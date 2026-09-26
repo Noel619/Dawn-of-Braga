@@ -484,3 +484,79 @@ export class DecalPool {
     return m;
   }
 }
+
+// ------------------------------------------------------------ haces de luz
+// Haces volumétricos falsos (vidrieras, rejillas): cintas aditivas con polvo.
+export class LightShafts {
+  constructor(scene) {
+    this.scene = scene;
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: { uTime: G.uTime },
+      vertexShader: `
+        attribute vec3 color; attribute float aAlong;
+        varying vec2 vUv; varying vec3 vC; varying float vDist;
+        void main(){
+          vUv = uv; vC = color;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vDist = -mv.z;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float uTime;
+        varying vec2 vUv; varying vec3 vC; varying float vDist;
+        float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
+        void main(){
+          float across = sin(vUv.x * 3.14159);
+          across = across * across * across;
+          float along = smoothstep(0.0, 0.2, vUv.y) * pow(1.0 - vUv.y, 1.3);
+          // motas de polvo que caen lentamente
+          vec2 g = floor(vec2(vUv.x * 22.0, vUv.y * 60.0 + uTime * 1.2));
+          float dust = step(0.985, h(g)) * 1.5;
+          float near = smoothstep(2.0, 7.0, vDist);
+          float a = across * along * near;
+          gl_FragColor = vec4(vC * (a * 0.13 + dust * a * 0.4), 1.0);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    this.pos = [];
+    this.uv = [];
+    this.col = [];
+    this.idx = [];
+  }
+  // haz desde 'a' (ventana) hasta 'b' (suelo), con anchura w
+  add(a, b, w, color) {
+    const n = this.pos.length / 3;
+    const dir = new THREE.Vector3().subVectors(b, a);
+    const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0));
+    if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+    side.normalize().multiplyScalar(w / 2);
+    const c = new THREE.Color(color);
+    // dos cintas cruzadas para que se vea desde cualquier ángulo
+    const side2 = new THREE.Vector3().crossVectors(dir, side).normalize().multiplyScalar(w / 2);
+    for (const s of [side, side2]) {
+      const k = this.pos.length / 3;
+      const pts = [a.clone().sub(s), a.clone().add(s), b.clone().add(s.clone().multiplyScalar(1.6)), b.clone().sub(s.clone().multiplyScalar(1.6))];
+      for (const p of pts) this.pos.push(p.x, p.y, p.z);
+      this.uv.push(0, 0, 1, 0, 1, 1, 0, 1);
+      for (let i = 0; i < 4; i++) this.col.push(c.r, c.g, c.b);
+      this.idx.push(k, k + 1, k + 2, k, k + 2, k + 3);
+    }
+  }
+  build() {
+    if (!this.pos.length) return;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    g.setIndex(this.idx);
+    g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, this.mat);
+    m.renderOrder = 7;
+    m.frustumCulled = false;
+    this.scene.add(m);
+    this.mesh = m;
+  }
+}

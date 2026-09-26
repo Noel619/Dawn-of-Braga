@@ -102,9 +102,14 @@ export function buildCathedral(ctx, S, L) {
     lancet(ctx, 11.02, z, 'x', 7.5, 4.5);
     lancet(ctx, 12.98, z, 'x', 7.5, 4.5);
     ctx.lights.push({ x: -9.5, y: 7.5, z, r: 1.0, g: 0.16, b: 0.1, radius: 10, intensity: 0.7, room });
+    if (ctx.shafts) {
+      ctx.shafts.push({ a: [-11, 9, z], b: [-3.5, 0.6, z + 2.5], w: 1.8, color: 0xff5a40 });
+      ctx.shafts.push({ a: [11, 10, z], b: [4.5, 0.6, z - 2], w: 1.5, color: 0x7080e0 });
+    }
     ctx.lights.push({ x: 9.5, y: 8.5, z, r: 0.9, g: 0.2, b: 0.2, radius: 10, intensity: 0.5, room });
   }
   lancet(ctx, 0, -103.98, 'z', 5, 7, 2.2);
+  if (ctx.shafts) ctx.shafts.push({ a: [0, 9, -103.9], b: [0, 1.2, -95], w: 2.0, color: 0xff3a28 });
   lancet(ctx, -4, -103.98, 'z', 6, 5, 1.2);
   lancet(ctx, 4, -103.98, 'z', 6, 5, 1.2);
 
@@ -385,6 +390,7 @@ export function buildCrypt(ctx, S, C, L) {
   P.candles(ctx, -6.2, Y, -98, 6, 1501, { room, radius: 4, intensity: 0.9 });
   P.candles(ctx, 6.2, Y, -109, 6, 1502, { room, radius: 4, intensity: 0.9 });
   P.bones(ctx, -5.8, Y, -108.8, 8, 1503, 0.6);
+  if (ctx.shafts) ctx.shafts.push({ a: [0, Y + 4.8, -98.5], b: [0.5, Y, -101.5], w: 2.2, color: 0xffb070 });
   L.interact.push({ kind: 'altar', id: 'a_cripta', name: 'Altar de la Cripta', x: 5.8, y: Y, z: -103.5, spawn: [4.2, Y, -103.5], yaw: -Math.PI / 2 });
 
   // --- osario (pasillo de calaveras)
@@ -558,42 +564,117 @@ export function buildCrypt(ctx, S, C, L) {
 export function buildRiver(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -30, -216, 30, -196);
-  floor(ctx, -40, -240, 40, -196, 'dirt', 0, { tint: [0.8, 0.9, 0.7], sub: 4 });
-  wb.box('water', -80, -0.35, -300, 80, -0.3, -214, { faces: 't', ao: false, grime: false, sub: 8 });
-  // montículo con la boca de la galería
-  wb.box('dirt', -9, 0, -194, 9, 4.2, -178, { faces: 'tnsew', sub: 3, tint: [0.7, 0.8, 0.6] });
-  wb.pyramid('dirt', 0, -186, 22, 20, 4.2, 2.5, { tint: [0.7, 0.8, 0.6] });
-  for (const x of [-2.6, 2]) wb.box('mossstone', x, 0, -196.4, x + 0.6, 3.6, -194, { sub: 2 });
-  wb.box('mossstone', -2.8, 3.2, -196.4, 2.8, 4.2, -194, { sub: 2 });
-  ctx.col.add(-9, 0, -194, -2, 5, -178);
-  ctx.col.add(2, 0, -194, 9, 5, -178);
-  // juncos y rocas en la orilla
   const rng = new RNG(1701);
-  for (let i = 0; i < 70; i++) {
-    const x = rng.range(-30, 30),
-      z = rng.range(-216, -208);
-    const h = rng.range(0.6, 1.6);
+  // orilla: malla de alturas (plana donde se camina, baja hacia el agua)
+  const hgt = (x, z) => {
+    const n = Math.sin(x * 0.31) * Math.cos(z * 0.27) * 0.12 + Math.sin(x * 0.07 + z * 0.05) * 0.2;
+    const shore = z < -212 ? -(-212 - z) * 0.22 : 0;
+    const side = Math.max(0, Math.abs(x) - 32) * 0.12;
+    return n * (Math.abs(x) < 30 && z > -212 ? 0.3 : 1) + shore + side;
+  };
+  const GX = 44,
+    GZ = 22;
+  const g = new THREE.PlaneGeometry(120, 48, GX, GZ);
+  g.rotateX(-Math.PI / 2);
+  g.translate(0, 0, -220);
+  const pa = g.attributes.position;
+  for (let i = 0; i < pa.count; i++) pa.setY(i, hgt(pa.getX(i), pa.getZ(i)));
+  g.computeVertexNormals();
+  wb.geometry('dirt', g, null, { ao: false, uvScale: 18, tint: [0.72, 0.78, 0.56] });
+  // matas de hierba: briznas finas inclinadas
+  for (let i = 0; i < 150; i++) {
+    const x = rng.range(-50, 50),
+      z = rng.range(-213, -197);
+    const y = hgt(x, z);
+    const n = rng.int(4, 7);
+    for (let k = 0; k < n; k++) {
+      const h = rng.range(0.25, 0.7);
+      wb.push();
+      wb.translate(x + rng.range(-0.2, 0.2), y, z + rng.range(-0.2, 0.2));
+      wb.rotateY(rng.range(0, 3.14));
+      wb.rotateZ(rng.range(-0.45, 0.45));
+      wb.box('straw', -0.012, 0, -0.012, 0.012, h, 0.012, { ao: false, tint: [0.36, 0.48, 0.24], grime: false });
+      wb.pop();
+    }
+  }
+  // agua del Este
+  wb.box('water', -140, -1.05, -420, 140, -1.0, -214, { faces: 't', ao: false, grime: false, sub: 12, tint: [1.25, 1.1, 1.0] });
+  // juncos en la orilla
+  for (let i = 0; i < 110; i++) {
+    const x = rng.range(-55, 55),
+      z = rng.range(-218, -211);
+    const hh = rng.range(0.8, 1.9);
     wb.push();
-    wb.translate(x, -0.3, z);
-    wb.rotateZ(rng.range(-0.25, 0.25));
-    wb.box('straw', -0.02, 0, -0.02, 0.02, h, 0.02, { ao: false, tint: [0.6, 0.8, 0.5] });
+    wb.translate(x, hgt(x, z) - 0.2, z);
+    wb.rotateZ(rng.range(-0.3, 0.3));
+    wb.rotateX(rng.range(-0.2, 0.2));
+    wb.box('straw', -0.018, 0, -0.018, 0.018, hh, 0.018, { ao: false, tint: [0.5, 0.62, 0.35], grime: false });
+    if (rng.chance(0.4)) wb.box('leather', -0.035, hh - 0.25, -0.035, 0.035, hh, 0.035, { ao: false });
     wb.pop();
   }
-  P.rubble(ctx, -14, 0, -210, 7, 1702, 2.4, { mat: 'wallstone', scale: 2 });
-  P.rubble(ctx, 17, 0, -205, 6, 1703, 2, { mat: 'wallstone', scale: 2.4 });
-  // embarcadero y barca
-  for (let z = -206; z > -222; z -= 1.2) wb.box('planks', 6, 0.05, z - 1.1, 8.4, 0.2, z, { faces: 'tnsew', ao: false, uv: 0.7 });
-  for (let z = -208; z > -222; z -= 3.6) for (const x of [6.1, 8.3]) wb.box('wooddark', x - 0.1, -1, z - 0.1, x + 0.1, 0.6, z + 0.1, { ao: false });
+  // muro de contención con la boca de la galería
+  const wall = (x0, x1) => {
+    wb.box('mossstone', x0, -1, -196.4, x1, 5, -194, { sub: 2, aoH: 1.5 });
+    ctx.col.add(x0, -1, -196.4, x1, 5, -194);
+  };
+  wall(-60, -2.6);
+  wall(2.6, 60);
+  wb.box('mossstone', -2.6, 3.6, -196.4, 2.6, 5, -194, { sub: 2, ao: false });
+  for (const x of [-2.6, 2]) wb.box('mossstone', x, 0, -196.4, x + 0.6, 3.6, -194, { sub: 2, faces: 'n' });
+  // dovelas del arco
+  for (let i = 0; i <= 8; i++) {
+    const a = Math.PI - (i / 8) * Math.PI;
+    const px = Math.cos(a) * 2.3,
+      py = 2.4 + Math.sin(a) * 1.3;
+    wb.box('ashlar', px - 0.25, py - 0.2, -196.6, px + 0.25, py + 0.25, -196.3, { ao: false });
+  }
+  wb.box('mossstone', -60, 5, -196.4, 60, 5.4, -194.5, { ao: false });
+  // reja arrancada en el suelo
   wb.push();
-  wb.translate(10.4, -0.2, -219);
-  wb.rotateY(0.25);
-  wb.box('planks', -0.8, 0, -2.4, 0.8, 0.5, 2.4, { faces: 'nsewb', ao: false, uv: 0.8 });
-  wb.box('planks', -0.7, 0.1, -2.3, 0.7, 0.15, 2.3, { faces: 't', ao: false, uv: 0.8 });
+  wb.translate(1.2, 0.05, -198.5);
+  wb.rotateY(0.4);
+  for (let x = -1.6; x <= 1.6; x += 0.3) wb.box('iron', x - 0.03, 0, -1.5, x + 0.03, 0.06, 1.5, { ao: false });
   wb.pop();
-  L.interact.push({ kind: 'trigger', id: 't_final', x: 0, y: 0, z: -209, r: 30, rz: 4, event: 'ending' });
-  // muralla norte de la ciudad, visible desde el río
+  // talud hasta las murallas
+  wb.quad('dirt', new THREE.Vector3(-70, 5, -194.5), new THREE.Vector3(70, 5, -194.5), new THREE.Vector3(70, 11, -135), new THREE.Vector3(-70, 11, -135), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
+  // muralla norte de la ciudad y la Sé recortada contra el cielo
   cityWall(ctx, -93, -126, 76, -122, 10, { merlonSides: ['n'] });
   for (const x of [-60, -30, 25, 55]) tower(ctx, x, -124, 6, 14);
-  L.zones.push({ id: 'river', rects: [[-60, -300, 60, -196, -2, 30]], atmo: 'dawn' });
+  // colinas lejanas al otro lado del río (crestas irregulares)
+  let hx = -220;
+  for (let i = 0; i < 14; i++) {
+    const w = rng.range(35, 70),
+      h = rng.range(8, 22),
+      z = -320 - rng.range(0, 30);
+    const a = new THREE.Vector3(hx, -1, z),
+      b = new THREE.Vector3(hx + w, -1, z),
+      p1 = new THREE.Vector3(hx + w * rng.range(0.25, 0.45), h, z - 4),
+      p2 = new THREE.Vector3(hx + w * rng.range(0.55, 0.8), h * rng.range(0.6, 0.95), z - 4);
+    wb.tri('dirt', a, p2, p1, { ao: false, tint: [0.38, 0.4, 0.34] });
+    wb.tri('dirt', a, b, p2, { ao: false, tint: [0.38, 0.4, 0.34] });
+    hx += w * rng.range(0.55, 0.8);
+  }
+  // rocas, árbol muerto, embarcadero y barca
+  P.rubble(ctx, -14, 0, -206, 7, 1702, 2.4, { mat: 'wallstone', scale: 2 });
+  P.rubble(ctx, 18, 0, -203, 6, 1703, 2, { mat: 'wallstone', scale: 2.4 });
+  P.deadTree(ctx, -22, 0, -201, 1704, 6.5);
+  P.deadTree(ctx, 25, 0, -208, 1705, 5);
+  for (let z = -206; z > -226; z -= 1.2) wb.box('planks', 6, -0.1, z - 1.1, 8.4, 0.05, z, { faces: 'tnsew', ao: false, uv: 0.7 });
+  for (let z = -208; z > -226; z -= 3.6) for (const x of [6.1, 8.3]) wb.box('wooddark', x - 0.1, -1.5, z - 0.1, x + 0.1, 0.5, z + 0.1, { ao: false });
+  wb.push();
+  wb.translate(10.4, -1.0, -222);
+  wb.rotateY(0.25);
+  wb.box('planks', -0.8, 0, -2.4, 0.8, 0.55, 2.4, { faces: 'nsewb', ao: false, uv: 0.8 });
+  wb.box('planks', -0.7, 0.2, -2.3, 0.7, 0.25, 2.3, { faces: 't', ao: false, uv: 0.8 });
+  wb.pop();
+  // humo de la ciudad que arde a lo lejos
+  for (const [x, z] of [
+    [-40, -150],
+    [10, -140],
+    [45, -160],
+  ])
+    ctx.fires.push({ x, y: 6, z, s: 2.8, smoke: true, light: false, embers: false, glow: false });
+  L.interact.push({ kind: 'trigger', id: 't_final', x: 0, y: 0, z: -207.5, r: 30, rz: 3.5, event: 'ending' });
+  L.zones.push({ id: 'river', rects: [[-70, -420, 70, -196.4, -3, 40]], atmo: 'dawn' });
   L.map.push({ id: 'river', r: [-30, -216, 30, -196] });
 }

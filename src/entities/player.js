@@ -392,6 +392,11 @@ export class Player {
       rz = Math.sin(cy);
     let wx = fx * mv.y + rx * mv.x,
       wz = fz * mv.y + rz * mv.x;
+    if (this.autoDir) {
+      // caminata automática (escena final)
+      wx = this.autoDir.x * this.autoDir.m;
+      wz = this.autoDir.z * this.autoDir.m;
+    }
     const mag = Math.min(1, Math.hypot(wx, wz));
     this.moveMag = mag;
 

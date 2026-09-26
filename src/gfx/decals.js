@@ -111,7 +111,7 @@ export function buildBanners(scene, banners) {
     const merged = geos.length === 1 ? geos[0] : mergeSimple(geos);
     merged.computeVertexNormals();
     const m = new THREE.MeshLambertMaterial({ map: getTexture(kind), alphaTest: 0.5, side: THREE.DoubleSide });
-    registerMaterialPatch(m);
+    registerMaterialPatch(m, { wind: true });
     const mesh = new THREE.Mesh(merged, m);
     scene.add(mesh);
     out.push(mesh);

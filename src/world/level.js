@@ -16,6 +16,7 @@ export function buildLevel() {
     dynLights: [], // fuentes para el pool de luces dinámicas
     decals: [],
     banners: [],
+    shafts: [],
   };
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie

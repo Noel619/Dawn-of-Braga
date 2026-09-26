@@ -12,7 +12,7 @@ export const ATMO = {
   crypt: { fog: 0x070809, density: 0.065, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.75, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.1 },
   arena: { fog: 0x1a080c, density: 0.028, sky: 0x70404a, ground: 0x241010, hemi: 1.1, moon: 0, vol: 0.02, ash: 0, exposure: 1.2, sat: 0.85, lamp: 11, bloom: 1.3 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },
-  dawn: { fog: 0xc09a86, density: 0.016, sky: 0xffd6b8, ground: 0x6a5a4a, hemi: 3.2, moon: 2.2, moonColor: 0xffb070, vol: 0.02, ash: 0, exposure: 1.05, sat: 0.95, lamp: 2, bloom: 1.0 },
+  dawn: { fog: 0xc8a08a, density: 0.012, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.2, moonColor: 0xffa860, vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, lamp: 1, bloom: 1.1 },
 };
 
 const tmpC = new THREE.Color();
@@ -69,7 +69,13 @@ export class Atmosphere {
     const U = this.post.U;
     U.uFogColor.value.copy(this.fogC);
     U.uVol.value = c.vol;
-    U.uSkyGlow.value = this.name === 'dawn' ? -0.6 : this.name === 'city' || this.name === 'ramparts' ? 1 : 0;
+    U.uSkyGlow.value = this.name === 'dawn' ? 0 : this.name === 'city' || this.name === 'ramparts' ? 1 : 0;
+    U.uSun.value = damp(U.uSun.value, this.name === 'dawn' ? 1 : 0, 1, dt);
+    // luz del amanecer: rasante desde el norte
+    const mp = this.name === 'dawn' ? [18, 14, -80] : [-30, 60, 20];
+    this.moon.position.x = damp(this.moon.position.x, mp[0], 1, dt);
+    this.moon.position.y = damp(this.moon.position.y, mp[1], 1, dt);
+    this.moon.position.z = damp(this.moon.position.z, mp[2], 1, dt);
     U.uExposure.value = c.exposure;
     U.uSat.value = c.sat;
     U.uBloom.value = c.bloom;

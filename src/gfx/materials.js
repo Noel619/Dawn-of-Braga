@@ -64,6 +64,7 @@ const matCache = new Map();
 function patch(material, opts = {}) {
   const flesh = !!opts.flesh;
   const bake = !!opts.bake;
+  const wind = !!opts.wind;
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = G.uTime;
     shader.uniforms.uSnap = G.uSnap;
@@ -83,6 +84,10 @@ ${bake ? 'attribute vec3 aBake;\nvarying vec3 vBake;' : ''}`
       `#include <begin_vertex>
 vPulse = 0.0;
 ${bake ? 'vBake = aBake;' : ''}
+${wind ? `{
+  float sway = 1.0 - uv.y;
+  transformed += objectNormal * (sin(uTime * 2.3 + position.y * 1.7 + position.x * 0.9) * 0.12 + sin(uTime * 5.1 + position.y * 4.0) * 0.03) * sway;
+}` : ''}
 ${
   flesh
     ? `{
@@ -152,7 +157,7 @@ totalEmissiveRadiance *= 0.35 + 0.95 * vPulse * vPulse;`
     }
     shader.fragmentShader = fs;
   };
-  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '');
+  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '') + (wind ? '-wind' : '');
   material.customProgramCacheKey = () => ck;
   return material;
 }

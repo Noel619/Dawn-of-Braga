@@ -125,6 +125,7 @@ export class Input {
     document.addEventListener('pointerlockchange', () => {
       const was = this.locked;
       this.locked = document.pointerLockElement === canvas;
+      if (this.locked) this.freeLook = false;
       if (was && !this.locked && this.onPointerLockLost) this.onPointerLockLost();
     });
     addEventListener('gamepadconnected', () => {
@@ -136,7 +137,7 @@ export class Input {
     if (!this.enabledPointerLock || this.locked) return;
     try {
       const p = this.canvas.requestPointerLock && this.canvas.requestPointerLock();
-      if (p && p.catch) p.catch(() => (this.freeLook = true));
+      if (p && p.catch) p.catch(() => (this.freeLook = !this.locked));
     } catch (e) {
       this.freeLook = true;
     }

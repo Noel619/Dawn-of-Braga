@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { buildLevel } from '../world/level.js';
 import { PostPipeline } from '../gfx/post.js';
 import { G } from '../gfx/materials.js';
-import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool } from '../gfx/effects.js';
+import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts } from '../gfx/effects.js';
 import { buildDecals, buildBanners } from '../gfx/decals.js';
 import { Atmosphere } from './atmosphere.js';
 import { CameraRig } from './camera.js';
@@ -44,6 +44,9 @@ export class Game {
     for (const m of lvl.meshes) this.scene.add(m);
     buildDecals(this.scene, lvl.ctx.decals);
     buildBanners(this.scene, lvl.ctx.banners);
+    const shafts = new LightShafts(this.scene);
+    for (const s of lvl.ctx.shafts) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
+    shafts.build();
     this.fx = {};
     this.fx.fires = new FireSystem(this.scene, 240);
     for (const f of lvl.ctx.fires) this.fx.fires.add(f);
@@ -571,26 +574,28 @@ export class Game {
     this.state = 'ending';
     this.lockTarget = null;
     const p = this.player;
-    p.state = 'cine';
+    p.state = 'free';
+    p.autoDir = { x: 0.05, z: -1, m: 0.42 };
+    p.blocking = false;
     this.audio.music('ending');
     this.flags.finished = true;
     this.saveGame();
-    this.camRig.override = { pos: new THREE.Vector3(p.pos.x + 3, p.pos.y + 1.6, p.pos.z + 5), look: new THREE.Vector3(p.pos.x, p.pos.y + 2.5, p.pos.z - 30), speed: 0.6 };
+    this.camRig.override = { pos: new THREE.Vector3(p.pos.x + 2.6, p.pos.y + 1.4, p.pos.z + 3.5), look: new THREE.Vector3(p.pos.x, p.pos.y + 3.5, p.pos.z - 40), speed: 0.5 };
     setTimeout(() => {
       this.ui.showHud(false);
       this.post.U.uFadeColor.value.setRGB(1, 0.92, 0.82);
       this.fadeTarget = 0;
     }, 5000);
     setTimeout(() => {
+      this.player.autoDir = null;
       const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
       const body = document.getElementById('ending-body');
       body.innerHTML = `
         <div class="line" style="font-size:22px;line-height:1.7;max-width:46ch;margin:0 auto">Al amanecer, el Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
         <h2 style="margin-top:34px;font-size:40px">Dawn of Braga</h2>
         <div class="stats" style="justify-content:center;margin:18px auto 0"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / 10</b></div>
-        <div style="margin-top:34px;color:var(--ash);font-size:15px">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
+        <div class="credit">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
         <div class="hint" style="margin-top:26px"><span>${this.ui.keyHtml('confirm')} Volver al título</span></div>`;
-      document.getElementById('ending').style.color = '#2a2018';
       setTimeout(() => (s.data.ready = true), 2500);
     }, 8500);
   }
@@ -784,6 +789,7 @@ export class Game {
         this.updatePhantoms(dt);
       } else this.promptTarget = null;
       if (p.pos.y < -40 && !p.dead) p.die();
+      if (p.autoDir && p.pos.z < -211.5) p.autoDir = null;
     }
     // cámara
     this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine);

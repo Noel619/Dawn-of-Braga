@@ -7,7 +7,7 @@ const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
 await p.goto('http://localhost:5199/?dev=1' + (process.env.Q || ''));
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
-await p.evaluate(() => { window.__pause = true; const g = __game; g.input.enabledPointerLock = false; g.input.onPointerLockLost = null; g.ui.closeAll(); g.player.maxHp = g.player.hp = 1e6; });
+await p.evaluate(() => { window.__pause = true; const g = __game; g.input.enabledPointerLock = false; g.input.onPointerLockLost = null; g.ui.closeAll(); g.player.maxHp = g.player.hp = 1e6; const t = g.interact.list.find((i) => i.kind === 'trigger'); if (t) t.done = true; });
 let i = 0;
 for (const s of spots) {
   const [x, y, z, yaw, pitch, camyaw] = s.split(',').map(Number);
