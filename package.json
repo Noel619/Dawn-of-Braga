@@ -1,0 +1,21 @@
+{
+  "name": "dawn-of-braga",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Dawn of Braga \u2014 survival horror medieval soulslike (Three.js, todo procedural)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:play": "vite build && mkdir -p docs && cp dist/index.html docs/index.html"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "vite": "^8.3.1",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

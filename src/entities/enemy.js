@@ -1,0 +1,552 @@
+// Clase base de enemigo con IA de percepción, persecución, ataque y retorno.
+import * as THREE from 'three';
+import { Animator, blendInto } from './rig.js';
+import { moveBody } from '../world/collision.js';
+import { TYPES } from './enemies.js';
+import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/util.js';
+import { getTexture } from '../gfx/textures.js';
+
+const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+let shadowMat = null;
+
+export function makeBlobShadow(size) {
+  if (!shadowMat) shadowMat = new THREE.MeshBasicMaterial({ map: getTexture('shadow'), transparent: true, depthWrite: false, opacity: 0.8, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  const m = new THREE.Mesh(shadowGeo, shadowMat);
+  m.scale.set(size, 1, size);
+  m.renderOrder = 1;
+  return m;
+}
+
+export class Enemy {
+  constructor(game, spec) {
+    this.game = game;
+    this.spec = spec;
+    this.id = spec.id;
+    this.type = spec.type;
+    const T = (this.T = TYPES[spec.type]);
+    this.rig = T.build();
+    this.obj = this.rig.root;
+    game.scene.add(this.obj);
+    this.shadow = makeBlobShadow(T.radius * 3.2);
+    game.scene.add(this.shadow);
+    this.body = { pos: new THREE.Vector3(), radius: T.radius, height: T.height, stepH: T.stepH ?? 0.5, grounded: true, vy: 0 };
+    this.anim = new Animator(T.fps ?? 18);
+    this.anim.onEvent = (e) => this.onAnimEvent(e);
+    this.lockHeight = T.lockHeight;
+    this.boss = !!spec.boss;
+    this.home = { x: spec.x, y: spec.y, z: spec.z, yaw: spec.yaw || 0 };
+    this.maxHp = T.hp;
+    this.data = {};
+    this.P = {}; // datos persistentes entre reinicios
+    this.flash = 0;
+    this.phase = Math.random() * 10;
+    this.percT = Math.random() * 0.3;
+    if (T.init) T.init(this);
+    this.reset();
+  }
+
+  get pos() {
+    return this.body.pos;
+  }
+  get alive() {
+    return !this.dead;
+  }
+  get lockable() {
+    return !this.dead && this.obj.visible && this.state !== 'ceiling';
+  }
+
+  reset() {
+    const s = this.spec;
+    this.body.pos.set(s.x, s.y, s.z);
+    this.body.vy = 0;
+    this.body.grounded = true;
+    this.yaw = s.yaw || 0;
+    this.vx = this.vz = 0;
+    this.hp = this.maxHp;
+    this.poise = this.T.poise;
+    this.poiseT = 0;
+    this.dead = false;
+    this.state = s.idle === 'ceiling' ? 'ceiling' : s.idle === 'boss' ? 'bossIdle' : 'dormant';
+    this.idle = s.idle || 'stand';
+    this.stT = 0;
+    this.cooldown = 0.5;
+    this.atk = null;
+    this.path = null;
+    this.pathT = 0;
+    this.lostT = 0;
+    this.stuckT = 0;
+    this.lastPos = this.body.pos.clone();
+    this.anim.stop(0);
+    this.anim.weight = 0;
+    this.obj.visible = true;
+    this.obj.position.copy(this.body.pos);
+    this.obj.rotation.set(0, this.yaw, 0);
+    this.sink = 0;
+    this.aware = false;
+    this.data = {};
+    this.hitShown = 0;
+    if (this.T.onReset) this.T.onReset(this);
+  }
+
+  // ------------------------------------------------------------ percepción
+  distTo(p) {
+    return Math.hypot(p.x - this.pos.x, p.z - this.pos.z);
+  }
+  angleTo(p) {
+    return Math.atan2(p.x - this.pos.x, p.z - this.pos.z);
+  }
+  perceive(player) {
+    if (player.dead) return false;
+    const T = this.T;
+    const dy = player.pos.y - this.pos.y;
+    if (Math.abs(dy) > (this.state === 'ceiling' ? 5 : 3.2)) return false;
+    const d = this.distTo(player.pos);
+    const dormant = this.state === 'dormant' || this.state === 'ceiling';
+    let sight = T.sight;
+    if (dormant && (this.idle === 'eat' || this.idle === 'pray' || this.idle === 'window')) sight *= 0.45;
+    let hear = T.hear;
+    if (player.sprinting) hear *= 2.2;
+    if (player.state === 'attack' || player.state === 'roll') hear *= 1.6;
+    if (d > Math.max(sight, hear)) return false;
+    const eye = this.pos.y + T.height * 0.8;
+    const los = this.game.world.col.lineOfSight(this.pos.x, eye, this.pos.z, player.pos.x, player.pos.y + 1.4, player.pos.z);
+    if (d < hear && los) return true;
+    if (d > sight) return false;
+    const ang = Math.abs(angleDiff(this.yaw, this.angleTo(player.pos)));
+    if (ang > (T.fov ?? 120) * 0.5 * DEG) return false;
+    return los;
+  }
+
+  alert() {
+    if (this.aware) return;
+    this.aware = true;
+    this.state = 'alert';
+    this.stT = 0;
+    if (this.T.clips.alert) this.anim.play(this.T.clips.alert, { blend: 0.15 });
+    this.game.audio && this.game.audio.enemyVoice(this, 'alert');
+    this.game.onEnemyAlert && this.game.onEnemyAlert(this);
+  }
+
+  // ------------------------------------------------------------ movimiento
+  steerTo(tx, tz, speed, dt, face = true) {
+    const dx = tx - this.pos.x,
+      dz = tz - this.pos.z;
+    const d = Math.hypot(dx, dz);
+    let wx = 0,
+      wz = 0;
+    if (d > 0.05) {
+      wx = dx / d;
+      wz = dz / d;
+    }
+    // separación de otros enemigos
+    for (const o of this.game.activeEnemies) {
+      if (o === this || o.dead) continue;
+      const ox = this.pos.x - o.pos.x,
+        oz = this.pos.z - o.pos.z;
+      const od = Math.hypot(ox, oz);
+      const min = this.body.radius + o.body.radius + 0.3;
+      if (od < min && od > 0.001) {
+        wx += (ox / od) * (min - od) * 1.5;
+        wz += (oz / od) * (min - od) * 1.5;
+      }
+    }
+    const m = Math.hypot(wx, wz) || 1;
+    const k = Math.min(1, d / 0.6);
+    this.vx = damp(this.vx, (wx / m) * speed * k, 8, dt);
+    this.vz = damp(this.vz, (wz / m) * speed * k, 8, dt);
+    if (face && d > 0.1) this.yaw = approachAngle(this.yaw, Math.atan2(wx, wz), (this.T.turn ?? 5) * dt);
+  }
+
+  nav() {
+    const y = this.pos.y;
+    if (y < -3) return this.game.navCrypt;
+    if (y < 3 && y > -1.5) return this.game.navSurface;
+    return null;
+  }
+
+  // Persigue un punto con A* cuando no hay línea directa.
+  chaseTo(tx, tz, speed, dt) {
+    const nav = this.nav();
+    if (!nav || nav.line(this.pos.x, this.pos.z, tx, tz)) {
+      this.path = null;
+      this.steerTo(tx, tz, speed, dt);
+      return;
+    }
+    this.pathT -= dt;
+    if (!this.path || this.pathT <= 0) {
+      const r = nav.path(this.pos.x, this.pos.z, tx, tz, 5000);
+      this.path = r ? r.pts : null;
+      this.pathI = 1;
+      this.pathT = 0.7 + Math.random() * 0.3;
+    }
+    if (this.path && this.pathI < this.path.length) {
+      const [px, pz] = this.path[this.pathI];
+      if (Math.hypot(px - this.pos.x, pz - this.pos.z) < 0.6) this.pathI++;
+      this.steerTo(px, pz, speed, dt);
+    } else this.steerTo(tx, tz, speed, dt);
+  }
+
+  // ------------------------------------------------------------ combate
+  takeHit(dmg, poiseDmg, fromX, fromZ, heavy) {
+    if (this.dead) return 'none';
+    const T = this.T;
+    if (this.state === 'ceiling') this.drop();
+    const toSrc = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);
+    const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 55 * DEG;
+    if (T.canBlock && !heavy && facing && this.state !== 'attack' && this.state !== 'hurt' && this.state !== 'stagger' && Math.random() < T.blockChance) {
+      if (T.clips.block) this.anim.play(T.clips.block, { blend: 0.03 });
+      this.data.blockT = 0.4;
+      return 'blocked';
+    }
+    this.hp -= dmg;
+    this.flash = 0.12;
+    this.hitShown = 3;
+    if (!this.aware) {
+      this.aware = true;
+      this.game.onEnemyAlert && this.game.onEnemyAlert(this);
+    }
+    if (this.hp <= 0) {
+      this.die();
+      return 'kill';
+    }
+    this.poise -= poiseDmg;
+    this.poiseT = 3;
+    if (this.poise <= 0) {
+      this.poise = T.poise;
+      if (T.onStagger) T.onStagger(this);
+      this.state = heavy && T.clips.stagger ? 'stagger' : 'hurt';
+      this.stT = 0;
+      const c = this.state === 'stagger' ? T.clips.stagger : T.clips.hurt;
+      if (c) this.anim.play(c, { blend: 0.03 });
+      const d = Math.hypot(this.pos.x - fromX, this.pos.z - fromZ) || 1;
+      const kb = heavy ? 3.5 : 2;
+      this.vx = ((this.pos.x - fromX) / d) * kb;
+      this.vz = ((this.pos.z - fromZ) / d) * kb;
+      this.atk = null;
+    } else if (this.state === 'dormant' || this.state === 'alert') {
+      this.state = 'chase';
+    }
+    return 'hit';
+  }
+
+  die() {
+    this.dead = true;
+    this.state = 'dead';
+    this.stT = 0;
+    this.hp = 0;
+    this.anim.play(this.T.clips.death, { blend: 0.05 });
+    this.game.onEnemyDeath && this.game.onEnemyDeath(this);
+  }
+
+  drop() {
+    this.state = 'dropping';
+    this.stT = 0;
+    this.body.vy = -1;
+    this.body.grounded = false;
+    this.game.audio && this.game.audio.enemyVoice(this, 'alert');
+    this.aware = true;
+  }
+
+  startAttack(a) {
+    this.state = 'attack';
+    this.atk = a;
+    this.stT = 0;
+    this.hitDone = [];
+    this.evDone = [];
+    this.anim.play(a.clip, { blend: a.blend ?? 0.1 });
+    if (a.onStart) a.onStart(this);
+    this.game.audio && this.game.audio.enemyVoice(this, 'attack', a);
+  }
+
+  pickAttack(d) {
+    const T = this.T;
+    const opts = [];
+    let total = 0;
+    for (const a of T.attacks) {
+      if (d < a.min || d > a.max) continue;
+      if (a.cond && !a.cond(this, d)) continue;
+      if (a.phase && (this.data.phase || 1) < a.phase) continue;
+      const w = a.weight ?? 1;
+      opts.push([a, w]);
+      total += w;
+    }
+    if (!opts.length) return null;
+    let r = Math.random() * total;
+    for (const [a, w] of opts) {
+      r -= w;
+      if (r <= 0) return a;
+    }
+    return opts[0][0];
+  }
+
+  onAnimEvent(e) {
+    if (e === 'step' && this.game.audio) this.game.audio.enemyStep(this);
+  }
+
+  // ------------------------------------------------------------ actualización
+  update(dt, player) {
+    const T = this.T;
+    this.stT += dt;
+    this.cooldown -= dt;
+    this.flash -= dt;
+    this.poiseT -= dt;
+    if (this.poiseT <= 0) this.poise = T.poise;
+    if (this.data.blockT) this.data.blockT -= dt;
+    const d = this.distTo(player.pos);
+    const toP = this.angleTo(player.pos);
+    let speed = 0;
+    let move = true;
+
+    // percepción escalonada
+    this.percT -= dt;
+    if (this.percT <= 0) {
+      this.percT = 0.2;
+      this.sees = this.perceive(player);
+      if (this.sees) this.lostT = 0;
+    }
+    if (!this.sees) this.lostT += dt;
+
+    switch (this.state) {
+      case 'dormant':
+        this.vx = damp(this.vx, 0, 6, dt);
+        this.vz = damp(this.vz, 0, 6, dt);
+        if (this.idle === 'wander') {
+          const w = this.data.wander || (this.data.wander = { x: this.home.x, z: this.home.z, t: 0 });
+          w.t -= dt;
+          if (w.t <= 0) {
+            w.x = this.home.x + (Math.random() - 0.5) * 7;
+            w.z = this.home.z + (Math.random() - 0.5) * 7;
+            w.t = 4 + Math.random() * 4;
+          }
+          const nav = this.nav();
+          if (!nav || nav.walkable(w.x, w.z)) this.steerTo(w.x, w.z, T.walk * 0.55, dt);
+          else w.t = 0;
+        }
+        if (this.sees) this.alert();
+        break;
+      case 'ceiling':
+        this.vx = this.vz = 0;
+        if (d < 3.8 && Math.abs(player.pos.y - this.home.y) < 5) this.drop();
+        move = false;
+        break;
+      case 'dropping':
+        this.vx = this.vz = 0;
+        if (this.body.grounded && this.stT > 0.1) {
+          this.state = 'alert';
+          this.stT = 0;
+          if (T.clips.alert) this.anim.play(T.clips.alert, { blend: 0.05 });
+          this.game.camRig.shake(0.2);
+        }
+        break;
+      case 'bossIdle':
+        this.vx = this.vz = 0;
+        break;
+      case 'alert':
+        this.vx = damp(this.vx, 0, 8, dt);
+        this.vz = damp(this.vz, 0, 8, dt);
+        this.yaw = approachAngle(this.yaw, toP, (T.turn ?? 5) * dt);
+        if (this.stT > (T.alertTime ?? 0.7)) {
+          this.state = 'chase';
+          this.anim.stop(0.2);
+        }
+        break;
+      case 'chase': {
+        if (player.dead) {
+          this.state = 'return';
+          break;
+        }
+        const leashD = Math.hypot(this.pos.x - this.home.x, this.pos.z - this.home.z);
+        if (!this.boss && (leashD > (T.leash ?? 30) || this.lostT > 7)) {
+          this.state = 'return';
+          break;
+        }
+        if (T.think) {
+          const r = T.think(this, player, d, dt);
+          if (r === 'handled') break;
+        }
+        if (this.cooldown <= 0) {
+          const a = this.pickAttack(d);
+          if (a) {
+            this.startAttack(a);
+            break;
+          }
+        }
+        const keep = T.keepDist ?? 0;
+        if (d > (T.approach ?? 1.6) + keep) {
+          speed = d > (T.runDist ?? 6) && T.run ? T.run : T.walk;
+          this.chaseTo(player.pos.x, player.pos.z, speed, dt);
+        } else {
+          // rodear lentamente
+          const side = this.data.side || (this.data.side = Math.random() < 0.5 ? -1 : 1);
+          const a = toP + side * Math.PI * 0.5;
+          const sx = this.pos.x + Math.sin(a),
+            sz = this.pos.z + Math.cos(a);
+          this.steerTo(sx, sz, T.walk * 0.35, dt, false);
+          this.yaw = approachAngle(this.yaw, toP, (T.turn ?? 5) * dt);
+          if (Math.random() < dt * 0.3) this.data.side = -side;
+        }
+        // atasco
+        this.stuckT += dt;
+        if (this.stuckT > 1.2) {
+          const moved = this.pos.distanceTo(this.lastPos);
+          this.lastPos.copy(this.pos);
+          this.stuckT = 0;
+          if (moved < 0.3 && d > 2.5) this.path = null;
+        }
+        break;
+      }
+      case 'attack': {
+        const a = this.atk;
+        const t = this.stT;
+        const firstHit = a.hits && a.hits.length ? a.hits[0][0] : a.dur * 0.5;
+        const trackUntil = a.trackUntil ?? firstHit - 0.05;
+        if (t < trackUntil) this.yaw = approachAngle(this.yaw, toP, (a.turn ?? T.turn ?? 5) * dt);
+        let lunging = false;
+        if (a.lunge) {
+          for (const [l0, l1, ls] of a.lunge) {
+            if (t >= l0 && t <= l1) {
+              this.vx = Math.sin(this.yaw) * ls;
+              this.vz = Math.cos(this.yaw) * ls;
+              lunging = true;
+            }
+          }
+        }
+        if (!lunging) {
+          this.vx = damp(this.vx, 0, 10, dt);
+          this.vz = damp(this.vz, 0, 10, dt);
+        }
+        if (a.hits) {
+          a.hits.forEach(([h0, h1], i) => {
+            if (t >= h0 && t <= h1 && !this.hitDone[i]) {
+              if (this.game.combat.enemyStrike(this, a, i)) this.hitDone[i] = true;
+            }
+          });
+        }
+        if (a.events) {
+          a.events.forEach((ev, i) => {
+            if (t >= ev.t && !this.evDone[i]) {
+              this.evDone[i] = true;
+              ev.fn(this, this.game);
+            }
+          });
+        }
+        if (a.update) a.update(this, dt, t);
+        if (t >= a.dur) {
+          this.state = 'chase';
+          this.atk = null;
+          this.cooldown = a.cd ?? T.cooldown ?? 0.8 + Math.random() * 0.8;
+          this.anim.stop(0.18);
+        }
+        move = true;
+        break;
+      }
+      case 'hurt':
+      case 'stagger': {
+        this.vx = damp(this.vx, 0, 5, dt);
+        this.vz = damp(this.vz, 0, 5, dt);
+        const dur = this.state === 'hurt' ? T.clips.hurt.dur : T.clips.stagger.dur;
+        if (this.stT >= dur) {
+          this.state = 'chase';
+          this.cooldown = 0.2 + Math.random() * 0.4;
+          this.anim.stop(0.15);
+        }
+        break;
+      }
+      case 'return': {
+        const hd = Math.hypot(this.pos.x - this.home.x, this.pos.z - this.home.z);
+        if (this.sees && !player.dead && hd < (T.leash ?? 30) * 0.7) {
+          this.state = 'chase';
+          break;
+        }
+        if (hd < 0.6) {
+          this.state = 'dormant';
+          this.aware = false;
+          this.hp = this.maxHp;
+          this.vx = this.vz = 0;
+          this.yaw = this.home.yaw;
+        } else this.chaseTo(this.home.x, this.home.z, T.walk, dt);
+        break;
+      }
+      case 'dead': {
+        this.vx = damp(this.vx, 0, 6, dt);
+        this.vz = damp(this.vz, 0, 6, dt);
+        if (this.stT > 2.4) {
+          this.sink += dt * 0.35;
+          if (this.stT > 2.4 && !this.data.dissolved) {
+            this.data.dissolved = true;
+            this.game.fx && this.game.fx.dissolve && this.game.fx.dissolve(this);
+          }
+        }
+        if (this.stT > 5.5) {
+          this.obj.visible = false;
+          this.shadow.visible = false;
+        }
+        break;
+      }
+    }
+    if (T.update) T.update(this, dt, player, d);
+
+    // física
+    if (this.state !== 'ceiling' && move) {
+      const floating = T.float;
+      if (floating) {
+        this.pos.x += this.vx * dt;
+        this.pos.z += this.vz * dt;
+        this.game.world.col.resolve(this.pos, this.body.radius, this.pos.y, this.body.height, 0.5);
+        const g = this.game.world.col.groundHeight(this.pos.x, this.pos.z, this.body.radius, this.pos.y + 1.5);
+        this.pos.y = damp(this.pos.y, g, 6, dt);
+      } else moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
+      // no atravesar al jugador
+      if (!this.dead && !player.dead) {
+        const dx = this.pos.x - player.pos.x,
+          dz = this.pos.z - player.pos.z;
+        const dd = Math.hypot(dx, dz);
+        const min = this.body.radius + player.body.radius;
+        if (dd < min && dd > 0.001 && Math.abs(this.pos.y - player.pos.y) < 1.5) {
+          const push = (min - dd) * 0.5;
+          this.pos.x += (dx / dd) * push;
+          this.pos.z += (dz / dd) * push;
+          if (this.T.heavy) {
+            player.pos.x -= (dx / dd) * push;
+            player.pos.z -= (dz / dd) * push;
+          } else {
+            player.pos.x -= (dx / dd) * push * 0.6;
+            player.pos.z -= (dz / dd) * push * 0.6;
+          }
+        }
+      }
+    }
+    this.animate(dt);
+  }
+
+  animate(dt) {
+    const T = this.T;
+    const spd = Math.hypot(this.vx, this.vz);
+    this.phase += dt * spd * (T.stride ?? 2.2);
+    let pose;
+    if (this.state === 'dormant' && T.idlePose) pose = T.idlePose(this, this.idle, this.game.time, spd);
+    else if (this.state === 'ceiling' && T.idlePose) pose = T.idlePose(this, 'ceiling', this.game.time, 0);
+    else pose = T.loco(this, this.game.time, spd);
+    const ap = this.anim.update(dt);
+    if (ap && this.anim.weight > 0) blendInto(pose, ap, this.anim.weight, this.anim.clip.mask);
+    if (T.postPose) T.postPose(this, pose, dt);
+    this.rig.apply(pose);
+    this.obj.position.set(this.pos.x, this.pos.y - this.sink, this.pos.z);
+    this.obj.rotation.y = this.yaw;
+    if (T.rootRot) T.rootRot(this);
+    // sombra
+    const g = this.state === 'ceiling' ? this.home.y - 3 : this.pos.y;
+    this.shadow.position.set(this.pos.x, g + 0.02, this.pos.z);
+    this.shadow.visible = this.obj.visible && this.state !== 'ceiling';
+    // destello de golpe
+    if (this.flash > 0) {
+      if (!this._flashing) {
+        this.rig.setTint(null, new THREE.Color(0.6, 0.15, 0.1));
+        this._flashing = true;
+      }
+    } else if (this._flashing) {
+      this.rig.setTint(null, null);
+      this._flashing = false;
+    }
+  }
+}

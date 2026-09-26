@@ -1,0 +1,236 @@
+// Materiales "PSX": Lambert de three.js parcheado con
+//  - vértices ajustados a una rejilla de pantalla (temblor característico)
+//  - mapeo de textura afín parcial (deformación de PS1)
+//  - carne palpitante (desplazamiento + emisión pulsante) para la corrupción
+import * as THREE from 'three';
+import { getTexture } from './textures.js';
+
+export const G = {
+  uTime: { value: 0 },
+  uSnap: { value: new THREE.Vector2(240, 135) },
+  uAffine: { value: 0.35 },
+};
+
+// uv: repeticiones de textura por metro (mapeo en espacio mundo).
+export const MAT_DEFS = {
+  cobble: { tex: 'cobble', uv: 0.5 },
+  flag: { tex: 'flag', uv: 0.5 },
+  wallstone: { tex: 'wallstone', uv: 0.5 },
+  ashlar: { tex: 'ashlar', uv: 0.36 },
+  plaster: { tex: 'plaster', uv: 0.42 },
+  timber: { tex: 'timber', uv: 1.2 },
+  planks: { tex: 'planks', uv: 0.6 },
+  wooddark: { tex: 'wooddark', uv: 0.5 },
+  roof: { tex: 'roof', uv: 0.55 },
+  dirt: { tex: 'dirt', uv: 0.3 },
+  iron: { tex: 'iron', uv: 1.2 },
+  bronze: { tex: 'bronze', uv: 1.0 },
+  mossstone: { tex: 'mossstone', uv: 0.5 },
+  skulls: { tex: 'skulls', uv: 0.55 },
+  mosaic: { tex: 'mosaic', uv: 0.2 },
+  bone: { tex: 'bone', uv: 1.6 },
+  straw: { tex: 'straw', uv: 1.0 },
+  burlap: { tex: 'burlap', uv: 1.4 },
+  clothRed: { tex: 'clothRed', uv: 1.4 },
+  clothDark: { tex: 'clothDark', uv: 1.4 },
+  clothBlue: { tex: 'clothBlue', uv: 1.4 },
+  clothWhite: { tex: 'clothWhite', uv: 1.4 },
+  leather: { tex: 'leather', uv: 1.6 },
+  chainmail: { tex: 'chainmail', uv: 2.2 },
+  plate: { tex: 'plate', uv: 1.6 },
+  skin: { tex: 'skin', uv: 2.0 },
+  skinCorrupt: { tex: 'skinCorrupt', uv: 1.6 },
+  flesh: {
+    tex: 'flesh',
+    uv: 0.7,
+    emissiveTex: 'fleshEmit',
+    emissive: 0xff6a3a,
+    emissiveIntensity: 0.9,
+    flesh: true,
+  },
+  fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.6 },
+  glass: { tex: 'glass', uv: 0.5, emissiveTex: 'glass', emissive: 0xffffff, emissiveIntensity: 1.3 },
+  candle: { tex: 'candle', uv: 2.0, emissive: 0x3a2a10, emissiveIntensity: 1 },
+  blood: { tex: 'blood', uv: 0.5 },
+  water: { tex: 'water', uv: 0.25 },
+  black: { tex: 'black', uv: 1, color: 0x050505 },
+  ember: { tex: 'white', uv: 1, color: 0x220800, emissive: 0xff5a10, emissiveIntensity: 1.6 },
+  eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
+  redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
+};
+
+const matCache = new Map();
+
+function patch(material, opts = {}) {
+  const flesh = !!opts.flesh;
+  const bake = !!opts.bake;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = G.uTime;
+    shader.uniforms.uSnap = G.uSnap;
+    shader.uniforms.uAffine = G.uAffine;
+    let vs = shader.vertexShader;
+    vs = vs.replace(
+      '#include <common>',
+      `#include <common>
+uniform float uTime;
+uniform vec2 uSnap;
+varying vec3 vAffUv;
+varying float vPulse;
+${bake ? 'attribute vec3 aBake;\nvarying vec3 vBake;' : ''}`
+    );
+    vs = vs.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
+vPulse = 0.0;
+${bake ? 'vBake = aBake;' : ''}
+${
+  flesh
+    ? `{
+  vec4 wp0 = modelMatrix * vec4(position, 1.0);
+  float ph = sin(uTime * 2.1 + wp0.x * 1.7 + wp0.y * 2.6 + wp0.z * 1.3);
+  float ph2 = sin(uTime * 4.2 + wp0.x * 3.1 - wp0.z * 2.2);
+  vPulse = ph * 0.5 + 0.5;
+  transformed += objectNormal * (ph * 0.045 + ph2 * 0.015);
+}`
+    : ''
+}`
+    );
+    vs = vs.replace(
+      '#include <uv_vertex>',
+      `#include <uv_vertex>`
+    );
+    vs = vs.replace(
+      '#include <project_vertex>',
+      `#include <project_vertex>
+{
+  vec2 s = uSnap * 0.5;
+  vec4 p = gl_Position;
+  if (p.w > 0.05) {
+    p.xy = floor(p.xy / p.w * s + 0.5) / s * p.w;
+    gl_Position = p;
+  }
+#ifdef USE_MAP
+  vAffUv = vec3(vMapUv * gl_Position.w, gl_Position.w);
+#else
+  vAffUv = vec3(0.0, 0.0, 1.0);
+#endif
+}`
+    );
+    shader.vertexShader = vs;
+
+    let fs = shader.fragmentShader;
+    fs = fs.replace(
+      '#include <common>',
+      `#include <common>
+uniform float uAffine;
+uniform float uTime;
+varying vec3 vAffUv;
+varying float vPulse;
+${bake ? 'varying vec3 vBake;' : ''}`
+    );
+    fs = fs.replace(
+      '#include <map_fragment>',
+      `#ifdef USE_MAP
+  vec2 muv = mix(vMapUv, vAffUv.xy / vAffUv.z, uAffine);
+  vec4 sampledDiffuseColor = texture2D(map, muv);
+  diffuseColor *= sampledDiffuseColor;
+#endif`
+    );
+    if (bake) {
+      fs = fs.replace(
+        '#include <lights_fragment_end>',
+        `#include <lights_fragment_end>
+reflectedLight.indirectDiffuse += diffuseColor.rgb * vBake;`
+      );
+    }
+    if (flesh) {
+      fs = fs.replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+totalEmissiveRadiance *= 0.35 + 0.95 * vPulse * vPulse;`
+      );
+    }
+    shader.fragmentShader = fs;
+  };
+  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '');
+  material.customProgramCacheKey = () => ck;
+  return material;
+}
+
+function build(name, { vertexColors = true, side = THREE.FrontSide, basic = false } = {}) {
+  const def = MAT_DEFS[name];
+  if (!def) throw new Error('Material desconocido: ' + name);
+  const params = {
+    map: getTexture(def.tex),
+    vertexColors,
+    side,
+  };
+  if (def.color !== undefined) params.color = def.color;
+  let m;
+  if (basic) {
+    m = new THREE.MeshBasicMaterial(params);
+  } else {
+    if (def.emissive !== undefined) {
+      params.emissive = new THREE.Color(def.emissive);
+      params.emissiveIntensity = def.emissiveIntensity ?? 1;
+      if (def.emissiveTex) params.emissiveMap = getTexture(def.emissiveTex);
+    }
+    m = new THREE.MeshLambertMaterial(params);
+  }
+  m.userData.def = def;
+  return patch(m, { flesh: def.flesh, bake: vertexColors && !basic });
+}
+
+// Material de mundo (con colores de vértice horneados).
+export function worldMat(name) {
+  const key = 'w:' + name;
+  if (!matCache.has(key)) matCache.set(key, build(name, { vertexColors: true }));
+  return matCache.get(key);
+}
+
+// Material para personajes/objetos dinámicos (sin colores de vértice).
+export function objMat(name, opts = {}) {
+  const key = 'o:' + name + (opts.side === THREE.DoubleSide ? ':ds' : '') + (opts.tint ? ':' + opts.tint : '');
+  if (!matCache.has(key)) {
+    const m = build(name, { vertexColors: false, side: opts.side });
+    if (opts.tint) m.color = new THREE.Color(opts.tint);
+    matCache.set(key, m);
+  }
+  return matCache.get(key);
+}
+
+// Materiales especiales -----------------------------------------------------
+
+// Material de sprite/decal con recorte alfa y parche PSX.
+export function cutoutMat(texName, { color = 0xffffff, side = THREE.DoubleSide, lit = true, alphaTest = 0.5 } = {}) {
+  const key = 'c:' + texName + ':' + color + ':' + lit + ':' + side;
+  if (matCache.has(key)) return matCache.get(key);
+  const P = { map: getTexture(texName), alphaTest, side, color, transparent: false };
+  const m = lit ? new THREE.MeshLambertMaterial(P) : new THREE.MeshBasicMaterial(P);
+  patch(m);
+  matCache.set(key, m);
+  return m;
+}
+
+// Decal transparente sobre el suelo (sangre, sombras).
+export function decalMat(texName, { opacity = 1, color = 0xffffff, blending = THREE.NormalBlending } = {}) {
+  const key = 'd:' + texName + ':' + opacity + ':' + color + ':' + blending;
+  if (matCache.has(key)) return matCache.get(key);
+  const m = new THREE.MeshBasicMaterial({
+    map: getTexture(texName),
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    color,
+    blending,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2,
+  });
+  matCache.set(key, m);
+  return m;
+}
+
+export function registerMaterialPatch(material, opts) {
+  return patch(material, opts);
+}
