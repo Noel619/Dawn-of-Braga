@@ -164,9 +164,9 @@ export function buildCathedral(ctx, S, L) {
   // bancos (algunos volcados) con fieles muertos arrodillados
   const rng = new RNG(1212);
   for (let z = -68; z >= -83; z -= 1.7) {
-    for (const x of [-2.6, 2.6]) {
-      const off = rng.chance(0.2) ? rng.range(-0.5, 0.5) : 0;
-      P.pew(ctx, x, FY, z, 3.8, off);
+    for (const x of [-3.0, 3.0]) {
+      const off = rng.chance(0.2) ? rng.range(-0.25, 0.25) : 0;
+      P.pew(ctx, x, FY, z, 3.4, off);
       if (rng.chance(0.28)) bakeCorpse(wb, x + rng.range(-1, 1), FY + 0.02, z + 0.45, Math.PI, 'kneel', 'villager', rng.int(0, 5));
     }
   }
@@ -222,8 +222,8 @@ export function buildCathedral(ctx, S, L) {
 
   L.enemies.push(
     { type: 'bell', x: 0, y: FY, z: -74, yaw: Math.PI, idle: 'wander', id: 'e_se1' },
-    { type: 'penitent', x: -2.6, y: FY, z: -71.2, yaw: Math.PI, idle: 'pray', id: 'e_se2' },
-    { type: 'penitent', x: 2.6, y: FY, z: -79.7, yaw: Math.PI, idle: 'pray', id: 'e_se3' },
+    { type: 'penitent', x: -3.0, y: FY, z: -70.55, yaw: Math.PI, idle: 'pray', id: 'e_se2' },
+    { type: 'penitent', x: 3.0, y: FY, z: -79.05, yaw: Math.PI, idle: 'pray', id: 'e_se3' },
     { type: 'mourner', x: 0, y: 1.2, z: -99.5, yaw: 0, idle: 'stand', id: 'e_se4' }
   );
   L.phantoms.push({ x: 0, y: 1.2, z: -101, trigger: [0, 0.6, -70], kind: 'penitent' });

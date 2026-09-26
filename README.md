@@ -92,7 +92,8 @@ src/
   world/                colisión, rejilla transitable, arquitectura, atrezo y el mapa de Braga
   entities/             rig articulado + animador, jugador, criaturas e IA
   game/                 juego, combate, interacción, cámara, atmósfera, navegación A*, interfaz, guardado, textos
-tools/                  scripts de prueba automatizada con Playwright (capturas, recorridos, progresión)
+tools/                  pruebas automatizadas con Playwright: capturas, recorrido de toda la progresión
+                        (progress.mjs), prueba de estrés (fuzz.mjs). Requieren `npx vite --port 5199`.
 ```
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.

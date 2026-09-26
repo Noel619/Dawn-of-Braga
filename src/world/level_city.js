@@ -551,8 +551,8 @@ export function buildTanners(ctx, S, L) {
   P.decal(ctx, 68, 0.02, -28, 2);
 
   L.enemies.push(
-    { type: 'bell', x: 53, y: 0, z: -0.5, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
-    { type: 'penitent', x: 60, y: 0, z: 8, yaw: 3, idle: 'kneel', id: 'e_tan2' },
+    { type: 'bell', x: 56, y: 0, z: -1, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
+    { type: 'penitent', x: 61.5, y: 0, z: 10, yaw: 3, idle: 'kneel', id: 'e_tan2' },
     { type: 'penitent', x: 45.5, y: 0, z: 0, yaw: -1, idle: 'stand', id: 'e_tan3' },
     { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },
     { type: 'hound', x: 67, y: 0, z: -20, yaw: 0, idle: 'eat', id: 'e_mur1' },
