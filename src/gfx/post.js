@@ -56,7 +56,7 @@ uniform sampler2D tScene; uniform sampler2D tDepth; uniform sampler2D tBloom;
 uniform vec2 uRes;
 uniform mat4 uProjInv; uniform mat4 uCamWorld; uniform vec3 uCamPos;
 uniform float uTime;
-uniform vec3 uFogColor; uniform float uVol; uniform float uVolY; uniform float uVolScale;
+uniform vec3 uFogColor; uniform float uVol; uniform float uVolY; uniform float uVolScale; uniform float uSkyGlow;
 uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
 uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness;
@@ -78,6 +78,14 @@ void main(){
   vec3 wp = (uCamWorld * vec4(vp.xyz, 1.0)).xyz;
   vec3 rd = normalize(wp - uCamPos);
   float dith = bayer4(gl_FragCoord.xy);
+  // cielo: degradado desde el color de la niebla hacia un cenit oscuro,
+  // con un resplandor rojizo de incendios en el horizonte
+  if (d >= 0.99999) {
+    float up = clamp(rd.y, 0.0, 1.0);
+    vec3 zen = uFogColor * vec3(0.34, 0.36, 0.42);
+    vec3 glow = vec3(0.35, 0.12, 0.05) * uSkyGlow * (1.0 - smoothstep(0.0, 0.25, up));
+    col = mix(uFogColor + glow, zen, smoothstep(0.02, 0.75, up));
+  }
 
   // Niebla volumétrica: bancos de niebla que se arrastran por las calles.
   if (uVol > 0.0) {
@@ -177,6 +185,7 @@ export class PostPipeline {
       uTime: { value: 0 },
       uFogColor: { value: new THREE.Color(0.3, 0.32, 0.3) },
       uVol: { value: 0.035 },
+      uSkyGlow: { value: 1 },
       uVolY: { value: 0 },
       uVolScale: { value: 0.11 },
       uBloom: { value: 0.9 },

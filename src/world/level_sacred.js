@@ -221,6 +221,7 @@ export function buildCathedral(ctx, S, L) {
     { type: 'penitent', x: 2.6, y: FY, z: -79.7, yaw: Math.PI, idle: 'pray', id: 'e_se3' },
     { type: 'mourner', x: 0, y: 1.2, z: -99.5, yaw: 0, idle: 'stand', id: 'e_se4' }
   );
+  L.phantoms.push({ x: 0, y: 1.2, z: -101, trigger: [0, 0.6, -70], kind: 'penitent' });
   L.zones.push({ id: 'cathedral', rects: [[-13, -108, 13, -61.5, -0.5, 16]], atmo: 'cathedral' });
   L.map.push({ id: 'cathedral', r: [-11, -104, 11, -61.5] }, { id: 'largo', r: [-5, -61.5, 5, -55] });
 }
@@ -324,6 +325,7 @@ export function buildCloister(ctx, S, L) {
     { type: 'hound', x: 33, y: 0, z: -79, yaw: 1.5, idle: 'eat', id: 'e_cl3' },
     { type: 'crawler', x: 26, y: 0, z: -85.5, yaw: 0, idle: 'stand', id: 'e_cl4' }
   );
+  L.phantoms.push({ x: 24.5, y: 0, z: -84.5, trigger: [17, 0, -64], kind: 'mourner' });
   L.zones.push({ id: 'cloister', rects: [[13, -88, 36, -60.5, -1, 8], [15.5, -60.6, 19, -59.4, -1, 8]], atmo: 'city' });
   L.map.push({ id: 'cloister', r: [13, -88, 36, -60.5] });
 }
@@ -532,6 +534,7 @@ export function buildCrypt(ctx, S, C, L) {
   }
   wb.setRoom(null);
 
+  L.phantoms.push({ x: 0, y: Y, z: -133, trigger: [0, Y, -113], kind: 'mourner' });
   L.zones.push(
     { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena' },
     { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt' },

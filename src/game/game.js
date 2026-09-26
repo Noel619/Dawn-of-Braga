@@ -9,7 +9,7 @@ import { Atmosphere } from './atmosphere.js';
 import { CameraRig } from './camera.js';
 import { Player } from '../entities/player.js';
 import { Enemy, makeBlobShadow } from '../entities/enemy.js';
-import { buildMourner } from '../entities/enemy_models.js';
+import { buildMourner, buildPenitent, buildBell } from '../entities/enemy_models.js';
 import { Input, GLYPHS } from '../core/input.js';
 import { Audio } from '../core/audio.js';
 import { Combat } from './combat.js';
@@ -62,6 +62,7 @@ export class Game {
     };
 
     this.atmo = new Atmosphere(this.scene, this.post, this.fx);
+    this.atmo.camera = this.camera;
     this.camRig = new CameraRig(this.camera);
     this.player = new Player(this);
     this.scene.add(this.player.obj);
@@ -420,7 +421,12 @@ export class Game {
     const s = this.ui.top;
     s.data.onClose = () => {
       if (this.state === 'paused') this.state = 'play';
-      if (id === 'espada') this.hint('sword');
+      if (id === 'espada') {
+        this.hint('sword');
+        // algo se levanta en la celda del fondo
+        const e = this.enemies.find((x) => x.id === 'e_carcel1');
+        if (e && !e.dead && !e.aware) setTimeout(() => e.alert(), 1200);
+      }
       if (id === 'escudo') this.hint('shield');
       if (id === 'palanca') this.hint('map');
     };
@@ -466,8 +472,9 @@ export class Game {
     this.audio.play('fog');
     // cruzar la niebla
     const dir = it.enter ?? -1;
-    if (it.axis === 'x') p.body.pos.z = it.z + dir * 1.4;
-    else p.body.pos.x = it.x + dir * 1.4;
+    if (it.axis === 'x') p.body.pos.z = it.z + dir * 2.2;
+    else p.body.pos.x = it.x + dir * 2.2;
+    p.body.pos.y = this.world.col.groundHeight(p.body.pos.x, p.body.pos.z, 0.3, p.body.pos.y + 1);
     p.visY = p.body.pos.y;
     p.yaw = it.axis === 'x' ? (dir < 0 ? Math.PI : 0) : dir < 0 ? -Math.PI / 2 : Math.PI / 2;
     this.camRig.snapTo(p);
@@ -476,6 +483,18 @@ export class Game {
 
   startBoss(b) {
     this.activeBoss = b;
+    const p = this.player.pos;
+    const dx = p.x - b.pos.x,
+      dz = p.z - b.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    // cámara entre el jefe y el jugador, ligeramente de lado, sin atravesar muros
+    const want = Math.min(d * 0.7, b.T.height * 2.2 + 2);
+    const dir = new THREE.Vector3(dx / d + (-dz / d) * 0.45, 0, dz / d + (dx / d) * 0.45).normalize();
+    const eyeY = b.pos.y + b.T.height * 0.55;
+    const hit = this.world.col.raycast(b.pos.x, eyeY, b.pos.z, dir.x, 0, dir.z, want, (bx) => bx.cam !== false && bx.tag !== 'fog');
+    const dist = hit === Infinity ? want : Math.max(2.5, hit - 0.5);
+    const camPos = new THREE.Vector3(b.pos.x + dir.x * dist, eyeY - 0.4, b.pos.z + dir.z * dist);
+    this.cinematic(b.type === 'turibulario' ? 3.4 : 2.0, camPos, new THREE.Vector3(b.pos.x, b.pos.y + b.T.height * 0.65, b.pos.z));
     b.aware = true;
     b.state = 'alert';
     b.stT = 0;
@@ -533,6 +552,7 @@ export class Game {
   }
 
   respawn() {
+    this.cine = null;
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -577,16 +597,19 @@ export class Game {
 
   // ------------------------------------------------------------ fantasmas en la niebla
   buildPhantom() {
-    const r = buildMourner();
-    const black = new THREE.MeshBasicMaterial({ color: 0x0a0a0a, fog: true });
-    for (const m of r.meshes) m.material = black;
-    r.root.visible = false;
-    this.scene.add(r.root);
-    this.phantomRig = r;
+    // siluetas negras que se desvanecen al acercarse (varias formas)
+    const black = new THREE.MeshBasicMaterial({ color: 0x080808, fog: true });
+    this.phantomRigs = {};
+    for (const [k, fn] of Object.entries({ mourner: buildMourner, penitent: buildPenitent, bell: buildBell })) {
+      const r = fn();
+      for (const m of r.meshes) m.material = black;
+      r.root.visible = false;
+      this.scene.add(r.root);
+      this.phantomRigs[k] = r;
+    }
   }
   updatePhantoms(dt) {
     const p = this.player.pos;
-    const r = this.phantomRig;
     let showing = null;
     for (const ph of this.phantoms) {
       if (ph.state === 'done') continue;
@@ -600,20 +623,27 @@ export class Game {
       if (ph.state === 'show') {
         ph.t += dt;
         const d = Math.hypot(p.x - ph.x, p.z - ph.z);
-        if (d < 13 || ph.t > 7) {
+        if (d < 12 || ph.t > 8) {
           ph.state = 'done';
-          this.audio.play('stinger');
+          if (d < 12) this.audio.play('stinger');
         } else showing = ph;
       }
     }
-    if (showing) {
-      r.root.visible = true;
-      r.root.position.set(showing.x, showing.y + 0.3, showing.z);
+    for (const [k, r] of Object.entries(this.phantomRigs)) {
+      const on = showing && (showing.kind || 'mourner') === k;
+      r.root.visible = !!on;
+      if (!on) continue;
+      r.root.position.set(showing.x, showing.y + (k === 'mourner' ? 0.3 : 0), showing.z);
       r.root.rotation.y = Math.atan2(p.x - showing.x, p.z - showing.z);
       const t = this.time;
-      const pose = { chest: [0.1, 0, Math.sin(t) * 0.05], head: [0.3, 0, 0.25], armL: [0, 0, 0.05], armR: [0, 0, -0.05] };
-      r.apply(pose);
-    } else r.root.visible = false;
+      r.apply({ chest: [0.25, 0, Math.sin(t * 0.7) * 0.06], head: [0.35, 0, 0.35 + Math.sin(t * 0.5) * 0.1], armL: [0, 0, 0.05], armR: [0, 0, -0.05] });
+    }
+  }
+
+  // Plano cinematográfico breve (cámara fija, control bloqueado).
+  cinematic(dur, pos, look) {
+    this.cine = { t: 0, dur, pos: pos.clone(), look: look.clone() };
+    this.lockTarget = null;
   }
 
   // ------------------------------------------------------------ fijado de objetivo
@@ -692,6 +722,16 @@ export class Game {
         this.camRig.curDist = 2;
         this.camRig.override = null;
       } else this.camRig.override.look.set(-84.7, 0.4 + Math.min(1, this.player.stT / 3.4) * 1.1, -15.9);
+    } else if (this.cine) {
+      this.cine.t += dt;
+      this.camRig.override = { pos: this.cine.pos, look: this.cine.look, speed: 4 };
+      if (this.cine.t >= this.cine.dur) {
+        this.cine = null;
+        this.camRig.override = null;
+        this.camRig.snapTo(this.player);
+        const b = this.activeBoss;
+        if (b) this.camRig.yaw = Math.atan2(b.pos.x - this.player.pos.x, b.pos.z - this.player.pos.z);
+      }
     } else if (this.state !== 'ending') this.camRig.override = null;
 
     if (this.hitstop > 0) {
@@ -717,7 +757,7 @@ export class Game {
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal;
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine;
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -730,7 +770,7 @@ export class Game {
           const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
-          e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < 75 && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
+          e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < 58 && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
           return act;
         });
       }
@@ -746,7 +786,7 @@ export class Game {
       if (p.pos.y < -40 && !p.dead) p.die();
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead);
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine);
 
     // zona y atmósfera
     if (this.state !== 'title') {
@@ -815,7 +855,7 @@ export class Game {
     const c = this.camera.position;
     if (!this._fireT || this.time - this._fireT > 0.25 || this.time < this._fireT) {
       this._fireT = this.time;
-      this.fx.fires.refresh(c.x, c.z);
+      this.fx.fires.refresh(c.x, c.z, 60);
     }
     const lp = this.state === 'title' ? c : this.player.pos;
     this.fx.lights.update(lp.x, lp.y + 1, lp.z, this.time);

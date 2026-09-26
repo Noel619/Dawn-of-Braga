@@ -687,7 +687,7 @@ export const TYPES = {
     turn: 5,
     approach: 1.8,
     canBlock: true,
-    blockChance: 0.55,
+    blockChance: 0.4,
     clips: solClips,
     voice: 'soldier',
     attacks: [
@@ -920,7 +920,7 @@ export const TYPES = {
   turibulario: {
     name: 'O Turiferario',
     build: buildTuribulario,
-    hp: 1400,
+    hp: 1250,
     poise: 320,
     radius: 1.3,
     height: 4.6,

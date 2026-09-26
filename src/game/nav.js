@@ -11,7 +11,7 @@ export class NavGrid {
     this.cells = new Uint8Array(walk.cells); // 1 transitable
     // rasterizar obstáculos (cajas que bloquean a la altura del torso)
     for (const b of col.boxes) {
-      if (b.tag === 'floor') continue;
+      if (b.tag === 'floor' || b.tag === 'door') continue;
       const cx = (b.minx + b.maxx) / 2,
         cz = (b.minz + b.maxz) / 2;
       const fy = floorY(cx, cz);

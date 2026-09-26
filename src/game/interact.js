@@ -298,7 +298,7 @@ export class Interactables {
       const t = 0.3;
       if (s.axis === 'x') it.box = g.world.col.add(s.x - s.w / 2, s.y, s.z - t, s.x + s.w / 2, s.y + s.h, s.z + t, 'fog');
       else it.box = g.world.col.add(s.x - t, s.y, s.z - s.w / 2, s.x + t, s.y + s.h, s.z + s.w / 2, 'fog');
-      it.box.cam = false;
+      it.box.cam = true;
       it.r = 2.4;
     } else if (s.kind === 'examine') {
       it.r = s.r ?? 2;
@@ -382,7 +382,7 @@ export class Interactables {
       if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note') continue;
       if (it.hidden) continue;
       if (it.kind === 'trigger') continue;
-      if (it.kind === 'fog' && !this.game.fogActive(it)) continue;
+      if (it.kind === 'fog' && (!this.game.fogActive(it) || this.game.activeBoss)) continue;
       const ix = it.ix ?? it.x,
         iz = it.iz ?? it.z;
       const dy = player.pos.y - it.y;

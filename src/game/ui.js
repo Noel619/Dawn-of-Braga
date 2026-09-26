@@ -299,8 +299,9 @@ export class UI {
     }
     for (const m of rects) {
       const vis = g.visited.has(m.id);
-      c.fillStyle = vis ? '#4a4034' : 'rgba(74,64,52,0.18)';
-      c.strokeStyle = vis ? '#8a7a5c' : 'rgba(138,122,92,0.25)';
+      if (!vis) continue;
+      c.fillStyle = '#4a4034';
+      c.strokeStyle = '#8a7a5c';
       c.lineWidth = 1.5;
       const [a, b, cc, d] = m.r;
       c.fillRect(X(a), Z(b), (cc - a) * sc, (d - b) * sc);

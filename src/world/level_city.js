@@ -137,7 +137,8 @@ export function buildCastle(ctx, S, L) {
   P.wallTorch(ctx, -86.5, 2.2, -11.5, 'e', { room, radius: 7 });
   P.wallTorch(ctx, -74.5, 2.2, -14.5, 'w', { room, radius: 6 });
   P.wallTorch(ctx, -80.5, 2.2, -5.5, 'n', { room, radius: 6, dyn: 2.5 });
-  bakeCorpse(wb, -76.8, 0.02, -10.8, 2.2, 'back', 'soldier', 4);
+  bakeCorpse(wb, -76.2, 0.02, -16.6, 2.2, 'back', 'soldier', 4);
+  P.decal(ctx, -76.2, 0.01, -16.3, 2.2);
   P.fleshGrowth(ctx, -75.2, 0, -16.5, 0.7, 51, { room, climb: 0.9, bound: [-78, -74.6, -17.4, -13.7] });
   wb.setRoom(null);
 
@@ -194,7 +195,7 @@ export function buildCastle(ctx, S, L) {
   L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Altar del Castelo', x: -70, y: 0, z: -13.5, spawn: [-68.4, 0, -13.5], yaw: Math.PI / 2 });
 
   L.enemies.push(
-    { type: 'penitent', x: -76.6, y: 0, z: -11.5, yaw: 2.2, idle: 'eat', id: 'e_carcel1' },
+    { type: 'penitent', x: -76.4, y: 0, z: -15.6, yaw: 0.3, idle: 'eat', id: 'e_carcel1' },
     { type: 'penitent', x: -63, y: 0, z: 1, yaw: -1.2, idle: 'wander', id: 'e_patio1' },
     { type: 'penitent', x: -81, y: 0, z: 9, yaw: 0.5, idle: 'kneel', id: 'e_patio2' },
     { type: 'soldier', x: -55, y: 0, z: 0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_patio3' }
@@ -271,7 +272,7 @@ export function buildSouto(ctx, S, L) {
   );
   L.zones.push({ id: 'souto_house', rects: [[-33, -12.5, -26.5, -3.6, -1, 4]], atmo: 'interior' }, { id: 'souto', rects: [[-48, -3.5, -14, 3.5, -1, 8]], atmo: 'city' });
   L.map.push({ id: 'souto', r: [-48, -3.5, -14, 3.5] }, { id: 'souto_house', r: [-32.6, -12.1, -26.9, -3.85] });
-  L.phantoms.push({ x: -16, y: 0, z: 0, trigger: [-40, 0, 0] });
+  L.phantoms.push({ x: -16, y: 0, z: 0, trigger: [-40, 0, 0], kind: 'penitent' });
 }
 
 // ======================================================================== PRAÇA DO PÃO
@@ -324,6 +325,7 @@ export function buildPraca(ctx, S, L) {
   L.zones.push({ id: 'praca', rects: [[-14, -14, 14, 14, -1, 10]], atmo: 'city' });
   L.map.push({ id: 'praca', r: [-14, -14, 14, 14] });
   L.phantoms.push({ x: 0, y: 0, z: -34, trigger: [0, 0, -8] });
+  L.phantoms.push({ x: 0, y: 0, z: 36, trigger: [0, 0, 11], kind: 'bell' });
 }
 
 // ======================================================================== RUA DA SÉ
@@ -412,6 +414,7 @@ export function buildPelames(ctx, S, L) {
   L.enemies.push({ type: 'penitent', x: 36, y: 0, z: 0.5, yaw: -1.6, idle: 'stand', id: 'e_pelames1' });
   L.zones.push({ id: 'pelames', rects: [[14, -3, 42, 3, -1, 10]], atmo: 'city' });
   L.map.push({ id: 'pelames', r: [14, -3, 42, 3] });
+  L.phantoms.push({ x: 40, y: 0, z: 0, trigger: [18, 0, 0], kind: 'penitent' });
 }
 
 export function buildTanners(ctx, S, L) {
@@ -562,6 +565,7 @@ export function buildTanners(ctx, S, L) {
     { id: 'tanners', rects: [[42, -12, 64, 12, -1, 10]], atmo: 'city' },
     { id: 'muralla', rects: [[64, -40, 72, 12, -1, 7]], atmo: 'city' }
   );
+  L.phantoms.push({ x: 68, y: 0, z: -34, trigger: [66, 0, -4], kind: 'mourner' });
   L.map.push({ id: 'tanners', r: [42, -12, 64, 12] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'canon', r: [48.4, -25.6, 63.6, -12.4] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
 }
 
@@ -633,6 +637,7 @@ export function buildRamparts(ctx, S, L) {
   P.fleshGrowth(ctx, 79, 9, -67, 1.6, 101, { climb: 1.5 });
   L.interact.push(
     { kind: 'fog', id: 'f_impaled', boss: 'impaled', x: 74, y: 9, z: -55.7, w: 3.4, h: 3.2, axis: 'x', enter: -1 },
+    { kind: 'fog', id: 'f_impaled2', boss: 'impaled', x: 62.2, y: 9, z: -58, w: 3.2, h: 3.2, axis: 'z', enter: 1 },
     { kind: 'item', id: 'i_manivela', item: 'manivela', x: 71.5, y: 10.0, z: -62.4, afterBoss: 'impaled' }
   );
   L.enemies.push(

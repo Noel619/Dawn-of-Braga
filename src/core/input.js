@@ -328,6 +328,8 @@ export const GLYPHS = {
     confirm: 'E',
     back: 'Esc',
     sprint: 'Mayús',
+    tabL: 'Q',
+    tabR: 'E',
   },
   pad: {
     interact: 'A',
@@ -343,5 +345,7 @@ export const GLYPHS = {
     confirm: 'A',
     back: 'B',
     sprint: 'B (mant.)',
+    tabL: 'LB',
+    tabR: 'RB',
   },
 };

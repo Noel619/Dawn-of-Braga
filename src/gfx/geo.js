@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { fbm3, clamp, smoothstep } from '../core/util.js';
 import { worldMat, MAT_DEFS } from './materials.js';
 
-const CHUNK = 24;
+const CHUNK = 32;
 const _p = new THREE.Vector3();
 const _n = new THREE.Vector3();
 

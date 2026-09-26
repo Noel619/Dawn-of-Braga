@@ -69,6 +69,7 @@ export class Atmosphere {
     const U = this.post.U;
     U.uFogColor.value.copy(this.fogC);
     U.uVol.value = c.vol;
+    U.uSkyGlow.value = this.name === 'dawn' ? -0.6 : this.name === 'city' || this.name === 'ramparts' ? 1 : 0;
     U.uExposure.value = c.exposure;
     U.uSat.value = c.sat;
     U.uBloom.value = c.bloom;
@@ -76,5 +77,13 @@ export class Atmosphere {
     U.uVolY.value = player ? player.pos.y : 0;
     if (this.fx && this.fx.ash) this.fx.ash.mat.uniforms.uAmount.value = c.ash;
     if (player) player.lampBase = c.lamp;
+    // el plano lejano se ajusta a la niebla: lo que la niebla oculta no se dibuja
+    if (this.camera) {
+      const far = Math.min(170, Math.max(46, 2.6 / Math.max(0.005, c.density)));
+      if (Math.abs(this.camera.far - far) > 1) {
+        this.camera.far = far;
+        this.camera.updateProjectionMatrix();
+      }
+    }
   }
 }

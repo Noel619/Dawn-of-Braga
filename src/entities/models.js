@@ -83,7 +83,8 @@ export function playerDef() {
     { j: 'shinR', type: 'box', s: [0.13, 0.42, 0.14], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'leather' },
     { j: 'shinR', type: 'box', s: [0.12, 0.08, 0.25], p: [0, -0.43, 0.05], mat: 'leather' },
     // capa raída
-    { j: 'cloak', type: 'box', s: [0.52, 1.1, 0.03], p: [0, -0.55, 0], taper: [1.35, 1], mat: 'clothDark' },
+    { j: 'cloak', type: 'box', s: [0.42, 0.92, 0.03], p: [0, -0.46, 0], taper: [1.3, 1], mat: 'clothRed', ds: true },
+    { j: 'cloak', type: 'box', s: [0.5, 0.12, 0.08], p: [0, 0.0, 0.03], mat: 'clothRed' },
     // lámpara de aceite al cinto
     { j: 'lantern', type: 'box', s: [0.09, 0.12, 0.09], p: [0, -0.1, 0], mat: 'ember' },
     { j: 'lantern', type: 'box', s: [0.11, 0.02, 0.11], p: [0, -0.03, 0], mat: 'iron' },
