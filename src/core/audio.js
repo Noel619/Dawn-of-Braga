@@ -723,15 +723,8 @@ export class Audio {
       } else F.g.gain.setTargetAtTime(0, t, 0.3);
     });
 
-    // miedo: susurros y estática según criaturas cercanas
-    let fear = 0;
-    for (const e of game.activeEnemies) {
-      if (e.dead) continue;
-      const d = Math.hypot(e.pos.x - cp.x, e.pos.z - cp.z);
-      if (Math.abs(e.pos.y - cp.y) > 5) continue;
-      fear = Math.max(fear, Math.max(0, 1 - d / (e.boss ? 30 : 18)) * (e.aware ? 1 : 0.7));
-    }
-    this.fear += (fear - this.fear) * Math.min(1, dt * 2);
+    // miedo: susurros y estática según criaturas cercanas (calculado por el juego)
+    this.fear = game.fear || 0;
     this.staticG.gain.setTargetAtTime(this.fear * this.fear * 0.16, t, 0.2);
     if (this.fear > 0.35 && Math.random() < dt * this.fear * 0.7) {
       const d = this.out({ x: cp.x + rnd(-4, 4), y: cp.y + 1, z: cp.z + rnd(-4, 4) }, { gain: 0.5 * this.fear, verb: 0.6, life: 3 });

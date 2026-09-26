@@ -825,6 +825,18 @@ export class Game {
       if (Math.hypot(p.vx, p.vz) > 0.8 && p.body.grounded && this.state === 'play') this.audio.play('step');
     }
 
+    // miedo: criaturas cercanas -> estática del relicario y grano en pantalla
+    let fear = 0;
+    if (this.state === 'play') {
+      for (const e of this.activeEnemies) {
+        if (e.dead || Math.abs(e.pos.y - p.pos.y) > 5) continue;
+        const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
+        fear = Math.max(fear, Math.max(0, 1 - d / (e.boss ? 30 : 18)) * (e.aware ? 1 : 0.7));
+      }
+    }
+    this.fear = damp(this.fear || 0, fear, 2, dt);
+    this.post.U.uGrain.value = 0.045 + this.fear * this.fear * 0.09;
+
     // postproceso: daño, salud baja, destellos, fundido
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.2);
     this.warp = Math.max(0, this.warp - dt * 1.5);
