@@ -4,6 +4,11 @@ import * as THREE from 'three';
 import { RNG, fbm2, vnoise2, worley2, hash2, clamp, lerp } from '../core/util.js';
 
 const cache = new Map();
+let ANISO = 1;
+// filtrado anisótropo para las texturas del mundo (suelos a ras sin ruido)
+export function setMaxAnisotropy(n) {
+  ANISO = Math.max(1, Math.min(8, n | 0));
+}
 
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
@@ -40,7 +45,7 @@ function toTex(canvas, { repeat = true, srgb = true, smoothMin = true, nearest =
   // Cerca: píxeles nítidos. Lejos: mipmaps para evitar ruido de aliasing.
   t.minFilter = smoothMin ? THREE.LinearMipmapLinearFilter : THREE.NearestFilter;
   t.generateMipmaps = smoothMin;
-  t.anisotropy = 1;
+  t.anisotropy = smoothMin ? ANISO : 1;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   t.needsUpdate = true;
   return t;

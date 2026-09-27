@@ -76,6 +76,7 @@ export function buildDecals(scene, decals) {
       side: THREE.DoubleSide,
       color: tex === 'splat' ? 0x9a8080 : tex === 'sigil' ? 0xb09090 : 0xffffff,
     });
+    registerMaterialPatch(m);
     // las sombras oscurecen; la sangre/sigilos se tiñen con la luz ambiente baja
     const mesh = new THREE.Mesh(g, m);
     mesh.renderOrder = 1;

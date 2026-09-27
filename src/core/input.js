@@ -181,6 +181,8 @@ export class Input {
   // Llamar al principio de cada fotograma.
   update(dt) {
     this._pollPad();
+    // acumulador del movimiento horizontal del ratón (para cambiar de objetivo)
+    this.flickAcc = (this.flickAcc || 0) * Math.exp(-dt * 7) + this.mdx;
     for (const a of new Set([...Object.keys(KB), ...Object.keys(PAD)])) {
       let down = false,
         pressed = false,
@@ -297,8 +299,12 @@ export class Input {
 
   // Impulso rápido del stick derecho / ratón para cambiar de objetivo fijado.
   flick() {
-    if (this.rs && Math.abs(this.rs.x) > 0.8) return Math.sign(this.rs.x);
-    if (Math.abs(this.mdx) > 60) return Math.sign(this.mdx);
+    if (this.rs && Math.abs(this.rs.x) > 0.75) return Math.sign(this.rs.x);
+    if (Math.abs(this.flickAcc || 0) > 70 / Math.max(0.4, this.sens)) {
+      const s = Math.sign(this.flickAcc);
+      this.flickAcc = 0;
+      return s;
+    }
     return 0;
   }
 

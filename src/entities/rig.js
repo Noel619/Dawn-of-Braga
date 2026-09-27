@@ -78,6 +78,8 @@ export function partGeometry(pt) {
 }
 
 // ------------------------------------------------------------- rig
+const _qj = new THREE.Quaternion();
+
 export class Rig {
   // def = { joints: [{name, parent, pos:[x,y,z]}], parts: [{j, type, s, p, r, mat}] }
   constructor(def, opts = {}) {
@@ -85,12 +87,14 @@ export class Rig {
     this.joints = {};
     this.rest = {};
     this.meshes = [];
+    this.restQ = {};
     for (const j of def.joints) {
       const o = new THREE.Group();
       o.name = j.name;
       o.position.set(...(j.pos || [0, 0, 0]));
       if (j.rot) o.rotation.set(j.rot[0] * DEG, j.rot[1] * DEG, j.rot[2] * DEG);
       this.rest[j.name] = { pos: o.position.clone(), rot: o.rotation.clone() };
+      this.restQ[j.name] = o.quaternion.clone();
       this.joints[j.name] = o;
       (j.parent ? this.joints[j.parent] : this.root).add(o);
     }
@@ -117,10 +121,12 @@ export class Rig {
     if (pose.root && !rootOffset) rootOffset = pose.root;
     for (const name in this.joints) {
       const j = this.joints[name];
-      const r = this.rest[name].rot;
+      const rq = this.restQ[name];
       const p = pose[name];
-      if (p) j.rotation.set(r.x + p[0], r.y + p[1], r.z + p[2]);
-      else j.rotation.copy(r);
+      if (p) {
+        e2q(p, _qj);
+        j.quaternion.copy(_qj.premultiply(rq));
+      } else j.quaternion.copy(rq);
     }
     if (this.joints.hips) {
       const rp = this.rest.hips.pos;
@@ -137,12 +143,20 @@ export class Rig {
     return out.setFromMatrixPosition(j.matrixWorld);
   }
 
-  setTint(color, emissive = null) {
-    // usado para destellos de daño: clona materiales la primera vez
+  // materiales propios (para destellos y ojos sin afectar a otras criaturas)
+  own() {
     if (!this._own) {
-      for (const m of this.meshes) m.material = m.material.clone();
+      for (const m of this.meshes) {
+        m.material = m.material.clone();
+        m.userData.baseEI = m.material.emissiveIntensity;
+      }
       this._own = true;
     }
+  }
+
+  setTint(color, emissive = null) {
+    // usado para destellos de daño: clona materiales la primera vez
+    this.own();
     for (const m of this.meshes) {
       if (m.material.emissive) {
         if (!m.userData.baseEm) m.userData.baseEm = m.material.emissive.clone();
@@ -153,16 +167,125 @@ export class Rig {
   }
 }
 
+// ------------------------------------------------------------- rotaciones
+// Las poses se escriben como ángulos de Euler (orden XYZ, radianes) por
+// articulación, pero toda mezcla se hace con cuaterniones (slerp): así una
+// voltereta de 360° no "desgira" al volver a la locomoción.
+const _qa = new THREE.Quaternion();
+const _qb = new THREE.Quaternion();
+const Z3 = [0, 0, 0];
+
+export function e2q(e, q = new THREE.Quaternion()) {
+  const c1 = Math.cos(e[0] / 2),
+    c2 = Math.cos(e[1] / 2),
+    c3 = Math.cos(e[2] / 2);
+  const s1 = Math.sin(e[0] / 2),
+    s2 = Math.sin(e[1] / 2),
+    s3 = Math.sin(e[2] / 2);
+  q.x = s1 * c2 * c3 + c1 * s2 * s3;
+  q.y = c1 * s2 * c3 - s1 * c2 * s3;
+  q.z = c1 * c2 * s3 + s1 * s2 * c3;
+  q.w = c1 * c2 * c3 - s1 * s2 * s3;
+  return q;
+}
+
+export function q2e(q, out = [0, 0, 0]) {
+  const x = q.x,
+    y = q.y,
+    z = q.z,
+    w = q.w;
+  const m11 = 1 - 2 * (y * y + z * z),
+    m12 = 2 * (x * y - w * z),
+    m13 = 2 * (x * z + w * y);
+  const m22 = 1 - 2 * (x * x + z * z),
+    m23 = 2 * (y * z - w * x);
+  const m32 = 2 * (y * z + w * x),
+    m33 = 1 - 2 * (x * x + y * y);
+  out[1] = Math.asin(Math.max(-1, Math.min(1, m13)));
+  if (Math.abs(m13) < 0.9999999) {
+    out[0] = Math.atan2(-m23, m33);
+    out[2] = Math.atan2(-m12, m11);
+  } else {
+    out[0] = Math.atan2(m32, m22);
+    out[2] = 0;
+  }
+  return out;
+}
+
+// Interpolación esférica entre dos rotaciones de Euler.
+export function slerpE(a, b, t, out = [0, 0, 0]) {
+  if (t <= 0) {
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+    return out;
+  }
+  if (t >= 1) {
+    out[0] = b[0];
+    out[1] = b[1];
+    out[2] = b[2];
+    return out;
+  }
+  e2q(a, _qa);
+  e2q(b, _qb);
+  _qa.slerp(_qb, t);
+  return q2e(_qa, out);
+}
+
 // ------------------------------------------------------------- clips
-// Crea un clip: keys = [[t, {joint:[x,y,z] (grados)}], ...]
+// Crea un clip: keys = [[t, {joint:[x,y,z] (grados; 'root' en cm)}, ease], ...]
+// ease del tramo que llega a esa clave:
+//   (por defecto) curva Hermite continua que fluye a través de las claves
+//   'snap'   golpe: sale disparado y frena al llegar (impactos)
+//   'hold'   llega frenando y se detiene en la clave (anticipación)
+//   'linear' velocidad constante, 'in' acelera, 'out' frena
+// opts.ground (por defecto true si el clip mueve las piernas): los pies se
+// plantan en el suelo mediante IK; false para volteretas, caídas, etc.
 export function clip(name, dur, keys, opts = {}) {
+  const joints = new Set();
+  for (const [, pose] of keys) for (const j in pose) joints.add(j);
+  const J = [...joints];
   const k = keys.map(([t, pose, ease]) => {
     const p = {};
-    // 'root' = desplazamiento de cadera en cm; el resto en grados
-    for (const j in pose) p[j] = pose[j].map((v) => (j === 'root' ? v / 100 : v * DEG));
-    return { t, pose: p, ease: ease || 'smooth' };
+    for (const j of J) {
+      const v = pose[j];
+      p[j] = v ? v.map((x) => (j === 'root' || j.startsWith('ik') ? x / 100 : x * DEG)) : [0, 0, 0];
+    }
+    return { t, pose: p, ease: ease || 'smooth', m: {} };
   });
-  return { name, dur, keys: k, loop: !!opts.loop, events: opts.events || [], mask: opts.mask || null, root: opts.root || null };
+  // tangentes (Catmull-Rom con tiempos no uniformes)
+  for (let i = 0; i < k.length; i++) {
+    for (const j of J) {
+      const m = [0, 0, 0];
+      const into = k[i].ease;
+      const out = k[i + 1] ? k[i + 1].ease : 'smooth';
+      // antes de un golpe ('snap') siempre hay una pausa de anticipación
+      if (i > 0 && i < k.length - 1 && into !== 'snap' && into !== 'hold' && into !== 'in' && out !== 'hold' && out !== 'snap') {
+        const a = k[i - 1],
+          b = k[i + 1];
+        const dt = Math.max(1e-4, b.t - a.t);
+        for (let c = 0; c < 3; c++) m[c] = (b.pose[j][c] - a.pose[j][c]) / dt;
+      } else if (into === 'linear' && i > 0) {
+        const a = k[i - 1];
+        const dt = Math.max(1e-4, k[i].t - a.t);
+        for (let c = 0; c < 3; c++) m[c] = (k[i].pose[j][c] - a.pose[j][c]) / dt;
+      }
+      k[i].m[j] = m;
+    }
+  }
+  const legs = joints.has('legL') || joints.has('legR') || joints.has('shinL') || joints.has('shinR');
+  return {
+    name,
+    dur,
+    keys: k,
+    joints,
+    loop: !!opts.loop,
+    events: opts.events || [],
+    mask: opts.mask || null,
+    root: opts.root || null,
+    ground: opts.ground ?? legs,
+    legs,
+  };
 }
 
 const EASE = {
@@ -170,15 +293,16 @@ const EASE = {
   smooth: (a) => a * a * (3 - 2 * a),
   in: (a) => a * a,
   out: (a) => 1 - (1 - a) * (1 - a),
-  snap: (a) => 1 - Math.pow(1 - a, 4),
+  snap: (a) => 1 - Math.pow(1 - a, 3),
+  hold: (a) => a * a * (3 - 2 * a),
 };
 
 export function sampleClip(c, t, out = {}) {
-  for (const k in out) delete out[k];
   const keys = c.keys;
+  for (const j in out) if (!(j in keys[0].pose)) delete out[j];
   if (c.loop) t = ((t % c.dur) + c.dur) % c.dur;
   if (t <= keys[0].t) {
-    Object.assign(out, keys[0].pose);
+    for (const j in keys[0].pose) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...keys[0].pose[j]);
     return out;
   }
   let i = 0;
@@ -186,81 +310,131 @@ export function sampleClip(c, t, out = {}) {
   if (i >= keys.length - 1) {
     const last = keys[keys.length - 1];
     if (c.loop) {
-      // interpolar del último al primero
       const a = (t - last.t) / (c.dur - last.t || 1);
-      lerpPose(last.pose, keys[0].pose, EASE.smooth(Math.min(1, a)), out);
+      const e = EASE.smooth(Math.min(1, a));
+      for (const j in last.pose) {
+        const pa = last.pose[j],
+          pb = keys[0].pose[j];
+        const o = out[j] || (out[j] = [0, 0, 0]);
+        for (let q = 0; q < 3; q++) o[q] = pa[q] + (pb[q] - pa[q]) * e;
+      }
       return out;
     }
-    Object.assign(out, last.pose);
+    for (const j in last.pose) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...last.pose[j]);
     return out;
   }
   const A = keys[i],
     B = keys[i + 1];
-  const a = (t - A.t) / (B.t - A.t);
-  lerpPose(A.pose, B.pose, (EASE[B.ease] || EASE.smooth)(a), out);
+  const D = B.t - A.t;
+  const u = (t - A.t) / D;
+  if (B.ease === 'smooth' || B.ease === 'hold') {
+    // Hermite cúbica
+    const u2 = u * u,
+      u3 = u2 * u;
+    const h00 = 2 * u3 - 3 * u2 + 1,
+      h10 = u3 - 2 * u2 + u,
+      h01 = -2 * u3 + 3 * u2,
+      h11 = u3 - u2;
+    for (const j in A.pose) {
+      const pa = A.pose[j],
+        pb = B.pose[j],
+        ma = A.m[j],
+        mb = B.m[j];
+      const o = out[j] || (out[j] = [0, 0, 0]);
+      for (let q = 0; q < 3; q++) o[q] = h00 * pa[q] + h10 * D * ma[q] + h01 * pb[q] + h11 * D * mb[q];
+    }
+  } else {
+    const e = (EASE[B.ease] || EASE.smooth)(u);
+    for (const j in A.pose) {
+      const pa = A.pose[j],
+        pb = B.pose[j];
+      const o = out[j] || (out[j] = [0, 0, 0]);
+      for (let q = 0; q < 3; q++) o[q] = pa[q] + (pb[q] - pa[q]) * e;
+    }
+  }
   return out;
 }
 
-const Z3 = [0, 0, 0];
-export function lerpPose(a, b, t, out = {}) {
-  for (const j in a) {
-    const pa = a[j],
-      pb = b[j] || Z3;
-    out[j] = [pa[0] + (pb[0] - pa[0]) * t, pa[1] + (pb[1] - pa[1]) * t, pa[2] + (pb[2] - pa[2]) * t];
-  }
-  for (const j in b) {
-    if (a[j]) continue;
-    const pb = b[j];
-    out[j] = [pb[0] * t, pb[1] * t, pb[2] * t];
-  }
-  return out;
-}
-
-// Mezcla 'over' sobre 'base' con peso w, sólo en las articulaciones de mask (o todas).
-export function blendInto(base, over, w, mask = null) {
-  const joints = new Set([...Object.keys(base), ...Object.keys(over)]);
-  for (const j of joints) {
+// Mezcla 'over' sobre 'base' con peso w (slerp por articulación), sólo en las
+// articulaciones de mask (o todas). jw: peso extra por articulación.
+export function blendInto(base, over, w, mask = null, jw = null) {
+  if (w <= 0) return base;
+  for (const j in over) {
     if (mask && !mask.has(j)) continue;
-    const a = base[j] || Z3,
-      b = over[j] || Z3;
-    base[j] = [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w];
+    const ww = jw ? w * (jw[j] ?? 1) : w;
+    if (ww <= 0) continue;
+    const b = over[j];
+    if (j === 'root' || j.startsWith('ik') || j.startsWith('elbow')) {
+      const a = base[j] || Z3;
+      base[j] = [a[0] + (b[0] - a[0]) * ww, a[1] + (b[1] - a[1]) * ww, a[2] + (b[2] - a[2]) * ww];
+    } else base[j] = slerpE(base[j] || Z3, b, ww, base[j] && base[j] !== Z3 ? base[j] : [0, 0, 0]);
   }
   return base;
 }
 
-export const UPPER = new Set(['chest', 'head', 'neck', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'spine']);
+// Suma una rotación (Euler) a la pose: base[j] = base[j] · add
+export function addRot(base, j, add) {
+  e2q(base[j] || Z3, _qa);
+  e2q(add, _qb);
+  _qa.multiply(_qb);
+  base[j] = q2e(_qa, base[j] || [0, 0, 0]);
+}
 
-// Reproductor de clips con fundido cruzado y eventos.
+export const UPPER = new Set(['chest', 'head', 'neck', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'spine', 'shield', 'ikL', 'ikR', 'bladeL', 'bladeR', 'elbowL', 'elbowR']);
+
+const smooth01 = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+
+// Reproductor de clips: muestreo continuo, fundido cruzado entre clips con
+// slerp y entrada/salida suave sobre la locomoción.
 export class Animator {
-  constructor(fps = 20) {
+  constructor() {
     this.clip = null;
     this.t = 0;
     this.speed = 1;
-    this.fade = 0;
-    this.fadeDur = 0.1;
-    this.from = {};
-    this.cur = {};
-    this.fps = fps;
-    this.onEvent = null;
-    this.done = true;
-    this.weight = 0;
+    this.w = 0; // peso interno 0..1
     this.targetWeight = 0;
+    this.fadeIn = 0.08;
+    this.fadeOut = 0.15;
+    this.from = null;
+    this.xf = 1;
+    this.xfDur = 0.1;
+    this.cur = {};
+    this.jw = {};
+    this.onEvent = null;
+    this.resolve = null;
+    this.done = true;
+    this._s = {};
+  }
+  get weight() {
+    return smooth01(this.w);
+  }
+  set weight(v) {
+    this.w = v;
   }
   play(c, { speed = 1, blend = 0.09, t0 = 0 } = {}) {
-    // snapshot de la pose actual para el fundido
-    this.from = { ...this.cur };
+    // fundido desde lo que se estaba viendo
+    if (this.clip && this.w > 0.02) {
+      this.from = {};
+      for (const j in this.cur) this.from[j] = this.cur[j].slice();
+      this.fromW = {};
+      for (const j in this.cur) this.fromW[j] = (this.jw[j] ?? 1) * this.weight;
+      this.xf = 0;
+      this.xfDur = Math.max(0.02, blend);
+      this.w = 1;
+    } else {
+      this.from = null;
+      this.xf = 1;
+    }
     this.clip = c;
     this.t = t0;
     this.speed = speed;
-    this.fade = blend > 0 ? 0 : 1;
-    this.fadeDur = blend;
     this.done = false;
     this.targetWeight = 1;
-    if (this.weight < 0.05) this.fade = 1;
+    this.fadeIn = Math.max(0.03, blend);
   }
   stop(blend = 0.15) {
     this.targetWeight = 0;
-    this.fadeOut = blend;
+    this.fadeOut = Math.max(0.001, blend);
     this.done = true;
   }
   get progress() {
@@ -271,7 +445,6 @@ export class Animator {
     const c = this.clip;
     const prevT = this.t;
     if (!this.done || c.loop) this.t += dt * this.speed;
-    // eventos
     for (const ev of c.events) {
       if (ev.t > prevT && ev.t <= this.t && this.onEvent) this.onEvent(ev.name, c.name);
     }
@@ -282,17 +455,67 @@ export class Animator {
         if (this.onEvent) this.onEvent('end', c.name);
       }
     }
-    // muestreo "a saltos"
-    const ts = this.fps > 0 ? Math.floor(this.t * this.fps) / this.fps : this.t;
-    const s = sampleClip(c, ts, this._tmp || (this._tmp = {}));
-    this.fade = Math.min(1, this.fade + dt / Math.max(0.001, this.fadeDur));
-    const f = this.fade;
-    const out = {};
-    lerpPose(this.from, s, f * f * (3 - 2 * f), out);
-    this.cur = out;
-    // peso global (entrada/salida del clip sobre la locomoción)
-    if (this.targetWeight > this.weight) this.weight = Math.min(1, this.weight + dt / 0.08);
-    else this.weight = Math.max(0, this.weight - dt / (this.fadeOut || 0.15));
+    const s = sampleClip(c, this.t, this._s);
+    // p.ej. IK de brazos: convierte canales de trayectoria en rotaciones
+    if (this.resolve) this.resolve(s);
+    const out = this.cur;
+    for (const j in out) if (!(j in s) && !(this.from && j in this.from)) delete out[j];
+    const jw = this.jw;
+    for (const j in jw) delete jw[j];
+    if (this.from && this.xf < 1) {
+      this.xf = Math.min(1, this.xf + dt / this.xfDur);
+      const k = smooth01(this.xf);
+      for (const j in s) {
+        const f = this.from[j];
+        if (f) {
+          const fw = this.fromW[j] ?? 1;
+          out[j] = j === 'root' ? [f[0] + (s[j][0] - f[0]) * k, f[1] + (s[j][1] - f[1]) * k, f[2] + (s[j][2] - f[2]) * k] : slerpE(f, s[j], k, out[j] || [0, 0, 0]);
+          jw[j] = fw + (1 - fw) * k;
+        } else {
+          out[j] = (out[j] || [0, 0, 0]).fill(0).map((_, q) => s[j][q]);
+          jw[j] = k;
+        }
+      }
+      for (const j in this.from) {
+        if (j in s) continue;
+        out[j] = this.from[j].slice();
+        jw[j] = (this.fromW[j] ?? 1) * (1 - k);
+      }
+    } else {
+      this.from = null;
+      for (const j in s) {
+        const o = out[j] || (out[j] = [0, 0, 0]);
+        o[0] = s[j][0];
+        o[1] = s[j][1];
+        o[2] = s[j][2];
+      }
+    }
+    // peso global del clip sobre la locomoción
+    if (this.targetWeight > 0) this.w = Math.min(1, this.w + dt / this.fadeIn);
+    else this.w = Math.max(0, this.w - dt / this.fadeOut);
     return out;
+  }
+}
+
+// Muelle amortiguado (movimiento secundario: capa, retrocesos, inercia).
+export class Spring {
+  constructor(k = 140, d = 16) {
+    this.x = 0;
+    this.v = 0;
+    this.k = k;
+    this.d = d;
+  }
+  update(dt, target = 0) {
+    const n = Math.max(1, Math.ceil(dt / (1 / 120)));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const a = this.k * (target - this.x) - this.d * this.v;
+      this.v += a * h;
+      this.x += this.v * h;
+    }
+    return this.x;
+  }
+  kick(v) {
+    this.v += v;
   }
 }

@@ -7,9 +7,29 @@ import { getTexture } from './textures.js';
 
 export const G = {
   uTime: { value: 0 },
-  uSnap: { value: new THREE.Vector2(240, 135) },
-  uAffine: { value: 0.35 },
+  uSnap: { value: new THREE.Vector2(0, 0) }, // 0 = sin temblor de vértices
+  uAffine: { value: 0 },
+  // cielo compartido con la composición: la niebla toma el color del cielo en
+  // la dirección de la vista, así la geometría lejana se funde con él y el
+  // plano lejano nunca se nota
+  uSkyGlow: { value: 1 },
+  uSun: { value: 0 },
+  uSunDir: { value: new THREE.Vector3(0.15, 0.12, -1) },
 };
+
+// Color del cielo (espacio lineal) en la dirección rd; idéntico al de post.js.
+export const SKY_GLSL = `
+vec3 skyColor(vec3 fogC, vec3 rd){
+  float up = clamp(rd.y, 0.0, 1.0);
+  vec3 zen = fogC * vec3(0.34, 0.36, 0.42);
+  vec3 glow = vec3(0.35, 0.12, 0.05) * uSkyGlow * (1.0 - smoothstep(0.0, 0.25, up));
+  vec3 c = mix(fogC + glow, zen, smoothstep(0.02, 0.75, up));
+  if (uSun > 0.0) {
+    float sd = max(dot(rd, normalize(uSunDir)), 0.0);
+    c += vec3(1.0, 0.72, 0.42) * (pow(sd, 18.0) * 0.45 + pow(sd, 4.0) * 0.12) * uSun;
+  }
+  return c;
+}`;
 
 // uv: repeticiones de textura por metro (mapeo en espacio mundo).
 export const MAT_DEFS = {
@@ -69,6 +89,9 @@ function patch(material, opts = {}) {
     shader.uniforms.uTime = G.uTime;
     shader.uniforms.uSnap = G.uSnap;
     shader.uniforms.uAffine = G.uAffine;
+    shader.uniforms.uSkyGlow = G.uSkyGlow;
+    shader.uniforms.uSun = G.uSun;
+    shader.uniforms.uSunDir = G.uSunDir;
     let vs = shader.vertexShader;
     vs = vs.replace(
       '#include <common>',
@@ -77,7 +100,13 @@ uniform float uTime;
 uniform vec2 uSnap;
 varying vec3 vAffUv;
 varying float vPulse;
+varying vec3 vSkyDir;
 ${bake ? 'attribute vec3 aBake;\nvarying vec3 vBake;' : ''}`
+    );
+    vs = vs.replace(
+      '#include <fog_vertex>',
+      `#include <fog_vertex>
+vSkyDir = transpose(mat3(viewMatrix)) * mvPosition.xyz;`
     );
     vs = vs.replace(
       '#include <begin_vertex>',
@@ -110,7 +139,7 @@ ${
 {
   vec2 s = uSnap * 0.5;
   vec4 p = gl_Position;
-  if (p.w > 0.05) {
+  if (uSnap.x > 0.0 && p.w > 0.05) {
     p.xy = floor(p.xy / p.w * s + 0.5) / s * p.w;
     gl_Position = p;
   }
@@ -129,9 +158,25 @@ ${
       `#include <common>
 uniform float uAffine;
 uniform float uTime;
+uniform float uSkyGlow;
+uniform float uSun;
+uniform vec3 uSunDir;
 varying vec3 vAffUv;
 varying float vPulse;
-${bake ? 'varying vec3 vBake;' : ''}`
+varying vec3 vSkyDir;
+${bake ? 'varying vec3 vBake;' : ''}
+${SKY_GLSL}`
+    );
+    fs = fs.replace(
+      '#include <fog_fragment>',
+      `#ifdef USE_FOG
+  #ifdef FOG_EXP2
+    float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
+  #else
+    float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
+  #endif
+  gl_FragColor.rgb = mix( gl_FragColor.rgb, skyColor(fogColor, normalize(vSkyDir)), fogFactor );
+#endif`
     );
     fs = fs.replace(
       '#include <map_fragment>',

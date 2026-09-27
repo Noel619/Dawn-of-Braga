@@ -1,16 +1,18 @@
 // Clase base de enemigo con IA de percepción, persecución, ataque y retorno.
 import * as THREE from 'three';
-import { Animator, blendInto } from './rig.js';
+import { Animator, blendInto, addRot, slerpE, Spring } from './rig.js';
+import { Biped, stabilizeShield } from './locomotion.js';
 import { moveBody } from '../world/collision.js';
 import { TYPES } from './enemies.js';
 import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
+import { registerMaterialPatch } from '../gfx/materials.js';
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 let shadowMat = null;
 
 export function makeBlobShadow(size) {
-  if (!shadowMat) shadowMat = new THREE.MeshBasicMaterial({ map: getTexture('shadow'), transparent: true, depthWrite: false, opacity: 0.8, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  if (!shadowMat) shadowMat = registerMaterialPatch(new THREE.MeshBasicMaterial({ map: getTexture('shadow'), transparent: true, depthWrite: false, opacity: 0.8, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
   const m = new THREE.Mesh(shadowGeo, shadowMat);
   m.scale.set(size, 1, size);
   m.renderOrder = 1;
@@ -30,8 +32,21 @@ export class Enemy {
     this.shadow = makeBlobShadow(T.radius * 3.2);
     game.scene.add(this.shadow);
     this.body = { pos: new THREE.Vector3(), radius: T.radius, height: T.height, stepH: T.stepH ?? 0.5, grounded: true, vy: 0 };
-    this.anim = new Animator(T.fps ?? 18);
+    this.anim = new Animator();
     this.anim.onEvent = (e) => this.onAnimEvent(e);
+    // marcha bípeda con pies plantados para los humanoides
+    if (T.biped) {
+      this.gait = new Biped(this.rig, T.biped);
+      if (T.heavy) this.gait.onStep = () => this.onAnimEvent('step');
+      this._gpos = new THREE.Vector3();
+      this._groundFn = (x, z) => game.world.col.groundHeight(x, z, 0.1, this.body.pos.y + 0.7);
+    }
+    this.legIK = 1;
+    this.flX = new Spring(150, 13);
+    this.flY = new Spring(150, 13);
+    this.baseFrom = null;
+    this.baseKind = null;
+    this.lastPose = {};
     this.lockHeight = T.lockHeight;
     this.boss = !!spec.boss;
     this.home = { x: spec.x, y: spec.y, z: spec.z, yaw: spec.yaw || 0 };
@@ -187,7 +202,7 @@ export class Enemy {
   }
 
   // ------------------------------------------------------------ combate
-  takeHit(dmg, poiseDmg, fromX, fromZ, heavy) {
+  takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0) {
     if (this.dead) return 'none';
     const T = this.T;
     if (this.state === 'ceiling') this.drop();
@@ -201,6 +216,16 @@ export class Enemy {
     this.hp -= dmg;
     this.flash = 0.12;
     this.hitShown = 3;
+    // cada golpe se nota en el cuerpo aunque no rompa la guardia
+    const mass = clamp(T.height / 1.8, 1, 3.2);
+    this.flX.kick(-(heavy ? 10 : 6.5) / mass);
+    this.flY.kick(((dir || (Math.random() < 0.5 ? -1 : 1)) * (heavy ? 7 : 5)) / mass);
+    if (!T.heavy) {
+      const dd = Math.hypot(this.pos.x - fromX, this.pos.z - fromZ) || 1;
+      const kb = (heavy ? 2.4 : 1.4) / mass;
+      this.vx += ((this.pos.x - fromX) / dd) * kb;
+      this.vz += ((this.pos.z - fromZ) / dd) * kb;
+    }
     if (!this.aware) {
       this.aware = true;
       this.game.onEnemyAlert && this.game.onEnemyAlert(this);
@@ -249,6 +274,7 @@ export class Enemy {
 
   startAttack(a) {
     this.state = 'attack';
+    this.flare = 1;
     this.atk = a;
     this.stT = 0;
     this.hitDone = [];
@@ -523,21 +549,97 @@ export class Enemy {
     const T = this.T;
     const spd = Math.hypot(this.vx, this.vz);
     this.phase += dt * spd * (T.stride ?? 2.2);
-    let pose;
-    if (this.state === 'dormant' && T.idlePose) pose = T.idlePose(this, this.idle, this.game.time, spd);
-    else if (this.state === 'ceiling' && T.idlePose) pose = T.idlePose(this, 'ceiling', this.game.time, 0);
-    else pose = T.loco(this, this.game.time, spd);
+    const t = this.game.time;
+    let pose, kind;
+    if (this.state === 'dormant' && T.idlePose) {
+      pose = T.idlePose(this, this.idle, t, spd);
+      kind = 'idle';
+    } else if (this.state === 'ceiling' && T.idlePose) {
+      pose = T.idlePose(this, 'ceiling', t, 0);
+      kind = 'ceiling';
+    } else {
+      pose = T.loco(this, t, spd);
+      kind = 'loco';
+    }
+    // al cambiar de postura base (p.ej. arrodillado -> perseguir), fundido
+    if (this.baseKind && kind !== this.baseKind && this.state !== 'dead') {
+      this.baseFrom = {};
+      for (const j in this.lastPose) this.baseFrom[j] = this.lastPose[j].slice();
+      this.baseFromT = 0;
+    }
+    this.baseKind = kind;
+    const gait = this.gait;
+    const ik = !!gait && !pose.legL;
+    if (gait) {
+      this.legIK = damp(this.legIK, ik ? 1 : 0, 7, dt);
+      const gp = gait.update(dt, this.vx, this.vz, this.yaw, {
+        time: t,
+        grounded: this.body.grounded,
+        ground: T.boss || T.heavy ? this._groundFn : null,
+        pos: this._gpos.set(this.pos.x, this.pos.y, this.pos.z),
+      });
+      if (ik) {
+        const r = pose.root || [0, 0, 0];
+        pose.root = [r[0] + gp.root[0], r[1] + gp.root[1], r[2] + gp.root[2]];
+        pose.hips = pose.hips || [0, 0, 0];
+        addRot(pose, 'hips', gp.hips);
+        addRot(pose, 'chest', gp.chest);
+        if (pose.head) addRot(pose, 'head', gp.head);
+      }
+    }
+    if (this.baseFrom) {
+      this.baseFromT += dt / 0.35;
+      if (this.baseFromT >= 1) this.baseFrom = null;
+      else blendInto(pose, this.baseFrom, 1 - this.baseFromT * this.baseFromT * (3 - 2 * this.baseFromT));
+    }
     const ap = this.anim.update(dt);
-    if (ap && this.anim.weight > 0) blendInto(pose, ap, this.anim.weight, this.anim.clip.mask);
+    const c = this.anim.clip;
+    const aw = ap ? this.anim.weight : 0;
+    let clipPose = null;
+    if (ap && aw > 0) {
+      if (c.legs && c.ground) clipPose = ap;
+      blendInto(pose, ap, aw, c.mask, this.anim.jw);
+    }
+    // piernas por IK (pies en el suelo); poses sentadas/arrodilladas y clips
+    // sin apoyo conservan las suyas
+    if (gait && this.legIK > 0.001 && this.state !== 'dead') {
+      const w = this.legIK * (c && c.legs && !c.ground ? 1 - aw : 1);
+      if (w > 0.001) gait.solve(pose, { w, clipPose, clipW: clipPose ? aw : 0, clipGround: true });
+    }
+    // retroceso de los golpes
+    const fx = this.flX.update(dt),
+      fy = this.flY.update(dt);
+    if (Math.abs(fx) + Math.abs(fy) > 0.002) {
+      const j = pose.chest ? 'chest' : 'body';
+      addRot(pose, j, [fx * 0.055, fy * 0.05, 0]);
+      if (pose.head) addRot(pose, 'head', [fx * 0.04, fy * 0.06, 0]);
+      if (pose.neck) addRot(pose, 'neck', [fx * 0.05, fy * 0.05, 0]);
+    }
     if (T.postPose) T.postPose(this, pose, dt);
     this.rig.apply(pose);
+    for (const j in this.lastPose) if (!(j in pose)) delete this.lastPose[j];
+    for (const j in pose) this.lastPose[j] = pose[j];
     this.obj.position.set(this.pos.x, this.pos.y - this.sink, this.pos.z);
     this.obj.rotation.y = this.yaw;
     if (T.rootRot) T.rootRot(this);
+    if (this.rig.joints.shield && this.obj.visible) {
+      const blk = this.state === 'attack' ? 0 : this.data.blockT > 0 ? 1 : 0;
+      const sh = T.shield || {};
+      stabilizeShield(this.rig, { w: this.dead ? 0.2 : 0.88, yaw: sh.yaw ?? 0.3, pitch: sh.pitch ?? -0.1, out: sh.out ?? 0.08, along: sh.along ?? 0.14, raise: blk * 0.05 });
+    }
     // sombra
     const g = this.state === 'ceiling' ? this.home.y - 3 : this.pos.y;
     this.shadow.position.set(this.pos.x, g + 0.02, this.pos.z);
     this.shadow.visible = this.obj.visible && this.state !== 'ceiling';
+    // los ojos se encienden al preparar un ataque (telegrafiado)
+    this.flare = Math.max(0, (this.flare || 0) - dt * 1.8);
+    if (this.flare > 0 || this._flareOn) {
+      this.rig.own();
+      if (!this._eyes) this._eyes = this.rig.meshes.filter((m) => m.userData.matName === 'eyeGlow' || m.userData.matName === 'redGlow');
+      const k = 1 + this.flare * this.flare * 4;
+      for (const m of this._eyes) m.material.emissiveIntensity = (m.userData.baseEI ?? 2) * k;
+      this._flareOn = this.flare > 0;
+    }
     // destello de golpe
     if (this.flash > 0) {
       if (!this._flashing) {

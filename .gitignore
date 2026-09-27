@@ -2,3 +2,4 @@ node_modules/
 dist/
 tools/shots/
 *.log
+tools/scratch/

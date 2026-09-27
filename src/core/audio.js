@@ -462,7 +462,11 @@ export class Audio {
       this.tone(d, t, 0.25, { f0: 660, gain: 0.1 });
       this.tone(d, t + 0.07, 0.35, { f0: 990, gain: 0.08 });
     } else if (kind === 'open') this.noise(d, t, 0.25, { f0: 600, f1: 1800, q: 1, gain: 0.12, a: 0.08 });
-    else this.noise(d, t, 0.2, { f0: 1600, f1: 500, q: 1, gain: 0.1, a: 0.04 });
+    else if (kind === 'lock') {
+      // "clic" metálico seco al fijar
+      this.tone(d, t, 0.05, { type: 'square', f0: 1900, f1: 1500, gain: 0.05 });
+      this.tone(d, t + 0.03, 0.12, { f0: 2600, gain: 0.05 });
+    } else this.noise(d, t, 0.2, { f0: 1600, f1: 500, q: 1, gain: 0.1, a: 0.04 });
   }
 
   // ------------------------------------------------------------ voces de criaturas

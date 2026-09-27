@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { buildLevel } from '../world/level.js';
 import { PostPipeline } from '../gfx/post.js';
 import { G } from '../gfx/materials.js';
-import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts } from '../gfx/effects.js';
+import { setMaxAnisotropy } from '../gfx/textures.js';
+import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts, FX_FAR, SwordTrail } from '../gfx/effects.js';
 import { buildDecals, buildBanners } from '../gfx/decals.js';
 import { Atmosphere } from './atmosphere.js';
 import { CameraRig } from './camera.js';
@@ -28,9 +29,14 @@ export class Game {
     this.opts = opts;
     this.THREE = THREE;
     this.time = 0;
-    this.settings = { res: 300, snap: true, affine: 0.25, crt: 0.35, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, ...(loadSettings() || {}) };
+    // ajustes guardados de versiones anteriores: se conservan audio y control,
+    // pero los gráficos vuelven a los nuevos valores por defecto
+    const saved = loadSettings() || {};
+    if ((saved.v | 0) < 2) for (const k of ['res', 'snap', 'affine', 'crt']) delete saved[k];
+    this.settings = { res: 540, snap: false, affine: 0, crt: 0, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, ...saved, v: 2 };
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }));
     r.setPixelRatio(1);
+    setMaxAnisotropy(r.capabilities.getMaxAnisotropy());
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.08, 95);
     this.post = new PostPipeline(r);
@@ -50,7 +56,7 @@ export class Game {
     this.fx = {};
     this.fx.fires = new FireSystem(this.scene, 240);
     for (const f of lvl.ctx.fires) this.fx.fires.add(f);
-    this.fx.lights = new LightPool(this.scene, 5);
+    this.fx.lights = new LightPool(this.scene, 8);
     for (const f of lvl.ctx.fires) if (f.light !== false && f.s >= 0.4) this.fx.lights.add({ x: f.x, y: f.y + 0.6 + f.s * 0.3, z: f.z, intensity: 8 + f.s * 8, range: 8 + f.s * 3 });
     for (const d of lvl.ctx.dynLights) this.fx.lights.add({ ...d, intensity: d.intensity * 2.6, color: d.color ?? 0xff7a30 });
     this.bossLight = new THREE.PointLight(0xff6a20, 0, 14, 1.5);
@@ -64,6 +70,9 @@ export class Game {
       for (let i = 0; i < 4; i++) this.fx.blood.emit(e.pos.x, e.pos.y + 0.5 + i * 0.3, e.pos.z, 12, { color: [0.12, 0.1, 0.09], speed: 1.5, life: 1.8, up: 1.2, gravity: -0.8 });
     };
 
+    this.fx.trail = new SwordTrail(this.scene);
+    this._bb = new THREE.Vector3();
+    this._bt = new THREE.Vector3();
     this.atmo = new Atmosphere(this.scene, this.post, this.fx);
     this.atmo.camera = this.camera;
     this.camRig = new CameraRig(this.camera);
@@ -178,18 +187,20 @@ export class Game {
     this.atmo.brightness = S.brightness;
     this.audio.setVolumes(S.music, S.sfx);
     if (this.post.internalHeight !== S.res) this.resize();
-    G.uSnap.value.set(S.snap ? this.post.w : 8000, S.snap ? this.post.h : 8000);
+    G.uSnap.value.set(S.snap ? this.post.w : 0, S.snap ? this.post.h : 0);
     G.uAffine.value = S.affine;
     this.post.blit.uniforms.uCrt.value = S.crt;
     writeSettings(S);
   }
 
   resize() {
-    const w = innerWidth,
-      h = innerHeight;
+    // lienzo en píxeles físicos para que el escalado entero sea exacto
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const w = Math.max(2, Math.round(innerWidth * dpr)),
+      h = Math.max(2, Math.round(innerHeight * dpr));
     this.renderer.setSize(w, h, false);
     this.post.setSize(w, h, this.settings.res);
-    G.uSnap.value.set(this.settings.snap ? this.post.w : 8000, this.settings.snap ? this.post.h : 8000);
+    G.uSnap.value.set(this.settings.snap ? this.post.w : 0, this.settings.snap ? this.post.h : 0);
     const pix = Math.max(1, this.post.h / 300);
     this.fx.fires.setPixelScale(pix);
     this.fx.ash.mat.uniforms.uPix.value = pix;
@@ -652,57 +663,111 @@ export class Game {
   }
 
   // ------------------------------------------------------------ fijado de objetivo
+  // ¿Se ve a la criatura? (desde el pecho del jugador o desde la cámara; un
+  // barril en medio no debe impedir fijar)
+  canSee(e) {
+    const p = this.player.pos,
+      c = this.camera.position,
+      col = this.world.col;
+    const ty = e.pos.y + Math.min(e.lockHeight, 1.6);
+    return col.lineOfSight(p.x, p.y + 1.5, p.z, e.pos.x, ty, e.pos.z) || col.lineOfSight(c.x, c.y, c.z, e.pos.x, e.pos.y + e.lockHeight, e.pos.z);
+  }
+
+  // Candidato a fijar: el más centrado en la vista y cercano. Con dirSign
+  // (±1) busca el siguiente a la derecha/izquierda del actual en pantalla.
   findTarget(exclude = null, dirSign = 0) {
     const p = this.player,
       cam = this.camera;
-    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+    cam.updateMatrixWorld();
+    const fwd = this._fwd || (this._fwd = new THREE.Vector3());
+    fwd.set(0, 0, -1).applyQuaternion(cam.quaternion);
     const camYaw = Math.atan2(fwd.x, fwd.z);
+    const v = this._pv || (this._pv = new THREE.Vector3());
+    let curX = 0;
+    if (dirSign && exclude) curX = v.set(exclude.pos.x, exclude.pos.y + exclude.lockHeight, exclude.pos.z).project(cam).x;
     let best = null,
       bs = 1e9;
     for (const e of this.activeEnemies) {
       if (!e.lockable || e === exclude) continue;
-      const d = e.distTo(p.pos);
-      if (d > 18 || Math.abs(e.pos.y - p.pos.y) > 6) continue;
-      const a = angleDiff(camYaw, e.angleTo(p.pos));
-      if (!dirSign && Math.abs(a) > 60 * DEG) continue;
+      const dx = e.pos.x - p.pos.x,
+        dz = e.pos.z - p.pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d > 20 || Math.abs(e.pos.y - p.pos.y) > 6) continue;
+      // ángulo entre la vista y la dirección jugador -> criatura
+      const a = Math.abs(angleDiff(camYaw, Math.atan2(dx, dz)));
+      let score;
       if (dirSign) {
-        const cur = exclude ? angleDiff(camYaw, exclude.angleTo(p.pos)) : 0;
-        if (Math.sign(-(a - cur)) !== dirSign) continue;
+        v.set(e.pos.x, e.pos.y + e.lockHeight, e.pos.z).project(cam);
+        if (v.z > 1 || Math.abs(v.x) > 1.3) continue;
+        const sx = v.x - curX;
+        if (Math.sign(sx) !== dirSign || Math.abs(sx) < 0.02) continue;
+        score = Math.abs(sx) * 10 + d * 0.08;
+      } else {
+        // delante de la cámara (o pegada al jugador aunque quede de lado)
+        if (a > 80 * DEG && d > 3) continue;
+        score = a * 3.0 + d * 0.12;
       }
-      if (!this.world.col.lineOfSight(p.pos.x, p.pos.y + 1.4, p.pos.z, e.pos.x, e.pos.y + e.lockHeight, e.pos.z)) continue;
-      const s = d * 0.1 + Math.abs(a) * 2;
-      if (s < bs) {
-        bs = s;
-        best = e;
-      }
+      if (score >= bs) continue;
+      if (!this.canSee(e)) continue;
+      bs = score;
+      best = e;
     }
     return best;
+  }
+
+  setLock(t) {
+    if (this.lockTarget === t) return;
+    this.lockTarget = t;
+    this._lostT = 0;
+    this._seen = true;
   }
 
   updateLock(dt) {
     const inp = this.input;
     if (inp.pressed('lock')) {
-      if (this.lockTarget) this.lockTarget = null;
+      if (this.lockTarget) this.setLock(null);
       else {
-        this.lockTarget = this.findTarget();
-        if (!this.lockTarget) {
-          // recentrar cámara
-          this.camRig.yaw = this.player.yaw;
-        }
+        const t = this.findTarget();
+        if (t) this.setLock(t);
+        // sin nada que fijar: la cámara vuelve suavemente detrás del jugador
+        else this.camRig.recenter(this.player.yaw);
       }
-      this.audio.ui('move');
+      this.audio.ui(this.lockTarget ? 'lock' : 'move');
     }
     const t = this.lockTarget;
-    if (t) {
-      const d = t.distTo(this.player.pos);
-      if (t.dead || !t.lockable || d > 22) this.lockTarget = t.dead ? this.findTarget(t) : null;
-      this._flickT = (this._flickT || 0) - dt;
-      const f = inp.flick();
-      if (f && this._flickT <= 0) {
-        const n = this.findTarget(t, f);
-        if (n) this.lockTarget = n;
-        this._flickT = 0.35;
+    if (!t) return;
+    const d = t.distTo(this.player.pos);
+    if (t.dead || !t.lockable) {
+      // al morir, pasa a la criatura más cercana si la hay
+      const n = t.dead ? this.findTarget(t) : null;
+      this.setLock(n && n.distTo(this.player.pos) < 12 ? n : null);
+      return;
+    }
+    if (d > 24 || Math.abs(t.pos.y - this.player.pos.y) > 7) {
+      this.setLock(null);
+      return;
+    }
+    // si se pierde de vista un buen rato, se suelta
+    this._losT = (this._losT || 0) - dt;
+    if (this._losT <= 0) {
+      this._losT = 0.25;
+      this._seen = this.canSee(t);
+    }
+    this._lostT = this._seen ? 0 : (this._lostT || 0) + dt;
+    if (this._lostT > 2.5) {
+      this.setLock(null);
+      return;
+    }
+    // cambiar de objetivo con un golpe de ratón / stick
+    this._flickT = (this._flickT || 0) - dt;
+    const f = inp.flick();
+    if (f && this._flickT <= 0) {
+      const n = this.findTarget(t, f);
+      if (n) {
+        this.setLock(n);
+        this.audio.ui('lock');
       }
+      this._flickT = 0.3;
     }
   }
 
@@ -767,6 +832,14 @@ export class Game {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
       }
+      // estela de la espada
+      if (p.hasSword && p.obj.visible) {
+        const sj = p.rig.joints.sword;
+        sj.updateWorldMatrix(true, false);
+        this._bb.copy(p.bladeBase).applyMatrix4(sj.matrixWorld);
+        this._bt.copy(p.bladeTip).applyMatrix4(sj.matrixWorld);
+        this.fx.trail.update(this.time, this._bb, this._bt, p.swinging);
+      }
       // enemigos activos
       this._actT = (this._actT || 0) - dt;
       if (this._actT <= 0) {
@@ -775,7 +848,7 @@ export class Game {
           const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
-          e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < 58 && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
+          e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
           return act;
         });
       }
@@ -818,12 +891,6 @@ export class Game {
     } else this.audio.setZone('city');
     this.atmo.update(dt, p);
 
-    // pasos del jugador
-    const k = Math.floor(p.phase / Math.PI);
-    if (k !== this._stepK) {
-      this._stepK = k;
-      if (Math.hypot(p.vx, p.vz) > 0.8 && p.body.grounded && this.state === 'play') this.audio.play('step');
-    }
 
     // miedo: criaturas cercanas -> estática del relicario y grano en pantalla
     let fear = 0;
@@ -871,9 +938,11 @@ export class Game {
 
   render() {
     const c = this.camera.position;
+    // los efectos se dibujan hasta donde llega la niebla y se funden antes
+    FX_FAR.value = Math.min(80, this.camera.far);
     if (!this._fireT || this.time - this._fireT > 0.25 || this.time < this._fireT) {
       this._fireT = this.time;
-      this.fx.fires.refresh(c.x, c.z, 60);
+      this.fx.fires.refresh(c.x, c.z, FX_FAR.value + 2);
     }
     const lp = this.state === 'title' ? c : this.player.pos;
     this.fx.lights.update(lp.x, lp.y + 1, lp.z, this.time);

@@ -1,27 +1,41 @@
-// Cámara en tercera persona con colisión, fijado de objetivo y temblor.
+// Cámara en tercera persona al estilo Souls: seguimiento suave, colisión,
+// recentrado animado, fijado de objetivo que encuadra a los dos y temblor.
 import * as THREE from 'three';
-import { clamp, damp, dampAngle } from '../core/util.js';
+import { clamp, damp, dampAngle, angleDiff } from '../core/util.js';
+
+const _dir = new THREE.Vector3();
+const _tp = new THREE.Vector3();
 
 export class CameraRig {
   constructor(camera) {
     this.cam = camera;
     this.yaw = 0;
     this.pitch = 0.22;
-    this.dist = 4.3;
-    this.curDist = 4.3;
+    this.dist = 4.1;
+    this.curDist = 4.1;
     this.side = 0;
     this.pivot = new THREE.Vector3();
     this.trauma = 0;
     this.lookAt = new THREE.Vector3();
     this.override = null; // {pos, look} para escenas
-    this.fovBase = 62;
+    this.fovBase = 60;
     this.fovKick = 0;
+    this.recenterT = 0;
+    this.recenterYaw = 0;
+    this.lockW = 0; // 0..1: transición suave al fijar/soltar
   }
 
   snapTo(player) {
-    this.pivot.set(player.pos.x, player.visY + 1.5, player.pos.z);
+    this.pivot.set(player.pos.x, player.visY + 1.55, player.pos.z);
     this.yaw = player.yaw;
     this.curDist = this.dist;
+    this.recenterT = 0;
+  }
+
+  // Gira la cámara hasta quedar detrás del jugador (animado, no instantáneo).
+  recenter(yaw) {
+    this.recenterYaw = yaw;
+    this.recenterT = 0.7;
   }
 
   shake(a) {
@@ -39,51 +53,72 @@ export class CameraRig {
       return;
     }
     const look = allowLook ? input.look(dt) : { x: 0, y: 0 };
-    // desplazamiento lateral (hombro) al fijar objetivo para no tapar al enemigo
-    this.side = damp(this.side, target ? 0.75 : 0, 4, dt);
+    this.lockW = damp(this.lockW, target ? 1 : 0, 6, dt);
+    // hombro: con objetivo fijado, la cámara se aparta un poco para no taparlo
+    this.side = damp(this.side, target ? 0.72 : 0, 5, dt);
     const sx = -Math.cos(this.yaw) * this.side,
       sz = Math.sin(this.yaw) * this.side;
-    const pv = new THREE.Vector3(player.pos.x + sx, player.visY + 1.6, player.pos.z + sz);
-    this.pivot.x = damp(this.pivot.x, pv.x, 16, dt);
-    this.pivot.z = damp(this.pivot.z, pv.z, 16, dt);
-    this.pivot.y = damp(this.pivot.y, pv.y, 9, dt);
+    const px = player.pos.x + sx,
+      py = player.visY + 1.55,
+      pz = player.pos.z + sz;
+    // seguimiento: casi rígido en horizontal (sin mareo), algo de retardo en vertical
+    this.pivot.x = damp(this.pivot.x, px, 18, dt);
+    this.pivot.z = damp(this.pivot.z, pz, 18, dt);
+    this.pivot.y = damp(this.pivot.y, py, 10, dt);
 
     if (target) {
+      this.recenterT = 0;
       const tx = target.pos.x - player.pos.x,
         tz = target.pos.z - player.pos.z;
       const d = Math.hypot(tx, tz);
       const desiredYaw = Math.atan2(tx, tz);
-      this.yaw = dampAngle(this.yaw, desiredYaw, 7, dt);
-      const th = (target.lockHeight ?? 1.4) + target.pos.y - (player.visY + 1.5);
-      const desiredPitch = clamp(0.28 + Math.atan2(-th, Math.max(d, 2)) * 0.5, -0.05, 0.6);
-      this.pitch = damp(this.pitch, desiredPitch, 5, dt);
+      // más rápido cuanto más se escapa el objetivo del encuadre, pero con
+      // velocidad angular limitada: un barrido, nunca un salto
+      const err = Math.abs(angleDiff(this.yaw, desiredYaw));
+      const ny = dampAngle(this.yaw, desiredYaw, 5 + Math.min(err, 1.5) * 5, dt);
+      const maxStep = 6.5 * dt;
+      this.yaw += clamp(angleDiff(this.yaw, ny), -maxStep, maxStep);
+      const th = target.pos.y + (target.lockHeight ?? 1.4) * 0.75 - (player.visY + 1.4);
+      const big = clamp(((target.T && target.T.height) || 1.8) / 1.8, 1, 3);
+      const desiredPitch = clamp(0.24 + (big - 1) * 0.08 + Math.atan2(-th, Math.max(d, 2.5)) * 0.55 + clamp((6 - d) * 0.03, 0, 0.14), -0.1, 0.66);
+      this.pitch = damp(this.pitch, desiredPitch, 4.5, dt);
     } else {
+      if (Math.abs(look.x) + Math.abs(look.y) > 0.004) this.recenterT = 0;
+      if (this.recenterT > 0) {
+        this.recenterT -= dt;
+        const ny = dampAngle(this.yaw, this.recenterYaw, 11, dt);
+        this.yaw += clamp(angleDiff(this.yaw, ny), -9 * dt, 9 * dt);
+        this.pitch = damp(this.pitch, 0.24, 8, dt);
+        if (Math.abs(angleDiff(this.yaw, this.recenterYaw)) < 0.01) this.recenterT = 0;
+      }
       this.yaw -= look.x;
-      this.pitch = clamp(this.pitch + look.y, -0.55, 1.15);
+      this.pitch = clamp(this.pitch + look.y, -0.6, 1.15);
     }
 
     const cp = Math.cos(this.pitch),
       sp = Math.sin(this.pitch);
-    const dir = new THREE.Vector3(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
-    const want = target ? this.dist + 0.5 : this.dist;
-    // colisión de cámara
+    const dir = _dir.set(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
+    let want = this.dist + this.lockW * 0.6;
+    if (target && target.T && target.T.height > 2.6) want += Math.min(2.2, (target.T.height - 2.6) * 0.8) * this.lockW;
+    // colisión de cámara: se acerca al instante, se aleja suavemente
     const hit = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, -dir.x, -dir.y, -dir.z, want + 0.3, (b) => b.cam !== false);
     let allowed = want;
-    if (hit !== Infinity) allowed = Math.max(0.6, hit - 0.3);
-    if (allowed < this.curDist) this.curDist = allowed;
-    else this.curDist = damp(this.curDist, allowed, 3, dt);
+    if (hit !== Infinity) allowed = Math.max(0.5, hit - 0.28);
+    if (allowed < this.curDist) this.curDist = damp(this.curDist, allowed, 30, dt);
+    else this.curDist = damp(this.curDist, allowed, 3.5, dt);
 
     cam.position.set(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist, this.pivot.z - dir.z * this.curDist);
     // no bajar del suelo
     const minY = player.visY + 0.3;
     if (cam.position.y < minY) cam.position.y = minY;
 
-    if (target) {
-      const tp = new THREE.Vector3(target.pos.x, target.pos.y + (target.lockHeight ?? 1.4) * 0.8, target.pos.z);
-      this.lookAt.copy(this.pivot).lerp(tp, 0.45);
-    } else {
-      this.lookAt.copy(this.pivot).addScaledVector(dir, 1);
-      this.lookAt.y += 0.35;
+    // punto de mira: delante del jugador; con objetivo, entre ambos
+    this.lookAt.copy(this.pivot).addScaledVector(dir, 1);
+    this.lookAt.y += 0.3;
+    if (target && this.lockW > 0.01) {
+      _tp.set(target.pos.x, target.pos.y + (target.lockHeight ?? 1.4) * 0.7, target.pos.z);
+      _tp.lerp(this.pivot, 0.55);
+      this.lookAt.lerp(_tp, this.lockW * 0.8);
     }
     cam.lookAt(this.lookAt);
     // FOV
@@ -101,9 +136,9 @@ export class CameraRig {
       const s = this.trauma * this.trauma;
       const t = performance.now() / 1000;
       this.cam.rotation.z += Math.sin(t * 47) * 0.02 * s;
-      this.cam.position.x += Math.sin(t * 61) * 0.08 * s;
-      this.cam.position.y += Math.sin(t * 53 + 1) * 0.08 * s;
-      this.trauma = Math.max(0, this.trauma - dt * 1.8);
+      this.cam.position.x += Math.sin(t * 61) * 0.07 * s;
+      this.cam.position.y += Math.sin(t * 53 + 1) * 0.07 * s;
+      this.trauma = Math.max(0, this.trauma - dt * 2.0);
     }
   }
 }

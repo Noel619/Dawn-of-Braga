@@ -4,6 +4,7 @@ import { clip } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff } from '../core/util.js';
 import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, CANDLE_OFFSETS } from './enemy_models.js';
 import { objMat } from '../gfx/materials.js';
+import { GAIT } from './locomotion.js';
 import { getTexture } from '../gfx/textures.js';
 
 const S = Math.sin,
@@ -16,40 +17,25 @@ function rad(p) {
   return o;
 }
 
-// Locomoción humanoide procedural.
-function humanLoco(e, t, spd, o) {
-  const walk = o.walk,
-    run = clamp((spd - walk * 1.15) / Math.max(0.1, (o.run || walk * 2) - walk * 1.15), 0, 1);
-  const s = clamp(spd / walk, 0, 1.4);
-  const ph = e.phase;
-  const A = (o.legA ?? 30) * s + run * 18;
+// Estilo del tren superior de los humanoides: encorvamiento, brazos y
+// respiración. La marcha (cadera, piernas por IK, balanceo) la pone Biped.
+function humanStyle(e, t, o) {
+  const g = e.gait;
+  const sw = g ? g.armSwing / DEG : 0;
+  const run = g ? g.runW * g.mw : 0;
   const br = S(t * (o.breath ?? 1.6) + e.phase * 0.1);
   const hunch = o.hunch ?? 0;
-  const p = {
-    legL: [-S(ph) * A, 0, 3],
-    legR: [S(ph) * A, 0, -3],
-    shinL: [Math.max(0, -Cc(ph)) * (40 + run * 40) * s + 6, 0, 0],
-    shinR: [Math.max(0, Cc(ph)) * (40 + run * 40) * s + 6, 0, 0],
-    chest: [hunch + run * 12 + br * (o.breathAmp ?? 2), S(ph) * 5 * s, (o.sway ?? 0) * S(ph) * s],
-    head: [-hunch * 0.55 + (o.headX ?? 0), 0, (o.headZ ?? 0)],
-    root: [0, -Math.abs(Cc(ph)) * 5 * s + (o.rootY ?? 0), 0],
-    hips: [0, -S(ph) * 5 * s, 0],
-    armL: [(o.armL ?? [0, 0, 6])[0] - S(ph) * 14 * s, (o.armL ?? [0, 0, 6])[1], (o.armL ?? [0, 0, 6])[2]],
+  const aL = o.armL ?? [0, 0, 6],
+    aR = o.armR ?? [0, 0, -6];
+  return {
+    chest: [hunch + run * 8 + br * (o.breathAmp ?? 2), 0, 0],
+    head: [-hunch * 0.55 + (o.headX ?? 0), 0, o.headZ ?? 0],
+    armL: [aL[0] + sw * (o.armLSwing ?? 1), aL[1], aL[2]],
     foreL: o.foreL ?? [-12, 0, 0],
-    armR: [(o.armR ?? [0, 0, -6])[0] + S(ph) * 14 * s * (o.armRSwing ?? 1), (o.armR ?? [0, 0, -6])[1], (o.armR ?? [0, 0, -6])[2]],
+    armR: [aR[0] - sw * (o.armRSwing ?? 1), aR[1], aR[2]],
     foreR: o.foreR ?? [-12, 0, 0],
     handR: o.handR ?? [0, 0, 0],
   };
-  return p;
-}
-
-// Evento de pisada cuando la fase cruza medio ciclo.
-function stepEvents(e) {
-  const k = Math.floor(e.phase / Math.PI);
-  if (k !== e.data._step) {
-    e.data._step = k;
-    e.onAnimEvent('step');
-  }
 }
 
 // ======================================================================= PENITENTE
@@ -669,7 +655,8 @@ export const TYPES = {
       { name: 'lunge', clip: penClips.lunge, dur: 1.55, min: 2.8, max: 5.5, hits: [[0.8, 0.95]], dmg: 22, range: 2.2, arc: 70, lunge: [[0.62, 0.9, 7]], weight: 2, turn: 3 },
     ],
     idlePose: penIdle,
-    loco: (e, t, spd) => rad(humanLoco(e, t, spd, { walk: 1.3, run: 3.1, hunch: 32, sway: 8, armR: [-30, 0, -10], foreR: [-40, 0, 0], handR: [30, 0, 0], armL: [-10, 0, 8], armRSwing: 0.3, headZ: S(t * 0.7) * 10 })),
+    biped: { scale: 0.95, style: GAIT.shamble, stance: 0.06 },
+    loco: (e, t, spd) => rad(humanStyle(e, t, { hunch: 32, armR: [-30, 0, -10], foreR: [-40, 0, 0], handR: [30, 0, 0], armL: [-10, 0, 8], armRSwing: 0.3, headZ: S(t * 0.7) * 10 })),
   },
   soldier: {
     name: 'Soldado cosido',
@@ -695,15 +682,17 @@ export const TYPES = {
       { name: 'thrust', clip: solClips.thrust, dur: 1.35, min: 1.5, max: 3.6, hits: [[0.6, 0.74]], dmg: 24, range: 2.8, arc: 40, lunge: [[0.56, 0.74, 5]], weight: 2 },
       { name: 'arm3', clip: solClips.arm3, dur: 1.7, min: 0, max: 2.2, hits: [[0.98, 1.12]], dmg: 28, range: 2.3, arc: 70, weight: 1.5, stDmg: 40 },
     ],
+    biped: { scale: 1.03, stance: 0.14 },
+    shield: { yaw: 0.3, pitch: -0.08, out: 0.08, along: 0.14 },
     loco: (e, t, spd) => {
-      const p = humanLoco(e, t, spd, { walk: 1.7, run: 3.8, hunch: 6, armR: [-30, 0, -8], foreR: [-62, 0, 0], handR: [38, 0, 0], armL: [-40, 0, 18], foreL: [-70, 0, 0], armRSwing: 0.3 });
+      const p = humanStyle(e, t, { hunch: 6, armR: [-30, 0, -8], foreR: [-62, 0, 0], handR: [38, 0, 0], armL: [-40, 0, 18], foreL: [-70, 0, 0], armRSwing: 0.3, armLSwing: 0.2 });
       p.arm3 = [S(t * 2.7 + e.phase) * 18, S(t * 1.9) * 10, S(t * 3.3) * 15];
       p.fore3 = [S(t * 3.1) * 25, 0, 0];
       return rad(p);
     },
     idlePose: (e, kind, t, spd) => {
       if (kind === 'wander') return TYPES.soldier.loco(e, t, spd);
-      const p = humanLoco(e, t, 0, { walk: 1.7, hunch: 6, armR: [-10, 0, -8], foreR: [-20, 0, 0], handR: [60, 0, 0], armL: [-20, 0, 12], foreL: [-60, 0, 0], headX: 20 + S(t * 0.8) * 6, headZ: S(t * 0.5) * 12 });
+      const p = humanStyle(e, t, { hunch: 6, armR: [-10, 0, -8], foreR: [-20, 0, 0], handR: [60, 0, 0], armL: [-20, 0, 12], foreL: [-60, 0, 0], headX: 20 + S(t * 0.8) * 6, headZ: S(t * 0.5) * 12 });
       p.arm3 = [S(t * 2.7) * 25, 0, S(t * 3.3) * 20];
       return rad(p);
     },
@@ -816,10 +805,11 @@ export const TYPES = {
       { name: 'sweep', clip: bellClips.sweep, dur: 1.9, min: 0, max: 3.6, hits: [[0.9, 1.12]], dmg: 30, range: 3.7, arc: 170, weight: 2, turn: 2.2 },
       { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, events: [{ t: 1.3, fn: (e, g) => g.combat.toll(e, 6.5, 12) }] },
     ],
+    biped: { scale: 1.38, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => {
-      stepEvents(e);
-      const p = humanLoco(e, t, spd, { walk: 1.35, hunch: 14, sway: 10, legA: 24, armR: [-20, 0, -18], foreR: [-50, 0, 0], handR: [40, 0, 0], armL: [0, 0, 16], foreL: [-15, 0, 0], armRSwing: 0.4, breath: 1.1, breathAmp: 4 });
-      p.bellJ = [S(e.phase) * 4, 0, S(e.phase * 0.5) * 6];
+      const p = humanStyle(e, t, { hunch: 14, armR: [-20, 0, -18], foreR: [-50, 0, 0], handR: [40, 0, 0], armL: [0, 0, 16], foreL: [-15, 0, 0], armRSwing: 0.4, breath: 1.1, breathAmp: 4 });
+      const ph = e.gait ? e.gait.phase * Math.PI * 2 : e.phase;
+      p.bellJ = [S(ph * 2) * 4, 0, S(ph) * 6];
       return rad(p);
     },
     idlePose: (e, kind, t, spd) => TYPES.bell.loco(e, t, spd),
@@ -893,10 +883,8 @@ export const TYPES = {
       { name: 'stomp', clip: impClips.stomp, dur: 1.3, min: 0, max: 2.4, hits: [], weight: 2, events: [{ t: 0.62, fn: (e, g) => g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 3.0, 20, e, 9) }] },
       { name: 'charge', clip: impClips.charge, dur: 2.4, min: 5, max: 14, hits: [[0.62, 1.9]], dmg: 34, range: 2.4, arc: 70, lunge: [[0.62, 1.9, 7.5]], weight: 2, phase: 2, turn: 1.5, trackUntil: 0.6, stagger: true },
     ],
-    loco: (e, t, spd) => {
-      stepEvents(e);
-      return rad(humanLoco(e, t, spd, { walk: 1.6, hunch: 12, sway: 8, legA: 22, armR: [-35, 0, -12], foreR: [-50, 0, 0], handR: [55, 0, 0], armL: [-30, 0, 15], foreL: [-60, 0, 0], armRSwing: 0.2, breath: 1.0, breathAmp: 3 }));
-    },
+    biped: { scale: 1.8, style: GAIT.heavy, stance: 0.1 },
+    loco: (e, t, spd) => rad(humanStyle(e, t, { hunch: 12, armR: [-35, 0, -12], foreR: [-50, 0, 0], handR: [55, 0, 0], armL: [-30, 0, 15], foreL: [-60, 0, 0], armRSwing: 0.2, breath: 1.0, breathAmp: 3 })),
     update: (e, dt, player) => {
       if (!e.dead && e.hp < e.maxHp * 0.5 && e.data.phase !== 2) {
         e.data.phase = 2;
@@ -1020,9 +1008,9 @@ export const TYPES = {
       e.data.phase = 1;
       censerReset(e);
     },
+    biped: { scale: 2.35, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => {
-      stepEvents(e);
-      const p = humanLoco(e, t, spd, { walk: 1.6, hunch: 12, sway: 6, legA: 20, armR: [-45, 0, -25], foreR: [-40, 0, 0], armL: [-15, 0, 18], foreL: [-30, 0, 0], armRSwing: 0.4, breath: 0.9, breathAmp: 4 });
+      const p = humanStyle(e, t, { hunch: 12, armR: [-45, 0, -25], foreR: [-40, 0, 0], armL: [-15, 0, 18], foreL: [-30, 0, 0], armRSwing: 0.4, breath: 0.9, breathAmp: 4 });
       if (e.state === 'bossIdle') {
         Object.assign(p, { chest: [70, 0, 0], head: [50, 0, 0], armR: [0, 0, -10], armL: [0, 0, 10], root: [0, -60, 0], legL: [-90, 0, 5], shinL: [100, 0, 0], legR: [-90, 0, -5], shinR: [100, 0, 0] });
         p.chest[0] += S(t * 0.8) * 4;

@@ -2,13 +2,17 @@
 // brasas, ceniza cayendo, sangre, chispas y pool de luces dinámicas.
 import * as THREE from 'three';
 import { getTexture } from './textures.js';
-import { G } from './materials.js';
+import { G, registerMaterialPatch } from './materials.js';
 
 const SNAP = `
-vec4 psxSnap(vec4 p){ vec2 s = uSnap*0.5; if(p.w>0.05){ p.xy = floor(p.xy/p.w*s+0.5)/s*p.w; } return p; }`;
+vec4 psxSnap(vec4 p){ vec2 s = uSnap*0.5; if(uSnap.x > 0.0 && p.w>0.05){ p.xy = floor(p.xy/p.w*s+0.5)/s*p.w; } return p; }`;
 
 const FOG_PARS = `
-uniform vec3 fogColor; uniform float fogDensity;`;
+uniform vec3 fogColor; uniform float fogDensity; uniform float uFar;
+float farFade(float d){ return 1.0 - smoothstep(uFar * 0.72, uFar, d); }`;
+
+// radio de dibujo de los efectos (se ajusta al plano lejano)
+export const FX_FAR = { value: 60 };
 
 function commonUniforms(extra = {}) {
   return THREE.UniformsUtils.merge([
@@ -16,6 +20,7 @@ function commonUniforms(extra = {}) {
     {
       uTime: G.uTime,
       uSnap: G.uSnap,
+      uFar: FX_FAR,
       ...extra,
     },
   ]);
@@ -41,6 +46,7 @@ export class FireSystem {
       // Asegurar que el uniform de tiempo es compartido (merge clona)
       u.uTime = G.uTime;
       u.uSnap = G.uSnap;
+      u.uFar = FX_FAR;
       const mat = new THREE.ShaderMaterial({
         vertexShader: vs,
         fragmentShader: fs,
@@ -73,7 +79,7 @@ export class FireSystem {
         vFrame = floor(mod(uTime * 11.0 + ph * 8.0, 8.0));
         vUv = uv;
         float d = length(mv.xyz);
-        vFog = exp(-fogDensity*fogDensity*d*d*0.55);
+        vFog = exp(-fogDensity*fogDensity*d*d*0.55) * farFade(d);
       }`;
     const FIRE_FS = `
       uniform sampler2D tMap;
@@ -101,7 +107,7 @@ export class FireSystem {
         gl_Position = psxSnap(projectionMatrix * mv);
         vUv = uv;
         float d = length(mv.xyz);
-        vA = exp(-fogDensity*fogDensity*d*d*0.35) * fl;
+        vA = exp(-fogDensity*fogDensity*d*d*0.35) * fl * farFade(d);
       }`;
     const GLOW_FS = `
       uniform sampler2D tMap; uniform vec3 uColor;
@@ -131,7 +137,7 @@ export class FireSystem {
         gl_Position = psxSnap(projectionMatrix * mv);
         vUv = uv;
         float d = length(mv.xyz);
-        vA = sin(t * 3.14159) * 0.55 * exp(-fogDensity*fogDensity*d*d*0.5);
+        vA = sin(t * 3.14159) * 0.55 * exp(-fogDensity*fogDensity*d*d*0.5) * farFade(d);
       }`;
     const SMOKE_FS = `
       uniform sampler2D tMap;
@@ -156,6 +162,7 @@ export class FireSystem {
     const eu = commonUniforms({ uPix: { value: 1 } });
     eu.uTime = G.uTime;
     eu.uSnap = G.uSnap;
+    eu.uFar = FX_FAR;
     this.emberMat = new THREE.ShaderMaterial({
       vertexShader: `
         attribute vec4 iPos; uniform float uTime; uniform vec2 uSnap; uniform float uPix;
@@ -173,7 +180,7 @@ export class FireSystem {
           gl_Position = psxSnap(projectionMatrix * mv);
           gl_PointSize = uPix * 2.0 * (8.0 / max(1.0, -mv.z));
           float d = length(mv.xyz);
-          vA = (1.0 - t) * exp(-fogDensity*fogDensity*d*d*0.4);
+          vA = (1.0 - t) * exp(-fogDensity*fogDensity*d*d*0.4) * farFade(d);
         }`,
       fragmentShader: `
         varying float vA;
@@ -195,7 +202,7 @@ export class FireSystem {
   }
 
   // Actualiza qué fuegos cercanos se dibujan (llamar cada ~0.25 s)
-  refresh(cx, cz, radius = 70) {
+  refresh(cx, cz, radius = FX_FAR.value) {
     let nf = 0,
       ng = 0,
       ns = 0,
@@ -250,17 +257,22 @@ export class FireSystem {
 }
 
 // ------------------------------------------------------------ luces dinámicas
-// Un número fijo de luces puntuales (evita recompilar shaders). Se asignan
-// cada fotograma a las fuentes más cercanas, con parpadeo.
+// Un número fijo de luces puntuales (evita recompilar shaders). Cada ranura se
+// asigna a una de las fuentes más cercanas; cuando deja de serlo se apaga
+// suavemente antes de pasar a otra fuente (nada de saltos de iluminación).
 export class LightPool {
-  constructor(scene, n = 5) {
-    this.lights = [];
+  constructor(scene, n = 8) {
+    this.slots = [];
     for (let i = 0; i < n; i++) {
       const l = new THREE.PointLight(0xff8a3a, 0, 12, 1.6);
       scene.add(l);
-      this.lights.push(l);
+      this.slots.push({ light: l, src: null, w: 0, target: 0 });
     }
     this.sources = [];
+    this._t = null;
+  }
+  get lights() {
+    return this.slots.map((s) => s.light);
   }
   add(src) {
     // src: {x,y,z, color, intensity, range, flicker, on}
@@ -270,31 +282,54 @@ export class LightPool {
     return s;
   }
   update(cx, cy, cz, t) {
+    const dt = this._t === null ? 1 / 60 : Math.min(0.1, Math.max(0, t - this._t));
+    this._t = t;
     const cand = [];
     for (const s of this.sources) {
       if (!s.on) continue;
       const d = (s.x - cx) ** 2 + (s.y - cy) ** 2 * 0.5 + (s.z - cz) ** 2;
-      if (d > 40 * 40) continue;
+      if (d > 44 * 44) continue;
       cand.push([d - (s.priority || 0) * 400, s]);
     }
     cand.sort((a, b) => a[0] - b[0]);
-    for (let i = 0; i < this.lights.length; i++) {
-      const L = this.lights[i];
-      const c = cand[i];
-      if (!c) {
+    const n = this.slots.length;
+    const want = new Set();
+    for (let i = 0; i < Math.min(n, cand.length); i++) want.add(cand[i][1]);
+    const assigned = new Set();
+    for (const sl of this.slots) {
+      if (sl.src && want.has(sl.src) && !assigned.has(sl.src)) {
+        sl.target = 1;
+        assigned.add(sl.src);
+      } else sl.target = 0;
+    }
+    for (const c of cand) {
+      const s = c[1];
+      if (!want.has(s) || assigned.has(s)) continue;
+      const free = this.slots.find((sl) => sl.target === 0 && sl.w <= 0.001);
+      if (!free) break;
+      free.src = s;
+      free.target = 1;
+      assigned.add(s);
+    }
+    for (const sl of this.slots) {
+      const step = dt / 0.45;
+      sl.w = sl.target > sl.w ? Math.min(sl.target, sl.w + step) : Math.max(sl.target, sl.w - step);
+      const L = sl.light;
+      if (sl.w <= 0.001 && sl.target === 0) sl.src = null;
+      const s = sl.src;
+      if (!s) {
         L.intensity = 0;
         continue;
       }
-      const s = c[1];
       const ph = s.x * 1.3 + s.z * 0.7;
-      const fl = s.flicker ? 0.78 + 0.12 * Math.sin(t * 13 + ph) + 0.1 * Math.sin(t * 29.7 + ph * 2) : 1;
-      // aparición suave según distancia para evitar saltos
-      const d = Math.sqrt(c[0]);
-      const fade = Math.min(1, Math.max(0, (38 - d) / 10));
-      L.position.set(s.x + (s.flicker ? Math.sin(t * 7 + ph) * 0.05 : 0), s.y, s.z);
+      const fl = s.flicker ? 0.8 + 0.1 * Math.sin(t * 13 + ph) + 0.1 * Math.sin(t * 29.7 + ph * 2) : 1;
+      const d = Math.sqrt((s.x - cx) ** 2 + (s.y - cy) ** 2 * 0.5 + (s.z - cz) ** 2);
+      const fade = Math.min(1, Math.max(0, (42 - d) / 12));
+      const w = sl.w * sl.w * (3 - 2 * sl.w);
+      L.position.set(s.x + (s.flicker ? Math.sin(t * 7 + ph) * 0.04 : 0), s.y, s.z);
       L.color.copy(s._c);
       L.distance = s.range;
-      L.intensity = s.intensity * fl * fade;
+      L.intensity = s.intensity * fl * fade * w;
     }
   }
 }
@@ -453,21 +488,21 @@ export class DecalPool {
     this.head = 0;
     const geo = new THREE.PlaneGeometry(1, 1);
     geo.rotateX(-Math.PI / 2);
+    const mat = registerMaterialPatch(
+      new THREE.MeshBasicMaterial({
+        map: getTexture(texName),
+        transparent: true,
+        depthWrite: false,
+        opacity: opts.opacity ?? 0.9,
+        color: opts.color ?? 0xffffff,
+        polygonOffset: true,
+        polygonOffsetFactor: -3,
+        polygonOffsetUnits: -3,
+        fog: true,
+      })
+    );
     for (let i = 0; i < max; i++) {
-      const m = new THREE.Mesh(
-        geo,
-        new THREE.MeshBasicMaterial({
-          map: getTexture(texName),
-          transparent: true,
-          depthWrite: false,
-          opacity: opts.opacity ?? 0.9,
-          color: opts.color ?? 0xffffff,
-          polygonOffset: true,
-          polygonOffsetFactor: -3,
-          polygonOffsetUnits: -3,
-          fog: true,
-        })
-      );
+      const m = new THREE.Mesh(geo, mat);
       m.visible = false;
       m.renderOrder = 2;
       scene.add(m);
@@ -558,5 +593,114 @@ export class LightShafts {
     m.frustumCulled = false;
     this.scene.add(m);
     this.mesh = m;
+  }
+}
+
+// ------------------------------------------------------------ estela de espada
+// Cinta aditiva entre la base y la punta de la hoja durante los tajos; los
+// puntos se suavizan con Catmull-Rom para que el arco sea continuo aunque el
+// juego vaya a pocos fotogramas.
+export class SwordTrail {
+  constructor(scene, o = {}) {
+    this.max = o.samples ?? 14;
+    this.sub = o.sub ?? 4;
+    this.life = o.life ?? 0.16;
+    this.samples = [];
+    const n = (this.max - 1) * this.sub + 1;
+    this.n = n;
+    const g = new THREE.BufferGeometry();
+    this.pos = new Float32Array(n * 2 * 3);
+    this.alpha = new Float32Array(n * 2);
+    this.side = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      this.side[i * 2] = 0;
+      this.side[i * 2 + 1] = 1;
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
+    g.setAttribute('aAlpha', new THREE.BufferAttribute(this.alpha, 1));
+    g.setAttribute('aSide', new THREE.BufferAttribute(this.side, 1));
+    const idx = [];
+    for (let i = 0; i < n - 1; i++) {
+      const a = i * 2;
+      idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
+    }
+    g.setIndex(idx);
+    g.setDrawRange(0, 0);
+    this.geo = g;
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(o.color ?? 0xffe2b0) }, uCore: { value: new THREE.Color(0xffffff) } },
+      vertexShader: `
+        attribute float aAlpha; attribute float aSide;
+        varying float vA; varying float vS;
+        void main(){ vA = aAlpha; vS = aSide; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `
+        uniform vec3 uColor; uniform vec3 uCore;
+        varying float vA; varying float vS;
+        void main(){
+          // más intensa hacia la punta y en el borde de ataque
+          float edge = smoothstep(0.0, 1.0, vS);
+          vec3 c = mix(uColor * 0.5, mix(uColor, uCore, edge * edge * vA), edge);
+          gl_FragColor = vec4(c * vA * (0.25 + edge * 0.9), 1.0);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    this.mesh = new THREE.Mesh(g, this.mat);
+    this.mesh.frustumCulled = false;
+    this.mesh.renderOrder = 9;
+    scene.add(this.mesh);
+  }
+  // base/tip: Vector3 en el mundo; active: si la hoja está cortando
+  update(time, base, tip, active) {
+    const S = this.samples;
+    if (active) {
+      S.push({ t: time, b: base.clone(), p: tip.clone() });
+      if (S.length > this.max) S.shift();
+    }
+    while (S.length && time - S[0].t > this.life) S.shift();
+    const k = S.length;
+    if (k < 2) {
+      this.geo.setDrawRange(0, 0);
+      return;
+    }
+    const P = this.pos,
+      A = this.alpha;
+    let v = 0;
+    const cr = (p0, p1, p2, p3, u, out) => {
+      const u2 = u * u,
+        u3 = u2 * u;
+      out.set(
+        0.5 * (2 * p1.x + (-p0.x + p2.x) * u + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * u2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * u3),
+        0.5 * (2 * p1.y + (-p0.y + p2.y) * u + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * u2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * u3),
+        0.5 * (2 * p1.z + (-p0.z + p2.z) * u + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * u2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * u3)
+      );
+      return out;
+    };
+    const tb = this._tb || (this._tb = new THREE.Vector3());
+    const tp = this._tp || (this._tp = new THREE.Vector3());
+    for (let i = 0; i < k - 1; i++) {
+      const s0 = S[Math.max(0, i - 1)],
+        s1 = S[i],
+        s2 = S[i + 1],
+        s3 = S[Math.min(k - 1, i + 2)];
+      const steps = i === k - 2 ? this.sub + 1 : this.sub;
+      for (let q = 0; q < steps && v < this.n; q++) {
+        const u = q / this.sub;
+        cr(s0.b, s1.b, s2.b, s3.b, u, tb);
+        cr(s0.p, s1.p, s2.p, s3.p, u, tp);
+        const age = time - (s1.t + (s2.t - s1.t) * u);
+        const a = Math.max(0, 1 - age / this.life);
+        P.set([tb.x, tb.y, tb.z], v * 6);
+        P.set([tp.x, tp.y, tp.z], v * 6 + 3);
+        A[v * 2] = a * a;
+        A[v * 2 + 1] = a * a;
+        v++;
+      }
+    }
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.aAlpha.needsUpdate = true;
+    this.geo.setDrawRange(0, Math.max(0, (v - 1) * 6));
   }
 }

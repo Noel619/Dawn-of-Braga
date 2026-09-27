@@ -3,6 +3,7 @@
 //  (niebla volumétrica por raymarching, gradación de color, viñeta, grano,
 //  cuantización 15 bits con tramado Bayer) -> escalado "nearest" a pantalla.
 import * as THREE from 'three';
+import { G } from './materials.js';
 
 const VS = `
 varying vec2 vUv;
@@ -189,9 +190,9 @@ export class PostPipeline {
       uTime: { value: 0 },
       uFogColor: { value: new THREE.Color(0.3, 0.32, 0.3) },
       uVol: { value: 0.035 },
-      uSkyGlow: { value: 1 },
-      uSun: { value: 0 },
-      uSunDir: { value: new THREE.Vector3(0.15, 0.12, -1) },
+      uSkyGlow: G.uSkyGlow,
+      uSun: G.uSun,
+      uSunDir: G.uSunDir,
       uVolY: { value: 0 },
       uVolScale: { value: 0.11 },
       uBloom: { value: 0.9 },
@@ -200,7 +201,7 @@ export class PostPipeline {
       uContrast: { value: 1.08 },
       uBrightness: { value: 0 },
       uVignette: { value: 1.25 },
-      uGrain: { value: 0.045 },
+      uGrain: { value: 0.025 },
       uLift: { value: new THREE.Vector3(0.012, 0.018, 0.02) },
       uGain: { value: new THREE.Vector3(1.0, 0.98, 0.94) },
       uHurt: { value: 0 },
@@ -224,10 +225,18 @@ export class PostPipeline {
     this.rtScene = null;
   }
 
+  // sw, sh: tamaño del lienzo en píxeles físicos. La resolución interna se
+  // elige para que cada píxel interno ocupe exactamente k×k píxeles de
+  // pantalla (escalado entero): sin columnas de distinto ancho que "reptan"
+  // al mover la cámara.
   setSize(sw, sh, internalHeight = this.internalHeight) {
     this.internalHeight = internalHeight;
-    const h = Math.max(120, Math.round(internalHeight));
-    const w = Math.max(160, Math.round((h * sw) / sh));
+    const k = Math.max(1, Math.round(sh / Math.max(120, internalHeight)));
+    const h = Math.max(120, Math.ceil(sh / k));
+    const w = Math.max(160, Math.ceil(sw / k));
+    this.k = k;
+    this.sw = sw;
+    this.sh = sh;
     this.w = w;
     this.h = h;
     [this.rtScene, this.rtFinal, this.rtB1, this.rtB2].forEach((r) => r && r.dispose());
@@ -254,7 +263,7 @@ export class PostPipeline {
     this.bh = bh;
     this.U.uRes.value.set(w, h);
     this.blit.uniforms.uLowRes.value.set(w, h);
-    this.blit.uniforms.uScreen.value.set(sw, sh);
+    this.blit.uniforms.uScreen.value.set(w * k, h * k);
   }
 
   _pass(mat, target) {
@@ -292,6 +301,10 @@ export class PostPipeline {
     this._pass(this.composite, this.rtFinal);
 
     this.blit.uniforms.tSrc.value = this.rtFinal.texture;
+    // viewport de tamaño exacto k·w × k·h anclado arriba a la izquierda
+    const k = this.k || 1;
+    r.setViewport(0, this.sh - this.h * k, this.w * k, this.h * k);
     this._pass(this.blit, null);
+    r.setViewport(0, 0, this.sw, this.sh);
   }
 }

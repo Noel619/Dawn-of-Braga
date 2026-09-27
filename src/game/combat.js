@@ -13,6 +13,14 @@ export class Combat {
     this.rings = [];
     this.tempFires = [];
     this.glowTex = getTexture('glow');
+    this.flashes = [];
+  }
+
+  // destello breve en el punto de impacto
+  impactFlash(x, y, z, size = 1.2, color = 0xffe0b0) {
+    const s = this._orb(color, size);
+    s.position.set(x, y, z);
+    this.flashes.push({ s, t: 0, dur: 0.1, size });
   }
 
   // ------------------------------------------------------------ jugador -> enemigos
@@ -30,12 +38,20 @@ export class Combat {
       if (d > e.body.radius + 0.6 && ang > atk.arc * 0.5 * DEG) continue;
       if (!g.world.col.lineOfSight(player.pos.x, player.pos.y + 1.2, player.pos.z, e.pos.x, e.pos.y + Math.min(1.2, e.T.height * 0.5), e.pos.z)) continue;
       player.hitSet.add(e);
-      const dmg = Math.round(atk.dmg * player.dmgMul * (0.92 + Math.random() * 0.16));
-      const r = e.takeHit(dmg, atk.poise, player.pos.x, player.pos.z, !!atk.heavy);
+      // por la espalda o sin que se lo espere: golpe crítico
+      const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
+      const crit = !e.boss && (!e.aware || behind);
+      const dmg = Math.round(atk.dmg * player.dmgMul * (crit ? 1.7 : 1) * (0.92 + Math.random() * 0.16));
+      const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
+      if (crit && r !== 'blocked' && r !== 'none') {
+        g.hitstop = Math.max(g.hitstop, 0.14);
+        g.fx.blood.emit(e.pos.x, e.pos.y + Math.min(1.3, e.T.height * 0.55), e.pos.z, 24, { speed: 5 });
+      }
       const hx = e.pos.x - (dx / d) * e.body.radius * 0.6,
         hy = e.pos.y + Math.min(1.3, e.T.height * 0.55),
         hz = e.pos.z - (dz / d) * e.body.radius * 0.6;
       if (r === 'blocked') {
+        this.impactFlash(hx, hy, hz, 1.1, 0xffd080);
         g.fx.blood.emit(hx, hy, hz, 14, { color: [1.0, 0.8, 0.4], speed: 5, life: 0.35, up: 1.5 });
         g.audio && g.audio.play('clang', e.pos);
         g.hitstop = Math.max(g.hitstop, 0.07);
@@ -44,6 +60,7 @@ export class Combat {
         g.input.rumble(0.4, 0.6, 90);
       } else if (r !== 'none') {
         const f = player.forward();
+        this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, 0xff9070);
         g.fx.blood.emit(hx, hy, hz, atk.heavy ? 34 : 20, { dir: { x: f.x, z: f.z }, speed: atk.heavy ? 6 : 4.5 });
         g.audio && g.audio.play(atk.heavy ? 'hitHeavy' : 'hit', e.pos);
         g.hitstop = Math.max(g.hitstop, atk.heavy ? 0.12 : 0.07);
@@ -215,6 +232,18 @@ export class Combat {
   update(dt) {
     const g = this.game;
     const p = g.player;
+    for (let i = this.flashes.length - 1; i >= 0; i--) {
+      const F = this.flashes[i];
+      F.t += dt;
+      const k = F.t / F.dur;
+      F.s.scale.setScalar(F.size * (1 - k * 0.6));
+      F.s.material.opacity = 1 - k;
+      if (k >= 1) {
+        g.scene.remove(F.s);
+        F.s.material.dispose();
+        this.flashes.splice(i, 1);
+      }
+    }
     // anillos
     for (let i = this.rings.length - 1; i >= 0; i--) {
       const R = this.rings[i];

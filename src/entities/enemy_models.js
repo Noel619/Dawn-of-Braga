@@ -1,7 +1,7 @@
 // Modelos de las criaturas: restos humanos, armaduras y deformaciones.
 import * as THREE from 'three';
 import { Rig } from './rig.js';
-import { humanoidJoints, swordParts } from './models.js';
+import { humanoidJoints, swordParts, feetParts } from './models.js';
 
 // ------------------------------------------------------------ Penitente
 // Flagelante encorvado con capucha de arpillera, clavos en la espalda y hoz.
@@ -45,9 +45,8 @@ export function buildPenitent() {
     { j: 'handR', type: 'box', s: [0.028, 0.02, 0.16], p: [0, 0.16, 0.57], r: [-105, 0, 0], mat: 'iron' },
     // piernas bajo el hábito
     { j: 'shinL', type: 'box', s: [0.075, 0.44, 0.075], p: [0, -0.2, 0], mat: 'skinCorrupt' },
-    { j: 'shinL', type: 'box', s: [0.08, 0.05, 0.2], p: [0, -0.42, 0.05], mat: 'skinCorrupt' },
     { j: 'shinR', type: 'box', s: [0.075, 0.44, 0.075], p: [0, -0.2, 0], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.08, 0.05, 0.2], p: [0, -0.42, 0.05], mat: 'skinCorrupt' },
+    ...feetParts(0.95, 'skinCorrupt', { w: 0.085, h: 0.05, l: 0.21 }),
   ];
   return new Rig({ joints, parts });
 }
@@ -59,6 +58,7 @@ export function buildSoldier() {
   joints.push({ name: 'arm3', parent: 'chest', pos: [0.12, 0.42, -0.17], rot: [-150, 0, 35] });
   joints.push({ name: 'fore3', parent: 'arm3', pos: [0, -0.34, 0], rot: [-50, 0, 0] });
   joints.push({ name: 'hand3', parent: 'fore3', pos: [0, -0.32, 0] });
+  joints.push({ name: 'shield', parent: 'foreL', pos: [0.02, -0.14, 0.1] });
   const parts = [
     { j: 'hips', type: 'box', s: [0.4, 0.36, 0.28], p: [0, -0.14, 0], taper: [1.15, 1.1], mat: 'chainmail' },
     { j: 'hips', type: 'box', s: [0.32, 0.56, 0.03], p: [0, -0.26, 0.15], taper: [1.1, 1], mat: 'clothDark' },
@@ -85,10 +85,12 @@ export function buildSoldier() {
     { j: 'foreR', type: 'box', s: [0.12, 0.28, 0.12], p: [0, -0.13, 0], taper: [0.85, 0.85], mat: 'plate' },
     { j: 'handR', type: 'box', s: [0.09, 0.1, 0.1], p: [0, -0.05, 0.01], mat: 'iron' },
     ...swordParts('handR', { len: 0.82 }),
-    // escudo redondo
-    { j: 'foreL', type: 'cyl', s: [0.33, 0.33, 0.05], p: [0.07, -0.12, 0.1], r: [90, 0, 0], seg: 10, mat: 'planks' },
-    { j: 'foreL', type: 'torus', s: [0.33, 0.025], p: [0.07, -0.12, 0.13], seg: 10, mat: 'iron' },
-    { j: 'foreL', type: 'ico', s: [0.06], p: [0.07, -0.12, 0.14], mat: 'iron' },
+    // escudo redondo (cara hacia +Z de su articulación)
+    { j: 'shield', type: 'cyl', s: [0.34, 0.34, 0.05], p: [0, 0, 0], r: [90, 0, 0], seg: 12, mat: 'planks' },
+    { j: 'shield', type: 'torus', s: [0.335, 0.028], p: [0, 0, 0.012], seg: 12, mat: 'iron' },
+    { j: 'shield', type: 'ico', s: [0.07], p: [0, 0, 0.04], mat: 'iron' },
+    { j: 'shield', type: 'box', s: [0.6, 0.05, 0.012], p: [0, 0.02, 0.03], r: [0, 0, 28], mat: 'iron' },
+    { j: 'shield', type: 'box', s: [0.05, 0.3, 0.03], p: [0, 0, -0.04], mat: 'leather' },
     // tercer brazo que brota de la espalda
     { j: 'arm3', type: 'box', s: [0.08, 0.36, 0.08], p: [0, -0.17, 0], taper: [0.7, 0.7], mat: 'skinCorrupt' },
     { j: 'arm3', type: 'ico', s: [0.1], p: [0, 0, 0], mat: 'flesh' },
@@ -98,10 +100,9 @@ export function buildSoldier() {
     // piernas
     { j: 'legL', type: 'box', s: [0.17, 0.46, 0.18], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: 'chainmail' },
     { j: 'shinL', type: 'box', s: [0.14, 0.42, 0.15], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'plate' },
-    { j: 'shinL', type: 'box', s: [0.13, 0.08, 0.26], p: [0, -0.43, 0.05], mat: 'iron' },
     { j: 'legR', type: 'box', s: [0.17, 0.46, 0.18], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: 'chainmail' },
     { j: 'shinR', type: 'box', s: [0.14, 0.42, 0.15], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'plate' },
-    { j: 'shinR', type: 'box', s: [0.13, 0.08, 0.26], p: [0, -0.43, 0.05], mat: 'iron' },
+    ...feetParts(1.03, 'iron', { w: 0.125, h: 0.08, l: 0.25 }),
   ];
   return new Rig({ joints, parts });
 }
@@ -235,12 +236,11 @@ export function buildBell() {
     // badajo como maza
     { j: 'handR', type: 'cyl', s: [0.05, 0.06, 1.5], p: [0, -0.08, 0.55], r: [90, 0, 0], mat: 'iron' },
     { j: 'handR', type: 'ico', s: [0.22, 0.26, 0.22], p: [0, -0.08, 1.36], mat: 'iron', detail: 1 },
-    { j: 'legL', type: 'box', s: [0.26, 0.5, 0.28], p: [0, -0.23, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinL', type: 'box', s: [0.22, 0.46, 0.24], p: [0, -0.21, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinL', type: 'box', s: [0.2, 0.08, 0.32], p: [0, -0.45, 0.06], mat: 'skinCorrupt' },
-    { j: 'legR', type: 'box', s: [0.26, 0.5, 0.28], p: [0, -0.23, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.22, 0.46, 0.24], p: [0, -0.21, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.2, 0.08, 0.32], p: [0, -0.45, 0.06], mat: 'skinCorrupt' },
+    { j: 'legL', type: 'box', s: [0.27, 0.64, 0.29], p: [0, -0.3, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
+    { j: 'shinL', type: 'box', s: [0.23, 0.6, 0.25], p: [0, -0.28, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
+    { j: 'legR', type: 'box', s: [0.27, 0.64, 0.29], p: [0, -0.3, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
+    { j: 'shinR', type: 'box', s: [0.23, 0.6, 0.25], p: [0, -0.28, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
+    ...feetParts(1.38, 'skinCorrupt', { w: 0.15, h: 0.06, l: 0.24 }),
   ];
   return new Rig({ joints, parts });
 }
@@ -302,10 +302,9 @@ export function buildImpaled() {
     { j: 'handR', type: 'box', s: [0.7, 0.08, 0.46], p: [0, 0.08, 1.5], mat: 'iron' },
     { j: 'legL', type: 'box', s: [0.18 * k, 0.46 * k, 0.19 * k], p: [0, -0.22 * k, 0], taper: [0.8, 0.85], mat: 'chainmail' },
     { j: 'shinL', type: 'box', s: [0.15 * k, 0.42 * k, 0.16 * k], p: [0, -0.2 * k, 0], taper: [0.9, 0.9], mat: 'plate' },
-    { j: 'shinL', type: 'box', s: [0.14 * k, 0.08 * k, 0.26 * k], p: [0, -0.43 * k, 0.05 * k], mat: 'iron' },
     { j: 'legR', type: 'box', s: [0.18 * k, 0.46 * k, 0.19 * k], p: [0, -0.22 * k, 0], taper: [0.8, 0.85], mat: 'chainmail' },
     { j: 'shinR', type: 'box', s: [0.15 * k, 0.42 * k, 0.16 * k], p: [0, -0.2 * k, 0], taper: [0.9, 0.9], mat: 'plate' },
-    { j: 'shinR', type: 'box', s: [0.14 * k, 0.08 * k, 0.26 * k], p: [0, -0.43 * k, 0.05 * k], mat: 'iron' },
+    ...feetParts(k, 'iron', { w: 0.14, h: 0.08, l: 0.26 }),
   ];
   return new Rig({ joints, parts });
 }
@@ -351,9 +350,8 @@ export function buildTuribulario() {
     { j: 'handR', type: 'box', s: [0.07 * k, 0.12 * k, 0.04 * k], p: [0, -0.06 * k, 0], mat: 'skinCorrupt' },
     // piernas ocultas: sólo pies bajo la casulla
     { j: 'shinL', type: 'box', s: [0.08 * k, 0.44 * k, 0.08 * k], p: [0, -0.2 * k, 0], mat: 'skinCorrupt' },
-    { j: 'shinL', type: 'box', s: [0.08 * k, 0.05 * k, 0.2 * k], p: [0, -0.43 * k, 0.05 * k], mat: 'skinCorrupt' },
     { j: 'shinR', type: 'box', s: [0.08 * k, 0.44 * k, 0.08 * k], p: [0, -0.2 * k, 0], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.08 * k, 0.05 * k, 0.2 * k], p: [0, -0.43 * k, 0.05 * k], mat: 'skinCorrupt' },
+    ...feetParts(k, 'skinCorrupt', { w: 0.085, h: 0.05, l: 0.21 }),
   ];
   return new Rig({ joints, parts });
 }

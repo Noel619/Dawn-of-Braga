@@ -21,7 +21,26 @@ export function humanoidJoints(k = 1, o = {}) {
     { name: 'shinL', parent: 'legL', pos: [0, -0.45 * k * leg, 0] },
     { name: 'legR', parent: 'hips', pos: [-0.1 * k, -0.03 * k, 0] },
     { name: 'shinR', parent: 'legR', pos: [0, -0.45 * k * leg, 0] },
+    { name: 'footL', parent: 'shinL', pos: [0, -0.43 * k * leg, 0] },
+    { name: 'footR', parent: 'shinR', pos: [0, -0.43 * k * leg, 0] },
   ];
+}
+
+// Altura del tobillo sobre el suelo en reposo (la suela queda a -ankleH).
+export const ankleH = (k = 1, leg = 1) => 0.95 * k * leg - 0.03 * k - 0.88 * k * leg;
+
+// Pies con puntera: pieza principal + puntera algo más estrecha.
+export function feetParts(k, mat, o = {}) {
+  const a = ankleH(k, o.leg ?? 1);
+  const w = (o.w ?? 0.12) * k,
+    h = (o.h ?? 0.08) * k,
+    l = (o.l ?? 0.24) * k;
+  const out = [];
+  for (const j of ['footL', 'footR']) {
+    out.push({ j, type: 'box', s: [w, h, l * 0.62], p: [0, -a + h / 2, l * 0.12], taper: [1.05, 1.05], mat });
+    out.push({ j, type: 'box', s: [w * 0.9, h * 0.72, l * 0.42], p: [0, -a + h * 0.36, l * 0.5], mat });
+  }
+  return out;
 }
 
 // Forma de escudo de lágrima (heater).
@@ -44,6 +63,9 @@ export function playerDef() {
   const joints = humanoidJoints(1);
   joints.push({ name: 'cloak', parent: 'chest', pos: [0, 0.5, -0.15] });
   joints.push({ name: 'lantern', parent: 'hips', pos: [0.24, -0.02, 0.06] });
+  // el escudo cuelga del antebrazo; su orientación la estabiliza el animador
+  joints.push({ name: 'shield', parent: 'foreL', pos: [0.02, -0.13, 0.09] });
+  joints.push({ name: 'sword', parent: 'handR', pos: [0, 0, 0] });
   const parts = [
     // cadera
     { j: 'hips', type: 'box', s: [0.38, 0.1, 0.25], p: [0, 0.03, 0], mat: 'leather' },
@@ -78,10 +100,9 @@ export function playerDef() {
     // piernas
     { j: 'legL', type: 'box', s: [0.16, 0.46, 0.17], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: 'clothDark' },
     { j: 'shinL', type: 'box', s: [0.13, 0.42, 0.14], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'leather' },
-    { j: 'shinL', type: 'box', s: [0.12, 0.08, 0.25], p: [0, -0.43, 0.05], mat: 'leather' },
     { j: 'legR', type: 'box', s: [0.16, 0.46, 0.17], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: 'clothDark' },
     { j: 'shinR', type: 'box', s: [0.13, 0.42, 0.14], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'leather' },
-    { j: 'shinR', type: 'box', s: [0.12, 0.08, 0.25], p: [0, -0.43, 0.05], mat: 'leather' },
+    ...feetParts(1, 'leather', { w: 0.12, h: 0.085, l: 0.26 }),
     // capa raída
     { j: 'cloak', type: 'box', s: [0.42, 0.92, 0.03], p: [0, -0.46, 0], taper: [1.3, 1], mat: 'clothRed', ds: true },
     { j: 'cloak', type: 'box', s: [0.5, 0.12, 0.08], p: [0, 0.0, 0.03], mat: 'clothRed' },
@@ -97,27 +118,38 @@ export function playerDef() {
 // Espada (piezas en espacio de la mano derecha; hoja hacia +z local).
 export function swordParts(j = 'handR', o = {}) {
   const len = o.len ?? 0.92;
+  const y = -0.05;
   return [
-    { j, type: 'cyl', s: [0.02, 0.022, 0.2], p: [0, -0.05, 0.0], r: [90, 0, 0], mat: 'leather' },
-    { j, type: 'box', s: [0.26, 0.035, 0.045], p: [0, -0.05, 0.11], mat: 'iron' },
-    { j, type: 'box', s: [0.058, len, 0.014], p: [0, -0.05, 0.13 + len / 2], r: [-90, 0, 0], taper: [0.22, 1], mat: 'plate' },
-    { j, type: 'ico', s: [0.035], p: [0, -0.05, -0.12], mat: 'iron' },
+    { j, type: 'cyl', s: [0.021, 0.024, 0.2], p: [0, y, 0.0], r: [90, 0, 0], seg: 6, mat: 'leather' },
+    { j, type: 'box', s: [0.26, 0.035, 0.045], p: [0, y, 0.11], mat: 'iron' },
+    { j, type: 'box', s: [0.05, 0.05, 0.05], p: [0.13, y, 0.11], r: [0, 0, 45], mat: 'iron' },
+    { j, type: 'box', s: [0.05, 0.05, 0.05], p: [-0.13, y, 0.11], r: [0, 0, 45], mat: 'iron' },
+    { j, type: 'box', s: [0.058, len, 0.014], p: [0, y, 0.13 + len / 2], r: [-90, 0, 0], taper: [0.2, 1], mat: 'plate' },
+    { j, type: 'box', s: [0.012, len * 0.8, 0.018], p: [0, y, 0.15 + len * 0.4], r: [-90, 0, 0], mat: 'iron' },
+    { j, type: 'ico', s: [0.036], p: [0, y, -0.12], mat: 'iron' },
   ];
 }
 
-export function shieldParts(j = 'foreL') {
+// Escudo de lágrima en su propia articulación: cara hacia +Z, punta hacia -Y.
+export function shieldParts(j = 'shield') {
   return [
-    { j, type: 'shape', shape: heaterShape(0.54, 0.7), s: [1, 1, 0.045], p: [0.06, -0.1, 0.09], r: [0, 0, 0], mat: 'planks' },
-    { j, type: 'box', s: [0.5, 0.06, 0.06], p: [0.06, 0.2, 0.09], mat: 'iron' },
-    { j, type: 'box', s: [0.06, 0.52, 0.02], p: [0.06, -0.08, 0.12], mat: 'clothRed' },
-    { j, type: 'box', s: [0.36, 0.06, 0.02], p: [0.06, 0.04, 0.12], mat: 'clothRed' },
-    { j, type: 'ico', s: [0.05], p: [0.06, 0.04, 0.13], mat: 'iron' },
+    // canto de hierro (silueta algo mayor detrás de las tablas)
+    { j, type: 'shape', shape: heaterShape(0.6, 0.77), s: [1, 1, 0.03], p: [0, 0.035, -0.012], mat: 'iron' },
+    { j, type: 'shape', shape: heaterShape(0.54, 0.7), s: [1, 1, 0.045], p: [0, 0.035, 0.004], mat: 'planks' },
+    // cruz de Braga pintada
+    { j, type: 'box', s: [0.07, 0.5, 0.012], p: [0, 0.0, 0.03], mat: 'clothRed' },
+    { j, type: 'box', s: [0.36, 0.07, 0.012], p: [0, 0.13, 0.03], mat: 'clothRed' },
+    { j, type: 'ico', s: [0.045], p: [0, 0.13, 0.04], mat: 'iron' },
+    // remaches del canto
+    ...[-0.2, 0, 0.2].map((x) => ({ j, type: 'box', s: [0.03, 0.03, 0.02], p: [x, 0.3, 0.03], mat: 'iron' })),
+    // correas (se ven por detrás)
+    { j, type: 'box', s: [0.05, 0.3, 0.03], p: [0, 0.05, -0.035], mat: 'leather' },
   ];
 }
 
 export function buildPlayer({ sword = true, shield = true } = {}) {
   const def = playerDef();
-  if (sword) def.parts.push(...swordParts());
+  if (sword) def.parts.push(...swordParts('sword'));
   if (shield) def.parts.push(...shieldParts());
   return new Rig(def);
 }
