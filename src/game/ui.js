@@ -410,7 +410,7 @@ export class UI {
       ['Bloquear', 'Clic der.', 'LB'],
       ['Esquivar / correr (mantener)', 'Espacio', 'B'],
       ['Correr', 'Mayús', 'L3'],
-      ['Fijar objetivo', 'Q', 'R3'],
+      ['Fijar objetivo', 'Q|Clic central', 'R3'],
       ['Cambiar objetivo', 'Ratón', 'Stick der.'],
       ['Curarse (ampolla)', 'R', 'X'],
       ['Interactuar', 'E', 'A'],
@@ -418,7 +418,7 @@ export class UI {
       ['Mapa', 'M', 'View'],
       ['Pausa', 'Esc', 'Start'],
     ];
-    const one = (s) => (s.includes('.') || s.length > 5 ? [s] : s.split(' '));
+    const one = (s) => (s.includes('|') ? s.split('|') : s.includes('.') || s.length > 5 ? [s] : s.split(' '));
     const keys = (s, pad) => `<span class="k">${one(s)
       .map((k) => spriteHtml(keyBitmap(k, pad)))
       .join('')}</span>`;
@@ -523,6 +523,7 @@ export class UI {
       box.appendChild(spriteImg(dropCap(cap), 1, 'drop'));
       rest = text.slice(0, m[0].length - 1) + text.slice(m[0].length);
     }
+    box.scrollTop = 0;
     const paras = rest.split(/\n\s*\n/);
     paras.forEach((t) => {
       const p = document.createElement('p');
@@ -932,6 +933,8 @@ export class UI {
       case 'item':
         if (s.t === undefined) s.t = 0;
         s.t += dt;
+        // documentos largos en pantallas pequeñas: el texto se desplaza
+        if (s.name === 'note' && dir.y) $('note-text').scrollBy(0, dir.y * 19 * (this.sc.m + 1) * 2);
         if (s.t > 0.35 && (conf || back)) this.close();
         break;
       case 'inv': {

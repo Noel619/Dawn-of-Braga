@@ -135,10 +135,11 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .stats .ico { display: inline-flex; align-items: center; gap: calc(var(--u) * 2); }
 
 /* documentos: pergamino */
-#note .parch { position: relative; width: min(calc(var(--u) * 270), 94vw); max-height: 92vh; padding: calc(var(--u) * 16) calc(var(--u) * 18) calc(var(--u) * 12); color: var(--pink); }
+#note .parch { position: relative; display: flex; flex-direction: column; width: min(calc(var(--u) * 270), 94vw); max-height: 94vh; padding: calc(var(--u) * 16) calc(var(--u) * 18) calc(var(--u) * 12); color: var(--pink); }
 #note .parch > :not(canvas.pxbg) { position: relative; z-index: 1; }
 #note h3 { margin: 0 0 calc(var(--u) * 4); font-weight: normal; text-align: center; color: #5a1a10; }
-#note .text { white-space: pre-wrap; color: var(--pink); }
+#note .text { white-space: pre-wrap; color: var(--pink); overflow-y: auto; min-height: 0; scrollbar-width: none; }
+#note .text::-webkit-scrollbar { display: none; }
 #note .text .drop { float: left; margin: calc(var(--u) * 1) calc(var(--u) * 3) 0 0; }
 #note .text p { margin: 0 0 calc(10px * var(--m)); }
 #note .hint { color: var(--pink2); text-shadow: none; }
@@ -184,7 +185,7 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #story .line.show { opacity: 1; }
 #story .big { font-family: 'Bastarda', serif; font-size: var(--fs-bastXL); line-height: 1.2; color: var(--bone-hi); }
 #ending { background-color: rgba(238, 220, 190, 0.35); text-align: center; color: var(--pink); }
-#ending .parch { position: relative; width: min(calc(var(--u) * 320), 96vw); padding: calc(var(--u) * 14) calc(var(--u) * 18) calc(var(--u) * 10); }
+#ending .parch { position: relative; width: min(calc(var(--u) * 320), 96vw); max-height: 96vh; overflow: hidden; padding: calc(var(--u) * 14) calc(var(--u) * 18) calc(var(--u) * 10); }
 #ending .stats { grid-template-columns: repeat(6, auto); gap: 0 calc(var(--u) * 4); }
 #ending .parch > :not(canvas.pxbg) { position: relative; z-index: 1; }
 #ending .stats { justify-content: center; color: var(--pink2); text-shadow: none; margin-top: calc(var(--u) * 6); }
