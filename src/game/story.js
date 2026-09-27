@@ -41,7 +41,7 @@ export const ITEMS = {
   ampolla: {
     name: 'Ampolla vacía',
     desc: 'Frasco para las lágrimas de Santa Bárbara. Podrás llevar una ampolla más.',
-    icon: 'flask',
+    icon: 'flaskEmpty',
     key: false,
     upgrade: 'flask',
   },

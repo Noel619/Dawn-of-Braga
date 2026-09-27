@@ -1,5 +1,7 @@
 // Punto de entrada: carga, bucle principal y ganchos de depuración.
+import './ui/ui.css';
 import { Game } from './game/game.js';
+import { loadFonts } from './ui/pixel.js';
 
 const canvas = document.getElementById('gl');
 const q = new URLSearchParams(location.search);
@@ -94,5 +96,6 @@ function boot() {
   };
 }
 
-// deja pintar la pantalla de carga antes de construir la ciudad
-setTimeout(boot, 60);
+// deja pintar la pantalla de carga (y cargar las fuentes pixeladas) antes de
+// construir la ciudad
+loadFonts().then(() => setTimeout(boot, 60));

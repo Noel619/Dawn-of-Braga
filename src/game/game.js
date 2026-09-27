@@ -305,7 +305,8 @@ export class Game {
     const els = lines.map((l, i) => {
       const d = document.createElement('div');
       d.className = 'line' + (i === 0 ? ' big' : '');
-      d.textContent = l;
+      if (i === 0) d.innerHTML = this.ui.gothicHtml(l);
+      else d.textContent = l;
       box.appendChild(d);
       return d;
     });
@@ -605,12 +606,15 @@ export class Game {
       this.player.autoDir = null;
       const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
       const body = document.getElementById('ending-body');
+      const pc = body.querySelector('canvas.pxbg');
       body.innerHTML = `
-        <div class="line" style="font-size:22px;line-height:1.7;max-width:46ch;margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
-        <h2 style="margin-top:34px;font-size:40px">Dawn of Braga</h2>
-        <div class="stats" style="justify-content:center;margin:18px auto 0"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / 10</b></div>
-        <div class="credit">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
-        <div class="hint" style="margin-top:26px"><span>${this.ui.keyHtml('confirm')} Volver al título</span></div>`;
+        <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
+        <div style="display:grid;place-items:center;margin-top:calc(var(--u) * 6)">${this.ui.inkTitleHtml()}</div>
+        <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / 10</b></div>
+        <div class="credit f-hand">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
+        <div class="hint f-hand"><span>${this.ui.keyHtml('confirm')} Volver al título</span></div>`;
+      if (pc) body.prepend(pc);
+      body._pxRedraw && body._pxRedraw();
       setTimeout(() => (s.data.ready = true), 2500);
     }, 8500);
   }
