@@ -65,10 +65,12 @@ export const MAT_DEFS = {
     uv: 0.7,
     emissiveTex: 'fleshEmit',
     emissive: 0xff6a3a,
-    emissiveIntensity: 0.9,
+    emissiveIntensity: 0.45,
     flesh: true,
+    // brillo húmedo
+    phong: { specular: 0x6a3a38, shininess: 38 },
   },
-  fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.6 },
+  fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.35, phong: { specular: 0x5a3232, shininess: 30 } },
   glass: { tex: 'glass', uv: 0.5, emissiveTex: 'glass', emissive: 0xffffff, emissiveIntensity: 1.3 },
   candle: { tex: 'candle', uv: 2.0, emissive: 0x3a2a10, emissiveIntensity: 1 },
   blood: { tex: 'blood', uv: 0.5 },
@@ -225,7 +227,7 @@ function build(name, { vertexColors = true, side = THREE.FrontSide, basic = fals
       params.emissiveIntensity = def.emissiveIntensity ?? 1;
       if (def.emissiveTex) params.emissiveMap = getTexture(def.emissiveTex);
     }
-    m = new THREE.MeshLambertMaterial(params);
+    m = def.phong ? new THREE.MeshPhongMaterial({ ...params, specular: new THREE.Color(def.phong.specular), shininess: def.phong.shininess }) : new THREE.MeshLambertMaterial(params);
   }
   m.userData.def = def;
   return patch(m, { flesh: def.flesh, bake: vertexColors && !basic });

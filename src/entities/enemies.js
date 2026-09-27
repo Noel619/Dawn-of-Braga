@@ -906,7 +906,7 @@ export const TYPES = {
     },
   },
   turibulario: {
-    name: 'O Turiferario',
+    name: 'El Turiferario',
     build: buildTuribulario,
     hp: 1250,
     poise: 320,

@@ -22,6 +22,9 @@ export function buildCastle(ctx, S, L) {
   floor(ctx, -90, -20, -51, 20, 'dirt');
   floor(ctx, -73, -3, -51, 3, 'flag', 0.02);
   floor(ctx, -73, -10, -68, -3, 'flag', 0.02);
+  // pasadizo bajo el arco de la puerta (enlaza el patio con la Calle del Soto)
+  floor(ctx, -51.2, -2.6, -47.8, 2.6, 'flag', 0.02, { tint: [0.85, 0.83, 0.8] });
+  wb.box('ashlar', -49.8, 0, -2.6, -49.4, 0.06, 2.6, { faces: 'tnsew', ao: false });
 
   // --- murallas del castillo
   cityWall(ctx, -93, -23, -48, -20, 9, { merlonSides: ['n'] });
@@ -161,18 +164,25 @@ export function buildCastle(ctx, S, L) {
     wb.box('wooddark', x - 0.12, 0, 14.4, x + 0.12, 3.2, 14.64, { ao: false });
     ctx.col.add(x - 0.15, 0, 14.35, x + 0.15, 3.2, 14.7).cam = false;
   }
-  // tejadillo apoyado en la muralla (la otra mitad queda dentro del muro)
-  wb.gableRoof(-89, 14.2, -69, 25.8, 3.3, 5.2, 'x', { overhang: 0.3, ridge: false, wallMat: 'wooddark' });
+  // cobertizo de una sola agua apoyado en la muralla (viga y canes en el muro)
+  {
+    const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    wb.quad('roof', V3(-89.2, 3.05, 13.8), V3(-68.8, 3.05, 13.8), V3(-68.8, 5.1, 20), V3(-89.2, 5.1, 20), { ao: false, sub: 2.4 });
+    wb.quad('wooddark', V3(-68.8, 2.93, 13.8), V3(-89.2, 2.93, 13.8), V3(-89.2, 4.98, 20), V3(-68.8, 4.98, 20), { ao: false, sub: 3, tint: [0.5, 0.48, 0.45] });
+    wb.box('wooddark', -89.2, 2.95, 14.3, -68.8, 3.2, 14.72, { ao: false });
+    wb.box('wooddark', -89.2, 4.8, 19.65, -68.8, 5.05, 20, { ao: false });
+    for (let x = -88; x <= -70; x += 2.25) wb.box('wooddark', x - 0.07, 3.1, 14.5, x + 0.07, 3.2, 19.9, { ao: false });
+  }
   // picas con cabezas junto a la puerta
   P.pike(ctx, -54, 0, -4.2, { tilt: 0.1 });
   P.pike(ctx, -54.6, 0, -5.4, { tilt: -0.08, skull: true });
   P.pike(ctx, -54, 0, 4.4, { tilt: -0.1 });
   P.pike(ctx, -55, 0, 5.8, { tilt: 0.12 });
   P.gibbet(ctx, -66, 0, 15, 4.4);
-  P.ladder(ctx, -70, 0, -19.8, 8.5, 0, -0.22);
-  P.ladder(ctx, -60, 0, -19.8, 8.5, 0.1, -0.22);
-  P.arrows(ctx, -65, 0.2, -4, 8, 21);
-  P.arrows(ctx, -78, 0.2, 6, 6, 22);
+  P.ladder(ctx, -70, 0, -20, 8.4, 0, 0.22);
+  P.ladder(ctx, -60, 0, -20, 8.4, 0.06, 0.2);
+  P.arrows(ctx, -65, 0, -4, 8, 21);
+  P.arrows(ctx, -78, 0, 6, 6, 22);
   P.barrel(ctx, -52.5, 0, -16, {});
   P.barrel(ctx, -53.2, 0, -17.2, { lying: true, rot: 0.3 });
   P.crate(ctx, -53, 0, 17, 1.0, 0.2);
@@ -192,7 +202,41 @@ export function buildCastle(ctx, S, L) {
   P.rubble(ctx, -73, 0, 18, 10, 5, 1.6);
   // altar del castillo
   P.candleAltar(ctx, -70, 0, -13.5, Math.PI / 2);
-  L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Altar del Castelo', x: -70, y: 0, z: -13.5, spawn: [-68.4, 0, -13.5], yaw: Math.PI / 2 });
+  L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Altar del Castillo', x: -70, y: 0, z: -13.5, spawn: [-68.4, 0, -13.5], yaw: Math.PI / 2 });
+
+  // --- guarnición: patio de armas, tiendas derribadas y restos de la batalla
+  P.target(ctx, -65, 0, -19.3, 0);
+  P.target(ctx, -55.5, 0, -19.3, 0);
+  P.weaponRack(ctx, -63.2, 0, -19.75, 0);
+  P.dummy(ctx, -58, 0, -15, 0.3);
+  P.dummy(ctx, -55.6, 0, -12.8, -0.4);
+  P.tent(ctx, -84.2, 0, 1.6, 0.25, 'burlap');
+  P.tent(ctx, -75.5, 0, 8.8, -0.35, 'clothDark');
+  P.siegeStone(ctx, -69.5, 0, 5.2, 0.5);
+  P.siegeStone(ctx, -62.5, 0, -7.2, 0.42);
+  P.dropped(ctx, -63.2, 0, 3.8, 0.7, 'sword');
+  P.dropped(ctx, -67.4, 0, 4.9, 2.1, 'shield');
+  P.dropped(ctx, -58.8, 0, -4.4, 1.2, 'helmet');
+  P.dropped(ctx, -76.4, 0, -1.6, 0.3, 'spear');
+  P.dropped(ctx, -60.5, 0, 3.6, 2.6, 'axe');
+  P.dropped(ctx, -82.2, 0, 4.4, 1.1, 'shield');
+  // cacharros junto al pozo
+  P.jar(ctx, -60.5, 0, -12.9, 0.9);
+  P.jar(ctx, -61.1, 0, -10.4, 0.8, { lying: true, rot: 1 });
+  P.basket(ctx, -63.6, 0, -10.8, { tipped: true, rot: 2 });
+  // bajo el cobertizo: barriles, cajas y leña
+  P.barrel(ctx, -88.9, 0, 15.8);
+  P.barrel(ctx, -88.7, 0, 17.4, { lying: true, rot: 0.2 });
+  P.crate(ctx, -79.4, 0, 18.9, 0.9, 0.1);
+  P.crate(ctx, -78.2, 0, 19.2, 0.7, 0.5);
+  P.crate(ctx, -79.3, 0.9, 18.95, 0.6, 0.35);
+  P.firewood(ctx, -69.6, 0, 19.35, Math.PI / 2, 3);
+  P.firewood(ctx, -72.4, 0, -15.6, 0, 3);
+  P.sacks(ctx, -86.8, 0, 11.2, 3, 41);
+  // vida: cuervos sobre los muertos y en la jaula, ratas en la cárcel y el cobertizo
+  ctx.crows.push({ x: -66.5, y: 0, z: 6.5, r: 1.5, n: 4 });
+  ctx.crows.push({ pts: [[-65.55, 4.9, 15], [-64.95, 4.9, 15]], yaw: 0 });
+  ctx.rats.push({ x: -84.4, y: 0, z: -16.4, n: 2 }, { x: -76.6, y: 0, z: -7.4, n: 1 }, { x: -80.8, y: 0, z: 17.6, n: 2 });
 
   L.enemies.push(
     { type: 'penitent', x: -76.4, y: 0, z: -15.6, yaw: 0.3, idle: 'eat', id: 'e_carcel1' },
@@ -261,9 +305,27 @@ export function buildSouto(ctx, S, L) {
     [-20.1, -3.44, 0],
   ])
     P.decal(ctx, x, 1.8, z, 1.2, 'sigil', r, { wall: 'z' });
-  P.wallTorch(ctx, -44, 2.6, 3.5, 's');
-  P.wallTorch(ctx, -17, 2.6, -3.5, 'n');
+  P.wallTorch(ctx, -44, 2.6, 3.5, 'n');
+  P.wallTorch(ctx, -17, 2.6, -3.5, 's');
   P.fleshGrowth(ctx, -46, 0, 3.2, 0.8, 61, { climb: 1.2, bound: [-48, -44, 3, 4] });
+  // --- vida de la calle: ropa tendida, rótulos, faroles y cacharros
+  P.laundry(ctx, -44.8, -3.45, -44.8, 3.45, 4.5, 11);
+  P.laundry(ctx, -35.2, -3.45, -35.2, 3.45, 4.7, 12);
+  P.laundry(ctx, -24.8, -3.45, -24.8, 3.45, 4.4, 13);
+  P.sign(ctx, -41.8, 2.95, -3.5, 0, 0);
+  P.sign(ctx, -30.4, 2.95, 3.5, Math.PI, 1);
+  P.sign(ctx, -19.5, 2.95, -3.5, 0, 2);
+  P.lantern(ctx, -37.9, 2.75, -3.5, 0, false);
+  P.lantern(ctx, -26.1, 2.75, 3.5, Math.PI, true);
+  P.lantern(ctx, -15.6, 2.75, 3.5, Math.PI, false);
+  P.jar(ctx, -39.6, 0, -3.1, 0.85);
+  P.jar(ctx, -39.0, 0, -3.15, 0.7, { broken: true });
+  P.basket(ctx, -33.6, 0, 2.9, { tipped: true, rot: 2.6 });
+  P.firewood(ctx, -18.6, 0, -2.95, Math.PI / 2, 3);
+  P.crate(ctx, -46.9, 0, -2.7, 0.7, 0.3);
+  P.dropped(ctx, -31.5, 0, 1.3, 0.4, 'spear');
+  P.dropped(ctx, -22.3, 0, 0.8, 2.2, 'helmet');
+  ctx.rats.push({ x: -45.4, y: 0, z: -2.5, n: 2 }, { x: -31.8, y: 0, z: -8.2, n: 1 });
 
   L.enemies.push(
     { type: 'hound', x: -37, y: 0, z: -1, yaw: 1.2, idle: 'eat', id: 'e_souto1' },
@@ -314,8 +376,27 @@ export function buildPraca(ctx, S, L) {
   P.brazier(ctx, -6.5, 0, 11.5, { smoke: false });
   P.brazier(ctx, 6.5, 0, -12, {});
   P.candleAltar(ctx, -5, 0, 4.2, Math.PI);
-  L.interact.push({ kind: 'altar', id: 'a_praca', name: 'Altar da Praça', x: -5, y: 0, z: 4.2, spawn: [-5, 0, 6], yaw: 0 });
+  L.interact.push({ kind: 'altar', id: 'a_praca', name: 'Altar de la Plaza del Pan', x: -5, y: 0, z: 4.2, spawn: [-5, 0, 6], yaw: 0 });
   P.decal(ctx, 13.94, 2, -8, 1.3, 'sigil', -Math.PI / 2, { wall: 'x' });
+  // --- mercado abandonado
+  P.jar(ctx, -12.2, 0, 8.1, 0.9, { broken: true });
+  P.jar(ctx, -9.0, 0, 11.1, 0.8, { lying: true, rot: 0.4 });
+  P.basket(ctx, 9.4, 0, -8.4, { tipped: true, rot: -2 });
+  P.basket(ctx, 11.7, 0, -3.6);
+  P.jar(ctx, 12.9, 0, -6.4, 1.0);
+  P.siegeStone(ctx, -1.8, 0, -11.2, 0.55);
+  P.dropped(ctx, 3.4, 0, 9.9, 1.4, 'shield');
+  P.dropped(ctx, -6.9, 0, -1.4, 0.2, 'sword');
+  P.sign(ctx, -6.2, 2.95, -14, 0, 1);
+  P.sign(ctx, 6.1, 2.95, -14, 0, 2);
+  P.sign(ctx, -9.2, 2.95, 14, Math.PI, 3);
+  P.lantern(ctx, -11.9, 2.75, -14, 0, true);
+  P.lantern(ctx, 14, 2.75, 7.6, -Math.PI / 2, true);
+  // cuervos en la horca, en el pilón de la fuente y sobre un cadáver
+  ctx.crows.push({ pts: [[-9.6, 5.5, -7.6], [-8.46, 5.5, -8.22], [-7.58, 5.5, -8.7]], yaw: 0.5 });
+  ctx.crows.push({ pts: [[2.77, 0.87, 1.01], [1.72, 0.87, 2.4], [-1.97, 0.87, 2.2]] });
+  ctx.crows.push({ x: 6, y: 0, z: 3, r: 1.1, n: 3 });
+  ctx.rats.push({ x: -12.4, y: 0, z: 2.0, n: 2 }, { x: -13.2, y: 0, z: 11.2, n: 1 });
 
   L.enemies.push(
     { type: 'penitent', x: 2.5, y: 0, z: -4.4, yaw: 3, idle: 'kneel', id: 'e_praca1' },
@@ -342,7 +423,7 @@ export function buildRuaSe(ctx, S, L) {
   P.barrel(ctx, -1.2, 0, -28.4, { lying: true, rot: 0.2 });
   P.crate(ctx, 2.6, 0, -29.3, 0.9, 0.3);
   P.sacks(ctx, 2.4, 0, -25, 4, 12);
-  P.arrows(ctx, 0.5, 0.1, -26, 10, 31);
+  P.arrows(ctx, 0.5, 0, -26, 10, 31);
   bakeCorpse(wb, -1.6, 0, -24, 1.5, 'face', 'soldier', 2);
   bakeCorpse(wb, 1.8, 0, -33, -2.2, 'back', 'villager', 3);
   P.decal(ctx, -1.6, 0.02, -24, 2.2);
@@ -351,6 +432,17 @@ export function buildRuaSe(ctx, S, L) {
   wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false });
   P.wallTorch(ctx, 3.5, 2.8, -20, 'w');
   P.fleshGrowth(ctx, -3.2, 0, -36, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -40, -30] });
+  P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
+  P.laundry(ctx, -3.45, -36.8, 3.45, -36.8, 4.6, 15);
+  P.sign(ctx, -3.5, 2.95, -24.2, Math.PI / 2, 3);
+  P.sign(ctx, 3.5, 2.95, -28.8, -Math.PI / 2, 0);
+  P.lantern(ctx, -3.5, 2.75, -29.6, Math.PI / 2, true);
+  P.dropped(ctx, -1.9, 0, -32.6, 0.3, 'spear');
+  P.dropped(ctx, 1.2, 0, -22.6, 2.2, 'helmet');
+  P.dropped(ctx, -2.3, 0, -29.2, 1.0, 'shield');
+  P.jar(ctx, 3.0, 0, -18.8, 0.8);
+  P.basket(ctx, -2.9, 0, -19.6, { rot: 0.5 });
+  ctx.rats.push({ x: 2.95, y: 0, z: -31.2, n: 2 });
   L.enemies.push({ type: 'soldier', x: 0, y: 0, z: -31, yaw: 0, idle: 'stand', id: 'e_ruase1' }, { type: 'hound', x: -1.5, y: 0, z: -35, yaw: 0.3, idle: 'eat', id: 'e_ruase2' });
   L.zones.push({ id: 'ruase', rects: [[-3.5, -40, 3.5, -14, -1, 10]], atmo: 'city' });
   L.map.push({ id: 'ruase', r: [-3.5, -40, 3.5, -14] });
@@ -385,6 +477,23 @@ export function buildLargo(ctx, S, L) {
   P.wallTorch(ctx, -18, 2.8, -44, 'e');
   P.wallTorch(ctx, 22, 2.8, -53, 'w');
   L.interact.push({ kind: 'note', id: 'n_soldado', note: 'soldado', x: 12.6, y: 0.08, z: -43.3, model: 'paper' });
+  // --- el atrio del sacrificio
+  P.ritual(ctx, -12.5, 0, -51.5, 1.4, 7);
+  P.stake(ctx, 18.2, 0, -52.8, 0.4, 3);
+  P.stake(ctx, 20.3, 0, -49.6, -0.6, 4);
+  P.siegeStone(ctx, -14.2, 0, -44.6, 0.6);
+  P.siegeStone(ctx, 9.6, 0, -41.6, 0.45);
+  P.dropped(ctx, 13.5, 0, -45.3, 0.9, 'sword');
+  P.dropped(ctx, 10.7, 0, -42.9, 2.4, 'shield');
+  P.barrel(ctx, -17.35, 0, -43.4);
+  P.jar(ctx, 21.2, 0, -42.3, 1.0);
+  P.basket(ctx, 19.5, 0, -40.7, { tipped: true, rot: 1.2 });
+  // vigas quemadas de la casa hundida
+  P.beam(ctx, -17.6, -53.6, -14.3, -50.8, 0, 0.12);
+  P.beam(ctx, -17.9, -49.5, -15.6, -52.0, 0.24, 0.1);
+  P.rubble(ctx, -16.9, 0, -52.4, 7, 441, 1.2, { scale: 0.55 });
+  ctx.crows.push({ x: 12, y: 0, z: -44, r: 1.5, n: 4 });
+  ctx.crows.push({ pts: [[-16.2, 5.2, -56.35], [-15.3, 5.2, -56.25], [-14.2, 5.2, -56.4]], yaw: 0 });
   L.enemies.push(
     { type: 'soldier', x: -6, y: 0, z: -45, yaw: 0.8, idle: 'stand', id: 'e_largo1' },
     { type: 'soldier', x: 14, y: 0, z: -50, yaw: -1.2, idle: 'wander', id: 'e_largo2' },
@@ -410,7 +519,27 @@ export function buildPelames(ctx, S, L) {
   L.interact.push({ kind: 'door', id: 'd_barricada', x: 28.3, y: 0, z: 0, w: 6, h: 2.6, axis: 'z', lock: { type: 'boards' }, mat: 'barricade', hinge: 0 });
   bakeCorpse(wb, 25.5, 0, 1.6, 0.5, 'sit', 'soldier', 8);
   P.decal(ctx, 25.5, 0.02, 1.2, 1.4);
-  P.wallTorch(ctx, 20, 2.8, -3, 'n');
+  P.wallTorch(ctx, 20, 2.8, -3, 's');
+  // pieles clavadas en las fachadas, ropa tendida, rótulos
+  for (const [x, zz, k] of [
+    [16.6, -3, 0],
+    [21.4, 3, 1],
+    [33.8, -3, 2],
+    [39.2, 3, 3],
+  ]) {
+    const f = zz < 0 ? 1 : -1;
+    const t = [[0.8, 0.66, 0.55], [0.7, 0.55, 0.45], [0.85, 0.72, 0.62], [0.62, 0.5, 0.42]][k];
+    wb.box('leather', x - 0.38, 1.0 + (k % 2) * 0.15, zz + f * 0.005, x + 0.38, 2.15, zz + f * 0.035, { ao: false, faces: f > 0 ? 's' : 'n', tint: t });
+    for (const dx of [-0.3, 0.3]) wb.box('iron', x + dx - 0.02, 2.08, zz, x + dx + 0.02, 2.12, zz + f * 0.06, { ao: false });
+  }
+  P.laundry(ctx, 17.8, -2.97, 17.8, 2.97, 4.3, 16);
+  P.laundry(ctx, 37.6, -2.97, 37.6, 2.97, 4.5, 17);
+  P.sign(ctx, 26.4, 2.95, -3, 0, 2);
+  P.sign(ctx, 35.8, 2.95, 3, Math.PI, 3);
+  P.barrel(ctx, 40.6, 0, -2.45);
+  P.barrel(ctx, 39.6, 0, 2.4, { lying: true, rot: 0.3 });
+  P.jar(ctx, 16.2, 0, 2.5, 0.9);
+  ctx.rats.push({ x: 32.6, y: 0, z: 2.4, n: 2 });
   L.enemies.push({ type: 'penitent', x: 36, y: 0, z: 0.5, yaw: -1.6, idle: 'stand', id: 'e_pelames1' });
   L.zones.push({ id: 'pelames', rects: [[14, -3, 42, 3, -1, 10]], atmo: 'city' });
   L.map.push({ id: 'pelames', r: [14, -3, 42, 3] });
@@ -451,6 +580,15 @@ export function buildTanners(ctx, S, L) {
     P.decal(ctx, x, 0.02, z, s);
   P.fleshGrowth(ctx, 63.2, 0, 7, 1.1, 91, { climb: 1.6 });
   P.fleshGrowth(ctx, 42.8, 0, 9, 0.8, 92, { climb: 1.2 });
+  P.jar(ctx, 44.1, 0, -2.6, 1.1);
+  P.jar(ctx, 44.8, 0, -3.5, 0.9);
+  P.jar(ctx, 43.6, 0, -4.2, 1.0, { broken: true });
+  P.basket(ctx, 60.2, 0, -6.0, { rot: 0.4 });
+  P.firewood(ctx, 45.2, 0, -11.45, Math.PI / 2, 3);
+  P.dropped(ctx, 54.8, 0, -5.8, 2.6, 'axe');
+  ctx.crows.push({ pts: [[57.0, 2.4, -7.9], [57.8, 2.4, -7.98], [58.8, 2.4, -8.08]], yaw: 0.1 });
+  ctx.crows.push({ x: 60.5, y: 0, z: 2.2, r: 1.2, n: 3 });
+  ctx.rats.push({ x: 43.0, y: 0, z: -9.6, n: 2 }, { x: 62.3, y: 0, z: -9.4, n: 2 }, { x: 62.0, y: 0, z: -15.2, n: 1 });
 
   // casas alrededor
   house(ctx, { x0: 42, z0: -21, x1: 48, z1: -12, front: 's', seed: 601, h: 6.5 });
@@ -508,6 +646,7 @@ export function buildTanners(ctx, S, L) {
   wb.box('ashlar', 47.9, 0, 11.8, 48.2, 3.4, 12, { ao: false });
   wb.box('ashlar', 49.8, 0, 11.8, 50.1, 3.4, 12, { ao: false });
   wb.box('ashlar', 47.9, 3.2, 11.8, 50.1, 3.5, 12, { ao: false });
+  wb.box('ashlar', 48.1, -0.05, 11.7, 49.9, 0.04, 12.7, { faces: 'tnsew', ao: false });
   wb.setRoom(croom);
   wb.box('flag', 44.6, -0.05, 12.6, 53.4, 0.01, 21.4, { faces: 't', ao: false, room: croom });
   for (let z = 14.5; z < 19; z += 1.5) {
@@ -520,7 +659,7 @@ export function buildTanners(ctx, S, L) {
   P.candles(ctx, 45.3, 0, 13.4, 6, 31, { room: croom, radius: 4, intensity: 0.8 });
   P.candles(ctx, 52.8, 0, 13.4, 6, 32, { room: croom, radius: 4, intensity: 0.8 });
   wb.setRoom(null);
-  L.interact.push({ kind: 'altar', id: 'a_capela', name: 'Capela de São Frutuoso', x: 49, y: 0, z: 20.4, spawn: [49, 0, 18.8], yaw: Math.PI });
+  L.interact.push({ kind: 'altar', id: 'a_capela', name: 'Capilla de San Fructuoso', x: 49, y: 0, z: 20.4, spawn: [49, 0, 18.8], yaw: Math.PI });
 
   // muralla oriental (de la puerta a la esquina sur)
   cityWall(ctx, 72, -56, 76, 26, 9, { merlons: false });
@@ -537,7 +676,7 @@ export function buildTanners(ctx, S, L) {
   // derrumbe que cierra el adarve hacia el sur
   P.rubble(ctx, 74, 9, -16, 14, 97, 1.6, { collide: false, scale: 1.4 });
   ctx.col.add(72, 9, -17.5, 76, 11, -14.5);
-  // derrumbe que cierra la Rua da Muralha al norte
+  // derrumbe que cierra la Calle de la Muralla al norte
   P.rubble(ctx, 68, 0, -41.5, 18, 98, 3.4, { scale: 1.6 });
   P.cart(ctx, 67, 0, -38.5, 0.8, { tipped: true });
   wb.box('wooddark', 64, 0, -42, 72, 3, -40.5, { ao: false });
@@ -549,6 +688,15 @@ export function buildTanners(ctx, S, L) {
   P.crate(ctx, 65, 0, -23, 0.9, 0.4);
   bakeCorpse(wb, 68, 0, -28, 1.8, 'face', 'soldier', 3);
   P.decal(ctx, 68, 0.02, -28, 2);
+  // proyectiles y flechas que pasaron por encima de la muralla
+  P.firewood(ctx, 71.35, 0, 2.2, 0, 4);
+  P.arrows(ctx, 68.4, 0, -12.5, 6, 55, 1.4);
+  P.siegeStone(ctx, 66.3, 0, -5.8, 0.5);
+  P.barrel(ctx, 71.35, 0, -27.0);
+  P.crate(ctx, 71.3, 0, -28.4, 0.8, 0.2);
+  P.weaponRack(ctx, 71.8, 0, -34.5, -Math.PI / 2);
+  ctx.crows.push({ pts: [[72.3, 10.1, -31.35], [72.3, 10.1, -29.75], [72.3, 10.1, -28.15]], yaw: -Math.PI / 2 });
+  ctx.crows.push({ pts: [[75.7, 10.1, -45.8], [75.7, 10.1, -44.2]], yaw: Math.PI / 2 });
 
   L.enemies.push(
     { type: 'bell', x: 56, y: 0, z: -1, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
@@ -599,6 +747,7 @@ export function buildRamparts(ctx, S, L) {
   P.wallTorch(ctx, 76.5, 11, -38.5, 'w', { room: tr, radius: 6 });
   bakeCorpse(wb, 74.6, 9, -40, 0.6, 'sit', 'soldier', 9);
   wb.setRoom(null);
+  ctx.rats.push({ x: 75.2, y: 9, z: -37.2, n: 1 });
   L.interact.push({ kind: 'item', id: 'i_ampolla2', item: 'ampolla', x: 72.5, y: 9.85, z: -38.8 }, { kind: 'note', id: 'n_muralla', note: 'muralla', x: 72.5, y: 9.82, z: -38.1, model: 'paper' });
 
   // cuerpo de la puerta del Postigo (cima = arena del jefe menor)
@@ -633,8 +782,12 @@ export function buildRamparts(ctx, S, L) {
   P.brazier(ctx, 78, 9, -65, {});
   bakeCorpse(wb, 67, 9, -65, 2.2, 'back', 'soldier', 10);
   bakeCorpse(wb, 77, 9, -58.5, -0.4, 'face', 'soldier', 11);
-  P.arrows(ctx, 71, 9.1, -60, 14, 41);
+  P.arrows(ctx, 71, 9, -60, 14, 41, 2.2);
   P.fleshGrowth(ctx, 79, 9, -67, 1.6, 101, { climb: 1.5 });
+  P.dropped(ctx, 68.4, 9, -61.3, 0.8, 'sword');
+  P.dropped(ctx, 75.8, 9, -63.9, 2.0, 'shield');
+  P.dropped(ctx, 72.9, 9, -58.3, 1.4, 'spear');
+  P.dropped(ctx, 66.3, 9, -66.3, 0.3, 'helmet');
   L.interact.push(
     { kind: 'fog', id: 'f_impaled', boss: 'impaled', x: 74, y: 9, z: -55.7, w: 3.4, h: 3.2, axis: 'x', enter: -1 },
     { kind: 'fog', id: 'f_impaled2', boss: 'impaled', x: 62.2, y: 9, z: -58, w: 3.2, h: 3.2, axis: 'z', enter: 1 },
@@ -666,12 +819,26 @@ export function buildRamparts(ctx, S, L) {
   P.hay(ctx, 59.5, 0, -47, 0.3);
   bakeCorpse(wb, 51, 0, -52, 0.4, 'back', 'soldier', 12);
   P.decal(ctx, 51, 0.02, -52, 2.2);
-  P.wallTorch(ctx, 44, 2.8, -47.8, 'e');
+  P.wallTorch(ctx, 45.5, 2.8, -45, 'n');
+  // advertencia de los sitiadores y restos del asalto
+  P.stake(ctx, 45.3, 0, -52.6, 0.9, 5);
+  P.stake(ctx, 45.6, 0, -55.2, -0.4, 6);
+  P.tent(ctx, 58.2, 0, -53.4, 2.6, 'clothDark');
+  P.firewood(ctx, 50.2, 0, -45.55, Math.PI / 2, 3);
+  P.dropped(ctx, 53.3, 0, -53.2, 1.9, 'sword');
+  P.dropped(ctx, 49.4, 0, -50.7, 0.6, 'shield');
+  P.arrows(ctx, 56.2, 0, -48.2, 6, 63, 1.3);
+  P.laundry(ctx, 30.5, -49.95, 30.5, -45.55, 4.4, 17);
+  P.sign(ctx, 27.2, 2.95, -50, 0, 1);
+  P.sign(ctx, 38.8, 2.95, -45.5, Math.PI, 0);
+  P.lantern(ctx, 34.6, 2.75, -50, 0, false);
+  ctx.crows.push({ x: 51, y: 0, z: -52, r: 1.3, n: 3 });
+  ctx.rats.push({ x: 45.0, y: 0, z: -45.9, n: 2 });
   // puerta del Postigo (vista desde el patio, cerrada por carne)
   wb.box('iron', 61.9, 0, -55.8, 62.05, 4.2, -52, { ao: false });
   P.fleshGrowth(ctx, 61.4, 0, -54, 1.3, 111, { climb: 1.8 });
   L.interact.push({ kind: 'examine', id: 'x_postigo', text: 'noExit', x: 61.4, y: 1, z: -54, r: 2.6 });
-  // portón atrancado hacia el Largo da Sé (atajo)
+  // portón atrancado hacia la Plaza de la Catedral (atajo)
   L.interact.push({ kind: 'door', id: 'd_postigo', x: 22.4, y: 0, z: -47.75, w: 4.5, h: 3.2, axis: 'z', lock: { type: 'barred', side: 1 }, mat: 'planks', hinge: -1, swing: 1, double: true });
   wb.box('ashlar', 22, 3.2, -50.3, 22.8, 4, -45.2, { ao: false });
   L.enemies.push({ type: 'soldier', x: 52, y: 0, z: -48, yaw: 1.2, idle: 'wander', id: 'e_post1' }, { type: 'penitent', x: 34, y: 0, z: -47.8, yaw: -1.5, idle: 'kneel', id: 'e_post2' });
@@ -786,6 +953,21 @@ export function buildFerraria(ctx, S, L) {
   P.wallTorch(ctx, -14, 2.8, 45, 'e');
   P.pike(ctx, 7, 0, 44, { tilt: 0.15 });
   P.pike(ctx, 8, 0, 43.4, { tilt: -0.1, skull: true });
+  P.laundry(ctx, -3.45, 24.6, 3.45, 24.6, 4.3, 18);
+  P.laundry(ctx, -3.45, 37.2, 3.45, 37.2, 4.2, 19);
+  P.sign(ctx, -3.5, 2.95, 27.4, Math.PI / 2, 0);
+  P.sign(ctx, 3.5, 2.95, 31.2, -Math.PI / 2, 2);
+  P.lantern(ctx, 3.5, 2.75, 23.6, -Math.PI / 2, true);
+  P.firewood(ctx, -13.35, 0, 44.4, 0, 3);
+  P.weaponRack(ctx, -13.75, 0, 52.6, Math.PI / 2);
+  P.jar(ctx, 12.9, 0, 43.3, 1.0);
+  P.jar(ctx, 13.2, 0, 44.2, 0.8, { lying: true, rot: 2.2 });
+  P.dropped(ctx, -2.9, 0, 51.3, 0.5, 'sword');
+  P.dropped(ctx, 6.3, 0, 54.5, 1.8, 'helmet');
+  P.dropped(ctx, 3.3, 0, 51.4, 2.9, 'shield');
+  ctx.crows.push({ pts: [[-12.5, 9, 58.35], [-11.7, 9, 58.3], [-10.8, 9, 58.4]], yaw: Math.PI });
+  ctx.crows.push({ x: 5, y: 0, z: 53, r: 1.2, n: 3 });
+  ctx.rats.push({ x: -12.2, y: 0, z: 55.6, n: 2 }, { x: -15.4, y: 0, z: 44.6, n: 1 });
   L.enemies.push(
     { type: 'soldier', x: -4, y: 0, z: 49, yaw: 0, idle: 'stand', id: 'e_fer1' },
     { type: 'soldier', x: 7, y: 0, z: 52, yaw: -2.5, idle: 'wander', id: 'e_fer2' },

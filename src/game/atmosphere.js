@@ -3,12 +3,12 @@ import * as THREE from 'three';
 import { damp } from '../core/util.js';
 
 export const ATMO = {
-  city: { fog: 0x5c625e, density: 0.05, sky: 0x9aa6b2, ground: 0x2c2723, hemi: 2.2, moon: 0.9, vol: 0.045, ash: 1, exposure: 1.0, sat: 0.7, lamp: 9, bloom: 0.9 },
+  city: { fog: 0x5c625e, density: 0.042, sky: 0x9aa6b2, ground: 0x2c2723, hemi: 2.2, moon: 0.9, vol: 0.038, ash: 1, exposure: 1.0, sat: 0.7, lamp: 9, bloom: 0.9 },
   prison: { fog: 0x100d0b, density: 0.06, sky: 0x8a8278, ground: 0x2a221c, hemi: 1.1, moon: 0, vol: 0, ash: 0, exposure: 1.2, sat: 0.8, lamp: 10, bloom: 1.0 },
   interior: { fog: 0x15110e, density: 0.055, sky: 0x8a8278, ground: 0x2a221c, hemi: 1.2, moon: 0.05, vol: 0, ash: 0, exposure: 1.15, sat: 0.8, lamp: 10, bloom: 1.0 },
   chapel: { fog: 0x1b1411, density: 0.045, sky: 0x9a8a80, ground: 0x2a2018, hemi: 1.4, moon: 0.05, vol: 0, ash: 0, exposure: 1.15, sat: 0.85, lamp: 9, bloom: 1.1 },
   cathedral: { fog: 0x241a1c, density: 0.03, sky: 0x8a7a80, ground: 0x2a1e1e, hemi: 1.6, moon: 0.15, vol: 0.03, ash: 0.12, exposure: 1.1, sat: 0.8, lamp: 10, bloom: 1.2 },
-  ramparts: { fog: 0x666d6a, density: 0.042, sky: 0xa6b2bc, ground: 0x2c2723, hemi: 2.4, moon: 1.1, vol: 0.055, ash: 1.4, exposure: 1.0, sat: 0.68, lamp: 8, bloom: 0.9 },
+  ramparts: { fog: 0x666d6a, density: 0.036, sky: 0xa6b2bc, ground: 0x2c2723, hemi: 2.4, moon: 1.1, vol: 0.048, ash: 1.4, exposure: 1.0, sat: 0.68, lamp: 8, bloom: 0.9 },
   crypt: { fog: 0x070809, density: 0.065, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.75, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.1 },
   arena: { fog: 0x1a080c, density: 0.028, sky: 0x70404a, ground: 0x241010, hemi: 1.1, moon: 0, vol: 0.02, ash: 0, exposure: 1.2, sat: 0.85, lamp: 11, bloom: 1.3 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },

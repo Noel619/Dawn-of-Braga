@@ -647,26 +647,33 @@ function fleshGen(emit) {
   const S = 64;
   return pixels(S, S, (x, y, o) => {
     const n = fbm2(x / 6, y / 6, 4, S / 6, 121);
+    // fibras musculares: ruido muy estirado en una dirección que ondula
+    const wob = fbm2(x / 16, y / 16, 2, S / 16, 126) * 6;
+    const fib = fbm2((x + wob) / 1.6, (y + wob) / 11, 3, 0, 127);
     const v = 1 - Math.abs(fbm2(x / 9, y / 9, 4, S / 9, 122) * 2 - 1);
-    const fat = fbm2(x / 3, y / 12, 3, 0, 123);
-    const [f1, , id] = worley2((x / S) * 6, (y / S) * 6, 6, 124, 0.9);
-    const pust = hash2(id, 1, 125) > 0.6 && f1 < 0.22;
+    const bruise = fbm2(x / 10 + 3, y / 10, 3, S / 10, 128);
+    const fat = fbm2(x / 5, y / 5, 3, S / 5, 123);
+    const [f1, , id] = worley2((x / S) * 5, (y / S) * 5, 5, 124, 0.9);
+    const pust = hash2(id, 1, 125) > 0.72 && f1 < 0.16;
     if (emit) {
       if (pust) {
-        const k = 1 - f1 / 0.22;
-        set(o, 255 * k, 170 * k, 60 * k);
-      } else if (v > 0.9) {
-        const k = (v - 0.9) * 10;
-        set(o, 200 * k, 40 * k, 10 * k);
+        const k = 1 - f1 / 0.16;
+        set(o, 200 * k, 120 * k, 40 * k);
+      } else if (v > 0.93) {
+        const k = (v - 0.93) * 12;
+        set(o, 120 * k, 14 * k, 8 * k);
       } else set(o, 0, 0, 0);
       return;
     }
-    let c = mix3([96, 18, 26], [140, 36, 44], n);
-    if (fat > 0.62) c = mix3(c, [176, 104, 96], Math.min(1, (fat - 0.62) * 3));
-    if (v > 0.88) c = mix3(c, [40, 6, 12], Math.min(1, (v - 0.88) * 8));
+    let c = mix3([58, 10, 16], [118, 26, 32], n);
+    if (fib > 0.56) c = mix3(c, [150, 60, 62], Math.min(1, (fib - 0.56) * 3));
+    if (fib < 0.4) c = mix3(c, [38, 6, 12], Math.min(1, (0.4 - fib) * 2.5));
+    if (bruise > 0.6) c = mix3(c, [62, 30, 58], Math.min(1, (bruise - 0.6) * 3));
+    if (fat > 0.7) c = mix3(c, [168, 128, 104], Math.min(1, (fat - 0.7) * 3.5));
+    if (v > 0.86) c = mix3(c, [26, 4, 16], Math.min(1, (v - 0.86) * 8));
     if (pust) {
-      const k = 1 - f1 / 0.22;
-      c = mix3(c, [210, 180, 100], k);
+      const k = 1 - f1 / 0.16;
+      c = mix3(c, [196, 170, 96], k * k);
     }
     set(o, c[0], c[1], c[2]);
   });

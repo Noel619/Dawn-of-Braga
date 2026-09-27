@@ -6,6 +6,8 @@ import { CollisionWorld } from './collision.js';
 import { WalkGrid } from './walkgrid.js';
 import { buildCastle, buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
+import { scatterClutter } from './clutter.js';
+import { corpseLog } from '../entities/models.js';
 
 export function buildLevel() {
   const ctx = {
@@ -17,7 +19,11 @@ export function buildLevel() {
     decals: [],
     banners: [],
     shafts: [],
+    crows: [], // bandadas de cuervos {x,y,z,r,n} | {pts:[[x,y,z]...], yaw}
+    rats: [], // nidos de ratas {x,y,z,n}
+    flies: [], // enjambres de moscas (salen de los cadáveres)
   };
+  corpseLog.length = 0;
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
@@ -36,6 +42,15 @@ export function buildLevel() {
   buildCrypt(ctx, S, C, L);
   buildRiver(ctx, S, L);
 
+  // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
+  for (const c of corpseLog) {
+    if (ctx.fires.some((f) => f.s >= 0.8 && Math.hypot(f.x - c.x, f.z - c.z) < 2.6 && Math.abs(f.y - c.y) < 3)) continue;
+    if (ctx.flies.some((f) => Math.hypot(f.x - c.x, f.z - c.z) < 1.8 && Math.abs(f.y - c.y) < 1.2)) continue;
+    ctx.flies.push({ x: c.x, y: c.y, z: c.z });
+  }
+  // detritos al pie de los muros
+  const clutter = scatterClutter(ctx, S, L, corpseLog);
+
   // colisión generada a partir de las zonas transitables
   const nS = S.toColliders(ctx.col, -1, 5.2);
   const nC = C.toColliders(ctx.col, -10.6, -1.2);
@@ -49,5 +64,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC } };
+  return { ctx, L, meshes, S, C, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, clutter } };
 }

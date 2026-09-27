@@ -274,7 +274,7 @@ export class UI {
     c.fillStyle = '#16120e';
     c.fillRect(0, 0, W, H);
     const crypt = g.player.pos.y < -3;
-    $('map-eyebrow').textContent = crypt ? 'Mapa · Bajo la Sé' : 'Mapa · Braga intramuros';
+    $('map-eyebrow').textContent = crypt ? 'Mapa · Bajo la catedral' : 'Mapa · Braga intramuros';
     const rects = g.level.L.map.filter((m) => (m.level === 'crypt') === crypt && (crypt || m.id !== 'river' || g.visited.has('river')));
     let x0 = 1e9,
       z0 = 1e9,

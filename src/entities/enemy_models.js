@@ -196,7 +196,7 @@ export function buildHound() {
 }
 
 // ------------------------------------------------------------ Campanero
-// Bruto de 2,6 m con una campana de la Sé fundida en lugar de cabeza.
+// Bruto de 2,6 m con una campana de la catedral fundida en lugar de cabeza.
 export function buildBell() {
   const k = 1.38;
   const joints = humanoidJoints(k, { arm: 1.05 });
@@ -309,7 +309,7 @@ export function buildImpaled() {
   return new Rig({ joints, parts });
 }
 
-// ------------------------------------------------------------ O Turiferario
+// ------------------------------------------------------------ El Turiferario
 // El arzobispo transfigurado: casulla carmesí, jaula de hierro por rostro,
 // corona de velas, costillar abierto con un núcleo ardiente.
 export function buildTuribulario() {

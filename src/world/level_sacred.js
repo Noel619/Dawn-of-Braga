@@ -1,4 +1,4 @@
-// Sé de Braga, claustro, cripta (osario, templo romano, sepulcro),
+// Catedral de Braga, claustro, cripta (osario, templo romano, sepulcro),
 // cisterna del jefe final, galería y orillas del río.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
@@ -208,7 +208,13 @@ export function buildCathedral(ctx, S, L) {
   P.banner(ctx, -5.5, 12.5, -80, Math.PI / 2, 'bannerBlack', 1.4, 3.8);
   P.banner(ctx, 5.5, 12.5, -80, -Math.PI / 2, 'bannerBlack', 1.4, 3.8);
   P.banner(ctx, 0, 13, -100, 0, 'bannerBlack', 2.4, 5.5);
+  // candelabros volcados y cera por el suelo de la nave
+  P.candles(ctx, 8.6, FY, -70.5, 5, 1312, { room, unlit: true, spread: 0.5 });
+  P.candles(ctx, -8.9, FY, -96.8, 4, 1313, { room, unlit: true, spread: 0.4 });
+  P.chains(ctx, -10.9, 5.2, -88, 12, 0);
+  P.chains(ctx, 10.9, 5.6, -74, 10, 0);
   wb.setRoom(null);
+  ctx.rats.push({ x: -10.0, y: FY, z: -102.6, n: 2 });
 
   L.interact.push(
     { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 4.4, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true },
@@ -244,6 +250,8 @@ export function buildCloister(ctx, S, L) {
   solid(ctx, 'wallstone', 13, 0, -89, 37, 7, -88, { sub: 2 });
   floor(ctx, 13, -88, 36, -60.5, 'flag');
   floor(ctx, 19.4, -81.6, 29.6, -66.4, 'dirt', 0.02);
+  // paso de la verja hacia el atrio de la catedral
+  floor(ctx, 15.5, -60.6, 19, -55.9, 'flag', 0.015);
   // parapeto del patio con huecos centrales + columnas
   const gx0 = 19,
     gx1 = 30,
@@ -319,6 +327,11 @@ export function buildCloister(ctx, S, L) {
   bakeCorpse(wb, 16, 0, -84.5, 0.4, 'back', 'villager', 2);
   P.decal(ctx, 16, 0.02, -84.5, 2);
   P.fleshGrowth(ctx, 13.4, 0, -79.6, 0.7, 1407, { climb: 1.4 });
+  P.jar(ctx, 34.9, 0, -62.6, 1.1);
+  P.jar(ctx, 35.2, 0, -63.5, 0.8, { broken: true });
+  P.basket(ctx, 14.3, 0, -73.6, { tipped: true, rot: -1.2, fill: 'straw', fillTint: [0.5, 0.35, 0.2] });
+  ctx.crows.push({ x: 24.5, y: 0, z: -70.2, r: 1.4, n: 4 });
+  ctx.rats.push({ x: 14.4, y: 0, z: -87.2, n: 2 });
   L.interact.push(
     { kind: 'door', id: 'd_claustro', x: 17.25, y: 0, z: -60, w: 3.5, h: 3.6, axis: 'x', lock: { type: 'key', item: 'llave_claustro' }, mat: 'irongate', hinge: 0, swing: -1, double: true },
     { kind: 'item', id: 'i_relicario1', item: 'relicario', x: 27.9, y: 0.25, z: -68.3 },
@@ -390,6 +403,7 @@ export function buildCrypt(ctx, S, C, L) {
   P.candles(ctx, -6.2, Y, -98, 6, 1501, { room, radius: 4, intensity: 0.9 });
   P.candles(ctx, 6.2, Y, -109, 6, 1502, { room, radius: 4, intensity: 0.9 });
   P.bones(ctx, -5.8, Y, -108.8, 8, 1503, 0.6);
+  ctx.rats.push({ x: -5.4, y: Y, z: -109.2, n: 2 });
   if (ctx.shafts) ctx.shafts.push({ a: [0, Y + 4.8, -98.5], b: [0.5, Y, -101.5], w: 2.2, color: 0xffb070 });
   L.interact.push({ kind: 'altar', id: 'a_cripta', name: 'Altar de la Cripta', x: 5.8, y: Y, z: -103.5, spawn: [4.2, Y, -103.5], yaw: -Math.PI / 2 });
 
@@ -412,6 +426,7 @@ export function buildCrypt(ctx, S, C, L) {
   // cadenas colgando
   for (let z = -115; z > -134; z -= 5) for (let k = 0; k < 8; k++) wb.box('iron', -0.03, Y + 3.8 - k * 0.14, z - 0.03, 0.03, Y + 3.7 - k * 0.14, z + 0.03, { ao: false, room });
   P.fleshGrowth(ctx, -1.9, Y, -131, 0.8, 1504, { room, climb: 1.6, tendrils: 2, bound: [-2.4, -1.2, -135.8, -126] });
+  ctx.rats.push({ x: 1.4, y: Y, z: -113.5, n: 2 });
 
   // --- sepulcro del arzobispo (este)
   C.paint(2.4, -121, 3.6, -119, 1);
@@ -428,6 +443,7 @@ export function buildCrypt(ctx, S, C, L) {
   P.sarcophagus(ctx, 5, Y, -126.4, 0, { effigy: true });
   P.sarcophagus(ctx, 14.6, Y, -116, Math.PI / 2, {});
   P.fleshGrowth(ctx, 15.4, Y, -127.4, 1.0, 1506, { room, climb: 1.8 });
+  ctx.rats.push({ x: 14.9, y: Y, z: -125.8, n: 1 });
   L.interact.push(
     { kind: 'item', id: 'i_anillo', item: 'anillo', x: 10.1, y: Y + 1.2, z: -119.6 },
     { kind: 'note', id: 'n_arzobispo', note: 'arzobispo', x: 9.2, y: Y + 1.3, z: -121.2, model: 'paper' }
@@ -461,6 +477,8 @@ export function buildCrypt(ctx, S, C, L) {
   P.candles(ctx, -11, Y + 1.5, -130.8, 7, 1507, { room, radius: 6, intensity: 1.3, spread: 1.2 });
   P.fleshGrowth(ctx, -11, Y + 1.5, -131.7, 1.1, 1508, { room, climb: 2.5, lift: 1.5, bound: [-14, -8, -131.9, -129] });
   P.bones(ctx, -6, Y, -114, 10, 1509, 1.2);
+  P.ritual(ctx, -11, Y, -125.5, 1.6, 1510, { room });
+  ctx.rats.push({ x: -5.4, y: Y, z: -113.2, n: 2 });
   L.interact.push(
     { kind: 'note', id: 'n_romana', note: 'romana', x: -11, y: Y + 1.0, z: -129.8, model: 'wall', r: 1.8 },
     { kind: 'item', id: 'i_relicario2', item: 'relicario', x: -12.3, y: Y + 1.7, z: -130.6 }
@@ -534,6 +552,8 @@ export function buildCrypt(ctx, S, C, L) {
     wb.box('mossstone', -2, cy, z - 1.5, 2, cy + 0.4, z, { faces: 'b', ao: false, room: 'tunnel' });
     ctx.col.add(-2, cy, z - 1.5, 2, cy + 0.4, z).cam = true;
   }
+  // tramo llano final de la galería (antes sin suelo visible)
+  wb.box('mossstone', -2, -0.3, -196.4, 2, 0, -185.2, { faces: 't', ao: false, room: 'tunnel', sub: 2 });
   for (let z = -175; z > -192; z -= 6) {
     const fy = AY + Math.min(10, ((-170 - z) / 0.45) * (10 / 34));
     P.wallTorch(ctx, -2, fy + 2.2, z, 'e', { room: 'tunnel', radius: 6, dyn: 2 });
@@ -563,7 +583,8 @@ export function buildCrypt(ctx, S, C, L) {
 // ======================================================================== RÍO / FINAL
 export function buildRiver(ctx, S, L) {
   const wb = ctx.wb;
-  W(S, -30, -216, 30, -196);
+  // la orilla baja hacia el agua a partir de z=-212: no se camina por el aire
+  W(S, -30, -212.2, 30, -196);
   const rng = new RNG(1701);
   // orilla: malla de alturas (plana donde se camina, baja hacia el agua)
   const hgt = (x, z) => {
@@ -674,6 +695,8 @@ export function buildRiver(ctx, S, L) {
     [45, -160],
   ])
     ctx.fires.push({ x, y: 6, z, s: 2.8, smoke: true, light: false, embers: false, glow: false });
+  ctx.crows.push({ x: -7.5, y: 0, z: -204.5, r: 2, n: 5 });
+  ctx.crows.push({ x: 9.5, y: 0, z: -203.4, r: 1.6, n: 3 });
   L.interact.push({ kind: 'trigger', id: 't_final', x: 0, y: 0, z: -207.5, r: 30, rz: 3.5, event: 'ending' });
   L.zones.push({ id: 'river', rects: [[-70, -420, 70, -196.4, -3, 40]], atmo: 'dawn' });
   L.map.push({ id: 'river', r: [-30, -216, 30, -196] });

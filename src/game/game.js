@@ -14,6 +14,7 @@ import { buildMourner, buildPenitent, buildBell } from '../entities/enemy_models
 import { Input, GLYPHS } from '../core/input.js';
 import { Audio } from '../core/audio.js';
 import { Combat } from './combat.js';
+import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
 import { NavGrid } from './nav.js';
 import { UI } from './ui.js';
@@ -71,6 +72,7 @@ export class Game {
     };
 
     this.fx.trail = new SwordTrail(this.scene);
+    this.fauna = new Fauna(this, { crows: lvl.ctx.crows, rats: lvl.ctx.rats, flies: lvl.ctx.flies });
     this._bb = new THREE.Vector3();
     this._bt = new THREE.Vector3();
     this.atmo = new Atmosphere(this.scene, this.post, this.fx);
@@ -347,6 +349,7 @@ export class Game {
     p.flasks = p.maxFlasks;
     this.camRig.snapTo(p);
     this.lockTarget = null;
+    this.fauna.reset();
   }
 
   openPause() {
@@ -468,6 +471,7 @@ export class Game {
     this.fadeTarget = 0.55;
     setTimeout(() => (this.fadeTarget = 1), 900);
     for (const e of this.enemies) if (!e.boss) e.reset();
+    this.fauna.reset();
     this.combat.clear();
     this.saveGame();
     setTimeout(() => this.hint('altar'), 1500);
@@ -602,7 +606,7 @@ export class Game {
       const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
       const body = document.getElementById('ending-body');
       body.innerHTML = `
-        <div class="line" style="font-size:22px;line-height:1.7;max-width:46ch;margin:0 auto">Al amanecer, el Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
+        <div class="line" style="font-size:22px;line-height:1.7;max-width:46ch;margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
         <h2 style="margin-top:34px;font-size:40px">Dawn of Braga</h2>
         <div class="stats" style="justify-content:center;margin:18px auto 0"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / 10</b></div>
         <div class="credit">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
@@ -854,6 +858,7 @@ export class Game {
       }
       if (this.state === 'play') for (const e of this.activeEnemies) e.update(dt, p);
       else if (this.state === 'title') for (const e of this.activeEnemies) e.animate(dt);
+      this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
       this.interact.update(dt);
       if (this.state === 'play') {

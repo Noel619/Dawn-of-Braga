@@ -76,7 +76,7 @@ Al preso de la primera celda lo dejo sin comer. Que Dios me perdone: no pienso a
     title: 'Carta sin terminar',
     text: `Miguel, si vuelves:
 
-Tu hermana dejó de toser anoche. Por la mañana estaba de pie junto a la ventana, mirando hacia la Sé. No contesta. No parpadea.
+Tu hermana dejó de toser anoche. Por la mañana estaba de pie junto a la ventana, mirando hacia la catedral. No contesta. No parpadea.
 
 He clavado la puerta. Ya no sé si es para que no entren o para que no salga.`,
   },
@@ -86,7 +86,7 @@ He clavado la puerta. Ya no sé si es para que no entren o para que no salga.`,
 
 Las eché a la fragua. Gritaron.
 
-Dejo la palanca junto al yunque. Con ella se arrancan los tablones de la barricada de los Pelames.`,
+Dejo la palanca junto al yunque. Con ella se arrancan los tablones de la barricada de la Calle de los Pellejeros.`,
   },
   canonigo: {
     title: 'Diario del canónigo',
@@ -94,13 +94,13 @@ Dejo la palanca junto al yunque. Con ella se arrancan los tablones de la barrica
 
 Dijo que era un regalo. Que nos protegería del asedio.
 
-Los sitiadores no lo trajeron: lo oyeron. La campana de la Sé tocó sola la noche de la caída, y ellos abrieron nuestras puertas como si alguien los llamara.
+Los sitiadores no lo trajeron: lo oyeron. La campana de la catedral tocó sola la noche de la caída, y ellos abrieron nuestras puertas como si alguien los llamara.
 
 Me quedo la llave del claustro. No volveré a bajar.`,
   },
   soldado: {
     title: 'Nota ensangrentada',
-    text: `Las puertas de la Sé están atrancadas por dentro. Durante dos días oímos rezar al otro lado.
+    text: `Las puertas de la catedral están atrancadas por dentro. Durante dos días oímos rezar al otro lado.
 
 Después, sólo la campana.`,
   },
@@ -153,36 +153,36 @@ export const MSG = {
   seal: 'Una losa con el sigilo del Pacto sella el paso. Tiene un hueco del tamaño de un anillo.',
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
-  southGate: 'La Porta Sul está hundida bajo escombros y carne. No hay salida.',
+  southGate: 'La Puerta Sur está hundida bajo escombros y carne. No hay salida.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   died: 'HAS CAÍDO',
 };
 
 export const AREA_NAMES = {
-  prison: 'Cárcel del Castelo',
-  castle: 'Patio del Castelo',
-  souto: 'Rua do Souto',
-  praca: 'Praça do Pão',
-  ruase: 'Rua da Sé',
-  largo: 'Largo da Sé',
-  cathedral: 'Sé de Braga',
-  cloister: 'Claustro de la Sé',
-  pelames: 'Rua dos Pelames',
+  prison: 'Cárcel del Castillo',
+  castle: 'Patio del Castillo',
+  souto: 'Calle del Soto',
+  praca: 'Plaza del Pan',
+  ruase: 'Calle de la Catedral',
+  largo: 'Plaza de la Catedral',
+  cathedral: 'Catedral de Braga',
+  cloister: 'Claustro de la Catedral',
+  pelames: 'Calle de los Pellejeros',
   tanners: 'Curtidurías',
   canon: 'Casa del Canónigo',
-  chapel: 'Capela de São Frutuoso',
-  muralla: 'Rua da Muralha',
+  chapel: 'Capilla de San Fructuoso',
+  muralla: 'Calle de la Muralla',
   ramparts: 'Adarve oriental',
   gatehouse: 'Torre del Postigo',
-  postigo: 'Travessa do Postigo',
-  ferraria: 'Rua da Ferraria',
+  postigo: 'Callejón del Postigo',
+  ferraria: 'Calle de la Herrería',
   smithy: 'Fragua',
   souto_house: 'Casa tapiada',
-  crypt: 'Cripta de la Sé',
+  crypt: 'Cripta de la Catedral',
   ossuary: 'Osario',
   roman: 'Templo de Bracara',
   tomb: 'Sepulcro del arzobispo',
   arena: 'Cisterna del Dios Desconocido',
   tunnel: 'Galería del río',
-  river: 'Orillas del Este',
+  river: 'Orillas del río Este',
 };

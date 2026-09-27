@@ -258,6 +258,18 @@ export class Audio {
     const P = pos && pos.x !== undefined ? pos : null;
     let d;
     switch (name) {
+      case 'crow': {
+        // graznido: sierra ronca con formantes nasales, uno o dos "craa"
+        d = this.out(P, { gain: 0.55, verb: 0.45, ref: 4, life: 3 });
+        const n = Math.random() < 0.5 ? 1 : 2;
+        for (let i = 0; i < n; i++) {
+          const t0 = t + i * (0.26 + Math.random() * 0.08);
+          const f = 520 + Math.random() * 160;
+          this.voice(d, t0, 0.22, { f0: f, f1: f * 0.72, vowel: 'a', gain: 0.22, vib: 38, vibD: 90, breath: 0.08, a: 0.012 });
+          this.noise(d, t0, 0.18, { type: 'bandpass', f0: 1400, q: 3, gain: 0.08, a: 0.01 });
+        }
+        break;
+      }
       case 'swing':
         d = this.out(P, { gain: 0.55, verb: 0.1, life: 1 });
         this.noise(d, t, 0.24, { f0: 500, f1: 2600, q: 1.4, gain: 0.5, a: 0.06 });
@@ -652,6 +664,47 @@ export class Audio {
       s.start(0, i * 2);
       this.fire.push({ p, g });
     }
+    // zumbido de moscas (posicional: sigue al cadáver más cercano)
+    {
+      const bf = ctx.createBiquadFilter();
+      bf.type = 'bandpass';
+      bf.frequency.value = 1100;
+      bf.Q.value = 1.4;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 6.1;
+      const lg = ctx.createGain();
+      lg.gain.value = 22;
+      lfo.connect(lg);
+      for (const f of [187, 211, 243]) {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = f;
+        lg.connect(o.frequency);
+        const g = ctx.createGain();
+        g.gain.value = 0.3;
+        o.connect(g).connect(bf);
+        o.start();
+      }
+      // vaivén de volumen: las moscas se acercan y se alejan
+      const wob = ctx.createGain();
+      wob.gain.value = 0.65;
+      const lfo2 = ctx.createOscillator();
+      lfo2.frequency.value = 0.37;
+      const lg2 = ctx.createGain();
+      lg2.gain.value = 0.35;
+      lfo2.connect(lg2).connect(wob.gain);
+      const p = ctx.createPanner();
+      p.panningModel = 'equalpower';
+      p.distanceModel = 'inverse';
+      p.refDistance = 0.8;
+      p.rolloffFactor = 1.6;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      bf.connect(wob).connect(g).connect(p).connect(this.amb);
+      lfo.start();
+      lfo2.start();
+      this.flyBuzz = { p, g };
+    }
     // susurros / estática del miedo
     const st = ctx.createBufferSource();
     st.buffer = this.staticBuf;
@@ -726,6 +779,16 @@ export class Audio {
         F.g.gain.setTargetAtTime(0.18 * Math.min(1.6, n[1].s), t, 0.3);
       } else F.g.gain.setTargetAtTime(0, t, 0.3);
     });
+
+    // moscas
+    const fl = game.fauna && game.state !== 'title' ? game.fauna.nearestFlies(cp, 7) : null;
+    if (fl) {
+      const B = this.flyBuzz.p;
+      B.positionX.setTargetAtTime(fl.x, t, 0.1);
+      B.positionY.setTargetAtTime(fl.y + 0.3, t, 0.1);
+      B.positionZ.setTargetAtTime(fl.z, t, 0.1);
+    }
+    this.flyBuzz.g.gain.setTargetAtTime(fl ? 0.05 : 0, t, 0.4);
 
     // miedo: susurros y estática según criaturas cercanas (calculado por el juego)
     this.fear = game.fear || 0;

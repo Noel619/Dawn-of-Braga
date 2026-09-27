@@ -192,6 +192,10 @@ export const CORPSE_POSES = {
 
 const _m = new THREE.Matrix4();
 
+// Registro de los cadáveres horneados (posición mundial sobre el torso): de
+// aquí salen los enjambres de moscas.
+export const corpseLog = [];
+
 // Hornea un cadáver en la geometría estática del mundo.
 export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed = 0, extraDef = null) {
   const def = extraDef || villagerDef(kind, seed);
@@ -204,6 +208,8 @@ export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed =
   const lie = poseName === 'back' || poseName === 'face' || poseName === 'curl';
   const hipY = lie ? 0.16 : poseName === 'sit' ? 0.2 : poseName === 'kneel' ? 0.5 : 0;
   if (poseName !== 'hang') rig.joints.hips.position.y = hipY;
+  const torso = poseName === 'hang' ? 0.8 : lie ? 0.05 : poseName === 'sit' ? 0.25 : poseName === 'kneel' ? 0.5 : 0.3;
+  corpseLog.push(new THREE.Vector3(x, y + torso, z).applyMatrix4(wb.m));
   rig.root.position.set(x, y, z);
   rig.root.rotation.y = yaw;
   rig.root.updateMatrixWorld(true);
