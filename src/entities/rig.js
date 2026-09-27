@@ -2,7 +2,7 @@
 // (muestreado a 20 fps para el característico movimiento "a saltos" de PS1).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { objMat, MAT_DEFS } from '../gfx/materials.js';
+import { objMat, MAT_DEFS, cloneMat } from '../gfx/materials.js';
 import { DEG } from '../core/util.js';
 
 // ------------------------------------------------------------- geometrías
@@ -143,14 +143,28 @@ export class Rig {
     return out.setFromMatrixPosition(j.matrixWorld);
   }
 
-  // materiales propios (para destellos y ojos sin afectar a otras criaturas)
+  // materiales propios (para destellos, ojos y la luz del lugar sin afectar a
+  // otras criaturas); la copia conserva el parche PSX
   own() {
     if (!this._own) {
+      const done = new Map();
       for (const m of this.meshes) {
-        m.material = m.material.clone();
+        if (!done.has(m.material)) done.set(m.material, cloneMat(m.material));
+        m.material = done.get(m.material);
         m.userData.baseEI = m.material.emissiveIntensity;
       }
+      this.mats = [...done.values()];
       this._own = true;
+    }
+  }
+
+  // Luz horneada del lugar (sonda) y oclusión junto al suelo.
+  setProbe(r, g, b, groundY, ao = 0.34) {
+    this.own();
+    for (const m of this.mats) {
+      if (!m._u) continue;
+      m._u.uProbe.value.set(r, g, b);
+      m._u.uGround.value.set(groundY, ao);
     }
   }
 

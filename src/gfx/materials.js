@@ -87,6 +87,12 @@ function patch(material, opts = {}) {
   const flesh = !!opts.flesh;
   const bake = !!opts.bake;
   const wind = !!opts.wind;
+  // personajes y objetos móviles: reciben la luz horneada del lugar donde
+  // están (sonda) y oscurecen cerca del suelo como el escenario; así no
+  // parecen recortados sobre el fondo
+  const probe = !!opts.probe;
+  material.userData.patch = { flesh, bake, wind, probe };
+  if (probe) material._u = { uProbe: { value: new THREE.Vector3() }, uGround: { value: new THREE.Vector2(0, 0) } };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = G.uTime;
     shader.uniforms.uSnap = G.uSnap;
@@ -94,6 +100,10 @@ function patch(material, opts = {}) {
     shader.uniforms.uSkyGlow = G.uSkyGlow;
     shader.uniforms.uSun = G.uSun;
     shader.uniforms.uSunDir = G.uSunDir;
+    if (probe) {
+      shader.uniforms.uProbe = material._u.uProbe;
+      shader.uniforms.uGround = material._u.uGround;
+    }
     let vs = shader.vertexShader;
     vs = vs.replace(
       '#include <common>',
@@ -103,12 +113,14 @@ uniform vec2 uSnap;
 varying vec3 vAffUv;
 varying float vPulse;
 varying vec3 vSkyDir;
+${probe ? 'varying float vWY;' : ''}
 ${bake ? 'attribute vec3 aBake;\nvarying vec3 vBake;' : ''}`
     );
     vs = vs.replace(
       '#include <fog_vertex>',
       `#include <fog_vertex>
-vSkyDir = transpose(mat3(viewMatrix)) * mvPosition.xyz;`
+vSkyDir = transpose(mat3(viewMatrix)) * mvPosition.xyz;
+${probe ? 'vWY = (modelMatrix * vec4(transformed, 1.0)).y;' : ''}`
     );
     vs = vs.replace(
       '#include <begin_vertex>',
@@ -167,6 +179,7 @@ varying vec3 vAffUv;
 varying float vPulse;
 varying vec3 vSkyDir;
 ${bake ? 'varying vec3 vBake;' : ''}
+${probe ? 'uniform vec3 uProbe;\nuniform vec2 uGround;\nvarying float vWY;' : ''}
 ${SKY_GLSL}`
     );
     fs = fs.replace(
@@ -195,6 +208,19 @@ ${SKY_GLSL}`
 reflectedLight.indirectDiffuse += diffuseColor.rgb * vBake;`
       );
     }
+    if (probe) {
+      // oclusión de contacto (más oscuro junto a los pies) + luz horneada del sitio
+      fs = fs.replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+diffuseColor.rgb *= 1.0 - uGround.y * (1.0 - smoothstep(0.0, 1.25, vWY - uGround.x));`
+      );
+      fs = fs.replace(
+        '#include <lights_fragment_end>',
+        `#include <lights_fragment_end>
+reflectedLight.indirectDiffuse += diffuseColor.rgb * uProbe;`
+      );
+    }
     if (flesh) {
       fs = fs.replace(
         '#include <emissivemap_fragment>',
@@ -204,9 +230,20 @@ totalEmissiveRadiance *= 0.35 + 0.95 * vPulse * vPulse;`
     }
     shader.fragmentShader = fs;
   };
-  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '') + (wind ? '-wind' : '');
+  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '') + (wind ? '-wind' : '') + (probe ? '-probe' : '');
   material.customProgramCacheKey = () => ck;
   return material;
+}
+
+// Copia de un material conservando el parche PSX (Material.clone() no copia
+// onBeforeCompile: el clon perdía la niebla con color de cielo y resaltaba
+// en la niebla como una silueta recortada).
+export function cloneMat(m) {
+  const c = m.clone();
+  c.userData.def = m.userData.def;
+  const p = m.userData.patch;
+  if (p) patch(c, { ...p, probe: p.probe || (!p.bake && !(c.isMeshBasicMaterial)) });
+  return c;
 }
 
 function build(name, { vertexColors = true, side = THREE.FrontSide, basic = false } = {}) {

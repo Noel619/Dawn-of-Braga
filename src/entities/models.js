@@ -197,7 +197,7 @@ const _m = new THREE.Matrix4();
 export const corpseLog = [];
 
 // Hornea un cadáver en la geometría estática del mundo.
-export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed = 0, extraDef = null) {
+export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed = 0, extraDef = null, o = {}) {
   const def = extraDef || villagerDef(kind, seed);
   const rig = new Rig(def);
   const pose = {};
@@ -215,6 +215,6 @@ export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed =
   rig.root.updateMatrixWorld(true);
   for (const mesh of rig.meshes) {
     _m.copy(mesh.matrixWorld);
-    wb.geometry(mesh.userData.matName, mesh.geometry, _m, { ao: false, uvScale: 1 });
+    wb.geometry(mesh.userData.matName, mesh.geometry, _m, { ao: false, uvScale: 1, tint: o.tint });
   }
 }

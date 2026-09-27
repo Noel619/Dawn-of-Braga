@@ -282,6 +282,12 @@ function sideFrame(side, x0, z0, x1, z1) {
 
 // Casa medieval: zócalo de piedra, planta baja, planta alta en voladizo
 // con entramado de madera, tejado a dos aguas de teja.
+// Casa visitable (hollow): muros de la planta baja con huecos de puerta en
+// cualquier fachada (doors), tabiques interiores con pasos (walls), suelo,
+// techo con vigas y colisión exacta; el techo y el tejado frenan la cámara.
+//   doors: [{ side:'n'|'s'|'e'|'w', at (a lo largo de la fachada, como doorAt)
+//             | x/z (coordenada mundo), w, h }]
+//   walls: [{ x0, z0, x1, z1, doors: [{ at (coordenada mundo a lo largo), w, h }] }]
 export function house(ctx, s) {
   const wb = ctx.wb;
   const { x0, z0, x1, z1 } = s;
@@ -289,7 +295,7 @@ export function house(ctx, s) {
   const W = x1 - x0,
     D = z1 - z0;
   const h = s.h ?? rng.range(5.6, 8.4);
-  const g1 = 3.1; // altura planta baja
+  const g1 = s.g1 ?? 3.1; // altura planta baja
   const style = s.style ?? rng.pick(['plaster', 'timber', 'timber', 'stone']);
   const tint = s.tint ?? rng.pick(PLASTER_TINTS);
   const front = s.front ?? 's';
@@ -298,30 +304,97 @@ export function house(ctx, s) {
   const lowerMat = style === 'plaster' ? 'plaster' : 'wallstone';
   const jetty = s.jetty ?? (style !== 'stone' && h > 6 && rng.chance(0.7) ? 0.5 : 0);
   const burned = s.burned;
+  const hollow = !!s.hollow;
+  const lt = lowerMat === 'plaster' ? tint : null;
 
-  // colisión del volumen
-  if (s.collide !== false) ctx.col.add(x0, 0, z0, x1, h, z1);
+  // colisión del volumen (las visitables la llevan pieza a pieza)
+  if (s.collide !== false && !hollow) ctx.col.add(x0, 0, z0, x1, h, z1);
 
-  // zócalo
-  wb.box('wallstone', x0 - 0.07, 0, z0 - 0.07, x1 + 0.07, 0.65, z1 + 0.07, { sub: 2, aoH: 0.6, faces: 'tnsew' });
-  // planta baja (maciza, o hueca con hueco de puerta si es visitable)
-  if (s.hollow) {
-    const t = 0.35;
-    const [ftx, ftz, frot, FL] = sideFrame(front, x0, z0, x1, z1);
-    const da = s.doorAt ?? FL / 2;
-    const lt = lowerMat === 'plaster' ? tint : null;
+  // puertas de una casa visitable, en el marco local de cada fachada
+  const doorsBySide = { n: [], s: [], e: [], w: [] };
+  if (hollow) {
+    const list = s.doors ?? [{ side: front, at: s.doorAt }];
+    for (const d of list) {
+      const [tx, tz, , L] = sideFrame(d.side, x0, z0, x1, z1);
+      let at = d.at;
+      if (at === undefined && d.x !== undefined) at = d.side === 's' ? d.x - tx : d.side === 'n' ? tx - d.x : at;
+      if (at === undefined && d.z !== undefined) at = d.side === 'e' ? tz - d.z : d.side === 'w' ? d.z - tz : at;
+      if (at === undefined) at = L / 2;
+      doorsBySide[d.side].push({ at, w: d.w ?? 1.3, h: d.h ?? 2.3, frame: d.frame !== false });
+    }
+  }
+
+  if (hollow) {
+    const t = s.wallT ?? 0.35;
+    const room = s.room;
     for (const sd of ['n', 's', 'e', 'w']) {
       const [tx, tz, rot, L] = sideFrame(sd, x0, z0, x1, z1);
+      const ds = doorsBySide[sd].sort((a, b) => a.at - b.at);
       wb.at(tx, 0, tz, rot, () => {
-        if (sd === front) {
-          wb.box(lowerMat, 0, 0.65, -t, da - 0.65, g1, 0, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'tnsew' });
-          wb.box(lowerMat, da + 0.65, 0.65, -t, L, g1, 0, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'tnsew' });
-          wb.box(lowerMat, da - 0.65, 2.3, -t, da + 0.65, g1, 0, { sub: 1.6, tint: lt, ao: false, faces: 'nsb' });
-        } else wb.box(lowerMat, 0, 0.65, -t, L, g1, 0, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'nsew' });
+        // tramos de muro entre puertas: cara exterior (fuera) e interior (habitación)
+        const seg = (a0, a1, yb, yt, ends) => {
+          if (a1 - a0 < 0.01) return;
+          wb.box(lowerMat, a0, yb, -t, a1, yt, 0, { sub: 1.6, tint: lt, aoH: 1.2, faces: 's' + (yb > 0 ? 'b' : '') + ends, room: 'out' });
+          wb.box(lowerMat, a0, yb, -t, a1, yt, 0, { sub: 1.6, tint: lt ? lt.map((v) => v * 0.92) : [0.86, 0.84, 0.8], aoH: 1.2, faces: 'n', room, baseY: 0 });
+        };
+        let cur = 0;
+        for (const d of ds) {
+          const a = d.at - d.w / 2,
+            b = d.at + d.w / 2;
+          seg(cur, a, 0, g1, 'e');
+          seg(a, b, d.h, g1, '');
+          // umbral de piedra
+          wb.box('ashlar', a, 0, -t - 0.02, b, 0.035, 0.12, { ao: false, faces: 'tnsew' });
+          cur = b;
+        }
+        seg(cur, L, 0, g1, ds.length ? 'w' : '');
+        // zócalo: sólo una franja exterior (antes era un bloque macizo que
+        // tapaba el suelo de dentro y lo hacía parecer elevado)
+        // (las fachadas n/s se alargan 7 cm por los extremos y cierran las esquinas)
+        const ext = sd === 'n' || sd === 's' ? 0.07 : 0;
+        cur = 0;
+        for (const d of [...ds, { at: L + 10, w: 0 }]) {
+          const a = Math.min(L, d.at - d.w / 2);
+          if (a - cur > 0.01) wb.box('wallstone', cur - (cur <= 0 ? ext : 0), 0, 0, a + (a >= L ? ext : 0), 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'ts' + (cur > 0 ? 'w' : '') + (a < L ? 'e' : ''), room: 'out' });
+          cur = d.at + d.w / 2;
+        }
+        // marcos de piedra de las puertas
+        for (const d of ds) if (d.frame) doorAt(ctx, d.at, d.w, d.h, { frameOnly: true });
       });
+      // colisión de los tramos (coordenadas mundo)
+      let cur = 0;
+      for (const d of [...ds, { at: L + 10, w: 0 }]) {
+        const a = Math.min(L, d.at - d.w / 2);
+        if (a - cur > 0.01) addSideBox(ctx.col, sd, x0, z0, x1, z1, cur, a, t, 0, g1);
+        if (d.h) addSideBox(ctx.col, sd, x0, z0, x1, z1, d.at - d.w / 2, d.at + d.w / 2, t, d.h, g1);
+        cur = d.at + d.w / 2;
+      }
     }
-    wb.box('planks', x0, -0.05, z0, x1, 0.02, z1, { faces: 't', ao: false, room: s.room, uv: 0.5 });
-  } else wb.box(lowerMat, x0, 0.65, z0, x1, g1, z1, { sub: 1.6, tint: lowerMat === 'plaster' ? tint : null, aoH: 1.2, faces: 'nsew' });
+    // suelo, techo con vigas y su colisión (la cámara no sube a la planta alta)
+    wb.box(s.floorMat ?? 'planks', x0 + t - 0.01, -0.05, z0 + t - 0.01, x1 - t + 0.01, 0.02, z1 - t + 0.01, { faces: 't', ao: false, room, uv: 0.5, tint: s.floorTint });
+    wb.box('wooddark', x0 + t, g1, z0 + t, x1 - t, g1 + 0.05, z1 - t, { faces: 'b', ao: false, room, tint: [0.62, 0.56, 0.5] });
+    const alongX = W >= D;
+    if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room });
+    else for (let z = z0 + 1.1; z < z1 - 0.6; z += 1.7) wb.box('timber', x0 + t, g1 - 0.22, z - 0.1, x1 - t, g1, z + 0.1, { ao: false, room });
+    ctx.col.add(x0, g1, z0, x1, h + 0.2, z1).cam = true;
+    // tabiques interiores con pasos
+    for (const iw of s.walls ?? []) partition(ctx, iw, g1, room, s.partMat ?? (lowerMat === 'plaster' ? 'plaster' : 'wallstone'), lt);
+    // transitable: toda la huella (los muros tienen su propia colisión)
+    if (ctx.S && s.paint !== false) {
+      ctx.S.paint(x0 + 0.01, z0 + 0.01, x1 - 0.01, z1 - 0.01, 1);
+      for (const sd of ['n', 's', 'e', 'w'])
+        for (const d of doorsBySide[sd]) {
+          const [cx, cz] = sidePoint(sd, x0, z0, x1, z1, d.at);
+          const hw = d.w / 2;
+          if (sd === 'n' || sd === 's') ctx.S.paint(cx - hw, cz - 0.8, cx + hw, cz + 0.8, 1);
+          else ctx.S.paint(cx - 0.8, cz - hw, cx + 0.8, cz + hw, 1);
+        }
+    }
+  } else {
+    // zócalo
+    wb.box('wallstone', x0 - 0.07, 0, z0 - 0.07, x1 + 0.07, 0.65, z1 + 0.07, { sub: 2, aoH: 0.6, faces: 'tnsew' });
+    wb.box(lowerMat, x0, 0.65, z0, x1, g1, z1, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'nsew' });
+  }
   // planta alta (voladizo hacia la fachada principal)
   let ux0 = x0,
     ux1 = x1,
@@ -338,20 +411,53 @@ export function house(ctx, s) {
     sub: 1.6,
     tint: burnTint || (upperMat === 'plaster' ? tint : null),
     ao: false,
-    faces: jetty || s.hollow ? 'nsewb' : 'nsew',
-    mats: s.hollow ? { b: 'wooddark' } : null,
+    faces: jetty && !hollow ? 'nsewb' : 'nsew',
+    mats: { b: 'wooddark' },
+    room: 'out',
   });
+  // en las visitables sólo se ve por debajo la franja del voladizo
+  if (jetty && hollow) {
+    const jb = { n: [ux0, uz0, ux1, z0], s: [ux0, z1, ux1, uz1], e: [x1, uz0, ux1, uz1], w: [ux0, uz0, x0, uz1] }[front];
+    wb.box('wooddark', jb[0], g1, jb[1], jb[2], g1 + 0.05, jb[3], { faces: 'b', ao: false, room: 'out' });
+  }
   // viga de forjado
-  wb.box('timber', ux0 - 0.05, g1 - 0.05, uz0 - 0.05, ux1 + 0.05, g1 + 0.22, uz1 + 0.05, { ao: false, sub: 3 });
-  // canes del voladizo
-  if (jetty) {
+  wb.box('timber', ux0 - 0.05, g1 - 0.05, uz0 - 0.05, ux1 + 0.05, g1 + 0.22, uz1 + 0.05, { ao: false, sub: 3, room: 'out' });
+  // canes del voladizo (o soportal: la planta alta descansa en columnas)
+  if (jetty && s.arcade) {
+    const [tx, tz, rot, L] = sideFrame(front, x0, z0, x1, z1);
+    const n = Math.max(2, Math.round(L / 2.8));
+    wb.at(tx, 0, tz, rot, () => {
+      for (let i = 0; i <= n; i++) {
+        const a = 0.25 + (i / n) * (L - 0.5);
+        wb.box('ashlar', a - 0.3, 0, jetty - 0.55, a + 0.3, 0.3, jetty + 0.05, { sub: 2, aoH: 0.3, room: 'out' });
+        wb.cylinder('ashlar', a, 0.3, jetty - 0.25, 0.2, 0.18, g1 - 0.62, 8, { ao: false, room: 'out' });
+        wb.box('ashlar', a - 0.32, g1 - 0.32, jetty - 0.57, a + 0.32, g1 - 0.02, jetty + 0.07, { ao: false, room: 'out' });
+      }
+      // viga de carga sobre las columnas y zapatas
+      wb.box('timber', -0.05, g1 - 0.02, jetty - 0.4, L + 0.05, g1 + 0.02, jetty - 0.1, { ao: false, room: 'out', faces: 'nsewb' });
+    });
+    for (let i = 0; i <= n; i++) {
+      const a = 0.25 + (i / n) * (L - 0.5);
+      const [cx, cz] = sidePoint(front, x0, z0, x1, z1, a);
+      const o = { s: [0, 1], n: [0, -1], e: [1, 0], w: [-1, 0] }[front];
+      const px = cx + o[0] * (jetty - 0.25),
+        pz = cz + o[1] * (jetty - 0.25);
+      ctx.col.add(px - 0.22, 0, pz - 0.22, px + 0.22, g1, pz + 0.22);
+    }
+    // la planta alta que vuela sobre el soportal frena la cámara
+    const jb = { n: [ux0, uz0, ux1, z0], s: [ux0, z1, ux1, uz1], e: [x1, uz0, ux1, uz1], w: [ux0, uz0, x0, uz1] }[front];
+    addCam(ctx.col, jb[0], g1, jb[1], jb[2], h, jb[3]);
+    if (ctx.S) ctx.S.paint(jb[0], jb[1], jb[2], jb[3], 1);
+  } else if (jetty) {
     const [tx, tz, rot, L] = sideFrame(front, x0, z0, x1, z1);
     wb.at(tx, 0, tz, rot, () => {
-      for (let a = 0.4; a < L - 0.2; a += 0.7) wb.box('timber', a - 0.08, g1 - 0.25, 0, a + 0.08, g1, jetty + 0.05, { ao: false });
+      for (let a = 0.4; a < L - 0.2; a += 0.7) wb.box('timber', a - 0.08, g1 - 0.25, 0, a + 0.08, g1, jetty + 0.05, { ao: false, room: 'out' });
     });
   }
 
   // fachadas
+  const prevRoom = wb.room;
+  wb.setRoom(null);
   for (const side of sides) {
     const [tx, tz, rot, L] = sideFrame(side, ux0, uz0, ux1, uz1);
     const [ltx, ltz, , LL] = sideFrame(side, x0, z0, x1, z1);
@@ -395,15 +501,23 @@ export function house(ctx, s) {
     });
     // planta baja: puerta y ventanas
     wb.at(ltx, 0, ltz, rot, () => {
-      if (side === front && s.door !== false) {
+      const ds = doorsBySide[side];
+      if (hollow) {
+        // ventanas ciegas lejos de las puertas
+        if (LL > 3.4 && s.windows !== false && s.lowerWindows !== false) {
+          const cand = [LL * 0.25, LL * 0.75];
+          for (const a of cand) if (ds.every((d) => Math.abs(d.at - a) > d.w / 2 + 0.9) && rng.chance(0.7)) windowAt(ctx, a, 1.25, 0.6, 0.8, { lit: !!s.lit && rng.chance(0.5) }, rng);
+        }
+      } else if (side === front && s.door !== false) {
         const da = s.doorAt ?? LL / 2;
-        doorAt(ctx, da, 1.3, 2.3, { boards: s.boards, open: s.doorOpen, frameOnly: s.hollow });
+        doorAt(ctx, da, 1.3, 2.3, { boards: s.boards, open: s.doorOpen });
         if (LL > 5) windowAt(ctx, da > LL / 2 ? da - 2.2 : da + 2.2, 1.2, 0.6, 0.8, { lit: false }, rng);
       } else if (LL > 3 && s.windows !== false && rng.chance(0.5)) {
         windowAt(ctx, LL * rng.range(0.3, 0.7), 1.3, 0.6, 0.8, { lit: false }, rng);
       }
     });
   }
+  wb.room = prevRoom;
 
   // tejado
   const axis = s.roofAxis ?? (ux1 - ux0 >= uz1 - uz0 ? 'x' : 'z');
@@ -423,19 +537,142 @@ export function house(ctx, s) {
           wb.box('wooddark', ux0, h, z - 0.1, ux1, h + 0.2, z + 0.1, { ao: false, tint: [0.3, 0.25, 0.22] });
         }
       }
+      // techo de la última planta, ennegrecido, para no ver el vacío desde arriba
+      wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.22, 0.19, 0.17] });
       if (ctx.fires && rng.chance(0.8)) ctx.fires.push({ x: (ux0 + ux1) / 2, y: h + 0.2, z: (uz0 + uz1) / 2, s: 2.2, light: true, smoke: true });
     } else {
       wb.gableRoof(ux0, uz0, ux1, uz1, h, ridge, axis, { wallMat: upperMat === 'plaster' ? 'plaster' : 'wallstone' });
+      // la cámara no atraviesa el tejado: tres rebanadas escalonadas
+      if (s.roofCol !== false) {
+        const nS = 3;
+        for (let i = 0; i < nS; i++) {
+          const ya = h + ((ridge - h) * i) / nS,
+            yb = h + ((ridge - h) * (i + 1)) / nS;
+          const k = 1 - (i + 0.5) / nS;
+          if (axis === 'x') {
+            const zc = (uz0 + uz1) / 2,
+              hw = ((uz1 - uz0) / 2) * k;
+            addCam(ctx.col, ux0, ya, zc - hw, ux1, yb, zc + hw);
+          } else {
+            const xc = (ux0 + ux1) / 2,
+              hw = ((ux1 - ux0) / 2) * k;
+            addCam(ctx.col, xc - hw, ya, uz0, xc + hw, yb, uz1);
+          }
+        }
+      }
     }
     // chimenea
-    if (rng.chance(0.5)) {
-      const cx = rng.range(ux0 + 1, ux1 - 1),
-        cz = rng.range(uz0 + 1, uz1 - 1);
-      wb.box('wallstone', cx - 0.4, h, cz - 0.4, cx + 0.4, ridge + 1.0, cz + 0.4, { ao: false, sub: 2 });
-      wb.box('wallstone', cx - 0.5, ridge + 1.0, cz - 0.5, cx + 0.5, ridge + 1.2, cz + 0.5, { ao: false });
+    if (s.chimney ?? rng.chance(0.5)) {
+      const cx = s.chimneyAt ? s.chimneyAt[0] : rng.range(ux0 + 1, ux1 - 1),
+        cz = s.chimneyAt ? s.chimneyAt[1] : rng.range(uz0 + 1, uz1 - 1);
+      const cs = s.chimneySize ?? 0.4;
+      wb.box('wallstone', cx - cs, h, cz - cs, cx + cs, ridge + 1.0, cz + cs, { ao: false, sub: 2 });
+      wb.box('wallstone', cx - cs - 0.1, ridge + 1.0, cz - cs - 0.1, cx + cs + 0.1, ridge + 1.2, cz + cs + 0.1, { ao: false });
+      if (s.smoke && ctx.fires) ctx.fires.push({ x: cx, y: ridge + 1.3, z: cz, s: 0.9, smoke: true, light: false, embers: s.smoke === 'embers', glow: false });
     }
   }
-  return { h, ridge };
+  return { h, ridge, g1 };
+}
+
+// Caja de colisión sólo para la cámara (tejados).
+function addCam(col, a, b, c, d, e, f) {
+  const box = col.add(a, b, c, d, e, f);
+  box.cam = true;
+  box.noSight = true;
+  return box;
+}
+
+// Punto mundo de la fachada 'side' a la distancia 'at' de su origen local.
+function sidePoint(side, x0, z0, x1, z1, at) {
+  if (side === 's') return [x0 + at, z1];
+  if (side === 'n') return [x1 - at, z0];
+  if (side === 'e') return [x1, z1 - at];
+  return [x0, z0 + at];
+}
+
+// Caja de colisión de un tramo de muro de la fachada (entre a0 y a1, grosor t hacia dentro).
+function addSideBox(col, side, x0, z0, x1, z1, a0, a1, t, yb, yt) {
+  if (a1 - a0 < 0.01) return;
+  if (side === 's') return col.add(x0 + a0, yb, z1 - t, x0 + a1, yt, z1);
+  if (side === 'n') return col.add(x1 - a1, yb, z0, x1 - a0, yt, z0 + t);
+  if (side === 'e') return col.add(x1 - t, yb, z1 - a1, x1, yt, z1 - a0);
+  return col.add(x0, yb, z0 + a0, x0 + t, yt, z0 + a1);
+}
+
+// Tabique interior (dos caras dentro de la habitación) con pasos.
+export function partition(ctx, iw, g1, room, mat = 'plaster', tint = null) {
+  const wb = ctx.wb;
+  const alongX = iw.x1 - iw.x0 >= iw.z1 - iw.z0;
+  const a0 = alongX ? iw.x0 : iw.z0,
+    a1 = alongX ? iw.x1 : iw.z1;
+  const tn = tint ? tint.map((v) => v * 0.9) : [0.82, 0.78, 0.72];
+  const piece = (u0, u1, yb, yt) => {
+    if (u1 - u0 < 0.01) return;
+    const b = alongX ? [u0, yb, iw.z0, u1, yt, iw.z1] : [iw.x0, yb, u0, iw.x1, yt, u1];
+    wb.box(mat, ...b, { sub: 1.6, tint: tn, aoH: 1.2, room, faces: 'nsew' + (yb > 0 ? 'b' : ''), baseY: 0 });
+    ctx.col.add(...b);
+  };
+  const ds = [...(iw.doors ?? [])].sort((a, b) => a.at - b.at);
+  let cur = a0;
+  for (const d of ds) {
+    const a = d.at - d.w / 2,
+      b = d.at + d.w / 2;
+    piece(cur, a, 0, g1);
+    piece(a, b, d.h ?? 2.3, g1);
+    // marco de madera del paso
+    const fr = (u0, u1, yb, yt) => {
+      const bb = alongX ? [u0, yb, iw.z0 - 0.04, u1, yt, iw.z1 + 0.04] : [iw.x0 - 0.04, yb, u0, iw.x1 + 0.04, yt, u1];
+      wb.box('wooddark', ...bb, { ao: false, room });
+    };
+    fr(a - 0.1, a, 0, d.h ?? 2.3);
+    fr(b, b + 0.1, 0, d.h ?? 2.3);
+    fr(a - 0.1, b + 0.1, d.h ?? 2.3, (d.h ?? 2.3) + 0.12);
+    cur = b;
+  }
+  piece(cur, a1, 0, g1);
+}
+
+// Pasadizo: una estancia de entramado que cruza por encima de un callejón
+// entre dos casas (x0..x1, z0..z1 = hueco que cubre; y0 = altura libre).
+// axis: dirección del callejón ('x' | 'z'); sus dos caras abiertas miran a lo
+// largo del callejón.
+export function overpass(ctx, x0, z0, x1, z1, y0, y1, axis, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(hashSeed(x0, z0, x1, z1));
+  const mat = o.mat ?? 'plaster';
+  const tint = o.tint ?? rng.pick(PLASTER_TINTS);
+  // cuerpo: sólo las caras que se ven desde el callejón, techo del paso y remate
+  wb.box(mat, x0, y0, z0, x1, y1, z1, { faces: axis === 'x' ? 'ew' : 'ns', ao: false, sub: 1.6, tint });
+  wb.box('wooddark', x0, y0 - 0.05, z0, x1, y0, z1, { faces: 'b', ao: false, tint: [0.55, 0.5, 0.46] });
+  // vigas bajo el paso y ménsulas en los arranques
+  const L = axis === 'x' ? x1 - x0 : z1 - z0;
+  const n = Math.max(2, Math.round(L / 0.8));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    if (axis === 'x') {
+      const x = x0 + 0.1 + t * (x1 - x0 - 0.2);
+      wb.box('timber', x - 0.08, y0 - 0.22, z0, x + 0.08, y0 - 0.05, z1, { ao: false });
+    } else {
+      const z = z0 + 0.1 + t * (z1 - z0 - 0.2);
+      wb.box('timber', x0, y0 - 0.22, z - 0.08, x1, y0 - 0.05, z + 0.08, { ao: false });
+    }
+  }
+  // entramado y ventanas en las dos caras abiertas
+  for (const sd of axis === 'x' ? ['e', 'w'] : ['n', 's']) {
+    const [tx, tz, rot, LL] = sideFrame(sd, x0, z0, x1, z1);
+    wb.at(tx, 0, tz, rot, () => {
+      wb.box('timber', 0, y0, 0, LL, y0 + 0.18, 0.08, { ao: false });
+      wb.box('timber', 0, y1 - 0.18, 0, LL, y1, 0.08, { ao: false });
+      for (const a of [0.1, LL / 2, LL - 0.1]) wb.box('timber', a - 0.09, y0, 0, a + 0.09, y1, 0.07, { ao: false });
+      if (LL > 1.6) windowAt(ctx, LL * 0.3, y0 + 0.9, 0.55, 0.8, { lit: !!o.lit && rng.chance(0.6) }, rng);
+      if (LL > 2.6) windowAt(ctx, LL * 0.72, y0 + 0.9, 0.55, 0.8, { lit: false }, rng);
+    });
+  }
+  // cubierta a dos aguas atravesada al callejón
+  const ov = 0.35;
+  if (axis === 'x') wb.gableRoof(x0 - ov, z0, x1 + ov, z1, y1, y1 + (x1 - x0) * 0.35, 'z', { wallMat: mat, overhang: 0.25 });
+  else wb.gableRoof(x0, z0 - ov, x1, z1 + ov, y1, y1 + (z1 - z0) * 0.35, 'x', { wallMat: mat, overhang: 0.25 });
+  addCam(ctx.col, x0, y0 - 0.25, z0, x1, y1 + 1.2, z1);
 }
 
 // Muro de mampostería sencillo (tapias, muros de patio).

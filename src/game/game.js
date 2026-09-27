@@ -6,6 +6,7 @@ import { G } from '../gfx/materials.js';
 import { setMaxAnisotropy } from '../gfx/textures.js';
 import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts, FX_FAR, SwordTrail } from '../gfx/effects.js';
 import { buildDecals, buildBanners } from '../gfx/decals.js';
+import { BakedProbe } from '../gfx/probe.js';
 import { Atmosphere } from './atmosphere.js';
 import { CameraRig } from './camera.js';
 import { Player } from '../entities/player.js';
@@ -18,7 +19,7 @@ import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
 import { NavGrid } from './nav.js';
 import { UI } from './ui.js';
-import { ITEMS, MSG, AREA_NAMES } from './story.js';
+import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
 import { loadSave, writeSave, clearSave, loadSettings, writeSettings, Inventory } from './save.js';
 import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
 
@@ -92,6 +93,11 @@ export class Game {
     this.activeEnemies = [];
     this.bosses = { impaled: this.enemies.find((e) => e.type === 'impaled'), turibulario: this.enemies.find((e) => e.type === 'turibulario') };
     this.activeBoss = null;
+
+    // cada personaje con sus propios materiales: luz horneada del sitio (sonda)
+    this.probe = new BakedProbe(lvl.ctx.lights);
+    for (const e of this.enemies) e.rig.own();
+    this.player.rig.own();
 
     this.combat = new Combat(this);
     this.interact = new Interactables(this, lvl.L.interact);
@@ -610,7 +616,7 @@ export class Game {
       body.innerHTML = `
         <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
         <div style="display:grid;place-items:center;margin-top:calc(var(--u) * 6)">${this.ui.inkTitleHtml()}</div>
-        <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / 10</b></div>
+        <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / ${Object.keys(NOTES).length}</b></div>
         <div class="credit f-hand">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
         <div class="hint f-hand"><span>${this.ui.keyHtml('confirm')} Volver al título</span></div>`;
       if (pc) body.prepend(pc);
@@ -862,6 +868,7 @@ export class Game {
       }
       if (this.state === 'play') for (const e of this.activeEnemies) e.update(dt, p);
       else if (this.state === 'title') for (const e of this.activeEnemies) e.animate(dt);
+      this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
       this.interact.update(dt);
@@ -934,6 +941,28 @@ export class Game {
     this.playerShadow.visible = p.obj.visible;
     this.audio.update(dt, this);
     inp.endFrame();
+  }
+
+  // Luz horneada del lugar para el jugador y las criaturas visibles (suavizada).
+  updateProbes(dt) {
+    this._probeT = (this._probeT || 0) - dt;
+    if (this._probeT > 0) return;
+    this._probeT = 0.1;
+    const wb = this.level.ctx.wb;
+    const upd = (e, instant) => {
+      if (!e.obj.visible) return;
+      const P = e.pos;
+      const z = this.zoneAt(P);
+      const rid = z && z.room ? wb.roomId(z.room) : 0;
+      const o = this.probe.sample(P.x, P.y + 1.1, P.z, rid);
+      const q = e._probe || (e._probe = [o[0], o[1], o[2]]);
+      const k = instant ? 1 : 0.35;
+      for (let i = 0; i < 3; i++) q[i] += (o[i] - q[i]) * k;
+      const gy = e.shadow ? e.shadow.position.y - 0.02 : P.y;
+      e.rig.setProbe(q[0], q[1], q[2], gy);
+    };
+    upd(this.player, false);
+    for (const e of this.activeEnemies) upd(e, !e._probe);
   }
 
   zoneAt(p) {

@@ -12,35 +12,45 @@ function col(ctx, x0, y0, z0, x1, y1, z1) {
   return ctx.col.add(Math.min(x0, x1), y0, Math.min(z0, z1), Math.max(x0, x1), y1, Math.max(z0, z1));
 }
 
-// Rectángulo girado (semiejes hx a lo largo, hz a lo ancho) aproximado con
-// cajas pequeñas a lo largo de su eje: sin paredes invisibles en las esquinas.
+// Rectángulo girado (semiejes hx a lo largo del x local, hz del z local):
+// caja orientada exacta, sin paredes invisibles en las esquinas.
 export function colOBB(ctx, x, z, hx, hz, rot, y0, y1) {
+  return ctx.col.addOBB(x, z, hx, hz, rot, y0, y1);
+}
+
+// Caja orientada a partir de la geometría real: recorre los puntos (en el
+// espacio local 'm' de un objeto girado 'rot' en Y alrededor de (x,z)) y
+// devuelve la caja que los envuelve en ese marco. Sirve para objetos
+// volcados o inclinados cuya forma ya no está centrada en su origen.
+export function colFromPoints(ctx, x, y, z, rot, pts, o = {}) {
+  let x0 = Infinity,
+    x1 = -Infinity,
+    z0 = Infinity,
+    z1 = -Infinity,
+    y1 = -Infinity;
+  for (const p of pts) {
+    x0 = Math.min(x0, p.x);
+    x1 = Math.max(x1, p.x);
+    z0 = Math.min(z0, p.z);
+    z1 = Math.max(z1, p.z);
+    y1 = Math.max(y1, p.y);
+  }
+  const sh = o.shrink ?? 0.04;
+  const lx = (x0 + x1) / 2,
+    lz = (z0 + z1) / 2;
   const c = Math.cos(rot),
     s = Math.sin(rot);
-  const ac = Math.abs(c),
-    as = Math.abs(s);
-  // casi alineado: una sola caja
-  if (ac > 0.985 || as > 0.985) {
-    const ex = ac > as ? hx : hz,
-      ez = ac > as ? hz : hx;
-    return col(ctx, x - ex, y0, z - ez, x + ex, y1, z + ez);
-  }
-  const long = hx >= hz;
-  const L = long ? hx : hz,
-    Wd = long ? hz : hx;
-  const n = Math.max(2, Math.ceil((L * 2) / (Wd * 1.2)));
-  // dirección del eje largo en el mundo
-  const dx = long ? c : s,
-    dz = long ? -s : c;
-  for (let i = 0; i < n; i++) {
-    const t = -L + ((i + 0.5) / n) * 2 * L;
-    const cx = x + dx * t,
-      cz = z + dz * t;
-    const half = L / n;
-    const ex = Math.abs(dx) * half + Math.abs(dz) * Wd,
-      ez = Math.abs(dz) * half + Math.abs(dx) * Wd;
-    col(ctx, cx - ex * 0.92, y0, cz - ez * 0.92, cx + ex * 0.92, y1, cz + ez * 0.92);
-  }
+  // centro local -> mundo (rotación en Y de three.js)
+  const cx = x + lx * c + lz * s,
+    cz = z - lx * s + lz * c;
+  return ctx.col.addOBB(cx, cz, Math.max(0.05, (x1 - x0) / 2 - sh), Math.max(0.05, (z1 - z0) / 2 - sh), rot, y, Math.min(y + (o.maxH ?? 99), y1));
+}
+
+// Esquinas de una caja local transformadas por una matriz.
+export function boxCorners(m, x0, y0, z0, x1, y1, z1) {
+  const out = [];
+  for (const X of [x0, x1]) for (const Y of [y0, y1]) for (const Z of [z0, z1]) out.push(V(X, Y, Z).applyMatrix4(m));
+  return out;
 }
 
 // ------------------------------------------------------------- básicos
@@ -116,20 +126,20 @@ export function hay(ctx, x, y, z, rot = 0) {
 // Carro de madera (volcado o quemado).
 export function cart(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
+  // vuelco / inclinación en el marco del carro (también define su colisión)
+  const tip = M4();
+  if (o.tipped) {
+    // volcado de lado, apoyado sobre el costado (-z)
+    tip.multiply(M4().makeTranslation(0, 0, -0.9)).multiply(M4().makeRotationX(-1.25)).multiply(M4().makeTranslation(0, 0.18, 0.9));
+  } else if (o.brokenWheel) {
+    // sin la rueda de +z: el carro cae hacia ese lado pivotando en el otro eje
+    tip.multiply(M4().makeTranslation(0, 0.52, -0.85)).multiply(M4().makeRotationX(0.33)).multiply(M4().makeTranslation(0, -0.52, 0.85));
+  }
   wb.push();
   wb.translate(x, y, z);
   wb.rotateY(rot);
-  if (o.tipped) {
-    // volcado de lado, apoyado sobre el costado (-z)
-    wb.translate(0, 0, -0.9);
-    wb.rotateX(-1.25);
-    wb.translate(0, 0.18, 0.9);
-  } else if (o.brokenWheel) {
-    // sin la rueda de +z: el carro cae hacia ese lado pivotando en el otro eje
-    wb.translate(0, 0.52, -0.85);
-    wb.rotateX(0.33);
-    wb.translate(0, -0.52, 0.85);
-  }
+  wb.m.multiply(tip);
+  wb.nm.getNormalMatrix(wb.m);
   const tint = o.burnt ? [0.35, 0.3, 0.27] : null;
   wb.box('planks', -1.1, 0.55, -0.75, 1.1, 0.65, 0.75, { faces: 'tnsewb', ao: false, tint, uv: 0.8 });
   wb.box('planks', -1.1, 0.65, -0.78, 1.1, 1.05, -0.72, { ao: false, tint, uv: 0.8 });
@@ -171,8 +181,12 @@ export function cart(ctx, x, y, z, rot = 0, o = {}) {
     wb.pop();
   }
   wb.pop();
-  // colisión orientada (las varas no bloquean)
-  colOBB(ctx, x + Math.cos(rot) * 0.0, z, 1.15, 0.85, rot, y, y + (o.tipped ? 1.6 : 1.1));
+  // colisión orientada sacada de la forma real (caja y ruedas ya volcadas;
+  // las varas no bloquean): antes el carro volcado quedaba a metro y medio
+  // de su colisión y se podía atravesar
+  const pts = boxCorners(tip, -1.1, 0.55, -0.78, 1.1, 1.05, 0.78);
+  for (const s of [-1, 1]) if (!(o.brokenWheel && s > 0)) pts.push(...boxCorners(tip, 0.2 - 0.5, 0.02, s * 0.85 - 0.06, 0.2 + 0.5, 1.04, s * 0.85 + 0.06));
+  colFromPoints(ctx, x, y, z, rot, pts, { shrink: 0.03 });
   if (o.burning && ctx.fires) {
     const fy = o.brokenWheel ? 0.5 : o.tipped ? 0.9 : 0.7;
     ctx.fires.push({ x, y: y + fy, z, s: 1.8, smoke: true });
@@ -278,36 +292,111 @@ export function wallTorch(ctx, x, y, z, dir, o = {}) {
   if (ctx.dynLights) ctx.dynLights.push({ x: tx + d[0] * 0.3, y: y + 0.6, z: tz + d[1] * 0.3, intensity: o.dyn ?? 3.5, range: 8 });
 }
 
-// Horca con ahorcados.
+// Cadalso con horca: tablado sobre pies derechos con arriostrado, escalera
+// de verdad (cada peldaño se sube), trampilla, horca con tornapuntas y los
+// ahorcados. La colisión sigue a cada pieza (sin paredes invisibles).
 export function gallows(ctx, x, y, z, rot = 0, bodies = 2) {
   const wb = ctx.wb;
+  const H = 1.3; // altura del tablado
+  const hx = 2.2,
+    hz = 1.4;
+  const nSteps = 5;
+  const rise = H / nSteps,
+    run = 0.36,
+    sw = 0.65; // semiancho de la escalera
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  const W = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
+  const xs = bodies === 1 ? [0] : bodies === 2 ? [-0.9, 0.9] : [-1.2, 0, 1.2];
   wb.at(x, y, z, rot, () => {
-    wb.box('planks', -2.2, 0, -1.4, 2.2, 1.3, 1.4, { faces: 'tnsew', uv: 0.7, aoH: 0.8 });
-    for (const sx of [-1.8, 1.8]) wb.box('wooddark', sx - 0.14, 1.3, -0.14, sx + 0.14, 5.4, 0.14, { ao: false });
-    wb.box('wooddark', -2.2, 5.2, -0.16, 2.2, 5.5, 0.16, { ao: false });
+    // tablero (tablas con juntas) y cabezas de viga
+    wb.box('planks', -hx, H - 0.09, -hz, hx, H, hz, { faces: 'tnsewb', uv: 0.7, ao: false });
+    for (const zz of [-hz + 0.1, 0, hz - 0.1]) wb.box('wooddark', -hx - 0.06, H - 0.3, zz - 0.09, hx + 0.06, H - 0.09, zz + 0.09, { ao: false });
+    // pies derechos y cruces de San Andrés en los costados
+    for (const px of [-hx + 0.1, 0, hx - 0.1])
+      for (const pz of [-hz + 0.1, hz - 0.1]) wb.box('wooddark', px - 0.1, 0, pz - 0.1, px + 0.1, H - 0.09, pz + 0.1, { aoH: 0.5 });
+    // cruces de San Andrés en la cara abierta (bajo la escalera)
+    const brace = (ax, bx, lz) => {
+      const dx = bx - ax,
+        len = Math.hypot(dx, H - 0.35);
+      const ang = Math.atan2(H - 0.35, dx);
+      for (const sg of [1, -1]) {
+        wb.push();
+        wb.translate((ax + bx) / 2, (H - 0.35) / 2 + 0.05, lz + sg * 0.04);
+        wb.rotateZ(sg * ang);
+        wb.box('wooddark', -len / 2, -0.05, -0.03, len / 2, 0.05, 0.03, { ao: false });
+        wb.pop();
+      }
+    };
+    brace(-hx + 0.2, -0.1, hz - 0.1);
+    brace(0.1, hx - 0.2, hz - 0.1);
+    // faldón de tablas verticales en la trasera y los lados (la parte de delante
+    // queda abierta bajo la escalera)
+    for (let px = -hx; px < hx - 0.01; px += 0.3) wb.box('planks', px + 0.01, 0, -hz - 0.03, px + 0.29, H - 0.3, -hz + 0.01, { ao: false, faces: 'nsew', uv: 0.9, tint: [0.8, 0.76, 0.72] });
+    for (const sx of [-1, 1]) for (let pz = -hz; pz < hz - 0.01; pz += 0.3) wb.box('planks', sx * hx - 0.02, 0, pz + 0.01, sx * hx + 0.02, H - 0.3, pz + 0.29, { ao: false, faces: 'nsew', uv: 0.9, tint: [0.8, 0.76, 0.72] });
+    // trampilla bajo los ahorcados
+    wb.box('black', -1.5, H + 0.001, -0.45, 1.5, H + 0.004, 0.45, { faces: 't', ao: false, grime: false });
+    wb.box('wooddark', -1.55, H, -0.5, 1.55, H + 0.025, -0.45, { ao: false });
+    wb.box('wooddark', -1.55, H, 0.45, 1.55, H + 0.025, 0.5, { ao: false });
+    // horca: dos pies, travesaño y tornapuntas
+    for (const sx of [-1.8, 1.8]) wb.box('wooddark', sx - 0.14, H, -0.14, sx + 0.14, H + 4.1, 0.14, { ao: false });
+    wb.box('wooddark', -2.15, H + 3.85, -0.16, 2.15, H + 4.16, 0.16, { ao: false, faces: 'tnsewb' });
     for (const sx of [-1, 1]) {
       wb.push();
-      wb.translate(sx * 1.8, 4.4, 0);
+      wb.translate(sx * 1.45, H + 3.45, 0);
       wb.rotateZ(sx * 0.785);
-      wb.box('wooddark', -0.08, -0.7, -0.08, 0.08, 0.7, 0.08, { ao: false });
+      wb.box('wooddark', -0.07, -0.5, -0.07, 0.07, 0.5, 0.07, { ao: false });
       wb.pop();
     }
-    // escalera
-    for (let i = 0; i < 4; i++) wb.box('planks', -0.7, i * 0.32, 1.4 + (3 - i) * 0.35, 0.7, (i + 1) * 0.32, 1.4 + (4 - i) * 0.35, { ao: false, uv: 0.8 });
-    // sogas y cuerpos
-    const xs = bodies === 1 ? [0] : bodies === 2 ? [-0.9, 0.9] : [-1.2, 0, 1.2];
-    xs.forEach((bx, i) => {
-      wb.box('burlap', bx - 0.02, 3.6, -0.02, bx + 0.02, 5.2, 0.02, { ao: false });
-    });
+    // sogas con nudo
+    for (const bx of xs) {
+      wb.box('burlap', bx - 0.018, H + 2.35, -0.018, bx + 0.018, H + 3.86, 0.018, { ao: false });
+      wb.cylinder('burlap', bx, H + 2.3, 0, 0.05, 0.05, 0.14, 5, { ao: false });
+    }
+    // escalera: zancas y peldaños macizos (se ven de lado)
+    for (let i = 0; i < nSteps; i++) {
+      const top = (i + 1) * rise;
+      const zf = hz + (nSteps - i) * run;
+      wb.box('planks', -sw, top - 0.07, zf - run - 0.02, sw, top, zf, { faces: 'tnsew', ao: false, uv: 0.8 });
+      wb.box('wooddark', -sw + 0.06, 0, zf - run * 0.5 - 0.04, -sw + 0.14, top - 0.07, zf - run * 0.5 + 0.04, { ao: false });
+      wb.box('wooddark', sw - 0.14, 0, zf - run * 0.5 - 0.04, sw - 0.06, top - 0.07, zf - run * 0.5 + 0.04, { ao: false });
+    }
+    const slen = Math.hypot(nSteps * run, H);
+    for (const sx of [-sw - 0.04, sw + 0.04]) {
+      wb.push();
+      wb.translate(sx, H / 2 - 0.02, hz + (nSteps * run) / 2);
+      wb.rotateX(Math.atan2(H, nSteps * run));
+      wb.box('wooddark', -0.05, -0.1, -slen / 2, 0.05, 0.1, slen / 2, { ao: false });
+      wb.pop();
+    }
+    // pasamanos en un lado de la escalera
+    wb.box('wooddark', -sw - 0.08, 0, hz + nSteps * run - 0.08, -sw, 1.0, hz + nSteps * run, { ao: false });
+    wb.push();
+    wb.translate(-sw - 0.04, H / 2 + 0.95, hz + (nSteps * run) / 2);
+    wb.rotateX(Math.atan2(H, nSteps * run));
+    wb.box('wooddark', -0.035, -0.035, -slen / 2, 0.035, 0.035, slen / 2, { ao: false });
+    wb.pop();
+    wb.box('wooddark', -sw - 0.08, H, hz - 0.08, -sw, H + 1.0, hz, { ao: false });
   });
-  // cuerpos colgados (en coordenadas mundo)
-  const xs = bodies === 1 ? [0] : bodies === 2 ? [-0.9, 0.9] : [-1.2, 0, 1.2];
+  // ahorcados (coordenadas mundo): los pies cuelgan sobre la trampilla
   xs.forEach((bx, i) => {
-    const wx = x + Math.cos(rot) * bx,
-      wz = z - Math.sin(rot) * bx;
-    bakeCorpse(wb, wx, y + 1.95, wz, rot + (i - 1) * 0.6, 'hang', i % 2 ? 'soldier' : 'villager', i + 3);
+    const [wx, wz] = W(bx, 0);
+    bakeCorpse(wb, wx, y + H + 0.65, wz, rot + (i - 1) * 0.6, 'hang', i % 2 ? 'soldier' : 'villager', i + 3);
+    ctx.col.addOBB(wx, wz, 0.2, 0.2, rot, y + H + 0.6, y + H + 2.4).noSight = true;
   });
-  colOBB(ctx, x, z, 2.2, 1.4, rot, y, y + 1.3);
+  // colisión: tablado (se puede subir por la escalera), pies de la horca y peldaños
+  colOBB(ctx, x, z, hx, hz, rot, y, y + H);
+  for (const sx of [-1.8, 1.8]) {
+    const [px, pz] = W(sx, 0);
+    colOBB(ctx, px, pz, 0.15, 0.15, rot, y + H, y + H + 4.1);
+  }
+  for (let i = 0; i < nSteps; i++) {
+    const zf = hz + (nSteps - i) * run;
+    const [px, pz] = W(0, (zf + hz) / 2);
+    colOBB(ctx, px, pz, sw, (zf - hz) / 2, rot, y, y + (i + 1) * rise);
+  }
+  const [rx, rz] = W(-sw - 0.04, hz + (nSteps * run) / 2);
+  colOBB(ctx, rx, rz, 0.05, (nSteps * run) / 2, rot, y, y + H + 1).noSight = true;
 }
 
 // Jaula colgante (gibbet) con esqueleto.
@@ -784,44 +873,265 @@ export function banner(ctx, x, y, z, rot, kind = 'bannerBlack', w = 1.2, h = 2.6
   ctx.banners.push({ x, y, z, rot, kind, w, h });
 }
 
-// Puesto de mercado roto con toldo.
+// Tela fina de doble cara: dos cuadriláteros separados unos milímetros según
+// su normal (nunca coinciden: sin parpadeo) y visibles desde ambos lados.
+function cloth2(wb, mat, p0, p1, p2, p3, o = {}) {
+  const n = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p3, p0)).normalize();
+  const e = n.multiplyScalar(o.gap ?? 0.012);
+  const oo = { ao: false, sub: o.sub ?? 3, tint: o.tint, grime: o.grime, uvLocal: true };
+  wb.quad(mat, p0, p1, p2, p3, oo);
+  wb.quad(mat, p3.clone().sub(e), p2.clone().sub(e), p1.clone().sub(e), p0.clone().sub(e), { ...oo, tint: o.backTint ?? (o.tint ? o.tint.map((v) => v * 0.82) : [0.84, 0.82, 0.8]) });
+}
+
+// Mercancía sobre un mostrador (espacio local del puesto: y = altura del tablero).
+function stallGoods(ctx, kind, rng, y, hw, burnt) {
+  const wb = ctx.wb;
+  const sph = (mat, px, py, pz, sx, sy, sz, tint) => wb.geometry(mat, new THREE.SphereGeometry(1, 6, 4), M4().compose(V(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.3, 0.3), rng.range(0, 6), 0)), V(sx, sy, sz)), { ao: false, tint });
+  const k = burnt ? 0.35 : 1;
+  if (kind === 'bread') {
+    // hogazas y panes largos, algunos mordisqueados por las ratas
+    for (let i = 0; i < 9; i++) sph('straw', rng.range(-hw + 0.2, hw - 0.2), y + 0.07, rng.range(-0.3, 0.25), 0.13, 0.08, 0.1, [0.95 * k, 0.62 * k, 0.32 * k]);
+    for (let i = 0; i < 3; i++) sph('straw', rng.range(-hw + 0.4, hw - 0.4), y + 0.06, rng.range(-0.25, 0.2), 0.28, 0.06, 0.07, [0.85 * k, 0.55 * k, 0.28 * k]);
+    // cesta de panecillos
+    wb.cylinder('straw', -hw + 0.35, y, 0.1, 0.2, 0.24, 0.16, 8, { ao: false, capBot: true, tint: [0.62, 0.5, 0.36] });
+    for (let i = 0; i < 5; i++) sph('straw', -hw + 0.35 + rng.range(-0.1, 0.1), y + 0.17, 0.1 + rng.range(-0.1, 0.1), 0.07, 0.05, 0.07, [0.9 * k, 0.6 * k, 0.3 * k]);
+  } else if (kind === 'veg') {
+    // cestas con nabos, coles y manzanas podridas
+    for (const [bx, bz, t] of [
+      [-hw + 0.4, -0.1, [0.62, 0.72, 0.4]],
+      [0, 0.05, [0.7, 0.28, 0.2]],
+      [hw - 0.4, -0.12, [0.85, 0.8, 0.62]],
+    ]) {
+      wb.cylinder('straw', bx, y, bz, 0.26, 0.3, 0.2, 8, { ao: false, capBot: true, tint: [0.6, 0.48, 0.34] });
+      for (let i = 0; i < 7; i++) sph('plaster', bx + rng.range(-0.15, 0.15), y + 0.2 + rng.range(0, 0.06), bz + rng.range(-0.15, 0.15), 0.07, 0.065, 0.07, t.map((v) => v * k * rng.range(0.7, 1.05)));
+    }
+  } else if (kind === 'pots') {
+    for (let i = 0; i < 5; i++) jar(ctx, rng.range(-hw + 0.25, hw - 0.25), y, rng.range(-0.28, 0.2), rng.range(0.45, 0.7), { collide: false, rot: rng.range(0, 6), tint: [0.62 * k, 0.4 * k, 0.28 * k] });
+    wb.cylinder('bronze', 0.3, y, 0.2, 0.16, 0.13, 0.1, 8, { ao: false, capTop: true });
+  } else if (kind === 'cloth') {
+    // rollos de paño
+    for (let i = 0; i < 5; i++) {
+      wb.push();
+      wb.translate(-hw + 0.35 + i * ((hw * 2 - 0.7) / 4), y + 0.09, rng.range(-0.1, 0.1));
+      wb.rotateX(Math.PI / 2);
+      wb.rotateZ(rng.range(-0.15, 0.15));
+      wb.cylinder(rng.pick(['clothRed', 'clothBlue', 'clothWhite', 'burlap', 'clothDark']), 0, -0.35, 0, 0.09, 0.09, 0.7, 7, { ao: false, capTop: true, capBot: true, tint: burnt ? [0.35, 0.3, 0.28] : null });
+      wb.pop();
+    }
+  } else if (kind === 'meat') {
+    // carnicería: piezas colgadas de ganchos y un tajo con cuchilla
+    wb.box('wooddark', -0.35, y, -0.3, 0.35, y + 0.18, 0.2, { ao: false, faces: 'tnsew' });
+    wb.box('iron', -0.05, y + 0.18, -0.12, 0.25, y + 0.2, -0.02, { ao: false });
+    for (let i = 0; i < 3; i++) sph('skinCorrupt', rng.range(-hw + 0.3, hw - 0.3), y + 0.06, rng.range(-0.25, 0.2), 0.16, 0.06, 0.12, [0.8 * k, 0.45 * k, 0.4 * k]);
+  }
+}
+
+// Puesto de mercado: mostrador de tablas con su mercancía, pies derechos,
+// estante trasero y toldo a rayas con caída festoneada (de doble cara).
+// kind: 'bread' | 'veg' | 'pots' | 'cloth' | 'meat'
 export function stall(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
+  const rng = new RNG(Math.round(x * 31 + z * 17) + 7);
+  const hw = o.w ?? 1.35; // semiancho
+  const burnt = !!o.burning;
+  const wt = burnt ? [0.4, 0.34, 0.3] : null;
+  const ct = o.cloth ?? 'clothRed';
+  const ct2 = o.cloth2 ?? 'clothWhite';
   wb.at(x, y, z, rot, () => {
-    wb.box('planks', -1.4, 0.8, -0.6, 1.4, 0.9, 0.6, { ao: false, faces: 'tnsewb', uv: 0.8 });
-    wb.box('planks', -1.4, 0, 0.5, 1.4, 0.8, 0.6, { ao: false, uv: 0.8 });
-    for (const sx of [-1.35, 1.35]) for (const sz of [-0.55, 0.55]) wb.box('wooddark', sx - 0.05, 0, sz - 0.05, sx + 0.05, sz < 0 ? 2.5 : 2.1, sz + 0.05, { ao: false });
-    // toldo rasgado
-    wb.push();
-    wb.translate(0, 2.3, 0);
-    wb.rotateX(-0.3);
-    wb.box(o.cloth ?? 'clothRed', -1.5, -0.02, -0.8, 1.5, 0.02, 0.7, { ao: false, faces: 'tb' });
-    wb.pop();
+    const topY = 0.92;
+    // tablero con canto y costeros
+    wb.box('planks', -hw - 0.08, topY - 0.08, -0.5, hw + 0.08, topY, 0.56, { ao: false, faces: 'tnsewb', uv: 0.8, tint: wt });
+    // frente de tablas verticales con holguras
+    for (let px = -hw; px < hw - 0.01; px += 0.27) {
+      const t = rng.range(0.8, 1.05);
+      wb.box('planks', px + 0.012, 0.06, 0.44, px + 0.258, topY - 0.08, 0.49, { ao: false, faces: 'nsewt', uv: 0.9, tint: wt || [t, t * 0.97, t * 0.93] });
+    }
+    // costados
+    for (const sx of [-1, 1]) wb.box('planks', sx * hw - 0.04, 0.06, -0.44, sx * hw + 0.04, topY - 0.08, 0.43, { ao: false, faces: 'tnsew', uv: 0.9, tint: wt });
+    // travesaño bajo y balda inferior con mercancía guardada
+    wb.box('wooddark', -hw, 0.16, -0.4, hw, 0.2, 0.4, { ao: false, faces: 'tnsewb', tint: wt });
+    // pies derechos: traseros más altos (el toldo cae hacia delante)
+    const yB = 2.55,
+      yF = 2.12,
+      zB = -0.47,
+      zF = 0.5;
+    for (const sx of [-hw - 0.02, hw + 0.02]) {
+      wb.box('wooddark', sx - 0.055, 0, zB - 0.055, sx + 0.055, yB, zB + 0.055, { aoH: 0.5, tint: wt });
+      wb.box('wooddark', sx - 0.055, 0, zF - 0.055, sx + 0.055, yF, zF + 0.055, { aoH: 0.5, tint: wt });
+      // larguero lateral del toldo
+      const len = Math.hypot(zF + 0.55 - zB, yB - yF + 0.24);
+      wb.push();
+      wb.translate(sx, (yB + yF - 0.24) / 2 + 0.03, (zB + zF + 0.55) / 2);
+      wb.rotateX(Math.atan2(yB - yF + 0.24, zF + 0.55 - zB));
+      wb.box('wooddark', -0.035, -0.035, -len / 2, 0.035, 0.035, len / 2, { ao: false, tint: wt });
+      wb.pop();
+    }
+    wb.box('wooddark', -hw - 0.08, yB - 0.1, zB - 0.04, hw + 0.08, yB - 0.02, zB + 0.04, { ao: false, tint: wt });
+    // estante trasero
+    wb.box('planks', -hw + 0.05, 1.42, zB - 0.02, hw - 0.05, 1.47, zB + 0.24, { ao: false, faces: 'tnsewb', tint: wt });
+    for (let i = 0; i < 4; i++) {
+      if (rng.chance(0.3)) continue;
+      const px = -hw + 0.3 + i * ((hw * 2 - 0.6) / 3);
+      if (rng.chance(0.5)) jar(ctx, px, 1.47, zB + 0.11, 0.42, { collide: false, rot: rng.range(0, 6) });
+      else wb.box(rng.pick(['leather', 'burlap', 'clothDark']), px - 0.12, 1.47, zB + 0.02, px + 0.12, 1.47 + rng.range(0.12, 0.26), zB + 0.2, { ao: false, tint: wt });
+    }
+    // toldo a rayas: franjas alternas de doble cara con caída
+    const n = Math.max(5, Math.round((hw * 2 + 0.3) / 0.36));
+    const xA = -hw - 0.15,
+      xB = hw + 0.15;
+    const back = (u) => V(xA + u * (xB - xA), yB + 0.02, zB - 0.12);
+    const front = (u) => V(xA + u * (xB - xA), yF - 0.2, zF + 0.58);
+    const torn = new Set();
+    if (burnt) for (let i = 0; i < n; i++) if (rng.chance(0.4)) torn.add(i);
+    for (let i = 0; i < n; i++) {
+      if (torn.has(i)) continue;
+      const u0 = i / n,
+        u1 = (i + 1) / n;
+      // pandeo: el centro de cada franja cae un poco
+      const mid = (u) => back(u).lerp(front(u), 0.5).add(V(0, -0.06, 0));
+      const mat = i % 2 ? ct2 : ct;
+      const tint = burnt ? [0.35, 0.3, 0.28] : null;
+      // (orden con la cara principal hacia arriba; la de abajo queda más oscura)
+      cloth2(wb, mat, back(u0), mid(u0), mid(u1), back(u1), { tint, sub: 3 });
+      cloth2(wb, mat, mid(u0), front(u0), front(u1), mid(u1), { tint, sub: 3 });
+      // faldón festoneado colgando del borde delantero
+      const fl = front(u0),
+        fr = front(u1);
+      const drop = 0.26 + (i % 2) * 0.04;
+      const tip = V((fl.x + fr.x) / 2, fl.y - drop - 0.1, fl.z + 0.02);
+      cloth2(wb, mat, V(fl.x, fl.y - drop, fl.z + 0.02), V(fr.x, fr.y - drop, fr.z + 0.02), V(fr.x, fr.y, fr.z + 0.02), V(fl.x, fl.y, fl.z + 0.02), { tint, sub: 3 });
+      wb.tri(mat, V(fr.x, fr.y - drop, fr.z + 0.02), V(fl.x, fl.y - drop, fl.z + 0.02), tip, { ao: false, tint });
+      wb.tri(mat, V(fl.x, fl.y - drop, fl.z + 0.008), V(fr.x, fr.y - drop, fr.z + 0.008), V(tip.x, tip.y, tip.z - 0.012), { ao: false, tint: [0.7, 0.68, 0.66] });
+    }
+    // vara delantera del toldo
+    wb.box('wooddark', xA - 0.02, yF - 0.24, zF + 0.55, xB + 0.02, yF - 0.17, zF + 0.62, { ao: false, tint: wt });
+    // mercancía y báscula
+    stallGoods(ctx, o.goods ?? 'pots', rng, topY, hw, burnt);
+    if (!burnt && rng.chance(0.6)) {
+      wb.box('iron', hw - 0.45, topY, 0.2, hw - 0.42, topY + 0.35, 0.23, { ao: false });
+      wb.box('iron', hw - 0.7, topY + 0.34, 0.2, hw - 0.17, topY + 0.36, 0.23, { ao: false });
+      for (const sx of [hw - 0.68, hw - 0.19]) wb.cylinder('bronze', sx, topY + 0.14, 0.215, 0.09, 0.09, 0.02, 7, { ao: false, capTop: true, capBot: true });
+    }
+    // cosas colgadas del larguero delantero (ajos, hierbas, paños)
+    for (let i = 0; i < 4; i++) {
+      if (rng.chance(0.35)) continue;
+      const px = -hw + 0.3 + i * ((hw * 2 - 0.6) / 3);
+      const hy = yF - 0.22;
+      wb.box('burlap', px - 0.008, hy - 0.3, zF + 0.57, px + 0.008, hy, zF + 0.59, { ao: false });
+      if (o.goods === 'meat') wb.geometry('skinCorrupt', new THREE.SphereGeometry(1, 6, 4), M4().compose(V(px, hy - 0.5, zF + 0.58), new THREE.Quaternion(), V(0.12, 0.24, 0.09)), { ao: false, tint: [0.75, 0.4, 0.38] });
+      else wb.geometry('straw', new THREE.SphereGeometry(1, 5, 4), M4().compose(V(px, hy - 0.38, zF + 0.58), new THREE.Quaternion(), V(0.07, 0.11, 0.07)), { ao: false, tint: burnt ? [0.3, 0.26, 0.24] : [0.86, 0.82, 0.7] });
+    }
   });
+  // género guardado bajo el mostrador y cajas al lado (en coordenadas mundo)
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  const Wp = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
+  if (!o.bare) {
+    const [ax, az] = Wp(hw + 0.55, -0.15);
+    crate(ctx, ax, y, az, 0.62, rot + 0.3);
+    if (rng.chance(0.6)) {
+      const [bx, bz] = Wp(-hw - 0.5, 0.1);
+      basket(ctx, bx, y, bz, { rot: rng.range(0, 6), tipped: burnt });
+    }
+  }
   if (o.burning && ctx.fires) {
     ctx.fires.push({ x, y: y + 1.0, z, s: 1.4, smoke: true });
     ctx.lights.push({ x, y: y + 1.6, z, r: 1, g: 0.45, b: 0.15, radius: 8, intensity: 1.3 });
   }
-  colOBB(ctx, x, z, 1.4, 0.6, rot, y, y + 0.9);
+  // mostrador (sin paredes invisibles: la caja sigue el giro del puesto)
+  colOBB(ctx, x, z, hw + 0.1, 0.53, rot, y, y + 0.95);
 }
 
-// Pira de cuerpos ardiendo.
-export function pyre(ctx, x, y, z, seed = 1) {
+// Pira funeraria: un castillete de troncos en capas cruzadas (cada capa
+// descansa sobre la anterior) con los cuerpos tendidos ENCIMA de la última
+// capa, uno más cruzado sobre ellos y otros caídos al pie. Nada flota.
+export function pyre(ctx, x, y, z, seed = 1, rot = 0) {
   const rng = new RNG(seed);
-  for (let i = 0; i < 8; i++) {
-    ctx.wb.push();
-    ctx.wb.translate(x + rng.range(-1, 1), y + 0.2 + (i % 3) * 0.2, z + rng.range(-1, 1));
-    ctx.wb.rotateY(rng.range(0, 3));
-    ctx.wb.rotateZ(Math.PI / 2);
-    ctx.wb.cylinder('wooddark', 0, -1.2, 0, 0.1, 0.1, 2.4, 5, { ao: false, tint: [0.3, 0.25, 0.22] });
-    ctx.wb.pop();
+  const wb = ctx.wb;
+  const r = 0.12; // radio de los troncos
+  const half = 1.25; // semilado del castillete
+  const layers = 4;
+  const burnt = (k) => [0.34 * k, 0.27 * k, 0.23 * k];
+  wb.push();
+  wb.translate(x, y, z);
+  wb.rotateY(rot);
+  // lecho de brasas y ceniza
+  wb.cylinder('ember', 0, 0.005, 0, half * 0.8, half * 0.9, 0.03, 10, { ao: false, capTop: true, grime: false });
+  for (let l = 0; l < layers; l++) {
+    const yy = r + l * 2 * r;
+    const n = l % 2 ? 5 : 6;
+    for (let i = 0; i < n; i++) {
+      const t = -half + r + (i / (n - 1)) * (2 * half - 2 * r);
+      const len = 2 * half + rng.range(0.15, 0.55);
+      const off = rng.range(-0.15, 0.15);
+      wb.push();
+      if (l % 2) {
+        // troncos a lo largo de Z
+        wb.translate(t, yy, off);
+        wb.rotateX(Math.PI / 2);
+      } else {
+        wb.translate(off, yy, t);
+        wb.rotateZ(Math.PI / 2);
+      }
+      wb.rotateY(rng.range(0, 3));
+      wb.cylinder('wooddark', 0, -len / 2, 0, r * rng.range(0.85, 1.05), r, len, 6, { ao: false, capTop: true, capBot: true, tint: burnt(rng.range(0.8, 1.15)) });
+      wb.pop();
+    }
   }
-  for (let i = 0; i < 5; i++) bakeCorpse(ctx.wb, x + rng.range(-1.2, 1.2), y + 0.5 + i * 0.12, z + rng.range(-1.2, 1.2), rng.range(0, 6), rng.pick(['back', 'face', 'curl']), 'villager', i);
-  ctx.fires.push({ x, y: y + 0.6, z, s: 2.6, smoke: true });
-  ctx.fires.push({ x: x + 0.8, y: y + 0.5, z: z - 0.5, s: 1.6 });
+  const top = layers * 2 * r;
+  // tablas y ramas atravesadas encima, bajo los cuerpos
+  for (let i = 0; i < 4; i++) {
+    wb.push();
+    wb.translate(rng.range(-0.6, 0.6), top + 0.02, rng.range(-0.6, 0.6));
+    wb.rotateY(rng.range(0, 3.14));
+    wb.box('planks', -0.9, 0, -0.1, 0.9, 0.04, 0.1, { ao: false, faces: 'tnsew', tint: burnt(1.1) });
+    wb.pop();
+  }
+  // cuerpos tendidos sobre la pira (cadera sobre la capa superior)
+  const ty = top + 0.04;
+  const bodies = [
+    [-0.62, Math.PI / 2 + rng.range(-0.15, 0.15), 'back'],
+    [0.05, -Math.PI / 2 + rng.range(-0.15, 0.15), 'face'],
+    [0.66, Math.PI / 2 + rng.range(-0.15, 0.15), 'back'],
+  ];
+  wb.pop();
+  // (los cuerpos se hornean en coordenadas mundo para que la cadera quede
+  // exactamente sobre la última capa)
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  const W = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
+  const tint = [0.55, 0.45, 0.4];
+  for (const [dz, yaw, pose] of bodies) {
+    const [bx, bz] = W(rng.range(-0.12, 0.12), dz);
+    bakeCorpse(wb, bx, y + ty, bz, rot + yaw, pose, 'villager', rng.int(0, 5), null, { tint });
+  }
+  // uno más cruzado encima de los otros (apoyado sobre sus torsos)
+  {
+    const [bx, bz] = W(rng.range(-0.2, 0.2), 0.1);
+    bakeCorpse(wb, bx, y + ty + 0.24, bz, rot + rng.range(-0.3, 0.3), 'back', 'villager', rng.int(0, 5), null, { tint });
+  }
+  // al pie: uno sentado contra la pira y otro que cayó rodando
+  {
+    const [bx, bz] = W(half + 0.42, rng.range(-0.5, 0.5));
+    bakeCorpse(wb, bx, y, bz, rot + Math.PI / 2, 'sit', 'villager', rng.int(0, 5), null, { tint });
+    const [cx2, cz2] = W(rng.range(-0.8, 0.8), -half - 0.9);
+    bakeCorpse(wb, cx2, y, cz2, rot + rng.range(0, 6), 'curl', 'villager', rng.int(0, 5), null, { tint });
+  }
+  // cenizas y huesos calcinados alrededor
+  if (ctx.decals) {
+    ctx.decals.push({ x, y: y + 0.01, z, size: half * 4.2, tex: 'shadow', rot: 0, opacity: 0.85 });
+    ctx.decals.push({ x: x + 0.4, y: y + 0.011, z: z - 0.3, size: half * 3, tex: 'splat', rot: seed, opacity: 0.35 });
+  }
+  bones(ctx, x, y, z, 9, seed + 7, half + 0.9);
+  // fuego sobre los cuerpos y entre los troncos
+  ctx.fires.push({ x, y: y + top + 0.1, z, s: 2.5, smoke: true });
+  const [fx, fz] = W(0.7, -0.5);
+  ctx.fires.push({ x: fx, y: y + top * 0.5, z: fz, s: 1.3 });
+  const [gx, gz] = W(-0.8, 0.6);
+  ctx.fires.push({ x: gx, y: y + top * 0.7, z: gz, s: 1.1 });
   ctx.lights.push({ x, y: y + 2, z, r: 1, g: 0.42, b: 0.12, radius: 13, intensity: 1.8 });
   if (ctx.dynLights) ctx.dynLights.push({ x, y: y + 2, z, intensity: 12, range: 15 });
-  col(ctx, x - 1.5, y, z - 1.5, x + 1.5, y + 1.2, z + 1.5);
+  colOBB(ctx, x, z, half + 0.15, half + 0.15, rot, y, y + top + 0.5);
 }
 
 // Estantería con objetos.
@@ -878,7 +1188,7 @@ export function forge(ctx, x, y, z, rot = 0, room) {
     for (const sx of [-1.1, 1.1]) wb.box('wallstone', sx - 0.1, 0.9, -0.9, sx + 0.1, 2.2, -0.7, { ao: false });
   });
   ctx.fires.push({ x, y: y + 0.95, z, s: 0.8, embers: true });
-  ctx.lights.push({ x, y: y + 1.5, z, r: 1, g: 0.42, b: 0.1, radius: 9, intensity: 1.8, room });
+  ctx.lights.push({ x, y: y + 1.5, z: z + 0.9, r: 1, g: 0.42, b: 0.1, radius: 11, intensity: 2.0, room });
   if (ctx.dynLights) ctx.dynLights.push({ x, y: y + 1.5, z, intensity: 6, range: 10, room });
   col(ctx, x - 1.25, y, z - 1.25, x + 1.25, y + 2.5, z + 1.25);
 }
@@ -1130,11 +1440,27 @@ export function sign(ctx, x, y, z, rot = 0, kind = 0) {
     for (const zz of [0.3, 0.8]) wb.box('iron', -0.006, -0.18, zz - 0.006, 0.006, 0, zz + 0.006, { ao: false });
     wb.push();
     wb.translate(0, -0.18, 0.55);
-    wb.rotateZ(0.06 * (kind % 2 ? 1 : -1));
+    wb.rotateZ(0.06 * (typeof kind === 'number' && kind % 2 ? 1 : -1));
     wb.box('planks', -0.03, -0.5, -0.32, 0.03, 0, 0.32, { ao: false, tint: [0.7, 0.6, 0.5] });
-    // símbolo tallado (bota, pan, jarra, llave)
+    // símbolo tallado (bota, pan, jarra, llave) o de hierro (yunque, herradura, huso)
     const mat = 'wooddark';
-    if (kind % 4 === 0) {
+    if (kind === 'anvil') {
+      wb.box('iron', -0.05, -0.3, -0.2, 0.05, -0.22, 0.2, { ao: false });
+      wb.box('iron', -0.05, -0.36, -0.07, 0.05, -0.3, 0.07, { ao: false });
+      wb.box('iron', -0.05, -0.42, -0.13, 0.05, -0.36, 0.13, { ao: false });
+      wb.box('iron', -0.05, -0.26, 0.2, 0.05, -0.23, 0.27, { ao: false });
+    } else if (kind === 'horseshoe') {
+      for (let i = 0; i < 7; i++) {
+        const a = -0.3 + (i / 6) * (Math.PI + 0.6);
+        wb.box('iron', -0.05, -0.27 + Math.sin(a) * 0.12 - 0.025, Math.cos(a) * 0.12 - 0.025, 0.05, -0.27 + Math.sin(a) * 0.12 + 0.025, Math.cos(a) * 0.12 + 0.025, { ao: false });
+      }
+    } else if (kind === 'spindle') {
+      wb.box(mat, -0.04, -0.42, -0.015, 0.04, -0.08, 0.015, { ao: false });
+      wb.cylinder('clothRed', 0, -0.32, 0, 0.07, 0.07, 0.14, 6, { ao: false, capTop: true, capBot: true });
+    } else if (kind === 'cup') {
+      wb.cylinder('bronze', 0, -0.42, 0, 0.06, 0.1, 0.18, 7, { ao: false, capTop: true, capBot: true });
+      wb.cylinder('bronze', 0, -0.46, 0, 0.08, 0.02, 0.04, 7, { ao: false, capBot: true });
+    } else if (kind % 4 === 0) {
       wb.box(mat, -0.04, -0.36, -0.12, 0.04, -0.14, -0.04, { ao: false });
       wb.box(mat, -0.04, -0.36, -0.04, 0.04, -0.28, 0.14, { ao: false });
     } else if (kind % 4 === 1) wb.cylinder(mat, 0, -0.34, 0, 0.13, 0.11, 0.14, 7, { ao: false, capTop: true });
@@ -1329,4 +1655,557 @@ export function tent(ctx, x, y, z, rot = 0, mat = 'burlap') {
     wb.quad(mat, V3(1.2, 0.9, -0.05), V3(1.4, 0.02, -1.1), V3(-1.4, 0.02, -1.1), V3(-0.3, 1.5, -0.05), { ao: false, sub: 3, tint: [0.65, 0.6, 0.55] });
   });
   colOBB(ctx, x, z, 1.3, 0.9, rot, y, y + 1.2);
+}
+
+// ============================================================= oficios e interiores
+// (tabernas, hornos, telares, tintes, fraguas y cuadras)
+
+// Hogar/chimenea de pared: dir = hacia dónde mira la boca ('n','s','e','w').
+export function hearth(ctx, x, y, z, dir, o = {}) {
+  const wb = ctx.wb;
+  const rot = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 }[dir];
+  const w = o.w ?? 1.8,
+    lit = o.lit !== false;
+  wb.at(x, y, z, rot, () => {
+    // jambas, dintel y campana
+    wb.box('wallstone', -w / 2, 0, -0.1, -w / 2 + 0.35, 1.25, 0.55, { sub: 2, aoH: 0.5, room: o.room });
+    wb.box('wallstone', w / 2 - 0.35, 0, -0.1, w / 2, 1.25, 0.55, { sub: 2, aoH: 0.5, room: o.room });
+    wb.box('ashlar', -w / 2 - 0.05, 1.25, -0.1, w / 2 + 0.05, 1.45, 0.6, { ao: false, room: o.room });
+    const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+    wb.quad('wallstone', V3(-w / 2, 1.45, 0.6), V3(w / 2, 1.45, 0.6), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), 0.1), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), 0.1), { ao: false, sub: 2, room: o.room });
+    wb.quad('wallstone', V3(w / 2, 1.45, 0.6), V3(w / 2, 1.45, -0.1), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), -0.1), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), 0.1), { ao: false, sub: 2, room: o.room });
+    wb.quad('wallstone', V3(-w / 2, 1.45, -0.1), V3(-w / 2, 1.45, 0.6), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), 0.1), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), -0.1), { ao: false, sub: 2, room: o.room });
+    // fondo tiznado y hogar
+    wb.box('black', -w / 2 + 0.35, 0.02, -0.1, w / 2 - 0.35, 1.25, -0.08, { faces: 's', ao: false, grime: false, room: o.room });
+    wb.box('wallstone', -w / 2 + 0.35, 0, -0.08, w / 2 - 0.35, 0.12, 0.5, { faces: 't', ao: false, room: o.room, tint: [0.4, 0.37, 0.35] });
+    if (lit) wb.box('ember', -0.3, 0.12, 0.05, 0.3, 0.16, 0.35, { faces: 't', ao: false, grime: false, room: o.room });
+    // morillos y leños
+    for (const sx of [-0.35, 0.35]) wb.box('iron', sx - 0.03, 0.12, 0.05, sx + 0.03, 0.4, 0.4, { ao: false, room: o.room });
+    for (let i = 0; i < 3; i++) {
+      wb.push();
+      wb.translate(-0.05 + i * 0.05, 0.24 + i * 0.04, 0.2 + (i - 1) * 0.1);
+      wb.rotateZ(Math.PI / 2);
+      wb.rotateX(0.1 * (i - 1));
+      wb.cylinder('wooddark', 0, -0.45, 0, 0.06, 0.06, 0.9, 6, { ao: false, capTop: true, capBot: true, tint: [0.35, 0.28, 0.24], room: o.room });
+      wb.pop();
+    }
+    if (o.pot) {
+      // caldero colgado de su cremallera
+      wb.box('iron', -0.015, 0.7, 0.2, 0.015, 1.3, 0.23, { ao: false, room: o.room });
+      wb.cylinder('iron', 0, 0.42, 0.22, 0.2, 0.26, 0.3, 8, { ao: false, capBot: true, room: o.room });
+      wb.cylinder('black', 0, 0.7, 0.22, 0.24, 0.24, 0.01, 8, { ao: false, capTop: true, grime: false, room: o.room });
+    }
+  });
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  const fx = x + 0.2 * s,
+    fz = z + 0.2 * c;
+  if (lit && ctx.fires) {
+    ctx.fires.push({ x: fx, y: y + 0.2, z: fz, s: o.fire ?? 0.75, embers: true });
+    ctx.lights.push({ x: x + 0.9 * s, y: y + 0.8, z: z + 0.9 * c, r: 1, g: 0.46, b: 0.16, radius: o.radius ?? 8, intensity: 1.4, room: o.room });
+    if (ctx.dynLights) ctx.dynLights.push({ x: x + 0.7 * s, y: y + 0.9, z: z + 0.7 * c, intensity: 5, range: 9 });
+  }
+  colOBB(ctx, x + 0.22 * s, z + 0.22 * c, w / 2, 0.35, rot, y, y + 1.45);
+}
+
+// Horno de pan abovedado (de ladrillo y barro) con su boca incandescente.
+export function breadOven(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const R = o.r ?? 1.3;
+  wb.at(x, y, z, rot, () => {
+    // basamento
+    wb.box('wallstone', -R - 0.2, 0, -R - 0.2, R + 0.2, 0.9, R + 0.2, { sub: 2, aoH: 0.6, room: o.room });
+    // cúpula
+    wb.geometry('plaster', new THREE.SphereGeometry(R, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), M4().compose(V(0, 0.9, 0), new THREE.Quaternion(), V(1, 0.78, 1)), { ao: false, uvScale: 1.4, tint: [0.72, 0.5, 0.38], room: o.room });
+    // boca con arco
+    wb.box('ashlar', -0.45, 0.9, R - 0.05, 0.45, 1.05, R + 0.25, { ao: false, room: o.room });
+    wb.box('ashlar', -0.45, 1.05, R - 0.05, -0.33, 1.55, R + 0.25, { ao: false, room: o.room });
+    wb.box('ashlar', 0.33, 1.05, R - 0.05, 0.45, 1.55, R + 0.25, { ao: false, room: o.room });
+    wb.box('ashlar', -0.45, 1.55, R - 0.05, 0.45, 1.72, R + 0.25, { ao: false, room: o.room });
+    wb.box(o.lit === false ? 'black' : 'ember', -0.33, 1.05, R + 0.05, 0.33, 1.55, R + 0.07, { faces: 's', ao: false, grime: false, room: o.room });
+    // chimenea sobre la cúpula
+    wb.box('wallstone', -0.22, 0.9 + R * 0.7, -0.4, 0.22, (o.flue ?? 3.1), 0.05, { ao: false, room: o.room });
+    // pala de hornear apoyada
+    wb.push();
+    wb.translate(R + 0.35, 0, R * 0.2);
+    wb.rotateZ(0.28);
+    wb.box('wooddark', -0.03, 0, -0.03, 0.03, 2.1, 0.03, { ao: false, room: o.room });
+    wb.box('planks', -0.18, 2.0, -0.02, 0.18, 2.4, 0.02, { ao: false, room: o.room });
+    wb.pop();
+  });
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  if (o.lit !== false && ctx.fires) {
+    ctx.fires.push({ x: x + (R + 0.1) * s, y: y + 1.1, z: z + (R + 0.1) * c, s: 0.35, embers: true, light: false });
+    ctx.lights.push({ x: x + (R + 0.8) * s, y: y + 1.3, z: z + (R + 0.8) * c, r: 1, g: 0.5, b: 0.2, radius: 7, intensity: 1.2, room: o.room });
+    if (ctx.dynLights) ctx.dynLights.push({ x: x + (R + 0.6) * s, y: y + 1.3, z: z + (R + 0.6) * c, intensity: 4, range: 8 });
+  }
+  colOBB(ctx, x, z, R + 0.2, R + 0.25, rot, y, y + 2.0);
+}
+
+// Artesa de amasar (con la masa que "crece").
+export function kneadTrough(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    for (const sx of [-0.8, 0.8]) for (const sz of [-0.28, 0.28]) wb.box('wooddark', sx - 0.05, 0, sz - 0.05, sx + 0.05, 0.62, sz + 0.05, { ao: false, room: o.room });
+    wb.box('planks', -0.95, 0.6, -0.36, 0.95, 0.66, 0.36, { ao: false, faces: 'tnsewb', room: o.room });
+    wb.box('planks', -0.95, 0.66, -0.36, 0.95, 0.95, -0.3, { ao: false, room: o.room });
+    wb.box('planks', -0.95, 0.66, 0.3, 0.95, 0.95, 0.36, { ao: false, room: o.room });
+    wb.box('planks', -0.95, 0.66, -0.3, -0.89, 0.95, 0.3, { ao: false, room: o.room });
+    wb.box('planks', 0.89, 0.66, -0.3, 0.95, 0.95, 0.3, { ao: false, room: o.room });
+    if (o.flesh) wb.geometry('fleshStatic', new THREE.SphereGeometry(1, 8, 5), M4().compose(V(0, 0.88, 0), new THREE.Quaternion(), V(0.86, 0.14, 0.28)), { ao: false, grime: false, room: o.room, tint: [1.2, 1.0, 0.85] });
+    else wb.box('clothWhite', -0.88, 0.66, -0.29, 0.88, 0.8, 0.29, { faces: 't', ao: false, room: o.room, tint: [0.95, 0.88, 0.72] });
+  });
+  colOBB(ctx, x, z, 0.97, 0.38, rot, y, y + 0.95);
+}
+
+// Telar de bajo lizo con la tela a medio tejer.
+export function loom(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    for (const sx of [-0.9, 0.9]) {
+      wb.box('wooddark', sx - 0.06, 0, -0.6, sx + 0.06, 1.7, -0.5, { ao: false, room: o.room });
+      wb.box('wooddark', sx - 0.06, 0, 0.5, sx + 0.06, 1.0, 0.6, { ao: false, room: o.room });
+      wb.box('wooddark', sx - 0.05, 0.9, -0.6, sx + 0.05, 1.0, 0.6, { ao: false, room: o.room });
+    }
+    wb.box('wooddark', -0.95, 1.6, -0.6, 0.95, 1.7, -0.5, { ao: false, room: o.room });
+    wb.push();
+    wb.translate(0, 0.95, 0.52);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('wooddark', 0, -0.9, 0, 0.07, 0.07, 1.8, 6, { ao: false, capTop: true, capBot: true, room: o.room });
+    wb.pop();
+    // urdimbre (hilos) y tela
+    for (let i = 0; i < 24; i++) {
+      const px = -0.8 + (i / 23) * 1.6;
+      wb.box('clothWhite', px - 0.004, 0.95, -0.55, px + 0.004, 1.62, -0.545, { ao: false, grime: false, room: o.room, tint: [0.85, 0.8, 0.72] });
+    }
+    const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+    wb.quad(o.cloth ?? 'clothRed', V3(-0.8, 0.96, 0.5), V3(0.8, 0.96, 0.5), V3(0.8, 0.98, -0.1), V3(-0.8, 0.98, -0.1), { ao: false, sub: 3, room: o.room, uvLocal: true });
+    wb.quad(o.cloth ?? 'clothRed', V3(-0.8, 0.95, -0.1), V3(0.8, 0.95, -0.1), V3(0.8, 0.94, 0.5), V3(-0.8, 0.94, 0.5), { ao: false, sub: 3, room: o.room, uvLocal: true, tint: [0.7, 0.7, 0.7] });
+    // banco del tejedor
+    wb.box('wooddark', -0.5, 0.45, 0.85, 0.5, 0.5, 1.15, { ao: false, faces: 'tnsewb', room: o.room });
+    for (const sx of [-0.42, 0.42]) wb.box('wooddark', sx - 0.04, 0, 0.9, sx + 0.04, 0.45, 1.1, { ao: false, room: o.room });
+  });
+  colOBB(ctx, x, z, 1.0, 0.65, rot, y, y + 1.7);
+}
+
+// Rueca.
+export function spinningWheel(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    wb.box('wooddark', -0.4, 0.3, -0.08, 0.4, 0.38, 0.08, { ao: false, room: o.room });
+    for (const [sx, sz] of [[-0.35, -0.12], [-0.35, 0.12], [0.35, 0]]) wb.box('wooddark', sx - 0.03, 0, sz - 0.03, sx + 0.03, 0.34, sz + 0.03, { ao: false, room: o.room });
+    wb.box('wooddark', -0.2, 0.38, -0.03, -0.14, 0.95, 0.03, { ao: false, room: o.room });
+    wb.push();
+    wb.translate(-0.17, 0.85, 0);
+    wb.rotateX(Math.PI / 2);
+    wb.cylinder('wooddark', 0, -0.03, 0, 0.36, 0.36, 0.06, 12, { ao: false, capTop: true, capBot: true, room: o.room, open: true });
+    wb.pop();
+    wb.cylinder('clothWhite', 0.3, 0.6, 0, 0.05, 0.05, 0.16, 6, { ao: false, capTop: true, room: o.room, tint: [0.9, 0.85, 0.75] });
+  });
+  colOBB(ctx, x, z, 0.45, 0.2, rot, y, y + 1.1);
+}
+
+// Tina de tintorero (redonda, con el tinte y el paño a medio sumergir).
+export function dyeVat(ctx, x, y, z, color = [0.25, 0.3, 0.8], o = {}) {
+  const wb = ctx.wb;
+  const r = o.r ?? 0.8;
+  wb.cylinder('planks', x, y, z, r, r * 1.04, 0.9, 12, { uv: 1.2, aoH: 0.5, room: o.room });
+  for (const yy of [0.15, 0.7]) wb.cylinder('iron', x, y + yy, z, r * 1.05, r * 1.05, 0.06, 12, { ao: false, room: o.room });
+  wb.cylinder('water', x, y + 0.78, z, r * 0.96, r * 0.96, 0.02, 12, { ao: false, capTop: true, grime: false, tint: color, room: o.room });
+  // paño que asoma
+  wb.push();
+  wb.translate(x + r * 0.5, y + 0.8, z);
+  wb.rotateZ(-0.9);
+  wb.box('clothWhite', -0.02, -0.1, -0.25, 0.02, 0.7, 0.25, { ao: false, grime: false, tint: color.map((v) => Math.min(1, v * 1.4)), room: o.room });
+  wb.pop();
+  col(ctx, x - r, y, z - r, x + r, y + 0.9, z + r);
+}
+
+// Abrevadero / pila de piedra con agua.
+export function trough(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const L = o.len ?? 2.2;
+  wb.at(x, y, z, rot, () => {
+    wb.box('ashlar', -L / 2, 0, -0.45, L / 2, 0.75, -0.33, { sub: 2, room: o.room });
+    wb.box('ashlar', -L / 2, 0, 0.33, L / 2, 0.75, 0.45, { sub: 2, room: o.room });
+    wb.box('ashlar', -L / 2, 0, -0.33, -L / 2 + 0.12, 0.75, 0.33, { sub: 2, room: o.room });
+    wb.box('ashlar', L / 2 - 0.12, 0, -0.33, L / 2, 0.75, 0.33, { sub: 2, room: o.room });
+    wb.box(o.blood ? 'blood' : 'water', -L / 2 + 0.12, 0.55, -0.33, L / 2 - 0.12, 0.56, 0.33, { faces: 't', ao: false, grime: false, room: o.room, tint: o.tint });
+  });
+  colOBB(ctx, x, z, L / 2, 0.45, rot, y, y + 0.75);
+}
+
+// Fuelle de fragua con su palanca.
+export function bellows(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    wb.box('wooddark', -0.1, 0, -0.5, 0.1, 0.55, 0.5, { ao: false, room: o.room });
+    // tablas y cuero plegado
+    wb.box('planks', -0.55, 0.55, -0.45, 0.55, 0.6, 0.45, { ao: false, faces: 'tnsewb', room: o.room });
+    wb.box('leather', -0.52, 0.6, -0.4, 0.5, 0.82, 0.4, { ao: false, room: o.room, tint: [0.7, 0.55, 0.45] });
+    wb.push();
+    wb.translate(-0.55, 0.84, 0);
+    wb.rotateZ(0.12);
+    wb.box('planks', 0, 0, -0.45, 1.1, 0.05, 0.45, { ao: false, faces: 'tnsewb', room: o.room });
+    wb.pop();
+    wb.push();
+    wb.translate(0.55, 0.72, 0);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('iron', 0, 0, 0, 0.06, 0.03, 0.5, 6, { ao: false, room: o.room });
+    wb.pop();
+    // palanca
+    wb.box('wooddark', -0.03, 1.0, -0.03, 0.03, 2.1, 0.03, { ao: false, room: o.room });
+    wb.box('wooddark', -0.6, 2.05, -0.03, 0.6, 2.12, 0.03, { ao: false, room: o.room });
+  });
+  colOBB(ctx, x, z, 0.6, 0.5, rot, y, y + 1.0);
+}
+
+// Barra de taberna (mostrador) con jarras.
+export function counter(ctx, x, y, z, rot = 0, len = 3, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    wb.box('planks', -len / 2, 0, -0.3, len / 2, 1.0, 0.3, { faces: 'tnsew', uv: 0.8, aoH: 0.6, room: o.room });
+    wb.box('wooddark', -len / 2 - 0.06, 1.0, -0.38, len / 2 + 0.06, 1.08, 0.38, { ao: false, faces: 'tnsewb', room: o.room });
+    for (let px = -len / 2 + 0.3; px < len / 2; px += 0.6) wb.box('wooddark', px - 0.04, 0, 0.3, px + 0.04, 1.0, 0.33, { ao: false, room: o.room });
+    const rng = new RNG(Math.round(x * 7 + z * 13));
+    for (let i = 0; i < 5; i++) {
+      const px = rng.range(-len / 2 + 0.2, len / 2 - 0.2);
+      if (rng.chance(0.5)) wb.cylinder('bronze', px, 1.08, rng.range(-0.2, 0.2), 0.05, 0.05, 0.13, 6, { ao: false, capTop: true, room: o.room });
+      else jar(ctx, px, 1.08, rng.range(-0.2, 0.2), 0.45, { collide: false, rot: rng.range(0, 6) });
+    }
+  });
+  colOBB(ctx, x, z, len / 2 + 0.06, 0.38, rot, y, y + 1.08);
+}
+
+// Taburete.
+export function stool(ctx, x, y, z, o = {}) {
+  const wb = ctx.wb;
+  wb.cylinder('wooddark', x, y + 0.42, z, 0.2, 0.2, 0.05, 7, { ao: false, capTop: true, capBot: true, room: o.room });
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2 + (x + z);
+    wb.box('wooddark', x + Math.cos(a) * 0.13 - 0.025, y, z + Math.sin(a) * 0.13 - 0.025, x + Math.cos(a) * 0.13 + 0.025, y + 0.42, z + Math.sin(a) * 0.13 + 0.025, { ao: false, room: o.room });
+  }
+  if (o.tipped) return;
+  col(ctx, x - 0.18, y, z - 0.18, x + 0.18, y + 0.45, z + 0.18);
+}
+
+// Tonel grande tumbado sobre su cuna (bodega).
+export function cask(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const r = o.r ?? 0.55,
+    L = o.len ?? 1.3;
+  wb.at(x, y, z, rot, () => {
+    for (const sx of [-L * 0.3, L * 0.3]) wb.box('wooddark', sx - 0.06, 0, -r * 0.8, sx + 0.06, r * 0.45, r * 0.8, { ao: false, room: o.room });
+    wb.push();
+    wb.translate(0, r + 0.1, 0);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('planks', 0, -L / 2, 0, r * 0.92, r * 0.92, L, 10, { ao: false, capTop: true, capBot: true, uv: 1.2, room: o.room });
+    wb.cylinder('planks', 0, -L * 0.25, 0, r, r, L * 0.5, 10, { ao: false, uv: 1.2, room: o.room });
+    for (const yy of [-L * 0.42, -L * 0.1, L * 0.1, L * 0.36]) wb.cylinder('iron', 0, yy, 0, r * 0.97, r * 0.97, 0.05, 10, { ao: false, room: o.room });
+    wb.pop();
+    wb.box('wooddark', L / 2 - 0.01, r * 0.5, -0.03, L / 2 + 0.12, r * 0.56, 0.03, { ao: false, room: o.room });
+  });
+  colOBB(ctx, x, z, L / 2 + 0.1, r, rot, y, y + r * 2 + 0.1);
+}
+
+// Rueda de carro apoyada en un muro.
+export function cartWheel(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.push();
+  wb.translate(x, y + 0.5, z);
+  wb.rotateY(rot);
+  wb.rotateX(Math.PI / 2 - 0.2);
+  wb.cylinder('wooddark', 0, -0.05, 0, 0.55, 0.55, 0.1, 12, { ao: false, open: true, room: o.room });
+  wb.cylinder('wooddark', 0, -0.06, 0, 0.12, 0.12, 0.12, 8, { ao: false, capTop: true, capBot: true, room: o.room });
+  for (let i = 0; i < 6; i++) {
+    wb.push();
+    wb.rotateY((i / 6) * Math.PI * 2);
+    wb.box('wooddark', 0.1, -0.03, -0.025, 0.52, 0.03, 0.025, { ao: false, room: o.room });
+    wb.pop();
+  }
+  wb.pop();
+}
+
+// Tabla con herraduras y herramientas colgadas (tenazas, martillos).
+export function toolBoard(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(Math.round(x * 17 + z * 5));
+  wb.at(x, y, z, rot, () => {
+    wb.box('planks', -0.9, 1.0, 0, 0.9, 1.9, 0.05, { ao: false, room: o.room, tint: [0.75, 0.68, 0.6] });
+    for (let i = 0; i < 6; i++) {
+      const px = -0.75 + i * 0.3;
+      const kind = rng.int(0, 2);
+      if (kind === 0) {
+        // tenazas
+        wb.push();
+        wb.translate(px, 1.75, 0.07);
+        wb.rotateZ(rng.range(-0.1, 0.1));
+        wb.box('iron', -0.04, -0.6, -0.01, -0.015, 0, 0.01, { ao: false, room: o.room });
+        wb.box('iron', 0.015, -0.6, -0.01, 0.04, 0, 0.01, { ao: false, room: o.room });
+        wb.pop();
+      } else if (kind === 1) {
+        // martillo
+        wb.box('wooddark', px - 0.015, 1.25, 0.06, px + 0.015, 1.75, 0.08, { ao: false, room: o.room });
+        wb.box('iron', px - 0.08, 1.7, 0.05, px + 0.08, 1.78, 0.1, { ao: false, room: o.room });
+      } else {
+        // herradura
+        for (let k = 0; k < 6; k++) {
+          const a = -0.2 + (k / 5) * (Math.PI + 0.4);
+          wb.box('iron', px + Math.cos(a) * 0.08 - 0.015, 1.5 + Math.sin(a) * 0.08 - 0.015, 0.05, px + Math.cos(a) * 0.08 + 0.015, 1.5 + Math.sin(a) * 0.08 + 0.015, 0.075, { ao: false, room: o.room });
+        }
+      }
+    }
+  });
+}
+
+// Montón de carbón.
+export function coalPile(ctx, x, y, z, s = 1, o = {}) {
+  const rng = new RNG(Math.round(x * 13 - z * 7));
+  for (let i = 0; i < 16; i++) {
+    const a = rng.range(0, Math.PI * 2),
+      r = rng.range(0, 0.6) * s;
+    const h = (1 - r / (0.7 * s)) * 0.35 * s;
+    ctx.wb.geometry('black', new THREE.IcosahedronGeometry(0.1 * s, 0), M4().compose(V(x + Math.cos(a) * r, y + Math.max(0.04, h), z + Math.sin(a) * r), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(0, 3), rng.range(0, 3), 0)), V(1, 0.8, 1)), { ao: false, grime: false, room: o.room, tint: [2.2, 2.2, 2.3] });
+  }
+  col(ctx, x - 0.5 * s, y, z - 0.5 * s, x + 0.5 * s, y + 0.3 * s, z + 0.5 * s);
+}
+
+// Barras de hierro apiladas.
+export function ironBars(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    for (const sz of [-0.3, 0.3]) wb.box('wooddark', -0.06, 0, sz - 0.4, 0.06, 0.1, sz + 0.4, { ao: false, room: o.room });
+    for (let l = 0; l < 3; l++) for (let i = 0; i < 5 - l; i++) wb.box('iron', -0.9, 0.1 + l * 0.05, -0.2 + i * 0.09 + l * 0.045, 0.9, 0.15 + l * 0.05, -0.16 + i * 0.09 + l * 0.045, { ao: false, room: o.room });
+  });
+}
+
+// Maniquí de armero con cota de malla y yelmo.
+export function armorStand(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    wb.box('wooddark', -0.25, 0, -0.04, 0.25, 0.06, 0.04, { ao: false, room: o.room });
+    wb.box('wooddark', -0.04, 0, -0.25, 0.04, 0.06, 0.25, { ao: false, room: o.room });
+    wb.box('wooddark', -0.04, 0.06, -0.04, 0.04, 1.4, 0.04, { ao: false, room: o.room });
+    wb.box('chainmail', -0.24, 0.8, -0.14, 0.24, 1.45, 0.14, { ao: false, room: o.room });
+    wb.box('wooddark', -0.35, 1.4, -0.03, 0.35, 1.46, 0.03, { ao: false, room: o.room });
+    wb.cylinder('plate', 0, 1.5, 0, 0.13, 0.12, 0.2, 8, { ao: false, capTop: true, room: o.room });
+    if (o.flesh) wb.geometry('fleshStatic', new THREE.SphereGeometry(1, 6, 4), M4().compose(V(0.08, 1.1, 0.12), new THREE.Quaternion(), V(0.16, 0.2, 0.08)), { ao: false, grime: false, room: o.room });
+  });
+  colOBB(ctx, x, z, 0.28, 0.2, rot, y, y + 1.7);
+}
+
+// Cota de malla tirada con carne cosida a las anillas (lo que el herrero quemó).
+export function fleshMail(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, rot, () => {
+    wb.box('chainmail', -0.35, 0, -0.3, 0.35, 0.07, 0.3, { ao: false, room: o.room });
+    wb.box('chainmail', 0.1, 0, 0.2, 0.55, 0.05, 0.55, { ao: false, room: o.room });
+    wb.geometry('fleshStatic', new THREE.SphereGeometry(1, 7, 5), M4().compose(V(-0.05, 0.07, 0), new THREE.Quaternion(), V(0.22, 0.08, 0.16)), { ao: false, grime: false, room: o.room });
+  });
+}
+
+// Cerca de madera (tramo recto de x0,z0 a x1,z1) con colisión.
+export function fence(ctx, x0, z0, x1, z1, o = {}) {
+  const wb = ctx.wb;
+  const L = Math.hypot(x1 - x0, z1 - z0);
+  const rot = Math.atan2(-(z1 - z0), x1 - x0);
+  const cx = (x0 + x1) / 2,
+    cz = (z0 + z1) / 2;
+  const rng = new RNG(Math.round(x0 * 11 + z1 * 3));
+  wb.at(cx, 0, cz, rot, () => {
+    const n = Math.max(1, Math.round(L / 1.4));
+    for (let i = 0; i <= n; i++) {
+      const px = -L / 2 + (i / n) * L;
+      wb.box('wooddark', px - 0.06, 0, -0.06, px + 0.06, (o.h ?? 1.1) + rng.range(-0.05, 0.1), 0.06, { aoH: 0.4, room: o.room });
+    }
+    for (const yy of [0.35, 0.85]) {
+      if (o.broken && rng.chance(0.3)) continue;
+      wb.box('planks', -L / 2, yy, -0.07, L / 2, yy + 0.1, -0.04, { ao: false, faces: 'tnsewb', room: o.room, tint: [0.75, 0.68, 0.6] });
+    }
+  });
+  colOBB(ctx, cx, cz, L / 2, 0.08, rot, 0, o.h ?? 1.1);
+}
+
+// Caballo muerto (tumbado de lado, hinchado).
+export function deadHorse(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const tint = o.tint ?? [0.55, 0.42, 0.34];
+  wb.at(x, y, z, rot, () => {
+    wb.geometry('skin', new THREE.SphereGeometry(1, 9, 6), M4().compose(V(0, 0.42, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.1)), V(1.05, 0.42, 0.5)), { ao: false, tint, uvScale: 1.3 });
+    // cuello y cabeza
+    wb.push();
+    wb.translate(1.0, 0.36, 0.1);
+    wb.rotateY(-0.3);
+    wb.rotateZ(-0.35);
+    wb.box('skin', 0, -0.17, -0.14, 0.8, 0.17, 0.14, { ao: false, tint });
+    wb.translate(0.8, -0.05, 0);
+    wb.rotateZ(-0.6);
+    wb.box('skin', 0, -0.12, -0.11, 0.55, 0.12, 0.11, { ao: false, tint });
+    wb.box('black', 0.35, 0.02, 0.1, 0.4, 0.06, 0.115, { ao: false, grime: false });
+    wb.pop();
+    // patas rígidas
+    for (const [px, pz, a] of [[-0.7, 0.3, 0.4], [-0.5, 0.35, 0.9], [0.55, 0.3, 0.5], [0.75, 0.35, 1.1]]) {
+      wb.push();
+      wb.translate(px, 0.45, pz);
+      wb.rotateX(-Math.PI / 2 + 0.3);
+      wb.rotateZ(a - 0.7);
+      wb.box('skin', -0.06, 0, -0.06, 0.06, 0.95, 0.06, { ao: false, tint });
+      wb.box('black', -0.07, 0.95, -0.07, 0.07, 1.05, 0.07, { ao: false });
+      wb.pop();
+    }
+    // cola y costillas al aire
+    wb.box('clothDark', -1.15, 0.3, -0.04, -0.95, 0.4, 0.04, { ao: false });
+    if (o.torn !== false) {
+      wb.geometry('fleshStatic', new THREE.SphereGeometry(1, 7, 5), M4().compose(V(-0.1, 0.5, 0.35), new THREE.Quaternion(), V(0.45, 0.25, 0.2)), { ao: false, grime: false });
+      for (let i = 0; i < 5; i++) wb.box('bone', -0.4 + i * 0.16, 0.32, 0.38, -0.37 + i * 0.16, 0.68, 0.42, { ao: false });
+    }
+  });
+  corpseAt(ctx, x, y + 0.4, z);
+  if (ctx.decals) ctx.decals.push({ x, y: y + 0.01, z, size: 3.2, tex: 'splat', rot: x, opacity: 0.8 });
+  colOBB(ctx, x, z, 1.3, 0.55, rot, y, y + 0.85);
+}
+
+// Registra un cuerpo para las moscas.
+function corpseAt(ctx, x, y, z) {
+  if (ctx.flies) ctx.flies.push({ x, y, z });
+}
+
+// Hornacina en un muro con una imagen, velas y exvotos. dir = hacia dónde mira.
+export function niche(ctx, x, y, z, dir, o = {}) {
+  const wb = ctx.wb;
+  const rot = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 }[dir];
+  wb.at(x, y, z, rot, () => {
+    wb.box('ashlar', -0.55, 0, 0, 0.55, 0.12, 0.35, { ao: false, room: o.room });
+    wb.box('ashlar', -0.55, 0.12, 0, -0.42, 1.1, 0.12, { ao: false, room: o.room });
+    wb.box('ashlar', 0.42, 0.12, 0, 0.55, 1.1, 0.12, { ao: false, room: o.room });
+    wb.box('ashlar', -0.55, 1.1, 0, 0.55, 1.3, 0.14, { ao: false, room: o.room });
+    wb.box('black', -0.42, 0.12, 0.005, 0.42, 1.1, 0.01, { faces: 's', ao: false, grime: false, room: o.room });
+    // imagen velada
+    wb.cylinder('ashlar', 0, 0.12, 0.12, 0.13, 0.08, 0.65, 7, { ao: false, room: o.room });
+    wb.cylinder(o.veil ?? 'clothWhite', 0, 0.62, 0.12, 0.14, 0.05, 0.3, 7, { ao: false, capTop: true, room: o.room });
+  });
+  const c = Math.cos(rot),
+    s = Math.sin(rot);
+  candles(ctx, x + 0.22 * s, y + 0.12, z + 0.22 * c, 4, Math.round(x * 3 + z), { room: o.room, spread: 0.18, radius: 3.5, intensity: 0.7, scale: 0.6 });
+}
+
+// Muro de carne que tapona un hueco entero (x0..x1 a lo ancho, y0..y1 de
+// alto, en el plano z; out = hacia dónde asoma, ±1). Bultos solapados sin
+// huecos por los que se vea detrás, con venas que salen hacia fuera.
+export function fleshWall(ctx, x0, x1, y0, y1, z, out = -1, seed = 1, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(seed);
+  const W = x1 - x0,
+    H = y1 - y0;
+  // fondo continuo (para que no haya ningún resquicio)
+  wb.box('flesh', x0, y0, z - 0.25 * out, x1, y1, z - 0.1 * out, { faces: out < 0 ? 'n' : 's', ao: false, grime: false, sub: 0.8 });
+  const nx = Math.ceil(W / 0.55),
+    ny = Math.ceil(H / 0.55);
+  for (let j = 0; j <= ny; j++)
+    for (let i = 0; i <= nx; i++) {
+      const px = x0 + (i / nx) * W + rng.range(-0.18, 0.18),
+        py = y0 + (j / ny) * H + rng.range(-0.18, 0.18);
+      const low = 1 - j / ny; // más grueso abajo
+      const s = rng.range(0.32, 0.5) * (0.8 + low * 0.6);
+      const bulge = rng.range(0.05, 0.25) + low * 0.35;
+      wb.geometry('flesh', lumpGeo(rng, rng.chance(0.3) ? 2 : 1), M4().compose(V(Math.min(x1, Math.max(x0, px)), Math.min(y1, Math.max(y0, py)), z + out * bulge), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(0, 6), rng.range(0, 6), rng.range(0, 6))), V(s, s * rng.range(0.7, 1.1), s * 0.6)), { ao: false, uvScale: 1.3, grime: false });
+      if (rng.chance(0.12)) {
+        const r = rng.range(0.03, 0.06);
+        wb.geometry(rng.chance(0.5) ? 'eyeGlow' : 'candle', new THREE.SphereGeometry(1, 6, 4), M4().compose(V(px, py, z + out * (bulge + s * 0.55)), new THREE.Quaternion(), V(r, r, r)), { ao: false, grime: false, tint: [1, 0.85, 0.55] });
+      }
+    }
+  // bocas
+  for (let k = 0; k < (o.mouths ?? 2); k++) {
+    const mx = rng.range(x0 + 0.8, x1 - 0.8),
+      my = rng.range(y0 + 0.6, y0 + H * 0.6);
+    const mz = z + out * 0.62;
+    wb.geometry('black', new THREE.SphereGeometry(1, 7, 4), M4().compose(V(mx, my, mz), new THREE.Quaternion(), V(0.32, 0.1, 0.05)), { ao: false, grime: false });
+    for (let t = -3; t <= 3; t++)
+      for (const up of [1, -1]) {
+        const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), V(0, -up, out * 0.5).normalize());
+        wb.geometry('bone', new THREE.ConeGeometry(0.022, 0.08, 4), M4().compose(V(mx + t * 0.08, my + up * 0.07, mz + out * 0.02), q, V(1, 1, 1)), { ao: false });
+      }
+  }
+  // venas que asoman hacia fuera y reptan por el suelo
+  for (let k = 0; k < (o.tendrils ?? 7); k++) {
+    const sx = rng.range(x0 + 0.3, x1 - 0.3);
+    const pts = [];
+    let px = sx,
+      py = y0 + 0.08,
+      pz = z + out * 0.3;
+    const L = rng.range(1.2, 2.6);
+    const steps = 6;
+    for (let i = 0; i <= steps; i++) {
+      pts.push(V(px, py, pz));
+      pz += out * (L / steps);
+      px += rng.range(-0.25, 0.25);
+      py = y0 + 0.04 + Math.max(0, 0.06 - i * 0.01);
+    }
+    wb.geometry('flesh', taperTube(pts, 0.07, 0.01, 5, k * 1.3 + seed), null, { ao: false, uvScale: 1, grime: false });
+  }
+  if (ctx.decals) ctx.decals.push({ x: (x0 + x1) / 2, y: y0 + 0.015, z: z + out * 1.2, size: W * 0.9, tex: 'splat', rot: seed, opacity: 0.85 });
+  if (ctx.lights) ctx.lights.push({ x: (x0 + x1) / 2, y: y0 + H * 0.4, z: z + out * 1.4, r: 0.9, g: 0.2, b: 0.12, radius: 5 + W * 0.4, intensity: 0.9 });
+}
+
+function lumpGeo(rng, d) {
+  return lump(rng, d);
+}
+
+// Cobertizo de una sola agua apoyado en un muro: la cubierta baja desde el muro
+// (lado 'wall') hacia fuera. x0..x1, z0..z1: huella; posts en el lado bajo.
+export function leanTo(ctx, x0, z0, x1, z1, wall, yHi, yLo, o = {}) {
+  const wb = ctx.wb;
+  const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+  let p;
+  if (wall === 'n') p = [V3(x0, yLo, z1), V3(x1, yLo, z1), V3(x1, yHi, z0), V3(x0, yHi, z0)];
+  else if (wall === 's') p = [V3(x1, yLo, z0), V3(x0, yLo, z0), V3(x0, yHi, z1), V3(x1, yHi, z1)];
+  else if (wall === 'w') p = [V3(x1, yLo, z1), V3(x1, yLo, z0), V3(x0, yHi, z0), V3(x0, yHi, z1)];
+  else p = [V3(x0, yLo, z0), V3(x0, yLo, z1), V3(x1, yHi, z1), V3(x1, yHi, z0)];
+  wb.quad(o.mat ?? 'roof', p[0], p[1], p[2], p[3], { ao: false, sub: 2.4 });
+  const d = 0.12;
+  const q = p.map((v) => v.clone().add(V3(0, -d, 0)));
+  wb.quad('wooddark', q[3], q[2], q[1], q[0], { ao: false, sub: 3, tint: [0.5, 0.48, 0.45] });
+  // pies derechos en el lado bajo
+  const lowA = p[0],
+    lowB = p[1];
+  const n = Math.max(2, Math.round(lowA.distanceTo(lowB) / 2.4));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    // (metidos un palmo hacia el muro para que queden bajo la cubierta)
+    const inset = 0.15;
+    const px = lowA.x + (lowB.x - lowA.x) * t + (wall === 'w' ? -inset : wall === 'e' ? inset : 0),
+      pz = lowA.z + (lowB.z - lowA.z) * t + (wall === 'n' ? -inset : wall === 's' ? inset : 0);
+    wb.box('wooddark', px - 0.08, 0, pz - 0.08, px + 0.08, yLo - 0.08, pz + 0.08, { aoH: 0.5 });
+    if (o.collide !== false) col(ctx, px - 0.1, 0, pz - 0.1, px + 0.1, yLo, pz + 0.1);
+  }
+  wb.box('wooddark', Math.min(lowA.x, lowB.x) - 0.05, yLo - 0.2, Math.min(lowA.z, lowB.z) - 0.05, Math.max(lowA.x, lowB.x) + 0.05, yLo - 0.05, Math.max(lowA.z, lowB.z) + 0.05, { ao: false });
+  // la cámara no atraviesa la cubierta
+  const cb = ctx.col.add(x0, yLo - 0.1, z0, x1, yHi, z1);
+  cb.cam = true;
+  cb.noSight = true;
+}
+
+// Elipsoide suelto (panes, jamones, bultos).
+export function ellipsoid(ctx, mat, x, y, z, sx, sy, sz, tint = null, o = {}) {
+  ctx.wb.geometry(mat, new THREE.SphereGeometry(1, 6, 4), M4().compose(V(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, (x * 7 + z * 3) % 6, 0)), V(sx, sy, sz)), { ao: false, tint, room: o.room });
+}
+
+// Farol colgado de una viga (interiores): cadena, farol y luz.
+export function hangingLamp(ctx, x, yTop, z, o = {}) {
+  const wb = ctx.wb;
+  const len = o.len ?? 0.7;
+  chains(ctx, x, yTop, z, Math.max(3, Math.round(len / 0.06)), 0);
+  const y = yTop - len;
+  wb.cylinder('iron', x, y - 0.05, z, 0.13, 0.13, 0.04, 6, { ao: false, capBot: true, room: o.room });
+  wb.cylinder(o.lit === false ? 'black' : 'ember', x, y - 0.01, z, 0.1, 0.1, 0.2, 6, { ao: false, grime: false, room: o.room });
+  wb.cylinder('iron', x, y + 0.19, z, 0.14, 0.03, 0.14, 6, { ao: false, room: o.room });
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + 0.4;
+    wb.box('iron', x + Math.cos(a) * 0.11 - 0.01, y - 0.03, z + Math.sin(a) * 0.11 - 0.01, x + Math.cos(a) * 0.11 + 0.01, y + 0.2, z + Math.sin(a) * 0.11 + 0.01, { ao: false, room: o.room });
+  }
+  if (o.lit === false) return;
+  if (ctx.fires) ctx.fires.push({ x, y: y + 0.05, z, s: 0.16, light: false, embers: false, glow: true });
+  if (ctx.lights) ctx.lights.push({ x, y: y - 0.2, z, r: 1, g: 0.58, b: 0.24, radius: o.radius ?? 6.5, intensity: o.intensity ?? 1.1, room: o.room });
+  if (ctx.dynLights && o.dyn) ctx.dynLights.push({ x, y: y - 0.2, z, intensity: o.dyn, range: 7 });
 }

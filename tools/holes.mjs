@@ -34,7 +34,7 @@ const r = await p.evaluate((step) => {
         // la galería del río pertenece a la cripta (rampa de -10 a 0)
         if (W === g.level.S && z < -166 && z > -186 && Math.abs(x) < 3) continue;
         // superficie pisable más alta bajo y1: con 1.6 m libres encima
-        const boxes = g.world.col.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01, []).filter((b) => x >= b.minx && x <= b.maxx && z >= b.minz && z <= b.maxz);
+        const boxes = g.world.col.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01, []).filter((b) => g.world.col.overlapXZ(b, x, z, 0));
         const tops = boxes.map((b) => b.maxy).filter((t) => t <= y1 + 0.01 && t >= y0 - 1).sort((a, b) => b - a);
         let gy = null;
         for (const t of tops) {

@@ -22,7 +22,15 @@ export class NavGrid {
         i1 = Math.min(this.w - 1, Math.floor((b.maxx + pad - this.x0) / this.res));
       const j0 = Math.max(0, Math.floor((b.minz - pad - this.z0) / this.res)),
         j1 = Math.min(this.h - 1, Math.floor((b.maxz + pad - this.z0) / this.res));
-      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) this.cells[j * this.w + i] = 0;
+      // se bloquean las celdas cuyo centro queda a menos de 'pad' de la caja
+      // (así una puerta de 1,3 m sigue siendo transitable por mala que sea la
+      // alineación con la rejilla); vale también para cajas giradas
+      const r = pad - 0.01;
+      for (let j = j0; j <= j1; j++)
+        for (let i = i0; i <= i1; i++) {
+          if (!col.overlapXZ(b, this.x0 + (i + 0.5) * this.res, this.z0 + (j + 0.5) * this.res, r)) continue;
+          this.cells[j * this.w + i] = 0;
+        }
     }
     this.g = new Float32Array(this.w * this.h);
     this.from = new Int32Array(this.w * this.h);

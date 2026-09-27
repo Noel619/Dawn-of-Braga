@@ -233,7 +233,7 @@ export function buildCathedral(ctx, S, L) {
     { type: 'mourner', x: 0, y: 1.2, z: -99.5, yaw: 0, idle: 'stand', id: 'e_se4' }
   );
   L.phantoms.push({ x: 0, y: 1.2, z: -101, trigger: [0, 0.6, -70], kind: 'penitent' });
-  L.zones.push({ id: 'cathedral', rects: [[-13, -108, 13, -61.5, -0.5, 16]], atmo: 'cathedral' });
+  L.zones.push({ id: 'cathedral', rects: [[-13, -108, 13, -61.5, -0.5, 16]], atmo: 'cathedral', room: 'cathedral' });
   L.map.push({ id: 'cathedral', r: [-11, -104, 11, -61.5] }, { id: 'largo', r: [-5, -61.5, 5, -55] });
 }
 
@@ -562,12 +562,12 @@ export function buildCrypt(ctx, S, C, L) {
 
   L.phantoms.push({ x: 0, y: Y, z: -133, trigger: [0, Y, -113], kind: 'mourner' });
   L.zones.push(
-    { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena' },
-    { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt' },
-    { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1]], atmo: 'crypt' },
-    { id: 'ossuary', rects: [[-2.5, -136, 2.5, -110, -8, -2]], atmo: 'crypt' },
-    { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt' },
-    { id: 'tunnel', rects: [[-2, -196, 2, -167, -11, 4]], atmo: 'tunnel' }
+    { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena', room: 'crypt' },
+    { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
+    { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
+    { id: 'ossuary', rects: [[-2.5, -136, 2.5, -110, -8, -2]], atmo: 'crypt', room: 'crypt' },
+    { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt', room: 'crypt' },
+    { id: 'tunnel', rects: [[-2, -196, 2, -167, -11, 4]], atmo: 'tunnel', room: 'tunnel' }
   );
   L.map.push(
     { id: 'crypt', r: [-7, -110, 7, -97], level: 'crypt' },

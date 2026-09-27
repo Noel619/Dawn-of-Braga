@@ -1,8 +1,19 @@
-// Mundo de colisión basado en cajas alineadas a ejes con rejilla espacial.
-// Los personajes son cilindros (círculo en XZ + altura). Escalones bajos
-// (< stepH) se suben automáticamente; lo demás es pared.
+// Mundo de colisión basado en cajas con rejilla espacial. Las cajas son
+// alineadas a ejes o giradas en Y (orientadas: atrezo en diagonal sin paredes
+// invisibles en las esquinas). Los personajes son cilindros (círculo en XZ +
+// altura). Escalones bajos (< stepH) se suben automáticamente; lo demás es pared.
 
 const CELL = 4;
+
+// Coordenadas locales de (x,z) en una caja orientada.
+function toLocal(o, x, z) {
+  const dx = x - o.cx,
+    dz = z - o.cz;
+  _l[0] = dx * o.c - dz * o.s;
+  _l[1] = dx * o.s + dz * o.c;
+  return _l;
+}
+const _l = [0, 0];
 
 export class CollisionWorld {
   constructor() {
@@ -15,7 +26,7 @@ export class CollisionWorld {
     if (maxx < minx) [minx, maxx] = [maxx, minx];
     if (maxy < miny) [miny, maxy] = [maxy, miny];
     if (maxz < minz) [minz, maxz] = [maxz, minz];
-    const b = { minx, miny, minz, maxx, maxy, maxz, tag, enabled: true, _s: 0, cam: true };
+    const b = { minx, miny, minz, maxx, maxy, maxz, tag, enabled: true, _s: 0, cam: true, obb: null };
     this.boxes.push(b);
     for (let gx = Math.floor(minx / CELL); gx <= Math.floor(maxx / CELL); gx++)
       for (let gz = Math.floor(minz / CELL); gz <= Math.floor(maxz / CELL); gz++) {
@@ -25,6 +36,31 @@ export class CollisionWorld {
         arr.push(b);
       }
     return b;
+  }
+
+  // Caja girada 'rot' en Y (convención de three.js: el eje x local apunta a
+  // (cos, -sin) en el mundo) con semiejes hx (x local) y hz (z local).
+  addOBB(cx, cz, hx, hz, rot, y0, y1, tag = null) {
+    const c = Math.cos(rot),
+      s = Math.sin(rot);
+    const ac = Math.abs(c),
+      as = Math.abs(s);
+    if (ac > 0.9998) return this.add(cx - hx, y0, cz - hz, cx + hx, y1, cz + hz, tag);
+    if (as > 0.9998) return this.add(cx - hz, y0, cz - hx, cx + hz, y1, cz + hx, tag);
+    const ex = ac * hx + as * hz,
+      ez = as * hx + ac * hz;
+    const b = this.add(cx - ex, y0, cz - ez, cx + ex, y1, cz + ez, tag);
+    b.obb = { cx, cz, hx, hz, c, s };
+    return b;
+  }
+
+  // ¿El círculo (x,z,r) toca la huella de la caja?
+  overlapXZ(b, x, z, r = 0) {
+    if (x + r < b.minx || x - r > b.maxx || z + r < b.minz || z - r > b.maxz) return false;
+    if (!b.obb) return true;
+    const o = b.obb;
+    const l = toLocal(o, x, z);
+    return Math.abs(l[0]) <= o.hx + r && Math.abs(l[1]) <= o.hz + r;
   }
 
   query(minx, minz, maxx, maxz, out = []) {
@@ -50,7 +86,7 @@ export class CollisionWorld {
     let g = -100;
     for (const b of list) {
       if (b.maxy > yMax) continue;
-      if (x + r * 0.7 < b.minx || x - r * 0.7 > b.maxx || z + r * 0.7 < b.minz || z - r * 0.7 > b.maxz) continue;
+      if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
       if (b.maxy > g) g = b.maxy;
     }
     return g;
@@ -64,6 +100,10 @@ export class CollisionWorld {
       let moved = false;
       for (const b of list) {
         if (b.maxy <= feet + stepH || b.miny >= feet + height) continue;
+        if (b.obb) {
+          if (this._resolveOBB(b.obb, pos, r)) moved = hit = true;
+          continue;
+        }
         const cx = Math.max(b.minx, Math.min(pos.x, b.maxx));
         const cz = Math.max(b.minz, Math.min(pos.z, b.maxz));
         let dx = pos.x - cx,
@@ -94,6 +134,39 @@ export class CollisionWorld {
     return hit;
   }
 
+  _resolveOBB(o, pos, r) {
+    const l = toLocal(o, pos.x, pos.z);
+    const lx = l[0],
+      lz = l[1];
+    const qx = Math.max(-o.hx, Math.min(lx, o.hx)),
+      qz = Math.max(-o.hz, Math.min(lz, o.hz));
+    const ex = lx - qx,
+      ez = lz - qz;
+    const d2 = ex * ex + ez * ez;
+    if (d2 >= r * r) return false;
+    let nx, nz;
+    if (d2 > 1e-8) {
+      const d = Math.sqrt(d2);
+      nx = qx + (ex / d) * r;
+      nz = qz + (ez / d) * r;
+    } else {
+      const pl = lx + o.hx,
+        pr = o.hx - lx,
+        pn = lz + o.hz,
+        ps = o.hz - lz;
+      const m = Math.min(pl, pr, pn, ps);
+      nx = lx;
+      nz = lz;
+      if (m === pl) nx = -o.hx - r;
+      else if (m === pr) nx = o.hx + r;
+      else if (m === pn) nz = -o.hz - r;
+      else nz = o.hz + r;
+    }
+    pos.x = o.cx + nx * o.c + nz * o.s;
+    pos.z = o.cz - nx * o.s + nz * o.c;
+    return true;
+  }
+
   // Rayo contra cajas (método de las placas). Devuelve distancia o Infinity.
   raycast(ox, oy, oz, dx, dy, dz, maxD, filter = null) {
     const ex = ox + dx * maxD,
@@ -101,21 +174,43 @@ export class CollisionWorld {
     const list = this.query(Math.min(ox, ex), Math.min(oz, ez), Math.max(ox, ex), Math.max(oz, ez), this._q3 || (this._q3 = []));
     let best = maxD;
     let found = false;
-    const ix = 1 / (dx || 1e-9),
-      iy = 1 / (dy || 1e-9),
-      iz = 1 / (dz || 1e-9);
+    const iy = 1 / (dy || 1e-9);
     for (const b of list) {
       if (filter && !filter(b)) continue;
-      let t1 = (b.minx - ox) * ix,
-        t2 = (b.maxx - ox) * ix;
+      let px, pz, qx, qz, x0, x1, z0, z1;
+      if (b.obb) {
+        const o = b.obb;
+        const l = toLocal(o, ox, oz);
+        px = l[0];
+        pz = l[1];
+        qx = dx * o.c - dz * o.s;
+        qz = dx * o.s + dz * o.c;
+        x0 = -o.hx;
+        x1 = o.hx;
+        z0 = -o.hz;
+        z1 = o.hz;
+      } else {
+        px = ox;
+        pz = oz;
+        qx = dx;
+        qz = dz;
+        x0 = b.minx;
+        x1 = b.maxx;
+        z0 = b.minz;
+        z1 = b.maxz;
+      }
+      const ix = 1 / (qx || 1e-9),
+        iz = 1 / (qz || 1e-9);
+      let t1 = (x0 - px) * ix,
+        t2 = (x1 - px) * ix;
       let tmin = Math.min(t1, t2),
         tmax = Math.max(t1, t2);
       t1 = (b.miny - oy) * iy;
       t2 = (b.maxy - oy) * iy;
       tmin = Math.max(tmin, Math.min(t1, t2));
       tmax = Math.min(tmax, Math.max(t1, t2));
-      t1 = (b.minz - oz) * iz;
-      t2 = (b.maxz - oz) * iz;
+      t1 = (z0 - pz) * iz;
+      t2 = (z1 - pz) * iz;
       tmin = Math.max(tmin, Math.min(t1, t2));
       tmax = Math.min(tmax, Math.max(t1, t2));
       if (tmax >= Math.max(tmin, 0) && tmin < best) {

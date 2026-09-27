@@ -325,7 +325,7 @@ export class Fauna {
     const list = col.query(x - 0.08, z - 0.08, x + 0.08, z + 0.08, this._qb || (this._qb = []));
     for (const b of list) {
       if (b.maxy <= y + 0.12 || b.miny >= y + 0.3 || b.tag === 'fog') continue;
-      if (x + 0.08 > b.minx && x - 0.08 < b.maxx && z + 0.08 > b.minz && z - 0.08 < b.maxz) return true;
+      if (col.overlapXZ(b, x, z, 0.08)) return true;
     }
     return false;
   }

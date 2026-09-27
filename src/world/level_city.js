@@ -2,7 +2,7 @@
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall } from './builders.js';
+import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, overpass } from './builders.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -183,8 +183,8 @@ export function buildCastle(ctx, S, L) {
   P.ladder(ctx, -60, 0, -20, 8.4, 0.06, 0.2);
   P.arrows(ctx, -65, 0, -4, 8, 21);
   P.arrows(ctx, -78, 0, 6, 6, 22);
-  P.barrel(ctx, -52.5, 0, -16, {});
-  P.barrel(ctx, -53.2, 0, -17.2, { lying: true, rot: 0.3 });
+  P.barrel(ctx, -52, 0, -12.6, {});
+  P.barrel(ctx, -52.4, 0, -11.4, { lying: true, rot: 0.3 });
   P.crate(ctx, -53, 0, 17, 1.0, 0.2);
   P.crate(ctx, -54.4, 0, 17.4, 0.8, 0.7);
   P.sacks(ctx, -86.5, 0, 6, 4, 3);
@@ -200,16 +200,31 @@ export function buildCastle(ctx, S, L) {
   P.fleshGrowth(ctx, -89.6, 0, 8, 1.2, 52, { climb: 1.2 });
   P.fleshGrowth(ctx, -51.5, 0, -12, 0.9, 53, { climb: 1.4 });
   P.rubble(ctx, -73, 0, 18, 10, 5, 1.6);
-  // altar del castillo
-  P.candleAltar(ctx, -70, 0, -13.5, Math.PI / 2);
-  L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Altar del Castillo', x: -70, y: 0, z: -13.5, spawn: [-68.4, 0, -13.5], yaw: Math.PI / 2 });
+  // capilla de la guarnición: el altar del castillo, a resguardo del patio
+  const croomC = 'castle_chapel';
+  house(ctx, { x0: -61, z0: -20, x1: -53, z1: -14, front: 's', seed: 91, h: 6.2, style: 'stone', hollow: true, room: croomC, doors: [{ side: 's', x: -57, w: 1.4, h: 2.5 }], jetty: 0, lowerWindows: false, floorMat: 'flag', roofAxis: 'x' });
+  wb.box('ashlar', -57.3, 6.2, -14.4, -56.7, 7.8, -13.9, { sub: 2 });
+  wb.box('ashlar', -57.8, 7.2, -14.35, -56.2, 7.45, -13.95, { ao: false });
+  wb.setRoom(croomC);
+  P.candleAltar(ctx, -57, 0, -19.05, 0, croomC);
+  P.pew(ctx, -58.8, 0, -16.2, 2.4, 0);
+  P.pew(ctx, -55.2, 0, -16.2, 2.4, 0);
+  P.candles(ctx, -60.3, 0, -19.3, 6, 71, { room: croomC, radius: 4.5, intensity: 0.9 });
+  P.candles(ctx, -53.7, 0, -19.3, 6, 72, { room: croomC, radius: 4.5, intensity: 0.9 });
+  P.veiledStatue(ctx, -60.2, 0, -14.9, 0.7, { ped: 0.7 });
+  P.chains(ctx, -53.7, 2.6, -17.2, 9, 0);
+  bakeCorpse(wb, -55.6, 0, -15.1, 0.2, 'kneel', 'soldier', 5);
+  wb.setRoom(null);
+  P.banner(ctx, -58.9, 5.2, -13.9, 0, 'bannerBlack', 1.2, 2.6);
+  P.banner(ctx, -55.1, 5.2, -13.9, 0, 'bannerBlack', 1.2, 2.6);
+  L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Capilla de la guarnición', x: -57, y: 0, z: -19.05, spawn: [-57, 0, -17.3], yaw: 0 });
 
   // --- guarnición: patio de armas, tiendas derribadas y restos de la batalla
-  P.target(ctx, -65, 0, -19.3, 0);
-  P.target(ctx, -55.5, 0, -19.3, 0);
-  P.weaponRack(ctx, -63.2, 0, -19.75, 0);
-  P.dummy(ctx, -58, 0, -15, 0.3);
-  P.dummy(ctx, -55.6, 0, -12.8, -0.4);
+  P.target(ctx, -66.5, 0, -19.3, 0);
+  P.target(ctx, -76, 0, -3.6, 0.2);
+  P.weaponRack(ctx, -63.4, 0, -19.75, 0);
+  P.dummy(ctx, -64.2, 0, -12.6, 0.3);
+  P.dummy(ctx, -66.8, 0, -14.4, -0.4);
   P.tent(ctx, -84.2, 0, 1.6, 0.25, 'burlap');
   P.tent(ctx, -75.5, 0, 8.8, -0.35, 'clothDark');
   P.siegeStone(ctx, -69.5, 0, 5.2, 0.5);
@@ -242,13 +257,14 @@ export function buildCastle(ctx, S, L) {
     { type: 'penitent', x: -76.4, y: 0, z: -15.6, yaw: 0.3, idle: 'eat', id: 'e_carcel1' },
     { type: 'penitent', x: -63, y: 0, z: 1, yaw: -1.2, idle: 'wander', id: 'e_patio1' },
     { type: 'penitent', x: -81, y: 0, z: 9, yaw: 0.5, idle: 'kneel', id: 'e_patio2' },
-    { type: 'soldier', x: -55, y: 0, z: 0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_patio3' }
+    { type: 'soldier', x: -56, y: 0, z: 6.5, yaw: -Math.PI / 2, idle: 'stand', id: 'e_patio3' }
   );
   L.zones.push(
-    { id: 'prison', rects: [[-86.5, -17.5, -74.5, -5.5, -1, 5]], atmo: 'prison' },
+    { id: 'prison', rects: [[-86.5, -17.5, -74.5, -5.5, -1, 5]], atmo: 'prison', room: 'prison' },
+    { id: 'castle_chapel', rects: [[-61, -20, -53, -14, -1, 5]], atmo: 'chapel', room: 'castle_chapel' },
     { id: 'castle', rects: [[-93, -23, -47.8, 23, -1, 20]], atmo: 'city' }
   );
-  L.map.push({ id: 'prison', r: [-86.5, -17.5, -74.5, -5.5] }, { id: 'castle', r: [-90, -20, -51, 20], cut: [-88, -19, -73, -4] });
+  L.map.push({ id: 'prison', r: [-86.5, -17.5, -74.5, -5.5] }, { id: 'castle', r: [-90, -20, -51, 20], cut: [-88, -19, -73, -4] }, { id: 'castle_chapel', r: [-61, -20, -53, -14] });
   L.phantoms.push({ x: -72, y: 9, z: 21.5, trigger: [-70, 0, 10] });
 }
 
@@ -259,18 +275,13 @@ export function buildSouto(ctx, S, L) {
   floor(ctx, -48, -3.5, -14, 3.5, 'cobble');
   // canalón central
   wb.box('flag', -48, -0.05, -0.4, -14, 0.005, 0.4, { faces: 't', ao: false, tint: [0.7, 0.7, 0.7] });
-
-  houseRow(ctx, { axis: 'x', from: -48, to: -33, line: -3.5, side: 'n', seed: 101 });
-  houseRow(ctx, { axis: 'x', from: -26.5, to: -23, line: -3.5, side: 'n', seed: 102, minW: 3 });
-  houseRow(ctx, { axis: 'x', from: -48, to: -23, line: 3.5, side: 's', seed: 103, opts: (rng, i) => (i === 1 ? { burned: true } : { lit: i === 2 }) });
-  house(ctx, { x0: -23, z0: -14, x1: -14, z1: -3.5, front: 'e', seed: 104, h: 7.6 });
-  house(ctx, { x0: -23, z0: 3.5, x1: -14, z1: 14, front: 'e', seed: 105, h: 6.4 });
+  // (las fachadas de ambos lados, con sus callejones, están en level_barrios.js)
+  // pasadizo que cruza la calle por encima: la calle deja de ser un tubo recto
+  overpass(ctx, -31.4, -3.5, -28, 3.5, 3.7, 6.7, 'x', { lit: true });
 
   // casa tapiada (interior visitable)
   const room = 'souto_house';
-  house(ctx, { x0: -33, z0: -12.5, x1: -26.5, z1: -3.5, front: 's', seed: 106, hollow: true, collide: false, h: 6.8, style: 'plaster', doorAt: 3.25, room, windows: true, jetty: 0 });
-  W(S, -32.6, -12.1, -26.9, -3.85);
-  W(S, -30.4, -4.0, -29.1, -3.2);
+  house(ctx, { x0: -33, z0: -12.5, x1: -26.5, z1: -3.5, front: 's', seed: 106, hollow: true, h: 6.8, style: 'plaster', doorAt: 3.25, room, windows: true, jetty: 0 });
   wb.setRoom(room);
   P.table(ctx, -31, 0, -10.5, 1.4, 0.8, 0.2);
   P.shelf(ctx, -27.3, 0, -9, -Math.PI / 2, 1.4);
@@ -300,9 +311,9 @@ export function buildSouto(ctx, S, L) {
   P.decal(ctx, -22, 0.02, -1, 1.6);
   // sigilo del pacto pintado en puertas
   for (const [x, z, r] of [
-    [-40.5, -3.44, 0],
+    [-37.2, -3.44, 0],
     [-36.2, 3.44, Math.PI],
-    [-20.1, -3.44, 0],
+    [-23.6, -3.44, 0],
   ])
     P.decal(ctx, x, 1.8, z, 1.2, 'sigil', r, { wall: 'z' });
   P.wallTorch(ctx, -44, 2.6, 3.5, 'n');
@@ -312,16 +323,15 @@ export function buildSouto(ctx, S, L) {
   P.laundry(ctx, -44.8, -3.45, -44.8, 3.45, 4.5, 11);
   P.laundry(ctx, -35.2, -3.45, -35.2, 3.45, 4.7, 12);
   P.laundry(ctx, -24.8, -3.45, -24.8, 3.45, 4.4, 13);
-  P.sign(ctx, -41.8, 2.95, -3.5, 0, 0);
+  P.sign(ctx, -45.6, 2.95, -3.5, 0, 0);
   P.sign(ctx, -30.4, 2.95, 3.5, Math.PI, 1);
-  P.sign(ctx, -19.5, 2.95, -3.5, 0, 2);
   P.lantern(ctx, -37.9, 2.75, -3.5, 0, false);
   P.lantern(ctx, -26.1, 2.75, 3.5, Math.PI, true);
   P.lantern(ctx, -15.6, 2.75, 3.5, Math.PI, false);
-  P.jar(ctx, -39.6, 0, -3.1, 0.85);
-  P.jar(ctx, -39.0, 0, -3.15, 0.7, { broken: true });
+  P.jar(ctx, -39.2, 0, -3.1, 0.85);
+  P.jar(ctx, -38.6, 0, -3.15, 0.7, { broken: true });
   P.basket(ctx, -33.6, 0, 2.9, { tipped: true, rot: 2.6 });
-  P.firewood(ctx, -18.6, 0, -2.95, Math.PI / 2, 3);
+  P.firewood(ctx, -18.6, 0, 2.95, Math.PI / 2, 3);
   P.crate(ctx, -46.9, 0, -2.7, 0.7, 0.3);
   P.dropped(ctx, -31.5, 0, 1.3, 0.4, 'spear');
   P.dropped(ctx, -22.3, 0, 0.8, 2.2, 'helmet');
@@ -332,7 +342,7 @@ export function buildSouto(ctx, S, L) {
     { type: 'hound', x: -35.5, y: 0, z: 0.5, yaw: 1.6, idle: 'eat', id: 'e_souto2' },
     { type: 'penitent', x: -19.5, y: 0, z: -1.8, yaw: -1, idle: 'eat', id: 'e_souto3' }
   );
-  L.zones.push({ id: 'souto_house', rects: [[-33, -12.5, -26.5, -3.6, -1, 4]], atmo: 'interior' }, { id: 'souto', rects: [[-48, -3.5, -14, 3.5, -1, 8]], atmo: 'city' });
+  L.zones.push({ id: 'souto_house', rects: [[-33, -12.5, -26.5, -3.6, -1, 4]], atmo: 'interior', room: 'souto_house' }, { id: 'souto', rects: [[-48, -3.5, -14, 3.5, -1, 8]], atmo: 'city' });
   L.map.push({ id: 'souto', r: [-48, -3.5, -14, 3.5] }, { id: 'souto_house', r: [-32.6, -12.1, -26.9, -3.85] });
   L.phantoms.push({ x: -16, y: 0, z: 0, trigger: [-40, 0, 0], kind: 'penitent' });
 }
@@ -341,26 +351,30 @@ export function buildSouto(ctx, S, L) {
 export function buildPraca(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -14, -14, 14, 14);
-  floor(ctx, -14, -14, 14, 14, 'flag');
+  floor(ctx, -14, -16.5, 14, 14, 'flag');
   wb.cylinder('cobble', 0, -0.19, 0, 7.5, 7.5, 0.2, 16, { capTop: true, ao: false });
 
-  house(ctx, { x0: -14, z0: -22, x1: -3.5, z1: -14, front: 's', seed: 201, lit: true });
-  house(ctx, { x0: 3.5, z0: -22, x1: 14, z1: -14, front: 's', seed: 202, h: 8 });
-  house(ctx, { x0: -14, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true });
+  // soportales en el lado norte: la planta alta vuela sobre columnas
+  house(ctx, { x0: -14, z0: -19.5, x1: -3.5, z1: -16.5, front: 's', seed: 201, lit: true, h: 7.4, style: 'timber', jetty: 2.5, arcade: true });
+  house(ctx, { x0: 3.5, z0: -22, x1: 14, z1: -16.5, front: 's', seed: 202, h: 8, style: 'plaster', jetty: 2.5, arcade: true });
+  house(ctx, { x0: -12.5, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true });
   house(ctx, { x0: 3.5, z0: 14, x1: 14, z1: 22, front: 'n', seed: 204 });
-  house(ctx, { x0: 14, z0: -14, x1: 23, z1: -3, front: 'w', seed: 205, h: 7 });
-  house(ctx, { x0: 14, z0: 3, x1: 23, z1: 14, front: 'w', seed: 206, lit: true });
+  house(ctx, { x0: 14, z0: -14, x1: 22, z1: -3, front: 'w', seed: 205, h: 7 });
+  house(ctx, { x0: 14, z0: 3, x1: 23, z1: 11, front: 'w', seed: 206, lit: true });
+  // (la taberna ocupa el lado oeste al norte del Soto: level_barrios.js)
 
   P.fountain(ctx, 0, 0, 0);
   P.gallows(ctx, -8.5, 0, -8.2, 0.5, 3);
   P.pelourinho(ctx, 8.6, 0, 8.2);
-  P.stall(ctx, -10.5, 0, 9.4, 0.2, { burning: true, cloth: 'clothBlue' });
-  P.stall(ctx, 10.4, 0, -10, Math.PI + 0.1, {});
-  P.stall(ctx, 10.2, 0, -4.9, Math.PI / 2 + 0.1, { cloth: 'clothWhite' });
+  P.stall(ctx, -10.5, 0, 9.4, 0.2, { burning: true, cloth: 'clothBlue', goods: 'cloth' });
+  P.stall(ctx, 10.4, 0, -10, Math.PI + 0.1, { goods: 'bread' });
+  P.stall(ctx, 10.2, 0, -4.9, Math.PI / 2 + 0.1, { cloth: 'clothBlue', goods: 'veg' });
+  P.stall(ctx, -6.6, 0, 10.4, 0.05, { cloth: 'clothRed', cloth2: 'burlap', goods: 'pots' });
+  P.stall(ctx, -1.0, 0, -12.2, 0.05, { cloth: 'clothDark', cloth2: 'clothWhite', goods: 'meat' });
   P.cart(ctx, -10, 0, 3.5, 1.4, { bodies: true });
-  P.crate(ctx, -12.6, 0, 12.5, 0.9, 0.2);
-  P.crate(ctx, -11.5, 0, 12.8, 0.7, 0.9);
-  P.barrel(ctx, 12.6, 0, 12.4);
+  P.crate(ctx, -12.6, 0, 8.1, 0.9, 0.2);
+  P.crate(ctx, -11.5, 0, 7.4, 0.7, 0.9);
+  P.barrel(ctx, 12.6, 0, 9.4);
   P.sacks(ctx, 11.8, 0, -12.2, 4, 9);
   bakeCorpse(wb, 4.5, 0, -4.2, 2.8, 'face', 'villager', 3);
   bakeCorpse(wb, -3.6, 0, 6.6, 0.6, 'back', 'soldier', 4);
@@ -373,38 +387,43 @@ export function buildPraca(ctx, S, L) {
     [7, -9, 1.3],
   ])
     P.decal(ctx, x, 0.02, z, s);
-  P.brazier(ctx, -6.5, 0, 11.5, { smoke: false });
+  P.brazier(ctx, -9.6, 0, 12.6, { smoke: false });
   P.brazier(ctx, 6.5, 0, -12, {});
-  P.candleAltar(ctx, -5, 0, 4.2, Math.PI);
-  L.interact.push({ kind: 'altar', id: 'a_praca', name: 'Altar de la Plaza del Pan', x: -5, y: 0, z: 4.2, spawn: [-5, 0, 6], yaw: 0 });
   P.decal(ctx, 13.94, 2, -8, 1.3, 'sigil', -Math.PI / 2, { wall: 'x' });
   // --- mercado abandonado
-  P.jar(ctx, -12.2, 0, 8.1, 0.9, { broken: true });
+  P.jar(ctx, -12.2, 0, 5.6, 0.9, { broken: true });
   P.jar(ctx, -9.0, 0, 11.1, 0.8, { lying: true, rot: 0.4 });
   P.basket(ctx, 9.4, 0, -8.4, { tipped: true, rot: -2 });
   P.basket(ctx, 11.7, 0, -3.6);
   P.jar(ctx, 12.9, 0, -6.4, 1.0);
-  P.siegeStone(ctx, -1.8, 0, -11.2, 0.55);
+  P.siegeStone(ctx, -2.9, 0, -6.6, 0.55);
   P.dropped(ctx, 3.4, 0, 9.9, 1.4, 'shield');
   P.dropped(ctx, -6.9, 0, -1.4, 0.2, 'sword');
-  P.sign(ctx, -6.2, 2.95, -14, 0, 1);
-  P.sign(ctx, 6.1, 2.95, -14, 0, 2);
+  // bajo los soportales: bancos, cajas y el género que nadie recogió
+  P.bench(ctx, -11.2, 0, -16.1, 1.6, 0);
+  P.bench(ctx, 9.4, 0, -16.1, 1.6, 0);
+  P.crate(ctx, -5.2, 0, -16, 0.7, 0.2);
+  P.sacks(ctx, 5, 0, -15.8, 3, 19);
+  P.barrel(ctx, 12.8, 0, -15.7);
+  P.sign(ctx, -6.2, 2.7, -16.5, 0, 1);
+  P.sign(ctx, 6.1, 2.7, -16.5, 0, 2);
   P.sign(ctx, -9.2, 2.95, 14, Math.PI, 3);
-  P.lantern(ctx, -11.9, 2.75, -14, 0, true);
+  P.lantern(ctx, -11.9, 2.6, -16.5, 0, true);
+  P.lantern(ctx, 1.6, 2.6, -16.5, 0, true);
   P.lantern(ctx, 14, 2.75, 7.6, -Math.PI / 2, true);
   // cuervos en la horca, en el pilón de la fuente y sobre un cadáver
   ctx.crows.push({ pts: [[-9.6, 5.5, -7.6], [-8.46, 5.5, -8.22], [-7.58, 5.5, -8.7]], yaw: 0.5 });
   ctx.crows.push({ pts: [[2.77, 0.87, 1.01], [1.72, 0.87, 2.4], [-1.97, 0.87, 2.2]] });
   ctx.crows.push({ x: 6, y: 0, z: 3, r: 1.1, n: 3 });
-  ctx.rats.push({ x: -12.4, y: 0, z: 2.0, n: 2 }, { x: -13.2, y: 0, z: 11.2, n: 1 });
+  ctx.rats.push({ x: -12.4, y: 0, z: 2.0, n: 2 }, { x: -13.2, y: 0, z: 9.2, n: 1 });
 
   L.enemies.push(
     { type: 'penitent', x: 2.5, y: 0, z: -4.4, yaw: 3, idle: 'kneel', id: 'e_praca1' },
     { type: 'penitent', x: -9, y: 0, z: -3.5, yaw: 0.4, idle: 'wander', id: 'e_praca2' },
     { type: 'soldier', x: 6, y: 0, z: 9.5, yaw: -2, idle: 'stand', id: 'e_praca3' }
   );
-  L.zones.push({ id: 'praca', rects: [[-14, -14, 14, 14, -1, 10]], atmo: 'city' });
-  L.map.push({ id: 'praca', r: [-14, -14, 14, 14] });
+  L.zones.push({ id: 'praca', rects: [[-14, -16.5, 14, 14, -1, 10]], atmo: 'city' });
+  L.map.push({ id: 'praca', r: [-14, -16.5, 14, 14] });
   L.phantoms.push({ x: 0, y: 0, z: -34, trigger: [0, 0, -8] });
   L.phantoms.push({ x: 0, y: 0, z: 36, trigger: [0, 0, 11], kind: 'bell' });
 }
@@ -414,36 +433,40 @@ export function buildRuaSe(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -3.5, -40, 3.5, -14);
   floor(ctx, -3.5, -40, 3.5, -14, 'cobble');
-  house(ctx, { x0: -12.5, z0: -31, x1: -3.5, z1: -22, front: 'e', seed: 301, lit: true });
-  house(ctx, { x0: 3.5, z0: -31, x1: 12.5, z1: -22, front: 'w', seed: 302 });
-  house(ctx, { x0: -12.5, z0: -40, x1: -3.5, z1: -31, front: 'n', seed: 303, h: 8.2 });
+  // (fachadas y cruces con los callejones del Arco y de las Ánimas: level_barrios.js)
   house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5 });
+  // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza
+  archWall(ctx, -3.5, 3.5, -38.4, -37.6, 7.4, 0, 4.2, 5.0, { slices: 10 });
+  wb.box('ashlar', -3.6, 7.4, -38.5, 3.6, 7.7, -37.5, { ao: false });
+  merlons(ctx, -3.5, -38, 3.5, -38, 7.7, { collide: false, w: 0.6, gap: 0.5, h: 0.6, t: 0.5 });
+  P.veiledStatue(ctx, 0, 5.95, -37.35, 0, { ped: 0 });
+  P.banner(ctx, 0, 5.3, -37.5, 0, 'bannerBlack', 1.2, 2.2);
   // barricada a medio derribar
-  P.cart(ctx, 1.4, 0, -27, 1.4, { tipped: true });
-  P.barrel(ctx, -1.2, 0, -28.4, { lying: true, rot: 0.2 });
-  P.crate(ctx, 2.6, 0, -29.3, 0.9, 0.3);
-  P.sacks(ctx, 2.4, 0, -25, 4, 12);
-  P.arrows(ctx, 0.5, 0, -26, 10, 31);
-  bakeCorpse(wb, -1.6, 0, -24, 1.5, 'face', 'soldier', 2);
-  bakeCorpse(wb, 1.8, 0, -33, -2.2, 'back', 'villager', 3);
-  P.decal(ctx, -1.6, 0.02, -24, 2.2);
+  P.cart(ctx, 1.6, 0, -29.6, 1.5, { tipped: true });
+  P.barrel(ctx, -1.2, 0, -30.9, { lying: true, rot: 0.2 });
+  P.crate(ctx, 2.7, 0, -32.2, 0.9, 0.3);
+  P.sacks(ctx, 2.5, 0, -27.6, 4, 12);
+  P.arrows(ctx, 0.5, 0, -28.6, 10, 31);
+  bakeCorpse(wb, -1.6, 0, -26.6, 1.5, 'face', 'soldier', 2);
+  bakeCorpse(wb, 1.8, 0, -35, -2.2, 'back', 'villager', 3);
+  P.decal(ctx, -1.6, 0.02, -26.6, 2.2);
   P.decal(ctx, 0, 0.02, -18, 1.6);
   P.veiledStatue(ctx, -3.1, 2.4, -26.5, Math.PI / 2, { ped: 0 });
   wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false });
-  P.wallTorch(ctx, 3.5, 2.8, -20, 'w');
-  P.fleshGrowth(ctx, -3.2, 0, -36, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -40, -30] });
+  P.wallTorch(ctx, 3.5, 2.8, -19.2, 'w');
+  P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -37.4, -31] });
   P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
-  P.laundry(ctx, -3.45, -36.8, 3.45, -36.8, 4.6, 15);
-  P.sign(ctx, -3.5, 2.95, -24.2, Math.PI / 2, 3);
+  P.laundry(ctx, -3.45, -33.8, 3.45, -33.8, 4.6, 15);
+  P.sign(ctx, -3.5, 2.95, -24.6, Math.PI / 2, 3);
   P.sign(ctx, 3.5, 2.95, -28.8, -Math.PI / 2, 0);
   P.lantern(ctx, -3.5, 2.75, -29.6, Math.PI / 2, true);
   P.dropped(ctx, -1.9, 0, -32.6, 0.3, 'spear');
-  P.dropped(ctx, 1.2, 0, -22.6, 2.2, 'helmet');
+  P.dropped(ctx, 1.2, 0, -21.6, 2.2, 'helmet');
   P.dropped(ctx, -2.3, 0, -29.2, 1.0, 'shield');
-  P.jar(ctx, 3.0, 0, -18.8, 0.8);
-  P.basket(ctx, -2.9, 0, -19.6, { rot: 0.5 });
+  P.jar(ctx, 3.0, 0, -15.6, 0.8);
+  P.basket(ctx, -2.9, 0, -15.2, { rot: 0.5 });
   ctx.rats.push({ x: 2.95, y: 0, z: -31.2, n: 2 });
-  L.enemies.push({ type: 'soldier', x: 0, y: 0, z: -31, yaw: 0, idle: 'stand', id: 'e_ruase1' }, { type: 'hound', x: -1.5, y: 0, z: -35, yaw: 0.3, idle: 'eat', id: 'e_ruase2' });
+  L.enemies.push({ type: 'soldier', x: 0.2, y: 0, z: -33, yaw: 0, idle: 'stand', id: 'e_ruase1' }, { type: 'hound', x: -1.5, y: 0, z: -35.8, yaw: 0.3, idle: 'eat', id: 'e_ruase2' });
   L.zones.push({ id: 'ruase', rects: [[-3.5, -40, 3.5, -14, -1, 10]], atmo: 'city' });
   L.map.push({ id: 'ruase', r: [-3.5, -40, 3.5, -14] });
 }
@@ -453,7 +476,6 @@ export function buildLargo(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -18, -56, 22, -40);
   floor(ctx, -18, -56, 22, -40, 'flag');
-  house(ctx, { x0: -18, z0: -40, x1: -12.5, z1: -31, front: 'n', seed: 401 });
   house(ctx, { x0: 12.5, z0: -40, x1: 22, z1: -31, front: 'n', seed: 402, lit: true });
   house(ctx, { x0: -27, z0: -48, x1: -18, z1: -40, front: 'e', seed: 403, h: 7.8 });
   house(ctx, { x0: -27, z0: -56, x1: -18, z1: -48, front: 'e', seed: 404, burned: true });
@@ -467,7 +489,7 @@ export function buildLargo(ctx, S, L) {
   P.cruzeiro(ctx, -9.5, 0, -47.5, 0.2);
   P.cart(ctx, 15.5, 0, -43.5, -0.4, {});
   P.barrel(ctx, 20.5, 0, -41.2);
-  P.crate(ctx, -16.8, 0, -41.5, 1, 0.2);
+  P.crate(ctx, -12.4, 0, -41.1, 1, 0.2);
   bakeCorpse(wb, 12, 0, -44, 0.9, 'back', 'soldier', 5);
   bakeCorpse(wb, -4, 0, -53, 2.9, 'face', 'villager', 6);
   bakeCorpse(wb, 8.5, 0, -53.5, -1.9, 'kneel', 'villager', 7);
@@ -485,7 +507,7 @@ export function buildLargo(ctx, S, L) {
   P.siegeStone(ctx, 9.6, 0, -41.6, 0.45);
   P.dropped(ctx, 13.5, 0, -45.3, 0.9, 'sword');
   P.dropped(ctx, 10.7, 0, -42.9, 2.4, 'shield');
-  P.barrel(ctx, -17.35, 0, -43.4);
+  P.barrel(ctx, -13.6, 0, -41.3);
   P.jar(ctx, 21.2, 0, -42.3, 1.0);
   P.basket(ctx, 19.5, 0, -40.7, { tipped: true, rot: 1.2 });
   // vigas quemadas de la casa hundida
@@ -510,8 +532,9 @@ export function buildPelames(ctx, S, L) {
   W(S, 14, -3, 42, 3);
   floor(ctx, 14, -3, 42, 3, 'cobble');
   floor(ctx, 30, -3, 42, 3, 'dirt', 0.01);
-  houseRow(ctx, { axis: 'x', from: 23, to: 42, line: -3, side: 'n', seed: 501 });
-  houseRow(ctx, { axis: 'x', from: 23, to: 42, line: 3, side: 's', seed: 502, opts: (r, i) => ({ lit: i === 0 }) });
+  // (al norte, el pasaje de los Tintoreros; al sur, la puerta atrancada del corral)
+  houseRow(ctx, { axis: 'x', from: 24.5, to: 42, line: -3, side: 'n', seed: 501 });
+  houseRow(ctx, { axis: 'x', from: 23, to: 36, line: 3, side: 's', seed: 502, opts: (r, i) => ({ lit: i === 0 }) });
   // barricada (se arranca con la palanca)
   P.cart(ctx, 30.5, 0, -1.6, 1.6, { brokenWheel: true });
   P.barrel(ctx, 29.8, 0, 2.2);
@@ -525,7 +548,7 @@ export function buildPelames(ctx, S, L) {
     [16.6, -3, 0],
     [21.4, 3, 1],
     [33.8, -3, 2],
-    [39.2, 3, 3],
+    [40.2, 3, 3],
   ]) {
     const f = zz < 0 ? 1 : -1;
     const t = [[0.8, 0.66, 0.55], [0.7, 0.55, 0.45], [0.85, 0.72, 0.62], [0.62, 0.5, 0.42]][k];
@@ -535,9 +558,9 @@ export function buildPelames(ctx, S, L) {
   P.laundry(ctx, 17.8, -2.97, 17.8, 2.97, 4.3, 16);
   P.laundry(ctx, 37.6, -2.97, 37.6, 2.97, 4.5, 17);
   P.sign(ctx, 26.4, 2.95, -3, 0, 2);
-  P.sign(ctx, 35.8, 2.95, 3, Math.PI, 3);
+  P.sign(ctx, 34.8, 2.95, 3, Math.PI, 3);
   P.barrel(ctx, 40.6, 0, -2.45);
-  P.barrel(ctx, 39.6, 0, 2.4, { lying: true, rot: 0.3 });
+  P.barrel(ctx, 41, 0, 2.2, { lying: true, rot: 0.3 });
   P.jar(ctx, 16.2, 0, 2.5, 0.9);
   ctx.rats.push({ x: 32.6, y: 0, z: 2.4, n: 2 });
   L.enemies.push({ type: 'penitent', x: 36, y: 0, z: 0.5, yaw: -1.6, idle: 'stand', id: 'e_pelames1' });
@@ -676,11 +699,16 @@ export function buildTanners(ctx, S, L) {
   // derrumbe que cierra el adarve hacia el sur
   P.rubble(ctx, 74, 9, -16, 14, 97, 1.6, { collide: false, scale: 1.4 });
   ctx.col.add(72, 9, -17.5, 76, 11, -14.5);
-  // derrumbe que cierra la Calle de la Muralla al norte
-  P.rubble(ctx, 68, 0, -41.5, 18, 98, 3.4, { scale: 1.6 });
-  P.cart(ctx, 67, 0, -38.5, 0.8, { tipped: true });
-  wb.box('wooddark', 64, 0, -42, 72, 3, -40.5, { ao: false });
-  P.fleshGrowth(ctx, 68, 0.5, -41, 1.4, 99, { climb: 2 });
+  // derrumbe que cierra la Calle de la Muralla al norte: la casa quemada que
+  // cayó sobre la calle (detrás, hasta la torre del Postigo, todo es casa)
+  house(ctx, { x0: 64, z0: -56, x1: 72, z1: -41, front: 's', seed: 950, h: 7.2, burned: true, boards: true, style: 'stone' });
+  for (let i = 0; i < 5; i++) P.rubble(ctx, 65 + i * 1.5, 0, -40.4, 7, 980 + i, 0.8, { scale: 1.2 });
+  P.rubble(ctx, 68, 0, -40.6, 10, 98, 3.4, { scale: 0.9 });
+  ctx.col.add(64, 0, -41, 72, 1.0, -39.9).noSight = true;
+  P.beam(ctx, 64.6, -39.8, 67.8, -41.2, 0, 0.14);
+  P.beam(ctx, 70.8, -39.6, 68.4, -41.3, 0.3, 0.12);
+  P.cart(ctx, 66.6, 0, -37.6, 0.8, { tipped: true });
+  P.fleshGrowth(ctx, 69.2, 0, -40.8, 1.2, 99, { climb: 2 });
   // rua da muralha
   P.wallTorch(ctx, 72, 3, -2, 'w');
   P.wallTorch(ctx, 72, 3, -32, 'w');
@@ -699,17 +727,17 @@ export function buildTanners(ctx, S, L) {
   ctx.crows.push({ pts: [[75.7, 10.1, -45.8], [75.7, 10.1, -44.2]], yaw: Math.PI / 2 });
 
   L.enemies.push(
-    { type: 'bell', x: 56, y: 0, z: -1, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
-    { type: 'penitent', x: 61.5, y: 0, z: 10, yaw: 3, idle: 'kneel', id: 'e_tan2' },
-    { type: 'penitent', x: 45.5, y: 0, z: 0, yaw: -1, idle: 'stand', id: 'e_tan3' },
+    { type: 'bell', x: 56, y: 0, z: -4, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
+    { type: 'penitent', x: 60.5, y: 0, z: -9.2, yaw: 3, idle: 'kneel', id: 'e_tan2' },
+    { type: 'penitent', x: 52.6, y: 0, z: -6.8, yaw: -1, idle: 'stand', id: 'e_tan3' },
     { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },
     { type: 'hound', x: 67, y: 0, z: -20, yaw: 0, idle: 'eat', id: 'e_mur1' },
     { type: 'hound', x: 68.5, y: 0, z: -21.5, yaw: 0.5, idle: 'eat', id: 'e_mur2' },
     { type: 'crawler', x: 67.5, y: 0, z: 6, yaw: -2, idle: 'stand', id: 'e_mur3' }
   );
   L.zones.push(
-    { id: 'canon', rects: [[48, -26, 64, -12.2, -1, 4]], atmo: 'interior' },
-    { id: 'chapel', rects: [[44, 12.2, 54, 22, -1, 6]], atmo: 'chapel' },
+    { id: 'canon', rects: [[48, -26, 64, -12.2, -1, 4]], atmo: 'interior', room: 'canon' },
+    { id: 'chapel', rects: [[44, 12.2, 54, 22, -1, 6]], atmo: 'chapel', room: 'chapel' },
     { id: 'tanners', rects: [[42, -12, 64, 12, -1, 10]], atmo: 'city' },
     { id: 'muralla', rects: [[64, -40, 72, 12, -1, 7]], atmo: 'city' }
   );
@@ -887,9 +915,10 @@ export function buildFerraria(ctx, S, L) {
   floor(ctx, -3.5, 14, 3.5, 42, 'cobble');
   floor(ctx, -14, 42, 14, 58, 'dirt');
   floor(ctx, -8, 44, 8, 56, 'cobble', 0.01);
+  // (lado este: callejón del Muladar hacia el corral; lado oeste: callejón del
+  // Yunque hacia la trasera de la herrería; ver level_barrios.js)
   houseRow(ctx, { axis: 'z', from: 22, to: 33, line: -3.5, side: 'w', seed: 801 });
-  houseRow(ctx, { axis: 'z', from: 22, to: 33, line: 3.5, side: 'e', seed: 802, opts: { lit: true } });
-  house(ctx, { x0: -14, z0: 33, x1: -3.5, z1: 42, front: 's', seed: 803 });
+  house(ctx, { x0: -14, z0: 35.5, x1: -3.5, z1: 42, front: 's', seed: 803 });
   house(ctx, { x0: 3.5, z0: 33, x1: 14, z1: 42, front: 's', seed: 804, burned: true });
   house(ctx, { x0: 14, z0: 42, x1: 24, z1: 50, front: 'w', seed: 805 });
   house(ctx, { x0: 14, z0: 50, x1: 24, z1: 58, front: 'w', seed: 806, lit: true });
@@ -899,25 +928,80 @@ export function buildFerraria(ctx, S, L) {
   cityWall(ctx, 3.5, 58, 30, 62, 9, { merlonSides: ['s'] });
   tower(ctx, -5.5, 60, 4.5, 12);
   tower(ctx, 5.5, 60, 4.5, 12);
-  solid(ctx, 'wallstone', -3.5, 5, 58, 3.5, 9, 62, { sub: 2, ao: false });
+  // el paso de la puerta: bóveda, suelo, rastrillo y, detrás, la carne que lo tapona entero
+  solid(ctx, 'wallstone', -3.5, 5, 58, 3.5, 9, 62, { sub: 2, ao: false, faces: 'tnsewb' });
+  floor(ctx, -3.5, 58, 3.5, 62, 'cobble');
   for (let x = -3.2; x <= 3.21; x += 0.4) wb.box('iron', x - 0.04, 0, 58.6, x + 0.04, 5, 58.75, { ao: false });
+  for (const y of [1.2, 2.6, 4.0]) wb.box('iron', -3.3, y, 58.58, 3.3, y + 0.08, 58.77, { ao: false });
+  for (let x = -3.2; x <= 3.21; x += 0.4) wb.cylinder('iron', x, -0.12, 58.675, 0.001, 0.05, 0.16, 4, { ao: false });
   ctx.col.add(-3.5, 0, 58, 3.5, 5, 62);
+  P.fleshWall(ctx, -3.3, 3.3, 0, 5.0, 59.35, -1, 122, { tendrils: 9, mouths: 2 });
   P.rubble(ctx, 0, 0, 57, 16, 121, 3, { scale: 1.3 });
-  P.fleshGrowth(ctx, 0, 0.5, 57.8, 2, 122, { climb: 1.8 });
+  P.fleshGrowth(ctx, -2.6, 0, 57.4, 1.0, 123, { climb: 1.6, bound: [-3.4, -1.5, 56.5, 58] });
   L.interact.push({ kind: 'examine', id: 'x_portasul', text: 'southGate', x: 0, y: 1, z: 56.5, r: 3.2 });
 
-  // fragua (visitable)
+  // ------------------------------------------------------------ fragua (visitable)
+  // Se ve desde lejos: chimenea grande humeante, soportal con yunque y pila
+  // de templar, rótulo de hierro y las ventanas encendidas por el fuego.
   const room = 'smithy';
-  house(ctx, { x0: -26, z0: 42, x1: -14, z1: 56, front: 'e', seed: 807, hollow: true, collide: false, h: 6.4, style: 'stone', doorAt: 7, room, jetty: 0 });
-  W(S, -25.6, 42.4, -14.4, 55.6);
-  W(S, -14.6, 48.35, -13.8, 49.65);
+  house(ctx, {
+    x0: -26,
+    z0: 42,
+    x1: -14,
+    z1: 56,
+    front: 'e',
+    seed: 807,
+    h: 6.4,
+    style: 'stone',
+    hollow: true,
+    room,
+    lit: true,
+    litChance: 1,
+    jetty: 0,
+    floorMat: 'flag',
+    floorTint: [0.6, 0.56, 0.52],
+    chimney: true,
+    chimneyAt: [-21.5, 43.2],
+    chimneySize: 0.75,
+    smoke: 'embers',
+    doors: [
+      { side: 'e', z: 49, w: 1.5, h: 2.5 },
+      { side: 'w', z: 46 },
+    ],
+  });
+  // soportal delantero con el taller al aire libre
+  P.leanTo(ctx, -14, 43, -11.2, 55, 'w', 3.75, 2.75);
+  P.sign(ctx, -11.25, 2.62, 46.2, Math.PI / 2, 'anvil');
+  P.sign(ctx, -14, 2.9, 51.4, Math.PI / 2, 'horseshoe');
+  P.anvil(ctx, -12.4, 0, 45.4, 0.3);
+  P.dyeVat(ctx, -12.5, 0, 53.4, [0.2, 0.24, 0.26], { r: 0.5 });
+  P.cartWheel(ctx, -13.8, 0, 51.9, Math.PI / 2);
+  P.toolBoard(ctx, -14, 0, 46.9, Math.PI / 2);
+  P.firewood(ctx, -13.35, 0, 44.1, 0, 3);
+  P.sacks(ctx, -12.4, 0, 54.5, 3, 24);
+  P.coalPile(ctx, -11.8, 0, 43.6, 0.8);
+  P.wallTorch(ctx, -14, 2.4, 50.9, 'e');
+  P.brazier(ctx, -12.5, 0, 47.6, { s: 0.9, radius: 7 });
+  P.ironBars(ctx, -12.2, 0, 50.9, Math.PI / 2 + 0.1);
   wb.setRoom(room);
-  P.forge(ctx, -23.6, 0, 45, 0, room);
-  P.anvil(ctx, -20.5, 0, 48.5, 0.4);
+  // interior: fragua con su campana, fuelle, yunque, pila de templar, carbón
+  P.forge(ctx, -21.5, 0, 43.5, 0, room);
+  P.fleshMail(ctx, -21.6, 0.95, 43.4, 0.4, { room });
+  P.bellows(ctx, -23.85, 0, 43.4, 0, { room });
+  P.coalPile(ctx, -25, 0, 43.1, 0.8, { room });
+  P.trough(ctx, -18.7, 0, 43.1, 0, { len: 2, room, tint: [0.35, 0.4, 0.42] });
+  P.toolBoard(ctx, -18.7, 0, 42.36, 0, { room });
+  P.anvil(ctx, -20.6, 0, 46.7, 0.4);
+  wb.box('iron', -20.95, 0.9, 46.55, -20.4, 0.95, 46.62, { ao: false });
+  P.ironBars(ctx, -15.2, 0, 44.4, Math.PI / 2);
+  P.barrel(ctx, -15.1, 0, 46.3);
   P.table(ctx, -18, 0, 54.4, 2.2, 0.9, 0);
-  P.weaponRack(ctx, -25.4, 0, 51, Math.PI / 2);
-  P.barrel(ctx, -15.2, 0, 43.2);
-  P.crate(ctx, -16.4, 0, 43.1, 0.8, 0.2);
+  P.weaponRack(ctx, -25.4, 0, 51.2, Math.PI / 2);
+  P.toolBoard(ctx, -25.64, 0, 53.6, Math.PI / 2, { room });
+  P.armorStand(ctx, -24.6, 0, 55, Math.PI + 0.3, { room, flesh: true });
+  P.crate(ctx, -15.4, 0, 55, 0.8, 0.2);
+  P.barrel(ctx, -16.4, 0, 55.1, { lying: true, rot: 0.1 });
+  P.fleshMail(ctx, -19.4, 0, 44.6, 2.1, { room });
   // piedra de amolar
   wb.push();
   wb.translate(-22.4, 0.8, 54);
@@ -925,19 +1009,22 @@ export function buildFerraria(ctx, S, L) {
   wb.cylinder('wallstone', 0, -0.1, 0, 0.5, 0.5, 0.2, 10, { ao: false, capTop: true, capBot: true });
   wb.pop();
   wb.box('wooddark', -23, 0, 53.8, -21.8, 0.35, 54.2, { ao: false });
-  bakeCorpse(wb, -20.6, 0, 47.4, 0.4, 'kneel', 'villager', 0);
-  P.fleshGrowth(ctx, -20.5, 0.5, 48, 0.7, 131, { room, climb: 0.4 });
+  bakeCorpse(wb, -20.2, 0, 47.4, 0.4, 'kneel', 'villager', 0);
+  P.fleshGrowth(ctx, -20.1, 0.5, 48, 0.7, 131, { room, climb: 0.4 });
   P.fleshGrowth(ctx, -25, 0, 55, 0.9, 132, { room, climb: 1.4, bound: [-25.6, -14.4, 42.4, 55.6] });
-  P.decal(ctx, -19.5, 0.03, 48, 2.4);
+  P.decal(ctx, -19.5, 0.05, 48, 2.4);
+  P.decal(ctx, -21.5, 0.05, 45, 3.6, 'shadow');
+  P.candles(ctx, -17.2, 0.8, 54.6, 3, 133, { room, radius: 5, intensity: 1.0, spread: 0.25 });
+  P.hangingLamp(ctx, -19.8, 2.88, 50.4, { room, radius: 8, intensity: 1.2, dyn: 2.2 });
+  P.hangingLamp(ctx, -23.4, 2.88, 49.2, { room, radius: 6, intensity: 0.9 });
   wb.setRoom(null);
   L.interact.push(
     { kind: 'item', id: 'i_palanca', item: 'palanca', x: -18.2, y: 0.86, z: 54.4 },
     { kind: 'note', id: 'n_herrero', note: 'herrero', x: -17.2, y: 0.82, z: 54.3, model: 'book' },
     { kind: 'item', id: 'i_piedra', item: 'piedra', x: -22.4, y: 1.35, z: 54 },
-    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.3, h: 2.3, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1 }
+    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.5, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1 }
   );
   // atrezo
-  P.anvil(ctx, -10.5, 0, 45, 0.3);
   P.barrel(ctx, -12.6, 0, 56.4);
   P.barrel(ctx, -11.8, 0, 57);
   P.cart(ctx, 9.5, 0, 47, -0.5, { burning: true });
@@ -950,7 +1037,6 @@ export function buildFerraria(ctx, S, L) {
   P.decal(ctx, 5, 0.02, 53, 1.8);
   P.decal(ctx, 1.5, 0.02, 29, 1.6);
   P.wallTorch(ctx, -3.5, 2.8, 26, 'e');
-  P.wallTorch(ctx, -14, 2.8, 45, 'e');
   P.pike(ctx, 7, 0, 44, { tilt: 0.15 });
   P.pike(ctx, 8, 0, 43.4, { tilt: -0.1, skull: true });
   P.laundry(ctx, -3.45, 24.6, 3.45, 24.6, 4.3, 18);
@@ -958,8 +1044,6 @@ export function buildFerraria(ctx, S, L) {
   P.sign(ctx, -3.5, 2.95, 27.4, Math.PI / 2, 0);
   P.sign(ctx, 3.5, 2.95, 31.2, -Math.PI / 2, 2);
   P.lantern(ctx, 3.5, 2.75, 23.6, -Math.PI / 2, true);
-  P.firewood(ctx, -13.35, 0, 44.4, 0, 3);
-  P.weaponRack(ctx, -13.75, 0, 52.6, Math.PI / 2);
   P.jar(ctx, 12.9, 0, 43.3, 1.0);
   P.jar(ctx, 13.2, 0, 44.2, 0.8, { lying: true, rot: 2.2 });
   P.dropped(ctx, -2.9, 0, 51.3, 0.5, 'sword');
@@ -967,7 +1051,7 @@ export function buildFerraria(ctx, S, L) {
   P.dropped(ctx, 3.3, 0, 51.4, 2.9, 'shield');
   ctx.crows.push({ pts: [[-12.5, 9, 58.35], [-11.7, 9, 58.3], [-10.8, 9, 58.4]], yaw: Math.PI });
   ctx.crows.push({ x: 5, y: 0, z: 53, r: 1.2, n: 3 });
-  ctx.rats.push({ x: -12.2, y: 0, z: 55.6, n: 2 }, { x: -15.4, y: 0, z: 44.6, n: 1 });
+  ctx.rats.push({ x: -12.2, y: 0, z: 55.6, n: 2 }, { x: -15.4, y: 0, z: 52.6, n: 1 });
   L.enemies.push(
     { type: 'soldier', x: -4, y: 0, z: 49, yaw: 0, idle: 'stand', id: 'e_fer1' },
     { type: 'soldier', x: 7, y: 0, z: 52, yaw: -2.5, idle: 'wander', id: 'e_fer2' },
@@ -975,8 +1059,8 @@ export function buildFerraria(ctx, S, L) {
     { type: 'crawler', x: -19, y: 2.6, z: 51.5, yaw: 1, idle: 'ceiling', id: 'e_fer4' }
   );
   L.zones.push(
-    { id: 'smithy', rects: [[-26, 42, -14.2, 56, -1, 4]], atmo: 'interior' },
+    { id: 'smithy', rects: [[-26, 42, -14.2, 56, -1, 4]], atmo: 'interior', room: 'smithy' },
     { id: 'ferraria', rects: [[-3.5, 14, 3.5, 42, -1, 10], [-14, 42, 14, 58, -1, 10]], atmo: 'city' }
   );
-  L.map.push({ id: 'ferraria', r: [-3.5, 14, 3.5, 42] }, { id: 'ferraria', r: [-14, 42, 14, 58] }, { id: 'smithy', r: [-25.6, 42.4, -14.4, 55.6] });
+  L.map.push({ id: 'ferraria', r: [-3.5, 14, 3.5, 42] }, { id: 'ferraria', r: [-14, 42, 14, 58] }, { id: 'smithy', r: [-26, 42, -14, 56] });
 }

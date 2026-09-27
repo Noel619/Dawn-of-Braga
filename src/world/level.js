@@ -5,6 +5,7 @@ import { WorldBuilder } from '../gfx/geo.js';
 import { CollisionWorld } from './collision.js';
 import { WalkGrid } from './walkgrid.js';
 import { buildCastle, buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
+import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
@@ -27,8 +28,15 @@ export function buildLevel() {
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
+  ctx.S = S; // las casas visitables pintan su huella transitable
 
   buildCastle(ctx, S, L);
+  // los barrios primero: sus fachadas son los muros en los que trepan las
+  // carnosidades de las calles principales
+  buildNW(ctx, S, L);
+  buildSW(ctx, S, L);
+  buildNE(ctx, S, L);
+  buildSE(ctx, S, L);
   buildSouto(ctx, S, L);
   buildPraca(ctx, S, L);
   buildRuaSe(ctx, S, L);
@@ -41,6 +49,7 @@ export function buildLevel() {
   buildCloister(ctx, S, L);
   buildCrypt(ctx, S, C, L);
   buildRiver(ctx, S, L);
+  buildFillers(ctx, S, L);
 
   // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
   for (const c of corpseLog) {
@@ -59,7 +68,12 @@ export function buildLevel() {
   F.paint(-96, -232, 84, 72, 1);
   F.paint(-2, -97, 2, -86, 0);
   F.paint(-2, -186, 2, -167, 0);
-  for (const [a, b, c, d] of F.rects(1)) ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
+  for (const [a, b, c, d] of F.rects(1)) {
+    ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
+    // suelo visual de fondo (tierra), un poco por debajo de calles e
+    // interiores: donde no hay pavimento se ve tierra, nunca el vacío
+    ctx.wb.box('dirt', a, -0.2, b, c, -0.06, d, { faces: 't', ao: false, sub: 8, tint: [0.62, 0.58, 0.54] });
+  }
 
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);

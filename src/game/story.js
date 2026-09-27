@@ -136,6 +136,38 @@ El Turiferario guarda el camino al río. Arde por mí. Quema el incienso que yo 
 
 Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar.`,
   },
+  tabernero: {
+    title: 'Cuentas de la taberna del Cuervo',
+    text: `Noche de la caída. Seis soldados del adarve. Bebieron sin hablar, mirando hacia la catedral.
+
+Uno pidió que le sirviera también al que se sentaba a su lado. No había nadie a su lado. Le serví.
+
+Pagaron con monedas todavía calientes. He cerrado la bodega: algo rasca las cubas desde dentro.`,
+  },
+  panadero: {
+    title: 'Nota clavada en la artesa',
+    text: `La masa no sube. Crece.
+
+Esta mañana la artesa estaba llena hasta el borde y latía bajo el paño.
+
+He encendido el horno para quemarla. Huele a pan. Dios mío, huele a pan.`,
+  },
+  tejedora: {
+    title: 'Hilo para las mortajas',
+    text: `Me encargaron doce mortajas para los del adarve. Cosí once.
+
+La duodécima la tejo con el pelo de mi hija, porque el hilo se acabó y la tela sigue pidiendo más.
+
+Si alguien lee esto: no descosáis nada. Lo que va dentro todavía se mueve.`,
+  },
+  mozo: {
+    title: 'Tablilla del mozo de cuadra',
+    text: `Los caballos no comen. Miran hacia la catedral y tiemblan.
+
+Anoche el tordo del canónigo se tumbó y no volvió a levantarse. Esta mañana tenía ocho patas.
+
+He echado la tranca de la puerta que da a los Pellejeros. Por aquí no entra nadie más.`,
+  },
   celda: {
     title: 'Arañazos en la pared',
     text: `Alguien grabó con las uñas, una y otra vez:
@@ -185,4 +217,19 @@ export const AREA_NAMES = {
   arena: 'Cisterna del Dios Desconocido',
   tunnel: 'Galería del río',
   river: 'Orillas del río Este',
+  castle_chapel: 'Capilla de la guarnición',
+  callejon_pozo: 'Callejón del Pozo',
+  pozo: 'Plazuela del Pozo',
+  arco: 'Callejón del Arco',
+  callejon_se: 'Travesía de la Sé',
+  taberna: 'Taberna del Cuervo',
+  tejedor: 'Obrador de la tejedora',
+  horno: 'Patio del Horno',
+  panaderia: 'Horno de pan',
+  oratorio: 'Oratorio de Santa Bárbara',
+  fragua_callejon: 'Callejón de la Fragua',
+  tintoreros: 'Patio de los Tintoreros',
+  tintoreria: 'Tintorería',
+  corral: 'Corral de los Pellejeros',
+  establo: 'Establo',
 };
