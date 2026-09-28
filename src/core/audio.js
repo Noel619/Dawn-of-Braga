@@ -1,176 +1,422 @@
-// Motor de audio 100% sintetizado con WebAudio: efectos, voces, ambiente
-// espacializado, reverberación generada y música procedural.
+// Motor de audio 100% sintetizado con WebAudio.
+// - Buses de música, efectos, ambiente e interfaz hacia un limitador final;
+//   la música se atenúa (ducking) con los golpes fuertes y se oye «tras una
+//   puerta» en el menú de pausa.
+// - Reverberación por convolución con salas generadas (calle, habitación,
+//   capilla, catedral, cripta, exterior) que se funden al cambiar de zona.
+// - Sonidos posicionales con absorción del aire y oclusión: lo que suena tras
+//   un muro llega apagado.
+// - Ambiente por capas (viento a rachas, la ciudad ardiendo, río, fuegos,
+//   moscas, el zumbido de los altares, el miedo) y sucesos propios de cada zona.
+// - Música adaptativa por zona y peligro (audio_music.js).
+import { SoundLib, mtof } from './audio_lib.js';
+import { MusicEngine } from './audio_music.js';
 
 const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// tema musical de cada atmósfera
+const ZONE_MUSIC = {
+  city: 'city',
+  ramparts: 'ramparts',
+  interior: 'interior',
+  prison: 'prison',
+  chapel: 'sanctuary',
+  cathedral: 'cathedral',
+  crypt: 'crypt',
+  tunnel: 'crypt',
+  arena: 'crypt',
+  dawn: 'ending',
+};
+// sala (respuesta de impulso) y cantidad de reverberación
+const ZONE_ROOM = {
+  city: ['street', 0.3],
+  ramparts: ['open', 0.2],
+  interior: ['room', 0.34],
+  prison: ['room', 0.42],
+  chapel: ['hall', 0.5],
+  cathedral: ['cathedral', 0.72],
+  crypt: ['crypt', 0.6],
+  tunnel: ['crypt', 0.55],
+  arena: ['hall', 0.55],
+  dawn: ['open', 0.16],
+};
+// capas de fondo: viento, rumor del incendio, tono de sala, dron grave, río
+const ZONE_BED = {
+  city: [0.22, 0.1, 0, 0, 0],
+  ramparts: [0.42, 0.07, 0, 0, 0],
+  interior: [0.05, 0.035, 0.12, 0, 0],
+  prison: [0.03, 0, 0.16, 0.02, 0],
+  chapel: [0.03, 0.02, 0.07, 0, 0],
+  cathedral: [0.05, 0.02, 0.1, 0.02, 0],
+  crypt: [0, 0, 0.14, 0.06, 0],
+  tunnel: [0.06, 0, 0.12, 0.05, 0],
+  arena: [0.02, 0, 0.12, 0.07, 0],
+  dawn: [0.1, 0, 0, 0, 0.3],
+};
+const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
+// distancia máxima a la que merece la pena sintetizar cada sonido
+const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60 };
+// formantes (Hz, ancho de banda, ganancia) para voces y gritos
+const VOW = {
+  a: [
+    [730, 90, 1],
+    [1090, 110, 0.5],
+    [2440, 160, 0.25],
+  ],
+  e: [
+    [530, 80, 1],
+    [1840, 120, 0.45],
+    [2480, 160, 0.22],
+  ],
+  i: [
+    [300, 70, 1],
+    [2250, 140, 0.4],
+    [3000, 180, 0.2],
+  ],
+  o: [
+    [570, 80, 1],
+    [840, 90, 0.5],
+    [2410, 150, 0.15],
+  ],
+  u: [
+    [320, 70, 1],
+    [870, 90, 0.3],
+    [2240, 150, 0.1],
+  ],
+};
 
 export class Audio {
   constructor() {
     this.ok = false;
     this.vol = { music: 0.7, sfx: 0.9 };
     this.zone = 'city';
-    this.musicName = null;
-    this.nextAmb = 5;
+    this.surface = 'stone';
+    this.override = null; // música explícita: título, jefes, final
+    this.silenceUntil = 0; // silencio musical tras morir o vencer
+    this.nextAmb = 6;
+    this.lis = { x: 0, y: 0, z: 0 };
+    this.game = null;
+    this.combatK = 0;
+    this.gust = 0.5;
+    this.gustTo = 0.5;
+    this.gustT = 0;
+    this.heartT = 0;
+    this.fear = 0;
+    this.stingT = 0;
+    this.zoneMusT = 0;
+    this._slow = 0;
+    this._duckUntil = 0;
+    this._duckLvl = 1;
   }
 
-  init() {
+  // ------------------------------------------------------------ arranque
+  init(ctx = null) {
     if (this.ok) {
       if (this.ctx.state === 'suspended') this.ctx.resume();
       return;
     }
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    const ctx = (this.ctx = new AC());
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        ctx = new AC({ latencyHint: 'interactive' });
+      } catch (e) {
+        ctx = new AC();
+      }
+    }
+    this.ctx = ctx;
     this.ok = true;
+    const lib = (this.lib = new SoundLib(ctx));
+    this.white = lib.noise('white', 2);
+    this.pink = lib.noise('pink', 3);
+    this.brown = lib.noise('brown', 4);
+    this.raspCurve = this.makeRasp(4);
+
+    // --- mezcla final con limitador
     this.master = ctx.createGain();
     this.master.gain.value = 0.9;
-    const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -14;
-    comp.ratio.value = 4;
-    comp.attack.value = 0.005;
-    comp.release.value = 0.2;
-    this.master.connect(comp).connect(ctx.destination);
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -9;
+    lim.knee.value = 8;
+    lim.ratio.value = 12;
+    lim.attack.value = 0.002;
+    lim.release.value = 0.22;
+    this.master.connect(lim).connect(ctx.destination);
+    // efectos y ambiente -> mundo (se apaga en pausa) -> volumen de efectos
+    this.sfxVol = ctx.createGain();
+    this.sfxVol.gain.value = this.vol.sfx;
+    this.sfxVol.connect(this.master);
+    this.worldBus = ctx.createGain();
+    this.worldBus.connect(this.sfxVol);
     this.sfx = ctx.createGain();
-    this.sfx.gain.value = this.vol.sfx;
-    this.sfx.connect(this.master);
-    this.mus = ctx.createGain();
-    this.mus.gain.value = this.vol.music;
-    this.mus.connect(this.master);
+    this.sfx.connect(this.worldBus);
     this.amb = ctx.createGain();
-    this.amb.gain.value = 0.9;
-    this.amb.connect(this.sfx);
-    // reverberación
-    this.verb = ctx.createConvolver();
-    this.verb.buffer = this.makeIR(3.4, 2.6);
+    this.amb.connect(this.worldBus);
+    // interfaz: seca y fuera de la pausa
+    this.uiVol = ctx.createGain();
+    this.uiVol.gain.value = this.vol.sfx;
+    this.uiVol.connect(this.master);
+    this.uiBus = ctx.createGain();
+    this.uiBus.gain.value = 0.9;
+    this.uiBus.connect(this.uiVol);
+
+    // --- reverberación de los efectos (sala de la zona)
     this.verbIn = ctx.createGain();
+    this.verbHP = ctx.createBiquadFilter();
+    this.verbHP.type = 'highpass';
+    this.verbHP.frequency.value = 170;
+    this.verbIn.connect(this.verbHP);
     this.verbOut = ctx.createGain();
-    this.verbOut.gain.value = 0.35;
-    this.verbIn.connect(this.verb).connect(this.verbOut).connect(this.master);
-    // buffers de ruido
-    this.white = this.noiseBuf('white', 2);
-    this.brown = this.noiseBuf('brown', 4);
-    this.pink = this.noiseBuf('pink', 3);
-    this.crackleBuf = this.makeCrackle(6);
-    this.staticBuf = this.makeStatic(4);
-    this.listener = ctx.listener;
+    this.verbOut.gain.value = 0.3;
+    this.verbOut.connect(this.worldBus);
+    this.room = null;
+    this.setRoom('street', 0.3, 0.05);
+
+    // --- música: compresión suave, filtro de pausa, atenuación y volumen
+    this.musVol = ctx.createGain();
+    this.musVol.gain.value = this.vol.music;
+    this.musVol.connect(this.master);
+    this.duckG = ctx.createGain();
+    this.duckG.connect(this.musVol);
+    this.musLP = ctx.createBiquadFilter();
+    this.musLP.type = 'lowpass';
+    this.musLP.frequency.value = 20000;
+    this.musLP.Q.value = 0.5;
+    this.musLP.connect(this.duckG);
+    const mcomp = ctx.createDynamicsCompressor();
+    mcomp.threshold.value = -20;
+    mcomp.knee.value = 10;
+    mcomp.ratio.value = 3;
+    mcomp.attack.value = 0.02;
+    mcomp.release.value = 0.4;
+    mcomp.connect(this.musLP);
+    this.musIn = ctx.createGain();
+    this.musIn.gain.value = 0.85;
+    this.musIn.connect(mcomp);
+    // la música tiene su propia sala, grande y fija
+    this.musSend = ctx.createGain();
+    const mhp = ctx.createBiquadFilter();
+    mhp.type = 'highpass';
+    mhp.frequency.value = 200;
+    const mconv = ctx.createConvolver();
+    mconv.buffer = lib.ir('hall');
+    const mret = ctx.createGain();
+    mret.gain.value = 0.55;
+    this.musSend.connect(mhp).connect(mconv).connect(mret).connect(this.musLP);
+    this.score = new MusicEngine(ctx, lib, this.musIn, this.musSend);
+
     this.startAmbience();
+    this.prewarm();
+  }
+
+  // Precalcula en segundo plano los buffers pesados (salas, campanas...).
+  prewarm() {
+    const lib = this.lib;
+    const jobs = [
+      () => ['taiko', 'frame', 'tabor', 'thud', 'heart', 'rim', 'gong'].forEach((k) => lib.drum(k)),
+      () => this.churchBell(),
+      () => this.smallBell(),
+      () => lib.chain(1.2),
+      () => lib.ir('room'),
+      () => lib.ir('crypt'),
+      () => lib.ir('open'),
+      () => lib.ir('cathedral'),
+    ];
+    const run = () => {
+      const j = jobs.shift();
+      if (!j) return;
+      try {
+        j();
+      } catch (e) {}
+      setTimeout(run, 80);
+    };
+    setTimeout(run, 150);
   }
 
   setVolumes(music, sfx) {
     this.vol.music = music;
     this.vol.sfx = sfx;
     if (!this.ok) return;
-    this.mus.gain.setTargetAtTime(music, this.ctx.currentTime, 0.1);
-    this.sfx.gain.setTargetAtTime(sfx, this.ctx.currentTime, 0.1);
+    const t = this.t();
+    this.musVol.gain.setTargetAtTime(music, t, 0.1);
+    this.sfxVol.gain.setTargetAtTime(sfx, t, 0.1);
+    this.uiVol.gain.setTargetAtTime(sfx, t, 0.1);
   }
 
-  // ------------------------------------------------------------ generadores
-  noiseBuf(kind, sec) {
+  // Cambia la sala de reverberación con un fundido entre las dos.
+  setRoom(kind, level, fade = 1.5) {
     const ctx = this.ctx;
-    const n = Math.floor(ctx.sampleRate * sec);
-    const b = ctx.createBuffer(1, n, ctx.sampleRate);
-    const d = b.getChannelData(0);
-    let last = 0,
-      b0 = 0,
-      b1 = 0,
-      b2 = 0;
-    for (let i = 0; i < n; i++) {
-      const w = Math.random() * 2 - 1;
-      if (kind === 'white') d[i] = w;
-      else if (kind === 'brown') {
-        last = (last + 0.02 * w) / 1.02;
-        d[i] = last * 3.5;
-      } else {
-        b0 = 0.99765 * b0 + w * 0.099;
-        b1 = 0.963 * b1 + w * 0.2965;
-        b2 = 0.57 * b2 + w * 1.0527;
-        d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.2;
-      }
+    const t = ctx.currentTime;
+    this.verbOut.gain.setTargetAtTime(level, t, Math.max(0.01, fade / 3));
+    if (this.room && this.room.kind === kind) return;
+    const conv = ctx.createConvolver();
+    conv.buffer = this.lib.ir(kind);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(1, t + fade);
+    this.verbHP.connect(conv).connect(g).connect(this.verbOut);
+    const old = this.room;
+    if (old) {
+      old.g.gain.cancelScheduledValues(t);
+      old.g.gain.setValueAtTime(old.g.gain.value, t);
+      old.g.gain.linearRampToValueAtTime(0.0001, t + fade);
+      setTimeout(() => {
+        try {
+          this.verbHP.disconnect(old.conv);
+          old.conv.disconnect();
+          old.g.disconnect();
+        } catch (e) {}
+      }, (fade + 4) * 1000);
     }
-    return b;
-  }
-  makeIR(sec, decay) {
-    const ctx = this.ctx;
-    const n = Math.floor(ctx.sampleRate * sec);
-    const b = ctx.createBuffer(2, n, ctx.sampleRate);
-    for (let c = 0; c < 2; c++) {
-      const d = b.getChannelData(c);
-      for (let i = 0; i < n; i++) {
-        const t = i / n;
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay) * (i < 400 ? i / 400 : 1);
-      }
-    }
-    return b;
-  }
-  makeCrackle(sec) {
-    const ctx = this.ctx;
-    const n = Math.floor(ctx.sampleRate * sec);
-    const b = ctx.createBuffer(1, n, ctx.sampleRate);
-    const d = b.getChannelData(0);
-    let low = 0;
-    for (let i = 0; i < n; i++) {
-      low = low * 0.995 + (Math.random() * 2 - 1) * 0.005;
-      d[i] = low * 6;
-    }
-    for (let k = 0; k < sec * 40; k++) {
-      const p = Math.floor(Math.random() * (n - 800));
-      const a = rnd(0.2, 1) * (Math.random() < 0.1 ? 1.8 : 1);
-      const len = Math.floor(rnd(40, 400));
-      for (let i = 0; i < len; i++) d[p + i] += (Math.random() * 2 - 1) * a * Math.exp(-i / (len * 0.25));
-    }
-    return b;
-  }
-  makeStatic(sec) {
-    const ctx = this.ctx;
-    const n = Math.floor(ctx.sampleRate * sec);
-    const b = ctx.createBuffer(1, n, ctx.sampleRate);
-    const d = b.getChannelData(0);
-    let env = 0;
-    for (let i = 0; i < n; i++) {
-      if (Math.random() < 0.0004) env = rnd(0.4, 1);
-      env *= 0.9995;
-      const hiss = (Math.random() * 2 - 1) * (0.25 + env * 0.75);
-      d[i] = hiss * (Math.random() < 0.002 ? 3 : 1);
-    }
-    return b;
+    this.room = { kind, conv, g };
   }
 
-  // ------------------------------------------------------------ utilidades de síntesis
+  setZone(atmo) {
+    if (atmo === this.zone && this._roomSet) return;
+    this.zone = atmo;
+    if (!this.ok) return;
+    this._roomSet = true;
+    const [kind, lvl] = ZONE_ROOM[atmo] || ZONE_ROOM.city;
+    this.setRoom(kind, lvl);
+  }
+
+  // ------------------------------------------------------------ utilidades
   t() {
     return this.ctx.currentTime;
   }
-  out(pos, opts = {}) {
-    // devuelve nodo de entrada conectado (con panner si hay posición)
+  churchBell() {
+    return this.lib.bell(mtof(45), { kind: 'church', dur: 9 });
+  }
+  smallBell() {
+    return this.lib.bell(mtof(76), { kind: 'small', dur: 4 });
+  }
+  makeRasp(k) {
+    const n = 1024,
+      c = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1;
+      c[i] = Math.tanh(x * k) / Math.tanh(k);
+    }
+    return c;
+  }
+  dist(p) {
+    const L = this.lis;
+    return Math.hypot(p.x - L.x, (p.y ?? L.y) - L.y, p.z - L.z);
+  }
+  // Atenúa la música unos instantes (golpes, rugidos, campanas).
+  duck(amount, hold = 0.3) {
+    if (!this.ok) return;
+    const t = this.t();
+    const target = 1 - amount;
+    if (this._duckUntil > t && target >= this._duckLvl) return;
+    this._duckLvl = target;
+    this._duckUntil = t + hold;
+    const g = this.duckG.gain;
+    if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
+    else g.cancelScheduledValues(t);
+    g.setTargetAtTime(target, t, 0.03);
+    g.setTargetAtTime(1, t + hold, 0.5);
+  }
+  // Fija un parámetro solo si cambia (evita llenar la línea de tiempo).
+  setP(param, v, tc = 0.2) {
+    if (param._v !== undefined && Math.abs(param._v - v) <= Math.abs(v) * 0.01 + 1e-5) return;
+    param._v = v;
+    param.setTargetAtTime(v, this.ctx.currentTime, tc);
+  }
+  panner(ref = 3, roll = 1.1, max = 100) {
+    const p = this.ctx.createPanner();
+    p.panningModel = 'equalpower';
+    p.distanceModel = 'inverse';
+    p.refDistance = ref;
+    p.maxDistance = max;
+    p.rolloffFactor = roll;
+    return p;
+  }
+  // Coloca un panner; jump = salto inmediato (sin deslizar).
+  setPos(p, x, y, z, glide = true) {
+    const t = this.t();
+    if (p.positionX) {
+      for (const [a, v] of [
+        [p.positionX, x],
+        [p.positionY, y],
+        [p.positionZ, z],
+      ]) {
+        if (glide) a.setTargetAtTime(v, t, 0.08);
+        else {
+          a.cancelScheduledValues(t);
+          a.setValueAtTime(v, t);
+        }
+      }
+    } else p.setPosition(x, y, z);
+  }
+  // ¿Hay un muro entre el oyente y la fuente?
+  occluded(x, y, z, d) {
+    const col = this.game && this.game.world && this.game.world.col;
+    if (!col) return false;
+    const L = this.lis;
+    const len = d - 0.7;
+    if (len <= 0.5) return false;
+    const hit = col.raycast(L.x, L.y, L.z, (x - L.x) / d, (y - L.y) / d, (z - L.z) / d, len, (b) => b.tag !== 'floor' && b.tag !== 'fog' && b.maxy - b.miny > 1.2);
+    return hit < len;
+  }
+
+  // Cadena de salida de un sonido: ganancia -> (absorción/oclusión) ->
+  // panorama 3D -> bus, con envío a la reverberación de la sala.
+  out(pos, o = {}) {
     const ctx = this.ctx;
     const g = ctx.createGain();
-    g.gain.value = opts.gain ?? 1;
+    g.gain.value = o.gain ?? 1;
     let node = g;
+    let wet = o.verb ?? 0.25;
     if (pos) {
-      const p = ctx.createPanner();
-      p.panningModel = 'equalpower';
-      p.distanceModel = 'inverse';
-      p.refDistance = opts.ref ?? 3;
-      p.maxDistance = 80;
-      p.rolloffFactor = opts.roll ?? 1.1;
-      p.positionX.value = pos.x;
-      p.positionY.value = (pos.y ?? 0) + 1;
-      p.positionZ.value = pos.z;
-      g.connect(p);
+      const L = this.lis;
+      const px = pos.x,
+        py = (pos.y ?? L.y - 1) + 1,
+        pz = pos.z;
+      const d = Math.hypot(px - L.x, py - L.y, pz - L.z);
+      let cut = 20000 * Math.exp(-d / 38);
+      if (o.occlude !== false && d > 2.5 && this.occluded(px, py, pz, d)) {
+        cut = Math.min(cut, 650);
+        g.gain.value *= 0.6;
+        wet *= 1.5;
+      }
+      if (cut < 15000) {
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = Math.max(350, cut);
+        lp.Q.value = 0.5;
+        g.connect(lp);
+        node = lp;
+      }
+      const p = this.panner(o.ref ?? 3, o.roll ?? 1.1);
+      this.setPos(p, px, py, pz, false);
+      node.connect(p);
       node = p;
+      wet *= 1 + Math.min(1.2, d / 30);
     }
-    node.connect(opts.bus || this.sfx);
-    const send = this.ctx.createGain();
-    send.gain.value = opts.verb ?? 0.3;
-    node.connect(send).connect(this.verbIn);
-    setTimeout(() => {
-      try {
-        g.disconnect();
-        node.disconnect();
-        send.disconnect();
-      } catch (e) {}
-    }, (opts.life ?? 4) * 1000);
+    node.connect(o.bus || this.sfx);
+    let send = null;
+    if (wet > 0.001) {
+      send = ctx.createGain();
+      send.gain.value = wet;
+      node.connect(send).connect(this.verbIn);
+    }
+    setTimeout(
+      () => {
+        try {
+          g.disconnect();
+          node.disconnect();
+          if (send) send.disconnect();
+        } catch (e) {}
+      },
+      (o.life ?? 3) * 1000,
+    );
     return g;
   }
-  noise(dest, t0, dur, { type = 'bandpass', f0 = 1000, f1 = null, q = 1, gain = 0.5, a = 0.005, buf = null, rate = 1 } = {}) {
+
+  noise(dest, t0, dur, { type = 'bandpass', f0 = 1000, f1 = null, q = 1, gain = 0.5, a = 0.005, buf = null, rate = 1, curve = 'exp' } = {}) {
     const ctx = this.ctx;
     const s = ctx.createBufferSource();
     s.buffer = buf || this.white;
@@ -182,11 +428,15 @@ export class Audio {
     if (f1) f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
     f.Q.value = q;
     const g = ctx.createGain();
+    a = Math.min(a, dur * 0.9);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + a);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t0 + a);
+    if (curve === 'lin') {
+      g.gain.setValueAtTime(Math.max(0.0002, gain), t0 + Math.max(a, dur * 0.6));
+      g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+    } else g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     s.connect(f).connect(g).connect(dest);
-    s.start(t0, Math.random() * 1.5);
+    s.start(t0, Math.random() * s.buffer.duration * 0.8);
     s.stop(t0 + dur + 0.05);
     return f;
   }
@@ -198,11 +448,12 @@ export class Audio {
     o.detune.value = detune;
     if (f1) o.frequency.exponentialRampToValueAtTime(Math.max(10, f1), t0 + dur);
     const g = ctx.createGain();
+    a = Math.min(a, dur * 0.9);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + a);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t0 + a);
     if (curve === 'exp') g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     else {
-      g.gain.setValueAtTime(gain, t0 + dur * 0.7);
+      g.gain.setValueAtTime(gain, t0 + Math.max(a, dur * 0.7));
       g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
     }
     o.connect(g).connect(dest);
@@ -210,767 +461,1235 @@ export class Audio {
     o.stop(t0 + dur + 0.05);
     return o;
   }
-  // voz con formantes (gritos, lamentos, coro)
-  voice(dest, t0, dur, { f0 = 200, f1 = null, vowel = 'a', gain = 0.3, vib = 5, vibD = 6, type = 'sawtooth', breath = 0.1, a = 0.05 } = {}) {
+  // Reproduce un buffer de la biblioteca con filtros y envolvente opcionales.
+  smp(dest, t0, buffer, o = {}) {
     const ctx = this.ctx;
-    const V = { a: [700, 1220, 2600], e: [500, 1900, 2500], i: [300, 2300, 3000], o: [450, 800, 2800], u: [320, 800, 2400] }[vowel];
-    const o = ctx.createOscillator();
-    o.type = type;
-    o.frequency.setValueAtTime(f0, t0);
-    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = vib;
-    const lg = ctx.createGain();
-    lg.gain.value = vibD;
-    lfo.connect(lg).connect(o.detune);
+    const s = ctx.createBufferSource();
+    s.buffer = buffer;
+    s.playbackRate.value = o.rate ?? 1;
+    let n = s;
+    for (const [type, f] of [
+      ['lowpass', o.lp],
+      ['highpass', o.hp],
+    ]) {
+      if (!f) continue;
+      const fl = ctx.createBiquadFilter();
+      fl.type = type;
+      fl.frequency.value = f;
+      n.connect(fl);
+      n = fl;
+    }
     const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + a);
-    g.gain.setValueAtTime(gain, t0 + dur * 0.6);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    const G = o.gain ?? 1;
+    if (o.dur) {
+      const r = Math.min(0.08, o.dur * 0.3);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(G, t0 + 0.004);
+      g.gain.setValueAtTime(G, t0 + o.dur - r);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + o.dur);
+    } else g.gain.value = G;
+    n.connect(g).connect(dest);
+    s.start(t0, o.offset ?? 0);
+    if (o.dur) s.stop(t0 + o.dur + 0.02);
+    return s;
+  }
+
+  // Voz con formantes: gritos, gruñidos, lamentos. v1 = vocal final (se
+  // desliza), rasp = aspereza subarmónica, dist = saturación, jit = temblor.
+  voice(dest, t0, dur, o = {}) {
+    const { f0 = 200, f1 = null, vowel = 'a', v1 = null, gain = 0.3, vib = 5, vibD = 6, type = 'sawtooth', breath = 0.1, a = 0.05, rasp = 0, dist = 0, jit = 0, rel = 0.35 } = o;
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f0, t0);
+    if (f1) osc.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    const nodes = [osc];
+    if (vibD > 0) {
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = vib;
+      const lg = ctx.createGain();
+      lg.gain.value = vibD;
+      lfo.connect(lg).connect(osc.detune);
+      nodes.push(lfo);
+    }
+    if (jit > 0) {
+      const js = ctx.createBufferSource();
+      js.buffer = this.white;
+      js.loop = true;
+      const jl = ctx.createBiquadFilter();
+      jl.type = 'lowpass';
+      jl.frequency.value = 18;
+      const jg = ctx.createGain();
+      jg.gain.value = jit * 30;
+      js.connect(jl).connect(jg).connect(osc.detune);
+      nodes.push(js);
+    }
+    const src = ctx.createGain();
+    osc.connect(src);
+    if (rasp > 0) {
+      // modulación subarmónica: voz rota, gruñido
+      const sub = ctx.createOscillator();
+      sub.type = 'square';
+      sub.frequency.setValueAtTime(f0 * 0.5, t0);
+      if (f1) sub.frequency.exponentialRampToValueAtTime(f1 * 0.5, t0 + dur);
+      const sg = ctx.createGain();
+      sg.gain.value = rasp * 0.5;
+      src.gain.value = 1 - rasp * 0.5;
+      sub.connect(sg).connect(src.gain);
+      nodes.push(sub);
+    }
+    let exc = src;
+    if (dist > 0) {
+      const ws = ctx.createWaveShaper();
+      ws.curve = this.raspCurve;
+      ws.oversample = '2x';
+      src.connect(ws);
+      exc = ws;
+    }
+    const V = VOW[vowel] || VOW.a;
+    const V1 = v1 ? VOW[v1] : null;
     const mix = ctx.createGain();
-    for (const [i, f] of V.entries()) {
+    mix.gain.value = 2.4;
+    V.forEach(([fr, bw, amp], i) => {
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
-      bp.frequency.value = f;
-      bp.Q.value = 8 - i * 2;
+      bp.frequency.setValueAtTime(fr, t0);
+      if (V1) bp.frequency.linearRampToValueAtTime(V1[i][0], t0 + dur * 0.8);
+      bp.Q.value = fr / bw;
       const fg = ctx.createGain();
-      fg.gain.value = [1, 0.5, 0.2][i];
-      o.connect(bp).connect(fg).connect(mix);
-    }
+      fg.gain.value = amp;
+      exc.connect(bp).connect(fg).connect(mix);
+    });
+    const g = ctx.createGain();
+    const A = Math.min(a, dur * 0.5);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + A);
+    g.gain.setValueAtTime(gain, t0 + Math.max(A, dur * (1 - rel)));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     mix.connect(g).connect(dest);
-    o.start(t0);
-    lfo.start(t0);
-    o.stop(t0 + dur + 0.05);
-    lfo.stop(t0 + dur + 0.05);
-    if (breath > 0) this.noise(dest, t0, dur, { type: 'bandpass', f0: V[1], q: 2, gain: breath, a });
-  }
-  bell(dest, t0, f, gain = 0.4, len = 5) {
-    const R = [0.5, 1, 1.19, 1.5, 2.0, 2.51, 2.66, 3.01, 4.16, 5.43];
-    R.forEach((r, i) => this.tone(dest, t0, len * (1.2 - i * 0.08), { f0: f * r * (1 + (Math.random() - 0.5) * 0.004), gain: gain * [0.6, 1, 0.7, 0.5, 0.45, 0.3, 0.25, 0.2, 0.15, 0.1][i], a: 0.003 }));
-    this.noise(dest, t0, 0.08, { type: 'highpass', f0: 2500, gain: gain * 0.4 });
-  }
-
-  // ------------------------------------------------------------ efectos
-  play(name, pos = null) {
-    if (!this.ok) return;
-    const t = this.t();
-    const P = pos && pos.x !== undefined ? pos : null;
-    let d;
-    switch (name) {
-      case 'crow': {
-        // graznido: sierra ronca con formantes nasales, uno o dos "craa"
-        d = this.out(P, { gain: 0.55, verb: 0.45, ref: 4, life: 3 });
-        const n = Math.random() < 0.5 ? 1 : 2;
-        for (let i = 0; i < n; i++) {
-          const t0 = t + i * (0.26 + Math.random() * 0.08);
-          const f = 520 + Math.random() * 160;
-          this.voice(d, t0, 0.22, { f0: f, f1: f * 0.72, vowel: 'a', gain: 0.22, vib: 38, vibD: 90, breath: 0.08, a: 0.012 });
-          this.noise(d, t0, 0.18, { type: 'bandpass', f0: 1400, q: 3, gain: 0.08, a: 0.01 });
-        }
-        break;
-      }
-      case 'swing':
-        d = this.out(P, { gain: 0.55, verb: 0.1, life: 1 });
-        this.noise(d, t, 0.24, { f0: 500, f1: 2600, q: 1.4, gain: 0.5, a: 0.06 });
-        break;
-      case 'swingHeavy':
-        d = this.out(P, { gain: 0.7, verb: 0.15, life: 1.2 });
-        this.noise(d, t, 0.38, { f0: 300, f1: 1500, q: 1.2, gain: 0.6, a: 0.12 });
-        this.tone(d, t + 0.05, 0.3, { f0: 110, f1: 60, gain: 0.25, a: 0.05 });
-        break;
-      case 'hit':
-      case 'hitHeavy': {
-        const h = name === 'hitHeavy';
-        d = this.out(P, { gain: h ? 1 : 0.8, verb: 0.2, life: 1.2 });
-        this.tone(d, t, h ? 0.25 : 0.16, { f0: h ? 120 : 160, f1: 45, gain: 0.8 });
-        this.noise(d, t, 0.12, { type: 'lowpass', f0: 1400, f1: 300, gain: 0.7 });
-        this.noise(d, t + 0.02, 0.2, { type: 'bandpass', f0: 700, f1: 350, q: 4, gain: 0.35, buf: this.brown, rate: 3 });
-        break;
-      }
-      case 'clang':
-      case 'block':
-      case 'guardbreak': {
-        d = this.out(P, { gain: 0.7, verb: 0.35, life: 2 });
-        const base = name === 'block' ? 380 : 520;
-        [1, 2.63, 4.13, 5.92, 8.6].forEach((r, i) => this.tone(d, t, 0.9 - i * 0.12, { f0: base * r * rnd(0.98, 1.02), gain: 0.22 / (i + 1), a: 0.002 }));
-        this.noise(d, t, 0.05, { type: 'highpass', f0: 3000, gain: 0.5 });
-        if (name === 'block') this.tone(d, t, 0.12, { f0: 180, f1: 90, gain: 0.5 });
-        if (name === 'guardbreak') {
-          this.tone(d, t, 0.5, { f0: 90, f1: 40, gain: 0.7 });
-          this.noise(d, t + 0.05, 0.4, { type: 'lowpass', f0: 800, gain: 0.5 });
-        }
-        break;
-      }
-      case 'playerHurt':
-        d = this.out(P, { gain: 0.8, verb: 0.2, life: 1.2 });
-        this.voice(d, t, 0.28, { f0: 150, f1: 95, vowel: 'u', gain: 0.35, vib: 0, breath: 0.15, a: 0.01 });
-        this.tone(d, t, 0.15, { f0: 140, f1: 50, gain: 0.6 });
-        this.noise(d, t, 0.1, { type: 'lowpass', f0: 1200, gain: 0.5 });
-        break;
-      case 'roll':
-        d = this.out(P, { gain: 0.5, verb: 0.1, life: 1.2 });
-        this.noise(d, t, 0.3, { f0: 1200, f1: 400, q: 0.8, gain: 0.35, a: 0.05 });
-        this.tone(d, t + 0.3, 0.12, { f0: 90, f1: 50, gain: 0.35 });
-        this.noise(d, t + 0.3, 0.12, { type: 'lowpass', f0: 600, gain: 0.3 });
-        break;
-      case 'step': {
-        d = this.out(null, { gain: 0.3, verb: 0.08, life: 0.5 });
-        const s = this.surface || 'stone';
-        if (s === 'stone') this.noise(d, t, 0.05, { f0: rnd(1500, 2400), q: 1.5, gain: 0.4, a: 0.002 });
-        else if (s === 'wood') this.tone(d, t, 0.07, { f0: rnd(200, 260), f1: 150, gain: 0.35 });
-        else this.noise(d, t, 0.07, { type: 'lowpass', f0: rnd(500, 800), gain: 0.5, a: 0.004, buf: this.brown, rate: 4 });
-        this.tone(d, t, 0.05, { f0: 70, f1: 45, gain: 0.25 });
-        break;
-      }
-      case 'heal':
-        d = this.out(P, { gain: 0.5, verb: 0.7, life: 3 });
-        [880, 1318, 1760, 2637].forEach((f, i) => this.tone(d, t + i * 0.06, 1.6, { f0: f, gain: 0.08, a: 0.1 }));
-        this.noise(d, t, 1.0, { type: 'bandpass', f0: 3000, q: 3, gain: 0.08, a: 0.5 });
-        break;
-      case 'slam':
-        d = this.out(P, { gain: 1, verb: 0.4, life: 2.5, ref: 5 });
-        this.tone(d, t, 0.7, { f0: 70, f1: 28, gain: 1 });
-        this.noise(d, t, 0.6, { type: 'lowpass', f0: 900, f1: 150, gain: 0.8 });
-        for (let i = 0; i < 8; i++) this.noise(d, t + rnd(0.05, 0.5), 0.04, { f0: rnd(800, 2500), q: 2, gain: 0.2 });
-        break;
-      case 'bellToll':
-        d = this.out(P, { gain: 0.9, verb: 0.8, life: 9, ref: 8, roll: 0.6 });
-        this.bell(d, t, 98, 0.45, 7);
-        break;
-      case 'roar':
-        d = this.out(P, { gain: 1, verb: 0.6, life: 4, ref: 8 });
-        this.voice(d, t, 2.0, { f0: 70, f1: 55, vowel: 'o', gain: 0.6, vib: 7, vibD: 40, breath: 0.4, a: 0.15 });
-        this.voice(d, t, 2.0, { f0: 104, f1: 80, vowel: 'a', gain: 0.4, vib: 5.5, vibD: 30, breath: 0, a: 0.2 });
-        break;
-      case 'wail':
-        d = this.out(P, { gain: 0.8, verb: 0.8, life: 3 });
-        this.voice(d, t, 1.4, { f0: 620, f1: 480, vowel: 'i', gain: 0.25, vib: 6, vibD: 60, breath: 0.2, type: 'triangle', a: 0.1 });
-        break;
-      case 'wailHit':
-        d = this.out(P, { gain: 0.6, verb: 0.7, life: 2 });
-        this.noise(d, t, 0.4, { f0: 2000, f1: 500, q: 2, gain: 0.4 });
-        break;
-      case 'fireWhoosh':
-        d = this.out(P, { gain: 0.7, verb: 0.3, life: 2 });
-        this.noise(d, t, 0.6, { f0: 250, f1: 1400, q: 0.8, gain: 0.6, a: 0.1, buf: this.brown, rate: 3 });
-        break;
-      case 'explosion':
-        d = this.out(P, { gain: 1, verb: 0.5, life: 3, ref: 6 });
-        this.noise(d, t, 1.2, { type: 'lowpass', f0: 2400, f1: 150, gain: 0.9 });
-        this.tone(d, t, 0.8, { f0: 60, f1: 25, gain: 1 });
-        break;
-      case 'burn':
-        d = this.out(P, { gain: 0.4, verb: 0.1, life: 1 });
-        this.noise(d, t, 0.25, { type: 'highpass', f0: 3000, gain: 0.3 });
-        break;
-      case 'doorOpen':
-        d = this.out(P, { gain: 0.7, verb: 0.45, life: 3 });
-        this.creak(d, t, 1.1, rnd(70, 95));
-        this.tone(d, t, 0.05, { type: 'square', f0: 900, f1: 400, gain: 0.08 });
-        break;
-      case 'gateOpen':
-        d = this.out(P, { gain: 0.8, verb: 0.5, life: 4 });
-        for (let i = 0; i < 26; i++) this.noise(d, t + i * 0.08 + rnd(0, 0.05), 0.04, { f0: rnd(1800, 3500), q: 6, gain: 0.18 });
-        this.noise(d, t, 2.2, { type: 'lowpass', f0: 300, gain: 0.35, a: 0.2, buf: this.brown, rate: 2 });
-        this.creak(d, t + 0.2, 1.6, 140);
-        break;
-      case 'unlock':
-        d = this.out(P, { gain: 0.6, verb: 0.3, life: 1.5 });
-        [0, 0.12, 0.3].forEach((dt) => this.noise(d, t + dt, 0.03, { f0: 3200, q: 8, gain: 0.35 }));
-        this.tone(d, t + 0.3, 0.1, { type: 'square', f0: 300, f1: 150, gain: 0.05 });
-        break;
-      case 'locked':
-        d = this.out(P, { gain: 0.6, verb: 0.3, life: 1.5 });
-        for (let i = 0; i < 4; i++) this.noise(d, t + i * 0.07, 0.04, { f0: rnd(1500, 2500), q: 5, gain: 0.3 });
-        this.tone(d, t, 0.12, { f0: 110, f1: 70, gain: 0.3 });
-        break;
-      case 'bar':
-        d = this.out(P, { gain: 0.7, verb: 0.4, life: 2 });
-        this.noise(d, t, 0.5, { type: 'bandpass', f0: 500, f1: 250, q: 2, gain: 0.4, buf: this.brown, rate: 4 });
-        this.tone(d, t + 0.5, 0.2, { f0: 120, f1: 60, gain: 0.6 });
-        break;
-      case 'boards':
-        d = this.out(P, { gain: 0.9, verb: 0.35, life: 2.5 });
-        [0, 0.25, 0.45, 0.8].forEach((dt) => {
-          this.noise(d, t + dt, 0.08, { f0: rnd(900, 1800), q: 3, gain: 0.6, a: 0.001 });
-          this.tone(d, t + dt, 0.12, { f0: rnd(180, 260), f1: 90, gain: 0.35 });
-        });
-        break;
-      case 'seal':
-        d = this.out(P, { gain: 0.9, verb: 0.6, life: 4.5 });
-        this.noise(d, t, 3, { type: 'lowpass', f0: 220, gain: 0.7, a: 0.4, buf: this.brown, rate: 1.5 });
-        this.tone(d, t, 3, { f0: 42, gain: 0.5, a: 0.5 });
-        break;
-      case 'pickup':
-        d = this.out(null, { gain: 0.5, verb: 0.5, life: 3, bus: this.sfx });
-        [659, 880, 1319].forEach((f, i) => this.tone(d, t + i * 0.09, 1.3, { f0: f, gain: 0.12, a: 0.01 }));
-        break;
-      case 'paper':
-        d = this.out(null, { gain: 0.5, verb: 0.1, life: 1 });
-        for (let i = 0; i < 5; i++) this.noise(d, t + i * 0.06, 0.07, { f0: rnd(2500, 5000), q: 1, gain: 0.25 });
-        break;
-      case 'rest':
-        d = this.out(null, { gain: 0.6, verb: 0.9, life: 6, bus: this.mus });
-        [146.8, 220, 293.7, 370].forEach((f, i) => this.voice(d, t + i * 0.15, 4, { f0: f, vowel: 'a', gain: 0.1, vib: 5, vibD: 8, breath: 0.03, a: 1.2 }));
-        break;
-      case 'death':
-        d = this.out(null, { gain: 0.8, verb: 0.9, life: 7, bus: this.mus });
-        [65.4, 69.3, 98, 103.8].forEach((f) => this.voice(d, t, 5, { f0: f, vowel: 'o', gain: 0.2, vib: 3, vibD: 10, breath: 0.05, a: 0.8 }));
-        this.bell(d, t + 0.2, 55, 0.35, 6);
-        break;
-      case 'item':
-        this.play('pickup');
-        break;
-      case 'stinger':
-        d = this.out(null, { gain: 0.6, verb: 0.8, life: 4, bus: this.mus });
-        [233, 247, 262].forEach((f) => this.voice(d, t, 1.6, { f0: f, f1: f * 0.92, vowel: 'e', gain: 0.1, vib: 7, vibD: 25, breath: 0.1, a: 0.02, type: 'sawtooth' }));
-        this.noise(d, t, 0.8, { f0: 5000, f1: 800, q: 2, gain: 0.2 });
-        break;
-      case 'fog':
-        d = this.out(null, { gain: 0.6, verb: 0.9, life: 4 });
-        this.noise(d, t, 1.6, { f0: 400, f1: 3000, q: 1, gain: 0.3, a: 0.5 });
-        break;
-      case 'victory':
-        d = this.out(null, { gain: 0.7, verb: 0.9, life: 8, bus: this.mus });
-        [98, 146.8, 196, 246.9, 293.7].forEach((f, i) => this.voice(d, t + i * 0.2, 5.5, { f0: f, vowel: 'a', gain: 0.1, vib: 5, vibD: 7, breath: 0.02, a: 1.4 }));
-        this.bell(d, t + 0.5, 196, 0.25, 6);
-        break;
+    for (const n of nodes) {
+      n.start(t0);
+      n.stop(t0 + dur + 0.05);
     }
+    if (breath > 0) this.noise(dest, t0, dur, { type: 'bandpass', f0: V[1][0], f1: V1 ? V1[1][0] : null, q: 1.6, gain: breath * gain * 1.2, a: A });
   }
 
-  creak(dest, t0, dur, f) {
+  // Chirrido de madera (fricción que se agarra y suelta) con resonancias.
+  creak(dest, t0, dur, f, gain = 0.22) {
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
     o.frequency.setValueAtTime(f, t0);
-    for (let i = 0; i < 8; i++) o.frequency.setValueAtTime(f * rnd(0.7, 1.5), t0 + (i / 8) * dur);
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = 900;
-    bp.Q.value = 6;
+    const n = Math.max(3, Math.floor(dur * 7));
+    for (let i = 1; i <= n; i++) o.frequency.linearRampToValueAtTime(f * rnd(0.55, 1.6), t0 + (i / n) * dur);
+    const mix = ctx.createGain();
+    for (const [fr, q, a] of [
+      [rnd(500, 700), 7, 1],
+      [rnd(1100, 1500), 9, 0.6],
+      [rnd(2300, 2900), 10, 0.3],
+    ]) {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = fr;
+      bp.Q.value = q;
+      const bg = ctx.createGain();
+      bg.gain.value = a;
+      o.connect(bp).connect(bg).connect(mix);
+    }
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.1);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + Math.min(0.08, dur * 0.3));
+    for (let i = 1; i < n; i++) g.gain.linearRampToValueAtTime(gain * rnd(0.3, 1), t0 + (i / n) * dur * 0.9);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    const am = ctx.createOscillator();
-    am.frequency.value = 23;
-    const amg = ctx.createGain();
-    amg.gain.value = 0.12;
-    am.connect(amg).connect(g.gain);
-    o.connect(bp).connect(g).connect(dest);
+    mix.connect(g).connect(dest);
     o.start(t0);
-    am.start(t0);
-    o.stop(t0 + dur + 0.1);
-    am.stop(t0 + dur + 0.1);
+    o.stop(t0 + dur + 0.05);
+  }
+  // Metal: parciales inarmónicos (espadas, armaduras, rejas).
+  metal(dest, t0, base, gain = 0.2, dur = 0.8, o = {}) {
+    const R = o.ratios ?? [1, 2.76, 5.4, 8.93, 13.3];
+    R.forEach((r, i) => {
+      const f = base * r * rnd(0.985, 1.015);
+      if (f < 16000) this.tone(dest, t0, dur * Math.max(0.2, 1 - i * 0.15), { f0: f, gain: gain / (1 + i * 0.8), a: 0.001 });
+    });
+    this.noise(dest, t0, 0.04, { type: 'highpass', f0: 3500, gain: gain * 1.2, a: 0.001 });
+  }
+  // Cascotes: clics cortos repartidos en el tiempo.
+  debris(dest, t0, n, spread, o = {}) {
+    for (let i = 0; i < n; i++) this.noise(dest, t0 + Math.pow(Math.random(), 1.6) * spread, rnd(0.02, 0.06), { f0: rnd(o.f0 ?? 700, o.f1 ?? 2600), q: rnd(2, 6), gain: rnd(0.05, 0.2) * (o.gain ?? 1), a: 0.001 });
+  }
+  // Cota de malla, cadenas: un fragmento del buffer de cadena.
+  jingle(dest, t0, dur = 0.15, gain = 0.2, rate = 1) {
+    this.smp(dest, t0, this.lib.chain(1.2), { gain, rate: rate * rnd(0.9, 1.1), offset: Math.random() * (1.1 - dur), dur, hp: 1500 });
+  }
+  whisper(dest, t0, dur, gain) {
+    const n = Math.max(2, Math.floor(dur / 0.13));
+    for (let i = 0; i < n; i++) {
+      const V = VOW[pick(['a', 'e', 'i', 'o', 'u'])];
+      const tt = t0 + i * 0.13 + rnd(0, 0.04);
+      if (Math.random() < 0.3) this.noise(dest, tt, rnd(0.05, 0.1), { type: 'highpass', f0: rnd(4000, 6500), gain: gain * 0.5, a: 0.01 });
+      else {
+        const l = rnd(0.08, 0.16);
+        this.noise(dest, tt, l, { f0: V[0][0] * 1.4, q: 4, gain: gain * rnd(0.4, 1), a: 0.02 });
+        this.noise(dest, tt, l, { f0: V[1][0], q: 6, gain: gain * rnd(0.3, 0.7), a: 0.02 });
+      }
+    }
+  }
+  // Rezo ininteligible: sílabas cortas con vocales al azar.
+  mutter(d, t, dur, f0) {
+    let tt = t;
+    while (tt < t + dur) {
+      const l = rnd(0.1, 0.22);
+      this.voice(d, tt, l, { f0: f0 * rnd(0.92, 1.08), vowel: pick(['a', 'e', 'o', 'u']), v1: pick(['a', 'e', 'i', 'o', 'u']), gain: 0.06, vibD: 0, breath: 0.8, a: 0.02, jit: 25 });
+      tt += l + rnd(0.02, 0.12);
+    }
+  }
+  chitter(d, t, dur, gain) {
+    const n = Math.floor(dur / 0.035);
+    for (let i = 0; i < n; i++) if (Math.random() < 0.7) this.noise(d, t + i * 0.035 + rnd(0, 0.01), 0.015, { f0: rnd(2500, 4500), q: 8, gain: gain * rnd(0.4, 1), a: 0.001 });
+  }
+  bodyFall(d, t, k = 1, armor = false) {
+    this.tone(d, t, 0.3 * k, { f0: 85 / Math.sqrt(k), f1: 35, gain: 0.6 });
+    this.noise(d, t, 0.25 * k, { type: 'lowpass', f0: 900, f1: 200, gain: 0.45, a: 0.003, buf: this.brown, rate: 3 });
+    this.tone(d, t + 0.18 * k, 0.15, { f0: 110, f1: 55, gain: 0.25 });
+    if (armor) {
+      this.jingle(d, t, 0.5, 0.25);
+      this.metal(d, t + 0.05, rnd(500, 700), 0.08, 0.6);
+    }
+  }
+  // Pisada según el suelo (el pie izquierdo y el derecho suenan distinto).
+  stepSound(d, t, k = 1, side = 0, surface = null) {
+    const s = surface || this.surface || 'stone';
+    const pv = side ? 1.04 : 0.97;
+    if (s === 'stone') {
+      this.tone(d, t, 0.06, { f0: 95 * pv, f1: 50, gain: 0.35 * k });
+      this.noise(d, t, 0.045, { f0: rnd(1700, 2600) * pv, q: 1.4, gain: 0.3 * k, a: 0.002 });
+      if (Math.random() < 0.3) this.noise(d, t + 0.03, 0.08, { f0: rnd(3000, 4500), q: 2, gain: 0.07 * k, a: 0.01 });
+    } else if (s === 'wood') {
+      this.tone(d, t, 0.09, { f0: rnd(160, 210) * pv, f1: 110, gain: 0.4 * k });
+      this.noise(d, t, 0.06, { f0: 700 * pv, q: 3, gain: 0.25 * k, a: 0.002, buf: this.brown, rate: 4 });
+      if (Math.random() < 0.08) this.creak(d, t + 0.03, 0.35, rnd(90, 140), 0.07);
+    } else {
+      this.noise(d, t, 0.09, { type: 'lowpass', f0: rnd(600, 900) * pv, gain: 0.5 * k, a: 0.006, buf: this.brown, rate: 4 });
+      this.noise(d, t + 0.02, 0.07, { f0: rnd(1500, 2200), q: 1.2, gain: 0.08 * k, a: 0.01 });
+      this.tone(d, t, 0.06, { f0: 70, f1: 45, gain: 0.25 * k });
+    }
+  }
+
+  // ------------------------------------------------------------ efectos
+  play(name, pos = null, o = {}) {
+    if (!this.ok) return;
+    const t = this.t() + 0.005;
+    const P = pos && pos.x !== undefined ? pos : null;
+    if (P && this.dist(P) > (FAR[name] ?? 70)) return;
+    let d;
+    switch (name) {
+      case 'crow': {
+        d = this.out(P, { gain: 0.5, verb: 0.5, ref: 5, life: 3 });
+        const n = 1 + Math.floor(Math.random() * 3);
+        const base = rnd(480, 640);
+        for (let i = 0; i < n; i++) {
+          const f = base * rnd(0.95, 1.05);
+          this.voice(d, t + i * rnd(0.28, 0.4), rnd(0.2, 0.3), { f0: f, f1: f * 0.7, vowel: 'a', v1: 'o', gain: 0.24, vib: 30, vibD: 60, breath: 0.4, a: 0.012, rasp: 0.7, dist: 1, rel: 0.5 });
+        }
+        // aleteo
+        if (Math.random() < 0.4) for (let i = 0; i < 6; i++) this.noise(d, t + n * 0.35 + i * 0.11, 0.08, { type: 'lowpass', f0: 900, gain: 0.12, a: 0.02, buf: this.pink });
+        break;
+      }
+      case 'swing':
+      case 'swingHeavy': {
+        const h = name === 'swingHeavy';
+        d = this.out(P, { gain: h ? 0.75 : 0.6, verb: 0.08, life: 1.5, occlude: false });
+        const dur = h ? 0.42 : 0.26;
+        // silbido del filo: ruido que barre hacia el agudo y cae
+        this.noise(d, t, dur, { f0: h ? 280 : 450, f1: h ? 1300 : 2400, q: 2.2, gain: 0.5, a: dur * 0.55, curve: 'lin' });
+        this.noise(d, t + dur * 0.35, dur * 0.6, { f0: h ? 1800 : 3200, f1: 900, q: 3, gain: 0.12, a: dur * 0.2 });
+        if (h) {
+          this.tone(d, t + 0.06, 0.34, { f0: 95, f1: 55, gain: 0.22, a: 0.08 });
+          this.voice(d, t, 0.26, { f0: 125, f1: 105, vowel: 'a', v1: 'o', gain: 0.1, vibD: 0, breath: 0.6, a: 0.02, rel: 0.6 });
+        }
+        this.jingle(d, t, 0.14, h ? 0.08 : 0.05);
+        break;
+      }
+      case 'hit':
+      case 'hitHeavy': {
+        const h = name === 'hitHeavy';
+        d = this.out(P, { gain: h ? 1 : 0.85, verb: 0.2, life: 1.5 });
+        this.tone(d, t, h ? 0.28 : 0.18, { f0: h ? 130 : 170, f1: 42, gain: 0.75 }); // cuerpo
+        this.noise(d, t, 0.09, { type: 'lowpass', f0: 3500, f1: 400, gain: 0.7, a: 0.001 }); // chasquido
+        this.noise(d, t + 0.01, h ? 0.3 : 0.2, { f0: 750, f1: 260, q: 3.5, gain: 0.4, buf: this.brown, rate: 3 }); // carne
+        this.noise(d, t + 0.03, 0.16, { f0: rnd(1200, 1700), f1: 500, q: 5, gain: 0.12, buf: this.brown, rate: 5 }); // salpicadura
+        if (h) {
+          this.debris(d, t + 0.01, 4, 0.06, { f0: 1800, f1: 3500, gain: 1.2 }); // hueso
+          this.tone(d, t, 0.4, { f0: 60, f1: 30, gain: 0.5 });
+        }
+        this.duck(h ? 0.2 : 0.1, 0.25);
+        break;
+      }
+      case 'clang': {
+        d = this.out(P, { gain: 0.75, verb: 0.35, life: 2.5 });
+        this.metal(d, t, rnd(480, 600), 0.22, 1.1);
+        this.metal(d, t + 0.002, rnd(1300, 1700), 0.08, 0.5);
+        this.tone(d, t, 0.1, { f0: 220, f1: 110, gain: 0.35 });
+        this.noise(d, t, 0.25, { f0: 5000, f1: 2500, q: 1, gain: 0.1, a: 0.001 }); // chispas
+        break;
+      }
+      case 'block': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2, occlude: false });
+        this.tone(d, t, 0.16, { f0: 200, f1: 85, gain: 0.6 }); // madera del escudo
+        this.noise(d, t, 0.12, { f0: 900, f1: 400, q: 2, gain: 0.4, buf: this.brown, rate: 4, a: 0.001 });
+        this.metal(d, t, rnd(360, 420), 0.13, 0.7); // tachón y cerco de hierro
+        this.jingle(d, t + 0.02, 0.2, 0.1);
+        this.duck(0.12, 0.2);
+        break;
+      }
+      case 'guardbreak': {
+        d = this.out(P, { gain: 1, verb: 0.4, life: 3, occlude: false });
+        this.metal(d, t, rnd(300, 340), 0.25, 1.4);
+        this.metal(d, t + 0.01, rnd(700, 800), 0.12, 0.9);
+        this.tone(d, t, 0.6, { f0: 95, f1: 38, gain: 0.8 });
+        this.noise(d, t + 0.03, 0.5, { type: 'lowpass', f0: 1100, f1: 200, gain: 0.5 });
+        this.noise(d, t + 0.08, 0.3, { f0: 1500, f1: 600, q: 3, gain: 0.2, buf: this.brown, rate: 4 }); // la madera cruje
+        this.jingle(d, t + 0.05, 0.4, 0.18);
+        this.duck(0.3, 0.5);
+        break;
+      }
+      case 'playerHurt': {
+        d = this.out(P, { gain: 0.85, verb: 0.15, life: 1.5, occlude: false });
+        this.voice(d, t + 0.02, 0.32, { f0: rnd(145, 165), f1: 100, vowel: pick(['a', 'u', 'o']), v1: 'u', gain: 0.22, vibD: 0, breath: 0.6, a: 0.01, rasp: 0.35, jit: 20 });
+        this.tone(d, t, 0.18, { f0: 140, f1: 48, gain: 0.7 });
+        this.noise(d, t, 0.08, { type: 'lowpass', f0: 2600, f1: 500, gain: 0.5, a: 0.001 });
+        this.noise(d, t + 0.01, 0.2, { f0: 700, f1: 280, q: 3, gain: 0.3, buf: this.brown, rate: 3 });
+        this.jingle(d, t + 0.02, 0.25, 0.12);
+        this.duck(0.25, 0.3);
+        break;
+      }
+      case 'roll': {
+        d = this.out(P, { gain: 0.6, verb: 0.08, life: 1.5, occlude: false });
+        this.noise(d, t, 0.34, { f0: 900, f1: 350, q: 0.9, gain: 0.3, a: 0.08, buf: this.pink }); // ropa
+        this.jingle(d, t + 0.05, 0.3, 0.12);
+        this.stepSound(d, t + 0.32, 1.3);
+        break;
+      }
+      case 'step': {
+        d = this.out(null, { gain: 0.34, verb: 0.08, life: 0.8 });
+        const k = (o.run ? 1.35 : 1) * clamp(o.w ?? 1, 0.4, 1);
+        this.stepSound(d, t, k, o.side);
+        if (Math.random() < (o.run ? 0.8 : 0.35)) this.jingle(d, t + 0.01, 0.1, 0.035 * k);
+        break;
+      }
+      case 'land': {
+        const v = clamp(((o.v ?? 7) - 5) / 8, 0, 1);
+        d = this.out(null, { gain: 0.5 + v * 0.4, verb: 0.12, life: 1.2 });
+        this.stepSound(d, t, 1.2 + v * 0.6);
+        this.stepSound(d, t + 0.05, 0.9, 1);
+        this.jingle(d, t, 0.3, 0.15);
+        if (v > 0.4) this.voice(d, t + 0.02, 0.2, { f0: 130, f1: 100, vowel: 'u', gain: 0.1, vibD: 0, breath: 0.7, a: 0.01 });
+        break;
+      }
+      case 'heal': {
+        d = this.out(P, { gain: 0.6, verb: 0.5, life: 4, occlude: false });
+        // tragos
+        for (let i = 0; i < 2; i++) this.tone(d, t + i * 0.22, 0.12, { f0: rnd(260, 320), f1: 150, gain: 0.25, a: 0.01 });
+        this.noise(d, t, 0.4, { f0: 500, q: 3, gain: 0.08, buf: this.brown, rate: 2, a: 0.05 });
+        // resplandor sagrado
+        [76, 83, 88, 95].forEach((m, i) => this.smp(d, t + 0.45 + i * 0.07, this.smallBell(), { gain: 0.07, rate: mtof(m) / mtof(76) }));
+        this.voice(d, t + 0.4, 1.6, { f0: mtof(74), vowel: 'a', gain: 0.04, vib: 5, vibD: 8, breath: 0.3, a: 0.4, type: 'triangle' });
+        this.noise(d, t + 0.4, 1.3, { f0: 3500, q: 2.5, gain: 0.05, a: 0.5 });
+        break;
+      }
+      case 'slam': {
+        d = this.out(P, { gain: 1, verb: 0.45, life: 3.5, ref: 6 });
+        this.tone(d, t, 0.8, { f0: 72, f1: 26, gain: 1 });
+        this.noise(d, t, 0.7, { type: 'lowpass', f0: 1200, f1: 120, gain: 0.8, a: 0.002 });
+        this.smp(d, t, this.lib.drum('taiko'), { gain: 0.6, rate: 0.6 });
+        this.debris(d, t + 0.05, 14, 0.8, { gain: 1.2 });
+        this.duck(0.4, 0.6);
+        break;
+      }
+      case 'bellToll': {
+        d = this.out(P, { gain: 0.9, verb: 0.8, life: 20, ref: 10, roll: 0.5, occlude: false });
+        this.smp(d, t, this.churchBell(), { gain: 0.45, rate: mtof(43) / mtof(45) });
+        this.smp(d, t, this.churchBell(), { gain: 0.18, rate: mtof(31) / mtof(45), lp: 700 }); // zumbido grave
+        this.duck(0.2, 2);
+        break;
+      }
+      case 'roar': {
+        d = this.out(P, { gain: 1, verb: 0.6, life: 4, ref: 9, roll: 0.8 });
+        this.voice(d, t, 2.1, { f0: 68, f1: 52, vowel: 'o', v1: 'a', gain: 0.5, vib: 7, vibD: 35, breath: 0.8, a: 0.12, rasp: 0.8, dist: 1, jit: 40 });
+        this.voice(d, t + 0.05, 2.0, { f0: 101, f1: 78, vowel: 'a', v1: 'u', gain: 0.32, vib: 5.5, vibD: 30, breath: 0, a: 0.2, rasp: 0.5, dist: 1 });
+        this.voice(d, t + 0.1, 1.8, { f0: 150, f1: 120, vowel: 'e', gain: 0.12, vib: 9, vibD: 50, breath: 0, a: 0.3, rasp: 0.6 });
+        this.noise(d, t, 2, { type: 'lowpass', f0: 400, gain: 0.4, a: 0.2, buf: this.brown, rate: 2, curve: 'lin' });
+        this.duck(0.35, 1.6);
+        break;
+      }
+      case 'wail': {
+        d = this.out(P, { gain: 0.8, verb: 0.8, life: 3 });
+        for (const [k, g] of [
+          [1, 0.2],
+          [1.012, 0.14],
+          [0.5, 0.08],
+        ])
+          this.voice(d, t, 1.4, { f0: 620 * k, f1: 470 * k, vowel: 'i', v1: 'a', gain: g, vib: 6, vibD: 60, breath: 0.25, type: 'triangle', a: 0.1, jit: 25 });
+        this.noise(d, t, 1.2, { f0: 2500, f1: 800, q: 3, gain: 0.06, a: 0.3 });
+        break;
+      }
+      case 'wailHit': {
+        d = this.out(P, { gain: 0.7, verb: 0.7, life: 2 });
+        this.noise(d, t, 0.45, { f0: 2400, f1: 450, q: 2, gain: 0.4, a: 0.002 });
+        this.voice(d, t, 0.35, { f0: 900, f1: 500, vowel: 'i', gain: 0.1, type: 'triangle', breath: 0.3, a: 0.005 });
+        break;
+      }
+      case 'fireWhoosh': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2.5 });
+        this.noise(d, t, 0.7, { f0: 220, f1: 1500, q: 0.8, gain: 0.6, a: 0.12, buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.1, 0.9, { type: 'lowpass', f0: 600, gain: 0.3, a: 0.1, buf: this.brown, rate: 1.5 });
+        this.smp(d, t + 0.05, this.lib.crackle(6), { gain: 0.5, offset: rnd(0, 4), dur: 0.9, hp: 400 });
+        break;
+      }
+      case 'explosion': {
+        d = this.out(P, { gain: 1, verb: 0.55, life: 4, ref: 7, roll: 0.9 });
+        this.tone(d, t, 0.9, { f0: 64, f1: 24, gain: 1 });
+        this.noise(d, t, 1.4, { type: 'lowpass', f0: 3000, f1: 140, gain: 0.95, a: 0.002 });
+        this.smp(d, t, this.lib.drum('taiko'), { gain: 0.7, rate: 0.5 });
+        this.smp(d, t + 0.1, this.lib.crackle(6), { gain: 0.6, offset: rnd(0, 3), dur: 1.6, hp: 300 });
+        this.debris(d, t + 0.15, 12, 1.2);
+        this.duck(0.5, 0.9);
+        break;
+      }
+      case 'burn': {
+        d = this.out(P, { gain: 0.5, verb: 0.1, life: 1.5, occlude: false });
+        this.noise(d, t, 0.35, { type: 'highpass', f0: 2800, gain: 0.25, a: 0.01 });
+        this.smp(d, t, this.lib.crackle(6), { gain: 0.35, offset: rnd(0, 5), dur: 0.4, hp: 1200 });
+        break;
+      }
+      case 'doorOpen': {
+        d = this.out(P, { gain: 0.75, verb: 0.45, life: 3.5 });
+        this.noise(d, t, 0.05, { f0: 2400, q: 6, gain: 0.25, a: 0.001 }); // pestillo
+        this.tone(d, t, 0.05, { type: 'square', f0: 700, f1: 380, gain: 0.05 });
+        const len = rnd(0.9, 1.3);
+        this.creak(d, t + 0.12, len, rnd(70, 110), 0.22);
+        this.tone(d, t + 0.2 + len, 0.25, { f0: 110, f1: 60, gain: 0.3 }); // la hoja llega al tope
+        this.noise(d, t + 0.2 + len, 0.15, { type: 'lowpass', f0: 800, gain: 0.2, buf: this.brown, rate: 3 });
+        break;
+      }
+      case 'gateOpen': {
+        d = this.out(P, { gain: 0.85, verb: 0.55, life: 5, ref: 5 });
+        this.smp(d, t, this.lib.chain(1.2), { gain: 0.45, rate: 0.8 });
+        this.smp(d, t + 0.9, this.lib.chain(1.2), { gain: 0.35, rate: 0.7 });
+        this.noise(d, t, 2.4, { type: 'lowpass', f0: 280, gain: 0.35, a: 0.2, buf: this.brown, rate: 2, curve: 'lin' }); // el torno
+        this.creak(d, t + 0.2, 1.9, 150, 0.2);
+        this.metal(d, t + 2.3, 190, 0.2, 1.2, { ratios: [1, 2.3, 3.9, 5.6] });
+        this.tone(d, t + 2.3, 0.4, { f0: 80, f1: 40, gain: 0.5 });
+        break;
+      }
+      case 'unlock': {
+        d = this.out(P, { gain: 0.7, verb: 0.3, life: 3.5 });
+        this.noise(d, t, 0.25, { f0: 3500, f1: 2500, q: 4, gain: 0.06, a: 0.05 }); // la llave entra
+        for (const dt of [0.3, 0.42]) {
+          this.noise(d, t + dt, 0.03, { f0: 3000, q: 8, gain: 0.35, a: 0.001 });
+          this.metal(d, t + dt, rnd(1800, 2200), 0.03, 0.2);
+        }
+        this.tone(d, t + 0.55, 0.12, { f0: 180, f1: 90, gain: 0.35 }); // el cerrojo corre
+        this.noise(d, t + 0.55, 0.1, { f0: 1500, q: 3, gain: 0.2 });
+        this.creak(d, t + 0.8, rnd(0.9, 1.2), rnd(70, 100), 0.2);
+        break;
+      }
+      case 'locked': {
+        d = this.out(P, { gain: 0.7, verb: 0.3, life: 2 });
+        for (let i = 0; i < 3; i++) {
+          const tt = t + i * 0.11 + rnd(0, 0.02);
+          this.noise(d, tt, 0.04, { f0: rnd(1400, 2200), q: 5, gain: 0.3, a: 0.001 });
+          this.tone(d, tt, 0.1, { f0: rnd(100, 130), f1: 70, gain: 0.3 });
+        }
+        break;
+      }
+      case 'bar': {
+        d = this.out(P, { gain: 0.75, verb: 0.4, life: 3.5 });
+        this.noise(d, t, 0.55, { f0: 520, f1: 260, q: 2, gain: 0.35, a: 0.05, buf: this.brown, rate: 4, curve: 'lin' }); // la tranca se desliza
+        this.creak(d, t + 0.05, 0.45, 60, 0.08);
+        this.tone(d, t + 0.62, 0.22, { f0: 140, f1: 60, gain: 0.55 }); // cae al suelo
+        this.tone(d, t + 0.82, 0.14, { f0: 170, f1: 80, gain: 0.25 });
+        this.creak(d, t + 1.1, 1.0, rnd(70, 100), 0.18);
+        break;
+      }
+      case 'boards': {
+        d = this.out(P, { gain: 0.95, verb: 0.35, life: 3.5 });
+        for (const dt of [0, 0.35, 0.62, 1.0]) {
+          this.creak(d, t + dt, 0.14, rnd(90, 160), 0.12); // la palanca fuerza
+          this.noise(d, t + dt + 0.12, 0.1, { f0: rnd(900, 1900), q: 3, gain: 0.55, a: 0.001 }); // la madera salta
+          this.tone(d, t + dt + 0.12, 0.14, { f0: rnd(170, 250), f1: 90, gain: 0.35 });
+          this.debris(d, t + dt + 0.14, 3, 0.1, { f0: 2000, f1: 4000, gain: 0.8 }); // astillas
+          this.tone(d, t + dt + 0.42, 0.18, { f0: rnd(120, 160), f1: 70, gain: 0.25 }); // el tablón cae
+        }
+        break;
+      }
+      case 'seal': {
+        d = this.out(P, { gain: 0.95, verb: 0.65, life: 6 });
+        this.metal(d, t, 900, 0.12, 1.2, { ratios: [1, 2.4, 4.1] }); // el anillo encaja
+        this.noise(d, t + 0.3, 3.2, { type: 'lowpass', f0: 240, gain: 0.7, a: 0.4, buf: this.brown, rate: 1.4, curve: 'lin' }); // la losa se hunde
+        this.tone(d, t + 0.3, 3.2, { f0: 40, gain: 0.45, a: 0.5, curve: 'lin' });
+        this.debris(d, t + 0.5, 16, 2.8, { f0: 500, f1: 1800 });
+        this.tone(d, t + 3.4, 0.6, { f0: 70, f1: 30, gain: 0.7 });
+        this.duck(0.3, 3);
+        break;
+      }
+      case 'pickup':
+      case 'item': {
+        d = this.out(null, { gain: 0.6, verb: 0.5, life: 3.5 });
+        this.noise(d, t, 0.18, { f0: 2500, f1: 5000, q: 1, gain: 0.07, a: 0.05 });
+        [76, 80, 83, 88].forEach((m, i) => this.smp(d, t + 0.05 + i * 0.075, this.lib.pluck(mtof(m), { bright: 0.8, dur: 2 }), { gain: 0.2 }));
+        this.smp(d, t + 0.35, this.smallBell(), { gain: 0.06, rate: mtof(88) / mtof(76) });
+        break;
+      }
+      case 'paper': {
+        d = this.out(null, { gain: 0.55, verb: 0.1, life: 1.5 });
+        for (let i = 0; i < 7; i++) this.noise(d, t + i * rnd(0.04, 0.08), rnd(0.04, 0.1), { f0: rnd(2200, 5500), q: rnd(0.8, 2), gain: rnd(0.1, 0.25), a: 0.004 });
+        this.noise(d, t, 0.45, { type: 'highpass', f0: 3000, gain: 0.04, a: 0.1 });
+        break;
+      }
+      case 'rest': {
+        d = this.out(null, { gain: 0.6, verb: 0.6, life: 4 });
+        this.noise(d, t, 0.9, { f0: 200, f1: 900, q: 0.8, gain: 0.35, a: 0.3, buf: this.brown, rate: 3 }); // prenden las velas
+        this.smp(d, t + 0.3, this.lib.crackle(6), { gain: 0.4, offset: rnd(0, 4), dur: 1.4, hp: 500 });
+        this.score.stinger('rest');
+        break;
+      }
+      case 'death': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 3, occlude: false });
+        this.voice(d, t, 0.9, { f0: 150, f1: 70, vowel: 'a', v1: 'u', gain: 0.2, vibD: 0, breath: 0.7, a: 0.02, rasp: 0.5, jit: 30 });
+        this.bodyFall(d, t + 0.9, 1.2, true);
+        this.score.stinger('death');
+        this.silenceUntil = Math.max(this.silenceUntil, this.t() + 8);
+        break;
+      }
+      case 'stinger':
+        if (this.t() > this.stingT) {
+          this.stingT = this.t() + 8;
+          this.score.stinger('alert');
+        }
+        break;
+      case 'phantom':
+        this.score.stinger('phantom');
+        break;
+      case 'discover':
+        this.score.stinger('discover');
+        break;
+      case 'fog': {
+        d = this.out(null, { gain: 0.6, verb: 0.9, life: 3 });
+        this.noise(d, t, 1.4, { f0: 300, f1: 2600, q: 0.8, gain: 0.3, a: 0.6, buf: this.pink });
+        this.score.stinger('fog');
+        break;
+      }
+      case 'victory':
+        this.score.stinger('victory');
+        this.silenceUntil = Math.max(this.silenceUntil, this.t() + 11);
+        break;
+    }
   }
 
   ui(kind) {
     if (!this.ok) return;
-    const t = this.t();
-    const d = this.out(null, { gain: 0.35, verb: 0.2, life: 1.2 });
-    if (kind === 'move') this.tone(d, t, 0.06, { f0: 1100, gain: 0.08 });
-    else if (kind === 'confirm') {
-      this.tone(d, t, 0.25, { f0: 660, gain: 0.1 });
-      this.tone(d, t + 0.07, 0.35, { f0: 990, gain: 0.08 });
-    } else if (kind === 'open') this.noise(d, t, 0.25, { f0: 600, f1: 1800, q: 1, gain: 0.12, a: 0.08 });
-    else if (kind === 'lock') {
-      // "clic" metálico seco al fijar
-      this.tone(d, t, 0.05, { type: 'square', f0: 1900, f1: 1500, gain: 0.05 });
-      this.tone(d, t + 0.03, 0.12, { f0: 2600, gain: 0.05 });
-    } else this.noise(d, t, 0.2, { f0: 1600, f1: 500, q: 1, gain: 0.1, a: 0.04 });
+    const t = this.t() + 0.003;
+    const d = this.out(null, { gain: 0.5, verb: 0, life: 2, bus: this.uiBus });
+    switch (kind) {
+      case 'move':
+        this.smp(d, t, this.lib.pluck(mtof(pick([86, 88])), { bright: 0.6, dur: 0.6 }), { gain: 0.08 });
+        this.noise(d, t, 0.03, { f0: 3000, q: 2, gain: 0.04, a: 0.001 });
+        break;
+      case 'confirm':
+        [64, 71, 76].forEach((m, i) => this.smp(d, t + i * 0.05, this.lib.pluck(mtof(m), { bright: 0.7, dur: 1.5 }), { gain: 0.14 }));
+        break;
+      case 'open':
+        this.noise(d, t, 0.3, { f0: 500, f1: 2000, q: 0.9, gain: 0.12, a: 0.1, buf: this.pink });
+        this.smp(d, t + 0.05, this.lib.pluck(mtof(52), { bright: 0.4, dur: 1.5 }), { gain: 0.12 });
+        break;
+      case 'close':
+        this.noise(d, t, 0.22, { f0: 1800, f1: 500, q: 0.9, gain: 0.1, a: 0.04, buf: this.pink });
+        this.tone(d, t + 0.12, 0.08, { f0: 160, f1: 90, gain: 0.12 });
+        break;
+      case 'lock':
+        this.tone(d, t, 0.04, { type: 'square', f0: 1900, f1: 1400, gain: 0.04 });
+        this.metal(d, t + 0.01, 2600, 0.03, 0.25);
+        break;
+      default:
+        this.noise(d, t, 0.2, { f0: 1600, f1: 500, q: 1, gain: 0.1, a: 0.04 });
+    }
   }
 
-  // ------------------------------------------------------------ voces de criaturas
+  // ------------------------------------------------------------ criaturas
   enemyVoice(e, kind) {
     if (!this.ok) return;
     const now = this.t();
     if (kind !== 'death' && e._vt && now - e._vt < 0.35) return;
-    e._vt = now;
-    const t = now;
     const v = e.T.voice;
-    const d = this.out(e.pos, { gain: 0.9, verb: 0.45, life: 4, ref: v === 'boss' || v === 'impaled' ? 7 : 3 });
-    const V = (o) => this.voice(d, t, o.dur ?? 0.6, o);
+    const big = v === 'boss' || v === 'impaled' || v === 'bell';
+    if (this.dist(e.pos) > (big ? 110 : 55)) return;
+    e._vt = now;
+    const t = now + 0.005;
+    const d = this.out(e.pos, { gain: 0.9, verb: 0.45, life: 5, ref: big ? 7 : 3 });
+    const V = (o) => this.voice(d, t + (o.dt || 0), o.dur ?? 0.6, o);
+    const pv = e._pv || (e._pv = rnd(0.9, 1.12)); // cada criatura con su timbre
     switch (v) {
       case 'penitent':
-        if (kind === 'alert') V({ dur: 0.9, f0: rnd(380, 460), f1: 700, vowel: 'i', gain: 0.22, vib: 9, vibD: 50, breath: 0.25, a: 0.03 });
-        else if (kind === 'attack') V({ dur: 0.35, f0: 220, f1: 330, vowel: 'e', gain: 0.18, vib: 0, breath: 0.3 });
-        else if (kind === 'hurt') V({ dur: 0.3, f0: 500, f1: 300, vowel: 'a', gain: 0.2, breath: 0.2 });
-        else if (kind === 'death') V({ dur: 1.2, f0: 300, f1: 90, vowel: 'o', gain: 0.22, vib: 12, vibD: 40, breath: 0.3 });
-        else if (kind === 'idle') this.whisper(d, t, 1.4, 0.12);
+        if (kind === 'alert') V({ dur: 1.0, f0: 360 * pv, f1: 640 * pv, vowel: 'a', v1: 'i', gain: 0.22, vib: 9, vibD: 45, breath: 0.5, a: 0.04, rasp: 0.35, jit: 30 });
+        else if (kind === 'attack') {
+          V({ dur: 0.32, f0: 210 * pv, f1: 280 * pv, vowel: 'e', gain: 0.18, vibD: 0, breath: 0.7, a: 0.01, rasp: 0.3 });
+          this.noise(d, t + 0.25, 0.03, { type: 'highpass', f0: 2500, gain: 0.3, a: 0.001 }); // restallido del flagelo
+        } else if (kind === 'hurt') V({ dur: 0.32, f0: 480 * pv, f1: 290 * pv, vowel: 'a', gain: 0.2, breath: 0.5, a: 0.01, rasp: 0.25, jit: 20 });
+        else if (kind === 'death') {
+          V({ dur: 1.3, f0: 300 * pv, f1: 85, vowel: 'o', v1: 'u', gain: 0.22, vib: 11, vibD: 40, breath: 0.6, rasp: 0.3 });
+          this.bodyFall(d, t + 0.9, 0.7);
+        } else if (kind === 'idle') {
+          if (Math.random() < 0.5) this.whisper(d, t, 1.4, 0.1);
+          else this.mutter(d, t, 1.6, 110 * pv);
+        }
         break;
       case 'soldier':
-        if (kind === 'alert') V({ dur: 0.9, f0: 95, f1: 80, vowel: 'o', gain: 0.35, vib: 6, vibD: 20, breath: 0.2 });
-        else if (kind === 'attack') {
-          V({ dur: 0.3, f0: 110, vowel: 'u', gain: 0.2, breath: 0.1 });
-          this.noise(d, t, 0.2, { f0: 2400, q: 4, gain: 0.15 });
-        } else if (kind === 'hurt') V({ dur: 0.3, f0: 120, f1: 90, vowel: 'u', gain: 0.25 });
-        else if (kind === 'death') {
-          V({ dur: 1.0, f0: 100, f1: 50, vowel: 'o', gain: 0.25, breath: 0.2 });
-          for (let i = 0; i < 6; i++) this.noise(d, t + 0.5 + rnd(0, 0.5), 0.05, { f0: rnd(1500, 3500), q: 6, gain: 0.2 });
-        }
+        if (kind === 'alert') {
+          V({ dur: 0.95, f0: 92 * pv, f1: 118 * pv, vowel: 'a', v1: 'o', gain: 0.32, vib: 6, vibD: 18, breath: 0.4, rasp: 0.45, dist: 1 });
+          this.jingle(d, t, 0.3, 0.15);
+        } else if (kind === 'attack') {
+          V({ dur: 0.3, f0: 110 * pv, f1: 95, vowel: 'u', v1: 'a', gain: 0.2, vibD: 0, breath: 0.6, a: 0.01, rasp: 0.3 });
+          this.jingle(d, t, 0.2, 0.12);
+        } else if (kind === 'hurt') {
+          V({ dur: 0.3, f0: 125 * pv, f1: 90, vowel: 'u', gain: 0.24, breath: 0.4, rasp: 0.3 });
+          this.metal(d, t, rnd(600, 750), 0.07, 0.5);
+        } else if (kind === 'death') {
+          V({ dur: 1.1, f0: 105 * pv, f1: 48, vowel: 'o', v1: 'u', gain: 0.25, breath: 0.5, rasp: 0.4 });
+          this.bodyFall(d, t + 0.8, 1, true);
+        } else if (kind === 'idle') this.mutter(d, t, 1.2, 90 * pv);
         break;
       case 'crawler':
         if (kind === 'alert' || kind === 'attack') {
-          V({ dur: kind === 'alert' ? 0.7 : 0.35, f0: rnd(900, 1100), f1: 1600, vowel: 'i', gain: 0.18, vib: 30, vibD: 100, breath: 0.3, type: 'square' });
-        } else if (kind === 'hurt') V({ dur: 0.25, f0: 1200, f1: 800, vowel: 'e', gain: 0.18, type: 'square' });
-        else if (kind === 'death') V({ dur: 0.8, f0: 900, f1: 200, vowel: 'e', gain: 0.18, vib: 20, vibD: 80, type: 'square' });
-        else if (kind === 'idle') for (let i = 0; i < 8; i++) this.noise(d, t + i * 0.06, 0.02, { f0: 3000, q: 10, gain: 0.2 });
+          V({ dur: kind === 'alert' ? 0.7 : 0.32, f0: rnd(900, 1100), f1: 1600, vowel: 'i', gain: 0.16, vib: 30, vibD: 100, breath: 0.6, type: 'square', rasp: 0.4 });
+          this.chitter(d, t, 0.4, 0.2);
+        } else if (kind === 'hurt') V({ dur: 0.25, f0: 1200, f1: 800, vowel: 'e', gain: 0.16, type: 'square', breath: 0.4 });
+        else if (kind === 'death') {
+          V({ dur: 0.8, f0: 900, f1: 180, vowel: 'e', v1: 'u', gain: 0.16, vib: 20, vibD: 80, type: 'square', breath: 0.5 });
+          this.noise(d, t + 0.1, 0.4, { f0: 600, f1: 250, q: 3, gain: 0.3, buf: this.brown, rate: 3 });
+        } else if (kind === 'idle') this.chitter(d, t, 0.6, 0.25);
         break;
       case 'hound':
         if (kind === 'alert') {
-          this.noise(d, t, 0.8, { type: 'lowpass', f0: 500, gain: 0.5, buf: this.brown, rate: 8 });
-          V({ dur: 0.8, f0: 130, f1: 110, vowel: 'o', gain: 0.25, vib: 28, vibD: 60, breath: 0.2 });
+          V({ dur: 0.9, f0: 95, f1: 120, vowel: 'o', gain: 0.22, vib: 26, vibD: 40, breath: 0.6, rasp: 0.9, dist: 1 }); // gruñido
+          V({ dt: 0.95, dur: 0.18, f0: 380, f1: 260, vowel: 'a', gain: 0.3, vibD: 0, breath: 0.4, a: 0.005, rasp: 0.5, dist: 1 }); // ladrido
         } else if (kind === 'attack') {
-          V({ dur: 0.18, f0: 300, f1: 200, vowel: 'a', gain: 0.3, breath: 0.2, a: 0.005 });
-          this.noise(d, t + 0.15, 0.05, { f0: 2500, q: 2, gain: 0.3 });
-        } else if (kind === 'hurt') V({ dur: 0.25, f0: 700, f1: 500, vowel: 'i', gain: 0.2 });
-        else if (kind === 'death') V({ dur: 0.9, f0: 600, f1: 250, vowel: 'i', gain: 0.2, vib: 8, vibD: 30 });
+          V({ dur: 0.2, f0: 320, f1: 210, vowel: 'a', gain: 0.3, breath: 0.5, a: 0.005, rasp: 0.6, dist: 1 });
+          this.noise(d, t + 0.16, 0.04, { f0: 2500, q: 2, gain: 0.35, a: 0.001 }); // dentellada
+          this.tone(d, t + 0.16, 0.05, { f0: 300, f1: 150, gain: 0.2 });
+        } else if (kind === 'hurt') V({ dur: 0.25, f0: 720, f1: 520, vowel: 'i', gain: 0.2, breath: 0.3, a: 0.005 });
+        else if (kind === 'death') V({ dur: 1.0, f0: 620, f1: 240, vowel: 'i', v1: 'u', gain: 0.18, vib: 8, vibD: 30, breath: 0.4 });
+        else if (kind === 'idle') {
+          // jadeo
+          this.noise(d, t, 0.5, { f0: 500, q: 1.5, gain: 0.05, buf: this.brown, rate: 5, a: 0.1 });
+          this.noise(d, t + 0.6, 0.45, { f0: 700, q: 1.5, gain: 0.05, buf: this.brown, rate: 5, a: 0.1 });
+        }
         break;
       case 'bell':
         if (kind === 'alert') {
-          this.bell(d, t, 130, 0.3, 3.5);
-          V({ dur: 1.2, f0: 70, f1: 60, vowel: 'o', gain: 0.3, vib: 5, vibD: 20, breath: 0.3 });
-        } else if (kind === 'attack') V({ dur: 0.8, f0: 65, vowel: 'u', gain: 0.25, breath: 0.4 });
-        else if (kind === 'hurt') this.bell(d, t, 130 * rnd(0.95, 1.05), 0.12, 1.5);
+          this.smp(d, t, this.churchBell(), { gain: 0.45, rate: mtof(48) / mtof(45) });
+          V({ dt: 0.15, dur: 1.3, f0: 68, f1: 58, vowel: 'o', gain: 0.3, vib: 5, vibD: 20, breath: 0.5, rasp: 0.5, dist: 1 });
+        } else if (kind === 'attack') V({ dur: 0.8, f0: 64, vowel: 'u', v1: 'a', gain: 0.25, breath: 0.7, rasp: 0.6 });
+        else if (kind === 'hurt') this.smp(d, t, this.churchBell(), { gain: 0.2, rate: (mtof(48) / mtof(45)) * rnd(0.97, 1.03) });
         else if (kind === 'death') {
-          this.bell(d, t, 110, 0.35, 5);
-          V({ dur: 2, f0: 70, f1: 35, vowel: 'o', gain: 0.3, breath: 0.3 });
+          this.smp(d, t, this.churchBell(), { gain: 0.55 });
+          V({ dur: 2.1, f0: 70, f1: 34, vowel: 'o', v1: 'u', gain: 0.3, breath: 0.6, rasp: 0.5 });
+          this.bodyFall(d, t + 1.3, 1.6, true);
         }
         break;
       case 'mourner':
-        if (kind === 'alert') V({ dur: 1.8, f0: 520, f1: 680, vowel: 'i', gain: 0.18, vib: 5, vibD: 40, breath: 0.2, type: 'triangle', a: 0.2 });
-        else if (kind === 'attack') V({ dur: 1.0, f0: 600, f1: 450, vowel: 'e', gain: 0.16, vib: 6, vibD: 50, breath: 0.2, type: 'triangle' });
-        else if (kind === 'hurt') V({ dur: 0.4, f0: 700, f1: 500, vowel: 'a', gain: 0.16, type: 'triangle' });
-        else if (kind === 'death') V({ dur: 2.2, f0: 650, f1: 200, vowel: 'i', gain: 0.18, vib: 4, vibD: 60, breath: 0.2, type: 'triangle' });
-        else if (kind === 'idle') for (let i = 0; i < 3; i++) this.voice(d, t + i * 0.5, 0.4, { f0: 480 - i * 20, f1: 430, vowel: 'a', gain: 0.08, type: 'triangle', breath: 0.15 });
+        if (kind === 'alert') V({ dur: 1.8, f0: 520, f1: 690, vowel: 'i', v1: 'a', gain: 0.17, vib: 5, vibD: 40, breath: 0.4, type: 'triangle', a: 0.2, jit: 20 });
+        else if (kind === 'attack') V({ dur: 1.0, f0: 610, f1: 440, vowel: 'e', gain: 0.16, vib: 6, vibD: 50, breath: 0.4, type: 'triangle' });
+        else if (kind === 'hurt') V({ dur: 0.4, f0: 700, f1: 500, vowel: 'a', gain: 0.16, type: 'triangle', breath: 0.3 });
+        else if (kind === 'death') V({ dur: 2.3, f0: 650, f1: 190, vowel: 'i', v1: 'o', gain: 0.18, vib: 4, vibD: 60, breath: 0.4, type: 'triangle' });
+        else if (kind === 'idle') for (let i = 0; i < 3; i++) V({ dt: i * 0.45, dur: 0.38, f0: 480 - i * 25, f1: 420 - i * 25, vowel: 'a', gain: 0.08, type: 'triangle', breath: 0.5, jit: 30 }); // sollozos
         break;
       case 'impaled':
-      case 'boss':
+      case 'boss': {
+        const lo = v === 'boss' ? 0.8 : 1;
         if (kind === 'alert') this.play('roar', e.pos);
-        else if (kind === 'attack') V({ dur: 0.7, f0: v === 'boss' ? 55 : 65, vowel: 'o', gain: 0.35, vib: 6, vibD: 25, breath: 0.35 });
-        else if (kind === 'hurt') V({ dur: 0.4, f0: 80, f1: 60, vowel: 'u', gain: 0.2, breath: 0.2 });
+        else if (kind === 'attack') V({ dur: 0.75, f0: 62 * lo, f1: 52 * lo, vowel: 'o', v1: 'a', gain: 0.35, vib: 6, vibD: 25, breath: 0.8, rasp: 0.7, dist: 1 });
+        else if (kind === 'hurt') V({ dur: 0.45, f0: 82 * lo, f1: 60 * lo, vowel: 'u', gain: 0.24, breath: 0.6, rasp: 0.5 });
         else if (kind === 'death') {
-          V({ dur: 3.5, f0: 90, f1: 30, vowel: 'o', gain: 0.45, vib: 4, vibD: 30, breath: 0.4, a: 0.2 });
-          this.bell(d, t + 0.5, 73, 0.3, 7);
+          V({ dur: 3.6, f0: 90 * lo, f1: 28, vowel: 'o', v1: 'u', gain: 0.45, vib: 4, vibD: 30, breath: 0.7, a: 0.2, rasp: 0.6, dist: 1 });
+          this.smp(d, t + 0.5, this.churchBell(), { gain: 0.4, rate: mtof(38) / mtof(45) });
+          this.bodyFall(d, t + 2.4, 2.2, v === 'impaled');
+          this.duck(0.4, 3);
         }
         break;
+      }
     }
   }
 
   enemyStep(e) {
     if (!this.ok) return;
-    const t = this.t();
     const v = e.T.voice;
-    const d = this.out(e.pos, { gain: 0.8, verb: 0.3, life: 3, ref: 4 });
+    const big = v === 'bell' || v === 'boss' || v === 'impaled';
+    if (this.dist(e.pos) > (big ? 45 : 22)) return;
+    const t = this.t() + 0.005;
+    const d = this.out(e.pos, { gain: big ? 0.9 : 0.6, verb: 0.25, life: 2.5, ref: big ? 5 : 2.5 });
     if (v === 'bell') {
-      this.bell(d, t, 175 * rnd(0.98, 1.02), 0.05, 1.8);
-      this.tone(d, t, 0.2, { f0: 60, f1: 35, gain: 0.5 });
-    } else {
-      this.tone(d, t, 0.3, { f0: 55, f1: 30, gain: 0.7 });
-      this.noise(d, t, 0.2, { type: 'lowpass', f0: 500, gain: 0.4 });
+      this.smp(d, t, this.smallBell(), { gain: 0.06, rate: rnd(0.45, 0.5) });
+      this.tone(d, t, 0.25, { f0: 62, f1: 34, gain: 0.35 });
+    } else if (big) {
+      this.tone(d, t, 0.4, { f0: 55, f1: 28, gain: 0.45 });
+      this.noise(d, t, 0.3, { type: 'lowpass', f0: 500, gain: 0.3, a: 0.003 });
+      this.debris(d, t + 0.03, 3, 0.25, { f0: 600, f1: 1500, gain: 0.7 });
+      if (v === 'impaled') this.jingle(d, t, 0.3, 0.15, 0.6);
+    } else if (v === 'soldier') {
+      this.tone(d, t, 0.12, { f0: 90, f1: 48, gain: 0.45 });
+      this.noise(d, t, 0.06, { f0: rnd(1500, 2200), q: 1.4, gain: 0.2, a: 0.002 });
+      this.jingle(d, t, 0.12, 0.1);
+    } else if (v === 'hound') this.noise(d, t, 0.05, { type: 'lowpass', f0: 700, gain: 0.25, a: 0.004, buf: this.brown, rate: 4 });
+    else if (v === 'crawler') this.chitter(d, t, 0.1, 0.12);
+    else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
+    else {
+      // pie descalzo que a veces se arrastra
+      this.noise(d, t, 0.06, { f0: rnd(700, 1000), q: 1.2, gain: 0.25, a: 0.002 });
+      this.tone(d, t, 0.08, { f0: 75, f1: 45, gain: 0.3 });
+      if (Math.random() < 0.3) this.noise(d, t + 0.05, 0.25, { f0: 1200, f1: 700, q: 0.8, gain: 0.05, a: 0.05 });
     }
   }
 
-  whisper(dest, t0, dur, gain) {
-    const n = Math.floor(dur / 0.12);
-    for (let i = 0; i < n; i++) {
-      const vw = ['a', 'e', 'i', 'o', 'u'][Math.floor(Math.random() * 5)];
-      const V = { a: 1100, e: 1800, i: 2300, o: 800, u: 700 }[vw];
-      this.noise(dest, t0 + i * 0.12 + rnd(0, 0.04), rnd(0.06, 0.14), { f0: V, q: 5, gain: gain * rnd(0.4, 1), a: 0.02 });
-      if (Math.random() < 0.3) this.noise(dest, t0 + i * 0.12, 0.05, { type: 'highpass', f0: 5000, gain: gain * 0.6 });
-    }
+  // ------------------------------------------------------------ ambiente continuo
+  _loop(buf, rate = 1, off = 0) {
+    const s = this.ctx.createBufferSource();
+    s.buffer = buf;
+    s.loop = true;
+    s.playbackRate.value = rate;
+    s.start(0, off % buf.duration);
+    return s;
   }
-
-  // ------------------------------------------------------------ ambiente
-  startAmbience() {
-    const ctx = this.ctx;
-    // viento
-    const w = ctx.createBufferSource();
-    w.buffer = this.pink;
-    w.loop = true;
-    const wf = ctx.createBiquadFilter();
-    wf.type = 'bandpass';
-    wf.frequency.value = 450;
-    wf.Q.value = 0.7;
-    this.windF = wf;
-    this.windG = ctx.createGain();
-    this.windG.gain.value = 0.0;
-    w.connect(wf).connect(this.windG).connect(this.amb);
-    w.start();
-    // zumbido grave
-    this.drone = ctx.createGain();
-    this.drone.gain.value = 0;
-    const dl = ctx.createBiquadFilter();
-    dl.type = 'lowpass';
-    dl.frequency.value = 220;
-    this.droneF = dl;
-    for (const [f, type] of [
-      [41.2, 'sawtooth'],
-      [41.5, 'sawtooth'],
-      [61.7, 'triangle'],
-      [82.4, 'sine'],
-    ]) {
-      const o = ctx.createOscillator();
-      o.type = type;
-      o.frequency.value = f;
-      const g = ctx.createGain();
-      g.gain.value = type === 'sawtooth' ? 0.12 : 0.18;
-      o.connect(g).connect(dl);
-      o.start();
-    }
-    dl.connect(this.drone).connect(this.amb);
-    // habitación / goteo
-    const rt = ctx.createBufferSource();
-    rt.buffer = this.brown;
-    rt.loop = true;
-    const rf = ctx.createBiquadFilter();
-    rf.type = 'lowpass';
-    rf.frequency.value = 160;
-    this.roomG = ctx.createGain();
-    this.roomG.gain.value = 0;
-    rt.connect(rf).connect(this.roomG).connect(this.amb);
-    rt.start();
-    // río
-    const rv = ctx.createBufferSource();
-    rv.buffer = this.pink;
-    rv.loop = true;
-    const rvf = ctx.createBiquadFilter();
-    rvf.type = 'bandpass';
-    rvf.frequency.value = 900;
-    rvf.Q.value = 0.5;
-    this.riverG = ctx.createGain();
-    this.riverG.gain.value = 0;
-    rv.connect(rvf).connect(this.riverG).connect(this.amb);
-    rv.start();
-    // crepitar del fuego (posicional, sigue al fuego más cercano)
-    this.fire = [];
-    for (let i = 0; i < 2; i++) {
-      const s = ctx.createBufferSource();
-      s.buffer = this.crackleBuf;
-      s.loop = true;
-      s.playbackRate.value = 0.9 + i * 0.2;
-      const p = ctx.createPanner();
-      p.panningModel = 'equalpower';
-      p.distanceModel = 'inverse';
-      p.refDistance = 2;
-      p.rolloffFactor = 1.4;
-      const g = ctx.createGain();
-      g.gain.value = 0;
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 180;
-      s.connect(hp).connect(g).connect(p).connect(this.amb);
-      s.start(0, i * 2);
-      this.fire.push({ p, g });
-    }
-    // zumbido de moscas (posicional: sigue al cadáver más cercano)
-    {
-      const bf = ctx.createBiquadFilter();
-      bf.type = 'bandpass';
-      bf.frequency.value = 1100;
-      bf.Q.value = 1.4;
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 6.1;
-      const lg = ctx.createGain();
-      lg.gain.value = 22;
-      lfo.connect(lg);
-      for (const f of [187, 211, 243]) {
-        const o = ctx.createOscillator();
-        o.type = 'sawtooth';
-        o.frequency.value = f;
-        lg.connect(o.frequency);
-        const g = ctx.createGain();
-        g.gain.value = 0.3;
-        o.connect(g).connect(bf);
-        o.start();
-      }
-      // vaivén de volumen: las moscas se acercan y se alejan
-      const wob = ctx.createGain();
-      wob.gain.value = 0.65;
-      const lfo2 = ctx.createOscillator();
-      lfo2.frequency.value = 0.37;
-      const lg2 = ctx.createGain();
-      lg2.gain.value = 0.35;
-      lfo2.connect(lg2).connect(wob.gain);
-      const p = ctx.createPanner();
-      p.panningModel = 'equalpower';
-      p.distanceModel = 'inverse';
-      p.refDistance = 0.8;
-      p.rolloffFactor = 1.6;
-      const g = ctx.createGain();
-      g.gain.value = 0;
-      bf.connect(wob).connect(g).connect(p).connect(this.amb);
-      lfo.start();
-      lfo2.start();
-      this.flyBuzz = { p, g };
-    }
-    // susurros / estática del miedo
-    const st = ctx.createBufferSource();
-    st.buffer = this.staticBuf;
-    st.loop = true;
-    const sf = ctx.createBiquadFilter();
-    sf.type = 'bandpass';
-    sf.frequency.value = 1800;
-    sf.Q.value = 0.9;
-    this.staticG = ctx.createGain();
-    this.staticG.gain.value = 0;
-    st.connect(sf).connect(this.staticG).connect(this.sfx);
-    st.start();
-    this.fear = 0;
-    this.heartT = 0;
+  _filt(type, f, q = 0.7) {
+    const b = this.ctx.createBiquadFilter();
+    b.type = type;
+    b.frequency.value = f;
+    b.Q.value = q;
+    return b;
   }
-
-  setZone(atmo) {
-    this.zone = atmo;
+  _gain(v = 0) {
+    const g = this.ctx.createGain();
+    g.gain.value = v;
+    return g;
   }
-
-  // Llamar cada fotograma
-  update(dt, game) {
-    if (!this.ok) return;
-    const ctx = this.ctx;
+  _osc(f, type = 'sine') {
+    const o = this.ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = f;
+    o.start();
+    return o;
+  }
+  // Capa perezosa: sus nodos solo existen mientras suena (ahorra CPU).
+  layer(make) {
+    return { make, on: null, offAt: 0 };
+  }
+  // Fija el volumen de una capa; la crea al subir y la destruye tras un rato
+  // en silencio. Devuelve la capa viva (o null).
+  layerGain(L, v, tc = 0.3) {
     const t = this.t();
-    const cam = game.camera;
-    const L = this.listener;
-    const f = new game.THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
-    if (L.positionX) {
-      L.positionX.setTargetAtTime(cam.position.x, t, 0.05);
-      L.positionY.setTargetAtTime(cam.position.y, t, 0.05);
-      L.positionZ.setTargetAtTime(cam.position.z, t, 0.05);
-      L.forwardX.setTargetAtTime(f.x, t, 0.05);
-      L.forwardY.setTargetAtTime(f.y, t, 0.05);
-      L.forwardZ.setTargetAtTime(f.z, t, 0.05);
-      L.upX.value = 0;
-      L.upY.value = 1;
-      L.upZ.value = 0;
-    } else if (L.setPosition) {
-      L.setPosition(cam.position.x, cam.position.y, cam.position.z);
-      L.setOrientation(f.x, f.y, f.z, 0, 1, 0);
+    if (v > 0.0005) {
+      if (!L.on) L.on = L.make();
+      L.offAt = 0;
+      this.setP(L.on.g.gain, v, tc);
+      return L.on;
     }
-    const z = this.zone;
-    const outdoor = z === 'city' || z === 'ramparts' || z === 'dawn';
-    const W = z === 'ramparts' ? 0.5 : z === 'city' ? 0.28 : z === 'dawn' ? 0.12 : z === 'cathedral' ? 0.06 : 0.02;
-    this.windG.gain.setTargetAtTime(W, t, 1.5);
-    this.windF.frequency.setTargetAtTime(350 + Math.sin(t * 0.13) * 180 + Math.sin(t * 0.41) * 80, t, 0.5);
-    const D = z === 'crypt' || z === 'tunnel' ? 0.3 : z === 'arena' ? 0.35 : z === 'cathedral' ? 0.25 : z === 'dawn' ? 0.0 : 0.12;
-    this.drone.gain.setTargetAtTime(D, t, 2);
-    this.droneF.frequency.setTargetAtTime(160 + Math.sin(t * 0.07) * 70, t, 1);
-    this.roomG.gain.setTargetAtTime(outdoor ? 0 : 0.35, t, 1);
-    this.riverG.gain.setTargetAtTime(z === 'dawn' ? 0.35 : 0, t, 2);
-    const V = { city: 0.3, ramparts: 0.2, interior: 0.18, prison: 0.3, chapel: 0.45, cathedral: 0.9, crypt: 0.65, arena: 0.8, tunnel: 0.55, dawn: 0.2 }[z] ?? 0.3;
-    this.verbOut.gain.setTargetAtTime(V, t, 0.8);
-
-    // fuegos cercanos
-    const fires = game.fx.fires.list;
-    const cp = game.player.pos;
-    const near = [];
-    for (const fr of fires) {
-      if (!fr.on || fr.s < 0.4) continue;
-      const d = (fr.x - cp.x) ** 2 + (fr.z - cp.z) ** 2 + (fr.y - cp.y) ** 2;
-      if (d < 400) near.push([d, fr]);
-    }
-    near.sort((a, b) => a[0] - b[0]);
-    this.fire.forEach((F, i) => {
-      const n = near[i];
-      if (n) {
-        F.p.positionX.setTargetAtTime(n[1].x, t, 0.1);
-        F.p.positionY.setTargetAtTime(n[1].y + 0.5, t, 0.1);
-        F.p.positionZ.setTargetAtTime(n[1].z, t, 0.1);
-        F.g.gain.setTargetAtTime(0.18 * Math.min(1.6, n[1].s), t, 0.3);
-      } else F.g.gain.setTargetAtTime(0, t, 0.3);
-    });
-
-    // moscas
-    const fl = game.fauna && game.state !== 'title' ? game.fauna.nearestFlies(cp, 7) : null;
-    if (fl) {
-      const B = this.flyBuzz.p;
-      B.positionX.setTargetAtTime(fl.x, t, 0.1);
-      B.positionY.setTargetAtTime(fl.y + 0.3, t, 0.1);
-      B.positionZ.setTargetAtTime(fl.z, t, 0.1);
-    }
-    this.flyBuzz.g.gain.setTargetAtTime(fl ? 0.05 : 0, t, 0.4);
-
-    // miedo: susurros y estática según criaturas cercanas (calculado por el juego)
-    this.fear = game.fear || 0;
-    this.staticG.gain.setTargetAtTime(this.fear * this.fear * 0.16, t, 0.2);
-    if (this.fear > 0.35 && Math.random() < dt * this.fear * 0.7) {
-      const d = this.out({ x: cp.x + rnd(-4, 4), y: cp.y + 1, z: cp.z + rnd(-4, 4) }, { gain: 0.5 * this.fear, verb: 0.6, life: 3 });
-      this.whisper(d, t, rnd(0.6, 1.4), 0.1);
-    }
-
-    // latido con poca vida
-    const hpk = game.player.hp / game.player.maxHp;
-    if (hpk < 0.32 && !game.player.dead) {
-      this.heartT -= dt;
-      if (this.heartT <= 0) {
-        this.heartT = 0.55 + hpk * 1.5;
-        const d = this.out(null, { gain: 0.9, verb: 0.05, life: 1 });
-        this.tone(d, t, 0.14, { f0: 58, f1: 38, gain: 0.8 });
-        this.tone(d, t + 0.2, 0.16, { f0: 52, f1: 34, gain: 0.6 });
-      }
-    }
-
-    // sucesos ambientales aleatorios
-    this.nextAmb -= dt;
-    if (this.nextAmb <= 0) {
-      this.nextAmb = rnd(9, 22);
-      const a = Math.random() * Math.PI * 2;
-      const far = { x: cp.x + Math.cos(a) * rnd(25, 45), y: cp.y + 5, z: cp.z + Math.sin(a) * rnd(25, 45) };
-      const r = Math.random();
-      if (outdoor && z !== 'dawn') {
-        if (r < 0.3) {
-          const d = this.out(far, { gain: 0.9, verb: 0.9, life: 9, ref: 20, roll: 0.4 });
-          this.bell(d, t, rnd(80, 120), 0.18, 6);
-        } else if (r < 0.55) {
-          const d = this.out(far, { gain: 0.6, verb: 0.9, life: 4, ref: 20, roll: 0.4 });
-          this.voice(d, t, 1.6, { f0: rnd(500, 700), f1: rnd(300, 400), vowel: 'a', gain: 0.1, vib: 7, vibD: 60, breath: 0.2 });
-        } else if (r < 0.75) {
-          const d = this.out(far, { gain: 0.6, verb: 0.8, life: 4, ref: 20, roll: 0.4 });
-          this.voice(d, t, 2.4, { f0: 300, f1: 420, vowel: 'u', gain: 0.1, vib: 4, vibD: 30, breath: 0.1, type: 'triangle' });
-        } else {
-          const d = this.out(far, { gain: 0.7, verb: 0.7, life: 3, ref: 15 });
-          this.creak(d, t, 1.4, rnd(60, 90));
+    if (L.on) {
+      this.setP(L.on.g.gain, 0, tc);
+      if (!L.offAt) L.offAt = t + Math.min(6, tc * 5) + 2;
+      else if (t > L.offAt) {
+        for (const n of L.on.src) {
+          try {
+            n.stop();
+          } catch (e) {}
         }
-      } else if (z === 'crypt' || z === 'tunnel' || z === 'arena') {
-        const d = this.out({ x: cp.x + rnd(-8, 8), y: cp.y + 3, z: cp.z + rnd(-8, 8) }, { gain: 0.6, verb: 0.9, life: 3 });
-        if (r < 0.6) for (let i = 0; i < rnd(1, 4); i++) this.tone(d, t + i * rnd(0.3, 0.9), 0.12, { f0: rnd(1200, 2400), f1: rnd(600, 900), gain: 0.12 });
-        else this.whisper(d, t, 1.6, 0.08);
-        this.nextAmb = rnd(4, 10);
-      } else if (z === 'dawn') {
-        const d = this.out(far, { gain: 0.5, verb: 0.3, life: 2 });
-        for (let i = 0; i < rnd(2, 5); i++) this.tone(d, t + i * 0.13, 0.1, { f0: rnd(2500, 4000), f1: rnd(3000, 5000), gain: 0.06 });
-        this.nextAmb = rnd(2, 6);
-      } else {
-        const d = this.out(far, { gain: 0.4, verb: 0.6, life: 3 });
-        this.creak(d, t, 1.0, rnd(60, 110));
+        try {
+          L.on.out.disconnect();
+        } catch (e) {}
+        L.on = null;
+        L.offAt = 0;
       }
     }
-    this.musicUpdate(dt);
+    return null;
+  }
+
+  startAmbience() {
+    const A = this;
+    this.L = {
+      // viento: dos capas estéreo que siguen las rachas
+      wind: this.layer(() => {
+        const g = A._gain(0);
+        const lp = A._filt('lowpass', 9000, 0.5);
+        g.connect(lp).connect(A.amb);
+        const src = [],
+          bp = [];
+        for (const [pan, off] of [
+          [-0.7, 0],
+          [0.7, 1.3],
+        ]) {
+          const f = A._filt('bandpass', 420, 0.8);
+          const p = A.ctx.createStereoPanner();
+          p.pan.value = pan;
+          const s = A._loop(A.pink, 1, off);
+          s.connect(f).connect(p).connect(g);
+          src.push(s);
+          bp.push(f);
+        }
+        return { g, out: lp, src, bp, lp };
+      }),
+      // silbido del viento en almenas y túneles
+      whistle: this.layer(() => {
+        const g = A._gain(0);
+        const bp = A._filt('bandpass', 900, 14);
+        const s = A._loop(A.white, 1, 0.5);
+        s.connect(bp).connect(g).connect(A.amb);
+        return { g, out: g, src: [s], bp };
+      }),
+      // rumor lejano de la ciudad en llamas
+      roar: this.layer(() => {
+        const g = A._gain(0);
+        const s = A._loop(A.brown, 0.7);
+        s.connect(A._filt('lowpass', 240, 0.6)).connect(g).connect(A.amb);
+        return { g, out: g, src: [s] };
+      }),
+      // tono de sala
+      room: this.layer(() => {
+        const g = A._gain(0);
+        const s = A._loop(A.brown, 0.5, 2);
+        s.connect(A._filt('lowpass', 130, 0.7)).connect(g).connect(A.amb);
+        return { g, out: g, src: [s] };
+      }),
+      // dron subterráneo
+      drone: this.layer(() => {
+        const g = A._gain(0);
+        const lp = A._filt('lowpass', 120, 1.2);
+        const src = [];
+        for (const f of [41.2, 41.6, 61.7]) {
+          const o = A._osc(f, 'triangle');
+          o.connect(A._gain(0.3)).connect(lp);
+          src.push(o);
+        }
+        const s = A._loop(A.brown, 0.4, 1);
+        s.connect(A._filt('bandpass', 70, 1.5)).connect(lp);
+        src.push(s);
+        lp.connect(g).connect(A.amb);
+        return { g, out: g, src };
+      }),
+      // río: corriente + borboteo agudo
+      river: this.layer(() => {
+        const g = A._gain(0);
+        const a = A._loop(A.pink, 1, 0.7);
+        a.connect(A._filt('bandpass', 700, 0.45)).connect(g);
+        const sp = A._gain(0.25);
+        const b = A._loop(A.white, 1, 1.1);
+        b.connect(A._filt('highpass', 2800, 0.7)).connect(sp).connect(g);
+        const am = A._osc(7.3);
+        am.connect(A._gain(0.18)).connect(sp.gain);
+        g.connect(A.amb);
+        return { g, out: g, src: [a, b, am] };
+      }),
+      // moscas sobre los cadáveres
+      flies: this.layer(() => {
+        const g = A._gain(0);
+        const bf = A._filt('bandpass', 1100, 1.4);
+        const lfo = A._osc(6.1);
+        const lg = A._gain(22);
+        lfo.connect(lg);
+        const src = [lfo];
+        for (const f of [187, 211, 243]) {
+          const o = A._osc(f, 'sawtooth');
+          lg.connect(o.frequency);
+          o.connect(A._gain(0.3)).connect(bf);
+          src.push(o);
+        }
+        const wob = A._gain(0.65);
+        const lfo2 = A._osc(0.37);
+        lfo2.connect(A._gain(0.35)).connect(wob.gain);
+        src.push(lfo2);
+        const p = A.panner(0.8, 1.6);
+        bf.connect(wob).connect(g).connect(p).connect(A.amb);
+        return { g, out: p, src, p };
+      }),
+      // zumbido de los altares: un acorde cálido que respira
+      altar: this.layer(() => {
+        const g = A._gain(0);
+        const lp = A._filt('lowpass', 1800, 0.5);
+        const src = [];
+        for (const [m, v] of [
+          [50, 0.3],
+          [57, 0.22],
+          [62, 0.18],
+          [66, 0.12],
+          [74, 0.06],
+        ]) {
+          const o = A._osc(mtof(m));
+          o.detune.value = rnd(-4, 4);
+          const og = A._gain(v);
+          const l = A._osc(rnd(0.07, 0.2));
+          l.connect(A._gain(v * 0.6)).connect(og.gain);
+          o.connect(og).connect(lp);
+          src.push(o, l);
+        }
+        const p = A.panner(1.5, 1.4);
+        lp.connect(g).connect(p).connect(A.amb);
+        return { g, out: p, src, p };
+      }),
+      // estática del miedo
+      fear: this.layer(() => {
+        const g = A._gain(0);
+        const s = A._loop(A.lib.static(4));
+        s.connect(A._filt('bandpass', 1800, 0.9)).connect(g).connect(A.sfx);
+        return { g, out: g, src: [s] };
+      }),
+    };
+    // fuegos cercanos: crepitar + rugido de la llama, posicionales
+    this.fireSlots = [0, 1, 2].map((i) => ({
+      fire: null,
+      L: this.layer(() => {
+        const g = A._gain(0);
+        const c = A._loop(A.lib.crackle(6), 0.9 + i * 0.12, i * 1.7);
+        c.connect(A._filt('highpass', 200)).connect(g);
+        const r = A._loop(A.brown, 1.2, i);
+        r.connect(A._filt('lowpass', 380, 0.8)).connect(A._gain(0.5)).connect(g);
+        const p = A.panner(2, 1.3);
+        g.connect(p).connect(A.amb);
+        return { g, out: p, src: [c, r], p };
+      }),
+    }));
+  }
+
+  // Sucesos ambientales de cada zona; devuelve la espera hasta el siguiente.
+  ambEvent(z, cp, t) {
+    const far = (r0 = 25, r1 = 45, h = 5) => {
+      const a = Math.random() * Math.PI * 2,
+        r = rnd(r0, r1);
+      return { x: cp.x + Math.cos(a) * r, y: cp.y + h, z: cp.z + Math.sin(a) * r };
+    };
+    const near = (r = 8, h = 2) => ({ x: cp.x + rnd(-r, r), y: cp.y + h, z: cp.z + rnd(-r, r) });
+    const O = (pos, gain, extra = {}) => this.out(pos, { gain, verb: 0.9, life: 8, ref: 18, roll: 0.35, occlude: false, ...extra });
+    const r = Math.random();
+    if (z === 'city' || z === 'ramparts') {
+      if (r < 0.13) {
+        const d = O(far(40, 70, 15), 0.8, { life: 18 });
+        this.smp(d, t, this.churchBell(), { gain: 0.3, rate: mtof(pick([40, 43, 45])) / mtof(45), lp: 1800 });
+      } else if (r < 0.26) {
+        const d = O(far(), 0.6); // grito lejano
+        this.voice(d, t, rnd(1.2, 2), { f0: rnd(480, 700), f1: rnd(280, 380), vowel: 'a', v1: pick(['o', 'i']), gain: 0.12, vib: 7, vibD: 60, breath: 0.5, jit: 30 });
+      } else if (r < 0.36) {
+        const d = O(far(), 0.55); // perro que aúlla
+        this.voice(d, t, 2.6, { f0: 280, f1: 430, vowel: 'u', v1: 'o', gain: 0.11, vib: 4, vibD: 30, breath: 0.3, type: 'triangle' });
+        this.voice(d, t + 2.4, 1.4, { f0: 430, f1: 300, vowel: 'o', gain: 0.08, vib: 4, vibD: 30, breath: 0.3, type: 'triangle' });
+      } else if (r < 0.48) this.play('crow', far(15, 30, 6));
+      else if (r < 0.57) {
+        const d = O(far(20, 40, 3), 0.8); // se desploma una viga
+        this.tone(d, t, 0.8, { f0: 60, f1: 30, gain: 0.6 });
+        this.noise(d, t, 1.2, { type: 'lowpass', f0: 900, f1: 150, gain: 0.5, a: 0.01, buf: this.brown, rate: 2 });
+        this.debris(d, t + 0.1, 12, 1.5, { f0: 500, f1: 1600 });
+      } else if (r < 0.66) {
+        const d = O(far(15, 30, 4), 0.6, { roll: 0.6 });
+        this.creak(d, t, rnd(1, 2), rnd(55, 90), 0.2);
+      } else if (r < 0.75) this.procession(O(far(30, 50, 3), 0.5), t);
+      else if (r < 0.84 && z === 'ramparts') this.warHorn(O(far(60, 90, 5), 0.8), t);
+      else if (r < 0.92) {
+        const d = O(far(20, 40, 3), 0.5);
+        this.smp(d, t, this.lib.chain(1.2), { gain: 0.3, rate: rnd(0.6, 0.9) });
+      } else {
+        const d = O(far(25, 45, 2), 0.5); // espadas a lo lejos
+        for (let i = 0; i < 3; i++) this.metal(d, t + i * rnd(0.25, 0.5), rnd(450, 600), 0.06, 0.6);
+      }
+      return rnd(7, 18);
+    }
+    if (z === 'interior' || z === 'prison' || z === 'chapel') {
+      const I = (pos, g, life = 4) => O(pos, g, { ref: 3, roll: 1, verb: 0.5, life });
+      if (r < 0.3) this.creak(I(near(6, 2.5), 0.5), t, rnd(0.5, 1.4), rnd(60, 120), 0.15);
+      else if (r < 0.46 && z !== 'chapel') {
+        const d = I(near(5, 0), 0.4, 2); // ratas
+        const n = 2 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < n; i++) this.tone(d, t + i * rnd(0.08, 0.2), 0.07, { f0: rnd(3200, 4600), f1: rnd(2600, 5200), gain: 0.05, type: 'triangle' });
+        this.noise(d, t, 0.6, { f0: 3000, q: 1, gain: 0.02, a: 0.1 });
+      } else if (r < 0.62) this.smp(I(near(6, 2), 0.5, 3), t, this.lib.drip(rnd(900, 1800)), { gain: 0.25 });
+      else if (r < 0.76 && z === 'prison') this.smp(I(near(10, 1), 0.5), t, this.lib.chain(1.2), { gain: 0.35, rate: rnd(0.7, 1) });
+      else if (r < 0.88) {
+        const d = I(near(5, 3), 0.35, 3); // cae polvo
+        this.noise(d, t, rnd(0.6, 1.4), { type: 'highpass', f0: 2500, gain: 0.03, a: 0.2, buf: this.pink });
+        this.debris(d, t, 6, 0.8, { f0: 3000, f1: 6000, gain: 0.3 });
+      } else if (z === 'chapel') {
+        const d = I(near(8, 4), 0.3, 3); // paloma en el tejado
+        this.voice(d, t, 0.5, { f0: 330, f1: 290, vowel: 'u', gain: 0.05, vibD: 0, breath: 0.3, type: 'sine' });
+        this.voice(d, t + 0.6, 0.7, { f0: 320, f1: 270, vowel: 'u', gain: 0.05, vibD: 0, breath: 0.3, type: 'sine' });
+      } else if (z === 'prison') {
+        const d = O(far(10, 20, 1), 0.5, { ref: 3, roll: 1 }); // lamento en otra celda
+        this.voice(d, t, 1.8, { f0: 150, f1: 120, vowel: 'o', v1: 'u', gain: 0.07, vib: 5, vibD: 20, breath: 0.6, jit: 20 });
+      }
+      return rnd(6, 14);
+    }
+    if (z === 'cathedral') {
+      if (r < 0.22) {
+        const d = O(far(10, 25, 0), 0.4, { ref: 4 }); // pasos que no son tuyos
+        for (let i = 0; i < 6; i++) this.stepSound(d, t + i * 0.55, 0.8, i % 2, 'stone');
+      } else if (r < 0.42) this.whisper(O(near(10, 3), 0.5, { ref: 3, roll: 1 }), t, rnd(1, 2), 0.07);
+      else if (r < 0.58) {
+        const d = O(far(8, 20, 12), 0.5, { ref: 4 }); // aleteo en la bóveda
+        for (let i = 0; i < 8; i++) this.noise(d, t + i * 0.09, 0.07, { type: 'lowpass', f0: 1000, gain: 0.15, a: 0.01, buf: this.pink });
+      } else if (r < 0.74) {
+        const d = O(far(10, 25, 0), 0.6, { ref: 4 }); // piedra que se arrastra
+        this.noise(d, t, rnd(1.5, 2.5), { f0: 300, f1: 180, q: 2, gain: 0.25, a: 0.3, buf: this.brown, rate: 3, curve: 'lin' });
+      } else if (r < 0.9) {
+        const d = O(far(10, 20, 8), 0.4, { ref: 5 }); // una nota de órgano, sola
+        this.tone(d, t, 3.5, { type: 'triangle', f0: mtof(pick([38, 43, 45])), gain: 0.08, a: 0.6, curve: 'lin' });
+        this.tone(d, t, 3.5, { type: 'sine', f0: mtof(pick([50, 55, 57])), gain: 0.04, a: 0.8, curve: 'lin' });
+      } else {
+        const d = O(far(30, 50, 20), 0.7, { life: 18 });
+        this.smp(d, t, this.churchBell(), { gain: 0.25, rate: mtof(38) / mtof(45), lp: 1500 });
+      }
+      return rnd(6, 14);
+    }
+    if (z === 'crypt' || z === 'tunnel' || z === 'arena') {
+      if (r < 0.4) {
+        const d = O(near(9, 3), 0.55, { ref: 3, roll: 1, verb: 1, life: 4 });
+        const n = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) this.smp(d, t + i * rnd(0.3, 0.9), this.lib.drip(rnd(800, 1900)), { gain: 0.3 });
+      } else if (r < 0.55) {
+        const d = O(near(10, 1), 0.5, { ref: 3, roll: 1 }); // huesos que ruedan
+        for (let i = 0; i < 5; i++) this.tone(d, t + i * rnd(0.05, 0.14), 0.05, { f0: rnd(600, 1100), f1: 400, gain: 0.1, type: 'triangle' });
+      } else if (r < 0.7) this.whisper(O(near(12, 2), 0.5, { ref: 3, roll: 1 }), t, rnd(1.2, 2.4), 0.08);
+      else if (r < 0.85) {
+        const d = O(far(12, 25, 0), 0.6, { ref: 4 });
+        this.noise(d, t, rnd(1.2, 2.2), { f0: 260, f1: 160, q: 2, gain: 0.25, a: 0.2, buf: this.brown, rate: 3, curve: 'lin' });
+      } else {
+        const d = O(far(15, 30, 0), 0.7, { ref: 5 }); // golpe sordo en la roca
+        this.tone(d, t, 0.6, { f0: 55, f1: 30, gain: 0.5 });
+        this.debris(d, t + 0.1, 5, 0.8, { f0: 400, f1: 1200 });
+      }
+      return rnd(3, 8);
+    }
+    if (z === 'dawn') {
+      this.birdsong(O(far(8, 25, rnd(3, 8)), 0.4, { verb: 0.3, ref: 6, life: 3 }), t);
+      return rnd(1.2, 4);
+    }
+    return rnd(8, 16);
+  }
+  procession(d, t) {
+    const root = pick([48, 50, 52]);
+    let tt = t;
+    for (const s of [0, 2, 3, 2, 0, -2, 0]) {
+      const l = rnd(0.5, 0.9);
+      for (const k of [0, -12]) this.voice(d, tt, l * 1.05, { f0: mtof(root + s + k), vowel: pick(['a', 'o']), gain: 0.05, vib: 4.5, vibD: 8, breath: 0.2, a: 0.08 });
+      tt += l;
+    }
+  }
+  warHorn(d, t) {
+    const f = mtof(pick([43, 45]));
+    this.voice(d, t, 1.8, { f0: f * 0.97, f1: f, vowel: 'o', gain: 0.12, vib: 4, vibD: 8, breath: 0.3, a: 0.2 });
+    this.voice(d, t + 1.9, 2.6, { f0: f * 1.5, f1: f * 1.48, vowel: 'o', gain: 0.1, vib: 4, vibD: 8, breath: 0.3, a: 0.2 });
+  }
+  birdsong(d, t) {
+    const kind = Math.floor(Math.random() * 3);
+    const base = rnd(2600, 4200);
+    const n = 3 + Math.floor(Math.random() * 6);
+    let tt = t;
+    for (let i = 0; i < n; i++) {
+      const l = kind === 0 ? rnd(0.05, 0.09) : kind === 1 ? rnd(0.12, 0.2) : 0.04;
+      const f0 = base * (kind === 1 ? rnd(0.9, 1.2) : rnd(0.95, 1.05));
+      const f1 = kind === 2 ? f0 * 1.5 : f0 * rnd(0.7, 1.4);
+      this.tone(d, tt, l, { f0, f1, gain: 0.05, a: 0.005 });
+      tt += l + (kind === 2 ? 0.02 : rnd(0.03, 0.12));
+    }
   }
 
   // ------------------------------------------------------------ música
   music(name) {
-    if (!this.ok || this.musicName === name) return;
-    this.musicName = name;
-    this.mStep = 0;
-    this.mNext = this.t() + 0.1;
-    if (this.mBus) {
-      const old = this.mBus;
-      old.gain.setTargetAtTime(0, this.t(), 0.6);
-      setTimeout(() => old.disconnect(), 3000);
-    }
-    this.mBus = this.ctx.createGain();
-    this.mBus.gain.value = 0;
-    this.mBus.gain.setTargetAtTime(1, this.t(), 0.8);
-    this.mBus.connect(this.mus);
-    const send = this.ctx.createGain();
-    send.gain.value = 0.6;
-    this.mBus.connect(send).connect(this.verbIn);
-    if (name === 'title' || name === 'ending') {
-      // pedal de órgano sostenido
-      const g = this.ctx.createGain();
-      g.gain.value = 0;
-      g.gain.setTargetAtTime(name === 'ending' ? 0.08 : 0.1, this.t(), 2);
-      const lp = this.ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 500;
-      const base = name === 'ending' ? 73.4 : 82.4;
-      for (const r of [1, 1.5, 2, 2.004]) {
-        const o = this.ctx.createOscillator();
-        o.type = 'sawtooth';
-        o.frequency.value = base * r;
-        o.connect(lp);
-        o.start();
-        this._stopLater(o, name);
-      }
-      lp.connect(g).connect(this.mBus);
-    }
-  }
-  _stopLater(o, name) {
-    const check = () => {
-      if (this.musicName !== name) {
-        try {
-          o.stop(this.t() + 2);
-        } catch (e) {}
-      } else setTimeout(check, 500);
-    };
-    setTimeout(check, 500);
-  }
-  musicUpdate() {
-    if (!this.mBus || !this.musicName) return;
-    const ctx = this.ctx;
-    const ahead = this.t() + 0.25;
-    while (this.mNext < ahead) {
-      const t = this.mNext;
-      const n = this.musicName;
-      const s = this.mStep++;
-      if (n === 'title') {
-        // canto llano en modo frigio (mi)
-        const mel = [0, 1, 3, 1, 0, -2, 0, 3, 5, 3, 1, 0, 1, -2, 0, 0];
-        const lens = [2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 2, 3];
-        const i = s % mel.length;
-        const f = 164.8 * Math.pow(2, mel[i] / 12);
-        const dur = lens[i] * 0.9;
-        for (const [k, dt] of [
-          [1, 0],
-          [2, 0.02],
-          [0.5, 0.01],
-        ])
-          this.voice(this.mBus, t + dt, dur * 1.05, { f0: f * k, vowel: s % 8 < 4 ? 'a' : 'o', gain: k === 1 ? 0.05 : 0.025, vib: 4.5, vibD: 9, breath: 0.012, a: 0.25 });
-        if (i === 0 && s % 32 === 0) this.bell(this.mBus, t, 82.4, 0.12, 7);
-        this.mNext += dur;
-      } else if (n === 'boss' || n === 'boss2') {
-        const bpm = n === 'boss2' ? 150 : 132;
-        const beat = 60 / bpm / 2;
-        const bar = s % 12;
-        // tambores graves
-        if ([0, 3, 6, 8, 9].includes(bar)) {
-          this.tone(this.mBus, t, 0.35, { f0: bar === 0 ? 110 : 90, f1: 42, gain: bar === 0 ? 0.5 : 0.32 });
-          this.noise(this.mBus, t, 0.12, { type: 'lowpass', f0: 600, gain: 0.2 });
-        }
-        if (bar === 4 || bar === 10) this.noise(this.mBus, t, 0.18, { type: 'bandpass', f0: 1800, q: 1, gain: 0.12 });
-        // coro disonante cada 2 compases
-        if (s % 24 === 0) {
-          const chords = [
-            [110, 130.8, 155.6],
-            [103.8, 123.5, 146.8],
-            [98, 116.5, 146.8],
-            [92.5, 110, 138.6],
-          ];
-          const ch = chords[Math.floor(s / 24) % chords.length];
-          for (const f of ch) {
-            this.voice(this.mBus, t, beat * 23, { f0: f * 2, vowel: 'a', gain: 0.045, vib: 5, vibD: 12, breath: 0.01, a: 0.4 });
-            this.voice(this.mBus, t, beat * 23, { f0: f, vowel: 'o', gain: 0.05, vib: 4, vibD: 10, breath: 0.01, a: 0.3 });
-          }
-          if (Math.floor(s / 24) % 2 === 0) this.bell(this.mBus, t, 55, 0.1, 5);
-        }
-        // metal agudo en fase 2
-        if (n === 'boss2' && s % 3 === 0) this.tone(this.mBus, t, beat * 2.5, { type: 'sawtooth', f0: 880 * (s % 24 < 12 ? 1 : 0.944), gain: 0.012 });
-        this.mNext += beat;
-      } else if (n === 'ending') {
-        const prog = [
-          [146.8, 220, 293.7, 369.9],
-          [123.5, 185, 246.9, 293.7],
-          [98, 146.8, 196, 246.9],
-          [110, 164.8, 220, 277.2],
-        ];
-        const ch = prog[s % prog.length];
-        ch.forEach((f, i) => this.voice(this.mBus, t + i * 0.1, 6.2, { f0: f, vowel: i % 2 ? 'o' : 'a', gain: 0.035, vib: 4, vibD: 6, breath: 0.008, a: 1.6 }));
-        if (s % 2 === 0) this.bell(this.mBus, t + 1, ch[2] * 2, 0.06, 6);
-        this.mNext += 6;
-      } else {
-        this.mNext += 1;
-      }
-    }
+    if (!this.ok) return;
+    this.override = name;
+    this.score.setTheme(name, name.startsWith('boss') ? 0.8 : 2.5);
   }
   stopMusic() {
     if (!this.ok) return;
-    this.musicName = null;
-    if (this.mBus) {
-      const old = this.mBus;
-      old.gain.setTargetAtTime(0, this.t(), 1.2);
-      setTimeout(() => old.disconnect(), 5000);
-      this.mBus = null;
+    this.override = null;
+    this.silenceUntil = Math.max(this.silenceUntil, this.t() + 4);
+    this.score.setTheme(null, 1.6);
+  }
+
+  // ------------------------------------------------------------ cada fotograma
+  update(dt, game) {
+    if (!this.ok) return;
+    this.game = game;
+    const t = this.t();
+    // oyente = cámara (solo se reprograma si se ha movido o girado)
+    const cam = game.camera;
+    const L = this.ctx.listener;
+    const f = (this._fwd = this._fwd || new game.THREE.Vector3()).set(0, 0, -1).applyQuaternion(cam.quaternion);
+    const cp0 = cam.position;
+    const lk = this._lk || (this._lk = [1e9, 0, 0, 0, 0, 0]);
+    if (Math.abs(lk[0] - cp0.x) + Math.abs(lk[1] - cp0.y) + Math.abs(lk[2] - cp0.z) > 0.01 || Math.abs(lk[3] - f.x) + Math.abs(lk[4] - f.y) + Math.abs(lk[5] - f.z) > 0.002) {
+      lk[0] = cp0.x;
+      lk[1] = cp0.y;
+      lk[2] = cp0.z;
+      lk[3] = f.x;
+      lk[4] = f.y;
+      lk[5] = f.z;
+      if (L.positionX) {
+        L.positionX.setTargetAtTime(cp0.x, t, 0.05);
+        L.positionY.setTargetAtTime(cp0.y, t, 0.05);
+        L.positionZ.setTargetAtTime(cp0.z, t, 0.05);
+        L.forwardX.setTargetAtTime(f.x, t, 0.05);
+        L.forwardY.setTargetAtTime(f.y, t, 0.05);
+        L.forwardZ.setTargetAtTime(f.z, t, 0.05);
+        if (!this._upSet) {
+          this._upSet = true;
+          L.upX.value = 0;
+          L.upY.value = 1;
+          L.upZ.value = 0;
+        }
+      } else if (L.setPosition) {
+        L.setPosition(cp0.x, cp0.y, cp0.z);
+        L.setOrientation(f.x, f.y, f.z, 0, 1, 0);
+      }
     }
+    this.lis.x = cam.position.x;
+    this.lis.y = cam.position.y;
+    this.lis.z = cam.position.z;
+
+    const p = game.player;
+    const cp = p.pos;
+    const z = this.zone;
+    const play = game.state === 'play';
+    const paused = game.state === 'paused';
+    // pausa: el mundo se aleja y la música suena tras una puerta
+    if (paused !== !!this._paused) {
+      this._paused = paused;
+      this.worldBus.gain.setTargetAtTime(paused ? 0.25 : 1, t, 0.15);
+      this.musLP.frequency.setTargetAtTime(paused ? 900 : 20000, t, 0.2);
+    }
+
+    // rachas de viento: paseo aleatorio suavizado
+    this.gustT -= dt;
+    if (this.gustT <= 0) {
+      this.gustT = rnd(1.2, 4);
+      this.gustTo = Math.random() < 0.25 ? rnd(0.8, 1) : rnd(0.15, 0.6);
+    }
+    this.gust += (this.gustTo - this.gust) * Math.min(1, dt * 0.8);
+
+    this._slow -= dt;
+    if (this._slow <= 0) {
+      this._slow = 0.1;
+      const bed = ZONE_BED[z] || ZONE_BED.city;
+      const w = this.layerGain(this.L.wind, bed[0] * (0.45 + this.gust * 0.9), 0.3);
+      if (w) {
+        const wf = 260 + this.gust * 520;
+        this.setP(w.bp[0].frequency, wf, 0.3);
+        this.setP(w.bp[1].frequency, wf * 1.23, 0.3);
+        this.setP(w.lp.frequency, OUTDOOR[z] ? 9000 : 450, 0.5);
+      }
+      const wh = this.layerGain(this.L.whistle, z === 'ramparts' || z === 'tunnel' ? Math.max(0, this.gust - 0.5) * 0.08 : 0, 0.4);
+      if (wh) this.setP(wh.bp.frequency, 700 + this.gust * 600, 0.5);
+      this.layerGain(this.L.roar, bed[1], 1.5);
+      this.layerGain(this.L.room, bed[2], 1.5);
+      this.layerGain(this.L.drone, bed[3], 2);
+      this.layerGain(this.L.river, bed[4], 2);
+
+      // fuegos: cada hueco sigue a uno de los tres más cercanos sin saltar
+      const fires = game.fx && game.fx.fires ? game.fx.fires.list : [];
+      const near = [];
+      for (const fr of fires) {
+        if (!fr.on || fr.s < 0.3) continue;
+        const d2 = (fr.x - cp.x) ** 2 + (fr.z - cp.z) ** 2 + (fr.y - cp.y) ** 2;
+        if (d2 < 500) near.push([d2, fr]);
+      }
+      near.sort((a, b) => a[0] - b[0]);
+      const top = near.slice(0, 3).map((n) => n[1]);
+      const free = top.filter((fr) => !this.fireSlots.some((s) => s.fire === fr));
+      for (const s of this.fireSlots) {
+        if (!s.fire || !top.includes(s.fire)) {
+          s.fire = free.shift() || null;
+          s.moved = true;
+        }
+        const on = this.layerGain(s.L, s.fire ? 0.2 * Math.min(1.6, s.fire.s) : 0, 0.3);
+        if (on && s.fire && (s.moved || !on.placed)) {
+          this.setPos(on.p, s.fire.x, s.fire.y + 0.6, s.fire.z, false);
+          on.placed = true;
+          s.moved = false;
+        }
+      }
+
+      // moscas
+      const fl = game.fauna && game.state !== 'title' ? game.fauna.nearestFlies(cp, 7) : null;
+      const fb = this.layerGain(this.L.flies, fl ? 0.05 : 0, 0.4);
+      if (fb && fl) {
+        this.setPos(fb.p, fl.x, fl.y + 0.3, fl.z, !!fb.placed);
+        fb.placed = true;
+      }
+
+      // altar más cercano
+      if (!this.altars && game.interact) this.altars = game.interact.list.filter((it) => it.kind === 'altar');
+      let best = null,
+        bd = 16;
+      for (const a of this.altars || []) {
+        const dd = Math.hypot(a.x - cp.x, (a.y || 0) - cp.y, a.z - cp.z);
+        if (dd < bd) {
+          bd = dd;
+          best = a;
+        }
+      }
+      const ah = this.layerGain(this.L.altar, best && (play || paused) ? 0.07 : 0, 0.6);
+      if (ah && best) {
+        this.setPos(ah.p, best.x, (best.y || 0) + 1.2, best.z, !!ah.placed && best === this._altar);
+        ah.placed = true;
+        this._altar = best;
+      }
+
+      // miedo
+      this.fear = game.fear || 0;
+      this.layerGain(this.L.fear, play ? this.fear * this.fear * 0.12 : 0, 0.2);
+    }
+
+    // susurros cuando algo acecha
+    if (play && this.fear > 0.35 && Math.random() < dt * this.fear * 0.6) {
+      const a = Math.random() * Math.PI * 2;
+      const d = this.out({ x: cp.x + Math.cos(a) * 3, y: cp.y, z: cp.z + Math.sin(a) * 3 }, { gain: 0.5 * this.fear, verb: 0.6, life: 3, occlude: false });
+      this.whisper(d, t, rnd(0.6, 1.4), 0.1);
+    }
+
+    // latido con poca vida
+    const hpk = p.maxHp ? p.hp / p.maxHp : 1;
+    if (play && hpk < 0.32 && !p.dead) {
+      this.heartT -= dt;
+      if (this.heartT <= 0) {
+        this.heartT = 0.55 + hpk * 1.6;
+        const d = this.out(null, { gain: 0.9 - hpk, verb: 0.02, life: 1.5 });
+        this.smp(d, t, this.lib.drum('heart'), { gain: 0.7, lp: 400 });
+      }
+    }
+
+    // sucesos ambientales
+    this.nextAmb -= dt;
+    if (this.nextAmb <= 0) this.nextAmb = game.state === 'intro' || game.state === 'ending' ? 4 : this.ambEvent(z, cp, t) * (game.state === 'title' ? 1.5 : 1);
+
+    // música: peligro -> capas de tensión y combate
+    let combat = 0;
+    if (play && !p.dead) {
+      for (const e of game.activeEnemies || []) {
+        if (e.dead || !e.aware || e.boss || Math.abs(e.pos.y - cp.y) > 6) continue;
+        const dd = Math.hypot(e.pos.x - cp.x, e.pos.z - cp.z);
+        combat = Math.max(combat, clamp(1.25 - dd / 22, 0, 1));
+      }
+    }
+    // sube deprisa y baja despacio: no «bombea» al perder de vista a un enemigo
+    this.combatK += (combat - this.combatK) * Math.min(1, dt * (combat > this.combatK ? 2.5 : 0.25));
+    this.score.setIntensity(play ? clamp((this.fear - 0.12) / 0.7, 0, 1) : 0, clamp(this.combatK, 0, 1));
+
+    // música: explícita (título, jefes, final) o la de la zona
+    const cur = this.score.cur ? this.score.cur.name : null;
+    let want = null;
+    if (this.override) want = this.override;
+    else if ((play || paused) && t >= this.silenceUntil) want = ZONE_MUSIC[z] || 'city';
+    if (this.vol.music <= 0.001) want = null; // música apagada: no se programa nada
+    // la música de zona espera a que la zona se asiente (umbrales, puertas)
+    if (want && !this.override && cur && cur !== want) {
+      if (!this.zoneMusT) this.zoneMusT = t;
+      if (t - this.zoneMusT < 1.6) want = cur;
+    } else this.zoneMusT = 0;
+    if (want !== cur) this.score.setTheme(want, this.override ? (want && want.startsWith('boss') ? 0.8 : 2.5) : 3.5);
+    this.score.update();
   }
 }

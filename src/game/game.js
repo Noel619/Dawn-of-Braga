@@ -525,12 +525,12 @@ export class Game {
     b.stT = 0;
     if (b.T.clips.alert) b.anim.play(b.T.clips.alert, { blend: 0.1 });
     this.audio.enemyVoice(b, 'alert');
-    this.audio.music('boss');
+    this.audio.music(b.type === 'turibulario' ? 'bossFinal' : 'boss');
     this.ui.area(b.T.name);
   }
 
   onBossPhase(b) {
-    this.audio.music('boss2');
+    this.audio.music(b.type === 'turibulario' ? 'bossFinal2' : 'boss2');
     this.camRig.shake(0.6);
     this.flash = 0.5;
     if (b.type === 'turibulario') this.atmo.override = { fog: 0x2a0806, vol: 0.05, bloom: 1.6 };
@@ -655,7 +655,7 @@ export class Game {
         const d = Math.hypot(p.x - ph.x, p.z - ph.z);
         if (d < 12 || ph.t > 8) {
           ph.state = 'done';
-          if (d < 12) this.audio.play('stinger');
+          if (d < 12) this.audio.play('phantom');
         } else showing = ph;
       }
     }
@@ -893,7 +893,10 @@ export class Game {
         this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' ? 'dirt' : 'stone';
         if (!this.visited.has(z.id)) {
           this.visited.add(z.id);
-          if (AREA_NAMES[z.id] && this.state === 'play' && !this.activeBoss) this.ui.area(AREA_NAMES[z.id]);
+          if (AREA_NAMES[z.id] && this.state === 'play' && !this.activeBoss) {
+            this.ui.area(AREA_NAMES[z.id]);
+            this.audio.play('discover');
+          }
         } else if (AREA_NAMES[z.id] && this.state === 'play' && z.id !== this._lastArea && (z.atmo !== 'interior' || z.id === 'canon')) {
           if (this.time - (this._areaT || 0) > 20) this.ui.area(AREA_NAMES[z.id]);
         }

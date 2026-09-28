@@ -383,7 +383,7 @@ export class Player {
   onStep(side, w) {
     const g = this.game;
     if (g.state !== 'play' || !this.body.grounded || w < 0.2) return;
-    g.audio && g.audio.play('step');
+    g.audio && g.audio.play('step', null, { side, w, run: this.sprinting });
   }
 
   // Criatura a la que "se pega" el ataque sin fijar (apuntado suave).
@@ -719,8 +719,10 @@ export class Player {
     }
     if (faceTarget !== null) this.yaw = dampAngle(this.yaw, faceTarget, turnRate, dt);
 
-    // física
+    // física (y golpe al aterrizar tras una caída)
+    const airVy = this.body.grounded ? 0 : this.body.vy || 0;
     moveBody(g.world.col, this.body, this.vx * dt, this.vz * dt, dt);
+    if (airVy < -5.5 && this.body.grounded && g.state === 'play') g.audio && g.audio.play('land', this.pos, { v: -airVy });
 
     // escudo arriba/abajo
     this.blockW = damp(this.blockW, this.blocking ? 1 : 0, 16, dt);

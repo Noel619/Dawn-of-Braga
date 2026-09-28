@@ -1,6 +1,6 @@
 // Prueba de estrés: entradas aleatorias por todo el mapa buscando excepciones y NaN.
 import { chromium } from 'playwright';
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
@@ -8,7 +8,7 @@ await p.goto('http://localhost:5199/?dev=1&items=espada,escudo');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const r = await p.evaluate(() => {
   window.__pause = true;
-  const g = __game; g.input.enabledPointerLock = false; g.input.onPointerLockLost = null; g.ui.closeAll();
+  const g = __game; g.input.enabledPointerLock = false; g.input.onPointerLockLost = null; g.ui.closeAll(); g.audio.init();
   const spots = [[-66, 0, 0], [-40, 0, 0], [0, 0, 6], [0, 0, -30], [0, 0, -48], [0, 0.6, -75], [24, 0, -74], [50, 0, 0], [68, 0, -20], [74, 9, -30], [74, 9, -60], [0, 0, 50], [-20, 0, 50], [0, -7, -104], [0, -7, -120], [10, -7, -120], [-10, -7, -122], [0, -10, -150], [55, -0, -50]];
   const keys = ['KeyW', 'KeyA', 'KeyS', 'KeyD'];
   const taps = ['M0', 'KeyF', 'Space', 'KeyR', 'KeyQ', 'KeyE', 'M2'];
@@ -38,4 +38,9 @@ const r = await p.evaluate(() => {
 });
 console.log(JSON.stringify(r));
 console.log(errs.slice(0, 10).join('\n'));
+// estado del audio tras la prueba
+console.log(JSON.stringify(await p.evaluate(() => {
+  const a = __game.audio;
+  return { ok: a.ok, ctx: a.ctx && a.ctx.state, tema: a.score && a.score.cur && a.score.cur.name, zona: a.zone, sala: a.room && a.room.kind, capas: a.L && Object.entries(a.L).filter(([k, v]) => v.on).map(([k]) => k) };
+})));
 await b.close();

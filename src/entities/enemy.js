@@ -348,6 +348,8 @@ export class Enemy {
           if (!nav || nav.walkable(w.x, w.z)) this.steerTo(w.x, w.z, T.walk * 0.55, dt);
           else w.t = 0;
         }
+        // si estás cerca sin que te vea, se le oye: rezos, jadeos, sollozos
+        if (d < 14 && this.game.audio && Math.random() < dt * 0.07) this.game.audio.enemyVoice(this, 'idle');
         if (this.sees) this.alert();
         break;
       case 'ceiling':

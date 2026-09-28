@@ -46,12 +46,21 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 
 ## Qué hay dentro
 
-**Mundo.** El castillo con su cárcel y su patio de armas, la Calle del Soto, la Plaza del Pan con su fuente, horca
-y picota, la Calle de la Catedral, la Plaza de la Catedral, la catedral (nave con arquerías, vidrieras, bancos con
-fieles muertos), el claustro, la Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la
-Torre del Postigo, la Calle de la Herrería con la fragua, y bajo la catedral: osario de calaveras, un templo romano
-de *Bracara Augusta* con mosaicos, el sepulcro del arzobispo y la cisterna del Dios Desconocido. Al final, las
-orillas del río Este.
+**Mundo.** El castillo con su cárcel, su patio de armas y la capilla de la guarnición, la Calle del Soto, la Plaza
+del Pan con su fuente, horca (con escalera por la que se sube al cadalso) y picota, la Calle de la Catedral, la Plaza
+de la Catedral con la pira, la catedral (nave con arquerías, vidrieras, bancos con fieles muertos), el claustro, la
+Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la Torre del Postigo, la Calle de la
+Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y taller decorado por dentro), y bajo la
+catedral: osario de calaveras, un templo romano de *Bracara Augusta* con mosaicos, el sepulcro del arzobispo y la
+cisterna del Dios Desconocido. Al final, las orillas del río Este.
+
+**Los barrios.** Entre las calles principales hay una trama de callejones, pasadizos elevados, soportales y
+casas que se pueden visitar por dentro: el Callejón del Pozo y su plazuela, el Callejón del Arco, la Travesía de la
+Sé, la Taberna del Cuervo, el obrador de la tejedora (telar y torno de hilar), el patio y el horno de pan (con
+artesas y hornos de leña), el Callejón de la Fragua, el patio y el taller de los tintoreros (cubas de tinte y telas
+tendidas), el corral y el establo de los Pellejeros, y la cerca de la ciudad cerrando cada barrio. Los altares de
+descanso están en lugares a salvo: la capilla de la guarnición, el Oratorio de Santa Bárbara, la Capilla de San
+Fructuoso y la cripta.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -63,7 +72,7 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, un
 sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Mejoras opcionales: ampollas vacías, relicarios de hueso (vitalidad) y una piedra de
-afilar bendita (daño). Diez documentos breves cuentan la historia junto con el escenario.
+afilar bendita (daño). Doce documentos breves cuentan la historia junto con el escenario.
 
 **Combate Soulslike simplificado.** Ataque ligero en combo, ataque pesado que rompe guardias, ataque a la carrera,
 bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de invulnerabilidad, curación con
@@ -100,17 +109,38 @@ en la portada, pergamino rasgado con capitular iluminada y lacre para los docume
 pergamino, teclas dibujadas y un HUD pintado píxel a píxel. El texto usa fuentes pixeladas (Jacquarda Bastarda 9,
 Handjet, Silkscreen y Jacquard) siempre a múltiplos exactos de su rejilla para que se vea nítido.
 
-**Sonido 100 % sintetizado (WebAudio).** Campanas con parciales inarmónicos, voces de criaturas con formantes,
-viento, crepitar de fuego posicional, graznidos de cuervo, zumbido de moscas, goteos en la cripta, susurros y estática que crecen cuando algo se acerca,
-latido con poca vida, reverberación generada y música procedural (canto llano en modo frigio, percusión de jefe,
-coro del amanecer).
+**Música adaptativa, compuesta por código.** Cada zona tiene su tema, con su modo, tempo e instrumentos, y tres
+capas que se funden según lo que pasa: exploración, tensión (clúster de cuerdas en trémolo, latido y susurros cuando
+algo acecha) y combate (tambores de guerra, pandero, metales y ostinato cuando te persiguen). Las calles suenan en
+mi frigio con dron grave, coro lejano, zanfona y salterio; la muralla, con cuernos y los tambores de los sitiadores
+al otro lado; las casas, con una caja de música olvidada; las capillas con altar, con órgano de flautado y un coro
+en paz (ahí no entra la tensión); la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
+coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
+fase) y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies irae*. La portada es canto llano en
+*organum* con campanas y el amanecer, un coro y un arpa en mayor. Hay golpes de efecto al ser descubierto, al
+descubrir una zona, al descansar, al cruzar la niebla, al morir y al vencer. Los instrumentos se sintetizan en
+directo: órgano con registros, coro con formantes, cuerdas, zanfona, metales, salterio y arpa por Karplus-Strong,
+campanas aditivas y tambores.
+
+**Sonido 100 % sintetizado (WebAudio).** Reverberación por convolución con salas generadas (calle, habitación,
+capilla, catedral, cripta, exterior) que se funden al pasar de una a otra; sonidos 3D con absorción del aire por
+distancia y oclusión (lo que suena tras un muro llega apagado); pisadas según el suelo (piedra, madera, tierra) con
+el tintineo de la cota de malla y golpe al aterrizar; filos que silban, carne, hueso, escudos y metal; puertas que
+chirrían, cerrojos, trancas, tablones, rejas con cadenas y la losa del sello; voces de criaturas con formantes,
+aspereza y temblor (rezos que se oyen antes de que te vean, jadeos, sollozos, gritos); ambiente por capas (viento a
+rachas y silbando en las almenas, el rumor de la ciudad en llamas, fuegos posicionales, moscas, el acorde cálido de
+los altares, el río) y sucesos de cada zona (campanas lejanas, gritos, perros, vigas que se desploman, procesiones,
+cuernos, ratas, gotas en la cripta, pasos que no son tuyos en la catedral, pájaros al amanecer). La música se atenúa
+con los golpes fuertes y se oye «tras una puerta» en la pausa.
 
 ## Estructura del código
 
 ```
 src/
   main.js               arranque y bucle
-  core/                 entrada (teclado/ratón/mando), audio sintetizado, utilidades y ruido
+  core/                 entrada (teclado/ratón/mando), utilidades, ruido y audio:
+                        audio.js (mezcla, efectos, ambiente), audio_music.js (música adaptativa),
+                        audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
@@ -125,6 +155,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones
+                        audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
+                        audiobench.mjs coste de CPU del audio
 ```
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.
