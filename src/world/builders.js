@@ -210,7 +210,7 @@ const PLASTER_TINTS = [
 ];
 
 // Ventana en coordenadas de fachada (x a lo largo, y altura, z hacia fuera).
-function windowAt(ctx, x, y, w, h, o, rng) {
+export function windowAt(ctx, x, y, w, h, o, rng) {
   const wb = ctx.wb;
   const lit = o.lit;
   wb.box(lit ? 'ember' : 'black', x - w / 2, y, 0, x + w / 2, y + h, 0.03, { ao: false, grime: false, faces: 's' });
@@ -253,7 +253,7 @@ function windowAt(ctx, x, y, w, h, o, rng) {
   }
 }
 
-function doorAt(ctx, x, w, h, o = {}) {
+export function doorAt(ctx, x, w, h, o = {}) {
   const wb = ctx.wb;
   // jambas y dintel de piedra (el dintel descansa sobre las jambas y vuela
   // 2 cm por los lados: con las piezas solapadas, las esquinas parpadeaban)
@@ -261,12 +261,25 @@ function doorAt(ctx, x, w, h, o = {}) {
   wb.box('ashlar', x + w / 2, 0, 0, x + w / 2 + 0.3, h, 0.16, { sub: 2 });
   wb.box('ashlar', x - w / 2 - 0.32, h, 0, x + w / 2 + 0.32, h + 0.35, 0.18, { sub: 2, baseY: 0 });
   if (o.frameOnly) return;
+  // umbral de piedra delante de la hoja: se lee como una puerta a pie de calle
+  wb.box('ashlar', x - w / 2 - 0.08, -0.02, 0, x + w / 2 + 0.08, 0.05, 0.26, { ao: false, faces: 'tnsew', sub: 3 });
   if (o.open) {
     wb.box('black', x - w / 2, 0, 0, x + w / 2, h, 0.02, { ao: false, grime: false, faces: 's' });
     return;
   }
-  wb.box(o.mat ?? 'planks', x - w / 2, 0, 0, x + w / 2, h, 0.06, { sub: 3, aoH: 0.6 });
+  wb.box(o.mat ?? 'planks', x - w / 2, 0.05, 0, x + w / 2, h, 0.06, { sub: 3, aoH: 0.6 });
   for (const yy of [0.4, h - 0.5]) wb.box('iron', x - w / 2, yy, 0.06, x + w / 2 - 0.1, yy + 0.08, 0.09, { ao: false });
+  // aldaba y bocallave
+  wb.box('iron', x + w / 2 - 0.3, 1.02, 0.06, x + w / 2 - 0.2, 1.2, 0.075, { ao: false });
+  wb.box('black', x + w / 2 - 0.265, 1.05, 0.075, x + w / 2 - 0.235, 1.11, 0.078, { ao: false, grime: false, faces: 's' });
+  wb.box('iron', x - 0.05, 1.32, 0.06, x + 0.05, 1.36, 0.12, { ao: false });
+  wb.box('iron', x - 0.1, 1.18, 0.1, x + 0.1, 1.21, 0.13, { ao: false });
+  if (o.bar) {
+    // tranca atravesada sobre dos grapas de hierro
+    wb.box('iron', x - w / 2 - 0.12, 1.02, 0.06, x - w / 2 + 0.02, 1.22, 0.16, { ao: false });
+    wb.box('iron', x + w / 2 - 0.02, 1.02, 0.06, x + w / 2 + 0.12, 1.22, 0.16, { ao: false });
+    wb.box('wooddark', x - w / 2 - 0.25, 1.06, 0.09, x + w / 2 + 0.25, 1.2, 0.2, { ao: false, faces: 'tnsewb' });
+  }
   if (o.boards) {
     // tablones clavados en aspa
     for (const s of [-1, 1]) {
@@ -395,8 +408,10 @@ export function house(ctx, s) {
         cur = d.at + d.w / 2;
       }
     }
-    // suelo, techo con vigas y su colisión (la cámara no sube a la planta alta)
-    wb.box(s.floorMat ?? 'planks', x0 + t - 0.01, -0.05, z0 + t - 0.01, x1 - t + 0.01, 0.02, z1 - t + 0.01, { faces: 't', ao: false, room, uv: 0.5, tint: s.floorTint });
+    // suelo (con los huecos de escaleras que bajan, floorHoles), techo con
+    // vigas y su colisión (la cámara no sube a la planta alta)
+    for (const r of subtractRects([x0 + t - 0.01, z0 + t - 0.01, x1 - t + 0.01, z1 - t + 0.01], s.floorHoles ?? []))
+      wb.box(s.floorMat ?? 'planks', r[0], -0.05, r[1], r[2], 0.02, r[3], { faces: 't', ao: false, room, uv: 0.5, tint: s.floorTint });
     wb.box('wooddark', x0 + t, g1, z0 + t, x1 - t, g1 + 0.05, z1 - t, { faces: 'b', ao: false, room, tint: [0.62, 0.56, 0.5] });
     const alongX = W >= D;
     if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room, faces: 'nsewb' });
@@ -416,9 +431,27 @@ export function house(ctx, s) {
         }
     }
   } else {
-    // zócalo (7 cm corto por el lado de una casa vecina ya construida)
+    // zócalo (7 cm corto por el lado de una casa vecina ya construida). En la
+    // fachada de la puerta va aparte y se interrumpe en el hueco: entero,
+    // quedaba 7 cm por delante de la hoja y tapaba sus 65 cm de abajo, y las
+    // puertas parecían ventanas con alféizar
     const zo = (b) => (b ? -0.07 : 0.07);
-    wb.box('wallstone', x0 - zo(nb.w), 0, z0 - zo(nb.n), x1 + zo(nb.e), 0.65, z1 + zo(nb.s), { sub: 2, aoH: 0.6, faces: 'tnsew' });
+    const hasDoor = s.door !== false && zo(nb[front]) > 0;
+    const ex = { n: zo(nb.n), s: zo(nb.s), e: zo(nb.e), w: zo(nb.w) };
+    if (hasDoor) ex[front] = 0;
+    wb.box('wallstone', x0 - ex.w, 0, z0 - ex.n, x1 + ex.e, 0.65, z1 + ex.s, { sub: 2, aoH: 0.6, faces: 'tnsew' });
+    if (hasDoor) {
+      const [tx, tz, rot, L] = sideFrame(front, x0, z0, x1, z1);
+      const ends = { s: ['w', 'e'], n: ['e', 'w'], e: ['s', 'n'], w: ['n', 's'] }[front];
+      const a0 = -zo(nb[ends[0]]),
+        a1 = L + zo(nb[ends[1]]);
+      const da = s.doorAt ?? L / 2;
+      wb.at(tx, 0, tz, rot, () => {
+        // (los extremos del hueco quedan dentro de las jambas)
+        wb.box('wallstone', a0, 0, 0, da - 0.8, 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'tsw' });
+        wb.box('wallstone', da + 0.8, 0, 0, a1, 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'tse' });
+      });
+    }
     wb.box(lowerMat, x0, 0.65, z0, x1, g1, z1, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'nsew' });
   }
   // planta alta (voladizo hacia la fachada principal)
@@ -538,7 +571,10 @@ export function house(ctx, s) {
         }
       } else if (side === front && s.door !== false) {
         const da = s.doorAt ?? LL / 2;
-        doorAt(ctx, da, 1.3, 2.3, { boards: s.boards, open: s.doorOpen });
+        // puertas cerradas; algunas clavadas o atrancadas por fuera (dado
+        // aparte para no cambiar el resto de la casa)
+        const dr = new RNG((s.seed ?? hashSeed(x0, z0, x1, z1)) ^ 0x5bd1e995).next();
+        doorAt(ctx, da, 1.3, 2.3, { boards: s.boards ?? dr < 0.2, bar: s.boards === undefined && dr >= 0.2 && dr < 0.3, open: s.doorOpen });
         if (LL > 5) windowAt(ctx, da > LL / 2 ? da - 2.2 : da + 2.2, 1.2, 0.6, 0.8, { lit: false }, rng);
       } else if (LL > 3 && s.windows !== false && rng.chance(0.5)) {
         windowAt(ctx, LL * rng.range(0.3, 0.7), 1.3, 0.6, 0.8, { lit: false }, rng);
@@ -600,6 +636,28 @@ export function house(ctx, s) {
     }
   }
   return { h, ridge, g1 };
+}
+
+// Rectángulo [x0, z0, x1, z1] menos una lista de huecos: rectángulos que lo cubren.
+export function subtractRects(r, holes) {
+  let out = [r];
+  for (const h of holes) {
+    const next = [];
+    for (const [a, b, c, d] of out) {
+      if (h[0] >= c || h[2] <= a || h[1] >= d || h[3] <= b) {
+        next.push([a, b, c, d]);
+        continue;
+      }
+      if (h[1] > b) next.push([a, b, c, h[1]]);
+      if (h[3] < d) next.push([a, h[3], c, d]);
+      const zb = Math.max(b, h[1]),
+        zd = Math.min(d, h[3]);
+      if (h[0] > a) next.push([a, zb, h[0], zd]);
+      if (h[2] < c) next.push([h[2], zb, c, zd]);
+    }
+    out = next;
+  }
+  return out;
 }
 
 // Caja de colisión sólo para la cámara (tejados).

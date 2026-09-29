@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { buildPlayer } from './models.js';
 import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
-import { Biped, stabilizeShield } from './locomotion.js';
+import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
 import { WEAPONS, weaponSet, resolveWeaponArms } from './weapons.js';
 import { buildParts, backShield, hipSaya } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
@@ -60,6 +60,14 @@ export class Player {
     this.cloakX = new Spring(60, 7);
     this.cloakZ = new Spring(60, 7);
     this.lampS = new Spring(90, 6);
+    // escudo con algo de juego en la muñeca (no va clavado al pecho)
+    this.shieldYaw = new Spring(110, 13);
+    this.shieldPitch = new Spring(120, 12);
+    this.shieldRoll = new Spring(90, 9);
+    this.shieldYaw.x = 0.42;
+    this.shieldPitch.x = -0.03;
+    this._shCarry = [1, 0, 0];
+    this.shieldHold = new THREE.Vector3();
     this.headYaw = 0;
     this.exert = 0;
     this.phase = 0;
@@ -734,8 +742,22 @@ export class Player {
       pose.foreR = [-0.25 - run * 0.9, 0, 0];
       pose.handR = [0, 0, 0];
     }
+    // escudo: en guardia delante del cuerpo al estar quieto o con un objetivo
+    // fijado; al andar el brazo se relaja y lo abre hacia fuera, y al correr
+    // lo lleva al costado, de canto a la marcha (delante del pecho, con el
+    // braceo, se metía en el torso)
+    const lk = target ? 1 : 0;
+    const shR = run * (1 - lk),
+      shW = gait.mw * (1 - shR) * (1 - lk),
+      shG = 1 - shW - shR;
+    this._shCarry = [shG, shW, shR];
     if (!two) {
-      if (this.hasShield) pose.ikL = [lerp(0.17, 0.24, run), lerp(0.22, 0.2, run), lerp(0.27 - sw * 0.04, 0.16 - sw * 0.14, run)];
+      if (this.hasShield)
+        pose.ikL = [
+          0.2 * shG + 0.24 * shW + 0.29 * shR,
+          0.2 * shG + 0.17 * shW + (0.16 + Math.abs(sw) * 0.02) * shR,
+          (0.31 - sw * 0.03 * lk) * shG + (0.28 - sw * 0.05) * shW + (0.26 - sw * 0.1) * shR,
+        ];
       else {
         pose.armL = [sw * 0.45, 0, 0.1];
         pose.foreL = [-0.25 - run * 0.9, 0, 0];
@@ -792,17 +814,32 @@ export class Player {
     this.obj.position.set(this.body.pos.x, this.visY, this.body.pos.z);
     this.obj.rotation.y = this.yaw;
     this.phase = gait.phase * Math.PI * 2;
-    // escudo: siempre de cara, subido al bloquear
+    // escudo: orientado respecto al pecho (de cara en guardia, abierto al
+    // andar, de canto al correr) con muelles que lo dejan balancearse con el
+    // brazo y quedarse atrás en los giros; subido al bloquear y, pase lo que
+    // pase, fuera del cuerpo
     if (this.hasShield && !two) {
       const healW = this.state === 'heal' ? clamp(1 - Math.abs(this.stT - 0.62) / 0.5, 0, 1) : 0;
       const rolling = this.state === 'roll' || this.state === 'dead' || this.state === 'wake' || this.state === 'rest';
+      const [cg, cw, cr] = this._shCarry;
+      const turn = clamp(-gait.yawRate * 0.05, -0.3, 0.3) * (cw + cr);
+      const yawT = 0.42 * cg + 0.72 * cw + 1.25 * cr + sw * (0.14 * cw + 0.12 * cr) + turn;
+      // (casi vertical: inclinado hacia atrás, el canto de arriba se metía en la hombrera)
+      const pitchT = -0.03 * cg - 0.01 * cw + (0.02 + sw * 0.1) * cr;
+      const sy = this.shieldYaw.update(dt, yawT),
+        sp = this.shieldPitch.update(dt, pitchT);
       stabilizeShield(this.rig, {
-        w: rolling ? 0.35 : lerp(0.92, 0.75, healW),
-        yaw: lerp(0.42, 0.1, this.blockW) + healW * 1.15,
-        pitch: lerp(-0.14, -0.04, this.blockW),
+        w: rolling ? 0.35 : lerp(0.94, 0.75, healW),
+        yaw: lerp(sy, 0.1, this.blockW) + healW * 1.15,
+        pitch: lerp(sp, -0.04, this.blockW),
+        roll: this.shieldRoll.update(dt, sw * 0.08 * (cw + cr)) * (1 - this.blockW),
         out: 0.07,
         along: 0.13,
+        // el antebrazo cruza la parte alta del escudo (como con los tiros de
+        // un escudo de lágrima); al bloquear, centrado para cubrir la cara
+        raise: -(0.05 * cg + 0.12 * cw + 0.14 * cr) * (1 - this.blockW),
       });
+      this.shieldPush = keepShieldOut(this.rig, this.shieldHold, dt);
     }
     // parpadeo de la lámpara
     this.lamp.intensity = this.lampBase * (0.9 + 0.07 * Math.sin(t * 11) + 0.05 * Math.sin(t * 23.7));

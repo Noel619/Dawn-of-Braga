@@ -512,15 +512,78 @@ export function fountain(ctx, x, y, z) {
   col(ctx, x - 0.6, y, z - 0.6, x + 0.6, y + 3.4, z + 0.6);
 }
 
+// Pozo con brocal de piedra, torno con cubo y tejadillo a cuatro aguas sobre
+// cuatro postes. (El de dos aguas, visto por los hastiales —como se llega a
+// la plazuela—, era un triángulo oscuro: parecía que no tenía tejado.) El
+// tejadillo tiene cara inferior de tablas y canto: se ve igual desde abajo,
+// desde cerca y desde cualquier lado.
 export function well(ctx, x, y, z) {
   const wb = ctx.wb;
-  wb.cylinder('wallstone', x, y, z, 1.1, 1.1, 0.9, 10, { sub: 2 });
-  wb.cylinder('wallstone', x, y + 0.9, z, 1.15, 1.15, 0.12, 10, { ao: false });
-  wb.cylinder('black', x, y + 0.85, z, 0.9, 0.9, 0.02, 10, { capTop: true, ao: false, grime: false });
-  for (const s of [-1, 1]) wb.box('wooddark', x + s * 1.0 - 0.07, y + 0.9, z - 0.07, x + s * 1.0 + 0.07, y + 2.6, z + 0.07, { ao: false });
-  wb.box('wooddark', x - 1.15, y + 2.4, z - 0.06, x + 1.15, y + 2.52, z + 0.06, { ao: false });
-  wb.gableRoof(x - 1.3, z - 0.8, x + 1.3, z + 0.8, y + 2.6, y + 3.2, 'x', { overhang: 0.1, ridge: false, wallMat: 'wooddark' });
-  col(ctx, x - 1.1, y, z - 1.1, x + 1.1, y + 1.0, z + 1.1);
+  const R = 1.1,
+    rIn = 0.84,
+    top = y + 1.02;
+  const seg = 12;
+  wb.cylinder('wallstone', x, y, z, R, R, 0.9, seg, { sub: 2 });
+  wb.cylinder('ashlar', x, y + 0.9, z, R + 0.06, R + 0.06, 0.12, seg, { ao: false });
+  // corona del brocal y pared interior del pozo (se ve bajar a la oscuridad)
+  for (let i = 0; i < seg; i++) {
+    const a0 = (i / seg) * Math.PI * 2,
+      a1 = ((i + 1) / seg) * Math.PI * 2;
+    const c0 = Math.cos(a0),
+      s0 = Math.sin(a0),
+      c1 = Math.cos(a1),
+      s1 = Math.sin(a1);
+    const Ro = R + 0.06;
+    wb.quad('ashlar', V(x + c1 * Ro, top, z + s1 * Ro), V(x + c0 * Ro, top, z + s0 * Ro), V(x + c0 * rIn, top, z + s0 * rIn), V(x + c1 * rIn, top, z + s1 * rIn), { ao: false, sub: 3 });
+    wb.quad('wallstone', V(x + c0 * rIn, y + 0.15, z + s0 * rIn), V(x + c1 * rIn, y + 0.15, z + s1 * rIn), V(x + c1 * rIn, top, z + s1 * rIn), V(x + c0 * rIn, top, z + s0 * rIn), { ao: true, aoH: 0.8, aoMin: 0.15, baseY: y + 0.15, sub: 3 });
+  }
+  wb.cylinder('water', x, y + 0.18, z, rIn, rIn, 0.02, seg, { capTop: true, ao: false, grime: false, tint: [0.12, 0.13, 0.14] });
+  // cuatro postes sobre el brocal y el marco que sostiene el tejadillo
+  const p = 0.76,
+    eave = y + 2.5;
+  for (const [sx, sz] of [
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1],
+  ])
+    wb.box('wooddark', x + sx * p - 0.07, top, z + sz * p - 0.07, x + sx * p + 0.07, eave, z + sz * p + 0.07, { ao: false });
+  for (const s of [-1, 1]) {
+    wb.box('wooddark', x - p - 0.1, eave - 0.14, z + s * p - 0.06, x + p + 0.1, eave, z + s * p + 0.06, { ao: false, faces: 'tnsewb' });
+    wb.box('wooddark', x + s * p - 0.06, eave - 0.14, z - p + 0.07, x + s * p + 0.06, eave, z + p - 0.07, { ao: false, faces: 'nsewb' });
+  }
+  // torno: eje entre dos tablas, soga enrollada, manivela y cubo colgando
+  for (const s of [-1, 1]) wb.box('wooddark', x + s * 0.8 - 0.04, top, z - 0.1, x + s * 0.8 + 0.04, y + 2.05, z + 0.1, { ao: false });
+  wb.push();
+  wb.translate(x, y + 1.9, z);
+  wb.rotateZ(Math.PI / 2);
+  wb.cylinder('wooddark', 0, -0.84, 0, 0.07, 0.07, 1.68, 8, { ao: false, capTop: true, capBot: true });
+  wb.cylinder('burlap', 0, -0.25, 0, 0.095, 0.095, 0.5, 8, { ao: false, uv: 3, tint: [0.8, 0.7, 0.55] });
+  wb.pop();
+  wb.box('iron', x + 0.84, y + 1.87, z - 0.02, x + 0.9, y + 2.2, z + 0.02, { ao: false });
+  wb.box('iron', x + 0.86, y + 2.16, z - 0.02, x + 1.08, y + 2.2, z + 0.02, { ao: false });
+  wb.box('burlap', x + 0.08, y + 1.3, z - 0.015, x + 0.11, y + 1.82, z + 0.015, { ao: false, tint: [0.8, 0.7, 0.55] });
+  wb.cylinder('planks', x + 0.095, y + 1.0, z, 0.16, 0.19, 0.3, 8, { ao: false, capBot: true, uv: 1.2 });
+  for (const yy of [1.04, 1.24]) wb.cylinder('iron', x + 0.095, y + yy, z, 0.185 - (yy - 1.04) * 0.1, 0.18 - (yy - 1.04) * 0.1, 0.03, 8, { ao: false });
+  wb.box('iron', x + 0.08, y + 1.3, z - 0.17, x + 0.11, y + 1.33, z + 0.17, { ao: false });
+  // tejadillo a cuatro aguas: teja por encima, tablas por debajo, canto de madera
+  const hw = 1.22,
+    rise = 0.85,
+    th = 0.08;
+  wb.pyramid('roof', x, z, hw * 2, hw * 2, eave, rise, { sub: 1.2 });
+  const t = V(x, eave + rise - th, z);
+  const c = [V(x - hw, eave - th, z + hw), V(x + hw, eave - th, z + hw), V(x + hw, eave - th, z - hw), V(x - hw, eave - th, z - hw)];
+  for (let i = 0; i < 4; i++) wb.tri('planks', c[(i + 1) % 4], c[i], t, { ao: false, tint: [0.62, 0.56, 0.5] });
+  wb.box('wooddark', x - hw, eave - th, z + hw - 0.03, x + hw, eave, z + hw, { ao: false, faces: 's' });
+  wb.box('wooddark', x - hw, eave - th, z - hw, x + hw, eave, z - hw + 0.03, { ao: false, faces: 'n' });
+  wb.box('wooddark', x + hw - 0.03, eave - th, z - hw, x + hw, eave, z + hw, { ao: false, faces: 'e' });
+  wb.box('wooddark', x - hw, eave - th, z - hw, x - hw + 0.03, eave, z + hw, { ao: false, faces: 'w' });
+  wb.cylinder('wooddark', x, eave + rise - 0.1, z, 0.06, 0.05, 0.3, 6, { ao: false });
+  wb.cylinder('wooddark', x, eave + rise + 0.2, z, 0.09, 0.02, 0.14, 6, { ao: false });
+  col(ctx, x - R, y, z - R, x + R, y + 1.0, z + R);
+  // la cámara no se mete dentro del tejadillo (a nadie le estorba a esa altura)
+  const cb = col(ctx, x - hw, eave - 0.2, z - hw, x + hw, eave + rise, z + hw);
+  cb.noSight = true;
 }
 
 // Columna con basa y capitel.

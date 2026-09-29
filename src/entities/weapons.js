@@ -221,7 +221,9 @@ export const WEAPONS = {
     tip: [0, -0.05, 1.05],
     edge: 'double',
     guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
-    runPose: { ikR: [-30, 8, 2], bladeR: [-165, -28, 0] },
+    // al trotar y correr, la hoja por delante y algo alzada (antes apuntaba
+    // hacia atrás en cuanto el personaje avanzaba)
+    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: swordMoves,
   },

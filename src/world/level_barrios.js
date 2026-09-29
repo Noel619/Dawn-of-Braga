@@ -61,7 +61,9 @@ export function buildNW(ctx, S, L) {
   P.barrel(ctx, -44.3, 0, -20.4);
   P.barrel(ctx, -43.6, 0, -21.1, { lying: true, rot: 0.8 });
   P.jar(ctx, -36.2, 0, -24.3, 0.9, { broken: true });
-  P.trough(ctx, -35.2, 0, -21, 0, { len: 2.4 });
+  // el abrevadero, contra la casa del oeste: en la boca del Callejón del Arco
+  // cortaba el paso a la plazuela
+  P.trough(ctx, -44.4, 0, -25.9, Math.PI / 2, { len: 2.2 });
   bakeCorpse(wb, -39.6, 0, -23.4, 2.3, 'face', 'villager', 2);
   bakeCorpse(wb, -42, 0, -29.2, 0.9, 'back', 'soldier', 6);
   P.decal(ctx, -39.6, 0.02, -23.4, 2);

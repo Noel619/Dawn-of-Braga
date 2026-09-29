@@ -337,6 +337,118 @@ export function stabilizeShield(rig, o = {}) {
   sj.updateMatrixWorld(true);
 }
 
+// Saca el escudo del cuerpo: si algún punto de su silueta queda dentro del
+// torso, la cadera o el muslo izquierdo (cajas de las piezas del modelo, algo
+// holgadas), lo desplaza hacia fuera o hacia delante por el camino más corto.
+// Llamar después de stabilizeShield().
+// (rejilla sobre toda la lágrima, no sólo el contorno: una hombrera puede
+// asomar por el centro del escudo sin tocar ningún borde)
+const SHIELD_PTS = [];
+for (let y = -0.4; y <= 0.4; y += 0.1)
+  for (let i = -3; i <= 3; i++) {
+    // semiancho de la lágrima a esa altura (recta arriba, curva hacia la punta)
+    const hw = y > 0.05 ? 0.3 : 0.3 * Math.sqrt(Math.max(0, 1 - Math.pow((0.05 - y) / 0.47, 2)));
+    if (hw < 0.02 && i !== 0) continue;
+    for (const z of [-0.03, 0.04]) SHIELD_PTS.push(new THREE.Vector3((i / 3) * hw, y, z));
+  }
+// cajas de las piezas del modelo (centro y giro en Z en el espacio de su
+// articulación, semiejes con 1 cm de holgura)
+const BODY_BOXES = [
+  { j: 'chest', c: [0, 0.26, 0], rz: 0, h: [0.23, 0.27, 0.15] },
+  // hombrera izquierda
+  { j: 'chest', c: [0.25, 0.47, 0], rz: -18, h: [0.1, 0.06, 0.12] },
+  { j: 'hips', c: [0, -0.12, 0], rz: 0, h: [0.24, 0.2, 0.15] },
+  { j: 'legL', c: [0, -0.22, 0], rz: 0, h: [0.09, 0.24, 0.095] },
+];
+for (const B of BODY_BOXES) {
+  B.L = new THREE.Matrix4().makeRotationZ(B.rz * DEG).setPosition(B.c[0], B.c[1], B.c[2]);
+  B.q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), B.rz * DEG);
+  B.inv = new THREE.Matrix4();
+  B.M = new THREE.Matrix4();
+  B.wq = new THREE.Quaternion();
+  // esquinas, centros de aristas y de caras: una pieza pequeña (la hombrera)
+  // puede atravesar el escudo entre dos puntos de su rejilla
+  B.pts = [];
+  for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) if (a || b || c) B.pts.push(new THREE.Vector3(a * B.h[0], b * B.h[1], c * B.h[2]));
+}
+// grosor del escudo en su espacio (correas por detrás, cruz pintada delante)
+const SH_BACK = -0.05,
+  SH_FRONT = 0.037;
+const shieldHalfW = (y) => (y > 0.05 ? 0.3 : 0.3 * Math.sqrt(Math.max(0, 1 - Math.pow((0.05 - y) / 0.46, 2))));
+const _kp = new THREE.Vector3();
+const _kd = new THREE.Vector3();
+const _ki = new THREE.Matrix4();
+// hold (opcional, Vector3 en el espacio del pecho): lo que se apartó el
+// escudo el fotograma anterior; vuelve a su sitio poco a poco en vez de
+// saltar, y se actualiza con lo que haya hecho falta ahora.
+const _kw = new THREE.Vector3();
+const _kq = new THREE.Quaternion();
+export function keepShieldOut(rig, hold = null, dt = 0, margin = 0.012) {
+  const sj = rig.joints.shield;
+  const fore = rig.joints.foreL;
+  const chest = rig.joints.chest;
+  if (!sj || !fore || !chest) return 0;
+  for (const B of BODY_BOXES) {
+    const J = rig.joints[B.j];
+    B.M.multiplyMatrices(J.matrixWorld, B.L);
+    B.inv.copy(B.M).invert();
+    J.getWorldQuaternion(B.wq).multiply(B.q);
+  }
+  fore.getWorldQuaternion(_sw);
+  _sw.invert();
+  chest.getWorldQuaternion(_kq);
+  _kw.set(0, 0, 0);
+  if (hold && hold.lengthSq() > 1e-10) {
+    hold.multiplyScalar(Math.exp(-7 * dt));
+    _kw.copy(hold).applyQuaternion(_kq);
+    sj.position.add(_kd.copy(_kw).applyQuaternion(_sw));
+  }
+  for (let it = 0; it < 4; it++) {
+    sj.updateMatrixWorld(true);
+    _ki.copy(sj.matrixWorld).invert();
+    let best = 0,
+      bb = null,
+      ax = 0;
+    for (const B of BODY_BOXES) {
+      // puntos del escudo dentro de la pieza: hacia fuera (el escudo va a la
+      // izquierda) o hacia delante; nunca hacia atrás ni al otro costado
+      for (const p of SHIELD_PTS) {
+        _kp.copy(p).applyMatrix4(sj.matrixWorld).applyMatrix4(B.inv);
+        if (Math.abs(_kp.x) >= B.h[0] || Math.abs(_kp.y) >= B.h[1] || Math.abs(_kp.z) >= B.h[2]) continue;
+        const ox = B.h[0] - _kp.x,
+          oz = B.h[2] - _kp.z;
+        const d = Math.min(ox, oz);
+        if (d > best) {
+          best = d;
+          bb = B;
+          ax = ox <= oz ? 0 : 2;
+        }
+      }
+      // puntos de la pieza dentro del escudo: el escudo se aparta de frente
+      for (const p of B.pts) {
+        _kp.copy(p).applyMatrix4(B.M).applyMatrix4(_ki);
+        if (_kp.z <= SH_BACK || _kp.z >= SH_FRONT || _kp.y < -0.41 || _kp.y > 0.36 || Math.abs(_kp.x) >= shieldHalfW(_kp.y)) continue;
+        const d = _kp.z - SH_BACK;
+        if (d > best) {
+          best = d;
+          bb = null;
+          ax = 3;
+        }
+      }
+    }
+    if (best <= 0) break;
+    // dirección de salida en el mundo -> espacio del antebrazo
+    if (ax === 3) _kd.set(0, 0, 1).transformDirection(sj.matrixWorld);
+    else _kd.set(ax === 0 ? 1 : 0, 0, ax === 2 ? 1 : 0).applyQuaternion(bb.wq);
+    _kd.multiplyScalar(best + margin);
+    _kw.add(_kd);
+    sj.position.add(_kd.applyQuaternion(_sw));
+  }
+  sj.updateMatrixWorld(true);
+  if (hold) hold.copy(_kw).applyQuaternion(_kq.invert());
+  return _kw.length();
+}
+
 // ------------------------------------------------------------ IK de brazos
 // Canales de pose (espacio del pecho: +z delante, +y arriba, +x izquierda):
 //   ikR / ikL      posición de la muñeca (m)

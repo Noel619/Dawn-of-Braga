@@ -994,7 +994,8 @@ export const MOVESETS = {
     edge: [0, -1, 0],
     holy: true,
     guard: { ikR: [-4, 24, 34], bladeR: [2, 32, 0], elbowR: [-0.5, -0.8, -0.3] },
-    runPose: { ikR: [-30, 4, 2], bladeR: [-168, -30, 0], elbowR: [-0.6, -0.6, -0.4] },
+    // al correr, baja y por delante (como la espada: nunca apuntando atrás)
+    runPose: { ikR: [-30, 2, 16], bladeR: [-10, -16, 0], elbowR: [-0.6, -0.6, -0.4] },
     swing: [6, 24],
     block: { ikR: [-6, 40, 30], bladeR: [-96, 12, 0], elbowR: [-0.4, -0.8, -0.2], chest: [4, -6, 0], head: [6, 4, 0] },
     blockK: { st: 1.45, chip: 0.22 },
