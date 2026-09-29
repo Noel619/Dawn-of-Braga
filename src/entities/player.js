@@ -106,6 +106,7 @@ export class Player {
     this.lamp.position.set(0, -0.08, 0.1);
     this.rig.joints.lantern.add(this.lamp);
     this.lampBase = 9;
+    this.lampK = 1;
     this.dead = false;
     this.lastHitBy = null;
     // extremos de la hoja (espacio de la articulación del arma) para la estela
@@ -842,7 +843,8 @@ export class Player {
       this.shieldPush = keepShieldOut(this.rig, this.shieldHold, dt);
     }
     // parpadeo de la lámpara
-    this.lamp.intensity = this.lampBase * (0.9 + 0.07 * Math.sin(t * 11) + 0.05 * Math.sin(t * 23.7));
+    // (lampK: las cinemáticas pueden hacerlo titilar o apagarse)
+    this.lamp.intensity = this.lampBase * this.lampK * (0.9 + 0.07 * Math.sin(t * 11) + 0.05 * Math.sin(t * 23.7));
   }
 }
 

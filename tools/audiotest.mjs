@@ -91,7 +91,7 @@ const res = await p.evaluate(async (mode) => {
   }
   const out = {};
   if (mode === 'temas' || mode === 'todo') {
-    const themes = ['title', 'city', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'bossFinal', 'bossFinal2', 'ending'];
+    const themes = ['title', 'city', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'bossCellar', 'bossCellar2', 'bossFinal', 'bossFinal2', 'ending'];
     for (const th of themes) {
       // 0-24 s calma, 24-40 s tensión, 40-60 s combate
       const { buf, wall } = await render(
@@ -115,7 +115,7 @@ const res = await p.evaluate(async (mode) => {
     out.zonas = { ciudad: stats(buf, 2, 15), cripta: stats(buf, 20, 30) };
   }
   if (mode === 'efectos' || mode === 'todo') {
-    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory'];
+    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory', 'crack', 'scuttle', 'boneCrack', 'breathClose', 'stairCreak', 'lampOut', 'whisperClose', 'scare', 'dread'];
     for (const n of names) {
       const { buf, wall } = await render(
         6,
@@ -129,7 +129,7 @@ const res = await p.evaluate(async (mode) => {
       );
       out['fx:' + n] = { ...stats(buf, 0.4, 6), cpu: Math.round((wall / 6) * 1000) / 1000 };
     }
-    const voices = ['penitent', 'soldier', 'crawler', 'hound', 'bell', 'mourner', 'impaled', 'boss'];
+    const voices = ['penitent', 'soldier', 'crawler', 'hound', 'bell', 'mourner', 'impaled', 'descoyuntado', 'boss'];
     for (const v of voices)
       for (const k of ['alert', 'attack', 'hurt', 'death', 'idle']) {
         const { buf } = await render(
@@ -149,7 +149,7 @@ const res = await p.evaluate(async (mode) => {
         out['voz:' + v + ':' + k] = stats(buf, 0.4, 5);
       }
     // ambiente de cada zona, sin música
-    for (const z of ['city', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'dawn']) {
+    for (const z of ['city', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'cellar', 'dawn']) {
       const { buf, wall } = await render(
         20,
         (au, g) => {

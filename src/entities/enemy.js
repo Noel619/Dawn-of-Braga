@@ -79,8 +79,9 @@ export class Enemy {
   get alive() {
     return !this.dead;
   }
+  // (data.air: trepando por el techo o cayendo de él, fuera del alcance)
   get lockable() {
-    return !this.dead && this.obj.visible && this.state !== 'ceiling';
+    return !this.dead && this.obj.visible && this.state !== 'ceiling' && !this.data.air && !this.scripted;
   }
 
   reset() {
@@ -112,6 +113,7 @@ export class Enemy {
     this.sink = 0;
     this.aware = false;
     this.data = {};
+    this.scripted = false;
     this.hitShown = 0;
     // sin destellos ni ojos encendidos a medias al volver a su puesto
     this.flash = 0;
@@ -196,6 +198,8 @@ export class Enemy {
 
   nav() {
     const y = this.pos.y;
+    const g = this.game;
+    if (g.navCellar && y < -0.5 && g.inCellar(this.pos)) return g.navCellar;
     if (y < -3) return this.game.navCrypt;
     if (y < 3 && y > -1.5) return this.game.navSurface;
     return null;
@@ -225,7 +229,7 @@ export class Enemy {
 
   // ------------------------------------------------------------ combate
   takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0) {
-    if (this.dead) return 'none';
+    if (this.dead || this.data.air || this.scripted) return 'none';
     const T = this.T;
     if (this.state === 'ceiling') this.drop();
     const toSrc = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);
@@ -341,6 +345,8 @@ export class Enemy {
 
   // ------------------------------------------------------------ actualización
   update(dt, player) {
+    // en una cinemática la mueve el guion
+    if (this.scripted) return;
     const T = this.T;
     this.stT += dt;
     this.cooldown -= dt;
@@ -565,8 +571,8 @@ export class Enemy {
         const g = this.game.world.col.groundHeight(this.pos.x, this.pos.z, this.body.radius, this.pos.y + 1.5);
         this.pos.y = damp(this.pos.y, g, 6, dt);
       } else moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
-      // no atravesar al jugador
-      if (!this.dead && !player.dead) {
+      // no atravesar al jugador (salvo si va por el techo)
+      if (!this.dead && !player.dead && !this.data.air) {
         const dx = this.pos.x - player.pos.x,
           dz = this.pos.z - player.pos.z;
         const dd = Math.hypot(dx, dz);

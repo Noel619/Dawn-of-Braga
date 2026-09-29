@@ -19,10 +19,12 @@ const r = await p.evaluate((step) => {
   const down = new T.Vector3(0, -1, 0);
   const o = new T.Vector3();
   const holes = [];
-  // [rejilla, techo de búsqueda del suelo]: nivel de calle y cripta
+  // [rejilla, techo de búsqueda del suelo]: nivel de calle, cripta y la
+  // bodega del canónigo (con su escalera)
   const grids = [
     [g.level.S, -1, 1.2],
     [g.level.C, -10.6, -5.5],
+    [g.level.B, -5.2, 0.1],
   ];
   let tested = 0;
   for (const [W, y0, y1] of grids) {

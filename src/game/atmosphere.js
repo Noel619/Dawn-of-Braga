@@ -11,6 +11,8 @@ export const ATMO = {
   ramparts: { fog: 0x666d6a, density: 0.036, sky: 0xa6b2bc, ground: 0x2c2723, hemi: 2.4, moon: 1.1, vol: 0.048, ash: 1.4, exposure: 1.0, sat: 0.68, lamp: 8, bloom: 0.9 },
   crypt: { fog: 0x070809, density: 0.065, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.75, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.1 },
   arena: { fog: 0x1a080c, density: 0.028, sky: 0x70404a, ground: 0x241010, hemi: 1.1, moon: 0, vol: 0.02, ash: 0, exposure: 1.2, sat: 0.85, lamp: 11, bloom: 1.3 },
+  // la bodega del canónigo: casi a oscuras, sólo el farol y las velas del altar
+  cellar: { fog: 0x060505, density: 0.075, sky: 0x4a4644, ground: 0x161210, hemi: 0.55, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.78, lamp: 12, bloom: 1.1 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },
   dawn: { fog: 0xc8a08a, density: 0.012, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.2, moonColor: 0xffa860, vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, lamp: 1, bloom: 1.1 },
 };

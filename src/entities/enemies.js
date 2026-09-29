@@ -1,8 +1,8 @@
 // Definiciones de criaturas: estadísticas, ataques, animación.
 import * as THREE from 'three';
 import { clip } from './rig.js';
-import { clamp, DEG, damp, lerp, angleDiff } from '../core/util.js';
-import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, CANDLE_OFFSETS } from './enemy_models.js';
+import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
+import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, DESC, CANDLE_OFFSETS } from './enemy_models.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
 import { getTexture } from '../gfx/textures.js';
@@ -629,6 +629,191 @@ function censerUpdate(e, dt) {
 }
 
 // ======================================================================= DEFINICIONES
+
+// ======================================================================= EL DESCOYUNTADO
+// Postura base: el tronco boca arriba y los cuatro miembros abiertos como una
+// araña, codos y rodillas por encima del cuerpo. De vez en cuando una
+// articulación da un tirón sola: ya no le obedecen.
+const DS_REST = {
+  body: [-6, 0, 0],
+  neck: [26, 0, 0],
+  head: [30, 0, 0],
+  lfA: [34, 0, -48],
+  lfB: [-24, 0, 62],
+  rfA: [34, 0, 48],
+  rfB: [-24, 0, -62],
+  lbA: [-34, 0, -50],
+  lbB: [24, 0, 64],
+  rbA: [-34, 0, 50],
+  rbB: [24, 0, -64],
+};
+function descJerk(t, k) {
+  const v = S(t * 1.7 + k * 2.3) * S(t * 0.61 + k);
+  return v > 0.8 ? S(t * 53 + k * 7) * 18 : 0;
+}
+function descPose(e, t, spd) {
+  const ph = e.phase;
+  const s = clamp(spd / 3.2, 0, 1.6);
+  const lift = (o) => Math.max(0, S(ph + o)) * 30 * s;
+  const sw = (o) => Cc(ph + o) * 20 * s;
+  const j = (k) => descJerk(t, k);
+  const br = S(t * 1.1 + ph * 0.2);
+  const R = DS_REST;
+  return rad({
+    body: [R.body[0] + S(ph * 2) * 3 * s + br * 1.5, S(t * 0.4) * 5, S(ph) * 5 * s + j(1) * 0.2],
+    neck: [R.neck[0] + br * 5 + j(2) * 0.5, j(3) * 0.8, S(t * 0.5) * 8],
+    head: [R.head[0] + S(t * 1.9 + ph) * 8, S(t * 0.6) * 35 + j(4) * 2, S(t * 1.3) * 18 + j(5) * 1.5],
+    lfA: [R.lfA[0] + sw(0), 0, R.lfA[2] + lift(0)],
+    lfB: [R.lfB[0] - lift(0) * 0.4, 0, R.lfB[2] - lift(0) * 0.3 + j(6) * 0.3],
+    rfA: [R.rfA[0] + sw(Math.PI), 0, R.rfA[2] - lift(Math.PI)],
+    rfB: [R.rfB[0] - lift(Math.PI) * 0.4, 0, R.rfB[2] + lift(Math.PI) * 0.3],
+    lbA: [R.lbA[0] + sw(Math.PI), 0, R.lbA[2] + lift(Math.PI)],
+    lbB: [R.lbB[0] + lift(Math.PI) * 0.4, 0, R.lbB[2] - lift(Math.PI) * 0.3],
+    rbA: [R.rbA[0] + sw(0), 0, R.rbA[2] - lift(0)],
+    rbB: [R.rbB[0] + lift(0) * 0.4, 0, R.rbB[2] + lift(0) * 0.3 - j(7) * 0.3],
+    root: [0, S(ph * 2) * 3 * s, 0],
+  });
+}
+// (cada clave repite los miembros que no se mueven: si faltaran en una clave
+// valdrían 0, la pose de reposo del rig, con el brazo apuntando al techo)
+const DR = DS_REST;
+const dsKey = (o) => ({ ...DR, ...o });
+const dsClips = {
+  alert: clip('alert', 1.5, [
+    [0, dsKey({})],
+    [0.22, dsKey({ head: [-20, 0, 80], neck: [64, 0, 10], body: [-16, 0, 8], lfB: [-40, 0, 90], rbB: [40, 0, -90] }), 'snap'],
+    [0.5, dsKey({ head: [80, 50, -60], neck: [6, 0, -10], body: [-2, 0, -8], rfB: [-40, 0, -90], lbB: [40, 0, 90] }), 'snap'],
+    [0.78, dsKey({ head: [10, -40, 90], neck: [44, 0, 0], body: [-12, 0, 5], lfB: [-36, 0, 84] }), 'snap'],
+    [1.5, dsKey({})],
+  ]),
+  // zarpazo: la mano derecha se alza sobre el cuerpo y cae delante
+  claw: clip('claw', 1.3, [
+    [0, dsKey({})],
+    [0.55, dsKey({ rfA: [80, 0, 30], rfB: [140, 0, -30], body: [-20, 14, 8], neck: [40, 0, 0], head: [10, 30, 30], root: [0, 10, 0] }), 'hold'],
+    [0.68, dsKey({ rfA: [62, 0, 14], rfB: [-50, 0, -8], body: [8, -10, -6], neck: [20, 0, 0], head: [50, -10, -10], root: [0, -14, 0] }), 'snap'],
+    [0.95, dsKey({ rfA: [60, 0, 16], rfB: [-48, 0, -10], body: [6, -8, -5], root: [0, -12, 0] })],
+    [1.3, dsKey({})],
+  ]),
+  // dos zarpazos cruzados, izquierda y derecha
+  claw2: clip('claw2', 1.75, [
+    [0, dsKey({})],
+    [0.46, dsKey({ lfA: [78, 0, -30], lfB: [130, 0, 30], body: [-16, -14, -8], head: [10, -30, -30], root: [0, 8, 0] }), 'hold'],
+    [0.6, dsKey({ lfA: [60, 0, -12], lfB: [-48, 0, 8], body: [6, 12, 6], head: [50, 10, 10], root: [0, -12, 0] }), 'snap'],
+    [0.94, dsKey({ lfA: [40, 0, -30], lfB: [-30, 0, 40], rfA: [80, 0, 30], rfB: [140, 0, -30], body: [-16, 14, 8], head: [10, 30, 30], root: [0, 8, 0] }), 'hold'],
+    [1.08, dsKey({ rfA: [62, 0, 14], rfB: [-50, 0, -8], body: [8, -10, -6], head: [50, -10, -10], root: [0, -14, 0] }), 'snap'],
+    [1.4, dsKey({ rfA: [58, 0, 16], rfB: [-46, 0, -10], root: [0, -10, 0] })],
+    [1.75, dsKey({})],
+  ]),
+  // salto: se agazapa, se lanza y cae con las cuatro manos
+  pounce: clip('pounce', 1.7, [
+    [0, dsKey({})],
+    [0.58, dsKey({ body: [14, 0, 0], neck: [10, 0, 0], head: [60, 0, 0], lfA: [20, 0, -70], rfA: [20, 0, 70], lbA: [-20, 0, -72], rbA: [-20, 0, 72], root: [0, -28, 0] }), 'hold'],
+    [0.74, dsKey({ body: [-24, 0, 0], neck: [50, 0, 0], head: [0, 0, 0], lfA: [80, 0, -30], lfB: [-10, 0, 40], rfA: [80, 0, 30], rfB: [-10, 0, -40], lbA: [-70, 0, -40], rbA: [-70, 0, 40], root: [0, 10, 0] }), 'snap'],
+    [1.08, dsKey({ body: [10, 0, 0], head: [50, 0, 0], lfA: [50, 0, -40], rfA: [50, 0, 40], root: [0, -18, 0] })],
+    [1.7, dsKey({})],
+  ]),
+  // se agazapa antes de saltar al techo y, al caer, se queda despatarrado
+  climb: clip('climb', 5.4, [
+    [0, dsKey({})],
+    [0.5, dsKey({ body: [12, 0, 0], head: [60, 0, 20], lfA: [20, 0, -72], rfA: [20, 0, 72], lbA: [-20, 0, -74], rbA: [-20, 0, 74], root: [0, -30, 0] }), 'hold'],
+    [0.75, dsKey({ lfA: [10, 0, -30], rfA: [10, 0, 30], lbA: [-10, 0, -30], rbA: [-10, 0, 30], root: [0, 10, 0] }), 'snap'],
+    [3.6, dsKey({ head: [50, 30, 40] })],
+    [3.95, dsKey({ head: [-10, 0, 60], neck: [60, 0, 0] }), 'snap'],
+    [4.35, dsKey({ body: [0, 0, 20], head: [70, 20, 40], lfA: [10, 0, -90], rfA: [10, 0, 90], lbA: [-10, 0, -90], rbA: [-10, 0, 90], root: [0, -38, 0] }), 'snap'],
+    [4.9, dsKey({ body: [0, 0, 16], head: [60, 30, 50], lfA: [14, 0, -84], rfA: [14, 0, 84], lbA: [-14, 0, -84], rbA: [-14, 0, 84], root: [0, -34, 0] })],
+    [5.4, dsKey({})],
+  ]),
+  // crujido: se parte todas las articulaciones a la vez (onda que aturde)
+  crack: clip('crack', 1.9, [
+    [0, dsKey({})],
+    [0.85, dsKey({ body: [-26, 0, 0], neck: [70, 0, 0], head: [-30, 0, 0], lfA: [50, 0, -20], rfA: [50, 0, 20], lbA: [-50, 0, -20], rbA: [-50, 0, 20], root: [0, 14, 0] }), 'hold'],
+    [0.95, dsKey({ body: [10, 0, 0], neck: [10, 0, 0], head: [80, 0, 0], lfA: [10, 0, -95], lfB: [-60, 0, 110], rfA: [10, 0, 95], rfB: [-60, 0, -110], lbA: [-10, 0, -95], lbB: [60, 0, 110], rbA: [-10, 0, 95], rbB: [60, 0, -110], root: [0, -30, 0] }), 'snap'],
+    [1.4, dsKey({ body: [8, 0, 0], head: [70, 20, 20], lfA: [14, 0, -88], lfB: [-50, 0, 100], rfA: [14, 0, 88], rfB: [-50, 0, -100], lbA: [-14, 0, -88], lbB: [50, 0, 100], rbA: [-14, 0, 88], rbB: [50, 0, -100], root: [0, -26, 0] })],
+    [1.9, dsKey({})],
+  ]),
+  hurt: clip('hurt', 0.5, [
+    [0, dsKey({ body: [-18, 0, 16], neck: [50, 0, 0], head: [0, 40, 60] }), 'snap'],
+    [0.5, dsKey({})],
+  ]),
+  stagger: clip('stagger', 1.6, [
+    [0, dsKey({ body: [-26, 0, 30], head: [0, 0, 80], root: [0, -10, 0] }), 'snap'],
+    [0.5, dsKey({ body: [0, 0, 40], head: [70, 20, 40], lfA: [14, 0, -86], rfA: [14, 0, 80], lbA: [-14, 0, -80], rbA: [-14, 0, 86], root: [0, -34, 0] })],
+    [1.6, dsKey({})],
+  ]),
+  // al morir, los miembros se doblan hacia dentro y la cabeza se endereza
+  death: clip('death', 3.2, [
+    [0, dsKey({ body: [-20, 0, 20], head: [0, 0, 70], neck: [60, 0, 0] }), 'snap'],
+    [0.9, dsKey({ body: [0, 0, 10], head: [80, 0, 0], neck: [10, 0, 0], lfA: [10, 0, -100], rfA: [10, 0, 100], lbA: [-10, 0, -100], rbA: [-10, 0, 100], root: [0, -60, 0] })],
+    [2.0, dsKey({ body: [0, 0, 6], head: [100, 0, 0], neck: [-10, 0, 0], lfA: [20, 0, -40], lfB: [-120, 0, 30], rfA: [20, 0, 40], rfB: [-120, 0, -30], lbA: [-20, 0, -40], lbB: [120, 0, 30], rbA: [-20, 0, 40], rbB: [120, 0, -30], root: [0, -82, 0] }), 'in'],
+    [3.2, dsKey({ body: [0, 0, 4], head: [100, 0, 0], neck: [-12, 0, 0], lfA: [20, 0, -34], lfB: [-128, 0, 26], rfA: [20, 0, 34], rfB: [-128, 0, -26], lbA: [-20, 0, -34], lbB: [128, 0, 26], rbA: [-20, 0, 34], rbB: [128, 0, -26], root: [0, -86, 0] })],
+  ]),
+};
+
+// Ataque del techo: salta a la bóveda dándose la vuelta, corre boca abajo
+// hacia el jugador (su sombra en el suelo lo delata), se para encima,
+// chilla y se deja caer. Mientras está arriba no se le puede tocar.
+function descCeiling(e, dt, t) {
+  const d = e.data;
+  const g = e.game;
+  const p = g.player.pos;
+  const sm = (u) => u * u * (3 - 2 * u);
+  if (t < 0.5) {
+    d.lift = 0;
+    d.flip = 0;
+  } else if (t < 0.9) {
+    const u = (t - 0.5) / 0.4;
+    d.lift = sm(u);
+    d.flip = sm(u);
+    d.air = u > 0.25;
+    if (!d.sndUp) {
+      d.sndUp = true;
+      g.audio && g.audio.play('scuttle', e.pos);
+    }
+  } else if (t < 3.6) {
+    d.lift = 1;
+    d.flip = 1;
+    d.air = true;
+    const dx = p.x - e.pos.x,
+      dz = p.z - e.pos.z,
+      dd = Math.hypot(dx, dz);
+    const sp = dd > 0.25 ? Math.min(4.4, dd * 3) : 0;
+    e.vx = dd > 0.01 ? (dx / dd) * sp : 0;
+    e.vz = dd > 0.01 ? (dz / dd) * sp : 0;
+    if (dd > 0.2) e.yaw = approachAngle(e.yaw, Math.atan2(dx, dz), 6 * dt);
+    d.scT = (d.scT ?? 0) - dt;
+    if (d.scT <= 0 && sp > 0.5) {
+      d.scT = 0.32;
+      g.audio && g.audio.play('scuttle', { x: e.pos.x, y: (e.P.ceilY ?? e.pos.y + 3), z: e.pos.z });
+    }
+  } else if (t < 3.95) {
+    e.vx = e.vz = 0;
+    if (!d.sndCry) {
+      d.sndCry = true;
+      g.audio && g.audio.enemyVoice(e, 'attack');
+    }
+  } else if (t < 4.3) {
+    e.vx = e.vz = 0;
+    const u = (t - 3.95) / 0.35;
+    d.lift = 1 - u * u;
+    d.flip = 1 - sm(u);
+    d.air = u < 0.85;
+  } else {
+    e.vx = e.vz = 0;
+    d.lift = 0;
+    d.flip = 0;
+    d.air = false;
+  }
+}
+const _sv = new THREE.Vector3();
+const _sl = new THREE.Vector3();
+function descCeilingEnd(e) {
+  const d = e.data;
+  d.lift = 0;
+  d.flip = 0;
+  d.air = false;
+  d.sndUp = d.sndCry = false;
+}
+
 export const TYPES = {
   penitent: {
     name: 'Penitente',
@@ -1051,6 +1236,154 @@ export const TYPES = {
       }
       if (e.state !== 'attack') e.data.censerTarget = null;
       censerUpdate(e, dt);
+    },
+  },
+  descoyuntado: {
+    name: 'El Descoyuntado',
+    build: buildDescoyuntado,
+    hp: 480,
+    poise: 70,
+    radius: 0.8,
+    height: 2.0,
+    lockHeight: 1.2,
+    walk: 1.9,
+    run: 5.0,
+    runDist: 4.5,
+    sight: 30,
+    hear: 30,
+    turn: 4.2,
+    stride: 2.4,
+    approach: 2.1,
+    boss: true,
+    hangs: true,
+    fps: 24,
+    clips: dsClips,
+    voice: 'descoyuntado',
+    alertTime: 1.5,
+    attacks: [
+      { name: 'claw', clip: dsClips.claw, dur: 1.3, min: 0, max: 2.9, hits: [[0.64, 0.8]], dmg: 18, range: 2.9, arc: 70, lunge: [[0.56, 0.7, 3.2]], weight: 3 },
+      { name: 'claw2', clip: dsClips.claw2, dur: 1.75, min: 0, max: 2.9, hits: [[0.56, 0.7], [1.04, 1.18]], dmg: 15, range: 2.8, arc: 110, weight: 2, lunge: [[0.5, 0.62, 2], [0.98, 1.1, 2.4]] },
+      { name: 'pounce', clip: dsClips.pounce, dur: 1.7, min: 3.4, max: 8.5, hits: [[0.72, 1.08]], dmg: 26, range: 2.0, arc: 90, lunge: [[0.64, 1.02, 9.5]], weight: 2, stagger: true, onStart: (e) => (e.data.jump = 0.66) },
+      {
+        name: 'ceiling',
+        clip: dsClips.climb,
+        dur: 5.4,
+        min: 2.2,
+        max: 16,
+        weight: 1.1,
+        cd: 1.8,
+        trackUntil: 0,
+        hits: [],
+        // (no más de una vez cada 11 s: arriba no se le puede tocar)
+        cond: (e) => !e.data.lastCeil || e.game.time - e.data.lastCeil > 11,
+        onStart: (e) => (e.data.lastCeil = e.game.time),
+        update: descCeiling,
+        events: [
+          {
+            t: 4.3,
+            fn: (e, g) => {
+              g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 2.8, 30, e, 8);
+              g.camRig.shake(0.55);
+            },
+          },
+        ],
+      },
+      { name: 'crack', clip: dsClips.crack, dur: 1.9, min: 0, max: 4.4, hits: [], weight: 1.6, phase: 2, cd: 1.2, events: [{ t: 0.95, fn: (e, g) => g.combat.toll(e, 4.4, 16, 'crack') }] },
+    ],
+    loco: descPose,
+    init: (e) => {
+      // techo sobre su puesto: de ahí cuelga hasta que entras en la bodega
+      const col = e.game.world.col;
+      const s = e.spec;
+      let c = Infinity;
+      for (const b of col.query(s.x - 0.3, s.z - 0.3, s.x + 0.3, s.z + 0.3, [])) if (b.miny > s.y + 1.6 && b.miny < c && col.overlapXZ(b, s.x, s.z, 0.2)) c = b.miny;
+      e.P.ceilY = c < Infinity ? c - 0.03 : s.y + 3.2;
+    },
+    onReset: (e) => {
+      e.data.phase = 1;
+      e.anim.speed = 1;
+    },
+    // al entrar en la niebla: se descuelga del techo delante de ti
+    onWake: (e) => {
+      const bj = DESC.body;
+      e._bj = bj;
+      e.state = 'dropping';
+      e.stT = 0;
+      e.aware = true;
+      e.body.pos.y = e.P.ceilY - 2 * bj;
+      e.body.vy = -1;
+      e.body.grounded = false;
+      e.data.dropGround = e.game.world.col.groundHeight(e.pos.x, e.pos.z, 0.3, e.spec.y + 0.5);
+    },
+    think: (e, player, d, dt) => {
+      // se escabulle de lado o hacia atrás, a trompicones, cuando lo acosas
+      const sk = e.data.skit;
+      if (sk) {
+        sk.t -= dt;
+        e.steerTo(e.pos.x + sk.dx, e.pos.z + sk.dz, 6.4, dt, false);
+        e.yaw = approachAngle(e.yaw, e.angleTo(player.pos), 8 * dt);
+        if (sk.t <= 0) e.data.skit = null;
+        return 'handled';
+      }
+      if (d < 2.3 && e.cooldown > 0.2 && Math.random() < dt * 1.3) {
+        const a = e.angleTo(player.pos) + Math.PI + (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.9);
+        e.data.skit = { t: 0.42, dx: Math.sin(a) * 3, dz: Math.cos(a) * 3 };
+        e.game.audio && e.game.audio.play('scuttle', e.pos);
+      }
+    },
+    update: (e, dt) => {
+      if (!e.dead && e.hp < e.maxHp * 0.5 && e.data.phase !== 2 && e.state !== 'attack') {
+        e.data.phase = 2;
+        e.anim.speed = 1.15;
+        e.game.onBossPhase && e.game.onBossPhase(e);
+      }
+      // el salto del zarpazo largo
+      if (e.data.jump !== undefined && e.state === 'attack' && e.stT >= e.data.jump) {
+        e.body.vy = 4.6;
+        e.body.grounded = false;
+        e.body.pos.y += 0.05;
+        e.data.jump = undefined;
+      }
+      // si un golpe o su muerte cortan el ataque del techo, vuelve al suelo
+      if ((e.state !== 'attack' || !e.atk || e.atk.name !== 'ceiling') && (e.data.lift || e.data.air)) descCeilingEnd(e);
+    },
+    // cinemática: 'hang' = colgado del techo con el cuello estirado hacia
+    // abajo y la cara del revés vuelta hacia la cámara; target: la cara
+    scriptPose: (e, kind, t, target) => {
+      const p = descPose(e, t, 0);
+      p.neck = [-150 * DEG, 0, S(t * 1.3) * 0.1];
+      p.head = [S(t * 1.7) * 0.08, S(t * 2.1) * 0.25, S(t * 0.9) * 0.15];
+      e.rig.apply(p);
+      e.obj.rotation.set(0, 0, Math.PI);
+      e.obj.position.set(0, 0, 0);
+      e.obj.updateMatrixWorld(true);
+      const hp = e.rig.worldPos('head', _sv, _sl.set(0, -0.15, 0.12));
+      e.obj.position.set(target.x - hp.x, target.y - hp.y, target.z - hp.z);
+      e.obj.updateMatrixWorld(true);
+    },
+    rootRot: (e) => {
+      const d = e.data;
+      const bj = DESC.body;
+      const ceil = (e.P.ceilY ?? e.pos.y + 3.2) - bj; // centro del cuerpo colgado
+      let th = 0,
+        by = e.pos.y + bj;
+      if (e.state === 'bossIdle') {
+        th = Math.PI;
+        by = ceil;
+      } else if (e.state === 'dropping') th = Math.PI * Math.max(0, 1 - e.stT * 3);
+      else if (d.lift || d.flip) {
+        th = Math.PI * (d.flip || 0);
+        by = lerp(e.pos.y + bj, ceil, d.lift || 0);
+      }
+      const r = e.lastPose.root ? e.lastPose.root[1] : 0;
+      if (!th) {
+        e.obj.rotation.z = 0;
+        e.obj.position.y = by - bj - e.sink + r;
+        return;
+      }
+      const sn = Math.sin(th);
+      e.obj.rotation.z = th;
+      e.obj.position.set(e.pos.x + bj * sn * Math.cos(e.yaw), by - bj * Math.cos(th), e.pos.z - bj * sn * Math.sin(e.yaw));
     },
   },
 };

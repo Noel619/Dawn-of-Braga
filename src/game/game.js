@@ -23,8 +23,12 @@ import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
 import { loadSave, writeSave, clearSave, loadSettings, writeSettings, Inventory } from './save.js';
 import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
+import { CANON, stairY } from '../world/level_canon.js';
+import { CellarCutscene } from './cutscene.js';
 
 const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
+// música de cada jefe (fase 1 y fase 2)
+const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -88,11 +92,13 @@ export class Game {
     // navegación
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
+    this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > CANON.stair.bottom ? stairY(z) : CANON.cellar.y));
 
     // enemigos
     this.enemies = lvl.L.enemies.map((s) => new Enemy(this, s));
     this.activeEnemies = [];
-    this.bosses = { impaled: this.enemies.find((e) => e.type === 'impaled'), turibulario: this.enemies.find((e) => e.type === 'turibulario') };
+    this.bosses = {};
+    for (const e of this.enemies) if (e.boss) this.bosses[e.type] = e;
     this.activeBoss = null;
 
     // cada personaje con sus propios materiales: luz horneada del sitio (sonda)
@@ -150,6 +156,7 @@ export class Game {
       inv: this.inventory.toJSON(),
       maxHp: p.maxHp,
       maxFlasks: p.maxFlasks,
+      maxSt: p.maxSt,
       dmgMul: p.dmgMul,
       weapon: p.weaponId,
       lastAltar: this.lastAltar,
@@ -172,6 +179,7 @@ export class Game {
     const p = this.player;
     p.maxHp = s.maxHp || 100;
     p.maxFlasks = s.maxFlasks || 3;
+    p.maxSt = s.maxSt || 100;
     p.dmgMul = s.dmgMul || 1;
     this.savedWeapon = s.weapon || null;
   }
@@ -238,6 +246,7 @@ export class Game {
 
   // ------------------------------------------------------------ flujo
   toTitle() {
+    this.endCutscene();
     this.state = 'title';
     this.ui.closeAll();
     this.ui.showHud(false);
@@ -293,6 +302,7 @@ export class Game {
     const p = this.player;
     p.maxHp = 100;
     p.maxFlasks = 3;
+    p.maxSt = 100;
     p.dmgMul = 1;
     this.applyWorldState();
     this.ui.closeAll();
@@ -461,6 +471,10 @@ export class Game {
       p.maxHp += 25;
       p.hp += 25;
     } else if (it.upgrade === 'dmg') p.dmgMul += 0.25;
+    else if (it.upgrade === 'st') {
+      p.maxSt += 30;
+      p.st = p.maxSt;
+    }
     this.ui.showItem(id);
     this.state = 'paused';
     const s = this.ui.top;
@@ -536,22 +550,27 @@ export class Game {
     // cámara entre el jefe y el jugador, ligeramente de lado, sin atravesar muros
     const want = Math.min(d * 0.7, b.T.height * 2.2 + 2);
     const dir = new THREE.Vector3(dx / d + (-dz / d) * 0.45, 0, dz / d + (dx / d) * 0.45).normalize();
-    const eyeY = b.pos.y + b.T.height * 0.55;
+    // (el que cuelga del techo: la cámara baja y mira hacia arriba mientras cae)
+    const hang = !!b.T.hangs;
+    const eyeY = b.pos.y + (hang ? 1.2 : b.T.height * 0.55);
     const hit = this.world.col.raycast(b.pos.x, eyeY, b.pos.z, dir.x, 0, dir.z, want, (bx) => bx.cam !== false && bx.tag !== 'fog');
     const dist = hit === Infinity ? want : Math.max(2.5, hit - 0.5);
     const camPos = new THREE.Vector3(b.pos.x + dir.x * dist, eyeY - 0.4, b.pos.z + dir.z * dist);
-    this.cinematic(b.type === 'turibulario' ? 3.4 : 2.0, camPos, new THREE.Vector3(b.pos.x, b.pos.y + b.T.height * 0.65, b.pos.z));
-    b.aware = true;
-    b.state = 'alert';
-    b.stT = 0;
-    if (b.T.clips.alert) b.anim.play(b.T.clips.alert, { blend: 0.1 });
+    this.cinematic(b.type === 'turibulario' ? 3.4 : hang ? 2.8 : 2.0, camPos, new THREE.Vector3(b.pos.x, b.pos.y + (hang ? 1.5 : b.T.height * 0.65), b.pos.z));
+    if (b.T.onWake) b.T.onWake(b, this);
+    else {
+      b.aware = true;
+      b.state = 'alert';
+      b.stT = 0;
+      if (b.T.clips.alert) b.anim.play(b.T.clips.alert, { blend: 0.1 });
+    }
     this.audio.enemyVoice(b, 'alert');
-    this.audio.music(b.type === 'turibulario' ? 'bossFinal' : 'boss');
+    this.audio.music((BOSS_MUSIC[b.type] || BOSS_MUSIC.impaled)[0]);
     this.ui.area(b.T.name);
   }
 
   onBossPhase(b) {
-    this.audio.music(b.type === 'turibulario' ? 'bossFinal2' : 'boss2');
+    this.audio.music((BOSS_MUSIC[b.type] || BOSS_MUSIC.impaled)[1]);
     this.camRig.shake(0.6);
     this.flash = 0.5;
     if (b.type === 'turibulario') this.atmo.override = { fog: 0x2a0806, vol: 0.05, bloom: 1.6 };
@@ -571,7 +590,7 @@ export class Game {
       this.audio.play('victory');
       this.atmo.override = null;
       setTimeout(() => {
-        this.ui.area(e.type === 'impaled' ? 'EL EMPALADO HA CAÍDO' : 'EL TURIFERARIO HA CAÍDO');
+        this.ui.area(`${e.T.name.toUpperCase()} HA CAÍDO`);
         this.interact.applyFlags(this.flags);
         for (const it of this.interact.list) if (it.kind === 'door' && it.lock.type === 'boss' && it.lock.boss === e.type) this.interact.setOpen(it), (this.flags['door:' + it.id] = true);
         this.saveGame();
@@ -599,6 +618,7 @@ export class Game {
 
   respawn() {
     this.cine = null;
+    this.endCutscene();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -611,6 +631,27 @@ export class Game {
 
   onTrigger(it) {
     if (it.event === 'ending') this.ending();
+    // al asomarse a la escalera de la bodega (una vez, y sólo si el
+    // Descoyuntado sigue ahí abajo)
+    else if (it.event === 'sotano' && !this.flags['cine:sotano'] && !this.flags['boss:descoyuntado'] && !this.cutscene) this.startCutscene();
+  }
+
+  startCutscene() {
+    this.cutscene = new CellarCutscene(this);
+    this.cutscene.start();
+    this.flags['cine:sotano'] = true;
+    this.saveGame();
+  }
+  endCutscene() {
+    const c = this.cutscene;
+    this.cutscene = null;
+    if (c) c.end();
+  }
+
+  // ¿Está en la bodega del canónigo (o en su escalera)?
+  inCellar(p) {
+    const C = CANON.cellar;
+    return p.x > C.x0 - 1 && p.x < C.x1 + 1 && p.z > C.z0 - 1 && p.z < CANON.stair.top + 0.5 && p.y < -0.5;
   }
 
   ending() {
@@ -838,6 +879,12 @@ export class Game {
         this.camRig.curDist = 2;
         this.camRig.override = null;
       } else this.camRig.override.look.set(-84.7, 0.4 + Math.min(1, this.player.stT / 3.4) * 1.1, -15.9);
+    } else if (this.cutscene) {
+      // (en pausa se detiene; con «interactuar» se salta al corte)
+      if (this.state === 'play' && !this.ui.modal) {
+        if (this.cutscene.t > 1 && inp.pressed('interact')) this.cutscene.skip();
+        if (!this.cutscene.update(dt)) this.endCutscene();
+      }
     } else if (this.cine) {
       this.cine.t += dt;
       this.camRig.override = { pos: this.cine.pos, look: this.cine.look, speed: 4 };
@@ -866,14 +913,14 @@ export class Game {
     if (playing) {
       this.playTime += dt;
       if (inp.pressed('pause')) this.openPause();
-      else if (inp.pressed('inventory')) this.openOverlay('inv');
-      else if (inp.pressed('map')) this.openOverlay('map');
+      else if (inp.pressed('inventory') && !this.cutscene) this.openOverlay('inv');
+      else if (inp.pressed('map') && !this.cutscene) this.openOverlay('map');
     }
     if (this.state === 'paused' && !this.ui.modal) this.state = 'play';
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine;
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene;
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -898,11 +945,13 @@ export class Game {
           const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
-          e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
+          // (a la que mueve una cinemática la muestra y la oculta el guion)
+          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
           return act;
         });
       }
-      if (this.state === 'play') for (const e of this.activeEnemies) e.update(dt, p);
+      // (durante una cinemática las criaturas esperan)
+      if (this.state === 'play' && !this.cutscene) for (const e of this.activeEnemies) e.update(dt, p);
       else if (this.state === 'title') for (const e of this.activeEnemies) e.animate(dt);
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
@@ -920,7 +969,7 @@ export class Game {
       if (p.autoDir && p.pos.z < -211.5) p.autoDir = null;
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine);
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene);
 
     // zona y atmósfera
     if (this.state !== 'title') {
@@ -960,7 +1009,7 @@ export class Game {
       }
     }
     this.fear = damp(this.fear || 0, fear, 2, dt);
-    this.post.U.uGrain.value = 0.045 + this.fear * this.fear * 0.09;
+    this.post.U.uGrain.value = 0.045 + this.fear * this.fear * 0.09 + (this.cutscene ? this.cutscene.grain || 0 : 0);
 
     // postproceso: daño, salud baja, destellos, fundido
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.2);

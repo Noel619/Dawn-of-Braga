@@ -156,11 +156,12 @@ export class Combat {
     if (!recent && dd < r + 0.3 && Math.abs(p.pos.y - y) < 1.2 && p.body.grounded) this.apply(src, { dmg, knock, stagger: true, chip: 0.25 }, x, z);
   }
 
-  // Tañido / rugido: onda que aturde (sólo se evita esquivando).
+  // Tañido / rugido / crujido: onda que aturde (sólo se evita esquivando).
   toll(e, r, dmg, kind = 'bell') {
     const g = this.game;
-    this.ring(e.pos.x, e.pos.y + 0.1, e.pos.z, r, kind === 'roar' ? 0xff4020 : 0xc8b070, 0.8);
-    g.audio && g.audio.play(kind === 'roar' ? 'roar' : 'bellToll', e.pos);
+    // (crack: el Descoyuntado se parte todas las articulaciones a la vez)
+    this.ring(e.pos.x, e.pos.y + 0.1, e.pos.z, r, kind === 'roar' ? 0xff4020 : kind === 'crack' ? 0xd0c0a8 : 0xc8b070, 0.8);
+    g.audio && g.audio.play(kind === 'roar' ? 'roar' : kind === 'crack' ? 'crack' : 'bellToll', e.pos);
     g.warp = 1;
     g.camRig.shake(0.45);
     const p = g.player;

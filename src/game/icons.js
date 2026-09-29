@@ -408,6 +408,24 @@ const ICONS = {
       b.set(x, y, P.ruby2);
     b.outline(P.void);
   },
+  // rosario de azabache con la cruz de plata ennegrecida
+  rosary(b) {
+    const JET = [P.void, P.ink1, P.ink3, P.iron1, P.iron3, P.steel3];
+    const SIL = [P.steel0, P.steel1, P.steel2, P.steel3, P.steel4, P.steel5];
+    const n = 18;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const x = 15.5 + Math.cos(a) * 9.5 + Math.sin(a) * 1.4,
+        y = 11 + Math.sin(a) * 6.8;
+      disc(b, x, y, 1.75, (l, d, xx, yy) => shade(i % 6 === 3 ? SIL : JET, l * 0.95 + 0.04, xx, yy));
+    }
+    // tramo que cuelga hasta la cruz
+    for (let i = 0; i < 3; i++) disc(b, 15.2 - i * 0.5, 19.6 + i * 2.6, 1.55, (l, d, xx, yy) => shade(JET, l, xx, yy));
+    for (let y = 25; y <= 31; y++) for (let x = 13; x <= 15; x++) b.set(x, y, shade(SIL, 0.85 - (y - 25) / 12 - (x - 13) * 0.14, x, y));
+    for (let x = 10; x <= 18; x++) for (let y = 26; y <= 27; y++) b.set(x, y, shade(SIL, 0.9 - (x - 10) / 14 - (y - 26) * 0.18, x, y));
+    sparkle(b, 23, 5);
+    b.outline(P.void);
+  },
   // piedra de afilar con runas que arden
   whetstone(b) {
     const ST = [P.void, P.iron0, P.iron1, P.iron2, P.iron3, P.iron4, P.iron5];

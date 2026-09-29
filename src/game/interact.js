@@ -75,6 +75,22 @@ function doorLeaf(w, h, mat) {
   return g;
 }
 
+// Tranca atravesada por el lado desde el que se puede quitar, sobre dos
+// grapas de hierro empotradas en las jambas.
+function barMesh(w) {
+  const g = new THREE.Group();
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, 0.18, 0.14), objMat('timber'));
+  beam.position.y = 1.32;
+  g.add(beam);
+  for (const s of [-1, 1]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.2), objMat('iron'));
+    b.position.set(s * (w / 2 + 0.12), 1.32, -0.02);
+    g.add(b);
+  }
+  g.userData.beam = beam;
+  return g;
+}
+
 function barricadeMesh(w, h) {
   const g = new THREE.Group();
   const wood = objMat('planks');
@@ -240,6 +256,28 @@ function itemMesh(id) {
     const b = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 5), objMat('wooddark'));
     b.position.set(0, 0.12, 0.2);
     g.add(a, b);
+  } else if (id === 'rosario') {
+    // cuentas de azabache en un lazo y la cruz de plata colgando
+    const jet = objMat('black'),
+      silver = objMat('silver');
+    const bead = new THREE.SphereGeometry(0.022, 5, 4);
+    for (let i = 0; i < 22; i++) {
+      const a = (i / 22) * Math.PI * 2;
+      const b = new THREE.Mesh(bead, i % 6 === 0 ? silver : jet);
+      b.position.set(Math.cos(a) * 0.14, 0.02, Math.sin(a) * 0.1 - 0.04);
+      g.add(b);
+    }
+    for (let i = 1; i <= 4; i++) {
+      const b = new THREE.Mesh(bead, jet);
+      b.position.set(0, 0.02, 0.06 + i * 0.045);
+      g.add(b);
+    }
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.015, 0.16), silver);
+    c1.position.set(0, 0.02, 0.33);
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.015, 0.03), silver);
+    c2.position.set(0, 0.02, 0.3);
+    g.add(c1, c2);
+    g.rotation.y = 0.5;
   } else if (id === 'anillo') {
     const r = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.012, 4, 10), bronze);
     const gem = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.03), objMat('redGlow'));
@@ -296,6 +334,8 @@ function fogWallMat() {
           #else
             alpha *= 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
           #endif
+          // pegada a la cámara se aclara: dentro de la arena no tapa medio encuadre
+          alpha *= smoothstep(0.5, 2.6, vFogDepth);
         #endif
         gl_FragColor = vec4(vec3(0.85, 0.88, 0.9) * (0.7 + a * 0.5), alpha);
       }`,
@@ -358,6 +398,18 @@ export class Interactables {
           leaves.push(pivot);
         }
         it.leaves = leaves;
+        // puerta entornada: la hoja queda algo abierta (se ve luz dentro)
+        it.ajar = s.ajar ?? 0;
+        if (s.lock && s.lock.type === 'barred') {
+          // (eje 'x': +z local = +z del mundo; eje 'z': +z local = -x del mundo)
+          const ls = (s.axis === 'z' ? -1 : 1) * s.lock.side;
+          it.bar = barMesh(s.w);
+          // barAt: plano (coordenada mundo) de la cara del muro por ese lado
+          it.barZ = s.barAt !== undefined ? (s.axis === 'z' ? s.x - s.barAt : s.barAt - s.z) + ls * 0.08 : off + ls * 0.14;
+          it.barS = ls;
+          it.bar.position.z = it.barZ;
+          it.obj.add(it.bar);
+        }
         if (s.lock && s.lock.type === 'boards') {
           it.boards = boardsOverDoor(s.w, s.h);
           it.boards.position.x = -s.w / 2;
@@ -528,6 +580,15 @@ export class Interactables {
         b.rotation.x = Math.min(1, k * 2) * 1.4;
       });
     }
+    if (it.bar) {
+      // se levanta de las grapas, se aparta y desaparece
+      const u = Math.min(1, k / 0.4);
+      it.bar.position.set(0, u * 0.28 - Math.max(0, u - 0.6) * 1.2, it.barZ + it.barS * u * 0.45);
+      it.bar.rotation.z = u * 0.35;
+      it.bar.visible = k < 0.45;
+    }
+    // la entornada parte de su apertura inicial
+    if (it.ajar) k = it.ajar + (1 - it.ajar) * k;
     for (const lf of it.leaves || []) {
       if (it.mat === 'grate') lf.position.y = k * (it.h - 0.3);
       else if (it.mat === 'seal') lf.position.y = -k * (it.h + 0.2);
@@ -598,7 +659,7 @@ export class Interactables {
   refreshNav(it) {
     const g = this.game;
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
-    for (const n of [g.navSurface, g.navCrypt]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+    for (const n of [g.navSurface, g.navCrypt, g.navCellar]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
 
   shatter(it, instant = false) {

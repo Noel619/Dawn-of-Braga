@@ -27,6 +27,7 @@ const ZONE_MUSIC = {
   crypt: 'crypt',
   tunnel: 'crypt',
   arena: 'crypt',
+  cellar: 'crypt',
   dawn: 'ending',
 };
 // sala (respuesta de impulso) y cantidad de reverberación
@@ -40,6 +41,7 @@ const ZONE_ROOM = {
   crypt: ['crypt', 0.6],
   tunnel: ['crypt', 0.55],
   arena: ['hall', 0.55],
+  cellar: ['crypt', 0.5],
   dawn: ['open', 0.16],
 };
 // capas de fondo: viento, rumor del incendio, tono de sala, dron grave, río
@@ -53,11 +55,12 @@ const ZONE_BED = {
   crypt: [0, 0, 0.14, 0.06, 0],
   tunnel: [0.06, 0, 0.12, 0.05, 0],
   arena: [0.02, 0, 0.12, 0.07, 0],
+  cellar: [0, 0, 0.15, 0.08, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60 };
+const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -644,6 +647,13 @@ export class Audio {
       tt += l + rnd(0.02, 0.12);
     }
   }
+  // Hueso que se sale de su sitio: chasquido seco, golpe sordo y algo húmedo.
+  boneCrack(d, t, k = 1) {
+    this.noise(d, t, 0.012, { type: 'highpass', f0: rnd(2200, 3800), gain: 0.5 * k, a: 0.0005 });
+    this.noise(d, t, 0.03, { f0: rnd(900, 1500), q: 3, gain: 0.35 * k, a: 0.001 });
+    this.tone(d, t, 0.05, { f0: rnd(170, 240), f1: 70, gain: 0.3 * k, a: 0.001 });
+    this.noise(d, t + 0.01, 0.07, { f0: rnd(500, 800), q: 2, gain: 0.12 * k, a: 0.005, buf: this.brown, rate: 4 });
+  }
   chitter(d, t, dur, gain) {
     const n = Math.floor(dur / 0.035);
     for (let i = 0; i < n; i++) if (Math.random() < 0.7) this.noise(d, t + i * 0.035 + rnd(0, 0.01), 0.015, { f0: rnd(2500, 4500), q: 8, gain: gain * rnd(0.4, 1), a: 0.001 });
@@ -1071,6 +1081,72 @@ export class Audio {
         this.score.stinger('fog');
         break;
       }
+      // todas las articulaciones a la vez: el crujido del Descoyuntado
+      case 'crack': {
+        d = this.out(P, { gain: 0.9, verb: 0.6, life: 4, ref: 6 });
+        for (let i = 0; i < 9; i++) this.boneCrack(d, t + Math.pow(i / 9, 1.4) * 0.5 + rnd(0, 0.03), rnd(0.7, 1.2));
+        this.tone(d, t + 0.05, 0.6, { f0: 70, f1: 34, gain: 0.5 });
+        this.voice(d, t + 0.1, 1.1, { f0: 380, f1: 880, vowel: 'a', v1: 'i', gain: 0.16, vib: 18, vibD: 90, breath: 0.6, type: 'square', rasp: 0.6, jit: 40 });
+        this.duck(0.3, 0.6);
+        break;
+      }
+      // manos y pies que golpean la piedra a toda prisa
+      case 'scuttle': {
+        d = this.out(P, { gain: 0.7, verb: 0.4, life: 2.5, ref: 4 });
+        const n = 6 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < n; i++) {
+          const tt = t + i * rnd(0.035, 0.07);
+          this.noise(d, tt, 0.03, { type: 'lowpass', f0: rnd(500, 900), gain: rnd(0.25, 0.45), a: 0.001, buf: this.brown, rate: 4 });
+          if (Math.random() < 0.25) this.boneCrack(d, tt, 0.5);
+        }
+        this.chitter(d, t, 0.3, 0.08);
+        break;
+      }
+      case 'boneCrack':
+        d = this.out(P, { gain: 0.8, verb: 0.7, life: 3, ref: 4 });
+        this.boneCrack(d, t, o.k ?? 1);
+        if (o.n) for (let i = 1; i < o.n; i++) this.boneCrack(d, t + i * rnd(0.09, 0.2), rnd(0.5, 0.9));
+        break;
+      // respiración ronca pegada a la oreja
+      case 'breathClose': {
+        d = this.out(null, { gain: 0.8, verb: 0.15, life: 3.5, occlude: false });
+        this.noise(d, t, 1.2, { f0: 500, f1: 1300, q: 1.2, gain: 0.16, a: 0.5, buf: this.pink, curve: 'lin' });
+        this.voice(d, t + 1.25, 1.3, { f0: 72, f1: 60, vowel: 'o', v1: 'u', gain: 0.1, vibD: 0, breath: 1.4, a: 0.1, rasp: 0.9, jit: 40 });
+        break;
+      }
+      case 'stairCreak':
+        d = this.out(P, { gain: 0.7, verb: 0.6, life: 3, ref: 3 });
+        this.creak(d, t, rnd(0.5, 0.9), rnd(55, 80), 0.18);
+        break;
+      // la llama del farol que se ahoga
+      case 'lampOut': {
+        d = this.out(P, { gain: 0.6, verb: 0.2, life: 2, ref: 2 });
+        this.noise(d, t, 0.35, { type: 'lowpass', f0: 700, f1: 200, gain: 0.3, a: 0.01, buf: this.brown, rate: 2 });
+        this.smp(d, t, this.lib.crackle(6), { gain: 0.25, offset: rnd(0, 4), dur: 0.5, hp: 800 });
+        break;
+      }
+      // «Deo ignoto…», susurrado muy cerca
+      case 'whisperClose': {
+        d = this.out(null, { gain: 0.8, verb: 0.3, life: 4, occlude: false });
+        this.whisper(d, t, 1.4, 0.13);
+        this.mutter(d, t + 0.2, 1.3, 96);
+        break;
+      }
+      // el grito del susto
+      case 'scare': {
+        d = this.out(null, { gain: 1, verb: 0.35, life: 3, occlude: false });
+        this.voice(d, t, 0.8, { f0: 820, f1: 1500, vowel: 'i', v1: 'e', gain: 0.22, vib: 28, vibD: 120, breath: 0.5, type: 'square', rasp: 0.7, jit: 60 });
+        this.voice(d, t, 0.8, { f0: 190, f1: 120, vowel: 'a', gain: 0.18, vib: 9, vibD: 40, breath: 0.6, rasp: 0.8, dist: 1 });
+        for (let i = 0; i < 4; i++) this.boneCrack(d, t + i * 0.06, 1.2);
+        this.score.stinger('scare');
+        this.duck(0.8, 1.2);
+        break;
+      }
+      // al asomarse a la escalera de la bodega: pavor
+      case 'dread':
+        this.score.stinger('dread');
+        this.silenceUntil = Math.max(this.silenceUntil, this.t() + 12);
+        break;
       case 'victory':
         this.score.stinger('victory');
         this.silenceUntil = Math.max(this.silenceUntil, this.t() + 11);
@@ -1195,6 +1271,28 @@ export class Audio {
         else if (kind === 'death') V({ dur: 2.3, f0: 650, f1: 190, vowel: 'i', v1: 'o', gain: 0.18, vib: 4, vibD: 60, breath: 0.4, type: 'triangle' });
         else if (kind === 'idle') for (let i = 0; i < 3; i++) V({ dt: i * 0.45, dur: 0.38, f0: 480 - i * 25, f1: 420 - i * 25, vowel: 'a', gain: 0.08, type: 'triangle', breath: 0.5, jit: 30 }); // sollozos
         break;
+      case 'descoyuntado':
+        if (kind === 'alert') {
+          V({ dur: 1.4, f0: 118 * pv, f1: 64, vowel: 'o', v1: 'u', gain: 0.24, vib: 5, vibD: 30, breath: 0.7, rasp: 0.7, jit: 30 });
+          V({ dt: 1.1, dur: 0.9, f0: 420, f1: 960, vowel: 'a', v1: 'i', gain: 0.16, vib: 22, vibD: 110, breath: 0.5, type: 'square', rasp: 0.5, jit: 40 });
+          for (let i = 0; i < 6; i++) this.boneCrack(d, t + 0.2 + i * rnd(0.12, 0.2), rnd(0.7, 1.1));
+        } else if (kind === 'attack') {
+          V({ dur: 0.45, f0: 150 * pv, f1: 105, vowel: 'a', v1: 'e', gain: 0.2, vibD: 0, breath: 0.8, a: 0.01, rasp: 0.6, jit: 30 });
+          this.boneCrack(d, t + 0.05, 0.9);
+        } else if (kind === 'hurt') {
+          this.boneCrack(d, t, 1.1);
+          V({ dt: 0.03, dur: 0.35, f0: 210 * pv, f1: 140, vowel: 'e', gain: 0.18, breath: 0.6, a: 0.01, rasp: 0.4 });
+        } else if (kind === 'death') {
+          V({ dur: 3.4, f0: 130 * pv, f1: 38, vowel: 'a', v1: 'u', gain: 0.26, vib: 5, vibD: 40, breath: 0.7, a: 0.1, rasp: 0.6, jit: 25 });
+          for (let i = 0; i < 12; i++) this.boneCrack(d, t + 0.3 + i * rnd(0.12, 0.26), rnd(0.6, 1.1));
+          this.bodyFall(d, t + 1.6, 1.4);
+          this.whisper(d, t + 3.2, 1.6, 0.09);
+          this.duck(0.35, 3);
+        } else if (kind === 'idle') {
+          this.mutter(d, t, 1.8, 98 * pv);
+          if (Math.random() < 0.6) this.boneCrack(d, t + rnd(0.3, 1.5), 0.7);
+        }
+        break;
       case 'impaled':
       case 'boss': {
         const lo = v === 'boss' ? 0.8 : 1;
@@ -1233,6 +1331,11 @@ export class Audio {
       this.jingle(d, t, 0.12, 0.1);
     } else if (v === 'hound') this.noise(d, t, 0.05, { type: 'lowpass', f0: 700, gain: 0.25, a: 0.004, buf: this.brown, rate: 4 });
     else if (v === 'crawler') this.chitter(d, t, 0.1, 0.12);
+    else if (v === 'descoyuntado') {
+      // palmada de una mano en la piedra y, a veces, un hueso
+      this.noise(d, t, 0.045, { type: 'lowpass', f0: 650, gain: 0.35, a: 0.002, buf: this.brown, rate: 4 });
+      if (Math.random() < 0.3) this.boneCrack(d, t + 0.02, 0.5);
+    }
     else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
     else {
       // pie descalzo que a veces se arrastra
@@ -1552,6 +1655,15 @@ export class Audio {
         this.debris(d, t + 0.1, 5, 0.8, { f0: 400, f1: 1200 });
       }
       return rnd(3, 8);
+    }
+    if (z === 'cellar') {
+      const d = O(near(8, 1.5), 0.6, { ref: 3, roll: 1, verb: 0.9, life: 4 });
+      if (r < 0.3) this.smp(d, t, this.lib.drip(rnd(700, 1500)), { gain: 0.3 });
+      else if (r < 0.5) this.boneCrack(d, t, 0.6);
+      else if (r < 0.65) this.mutter(d, t, rnd(1.2, 2), 96);
+      else if (r < 0.8) this.noise(d, t, rnd(1, 1.8), { f0: 320, f1: 190, q: 2, gain: 0.18, a: 0.2, buf: this.brown, rate: 3, curve: 'lin' });
+      else this.creak(d, t, rnd(0.6, 1.2), rnd(50, 80), 0.12);
+      return rnd(3, 7);
     }
     if (z === 'dawn') {
       this.birdsong(O(far(8, 25, rnd(3, 8)), 0.4, { verb: 0.3, ref: 6, life: 3 }), t);

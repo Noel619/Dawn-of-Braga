@@ -54,13 +54,24 @@ Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y tall
 catedral: osario de calaveras, un templo romano de *Bracara Augusta* con mosaicos, el sepulcro del arzobispo y la
 cisterna del Dios Desconocido. Al final, las orillas del río Este.
 
-**Los barrios.** Entre las calles principales hay una trama de callejones, pasadizos elevados, soportales y
-casas que se pueden visitar por dentro: el Callejón del Pozo y su plazuela, el Callejón del Arco, la Travesía de la
-Sé, la Taberna del Cuervo, el obrador de la tejedora (telar y torno de hilar), el patio y el horno de pan (con
-artesas y hornos de leña), el Callejón de la Fragua, el patio y el taller de los tintoreros (cubas de tinte y telas
-tendidas), el corral y el establo de los Pellejeros, y la cerca de la ciudad cerrando cada barrio. Los altares de
-descanso están en lugares a salvo: la capilla de la guarnición, el Oratorio de Santa Bárbara, la Capilla de San
-Fructuoso y la cripta.
+**Los barrios.** Entre las calles principales hay una trama de callejones, pasadizos elevados, soportales y casas
+que se pueden visitar por dentro: el Callejón del Pozo y su plazuela (con el pozo bajo un tejadillo a cuatro aguas,
+su torno y su cubo), el Callejón del Arco, la Travesía de la Sé, la Taberna del Cuervo, el obrador de la tejedora
+(telar y torno de hilar), el patio y el horno de pan (con artesas y hornos de leña), el Callejón de la Fragua, el
+patio y el taller de los tintoreros (cubas de tinte y telas tendidas), el corral y el establo de los Pellejeros, y
+la cerca de la ciudad cerrando cada barrio. Los altares de descanso están en lugares a salvo: la capilla de la
+guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso y la cripta. Las casas que se pueden visitar
+se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
+adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
+
+**La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
+portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
+a los lados de la puerta entornada y una torre almenada con la ventana alta siempre iluminada. Dentro, el zaguán,
+el estudio (la llave del claustro sigue sobre la mesa), la alcoba, la cocina con su hogar y la despensa. Al fondo,
+la puerta de la bodega, atrancada por el ama con sal y velas. Al asomarse a la escalera salta una cinemática de
+terror: la cámara baja de espaldas por los peldaños mirando siempre al personaje, con un zoom de vértigo y franjas
+de cine; algo cruza el plano de un salto sin que él lo vea y, abajo, cuando el farol se ahoga, una cabeza del revés
+baja del techo delante del objetivo. Abajo espera **El Descoyuntado**, un jefe opcional.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -72,8 +83,10 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
 puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, un
 sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
-criaturas a sus puestos. Mejoras opcionales: ampollas vacías, relicarios de hueso (vitalidad) y una piedra de
-afilar bendita (daño). Doce documentos breves cuentan la historia junto con el escenario.
+criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
+opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
+canónigo (aguante), que deja el Descoyuntado al morir. Catorce documentos breves cuentan la historia junto con el
+escenario.
 
 **Combate Soulslike simplificado.** Ataque ligero en combo, ataque pesado que rompe guardias, ataque a la carrera,
 bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de invulnerabilidad, curación con
@@ -85,6 +98,9 @@ barrido suave, sin saltos.
 **Animación procedural.** Clips con interpolación de Hermite y mezcla por cuaterniones, marcha bípeda con zancada
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
 (los pies se apoyan en el suelo y en los escalones) y brazos; los escudos se estabilizan para mirar siempre al frente.
+El brazo del escudo lo lleva con soltura (muelles de guiñada, cabeceo y alabeo, y mezcla de las poses de guardia,
+marcha y carrera) y, si aun así fuera a meterse en el torso, la hombrera, la cadera o la pierna, se aparta; al trotar
+y correr la hoja va por delante.
 
 **Armas.** Cinco armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
 pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación). Por el orden en que se
@@ -121,6 +137,11 @@ se encadena el anterior.
 - **Campanero**: bruto de 2,6 m con una campana fundida en la cabeza; su tañido aturde.
 - **Plañidera**: figura velada que flota y lanza lamentos espectrales.
 - **El Empalado** (jefe menor): un gigante atravesado por una pica que carga contra ti.
+- **El Descoyuntado** (jefe opcional, en la bodega del canónigo): el canónigo, boca arriba sobre cuatro miembros
+  descoyuntados, con la sotana hecha jirones y la cabeza del revés. Cuelga del techo hasta que entras; da
+  zarpazos, salta sobre ti, trepa a la bóveda y corre boca abajo hacia ti (sólo su sombra lo delata; ahí arriba no
+  se le puede tocar) para dejarse caer, y en la segunda fase se parte todas las articulaciones a la vez en una onda
+  que aturde.
 - **El Turiferario** (jefe final): el arzobispo transfigurado, con una corona de velas y un incensario gigante
   simulado físicamente como un péndulo en llamas; segunda fase con lluvia de ascuas y charcos de fuego.
 
@@ -144,7 +165,9 @@ mi frigio con dron grave, coro lejano, zanfona y salterio; la muralla, con cuern
 al otro lado; las casas, con una caja de música olvidada; las capillas con altar, con órgano de flautado y un coro
 en paz (ahí no entra la tensión); la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
 coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
-fase) y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies irae*. La portada es canto llano en
+fase); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
+y un coro que salmodia en una sola nota, y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies
+irae*. La portada es canto llano en
 *organum* con campanas y el amanecer, un coro y un arpa en mayor. Hay golpes de efecto al ser descubierto, al
 descubrir una zona, al descansar, al cruzar la niebla, al morir y al vencer. Los instrumentos se sintetizan en
 directo: órgano con registros, coro con formantes, cuerdas, zanfona, metales, salterio y arpa por Karplus-Strong,
@@ -171,11 +194,12 @@ src/
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
+                        (level_canon.js: la Casa del Canónigo y su bodega)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
-                        iconos, guardado y textos
+                        iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
@@ -189,6 +213,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        bloqueo y curación contra un enemigo real
                         animcheck.mjs  (sin navegador) análisis numérico de los golpes: velocidad de la punta,
                                        filo por delante, agarre a dos manos, tirones y saltos al encadenar
+                        gearcheck.mjs  escudo y hoja frente al cuerpo al andar, correr, girar y bloquear:
+                                       cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
 ```

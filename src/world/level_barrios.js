@@ -93,6 +93,9 @@ export function buildNW(ctx, S, L) {
   P.decal(ctx, -34.4, 0.03, -35.8, 1.2);
   wb.setRoom(null);
   L.interact.push({ kind: 'note', id: 'n_tejedora', note: 'tejedora', x: -32.8, y: 0.82, z: -38.4, model: 'paper' });
+  // rótulo del huso y farol encendido: el obrador se distingue desde la plazuela
+  P.sign(ctx, -34.1, 2.95, -32, 0, 'spindle');
+  P.lantern(ctx, -36.85, 2.7, -32, 0, true);
 
   // --- callejón del Arco: de la plazuela a la Calle de la Catedral
   lane(ctx, S, -31, -22, -3.5, -19.5);
@@ -602,7 +605,11 @@ export function buildFillers(ctx, S, L) {
   block(-27, -62, -18, -56, { h: 6.2 });
   // noreste: entre el claustro, la Sé y la torre del Postigo
   block(44, -40, 55, -32, { front: 'n' });
-  block(48, -32, 55, -26);
+  // (aquí había una manzana: ahora es la casa del canónigo; se gastan sus
+  // tiradas para que el resto de las manzanas no cambie)
+  rng.pick(['n', 's', 'e', 'w']);
+  rng.next();
+  rng.range(5.8, 8.2);
   block(42, -32, 48, -21);
   block(40, -72, 50, -62, { front: 's' });
   block(50, -72, 62, -62, { front: 's', lit: true });

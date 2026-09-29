@@ -7,6 +7,7 @@ import { WalkGrid } from './walkgrid.js';
 import { buildCastle, buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
+import { buildCanon } from './level_canon.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
@@ -28,6 +29,7 @@ export function buildLevel() {
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
+  const B = new WalkGrid(46, -48, 66, -24, 0.5); // bodega del canónigo
   ctx.S = S; // las casas visitables pintan su huella transitable
 
   buildCastle(ctx, S, L);
@@ -43,6 +45,7 @@ export function buildLevel() {
   buildLargo(ctx, S, L);
   buildPelames(ctx, S, L);
   buildTanners(ctx, S, L);
+  const nB = buildCanon(ctx, S, B, L);
   buildRamparts(ctx, S, L);
   buildFerraria(ctx, S, L);
   buildCathedral(ctx, S, L);
@@ -68,6 +71,7 @@ export function buildLevel() {
   F.paint(-96, -232, 84, 72, 1);
   F.paint(-2, -97, 2, -86, 0);
   F.paint(-2, -186, 2, -167, 0);
+  F.paint(58, -32, 61, -27, 0); // escalera de la bodega del canónigo
   for (const [a, b, c, d] of F.rects(1)) {
     ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
     // suelo visual de fondo (tierra), un poco por debajo de calles e
@@ -78,5 +82,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, clutter } };
+  return { ctx, L, meshes, S, C, B, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, clutter } };
 }

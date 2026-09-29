@@ -575,6 +575,23 @@ export class MusicEngine {
       this.bell(d, t, 64, 0.07, { kind: 'small', dur: 4, pan: -0.2 });
       this.pluck(d, t + 0.35, 71, 0.12);
       this.pluck(d, t + 0.7, 76, 0.1);
+    } else if (name === 'dread') {
+      // al asomarse a la bodega: clúster grave que crece y un latido que se acelera
+      for (const m of [38, 39, 45]) this.strings(d, t, 7.5, m, 0.035, { a: 3.2, r: 2.2, trem: 5, bright: 5 });
+      for (const m of [50, 51]) this.choir(d, t + 1.5, 6, m, 0.022, 'u', { a: 2.5, r: 2 });
+      let tt = t + 0.6;
+      for (let k = 0; k < 9; k++) {
+        this.drum(d, tt, 'heart', 0.3 + k * 0.03);
+        tt += 1.0 - k * 0.06;
+      }
+      this.swell(d, t + 4, 3.5, 0.04, 200, 1600);
+    } else if (name === 'scare') {
+      // golpe de cuerdas agudas en clúster, tambor y gong
+      for (const m of [74, 75, 81, 82]) this.strings(d, t, 1.6, m, 0.06, { a: 0.004, r: 1.4, trem: 14, bright: 11 });
+      for (const m of [38, 39]) this.strings(d, t, 2.2, m, 0.06, { a: 0.004, r: 1.8, bright: 7 });
+      this.drum(d, t, 'taiko', 0.8);
+      this.drum(d, t, 'gong', 0.5);
+      this.swell(d, t, 0.9, 0.08, 1200, 7000);
     } else if (name === 'phantom') {
       for (const m of [58, 59, 64]) this.strings(d, t, 1.4, m, 0.035, { a: 0.9, r: 1.5, trem: 7, bright: 9 });
       this.whisper(d, t, 1.2, 0.05);
@@ -912,6 +929,38 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- jefe opcional: el Descoyuntado
+  // La caja de música de las casas, rota y desafinada, sobre tambores en 7/8
+  // (2+2+3) con chasquidos de hueso y un coro que salmodia en una sola nota.
+  bossCellar: {
+    bpm: 92,
+    root: 38,
+    mode: 'aeolian',
+    meter: 7,
+    prog: [0, 1, 0, 5],
+    chordBars: 1,
+    verb: 0.6,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 190, level: 0.09, rate: 0.12 },
+    step(S) {
+      cellarStep(S, 0);
+    },
+  },
+  bossCellar2: {
+    bpm: 108,
+    root: 38,
+    mode: 'aeolian',
+    meter: 7,
+    prog: [0, 1, 3, 1],
+    chordBars: 1,
+    verb: 0.6,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 260, level: 0.1, rate: 0.25 },
+    step(S) {
+      cellarStep(S, 1);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe final: el Turiferario (Dies irae)
   bossFinal: {
     bpm: 104,
@@ -1000,6 +1049,38 @@ function bossStep(S, phase) {
   if (phase && inBar === 0 && bar % 4 === 0) for (const n of [T.root + 24, T.root + 25, T.root + 31]) m.choir(L.base, t, spb * 15, n, 0.025, 'i', { a: 2, r: 1, shift: 1.25 });
   if (phase && inBar === 2) m.strings(L.base, t, spb * 2, m.deg(T, chord, 2) + 12, 0.02, { trem: 14, a: 0.1, r: 0.2, bright: 9 });
   if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, 38, 0.2, { dur: 6 });
+}
+
+// Jefe de la bodega: compás de 7 (2+2+3), nana de caja de música rota,
+// salmodia en una nota y chasquidos de hueso.
+const NANA = [4, 2, 3, 1, 2, 0, 1, -1, 0, 2, 1, 4, 3, 2];
+function cellarStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  const acc = inBar === 0 || inBar === 2 || inBar === 4;
+  if (inBar === 0) m.drum(L.base, t, 'taiko', 0.5);
+  else if (acc) m.drum(L.base, t, 'frame', 0.3, 0.9);
+  // chasquidos de hueso a contratiempo (en la segunda fase, en cada pulso)
+  if (!acc || phase) m.drum(L.base, t + spb * 0.5, 'tabor', 0.12 + phase * 0.06, 1.6);
+  if (phase && inBar === 6) m.drum(L.base, t, 'taiko', 0.35, 1.2);
+  // nana: una nota por pulso, con alguna desafinada medio tono
+  const d = S.c.data;
+  if (d.i === undefined) d.i = 0;
+  if (bar % 4 !== 3 || phase) {
+    const g = NANA[d.i % NANA.length];
+    const off = chance(0.12) ? 1 : 0;
+    m.pluck(L.base, t, degree(T.root + 24, T.mode, chord + g) + off, rnd(0.07, 0.11), { bright: 0.35 });
+    d.i++;
+  }
+  // salmodia: el coro en la tónica, respirando cada dos compases
+  if (inBar === 0 && bar % 2 === 0) {
+    const r = m.deg(T, chord, 1);
+    m.choir(L.base, t, spb * 6.5, r, 0.03, 'o', { a: 0.4, r: 0.8 });
+    m.choir(L.base, t, spb * 6.5, r - 12, 0.025, 'u', { a: 0.4, r: 0.8 });
+  }
+  // cuerdas en clúster
+  if (inBar === 0 && (bar % 2 === 1 || phase)) for (const n of [chord, chord + 1]) m.strings(L.base, t, spb * 5, m.deg(T, n, 1) + 12, 0.02 + phase * 0.01, { trem: 10, a: 0.3, r: 0.6, bright: 8 });
+  if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root, 0.18, { dur: 6 });
+  if (phase && inBar === 4 && bar % 2 === 0) m.swell(L.base, t, spb * 2, 0.04, 600, 4000);
 }
 
 // Jefe final: órgano, coro con el Dies irae, campanas del incensario, tambores.

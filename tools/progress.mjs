@@ -45,7 +45,14 @@ const steps = [
   "__use('d_barricada')", "__use('d_souto')", "__use('i_ampolla1')", "__use('n_madre')",
   "__use('a_praca')", "__use('a_castelo')",
   "__use('n_tabernero')", "__use('x_mesa_taberna')", "__use('n_tejedora')", "__use('n_panadero')", "__use('n_mozo')", "__use('i_ampolla3')", "__use('d_corral')",
-  "__use('d_canon')", "__use('i_llave')", "__use('n_canonigo')", "__use('a_capela')",
+  "__use('d_canon')", "__use('i_llave')", "__use('n_canonigo')",
+  // bodega del canónigo (opcional): tranca, cinemática, el Descoyuntado y su rosario
+  "__use('n_ama')", "__use('d_sotano')",
+  "(()=>{const g=__game;g.player.spawn(59.5,0,-25.2,Math.PI);__noEnemies();for(let i=0;i<40&&!g.cutscene;i++)__sim(0.05,['KeyW']);const had=!!g.cutscene;for(let i=0;i<400&&g.cutscene;i++)__sim(0.05);return {cine:had,flag:!!g.flags['cine:sotano'],ended:!g.cutscene,ps:g.player.state,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z].map(v=>+v.toFixed(2))}})()",
+  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='f_sotano');g.player.spawn(59.5,-3.9,-32.6,Math.PI);__sim(0.2);g.enterFog(it);__sim(3.2);const b=g.bosses.descoyuntado;const st=b.state;b.hp=1;b.die();__sim(1);return {active:!!g.activeBoss,bossState:st}})()",
+  "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:descoyuntado'],fog:__game.fogActive(__game.interact.list.find(i=>i.id==='f_sotano'))}),3000))",
+  "__use('i_rosario')", "__use('n_bodega')", "({maxSt:__game.player.maxSt})",
+  "__use('a_capela')",
   "__use('d_claustro')", "__use('i_relicario1')", "__use('n_claustro')", "__use('d_claustro_se')",
   "__use('d_se')", "__use('d_cripta')",
   "__use('i_ampolla2')", "__use('n_muralla')",
@@ -57,7 +64,7 @@ const steps = [
   "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1);g.bosses.turibulario.hp=1;g.bosses.turibulario.die();__sim(1);return {active:!!g.activeBoss}})()",
   "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:turibulario'], exit:__game.flags['door:d_salida']}),3000))",
   "(()=>{const g=__game;const y=g.world.col.groundHeight(0,-195,0.2,1);g.player.spawn(0,y,-195,Math.PI);__sim(0.5);for(let i=0;i<30;i++){__sim(0.2,['KeyW']);if(g.state==='ending')break;}return {state:g.state,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z]}})()",
-  "({inv:[...__game.inventory.items.entries()], maxHp:__game.player.maxHp, flasks:__game.player.maxFlasks, dmg:__game.player.dmgMul, notes:Object.keys(__game.flags).filter(k=>k.startsWith('note:')).length})",
+  "({inv:[...__game.inventory.items.entries()], maxHp:__game.player.maxHp, maxSt:__game.player.maxSt, flasks:__game.player.maxFlasks, dmg:__game.player.dmgMul, notes:Object.keys(__game.flags).filter(k=>k.startsWith('note:')).length})",
 ];
 for (const s of steps) {
   let r;

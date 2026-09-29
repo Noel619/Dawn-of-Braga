@@ -84,6 +84,13 @@ export const ITEMS = {
     key: false,
     upgrade: 'hp',
   },
+  rosario: {
+    name: 'Rosario del canónigo',
+    desc: 'Cuentas de azabache de Santiago, gastadas de tanto pasarlas, con una cruz de plata ennegrecida. Al rezarlo se calma el aliento: tu aguante aumenta.',
+    icon: 'rosary',
+    key: false,
+    upgrade: 'st',
+  },
   piedra: {
     name: 'Piedra de afilar bendita',
     desc: 'Afilas la espada con ella. El acero recuerda para qué fue forjado. Tus golpes hacen más daño.',
@@ -129,6 +136,26 @@ Dijo que era un regalo. Que nos protegería del asedio.
 Los sitiadores no lo trajeron: lo oyeron. La campana de la catedral tocó sola la noche de la caída, y ellos abrieron nuestras puertas como si alguien los llamara.
 
 Me quedo la llave del claustro. No volveré a bajar.`,
+  },
+  ama: {
+    title: 'Nota del ama',
+    text: `Señor canónigo, perdóneme.
+
+Desde la noche de la campana ya no duerme en su cama. Baja a la bodega a rezar, y reza a cuatro patas, con la cara vuelta hacia el techo.
+
+Anoche le oí crujir los huesos uno a uno, como quien parte leña. Después me llamó por mi nombre desde debajo de las tablas.
+
+He echado la tranca y he puesto sal y velas en la puerta. Que Dios me perdone: me voy.`,
+  },
+  bodega: {
+    title: 'Última página del canónigo',
+    text: `No me arrodillaba lo bastante. Por eso no me oía.
+
+Ahora me ha enseñado a rezar como Él quiere: más abajo, siempre más abajo. Los huesos estorbaban. Los he ido sacando de su sitio, uno a uno, para arrodillarme mejor.
+
+Ya no me duelen. Ya casi no soy yo.
+
+DEO IGNOTO. DEO IGNOTO. DEO IGNOTO.`,
   },
   soldado: {
     title: 'Nota ensangrentada',
@@ -234,6 +261,7 @@ export const AREA_NAMES = {
   pelames: 'Calle de los Pellejeros',
   tanners: 'Curtidurías',
   canon: 'Casa del Canónigo',
+  sotano: 'Bodega del Canónigo',
   chapel: 'Capilla de San Fructuoso',
   muralla: 'Calle de la Muralla',
   ramparts: 'Adarve oriental',

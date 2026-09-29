@@ -60,7 +60,7 @@ uniform float uTime;
 uniform vec3 uFogColor; uniform float uVol; uniform float uVolY; uniform float uVolScale; uniform float uSkyGlow; uniform float uSun; uniform vec3 uSunDir;
 uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
-uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness;
+uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness, uBars;
 uniform vec3 uFadeColor, uFlashColor;
 varying vec2 vUv;
 ${NOISE}
@@ -136,6 +136,8 @@ void main(){
   // destello y fundido
   col = mix(col, uFlashColor, uFlash);
   col = mix(uFadeColor, col, uFade);
+  // franjas negras de las cinemáticas
+  if (abs(vUv.y - 0.5) > 0.5 - uBars) col = vec3(0.0);
   // cuantización a 15 bits con tramado ordenado (PS1)
   col = floor(clamp(col, 0.0, 1.0) * uQuant + dith) / uQuant;
   gl_FragColor = vec4(col, 1.0);
@@ -213,6 +215,7 @@ export class PostPipeline {
       uQuant: { value: 31 },
       uWarp: { value: 0 },
       uDesat: { value: 0 },
+      uBars: { value: 0 },
     };
     this.composite = fsMat(COMPOSITE_FS, this.U);
     this.blit = fsMat(BLIT_FS, {

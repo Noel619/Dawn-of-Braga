@@ -361,3 +361,89 @@ export const CANDLE_OFFSETS = (k = 2.35) =>
     const a = Math.PI * (0.1 + (i / 6) * 0.8);
     return new THREE.Vector3(Math.cos(a) * 0.2 * k, 0.3 * k + Math.sin(a) * 0.2 * k + 0.07 * k, -0.08 * k);
   });
+
+// ------------------------------------------------------------ El Descoyuntado
+// El canónigo, boca arriba sobre cuatro miembros descoyuntados como una
+// araña: los codos y las rodillas por encima del cuerpo, huesos asomando en
+// cada articulación, la sotana hecha jirones colgando hasta el suelo y la
+// cabeza del revés (la tonsura abajo, la boca arriba). Lleva su rosario
+// enredado en la muñeca izquierda.
+export const DESC = { body: 1.02, LAf: 1.0, LBf: 1.75, LAb: 0.95, LBb: 1.7 };
+export function buildDescoyuntado() {
+  const D = DESC;
+  const joints = [
+    { name: 'body', pos: [0, D.body, 0] },
+    { name: 'neck', parent: 'body', pos: [0, 0.02, 0.6] },
+    { name: 'head', parent: 'neck', pos: [0, -0.32, 0.04] },
+  ];
+  const limbs = [
+    ['lf', 0.27, 0.44, D.LAf, D.LBf],
+    ['rf', -0.27, 0.44, D.LAf, D.LBf],
+    ['lb', 0.23, -0.48, D.LAb, D.LBb],
+    ['rb', -0.23, -0.48, D.LAb, D.LBb],
+  ];
+  for (const [n, x, z, la] of limbs) {
+    joints.push({ name: n + 'A', parent: 'body', pos: [x, 0.04, z] });
+    joints.push({ name: n + 'B', parent: n + 'A', pos: [0, la, 0] });
+  }
+  const parts = [
+    // tronco boca arriba: costillas y esternón por encima, espinazo por debajo
+    { j: 'body', type: 'box', s: [0.56, 0.3, 1.16], p: [0, 0, 0], taper: [0.8, 1], mat: 'skinCorrupt' },
+    { j: 'body', type: 'box', s: [0.06, 0.06, 1.02], p: [0, -0.13, 0], mat: 'bone' },
+    ...[-0.12, 0.03, 0.18, 0.33].map((z) => ({ j: 'body', type: 'box', s: [0.5, 0.035, 0.04], p: [0, 0.125, z], mat: 'bone' })),
+    { j: 'body', type: 'box', s: [0.06, 0.045, 0.52], p: [0, 0.14, 0.14], mat: 'bone' },
+    { j: 'body', type: 'ico', s: [0.16, 0.08, 0.2], p: [0.06, 0.1, -0.3], mat: 'flesh' },
+    { j: 'body', type: 'box', s: [0.64, 0.2, 0.24], p: [0, 0, 0.46], mat: 'skinCorrupt' },
+    { j: 'body', type: 'box', s: [0.52, 0.2, 0.26], p: [0, -0.01, -0.48], mat: 'skinCorrupt' },
+    // alzacuello
+    { j: 'body', type: 'box', s: [0.22, 0.08, 0.08], p: [0, 0.02, 0.6], mat: 'clothWhite' },
+    // jirones de la sotana colgando a los lados y por detrás
+    ...[
+      [-0.4, 0.78],
+      [-0.14, 0.98],
+      [0.12, 0.86],
+      [0.34, 0.7],
+    ].flatMap(([z, len], i) =>
+      [-1, 1].map((sd) => ({ j: 'body', type: 'box', s: [0.025, len * (sd > 0 ? 1 : 0.9 + (i % 2) * 0.15), 0.21], p: [sd * 0.26, -len / 2 + 0.03, z], r: [0, 0, sd * 9], mat: 'clothDark', ds: true }))
+    ),
+    { j: 'body', type: 'box', s: [0.44, 0.84, 0.025], p: [0, -0.4, -0.62], r: [-8, 0, 0], taper: [1.2, 1], mat: 'clothDark', ds: true },
+    // cuello estirado, con la carne abierta
+    { j: 'neck', type: 'box', s: [0.11, 0.36, 0.11], p: [0, -0.15, 0.02], taper: [0.9, 0.9], mat: 'skinCorrupt' },
+    { j: 'neck', type: 'ico', s: [0.08], p: [0.03, -0.03, 0], mat: 'flesh' },
+    // cabeza del revés: la boca arriba, los ojos debajo y la tonsura abajo
+    { j: 'head', type: 'box', s: [0.24, 0.3, 0.27], p: [0, -0.13, 0.03], mat: 'skinCorrupt' },
+    { j: 'head', type: 'box', s: [0.13, 0.13, 0.02], p: [0, -0.05, 0.17], mat: 'black' },
+    ...[-0.045, -0.015, 0.015, 0.045].map((x) => ({ j: 'head', type: 'box', s: [0.018, 0.03, 0.015], p: [x, -0.1, 0.178], mat: 'bone' })),
+    ...[-0.04, 0, 0.04].map((x) => ({ j: 'head', type: 'box', s: [0.018, 0.028, 0.015], p: [x, -0.005, 0.178], mat: 'bone' })),
+    { j: 'head', type: 'box', s: [0.04, 0.06, 0.04], p: [0, -0.145, 0.175], mat: 'skinCorrupt' },
+    { j: 'head', type: 'box', s: [0.036, 0.022, 0.012], p: [-0.056, -0.195, 0.168], mat: 'eyeGlow' },
+    { j: 'head', type: 'box', s: [0.036, 0.022, 0.012], p: [0.056, -0.195, 0.168], mat: 'eyeGlow' },
+    { j: 'head', type: 'box', s: [0.26, 0.06, 0.29], p: [0, -0.265, 0.03], mat: 'black' },
+    { j: 'head', type: 'box', s: [0.17, 0.03, 0.19], p: [0, -0.3, 0.03], mat: 'skinCorrupt' },
+  ];
+  for (const [n, , , la, lb] of limbs) {
+    const front = n[1] === 'f';
+    // (brazos y muslos de hombre, no patas de araña)
+    parts.push({ j: n + 'A', type: 'box', s: [0.15, la + 0.04, 0.15], p: [0, la / 2, 0], taper: [0.72, 0.72], mat: 'skinCorrupt' });
+    parts.push({ j: n + 'A', type: 'ico', s: [0.11], p: [0, 0.03, 0], mat: 'flesh' });
+    // codo / rodilla descoyuntados: el hueso asoma
+    parts.push({ j: n + 'A', type: 'ico', s: [0.075], p: [0, la, 0], mat: 'bone' });
+    parts.push({ j: n + 'A', type: 'cone', s: [0.028, 0.18], p: [0, la + 0.05, -0.07], r: [-50, 0, 0], mat: 'bone' });
+    parts.push({ j: n + 'B', type: 'box', s: [0.11, lb, 0.11], p: [0, -lb / 2, 0], taper: [0.5, 0.5], mat: 'skinCorrupt' });
+    // tendones tensos bajo la piel
+    parts.push({ j: n + 'B', type: 'box', s: [0.025, lb * 0.7, 0.025], p: [0.04, -lb * 0.42, 0.045], mat: 'flesh' });
+    if (front) {
+      // manos con dedos larguísimos
+      parts.push({ j: n + 'B', type: 'box', s: [0.11, 0.03, 0.12], p: [0, -lb, 0.04], mat: 'skinCorrupt' });
+      for (const dx of [-0.04, -0.013, 0.013, 0.04]) parts.push({ j: n + 'B', type: 'box', s: [0.016, 0.016, 0.26], p: [dx * 1.3, -lb, 0.18], r: [0, dx * 260, 0], mat: 'skinCorrupt' });
+    } else parts.push({ j: n + 'B', type: 'box', s: [0.1, 0.05, 0.26], p: [0, -lb + 0.01, -0.06], mat: 'skinCorrupt' });
+  }
+  // el rosario enredado en la muñeca izquierda
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2;
+    parts.push({ j: 'lfB', type: 'sphere', s: [0.022], p: [Math.cos(a) * 0.06, -DESC.LBf + 0.2, Math.sin(a) * 0.06], mat: 'black' });
+  }
+  parts.push({ j: 'lfB', type: 'box', s: [0.012, 0.09, 0.012], p: [0.065, -DESC.LBf + 0.12, 0], mat: 'silver' });
+  parts.push({ j: 'lfB', type: 'box', s: [0.05, 0.012, 0.012], p: [0.065, -DESC.LBf + 0.1, 0], mat: 'silver' });
+  return new Rig({ joints, parts });
+}

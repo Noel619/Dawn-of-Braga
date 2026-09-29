@@ -560,7 +560,8 @@ export class UI {
     const W = Math.max(160, Math.min(330, Math.floor((innerWidth * 0.84) / u) - 30)),
       H = Math.max(100, Math.min(200, Math.floor((innerHeight * 0.66) / u) - 40));
     const b = parchmentBitmap(W, H, 91);
-    const crypt = g.player.pos.y < -3;
+    // (la bodega del canónigo va en el plano de la ciudad, bajo su casa)
+    const crypt = g.player.pos.y < -3 && !g.inCellar(g.player.pos);
     const ey = $('map-eyebrow').querySelector('span');
     if (ey) ey.textContent = (crypt ? 'Bajo la catedral' : 'Braga intramuros') + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
     const rects = g.level.L.map.filter((m) => (m.level === 'crypt') === crypt && (crypt || m.id !== 'river' || g.visited.has('river')));

@@ -46,9 +46,20 @@ export class CameraRig {
     const cam = this.cam;
     if (this.override) {
       const o = this.override;
-      cam.position.lerp(o.pos, 1 - Math.exp(-(o.speed ?? 3) * dt));
-      this.lookAt.lerp(o.look, 1 - Math.exp(-(o.speed ?? 3) * dt));
+      // snap: la escena coloca la cámara exactamente (travellings de cinemática)
+      if (o.snap) {
+        cam.position.copy(o.pos);
+        this.lookAt.copy(o.look);
+      } else {
+        cam.position.lerp(o.pos, 1 - Math.exp(-(o.speed ?? 3) * dt));
+        this.lookAt.lerp(o.look, 1 - Math.exp(-(o.speed ?? 3) * dt));
+      }
       cam.lookAt(this.lookAt);
+      if (o.roll) cam.rotateZ(o.roll);
+      if (o.fov && Math.abs(cam.fov - o.fov) > 0.01) {
+        cam.fov = o.fov;
+        cam.updateProjectionMatrix();
+      }
       this._applyShake(dt);
       return;
     }

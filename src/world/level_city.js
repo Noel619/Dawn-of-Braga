@@ -591,7 +591,8 @@ export function buildTanners(ctx, S, L) {
     [56, 5.5],
   ])
     P.tanningVat(ctx, x, z, x + 4.2, z + 3.2);
-  P.dryingRack(ctx, 58, 0, -8, 0.1, 1);
+  // (apartado de la portada de la casa del canónigo, que antes tapaba)
+  P.dryingRack(ctx, 61.2, 0, -7.4, 0.1, 1);
   P.dryingRack(ctx, 58.5, 0, -3.5, -0.1, 2);
   P.dryingRack(ctx, 47.5, 0, -1.5, Math.PI / 2, 3);
   P.barrel(ctx, 62.5, 0, -10.5);
@@ -616,7 +617,7 @@ export function buildTanners(ctx, S, L) {
   P.basket(ctx, 60.2, 0, -6.0, { rot: 0.4 });
   P.firewood(ctx, 45.2, 0, -11.45, Math.PI / 2, 3);
   P.dropped(ctx, 54.8, 0, -5.8, 2.6, 'axe');
-  ctx.crows.push({ pts: [[57.0, 2.4, -7.9], [57.8, 2.4, -7.98], [58.8, 2.4, -8.08]], yaw: 0.1 });
+  ctx.crows.push({ pts: [[60.2, 2.4, -7.3], [61.0, 2.4, -7.38], [62.0, 2.4, -7.48]], yaw: 0.1 });
   ctx.crows.push({ x: 60.5, y: 0, z: 2.2, r: 1.2, n: 3 });
   ctx.rats.push({ x: 43.0, y: 0, z: -9.6, n: 2 }, { x: 62.3, y: 0, z: -9.4, n: 2 }, { x: 62.0, y: 0, z: -15.2, n: 1 });
 
@@ -624,38 +625,9 @@ export function buildTanners(ctx, S, L) {
   house(ctx, { x0: 42, z0: -21, x1: 48, z1: -12, front: 's', seed: 601, h: 6.5 });
   house(ctx, { x0: 54, z0: 12, x1: 64, z1: 21, front: 'n', seed: 602, lit: true });
   house(ctx, { x0: 64, z0: 12, x1: 72, z1: 21, front: 'n', seed: 603 });
-  house(ctx, { x0: 55, z0: -33, x1: 64, z1: -26, front: 'e', seed: 604 });
-  house(ctx, { x0: 55, z0: -40, x1: 64, z1: -33, front: 'e', seed: 605, burned: true });
+  // (la casa del canónigo, más grande, llega ahora hasta z = -32: level_canon.js)
+  house(ctx, { x0: 55, z0: -40, x1: 64, z1: -32, front: 'e', seed: 605, burned: true });
   stoneWall(ctx, 42, 12, 44, 22, 4.5);
-
-  // casa del canónigo (visitable)
-  const room = 'canon';
-  house(ctx, { x0: 48, z0: -26, x1: 64, z1: -12, front: 's', seed: 606, hollow: true, collide: false, h: 7.4, style: 'stone', doorAt: 10, room, jetty: 0 });
-  W(S, 48.4, -25.6, 63.6, -12.4);
-  W(S, 57.35, -12.6, 58.65, -11.8);
-  // tabique interior con paso (5 cm corrido: una viga del techo caía justo
-  // en su cara y parpadeaba)
-  solid(ctx, 'plaster', 55.75, 0, -25.6, 56.15, 3.1, -21, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
-  solid(ctx, 'plaster', 55.75, 0, -19, 56.15, 3.1, -12.4, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
-  solid(ctx, 'plaster', 55.75, 2.3, -21, 56.15, 3.1, -19, { sub: 1.5, room, ao: false, tint: [0.8, 0.76, 0.7], faces: 'nsewb' });
-  wb.setRoom(room);
-  P.table(ctx, 51.5, 0, -22, 2, 1, 0);
-  P.shelf(ctx, 48.6, 0, -18, Math.PI / 2, 1.8);
-  P.shelf(ctx, 48.6, 0, -15.5, Math.PI / 2, 1.8);
-  P.bench(ctx, 51.5, 0, -21.1, 1.4, 0);
-  P.candles(ctx, 52.1, 0.8, -22.2, 4, 21, { room, radius: 5, intensity: 1.1, spread: 0.25 });
-  P.bed(ctx, 61.5, 0, -24, 0);
-  P.crate(ctx, 62.8, 0, -13.4, 0.8, 0.2);
-  bakeCorpse(wb, 60.8, 0.6, -24, -1.4, 'back', 'villager', 2);
-  P.candles(ctx, 58, 0, -16, 5, 22, { room, radius: 4, intensity: 0.8 });
-  P.fleshGrowth(ctx, 49, 0, -25, 0.8, 93, { room, climb: 1.5, bound: [48.5, 55.5, -25.5, -12.5] });
-  P.decal(ctx, 53, 0.03, -18, 2.6);
-  wb.setRoom(null);
-  L.interact.push(
-    { kind: 'door', id: 'd_canon', x: 58, y: 0, z: -12, w: 1.3, h: 2.25, axis: 'x', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: 1, plane: -12.3 },
-    { kind: 'item', id: 'i_llave', item: 'llave_claustro', x: 50.9, y: 0.85, z: -21.9 },
-    { kind: 'note', id: 'n_canonigo', note: 'canonigo', x: 51.9, y: 0.82, z: -22.3, model: 'book' }
-  );
 
   // capilla con altar (punto de descanso)
   const croom = 'chapel';
@@ -739,19 +711,17 @@ export function buildTanners(ctx, S, L) {
     { type: 'penitent', x: 60.5, y: 0, z: -9.2, yaw: 3, idle: 'kneel', id: 'e_tan2' },
     // (fuera de la pila de curtido: dentro, al moverse, la colisión lo sacaba de golpe)
     { type: 'penitent', x: 53.2, y: 0, z: -4.6, yaw: -1, idle: 'stand', id: 'e_tan3' },
-    { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },
     { type: 'hound', x: 67, y: 0, z: -20, yaw: 0, idle: 'eat', id: 'e_mur1' },
     { type: 'hound', x: 68.5, y: 0, z: -21.5, yaw: 0.5, idle: 'eat', id: 'e_mur2' },
     { type: 'crawler', x: 67.5, y: 0, z: 6, yaw: -2, idle: 'stand', id: 'e_mur3' }
   );
   L.zones.push(
-    { id: 'canon', rects: [[48, -26, 64, -12.2, -1, 4]], atmo: 'interior', room: 'canon' },
     { id: 'chapel', rects: [[44, 12.2, 54, 22, -1, 6]], atmo: 'chapel', room: 'chapel' },
     { id: 'tanners', rects: [[42, -12, 64, 12, -1, 10]], atmo: 'city' },
     { id: 'muralla', rects: [[64, -40, 72, 12, -1, 7]], atmo: 'city' }
   );
   L.phantoms.push({ x: 68, y: 0, z: -34, trigger: [66, 0, -4], kind: 'mourner' });
-  L.map.push({ id: 'tanners', r: [42, -12, 64, 12] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'canon', r: [48.4, -25.6, 63.6, -12.4] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
+  L.map.push({ id: 'tanners', r: [42, -12, 64, 12] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
 }
 
 // ======================================================================== ADARVE Y POSTIGO
@@ -1035,8 +1005,10 @@ export function buildFerraria(ctx, S, L) {
     { kind: 'item', id: 'i_palanca', item: 'palanca', x: -18.2, y: 0.86, z: 54.4 },
     { kind: 'note', id: 'n_herrero', note: 'herrero', x: -17.2, y: 0.82, z: 54.3, model: 'book' },
     { kind: 'item', id: 'i_piedra', item: 'piedra', x: -22.4, y: 1.35, z: 54 },
-    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.45, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: -14.3 }
+    // entornada: por la rendija se ve el resplandor de la forja
+    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.45, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: -14.3, ajar: 0.3 }
   );
+  P.lantern(ctx, -14, 2.75, 50.45, Math.PI / 2, true);
   // atrezo
   P.barrel(ctx, -12.6, 0, 56.4);
   P.barrel(ctx, -11.8, 0, 57);
