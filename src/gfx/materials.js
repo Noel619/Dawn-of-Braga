@@ -323,3 +323,25 @@ export function decalMat(texName, { opacity = 1, color = 0xffffff, blending = TH
 export function registerMaterialPatch(material, opts) {
   return patch(material, opts);
 }
+
+// Brillos aditivos (halos, orbes, llamas en sprite): la niebla los apaga en
+// vez de teñirlos de su color. Mezclados hacia el color de la niebla y sumados
+// a la escena, a lo lejos quedaban como manchas grises que se veían a través
+// de la niebla.
+export function additiveFog(material) {
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <fog_fragment>',
+      `#ifdef USE_FOG
+  #ifdef FOG_EXP2
+    float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
+  #else
+    float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
+  #endif
+  gl_FragColor.rgb *= 1.0 - fogFactor;
+#endif`
+    );
+  };
+  material.customProgramCacheKey = () => 'addfog';
+  return material;
+}

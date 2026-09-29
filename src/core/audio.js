@@ -924,6 +924,19 @@ export class Audio {
         }
         break;
       }
+      case 'woodBreak': {
+        d = this.out(P, { gain: 1, verb: 0.35, life: 3 });
+        this.tone(d, t, 0.3, { f0: 150, f1: 50, gain: 0.8 }); // el golpe en el tablero
+        this.noise(d, t, 0.07, { type: 'lowpass', f0: 4200, f1: 600, gain: 0.8, a: 0.001 }); // chasquido
+        this.noise(d, t + 0.015, 0.24, { f0: rnd(1300, 1900), f1: 650, q: 3, gain: 0.45, a: 0.002, buf: this.brown, rate: 4 }); // la veta se raja
+        this.creak(d, t + 0.02, 0.2, rnd(110, 150), 0.14);
+        this.debris(d, t + 0.03, 8, 0.25, { f0: 1800, f1: 4200, gain: 1.1 }); // astillas
+        this.tone(d, t + 0.34, 0.2, { f0: rnd(130, 160), f1: 60, gain: 0.45 }); // cae una mitad
+        this.tone(d, t + 0.43, 0.2, { f0: rnd(110, 140), f1: 55, gain: 0.4 }); // y la otra
+        this.debris(d, t + 0.36, 5, 0.3, { f0: 600, f1: 1800 });
+        this.duck(0.25, 0.4);
+        break;
+      }
       case 'seal': {
         d = this.out(P, { gain: 0.95, verb: 0.65, life: 6 });
         this.metal(d, t, 900, 0.12, 1.2, { ratios: [1, 2.4, 4.1] }); // el anillo encaja

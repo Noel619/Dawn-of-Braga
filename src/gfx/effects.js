@@ -396,6 +396,10 @@ export class ParticleBurst {
     this.life = new Float32Array(count);
     this.grav = new Float32Array(count);
     this.col = new Float32Array(count * 3);
+    // sólo la sangre mancha el suelo (no las chispas, el polvo ni las brasas),
+    // y una vez: al posarse la gota volvía a "caer" en cada fotograma y
+    // repartía manchas sin parar, que se reciclaban enseguida
+    this.stain = new Uint8Array(count);
     this.head = 0;
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(this.p, 3));
@@ -427,6 +431,7 @@ export class ParticleBurst {
   emit(x, y, z, n, opts = {}) {
     const spd = opts.speed ?? 4;
     const c = opts.color ?? [0.45, 0.02, 0.03];
+    const stain = (opts.stain ?? !opts.color) ? 1 : 0;
     const dir = opts.dir;
     for (let i = 0; i < n; i++) {
       const k = this.head;
@@ -450,6 +455,7 @@ export class ParticleBurst {
       this.col[k * 3 + 1] = c[1] * f;
       this.col[k * 3 + 2] = c[2] * f;
       this.grav[k] = opts.gravity ?? 14;
+      this.stain[k] = stain;
     }
   }
 
@@ -473,7 +479,10 @@ export class ParticleBurst {
         this.v[k * 3] *= 0.2;
         this.v[k * 3 + 2] *= 0.2;
         this.v[k * 3 + 1] = 0;
-        if (this.onLand && Math.random() < 0.04) this.onLand(this.p[k * 3], gy, this.p[k * 3 + 2]);
+        if (this.stain[k]) {
+          this.stain[k] = 0;
+          if (this.onLand && Math.random() < 0.25) this.onLand(this.p[k * 3], gy, this.p[k * 3 + 2]);
+        }
       }
     }
     this.geo.attributes.position.needsUpdate = true;

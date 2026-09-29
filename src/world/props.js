@@ -82,10 +82,9 @@ export function crate(ctx, x, y, z, s = 0.8, rot = 0, o = {}) {
     wb.box('wooddark', -s / 2 - 0.02, s - 0.1, -s / 2 - 0.02, s / 2 + 0.02, s - 0.02, s / 2 + 0.02, { ao: false });
     wb.box('wooddark', -s / 2 - 0.02, 0.04, -s / 2 - 0.02, s / 2 + 0.02, 0.12, s / 2 + 0.02, { ao: false });
   });
-  if (o.collide !== false) {
-    const h = s * 0.75;
-    col(ctx, x - h, y, z - h, x + h, y + s, z + h);
-  }
+  // caja orientada exacta (la caja alineada de 1,5 veces el tamaño que se
+  // usaba antes dejaba paredes invisibles alrededor)
+  if (o.collide !== false) colOBB(ctx, x, z, s / 2 + 0.02, s / 2 + 0.02, rot, y, y + s);
 }
 
 export function sacks(ctx, x, y, z, n = 3, seed = 1) {
@@ -1160,7 +1159,7 @@ export function bed(ctx, x, y, z, rot = 0) {
     wb.box('clothWhite', -0.95, 0.45, -0.45, 0.95, 0.6, 0.45, { faces: 'tnsew', ao: false, tint: [0.7, 0.6, 0.55] });
     wb.box('wooddark', -1.05, 0, -0.55, -0.95, 1.0, 0.55, { ao: false });
   });
-  col(ctx, x - 1, y, z - 1, x + 1, y + 0.6, z + 1);
+  colOBB(ctx, x, z, 1.05, 0.55, rot, y, y + 0.6);
 }
 
 export function anvil(ctx, x, y, z, rot = 0) {
@@ -1190,17 +1189,19 @@ export function forge(ctx, x, y, z, rot = 0, room) {
   ctx.fires.push({ x, y: y + 0.95, z, s: 0.8, embers: true });
   ctx.lights.push({ x, y: y + 1.5, z: z + 0.9, r: 1, g: 0.42, b: 0.1, radius: 11, intensity: 2.0, room });
   if (ctx.dynLights) ctx.dynLights.push({ x, y: y + 1.5, z, intensity: 6, range: 10, room });
-  col(ctx, x - 1.25, y, z - 1.25, x + 1.25, y + 2.5, z + 1.25);
+  colOBB(ctx, x, z, 1.25, 0.95, rot, y, y + 2.5);
 }
 
 // Pila de curtido llena de sangre/tinte.
 export function tanningVat(ctx, x0, z0, x1, z1, y = 0) {
   const wb = ctx.wb;
   const t = 0.3;
+  // (los bordes cortos van entre los largos: solapados en las esquinas, sus
+  // caras coincidentes parpadeaban)
   solid(ctx, 'wallstone', x0, y, z0, x1, y + 0.7, z0 + t, { sub: 2 });
   solid(ctx, 'wallstone', x0, y, z1 - t, x1, y + 0.7, z1, { sub: 2 });
-  solid(ctx, 'wallstone', x0, y, z0, x0 + t, y + 0.7, z1, { sub: 2 });
-  solid(ctx, 'wallstone', x1 - t, y, z0, x1, y + 0.7, z1, { sub: 2 });
+  solid(ctx, 'wallstone', x0, y, z0 + t, x0 + t, y + 0.7, z1 - t, { sub: 2 });
+  solid(ctx, 'wallstone', x1 - t, y, z0 + t, x1, y + 0.7, z1 - t, { sub: 2 });
   wb.box('blood', x0 + t, y + 0.45, z0 + t, x1 - t, y + 0.46, z1 - t, { faces: 't', ao: false, grime: false });
   ctx.col.add(x0 + t, y, z0 + t, x1 - t, y + 0.7, z1 - t);
 }
@@ -1328,7 +1329,7 @@ export function candleAltar(ctx, x, y, z, rot = 0, room) {
     ctx.fires.push({ x: px, y: y + 1.05 + h, z: pz, s: 0.14, light: false, embers: false, glow: true });
   });
   ctx.lights.push({ x, y: y + 1.6, z, r: 1, g: 0.62, b: 0.3, radius: 6, intensity: 1.2, room });
-  col(ctx, x - 0.8, y, z - 0.8, x + 0.8, y + 1.1, z + 0.8);
+  colOBB(ctx, x, z, 0.9, 0.52, rot, y, y + 1.1);
 }
 
 // ============================================================= atrezo extra
@@ -1641,18 +1642,30 @@ export function chains(ctx, x, y, z, n = 8, rotZ = 0) {
   }
 }
 
-// Tienda de campaña derrumbada (lona sobre palos).
+// Tienda de campaña derrumbada (lona sobre palos). La lona es de doble cara:
+// con una sola cara, vista desde un extremo o desde dentro la tienda
+// desaparecía (sólo quedaba el palo).
 export function tent(ctx, x, y, z, rot = 0, mat = 'burlap') {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
+    // palo caído y el que aún sostiene la punta de la lona
     wb.push();
     wb.translate(-1.2, 0, 0);
     wb.rotateZ(-0.5);
     wb.cylinder('wooddark', 0, 0, 0, 0.04, 0.04, 1.9, 5, { ao: false });
     wb.pop();
+    wb.cylinder('wooddark', 1.2, 0, 0, 0.035, 0.035, 0.9, 5, { ao: false });
     const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
-    wb.quad(mat, V3(-1.4, 0.02, 1.1), V3(1.4, 0.02, 1.1), V3(1.2, 0.9, 0.05), V3(-0.3, 1.5, 0.05), { ao: false, sub: 3, tint: [0.7, 0.66, 0.6] });
-    wb.quad(mat, V3(1.2, 0.9, -0.05), V3(1.4, 0.02, -1.1), V3(-1.4, 0.02, -1.1), V3(-0.3, 1.5, -0.05), { ao: false, sub: 3, tint: [0.65, 0.6, 0.55] });
+    const r0 = V3(1.2, 0.9, 0),
+      r1 = V3(-0.3, 1.5, 0);
+    cloth2(wb, mat, V3(-1.4, 0.02, 1.1), V3(1.4, 0.02, 1.1), r0, r1, { tint: [0.7, 0.66, 0.6], backTint: [0.42, 0.39, 0.36] });
+    cloth2(wb, mat, r0, V3(1.4, 0.02, -1.1), V3(-1.4, 0.02, -1.1), r1, { tint: [0.65, 0.6, 0.55], backTint: [0.4, 0.37, 0.34] });
+    // cumbrera de la lona
+    wb.push();
+    wb.translate(r1.x, r1.y, 0);
+    wb.rotateZ(-Math.atan2(r1.y - r0.y, r0.x - r1.x) - Math.PI / 2);
+    wb.cylinder(mat, 0, 0, 0, 0.03, 0.03, r0.distanceTo(r1), 5, { ao: false, tint: [0.6, 0.56, 0.5] });
+    wb.pop();
   });
   colOBB(ctx, x, z, 1.3, 0.9, rot, y, y + 1.2);
 }

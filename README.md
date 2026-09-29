@@ -68,7 +68,8 @@ rótulos de tienda, faroles, armas caídas, maniquíes y dianas en el patio de a
 piedras de catapulta y una pasada automática que acumula piedras, tejas, tablas, paja, trapos, huesos y hierbajos al
 pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las paredes y trepan por ellas.
 
-**Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, la verja del claustro,
+**Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, una mesa atravesada en
+la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
 puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, un
 sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Mejoras opcionales: ampollas vacías, relicarios de hueso (vitalidad) y una piedra de

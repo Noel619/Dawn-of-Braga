@@ -50,7 +50,7 @@ export function buildNW(ctx, S, L) {
   house(ctx, { x0: -48, z0: -32, x1: -45, z1: -24.5, front: 'e', seed: 1104, h: 6.2 });
   house(ctx, { x0: -48, z0: -40, x1: -40, z1: -32, front: 's', seed: 1105, h: 7.6, lit: true });
   house(ctx, { x0: -31, z0: -32, x1: -24, z1: -22, front: 'w', seed: 1106, h: 6.8 });
-  house(ctx, { x0: -31, z0: -40, x1: -24, z1: -32, front: 'n', seed: 1107, h: 7.2, windows: false });
+  house(ctx, { x0: -31, z0: -40, x1: -24, z1: -32, front: 'n', seed: 1107, h: 7.2, windows: false, jetty: 0 });
   P.niche(ctx, -31, 1.5, -27.5, 'w');
   P.laundry(ctx, -44.95, -27.5, -31.05, -27.5, 4.6, 1103);
   P.laundry(ctx, -38, -31.95, -38, -19.55, 4.9, 1104);
@@ -172,12 +172,13 @@ export function buildNW(ctx, S, L) {
   bakeCorpse(wb, -19.6, 0, -8.6, 2.6, 'face', 'villager', 3);
   P.decal(ctx, -19.6, 0.03, -8.6, 2.2);
   P.decal(ctx, -24.8, 0.03, -9.6, 1.4);
-  // cocina: fogón con caldero, mesa de despiece, jamones colgados
+  // cocina: fogón con caldero, mesa de despiece, jamones colgados. La mesa,
+  // atravesada tras la puerta de la sala, se parte de un golpe (interact).
   P.hearth(ctx, -26.15, 0, -15.6, 'e', { room, w: 2.1, pot: true });
-  P.table(ctx, -22.4, 0, -13.1, 2.0, 0.8, 0);
+  L.interact.push({ kind: 'breakable', id: 'x_mesa_taberna', x: -22.4, y: 0, z: -13.1, w: 2.0, d: 0.8, rot: 0 });
   P.shelf(ctx, -23.8, 0, -18.8, 0, 1.8);
   P.sacks(ctx, -21, 0, -18.4, 4, 1112);
-  P.barrel(ctx, -20.8, 0, -13.2);
+  P.barrel(ctx, -25.6, 0, -12.75);
   for (const hx of [-24.8, -23.6, -22.4]) {
     wb.box('burlap', hx - 0.01, 2.4, -15.61, hx + 0.01, 2.9, -15.59, { ao: false });
     P.ellipsoid(ctx, 'skinCorrupt', hx, 2.12, -15.6, 0.16, 0.3, 0.12, [0.75, 0.42, 0.38]);
@@ -252,10 +253,13 @@ export function buildSW(ctx, S, L) {
   // --- patio del Horno
   lane(ctx, S, -35, 16, -20.5, 28, 'dirt');
   floor(ctx, -31, 19, -24.5, 25, 'flag', 0.01);
-  P.breadOven(ctx, -27.8, 0, 26.2, Math.PI, { flue: 3.6 });
-  P.trough(ctx, -22.2, 0, 18.4, Math.PI / 2, { len: 2.2 });
-  P.firewood(ctx, -34.5, 0, 26.8, 0, 4);
-  P.firewood(ctx, -31.2, 0, 27.55, Math.PI / 2, 3);
+  // el horno en el rincón suroeste (antes tapaba la boca del callejón de la
+  // Fragua) con su leña al lado; el abrevadero contra la pared este, fuera
+  // del paso del callejón del Rastro y de la puerta de la panadería
+  P.breadOven(ctx, -31.9, 0, 26.1, Math.PI, { flue: 3.6 });
+  P.trough(ctx, -21.05, 0, 24.3, Math.PI / 2, { len: 2.2 });
+  P.firewood(ctx, -34.35, 0, 26.8, 0, 4);
+  P.firewood(ctx, -34.35, 0, 24.9, 0, 3);
   P.sacks(ctx, -24.6, 0, 27, 5, 1203);
   P.cart(ctx, -30.6, 0, 18.4, 0.1, {});
   P.laundry(ctx, -34.95, 22.5, -20.55, 22.5, 4.6, 1203);
@@ -265,7 +269,8 @@ export function buildSW(ctx, S, L) {
   P.basket(ctx, -23.3, 0, 25.6, { fill: 'straw', fillTint: [0.9, 0.6, 0.3] });
   P.jar(ctx, -21.2, 0, 27.3, 1.0);
   P.decal(ctx, -28, 0.02, 22, 1.2);
-  ctx.crows.push({ pts: [[-28.6, 1.95, 28.1], [-27.2, 1.95, 28.1]], yaw: Math.PI });
+  // cuervos en el poyo del horno, detrás de la cúpula
+  ctx.crows.push({ pts: [[-33.0, 0.9, 27.45], [-30.8, 0.9, 27.45]], yaw: Math.PI });
 
   // --- horno de pan (visitable)
   const broom = 'panaderia';
@@ -312,7 +317,7 @@ export function buildSW(ctx, S, L) {
   house(ctx, { x0: -41, z0: 17, x1: -35, z1: 26, front: 'e', seed: 1208, h: 6.2, style: 'stone', hollow: true, room: oroom, doors: [{ side: 'e', z: 21.5, w: 1.4, h: 2.5 }], jetty: 0, lowerWindows: false, floorMat: 'flag' });
   // espadaña con campanil sobre la puerta
   wb.box('ashlar', -35.3, 6.2, 20.6, -34.9, 8.2, 22.4, { sub: 2 });
-  wb.box('black', -34.92, 6.8, 21.1, -34.9, 7.8, 21.9, { ao: false, grime: false });
+  wb.box('black', -34.9, 6.8, 21.1, -34.88, 7.8, 21.9, { ao: false, grime: false });
   wb.cylinder('bronze', -35.1, 6.9, 21.5, 0.28, 0.14, 0.45, 8, { ao: false });
   wb.setRoom(oroom);
   P.candleAltar(ctx, -39.9, 0, 21.5, Math.PI / 2, oroom);
@@ -350,8 +355,8 @@ export function buildSW(ctx, S, L) {
   lane(ctx, S, -26, 33, -3.5, 35.5);
   house(ctx, { x0: -40, z0: 36, x1: -28.5, z1: 46, front: 'e', seed: 1214, h: 7 });
   house(ctx, { x0: -40, z0: 46, x1: -28.5, z1: 58, front: 'e', seed: 1215, h: 6.6 });
-  house(ctx, { x0: -48, z0: 30, x1: -40, z1: 44, front: 'e', seed: 1216, h: 6.8, windows: false });
-  house(ctx, { x0: -48, z0: 44, x1: -40, z1: 58, front: 'e', seed: 1217, h: 7.4, windows: false });
+  house(ctx, { x0: -48, z0: 30, x1: -40, z1: 44, front: 'e', seed: 1216, h: 6.8, windows: false, jetty: 0 });
+  house(ctx, { x0: -48, z0: 44, x1: -40, z1: 58, front: 'e', seed: 1217, h: 7.4, windows: false, jetty: 0 });
   house(ctx, { x0: -26, z0: 35.5, x1: -14, z1: 42, front: 'n', seed: 1218, h: 7.2 });
   stoneWall(ctx, -28.5, 51, -26, 51.6, 4.2);
   P.niche(ctx, -27.25, 1.2, 51, 'n');
@@ -514,7 +519,7 @@ export function buildSE(ctx, S, L) {
   P.hay(ctx, 17.6, 0, 29.6, -0.3);
   P.hay(ctx, 16.8, 0.8, 28.8, 0.1);
   P.cart(ctx, 26.4, 0, 28.6, 2.9, { brokenWheel: true });
-  P.firewood(ctx, 29.55, 0, 18.2, Math.PI / 2, 3);
+  P.firewood(ctx, 26.2, 0, 17.6, Math.PI / 2, 3);
   P.rubble(ctx, 27.5, 0, 19.8, 6, 1404, 1.0, { mat: 'dirt', scale: 1.3 });
   P.wallTorch(ctx, 23, 2.6, 17, 's');
   P.lantern(ctx, 30, 2.8, 27.5, Math.PI / 2, true);
@@ -524,7 +529,8 @@ export function buildSE(ctx, S, L) {
   ctx.crows.push({ pts: [[14.6, 1.25, 26.2], [16.6, 1.25, 26.2], [18.6, 1.25, 26.2]], yaw: 0 });
   ctx.rats.push({ x: 29.2, y: 0, z: 30.2, n: 2 });
   house(ctx, { x0: 14, z0: 31, x1: 24, z1: 42, front: 'n', seed: 1405, h: 7 });
-  house(ctx, { x0: 24, z0: 31, x1: 38.5, z1: 42, front: 'n', seed: 1406, h: 6.6, windows: false });
+  // (sin voladizo: su fachada da al establo y la planta alta se metía dentro)
+  house(ctx, { x0: 24, z0: 31, x1: 38.5, z1: 42, front: 'n', seed: 1406, h: 6.6, windows: false, jetty: 0 });
   house(ctx, { x0: 23, z0: 12, x1: 30, z1: 17, front: 's', seed: 1407, h: 6.2 });
   house(ctx, { x0: 30, z0: 12, x1: 36, z1: 17, front: 's', seed: 1408, h: 6.8 });
 
@@ -555,12 +561,12 @@ export function buildSE(ctx, S, L) {
   lane(ctx, S, 30, 17, 36, 19.5);
   lane(ctx, S, 36, 3, 38.5, 19.5);
   house(ctx, { x0: 38.5, z0: 3, x1: 42, z1: 19.5, front: 'w', seed: 1410, h: 6.8 });
-  house(ctx, { x0: 38.5, z0: 19.5, x1: 42, z1: 31, front: 'w', seed: 1411, h: 6.4, windows: false });
+  house(ctx, { x0: 38.5, z0: 19.5, x1: 42, z1: 31, front: 'w', seed: 1411, h: 6.4, windows: false, jetty: 0 });
   P.wallTorch(ctx, 36, 2.6, 9, 'e');
   P.crate(ctx, 37.9, 0, 17.8, 0.7, 0.2);
   P.barrel(ctx, 36.6, 0, 12.4, { lying: true, rot: 1.4 });
-  L.interact.push({ kind: 'door', id: 'd_corral', x: 37.25, y: 0, z: 3.05, w: 2.5, h: 2.6, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: -1, swing: 1 });
-  wb.box('ashlar', 35.9, 2.6, 2.85, 38.6, 3.1, 3.25, { ao: false });
+  L.interact.push({ kind: 'door', id: 'd_corral', x: 37.25, y: 0, z: 3.05, w: 2.5, h: 2.55, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: -1, swing: -1, inset: 0.13 });
+  wb.box('ashlar', 35.9, 2.6, 2.85, 38.6, 3.1, 3.25, { ao: false, faces: 'tnsewb' });
 
   L.enemies.push(
     { type: 'hound', x: 21.6, y: 0, z: 22.4, yaw: 0.8, idle: 'eat', id: 'e_cor1' },
@@ -580,7 +586,9 @@ export function buildSE(ctx, S, L) {
 // no se asoma uno al vacío.
 export function buildFillers(ctx, S, L) {
   const rng = new RNG(4242);
-  const block = (x0, z0, x1, z1, o = {}) => house(ctx, { x0, z0, x1, z1, front: o.front ?? rng.pick(['n', 's', 'e', 'w']), seed: Math.floor(rng.next() * 1e9), h: o.h ?? rng.range(5.8, 8.2), windows: o.windows, lit: o.lit, burned: o.burned, jetty: o.jetty });
+  // (sin voladizo: la fachada de una manzana de relleno suele dar a otra casa,
+  // y la planta alta en saledizo se metía dentro de la vecina)
+  const block = (x0, z0, x1, z1, o = {}) => house(ctx, { x0, z0, x1, z1, front: o.front ?? rng.pick(['n', 's', 'e', 'w']), seed: Math.floor(rng.next() * 1e9), h: o.h ?? rng.range(5.8, 8.2), windows: o.windows, lit: o.lit, burned: o.burned, jetty: o.jetty ?? 0 });
   // noroeste, detrás de la plaza de la catedral
   block(-48, -48, -38, -40, { front: 'n' });
   block(-38, -48, -27, -40, { front: 'n', lit: true });

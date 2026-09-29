@@ -1,6 +1,6 @@
 // Interactuables: puertas y cierres, objetos, documentos, altares, niebla.
 import * as THREE from 'three';
-import { objMat } from '../gfx/materials.js';
+import { objMat, additiveFog, cloneMat } from '../gfx/materials.js';
 import { getTexture } from '../gfx/textures.js';
 import { ITEMS, NOTES, MSG } from './story.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
@@ -46,7 +46,7 @@ function doorLeaf(w, h, mat) {
     g.add(slab);
     const sig = new THREE.Mesh(
       new THREE.PlaneGeometry(1.6, 1.6),
-      new THREE.MeshBasicMaterial({ map: getTexture('sigil'), transparent: true, color: 0xff4a30, blending: THREE.AdditiveBlending, depthWrite: false })
+      additiveFog(new THREE.MeshBasicMaterial({ map: getTexture('sigil'), transparent: true, color: 0xff4a30, blending: THREE.AdditiveBlending, depthWrite: false }))
     );
     sig.position.set(w / 2, h * 0.55, 0.16);
     g.add(sig);
@@ -117,6 +117,69 @@ function boardsOverDoor(w, h) {
   return g;
 }
 
+// Mesa atravesada en un paso, que se parte de un golpe. Cada mitad (tablero
+// hasta un corte dentado + las dos patas de su extremo) cuelga de un pivote a
+// ras de suelo en el canto interior de sus patas: al partirse sale despedida
+// hacia fuera y vuelca hasta apoyar el corte en el suelo. Entera, las dos
+// mitades encajan y el corte no se ve.
+const CUTS = [-0.07, 0.05, -0.03, 0.08];
+function breakableTable(w, d, mat) {
+  const g = new THREE.Group();
+  const hw = w / 2;
+  const box = (parent, x0, y0, z0, x1, y1, z1) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    parent.add(m);
+    return m;
+  };
+  const halves = [];
+  const n = CUTS.length;
+  for (const side of [-1, 1]) {
+    const px = side * (hw - 0.15);
+    const pivot = new THREE.Group();
+    pivot.position.x = px;
+    const body = new THREE.Group(); // la geometría, en coordenadas de la mesa
+    body.position.x = -px;
+    pivot.add(body);
+    let reach = 0;
+    for (let i = 0; i < n; i++) {
+      const z0 = -d / 2 + (i / n) * d,
+        z1 = -d / 2 + ((i + 1) / n) * d;
+      const c = CUTS[i];
+      if (side < 0) box(body, -hw, 0.72, z0, c, 0.8, z1);
+      else box(body, c, 0.72, z0, hw, 0.8, z1);
+      reach = Math.max(reach, Math.abs(c - px));
+    }
+    for (const sz of [-1, 1]) {
+      const lx = side * (hw - 0.1),
+        lz = sz * (d / 2 - 0.1);
+      box(body, lx - 0.05, 0, lz - 0.05, lx + 0.05, 0.72, lz + 0.05);
+    }
+    // astillas en el corte (sólo con la mesa partida)
+    const spl = [];
+    for (let i = 0; i < 3; i++) {
+      const len = 0.1 + ((i * 5 + (side > 0 ? 3 : 0)) % 7) * 0.012;
+      const z = -d / 2 + ((i + (side > 0 ? 0.35 : 0.65)) / 3) * d;
+      const c = CUTS[Math.min(n - 1, Math.floor(((z + d / 2) / d) * n))];
+      const sp = box(body, -len / 2, -0.012, -0.016, len / 2, 0.012, 0.016);
+      sp.position.set(c - side * len * 0.4, 0.765, z);
+      sp.rotation.set(0, (i - 1) * 0.3, -side * 0.3);
+      sp.visible = false;
+      sp.userData.splinter = true;
+      spl.push(sp);
+    }
+    // vuelca hasta que el canto más largo del corte toca el suelo
+    pivot.userData = { side, x0: px, spl, tilt: Math.atan2(0.72, reach), slide: 0, yaw: side < 0 ? 0.16 : -0.1, dz: side < 0 ? 0.05 : -0.07 };
+    g.add(pivot);
+    halves.push(pivot);
+  }
+  g.userData.halves = halves;
+  return g;
+}
+
+const _v = new THREE.Vector3();
+const _m4 = new THREE.Matrix4();
+
 function itemMesh(id) {
   const g = new THREE.Group();
   const iron = objMat('iron'),
@@ -183,12 +246,25 @@ function noteMesh(model) {
 }
 
 // Muro de niebla (shader animado)
+// (se funde con la niebla de la escena: sin ello brillaba a cualquier
+// distancia, como una mancha blanca en lo alto de la muralla)
 function fogWallMat() {
+  const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
+  u.uTime = G.uTime;
   return new THREE.ShaderMaterial({
-    uniforms: { uTime: G.uTime },
-    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    uniforms: u,
+    fog: true,
+    vertexShader: `varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main(){
+        vUv = uv;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
     fragmentShader: `
       uniform float uTime; varying vec2 vUv;
+      #include <fog_pars_fragment>
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
       float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
       void main(){
@@ -196,6 +272,13 @@ function fogWallMat() {
         float a = n(p + vec2(0.0, -uTime*0.6)) * 0.6 + n(p*2.3 + vec2(uTime*0.3, -uTime*1.1)) * 0.4;
         float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(1.0, 0.85, vUv.x) * smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.8, vUv.y);
         float alpha = (0.35 + a * 0.55) * edge;
+        #ifdef USE_FOG
+          #ifdef FOG_EXP2
+            alpha *= exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
+          #else
+            alpha *= 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
+          #endif
+        #endif
         gl_FragColor = vec4(vec3(0.85, 0.88, 0.9) * (0.7 + a * 0.5), alpha);
       }`,
     transparent: true,
@@ -227,22 +310,31 @@ export class Interactables {
         it.obj.position.set(s.x, s.y, s.z);
         if (s.axis === 'z') it.obj.rotation.y = -Math.PI / 2;
         const leaves = [];
+        const slides = s.mat === 'grate' || s.mat === 'seal';
+        // Hojas batientes: la bisagra va en la cara del muro hacia la que abre
+        // la puerta ('plane', coordenada a lo largo de la normal del muro) y
+        // separada 'inset' del canto del hueco. Con la bisagra en mitad del
+        // grosor del muro, la hoja atravesaba la jamba al abrirse.
+        const inset = slides ? 0 : s.inset ?? 0.06;
+        const off = slides || s.plane === undefined ? 0 : s.axis === 'z' ? s.x - s.plane : s.plane - s.z;
         if (s.double) {
+          const lw = s.w / 2 - inset - 0.01;
           for (const side of [-1, 1]) {
             const pivot = new THREE.Group();
-            pivot.position.x = (side * s.w) / 2;
-            const leaf = doorLeaf(s.w / 2, s.h, s.mat);
-            if (side > 0) leaf.position.x = -s.w / 2;
+            pivot.position.set(side * (s.w / 2 - inset), 0, off);
+            const leaf = doorLeaf(lw, s.h, s.mat);
+            if (side > 0) leaf.position.x = -lw;
             pivot.add(leaf);
             pivot.userData.side = side;
             it.obj.add(pivot);
             leaves.push(pivot);
           }
         } else {
+          const lw = s.w - 2 * inset;
           const pivot = new THREE.Group();
-          pivot.position.x = s.mat === 'grate' || s.mat === 'seal' ? -s.w / 2 : hinge * (s.w / 2);
-          const leaf = doorLeaf(s.w, s.h, s.mat);
-          if (hinge > 0 && s.mat !== 'grate' && s.mat !== 'seal') leaf.position.x = -s.w;
+          pivot.position.set(slides ? -s.w / 2 : hinge * (s.w / 2 - inset), 0, off);
+          const leaf = doorLeaf(lw, s.h, s.mat);
+          if (hinge > 0 && !slides) leaf.position.x = -lw;
           pivot.add(leaf);
           it.obj.add(pivot);
           leaves.push(pivot);
@@ -266,7 +358,7 @@ export class Interactables {
       it.obj.position.set(s.x, s.y, s.z);
       const m = itemMesh(s.item);
       if (m.children.length) it.obj.add(m);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff0c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }));
+      const glow = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff0c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true })));
       glow.scale.set(0.6, 0.6, 1);
       it.obj.add(glow);
       it.glow = glow;
@@ -279,7 +371,7 @@ export class Interactables {
       it.obj.position.set(s.x, s.y, s.z);
       const m = noteMesh(s.model);
       if (m.children.length) it.obj.add(m);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: 0xc8d8ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: true }));
+      const glow = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: glowTex(), color: 0xc8d8ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: true })));
       glow.scale.set(0.35, 0.35, 1);
       glow.position.y = 0.12;
       it.obj.add(glow);
@@ -300,6 +392,32 @@ export class Interactables {
       else it.box = g.world.col.add(s.x - t, s.y, s.z - s.w / 2, s.x + t, s.y + s.h, s.z + s.w / 2, 'fog');
       it.box.cam = true;
       it.r = 2.4;
+    } else if (s.kind === 'breakable') {
+      // la mesa recibe la luz horneada del sitio, como las mesas del escenario
+      const mat = cloneMat(objMat('wooddark'));
+      const zn = g.zoneAt(s);
+      const pr = g.probe.sample(s.x, s.y + 0.9, s.z, zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0);
+      mat._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+      mat._u.uGround.value.set(s.y, 0.34);
+      it.rot = s.rot ?? 0;
+      it.gap = s.gap ?? 1.1;
+      it.obj = breakableTable(s.w, s.d, mat);
+      it.obj.position.set(s.x, s.y, s.z);
+      it.obj.rotation.y = it.rot;
+      g.scene.add(it.obj);
+      it.box = g.world.col.addOBB(s.x, s.z, s.w / 2, s.d / 2, it.rot, s.y, s.y + 0.8);
+      // cuánto salen despedidas las mitades para dejar libre el paso central
+      this.poseBreak(it, 1);
+      for (const h of it.obj.userData.halves) {
+        const e = this.halfExtent(it, h);
+        h.userData.slide = Math.max(0, it.gap / 2 + 0.05 - (h.userData.side > 0 ? e.x0 : -e.x1));
+      }
+      this.poseBreak(it, 1);
+      it.broken = this.brokenBoxes(it);
+      this.poseBreak(it, 0);
+      this.refreshNav(it);
+      it.smash = 0;
+      it.r = s.r ?? 2.2;
     } else if (s.kind === 'examine') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
@@ -309,22 +427,51 @@ export class Interactables {
     return it;
   }
 
-  // aplica estado guardado
-  applyFlags(flags) {
+  // Aplica el estado guardado. Con 'reset' vuelve antes todo a su estado
+  // inicial: una partida nueva tras salir al título heredaba puertas
+  // abiertas, objetos recogidos (la espada no volvía a aparecer), nieblas
+  // disipadas y el disparador del final ya gastado.
+  applyFlags(flags, reset = false) {
     for (const it of this.list) {
-      if (it.kind === 'door' && flags['door:' + it.id]) this.setOpen(it, true);
-      if ((it.kind === 'item' || it.kind === 'note') && flags['take:' + it.id]) {
-        if (it.kind === 'item') {
-          it.done = true;
-          it.obj.visible = false;
-        }
+      if (reset) this.reset(it);
+      if (it.kind === 'door' && flags['door:' + it.id] && !it.done) this.setOpen(it, true);
+      if (it.kind === 'item' && flags['take:' + it.id]) {
+        it.done = true;
+        it.obj.visible = false;
       }
+      if (it.kind === 'note' && flags['take:' + it.id] && it.glow) it.glow.visible = false;
       if (it.kind === 'fog' && flags['boss:' + it.boss]) this.clearFog(it);
       if (it.kind === 'item' && it.afterBoss && flags['boss:' + it.afterBoss] && !flags['take:' + it.id]) {
         it.hidden = false;
         it.obj.visible = true;
       }
+      if (it.kind === 'breakable' && flags['broken:' + it.id] && !it.done) this.shatter(it, true);
     }
+  }
+
+  reset(it) {
+    it.done = false;
+    if (it.kind === 'door') {
+      it.target = 0;
+      it.open = 0;
+      if (it.box) it.box.enabled = true;
+      if (it.boards) it.boards.visible = true;
+      if (it.mat === 'barricade') it.obj.visible = true;
+      this.poseDoor(it, 0);
+    } else if (it.kind === 'item') {
+      it.hidden = !!it.afterBoss;
+      it.obj.visible = !it.hidden;
+    } else if (it.kind === 'note') {
+      if (it.glow) it.glow.visible = true;
+    } else if (it.kind === 'breakable') {
+      it.smash = 0;
+      it.bk = undefined;
+      it.box.enabled = true;
+      for (const b of it.broken) b.enabled = false;
+      this.poseBreak(it, 0);
+      this.refreshNav(it);
+    }
+    // la niebla la enciende update() según su jefe
   }
 
   setOpen(it, instant = false) {
@@ -367,11 +514,96 @@ export class Interactables {
       if (it.mat === 'grate') lf.position.y = k * (it.h - 0.3);
       else if (it.mat === 'seal') lf.position.y = -k * (it.h + 0.2);
       else {
+        // sw = +1 abre hacia -z local (eje 'x': -z del mundo; eje 'z': +x)
         const side = lf.userData.side ?? it.hinge ?? -1;
         const sw = it.swing ?? 1;
-        lf.rotation.y = -side * sw * k * 1.75;
+        lf.rotation.y = -side * sw * k * (it.maxAngle ?? 1.5);
       }
     }
+  }
+
+  // k: 0 entera -> 1 partida y en el suelo
+  poseBreak(it, k) {
+    const out = (x) => 1 - (1 - x) * (1 - x);
+    for (const h of it.obj.userData.halves) {
+      const u = h.userData;
+      // vuelca acelerando, da en el suelo y rebota un poco
+      let f = Math.min(1, k / 0.72);
+      f *= f;
+      if (k > 0.72) f = 1 - 0.08 * Math.sin((Math.PI * (k - 0.72)) / 0.28);
+      h.rotation.set(0, u.yaw * out(k), u.side * u.tilt * f);
+      h.position.set(u.x0 + u.side * u.slide * out(Math.min(1, k / 0.6)), 0, u.dz * out(k));
+      for (const sp of u.spl) sp.visible = k > 0;
+    }
+  }
+
+  // Huella de una mitad (sin astillas) en coordenadas de la mesa.
+  halfExtent(it, h) {
+    it.obj.updateMatrixWorld(true);
+    const inv = _m4.copy(it.obj.matrixWorld).invert();
+    const e = { x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity, y1: -Infinity };
+    h.traverse((m) => {
+      if (!m.isMesh || m.userData.splinter) return;
+      const p = m.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        _v.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv);
+        e.x0 = Math.min(e.x0, _v.x);
+        e.x1 = Math.max(e.x1, _v.x);
+        e.z0 = Math.min(e.z0, _v.z);
+        e.z1 = Math.max(e.z1, _v.z);
+        e.y1 = Math.max(e.y1, _v.y);
+      }
+    });
+    return e;
+  }
+
+  // Colisión de las dos mitades ya caídas (desactivada hasta que se parte).
+  brokenBoxes(it) {
+    const col = this.game.world.col;
+    const c = Math.cos(it.rot),
+      s = Math.sin(it.rot);
+    return it.obj.userData.halves.map((h) => {
+      const e = this.halfExtent(it, h);
+      // el paso central queda libre aunque el corte asome un poco
+      if (h.userData.side > 0) e.x0 = Math.max(e.x0, it.gap / 2);
+      else e.x1 = Math.min(e.x1, -it.gap / 2);
+      const sh = 0.04;
+      const lx = (e.x0 + e.x1) / 2,
+        lz = (e.z0 + e.z1) / 2;
+      const b = col.addOBB(it.x + lx * c + lz * s, it.z - lx * s + lz * c, Math.max(0.05, (e.x1 - e.x0) / 2 - sh), Math.max(0.05, (e.z1 - e.z0) / 2 - sh), it.rot, it.y, it.y + Math.min(0.75, e.y1));
+      b.enabled = false;
+      return b;
+    });
+  }
+
+  // las criaturas dejan de rodear la mesa (o vuelven a hacerlo)
+  refreshNav(it) {
+    const g = this.game;
+    const r = Math.hypot(it.w, it.d) / 2 + 1.2;
+    for (const n of [g.navSurface, g.navCrypt]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+  }
+
+  shatter(it, instant = false) {
+    const g = this.game;
+    it.done = true;
+    it.smash = 0;
+    it.box.enabled = false;
+    for (const b of it.broken) b.enabled = true;
+    this.refreshNav(it);
+    if (instant) {
+      it.bk = 1;
+      this.poseBreak(it, 1);
+      return;
+    }
+    it.bk = 0;
+    g.flags['broken:' + it.id] = true;
+    g.fx.blood.emit(it.x, it.y + 0.85, it.z, 34, { color: [0.14, 0.085, 0.05], speed: 4.5, life: 0.9, up: 2.2 }); // astillas
+    g.fx.blood.emit(it.x, it.y + 0.5, it.z, 18, { color: [0.1, 0.09, 0.075], speed: 2.4, life: 0.9, up: 0.8, gravity: 3 }); // polvo
+    g.audio && g.audio.play('woodBreak', { x: it.x, y: it.y, z: it.z });
+    g.camRig.shake(0.3);
+    g.hitstop = Math.max(g.hitstop, 0.08);
+    g.input.rumble(0.7, 0.5, 120);
+    g.saveGame();
   }
 
   // candidato más cercano
@@ -419,6 +651,8 @@ export class Interactables {
         return 'Atravesar la niebla';
       case 'examine':
         return 'Examinar';
+      case 'breakable':
+        return it.label ?? 'Partir la mesa';
     }
     return 'Interactuar';
   }
@@ -504,6 +738,13 @@ export class Interactables {
       g.ui.toast(MSG[it.text] || it.text);
       return true;
     }
+    if (it.kind === 'breakable') {
+      if (it.done || it.smash > 0) return true;
+      // golpe de arriba abajo; la mesa cede cuando baja el arma
+      it.smash = 0.5;
+      p.playInteract('smash', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
+      return true;
+    }
     return false;
   }
 
@@ -528,6 +769,17 @@ export class Interactables {
         const active = g.fogActive(it);
         it.obj.visible = active;
         if (it.box) it.box.enabled = active;
+      }
+      if (it.kind === 'breakable') {
+        if (it.smash > 0) {
+          it.smash -= dt;
+          // si le han cortado el golpe al jugador, la mesa sigue entera
+          if (it.smash <= 0 && g.player.state === 'interact' && g.player.interactKind === 'smash') this.shatter(it);
+        }
+        if (it.bk !== undefined && it.bk < 1) {
+          it.bk = Math.min(1, it.bk + dt / 0.6);
+          this.poseBreak(it, it.bk);
+        }
       }
       if (it.kind === 'door' && it.mat === 'seal' && it.leaves) {
         const sg = it.leaves[0].children[0].userData.sigil;

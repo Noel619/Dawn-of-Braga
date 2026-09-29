@@ -348,12 +348,15 @@ export class Player {
     this.anim.play(C.heal, { blend: 0.14 });
   }
 
-  playInteract(kind = 'interact') {
+  // 'smash': golpe de arriba abajo (romper un mueble); 'yaw' encara el objeto.
+  playInteract(kind = 'interact', yaw = null) {
     this.state = 'interact';
     this.stT = 0;
     this.vx = this.vz = 0;
-    this.anim.play(kind === 'push' ? C.push : C.interact, { blend: 0.12 });
-    this.interactDur = kind === 'push' ? 0.8 : 0.7;
+    this.interactKind = kind;
+    this.interactYaw = yaw;
+    this.anim.play(kind === 'push' ? C.push : kind === 'smash' ? C.heavy : C.interact, { blend: 0.12 });
+    this.interactDur = kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : 0.7;
   }
 
   startRest() {
@@ -371,7 +374,7 @@ export class Player {
   }
 
   onAnimEvent(e) {
-    if (e === 'swing') this.game.audio && this.game.audio.play(this.atk && this.atk.heavy ? 'swingHeavy' : 'swing', this.pos);
+    if (e === 'swing') this.game.audio && this.game.audio.play(this.state === 'interact' || (this.atk && this.atk.heavy) ? 'swingHeavy' : 'swing', this.pos);
     if (e === 'drink') {
       const amt = Math.round(this.maxHp * 0.45);
       this.hp = Math.min(this.maxHp, this.hp + amt);
@@ -679,6 +682,11 @@ export class Player {
       }
     } else if (st === 'interact') {
       desiredSpeed = 0;
+      if (this.interactYaw !== null && this.interactYaw !== undefined) {
+        faceTarget = this.interactYaw;
+        turnRate = 16;
+      }
+      if (this.interactKind === 'smash' && this.stT > 0.4 && this.stT < 0.6) this.swinging = true;
       if (this.stT >= this.interactDur) {
         this.state = 'free';
         this.anim.stop(0.2);

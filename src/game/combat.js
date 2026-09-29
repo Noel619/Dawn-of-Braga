@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { angleDiff, DEG, clamp } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
+import { additiveFog } from '../gfx/materials.js';
 
 const ringGeo = new THREE.RingGeometry(0.85, 1, 32).rotateX(-Math.PI / 2);
 
@@ -143,7 +144,7 @@ export class Combat {
   }
 
   ring(x, y, z, r, color, dur) {
-    const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    const m = new THREE.Mesh(ringGeo, additiveFog(new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })));
     m.position.set(x, y + 0.08, z);
     m.scale.set(0.2, 1, 0.2);
     this.game.scene.add(m);
@@ -152,7 +153,7 @@ export class Combat {
 
   // ------------------------------------------------------------ proyectiles
   _orb(color, size) {
-    const sm = new THREE.SpriteMaterial({ map: this.glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true });
+    const sm = additiveFog(new THREE.SpriteMaterial({ map: this.glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }));
     const s = new THREE.Sprite(sm);
     s.scale.set(size, size, 1);
     this.game.scene.add(s);
@@ -222,7 +223,7 @@ export class Combat {
       const a = (i / 4) * Math.PI * 2 + Math.random();
       fires.push(g.fx.fires.add({ x: x + Math.cos(a) * r * 0.5, y, z: z + Math.sin(a) * r * 0.5, s: 0.9, smoke: false }));
     }
-    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: getTexture('glow'), color: 0xff4a10, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 16).rotateX(-Math.PI / 2), additiveFog(new THREE.MeshBasicMaterial({ map: getTexture('glow'), color: 0xff4a10, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false })));
     m.position.set(x, y + 0.05, z);
     g.scene.add(m);
     this.pools.push({ x, y, z, r, t: dur, fires, m, tick: 0 });
@@ -322,6 +323,8 @@ export class Combat {
       if (F.t <= 0) {
         for (const f of F.fires) f.on = false;
         g.scene.remove(F.m);
+        F.m.geometry.dispose();
+        F.m.material.dispose();
         this.pools.splice(i, 1);
         g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
       }
@@ -346,16 +349,23 @@ export class Combat {
     for (const P of this.projectiles) {
       g.scene.remove(P.sprite);
       g.scene.remove(P.core);
+      P.sprite.material.dispose();
+      P.core.material.dispose();
     }
     this.projectiles.length = 0;
     for (const F of this.pools) {
       for (const f of F.fires) f.on = false;
       g.scene.remove(F.m);
+      F.m.geometry.dispose();
+      F.m.material.dispose();
     }
     this.pools.length = 0;
     for (const T of this.tempFires) T.f.on = false;
     this.tempFires.length = 0;
-    for (const R of this.rings) g.scene.remove(R.m);
+    for (const R of this.rings) {
+      g.scene.remove(R.m);
+      R.m.material.dispose();
+    }
     this.rings.length = 0;
   }
 }

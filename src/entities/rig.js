@@ -154,6 +154,10 @@ export class Rig {
         m.userData.baseEI = m.material.emissiveIntensity;
       }
       this.mats = [...done.values()];
+      // emisión original de cada material (varias piezas comparten material:
+      // guardarla por pieza hacía que la segunda guardase el destello como
+      // "original" y la criatura se quedaba teñida para siempre)
+      for (const mat of this.mats) if (mat.emissive) mat.userData.baseEm = mat.emissive.clone();
       this._own = true;
     }
   }
@@ -171,12 +175,10 @@ export class Rig {
   setTint(color, emissive = null) {
     // usado para destellos de daño: clona materiales la primera vez
     this.own();
-    for (const m of this.meshes) {
-      if (m.material.emissive) {
-        if (!m.userData.baseEm) m.userData.baseEm = m.material.emissive.clone();
-        if (emissive) m.material.emissive.copy(emissive);
-        else m.material.emissive.copy(m.userData.baseEm);
-      }
+    for (const mat of this.mats) {
+      if (!mat.emissive) continue;
+      if (emissive) mat.emissive.copy(emissive);
+      else mat.emissive.copy(mat.userData.baseEm);
     }
   }
 }

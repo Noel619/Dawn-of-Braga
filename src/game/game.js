@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { buildLevel } from '../world/level.js';
 import { PostPipeline } from '../gfx/post.js';
-import { G } from '../gfx/materials.js';
+import { G, registerMaterialPatch } from '../gfx/materials.js';
 import { setMaxAnisotropy } from '../gfx/textures.js';
 import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts, FX_FAR, SwordTrail } from '../gfx/effects.js';
 import { buildDecals, buildBanners } from '../gfx/decals.js';
@@ -173,7 +173,9 @@ export class Game {
   }
 
   applyWorldState() {
-    this.interact.applyFlags(this.flags);
+    this.interact.applyFlags(this.flags, true);
+    for (const ph of this.phantoms) ph.state = 'wait';
+    this.phantomA = 0;
     for (const e of this.enemies) {
       e.reset();
       if (e.boss && this.flags['boss:' + e.type]) {
@@ -231,7 +233,7 @@ export class Game {
     this.fadeTarget = 1;
     this.titleT = 0;
     for (const e of this.enemies) e.reset();
-    this.interact.applyFlags({});
+    this.interact.applyFlags({}, true);
     const s = this.ui.open('title', { entries: [] });
     const has = !!loadSave();
     const entries = [];
@@ -627,8 +629,12 @@ export class Game {
 
   // ------------------------------------------------------------ fantasmas en la niebla
   buildPhantom() {
-    // siluetas negras que se desvanecen al acercarse (varias formas)
-    const black = new THREE.MeshBasicMaterial({ color: 0x080808, fog: true });
+    // siluetas oscuras que se desvanecen al acercarse (varias formas). Llevan
+    // la misma niebla que el escenario (color del cielo en esa dirección):
+    // con la niebla estándar se fundían con un gris frío y, contra la niebla
+    // cálida de la ciudad, se veían a lo lejos como siluetas azules
+    const black = registerMaterialPatch(new THREE.MeshBasicMaterial({ color: 0x080808, fog: true, transparent: true, opacity: 0 }));
+    this.phantomMat = black;
     this.phantomRigs = {};
     for (const [k, fn] of Object.entries({ mourner: buildMourner, penitent: buildPenitent, bell: buildBell })) {
       const r = fn();
@@ -637,6 +643,8 @@ export class Game {
       this.scene.add(r.root);
       this.phantomRigs[k] = r;
     }
+    this.phantomA = 0;
+    this.phantomLast = null;
   }
   updatePhantoms(dt) {
     const p = this.player.pos;
@@ -659,12 +667,17 @@ export class Game {
         } else showing = ph;
       }
     }
+    // aparece poco a poco y se deshace deprisa (sin saltos de un fotograma a otro)
+    if (showing) this.phantomLast = showing;
+    this.phantomA = showing ? Math.min(1, this.phantomA + dt / 0.9) : Math.max(0, this.phantomA - dt / 0.45);
+    const ph = this.phantomA > 0 ? this.phantomLast : null;
+    this.phantomMat.opacity = this.phantomA * this.phantomA * (3 - 2 * this.phantomA);
     for (const [k, r] of Object.entries(this.phantomRigs)) {
-      const on = showing && (showing.kind || 'mourner') === k;
+      const on = ph && (ph.kind || 'mourner') === k;
       r.root.visible = !!on;
       if (!on) continue;
-      r.root.position.set(showing.x, showing.y + (k === 'mourner' ? 0.3 : 0), showing.z);
-      r.root.rotation.y = Math.atan2(p.x - showing.x, p.z - showing.z);
+      r.root.position.set(ph.x, ph.y + (k === 'mourner' ? 0.3 : 0), ph.z);
+      r.root.rotation.y = Math.atan2(p.x - ph.x, p.z - ph.z);
       const t = this.time;
       r.apply({ chest: [0.25, 0, Math.sin(t * 0.7) * 0.06], head: [0.35, 0, 0.35 + Math.sin(t * 0.5) * 0.1], armL: [0, 0, 0.05], armR: [0, 0, -0.05] });
     }
@@ -871,6 +884,9 @@ export class Game {
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
+      // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
+      // en pantallas de 120-144 Hz volaban al doble de velocidad)
+      this.fx.blood.update(dt, this._partGround || (this._partGround = (x, y, z) => this.world.col.groundHeight(x, z, 0.05, y + 0.3)));
       this.interact.update(dt);
       if (this.state === 'play') {
         this.interact.triggers(p);
@@ -988,7 +1004,6 @@ export class Game {
     const lp = this.state === 'title' ? c : this.player.pos;
     this.fx.lights.update(lp.x, lp.y + 1, lp.z, this.time);
     this.fx.ash.update(c);
-    this.fx.blood.update(1 / 60, (x, y, z) => this.world.col.groundHeight(x, z, 0.05, y + 0.3));
     this.post.render(this.scene, this.camera, this.time);
   }
 }

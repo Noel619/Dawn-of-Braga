@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { clip } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff } from '../core/util.js';
 import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, CANDLE_OFFSETS } from './enemy_models.js';
-import { objMat } from '../gfx/materials.js';
+import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
 import { getTexture } from '../gfx/textures.js';
 
@@ -516,7 +516,7 @@ function censerInit(e) {
     const tex = getTexture('fire').clone();
     tex.needsUpdate = true;
     tex.repeat.set(1 / 8, 1);
-    const sm = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true });
+    const sm = additiveFog(new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }));
     const sp = new THREE.Sprite(sm);
     sp.scale.set(0.9, 1.6, 1);
     g.scene.add(sp);
@@ -528,7 +528,7 @@ function censerInit(e) {
     const tex = getTexture('fire').clone();
     tex.needsUpdate = true;
     tex.repeat.set(1 / 8, 1);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true }));
+    const sp = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true })));
     sp.scale.set(0.22, 0.4, 1);
     g.scene.add(sp);
     candles.push(sp);
@@ -740,7 +740,13 @@ export const TYPES = {
         e.obj.rotation.z = Math.PI;
         e.obj.position.y = e.home.y;
       } else if (e.state === 'dropping') {
-        e.obj.rotation.z = Math.PI * Math.max(0, 1 - e.stT * 3);
+        // se da la vuelta en el aire girando sobre el centro del cuerpo (no
+        // sobre los pies, que lo hacía atravesar el techo al voltearse)
+        const th = Math.PI * Math.max(0, 1 - e.stT * 3);
+        const bj = e._bj ?? 0.78;
+        const s = Math.sin(th);
+        e.obj.rotation.z = th;
+        e.obj.position.set(e.pos.x + bj * s * Math.cos(e.yaw), e.pos.y + bj - bj * Math.cos(th), e.pos.z - bj * s * Math.sin(e.yaw));
       } else e.obj.rotation.z = 0;
     },
   },

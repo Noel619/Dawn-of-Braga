@@ -21,32 +21,38 @@ export function interiorRoom(ctx, x0, z0, x1, z1, y0, h, o = {}) {
   // vigas del techo
   if (o.beams !== false && o.ceil !== false) {
     const alongX = x1 - x0 < z1 - z0;
-    if (alongX) for (let z = z0 + 1.2; z < z1 - 0.5; z += 1.8) wb.box('timber', x0, y0 + h - 0.25, z - 0.12, x1, y0 + h, z + 0.12, { ao: false, room });
-    else for (let x = x0 + 1.2; x < x1 - 0.5; x += 1.8) wb.box('timber', x - 0.12, y0 + h - 0.25, z0, x + 0.12, y0 + h, z1, { ao: false, room });
+    if (alongX) for (let z = z0 + 1.2; z < z1 - 0.5; z += 1.8) wb.box('timber', x0, y0 + h - 0.25, z - 0.12, x1, y0 + h, z + 0.12, { ao: false, room, faces: 'nsewb' });
+    else for (let x = x0 + 1.2; x < x1 - 0.5; x += 1.8) wb.box('timber', x - 0.12, y0 + h - 0.25, z0, x + 0.12, y0 + h, z1, { ao: false, room, faces: 'nsewb' });
   }
-  const seg = (side, a0, a1, yb, yt) => {
+  const seg = (side, a0, a1, yb, yt, extra = '') => {
     // pared interior de un lado, con cara mirando hacia dentro
     if (a1 - a0 < 0.01) return;
     const oo = { room, tint, aoH: 1.2, aoMin: 0.5, baseY: y0 };
-    if (side === 's') wb.box(wall, a0, yb, z1, a1, yt, z1 + t, { ...oo, faces: 'n' });
-    if (side === 'n') wb.box(wall, a0, yb, z0 - t, a1, yt, z0, { ...oo, faces: 's' });
-    if (side === 'e') wb.box(wall, x1, yb, a0, x1 + t, yt, a1, { ...oo, faces: 'w' });
-    if (side === 'w') wb.box(wall, x0 - t, yb, a0, x0, yt, a1, { ...oo, faces: 'e' });
+    if (side === 's') wb.box(wall, a0, yb, z1, a1, yt, z1 + t, { ...oo, faces: 'n' + extra });
+    if (side === 'n') wb.box(wall, a0, yb, z0 - t, a1, yt, z0, { ...oo, faces: 's' + extra });
+    if (side === 'e') wb.box(wall, x1, yb, a0, x1 + t, yt, a1, { ...oo, faces: 'w' + extra });
+    if (side === 'w') wb.box(wall, x0 - t, yb, a0, x0, yt, a1, { ...oo, faces: 'e' + extra });
   };
   for (const side of ['n', 's', 'e', 'w']) {
     if (o.skip && o.skip.includes(side)) continue;
-    const lo = side === 'n' || side === 's' ? x0 : z0;
-    const hi = side === 'n' || side === 's' ? x1 : z1;
+    const along = side === 'n' || side === 's';
+    const lo = along ? x0 : z0;
+    const hi = along ? x1 : z1;
     const ds = doors.filter((d) => d.side === side).sort((a, b) => a.at - b.at);
-    let cur = lo;
+    // 'reveal': el hueco lleva jambas y dintel por dentro del grosor del muro
+    // (sin ellas, entre dos salas pegadas se veía a través de las paredes).
+    // Sólo donde ninguna otra pared ocupa ya ese plano.
+    let cur = lo,
+      open = '';
     for (const d of ds) {
       const a = d.at - d.w / 2,
         b = d.at + d.w / 2;
-      seg(side, cur, a, y0, y0 + h);
-      seg(side, a, b, y0 + (d.h ?? 2.3), y0 + h);
+      seg(side, cur, a, y0, y0 + h, open + (d.reveal ? (along ? 'e' : 's') : ''));
+      seg(side, a, b, y0 + (d.h ?? 2.3), y0 + h, d.reveal ? 'b' : '');
       cur = b;
+      open = d.reveal ? (along ? 'w' : 'n') : '';
     }
-    seg(side, cur, hi, y0, y0 + h);
+    seg(side, cur, hi, y0, y0 + h, open);
   }
   // zócalo de madera oscura
   if (o.skirting !== false) {

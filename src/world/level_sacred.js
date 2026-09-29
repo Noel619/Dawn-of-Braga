@@ -62,6 +62,22 @@ export function buildCathedral(ctx, S, L) {
   P.wallTorch(ctx, 4.9, 3, -58, 'w');
   // fachada con portada
   archWall(ctx, -5, 5, -61.5, -60, 18, 0, 3.2, 4.6, { mat: 'ashlar', slices: 8 });
+  // tímpano de piedra que cierra el medio punto sobre las hojas de la puerta
+  // (las hojas rectangulares no caben en el arco: antes lo atravesaban)
+  {
+    const R = 1.6,
+      spring = 4.6 - R,
+      N = 8;
+    for (let i = 0; i < N; i++) {
+      const u0 = -R + (i / N) * 2 * R,
+        u1 = -R + ((i + 1) / N) * 2 * R;
+      const um = (u0 + u1) / 2;
+      const yy = spring + Math.sqrt(Math.max(0, R * R - um * um));
+      wb.box('ashlar', u0, spring, -60.12, u1, yy, -60.0, { ao: false, faces: 'nsbew', tint: [0.8, 0.78, 0.74] });
+    }
+    const tb = ctx.col.add(-R, spring, -60.12, R, spring + R, -60.0);
+    tb.noSight = true;
+  }
   wb.box('ashlar', -1.6, 0, -61.5, 1.6, FY, -60, { faces: 't', ao: false });
   ctx.col.add(-1.6, 0, -61.5, 1.6, FY, -60);
   // rosetón
@@ -87,7 +103,7 @@ export function buildCathedral(ctx, S, L) {
   nave(-13, -104, -11, -64);
   nave(11, -104, 13, -81);
   nave(11, -79, 13, -64);
-  solid(ctx, 'ashlar', 11, 3.2, -81, 13, 14, -79, { sub: 2, ao: false });
+  solid(ctx, 'ashlar', 11, 3.2, -81, 13, 14, -79, { sub: 2, ao: false, faces: 'tnsewb' });
   nave(-13, -108, 13, -104);
   // cabecera poligonal
   solid(ctx, 'ashlar', -7, 0, -112, 7, 12, -108, { sub: 2.2 });
@@ -131,7 +147,7 @@ export function buildCathedral(ctx, S, L) {
   ctx.col.add(-8, FY, -104, 8, 1.2, -100);
   // techo artesonado
   wb.box('wooddark', -11, 14, -104, 11, 14.3, -61.5, { faces: 'b', ao: false, room, tint: [0.5, 0.45, 0.42] });
-  for (let z = -103; z < -62; z += 2.2) wb.box('timber', -11, 13.6, z - 0.15, 11, 14, z + 0.15, { ao: false, room });
+  for (let z = -103; z < -62; z += 2.2) wb.box('timber', -11, 13.6, z - 0.15, 11, 14, z + 0.15, { ao: false, room, faces: 'nsewb' });
   ctx.col.add(-11, 14, -104, 11, 14.5, -61.5).cam = true;
   // arquerías de la nave (dos filas)
   const bays = 6;
@@ -143,14 +159,18 @@ export function buildCathedral(ctx, S, L) {
       const a0 = za + i * bw;
       archWall(ctx, a0, a0 + bw, x - 0.45, x + 0.45, 11, a0 + bw / 2, bw - 1.2, 7.6, { axis: 'z', mat: 'ashlar', slices: 8, vmat: 'ashlar' });
     }
-    solid(ctx, 'ashlar', x - 0.6, 0, za - 0.6, x + 0.6, 11, za + 0.6, { sub: 2 });
-    solid(ctx, 'ashlar', x - 0.6, 0, zb - 0.6, x + 0.6, 11, zb + 0.6, { sub: 2 });
+    // (algo más gruesos que el machón del arco que se apoya en ellos: con la
+    // cara en el mismo plano parpadeaban)
+    solid(ctx, 'ashlar', x - 0.6, 0, za - 0.62, x + 0.6, 11, za + 0.62, { sub: 2 });
+    solid(ctx, 'ashlar', x - 0.6, 0, zb - 0.62, x + 0.6, 11, zb + 0.62, { sub: 2 });
   }
   // barandilla alrededor de la escalera de la cripta
+  // (piezas que no se solapan y pilastras que sobresalen un poco: las caras
+  // coincidentes de las esquinas parpadeaban)
   solid(ctx, 'ashlar', -2.4, FY, -97.4, -2, FY + 0.95, -86, { sub: 2 });
   solid(ctx, 'ashlar', 2, FY, -97.4, 2.4, FY + 0.95, -86, { sub: 2 });
-  solid(ctx, 'ashlar', -2.4, FY, -97.4, 2.4, FY + 0.95, -97, { sub: 2 });
-  for (const x of [-2.2, 2.2]) wb.box('ashlar', x - 0.25, FY, -86.5, x + 0.25, FY + 1.4, -86, { ao: false });
+  solid(ctx, 'ashlar', -2, FY, -97.4, 2, FY + 0.95, -97, { sub: 2 });
+  for (const x of [-2.2, 2.2]) wb.box('ashlar', x - 0.26, FY, -86.5, x + 0.26, FY + 1.4, -85.98, { ao: false });
   // torno junto a la reja
   wb.box('wooddark', 2.9, FY, -85.6, 3.1, FY + 1.2, -85.4, { ao: false });
   wb.box('wooddark', 3.9, FY, -85.6, 4.1, FY + 1.2, -85.4, { ao: false });
@@ -217,14 +237,17 @@ export function buildCathedral(ctx, S, L) {
   ctx.rats.push({ x: -10.0, y: FY, z: -102.6, n: 2 });
 
   L.interact.push(
-    { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 4.4, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true },
-    { kind: 'door', id: 'd_claustro_se', x: 12, y: 0.3, z: -80, w: 2, h: 3.1, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1 },
+    { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 2.38, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
+    { kind: 'door', id: 'd_claustro_se', x: 12, y: FY, z: -80, w: 2, h: 2.55, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: 11.05 },
     { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, axis: 'x', lock: { type: 'grate', item: 'manivela' }, mat: 'grate', ix: 3.5, iz: -84.9 }
   );
-  // escalón de la puerta lateral
+  // escalón de la puerta lateral y umbral a la altura de la nave bajo la hoja
+  // (abre hacia dentro: con la hoja a ras del escalón rozaba el suelo de la nave)
   W(S, 11, -81, 13.2, -79);
-  wb.box('ashlar', 11, 0, -81, 13, 0.3, -79, { faces: 'tnsew', ao: false });
-  ctx.col.add(11, 0, -81, 13, 0.3, -79);
+  wb.box('ashlar', 11.6, 0, -81, 13, 0.3, -79, { faces: 'tnsew', ao: false });
+  ctx.col.add(11.6, 0, -81, 13, 0.3, -79);
+  wb.box('ashlar', 11, 0, -81, 11.6, FY, -79, { faces: 'te', ao: false });
+  ctx.col.add(11, 0, -81, 11.6, FY, -79);
 
   L.enemies.push(
     { type: 'bell', x: 0, y: FY, z: -74, yaw: Math.PI, idle: 'wander', id: 'e_se1' },
@@ -243,9 +266,11 @@ export function buildCloister(ctx, S, L) {
   W(S, 13, -88, 36, -60.5);
   W(S, 15.5, -60.6, 19, -56);
   // muros exteriores
-  solid(ctx, 'wallstone', 13, 0, -60.5, 15.5, 7, -59.5, { sub: 2 });
-  solid(ctx, 'wallstone', 19, 0, -60.5, 37, 7, -59.5, { sub: 2 });
-  solid(ctx, 'wallstone', 15.5, 3.6, -60.5, 19, 7, -59.5, { sub: 2, ao: false });
+  // (1 cm por dentro de las tapias de la plaza que los flanquean: con las
+  // caras coincidentes, las jambas de la verja parpadeaban)
+  solid(ctx, 'wallstone', 13, 0, -60.5, 15.49, 7, -59.5, { sub: 2 });
+  solid(ctx, 'wallstone', 19.01, 0, -60.5, 37, 7, -59.5, { sub: 2 });
+  solid(ctx, 'wallstone', 15.49, 3.6, -60.5, 19.01, 7, -59.5, { sub: 2, ao: false, faces: 'tnsewb' });
   solid(ctx, 'wallstone', 36, 0, -89, 37, 7, -60.5, { sub: 2 });
   solid(ctx, 'wallstone', 13, 0, -89, 37, 7, -88, { sub: 2 });
   floor(ctx, 13, -88, 36, -60.5, 'flag');
@@ -262,29 +287,31 @@ export function buildCloister(ctx, S, L) {
   par(25.5, gz0, gx1, gz0 + 0.4);
   par(gx0, gz1 - 0.4, 23.5, gz1);
   par(25.5, gz1 - 0.4, gx1, gz1);
-  par(gx0, gz0, gx0 + 0.4, -75);
-  par(gx0, -73, gx0 + 0.4, gz1);
-  par(gx1 - 0.4, gz0, gx1, -75);
-  par(gx1 - 0.4, -73, gx1, gz1);
+  // (los tramos laterales empiezan donde acaban los de las esquinas: solapados,
+  // sus caras coincidentes parpadeaban)
+  par(gx0, gz0 + 0.4, gx0 + 0.4, -75);
+  par(gx0, -73, gx0 + 0.4, gz1 - 0.4);
+  par(gx1 - 0.4, gz0 + 0.4, gx1, -75);
+  par(gx1 - 0.4, -73, gx1, gz1 - 0.4);
   for (let x = gx0; x <= gx1 + 0.01; x += 2.2) {
     for (const z of [gz0 + 0.2, gz1 - 0.2]) {
       if (Math.abs(x - 24.5) < 1.2) continue;
       wb.cylinder('ashlar', x, 0.9, z, 0.17, 0.15, 3.3, 6, { ao: false });
-      wb.box('ashlar', x - 0.28, 4.1, z - 0.28, x + 0.28, 4.4, z + 0.28, { ao: false });
+      wb.box('ashlar', x - 0.28, 4.1, z - 0.28, x + 0.28, 4.4, z + 0.28, { ao: false, faces: 'tnsewb' });
     }
   }
   for (let z = gz0; z <= gz1 + 0.01; z += 2.0) {
     for (const x of [gx0 + 0.2, gx1 - 0.2]) {
       if (Math.abs(z + 74) < 1.2) continue;
       wb.cylinder('ashlar', x, 0.9, z, 0.17, 0.15, 3.3, 6, { ao: false });
-      wb.box('ashlar', x - 0.28, 4.1, z - 0.28, x + 0.28, 4.4, z + 0.28, { ao: false });
+      wb.box('ashlar', x - 0.28, 4.1, z - 0.28, x + 0.28, 4.4, z + 0.28, { ao: false, faces: 'tnsewb' });
     }
   }
   // vigas y tejados en pendiente de las galerías
-  wb.box('ashlar', gx0, 4.4, gz0 - 0.1, gx1, 4.8, gz0 + 0.5, { ao: false });
-  wb.box('ashlar', gx0, 4.4, gz1 - 0.5, gx1, 4.8, gz1 + 0.1, { ao: false });
-  wb.box('ashlar', gx0 - 0.1, 4.4, gz0, gx0 + 0.5, 4.8, gz1, { ao: false });
-  wb.box('ashlar', gx1 - 0.5, 4.4, gz0, gx1 + 0.1, 4.8, gz1, { ao: false });
+  wb.box('ashlar', gx0, 4.4, gz0 - 0.1, gx1, 4.8, gz0 + 0.5, { ao: false, faces: 'tnsewb' });
+  wb.box('ashlar', gx0, 4.4, gz1 - 0.5, gx1, 4.8, gz1 + 0.1, { ao: false, faces: 'tnsewb' });
+  wb.box('ashlar', gx0 - 0.1, 4.4, gz0 + 0.5, gx0 + 0.5, 4.8, gz1 - 0.5, { ao: false, faces: 'tnsewb' });
+  wb.box('ashlar', gx1 - 0.5, 4.4, gz0 + 0.5, gx1 + 0.1, 4.8, gz1 - 0.5, { ao: false, faces: 'tnsewb' });
   // sur
   wb.quad('roof', V(36, 6.6, -60.5), V(13, 6.6, -60.5), V(13, 4.8, -66.2), V(36, 4.8, -66.2), { ao: false, sub: 2.4 });
   wb.quad('wooddark', V(13, 6.4, -60.5), V(36, 6.4, -60.5), V(36, 4.6, -66.2), V(13, 4.6, -66.2), { ao: false, sub: 3, tint: [0.45, 0.42, 0.4] });
@@ -333,7 +360,7 @@ export function buildCloister(ctx, S, L) {
   ctx.crows.push({ x: 24.5, y: 0, z: -70.2, r: 1.4, n: 4 });
   ctx.rats.push({ x: 14.4, y: 0, z: -87.2, n: 2 });
   L.interact.push(
-    { kind: 'door', id: 'd_claustro', x: 17.25, y: 0, z: -60, w: 3.5, h: 3.6, axis: 'x', lock: { type: 'key', item: 'llave_claustro' }, mat: 'irongate', hinge: 0, swing: -1, double: true },
+    { kind: 'door', id: 'd_claustro', x: 17.25, y: 0, z: -60, w: 3.5, h: 3.55, axis: 'x', lock: { type: 'key', item: 'llave_claustro' }, mat: 'irongate', hinge: 0, swing: 1, double: true, plane: -60.55 },
     { kind: 'item', id: 'i_relicario1', item: 'relicario', x: 27.9, y: 0.25, z: -68.3 },
     { kind: 'note', id: 'n_claustro', note: 'claustro', x: 21, y: 0.9, z: -78.4, model: 'stone', r: 1.6 }
   );
@@ -411,8 +438,8 @@ export function buildCrypt(ctx, S, C, L) {
   croom(-2.5, -136, 2.5, -110, Y, 3.8, 'skulls', [
     { side: 's', at: 0, w: 5, h: 3.8 },
     { side: 'n', at: 0, w: 3, h: 3.2 },
-    { side: 'e', at: -120, w: 2, h: 2.8 },
-    { side: 'w', at: -120, w: 2, h: 2.8 },
+    { side: 'e', at: -120, w: 2, h: 2.8, reveal: true },
+    { side: 'w', at: -120, w: 2, h: 2.8, reveal: true },
   ], { tint: [0.85, 0.82, 0.78] });
   cryptFloor(-2.5, -136, 2.5, -110, Y);
   for (let z = -113; z > -134; z -= 4) {
@@ -430,7 +457,7 @@ export function buildCrypt(ctx, S, C, L) {
 
   // --- sepulcro del arzobispo (este)
   C.paint(2.4, -121, 3.6, -119, 1);
-  croom(3.5, -128, 16, -112, Y, 5, 'mossstone', [{ side: 'w', at: -120, w: 2, h: 2.8 }]);
+  croom(3.5, -128, 16, -112, Y, 5, 'mossstone', [{ side: 'w', at: -120, w: 2, h: 2.8, reveal: true }]);
   cryptFloor(2.5, -121, 3.5, -119, Y);
   cryptFloor(3.5, -128, 16, -112, Y);
   wb.box('ashlar', 8, Y, -122.5, 12, Y + 0.3, -117.5, { faces: 'tnsew', ao: false, room });
@@ -451,7 +478,7 @@ export function buildCrypt(ctx, S, C, L) {
 
   // --- templo romano (oeste)
   C.paint(-3.6, -121, -2.4, -119, 1);
-  croom(-19, -132, -3.5, -112, Y, 5.5, 'ashlar', [{ side: 'e', at: -120, w: 2, h: 2.8 }], { tint: [0.6, 0.58, 0.55] });
+  croom(-19, -132, -3.5, -112, Y, 5.5, 'ashlar', [{ side: 'e', at: -120, w: 2, h: 2.8, reveal: true }], { tint: [0.6, 0.58, 0.55] });
   cryptFloor(-3.5, -121, -2.5, -119, Y);
   cryptFloor(-19, -132, -3.5, -112, Y, 'mosaic');
   wb.box('water', -18.8, Y + 0.08, -120.5, -12, Y + 0.1, -112.2, { faces: 't', ao: false, grime: false, room });

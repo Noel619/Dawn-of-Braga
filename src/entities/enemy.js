@@ -50,6 +50,19 @@ export class Enemy {
     this.lockHeight = T.lockHeight;
     this.boss = !!spec.boss;
     this.home = { x: spec.x, y: spec.y, z: spec.z, yaw: spec.yaw || 0 };
+    // las que acechan en el techo se cuelgan del techo real que tienen encima
+    // (no a una altura a ojo: flotaban bajo las vigas o quedaban dentro del
+    // forjado, y al soltarse la colisión del techo las sacaba por un lado)
+    if (spec.idle === 'ceiling') {
+      const col = game.world.col;
+      const fl = col.groundHeight(spec.x, spec.z, 0.1, spec.y);
+      let c = Infinity;
+      for (const b of col.query(spec.x - 0.3, spec.z - 0.3, spec.x + 0.3, spec.z + 0.3, [])) {
+        if (b.miny > fl + 1.6 && b.miny < c && col.overlapXZ(b, spec.x, spec.z, 0.2)) c = b.miny;
+      }
+      if (c < Infinity) this.home.y = c - 0.03;
+      this.floorY = fl;
+    }
     this.maxHp = T.hp;
     this.data = {};
     this.P = {}; // datos persistentes entre reinicios
@@ -72,7 +85,7 @@ export class Enemy {
 
   reset() {
     const s = this.spec;
-    this.body.pos.set(s.x, s.y, s.z);
+    this.body.pos.set(s.x, this.home.y, s.z);
     this.body.vy = 0;
     this.body.grounded = true;
     this.yaw = s.yaw || 0;
@@ -100,6 +113,15 @@ export class Enemy {
     this.aware = false;
     this.data = {};
     this.hitShown = 0;
+    // sin destellos ni ojos encendidos a medias al volver a su puesto
+    this.flash = 0;
+    this.flare = 0;
+    if (this._flashing) {
+      this.rig.setTint(null, null);
+      this._flashing = false;
+    }
+    if (this._eyes) for (const m of this._eyes) m.material.emissiveIntensity = m.userData.baseEI ?? 2;
+    this._flareOn = false;
     if (this.T.onReset) this.T.onReset(this);
   }
 
@@ -266,8 +288,16 @@ export class Enemy {
   drop() {
     this.state = 'dropping';
     this.stT = 0;
+    // cae en vertical desde el techo: el cuerpo físico empieza con la cabeza
+    // bajo el techo (el centro del cuerpo no salta) y gira sobre sí mismo
+    // mientras cae; sin resolver colisiones laterales contra el techo, que lo
+    // empujaban fuera de la casa y lo dejaban de pie encima de un muro
+    const bj = this.rig.rest.body ? this.rig.rest.body.pos.y : 0.8;
+    this._bj = bj;
+    this.body.pos.y = this.home.y - 2 * bj;
     this.body.vy = -1;
     this.body.grounded = false;
+    this.data.dropGround = this.game.world.col.groundHeight(this.pos.x, this.pos.z, this.body.radius * 0.5, this.body.pos.y + 0.05);
     this.game.audio && this.game.audio.enemyVoice(this, 'alert');
     this.aware = true;
   }
@@ -515,7 +545,18 @@ export class Enemy {
     if (T.update) T.update(this, dt, player, d);
 
     // física
-    if (this.state !== 'ceiling' && move) {
+    if (this.state === 'dropping') {
+      // caída libre en vertical hasta el suelo que tiene debajo
+      const b = this.body;
+      b.vy -= 22 * dt;
+      b.pos.y += b.vy * dt;
+      const gy = this.data.dropGround ?? -100;
+      if (b.pos.y <= gy) {
+        b.pos.y = gy;
+        b.vy = 0;
+        b.grounded = true;
+      }
+    } else if (this.state !== 'ceiling' && move) {
       const floating = T.float;
       if (floating) {
         this.pos.x += this.vx * dt;
@@ -630,7 +671,7 @@ export class Enemy {
       stabilizeShield(this.rig, { w: this.dead ? 0.2 : 0.88, yaw: sh.yaw ?? 0.3, pitch: sh.pitch ?? -0.1, out: sh.out ?? 0.08, along: sh.along ?? 0.14, raise: blk * 0.05 });
     }
     // sombra
-    const g = this.state === 'ceiling' ? this.home.y - 3 : this.pos.y;
+    const g = this.state === 'ceiling' ? this.home.y - 3 : this.state === 'dropping' ? (this.data.dropGround ?? this.pos.y) : this.pos.y;
     this.shadow.position.set(this.pos.x, g + 0.02, this.pos.z);
     this.shadow.visible = this.obj.visible && this.state !== 'ceiling';
     // los ojos se encienden al preparar un ataque (telegrafiado)

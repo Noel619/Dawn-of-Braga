@@ -22,8 +22,9 @@ export function buildCastle(ctx, S, L) {
   floor(ctx, -90, -20, -51, 20, 'dirt');
   floor(ctx, -73, -3, -51, 3, 'flag', 0.02);
   floor(ctx, -73, -10, -68, -3, 'flag', 0.02);
-  // pasadizo bajo el arco de la puerta (enlaza el patio con la Calle del Soto)
-  floor(ctx, -51.2, -2.6, -47.8, 2.6, 'flag', 0.02, { tint: [0.85, 0.83, 0.8] });
+  // pasadizo bajo el arco de la puerta (enlaza el patio con la Calle del Soto);
+  // empieza donde acaba el enlosado del patio (no se solapan)
+  floor(ctx, -51, -2.6, -47.8, 2.6, 'flag', 0.02, { tint: [0.85, 0.83, 0.8] });
   wb.box('ashlar', -49.8, 0, -2.6, -49.4, 0.06, 2.6, { faces: 'tnsew', ao: false });
 
   // --- murallas del castillo
@@ -51,13 +52,14 @@ export function buildCastle(ctx, S, L) {
   const room = 'prison';
   const K = { x0: -88, z0: -19, x1: -73, z1: -4, h: 20 };
   const t = 1.5;
-  solid(ctx, 'wallstone', K.x0, 0, K.z0, K.x0 + t, K.h, K.z1, { sub: 2, aoH: 2 });
-  solid(ctx, 'wallstone', K.x1 - t, 0, K.z0, K.x1, K.h, -9, { sub: 2, aoH: 2 });
-  solid(ctx, 'wallstone', K.x1 - t, 0, -7.5, K.x1, K.h, K.z1, { sub: 2, aoH: 2 });
-  solid(ctx, 'wallstone', K.x1 - t, 2.5, -9, K.x1, K.h, -7.5, { sub: 2, ao: false });
-  solid(ctx, 'wallstone', K.x0 + t, 0, K.z0, K.x1 - t, K.h, K.z0 + t, { sub: 2, aoH: 2 });
-  solid(ctx, 'wallstone', K.x0 + t, 0, K.z1 - t, K.x1 - t, K.h, K.z1, { sub: 2, aoH: 2 });
-  wb.box('wallstone', K.x0 - 0.4, K.h - 0.6, K.z0 - 0.4, K.x1 + 0.4, K.h, K.z1 + 0.4, { ao: false, sub: 3 });
+  // (sin cara superior: la cubre la cornisa, y a la misma altura parpadeaban)
+  solid(ctx, 'wallstone', K.x0, 0, K.z0, K.x0 + t, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
+  solid(ctx, 'wallstone', K.x1 - t, 0, K.z0, K.x1, K.h, -9, { sub: 2, aoH: 2, faces: 'nsew' });
+  solid(ctx, 'wallstone', K.x1 - t, 0, -7.5, K.x1, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
+  solid(ctx, 'wallstone', K.x1 - t, 2.5, -9, K.x1, K.h, -7.5, { sub: 2, ao: false, faces: 'nsewb' });
+  solid(ctx, 'wallstone', K.x0 + t, 0, K.z0, K.x1 - t, K.h, K.z0 + t, { sub: 2, aoH: 2, faces: 'nsew' });
+  solid(ctx, 'wallstone', K.x0 + t, 0, K.z1 - t, K.x1 - t, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
+  wb.box('wallstone', K.x0 - 0.4, K.h - 0.6, K.z0 - 0.4, K.x1 + 0.4, K.h, K.z1 + 0.4, { ao: false, sub: 3, faces: 'tnsewb' });
   merlons(ctx, K.x0 - 0.4, K.z0 - 0.1, K.x1 + 0.4, K.z0 - 0.1, K.h, { collide: false });
   merlons(ctx, K.x0 - 0.4, K.z1 + 0.1, K.x1 + 0.4, K.z1 + 0.1, K.h, { collide: false });
   merlons(ctx, K.x0 - 0.1, K.z0, K.x0 - 0.1, K.z1, K.h, { collide: false });
@@ -78,13 +80,13 @@ export function buildCastle(ctx, S, L) {
   // marco de la puerta exterior
   wb.box('ashlar', K.x1, 0, -9.35, K.x1 + 0.2, 2.8, -9, { ao: false });
   wb.box('ashlar', K.x1, 0, -7.5, K.x1 + 0.2, 2.8, -7.15, { ao: false });
-  wb.box('ashlar', K.x1, 2.5, -9.35, K.x1 + 0.22, 2.9, -7.15, { ao: false });
+  wb.box('ashlar', K.x1, 2.5, -9.35, K.x1 + 0.22, 2.9, -7.15, { ao: false, faces: 'tnsewb' });
 
   // interior de la cárcel
   wb.setRoom(room);
   wb.box('flag', -86.5, -0.1, -17.5, -74.5, 0.01, -5.5, { faces: 't', ao: false, room, uv: 0.6 });
   wb.box('wallstone', -86.5, 4.2, -17.5, -74.5, 4.6, -5.5, { faces: 'b', ao: false, room, tint: [0.6, 0.6, 0.6] });
-  for (let x = -85; x < -75; x += 2.5) wb.box('wooddark', x - 0.15, 3.85, -17.5, x + 0.15, 4.2, -5.5, { ao: false, room });
+  for (let x = -85; x < -75; x += 2.5) wb.box('wooddark', x - 0.15, 3.85, -17.5, x + 0.15, 4.2, -5.5, { ao: false, room, faces: 'nsewb' });
   ctx.col.add(-86.5, 4.2, -17.5, -74.5, 4.6, -5.5).cam = true;
   // celdas
   for (const x of [-82.75, -78.75]) solid(ctx, 'wallstone', x, 0, -17.5, x + 0.5, 4.2, -13.5, { sub: 1.5, room });
@@ -93,7 +95,7 @@ export function buildCastle(ctx, S, L) {
       if (x > gap0 && x < gap1) continue;
       wb.box('iron', x - 0.025, 0, -13.55, x + 0.025, 4.2, -13.45, { ao: false, room });
     }
-    wb.box('iron', xa, 2.4, -13.6, xb, 2.48, -13.4, { ao: false, room });
+    wb.box('iron', xa, 2.4, -13.6, xb, 2.48, -13.4, { ao: false, room, faces: 'tnsewb' });
     wb.box('iron', xa, 0.1, -13.6, xb, 0.18, -13.4, { ao: false, room });
     if (gap0 > xa) ctx.col.add(xa, 0, -13.6, gap0, 4.2, -13.4).cam = false;
     if (gap1 < xb) ctx.col.add(gap1, 0, -13.6, xb, 4.2, -13.4).cam = false;
@@ -150,7 +152,7 @@ export function buildCastle(ctx, S, L) {
     { kind: 'note', id: 'n_carcelero', note: 'carcelero', x: -82.7, y: 0.82, z: -8.3, model: 'paper' },
     { kind: 'item', id: 'i_espada', item: 'espada', x: -80.1, y: 0.9, z: -6.0 },
     { kind: 'item', id: 'i_escudo', item: 'escudo', x: -78.9, y: 0.9, z: -6.0 },
-    { kind: 'door', id: 'd_carcel', x: -73.75, y: 0, z: -8.25, w: 1.5, h: 2.5, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: 1 }
+    { kind: 'door', id: 'd_carcel', x: -73.75, y: 0, z: -8.25, w: 1.5, h: 2.45, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: 1, plane: -73.05 }
   );
 
   // --- patio
@@ -169,9 +171,9 @@ export function buildCastle(ctx, S, L) {
     const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
     wb.quad('roof', V3(-89.2, 3.05, 13.8), V3(-68.8, 3.05, 13.8), V3(-68.8, 5.1, 20), V3(-89.2, 5.1, 20), { ao: false, sub: 2.4 });
     wb.quad('wooddark', V3(-68.8, 2.93, 13.8), V3(-89.2, 2.93, 13.8), V3(-89.2, 4.98, 20), V3(-68.8, 4.98, 20), { ao: false, sub: 3, tint: [0.5, 0.48, 0.45] });
-    wb.box('wooddark', -89.2, 2.95, 14.3, -68.8, 3.2, 14.72, { ao: false });
-    wb.box('wooddark', -89.2, 4.8, 19.65, -68.8, 5.05, 20, { ao: false });
-    for (let x = -88; x <= -70; x += 2.25) wb.box('wooddark', x - 0.07, 3.1, 14.5, x + 0.07, 3.2, 19.9, { ao: false });
+    wb.box('wooddark', -89.2, 2.95, 14.3, -68.8, 3.2, 14.72, { ao: false, faces: 'nsewb' });
+    wb.box('wooddark', -89.2, 4.8, 19.65, -68.8, 5.05, 20, { ao: false, faces: 'nsewb' });
+    for (let x = -88; x <= -70; x += 2.25) wb.box('wooddark', x - 0.07, 3.1, 14.5, x + 0.07, 3.2, 19.9, { ao: false, faces: 'nsewb' });
   }
   // picas con cabezas junto a la puerta
   P.pike(ctx, -54, 0, -4.2, { tilt: 0.1 });
@@ -290,7 +292,7 @@ export function buildSouto(ctx, S, L) {
   P.decal(ctx, -29.5, 0.03, -7.5, 2);
   wb.setRoom(null);
   L.interact.push(
-    { kind: 'door', id: 'd_souto', x: -29.75, y: 0, z: -3.5, w: 1.3, h: 2.3, axis: 'x', lock: { type: 'boards' }, mat: 'planks', hinge: -1, swing: -1 },
+    { kind: 'door', id: 'd_souto', x: -29.75, y: 0, z: -3.5, w: 1.3, h: 2.25, axis: 'x', lock: { type: 'boards' }, mat: 'planks', hinge: -1, swing: 1, plane: -3.8 },
     { kind: 'note', id: 'n_madre', note: 'madre', x: -30.8, y: 0.82, z: -10.4, model: 'paper' },
     { kind: 'item', id: 'i_ampolla1', item: 'ampolla', x: -27.4, y: 1.4, z: -9 }
   );
@@ -370,7 +372,9 @@ export function buildPraca(ctx, S, L) {
   P.stall(ctx, 10.4, 0, -10, Math.PI + 0.1, { goods: 'bread' });
   P.stall(ctx, 10.2, 0, -4.9, Math.PI / 2 + 0.1, { cloth: 'clothBlue', goods: 'veg' });
   P.stall(ctx, -6.6, 0, 10.4, 0.05, { cloth: 'clothRed', cloth2: 'burlap', goods: 'pots' });
-  P.stall(ctx, -1.0, 0, -12.2, 0.05, { cloth: 'clothDark', cloth2: 'clothWhite', goods: 'meat' });
+  // (la carnicería, en la esquina sureste: delante de la Calle de la Catedral
+  // tapaba la entrada a la calle)
+  P.stall(ctx, 6.2, 0, 11.6, Math.PI + 0.05, { cloth: 'clothDark', cloth2: 'clothWhite', goods: 'meat' });
   P.cart(ctx, -10, 0, 3.5, 1.4, { bodies: true });
   P.crate(ctx, -12.6, 0, 8.1, 0.9, 0.2);
   P.crate(ctx, -11.5, 0, 7.4, 0.7, 0.9);
@@ -432,7 +436,9 @@ export function buildPraca(ctx, S, L) {
 export function buildRuaSe(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -3.5, -40, 3.5, -14);
-  floor(ctx, -3.5, -40, 3.5, -14, 'cobble');
+  // el empedrado acaba donde empieza el enlosado de la plaza (bajo los
+  // soportales): solapados a la misma altura parpadeaban
+  floor(ctx, -3.5, -40, 3.5, -16.5, 'cobble');
   // (fachadas y cruces con los callejones del Arco y de las Ánimas: level_barrios.js)
   house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5 });
   // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza
@@ -452,7 +458,7 @@ export function buildRuaSe(ctx, S, L) {
   P.decal(ctx, -1.6, 0.02, -26.6, 2.2);
   P.decal(ctx, 0, 0.02, -18, 1.6);
   P.veiledStatue(ctx, -3.1, 2.4, -26.5, Math.PI / 2, { ped: 0 });
-  wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false });
+  wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false, faces: 'tnsewb' });
   P.wallTorch(ctx, 3.5, 2.8, -19.2, 'w');
   P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -37.4, -31] });
   P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
@@ -483,7 +489,7 @@ export function buildLargo(ctx, S, L) {
   stoneWall(ctx, -18, -62, -13, -56, 5);
   stoneWall(ctx, 13, -62, 15.5, -56, 5);
   stoneWall(ctx, 19, -62, 22, -56, 5);
-  wb.box('ashlar', 15.2, 4.6, -60.4, 19.3, 5.4, -59.6, { ao: false });
+  wb.box('ashlar', 15.2, 4.6, -60.4, 19.3, 5.4, -59.6, { ao: false, faces: 'tnsewb' });
 
   P.pyre(ctx, 4.5, 0, -47, 81);
   P.cruzeiro(ctx, -9.5, 0, -47.5, 0.2);
@@ -502,7 +508,8 @@ export function buildLargo(ctx, S, L) {
   // --- el atrio del sacrificio
   P.ritual(ctx, -12.5, 0, -51.5, 1.4, 7);
   P.stake(ctx, 18.2, 0, -52.8, 0.4, 3);
-  P.stake(ctx, 20.3, 0, -49.6, -0.6, 4);
+  // (apartada del portón del Postigo: la hoja chocaba con ella al abrirse)
+  P.stake(ctx, 20.4, 0, -54.1, -0.6, 4);
   P.siegeStone(ctx, -14.2, 0, -44.6, 0.6);
   P.siegeStone(ctx, 9.6, 0, -41.6, 0.45);
   P.dropped(ctx, 13.5, 0, -45.3, 0.9, 'sword');
@@ -626,10 +633,11 @@ export function buildTanners(ctx, S, L) {
   house(ctx, { x0: 48, z0: -26, x1: 64, z1: -12, front: 's', seed: 606, hollow: true, collide: false, h: 7.4, style: 'stone', doorAt: 10, room, jetty: 0 });
   W(S, 48.4, -25.6, 63.6, -12.4);
   W(S, 57.35, -12.6, 58.65, -11.8);
-  // tabique interior con paso
-  solid(ctx, 'plaster', 55.8, 0, -25.6, 56.2, 3.1, -21, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
-  solid(ctx, 'plaster', 55.8, 0, -19, 56.2, 3.1, -12.4, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
-  solid(ctx, 'plaster', 55.8, 2.3, -21, 56.2, 3.1, -19, { sub: 1.5, room, ao: false, tint: [0.8, 0.76, 0.7] });
+  // tabique interior con paso (5 cm corrido: una viga del techo caía justo
+  // en su cara y parpadeaba)
+  solid(ctx, 'plaster', 55.75, 0, -25.6, 56.15, 3.1, -21, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
+  solid(ctx, 'plaster', 55.75, 0, -19, 56.15, 3.1, -12.4, { sub: 1.5, room, tint: [0.8, 0.76, 0.7] });
+  solid(ctx, 'plaster', 55.75, 2.3, -21, 56.15, 3.1, -19, { sub: 1.5, room, ao: false, tint: [0.8, 0.76, 0.7], faces: 'nsewb' });
   wb.setRoom(room);
   P.table(ctx, 51.5, 0, -22, 2, 1, 0);
   P.shelf(ctx, 48.6, 0, -18, Math.PI / 2, 1.8);
@@ -644,7 +652,7 @@ export function buildTanners(ctx, S, L) {
   P.decal(ctx, 53, 0.03, -18, 2.6);
   wb.setRoom(null);
   L.interact.push(
-    { kind: 'door', id: 'd_canon', x: 58, y: 0, z: -12, w: 1.3, h: 2.3, axis: 'x', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1 },
+    { kind: 'door', id: 'd_canon', x: 58, y: 0, z: -12, w: 1.3, h: 2.25, axis: 'x', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: 1, plane: -12.3 },
     { kind: 'item', id: 'i_llave', item: 'llave_claustro', x: 50.9, y: 0.85, z: -21.9 },
     { kind: 'note', id: 'n_canonigo', note: 'canonigo', x: 51.9, y: 0.82, z: -22.3, model: 'book' }
   );
@@ -655,7 +663,7 @@ export function buildTanners(ctx, S, L) {
   W(S, 48.2, 11.8, 49.8, 12.8);
   solid(ctx, 'wallstone', 44, 0, 12, 48.2, 6, 12.6, { sub: 2 });
   solid(ctx, 'wallstone', 49.8, 0, 12, 54, 6, 12.6, { sub: 2 });
-  solid(ctx, 'wallstone', 48.2, 3.2, 12, 49.8, 6, 12.6, { sub: 2, ao: false });
+  solid(ctx, 'wallstone', 48.2, 3.2, 12, 49.8, 6, 12.6, { sub: 2, ao: false, faces: 'tnsewb' });
   solid(ctx, 'wallstone', 44, 0, 21.4, 54, 6, 22, { sub: 2 });
   solid(ctx, 'wallstone', 44, 0, 12.6, 44.6, 6, 21.4, { sub: 2 });
   solid(ctx, 'wallstone', 53.4, 0, 12.6, 54, 6, 21.4, { sub: 2 });
@@ -666,9 +674,9 @@ export function buildTanners(ctx, S, L) {
   wb.box('wallstone', 47.8, 9, 11.8, 50.2, 11.5, 12.6, { sub: 2 });
   wb.box('black', 48.5, 9.6, 11.78, 49.5, 10.9, 11.8, { ao: false, grime: false });
   wb.cylinder('bronze', 49, 9.7, 12.2, 0.35, 0.18, 0.6, 8, { ao: false });
-  wb.box('ashlar', 47.9, 0, 11.8, 48.2, 3.4, 12, { ao: false });
-  wb.box('ashlar', 49.8, 0, 11.8, 50.1, 3.4, 12, { ao: false });
-  wb.box('ashlar', 47.9, 3.2, 11.8, 50.1, 3.5, 12, { ao: false });
+  wb.box('ashlar', 47.9, 0, 11.8, 48.2, 3.2, 12, { ao: false });
+  wb.box('ashlar', 49.8, 0, 11.8, 50.1, 3.2, 12, { ao: false });
+  wb.box('ashlar', 47.88, 3.2, 11.79, 50.12, 3.5, 12, { ao: false, faces: 'tnsewb' });
   wb.box('ashlar', 48.1, -0.05, 11.7, 49.9, 0.04, 12.7, { faces: 'tnsew', ao: false });
   wb.setRoom(croom);
   wb.box('flag', 44.6, -0.05, 12.6, 53.4, 0.01, 21.4, { faces: 't', ao: false, room: croom });
@@ -729,7 +737,8 @@ export function buildTanners(ctx, S, L) {
   L.enemies.push(
     { type: 'bell', x: 56, y: 0, z: -4, yaw: 1.5, idle: 'wander', id: 'e_tan1' },
     { type: 'penitent', x: 60.5, y: 0, z: -9.2, yaw: 3, idle: 'kneel', id: 'e_tan2' },
-    { type: 'penitent', x: 52.6, y: 0, z: -6.8, yaw: -1, idle: 'stand', id: 'e_tan3' },
+    // (fuera de la pila de curtido: dentro, al moverse, la colisión lo sacaba de golpe)
+    { type: 'penitent', x: 53.2, y: 0, z: -4.6, yaw: -1, idle: 'stand', id: 'e_tan3' },
     { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },
     { type: 'hound', x: 67, y: 0, z: -20, yaw: 0, idle: 'eat', id: 'e_mur1' },
     { type: 'hound', x: 68.5, y: 0, z: -21.5, yaw: 0.5, idle: 'eat', id: 'e_mur2' },
@@ -753,7 +762,11 @@ export function buildRamparts(ctx, S, L) {
     tx1 = 77.5,
     tz0 = -42,
     tz1 = -35;
-  solid(ctx, 'wallstone', tx0, 0, tz0, tx1, 9, tz1, { sub: 2, mats: { t: 'flag' } });
+  // sin cara superior donde la atraviesa la muralla: allí el suelo ya es el
+  // del adarve (dos suelos a la misma altura parpadeaban)
+  solid(ctx, 'wallstone', tx0, 0, tz0, tx1, 9, tz1, { sub: 2, faces: 'nsew' });
+  wb.box('flag', tx0, 8.8, tz0, 72, 9, tz1, { faces: 't', ao: false });
+  wb.box('flag', 76, 8.8, tz0, tx1, 9, tz1, { faces: 't', ao: false });
   const tr = 'ramptower';
   const tw = (a, b, c, d) => solid(ctx, 'wallstone', a, 9, b, c, 13, d, { sub: 2, room: tr });
   tw(tx0, tz0, 71.5, tz1);
@@ -762,8 +775,8 @@ export function buildRamparts(ctx, S, L) {
   tw(75.4, tz0, 76.5, tz0 + 0.6);
   tw(71.5, tz1 - 0.6, 72.6, tz1);
   tw(75.4, tz1 - 0.6, 76.5, tz1);
-  solid(ctx, 'wallstone', 72.6, 11.5, tz0, 75.4, 13, tz0 + 0.6, { sub: 2, ao: false });
-  solid(ctx, 'wallstone', 72.6, 11.5, tz1 - 0.6, 75.4, 13, tz1, { sub: 2, ao: false });
+  solid(ctx, 'wallstone', 72.6, 11.5, tz0, 75.4, 13, tz0 + 0.6, { sub: 2, ao: false, faces: 'tnsewb' });
+  solid(ctx, 'wallstone', 72.6, 11.5, tz1 - 0.6, 75.4, 13, tz1, { sub: 2, ao: false, faces: 'tnsewb' });
   wb.box('wooddark', 71.5, 12.3, tz0 + 0.6, 76.5, 12.5, tz1 - 0.6, { faces: 'b', ao: false, room: tr });
   ctx.col.add(71.5, 12.3, tz0, 76.5, 13.4, tz1).cam = true;
   wb.pyramid('roof', 74, -38.5, 8, 8, 13, 3.5);
@@ -867,8 +880,8 @@ export function buildRamparts(ctx, S, L) {
   P.fleshGrowth(ctx, 61.4, 0, -54, 1.3, 111, { climb: 1.8 });
   L.interact.push({ kind: 'examine', id: 'x_postigo', text: 'noExit', x: 61.4, y: 1, z: -54, r: 2.6 });
   // portón atrancado hacia la Plaza de la Catedral (atajo)
-  L.interact.push({ kind: 'door', id: 'd_postigo', x: 22.4, y: 0, z: -47.75, w: 4.5, h: 3.2, axis: 'z', lock: { type: 'barred', side: 1 }, mat: 'planks', hinge: -1, swing: 1, double: true });
-  wb.box('ashlar', 22, 3.2, -50.3, 22.8, 4, -45.2, { ao: false });
+  L.interact.push({ kind: 'door', id: 'd_postigo', x: 22.4, y: 0, z: -47.75, w: 4.5, h: 3.15, axis: 'z', lock: { type: 'barred', side: 1 }, mat: 'planks', hinge: -1, swing: -1, double: true, plane: 22.05, inset: 0.13 });
+  wb.box('ashlar', 21.98, 3.2, -50.3, 22.8, 4, -45.2, { ao: false, faces: 'tnsewb' });
   L.enemies.push({ type: 'soldier', x: 52, y: 0, z: -48, yaw: 1.2, idle: 'wander', id: 'e_post1' }, { type: 'penitent', x: 34, y: 0, z: -47.8, yaw: -1.5, idle: 'kneel', id: 'e_post2' });
 
   // campamento de los sitiadores fuera de la muralla (vista desde el adarve)
@@ -1022,7 +1035,7 @@ export function buildFerraria(ctx, S, L) {
     { kind: 'item', id: 'i_palanca', item: 'palanca', x: -18.2, y: 0.86, z: 54.4 },
     { kind: 'note', id: 'n_herrero', note: 'herrero', x: -17.2, y: 0.82, z: 54.3, model: 'book' },
     { kind: 'item', id: 'i_piedra', item: 'piedra', x: -22.4, y: 1.35, z: 54 },
-    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.5, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1 }
+    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.45, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: -14.3 }
   );
   // atrezo
   P.barrel(ctx, -12.6, 0, 56.4);

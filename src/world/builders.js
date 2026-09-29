@@ -122,9 +122,11 @@ export function tower(ctx, cx, cz, w, h, o = {}) {
     x1 = cx + w / 2,
     z0 = cz - w / 2,
     z1 = cz + w / 2;
-  solid(ctx, mat, x0, 0, z0, x1, h, z1, { sub: 2.2, aoH: 3, faces: 'tnsew', collide: o.collide, mats: { t: 'flag' } });
-  // cornisa
-  ctx.wb.box(mat, x0 - 0.3, h - 0.5, z0 - 0.3, x1 + 0.3, h, z1 + 0.3, { ao: false, sub: 3 });
+  // (la cima la pone la cornisa: con las dos caras superiores a la misma
+  // altura, lo alto de las torres parpadeaba)
+  solid(ctx, mat, x0, 0, z0, x1, h, z1, { sub: 2.2, aoH: 3, faces: 'nsew', collide: o.collide });
+  // cornisa (con su cara inferior: desde abajo el vuelo no queda hueco)
+  ctx.wb.box(mat, x0 - 0.3, h - 0.5, z0 - 0.3, x1 + 0.3, h, z1 + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' } });
   if (o.roof === 'pyramid') {
     ctx.wb.pyramid('roof', cx, cz, w + 0.8, w + 0.8, h, w * 0.9);
   } else {
@@ -154,11 +156,14 @@ export function archWall(ctx, a0, a1, t0, t1, h, c, w, ah, o = {}) {
   const mat = o.mat ?? 'wallstone';
   const axisZ = o.axis === 'z';
   const put = (u0, y0, u1, y1, col = true) => {
+    // las dovelas del arco llevan cara inferior (el intradós): sin ella, al
+    // pasar bajo el arco y mirar arriba se veía el cielo entre losas sueltas
+    const faces = y0 > 0.01 ? 'tnsewb' : 'tnsew';
     if (axisZ) {
-      ctx.wb.box(mat, t0, y0, u0, t1, y1, u1, { sub: 2, aoH: 2 });
+      ctx.wb.box(mat, t0, y0, u0, t1, y1, u1, { sub: 2, aoH: 2, faces, baseY: 0 });
       if (col) ctx.col.add(t0, y0, u0, t1, y1, u1);
     } else {
-      ctx.wb.box(mat, u0, y0, t0, u1, y1, t1, { sub: 2, aoH: 2 });
+      ctx.wb.box(mat, u0, y0, t0, u1, y1, t1, { sub: 2, aoH: 2, faces, baseY: 0 });
       if (col) ctx.col.add(u0, y0, t0, u1, y1, t1);
     }
   };
@@ -212,13 +217,14 @@ function windowAt(ctx, x, y, w, h, o, rng) {
   // marco
   const fm = o.frameMat ?? 'timber';
   wb.box(fm, x - w / 2 - 0.1, y - 0.12, 0, x + w / 2 + 0.1, y, 0.12, { ao: false, sub: 3 });
-  wb.box(fm, x - w / 2 - 0.1, y + h, 0, x + w / 2 + 0.1, y + h + 0.1, 0.1, { ao: false, sub: 3 });
+  wb.box(fm, x - w / 2 - 0.1, y + h, 0, x + w / 2 + 0.1, y + h + 0.1, 0.1, { ao: false, sub: 3, faces: 'tsewb' });
   wb.box(fm, x - w / 2 - 0.1, y, 0, x - w / 2, y + h, 0.08, { ao: false, sub: 3 });
   wb.box(fm, x + w / 2, y, 0, x + w / 2 + 0.1, y + h, 0.08, { ao: false, sub: 3 });
   const kind = rng.next();
   if (kind < 0.3) {
-    // contraventanas cerradas (tablas)
-    wb.box('planks', x - w / 2, y, 0.02, x + w / 2, y + h, 0.07, { ao: false, sub: 3 });
+    // contraventanas cerradas (tablas), por delante de los pies derechos del
+    // entramado (a su misma profundidad parpadeaban)
+    wb.box('planks', x - w / 2, y, 0.02, x + w / 2, y + h, 0.075, { ao: false, sub: 3 });
   } else if (kind < 0.65) {
     // contraventanas abiertas
     for (const s of [-1, 1]) {
@@ -249,10 +255,11 @@ function windowAt(ctx, x, y, w, h, o, rng) {
 
 function doorAt(ctx, x, w, h, o = {}) {
   const wb = ctx.wb;
-  // jambas y dintel de piedra
-  wb.box('ashlar', x - w / 2 - 0.3, 0, 0, x - w / 2, h + 0.3, 0.16, { sub: 2 });
-  wb.box('ashlar', x + w / 2, 0, 0, x + w / 2 + 0.3, h + 0.3, 0.16, { sub: 2 });
-  wb.box('ashlar', x - w / 2 - 0.3, h, 0, x + w / 2 + 0.3, h + 0.35, 0.18, { sub: 2 });
+  // jambas y dintel de piedra (el dintel descansa sobre las jambas y vuela
+  // 2 cm por los lados: con las piezas solapadas, las esquinas parpadeaban)
+  wb.box('ashlar', x - w / 2 - 0.3, 0, 0, x - w / 2, h, 0.16, { sub: 2 });
+  wb.box('ashlar', x + w / 2, 0, 0, x + w / 2 + 0.3, h, 0.16, { sub: 2 });
+  wb.box('ashlar', x - w / 2 - 0.32, h, 0, x + w / 2 + 0.32, h + 0.35, 0.18, { sub: 2, baseY: 0 });
   if (o.frameOnly) return;
   if (o.open) {
     wb.box('black', x - w / 2, 0, 0, x + w / 2, h, 0.02, { ao: false, grime: false, faces: 's' });
@@ -307,6 +314,20 @@ export function house(ctx, s) {
   const hollow = !!s.hollow;
   const lt = lowerMat === 'plaster' ? tint : null;
 
+  // casas ya construidas pegadas a ésta por algún lado: el zócalo no se mete
+  // en el suyo (sus caras coincidían en las esquinas y parpadeaban)
+  const prevHouses = ctx.houseRects || (ctx.houseRects = []);
+  const nb = { n: false, s: false, e: false, w: false };
+  for (const r of prevHouses) {
+    const ox = Math.min(x1, r.x1) - Math.max(x0, r.x0),
+      oz = Math.min(z1, r.z1) - Math.max(z0, r.z0);
+    if (oz > 0.3 && Math.abs(r.x0 - x1) < 0.02) nb.e = true;
+    if (oz > 0.3 && Math.abs(r.x1 - x0) < 0.02) nb.w = true;
+    if (ox > 0.3 && Math.abs(r.z0 - z1) < 0.02) nb.s = true;
+    if (ox > 0.3 && Math.abs(r.z1 - z0) < 0.02) nb.n = true;
+  }
+  prevHouses.push({ x0, z0, x1, z1, front, jetty, hollow, seed: s.seed });
+
   // colisión del volumen (las visitables la llevan pieza a pieza)
   if (s.collide !== false && !hollow) ctx.col.add(x0, 0, z0, x1, h, z1);
 
@@ -350,12 +371,16 @@ export function house(ctx, s) {
         seg(cur, L, 0, g1, ds.length ? 'w' : '');
         // zócalo: sólo una franja exterior (antes era un bloque macizo que
         // tapaba el suelo de dentro y lo hacía parecer elevado)
-        // (las fachadas n/s se alargan 7 cm por los extremos y cierran las esquinas)
-        const ext = sd === 'n' || sd === 's' ? 0.07 : 0;
+        // (las fachadas n/s se alargan 7 cm por los extremos y cierran las
+        // esquinas; junto a una casa vecina ya construida se quedan 7 cm cortas)
+        const ends = { s: ['w', 'e'], n: ['e', 'w'], e: ['s', 'n'], w: ['n', 's'] }[sd];
+        const base = sd === 'n' || sd === 's' ? 0.07 : 0;
+        const extS = nb[ends[0]] ? -0.07 : base,
+          extE = nb[ends[1]] ? -0.07 : base;
         cur = 0;
         for (const d of [...ds, { at: L + 10, w: 0 }]) {
           const a = Math.min(L, d.at - d.w / 2);
-          if (a - cur > 0.01) wb.box('wallstone', cur - (cur <= 0 ? ext : 0), 0, 0, a + (a >= L ? ext : 0), 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'ts' + (cur > 0 ? 'w' : '') + (a < L ? 'e' : ''), room: 'out' });
+          if (a - cur > 0.01) wb.box('wallstone', cur - (cur <= 0 ? extS : 0), 0, 0, a + (a >= L ? extE : 0), 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'ts' + (cur > 0 ? 'w' : '') + (a < L ? 'e' : ''), room: 'out' });
           cur = d.at + d.w / 2;
         }
         // marcos de piedra de las puertas
@@ -374,8 +399,8 @@ export function house(ctx, s) {
     wb.box(s.floorMat ?? 'planks', x0 + t - 0.01, -0.05, z0 + t - 0.01, x1 - t + 0.01, 0.02, z1 - t + 0.01, { faces: 't', ao: false, room, uv: 0.5, tint: s.floorTint });
     wb.box('wooddark', x0 + t, g1, z0 + t, x1 - t, g1 + 0.05, z1 - t, { faces: 'b', ao: false, room, tint: [0.62, 0.56, 0.5] });
     const alongX = W >= D;
-    if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room });
-    else for (let z = z0 + 1.1; z < z1 - 0.6; z += 1.7) wb.box('timber', x0 + t, g1 - 0.22, z - 0.1, x1 - t, g1, z + 0.1, { ao: false, room });
+    if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room, faces: 'nsewb' });
+    else for (let z = z0 + 1.1; z < z1 - 0.6; z += 1.7) wb.box('timber', x0 + t, g1 - 0.22, z - 0.1, x1 - t, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
     ctx.col.add(x0, g1, z0, x1, h + 0.2, z1).cam = true;
     // tabiques interiores con pasos
     for (const iw of s.walls ?? []) partition(ctx, iw, g1, room, s.partMat ?? (lowerMat === 'plaster' ? 'plaster' : 'wallstone'), lt);
@@ -391,8 +416,9 @@ export function house(ctx, s) {
         }
     }
   } else {
-    // zócalo
-    wb.box('wallstone', x0 - 0.07, 0, z0 - 0.07, x1 + 0.07, 0.65, z1 + 0.07, { sub: 2, aoH: 0.6, faces: 'tnsew' });
+    // zócalo (7 cm corto por el lado de una casa vecina ya construida)
+    const zo = (b) => (b ? -0.07 : 0.07);
+    wb.box('wallstone', x0 - zo(nb.w), 0, z0 - zo(nb.n), x1 + zo(nb.e), 0.65, z1 + zo(nb.s), { sub: 2, aoH: 0.6, faces: 'tnsew' });
     wb.box(lowerMat, x0, 0.65, z0, x1, g1, z1, { sub: 1.6, tint: lt, aoH: 1.2, faces: 'nsew' });
   }
   // planta alta (voladizo hacia la fachada principal)
@@ -431,7 +457,7 @@ export function house(ctx, s) {
         const a = 0.25 + (i / n) * (L - 0.5);
         wb.box('ashlar', a - 0.3, 0, jetty - 0.55, a + 0.3, 0.3, jetty + 0.05, { sub: 2, aoH: 0.3, room: 'out' });
         wb.cylinder('ashlar', a, 0.3, jetty - 0.25, 0.2, 0.18, g1 - 0.62, 8, { ao: false, room: 'out' });
-        wb.box('ashlar', a - 0.32, g1 - 0.32, jetty - 0.57, a + 0.32, g1 - 0.02, jetty + 0.07, { ao: false, room: 'out' });
+        wb.box('ashlar', a - 0.32, g1 - 0.32, jetty - 0.57, a + 0.32, g1 - 0.02, jetty + 0.07, { ao: false, room: 'out', faces: 'nsewb' });
       }
       // viga de carga sobre las columnas y zapatas
       wb.box('timber', -0.05, g1 - 0.02, jetty - 0.4, L + 0.05, g1 + 0.02, jetty - 0.1, { ao: false, room: 'out', faces: 'nsewb' });
@@ -451,7 +477,7 @@ export function house(ctx, s) {
   } else if (jetty) {
     const [tx, tz, rot, L] = sideFrame(front, x0, z0, x1, z1);
     wb.at(tx, 0, tz, rot, () => {
-      for (let a = 0.4; a < L - 0.2; a += 0.7) wb.box('timber', a - 0.08, g1 - 0.25, 0, a + 0.08, g1, jetty + 0.05, { ao: false, room: 'out' });
+      for (let a = 0.4; a < L - 0.2; a += 0.7) wb.box('timber', a - 0.08, g1 - 0.25, 0, a + 0.08, g1, jetty + 0.05, { ao: false, room: 'out', faces: 'tsewb' });
     });
   }
 
@@ -470,7 +496,9 @@ export function house(ctx, s) {
           wb.box('timber', a - 0.1, g1 + 0.2, 0, a + 0.1, h, 0.07, { ao: false, sub: 3 });
         }
         wb.box('timber', 0, h - 0.2, 0, L, h, 0.08, { ao: false, sub: 3 });
-        wb.box('timber', 0, g1 + 1.0, 0, L, g1 + 1.16, 0.07, { ao: false, sub: 3 });
+        // la carrera intermedia, algo por detrás de pies derechos y tornapuntas
+        // (a la misma profundidad, cada cruce parpadeaba)
+        wb.box('timber', 0, g1 + 1.0, 0, L, g1 + 1.16, 0.055, { ao: false, sub: 3 });
         // tornapuntas en aspa
         for (let i = 0; i < n; i++) {
           if (rng.chance(0.45)) continue;
@@ -619,14 +647,16 @@ export function partition(ctx, iw, g1, room, mat = 'plaster', tint = null) {
       b = d.at + d.w / 2;
     piece(cur, a, 0, g1);
     piece(a, b, d.h ?? 2.3, g1);
-    // marco de madera del paso
+    // marco de madera del paso: asoma 6 mm hacia dentro del hueco para cubrir
+    // los cantos del tabique (en su mismo plano parpadeaban)
     const fr = (u0, u1, yb, yt) => {
       const bb = alongX ? [u0, yb, iw.z0 - 0.04, u1, yt, iw.z1 + 0.04] : [iw.x0 - 0.04, yb, u0, iw.x1 + 0.04, yt, u1];
-      wb.box('wooddark', ...bb, { ao: false, room });
+      wb.box('wooddark', ...bb, { ao: false, room, faces: yb > 0 ? 'tnsewb' : 'tnsew' });
     };
-    fr(a - 0.1, a, 0, d.h ?? 2.3);
-    fr(b, b + 0.1, 0, d.h ?? 2.3);
-    fr(a - 0.1, b + 0.1, d.h ?? 2.3, (d.h ?? 2.3) + 0.12);
+    const dh = d.h ?? 2.3;
+    fr(a - 0.1, a + 0.006, 0, dh - 0.006);
+    fr(b - 0.006, b + 0.1, 0, dh - 0.006);
+    fr(a - 0.1, b + 0.1, dh - 0.006, dh + 0.12);
     cur = b;
   }
   piece(cur, a1, 0, g1);
@@ -651,10 +681,10 @@ export function overpass(ctx, x0, z0, x1, z1, y0, y1, axis, o = {}) {
     const t = i / n;
     if (axis === 'x') {
       const x = x0 + 0.1 + t * (x1 - x0 - 0.2);
-      wb.box('timber', x - 0.08, y0 - 0.22, z0, x + 0.08, y0 - 0.05, z1, { ao: false });
+      wb.box('timber', x - 0.08, y0 - 0.22, z0, x + 0.08, y0 - 0.05, z1, { ao: false, faces: 'nsewb' });
     } else {
       const z = z0 + 0.1 + t * (z1 - z0 - 0.2);
-      wb.box('timber', x0, y0 - 0.22, z - 0.08, x1, y0 - 0.05, z + 0.08, { ao: false });
+      wb.box('timber', x0, y0 - 0.22, z - 0.08, x1, y0 - 0.05, z + 0.08, { ao: false, faces: 'nsewb' });
     }
   }
   // entramado y ventanas en las dos caras abiertas

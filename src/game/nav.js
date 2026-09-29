@@ -8,36 +8,61 @@ export class NavGrid {
     this.w = walk.w;
     this.h = walk.h;
     this.floorY = floorY; // función (x,z) -> altura de referencia
+    this.col = col;
+    this.pad = opts.pad ?? 0.25;
+    this.base = walk.cells;
     this.cells = new Uint8Array(walk.cells); // 1 transitable
     // rasterizar obstáculos (cajas que bloquean a la altura del torso)
-    for (const b of col.boxes) {
-      if (b.tag === 'floor' || b.tag === 'door') continue;
-      const cx = (b.minx + b.maxx) / 2,
-        cz = (b.minz + b.maxz) / 2;
-      const fy = floorY(cx, cz);
-      if (fy === null) continue;
-      if (!(b.maxy > fy + 0.65 && b.miny < fy + 1.7)) continue;
-      const pad = opts.pad ?? 0.25;
-      const i0 = Math.max(0, Math.floor((b.minx - pad - this.x0) / this.res)),
-        i1 = Math.min(this.w - 1, Math.floor((b.maxx + pad - this.x0) / this.res));
-      const j0 = Math.max(0, Math.floor((b.minz - pad - this.z0) / this.res)),
-        j1 = Math.min(this.h - 1, Math.floor((b.maxz + pad - this.z0) / this.res));
-      // se bloquean las celdas cuyo centro queda a menos de 'pad' de la caja
-      // (así una puerta de 1,3 m sigue siendo transitable por mala que sea la
-      // alineación con la rejilla); vale también para cajas giradas
-      const r = pad - 0.01;
-      for (let j = j0; j <= j1; j++)
-        for (let i = i0; i <= i1; i++) {
-          if (!col.overlapXZ(b, this.x0 + (i + 0.5) * this.res, this.z0 + (j + 0.5) * this.res, r)) continue;
-          this.cells[j * this.w + i] = 0;
-        }
-    }
+    for (const b of col.boxes) this.block(b);
     this.g = new Float32Array(this.w * this.h);
     this.from = new Int32Array(this.w * this.h);
     this.stamp = new Uint32Array(this.w * this.h);
     this.closed = new Uint32Array(this.w * this.h);
     this.curStamp = 1;
   }
+  // Marca como no transitables las celdas que tapa la caja (dentro de los
+  // límites de celda opcionales). Se bloquean las celdas cuyo centro queda a
+  // menos de 'pad' de la caja (así una puerta de 1,3 m sigue siendo
+  // transitable por mala que sea la alineación con la rejilla); vale también
+  // para cajas giradas.
+  block(b, lim = null) {
+    if (b.tag === 'floor' || b.tag === 'door' || !b.enabled) return;
+    const fy = this.floorY((b.minx + b.maxx) / 2, (b.minz + b.maxz) / 2);
+    if (fy === null) return;
+    if (!(b.maxy > fy + 0.65 && b.miny < fy + 1.7)) return;
+    const pad = this.pad;
+    let i0 = Math.max(0, Math.floor((b.minx - pad - this.x0) / this.res)),
+      i1 = Math.min(this.w - 1, Math.floor((b.maxx + pad - this.x0) / this.res));
+    let j0 = Math.max(0, Math.floor((b.minz - pad - this.z0) / this.res)),
+      j1 = Math.min(this.h - 1, Math.floor((b.maxz + pad - this.z0) / this.res));
+    if (lim) {
+      i0 = Math.max(i0, lim[0]);
+      i1 = Math.min(i1, lim[1]);
+      j0 = Math.max(j0, lim[2]);
+      j1 = Math.min(j1, lim[3]);
+    }
+    const r = pad - 0.01;
+    for (let j = j0; j <= j1; j++)
+      for (let i = i0; i <= i1; i++) {
+        if (!this.col.overlapXZ(b, this.x0 + (i + 0.5) * this.res, this.z0 + (j + 0.5) * this.res, r)) continue;
+        this.cells[j * this.w + i] = 0;
+      }
+  }
+
+  // Vuelve a calcular una zona tras cambiar sus obstáculos (un mueble roto).
+  refresh(minx, minz, maxx, maxz) {
+    const pad = this.pad;
+    const lim = [
+      Math.max(0, Math.floor((minx - pad - this.x0) / this.res)),
+      Math.min(this.w - 1, Math.floor((maxx + pad - this.x0) / this.res)),
+      Math.max(0, Math.floor((minz - pad - this.z0) / this.res)),
+      Math.min(this.h - 1, Math.floor((maxz + pad - this.z0) / this.res)),
+    ];
+    if (lim[0] > lim[1] || lim[2] > lim[3]) return;
+    for (let j = lim[2]; j <= lim[3]; j++) for (let i = lim[0]; i <= lim[1]; i++) this.cells[j * this.w + i] = this.base[j * this.w + i];
+    for (const b of this.col.query(minx - pad * 2, minz - pad * 2, maxx + pad * 2, maxz + pad * 2)) this.block(b, lim);
+  }
+
   ci(x) {
     return Math.floor((x - this.x0) / this.res);
   }
