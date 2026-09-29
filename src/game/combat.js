@@ -42,7 +42,8 @@ export class Combat {
       // por la espalda o sin que se lo espere: golpe crítico
       const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
       const crit = !e.boss && (!e.aware || behind);
-      const dmg = Math.round(atk.dmg * player.dmgMul * (crit ? 1.7 : 1) * (0.92 + Math.random() * 0.16));
+      // atkMul: pesado cargado; crit: el facón hiere más por la espalda
+      const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
       if (crit && r !== 'blocked' && r !== 'none') {
         g.hitstop = Math.max(g.hitstop, 0.14);
@@ -61,9 +62,10 @@ export class Combat {
         g.input.rumble(0.4, 0.6, 90);
       } else if (r !== 'none') {
         const f = player.forward();
-        this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, 0xff9070);
+        this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, atk.holy ? 0xffe6a0 : 0xff9070);
         g.fx.blood.emit(hx, hy, hz, atk.heavy ? 34 : 20, { dir: { x: f.x, z: f.z }, speed: atk.heavy ? 6 : 4.5 });
-        g.audio && g.audio.play(atk.heavy ? 'hitHeavy' : 'hit', e.pos);
+        if (atk.holy) g.fx.blood.emit(hx, hy, hz, 10, { color: [1, 0.86, 0.45], speed: 3, life: 0.45, up: 1.2, gravity: -1 });
+        g.audio && g.audio.play(atk.hitSnd || (atk.heavy ? 'hitHeavy' : 'hit'), e.pos);
         g.hitstop = Math.max(g.hitstop, atk.heavy ? 0.12 : 0.07);
         g.camRig.shake(atk.heavy ? 0.28 : 0.14);
         g.input.rumble(atk.heavy ? 0.8 : 0.45, 0.5, atk.heavy ? 140 : 80);
@@ -72,6 +74,29 @@ export class Combat {
           g.audio && g.audio.enemyVoice(e, 'death');
         } else g.audio && g.audio.enemyVoice(e, 'hurt');
       }
+    }
+  }
+
+  // El arma del jugador muerde el suelo (hacha): polvo, onda y daño a lo que
+  // esté alrededor del punto de impacto (salvo a quien ya recibió el tajo).
+  playerImpact(player, atk) {
+    const g = this.game;
+    const tip = player.weaponPoint(player.weapon.tip, this._tip || (this._tip = new THREE.Vector3()));
+    const y = g.world.col.groundHeight(tip.x, tip.z, 0.2, player.pos.y + 1);
+    const I = atk.impact;
+    this.ring(tip.x, y, tip.z, I.r, 0x8a7a66, 0.4);
+    g.fx.blood.emit(tip.x, y + 0.15, tip.z, 26, { color: [0.36, 0.33, 0.29], speed: 5.5, life: 0.6, up: 2 });
+    g.audio && g.audio.play('axeGround', { x: tip.x, y, z: tip.z });
+    g.camRig.shake(0.3 + (player.atkMul - 1) * 0.4);
+    g.input.rumble(0.7, 0.6, 160);
+    for (const e of g.activeEnemies) {
+      if (e.dead || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
+      const d = Math.hypot(e.pos.x - tip.x, e.pos.z - tip.z);
+      if (d > I.r + e.body.radius || Math.abs(e.pos.y - y) > 1.5) continue;
+      player.hitSet.add(e);
+      const r = e.takeHit(Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1)), atk.poise * 0.5, tip.x, tip.z, true, 0);
+      if (r === 'kill') g.audio && g.audio.enemyVoice(e, 'death');
+      else if (r !== 'none' && r !== 'blocked') g.audio && g.audio.enemyVoice(e, 'hurt');
     }
   }
 

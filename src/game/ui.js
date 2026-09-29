@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { GLYPHS } from '../core/input.js';
 import { ITEMS, NOTES, AREA_NAMES } from './story.js';
+import { WEAPON_ORDER, WEAPONS } from '../entities/weapons.js';
 import { iconBitmap, smallIcon } from './icons.js';
 import { formatTime, clamp } from '../core/util.js';
 import { PAL as P, Bitmap, bayer, ramp, hash, uiScale, spriteImg, spriteHtml, attachBackdrop, panelBitmap, parchmentBitmap, bannerBitmap, dividerBitmap, cursorSword, greatSword, keyBitmap, reticleBitmap, slotBitmap, arrowBitmap, candleBitmap, notchBitmap, textBitmap } from '../ui/pixel.js';
@@ -431,7 +432,8 @@ export class UI {
     const g = this.g;
     const out = [];
     const inv = g.inventory;
-    if (inv.has('espada')) out.push({ id: 'espada' });
+    // armas en el orden en que se encuentran
+    for (const w of WEAPON_ORDER) if (inv.has(WEAPONS[w].item)) out.push({ id: WEAPONS[w].item });
     if (inv.has('escudo')) out.push({ id: 'escudo' });
     out.push({ id: '_flask', n: g.player.flasks + '/' + g.player.maxFlasks });
     for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo']) if (inv.has(k)) out.push({ id: k });

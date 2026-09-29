@@ -10,6 +10,7 @@ import { BakedProbe } from '../gfx/probe.js';
 import { Atmosphere } from './atmosphere.js';
 import { CameraRig } from './camera.js';
 import { Player } from '../entities/player.js';
+import { WEAPONS, WEAPON_ORDER } from '../entities/weapons.js';
 import { Enemy, makeBlobShadow } from '../entities/enemy.js';
 import { buildMourner, buildPenitent, buildBell } from '../entities/enemy_models.js';
 import { Input, GLYPHS } from '../core/input.js';
@@ -138,6 +139,7 @@ export class Game {
     this.visited = new Set();
     this.lastAltar = null;
     this.hintsShown = {};
+    this.savedWeapon = null;
   }
 
   saveGame() {
@@ -149,6 +151,7 @@ export class Game {
       maxHp: p.maxHp,
       maxFlasks: p.maxFlasks,
       dmgMul: p.dmgMul,
+      weapon: p.weaponId,
       lastAltar: this.lastAltar,
       playTime: this.playTime,
       deaths: this.deaths,
@@ -170,6 +173,19 @@ export class Game {
     p.maxHp = s.maxHp || 100;
     p.maxFlasks = s.maxFlasks || 3;
     p.dmgMul = s.dmgMul || 1;
+    this.savedWeapon = s.weapon || null;
+  }
+
+  // Armas: ¿tiene alguna? y cuál empuñar (la guardada si aún la tiene; si no,
+  // la última del orden en que se encuentran).
+  hasWeapon() {
+    return WEAPON_ORDER.some((id) => this.inventory.has(WEAPONS[id].item));
+  }
+  equipBestWeapon(prefer = null) {
+    const owned = WEAPON_ORDER.filter((id) => this.inventory.has(WEAPONS[id].item));
+    // (sin ninguna, la espada: oculta hasta recogerla, como siempre)
+    const id = prefer && owned.includes(prefer) ? prefer : owned[owned.length - 1] || 'espada';
+    if (id !== this.player.weaponId) this.player.equipWeapon(id);
   }
 
   applyWorldState() {
@@ -186,7 +202,8 @@ export class Game {
         if (e.P.censer) e.P.censer.grp.visible = false;
       }
     }
-    this.player.setEquipment(this.inventory.has('espada'), this.inventory.has('escudo'));
+    this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
+    this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
   }
 
   // ------------------------------------------------------------ ajustes
@@ -434,7 +451,9 @@ export class Game {
     const p = this.player;
     this.inventory.add(id);
     const it = ITEMS[id];
-    if (id === 'espada' || id === 'escudo') p.setEquipment(this.inventory.has('espada'), this.inventory.has('escudo'));
+    // un arma nueva se empuña al recogerla
+    if (it.weapon && WEAPONS[it.weapon]) p.equipWeapon(it.weapon);
+    if (it.weapon || id === 'escudo') p.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
     if (it.upgrade === 'flask') {
       p.maxFlasks++;
       p.flasks++;
@@ -859,7 +878,11 @@ export class Game {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
       }
-      // estela de la espada
+      // estela del arma (su color depende del arma empuñada)
+      if (this._trailW !== p.weaponId) {
+        this._trailW = p.weaponId;
+        this.fx.trail.mat.uniforms.uColor.value.setHex(p.weapon.trailColor || 0xffe2b0);
+      }
       if (p.hasSword && p.obj.visible) {
         const sj = p.rig.joints.sword;
         sj.updateWorldMatrix(true, false);
@@ -949,7 +972,10 @@ export class Game {
     U.uDesat.value = p.dead ? 0.8 : U.uLowHp.value * 0.4;
     U.uWarp.value = this.warp;
     U.uFlash.value = this.flash;
-    U.uFlashColor.value.setRGB(1, 0.6, 0.3);
+    // destello: naranja por defecto; dorado tras el iai de la katana
+    const ft = this.flashTint || [1, 0.6, 0.3];
+    U.uFlashColor.value.setRGB(ft[0], ft[1], ft[2]);
+    if (this.flash <= 0) this.flashTint = null;
     this.fade = damp(this.fade, this.fadeTarget, this.fadeTarget < this.fade ? 2.2 : 1.4, dt);
     U.uFade.value = this.fade;
     if (this.state !== 'ending') U.uFadeColor.value.setRGB(0, 0, 0);

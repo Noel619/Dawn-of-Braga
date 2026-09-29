@@ -2,18 +2,25 @@
 // de un clip o de la locomoción y los compone en una sola imagen.
 //   node tools/posesheet.mjs out.png "light1@0,0.14,0.26,0.4" "loco@4.5@0,0.25,0.5,0.75"
 //   CAM="yawDeg,height,dist"  WHO=player|<tipo de criatura>   (requiere npx vite --port 5199)
+//   ARMA=facon|hacha|lanza|espada|katana  el arma que empuña el jugador
+//   GHOST=0.25  superpone la hoja de los últimos 0,25 s (cada 1/60 s): el
+//               arco del golpe, con una marca hacia el filo en cada fotograma
 import { chromium } from 'playwright';
 const [out, ...specs] = process.argv.slice(2);
 const cam = (process.env.CAM || '35,1.2,3.4').split(',').map(Number);
 const who = process.env.WHO || 'player';
+const arma = process.env.ARMA || '';
+const ghost = +(process.env.GHOST || 0);
+const cell = (process.env.CELL || '240,300').split(',').map(Number);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const p = await b.newPage({ viewport: { width: 960, height: 540 } });
+const vs = cell[0] / 240;
+const p = await b.newPage({ viewport: { width: Math.round(960 * vs), height: Math.round(540 * vs) } });
 const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' | ')));
 await p.goto('http://localhost:5199/?dev=1&at=0,0,-44&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const res = await p.evaluate(
-  async ([specs, cam, who]) => {
+  async ([specs, cam, who, arma, ghost, cell]) => {
     window.__pause = true;
     const g = __game;
     const T = g.THREE;
@@ -44,13 +51,17 @@ const res = await p.evaluate(
       E.obj.visible = true;
       P.obj.visible = false;
       P.body.pos.set(0, 0, -30);
-    } else P.spawn(0, 0, -44, 0);
+    } else {
+      P.spawn(0, 0, -44, 0);
+      P.setEquipment(true, true);
+      if (arma) P.equipWeapon(arma);
+    }
     const actor = E || P;
     const clips = E ? E.T.clips : P.clips;
     const W = 960,
       H = 540;
-    const cw = 240,
-      ch = 300;
+    // (la ventana se escala con el tamaño de celda: mismo encuadre, más detalle)
+    const [cw, ch] = cell;
     const frames = [];
     for (const s of specs) {
       const parts = s.split('@');
@@ -98,16 +109,55 @@ const res = await p.evaluate(
           frames.err = 'no clip ' + f.kind;
           continue;
         }
-        A.play(c, { blend: 0 });
-        A.from = null;
-        A.xf = 1;
-        A.w = 1;
-        A.t = f.t;
-        if (E) E.animate(1 / 600);
-        else {
-          P.animate(1 / 600);
-          P.animate(1 / 600);
+        const at = (t) => {
+          A.play(c, { blend: 0 });
+          A.from = null;
+          A.xf = 1;
+          A.w = 1;
+          A.t = t;
+          if (E) E.animate(1 / 600);
+          else {
+            P.animate(1 / 600);
+            P.animate(1 / 600);
+          }
+        };
+        // estela: la hoja en los instantes anteriores (azul -> blanco) y una
+        // marca roja desde el centro de la hoja hacia el filo
+        if (ghost && !E) {
+          const pos = [],
+            col = [];
+          const W = P.weapon;
+          const sw = P.rig.joints.sword;
+          const n = Math.round(ghost * 60);
+          for (let k = n; k >= 0; k--) {
+            const t = f.t - k / 60;
+            if (t < 0) continue;
+            at(t);
+            P.obj.updateMatrixWorld(true);
+            const b0 = new T.Vector3().fromArray(W.trail[0]).applyMatrix4(sw.matrixWorld);
+            const b1 = new T.Vector3().fromArray(W.tip).applyMatrix4(sw.matrixWorld);
+            const u = 1 - k / (n + 1);
+            pos.push(b0.x, b0.y, b0.z, b1.x, b1.y, b1.z);
+            col.push(0.2 + 0.8 * u, 0.4 + 0.6 * u, 1, 0.2 + 0.8 * u, 0.4 + 0.6 * u, 1);
+            if (Array.isArray(W.edge)) {
+              const mid = b0.clone().lerp(b1, 0.7);
+              const q = sw.getWorldQuaternion(new T.Quaternion());
+              const e = new T.Vector3().fromArray(W.edge).applyQuaternion(q).multiplyScalar(0.12);
+              pos.push(mid.x, mid.y, mid.z, mid.x + e.x, mid.y + e.y, mid.z + e.z);
+              col.push(1, 0.2, 0.1, 1, 0.2, 0.1);
+            }
+          }
+          const gg = new T.BufferGeometry();
+          gg.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+          gg.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+          const ls = new T.LineSegments(gg, new T.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true }));
+          ls.renderOrder = 999;
+          ls.frustumCulled = false;
+          if (g.__ghost) g.scene.remove(g.__ghost);
+          g.__ghost = ls;
+          g.scene.add(ls);
         }
+        at(f.t);
       }
       const Pp = actor.pos;
       const ang = (cam[0] * Math.PI) / 180;
@@ -120,8 +170,8 @@ const res = await p.evaluate(
       g.render();
       const gx = (i % cols) * cw,
         gy = Math.floor(i / cols) * ch;
-      const srcW = (gl.width * cw) / (W * 0.62),
-        srcH = (gl.height * ch) / (H * 0.95);
+      const srcW = (gl.width * 240) / (W * 0.62),
+        srcH = (gl.height * 300) / (H * 0.95);
       sc.drawImage(gl, (gl.width - srcW) / 2, (gl.height - srcH) / 2, srcW, srcH, gx, gy, cw, ch);
       sc.fillStyle = '#e8d8b0';
       sc.font = '14px monospace';
@@ -130,7 +180,7 @@ const res = await p.evaluate(
     }
     return sheet.toDataURL('image/png');
   },
-  [specs, cam, who]
+  [specs, cam, who, arma, ghost, cell]
 );
 const fs = await import('fs');
 fs.writeFileSync(out, Buffer.from(res.split(',')[1], 'base64'));

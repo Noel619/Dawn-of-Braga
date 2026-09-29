@@ -4,7 +4,8 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
-await p.goto('http://localhost:5199/?dev=1&items=espada,escudo');
+// ARMA=facon|hacha|lanza|espada|katana para probar con otra arma
+await p.goto('http://localhost:5199/?dev=1&items=espada,escudo' + (process.env.ARMA ? '&arma=' + process.env.ARMA : ''));
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const r = await p.evaluate(() => {
   window.__pause = true;

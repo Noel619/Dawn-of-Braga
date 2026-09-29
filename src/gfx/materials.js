@@ -76,6 +76,11 @@ export const MAT_DEFS = {
   blood: { tex: 'blood', uv: 0.5 },
   water: { tex: 'water', uv: 0.25 },
   black: { tex: 'black', uv: 1, color: 0x050505 },
+  // metales de las armas
+  silver: { tex: 'plate', uv: 1.6, color: 0xe4e6ee },
+  gold: { tex: 'bronze', uv: 1.0, color: 0xffd67a },
+  holySteel: { tex: 'plate', uv: 1.6, color: 0xf4f1ea, emissive: 0xffdf9a, emissiveIntensity: 0.3 },
+  lacquer: { tex: 'wooddark', uv: 0.8, color: 0x3a1410 },
   ember: { tex: 'white', uv: 1, color: 0x220800, emissive: 0xff5a10, emissiveIntensity: 1.6 },
   eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },

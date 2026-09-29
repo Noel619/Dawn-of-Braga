@@ -5,6 +5,7 @@ import { getTexture } from '../gfx/textures.js';
 import { ITEMS, NOTES, MSG } from './story.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
 import { G } from '../gfx/materials.js';
+import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
 
 const glowTex = () => getTexture('glow');
 
@@ -180,7 +181,24 @@ function breakableTable(w, d, mat) {
 const _v = new THREE.Vector3();
 const _m4 = new THREE.Matrix4();
 
+// Armas nuevas como objeto recogible: el mismo modelo que empuña el jugador,
+// de pie con la hoja hacia arriba (la lanza, inclinada) y centrado.
+function weaponItemMesh(id) {
+  const g = new THREE.Group();
+  const w = buildParts(WEAPON_PARTS[id]('x')).group;
+  w.rotation.x = -Math.PI / 2;
+  const tilt = new THREE.Group();
+  tilt.rotation.z = id === 'lanza' ? 0.55 : id === 'katana' ? 0.18 : 0.08;
+  tilt.add(w);
+  g.add(tilt);
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(w);
+  w.position.sub(box.getCenter(new THREE.Vector3()).applyQuaternion(tilt.quaternion.clone().invert()));
+  return g;
+}
+
 function itemMesh(id) {
+  if (id === 'facon' || id === 'hacha' || id === 'lanza' || id === 'katana') return weaponItemMesh(id);
   const g = new THREE.Group();
   const iron = objMat('iron'),
     plate = objMat('plate'),

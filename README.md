@@ -86,6 +86,33 @@ barrido suave, sin saltos.
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
 (los pies se apoyan en el suelo y en los escalones) y brazos; los escudos se estabilizan para mirar siempre al frente.
 
+**Armas.** Cinco armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
+pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación). Por el orden en que se
+encontrarán:
+- **Facón criollo** (una mano, con escudo): agazapado, cuatro cortes cortos que se encadenan (tajo, revés con el
+  contrafilo, tajo corrido y puñalada), molinete de dos tajos y puñalada a fondo; hiere más por la espalda.
+- **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango): golpes lentos y demoledores que
+  desequilibran a casi cualquiera, barrido con las manos deslizándose por el mango y un hachazo del verdugo que se
+  carga manteniendo el botón, rompe la guardia y parte el suelo con una onda.
+- **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
+  que se lanza sin bajar el escudo.
+- **Espada del carcelero**: la de siempre, sin cambios.
+- **Katana sagrada** (dos manos): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
+  al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
+
+Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
+queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`
+(o `hacha`, `lanza`, `espada`, `katana`).
+
+Sus animaciones siguen la estructura de un golpe real: anticipación que frena, impacto que se cruza a la velocidad
+máxima y final del tajo que frena desde ahí (una sola campana de velocidad, sin paradas ni rebotes: tangentes
+monótonas), con retrasos escalonados de cadera, pecho, brazo y hoja. El filo va por delante: el giro de la muñeca
+se calcula fotograma a fotograma a lo largo del arco real de la hoja (sin medias vueltas bruscas cuando la hoja se
+alinea con el antebrazo) y el codo se elige para que la muñeca quede natural. Las estocadas se definen en el espacio del personaje para ir rectas aunque el torso gire; a dos
+manos, el puño izquierdo se coloca exactamente sobre el mango (y se desliza por él si el brazo no llega). Las
+ventanas de golpe salen del perfil de velocidad de la punta y cada golpe del combo empieza en la pose exacta en que
+se encadena el anterior.
+
 **Criaturas.**
 - **Penitente**: flagelante encapuchado, con clavos en la espalda y una hoz oxidada.
 - **Soldado cosido**: yelmo reventado por la carne y un tercer brazo que brota de la espalda; bloquea con el escudo.
@@ -144,7 +171,9 @@ src/
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; armas:
+                        weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
+                        hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado y textos
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
@@ -155,7 +184,11 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         holes.mjs      busca zonas transitables sin suelo visible
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
-                        posesheet.mjs  hoja de poses de las animaciones
+                        posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
+                        weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
+                                       bloqueo y curación contra un enemigo real
+                        animcheck.mjs  (sin navegador) análisis numérico de los golpes: velocidad de la punta,
+                                       filo por delante, agarre a dos manos, tirones y saltos al encadenar
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
 ```

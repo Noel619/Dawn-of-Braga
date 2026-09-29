@@ -366,7 +366,12 @@ export function bladeDir(b, out = new THREE.Vector3()) {
   return out.set(Math.sin(b[0]) * cp, Math.sin(b[1]), Math.cos(b[0]) * cp);
 }
 
-export function solveArm(pose, rig, side) {
+// mode 'euler': el giro de la hoja (bladeR[2]) se mide respecto al plano
+// vertical de la propia hoja (con giro 0 el filo mira hacia abajo), no respecto
+// al antebrazo. Esa referencia es continua mientras lo sean los canales de la
+// clave, así que la mano nunca da media vuelta de golpe cuando la hoja se
+// alinea con el antebrazo (estocadas). Por defecto, la referencia original.
+export function solveArm(pose, rig, side, mode = null) {
   const ik = pose['ik' + side];
   if (!ik) return;
   const R = rig.rest;
@@ -408,11 +413,16 @@ export function solveArm(pose, rig, side) {
   _qf.copy(_qu).multiply(_qt);
   const bl = pose['blade' + side];
   if (bl) {
-    const fdir = _up.set(0, -1, 0).applyQuaternion(_qf);
     bladeDir(bl, _Z);
-    _Y.copy(fdir).negate();
-    _Y.addScaledVector(_Z, -_Y.dot(_Z));
-    if (_Y.lengthSq() < 1e-6) _Y.set(0, 1, 0).addScaledVector(_Z, -_Z.y);
+    if (mode === 'euler') {
+      const sp = Math.sin(bl[1]);
+      _Y.set(-sp * Math.sin(bl[0]), Math.cos(bl[1]), -sp * Math.cos(bl[0]));
+    } else {
+      const fdir = _up.set(0, -1, 0).applyQuaternion(_qf);
+      _Y.copy(fdir).negate();
+      _Y.addScaledVector(_Z, -_Y.dot(_Z));
+      if (_Y.lengthSq() < 1e-6) _Y.set(0, 1, 0).addScaledVector(_Z, -_Z.y);
+    }
     _Y.normalize();
     if (bl[2]) _Y.applyAxisAngle(_Z, bl[2]);
     _X.crossVectors(_Y, _Z).normalize();

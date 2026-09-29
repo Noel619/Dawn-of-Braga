@@ -711,6 +711,83 @@ export class Audio {
         this.jingle(d, t, 0.14, h ? 0.08 : 0.05);
         break;
       }
+      // ---- armas
+      case 'swingKnife': {
+        // facón: silbido corto y agudo con un tintineo de la guarda
+        d = this.out(P, { gain: 0.55, verb: 0.06, life: 1.2, occlude: false });
+        this.noise(d, t, 0.15, { f0: 900, f1: 3800, q: 2.4, gain: 0.45, a: 0.07, curve: 'lin' });
+        this.noise(d, t + 0.06, 0.1, { f0: 4200, f1: 2200, q: 3, gain: 0.1, a: 0.02 });
+        this.metal(d, t, rnd(2600, 3000), 0.012, 0.2, { ratios: [1, 2.7] });
+        break;
+      }
+      case 'swingAxe': {
+        // hacha: masa que corta el aire, crujido del mango y esfuerzo
+        d = this.out(P, { gain: 0.85, verb: 0.12, life: 2, occlude: false });
+        this.noise(d, t, 0.55, { f0: 160, f1: 900, q: 1.6, gain: 0.6, a: 0.3, curve: 'lin', buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.18, 0.35, { f0: 600, f1: 260, q: 2, gain: 0.25, a: 0.08 });
+        this.tone(d, t + 0.1, 0.45, { f0: 78, f1: 46, gain: 0.3, a: 0.12 });
+        this.creak(d, t, 0.18, rnd(110, 150), 0.05);
+        this.voice(d, t, 0.34, { f0: 118, f1: 96, vowel: 'a', v1: 'u', gain: 0.12, vibD: 0, breath: 0.7, a: 0.03, rasp: 0.3, rel: 0.6 });
+        this.jingle(d, t + 0.05, 0.2, 0.1);
+        break;
+      }
+      case 'thrust': {
+        // lanza: estocada seca, el asta que vibra y la malla
+        d = this.out(P, { gain: 0.6, verb: 0.08, life: 1.2, occlude: false });
+        this.noise(d, t, 0.13, { f0: 1100, f1: 2800, q: 2, gain: 0.45, a: 0.05, curve: 'lin' });
+        this.noise(d, t + 0.05, 0.09, { f0: 2400, f1: 1300, q: 2.5, gain: 0.14, a: 0.01 });
+        this.tone(d, t + 0.02, 0.16, { f0: rnd(170, 200), f1: 140, gain: 0.1, type: 'triangle' });
+        this.jingle(d, t, 0.12, 0.06);
+        break;
+      }
+      case 'swingKatana': {
+        // katana: silbido limpio y afinado, con un leve brillo sagrado
+        d = this.out(P, { gain: 0.6, verb: 0.12, life: 1.6, occlude: false });
+        this.noise(d, t, 0.2, { f0: 1600, f1: 5200, q: 5, gain: 0.34, a: 0.1, curve: 'lin' });
+        this.noise(d, t + 0.08, 0.14, { f0: 5200, f1: 2600, q: 4, gain: 0.12, a: 0.02 });
+        this.tone(d, t + 0.02, 0.5, { f0: rnd(2380, 2460), gain: 0.012, a: 0.05 });
+        this.smp(d, t + 0.1, this.smallBell(), { gain: 0.018, rate: mtof(88) / mtof(76) });
+        break;
+      }
+      case 'iai': {
+        // desenvainado: roce del acero contra la boca de la saya y el destello
+        d = this.out(P, { gain: 0.75, verb: 0.3, life: 3, occlude: false });
+        this.noise(d, t, 0.12, { type: 'highpass', f0: 3200, gain: 0.16, a: 0.01 });
+        this.metal(d, t + 0.02, 2800, 0.05, 1.1, { ratios: [1, 1.5, 2.76] });
+        this.noise(d, t + 0.05, 0.22, { f0: 1800, f1: 6000, q: 4, gain: 0.4, a: 0.06, curve: 'lin' });
+        [83, 88, 95].forEach((m, i) => this.smp(d, t + 0.1 + i * 0.05, this.smallBell(), { gain: 0.05, rate: mtof(m) / mtof(76) }));
+        this.voice(d, t + 0.08, 1.2, { f0: mtof(69), vowel: 'a', gain: 0.03, vib: 5, vibD: 8, breath: 0.4, a: 0.1, type: 'triangle' });
+        this.duck(0.2, 0.5);
+        break;
+      }
+      case 'flick': {
+        // chiburi: sacudida rápida de la hoja y gotas al suelo
+        d = this.out(P, { gain: 0.5, verb: 0.1, life: 1.2, occlude: false });
+        this.noise(d, t, 0.1, { f0: 2400, f1: 900, q: 3, gain: 0.25, a: 0.02 });
+        for (let i = 0; i < 4; i++) this.noise(d, t + 0.12 + i * rnd(0.03, 0.06), 0.03, { f0: rnd(900, 1500), q: 4, gain: 0.08, a: 0.002, buf: this.brown, rate: 4 });
+        break;
+      }
+      case 'hitAxe': {
+        // hacha en carne y hueso
+        d = this.out(P, { gain: 1, verb: 0.2, life: 1.8 });
+        this.tone(d, t, 0.32, { f0: 120, f1: 38, gain: 0.85 });
+        this.noise(d, t, 0.1, { type: 'lowpass', f0: 3000, f1: 400, gain: 0.8, a: 0.001 });
+        this.noise(d, t + 0.01, 0.34, { f0: 650, f1: 220, q: 3, gain: 0.45, buf: this.brown, rate: 3 });
+        this.debris(d, t + 0.01, 6, 0.08, { f0: 1600, f1: 3400, gain: 1.4 });
+        this.tone(d, t, 0.45, { f0: 58, f1: 28, gain: 0.55 });
+        this.duck(0.25, 0.3);
+        break;
+      }
+      case 'axeGround': {
+        // la cabeza del hacha se clava en el suelo
+        d = this.out(P, { gain: 0.9, verb: 0.35, life: 2.5, ref: 5 });
+        this.tone(d, t, 0.5, { f0: 70, f1: 30, gain: 0.8 });
+        this.noise(d, t, 0.45, { type: 'lowpass', f0: 1100, f1: 160, gain: 0.6, a: 0.002 });
+        this.metal(d, t, rnd(420, 480), 0.07, 0.6, { ratios: [1, 2.3, 3.9] });
+        this.debris(d, t + 0.03, 10, 0.5, { gain: 1.1 });
+        this.duck(0.3, 0.4);
+        break;
+      }
       case 'hit':
       case 'hitHeavy': {
         const h = name === 'hitHeavy';

@@ -2,11 +2,43 @@
 // la historia se cuenta sobre todo con el escenario.
 
 export const ITEMS = {
+  // Armas (weapon: id en src/entities/weapons.js). Orden en el que se
+  // encontrarán: facón, hacha, lanza, espada y katana sagrada. Las cuatro
+  // nuevas todavía no están colocadas en el mundo.
+  facon: {
+    name: 'Facón criollo',
+    desc: 'Cuchillo largo de un marinero del Río de la Plata, con guardas de plata en S. Corto y veloz: tajos que se encadenan y una puñalada que remata.',
+    icon: 'facon',
+    key: false,
+    weapon: 'facon',
+  },
+  hacha: {
+    name: 'Hacha barbada',
+    desc: 'Hacha de mango largo de los leñadores del Gerês. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
+    icon: 'axe',
+    key: false,
+    weapon: 'hacha',
+  },
+  lanza: {
+    name: 'Lanza de la muralla',
+    desc: 'Lanza de la guardia del adarve, con la moharra en hoja de laurel y un lazo rojo. Mantiene a raya: estocadas largas sin bajar el escudo.',
+    icon: 'spear',
+    key: false,
+    weapon: 'lanza',
+  },
   espada: {
     name: 'Espada del carcelero',
     desc: 'Espada larga de la guarnición. La hoja está mellada, pero todavía corta.',
     icon: 'sword',
     key: false,
+    weapon: 'espada',
+  },
+  katana: {
+    name: 'Katana sagrada',
+    desc: 'Hoja curva traída del Japón por un jesuita y bendecida en la Sé. Su acero reluce en la oscuridad. Se desenvaina y corta en un solo gesto.',
+    icon: 'katana',
+    key: false,
+    weapon: 'katana',
   },
   escudo: {
     name: 'Escudo de la guardia',

@@ -249,25 +249,42 @@ export function slerpE(a, b, t, out = [0, 0, 0]) {
 }
 
 // ------------------------------------------------------------- clips
-// Crea un clip: keys = [[t, {joint:[x,y,z] (grados; 'root' en cm)}, ease], ...]
+// Crea un clip: keys = [[t, {joint:[x,y,z] (grados; 'root' en cm)}, ease, {k}], ...]
+// (k opcional: escala la tangente de esa clave; k > 1 = se cruza más rápido)
 // ease del tramo que llega a esa clave:
 //   (por defecto) curva Hermite continua que fluye a través de las claves
 //   'snap'   golpe: sale disparado y frena al llegar (impactos)
+//   'strike' golpe fluido: arranca desde parado, alcanza la velocidad máxima
+//            en el primer tercio y frena suave hasta la clave (sin tirones)
 //   'hold'   llega frenando y se detiene en la clave (anticipación)
+//   'settle' final de un tajo: la clave anterior (el impacto) se cruza a toda
+//            velocidad y el arma frena hasta detenerse en esta clave
 //   'linear' velocidad constante, 'in' acelera, 'out' frena
 // opts.ground (por defecto true si el clip mueve las piernas): los pies se
 // plantan en el suelo mediante IK; false para volteretas, caídas, etc.
+// opts.lag = { articulación: s }: esa articulación va con retraso respecto al
+// resto (acción superpuesta: la cadera empieza, el pecho la sigue, el brazo
+// después y la hoja llega la última y se pasa de largo). Al final del clip
+// el retraso se recupera suavemente para acabar exactamente en la última clave.
+// Canales que empiezan por 'w' son pesos sin unidades (p. ej. wGrip).
+// opts.mono: ningún canal rebasa sus claves ni retrocede entre ellas
+// (tangentes limitadas como en Fritsch-Carlson): arcos limpios sin rebotes.
 export function clip(name, dur, keys, opts = {}) {
   const joints = new Set();
   for (const [, pose] of keys) for (const j in pose) joints.add(j);
   const J = [...joints];
-  const k = keys.map(([t, pose, ease]) => {
+  const k = keys.map(([t, pose, ease, ko]) => {
     const p = {};
     for (const j of J) {
       const v = pose[j];
-      p[j] = v ? v.map((x) => (j === 'root' || j.startsWith('ik') ? x / 100 : x * DEG)) : [0, 0, 0];
+      // un peso ausente en una clave vale 1 (agarre completo), no 0
+      if (!v && j[0] === 'w') {
+        p[j] = [1, 0, 0];
+        continue;
+      }
+      p[j] = v ? v.map((x) => (j === 'root' || j.startsWith('ik') ? x / 100 : j[0] === 'w' ? x : x * DEG)) : [0, 0, 0];
     }
-    return { t, pose: p, ease: ease || 'smooth', m: {} };
+    return { t, pose: p, ease: ease || 'smooth', m: {}, tk: (ko && ko.k) || 1 };
   });
   // tangentes (Catmull-Rom con tiempos no uniformes)
   for (let i = 0; i < k.length; i++) {
@@ -276,11 +293,21 @@ export function clip(name, dur, keys, opts = {}) {
       const into = k[i].ease;
       const out = k[i + 1] ? k[i + 1].ease : 'smooth';
       // antes de un golpe ('snap') siempre hay una pausa de anticipación
-      if (i > 0 && i < k.length - 1 && into !== 'snap' && into !== 'hold' && into !== 'in' && out !== 'hold' && out !== 'snap') {
+      if (i > 0 && i < k.length - 1 && into !== 'snap' && into !== 'strike' && into !== 'hold' && into !== 'settle' && into !== 'in' && out !== 'hold' && out !== 'snap' && out !== 'strike') {
         const a = k[i - 1],
           b = k[i + 1];
         const dt = Math.max(1e-4, b.t - a.t);
-        for (let c = 0; c < 3; c++) m[c] = (b.pose[j][c] - a.pose[j][c]) / dt;
+        // tk > 1: la clave se cruza más deprisa (impacto en mitad de un tajo)
+        for (let c = 0; c < 3; c++) {
+          let v = ((b.pose[j][c] - a.pose[j][c]) / dt) * k[i].tk;
+          if (opts.mono) {
+            const d0 = (k[i].pose[j][c] - a.pose[j][c]) / Math.max(1e-4, k[i].t - a.t);
+            const d1 = (b.pose[j][c] - k[i].pose[j][c]) / Math.max(1e-4, b.t - k[i].t);
+            if (d0 * d1 <= 0 || v * d0 <= 0) v = 0;
+            else v = Math.sign(v) * Math.min(Math.abs(v), 3 * Math.abs(d0), 3 * Math.abs(d1));
+          }
+          m[c] = v;
+        }
       } else if (into === 'linear' && i > 0) {
         const a = k[i - 1];
         const dt = Math.max(1e-4, k[i].t - a.t);
@@ -290,6 +317,17 @@ export function clip(name, dur, keys, opts = {}) {
     }
   }
   const legs = joints.has('legL') || joints.has('legR') || joints.has('shinL') || joints.has('shinR');
+  // grupos de articulaciones por retraso (el grupo 0 va sin retraso)
+  let lagGroups = null;
+  if (opts.lag) {
+    const by = new Map();
+    for (const j of J) {
+      const d = opts.lag[j] || 0;
+      if (!by.has(d)) by.set(d, []);
+      by.get(d).push(j);
+    }
+    lagGroups = [...by.entries()].map(([dt, js]) => ({ dt, joints: js }));
+  }
   return {
     name,
     dur,
@@ -301,6 +339,7 @@ export function clip(name, dur, keys, opts = {}) {
     root: opts.root || null,
     ground: opts.ground ?? legs,
     legs,
+    lagGroups,
   };
 }
 
@@ -310,15 +349,67 @@ const EASE = {
   in: (a) => a * a,
   out: (a) => 1 - (1 - a) * (1 - a),
   snap: (a) => 1 - Math.pow(1 - a, 3),
+  // integral de una campana asimétrica: v(u) = 12·u·(1-u)², pico en u = 1/3
+  strike: (a) => 1 - Math.pow(1 - a, 3) * (1 + 3 * a),
   hold: (a) => a * a * (3 - 2 * a),
+  settle: (a) => a * a * (3 - 2 * a),
 };
 
 export function sampleClip(c, t, out = {}) {
   const keys = c.keys;
   for (const j in out) if (!(j in keys[0].pose)) delete out[j];
   if (c.loop) t = ((t % c.dur) + c.dur) % c.dur;
+  // cada grupo se muestrea con su retraso; en los últimos 0,25 s el retraso
+  // se recupera para llegar juntos a la última clave
+  const catchUp = Math.min(1, Math.max(0, (c.dur - t) / 0.25));
+  if (!c.lagGroups) sampleJoints(c, t, null, out);
+  else for (const g of c.lagGroups) sampleJoints(c, g.dt ? Math.max(0, t - g.dt * catchUp) : t, g.joints, out);
+  // pistas aditivas (p. ej. el giro de la muñeca que lleva el filo por delante)
+  if (c.tracks)
+    for (const tr of c.tracks) {
+      const o = out[tr.j];
+      if (o) o[tr.i] += evalTrack(tr, tr.lag ? Math.max(0, t - tr.lag * catchUp) : t);
+    }
+  return out;
+}
+
+// Pista 1D: puntos (t, v) unidos por una Hermite monótona (sin rebasar los
+// valores de los puntos). Fuera del rango conserva el primer/último valor.
+export function makeTrack(j, i, pts, lag = 0) {
+  const n = pts.length;
+  const t = pts.map((p) => p[0]),
+    v = pts.map((p) => p[1]),
+    m = new Array(n).fill(0);
+  for (let k = 1; k < n - 1; k++) {
+    const d0 = (v[k] - v[k - 1]) / Math.max(1e-4, t[k] - t[k - 1]);
+    const d1 = (v[k + 1] - v[k]) / Math.max(1e-4, t[k + 1] - t[k]);
+    if (d0 * d1 <= 0) continue;
+    const c = (v[k + 1] - v[k - 1]) / Math.max(1e-4, t[k + 1] - t[k - 1]);
+    m[k] = Math.sign(c) * Math.min(Math.abs(c), 3 * Math.abs(d0), 3 * Math.abs(d1));
+  }
+  return { j, i, lag, t, v, m };
+}
+
+export function evalTrack(tr, x) {
+  const { t, v, m } = tr;
+  const n = t.length;
+  if (x <= t[0]) return v[0];
+  if (x >= t[n - 1]) return v[n - 1];
+  let k = 0;
+  while (k < n - 2 && t[k + 1] <= x) k++;
+  const D = t[k + 1] - t[k];
+  const u = (x - t[k]) / D,
+    u2 = u * u,
+    u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * v[k] + (u3 - 2 * u2 + u) * D * m[k] + (-2 * u3 + 3 * u2) * v[k + 1] + (u3 - u2) * D * m[k + 1];
+}
+
+// Muestrea las articulaciones js (o todas) del clip en el instante t.
+function sampleJoints(c, t, js, out) {
+  const keys = c.keys;
+  const J = js || Object.keys(keys[0].pose);
   if (t <= keys[0].t) {
-    for (const j in keys[0].pose) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...keys[0].pose[j]);
+    for (const j of J) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...keys[0].pose[j]);
     return out;
   }
   let i = 0;
@@ -328,7 +419,7 @@ export function sampleClip(c, t, out = {}) {
     if (c.loop) {
       const a = (t - last.t) / (c.dur - last.t || 1);
       const e = EASE.smooth(Math.min(1, a));
-      for (const j in last.pose) {
+      for (const j of J) {
         const pa = last.pose[j],
           pb = keys[0].pose[j];
         const o = out[j] || (out[j] = [0, 0, 0]);
@@ -336,14 +427,14 @@ export function sampleClip(c, t, out = {}) {
       }
       return out;
     }
-    for (const j in last.pose) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...last.pose[j]);
+    for (const j of J) (out[j] || (out[j] = [0, 0, 0])).splice(0, 3, ...last.pose[j]);
     return out;
   }
   const A = keys[i],
     B = keys[i + 1];
   const D = B.t - A.t;
   const u = (t - A.t) / D;
-  if (B.ease === 'smooth' || B.ease === 'hold') {
+  if (B.ease === 'smooth' || B.ease === 'hold' || B.ease === 'settle') {
     // Hermite cúbica
     const u2 = u * u,
       u3 = u2 * u;
@@ -351,7 +442,7 @@ export function sampleClip(c, t, out = {}) {
       h10 = u3 - 2 * u2 + u,
       h01 = -2 * u3 + 3 * u2,
       h11 = u3 - u2;
-    for (const j in A.pose) {
+    for (const j of J) {
       const pa = A.pose[j],
         pb = B.pose[j],
         ma = A.m[j],
@@ -361,7 +452,7 @@ export function sampleClip(c, t, out = {}) {
     }
   } else {
     const e = (EASE[B.ease] || EASE.smooth)(u);
-    for (const j in A.pose) {
+    for (const j of J) {
       const pa = A.pose[j],
         pb = B.pose[j];
       const o = out[j] || (out[j] = [0, 0, 0]);
@@ -380,7 +471,7 @@ export function blendInto(base, over, w, mask = null, jw = null) {
     const ww = jw ? w * (jw[j] ?? 1) : w;
     if (ww <= 0) continue;
     const b = over[j];
-    if (j === 'root' || j.startsWith('ik') || j.startsWith('elbow')) {
+    if (j === 'root' || j.startsWith('ik') || j.startsWith('elbow') || j[0] === 'w') {
       const a = base[j] || Z3;
       base[j] = [a[0] + (b[0] - a[0]) * ww, a[1] + (b[1] - a[1]) * ww, a[2] + (b[2] - a[2]) * ww];
     } else base[j] = slerpE(base[j] || Z3, b, ww, base[j] && base[j] !== Z3 ? base[j] : [0, 0, 0]);
@@ -396,7 +487,7 @@ export function addRot(base, j, add) {
   base[j] = q2e(_qa, base[j] || [0, 0, 0]);
 }
 
-export const UPPER = new Set(['chest', 'head', 'neck', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'spine', 'shield', 'ikL', 'ikR', 'bladeL', 'bladeR', 'elbowL', 'elbowR']);
+export const UPPER = new Set(['chest', 'head', 'neck', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'spine', 'shield', 'ikL', 'ikR', 'bladeL', 'bladeR', 'elbowL', 'elbowR', 'wGrip', 'wSlide']);
 
 const smooth01 = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 

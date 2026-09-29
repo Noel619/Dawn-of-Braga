@@ -25,8 +25,11 @@ function boot() {
   document.getElementById('loading').classList.add('hidden');
 
   if (q.get('dev')) {
-    // arranque directo para pruebas: ?dev=1&at=x,y,z&yaw=grados&items=a,b
+    // arranque directo para pruebas: ?dev=1&at=x,y,z&yaw=grados&items=a,b&arma=id
     const items = (q.get('items') || 'espada,escudo').split(',').filter(Boolean);
+    // ?arma=facon|hacha|lanza|espada|katana para probar un arma (queda en el inventario)
+    const arma = q.get('arma');
+    if (arma && !items.includes(arma)) items.push(arma);
     game.newState();
     for (const i of items) game.inventory.add(i);
     game.applyWorldState();
@@ -34,6 +37,7 @@ function boot() {
     const at = (q.get('at') || '-84.6,0,-15.8').split(',').map(Number);
     game.player.spawn(at[0], at[1], at[2], (Number(q.get('yaw') || 180) * Math.PI) / 180);
     game.player.hp = game.player.maxHp;
+    if (arma) game.player.equipWeapon(arma);
     game.camRig.snapTo(game.player);
     game.fade = 1;
     game.beginPlay(false);

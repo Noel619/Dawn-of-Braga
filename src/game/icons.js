@@ -65,6 +65,14 @@ function sparkle(b, x, y) {
   b.set(x, y - 1, P.steel4);
   b.set(x, y + 1, P.steel4);
 }
+// destello dorado (la katana bendecida)
+function holySparkle(b, x, y) {
+  b.set(x, y, P.gold5);
+  b.set(x - 1, y, P.gold4);
+  b.set(x + 1, y, P.gold4);
+  b.set(x, y - 1, P.gold4);
+  b.set(x, y + 1, P.gold4);
+}
 
 const ICONS = {
   // espada larga en diagonal: pomo abajo a la izquierda, punta arriba a la derecha
@@ -89,6 +97,148 @@ const ICONS = {
     disc(b, 5, 27, 2.4, (l, d, x, y) => (d < 0.45 ? P.ruby2 : shade(GOLD, l, x, y)));
     b.set(4, 26, P.ruby3);
     sparkle(b, 22, 8);
+    b.outline(P.void);
+  },
+  // facón criollo: hoja larga con contrafilo, guardas de plata en S y cabo
+  // de asta oscura con virolas de plata
+  facon(b) {
+    // hoja: lomo (a la luz) arriba a la izquierda, filo abajo a la derecha
+    seg(b, 13.5, 18.5, 28, 4, 1.9, 1.9, (t, s, x, y) => {
+      if (t > 0.72) {
+        const k = (t - 0.72) / 0.28;
+        if (s < -1 + 2 * k) return null; // el lomo baja hasta la punta
+        if (s > 1 - 0.55 * k * k) return null;
+        if (s < -0.62 + 2 * k) return P.steel5; // contrafilo afilado
+      }
+      if (s > 0.62) return P.steel5; // filo
+      if (s > 0.22) return P.steel2; // bisel en sombra
+      if (s < -0.55) return P.steel4; // lomo
+      return (x * 3 + y) % 7 === 0 && t < 0.7 ? P.steel2 : P.steel3;
+    });
+    // guardas de plata en S (los extremos se curvan en sentidos opuestos)
+    seg(b, 10.8, 15.8, 16.2, 21.2, 1.0, 1.0, (t, s) => (s < 0 ? P.steel5 : P.steel3));
+    b.set(11, 14, P.steel4);
+    b.set(12, 14, P.steel5);
+    b.set(15, 22, P.steel2);
+    b.set(14, 23, P.steel3);
+    // cabo: virolas de plata y asta veteada
+    seg(b, 6.5, 25.5, 12.8, 19.2, 1.45, 1.45, (t, s, x, y) => {
+      if (t > 0.8 || t < 0.14) return s < -0.2 ? P.steel5 : s > 0.4 ? P.steel2 : P.steel4;
+      if (Math.abs(t - 0.47) < 0.05) return s < 0 ? P.steel4 : P.steel2;
+      return s < -0.35 ? P.wood3 : s > 0.45 ? P.wood0 : (x + 2 * y) % 5 === 0 ? P.wood2 : P.wood1;
+    });
+    // pomo de plata
+    disc(b, 5.4, 26.6, 1.9, (l, d, x, y) => shade(STEEL, l + 0.1, x, y));
+    sparkle(b, 23, 9);
+    b.outline(P.void);
+  },
+  // hacha barbada: mango largo con tiras de cuero y cabeza de hierro cuyo filo
+  // (acero bruñido) baja en barba hacia el mango
+  axe(b) {
+    seg(b, 5, 28, 22.5, 8.5, 1.35, 1.35, (t, s, x, y) => {
+      if ((t > 0.06 && t < 0.24) || (t > 0.52 && t < 0.62)) return (x + y) % 3 === 0 ? P.pink1 : s < 0 ? P.wood2 : P.wood1;
+      return s < -0.35 ? P.wood4 : s > 0.45 ? P.wood1 : shade(WOOD, 0.6 + (bayer(x, y) - 0.5) * 0.25, x, y);
+    });
+    // cabeza en el marco del mango: a = a lo largo (hacia arriba), c = hacia el filo
+    const hx = 20.2,
+      hy = 11.1;
+    const ux = 0.668,
+      uy = -0.744,
+      nx = 0.744,
+      ny = 0.668;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const px = x + 0.5 - hx,
+          py = y + 0.5 - hy;
+        const a = px * ux + py * uy,
+          c = px * nx + py * ny;
+        let col = null;
+        // ojo y nuca
+        if (Math.abs(a) <= 2.6 && c >= -3.2 && c <= 2.2) col = shade(IRON, 0.5 - c * 0.05 - a * 0.04, x, y);
+        // hoja: se abre hacia el filo y la barba cae hacia el mango
+        const q = (c - 2) / 8;
+        if (c > 1.8 && q <= 1) {
+          const top = 2.2 + q * 1.4,
+            bot = -2.2 - q * q * 6.2;
+          const edge = 9.8 - 0.05 * (a - (top + bot) / 2) ** 2;
+          if (a <= top && a >= bot && c <= edge) col = c > edge - 1.4 ? (a > top - 1.2 ? P.steel5 : P.steel4) : shade(IRON, 0.62 - q * 0.25 + (a > 0 ? 0.08 : -0.04), x, y);
+        }
+        if (col) b.set(x, y, col);
+      }
+    sparkle(b, 26, 16);
+    b.outline(P.void);
+  },
+  // lanza: asta larga, regatón, cubo con aletas, lazo rojo y moharra en hoja
+  // de laurel con su nervio
+  spear(b) {
+    seg(b, 3.5, 28.5, 20.5, 11.5, 1.0, 1.0, (t, s, x, y) => (s < -0.3 ? P.wood4 : s > 0.4 ? P.wood1 : shade(WOOD, 0.55 + (bayer(x, y) - 0.5) * 0.2, x, y)));
+    seg(b, 3.5, 28.5, 1.6, 30.4, 1.0, 0.35, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+    // lazo rojo atado bajo el cubo
+    seg(b, 18.2, 13.8, 16.6, 18.2, 0.9, 0.55, (t, s) => (s < 0 ? P.blood4 : P.blood2));
+    b.set(18, 13, P.blood3);
+    b.set(19, 13, P.blood2);
+    // cubo y aletas
+    seg(b, 19.3, 12.7, 22, 10, 1.25, 1.15, (t, s, x, y) => shade(IRON, s < 0 ? 0.72 : 0.36, x, y));
+    seg(b, 17.4, 10.8, 21.2, 14.6, 0.7, 0.7, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+    // moharra
+    seg(b, 21.6, 10.4, 30, 2, 2.6, 2.6, (t, s) => {
+      const w = t < 0.3 ? 0.35 + 0.65 * Math.sin(((t / 0.3) * Math.PI) / 2) : Math.pow(Math.max(0, 1 - (t - 0.3) / 0.7), 0.85);
+      if (Math.abs(s) > w) return null;
+      if (Math.abs(s) < 0.14 * w + 0.1) return P.steel2; // nervio
+      if (s < 0) return Math.abs(s) > w - 0.3 ? P.steel5 : P.steel4;
+      return Math.abs(s) > w - 0.3 ? P.steel3 : P.steel2;
+    });
+    sparkle(b, 25, 7);
+    b.outline(P.void);
+  },
+  // katana sagrada: hoja curva con el temple dorado que reluce, tsuba de
+  // hierro, tsuka de seda carmesí con menuki de oro y la cruz en el kashira
+  katana(b) {
+    const A = [12.2, 19.8],
+      B = [29.5, 2.5];
+    // sori: el centro de la hoja se desplaza hacia el filo
+    const pt = (t) => {
+      const bow = 1.7 * 4 * t * (1 - t);
+      return [A[0] + (B[0] - A[0]) * t + 0.707 * bow, A[1] + (B[1] - A[1]) * t + 0.707 * bow];
+    };
+    const N = 12;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N,
+        t1 = (i + 1) / N;
+      const p0 = pt(t0),
+        p1 = pt(t1);
+      seg(b, p0[0], p0[1], p1[0], p1[1], 1.65, 1.65, (tt, s, x, y) => {
+        const t = t0 + (t1 - t0) * tt;
+        // kissaki: el filo sube en curva hasta el lomo
+        if (t > 0.88) {
+          const k = (t - 0.88) / 0.12;
+          if (s > 1 - 1.9 * k * k) return null;
+        }
+        if (s > 0.45) return (x * 2 + y) % 5 < 2 ? P.gold4 : P.gold5; // temple
+        if (s < -0.55) return P.steel3; // mune
+        if (s > -0.25 && s < -0.08) return P.steel5; // shinogi
+        return P.steel4;
+      });
+    }
+    // habaki de oro y tsuba de hierro
+    b.set(13, 18, P.gold4);
+    b.set(14, 18, P.gold3);
+    seg(b, 10.3, 17.9, 14.1, 21.7, 1.25, 1.25, (t, s, x, y) => shade(IRON, s < 0 ? 0.78 : 0.4, x, y));
+    // tsuka: seda carmesí cruzada sobre piel blanca, fuchi y kashira de oro
+    seg(b, 5.2, 26.8, 11.5, 20.5, 1.5, 1.5, (t, s) => {
+      if (t > 0.88) return s < 0 ? P.gold4 : P.gold2;
+      const ph = (t * 6) % 1;
+      if (Math.abs(s) < 0.6 * (1 - Math.abs(ph * 2 - 1))) return s < 0 ? P.bone3 : P.bone1;
+      return s < 0 ? P.blood2 : P.blood1;
+    });
+    b.set(8, 24, P.gold4); // menuki
+    b.set(9, 23, P.gold3);
+    disc(b, 4.5, 27.5, 1.8, (l, d, x, y) => shade(GOLD, l, x, y));
+    b.set(4, 27, P.gold5); // cruz del kashira
+    b.set(4, 26, P.gold5);
+    b.set(3, 27, P.gold5);
+    holySparkle(b, 27, 12);
+    holySparkle(b, 19, 5);
     b.outline(P.void);
   },
   // escudo de lágrima con la cruz de Braga
