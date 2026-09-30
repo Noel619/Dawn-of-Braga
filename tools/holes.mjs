@@ -37,6 +37,8 @@ const r = await p.evaluate((step) => {
         if (W === g.level.S && z < -166 && z > -186 && Math.abs(x) < 3) continue;
         // la boca del pozo de la cisterna (el pretil tapa un hueco abierto)
         if (W === g.level.B && Math.hypot(x - 55, z + 50) < 1.4) continue;
+        // (y el aljibe de la cisterna: su pretil rodea el agua)
+        if (W === g.level.B && x > 50.2 && x < 61.4 && z > -59.6 && z < -56.4) continue;
         // superficie pisable más alta bajo y1: con 1.6 m libres encima
         const boxes = g.world.col.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01, []).filter((b) => !b.camOnly && !b.brk && g.world.col.overlapXZ(b, x, z, 0));
         const tops = boxes.map((b) => b.maxy).filter((t) => t <= y1 + 0.01 && t >= y0 - 1).sort((a, b) => b - a);

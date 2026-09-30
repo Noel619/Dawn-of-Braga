@@ -76,13 +76,19 @@ la vuelta de golpe, se alza, grita y arroja el cadáver contra la pared. Arriba,
 cierra la puerta de un portazo y echa la tranca («Perdóneme, señor…»). Abajo, la sala vacía; algo la cruza de un
 salto y se pierde en la bóveda.
 
-**Las bodegas del canónigo.** Un laberinto de sótanos de bóveda alta: la sala del altar con sus pilares, la celda
-donde el ama encerraba al canónigo, la galería de los toneles con sus estanterías, un pasillo que acaba en un arco
-tapiado, la cisterna del pozo y el osario, con las paredes de calaveras. La puerta de arriba queda atrancada: hay
-que encontrar otra salida mientras **El Descoyuntado** te caza. Se puede trepar por los pates de hierro del pozo
-hasta el Postigo (y, una vez descubierto, volver a bajar desde la calle) o echar abajo el arco tapiado a golpes
-pesados… o hacer que él lo embista. Los pilares aguantan un par de embestidas antes de venirse abajo, y las
-estanterías se parten en astillas. Cada vez que vuelves a bajar, alguien cierra de un portazo allá arriba.
+**Las bodegas del canónigo.** Un laberinto de sótanos a oscuras, mucho más grande que la casa de arriba: la sala del
+altar con sus pilares, la celda donde el ama encerraba al canónigo, la galería de los toneles con sus estanterías,
+el Lagar (una sala enorme y diáfana, con la pila de pisar la uva y la luz pálida que cae por las rejillas de la
+calle), la antecámara, la Cripta de los canónigos con sus sepulcros y santos velados, y el osario, con las paredes
+de calaveras, que da la vuelta hasta la cripta. Los pasillos forman varios anillos, así que siempre hay otro camino
+(para ti y para él). La puerta de arriba queda atrancada; la única salida es el pozo del Postigo, al fondo de la
+cisterna vieja, donde el agua negra refleja tu farol. Pero la cisterna la cierra un rastrillo colgado de tres
+cadenas, y cada cadena de una palanca: una en el Lagar, otra en la cripta y la última al fondo del ramal ciego del
+osario (lo cuenta la orden del canónigo al maestro de obras, en la mano de éste, muerto junto al rastrillo). Echar
+una palanca cuesta tiempo y hace ruido: la cadena corre por la bóveda y él la oye desde cualquier rincón. Con las
+tres echadas, el rastrillo sube y se puede trepar por los pates del pozo hasta la calle (y, una vez descubierto,
+volver a bajar por él). Los pilares aguantan un par de embestidas antes de venirse abajo, y las estanterías se
+parten en astillas. Cada vez que vuelves a bajar, alguien cierra de un portazo allá arriba.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -151,15 +157,26 @@ se encadena el anterior.
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
   cada miembro es una cadena de dos huesos con cinemática inversa y pies que se plantan en el suelo o en el techo y
-  sólo se despegan cuando se estiran demasiado, así que anda, trepa, gira y salta sin clips fijos. No te espera en
-  una sala: te acecha. Te observa desde la bóveda, se asoma por las esquinas, se mete en las madrigueras de las
-  paredes y lo oyes moverse al otro lado, imita tus pasos y la voz del ama, se ríe y te tira huesos. Tiene hambre,
-  y cuanta más tiene más se arriesga; ataca cuando no le miras o cuando te cura, se deja caer del techo, salta, te
-  agarra y te muerde (hay que forcejear para soltarse), finta los zarpazos, y aprende qué golpes te alcanzan y
-  cuáles esquivas. Si te escondes demasiado tras un pilar, lo arranca de un zarpazo. Herido, huye a lamerse las
-  heridas y vuelve a por ti; desde la segunda fase se parte todas las articulaciones en una onda que aturde, y en
-  la última apenas descansa entre golpe y golpe. Su barra
-  sólo aparece cuando pelea contigo.
+  sólo se despegan cuando se estiran demasiado; tiene tres andares (al acecho, bajo y con pausas; al paso, en
+  diagonal; y al galope), el tronco en dos mitades que se tuercen y se doblan, costillas que respiran, dedos que se
+  cierran y se abren, jirones que cuelgan siempre hacia el suelo (también boca abajo, en el techo) y una cabeza que
+  escudriña, se tuerce sola y tiembla de rabia. Cada golpe tiene preparación, golpe y recuperación con inercia:
+  zarpazo, doble zarpazo, barrido bajo, las dos manos contra el suelo (onda de choque), mordisco con el cuello
+  estirado, salto, carga al galope, giro con los brazos abiertos, agarrón con mordiscos (se forcejea para soltarse),
+  el crujido de todas sus articulaciones y huesos lanzados; esquiva con voltereta hacia atrás, salto atrás o de
+  lado, para tus golpes con los antebrazos cruzados y contraataca, cae de espaldas pataleando cuando se estrella y
+  muere a pedazos (se le parten los miembros uno a uno y, al final, la cabeza se le da la vuelta).
+  Primero **acecha**: te observa desde la bóveda, se asoma por las esquinas, se mete en las madrigueras de los
+  muros, imita tus pasos y la voz del ama, se ríe y te tira huesos, y te embosca cuando le das la espalda, te curas,
+  lees o echas una palanca. Tras cada emboscada se queda a pelear un rato. Cada emboscada que le sale mal (la
+  esquivas, la paras, le ves venir, le hieres, te sueltas de su agarrón) le frustra; cuando se harta, cuando le has
+  hecho bastante daño o cuando echas la tercera palanca, **enloquece**: viene a por ti, se alza, grita y golpea el
+  suelo, y ya no se esconde; tus golpes le hacen la mitad de daño. Enloquecido prefiere pelear en sitios abiertos
+  (si te metes en un pasillo, se aparta a lo ancho y te espera golpeando el suelo) y te lee: aprende qué haces y qué
+  sueles hacer después de qué, cuántos golpes tienen tus combos y hacia dónde ruedas cuando te ataca, y lo usa para
+  apartarse de un salto cuando vas a golpear y castigarte en la recuperación, cruzar los brazos para parar el resto
+  de un combo que ya conoce, adelantarse con un mordisco cuando sabe que vas a atacar y apuntar su segundo zarpazo
+  adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
 - **El Turiferario** (jefe final): el arzobispo transfigurado, con una corona de velas y un incensario gigante
   simulado físicamente como un péndulo en llamas; segunda fase con lluvia de ascuas y charcos de fuego.
 
@@ -212,16 +229,19 @@ src/
                         audio.js (mezcla, efectos, ambiente), audio_music.js (música adaptativa),
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
+                        y agua (water.js: la cisterna y el pozo)
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
-                        generado por regiones: suelos, bóvedas, muros, pilares, madrigueras y posaderos)
+                        generado por regiones: suelos, bóvedas, muros, pilares, madrigueras, posaderos,
+                        palancas y el rastrillo)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
-                        (descoyuntado.js: cuerpo con IK de cuatro miembros y la IA que acecha); armas:
+                        (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
+                        guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
-                        en las bodegas; breakables.js: pilares, estanterías y muros que se rompen)
+                        en las bodegas; breakables.js: pilares y estanterías que se rompen)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
@@ -239,8 +259,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
-                        huntsim.mjs    simula la caza del Descoyuntado sin dibujar (segundos, still|wander) y
-                                       traza sus modos, golpes y lo que rompe
+                        huntsim.mjs    simula la caza del Descoyuntado sin dibujar (segundos y un jugador
+                                       robot: still, wander, fight, levers o escape) y resume sus modos,
+                                       cuándo enloquece, qué aprende, lo que te lee y lo que rompe
+                        bossanim.mjs   hojas de fotogramas de cada movimiento del Descoyuntado
+                        cellar.mjs     comprueba que el pozo sólo se alcanza por el rastrillo y hace capturas
+                                       de cada sala de las bodegas
                         boss.mjs       capturas del Descoyuntado en posiciones y cámaras dadas
                         cine.mjs       fotogramas de la cinemática de la bodega en los segundos pedidos
 ```

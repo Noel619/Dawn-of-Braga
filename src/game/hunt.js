@@ -3,9 +3,11 @@
 // de la escalera: arriba, alguien cierra la puerta de un portazo y echa la
 // tranca). Mientras dura, el Descoyuntado es el jefe activo, pero su barra
 // sólo se ve cuando pelea contigo; la música es la de la caza (tensión, la
-// caja de música rota) y pasa a la de pelea cuando se te echa encima.
-// Termina al salir por el pozo del Postigo, al morir (todo vuelve a su sitio:
-// él a su cadáver) o al matarlo (alguien retira la tranca y huye).
+// caja de música rota), pasa a la de pelea cuando se te echa encima y a la
+// de la furia cuando enloquece. Las palancas del rastrillo se oyen desde
+// cualquier rincón (y la tercera le enloquece). Termina al salir por el pozo
+// del Postigo, al morir (todo vuelve a su sitio: él a su cadáver) o al
+// matarlo (alguien retira la tranca y huye).
 import * as THREE from 'three';
 import { Rig } from '../entities/rig.js';
 import { villagerDef, CORPSE_POSES } from '../entities/models.js';
@@ -92,6 +94,22 @@ export class CellarHunt {
     if (g.audio && b && !b.dead) g.audio.stopMusic();
   }
 
+  // Una palanca del rastrillo: la oye desde cualquier rincón de las bodegas
+  // (y con la tercera, cuando ve que te le escapas, enloquece).
+  onLever(it, n) {
+    const b = this.boss;
+    if (!this.active || !b || b.dead || !b.D) return;
+    b.D.onNoise && b.D.onNoise(it.x, it.z, n >= 3 ? 2 : 1);
+    if (n >= 3 && b.D.startRage) b.D.startRage('escape');
+  }
+
+  // Enloquece: ya no se esconde (y tus golpes le hacen la mitad de daño).
+  onRage(reason) {
+    const g = this.g;
+    g.ui.toast(reason === 'escape' ? 'Algo chilla en la oscuridad: sabe que te escapas.' : 'El Descoyuntado enloquece. Ya no se esconde.', 4.5);
+    this.music = null;
+  }
+
   // Muerte del jugador, título: todo a su sitio.
   reset() {
     this.stop(false);
@@ -124,7 +142,7 @@ export class CellarHunt {
     }
     // música: la caza, o la pelea cuando se te echa encima
     const D = b.D;
-    const want = D.engaged ? (D.phase >= 2 ? 'bossCellar2' : 'bossCellar') : 'cellarHunt';
+    const want = D.stage === 'rage' ? 'bossCellar2' : D.engaged ? 'bossCellar' : 'cellarHunt';
     if (want !== this.music && g.audio) {
       this.music = want;
       g.audio.music(want);

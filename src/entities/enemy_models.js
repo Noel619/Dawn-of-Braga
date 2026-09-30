@@ -368,49 +368,69 @@ export const CANDLE_OFFSETS = (k = 2.35) =>
 // cada articulación, la sotana hecha jirones colgando hasta el suelo y la
 // cabeza del revés (la tonsura abajo, la boca arriba). Lleva su rosario
 // enredado en la muñeca izquierda.
-export const DESC = { body: 1.02, LAf: 1.0, LBf: 1.75, LAb: 0.95, LBb: 1.7 };
+export const DESC = { body: 1.02, LAf: 1.0, LBf: 1.75, LAb: 0.95, LBb: 1.7, pelvisZ: -0.2 };
+// Jirones de la sotana: [articulación padre, x, z (en el padre), largo, ancho]
+// Cuelgan de sus articulaciones propias (movimiento secundario: caen hacia
+// el suelo aunque él vaya boca abajo por el techo, se quedan atrás al correr).
+export const DESC_CLOTH = [
+  ['body', 0.27, 0.42, 0.34, 0.12, 10],
+  ['body', -0.27, 0.4, 0.28, 0.16, -14],
+  ['body', 0.27, 0.24, 0.62, 0.2, -8],
+  ['body', -0.27, 0.2, 0.5, 0.14, 12],
+  ['body', 0.27, 0.04, 0.44, 0.17, 18],
+  ['body', -0.27, 0.02, 0.7, 0.22, -6],
+  ['pelvis', 0.26, 0.0, 0.78, 0.24, -12],
+  ['pelvis', -0.26, -0.02, 0.46, 0.13, 20],
+  ['pelvis', 0.25, -0.24, 0.54, 0.18, 6],
+  ['pelvis', -0.25, -0.22, 0.66, 0.2, -18],
+  ['pelvis', 0.02, -0.4, 0.72, 0.34, 4],
+];
 export function buildDescoyuntado() {
   const D = DESC;
+  const pz = D.pelvisZ;
   const joints = [
     { name: 'body', pos: [0, D.body, 0] },
+    // la mitad de atrás del tronco (se dobla y se tuerce respecto a la de delante)
+    { name: 'pelvis', parent: 'body', pos: [0, 0, pz] },
+    // costillas y esternón (respiran)
+    { name: 'ribs', parent: 'body', pos: [0, 0.12, 0.12] },
     { name: 'neck', parent: 'body', pos: [0, 0.02, 0.6] },
     { name: 'head', parent: 'neck', pos: [0, -0.32, 0.04] },
     // mandíbula (con la cabeza del revés, el mentón queda arriba)
     { name: 'jaw', parent: 'head', pos: [0, -0.02, 0.06] },
   ];
+  // brazos en la mitad de delante; piernas en la de atrás
   const limbs = [
-    ['lf', 0.27, 0.44, D.LAf, D.LBf],
-    ['rf', -0.27, 0.44, D.LAf, D.LBf],
-    ['lb', 0.23, -0.48, D.LAb, D.LBb],
-    ['rb', -0.23, -0.48, D.LAb, D.LBb],
+    ['lf', 'body', 0.27, 0.44, D.LAf, D.LBf],
+    ['rf', 'body', -0.27, 0.44, D.LAf, D.LBf],
+    ['lb', 'pelvis', 0.23, -0.48 - pz, D.LAb, D.LBb],
+    ['rb', 'pelvis', -0.23, -0.48 - pz, D.LAb, D.LBb],
   ];
-  for (const [n, x, z, la] of limbs) {
-    joints.push({ name: n + 'A', parent: 'body', pos: [x, 0.04, z] });
+  for (const [n, par, x, z, la, lb] of limbs) {
+    joints.push({ name: n + 'A', parent: par, pos: [x, 0.04, z] });
     joints.push({ name: n + 'B', parent: n + 'A', pos: [0, la, 0] });
+    // muñeca y dedos (en las manos)
+    if (n[1] === 'f') {
+      joints.push({ name: n + 'H', parent: n + 'B', pos: [0, -lb, 0] });
+      joints.push({ name: n + 'F', parent: n + 'H', pos: [0, 0, 0.09] });
+    }
   }
+  DESC_CLOTH.forEach(([par, x, z], i) => joints.push({ name: 'cl' + i, parent: par, pos: [x, 0.03, z] }));
   const parts = [
     // tronco boca arriba: costillas y esternón por encima, espinazo por debajo
-    { j: 'body', type: 'box', s: [0.56, 0.3, 1.16], p: [0, 0, 0], taper: [0.8, 1], mat: 'skinCorrupt' },
-    { j: 'body', type: 'box', s: [0.06, 0.06, 1.02], p: [0, -0.13, 0], mat: 'bone' },
-    ...[-0.12, 0.03, 0.18, 0.33].map((z) => ({ j: 'body', type: 'box', s: [0.5, 0.035, 0.04], p: [0, 0.125, z], mat: 'bone' })),
-    { j: 'body', type: 'box', s: [0.06, 0.045, 0.52], p: [0, 0.14, 0.14], mat: 'bone' },
-    { j: 'body', type: 'ico', s: [0.16, 0.08, 0.2], p: [0.06, 0.1, -0.3], mat: 'flesh' },
+    { j: 'body', type: 'box', s: [0.56, 0.3, 0.72], p: [0, 0, 0.23], taper: [0.8, 1], mat: 'skinCorrupt' },
+    { j: 'body', type: 'box', s: [0.06, 0.06, 0.62], p: [0, -0.13, 0.24], mat: 'bone' },
     { j: 'body', type: 'box', s: [0.64, 0.2, 0.24], p: [0, 0, 0.46], mat: 'skinCorrupt' },
-    { j: 'body', type: 'box', s: [0.52, 0.2, 0.26], p: [0, -0.01, -0.48], mat: 'skinCorrupt' },
+    { j: 'pelvis', type: 'box', s: [0.52, 0.28, 0.56], p: [0, -0.005, -0.16], taper: [0.8, 1], mat: 'skinCorrupt' },
+    { j: 'pelvis', type: 'box', s: [0.06, 0.06, 0.5], p: [0, -0.13, -0.14], mat: 'bone' },
+    { j: 'pelvis', type: 'box', s: [0.52, 0.2, 0.26], p: [0, -0.01, -0.28], mat: 'skinCorrupt' },
+    { j: 'pelvis', type: 'ico', s: [0.16, 0.08, 0.2], p: [0.06, 0.1, -0.1], mat: 'flesh' },
+    // costillas (se abren al respirar)
+    ...[-0.24, -0.09, 0.06, 0.21].map((z) => ({ j: 'ribs', type: 'box', s: [0.5, 0.035, 0.04], p: [0, 0.005, z], mat: 'bone' })),
+    { j: 'ribs', type: 'box', s: [0.06, 0.045, 0.52], p: [0, 0.02, 0.02], mat: 'bone' },
+    { j: 'ribs', type: 'box', s: [0.4, 0.06, 0.48], p: [0, -0.04, 0], mat: 'flesh' },
     // alzacuello
     { j: 'body', type: 'box', s: [0.22, 0.08, 0.08], p: [0, 0.02, 0.6], mat: 'clothWhite' },
-    // jirones de la sotana colgando a los lados y por detrás
-    // (jirones estrechos y desiguales, con huecos: no una cortina)
-    ...[
-      [-0.42, 0.5],
-      [-0.2, 0.64],
-      [0.02, 0.44],
-      [0.24, 0.58],
-      [0.4, 0.36],
-    ].flatMap(([z, len], i) =>
-      [-1, 1].map((sd) => ({ j: 'body', type: 'box', s: [0.02, len * (sd > 0 ? 1 : 0.75 + (i % 2) * 0.35), 0.1 + (i % 3) * 0.025], p: [sd * 0.27, -len / 2 + 0.03, z + sd * 0.03], r: [(i - 2) * 6, 0, sd * (10 + i * 3)], taper: [0.45, 1], mat: 'clothDark', ds: true }))
-    ),
-    { j: 'body', type: 'box', s: [0.3, 0.55, 0.02], p: [0.04, -0.26, -0.62], r: [-14, 0, 4], taper: [0.5, 1], mat: 'clothDark', ds: true },
     // cuello estirado, con la carne abierta
     { j: 'neck', type: 'box', s: [0.11, 0.36, 0.11], p: [0, -0.15, 0.02], taper: [0.9, 0.9], mat: 'skinCorrupt' },
     { j: 'neck', type: 'ico', s: [0.08], p: [0.03, -0.03, 0], mat: 'flesh' },
@@ -427,7 +447,16 @@ export function buildDescoyuntado() {
     { j: 'head', type: 'box', s: [0.26, 0.06, 0.29], p: [0, -0.265, 0.03], mat: 'black' },
     { j: 'head', type: 'box', s: [0.17, 0.03, 0.19], p: [0, -0.3, 0.03], mat: 'skinCorrupt' },
   ];
-  for (const [n, , , la, lb] of limbs) {
+  // jirones: tiras estrechas que cuelgan de su articulación (-Y)
+  // (tela rasgada: cada jirón algo girado, más estrecho abajo y con una
+  // tira más corta pegada al lado: no una cortina de barrotes)
+  DESC_CLOTH.forEach(([, x, , len, w, tw], i) => {
+    const back = i === DESC_CLOTH.length - 1;
+    const sx = Math.sign(x) || 1;
+    parts.push({ j: 'cl' + i, type: 'box', s: back ? [w, len, 0.015] : [0.015, len, w], p: [0, -len / 2, 0], r: back ? [-8, tw, 3] : [0, tw, sx * 6], taper: [0.25, 0.3], mat: 'clothDark', ds: true });
+    if (len > 0.45) parts.push({ j: 'cl' + i, type: 'box', s: back ? [w * 0.5, len * 0.55, 0.012] : [0.012, len * 0.55, w * 0.55], p: back ? [w * 0.3, -len * 0.27, 0.01] : [sx * 0.01, -len * 0.27, w * 0.35], r: back ? [-4, -tw, 8] : [0, -tw * 1.4, sx * 14], taper: [0.2, 0.2], mat: 'clothDark', ds: true });
+  });
+  for (const [n, , , , la, lb] of limbs) {
     const front = n[1] === 'f';
     // (brazos y muslos de hombre, no patas de araña)
     parts.push({ j: n + 'A', type: 'box', s: [0.15, la + 0.04, 0.15], p: [0, la / 2, 0], taper: [0.72, 0.72], mat: 'skinCorrupt' });
@@ -439,9 +468,11 @@ export function buildDescoyuntado() {
     // tendones tensos bajo la piel
     parts.push({ j: n + 'B', type: 'box', s: [0.025, lb * 0.7, 0.025], p: [0.04, -lb * 0.42, 0.045], mat: 'flesh' });
     if (front) {
-      // manos con dedos larguísimos
-      parts.push({ j: n + 'B', type: 'box', s: [0.11, 0.03, 0.12], p: [0, -lb, 0.04], mat: 'skinCorrupt' });
-      for (const dx of [-0.04, -0.013, 0.013, 0.04]) parts.push({ j: n + 'B', type: 'box', s: [0.016, 0.016, 0.26], p: [dx * 1.3, -lb, 0.18], r: [0, dx * 260, 0], mat: 'skinCorrupt' });
+      // manos con dedos larguísimos (los dedos se cierran en su articulación)
+      parts.push({ j: n + 'H', type: 'box', s: [0.11, 0.03, 0.13], p: [0, 0, 0.03], mat: 'skinCorrupt' });
+      for (const dx of [-0.04, -0.013, 0.013, 0.04]) parts.push({ j: n + 'F', type: 'box', s: [0.016, 0.016, 0.26], p: [dx * 1.5, 0, 0.12], r: [0, dx * 260, 0], mat: 'skinCorrupt' });
+      // el pulgar, aparte
+      parts.push({ j: n + 'H', type: 'box', s: [0.016, 0.016, 0.14], p: [(n[0] === 'l' ? 1 : -1) * 0.07, 0, 0.06], r: [0, (n[0] === 'l' ? 1 : -1) * 35, 0], mat: 'skinCorrupt' });
     } else parts.push({ j: n + 'B', type: 'box', s: [0.1, 0.05, 0.26], p: [0, -lb + 0.01, -0.06], mat: 'skinCorrupt' });
   }
   // el rosario enredado en la muñeca izquierda

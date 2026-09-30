@@ -27,6 +27,7 @@ import { CANON, stairY } from '../world/level_canon.js';
 import { CellarCutscene } from './cutscene.js';
 import { Breakables } from './breakables.js';
 import { CellarHunt } from './hunt.js';
+import { Waters } from '../gfx/water.js';
 import { CELLAR } from '../world/level_cellar.js';
 
 const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
@@ -63,6 +64,8 @@ export class Game {
     const shafts = new LightShafts(this.scene);
     for (const s of lvl.ctx.shafts) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
     shafts.build();
+    // agua de la cisterna y del pozo
+    this.waters = new Waters(this, lvl.ctx.waters || []);
     this.fx = {};
     this.fx.fires = new FireSystem(this.scene, 240);
     for (const f of lvl.ctx.fires) this.fx.fires.add(f);
@@ -109,7 +112,7 @@ export class Game {
     this.probe = new BakedProbe(lvl.ctx.lights);
     for (const e of this.enemies) e.rig.own();
     this.player.rig.own();
-    // pilares, estantes y el arco tapiado de las bodegas
+    // pilares y estantes de las bodegas
     this.breakables = new Breakables(this, lvl.L.breakables);
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     // la caza en las bodegas del canónigo
@@ -117,6 +120,8 @@ export class Game {
 
     this.combat = new Combat(this);
     this.interact = new Interactables(this, lvl.L.interact);
+    // (el rastrillo de la cisterna cierra el paso también a las criaturas)
+    this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
     this.buildPhantom();
@@ -676,6 +681,30 @@ export class Game {
     if (c) c.end();
   }
 
+  // Una palanca del rastrillo de la cisterna: la cadena corre por la bóveda
+  // (se oye pasar por encima, camino del rastrillo) y la reja sube un palmo.
+  onLever(it, n, gate) {
+    const a = this.audio;
+    this.ui.toast(MSG.palanca(n), 4.5);
+    this.camRig.shake(0.2);
+    if (a) {
+      a.play('chainRun', { x: it.x, y: it.y + 3, z: it.z });
+      if (gate) {
+        for (let k = 1; k <= 4; k++) {
+          const u = k / 5;
+          setTimeout(() => a.play('chainRun', { x: it.x + (gate.x - it.x) * u, y: it.y + 4, z: it.z + (gate.z - it.z) * u }, { k: 0.8 }), k * 260);
+        }
+        setTimeout(() => a.play(n >= 3 ? 'gateOpen' : 'gateStep', { x: gate.x, y: gate.y + 2, z: gate.z }), 1300);
+      }
+    }
+    this.hunt && this.hunt.onLever(it, n);
+  }
+  // Lo que hace el jugador (golpes, esquivas, curas): el Descoyuntado aprende.
+  onPlayerAction(kind, info) {
+    const b = this.activeBoss;
+    if (b && b.D && b.D.observe) b.D.observe(kind, info);
+  }
+
   // ¿Está en la bodega del canónigo (o en su escalera)?
   inCellar(p) {
     const C = CANON.cellar;
@@ -1028,7 +1057,8 @@ export class Game {
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
           // (a la que mueve una cinemática la muestra y la oculta el guion)
-          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < 5.5) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > 5);
+          const gone = e.T.deathDur ?? 5.5;
+          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < gone) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > gone - 0.5);
           return act;
         });
       }
@@ -1039,6 +1069,7 @@ export class Game {
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
       this.breakables.update(dt);
+      this.waters.update(dt);
       if (this.state === 'play') {
         this.hunt.update(dt);
         this.updateClimb(dt);

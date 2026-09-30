@@ -465,13 +465,13 @@ export function buildCanon(ctx, S, B, L) {
     { kind: 'trigger', id: 't_sotano', x: CANON.stair.x, y: 0, z: -26.75, r: 1.4, rz: 0.4, event: 'sotano' },
     // tras vencerlo: su rosario sobre el altar
     { kind: 'item', id: 'i_rosario', item: 'rosario', x: 60.4, y: Y + 1.18, z: -45.25, afterBoss: 'descoyuntado' },
-    // la última página, en su celda; y la vieja orden de tapiar la cisterna
+    // la última página, en su celda; y la orden al maestro de obras, en la
+    // mano de éste, muerto junto al rastrillo
     { kind: 'note', id: 'n_bodega', note: 'bodega', x: 53.7, y: Y + 0.27, z: -34.2, model: 'paper' },
-    { kind: 'note', id: 'n_pozo', note: 'pozo', x: 63.6, y: Y + 0.04, z: -59.3, model: 'paper' },
-    // lo que se ve y no se alcanza
-    { kind: 'examine', id: 'x_reja', text: 'rejaCisterna', x: 55, y: Y, z: -45.9, r: 1.9 },
-    { kind: 'examine', id: 'x_respiradero', text: 'rejaCisterna', x: 62.9, y: Y, z: -59.1, r: 1.6 },
-    { kind: 'examine', id: 'x_tapiado', text: 'tapiado', x: 46.6, y: Y, z: -58.5, r: 1.9, breakable: 'tapiado' },
+    { kind: 'note', id: 'n_pozo', note: 'pozo', x: 53.35, y: Y + 0.05, z: -45.35, model: 'paper' },
+    // el rastrillo de la cisterna: sube con las tres palancas
+    { kind: 'door', id: 'd_rastrillo', x: CELLAR.portcullis.x, y: Y, z: CELLAR.portcullis.z, w: CELLAR.portcullis.w, h: CELLAR.portcullis.h, axis: 'x', lock: { type: 'levers', levers: CELLAR.levers.map((l) => l.id) }, mat: 'grate', ix: CELLAR.portcullis.x, iz: -45.9 },
+    ...CELLAR.levers.map((l) => ({ kind: 'lever', id: l.id, x: l.ix, y: Y, z: l.iz, nx: l.nx, nz: l.nz, where: l.where, gate: 'd_rastrillo', r: 1.8 })),
     // la salida: trepar por el pozo del Postigo (y, ya fuera, volver a bajar)
     { kind: 'climb', id: 'x_pozo', x: CELLAR.well.x, y: Y, z: CELLAR.well.z, r: 2.3 },
     { kind: 'well', id: 'x_pozo_calle', x: CELLAR.well.x, y: 0, z: CELLAR.well.z, r: 2.3 }
@@ -484,24 +484,17 @@ export function buildCanon(ctx, S, B, L) {
   // las bodegas van antes que la casa: el tramo bajo de la escalera ya es bodega
   const cz = (id, r) => ({ id, rects: [[...r, Y - 1, C.top - 0.05]], atmo: 'cellar', room: croom });
   L.zones.push(
-    cz('toneles', [40, -49.5, 52, -36.5]),
-    cz('pasillo', [40.5, -61, 48, -49.5]),
-    cz('cisterna', [48, -60, 62, -47.5]),
-    cz('osario', [62, -61, 71, -36.5]),
+    cz('toneles', [40, -46.5, 52, -36.5]),
+    cz('lagar', [26, -60, 40, -35]),
+    cz('pasillo', [39.5, -64, 47, -46.5]),
+    cz('cripta', [40, -83, 58, -64]),
+    cz('cisterna', [49.5, -60, 62, -47.5]),
+    cz('osario', [58, -79, 71, -36.5]),
     { id: 'sotano', rects: [[C.x0, C.z0, C.x1, C.z1, Y - 1, C.top - 0.05], [58, -32.2, 61, -27, Y - 1, -0.6]], atmo: 'cellar', room: croom },
     { id: 'canon', rects: [[48, -32, 64, -12.2, -1, 4.5]], atmo: 'interior', room }
   );
-  L.map.push(
-    { id: 'canon', r: [48.4, -31.6, 63.6, -12.4] },
-    { id: 'sotano', r: [52, -46, 66, -36.5], level: 'cellar' },
-    { id: 'sotano', r: [52.5, -36.5, 56.5, -33], level: 'cellar' },
-    { id: 'sotano', r: [58, -36.5, 61, -27], level: 'cellar' },
-    { id: 'toneles', r: [40, -49, 52, -36.5], level: 'cellar' },
-    { id: 'pasillo', r: [40.5, -57, 43.5, -49], level: 'cellar' },
-    { id: 'pasillo', r: [40.5, -61, 48, -57], level: 'cellar' },
-    { id: 'cisterna', r: [48, -60, 62, -47.5], level: 'cellar' },
-    { id: 'osario', r: [66, -58, 70.5, -36.5], level: 'cellar' },
-    { id: 'osario', r: [62.5, -61, 70.5, -58], level: 'cellar' }
-  );
+  L.map.push({ id: 'canon', r: [48.4, -31.6, 63.6, -12.4] }, { id: 'sotano', r: [58, -36.5, 61, -27], level: 'cellar' });
+  // el mapa de las bodegas: una entrada por región (arcos incluidos)
+  for (const R of CELLAR.regions) if (R.id !== 'stair') L.map.push({ id: R.id === 'celda' ? 'sotano' : R.id, r: R.r, level: 'cellar' });
   return nB;
 }

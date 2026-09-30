@@ -161,11 +161,11 @@ DEO IGNOTO. DEO IGNOTO. DEO IGNOTO.`,
   },
   pozo: {
     title: 'Orden del canónigo al maestro de obras',
-    text: `Tápiese el arco de la cisterna vieja, al fondo del pasillo de la Galería de los toneles, con ladrillo y sin argamasa, que no ha de durar.
+    text: `Bájese el rastrillo de la cisterna vieja y que no se alce más con el torno. Cuélguese de tres cadenas, y cada cadena de una palanca: una en el Lagar, otra en la Cripta de los canónigos y la última al fondo del osario, donde el ramal ciego.
 
-Por allí bajaba el agua del pozo del Postigo, y por los pates del pozo entraban los ladrones de vino.
+Sólo con las tres echadas sube la reja. Así nadie baja solo por los pates del pozo del Postigo, y nadie sube solo.
 
-Que nadie más baje. Que nadie más suba.`,
+Dígale al ama que no baje de noche.`,
   },
   soldado: {
     title: 'Nota ensangrentada',
@@ -255,8 +255,12 @@ export const MSG = {
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
   southGate: 'La Puerta Sur está hundida bajo escombros y carne. No hay salida.',
-  rejaCisterna: 'Una reja empotrada en la roca. Al otro lado, bajo una luz pálida que cae de lo alto, el fondo de un pozo.',
-  tapiado: 'Un arco tapiado a toda prisa, ladrillo sobre ladrillo, casi sin argamasa. Por las rendijas corre aire y se oye gotear. Harían falta mil golpes de espada… o que algo muy pesado se estrellara contra él.',
+  rastrillo: (n) =>
+    n === 0
+      ? 'Un rastrillo de hierro cierra la cisterna. Al otro lado, bajo una luz pálida que cae de lo alto, el agua negra de un pozo. De la reja suben tres cadenas que se pierden en la bóveda.'
+      : `El rastrillo cuelga de tres cadenas; ${n === 1 ? 'una está tensa' : 'dos están tensas'}. Falta${n === 1 ? 'n dos palancas' : ' una palanca'}.`,
+  palanca: (n) => (n >= 3 ? 'La tercera cadena se tensa. Por todas las bodegas retumba el rastrillo al subir.' : `La cadena se tensa y corre por la bóveda. En algún sitio, el rastrillo sube un palmo. (${n}/3)`),
+  palancaHecha: 'La palanca ya está echada.',
   pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   died: 'HAS CAÍDO',
@@ -276,7 +280,9 @@ export const AREA_NAMES = {
   canon: 'Casa del Canónigo',
   sotano: 'Bodegas del Canónigo',
   toneles: 'Galería de los toneles',
-  pasillo: 'El arco tapiado',
+  pasillo: 'Antecámara de las bodegas',
+  lagar: 'El Lagar',
+  cripta: 'Cripta de los canónigos',
   cisterna: 'Cisterna del pozo',
   osario: 'Osario del canónigo',
   chapel: 'Capilla de San Fructuoso',

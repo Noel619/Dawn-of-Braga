@@ -214,6 +214,7 @@ export class Player {
     this.anim.play(def.clip, { blend: this.anim.weight > 0.3 ? 0.07 : 0.1 });
     this.combo = idx;
     this.game.onPlayerAttackStart && this.game.onPlayerAttackStart(def);
+    this.game.onPlayerAction && this.game.onPlayerAction('attack', { def, idx, heavy: !!def.heavy, run: def === this.set.run });
   }
 
   // Pesado: encadenado tras otro pesado pasa al siguiente de la lista.
@@ -242,6 +243,7 @@ export class Player {
       this.anim.play(this.clips.roll, { blend: 0.05 });
     }
     this.game.audio && this.game.audio.play('roll', this.pos);
+    this.game.onPlayerAction && this.game.onPlayerAction('roll', { x: this.rollDir.x, z: this.rollDir.z, back: this.rollBack });
   }
 
   startHeal() {
@@ -254,6 +256,7 @@ export class Player {
     this.stT = 0;
     this.flask.visible = true;
     this.anim.play(this.clips.heal, { blend: 0.14 });
+    this.game.onPlayerAction && this.game.onPlayerAction('heal', {});
   }
 
   // 'smash': golpe de arriba abajo (romper un mueble); 'yaw' encara el objeto.
@@ -265,8 +268,8 @@ export class Player {
     this.interactYaw = yaw;
     // el golpe para romper es el pesado del arma que se empuña
     const smash = this.set.heavy[0].clip;
-    this.anim.play(kind === 'push' ? this.clips.push : kind === 'smash' ? smash : this.clips.interact, { blend: 0.12 });
-    this.interactDur = kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : 0.7;
+    this.anim.play(kind === 'push' ? this.clips.push : kind === 'smash' ? smash : kind === 'lever' ? this.clips.pull : this.clips.interact, { blend: 0.12 });
+    this.interactDur = kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : kind === 'lever' ? 1.45 : 0.7;
   }
 
   startRest() {
@@ -506,7 +509,9 @@ export class Player {
 
     if (st === 'free' || st === 'blockhit') {
       const wantBlock = allowControl && input.down('block') && this.canBlock() && st === 'free';
+      const wasBlocking = this.blocking;
       this.blocking = wantBlock || st === 'blockhit';
+      if (this.blocking && !wasBlocking) this.game.onPlayerAction && this.game.onPlayerAction('block', {});
       const sprintHeld = allowControl && (input.held('dodge') > 0.3 || input.down('sprint'));
       this.sprinting = sprintHeld && mag > 0.3 && this.st > 0 && !this.blocking;
       if (this.sprinting) {

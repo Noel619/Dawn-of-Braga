@@ -26,7 +26,7 @@ export class NavGrid {
   // transitable por mala que sea la alineación con la rejilla); vale también
   // para cajas giradas.
   block(b, lim = null) {
-    if (b.tag === 'floor' || b.tag === 'door' || !b.enabled || b.camOnly) return;
+    if (b.tag === 'floor' || (b.tag === 'door' && !b.navSolid) || !b.enabled || b.camOnly) return;
     const fy = this.floorY((b.minx + b.maxx) / 2, (b.minz + b.maxz) / 2);
     if (fy === null) return;
     if (!(b.maxy > fy + 0.65 && b.miny < fy + 1.7)) return;

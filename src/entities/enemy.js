@@ -231,6 +231,15 @@ export class Enemy {
   takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0) {
     if (this.dead || this.data.air || this.scripted) return 'none';
     const T = this.T;
+    // (el jefe puede parar el golpe, o recibir más o menos daño)
+    if (T.preHit) {
+      const r = T.preHit(this, dmg, poiseDmg, fromX, fromZ, heavy);
+      if (r === 'blocked' || r === 'none') return r;
+      if (r) {
+        dmg = r.dmg;
+        poiseDmg = r.poise;
+      }
+    }
     if (this.state === 'ceiling') this.drop();
     const toSrc = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);
     const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 55 * DEG;

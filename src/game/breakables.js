@@ -1,7 +1,7 @@
-// Cosas que se rompen: los pilares de la sala del altar (el Descoyuntado los
-// arranca si te escudas tras ellos), los estantes de toneles de la galería
-// (también los rompes tú) y el arco tapiado de la cisterna (sólo cede si algo
-// muy pesado se estrella contra él). Son mallas propias con la luz horneada
+// Cosas que se rompen: los pilares de la sala del altar y del Lagar (el
+// Descoyuntado los arranca si te escudas tras ellos, y revientan si se
+// estrella dos veces contra ellos) y los estantes de toneles de la galería
+// (también los rompes tú). Son mallas propias con la luz horneada
 // del sitio (sonda); al romperse saltan cascotes con una física sencilla,
 // queda un montón de escombros, se quita su colisión y se rehace la
 // navegación de la zona.
@@ -322,10 +322,6 @@ export class Breakables {
         g.hitstop = Math.max(g.hitstop, 0.08);
         g.camRig.shake(0.15);
         player.useSt(10);
-        if (it.kind === 'wall' && !g.hintsShown['tapiado']) {
-          g.hintsShown['tapiado'] = true;
-          g.ui.toast('Los ladrillos apenas se resquebrajan. Haría falta algo mucho más pesado.', 4.5);
-        }
       }
     }
   }

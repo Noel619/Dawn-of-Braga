@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { clip } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
 import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS } from './enemy_models.js';
-import { descInit, descAI, descAnimate, descReset, descOnHit } from './descoyuntado.js';
+import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
 import { getTexture } from '../gfx/textures.js';
@@ -1069,8 +1069,8 @@ export const TYPES = {
   descoyuntado: {
     name: 'El Descoyuntado',
     build: buildDescoyuntado,
-    hp: 560,
-    poise: 70,
+    hp: 1100,
+    poise: 80,
     radius: 0.8,
     height: 2.0,
     lockHeight: 1.2,
@@ -1090,5 +1090,8 @@ export const TYPES = {
     animate: descAnimate,
     onReset: descReset,
     onHit: descOnHit,
+    preHit: descPreHit,
+    // (su muerte es larga: se le parten los miembros uno a uno)
+    deathDur: 9.8,
   },
 };

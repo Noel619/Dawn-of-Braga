@@ -2163,7 +2163,7 @@ export function niche(ctx, x, y, z, dir, o = {}) {
   });
   const c = Math.cos(rot),
     s = Math.sin(rot);
-  candles(ctx, x + 0.22 * s, y + 0.12, z + 0.22 * c, 4, Math.round(x * 3 + z), { room: o.room, spread: 0.18, radius: 3.5, intensity: 0.7, scale: 0.6 });
+  candles(ctx, x + 0.22 * s, y + 0.12, z + 0.22 * c, 4, Math.round(x * 3 + z), { room: o.room, spread: 0.18, radius: 3.5, intensity: o.intensity ?? 0.7, scale: 0.6, unlit: o.unlit });
 }
 
 // Muro de carne que tapona un hueco entero (x0..x1 a lo ancho, y0..y1 de

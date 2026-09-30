@@ -21,6 +21,7 @@ export function buildLevel() {
     decals: [],
     banners: [],
     shafts: [],
+    waters: [], // superficies de agua (cisterna, pozo)
     crows: [], // bandadas de cuervos {x,y,z,r,n} | {pts:[[x,y,z]...], yaw}
     rats: [], // nidos de ratas {x,y,z,n}
     flies: [], // enjambres de moscas (salen de los cadáveres)
@@ -29,7 +30,7 @@ export function buildLevel() {
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
-  const B = new WalkGrid(38, -64, 72, -24, 0.5); // bodegas del canónigo
+  const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
   ctx.S = S; // las casas visitables pintan su huella transitable
 
   buildCastle(ctx, S, L);

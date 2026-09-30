@@ -301,6 +301,30 @@ function noteMesh(model) {
   return g;
 }
 
+// Palanca de pared: mango de hierro con empuñadura de madera, en un eje
+// empotrado en su placa. Local: +Y arriba, +Z hacia la sala, gira en X.
+function leverMesh() {
+  const g = new THREE.Group();
+  const iron = objMat('iron'),
+    wood = objMat('wooddark');
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 8), iron);
+  axle.rotation.z = Math.PI / 2;
+  g.add(axle);
+  const arm = new THREE.Group();
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.72, 0.07), iron);
+  bar.position.y = 0.36;
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.3, 7), wood);
+  grip.position.y = 0.82;
+  const knob = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 0.14), iron);
+  knob.position.y = 0.99;
+  arm.add(bar, grip, knob);
+  g.add(arm);
+  g.userData.arm = arm;
+  return g;
+}
+const LEVER_UP = 0.3,
+  LEVER_DOWN = 2.45;
+
 // Muro de niebla (shader animado)
 // (se funde con la niebla de la escena: sin ello brillaba a cualquier
 // distancia, como una mancha blanca en lo alto de la muralla)
@@ -422,6 +446,8 @@ export class Interactables {
       if (s.axis === 'x') it.box = g.world.col.add(s.x - s.w / 2, s.y, s.z - t, s.x + s.w / 2, s.y + s.h, s.z + t, 'door');
       else it.box = g.world.col.add(s.x - t, s.y, s.z - s.w / 2, s.x + t, s.y + s.h, s.z + s.w / 2, 'door');
       it.open = 0;
+      // (un rastrillo cerrado es un muro también para las criaturas)
+      if (s.lock && s.lock.type === 'levers') it.box.navSolid = true;
       it.r = s.r ?? 2.2;
     } else if (s.kind === 'item') {
       it.obj = new THREE.Group();
@@ -488,6 +514,15 @@ export class Interactables {
       this.refreshNav(it);
       it.smash = 0;
       it.r = s.r ?? 2.2;
+    } else if (s.kind === 'lever') {
+      // el eje, en la placa del muro (0,45 m detrás del punto de uso)
+      it.obj = leverMesh();
+      it.obj.position.set(s.x - s.nx * 0.33, s.y + 1.25, s.z - s.nz * 0.33);
+      it.obj.rotation.y = Math.atan2(s.nx, s.nz);
+      it.obj.userData.arm.rotation.x = LEVER_UP;
+      g.scene.add(it.obj);
+      it.pull = 0;
+      it.r = s.r ?? 1.8;
     } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
@@ -516,7 +551,36 @@ export class Interactables {
         it.obj.visible = true;
       }
       if (it.kind === 'breakable' && flags['broken:' + it.id] && !it.done) this.shatter(it, true);
+      if (it.kind === 'lever' && flags['lever:' + it.id]) {
+        it.done = true;
+        it.pull = 0;
+        it.obj.userData.arm.rotation.x = LEVER_DOWN;
+      }
     }
+    // los rastrillos de palancas: un palmo por palanca echada
+    for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
+  }
+
+  // Palancas de un rastrillo ya echadas.
+  leversDown(it) {
+    return it.lock.levers.filter((id) => this.game.flags['lever:' + id]).length;
+  }
+  // Sube el rastrillo según sus palancas (del todo con las tres).
+  leverGate(it, instant = false) {
+    const n = this.leversDown(it);
+    if (n >= it.lock.levers.length) {
+      this.game.flags['door:' + it.id] = true;
+      this.setOpen(it, instant);
+      const nav = this.game.navCellar;
+      if (nav) nav.refresh(it.x - 3, it.z - 3, it.x + 3, it.z + 3);
+      return n;
+    }
+    it.rise = (n / it.lock.levers.length) * 0.16;
+    if (instant) {
+      it.open = it.rise;
+      this.poseDoor(it, it.open);
+    }
+    return n;
   }
 
   reset(it) {
@@ -524,6 +588,11 @@ export class Interactables {
     if (it.kind === 'door') {
       it.target = 0;
       it.open = 0;
+      if (it.rise !== undefined && this.game.navCellar) {
+        it.box.enabled = true;
+        this.game.navCellar.refresh(it.x - 3, it.z - 3, it.x + 3, it.z + 3);
+      }
+      it.rise = undefined;
       if (it.box) it.box.enabled = true;
       if (it.boards) it.boards.visible = true;
       if (it.mat === 'barricade') it.obj.visible = true;
@@ -533,6 +602,9 @@ export class Interactables {
       it.obj.visible = !it.hidden;
     } else if (it.kind === 'note') {
       if (it.glow) it.glow.visible = true;
+    } else if (it.kind === 'lever') {
+      it.pull = 0;
+      it.obj.userData.arm.rotation.x = LEVER_UP;
     } else if (it.kind === 'breakable') {
       it.smash = 0;
       it.bk = undefined;
@@ -703,8 +775,6 @@ export class Interactables {
       if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note') continue;
       if (it.hidden) continue;
       if (it.kind === 'trigger') continue;
-      // (el arco tapiado ya no se examina cuando está en el suelo)
-      if (it.breakable && this.game.breakables.get(it.breakable)?.broken) continue;
       if (it.kind === 'climb' && !this.game.canClimbWell()) continue;
       if (it.kind === 'fog' && (!this.game.fogActive(it) || this.game.activeBoss)) continue;
       const ix = it.ix ?? it.x,
@@ -732,6 +802,7 @@ export class Interactables {
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
         if (it.lock.type === 'seal') return 'Examinar la losa';
         if (it.lock.type === 'boss') return 'Examinar la reja';
+        if (it.lock.type === 'levers') return 'Examinar el rastrillo';
         return 'Abrir';
       case 'item':
         return 'Recoger';
@@ -747,6 +818,8 @@ export class Interactables {
         return it.label ?? 'Partir la mesa';
       case 'climb':
         return 'Trepar por el pozo';
+      case 'lever':
+        return 'Echar la palanca';
       case 'well':
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
     }
@@ -802,7 +875,19 @@ export class Interactables {
         }
       } else if (L.type === 'boss') {
         g.ui.toast('La reja no se mueve. Algo la mantiene cerrada desde la carne.');
+      } else if (L.type === 'levers') {
+        g.ui.toast(MSG.rastrillo(this.leversDown(it)), 5);
+        g.audio && g.audio.play('locked', it);
       }
+      return true;
+    }
+    if (it.kind === 'lever') {
+      if (it.done || it.pull > 0) return true;
+      // tirar cuesta: el mango baja despacio y chirría; si algo te golpea
+      // mientras, se suelta y vuelve arriba
+      it.pull = 0.001;
+      p.playInteract('lever', Math.atan2(-it.nx, -it.nz));
+      g.audio && g.audio.play('leverPull', { x: it.x, y: it.y + 1.2, z: it.z });
       return true;
     }
     if (it.kind === 'item') {
@@ -865,6 +950,33 @@ export class Interactables {
         it.open = Math.max(0, it.open - dt * 4.5);
         this.poseDoor(it, it.open * it.open);
         if (it.open <= 0) it.closing = 0;
+      }
+      if (it.kind === 'lever' && it.pull > 0) {
+        const p = g.player;
+        const arm = it.obj.userData.arm;
+        if (p.state !== 'interact' || p.interactKind !== 'lever') {
+          // se ha soltado: el mango vuelve arriba de golpe
+          it.pull = 0;
+          g.audio && g.audio.play('clang', { x: it.x, y: it.y + 1.2, z: it.z }, { k: 0.5 });
+        } else {
+          it.pull += dt;
+          const u = Math.min(1, it.pull / 1.3);
+          arm.rotation.x = LEVER_UP + (LEVER_DOWN - LEVER_UP) * u * u * (3 - 2 * u);
+          if (u >= 1) {
+            it.pull = 0;
+            it.done = true;
+            g.flags['lever:' + it.id] = true;
+            const gate = this.list.find((q) => q.id === it.gate);
+            const n = gate ? this.leverGate(gate) : 0;
+            g.onLever && g.onLever(it, n, gate);
+            g.saveGame();
+          }
+        }
+        if (it.pull === 0 && !it.done) arm.rotation.x += (LEVER_UP - arm.rotation.x) * Math.min(1, dt * 12);
+      }
+      if (it.kind === 'door' && it.rise !== undefined && !it.target && it.open < it.rise) {
+        it.open = Math.min(it.rise, it.open + dt * 0.12);
+        this.poseDoor(it, it.open);
       }
       if (it.kind === 'door' && it.target && it.open < 1) {
         const speed = it.mat === 'grate' ? 0.35 : it.mat === 'seal' ? 0.4 : it.mat === 'barricade' ? 1.3 : 1.1;

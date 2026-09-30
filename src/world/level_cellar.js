@@ -1,8 +1,11 @@
 // Las bodegas del canónigo: un laberinto bajo su casa y bajo el patio del
 // Postigo. La escalera baja desde la alcoba a la Sala del altar (5,6 m de
-// bóveda); al oeste, la Galería de los toneles; al norte, un pasillo y la
-// antecámara del arco tapiado; al este, el osario; y en medio de todo, sin
-// paso, la cisterna vieja con el fondo del pozo del Postigo: la salida.
+// bóveda). Al oeste, la Galería de los toneles y, detrás, el Lagar: una sala
+// enorme y diáfana. Al norte, un pasillo, la antecámara y la Cripta de los
+// canónigos; al este, el osario, que da la vuelta hasta la cripta. En medio
+// de todo, detrás del rastrillo, la cisterna vieja con el fondo del pozo del
+// Postigo: la salida. El rastrillo sube con tres palancas (una en el Lagar,
+// otra en la cripta y otra al fondo del osario).
 //
 // La planta se describe con rectángulos transitables (cada uno con la altura
 // de su techo). De ahí salen solos los muros (cara a cara con la rejilla
@@ -21,6 +24,8 @@ const TOP = -1.0; // bajo la losa de la calle
 
 // Regiones transitables: r = [x0, z0, x1, z1], top = techo (y absoluta).
 // Las que van después pisan a las anteriores (arcos, dinteles).
+// (La cisterna sólo toca el hueco del rastrillo: entre ella y las salas de
+// alrededor queda al menos un metro de roca.)
 const REGIONS = [
   // tramo bajo de la escalera (bajo el muro norte de la casa)
   { id: 'stair', r: [58, -36.5, 61, -32], top: TOP },
@@ -28,27 +33,34 @@ const REGIONS = [
   // Sala del altar
   { id: 'sotano', r: [52, -46, 66, -36.5], top: TOP, ribs: { x: [55.5, 62.5], z: [-40, -43.2], d: 0.5 } },
   // celda del canónigo (bajo la cocina)
-  { id: 'sotano', r: [52.5, -35.5, 56.5, -33], top: -3.0, floor: 'planks' },
-  { id: 'sotano', r: [53.4, -36.5, 55.6, -35.5], top: -3.8 },
+  { id: 'celda', r: [52.5, -35.5, 56.5, -33], top: -3.0, floor: 'planks' },
+  { id: 'celda', r: [53.4, -36.5, 55.6, -35.5], top: -3.8 },
+  // el hueco del rastrillo, entre la sala y la cisterna
+  { id: 'sotano', r: [53.8, -47.5, 56.2, -46], top: -3.4 },
+  // cisterna vieja (romana), con el fondo del pozo
+  { id: 'cisterna', r: [49.5, -60, 62, -47.5], top: TOP, floor: 'mossstone', ribs: { x: [52.5, 58.5], d: 0.6 } },
   // Galería de los toneles
-  { id: 'toneles', r: [40, -49, 51, -36.5], top: -2.0, ribs: { z: [-38.8, -42.7, -46.6], d: 0.4 } },
+  { id: 'toneles', r: [40, -46.5, 51, -36.5], top: -2.0, ribs: { z: [-38.8, -42.7], d: 0.4 } },
   { id: 'toneles', r: [51, -40.6, 52, -37.8], top: -3.3 },
   { id: 'toneles', r: [51, -45.2, 52, -42.4], top: -3.3 },
-  // pasillo norte y antecámara del arco tapiado
-  { id: 'pasillo', r: [40.5, -57, 43.5, -49], top: -2.8, ribs: { z: [-51.5, -54.5], d: 0.3 } },
-  { id: 'pasillo', r: [40.5, -49.5, 43.5, -49], top: -3.4 },
-  { id: 'pasillo', r: [40.5, -61, 47, -57], top: -2.4 },
-  { id: 'pasillo', r: [47, -59.8, 48, -57.2], top: -3.2 },
-  // cisterna vieja (romana), con el fondo del pozo
-  { id: 'cisterna', r: [48, -60, 62, -47.5], top: TOP, floor: 'mossstone', ribs: { x: [51.5, 58.5], d: 0.6 } },
-  // reja entre la sala y la cisterna (se ve el pozo; no se pasa)
-  { id: 'sotano', r: [53.8, -47.5, 56.2, -46], top: -3.4 },
-  // osario: galería larga con calaveras en los muros y su ramal norte
-  { id: 'osario', r: [67, -58, 70.5, -36.5], top: -2.6, wall: 'skulls', ribs: { z: [-40, -44, -48, -52, -56], d: 0.3 } },
+  // El Lagar: la sala grande (sin apenas estorbos)
+  { id: 'lagar', r: [26, -60, 38, -35], top: TOP, ribs: { z: [-40, -45.5, -51, -56], d: 0.55 } },
+  { id: 'lagar', r: [38, -45.5, 40, -41.5], top: -2.4 },
+  { id: 'lagar', r: [38, -39.5, 40, -37.5], top: -3.2 },
+  { id: 'lagar', r: [38, -60, 39.5, -57.5], top: -3.2 },
+  // pasillo norte y antecámara
+  { id: 'pasillo', r: [40.5, -57, 43.5, -46.5], top: -2.8, ribs: { z: [-50.5, -54], d: 0.3 } },
+  { id: 'pasillo', r: [40.5, -47, 43.5, -46.5], top: -3.4 },
+  { id: 'pasillo', r: [39.5, -64, 47, -57], top: -2.4 },
+  // Cripta de los canónigos y su pasillo
+  { id: 'cripta', r: [43, -73, 45.5, -64], top: -2.6, ribs: { z: [-67, -70], d: 0.3 } },
+  { id: 'cripta', r: [40, -83, 58, -73], top: -1.4, ribs: { x: [46, 52], d: 0.5 } },
+  // pasillo de la cripta al osario
+  { id: 'osario', r: [58, -79, 67, -76.5], top: -2.6 },
+  // osario: galería larga con calaveras en los muros, y su ramal ciego
+  { id: 'osario', r: [67, -79, 70.5, -36.5], top: -2.6, wall: 'skulls', ribs: { z: [-40, -44, -48, -52, -56, -60, -64, -68, -72, -76], d: 0.3 } },
   { id: 'osario', r: [66, -41.8, 67, -38.8], top: -3.3 },
-  { id: 'osario', r: [62.5, -61, 70.5, -58], top: -2.6, wall: 'skulls' },
-  // respiradero enrejado hacia la cisterna
-  { id: 'osario', r: [62, -59.8, 62.5, -58.4], top: -4.2 },
+  { id: 'osario', r: [63, -65, 67, -61], top: -2.6, wall: 'skulls' },
 ];
 
 // Madrigueras: agujeros en lo alto de los muros comunicados por dentro de la
@@ -57,20 +69,24 @@ const REGIONS = [
 const HOLE_Y = F + 2.9;
 const BURROWS = [
   [
-    { x: 64.8, z: -46, nx: 0, nz: 1 },
-    { x: 60.8, z: -47.5, nx: 0, nz: -1 },
+    { x: 63.5, z: -46, nx: 0, nz: 1 },
+    { x: 67, z: -70, nx: 1, nz: 0 },
   ],
   [
-    { x: 64.6, z: -36.5, nx: 0, nz: -1 },
-    { x: 67, z: -47.8, nx: 1, nz: 0 },
+    { x: 46.5, z: -46.5, nx: 0, nz: 1 },
+    { x: 38, z: -52, nx: -1, nz: 0 },
   ],
   [
-    { x: 40, z: -43, nx: 1, nz: 0 },
-    { x: 40.5, z: -59.6, nx: 1, nz: 0 },
+    { x: 26, z: -40, nx: 1, nz: 0 },
+    { x: 47, z: -60.5, nx: -1, nz: 0 },
   ],
   [
-    { x: 62, z: -53, nx: -1, nz: 0 },
-    { x: 67, z: -54.2, nx: 1, nz: 0 },
+    { x: 54, z: -73, nx: 0, nz: -1 },
+    { x: 66, z: -44.5, nx: -1, nz: 0 },
+  ],
+  [
+    { x: 40, z: -79, nx: 1, nz: 0 },
+    { x: 33, z: -60, nx: 0, nz: 1 },
   ],
 ];
 
@@ -84,47 +100,78 @@ const PERCHES = [
   [65.1, -37.4],
   [59, -41.6],
   // galería
-  [41.2, -48.1],
-  [49.8, -48.1],
-  [41.2, -37.4],
-  [49.8, -37.4],
+  [41, -45.8],
+  [50, -45.8],
+  [41, -37.4],
+  [50, -37.4],
   [45.5, -42.6],
-  [45.5, -47.8],
+  // Lagar
+  [27, -36],
+  [37, -36],
+  [27, -59],
+  [37, -59],
+  [32, -44],
+  [32, -51],
+  [36.5, -47.5],
   // pasillo y antecámara
-  [42, -52.8],
-  [42, -56.2],
-  [41.4, -60.2],
-  [46.2, -60.2],
-  // osario
+  [42, -52],
+  [42, -55.5],
+  [40.5, -63],
+  [46, -63],
+  [46, -58],
+  // pasillo de la cripta
+  [44.2, -69],
+  // cripta
+  [41, -82],
+  [57, -82],
+  [41, -74],
+  [57, -74],
+  [49, -78],
+  // pasillo y osario
+  [62.5, -77.7],
   [68.8, -37.6],
-  [68.8, -44.2],
-  [68.8, -50.2],
-  [68.8, -56.4],
-  [63.6, -60.1],
-  // cisterna
-  [49, -59],
-  [61, -59],
-  [61, -48.6],
-  [49, -48.6],
+  [68.8, -45],
+  [68.8, -52],
+  [68.8, -59],
+  [68.8, -66],
+  [68.8, -73],
+  [68.8, -78],
+  [64, -64],
+  [66, -62],
+];
+
+// Las tres palancas del rastrillo: punto del muro y hacia dónde mira.
+const LEVERS = [
+  { id: 'p_lagar', x: 26, z: -47.5, nx: 1, nz: 0, where: 'el Lagar' },
+  { id: 'p_cripta', x: 49, z: -83, nx: 0, nz: 1, where: 'la cripta' },
+  { id: 'p_osario', x: 63, z: -63, nx: 1, nz: 0, where: 'el osario' },
 ];
 
 export const CELLAR = {
   FLOOR: F,
   TOP,
   // rejilla transitable propia
-  grid: [38, -64, 72, -24],
+  grid: [24, -86, 74, -24],
   // envolvente (juego, mapa, zona)
-  bounds: [38.5, -63.5, 71.5, -32],
+  bounds: [25.5, -84, 71.5, -32],
   regions: REGIONS,
   burrows: BURROWS.map(([a, b]) => [
     { ...a, y: HOLE_Y, fx: a.x + a.nx * 1.4, fz: a.z + a.nz * 1.4 },
     { ...b, y: HOLE_Y, fx: b.x + b.nx * 1.4, fz: b.z + b.nz * 1.4 },
   ]),
   perches: PERCHES.map(([x, z]) => ({ x, z })),
+  // sitios despejados donde le gusta pelear cuando enloquece
+  open: [
+    { id: 'lagar', x: 32, z: -47.5, r: 5.5 },
+    { id: 'cripta', x: 49, z: -78, r: 3.6 },
+    { id: 'sotano', x: 59, z: -41.6, r: 3 },
+  ],
+  levers: LEVERS.map((L) => ({ ...L, ix: L.x + L.nx * 0.45, iz: L.z + L.nz * 0.45 })),
+  // el rastrillo de la cisterna (hueco de 2,4 m entre la sala y la cisterna)
+  portcullis: { x: 55, z: -46.75, w: 2.4, h: 3.2 },
   // el fondo del pozo (salida) y el comedero del canónigo
   well: { x: 55, z: -50, r: 1.3 },
   feast: { x: 59, z: -43.3, yaw: Math.PI, corpse: [59.1, -44.5] },
-  tapiado: { x: 47.5, z: -58.5 },
 };
 
 // Altura del techo en (x, z) (null fuera de las bodegas).
@@ -137,6 +184,16 @@ export function cellarCeil(x, z) {
   if (i < 0 || j < 0 || i >= _grid.w || j >= _grid.h) return null;
   const t = _tops[j * _grid.w + i];
   return Number.isNaN(t) ? null : t;
+}
+// Sala (id de la región) en (x, z).
+let _rid = null;
+export function cellarRoom(x, z) {
+  if (!_rid) return null;
+  const i = Math.floor((x - _grid.x0) / _grid.res),
+    j = Math.floor((z - _grid.z0) / _grid.res);
+  if (i < 0 || j < 0 || i >= _grid.w || j >= _grid.h) return null;
+  const n = _rid[j * _grid.w + i];
+  return n >= 0 ? REGIONS[n].id : null;
 }
 
 // Rectángulos máximos de celdas con la misma clave (voraz, como WalkGrid.rects).
@@ -168,6 +225,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   const res = B.res;
   const W = B.w,
     H = B.h;
+  ctx.waters = ctx.waters || [];
   // ---------------------------------------------------------- planta
   const tops = new Float32Array(W * H).fill(NaN);
   const rid = new Int16Array(W * H).fill(-1);
@@ -183,6 +241,7 @@ export function buildCellar(ctx, B, L, o = {}) {
       }
   });
   _tops = tops;
+  _rid = rid;
   _grid = { x0: B.x0, z0: B.z0, res, w: W, h: H };
   const cx = (i) => B.x0 + i * res,
     cz = (j) => B.z0 + j * res;
@@ -192,7 +251,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   wb.setRoom(room);
   // ---------------------------------------------------------- suelos
   for (const m of mergeCells(W, H, (i, j) => (Number.isNaN(top(i, j)) ? null : reg(i, j).floor || 'flag'))) {
-    const tint = m.k === 'mossstone' ? [0.42, 0.44, 0.4] : m.k === 'planks' ? [0.5, 0.44, 0.38] : [0.48, 0.46, 0.43];
+    const tint = m.k === 'mossstone' ? [0.4, 0.42, 0.38] : m.k === 'planks' ? [0.48, 0.42, 0.36] : [0.44, 0.42, 0.4];
     wb.box(m.k, cx(m.i0), F - 0.1, cz(m.j0), cx(m.i1), F, cz(m.j1), { faces: 't', ao: false, sub: 2, tint });
   }
   col.add(o.bounds ? o.bounds[0] : cx(0), F - 1, cz(0), cx(W), F, cz(H), 'floor').cam = true;
@@ -206,7 +265,7 @@ export function buildCellar(ctx, B, L, o = {}) {
       x1 = cx(m.i1),
       z0 = cz(m.j0),
       z1 = cz(m.j1);
-    for (const r of subtractRects([x0, z0, x1, z1], t === TOP ? [shaft] : [])) wb.box('wallstone', r[0], t, r[1], r[2], t + 0.2, r[3], { faces: 'b', ao: false, sub: 2.5, tint: [0.38, 0.36, 0.34] });
+    for (const r of subtractRects([x0, z0, x1, z1], t === TOP ? [shaft] : [])) wb.box('wallstone', r[0], t, r[1], r[2], t + 0.2, r[3], { faces: 'b', ao: false, sub: 2.5, tint: [0.34, 0.32, 0.3] });
     // bajo la losa de la calle: el techo es macizo hasta ella
     if (t < TOP - 0.01) col.add(x0, t, z0, x1, TOP, z1).cam = true;
   }
@@ -250,8 +309,8 @@ export function buildCellar(ctx, B, L, o = {}) {
       }
     }
   for (const f of faces) {
-    const tint = f.mat === 'skulls' ? [0.66, 0.62, 0.56] : f.y0 > F + 0.01 ? [0.5, 0.48, 0.45] : [0.62, 0.6, 0.56];
-    const oo = { sub: 2, aoH: 1.6, aoMin: 0.45, baseY: F, tint, uv: f.mat === 'skulls' ? 0.55 : undefined };
+    const tint = f.mat === 'skulls' ? [0.6, 0.56, 0.5] : f.y0 > F + 0.01 ? [0.46, 0.44, 0.41] : [0.56, 0.54, 0.5];
+    const oo = { sub: 2, aoH: 1.6, aoMin: 0.4, baseY: F, tint, uv: f.mat === 'skulls' ? 0.55 : undefined };
     // dir: hacia dónde mira la cara (+1 = hacia +x / +z)
     if (f.axis === 'x') {
       if (f.dir > 0) wb.box(f.mat, f.at - 0.3, f.y0, f.a0, f.at, f.y1, f.a1, { ...oo, faces: 'e' });
@@ -266,7 +325,7 @@ export function buildCellar(ctx, B, L, o = {}) {
     if (f.y0 > F + 0.01 || f.mat === 'skulls' || f.a1 - f.a0 < 0.4) continue;
     const k = 0.32,
       d = 0.06;
-    const oo = { ao: false, sub: 3, tint: [0.5, 0.48, 0.45] };
+    const oo = { ao: false, sub: 3, tint: [0.46, 0.44, 0.41] };
     if (f.axis === 'x') {
       if (f.dir > 0) wb.box('ashlar', f.at, F, f.a0, f.at + d, F + k, f.a1, { ...oo, faces: 'et' });
       else wb.box('ashlar', f.at - d, F, f.a0, f.at, F + k, f.a1, { ...oo, faces: 'wt' });
@@ -284,7 +343,7 @@ export function buildCellar(ctx, B, L, o = {}) {
     const [x0, z0, x1, z1] = R.r;
     const d = R.ribs.d;
     const t = R.top;
-    const tint = [0.5, 0.48, 0.45];
+    const tint = [0.46, 0.44, 0.41];
     for (const z of R.ribs.z || []) {
       wb.box('ashlar', x0, t - d, z - 0.22, x1, t, z + 0.22, { ao: false, sub: 2, faces: 'nsb', tint });
       // salmeres en los muros
@@ -327,16 +386,14 @@ export function buildCellar(ctx, B, L, o = {}) {
   P.altarTable(ctx, 60.4, F, -45.4, 0, 2.2);
   wb.box('clothDark', 59.25, F + 1.0, -45.9, 61.55, F + 1.03, -44.9, { ao: false, faces: 'tnsew' });
   P.decal(ctx, 60.4, F + 2.4, -45.97, 2.6, 'sigil', 0, { wall: 'z' });
-  P.candles(ctx, 59.8, F + 1.03, -45.6, 4, 6066, { room, radius: 7, intensity: 1.0, spread: 0.2 });
-  P.candles(ctx, 61.0, F + 1.03, -45.6, 4, 6073, { room, radius: 5, intensity: 0.6, spread: 0.2 });
+  P.candles(ctx, 59.8, F + 1.03, -45.6, 4, 6066, { room, radius: 6, intensity: 0.7, spread: 0.2 });
+  P.candles(ctx, 61.0, F + 1.03, -45.6, 3, 6073, { room, radius: 4, intensity: 0.35, spread: 0.2 });
   // el comedero: un círculo de velas medio consumidas, huesos y sangre
   const Fe = CELLAR.feast;
   P.ritual(ctx, Fe.x, F, Fe.corpse[1] + 0.2, 1.9, 6067, { room });
-  P.candles(ctx, Fe.x - 1.7, F, Fe.corpse[1] + 0.9, 3, 6074, { room, radius: 4, intensity: 0.55, spread: 0.2 });
-  P.candles(ctx, Fe.x + 1.6, F, Fe.corpse[1] + 1.1, 3, 6075, { room, radius: 4, intensity: 0.5, spread: 0.2 });
+  P.candles(ctx, Fe.x - 1.7, F, Fe.corpse[1] + 0.9, 3, 6074, { room, radius: 3.5, intensity: 0.35, spread: 0.2 });
   wb.box('blood', Fe.x - 1.3, F + 0.012, Fe.corpse[1] - 0.9, Fe.x + 1.2, F + 0.02, Fe.corpse[1] + 1.0, { faces: 't', ao: false, grime: false, tint: [0.42, 0.2, 0.2] });
   P.bones(ctx, Fe.x - 0.8, F, Fe.corpse[1] - 0.3, 8, 6068, 0.7);
-  P.bones(ctx, 53.6, F, -44.9, 9, 6069, 0.6);
   P.bones(ctx, 64.8, F, -38.2, 6, 6076, 0.6);
   P.fleshGrowth(ctx, 65.6, F, -45.6, 1.1, 6070, { room, climb: 2.2, lift: 1 });
   P.fleshGrowth(ctx, 52.4, F, -41.2, 0.8, 6071, { room, climb: 1.8 });
@@ -350,17 +407,25 @@ export function buildCellar(ctx, B, L, o = {}) {
   // toneles viejos contra los muros
   for (const z of [-38.0, -44.6]) P.cask(ctx, 65.1, F, z, Math.PI / 2, { room, r: 0.5, len: 1.2 });
   bakeCorpse(wb, 53.4, F, -38.3, 2.2, 'sit', 'villager', 7);
+  // el maestro de obras, muerto junto al rastrillo con la orden en la mano
+  bakeCorpse(wb, 52.9, F, -44.7, 0.9, 'sit', 'villager', 8);
   ctx.rats.push({ x: 64.8, y: F, z: -44.8, n: 2 });
   // la luz de la alcoba baja por la escalera
   if (ctx.shafts) ctx.shafts.push({ a: [59.5, 0.5, -28], b: [59.5, F + 0.6, -36.4], w: 1.6, color: 0xffb070 });
-  ctx.lights.push({ x: 59.5, y: F + 1.2, z: -36.2, r: 1, g: 0.55, b: 0.25, radius: 5, intensity: 0.55, room });
-
-  // reja de la cisterna: barrotes clavados en la roca; al otro lado, el pozo
-  ironGrille(ctx, 'x', 53.8, 56.2, -46.75, F, -3.4, room);
-  col.add(53.8, F, -47.05, 56.2, -3.4, -46.45);
-  // respiradero del osario
-  ironGrille(ctx, 'z', -59.8, -58.4, 62.25, F, -4.2, room);
-  col.add(62.1, F, -59.8, 62.4, -4.2, -58.4);
+  ctx.lights.push({ x: 59.5, y: F + 1.2, z: -36.2, r: 1, g: 0.55, b: 0.25, radius: 4.5, intensity: 0.4, room });
+  // el rastrillo: jambas y dintel de sillería, y las tres cadenas que suben
+  // por la bóveda hacia las palancas
+  const Pc = CELLAR.portcullis;
+  for (const s of [-1, 1]) {
+    const x = Pc.x + s * (Pc.w / 2 + 0.2);
+    wb.box('ashlar', x - 0.22, F, -46.35, x + 0.22, -3.4, -46, { ao: false, sub: 2, faces: 'tnsew', tint: [0.5, 0.48, 0.44] });
+  }
+  wb.box('ashlar', Pc.x - Pc.w / 2 - 0.42, -3.4, -46.35, Pc.x + Pc.w / 2 + 0.42, -2.85, -46, { ao: false, sub: 2, faces: 'bnsew', tint: [0.5, 0.48, 0.44] });
+  for (const dx of [-0.8, 0, 0.8]) {
+    wb.box('iron', Pc.x + dx - 0.06, -2.85, -46.24, Pc.x + dx + 0.06, -2.7, -46.1, { ao: false });
+    P.chains(ctx, Pc.x + dx, TOP - 0.1, -46.4, 28, 0);
+    wb.box('black', Pc.x + dx - 0.18, TOP - 0.02, -46.58, Pc.x + dx + 0.18, TOP, -46.22, { faces: 'b', ao: false, grime: false });
+  }
 
   // ---------------------------------------------------------- celda del canónigo
   // jergón de paja, sus escritos en los muros y las ropas que ya no le sirven
@@ -372,21 +437,20 @@ export function buildCellar(ctx, B, L, o = {}) {
     [54.4, F + 2.5, 0.7],
   ])
     P.decal(ctx, x, y, -33.03, s, 'sigil', x, { wall: 'z' });
-  P.candles(ctx, 56.1, F, -33.5, 5, 6077, { room, radius: 4.5, intensity: 0.9, spread: 0.2 });
+  P.candles(ctx, 56.1, F, -33.5, 4, 6077, { room, radius: 4, intensity: 0.5, spread: 0.2 });
   P.bones(ctx, 55.4, F, -34.6, 7, 6078, 0.5);
   ctx.rats.push({ x: 53.2, y: F, z: -34.2, n: 1 });
 
   // ---------------------------------------------------------- Galería de los toneles
   // (los estantes con los toneles se pueden romper: van en L.breakables)
   for (const [x, z] of [
-    [41.0, -46.2],
     [41.0, -40.0],
     [50.1, -41.6],
   ])
     P.cask(ctx, x, F, z, 0, { room, r: 0.48, len: 1.1 });
-  P.sacks(ctx, 50.2, F, -48.2, 3, 6079);
+  P.sacks(ctx, 50.2, F, -46, 3, 6079);
   // vino derramado (oscuro como la sangre) y duelas sueltas
-  for (let i = 0; i < 4; i++) wb.box('blood', 44.3 + i * 0.7, F + 0.012, -48.4 + i * 0.3, 45.6 + i * 0.7, F + 0.018, -47.2 + i * 0.4, { faces: 't', ao: false, grime: false, tint: [0.3, 0.12, 0.16] });
+  for (let i = 0; i < 4; i++) wb.box('blood', 44.3 + i * 0.7, F + 0.012, -46.3 + i * 0.3, 45.6 + i * 0.7, F + 0.018, -45.3 + i * 0.3, { faces: 't', ao: false, grime: false, tint: [0.3, 0.12, 0.16] });
   for (let i = 0; i < 8; i++) {
     wb.push();
     wb.translate(45.6 + rng.range(-1, 1), F + 0.03, -37.6 + rng.range(-0.6, 0.6));
@@ -394,86 +458,176 @@ export function buildCellar(ctx, B, L, o = {}) {
     wb.box('planks', -0.05, 0, -0.55, 0.05, 0.03, 0.55, { ao: false, faces: 'tnsew', tint: [0.55, 0.45, 0.38] });
     wb.pop();
   }
-  P.hangingLamp(ctx, 45.5, -2.0, -44.6, { room, radius: 6, intensity: 0.55, len: 1.4 });
+  P.hangingLamp(ctx, 45.5, -2.0, -42.7, { room, radius: 5, intensity: 0.35, len: 1.4 });
   bakeCorpse(wb, 49.6, F, -37.6, -2.6, 'face', 'villager', 3);
-  ctx.rats.push({ x: 40.8, y: F, z: -48.2, n: 2 });
+  ctx.rats.push({ x: 40.8, y: F, z: -45.8, n: 2 });
+
+  // ---------------------------------------------------------- el Lagar
+  // la pila de pisar la uva en el rincón noroeste, con su viga de prensa y
+  // el contrapeso; el resto, diáfano: toneles contra los muros, dos pilares
+  // (rompibles) y la luz pálida que cae por dos rejillas de la calle
+  const lg = [26, -60, 31.2, -55.4];
+  wb.box('ashlar', lg[0], F, lg[1], lg[2], F + 0.95, lg[3], { sub: 2, aoH: 0.5, faces: 'tnsew', tint: [0.5, 0.47, 0.43] });
+  wb.box('blood', lg[0] + 0.25, F + 0.955, lg[1] + 0.25, lg[2] - 0.25, F + 0.96, lg[3] - 0.25, { faces: 't', ao: false, grime: false, tint: [0.22, 0.08, 0.1] });
+  col.add(lg[0], F, lg[1], lg[2], F + 0.95, lg[3]);
+  wb.box('timber', 27.2, F + 0.95, -57.9, 30.2, F + 1.35, -57.5, { ao: false, faces: 'tnsewb' });
+  wb.box('timber', 28.5, F + 0.95, -57.9, 28.9, TOP, -57.5, { ao: false, faces: 'nsew' });
+  wb.box('ashlar', 29.4, F + 0.95, -58.4, 30.4, F + 1.55, -57.0, { ao: false, faces: 'tnsew' });
+  P.cask(ctx, 36.9, F, -49.2, Math.PI / 2, { room, r: 0.55, len: 1.3 });
+  P.cask(ctx, 36.9, F, -51.0, Math.PI / 2, { room, r: 0.55, len: 1.3 });
+  P.cask(ctx, 27.0, F, -36.2, 0, { room, r: 0.5, len: 1.2 });
+  P.sacks(ctx, 36.8, F, -35.9, 4, 6090);
+  P.bones(ctx, 32.4, F, -47.6, 12, 6091, 1.4);
+  wb.box('blood', 30.6, F + 0.012, -49.2, 34.1, F + 0.02, -45.9, { faces: 't', ao: false, grime: false, tint: [0.26, 0.1, 0.1] });
+  P.fleshGrowth(ctx, 26.4, F, -52.5, 1.1, 6092, { room, climb: 2.4 });
+  P.fleshGrowth(ctx, 37.6, F, -36.2, 0.9, 6093, { room, climb: 2 });
+  bakeCorpse(wb, 35.8, F, -58.6, 2.8, 'back', 'soldier', 9);
+  bakeCorpse(wb, 28.8, F, -41.2, -0.6, 'curl', 'villager', 10);
+  for (const [x, z] of [
+    [29.5, -38.5],
+    [34.5, -56.5],
+  ]) {
+    // rejilla del desagüe de la calle, en lo alto de la bóveda
+    wb.box('black', x - 0.5, TOP - 0.03, z - 0.5, x + 0.5, TOP - 0.01, z + 0.5, { faces: 'b', ao: false, grime: false });
+    for (let k = -2; k <= 2; k++) wb.box('iron', x + k * 0.2 - 0.025, TOP - 0.08, z - 0.5, x + k * 0.2 + 0.025, TOP - 0.02, z + 0.5, { ao: false });
+    if (ctx.shafts) ctx.shafts.push({ a: [x, TOP, z], b: [x + 0.4, F + 0.1, z + 0.3], w: 0.9, color: 0x8898b0 });
+    ctx.lights.push({ x, y: F + 1.4, z, r: 0.55, g: 0.62, b: 0.75, radius: 6, intensity: 0.45, room });
+  }
+  for (const [x, z, n] of [
+    [30.5, -44, 20],
+    [33.8, -52.4, 14],
+    [35, -41, 26],
+  ])
+    P.chains(ctx, x, TOP - 0.56, z, n, 0);
+  ctx.rats.push({ x: 27.4, y: F, z: -44.5, n: 3 });
 
   // ---------------------------------------------------------- pasillo y antecámara
-  P.bones(ctx, 42, F, -54, 6, 6080, 0.8);
-  P.decal(ctx, 41.2, F + 0.02, -52.5, 1.4);
+  P.bones(ctx, 42, F, -53, 6, 6080, 0.8);
+  P.decal(ctx, 41.2, F + 0.02, -51.5, 1.4);
   P.fleshGrowth(ctx, 40.7, F, -55.2, 0.7, 6081, { room, climb: 1.6 });
-  // una vela junto al arco tapiado: la llama se tuerce hacia él (corre aire)
-  P.candles(ctx, 46.2, F, -60.3, 3, 6082, { room, radius: 4.5, intensity: 0.75, spread: 0.12 });
+  P.candles(ctx, 46.3, F, -63.4, 3, 6082, { room, radius: 3.5, intensity: 0.4, spread: 0.12 });
   P.rubble(ctx, 46.3, F, -57.6, 5, 6083, 0.4, { mat: 'ashlar', scale: 0.5 });
-  bakeCorpse(wb, 41.3, F, -60.1, 1.2, 'curl', 'villager', 4);
+  bakeCorpse(wb, 40.4, F, -60.6, 1.2, 'curl', 'villager', 4);
+
+  // ---------------------------------------------------------- Cripta de los canónigos
+  // sepulcros a los dos lados (el centro, libre), dos santos velados junto a
+  // la palanca y hornacinas con calaveras en el pasillo
+  for (const [x, z, open] of [
+    [43.5, -77.2, false],
+    [43.5, -80.8, true],
+    [54.5, -77.2, true],
+    [54.5, -80.8, false],
+  ])
+    P.sarcophagus(ctx, x, F, z, 0, { open, effigy: !open });
+  P.veiledStatue(ctx, 46.2, F, -82.2, 0, { ped: 0.7 });
+  P.veiledStatue(ctx, 51.8, F, -82.2, 0, { ped: 0.7 });
+  for (const z of [-66, -69.5]) {
+    P.niche(ctx, 43, F, z, 'e', { room, unlit: true });
+    P.niche(ctx, 45.5, F, z - 1.5, 'w', { room, unlit: true });
+  }
+  P.bones(ctx, 49, F, -76, 8, 6094, 1);
+  P.bones(ctx, 41, F, -74, 6, 6095, 0.5);
+  P.candles(ctx, 49.9, F, -82.3, 3, 6096, { room, radius: 3.5, intensity: 0.4, spread: 0.15 });
+  bakeCorpse(wb, 56.8, F, -74.3, -2.2, 'sit', 'villager', 11);
+  P.fleshGrowth(ctx, 57.6, F, -82.4, 1, 6097, { room, climb: 2.4 });
 
   // ---------------------------------------------------------- cisterna
-  // columnas romanas, agua quieta al fondo y el pozo
+  // columnas romanas, el aljibe (agua negra en su pila) y el pozo
   for (const [x, z] of [
-    [51.5, -55.5],
-    [58.5, -55.5],
+    [52.5, -53.5],
+    [58.5, -53.5],
   ])
     P.column(ctx, x, F, z, TOP - F - 0.6, 0.45, { mat: 'mossstone' });
-  wb.box('water', 49, F + 0.03, -59.6, 61.4, F + 0.05, -56.8, { faces: 't', ao: false, grime: false, tint: [0.22, 0.26, 0.28] });
+  const pool = [50.2, -59.6, 61.4, -56.4];
+  const rim = 0.5;
+  for (const [a, b, c, d] of [
+    [pool[0], pool[1], pool[2], pool[1] + 0.3],
+    [pool[0], pool[3] - 0.3, pool[2], pool[3]],
+    [pool[0], pool[1], pool[0] + 0.3, pool[3]],
+    [pool[2] - 0.3, pool[1], pool[2], pool[3]],
+  ])
+    wb.box('mossstone', a, F, b, c, F + rim, d, { sub: 2, faces: 'tnsew', aoH: 0.4, tint: [0.44, 0.46, 0.42] });
+  col.add(pool[0], F, pool[1], pool[2], F + rim, pool[3]);
+  ctx.waters.push({ shape: 'rect', r: [pool[0] + 0.3, pool[1] + 0.3, pool[2] - 0.3, pool[3] - 0.3], y: F + rim - 0.1, light: [Wl.x, F + 5, Wl.z], lightK: 0.8, sky: 0x1c2228 });
   wellBottom(ctx, Wl.x, Wl.z, room);
+  ctx.waters.push({ shape: 'circle', x: Wl.x, z: Wl.z, r: 1.02, y: F + 0.62, light: [Wl.x + 0.2, 0.5, Wl.z + 0.1], lightK: 1.2, spot: [Wl.x + 0.1, Wl.z + 0.05, 0.75, 0.9] });
   P.fleshGrowth(ctx, 61.5, F, -48.1, 0.9, 6084, { room, climb: 2 });
-  P.bones(ctx, 50, F, -49, 7, 6085, 0.8);
+  P.bones(ctx, 50.5, F, -49, 7, 6085, 0.8);
   // luz pálida que cae por el pozo
-  ctx.lights.push({ x: Wl.x, y: F + 2.2, z: Wl.z, r: 0.62, g: 0.7, b: 0.86, radius: 9, intensity: 1.1, room });
-  ctx.lights.push({ x: Wl.x, y: F + 0.6, z: Wl.z, r: 0.5, g: 0.58, b: 0.72, radius: 5, intensity: 0.6, room });
-  if (ctx.shafts) ctx.shafts.push({ a: [Wl.x, 0.2, Wl.z], b: [Wl.x, F + 0.2, Wl.z], w: 1.4, color: 0x9ab0c8 });
+  ctx.lights.push({ x: Wl.x, y: F + 2.2, z: Wl.z, r: 0.6, g: 0.68, b: 0.84, radius: 8, intensity: 0.8, room });
+  ctx.lights.push({ x: Wl.x, y: F + 0.9, z: Wl.z, r: 0.5, g: 0.58, b: 0.72, radius: 4, intensity: 0.45, room });
+  if (ctx.shafts) ctx.shafts.push({ a: [Wl.x, 0.2, Wl.z], b: [Wl.x, F + 0.7, Wl.z], w: 1.4, color: 0x9ab0c8 });
 
   // ---------------------------------------------------------- osario
-  // estantes de calaveras, un santo velado y cadáveres traídos para comer
-  for (const z of [-39.5, -43.5, -47.5, -51.5, -55.5]) P.niche(ctx, 70.5, F, z, 'w', { room });
+  // hornacinas con santos velados, calaveras en los muros y cadáveres
+  // traídos para comer; el ramal ciego, con la tercera palanca
+  for (const z of [-40, -46, -52, -58, -66, -72]) P.niche(ctx, 70.5, F, z, 'w', { room, unlit: z !== -52, intensity: 0.4 });
   P.bones(ctx, 68.4, F, -46, 9, 6086, 0.9);
-  P.bones(ctx, 66.8, F, -59.8, 8, 6087, 0.7);
+  P.bones(ctx, 66, F, -64.3, 8, 6087, 0.7);
+  P.bones(ctx, 68.8, F, -74, 7, 6098, 0.8);
   bakeCorpse(wb, 69.3, F, -41.8, -1.4, 'sit', 'soldier', 5);
   bakeCorpse(wb, 68.2, F, -53.4, 0.4, 'back', 'villager', 6);
-  P.fleshGrowth(ctx, 63.2, F, -60.6, 1.0, 6088, { room, climb: 2 });
+  bakeCorpse(wb, 69.2, F, -69, -1.6, 'sit', 'villager', 12);
+  P.fleshGrowth(ctx, 66.6, F, -61.4, 1.0, 6088, { room, climb: 2 });
+  P.fleshGrowth(ctx, 62.6, F, -78.6, 0.9, 6099, { room, climb: 2.2 });
   P.decal(ctx, 68.8, F + 0.02, -49.5, 2.0);
+  P.decal(ctx, 63.5, F + 0.02, -77.6, 1.6);
+
+  // ---------------------------------------------------------- palancas
+  // placa de hierro en el muro, la ranura por la que baja el mango y la
+  // cadena que sube a un agujero de la bóveda (el mango es interactuable)
+  for (const Lv of CELLAR.levers) {
+    const tx = -Lv.nz,
+      tz = Lv.nx;
+    const t = cellarTop(Lv.x + Lv.nx * 0.6, Lv.z + Lv.nz * 0.6);
+    const px = (a, n) => Lv.x + tx * a + Lv.nx * n,
+      pz = (a, n) => Lv.z + tz * a + Lv.nz * n;
+    const bx = (a0, n0, a1, n1) => [Math.min(px(a0, n0), px(a1, n1)), Math.min(pz(a0, n0), pz(a1, n1)), Math.max(px(a0, n0), px(a1, n1)), Math.max(pz(a0, n0), pz(a1, n1))];
+    let r = bx(-0.3, 0, 0.3, 0.08);
+    wb.box('iron', r[0], F + 0.55, r[1], r[2], F + 1.95, r[3], { ao: false });
+    r = bx(-0.05, 0.07, 0.05, 0.1);
+    wb.box('black', r[0], F + 0.75, r[1], r[2], F + 1.75, r[3], { ao: false, grime: false });
+    r = bx(-0.35, 0, 0.35, 0.35);
+    wb.box('ashlar', r[0], F, r[1], r[2], F + 0.25, r[3], { ao: false, faces: 'tnsew' });
+    P.chains(ctx, px(0, 0.2), t - 0.02, pz(0, 0.2), Math.round((t - (F + 1.95)) / 0.06), 0);
+    r = bx(-0.2, 0.02, 0.2, 0.4);
+    wb.box('black', r[0], t - 0.02, r[1], r[2], t, r[3], { faces: 'b', ao: false, grime: false });
+    // una vela de ánimas al pie (se ve desde lejos)
+    P.candles(ctx, px(0.55, 0.3), F, pz(0.55, 0.3), 2, 6100 + Math.round(Lv.x), { room, radius: 3, intensity: 0.45, spread: 0.08 });
+  }
 
   // ---------------------------------------------------------- rompibles
-  // pilares de la sala (los arranca si te escudas tras ellos), estantes de
-  // toneles y el arco tapiado (sólo cede si algo muy pesado se estrella)
+  // pilares de la sala y del Lagar (los arranca si te escudas tras ellos) y
+  // estantes de toneles de la galería
   const pillarH = TOP - 0.5 - F;
   for (const [x, z, k] of [
     [55.5, -40, 1],
     [62.5, -40, 2],
     [55.5, -43.2, 3],
     [62.5, -43.2, 4],
+    [32, -41.5, 5],
+    [32, -53.5, 6],
   ])
     L.breakables.push({ id: 'pilar' + k, kind: 'pillar', x, z, y: F, hx: 0.5, hz: 0.5, h: pillarH, room });
   for (const x of [43.35, 47.65])
     for (const [z0, z1] of [
-      [-46.4, -44.2],
-      [-43.9, -41.7],
-      [-41.4, -39.2],
+      [-45.9, -43.9],
+      [-43.6, -41.6],
+      [-41.3, -39.3],
     ])
       L.breakables.push({ id: `estante${Math.round(x)}${Math.round(-z0)}`, kind: 'rack', x, z: (z0 + z1) / 2, y: F, hx: 0.55, hz: (z1 - z0) / 2, h: 2.4, room });
-  L.breakables.push({ id: 'tapiado', kind: 'wall', x: 47.5, z: -58.5, y: F, hx: 0.5, hz: 1.3, h: -3.2 - F, room, heavyOnly: true });
 
   wb.setRoom(null);
 }
 
-// Reja de barrotes empotrada en un hueco (eje 'x': el hueco va a lo largo de
-// x entre a0 y a1, en el plano z = at).
-function ironGrille(ctx, axis, a0, a1, at, y0, y1, room) {
-  const wb = ctx.wb;
-  const n = Math.round((a1 - a0) / 0.2);
-  for (let i = 0; i <= n; i++) {
-    const a = a0 + ((a1 - a0) * i) / n;
-    if (axis === 'x') wb.box('iron', a - 0.028, y0, at - 0.028, a + 0.028, y1, at + 0.028, { ao: false, room });
-    else wb.box('iron', at - 0.028, y0, a - 0.028, at + 0.028, y1, a + 0.028, { ao: false, room });
-  }
-  for (const y of [y0 + 0.4, (y0 + y1) / 2, y1 - 0.3]) {
-    if (axis === 'x') wb.box('iron', a0, y - 0.035, at - 0.04, a1, y + 0.035, at + 0.04, { ao: false, room });
-    else wb.box('iron', at - 0.04, y - 0.035, a0, at + 0.04, y + 0.035, a1, { ao: false, room });
-  }
+// Techo de la región en (x, z) mientras se construye.
+function cellarTop(x, z) {
+  return cellarCeil(x, z) ?? TOP;
 }
 
-// Fondo del pozo del Postigo: brocal bajo con agua negra, el tiro cuadrado
-// que sube por la bóveda hasta el pozo de la calle y los pates de hierro.
+// Fondo del pozo del Postigo: brocal con el agua casi a ras, el tiro
+// cuadrado que sube por la bóveda hasta el pozo de la calle y los pates de
+// hierro.
 function wellBottom(ctx, x, z, room) {
   const wb = ctx.wb;
   const R = 1.3,
@@ -492,16 +646,15 @@ function wellBottom(ctx, x, z, room) {
     wb.quad('ashlar', V(x + c1 * R, F + h, z + s1 * R), V(x + c0 * R, F + h, z + s0 * R), V(x + c0 * rIn, F + h, z + s0 * rIn), V(x + c1 * rIn, F + h, z + s1 * rIn), { ao: false, sub: 3, room });
     wb.quad('mossstone', V(x + c0 * rIn, F + 0.2, z + s0 * rIn), V(x + c1 * rIn, F + 0.2, z + s1 * rIn), V(x + c1 * rIn, F + h, z + s1 * rIn), V(x + c0 * rIn, F + h, z + s0 * rIn), { ao: true, aoH: 0.5, aoMin: 0.2, baseY: F + 0.2, sub: 3, room });
   }
-  wb.cylinder('water', x, F + 0.22, z, rIn, rIn, 0.02, seg, { capTop: true, ao: false, grime: false, tint: [0.1, 0.12, 0.14], room });
   ctx.col.add(x - R, F, z - R, x + R, F + h, z + R);
   // tiro cuadrado de 1,5 m (cabe dentro del brocal de arriba) hasta la calle
   const s = 0.75,
     y0 = TOP,
     y1 = 0.16;
-  wb.box('mossstone', x - s, y0, z - s - 0.3, x + s, y1, z - s, { faces: 's', ao: false, sub: 1, room, tint: [0.4, 0.42, 0.4] });
-  wb.box('mossstone', x - s, y0, z + s, x + s, y1, z + s + 0.3, { faces: 'n', ao: false, sub: 1, room, tint: [0.4, 0.42, 0.4] });
-  wb.box('mossstone', x - s - 0.3, y0, z - s, x - s, y1, z + s, { faces: 'e', ao: false, sub: 1, room, tint: [0.4, 0.42, 0.4] });
-  wb.box('mossstone', x + s, y0, z - s, x + s + 0.3, y1, z + s, { faces: 'w', ao: false, sub: 1, room, tint: [0.4, 0.42, 0.4] });
+  wb.box('mossstone', x - s, y0, z - s - 0.3, x + s, y1, z - s, { faces: 's', ao: false, sub: 1, room, tint: [0.38, 0.4, 0.38] });
+  wb.box('mossstone', x - s, y0, z + s, x + s, y1, z + s + 0.3, { faces: 'n', ao: false, sub: 1, room, tint: [0.38, 0.4, 0.38] });
+  wb.box('mossstone', x - s - 0.3, y0, z - s, x - s, y1, z + s, { faces: 'e', ao: false, sub: 1, room, tint: [0.38, 0.4, 0.38] });
+  wb.box('mossstone', x + s, y0, z - s, x + s + 0.3, y1, z + s, { faces: 'w', ao: false, sub: 1, room, tint: [0.38, 0.4, 0.38] });
   // pates de hierro: del brocal hasta perderse arriba
   for (let y = F + 1.2; y < 0; y += 0.42) {
     wb.box('iron', x - 0.22, y, z + s - 0.2, x + 0.22, y + 0.035, z + s - 0.17, { ao: false, room });
