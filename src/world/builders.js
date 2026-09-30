@@ -417,6 +417,9 @@ export function house(ctx, s) {
     if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room, faces: 'nsewb' });
     else for (let z = z0 + 1.1; z < z1 - 0.6; z += 1.7) wb.box('timber', x0 + t, g1 - 0.22, z - 0.1, x1 - t, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
     ctx.col.add(x0, g1, z0, x1, h + 0.2, z1).cam = true;
+    // la cámara se queda por debajo de las vigas (antes se metía entre ellas
+    // y las atravesaba al andar); no estorba a nadie más
+    ctx.col.addCam(x0 + t, g1 - 0.27, z0 + t, x1 - t, g1, z1 - t);
     // tabiques interiores con pasos
     for (const iw of s.walls ?? []) partition(ctx, iw, g1, room, s.partMat ?? (lowerMat === 'plaster' ? 'plaster' : 'wallstone'), lt);
     // transitable: toda la huella (los muros tienen su propia colisión)

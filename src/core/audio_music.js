@@ -961,6 +961,25 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- la caza en la bodega
+  // Mientras te acecha: sin tambores. Un dron grave que respira, latidos, la
+  // nana de la caja de música rota nota a nota, muy de vez en cuando, y un
+  // clúster de cuerdas que se arrastra.
+  cellarHunt: {
+    bpm: 66,
+    root: 38,
+    mode: 'aeolian',
+    meter: 7,
+    prog: [0, 1, 0, 5],
+    chordBars: 2,
+    verb: 0.75,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 150, level: 0.07, rate: 0.08 },
+    step(S) {
+      huntStep(S);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe final: el Turiferario (Dies irae)
   bossFinal: {
     bpm: 104,
@@ -1081,6 +1100,24 @@ function cellarStep(S, phase) {
   if (inBar === 0 && (bar % 2 === 1 || phase)) for (const n of [chord, chord + 1]) m.strings(L.base, t, spb * 5, m.deg(T, n, 1) + 12, 0.02 + phase * 0.01, { trem: 10, a: 0.3, r: 0.6, bright: 8 });
   if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root, 0.18, { dur: 6 });
   if (phase && inBar === 4 && bar % 2 === 0) m.swell(L.base, t, spb * 2, 0.04, 600, 4000);
+}
+
+// La caza: latidos, notas sueltas de la nana, cuerdas que se arrastran.
+function huntStep(S) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  if (inBar === 0) m.drum(L.base, t, 'heart', 0.26, 0.92);
+  if (inBar === 1) m.drum(L.base, t, 'heart', 0.18, 0.92);
+  const d = S.c.data;
+  if (d.i === undefined) d.i = 0;
+  if (chance(0.22)) {
+    const g = NANA[d.i % NANA.length];
+    m.pluck(L.base, t + spb * rnd(0, 0.5), degree(T.root + 24, T.mode, chord + g) + (chance(0.25) ? 1 : 0), rnd(0.035, 0.065), { bright: 0.3 });
+    d.i++;
+  }
+  if (inBar === 0 && bar % 2 === 0) for (const n of [chord, chord + 1]) m.strings(L.base, t, spb * 13, m.deg(T, n, 0) + 12, 0.013, { trem: 5, a: 2.5, r: 2, bright: 5 });
+  if (inBar === 3 && bar % 4 === 1 && chance(0.6)) m.whisper(L.base, t, spb * 3, 0.03);
+  if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root, 0.07, { dur: 7 });
+  if (inBar === 5 && bar % 3 === 2 && chance(0.5)) m.swell(L.base, t, spb * 2, 0.025, 200, 1400);
 }
 
 // Jefe final: órgano, coro con el Dies irae, campanas del incensario, tambores.

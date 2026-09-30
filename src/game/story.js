@@ -155,7 +155,17 @@ Ahora me ha enseñado a rezar como Él quiere: más abajo, siempre más abajo. L
 
 Ya no me duelen. Ya casi no soy yo.
 
+Tengo hambre. Ella me baja de comer por las noches. Buena mujer. Cierra la puerta al irse para que no me escape.
+
 DEO IGNOTO. DEO IGNOTO. DEO IGNOTO.`,
+  },
+  pozo: {
+    title: 'Orden del canónigo al maestro de obras',
+    text: `Tápiese el arco de la cisterna vieja, al fondo del pasillo de la Galería de los toneles, con ladrillo y sin argamasa, que no ha de durar.
+
+Por allí bajaba el agua del pozo del Postigo, y por los pates del pozo entraban los ladrones de vino.
+
+Que nadie más baje. Que nadie más suba.`,
   },
   soldado: {
     title: 'Nota ensangrentada',
@@ -245,6 +255,9 @@ export const MSG = {
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
   southGate: 'La Puerta Sur está hundida bajo escombros y carne. No hay salida.',
+  rejaCisterna: 'Una reja empotrada en la roca. Al otro lado, bajo una luz pálida que cae de lo alto, el fondo de un pozo.',
+  tapiado: 'Un arco tapiado a toda prisa, ladrillo sobre ladrillo, casi sin argamasa. Por las rendijas corre aire y se oye gotear. Harían falta mil golpes de espada… o que algo muy pesado se estrellara contra él.',
+  pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   died: 'HAS CAÍDO',
 };
@@ -261,7 +274,11 @@ export const AREA_NAMES = {
   pelames: 'Calle de los Pellejeros',
   tanners: 'Curtidurías',
   canon: 'Casa del Canónigo',
-  sotano: 'Bodega del Canónigo',
+  sotano: 'Bodegas del Canónigo',
+  toneles: 'Galería de los toneles',
+  pasillo: 'El arco tapiado',
+  cisterna: 'Cisterna del pozo',
+  osario: 'Osario del canónigo',
   chapel: 'Capilla de San Fructuoso',
   muralla: 'Calle de la Muralla',
   ramparts: 'Adarve oriental',

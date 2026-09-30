@@ -24,7 +24,7 @@ const r = await p.evaluate((step) => {
   const grids = [
     [g.level.S, -1, 1.2],
     [g.level.C, -10.6, -5.5],
-    [g.level.B, -5.2, 0.1],
+    [g.level.B, -7.6, 0.1],
   ];
   let tested = 0;
   for (const [W, y0, y1] of grids) {
@@ -35,8 +35,10 @@ const r = await p.evaluate((step) => {
           z = W.z0 + (j + 0.5) * W.res;
         // la galería del río pertenece a la cripta (rampa de -10 a 0)
         if (W === g.level.S && z < -166 && z > -186 && Math.abs(x) < 3) continue;
+        // la boca del pozo de la cisterna (el pretil tapa un hueco abierto)
+        if (W === g.level.B && Math.hypot(x - 55, z + 50) < 1.4) continue;
         // superficie pisable más alta bajo y1: con 1.6 m libres encima
-        const boxes = g.world.col.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01, []).filter((b) => g.world.col.overlapXZ(b, x, z, 0));
+        const boxes = g.world.col.query(x - 0.01, z - 0.01, x + 0.01, z + 0.01, []).filter((b) => !b.camOnly && !b.brk && g.world.col.overlapXZ(b, x, z, 0));
         const tops = boxes.map((b) => b.maxy).filter((t) => t <= y1 + 0.01 && t >= y0 - 1).sort((a, b) => b - a);
         let gy = null;
         for (const t of tops) {

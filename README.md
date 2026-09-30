@@ -68,10 +68,21 @@ adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
 a los lados de la puerta entornada y una torre almenada con la ventana alta siempre iluminada. Dentro, el zaguán,
 el estudio (la llave del claustro sigue sobre la mesa), la alcoba, la cocina con su hogar y la despensa. Al fondo,
-la puerta de la bodega, atrancada por el ama con sal y velas. Al asomarse a la escalera salta una cinemática de
-terror: la cámara baja de espaldas por los peldaños mirando siempre al personaje, con un zoom de vértigo y franjas
-de cine; algo cruza el plano de un salto sin que él lo vea y, abajo, cuando el farol se ahoga, una cabeza del revés
-baja del techo delante del objetivo. Abajo espera **El Descoyuntado**, un jefe opcional.
+la puerta de la bodega, atrancada por el ama con sal y velas. Desde la casa ya se oye, abajo, algo que mastica.
+Al asomarse a la escalera salta una cinemática: el personaje baja los peldaños con el ruido cada vez más cerca; al
+pie, la cámara gira por detrás de él y se ve la sala del altar, donde el canónigo, de espaldas, devora un cadáver.
+Un hueso cruje bajo la bota, se hace el silencio, la cabeza del revés gira despacio hasta mirarle, el cuerpo se da
+la vuelta de golpe, se alza, grita y arroja el cadáver contra la pared. Arriba, a contraluz de una vela, el ama
+cierra la puerta de un portazo y echa la tranca («Perdóneme, señor…»). Abajo, la sala vacía; algo la cruza de un
+salto y se pierde en la bóveda.
+
+**Las bodegas del canónigo.** Un laberinto de sótanos de bóveda alta: la sala del altar con sus pilares, la celda
+donde el ama encerraba al canónigo, la galería de los toneles con sus estanterías, un pasillo que acaba en un arco
+tapiado, la cisterna del pozo y el osario, con las paredes de calaveras. La puerta de arriba queda atrancada: hay
+que encontrar otra salida mientras **El Descoyuntado** te caza. Se puede trepar por los pates de hierro del pozo
+hasta el Postigo (y, una vez descubierto, volver a bajar desde la calle) o echar abajo el arco tapiado a golpes
+pesados… o hacer que él lo embista. Los pilares aguantan un par de embestidas antes de venirse abajo, y las
+estanterías se parten en astillas. Cada vez que vuelves a bajar, alguien cierra de un portazo allá arriba.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -85,7 +96,7 @@ puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesit
 sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Catorce documentos breves cuentan la historia junto con el
+canónigo (aguante), que deja el Descoyuntado al morir. Diecisiete documentos breves cuentan la historia junto con el
 escenario.
 
 **Combate Soulslike simplificado.** Ataque ligero en combo, ataque pesado que rompe guardias, ataque a la carrera,
@@ -93,7 +104,7 @@ bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de in
 animación, *hitstop*, golpes críticos, estela de la espada, retroceso y estremecimiento de las criaturas, aviso en
 los ojos antes de sus golpes, vibración del mando, *poise*, un *buffer* de entradas y cancelación de la recuperación
 al moverse. El fijado elige al enemigo que tienes delante (con línea de visión) y la cámara lo encuadra con un
-barrido suave, sin saltos.
+barrido suave, sin saltos. Bajo techos bajos y vigas la cámara se agacha en vez de atravesarlos.
 
 **Animación procedural.** Clips con interpolación de Hermite y mezcla por cuaterniones, marcha bípeda con zancada
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
@@ -137,11 +148,18 @@ se encadena el anterior.
 - **Campanero**: bruto de 2,6 m con una campana fundida en la cabeza; su tañido aturde.
 - **Plañidera**: figura velada que flota y lanza lamentos espectrales.
 - **El Empalado** (jefe menor): un gigante atravesado por una pica que carga contra ti.
-- **El Descoyuntado** (jefe opcional, en la bodega del canónigo): el canónigo, boca arriba sobre cuatro miembros
-  descoyuntados, con la sotana hecha jirones y la cabeza del revés. Cuelga del techo hasta que entras; da
-  zarpazos, salta sobre ti, trepa a la bóveda y corre boca abajo hacia ti (sólo su sombra lo delata; ahí arriba no
-  se le puede tocar) para dejarse caer, y en la segunda fase se parte todas las articulaciones a la vez en una onda
-  que aturde.
+- **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
+  descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
+  cada miembro es una cadena de dos huesos con cinemática inversa y pies que se plantan en el suelo o en el techo y
+  sólo se despegan cuando se estiran demasiado, así que anda, trepa, gira y salta sin clips fijos. No te espera en
+  una sala: te acecha. Te observa desde la bóveda, se asoma por las esquinas, se mete en las madrigueras de las
+  paredes y lo oyes moverse al otro lado, imita tus pasos y la voz del ama, se ríe y te tira huesos. Tiene hambre,
+  y cuanta más tiene más se arriesga; ataca cuando no le miras o cuando te cura, se deja caer del techo, salta, te
+  agarra y te muerde (hay que forcejear para soltarse), finta los zarpazos, y aprende qué golpes te alcanzan y
+  cuáles esquivas. Si te escondes demasiado tras un pilar, lo arranca de un zarpazo. Herido, huye a lamerse las
+  heridas y vuelve a por ti; desde la segunda fase se parte todas las articulaciones en una onda que aturde, y en
+  la última apenas descansa entre golpe y golpe. Su barra
+  sólo aparece cuando pelea contigo.
 - **El Turiferario** (jefe final): el arzobispo transfigurado, con una corona de velas y un incensario gigante
   simulado físicamente como un péndulo en llamas; segunda fase con lluvia de ascuas y charcos de fuego.
 
@@ -166,7 +184,8 @@ al otro lado; las casas, con una caja de música olvidada; las capillas con alta
 en paz (ahí no entra la tensión); la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
 coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
 fase); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
-y un coro que salmodia en una sola nota, y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies
+y un coro que salmodia en una sola nota (y, mientras te caza, un latido lento en 7/8 con la caja de música a medio
+sonar, clústeres de cuerda y susurros), y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies
 irae*. La portada es canto llano en
 *organum* con campanas y el amanecer, un coro y un arpa en mayor. Hay golpes de efecto al ser descubierto, al
 descubrir una zona, al descansar, al cruzar la niebla, al morir y al vencer. Los instrumentos se sintetizan en
@@ -194,12 +213,15 @@ src/
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
-                        (level_canon.js: la Casa del Canónigo y su bodega)
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; armas:
+                        (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
+                        generado por regiones: suelos, bóvedas, muros, pilares, madrigueras y posaderos)
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
+                        (descoyuntado.js: cuerpo con IK de cuatro miembros y la IA que acecha); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
-                        iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega)
+                        iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
+                        en las bodegas; breakables.js: pilares, estanterías y muros que se rompen)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
@@ -217,6 +239,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
+                        huntsim.mjs    simula la caza del Descoyuntado sin dibujar (segundos, still|wander) y
+                                       traza sus modos, golpes y lo que rompe
+                        boss.mjs       capturas del Descoyuntado en posiciones y cámaras dadas
+                        cine.mjs       fotogramas de la cinemática de la bodega en los segundos pedidos
 ```
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.

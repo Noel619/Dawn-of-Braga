@@ -3,28 +3,30 @@
 // tímpano, escudo con capelo y borlas, balcón, faroles encendidos a los lados
 // de la puerta entornada y una torre con la ventana alta iluminada). Dentro:
 // zaguán, estudio (la llave del claustro sigue sobre la mesa), alcoba, cocina,
-// despensa y la escalera de la bodega, que el ama atrancó. Abajo, la bodega
-// convertida en capilla del Dios Desconocido, donde espera el Descoyuntado.
+// despensa y la escalera de la bodega, que el ama atrancó. Abajo, las bodegas
+// (level_cellar.js): un laberinto donde el Descoyuntado caza.
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { house, solid, stairs, merlons } from './builders.js';
 import * as P from './props.js';
-import { interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { CELLAR, buildCellar } from './level_cellar.js';
 
 // Medidas que también usan el juego (cinemática, navegación) y las pruebas.
+const ST = { x: 59.5, w: 3, top: -27, n: 22, rise: 0.3, run: 0.42 };
+ST.bottom = ST.top - ST.n * ST.run;
 export const CANON = {
   g1: 3.6, // techo de la planta baja
   door: { x: 56, z: -12 },
-  // bodega: planta, suelo y techo
-  cellar: { x0: 50.5, z0: -44.5, x1: 63.5, z1: -32, y: -4.2, top: -1.0 },
+  // bodegas: envolvente, suelo y techo
+  cellar: { x0: CELLAR.bounds[0], z0: CELLAR.bounds[1], x1: CELLAR.bounds[2], z1: CELLAR.bounds[3], y: CELLAR.FLOOR, top: CELLAR.TOP },
   // escalera: baja hacia el norte desde el rellano (z = top) hasta la bodega
-  stair: { x: 59.5, w: 3, top: -27, bottom: -32.88, n: 14, rise: 0.3, run: 0.42 },
+  stair: ST,
   cellarDoor: { x: 59.5, z: -26 },
 };
 
-// Altura del peldaño de la escalera de la bodega en z (0 arriba, -4.2 abajo).
+// Altura del peldaño de la escalera de la bodega en z (0 arriba, suelo abajo).
 export function stairY(z) {
   const S = CANON.stair;
   if (z >= S.top) return 0;
@@ -432,88 +434,23 @@ export function buildCanon(ctx, S, B, L) {
   wb.box('wallstone', 58, -0.05, -31.85, 61, 0, -31.65, { faces: 'b', ao: false, room: croom, tint: [0.6, 0.58, 0.55] });
   wb.setRoom(croom);
   stairs(ctx, CANON.stair.x, Y, CANON.stair.bottom, 's', CANON.stair.w, CANON.stair.n, CANON.stair.rise, CANON.stair.run, 'ashlar');
-  // los dos últimos peldaños asoman a la bodega: muretes a sus lados, hasta el
-  // techo (sin ellos se subía a la escalera de lado, rodeando la niebla)
-  for (const [x0, x1] of [
-    [57.6, 58],
-    [61, 61.4],
-  ])
-    solid(ctx, 'wallstone', x0, Y, CANON.stair.bottom - 0.17, x1, C.top, -32, { sub: 2, faces: 'nsew', room: croom, tint: [0.62, 0.6, 0.56], aoH: 1.4 });
   // sangre en los peldaños y arañazos en el muro
   for (const [x, z] of [
     [59.9, -27.6],
     [59.2, -28.9],
     [60.1, -30.4],
     [59.4, -31.9],
+    [59.8, -33.6],
+    [59.3, -35.2],
   ])
     P.decal(ctx, x, stairY(z) + 0.02, z, 0.38);
   P.decal(ctx, 58.03, -1.2, -30, 1.1, 'sigil', Math.PI / 2, { wall: 'x' });
-  B.paint(58, CANON.stair.bottom - 0.1, 61, CANON.stair.top, 1);
+  B.paint(58, -32, 61, CANON.stair.top, 1);
 
-  // ------------------------------------------------------------ bodega
-  B.paint(C.x0, C.z0, C.x1, C.z1, 1);
-  interiorRoom(ctx, C.x0, C.z0, C.x1, C.z1, Y, C.top - Y, {
-    wall: 'wallstone',
-    t: 0.5,
-    room: croom,
-    doors: [{ side: 's', at: CANON.stair.x, w: CANON.stair.w, h: C.top - Y }],
-    floorMat: 'flag',
-    floorTint: [0.5, 0.48, 0.45],
-    ceilMat: 'wallstone',
-    beams: false,
-    skirting: false,
-    tint: [0.6, 0.58, 0.55],
-  });
-  col.add(C.x0, Y - 1, C.z0, C.x1, Y, C.z1);
+  // ------------------------------------------------------------ bodegas
+  buildCellar(ctx, B, L, { room: croom });
   // muros: todo lo que no es bodega ni escalera, bajo la losa de la calle
   const nB = B.toColliders(col, Y - 1, C.top);
-  // pilares y arcos de la bóveda
-  const pillars = [
-    [54, -37.2],
-    [61, -37.2],
-    [54, -41.2],
-    [61, -41.2],
-  ];
-  for (const [x, z] of pillars) {
-    solid(ctx, 'wallstone', x - 0.45, Y, z - 0.45, x + 0.45, C.top, z + 0.45, { sub: 2, faces: 'nsew', aoH: 1.6, tint: [0.66, 0.64, 0.6] });
-    wb.box('ashlar', x - 0.55, Y, z - 0.55, x + 0.55, Y + 0.35, z + 0.55, { sub: 2, faces: 'tnsew', aoH: 0.3, tint: [0.6, 0.58, 0.55] });
-    wb.box('ashlar', x - 0.55, C.top - 0.3, z - 0.55, x + 0.55, C.top - 0.02, z + 0.55, { ao: false, faces: 'nsewb', tint: [0.6, 0.58, 0.55] });
-  }
-  for (const z of [-37.2, -41.2]) wb.box('wallstone', C.x0, C.top - 0.34, z - 0.25, C.x1, C.top - 0.01, z + 0.25, { ao: false, faces: 'nsb', sub: 2, tint: [0.56, 0.54, 0.52] });
-  for (const x of [54, 61]) wb.box('wallstone', x - 0.25, C.top - 0.3, C.z0, x + 0.25, C.top - 0.01, C.z1, { ao: false, faces: 'ewb', sub: 2, tint: [0.56, 0.54, 0.52] });
-  // toneles de vino a los lados (alguno reventado)
-  for (const z of [-34.6, -36.0, -39.2, -43.2]) P.cask(ctx, 51.35, Y, z, Math.PI / 2, { room: croom, r: 0.5, len: 1.2 });
-  for (const z of [-35.0, -39.4, -43.0]) P.cask(ctx, 62.65, Y, z, Math.PI / 2, { room: croom, r: 0.5, len: 1.2 });
-  for (let i = 0; i < 6; i++) {
-    wb.push();
-    wb.translate(52.4 + rng.range(-0.3, 0.6), Y + 0.03, -41 + rng.range(-0.8, 0.8));
-    wb.rotateY(rng.range(0, 3));
-    wb.box('planks', -0.05, 0, -0.55, 0.05, 0.03, 0.55, { ao: false, faces: 'tnsew', tint: [0.55, 0.45, 0.38] });
-    wb.pop();
-  }
-  wb.box('blood', 51.9, Y + 0.012, -42.2, 53.5, Y + 0.02, -40.4, { faces: 't', ao: false, grime: false, room: croom, tint: [0.42, 0.2, 0.2] });
-  // altar del Dios Desconocido al fondo: sigilo, velas, huesos y carne
-  P.altarTable(ctx, 57.5, Y, -43.7, 0, 2.2);
-  wb.box('clothDark', 56.35, Y + 1.0, -44.2, 58.65, Y + 1.03, -43.2, { ao: false, faces: 'tnsew' });
-  P.decal(ctx, 57.5, Y + 2.0, -44.47, 2.2, 'sigil', 0, { wall: 'z' });
-  P.candles(ctx, 56.9, Y + 1.03, -43.95, 4, 6066, { room: croom, radius: 6, intensity: 0.9, spread: 0.2 });
-  P.candles(ctx, 58.1, Y + 1.03, -43.95, 4, 6073, { room: croom, radius: 5, intensity: 0.6, spread: 0.2 });
-  P.ritual(ctx, 57.5, Y, -40.2, 1.7, 6067, { room: croom });
-  P.bones(ctx, 55.4, Y, -43.4, 9, 6068, 0.7);
-  P.bones(ctx, 60.4, Y, -34.4, 6, 6069, 0.6);
-  P.fleshGrowth(ctx, 59.6, Y, -44.2, 1.0, 6070, { room: croom, climb: 2, lift: 1, bound: [58.2, 63.2, -44.4, -42.5] });
-  P.fleshGrowth(ctx, 50.9, Y, -37.4, 0.8, 6071, { room: croom, climb: 1.6 });
-  // cadenas colgando de la bóveda; la del centro, rota (de ahí se soltó)
-  for (const [x, z, n] of [
-    [55.2, -39.2, 14],
-    [59.8, -39.2, 9],
-    [57.5, -35.4, 12],
-  ])
-    P.chains(ctx, x, C.top - 0.02, z, n, 0);
-  wb.cylinder('iron', 59.8, C.top - 0.62, -39.2, 0.08, 0.08, 0.05, 8, { ao: false });
-  bakeCorpse(wb, 62.3, Y, -41.2, -2.2, 'sit', 'villager', 7);
-  ctx.rats.push({ x: 52.2, y: Y, z: -43.6, n: 2 });
-  if (ctx.shafts) ctx.shafts.push({ a: [59.5, 0.5, -28], b: [59.5, Y + 0.4, -32.6], w: 1.6, color: 0xffb070 });
   wb.setRoom(null);
 
   // ------------------------------------------------------------ interactuables
@@ -522,24 +459,49 @@ export function buildCanon(ctx, S, B, L) {
     { kind: 'door', id: 'd_canon', x: CANON.door.x, y: 0, z: -12, w: 1.5, h: 2.4, axis: 'x', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: 1, plane: -12.3, ajar: 0.34 },
     { kind: 'item', id: 'i_llave', item: 'llave_claustro', x: 50.9, y: 0.85, z: -21.9 },
     { kind: 'note', id: 'n_canonigo', note: 'canonigo', x: 51.9, y: 0.82, z: -22.3, model: 'book' },
-    // la bodega: atrancada desde la alcoba
-    { kind: 'door', id: 'd_sotano', x: CANON.cellarDoor.x, y: 0, z: CANON.cellarDoor.z, w: 1.5, h: 2.4, axis: 'x', lock: { type: 'barred', side: 1 }, mat: 'planks', hinge: -1, swing: 1, plane: -26.2, barAt: -25.8 },
+    // la bodega: atrancada desde la alcoba (y alguien vuelve a atrancarla)
+    { kind: 'door', id: 'd_sotano', x: CANON.cellarDoor.x, y: 0, z: CANON.cellarDoor.z, w: 1.5, h: 2.4, axis: 'x', lock: { type: 'barred', side: 1 }, mat: 'planks', hinge: -1, swing: 1, plane: -26.2, barAt: -25.8, relock: true },
     // al asomarse a la escalera: la cinemática (una vez)
     { kind: 'trigger', id: 't_sotano', x: CANON.stair.x, y: 0, z: -26.75, r: 1.4, rz: 0.4, event: 'sotano' },
-    { kind: 'fog', id: 'f_sotano', boss: 'descoyuntado', x: CANON.stair.x, y: Y, z: CANON.stair.bottom - 0.25, w: CANON.stair.w, h: C.top - Y, axis: 'x', enter: -1 },
-    // tras vencerlo: su rosario sobre el altar y la última página del diario
-    { kind: 'item', id: 'i_rosario', item: 'rosario', x: 57.5, y: Y + 1.18, z: -43.55, afterBoss: 'descoyuntado' },
-    { kind: 'note', id: 'n_bodega', note: 'bodega', x: 56.75, y: Y + 1.05, z: -43.45, model: 'paper' }
+    // tras vencerlo: su rosario sobre el altar
+    { kind: 'item', id: 'i_rosario', item: 'rosario', x: 60.4, y: Y + 1.18, z: -45.25, afterBoss: 'descoyuntado' },
+    // la última página, en su celda; y la vieja orden de tapiar la cisterna
+    { kind: 'note', id: 'n_bodega', note: 'bodega', x: 53.7, y: Y + 0.27, z: -34.2, model: 'paper' },
+    { kind: 'note', id: 'n_pozo', note: 'pozo', x: 63.6, y: Y + 0.04, z: -59.3, model: 'paper' },
+    // lo que se ve y no se alcanza
+    { kind: 'examine', id: 'x_reja', text: 'rejaCisterna', x: 55, y: Y, z: -45.9, r: 1.9 },
+    { kind: 'examine', id: 'x_respiradero', text: 'rejaCisterna', x: 62.9, y: Y, z: -59.1, r: 1.6 },
+    { kind: 'examine', id: 'x_tapiado', text: 'tapiado', x: 46.6, y: Y, z: -58.5, r: 1.9, breakable: 'tapiado' },
+    // la salida: trepar por el pozo del Postigo (y, ya fuera, volver a bajar)
+    { kind: 'climb', id: 'x_pozo', x: CELLAR.well.x, y: Y, z: CELLAR.well.z, r: 2.3 },
+    { kind: 'well', id: 'x_pozo_calle', x: CELLAR.well.x, y: 0, z: CELLAR.well.z, r: 2.3 }
   );
   L.enemies.push(
     { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },
-    { type: 'descoyuntado', x: 57.5, y: Y, z: -38.8, yaw: 0, idle: 'boss', id: 'b_descoyuntado', boss: true }
+    // come junto al altar, de espaldas a la escalera
+    { type: 'descoyuntado', x: CELLAR.feast.x, y: Y, z: CELLAR.feast.z, yaw: CELLAR.feast.yaw, idle: 'boss', id: 'b_descoyuntado', boss: true }
   );
-  // la bodega va antes que la casa: el tramo bajo de la escalera ya es bodega
+  // las bodegas van antes que la casa: el tramo bajo de la escalera ya es bodega
+  const cz = (id, r) => ({ id, rects: [[...r, Y - 1, C.top - 0.05]], atmo: 'cellar', room: croom });
   L.zones.push(
-    { id: 'sotano', rects: [[C.x0, C.z0, C.x1, C.z1, Y - 1, C.top + 0.2], [58, -32.2, 61, -27, Y - 1, -0.6]], atmo: 'cellar', room: croom },
+    cz('toneles', [40, -49.5, 52, -36.5]),
+    cz('pasillo', [40.5, -61, 48, -49.5]),
+    cz('cisterna', [48, -60, 62, -47.5]),
+    cz('osario', [62, -61, 71, -36.5]),
+    { id: 'sotano', rects: [[C.x0, C.z0, C.x1, C.z1, Y - 1, C.top - 0.05], [58, -32.2, 61, -27, Y - 1, -0.6]], atmo: 'cellar', room: croom },
     { id: 'canon', rects: [[48, -32, 64, -12.2, -1, 4.5]], atmo: 'interior', room }
   );
-  L.map.push({ id: 'canon', r: [48.4, -31.6, 63.6, -12.4] }, { id: 'sotano', r: [C.x0, C.z0, C.x1, C.z1] });
+  L.map.push(
+    { id: 'canon', r: [48.4, -31.6, 63.6, -12.4] },
+    { id: 'sotano', r: [52, -46, 66, -36.5], level: 'cellar' },
+    { id: 'sotano', r: [52.5, -36.5, 56.5, -33], level: 'cellar' },
+    { id: 'sotano', r: [58, -36.5, 61, -27], level: 'cellar' },
+    { id: 'toneles', r: [40, -49, 52, -36.5], level: 'cellar' },
+    { id: 'pasillo', r: [40.5, -57, 43.5, -49], level: 'cellar' },
+    { id: 'pasillo', r: [40.5, -61, 48, -57], level: 'cellar' },
+    { id: 'cisterna', r: [48, -60, 62, -47.5], level: 'cellar' },
+    { id: 'osario', r: [66, -58, 70.5, -36.5], level: 'cellar' },
+    { id: 'osario', r: [62.5, -61, 70.5, -58], level: 'cellar' }
+  );
   return nB;
 }

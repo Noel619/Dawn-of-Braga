@@ -26,10 +26,10 @@ export function buildLevel() {
     flies: [], // enjambres de moscas (salen de los cadáveres)
   };
   corpseLog.length = 0;
-  const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [] };
+  const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
-  const B = new WalkGrid(46, -48, 66, -24, 0.5); // bodega del canónigo
+  const B = new WalkGrid(38, -64, 72, -24, 0.5); // bodegas del canónigo
   ctx.S = S; // las casas visitables pintan su huella transitable
 
   buildCastle(ctx, S, L);

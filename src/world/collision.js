@@ -38,6 +38,16 @@ export class CollisionWorld {
     return b;
   }
 
+  // Caja sólo para la cámara (vigas, nervios de bóveda, techos bajos): la
+  // cámara no la atraviesa, pero no estorba al paso, no da suelo, no tapa la
+  // vista de las criaturas ni rebota el sonido.
+  addCam(minx, miny, minz, maxx, maxy, maxz) {
+    const b = this.add(minx, miny, minz, maxx, maxy, maxz, 'cam');
+    b.camOnly = true;
+    b.noSight = true;
+    return b;
+  }
+
   // Caja girada 'rot' en Y (convención de three.js: el eje x local apunta a
   // (cos, -sin) en el mundo) con semiejes hx (x local) y hz (z local).
   addOBB(cx, cz, hx, hz, rot, y0, y1, tag = null) {
@@ -85,7 +95,7 @@ export class CollisionWorld {
     const list = this.query(x - r, z - r, x + r, z + r, this._q1 || (this._q1 = []));
     let g = -100;
     for (const b of list) {
-      if (b.maxy > yMax) continue;
+      if (b.maxy > yMax || b.camOnly) continue;
       if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
       if (b.maxy > g) g = b.maxy;
     }
@@ -99,7 +109,7 @@ export class CollisionWorld {
       const list = this.query(pos.x - r, pos.z - r, pos.x + r, pos.z + r, this._q2 || (this._q2 = []));
       let moved = false;
       for (const b of list) {
-        if (b.maxy <= feet + stepH || b.miny >= feet + height) continue;
+        if (b.maxy <= feet + stepH || b.miny >= feet + height || b.camOnly) continue;
         if (b.obb) {
           if (this._resolveOBB(b.obb, pos, r)) moved = hit = true;
           continue;

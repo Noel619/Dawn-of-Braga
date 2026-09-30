@@ -27,6 +27,7 @@ export class Combat {
   // ------------------------------------------------------------ jugador -> enemigos
   playerSwing(player, atk) {
     const g = this.game;
+    if (g.breakables) g.breakables.playerSwing(player, atk);
     for (const e of g.activeEnemies) {
       if (e.dead || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
       const dx = e.pos.x - player.pos.x,
@@ -296,7 +297,7 @@ export class Combat {
       if (P.grav) P.vel.y -= P.grav * dt;
       const step = P.vel.length() * dt;
       const dir = P.vel.clone().normalize();
-      const hitWall = g.world.col.raycast(P.pos.x, P.pos.y, P.pos.z, dir.x, dir.y, dir.z, step + 0.1, (b) => b.maxy - b.miny > 0.2);
+      const hitWall = g.world.col.raycast(P.pos.x, P.pos.y, P.pos.z, dir.x, dir.y, dir.z, step + 0.1, (b) => !b.camOnly && b.maxy - b.miny > 0.2);
       P.pos.addScaledVector(P.vel, dt);
       P.sprite.position.copy(P.pos);
       P.core.position.copy(P.pos);

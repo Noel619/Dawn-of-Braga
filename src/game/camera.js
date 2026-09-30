@@ -106,11 +106,20 @@ export class CameraRig {
       this.pitch = clamp(this.pitch + look.y, -0.6, 1.15);
     }
 
-    const cp = Math.cos(this.pitch),
-      sp = Math.sin(this.pitch);
-    const dir = _dir.set(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
     let want = this.dist + this.lockW * 0.6;
     if (target && target.T && target.T.height > 2.6) want += Math.min(2.2, (target.T.height - 2.6) * 0.8) * this.lockW;
+    // techo bajo (interiores, vigas, bóvedas): en vez de pegarse al jugador o
+    // meterse entre las vigas, la cámara baja y mira más de frente. El tope
+    // se mide sobre la cabeza del jugador y se suaviza (baja deprisa, sube
+    // despacio) para no dar tirones al pasar de una sala a otra
+    const up = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, 0, 1, 0, 9, (b) => b.cam !== false);
+    const cap = up === Infinity ? 1.5 : Math.asin(clamp((up - 0.38) / Math.max(1, want), -0.25, 0.99));
+    if (this.pitchCap === undefined) this.pitchCap = cap;
+    this.pitchCap = damp(this.pitchCap, cap, cap < this.pitchCap ? 14 : 2.5, dt);
+    const pe = Math.min(this.pitch, this.pitchCap);
+    const cp = Math.cos(pe),
+      sp = Math.sin(pe);
+    const dir = _dir.set(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
     // colisión de cámara: se acerca al instante, se aleja suavemente
     const hit = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, -dir.x, -dir.y, -dir.z, want + 0.3, (b) => b.cam !== false);
     let allowed = want;

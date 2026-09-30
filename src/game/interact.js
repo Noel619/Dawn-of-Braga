@@ -488,7 +488,7 @@ export class Interactables {
       this.refreshNav(it);
       it.smash = 0;
       it.r = s.r ?? 2.2;
-    } else if (s.kind === 'examine') {
+    } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
       it.r = s.r;
@@ -554,6 +554,16 @@ export class Interactables {
       if (it.boards) it.boards.visible = false;
       if (it.mat === 'barricade') it.obj.visible = false;
     }
+  }
+
+  // Cierra de golpe una puerta abierta y le echa la tranca (por su lado de
+  // quitarla): la bodega, cuando alguien te encierra abajo.
+  slamShut(it) {
+    it.done = false;
+    it.target = 0;
+    it.closing = 1;
+    if (it.box) it.box.enabled = true;
+    delete this.game.flags['door:' + it.id];
   }
 
   clearFog(it) {
@@ -693,6 +703,9 @@ export class Interactables {
       if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note') continue;
       if (it.hidden) continue;
       if (it.kind === 'trigger') continue;
+      // (el arco tapiado ya no se examina cuando está en el suelo)
+      if (it.breakable && this.game.breakables.get(it.breakable)?.broken) continue;
+      if (it.kind === 'climb' && !this.game.canClimbWell()) continue;
       if (it.kind === 'fog' && (!this.game.fogActive(it) || this.game.activeBoss)) continue;
       const ix = it.ix ?? it.x,
         iz = it.iz ?? it.z;
@@ -732,6 +745,10 @@ export class Interactables {
         return 'Examinar';
       case 'breakable':
         return it.label ?? 'Partir la mesa';
+      case 'climb':
+        return 'Trepar por el pozo';
+      case 'well':
+        return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
     }
     return 'Interactuar';
   }
@@ -817,6 +834,18 @@ export class Interactables {
       g.ui.toast(MSG[it.text] || it.text);
       return true;
     }
+    if (it.kind === 'climb') {
+      g.climbWell(it);
+      return true;
+    }
+    if (it.kind === 'well') {
+      if (g.flags['pozo:salida']) g.descendWell(it);
+      else {
+        g.ui.toast(MSG.pozoCalle);
+        g.audio && g.audio.play('drip', { x: it.x, y: it.y - 4, z: it.z });
+      }
+      return true;
+    }
     if (it.kind === 'breakable') {
       if (it.done || it.smash > 0) return true;
       // golpe de arriba abajo; la mesa cede cuando baja el arma
@@ -831,6 +860,12 @@ export class Interactables {
     const g = this.game;
     const t = g.time;
     for (const it of this.list) {
+      if (it.kind === 'door' && it.closing) {
+        // se cierra de un portazo (muy deprisa) y la tranca cae en su sitio
+        it.open = Math.max(0, it.open - dt * 4.5);
+        this.poseDoor(it, it.open * it.open);
+        if (it.open <= 0) it.closing = 0;
+      }
       if (it.kind === 'door' && it.target && it.open < 1) {
         const speed = it.mat === 'grate' ? 0.35 : it.mat === 'seal' ? 0.4 : it.mat === 'barricade' ? 1.3 : 1.1;
         it.open = Math.min(1, it.open + dt * speed);

@@ -375,6 +375,8 @@ export function buildDescoyuntado() {
     { name: 'body', pos: [0, D.body, 0] },
     { name: 'neck', parent: 'body', pos: [0, 0.02, 0.6] },
     { name: 'head', parent: 'neck', pos: [0, -0.32, 0.04] },
+    // mandíbula (con la cabeza del revés, el mentón queda arriba)
+    { name: 'jaw', parent: 'head', pos: [0, -0.02, 0.06] },
   ];
   const limbs = [
     ['lf', 0.27, 0.44, D.LAf, D.LBf],
@@ -398,15 +400,17 @@ export function buildDescoyuntado() {
     // alzacuello
     { j: 'body', type: 'box', s: [0.22, 0.08, 0.08], p: [0, 0.02, 0.6], mat: 'clothWhite' },
     // jirones de la sotana colgando a los lados y por detrás
+    // (jirones estrechos y desiguales, con huecos: no una cortina)
     ...[
-      [-0.4, 0.78],
-      [-0.14, 0.98],
-      [0.12, 0.86],
-      [0.34, 0.7],
+      [-0.42, 0.5],
+      [-0.2, 0.64],
+      [0.02, 0.44],
+      [0.24, 0.58],
+      [0.4, 0.36],
     ].flatMap(([z, len], i) =>
-      [-1, 1].map((sd) => ({ j: 'body', type: 'box', s: [0.025, len * (sd > 0 ? 1 : 0.9 + (i % 2) * 0.15), 0.21], p: [sd * 0.26, -len / 2 + 0.03, z], r: [0, 0, sd * 9], mat: 'clothDark', ds: true }))
+      [-1, 1].map((sd) => ({ j: 'body', type: 'box', s: [0.02, len * (sd > 0 ? 1 : 0.75 + (i % 2) * 0.35), 0.1 + (i % 3) * 0.025], p: [sd * 0.27, -len / 2 + 0.03, z + sd * 0.03], r: [(i - 2) * 6, 0, sd * (10 + i * 3)], taper: [0.45, 1], mat: 'clothDark', ds: true }))
     ),
-    { j: 'body', type: 'box', s: [0.44, 0.84, 0.025], p: [0, -0.4, -0.62], r: [-8, 0, 0], taper: [1.2, 1], mat: 'clothDark', ds: true },
+    { j: 'body', type: 'box', s: [0.3, 0.55, 0.02], p: [0.04, -0.26, -0.62], r: [-14, 0, 4], taper: [0.5, 1], mat: 'clothDark', ds: true },
     // cuello estirado, con la carne abierta
     { j: 'neck', type: 'box', s: [0.11, 0.36, 0.11], p: [0, -0.15, 0.02], taper: [0.9, 0.9], mat: 'skinCorrupt' },
     { j: 'neck', type: 'ico', s: [0.08], p: [0.03, -0.03, 0], mat: 'flesh' },
@@ -414,7 +418,9 @@ export function buildDescoyuntado() {
     { j: 'head', type: 'box', s: [0.24, 0.3, 0.27], p: [0, -0.13, 0.03], mat: 'skinCorrupt' },
     { j: 'head', type: 'box', s: [0.13, 0.13, 0.02], p: [0, -0.05, 0.17], mat: 'black' },
     ...[-0.045, -0.015, 0.015, 0.045].map((x) => ({ j: 'head', type: 'box', s: [0.018, 0.03, 0.015], p: [x, -0.1, 0.178], mat: 'bone' })),
-    ...[-0.04, 0, 0.04].map((x) => ({ j: 'head', type: 'box', s: [0.018, 0.028, 0.015], p: [x, -0.005, 0.178], mat: 'bone' })),
+    ...[-0.04, 0, 0.04].map((x) => ({ j: 'jaw', type: 'box', s: [0.018, 0.028, 0.015], p: [x, 0.015, 0.118], mat: 'bone' })),
+    { j: 'jaw', type: 'box', s: [0.2, 0.07, 0.2], p: [0, 0.03, 0.02], mat: 'skinCorrupt' },
+    { j: 'head', type: 'box', s: [0.15, 0.1, 0.12], p: [0, -0.05, 0.1], mat: 'black' },
     { j: 'head', type: 'box', s: [0.04, 0.06, 0.04], p: [0, -0.145, 0.175], mat: 'skinCorrupt' },
     { j: 'head', type: 'box', s: [0.036, 0.022, 0.012], p: [-0.056, -0.195, 0.168], mat: 'eyeGlow' },
     { j: 'head', type: 'box', s: [0.036, 0.022, 0.012], p: [0.056, -0.195, 0.168], mat: 'eyeGlow' },

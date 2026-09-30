@@ -58,7 +58,7 @@ export class Enemy {
       const fl = col.groundHeight(spec.x, spec.z, 0.1, spec.y);
       let c = Infinity;
       for (const b of col.query(spec.x - 0.3, spec.z - 0.3, spec.x + 0.3, spec.z + 0.3, [])) {
-        if (b.miny > fl + 1.6 && b.miny < c && col.overlapXZ(b, spec.x, spec.z, 0.2)) c = b.miny;
+        if (b.miny > fl + 1.6 && b.miny < c && !b.camOnly && col.overlapXZ(b, spec.x, spec.z, 0.2)) c = b.miny;
       }
       if (c < Infinity) this.home.y = c - 0.03;
       this.floorY = fl;
@@ -258,6 +258,7 @@ export class Enemy {
     }
     if (this.hp <= 0) {
       this.die();
+      if (T.onHit) T.onHit(this, 'kill', dmg, heavy);
       return 'kill';
     }
     this.poise -= poiseDmg;
@@ -277,6 +278,7 @@ export class Enemy {
     } else if (this.state === 'dormant' || this.state === 'alert') {
       this.state = 'chase';
     }
+    if (T.onHit) T.onHit(this, 'hit', dmg, heavy);
     return 'hit';
   }
 
@@ -348,6 +350,11 @@ export class Enemy {
     // en una cinemática la mueve el guion
     if (this.scripted) return;
     const T = this.T;
+    // criaturas con cerebro propio (el Descoyuntado)
+    if (T.ai) {
+      T.ai(this, dt, player);
+      return;
+    }
     this.stT += dt;
     this.cooldown -= dt;
     this.flash -= dt;
@@ -596,6 +603,10 @@ export class Enemy {
 
   animate(dt) {
     const T = this.T;
+    if (T.animate) {
+      T.animate(this, dt);
+      return;
+    }
     const spd = Math.hypot(this.vx, this.vz);
     this.phase += dt * spd * (T.stride ?? 2.2);
     const t = this.game.time;

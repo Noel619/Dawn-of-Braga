@@ -49,9 +49,13 @@ const steps = [
   // bodega del canónigo (opcional): tranca, cinemática, el Descoyuntado y su rosario
   "__use('n_ama')", "__use('d_sotano')",
   "(()=>{const g=__game;g.player.spawn(59.5,0,-25.2,Math.PI);__noEnemies();for(let i=0;i<40&&!g.cutscene;i++)__sim(0.05,['KeyW']);const had=!!g.cutscene;for(let i=0;i<400&&g.cutscene;i++)__sim(0.05);return {cine:had,flag:!!g.flags['cine:sotano'],ended:!g.cutscene,ps:g.player.state,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z].map(v=>+v.toFixed(2))}})()",
-  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='f_sotano');g.player.spawn(59.5,-3.9,-32.6,Math.PI);__sim(0.2);g.enterFog(it);__sim(3.2);const b=g.bosses.descoyuntado;const st=b.state;b.hp=1;b.die();__sim(1);return {active:!!g.activeBoss,bossState:st}})()",
-  "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:descoyuntado'],fog:__game.fogActive(__game.interact.list.find(i=>i.id==='f_sotano'))}),3000))",
-  "__use('i_rosario')", "__use('n_bodega')", "({maxSt:__game.player.maxSt})",
+  // encerrado: la puerta está atrancada; se sale por el pozo y se vuelve a bajar por él
+  "(()=>{const g=__game;const d=g.interact.list.find(i=>i.id==='d_sotano');return {hunt:g.hunt.active,door:d.done,open:+d.open.toFixed(2),boss:g.bosses.descoyuntado.D.mode}})()",
+  "(()=>{const g=__game;g.player.spawn(53.4,-6.6,-50,Math.PI/2);__noEnemies();__sim(0.1);const t=g.promptTarget&&g.promptTarget.id;__sim(0.2,[],['KeyE']);__sim(2);return {prompt:t,flag:!!g.flags['pozo:salida'],hunt:g.hunt.active,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z].map(v=>+v.toFixed(2))}})()",
+  "(()=>{const g=__game;g.bosses.descoyuntado.reset();const r=__use('x_pozo_calle',1.2);__sim(2);return {r:r.ok,hunt:g.hunt.active,y:+g.player.pos.y.toFixed(2)}})()",
+  "(()=>{const g=__game;const b=g.bosses.descoyuntado;b.hp=1;b.die();__sim(1);return {active:!!g.activeBoss,hunt:g.hunt.active}})()",
+  "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:descoyuntado'],door:__game.flags['door:d_sotano']}),6000))",
+  "__use('i_rosario')", "__use('n_bodega')", "__use('n_pozo')", "({maxSt:__game.player.maxSt})",
   "__use('a_capela')",
   "__use('d_claustro')", "__use('i_relicario1')", "__use('n_claustro')", "__use('d_claustro_se')",
   "__use('d_se')", "__use('d_cripta')",

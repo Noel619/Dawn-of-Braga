@@ -396,6 +396,39 @@ export class Player {
     return 'hit';
   }
 
+  // Atrapado por el Descoyuntado: sin control; forcejear (pulsar ataque,
+  // esquiva o interactuar) suelta antes.
+  startGrabbed() {
+    this.state = 'grabbed';
+    this.stT = 0;
+    this.mash = 0;
+    this.blocking = false;
+    this.buffer = null;
+    this.vx = this.vz = 0;
+    this.flask.visible = false;
+    this.anim.play(this.clips.hurt, { blend: 0.05 });
+  }
+  receiveBite(dmg) {
+    if (this.dead) return;
+    this.hp -= dmg;
+    this.lastHitT = this.game.time;
+    this.flinchX.kick(-7);
+    this.flinchY.kick((Math.random() - 0.5) * 10);
+    this.anim.play(this.clips.hurt, { blend: 0.03 });
+    this.game.audio && this.game.audio.play('playerHurt', this.pos);
+    if (this.hp <= 0) this.die();
+  }
+  releaseGrab(knock, fx, fz, dmg = 0) {
+    if (this.dead) return;
+    this.hp -= dmg;
+    if (this.hp <= 0) return this.die();
+    this.state = 'stagger';
+    this.stT = 0;
+    this.vx = fx * knock;
+    this.vz = fz * knock;
+    this.anim.play(this.clips.stagger, { blend: 0.04 });
+  }
+
   die() {
     this.hp = 0;
     if (this.dead) return;
@@ -676,6 +709,11 @@ export class Player {
       this.vz = damp(this.vz, 0, 5, dt);
     } else if (st === 'cine') {
       desiredSpeed = 0;
+    } else if (st === 'grabbed') {
+      desiredSpeed = -1;
+      this.vx = this.vz = 0;
+      this.buffer = null;
+      if (allowControl) for (const a of ['light', 'heavy', 'dodge', 'interact', 'block']) if (input.pressed(a)) this.mash = (this.mash || 0) + 1;
     }
 
     // velocidad horizontal: acelera rápido, frena algo más rápido

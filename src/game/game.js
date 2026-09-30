@@ -25,6 +25,9 @@ import { loadSave, writeSave, clearSave, loadSettings, writeSettings, Inventory 
 import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
 import { CANON, stairY } from '../world/level_canon.js';
 import { CellarCutscene } from './cutscene.js';
+import { Breakables } from './breakables.js';
+import { CellarHunt } from './hunt.js';
+import { CELLAR } from '../world/level_cellar.js';
 
 const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
 // música de cada jefe (fase 1 y fase 2)
@@ -92,7 +95,8 @@ export class Game {
     // navegación
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
-    this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > CANON.stair.bottom ? stairY(z) : CANON.cellar.y));
+    // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
+    this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > CANON.stair.bottom ? stairY(z) : CANON.cellar.y), { pad: 0.7 });
 
     // enemigos
     this.enemies = lvl.L.enemies.map((s) => new Enemy(this, s));
@@ -105,6 +109,11 @@ export class Game {
     this.probe = new BakedProbe(lvl.ctx.lights);
     for (const e of this.enemies) e.rig.own();
     this.player.rig.own();
+    // pilares, estantes y el arco tapiado de las bodegas
+    this.breakables = new Breakables(this, lvl.L.breakables);
+    this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
+    // la caza en las bodegas del canónigo
+    this.hunt = new CellarHunt(this);
 
     this.combat = new Combat(this);
     this.interact = new Interactables(this, lvl.L.interact);
@@ -198,6 +207,7 @@ export class Game {
 
   applyWorldState() {
     this.interact.applyFlags(this.flags, true);
+    this.breakables.applyFlags(this.flags, true);
     for (const ph of this.phantoms) ph.state = 'wait';
     this.phantomA = 0;
     for (const e of this.enemies) {
@@ -247,6 +257,7 @@ export class Game {
   // ------------------------------------------------------------ flujo
   toTitle() {
     this.endCutscene();
+    this.hunt.reset();
     this.state = 'title';
     this.ui.closeAll();
     this.ui.showHud(false);
@@ -260,6 +271,7 @@ export class Game {
     this.titleT = 0;
     for (const e of this.enemies) e.reset();
     this.interact.applyFlags({}, true);
+    this.breakables.applyFlags({}, true);
     const s = this.ui.open('title', { entries: [] });
     const has = !!loadSave();
     const entries = [];
@@ -596,6 +608,19 @@ export class Game {
         this.saveGame();
       }, 2500);
       if (e.type === 'turibulario') this.bossLight.intensity = 0;
+      // muerto el canónigo, alguien retira la tranca de la bodega y huye
+      if (e.type === 'descoyuntado') {
+        setTimeout(() => {
+          const door = this.interact.list.find((i) => i.id === 'd_sotano');
+          if (door && !door.done) {
+            this.audio.play('bar', { x: door.x, y: 1, z: door.z });
+            this.interact.setOpen(door);
+            this.flags['door:d_sotano'] = true;
+            this.ui.toast('Arriba cae la tranca de la bodega. Unos pasos se alejan deprisa.', 5);
+            this.saveGame();
+          }
+        }, 5200);
+      }
     }
   }
 
@@ -619,6 +644,8 @@ export class Game {
   respawn() {
     this.cine = null;
     this.endCutscene();
+    this.hunt.reset();
+    this.climb = null;
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -637,6 +664,7 @@ export class Game {
   }
 
   startCutscene() {
+    this.hunt.reset();
     this.cutscene = new CellarCutscene(this);
     this.cutscene.start();
     this.flags['cine:sotano'] = true;
@@ -651,7 +679,59 @@ export class Game {
   // ¿Está en la bodega del canónigo (o en su escalera)?
   inCellar(p) {
     const C = CANON.cellar;
-    return p.x > C.x0 - 1 && p.x < C.x1 + 1 && p.z > C.z0 - 1 && p.z < CANON.stair.top + 0.5 && p.y < -0.5;
+    return p.x > C.x0 - 1 && p.x < C.x1 + 1 && p.z > C.z0 - 1 && p.z < CANON.stair.top + 0.5 && p.y < -0.5 && p.y > C.y - 2;
+  }
+
+  // El pozo del Postigo: la salida de las bodegas (y, una vez descubierta,
+  // un camino de vuelta desde la calle).
+  canClimbWell() {
+    return !this.climb && this.player.pos.y < -3;
+  }
+  climbWell() {
+    this.wellMove('up');
+  }
+  descendWell() {
+    this.wellMove('down');
+  }
+  wellMove(dir) {
+    const p = this.player;
+    if (this.climb || p.dead) return;
+    this.climb = { dir, t: 0, hp: p.hp };
+    p.playInteract('interact');
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    this.lockTarget = null;
+    this.fadeTarget = 0;
+    this.audio.play('climb', p.pos);
+  }
+  updateClimb(dt) {
+    const c = this.climb;
+    if (!c) return;
+    const p = this.player;
+    c.t += dt;
+    // si algo te alcanza mientras trepas, te caes del pozo
+    if (p.state !== 'cine' || p.dead) {
+      this.climb = null;
+      this.fadeTarget = 1;
+      return;
+    }
+    if (c.t < 1.25) return;
+    this.climb = null;
+    const W = CELLAR.well;
+    if (c.dir === 'up') {
+      p.spawn(W.x, 0, W.z + 1.75, 0);
+      this.flags['pozo:salida'] = true;
+      this.hunt.stop();
+      this.ui.toast('Sales por el pozo del Postigo. Abajo, algo chilla y se revuelve.', 4.5);
+      setTimeout(() => this.audio.play('dropCry', { x: W.x, y: -4, z: W.z }), 700);
+    } else {
+      p.spawn(W.x - 1.9, CELLAR.FLOOR, W.z, -Math.PI / 2);
+      this.ui.toast('Bajas por los pates de hierro hasta la cisterna.', 3.5);
+    }
+    p.hp = Math.max(p.hp, 1);
+    this.camRig.snapTo(p);
+    this.fadeTarget = 1;
+    this.saveGame();
   }
 
   ending() {
@@ -906,6 +986,8 @@ export class Game {
     // si había una pantalla abierta, su entrada no debe llegar al juego este fotograma
     const hadModal = this.ui.modal;
     this.ui.update(dt);
+    // (la IA de la bodega aprovecha que acabas de leer algo)
+    if (hadModal && !this.ui.modal) this.lastModalT = this.time;
     if (this.ui.modal) this.promptTarget = null;
 
     const p = this.player;
@@ -956,6 +1038,11 @@ export class Game {
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
+      this.breakables.update(dt);
+      if (this.state === 'play') {
+        this.hunt.update(dt);
+        this.updateClimb(dt);
+      }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
       this.fx.blood.update(dt, this._partGround || (this._partGround = (x, y, z) => this.world.col.groundHeight(x, z, 0.05, y + 0.3)));
@@ -981,7 +1068,7 @@ export class Game {
         this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' ? 'dirt' : 'stone';
         if (!this.visited.has(z.id)) {
           this.visited.add(z.id);
-          if (AREA_NAMES[z.id] && this.state === 'play' && !this.activeBoss) {
+          if (AREA_NAMES[z.id] && this.state === 'play' && (!this.activeBoss || this.activeBoss.T.stalker)) {
             this.ui.area(AREA_NAMES[z.id]);
             this.audio.play('discover');
           }

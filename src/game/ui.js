@@ -561,10 +561,12 @@ export class UI {
       H = Math.max(100, Math.min(200, Math.floor((innerHeight * 0.66) / u) - 40));
     const b = parchmentBitmap(W, H, 91);
     // (la bodega del canónigo va en el plano de la ciudad, bajo su casa)
-    const crypt = g.player.pos.y < -3 && !g.inCellar(g.player.pos);
+    const cellar = g.inCellar(g.player.pos);
+    const crypt = g.player.pos.y < -3 && !cellar;
     const ey = $('map-eyebrow').querySelector('span');
-    if (ey) ey.textContent = (crypt ? 'Bajo la catedral' : 'Braga intramuros') + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
-    const rects = g.level.L.map.filter((m) => (m.level === 'crypt') === crypt && (crypt || m.id !== 'river' || g.visited.has('river')));
+    if (ey) ey.textContent = (crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : 'Braga intramuros') + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
+    const layer = crypt ? 'crypt' : cellar ? 'cellar' : undefined;
+    const rects = g.level.L.map.filter((m) => m.level === layer && (layer || m.id !== 'river' || g.visited.has('river')));
     const seen = rects.filter((m) => g.visited.has(m.id));
     let x0 = 1e9,
       z0 = 1e9,
@@ -836,7 +838,8 @@ export class UI {
     // jefe
     const bb = $('bossbar');
     const b = g.activeBoss;
-    if (b && !b.dead) {
+    // (el que caza en la bodega sólo enseña su barra cuando pelea contigo)
+    if (b && !b.dead && (!b.T.stalker || (b.D && b.D.engaged))) {
       bb.classList.add('show');
       const nm = bb.querySelector('.name');
       if (nm.textContent !== b.T.name) nm.textContent = b.T.name;
