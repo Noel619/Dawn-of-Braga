@@ -2,9 +2,12 @@
 //
 // Es su casa: siempre sabe dónde estás. Tiene dos maneras de cazarte.
 //
-// ACECHO. Se mueve por el techo y por las madrigueras de los muros hasta
-// puntos oscuros desde los que te observa; a veces se deja ver a lo lejos y
-// se esfuma; se burla (huesos que crujen, pasos que no son tuyos, la voz del
+// ACECHO. Se mueve por el techo y por sus grutas hasta puntos oscuros desde
+// los que te observa; a ratos te sigue: va detrás de ti, por donde tú has
+// pasado, a unos metros, casi siempre por la bóveda; si te vuelves, se queda
+// quieto (a veces le ves los ojos un instante) y se aparta de tu vista, y se
+// le oye respirar, crujir, dar tus mismos pasos. A veces se deja ver a lo
+// lejos y se esfuma; se burla (huesos que crujen, pasos que no son tuyos, la voz del
 // ama que te llama, algo que corre dentro de la pared). Tiene hambre, y
 // cuanta más tiene antes se decide: cae del techo detrás de ti, salta desde
 // la oscuridad o te agarra por la espalda, sobre todo cuando le das la
@@ -29,7 +32,7 @@
 import * as THREE from 'three';
 import { clamp, damp, lerp, angleDiff, approachAngle, DEG } from '../core/util.js';
 import { moveBody } from '../world/collision.js';
-import { CELLAR, cellarCeil } from '../world/level_cellar.js';
+import { CELLAR, BURROW, cellarCeil } from '../world/level_cellar.js';
 import { seg, rnd } from './desc_util.js';
 
 const V3 = THREE.Vector3;
@@ -209,6 +212,14 @@ export const MIND = {
     this.chatter = 0;
     this.shake = 0;
     this.open = null;
+    this.noCol = false;
+    this.narrow = 0;
+    this.trail = [];
+    this.trailT = 0;
+    this.lastShadow = -20;
+    this.pendingRage = null;
+    this.lastSafe = null;
+    this.unsafeT = 0;
   },
 
   reset() {
@@ -408,6 +419,56 @@ export const MIND = {
     this.lookW = w;
   },
 
+  // ¿Se puede ir de (ax, az) a (bx, bz) en línea recta por suelo transitable
+  // y llano, a su misma altura (sin escalones ni escalera por medio)?
+  sameFloorLine(ax, az, bx, bz) {
+    const nav = this.g.navCellar;
+    const y = this.e.pos.y;
+    if (!nav.walkable(bx, bz) || !nav.line(ax, az, bx, bz)) return false;
+    const d = Math.hypot(bx - ax, bz - az);
+    const n = Math.max(1, Math.ceil(d / 0.3));
+    for (let k = 0; k <= n; k++) {
+      const x = ax + ((bx - ax) * k) / n,
+        z = az + ((bz - az) * k) / n;
+      const fy = nav.floorY(x, z);
+      if (fy === null || Math.abs(fy - y) > 0.2) return false;
+      if (Math.abs(this.g.world.col.groundHeight(x, z, 0.3, y + 0.5) - y) > 0.2) return false;
+    }
+    return true;
+  },
+  // Red de seguridad: si algo lo deja fuera de las salas (dentro de la roca)
+  // o a otra altura, vuelve al último sitio bueno.
+  keepSafe(dt) {
+    const e = this.e,
+      g = this.g;
+    if (this.air || this.hidden || this.noCol || this.mode === 'scripted' || this.mode === 'lair' || e.dead) {
+      this.unsafeT = 0;
+      return;
+    }
+    const nav = g.navCellar;
+    const i = nav.ci(e.pos.x),
+      j = nav.cj(e.pos.z);
+    const inGrid = i >= 0 && j >= 0 && i < nav.w && j < nav.h;
+    const room = inGrid && nav.base[j * nav.w + i] === 1;
+    const fy = room ? nav.floorY(e.pos.x, e.pos.z) : null;
+    const good = room && fy !== null && Math.abs(e.pos.y - fy) < 0.7 && isFinite(e.pos.x) && isFinite(e.pos.y);
+    if (good) {
+      this.unsafeT = 0;
+      if (nav.cells[j * nav.w + i] === 1) (this.lastSafe || (this.lastSafe = new THREE.Vector3())).copy(e.pos);
+      return;
+    }
+    this.unsafeT += dt;
+    if (this.unsafeT > (room ? 0.6 : 0.1) && this.lastSafe) {
+      this.unsafeT = 0;
+      e.pos.copy(this.lastSafe);
+      e.vx = e.vz = 0;
+      e.body.vy = 0;
+      this.plane = 'floor';
+      this.plantAll();
+      this.path = null;
+    }
+  },
+
   // Cambia de plano (salta al techo o se deja caer) si hace falta.
   toPlane(plane) {
     if (this.air || this.plane === plane) return !this.air && this.plane === plane;
@@ -453,6 +514,17 @@ export const MIND = {
       this.seenT = 0;
     }
     const hunting = this.huntActive();
+    // por dónde vas pasando (te sigue por tu rastro)
+    this.trailT -= dt;
+    if (this.trailT <= 0) {
+      this.trailT = 0.35;
+      const tr = this.trail;
+      const last = tr[tr.length - 1];
+      if (!last || Math.hypot(last.x - p.pos.x, last.z - p.pos.z) > 0.6) {
+        tr.push({ x: p.pos.x, z: p.pos.z });
+        if (tr.length > 48) tr.shift();
+      }
+    }
     // se harta: demasiado daño, demasiadas emboscadas fallidas o demasiado
     // tiempo sin cazarte
     const f = e.hp / e.maxHp;
@@ -491,11 +563,11 @@ export const MIND = {
     }
     // quién se ve y quién no
     const M = this.mode;
-    this.eyeT = M === 'peek' || M === 'fight' || M === 'attack' || M === 'lair' || M === 'guard' || M === 'evade' || M === 'rageIntro' || M === 'lure' || M === 'taunt' ? 1.2 : M === 'perch' ? 0.35 : 0.25;
-    this.creep = this.stage === 'stalk' && (M === 'stalk' || (M === 'hunt' && !this.seen && this.dist < 12)) && this.plane === 'floor';
+    this.eyeT = M === 'peek' || M === 'fight' || M === 'attack' || M === 'lair' || M === 'guard' || M === 'evade' || M === 'rageIntro' || M === 'lure' || M === 'taunt' ? 1.2 : M === 'perch' ? 0.35 : M === 'shadow' ? 0.12 : 0.25;
+    this.creep = this.stage === 'stalk' && (M === 'stalk' || M === 'shadow' || (M === 'hunt' && !this.seen && this.dist < 12)) && this.plane === 'floor';
     this.scan = damp(this.scan, this.stage === 'stalk' && (M === 'stalk' || M === 'perch') && !this.seen ? 0.7 : 0, 2, dt);
     if (hunting && this.stage === 'stalk') {
-      if (M === 'stalk' || M === 'perch' || M === 'peek') this.hungerTick(dt);
+      if (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow') this.hungerTick(dt);
       this.peekCD -= dt;
     }
     switch (M) {
@@ -507,6 +579,9 @@ export const MIND = {
         break;
       case 'perch':
         this.perchMode(dt);
+        break;
+      case 'shadow':
+        this.shadow(dt);
         break;
       case 'peek':
         this.peek(dt);
@@ -551,14 +626,14 @@ export const MIND = {
       case 'scripted':
         break;
     }
-    if (this.mode !== 'lair' && hunting && this.stage === 'stalk') this.taunts(dt);
+    if (this.mode !== 'lair' && this.mode !== 'shadow' && hunting && this.stage === 'stalk') this.taunts(dt);
     // compromiso (barra de vida, música): enloquecido, siempre
     const hot = this.stage === 'rage' || M === 'fight' || M === 'attack' || M === 'stun' || M === 'hurt' || M === 'down' || M === 'evade' || M === 'guard' || (M === 'hunt' && this.dist < 6);
     if (hot) this.lastEngaged = g.time;
     this.engaged = g.time - this.lastEngaged < 5;
     // física
     this.lastMoved = undefined;
-    if (!this.air && !this.hidden && this.mode !== 'scripted') {
+    if (!this.air && !this.hidden && !this.noCol && this.mode !== 'scripted') {
       const bx = e.pos.x,
         bz = e.pos.z;
       moveBody(g.world.col, e.body, e.vx * dt, e.vz * dt, dt);
@@ -587,6 +662,7 @@ export const MIND = {
         }
       }
     }
+    this.keepSafe(dt);
     // atascos: si no avanza, se olvida del camino
     this.stuckT += dt;
     if (this.stuckT > 1) {
@@ -603,7 +679,8 @@ export const MIND = {
   hungerTick(dt) {
     const p = this.g.player;
     if (this.seen) this.hunger -= dt * 0.1;
-    else this.hunger += dt * (0.055 + this.vuln() * 0.06 + (this.behind ? 0.03 : 0));
+    // (mientras te sigue, se entretiene: el hambre le crece más despacio)
+    else this.hunger += dt * (0.055 + this.vuln() * 0.06 + (this.behind ? 0.03 : 0)) * (this.mode === 'shadow' ? 0.35 : 1);
     this.hunger = clamp(this.hunger, 0, 1.6);
     // ¿emboscada?
     const lever = p.state === 'interact' && p.interactKind === 'lever' && this.dist < 16;
@@ -666,6 +743,9 @@ export const MIND = {
   stalk(dt) {
     const e = this.e;
     if (!this.perch) {
+      // a ratos, te sigue (si vas de un sitio a otro)
+      const p = this.g.player;
+      if (this.g.time - this.lastShadow > 28 && this.dist > 6 && this.dist < 30 && Math.hypot(p.vx, p.vz) > 0.8 && this.trail.length > 6 && Math.random() < 0.55) return this.startShadow();
       // hacia donde sonó algo (una palanca), o de vez en cuando se deja
       // ver; otras, se cuela por los muros
       if (this.noise && this.g.time - this.noise.t < 12) {
@@ -731,6 +811,114 @@ export const MIND = {
     if (this.mT > 12) this.perch = null;
   },
 
+  // ----- te sigue
+  startShadow() {
+    this.setMode('shadow');
+    this.shadowDur = rnd(18, 30);
+    this.shadowSnd = rnd(2.5, 4.5);
+    this.lastShadow = this.g.time;
+    this.hunger = Math.min(this.hunger, 0.5);
+    this.shy = 0;
+    this.glintT = 0;
+    this.perch = null;
+  },
+  // El punto de tu rastro que queda 'want' metros por detrás de ti.
+  trailPoint(want) {
+    const tr = this.trail;
+    const p = this.g.player.pos;
+    let acc = 0,
+      px = p.x,
+      pz = p.z;
+    for (let i = tr.length - 1; i >= 0; i--) {
+      const q = tr[i];
+      acc += Math.hypot(q.x - px, q.z - pz);
+      px = q.x;
+      pz = q.z;
+      if (acc >= want) return q;
+    }
+    return tr[0] || null;
+  },
+  shadow(dt) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    const d = this.dist;
+    const psp = Math.hypot(p.vx, p.vz);
+    // por la bóveda si cabe (ahí arriba casi no se le ve); si no, agazapado
+    const hh = this.ceilAt(e.pos.x, e.pos.z) - e.pos.y;
+    const want = this.plane === 'ceil' ? (hh > 2.9 ? 'ceil' : 'floor') : hh > 3.4 && g.time - this.planeT > 1.5 ? 'ceil' : 'floor';
+    if (!this.toPlane(want) && this.air) return this.stop(dt, 4);
+    // te acercas a él: o se te echa encima o se escabulle
+    if (d < 6.5 && this.closing > 1.3 && this.seen) {
+      if (this.hunger > 0.55) return this.engage();
+      this.giggle();
+      const b = this.chooseBurrow(true);
+      if (b && Math.random() < 0.5) {
+        this.burrow = { ...b, t: 0, stage: 'go' };
+        return this.setMode('burrow');
+      }
+      this.retreatTo = this.choosePerch('far');
+      return this.setMode('retreat');
+    }
+    // le ves: se queda quieto; un instante le brillan los ojos; luego se
+    // aparta de tu vista, despacio
+    if (this.seen && d < 16) {
+      this.shy += dt;
+      if (this.shy < 0.9) {
+        this.stop(dt, 16);
+        this.lookAtPlayer(1);
+        if (this.shy < 0.5 && this.glintT <= 0) {
+          this.glintT = 0.55;
+          if (Math.random() < 0.5) g.audio && g.audio.play('breathClose', this.center);
+        }
+      } else {
+        // hacia atrás por tu propio rastro, fuera de tu vista
+        const q = this.trailPoint(Math.min(22, d + 5)) || this.choosePerch('hide');
+        if (q) this.moveTo(q.x, q.z, 2.4, dt, false);
+        this.faceTo(p.pos.x, p.pos.z, 3, dt);
+        if (this.shy > 3.5) {
+          this.shy = 0;
+          this.retreatTo = this.choosePerch('far');
+          this.giggle();
+          return this.setMode('retreat');
+        }
+      }
+    } else {
+      this.shy = Math.max(0, this.shy - dt * 0.7);
+      // detrás de ti, por donde has pasado, a unos nueve metros
+      const q = this.trailPoint(this.plane === 'ceil' ? 8 : 10);
+      if (q) {
+        const dq = Math.hypot(q.x - e.pos.x, q.z - e.pos.z);
+        const sp = clamp(psp + (d - 9) * 0.7 + (dq > 6 ? 2 : 0), 0, this.plane === 'ceil' ? 5.6 : 4.6);
+        if (dq > 0.6 && sp > 0.15) this.moveTo(q.x, q.z, sp, dt);
+        else this.stop(dt, 6);
+      } else this.stop(dt, 6);
+      this.lookAtPlayer(0.8);
+    }
+    this.glintT -= dt;
+    if (this.glintT > 0) this.eyeT = 1.6;
+    // se le oye: respira, cruje, da tus mismos pasos, cosas que caen del techo
+    this.shadowSnd -= dt;
+    if (this.shadowSnd <= 0 && g.audio) {
+      this.shadowSnd = rnd(3.5, 7);
+      const r = Math.random();
+      const C = this.center;
+      if (r < 0.3 && d < 12) g.audio.play('breathClose', C);
+      else if (r < 0.55 && psp > 0.8) g.audio.play('mimicSteps', { x: lerp(p.pos.x, e.pos.x, 0.6), y: p.pos.y, z: lerp(p.pos.z, e.pos.z, 0.6) });
+      else if (r < 0.75) g.audio.play('boneCrack', C, { n: 2, k: 0.6 });
+      else if (this.plane === 'ceil') {
+        g.audio.play('scuttle', C, { k: 0.7 });
+        g.fx.blood.emit(C.x, this.ceilAt(C.x, C.z) - 0.1, C.z, 4, { color: [0.3, 0.28, 0.26], speed: 0.3, life: 1.6, up: -0.3, gravity: 5 });
+      } else g.audio.play('whisperNear', { x: p.pos.x + rnd(-2, 2), y: p.pos.y + 1.6, z: p.pos.z + rnd(-2, 2) });
+    }
+    if (this.mT > this.shadowDur) {
+      this.perch = null;
+      // (a veces, al final, se te echa encima por la espalda)
+      if (this.hunger > 0.75 && !this.seen) return this.startHunt();
+      this.setMode('stalk');
+    }
+  },
+
   perchMode(dt) {
     this.stop(dt, 10);
     this.lookAtPlayer(0.9);
@@ -774,60 +962,149 @@ export const MIND = {
     }
   },
 
-  // Por dentro de los muros: sube a la boca, desaparece, se le oye correr
-  // dentro de la piedra y sale por la otra.
+  // Por dentro de la roca: va hasta la boca de una de sus grutas, la husmea,
+  // mete las manos, se encoge y entra gateando hasta perderse en lo oscuro;
+  // se le oye escarbar y correr por dentro, y sale por la otra boca: primero
+  // los ojos, en lo negro del túnel, y luego él, a rastras, hasta erguirse.
   burrowMode(dt) {
     const e = this.e,
       g = this.g;
     const B = this.burrow;
     if (!B) return this.setMode('stalk');
     B.t += dt;
+    const A = B.A,
+      O = B.B;
     if (B.stage === 'go') {
       if (!this.toPlane('floor') && this.air) return;
-      const d = this.moveTo(B.A.fx, B.A.fz, 5.2, dt);
-      if (d < 1.1 || B.t > 6) {
-        B.stage = 'in';
+      const d = this.moveTo(A.fx, A.fz, this.seen ? 5.6 : 4.8, dt);
+      if (d < 0.55 || (B.t > 7 && d < 2.2)) {
+        B.stage = 'enter';
         B.t = 0;
-        e.yaw = Math.atan2(-B.A.nx, -B.A.nz);
         this.stop(dt, 20);
-        g.audio && g.audio.play('scuttle', { x: B.A.x, y: B.A.y, z: B.A.z });
+      } else if (B.t > 10) {
+        this.burrow = null;
+        return this.setMode('stalk');
       }
-    } else if (B.stage === 'in') {
-      // trepa a la boca (el cuerpo se estira hacia ella) y se mete
-      this.stop(dt, 20);
-      const u = clamp(B.t / 0.45, 0, 1);
-      this.T.h = lerp(1, 2.6, u);
-      this.T.pitch = -1.2 * u;
-      for (const L of this.L.slice(0, 2)) this.hold(L, B.A.x + L.side * 0.3 * -B.A.nz, B.A.y + 0.5, B.A.z + L.side * 0.3 * B.A.nx, 1, 1);
-      if (u >= 1) {
+      return;
+    }
+    if (B.stage === 'enter') {
+      const t = B.t;
+      const inYaw = Math.atan2(-A.nx, -A.nz);
+      // 1) se planta delante, gira hacia la boca y husmea
+      if (t < 0.6) {
+        this.stop(dt, 14);
+        this.faceTo(A.x, A.z, 7, dt);
+        this.T.h = lerp(1, 0.55, seg(t, 0, 0.55));
+        this.T.pitch = 0.2 * seg(t, 0, 0.5);
+        this.lookP.set(A.ix, A.y + 0.6, A.iz);
+        this.lookW = 1;
+        this.tiltT = Math.sin(t * 9) * 0.4;
+        return;
+      }
+      // 2) mete las manos en la boca, agarrándose a los bordes
+      const tx = -A.nz,
+        tz = A.nx;
+      if (t < 1.05) {
+        e.yaw = inYaw;
+        this.stop(dt, 14);
+        const u = seg(t, 0.6, 1.0);
+        for (const L of [this.L[0], this.L[1]]) {
+          // (mirando hacia dentro, su izquierda queda hacia +t)
+          const s = L.side;
+          this.hold(L, A.x + tx * s * 0.72 - A.nx * 0.35 * u, A.y + 0.15 + 0.55 * Math.sin(Math.PI * u), A.z + tz * s * 0.72 - A.nz * 0.35 * u, u, 1);
+        }
+        this.T.shz = 0.3 * u;
+        this.narrow = 0;
+        if (!B.dug) {
+          B.dug = true;
+          g.audio && g.audio.play('dig', { x: A.x, y: A.y + 0.8, z: A.z });
+        }
+        return;
+      }
+      // 3) entra a rastras: el cuerpo se estrecha y se pierde en lo oscuro
+      if (!B.crawl) {
+        B.crawl = true;
+        this.releaseAll();
+        this.noCol = true;
+        e.data.air = true; // (no se le puede golpear a medio meter)
+      }
+      e.yaw = inYaw;
+      const sp = 1.5;
+      e.vx = -A.nx * sp;
+      e.vz = -A.nz * sp;
+      e.pos.x += e.vx * dt;
+      e.pos.z += e.vz * dt;
+      const depth = (e.pos.x - A.x) * -A.nx + (e.pos.z - A.z) * -A.nz;
+      this.narrow = clamp((depth + 1.4) / 1.6, 0, 1);
+      this.T.h = lerp(0.62, 0.56, this.narrow);
+      this.T.pitch = 0.1;
+      this.T.shz = 0.15;
+      this.lookW = 0;
+      this.eyeT = lerp(0.6, 0, clamp(depth / 1.6, 0, 1));
+      if (Math.random() < dt * 6) g.fx.blood.emit(A.x, A.y + 1.4, A.z, 3, { color: [0.3, 0.26, 0.2], speed: 0.6, life: 1, up: -0.2, gravity: 6 });
+      if (depth >= BURROW.inside - 0.2) {
         B.stage = 'inside';
         B.t = 0;
-        B.dur = 1.4 + Math.hypot(B.B.x - B.A.x, B.B.z - B.A.z) / 8;
+        B.dur = 1.2 + Math.hypot(O.x - A.x, O.z - A.z) / 9;
         this.hidden = true;
         e.obj.visible = false;
-        e.data.air = true;
-        this.releaseAll();
-        this.T.h = 1;
-        this.T.pitch = 0;
-        this.hS.x = 1;
-        this.pitchS.x = 0;
+        e.vx = e.vz = 0;
         B.snd = 0;
       }
-    } else if (B.stage === 'inside') {
+      return;
+    }
+    if (B.stage === 'inside') {
       // se le oye dentro de la piedra, camino de la otra boca
       B.snd -= dt;
       if (B.snd <= 0) {
         B.snd = rnd(0.25, 0.45);
         const u = clamp(B.t / B.dur, 0, 1);
-        g.audio && g.audio.play(Math.random() < 0.25 ? 'boneCrack' : 'scuttle', { x: lerp(B.A.x, B.B.x, u), y: B.A.y, z: lerp(B.A.z, B.B.z, u) }, { k: 0.6 });
+        g.audio && g.audio.play(Math.random() < 0.2 ? 'boneCrack' : Math.random() < 0.35 ? 'dig' : 'scuttle', { x: lerp(A.x, O.x, u), y: A.y + 1, z: lerp(A.z, O.z, u) }, { k: 0.6 });
       }
       if (B.t >= B.dur) this.burrowOut();
-    } else if (B.stage === 'out') {
-      this.T.h = lerp(2.2, 1, seg(B.t, 0, 0.5));
-      this.T.pitch = lerp(-0.9, 0, seg(B.t, 0, 0.5));
-      if (B.t > 0.5) {
+      return;
+    }
+    if (B.stage === 'out') {
+      const t = B.t;
+      // primero, sólo los ojos en lo negro del túnel
+      if (t < 0.8) {
+        this.stop(dt, 20);
+        this.eyeT = 1.7;
+        this.lookAtPlayer(1);
+        if (Math.random() < dt * 8) g.fx.blood.emit(O.x, O.y + 1.4, O.z, 3, { color: [0.3, 0.26, 0.2], speed: 0.6, life: 1, up: -0.2, gravity: 6 });
+        return;
+      }
+      // luego sale a rastras
+      if (!B.crawl) {
+        B.crawl = true;
+        g.audio && g.audio.play('scuttle', { x: O.x, y: O.y + 0.8, z: O.z });
+      }
+      const sp = 1.7;
+      e.vx = O.nx * sp;
+      e.vz = O.nz * sp;
+      e.pos.x += e.vx * dt;
+      e.pos.z += e.vz * dt;
+      const depth = (e.pos.x - O.x) * -O.nx + (e.pos.z - O.z) * -O.nz;
+      this.narrow = clamp((depth + 1.4) / 1.6, 0, 1);
+      this.T.h = lerp(0.62, 0.56, this.narrow);
+      this.eyeT = 1.2;
+      this.lookAtPlayer(0.7);
+      const out = (e.pos.x - O.fx) * O.nx + (e.pos.z - O.fz) * O.nz;
+      if (out >= 0) {
+        // fuera: se yergue, crujiendo
+        this.noCol = false;
         e.data.air = false;
+        this.narrow = 0;
+        e.vx = e.vz = 0;
+        this.T.h = 1;
+        this.T.pitch = 0;
+        g.audio && g.audio.play('boneCrack', this.center, { n: 4, k: 0.8 });
         this.burrow = null;
+        if (this.pendingRage) {
+          const r = this.pendingRage;
+          this.pendingRage = null;
+          return this.startRage(r);
+        }
         // si sale cerca de ti y tiene hambre: a por ti
         if (this.stage === 'rage') this.engage();
         else if (this.hunger > 0.8 && this.dist < 9) this.startHunt();
@@ -842,19 +1119,24 @@ export const MIND = {
     const e = this.e,
       g = this.g;
     const B = this.burrow;
+    const O = B.B;
     B.stage = 'out';
     B.t = 0;
-    e.pos.set(B.B.fx, this.groundAt(B.B.fx, B.B.fz), B.B.fz);
-    e.yaw = Math.atan2(B.B.nx, B.B.nz);
+    B.crawl = false;
+    e.pos.set(O.ix, this.groundAt(O.ix, O.iz), O.iz);
+    e.yaw = Math.atan2(O.nx, O.nz);
     this.hidden = false;
+    this.noCol = true;
+    e.data.air = true;
     e.obj.visible = true;
     this.plane = 'floor';
+    this.narrow = 1;
+    this.T.h = 0.56;
+    this.hS.x = 0.56;
+    this.T.pitch = 0;
+    this.pitchS.x = 0;
     this.plantAll();
-    this.T.h = 2.2;
-    this.hS.x = 2.2;
-    this.T.pitch = -0.9;
-    this.pitchS.x = -0.9;
-    g.audio && g.audio.play('scuttle', { x: B.B.x, y: B.B.y, z: B.B.z });
+    g.audio && g.audio.play('dig', { x: O.x, y: O.y + 0.8, z: O.z });
   },
 
   // Emboscada: se acerca sin que le veas y ataca.
@@ -1086,7 +1368,7 @@ export const MIND = {
     if (this.shake > 0.6) this.jawT = Math.max(this.jawT, this.shake);
     // te has metido en un sitio estrecho: te espera a lo ancho
     const po = this.openAt(p.pos.x, p.pos.z);
-    if (po < 2.1 && d > 2.5) this.lureT += dt;
+    if (po < 2.1 && d > 2.5 && d < 11) this.lureT += dt;
     else this.lureT = Math.max(0, this.lureT - dt * 2);
     if (this.lureT > 1.6 && this.lureCD <= 0) {
       const spot = this.findOpenSpot();
@@ -1278,6 +1560,18 @@ export const MIND = {
     const e = this.e,
       g = this.g;
     if (this.stage === 'rage' || e.dead) return;
+    // metido en una gruta: termina de salir (o sale ya) y entonces enloquece
+    if (this.mode === 'burrow' && this.burrow && this.burrow.stage !== 'go') {
+      this.pendingRage = reason;
+      if (this.burrow.stage === 'inside') this.burrowOut();
+      else if (this.burrow.stage === 'enter') {
+        // (da la vuelta y sale por donde ha entrado)
+        const B = this.burrow;
+        B.B = B.A;
+        this.burrowOut();
+      }
+      return;
+    }
     this.stage = 'rage';
     this.rageReason = reason;
     if (this.grabbed) {
@@ -1289,8 +1583,6 @@ export const MIND = {
     this.ev = null;
     this.releaseAll();
     this.T.yaw = this.T.bend = this.T.twist = this.T.shx = this.T.shz = 0;
-    // si estaba dentro de un muro, sale ya
-    if (this.burrow && this.burrow.stage === 'inside') this.burrowOut();
     this.burrow = null;
     this.hidden = false;
     e.obj.visible = true;
@@ -1395,8 +1687,8 @@ export const MIND = {
     this.lookAtPlayer(1);
     const d = this.dist;
     const po = this.openAt(p.pos.x, p.pos.z);
-    // has salido a lo ancho (o te le acercas): pelea
-    if ((po > 2.8 && d < 9) || d < 3.2) {
+    // has salido a lo ancho (o te le acercas, o te vas lejos): pelea
+    if ((po > 2.8 && d < 9) || d < 3.2 || d > 16) {
       this.lureTo = null;
       this.lureCD = 10;
       return this.engage();
@@ -1515,7 +1807,7 @@ export const MIND = {
     if (this.stage !== 'stalk') return;
     this.hunger = Math.min(1.6, this.hunger + 0.35 * k);
     const M = this.mode;
-    if (M === 'stalk' || M === 'perch' || M === 'peek') {
+    if (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow') {
       this.perch = null;
       this.setMode('stalk');
       if (this.dist < 18) this.startHunt();
@@ -1624,7 +1916,7 @@ export const MIND = {
     if (r !== 'kill' && this.lastFrom) this.flinch(this.lastFrom[0], this.lastFrom[1], heavy);
     // le has alcanzado mientras acechaba: se revuelve
     const M = this.mode;
-    if (this.stage === 'stalk' && (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'hunt' || M === 'retreat')) {
+    if (this.stage === 'stalk' && (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow' || M === 'hunt' || M === 'retreat')) {
       if (r !== 'kill') this.hunger = 1;
       this.frust += 0.4;
       if (e.state !== 'hurt' && e.state !== 'stagger') this.engage();

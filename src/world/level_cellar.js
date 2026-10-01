@@ -63,30 +63,37 @@ const REGIONS = [
   { id: 'osario', r: [63, -65, 67, -61], top: -2.6, wall: 'skulls' },
 ];
 
-// Madrigueras: agujeros en lo alto de los muros comunicados por dentro de la
-// roca. Sólo él cabe. (x, z del agujero en la cara del muro; nx, nz: hacia
-// dónde mira; y: altura del borde inferior)
-const HOLE_Y = F + 2.9;
+// Madrigueras: grutas que él mismo ha excavado en la roca, a ras de suelo,
+// comunicadas por dentro (sólo él cabe: tú chocas con la roca). x, z: centro
+// de la boca en la cara del muro; nx, nz: hacia dónde mira (hacia la sala).
+// Por cada boca, un túnel de BURROW.depth metros se mete en la roca maciza y
+// se pierde en lo oscuro.
+export const BURROW = { w: 1.9, h: 1.6, depth: 2.8, inside: 2.3, front: 1.5 };
 const BURROWS = [
+  // la sala del altar y la cripta
   [
-    { x: 63.5, z: -46, nx: 0, nz: 1 },
-    { x: 67, z: -70, nx: 1, nz: 0 },
+    { x: 64.6, z: -46, nx: 0, nz: 1 },
+    { x: 58, z: -75, nx: -1, nz: 0 },
   ],
+  // la galería de los toneles y el Lagar
   [
-    { x: 46.5, z: -46.5, nx: 0, nz: 1 },
-    { x: 38, z: -52, nx: -1, nz: 0 },
+    { x: 45, z: -36.5, nx: 0, nz: -1 },
+    { x: 26, z: -42, nx: 1, nz: 0 },
   ],
+  // la antecámara y el ramal ciego del osario (la tercera palanca)
   [
-    { x: 26, z: -40, nx: 1, nz: 0 },
-    { x: 47, z: -60.5, nx: -1, nz: 0 },
+    { x: 47, z: -62.5, nx: -1, nz: 0 },
+    { x: 65, z: -65, nx: 0, nz: 1 },
   ],
+  // el Lagar y la cripta
   [
-    { x: 54, z: -73, nx: 0, nz: -1 },
-    { x: 66, z: -44.5, nx: -1, nz: 0 },
+    { x: 34.5, z: -60, nx: 0, nz: 1 },
+    { x: 40, z: -78, nx: 1, nz: 0 },
   ],
+  // la sala del altar (junto a la escalera) y el osario
   [
-    { x: 40, z: -79, nx: 1, nz: 0 },
-    { x: 33, z: -60, nx: 0, nz: 1 },
+    { x: 63.2, z: -36.5, nx: 0, nz: -1 },
+    { x: 67, z: -56, nx: 1, nz: 0 },
   ],
 ];
 
@@ -155,10 +162,10 @@ export const CELLAR = {
   // envolvente (juego, mapa, zona)
   bounds: [25.5, -84, 71.5, -32],
   regions: REGIONS,
-  burrows: BURROWS.map(([a, b]) => [
-    { ...a, y: HOLE_Y, fx: a.x + a.nx * 1.4, fz: a.z + a.nz * 1.4 },
-    { ...b, y: HOLE_Y, fx: b.x + b.nx * 1.4, fz: b.z + b.nz * 1.4 },
-  ]),
+  // (fx, fz: delante de la boca; ix, iz: dentro del túnel, donde desaparece)
+  burrows: BURROWS.map((pair) =>
+    pair.map((a) => ({ ...a, y: F, fx: a.x + a.nx * BURROW.front, fz: a.z + a.nz * BURROW.front, ix: a.x - a.nx * BURROW.inside, iz: a.z - a.nz * BURROW.inside }))
+  ),
   perches: PERCHES.map(([x, z]) => ({ x, z })),
   // sitios despejados donde le gusta pelear cuando enloquece
   open: [
@@ -311,6 +318,24 @@ export function buildCellar(ctx, B, L, o = {}) {
         else addFace('z', z, cx(i), cx(i + 1), a, b, 1, 'wallstone');
       }
     }
+  // las bocas de las madrigueras: se recortan del muro (dintel encima)
+  for (const pair of CELLAR.burrows)
+    for (const b of pair) {
+      const axis = b.nx ? 'x' : 'z',
+        at = b.nx ? b.x : b.z,
+        dir = b.nx ? Math.sign(b.nx) : Math.sign(b.nz),
+        a = b.nx ? b.z : b.x;
+      const m0 = a - BURROW.w / 2,
+        m1 = a + BURROW.w / 2;
+      for (let k = faces.length - 1; k >= 0; k--) {
+        const f = faces[k];
+        if (f.axis !== axis || Math.abs(f.at - at) > 1e-6 || f.dir !== dir || f.y0 > F + 0.01 || f.a1 <= m0 || f.a0 >= m1) continue;
+        faces.splice(k, 1);
+        if (f.a0 < m0) faces.push({ ...f, a1: m0 });
+        if (f.a1 > m1) faces.push({ ...f, a0: m1 });
+        faces.push({ ...f, a0: Math.max(f.a0, m0), a1: Math.min(f.a1, m1), y0: F + BURROW.h, mouth: true });
+      }
+    }
   for (const f of faces) {
     const tint = f.mat === 'skulls' ? [0.6, 0.56, 0.5] : f.y0 > F + 0.01 ? [0.46, 0.44, 0.41] : [0.56, 0.54, 0.5];
     const oo = { sub: 2, aoH: 1.6, aoMin: 0.4, baseY: F, tint, uv: f.mat === 'skulls' ? 0.55 : undefined };
@@ -362,38 +387,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   }
 
   // ---------------------------------------------------------- madrigueras
-  for (const pair of CELLAR.burrows)
-    for (const h of pair) {
-      // boca negra, un poco hundida, con carne alrededor y arañazos
-      const w = 1.1,
-        hh = 0.95;
-      const tx = -h.nz,
-        tz = h.nx;
-      const x0 = h.x - tx * w * 0.5,
-        x1 = h.x + tx * w * 0.5,
-        z0 = h.z - tz * w * 0.5,
-        z1 = h.z + tz * w * 0.5;
-      // (redondeada: filas de distinto ancho, algo separadas del muro para
-      // no parpadear contra él)
-      void x0, x1, z0, z1;
-      const rows = [0.45, 0.82, 1, 1, 0.82, 0.45];
-      rows.forEach((k, r) => {
-        const hw = w * 0.5 * k;
-        const a0x = h.x - tx * hw,
-          a1x = h.x + tx * hw,
-          a0z = h.z - tz * hw,
-          a1z = h.z + tz * hw;
-        wb.box('black', Math.min(a0x, a1x) + h.nx * 0.04, h.y + (r * hh) / rows.length, Math.min(a0z, a1z) + h.nz * 0.04, Math.max(a0x, a1x) + h.nx * 0.06, h.y + ((r + 1) * hh) / rows.length, Math.max(a0z, a1z) + h.nz * 0.06, { ao: false, grime: false });
-      });
-      for (let k = 0; k < 5; k++) {
-        const a = (k / 5) * Math.PI * 2;
-        const px = h.x + tx * Math.cos(a) * 0.62 + h.nx * 0.06,
-          pz = h.z + tz * Math.cos(a) * 0.62 + h.nz * 0.06;
-        P.ellipsoid(ctx, 'fleshStatic', px, h.y + hh * 0.5 + Math.sin(a) * 0.52, pz, 0.24, 0.2, 0.24, [0.7, 0.5, 0.5], { room });
-      }
-      P.decal(ctx, h.x + h.nx * 0.02, h.y - 0.7, h.z + h.nz * 0.02, 1.2, 'splat', 0, { wall: h.nx ? 'x' : 'z' });
-      P.decal(ctx, h.x + h.nx * 1.2, F + 0.02, h.z + h.nz * 1.2, 0.9);
-    }
+  for (const pair of CELLAR.burrows) for (const h of pair) burrowMouth(ctx, h, room, rng);
 
   // ---------------------------------------------------------- Sala del altar
   // altar del Dios Desconocido contra el muro norte, sigilo y velas
@@ -409,7 +403,10 @@ export function buildCellar(ctx, B, L, o = {}) {
   pool(ctx, Fe.x - 0.1, Fe.corpse[1] + 0.1, 1.1, 6101);
   P.bones(ctx, Fe.x - 0.8, F, Fe.corpse[1] - 0.3, 8, 6068, 0.7);
   P.bones(ctx, 64.8, F, -38.2, 6, 6076, 0.6);
-  P.fleshGrowth(ctx, 65.6, F, -45.6, 1.1, 6070, { room, climb: 2.2, lift: 1 });
+  // velas de alguien que bajó a rezarle junto a su gruta (y que se ven
+  // desde la escalera: la boca se recorta contra ellas)
+  P.candles(ctx, 65.72, F, -45.58, 3, 6079, { room, radius: 3.5, intensity: 0.5, spread: 0.12 });
+  P.fleshGrowth(ctx, 57.8, F, -45.6, 1.0, 6070, { room, climb: 2.2, lift: 1 });
   P.fleshGrowth(ctx, 52.4, F, -41.2, 0.8, 6071, { room, climb: 1.8 });
   // cadenas de las que colgaba; la del centro, rota
   for (const [x, z, n] of [
@@ -498,7 +495,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   pool(ctx, 32.3, -47.6, 1.3, 6103);
   P.fleshGrowth(ctx, 26.4, F, -52.5, 1.1, 6092, { room, climb: 2.4 });
   P.fleshGrowth(ctx, 37.6, F, -36.2, 0.9, 6093, { room, climb: 2 });
-  bakeCorpse(wb, 35.8, F, -58.6, 2.8, 'back', 'soldier', 9);
+  bakeCorpse(wb, 36.4, F, -56.2, 2.8, 'back', 'soldier', 9);
   bakeCorpse(wb, 28.8, F, -41.2, -0.6, 'curl', 'villager', 10);
   for (const [x, z] of [
     [29.5, -38.5],
@@ -522,7 +519,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   P.bones(ctx, 42, F, -53, 6, 6080, 0.8);
   P.decal(ctx, 41.2, F + 0.02, -51.5, 1.4);
   P.fleshGrowth(ctx, 40.7, F, -55.2, 0.7, 6081, { room, climb: 1.6 });
-  P.candles(ctx, 46.3, F, -63.4, 3, 6082, { room, radius: 3.5, intensity: 0.4, spread: 0.12 });
+  P.candles(ctx, 44.2, F, -63.5, 3, 6082, { room, radius: 3.5, intensity: 0.4, spread: 0.12 });
   P.rubble(ctx, 46.3, F, -57.6, 5, 6083, 0.4, { mat: 'ashlar', scale: 0.5 });
   bakeCorpse(wb, 40.4, F, -60.6, 1.2, 'curl', 'villager', 4);
 
@@ -536,7 +533,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   P.bones(ctx, 49, F, -76, 8, 6094, 1);
   P.bones(ctx, 41, F, -74, 6, 6095, 0.5);
   P.candles(ctx, 49.9, F, -82.3, 3, 6096, { room, radius: 3.5, intensity: 0.4, spread: 0.15 });
-  bakeCorpse(wb, 56.8, F, -74.3, -2.2, 'sit', 'villager', 11);
+  bakeCorpse(wb, 55.2, F, -82.3, -2.2, 'sit', 'villager', 11);
   P.fleshGrowth(ctx, 57.6, F, -82.4, 1, 6097, { room, climb: 2.4 });
 
   // ---------------------------------------------------------- cisterna
@@ -628,16 +625,16 @@ export function buildCellar(ctx, B, L, o = {}) {
   // arrasa al pasar; tú, a golpes
   [
     [65.1, -38.0, true, 0.5, 1.2],
-    [65.1, -44.6, true, 0.5, 1.2],
+    [65.1, -42.8, true, 0.5, 1.2],
     [41.0, -40.0, false, 0.48, 1.1],
     [50.1, -41.6, false, 0.48, 1.1],
     [36.9, -49.2, true, 0.55, 1.3],
     [36.9, -51.0, true, 0.55, 1.3],
     [27.0, -36.2, false, 0.5, 1.2],
     [28.6, -36.3, false, 0.5, 1.2],
-    [27.1, -43.6, true, 0.52, 1.25],
+    [27.1, -45.0, true, 0.52, 1.25],
     [36.9, -39.2, true, 0.5, 1.2],
-    [33.6, -59.3, false, 0.5, 1.2],
+    [36.6, -59.3, false, 0.5, 1.2],
     [40.4, -58.6, true, 0.5, 1.2],
     [46.2, -59.2, false, 0.46, 1.1],
   ].forEach(([x, z, along, r, len], i) =>
@@ -647,7 +644,7 @@ export function buildCellar(ctx, B, L, o = {}) {
     [50.2, -46.0],
     [36.8, -35.9],
     [30.4, -36.0],
-    [64.9, -41.4],
+    [65.0, -40.0],
   ].forEach(([x, z], i) => L.breakables.push({ id: 'sacos' + i, kind: 'sacks', x, z, y: F, hx: 0.55, hz: 0.55, h: 0.85, room }));
   // los sepulcros de la cripta y sus dos santos: si te escondes detrás, los
   // revienta
@@ -671,6 +668,82 @@ function pool(ctx, x, z, R, seed) {
       d = rng.range(0.4, 0.9) * R;
     P.decal(ctx, x + Math.cos(a) * d, F + 0.021 + i * 0.001, z + Math.sin(a) * d, R * rng.range(0.6, 1.1), 'splat', rng.range(0, 6));
   }
+}
+
+// Una madriguera: la boca recortada en el muro (con las esquinas de arriba
+// rotas, tierra amontonada al pie, carne en el borde y arañazos) y el túnel
+// que se mete en la roca, cada vez más oscuro, hasta perderse.
+function burrowMouth(ctx, h, room, rng) {
+  const wb = ctx.wb;
+  const { w, h: H, depth } = BURROW;
+  const tx = -h.nz,
+    tz = h.nx; // a lo ancho de la boca
+  // punto (a lo ancho a, hacia dentro de la roca d) -> mundo
+  const wx = (a, d) => h.x + tx * a - h.nx * d,
+    wz = (a, d) => h.z + tz * a - h.nz * d;
+  const box = (mat, a0, y0, d0, a1, y1, d1, o) => {
+    const xs = [wx(a0, d0), wx(a1, d1)],
+      zs = [wz(a0, d0), wz(a1, d1)];
+    wb.box(mat, Math.min(...xs), y0, Math.min(...zs), Math.max(...xs), y1, Math.max(...zs), { ao: false, grime: false, ...o });
+  };
+  // caras que miran: hacia la sala (+n), hacia dentro (-n), a lo ancho (±t)
+  const face = (v) => {
+    // v: [vx, vz] en el mundo -> letra de cara
+    if (v[0] > 0.5) return 'e';
+    if (v[0] < -0.5) return 'w';
+    if (v[1] > 0.5) return 's';
+    return 'n';
+  };
+  const out = face([h.nx, h.nz]),
+    inn = face([-h.nx, -h.nz]),
+    plusA = face([tx, tz]),
+    minusA = face([-tx, -tz]);
+  // el túnel, por tramos: cada uno algo más estrecho y bajo, con las paredes
+  // desiguales y la tierra del suelo cada vez más negra
+  const n = 6;
+  for (let i = 0; i < n; i++) {
+    const d0 = (i / n) * depth,
+      d1 = ((i + 1) / n) * depth;
+    const k = 1 - i / n;
+    const tint = [0.36 * k + 0.03, 0.33 * k + 0.03, 0.3 * k + 0.03];
+    const hw = w / 2 - 0.06 - i * 0.04 + rng.range(-0.05, 0.05),
+      top = H - 0.04 - i * 0.05 + rng.range(-0.05, 0.03);
+    box('dirt', -hw - 0.2, F - 0.05, d0, hw + 0.2, F + 0.012, d1, { faces: 't', tint: tint.map((v) => v * 0.8) });
+    // (con las caras de los extremos: entre tramo y tramo no queda rendija)
+    box('wallstone', -hw - 0.25, F + top, d0, hw + 0.25, F + top + 0.25, d1, { faces: 'b' + out + inn, tint });
+    box('wallstone', -hw - 0.25, F, d0, -hw, F + top, d1, { faces: plusA + out + inn, tint });
+    box('wallstone', hw, F, d0, hw + 0.25, F + top, d1, { faces: minusA + out + inn, tint });
+  }
+  // el fondo: negro (el túnel sigue, pero ya no se ve)
+  box('black', -w / 2, F, depth, w / 2, F + H, depth + 0.05, { faces: out });
+  // terrones y piedras en las paredes del túnel
+  for (let i = 0; i < 7; i++) {
+    const side = i % 2 ? 1 : -1;
+    const d = rng.range(0.3, depth - 0.3);
+    const k = 1 - d / depth;
+    P.ellipsoid(ctx, 'wallstone', wx(side * (w / 2 - 0.05), d), F + rng.range(0.2, H - 0.3), wz(side * (w / 2 - 0.05), d), rng.range(0.14, 0.26), rng.range(0.12, 0.22), rng.range(0.14, 0.26), [0.3 * k + 0.03, 0.28 * k + 0.03, 0.26 * k + 0.03], { room });
+  }
+  // la boca: esquinas de arriba rotas (piedras sueltas) y carne en el borde
+  for (const s of [-1, 1]) {
+    P.ellipsoid(ctx, 'wallstone', wx(s * (w / 2 - 0.12), 0.02), F + H - 0.12, wz(s * (w / 2 - 0.12), 0.02), 0.34, 0.3, 0.26, [0.42, 0.4, 0.37], { room });
+    P.ellipsoid(ctx, 'wallstone', wx(s * (w / 2 - 0.02), -0.05), F + rng.range(0.4, 0.9), wz(s * (w / 2 - 0.02), -0.05), 0.16, 0.28, 0.14, [0.4, 0.38, 0.35], { room });
+  }
+  P.ellipsoid(ctx, 'wallstone', wx(0, 0.02), F + H + 0.02, wz(0, 0.02), 0.5, 0.18, 0.24, [0.4, 0.38, 0.35], { room });
+  for (let k = 0; k < 4; k++) {
+    const a = (k / 3) * Math.PI;
+    P.ellipsoid(ctx, 'fleshStatic', wx(Math.cos(a) * (w / 2 + 0.08), -0.06), F + 0.15 + Math.sin(a) * (H - 0.1), wz(Math.cos(a) * (w / 2 + 0.08), -0.06), 0.2, 0.17, 0.12, [0.7, 0.5, 0.5], { room });
+  }
+  // la tierra que ha sacado, amontonada a los lados de la boca
+  for (let i = 0; i < 6; i++) {
+    const s = i % 2 ? 1 : -1;
+    const a = s * rng.range(w / 2 - 0.1, w / 2 + 0.55),
+      d = -rng.range(0.15, 0.7);
+    P.ellipsoid(ctx, 'dirt', wx(a, d), F + 0.02, wz(a, d), rng.range(0.25, 0.42), rng.range(0.1, 0.2), rng.range(0.25, 0.4), [0.38, 0.33, 0.28], { room });
+  }
+  P.bones(ctx, wx(0, -0.6), F, wz(0, -0.6), 4, Math.round(h.x * 13 + h.z), 0.5);
+  // arañazos en el muro, a los lados
+  for (const s of [-1, 1]) P.decal(ctx, wx(s * (w / 2 + 0.55), -0.025), F + 1.0, wz(s * (w / 2 + 0.55), -0.025), 0.9, 'splat', 0, { wall: h.nx ? 'x' : 'z' });
+  P.decal(ctx, wx(0, -1.0), F + 0.02, wz(0, -1.0), 1.4);
 }
 
 // Techo de la región en (x, z) mientras se construye.

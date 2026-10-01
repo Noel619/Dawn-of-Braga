@@ -69,12 +69,14 @@ portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, 
 a los lados de la puerta entornada y una torre almenada con la ventana alta siempre iluminada. Dentro, el zaguán,
 el estudio (la llave del claustro sigue sobre la mesa), la alcoba, la cocina con su hogar y la despensa. Al fondo,
 la puerta de la bodega, atrancada por el ama con sal y velas. Desde la casa ya se oye, abajo, algo que mastica.
-Al asomarse a la escalera salta una cinemática: el personaje baja los peldaños con el ruido cada vez más cerca; al
-pie, la cámara gira por detrás de él y se ve la sala del altar, donde el canónigo, de espaldas, devora un cadáver.
-Un hueso cruje bajo la bota, se hace el silencio, la cabeza del revés gira despacio hasta mirarle, el cuerpo se da
-la vuelta de golpe, se alza, grita y arroja el cadáver contra la pared. Arriba, a contraluz de una vela, el ama
-cierra la puerta de un portazo y echa la tranca («Perdóneme, señor…»). Abajo, la sala vacía; algo la cruza de un
-salto y se pierde en la bóveda.
+Al asomarse a la escalera salta una cinemática: desde el sótano se ve la escalera, por la que baja el personaje
+con su farol, y a la derecha, junto al altar, el canónigo, de espaldas, devorando un cadáver. Por encima del hombro
+del personaje se ve el festín; un hueso cruje bajo la bota y se hace el silencio. Desde detrás del canónigo, a ras
+de suelo, la cabeza del revés gira a sacudidas hasta mirarle y luego el cuerpo se da la vuelta, también a tirones,
+crujiendo. Se agacha, se alza, grita y arroja el cadáver contra la pared. Arriba, a contraluz de una vela, el ama
+cierra la puerta de un portazo y echa la tranca («Perdóneme, señor…»). Abajo, él sigue ahí, agazapado, mirándole;
+se aleja de espaldas sin quitarle los ojos de encima, rodea un pilar y se mete marcha atrás en su gruta, junto a
+unas velas. Desde dentro, a oscuras, sólo se le ven los ojos; se apagan, y se oye cómo se ríe.
 
 **Las bodegas del canónigo.** Un laberinto de sótanos a oscuras, mucho más grande que la casa de arriba: la sala del
 altar con sus pilares, la celda donde el ama encerraba al canónigo, la galería de los toneles con sus estanterías,
@@ -172,9 +174,16 @@ se encadena el anterior.
   cruzados y contraataca, cae de espaldas pataleando cuando se estrella contra la piedra o te sueltas de su agarrón
   (patas arriba, todo golpe es crítico) y muere a pedazos (se le parten los miembros uno a uno y, al final, la
   cabeza se le da la vuelta). No se queda atascado: si algo le cierra el paso, lo arranca o lo revienta.
-  Primero **acecha**: te observa desde la bóveda, se asoma por las esquinas, se mete en las madrigueras de los
-  muros, imita tus pasos y la voz del ama, se ríe y te tira huesos, y te embosca cuando le das la espalda, te curas,
-  lees o echas una palanca. Tras cada emboscada se queda a pelear un rato. Cada emboscada que le sale mal (la
+  Primero **acecha**: te observa desde la bóveda, se asoma por las esquinas, imita tus pasos y la voz del ama, se
+  ríe y te tira huesos, y te embosca cuando le das la espalda, te curas, lees o echas una palanca. A ratos **te
+  sigue**: va por tu propio rastro, por la bóveda o agazapado, a unos nueve metros, a tu paso; se le oye respirar,
+  crujir o repetir tus pasos, cae polvo del techo; si te vuelves y le ves, se queda quieto, le brillan los ojos un
+  instante y se aparta despacio de tu vista; si vas hacia él, o se te echa encima o se escabulle. Se mueve por las
+  bodegas por sus **grutas**: túneles que ha excavado en la roca, con la boca rota, tierra amontonada, huesos y
+  arañazos, que comunican salas lejanas. Se agacha, se agarra a los bordes, se mete a rastras con los miembros
+  abiertos como un lagarto y sale por otra; antes de salir, en el fondo del túnel, sólo se le ven los ojos. Al
+  esquivar nunca salta hacia la escalera, un desnivel o la roca, y si algo le saca del suelo de las salas, vuelve
+  al último sitio seguro. Tras cada emboscada se queda a pelear un rato. Cada emboscada que le sale mal (la
   esquivas, la paras, le ves venir, le hieres, te sueltas de su agarrón) le frustra; cuando se harta, cuando le has
   hecho bastante daño o cuando echas la tercera palanca, **enloquece**: viene a por ti, se alza, grita y golpea el
   suelo, y ya no se esconde. Enloquecido prefiere pelear en sitios abiertos
@@ -238,7 +247,7 @@ src/
                         y agua (water.js: la cisterna y el pozo)
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
-                        generado por regiones: suelos, bóvedas, muros, pilares, madrigueras, posaderos,
+                        generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y

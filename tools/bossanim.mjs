@@ -41,7 +41,7 @@ const info = await p.evaluate(
     const D = e.D;
     const P = g.player;
     const out = [];
-    const DUR = { smash: 2.6, smashcask: 2.4, claw: 1.2, claw2: 1.9, sweep: 1.35, slam: 1.75, lunge: 0.95, pounce: 1.85, charge: 2.6, spin: 1.95, grab: 2.8, rip: 2.4, crack: 1.9, throw: 1.2, riposte: 0.85, flip: 0.8, leap: 0.6, side: 0.55, guard: 1.2, beat: 2.2, laugh: 1.4, headspin: 1.3, down: 2.1, rage: 3.4, dead: 9.5, walk: 1.6, gallop: 1.2, creep: 2.4, ceil: 1.6, idle: 2 };
+    const DUR = { burrowin: 4.2, burrowout: 3.4, smash: 2.6, smashcask: 2.4, claw: 1.2, claw2: 1.9, sweep: 1.35, slam: 1.75, lunge: 0.95, pounce: 1.85, charge: 2.6, spin: 1.95, grab: 2.8, rip: 2.4, crack: 1.9, throw: 1.2, riposte: 0.85, flip: 0.8, leap: 0.6, side: 0.55, guard: 1.2, beat: 2.2, laugh: 1.4, headspin: 1.3, down: 2.1, rage: 3.4, dead: 9.5, walk: 1.6, gallop: 1.2, creep: 2.4, ceil: 1.6, idle: 2 };
     moves.forEach((mv, row) => {
       // todo en su sitio: él en el centro del Lagar, tú delante, a 4 m
       e.reset();
@@ -99,6 +99,25 @@ const info = await p.evaluate(
         e.die();
       } else if (mv === 'ceil') {
         D.jump('ceil', 0.4);
+      } else if (mv === 'burrowin' || mv === 'burrowout') {
+        // la gruta de la sala del altar (64, -46) y la de la cripta
+        const pair = g.CELLAR.burrows[0];
+        const A = pair[0];
+        D.stage = 'stalk';
+        D.rageK = 0;
+        P.spawn(60, -6.6, -40.5, 0);
+        if (mv === 'burrowin') {
+          e.pos.set(A.fx + 0.4, -6.6, A.fz + 0.6);
+          D.plantAll();
+          D.burrow = { A, B: pair[1], t: 0, stage: 'go' };
+          D.setMode('burrow');
+        } else {
+          D.burrow = { A: pair[1], B: A, t: 0, stage: 'inside', dur: 0.05 };
+          D.setMode('burrow');
+          D.hidden = true;
+          e.obj.visible = false;
+        }
+        window.__mouth = A;
       }
       const dur = DUR[mv] || 1.5;
       const dt = 1 / 30;
@@ -133,6 +152,12 @@ const info = await p.evaluate(
         const cy = mv === 'ceil' ? c.y - 0.6 : -6.6 + 1.0;
         g.camera.position.set(mx + 4.6 * CAM, -6.6 + (mv === 'ceil' ? 1.2 : 2.0 * Math.min(1, CAM + 0.2)), mz + 2.2 * CAM);
         g.camera.lookAt(mx, cy, mz);
+        if (window.__mouth && (mv === 'burrowin' || mv === 'burrowout')) {
+          // de lado, mirando la boca de la gruta
+          const A = window.__mouth;
+          g.camera.position.set(A.x + A.nx * 3.2 - A.nz * 1.4, -6.6 + 1.1, A.z + A.nz * 3.2 + A.nx * 1.4);
+          g.camera.lookAt(A.x + 0.2, -6.6 + 0.7, A.z + 0.2);
+        }
         g.camera.updateMatrixWorld();
         const want = Math.round(((col + 0.5) / COLS) * steps);
         if (i === want && col < COLS) {

@@ -1218,6 +1218,17 @@ export class Audio {
         this.tone(d, t, 0.2, { f0: 110, f1: 60, gain: 0.35 });
         break;
       }
+      // escarba la tierra con las manos: terrones que caen, uñas en la piedra
+      case 'dig': {
+        d = this.out(P, { gain: 0.85 * (o.k ?? 1), verb: 0.45, life: 2.5, ref: 4 });
+        for (let i = 0; i < 5; i++) {
+          const tt = t + i * rnd(0.09, 0.16);
+          this.noise(d, tt, 0.12, { type: 'lowpass', f0: 900, f1: 250, gain: 0.3, a: 0.003, buf: this.brown, rate: 3 });
+          this.noise(d, tt + 0.02, 0.05, { f0: 3200, q: 3, gain: 0.08, a: 0.002 });
+        }
+        this.debris(d, t + 0.15, 6, 0.5, { f0: 500, f1: 1400, gain: 0.45 });
+        break;
+      }
       // la cadena corre por encima, dentro de la bóveda
       case 'chainRun': {
         d = this.out(P, { gain: 0.8 * (o.k ?? 1), verb: 0.6, life: 3, ref: 6 });

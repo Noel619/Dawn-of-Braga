@@ -99,7 +99,10 @@ export class Game {
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
-    this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > CANON.stair.bottom ? stairY(z) : CANON.cellar.y), { pad: 0.7 });
+    // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
+    // lado, está a ras de la bodega)
+    const S = CANON.stair;
+    this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > S.bottom && x > S.x - S.w / 2 - 0.1 && x < S.x + S.w / 2 + 0.1 ? stairY(z) : CANON.cellar.y), { pad: 0.7 });
 
     // enemigos
     this.enemies = lvl.L.enemies.map((s) => new Enemy(this, s));
@@ -117,6 +120,7 @@ export class Game {
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     // la caza en las bodegas del canónigo
     this.hunt = new CellarHunt(this);
+    this.CELLAR = CELLAR; // (para las herramientas de prueba)
 
     this.combat = new Combat(this);
     this.interact = new Interactables(this, lvl.L.interact);

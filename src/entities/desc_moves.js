@@ -1024,7 +1024,8 @@ export const MOVES = {
     const bx = dx / d,
       bz = dz / d;
     const nav = g.navCellar;
-    const ok = (x, z) => nav.walkable(x, z) && nav.line(e.pos.x, e.pos.z, x, z);
+    // (sólo a suelo llano, a su misma altura: nada de caer en la escalera)
+    const ok = (x, z) => this.sameFloorLine(e.pos.x, e.pos.z, x, z);
     let tx, tz, flip = 0, arc, dur, spin = 0;
     const tries = [];
     if (kind === 'side') {

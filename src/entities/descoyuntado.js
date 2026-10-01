@@ -22,6 +22,8 @@ import { clamp, damp, lerp, angleDiff } from '../core/util.js';
 import { e2q, q2e, Spring } from './rig.js';
 import { DESC, DESC_CLOTH } from './enemy_models.js';
 import { cellarCeil } from '../world/level_cellar.js';
+import { additiveFog } from '../gfx/materials.js';
+import { getTexture } from '../gfx/textures.js';
 import { MOVES } from './desc_moves.js';
 import { sm, lin, rnd, approach } from './desc_util.js';
 import { MIND } from './desc_mind.js';
@@ -189,7 +191,10 @@ export class Desc {
   ideal(L, out, lead) {
     const e = this.e;
     const k = this.gaitMode === 'creep' ? 0.9 : this.gaitMode === 'gallop' ? 1.08 : 1;
-    this.planePoint(L.home.x * k, L.home.z * k, out);
+    // (en un túnel estrecho: las manos y los pies se recogen bajo el cuerpo
+    // y se estiran hacia delante y hacia atrás)
+    const nw = this.narrow || 0;
+    this.planePoint(L.home.x * k * lerp(1, 0.4, nw), L.home.z * k * lerp(1, 1.75, nw), out);
     out.x += e.vx * lead;
     out.z += e.vz * lead;
     if (this.plane === 'ceil') out.y = this.ceilAt(out.x, out.z);
@@ -330,7 +335,11 @@ export class Desc {
     const u = toT.normalize();
     const cosA = clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1);
     const sinA = Math.sqrt(1 - cosA * cosA);
-    const pole = _b.set(L.side * 0.62, 1, L.front ? 0.3 : -0.3);
+    // (en un túnel, codos y rodillas se doblan hacia delante y hacia atrás,
+    // no hacia arriba: no caben)
+    const nw = this.narrow || 0;
+    // (a ras de suelo y hacia los lados, como un lagarto)
+    const pole = _b.set(L.side * lerp(0.62, 0.95, nw), lerp(1, -0.2, nw), (L.front ? 1 : -1) * lerp(0.3, 0.15, nw));
     pole.addScaledVector(u, -pole.dot(u));
     if (pole.lengthSq() < 1e-6) pole.set(0, 1, 0);
     pole.normalize();
@@ -609,8 +618,9 @@ export class Desc {
     const shY = sh * (Math.sin(t * 31) * 0.14 + Math.sin(t * 17.3) * 0.1);
     const shX = sh * Math.sin(t * 27.1) * 0.1;
     const hy = this.lookY + this.twist + shY;
-    // cuello estirado (mordisco): recto hacia delante
-    const ne = this.neckExt;
+    // cuello estirado (mordisco): recto hacia delante; también a rastras
+    // por sus túneles (si no, la cabeza le colgaría por el suelo)
+    const ne = Math.max(this.neckExt, this.narrow || 0);
     // (el cuello cuelga hacia el suelo desde el pecho; estirado apunta
     // hacia delante y la cabeza se endereza para morder)
     pose.neck = [lerp(26 * 0.01745 + eat * 0.8 + Math.sin(t * 1.1) * 0.05, -1.15, ne), hy * 0.45 * (1 - ne * 0.6) + tear * 0.35, Math.sin(t * 0.5) * 0.1 + this.rear * 0.2];
@@ -668,14 +678,42 @@ export class Desc {
     }
     // enloquecido: los ojos se le ponen rojos
     this.eyeRed = damp(this.eyeRed, this.rageK, 2, dt);
+    // (cuando los abre del todo, un halo: en lo oscuro sólo se le ven los ojos)
+    // (los dos ojos van en una misma malla: un halo en cada punta de su caja)
+    if (!this._halos) {
+      this._halos = [];
+      for (const m of e._eyes) {
+        m.geometry.computeBoundingBox();
+        const bb = m.geometry.boundingBox;
+        const w = bb.max.x - bb.min.x;
+        for (const x of [bb.min.x + w * 0.12, bb.max.x - w * 0.12]) {
+          const sp = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: getTexture('glow'), color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0, fog: true })));
+          sp.position.set(x, (bb.min.y + bb.max.y) / 2, bb.max.z);
+          sp.renderOrder = 3;
+          sp.userData.eye = m;
+          m.add(sp);
+          this._halos.push(sp);
+        }
+      }
+    }
     for (const m of e._eyes) {
       m.material.emissiveIntensity = (m.userData.baseEI ?? 2.2) * this.eyeK;
       if (!e._flashing) m.material.emissive.copy(this._eyeC0).lerp(_RED, this.eyeRed);
+    }
+    const halo = clamp((this.eyeK - 0.95) * 0.75, 0, 0.75);
+    for (const sp of this._halos) {
+      sp.visible = halo > 0.01;
+      if (!sp.visible) continue;
+      sp.material.opacity = halo;
+      sp.material.color.copy(sp.userData.eye.material.emissive);
+      sp.userData.eye.getWorldScale(_ws);
+      sp.scale.set(0.2 / _ws.x, 0.2 / _ws.y, 1);
     }
     e.flare = Math.max(0, (e.flare || 0) - dt * 1.8);
   }
 }
 const _RED = new THREE.Color(1, 0.1, 0.04);
+const _ws = new THREE.Vector3();
 
 Object.assign(Desc.prototype, MOVES, MIND);
 
