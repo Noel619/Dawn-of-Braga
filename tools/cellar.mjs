@@ -52,7 +52,7 @@ const r = await p.evaluate(() => {
   }
   const at = (x, z) => seen[Math.floor((z - z0) / res) * W + Math.floor((x - x0) / res)] === 1;
   const rooms = { lagar: [32, -47.5], cripta: [49, -78], osario: [68.8, -60], ramal: [65, -63], antecamara: [43, -60], toneles: [45.5, -42], celda: [54.5, -34] };
-  const out = { cells: n, wellReachable: at(53.2, -50) || at(55, -52.5) || at(60, -50), rooms: {} };
+  const out = { cells: n, wellReachable: at(53.2, -54) || at(55, -52.2) || at(60, -52) || at(52, -49), rooms: {} };
   for (const k in rooms) out.rooms[k] = at(...rooms[k]);
   out.stats = g.level.stats;
   out.levers = g.interact.list.filter((i) => i.kind === 'lever').map((i) => i.id);
@@ -69,10 +69,15 @@ if (shots) {
     osario: [68.8, -5.2, -38, 68.8, -5.8, -60],
     ramal: [68.5, -5.2, -62.5, 63, -5.6, -63],
     cisterna: [55, -4.6, -47.2, 55, -6.2, -56],
-    pozo: [53, -5.0, -48.2, 55, -6.2, -50],
+    pozo: [55, -5.0, -50.3, 55, -6.2, -54],
+    pila: [33, -4.8, -54, 28.6, -5.9, -57.6],
     rastrillo: [57.5, -5.0, -41, 55, -5.5, -47],
     antecamara: [42, -5.1, -48, 43, -5.6, -62],
     sala: [59.5, -4.6, -37.5, 59, -5.8, -45],
+    comedero: [61.5, -4.9, -41, 59, -6.6, -44.4],
+    huesos: [35.5, -4.9, -45, 32.3, -6.6, -47.6],
+    cripta2: [49, -4.6, -74.5, 44, -6, -79],
+    galeria: [45.5, -4.9, -39, 45.5, -6.2, -45.8],
   };
   for (const [k, v] of Object.entries(views)) {
     await p.evaluate((v) => {

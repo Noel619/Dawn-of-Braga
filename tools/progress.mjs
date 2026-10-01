@@ -52,14 +52,18 @@ const steps = [
   // encerrado: la puerta está atrancada y el rastrillo de la cisterna, bajado
   "(()=>{const g=__game;const d=g.interact.list.find(i=>i.id==='d_sotano');const r=g.interact.list.find(i=>i.id==='d_rastrillo');return {hunt:g.hunt.active,door:d.done,open:+d.open.toFixed(2),gate:r.done,boss:g.bosses.descoyuntado.D.mode}})()",
   // (el pozo no se alcanza con el rastrillo bajado)
-  "(()=>{const g=__game;g.player.spawn(55,-6.6,-45.2,Math.PI);__sim(0.1);for(let i=0;i<30;i++)__sim(0.05,['KeyW']);return {z:+g.player.pos.z.toFixed(2),blocked:g.player.pos.z>-46.6}})()",
+  "(()=>{const g=__game;g.player.spawn(55,-6.6,-45.2,Math.PI);g.camRig.yaw=Math.PI;__sim(0.1);for(let i=0;i<30;i++){g.camRig.yaw=Math.PI;__sim(0.05,['KeyW'])}return {z:+g.player.pos.z.toFixed(2),blocked:g.player.pos.z>-46.6}})()",
   "__use('d_rastrillo')",
   // las tres palancas (él, quieto mientras)
-  "(()=>{__game.bosses.descoyuntado.D.setMode('scripted');return __use('p_lagar')})()",
-  "(()=>{__game.bosses.descoyuntado.D.setMode('scripted');return __use('p_cripta')})()",
-  "(()=>{__game.bosses.descoyuntado.D.setMode('scripted');const r=__use('p_osario');const g=__game;return {...r,levers:['p_lagar','p_cripta','p_osario'].map(k=>!!g.flags['lever:'+k]),gate:!!g.flags['door:d_rastrillo'],stage:g.bosses.descoyuntado.D.stage}})()",
+  // (cada palanca cuesta unos siete segundos y medio de tirones)
+  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');const r=__use('p_lagar');const early=!!g.flags['lever:p_lagar'];for(let i=0;i<14;i++){g.bosses.descoyuntado.D.setMode('scripted');__sim(0.5)}return {...r,early,pulled:!!g.flags['lever:p_lagar']}})()",
+  // al morir, todo vuelve a su sitio (la palanca, arriba)
+  "(()=>{const g=__game;g.respawn();return {lever:!!g.flags['lever:p_lagar'],gate:g.interact.list.find(i=>i.id==='d_rastrillo').open,broken:g.breakables.list.filter(b=>b.broken).length}})()",
+  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');__use('p_lagar');for(let i=0;i<14;i++){g.bosses.descoyuntado.D.setMode('scripted');__sim(0.5)}return {pulled:!!g.flags['lever:p_lagar']}})()",
+  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');__use('p_cripta');for(let i=0;i<14;i++){g.bosses.descoyuntado.D.setMode('scripted');__sim(0.5)}return {pulled:!!g.flags['lever:p_cripta']}})()",
+  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');__use('p_osario');for(let i=0;i<14;i++){if(g.bosses.descoyuntado.D.stage!=='rage')g.bosses.descoyuntado.D.setMode('scripted');__sim(0.5)}return {levers:['p_lagar','p_cripta','p_osario'].map(k=>!!g.flags['lever:'+k]),gate:!!g.flags['door:d_rastrillo'],stage:g.bosses.descoyuntado.D.stage}})()",
   // por el rastrillo abierto, al pozo, y arriba
-  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');g.player.spawn(55,-6.6,-45.2,Math.PI);__sim(0.1);for(let i=0;i<50;i++)__sim(0.05,['KeyW']);const through=g.player.pos.z<-47.5;g.player.spawn(53.4,-6.6,-50,Math.PI/2);__sim(0.1);const t=g.promptTarget&&g.promptTarget.id;__sim(0.2,[],['KeyE']);__sim(2);return {through,prompt:t,flag:!!g.flags['pozo:salida'],hunt:g.hunt.active,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z].map(v=>+v.toFixed(2))}})()",
+  "(()=>{const g=__game;g.bosses.descoyuntado.D.setMode('scripted');g.player.spawn(55,-6.6,-45.2,Math.PI);g.camRig.yaw=Math.PI;__sim(0.1);for(let i=0;i<50;i++){g.bosses.descoyuntado.D.setMode('scripted');g.camRig.yaw=Math.PI;__sim(0.05,['KeyW'])}const through=g.player.pos.z<-47.5;g.player.spawn(53.4,-6.6,-54,Math.PI/2);__sim(0.1);const t=g.promptTarget&&g.promptTarget.id;__sim(0.2,[],['KeyE']);__sim(2);return {through,prompt:t,flag:!!g.flags['pozo:salida'],hunt:g.hunt.active,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z].map(v=>+v.toFixed(2))}})()",
   "(()=>{const g=__game;g.bosses.descoyuntado.reset();const r=__use('x_pozo_calle',1.2);__sim(2);return {r:r.ok,hunt:g.hunt.active,y:+g.player.pos.y.toFixed(2)}})()",
   "(()=>{const g=__game;const b=g.bosses.descoyuntado;b.hp=1;b.die();__sim(1);return {active:!!g.activeBoss,hunt:g.hunt.active}})()",
   "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:descoyuntado'],door:__game.flags['door:d_sotano']}),6000))",

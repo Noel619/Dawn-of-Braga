@@ -324,6 +324,17 @@ function leverMesh() {
 }
 const LEVER_UP = 0.3,
   LEVER_DOWN = 2.45;
+// echarla cuesta: siete tirones (unos siete segundos y medio)
+export const LEVER_TIME = 7.3;
+const LEVER_HEAVES = 7;
+// cuánto baja el mango con 'pull' segundos de tirones
+function leverAngle(pull) {
+  const k = Math.min(1, pull / LEVER_TIME) * LEVER_HEAVES;
+  const i = Math.floor(k),
+    f = k - i;
+  const u = Math.min(1, (i + (f < 0.55 ? 0.15 * (f / 0.55) : 0.15 + 0.85 * ((f - 0.55) / 0.45) ** 0.6)) / LEVER_HEAVES);
+  return LEVER_UP + (LEVER_DOWN - LEVER_UP) * u;
+}
 
 // Muro de niebla (shader animado)
 // (se funde con la niebla de la escena: sin ello brillaba a cualquier
@@ -588,7 +599,7 @@ export class Interactables {
     if (it.kind === 'door') {
       it.target = 0;
       it.open = 0;
-      if (it.rise !== undefined && this.game.navCellar) {
+      if (it.lock && it.lock.type === 'levers' && this.game.navCellar) {
         it.box.enabled = true;
         this.game.navCellar.refresh(it.x - 3, it.z - 3, it.x + 3, it.z + 3);
       }
@@ -604,6 +615,7 @@ export class Interactables {
       if (it.glow) it.glow.visible = true;
     } else if (it.kind === 'lever') {
       it.pull = 0;
+      it.pulling = false;
       it.obj.userData.arm.rotation.x = LEVER_UP;
     } else if (it.kind === 'breakable') {
       it.smash = 0;
@@ -882,12 +894,13 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'lever') {
-      if (it.done || it.pull > 0) return true;
-      // tirar cuesta: el mango baja despacio y chirría; si algo te golpea
-      // mientras, se suelta y vuelve arriba
-      it.pull = 0.001;
-      p.playInteract('lever', Math.atan2(-it.nx, -it.nz));
-      g.audio && g.audio.play('leverPull', { x: it.x, y: it.y + 1.2, z: it.z });
+      if (it.done || it.pulling) return true;
+      // tirar cuesta: el mango baja a tirones y chirría; si algo te golpea
+      // (o te apartas), lo sueltas y vuelve a subir poco a poco
+      it.pulling = true;
+      it.pull = Math.max(0.001, it.pull);
+      it.heave = -1;
+      p.playInteract('lever', Math.atan2(-it.nx, -it.nz), LEVER_TIME + 0.15 - it.pull);
       return true;
     }
     if (it.kind === 'item') {
@@ -951,28 +964,39 @@ export class Interactables {
         this.poseDoor(it, it.open * it.open);
         if (it.open <= 0) it.closing = 0;
       }
-      if (it.kind === 'lever' && it.pull > 0) {
+      if (it.kind === 'lever' && !it.done && (it.pulling || it.pull > 0)) {
         const p = g.player;
         const arm = it.obj.userData.arm;
-        if (p.state !== 'interact' || p.interactKind !== 'lever') {
-          // se ha soltado: el mango vuelve arriba de golpe
-          it.pull = 0;
+        if (it.pulling && (p.state !== 'interact' || p.interactKind !== 'lever')) {
+          // se ha soltado: el mango se le escapa y empieza a subir
+          it.pulling = false;
           g.audio && g.audio.play('clang', { x: it.x, y: it.y + 1.2, z: it.z }, { k: 0.5 });
-        } else {
+        }
+        if (it.pulling) {
           it.pull += dt;
-          const u = Math.min(1, it.pull / 1.3);
-          arm.rotation.x = LEVER_UP + (LEVER_DOWN - LEVER_UP) * u * u * (3 - 2 * u);
-          if (u >= 1) {
+          // un chirrido por tirón
+          const k = Math.floor((it.pull / LEVER_TIME) * LEVER_HEAVES);
+          if (k !== it.heave) {
+            it.heave = k;
+            g.audio && g.audio.play('leverCreak', { x: it.x, y: it.y + 1.2, z: it.z });
+          }
+          if (it.pull >= LEVER_TIME) {
             it.pull = 0;
+            it.pulling = false;
             it.done = true;
+            arm.rotation.x = LEVER_DOWN;
+            g.audio && g.audio.play('leverClunk', { x: it.x, y: it.y + 1.2, z: it.z });
             g.flags['lever:' + it.id] = true;
             const gate = this.list.find((q) => q.id === it.gate);
             const n = gate ? this.leverGate(gate) : 0;
             g.onLever && g.onLever(it, n, gate);
             g.saveGame();
-          }
+          } else arm.rotation.x = leverAngle(it.pull);
+        } else {
+          // suelta, sube despacio (la mitad de rápido de lo que baja)
+          it.pull = Math.max(0, it.pull - dt * 0.5);
+          arm.rotation.x = leverAngle(it.pull);
         }
-        if (it.pull === 0 && !it.done) arm.rotation.x += (LEVER_UP - arm.rotation.x) * Math.min(1, dt * 12);
       }
       if (it.kind === 'door' && it.rise !== undefined && !it.target && it.open < it.rise) {
         it.open = Math.min(it.rise, it.open + dt * 0.12);

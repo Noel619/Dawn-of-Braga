@@ -15,6 +15,8 @@
 //   spin     gira sobre sí mismo con los brazos abiertos (al final)
 //   grab     te agarra y te muerde (no se para: se esquiva o se forcejea)
 //   rip      arranca el pilar tras el que te escondes
+//   smash    revienta de un golpe con las dos manos el sepulcro, el santo o
+//            el tonel tras el que te escondes (o que le cierra el paso)
 //   crack    se parte todas las articulaciones: onda que aturde
 //   throw    te tira un hueso;  drop  cae del techo encima de ti
 //   riposte  contraataque seco tras parar tus golpes
@@ -44,6 +46,7 @@ export const ATK = {
   spin: { dur: 1.95, range: 2.9, arc: 360, dmg: 14 },
   grab: { dur: 1.35, range: 2.0, arc: 70, dmg: 0, unblockable: true },
   rip: { dur: 1.7, range: 3.2, arc: 120, dmg: 24, stagger: true, knock: 6 },
+  smash: { dur: 1.45, range: 2.6, arc: 140, dmg: 24, stagger: true, knock: 6 },
   crack: { dur: 1.9, dmg: 18 },
   throw: { dur: 1.2, dmg: 11 },
   drop: { dur: 1.3, range: 2.6, arc: 360, dmg: 32, stagger: true, knock: 6 },
@@ -234,6 +237,7 @@ export const MOVES = {
         this.localPointYaw(a.aim[0], 0.1, a.aim[1], _c);
         g.fx.blood.emit(_c.x, _c.y, _c.z, 8, { color: [0.3, 0.28, 0.26], speed: 2, life: 0.6, up: 0.6 });
         g.audio && g.audio.play('slamSoft', _c, { k: 0.4 });
+        g.breakables && g.breakables.smashAround(_c.x, _c.z, 0.7, e.pos.y, e.pos);
         this.hS.kick(-1.5);
       }
       this.stop(dt, 9);
@@ -307,7 +311,10 @@ export const MOVES = {
         this.evDone.whoosh = true;
         g.audio && g.audio.play('pounceWhoosh', this.center);
       }
-      if (t > 0.54 && t < 0.72) this.strikeAt(0, _a.x, _a.y, _a.z, 1.15);
+      if (t > 0.54 && t < 0.72) {
+        this.strikeAt(0, _a.x, _a.y, _a.z, 1.15);
+        g.breakables && g.breakables.smashAround(_a.x, _a.z, 0.6, e.pos.y, e.pos);
+      }
     } else {
       // sigue de largo y vuelve
       this.stop(dt, 9);
@@ -367,6 +374,7 @@ export const MOVES = {
         this.evDone.slam = true;
         this.localPointYaw(0, 0, 2.15, _c);
         g.combat.shockwave(_c.x, this.groundAt(_c.x, _c.z), _c.z, 2.7, a.dmg, e, a.knock);
+        g.breakables && g.breakables.smashAround(_c.x, _c.z, 2.0, e.pos.y, _c);
         g.fx.blood.emit(_c.x, _c.y + 0.1, _c.z, 30, { color: [0.3, 0.28, 0.26], speed: 6, life: 0.9, up: 2.2 });
         g.camRig.shake(0.55);
         this.hS.kick(-3);
@@ -503,8 +511,9 @@ export const MOVES = {
       const moved = Math.hypot(e.pos.x - bx, e.pos.z - bz);
       const want = Math.hypot(a.vx, a.vz) * dt;
       const br = g.breakables && g.breakables.contact(e.pos.x, e.pos.z, e.body.radius + 0.35, a.fx, a.fz, e.pos.y);
-      if (br) return this.crash(g.breakables.crashInto(br, e.pos));
-      if (moved < want * 0.35 && a.flyT > 0.08) return this.crash(false);
+      if (br && br.light) g.breakables.shatter(br, e.pos);
+      else if (br) return this.crash(g.breakables.crashInto(br, e.pos));
+      else if (moved < want * 0.35 && a.flyT > 0.08) return this.crash(false);
       if (u >= 1) {
         a.landed = true;
         this.releaseAll();
@@ -513,6 +522,7 @@ export const MOVES = {
         this.hS.kick(-3);
         g.audio && g.audio.play('slamSoft', e.pos);
         g.camRig.shake(0.25);
+        g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 1.2, e.pos.y, e.pos);
       }
     }
     if (a.landed) {
@@ -571,8 +581,9 @@ export const MOVES = {
     this.jawT = 0.8;
     // choque contra lo que tenga delante
     const br = g.breakables && g.breakables.contact(e.pos.x, e.pos.z, e.body.radius + 0.4, f, c, e.pos.y);
-    if (br) return this.crash(g.breakables.crashInto(br, e.pos));
-    if (a.runT > 0.25 && this.lastMoved !== undefined && this.lastMoved < spd * dt * 0.3) return this.crash(false);
+    if (br && br.light) g.breakables.shatter(br, e.pos);
+    else if (br) return this.crash(g.breakables.crashInto(br, e.pos));
+    else if (a.runT > 0.25 && this.lastMoved !== undefined && this.lastMoved < spd * dt * 0.3) return this.crash(false);
     // te arrolla
     if (d < 1.9) this.strike(0);
     // llega: remata con un zarpazo o con las dos manos
@@ -623,6 +634,7 @@ export const MOVES = {
         g.audio && g.audio.play('pounceWhoosh', this.center, { k: 0.7 });
       }
       this.strike(k);
+      g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 1.9, e.pos.y, e.pos);
     } else {
       // mareado un instante
       this.stop(dt, 8);
@@ -827,6 +839,80 @@ export const MOVES = {
     }
   },
 
+  // revienta lo que tengas delante (un sepulcro, un santo, un tonel): se
+  // pega a ello, se alza con las dos manos en alto y las descarga encima
+  atk_smash(t, dt, a) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    const P = this.smashTarget;
+    if (!P || P.broken) {
+      this.endAttack();
+      return this.engage();
+    }
+    const B = g.breakables;
+    const lf = this.L[0],
+      rf = this.L[1];
+    if (!a.at) {
+      this.faceTo(P.x, P.z, 8, dt);
+      const dx = P.x - e.pos.x,
+        dz = P.z - e.pos.z;
+      const d = Math.hypot(dx, dz) || 1;
+      const ed = B.edgeDist(P, e.pos.x, e.pos.z);
+      this.moveTo(e.pos.x + (dx / d) * (ed - 1.1), e.pos.z + (dz / d) * (ed - 1.1), 4.5, dt, false);
+      this.atkT = 0;
+      if (ed < 1.6 || this.mT > 2.2) {
+        a.at = true;
+        g.audio && g.audio.enemyVoice(e, 'attack');
+      }
+      return;
+    }
+    this.faceTo(P.x, P.z, 6, dt);
+    this.stop(dt, 10);
+    const top = P.y + P.h + 0.1;
+    if (t < 0.55) {
+      const u = easeInBack(lin(t, 0, 0.5)) * 0.6 + seg(t, 0, 0.5) * 0.4;
+      this.rear = 0.75 * u;
+      this.T.h = lerp(1, 1.5, u);
+      this.T.bend = -0.25 * u;
+      for (const L of [lf, rf]) {
+        this.localPointYaw(L.side * lerp(1.1, 0.5, u), lerp(0.3, 3.1, u), lerp(1.3, 0.3, u), _a);
+        this.hold(L, _a.x, _a.y, _a.z, 1, 1);
+      }
+      this.jawT = u;
+      this.shake = Math.max(this.shake, u * 0.7);
+    } else if (t < 0.67) {
+      const u = easeOutExpo(lin(t, 0.55, 0.65));
+      for (const L of [lf, rf]) {
+        this.localPointYaw(L.side * 0.5, 3.1, 0.3, _a);
+        _b.set(P.x + L.side * 0.25 * Math.cos(e.yaw), top, P.z - L.side * 0.25 * Math.sin(e.yaw));
+        _a.lerp(_b, u);
+        this.hold(L, _a.x, _a.y, _a.z, 1, -0.3);
+      }
+      this.rear = lerp(0.75, 0, u);
+      this.T.h = lerp(1.5, 0.75, u);
+      this.T.pitch = 0.4 * u;
+      this.T.shz = 0.35 * u;
+      if (t > 0.63 && !this.evDone.smash) {
+        this.evDone.smash = true;
+        B.shatter(P, e.pos);
+        B.smashAround(P.x, P.z, 1.2, e.pos.y, e.pos);
+        g.camRig.shake(0.55);
+        this.hS.kick(-3);
+        // los cascotes (o el tonel reventado) te alcanzan si estabas detrás
+        if (B.edgeDist(P, p.pos.x, p.pos.z) < 1.7 && !p.dead) g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: a.knock, chip: 0.3 }, P.x, P.z);
+      }
+    } else {
+      const u = seg(t, 0.8, 1.4);
+      this.T.h = lerp(0.75, 1, u);
+      this.T.pitch = lerp(0.4, 0, u);
+      this.T.shz = lerp(0.35, 0, u);
+      this.T.bend = 0;
+      this.jawT = 0.3;
+      if (t > 0.95) this.releaseAll();
+    }
+  },
+
   // se parte todas las articulaciones a la vez: una onda que aturde
   atk_crack(t, dt, a) {
     const e = this.e,
@@ -846,6 +932,7 @@ export const MOVES = {
     } else if (!this.evDone.crack) {
       this.evDone.crack = true;
       g.combat.toll(e, 4.6, a.dmg, 'crack');
+      g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 2.6, e.pos.y, e.pos);
       for (const L of this.L) {
         this.planePoint(L.home.x * 2.05, L.home.z * 1.75, _a);
         this.hold(L, _a.x, _a.y, _a.z, 1, -0.4);
@@ -907,6 +994,7 @@ export const MOVES = {
       this.onLand = () => {
         this.onLand = null;
         g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 2.7, a.dmg, e, 6);
+        g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 1.8, e.pos.y, e.pos);
         g.camRig.shake(0.55);
         this.hS.kick(-3.5);
       };

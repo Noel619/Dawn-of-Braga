@@ -169,8 +169,11 @@ export const CELLAR = {
   levers: LEVERS.map((L) => ({ ...L, ix: L.x + L.nx * 0.45, iz: L.z + L.nz * 0.45 })),
   // el rastrillo de la cisterna (hueco de 2,4 m entre la sala y la cisterna)
   portcullis: { x: 55, z: -46.75, w: 2.4, h: 3.2 },
-  // el fondo del pozo (salida) y el comedero del canónigo
-  well: { x: 55, z: -50, r: 1.3 },
+  // el fondo del pozo (salida), al fondo de la cisterna, lejos del rastrillo
+  // (el tiro sube por la roca hasta el pozo de la calle, más al sur), y el
+  // comedero del canónigo
+  well: { x: 55, z: -54, r: 1.3 },
+  streetWell: { x: 55, z: -54 },
   feast: { x: 59, z: -43.3, yaw: Math.PI, corpse: [59.1, -44.5] },
 };
 
@@ -370,7 +373,18 @@ export function buildCellar(ctx, B, L, o = {}) {
         x1 = h.x + tx * w * 0.5,
         z0 = h.z - tz * w * 0.5,
         z1 = h.z + tz * w * 0.5;
-      wb.box('black', Math.min(x0, x1) + h.nx * 0.01, h.y, Math.min(z0, z1) + h.nz * 0.01, Math.max(x0, x1) + h.nx * 0.02, h.y + hh, Math.max(z0, z1) + h.nz * 0.02, { ao: false, grime: false });
+      // (redondeada: filas de distinto ancho, algo separadas del muro para
+      // no parpadear contra él)
+      void x0, x1, z0, z1;
+      const rows = [0.45, 0.82, 1, 1, 0.82, 0.45];
+      rows.forEach((k, r) => {
+        const hw = w * 0.5 * k;
+        const a0x = h.x - tx * hw,
+          a1x = h.x + tx * hw,
+          a0z = h.z - tz * hw,
+          a1z = h.z + tz * hw;
+        wb.box('black', Math.min(a0x, a1x) + h.nx * 0.04, h.y + (r * hh) / rows.length, Math.min(a0z, a1z) + h.nz * 0.04, Math.max(a0x, a1x) + h.nx * 0.06, h.y + ((r + 1) * hh) / rows.length, Math.max(a0z, a1z) + h.nz * 0.06, { ao: false, grime: false });
+      });
       for (let k = 0; k < 5; k++) {
         const a = (k / 5) * Math.PI * 2;
         const px = h.x + tx * Math.cos(a) * 0.62 + h.nx * 0.06,
@@ -392,7 +406,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   const Fe = CELLAR.feast;
   P.ritual(ctx, Fe.x, F, Fe.corpse[1] + 0.2, 1.9, 6067, { room });
   P.candles(ctx, Fe.x - 1.7, F, Fe.corpse[1] + 0.9, 3, 6074, { room, radius: 3.5, intensity: 0.35, spread: 0.2 });
-  wb.box('blood', Fe.x - 1.3, F + 0.012, Fe.corpse[1] - 0.9, Fe.x + 1.2, F + 0.02, Fe.corpse[1] + 1.0, { faces: 't', ao: false, grime: false, tint: [0.42, 0.2, 0.2] });
+  pool(ctx, Fe.x - 0.1, Fe.corpse[1] + 0.1, 1.1, 6101);
   P.bones(ctx, Fe.x - 0.8, F, Fe.corpse[1] - 0.3, 8, 6068, 0.7);
   P.bones(ctx, 64.8, F, -38.2, 6, 6076, 0.6);
   P.fleshGrowth(ctx, 65.6, F, -45.6, 1.1, 6070, { room, climb: 2.2, lift: 1 });
@@ -404,8 +418,6 @@ export function buildCellar(ctx, B, L, o = {}) {
     [59, -44.4, 22],
   ])
     P.chains(ctx, x, TOP - 0.52, z, n, 0);
-  // toneles viejos contra los muros
-  for (const z of [-38.0, -44.6]) P.cask(ctx, 65.1, F, z, Math.PI / 2, { room, r: 0.5, len: 1.2 });
   bakeCorpse(wb, 53.4, F, -38.3, 2.2, 'sit', 'villager', 7);
   // el maestro de obras, muerto junto al rastrillo con la orden en la mano
   bakeCorpse(wb, 52.9, F, -44.7, 0.9, 'sit', 'villager', 8);
@@ -415,16 +427,20 @@ export function buildCellar(ctx, B, L, o = {}) {
   ctx.lights.push({ x: 59.5, y: F + 1.2, z: -36.2, r: 1, g: 0.55, b: 0.25, radius: 4.5, intensity: 0.4, room });
   // el rastrillo: jambas y dintel de sillería, y las tres cadenas que suben
   // por la bóveda hacia las palancas
+  // (delante del muro, sin ninguna cara en el mismo plano que él: antes
+  // parpadeaban)
   const Pc = CELLAR.portcullis;
+  const zf = -46 + 0.2;
   for (const s of [-1, 1]) {
-    const x = Pc.x + s * (Pc.w / 2 + 0.2);
-    wb.box('ashlar', x - 0.22, F, -46.35, x + 0.22, -3.4, -46, { ao: false, sub: 2, faces: 'tnsew', tint: [0.5, 0.48, 0.44] });
+    const x0 = s < 0 ? Pc.x - Pc.w / 2 - 0.5 : Pc.x + Pc.w / 2,
+      x1 = x0 + 0.5;
+    wb.box('ashlar', x0, F, -46, x1, -3.25, zf, { ao: false, sub: 2, faces: s < 0 ? 'tsw' : 'tse', tint: [0.5, 0.48, 0.44] });
   }
-  wb.box('ashlar', Pc.x - Pc.w / 2 - 0.42, -3.4, -46.35, Pc.x + Pc.w / 2 + 0.42, -2.85, -46, { ao: false, sub: 2, faces: 'bnsew', tint: [0.5, 0.48, 0.44] });
+  wb.box('ashlar', Pc.x - Pc.w / 2 - 0.6, -3.4, -46, Pc.x + Pc.w / 2 + 0.6, -2.85, zf + 0.05, { ao: false, sub: 2, faces: 'tbsew', tint: [0.5, 0.48, 0.44] });
   for (const dx of [-0.8, 0, 0.8]) {
-    wb.box('iron', Pc.x + dx - 0.06, -2.85, -46.24, Pc.x + dx + 0.06, -2.7, -46.1, { ao: false });
-    P.chains(ctx, Pc.x + dx, TOP - 0.1, -46.4, 28, 0);
-    wb.box('black', Pc.x + dx - 0.18, TOP - 0.02, -46.58, Pc.x + dx + 0.18, TOP, -46.22, { faces: 'b', ao: false, grime: false });
+    wb.box('iron', Pc.x + dx - 0.07, -2.85, zf - 0.1, Pc.x + dx + 0.07, -2.68, zf + 0.12, { ao: false });
+    P.chains(ctx, Pc.x + dx, TOP - 0.06, zf + 0.02, 30, 0);
+    wb.box('black', Pc.x + dx - 0.18, TOP - 0.045, zf - 0.16, Pc.x + dx + 0.18, TOP - 0.04, zf + 0.2, { faces: 'b', ao: false, grime: false });
   }
 
   // ---------------------------------------------------------- celda del canónigo
@@ -443,14 +459,8 @@ export function buildCellar(ctx, B, L, o = {}) {
 
   // ---------------------------------------------------------- Galería de los toneles
   // (los estantes con los toneles se pueden romper: van en L.breakables)
-  for (const [x, z] of [
-    [41.0, -40.0],
-    [50.1, -41.6],
-  ])
-    P.cask(ctx, x, F, z, 0, { room, r: 0.48, len: 1.1 });
-  P.sacks(ctx, 50.2, F, -46, 3, 6079);
-  // vino derramado (oscuro como la sangre) y duelas sueltas
-  for (let i = 0; i < 4; i++) wb.box('blood', 44.3 + i * 0.7, F + 0.012, -46.3 + i * 0.3, 45.6 + i * 0.7, F + 0.018, -45.3 + i * 0.3, { faces: 't', ao: false, grime: false, tint: [0.3, 0.12, 0.16] });
+  // vino derramado y duelas sueltas (los toneles y los sacos, rompibles)
+  pool(ctx, 45.4, -45.6, 0.7, 6102);
   for (let i = 0; i < 8; i++) {
     wb.push();
     wb.translate(45.6 + rng.range(-1, 1), F + 0.03, -37.6 + rng.range(-0.6, 0.6));
@@ -466,19 +476,26 @@ export function buildCellar(ctx, B, L, o = {}) {
   // la pila de pisar la uva en el rincón noroeste, con su viga de prensa y
   // el contrapeso; el resto, diáfano: toneles contra los muros, dos pilares
   // (rompibles) y la luz pálida que cae por dos rejillas de la calle
+  // (una pila de verdad: pretil de sillería y el mosto negro dentro)
   const lg = [26, -60, 31.2, -55.4];
-  wb.box('ashlar', lg[0], F, lg[1], lg[2], F + 0.95, lg[3], { sub: 2, aoH: 0.5, faces: 'tnsew', tint: [0.5, 0.47, 0.43] });
-  wb.box('blood', lg[0] + 0.25, F + 0.955, lg[1] + 0.25, lg[2] - 0.25, F + 0.96, lg[3] - 0.25, { faces: 't', ao: false, grime: false, tint: [0.22, 0.08, 0.1] });
+  const lt = 0.3;
+  for (const [a, b, c, d] of [
+    [lg[0], lg[3] - lt, lg[2], lg[3]],
+    [lg[2] - lt, lg[1], lg[2], lg[3] - lt],
+  ])
+    wb.box('ashlar', a, F, b, c, F + 0.95, d, { sub: 2, aoH: 0.5, faces: 'tnsew', tint: [0.5, 0.47, 0.43] });
+  wb.box('ashlar', lg[0], F + 0.85, lg[1], lg[2] - lt, F + 0.95, lg[1] + 0.12, { ao: false, faces: 'ts', tint: [0.5, 0.47, 0.43] });
+  wb.box('ashlar', lg[0], F + 0.85, lg[1] + 0.12, lg[0] + 0.12, F + 0.95, lg[3] - lt, { ao: false, faces: 'te', tint: [0.5, 0.47, 0.43] });
   col.add(lg[0], F, lg[1], lg[2], F + 0.95, lg[3]);
-  wb.box('timber', 27.2, F + 0.95, -57.9, 30.2, F + 1.35, -57.5, { ao: false, faces: 'tnsewb' });
-  wb.box('timber', 28.5, F + 0.95, -57.9, 28.9, TOP, -57.5, { ao: false, faces: 'nsew' });
-  wb.box('ashlar', 29.4, F + 0.95, -58.4, 30.4, F + 1.55, -57.0, { ao: false, faces: 'tnsew' });
-  P.cask(ctx, 36.9, F, -49.2, Math.PI / 2, { room, r: 0.55, len: 1.3 });
-  P.cask(ctx, 36.9, F, -51.0, Math.PI / 2, { room, r: 0.55, len: 1.3 });
-  P.cask(ctx, 27.0, F, -36.2, 0, { room, r: 0.5, len: 1.2 });
-  P.sacks(ctx, 36.8, F, -35.9, 4, 6090);
+  ctx.waters.push({ shape: 'rect', r: [lg[0] + 0.1, lg[1] + 0.1, lg[2] - lt, lg[3] - lt], y: F + 0.72, deep: 0x120204, sky: 0x2a0a0c, glint: 0xb07068, light: [29.5, TOP, -38.5], lightK: 0.35 });
+  // la viga de la prensa sobre la pila, el husillo hasta la bóveda y el
+  // contrapeso en el suelo
+  wb.box('timber', 26.2, F + 0.95, -57.9, 31.2, F + 1.3, -57.5, { ao: false, faces: 'tnsewb' });
+  wb.box('timber', 28.5, F + 1.3, -57.9, 28.9, TOP, -57.5, { ao: false, faces: 'nsew' });
+  wb.box('ashlar', 31.5, F, -58.3, 32.4, F + 0.55, -57.2, { ao: false, faces: 'tnsew', tint: [0.46, 0.44, 0.4] });
+  col.add(31.5, F, -58.3, 32.4, F + 0.55, -57.2);
   P.bones(ctx, 32.4, F, -47.6, 12, 6091, 1.4);
-  wb.box('blood', 30.6, F + 0.012, -49.2, 34.1, F + 0.02, -45.9, { faces: 't', ao: false, grime: false, tint: [0.26, 0.1, 0.1] });
+  pool(ctx, 32.3, -47.6, 1.3, 6103);
   P.fleshGrowth(ctx, 26.4, F, -52.5, 1.1, 6092, { room, climb: 2.4 });
   P.fleshGrowth(ctx, 37.6, F, -36.2, 0.9, 6093, { room, climb: 2 });
   bakeCorpse(wb, 35.8, F, -58.6, 2.8, 'back', 'soldier', 9);
@@ -488,8 +505,8 @@ export function buildCellar(ctx, B, L, o = {}) {
     [34.5, -56.5],
   ]) {
     // rejilla del desagüe de la calle, en lo alto de la bóveda
-    wb.box('black', x - 0.5, TOP - 0.03, z - 0.5, x + 0.5, TOP - 0.01, z + 0.5, { faces: 'b', ao: false, grime: false });
-    for (let k = -2; k <= 2; k++) wb.box('iron', x + k * 0.2 - 0.025, TOP - 0.08, z - 0.5, x + k * 0.2 + 0.025, TOP - 0.02, z + 0.5, { ao: false });
+    wb.box('black', x - 0.5, TOP - 0.05, z - 0.5, x + 0.5, TOP - 0.04, z + 0.5, { faces: 'b', ao: false, grime: false });
+    for (let k = -2; k <= 2; k++) wb.box('iron', x + k * 0.2 - 0.025, TOP - 0.1, z - 0.5, x + k * 0.2 + 0.025, TOP - 0.055, z + 0.5, { ao: false });
     if (ctx.shafts) ctx.shafts.push({ a: [x, TOP, z], b: [x + 0.4, F + 0.1, z + 0.3], w: 0.9, color: 0x8898b0 });
     ctx.lights.push({ x, y: F + 1.4, z, r: 0.55, g: 0.62, b: 0.75, radius: 6, intensity: 0.45, room });
   }
@@ -512,15 +529,6 @@ export function buildCellar(ctx, B, L, o = {}) {
   // ---------------------------------------------------------- Cripta de los canónigos
   // sepulcros a los dos lados (el centro, libre), dos santos velados junto a
   // la palanca y hornacinas con calaveras en el pasillo
-  for (const [x, z, open] of [
-    [43.5, -77.2, false],
-    [43.5, -80.8, true],
-    [54.5, -77.2, true],
-    [54.5, -80.8, false],
-  ])
-    P.sarcophagus(ctx, x, F, z, 0, { open, effigy: !open });
-  P.veiledStatue(ctx, 46.2, F, -82.2, 0, { ped: 0.7 });
-  P.veiledStatue(ctx, 51.8, F, -82.2, 0, { ped: 0.7 });
   for (const z of [-66, -69.5]) {
     P.niche(ctx, 43, F, z, 'e', { room, unlit: true });
     P.niche(ctx, 45.5, F, z - 1.5, 'w', { room, unlit: true });
@@ -534,21 +542,21 @@ export function buildCellar(ctx, B, L, o = {}) {
   // ---------------------------------------------------------- cisterna
   // columnas romanas, el aljibe (agua negra en su pila) y el pozo
   for (const [x, z] of [
-    [52.5, -53.5],
-    [58.5, -53.5],
+    [52.5, -51.2],
+    [58.5, -51.2],
   ])
     P.column(ctx, x, F, z, TOP - F - 0.6, 0.45, { mat: 'mossstone' });
-  const pool = [50.2, -59.6, 61.4, -56.4];
+  const aj = [50.2, -59.8, 61.8, -58.1];
   const rim = 0.5;
   for (const [a, b, c, d] of [
-    [pool[0], pool[1], pool[2], pool[1] + 0.3],
-    [pool[0], pool[3] - 0.3, pool[2], pool[3]],
-    [pool[0], pool[1], pool[0] + 0.3, pool[3]],
-    [pool[2] - 0.3, pool[1], pool[2], pool[3]],
+    [aj[0], aj[1], aj[2], aj[1] + 0.3],
+    [aj[0], aj[3] - 0.3, aj[2], aj[3]],
+    [aj[0], aj[1], aj[0] + 0.3, aj[3]],
+    [aj[2] - 0.3, aj[1], aj[2], aj[3]],
   ])
     wb.box('mossstone', a, F, b, c, F + rim, d, { sub: 2, faces: 'tnsew', aoH: 0.4, tint: [0.44, 0.46, 0.42] });
-  col.add(pool[0], F, pool[1], pool[2], F + rim, pool[3]);
-  ctx.waters.push({ shape: 'rect', r: [pool[0] + 0.3, pool[1] + 0.3, pool[2] - 0.3, pool[3] - 0.3], y: F + rim - 0.1, light: [Wl.x, F + 5, Wl.z], lightK: 0.8, sky: 0x1c2228 });
+  col.add(aj[0], F, aj[1], aj[2], F + rim, aj[3]);
+  ctx.waters.push({ shape: 'rect', r: [aj[0] + 0.3, aj[1] + 0.3, aj[2] - 0.3, aj[3] - 0.3], y: F + rim - 0.1, light: [Wl.x, F + 5, Wl.z], lightK: 0.8, sky: 0x1c2228 });
   wellBottom(ctx, Wl.x, Wl.z, room);
   ctx.waters.push({ shape: 'circle', x: Wl.x, z: Wl.z, r: 1.02, y: F + 0.62, light: [Wl.x + 0.2, 0.5, Wl.z + 0.1], lightK: 1.2, spot: [Wl.x + 0.1, Wl.z + 0.05, 0.75, 0.9] });
   P.fleshGrowth(ctx, 61.5, F, -48.1, 0.9, 6084, { room, climb: 2 });
@@ -591,7 +599,7 @@ export function buildCellar(ctx, B, L, o = {}) {
     wb.box('ashlar', r[0], F, r[1], r[2], F + 0.25, r[3], { ao: false, faces: 'tnsew' });
     P.chains(ctx, px(0, 0.2), t - 0.02, pz(0, 0.2), Math.round((t - (F + 1.95)) / 0.06), 0);
     r = bx(-0.2, 0.02, 0.2, 0.4);
-    wb.box('black', r[0], t - 0.02, r[1], r[2], t, r[3], { faces: 'b', ao: false, grime: false });
+    wb.box('black', r[0], t - 0.05, r[1], r[2], t - 0.04, r[3], { faces: 'b', ao: false, grime: false });
     // una vela de ánimas al pie (se ve desde lejos)
     P.candles(ctx, px(0.55, 0.3), F, pz(0.55, 0.3), 2, 6100 + Math.round(Lv.x), { room, radius: 3, intensity: 0.45, spread: 0.08 });
   }
@@ -616,8 +624,53 @@ export function buildCellar(ctx, B, L, o = {}) {
       [-41.3, -39.3],
     ])
       L.breakables.push({ id: `estante${Math.round(x)}${Math.round(-z0)}`, kind: 'rack', x, z: (z0 + z1) / 2, y: F, hx: 0.55, hz: (z1 - z0) / 2, h: 2.4, room });
+  // toneles (tumbados en su cuna; along: a lo largo de z) y sacos: él los
+  // arrasa al pasar; tú, a golpes
+  [
+    [65.1, -38.0, true, 0.5, 1.2],
+    [65.1, -44.6, true, 0.5, 1.2],
+    [41.0, -40.0, false, 0.48, 1.1],
+    [50.1, -41.6, false, 0.48, 1.1],
+    [36.9, -49.2, true, 0.55, 1.3],
+    [36.9, -51.0, true, 0.55, 1.3],
+    [27.0, -36.2, false, 0.5, 1.2],
+    [28.6, -36.3, false, 0.5, 1.2],
+    [27.1, -43.6, true, 0.52, 1.25],
+    [36.9, -39.2, true, 0.5, 1.2],
+    [33.6, -59.3, false, 0.5, 1.2],
+    [40.4, -58.6, true, 0.5, 1.2],
+    [46.2, -59.2, false, 0.46, 1.1],
+  ].forEach(([x, z, along, r, len], i) =>
+    L.breakables.push({ id: 'tonel' + i, kind: 'cask', x, z, y: F, rot: along ? Math.PI / 2 : 0, r, len, hx: along ? r : len / 2 + 0.1, hz: along ? len / 2 + 0.1 : r, h: r * 2 + 0.1, room })
+  );
+  [
+    [50.2, -46.0],
+    [36.8, -35.9],
+    [30.4, -36.0],
+    [64.9, -41.4],
+  ].forEach(([x, z], i) => L.breakables.push({ id: 'sacos' + i, kind: 'sacks', x, z, y: F, hx: 0.55, hz: 0.55, h: 0.85, room }));
+  // los sepulcros de la cripta y sus dos santos: si te escondes detrás, los
+  // revienta
+  [
+    [43.5, -77.2, false],
+    [43.5, -80.8, true],
+    [54.5, -77.2, true],
+    [54.5, -80.8, false],
+  ].forEach(([x, z, open], i) => L.breakables.push({ id: 'sepulcro' + i, kind: 'tomb', x, z, y: F, open, hx: 1.3, hz: 0.62, h: 1.1, room }));
+  [46.2, 51.8].forEach((x, i) => L.breakables.push({ id: 'santo' + i, kind: 'statue', x, z: -82.2, y: F, hx: 0.55, hz: 0.55, h: 2.9, room }));
 
   wb.setRoom(null);
+}
+
+// Charco de sangre (o de vino): varias manchas solapadas, nunca un cuadrado.
+function pool(ctx, x, z, R, seed) {
+  const rng = new RNG(seed);
+  P.decal(ctx, x, F + 0.02, z, R * 2, 'splat', rng.range(0, 6));
+  for (let i = 0; i < 4; i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = rng.range(0.4, 0.9) * R;
+    P.decal(ctx, x + Math.cos(a) * d, F + 0.021 + i * 0.001, z + Math.sin(a) * d, R * rng.range(0.6, 1.1), 'splat', rng.range(0, 6));
+  }
 }
 
 // Techo de la región en (x, z) mientras se construye.
@@ -646,7 +699,8 @@ function wellBottom(ctx, x, z, room) {
     wb.quad('ashlar', V(x + c1 * R, F + h, z + s1 * R), V(x + c0 * R, F + h, z + s0 * R), V(x + c0 * rIn, F + h, z + s0 * rIn), V(x + c1 * rIn, F + h, z + s1 * rIn), { ao: false, sub: 3, room });
     wb.quad('mossstone', V(x + c0 * rIn, F + 0.2, z + s0 * rIn), V(x + c1 * rIn, F + 0.2, z + s1 * rIn), V(x + c1 * rIn, F + h, z + s1 * rIn), V(x + c0 * rIn, F + h, z + s0 * rIn), { ao: true, aoH: 0.5, aoMin: 0.2, baseY: F + 0.2, sub: 3, room });
   }
-  ctx.col.add(x - R, F, z - R, x + R, F + h, z + R);
+  // (colisión octogonal: una caja cuadrada dejaba esquinas invisibles)
+  for (let k = 0; k < 4; k++) ctx.col.addOBB(x, z, R, R * 0.414, (k * Math.PI) / 4, F, F + h);
   // tiro cuadrado de 1,5 m (cabe dentro del brocal de arriba) hasta la calle
   const s = 0.75,
     y0 = TOP,

@@ -1091,6 +1091,8 @@ export const TYPES = {
     onReset: descReset,
     onHit: descOnHit,
     preHit: descPreHit,
+    // patas arriba (tras estrellarse o soltarte de su agarrón): crítico seguro
+    critWhen: (e) => !!(e.D && e.D.mode === 'down'),
     // (su muerte es larga: se le parten los miembros uno a uno)
     deathDur: 9.8,
   },

@@ -42,13 +42,18 @@ export class Combat {
       player.hitSet.add(e);
       // por la espalda o sin que se lo espere: golpe crítico
       const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
-      const crit = !e.boss && (!e.aware || behind);
+      // (y el Descoyuntado tirado patas arriba: todo golpe es crítico)
+      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e));
       // atkMul: pesado cargado; crit: el facón hiere más por la espalda
       const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
       if (crit && r !== 'blocked' && r !== 'none') {
         g.hitstop = Math.max(g.hitstop, 0.14);
         g.fx.blood.emit(e.pos.x, e.pos.y + Math.min(1.3, e.T.height * 0.55), e.pos.z, 24, { speed: 5 });
+        if (e.boss) {
+          g.camRig.shake(0.35);
+          g.audio && g.audio.play('boneCrack', e.pos, { k: 1.2 });
+        }
       }
       const hx = e.pos.x - (dx / d) * e.body.radius * 0.6,
         hy = e.pos.y + Math.min(1.3, e.T.height * 0.55),

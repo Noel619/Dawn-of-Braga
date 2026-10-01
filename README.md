@@ -82,13 +82,17 @@ el Lagar (una sala enorme y diáfana, con la pila de pisar la uva y la luz páli
 calle), la antecámara, la Cripta de los canónigos con sus sepulcros y santos velados, y el osario, con las paredes
 de calaveras, que da la vuelta hasta la cripta. Los pasillos forman varios anillos, así que siempre hay otro camino
 (para ti y para él). La puerta de arriba queda atrancada; la única salida es el pozo del Postigo, al fondo de la
-cisterna vieja, donde el agua negra refleja tu farol. Pero la cisterna la cierra un rastrillo colgado de tres
+cisterna vieja (al fondo, lejos de la reja), donde el agua negra refleja tu farol. Pero la cisterna la cierra un rastrillo colgado de tres
 cadenas, y cada cadena de una palanca: una en el Lagar, otra en la cripta y la última al fondo del ramal ciego del
 osario (lo cuenta la orden del canónigo al maestro de obras, en la mano de éste, muerto junto al rastrillo). Echar
-una palanca cuesta tiempo y hace ruido: la cadena corre por la bóveda y él la oye desde cualquier rincón. Con las
+una palanca cuesta unos siete segundos y medio de tirones y hace ruido: la cadena corre por la bóveda y él la oye
+desde cualquier rincón; si te golpea (o la sueltas para esquivar), el mango vuelve a subir poco a poco. Con las
 tres echadas, el rastrillo sube y se puede trepar por los pates del pozo hasta la calle (y, una vez descubierto,
-volver a bajar por él). Los pilares aguantan un par de embestidas antes de venirse abajo, y las estanterías se
-parten en astillas. Cada vez que vuelves a bajar, alguien cierra de un portazo allá arriba.
+volver a bajar por él). Casi todo se rompe: los pilares aguantan un par de embestidas antes de venirse abajo, los
+sepulcros y los santos de la cripta revientan si te escondes detrás, y los toneles, los sacos y las estanterías
+saltan en astillas (a tus golpes, o cuando él pasa, barre o carga). Si mueres, todo vuelve a estar como estaba
+(palancas arriba, rastrillo bajado, nada roto); sólo si lo matas los cambios son para siempre. Cada vez que vuelves
+a bajar, alguien cierra de un portazo allá arriba.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -163,15 +167,17 @@ se encadena el anterior.
   escudriña, se tuerce sola y tiembla de rabia. Cada golpe tiene preparación, golpe y recuperación con inercia:
   zarpazo, doble zarpazo, barrido bajo, las dos manos contra el suelo (onda de choque), mordisco con el cuello
   estirado, salto, carga al galope, giro con los brazos abiertos, agarrón con mordiscos (se forcejea para soltarse),
-  el crujido de todas sus articulaciones y huesos lanzados; esquiva con voltereta hacia atrás, salto atrás o de
-  lado, para tus golpes con los antebrazos cruzados y contraataca, cae de espaldas pataleando cuando se estrella y
-  muere a pedazos (se le parten los miembros uno a uno y, al final, la cabeza se le da la vuelta).
+  el crujido de todas sus articulaciones, huesos lanzados y las dos manos contra lo que te esconde (un sepulcro, un
+  santo, un tonel); esquiva con voltereta hacia atrás, salto atrás o de lado, para tus golpes con los antebrazos
+  cruzados y contraataca, cae de espaldas pataleando cuando se estrella contra la piedra o te sueltas de su agarrón
+  (patas arriba, todo golpe es crítico) y muere a pedazos (se le parten los miembros uno a uno y, al final, la
+  cabeza se le da la vuelta). No se queda atascado: si algo le cierra el paso, lo arranca o lo revienta.
   Primero **acecha**: te observa desde la bóveda, se asoma por las esquinas, se mete en las madrigueras de los
   muros, imita tus pasos y la voz del ama, se ríe y te tira huesos, y te embosca cuando le das la espalda, te curas,
   lees o echas una palanca. Tras cada emboscada se queda a pelear un rato. Cada emboscada que le sale mal (la
   esquivas, la paras, le ves venir, le hieres, te sueltas de su agarrón) le frustra; cuando se harta, cuando le has
   hecho bastante daño o cuando echas la tercera palanca, **enloquece**: viene a por ti, se alza, grita y golpea el
-  suelo, y ya no se esconde; tus golpes le hacen la mitad de daño. Enloquecido prefiere pelear en sitios abiertos
+  suelo, y ya no se esconde. Enloquecido prefiere pelear en sitios abiertos
   (si te metes en un pasillo, se aparta a lo ancho y te espera golpeando el suelo) y te lee: aprende qué haces y qué
   sueles hacer después de qué, cuántos golpes tienen tus combos y hacia dónde ruedas cuando te ataca, y lo usa para
   apartarse de un salto cuando vas a golpear y castigarte en la recuperación, cruzar los brazos para parar el resto

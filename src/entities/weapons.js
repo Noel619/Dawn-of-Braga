@@ -119,15 +119,27 @@ function commonClips(W, G, GUARD, BLOCK) {
       [0.6, { chest: [25, 0, 0], armL: [-80, 0, 5], foreL: [-5, 0, 0], armR: [-80, 0, -5], foreR: [-5, 0, 0], legL: [-35, 0, 0], shinL: [20, 0, 0], legR: [30, 0, 0], shinR: [10, 0, 0] }],
       [0.8, { ...GUARD }],
     ]),
-    // echar una palanca de pared: la agarra en alto y la baja con todo el cuerpo
-    pull: clip('pull', 1.5, [
-      [0, { ...GUARD }],
-      [0.28, { chest: [-8, 0, 0], head: [-15, 0, 0], armL: [-155, 0, 8], foreL: [-20, 0, 0], armR: [-155, 0, -8], foreR: [-20, 0, 0], legL: [-10, 0, 0], shinL: [10, 0, 0], legR: [15, 0, 0], shinR: [5, 0, 0] }],
-      [0.5, { chest: [-4, 0, 0], head: [-10, 0, 0], armL: [-150, 0, 8], foreL: [-30, 0, 0], armR: [-150, 0, -8], foreR: [-30, 0, 0], legL: [-20, 0, 0], shinL: [25, 0, 0], legR: [15, 0, 0], shinR: [20, 0, 0], root: [0, -8, 0] }],
-      [1.05, { chest: [28, 0, 0], head: [15, 0, 0], armL: [-60, 0, 10], foreL: [-25, 0, 0], armR: [-60, 0, -10], foreR: [-25, 0, 0], legL: [-45, 0, 0], shinL: [70, 0, 0], legR: [10, 0, 0], shinR: [55, 0, 0], root: [0, -30, 0] }],
-      [1.28, { chest: [32, 0, 0], head: [20, 0, 0], armL: [-40, 0, 10], foreL: [-20, 0, 0], armR: [-40, 0, -10], foreR: [-20, 0, 0], legL: [-45, 0, 0], shinL: [70, 0, 0], legR: [10, 0, 0], shinR: [55, 0, 0], root: [0, -30, 0] }],
-      [1.5, { ...GUARD }],
-    ]),
+    // echar una palanca de pared: la agarra en alto y la baja a tirones, con
+    // todo el cuerpo (siete tirones; las manos, cada vez más abajo)
+    pull: clip(
+      'pull',
+      7.6,
+      (() => {
+        const arm = (u) => -155 + 115 * u;
+        const K = [[0, { ...GUARD }]];
+        K.push([0.28, { chest: [-8, 0, 0], head: [-15, 0, 0], armL: [-155, 0, 8], foreL: [-20, 0, 0], armR: [-155, 0, -8], foreR: [-20, 0, 0], legL: [-10, 0, 0], shinL: [10, 0, 0], legR: [15, 0, 0], shinR: [5, 0, 0] }]);
+        for (let i = 0; i < 7; i++) {
+          const t0 = 0.3 + i * (7.0 / 7);
+          const u0 = i / 7,
+            u1 = (i + 1) / 7;
+          // se afianza (tensión, casi quieto) y da el tirón
+          K.push([t0 + 0.45, { chest: [-6 + u0 * 20, 0, 0], head: [-10 + u0 * 20, 0, 0], armL: [arm(u0), 0, 8], foreL: [-30, 0, 0], armR: [arm(u0), 0, -8], foreR: [-30, 0, 0], legL: [-25, 0, 0], shinL: [30, 0, 0], legR: [18, 0, 0], shinR: [22, 0, 0], root: [0, -10, 0] }]);
+          K.push([t0 + 0.85, { chest: [10 + u1 * 24, 0, 0], head: [5 + u1 * 15, 0, 0], armL: [arm(u1), 0, 10], foreL: [-22, 0, 0], armR: [arm(u1), 0, -10], foreR: [-22, 0, 0], legL: [-42, 0, 0], shinL: [62, 0, 0], legR: [10, 0, 0], shinR: [50, 0, 0], root: [0, -26, 0] }]);
+        }
+        K.push([7.6, { ...GUARD }]);
+        return K;
+      })()
+    ),
     rest: clip('rest', 1.0, [[0, { root: [0, -48, 0], chest: [22, 0, 0], head: [35, 0, 0], legL: [-95, 0, 6], shinL: [95, 0, 0], legR: [5, 0, -4], shinR: [100, 0, 0], armR: [-48, 0, -6], foreR: [-45, 0, 0], handR: [60, 0, 0], armL: [-48, 0, 6], foreL: [-60, 0, 0] }]], { ground: false }),
     wake: clip(
       'wake',

@@ -474,7 +474,7 @@ export function buildCanon(ctx, S, B, L) {
     ...CELLAR.levers.map((l) => ({ kind: 'lever', id: l.id, x: l.ix, y: Y, z: l.iz, nx: l.nx, nz: l.nz, where: l.where, gate: 'd_rastrillo', r: 1.8 })),
     // la salida: trepar por el pozo del Postigo (y, ya fuera, volver a bajar)
     { kind: 'climb', id: 'x_pozo', x: CELLAR.well.x, y: Y, z: CELLAR.well.z, r: 2.3 },
-    { kind: 'well', id: 'x_pozo_calle', x: CELLAR.well.x, y: 0, z: CELLAR.well.z, r: 2.3 }
+    { kind: 'well', id: 'x_pozo_calle', x: CELLAR.streetWell.x, y: 0, z: CELLAR.streetWell.z, r: 2.3 }
   );
   L.enemies.push(
     { type: 'crawler', x: 52, y: 2.6, z: -18, yaw: 0, idle: 'ceiling', id: 'e_canon1' },

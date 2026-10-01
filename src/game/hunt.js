@@ -103,7 +103,7 @@ export class CellarHunt {
     if (n >= 3 && b.D.startRage) b.D.startRage('escape');
   }
 
-  // Enloquece: ya no se esconde (y tus golpes le hacen la mitad de daño).
+  // Enloquece: ya no se esconde.
   onRage(reason) {
     const g = this.g;
     g.ui.toast(reason === 'escape' ? 'Algo chilla en la oscuridad: sabe que te escapas.' : 'El Descoyuntado enloquece. Ya no se esconde.', 4.5);

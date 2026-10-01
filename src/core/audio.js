@@ -1194,6 +1194,30 @@ export class Audio {
         this.jingle(d, t + 1.3, 0.5, 0.22, 0.8);
         break;
       }
+      // un tirón de la palanca: el hierro cede un palmo, chirriando
+      case 'leverCreak': {
+        d = this.out(P, { gain: 0.8, verb: 0.45, life: 2.5, ref: 4 });
+        this.creak(d, t + 0.35, 0.6, rnd(50, 80), 0.24);
+        this.noise(d, t + 0.35, 0.5, { type: 'lowpass', f0: 380, gain: 0.2, a: 0.05, buf: this.brown, rate: 3, curve: 'lin' });
+        this.jingle(d, t + 0.8, 0.2, 0.1, 0.8);
+        break;
+      }
+      // abajo del todo: encaja
+      case 'leverClunk': {
+        d = this.out(P, { gain: 0.9, verb: 0.5, life: 3, ref: 5 });
+        this.metal(d, t, 240, 0.3, 1, { ratios: [1, 2.4, 4.1] });
+        this.tone(d, t, 0.25, { f0: 120, f1: 55, gain: 0.6 });
+        this.jingle(d, t + 0.05, 0.5, 0.22, 0.8);
+        break;
+      }
+      // un saco que revienta: arpillera rasgada y el grano que cae
+      case 'sackTear': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2.5 });
+        this.noise(d, t, 0.25, { type: 'highpass', f0: 1800, gain: 0.25, a: 0.01, curve: 'lin' });
+        this.noise(d, t + 0.1, 1.2, { f0: 3000, f1: 1500, q: 0.8, gain: 0.18, a: 0.05, buf: this.pink, curve: 'lin' });
+        this.tone(d, t, 0.2, { f0: 110, f1: 60, gain: 0.35 });
+        break;
+      }
       // la cadena corre por encima, dentro de la bóveda
       case 'chainRun': {
         d = this.out(P, { gain: 0.8 * (o.k ?? 1), verb: 0.6, life: 3, ref: 6 });

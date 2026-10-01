@@ -260,7 +260,7 @@ export class Player {
   }
 
   // 'smash': golpe de arriba abajo (romper un mueble); 'yaw' encara el objeto.
-  playInteract(kind = 'interact', yaw = null) {
+  playInteract(kind = 'interact', yaw = null, dur = null) {
     this.state = 'interact';
     this.stT = 0;
     this.vx = this.vz = 0;
@@ -269,7 +269,7 @@ export class Player {
     // el golpe para romper es el pesado del arma que se empuña
     const smash = this.set.heavy[0].clip;
     this.anim.play(kind === 'push' ? this.clips.push : kind === 'smash' ? smash : kind === 'lever' ? this.clips.pull : this.clips.interact, { blend: 0.12 });
-    this.interactDur = kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : kind === 'lever' ? 1.45 : 0.7;
+    this.interactDur = dur ?? (kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : kind === 'lever' ? 7.45 : 0.7);
   }
 
   startRest() {
@@ -691,7 +691,11 @@ export class Player {
         turnRate = 16;
       }
       if (this.interactKind === 'smash' && this.stT > 0.4 && this.stT < 0.6) this.swinging = true;
-      if (this.stT >= this.interactDur) {
+      // (una palanca se puede soltar: apartarse o cubrirse)
+      if (this.interactKind === 'lever' && this.stT > 0.25 && allowControl && (input.pressed('dodge') || input.pressed('block'))) {
+        this.state = 'free';
+        this.anim.stop(0.15);
+      } else if (this.stT >= this.interactDur) {
         this.state = 'free';
         this.anim.stop(0.2);
       }

@@ -15,7 +15,7 @@
 //
 // FURIA. Cuando se harta (demasiadas emboscadas fallidas, demasiado daño o
 // echas la tercera palanca), enloquece: viene a por ti, se alza, grita,
-// golpea el suelo, y ya no se esconde. Tus golpes le hacen la mitad de daño.
+// golpea el suelo, y ya no se esconde (y apenas trastabilla con tus golpes).
 // Prefiere pelear en sitios abiertos (el Lagar, la cripta): si te metes en
 // un pasillo, se aparta a lo ancho y te espera golpeando el suelo, y si no
 // sales, entra. Y aprende de ti: lleva la cuenta de lo que haces (golpes
@@ -563,6 +563,15 @@ export const MIND = {
         bz = e.pos.z;
       moveBody(g.world.col, e.body, e.vx * dt, e.vz * dt, dt);
       this.lastMoved = Math.hypot(e.pos.x - bx, e.pos.z - bz);
+      // a la carrera, lo de madera o de saco que se le cruza lo arrasa
+      const sp = Math.hypot(e.vx, e.vz);
+      if (sp > 3.8 && this.plane === 'floor' && this.lastMoved < sp * dt * 0.6 && g.breakables) {
+        const br = g.breakables.contact(e.pos.x, e.pos.z, e.body.radius + 0.3, e.vx / sp, e.vz / sp, e.pos.y);
+        if (br && br.light) {
+          g.breakables.shatter(br, e.pos);
+          g.camRig.shake(0.2);
+        }
+      }
       // no atravesar al jugador (salvo desde el techo)
       if (this.plane === 'floor' && !p.dead && !(this.atk && this.atk.name === 'grab' && this.grabbed)) {
         const dx = e.pos.x - p.pos.x,
@@ -904,7 +913,8 @@ export const MIND = {
       const dd = this.moveTo(bx, bz, 5.6, dt);
       if (dd < 1.3 || (d < 2.4 && this.behind)) return this.startAttack('drop');
     } else if (!this.air) {
-      // por el suelo, agazapado
+      // por el suelo, agazapado (y si algo le cierra el paso, lo revienta)
+      if (this.clearWay(dt)) return;
       this.T.h = 0.72;
       const spd = this.seen ? 5.6 : d > 9 ? 5 : 3.4;
       this.moveTo(p.pos.x, p.pos.z, spd, dt);
@@ -945,16 +955,8 @@ export const MIND = {
     const rage = this.stage === 'rage';
     // al acecho, se retira herido o harto (para volver cuando menos lo esperes)
     if (!rage && (this.engageDmg > e.maxHp * 0.1 || this.engageT > this.fightDur)) return this.startRetreat();
-    // ¿se escuda tras un pilar? lo arranca
-    const sh = g.breakables && g.breakables.between(e.pos.x, e.pos.z, p.pos.x, p.pos.z, e.pos.y);
-    if (sh && sh.kind === 'pillar' && d < 5) {
-      const pd = Math.hypot(p.pos.x - sh.x, p.pos.z - sh.z);
-      if (pd < 2.6) this.shieldT += dt * (1 + this.ripCount * 0.8);
-    } else this.shieldT = Math.max(0, this.shieldT - dt * 0.5);
-    if (sh && this.shieldT > (rage ? 0.8 : 1.1) && this.cool <= 0.3) {
-      this.ripTarget = sh;
-      return this.startAttack('rip');
-    }
+    // ¿te escondes tras algo, o algo le cierra el paso? lo revienta
+    if (this.clearWay(dt, rage)) return;
     // castiga que te cures
     if (p.state === 'heal' && this.cool < 0.6) {
       if (d < 3) return this.startAttack('claw');
@@ -969,6 +971,44 @@ export const MIND = {
     // distancia: se acerca, rodea o recula (enloquecido, buscando lo ancho)
     if (d > (rage ? 5 : 4.2) || !this.los) this.moveTo(p.pos.x, p.pos.z, d > 7 ? (rage ? 6.5 : 5) : 3.4, dt);
     else this.circleAround(dt, rage);
+  },
+  // Lo que se interpone: si te escudas tras un pilar, un sepulcro, un santo o
+  // un tonel, o si quiere llegar hasta ti y algo le atasca, lo arranca o lo
+  // revienta. true si ha empezado a hacerlo.
+  clearWay(dt, rage = this.stage === 'rage') {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    const B = g.breakables;
+    if (!B || this.air || this.plane !== 'floor') return false;
+    const d = this.dist;
+    const sh = d < 8 ? B.between(e.pos.x, e.pos.z, p.pos.x, p.pos.z, e.pos.y) : null;
+    if (sh && B.edgeDist(sh, p.pos.x, p.pos.z) < 2.8) this.shieldT += dt * (1 + this.ripCount * 0.6);
+    else this.shieldT = Math.max(0, this.shieldT - dt * 0.5);
+    // atascado: quiere acercarse y no avanza
+    const blocked = d > 3.2 && this.closing < 0.35 && this.lastMoved !== undefined && this.lastMoved < 0.02 && Math.hypot(e.vx, e.vz) > 0.5;
+    this.wedgeT = blocked ? (this.wedgeT || 0) + dt : Math.max(0, (this.wedgeT || 0) - dt);
+    let target = null;
+    if (sh && this.shieldT > (rage ? 0.6 : 0.9)) target = sh;
+    else if (this.wedgeT > 1) {
+      target = B.ahead(e.pos.x, e.pos.z, (p.pos.x - e.pos.x) / (d || 1), (p.pos.z - e.pos.z) / (d || 1), 2.6, e.pos.y);
+      if (!target) {
+        // nada que romper: otro camino
+        this.wedgeT = 0;
+        this.path = null;
+      }
+    }
+    if (!target || this.cool > 0.4) return false;
+    this.shieldT = 0;
+    this.wedgeT = 0;
+    if (target.kind === 'pillar') {
+      this.ripTarget = target;
+      this.startAttack('rip');
+    } else {
+      this.smashTarget = target;
+      this.startAttack('smash');
+    }
+    return true;
   },
   circleAround(dt, rage) {
     const e = this.e,
@@ -1281,7 +1321,10 @@ export const MIND = {
         return;
       }
       if (d <= 3.5) this.moveTo(e.pos.x + (e.pos.x - p.pos.x), e.pos.z + (e.pos.z - p.pos.z), 4, dt, false);
-      else this.moveTo(p.pos.x, p.pos.z, 6.8, dt);
+      else {
+        if (this.clearWay(dt, true)) return;
+        this.moveTo(p.pos.x, p.pos.z, 6.8, dt);
+      }
       this.faceTo(p.pos.x, p.pos.z, 6, dt);
       return;
     }
@@ -1565,11 +1608,8 @@ export const MIND = {
     }
     let k = 1,
       pk = 1;
-    if (this.mode === 'down') k *= 1.35;
-    if (this.stage === 'rage') {
-      k *= 0.5;
-      pk *= 0.55;
-    }
+    // (enloquecido aguanta más sin trastabillar, pero el daño es el mismo)
+    if (this.stage === 'rage') pk *= 0.7;
     // al alzarse y gritar no se le interrumpe
     if (this.mode === 'rageIntro') pk = 0;
     return { dmg: Math.max(1, Math.round(dmg * k)), poise: poise * pk };

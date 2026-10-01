@@ -825,7 +825,9 @@ export function buildRamparts(ctx, S, L) {
   house(ctx, { x0: 44, z0: -45, x1: 64, z1: -40, front: 'n', seed: 703, h: 6.2 });
   stoneWall(ctx, 40, -62, 48.5, -59.5, 5);
   stoneWall(ctx, 62, -56, 64, -45, 4);
-  P.well(ctx, 55, 0, -50);
+  // (el pozo cae a plomo sobre la cisterna del canónigo, al fondo, lejos del
+  // rastrillo)
+  P.well(ctx, 55, 0, -54);
   P.cart(ctx, 47, 0, -47.5, 0.2, {});
   P.hay(ctx, 59.5, 0, -47, 0.3);
   bakeCorpse(wb, 51, 0, -52, 0.4, 'back', 'soldier', 12);
@@ -834,9 +836,9 @@ export function buildRamparts(ctx, S, L) {
   // advertencia de los sitiadores y restos del asalto
   P.stake(ctx, 45.3, 0, -52.6, 0.9, 5);
   P.stake(ctx, 45.6, 0, -55.2, -0.4, 6);
-  P.tent(ctx, 58.2, 0, -53.4, 2.6, 'clothDark');
+  P.tent(ctx, 59.4, 0, -51.8, 2.6, 'clothDark');
   P.firewood(ctx, 50.2, 0, -45.55, Math.PI / 2, 3);
-  P.dropped(ctx, 53.3, 0, -53.2, 1.9, 'sword');
+  P.dropped(ctx, 51.8, 0, -55.2, 1.9, 'sword');
   P.dropped(ctx, 49.4, 0, -50.7, 0.6, 'shield');
   P.arrows(ctx, 56.2, 0, -48.2, 6, 63, 1.3);
   P.laundry(ctx, 30.5, -49.95, 30.5, -45.55, 4.4, 17);

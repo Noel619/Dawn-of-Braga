@@ -650,6 +650,9 @@ export class Game {
     this.cine = null;
     this.endCutscene();
     this.hunt.reset();
+    // mientras el canónigo siga vivo, sus bodegas vuelven a estar como
+    // estaban: palancas arriba, rastrillo bajado y todo entero otra vez
+    if (!this.flags['boss:descoyuntado']) this.resetCellar();
     this.climb = null;
     const b = this.activeBoss;
     this.activeBoss = null;
@@ -679,6 +682,16 @@ export class Game {
     const c = this.cutscene;
     this.cutscene = null;
     if (c) c.end();
+  }
+
+  // Las bodegas, como al principio de la caza (tras morir en ellas).
+  resetCellar() {
+    const F = this.flags;
+    for (const k of Object.keys(F)) if (k.startsWith('lever:')) delete F[k];
+    delete F['door:d_rastrillo'];
+    for (const it of this.breakables.list) delete F['broken:' + it.id];
+    this.breakables.applyFlags(F, true);
+    for (const it of this.interact.list) if (it.kind === 'lever' || it.id === 'd_rastrillo') this.interact.reset(it);
   }
 
   // Una palanca del rastrillo de la cisterna: la cadena corre por la bóveda
@@ -746,13 +759,14 @@ export class Game {
     }
     if (c.t < 1.25) return;
     this.climb = null;
-    const W = CELLAR.well;
+    const W = CELLAR.well,
+      SW = CELLAR.streetWell;
     if (c.dir === 'up') {
-      p.spawn(W.x, 0, W.z + 1.75, 0);
+      p.spawn(SW.x, 0, SW.z + 1.75, 0);
       this.flags['pozo:salida'] = true;
       this.hunt.stop();
       this.ui.toast('Sales por el pozo del Postigo. Abajo, algo chilla y se revuelve.', 4.5);
-      setTimeout(() => this.audio.play('dropCry', { x: W.x, y: -4, z: W.z }), 700);
+      setTimeout(() => this.audio.play('dropCry', { x: SW.x, y: -4, z: SW.z }), 700);
     } else {
       p.spawn(W.x - 1.9, CELLAR.FLOOR, W.z, -Math.PI / 2);
       this.ui.toast('Bajas por los pates de hierro hasta la cisterna.', 3.5);

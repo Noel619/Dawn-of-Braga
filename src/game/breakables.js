@@ -1,9 +1,11 @@
-// Cosas que se rompen: los pilares de la sala del altar y del Lagar (el
-// Descoyuntado los arranca si te escudas tras ellos, y revientan si se
-// estrella dos veces contra ellos) y los estantes de toneles de la galería
-// (también los rompes tú). Son mallas propias con la luz horneada
-// del sitio (sonda); al romperse saltan cascotes con una física sencilla,
-// queda un montón de escombros, se quita su colisión y se rehace la
+// Cosas que se rompen en las bodegas: los pilares de la sala del altar y del
+// Lagar (el Descoyuntado los arranca si te escudas tras ellos, y revientan si
+// se estrella dos veces contra ellos), los sepulcros y los santos velados de
+// la cripta (los revienta de un golpe si te escondes detrás), y los toneles,
+// los sacos y los estantes (de madera: también los rompes tú, y él los
+// arrasa al pasar, al barrer o al cargar). Son mallas propias con la luz
+// horneada del sitio (sonda); al romperse saltan cascotes con una física
+// sencilla, quedan los restos, se quita su colisión y se rehace la
 // navegación de la zona.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -11,7 +13,30 @@ import { partGeometry } from '../entities/rig.js';
 import { objMat, cloneMat } from '../gfx/materials.js';
 import { RNG, angleDiff, DEG } from '../core/util.js';
 
-const MAT_TINT = { ashlar: [0.72, 0.7, 0.66], planks: [0.7, 0.62, 0.55], wooddark: [0.8, 0.75, 0.7], wallstone: [0.66, 0.62, 0.58], iron: [1, 1, 1], blood: [0.5, 0.2, 0.25] };
+const MAT_TINT = { ashlar: [0.72, 0.7, 0.66], planks: [0.7, 0.62, 0.55], wooddark: [0.8, 0.75, 0.7], wallstone: [0.66, 0.62, 0.58], iron: [1, 1, 1], blood: [0.36, 0.14, 0.17], burlap: [0.78, 0.72, 0.62], straw: [0.7, 0.62, 0.45], clothWhite: [0.72, 0.7, 0.66], bone: [0.85, 0.82, 0.74], black: [1, 1, 1] };
+
+// Qué es cada cosa: golpes tuyos que aguanta (hp), choques de él que aguanta
+// (crash), de madera o de saco (light: él la arrasa sin detenerse) o de
+// piedra (stone), y su sonido al romperse.
+const KIND = {
+  pillar: { hp: Infinity, crash: 2, stone: true, snd: 'pillarBreak', chunks: 16 },
+  tomb: { hp: Infinity, crash: 1, stone: true, snd: 'wallBreak', chunks: 16 },
+  statue: { hp: Infinity, crash: 1, stone: true, snd: 'pillarBreak', chunks: 12 },
+  wall: { hp: Infinity, crash: 1, stone: true, snd: 'wallBreak', chunks: 18 },
+  rack: { hp: 3, crash: 1, light: true, snd: 'rackBreak', chunks: 12, wine: true },
+  cask: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10, wine: true },
+  sacks: { hp: 1, crash: 1, light: true, snd: 'sackTear', chunks: 8, soft: true },
+};
+
+// Charco irregular (varios discos solapados, nunca un cuadrado).
+function puddle(P, rng, cx, cz, R, mat = 'blood') {
+  for (let i = 0; i < 5; i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = i ? rng.range(0.2, 0.55) * R : 0;
+    const r = (i ? rng.range(0.35, 0.6) : rng.range(0.55, 0.7)) * R;
+    P.push({ type: 'cyl', s: [r, r * rng.range(0.9, 1.05), 0.006], p: [cx + Math.cos(a) * d, 0.012 + i * 0.001, cz + Math.sin(a) * d], sc: [1, 1, rng.range(0.6, 1)], r: [0, rng.range(0, 180), 0], seg: 9, mat });
+  }
+}
 
 // Piezas (en coordenadas locales: origen en el centro de la base) agrupadas
 // por material -> una malla por material.
@@ -90,7 +115,107 @@ function rackRubble(s, rng) {
     P.push({ type: 'cyl', s: [r, r, 0.9], p: [rng.range(-0.9, 0.9), r, rng.range(-L / 2, L / 2)], r: [0, rng.range(0, 180), 90], seg: 9, mat: 'planks' });
   }
   for (let i = 0; i < 10; i++) P.push({ type: 'box', s: [0.12, 0.02, rng.range(0.4, 0.8)], p: [rng.range(-1.3, 1.3), 0.02, rng.range(-L / 2 - 0.4, L / 2 + 0.4)], r: [0, rng.range(0, 180), 0], mat: 'planks' });
-  P.push({ type: 'box', s: [1.8, 0.01, L + 0.6], p: [0, 0.012, 0], mat: 'blood' });
+  puddle(P, rng, 0, 0, Math.min(1.6, L * 0.45));
+  return P;
+}
+// tonel tumbado en su cuna (el eje a lo largo de x local)
+function caskParts(s) {
+  const R = s.r,
+    L = s.len;
+  const P = [];
+  for (const sx of [-L * 0.3, L * 0.3]) P.push({ type: 'box', s: [0.12, R * 0.45, R * 1.6], p: [sx, R * 0.225, 0], mat: 'wooddark' });
+  P.push({ type: 'cyl', s: [R * 0.92, R * 0.92, L], p: [0, R + 0.1, 0], r: [0, 0, 90], seg: 10, mat: 'planks' });
+  P.push({ type: 'cyl', s: [R, R, L * 0.5], p: [0, R + 0.1, 0], r: [0, 0, 90], seg: 10, mat: 'planks' });
+  for (const x of [-L * 0.42, -L * 0.1, L * 0.1, L * 0.36]) P.push({ type: 'cyl', s: [R * 0.97 + 0.012, R * 0.97 + 0.012, 0.05], p: [x, R + 0.1, 0], r: [0, 0, 90], seg: 10, mat: 'iron' });
+  P.push({ type: 'box', s: [0.13, 0.06, 0.06], p: [L / 2 + 0.05, R * 0.53 + 0.1, 0], mat: 'wooddark' });
+  return P;
+}
+function caskRubble(s, rng) {
+  const R = s.r,
+    L = s.len;
+  const P = [];
+  // duelas sueltas, aros por el suelo, la cuna volcada y el vino derramado
+  for (let i = 0; i < 11; i++) P.push({ type: 'box', s: [rng.range(0.4, L * 0.95), 0.025, 0.09], p: [rng.range(-L * 0.6, L * 0.6), 0.02 + i * 0.006, rng.range(-R * 1.4, R * 1.4)], r: [rng.range(-5, 5), rng.range(0, 180), rng.range(-4, 4)], mat: 'planks' });
+  for (let i = 0; i < 3; i++) P.push({ type: 'torus', s: [R * rng.range(0.85, 1), 0.022], p: [rng.range(-L * 0.5, L * 0.5), 0.03 + i * 0.02, rng.range(-R, R)], r: [90 + rng.range(-10, 10), 0, rng.range(0, 180)], seg: 12, seg2: 3, mat: 'iron' });
+  P.push({ type: 'box', s: [0.12, R * 0.4, R * 1.5], p: [-L * 0.3, 0.06, R * 0.3], r: [80, rng.range(-20, 20), 0], mat: 'wooddark' });
+  P.push({ type: 'box', s: [0.12, R * 0.45, R * 1.6], p: [L * 0.35, R * 0.225, -0.1], r: [0, rng.range(-25, 25), 0], mat: 'wooddark' });
+  puddle(P, rng, 0, 0, Math.max(0.9, L * 0.8));
+  return P;
+}
+// sacos de grano amontonados
+function sacksParts(s, rng) {
+  const P = [];
+  const n = 3;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    P.push({ type: 'sphere', s: [0.4, 0.28, 0.3], p: [Math.cos(a) * 0.32, 0.25, Math.sin(a) * 0.32], r: [rng.range(-12, 12), rng.range(0, 180), rng.range(-12, 12)], seg: 7, seg2: 5, mat: 'burlap' });
+  }
+  P.push({ type: 'sphere', s: [0.38, 0.27, 0.3], p: [0.05, 0.62, -0.02], r: [rng.range(-12, 12), rng.range(0, 180), 0], seg: 7, seg2: 5, mat: 'burlap' });
+  return P;
+}
+function sacksRubble(s, rng) {
+  const P = [];
+  for (let i = 0; i < 4; i++) P.push({ type: 'sphere', s: [0.42, 0.07, 0.32], p: [rng.range(-0.6, 0.6), 0.05, rng.range(-0.6, 0.6)], r: [0, rng.range(0, 180), 0], seg: 7, seg2: 4, mat: 'burlap' });
+  // el grano desparramado
+  puddle(P, rng, 0.1, 0.1, 1.1, 'straw');
+  return P;
+}
+// sepulcro de piedra (cerrado con su yacente, o abierto)
+function tombParts(s) {
+  const P = [
+    { type: 'box', s: [2.4, 0.9, 1.1], p: [0, 0.45, 0], mat: 'ashlar' },
+    { type: 'box', s: [2.6, 0.15, 1.24], p: [0, 0.075, 0], mat: 'ashlar' },
+  ];
+  if (s.open) {
+    P.push({ type: 'box', s: [2.2, 0.02, 0.9], p: [0, 0.89, 0], mat: 'black' });
+    P.push({ type: 'box', s: [2.5, 0.18, 1.2], p: [0.3, 0.99, 0.45], r: [0, 20, 5], mat: 'ashlar' });
+  } else {
+    P.push({ type: 'box', s: [2.5, 0.18, 1.2], p: [0, 0.99, 0], mat: 'ashlar' });
+    P.push({ type: 'box', s: [1.6, 0.2, 0.4], p: [-0.1, 1.18, 0], mat: 'ashlar' });
+    P.push({ type: 'box', s: [0.28, 0.28, 0.28], p: [0.84, 1.22, 0], mat: 'ashlar' });
+  }
+  return P;
+}
+function tombRubble(s, rng) {
+  const P = [
+    { type: 'box', s: [2.6, 0.15, 1.24], p: [0, 0.075, 0], mat: 'ashlar' },
+    // el arranque de las paredes, mellado
+    { type: 'box', s: [2.3, 0.28, 0.14], p: [0, 0.29, 0.48], r: [rng.range(-4, 4), 0, rng.range(-3, 3)], mat: 'ashlar' },
+    { type: 'box', s: [1.4, 0.4, 0.14], p: [-0.4, 0.35, -0.48], r: [rng.range(-4, 4), 0, rng.range(-6, 6)], mat: 'ashlar' },
+    { type: 'box', s: [0.14, 0.5, 1.0], p: [1.12, 0.4, 0], r: [rng.range(-5, 5), 0, 8], mat: 'ashlar' },
+    // la losa, partida en dos y caída a un lado
+    { type: 'box', s: [1.3, 0.18, 1.2], p: [-0.7, 0.2, 1.3], r: [rng.range(10, 25), rng.range(-20, 20), rng.range(-8, 8)], mat: 'ashlar' },
+    { type: 'box', s: [1.1, 0.18, 1.2], p: [0.8, 0.12, -1.35], r: [rng.range(-20, -8), rng.range(-30, 30), 0], mat: 'ashlar' },
+  ];
+  for (let i = 0; i < 12; i++) P.push({ type: 'box', s: [rng.range(0.15, 0.4), rng.range(0.1, 0.25), rng.range(0.15, 0.35)], p: [rng.range(-1.8, 1.8), 0.1, rng.range(-1.3, 1.3)], r: [rng.range(-30, 30), rng.range(0, 180), rng.range(-30, 30)], mat: 'ashlar' });
+  // lo que había dentro
+  for (let i = 0; i < 9; i++) {
+    const sk = i < 2;
+    P.push(sk ? { type: 'sphere', s: [0.11, 0.1, 0.13], p: [rng.range(-0.9, 0.9), 0.1, rng.range(-0.3, 0.3)], seg: 6, seg2: 4, mat: 'bone' } : { type: 'box', s: [0.05, 0.05, rng.range(0.25, 0.45)], p: [rng.range(-1, 1), 0.18, rng.range(-0.35, 0.35)], r: [0, rng.range(0, 180), 0], mat: 'bone' });
+  }
+  return P;
+}
+// santo velado sobre su pedestal
+function statueParts() {
+  const y = 0.7;
+  return [
+    { type: 'box', s: [1.1, y, 1.1], p: [0, y / 2, 0], mat: 'ashlar' },
+    { type: 'cyl', s: [0.28, 0.45, 1.5], p: [0, y + 0.75, 0], seg: 8, mat: 'ashlar' },
+    { type: 'cyl', s: [0.2, 0.28, 0.35], p: [0, y + 1.675, 0], seg: 8, mat: 'ashlar' },
+    { type: 'cyl', s: [0.14, 0.42, 0.95], p: [0, y + 1.675, 0], seg: 8, mat: 'clothWhite' },
+    { type: 'cyl', s: [0.42, 0.5, 0.9], p: [0, y + 0.75, 0], seg: 8, open: true, mat: 'clothWhite' },
+    { type: 'box', s: [0.2, 0.25, 0.15], p: [0, y + 1.12, 0.32], mat: 'ashlar' },
+  ];
+}
+function statueRubble(s, rng) {
+  const y = 0.7;
+  const a = rng.range(0, 360);
+  const P = [{ type: 'box', s: [1.1, y, 1.1], p: [0, y / 2, 0], mat: 'ashlar' }];
+  // el santo, caído y partido
+  P.push({ type: 'cyl', s: [0.3, 0.45, 1.0], p: [0.9, 0.35, 0.4], r: [90, a, 0], seg: 8, mat: 'ashlar' });
+  P.push({ type: 'cyl', s: [0.14, 0.42, 0.7], p: [1.7, 0.3, 0.9], r: [80, a + 20, 0], seg: 8, mat: 'clothWhite' });
+  P.push({ type: 'cyl', s: [0.2, 0.28, 0.35], p: [2.1, 0.2, 1.1], r: [70, a, 30], seg: 8, mat: 'ashlar' });
+  for (let i = 0; i < 8; i++) P.push({ type: 'box', s: [rng.range(0.1, 0.3), rng.range(0.08, 0.2), rng.range(0.1, 0.3)], p: [rng.range(-1.2, 1.6), 0.08, rng.range(-1.2, 1.4)], r: [rng.range(-30, 30), rng.range(0, 180), rng.range(-30, 30)], mat: 'ashlar' });
   return P;
 }
 function wallParts(s, rng) {
@@ -125,7 +250,15 @@ function wallRubble(s, rng) {
   }
   return P;
 }
-const MODELS = { pillar: [pillarParts, pillarRubble], rack: [rackParts, rackRubble], wall: [wallParts, wallRubble] };
+const MODELS = {
+  pillar: [pillarParts, pillarRubble],
+  rack: [rackParts, rackRubble],
+  wall: [wallParts, wallRubble],
+  cask: [caskParts, caskRubble],
+  sacks: [sacksParts, sacksRubble],
+  tomb: [tombParts, tombRubble],
+  statue: [statueParts, statueRubble],
+};
 
 // ------------------------------------------------------------ sistema
 const _geoChunk = new THREE.BoxGeometry(1, 1, 1);
@@ -157,9 +290,10 @@ export class Breakables {
       return cache.get(name);
     };
     const [mk, rb] = MODELS[s.kind];
-    // hp: golpes del jugador (sólo los estantes); crash: choques del salto
+    // hp: golpes del jugador (sólo la madera y los sacos); crash: choques
     // del Descoyuntado que aguanta (un pilar se agrieta al primero)
-    const it = { ...s, broken: false, hp: s.kind === 'rack' ? 3 : Infinity, crash: s.kind === 'pillar' ? 2 : 1 };
+    const K = KIND[s.kind];
+    const it = { ...s, K, light: !!K.light, stone: !!K.stone, broken: false, hp: K.hp, crash: K.crash };
     it.obj = build(mk(s, rng), mats);
     it.rubble = build(rb(s, rng), mats);
     for (const o of [it.obj, it.rubble]) {
@@ -190,8 +324,8 @@ export class Breakables {
 
   restore(it) {
     it.broken = false;
-    it.hp = it.kind === 'rack' ? 3 : Infinity;
-    it.crash = it.kind === 'pillar' ? 2 : 1;
+    it.hp = it.K.hp;
+    it.crash = it.K.crash;
     it.obj.rotation.set(0, it.rot || 0, 0);
     it.obj.visible = true;
     it.rubble.visible = false;
@@ -226,15 +360,16 @@ export class Breakables {
       dx /= d;
       dz /= d;
     }
-    const stone = it.kind !== 'rack';
-    const col = stone ? [0.34, 0.32, 0.29] : [0.2, 0.13, 0.08];
+    const stone = it.stone;
+    const col = stone ? [0.34, 0.32, 0.29] : it.K.soft ? [0.42, 0.36, 0.26] : [0.2, 0.13, 0.08];
     const H = it.h;
     for (let k = 0; k < 4; k++) g.fx.blood.emit(it.x, it.y + 0.4 + (k * H) / 4, it.z, 22, { color: col, speed: 6, life: 1.1, up: 2, dir: { x: dx, z: dz } });
     g.fx.blood.emit(it.x, it.y + 0.3, it.z, 40, { color: [0.3, 0.28, 0.26], speed: 3, life: 1.8, up: 0.6, gravity: 1.5 }); // polvo
-    if (it.kind === 'rack') g.fx.blood.emit(it.x, it.y + 1, it.z, 30, { color: [0.28, 0.05, 0.08], speed: 5, life: 0.8, up: 1.4 }); // vino
+    if (it.K.wine) g.fx.blood.emit(it.x, it.y + Math.min(1, H * 0.5), it.z, 30, { color: [0.28, 0.05, 0.08], speed: 5, life: 0.8, up: 1.4 }); // vino
+    if (it.K.soft) g.fx.blood.emit(it.x, it.y + 0.5, it.z, 40, { color: [0.62, 0.55, 0.36], speed: 3.5, life: 1.2, up: 1.6, gravity: 5 }); // grano
     // cascotes
     const mat = it.mats[0];
-    const n = it.kind === 'pillar' ? 16 : it.kind === 'wall' ? 18 : 12;
+    const n = it.K.chunks;
     for (let i = 0; i < n; i++) {
       const m = new THREE.Mesh(_geoChunk, i % 3 === 0 && it.mats[1] ? it.mats[1] : mat);
       const s = stone ? 0.18 + Math.random() * 0.3 : 0.1 + Math.random() * 0.2;
@@ -254,8 +389,8 @@ export class Breakables {
     if (this.chunks.length > 90) {
       for (const c of this.chunks.splice(0, this.chunks.length - 90)) g.scene.remove(c.m);
     }
-    g.audio && g.audio.play(it.kind === 'rack' ? 'rackBreak' : it.kind === 'wall' ? 'wallBreak' : 'pillarBreak', { x: it.x, y: it.y + 1, z: it.z });
-    g.camRig.shake(it.kind === 'rack' ? 0.35 : 0.65);
+    g.audio && g.audio.play(it.K.snd, { x: it.x, y: it.y + 1, z: it.z });
+    g.camRig.shake(stone ? 0.65 : 0.3);
     g.hitstop = Math.max(g.hitstop, 0.06);
     g.input.rumble(0.8, 0.8, 260);
     g.onBreak && g.onBreak(it);
@@ -308,7 +443,7 @@ export class Breakables {
       const hx = cx,
         hy = player.pos.y + 1.1,
         hz = cz;
-      if (it.kind === 'rack') {
+      if (it.light) {
         it.hp -= atk.heavy ? 2 : 1;
         g.fx.blood.emit(hx, hy, hz, 14, { color: [0.22, 0.14, 0.08], speed: 4, life: 0.6, up: 1.4 });
         g.audio && g.audio.play('woodHit', { x: hx, y: hy, z: hz });
@@ -326,8 +461,7 @@ export class Breakables {
     }
   }
 
-  // Rompible que corta el segmento a->b a la altura del pecho (quién se
-  // escuda tras qué).
+  // Rompible que corta el segmento a->b (quién se escuda tras qué).
   between(ax, az, bx, bz, y) {
     const col = this.g.world.col;
     const dx = bx - ax,
@@ -339,11 +473,48 @@ export class Breakables {
     for (const it of this.list) {
       if (it.broken || it.heavyOnly) continue;
       if (Math.abs(y - it.y) > 3) continue;
-      const t = col.raycast(ax, y + 1.2, az, dx / d, 0, dz / d, d, (b) => b === it.box);
+      // (a media altura: también los sepulcros, los toneles y los sacos)
+      const t = col.raycast(ax, y + 0.7, az, dx / d, 0, dz / d, d, (b) => b === it.box);
       if (t < bt) {
         bt = t;
         best = it;
       }
+    }
+    return best;
+  }
+
+  // Lo de madera o de saco que quede a menos de r de (x, z): lo arrasa (un
+  // barrido, una onda, él al pasar). Devuelve cuántas.
+  smashAround(x, z, r, y, from = null) {
+    let n = 0;
+    for (const it of this.list) {
+      if (it.broken || !it.light || Math.abs(y - it.y) > 2) continue;
+      const qx = Math.max(Math.abs(x - it.x) - it.hx, 0),
+        qz = Math.max(Math.abs(z - it.z) - it.hz, 0);
+      if (Math.hypot(qx, qz) > r) continue;
+      this.shatter(it, from || { x, z });
+      n++;
+    }
+    return n;
+  }
+  // Distancia de (x, z) al borde de la caja de una.
+  edgeDist(it, x, z) {
+    return Math.hypot(Math.max(Math.abs(x - it.x) - it.hx, 0), Math.max(Math.abs(z - it.z) - it.hz, 0));
+  }
+  // La que tenga más cerca delante (dirección fx, fz), a menos de maxD.
+  ahead(x, z, fx, fz, maxD, y) {
+    let best = null,
+      bd = maxD;
+    for (const it of this.list) {
+      if (it.broken || Math.abs(y - it.y) > 2) continue;
+      const d = this.edgeDist(it, x, z);
+      if (d > bd) continue;
+      const dx = it.x - x,
+        dz = it.z - z;
+      const l = Math.hypot(dx, dz) || 1;
+      if ((dx * fx + dz * fz) / l < 0.2 && d > 0.3) continue;
+      bd = d;
+      best = it;
     }
     return best;
   }

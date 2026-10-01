@@ -41,7 +41,7 @@ const info = await p.evaluate(
     const D = e.D;
     const P = g.player;
     const out = [];
-    const DUR = { claw: 1.2, claw2: 1.9, sweep: 1.35, slam: 1.75, lunge: 0.95, pounce: 1.85, charge: 2.6, spin: 1.95, grab: 2.8, rip: 2.4, crack: 1.9, throw: 1.2, riposte: 0.85, flip: 0.8, leap: 0.6, side: 0.55, guard: 1.2, beat: 2.2, laugh: 1.4, headspin: 1.3, down: 2.1, rage: 3.4, dead: 9.5, walk: 1.6, gallop: 1.2, creep: 2.4, ceil: 1.6, idle: 2 };
+    const DUR = { smash: 2.6, smashcask: 2.4, claw: 1.2, claw2: 1.9, sweep: 1.35, slam: 1.75, lunge: 0.95, pounce: 1.85, charge: 2.6, spin: 1.95, grab: 2.8, rip: 2.4, crack: 1.9, throw: 1.2, riposte: 0.85, flip: 0.8, leap: 0.6, side: 0.55, guard: 1.2, beat: 2.2, laugh: 1.4, headspin: 1.3, down: 2.1, rage: 3.4, dead: 9.5, walk: 1.6, gallop: 1.2, creep: 2.4, ceil: 1.6, idle: 2 };
     moves.forEach((mv, row) => {
       // todo en su sitio: él en el centro del Lagar, tú delante, a 4 m
       e.reset();
@@ -74,6 +74,21 @@ const info = await p.evaluate(
         D.plantAll();
         D.ripTarget = pil;
         D.startAttack('rip');
+      } else if (mv === 'smash' || mv === 'smashcask') {
+        // escondido tras un sepulcro de la cripta (o tras un tonel del Lagar)
+        const tomb = mv === 'smash';
+        const it = g.breakables.list.find((q) => q.id === (tomb ? 'sepulcro0' : 'tonel4'));
+        if (tomb) {
+          e.pos.set(47.5, -6.6, -77.2);
+          P.spawn(41.3, -6.6, -77.2, Math.PI / 2);
+        } else {
+          e.pos.set(33.4, -6.6, -49.2);
+          P.spawn(37.6, -6.6, -47.6, -Math.PI / 2);
+        }
+        e.yaw = Math.atan2(it.x - e.pos.x, it.z - e.pos.z);
+        D.plantAll();
+        D.smashTarget = it;
+        D.startAttack('smash');
       } else if (mv === 'flip' || mv === 'leap' || mv === 'side') D.startEvade(mv, null);
       else if (mv === 'guard') D.startGuard(1.2, 9);
       else if (mv === 'beat' || mv === 'laugh' || mv === 'headspin') D.startTaunt(mv);
