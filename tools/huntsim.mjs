@@ -2,7 +2,8 @@
 //   node tools/huntsim.mjs [segundos] [modo] [ver]
 //   modos: still (quieto), wander (pasea), fight (pelea: combos de tres,
 //   rueda a la derecha cuando le atacan, se cura), levers (echa las tres
-//   palancas y sale por el pozo, peleando si hace falta)
+//   palancas y sale por el pozo, peleando si hace falta), parry (pelea
+//   desviando sus zarpazos, barridos y mordiscos en vez de rodar)
 //   ver: 1 para sacar cada cambio de modo del jefe
 import { chromium } from 'playwright';
 const secs = +(process.argv[2] || 90),
@@ -64,6 +65,15 @@ const r = await p.evaluate(
       blocks++;
       return oldBlock(x, z);
     };
+    let parries = 0,
+      downs = 0;
+    const oldPar = D.parried.bind(D);
+    D.parried = (a) => {
+      parries++;
+      const r = oldPar(a);
+      if (D.parryFull) downs++;
+      return r;
+    };
     const oldEv = D.startEvade.bind(D);
     D.startEvade = (k, t) => {
       const r = oldEv(k, t);
@@ -91,6 +101,7 @@ const r = await p.evaluate(
       pathI = 0,
       pathGoal = null,
       pathT = 0;
+    let parryErr = 0;
     let combo = 0,
       comboT = 0,
       rollCD = 0,
@@ -124,7 +135,7 @@ const r = await p.evaluate(
       const d = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z);
       const bossNear = !e.dead && e.obj.visible && D.plane === 'floor' && !D.hidden && d < 7 && D.mode !== 'lair';
       const allPulled = leverList.every((l) => g.flags['lever:' + l.id]);
-      const fighting = (how === 'fight' || (how === 'levers' && !allPulled)) && bossNear && !P.dead;
+      const fighting = (how === 'fight' || how === 'parry' || (how === 'levers' && !allPulled)) && bossNear && !P.dead;
       if (P.state === 'grabbed' || P.state === 'pinned') {
         // atrapado o derribado: forcejea
         if (i % 3 === 0) taps.push('M0');
@@ -133,8 +144,16 @@ const r = await p.evaluate(
         const yaw = Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z);
         g.camRig.yaw = yaw;
         if (P.state === 'free' || P.state === 'attack') P.yaw = yaw;
-        // rueda a la derecha cuando empieza un golpe (su costumbre)
-        if (D.mode === 'attack' && D.atkT < 0.35 && d < 4.2 && rollCD <= 0 && Math.random() < 0.7) {
+        // parry: pulsa la guardia justo antes de cada zarpazo, barrido o
+        // mordisco (con algo de error, como una persona)
+        const STRIKE = { claw: 0.55, claw2: 0.55, riposte: 0.36, sweep: 0.56, lunge: 0.31 };
+        const sAt = how === 'parry' && D.mode === 'attack' && D.atk ? STRIKE[D.atk.name] * (D.atk.fast ? 0.62 : 1) : null;
+        const second = D.atk && D.atk.name === 'claw2' && D.atkT > 0.95;
+        if (sAt && !D.atk.hold && Math.abs((second ? D.atkT - 0.75 : D.atkT) - (sAt - 0.08 + parryErr)) < 1 / 60 && d < 4.5) {
+          taps.push('M2');
+          parryErr = (Math.random() - 0.5) * 0.12;
+        } else if (how !== 'parry' && D.mode === 'attack' && D.atkT < 0.35 && d < 4.2 && rollCD <= 0 && Math.random() < 0.7) {
+          // rueda a la derecha cuando empieza un golpe (su costumbre)
           hold.push('KeyD');
           taps.push('Space');
           rollCD = 1.2;
@@ -241,6 +260,9 @@ const r = await p.evaluate(
       reads,
       blocks,
       evades,
+      parries,
+      downs,
+      parryLearned: D.learn.parries || 0,
       learned: D.learn.n,
       combos: D.learn.combos,
       dodge: D.learn.dodge._all,

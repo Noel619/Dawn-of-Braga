@@ -1387,8 +1387,10 @@ export const MOVES = {
     const e = this.e,
       g = this.g;
     if (e.dead) return 'none';
+    this.riposted = true;
+    e.parryT = 0;
     e.hp -= dmg;
-    e.flash = 0.2;
+    e.flash = 0.1;
     this.lastFrom = [fromX, fromZ];
     this.engageDmg += dmg;
     this.lastEngaged = g.time;
@@ -1412,6 +1414,8 @@ export const MOVES = {
     this.endAttack();
     this.downDur = dur;
     this.downUp = false;
+    // (un solo golpe de gracia por caída)
+    this.riposted = false;
     this.setMode('down');
     this.g.audio && this.g.audio.play('bodyFall', this.center);
     this.g.audio && this.g.audio.enemyVoice(this.e, 'hurt');

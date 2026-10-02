@@ -652,7 +652,7 @@ export const MIND = {
     // compromiso (barra de vida, música): enloquecido, siempre
     const hot = this.stage === 'rage' || M === 'fight' || M === 'attack' || M === 'stun' || M === 'hurt' || M === 'down' || M === 'evade' || M === 'guard' || M === 'parried' || (M === 'hunt' && this.dist < 6);
     // patas arriba admite el golpe de gracia (y tras un parry que le rompe)
-    e.parryT = this.mode === 'down' && this.mT < this.downDur - 0.45 ? this.downDur - 0.45 - this.mT : 0;
+    e.parryT = this.mode === 'down' && !this.riposted && this.mT < this.downDur - 0.45 ? this.downDur - 0.45 - this.mT : 0;
     if (hot) this.lastEngaged = g.time;
     this.engaged = g.time - this.lastEngaged < 5;
     // física

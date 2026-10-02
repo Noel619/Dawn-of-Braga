@@ -861,11 +861,12 @@ export class Audio {
       }
       // aviso: este golpe no se puede desviar (un toque grave y disonante)
       case 'peril': {
-        d = this.out(P, { gain: 0.85, verb: 0.55, life: 2.6 });
-        this.tone(d, t, 0.55, { f0: 98, gain: 0.22, type: 'sawtooth', a: 0.008 });
-        this.tone(d, t, 0.55, { f0: 104.5, gain: 0.2, type: 'sawtooth', a: 0.008 });
-        this.metal(d, t, 330, 0.12, 0.9, { ratios: [1, 1.41, 2.83] });
-        this.noise(d, t, 0.18, { f0: 2400, f1: 900, q: 6, gain: 0.07, a: 0.005 });
+        d = this.out(P, { gain: 1, verb: 0.55, life: 2.6, occlude: false });
+        this.tone(d, t, 0.6, { f0: 98, gain: 0.36, type: 'sawtooth', a: 0.008 });
+        this.tone(d, t, 0.6, { f0: 104.5, gain: 0.32, type: 'sawtooth', a: 0.008 });
+        this.metal(d, t, 330, 0.22, 1.0, { ratios: [1, 1.41, 2.83] });
+        this.metal(d, t + 0.01, 1480, 0.08, 0.5, { ratios: [1, 1.19] });
+        this.noise(d, t, 0.2, { f0: 2400, f1: 900, q: 6, gain: 0.12, a: 0.005 });
         break;
       }
       case 'block': {

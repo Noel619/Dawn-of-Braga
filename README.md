@@ -34,6 +34,8 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Ataque ligero (combo de 3) | Clic izquierdo | RB |
 | Ataque pesado | F | RT |
 | Bloquear con el escudo | Clic derecho (mantener) | LB |
+| **Parry** (desviar un golpe) | Clic derecho justo antes del golpe | LB |
+| Golpe de gracia (al desequilibrado) | Clic izquierdo | RB |
 | Esquivar / correr (mantener) | Espacio | B |
 | Correr | Mayús | L3 |
 | Fijar objetivo (el enemigo que tienes delante) | Q / clic central | R3 |
@@ -111,6 +113,24 @@ opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afi
 canónigo (aguante), que deja el Descoyuntado al morir. Diecisiete documentos breves cuentan la historia junto con el
 escenario.
 
+**Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
+canta, hay un parón seco y un destello, y te vuelves hacia quien te ataca. La ventana dura 0,2 s (la katana, 0,24;
+el hacha, que para con el mango, 0,16) y machacar el botón la acorta. Cada familia de arma tiene sus animaciones de
+desvío, dos que se alternan en los combos de varios golpes: con escudo (facón, lanza, espada) lo saca hacia fuera
+apartando el golpe o lo alza para desviarlo hacia arriba, con el arma atrás, lista; a dos manos barre el golpe con
+la hoja (o con el mango del hacha) hacia uno u otro lado. Mantener la guardia sigue siendo bloquear.
+Tras un parry la criatura queda **desequilibrada**, cada una con su animación (la hoz o la espada despedidas hacia
+atrás, el escudo abierto, el cuerpo de lado, la campana que se le va), y abierta al **golpe de gracia**: con el
+ataque ligero te lanzas hacia ella y le clavas una estocada (o un hachazo) que entra seguro, crítica, con un parón
+largo, un instante a cámara lenta y la cámara cerrándose sobre el golpe. A las pequeñas les basta un parry; el
+Campanero necesita dos seguidos y los jefes tres (mientras, el desvío sólo les corta el golpe); al Turiferario se
+le devuelve el incensario. El Descoyuntado se echa atrás chillando y, con la postura rota (dos parrys al acecho,
+tres enloquecido, cuatro en frenesí), cae patas arriba; aprende si desvías a menudo (amaga, se queda arriba hasta
+que se te cierra la ventana y prueba los golpes que no se desvían) y sus huesos lanzados se apartan de un golpe.
+**Los golpes que no se pueden desviar** avisan con los ojos en rojo, un destello rojo en la cabeza y un toque grave:
+los que llevan todo el cuerpo detrás (saltos, cargas, giros, agarrones, caer del techo, el tercer brazo del soldado),
+las ondas de choque y los tañidos, el fuego y los lamentos de la Plañidera. Se bloquean o se esquivan.
+
 **Combate Soulslike simplificado.** Ataque ligero en combo, ataque pesado que rompe guardias, ataque a la carrera,
 bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de invulnerabilidad, curación con
 animación, *hitstop*, golpes críticos, estela de la espada, retroceso y estremecimiento de las criaturas, aviso en
@@ -175,19 +195,27 @@ se encadena el anterior.
   (patas arriba, todo golpe es crítico) y muere a pedazos (se le parten los miembros uno a uno y, al final, la
   cabeza se le da la vuelta). No se queda atascado: si algo le cierra el paso, lo arranca o lo revienta.
   Primero **acecha**: te observa desde la bóveda, se asoma por las esquinas, imita tus pasos y la voz del ama, se
-  ríe y te tira huesos, y te embosca cuando le das la espalda, te curas, lees o echas una palanca. A ratos **te
+  ríe y te tira huesos, y te embosca cuando le das la espalda, te curas, lees o echas una palanca. Se adelanta a
+  sus **puestos de emboscada**, en la bóveda nada más pasar cada arco o puerta (el dintel lo tapa hasta que estás
+  debajo) y en mitad de los pasillos largos: se queda colgado, quieto y a oscuras, y si pasas por debajo sin mirar
+  arriba (y antes si vas corriendo) **te cae encima**: un chillido, polvo, su sombra en el suelo y la caída adonde
+  vas a estar. Si te alcanza te derriba de espaldas y se te queda encima mordiendo: forcejea para quitártelo de una
+  patada (y cae de espaldas). Si le ves a tiempo, se escabulle; si ruedas, se estrella contra el suelo y tarda en
+  rehacerse. Si no vienes hacia su puesto o te paras, no se queda esperando: va a por ti por la bóveda. A ratos **te
   sigue**: va por tu propio rastro, por la bóveda o agazapado, a unos nueve metros, a tu paso; se le oye respirar,
   crujir o repetir tus pasos, cae polvo del techo; si te vuelves y le ves, se queda quieto, le brillan los ojos un
   instante y se aparta despacio de tu vista; si vas hacia él, o se te echa encima o se escabulle. Se mueve por las
   bodegas por sus **grutas**: túneles que ha excavado en la roca, con la boca rota, tierra amontonada, huesos y
-  arañazos, que comunican salas lejanas. Se agacha, se agarra a los bordes, se mete a rastras con los miembros
-  abiertos como un lagarto y sale por otra; antes de salir, en el fondo del túnel, sólo se le ven los ojos. Al
+  arañazos, que comunican salas lejanas. Se agacha, se agarra a los bordes, se mete a rastras de un tirón con los
+  miembros abiertos como un lagarto, se funde con lo oscuro del túnel y sale por otra; antes de salir, en el fondo
+  del túnel, sólo se le ven los ojos. Al
   esquivar nunca salta hacia la escalera, un desnivel o la roca, y si algo le saca del suelo de las salas, vuelve
   al último sitio seguro. Tras cada emboscada se queda a pelear un rato. Cada emboscada que le sale mal (la
   esquivas, la paras, le ves venir, le hieres, te sueltas de su agarrón) le frustra; cuando se harta, cuando le has
   hecho bastante daño o cuando echas la tercera palanca, **enloquece**: viene a por ti, se alza, grita y golpea el
   suelo, y ya no se esconde. Enloquecido prefiere pelear en sitios abiertos
-  (si te metes en un pasillo, se aparta a lo ancho y te espera golpeando el suelo) y te lee: aprende qué haces y qué
+  (si te metes en un pasillo, te espera un momento en la bóveda de la salida, o a lo ancho golpeando el suelo, y si
+  no sales entra a por ti) y te lee: aprende qué haces y qué
   sueles hacer después de qué, cuántos golpes tienen tus combos y hacia dónde ruedas cuando te ataca, y lo usa para
   apartarse de un salto cuando vas a golpear y castigarte en la recuperación, cruzar los brazos para parar el resto
   de un combo que ya conoce, adelantarse con un mordisco cuando sabe que vas a atacar y apuntar su segundo zarpazo
@@ -235,6 +263,23 @@ los altares, el río) y sucesos de cada zona (campanas lejanas, gritos, perros, 
 cuernos, ratas, gotas en la cripta, pasos que no son tuyos en la catedral, pájaros al amanecer). La música se atenúa
 con los golpes fuertes y se oye «tras una puerta» en la pausa.
 
+## Modo desarrollador
+
+**F2** abre un panel para probar el juego: invulnerable, aguante infinito, volar atravesando muros (WASD según la
+cámara, Espacio sube, C baja, Mayús deprisa), velocidad del jugador y del juego (cámara lenta), IA congelada o
+ciega, el estado de cada criatura sobre su cabeza, los puestos del Descoyuntado en el mundo (emboscadas en rojo,
+perchas en azul, grutas en verde, palancas en amarillo), órdenes al Descoyuntado (traerlo, que te siga, emboscada,
+caza, gruta, enloquecer, calmar, matarlo), curar, todas las armas y objetos, cambiar de arma, teletransporte a cada
+zona y altar, guardar y volver a una posición, la ventana de parry en pantalla y un registro de parrys y golpes de
+gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cierra.
+
+Sólo se abre en el propio ordenador (localhost: `npm run dev`) o desde la IP del autor: en `src/dev/access.js` se
+guardan las huellas (PBKDF2-SHA256) de las IP autorizadas, nunca la IP. Al pulsar F2 en la versión publicada se
+pregunta la IP pública a un servicio externo y se compara su huella; si no coincide, el panel no aparece. Sin
+huellas en la lista no se pregunta nada, y quien no pulsa F2 no contacta con nadie. La huella de tu IP se saca con
+el botón «Huella de mi IP» del panel (en localhost) o, en la consola, `__game.dev.ipHash()`. Desde la consola
+también: `__game.dev.set('god', true)`, `__game.dev.act('rage')`, `__game.dev.tp('lagar')`.
+
 ## Estructura del código
 
 ```
@@ -249,6 +294,7 @@ src/
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo)
+  dev/                  el modo desarrollador (devmode.js) y quién puede abrirlo (access.js)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti); armas:
@@ -275,8 +321,14 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
                         huntsim.mjs    simula la caza del Descoyuntado sin dibujar (segundos y un jugador
-                                       robot: still, wander, fight, levers o escape) y resume sus modos,
-                                       cuándo enloquece, qué aprende, lo que te lee y lo que rompe
+                                       robot: still, wander, fight, parry, levers o escape) y resume sus
+                                       modos, cuándo enloquece, qué aprende, lo que te lee y lo que rompe
+                        idlesim.mjs    rachas en que el Descoyuntado se queda a la vista sin hacer nada
+                                       (jugador: wander, stopgo, still o look)
+                        parrytest.mjs  parry contra cada criatura con un arma: desvío sin daño,
+                                       desequilibrio, golpe de gracia, jefes y golpes imparables
+                        doorways.mjs   nada tapa los arcos y puertas de las bodegas, las bocas de las
+                                       grutas ni las palancas
                         bossanim.mjs   hojas de fotogramas de cada movimiento del Descoyuntado
                         cellar.mjs     comprueba que el pozo sólo se alcanza por el rastrillo y hace capturas
                                        de cada sala de las bodegas
