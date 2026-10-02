@@ -489,7 +489,10 @@ export function buildCanon(ctx, S, B, L) {
     cz('pasillo', [39.5, -64, 47, -46.5]),
     cz('cripta', [40, -83, 58, -64]),
     cz('cisterna', [49.5, -60, 62, -47.5]),
-    cz('osario', [58, -79, 71, -36.5]),
+    // (la galería y su paso a la sala, y al sur el pasillo de la cripta y el
+    // ramal: antes un solo rectángulo se comía media sala del altar, que se
+    // anunciaba como el osario)
+    { id: 'osario', rects: [[66, -79, 71, -36.5, Y - 1, C.top - 0.05], [58, -79, 66, -61, Y - 1, C.top - 0.05]], atmo: 'cellar', room: croom },
     { id: 'sotano', rects: [[C.x0, C.z0, C.x1, C.z1, Y - 1, C.top - 0.05], [58, -32.2, 61, -27, Y - 1, -0.6]], atmo: 'cellar', room: croom },
     { id: 'canon', rects: [[48, -32, 64, -12.2, -1, 4.5]], atmo: 'interior', room }
   );

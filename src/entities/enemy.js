@@ -135,7 +135,8 @@ export class Enemy {
     return Math.atan2(p.x - this.pos.x, p.z - this.pos.z);
   }
   perceive(player) {
-    if (player.dead) return false;
+    // (modo desarrollador: invisible para la IA)
+    if (player.dead || (this.game.dev && this.game.dev.invisible)) return false;
     const T = this.T;
     const dy = player.pos.y - this.pos.y;
     if (Math.abs(dy) > (this.state === 'ceiling' ? 5 : 3.2)) return false;

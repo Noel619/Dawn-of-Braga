@@ -60,6 +60,11 @@ export const MOVES = {
   startAttack(name, o = {}) {
     const e = this.e,
       g = this.g;
+    // (modo desarrollador: invisible para la IA, no ataca)
+    if (g.dev && g.dev.invisible) {
+      if (this.mode !== 'fight' && this.mode !== 'stalk') this.setMode(this.stage === 'rage' ? 'fight' : 'stalk');
+      return;
+    }
     if (this.plane === 'ceil' && name !== 'drop') {
       if (!this.air) this.jump('floor', 0.3, { arc: 0 });
       return;

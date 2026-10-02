@@ -463,6 +463,11 @@ export class Player {
   }
 
   die() {
+    // (modo desarrollador: invulnerable)
+    if (this.game.dev && this.game.dev.god) {
+      this.hp = this.maxHp;
+      return;
+    }
     this.hp = 0;
     if (this.dead) return;
     this.dead = true;
@@ -476,6 +481,21 @@ export class Player {
   // ------------------------------------------------------------ update
   update(dt, input, cam, allowControl = true) {
     const g = this.game;
+    // (modo desarrollador: volando, atravesando muros)
+    if (g.dev && g.dev.fly && allowControl && !this.dead) {
+      if (this.state !== 'free') {
+        this.state = 'free';
+        this.anim.stop(0.1);
+      }
+      this.blocking = false;
+      this.sprinting = false;
+      this.iframe = false;
+      this.swinging = false;
+      g.dev.flyMove(this, dt, input, cam);
+      this.blockW = 0;
+      this.animate(dt);
+      return;
+    }
     this.stT += dt;
     this.comboT -= dt;
     const target = g.lockTarget;
@@ -553,7 +573,7 @@ export class Player {
         this.stDelay = 0.45;
       }
       const base = this.blocking ? BLOCKWALK : this.sprinting ? RUN : target ? STRAFE : mag < 0.55 ? lerp(0, WALK, mag / 0.55) / Math.max(mag, 0.01) : JOG;
-      desiredSpeed = base * mag;
+      desiredSpeed = base * mag * (g.dev ? g.dev.speed : 1);
       if (st === 'blockhit') {
         desiredSpeed = 0;
         if (this.anim.done) this.state = 'free';

@@ -29,6 +29,7 @@ import { Breakables } from './breakables.js';
 import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
 import { CELLAR } from '../world/level_cellar.js';
+import { DevMode } from '../dev/devmode.js';
 
 const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
 // música de cada jefe (fase 1 y fase 2)
@@ -127,6 +128,8 @@ export class Game {
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
+    // modo desarrollador (F2; sólo en localhost o desde la IP del autor)
+    this.dev = new DevMode(this);
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
     this.buildPhantom();
 
@@ -145,10 +148,13 @@ export class Game {
     this.newState();
 
     this.input.onPointerLockLost = () => {
-      if (this.state === 'play' && !this.ui.modal && !this.input.freeLook) this.openPause();
+      // (con el panel del modo desarrollador abierto el juego sigue)
+      if (this.state === 'play' && !this.ui.modal && !this.input.freeLook && !this.dev.open) this.openPause();
     };
     this.canvas.addEventListener('click', () => {
-      if (this.state === 'play' && !this.ui.modal) this.input.requestLock();
+      // (un clic en el juego cierra el panel del modo desarrollador)
+      if (this.dev.open) this.dev.close();
+      else if (this.state === 'play' && !this.ui.modal) this.input.requestLock();
     });
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -1075,6 +1081,8 @@ export class Game {
       this.hitstop -= dt;
       dt *= 0.05;
     }
+    // (modo desarrollador: cámara lenta o rápida)
+    if (this.dev.timeScale !== 1) dt *= this.dev.timeScale;
     this.time += dt;
     G.uTime.value = this.time;
     // si había una pantalla abierta, su entrada no debe llegar al juego este fotograma
@@ -1131,8 +1139,9 @@ export class Game {
         });
       }
       // (durante una cinemática las criaturas esperan)
-      if (this.state === 'play' && !this.cutscene) for (const e of this.activeEnemies) e.update(dt, p);
-      else if (this.state === 'title') for (const e of this.activeEnemies) e.animate(dt);
+      // (modo desarrollador: con la IA congelada sólo respiran)
+      if (this.state === 'play' && !this.cutscene && !this.dev.freezeAI) for (const e of this.activeEnemies) e.update(dt, p);
+      else if (this.state === 'title' || this.dev.freezeAI) for (const e of this.activeEnemies) e.animate(dt);
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
@@ -1217,6 +1226,7 @@ export class Game {
 
     // HUD
     if (this.state === 'play' || this.state === 'paused') this.ui.updateHud(dt);
+    this.dev.update(dt);
     this.playerShadow.position.set(p.pos.x, p.pos.y + 0.02, p.pos.z);
     this.playerShadow.visible = p.obj.visible;
     this.audio.update(dt, this);
