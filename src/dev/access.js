@@ -18,6 +18,7 @@
 
 export const DEV_IP_HASHES = [
   // huellas (hex) de las IP autorizadas
+  '24afcf223f5fc135a39c63dbb8711c2364864452fad0952ca2a7179b271b2885', // el autor
 ];
 
 const SALT = 'dawn-of-braga/modo-desarrollador';
@@ -185,15 +186,17 @@ export async function myIpHash() {
 }
 
 let _cached = null;
-// true si este navegador puede abrir el panel. Se consulta una vez por sesión.
+// true si este navegador puede abrir el panel. Se consulta una vez por sesión
+// (la respuesta guardada va ligada a la lista: si cambia, se vuelve a mirar).
 export function checkAccess() {
   if (isLocalHost()) return Promise.resolve(true);
   if (_cached) return _cached;
   _cached = (async () => {
+    const list = DEV_IP_HASHES.map((h) => h.slice(0, 8)).join('.');
     try {
       const s = sessionStorage.getItem('dob-dev');
-      if (s === '1') return true;
-      if (s === '0') return false;
+      if (s === '1:' + list) return true;
+      if (s === '0:' + list) return false;
     } catch (e) {
       /* sin almacenamiento de sesión */
     }
@@ -212,7 +215,7 @@ export function checkAccess() {
       return false;
     }
     try {
-      sessionStorage.setItem('dob-dev', ok ? '1' : '0');
+      sessionStorage.setItem('dob-dev', (ok ? '1:' : '0:') + list);
     } catch (e) {
       /* sin almacenamiento de sesión */
     }
