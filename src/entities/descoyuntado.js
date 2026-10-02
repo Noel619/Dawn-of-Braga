@@ -401,6 +401,32 @@ export class Desc {
     return to === 'ceil' ? this.ceilAt(x, z) - h : this.groundAt(x, z) + h;
   }
 
+  // Oscurece el cuerpo (k = 1, como siempre; 0, negro): al meterse en sus
+  // grutas se funde con lo oscuro del túnel y sólo le quedan los ojos (la
+  // carne deja de relucir también).
+  setShade(k) {
+    k = clamp(k, 0, 1);
+    const cur = this._shade ?? 1;
+    // (sin cambio apreciable no se tocan los materiales; los extremos, exactos)
+    if (k === cur || (Math.abs(k - cur) < 0.003 && k !== 0 && k !== 1)) return;
+    this._shade = k;
+    const rig = this.e.rig;
+    rig.own();
+    if (!this._eyeMats) this._eyeMats = new Set(rig.meshes.filter((q) => q.userData.matName === 'eyeGlow').map((q) => q.material));
+    for (const m of rig.mats) {
+      const ud = m.userData;
+      if (this._eyeMats.has(m)) continue;
+      if (m.color) {
+        if (!ud.baseColor) ud.baseColor = m.color.clone();
+        m.color.copy(ud.baseColor).multiplyScalar(k);
+      }
+      if (m.emissive) {
+        if (ud.baseEI0 === undefined) ud.baseEI0 = m.emissiveIntensity;
+        m.emissiveIntensity = ud.baseEI0 * k;
+      }
+    }
+  }
+
   // Un golpe recibido se nota en todo el cuerpo: se aparta del golpe, se
   // tuerce y la cabeza da un latigazo.
   flinch(fromX, fromZ, heavy) {
@@ -565,7 +591,8 @@ export class Desc {
     this.center.setFromMatrixPosition(body.matrixWorld);
     const gy = this.groundAt(this.center.x, this.center.z);
     e.shadow.position.set(this.center.x, gy + 0.02, this.center.z);
-    e.shadow.visible = true;
+    // (metido en lo oscuro de una gruta, tampoco hay sombra)
+    e.shadow.visible = (this._shade ?? 1) > 0.35;
     const hs = clamp(1.35 - (this.center.y - gy) * 0.14, 0.5, 1.3);
     e.shadow.scale.set(e.T.radius * 3.2 * hs, 1, e.T.radius * 3.2 * hs);
     this.eyes(dt);

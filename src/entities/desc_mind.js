@@ -247,6 +247,7 @@ export const MIND = {
     e.sink = 0;
     this.hidden = false;
     this._death = null;
+    this.setShade(1);
     this.resetAI();
     this.plantAll();
     this.clearProjectiles();
@@ -497,6 +498,7 @@ export const MIND = {
     e.poiseT -= dt;
     if (e.poiseT <= 0) e.poise = e.T.poise;
     this.updateProjectiles(dt);
+    if (this.mode !== 'burrow' && this._shade !== undefined && this._shade !== 1) this.setShade(1);
     this.rageK = damp(this.rageK, this.stage === 'rage' ? 1 : 0, 1.5, dt);
     if (e.dead) return this.dead(dt);
     this.senseT -= dt;
@@ -1021,15 +1023,21 @@ export const MIND = {
         }
         return;
       }
-      // 3) entra a rastras: el cuerpo se estrecha y se pierde en lo oscuro
+      // 3) entra a rastras, de un tirón, como una lagartija: el cuerpo se
+      // estrecha, se ennegrece en lo oscuro del túnel y sólo le quedan los
+      // ojos, que se apagan (antes se arrastraba despacio, a la vista, y
+      // desaparecía de golpe unos segundos después)
       if (!B.crawl) {
         B.crawl = true;
+        B.crawlT = 0;
         this.releaseAll();
         this.noCol = true;
         e.data.air = true; // (no se le puede golpear a medio meter)
+        g.audio && g.audio.play('scuttle', { x: A.x, y: A.y + 0.8, z: A.z });
       }
+      B.crawlT += dt;
       e.yaw = inYaw;
-      const sp = 1.5;
+      const sp = lerp(2.4, 4.6, seg(B.crawlT, 0, 0.3));
       e.vx = -A.nx * sp;
       e.vz = -A.nz * sp;
       e.pos.x += e.vx * dt;
@@ -1040,9 +1048,10 @@ export const MIND = {
       this.T.pitch = 0.1;
       this.T.shz = 0.15;
       this.lookW = 0;
-      this.eyeT = lerp(0.6, 0, clamp(depth / 1.6, 0, 1));
+      this.setShade(1 - seg(depth, -0.5, 1.0));
+      this.eyeT = depth < 0.4 ? 0.9 : lerp(0.9, 0, seg(depth, 0.4, 1.4));
       if (Math.random() < dt * 6) g.fx.blood.emit(A.x, A.y + 1.4, A.z, 3, { color: [0.3, 0.26, 0.2], speed: 0.6, life: 1, up: -0.2, gravity: 6 });
-      if (depth >= BURROW.inside - 0.2) {
+      if (depth >= 1.4) {
         B.stage = 'inside';
         B.t = 0;
         B.dur = 1.2 + Math.hypot(O.x - A.x, O.z - A.z) / 9;
@@ -1069,17 +1078,18 @@ export const MIND = {
       // primero, sólo los ojos en lo negro del túnel
       if (t < 0.8) {
         this.stop(dt, 20);
+        this.setShade(0);
         this.eyeT = 1.7;
         this.lookAtPlayer(1);
         if (Math.random() < dt * 8) g.fx.blood.emit(O.x, O.y + 1.4, O.z, 3, { color: [0.3, 0.26, 0.2], speed: 0.6, life: 1, up: -0.2, gravity: 6 });
         return;
       }
-      // luego sale a rastras
+      // luego sale a rastras: de lo negro del túnel va apareciendo el cuerpo
       if (!B.crawl) {
         B.crawl = true;
         g.audio && g.audio.play('scuttle', { x: O.x, y: O.y + 0.8, z: O.z });
       }
-      const sp = 1.7;
+      const sp = lerp(1.8, 3.0, seg(t, 0.8, 1.3));
       e.vx = O.nx * sp;
       e.vz = O.nz * sp;
       e.pos.x += e.vx * dt;
@@ -1087,6 +1097,7 @@ export const MIND = {
       const depth = (e.pos.x - O.x) * -O.nx + (e.pos.z - O.z) * -O.nz;
       this.narrow = clamp((depth + 1.4) / 1.6, 0, 1);
       this.T.h = lerp(0.62, 0.56, this.narrow);
+      this.setShade(1 - seg(depth, -0.5, 1.0));
       this.eyeT = 1.2;
       this.lookAtPlayer(0.7);
       const out = (e.pos.x - O.fx) * O.nx + (e.pos.z - O.fz) * O.nz;
@@ -1129,6 +1140,7 @@ export const MIND = {
     this.noCol = true;
     e.data.air = true;
     e.obj.visible = true;
+    this.setShade(0);
     this.plane = 'floor';
     this.narrow = 1;
     this.T.h = 0.56;

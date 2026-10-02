@@ -1121,9 +1121,12 @@ export class Game {
           const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
-          // (a la que mueve una cinemática la muestra y la oculta el guion)
+          // (a la que mueve una cinemática la muestra y la oculta el guion; el
+          // Descoyuntado, metido en una de sus grutas, no se ve: antes esto lo
+          // volvía a mostrar y su cuerpo se quedaba unos segundos dentro del
+          // túnel, a la vista, hasta salir por la otra boca)
           const gone = e.T.deathDur ?? 5.5;
-          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < gone) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > gone - 0.5);
+          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < gone) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > gone - 0.5) && !(e.D && e.D.hidden);
           return act;
         });
       }

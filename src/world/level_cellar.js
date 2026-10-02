@@ -85,10 +85,11 @@ const BURROWS = [
     { x: 47, z: -62.5, nx: -1, nz: 0 },
     { x: 65, z: -65, nx: 0, nz: 1 },
   ],
-  // el Lagar y la cripta
+  // el Lagar y la cripta (entre los dos sepulcros del oeste: pegada a uno
+  // de ellos, no cabía delante de la boca)
   [
     { x: 34.5, z: -60, nx: 0, nz: 1 },
-    { x: 40, z: -78, nx: 1, nz: 0 },
+    { x: 40, z: -79, nx: 1, nz: 0 },
   ],
   // la sala del altar (junto a la escalera) y el osario
   [
@@ -614,15 +615,20 @@ export function buildCellar(ctx, B, L, o = {}) {
     [32, -53.5, 6],
   ])
     L.breakables.push({ id: 'pilar' + k, kind: 'pillar', x, z, y: F, hx: 0.5, hz: 0.5, h: pillarH, room });
+  // (a algo más de metro y medio del muro norte: el primero tapaba media
+  // entrada del pasillo)
   for (const x of [43.35, 47.65])
     for (const [z0, z1] of [
-      [-45.9, -43.9],
-      [-43.6, -41.6],
-      [-41.3, -39.3],
+      [-44.8, -42.8],
+      [-42.5, -40.5],
+      [-40.2, -38.2],
     ])
       L.breakables.push({ id: `estante${Math.round(x)}${Math.round(-z0)}`, kind: 'rack', x, z: (z0 + z1) / 2, y: F, hx: 0.55, hz: (z1 - z0) / 2, h: 2.4, room });
   // toneles (tumbados en su cuna; along: a lo largo de z) y sacos: él los
-  // arrasa al pasar; tú, a golpes
+  // arrasa al pasar; tú, a golpes. Ninguno a menos de metro y medio de un
+  // arco o de una puerta (tools/doorways.mjs lo comprueba): antes había
+  // toneles a la salida de los arcos del Lagar y de la antecámara y sacos
+  // delante de la puerta del osario
   [
     [65.1, -38.0, true, 0.5, 1.2],
     [65.1, -42.8, true, 0.5, 1.2],
@@ -633,9 +639,9 @@ export function buildCellar(ctx, B, L, o = {}) {
     [27.0, -36.2, false, 0.5, 1.2],
     [28.6, -36.3, false, 0.5, 1.2],
     [27.1, -45.0, true, 0.52, 1.25],
-    [36.9, -39.2, true, 0.5, 1.2],
-    [36.6, -59.3, false, 0.5, 1.2],
-    [40.4, -58.6, true, 0.5, 1.2],
+    [36.9, -52.8, true, 0.5, 1.2],
+    [33.6, -36.1, false, 0.5, 1.2],
+    [40.3, -62.9, true, 0.5, 1.2],
     [46.2, -59.2, false, 0.46, 1.1],
   ].forEach(([x, z, along, r, len], i) =>
     L.breakables.push({ id: 'tonel' + i, kind: 'cask', x, z, y: F, rot: along ? Math.PI / 2 : 0, r, len, hx: along ? r : len / 2 + 0.1, hz: along ? len / 2 + 0.1 : r, h: r * 2 + 0.1, room })
@@ -644,7 +650,7 @@ export function buildCellar(ctx, B, L, o = {}) {
     [50.2, -46.0],
     [36.8, -35.9],
     [30.4, -36.0],
-    [65.0, -40.0],
+    [48.9, -46.0],
   ].forEach(([x, z], i) => L.breakables.push({ id: 'sacos' + i, kind: 'sacks', x, z, y: F, hx: 0.55, hz: 0.55, h: 0.85, room }));
   // los sepulcros de la cripta y sus dos santos: si te escondes detrás, los
   // revienta
