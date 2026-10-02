@@ -114,18 +114,54 @@ export class Input {
       this.keys.delete(c);
       this.kReleased.add(c);
     });
+    // Chrome, con el ratón capturado, manda de vez en cuando un movimiento
+    // espurio enorme en un solo evento (un salto de media pantalla, a veces
+    // con el signo cambiado): la cámara daba media vuelta de golpe al
+    // girarla. Un giro de verdad, por rápido que sea, se reparte en varios
+    // eventos seguidos en la misma dirección; un salto aislado, no. Así que
+    // un evento desmesurado para lo que se venía moviendo queda en espera:
+    // si el siguiente sigue en la misma dirección y con fuerza, era un giro
+    // rápido y cuentan los dos; si no, se descarta.
+    this._mAvg = 0;
+    this._mPend = null;
+    this._lockAt = -1e9;
+    this.spikes = 0;
     addEventListener('mousemove', (e) => {
       // Sin pointer lock (p.ej. en un iframe restringido) se sigue usando movementX
-      if (this.locked || this.freeLook) {
-        this.mdx += e.movementX || 0;
-        this.mdy += e.movementY || 0;
-        if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) this.device = 'kb';
+      if (!(this.locked || this.freeLook)) return;
+      const dx = e.movementX || 0,
+        dy = e.movementY || 0;
+      const now = performance.now();
+      // (el primer evento tras capturar el ratón trae a veces el salto del cursor al centro)
+      if (now - this._lockAt < 90) return;
+      const m = Math.abs(dx) + Math.abs(dy);
+      const lim = 160 + this._mAvg * 5;
+      const P = this._mPend;
+      if (P) {
+        this._mPend = null;
+        const same = Math.abs(P.dx) >= Math.abs(P.dy) ? Math.sign(dx) === Math.sign(P.dx) && Math.abs(dx) > Math.abs(P.dx) * 0.25 : Math.sign(dy) === Math.sign(P.dy) && Math.abs(dy) > Math.abs(P.dy) * 0.25;
+        if (same && m > 30 && now - P.t < 70) {
+          this._look(P.dx, P.dy, P.m);
+          this._look(dx, dy, m);
+          return;
+        }
+        this.spikes++;
       }
+      if (m > lim) {
+        this._mPend = { dx, dy, m, t: now };
+        return;
+      }
+      this._look(dx, dy, m);
     });
     document.addEventListener('pointerlockchange', () => {
       const was = this.locked;
       this.locked = document.pointerLockElement === canvas;
-      if (this.locked) this.freeLook = false;
+      if (this.locked) {
+        this.freeLook = false;
+        this._lockAt = performance.now();
+        this._mPend = null;
+        this._mAvg = 0;
+      }
       if (was && !this.locked && this.onPointerLockLost) this.onPointerLockLost();
     });
     addEventListener('gamepadconnected', () => {
@@ -133,14 +169,44 @@ export class Input {
     });
   }
 
+  // Movimiento del ratón ya filtrado.
+  _look(dx, dy, m) {
+    this._mAvg = this._mAvg * 0.8 + Math.min(m, 400) * 0.2;
+    this.mdx += dx;
+    this.mdy += dy;
+    if (m > 2) this.device = 'kb';
+  }
+
   requestLock() {
     if (!this.enabledPointerLock || this.locked) return;
-    try {
-      const p = this.canvas.requestPointerLock && this.canvas.requestPointerLock();
-      if (p && p.catch) p.catch(() => (this.freeLook = !this.locked));
-    } catch (e) {
-      this.freeLook = true;
+    const c = this.canvas;
+    if (!c.requestPointerLock) return;
+    const plain = () => {
+      try {
+        const p = c.requestPointerLock();
+        if (p && p.catch) p.catch(() => (this.freeLook = !this.locked));
+      } catch (e) {
+        this.freeLook = true;
+      }
+    };
+    // movimiento en crudo (sin la aceleración del sistema): en Windows evita
+    // casi todos los saltos espurios de Chrome; donde no se admite, el normal
+    if (this.rawMouse !== false) {
+      try {
+        const p = c.requestPointerLock({ unadjustedMovement: true });
+        if (p && p.catch)
+          p.catch((err) => {
+            if (err && err.name === 'NotSupportedError') {
+              this.rawMouse = false;
+              plain();
+            } else this.freeLook = !this.locked;
+          });
+        return;
+      } catch (e) {
+        this.rawMouse = false;
+      }
     }
+    plain();
   }
   exitLock() {
     if (document.pointerLockElement) document.exitPointerLock();
@@ -305,7 +371,10 @@ export class Input {
   // Impulso rápido del stick derecho / ratón para cambiar de objetivo fijado.
   flick() {
     if (this.rs && Math.abs(this.rs.x) > 0.75) return Math.sign(this.rs.x);
-    if (Math.abs(this.flickAcc || 0) > 70 / Math.max(0.4, this.sens)) {
+    // (un golpe de ratón decidido: con 70 px bastaba un leve reajuste del
+    // pulso en mitad de una pelea para saltar a otra criatura y que la
+    // cámara barriese hacia ella)
+    if (Math.abs(this.flickAcc || 0) > 150 / Math.max(0.4, this.sens)) {
       const s = Math.sign(this.flickAcc);
       this.flickAcc = 0;
       return s;

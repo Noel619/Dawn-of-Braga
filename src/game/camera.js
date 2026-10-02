@@ -1,7 +1,7 @@
 // Cámara en tercera persona al estilo Souls: seguimiento suave, colisión,
 // recentrado animado, fijado de objetivo que encuadra a los dos y temblor.
 import * as THREE from 'three';
-import { clamp, damp, dampAngle, angleDiff } from '../core/util.js';
+import { clamp, damp, dampAngle, angleDiff, smoothstep } from '../core/util.js';
 
 const _dir = new THREE.Vector3();
 const _tp = new THREE.Vector3();
@@ -84,10 +84,13 @@ export class CameraRig {
       const d = Math.hypot(tx, tz);
       const desiredYaw = Math.atan2(tx, tz);
       // más rápido cuanto más se escapa el objetivo del encuadre, pero con
-      // velocidad angular limitada: un barrido, nunca un salto
+      // velocidad angular limitada: un barrido, nunca un salto. Con la
+      // criatura encima (te agarra, te cae encima, se te cuela por debajo)
+      // la dirección hacia ella da vueltas sin sentido: ahí apenas gira
+      const near = smoothstep(0.7, 2.6, d);
       const err = Math.abs(angleDiff(this.yaw, desiredYaw));
-      const ny = dampAngle(this.yaw, desiredYaw, 5 + Math.min(err, 1.5) * 5, dt);
-      const maxStep = 6.5 * dt;
+      const ny = dampAngle(this.yaw, desiredYaw, (5 + Math.min(err, 1.5) * 5) * (0.25 + 0.75 * near), dt);
+      const maxStep = (1 + 5.5 * near) * dt;
       this.yaw += clamp(angleDiff(this.yaw, ny), -maxStep, maxStep);
       const th = target.pos.y + (target.lockHeight ?? 1.4) * 0.75 - (player.visY + 1.4);
       const big = clamp(((target.T && target.T.height) || 1.8) / 1.8, 1, 3);
