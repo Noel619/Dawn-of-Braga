@@ -830,14 +830,17 @@ export class UI {
     // indicación de interacción
     const pr = $('prompt');
     const t = g.promptTarget;
-    if (t && !this.modal && g.state === 'play') {
-      const label = g.interact.label(t);
+    // (atrapado o derribado por el Descoyuntado: forcejea)
+    const struggle = (p.state === 'grabbed' || p.state === 'pinned') && !p.dead;
+    if ((t || struggle) && !this.modal && g.state === 'play') {
+      const label = struggle ? 'Forcejea' : g.interact.label(t);
       const d = this.device();
-      const k = d + ':' + GLYPHS[d].interact + ':' + label;
+      const glyph = GLYPHS[d][struggle ? 'light' : 'interact'];
+      const k = d + ':' + glyph + ':' + label;
       if (k !== this._promptKey) {
         this._promptKey = k;
         $('prompt-label').textContent = label;
-        $('prompt-key').innerHTML = spriteHtml(keyBitmap(GLYPHS[d].interact, d === 'pad'));
+        $('prompt-key').innerHTML = spriteHtml(keyBitmap(glyph, d === 'pad'));
       }
       pr.classList.add('show');
     } else pr.classList.remove('show');

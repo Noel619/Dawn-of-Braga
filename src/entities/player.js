@@ -341,7 +341,9 @@ export class Player {
   // ------------------------------------------------------------ daño
   // Devuelve 'hit' | 'block' | 'dodge' | 'guardbreak'
   receiveHit(atk, fromX, fromZ) {
-    if (this.dead || this.state === 'wake') return 'none';
+    // (derribado con el Descoyuntado encima o levantándose: eso ya duele bastante)
+    if (this.dead || this.state === 'wake' || this.state === 'pinned') return 'none';
+    if (this.state === 'getup' && this.stT < 0.75) return 'dodge';
     if (this.iframe) return 'dodge';
     const dx = fromX - this.pos.x,
       dz = fromZ - this.pos.z;
@@ -418,9 +420,36 @@ export class Player {
     this.lastHitT = this.game.time;
     this.flinchX.kick(-7);
     this.flinchY.kick((Math.random() - 0.5) * 10);
-    this.anim.play(this.clips.hurt, { blend: 0.03 });
+    // (derribado, sigue en el suelo: sólo el respingo)
+    if (this.state !== 'pinned') this.anim.play(this.clips.hurt, { blend: 0.03 });
     this.game.audio && this.game.audio.play('playerHurt', this.pos);
     if (this.hp <= 0) this.die();
+  }
+  // Derribado de espaldas con el Descoyuntado encima (te ha caído del techo):
+  // sin control; forcejear (pulsar ataque, esquiva, guardia o interactuar)
+  // te lo quita de encima.
+  startPinned() {
+    this.state = 'pinned';
+    this.stT = 0;
+    this.mash = 0;
+    this.blocking = false;
+    this.buffer = null;
+    this.vx = this.vz = 0;
+    this.flask.visible = false;
+    this.charging = false;
+    this.anim.speed = 1;
+    this.anim.play(this.clips.pinned, { blend: 0.05 });
+  }
+  // Se levanta (de una patada se lo ha quitado de encima, o le ha soltado):
+  // invulnerable mientras se incorpora.
+  releasePin(escaped, dmg = 0) {
+    if (this.dead) return;
+    this.hp -= dmg;
+    if (this.hp <= 0) return this.die();
+    this.state = 'getup';
+    this.stT = 0;
+    this.getupDur = escaped ? 0.85 : 1.05;
+    this.anim.play(this.clips.getup, { blend: 0.08, speed: escaped ? 1.2 : 1 });
   }
   releaseGrab(knock, fx, fz, dmg = 0) {
     if (this.dead) return;
@@ -728,11 +757,21 @@ export class Player {
       this.vz = damp(this.vz, 0, 5, dt);
     } else if (st === 'cine') {
       desiredSpeed = 0;
-    } else if (st === 'grabbed') {
+    } else if (st === 'grabbed' || st === 'pinned') {
       desiredSpeed = -1;
       this.vx = this.vz = 0;
       this.buffer = null;
       if (allowControl) for (const a of ['light', 'heavy', 'dodge', 'interact', 'block']) if (input.pressed(a)) this.mash = (this.mash || 0) + 1;
+    } else if (st === 'getup') {
+      desiredSpeed = -1;
+      this.vx = damp(this.vx, 0, 8, dt);
+      this.vz = damp(this.vz, 0, 8, dt);
+      this.buffer = null;
+      this.iframe = this.stT < 0.75;
+      if (this.stT >= (this.getupDur || 1)) {
+        this.state = 'free';
+        this.anim.stop(0.2);
+      }
     }
 
     // velocidad horizontal: acelera rápido, frena algo más rápido
@@ -878,7 +917,7 @@ export class Player {
     // pase, fuera del cuerpo
     if (this.hasShield && !two) {
       const healW = this.state === 'heal' ? clamp(1 - Math.abs(this.stT - 0.62) / 0.5, 0, 1) : 0;
-      const rolling = this.state === 'roll' || this.state === 'dead' || this.state === 'wake' || this.state === 'rest';
+      const rolling = this.state === 'roll' || this.state === 'dead' || this.state === 'wake' || this.state === 'rest' || this.state === 'pinned' || this.state === 'getup';
       const [cg, cw, cr] = this._shCarry;
       const turn = clamp(-gait.yawRate * 0.05, -0.3, 0.3) * (cw + cr);
       const yawT = 0.42 * cg + 0.72 * cw + 1.25 * cr + sw * (0.14 * cw + 0.12 * cr) + turn;

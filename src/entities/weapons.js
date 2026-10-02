@@ -107,6 +107,54 @@ function commonClips(W, G, GUARD, BLOCK) {
       ],
       { ground: false }
     ),
+    // derribado de espaldas (el Descoyuntado le ha caído encima): cae, se
+    // queda boca arriba y forcejea (los brazos empujan, la cabeza se aparta
+    // de la boca, las piernas patalean)
+    pinned: clip(
+      'pinned',
+      3.2,
+      (() => {
+        const LIE = { root: [0, -80, 0], hips: [-88, 0, 0], chest: [-6, 0, 0], head: [-20, 0, 0] };
+        const K = [
+          [0, { ...GUARD }],
+          [0.16, { root: [0, -34, 0], hips: [-38, 0, 0], chest: [-22, 0, 0], head: [-28, 0, 0], armL: [-120, 0, 40], foreL: [-40, 0, 0], armR: [-120, 0, -40], foreR: [-40, 0, 0], legL: [-60, 0, 8], shinL: [70, 0, 0], legR: [-40, 0, -8], shinR: [60, 0, 0] }],
+          [0.34, { ...LIE, armL: [-150, 0, 25], foreL: [-60, 0, 0], armR: [-150, 0, -25], foreR: [-60, 0, 0], legL: [-50, 0, 10], shinL: [80, 0, 0], legR: [-30, 0, -10], shinR: [70, 0, 0] }, 'snap'],
+        ];
+        for (let i = 0; i < 8; i++) {
+          const s = i % 2 ? 1 : -1;
+          K.push([
+            0.62 + i * 0.32,
+            {
+              ...LIE,
+              chest: [-10, 12 * s, 0],
+              head: [-6, 34 * s, 0],
+              armL: [s > 0 ? -160 : -134, 0, s > 0 ? 15 : 36],
+              foreL: [s > 0 ? -28 : -76, 0, 0],
+              armR: [s > 0 ? -134 : -160, 0, s > 0 ? -36 : -15],
+              foreR: [s > 0 ? -76 : -28, 0, 0],
+              legL: [s > 0 ? -72 : -22, 0, 10],
+              shinL: [s > 0 ? 100 : 40, 0, 0],
+              legR: [s > 0 ? -22 : -72, 0, -10],
+              shinR: [s > 0 ? 40 : 100, 0, 0],
+            },
+          ]);
+        }
+        return K;
+      })(),
+      { ground: false }
+    ),
+    // se levanta: se incorpora, apoya una rodilla y se pone en guardia
+    getup: clip(
+      'getup',
+      1.05,
+      [
+        [0, { root: [0, -80, 0], hips: [-88, 0, 0], chest: [-6, 0, 0], head: [-10, 0, 0], armL: [-40, 0, 50], armR: [-40, 0, -50], legL: [-30, 0, 8], shinL: [50, 0, 0], legR: [-20, 0, -8], shinR: [40, 0, 0] }],
+        [0.32, { root: [0, -72, 0], hips: [-20, 0, 0], chest: [30, 0, 0], head: [30, 0, 0], armL: [20, 0, 20], foreL: [-30, 0, 0], armR: [20, 0, -20], foreR: [-30, 0, 0], legL: [-90, 0, 10], shinL: [40, 0, 0], legR: [-80, 0, -10], shinR: [60, 0, 0] }],
+        [0.66, { root: [0, -42, 0], chest: [30, 0, 0], head: [20, 0, 0], legL: [-95, 0, 6], shinL: [95, 0, 0], legR: [5, 0, -4], shinR: [100, 0, 0], armL: [-40, 0, 10], foreL: [-40, 0, 0], armR: [-40, 0, -10], foreR: [-40, 0, 0] }],
+        [1.05, { ...GUARD }],
+      ],
+      { ground: false }
+    ),
     interact: clip('interact', 0.7, [
       [0, { ...GUARD }],
       [0.25, { root: [0, -35, 0], chest: [40, 0, 0], head: [20, 0, 0], legL: [-70, 0, 5], shinL: [100, 0, 0], legR: [-20, 0, -5], shinR: [80, 0, 0], armL: [-60, 0, 10], foreL: [-10, 0, 0], armR: [-20, 0, -10], foreR: [-60, 0, 0] }],

@@ -148,6 +148,61 @@ const PERCHES = [
   [66, -62],
 ];
 
+// Puestos de emboscada: en la bóveda, nada más pasar un arco o una puerta
+// (por donde hay que pasar por fuerza, y el dintel lo tapa hasta que estás
+// debajo) y en mitad de los pasillos largos. Ahí espera colgado, a oscuras,
+// a que pases por debajo sin mirar arriba, y te cae encima. Sólo donde la
+// bóveda queda bien por encima de tu cabeza (3,7 m o más).
+const AMBUSH_EXTRA = [
+  [42, -52], // pasillo norte
+  [44.2, -68.5], // pasillo de la cripta
+  [62.5, -77.7], // pasillo del osario
+  [68.8, -48],
+  [68.8, -60],
+  [68.8, -70], // galería del osario
+];
+function ambushSpots() {
+  const R = REGIONS.map((q) => ({ id: q.id, x0: q.r[0], z0: q.r[1], x1: q.r[2], z1: q.r[3], top: q.top }));
+  // (las regiones de después pisan a las de antes, como al pintar la planta)
+  const topAt = (x, z) => {
+    let t = null;
+    for (const q of R) if (x > q.x0 && x < q.x1 && z > q.z0 && z < q.z1) t = q.top;
+    return t;
+  };
+  const out = [];
+  const add = (x, z, kind, door = null) => {
+    const t = topAt(x, z);
+    if (t === null || t - F < 3.7) return;
+    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < 1.6)) return;
+    out.push({ x, z, top: t, kind, door });
+  };
+  for (const A of R)
+    for (const B of R) {
+      if (A === B || A.id === 'stair' || B.id === 'stair') continue;
+      for (const [ax, bx, axis] of [
+        [A.x1, B.x0, 'x'],
+        [A.z1, B.z0, 'z'],
+      ]) {
+        if (Math.abs(ax - bx) > 1e-6) continue;
+        const s0 = axis === 'x' ? Math.max(A.z0, B.z0) : Math.max(A.x0, B.x0),
+          s1 = axis === 'x' ? Math.min(A.z1, B.z1) : Math.min(A.x1, B.x1);
+        if (s1 - s0 < 1.2) continue;
+        // (dos trozos de una misma sala que se tocan a todo lo ancho no son un paso)
+        const wa = axis === 'x' ? A.z1 - A.z0 : A.x1 - A.x0;
+        if (A.id === B.id && Math.abs(s1 - s0 - wa) < 0.01) continue;
+        const m = (s0 + s1) / 2;
+        const door = { axis, at: ax, s0, s1 };
+        for (const side of [-1, 1]) {
+          const k = ax + side * 1.35;
+          if (axis === 'x') add(k, m, 'door', door);
+          else add(m, k, 'door', door);
+        }
+      }
+    }
+  for (const [x, z] of AMBUSH_EXTRA) add(x, z, 'hall');
+  return out;
+}
+
 // Las tres palancas del rastrillo: punto del muro y hacia dónde mira.
 const LEVERS = [
   { id: 'p_lagar', x: 26, z: -47.5, nx: 1, nz: 0, where: 'el Lagar' },
@@ -168,6 +223,7 @@ export const CELLAR = {
     pair.map((a) => ({ ...a, y: F, fx: a.x + a.nx * BURROW.front, fz: a.z + a.nz * BURROW.front, ix: a.x - a.nx * BURROW.inside, iz: a.z - a.nz * BURROW.inside }))
   ),
   perches: PERCHES.map(([x, z]) => ({ x, z })),
+  ambush: ambushSpots(),
   // sitios despejados donde le gusta pelear cuando enloquece
   open: [
     { id: 'lagar', x: 32, z: -47.5, r: 5.5 },

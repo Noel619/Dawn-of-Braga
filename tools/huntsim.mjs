@@ -125,7 +125,10 @@ const r = await p.evaluate(
       const bossNear = !e.dead && e.obj.visible && D.plane === 'floor' && !D.hidden && d < 7 && D.mode !== 'lair';
       const allPulled = leverList.every((l) => g.flags['lever:' + l.id]);
       const fighting = (how === 'fight' || (how === 'levers' && !allPulled)) && bossNear && !P.dead;
-      if (fighting) {
+      if (P.state === 'grabbed' || P.state === 'pinned') {
+        // atrapado o derribado: forcejea
+        if (i % 3 === 0) taps.push('M0');
+      } else if (fighting) {
         // de cara al jefe
         const yaw = Math.atan2(e.pos.x - P.pos.x, e.pos.z - P.pos.z);
         g.camRig.yaw = yaw;

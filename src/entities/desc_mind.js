@@ -220,6 +220,12 @@ export const MIND = {
     this.pendingRage = null;
     this.lastSafe = null;
     this.unsafeT = 0;
+    this.amb = null;
+    this.lastAmbush = [];
+    this.pinning = false;
+    this.stillT = 0;
+    this.scrX = 0;
+    this.scrY = 0;
   },
 
   reset() {
@@ -270,6 +276,8 @@ export const MIND = {
     const dc = cam.position.distanceTo(c);
     _a.copy(c).project(cam);
     const onScreen = _a.z < 1 && Math.abs(_a.x) < 0.94 && Math.abs(_a.y) < 0.94;
+    this.scrX = _a.x;
+    this.scrY = _a.y;
     const dp = Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
     const pr = e._probe;
     const lit = dp < 8 || (pr && pr[0] + pr[1] + pr[2] > 0.9) || this.eyeT > 1.2;
@@ -331,7 +339,7 @@ export const MIND = {
       const front = (_b.x * (P.x - p.x) + _b.z * (P.z - p.z)) / (Math.hypot(_b.x, _b.z) * d + 1e-6);
       let s = -Math.abs(d - want) + Math.random() * 2.5;
       if (kind === 'peek') s += (vis ? 8 : -6) + front * 4;
-      else s += (vis ? -9 : 0) - front * 2.5;
+      else s += (vis ? -9 : 0) - front * 2.5 - Math.max(0, this.openAt(P.x, P.z) - 2.4) * 1.6;
       if (this.lastPerches.includes(P)) s -= 6;
       const dm = Math.hypot(P.x - this.e.pos.x, P.z - this.e.pos.z);
       s -= dm * 0.08;
@@ -498,7 +506,10 @@ export const MIND = {
     e.poiseT -= dt;
     if (e.poiseT <= 0) e.poise = e.T.poise;
     this.updateProjectiles(dt);
-    if (this.mode !== 'burrow' && this._shade !== undefined && this._shade !== 1) this.setShade(1);
+    // (colgado a oscuras en la bóveda, metido en una gruta o cayendo de la
+    // emboscada lleva su propia sombra)
+    const ownShade = this.mode === 'burrow' || this.mode === 'ambush' || (this.atk && this.atk.name === 'drop');
+    if (!ownShade && this._shade !== undefined && this._shade !== 1) this.setShade(1);
     this.rageK = damp(this.rageK, this.stage === 'rage' ? 1 : 0, 1.5, dt);
     if (e.dead) return this.dead(dt);
     this.senseT -= dt;
@@ -516,6 +527,8 @@ export const MIND = {
       this.seenT = 0;
     }
     const hunting = this.huntActive();
+    // cuánto llevas sin moverte (si te paras, no se queda esperando)
+    this.stillT = Math.hypot(p.vx, p.vz) < 0.6 && p.state !== 'attack' && p.state !== 'roll' ? this.stillT + dt : 0;
     // por dónde vas pasando (te sigue por tu rastro)
     this.trailT -= dt;
     if (this.trailT <= 0) {
@@ -625,10 +638,14 @@ export const MIND = {
       case 'lure':
         this.lure(dt);
         break;
+      case 'ambush':
+        this.ambushMode(dt);
+        break;
       case 'scripted':
         break;
     }
-    if (this.mode !== 'lair' && this.mode !== 'shadow' && hunting && this.stage === 'stalk') this.taunts(dt);
+    // (al acecho en la bóveda, ni un ruido: le delataría)
+    if (this.mode !== 'lair' && this.mode !== 'shadow' && this.mode !== 'ambush' && hunting && this.stage === 'stalk') this.taunts(dt);
     // compromiso (barra de vida, música): enloquecido, siempre
     const hot = this.stage === 'rage' || M === 'fight' || M === 'attack' || M === 'stun' || M === 'hurt' || M === 'down' || M === 'evade' || M === 'guard' || (M === 'hunt' && this.dist < 6);
     if (hot) this.lastEngaged = g.time;
@@ -650,7 +667,7 @@ export const MIND = {
         }
       }
       // no atravesar al jugador (salvo desde el techo)
-      if (this.plane === 'floor' && !p.dead && !(this.atk && this.atk.name === 'grab' && this.grabbed)) {
+      if (this.plane === 'floor' && !p.dead && !(this.atk && this.atk.name === 'grab' && this.grabbed) && !this.pinning) {
         const dx = e.pos.x - p.pos.x,
           dz = e.pos.z - p.pos.z;
         const dd = Math.hypot(dx, dz);
@@ -733,7 +750,7 @@ export const MIND = {
     if (kind === 'intro') {
       // ya se ha ido: está en la oscuridad, colgado de algún techo
       this.setMode('perch');
-      this.perchDur = rnd(4, 6);
+      this.perchDur = rnd(3, 4.5);
     } else {
       // te ha oído bajar: deja de comer, te mira y se escabulle
       this.setMode('retreat');
@@ -754,6 +771,11 @@ export const MIND = {
         const P = this.choosePerch('hide', this.noise);
         if (P) this.perch = P;
         this.noise = null;
+      }
+      // o se adelanta a un puesto de la bóveda por donde vas a pasar
+      if (!this.perch && Math.random() < 0.5) {
+        const A = this.chooseAmbush();
+        if (A) return this.startAmbush(A);
       }
       if (!this.perch && this.peekCD <= 0 && Math.random() < 0.3) {
         const P = this.choosePerch('peek');
@@ -808,7 +830,7 @@ export const MIND = {
     const d = this.moveTo(P.x, P.z, spd, dt);
     if (d < 0.8) {
       this.setMode(this.peeking ? 'peek' : 'perch');
-      this.perchDur = this.peeking ? 6 : rnd(3, 6);
+      this.perchDur = this.peeking ? 4 : rnd(2, 3.5);
     }
     if (this.mT > 12) this.perch = null;
   },
@@ -816,7 +838,7 @@ export const MIND = {
   // ----- te sigue
   startShadow() {
     this.setMode('shadow');
-    this.shadowDur = rnd(18, 30);
+    this.shadowDur = rnd(14, 22);
     this.shadowSnd = rnd(2.5, 4.5);
     this.lastShadow = this.g.time;
     this.hunger = Math.min(this.hunger, 0.5);
@@ -850,6 +872,16 @@ export const MIND = {
     const hh = this.ceilAt(e.pos.x, e.pos.z) - e.pos.y;
     const want = this.plane === 'ceil' ? (hh > 2.9 ? 'ceil' : 'floor') : hh > 3.4 && g.time - this.planeT > 1.5 ? 'ceil' : 'floor';
     if (!this.toPlane(want) && this.air) return this.stop(dt, 4);
+    // te has parado: no se queda a esperar a que sigas. Sin que le veas, o
+    // se te acerca por la bóveda para caerte encima, o se adelanta a un
+    // puesto de emboscada por donde irás
+    if (this.stillT > 3 && !this.seen && this.mT > 3) {
+      if (this.hunger > 0.3 && this.ceilAt(p.pos.x, p.pos.z) - p.pos.y > 3.6) return this.startHunt();
+      const A = this.chooseAmbush();
+      if (A) return this.startAmbush(A);
+      this.perch = null;
+      return this.setMode('stalk');
+    }
     // te acercas a él: o se te echa encima o se escabulle
     if (d < 6.5 && this.closing > 1.3 && this.seen) {
       if (this.hunger > 0.55) return this.engage();
@@ -1223,6 +1255,179 @@ export const MIND = {
     }
   },
 
+  // ----- emboscada desde la bóveda
+  // Un puesto (CELLAR.ambush: nada más pasar un arco o una puerta, o en
+  // mitad de un pasillo) por delante de por donde vas, al que puede llegar
+  // antes que tú y que no estás viendo.
+  chooseAmbush(o = {}) {
+    const g = this.g,
+      p = g.player,
+      e = this.e;
+    const nav = g.navCellar;
+    g.camera.getWorldDirection(_b);
+    // hacia dónde vas (o hacia dónde miras, si estás parado)
+    let hx = p.vx,
+      hz = p.vz;
+    if (Math.hypot(hx, hz) < 0.6) {
+      hx = _b.x;
+      hz = _b.z;
+    }
+    const hl = Math.hypot(hx, hz) || 1;
+    hx /= hl;
+    hz /= hl;
+    let best = null,
+      bs = -1e9;
+    for (const A of CELLAR.ambush) {
+      if (!nav.walkable(A.x, A.z)) continue;
+      const dx = A.x - p.pos.x,
+        dz = A.z - p.pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d < (o.min ?? 5) || d > (o.max ?? 22)) continue;
+      const ahead = (dx * hx + dz * hz) / (d || 1);
+      const de = Math.hypot(A.x - e.pos.x, A.z - e.pos.z);
+      // tiene que poder llegar antes que tú
+      if (!o.rage && de > d * 1.7 + 5) continue;
+      let sc = ahead * 5 - Math.abs(d - (o.want ?? 11)) * 0.35 - de * 0.1 + Math.random() * 2.5;
+      if (this.pointVisible(A.x, A.top - 1, A.z)) sc -= 7;
+      if (A.kind === 'door') sc += 1;
+      if (this.lastAmbush.includes(A)) sc -= 6;
+      if (o.score) sc += o.score(A, d);
+      if (sc > bs) {
+        bs = sc;
+        best = A;
+      }
+    }
+    return best;
+  },
+  startAmbush(A, rage = false) {
+    this.amb = { A, stage: 'go', t: 0, spotT: 0, dustT: rnd(1, 2), rage };
+    this.lastAmbush.push(A);
+    if (this.lastAmbush.length > 4) this.lastAmbush.shift();
+    this.perch = null;
+    this.setMode('ambush');
+  },
+  // Va hasta el puesto (por la bóveda si cabe), sube y se queda colgado,
+  // quieto y a oscuras (los ojos cerrados; sólo su sombra en el suelo y algo
+  // de polvo que cae le delatan). Si pasas por debajo sin mirar arriba (y
+  // más si vas corriendo), te cae encima. Si le ves venir, se escabulle (o,
+  // si ya estás casi debajo, cae igual, pero lo esperas). Enloquecido sólo
+  // espera un momento y, si no sales, entra a por ti.
+  ambushMode(dt) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    const B = this.amb;
+    if (!B) return this.setMode(this.stage === 'rage' ? 'fight' : 'stalk');
+    B.t += dt;
+    const A = B.A;
+    const rage = B.rage;
+    const giveUp = (why) => {
+      this.amb = null;
+      if (rage || this.stage === 'rage') return this.engage();
+      if (why === 'seen') {
+        this.frust += 0.4;
+        this.giggle();
+        this.retreatTo = this.choosePerch('far') || this.choosePerch('hide');
+        return this.setMode('retreat');
+      }
+      this.perch = null;
+      this.setMode('stalk');
+    };
+    if (B.stage === 'go') {
+      // por la bóveda si cabe (ahí arriba casi no se le ve); si no, agazapado
+      const hh = this.ceilAt(e.pos.x, e.pos.z) - e.pos.y;
+      const want = this.plane === 'ceil' ? (hh > 2.9 ? 'ceil' : 'floor') : hh > 3.4 && g.time - this.planeT > 0.8 ? 'ceil' : 'floor';
+      if (!this.toPlane(want) && this.air) return this.stop(dt, 4);
+      // si le ves de camino: se queda quieto y luego se escabulle (o, si
+      // estás cerca y tiene hambre, se te echa encima)
+      if (!rage && this.seen && this.dist < 12) {
+        B.frz = (B.frz || 0) + dt;
+        this.stop(dt, 14);
+        this.lookAtPlayer(1);
+        if (B.frz > 0.7) {
+          if (this.dist < 6 && this.hunger > 0.45) {
+            this.amb = null;
+            return this.engage();
+          }
+          return giveUp('seen');
+        }
+        return;
+      }
+      B.frz = Math.max(0, (B.frz || 0) - dt);
+      this.lookW = damp(this.lookW, 0.3, 2, dt);
+      this.lookAtPlayer(this.lookW);
+      const spd = this.plane === 'ceil' ? 6.4 : this.dist > 12 ? 6 : 4.2;
+      const d = this.moveTo(A.x, A.z, spd, dt);
+      if (d < 0.55) {
+        if (this.plane !== 'ceil') {
+          if (this.ceilAt(e.pos.x, e.pos.z) - e.pos.y < 3.1) return giveUp('low');
+          this.toPlane('ceil');
+          return;
+        }
+        B.stage = 'wait';
+        B.t = 0;
+        g.audio && g.audio.play('scuttle', this.center, { k: 0.35 });
+      } else if (B.t > (rage ? 5 : 11)) return giveUp('late');
+      return;
+    }
+    // ---- colgado, quieto, a oscuras
+    this.stop(dt, 12);
+    if (this.air) return;
+    if (this.plane !== 'ceil') return giveUp('fell');
+    this.setShade(damp(this._shade ?? 1, 0.42, 3, dt));
+    this.eyeT = 0.04;
+    this.T.h = 0.8;
+    this.lookAtPlayer(0.7);
+    // ¿le has visto? (algo en el borde de la pantalla un instante no
+    // cuenta: tiene que estar a la vista, hacia el centro, un rato)
+    const noticed = this.seen && Math.abs(this.scrX) < 0.62 && this.scrY < 0.8 && this.dist < 11;
+    B.spotT = noticed ? B.spotT + dt : Math.max(0, B.spotT - dt * 0.5);
+    // dónde vas a estar dentro de un momento (si pasas corriendo, antes)
+    const lead = p.sprinting ? 0.45 : 0.3;
+    const fx = p.pos.x + p.vx * lead,
+      fz = p.pos.z + p.vz * lead;
+    const dNow = Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
+    const dNext = Math.hypot(fx - e.pos.x, fz - e.pos.z);
+    const below = Math.abs(p.pos.y - e.pos.y) < 1.2 && !p.dead && p.state !== 'grabbed' && p.state !== 'pinned' && p.state !== 'getup';
+    const reach = p.sprinting ? 1.9 : 1.5;
+    if (below && (dNow < reach || dNext < 1.2) && B.spotT < 0.35) {
+      this.amb = null;
+      return this.startAttack('drop', { ambush: true, fast: rage });
+    }
+    if (B.spotT > (p.sprinting ? 0.6 : 0.42)) {
+      // le has visto: si estás casi debajo, cae igual (pero ya lo esperas)
+      if (below && dNow < 3.4) {
+        this.amb = null;
+        return this.startAttack('drop', { ambush: false, fast: rage });
+      }
+      return giveUp('seen');
+    }
+    // lo que le delata, si te fijas: polvo que cae de la bóveda y algún crujido
+    if (dNow < 7) {
+      B.dustT -= dt;
+      if (B.dustT <= 0) {
+        B.dustT = rnd(1.2, 2.6);
+        const C = this.center;
+        g.fx.blood.emit(C.x + rnd(-0.3, 0.3), this.ceilAt(C.x, C.z) - 0.15, C.z + rnd(-0.3, 0.3), 3, { color: [0.3, 0.28, 0.26], speed: 0.25, life: 1.6, up: -0.2, gravity: 5 });
+        if (Math.random() < 0.35) g.audio && g.audio.play('boneCrack', C, { n: 1, k: 0.3 });
+      }
+    }
+    // ¿vienes hacia aquí? (si no te acercas, no se queda esperando)
+    if (B.best === undefined || dNow < B.best - 0.5) {
+      B.best = dNow;
+      B.closer = B.t;
+    }
+    // te has parado o no vienes: sin que le veas, va a por ti por la bóveda
+    // para caerte encima; si no, a otra cosa (enloquecido, entra a por ti)
+    if (!rage && !this.seen && (this.stillT > 3.5 || B.t - B.closer > 4.5) && B.t > 2) {
+      this.amb = null;
+      if (this.hunger > 0.3 || this.stillT > 3.5) return this.startHunt();
+      this.perch = null;
+      return this.setMode('stalk');
+    }
+    if (B.t > (rage ? 4.5 : 12) || this.dist > 26) return giveUp('late');
+  },
+
   // Pelea abierta.
   engage() {
     this.ambush = false;
@@ -1383,6 +1588,14 @@ export const MIND = {
     if (po < 2.1 && d > 2.5 && d < 11) this.lureT += dt;
     else this.lureT = Math.max(0, this.lureT - dt * 2);
     if (this.lureT > 1.6 && this.lureCD <= 0) {
+      // en la bóveda de la salida, a lo ancho, para caerte encima al salir
+      const A = this.chooseAmbush({ rage: true, min: 3, max: 12, want: 6, score: (S) => Math.min(3, this.openAt(S.x, S.z)) * 1.5 });
+      if (A && this.openAt(A.x, A.z) > 2 && Math.random() < 0.7) {
+        this.lureT = 0;
+        this.lureCD = 9;
+        this.startAmbush(A, true);
+        return true;
+      }
       const spot = this.findOpenSpot();
       if (spot) {
         this.lureTo = spot;
@@ -1482,6 +1695,11 @@ export const MIND = {
   onCrash(broke) {
     if (this.stage === 'stalk') this.frust += broke ? 0.8 : 0.5;
   },
+  onPinStart() {
+    // la emboscada le ha salido bien: se calma (y se sacia un rato)
+    if (this.stage === 'stalk') this.frust = Math.max(0, this.frust - 0.4);
+    this.hunger = 0.2;
+  },
   onEscaped() {
     if (this.stage === 'stalk') this.frust += 1;
   },
@@ -1541,8 +1759,11 @@ export const MIND = {
     const d = this.moveTo(P.x, P.z, this.plane === 'ceil' ? 6 : 5.4, dt);
     if (d < 0.9 || this.mT > 8) {
       this.perch = P;
+      // (de vuelta a lo oscuro: si tiene un puesto por delante de ti, ahí)
+      const A = this.chooseAmbush();
+      if (A && Math.random() < 0.6) return this.startAmbush(A);
       this.setMode('perch');
-      this.perchDur = rnd(3, 6);
+      this.perchDur = rnd(2, 3.5);
     }
   },
 
@@ -1591,6 +1812,8 @@ export const MIND = {
       this.grabbed = false;
       p.releaseGrab && p.releaseGrab(4, Math.sin(e.yaw), Math.cos(e.yaw), 0);
     }
+    if (this.pinning) this.endPin(false, 0);
+    this.amb = null;
     this.atk = null;
     this.ev = null;
     this.releaseAll();
@@ -1705,9 +1928,9 @@ export const MIND = {
       this.lureCD = 10;
       return this.engage();
     }
-    if (this.mT > 9) {
+    if (this.mT > 4.5) {
       this.lureTo = null;
-      this.lureCD = 14;
+      this.lureCD = 12;
       return this.engage();
     }
     const ds = Math.hypot(S.x - e.pos.x, S.z - e.pos.z);
@@ -1819,8 +2042,9 @@ export const MIND = {
     if (this.stage !== 'stalk') return;
     this.hunger = Math.min(1.6, this.hunger + 0.35 * k);
     const M = this.mode;
-    if (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow') {
+    if (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow' || M === 'ambush') {
       this.perch = null;
+      this.amb = null;
       this.setMode('stalk');
       if (this.dist < 18) this.startHunt();
     }
@@ -1928,7 +2152,7 @@ export const MIND = {
     if (r !== 'kill' && this.lastFrom) this.flinch(this.lastFrom[0], this.lastFrom[1], heavy);
     // le has alcanzado mientras acechaba: se revuelve
     const M = this.mode;
-    if (this.stage === 'stalk' && (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow' || M === 'hunt' || M === 'retreat')) {
+    if (this.stage === 'stalk' && (M === 'stalk' || M === 'perch' || M === 'peek' || M === 'shadow' || M === 'hunt' || M === 'retreat' || M === 'ambush')) {
       if (r !== 'kill') this.hunger = 1;
       this.frust += 0.4;
       if (e.state !== 'hurt' && e.state !== 'stagger') this.engage();
@@ -1962,6 +2186,7 @@ export const MIND = {
         this.grabbed = false;
         p.releaseGrab && p.releaseGrab(3, Math.sin(e.yaw), Math.cos(e.yaw), 0);
       }
+      if (this.pinning) this.endPin(false, 0);
     }
     const Dd = this._death;
     // 0 - 0,9: se alza y grita

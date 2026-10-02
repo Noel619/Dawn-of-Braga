@@ -18,13 +18,15 @@
 //   smash    revienta de un golpe con las dos manos el sepulcro, el santo o
 //            el tonel tras el que te escondes (o que le cierra el paso)
 //   crack    se parte todas las articulaciones: onda que aturde
-//   throw    te tira un hueso;  drop  cae del techo encima de ti
+//   throw    te tira un hueso
+//   drop     cae del techo encima de ti: si te alcanza, te derriba y se te
+//            queda encima mordiendo (forcejea para quitártelo de encima)
 //   riposte  contraataque seco tras parar tus golpes
 // Esquivas: voltereta hacia atrás, salto atrás y salto de lado. Guardia: los
 // antebrazos cruzados ante la cabeza (para golpes de frente). Burlas: golpea
 // el suelo, se ríe, gira la cabeza entera. Caída: boca arriba, pataleando.
 import * as THREE from 'three';
-import { clamp, damp, lerp, angleDiff, DEG } from '../core/util.js';
+import { clamp, damp, lerp, angleDiff, approachAngle, DEG } from '../core/util.js';
 import { moveBody } from '../world/collision.js';
 import { seg, lin, rnd, easeOutExpo, easeInBack } from './desc_util.js';
 
@@ -49,7 +51,7 @@ export const ATK = {
   smash: { dur: 1.45, range: 2.6, arc: 140, dmg: 24, stagger: true, knock: 6 },
   crack: { dur: 1.9, dmg: 18 },
   throw: { dur: 1.2, dmg: 11 },
-  drop: { dur: 1.3, range: 2.6, arc: 360, dmg: 32, stagger: true, knock: 6 },
+  drop: { dur: 9, range: 2.6, arc: 360, dmg: 16, stagger: true, knock: 5, unblockable: true },
   riposte: { dur: 0.85, range: 2.9, arc: 110, dmg: 20 },
 };
 
@@ -62,7 +64,7 @@ export const MOVES = {
       if (!this.air) this.jump('floor', 0.3, { arc: 0 });
       return;
     }
-    this.ambush = this.stage !== 'rage' && (this.mode === 'hunt' || this.mode === 'perch' || this.mode === 'stalk');
+    this.ambush = this.stage !== 'rage' && (this.mode === 'hunt' || this.mode === 'perch' || this.mode === 'stalk' || this.mode === 'ambush');
     this.atk = { name, ...ATK[name], t0: g.time, ...o };
     this.atkT = 0;
     this.hitDone = [];
@@ -971,42 +973,186 @@ export const MOVES = {
     }
   },
 
-  // cae del techo encima de ti (su sombra lo delata un instante antes)
+  // Cae del techo encima de ti: un chillido arriba, cae el polvo (y su
+  // sombra se ve en el suelo) y se deja caer adonde vas a estar. Si te
+  // alcanza, te derriba y se te queda encima, mordiendo (forcejea para
+  // quitártelo de encima); si ruedas a tiempo, se estrella contra el suelo
+  // y tarda en rehacerse.
   atk_drop(t, dt, a) {
     const e = this.e,
       g = this.g,
       p = g.player;
+    if (this.pinning) return this.pin(dt, a);
+    const W = a.fast ? 0.24 : a.ambush ? 0.3 : 0.34;
     if (!a.started) {
       a.started = true;
       g.audio && g.audio.play('dropCry', { x: this.center.x, y: this.center.y, z: this.center.z });
       e.flare = 1;
     }
-    if (t < 0.32) {
+    if (t < W) {
       // un chillido, arriba; el polvo cae
       this.stop(dt, 10);
       this.faceTo(p.pos.x, p.pos.z, 8, dt);
-      if (Math.random() < dt * 20) g.fx.blood.emit(this.center.x, this.center.y + 0.5, this.center.z, 2, { color: [0.3, 0.28, 0.26], speed: 0.4, life: 1.2, up: -0.5, gravity: 4 });
+      this.setShade(damp(this._shade ?? 1, 1, 14, dt));
+      this.eyeT = 1.5;
+      if (Math.random() < dt * 24) g.fx.blood.emit(this.center.x, this.center.y + 0.5, this.center.z, 2, { color: [0.3, 0.28, 0.26], speed: 0.4, life: 1.2, up: -0.5, gravity: 4 });
       return;
     }
     if (!a.fell) {
       a.fell = true;
-      this.jump('floor', 0.32, { arc: 0, x: e.pos.x, z: e.pos.z });
+      this.setShade(1);
+      // adonde vas a estar al caer (sin irse más de dos metros y medio, ni
+      // caer dentro de un muro o a otra altura)
+      let tx = p.pos.x + p.vx * 0.3,
+        tz = p.pos.z + p.vz * 0.3;
+      const dx = tx - e.pos.x,
+        dz = tz - e.pos.z;
+      const dd = Math.hypot(dx, dz);
+      if (dd > 2.4) {
+        tx = e.pos.x + (dx / dd) * 2.4;
+        tz = e.pos.z + (dz / dd) * 2.4;
+      }
+      if (!g.navCellar.walkable(tx, tz) || !this.sameFloorLine(e.pos.x, e.pos.z, tx, tz)) {
+        tx = e.pos.x;
+        tz = e.pos.z;
+      }
+      if (dd > 0.2) e.yaw = Math.atan2(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
+      this.jump('floor', 0.3, { arc: 0, x: tx, z: tz });
       this.onLand = () => {
         this.onLand = null;
-        g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 2.7, a.dmg, e, 6);
-        g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 1.8, e.pos.y, e.pos);
+        const d = Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
+        const can = !p.dead && !p.iframe && p.state !== 'grabbed' && p.state !== 'pinned' && p.state !== 'getup' && Math.abs(p.pos.y - e.pos.y) < 1.2;
         g.camRig.shake(0.55);
         this.hS.kick(-3.5);
+        g.breakables && g.breakables.smashAround(e.pos.x, e.pos.z, 1.6, e.pos.y, e.pos);
+        if (can && d < 1.3) return this.startPin(a);
+        // ha fallado: se estrella contra el suelo (onda pequeña)
+        a.landT = this.atkT;
+        a.dur = this.atkT + 1.15;
+        g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 2.1, a.dmg, e, a.knock);
+        if (d < 2.8 && p.iframe) a.whiff = true;
       };
       return;
     }
-    if (!this.air) {
-      this.stop(dt, 10);
-      this.lookAtPlayer(1);
-      if (!this.evDone.sweep && t > 0.75) {
-        this.evDone.sweep = true;
-        this.strike(1, { ...a, range: 2.4, arc: 140, dmg: 14 });
+    if (this.air) return;
+    // de bruces contra el suelo: tarda en rehacerse (tu ventana)
+    this.stop(dt, 10);
+    this.lookAtPlayer(1);
+    const lt = t - (a.landT ?? t);
+    this.T.h = lerp(0.5, 1, seg(lt, 0.35, 1.0));
+    this.T.pitch = lerp(0.3, 0, seg(lt, 0.3, 0.9));
+    this.jawT = 0.5;
+    this.shake = Math.max(this.shake, 0.4 * (1 - seg(lt, 0, 0.8)));
+  },
+
+  // Te ha caído encima: te derriba y se te queda encima.
+  startPin(a) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    this.pinning = true;
+    this.pinT = 0;
+    this.bites = 0;
+    a.dur = 99;
+    a.pinned = true;
+    this.pinMash = 0;
+    p.startPinned && p.startPinned(e);
+    if (g.lockTarget === e) g.lockTarget = null;
+    g.audio && g.audio.play('grab', p.pos);
+    g.audio && g.audio.play('bodyFall', p.pos);
+    g.camRig.shake(0.75);
+    g.input.rumble(1, 0.9, 280);
+    g.hurtFlash = Math.max(g.hurtFlash, 0.7);
+    // el golpe de caerte encima
+    p.receiveBite && p.receiveBite(10, e);
+    this.onPinStart && this.onPinStart();
+  },
+  // A horcajadas sobre ti, de cara a tu cara: las manos junto a tus hombros,
+  // los pies más allá de tus piernas y la cabeza colgando hasta tu
+  // garganta. Te muerde tres veces; cada vez que forcejeas se le nota (se
+  // tambalea); si forcejeas bastante, de una patada te lo quitas de encima.
+  pin(dt, a) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    this.pinT += dt;
+    const t = this.pinT;
+    this.stop(dt, 30);
+    e.vx = e.vz = 0;
+    if (p.dead) return this.endPin(false, 0);
+    // (tú, tumbado boca arriba: la cabeza hacia atrás, los pies hacia delante)
+    const fx = Math.sin(p.yaw),
+      fz = Math.cos(p.yaw);
+    e.pos.x = damp(e.pos.x, p.pos.x + fx * 0.5, 14, dt);
+    e.pos.z = damp(e.pos.z, p.pos.z + fz * 0.5, 14, dt);
+    e.yaw = approachAngle(e.yaw, p.yaw + Math.PI, 14 * dt);
+    for (const L of this.L) {
+      this.localPointYaw(L.side * (L.front ? 0.62 : 0.74), 0, L.front ? 1.05 : -0.95, _a);
+      _a.y = this.groundAt(_a.x, _a.z) + 0.03;
+      this.hold(L, _a.x, _a.y, _a.z, 1, L.front ? 0.95 : null);
+    }
+    // mordiscos: se alza un poco, estira el cuello y lo hunde en ti
+    const biteAt = [0.6, 1.25, 1.9];
+    const next = biteAt[this.bites] ?? 99;
+    const wind = clamp(1 - Math.abs(t - next + 0.12) / 0.22, 0, 1);
+    this.T.h = 0.62 + 0.12 * wind + Math.sin(t * 9) * 0.02;
+    this.T.pitch = 0.32 - 0.18 * wind;
+    this.neckExtT = 0.45 + 0.55 * wind;
+    this.jawT = 0.35 + 0.65 * Math.max(wind, Math.max(0, Math.sin(t * 13)) * 0.5);
+    this.shake = Math.max(this.shake, 0.5);
+    this.lookP.set(p.pos.x - fx * 0.5, p.pos.y + 0.25, p.pos.z - fz * 0.5);
+    this.lookW = 1;
+    if (this.bites < 3 && t > next) {
+      this.bites++;
+      if (p.receiveBite) p.receiveBite(8, e);
+      g.fx.blood.emit(p.pos.x - fx * 0.45, p.pos.y + 0.35, p.pos.z - fz * 0.45, 26, { speed: 4 });
+      g.audio && g.audio.play('bite', p.pos);
+      g.camRig.shake(0.4);
+      g.hurtFlash = 1;
+      g.input.rumble(1, 0.8, 180);
+      this.hS.kick(-1.6);
+    }
+    // forcejeas: se le nota
+    if ((p.mash || 0) > this.pinMash) {
+      this.pinMash = p.mash;
+      this.rollS.kick((Math.random() < 0.5 ? -1 : 1) * 1.4);
+      this.hS.kick(1.2);
+      g.audio && g.audio.play('boneCrack', this.center, { n: 1, k: 0.35 });
+    }
+    if ((p.mash || 0) >= 7) return this.endPin(true, 0);
+    if (t > 2.6) return this.endPin(false, 12);
+  },
+  // Te suelta: de una patada (escaped) cae de espaldas, pataleando; si no,
+  // tras el último mordisco se aparta de un salto.
+  endPin(escaped, dmg = 0) {
+    const e = this.e,
+      g = this.g,
+      p = g.player;
+    if (!this.pinning) return;
+    this.pinning = false;
+    const fx = Math.sin(p.yaw),
+      fz = Math.cos(p.yaw);
+    if (!p.dead) p.releasePin && p.releasePin(escaped, dmg);
+    this.neckExtT = 0;
+    if (this.atk && this.atk.name === 'drop') this.endAttack();
+    if (escaped) {
+      g.audio && g.audio.play('hitHeavy', p.pos);
+      g.camRig.shake(0.45);
+      g.input.rumble(0.8, 0.6, 160);
+      this.onEscaped && this.onEscaped();
+      this.startDown(1.7);
+      // (la patada lo echa hacia tus pies)
+      e.vx = fx * 6;
+      e.vz = fz * 6;
+    } else {
+      if (dmg > 0) {
+        g.fx.blood.emit(p.pos.x - fx * 0.45, p.pos.y + 0.35, p.pos.z - fz * 0.45, 34, { speed: 5 });
+        g.audio && g.audio.play('bite', p.pos);
+        g.camRig.shake(0.5);
+        g.hurtFlash = 1;
       }
+      this.cool = 0.8;
+      if (!this.startEvade('leap')) this.engage();
     }
   },
 
