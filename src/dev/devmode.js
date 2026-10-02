@@ -289,6 +289,15 @@ export class DevMode {
     }
   }
 
+  // Huella de la IP pública actual (para añadirla a DEV_IP_HASHES en
+  // access.js): __game.dev.ipHash() en la consola.
+  async ipHash() {
+    const r = await myIpHash();
+    if (r) console.info(`[modo desarrollador] IP ${r.ip} · huella ${r.hash}`);
+    else console.info('[modo desarrollador] no se pudo averiguar la IP pública');
+    return r;
+  }
+
   // ------------------------------------------------------------ teletransporte
   places() {
     if (this._places) return this._places;
