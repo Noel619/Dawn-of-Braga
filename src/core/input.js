@@ -161,7 +161,12 @@ export class Input {
     this.pad = pad;
     this.padPrev = this.padNow;
     this.padNow = [];
-    if (!pad) return;
+    if (!pad) {
+      // sin mando, sin sticks (al desconectarlo con uno inclinado, el
+      // personaje seguía andando y la cámara girando solos)
+      this.ls = this.rs = null;
+      return;
+    }
     for (let i = 0; i < pad.buttons.length; i++) {
       const b = pad.buttons[i];
       const v = typeof b === 'object' ? (b.pressed || b.value > 0.45 ? 1 : 0) : b > 0.45 ? 1 : 0;

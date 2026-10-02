@@ -180,6 +180,7 @@ export class Player {
     this.blocking = false;
     this.blockW = 0;
     this.buffer = null;
+    this._eatDodge = false;
     this.gait._yaw = null;
     this.obj.position.set(x, y, z);
     this.obj.rotation.y = yaw;
@@ -470,7 +471,11 @@ export class Player {
     // buffer de entrada (0.4 s)
     if (allowControl) {
       for (const a of ['light', 'heavy', 'heal', 'interact']) if (input.pressed(a)) this.buffer = { a, t: 0.4 };
-      if (input.released('dodge') && input.held('dodge') === 0 && this._dodgeHeld < 0.3) this.buffer = { a: 'dodge', t: 0.35 };
+      if (input.released('dodge') && input.held('dodge') === 0) {
+        // (la pulsación con la que se levanta del altar no es una esquiva)
+        if (!this._eatDodge && this._dodgeHeld < 0.3) this.buffer = { a: 'dodge', t: 0.35 };
+        this._eatDodge = false;
+      }
     }
     this._dodgeHeld = allowControl ? input.held('dodge') : 0;
     if (this.buffer) {
@@ -704,6 +709,11 @@ export class Player {
       if (this.stT > 1.0 && allowControl && (mag > 0.3 || input.pressed('dodge') || input.pressed('interact') || input.pressed('back'))) {
         this.state = 'free';
         this.anim.stop(0.45);
+        // el botón con el que se levanta no cuenta como acción: con
+        // «interactuar» volvía a descansar en el mismo altar y con la esquiva
+        // rodaba al soltarla
+        this.buffer = null;
+        if (input.down('dodge')) this._eatDodge = true;
         g.onLeaveRest && g.onLeaveRest();
       }
     } else if (st === 'wake') {

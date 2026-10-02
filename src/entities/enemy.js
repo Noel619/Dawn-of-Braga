@@ -364,7 +364,10 @@ export class Enemy {
       T.ai(this, dt, player);
       return;
     }
-    this.stT += dt;
+    // (el reloj de un ataque va al ritmo de su animación: en su segunda fase
+    // el Turiferario anima un 15 % más deprisa y sus golpes, sus pisotones y
+    // sus ascuas llegaban tarde respecto a lo que se veía)
+    this.stT += this.state === 'attack' ? dt * (this.anim.speed || 1) : dt;
     this.cooldown -= dt;
     this.flash -= dt;
     this.poiseT -= dt;

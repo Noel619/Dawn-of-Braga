@@ -137,6 +137,7 @@ export class Game {
     this.warp = 0;
     this.flash = 0;
     this.state = 'boot';
+    this.run = 0; // sube al volver al título (ver later())
     this.fade = 0;
     this.fadeTarget = 0;
     this.buildMs = performance.now() - t0;
@@ -264,9 +265,36 @@ export class Game {
   }
 
   // ------------------------------------------------------------ flujo
+  // Temporizador de la partida en curso: no se dispara si entretanto se ha
+  // salido al título (la muerte, al vencer a un jefe, las pistas...). Antes,
+  // al salir al título durante la muerte, la banda «Has caído» aparecía sobre
+  // la portada, la portada se fundía a negro y el jugador reaparecía en el
+  // altar en mitad de la partida que se cargara después.
+  later(ms, fn) {
+    const run = this.run;
+    return setTimeout(() => {
+      if (this.run === run) fn();
+    }, ms);
+  }
+
   toTitle() {
+    this.run = (this.run || 0) + 1;
     this.endCutscene();
     this.hunt.reset();
+    const death = document.getElementById('death');
+    death.classList.remove('show');
+    death.classList.add('hidden');
+    this._pauseAfterDeath = false;
+    this.hintQ = [];
+    this._hintBusy = false;
+    // nada de la partida anterior queda a medias: ni planos de cámara, ni el
+    // pozo, ni la niebla roja de la segunda fase del Turiferario (seguía en
+    // toda la ciudad al continuar)
+    this.cine = null;
+    this.climb = null;
+    this.introCam = false;
+    this.atmo.override = null;
+    this.bossLight.intensity = 0;
     this.state = 'title';
     this.ui.closeAll();
     this.ui.showHud(false);
@@ -391,7 +419,7 @@ export class Game {
       this.introCam = true;
       this.camRig.override = { pos: new THREE.Vector3(-83.1, 3.2, -13.95), look: new THREE.Vector3(-84.7, 0.4, -15.9), speed: 30 };
       this.camRig.cam.position.copy(this.camRig.override.pos);
-      setTimeout(() => this.hint('start'), 3800);
+      this.later(3800, () => this.hint('start'));
     }
     this.input.requestLock();
   }
@@ -411,6 +439,12 @@ export class Game {
 
   openPause() {
     if (this.ui.modal) return;
+    // durante la muerte no (se podía salir al título con la secuencia a
+    // medias): la pausa se abre al volver al altar
+    if (this.player.dead) {
+      this._pauseAfterDeath = true;
+      return;
+    }
     this.state = 'paused';
     const s = this.ui.menu('pause', [
       { label: 'Continuar', action: () => this.ui.close() },
@@ -436,7 +470,7 @@ export class Game {
   }
 
   openOverlay(name) {
-    if (this.ui.modal) return;
+    if (this.ui.modal || this.player.dead) return;
     this.state = 'paused';
     this.ui.open(name, {
       onClose: () => {
@@ -475,7 +509,7 @@ export class Game {
     }
     this._hintBusy = true;
     this.ui.toast(h, 5.5);
-    setTimeout(() => this._nextHint(), 6200);
+    this.later(6200, () => this._nextHint());
   }
 
   giveItem(id) {
@@ -505,7 +539,7 @@ export class Game {
         this.hint('sword');
         // algo se levanta en la celda del fondo
         const e = this.enemies.find((x) => x.id === 'e_carcel1');
-        if (e && !e.dead && !e.aware) setTimeout(() => e.alert(), 1200);
+        if (e && !e.dead && !e.aware) this.later(1200, () => e.alert());
       }
       if (id === 'escudo') this.hint('shield');
       if (id === 'palanca') this.hint('map');
@@ -532,12 +566,12 @@ export class Game {
     this.ui.toast(MSG.rest, 4);
     this.lockTarget = null;
     this.fadeTarget = 0.55;
-    setTimeout(() => (this.fadeTarget = 1), 900);
+    this.later(900, () => (this.fadeTarget = 1));
     for (const e of this.enemies) if (!e.boss) e.reset();
     this.fauna.reset();
     this.combat.clear();
     this.saveGame();
-    setTimeout(() => this.hint('altar'), 1500);
+    this.later(1500, () => this.hint('altar'));
   }
   onLeaveRest() {}
 
@@ -610,16 +644,16 @@ export class Game {
       this.audio.stopMusic();
       this.audio.play('victory');
       this.atmo.override = null;
-      setTimeout(() => {
+      this.later(2500, () => {
         this.ui.area(`${e.T.name.toUpperCase()} HA CAÍDO`);
         this.interact.applyFlags(this.flags);
         for (const it of this.interact.list) if (it.kind === 'door' && it.lock.type === 'boss' && it.lock.boss === e.type) this.interact.setOpen(it), (this.flags['door:' + it.id] = true);
         this.saveGame();
-      }, 2500);
+      });
       if (e.type === 'turibulario') this.bossLight.intensity = 0;
       // muerto el canónigo, alguien retira la tranca de la bodega y huye
       if (e.type === 'descoyuntado') {
-        setTimeout(() => {
+        this.later(5200, () => {
           const door = this.interact.list.find((i) => i.id === 'd_sotano');
           if (door && !door.done) {
             this.audio.play('bar', { x: door.x, y: 1, z: door.z });
@@ -628,7 +662,7 @@ export class Game {
             this.ui.toast('Arriba cae la tranca de la bodega. Unos pasos se alejan deprisa.', 5);
             this.saveGame();
           }
-        }, 5200);
+        });
       }
     }
   }
@@ -638,16 +672,17 @@ export class Game {
     this.lockTarget = null;
     this.audio.play('death');
     this.audio.stopMusic();
-    setTimeout(() => {
-      document.getElementById('death').classList.remove('hidden');
-      requestAnimationFrame(() => document.getElementById('death').classList.add('show'));
-    }, 1400);
-    setTimeout(() => (this.fadeTarget = 0), 4600);
-    setTimeout(() => {
-      document.getElementById('death').classList.remove('show');
-      document.getElementById('death').classList.add('hidden');
+    const band = document.getElementById('death');
+    this.later(1400, () => {
+      band.classList.remove('hidden');
+      requestAnimationFrame(() => band.classList.add('show'));
+    });
+    this.later(4600, () => (this.fadeTarget = 0));
+    this.later(6400, () => {
+      band.classList.remove('show');
+      band.classList.add('hidden');
       this.respawn();
-    }, 6400);
+    });
   }
 
   respawn() {
@@ -666,6 +701,11 @@ export class Game {
     this.respawnAtAltar();
     this.fadeTarget = 1;
     this.saveGame();
+    // (la pausa que se pidió mientras caía)
+    if (this._pauseAfterDeath) {
+      this._pauseAfterDeath = false;
+      if (this.state === 'play') this.openPause();
+    }
   }
 
   onTrigger(it) {
@@ -931,6 +971,13 @@ export class Game {
 
   setLock(t) {
     if (this.lockTarget === t) return;
+    // al fijar, el giro de cámara que se traía no cuenta como «cambiar de
+    // objetivo» (pulsar Q mientras se movía el ratón saltaba del enemigo de
+    // delante al de al lado)
+    if (t && !this.lockTarget) {
+      this.input.flickAcc = 0;
+      this._flickT = 0.3;
+    }
     this.lockTarget = t;
     this._lostT = 0;
     this._seen = true;

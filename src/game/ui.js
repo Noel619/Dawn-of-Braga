@@ -441,6 +441,8 @@ export class UI {
     if (c('relicario')) out.push({ id: 'relicario', n: '×' + c('relicario') });
     if (c('ampolla')) out.push({ id: 'ampolla', n: '×' + c('ampolla') });
     if (c('piedra')) out.push({ id: 'piedra' });
+    // (el rosario del canónigo no aparecía nunca en el inventario)
+    if (c('rosario')) out.push({ id: 'rosario' });
     return out;
   }
   statsHtml() {
@@ -508,7 +510,9 @@ export class UI {
         const prev = t.length > 230 ? t.slice(0, t.lastIndexOf(' ', 230)) + '…' : t;
         det.innerHTML = `<h3 class="f-bast">${esc(NOTES[k].title)}</h3><p style="white-space:pre-wrap">${esc(prev)}</p>`;
       } else det.innerHTML = this.statsHtml();
-      $('inv-hint').innerHTML = `<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('confirm')} Leer</span><span>${this.keyHtml('back')} Cerrar</span>`;
+      // (con teclado la E lee el documento: no se anuncia también como pestaña)
+      const tabs = this.keyHtml('tabL') + (read.length && this.device() === 'kb' ? '' : this.keyHtml('tabR'));
+      $('inv-hint').innerHTML = `<span>${tabs} Pestañas</span><span>${this.keyHtml('confirm')} Leer</span><span>${this.keyHtml('back')} Cerrar</span>`;
     }
   }
 
@@ -639,10 +643,12 @@ export class UI {
       halo.outline(P.parch4);
       b.blit(halo, tx, tz);
     }
-    // puertas, altares y objetos en zonas visitadas
+    // puertas, altares y objetos en zonas visitadas (de este plano: en el de
+    // las bodegas salían las puertas de la casa de arriba y no el rastrillo)
     const inVisited = (x, z) => vis.some((m) => x >= m.r[0] - 2 && x <= m.r[2] + 2 && z >= m.r[1] - 2 && z <= m.r[3] + 2);
+    const layerOf = (it) => (g.inCellar(it) ? 'cellar' : it.y < -3 ? 'crypt' : undefined);
     for (const it of g.interact.list) {
-      if ((it.y < -3) !== crypt) continue;
+      if (layerOf(it) !== layer) continue;
       if (!inVisited(it.x, it.z)) continue;
       const x = X(it.x),
         z = Z(it.z);
@@ -672,9 +678,9 @@ export class UI {
     arrow.set(Math.round(rot(0, -2)[0]), Math.round(rot(0, -2)[1]), P.gold4);
     arrow.outline(P.void);
     b.blit(arrow, 0, 0);
-    // rosa de los vientos
-    const nx = W - 16,
-      ny = 12;
+    // rosa de los vientos (fuera del borde rasgado: la N se cortaba)
+    const nx = W - 20,
+      ny = 22;
     b.line(nx, ny - 6, nx, ny + 6, P.pink1);
     b.line(nx - 6, ny, nx + 6, ny, P.pink1);
     b.poly(
@@ -944,7 +950,10 @@ export class UI {
         if (s.t > 0.35 && (conf || back)) this.close();
         break;
       case 'inv': {
-        if (inp.pressed('tabL') || inp.pressed('tabR') || (this.invTab === 1 && dir.x)) {
+        // en Documentos, «confirmar» lee el documento: con teclado la E es a la
+        // vez confirmar y pestaña derecha, y cambiaba de pestaña sin leerlo
+        const reading = this.invTab === 1 && conf && Object.keys(NOTES).some((k) => this.g.flags['note:' + k]);
+        if (!reading && (inp.pressed('tabL') || inp.pressed('tabR') || (this.invTab === 1 && dir.x))) {
           this.invTab = 1 - this.invTab;
           this.invSel = 0;
           this.renderInv();

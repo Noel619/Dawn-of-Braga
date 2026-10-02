@@ -473,7 +473,8 @@ export function buildCrypt(ctx, S, C, L) {
   ctx.rats.push({ x: 14.9, y: Y, z: -125.8, n: 1 });
   L.interact.push(
     { kind: 'item', id: 'i_anillo', item: 'anillo', x: 10.1, y: Y + 1.2, z: -119.6 },
-    { kind: 'note', id: 'n_arzobispo', note: 'arzobispo', x: 9.2, y: Y + 1.3, z: -121.2, model: 'paper' }
+    // (en el estrado, a los pies del sepulcro: a Y + 1,3 flotaba en el aire)
+    { kind: 'note', id: 'n_arzobispo', note: 'arzobispo', x: 9.2, y: Y + 0.31, z: -121.2, model: 'paper' }
   );
 
   // --- templo romano (oeste)

@@ -909,10 +909,13 @@ export const TYPES = {
         e.data.phase = 2;
         e.game.onBossPhase && e.game.onBossPhase(e);
       }
-      // la carga se detiene contra muros
+      // la carga se detiene contra muros: lo que avanzó en el fotograma
+      // anterior frente a su duración (con un umbral fijo por fotograma, el
+      // hitstop, que frena el tiempo, lo daba por estrellado en cuanto la
+      // carga te alcanzaba o le golpeabas, y se quedaba aturdido)
       if (e.state === 'attack' && e.atk && e.atk.name === 'charge' && e.stT > 0.8 && e.stT < 1.9) {
         const moved = Math.hypot(e.pos.x - (e.data.lx ?? e.pos.x), e.pos.z - (e.data.lz ?? e.pos.z));
-        if (moved < 0.03) {
+        if (moved < (e.data.ldt ?? dt) * 1.8) {
           e.state = 'stagger';
           e.stT = 0;
           e.anim.play(impClips.stagger, { blend: 0.05 });
@@ -922,6 +925,7 @@ export const TYPES = {
       }
       e.data.lx = e.pos.x;
       e.data.lz = e.pos.z;
+      e.data.ldt = dt;
     },
   },
   turibulario: {
