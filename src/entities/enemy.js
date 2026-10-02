@@ -9,6 +9,7 @@ import { getTexture } from '../gfx/textures.js';
 import { registerMaterialPatch } from '../gfx/materials.js';
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const _RED = new THREE.Color(1, 0.08, 0.03);
 let shadowMat = null;
 
 export function makeBlobShadow(size) {
@@ -118,6 +119,9 @@ export class Enemy {
     // sin destellos ni ojos encendidos a medias al volver a su puesto
     this.flash = 0;
     this.flare = 0;
+    this.flareRed = 0;
+    this.parryT = 0;
+    this.parryHits = 0;
     if (this._flashing) {
       this.rig.setTint(null, null);
       this._flashing = false;
@@ -232,6 +236,8 @@ export class Enemy {
   takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0) {
     if (this.dead || this.data.air || this.scripted) return 'none';
     const T = this.T;
+    // (desequilibrado tras un parry: el golpe es crítico, pero le espabila)
+    if (this.state === 'parried') this.parryT = 0;
     // (el jefe puede parar el golpe, o recibir más o menos daño)
     if (T.preHit) {
       const r = T.preHit(this, dmg, poiseDmg, fromX, fromZ, heavy);
@@ -321,6 +327,10 @@ export class Enemy {
   startAttack(a) {
     this.state = 'attack';
     this.flare = 1;
+    // (los golpes que no se pueden desviar: los ojos en rojo, un destello
+    // rojo y un toque grave)
+    this.flareRed = a.noParry ? 1 : 0;
+    if (a.noParry) this.perilFx();
     this.atk = a;
     this.stT = 0;
     this.hitDone = [];
@@ -353,6 +363,98 @@ export class Enemy {
 
   onAnimEvent(e) {
     if (e === 'step' && this.game.audio) this.game.audio.enemyStep(this);
+  }
+
+  perilFx() {
+    const g = this.game;
+    const h = this._hp || (this._hp = new THREE.Vector3());
+    if (this.rig.joints.head) this.rig.worldPos('head', h).y += 0.15;
+    else h.set(this.pos.x, this.pos.y + this.T.height * 0.85, this.pos.z);
+    g.combat && g.combat.glint(h.x, h.y, h.z, 0xff2a14, 1.2 + this.T.height * 0.25);
+    g.audio && g.audio.play('peril', h);
+  }
+
+  // ------------------------------------------------------------ parry
+  // Le han desviado el golpe. Las criaturas pequeñas quedan desequilibradas
+  // (abiertas al golpe de gracia) a la primera; las grandes y los jefes
+  // necesitan varios parrys seguidos (T.parryPosture, en pocos segundos):
+  // mientras, el desvío sólo les corta el golpe y les hace trastabillar.
+  parried(a) {
+    const T = this.T;
+    const g = this.game;
+    if (this.dead) return;
+    if (this.D) return this.D.parried(a);
+    this.parryHits = (g.time - (this.lastParriedT ?? -9) < 4 ? this.parryHits || 0 : 0) + 1;
+    this.lastParriedT = g.time;
+    const need = T.parryPosture ?? 1;
+    this.atk = null;
+    this.data.blockT = 0;
+    const mass = clamp(T.height / 1.8, 1, 3.2);
+    const p = g.player;
+    const dx = this.pos.x - p.pos.x,
+      dz = this.pos.z - p.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    this.flX.kick(-14 / mass);
+    this.flY.kick(((Math.random() < 0.5 ? -1 : 1) * 8) / mass);
+    if (this.parryHits < need) {
+      this.state = 'hurt';
+      this.stT = 0;
+      if (T.clips.hurt) this.anim.play(T.clips.hurt, { blend: 0.04 });
+      if (!T.heavy) {
+        this.vx = (dx / d) * 1.4;
+        this.vz = (dz / d) * 1.4;
+      }
+      this.cooldown = Math.max(this.cooldown, 0.6);
+      if (T.onParried) T.onParried(this, false);
+      return 'recoil';
+    }
+    this.parryHits = 0;
+    this.state = 'parried';
+    this.stT = 0;
+    this.parryT = T.parryDur ?? 1.6;
+    this.anim.play(T.clips.parried || T.clips.stagger, { blend: 0.03 });
+    const kb = T.heavy ? 0.6 : 2.2;
+    this.vx = (dx / d) * kb;
+    this.vz = (dz / d) * kb;
+    if (T.onParried) T.onParried(this, true);
+    g.audio && g.audio.enemyVoice(this, 'hurt');
+    return 'full';
+  }
+  // Va a recibir el golpe de gracia: se queda desequilibrado hasta que llega.
+  onRiposte() {
+    if (this.D) return this.D.onRiposte && this.D.onRiposte();
+    const dur = this.T.parryDur ?? 1.6;
+    if (this.state === 'parried') this.stT = Math.min(this.stT, dur - 0.9);
+    this.parryT = Math.max(this.parryT, 0.9);
+  }
+  // El golpe de gracia: crítico seguro, sin guardia que valga; si no le
+  // mata, le tumba hacia atrás.
+  takeRiposte(dmg, fromX, fromZ) {
+    if (this.dead) return 'none';
+    if (this.D && this.D.takeRiposte) return this.D.takeRiposte(dmg, fromX, fromZ);
+    const T = this.T;
+    this.parryT = 0;
+    this.hp -= dmg;
+    this.flash = 0.08;
+    this.hitShown = 3;
+    const mass = clamp(T.height / 1.8, 1, 3.2);
+    this.flX.kick(-16 / mass);
+    if (this.hp <= 0) {
+      this.die();
+      if (T.onHit) T.onHit(this, 'kill', dmg, true);
+      return 'kill';
+    }
+    this.poise = T.poise;
+    this.state = T.clips.stagger ? 'stagger' : 'hurt';
+    this.stT = 0;
+    this.anim.play(T.clips.stagger || T.clips.hurt, { blend: 0.03 });
+    const d = Math.hypot(this.pos.x - fromX, this.pos.z - fromZ) || 1;
+    const kb = T.heavy ? 1.2 : 4;
+    this.vx = ((this.pos.x - fromX) / d) * kb;
+    this.vz = ((this.pos.z - fromZ) / d) * kb;
+    this.atk = null;
+    if (T.onHit) T.onHit(this, 'hit', dmg, true);
+    return 'hit';
   }
 
   // ------------------------------------------------------------ actualización
@@ -524,6 +626,19 @@ export class Enemy {
         move = true;
         break;
       }
+      case 'parried': {
+        // desequilibrado: abierto al golpe de gracia
+        this.vx = damp(this.vx, 0, 4, dt);
+        this.vz = damp(this.vz, 0, 4, dt);
+        this.parryT = Math.max(0, this.parryT - dt);
+        if (this.stT >= (T.parryDur ?? 1.6)) {
+          this.state = 'chase';
+          this.parryT = 0;
+          this.cooldown = 0.35 + Math.random() * 0.3;
+          this.anim.stop(0.2);
+        }
+        break;
+      }
       case 'hurt':
       case 'stagger': {
         this.vx = damp(this.vx, 0, 5, dt);
@@ -568,6 +683,7 @@ export class Enemy {
         break;
       }
     }
+    if (this.state !== 'parried') this.parryT = 0;
     if (T.update) T.update(this, dt, player, d);
 
     // física
@@ -706,12 +822,18 @@ export class Enemy {
     this.shadow.visible = this.obj.visible && this.state !== 'ceiling';
     // los ojos se encienden al preparar un ataque (telegrafiado)
     this.flare = Math.max(0, (this.flare || 0) - dt * 1.8);
-    if (this.flare > 0 || this._flareOn) {
+    this.flareRed = Math.max(0, (this.flareRed || 0) - dt * 1.2);
+    const stun = this.parryT > 0;
+    if (this.flare > 0 || this._flareOn || stun) {
       this.rig.own();
       if (!this._eyes) this._eyes = this.rig.meshes.filter((m) => m.userData.matName === 'eyeGlow' || m.userData.matName === 'redGlow');
-      const k = 1 + this.flare * this.flare * 4;
-      for (const m of this._eyes) m.material.emissiveIntensity = (m.userData.baseEI ?? 2) * k;
-      this._flareOn = this.flare > 0;
+      const k = stun ? 0.35 + 0.25 * Math.sin(this.game.time * 9) : 1 + this.flare * this.flare * 4;
+      for (const m of this._eyes) {
+        m.material.emissiveIntensity = (m.userData.baseEI ?? 2) * k;
+        if (!m.userData.eyeC) m.userData.eyeC = m.material.emissive.clone();
+        if (!this._flashing) m.material.emissive.copy(m.userData.eyeC).lerp(_RED, this.flareRed > 0 && this.state === 'attack' ? Math.min(1, this.flareRed * 1.5) : 0);
+      }
+      this._flareOn = this.flare > 0 || stun || this.flareRed > 0;
     }
     // destello de golpe
     if (this.flash > 0) {

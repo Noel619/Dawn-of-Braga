@@ -42,8 +42,9 @@ export class Combat {
       player.hitSet.add(e);
       // por la espalda o sin que se lo espere: golpe crítico
       const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
-      // (y el Descoyuntado tirado patas arriba: todo golpe es crítico)
-      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e));
+      // (y el Descoyuntado tirado patas arriba, y quien está desequilibrado
+      // tras un parry: todo golpe es crítico)
+      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0;
       // atkMul: pesado cargado; crit: el facón hiere más por la espalda
       const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
@@ -125,11 +126,21 @@ export class Combat {
     return this.apply(e, a, x, z);
   }
 
+  // Un golpe de una criatura (src) que llega al jugador desde (sx, sz).
+  // Devuelve false si no le alcanza (esquiva) o lo que pasó: 'hit',
+  // 'block', 'guardbreak' o 'parry' (desviado: la criatura queda
+  // desequilibrada, salvo lo que se desvía sin más, como un hueso lanzado).
   apply(src, a, sx, sz) {
     const g = this.game;
     const p = g.player;
-    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, stagger: a.stagger, knock: a.knock, chip: a.chip }, sx, sz);
+    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip }, sx, sz);
     if (r === 'dodge' || r === 'none') return false;
+    if (r === 'parry') {
+      this.parryFx(src, a, sx, sz);
+      if (!a.deflect && src && src.parried) src.parried(a);
+      g.onParry && g.onParry(src, a);
+      return r;
+    }
     const hy = p.pos.y + 1.2;
     if (r === 'block' || r === 'guardbreak') {
       g.fx.blood.emit(p.pos.x, hy, p.pos.z, 16, { color: [1.0, 0.8, 0.4], speed: 5, life: 0.35, up: 1.5 });
@@ -145,7 +156,71 @@ export class Combat {
       g.hurtFlash = 1;
       g.input.rumble(0.9, 0.7, 200);
     }
-    return true;
+    return r;
+  }
+
+  // El desvío: chispas donde se cruzan el arma (o el escudo) y el golpe, un
+  // choque metálico que canta, un parón seco y un destello dorado.
+  parryFx(src, a, sx, sz) {
+    const g = this.game,
+      p = g.player;
+    const dx = sx - p.pos.x,
+      dz = sz - p.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const kind = p.weapon && p.weapon.parry ? p.weapon.parry.kind : 'shield';
+    const hx = p.pos.x + (dx / d) * 0.7,
+      hy = p.pos.y + (a.deflect ? 1.15 : 1.3),
+      hz = p.pos.z + (dz / d) * 0.7;
+    this.impactFlash(hx, hy, hz, a.deflect ? 0.9 : 1.35, 0xfff0c8);
+    g.fx.blood.emit(hx, hy, hz, a.deflect ? 14 : 36, { color: [1, 0.85, 0.42], speed: 7.5, life: 0.42, up: 1.8 });
+    g.fx.blood.emit(hx, hy, hz, a.deflect ? 4 : 12, { color: [1, 1, 0.86], speed: 3, life: 0.25, up: 0.6 });
+    g.audio && g.audio.play(a.deflect ? 'deflect' : 'parry', p.pos, { kind });
+    g.hitstop = Math.max(g.hitstop, a.deflect ? 0.06 : 0.16);
+    g.camRig.shake(a.deflect ? 0.1 : 0.24);
+    if (!a.deflect) {
+      g.flash = Math.max(g.flash, 0.12);
+      g.flashTint = [1, 0.9, 0.62];
+    }
+    g.input.rumble(0.8, 0.9, a.deflect ? 70 : 150);
+  }
+
+  // El golpe de gracia: entra seguro (sin mirar arco ni alcance), crítico,
+  // con un parón largo, un instante a cámara lenta, sangre y hueso.
+  riposteHit(p, a, e) {
+    const g = this.game;
+    if (!e || e.dead || p.hitSet.has(e)) return;
+    p.hitSet.add(e);
+    const dmg = Math.round(a.dmg * p.dmgMul * (0.95 + Math.random() * 0.1));
+    const r = e.takeRiposte ? e.takeRiposte(dmg, p.pos.x, p.pos.z) : e.takeHit(dmg, 999, p.pos.x, p.pos.z, true, 0);
+    if (r === 'none') return;
+    const dx = e.pos.x - p.pos.x,
+      dz = e.pos.z - p.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const hx = e.pos.x - (dx / d) * e.body.radius * 0.5,
+      hy = e.pos.y + Math.min(1.3, e.T.height * 0.55),
+      hz = e.pos.z - (dz / d) * e.body.radius * 0.5;
+    this.impactFlash(hx, hy, hz, 1.5, p.weapon && p.weapon.holy ? 0xffe6a0 : 0xff8060);
+    g.fx.blood.emit(hx, hy, hz, 60, { dir: { x: dx / d, z: dz / d }, speed: 7 });
+    g.fx.blood.emit(hx, hy, hz, 24, { speed: 4, up: 2 });
+    g.audio && g.audio.play('riposte', e.pos);
+    g.audio && g.audio.enemyVoice(e, r === 'kill' ? 'death' : 'hurt');
+    g.hitstop = Math.max(g.hitstop, 0.18);
+    g.slowmo = { t: 0.32, k: 0.45 };
+    g.camRig.shake(0.5);
+    g.flash = Math.max(g.flash, 0.16);
+    g.flashTint = p.weapon && p.weapon.holy ? [1, 0.9, 0.62] : [1, 0.4, 0.25];
+    g.input.rumble(1, 1, 240);
+    // el arma se queda un instante dentro
+    p.anim.speed = 0.35;
+    p.ripHold = 0.16;
+    g.onRiposte && g.onRiposte(e, r, dmg);
+  }
+
+  // Aviso de un golpe que no se puede desviar: un destello rojo en la cabeza.
+  glint(x, y, z, color = 0xff2a14, size = 1.6) {
+    const s = this._orb(color, size);
+    s.position.set(x, y, z);
+    this.flashes.push({ s, t: 0, dur: 0.45, size, grow: true });
   }
 
   // Onda de choque en el suelo.
@@ -159,7 +234,7 @@ export class Combat {
     const p = g.player;
     // no castigar dos veces el mismo golpe (impacto directo + onda)
     const recent = p.lastHitT !== undefined && g.time - p.lastHitT < 0.4;
-    if (!recent && dd < r + 0.3 && Math.abs(p.pos.y - y) < 1.2 && p.body.grounded) this.apply(src, { dmg, knock, stagger: true, chip: 0.25 }, x, z);
+    if (!recent && dd < r + 0.3 && Math.abs(p.pos.y - y) < 1.2 && p.body.grounded) this.apply(src, { dmg, knock, stagger: true, chip: 0.25, noParry: true }, x, z);
   }
 
   // Tañido / rugido / crujido: onda que aturde (sólo se evita esquivando).
@@ -172,7 +247,7 @@ export class Combat {
     g.camRig.shake(0.45);
     const p = g.player;
     const d = Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
-    if (d < r && Math.abs(p.pos.y - e.pos.y) < 3) this.apply(e, { dmg, unblockable: true, stagger: true, knock: 4 }, e.pos.x, e.pos.z);
+    if (d < r && Math.abs(p.pos.y - e.pos.y) < 3) this.apply(e, { dmg, unblockable: true, noParry: true, stagger: true, knock: 4 }, e.pos.x, e.pos.z);
   }
 
   ring(x, y, z, r, color, dur) {
@@ -244,7 +319,7 @@ export class Combat {
     g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
     const p = g.player;
     const d = Math.hypot(p.pos.x - x, p.pos.z - z);
-    if (d < r && Math.abs(p.pos.y - y) < 2) this.apply(src, { dmg, stagger: true, knock: 8, chip: 0.3 }, x, z);
+    if (d < r && Math.abs(p.pos.y - y) < 2) this.apply(src, { dmg, stagger: true, knock: 8, chip: 0.3, noParry: true }, x, z);
     if (src && src.data && src.data.phase === 2) this.firePool(x, y, z, 2.2, 5);
   }
 
@@ -269,8 +344,8 @@ export class Combat {
       const F = this.flashes[i];
       F.t += dt;
       const k = F.t / F.dur;
-      F.s.scale.setScalar(F.size * (1 - k * 0.6));
-      F.s.material.opacity = 1 - k;
+      F.s.scale.setScalar(F.grow ? F.size * (0.4 + Math.sin(Math.min(1, k * 1.6) * Math.PI) * 0.8) : F.size * (1 - k * 0.6));
+      F.s.material.opacity = F.grow ? Math.min(1, (1 - k) * 2) : 1 - k;
       if (k >= 1) {
         g.scene.remove(F.s);
         F.s.material.dispose();
@@ -312,7 +387,7 @@ export class Combat {
       let dead = P.life <= 0 || hitWall !== Infinity;
       const pd = Math.hypot(P.pos.x - p.pos.x, P.pos.y - (p.pos.y + 1.1), P.pos.z - p.pos.z);
       if (!dead && pd < 0.8 && !p.dead) {
-        const r = p.receiveHit({ dmg: P.dmg, stagger: P.kind === 'ember', knock: 4 }, P.pos.x - P.vel.x, P.pos.z - P.vel.z);
+        const r = p.receiveHit({ dmg: P.dmg, stagger: P.kind === 'ember', knock: 4, noParry: true }, P.pos.x - P.vel.x, P.pos.z - P.vel.z);
         if (r !== 'dodge' && r !== 'none') {
           dead = true;
           if (r === 'hit') {
@@ -329,7 +404,7 @@ export class Combat {
           const gy = g.world.col.groundHeight(P.pos.x, P.pos.z, 0.2, P.pos.y + 0.5);
           if (P.src && P.src.data && P.src.data.phase === 2) this.firePool(P.pos.x, gy, P.pos.z, 1.5, 4);
           const d2 = Math.hypot(p.pos.x - P.pos.x, p.pos.z - P.pos.z);
-          if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4 }, P.pos.x, P.pos.z);
+          if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4, noParry: true }, P.pos.x, P.pos.z);
         } else g.audio && g.audio.play('wailHit', P.pos);
         g.scene.remove(P.sprite);
         g.scene.remove(P.core);

@@ -297,6 +297,7 @@ export class Game {
     // pozo, ni la niebla roja de la segunda fase del Turiferario (seguía en
     // toda la ciudad al continuar)
     this.cine = null;
+    this.slowmo = null;
     this.climb = null;
     this.introCam = false;
     this.atmo.override = null;
@@ -497,7 +498,8 @@ export class Game {
     const H = {
       start: `${k('interact')} Interactuar  ·  Busca una salida de la cárcel.`,
       sword: `${k('light')} Ataque ligero  ·  ${k('heavy')} Ataque pesado  ·  ${k('dodge')} Esquivar (mantén para correr)`,
-      shield: `${k('block')} Mantén para bloquear con el escudo.`,
+      shield: `${k('block')} Mantén para bloquear  ·  Púlsalo justo antes del golpe: parry`,
+      parry: `¡Parry! Está desequilibrado: ${k('light')} golpe de gracia. Los golpes en rojo no se pueden desviar.`,
       enemy: `${k('lock')} Fijar objetivo  ·  ${k('heal')} Beber una ampolla`,
       altar: `Descansar cura y rellena las ampollas, pero las criaturas vuelven a levantarse.`,
       map: `${k('map')} Mapa  ·  ${k('inventory')} Inventario y documentos`,
@@ -693,6 +695,7 @@ export class Game {
 
   respawn() {
     this.cine = null;
+    this.slowmo = null;
     this.endCutscene();
     this.hunt.reset();
     // mientras el canónigo siga vivo, sus bodegas vuelven a estar como
@@ -762,6 +765,17 @@ export class Game {
     }
     this.hunt && this.hunt.onLever(it, n);
   }
+  // Un golpe desviado (la criatura ya ha reaccionado): la primera vez que
+  // queda desequilibrada, la pista del golpe de gracia.
+  onParry(src, a) {
+    const open = src && (src.parryT > 0 || (src.D && src.D.mode === 'parried' && src.D.parryFull));
+    if (open && !a.deflect) this.hint('parry');
+    this.dev.note(`parry${a.deflect ? ' (hueso)' : ''} · ${src ? src.type : '?'}${a && a.name ? ' · ' + a.name : ''}${open ? ' · DESEQUILIBRADO' : ''}`);
+  }
+  onRiposte(e, r, dmg) {
+    this.dev.note(`golpe de gracia · ${e.type} · ${dmg}${r === 'kill' ? ' · muerto' : ''}`);
+  }
+
   // Lo que hace el jugador (golpes, esquivas, curas): el Descoyuntado aprende.
   onPlayerAction(kind, info) {
     const b = this.activeBoss;
@@ -1080,6 +1094,12 @@ export class Game {
     if (this.hitstop > 0) {
       this.hitstop -= dt;
       dt *= 0.05;
+    }
+    // (un instante a cámara lenta: el golpe de gracia)
+    if (this.slowmo) {
+      this.slowmo.t -= dt;
+      dt *= this.slowmo.k;
+      if (this.slowmo.t <= 0) this.slowmo = null;
     }
     // (modo desarrollador: cámara lenta o rápida)
     if (this.dev.timeScale !== 1) dt *= this.dev.timeScale;

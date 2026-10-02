@@ -145,7 +145,9 @@ export class CameraRig {
     }
     cam.lookAt(this.lookAt);
     // FOV
-    this.fovKick = damp(this.fovKick, player.sprinting ? 5 : 0, 4, dt);
+    // (al correr se abre; en el golpe de gracia se cierra sobre él)
+    const rip = player.state === 'attack' && player.atk && player.atk.riposte;
+    this.fovKick = damp(this.fovKick, player.sprinting ? 5 : rip ? -8 : 0, rip ? 7 : 4, dt);
     const fov = this.fovBase + this.fovKick;
     if (Math.abs(cam.fov - fov) > 0.05) {
       cam.fov = fov;

@@ -723,9 +723,12 @@ export class Desc {
         }
       }
     }
+    // (rojo: enloquecido, o un golpe que no se puede desviar)
+    e.flareRed = Math.max(0, (e.flareRed || 0) - dt * 1.3);
+    const red = Math.max(this.eyeRed, this.mode === 'attack' ? Math.min(1, (e.flareRed || 0) * 1.5) : 0);
     for (const m of e._eyes) {
       m.material.emissiveIntensity = (m.userData.baseEI ?? 2.2) * this.eyeK;
-      if (!e._flashing) m.material.emissive.copy(this._eyeC0).lerp(_RED, this.eyeRed);
+      if (!e._flashing) m.material.emissive.copy(this._eyeC0).lerp(_RED, red);
     }
     const halo = clamp((this.eyeK - 0.95) * 0.75, 0, 0.75);
     for (const sp of this._halos) {

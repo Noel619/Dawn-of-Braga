@@ -81,6 +81,15 @@ const penClips = {
     [0.6, { chest: [70, 0, 0], head: [20, 0, 0], armL: [0, 0, 20], armR: [0, 0, -20], root: [0, -40, 0], legL: [-70, 0, 0], shinL: [100, 0, 0], legR: [-40, 0, 0], shinR: [100, 0, 0] }],
     [1.3, { ...PEN_BASE }],
   ]),
+  // desequilibrado tras un parry: la hoz sale despedida hacia atrás, el
+  // cuerpo se le va hacia atrás y tarda en rehacerse (tu ventana)
+  parried: clip('parried', 1.7, [
+    [0, { chest: [-28, -28, 0], head: [-42, 0, 24], armR: [-160, 0, -75], foreR: [-25, 0, 0], handR: [40, 0, 0], armL: [-25, 0, 65], foreL: [-20, 0, 0], root: [0, -6, -18], legL: [-28, 0, 0], shinL: [38, 0, 0], legR: [20, 0, 0], shinR: [22, 0, 0] }, 'snap'],
+    [0.32, { chest: [-20, -20, 0], head: [-32, 0, 18], armR: [-138, 0, -62], foreR: [-30, 0, 0], handR: [40, 0, 0], armL: [-12, 0, 52], foreL: [-25, 0, 0], root: [0, -14, -20], legL: [-38, 0, 0], shinL: [58, 0, 0], legR: [26, 0, 0], shinR: [30, 0, 0] }],
+    [0.95, { chest: [-8, -12, 0], head: [-20, 0, 12], armR: [-96, 0, -44], foreR: [-34, 0, 0], handR: [36, 0, 0], armL: [-12, 0, 40], foreL: [-25, 0, 0], root: [0, -12, -12], legL: [-32, 0, 0], shinL: [52, 0, 0], legR: [16, 0, 0], shinR: [26, 0, 0] }],
+    [1.3, { chest: [18, -4, 0], head: [-14, 0, 4], armR: [-50, 0, -20], foreR: [-38, 0, 0], handR: [32, 0, 0], armL: [-10, 0, 14], foreL: [-20, 0, 0], root: [0, -6, -4], legL: [-10, 0, 0], shinL: [16, 0, 0], legR: [6, 0, 0], shinR: [10, 0, 0] }],
+    [1.7, { ...PEN_BASE }],
+  ]),
   death: clip('death', 1.8, [
     [0, { chest: [-20, 0, 0], head: [-40, 0, 0], armL: [-20, 0, 50], armR: [-20, 0, -50] }, 'snap'],
     [0.5, { chest: [30, 0, 0], head: [40, 0, 0], root: [0, -48, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0], armL: [10, 0, 10], armR: [10, 0, -10] }],
@@ -150,6 +159,14 @@ const solClips = {
     [0.7, { chest: [40, 0, 0], head: [20, 0, 0], armL: [0, 0, 20], armR: [0, 0, -20], root: [0, -40, 0], legL: [-60, 0, 0], shinL: [100, 0, 0], legR: [-20, 0, 0], shinR: [100, 0, 0] }],
     [1.4, { ...SOL_BASE }],
   ]),
+  // desequilibrado: el escudo y la espada abiertos, el tercer brazo en el aire
+  parried: clip('parried', 1.5, [
+    [0, { chest: [-30, 22, 0], head: [-30, 0, -15], armR: [-150, 0, -70], foreR: [-20, 0, 0], handR: [50, 0, 0], armL: [-60, 0, 80], foreL: [-30, 0, 0], arm3: [70, 0, -40], root: [0, -6, -16], legL: [-26, 0, 0], shinL: [36, 0, 0], legR: [20, 0, 0], shinR: [20, 0, 0] }, 'snap'],
+    [0.3, { chest: [-22, 16, 0], head: [-24, 0, -10], armR: [-130, 0, -58], foreR: [-28, 0, 0], handR: [48, 0, 0], armL: [-50, 0, 70], foreL: [-35, 0, 0], arm3: [60, 0, -30], root: [0, -14, -18], legL: [-36, 0, 0], shinL: [56, 0, 0], legR: [24, 0, 0], shinR: [28, 0, 0] }],
+    [0.85, { chest: [-8, 8, 0], head: [-14, 0, -6], armR: [-80, 0, -36], foreR: [-40, 0, 0], handR: [42, 0, 0], armL: [-46, 0, 46], foreL: [-50, 0, 0], arm3: [30, 0, -16], root: [0, -12, -10], legL: [-30, 0, 0], shinL: [48, 0, 0], legR: [14, 0, 0], shinR: [24, 0, 0] }],
+    [1.15, { ...SOL_BASE, chest: [0, 4, 0], arm3: [10, 0, -6], root: [0, -5, -3], legL: [-8, 0, 0], shinL: [12, 0, 0], legR: [4, 0, 0], shinR: [8, 0, 0] }],
+    [1.5, { ...SOL_BASE }],
+  ]),
   death: penClips.death,
 };
 
@@ -204,6 +221,13 @@ const crClips = {
   stagger: clip('stagger', 1.0, [
     [0, { body: [-30, 0, 30], head: [0, 0, 80], root: [0, -20, 0] }, 'snap'],
     [1.0, {}],
+  ]),
+  // desequilibrado: se le va el cuerpo de lado y se alza, la cabeza colgando
+  parried: clip('parried', 1.3, [
+    [0, { body: [-28, 0, 38], head: [-10, 0, 70], root: [0, 14, 0] }, 'snap'],
+    [0.35, { body: [-20, 0, 30], head: [0, 0, 55], root: [0, 6, 0] }],
+    [0.9, { body: [-8, 0, 12], head: [30, 0, 25], root: [0, 0, 0] }],
+    [1.3, {}],
   ]),
   death: clip('death', 1.6, [
     [0, { body: [-20, 0, 20], head: [0, 0, 60] }, 'snap'],
@@ -267,6 +291,13 @@ const hdClips = {
     [0, { body: [-10, 0, 40], neck: [-20, 40, 0], jaw: [50, 0, 0], root: [0, -15, 0] }, 'snap'],
     [0.9, {}],
   ]),
+  // desequilibrado: el hocico desviado de un golpe, de lado, aullando
+  parried: clip('parried', 1.1, [
+    [0, { body: [-14, 0, 42], neck: [-30, 40, 0], head: [-20, 0, 0], jaw: [55, 0, 0], root: [0, -8, 0] }, 'snap'],
+    [0.3, { body: [-8, 0, 34], neck: [-22, 30, 0], head: [-12, 0, 0], jaw: [45, 0, 0], root: [0, -12, 0] }],
+    [0.8, { body: [-2, 0, 12], neck: [-6, 12, 0], head: [0, 0, 0], jaw: [25, 0, 0], root: [0, -4, 0] }],
+    [1.1, {}],
+  ]),
   death: clip('death', 1.4, [
     [0, { body: [0, 0, 30], jaw: [60, 0, 0] }, 'snap'],
     [0.6, { body: [0, 0, 88], root: [0, -45, 0], neck: [20, 0, 0], jaw: [40, 0, 0], flA: [-30, 0, 0], blA: [30, 0, 0] }],
@@ -315,6 +346,13 @@ const bellClips = {
     [0.8, { chest: [45, 0, 0], bellJ: [30, 0, 0], armL: [-20, 0, 10], armR: [-20, 0, -10], root: [0, -50, 0], legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0] }],
     [1.8, { ...BELL_BASE }],
   ]),
+  // desequilibrado: la campana se le va hacia atrás y los brazos se abren
+  parried: clip('parried', 1.5, [
+    [0, { chest: [-26, -18, 0], bellJ: [-26, 0, 14], armR: [-110, 0, -70], foreR: [-20, 0, 0], handR: [40, 0, 0], armL: [-40, 0, 70], foreL: [-20, 0, 0], root: [0, -8, -18], legL: [-24, 0, 0], shinL: [34, 0, 0], legR: [18, 0, 0], shinR: [20, 0, 0] }, 'snap'],
+    [0.35, { chest: [-18, -12, 0], bellJ: [-18, 0, 10], armR: [-90, 0, -58], foreR: [-25, 0, 0], handR: [40, 0, 0], armL: [-30, 0, 58], foreL: [-20, 0, 0], root: [0, -16, -20], legL: [-34, 0, 0], shinL: [54, 0, 0], legR: [22, 0, 0], shinR: [28, 0, 0] }],
+    [1.0, { chest: [0, -6, 0], bellJ: [-6, 0, 4], armR: [-50, 0, -34], foreR: [-40, 0, 0], handR: [40, 0, 0], armL: [-14, 0, 34], foreL: [-15, 0, 0], root: [0, -10, -8], legL: [-24, 0, 0], shinL: [40, 0, 0], legR: [12, 0, 0], shinR: [20, 0, 0] }],
+    [1.5, { ...BELL_BASE }],
+  ]),
   death: clip('death', 2.2, [
     [0, { chest: [-20, 0, 0], bellJ: [-20, 0, 0], armL: [-30, 0, 50], armR: [-30, 0, -50] }, 'snap'],
     [0.7, { chest: [35, 0, 0], bellJ: [20, 0, 0], root: [0, -60, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0], armL: [10, 0, 20], armR: [10, 0, -20] }],
@@ -352,6 +390,13 @@ const mourClips = {
   stagger: clip('stagger', 1.1, [
     [0, { chest: [-30, 0, 20], head: [-40, 0, 40], armL: [-40, 0, 80], armR: [-40, 0, -80], root: [0, -10, -15] }, 'snap'],
     [1.1, { ...MOUR_BASE }],
+  ]),
+  // desequilibrada: retrocede flotando, los brazos abiertos, el velo agitado
+  parried: clip('parried', 1.6, [
+    [0, { chest: [-32, 0, 22], head: [-45, 0, 35], armL: [-60, 0, 90], foreL: [-20, 0, 0], armR: [-130, 0, -60], foreR: [-10, 0, 0], root: [0, 26, -22], veil: [40, 0, 0] }, 'snap'],
+    [0.35, { chest: [-24, 0, 16], head: [-34, 0, 26], armL: [-40, 0, 76], foreL: [-20, 0, 0], armR: [-110, 0, -50], foreR: [-15, 0, 0], root: [0, 24, -24], veil: [30, 0, 0] }],
+    [1.05, { chest: [-6, 0, 6], head: [0, 0, 16], armL: [-10, 0, 30], foreL: [-8, 0, 0], armR: [-30, 0, -20], foreR: [-8, 0, 0], root: [0, 28, -10], veil: [14, 0, 0] }],
+    [1.6, { ...MOUR_BASE, root: [0, 30, 0], veil: [10, 0, 0] }],
   ]),
   death: clip('death', 2.0, [
     [0, { chest: [-30, 0, 0], head: [-60, 0, 0], armL: [-150, 0, 40], armR: [-150, 0, -40] }, 'snap'],
@@ -403,6 +448,13 @@ const impClips = {
     [0, { chest: [-25, 20, 0], head: [-30, 0, 0], armL: [-20, 0, 60], armR: [-20, 0, -60], root: [0, -10, -15] }, 'snap'],
     [0.9, { chest: [45, 0, 0], head: [20, 0, 0], root: [0, -60, 0], legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0], armL: [-10, 0, 20], armR: [-10, 0, -20] }],
     [2.0, { ...IMP_BASE }],
+  ]),
+  // desequilibrado: la pica y el cuerpo hacia atrás, un paso para no caer
+  parried: clip('parried', 1.4, [
+    [0, { chest: [-24, 18, 0], head: [-30, 0, 0], armR: [-120, 0, -64], foreR: [-20, 0, 0], handR: [55, 0, 0], armL: [-50, 0, 62], foreL: [-30, 0, 0], root: [0, -8, -18], legL: [-22, 0, 0], shinL: [34, 0, 0], legR: [18, 0, 0], shinR: [20, 0, 0] }, 'snap'],
+    [0.35, { chest: [-16, 12, 0], head: [-20, 0, 0], armR: [-96, 0, -52], foreR: [-28, 0, 0], handR: [55, 0, 0], armL: [-40, 0, 50], foreL: [-36, 0, 0], root: [0, -16, -20], legL: [-32, 0, 0], shinL: [52, 0, 0], legR: [22, 0, 0], shinR: [28, 0, 0] }],
+    [0.95, { chest: [0, 4, 0], head: [-8, 0, 0], armR: [-56, 0, -26], foreR: [-40, 0, 0], handR: [55, 0, 0], armL: [-34, 0, 24], foreL: [-50, 0, 0], root: [0, -10, -8], legL: [-22, 0, 0], shinL: [38, 0, 0], legR: [12, 0, 0], shinR: [20, 0, 0] }],
+    [1.4, { ...IMP_BASE }],
   ]),
   death: clip('death', 3.0, [
     [0, { chest: [-30, 0, 0], head: [-40, 0, 0], armL: [-40, 0, 60], armR: [-40, 0, -60] }, 'snap'],
@@ -468,6 +520,13 @@ const turClips = {
     [0, { chest: [-20, 20, 0], head: [-35, 0, 0], armL: [-30, 0, 60], armR: [-60, 0, -40], root: [0, -10, -15] }, 'snap'],
     [1.0, { chest: [50, 0, 0], head: [30, 0, 0], root: [0, -90, 0], legL: [-85, 0, 0], shinL: [100, 0, 0], legR: [-40, 0, 0], shinR: [100, 0, 0], armL: [-20, 0, 20], armR: [-40, 0, -20] }],
     [2.2, { ...TUR_BASE }],
+  ]),
+  // desequilibrado: el incensario devuelto le arrastra el brazo hacia atrás
+  parried: clip('parried', 1.6, [
+    [0, { chest: [-22, -20, 0], head: [-34, 0, 0], armR: [-130, 0, -70], foreR: [-20, 0, 0], armL: [-40, 0, 60], foreL: [-30, 0, 0], root: [0, -10, -20], legL: [-22, 0, 0], shinL: [34, 0, 0], legR: [16, 0, 0], shinR: [20, 0, 0] }, 'snap'],
+    [0.4, { chest: [-16, -14, 0], head: [-26, 0, 0], armR: [-110, 0, -58], foreR: [-25, 0, 0], armL: [-32, 0, 50], foreL: [-30, 0, 0], root: [0, -20, -22], legL: [-32, 0, 0], shinL: [52, 0, 0], legR: [20, 0, 0], shinR: [28, 0, 0] }],
+    [1.1, { chest: [2, -6, 0], head: [-14, 0, 0], armR: [-70, 0, -40], foreR: [-35, 0, 0], armL: [-20, 0, 26], foreL: [-30, 0, 0], root: [0, -12, -8], legL: [-22, 0, 0], shinL: [38, 0, 0], legR: [12, 0, 0], shinR: [20, 0, 0] }],
+    [1.6, { ...TUR_BASE }],
   ]),
   death: clip('death', 4.0, [
     [0, { chest: [-35, 0, 0], head: [-50, 0, 0], armL: [-150, 0, 50], armR: [-150, 0, -50] }, 'snap'],
@@ -662,6 +721,8 @@ export const TYPES = {
     leash: 28,
     clips: penClips,
     voice: 'penitent',
+    // (tras un parry, desequilibrado: abierto al golpe de gracia)
+    parryDur: 1.7,
     attacks: [
       { name: 'slash', clip: penClips.slash, dur: 1.3, min: 0, max: 2.0, hits: [[0.56, 0.7]], dmg: 17, range: 2.1, arc: 100, weight: 3 },
       { name: 'double', clip: penClips.double, dur: 1.7, min: 0, max: 2.0, hits: [[0.44, 0.56], [0.98, 1.1]], dmg: 13, range: 2.0, arc: 120, weight: 2 },
@@ -688,12 +749,14 @@ export const TYPES = {
     approach: 1.8,
     canBlock: true,
     blockChance: 0.4,
+    parryDur: 1.5,
     clips: solClips,
     voice: 'soldier',
     attacks: [
       { name: 'combo', clip: solClips.combo, dur: 1.7, min: 0, max: 2.3, hits: [[0.44, 0.58], [0.98, 1.12]], dmg: 18, range: 2.4, arc: 110, weight: 3, lunge: [[0.4, 0.5, 2], [0.95, 1.05, 2]] },
       { name: 'thrust', clip: solClips.thrust, dur: 1.35, min: 1.5, max: 3.6, hits: [[0.6, 0.74]], dmg: 24, range: 2.8, arc: 40, lunge: [[0.56, 0.74, 5]], weight: 2 },
-      { name: 'arm3', clip: solClips.arm3, dur: 1.7, min: 0, max: 2.2, hits: [[0.98, 1.12]], dmg: 28, range: 2.3, arc: 70, weight: 1.5, stDmg: 40 },
+      // (el tercer brazo aplasta: no se puede desviar)
+      { name: 'arm3', clip: solClips.arm3, dur: 1.7, min: 0, max: 2.2, hits: [[0.98, 1.12]], dmg: 28, range: 2.3, arc: 70, weight: 1.5, stDmg: 40, noParry: true },
     ],
     biped: { scale: 1.03, stance: 0.14 },
     shield: { yaw: 0.3, pitch: -0.08, out: 0.08, along: 0.14 },
@@ -730,9 +793,11 @@ export const TYPES = {
     clips: crClips,
     voice: 'crawler',
     alertTime: 0.6,
+    parryDur: 1.3,
     attacks: [
       { name: 'lunge', clip: crClips.lunge, dur: 1.0, min: 0, max: 2.2, hits: [[0.45, 0.66]], dmg: 14, range: 1.6, arc: 80, lunge: [[0.42, 0.62, 6.5]], weight: 3, cd: 0.5 },
-      { name: 'pounce', clip: crClips.pounce, dur: 1.5, min: 3, max: 6.5, hits: [[0.65, 1.0]], dmg: 20, range: 1.7, arc: 90, lunge: [[0.6, 1.0, 9]], weight: 2, onStart: (e) => (e.data.jump = 0.6) },
+      // (se te echa encima con todo el cuerpo: esquívalo)
+      { name: 'pounce', clip: crClips.pounce, dur: 1.5, min: 3, max: 6.5, hits: [[0.65, 1.0]], dmg: 20, range: 1.7, arc: 90, lunge: [[0.6, 1.0, 9]], weight: 2, noParry: true, onStart: (e) => (e.data.jump = 0.6) },
     ],
     loco: (e, t, spd) => crawlerPose(e, t, spd),
     idlePose: (e, kind, t) => {
@@ -783,9 +848,10 @@ export const TYPES = {
     clips: hdClips,
     voice: 'hound',
     alertTime: 0.5,
+    parryDur: 1.1,
     attacks: [
       { name: 'bite', clip: hdClips.bite, dur: 0.8, min: 0, max: 1.9, hits: [[0.32, 0.46]], dmg: 11, range: 1.7, arc: 80, lunge: [[0.28, 0.42, 5]], weight: 3, cd: 0.4 },
-      { name: 'leap', clip: hdClips.leap, dur: 1.2, min: 2.5, max: 6, hits: [[0.48, 0.72]], dmg: 16, range: 1.7, arc: 80, lunge: [[0.42, 0.72, 9]], weight: 2 },
+      { name: 'leap', clip: hdClips.leap, dur: 1.2, min: 2.5, max: 6, hits: [[0.48, 0.72]], dmg: 16, range: 1.7, arc: 80, lunge: [[0.42, 0.72, 9]], weight: 2, noParry: true },
     ],
     loco: houndPose,
     idlePose: (e, kind, t) => {
@@ -816,13 +882,16 @@ export const TYPES = {
     stride: 1.8,
     approach: 2.4,
     heavy: true,
+    // (pesado: hacen falta dos parrys seguidos para desequilibrarlo)
+    parryPosture: 2,
+    parryDur: 1.5,
     clips: bellClips,
     voice: 'bell',
     alertTime: 1.2,
     attacks: [
-      { name: 'slam', clip: bellClips.slam, dur: 2.3, min: 0, max: 3.4, hits: [[1.08, 1.22]], dmg: 38, range: 3.5, arc: 60, weight: 3, turn: 2, events: [{ t: 1.12, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 2.6, e.pos.y, e.pos.z + Math.cos(e.yaw) * 2.6, 3.4, 16, e) }], stagger: true },
+      { name: 'slam', clip: bellClips.slam, dur: 2.3, min: 0, max: 3.4, hits: [[1.08, 1.22]], dmg: 38, range: 3.5, arc: 60, weight: 3, turn: 2, events: [{ t: 1.12, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 2.6, e.pos.y, e.pos.z + Math.cos(e.yaw) * 2.6, 3.4, 16, e) }], stagger: true, noParry: true },
       { name: 'sweep', clip: bellClips.sweep, dur: 1.9, min: 0, max: 3.6, hits: [[0.9, 1.12]], dmg: 30, range: 3.7, arc: 170, weight: 2, turn: 2.2 },
-      { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, events: [{ t: 1.3, fn: (e, g) => g.combat.toll(e, 6.5, 12) }] },
+      { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, noParry: true, events: [{ t: 1.3, fn: (e, g) => g.combat.toll(e, 6.5, 12) }] },
     ],
     biped: { scale: 1.38, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => {
@@ -848,11 +917,12 @@ export const TYPES = {
     approach: 2.2,
     keepDist: 3.5,
     float: true,
+    parryDur: 1.6,
     clips: mourClips,
     voice: 'mourner',
     alertTime: 1.1,
     attacks: [
-      { name: 'scream', clip: mourClips.scream, dur: 1.8, min: 3.5, max: 16, hits: [], weight: 3, cd: 1.6, events: [{ t: 0.92, fn: (e, g) => g.combat.wail(e) }] },
+      { name: 'scream', clip: mourClips.scream, dur: 1.8, min: 3.5, max: 16, hits: [], weight: 3, cd: 1.6, noParry: true, events: [{ t: 0.92, fn: (e, g) => g.combat.wail(e) }] },
       { name: 'swipe', clip: mourClips.swipe, dur: 1.4, min: 0, max: 3.2, hits: [[0.66, 0.84]], dmg: 18, range: 3.2, arc: 150, weight: 3 },
     ],
     think: (e, player, d, dt) => {
@@ -893,14 +963,17 @@ export const TYPES = {
     approach: 3.2,
     heavy: true,
     boss: true,
+    // (jefe: tres parrys seguidos para desequilibrarlo)
+    parryPosture: 3,
+    parryDur: 1.4,
     clips: impClips,
     voice: 'impaled',
     alertTime: 1.6,
     attacks: [
-      { name: 'slam', clip: impClips.slam, dur: 2.1, min: 0, max: 4.4, hits: [[1.0, 1.14]], dmg: 36, range: 4.5, arc: 50, weight: 3, turn: 2.2, stagger: true, events: [{ t: 1.05, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 3.4, e.pos.y, e.pos.z + Math.cos(e.yaw) * 3.4, 3.0, 16, e) }] },
+      { name: 'slam', clip: impClips.slam, dur: 2.1, min: 0, max: 4.4, hits: [[1.0, 1.14]], dmg: 36, range: 4.5, arc: 50, weight: 3, turn: 2.2, stagger: true, noParry: true, events: [{ t: 1.05, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 3.4, e.pos.y, e.pos.z + Math.cos(e.yaw) * 3.4, 3.0, 16, e) }] },
       { name: 'sweep', clip: impClips.sweep, dur: 1.8, min: 0, max: 4.6, hits: [[0.8, 1.0]], dmg: 30, range: 4.7, arc: 170, weight: 3 },
-      { name: 'stomp', clip: impClips.stomp, dur: 1.3, min: 0, max: 2.4, hits: [], weight: 2, events: [{ t: 0.62, fn: (e, g) => g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 3.0, 20, e, 9) }] },
-      { name: 'charge', clip: impClips.charge, dur: 2.4, min: 5, max: 14, hits: [[0.62, 1.9]], dmg: 34, range: 2.4, arc: 70, lunge: [[0.62, 1.9, 7.5]], weight: 2, phase: 2, turn: 1.5, trackUntil: 0.6, stagger: true },
+      { name: 'stomp', clip: impClips.stomp, dur: 1.3, min: 0, max: 2.4, hits: [], weight: 2, noParry: true, events: [{ t: 0.62, fn: (e, g) => g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 3.0, 20, e, 9) }] },
+      { name: 'charge', clip: impClips.charge, dur: 2.4, min: 5, max: 14, hits: [[0.62, 1.9]], dmg: 34, range: 2.4, arc: 70, lunge: [[0.62, 1.9, 7.5]], weight: 2, phase: 2, turn: 1.5, trackUntil: 0.6, stagger: true, noParry: true },
     ],
     biped: { scale: 1.8, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => rad(humanStyle(e, t, { hunch: 12, armR: [-35, 0, -12], foreR: [-50, 0, 0], handR: [55, 0, 0], armL: [-30, 0, 15], foreL: [-60, 0, 0], armRSwing: 0.2, breath: 1.0, breathAmp: 3 })),
@@ -976,6 +1049,7 @@ export const TYPES = {
         max: 7,
         weight: 3,
         dmg: 40,
+        noParry: true,
         censer: [[1.25, 1.45]],
         onStart: (e) => (e.data.slamArmed = true),
         update: (e, dt, t) => {
@@ -998,6 +1072,7 @@ export const TYPES = {
         max: 7,
         weight: 2,
         dmg: 26,
+        noParry: true,
         phase: 2,
         censer: [[0.8, 1.5], [1.6, 2.3], [2.4, 3.1], [3.2, 3.5]],
         update: (e, dt, t) => {
@@ -1008,7 +1083,7 @@ export const TYPES = {
           } else e.data.censerTarget = null;
         },
       },
-      { name: 'stomp', clip: turClips.stomp, dur: 1.5, min: 0, max: 3.4, hits: [], weight: 2, events: [{ t: 0.72, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 0.8, e.pos.y, e.pos.z + Math.cos(e.yaw) * 0.8, 3.4, 24, e, 10) }] },
+      { name: 'stomp', clip: turClips.stomp, dur: 1.5, min: 0, max: 3.4, hits: [], weight: 2, noParry: true, events: [{ t: 0.72, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 0.8, e.pos.y, e.pos.z + Math.cos(e.yaw) * 0.8, 3.4, 24, e, 10) }] },
       {
         name: 'volley',
         clip: turClips.volley,
@@ -1017,6 +1092,7 @@ export const TYPES = {
         max: 18,
         weight: 2,
         phase: 2,
+        noParry: true,
         events: [1.0, 1.3, 1.6].map((t) => ({ t, fn: (e, g) => g.combat.ember(e) })),
         update: (e, dt, t) => {
           if (t > 0.3 && t < 2.0) {
@@ -1030,6 +1106,17 @@ export const TYPES = {
     onReset: (e) => {
       e.data.phase = 1;
       censerReset(e);
+    },
+    // (jefe: tres parrys seguidos; cada parry le devuelve el incensario)
+    parryPosture: 3,
+    parryDur: 1.6,
+    onParried: (e) => {
+      const c = e.P.censer;
+      if (c) {
+        c.vel.multiplyScalar(-0.9);
+        c.vel.y += 5;
+      }
+      e.data.censerTarget = null;
     },
     biped: { scale: 2.35, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => {

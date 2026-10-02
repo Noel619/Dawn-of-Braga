@@ -204,6 +204,62 @@ function commonClips(W, G, GUARD, BLOCK) {
   };
 }
 
+// ---------------------------------------------------------------- parry
+// Animaciones del parry (desvío): parten de la guardia del arma y salen al
+// encuentro del golpe con un tirón seco (curva 'snap'), se quedan un
+// instante en el desvío (la ventana para el golpe de gracia) y vuelven.
+// Dos variantes que se alternan en los parrys seguidos (combos de varios
+// golpes): con escudo, A lo saca hacia fuera y aparta el golpe a la
+// izquierda, B lo alza y lo desvía hacia arriba; el arma queda atrás,
+// lista. A dos manos, A barre el golpe hacia la derecha con la hoja (o el
+// mango del hacha) en alto y B lo aparta hacia la izquierda.
+const POLES = { elbowR: [-0.55, -0.75, -0.4], elbowL: [0.9, -0.25, -0.35] };
+// (un polo de codo ausente en una clave valdría [0,0,0] y el codo saltaría)
+function pclip(name, dur, keys) {
+  for (const j in POLES) if (keys.some((k) => k[1][j])) for (const k of keys) if (!k[1][j]) k[1] = { ...k[1], [j]: POLES[j] };
+  return clip(name, dur, keys, { mono: true });
+}
+function parryClips(W, G, BLOCK) {
+  const two = W.hands === 2;
+  const add = (a, b) => a.map((v, i) => v + (b[i] || 0));
+  const S0 = { legL: [12, 0, 4], shinL: [14, 0, 0], legR: [-20, 0, -4], shinR: [22, 0, 0], root: [0, -6, 2] };
+  const S1 = { legL: [18, 0, 4], shinL: [16, 0, 0], legR: [-28, 0, -4], shinR: [30, 0, 0], root: [0, -11, 4] };
+  const B = { ...BLOCK };
+  const ikR = B.ikR,
+    bl = B.bladeR;
+  const end = { ...G, ...S0, root: [0, -4, 0] };
+  if (!two) {
+    return {
+      parryA: pclip('parryA', 0.46, [
+        [0, { ...B, ...S0 }],
+        [0.07, { ...B, ...S1, ikL: [24, 50, 50], elbowL: [0.9, -0.1, -0.2], chest: [10, 22, 0], head: [4, -8, 0], ikR: add(ikR, [-2, 8, -14]), bladeR: add(bl, [-10, 18, 0]) }, 'snap'],
+        [0.2, { ...B, ...S1, ikL: [30, 44, 40], elbowL: [0.9, -0.2, -0.3], chest: [8, 26, 0], head: [4, -10, 0], ikR: add(ikR, [-2, 10, -12]), bladeR: add(bl, [-12, 20, 0]) }],
+        [0.46, end],
+      ]),
+      parryB: pclip('parryB', 0.46, [
+        [0, { ...B, ...S0 }],
+        [0.07, { ...B, ...S1, ikL: [0, 66, 46], elbowL: [0.9, 0.1, -0.3], chest: [6, -28, 0], head: [10, 14, 0], ikR: add(ikR, [-4, 4, -12]), bladeR: add(bl, [-8, 16, 0]) }, 'snap'],
+        [0.2, { ...B, ...S1, ikL: [6, 70, 38], elbowL: [0.9, 0, -0.35], chest: [4, -22, 0], head: [10, 12, 0], ikR: add(ikR, [-4, 6, -10]), bladeR: add(bl, [-10, 18, 0]) }],
+        [0.46, end],
+      ]),
+    };
+  }
+  return {
+    parryA: pclip('parryA', 0.44, [
+      [0, { ...B, ...S0 }],
+      [0.06, { ...B, ...S1, ikR: add(ikR, [-12, 8, 14]), bladeR: add(bl, [40, 34, 0]), chest: [6, -24, 0], head: [4, 12, 0] }, 'snap'],
+      [0.2, { ...B, ...S1, ikR: add(ikR, [-14, 6, 8]), bladeR: add(bl, [48, 40, 0]), chest: [6, -28, 0], head: [4, 14, 0] }],
+      [0.44, end],
+    ]),
+    parryB: pclip('parryB', 0.44, [
+      [0, { ...B, ...S0 }],
+      [0.06, { ...B, ...S1, ikR: add(ikR, [10, 12, 12]), bladeR: add(bl, [-24, 46, 0]), chest: [8, 18, 0], head: [6, -10, 0] }, 'snap'],
+      [0.2, { ...B, ...S1, ikR: add(ikR, [12, 14, 6]), bladeR: add(bl, [-30, 52, 0]), chest: [8, 22, 0], head: [6, -12, 0] }],
+      [0.44, end],
+    ]),
+  };
+}
+
 // ---------------------------------------------------------------- espada
 // La espada larga del carcelero: el repertorio original, sin cambios.
 function swordMoves({ G }) {
@@ -298,10 +354,21 @@ export const WEAPONS = {
   },
   ...MOVESETS,
 };
+// Parry y golpe de gracia de cada arma: la ventana (s) que se abre al
+// pulsar la guardia, con qué se para (el escudo; a dos manos, la hoja o el
+// mango del hacha) y con qué golpe se remata al desequilibrado.
+const PARRY = {
+  facon: { win: 0.2, kind: 'shield', riposte: ['heavy', 1], dmg: 104 },
+  hacha: { win: 0.16, kind: 'haft', riposte: ['light', 2], dmg: 118 },
+  lanza: { win: 0.2, kind: 'shield', riposte: ['heavy', 0], dmg: 110 },
+  espada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 108 },
+  katana: { win: 0.24, kind: 'blade', riposte: ['light', 3], dmg: 108 },
+};
 for (const id in WEAPONS) {
   const W = WEAPONS[id];
   W.parts = WEAPON_PARTS[id];
   W.carry = W.hands === 2 ? carry2(W) : carry1(W);
+  W.parry = PARRY[id] || PARRY.espada;
 }
 
 // Clips y ataques de un arma para un rig (se construyen una vez).
@@ -317,7 +384,12 @@ export function weaponSet(W, rig) {
   for (const k of ['armR', 'foreR', 'handR', 'armL', 'foreL', 'handL']) GUARD[k] = gp[k].map((v) => v / DEG);
   const BLOCK = { ...W.block };
   const M = W.moves({ G, GUARD, W, rig });
-  const clips = { ...commonClips(W, G, GUARD, BLOCK), ...M.clips };
+  const clips = { ...commonClips(W, G, GUARD, BLOCK), ...parryClips(W, G, BLOCK), ...M.clips };
+  // golpe de gracia: uno de los golpes del arma, rematando (sin coste de
+  // aguante, sin encadenar y con el daño de un crítico)
+  const R = W.parry;
+  const base = (M[R.riposte[0]] || M.light)[R.riposte[1]] || M.light[M.light.length - 1];
+  const riposte = { ...base, dmg: R.dmg, poise: 999, riposte: true, st: 0, cancel: base.clip.dur + 1, move: base.clip.dur + 1, charge: null, impact: null, keepBlock: false };
   const set = {
     clips,
     light: M.light,
@@ -325,6 +397,7 @@ export function weaponSet(W, rig) {
     run: M.run,
     roll: M.roll,
     guard: M.guard || null,
+    riposte,
     blockRad: rad(BLOCK),
   };
   SETS.set(W.id, set);

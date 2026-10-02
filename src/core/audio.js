@@ -821,6 +821,53 @@ export class Audio {
         this.noise(d, t, 0.25, { f0: 5000, f1: 2500, q: 1, gain: 0.1, a: 0.001 }); // chispas
         break;
       }
+      // parry: choque seco y brillante, el acero que canta, chispas y un golpe
+      // sordo (con escudo, la madera y el tachón; a dos manos, sólo acero)
+      case 'parry': {
+        const sh = o.kind === 'shield',
+          haft = o.kind === 'haft';
+        d = this.out(P, { gain: 1, verb: 0.5, life: 3.2, occlude: false });
+        this.metal(d, t, rnd(sh ? 640 : haft ? 520 : 1050, sh ? 760 : haft ? 600 : 1250), 0.3, 1.7, { ratios: [1, 2.32, 4.25, 6.63, 9.38] });
+        this.metal(d, t + 0.003, rnd(2300, 2800), 0.12, 1.0);
+        this.noise(d, t, 0.05, { type: 'highpass', f0: 4200, gain: 0.55, a: 0.0005 });
+        this.noise(d, t, 0.4, { f0: 6200, f1: 2400, q: 2, gain: 0.17, a: 0.001 }); // chispas
+        this.tone(d, t, 0.2, { f0: sh ? 150 : 200, f1: 60, gain: 0.6 });
+        if (sh || haft) this.noise(d, t, 0.12, { f0: 800, f1: 300, q: 2, gain: 0.32, buf: this.brown, rate: 4, a: 0.001 });
+        if (!sh) this.noise(d, t + 0.02, 0.22, { f0: 3000, f1: 7000, q: 6, gain: 0.08, a: 0.01, curve: 'lin' }); // la hoja que se desliza
+        this.duck(0.4, 0.45);
+        break;
+      }
+      // un hueso lanzado que se aparta de un golpe
+      case 'deflect': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2, occlude: false });
+        this.metal(d, t, rnd(1200, 1500), 0.12, 0.4, { ratios: [1, 2.6, 4.1] });
+        this.boneCrack(d, t, 0.6);
+        this.noise(d, t, 0.15, { f0: 5000, f1: 2500, q: 2, gain: 0.08, a: 0.001 });
+        break;
+      }
+      // el golpe de gracia: el arma entra hasta dentro, hueso que cede y un
+      // golpe hondo
+      case 'riposte': {
+        d = this.out(P, { gain: 1, verb: 0.4, life: 3.2, occlude: false });
+        this.tone(d, t, 0.55, { f0: 92, f1: 28, gain: 0.95 });
+        this.noise(d, t, 0.12, { type: 'lowpass', f0: 3200, f1: 300, gain: 0.85, a: 0.001 });
+        this.noise(d, t + 0.02, 0.5, { f0: 620, f1: 170, q: 3, gain: 0.58, buf: this.brown, rate: 3 });
+        this.boneCrack(d, t + 0.03, 1.6);
+        this.boneCrack(d, t + 0.1, 1.15);
+        this.noise(d, t + 0.05, 0.32, { f0: rnd(1100, 1500), f1: 400, q: 5, gain: 0.24, buf: this.brown, rate: 5 });
+        this.metal(d, t, rnd(240, 280), 0.06, 1.2, { ratios: [1, 2.1, 3.7] });
+        this.duck(0.55, 0.7);
+        break;
+      }
+      // aviso: este golpe no se puede desviar (un toque grave y disonante)
+      case 'peril': {
+        d = this.out(P, { gain: 0.85, verb: 0.55, life: 2.6 });
+        this.tone(d, t, 0.55, { f0: 98, gain: 0.22, type: 'sawtooth', a: 0.008 });
+        this.tone(d, t, 0.55, { f0: 104.5, gain: 0.2, type: 'sawtooth', a: 0.008 });
+        this.metal(d, t, 330, 0.12, 0.9, { ratios: [1, 1.41, 2.83] });
+        this.noise(d, t, 0.18, { f0: 2400, f1: 900, q: 6, gain: 0.07, a: 0.005 });
+        break;
+      }
       case 'block': {
         d = this.out(P, { gain: 0.8, verb: 0.3, life: 2, occlude: false });
         this.tone(d, t, 0.16, { f0: 200, f1: 85, gain: 0.6 }); // madera del escudo

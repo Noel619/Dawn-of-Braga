@@ -109,6 +109,14 @@ export class Player {
     this.lampK = 1;
     this.dead = false;
     this.lastHitBy = null;
+    // parry: ventana abierta (s), pulsaciones recientes, parrys seguidos
+    this.parryWin = 0;
+    this.parryPress = [];
+    this.parryN = 0;
+    this.parryLastT = -9;
+    this.parryFx = 0;
+    this.parryFace = null;
+    this.ripE = null;
     // extremos de la hoja (espacio de la articulación del arma) para la estela
     this.bladeBase = new THREE.Vector3(0, -0.05, 0.2);
     this.bladeTip = new THREE.Vector3(0, -0.05, 1.02);
@@ -181,6 +189,10 @@ export class Player {
     this.blockW = 0;
     this.buffer = null;
     this._eatDodge = false;
+    this.parryWin = 0;
+    this.parryPress.length = 0;
+    this.parryFx = 0;
+    this.ripE = null;
     this.gait._yaw = null;
     this.obj.position.set(x, y, z);
     this.obj.rotation.y = yaw;
@@ -349,6 +361,9 @@ export class Player {
       dz = fromZ - this.pos.z;
     const toSrc = Math.atan2(dx, dz);
     const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 80 * DEG;
+    // parry: has pulsado la guardia justo antes del golpe (y se puede
+    // desviar: los golpes marcados en rojo, no)
+    if (this.parryWin > 0 && Math.abs(angleDiff(this.yaw, toSrc)) < 100 * DEG && !atk.noParry && !atk.unblockable && this.canBlock()) return this.doParry(atk, fromX, fromZ);
     if (this.blocking && this.blockW > 0.5 && facing && !atk.unblockable && this.canBlock()) {
       // a dos manos se para con el arma: cuesta más aguante y entra más daño
       const bk = this.twoHanded && this.hasSword ? this.weapon.blockK || { st: 1.3, chip: 0.2 } : null;
@@ -400,6 +415,108 @@ export class Player {
     this.yaw = toSrc; // encarar al atacante
     this.stT = 0;
     return 'hit';
+  }
+
+  // ------------------------------------------------------------ parry
+  // Abre la ventana de parry. Pulsar una y otra vez la acorta (machacar el
+  // botón no sirve): la segunda pulsación en menos de un segundo deja el
+  // 75 %, la tercera la mitad y la cuarta un tercio. Si hay alguien
+  // atacando delante (o el objetivo fijado), te vuelves hacia él.
+  startParryWin(target = null) {
+    const g = this.game;
+    const t = g.time;
+    this.parryPress = this.parryPress.filter((q) => t - q < 1.0);
+    const k = [1, 0.75, 0.5, 0.34][Math.min(3, this.parryPress.length)];
+    this.parryPress.push(t);
+    this.parryWin = (this.weapon.parry ? this.weapon.parry.win : 0.2) * k;
+    const th = target || this.threat();
+    this.parryFace = th ? Math.atan2(th.pos.x - this.pos.x, th.pos.z - this.pos.z) : null;
+    if (this.state === 'attack') {
+      this.state = 'free';
+      this.anim.stop(0.08);
+    }
+    g.onPlayerAction && g.onPlayerAction('parryTry', {});
+  }
+  // La criatura que te está atacando (o a punto) más cerca y delante.
+  threat() {
+    let best = null,
+      bs = 1e9;
+    for (const e of this.game.activeEnemies) {
+      if (!e.lockable) continue;
+      const dx = e.pos.x - this.pos.x,
+        dz = e.pos.z - this.pos.z;
+      const d = Math.hypot(dx, dz) - e.body.radius;
+      if (d > 4.2 || Math.abs(e.pos.y - this.pos.y) > 1.8) continue;
+      const a = Math.abs(angleDiff(this.yaw, Math.atan2(dx, dz)));
+      const atk = e.state === 'attack' || (e.D && e.D.mode === 'attack');
+      const s = d + a * 0.8 - (atk ? 2.5 : 0);
+      if (s < bs) {
+        bs = s;
+        best = e;
+      }
+    }
+    return best;
+  }
+  // Un golpe desviado: sin daño; el desvío (alterna dos animaciones en los
+  // parrys seguidos) y un respiro de aguante.
+  doParry(atk, fx, fz) {
+    const g = this.game;
+    this.parryWin = 0;
+    // (un parry logrado no cuenta como machacar el botón)
+    this.parryPress.length = 0;
+    const t = g.time;
+    this.parryN = t - this.parryLastT < 1.3 ? this.parryN + 1 : 0;
+    this.parryLastT = t;
+    this.state = 'parry';
+    this.stT = 0;
+    this.blocking = true;
+    this.buffer = null;
+    const dx = fx - this.pos.x,
+      dz = fz - this.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    this.yaw = Math.atan2(dx, dz);
+    this.vx = (-dx / d) * 1.3;
+    this.vz = (-dz / d) * 1.3;
+    const c = this.parryN % 2 ? this.clips.parryB : this.clips.parryA;
+    this.parryDur = c.dur;
+    this.anim.play(c, { blend: 0.03 });
+    this.parryFx = 1;
+    this.flinchX.kick(-2.5);
+    this.st = Math.min(this.maxSt, this.st + 8);
+    this.flask.visible = false;
+    g.onPlayerAction && g.onPlayerAction('parry', { atk });
+    return 'parry';
+  }
+  // Un desequilibrado a tu alcance y por delante (tras un parry, o el
+  // Descoyuntado patas arriba): el golpe de gracia.
+  riposteTarget() {
+    let best = null,
+      bs = 1e9;
+    for (const e of this.game.activeEnemies) {
+      if (e.dead || !(e.parryT > 0) || !e.obj.visible) continue;
+      const dx = e.pos.x - this.pos.x,
+        dz = e.pos.z - this.pos.z;
+      const d = Math.hypot(dx, dz) - e.body.radius;
+      // (el golpe de gracia se lanza hacia él: no hace falta estar pegado)
+      if (d > (e.T.heavy ? 4.2 : 3) || Math.abs(e.pos.y - this.pos.y) > 1.5) continue;
+      const a = Math.abs(angleDiff(this.yaw, Math.atan2(dx, dz)));
+      if (a > 80 * DEG && d > 0.7) continue;
+      const sc = d + a;
+      if (sc < bs) {
+        bs = sc;
+        best = e;
+      }
+    }
+    return best;
+  }
+  startRiposte(e) {
+    const g = this.game;
+    this.ripE = e;
+    this.yaw = Math.atan2(e.pos.x - this.pos.x, e.pos.z - this.pos.z);
+    this.aimYaw = this.yaw;
+    this.startAttack(this.set.riposte, 0);
+    e.onRiposte && e.onRiposte(this);
+    g.onRiposteStart && g.onRiposteStart(this, e);
   }
 
   // Atrapado por el Descoyuntado: sin control; forcejear (pulsar ataque,
@@ -550,14 +667,24 @@ export class Player {
     let desiredSpeed = 0;
     let faceTarget = null;
     let turnRate = 14;
-    const st = this.state;
     this.iframe = false;
     this.sprinting = false;
     this.swinging = false;
 
+    // parry: pulsar la guardia abre una ventana breve; si un golpe llega
+    // dentro, se desvía. También desde la recuperación de un golpe propio
+    // y tras otro parry (los combos de varios golpes se paran uno a uno)
+    this.parryWin = Math.max(0, this.parryWin - dt);
+    if (allowControl && input.pressed('block') && this.canBlock()) {
+      const s0 = this.state;
+      if (s0 === 'free' || s0 === 'blockhit' || s0 === 'parry' || (s0 === 'attack' && this.atk && this.atkT >= this.atk.cancel && !this.atk.riposte)) this.startParryWin(target);
+    }
+    const st = this.state;
+
     // la carga de un pesado sólo existe mientras se ataca
-    if (st !== 'attack' && this.charging) {
+    if (st !== 'attack' && (this.charging || this.ripHold > 0)) {
       this.charging = false;
+      this.ripHold = 0;
       this.anim.speed = 1;
     }
 
@@ -582,11 +709,21 @@ export class Player {
       if (target && !this.sprinting) faceTarget = Math.atan2(target.pos.x - this.pos.x, target.pos.z - this.pos.z);
       else if (mag > 0.1) faceTarget = Math.atan2(wx, wz);
       turnRate = this.sprinting ? 9 : 15;
+      // (con la ventana de parry abierta, de cara a quien te ataca)
+      if (this.parryWin > 0 && this.parryFace !== null) {
+        faceTarget = this.parryFace;
+        turnRate = 26;
+      }
 
       if (st === 'free') {
         const M = this.set;
+        const rip = (has('light') || has('heavy')) && this.hasSword ? this.riposteTarget() : null;
         if (take('dodge') && this.canAct()) this.startRoll(wx, wz);
-        else if (has('light') && this.hasSword && this.canAct()) {
+        else if (rip) {
+          // golpe de gracia al desequilibrado
+          take('light') || take('heavy');
+          this.startRiposte(rip);
+        } else if (has('light') && this.hasSword && this.canAct()) {
           take('light');
           const idx = this.comboT > 0 ? (this.combo + 1) % M.light.length : 0;
           this.orientForAttack(target, wx, wz, mag);
@@ -623,7 +760,12 @@ export class Player {
           }
         }
       }
-      if (!this.charging) this.atkT += dt;
+      // (el golpe de gracia se queda un instante dentro: el reloj va con él)
+      if (this.ripHold > 0) {
+        this.ripHold -= dt;
+        if (this.ripHold <= 0) this.anim.speed = 1;
+      }
+      if (!this.charging) this.atkT += dt * (this.ripHold > 0 ? this.anim.speed : 1);
       const t = this.atkT;
       // seguimiento durante la preparación: giro rápido hacia el objetivo del
       // golpe al empezar, luego corrección suave
@@ -636,7 +778,18 @@ export class Player {
       // estocada (desplazamiento con perfil suave)
       const [l0, l1, ls] = a.lunge;
       const f = this.forward();
-      if (t >= l0 && t <= l1) {
+      const R = a.riposte ? this.ripE : null;
+      if (R && t < a.hit[0] + 0.05 && !R.dead) {
+        // golpe de gracia: hasta quedar justo delante de él, de cara
+        const dx = R.pos.x - this.pos.x,
+          dz = R.pos.z - this.pos.z;
+        const d = Math.hypot(dx, dz) || 1;
+        const gap = d - (R.body.radius + this.body.radius + 0.42);
+        const sp = clamp(gap * 9, -3, 9);
+        this.vx = (dx / d) * sp;
+        this.vz = (dz / d) * sp;
+        this.yaw = approachAngle(this.yaw, Math.atan2(dx, dz), 22 * dt);
+      } else if (t >= l0 && t <= l1) {
         // no atravesar a la criatura: frenar si ya está pegada
         const near = target && target.distTo(this.pos) < target.body.radius + this.body.radius + 0.5;
         const u = (t - l0) / (l1 - l0);
@@ -655,10 +808,12 @@ export class Player {
             if (this.hitWin >= 0) this.hitSet.clear();
             this.hitWin = i;
           }
-          this.swinging = true;
-          g.combat.playerSwing(this, a);
+          // (el golpe de gracia es una estocada a quemarropa: sin estela)
+          this.swinging = !R;
+          if (R) g.combat.riposteHit(this, a, R);
+          else g.combat.playerSwing(this, a);
           break;
-        } else if (t >= h0 - 0.06 && t <= h1 + 0.05) this.swinging = true;
+        } else if (t >= h0 - 0.06 && t <= h1 + 0.05) this.swinging = !R;
       }
       // encadenar
       if (t >= a.cancel) {
@@ -691,6 +846,29 @@ export class Player {
         this.anim.stop(0.14);
       }
       desiredSpeed = -1; // velocidad gestionada arriba
+    } else if (st === 'parry') {
+      // el desvío: plantado, de cara al golpe, con la guardia arriba; de aquí
+      // sale el golpe de gracia, otro parry o una voltereta
+      desiredSpeed = -1;
+      this.vx = damp(this.vx, 0, 7, dt);
+      this.vz = damp(this.vz, 0, 7, dt);
+      this.blocking = this.canBlock();
+      const rip = this.stT > 0.08 && (has('light') || has('heavy')) && this.hasSword ? this.riposteTarget() : null;
+      if (rip) {
+        take('light') || take('heavy');
+        this.startRiposte(rip);
+      } else if (this.stT > 0.22 && has('dodge') && this.canAct()) {
+        take('dodge');
+        this.startRoll(wx, wz);
+      } else if (this.stT > 0.3 && has('light') && this.hasSword && this.canAct()) {
+        take('light');
+        this.orientForAttack(target, wx, wz, mag);
+        this.startAttack(this.set.light[0], 0);
+      }
+      if (this.state === 'parry' && this.stT >= (this.parryDur || 0.46)) {
+        this.state = 'free';
+        this.anim.stop(0.16);
+      }
     } else if (st === 'roll') {
       const dur = this.rollBack ? 0.46 : 0.64;
       const t = this.stT / dur;
@@ -816,6 +994,7 @@ export class Player {
 
     // escudo arriba/abajo
     this.blockW = damp(this.blockW, this.blocking ? 1 : 0, 16, dt);
+    this.parryFx = Math.max(0, this.parryFx - dt * 3.2);
     this.exert = damp(this.exert, this.sprinting ? 1 : this.state === 'attack' ? 0.6 : 0, this.sprinting ? 0.8 : 0.25, dt);
     this.animate(dt);
   }
@@ -947,7 +1126,8 @@ export class Player {
         sp = this.shieldPitch.update(dt, pitchT);
       stabilizeShield(this.rig, {
         w: rolling ? 0.35 : lerp(0.94, 0.75, healW),
-        yaw: lerp(sy, 0.1, this.blockW) + healW * 1.15,
+        // (en el parry, el escudo se abre hacia fuera y aparta el golpe)
+        yaw: lerp(sy, 0.1, this.blockW) + healW * 1.15 + this.parryFx * this.parryFx * (this.parryN % 2 ? -0.35 : 0.75),
         pitch: lerp(sp, -0.04, this.blockW),
         roll: this.shieldRoll.update(dt, sw * 0.08 * (cw + cr)) * (1 - this.blockW),
         out: 0.07,

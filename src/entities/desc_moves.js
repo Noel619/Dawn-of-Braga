@@ -36,22 +36,26 @@ const _a = new V3(),
   _c = new V3(),
   _h = new V3();
 
-// Ataques: alcance, arco (grados), daño y duración.
+// Ataques: alcance, arco (grados), daño y duración. noParry: no se puede
+// desviar (se avisa con los ojos en rojo y un destello): los golpes con todo
+// el cuerpo (saltos, cargas, giros, agarrones, caer del techo) y los que
+// revientan el suelo o lo que te esconde. Los zarpazos, el barrido, el
+// mordisco y su contraataque, sí; y los huesos que tira se apartan.
 export const ATK = {
   claw: { dur: 1.2, range: 2.9, arc: 85, dmg: 22 },
   claw2: { dur: 1.9, range: 2.8, arc: 110, dmg: 18 },
   sweep: { dur: 1.35, range: 3.3, arc: 170, dmg: 20 },
-  slam: { dur: 1.75, range: 2.6, dmg: 30, stagger: true, knock: 6 },
+  slam: { dur: 1.75, range: 2.6, dmg: 30, stagger: true, knock: 6, noParry: true },
   lunge: { dur: 0.95, range: 3.6, arc: 55, dmg: 16 },
-  pounce: { dur: 1.85, range: 2.2, arc: 110, dmg: 30, stagger: true, knock: 7 },
-  charge: { dur: 3.2, range: 2.4, arc: 100, dmg: 26, stagger: true, knock: 8 },
-  spin: { dur: 1.95, range: 2.9, arc: 360, dmg: 14 },
-  grab: { dur: 1.35, range: 2.0, arc: 70, dmg: 0, unblockable: true },
-  rip: { dur: 1.7, range: 3.2, arc: 120, dmg: 24, stagger: true, knock: 6 },
-  smash: { dur: 1.45, range: 2.6, arc: 140, dmg: 24, stagger: true, knock: 6 },
-  crack: { dur: 1.9, dmg: 18 },
+  pounce: { dur: 1.85, range: 2.2, arc: 110, dmg: 30, stagger: true, knock: 7, noParry: true },
+  charge: { dur: 3.2, range: 2.4, arc: 100, dmg: 26, stagger: true, knock: 8, noParry: true },
+  spin: { dur: 1.95, range: 2.9, arc: 360, dmg: 14, noParry: true },
+  grab: { dur: 1.35, range: 2.0, arc: 70, dmg: 0, unblockable: true, noParry: true },
+  rip: { dur: 1.7, range: 3.2, arc: 120, dmg: 24, stagger: true, knock: 6, noParry: true },
+  smash: { dur: 1.45, range: 2.6, arc: 140, dmg: 24, stagger: true, knock: 6, noParry: true },
+  crack: { dur: 1.9, dmg: 18, noParry: true },
   throw: { dur: 1.2, dmg: 11 },
-  drop: { dur: 9, range: 2.6, arc: 360, dmg: 16, stagger: true, knock: 5, unblockable: true },
+  drop: { dur: 9, range: 2.6, arc: 360, dmg: 16, stagger: true, knock: 5, unblockable: true, noParry: true },
   riposte: { dur: 0.85, range: 2.9, arc: 110, dmg: 20 },
 };
 
@@ -76,6 +80,14 @@ export const MOVES = {
     this.evDone = {};
     this.setMode('attack');
     e.flare = 1;
+    // (no se puede desviar: los ojos en rojo, un destello y un toque grave;
+    // la caída desde la bóveda ya avisa con su chillido)
+    if (this.atk.noParry && name !== 'drop' && name !== 'rip' && name !== 'smash') {
+      e.flareRed = 1;
+      e.rig.worldPos('head', _h);
+      g.combat && g.combat.glint(_h.x, _h.y + 0.1, _h.z, 0xff2a14, 1.7);
+      g.audio && g.audio.play('peril', _h);
+    }
     this.eyeT = 1.4;
     this.feinted = false;
     this.hpAt = g.player.hp;
@@ -184,11 +196,15 @@ export const MOVES = {
     const t1 = 0.46 * W,
       t2 = 0.52 * W,
       t3 = t2 + 0.11;
-    // amago: si ruedas antes de tiempo, se detiene arriba y espera
-    if (idx === 0 && t < t1 && p.state === 'roll' && !this.feinted && Math.random() < 0.45 + this.rollN * 0.05 + (this.skill || 0) * 0.3) {
+    // amago: si ruedas antes de tiempo, se detiene arriba y espera; y si ya
+    // sabe que desvías sus zarpazos, cuando te ve la guardia en alto antes
+    // de tiempo se queda arriba hasta que se te cierra la ventana
+    const early = p.parryWin > 0 || (p.state === 'parry' && p.stT > 0.12);
+    const parrier = (this.learn.parries || 0) >= 2;
+    if (idx === 0 && t < t1 && !this.feinted && ((p.state === 'roll' && Math.random() < 0.45 + this.rollN * 0.05 + (this.skill || 0) * 0.3) || (early && parrier && t > t1 * 0.35 && Math.random() < 0.3 + (this.skill || 0) * 0.5))) {
       this.feinted = true;
       this.atkT = t1 * 0.7;
-      a.hold = 0.35;
+      a.hold = early ? 0.42 : 0.35;
       g.audio && g.audio.play('snarl', this.center);
     }
     if (a.hold > 0) {
@@ -1294,6 +1310,101 @@ export const MOVES = {
     if (this.guardHits >= this.guardWant) this.guardT = Math.min(this.guardT, 0.05);
   },
 
+  // -------------------------------------------------------------- parry
+  // Le has desviado el golpe: el brazo (o los dos) le sale despedido hacia
+  // atrás, se le va el cuerpo y chilla. Al acecho le basta con dos parrys
+  // seguidos para caer de espaldas; enloquecido, tres; en frenesí, cuatro.
+  // Mientras, se rehace enseguida (y aprende: el golpe desviado le gusta
+  // menos y, si desvías a menudo, prueba amagos y golpes que no se desvían).
+  parried(a) {
+    const e = this.e,
+      g = this.g;
+    if (e.dead || this.grabbed || this.pinning || this.mode === 'down' || this.mode === 'parried') return;
+    this.learn.parries = (this.learn.parries || 0) + 1;
+    const name = a && a.name;
+    if (name && this.score[name] !== undefined) this.score[name] = clamp(this.score[name] - 1.2, -3, 5);
+    if (this.ambush && this.stage === 'stalk') this.frust += 0.6;
+    const need = this.stage === 'stalk' ? 2 : this.frenzy ? 4 : 3;
+    this.posture = (g.time - (this.postureT ?? -9) < 5 ? this.posture || 0 : 0) + 1;
+    this.postureT = g.time;
+    if (this.atk) {
+      this.atk.whiff = true;
+      this.endAttack();
+    }
+    const full = this.posture >= need;
+    if (full) this.posture = 0;
+    this.parryFull = full;
+    this.releaseAll();
+    this.setMode('parried');
+    this.flinch(g.player.pos.x, g.player.pos.z, true);
+    g.audio && g.audio.play(full ? 'descScream' : 'snarl', this.center, { k: full ? 0.8 : 1 });
+    this.lastEngaged = g.time;
+  },
+  parriedMode(dt) {
+    const g = this.g,
+      p = g.player;
+    const t = this.mT;
+    this.stop(dt, 9);
+    const u = seg(t, 0, 0.1) * (1 - seg(t, 0.32, 0.6));
+    this.rear = 0.55 * u;
+    this.T.pitch = -0.35 * u;
+    this.T.shz = -0.45 * u;
+    this.T.h = 1 + 0.18 * u;
+    for (const L of [this.L[0], this.L[1]]) {
+      this.localPointYaw(L.side * 1.5, 0.3 + 2.0 * u, 0.3, _a);
+      this.hold(L, _a.x, _a.y, _a.z, u, -0.4);
+    }
+    this.jawT = 0.4 + 0.6 * u;
+    this.tiltT = 1.1;
+    this.shake = Math.max(this.shake, 0.6 * u);
+    this.lookAtPlayer(1);
+    if (t > (this.parryFull ? 0.42 : 0.5)) {
+      this.rear = 0;
+      this.T.pitch = this.T.shz = 0;
+      this.releaseAll();
+      // roto: patas arriba, pataleando (todo golpe es crítico y admite el
+      // golpe de gracia)
+      if (this.parryFull) {
+        this.startDown(1.8);
+        // (cae hacia atrás, lejos de ti)
+        const dx = this.e.pos.x - p.pos.x,
+          dz = this.e.pos.z - p.pos.z;
+        const d = Math.hypot(dx, dz) || 1;
+        this.e.vx = (dx / d) * 3;
+        this.e.vz = (dz / d) * 3;
+        return;
+      }
+      this.cool = Math.max(this.cool, 0.3);
+      if (this.stage === 'rage' && Math.random() < this.skill * 0.6 && this.dist < 3.2) return this.startEvade(Math.random() < 0.5 ? 'leap' : 'side', 'counter') || this.engage();
+      return this.engage();
+    }
+  },
+  // Vas a darle el golpe de gracia (patas arriba): no se levanta antes.
+  onRiposte() {
+    if (this.mode === 'down') this.mT = Math.min(this.mT, this.downDur - 1.0);
+  },
+  takeRiposte(dmg, fromX, fromZ) {
+    const e = this.e,
+      g = this.g;
+    if (e.dead) return 'none';
+    e.hp -= dmg;
+    e.flash = 0.2;
+    this.lastFrom = [fromX, fromZ];
+    this.engageDmg += dmg;
+    this.lastEngaged = g.time;
+    this.lastHurtT = g.time;
+    if (e.hp <= 0) {
+      e.die();
+      return 'kill';
+    }
+    this.flinch(fromX, fromZ, true);
+    g.audio && g.audio.play('limbSnap', this.center);
+    // le cuesta levantarse
+    if (this.mode === 'down') this.mT = Math.min(this.mT, this.downDur - 0.8);
+    if (this.stage === 'stalk' && e.hp / e.maxHp < 0.72) this.pendingRiposteRage = true;
+    return 'hit';
+  },
+
   // -------------------------------------------------------------- caída
   // Boca arriba, pataleando (tras reventar un pilar o si te sueltas de su
   // agarrón): recibe más daño mientras.
@@ -1433,7 +1544,11 @@ export const MOVES = {
       }
       if (!end && !P.hit && Math.hypot(q.x - p.pos.x, q.y - (p.pos.y + 1.1), q.z - p.pos.z) < 0.6 && !p.dead) {
         P.hit = true;
-        if (g.combat.apply(this.e, { dmg: ATK.throw.dmg, knock: 2.5 }, q.x - P.v.x * 0.1, q.z - P.v.z * 0.1)) end = true;
+        const r = g.combat.apply(this.e, { dmg: ATK.throw.dmg, knock: 2.5, deflect: true }, q.x - P.v.x * 0.1, q.z - P.v.z * 0.1);
+        if (r === 'parry') {
+          // desviado: sale despedido hacia un lado
+          P.v.set(-P.v.x * 0.5 + (Math.random() - 0.5) * 4, 3, -P.v.z * 0.5 + (Math.random() - 0.5) * 4);
+        } else if (r) end = true;
       }
       if (end) {
         g.scene.remove(P.m);

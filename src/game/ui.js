@@ -408,7 +408,9 @@ export class UI {
       ['Cámara', 'Ratón', 'Stick der.'],
       ['Ataque ligero', 'Clic izq.', 'RB'],
       ['Ataque pesado', 'F', 'RT'],
-      ['Bloquear', 'Clic der.', 'LB'],
+      ['Bloquear (mantener)', 'Clic der.', 'LB'],
+      ['Parry: pulsar justo antes del golpe', 'Clic der.', 'LB'],
+      ['Golpe de gracia (tras un parry)', 'Clic izq.', 'RB'],
       ['Esquivar / correr (mantener)', 'Espacio', 'B'],
       ['Correr', 'Mayús', 'L3'],
       ['Fijar objetivo', 'Q|Clic central', 'R3'],
@@ -830,12 +832,14 @@ export class UI {
     // indicación de interacción
     const pr = $('prompt');
     const t = g.promptTarget;
-    // (atrapado o derribado por el Descoyuntado: forcejea)
+    // (atrapado o derribado por el Descoyuntado: forcejea; con alguien
+    // desequilibrado a tu alcance tras un parry: el golpe de gracia)
     const struggle = (p.state === 'grabbed' || p.state === 'pinned') && !p.dead;
-    if ((t || struggle) && !this.modal && g.state === 'play') {
-      const label = struggle ? 'Forcejea' : g.interact.label(t);
+    const rip = !struggle && !p.dead && (p.state === 'free' || p.state === 'parry') && p.hasSword && !!p.riposteTarget();
+    if ((t || struggle || rip) && !this.modal && g.state === 'play') {
+      const label = struggle ? 'Forcejea' : rip ? 'Golpe de gracia' : g.interact.label(t);
       const d = this.device();
-      const glyph = GLYPHS[d][struggle ? 'light' : 'interact'];
+      const glyph = GLYPHS[d][struggle || rip ? 'light' : 'interact'];
       const k = d + ':' + glyph + ':' + label;
       if (k !== this._promptKey) {
         this._promptKey = k;

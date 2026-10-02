@@ -578,7 +578,7 @@ export const MIND = {
     }
     // quién se ve y quién no
     const M = this.mode;
-    this.eyeT = M === 'peek' || M === 'fight' || M === 'attack' || M === 'lair' || M === 'guard' || M === 'evade' || M === 'rageIntro' || M === 'lure' || M === 'taunt' ? 1.2 : M === 'perch' ? 0.35 : M === 'shadow' ? 0.12 : 0.25;
+    this.eyeT = M === 'peek' || M === 'fight' || M === 'attack' || M === 'lair' || M === 'guard' || M === 'evade' || M === 'rageIntro' || M === 'lure' || M === 'taunt' || M === 'parried' ? 1.2 : M === 'perch' ? 0.35 : M === 'shadow' ? 0.12 : 0.25;
     this.creep = this.stage === 'stalk' && (M === 'stalk' || M === 'shadow' || (M === 'hunt' && !this.seen && this.dist < 12)) && this.plane === 'floor';
     this.scan = damp(this.scan, this.stage === 'stalk' && (M === 'stalk' || M === 'perch') && !this.seen ? 0.7 : 0, 2, dt);
     if (hunting && this.stage === 'stalk') {
@@ -641,13 +641,18 @@ export const MIND = {
       case 'ambush':
         this.ambushMode(dt);
         break;
+      case 'parried':
+        this.parriedMode(dt);
+        break;
       case 'scripted':
         break;
     }
     // (al acecho en la bóveda, ni un ruido: le delataría)
     if (this.mode !== 'lair' && this.mode !== 'shadow' && this.mode !== 'ambush' && hunting && this.stage === 'stalk') this.taunts(dt);
     // compromiso (barra de vida, música): enloquecido, siempre
-    const hot = this.stage === 'rage' || M === 'fight' || M === 'attack' || M === 'stun' || M === 'hurt' || M === 'down' || M === 'evade' || M === 'guard' || (M === 'hunt' && this.dist < 6);
+    const hot = this.stage === 'rage' || M === 'fight' || M === 'attack' || M === 'stun' || M === 'hurt' || M === 'down' || M === 'evade' || M === 'guard' || M === 'parried' || (M === 'hunt' && this.dist < 6);
+    // patas arriba admite el golpe de gracia (y tras un parry que le rompe)
+    e.parryT = this.mode === 'down' && this.mT < this.downDur - 0.45 ? this.downDur - 0.45 - this.mT : 0;
     if (hot) this.lastEngaged = g.time;
     this.engaged = g.time - this.lastEngaged < 5;
     // física
@@ -1629,8 +1634,15 @@ export const MIND = {
       W.push([n, w * sc(n)]);
     };
     const rage = this.stage === 'rage';
-    // si ruedas mucho hacia los lados, barre; si te escudas, agarra o machaca
+    // si ruedas mucho hacia los lados, barre; si te escudas, agarra o machaca;
+    // si desvías sus golpes a menudo, prueba los que no se desvían
     const sideRoller = this.learn.dodge._all && this.learn.dodge._all.n > 2 && (this.learn.dodge._all.l + this.learn.dodge._all.r) / this.learn.dodge._all.n > 0.5;
+    const parrier = Math.min(1, (this.learn.parries || 0) / 6);
+    if (parrier > 0 && d < 3.1) {
+      add('grab', 1.4 * parrier);
+      if (rage) add('slam', 1.2 * parrier);
+    }
+    if (parrier > 0 && d >= 3 && d < 7) add('pounce', 1.0 * parrier);
     if (d < 3.1) {
       add('claw', 3);
       add('claw2', 2);
@@ -1714,6 +1726,10 @@ export const MIND = {
     this.engage();
   },
   afterDown() {
+    if (this.pendingRiposteRage && this.stage === 'stalk') {
+      this.pendingRiposteRage = false;
+      return this.startRage('hurt');
+    }
     if (this.stage === 'rage') {
       // se levanta a gritos
       if (Math.random() < 0.5) return this.startTaunt('beat', 1.2);
@@ -2057,7 +2073,7 @@ export const MIND = {
       e = this.e;
     const t = g.time;
     if (e.dead) return;
-    const tok = kind === 'attack' ? (info.heavy ? 'H' : info.run ? 'S' : 'L') : kind === 'roll' ? 'D' : kind === 'block' ? 'B' : kind === 'heal' ? 'F' : null;
+    const tok = kind === 'attack' ? (info.heavy ? 'H' : info.run ? 'S' : 'L') : kind === 'roll' ? 'D' : kind === 'block' || kind === 'parryTry' ? 'B' : kind === 'heal' ? 'F' : null;
     if (!tok) return;
     this.learn.token(tok, t, this.dist);
     // hacia dónde ruedas cuando te ataca
