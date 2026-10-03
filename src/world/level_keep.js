@@ -269,6 +269,17 @@ export function buildCastleTop(ctx, S, L) {
   P.sacks(ctx, -82.4, F2, -16.8, 3, 5207);
   bakeCorpse(wb, -79.4, F2, -9.4, 2.0, 'face', 'soldier', 22);
   P.decal(ctx, -79.4, F2 + 0.01, -9.4, 2.0);
+  // la mesa de la tropa, armeros en el muro sur, el yunque de las reparaciones
+  P.table(ctx, -82.6, F2, -14.6, 2.6, 0.9, Math.PI / 2);
+  P.bench(ctx, -83.5, F2, -14.6, 2.4, Math.PI / 2);
+  P.bench(ctx, -81.7, F2, -14.6, 2.4, Math.PI / 2);
+  P.jar(ctx, -82.5, F2 + 0.82, -15.4, 0.6);
+  P.weaponRack(ctx, -77.8, F2, -5.75, Math.PI);
+  P.anvil(ctx, -77.6, F2, -12.6, 0.4);
+  P.dropped(ctx, -84.4, F2, -11.4, 1.1, 'shield');
+  P.dropped(ctx, -78.6, F2, -14.8, 2.3, 'helmet');
+  P.dropped(ctx, -85.8, F2, -16.4, 0.4, 'spear');
+  ctx.rats.push({ x: -84.4, y: F2, z: -16.2, n: 2 });
   P.wallTorch(ctx, -86.5, F2 + 2.2, -9.0, 'e', { room: 'keep2', radius: 7 });
   P.wallTorch(ctx, -79.5, F2 + 2.2, -17.5, 's', { room: 'keep2', radius: 7 });
   wb.setRoom(null);
@@ -294,6 +305,22 @@ export function buildCastleTop(ctx, S, L) {
   bakeCorpse(wb, -79.9, F3 + 0.02, -9.15, 0, 'sit', 'soldier', 23);
   P.candles(ctx, -78.9, F3 + 0.82, -8.0, 3, 5208, { room: 'keep3', radius: 5, intensity: 1.1, spread: 0.15 });
   P.decal(ctx, -79.9, F3 + 0.01, -9.4, 1.4);
+  // la alfombra, el armario, el arcón a los pies de la cama y la mesa de los planos
+  wb.box('clothRed', -84.2, F3 + 0.005, -13.4, -79.4, F3 + 0.03, -9.9, { ao: false, faces: 't', tint: [0.62, 0.5, 0.45], room: 'keep3' });
+  wb.box('wooddark', -78.0, F3, -6.1, -76.2, F3 + 2.3, -5.5, { ao: false, room: 'keep3' });
+  wb.box('iron', -77.15, F3 + 1.0, -6.14, -77.05, F3 + 1.3, -6.1, { ao: false, room: 'keep3' });
+  ctx.col.add(-78.0, F3, -6.1, -76.2, F3 + 2.3, -5.5);
+  wb.box('wooddark', -86.0, F3, -14.7, -84.4, F3 + 0.6, -14.2, { ao: false, room: 'keep3' });
+  for (const x of [-85.7, -84.7]) wb.box('iron', x - 0.04, F3, -14.72, x + 0.04, F3 + 0.62, -14.18, { ao: false, room: 'keep3' });
+  ctx.col.add(-86.0, F3, -14.7, -84.4, F3 + 0.6, -14.2);
+  P.table(ctx, -83.4, F3, -7.0, 1.6, 1.0, 0);
+  for (const [x, z, r] of [
+    [-83.7, -7.1, 0.2],
+    [-83.0, -6.9, -0.3],
+  ])
+    wb.at(x, F3 + 0.83, z, r, () => wb.box('clothWhite', -0.25, 0, -0.18, 0.25, 0.01, 0.18, { ao: false, faces: 't', tint: [0.9, 0.82, 0.62], room: 'keep3' }));
+  P.candles(ctx, -82.9, F3 + 0.82, -7.3, 2, 5209, { room: 'keep3', radius: 4, intensity: 0.7, spread: 0.1 });
+  P.dropped(ctx, -76.4, F3, -12.6, 2.6, 'sword');
   // chimenea, arcón, armero, estante
   P.hearth(ctx, -86.5, F3, -10.5, 'e', { room: 'keep3', lit: true });
   P.crate(ctx, -82.2, F3, -16.8, 0.9, 0);

@@ -95,6 +95,26 @@ const FX_PRIO = {
   seal: [4, 'mundo'],
   pillarBreak: [4, 'mundo'],
   wallBreak: [4, 'mundo'],
+  // el Empalado y la Bestia de Carne
+  ramImpact: [4, 'golpe'],
+  armorFall: [3, 'mundo'],
+  armorClank: [2, 'mundo'],
+  armorHit: [3, 'golpe'],
+  scrape: [1, 'mundo'],
+  beastRoar: [5, 'mundo'],
+  beastRoarBig: [5, 'mundo'],
+  beastHurt: [4, 'mundo'],
+  beastStep: [3, 'pasos'],
+  fleshTear: [4, 'mundo'],
+  fleshBurst: [5, 'mundo'],
+  pikeWhoosh: [4, 'golpe'],
+  leapWind: [5, 'jugador'],
+  hayLand: [5, 'jugador'],
+  // avisos de pulsación: la respuesta a tu mano, siempre
+  qte: [5, 'jugador'],
+  qteOk: [5, 'jugador'],
+  qteFail: [5, 'jugador'],
+  qteTick: [5, 'jugador'],
 };
 // las partes de un sonido que empiezan más tarde de esto se crean poco antes
 // de sonar (s)
@@ -184,7 +204,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45 };
+const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, ramImpact: 90, fleshBurst: 90 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -1371,6 +1391,145 @@ export class Audio {
         this.duck(0.2, 2);
         break;
       }
+      // ---- el Empalado
+      // la cabeza de hierro del ariete contra la piedra
+      case 'ramImpact': {
+        d = this.out(P, { gain: 1, verb: 0.55, life: 4, ref: 7, roll: 0.7 });
+        this.tone(d, t, 0.9, { f0: 64, f1: 24, gain: 1 });
+        this.noise(d, t, 0.8, { type: 'lowpass', f0: 1400, f1: 120, gain: 0.8, a: 0.002 });
+        this.smp(d, t, this.lib.drum('taiko'), { gain: 0.6, rate: 0.55 });
+        this.metal(d, t, rnd(150, 190), 0.25, 1.4);
+        this.debris(d, t + 0.04, 18, 1.0, { gain: 1.2 });
+        this.duck(0.45, 0.7);
+        break;
+      }
+      // se le caen piezas de la armadura (varias placas a la vez)
+      case 'armorFall': {
+        d = this.out(P, { gain: 0.85, verb: 0.45, life: 3 });
+        for (let i = 0; i < 3; i++) this.metal(d, t + i * rnd(0.06, 0.14), rnd(260, 520), 0.16, 0.7);
+        this.jingle(d, t, 0.4, 0.22, 0.8);
+        this.tone(d, t + 0.05, 0.25, { f0: 120, f1: 60, gain: 0.35 });
+        break;
+      }
+      // una placa que rebota contra el suelo
+      case 'armorClank': {
+        d = this.out(P, { gain: 0.6, verb: 0.35, life: 2 });
+        this.metal(d, t, rnd(300, 640), 0.14, 0.45);
+        this.tone(d, t, 0.12, { f0: 140, f1: 70, gain: 0.25 });
+        break;
+      }
+      // tu golpe contra sus placas
+      case 'armorHit': {
+        d = this.out(P, { gain: 0.6, verb: 0.3, life: 1.5 });
+        this.metal(d, t, rnd(700, 900), 0.12, 0.5);
+        this.noise(d, t, 0.15, { f0: 5200, f1: 2600, q: 1.2, gain: 0.08, a: 0.001 });
+        break;
+      }
+      // el hierro arrastrado por la piedra, echando chispas
+      case 'scrape': {
+        d = this.out(P, { gain: 0.45, verb: 0.2, life: 1 });
+        this.noise(d, t, rnd(0.12, 0.22), { f0: rnd(1800, 2600), f1: rnd(1100, 1500), q: 4, gain: 0.25, a: 0.01 });
+        this.debris(d, t, 3, 0.12, { f0: 3000, f1: 6000, gain: 0.25 });
+        break;
+      }
+      // ---- la Bestia de Carne
+      // bramido de toro con la garganta en carne viva
+      case 'beastRoar':
+      case 'beastRoarBig': {
+        const big = name === 'beastRoarBig';
+        const L = big ? 3.2 : 2.2;
+        d = this.out(P, { gain: 1, verb: big ? 0.85 : 0.65, life: L + 3, ref: 12, roll: 0.7, occlude: false });
+        this.voice(d, t, L, { f0: 56, f1: 42, vowel: 'o', v1: 'u', gain: 0.55, vib: 6, vibD: 30, breath: 0.9, a: 0.15, rasp: 1, dist: 1, jit: 50 });
+        this.voice(d, t + 0.04, L * 0.95, { f0: 84, f1: 64, vowel: 'a', v1: 'o', gain: 0.36, vib: 5, vibD: 26, breath: 0.4, a: 0.18, rasp: 0.8, dist: 1 });
+        this.voice(d, t + 0.12, L * 0.8, { f0: 172, f1: 118, vowel: 'a', v1: 'e', gain: 0.15, vib: 11, vibD: 70, breath: 0.6, a: 0.25, rasp: 1, type: 'square', jit: 70 });
+        if (big) this.voice(d, t + 0.3, L * 0.7, { f0: 330, f1: 220, vowel: 'e', v1: 'a', gain: 0.07, vib: 14, vibD: 90, breath: 0.5, a: 0.4, type: 'triangle', jit: 60 });
+        this.noise(d, t, L, { type: 'lowpass', f0: 380, gain: 0.5, a: 0.18, buf: this.brown, rate: 2, curve: 'lin' });
+        this.noise(d, t + 0.1, L * 0.8, { f0: 1600, f1: 700, q: 1.2, gain: 0.07, a: 0.3, buf: this.pink });
+        this.duck(0.5, L * 0.8);
+        break;
+      }
+      case 'beastHurt': {
+        d = this.out(P, { gain: 0.9, verb: 0.5, life: 3 });
+        this.voice(d, t, 0.8, { f0: 130, f1: 70, vowel: 'a', v1: 'o', gain: 0.32, vib: 8, vibD: 60, breath: 0.8, a: 0.02, rasp: 1, dist: 1, jit: 60 });
+        this.voice(d, t + 0.05, 0.6, { f0: 260, f1: 150, vowel: 'e', gain: 0.1, breath: 0.5, a: 0.03, rasp: 1, type: 'square' });
+        break;
+      }
+      // pezuña hendida contra la piedra: un golpe sordo que se siente
+      case 'beastStep': {
+        d = this.out(P, { gain: 0.7, verb: 0.3, life: 2, ref: 6 });
+        this.tone(d, t, 0.35, { f0: 56, f1: 28, gain: 0.7 });
+        this.noise(d, t, 0.18, { type: 'lowpass', f0: 900, f1: 160, gain: 0.55, a: 0.002, buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.01, 0.07, { f0: 2400, f1: 800, q: 1, gain: 0.07, a: 0.001 });
+        if (Math.random() < 0.35) this.debris(d, t + 0.02, 4, 0.2, { f0: 1500, f1: 3500, gain: 0.3 });
+        break;
+      }
+      // carne que se rasga (la armadura revienta, la pica sale de la espalda)
+      case 'fleshTear': {
+        d = this.out(P, { gain: 0.9, verb: 0.4, life: 2.5 });
+        this.noise(d, t, 0.45, { f0: 260, f1: 900, q: 1.8, gain: 0.45, a: 0.02, buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.05, 0.3, { f0: 1400, f1: 600, q: 2.5, gain: 0.12, a: 0.01, buf: this.pink });
+        for (let i = 0; i < 4; i++) this.boneCrack(d, t + i * rnd(0.05, 0.11), rnd(0.4, 0.8));
+        break;
+      }
+      // estalla: un golpe húmedo y grave, y lo que salpica
+      case 'fleshBurst': {
+        d = this.out(P, { gain: 1, verb: 0.7, life: 5, ref: 10, roll: 0.6, occlude: false });
+        this.tone(d, t, 1.0, { f0: 52, f1: 20, gain: 1 });
+        this.noise(d, t, 0.9, { type: 'lowpass', f0: 900, f1: 90, gain: 0.9, a: 0.003, buf: this.brown, rate: 2 });
+        this.noise(d, t + 0.02, 0.6, { f0: 700, f1: 260, q: 1.4, gain: 0.4, a: 0.01, buf: this.brown, rate: 4 });
+        for (let i = 0; i < 10; i++) this.noise(d, t + 0.25 + Math.pow(Math.random(), 1.5) * 1.4, rnd(0.04, 0.1), { f0: rnd(300, 900), q: 3, gain: rnd(0.08, 0.2), a: 0.004, buf: this.brown, rate: 4 });
+        for (let i = 0; i < 6; i++) this.boneCrack(d, t + rnd(0, 0.3), rnd(0.6, 1.1));
+        this.duck(0.6, 1.4);
+        break;
+      }
+      // la pica (o un sillar) por el aire
+      case 'pikeWhoosh': {
+        d = this.out(P, { gain: 0.85, verb: 0.2, life: 1.5, occlude: false });
+        this.noise(d, t, 0.55, { f0: 220, f1: 1100, q: 1.6, gain: 0.55, a: 0.18, curve: 'lin', buf: this.pink });
+        this.noise(d, t + 0.25, 0.4, { f0: 900, f1: 300, q: 2, gain: 0.25, a: 0.05 });
+        break;
+      }
+      // el salto de fe: el aire que ruge al caer
+      case 'leapWind': {
+        d = this.out(null, { gain: 0.8, verb: 0.15, life: 3, occlude: false });
+        this.noise(d, t, 1.8, { type: 'lowpass', f0: 300, f1: 2200, gain: 0.5, a: 0.4, buf: this.pink, curve: 'lin' });
+        this.noise(d, t + 0.3, 1.4, { f0: 900, f1: 2600, q: 0.8, gain: 0.18, a: 0.5 });
+        break;
+      }
+      // cae en la paja
+      case 'hayLand': {
+        d = this.out(null, { gain: 0.9, verb: 0.2, life: 2, occlude: false });
+        this.tone(d, t, 0.3, { f0: 90, f1: 46, gain: 0.6 });
+        this.noise(d, t, 0.5, { type: 'highpass', f0: 2600, gain: 0.25, a: 0.005, buf: this.pink });
+        this.noise(d, t, 0.35, { f0: 700, f1: 300, q: 1, gain: 0.3, a: 0.004, buf: this.brown, rate: 3 });
+        this.debris(d, t + 0.03, 12, 0.6, { f0: 2500, f1: 6000, gain: 0.35 });
+        this.voice(d, t + 0.04, 0.25, { f0: 140, f1: 100, vowel: 'u', gain: 0.12, vibD: 0, breath: 0.8, a: 0.01 });
+        break;
+      }
+      // ---- avisos de pulsación (QTE)
+      case 'qte': {
+        d = this.out(null, { gain: 0.55, verb: 0.25, life: 1.5, occlude: false });
+        this.tone(d, t, 0.09, { type: 'square', f0: 660, f1: 440, gain: 0.06 });
+        this.metal(d, t, 1320, 0.07, 0.35);
+        this.tone(d, t, 0.4, { f0: 82, f1: 60, gain: 0.35 });
+        break;
+      }
+      case 'qteOk': {
+        d = this.out(null, { gain: 0.5, verb: 0.35, life: 1.5, occlude: false });
+        [79, 86].forEach((m, i) => this.tone(d, t + i * 0.05, 0.25, { type: 'triangle', f0: mtof(m), gain: 0.08, a: 0.005 }));
+        break;
+      }
+      case 'qteFail': {
+        d = this.out(null, { gain: 0.5, verb: 0.2, life: 1.2, occlude: false });
+        this.tone(d, t, 0.32, { type: 'square', f0: 110, f1: 70, gain: 0.07 });
+        this.noise(d, t, 0.2, { type: 'lowpass', f0: 600, gain: 0.15, a: 0.005 });
+        break;
+      }
+      case 'qteTick': {
+        d = this.out(null, { gain: 0.45, verb: 0.1, life: 0.6, occlude: false });
+        this.tone(d, t, 0.04, { type: 'triangle', f0: 900 + (o.k || 0) * 700, gain: 0.07, a: 0.001 });
+        break;
+      }
       case 'roar': {
         d = this.out(P, { gain: 1, verb: 0.6, life: 4, ref: 9, roll: 0.8 });
         this.voice(d, t, 2.1, { f0: 68, f1: 52, vowel: 'o', v1: 'a', gain: 0.5, vib: 7, vibD: 35, breath: 0.8, a: 0.12, rasp: 0.8, dist: 1, jit: 40 });
@@ -2088,6 +2247,11 @@ export class Audio {
         if (kind === 'alert') this.play('roar', e.pos);
         else if (kind === 'attack') V({ dur: 0.75, f0: 62 * lo, f1: 52 * lo, vowel: 'o', v1: 'a', gain: 0.35, vib: 6, vibD: 25, breath: 0.8, rasp: 0.7, dist: 1 });
         else if (kind === 'hurt') V({ dur: 0.45, f0: 82 * lo, f1: 60 * lo, vowel: 'u', gain: 0.24, breath: 0.6, rasp: 0.5 });
+        else if (kind === 'pain') {
+          // ruge de dolor dentro del yelmo
+          V({ dur: 1.4, f0: 78 * lo, f1: 50 * lo, vowel: 'o', v1: 'u', gain: 0.4, vib: 5, vibD: 40, breath: 0.9, a: 0.06, rasp: 0.9, dist: 1 });
+          V({ dur: 1.1, f0: 156 * lo, f1: 100 * lo, vowel: 'u', gain: 0.1, vib: 7, vibD: 50, breath: 0.4, a: 0.1, rasp: 0.7 });
+        }
         else if (kind === 'death') {
           V({ dur: 3.6, f0: 90 * lo, f1: 28, vowel: 'o', v1: 'u', gain: 0.45, vib: 4, vibD: 30, breath: 0.7, a: 0.2, rasp: 0.6, dist: 1 });
           this.smp(d, t + 0.5, this.churchBell(), { gain: 0.4, rate: mtof(38) / mtof(45) });
@@ -2499,7 +2663,7 @@ export class Audio {
     if (!this.ok) return;
     this.warmTheme(name);
     this.override = name;
-    this.score.setTheme(name, name.startsWith('boss') ? 0.8 : 2.5);
+    this.score.setTheme(name, name.startsWith('boss') || name === 'chase' ? 0.8 : 2.5);
   }
   stopMusic() {
     if (!this.ok) return;

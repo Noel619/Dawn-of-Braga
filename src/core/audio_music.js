@@ -972,6 +972,21 @@ const THEMES = {
     },
   },
 
+  // la huida de la Bestia de Carne: el tema del Empalado, desbocado
+  chase: {
+    bpm: 166,
+    root: 38,
+    mode: 'phrygianDom',
+    prog: [0, 1, 0, 2],
+    chordBars: 1,
+    verb: 0.4,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d)], type: 'sawtooth', cutoff: 260, level: 0.12, rate: 0.5 },
+    step(S) {
+      bossStep(S, 1);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe opcional: el Descoyuntado
   // La caja de música de las casas, rota y desafinada, sobre tambores en 7/8
   // (2+2+3) con chasquidos de hueso y un coro que salmodia en una sola nota.

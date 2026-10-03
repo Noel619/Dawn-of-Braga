@@ -54,7 +54,10 @@ de la Catedral con la pira, la catedral (nave con arquerías, vidrieras, bancos 
 Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la Torre del Postigo, la Calle de la
 Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y taller decorado por dentro), y bajo la
 catedral: osario de calaveras, un templo romano de *Bracara Augusta* con mosaicos, el sepulcro del arzobispo y la
-cisterna del Dios Desconocido. Al final, las orillas del río Este.
+cisterna del Dios Desconocido. Al final, las orillas del río Este. Tras el Postigo, el adarve del muro este sigue
+hacia el norte (atraviesa una torre), sube en la esquina a la muralla norte y corre hacia poniente por otras dos
+torres hasta la Torre del Fanal, con un tramo de adarve hundido a medio camino; desde allí arriba se ven los
+tejados de toda la ciudad, la Sé y el campamento de los sitiadores.
 
 **Los barrios.** Entre las calles principales hay una trama de callejones, pasadizos elevados, soportales y casas
 que se pueden visitar por dentro: el Callejón del Pozo y su plazuela (con el pozo bajo un tejadillo a cuatro aguas,
@@ -62,7 +65,7 @@ su torno y su cubo), el Callejón del Arco, la Travesía de la Sé, la Taberna d
 (telar y torno de hilar), el patio y el horno de pan (con artesas y hornos de leña), el Callejón de la Fragua, el
 patio y el taller de los tintoreros (cubas de tinte y telas tendidas), el corral y el establo de los Pellejeros, y
 la cerca de la ciudad cerrando cada barrio. Los altares de descanso están en lugares a salvo: la capilla de la
-guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso y la cripta. Las casas que se pueden visitar
+guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torre de la coracha y la cripta. Las casas que se pueden visitar
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 
@@ -98,6 +101,36 @@ saltan en astillas (a tus golpes, o cuando él pasa, barre o carga). Si mueres, 
 (palancas arriba, rastrillo bajado, nada roto); sólo si lo matas los cambios son para siempre. Cada vez que vuelves
 a bajar, alguien cierra de un portazo allá arriba.
 
+**El Empalado y la Bestia de Carne.** En lo alto del Postigo espera, arrodillado, el Empalado: un caballero de la
+guarnición, gigante ya, al que los sitiadores clavaron a su propia puerta con una pica de asedio que le sigue
+atravesando el cuerpo, con un trozo del portón y el estandarte de la ciudad todavía en el asta. Pelea con la cabeza
+de carnero de un ariete montada en un madero, que arrastra echando chispas por la piedra: mazazo de arriba abajo
+(se queda clavado en la piedra), barrido, barrido y revés, pisotón, golpe de regatón, estocada con la pica de su
+propio vientre, embestida con la pica por delante y, sin yelmo, un salto con mazazo. Los golpes salen de donde de
+verdad pasa el arma y revientan lo que encuentran: las almenas, el torno del rastrillo, los barriles, las cajas.
+A medida que pierde vida se le va cayendo la armadura (hombreras, visera, medio peto) y asoma la carne.
+Con un cuarto de vida **se transforma**: cae de rodillas, se le revientan una a una las piezas que le quedan, se
+hincha y estalla en sangre, y lo que se levanta es **la Bestia de Carne**, un minotauro de músculo desollado con la
+testuz de toro, cuernos de hueso y la columna en cresta. Ruge, se arranca la pica de la espalda y te la tira, y
+embiste: si la esquivas, revienta el torno y la barricada que cerraba el adarve del norte y se queda un instante
+con los cuernos clavados en la piedra. Por el hueco empieza **la huida**, por el adarve, con la Bestia pisándote los
+talones (si te alcanza, te golpea; corres sin gastar aguante) y, de vez en cuando, un vistazo atrás. En cada tramo,
+**pulsaciones rápidas** (la tecla o el botón del mando en un anillo que se vacía, a cámara lenta): un sillar
+arrancado del parapeto por el aire, una viga ardiendo atravesada en la torre (rodar por debajo), un salto sobre ti
+en la esquina, el adarve hundido (saltar; si te quedas corto, cuelgas del borde y hay que trepar machacando) y los
+**reflejos**: te corta el paso de un salto y llegan zarpazo (esquiva), cornada (desvía), zarpa (golpea) y mazazo
+(rueda entre sus piernas). Fallar cuesta vida, no la partida. Al final, en lo alto de la Torre del Fanal no hay
+salida: el **salto de fe** a la paja de la atalaya de la coracha. La Bestia se queda mirando desde lo alto, ruge y
+se va. Si mueres durante la huida, vuelves al último tramo; si sales a mitad, al cruzar la niebla del Postigo
+empieza otra vez la huida.
+
+**Lo alto del castillo.** A donde lleva el salto: la atalaya (la cabeza de la coracha, con la paja y la leña del
+fanal), la coracha, un muro almenado que baja desde la muralla norte hasta el castillo con una torre en medio (y en
+ella un altar), el adarve del castillo y, por un puente de tablas, los pisos altos de la torre del homenaje: los
+aposentos del alcaide (muerto en su mesa, con la manivela del torno que abre la reja de la cripta de la Sé y sus
+últimas líneas) y, debajo, la sala de armas, con una trampilla atrancada por arriba que baja por una escalera de
+mano a la cárcel del principio: el atajo de vuelta al patio.
+
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
 rótulos de tienda, faroles, armas caídas, maniquíes y dianas en el patio de armas, estacas, círculos rituales,
@@ -110,7 +143,7 @@ puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesit
 sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Diecisiete documentos breves cuentan la historia junto con el
+canónigo (aguante), que deja el Descoyuntado al morir. Dieciocho documentos breves cuentan la historia junto con el
 escenario.
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
@@ -188,7 +221,7 @@ se encadena el anterior.
   rosario; brazos que le llegan al suelo, con mangas que cuelgan y dedos larguísimos, y una falda de paños rotos
   que ondea sin tocar el suelo (al morir se extiende por él). Se le descuelga la mandíbula al gritar y el lamento
   espectral le sale de la boca.
-- **El Empalado** (jefe menor): un gigante atravesado por una pica que carga contra ti.
+- **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
   cada miembro es una cadena de dos huesos con cinemática inversa y pies que se plantan en el suelo o en el techo y
@@ -252,7 +285,7 @@ mi frigio con dron grave, coro lejano, zanfona y salterio; la muralla, con cuern
 al otro lado; las casas, con una caja de música olvidada; las capillas con altar, con órgano de flautado y un coro
 en paz (ahí no entra la tensión); la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
 coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
-fase); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
+fase, y desbocada en la huida de la Bestia); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
 y un coro que salmodia en una sola nota (y, mientras te caza, un latido lento en 7/8 con la caja de música a medio
 sonar, clústeres de cuerda y susurros), y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies
 irae*. La portada es canto llano en
@@ -316,16 +349,21 @@ src/
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
-                        palancas y el rastrillo)
+                        palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
+                        level_keep.js: lo alto del castillo)
   dev/                  el modo desarrollador (devmode.js) y quién puede abrirlo (access.js)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
-                        guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti); armas:
+                        guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
+                        impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
+                        beast.js, cómo se mueve la Bestia); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
-                        en las bodegas; breakables.js: pilares y estanterías que se rompen)
+                        en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
+                        rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
+                        pulsaciones rápidas)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
@@ -354,6 +392,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        (jugador: wander, stopgo, still o look)
                         parrytest.mjs  parry contra cada criatura con un arma: desvío sin daño,
                                        desequilibrio, golpe de gracia, jefes y golpes imparables
+                        beastchase.mjs el Empalado se transforma y un jugador robot hace la huida entera
+                                       pulsando los avisos (con «fallos», falla algunos y muere en el fanal
+                                       para probar el reintento): llega a la atalaya y queda vencido
                         doorways.mjs   nada tapa los arcos y puertas de las bodegas, las bocas de las
                                        grutas ni las palancas
                         clipcheck.mjs  interpenetraciones de cada animación de una criatura (campanero,
