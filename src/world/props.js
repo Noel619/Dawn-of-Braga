@@ -616,28 +616,57 @@ export function veiledStatue(ctx, x, y, z, rot = 0, o = {}) {
 }
 
 // Sarcófago con tapa (opcionalmente desplazada).
+//   l, w: medio largo y medio ancho de la caja (1,2 x 0,55).
+//   open: destapado (la tapa corrida en diagonal; lid: false, sin tapa).
+//   hollow: abierto y hueco por dentro (con el fondo a la vista, para
+//   tender algo dentro); si no, una boca negra.
 export function sarcophagus(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
+  const l = o.l ?? 1.2,
+    w = o.w ?? 0.55;
+  const room = o.room;
   wb.at(x, y, z, rot, () => {
-    wb.box('ashlar', -1.2, 0, -0.55, 1.2, 0.9, 0.55, { faces: 'tnsew', sub: 2, aoH: 0.4 });
-    wb.box('ashlar', -1.3, 0, -0.62, 1.3, 0.15, 0.62, { ao: false });
+    if (o.open && o.hollow) {
+      const t = 0.09,
+        fb = o.floor ?? 0.24;
+      wb.box('ashlar', -l, 0, -w, l, fb, w, { faces: 'nsew', sub: 2, aoH: 0.4, room });
+      wb.box('ashlar', -l + t, fb - 0.02, -w + t, l - t, fb, w - t, { ao: false, faces: 't', room, tint: [0.42, 0.4, 0.37] });
+      wb.box('ashlar', -l, fb, -w, l, 0.9, -w + t, { faces: 'tnsew', sub: 2, aoH: 0.4, room });
+      wb.box('ashlar', -l, fb, w - t, l, 0.9, w, { faces: 'tnsew', sub: 2, aoH: 0.4, room });
+      wb.box('ashlar', -l, fb, -w + t, -l + t, 0.9, w - t, { faces: 'tew', sub: 2, aoH: 0.4, room });
+      wb.box('ashlar', l - t, fb, -w + t, l, 0.9, w - t, { faces: 'tew', sub: 2, aoH: 0.4, room });
+    } else if (o.open) {
+      // la boca negra, con su borde de piedra alrededor
+      wb.box('ashlar', -l, 0, -w, l, 0.9, w, { faces: 'nsew', sub: 2, aoH: 0.4, room });
+      const t = 0.1;
+      for (const [a0, b0, a1, b1] of [
+        [-l, -w, l, -w + t],
+        [-l, w - t, l, w],
+        [-l, -w + t, -l + t, w - t],
+        [l - t, -w + t, l, w - t],
+      ])
+        wb.box('ashlar', a0, 0.9, b0, a1, 0.9, b1, { ao: false, faces: 't', room });
+      wb.box('black', -l + t, 0.9, -w + t, l - t, 0.9, w - t, { ao: false, faces: 't', grime: false, room });
+    } else wb.box('ashlar', -l, 0, -w, l, 0.9, w, { faces: 'tnsew', sub: 2, aoH: 0.4, room });
+    wb.box('ashlar', -l - 0.1, 0, -w - 0.07, l + 0.1, 0.15, w + 0.07, { ao: false, room });
     if (o.open) {
-      wb.push();
-      wb.translate(0.3, 0.9, 0.45);
-      wb.rotateY(0.35);
-      wb.rotateZ(0.08);
-      wb.box('ashlar', -1.25, 0, -0.6, 1.25, 0.18, 0.6, { ao: false, faces: 'tnsewb' });
-      wb.pop();
-      wb.box('black', -1.1, 0.88, -0.45, 1.1, 0.9, 0.45, { ao: false, faces: 't', grime: false });
+      if (o.lid !== false) {
+        wb.push();
+        wb.translate(0.3, 0.9, 0.45);
+        wb.rotateY(0.35);
+        wb.rotateZ(0.08);
+        wb.box('ashlar', -l - 0.05, 0, -w - 0.05, l + 0.05, 0.18, w + 0.05, { ao: false, faces: 'tnsewb', room });
+        wb.pop();
+      }
     } else {
-      wb.box('ashlar', -1.25, 0.9, -0.6, 1.25, 1.08, 0.6, { ao: false, faces: 'tnsew' });
+      wb.box('ashlar', -l - 0.05, 0.9, -w - 0.05, l + 0.05, 1.08, w + 0.05, { ao: false, faces: 'tnsew', room });
       if (o.effigy) {
-        wb.box('ashlar', -0.9, 1.08, -0.2, 0.7, 1.28, 0.2, { ao: false });
-        wb.box('ashlar', 0.7, 1.08, -0.14, 0.98, 1.36, 0.14, { ao: false });
+        wb.box('ashlar', -0.9, 1.08, -0.2, 0.7, 1.28, 0.2, { ao: false, room });
+        wb.box('ashlar', 0.7, 1.08, -0.14, 0.98, 1.36, 0.14, { ao: false, room });
       }
     }
   });
-  colOBB(ctx, x, z, 1.3, 0.62, rot, y, y + 1.1);
+  colOBB(ctx, x, z, l + 0.1, w + 0.07, rot, y, y + 1.1);
 }
 
 // Montón de huesos y calaveras.
@@ -1438,7 +1467,8 @@ export function shelf(ctx, x, y, z, rot = 0, w = 1.6) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
     for (const sx of [-w / 2, w / 2 - 0.06]) wb.box('wooddark', sx, 0, -0.2, sx + 0.06, 2.0, 0.2, { ao: false });
-    for (let i = 0; i < 4; i++) wb.box('wooddark', -w / 2, 0.3 + i * 0.5, -0.2, w / 2, 0.34 + i * 0.5, 0.2, { ao: false, faces: 'tnsewb' });
+    // (las baldas, entre los costados: si no, sus cantos coinciden con ellos)
+    for (let i = 0; i < 4; i++) wb.box('wooddark', -w / 2 + 0.06, 0.3 + i * 0.5, -0.19, w / 2 - 0.06, 0.34 + i * 0.5, 0.19, { ao: false, faces: 'tnsewb' });
     const rng = new RNG(Math.round(x * 13 + z * 7));
     for (let i = 0; i < 4; i++)
       for (let k = 0; k < 3; k++) {

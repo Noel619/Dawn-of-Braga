@@ -632,12 +632,20 @@ function buildKeep(ctx, S, L) {
   {
     const yb = R - SL;
     wb.box('timber', roofHole[0] - 0.3, yb - 0.38, -20.1, roofHole[2], yb, -19.8, { ao: false, faces: 'nsewb', room: 'homenaje2' });
+    // (las que caen sobre un muro de la planta descansan en él: no se
+    // dibujan, que sus caras coincidirían con las del muro)
+    const onWall = [
+      [ix0, KEEP_SPINE, -13.3, -12.7],
+      [KEEP_SPINE, ix1, -15.05, -14.55],
+    ];
     for (let z = -19.0; z < iz1 - 0.4; z += 1.45)
       for (const [a2, b2] of [
         [ix0, KEEP_SPINE],
         [KEEP_SPINE, ix1],
-      ])
+      ]) {
+        if (onWall.some((w) => w[0] < b2 - 0.01 && w[1] > a2 + 0.01 && z + 0.12 > w[2] && z - 0.12 < w[3])) continue;
         wb.box('wooddark', a2, yb - 0.2, z - 0.1, b2, yb, z + 0.1, { ao: false, faces: 'nsewb', room: roomAt(2, (a2 + b2) / 2, z) });
+      }
   }
   // el pilar del cuerpo de guardia (los demás quedan dentro del muro de carga)
   {
@@ -669,7 +677,8 @@ function buildKeep(ctx, S, L) {
   // de la segunda a la terraza, contra el muro norte (sube al oeste y sale
   // a la caseta de la terraza)
   wb.setRoom('homenaje2');
-  stairs(ctx, -78.6, F2, -20.85, 'w', 1.5, 15, (R - F2) / 15, 0.42, 'wallstone', { solidBelow: true });
+  // (sin meterse bajo el pretil: si no, sus caras coinciden y parpadean)
+  stairs(ctx, -78.6, F2, -20.975, 'w', 1.25, 15, (R - F2) / 15, 0.42, 'wallstone', { solidBelow: true });
   // su pretil de piedra por el lado de la sala (y de la alcoba): no se cae
   // nadie de lado, ni se salta a la alcoba
   for (let i = 0; i < 15; i++) {
@@ -751,14 +760,22 @@ function buildKeep(ctx, S, L) {
     const cz = -9.8,
       ct = R + 2.6;
     solid(ctx, 'wallstone', x0 - 0.12, R, cz - 0.62, x0 + 1.0, ct, cz + 0.62, { sub: 2, aoH: 1.2, faces: 'nsew' });
-    wb.box('ashlar', x0 - 0.2, ct, cz - 0.72, x0 + 1.08, ct + 0.14, cz + 0.72, { ao: false, faces: 'tnsewb' });
+    wb.box('ashlar', x0 - 0.2, ct, cz - 0.72, x0 + 1.08, ct + 0.14, cz + 0.72, { ao: false, faces: 'nsewb' });
+    // (la tapa, alrededor de la boca negra del humero: sin caras encimadas)
+    for (const [a, b, c, d] of [
+      [x0 - 0.2, cz - 0.72, x0 + 1.08, cz - 0.5],
+      [x0 - 0.2, cz + 0.5, x0 + 1.08, cz + 0.72],
+      [x0 - 0.2, cz - 0.5, x0 - 0.1, cz + 0.5],
+      [x0 + 0.98, cz - 0.5, x0 + 1.08, cz + 0.5],
+    ])
+      wb.box('ashlar', a, ct + 0.14, b, c, ct + 0.14, d, { ao: false, faces: 't' });
     for (const [a, b] of [
       [cz - 0.72, cz - 0.5],
       [cz + 0.5, cz + 0.72],
     ])
       wb.box('wallstone', x0 - 0.2, ct + 0.14, a, x0 + 1.08, ct + 0.55, b, { ao: false, faces: 'nsewt' });
     wb.box('ashlar', x0 - 0.26, ct + 0.55, cz - 0.78, x0 + 1.14, ct + 0.68, cz + 0.78, { ao: false, faces: 'tnsewb' });
-    wb.box('black', x0 - 0.1, ct + 0.141, cz - 0.5, x0 + 0.98, ct + 0.145, cz + 0.5, { ao: false, faces: 't', grime: false });
+    wb.box('black', x0 - 0.1, ct + 0.14, cz - 0.5, x0 + 0.98, ct + 0.14, cz + 0.5, { ao: false, faces: 't', grime: false });
     if (ctx.fires) ctx.fires.push({ x: x0 + 0.44, y: ct + 0.4, z: cz, s: 0.8, smoke: true, light: false, embers: false, glow: false });
   }
   // los demás huecos: saeteras en cada planta y la ventana geminada de la
@@ -831,7 +848,7 @@ function buildKeep(ctx, S, L) {
       ]) {
         solid(ctx, 'wallstone', a, 0, b, c, top, d, { sub: 2.2, aoH: 2.5, faces: 'nsewt', tint, mats: { t: 'flag' } });
         // albardilla en los bordes que dan al rellano, al foso o al patio
-        wb.box('ashlar', a - 0.04, top, b - 0.04, c + 0.04, top + 0.1, d + 0.04, { ao: false, faces: 'tnsew', tint: [0.72, 0.7, 0.66] });
+        wb.box('ashlar', a, top, b, c, top + 0.1, d, { ao: false, faces: 'tnsew', tint: [0.72, 0.7, 0.66] });
         S.paint(a, b, c, d, 0);
       }
       // junto a la escalera, hasta la torre: un macizo con la cara de arriba
@@ -1689,7 +1706,9 @@ function buildPrisonTower(ctx, S, L) {
     const segs = x + 0.12 > hh[0] && x - 0.12 < hh[2] ? [[iz0, hh[1] - 0.12], [hh[3] + 0.12, iz1]] : [[iz0, iz1]];
     for (const [za, zb] of segs) wb.box('timber', x - 0.12, F - 0.25, za, x + 0.12, F, zb, { ao: false, faces: 'nsewb', room });
   }
-  for (const z of [hh[1] - 0.12, hh[3]]) wb.box('timber', hh[0] - 0.4, F - 0.25, z, hh[2] + 0.38, F, z + 0.12, { ao: false, faces: 'nsewb', room });
+  // (los brochales acaban dentro de la vigueta de al lado, algo menos
+  // hondos que ella: sin caras que coincidan)
+  for (const z of [hh[1] - 0.12, hh[3]]) wb.box('timber', hh[0] - 0.28, F - 0.24, z, hh[2] + 0.38, F, z + 0.12, { ao: false, faces: 'nsewb', room });
   // el techo de la sala de arriba y lo macizo encima
   wb.box('wooddark', ix0, CA, iz0, ix1, CA + 0.05, iz1, { faces: 'b', ao: false, room: roomA, tint: [0.6, 0.55, 0.5] });
   for (let x = ix0 + 0.9; x < ix1 - 0.4; x += 1.4) wb.box('timber', x - 0.12, CA - 0.25, iz0, x + 0.12, CA, iz1, { ao: false, faces: 'nsewb', room: roomA });
@@ -1774,9 +1793,10 @@ function buildPrisonTower(ctx, S, L) {
       swing: 1,
       plane: x1 - 0.05,
     },
-    // (la trampilla está abierta: sólo hay que subir o bajar por la escalera)
+    // (la trampilla está abierta: sólo hay que subir o bajar por la escalera;
+    // abajo se llega de lado a la escalera, para que la cámara no quede tras ella)
     { kind: 'hatch', id: 'h_carcel_abajo', end: 'bottom', flag: 'hatch:carcel', open: true, msgUp: 'carcelSube', x: HT.x - 0.45, y: 0, z: HT.z, r: 1.5, to: [HT.x - 1.1, FA, HT.z, -Math.PI / 2] },
-    { kind: 'hatch', id: 'h_carcel_arriba', end: 'top', flag: 'hatch:carcel', open: true, realHole: true, msgDown: 'carcelBaja', x: HT.x, y: FA, z: HT.z, r: 1.6, to: [HT.x - 1.1, 0, HT.z, -Math.PI / 2] },
+    { kind: 'hatch', id: 'h_carcel_arriba', end: 'top', flag: 'hatch:carcel', open: true, realHole: true, msgDown: 'carcelBaja', x: HT.x, y: FA, z: HT.z, r: 1.6, to: [HT.x - 0.7, 0, HT.z - 1.1, -Math.PI / 2 + 0.4] },
     { kind: 'examine', id: 'x_presos', text: 'libroPresos', x: -85.5, y: FA, z: 6.6, r: 1.6 }
   );
 }
@@ -1791,7 +1811,7 @@ function buildPrisonTower(ctx, S, L) {
 // La escalera de la torre de la cárcel: sube hacia el este, de cara a la
 // puerta de la torre (antes subía contra el muro y había que salir de lado).
 // Arranca bajo la muralla, en un rellano que da al pasadizo.
-export const PSTAIR = { x0: -90.4, x1: -84.0, z0: 7, z1: 9, n: 16 };
+export const PSTAIR = { x0: -90.5, x1: -84.0, z0: 7, z1: 9, n: 16 };
 
 function buildDungeon(ctx, D, L) {
   const wb = ctx.wb;
@@ -1838,7 +1858,7 @@ function buildDungeon(ctx, D, L) {
     R(-72, 1, -70, 4, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('z') }),
     R(-62, 1, -60, 4, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('z') }),
     R(-82, 4, -60, 6, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('x') }),
-    R(-77.6, 6, -75.2, 7.4, YD + 2.6, 'mossstone', 'catacumbas', { tint: catT, vault: { axis: 'x', ys: YD + 1.4, rise: 1.0 } }),
+    R(-77.5, 6, -75.0, 7.5, YD + 2.6, 'mossstone', 'catacumbas', { tint: catT, vault: { axis: 'x', ys: YD + 1.4, rise: 1.0 } }),
     R(-88, -2, -84, 2, YD + 3.9, 'skulls', 'catacumbas', { tint: [0.85, 0.82, 0.78], vault: { axis: 'x', ys: YD + 1.95, rise: 1.85 } }),
     // al aljibe
     R(-66, 6, -64, 8, CR, 'mossstone', 'aljibe', { tint: catT, vault: gv('z') }),
@@ -2016,7 +2036,8 @@ function buildDungeon(ctx, D, L) {
     // fajones a lo ancho del pasillo, sobre los tabiques
     for (let k = 1; k < cellsX.length - 1; k++) {
       const x = cellsX[k];
-      archRing(ctx, { axis: 'z', c: (zN + zS) / 2, w: zS - zN - 0.44, y0: yS, rise: 1.0, ring: 0.25, t0: x - 0.2, t1: x + 0.2, top, clip: [zN + 0.22 - 0.25, zS - 0.22 + 0.25], mat: 'ashlar', room, tint: [0.6, 0.58, 0.55], spTint: mazT, proud: 0.02 });
+      // (un dedo más estrechos que el tabique: si no, sus caras coinciden)
+      archRing(ctx, { axis: 'z', c: (zN + zS) / 2, w: zS - zN - 0.44, y0: yS, rise: 1.0, ring: 0.25, t0: x - 0.19, t1: x + 0.19, top, clip: [zN + 0.22 - 0.25, zS - 0.22 + 0.25], mat: 'ashlar', room, tint: [0.6, 0.58, 0.55], spTint: mazT, proud: 0.02 });
     }
     // la reja de la celda del jugador, reventada hacia fuera
     wb.push();
@@ -2111,14 +2132,23 @@ function buildDungeon(ctx, D, L) {
     wb.setRoom(room);
     for (const z of [-12.9, -10.6]) fajon('z', z, -63.75, 5.5, YD + 2.4, room, { rise: 1.08 });
     // el potro y el condenado tendido, con las cuerdas de muñecas y tobillos
-    const rk = P.rack(ctx, -63.8, YD, -12.0, 0, { room, len: 2.4, w: 0.8 });
-    bakeCorpse(wb, -63.8, YD + rk.H - 0.04, -12.0, Math.PI / 2, 'back', 'villager', 39);
-    for (const sx of [-1, 1])
-      for (const sz of [-1, 1]) {
-        const a = V(-63.8 + sx * (rk.L / 2 - 0.12), YD + rk.H + 0.1, -12.0 + sz * 0.09);
-        const b = V(-63.8 + sx * 0.82, YD + rk.H + 0.05, -12.0 + sz * 0.2);
-        beam3(ctx, 'rope', a, b, 0.025, { room });
-      }
+    // (la cabeza hacia el oeste, los brazos por encima de ella)
+    const rk = P.rack(ctx, -63.8, YD, -12.0, 0, { room, len: 2.7, w: 0.8 });
+    const vj = bakeCorpse(wb, -63.66, YD + rk.H - 0.04, -12.0, Math.PI / 2, 'rack', 'villager', 39);
+    for (const [k, sx, dz] of [
+      ['handL', -1, 0.07],
+      ['handR', -1, -0.07],
+      ['footL', 1, 0.07],
+      ['footR', 1, -0.07],
+    ]) {
+      const p = vj[k];
+      if (!p) continue;
+      // de la muñeca (o el tobillo) a lo alto del rodillo, donde se enrolla
+      const a = V(-63.8 + sx * (rk.L / 2 - 0.12), YD + rk.H + 0.08 + 0.1, -12.0 + dz);
+      beam3(ctx, 'rope', p, a, 0.022, { room });
+      // la vuelta de cuerda en la muñeca
+      wb.geometry('rope', new THREE.TorusGeometry(0.045, 0.014, 3, 8), new THREE.Matrix4().compose(p, new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), Math.PI / 2), V(1, 1, 1)), { ao: false, room });
+    }
     P.decal(ctx, -63.8, YD + 0.01, -12.0, 2.2);
     // la garrucha: una polea en la clave y la soga con su lazo
     {
@@ -2231,10 +2261,35 @@ function buildDungeon(ctx, D, L) {
     }
     // el arcosolio de la galería del sur: un arco hondo con el sarcófago de
     // los antiguos
-    archRing(ctx, { axis: 'x', c: -76.4, w: 2.4, y0: YD + 1.4, rise: 1.0, ring: 0.3, t0: 5.75, t1: 6.25, top: CR, clip: [-77.6, -75.2], mat: 'ashlar', spMat: 'mossstone', room, tint: ARCH_T, spTint: catT });
-    P.sarcophagus(ctx, -76.4, YD, 6.78, 0, { open: true });
-    P.skeleton(ctx, -76.3, YD + 0.75, 6.8, Math.PI, { mess: 0.5, seed: 4519, scale: 0.8, room });
-    P.candles(ctx, -77.3, YD, 6.25, 3, 4520, { room, radius: 3.5, intensity: 0.6, spread: 0.12 });
+    archRing(ctx, { axis: 'x', c: -76.25, w: 2.5, y0: YD + 1.4, rise: 1.0, ring: 0.3, t0: 5.75, t1: 6.25, top: CR, clip: [-77.5, -75.0], mat: 'ashlar', spMat: 'mossstone', room, tint: ARCH_T, spTint: catT });
+    // (cabe entre las jambas; destapado y hueco, con el muerto dentro)
+    P.sarcophagus(ctx, -76.25, YD, 6.92, 0, { open: true, hollow: true, lid: false, l: 1.0, w: 0.46, room });
+    P.skeleton(ctx, -76.3, YD + 0.24, 6.92, Math.PI, { mess: 0.35, seed: 4519, scale: 0.82, room });
+    // la tapa, partida: media apoyada contra el sarcófago y media en el suelo
+    {
+      const lidT = [0.7, 0.68, 0.64];
+      wb.push();
+      wb.translate(-76.53, YD, 5.8);
+      wb.rotateY(0.06);
+      wb.rotateX(0.52);
+      wb.box('ashlar', -0.52, 0, 0, 0.52, 1.0, 0.16, { ao: false, faces: 'tnsewb', room, tint: lidT });
+      wb.pop();
+      ctx.col.add(-77.07, YD, 5.78, -75.99, YD + 0.8, 6.38);
+      wb.push();
+      wb.translate(-75.1, YD + 0.02, 5.2);
+      wb.rotateY(0.48);
+      wb.rotateZ(0.07);
+      wb.box('ashlar', -0.52, 0, -0.5, 0.52, 0.16, 0.5, { ao: false, faces: 'tnsewb', room, tint: lidT });
+      wb.pop();
+      ctx.col.addOBB(-75.1, 5.2, 0.52, 0.5, 0.48, YD, YD + 0.2);
+      for (const [x, z, sz, sd] of [
+        [-75.8, 5.62, 0.11, 4521],
+        [-75.95, 5.35, 0.07, 4522],
+        [-74.6, 5.6, 0.09, 4523],
+      ])
+        P.roughStone(ctx, x, YD, z, sz, sd, { mat: 'ashlar', room, tint: lidT });
+    }
+    P.candles(ctx, -77.95, YD, 5.7, 3, 4520, { room, radius: 3.5, intensity: 0.6, spread: 0.12 });
     // un tramo hundido (tapado de escombro)
     P.rubble(ctx, -82.8, YD, 5.0, 10, 4504, 1.0, { mat: 'mossstone', scale: 1.2 });
     // velas en las galerías
@@ -2317,14 +2372,18 @@ function buildDungeon(ctx, D, L) {
     blocker(ctx, px0, -6.4, pz0, px1, -3.4, pz1);
     // columnas en el agua y arcos de medio punto entre ellas y hasta los muros
     const yS = -3.0;
+    // (las hileras dejan libre la boca del pasadizo, en el muro oeste entre
+    // z 11 y 13, y la del pozo, en la bóveda)
     const XS = [-67.6, -64.4, -61.2],
-      ZS = [11.8, 14.2];
+      ZS = [10.3, 14.0];
     for (const z of ZS) for (const x of XS) P.column(ctx, x, -6.4, z, yS + 6.4, 0.32, { mat: 'ashlar', collide: false });
-    const arc = (axis, a, b, at, base) => {
+    // (los de través, sin asiento: sobre las columnas, el de la hilera ya lo
+    // pone y los dos coincidirían)
+    const arc = (axis, a, b, at) => {
       const c = (a + b) / 2,
         w = b - a;
       const rise = Math.min(w / 2, -1.55 - yS);
-      archRing(ctx, { axis, c, w, y0: yS, rise, ring: 0.25, t0: at - 0.24, t1: at + 0.24, top: -1.3, mat: 'ashlar', spMat: 'ashlar', room, tint: [0.6, 0.62, 0.6], spTint: aljT, proud: 0.02 });
+      archRing(ctx, { axis, c, w, y0: yS, rise, ring: 0.25, t0: at - 0.24, t1: at + 0.24, top: -1.3, mat: 'ashlar', spMat: 'ashlar', room, tint: [0.6, 0.62, 0.6], spTint: aljT, proud: 0.02, seats: axis === 'x' });
     };
     // a lo largo (x), en cada hilera: del muro oeste a la primera columna,
     // entre columnas y hasta el muro este
@@ -2365,7 +2424,7 @@ function buildDungeon(ctx, D, L) {
     if (ctx.lights) ctx.lights.push({ x: W2.x, y: -4.4, z: W2.z, r: 0.55, g: 0.66, b: 0.85, radius: 9, intensity: 0.9, room });
     // antorchas en los andenes y un caído
     P.wallTorch(ctx, -71.0, YD + 2.2, 8.0, 's', { room, radius: 7 });
-    P.wallTorch(ctx, -72.0, YD + 2.2, 13.0, 'e', { room, radius: 6 });
+    P.wallTorch(ctx, -72.0, YD + 2.2, 15.0, 'e', { room, radius: 6 });
     P.wallTorch(ctx, -59.6, YD + 2.2, 8.0, 's', { room, radius: 6 });
     bakeCorpse(wb, -71.2, YD, 15.2, 0.6, 'face', 'soldier', 40);
     P.decal(ctx, -71.2, YD + 0.01, 15.0, 1.6);
@@ -2444,7 +2503,7 @@ function buildDungeon(ctx, D, L) {
       id: 'catacumbas_castillo',
       rects: [
         [-88, -8.5, -60, 6, YD - 1, -1],
-        [-77.6, 6, -75.2, 7.4, YD - 1, -1],
+        [-77.5, 6, -75.0, 7.5, YD - 1, -1],
         [-66, 6, -64, 8, YD - 1, -1],
       ],
       atmo: 'crypt',

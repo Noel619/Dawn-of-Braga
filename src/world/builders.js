@@ -262,9 +262,12 @@ export function archRing(ctx, o) {
     q(mat, P(ea[0], ea[1], df), P(eb[0], eb[1], df), P(eb[0], eb[1], db), P(ea[0], ea[1], db), { ...sub, room: rooms[1] });
   }
   // asiento de los salmeres (por debajo asoman lo que sobresalen del muro)
-  const sb = { ao: false, sub: 4, tint, room: rooms[1] };
-  q(mat, P(E[0][0], y0, db), P(I[0][0], y0, db), P(I[0][0], y0, df), P(E[0][0], y0, df), sb);
-  q(mat, P(I[n][0], y0, db), P(E[n][0], y0, db), P(E[n][0], y0, df), P(I[n][0], y0, df), sb);
+  // (seats: false, sin ellos: cuando otro arco ya los pone en el mismo sitio)
+  if (o.seats !== false) {
+    const sb = { ao: false, sub: 4, tint, room: rooms[1] };
+    q(mat, P(E[0][0], y0, db), P(I[0][0], y0, db), P(I[0][0], y0, df), P(E[0][0], y0, df), sb);
+    q(mat, P(I[n][0], y0, db), P(E[n][0], y0, db), P(E[n][0], y0, df), P(I[n][0], y0, df), sb);
+  }
   // enjutas: de la rosca hasta 'top', recortadas al tramo del muro
   if (o.top !== undefined) {
     const [s0, s1] = o.clip ?? [E[0][0], E[n][0]];

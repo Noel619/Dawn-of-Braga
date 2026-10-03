@@ -131,24 +131,34 @@ un giro a la izquierda antes del patio, para que nadie cargue en línea recta). 
 que baja al aljibe; el **cuartel de la tropa** (jergones en el suelo, la mesa larga, las lanzas de todos); la fragua
 del armero con su muela; la cocina con el horno de pan y la caldera; las caballerizas, sin caballos (se los
 comieron); la capilla de la guarnición, que acabó de hospital (el altar del castillo); el **fundíbulo** de la
-defensa, partido por un tiro de los de fuera, con sus bolaños; caballos de frisa y la barricada de la puerta. La
-escalera del adarve norte se vino abajo: desde el patio no se sube a la muralla.
+defensa, partido por un tiro de los de fuera, con sus bolaños labrados a pico; caballos de frisa y la barricada de
+la puerta. La escalera del adarve, pegada a la torre del homenaje, la partió un tiro: el tramo de arriba se desmoronó
+en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
 
 La **torre del homenaje**, el último reducto, ocupa la esquina noroeste y los adarves entran en ella. Se sube por una
-escalera exenta hasta un rellano frente a la puerta, en la planta primera, y un **puente levadizo** la une con él;
-está alzado desde dentro. Planta baja: el **almacén** de víveres (trigo, toneles, tinajas de aceite, cecina colgada,
-el pozo de la torre), al que sólo se baja por una trampilla. Primera: el **cuerpo de guardia y la armería** (picas,
-ballestas, escudos, el banco del flechero) con el **torno del puente**. Segunda: la **sala del alcaide**, con la mesa
-del plano de la defensa, la mesa del consejo y el libro de la guarnición, y el alcaide muerto en su escritorio con la
-manivela del torno que abre la reja de la cripta de la Sé. Arriba, la **terraza** de combate: amplia, con su matacán
-sobre la puerta, el fanal, la caldera de la pez y piedras para tirar (ahí se peleará con la Bestia de Carne; el
-escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y pilares de sillería.
+escalera exenta, metida en un antecuerpo de sillería que llega a la muralla y a la torre de la cárcel (sin callejones
+a los lados), hasta un rellano frente a la puerta, en la planta primera; un **puente levadizo** sobre un foso con
+estacas la une con él, alzado desde dentro. Cada planta está partida por el muro de carga y tabiques con puertas de
+arco. Planta baja: el **granero**, la **bodega**, el **almacén** y el **pozo** de la torre, a los que sólo se baja por
+una trampilla. Primera: el **cuerpo de guardia** con el **torno del puente** y el pañol de la trampilla, y tras un muro
+la **armería** (picas, escudos) y el **taller del ballestero**. Segunda: la **sala del alcaide**, partida por un arco
+diafragma, con la mesa del plano de la defensa, la mesa del consejo y el libro de la guarnición; el **escritorio**,
+con el alcaide muerto sobre sus cuentas junto a la chimenea y la manivela del torno que abre la reja de la cripta de
+la Sé, y tras él su **alcoba**. Arriba, la **terraza** de combate: amplia, con su matacán sobre la puerta, la caseta
+de la escalera con su tejado a dos aguas, la chimenea, el fanal, la caldera de la pez y piedras para tirar (ahí se
+peleará con la Bestia de Carne; el escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y
+pilares de sillería.
 
-**Las mazmorras.** Bajo el patio: el pasillo de las celdas (donde despiertas), el cuarto del carcelero (con la
-espada y el escudo) y la sala del tormento, cavados junto a una necrópolis más antigua, las **catacumbas** (nichos
-con sus muertos, un osario de calaveras), que llegan hasta el **aljibe** del castillo: bóvedas sobre columnas,
-agua negra y la luz pálida que baja por el pozo del patio. Un pasadizo sigue hasta la escalera de la **torre de la
-cárcel**, que sale al patio.
+**Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras y portadas de
+arco en cada paso: el pasillo de las celdas (donde despiertas; cada celda con su arco y su reja, que también para
+la cámara), el cuarto del carcelero (con la espada y el escudo) y la sala del tormento (el potro con su condenado
+atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los hierros). Cavadas junto a una
+necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros abiertos con el muerto
+tendido dentro, un arcosolio con el sarcófago destapado y su tapa partida, y al fondo el **osario**, una capilla de
+huesos con su altar de calaveras. Llegan hasta el **aljibe** del castillo: arquerías sobre columnas, agua negra y la
+luz pálida que baja por el pozo del patio. Un pasadizo, con dos celdas de castigo, lleva a un rellano bajo la
+muralla y a la escalera de la **torre de la cárcel**, que sube de frente a la puerta de la torre (y se baja igual).
+En la torre, la escalera de mano sube a la sala de los guardas, con sus jergones y el libro de presos.
 
 **Lo alto del castillo.** A donde lleva el salto: la atalaya (la cabeza de la coracha, con la paja y la leña del
 fanal), la coracha, un muro almenado que baja desde la muralla norte hasta el castillo con una torre en medio (y en
@@ -193,7 +203,9 @@ bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de in
 animación, *hitstop*, golpes críticos, estela de la espada, retroceso y estremecimiento de las criaturas, aviso en
 los ojos antes de sus golpes, vibración del mando, *poise*, un *buffer* de entradas y cancelación de la recuperación
 al moverse. El fijado elige al enemigo que tienes delante (con línea de visión) y la cámara lo encuadra con un
-barrido suave, sin saltos. Bajo techos bajos y vigas la cámara se agacha en vez de atravesarlos.
+barrido suave, sin saltos. Bajo techos bajos y vigas la cámara se agacha en vez de atravesarlos; contra los muros
+mide con un haz de rayos y guarda holgura a su alrededor (no se ve a través de paredes ni rejas), y de espaldas a
+una pared, en vez de meterse en ella, sube sobre la cabeza y deja de dibujar el cuerpo.
 
 **Animación procedural.** Clips con interpolación de Hermite y mezcla por cuaterniones, marcha bípeda con zancada
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
@@ -402,6 +414,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo
+                        camclip.mjs    la cámara en el castillo y las mazmorras, contra muros, rejas y en
+                                       escaleras, en muchas orientaciones: que no quede tras un muro ni pegada
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
