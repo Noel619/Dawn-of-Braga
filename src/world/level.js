@@ -4,12 +4,13 @@ import * as THREE from 'three';
 import { WorldBuilder } from '../gfx/geo.js';
 import { CollisionWorld } from './collision.js';
 import { WalkGrid } from './walkgrid.js';
-import { buildCastle, buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
+import { buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
 import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
+import { buildCastle, CASTLE } from './level_castle.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
@@ -33,9 +34,12 @@ export function buildLevel() {
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
+  const Dg = CASTLE.dun;
+  const D = new WalkGrid(Dg.x0, Dg.z0, Dg.x1, Dg.z1, 0.5); // mazmorras del castillo
   ctx.S = S; // las casas visitables pintan su huella transitable
+  ctx.floorHoles = []; // huecos en la losa de suelo (escaleras que bajan)
 
-  buildCastle(ctx, S, L);
+  buildCastle(ctx, S, D, L);
   // los barrios primero: sus fachadas son los muros en los que trepan las
   // carnosidades de las calles principales
   buildNW(ctx, S, L);
@@ -71,12 +75,14 @@ export function buildLevel() {
   // colisión generada a partir de las zonas transitables
   const nS = S.toColliders(ctx.col, -1, 5.2);
   const nC = C.toColliders(ctx.col, -10.6, -1.2);
+  const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(-96, -232, 84, 72, 1);
   F.paint(-96, -232, 84, 72, 1);
   F.paint(-2, -97, 2, -86, 0);
   F.paint(-2, -186, 2, -167, 0);
   F.paint(58, -32, 61, -27, 0); // escalera de la bodega del canónigo
+  for (const h of ctx.floorHoles) F.paint(h[0], h[1], h[2], h[3], 0);
   for (const [a, b, c, d] of F.rects(1)) {
     ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
     // suelo visual de fondo (tierra), un poco por debajo de calles e
@@ -87,5 +93,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, B, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, clutter } };
+  return { ctx, L, meshes, S, C, B, D, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, clutter } };
 }

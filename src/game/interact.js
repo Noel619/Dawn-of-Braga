@@ -328,6 +328,39 @@ function hatchMesh() {
   return g;
 }
 
+// Puente levadizo: la hoja (tablones con herrajes) gira en su eje, en el
+// umbral de la puerta; alzada, tapa el vano.
+function bridgeMesh(w, len) {
+  const g = new THREE.Group();
+  const leaf = new THREE.Group();
+  const wood = cloneMat(objMat('planks')),
+    dark = cloneMat(objMat('wooddark')),
+    iron = cloneMat(objMat('iron'));
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(w, 0.18, len), wood);
+  deck.position.set(0, -0.09, len / 2);
+  leaf.add(deck);
+  // largueros por debajo y bandas de hierro por encima
+  for (const s of [-1, 1]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, len), dark);
+    b.position.set(s * (w / 2 - 0.2), -0.24, len / 2);
+    leaf.add(b);
+  }
+  for (const z of [0.35, len / 2, len - 0.35]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.09), iron);
+    b.position.set(0, 0.01, z);
+    leaf.add(b);
+  }
+  // argollas de las cadenas en la punta
+  for (const s of [-1, 1]) {
+    const r = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 4, 8), iron);
+    r.position.set(s * (w / 2 - 0.15), 0.06, len - 0.12);
+    leaf.add(r);
+  }
+  g.add(leaf);
+  g.userData = { leaf, mats: [wood, dark, iron] };
+  return g;
+}
+
 function leverMesh() {
   const g = new THREE.Group();
   const iron = objMat('iron'),
@@ -575,6 +608,34 @@ export class Interactables {
           }
         it.lift = 0;
       }
+    } else if (s.kind === 'bridge') {
+      // la hoja, en su eje (el umbral); las cadenas, de la punta a los
+      // agujeros del muro
+      const [hx, hy, hz] = s.hinge;
+      it.obj = bridgeMesh(s.w, s.len);
+      it.obj.position.set(hx, hy, hz);
+      g.scene.add(it.obj);
+      const iron = cloneMat(objMat('iron'));
+      it.obj.userData.mats.push(iron);
+      it.chains = s.anchors.map(() => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1), iron);
+        g.scene.add(m);
+        return m;
+      });
+      // con la luz horneada del sitio
+      const pr = g.probe.sample(hx, hy + 1, hz + s.len / 2, 0);
+      for (const m of it.obj.userData.mats)
+        if (m._u) {
+          m._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+          m._u.uGround.value.set(hy - 4.5, 0.34);
+        }
+      const w2 = s.w / 2;
+      it.upBox = g.world.col.add(hx - w2, hy, hz, hx + w2, hy + s.len, hz + 0.3, 'door');
+      it.deckBox = g.world.col.add(hx - w2, hy - 0.25, hz, hx + w2, hy, hz + s.len);
+      it.deckBox.enabled = false;
+      it.k = 0;
+      this.poseBridge(it, 0);
+      it.r = s.r ?? 2;
     } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
@@ -609,6 +670,7 @@ export class Interactables {
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
       }
       if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] ? 1 : 0);
+      if (it.kind === 'bridge' && flags[it.flag]) this.lowerBridge(it, true);
     }
     // los rastrillos de palancas: un palmo por palanca echada
     for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
@@ -620,6 +682,37 @@ export class Interactables {
     const u = it.obj.userData;
     u.lidG.rotation.z = k * 2.75;
     u.hole.visible = k > 0.02;
+  }
+
+  // Puente levadizo: 0 alzado (tapa la puerta), 1 bajado (se pisa).
+  poseBridge(it, k) {
+    it.k = k;
+    const a = (-Math.PI / 2) * (1 - k);
+    it.obj.userData.leaf.rotation.x = a;
+    const [hx, hy, hz] = it.hinge;
+    const tipY = hy - Math.sin(a) * (it.len - 0.12),
+      tipZ = hz + Math.cos(a) * (it.len - 0.12);
+    it.anchors.forEach((an, i) => {
+      const m = it.chains[i];
+      const sx = i === 0 ? -1 : 1;
+      const p0 = new THREE.Vector3(hx + sx * (it.w / 2 - 0.15), tipY + 0.06, tipZ);
+      const p1 = new THREE.Vector3(an[0], an[1], an[2]);
+      m.position.copy(p0).add(p1).multiplyScalar(0.5);
+      m.scale.set(1, 1, Math.max(0.01, p0.distanceTo(p1)));
+      m.lookAt(p1);
+    });
+  }
+  lowerBridge(it, instant = false) {
+    it.done = true;
+    if (instant) {
+      it.lowering = false;
+      this.poseBridge(it, 1);
+      it.upBox.enabled = false;
+      it.deckBox.enabled = true;
+    } else {
+      it.lowering = true;
+      it.fall = 0;
+    }
   }
 
   // Palancas de un rastrillo ya echadas.
@@ -670,6 +763,11 @@ export class Interactables {
     } else if (it.kind === 'hatch') {
       it.opening = false;
       if (it.obj) this.poseHatch(it, 0);
+    } else if (it.kind === 'bridge') {
+      it.lowering = false;
+      it.upBox.enabled = true;
+      it.deckBox.enabled = false;
+      this.poseBridge(it, 0);
     } else if (it.kind === 'breakable') {
       it.smash = 0;
       it.bk = undefined;
@@ -806,7 +904,7 @@ export class Interactables {
   refreshNav(it) {
     const g = this.game;
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
-    for (const n of [g.navSurface, g.navCrypt, g.navCellar]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
 
   shatter(it, instant = false) {
@@ -839,6 +937,7 @@ export class Interactables {
     for (const it of this.list) {
       if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note') continue;
       if (it.hidden) continue;
+      if (it.unless && this.game.flags[it.unless]) continue;
       if (it.kind === 'trigger') continue;
       if (it.kind === 'climb' && !this.game.canClimbWell()) continue;
       if (it.kind === 'fog' && (!this.game.fogActive(it) || this.game.activeBoss)) continue;
@@ -887,6 +986,8 @@ export class Interactables {
         return 'Echar la palanca';
       case 'well':
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
+      case 'bridge':
+        return 'Soltar el torno del puente';
       case 'hatch':
         if (it.end === 'top') return this.game.flags[it.flag] ? 'Bajar por la escalera' : 'Abrir la trampilla';
         return this.game.flags[it.flag] ? 'Subir por la escalera' : 'Examinar la trampilla';
@@ -1009,6 +1110,19 @@ export class Interactables {
       }
       return true;
     }
+    if (it.kind === 'bridge') {
+      if (it.done) return true;
+      // se suelta el freno del torno y el puente cae con sus cadenas
+      g.flags[it.flag] = true;
+      this.lowerBridge(it);
+      p.playInteract('push', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
+      g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z });
+      const [hx, hy, hz] = it.hinge;
+      setTimeout(() => g.audio && g.audio.play('gateOpen', { x: hx, y: hy + 1, z: hz + it.len / 2 }), 250);
+      g.ui.toast(MSG.puenteBaja, 4.5);
+      g.saveGame();
+      return true;
+    }
     if (it.kind === 'well') {
       if (g.flags['pozo:salida']) g.descendWell(it);
       else {
@@ -1082,6 +1196,23 @@ export class Interactables {
         this.poseDoor(it, 1 - Math.pow(1 - k, 2));
         if (k >= 1 && it.mat === 'barricade') it.obj.visible = false;
         if (k >= 1 && it.boards) it.boards.visible = false;
+      }
+      if (it.kind === 'bridge' && it.lowering) {
+        // cae acelerando, frenado al principio por las cadenas
+        it.fall += dt;
+        const u = Math.min(1, it.fall / 2.4);
+        this.poseBridge(it, u * u * (1.6 - 0.6 * u));
+        if (u >= 1) {
+          it.lowering = false;
+          it.upBox.enabled = false;
+          it.deckBox.enabled = true;
+          const g = this.game;
+          const [hx, hy, hz] = it.hinge;
+          const tip = { x: hx, y: hy, z: hz + it.len };
+          g.audio && g.audio.play('slam', tip);
+          const d = Math.hypot(g.player.pos.x - tip.x, g.player.pos.z - tip.z);
+          if (d < 14) g.camRig.shake(0.5 * (1 - d / 14));
+        }
       }
       if (it.kind === 'hatch' && it.opening && it.obj) {
         const k = Math.min(1, it.lift + dt / 0.7);

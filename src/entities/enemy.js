@@ -205,6 +205,7 @@ export class Enemy {
     const y = this.pos.y;
     const g = this.game;
     if (g.navCellar && y < -0.5 && g.inCellar(this.pos)) return g.navCellar;
+    if (g.navDungeon && g.inDungeon(this.pos)) return g.navDungeon;
     if (y < -3) return this.game.navCrypt;
     if (y < 3 && y > -1.5) return this.game.navSurface;
     return null;

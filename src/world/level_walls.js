@@ -44,8 +44,10 @@ export const CHASE = {
 };
 
 // Parapeto macizo (con su albardilla) en el lado de dentro del adarve.
+// (desde la coronación del muro, no más abajo: sus caras coincidirían con
+// las del muro y parpadearían)
 function parapet(ctx, x0, z0, x1, z1, y, h = 0.95) {
-  solid(ctx, 'wallstone', x0, y - 0.05, z0, x1, y + h, z1, { sub: 2, ao: false, faces: 'nsew' });
+  solid(ctx, 'wallstone', x0, y, z0, x1, y + h, z1, { sub: 2, ao: false, faces: 'nsew' });
   ctx.wb.box('ashlar', x0 - 0.05, y + h, z0 - 0.05, x1 + 0.05, y + h + 0.12, z1 + 0.05, { ao: false, faces: 'tnsewb' });
 }
 
@@ -84,8 +86,9 @@ function gateTower(ctx, cx, cz, w, yF, h, axis, o = {}) {
     room(a, B0 + t, b, BC - dw / 2, yF, yF + ch);
     room(a, BC + dw / 2, b, B1 - t, yF, yF + ch);
     room(a, BC - dw / 2, b, BC + dw / 2, yF + dh, yF + ch, 'tnsewb');
-    // jambas y dintel de sillería
-    for (const s of [-1, 1]) room(a - 0.05, BC + s * (dw / 2) - (s > 0 ? 0 : 0.25), b + 0.05, BC + s * (dw / 2) + (s > 0 ? 0.25 : 0), yF, yF + dh, 'nsew');
+    // jambas de sillería (asoman un poco al vano: si no, su cara coincidía
+    // con la del muro y parpadeaba)
+    for (const s of [-1, 1]) room(a - 0.05, BC + s * (dw / 2) - (s > 0 ? 0.04 : 0.25), b + 0.05, BC + s * (dw / 2) + (s > 0 ? 0.25 : 0.04), yF, yF + dh, 'nsew');
   }
   // techo de vigas y parte alta maciza
   wb.box('wooddark', x0 + t, yF + ch - 0.25, z0 + t, x1 - t, yF + ch, z1 - t, { faces: 'b', ao: false });
@@ -249,17 +252,21 @@ export function buildNorthWalls(ctx, S, L) {
       ])
         wb.box('black', sx - rx - 0.001, y, sz - rz - 0.001, sx + rx + 0.001, y + 1.2, sz + rz + 0.001, { ao: false, grime: false });
     // la escalera: del adarve (a 10 m) a lo alto (a 18), por todo el ancho
+    // (entre los pretiles y hasta el borde de la cornisa: si no, sus caras
+    // coincidían con las de los pretiles y la cornisa, y parpadeaban)
     const n = 27,
       rise = (top - YN) / n,
-      run = (F.stairX - fx1) / n;
-    stairs(ctx, F.stairX, YN, -124, 'w', 4, n, rise, run, 'wallstone', { solidBelow: true });
-    // pretiles escalonados a los dos lados (con colisión)
+      run = (F.stairX - fx1 - 0.3) / n;
+    stairs(ctx, F.stairX, YN, -124, 'w', 4 - 0.9, n, rise, run, 'wallstone', { solidBelow: true });
+    ctx.col.add(fx1, top - 0.5, -125.55, fx1 + 0.3, top, -122.45);
+    // pretiles escalonados a los dos lados (con colisión; el último, hasta la
+    // torre)
     for (let i = 0; i < n; i++) {
-      const xa = F.stairX - run * (i + 1),
+      const xa = i === n - 1 ? fx1 : F.stairX - run * (i + 1),
         xb = F.stairX - run * i;
       const y1 = YN + rise * (i + 1) + 1.0;
-      solid(ctx, 'wallstone', xa, YN, -126, xb + 0.01, y1, -125.55, { sub: 2, ao: false, faces: 'tnsew' });
-      solid(ctx, 'wallstone', xa, YN, -122.45, xb + 0.01, y1, -122, { sub: 2, ao: false, faces: 'tnsew' });
+      solid(ctx, 'wallstone', xa, YN, -126, xb, y1, -125.55, { sub: 2, ao: false, faces: 'tnsew' });
+      solid(ctx, 'wallstone', xa, YN, -122.45, xb, y1, -122, { sub: 2, ao: false, faces: 'tnsew' });
     }
   }
 

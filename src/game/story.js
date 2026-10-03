@@ -191,7 +191,20 @@ Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo
 
 La manivela del torno abre también la reja de la cripta de la Sé. El arzobispo bajó con sus canónigos y no ha vuelto a subir. No pienso dársela a nadie.
 
-He atrancado la trampilla de la sala de armas. Que no suba nadie de la cárcel.`,
+He mandado alzar el puente de la torre. Que no suba nadie del patio.`,
+  },
+  guarnicion: {
+    title: 'Libro de la guarnición',
+    text: `Día nueve del asedio. Quedan en el castillo:
+
+Hombres de armas, treinta y uno. Ballesteros, nueve. Heridos en la capilla, catorce.
+Trigo, sesenta fanegas. Vino, once toneles. Cecina y tocino, lo que cuelga en el almacén de la torre.
+El aljibe, a la mitad. Que nadie lave nada.
+Bolaños para el fundíbulo, los que quedan en el patio.
+
+Día once. Un tiro de los de fuera partió el fundíbulo. Otro se llevó la escalera del adarve norte: se sube por la torre.
+Día doce. Matamos los caballos.
+Día trece. Los heridos de la capilla ya no se quejan. No están muertos.`,
   },
   muralla: {
     title: 'Orden del alcaide',
@@ -274,17 +287,30 @@ export const MSG = {
   palanca: (n) => (n >= 3 ? 'La tercera cadena se tensa. Por todas las bodegas retumba el rastrillo al subir.' : `La cadena se tensa y corre por la bóveda. En algún sitio, el rastrillo sube un palmo. (${n}/3)`),
   palancaHecha: 'La palanca ya está echada.',
   pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
-  hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Una escalera de mano baja a la cárcel del castillo.',
+  hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Una escalera de mano baja al almacén de la torre.',
   hatchShut: 'Una trampilla en el techo, atrancada desde arriba.',
-  hatchDown: 'Bajas por la escalera de mano hasta la cárcel.',
-  hatchUp: 'Subes por la escalera de mano a la sala de armas.',
+  hatchDown: 'Bajas por la escalera de mano al almacén.',
+  hatchUp: 'Subes por la escalera de mano al cuerpo de guardia.',
+  puenteAlzado: 'El puente levadizo de la torre del homenaje está alzado. Sólo se baja con el torno, desde dentro.',
+  puenteBaja: 'Sueltas el freno del torno. Con un estruendo de cadenas, el puente levadizo cae sobre el rellano.',
+  escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan cuelgan de la muralla.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   died: 'HAS CAÍDO',
 };
 
 export const AREA_NAMES = {
-  prison: 'Cárcel del Castillo',
-  castle: 'Patio del Castillo',
+  prison: 'Mazmorras del castillo',
+  castle: 'Patio de armas',
+  catacumbas_castillo: 'Catacumbas del castillo',
+  aljibe: 'Aljibe del castillo',
+  torre_carcel: 'Torre de la cárcel',
+  castle_gate: 'Puerta del castillo',
+  cuartel: 'Cuartel de la tropa',
+  homenaje: 'Torre del homenaje',
+  homenaje_almacen: 'Almacén de la torre del homenaje',
+  homenaje_guardia: 'Cuerpo de guardia',
+  homenaje_alcaide: 'Sala del alcaide',
+  homenaje_terraza: 'Terraza de la torre del homenaje',
   souto: 'Calle del Soto',
   praca: 'Plaza del Pan',
   ruase: 'Calle de la Catedral',
@@ -337,6 +363,4 @@ export const AREA_NAMES = {
   coracha: 'La Coracha',
   coracha_torre: 'Torre de la coracha',
   adarve_castillo: 'Adarve del castillo',
-  torre_armas: 'Sala de armas',
-  torre_alcaide: 'Aposentos del alcaide',
 };

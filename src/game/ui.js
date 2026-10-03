@@ -568,10 +568,12 @@ export class UI {
     const b = parchmentBitmap(W, H, 91);
     // (la bodega del canónigo va en el plano de la ciudad, bajo su casa)
     const cellar = g.inCellar(g.player.pos);
-    const crypt = g.player.pos.y < -3 && !cellar;
+    const dungeon = !cellar && g.inDungeon(g.player.pos);
+    const crypt = g.player.pos.y < -3 && !cellar && !dungeon;
     const ey = $('map-eyebrow').querySelector('span');
-    if (ey) ey.textContent = (crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : 'Braga intramuros') + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
-    const layer = crypt ? 'crypt' : cellar ? 'cellar' : undefined;
+    const where = crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : 'Braga intramuros';
+    if (ey) ey.textContent = where + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
+    const layer = crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : undefined;
     const rects = g.level.L.map.filter((m) => m.level === layer && (layer || m.id !== 'river' || g.visited.has('river')));
     const seen = rects.filter((m) => g.visited.has(m.id));
     let x0 = 1e9,
@@ -625,11 +627,14 @@ export class UI {
     }
     // rótulos: primero las zonas grandes; sólo donde caben sin pisarse
     const placed = [];
-    const byArea = [...new Map(vis.map((m) => [m.id, m])).values()].sort((a, bb) => (bb.r[2] - bb.r[0]) * (bb.r[3] - bb.r[1]) - (a.r[2] - a.r[0]) * (a.r[3] - a.r[1]));
+    // (las zonas con 'label' comparten rótulo: los pisos de la torre del homenaje)
     const here = this.g.zone && this.g.zone.id;
+    const hereKey = (vis.find((m) => m.id === here) || {}).label ?? here;
+    const byArea = [...new Map(vis.map((m) => [m.label ?? m.id, m])).values()].sort((a, bb) => (bb.r[2] - bb.r[0]) * (bb.r[3] - bb.r[1]) - (a.r[2] - a.r[0]) * (a.r[3] - a.r[1]));
     for (const m of byArea) {
-      const name = AREA_NAMES[m.id] || m.id;
-      const t = textBitmap(name.toUpperCase(), 'small', { color: m.id === here ? P.blood2 : P.pink0 });
+      const key = m.label ?? m.id;
+      const name = AREA_NAMES[key] || m.id;
+      const t = textBitmap(name.toUpperCase(), 'small', { color: key === hereKey ? P.blood2 : P.pink0 });
       const zw = (m.r[2] - m.r[0]) * sc,
         zh = (m.r[3] - m.r[1]) * sc;
       const cx = X((m.r[0] + m.r[2]) / 2),
@@ -638,7 +643,7 @@ export class UI {
         tz = clamp(cz - Math.floor(t.h / 2), 2, H - t.h - 2);
       const fits = t.w <= Math.max(zw, zh) * 1.6 + 8;
       const clash = placed.some((q) => tx < q[0] + q[2] + 2 && tx + t.w + 2 > q[0] && tz < q[1] + q[3] && tz + t.h > q[1]);
-      if ((!fits || clash) && m.id !== here) continue;
+      if ((!fits || clash) && key !== hereKey) continue;
       placed.push([tx, tz, t.w, t.h]);
       const halo = new Bitmap(t.w, t.h);
       halo.blit(t, 0, 0);
@@ -648,7 +653,7 @@ export class UI {
     // puertas, altares y objetos en zonas visitadas (de este plano: en el de
     // las bodegas salían las puertas de la casa de arriba y no el rastrillo)
     const inVisited = (x, z) => vis.some((m) => x >= m.r[0] - 2 && x <= m.r[2] + 2 && z >= m.r[1] - 2 && z <= m.r[3] + 2);
-    const layerOf = (it) => (g.inCellar(it) ? 'cellar' : it.y < -3 ? 'crypt' : undefined);
+    const layerOf = (it) => (g.inCellar(it) ? 'cellar' : g.inDungeon(it) ? 'dungeon' : it.y < -3 ? 'crypt' : undefined);
     for (const it of g.interact.list) {
       if (layerOf(it) !== layer) continue;
       if (!inVisited(it.x, it.z)) continue;

@@ -321,7 +321,7 @@ export class DevMode {
     if (d.zone) {
       // la celda transitable más cercana al centro de la zona
       const g = this.g;
-      const nav = y < -5 && g.inCellar({ x, y, z }) ? g.navCellar : y < -3 ? g.navCrypt : g.navSurface;
+      const nav = y < -5 && g.inCellar({ x, y, z }) ? g.navCellar : g.inDungeon({ x, y, z }) ? g.navDungeon : y < -3 ? g.navCrypt : g.navSurface;
       const c = nav && nav.nearest(nav.ci(x), nav.cj(z), 12);
       if (c) {
         x = nav.x0 + (c[0] + 0.5) * nav.res;

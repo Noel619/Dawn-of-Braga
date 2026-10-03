@@ -2,7 +2,8 @@
 // rayo hacia abajo contra la geometría dibujada y comprueba que haya una
 // superficie a la altura de la colisión. Agrupa los agujeros encontrados.
 // Con «alto» revisa lo que está en alto (adarves, torres, la atalaya, la
-// coracha, los pisos de la torre del homenaje): lo recorre por inundación
+// coracha, los pisos y la terraza de la torre del homenaje) y lo que está
+// bajo el castillo (mazmorras, catacumbas, aljibe): lo recorre por inundación
 // desde varios puntos, como andaría el jugador (escalones de medio metro, sin
 // atravesar muros ni almenas).
 //   node tools/holes.mjs [paso=1] [alto]      (requiere npx vite --port 5199)
@@ -52,20 +53,29 @@ const r = await p.evaluate(([step, alto]) => {
       [-60, 11.5, -110.5],
       [-60, 9, -90],
       [-60, 9, -64],
-      [-70, 9, -21.5],
-      [-80.5, 9, -12],
-      [-80.5, 4.6, -12],
+      [-66, 9, -21.5],
+      // la torre del homenaje: guardia, sala del alcaide, terraza y rellano
+      [-80, 4.5, -10],
+      [-80, 9, -14],
+      [-83, 13.6, -10],
+      [-82, 4.5, 1.5],
+      // bajo el castillo: mazmorras, catacumbas y aljibe
+      [-80, -5, -12],
+      [-71, -5, 0],
+      [-71, -5, 8.7],
     ];
     const done = new Set();
     const q = [];
     const free = (x, z, gy) => !col.query(x - 0.12, z - 0.12, x + 0.12, z + 0.12, []).some((b) => !b.camOnly && b.miny < gy + 1.6 && b.maxy > gy + 0.05 && col.overlapXZ(b, x, z, 0.12));
+    // (lo de arriba no baja al suelo; lo de abajo no sube a él)
+    const band = (y) => (y < -1 ? [-7, -1.2] : [2.5, 99]);
     for (const [x, y, z] of seeds) {
       const gy = col.groundHeight(x, z, 0.05, y + 0.5);
-      q.push([Math.round(x / R), Math.round(z / R), gy]);
+      q.push([Math.round(x / R), Math.round(z / R), gy, band(y)]);
     }
     let n = 0;
     while (q.length && n < 400000) {
-      const [i, j, y] = q.pop();
+      const [i, j, y, bd] = q.pop();
       const k = key(i, j, y);
       if (done.has(k)) continue;
       done.add(k);
@@ -83,9 +93,9 @@ const r = await p.evaluate(([step, alto]) => {
         const nx = (i + di) * R,
           nz = (j + dj) * R;
         const ny = col.groundHeight(nx, nz, 0.05, y + 0.55);
-        if (ny < 2.5 || Math.abs(ny - y) > 0.55) continue;
+        if (ny < bd[0] || ny > bd[1] || Math.abs(ny - y) > 0.55) continue;
         if (!free(nx, nz, ny)) continue;
-        q.push([i + di, j + dj, ny]);
+        q.push([i + di, j + dj, ny, bd]);
       }
     }
     const groups = [];

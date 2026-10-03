@@ -2,7 +2,7 @@
 
 Survival horror medieval en 3D con combate **Soulslike**, ambientado en una Braga ficticia durante la Reconquista.
 La ciudad ha caído tras un asedio: los sitiadores respondieron a la llamada de algo que dormía bajo la catedral, y la
-corrupción ha deformado a vivos y muertos. Despiertas en una celda del castillo. Tu única meta: **salir de Braga**.
+corrupción ha deformado a vivos y muertos. Despiertas en una celda de las mazmorras del castillo. Tu única meta: **salir de Braga**.
 
 *Dark Souls + Resident Evil 2 + Silent Hill*, en pequeño: un mapa compacto e interconectado, llaves y herramientas
 que abren atajos y zonas nuevas, pocos enemigos pero peligrosos, niebla espesa y una estética de juego perdido de
@@ -48,7 +48,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 
 ## Qué hay dentro
 
-**Mundo.** El castillo con su cárcel, su patio de armas y la capilla de la guarnición, la Calle del Soto, la Plaza
+**Mundo.** El castillo (ver más abajo), la Calle del Soto, la Plaza
 del Pan con su fuente, horca (con escalera por la que se sube al cadalso) y picota, la Calle de la Catedral, la Plaza
 de la Catedral con la pira, la catedral (nave con arquerías, vidrieras, bancos con fieles muertos), el claustro, la
 Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la Torre del Postigo, la Calle de la
@@ -125,12 +125,35 @@ salida: el **salto de fe** a la paja de la atalaya de la coracha. La Bestia se q
 se va. Si mueres durante la huida, vuelves al último tramo; si sales a mitad, al cruzar la niebla del Postigo
 empieza otra vez la huida.
 
+**El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
+desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
+un giro a la izquierda antes del patio, para que nadie cargue en línea recta). El **patio de armas** tiene su pozo,
+que baja al aljibe; el **cuartel de la tropa** (jergones en el suelo, la mesa larga, las lanzas de todos); la fragua
+del armero con su muela; la cocina con el horno de pan y la caldera; las caballerizas, sin caballos (se los
+comieron); la capilla de la guarnición, que acabó de hospital (el altar del castillo); el **fundíbulo** de la
+defensa, partido por un tiro de los de fuera, con sus bolaños; caballos de frisa y la barricada de la puerta. La
+escalera del adarve norte se vino abajo: desde el patio no se sube a la muralla.
+
+La **torre del homenaje**, el último reducto, ocupa la esquina noroeste y los adarves entran en ella. Se sube por una
+escalera exenta hasta un rellano frente a la puerta, en la planta primera, y un **puente levadizo** la une con él;
+está alzado desde dentro. Planta baja: el **almacén** de víveres (trigo, toneles, tinajas de aceite, cecina colgada,
+el pozo de la torre), al que sólo se baja por una trampilla. Primera: el **cuerpo de guardia y la armería** (picas,
+ballestas, escudos, el banco del flechero) con el **torno del puente**. Segunda: la **sala del alcaide**, con la mesa
+del plano de la defensa, la mesa del consejo y el libro de la guarnición, y el alcaide muerto en su escritorio con la
+manivela del torno que abre la reja de la cripta de la Sé. Arriba, la **terraza** de combate: amplia, con su matacán
+sobre la puerta, el fanal, la caldera de la pez y piedras para tirar (ahí se peleará con la Bestia de Carne; el
+escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y pilares de sillería.
+
+**Las mazmorras.** Bajo el patio: el pasillo de las celdas (donde despiertas), el cuarto del carcelero (con la
+espada y el escudo) y la sala del tormento, cavados junto a una necrópolis más antigua, las **catacumbas** (nichos
+con sus muertos, un osario de calaveras), que llegan hasta el **aljibe** del castillo: bóvedas sobre columnas,
+agua negra y la luz pálida que baja por el pozo del patio. Un pasadizo sigue hasta la escalera de la **torre de la
+cárcel**, que sale al patio.
+
 **Lo alto del castillo.** A donde lleva el salto: la atalaya (la cabeza de la coracha, con la paja y la leña del
 fanal), la coracha, un muro almenado que baja desde la muralla norte hasta el castillo con una torre en medio (y en
-ella un altar), el adarve del castillo y, por un puente de tablas, los pisos altos de la torre del homenaje: los
-aposentos del alcaide (muerto en su mesa, con la manivela del torno que abre la reja de la cripta de la Sé y sus
-últimas líneas) y, debajo, la sala de armas, con una trampilla atrancada por arriba que baja por una escalera de
-mano a la cárcel del principio: el atajo de vuelta al patio.
+ella un altar), y el adarve del castillo, que entra en la torre del homenaje por su poterna, en la sala del alcaide.
+Desde dentro, el torno baja el puente levadizo: el atajo de vuelta al patio.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -352,7 +375,8 @@ src/
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
-                        level_keep.js: lo alto del castillo)
+                        level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
+                        atalaya y la coracha)
   dev/                  el modo desarrollador (devmode.js) y quién puede abrirlo (access.js)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
@@ -371,7 +395,13 @@ src/
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
                         progress.mjs   recorre toda la progresión hasta el final
                         fuzz.mjs       prueba de estrés con entradas aleatorias
-                        holes.mjs      busca zonas transitables sin suelo visible
+                        holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
+                                       en alto y bajo el castillo, recorrido como andaría el jugador)
+                        zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
+                                       parpadea entre dos texturas); con una región, sólo ahí
+                        castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
+                                       catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
+                                       terraza y el puente levadizo
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)

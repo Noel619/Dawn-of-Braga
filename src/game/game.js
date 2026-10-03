@@ -29,11 +29,16 @@ import { Breakables } from './breakables.js';
 import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
 import { CELLAR } from '../world/level_cellar.js';
+import { CASTLE } from '../world/level_castle.js';
 import { DevMode } from '../dev/devmode.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 
-const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
+// en la celda de las mazmorras del castillo
+const START = CASTLE.start;
+// el plano fijo del despertar: desde el fondo de la celda; al levantarse,
+// la reja reventada y el pasillo quedan delante
+const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
 const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'] };
 
@@ -101,6 +106,7 @@ export class Game {
     // navegación
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
+    this.navDungeon = new NavGrid(lvl.D, this.world.col, () => CASTLE.dun.y);
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
     // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
     // lado, está a ras de la bodega)
@@ -441,7 +447,7 @@ export class Game {
       this.player.startWake();
       this.camRig.snapTo(this.player);
       this.introCam = true;
-      this.camRig.override = { pos: new THREE.Vector3(-83.1, 3.2, -13.95), look: new THREE.Vector3(-84.7, 0.4, -15.9), speed: 30 };
+      this.camRig.override = { pos: new THREE.Vector3(...WAKE_CAM.pos), look: new THREE.Vector3(...WAKE_CAM.look), speed: 30 };
       this.camRig.cam.position.copy(this.camRig.override.pos);
       this.later(3800, () => this.hint('start'));
     }
@@ -829,6 +835,12 @@ export class Game {
   }
 
   // ¿Está en la bodega del canónigo (o en su escalera)?
+  // Bajo el castillo: las mazmorras, las catacumbas y el aljibe.
+  inDungeon(p) {
+    const D = CASTLE.dun;
+    return p.x > D.x0 && p.x < D.x1 && p.z > D.z0 && p.z < D.z1 && p.y < -1.2 && p.y > D.y - 3;
+  }
+
   inCellar(p) {
     const C = CANON.cellar;
     return p.x > C.x0 - 1 && p.x < C.x1 + 1 && p.z > C.z0 - 1 && p.z < CANON.stair.top + 0.5 && p.y < -0.5 && p.y > C.y - 2;
@@ -1027,7 +1039,10 @@ export class Game {
       const dx = e.pos.x - p.pos.x,
         dz = e.pos.z - p.pos.z;
       const d = Math.hypot(dx, dz);
-      if (d > 20 || Math.abs(e.pos.y - p.pos.y) > 6) continue;
+      // (sólo a una altura parecida: no la de otro piso, ni la de abajo en el
+      // patio desde la muralla)
+      const dy = Math.abs(e.pos.y - p.pos.y);
+      if (d > 20 || dy > 3.2) continue;
       // ángulo entre la vista y la dirección jugador -> criatura
       const a = Math.abs(angleDiff(camYaw, Math.atan2(dx, dz)));
       let score;
@@ -1036,11 +1051,11 @@ export class Game {
         if (v.z > 1 || Math.abs(v.x) > 1.3) continue;
         const sx = v.x - curX;
         if (Math.sign(sx) !== dirSign || Math.abs(sx) < 0.02) continue;
-        score = Math.abs(sx) * 10 + d * 0.08;
+        score = Math.abs(sx) * 10 + d * 0.08 + dy * 0.3;
       } else {
         // delante de la cámara (o pegada al jugador aunque quede de lado)
         if (a > 80 * DEG && d > 3) continue;
-        score = a * 3.0 + d * 0.12;
+        score = a * 3.0 + d * 0.12 + dy * 0.5;
       }
       if (score >= bs) continue;
       if (!this.canSee(e)) continue;
@@ -1133,7 +1148,7 @@ export class Game {
         this.camRig.pitch = 0.5;
         this.camRig.curDist = 2;
         this.camRig.override = null;
-      } else this.camRig.override.look.set(-84.7, 0.4 + Math.min(1, this.player.stT / 3.4) * 1.1, -15.9);
+      } else this.camRig.override.look.set(WAKE_CAM.look[0], WAKE_CAM.look[1] + Math.min(1, this.player.stT / 3.4) * 1.1, WAKE_CAM.look[2]);
     } else if (this.cutscene) {
       // (en pausa se detiene; con «interactuar» se salta al corte)
       if (this.state === 'play' && !this.ui.modal) {

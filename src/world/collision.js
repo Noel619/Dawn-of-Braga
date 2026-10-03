@@ -14,6 +14,8 @@ function toLocal(o, x, z) {
   return _l;
 }
 const _l = [0, 0];
+// Lo estrecho de una caja en planta (para distinguir un forjado de un mueble).
+const slabWidth = (b) => (b.obb ? 2 * Math.min(b.obb.hx, b.obb.hz) : Math.min(b.maxx - b.minx, b.maxz - b.minz));
 
 export class CollisionWorld {
   constructor() {
@@ -232,13 +234,17 @@ export class CollisionWorld {
     return found ? best : Infinity;
   }
 
+  // ¿Se ve de a a b? Tapan los muros y lo que pasa de 0,9 m de alto (un
+  // barril o una mesa en medio no), y también los forjados y techos: losas
+  // finas y anchas (si no, se veía —y se fijaba— a las criaturas de otro
+  // piso a través del suelo).
   lineOfSight(ax, ay, az, bx, by, bz) {
     const dx = bx - ax,
       dy = by - ay,
       dz = bz - az;
     const d = Math.hypot(dx, dy, dz);
     if (d < 0.01) return true;
-    const t = this.raycast(ax, ay, az, dx / d, dy / d, dz / d, d, (b) => b.maxy - b.miny > 0.9 && !b.noSight);
+    const t = this.raycast(ax, ay, az, dx / d, dy / d, dz / d, d, (b) => !b.noSight && (b.maxy - b.miny > 0.9 || (b.maxy - b.miny <= 0.6 && slabWidth(b) > 1.4)));
     return t === Infinity;
   }
 }
