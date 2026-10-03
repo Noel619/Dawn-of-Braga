@@ -643,6 +643,5 @@ export function buildFillers(ctx, S, L) {
   cityWall(ctx, 72, 26, 76, 62, 9, { merlonSides: ['e'] });
   tower(ctx, 74, 60, 5.5, 12.5);
   tower(ctx, 51, 60, 4.5, 11.5);
-  cityWall(ctx, 72, -122, 76, -68, 9, { merlonSides: ['e'] });
-  tower(ctx, 74, -95, 6, 12.5);
+  // (el muro este al norte del Postigo, con su torre, está en level_walls.js)
 }

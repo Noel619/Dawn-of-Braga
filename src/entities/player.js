@@ -181,6 +181,7 @@ export class Player {
     this.yaw = yaw;
     this.vx = this.vz = 0;
     this.state = 'free';
+    this.puppet = false;
     this.anim.stop(0);
     this.anim.weight = 0;
     this.dead = false;
@@ -613,6 +614,19 @@ export class Player {
       this.animate(dt);
       return;
     }
+    // (una secuencia con la Bestia le mueve: sólo se anima)
+    if (this.puppet) {
+      this.stT += dt;
+      this.blocking = false;
+      this.sprinting = false;
+      this.swinging = false;
+      this.iframe = true;
+      this.buffer = null;
+      this.blockW = damp(this.blockW, 0, 16, dt);
+      this.exert = damp(this.exert, 0.7, 0.6, dt);
+      this.animate(dt);
+      return;
+    }
     this.stT += dt;
     this.comboT -= dt;
     const target = g.lockTarget;
@@ -693,9 +707,10 @@ export class Player {
       const wasBlocking = this.blocking;
       this.blocking = wantBlock || st === 'blockhit';
       if (this.blocking && !wasBlocking) this.game.onPlayerAction && this.game.onPlayerAction('block', {});
-      const sprintHeld = allowControl && (input.held('dodge') > 0.3 || input.down('sprint'));
+      // (huyendo de la Bestia se corre siempre, sin gastar aguante)
+      const sprintHeld = allowControl && (input.held('dodge') > 0.3 || input.down('sprint') || !!g.chaseRun);
       this.sprinting = sprintHeld && mag > 0.3 && this.st > 0 && !this.blocking;
-      if (this.sprinting) {
+      if (this.sprinting && !g.chaseRun) {
         this.st -= 14 * dt;
         this.stDelay = 0.45;
       }

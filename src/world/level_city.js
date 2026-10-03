@@ -6,6 +6,7 @@ import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, ov
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { KEEP } from './level_keep.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 
@@ -28,7 +29,10 @@ export function buildCastle(ctx, S, L) {
   wb.box('ashlar', -49.8, 0, -2.6, -49.4, 0.06, 2.6, { faces: 'tnsew', ao: false });
 
   // --- murallas del castillo
-  cityWall(ctx, -93, -23, -48, -20, 9, { merlonSides: ['n'] });
+  // (al norte, las almenas se abren donde llega la coracha: level_keep.js)
+  cityWall(ctx, -93, -23, -48, -20, 9, { merlons: false });
+  merlons(ctx, -93, -22.7, KEEP.coracha.x0, -22.7, 9, { collide: false });
+  merlons(ctx, KEEP.coracha.x1, -22.7, -48, -22.7, 9, { collide: false });
   cityWall(ctx, -93, 20, -48, 23, 9, { merlonSides: ['s'] });
   cityWall(ctx, -93, -20, -90, 20, 9, { merlonSides: ['w'] });
   // muro este con la puerta
@@ -57,7 +61,18 @@ export function buildCastle(ctx, S, L) {
   solid(ctx, 'wallstone', K.x1 - t, 0, K.z0, K.x1, K.h, -9, { sub: 2, aoH: 2, faces: 'nsew' });
   solid(ctx, 'wallstone', K.x1 - t, 0, -7.5, K.x1, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
   solid(ctx, 'wallstone', K.x1 - t, 2.5, -9, K.x1, K.h, -7.5, { sub: 2, ao: false, faces: 'nsewb' });
-  solid(ctx, 'wallstone', K.x0 + t, 0, K.z0, K.x1 - t, K.h, K.z0 + t, { sub: 2, aoH: 2, faces: 'nsew' });
+  // (el muro norte, con la puerta de los aposentos del alcaide, que da al
+  // adarve del castillo por un puente de tablas: level_keep.js)
+  {
+    const D = KEEP.door;
+    solid(ctx, 'wallstone', K.x0 + t, 0, K.z0, K.x1 - t, D.y0, K.z0 + t, { sub: 2, aoH: 2, faces: 'nsew' });
+    solid(ctx, 'wallstone', K.x0 + t, D.y0, K.z0, D.x0, D.y1, K.z0 + t, { sub: 2, faces: 'nsew' });
+    solid(ctx, 'wallstone', D.x1, D.y0, K.z0, K.x1 - t, D.y1, K.z0 + t, { sub: 2, faces: 'nsew' });
+    solid(ctx, 'wallstone', K.x0 + t, D.y1, K.z0, K.x1 - t, K.h, K.z0 + t, { sub: 2, faces: 'nsewb' });
+    wb.box('ashlar', D.x0 - 0.25, D.y0, K.z0 - 0.08, D.x0, D.y1, K.z0 + 0.02, { ao: false });
+    wb.box('ashlar', D.x1, D.y0, K.z0 - 0.08, D.x1 + 0.25, D.y1, K.z0 + 0.02, { ao: false });
+    wb.box('ashlar', D.x0 - 0.25, D.y1, K.z0 - 0.1, D.x1 + 0.25, D.y1 + 0.3, K.z0 + 0.02, { ao: false, faces: 'tnsewb' });
+  }
   solid(ctx, 'wallstone', K.x0 + t, 0, K.z1 - t, K.x1 - t, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
   wb.box('wallstone', K.x0 - 0.4, K.h - 0.6, K.z0 - 0.4, K.x1 + 0.4, K.h, K.z1 + 0.4, { ao: false, sub: 3, faces: 'tnsewb' });
   merlons(ctx, K.x0 - 0.4, K.z0 - 0.1, K.x1 + 0.4, K.z0 - 0.1, K.h, { collide: false });
@@ -140,6 +155,11 @@ export function buildCastle(ctx, S, L) {
   P.barrel(ctx, -85.2, 0, -6.0);
   P.crate(ctx, -75.4, 0, -6.3, 0.8, 0.3);
   P.wallTorch(ctx, -86.5, 2.2, -11.5, 'e', { room, radius: 7 });
+  // escalera de mano hasta una trampilla en el techo (atrancada desde arriba:
+  // el atajo de la sala de armas, level_keep.js)
+  P.ladder(ctx, KEEP.hatch.x - 0.62, 0, KEEP.hatch.z, 4.15, Math.PI / 2, 0.1);
+  wb.box('wooddark', KEEP.hatch.x - 0.62, 4.16, KEEP.hatch.z - 0.62, KEEP.hatch.x + 0.62, 4.2, KEEP.hatch.z + 0.62, { ao: false, faces: 'b', room });
+  for (const dz of [-0.4, 0, 0.4]) wb.box('iron', KEEP.hatch.x - 0.5, 4.13, KEEP.hatch.z + dz - 0.03, KEEP.hatch.x + 0.5, 4.16, KEEP.hatch.z + dz + 0.03, { ao: false, room });
   P.wallTorch(ctx, -74.5, 2.2, -14.5, 'w', { room, radius: 6 });
   P.wallTorch(ctx, -80.5, 2.2, -5.5, 'n', { room, radius: 6, dyn: 2.5 });
   bakeCorpse(wb, -76.2, 0.02, -16.6, 2.2, 'back', 'soldier', 4);

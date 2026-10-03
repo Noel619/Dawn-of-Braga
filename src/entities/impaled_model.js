@@ -606,8 +606,8 @@ export function beastDef() {
   for (let i = 0; i < 6; i++) P.push({ j: 'chest', type: 'cone', s: [0.07 - i * 0.006, 0.36 - i * 0.03], p: [0, 0.95 - i * 0.17, -0.48 + i * 0.03], r: [-130 + i * 6, 0, 0], seg: 5, mat: 'bone' });
   for (let i = 0; i < 3; i++) P.push({ j: 'spine', type: 'cone', s: [0.05, 0.22], p: [0, 0.42 - i * 0.16, -0.34], r: [-120, 0, 0], seg: 5, mat: 'bone' });
   // la pica partida que le sigue saliendo de la espalda
-  P.push({ ...rod(D.stub, [D.stub[0] - 0.42, D.stub[1] + 0.52, D.stub[2] - 0.58], 0.055, 0.045, 'wooddark', { seg: 7 }), j: 'chest' });
-  P.push({ ...rod([D.stub[0] - 0.4, D.stub[1] + 0.5, D.stub[2] - 0.56], [D.stub[0] - 0.47, D.stub[1] + 0.62, D.stub[2] - 0.6], 0.04, 0.01, 'wooddark', { seg: 5 }), j: 'chest' });
+  P.push({ ...rod(D.stub, [D.stub[0] - 0.42, D.stub[1] + 0.52, D.stub[2] - 0.58], 0.055, 0.045, 'wooddark', { seg: 7, grp: 'stub' }), j: 'chest' });
+  P.push({ ...rod([D.stub[0] - 0.4, D.stub[1] + 0.5, D.stub[2] - 0.56], [D.stub[0] - 0.47, D.stub[1] + 0.62, D.stub[2] - 0.6], 0.04, 0.01, 'wooddark', { seg: 5, grp: 'stub' }), j: 'chest' });
   P.push({ j: 'chest', type: 'ico', s: [0.13, 0.11, 0.12], p: D.stub, mat: 'blood' });
   // la hombrera derecha, hundida en la carne, y la gola rota
   P.push({ j: 'chest', type: 'sphere', s: [0.34, 0.27, 0.36], sph: [180, 200, 0, 70], p: [-0.7, 0.68, 0.0], r: [0, 0, 24], seg: 10, seg2: 5, mat: 'plateRust', ds: true });

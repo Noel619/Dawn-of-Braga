@@ -8,6 +8,8 @@ import { buildCastle, buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelam
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
 import { buildCanon } from './level_canon.js';
+import { buildNorthWalls } from './level_walls.js';
+import { buildCastleTop } from './level_keep.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
@@ -54,6 +56,8 @@ export function buildLevel() {
   buildCrypt(ctx, S, C, L);
   buildRiver(ctx, S, L);
   buildFillers(ctx, S, L);
+  buildNorthWalls(ctx, S, L);
+  buildCastleTop(ctx, S, L);
 
   // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
   for (const c of corpseLog) {

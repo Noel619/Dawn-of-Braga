@@ -181,6 +181,18 @@ Al alba, la tierra estaba removida.
 
 Desde dentro.`,
   },
+  alcaide: {
+    title: 'Últimas líneas del alcaide',
+    text: `Día catorce del asedio.
+
+Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo clavaron a su propia puerta con una pica de asedio, y la puerta aguantó. Él también. Al alba seguía en pie, con el asta dentro, y ya no nos conocía.
+
+Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
+
+La manivela del torno abre también la reja de la cripta de la Sé. El arzobispo bajó con sus canónigos y no ha vuelto a subir. No pienso dársela a nadie.
+
+He atrancado la trampilla de la sala de armas. Que no suba nadie de la cárcel.`,
+  },
   muralla: {
     title: 'Orden del alcaide',
     text: `Nadie abre el rastrillo del Postigo. NADIE.
@@ -262,6 +274,10 @@ export const MSG = {
   palanca: (n) => (n >= 3 ? 'La tercera cadena se tensa. Por todas las bodegas retumba el rastrillo al subir.' : `La cadena se tensa y corre por la bóveda. En algún sitio, el rastrillo sube un palmo. (${n}/3)`),
   palancaHecha: 'La palanca ya está echada.',
   pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
+  hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Una escalera de mano baja a la cárcel del castillo.',
+  hatchShut: 'Una trampilla en el techo, atrancada desde arriba.',
+  hatchDown: 'Bajas por la escalera de mano hasta la cárcel.',
+  hatchUp: 'Subes por la escalera de mano a la sala de armas.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   died: 'HAS CAÍDO',
 };
@@ -315,4 +331,12 @@ export const AREA_NAMES = {
   tintoreria: 'Tintorería',
   corral: 'Corral de los Pellejeros',
   establo: 'Establo',
+  adarve_norte: 'Adarve norte',
+  torre_fanal: 'Torre del Fanal',
+  atalaya: 'Atalaya de la coracha',
+  coracha: 'La Coracha',
+  coracha_torre: 'Torre de la coracha',
+  adarve_castillo: 'Adarve del castillo',
+  torre_armas: 'Sala de armas',
+  torre_alcaide: 'Aposentos del alcaide',
 };

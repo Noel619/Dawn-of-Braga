@@ -303,6 +303,31 @@ function noteMesh(model) {
 
 // Palanca de pared: mango de hierro con empuñadura de madera, en un eje
 // empotrado en su placa. Local: +Y arriba, +Z hacia la sala, gira en X.
+// Trampilla del suelo (vista desde arriba): la tapa gira sobre su bisagra
+// y deja ver el hueco negro con la escalera de mano.
+function hatchMesh() {
+  const g = new THREE.Group();
+  const lidG = new THREE.Group();
+  lidG.position.set(-0.6, 0, 0);
+  const mat = cloneMat(objMat('planks'));
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, 1.2), mat);
+  lid.position.set(0.6, 0.03, 0);
+  lidG.add(lid);
+  const iron = cloneMat(objMat('iron'));
+  for (const dz of [-0.4, 0, 0.4]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.03, 0.06), iron);
+    b.position.set(0.6, 0.075, dz);
+    lidG.add(b);
+  }
+  g.add(lidG);
+  const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.14, 1.14).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x030202 }));
+  hole.position.y = 0.035;
+  hole.visible = false;
+  g.add(hole);
+  g.userData = { lidG, hole, mats: [mat, iron] };
+  return g;
+}
+
 function leverMesh() {
   const g = new THREE.Group();
   const iron = objMat('iron'),
@@ -534,6 +559,22 @@ export class Interactables {
       g.scene.add(it.obj);
       it.pull = 0;
       it.r = s.r ?? 1.8;
+    } else if (s.kind === 'hatch') {
+      it.r = s.r ?? 1.6;
+      if (s.end === 'top') {
+        it.obj = hatchMesh();
+        it.obj.position.set(s.x, s.y + 0.03, s.z);
+        g.scene.add(it.obj);
+        // con la luz horneada del sitio
+        const zn = g.zoneAt(s);
+        const pr = g.probe.sample(s.x, s.y + 0.9, s.z, zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0);
+        for (const m of it.obj.userData.mats)
+          if (m._u) {
+            m._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+            m._u.uGround.value.set(s.y, 0.34);
+          }
+        it.lift = 0;
+      }
     } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
@@ -567,9 +608,18 @@ export class Interactables {
         it.pull = 0;
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
       }
+      if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] ? 1 : 0);
     }
     // los rastrillos de palancas: un palmo por palanca echada
     for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
+  }
+
+  // Tapa de la trampilla: 0 cerrada, 1 abierta (tumbada sobre el suelo).
+  poseHatch(it, k) {
+    it.lift = k;
+    const u = it.obj.userData;
+    u.lidG.rotation.z = k * 2.75;
+    u.hole.visible = k > 0.02;
   }
 
   // Palancas de un rastrillo ya echadas.
@@ -617,6 +667,9 @@ export class Interactables {
       it.pull = 0;
       it.pulling = false;
       it.obj.userData.arm.rotation.x = LEVER_UP;
+    } else if (it.kind === 'hatch') {
+      it.opening = false;
+      if (it.obj) this.poseHatch(it, 0);
     } else if (it.kind === 'breakable') {
       it.smash = 0;
       it.bk = undefined;
@@ -834,6 +887,9 @@ export class Interactables {
         return 'Echar la palanca';
       case 'well':
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
+      case 'hatch':
+        if (it.end === 'top') return this.game.flags[it.flag] ? 'Bajar por la escalera' : 'Abrir la trampilla';
+        return this.game.flags[it.flag] ? 'Subir por la escalera' : 'Examinar la trampilla';
     }
     return 'Interactuar';
   }
@@ -936,6 +992,23 @@ export class Interactables {
       g.climbWell(it);
       return true;
     }
+    if (it.kind === 'hatch') {
+      if (g.flags[it.flag]) g.hatchMove(it);
+      else if (it.end === 'top') {
+        // se descorre el cerrojo y la tapa se abre: el atajo a la cárcel
+        g.flags[it.flag] = true;
+        it.opening = true;
+        p.playInteract('interact', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
+        g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z });
+        setTimeout(() => g.audio && g.audio.play('doorOpen', { x: it.x, y: it.y, z: it.z }), 350);
+        g.ui.toast(MSG.hatchOpen, 4.5);
+        g.saveGame();
+      } else {
+        g.ui.toast(MSG.hatchShut, 4);
+        g.audio && g.audio.play('locked', { x: it.x, y: it.y + 4, z: it.z });
+      }
+      return true;
+    }
     if (it.kind === 'well') {
       if (g.flags['pozo:salida']) g.descendWell(it);
       else {
@@ -1009,6 +1082,11 @@ export class Interactables {
         this.poseDoor(it, 1 - Math.pow(1 - k, 2));
         if (k >= 1 && it.mat === 'barricade') it.obj.visible = false;
         if (k >= 1 && it.boards) it.boards.visible = false;
+      }
+      if (it.kind === 'hatch' && it.opening && it.obj) {
+        const k = Math.min(1, it.lift + dt / 0.7);
+        this.poseHatch(it, k);
+        if (k >= 1) it.opening = false;
       }
       if ((it.kind === 'item' || it.kind === 'note') && it.glow && it.obj.visible) {
         const s = (it.kind === 'item' ? 0.55 : 0.3) * (0.8 + 0.25 * Math.sin(t * 3 + it.x));

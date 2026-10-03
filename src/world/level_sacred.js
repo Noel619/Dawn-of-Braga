@@ -685,10 +685,12 @@ export function buildRiver(ctx, S, L) {
   for (let x = -1.6; x <= 1.6; x += 0.3) wb.box('iron', x - 0.03, 0, -1.5, x + 0.03, 0.06, 1.5, { ao: false });
   wb.pop();
   // talud hasta las murallas
-  wb.quad('dirt', new THREE.Vector3(-70, 5, -194.5), new THREE.Vector3(70, 5, -194.5), new THREE.Vector3(70, 11, -135), new THREE.Vector3(-70, 11, -135), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
-  // muralla norte de la ciudad y la Sé recortada contra el cielo
-  cityWall(ctx, -93, -126, 76, -122, 10, { merlonSides: ['n'] });
-  for (const x of [-60, -30, 25, 55]) tower(ctx, x, -124, 6, 14);
+  // (sube desde la orilla y vuelve a bajar hasta el pie de la muralla: desde
+  // el adarve se ve la ladera, no una explanada a la altura de las almenas)
+  wb.quad('dirt', new THREE.Vector3(-70, 5, -194.5), new THREE.Vector3(70, 5, -194.5), new THREE.Vector3(70, 7.5, -152), new THREE.Vector3(-70, 7.5, -152), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
+  wb.quad('dirt', new THREE.Vector3(-70, 7.5, -152), new THREE.Vector3(70, 7.5, -152), new THREE.Vector3(70, 2.5, -126.1), new THREE.Vector3(-70, 2.5, -126.1), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
+  // (la muralla norte de la ciudad, recortada contra el cielo con la Sé
+  // detrás, la levanta level_walls.js: por su adarve corre la persecución)
   // colinas lejanas al otro lado del río (crestas irregulares)
   let hx = -220;
   for (let i = 0; i < 14; i++) {

@@ -189,6 +189,64 @@ function commonClips(W, G, GUARD, BLOCK) {
       })()
     ),
     rest: clip('rest', 1.0, [[0, { root: [0, -48, 0], chest: [22, 0, 0], head: [35, 0, 0], legL: [-95, 0, 6], shinL: [95, 0, 0], legR: [5, 0, -4], shinR: [100, 0, 0], armR: [-48, 0, -6], foreR: [-45, 0, 0], handR: [60, 0, 0], armL: [-48, 0, 6], foreL: [-60, 0, 0] }]], { ground: false }),
+    // ---- secuencias con la Bestia de Carne (las mueve el guion)
+    // salto a la carrera: se impulsa, encoge las piernas y prepara la caída
+    jump: clip(
+      'jump',
+      0.75,
+      [
+        [0, { root: [0, -14, 0], chest: [24, 0, 0], legL: [-34, 0, 4], shinL: [56, 0, 0], legR: [22, 0, -4], shinR: [34, 0, 0], armL: [30, 0, 12], foreL: [-30, 0, 0], armR: [34, 0, -12], foreR: [-30, 0, 0] }],
+        [0.14, { root: [0, 2, 0], chest: [14, 0, 0], head: [-10, 0, 0], legL: [-64, 0, 4], shinL: [88, 0, 0], legR: [26, 0, -4], shinR: [12, 0, 0], armL: [-100, 0, 24], foreL: [-30, 0, 0], armR: [-96, 0, -24], foreR: [-30, 0, 0] }, 'snap'],
+        [0.42, { root: [0, 0, 0], chest: [26, 0, 0], head: [-14, 0, 0], legL: [-84, 0, 4], shinL: [112, 0, 0], legR: [-54, 0, -4], shinR: [104, 0, 0], armL: [-126, 0, 34], foreL: [-20, 0, 0], armR: [-120, 0, -34], foreR: [-20, 0, 0] }],
+        [0.75, { root: [0, -34, 0], chest: [32, 0, 0], head: [-6, 0, 0], legL: [-62, 0, 6], shinL: [94, 0, 0], legR: [-22, 0, -6], shinR: [84, 0, 0], armL: [-46, 0, 34], foreL: [-40, 0, 0], armR: [-46, 0, -34], foreR: [-40, 0, 0] }],
+      ],
+      { ground: false }
+    ),
+    // colgado del borde por las manos, pataleando
+    hang: clip(
+      'hang',
+      1.0,
+      [
+        [0, { armL: [-170, 0, 14], foreL: [-12, 0, 0], armR: [-170, 0, -14], foreR: [-12, 0, 0], chest: [-8, 0, 0], head: [-26, 0, 0], legL: [-24, 0, 4], shinL: [30, 0, 0], legR: [12, 0, -4], shinR: [44, 0, 0] }],
+        [0.5, { armL: [-168, 0, 12], foreL: [-18, 0, 0], armR: [-172, 0, -12], foreR: [-8, 0, 0], chest: [-4, 6, 0], head: [-30, 0, 0], legL: [14, 0, 4], shinL: [46, 0, 0], legR: [-28, 0, -4], shinR: [26, 0, 0] }],
+        [1.0, { armL: [-170, 0, 14], foreL: [-12, 0, 0], armR: [-170, 0, -14], foreR: [-12, 0, 0], chest: [-8, 0, 0], head: [-26, 0, 0], legL: [-24, 0, 4], shinL: [30, 0, 0], legR: [12, 0, -4], shinR: [44, 0, 0] }],
+      ],
+      { ground: false, loop: true }
+    ),
+    // se encarama: tira de los brazos, apoya el pecho y sube una rodilla
+    climbUp: clip(
+      'climbUp',
+      0.95,
+      [
+        [0, { armL: [-170, 0, 14], foreL: [-12, 0, 0], armR: [-170, 0, -14], foreR: [-12, 0, 0], chest: [-8, 0, 0], head: [-26, 0, 0], legL: [-24, 0, 4], shinL: [30, 0, 0], legR: [12, 0, -4], shinR: [44, 0, 0] }],
+        [0.36, { armL: [-124, 0, 22], foreL: [-104, 0, 0], armR: [-124, 0, -22], foreR: [-104, 0, 0], chest: [30, 0, 0], head: [12, 0, 0], legL: [-44, 0, 4], shinL: [70, 0, 0], legR: [6, 0, -4], shinR: [40, 0, 0] }],
+        [0.66, { root: [0, -42, 0], chest: [50, 0, 0], head: [16, 0, 0], armL: [-40, 0, 22], foreL: [-60, 0, 0], armR: [-40, 0, -22], foreR: [-60, 0, 0], legL: [-104, 0, 6], shinL: [124, 0, 0], legR: [-20, 0, -4], shinR: [66, 0, 0] }],
+        [0.95, { ...GUARD }],
+      ],
+      { ground: false }
+    ),
+    // el salto de fe: dos zancadas, el impulso y los brazos abiertos en el aire
+    leap: clip(
+      'leap',
+      1.3,
+      [
+        [0, { root: [0, -10, 0], chest: [20, 0, 0], legL: [-40, 0, 4], shinL: [50, 0, 0], legR: [26, 0, -4], shinR: [30, 0, 0], armL: [40, 0, 14], armR: [40, 0, -14] }],
+        [0.2, { root: [0, 4, 0], chest: [8, 0, 0], head: [-16, 0, 0], legL: [-30, 0, 4], shinL: [20, 0, 0], legR: [40, 0, -4], shinR: [24, 0, 0], armL: [-60, 0, 50], armR: [-60, 0, -50] }, 'snap'],
+        [0.5, { root: [0, 0, 0], hips: [-8, 0, 0], chest: [-22, 0, 0], head: [-34, 0, 0], armL: [-86, 0, 84], foreL: [-6, 0, 0], armR: [-86, 0, -84], foreR: [-6, 0, 0], legL: [12, 0, 6], shinL: [22, 0, 0], legR: [26, 0, -6], shinR: [30, 0, 0] }],
+        [1.3, { root: [0, 0, 0], hips: [-10, 0, 0], chest: [-24, 0, 0], head: [-30, 0, 0], armL: [-90, 0, 88], foreL: [-4, 0, 0], armR: [-90, 0, -88], foreR: [-4, 0, 0], legL: [16, 0, 6], shinL: [26, 0, 0], legR: [30, 0, -6], shinR: [34, 0, 0] }],
+      ],
+      { ground: false }
+    ),
+    // cae de espaldas (en la paja, o derribado): luego se levanta (getup)
+    fallBack: clip(
+      'fallBack',
+      0.4,
+      [
+        [0, { root: [0, -10, 0], hips: [-20, 0, 0], chest: [-20, 0, 0], head: [-20, 0, 0], armL: [-60, 0, 60], armR: [-60, 0, -60], legL: [-40, 0, 6], shinL: [40, 0, 0], legR: [-20, 0, -6], shinR: [50, 0, 0] }],
+        [0.4, { root: [0, -80, 0], hips: [-88, 0, 0], chest: [-6, 0, 0], head: [-10, 0, 0], armL: [-40, 0, 50], armR: [-40, 0, -50], legL: [-30, 0, 8], shinL: [50, 0, 0], legR: [-20, 0, -8], shinR: [40, 0, 0] }, 'snap'],
+      ],
+      { ground: false }
+    ),
     wake: clip(
       'wake',
       3.4,

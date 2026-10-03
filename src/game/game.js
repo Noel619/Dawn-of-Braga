@@ -30,6 +30,8 @@ import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { DevMode } from '../dev/devmode.js';
+import { QTE } from './qte.js';
+import { BeastChase } from './beast_chase.js';
 
 const START = { x: -84.6, y: 0, z: -15.8, yaw: Math.PI };
 // música de cada jefe (fase 1 y fase 2)
@@ -128,6 +130,10 @@ export class Game {
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
+    // la segunda forma del Empalado y la huida por la muralla norte
+    this.qte = new QTE(this);
+    this.chase = new BeastChase(this);
+    this.beastTransform = (e) => this.chase.transform(e);
     // modo desarrollador (F2; sólo en localhost o desde la IP del autor)
     this.dev = new DevMode(this);
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
@@ -234,10 +240,20 @@ export class Game {
         e.obj.visible = false;
         e.shadow.visible = false;
         if (e.P.censer) e.P.censer.grp.visible = false;
-      }
+      } else if (e.type === 'impaled' && this.flags['impaled:beast']) this.hideImpaled(e);
     }
     this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
     this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
+  }
+
+  // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
+  // (la niebla sigue ahí hasta escapar de ella).
+  hideImpaled(e) {
+    e.scripted = true;
+    e.state = 'dead';
+    e.stT = 99;
+    e.obj.visible = false;
+    e.shadow.visible = false;
   }
 
   // ------------------------------------------------------------ ajustes
@@ -287,6 +303,7 @@ export class Game {
     this.run = (this.run || 0) + 1;
     this.endCutscene();
     this.hunt.reset();
+    this.chase.reset();
     const death = document.getElementById('death');
     death.classList.remove('show');
     death.classList.add('hidden');
@@ -591,6 +608,13 @@ export class Game {
   enterFog(it) {
     const p = this.player;
     const b = this.bosses[it.boss];
+    if (this.chase.active) return;
+    // (ya transformado: directamente a la huida)
+    if (it.boss === 'impaled' && this.flags['impaled:beast'] && !this.flags['boss:impaled']) {
+      this.audio.play('fog');
+      this.chase.resume();
+      return;
+    }
     if (!b || b.dead) return;
     this.audio.play('fog');
     // cruzar la niebla
@@ -698,6 +722,19 @@ export class Game {
     this.slowmo = null;
     this.endCutscene();
     this.hunt.reset();
+    // huyendo de la Bestia: desde el último punto de control de la huida
+    if (this.chase.active) {
+      this.combat.clear();
+      this.lockTarget = null;
+      for (const e of this.enemies) if (!(e.boss && this.flags['boss:' + e.type]) && e.type !== 'impaled') e.reset();
+      this.player.spawn(this.player.pos.x, this.player.pos.y, this.player.pos.z, this.player.yaw);
+      this.chase.retry();
+      if (this._pauseAfterDeath) {
+        this._pauseAfterDeath = false;
+        if (this.state === 'play') this.openPause();
+      }
+      return;
+    }
     // mientras el canónigo siga vivo, sus bodegas vuelven a estar como
     // estaban: palancas arriba, rastrillo bajado y todo entero otra vez
     if (!this.flags['boss:descoyuntado']) this.resetCellar();
@@ -819,6 +856,18 @@ export class Game {
     this.fadeTarget = 0;
     this.audio.play('climb', p.pos);
   }
+  // La escalera de mano de la trampilla (sala de armas <-> cárcel).
+  hatchMove(it) {
+    const p = this.player;
+    if (this.climb || p.dead) return;
+    this.climb = { dir: 'to', t: 0, hp: p.hp, to: it.to, msg: it.end === 'top' ? MSG.hatchDown : MSG.hatchUp };
+    p.playInteract('interact');
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    this.lockTarget = null;
+    this.fadeTarget = 0;
+    this.audio.play('climb', p.pos);
+  }
   updateClimb(dt) {
     const c = this.climb;
     if (!c) return;
@@ -834,7 +883,10 @@ export class Game {
     this.climb = null;
     const W = CELLAR.well,
       SW = CELLAR.streetWell;
-    if (c.dir === 'up') {
+    if (c.dir === 'to') {
+      p.spawn(c.to[0], c.to[1], c.to[2], c.to[3]);
+      this.ui.toast(c.msg, 3.5);
+    } else if (c.dir === 'up') {
       p.spawn(SW.x, 0, SW.z + 1.75, 0);
       this.flags['pozo:salida'] = true;
       this.hunt.stop();
@@ -1100,6 +1152,10 @@ export class Game {
       }
     } else if (this.state !== 'ending') this.camRig.override = null;
 
+    // (los avisos de pulsación corren en tiempo real; el juego, mientras, a
+    // cámara lenta)
+    if (this.state === 'play' && !this.ui.modal) this.qte.update(dt);
+    if (this.qte.active) dt *= this.qte.slow;
     if (this.hitstop > 0) {
       this.hitstop -= dt;
       dt *= 0.05;
@@ -1133,7 +1189,7 @@ export class Game {
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene;
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !this.chase.lock;
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -1179,6 +1235,7 @@ export class Game {
       if (this.state === 'play') {
         this.hunt.update(dt);
         this.updateClimb(dt);
+        this.chase.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
@@ -1193,7 +1250,7 @@ export class Game {
       if (p.autoDir && p.pos.z < -211.5) p.autoDir = null;
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene);
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !this.chase.lock);
 
     // zona y atmósfera
     if (this.state !== 'title') {
@@ -1205,7 +1262,7 @@ export class Game {
         this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' ? 'dirt' : 'stone';
         if (!this.visited.has(z.id)) {
           this.visited.add(z.id);
-          if (AREA_NAMES[z.id] && this.state === 'play' && (!this.activeBoss || this.activeBoss.T.stalker)) {
+          if (AREA_NAMES[z.id] && this.state === 'play' && (!this.activeBoss || this.activeBoss.T.stalker) && !(this.chase.active && this.chase.lock)) {
             this.ui.area(AREA_NAMES[z.id]);
             this.audio.play('discover');
           }
