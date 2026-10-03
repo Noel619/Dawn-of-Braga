@@ -63,7 +63,8 @@ function gateTower(ctx, cx, cz, w, yF, h, axis, o = {}) {
     dh = o.dh ?? 3.8,
     ch = o.ch ?? 4.6;
   solid(ctx, 'wallstone', x0, 0, z0, x1, yF, z1, { sub: 2.2, aoH: 3, faces: 'nsew' });
-  wb.box('flag', x0 + t, yF - 0.3, z0 + t, x1 - t, yF, z1 - t, { faces: 't', ao: false, uv: 0.8 });
+  // (el enlosado, por toda la planta: también bajo los umbrales de las puertas)
+  wb.box('flag', x0, yF - 0.3, z0, x1, yF, z1, { faces: 't', ao: false, uv: 0.8 });
   const room = (a0, b0, a1, b1, y0, y1, faces) =>
     axis === 'x' ? solid(ctx, 'wallstone', a0, y0, b0, a1, y1, b1, { sub: 2, faces }) : solid(ctx, 'wallstone', b0, y0, a0, b1, y1, a1, { sub: 2, faces });
   // en coordenadas del adarve: a a lo largo, b de través
@@ -126,8 +127,9 @@ function gateTower(ctx, cx, cz, w, yF, h, axis, o = {}) {
 function wallRun(ctx, x0, z0, x1, z1, h, out, o = {}) {
   cityWall(ctx, x0, z0, x1, z1, h, { merlonSides: [out] });
   // colisión de las almenas (el muro las pone sólo de adorno)
-  if (out === 'n') blocker(ctx, x0, h - 0.2, z0, x1, h + 1.1, z0 + 0.6);
-  if (out === 'e') blocker(ctx, x1 - 0.6, h - 0.2, z0, x1, h + 1.1, z1);
+  // (alta: que no se pueda subir encima desde un escalón o una caja)
+  if (out === 'n') blocker(ctx, x0, h - 0.2, z0, x1, h + 2.4, z0 + 0.6);
+  if (out === 'e') blocker(ctx, x1 - 0.6, h - 0.2, z0, x1, h + 2.4, z1);
   if (o.inner === false) return;
   if (out === 'n') parapet(ctx, x0 + (o.trimA ?? 0), z1 - 0.5, x1 - (o.trimB ?? 0), z1, h);
   if (out === 'e') parapet(ctx, x0, z0 + (o.trimA ?? 0), x0 + 0.5, z1 - (o.trimB ?? 0), h);
@@ -170,7 +172,7 @@ export function buildNorthWalls(ctx, S, L) {
     wallRun(ctx, a, -126, b, -122, YN, 'n', { trimB: b === 76 ? 4 : 0 });
   }
   // la esquina: almenas también al este
-  blocker(ctx, 75.4, YN - 0.2, -126, 76, YN + 1.1, -122);
+  blocker(ctx, 75.4, YN - 0.2, -126, 76, YN + 2.4, -122);
   merlons(ctx, 75.7, -126, 75.7, -122, YN, { collide: false });
   for (const x of towerX) gateTower(ctx, x, -124, tw, YN, 16, 'x');
 

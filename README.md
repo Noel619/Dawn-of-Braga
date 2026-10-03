@@ -115,7 +115,8 @@ testuz de toro, cuernos de hueso y la columna en cresta. Ruge, se arranca la pic
 embiste: si la esquivas, revienta el torno y la barricada que cerraba el adarve del norte y se queda un instante
 con los cuernos clavados en la piedra. Por el hueco empieza **la huida**, por el adarve, con la Bestia pisándote los
 talones (si te alcanza, te golpea; corres sin gastar aguante) y, de vez en cuando, un vistazo atrás. En cada tramo,
-**pulsaciones rápidas** (la tecla o el botón del mando en un anillo que se vacía, a cámara lenta): un sillar
+**pulsaciones rápidas** (en un anillo que se vacía, a cámara lenta, lo que hay que pulsar parpadeando: la tecla,
+el ratón con el botón encendido o el botón del mando con su forma, gatillos y botones de los hombros): un sillar
 arrancado del parapeto por el aire, una viga ardiendo atravesada en la torre (rodar por debajo), un salto sobre ti
 en la esquina, el adarve hundido (saltar; si te quedas corto, cuelgas del borde y hay que trepar machacando) y los
 **reflejos**: te corta el paso de un salto y llegan zarpazo (esquiva), cornada (desvía), zarpa (golpea) y mazazo
@@ -275,8 +276,9 @@ parpadeantes, ceniza cayendo, brasas, humo, sangre, sombras de mancha, filtro CR
 **Interfaz en pixel art.** Todos los menús se dibujan con sprites generados por código a resolución de arte y
 escalado entero: marcos de hierro con esquineras doradas, estandartes carmesí con espadas como cursor, una gran espada
 en la portada, pergamino rasgado con capitular iluminada y lacre para los documentos, iconos 32×32, mapa sobre
-pergamino, teclas dibujadas y un HUD pintado píxel a píxel. El texto usa fuentes pixeladas (Jacquarda Bastarda 9,
-Handjet, Silkscreen y Jacquard) siempre a múltiplos exactos de su rejilla para que se vea nítido.
+pergamino, teclas dibujadas (los clics, un ratón con el botón encendido; en el mando, cada botón con su forma) y
+un HUD pintado píxel a píxel. El texto usa fuentes pixeladas (Jacquarda Bastarda 9, Handjet, Silkscreen y Jacquard)
+siempre a múltiplos exactos de su rejilla para que se vea nítido.
 
 **Música adaptativa, compuesta por código.** Cada zona tiene su tema, con su modo, tempo e instrumentos, y tres
 capas que se funden según lo que pasa: exploración, tensión (clúster de cuerdas en trémolo, latido y susurros cuando

@@ -67,7 +67,8 @@ function passTower(ctx, cx, cz, w, yF, h) {
     dh = 3.6,
     ch = 4.4;
   solid(ctx, 'wallstone', x0, 0, z0, x1, yF, z1, { sub: 2.2, aoH: 3, faces: 'nsew' });
-  wb.box('flag', x0 + t, yF - 0.3, z0 + t, x1 - t, yF, z1 - t, { faces: 't', ao: false, uv: 0.8, room: 'coracha_torre' });
+  // (el enlosado, por toda la planta: también bajo los umbrales de las puertas)
+  wb.box('flag', x0, yF - 0.3, z0, x1, yF, z1, { faces: 't', ao: false, uv: 0.8, room: 'coracha_torre' });
   solid(ctx, 'wallstone', x0, yF, z0, x0 + t, yF + ch, z1, { sub: 2, room: 'coracha_torre' });
   solid(ctx, 'wallstone', x1 - t, yF, z0, x1, yF + ch, z1, { sub: 2, room: 'coracha_torre' });
   for (const [a, b] of [

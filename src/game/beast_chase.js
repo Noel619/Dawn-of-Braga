@@ -218,9 +218,28 @@ export class BeastChase {
   shot(pos, look, o = {}) {
     this.cam = { pos: pos.clone ? pos.clone() : new V3(...pos), look: look.clone ? look.clone() : new V3(...look), speed: o.speed ?? 6, snap: !!o.snap, fov: o.fov ?? 55 };
   }
+  // Por delante del jugador, mirando hacia atrás: se ve a la Bestia que viene
+  // (el sillar que te tira, el salto sobre ti en la esquina). El control sigue
+  // relativo a la cámara de siempre (su rumbo no cambia).
+  lookBack(speed = 9) {
+    const p = this.g.player,
+      b = this.beast;
+    const q = {};
+    let first = true;
+    this.camFn = () => {
+      this.path.at(this.path.project(p.pos.x, p.pos.z) + 4.6, q);
+      const pos = new V3(q.x - q.tz * 1.1, p.pos.y + 2.3, q.z + q.tx * 1.1);
+      const look = b.pos.clone().lerp(p.pos, 0.42);
+      look.y = p.pos.y + 1.7 + b.lift * 0.6;
+      this.cam = { pos, look, speed, fov: 64, snap: first };
+      first = false;
+    };
+  }
+
   releaseCam(yaw = null) {
     const g = this.g;
     this.cam = null;
+    this.camFn = null;
     g.camRig.override = null;
     g.camRig.snapTo(g.player);
     if (yaw !== null) g.camRig.yaw = yaw;
@@ -323,10 +342,13 @@ export class BeastChase {
     this.follow = false;
     this.lock = false;
     this.cam = null;
+    this.camFn = null;
     g.chaseRun = false;
     g.qte.cancel();
     this.beast.hide();
     this.beast.stopClip(0);
+    this.fadeK = 1;
+    this.beast.setFade(1);
     this.pike.visible = false;
     this.rock.visible = false;
     this.restoreBeam();
@@ -354,6 +376,7 @@ export class BeastChase {
         this.deadSeen = true;
         this.co = null;
         this.bg = [];
+        this.camFn = null;
         g.qte.cancel();
         this.follow = false;
         this.lock = false;
@@ -410,6 +433,7 @@ export class BeastChase {
     }
     // cámara del guion; si no, una mano que la lleva hacia delante, y más
     // cerca y más alta con la Bestia encima (si no, se metía en su cuerpo)
+    if (this.camFn) this.camFn(dt);
     const near = b.visible ? Math.hypot(b.pos.x - p.pos.x, b.pos.z - p.pos.z) : 99;
     const cr = g.camRig;
     if (this.cam) cr.override = this.cam;
@@ -419,9 +443,26 @@ export class BeastChase {
       if (near < 8) cr.pitch = Math.max(cr.pitch, damp(cr.pitch, 0.42, 3, dt));
     }
     cr.dist = damp(cr.dist, !this.cam && near < 8 ? 3.0 : 4.1, 3, dt);
-    // la cámara dentro de la Bestia: no se dibuja
+    // la cámara dentro de la Bestia: no se dibuja; si se interpone entre la
+    // cámara y el jugador (te pisa los talones), se vuelve transparente
     const c = cr.cam.position;
     b.obj.visible = b.visible && Math.hypot(c.x - b.pos.x, c.z - b.pos.z) > 1.5 + (c.y < b.pos.y + 3.4 ? 0.4 : -0.6);
+    let occ = false;
+    if (b.visible && !this.cam) {
+      // distancia del eje de la Bestia al segmento cámara-pecho del jugador
+      const ax = c.x,
+        az = c.z,
+        bx = p.pos.x,
+        bz = p.pos.z;
+      const dx = bx - ax,
+        dz = bz - az,
+        l2 = dx * dx + dz * dz || 1;
+      const u = clamp(((b.pos.x - ax) * dx + (b.pos.z - az) * dz) / l2, 0, 1);
+      const hy = lerp(c.y, p.pos.y + 1.2, u);
+      occ = u > 0.05 && u < 0.97 && Math.hypot(ax + dx * u - b.pos.x, az + dz * u - b.pos.z) < 1.5 && hy < b.pos.y + b.lift + 3.6;
+    }
+    this.fadeK = damp(this.fadeK ?? 1, occ ? 0.3 : 1, 10, dt);
+    b.setFade(this.fadeK > 0.98 ? 1 : this.fadeK);
   }
 
   // La Bestia corre detrás (goma elástica: nunca muy lejos, nunca encima sin
@@ -948,6 +989,7 @@ export class BeastChase {
     this.follow = false;
     b.vx = b.vz = 0;
     b.play('throw', { blend: 0.1 });
+    this.lookBack();
     yield* this.waitClip(0.45);
     this.rockHeld = true;
     this.rock.visible = true;
@@ -1014,6 +1056,7 @@ export class BeastChase {
     p.anim.stop(0.15);
     this.lock = false;
     this.cam = null;
+    this.camFn = null;
     g.camRig.override = null;
     if (b.clipName && b.clipName !== 'bash') b.stopClip(0.25);
     this.sB = Math.min(this.path.project(b.pos.x, b.pos.z), this.sP - 3.5);
@@ -1058,6 +1101,7 @@ export class BeastChase {
       b = this.beast;
     this.follow = false;
     b.play('leap', { blend: 0.1 });
+    this.lookBack(11);
     const from = b.pos.clone();
     yield* this.waitClip(0.56);
     this.lock = true;
@@ -1124,7 +1168,9 @@ export class BeastChase {
     this.lock = true;
     this.puppet(true);
     this.runOn = Math.max(4.5, this.vP);
-    this.shot([G.x0 - 1.0, Y + 1.2, -121.4], [G.x1 + 2, Y + 0.6, -124.6], { speed: 7, fov: 60 });
+    // desde el otro lado del hueco, sobre el adarve: el jugador llega y salta
+    // hacia la cámara, con la Bestia detrás
+    this.shot([G.x0 - 5.2, Y + 2.3, -123.1], [G.x1 + 1.6, Y + 0.7, -124], { speed: 9, fov: 60, snap: true });
     const ok = yield* this.prompt({ action: 'interact', label: '¡Salta!', window: 1.0, slow: 0.3 });
     this.runOn = 0;
     const from = p.pos.clone();
@@ -1154,7 +1200,8 @@ export class BeastChase {
       this.pClip('hang', { blend: 0.08 });
       g.camRig.shake(0.4);
       g.audio && g.audio.play('land', p.pos, { v: 4 });
-      this.shot([G.x0 - 2.6, Y + 1.6, -121.6], [G.x0 + 0.4, Y - 1.0, -124], { speed: 6, fov: 56 });
+      // colgado del borde: desde el borde de enfrente, se le ve aferrado a la piedra
+      this.shot([G.x0 + 2.7, Y - 0.3, -122.75], [G.x0 + 0.3, Y - 1.1, -124.1], { speed: 6, fov: 66, snap: true });
       const up = yield* this.prompt({ action: 'interact', label: '¡Trepa!', window: 2.8, mash: 8, slow: 0.6 });
       if (up) {
         this.pClip('climbUp', { blend: 0.06 });
@@ -1227,8 +1274,16 @@ export class BeastChase {
     const L = new V3(ahead.x, Y, ahead.z);
     // el jugador frena
     const from = p.pos.clone();
-    const yawF = Math.atan2(ahead.tx, ahead.tz);
-    this.shot([p.pos.x - 3, Y + 3.2, -119.6], [p.pos.x - 4, Y + 1.6, -124], { speed: 4, fov: 58 });
+    // plano lateral desde fuera de la muralla (sólo hay ladera y niebla): la
+    // cámara sigue a la Bestia por el aire y siempre encuadra a los dos
+    let first = true;
+    this.camFn = () => {
+      const mx = (p.pos.x + b.pos.x) / 2;
+      const span = Math.abs(p.pos.x - b.pos.x);
+      const dist = 5.8 + span * 0.42;
+      this.cam = { pos: new V3(mx, Y + 4.4 + b.lift * 0.4, -124 - dist), look: new V3(mx, Y + 1.5 + b.lift * 0.55, -123.6), speed: 7, fov: 62, snap: first };
+      first = false;
+    };
     for (let t = 0; t < 0.5; ) {
       t += yield;
       const u = sm(t / 0.5);
@@ -1242,7 +1297,10 @@ export class BeastChase {
     b.yaw = Math.atan2(p.pos.x - L.x, p.pos.z - L.z);
     yield* this.waitClip(1.85);
     b.play('roar', { blend: 0.15 });
+    // (el jugador alza la vista hacia ella)
+    p.yaw = Math.atan2(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
     yield* this.waitClip(2.3);
+    this.camFn = null;
     // los cuatro golpes
     // por encima del hombro: el jugador de espaldas y la Bestia encima
     const cam = () => {
@@ -1603,9 +1661,18 @@ export class BeastChase {
     b.hide();
     b.stopClip(0);
     this.follow = false;
+    // (el control vuelve al jugador: sin esto se quedaba inmóvil en la atalaya)
+    this.lock = false;
+    this.cam = null;
+    this.camFn = null;
+    this.glance = null;
+    this.fadeK = 1;
+    b.setFade(1);
+    g.qte.cancel();
     g.chaseRun = false;
     this.active = false;
     this.co = null;
+    this.bg = [];
     this.setBars(0);
     this.puppet(false);
     p.anim.stop(0.2);
@@ -1641,6 +1708,7 @@ export class BeastChase {
     this.follow = false;
     this.lock = true;
     this.cam = null;
+    this.camFn = null;
     g.camRig.override = null;
     g.chaseRun = false;
     const cp = this.cp;

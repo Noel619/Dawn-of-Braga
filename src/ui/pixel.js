@@ -736,27 +736,202 @@ export function greatSword(len = 118) {
 // ---------------------------------------------------------------- piezas pequeñas
 const PAD_COL = { A: PAL.moss4, B: PAL.blood4, X: PAL.glass3, Y: PAL.gold4 };
 const _keys = new Map();
-// Tecla o botón del mando con su rótulo.
-export function keyBitmap(label, pad = false) {
-  const k = label + (pad ? ':p' : '');
+// Los clics, por su rótulo: qué botón del ratón se enciende.
+const MOUSE_BTN = { 'Clic izq.': 'l', 'Clic der.': 'r', 'Clic central': 'm', Ratón: '' };
+
+// Tecla o botón del mando con su rótulo. Los clics se dibujan como un ratón
+// con el botón que hay que pulsar encendido y, en el mando, los botones de
+// los hombros, los gatillos, los sticks y los del centro tienen su forma.
+// alt: el otro fotograma del aviso que parpadea (la tecla hundida, el botón
+// del ratón al rojo blanco): ver keyBlinkHtml.
+export function keyBitmap(label, pad = false, alt = false) {
+  const k = label + (pad ? ':p' : '') + (alt ? ':a' : '');
   if (_keys.has(k)) return _keys.get(k);
+  let b;
+  if (label in MOUSE_BTN) b = mouseBitmap(MOUSE_BTN[label], alt);
+  else if (pad && /^[LR][BT]$/.test(label)) b = shoulderBitmap(label, alt);
+  else if (pad && /^([LR]3|Stick (izq|der)\.)$/.test(label)) b = stickBitmap(label[0] === 'R' || /der/.test(label) ? 'R' : 'L', alt);
+  else if (pad && (label === 'View' || label === 'Start')) b = menuBtnBitmap(label, alt);
+  else b = capBitmap(label, pad, alt);
+  _keys.set(k, b);
+  return b;
+}
+
+// La tecla (o el botón) parpadeando entre sus dos fotogramas: para los avisos
+// que piden pulsar ya (QTE).
+export const keyBlinkHtml = (label, pad = false, scale = 1) => `<span class="kblink">${spriteHtml(keyBitmap(label, pad), scale)}${spriteHtml(keyBitmap(label, pad, true), scale, 'k2')}</span>`;
+
+// Tecla con relieve (o botón redondo del mando): cara clara arriba y canto
+// oscuro abajo. Hundida, la cara baja un píxel y se aclara.
+function capBitmap(label, pad, pressed) {
   const P = PAL;
-  const t = textBitmap(label.toUpperCase(), 'small', { color: pad && PAD_COL[label] ? PAD_COL[label] : P.bone3 });
-  const round = pad && label.length === 1;
-  const w = round ? 13 : Math.max(12, t.w + 5),
+  // «␣»: la barra espaciadora en corto, con su símbolo (donde no cabe el rótulo)
+  const space = label === '␣';
+  const t = space ? null : textBitmap(label.toUpperCase(), 'small', { color: pad && PAD_COL[label] ? PAD_COL[label] : P.bone3 });
+  const round = pad && label.length === 1 && !space;
+  const w = round ? 13 : space ? 19 : Math.max(12, t.w + 5),
     h = 13;
+  // (los redondos no bajan: se aclaran)
+  const o = pressed && !round ? 1 : 0;
   const b = new Bitmap(w, h + 1);
-  for (let y = 0; y < h; y++)
+  for (let y = o; y < h; y++)
     for (let x = 0; x < w; x++) {
       if (round) {
         if ((x - 6) ** 2 + (y - 6) ** 2 > 40) continue;
-      } else if ((x === 0 || x === w - 1) && (y === 0 || y === h - 1)) continue;
-      const c = y >= h - 3 ? P.iron0 : y === 0 || x === 0 ? P.iron4 : y < 4 ? P.iron3 : P.iron2;
+      } else if ((x === 0 || x === w - 1) && (y === o || y === h - 1)) continue;
+      const f = y - o;
+      const c = y >= h - 3 + o ? P.iron0 : f === 0 || x === 0 ? (pressed ? P.iron5 : P.iron4) : f < 4 ? (pressed ? P.iron4 : P.iron3) : pressed ? P.iron3 : P.iron2;
       b.set(x, y, c);
     }
-  b.blit(t, Math.floor((w - t.w) / 2), 2);
+  if (space) {
+    for (let x = 4; x <= w - 5; x++) b.set(x, 7 + o, P.bone3);
+    for (const x of [4, w - 5]) b.rect(x, 5 + o, 1, 2, P.bone3);
+  } else b.blit(t, Math.floor((w - t.w) / 2), 2 + o);
   b.outline(P.void);
-  _keys.set(k, b);
+  return b;
+}
+
+// Pieza con relieve de forma libre (in(x, y): si el píxel es de la pieza, en
+// una caja de w x h): cara con brillo arriba y a la izquierda, canto oscuro
+// abajo. Deja un píxel de margen para el contorno.
+function reliefBitmap(w, h, inside, pressed) {
+  const P = PAL;
+  const o = pressed ? 1 : 0;
+  const b = new Bitmap(w + 2, h + 2);
+  const at = (x, y) => y >= o && inside(x, y - o, h - o);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!at(x, y)) continue;
+      const f = y - o;
+      const c = y >= h - 3 + o ? P.iron0 : !at(x, y - 1) || !at(x - 1, y) ? (pressed ? P.iron5 : P.iron4) : f < 4 ? (pressed ? P.iron4 : P.iron3) : pressed ? P.iron3 : P.iron2;
+      b.set(x + 1, y + 1, c);
+    }
+  return b;
+}
+
+// Ratón visto desde arriba: l y r, los botones; m, la raya entre ellos; w, la
+// rueda; -, la junta con el cuerpo (b).
+const MOUSE = [
+  '..lllmrrr..',
+  '.llllmrrrr.',
+  'lllllmrrrrr',
+  'lllllwrrrrr',
+  'lllllwrrrrr',
+  'lllllmrrrrr',
+  'lllllmrrrrr',
+  '-----------',
+  'bbbbbbbbbbb',
+  'bbbbbbbbbbb',
+  'bbbbbbbbbbb',
+  'bbbbbbbbbbb',
+  'bbbbbbbbbbb',
+  '.bbbbbbbbb.',
+  '..bbbbbbb..',
+];
+function mouseBitmap(btn, flash) {
+  const P = PAL;
+  const H = MOUSE.length,
+    W = MOUSE[0].length;
+  const at = (x, y) => (MOUSE[y] && MOUSE[y][x]) || '.';
+  const b = new Bitmap(W + 2, H + 2);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const ch = at(x, y);
+      if (ch === '.') continue;
+      const edgeL = at(x - 1, y) === '.',
+        edgeR = at(x + 1, y) === '.';
+      let c;
+      if (ch === 'l' || ch === 'r') {
+        // el botón que se pulsa, en ascua (al pulsarse, al rojo blanco); con
+        // brillo arriba y a la izquierda
+        const on = btn === ch;
+        const [lo, mid, hi] = on ? (flash ? [P.ember3, P.ember4, P.gold5] : [P.ember2, P.ember3, P.ember4]) : [P.iron3, P.iron4, P.iron5];
+        c = at(x, y - 1) === '.' || edgeL ? hi : edgeR || at(x, y + 1) === '-' || 'mw'.includes(at(x + 1, y)) ? lo : mid;
+      } else if (ch === 'w') c = btn === 'm' ? (at(x, y - 1) === 'w' ? (flash ? P.ember3 : P.ember2) : flash ? P.gold5 : P.ember4) : at(x, y - 1) === 'w' ? P.iron0 : P.bone1;
+      else if (ch === 'm') c = btn === 'm' ? P.ember1 : P.iron1;
+      else if (ch === '-') c = P.iron0;
+      else c = edgeL ? P.iron4 : edgeR || y >= H - 2 ? P.iron1 : at(x, y - 1) === '-' ? P.iron3 : P.iron2;
+      b.set(x + 1, y + 1, c);
+    }
+  b.outline(P.void);
+  return b;
+}
+
+// Botones de los hombros (LB, RB: la esquina de fuera muy redondeada) y
+// gatillos (LT, RT: más altos, redondos arriba y estrechándose por dentro).
+function shoulderBitmap(label, pressed) {
+  const P = PAL;
+  const trig = label[1] === 'T',
+    right = label[0] === 'R';
+  const t = textBitmap(label, 'small', { color: P.bone3 });
+  const w = Math.max(trig ? 13 : 15, t.w + (trig ? 5 : 6)),
+    h = trig ? 15 : 12;
+  const inside = (x, y, hh) => {
+    if (x < 0 || x >= w || y < 0 || y >= hh) return false;
+    const e = right ? w - 1 - x : x, // columnas desde el lado de fuera
+      i = w - 1 - e; // y desde el de dentro
+    if (trig) {
+      if ((y === 0 && (e < 4 || i < 2)) || (y === 1 && (e < 2 || i < 1)) || (y === 2 && e < 1)) return false;
+      // abajo se estrecha por dentro
+      if (y >= hh - 4 && i < y - (hh - 5)) return false;
+      return !(y === hh - 1 && e < 1);
+    }
+    if ((y === 0 && (e < 5 || i < 1)) || (y === 1 && e < 3) || (y === 2 && e < 1)) return false;
+    return !(y === hh - 1 && (e < 1 || i < 1));
+  };
+  const b = reliefBitmap(w, h, inside, pressed);
+  const o = pressed ? 1 : 0;
+  b.blit(t, 1 + Math.floor((w - t.w) / 2) + (trig ? (right ? -1 : 1) : right ? -1 : 1), 1 + (trig ? 5 : 3) + o);
+  b.outline(P.void);
+  return b;
+}
+
+// Stick: la base, el borde de la seta y su hueco, con la letra del lado.
+function stickBitmap(side, pressed) {
+  const P = PAL;
+  const S = 13,
+    c0 = 6;
+  const b = new Bitmap(S + 2, S + 2);
+  for (let y = 0; y < S; y++)
+    for (let x = 0; x < S; x++) {
+      const d2 = (x - c0) ** 2 + (y - c0) ** 2;
+      if (d2 > 40) continue;
+      const up = y < c0 || (y === c0 && x < c0);
+      let c;
+      if (d2 > 30) c = y > 9 ? P.void : P.iron1;
+      else if (d2 > 17) c = up ? (pressed ? P.iron5 : P.iron4) : pressed ? P.iron4 : P.iron3;
+      else c = up ? (pressed ? P.iron3 : P.iron1) : pressed ? P.iron4 : P.iron2;
+      b.set(x + 1, y + 1, c);
+    }
+  const t = textBitmap(side, 'small', { color: pressed ? P.gold4 : P.bone3 });
+  b.blit(t, 1 + Math.floor((S - t.w) / 2) + 1, 1 + Math.floor((S - t.h) / 2) + 1);
+  b.outline(P.void);
+  return b;
+}
+
+// Botones del centro del mando: View (dos ventanas) y Start (tres rayas).
+function menuBtnBitmap(label, pressed) {
+  const P = PAL;
+  const w = 15,
+    h = 10;
+  const inside = (x, y, hh) => x >= 0 && x < w && y >= 0 && y < hh && !((x < 2 || x > w - 3) && (y === 0 || y === hh - 1)) && !((x < 1 || x > w - 2) && (y === 1 || y === hh - 2));
+  const b = reliefBitmap(w, h, inside, pressed);
+  const o = pressed ? 1 : 0,
+    ic = pressed ? P.gold4 : P.bone3;
+  const cx = 1 + Math.floor(w / 2);
+  if (label === 'Start') for (const y of [2, 4, 6]) b.rect(cx - 3, 1 + y + o - 1, 7, 1, ic);
+  else {
+    // dos ventanas solapadas
+    const box = (x0, y0) => {
+      b.rect(x0, y0, 5, 1, ic);
+      b.rect(x0, y0 + 3, 5, 1, ic);
+      b.rect(x0, y0, 1, 4, ic);
+      b.rect(x0 + 4, y0, 1, 4, ic);
+    };
+    box(cx - 4, 1 + 1 + o);
+    box(cx - 1, 1 + 3 + o);
+  }
+  b.outline(P.void);
   return b;
 }
 

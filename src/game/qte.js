@@ -8,12 +8,13 @@
 //   - machacar: pulsarla una y otra vez hasta llenar el anillo antes de que
 //     se acabe el tiempo (forcejear, trepar).
 import { GLYPHS } from '../core/input.js';
-import { PAL, keyBitmap, spriteHtml } from '../ui/pixel.js';
+import { PAL, keyBitmap, keyBlinkHtml } from '../ui/pixel.js';
 
 const $ = (id) => document.getElementById(id);
 // botones de acción que cuentan como «otro botón» (fallo)
 const ACTIONS = ['light', 'heavy', 'block', 'dodge', 'interact'];
-const R = 24; // radio del anillo (píxeles de arte)
+const R = 27; // radio del anillo (píxeles de arte)
+const HOLE = (R - 7.5) * 2; // el hueco de dentro, donde va la tecla
 
 export class QTE {
   constructor(game) {
@@ -97,9 +98,11 @@ export class QTE {
     const k = d + ':' + glyph + ':' + q.label;
     if (k !== this._key) {
       this._key = k;
-      // (las teclas de nombre largo, «Espacio», a tamaño normal: no caben en el anillo)
-      const kb = keyBitmap(glyph, d === 'pad');
-      $('qte-key').innerHTML = spriteHtml(kb, kb.w * 2 > R * 2 - 12 ? 1 : 2);
+      // la tecla (o el ratón con su botón) parpadeando, como si se pulsara,
+      // al doble si cabe en el anillo (el espacio, en corto: la barra)
+      const g = glyph === 'Espacio' ? '␣' : glyph;
+      const kb = keyBitmap(g, d === 'pad');
+      $('qte-key').innerHTML = keyBlinkHtml(g, d === 'pad', kb.w * 2 > HOLE ? 1 : 2);
       $('qte-label').textContent = q.label;
     }
     // el anillo: lo que queda de tiempo (o lo que se lleva machacado)

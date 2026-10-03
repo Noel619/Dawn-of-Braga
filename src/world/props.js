@@ -111,7 +111,9 @@ export function sacks(ctx, x, y, z, n = 3, seed = 1) {
       b = low[(i - nLow + 1) % low.length];
     put((a[0] + b[0]) / 2, y + 0.62, (a[1] + b[1]) / 2);
   }
-  col(ctx, x - 0.62, y, z - 0.62, x + 0.62, y + (n > nLow ? 0.85 : 0.5), z + 0.62);
+  // (la colisión, algo más alta que un escalón: que no se ande por encima
+  // de los huecos entre saco y saco)
+  col(ctx, x - 0.62, y, z - 0.62, x + 0.62, y + (n > nLow ? 0.85 : 0.6), z + 0.62);
 }
 
 export function hay(ctx, x, y, z, rot = 0) {

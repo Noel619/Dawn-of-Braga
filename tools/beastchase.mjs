@@ -82,8 +82,22 @@ const r = await p.evaluate(async (fallos) => {
     }
     if (!C.active && seen.transform) break;
   }
+  // y después de escapar, el jugador se mueve (andando con la tecla de
+  // avanzar) y la cámara responde
+  for (let i = 0; i < 120; i++) frame();
+  const p0 = P.pos.clone();
+  P.autoDir = null;
+  for (let i = 0; i < 90; i++) {
+    inp.keys.clear();
+    inp.keys.add('KeyW');
+    g.update(1 / 60);
+  }
+  inp.keys.clear();
+  const moved = Math.hypot(P.pos.x - p0.x, P.pos.z - p0.z);
   return {
     log,
+    moved: +moved.toFixed(2),
+    control: g.state === 'play' && !(C.active && C.lock) && !P.puppet && P.state === 'free',
     t: Math.round(t),
     seen,
     flags: { beast: !!g.flags['impaled:beast'], boss: !!g.flags['boss:impaled'], escaped: !!g.flags['impaled:escaped'] },
@@ -94,9 +108,9 @@ const r = await p.evaluate(async (fallos) => {
   };
 }, fallos);
 for (const l of r.log) console.log('  ' + l);
-const ok = r.seen.transform && r.seen.run && r.seen.top && r.flags.beast && r.flags.boss && r.flags.escaped && r.zone === 'atalaya' && !r.fog;
+const ok = r.seen.transform && r.seen.run && r.seen.top && r.flags.beast && r.flags.boss && r.flags.escaped && r.zone === 'atalaya' && !r.fog && r.moved > 1 && r.control;
 console.log(
-  `${ok ? 'OK ' : 'MAL'} ${fallos ? 'con fallos' : 'sin fallos'}: ${r.t} s, zona ${r.zone}, ${JSON.stringify(r.pos)}, vida ${r.hp}, banderas ${JSON.stringify(r.flags)}, niebla ${r.fog ? 'sigue' : 'disipada'}`
+  `${ok ? 'OK ' : 'MAL'} ${fallos ? 'con fallos' : 'sin fallos'}: ${r.t} s, después se mueve ${r.moved} m (control: ${r.control ? 'sí' : 'NO'}), zona ${r.zone}, ${JSON.stringify(r.pos)}, vida ${r.hp}, banderas ${JSON.stringify(r.flags)}, niebla ${r.fog ? 'sigue' : 'disipada'}`
 );
 if (errs.length) console.log(errs.join('\n'));
 await b.close();

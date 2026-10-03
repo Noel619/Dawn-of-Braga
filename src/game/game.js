@@ -1189,7 +1189,7 @@ export class Game {
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !this.chase.lock;
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock);
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -1250,7 +1250,7 @@ export class Game {
       if (p.autoDir && p.pos.z < -211.5) p.autoDir = null;
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !this.chase.lock);
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock));
 
     // zona y atmósfera
     if (this.state !== 'title') {

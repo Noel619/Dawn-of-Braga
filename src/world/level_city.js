@@ -72,6 +72,8 @@ export function buildCastle(ctx, S, L) {
     wb.box('ashlar', D.x0 - 0.25, D.y0, K.z0 - 0.08, D.x0, D.y1, K.z0 + 0.02, { ao: false });
     wb.box('ashlar', D.x1, D.y0, K.z0 - 0.08, D.x1 + 0.25, D.y1, K.z0 + 0.02, { ao: false });
     wb.box('ashlar', D.x0 - 0.25, D.y1, K.z0 - 0.1, D.x1 + 0.25, D.y1 + 0.3, K.z0 + 0.02, { ao: false, faces: 'tnsewb' });
+    // el umbral (el muro de debajo no lleva cara de arriba)
+    wb.box('ashlar', D.x0, D.y0 - 0.1, K.z0, D.x1, D.y0, K.z0 + t, { ao: false, faces: 't' });
   }
   solid(ctx, 'wallstone', K.x0 + t, 0, K.z1 - t, K.x1 - t, K.h, K.z1, { sub: 2, aoH: 2, faces: 'nsew' });
   wb.box('wallstone', K.x0 - 0.4, K.h - 0.6, K.z0 - 0.4, K.x1 + 0.4, K.h, K.z1 + 0.4, { ao: false, sub: 3, faces: 'tnsewb' });

@@ -570,6 +570,21 @@ export class Beast {
     this.stub = this.rig.meshes.filter((m) => m.userData.grp === 'stub');
   }
 
+  // Transparencia (cuando se interpone entre la cámara y el jugador).
+  setFade(a) {
+    if (Math.abs(a - (this._fade ?? 1)) < 0.005) return;
+    this._fade = a;
+    const tr = a < 0.99;
+    for (const m of this.rig.mats) {
+      if (m.transparent !== tr) {
+        m.transparent = tr;
+        m.depthWrite = !tr;
+        m.needsUpdate = true;
+      }
+      m.opacity = a;
+    }
+  }
+
   show(x, y, z, yaw) {
     this.pos.set(x, y, z);
     this.yaw = yaw;
