@@ -66,8 +66,12 @@ export const MAT_DEFS = {
   leather: { tex: 'leather', uv: 1.6 },
   chainmail: { tex: 'chainmail', uv: 2.2 },
   plate: { tex: 'plate', uv: 1.6 },
+  // armadura vieja del Empalado: acero ennegrecido con brillo de metal
+  plateRust: { tex: 'plateRust', uv: 1.4, phong: { specular: 0x5a5450, shininess: 22 } },
+  mailRust: { tex: 'mailRust', uv: 2.0 },
   skin: { tex: 'skin', uv: 2.0 },
   skinCorrupt: { tex: 'skinCorrupt', uv: 1.6 },
+  hide: { tex: 'hide', uv: 1.4, phong: { specular: 0x3a2a2a, shininess: 16 } },
   flesh: {
     tex: 'flesh',
     uv: 0.7,

@@ -446,6 +446,43 @@ const GEN = {
     });
   },
 
+  // Placa vieja: acero ennegrecido con vetas de forja, abolladuras, óxido,
+  // sangre seca en las juntas y arañazos que brillan.
+  plateRust() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const b = fbm2(x / 1.3, y / 20, 2, 0, 205);
+      const dent = fbm2(x / 5, y / 5, 3, S / 5, 206);
+      const rust = fbm2(x / 7, y / 7, 4, S / 7, 207);
+      const grime = fbm2(x / 4 + 9, y / 4, 3, S / 4, 208);
+      let c = mix3([62, 62, 66], [104, 104, 108], b);
+      c = mix3(c, [24, 24, 26], Math.max(0, dent - 0.56) * 2.2);
+      if (rust > 0.5) c = mix3(c, [104, 50, 26], Math.min(1, (rust - 0.5) * 2.4));
+      if (grime > 0.66) c = mix3(c, [46, 10, 10], Math.min(1, (grime - 0.66) * 3));
+      if (hash2(x, y >> 2, 209) > 0.965) c = mix3(c, [164, 162, 160], 0.55);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // Malla vieja: anillas oscuras, con óxido y costras.
+  mailRust() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const row = Math.floor(y / 3);
+      const xo = x + (row % 2) * 2;
+      const cx = (xo % 4) - 1.5,
+        cy = (y % 3) - 1;
+      const d = Math.hypot(cx, cy * 1.2);
+      const n = fbm2(x / 5, y / 5, 2, S / 5, 211);
+      const rust = fbm2(x / 6, y / 6, 3, S / 6, 212);
+      let k = d > 0.8 && d < 1.9 ? 1 : 0.22;
+      if (cy < 0 && k === 1) k = 1.22;
+      k *= 0.75 + n * 0.3;
+      let c = [84 * k, 82 * k, 84 * k];
+      if (rust > 0.55) c = mix3(c, [88 * k, 42 * k, 22 * k], Math.min(1, (rust - 0.55) * 3));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
   leather() {
     const S = 32;
     return pixels(S, S, (x, y, o) => {
@@ -502,6 +539,20 @@ const GEN = {
       let c = mix3([104, 106, 92], [138, 134, 116], n);
       if (v > 0.86) c = mix3(c, [28, 22, 30], Math.min(1, (v - 0.86) * 7));
       if (sore > 0.66) c = mix3(c, [110, 20, 22], Math.min(1, (sore - 0.66) * 4));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
+  // Cuero de la Bestia: piel morada y negruzca, tirante, con venas y llagas.
+  hide() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, S / 4, 61);
+      const v = 1 - Math.abs(fbm2(x / 5, y / 5, 4, S / 5, 62) * 2 - 1);
+      const sore = fbm2(x / 4 + 3, y / 4, 3, S / 4, 63);
+      let c = mix3([54, 34, 38], [88, 56, 54], n);
+      if (v > 0.84) c = mix3(c, [16, 8, 12], Math.min(1, (v - 0.84) * 7));
+      if (sore > 0.64) c = mix3(c, [146, 30, 26], Math.min(1, (sore - 0.64) * 4));
       set(o, c[0], c[1], c[2]);
     });
   },

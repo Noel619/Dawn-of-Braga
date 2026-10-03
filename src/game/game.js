@@ -619,7 +619,7 @@ export class Game {
     const hit = this.world.col.raycast(b.pos.x, eyeY, b.pos.z, dir.x, 0, dir.z, want, (bx) => bx.cam !== false && bx.tag !== 'fog');
     const dist = hit === Infinity ? want : Math.max(2.5, hit - 0.5);
     const camPos = new THREE.Vector3(b.pos.x + dir.x * dist, eyeY - 0.4, b.pos.z + dir.z * dist);
-    this.cinematic(b.type === 'turibulario' ? 3.4 : hang ? 2.8 : 2.0, camPos, new THREE.Vector3(b.pos.x, b.pos.y + (hang ? 1.5 : b.T.height * 0.65), b.pos.z));
+    this.cinematic(b.T.introDur ?? (b.type === 'turibulario' ? 3.4 : hang ? 2.8 : 2.0), camPos, new THREE.Vector3(b.pos.x, b.pos.y + (hang ? 1.5 : b.T.height * 0.65), b.pos.z));
     if (b.T.onWake) b.T.onWake(b, this);
     else {
       b.aware = true;
@@ -701,6 +701,8 @@ export class Game {
     // mientras el canónigo siga vivo, sus bodegas vuelven a estar como
     // estaban: palancas arriba, rastrillo bajado y todo entero otra vez
     if (!this.flags['boss:descoyuntado']) this.resetCellar();
+    // y lo alto del Postigo, mientras el Empalado siga ahí
+    if (!this.flags['boss:impaled']) this.resetArea('postigo');
     this.climb = null;
     const b = this.activeBoss;
     this.activeBoss = null;
@@ -745,6 +747,13 @@ export class Game {
     for (const it of this.breakables.list) delete F['broken:' + it.id];
     this.breakables.applyFlags(F, true);
     for (const it of this.interact.list) if (it.kind === 'lever' || it.id === 'd_rastrillo') this.interact.reset(it);
+  }
+
+  // Lo que se rompió en una zona vuelve a estar entero (al morir).
+  resetArea(area) {
+    const F = this.flags;
+    for (const it of this.breakables.list) if (it.area === area) delete F['broken:' + it.id];
+    for (const it of this.breakables.list) if (it.area === area && it.broken) this.breakables.restore(it);
   }
 
   // Una palanca del rastrillo de la cisterna: la cadena corre por la bóveda

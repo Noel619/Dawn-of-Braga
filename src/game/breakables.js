@@ -26,6 +26,13 @@ const KIND = {
   rack: { hp: 3, crash: 1, light: true, snd: 'rackBreak', chunks: 12, wine: true },
   cask: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10, wine: true },
   sacks: { hp: 1, crash: 1, light: true, snd: 'sackTear', chunks: 8, soft: true },
+  // en lo alto del Postigo: almenas, el torno del rastrillo, la barricada
+  // del adarve norte y los barriles y cajas de la guarnición
+  merlon: { hp: Infinity, crash: 1, stone: true, snd: 'merlonBreak', chunks: 9 },
+  winch: { hp: Infinity, crash: 1, snd: 'winchBreak', chunks: 16, wood: true },
+  barricade: { hp: Infinity, crash: 1, snd: 'barricadeBreak', chunks: 24, wood: true },
+  barrel: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10, pitch: true },
+  crate: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10 },
 };
 
 // Charco irregular (varios discos solapados, nunca un cuadrado).
@@ -250,7 +257,156 @@ function wallRubble(s, rng) {
   }
   return P;
 }
+// almena (hx: medio ancho a lo largo del muro, hz: medio grueso; s.out: hacia
+// dónde cae, fuera del adarve)
+function merlonParts(s, rng) {
+  const W = s.hx * 2,
+    T = s.hz * 2,
+    H = s.h;
+  return [
+    { type: 'box', s: [W - 0.02, H - 0.08, T - 0.02], p: [rng.range(-0.01, 0.01), (H - 0.08) / 2, 0], r: [0, rng.range(-1.5, 1.5), 0], mat: 'wallstone' },
+    { type: 'box', s: [W + 0.04, 0.1, T + 0.04], p: [0, H - 0.05, 0], mat: 'wallstone' },
+  ];
+}
+function merlonRubble(s, rng) {
+  const W = s.hx * 2,
+    T = s.hz * 2;
+  const P = [{ type: 'box', s: [W - 0.04, rng.range(0.18, 0.4), T - 0.04], p: [0, 0.12, 0], r: [rng.range(-5, 5), rng.range(-6, 6), rng.range(-5, 5)], mat: 'wallstone' }];
+  // unos sillares caídos por dentro del adarve (los demás, al vacío)
+  const ix = -(s.out ? s.out[0] : 0),
+    iz = -(s.out ? s.out[1] : 0);
+  for (let i = 0; i < 4; i++) {
+    const d = rng.range(0.5, 1.5);
+    P.push({ type: 'box', s: [rng.range(0.2, 0.36), rng.range(0.13, 0.22), rng.range(0.18, 0.3)], p: [ix * d + rng.range(-W * 0.6, W * 0.6), 0.09, iz * d + rng.range(-0.3, 0.3)], r: [rng.range(-20, 20), rng.range(0, 180), rng.range(-20, 20)], mat: 'wallstone' });
+  }
+  return P;
+}
+// el torno del rastrillo del Postigo (el madero a lo largo de x)
+function winchParts() {
+  const P = [];
+  for (const x of [-1.75, 1.75]) {
+    P.push({ type: 'box', s: [0.5, 1.6, 0.42], p: [x, 0.8, 0], mat: 'wooddark' });
+    P.push({ type: 'box', s: [0.66, 0.12, 0.6], p: [x, 0.06, 0], mat: 'wooddark' });
+    P.push({ type: 'box', s: [0.06, 1.1, 0.5], p: [x + (x < 0 ? -0.28 : 0.28), 0.62, 0], r: [0, 0, x < 0 ? 18 : -18], mat: 'wooddark' });
+    P.push({ type: 'cyl', s: [0.17, 0.17, 0.14], p: [x, 1.3, 0], r: [0, 0, 90], seg: 8, mat: 'iron' });
+  }
+  P.push({ type: 'cyl', s: [0.33, 0.33, 3.2], p: [0, 1.3, 0], r: [0, 0, 90], seg: 8, mat: 'wooddark' });
+  for (const x of [-1.15, 0, 1.15]) P.push({ type: 'cyl', s: [0.35, 0.35, 0.08], p: [x, 1.3, 0], r: [0, 0, 90], seg: 8, mat: 'iron' });
+  // la cadena enrollada y la que baja por el hueco hacia el rastrillo
+  for (let i = 0; i < 6; i++) P.push({ type: 'torus', s: [0.36, 0.028], p: [-0.55 + i * 0.075, 1.3, 0], r: [0, 90, 0], seg: 10, seg2: 3, mat: 'iron' });
+  for (let i = 0; i < 12; i++) P.push({ type: 'torus', s: [0.052, 0.016], p: [-0.3 + (i % 2) * 0.03, 1.02 - i * 0.085, 0.3], r: [0, i % 2 ? 90 : 0, 0], seg: 6, seg2: 3, mat: 'iron' });
+  P.push({ type: 'box', s: [0.5, 0.04, 0.5], p: [-0.3, 0.01, 0.32], mat: 'black' });
+  // rueda de trinquete, uña y el encaje vacío de la manivela
+  P.push({ type: 'cyl', s: [0.5, 0.5, 0.08], p: [2.1, 1.3, 0], r: [0, 0, 90], seg: 12, mat: 'iron' });
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    P.push({ type: 'box', s: [0.08, 0.1, 0.06], p: [2.1, 1.3 + Math.sin(a) * 0.52, Math.cos(a) * 0.52], r: [(a * 180) / Math.PI, 0, 0], mat: 'iron' });
+  }
+  P.push({ type: 'box', s: [0.06, 0.5, 0.08], p: [2.17, 1.64, 0.12], r: [22, 0, 0], mat: 'iron' });
+  P.push({ type: 'box', s: [0.15, 0.15, 0.15], p: [2.23, 1.3, 0], mat: 'iron' });
+  return P;
+}
+function winchRubble(s, rng) {
+  const P = [];
+  for (const x of [-1.75, 1.75]) {
+    P.push({ type: 'box', s: [0.5, rng.range(0.35, 0.6), 0.42], p: [x, 0.25, 0], r: [rng.range(-6, 6), 0, rng.range(-8, 8)], mat: 'wooddark' });
+    P.push({ type: 'box', s: [0.66, 0.12, 0.6], p: [x, 0.06, 0], mat: 'wooddark' });
+    P.push({ type: 'box', s: [0.42, 0.9, 0.36], p: [x + rng.range(-0.9, 0.9), 0.2, rng.range(0.7, 1.3)], r: [86, rng.range(0, 180), 0], mat: 'wooddark' });
+  }
+  // el madero, en el suelo y rodado
+  P.push({ type: 'cyl', s: [0.33, 0.33, 3.2], p: [0.3, 0.33, 1.1], r: [0, rng.range(-12, 12), 90], seg: 8, mat: 'wooddark' });
+  for (const x of [-0.85, 0.3, 1.45]) P.push({ type: 'cyl', s: [0.35, 0.35, 0.08], p: [x, 0.33, 1.1], r: [0, 0, 90], seg: 8, mat: 'iron' });
+  P.push({ type: 'cyl', s: [0.5, 0.5, 0.08], p: [2.4, 0.05, -0.6], r: [0, 0, 4], seg: 12, mat: 'iron' });
+  for (let i = 0; i < 14; i++) P.push({ type: 'torus', s: [0.052, 0.016], p: [rng.range(-1.5, 1.5), 0.02, rng.range(-0.6, 0.9)], r: [90, rng.range(0, 180), 0], seg: 6, seg2: 3, mat: 'iron' });
+  for (let i = 0; i < 8; i++) P.push({ type: 'box', s: [0.06, 0.04, rng.range(0.3, 0.8)], p: [rng.range(-2, 2), 0.03, rng.range(-1, 1.4)], r: [0, rng.range(0, 180), 0], mat: 'wooddark' });
+  P.push({ type: 'box', s: [0.5, 0.04, 0.5], p: [-0.3, 0.01, 0.32], mat: 'black' });
+  return P;
+}
+// barricada atravesada en el adarve: vigas cruzadas, tablones, sacos,
+// piedras, una rueda de carro y estacas
+function barricadeParts(s, rng) {
+  const W = s.hx * 2,
+    H = s.h;
+  const P = [];
+  P.push({ type: 'box', s: [W * 1.04, 0.28, 0.28], p: [0, 1.15, 0.12], r: [0, 0, 21], mat: 'wooddark' });
+  P.push({ type: 'box', s: [W * 1.04, 0.28, 0.28], p: [0, 1.05, -0.08], r: [0, 0, -19], mat: 'wooddark' });
+  P.push({ type: 'box', s: [W * 0.98, 0.22, 0.22], p: [0, 0.55, 0.22], r: [0, 2, 3], mat: 'wooddark' });
+  for (let i = 0; i < 10; i++) {
+    const h = H * rng.range(0.72, 1.0);
+    P.push({ type: 'box', s: [0.32, h, 0.07], p: [-W / 2 + 0.25 + (i * (W - 0.5)) / 9, h / 2, 0.3 + rng.range(-0.05, 0.05)], r: [rng.range(-7, 7), rng.range(-6, 6), rng.range(-9, 9)], mat: 'planks' });
+  }
+  for (let i = 0; i < 7; i++) P.push({ type: 'sphere', s: [0.38, 0.22, 0.27], p: [-W / 2 + 0.32 + (i * (W - 0.64)) / 6, 0.2 + (i % 2) * 0.06, -0.26], r: [0, rng.range(0, 180), 0], seg: 7, seg2: 5, mat: 'burlap' });
+  for (let i = 0; i < 4; i++) P.push({ type: 'sphere', s: [0.36, 0.2, 0.26], p: [-W / 2 + 0.6 + i * 0.95, 0.58, -0.24], r: [0, rng.range(0, 180), 0], seg: 7, seg2: 5, mat: 'burlap' });
+  for (let i = 0; i < 6; i++) P.push({ type: 'box', s: [rng.range(0.3, 0.5), rng.range(0.25, 0.4), rng.range(0.3, 0.45)], p: [rng.range(-W / 2 + 0.3, W / 2 - 0.3), 0.18, rng.range(-0.5, -0.1)], r: [rng.range(-10, 10), rng.range(0, 90), 0], mat: 'wallstone' });
+  P.push({ type: 'torus', s: [0.55, 0.07], p: [W * 0.24, 0.78, 0.42], r: [0, 0, 0], seg: 12, seg2: 4, mat: 'wooddark' });
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI;
+    P.push({ type: 'box', s: [0.05, 1.0, 0.05], p: [W * 0.24 + Math.cos(a) * 0.0, 0.78, 0.42], r: [0, 0, (a * 180) / Math.PI], mat: 'wooddark' });
+  }
+  // estacas hacia fuera (hacia el adarve norte, por donde venían)
+  for (let i = 0; i < 4; i++) P.push({ type: 'cone', s: [0.06, 0.6], p: [-W / 2 + 0.6 + i * 0.95, 1.45, -0.5], r: [-70, 0, 0], seg: 4, mat: 'wooddark' });
+  return P;
+}
+function barricadeRubble(s, rng) {
+  const W = s.hx * 2;
+  const P = [];
+  // la mayoría sale hacia el norte (el golpe viene de la torre)
+  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [0.32, 0.07, rng.range(1.0, 2.0)], p: [rng.range(-W / 2, W / 2), 0.04 + i * 0.01, rng.range(-3.4, 0.4)], r: [rng.range(-8, 8), rng.range(-50, 50), rng.range(-6, 6)], mat: 'planks' });
+  for (let i = 0; i < 3; i++) P.push({ type: 'box', s: [0.28, 0.28, rng.range(2.2, 3.4)], p: [rng.range(-1.2, 1.2), 0.14 + i * 0.28, rng.range(-3.6, -1.2)], r: [0, rng.range(-70, 70), rng.range(-6, 6)], mat: 'wooddark' });
+  for (let i = 0; i < 6; i++) P.push({ type: 'sphere', s: [0.4, 0.08, 0.3], p: [rng.range(-W / 2, W / 2), 0.05, rng.range(-1.6, 0.6)], r: [0, rng.range(0, 180), 0], seg: 7, seg2: 4, mat: 'burlap' });
+  for (let i = 0; i < 7; i++) P.push({ type: 'box', s: [rng.range(0.25, 0.45), rng.range(0.2, 0.35), rng.range(0.25, 0.4)], p: [rng.range(-W / 2, W / 2), 0.13, rng.range(-2.8, 0.6)], r: [rng.range(-25, 25), rng.range(0, 180), rng.range(-25, 25)], mat: 'wallstone' });
+  P.push({ type: 'torus', s: [0.55, 0.07], p: [-0.8, 0.07, -2.4], r: [90, 0, 0], seg: 12, seg2: 4, mat: 'wooddark' });
+  puddle(P, rng, 0.2, -1, 1.4, 'straw');
+  return P;
+}
+// barril de pez de los defensores (en pie)
+function barrelParts(s) {
+  const R = s.hx,
+    H = s.h;
+  return [
+    { type: 'cyl', s: [R * 0.9, R * 0.9, H], p: [0, H / 2, 0], seg: 10, mat: 'planks' },
+    { type: 'cyl', s: [R, R, H * 0.5], p: [0, H / 2, 0], seg: 10, mat: 'planks' },
+    ...[0.1, 0.36, 0.64, 0.9].map((u) => ({ type: 'cyl', s: [R * 0.95 + 0.012, R * 0.95 + 0.012, 0.05], p: [0, H * u, 0], seg: 10, mat: 'iron' })),
+    { type: 'cyl', s: [R * 0.84, R * 0.84, 0.02], p: [0, H + 0.005, 0], seg: 10, mat: 'wooddark' },
+  ];
+}
+function barrelRubble(s, rng) {
+  const R = s.hx;
+  const P = [];
+  for (let i = 0; i < 10; i++) P.push({ type: 'box', s: [0.12, 0.025, rng.range(0.5, 0.9)], p: [rng.range(-0.9, 0.9), 0.02 + i * 0.005, rng.range(-0.9, 0.9)], r: [0, rng.range(0, 180), 0], mat: 'planks' });
+  for (let i = 0; i < 3; i++) P.push({ type: 'torus', s: [R * rng.range(0.85, 1), 0.022], p: [rng.range(-0.6, 0.6), 0.03 + i * 0.02, rng.range(-0.6, 0.6)], r: [90 + rng.range(-10, 10), 0, rng.range(0, 180)], seg: 12, seg2: 3, mat: 'iron' });
+  puddle(P, rng, 0, 0, 1.0, 'black');
+  return P;
+}
+function crateParts(s) {
+  const W = s.hx * 2,
+    D = s.hz * 2,
+    H = s.h;
+  const P = [{ type: 'box', s: [W - 0.04, H - 0.04, D - 0.04], p: [0, H / 2, 0], mat: 'planks' }];
+  for (const [x, z] of [
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1],
+  ])
+    P.push({ type: 'box', s: [0.07, H, 0.07], p: [(x * (W - 0.07)) / 2, H / 2, (z * (D - 0.07)) / 2], mat: 'wooddark' });
+  for (const y of [0.04, H - 0.04]) {
+    P.push({ type: 'box', s: [W, 0.07, 0.07], p: [0, y, D / 2 - 0.035], mat: 'wooddark' });
+    P.push({ type: 'box', s: [W, 0.07, 0.07], p: [0, y, -D / 2 + 0.035], mat: 'wooddark' });
+  }
+  return P;
+}
+function crateRubble(s, rng) {
+  const P = [];
+  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [rng.range(0.4, 0.9), 0.025, 0.14], p: [rng.range(-0.8, 0.8), 0.02 + i * 0.006, rng.range(-0.8, 0.8)], r: [0, rng.range(0, 180), 0], mat: i % 3 ? 'planks' : 'wooddark' });
+  return P;
+}
 const MODELS = {
+  merlon: [merlonParts, merlonRubble],
+  winch: [winchParts, winchRubble],
+  barricade: [barricadeParts, barricadeRubble],
+  barrel: [barrelParts, barrelRubble],
+  crate: [crateParts, crateRubble],
   pillar: [pillarParts, pillarRubble],
   rack: [rackParts, rackRubble],
   wall: [wallParts, wallRubble],
@@ -362,11 +518,17 @@ export class Breakables {
     }
     const stone = it.stone;
     const col = stone ? [0.34, 0.32, 0.29] : it.K.soft ? [0.42, 0.36, 0.26] : [0.2, 0.13, 0.08];
+    // las almenas caen al vacío, por fuera del adarve
+    if (it.out && !from) {
+      dx = it.out[0];
+      dz = it.out[1];
+    }
     const H = it.h;
     for (let k = 0; k < 4; k++) g.fx.blood.emit(it.x, it.y + 0.4 + (k * H) / 4, it.z, 22, { color: col, speed: 6, life: 1.1, up: 2, dir: { x: dx, z: dz } });
     g.fx.blood.emit(it.x, it.y + 0.3, it.z, 40, { color: [0.3, 0.28, 0.26], speed: 3, life: 1.8, up: 0.6, gravity: 1.5 }); // polvo
     if (it.K.wine) g.fx.blood.emit(it.x, it.y + Math.min(1, H * 0.5), it.z, 30, { color: [0.28, 0.05, 0.08], speed: 5, life: 0.8, up: 1.4 }); // vino
     if (it.K.soft) g.fx.blood.emit(it.x, it.y + 0.5, it.z, 40, { color: [0.62, 0.55, 0.36], speed: 3.5, life: 1.2, up: 1.6, gravity: 5 }); // grano
+    if (it.K.pitch) g.fx.blood.emit(it.x, it.y + 0.6, it.z, 34, { color: [0.05, 0.04, 0.04], speed: 4, life: 0.9, up: 1.6 }); // pez
     // cascotes
     const mat = it.mats[0];
     const n = it.K.chunks;
@@ -443,7 +605,14 @@ export class Breakables {
       const hx = cx,
         hy = player.pos.y + 1.1,
         hz = cz;
-      if (it.light) {
+      if (it.K.wood && !it.light) {
+        // el torno y la barricada: madera maciza (no ceden a la espada)
+        g.fx.blood.emit(hx, hy, hz, 12, { color: [0.22, 0.14, 0.08], speed: 3, life: 0.5, up: 1.2 });
+        g.audio && g.audio.play('woodHit', { x: hx, y: hy, z: hz });
+        g.hitstop = Math.max(g.hitstop, 0.07);
+        g.camRig.shake(0.12);
+        player.useSt(8);
+      } else if (it.light) {
         it.hp -= atk.heavy ? 2 : 1;
         g.fx.blood.emit(hx, hy, hz, 14, { color: [0.22, 0.14, 0.08], speed: 4, life: 0.6, up: 1.4 });
         g.audio && g.audio.play('woodHit', { x: hx, y: hy, z: hz });

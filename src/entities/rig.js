@@ -28,13 +28,18 @@ export function partGeometry(pt) {
       g = pt.taper ? taperBox(s[0], s[1], s[2], pt.taper[0], pt.taper[1] ?? pt.taper[0]) : new THREE.BoxGeometry(s[0], s[1], s[2]);
       break;
     case 'cyl':
-      g = new THREE.CylinderGeometry(s[0], s[1] ?? s[0], s[2] ?? 0.3, pt.seg || 6, 1, !!pt.open);
+      // theta: [inicio, amplitud] en grados (0 = +z): placas curvas (grebas,
+      // brazales, lamas de hombrera)
+      g = pt.theta
+        ? new THREE.CylinderGeometry(s[0], s[1] ?? s[0], s[2] ?? 0.3, pt.seg || 6, 1, true, pt.theta[0] * DEG, pt.theta[1] * DEG)
+        : new THREE.CylinderGeometry(s[0], s[1] ?? s[0], s[2] ?? 0.3, pt.seg || 6, 1, !!pt.open);
       break;
     case 'cone':
       g = new THREE.ConeGeometry(s[0], s[1], pt.seg || 6);
       break;
     case 'sphere':
-      g = new THREE.SphereGeometry(s[0], pt.seg || 6, pt.seg2 || 4);
+      // sph: [phi0, dphi, theta0, dtheta] en grados: casquetes (hombreras, cúpulas)
+      g = pt.sph ? new THREE.SphereGeometry(s[0], pt.seg || 6, pt.seg2 || 4, pt.sph[0] * DEG, pt.sph[1] * DEG, pt.sph[2] * DEG, pt.sph[3] * DEG) : new THREE.SphereGeometry(s[0], pt.seg || 6, pt.seg2 || 4);
       if (s[1] !== undefined) g.scale(1, s[1] / s[0], (s[2] ?? s[0]) / s[0]);
       break;
     case 'ico':
@@ -52,7 +57,13 @@ export function partGeometry(pt) {
       g.translate(0, 0, -(s[2] ?? 0.05) / 2);
       break;
     case 'lathe':
-      g = new THREE.LatheGeometry(pt.points.map((q) => new THREE.Vector2(q[0], q[1])), pt.seg || 8);
+      // phi: [inicio, amplitud] en grados (0 = +z): petos y espaldares curvos
+      g = new THREE.LatheGeometry(
+        pt.points.map((q) => new THREE.Vector2(q[0], q[1])),
+        pt.seg || 8,
+        pt.phi ? pt.phi[0] * DEG : 0,
+        pt.phi ? pt.phi[1] * DEG : Math.PI * 2
+      );
       break;
     default:
       throw new Error('tipo de pieza ' + pt.type);
@@ -98,11 +109,13 @@ export class Rig {
       this.joints[j.name] = o;
       (j.parent ? this.joints[j.parent] : this.root).add(o);
     }
-    // agrupar piezas por (articulación, material)
+    // agrupar piezas por (articulación, material); las de un grupo con nombre
+    // (grp: una hombrera, el peto...) van en mallas propias para poder
+    // desprenderse del cuerpo
     const groups = new Map();
     for (const pt of def.parts) {
-      const key = pt.j + '|' + pt.mat + '|' + (pt.ds ? 1 : 0);
-      if (!groups.has(key)) groups.set(key, { j: pt.j, mat: pt.mat, ds: pt.ds, geos: [] });
+      const key = pt.j + '|' + pt.mat + '|' + (pt.ds ? 1 : 0) + '|' + (pt.grp || '');
+      if (!groups.has(key)) groups.set(key, { j: pt.j, mat: pt.mat, ds: pt.ds, grp: pt.grp || null, geos: [] });
       groups.get(key).geos.push(partGeometry(pt));
     }
     for (const gr of groups.values()) {
@@ -111,6 +124,7 @@ export class Rig {
       const mat = opts.matFn ? opts.matFn(gr.mat, gr.ds) : objMat(gr.mat, gr.ds ? { side: THREE.DoubleSide } : {});
       const mesh = new THREE.Mesh(geo, mat);
       mesh.userData.matName = gr.mat;
+      if (gr.grp) mesh.userData.grp = gr.grp;
       this.joints[gr.j].add(mesh);
       this.meshes.push(mesh);
     }

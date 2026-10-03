@@ -611,43 +611,7 @@ export function buildMourner() {
   return new Rig({ joints, parts });
 }
 
-// ------------------------------------------------------------ El Empalado
-export function buildImpaled() {
-  const k = 1.8;
-  const joints = humanoidJoints(k);
-  const parts = [
-    { j: 'hips', type: 'box', s: [0.42 * k, 0.36 * k, 0.28 * k], p: [0, -0.12 * k, 0], taper: [1.15, 1.1], mat: 'chainmail' },
-    { j: 'hips', type: 'box', s: [0.34 * k, 0.6 * k, 0.03 * k], p: [0, -0.28 * k, 0.15 * k], taper: [1.2, 1], mat: 'clothDark' },
-    { j: 'chest', type: 'box', s: [0.5 * k, 0.54 * k, 0.32 * k], p: [0, 0.27 * k, 0], taper: [0.84, 0.9], mat: 'plate' },
-    { j: 'chest', type: 'box', s: [0.24 * k, 0.14 * k, 0.26 * k], p: [0.28 * k, 0.48 * k, 0], r: [0, 0, -25], mat: 'plate' },
-    { j: 'chest', type: 'box', s: [0.24 * k, 0.14 * k, 0.26 * k], p: [-0.28 * k, 0.48 * k, 0], r: [0, 0, 25], mat: 'plate' },
-    // la pica que lo atraviesa
-    { j: 'chest', type: 'cyl', s: [0.06, 0.06, 4.2], p: [0.1, 0.3 * k, 0], r: [-60, 15, 0], mat: 'wooddark' },
-    { j: 'chest', type: 'cone', s: [0.12, 0.5], p: [0.34, 0.3 * k - 1.0, 1.75], r: [120, 15, 0], mat: 'iron' },
-    { j: 'chest', type: 'ico', s: [0.2, 0.16, 0.16], p: [0.08, 0.3 * k, 0.3 * k], mat: 'flesh' },
-    { j: 'chest', type: 'ico', s: [0.18], p: [0.12, 0.34 * k, -0.3 * k], mat: 'flesh' },
-    // yelmo aplastado
-    { j: 'head', type: 'cyl', s: [0.16 * k, 0.17 * k, 0.26 * k], p: [0.02, 0.13 * k, 0], r: [0, 0, 14], seg: 8, mat: 'plate' },
-    { j: 'head', type: 'box', s: [0.22 * k, 0.02 * k, 0.02 * k], p: [0, 0.14 * k, 0.17 * k], r: [0, 0, 14], mat: 'redGlow' },
-    { j: 'head', type: 'ico', s: [0.14], p: [-0.2, 0.32, 0.05], mat: 'flesh' },
-    { j: 'armL', type: 'box', s: [0.15 * k, 0.32 * k, 0.15 * k], p: [0, -0.15 * k, 0], taper: [0.85, 0.85], mat: 'chainmail' },
-    { j: 'foreL', type: 'box', s: [0.13 * k, 0.28 * k, 0.13 * k], p: [0, -0.13 * k, 0], taper: [0.85, 0.85], mat: 'plate' },
-    { j: 'handL', type: 'box', s: [0.1 * k, 0.1 * k, 0.1 * k], p: [0, -0.05 * k, 0], mat: 'iron' },
-    { j: 'armR', type: 'box', s: [0.15 * k, 0.32 * k, 0.15 * k], p: [0, -0.15 * k, 0], taper: [0.85, 0.85], mat: 'chainmail' },
-    { j: 'foreR', type: 'box', s: [0.13 * k, 0.28 * k, 0.13 * k], p: [0, -0.13 * k, 0], taper: [0.85, 0.85], mat: 'plate' },
-    { j: 'handR', type: 'box', s: [0.1 * k, 0.1 * k, 0.1 * k], p: [0, -0.05 * k, 0], mat: 'iron' },
-    // maza de asedio
-    { j: 'handR', type: 'cyl', s: [0.06, 0.07, 2.1], p: [0, -0.1, 0.55], r: [90, 0, 0], mat: 'wooddark' },
-    { j: 'handR', type: 'box', s: [0.62, 0.42, 0.42], p: [0, -0.1, 1.5], mat: 'iron' },
-    { j: 'handR', type: 'box', s: [0.7, 0.08, 0.46], p: [0, 0.08, 1.5], mat: 'iron' },
-    { j: 'legL', type: 'box', s: [0.18 * k, 0.46 * k, 0.19 * k], p: [0, -0.22 * k, 0], taper: [0.8, 0.85], mat: 'chainmail' },
-    { j: 'shinL', type: 'box', s: [0.15 * k, 0.42 * k, 0.16 * k], p: [0, -0.2 * k, 0], taper: [0.9, 0.9], mat: 'plate' },
-    { j: 'legR', type: 'box', s: [0.18 * k, 0.46 * k, 0.19 * k], p: [0, -0.22 * k, 0], taper: [0.8, 0.85], mat: 'chainmail' },
-    { j: 'shinR', type: 'box', s: [0.15 * k, 0.42 * k, 0.16 * k], p: [0, -0.2 * k, 0], taper: [0.9, 0.9], mat: 'plate' },
-    ...feetParts(k, 'iron', { w: 0.14, h: 0.08, l: 0.26 }),
-  ];
-  return new Rig({ joints, parts });
-}
+// (El Empalado: impaled_model.js)
 
 // ------------------------------------------------------------ El Turiferario
 // El arzobispo transfigurado: casulla carmesí, jaula de hierro por rostro,

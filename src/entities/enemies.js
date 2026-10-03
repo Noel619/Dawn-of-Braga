@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 import { clip, addRot, q2e, Spring } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
-import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER, MOURNER_SKIRT, MOURNER_SKIRT_LEN } from './enemy_models.js';
+import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER, MOURNER_SKIRT, MOURNER_SKIRT_LEN } from './enemy_models.js';
+import { IMPALED_TYPE } from './impaled.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -512,64 +513,7 @@ const mourClips = {
   ),
 };
 
-// ======================================================================= EMPALADO
-const IMP_BASE = { chest: [10, 0, 0], armR: [-35, 0, -12], foreR: [-50, 0, 0], handR: [55, 0, 0], armL: [-30, 0, 15], foreL: [-60, 0, 0] };
-const impClips = {
-  alert: clip('alert', 1.6, [
-    [0, { ...IMP_BASE }],
-    [0.6, { chest: [-25, 0, 0], head: [-35, 0, 0], armL: [-60, 0, 70], armR: [-60, 0, -70], foreR: [-30, 0, 0] }, 'snap'],
-    [1.6, { ...IMP_BASE }],
-  ]),
-  slam: clip('slam', 2.1, [
-    [0, { ...IMP_BASE }],
-    [0.9, { chest: [-20, 0, 0], armR: [-210, 0, -10], foreR: [-30, 0, 0], handR: [50, 0, 0], armL: [-200, 0, 15], foreL: [-40, 0, 0], legL: [20, 0, 5], legR: [-20, 0, -5] }],
-    [1.02, { chest: [45, 0, 0], armR: [-42, 0, -4], foreR: [-5, 0, 0], handR: [85, 0, 0], armL: [-50, 0, 10], foreL: [-10, 0, 0], legL: [35, 0, 5], legR: [-45, 0, -5], shinR: [45, 0, 0], root: [0, -30, 0] }, 'snap'],
-    [1.6, { chest: [42, 0, 0], armR: [-40, 0, -4], foreR: [-5, 0, 0], handR: [85, 0, 0], armL: [-48, 0, 10], legL: [35, 0, 5], legR: [-45, 0, -5], shinR: [45, 0, 0], root: [0, -30, 0] }],
-    [2.1, { ...IMP_BASE }],
-  ]),
-  sweep: clip('sweep', 1.8, [
-    [0, { ...IMP_BASE }],
-    [0.7, { chest: [10, -65, 0], armR: [-90, 0, -110], foreR: [-20, 0, 0], handR: [80, 0, 0], armL: [-80, 0, -60], foreL: [-30, 0, 0] }],
-    [0.86, { chest: [20, 55, 0], armR: [-90, 0, 55], foreR: [-5, 0, 0], handR: [85, 0, 0], armL: [-80, 0, 20], root: [0, -12, 0] }, 'snap'],
-    [1.3, { chest: [18, 60, 0], armR: [-80, 0, 70], foreR: [-15, 0, 0], handR: [80, 0, 0], root: [0, -12, 0] }],
-    [1.8, { ...IMP_BASE }],
-  ]),
-  stomp: clip('stomp', 1.3, [
-    [0, { ...IMP_BASE }],
-    [0.5, { ...IMP_BASE, legL: [-70, 0, 10], shinL: [60, 0, 0], chest: [-10, 0, 0], root: [0, 6, 0] }],
-    [0.62, { ...IMP_BASE, legL: [5, 0, 10], shinL: [0, 0, 0], chest: [20, 0, 0], root: [0, -14, 0] }, 'snap'],
-    [1.3, { ...IMP_BASE }],
-  ]),
-  charge: clip('charge', 2.4, [
-    [0, { ...IMP_BASE }],
-    [0.6, { chest: [40, 0, 0], head: [-30, 0, 0], armR: [-60, 0, -20], armL: [-60, 0, 20], root: [0, -20, 0] }],
-    [0.62, { chest: [40, 0, 0], head: [-30, 0, 0], armR: [-60, 0, -20], armL: [-60, 0, 20], root: [0, -20, 0] }],
-    [1.9, { chest: [40, 0, 0], head: [-30, 0, 0], armR: [-60, 0, -20], armL: [-60, 0, 20], root: [0, -20, 0] }],
-    [2.4, { ...IMP_BASE }],
-  ]),
-  hurt: clip('hurt', 0.45, [
-    [0, { ...IMP_BASE, chest: [0, 10, 0], head: [-10, 0, 10] }, 'snap'],
-    [0.45, { ...IMP_BASE }],
-  ]),
-  stagger: clip('stagger', 2.0, [
-    [0, { chest: [-25, 20, 0], head: [-30, 0, 0], armL: [-20, 0, 60], armR: [-20, 0, -60], root: [0, -10, -15] }, 'snap'],
-    [0.9, { chest: [45, 0, 0], head: [20, 0, 0], root: [0, -60, 0], legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0], armL: [-10, 0, 20], armR: [-10, 0, -20] }],
-    [2.0, { ...IMP_BASE }],
-  ]),
-  // desequilibrado: la pica y el cuerpo hacia atrás, un paso para no caer
-  parried: clip('parried', 1.4, [
-    [0, { chest: [-24, 18, 0], head: [-30, 0, 0], armR: [-120, 0, -64], foreR: [-20, 0, 0], handR: [55, 0, 0], armL: [-50, 0, 62], foreL: [-30, 0, 0], root: [0, -8, -18], legL: [-22, 0, 0], shinL: [34, 0, 0], legR: [18, 0, 0], shinR: [20, 0, 0] }, 'snap'],
-    [0.35, { chest: [-16, 12, 0], head: [-20, 0, 0], armR: [-96, 0, -52], foreR: [-28, 0, 0], handR: [55, 0, 0], armL: [-40, 0, 50], foreL: [-36, 0, 0], root: [0, -16, -20], legL: [-32, 0, 0], shinL: [52, 0, 0], legR: [22, 0, 0], shinR: [28, 0, 0] }],
-    [0.95, { chest: [0, 4, 0], head: [-8, 0, 0], armR: [-56, 0, -26], foreR: [-40, 0, 0], handR: [55, 0, 0], armL: [-34, 0, 24], foreL: [-50, 0, 0], root: [0, -10, -8], legL: [-22, 0, 0], shinL: [38, 0, 0], legR: [12, 0, 0], shinR: [20, 0, 0] }],
-    [1.4, { ...IMP_BASE }],
-  ]),
-  death: clip('death', 3.0, [
-    [0, { chest: [-30, 0, 0], head: [-40, 0, 0], armL: [-40, 0, 60], armR: [-40, 0, -60] }, 'snap'],
-    [1.0, { chest: [30, 0, 0], head: [40, 0, 0], root: [0, -80, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0], armL: [10, 0, 20], armR: [10, 0, -20] }],
-    [2.0, { hips: [80, 0, 0], chest: [8, 0, 0], root: [0, -135, 0], armL: [-150, 0, 30], armR: [-60, 0, -50], legL: [-10, 0, 5], legR: [-5, 0, -5] }, 'in'],
-    [3.0, { hips: [86, 0, 0], chest: [4, 0, 0], root: [0, -140, 0], armL: [-150, 0, 30], armR: [-60, 0, -50], legL: [-4, 0, 5], legR: [-4, 0, -5] }],
-  ]),
-};
+// (El Empalado y su segunda forma: impaled.js y game/beast_chase.js)
 
 // ======================================================================= TURIFERARIO
 const TUR_BASE = { chest: [12, 0, 0], head: [-10, 0, 0], armR: [-45, 0, -25], foreR: [-40, 0, 0], armL: [-15, 0, 18], foreL: [-30, 0, 0] };
@@ -1192,60 +1136,7 @@ export const TYPES = {
       }
     },
   },
-  impaled: {
-    name: 'El Empalado',
-    build: buildImpaled,
-    hp: 620,
-    poise: 180,
-    radius: 1.0,
-    height: 3.4,
-    lockHeight: 2.4,
-    walk: 1.6,
-    sight: 30,
-    hear: 30,
-    turn: 2.4,
-    stride: 1.4,
-    approach: 3.2,
-    heavy: true,
-    boss: true,
-    // (jefe: tres parrys seguidos para desequilibrarlo)
-    parryPosture: 3,
-    parryDur: 1.4,
-    clips: impClips,
-    voice: 'impaled',
-    alertTime: 1.6,
-    attacks: [
-      { name: 'slam', clip: impClips.slam, dur: 2.1, min: 0, max: 4.4, hits: [[1.0, 1.14]], dmg: 36, range: 4.5, arc: 50, weight: 3, turn: 2.2, stagger: true, noParry: true, events: [{ t: 1.05, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 3.4, e.pos.y, e.pos.z + Math.cos(e.yaw) * 3.4, 3.0, 16, e) }] },
-      { name: 'sweep', clip: impClips.sweep, dur: 1.8, min: 0, max: 4.6, hits: [[0.8, 1.0]], dmg: 30, range: 4.7, arc: 170, weight: 3 },
-      { name: 'stomp', clip: impClips.stomp, dur: 1.3, min: 0, max: 2.4, hits: [], weight: 2, noParry: true, events: [{ t: 0.62, fn: (e, g) => g.combat.shockwave(e.pos.x, e.pos.y, e.pos.z, 3.0, 20, e, 9) }] },
-      { name: 'charge', clip: impClips.charge, dur: 2.4, min: 5, max: 14, hits: [[0.62, 1.9]], dmg: 34, range: 2.4, arc: 70, lunge: [[0.62, 1.9, 7.5]], weight: 2, phase: 2, turn: 1.5, trackUntil: 0.6, stagger: true, noParry: true },
-    ],
-    biped: { scale: 1.8, style: GAIT.heavy, stance: 0.1 },
-    loco: (e, t, spd) => rad(humanStyle(e, t, { hunch: 12, armR: [-35, 0, -12], foreR: [-50, 0, 0], handR: [55, 0, 0], armL: [-30, 0, 15], foreL: [-60, 0, 0], armRSwing: 0.2, breath: 1.0, breathAmp: 3 })),
-    update: (e, dt, player) => {
-      if (!e.dead && e.hp < e.maxHp * 0.5 && e.data.phase !== 2) {
-        e.data.phase = 2;
-        e.game.onBossPhase && e.game.onBossPhase(e);
-      }
-      // la carga se detiene contra muros: lo que avanzó en el fotograma
-      // anterior frente a su duración (con un umbral fijo por fotograma, el
-      // hitstop, que frena el tiempo, lo daba por estrellado en cuanto la
-      // carga te alcanzaba o le golpeabas, y se quedaba aturdido)
-      if (e.state === 'attack' && e.atk && e.atk.name === 'charge' && e.stT > 0.8 && e.stT < 1.9) {
-        const moved = Math.hypot(e.pos.x - (e.data.lx ?? e.pos.x), e.pos.z - (e.data.lz ?? e.pos.z));
-        if (moved < (e.data.ldt ?? dt) * 1.8) {
-          e.state = 'stagger';
-          e.stT = 0;
-          e.anim.play(impClips.stagger, { blend: 0.05 });
-          e.game.camRig.shake(0.5);
-          e.game.audio && e.game.audio.play('slam', e.pos);
-        }
-      }
-      e.data.lx = e.pos.x;
-      e.data.lz = e.pos.z;
-      e.data.ldt = dt;
-    },
-  },
+  impaled: IMPALED_TYPE,
   turibulario: {
     name: 'El Turiferario',
     build: buildTuribulario,

@@ -724,6 +724,31 @@ export function buildTanners(ctx, S, L) {
   L.map.push({ id: 'tanners', r: [42, -12, 64, 12] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
 }
 
+// Almenas rompibles en la cima del Postigo (cada una, su pieza) y el parapeto
+// continuo, invisible, que no deja caer al vacío aunque falte la piedra.
+// out: hacia dónde caen los sillares (fuera del adarve).
+function arenaMerlons(ctx, L, x0, z0, x1, z1, y, out, skip = []) {
+  const alongX = Math.abs(x1 - x0) >= Math.abs(z1 - z0);
+  const len = alongX ? Math.abs(x1 - x0) : Math.abs(z1 - z0);
+  const mw = 0.9,
+    gap = 0.7,
+    mh = 1.1,
+    t = 0.6;
+  const n = Math.floor((len + gap) / (mw + gap));
+  const start = (len - (n * mw + (n - 1) * gap)) / 2;
+  const sx = Math.min(x0, x1),
+    sz = Math.min(z0, z1);
+  for (let i = 0; i < n; i++) {
+    const a = start + i * (mw + gap) + mw / 2;
+    const cx = alongX ? sx + a : x0,
+      cz = alongX ? z0 : sz + a;
+    if (skip.some(([a0, b0, a1, b1]) => cx > a0 && cx < a1 && cz > b0 && cz < b1)) continue;
+    L.breakables.push({ kind: 'merlon', id: `m_${Math.round(cx * 10)}_${Math.round(-cz * 10)}`, area: 'postigo', x: cx, y, z: cz, hx: alongX ? mw / 2 : t / 2, hz: alongX ? t / 2 : mw / 2, h: mh, out });
+  }
+  if (alongX) ctx.col.add(sx, y - 0.2, z0 - t / 2, sx + len, y + mh, z0 + t / 2).noSight = true;
+  else ctx.col.add(x0 - t / 2, y - 0.2, sz, x0 + t / 2, y + mh, sz + len).noSight = true;
+}
+
 // ======================================================================== ADARVE Y POSTIGO
 export function buildRamparts(ctx, S, L) {
   const wb = ctx.wb;
@@ -767,11 +792,21 @@ export function buildRamparts(ctx, S, L) {
     gz0 = -68,
     gz1 = -56;
   solid(ctx, 'wallstone', gx0, 0, gz0, gx1, 9, gz1, { sub: 2.2, aoH: 3, mats: { t: 'flag' } });
-  merlons(ctx, gx0 - 0.3, gz0 + 0.3, gx1 + 0.3, gz0 + 0.3, 9, { collide: true });
-  merlons(ctx, gx1 - 0.3, gz0, gx1 - 0.3, gz1, 9, { collide: true });
-  merlons(ctx, gx0 + 0.3, gz0, gx0 + 0.3, -60, 9, { collide: true });
-  merlons(ctx, gx0 - 0.3, gz1 - 0.3, 72.3, gz1 - 0.3, 9, { collide: true });
-  merlons(ctx, 75.7, gz1 - 0.3, gx1 + 0.3, gz1 - 0.3, 9, { collide: true });
+  // las almenas se rompen (el Empalado las revienta con el ariete); el
+  // parapeto que no deja caer sigue ahí aunque falte la piedra. Al norte, el
+  // paso al adarve del norte está cegado con una barricada
+  const towers = [
+    [gx0 - 2.1, gz0 - 2.1, gx0 + 2.1, gz0 + 2.1],
+    [gx1 - 2.1, gz0 - 2.1, gx1 + 2.1, gz0 + 2.1],
+    [gx1 - 2.1, gz1 - 2.1, gx1 + 2.1, gz1 + 2.1],
+  ];
+  arenaMerlons(ctx, L, gx0 - 0.3, gz0 + 0.3, 72, gz0 + 0.3, 9, [0, -1], towers);
+  arenaMerlons(ctx, L, 76, gz0 + 0.3, gx1 + 0.3, gz0 + 0.3, 9, [0, -1], towers);
+  arenaMerlons(ctx, L, gx1 - 0.3, gz0, gx1 - 0.3, gz1, 9, [1, 0], towers);
+  arenaMerlons(ctx, L, gx0 + 0.3, gz0, gx0 + 0.3, -60, 9, [-1, 0], towers);
+  arenaMerlons(ctx, L, gx0 - 0.3, gz1 - 0.3, 72.3, gz1 - 0.3, 9, [0, 1], towers);
+  arenaMerlons(ctx, L, 75.7, gz1 - 0.3, gx1 + 0.3, gz1 - 0.3, 9, [0, 1], towers);
+  L.breakables.push({ kind: 'barricade', id: 'barricada_norte', area: 'postigo', x: 74, y: 9, z: -67.75, hx: 2.0, hz: 0.6, h: 2.3 });
   // torrecillas en las esquinas
   for (const [x, z] of [
     [gx0, gz0],
@@ -779,16 +814,18 @@ export function buildRamparts(ctx, S, L) {
     [gx1, gz1],
   ])
     tower(ctx, x, z, 4, 12.5, { slits: false, roof: 'pyramid' });
-  // torno del rastrillo en el centro
-  wb.box('wooddark', 69.5, 9, -63.2, 70, 10.6, -62.8, { ao: false });
-  wb.box('wooddark', 73, 9, -63.2, 73.5, 10.6, -62.8, { ao: false });
-  wb.push();
-  wb.translate(71.5, 10.3, -63);
-  wb.rotateZ(Math.PI / 2);
-  wb.cylinder('wooddark', 0, -1.6, 0, 0.35, 0.35, 3.2, 8, { ao: false, capTop: true, capBot: true });
-  wb.pop();
-  for (let i = 0; i < 14; i++) wb.box('iron', 70.8 + (i % 2) * 0.1, 10.3 - i * 0.2, -63.05, 70.9 + (i % 2) * 0.1, 10.42 - i * 0.2, -62.95, { ao: false });
-  ctx.col.add(69.3, 9, -63.4, 73.7, 10.7, -62.6);
+  // torno del rastrillo en el centro (lo revientan los golpes del Empalado)
+  L.breakables.push({ kind: 'winch', id: 'torno_postigo', area: 'postigo', x: 71.5, y: 9, z: -63, hx: 2.35, hz: 0.42, h: 1.75 });
+  // pez y pertrechos de los defensores
+  for (const [k, x, z, hx, hz, h] of [
+    ['barrel', 78.4, -60.6, 0.42, 0.42, 1.0],
+    ['barrel', 77.5, -59.6, 0.42, 0.42, 1.0],
+    ['crate', 64.5, -61.6, 0.45, 0.45, 0.85],
+    ['crate', 65.3, -63.0, 0.42, 0.4, 0.75],
+    ['barrel', 63.6, -64.7, 0.42, 0.42, 1.0],
+    ['crate', 77.9, -66.1, 0.45, 0.45, 0.8],
+  ])
+    L.breakables.push({ kind: k, id: `p_${k}_${Math.round(x * 10)}_${Math.round(-z * 10)}`, area: 'postigo', x, y: 9, z, hx, hz, h });
   P.brazier(ctx, 65, 9, -59, {});
   P.brazier(ctx, 78, 9, -65, {});
   bakeCorpse(wb, 67, 9, -65, 2.2, 'back', 'soldier', 10);
@@ -801,8 +838,7 @@ export function buildRamparts(ctx, S, L) {
   P.dropped(ctx, 66.3, 9, -66.3, 0.3, 'helmet');
   L.interact.push(
     { kind: 'fog', id: 'f_impaled', boss: 'impaled', x: 74, y: 9, z: -55.7, w: 3.4, h: 3.2, axis: 'x', enter: -1 },
-    { kind: 'fog', id: 'f_impaled2', boss: 'impaled', x: 62.2, y: 9, z: -58, w: 3.2, h: 3.2, axis: 'z', enter: 1 },
-    { kind: 'item', id: 'i_manivela', item: 'manivela', x: 71.5, y: 10.0, z: -62.4, afterBoss: 'impaled' }
+    { kind: 'fog', id: 'f_impaled2', boss: 'impaled', x: 62.2, y: 9, z: -58, w: 3.2, h: 3.2, axis: 'z', enter: 1 }
   );
   L.enemies.push(
     { type: 'soldier', x: 74, y: 9, z: -28, yaw: Math.PI, idle: 'stand', id: 'e_ram1' },
