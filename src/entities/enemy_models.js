@@ -544,7 +544,7 @@ export function buildMourner() {
       { j, type: 'box', s: [0.02, 0.31, 0.01], p: [n ? 0.012 : -0.012, -0.155, 0.01], r: [0, 0, n ? 3 : -3], mat: 'black' },
     ]),
     // el velo, que le cae por la espalda, con el borde de encaje
-    { j: 'veil', type: 'box', s: [0.36, 1.2, 0.02], p: [0, -0.58, 0], taper: [1.3, 1], mat: 'shroud', ds: true },
+    { j: 'veil', type: 'box', s: [0.34, 1.2, 0.02], p: [0, -0.58, 0], taper: [1.3, 1], mat: 'shroud', ds: true },
     { j: 'veil', type: 'box', s: [0.48, 0.05, 0.026], p: [0, -1.17, 0], mat: 'lace' },
 
     // ---------------------------------------------------------- tronco

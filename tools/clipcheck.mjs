@@ -74,7 +74,7 @@ const r = await p.evaluate(
           ['mangaR', 'sleeveR', 'c', [[0, -0.1, 0], [0, -0.46, 0], 0.11]],
           ['peloL', 'hairL', 'c', [[0, -0.05, 0], [0, -0.32, 0], 0.012]],
           ['peloR', 'hairR', 'c', [[0, -0.05, 0], [0, -0.32, 0], 0.012]],
-          ['velo', 'veil', 'o', [[0, -0.58, 0], [0.2, 0.6, 0.012]]],
+          ['velo', 'veil', 'o', [[0, -0.58, 0], [0.19, 0.6, 0.012]]],
         ],
         pairs: [
           [['manoL', 'manoR', 'antebrazoL', 'antebrazoR', 'mangaL', 'mangaR'], ['falda', 'torso', 'cabeza']],

@@ -1169,7 +1169,7 @@ export const TYPES = {
       pose.hairR = [sx * 0.25 * k, 0, -hz * 0.85 + sz * 0.25 * k - 0.03];
       if (!dead) {
         // (con el tronco girado, algo más atrás: que no lo atraviese el brazo)
-        hangDown(e, pose, 'veil', sx + 0.16 + Math.abs(pose.chest ? pose.chest[1] : 0) * 0.4, sz);
+        hangDown(e, pose, 'veil', sx + 0.2 + Math.abs(pose.chest ? pose.chest[1] : 0) * 0.4, sz);
         hangDown(e, pose, 'sleeveL', sx * 0.7, sz * 0.6 + 0.05);
         hangDown(e, pose, 'sleeveR', sx * 0.7, sz * 0.6 - 0.05);
       } else {
