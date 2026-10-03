@@ -363,6 +363,7 @@ export class Enemy {
 
   onAnimEvent(e) {
     if (e === 'step' && this.game.audio) this.game.audio.enemyStep(this);
+    if (this.T.onAnimEvent) this.T.onAnimEvent(this, e);
   }
 
   perilFx() {

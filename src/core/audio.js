@@ -1611,7 +1611,8 @@ export class Audio {
         break;
       case 'bell':
         if (kind === 'alert') {
-          this.smp(d, t, this.churchBell(), { gain: 0.45, rate: mtof(48) / mtof(45) });
+          // (suena cuando el puño da en la campana)
+          this.smp(d, t + 0.36, this.churchBell(), { gain: 0.45, rate: mtof(48) / mtof(45) });
           V({ dt: 0.15, dur: 1.3, f0: 68, f1: 58, vowel: 'o', gain: 0.3, vib: 5, vibD: 20, breath: 0.5, rasp: 0.5, dist: 1 });
         } else if (kind === 'attack') V({ dur: 0.8, f0: 64, vowel: 'u', v1: 'a', gain: 0.25, breath: 0.7, rasp: 0.6 });
         else if (kind === 'hurt') this.smp(d, t, this.churchBell(), { gain: 0.2, rate: (mtof(48) / mtof(45)) * rnd(0.97, 1.03) });

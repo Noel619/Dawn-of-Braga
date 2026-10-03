@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { Rig } from './rig.js';
 import { humanoidJoints, swordParts, feetParts } from './models.js';
+import { DEG } from '../core/util.js';
 
 // ------------------------------------------------------------ Penitente
 // Flagelante encorvado con capucha de arpillera, clavos en la espalda y hoz.
@@ -196,51 +197,289 @@ export function buildHound() {
 }
 
 // ------------------------------------------------------------ Campanero
-// Bruto de 2,6 m con una campana de la catedral fundida en lugar de cabeza.
+// Bruto de casi tres metros con una campana de la catedral por cabeza: se la
+// fundieron sobre los hombros (el bronce chorreó y se pegó a la carne) y la
+// encadenaron al pecho. La campana conserva su corona de asas y un trozo del
+// yugo de madera roto; tiene dos rendijas por las que le brillan los ojos,
+// una grieta y una inscripción. Lleva el delantal de cuero del fundidor, la
+// cuerda de la campana enrollada a la cintura, grilletes rotos en las
+// muñecas y, por arma, el badajo.
+//
+// La campana es una pieza torneada cerrada: por fuera bronce viejo, por
+// dentro bronce ennegrecido (perfil del borde hacia la corona, para que las
+// caras miren hacia fuera; al revés se veía el interior a través de ella).
+// Va alta, con el borde por encima de los hombros: los brazos pasan por
+// debajo al alzarse.
+export const BELL_OUT = [
+  [0.423, 0.1],
+  [0.46, 0.1],
+  [0.465, 0.128],
+  [0.432, 0.192],
+  [0.377, 0.284],
+  [0.327, 0.422],
+  [0.304, 0.56],
+  [0.299, 0.67],
+  [0.285, 0.762],
+  [0.248, 0.818],
+  [0.184, 0.846],
+  [0.001, 0.855],
+];
+const BELL_IN = [
+  [0.001, 0.8],
+  [0.166, 0.79],
+  [0.239, 0.744],
+  [0.262, 0.652],
+  [0.267, 0.56],
+  [0.285, 0.422],
+  [0.331, 0.284],
+  [0.386, 0.192],
+  [0.419, 0.128],
+  [0.423, 0.1],
+];
+// Radio exterior de la campana a la altura y (espacio de su articulación).
+export function bellRadius(y) {
+  const P = BELL_OUT;
+  if (y < P[1][1] || y > P[P.length - 1][1]) return 0;
+  for (let i = 1; i < P.length - 1; i++) {
+    const a = P[i],
+      b = P[i + 1];
+    if (y >= a[1] && y <= b[1]) return a[0] + ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1] || 1);
+  }
+  return 0;
+}
+// el badajo, en el espacio de la mano derecha (a lo largo de +z)
+export const CLAPPER = { y: -0.08, z0: -0.12, z1: 1.0, ball: 1.16, ballR: 0.205, tip: 1.51 };
+
+const _m4 = new THREE.Matrix4();
+const _eu = new THREE.Euler();
+const _ax = new THREE.Vector3(),
+  _ay = new THREE.Vector3(),
+  _az = new THREE.Vector3();
+// Rotación (grados) de una pieza cuyo eje y va de a a b y su cara (+z) mira
+// hacia n.
+function alignR(a, b, n) {
+  _ay.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]).normalize();
+  _az.set(n[0], n[1], n[2]);
+  _ax.crossVectors(_ay, _az).normalize();
+  _az.crossVectors(_ax, _ay).normalize();
+  _m4.makeBasis(_ax, _ay, _az);
+  _eu.setFromRotationMatrix(_m4, 'XYZ');
+  return [_eu.x / DEG, _eu.y / DEG, _eu.z / DEG];
+}
+
 export function buildBell() {
   const k = 1.38;
-  const joints = humanoidJoints(k, { arm: 1.05 });
-  joints.push({ name: 'bellJ', parent: 'chest', pos: [0, 0.56 * k, 0] });
-  const bellPts = [
-    [0.001, 0.95],
-    [0.16, 0.95],
-    [0.3, 0.86],
-    [0.36, 0.64],
-    [0.4, 0.34],
-    [0.48, 0.1],
-    [0.58, -0.02],
-    [0.56, -0.08],
-  ];
+  const base = humanoidJoints(k, { arm: 1.05 });
+  const J = Object.fromEntries(base.map((j) => [j.name, j]));
+  // hombros de bruto, anchos y algo bajos
+  J.armL.pos = [0.4, 0.64, -0.02];
+  J.armR.pos = [-0.4, 0.64, -0.02];
+  const joints = base.filter((j) => j.name !== 'head');
+  joints.push({ name: 'bellJ', parent: 'chest', pos: [0, 0.79, -0.01] });
+  // los ojos (y el destello de aviso) están en la campana
+  joints.push({ name: 'head', parent: 'bellJ', pos: [0, 0.4, 0.36] });
+  // delantal y faldón (siguen a los muslos), la cuerda y la cadena de un grillete
+  joints.push({ name: 'apron', parent: 'hips', pos: [0, 0.04, 0.4] });
+  joints.push({ name: 'apron2', parent: 'apron', pos: [0, -0.5, 0] });
+  joints.push({ name: 'flapB', parent: 'hips', pos: [0, -0.02, -0.25] });
+  joints.push({ name: 'rope', parent: 'hips', pos: [0.35, -0.1, 0.07] });
+  joints.push({ name: 'chainL', parent: 'foreL', pos: [0.135, -0.37, 0.0] });
+
+  // un punto de la superficie exterior de la campana y su normal
+  const onBell = (x, y, out = 0.004) => {
+    const r = bellRadius(y);
+    const z = Math.sqrt(Math.max(0, r * r - x * x));
+    const n = [x, 0.35 * r, z];
+    const l = Math.hypot(n[0], n[1], n[2]);
+    return { p: [x + (x / r) * out, y, z + (z / r) * out], n: [n[0] / l, n[1] / l, n[2] / l] };
+  };
+  // tira fina sobre la campana entre dos puntos (grieta, relieves)
+  const onBellSeg = (x0, y0, x1, y1, w, d, mat) => {
+    const a = onBell(x0, y0),
+      b = onBell(x1, y1);
+    const len = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]);
+    const m = [(a.p[0] + b.p[0]) / 2, (a.p[1] + b.p[1]) / 2, (a.p[2] + b.p[2]) / 2];
+    return { j: 'bellJ', type: 'box', s: [w, len + w * 0.6, d], p: m, r: alignR(a.p, b.p, a.n), mat };
+  };
+  const ring = (y, tube, mat = 'bronze') => ({ j: 'bellJ', type: 'torus', s: [bellRadius(y) + tube * 0.4, tube], p: [0, y, 0], r: [90, 0, 0], seg: 24, seg2: 4, mat });
+
   const parts = [
+    // ---------------------------------------------------------- campana
+    { j: 'bellJ', type: 'lathe', points: BELL_OUT, s: [1, 1, 1], seg: 20, mat: 'bronzeAged' },
+    { j: 'bellJ', type: 'lathe', points: BELL_IN, s: [1, 1, 1], seg: 20, mat: 'bronzeIn' },
+    // molduras
+    ring(0.15, 0.016),
+    ring(0.205, 0.01),
+    ring(0.64, 0.01),
+    ring(0.72, 0.013),
+    ring(0.79, 0.01),
+    // inscripción entre las molduras de arriba
+    ...Array.from({ length: 22 }, (_, i) => {
+      const a = (i / 22) * Math.PI * 2 + 0.15;
+      const r = bellRadius(0.68) + 0.004;
+      const tall = i % 3 === 1;
+      return { j: 'bellJ', type: 'box', s: [0.02 + (i % 2) * 0.012, tall ? 0.04 : 0.028, 0.008], p: [Math.sin(a) * r, tall ? 0.682 : 0.678, Math.cos(a) * r], r: [0, a / DEG, 0], mat: 'bronze' };
+    }),
+    // cruz en la frente
+    onBellSeg(0, 0.49, 0, 0.62, 0.028, 0.012, 'bronze'),
+    onBellSeg(-0.045, 0.585, 0.045, 0.585, 0.024, 0.012, 'bronze'),
+    // rendijas de los ojos (inclinadas: mirada torva) y su brillo
+    ...[1, -1].flatMap((sx) => {
+      const a = onBell(sx * 0.085, 0.4, 0.004),
+        b = onBell(sx * 0.085, 0.4, 0.011);
+      const ry = Math.atan2(a.p[0], a.p[2]) / DEG;
+      return [
+        { j: 'bellJ', type: 'box', s: [0.105, 0.036, 0.016], p: a.p, r: [-18, ry, sx * -11], mat: 'black' },
+        { j: 'bellJ', type: 'box', s: [0.056, 0.014, 0.01], p: b.p, r: [-18, ry, sx * -11], mat: 'eyeGlow' },
+      ];
+    }),
+    // y la brasa de dentro (se ve desde abajo, por la boca)
+    { j: 'bellJ', type: 'sphere', s: [0.07], p: [0, 0.36, 0.17], mat: 'eyeGlow' },
+    // grieta que baja por la mejilla derecha hasta el borde
+    onBellSeg(-0.13, 0.115, -0.165, 0.2, 0.014, 0.012, 'black'),
+    onBellSeg(-0.165, 0.2, -0.12, 0.275, 0.013, 0.012, 'black'),
+    onBellSeg(-0.12, 0.275, -0.14, 0.35, 0.012, 0.012, 'black'),
+    onBellSeg(-0.14, 0.35, -0.11, 0.38, 0.011, 0.012, 'black'),
+    onBellSeg(-0.165, 0.2, -0.215, 0.235, 0.009, 0.01, 'black'),
+    // corona de asas
+    { j: 'bellJ', type: 'torus', s: [0.085, 0.024], p: [0, 0.905, 0], seg: 10, seg2: 4, mat: 'bronzeAged' },
+    { j: 'bellJ', type: 'torus', s: [0.085, 0.024], p: [0, 0.905, 0], r: [0, 90, 0], seg: 10, seg2: 4, mat: 'bronzeAged' },
+    // lo que queda del yugo: la viga partida, flejes y el gorrón
+    { j: 'bellJ', type: 'box', s: [0.64, 0.12, 0.17], p: [0.05, 0.99, 0], mat: 'wooddark' },
+    { j: 'bellJ', type: 'box', s: [0.12, 0.045, 0.07], p: [-0.3, 1.015, 0.03], r: [0, 15, 22], mat: 'wooddark' },
+    { j: 'bellJ', type: 'box', s: [0.09, 0.04, 0.06], p: [-0.29, 0.965, -0.035], r: [0, -12, -24], mat: 'wooddark' },
+    ...[
+      [0.14, 0.088],
+      [0.14, -0.088],
+      [-0.12, 0.088],
+      [-0.12, -0.088],
+    ].map(([x, z]) => ({ j: 'bellJ', type: 'box', s: [0.036, 0.2, 0.012], p: [x, 0.95, z], mat: 'iron' })),
+    { j: 'bellJ', type: 'cyl', s: [0.032, 0.032, 0.09], p: [0.41, 0.99, 0], r: [0, 0, 90], seg: 6, mat: 'iron' },
+    // bronce que chorreó al fundírsela encima
+    ...[
+      [40, 0.05],
+      [75, 0.12],
+      [104, 0.14],
+      [138, 0.08],
+      [180, 0.1],
+      [222, 0.09],
+      [256, 0.13],
+      [284, 0.12],
+      [322, 0.05],
+    ].map(([a, len], i) => ({ j: 'bellJ', type: 'cone', s: [0.022 + (i % 3) * 0.005, len], p: [Math.sin(a * DEG) * 0.452, 0.11 - len / 2, Math.cos(a * DEG) * 0.452], r: [180, 0, 0], mat: 'bronzeAged' })),
+
+    // ---------------------------------------------------------- tronco
+    { j: 'chest', type: 'box', s: [0.86, 0.62, 0.54], p: [0, 0.36, 0], taper: [0.72, 0.84], mat: 'skinCorrupt' },
+    // joroba, trapecios, pectorales y tripa
+    { j: 'chest', type: 'ico', s: [0.42, 0.3, 0.26], p: [0, 0.5, -0.2], mat: 'skinCorrupt' },
+    { j: 'chest', type: 'box', s: [0.32, 0.12, 0.34], p: [0.2, 0.68, -0.03], r: [0, 0, -12], mat: 'skinCorrupt' },
+    { j: 'chest', type: 'box', s: [0.32, 0.12, 0.34], p: [-0.2, 0.68, -0.03], r: [0, 0, 12], mat: 'skinCorrupt' },
+    { j: 'chest', type: 'ico', s: [0.2, 0.13, 0.09], p: [0.17, 0.47, 0.25], mat: 'skinCorrupt' },
+    { j: 'chest', type: 'ico', s: [0.2, 0.13, 0.09], p: [-0.17, 0.47, 0.25], mat: 'skinCorrupt' },
+    { j: 'chest', type: 'ico', s: [0.32, 0.24, 0.16], p: [0, 0.24, 0.17], mat: 'skinCorrupt' },
+    // muñón del cuello que entra en la campana, con la costura quemada
+    { j: 'chest', type: 'cyl', s: [0.25, 0.33, 0.36], p: [0, 0.82, -0.01], seg: 10, mat: 'skinCorrupt' },
+    { j: 'chest', type: 'cyl', s: [0.29, 0.31, 0.06], p: [0, 0.9, -0.01], seg: 10, mat: 'flesh' },
+    // llagas
+    { j: 'chest', type: 'ico', s: [0.12, 0.1, 0.07], p: [-0.22, 0.26, 0.21], mat: 'flesh' },
+    { j: 'chest', type: 'ico', s: [0.13], p: [0.24, 0.52, -0.2], mat: 'flesh' },
+    // goterones de bronce sobre los hombros y el pecho
+    ...[
+      [0.3, 0.68, 0.12],
+      [-0.28, 0.69, 0.1],
+      [0.36, 0.66, -0.14],
+      [-0.12, 0.66, 0.25],
+      [0.08, 0.68, -0.25],
+    ].map(([x, y, z]) => ({ j: 'chest', type: 'ico', s: [0.06, 0.03, 0.055], p: [x, y, z], mat: 'bronzeAged' })),
+    { j: 'chest', type: 'box', s: [0.025, 0.16, 0.02], p: [-0.12, 0.58, 0.268], r: [6, 0, 4], mat: 'bronzeAged' },
+    { j: 'chest', type: 'box', s: [0.02, 0.12, 0.02], p: [0.31, 0.6, 0.18], r: [10, 0, -12], mat: 'bronzeAged' },
+    // cadenas que sujetan la campana: de unos garfios clavados en el pecho al borde
+    ...[1, -1].flatMap((sx) =>
+      [0, 1, 2, 3, 4].map((i) => ({ j: 'chest', type: 'torus', s: [0.042, 0.012], p: [sx * 0.19, 0.61 + i * 0.065, 0.274 + i * 0.034], r: [-27, i % 2 ? 90 : 0, 0], seg: 6, mat: 'iron' }))
+    ),
+    { j: 'chest', type: 'box', s: [0.03, 0.05, 0.04], p: [0.19, 0.57, 0.262], mat: 'iron' },
+    { j: 'chest', type: 'box', s: [0.03, 0.05, 0.04], p: [-0.19, 0.57, 0.262], mat: 'iron' },
+
+    // ---------------------------------------------------------- cintura
     { j: 'hips', type: 'box', s: [0.62, 0.36, 0.44], p: [0, -0.08, 0], taper: [1.05, 1.05], mat: 'skinCorrupt' },
-    { j: 'hips', type: 'box', s: [0.5, 1.0, 0.04], p: [0, -0.45, 0.24], taper: [1.2, 1], mat: 'leather' },
-    { j: 'chest', type: 'box', s: [0.82, 0.7, 0.52], p: [0, 0.34, 0], taper: [0.72, 0.9], mat: 'skinCorrupt' },
-    { j: 'chest', type: 'ico', s: [0.2, 0.16, 0.14], p: [-0.2, 0.25, 0.22], mat: 'flesh' },
-    { j: 'chest', type: 'ico', s: [0.16], p: [0.25, 0.5, -0.18], mat: 'flesh' },
-    // cadenas cruzadas
-    ...[0, 1, 2, 3, 4, 5, 6].map((i) => ({ j: 'chest', type: 'torus', s: [0.05, 0.015], p: [-0.3 + i * 0.1, 0.12 + i * 0.08, 0.27], r: [0, 90 * (i % 2), 40], mat: 'iron', seg: 6 })),
-    // campana
-    { j: 'bellJ', type: 'lathe', points: bellPts, s: [1, 1, 1], p: [0, -0.28, 0], seg: 10, mat: 'bronze' },
-    { j: 'bellJ', type: 'cyl', s: [0.5, 0.5, 0.02], p: [0, -0.32, 0], seg: 10, mat: 'black' },
-    { j: 'bellJ', type: 'torus', s: [0.1, 0.03], p: [0, 0.7, 0], r: [0, 0, 90], mat: 'iron' },
-    { j: 'bellJ', type: 'sphere', s: [0.035], p: [-0.12, -0.26, 0.4], mat: 'eyeGlow' },
-    { j: 'bellJ', type: 'sphere', s: [0.035], p: [0.1, -0.24, 0.42], mat: 'eyeGlow' },
-    // brazos enormes
-    { j: 'armL', type: 'box', s: [0.24, 0.44, 0.24], p: [0, -0.2, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'foreL', type: 'box', s: [0.22, 0.42, 0.22], p: [0, -0.2, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'handL', type: 'box', s: [0.18, 0.18, 0.16], p: [0, -0.07, 0], mat: 'skinCorrupt' },
-    { j: 'armR', type: 'box', s: [0.24, 0.44, 0.24], p: [0, -0.2, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'foreR', type: 'box', s: [0.22, 0.42, 0.22], p: [0, -0.2, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'foreR', type: 'box', s: [0.24, 0.12, 0.24], p: [0, -0.3, 0], mat: 'iron' },
-    { j: 'handR', type: 'box', s: [0.18, 0.18, 0.16], p: [0, -0.07, 0], mat: 'skinCorrupt' },
-    // badajo como maza
-    { j: 'handR', type: 'cyl', s: [0.05, 0.06, 1.5], p: [0, -0.08, 0.55], r: [90, 0, 0], mat: 'iron' },
-    { j: 'handR', type: 'ico', s: [0.22, 0.26, 0.22], p: [0, -0.08, 1.36], mat: 'iron', detail: 1 },
-    { j: 'legL', type: 'box', s: [0.27, 0.64, 0.29], p: [0, -0.3, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinL', type: 'box', s: [0.23, 0.6, 0.25], p: [0, -0.28, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    { j: 'legR', type: 'box', s: [0.27, 0.64, 0.29], p: [0, -0.3, 0], taper: [0.8, 0.85], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.23, 0.6, 0.25], p: [0, -0.28, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
-    ...feetParts(1.38, 'skinCorrupt', { w: 0.15, h: 0.06, l: 0.24 }),
+    { j: 'hips', type: 'box', s: [0.66, 0.13, 0.48], p: [0, 0.02, 0], mat: 'leather' },
+    { j: 'hips', type: 'box', s: [0.1, 0.1, 0.03], p: [0.12, 0.02, 0.25], mat: 'iron' },
+    // la cuerda de la campana, enrollada al costado
+    { j: 'hips', type: 'torus', s: [0.11, 0.028], p: [0.33, -0.03, 0.05], r: [0, 90, 8], seg: 10, mat: 'rope' },
+    { j: 'hips', type: 'torus', s: [0.1, 0.026], p: [0.34, -0.06, 0.05], r: [0, 90, -10], seg: 10, mat: 'rope' },
+    { j: 'rope', type: 'box', s: [0.045, 0.62, 0.045], p: [0, -0.31, 0], mat: 'rope' },
+    { j: 'rope', type: 'box', s: [0.02, 0.12, 0.02], p: [0.02, -0.66, 0.01], r: [0, 0, 14], mat: 'rope' },
+    { j: 'rope', type: 'box', s: [0.02, 0.1, 0.02], p: [-0.02, -0.65, -0.01], r: [0, 0, -12], mat: 'rope' },
+    { j: 'rope', type: 'box', s: [0.02, 0.11, 0.02], p: [0, -0.655, 0.02], r: [14, 0, 0], mat: 'rope' },
+    // delantal de cuero del fundidor, chamuscado (en dos paños: el de arriba
+    // sigue al muslo que va delante, el de abajo cuelga a plomo)
+    { j: 'apron', type: 'box', s: [0.5, 0.53, 0.035], p: [0, -0.255, 0], taper: [1.08, 1], mat: 'leather' },
+    { j: 'apron', type: 'box', s: [0.53, 0.05, 0.045], p: [0, -0.01, 0], mat: 'leather' },
+    { j: 'apron', type: 'box', s: [0.09, 0.12, 0.04], p: [-0.14, -0.3, 0.003], mat: 'black' },
+    { j: 'apron2', type: 'box', s: [0.55, 0.52, 0.035], p: [0, -0.25, 0], taper: [1.1, 1], mat: 'leather' },
+    { j: 'apron2', type: 'box', s: [0.14, 0.18, 0.04], p: [0.12, -0.2, 0.003], mat: 'black' },
+    { j: 'apron2', type: 'box', s: [0.07, 0.06, 0.04], p: [-0.18, -0.4, 0.003], mat: 'black' },
+    { j: 'flapB', type: 'box', s: [0.48, 0.74, 0.03], p: [0, -0.37, 0], taper: [1.2, 1], mat: 'clothDark', ds: true },
+
+    // ---------------------------------------------------------- piernas
+    ...['L', 'R'].flatMap((s) => [
+      { j: 'leg' + s, type: 'box', s: [0.31, 0.66, 0.33], p: [0, -0.31, 0], taper: [0.78, 0.82], mat: 'skinCorrupt' },
+      { j: 'shin' + s, type: 'ico', s: [0.12], p: [0, 0, 0.02], mat: 'skinCorrupt' },
+      { j: 'shin' + s, type: 'box', s: [0.25, 0.62, 0.27], p: [0, -0.29, 0], taper: [0.78, 0.8], mat: 'skinCorrupt' },
+      // vendas en las espinillas
+      ...[-0.13, -0.27, -0.41].map((y, i) => {
+        const f = (0.02 - y) / 0.62;
+        return { j: 'shin' + s, type: 'box', s: [0.25 * (1 - f * 0.22) + 0.025, 0.045, 0.27 * (1 - f * 0.2) + 0.025], p: [0, y, 0], r: [i % 2 ? 7 : -5, 0, i % 2 ? -4 : 5], mat: 'clothDark' };
+      }),
+    ]),
+    ...feetParts(k, 'skinCorrupt', { w: 0.17, h: 0.07, l: 0.27 }),
+
+    // ---------------------------------------------------------- brazos
+    ...['L', 'R'].flatMap((s) => [
+      { j: 'arm' + s, type: 'ico', s: [0.14], p: [0, 0, 0], mat: 'skinCorrupt' },
+      { j: 'arm' + s, type: 'box', s: [0.26, 0.46, 0.26], p: [0, -0.22, 0], taper: [0.85, 0.85], mat: 'skinCorrupt' },
+      { j: 'arm' + s, type: 'ico', s: [0.11, 0.14, 0.1], p: [0, -0.2, 0.09], mat: 'skinCorrupt' },
+      { j: 'fore' + s, type: 'ico', s: [0.115], p: [0, 0, 0], mat: 'skinCorrupt' },
+      { j: 'fore' + s, type: 'box', s: [0.25, 0.42, 0.25], p: [0, -0.19, 0], taper: [0.78, 0.78], mat: 'skinCorrupt' },
+      // grilletes rotos
+      { j: 'fore' + s, type: 'cyl', s: [0.15, 0.15, 0.09], p: [0, -0.36, 0], seg: 8, mat: 'iron' },
+    ]),
+    // mano izquierda abierta, dedos gruesos
+    { j: 'handL', type: 'box', s: [0.2, 0.17, 0.14], p: [0, -0.08, 0.01], mat: 'skinCorrupt' },
+    ...[-0.066, -0.022, 0.022, 0.066].map((x, i) => ({ j: 'handL', type: 'box', s: [0.04, 0.13 + (i % 2) * 0.02, 0.05], p: [x, -0.2, 0.03], r: [14, 0, 0], mat: 'skinCorrupt' })),
+    { j: 'handL', type: 'box', s: [0.05, 0.1, 0.05], p: [-0.11, -0.1, 0.05], r: [0, 0, -30], mat: 'skinCorrupt' },
+    // cadena que cuelga del grillete izquierdo
+    ...[0, 1, 2, 3].map((i) => ({ j: 'chainL', type: 'torus', s: [0.04, 0.011], p: [0, -0.035 - i * 0.065, 0], r: [0, i % 2 ? 90 : 0, 0], seg: 6, mat: 'iron' })),
+    // puño derecho, cerrado sobre el badajo
+    { j: 'handR', type: 'box', s: [0.2, 0.19, 0.2], p: [0, -0.08, 0], mat: 'skinCorrupt' },
+    { j: 'handR', type: 'box', s: [0.21, 0.06, 0.08], p: [0, -0.15, 0.06], mat: 'skinCorrupt' },
+
+    // ---------------------------------------------------------- el badajo
+    { j: 'handR', type: 'torus', s: [0.065, 0.018], p: [0, CLAPPER.y, CLAPPER.z0 - 0.06], r: [0, 90, 0], seg: 8, mat: 'iron' },
+    { j: 'handR', type: 'cyl', s: [0.042, 0.05, CLAPPER.z1 - CLAPPER.z0], p: [0, CLAPPER.y, (CLAPPER.z0 + CLAPPER.z1) / 2], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    {
+      j: 'handR',
+      type: 'lathe',
+      points: [
+        [0.001, -0.2],
+        [0.08, -0.19],
+        [0.15, -0.14],
+        [0.195, -0.06],
+        [0.205, 0.02],
+        [0.185, 0.1],
+        [0.13, 0.17],
+        [0.06, 0.205],
+        [0.001, 0.21],
+      ],
+      s: [0.4, 0.4, 0.4],
+      p: [0, CLAPPER.y, CLAPPER.ball],
+      r: [90, 0, 0],
+      seg: 10,
+      mat: 'iron',
+    },
+    { j: 'handR', type: 'cyl', s: [0.035, 0.06, 0.17], p: [0, CLAPPER.y, CLAPPER.tip - 0.085], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    { j: 'handR', type: 'ico', s: [0.07, 0.05, 0.05], p: [0.12, CLAPPER.y + 0.09, CLAPPER.ball + 0.03], mat: 'blood' },
+    { j: 'handR', type: 'ico', s: [0.06, 0.05, 0.04], p: [-0.11, CLAPPER.y - 0.12, CLAPPER.ball - 0.04], mat: 'blood' },
   ];
   return new Rig({ joints, parts });
 }

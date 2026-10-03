@@ -1,8 +1,8 @@
 // Definiciones de criaturas: estadísticas, ataques, animación.
 import * as THREE from 'three';
-import { clip } from './rig.js';
+import { clip, addRot, q2e, Spring } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
-import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS } from './enemy_models.js';
+import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER } from './enemy_models.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -306,60 +306,146 @@ const hdClips = {
 };
 
 // ======================================================================= CAMPANERO
-const BELL_BASE = { chest: [15, 0, 0], armR: [-20, 0, -18], foreR: [-50, 0, 0], handR: [40, 0, 0], armL: [0, 0, 16], foreL: [-15, 0, 0] };
+// (los brazos nunca suben más de unos 45° sobre la horizontal ni se meten
+// bajo el borde de la campana: con ella sobre los hombros no hay golpes por
+// encima de la cabeza; se alza el badajo por el costado)
+// En reposo el badajo cuelga por delante, con la bola casi en el suelo.
+const BELL_BASE = { chest: [16, 0, 0], bellJ: [-8, 0, 0], armR: [-27, 3, -14], foreR: [-40, 0, 0], handR: [92, 13, -101], armL: [-21, -1, 11], foreL: [-26, 0, 0], handL: [8, 0, 0] };
+// Los brazos en cada momento (calculados a partir de las direcciones que se
+// querían: el puño justo en la campana, la bola en el suelo, el barrido a la
+// altura del pecho), para combinarlos con el resto de cada clave
+const BA = {
+  // aviso: echa atrás el puño izquierdo y se da en la campana
+  alertCockL: { armL: [-92, -7, 125], foreL: [-70, 0, 0], handL: [0, 0, 0] },
+  alertCockR: { armR: [-17, 15, -24], foreR: [-30, 0, 0], handR: [91, 4, -108] },
+  alertHitL: { armL: [-104, -9, 59], foreL: [-118, 0, 0], handL: [0, 0, 0] },
+  openL: { armL: [-12, -18, 60], foreL: [-22, 0, 0], handL: [0, 0, 0] },
+  openR: { armR: [-14, 20, -58], foreR: [-18, 0, 0], handR: [80, 0, 3] },
+  // barrido: el badajo atrás a la derecha, por delante y a la izquierda
+  sweepWind: { armR: [-89, -31, -77], foreR: [-14, 0, 0], handR: [100, -3, 163], armL: [-85, 25, 74], foreL: [-30, 0, 0], handL: [0, 0, 0] },
+  sweepHit: { armR: [-87, -11, -59], foreR: [-6, 0, 0], handR: [96, 17, -109], armL: [-79, 42, 55], foreL: [-30, 0, 0], handL: [0, 0, 0] },
+  sweepEnd: { armR: [-74, 1, -30], foreR: [-12, 0, 0], handR: [99, 16, -119], armL: [-72, 54, 53], foreL: [-34, 0, 0], handL: [0, 0, 0] },
+  // golpe: alzado por la derecha y descargado delante
+  slamUp: { armR: [-11, 16, -130], foreR: [-16, 0, 0], handR: [106, -29, 122], armL: [-88, -18, 79], foreL: [-20, 0, 0], handL: [0, 0, 0] },
+  slamHit: { armR: [-90, -8, -15], foreR: [-8, 0, 0], handR: [106, 5, -164], armL: [-55, -9, 13], foreL: [-40, 0, 0], handL: [0, 0, 0] },
+  // tañido: el puño izquierdo contra la campana
+  tollCock: { armL: [-74, -11, 137], foreL: [-64, 0, 0], handL: [0, 0, 0], armR: [0, 27, -59], foreR: [-14, 0, 0], handR: [77, 10, -35] },
+  tollHit: { armL: [-101, -8, 51], foreL: [-116, 0, 0], handL: [0, 0, 0], armR: [3, -26, -54], foreR: [-14, 0, 0], handR: [127, 11, -166] },
+  tollOpen: { armL: [-18, -16, 64], foreL: [-20, 0, 0], handL: [0, 0, 0], armR: [-17, 15, -63], foreR: [-16, 0, 0], handR: [80, 8, -40] },
+  // desviado: el badajo sale despedido hacia atrás
+  par: { armR: [-80, -4, -116], foreR: [-16, 0, 0], handR: [67, -11, 24], armL: [4, -6, 65], foreL: [-24, 0, 0], handL: [0, 0, 0] },
+  par2: { armR: [-100, -24, -127], foreR: [-22, 0, 0], handR: [75, -21, 54], armL: [0, -4, 52], foreL: [-24, 0, 0], handL: [0, 0, 0] },
+  // dolor
+  hurt: { armR: [3, -13, -27], foreR: [-30, 0, 0], handR: [85, 10, -62], armL: [6, -14, 32], foreL: [-24, 0, 0], handL: [0, 0, 0] },
+  // hincado: apoyado en el badajo
+  stag: { armR: [-82, 16, -15], foreR: [-24, 0, 0], handR: [111, 15, -145], armL: [-61, -3, 7], foreL: [-50, 0, 0], handL: [0, 0, 0] },
+  // muerte: de rodillas (el badajo en el suelo, delante) y desplomado
+  kneel: { armR: [-44, 8, -18], foreR: [-30, 0, 0], handR: [75, 7, -24], armL: [-34, -5, 18], foreL: [-24, 0, 0], handL: [0, 0, 0] },
+  slump: { armR: [-62, 6, -16], foreR: [-24, 0, 0], handR: [55, 5, -7], armL: [-55, -3, 13], foreL: [-18, 0, 0], handL: [0, 0, 0] },
+};
 const bellClips = {
-  alert: clip('alert', 1.2, [
-    [0, { ...BELL_BASE }],
-    [0.4, { ...BELL_BASE, chest: [-15, 0, 0], armL: [-40, 0, 60], armR: [-60, 0, -60], bellJ: [-15, 0, 0] }, 'snap'],
-    [0.8, { ...BELL_BASE, chest: [-10, 0, 0], armL: [-40, 0, 60], armR: [-60, 0, -60], bellJ: [10, 0, 0] }],
-    [1.2, { ...BELL_BASE }],
-  ]),
+  alert: clip(
+    'alert',
+    1.2,
+    [
+      [0, { ...BELL_BASE }],
+      [0.24, { ...BELL_BASE, chest: [6, -10, 0], bellJ: [-10, 6, 0], root: [0, -4, 0], ...BA.alertCockL, ...BA.alertCockR }, 'hold'],
+      [0.36, { ...BELL_BASE, chest: [8, 8, 0], bellJ: [-8, 0, 0], root: [0, -6, 0], ...BA.alertHitL, ...BA.alertCockR }, 'snap'],
+      // se yergue con los brazos abiertos mientras la campana vibra
+      [0.75, { chest: [2, 0, 0], bellJ: [-12, 0, 0], root: [0, 2, 0], ...BA.openL, ...BA.openR }],
+      [1.2, { ...BELL_BASE }],
+    ],
+    { events: [{ t: 0.36, name: 'ring' }] }
+  ),
   slam: clip('slam', 2.3, [
     [0, { ...BELL_BASE }],
-    [0.95, { chest: [-18, 0, 0], armR: [-205, 0, -10], foreR: [-30, 0, 0], handR: [40, 0, 0], armL: [-200, 0, 10], foreL: [-40, 0, 0], legL: [15, 0, 5], legR: [-15, 0, -5], bellJ: [-10, 0, 0] }],
-    [1.1, { chest: [45, 0, 0], armR: [-45, 0, -5], foreR: [-5, 0, 0], handR: [80, 0, 0], armL: [-50, 0, 10], foreL: [-10, 0, 0], legL: [30, 0, 5], legR: [-40, 0, -5], shinR: [40, 0, 0], root: [0, -25, 0], bellJ: [20, 0, 0] }, 'snap'],
-    [1.7, { chest: [42, 0, 0], armR: [-42, 0, -5], foreR: [-5, 0, 0], handR: [80, 0, 0], armL: [-48, 0, 10], legL: [30, 0, 5], legR: [-40, 0, -5], shinR: [40, 0, 0], root: [0, -25, 0], bellJ: [10, 0, 0] }],
+    // alza el badajo por la derecha, bien alto
+    [0.5, { chest: [4, -14, 0], bellJ: [-10, 6, 0], root: [0, 0, 0], armR: [-30, 20, -95], foreR: [-20, 0, 0], handR: [95, -10, 150], armL: [-60, -10, 50], foreL: [-24, 0, 0], handL: [0, 0, 0] }],
+    [0.95, { chest: [-6, -22, 0], bellJ: [-12, 10, 0], root: [0, 4, 0], ...BA.slamUp, legL: [-14, 0, 0], shinL: [10, 0, 0], legR: [8, 0, 0], shinR: [6, 0, 0] }, 'hold'],
+    // y lo descarga delante con todo el cuerpo
+    [1.1, { chest: [38, 6, 0], bellJ: [2, 0, 0], root: [0, -30, 14], ...BA.slamHit, legL: [-40, 0, 0], shinL: [44, 0, 0], legR: [18, 0, 0], shinR: [30, 0, 0] }, 'snap'],
+    [1.7, { chest: [36, 4, 0], bellJ: [0, 0, 0], root: [0, -28, 14], ...BA.slamHit, foreR: [-10, 0, 0], legL: [-40, 0, 0], shinL: [44, 0, 0], legR: [18, 0, 0], shinR: [30, 0, 0] }],
     [2.3, { ...BELL_BASE }],
   ]),
   sweep: clip('sweep', 1.9, [
     [0, { ...BELL_BASE }],
-    [0.8, { chest: [10, -60, 0], armR: [-90, 0, -110], foreR: [-20, 0, 0], handR: [80, 0, 0], armL: [-30, 0, 40], legL: [10, 0, 0], legR: [-20, 0, 0] }],
-    [0.98, { chest: [20, 55, 0], armR: [-90, 0, 55], foreR: [-5, 0, 0], handR: [85, 0, 0], armL: [-20, 0, 30], root: [0, -10, 0] }, 'snap'],
-    [1.4, { chest: [18, 60, 0], armR: [-80, 0, 70], foreR: [-15, 0, 0], handR: [80, 0, 0], root: [0, -10, 0] }],
+    [0.8, { chest: [8, -58, 0], bellJ: [-6, 18, 0], root: [0, -10, 0], ...BA.sweepWind, legL: [-22, 0, 0], shinL: [22, 0, 0], legR: [12, 0, 0], shinR: [14, 0, 0] }, 'hold'],
+    [0.98, { chest: [14, 48, 0], bellJ: [-6, -14, 0], root: [0, -14, 6], ...BA.sweepHit, legL: [-26, 0, 0], shinL: [26, 0, 0], legR: [14, 0, 0], shinR: [12, 0, 0] }, 'strike'],
+    [1.4, { chest: [16, 62, 0], bellJ: [-8, -18, 0], root: [0, -12, 6], ...BA.sweepEnd, legL: [-24, 0, 0], shinL: [24, 0, 0], legR: [14, 0, 0], shinR: [12, 0, 0] }, 'settle'],
     [1.9, { ...BELL_BASE }],
   ]),
+  // se planta, echa atrás el puño y se da en la campana: ¡DONG!
   toll: clip('toll', 2.5, [
     [0, { ...BELL_BASE }],
-    [0.5, { chest: [-10, 0, 0], armL: [-160, 0, 40], foreL: [-60, 0, 0], armR: [-160, 0, -40], foreR: [-60, 0, 0], bellJ: [0, 0, 0] }],
-    [0.8, { chest: [-5, 25, 0], armL: [-160, 0, 40], foreL: [-60, 0, 0], armR: [-160, 0, -40], foreR: [-60, 0, 0], bellJ: [0, 0, 25] }],
-    [1.05, { chest: [-5, -25, 0], armL: [-160, 0, 40], foreL: [-60, 0, 0], armR: [-160, 0, -40], foreR: [-60, 0, 0], bellJ: [0, 0, -25] }],
-    [1.3, { chest: [20, 0, 0], armL: [-40, 0, 60], armR: [-40, 0, -60], bellJ: [25, 0, 0], root: [0, -15, 0] }, 'snap'],
-    [1.9, { chest: [15, 0, 0], armL: [-40, 0, 60], armR: [-40, 0, -60], bellJ: [-10, 0, 0], root: [0, -10, 0] }],
+    [0.6, { chest: [4, -14, 0], bellJ: [-10, 8, 0], root: [0, -6, 0], ...BA.tollCock }],
+    [1.1, { chest: [-4, -20, 0], bellJ: [-10, 10, 0], root: [0, -8, 0], ...BA.tollCock, foreL: [-60, 0, 0] }, 'hold'],
+    [1.3, { chest: [4, 16, 0], bellJ: [-8, -4, 0], root: [0, -8, 0], ...BA.tollHit }, 'snap'],
+    [1.38, { chest: [4, 15, 0], bellJ: [-8, -4, 0], root: [0, -8, 0], ...BA.tollHit, armL: [-99, -8, 55], foreL: [-106, 0, 0] }],
+    // los brazos abiertos, temblando con la campana
+    [1.9, { chest: [10, 0, 0], bellJ: [-10, 0, 0], root: [0, -6, 0], ...BA.tollOpen }],
     [2.5, { ...BELL_BASE }],
   ]),
   hurt: clip('hurt', 0.5, [
-    [0, { ...BELL_BASE, chest: [0, 15, 0], bellJ: [-15, 0, 10], root: [0, -4, -6] }, 'snap'],
+    [0, { ...BELL_BASE, chest: [-6, 14, 0], bellJ: [-14, 0, 5], root: [0, -4, -6], ...BA.hurt }, 'snap'],
     [0.5, { ...BELL_BASE }],
   ]),
-  stagger: clip('stagger', 1.8, [
-    [0, { chest: [-20, 20, 0], bellJ: [-20, 0, 15], armL: [-20, 0, 60], armR: [-30, 0, -60], root: [0, -10, -15] }, 'snap'],
-    [0.8, { chest: [45, 0, 0], bellJ: [30, 0, 0], armL: [-20, 0, 10], armR: [-20, 0, -10], root: [0, -50, 0], legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0] }],
-    [1.8, { ...BELL_BASE }],
-  ]),
-  // desequilibrado: la campana se le va hacia atrás y los brazos se abren
+  // trastabilla, hinca una rodilla y se apoya en el badajo
+  stagger: clip(
+    'stagger',
+    1.8,
+    [
+      [0, { chest: [-18, 18, 0], bellJ: [-14, 0, 6], root: [0, -8, -14], ...BA.hurt }, 'snap'],
+      [0.75, { chest: [36, 0, 0], bellJ: [4, 0, 0], root: [0, -52, 0], ...BA.stag, legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0] }],
+      [1.25, { chest: [38, 0, 0], bellJ: [6, 0, 0], root: [0, -54, 0], ...BA.stag, legL: [-80, 0, 0], shinL: [100, 0, 0], legR: [-30, 0, 0], shinR: [100, 0, 0] }],
+      [1.8, { ...BELL_BASE }],
+    ],
+    { mono: true }
+  ),
+  // desequilibrado: el badajo sale despedido atrás y la campana se le va
   parried: clip('parried', 1.5, [
-    [0, { chest: [-26, -18, 0], bellJ: [-26, 0, 14], armR: [-110, 0, -70], foreR: [-20, 0, 0], handR: [40, 0, 0], armL: [-40, 0, 70], foreL: [-20, 0, 0], root: [0, -8, -18], legL: [-24, 0, 0], shinL: [34, 0, 0], legR: [18, 0, 0], shinR: [20, 0, 0] }, 'snap'],
-    [0.35, { chest: [-18, -12, 0], bellJ: [-18, 0, 10], armR: [-90, 0, -58], foreR: [-25, 0, 0], handR: [40, 0, 0], armL: [-30, 0, 58], foreL: [-20, 0, 0], root: [0, -16, -20], legL: [-34, 0, 0], shinL: [54, 0, 0], legR: [22, 0, 0], shinR: [28, 0, 0] }],
-    [1.0, { chest: [0, -6, 0], bellJ: [-6, 0, 4], armR: [-50, 0, -34], foreR: [-40, 0, 0], handR: [40, 0, 0], armL: [-14, 0, 34], foreL: [-15, 0, 0], root: [0, -10, -8], legL: [-24, 0, 0], shinL: [40, 0, 0], legR: [12, 0, 0], shinR: [20, 0, 0] }],
+    [0, { chest: [-16, -22, 0], bellJ: [-14, 6, 4], root: [0, -8, -18], ...BA.par, legL: [-20, 0, 0], shinL: [30, 0, 0], legR: [16, 0, 0], shinR: [20, 0, 0] }, 'snap'],
+    [0.4, { chest: [-8, -12, 0], bellJ: [-12, 4, 2], root: [0, -14, -20], ...BA.par2, legL: [-28, 0, 0], shinL: [46, 0, 0], legR: [20, 0, 0], shinR: [26, 0, 0] }],
+    [1.0, { ...BELL_BASE, chest: [6, -4, 0], root: [0, -10, -8] }],
     [1.5, { ...BELL_BASE }],
-  ]),
-  death: clip('death', 2.2, [
-    [0, { chest: [-20, 0, 0], bellJ: [-20, 0, 0], armL: [-30, 0, 50], armR: [-30, 0, -50] }, 'snap'],
-    [0.7, { chest: [35, 0, 0], bellJ: [20, 0, 0], root: [0, -60, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0], armL: [10, 0, 20], armR: [10, 0, -20] }],
-    [1.5, { hips: [80, 0, 0], chest: [10, 0, 0], root: [0, -100, 0], armL: [-150, 0, 30], armR: [-60, 0, -50], legL: [-10, 0, 5], legR: [-5, 0, -5] }, 'in'],
-    [2.2, { hips: [86, 0, 0], chest: [4, 0, 0], root: [0, -104, 0], armL: [-150, 0, 30], armR: [-60, 0, -50], legL: [-4, 0, 5], legR: [-4, 0, -5] }],
-  ]),
+  ], { mono: true }),
+  // (muerto no hay IK: las piernas van en cada clave) Le fallan las
+  // rodillas y se queda arrodillado, desplomado, con la campana gacha y el
+  // badajo en el suelo
+  death: clip(
+    'death',
+    2.2,
+    [
+      [0, { ...BELL_BASE, chest: [-12, 0, 0], bellJ: [-14, 0, 0], ...BA.hurt, legL: [-4, 0, 3], shinL: [8, 0, 0], legR: [-2, 0, -3], shinR: [6, 0, 0] }, 'snap'],
+      [0.3, { chest: [10, 0, 0], bellJ: [-4, 0, 0], root: [0, -32, 6], ...BA.kneel, legL: [-52, 0, 4], shinL: [86, 0, 0], footL: [40, 0, 0], legR: [-50, 0, -4], shinR: [84, 0, 0], footR: [40, 0, 0] }],
+      [0.65, { chest: [20, 0, 0], bellJ: [6, 0, 0], root: [0, -57, 0], ...BA.kneel, legL: [-23, 0, 4], shinL: [113, 0, 0], footL: [90, 0, 0], legR: [-23, 0, -4], shinR: [113, 0, 0], footR: [90, 0, 0] }],
+      [1.3, { chest: [44, 0, 3], bellJ: [7, 0, -3], root: [0, -58, 0], ...BA.slump, legL: [-23, 0, 4], shinL: [113, 0, 0], footL: [90, 0, 0], legR: [-23, 0, -4], shinR: [113, 0, 0], footR: [90, 0, 0] }, 'in'],
+      [2.2, { chest: [46, 0, 4], bellJ: [7, 0, -4], root: [0, -59, 0], ...BA.slump, foreL: [-14, 0, 0], legL: [-23, 0, 4], shinL: [113, 0, 0], footL: [90, 0, 0], legR: [-23, 0, -4], shinR: [113, 0, 0], footR: [90, 0, 0] }],
+    ],
+    { mono: true }
+  ),
 };
+// la bola del badajo (espacio de la mano derecha): ahí revienta el suelo
+const BELL_BALL = new THREE.Vector3(0, CLAPPER.y, CLAPPER.ball);
+const _bb = new THREE.Vector3();
+// La campana suena: vibra unos instantes (radianes)
+function bellRing(e, a) {
+  const R = e.data.ring || (e.data.ring = { a: 0, t: 0 });
+  R.a = Math.max(R.a * Math.exp(-R.t * 3.2), a);
+  R.t = 0;
+}
+// Una pieza que cuelga a plomo (la cuerda, la cadena, el paño de abajo del
+// delantal): su giro local compensa el de su padre, más un vaivén.
+const _hq = new THREE.Quaternion(),
+  _hq2 = new THREE.Quaternion(),
+  _he = new THREE.Euler();
+function hangDown(e, pose, j, swX, swZ) {
+  const parent = e.rig.joints[j].parent;
+  parent.updateWorldMatrix(true, false);
+  parent.getWorldQuaternion(_hq);
+  _hq2.setFromEuler(_he.set(swX, e.obj.rotation.y, swZ, 'YXZ'));
+  _hq.invert().multiply(_hq2);
+  pose[j] = q2e(_hq, [0, 0, 0]);
+}
 
 // ======================================================================= PLAÑIDERA
 const MOUR_BASE = { chest: [8, 0, 0], head: [15, 0, 12], armL: [5, 0, 6], foreL: [-5, 0, 0], armR: [5, 0, -6], foreR: [-5, 0, 0] };
@@ -873,8 +959,10 @@ export const TYPES = {
     hp: 230,
     poise: 110,
     radius: 0.7,
+    // (alto de colisión: pasa por las puertas de 2,8 m agachándose; la
+    // campana con el yugo llega a 3,2 m)
     height: 2.8,
-    lockHeight: 2.0,
+    lockHeight: 2.1,
     walk: 1.35,
     sight: 14,
     hear: 5,
@@ -889,18 +977,109 @@ export const TYPES = {
     voice: 'bell',
     alertTime: 1.2,
     attacks: [
-      { name: 'slam', clip: bellClips.slam, dur: 2.3, min: 0, max: 3.4, hits: [[1.08, 1.22]], dmg: 38, range: 3.5, arc: 60, weight: 3, turn: 2, events: [{ t: 1.12, fn: (e, g) => g.combat.shockwave(e.pos.x + Math.sin(e.yaw) * 2.6, e.pos.y, e.pos.z + Math.cos(e.yaw) * 2.6, 3.4, 16, e) }], stagger: true, noParry: true },
+      {
+        name: 'slam',
+        clip: bellClips.slam,
+        dur: 2.3,
+        min: 0,
+        max: 3.4,
+        hits: [[1.08, 1.22]],
+        dmg: 38,
+        range: 3.5,
+        arc: 60,
+        weight: 3,
+        turn: 2,
+        // la onda sale donde da la bola
+        events: [{ t: 1.12, fn: (e, g) => (e.rig.worldPos('handR', _bb, BELL_BALL), g.combat.shockwave(_bb.x, e.pos.y, _bb.z, 3.4, 16, e)) }],
+        stagger: true,
+        noParry: true,
+      },
       { name: 'sweep', clip: bellClips.sweep, dur: 1.9, min: 0, max: 3.6, hits: [[0.9, 1.12]], dmg: 30, range: 3.7, arc: 170, weight: 2, turn: 2.2 },
-      { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, noParry: true, events: [{ t: 1.3, fn: (e, g) => g.combat.toll(e, 6.5, 12) }] },
+      { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, noParry: true, events: [{ t: 1.3, fn: (e, g) => (g.combat.toll(e, 6.5, 12), bellRing(e, 0.085)) }] },
     ],
     biped: { scale: 1.38, style: GAIT.heavy, stance: 0.1 },
     loco: (e, t, spd) => {
-      const p = humanStyle(e, t, { hunch: 14, armR: [-20, 0, -18], foreR: [-50, 0, 0], handR: [40, 0, 0], armL: [0, 0, 16], foreL: [-15, 0, 0], armRSwing: 0.4, breath: 1.1, breathAmp: 4 });
-      const ph = e.gait ? e.gait.phase * Math.PI * 2 : e.phase;
-      p.bellJ = [S(ph * 2) * 4, 0, S(ph) * 6];
-      return rad(p);
+      const g = e.gait;
+      const sw = g ? g.armSwing / DEG : 0;
+      const mw = g ? g.mw : 0;
+      const br = S(t * 1.1 + e.phase * 0.1);
+      const ph = g ? g.phase * Math.PI * 2 : e.phase;
+      const duck = e.data.duck || 0;
+      return rad({
+        chest: [16 + br * 2.5 + duck * 25, 0, br * 0.8],
+        // la campana se vuelve hacia ti (lo que da el cuello) y se mece al andar
+        bellJ: [-8 + S(ph * 2) * 2 * mw - duck * 8, e.data.look || 0, S(ph) * 3 * mw],
+        armL: [-21 + sw * 1.4, -1, 11 + br],
+        foreL: [-26 - Math.max(0, sw) * 0.5, 0, 0],
+        handL: [8, 0, 0],
+        // (andando, el badajo algo más alto: el paso y el tronco lo bajan)
+        armR: [-27 - sw * 0.3, 3, -14],
+        foreR: [-40, 0, 0],
+        handR: [92 - mw * 14, 13, -101],
+        root: [0, -duck * 55, 0],
+      });
     },
     idlePose: (e, kind, t, spd) => TYPES.bell.loco(e, t, spd),
+    update: (e, dt, player) => {
+      const d = e.data;
+      // la campana mira hacia ti
+      const want = e.aware && !e.dead && e.state !== 'attack' ? clamp(angleDiff(e.yaw, e.angleTo(player.pos)) / DEG, -32, 32) : 0;
+      d.look = damp(d.look || 0, want, 3, dt);
+      // bajo un dintel o un techo bajo se agacha (la campana no lo atraviesa)
+      d.duckT = (d.duckT || 0) - dt;
+      if (d.duckT <= 0) {
+        d.duckT = 0.15;
+        const col = e.game.world.col;
+        const fx = Math.sin(e.yaw),
+          fz = Math.cos(e.yaw);
+        let room = 9;
+        // (la campana va por delante del cuerpo: se mira también más allá)
+        for (let a = -0.4; a <= 1.65; a += 0.25) {
+          const up = col.raycast(e.pos.x + fx * a, e.pos.y + 1.2, e.pos.z + fz * a, 0, 1, 0, 3, (b) => !b.camOnly);
+          if (up < Infinity) room = Math.min(room, up + 1.2);
+        }
+        d.duckWant = clamp((3.45 - room) / 0.85, 0, 1);
+      }
+      // (se agacha deprisa y se yergue despacio)
+      const dw = e.dead ? 0 : d.duckWant || 0;
+      d.duck = damp(d.duck || 0, dw, dw > (d.duck || 0) ? 8 : 2.5, dt);
+    },
+    onHit: (e, kind, dmg, heavy) => bellRing(e, heavy ? 0.07 : 0.045),
+    onAnimEvent: (e, name) => {
+      if (name === 'ring') bellRing(e, 0.06);
+    },
+    postPose: (e, pose, dt) => {
+      const d = e.data;
+      // delantal: el paño de arriba sigue al muslo que va delante; el faldón,
+      // al que va detrás
+      const lx = pose.legL ? pose.legL[0] : 0,
+        rx = pose.legR ? pose.legR[0] : 0;
+      const dead = e.state === 'dead';
+      pose.apron = [Math.max(-1.45, Math.min(0, lx, rx)) * 0.92 - 0.04, 0, 0];
+      pose.flapB = [Math.min(1.2, Math.max(0, lx, rx)) * 0.9 + 0.05, 0, 0];
+      // la campana vibra cuando suena
+      const R = d.ring;
+      if (R && R.a > 0) {
+        R.t += dt;
+        const a = R.a * Math.exp(-R.t * 3.2);
+        addRot(pose, 'bellJ', [a * 0.55 * S(R.t * 33 + 1), 0, a * S(R.t * 29)]);
+        if (R.t > 2.5) R.a = 0;
+      }
+      // vaivén de lo que cuelga: se queda atrás al andar, oscila con los pasos
+      const ss = d.sway || (d.sway = { x: new Spring(36, 5), z: new Spring(36, 5) });
+      const cy = Math.cos(e.yaw),
+        sy = Math.sin(e.yaw);
+      const vF = e.vx * sy + e.vz * cy,
+        vS = e.vx * cy - e.vz * sy;
+      const ph = e.gait ? e.gait.phase * Math.PI * 2 : 0;
+      const mw = e.gait ? e.gait.mw : 0;
+      const sx = ss.x.update(dt, clamp(vF * 0.14, -0.35, 0.35) + S(ph * 2) * 0.05 * mw),
+        sz = ss.z.update(dt, clamp(-vS * 0.12, -0.3, 0.3) + S(ph) * 0.08 * mw);
+      const sk = dead ? 0 : 1;
+      hangDown(e, pose, 'rope', sx * sk, sz * sk);
+      hangDown(e, pose, 'chainL', sx * 0.6 * sk, sz * 0.6 * sk);
+      hangDown(e, pose, 'apron2', Math.max(0, sx) * 0.4 * sk, sz * 0.25 * sk);
+    },
   },
   mourner: {
     name: 'Plañidera',

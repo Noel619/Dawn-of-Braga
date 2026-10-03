@@ -45,6 +45,10 @@ export const MAT_DEFS = {
   dirt: { tex: 'dirt', uv: 0.3 },
   iron: { tex: 'iron', uv: 1.2 },
   bronze: { tex: 'bronze', uv: 1.0 },
+  bronzeAged: { tex: 'bronzeAged', uv: 0.8 },
+  // el interior de una campana: bronce ennegrecido
+  bronzeIn: { tex: 'bronze', uv: 1.0, color: 0x3c3128 },
+  rope: { tex: 'rope', uv: 2.2 },
   mossstone: { tex: 'mossstone', uv: 0.5 },
   skulls: { tex: 'skulls', uv: 0.55 },
   mosaic: { tex: 'mosaic', uv: 0.2 },

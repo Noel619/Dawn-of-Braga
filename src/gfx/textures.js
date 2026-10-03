@@ -349,6 +349,37 @@ const GEN = {
     });
   },
 
+  // Bronce viejo de campana: pátina verde en manchas y en chorretones (en
+  // una campana torneada la 'v' sigue el perfil: chorrean de la corona al
+  // borde), mugre y algún brillo de metal gastado.
+  bronzeAged() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 8, y / 8, 4, S / 8, 301);
+      const f = fbm2(x / 2, y / 2, 2, S / 2, 302);
+      const st = fbm2(x / 4, 3.7, 3, S / 4, 303) * (0.55 + 0.6 * fbm2(x / 8, y / 8, 2, S / 8, 304));
+      const pat = fbm2(x / 16, y / 16, 4, S / 16, 305);
+      let c = mix3([116, 84, 44], [164, 120, 62], n);
+      const g = Math.max(0, pat - 0.5) * 2.6 + Math.max(0, st - 0.5) * 2.2;
+      if (g > 0) c = mix3(c, mix3([58, 112, 92], [104, 156, 126], f), Math.min(1, g));
+      if (n < 0.32) c = mix3(c, [44, 34, 24], (0.32 - n) * 2);
+      if (f > 0.76 && g < 0.3) c = mix3(c, [205, 165, 98], Math.min(1, (f - 0.76) * 3));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
+  // Cuerda de cáñamo: cabos retorcidos en diagonal.
+  rope() {
+    const S = 16;
+    return pixels(S, S, (x, y, o) => {
+      const u = ((x + y) % 8) / 8;
+      const k = 0.6 + 0.4 * Math.sin(u * Math.PI);
+      const n = fbm2(x / 4, y / 4, 2, S / 4, 311);
+      const c = mix3([92, 72, 44], [150, 124, 80], n);
+      set(o, c[0] * k, c[1] * k, c[2] * k);
+    });
+  },
+
   chainmail() {
     const S = 32;
     return pixels(S, S, (x, y, o) => {
