@@ -36,9 +36,13 @@ const r = await p.evaluate(async (arma) => {
   const out = [];
   // una prueba: la criatura 'type' lanza su golpe 'name'; el jugador pulsa
   // la guardia 'lead' segundos antes del impacto (o no la pulsa)
-  const trial = (type, name, lead = 0.08, riposte = true, pre = 0) => {
+  const trial = (type, name, lead = 0.08, riposte = true, pre = 0, probe = false) => {
     const e = g.enemies.find((q) => q.type === type && !q.dead) || g.enemies.find((q) => q.type === type);
     if (!e) return { type, err: 'no hay' };
+    // (golpes calculados por dónde pasa el arma, sin ventanas 'hits': se
+    // mide antes cuándo llega de verdad)
+    const a0 = e.T.attacks.find((x) => x.name === name);
+    if (!probe && !(a0.hits && a0.hits.length) && !a0.censer && !a0.hitAt) a0.hitAt = trial(type, name, null, false, 0, true).at ?? 0.5;
     for (const q of g.enemies) if (q !== e && q.type !== 'descoyuntado') { q.obj.visible = false; q.dead = true; q.state = 'dead'; q.stT = 99; }
     e.dead = false;
     e.reset();
@@ -65,7 +69,8 @@ const r = await p.evaluate(async (arma) => {
     step(2);
     const hp0 = P.hp;
     e.startAttack(a);
-    const hitAt = a.hits && a.hits.length ? a.hits[0][0] : (a.censer ? a.censer[0][0] : 0.5);
+    const hitAt = a.hits && a.hits.length ? a.hits[0][0] : a.hitAt ?? (a.censer ? a.censer[0][0] : 0.5);
+    let at = null;
     let pressed = false, res = null, parried = false, recoil = false, eState = null;
     for (let i = 0; i < 400; i++) {
       const tap = [];
@@ -74,10 +79,12 @@ const r = await p.evaluate(async (arma) => {
       const due = a.censer ? e.stT > a.censer[0][0] - 0.3 && Math.hypot(cz.x - P.pos.x, (cz.y - P.pos.y - 1) * 0.7, cz.z - P.pos.z) < 1.5 + lead * 9 : e.stT >= hitAt - lead;
       if (!pressed && lead !== null && due) { tap.push('M2'); pressed = true; }
       step(1, tap);
+      if (at === null && P.hp < hp0) at = e.stT - 1 / 60;
       if (P.state === 'parry' && !parried) { parried = true; eState = e.state; recoil = e.state === 'hurt'; }
       if (e.state !== 'attack' && i > 5) break;
     }
     const took = Math.round(hp0 - P.hp);
+    if (probe) return { at };
     res = { type, name, parried, eState, took, open: e.parryT > 0 };
     // golpe de gracia
     if (riposte && res.open) {

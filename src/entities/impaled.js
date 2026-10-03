@@ -326,6 +326,10 @@ export { DRAG, KNEEL, W2C, P as impPose };
 // ------------------------------------------------------------ física del arma
 const RAM = new V3(...IMP.ramHead);
 const BUTT = new V3(...IMP.ramButt);
+// (el madero también golpea, aunque menos: quien se le mete dentro del
+// alcance no se libra del barrido)
+const SHAFT = RAM.clone().multiplyScalar(0.62);
+const SHAFT2 = RAM.clone().multiplyScalar(0.3);
 const PIKE_TIP = new V3(...IMP.pikeOut).addScaledVector(new V3(...IMP.pikeDir), 0.62);
 export const ramPoint = (e, out) => e.rig.worldPos('weapon', out, RAM);
 const _a = new V3(),
@@ -379,6 +383,8 @@ function segDist(p1, q1, p2, q2) {
 function strikePoint(e, kind, out) {
   if (kind === 'butt') return e.rig.worldPos('weapon', out, BUTT);
   if (kind === 'pike') return e.rig.worldPos('pike', out, PIKE_TIP);
+  if (kind === 'shaft') return e.rig.worldPos('weapon', out, SHAFT);
+  if (kind === 'shaft2') return e.rig.worldPos('weapon', out, SHAFT2);
   return e.rig.worldPos('weapon', out, RAM);
 }
 
@@ -699,16 +705,19 @@ function update(e, dt, player) {
     const t = e.stT;
     for (const [kind, wins, r] of [
       ['ram', a.ram, 0.55],
+      ['shaft', a.ram, 0.3],
+      ['shaft2', a.ram, 0.3],
       ['butt', a.butt, 0.4],
       ['pike', a.pikeHit, 0.32],
     ]) {
       if (!wins) continue;
       const cur = strikePoint(e, kind, _a);
       const prev = e.data['prev_' + kind] || (e.data['prev_' + kind] = cur.clone());
+      const shaft = kind === 'shaft' || kind === 'shaft2';
       wins.forEach(([h0, h1], i) => {
         if (t < h0 - 0.02 || t > h1 + 0.02) return;
-        const key = kind + i;
-        smashWith(e, cur, r + 0.25, { x: prev.x, z: prev.z }, kind === 'ram');
+        const key = (shaft ? 'ram' : kind) + i;
+        if (!shaft) smashWith(e, cur, r + 0.25, { x: prev.x, z: prev.z }, kind === 'ram');
         if (e.hitDone[key] || player.dead) return;
         if (sweepHitsPlayer(player, prev, cur, r)) {
           e.hitDone[key] = true;
@@ -721,14 +730,15 @@ function update(e, dt, player) {
             kz = player.pos.z - e.pos.z;
           }
           const kk = Math.hypot(kx, kz) || 1;
-          const r = g.combat.apply(
+          const dmg = shaft ? Math.round(a.dmg * 0.7) : a.dmg;
+          const res = g.combat.apply(
             e,
-            { dmg: a.dmg, stDmg: a.stDmg ?? a.dmg * 1.5, stagger: true, knock: a.knock ?? 7, chip: 0.2, noParry: !!a.noParry },
+            { dmg, stDmg: a.stDmg ?? dmg * 1.5, stagger: true, knock: (a.knock ?? 7) * (shaft ? 0.7 : 1), chip: 0.2, noParry: !!a.noParry },
             player.pos.x - (kx / kk) * 2,
             player.pos.z - (kz / kk) * 2
           );
           // desviado: el ariete rebota
-          if (r === 'parry') {
+          if (res === 'parry') {
             P.pikeX.kick(-4);
             P.banX.kick(-2);
           }
