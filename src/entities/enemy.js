@@ -6,6 +6,9 @@ import { moveBody } from '../world/collision.js';
 import { TYPES } from './enemies.js';
 import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
+import { CASTLE } from '../world/level_castle.js';
+
+const CASTLE_KEEP_F2 = CASTLE.keep.F2 - 0.6;
 import { registerMaterialPatch } from '../gfx/materials.js';
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -204,6 +207,7 @@ export class Enemy {
   nav() {
     const y = this.pos.y;
     const g = this.game;
+    if (g.navKeep && g.inKeep(this.pos)) return g.navKeep[y > CASTLE_KEEP_F2 ? 1 : 0];
     if (g.navCellar && y < -0.5 && g.inCellar(this.pos)) return g.navCellar;
     if (g.navDungeon && g.inDungeon(this.pos)) return g.navDungeon;
     if (y < -3) return this.game.navCrypt;

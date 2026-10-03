@@ -54,6 +54,7 @@ export const MAT_DEFS = {
   lace: { tex: 'lace', uv: 3.0, emissive: 0x7f94b8, emissiveIntensity: 0.12 },
   skinPale: { tex: 'skinPale', uv: 2.0 },
   mossstone: { tex: 'mossstone', uv: 0.5 },
+  rock: { tex: 'rock', uv: 0.9 },
   skulls: { tex: 'skulls', uv: 0.55 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
   bone: { tex: 'bone', uv: 1.6 },

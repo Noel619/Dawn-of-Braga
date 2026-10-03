@@ -169,33 +169,431 @@ export function archWall(ctx, a0, a1, t0, t1, h, c, w, ah, o = {}) {
   };
   const l = c - w / 2,
     r = c + w / 2;
-  if (l > a0) put(a0, 0, l, h);
-  if (a1 > r) put(r, 0, a1, h);
-  // tímpano sobre el arco: rebanadas siguiendo el semicírculo
   const R = w / 2;
   const spring = ah - R;
-  const N = o.slices ?? 8;
-  for (let i = 0; i < N; i++) {
-    const u0 = l + (i / N) * w,
-      u1 = l + ((i + 1) / N) * w;
-    const um = (u0 + u1) / 2 - c;
-    const yy = spring + Math.sqrt(Math.max(0, R * R - um * um));
-    put(u0, yy, u1, h, false);
-  }
+  // rosca de dovelas de verdad (cuñas que siguen el arco, con el intradós
+  // liso): antes eran cubos sueltos alrededor del vano, que asomaban por
+  // debajo del arco y parecían flotar
+  const ring = o.ring ?? Math.min(0.5, 0.2 + w * 0.06);
+  const e0 = l - ring,
+    e1 = r + ring;
+  // jambas: hasta el arranque junto al vano y, por encima, hasta la rosca
+  if (l > a0) put(a0, 0, l, spring);
+  if (Math.min(l, e0) > a0) put(a0, spring, Math.min(l, e0), h);
+  if (a1 > r) put(r, 0, a1, spring);
+  if (a1 > Math.max(r, e1)) put(Math.max(r, e1), spring, a1, h);
+  archRing(ctx, {
+    axis: axisZ ? 'z' : 'x',
+    c,
+    w,
+    y0: spring,
+    ring,
+    t0,
+    t1,
+    top: h,
+    clip: [Math.max(a0, e0), Math.min(a1, e1)],
+    mat: o.voussoirs === false ? mat : (o.vmat ?? 'ashlar'),
+    spMat: mat,
+    topFace: true,
+    n: o.slices ? Math.max(7, o.slices | 1) : undefined,
+  });
   // colisión del dintel
   if (axisZ) ctx.col.add(t0, spring + R * 0.6, l, t1, h, r);
   else ctx.col.add(l, spring + R * 0.6, t0, r, h, t1);
-  // dovelas marcadas
-  if (o.voussoirs !== false) {
-    const vm = o.vmat ?? 'ashlar';
-    for (let i = 0; i <= N; i++) {
-      const ang = Math.PI - (i / N) * Math.PI;
-      const px = c + Math.cos(ang) * (R + 0.18),
-        py = spring + Math.sin(ang) * (R + 0.18);
-      const s = 0.2;
-      if (axisZ) ctx.wb.box(vm, t0 - 0.06, py - s, px - s, t1 + 0.06, py + s, px + s, { ao: false, sub: 2 });
-      else ctx.wb.box(vm, px - s, py - s, t0 - 0.06, px + s, py + s, t1 + 0.06, { ao: false, sub: 2 });
+}
+
+// Arco de dovelas en un plano vertical: la rosca (cuñas con el intradós liso,
+// de tonos alternos y la clave algo más clara, que sobresalen 'proud' de las
+// caras del muro) y las enjutas del muro, exactas, hasta 'top'.
+//   axis 'x': la luz va a lo largo de x (el muro corre en x y su grosor va de
+//   t0 a t1 en z); 'z': a lo largo de z (grosor en x).
+//   c: centro del vano; w: luz; y0: arranque; rise: flecha (w/2, medio
+//   punto; menos, rebajado); ring: canto de la rosca; n: dovelas (impar).
+//   clip: [u0, u1] tramo del muro donde van las enjutas (fuera, otro muro).
+//   rooms: [cara de t0, cara de t1] (la luz horneada de cada lado).
+// Devuelve la curva del intradós: yAt(u) (altura libre bajo el arco).
+export function archRing(ctx, o) {
+  const wb = ctx.wb;
+  const { c, w, y0, t0, t1 } = o;
+  const rise = o.rise ?? w / 2;
+  const ring = o.ring ?? 0.32;
+  const proud = o.proud ?? 0.025;
+  const mat = o.mat ?? 'ashlar',
+    spMat = o.spMat ?? 'wallstone';
+  const rooms = o.rooms ?? [o.room, o.room];
+  const tint = o.tint ?? [0.62, 0.6, 0.57];
+  const spTint = o.spTint ?? tint;
+  // circunferencia por (c - h, y0), (c + h, y0) y (c, y0 + k)
+  const circ = (h, k) => {
+    const R = (h * h + k * k) / (2 * k);
+    const yc = y0 + k - R;
+    return { R, yc, a0: Math.atan2(y0 - yc, h) };
+  };
+  const ci = circ(w / 2, rise),
+    ce = circ(w / 2 + ring, rise + ring);
+  const at = (C, t) => {
+    const a = Math.PI - C.a0 - t * (Math.PI - 2 * C.a0);
+    return [c + C.R * Math.cos(a), C.yc + C.R * Math.sin(a)];
+  };
+  let n = o.n ?? Math.round((Math.PI * (w / 2 + ring / 2)) / 0.42);
+  n = Math.max(5, n | 1);
+  const axZ = o.axis === 'z';
+  // (u a lo largo de la luz, v altura, d profundidad) -> mundo
+  const P = (u, v, d) => (axZ ? new THREE.Vector3(d, v, u) : new THREE.Vector3(u, v, d));
+  // en 'z' el sentido de giro se invierte: se dan las caras al revés
+  const q = (m, a, b, cc, d, opt) => (axZ ? wb.quad(m, d, cc, b, a, opt) : wb.quad(m, a, b, cc, d, opt));
+  const df = t1 + proud,
+    db = t0 - proud;
+  const I = [],
+    E = [];
+  for (let k = 0; k <= n; k++) {
+    I.push(at(ci, k / n));
+    E.push(at(ce, k / n));
+  }
+  for (let k = 0; k < n; k++) {
+    const key = k === (n - 1) / 2;
+    const tk = tint.map((v) => v * (key ? 1.07 : k % 2 ? 0.92 : 1));
+    const [ia, ib, ea, eb] = [I[k], I[k + 1], E[k], E[k + 1]];
+    const sub = { ao: false, sub: 4, tint: tk };
+    // caras (delante y detrás), intradós y trasdós
+    q(mat, P(ia[0], ia[1], df), P(ib[0], ib[1], df), P(eb[0], eb[1], df), P(ea[0], ea[1], df), { ...sub, room: rooms[1] });
+    q(mat, P(ea[0], ea[1], db), P(eb[0], eb[1], db), P(ib[0], ib[1], db), P(ia[0], ia[1], db), { ...sub, room: rooms[0] });
+    q(mat, P(ia[0], ia[1], db), P(ib[0], ib[1], db), P(ib[0], ib[1], df), P(ia[0], ia[1], df), { ...sub, room: o.underRoom ?? rooms[1] });
+    q(mat, P(ea[0], ea[1], df), P(eb[0], eb[1], df), P(eb[0], eb[1], db), P(ea[0], ea[1], db), { ...sub, room: rooms[1] });
+  }
+  // asiento de los salmeres (por debajo asoman lo que sobresalen del muro)
+  const sb = { ao: false, sub: 4, tint, room: rooms[1] };
+  q(mat, P(E[0][0], y0, db), P(I[0][0], y0, db), P(I[0][0], y0, df), P(E[0][0], y0, df), sb);
+  q(mat, P(I[n][0], y0, db), P(E[n][0], y0, db), P(E[n][0], y0, df), P(I[n][0], y0, df), sb);
+  // enjutas: de la rosca hasta 'top', recortadas al tramo del muro
+  if (o.top !== undefined) {
+    const [s0, s1] = o.clip ?? [E[0][0], E[n][0]];
+    const spOpt = (room) => ({ ao: o.ao ?? false, sub: 2, tint: spTint, room, baseY: o.baseY });
+    for (let k = 0; k < n; k++) {
+      let [ua, va] = E[k],
+        [ub, vb] = E[k + 1];
+      if (ub <= s0 || ua >= s1) continue;
+      const lerp = (u) => va + ((vb - va) * (u - ua)) / (ub - ua);
+      if (ua < s0) {
+        va = lerp(s0);
+        ua = s0;
+      }
+      if (ub > s1) {
+        vb = lerp(s1);
+        ub = s1;
+      }
+      if (Math.max(va, vb) >= o.top - 0.001) continue;
+      q(spMat, P(ua, va, t1), P(ub, vb, t1), P(ub, o.top, t1), P(ua, o.top, t1), spOpt(rooms[1]));
+      q(spMat, P(ua, o.top, t0), P(ub, o.top, t0), P(ub, vb, t0), P(ua, va, t0), spOpt(rooms[0]));
     }
+    if (o.topFace) {
+      if (axZ) wb.box(spMat, t0, o.top - 0.01, s0, t1, o.top, s1, { faces: 't', ao: false, sub: 2, tint: spTint });
+      else wb.box(spMat, s0, o.top - 0.01, t0, s1, o.top, t1, { faces: 't', ao: false, sub: 2, tint: spTint });
+    }
+  }
+  // altura libre bajo el arco en u
+  const yAt = (u) => {
+    const du = u - c;
+    if (Math.abs(du) >= w / 2) return y0;
+    return ci.yc + Math.sqrt(Math.max(0, ci.R * ci.R - du * du));
+  };
+  // la cámara no se cuela por los riñones del arco (capas escalonadas)
+  if (o.cam !== false && o.top !== undefined) {
+    const a = Math.min(t0, t1),
+      b = Math.max(t0, t1);
+    const steps = 4;
+    for (let i = 0; i < steps; i++) {
+      const ya = y0 + (rise * i) / steps,
+        yb = y0 + (rise * (i + 1)) / steps;
+      // ancho libre a la altura de arriba de la capa
+      const k = ci.yc + ci.R > yb ? Math.sqrt(Math.max(0, ci.R * ci.R - (yb - ci.yc) ** 2)) : 0;
+      for (const [u0, u1] of [
+        [c - w / 2 - ring, c - k],
+        [c + k, c + w / 2 + ring],
+      ]) {
+        if (u1 - u0 < 0.02) continue;
+        if (axZ) ctx.col.addCam(a, ya, u0, b, yb, u1);
+        else ctx.col.addCam(u0, ya, a, u1, yb, b);
+      }
+    }
+    if (o.top > y0 + rise) {
+      if (axZ) ctx.col.addCam(a, y0 + rise, c - w / 2 - ring, b, o.top, c + w / 2 + ring);
+      else ctx.col.addCam(c - w / 2 - ring, y0 + rise, a, c + w / 2 + ring, o.top, b);
+    }
+  }
+  return { yAt, ring, rise, n };
+}
+
+// Bóveda de cañón (de medio punto o rebajada) sobre x0..x1, z0..z1; el eje
+// va a lo largo de 'axis' y arranca a la altura ys con flecha 'rise' (por
+// defecto, la mitad de la luz). Sólo la cara de dentro, con una imposta
+// corrida en los arranques y una capa escalonada para la cámara (que no se
+// meta en los riñones).
+export function barrelVault(ctx, o) {
+  const wb = ctx.wb;
+  const { x0, z0, x1, z1, ys } = o;
+  const alongX = o.axis === 'x';
+  const span = alongX ? z1 - z0 : x1 - x0;
+  const len = alongX ? x1 - x0 : z1 - z0;
+  const c = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
+  const inset = o.inset ?? 0.03;
+  const h = span / 2 - inset;
+  const rise = Math.min(o.rise ?? h, h);
+  const R = (h * h + rise * rise) / (2 * rise);
+  const yc = ys + rise - R;
+  const a0 = Math.atan2(ys - yc, h);
+  const n = o.n ?? Math.max(6, Math.round(((Math.PI - 2 * a0) * R) / 0.4));
+  const mat = o.mat ?? 'wallstone';
+  const tint = o.tint ?? [0.5, 0.48, 0.46];
+  const room = o.room;
+  const V3 = (s, y, u) => (alongX ? new THREE.Vector3(s, y, u) : new THREE.Vector3(u, y, s));
+  const s0 = alongX ? x0 : z0,
+    s1 = alongX ? x1 : z1;
+  for (let k = 0; k < n; k++) {
+    const aa = Math.PI - a0 - (k / n) * (Math.PI - 2 * a0),
+      ab = Math.PI - a0 - ((k + 1) / n) * (Math.PI - 2 * a0);
+    const ua = c + R * Math.cos(aa),
+      va = yc + R * Math.sin(aa),
+      ub = c + R * Math.cos(ab),
+      vb = yc + R * Math.sin(ab);
+    // (vista desde dentro; en 'z' el giro se invierte)
+    if (alongX) wb.quad(mat, V3(s0, va, ua), V3(s1, va, ua), V3(s1, vb, ub), V3(s0, vb, ub), { ao: false, sub: o.sub ?? 2, tint, room });
+    else wb.quad(mat, V3(s0, vb, ub), V3(s1, vb, ub), V3(s1, va, ua), V3(s0, va, ua), { ao: false, sub: o.sub ?? 2, tint, room });
+  }
+  // imposta en los arranques (tapa la junta con el muro)
+  if (o.impost !== false) {
+    const it = 0.09,
+      ih = 0.14;
+    const im = o.impostMat ?? 'ashlar',
+      itn = o.impostTint ?? tint.map((v) => v * 1.1);
+    if (alongX) {
+      wb.box(im, x0, ys - ih, z0, x1, ys, z0 + it, { faces: 'tbs', ao: false, sub: 3, tint: itn, room });
+      wb.box(im, x0, ys - ih, z1 - it, x1, ys, z1, { faces: 'tbn', ao: false, sub: 3, tint: itn, room });
+    } else {
+      wb.box(im, x0, ys - ih, z0, x0 + it, ys, z1, { faces: 'tbe', ao: false, sub: 3, tint: itn, room });
+      wb.box(im, x1 - it, ys - ih, z0, x1, ys, z1, { faces: 'tbw', ao: false, sub: 3, tint: itn, room });
+    }
+  }
+  if (o.cam !== false) {
+    const steps = 4;
+    for (let i = 0; i < steps; i++) {
+      const ya = ys + (rise * i) / steps,
+        yb = ys + (rise * (i + 1)) / steps;
+      const k = Math.sqrt(Math.max(0, R * R - (yb - yc) ** 2));
+      for (const [u0, u1] of [
+        [c - span / 2, c - k],
+        [c + k, c + span / 2],
+      ]) {
+        if (u1 - u0 < 0.02) continue;
+        if (alongX) ctx.col.addCam(x0, ya, u0, x1, yb, u1);
+        else ctx.col.addCam(u0, ya, z0, u1, yb, z1);
+      }
+    }
+  }
+  return { crown: ys + rise, R, yc, len };
+}
+
+// Tejado a dos aguas con cuerpo: faldones de teja con su grueso (canto en
+// los aleros y tablas de remate en los hastiales), cara de abajo de madera,
+// cumbrera de teja, hastiales de piedra y su capa para la cámara.
+//   axis 'x': cumbrera a lo largo de x. wallT: grueso de los hastiales.
+export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o = {}) {
+  const wb = ctx.wb;
+  const ov = o.overhang ?? 0.4,
+    gv = o.gableOverhang ?? 0.3,
+    th = o.thick ?? 0.2;
+  const mat = o.mat ?? 'roof',
+    under = o.under ?? 'wooddark',
+    wall = o.wallMat ?? 'wallstone';
+  const alongX = axis === 'x';
+  const sA = (alongX ? x0 : z0) - gv,
+    sB = (alongX ? x1 : z1) + gv;
+  const uc = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
+  const half = (alongX ? z1 - z0 : x1 - x0) / 2;
+  const slope = (yRidge - yEave) / half;
+  const ue = half + ov,
+    ye = yEave - ov * slope;
+  // grueso medido en vertical (el faldón es inclinado)
+  const tv = th * Math.sqrt(1 + slope * slope);
+  const P = (sv, y, u) => (alongX ? new THREE.Vector3(sv, y, uc + u) : new THREE.Vector3(uc + u, y, sv));
+  // en 'z' (s -> z, u -> x) se invierte el sentido de giro
+  const q = (m, a, b, c, d, opt) => (alongX ? wb.quad(m, a, b, c, d, opt) : wb.quad(m, d, c, b, a, opt));
+  const top = { ao: false, sub: 2.2, tint: o.tint },
+    bot = { ao: false, sub: 3, tint: [0.5, 0.47, 0.44] },
+    edge = { ao: false, sub: 3, tint: [0.58, 0.52, 0.46] };
+  for (const sg of [1, -1]) {
+    // faldón (arriba), su cara de abajo y el canto del alero
+    if (sg > 0) {
+      q(mat, P(sA, ye, ue), P(sB, ye, ue), P(sB, yRidge, 0), P(sA, yRidge, 0), top);
+      q(under, P(sA, yRidge - tv, 0), P(sB, yRidge - tv, 0), P(sB, ye - tv, ue), P(sA, ye - tv, ue), bot);
+      q('wooddark', P(sA, ye - tv, ue), P(sB, ye - tv, ue), P(sB, ye, ue), P(sA, ye, ue), edge);
+    } else {
+      q(mat, P(sB, ye, -ue), P(sA, ye, -ue), P(sA, yRidge, 0), P(sB, yRidge, 0), top);
+      q(under, P(sB, yRidge - tv, 0), P(sA, yRidge - tv, 0), P(sA, ye - tv, -ue), P(sB, ye - tv, -ue), bot);
+      q('wooddark', P(sB, ye - tv, -ue), P(sA, ye - tv, -ue), P(sA, ye, -ue), P(sB, ye, -ue), edge);
+    }
+  }
+  // tablas de remate en los hastiales (el canto inclinado de los faldones)
+  for (const [sv, out] of [
+    [sA, -1],
+    [sB, 1],
+  ]) {
+    const B1 = P(sv, ye - tv, ue),
+      T1 = P(sv, ye, ue),
+      T2 = P(sv, yRidge, 0),
+      B2 = P(sv, yRidge - tv, 0),
+      B1n = P(sv, ye - tv, -ue),
+      T1n = P(sv, ye, -ue);
+    if (out < 0) {
+      q('wooddark', B1, T1, T2, B2, edge);
+      q('wooddark', B2, T2, T1n, B1n, edge);
+    } else {
+      q('wooddark', B2, T2, T1, B1, edge);
+      q('wooddark', B1n, T1n, T2, B2, edge);
+    }
+  }
+  // cumbrera: caballetes de teja
+  const rw = 0.17;
+  if (alongX) wb.box(mat, sA - 0.02, yRidge - 0.06, uc - rw, sB + 0.02, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
+  else wb.box(mat, uc - rw, yRidge - 0.06, sA - 0.02, uc + rw, yRidge + 0.15, sB + 0.02, { ao: false, faces: 'tnsewb', tint: o.tint });
+  // hastiales de piedra (por fuera y por dentro)
+  const wt = o.wallT ?? 0.4;
+  const sx0 = alongX ? x0 : z0,
+    sx1 = alongX ? x1 : z1;
+  const gTint = o.wallTint ?? [0.8, 0.78, 0.74];
+  for (const [a, b, outward] of [
+    [sx0, sx0 + wt, -1],
+    [sx1 - wt, sx1, 1],
+  ]) {
+    const so = outward < 0 ? a : b,
+      si = outward < 0 ? b : a;
+    // (triángulo: alero a alero bajo los faldones, hasta la cumbrera)
+    const tri = (sv, flip, room) => {
+      const p1 = P(sv, yEave, -half),
+        p2 = P(sv, yEave, half),
+        p3 = P(sv, yRidge - tv, 0);
+      const ccw = (outward < 0) !== flip;
+      const order = alongX ? ccw : !ccw;
+      if (order) wb.tri(wall, p1, p2, p3, { ao: false, tint: gTint, room });
+      else wb.tri(wall, p2, p1, p3, { ao: false, tint: gTint, room });
+    };
+    tri(so, false, 'out');
+    tri(si, true, o.room);
+  }
+  // la cámara no se mete en el tejado
+  if (o.cam !== false) {
+    const nS = 3;
+    for (let i = 0; i < nS; i++) {
+      const ya = yEave + ((yRidge - yEave) * i) / nS,
+        yb = yEave + ((yRidge - yEave) * (i + 1)) / nS;
+      const hw = half * (1 - (i + 0.5) / nS);
+      if (alongX) ctx.col.addCam(x0, ya, uc - hw, x1, yb, uc + hw);
+      else ctx.col.addCam(uc - hw, ya, z0, uc + hw, yb, z1);
+    }
+  }
+}
+
+// Pilastra adosada (de y0 a y1) con su basa y su imposta; dir: hacia dónde
+// asoma del muro ('n','s','e','w'); (a) centro a lo largo del muro; line:
+// plano del muro; w: ancho; d: vuelo.
+export function pilaster(ctx, line, a, dir, y0, y1, o = {}) {
+  const wb = ctx.wb;
+  const w = o.w ?? 0.45,
+    d = o.d ?? 0.15;
+  const mat = o.mat ?? 'ashlar';
+  const tint = o.tint ?? [0.6, 0.58, 0.55];
+  const room = o.room;
+  const sgn = dir === 'n' || dir === 'w' ? -1 : 1;
+  const box = (dd, ya, yb, ww, faces, t = tint) => {
+    const p0 = line,
+      p1 = line + sgn * dd;
+    if (dir === 'n' || dir === 's') wb.box(mat, a - ww / 2, ya, Math.min(p0, p1), a + ww / 2, yb, Math.max(p0, p1), { faces, ao: false, sub: 2, tint: t, room });
+    else wb.box(mat, Math.min(p0, p1), ya, a - ww / 2, Math.max(p0, p1), yb, a + ww / 2, { faces, ao: false, sub: 2, tint: t, room });
+  };
+  const front = { n: 'n', s: 's', e: 'e', w: 'w' }[dir];
+  const sides = dir === 'n' || dir === 's' ? 'ew' : 'ns';
+  box(d, y0 + 0.3, y1 - 0.16, w, front + sides);
+  box(d + 0.05, y0, y0 + 0.3, w + 0.1, 't' + front + sides);
+  box(d + 0.07, y1 - 0.16, y1, w + 0.12, 'b' + front + sides, tint.map((v) => v * 1.08));
+  if (o.collide !== false) {
+    const p0 = line,
+      p1 = line + sgn * (d + 0.05);
+    if (dir === 'n' || dir === 's') ctx.col.add(a - w / 2 - 0.05, y0, Math.min(p0, p1), a + w / 2 + 0.05, y1, Math.max(p0, p1));
+    else ctx.col.add(Math.min(p0, p1), y0, a - w / 2 - 0.05, Math.max(p0, p1), y1, a + w / 2 + 0.05);
+  }
+}
+
+// Muro de piedra con vanos de arco (puertas interiores): a lo largo de
+// 'axis' de a0 a a1, grosor de t0 a t1, de y0 a y1. openings: [{ c, w, h
+// (altura del arranque sobre y0), rise?, ring? }]. rooms: [lado de t0, lado
+// de t1]. Dibuja las dos caras (cada una con la luz de su estancia), las
+// jambas, la rosca de dovelas y las enjutas, con su colisión.
+export function archedWall(ctx, o) {
+  const wb = ctx.wb;
+  const { axis, a0, a1, t0, t1, y0, y1 } = o;
+  const mat = o.mat ?? 'wallstone';
+  const rooms = o.rooms ?? [o.room, o.room];
+  const tint = o.tint ?? [0.72, 0.7, 0.66];
+  const tints = o.tints ?? [tint, tint];
+  const axZ = axis === 'z';
+  const fNeg = axZ ? 'w' : 'n',
+    fPos = axZ ? 'e' : 's';
+  // cara del extremo que mira hacia -u y hacia +u
+  const endLo = axZ ? 'n' : 'w',
+    endHi = axZ ? 's' : 'e';
+  const base = { sub: 1.6, aoH: 1.2, aoMin: 0.5, baseY: y0 };
+  const piece = (u0, v0, u1, v1, lo = false, hi = false) => {
+    if (u1 - u0 < 0.005 || v1 - v0 < 0.005) return;
+    const b = axZ ? [t0, v0, u0, t1, v1, u1] : [u0, v0, t0, u1, v1, t1];
+    wb.box(mat, ...b, { ...base, faces: fNeg, room: rooms[0], tint: tints[0] });
+    wb.box(mat, ...b, { ...base, faces: fPos + (lo ? endLo : '') + (hi ? endHi : ''), room: rooms[1], tint: tints[1] });
+    if (o.collide !== false) ctx.col.add(...b);
+  };
+  const ops = [...(o.openings ?? [])].sort((p, q) => p.c - q.c);
+  let prevU = a0,
+    prevRing = 0,
+    prevYs = y1;
+  for (let i = 0; i <= ops.length; i++) {
+    const d = ops[i];
+    const ring = d ? (d.ring ?? 0.26) : 0;
+    const l = d ? d.c - d.w / 2 : a1;
+    const ys = d ? y0 + d.h : y1;
+    // jamba derecha del vano anterior, tramo entero y jamba izquierda de éste
+    if (i > 0) piece(prevU, y0, prevU + prevRing, prevYs, true, false);
+    piece(prevU + prevRing, y0, l - ring, y1, i === 0 && !!o.endLo, i === ops.length && !!o.endHi);
+    if (!d) break;
+    piece(l - ring, y0, l, ys, false, true);
+    const r = d.c + d.w / 2;
+    const rise = d.rise ?? d.w / 2;
+    archRing(ctx, {
+      axis: axZ ? 'z' : 'x',
+      c: d.c,
+      w: d.w,
+      y0: ys,
+      rise,
+      ring,
+      t0,
+      t1,
+      top: y1,
+      clip: [l - ring, r + ring],
+      mat: d.mat ?? 'ashlar',
+      spMat: mat,
+      rooms,
+      tint: d.tint ?? [0.66, 0.64, 0.6],
+      spTint: tint,
+      proud: d.proud ?? 0.02,
+      cam: o.cam,
+    });
+    if (o.collide !== false) {
+      const k = 0.62;
+      const box = (u0, v0, u1, v1) => (axZ ? ctx.col.add(t0, v0, u0, t1, v1, u1) : ctx.col.add(u0, v0, t0, u1, v1, t1));
+      box(l, ys + rise * k, r, y1);
+      box(l - ring, ys, l, y1);
+      box(r, ys, r + ring, y1);
+    }
+    prevU = r;
+    prevRing = ring;
+    prevYs = ys;
   }
 }
 

@@ -19,6 +19,7 @@ import { Combat } from './combat.js';
 import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
 import { NavGrid } from './nav.js';
+import { WalkGrid } from '../world/walkgrid.js';
 import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
 import { loadSave, writeSave, clearSave, loadSettings, writeSettings, Inventory } from './save.js';
@@ -107,6 +108,15 @@ export class Game {
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
     this.navDungeon = new NavGrid(lvl.D, this.world.col, () => CASTLE.dun.y);
+    // los pisos altos de la torre del homenaje, con sus muros y tabiques
+    {
+      const K = CASTLE.keep;
+      this.navKeep = [K.F1, K.F2].map((fy) => {
+        const w = new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5);
+        w.paint(K.x0 + K.t, K.z0 + K.t, K.x1 - K.t, K.z1 - K.t, 1);
+        return new NavGrid(w, this.world.col, () => fy);
+      });
+    }
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
     // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
     // lado, está a ras de la bodega)
@@ -836,6 +846,12 @@ export class Game {
 
   // ¿Está en la bodega del canónigo (o en su escalera)?
   // Bajo el castillo: las mazmorras, las catacumbas y el aljibe.
+  // ¿En un piso alto de la torre del homenaje?
+  inKeep(p) {
+    const K = CASTLE.keep;
+    return p.x > K.x0 && p.x < K.x1 && p.z > K.z0 && p.z < K.z1 && p.y > K.F1 - 0.6 && p.y < K.R - 0.5;
+  }
+
   inDungeon(p) {
     const D = CASTLE.dun;
     return p.x > D.x0 && p.x < D.x1 && p.z > D.z0 && p.z < D.z1 && p.y < -1.2 && p.y > D.y - 3;
@@ -872,7 +888,7 @@ export class Game {
   hatchMove(it) {
     const p = this.player;
     if (this.climb || p.dead) return;
-    this.climb = { dir: 'to', t: 0, hp: p.hp, to: it.to, msg: it.end === 'top' ? MSG.hatchDown : MSG.hatchUp };
+    this.climb = { dir: 'to', t: 0, hp: p.hp, to: it.to, msg: it.end === 'top' ? MSG[it.msgDown] ?? MSG.hatchDown : MSG[it.msgUp] ?? MSG.hatchUp };
     p.playInteract('interact');
     p.state = 'cine';
     p.vx = p.vz = 0;

@@ -655,15 +655,250 @@ export function bones(ctx, x, y, z, n = 10, seed = 1, spread = 0.8) {
   }
 }
 
-// Escombros de piedra.
+// Geometría de piedra tosca: un icosaedro deformado por ruido (la
+// deformación depende sólo de la posición, así las caras no se separan) y
+// desbastado por unos cuantos planos (lascas). Facetada.
+//   k: irregularidad; cuts: lascas; cutMin/cutMax: lo hondo de cada lasca.
+export function roughStoneGeo(seed, o = {}) {
+  const g = new THREE.IcosahedronGeometry(1, o.detail ?? 1);
+  return roughen(g, seed, o);
+}
+
+// Sillar o cascote roto: una caja con las aristas mordidas y caras alabeadas.
+export function roughBlockGeo(seed, o = {}) {
+  const g = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2).toNonIndexed();
+  return roughen(g, seed, { k: 0.1, cuts: 3, cutMin: 0.32, cutMax: 0.46, freq: 2.2, ...o });
+}
+
+function roughen(g, seed, o) {
+  const pos = g.attributes.position;
+  const rng = new RNG(seed);
+  const ox = rng.range(0, 50),
+    oy = rng.range(0, 50),
+    oz = rng.range(0, 50);
+  const k = o.k ?? 0.22,
+    fq = o.freq ?? 1.4;
+  const cuts = [];
+  for (let i = 0; i < (o.cuts ?? 3); i++) {
+    const d = V(rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)).normalize();
+    cuts.push([d, rng.range(o.cutMin ?? 0.62, o.cutMax ?? 0.86)]);
+  }
+  // planos dados (una piedra partida: medio bolaño)
+  for (const [d, c] of o.planes ?? []) cuts.push([V(...d).normalize(), c]);
+  const v = V(0, 0, 0);
+  for (let i = 0; i < pos.count; i++) {
+    v.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+    const f = 1 + (fbm3(v.x * fq + ox, v.y * fq + oy, v.z * fq + oz, 3, seed % 97) - 0.5) * 2 * k;
+    v.multiplyScalar(f);
+    for (const [d, c] of cuts) {
+      const p = v.dot(d);
+      if (p > c) v.addScaledVector(d, c - p);
+    }
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.deleteAttribute('normal');
+  g.computeVertexNormals();
+  return g;
+}
+
+// Una piedra tosca apoyada (algo hundida) en el suelo y: s es su tamaño.
+// Devuelve su altura y su radio en planta.
+export function roughStone(ctx, x, y, z, s, seed, o = {}) {
+  const rng = new RNG(seed * 7 + 3);
+  const g = o.block ? roughBlockGeo(seed, o) : roughStoneGeo(seed, o);
+  const sc = o.scl ?? [1, rng.range(0.72, 0.95), rng.range(0.85, 1.1)];
+  const rot = o.rot ?? new THREE.Euler(rng.range(0, 6.28), rng.range(0, 6.28), rng.range(0, 6.28));
+  g.applyMatrix4(M4().compose(V(0, 0, 0), new THREE.Quaternion().setFromEuler(rot), V(s * sc[0], s * sc[1], s * sc[2])));
+  g.computeBoundingBox();
+  const bb = g.boundingBox;
+  const sink = (o.sink ?? 0.1) * s;
+  ctx.wb.geometry(o.mat ?? 'rock', g, M4().makeTranslation(x, y - bb.min.y - sink, z), { ao: false, uvScale: o.uvScale ?? 1.2, tint: o.tint, room: o.room });
+  const h = bb.max.y - bb.min.y - sink,
+    r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2;
+  if (o.collide) col(ctx, x - r * 0.8, y, z - r * 0.8, x + r * 0.8, y + h, z + r * 0.8);
+  return { h, r };
+}
+
+// Hueso largo de A a B (en el marco local actual), con sus cabezas.
+function longBone(wb, a, b, r, room, knobs = true) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const len = d.length();
+  if (len < 0.01) return;
+  const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
+  wb.geometry('bone', new THREE.CylinderGeometry(r * 0.8, r, len, 5), M4().compose(a.clone().add(b).multiplyScalar(0.5), q, V(1, 1, 1)), { ao: false, room });
+  if (knobs) for (const p of [a, b]) wb.geometry('bone', new THREE.SphereGeometry(r * 1.55, 5, 3), M4().compose(p, q, V(1, 0.8, 1)), { ao: false, room });
+}
+
+// Calavera en su marco: la cara hacia +x y la coronilla hacia +y (cráneo,
+// cuencas, nariz y mandíbula).
+function skull(wb, m, room, jaw = true) {
+  const g = (geo, mat, mm) => wb.geometry(mat, geo, m.clone().multiply(mm), { ao: false, room, grime: mat !== 'black' });
+  g(new THREE.SphereGeometry(0.1, 7, 5), 'bone', M4().makeScale(1.12, 0.95, 0.88));
+  for (const sz of [-1, 1]) g(new THREE.BoxGeometry(0.012, 0.032, 0.034), 'black', M4().makeTranslation(0.104, 0.012, sz * 0.036));
+  g(new THREE.BoxGeometry(0.012, 0.022, 0.018), 'black', M4().makeTranslation(0.108, -0.028, 0));
+  if (jaw) g(new THREE.BoxGeometry(0.075, 0.035, 0.1), 'bone', M4().makeTranslation(0.05, -0.088, 0));
+}
+// (marcos: tendida boca arriba con la coronilla hacia +x; o de cara a +z)
+const SKULL_UP = new THREE.Euler(Math.PI, 0, Math.PI / 2, 'ZYX');
+
+// Esqueleto tendido boca arriba a lo largo del x local (la cabeza hacia +x)
+// en el suelo y: calavera, columna, costillas, pelvis, brazos y piernas.
+// mess (0..1): lo revuelto que está (y los huesos que faltan).
+export function skeleton(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(o.seed ?? Math.round(Math.abs(x * 31 + z * 17)) + 1);
+  const mess = o.mess ?? 0.15;
+  const sc = o.scale ?? 0.92;
+  const room = o.room;
+  const j = (k = 1) => rng.range(-mess, mess) * 0.12 * k;
+  const P3 = (px, py, pz) => V(px * sc + j(), py * sc, pz * sc + j());
+  const gone = () => rng.chance(mess * 0.35);
+  wb.at(x, y, z, rot, () => {
+    // la calavera, algo ladeada
+    const hq = new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.5, 0.5) * (0.3 + mess), 0, rng.range(-0.2, 0.2))).multiply(new THREE.Quaternion().setFromEuler(SKULL_UP));
+    const hm = M4().compose(V((0.72 + j(2)) * sc, 0.09 * sc, j(2)), hq, V(sc, sc, sc));
+    skull(wb, hm, room, !rng.chance(mess * 0.6));
+    // columna (vértebras) y costillas
+    for (let k = 0; k < 10; k++) {
+      const vx = 0.58 - k * 0.062;
+      if (!gone()) wb.geometry('bone', new THREE.BoxGeometry(0.045, 0.035, 0.05), M4().compose(P3(vx, 0.025, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, j(3), 0)), V(sc, sc, sc)), { ao: false, room });
+    }
+    for (let k = 0; k < 5; k++) {
+      if (gone()) continue;
+      const rx = 0.52 - k * 0.065;
+      const R = (0.13 - Math.abs(k - 1.5) * 0.012) * sc;
+      const flat = rng.chance(0.25 + mess * 0.5);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(flat ? Math.PI / 2 - 0.15 : 0, Math.PI / 2, 0));
+      wb.geometry('bone', new THREE.TorusGeometry(R, 0.011 * sc, 3, 7, Math.PI), M4().compose(P3(rx, flat ? 0.015 : 0.02, 0), q, V(1, flat ? 0.5 : 0.85, 1)), { ao: false, room });
+    }
+    // pelvis
+    if (!gone()) wb.geometry('bone', new THREE.SphereGeometry(0.1, 6, 4), M4().compose(P3(-0.02, 0.04, 0), new THREE.Quaternion(), V(0.9 * sc, 0.45 * sc, 1.35 * sc)), { ao: false, room });
+    // brazos y piernas
+    for (const s2 of [-1, 1]) {
+      if (!gone()) longBone(wb, P3(0.5, 0.03, s2 * 0.19), P3(0.21, 0.03, s2 * (0.21 + j())), 0.018 * sc, room);
+      if (!gone()) longBone(wb, P3(0.19, 0.025, s2 * 0.21), P3(-0.04, 0.025, s2 * (0.2 + j())), 0.014 * sc, room);
+      if (!gone()) wb.geometry('bone', new THREE.BoxGeometry(0.08, 0.02, 0.05), M4().compose(P3(-0.1, 0.012, s2 * 0.2), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, j(4), 0)), V(sc, sc, sc)), { ao: false, room });
+      if (!gone()) longBone(wb, P3(-0.08, 0.035, s2 * 0.09), P3(-0.53, 0.035, s2 * (0.1 + j())), 0.024 * sc, room);
+      if (!gone()) longBone(wb, P3(-0.56, 0.03, s2 * 0.1), P3(-0.95, 0.03, s2 * (0.1 + j())), 0.02 * sc, room);
+      if (!gone()) wb.geometry('bone', new THREE.BoxGeometry(0.13, 0.03, 0.06), M4().compose(P3(-1.0, 0.02, s2 * 0.11), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, j(3), 0)), V(sc, sc, sc)), { ao: false, room });
+    }
+  });
+}
+
+// Fila de calaveras en una repisa (a lo largo del x local, mirando a +z).
+export function skullRow(ctx, x, y, z, rot, n, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(o.seed ?? Math.round(Math.abs(x * 7 + z * 13)));
+  const gap = o.gap ?? 0.24;
+  wb.at(x, y, z, rot, () => {
+    for (let k = 0; k < n; k++) {
+      const px = (k - (n - 1) / 2) * gap + rng.range(-0.02, 0.02);
+      // (la cara hacia +z: se gira el marco de la calavera)
+      const m = M4().compose(V(px, 0.095, rng.range(-0.02, 0.02)), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.12, 0.12), -Math.PI / 2 + rng.range(-0.3, 0.3), rng.range(-0.1, 0.1))), V(1, 1, 1));
+      skull(wb, m, o.room, false);
+    }
+  });
+}
+
+// Muro de huesos apilados: cabezas de fémur y tibia en hileras (como en los
+// osarios), con hileras de calaveras entre medias. x0..x1 a lo largo del x
+// local, de y0 a y1, mirando a +z.
+export function boneWall(ctx, x, y, z, rot, w, h, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(o.seed ?? Math.round(Math.abs(x * 11 + z * 5)));
+  wb.at(x, y, z, rot, () => {
+    // el fondo, de huesos amontonados (textura de calaveras, oscuro)
+    wb.box('skulls', -w / 2, 0, -0.05, w / 2, h, 0, { faces: 's', ao: false, tint: [0.5, 0.47, 0.42], room: o.room });
+    let yy = 0;
+    let row = 0;
+    while (yy < h - 0.1) {
+      const skulls = row % 3 === 2;
+      const rh = skulls ? 0.2 : 0.075;
+      if (skulls) {
+        const n = Math.floor(w / 0.23);
+        for (let k = 0; k < n; k++) {
+          const px = -w / 2 + 0.12 + k * 0.23 + rng.range(-0.02, 0.02);
+          const m = M4().compose(V(px, yy + 0.095, 0.02), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.1, 0.1), -Math.PI / 2 + rng.range(-0.25, 0.25), 0)), V(1, 1, 1));
+          skull(wb, m, o.room, false);
+        }
+      } else {
+        // cabezas de los huesos largos, una junto a otra
+        const n = Math.floor(w / 0.07);
+        for (let k = 0; k < n; k++) {
+          const px = -w / 2 + 0.035 + k * 0.07 + (row % 2) * 0.035;
+          if (px > w / 2 - 0.03) continue;
+          wb.geometry('bone', new THREE.SphereGeometry(0.034, 5, 3), M4().compose(V(px, yy + 0.037, 0.0 + rng.range(-0.01, 0.015)), new THREE.Quaternion(), V(1, 0.9, 0.7)), { ao: false, room: o.room, tint: [0.9 + rng.range(-0.1, 0.06), 0.88, 0.8] });
+        }
+      }
+      yy += rh;
+      row++;
+    }
+  });
+}
+
+// El potro: un bastidor sobre cuatro patas con su lecho de tablas y un
+// rodillo en cada cabecera (con las aspas para tensarlo). Largo en x local.
+export function rack(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const L = o.len ?? 2.4,
+    W = o.w ?? 0.8,
+    H = o.h ?? 0.78;
+  const room = o.room;
+  wb.at(x, y, z, rot, () => {
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) wb.box('wooddark', sx * (L / 2 - 0.12) - 0.06, 0, sz * (W / 2 - 0.06) - 0.06, sx * (L / 2 - 0.12) + 0.06, H, sz * (W / 2 - 0.06) + 0.06, { ao: false, room });
+    // largueros y travesaños
+    for (const sz of [-1, 1]) wb.box('wooddark', -L / 2, H - 0.16, sz * (W / 2 - 0.06) - 0.07, L / 2, H, sz * (W / 2 - 0.06) + 0.07, { ao: false, faces: 'tnsewb', room });
+    for (const sx of [-1, 1]) wb.box('wooddark', sx * (L / 2 - 0.12) - 0.05, 0.18, -W / 2 + 0.06, sx * (L / 2 - 0.12) + 0.05, 0.28, W / 2 - 0.06, { ao: false, faces: 'tnsewb', room });
+    // el lecho de tablas
+    for (let k = 0; k < 8; k++) {
+      const px = -L / 2 + 0.38 + k * ((L - 0.76) / 7);
+      wb.box('planks', px - 0.1, H - 0.1, -W / 2 + 0.1, px + 0.1, H - 0.05, W / 2 - 0.1, { ao: false, faces: 'tnsewb', room, tint: [0.66, 0.56, 0.48] });
+    }
+    // los rodillos (a lo ancho, con sus tapas) y las aspas para girarlos
+    for (const sx of [-1, 1]) {
+      const rx = sx * (L / 2 - 0.12);
+      wb.push();
+      wb.translate(rx, H + 0.08, 0);
+      wb.rotateX(Math.PI / 2);
+      wb.cylinder('wooddark', 0, -W / 2 - 0.16, 0, 0.085, 0.085, W + 0.32, 8, { ao: false, capTop: true, capBot: true, room });
+      // cuerda enrollada
+      wb.cylinder('rope', 0, -0.18, 0, 0.1, 0.1, 0.36, 8, { ao: false, room });
+      wb.pop();
+      for (let k = 0; k < 4; k++) {
+        const a = k * (Math.PI / 2) + 0.35 + (sx > 0 ? 0.4 : 0);
+        const c = V(rx, H + 0.08, W / 2 + 0.2);
+        const e = c.clone().add(V(Math.cos(a) * 0.42, Math.sin(a) * 0.42, 0));
+        const d = new THREE.Vector3().subVectors(e, c);
+        wb.geometry('wooddark', new THREE.BoxGeometry(0.05, d.length(), 0.05), M4().compose(c.clone().add(e).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()), V(1, 1, 1)), { ao: false, room });
+      }
+    }
+  });
+  colOBB(ctx, x, z, L / 2 + 0.08, W / 2 + 0.25, rot, y, y + H + 0.2);
+  return { H, L, W };
+}
+
+// Escombros de piedra: cascotes y sillares rotos, cada uno distinto, medio
+// enterrados (antes, cajas perfectas).
 export function rubble(ctx, x, y, z, n = 8, seed = 1, spread = 1.2, o = {}) {
   const rng = new RNG(seed);
   for (let i = 0; i < n; i++) {
     const s = rng.range(0.2, 0.6) * (o.scale ?? 1);
-    const px = x + rng.range(-spread, spread),
-      pz = z + rng.range(-spread, spread);
-    const m = M4().compose(V(px, y + s * 0.3, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.5, 0.5), rng.range(0, 3), rng.range(-0.5, 0.5))), V(s, s * 0.7, s * 0.9));
-    ctx.wb.geometry(o.mat ?? 'wallstone', new THREE.BoxGeometry(1, 1, 1), m, { ao: false, uvScale: 0.6 });
+    // más juntos hacia el centro del montón
+    const a = rng.range(0, Math.PI * 2),
+      d = spread * Math.sqrt(rng.next());
+    const px = x + Math.cos(a) * d,
+      pz = z + Math.sin(a) * d;
+    const block = rng.chance(o.blocks ?? 0.55);
+    roughStone(ctx, px, y, pz, s * (block ? 1 : 0.62), Math.round(seed * 13 + i * 7), {
+      block,
+      mat: o.mat ?? 'wallstone',
+      uvScale: 0.7,
+      sink: 0.12,
+      scl: block ? [1, rng.range(0.5, 0.75), rng.range(0.7, 1.0)] : undefined,
+      tint: o.tint,
+      room: o.room,
+    });
   }
   if (o.collide) col(ctx, x - spread, y, z - spread, x + spread, y + (o.h ?? 0.6), z + spread);
 }
@@ -1636,10 +1871,20 @@ export function target(ctx, x, y, z, rot = 0) {
   colOBB(ctx, x, z, 0.5, 0.2, rot, y, y + 1.4);
 }
 
-// Piedra de catapulta hundida con su cráter.
+// Piedra de catapulta hundida con su cráter: un bolaño labrado a pico (casi
+// redondo, con lascas y la superficie picada), medio enterrado, y la tierra y
+// los cascotes que levantó.
 export function siegeStone(ctx, x, y, z, s = 0.45) {
-  ctx.wb.geometry('wallstone', new THREE.IcosahedronGeometry(s, 1), M4().compose(V(x, y + s * 0.55, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3, x, 0.2)), V(1, 0.95, 1)), { ao: false, uvScale: 0.8 });
-  rubble(ctx, x, y, z, 6, Math.round(x * 5 + z), s * 2.6, { scale: 0.45, mat: 'cobble' });
+  const seed = Math.round(Math.abs(x * 31 + z * 17)) + 7;
+  roughStone(ctx, x, y, z, s, seed, { detail: 2, k: 0.07, cuts: 4, cutMin: 0.84, cutMax: 0.95, freq: 2.4, scl: [1, 0.94, 0.97], sink: 0.32, uvScale: 1.0 });
+  // el cráter: tierra levantada alrededor y cascotes del empedrado
+  const rng = new RNG(seed);
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + rng.range(-0.3, 0.3),
+      d = s * rng.range(1.15, 1.6);
+    ctx.wb.geometry('dirt', roughStoneGeo(seed + i, { detail: 0, k: 0.3 }), M4().compose(V(x + Math.cos(a) * d, y - 0.02, z + Math.sin(a) * d), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, a, 0)), V(s * 0.55, s * 0.18, s * 0.32)), { ao: false, uvScale: 1.6, tint: [0.8, 0.74, 0.68] });
+  }
+  rubble(ctx, x, y, z, 6, Math.round(x * 5 + z), s * 2.6, { scale: 0.42, mat: 'cobble', blocks: 0.3 });
   if (ctx.decals) ctx.decals.push({ x, y, z, size: s * 5, tex: 'shadow', rot: 0, opacity: 0.75 });
   col(ctx, x - s * 0.8, y, z - s * 0.8, x + s * 0.8, y + s * 1.3, z + s * 0.8);
 }

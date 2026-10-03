@@ -234,6 +234,37 @@ export class CollisionWorld {
     return found ? best : Infinity;
   }
 
+  // ¿Hay alguna caja a menos de r del punto (x,y,z)? (holgura de la cámara)
+  sphereHits(x, y, z, r, filter = null) {
+    const list = this.query(x - r, z - r, x + r, z + r, this._q4 || (this._q4 = []));
+    const r2 = r * r;
+    for (const b of list) {
+      if (filter && !filter(b)) continue;
+      const dy = y < b.miny ? b.miny - y : y > b.maxy ? y - b.maxy : 0;
+      if (dy >= r) continue;
+      let px = x,
+        pz = z,
+        x0 = b.minx,
+        x1 = b.maxx,
+        z0 = b.minz,
+        z1 = b.maxz;
+      if (b.obb) {
+        const o = b.obb;
+        const l = toLocal(o, x, z);
+        px = l[0];
+        pz = l[1];
+        x0 = -o.hx;
+        x1 = o.hx;
+        z0 = -o.hz;
+        z1 = o.hz;
+      }
+      const dx = px < x0 ? x0 - px : px > x1 ? px - x1 : 0,
+        dz = pz < z0 ? z0 - pz : pz > z1 ? pz - z1 : 0;
+      if (dx * dx + dy * dy + dz * dz < r2) return true;
+    }
+    return false;
+  }
+
   // ¿Se ve de a a b? Tapan los muros y lo que pasa de 0,9 m de alto (un
   // barril o una mesa en medio no), y también los forjados y techos: losas
   // finas y anchas (si no, se veía —y se fijaba— a las criaturas de otro

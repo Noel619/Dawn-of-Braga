@@ -574,6 +574,26 @@ const GEN = {
     });
   },
 
+  // Piedra tosca (bolaños, peñas, cascotes): granito sin juntas, con motas,
+  // grietas finas y manchas de liquen.
+  rock() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 7, y / 7, 4, S / 7, 71);
+      const m = fbm2(x / 2.5, y / 2.5, 2, S / 2.5, 72);
+      const cr = Math.abs(fbm2(x / 11, y / 11, 3, S / 11, 73) - 0.5);
+      let k = 0.72 + n * 0.42 + (m - 0.5) * 0.22;
+      if (cr < 0.022) k *= 0.62;
+      const sp = hash2(x, y, 74);
+      if (sp > 0.94) k *= 0.64;
+      else if (sp < 0.05) k *= 1.28;
+      let c = [116 * k, 110 * k, 100 * k];
+      const li = fbm2(x / 8, y / 8, 3, S / 8, 75);
+      if (li > 0.64) c = mix3(c, [84, 90, 68], Math.min(0.55, (li - 0.64) * 3));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
   mossstone() {
     const S = 64;
     const map = blockLayout(S, S, [10, 12, 10, 12, 10, 10], 12, 24, 57);

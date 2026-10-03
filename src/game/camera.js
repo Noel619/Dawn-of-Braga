@@ -5,6 +5,7 @@ import { clamp, damp, dampAngle, angleDiff, smoothstep } from '../core/util.js';
 
 const _dir = new THREE.Vector3();
 const _tp = new THREE.Vector3();
+const camBox = (b) => b.cam !== false;
 
 export class CameraRig {
   constructor(camera) {
@@ -66,7 +67,16 @@ export class CameraRig {
     const look = allowLook ? input.look(dt) : { x: 0, y: 0 };
     this.lockW = damp(this.lockW, target ? 1 : 0, 6, dt);
     // hombro: con objetivo fijado, la cámara se aparta un poco para no taparlo
-    this.side = damp(this.side, target ? 0.72 : 0, 5, dt);
+    // (nunca tanto que el pivote se meta en un muro: desde dentro, el rayo de
+    // la cámara no lo ve y la cámara acababa al otro lado)
+    let sideWant = target ? 0.72 : 0;
+    if (sideWant > 0) {
+      const hx = -Math.cos(this.yaw),
+        hz = Math.sin(this.yaw);
+      const hit = col.raycast(player.pos.x, player.visY + 1.55, player.pos.z, hx, 0, hz, sideWant + 0.35, (b) => b.cam !== false);
+      if (hit !== Infinity) sideWant = Math.max(0, hit - 0.35);
+    }
+    this.side = damp(this.side, sideWant, sideWant < this.side ? 14 : 5, dt);
     const sx = -Math.cos(this.yaw) * this.side,
       sz = Math.sin(this.yaw) * this.side;
     const px = player.pos.x + sx,
@@ -123,10 +133,43 @@ export class CameraRig {
     const cp = Math.cos(pe),
       sp = Math.sin(pe);
     const dir = _dir.set(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
-    // colisión de cámara: se acerca al instante, se aleja suavemente
-    const hit = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, -dir.x, -dir.y, -dir.z, want + 0.3, (b) => b.cam !== false);
+    // colisión de cámara: se acerca al instante, se aleja suavemente. Un haz
+    // de rayos (el del centro y cuatro que se abren hacia los bordes del
+    // plano cercano): con uno solo, en un pasillo o rozando un muro de lado,
+    // la cámara se quedaba a dos dedos de la pared y se veía a través
+    let hit = Infinity;
+    {
+      const rx = Math.cos(this.yaw),
+        rz = -Math.sin(this.yaw);
+      const ux = -dir.x * dir.y,
+        uy = 1 - dir.y * dir.y,
+        uz = -dir.z * dir.y;
+      const ul = Math.hypot(ux, uy, uz) || 1;
+      const cr = 0.24;
+      for (const [ox, oy] of [
+        [0, 0],
+        [cr, 0],
+        [-cr, 0],
+        [0, cr],
+        [0, -cr],
+      ]) {
+        const tx = -dir.x * want + rx * ox + (ux / ul) * oy,
+          ty = -dir.y * want + (uy / ul) * oy,
+          tz = -dir.z * want + rz * ox + (uz / ul) * oy;
+        const tl = Math.hypot(tx, ty, tz);
+        const d = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, tx / tl, ty / tl, tz / tl, tl + 0.3, camBox);
+        if (d !== Infinity) hit = Math.min(hit, (d * want) / tl);
+      }
+    }
     let allowed = want;
     if (hit !== Infinity) allowed = Math.max(0.5, hit - 0.28);
+    // holgura: el rayo da con el muro, pero la cámara no es un punto (su
+    // plano cercano tiene anchura); a ras de una pared o en una esquina se
+    // veía el otro lado. Se acerca hasta tener 0,2 m libres a su alrededor
+    for (let i = 0; i < 40 && allowed > 0.5; i++) {
+      if (!col.sphereHits(this.pivot.x - dir.x * allowed, this.pivot.y - dir.y * allowed, this.pivot.z - dir.z * allowed, 0.2, camBox)) break;
+      allowed = Math.max(0.5, allowed - 0.1);
+    }
     if (allowed < this.curDist) this.curDist = damp(this.curDist, allowed, 30, dt);
     else this.curDist = damp(this.curDist, allowed, 3.5, dt);
 

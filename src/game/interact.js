@@ -607,6 +607,8 @@ export class Interactables {
             m._u.uGround.value.set(s.y, 0.34);
           }
         it.lift = 0;
+        // (las que siempre están abiertas, ya abiertas)
+        if (s.open) this.poseHatch(it, 1);
       }
     } else if (s.kind === 'bridge') {
       // la hoja, en su eje (el umbral); las cadenas, de la punta a los
@@ -669,7 +671,7 @@ export class Interactables {
         it.pull = 0;
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
       }
-      if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] ? 1 : 0);
+      if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] || it.open ? 1 : 0);
       if (it.kind === 'bridge' && flags[it.flag]) this.lowerBridge(it, true);
     }
     // los rastrillos de palancas: un palmo por palanca echada
@@ -681,7 +683,8 @@ export class Interactables {
     it.lift = k;
     const u = it.obj.userData;
     u.lidG.rotation.z = k * 2.75;
-    u.hole.visible = k > 0.02;
+    // (con un hueco de verdad debajo, se ve lo de abajo, no el negro)
+    u.hole.visible = k > 0.02 && !it.realHole;
   }
 
   // Puente levadizo: 0 alzado (tapa la puerta), 1 bajado (se pisa).
@@ -762,7 +765,7 @@ export class Interactables {
       it.obj.userData.arm.rotation.x = LEVER_UP;
     } else if (it.kind === 'hatch') {
       it.opening = false;
-      if (it.obj) this.poseHatch(it, 0);
+      if (it.obj) this.poseHatch(it, it.open ? 1 : 0);
     } else if (it.kind === 'bridge') {
       it.lowering = false;
       it.upBox.enabled = true;
@@ -904,7 +907,7 @@ export class Interactables {
   refreshNav(it) {
     const g = this.game;
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
-    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
 
   shatter(it, instant = false) {
@@ -989,8 +992,8 @@ export class Interactables {
       case 'bridge':
         return 'Soltar el torno del puente';
       case 'hatch':
-        if (it.end === 'top') return this.game.flags[it.flag] ? 'Bajar por la escalera' : 'Abrir la trampilla';
-        return this.game.flags[it.flag] ? 'Subir por la escalera' : 'Examinar la trampilla';
+        if (it.end === 'top') return this.game.flags[it.flag] || it.open ? 'Bajar por la escalera' : 'Abrir la trampilla';
+        return this.game.flags[it.flag] || it.open ? 'Subir por la escalera' : 'Examinar la trampilla';
     }
     return 'Interactuar';
   }
@@ -1094,7 +1097,7 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'hatch') {
-      if (g.flags[it.flag]) g.hatchMove(it);
+      if (g.flags[it.flag] || it.open) g.hatchMove(it);
       else if (it.end === 'top') {
         // se descorre el cerrojo y la tapa se abre: el atajo a la cárcel
         g.flags[it.flag] = true;
