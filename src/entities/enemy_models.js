@@ -485,28 +485,129 @@ export function buildBell() {
 }
 
 // ------------------------------------------------------------ Plañidera
-// Figura altísima velada que flota; brazos que llegan al suelo.
+// Una muerta altísima que flota amortajada: velo de encaje sobre la cabeza
+// que le cae por la espalda, el rostro cerúleo con las cuencas vacías, dos
+// regueros de sangre por lágrimas y una boca que se le descuelga al gritar;
+// mechones negros por la cara, corpiño rasgado sobre las costillas con la
+// mancha del corazón, un rosario a la cintura. Los brazos le llegan al suelo:
+// mangas anchas que cuelgan a plomo, antebrazos de hueso y dedos larguísimos.
+// La falda es de paños sueltos y rotos que no tocan el suelo y ondean.
+export const MOURNER_SKIRT = 10;
+export const MOURNER_SKIRT_LEN = (i) => 1.26 + ((i * 7) % 5) * 0.035;
 export function buildMourner() {
   const k = 1.25;
   const joints = humanoidJoints(k, { arm: 1.75 });
-  joints.push({ name: 'veil', parent: 'head', pos: [0, 0.2, -0.08] });
+  joints.push({ name: 'jaw', parent: 'head', pos: [0, 0.075, 0.06] });
+  // de aquí salen los lamentos
+  joints.push({ name: 'mouth', parent: 'head', pos: [0, 0.09, 0.14] });
+  joints.push({ name: 'veil', parent: 'head', pos: [0, 0.25, -0.14] });
+  joints.push({ name: 'hairL', parent: 'head', pos: [0.089, 0.25, 0.07] });
+  joints.push({ name: 'hairR', parent: 'head', pos: [-0.089, 0.25, 0.07] });
+  joints.push({ name: 'sleeveL', parent: 'foreL', pos: [0, -0.04, 0] });
+  joints.push({ name: 'sleeveR', parent: 'foreR', pos: [0, -0.04, 0] });
+  // paños de la falda: los de fuera y, entre ellos, otros por dentro
+  for (let i = 0; i < MOURNER_SKIRT; i++) {
+    const a = (i / MOURNER_SKIRT) * Math.PI * 2,
+      b = a + Math.PI / MOURNER_SKIRT;
+    joints.push({ name: 'sk' + i, parent: 'hips', pos: [Math.sin(a) * 0.165, -0.06, Math.cos(a) * 0.135], rot: [0, a / DEG, 0] });
+    joints.push({ name: 'ski' + i, parent: 'hips', pos: [Math.sin(b) * 0.15, -0.04, Math.cos(b) * 0.12], rot: [0, b / DEG, 0] });
+  }
   const parts = [
-    { j: 'hips', type: 'box', s: [0.46, 1.3, 0.38], p: [0, -0.6, 0], taper: [1.7, 1.5], mat: 'clothWhite' },
-    { j: 'chest', type: 'box', s: [0.36, 0.66, 0.24], p: [0, 0.32, 0], taper: [1.1, 1], mat: 'clothWhite' },
-    { j: 'chest', type: 'box', s: [0.12, 0.3, 0.01], p: [0, 0.2, 0.125], mat: 'blood' },
-    { j: 'head', type: 'box', s: [0.24, 0.34, 0.26], p: [0, 0.16, 0], taper: [1.25, 1.1], mat: 'clothWhite' },
-    { j: 'head', type: 'box', s: [0.08, 0.1, 0.01], p: [0, 0.07, 0.14], mat: 'black' },
-    { j: 'head', type: 'box', s: [0.1, 0.16, 0.01], p: [0, -0.02, 0.135], mat: 'blood' },
-    { j: 'veil', type: 'box', s: [0.34, 1.3, 0.02], p: [0, -0.62, 0], taper: [1.6, 1], mat: 'clothWhite' },
-    { j: 'armL', type: 'box', s: [0.055, 0.52, 0.055], p: [0, -0.25, 0], mat: 'skinCorrupt' },
-    { j: 'foreL', type: 'box', s: [0.045, 0.5, 0.045], p: [0, -0.24, 0], mat: 'skinCorrupt' },
-    { j: 'handL', type: 'box', s: [0.06, 0.1, 0.03], p: [0, -0.05, 0], mat: 'skinCorrupt' },
-    ...[-0.024, -0.008, 0.008, 0.024].map((x, i) => ({ j: 'handL', type: 'box', s: [0.012, 0.24 + (i % 2) * 0.04, 0.012], p: [x, -0.2, 0], mat: 'skinCorrupt' })),
-    { j: 'armR', type: 'box', s: [0.055, 0.52, 0.055], p: [0, -0.25, 0], mat: 'skinCorrupt' },
-    { j: 'foreR', type: 'box', s: [0.045, 0.5, 0.045], p: [0, -0.24, 0], mat: 'skinCorrupt' },
-    { j: 'handR', type: 'box', s: [0.06, 0.1, 0.03], p: [0, -0.05, 0], mat: 'skinCorrupt' },
-    ...[-0.024, -0.008, 0.008, 0.024].map((x, i) => ({ j: 'handR', type: 'box', s: [0.012, 0.24 + (i % 2) * 0.04, 0.012], p: [x, -0.2, 0], mat: 'skinCorrupt' })),
+    // ---------------------------------------------------------- cabeza
+    { j: 'head', type: 'box', s: [0.165, 0.25, 0.19], p: [0, 0.14, 0.015], taper: [0.72, 0.86], mat: 'skinPale' },
+    { j: 'head', type: 'box', s: [0.07, 0.15, 0.07], p: [0, 0.0, 0], mat: 'skinPale' },
+    ...[1, -1].flatMap((sx) => [
+      // cuencas vacías, caídas hacia fuera, con un punto de luz fría
+      { j: 'head', type: 'box', s: [0.052, 0.034, 0.02], p: [sx * 0.041, 0.175, 0.104], r: [0, sx * 8, sx * -12], mat: 'black' },
+      { j: 'head', type: 'box', s: [0.012, 0.01, 0.006], p: [sx * 0.04, 0.172, 0.116], mat: 'eyeCold' },
+      // lágrimas de sangre
+      { j: 'head', type: 'box', s: [0.011, 0.12, 0.005], p: [sx * 0.043, 0.105, 0.11], r: [6, 0, sx * 3], mat: 'blood' },
+    ]),
+    { j: 'head', type: 'box', s: [0.022, 0.05, 0.026], p: [0, 0.135, 0.116], mat: 'skinPale' },
+    { j: 'head', type: 'box', s: [0.05, 0.03, 0.02], p: [0, 0.088, 0.104], mat: 'black' },
+    ...[-0.014, 0, 0.014].map((x) => ({ j: 'head', type: 'box', s: [0.01, 0.014, 0.008], p: [x, 0.083, 0.112], mat: 'bone' })),
+    // la mandíbula (se descuelga al gritar)
+    { j: 'jaw', type: 'box', s: [0.12, 0.055, 0.11], p: [0, -0.02, 0.03], taper: [0.8, 0.9], mat: 'skinPale' },
+    { j: 'jaw', type: 'box', s: [0.05, 0.05, 0.02], p: [0, 0.005, 0.082], mat: 'black' },
+    ...[-0.012, 0.012].map((x) => ({ j: 'jaw', type: 'box', s: [0.01, 0.012, 0.008], p: [x, 0.024, 0.088], mat: 'bone' })),
+    // la toca: un capuchón redondo que deja la cara al aire, con las alas
+    // cayendo junto a las mejillas y un ribete de encaje en la frente
+    { j: 'head', type: 'sphere', s: [0.135, 0.175, 0.125], p: [0, 0.165, -0.045], seg: 10, seg2: 8, mat: 'shroud' },
+    { j: 'head', type: 'box', s: [0.03, 0.27, 0.15], p: [0.118, 0.07, -0.01], taper: [1.4, 1.2], r: [0, 0, 6], mat: 'shroud' },
+    { j: 'head', type: 'box', s: [0.03, 0.27, 0.15], p: [-0.118, 0.07, -0.01], taper: [1.4, 1.2], r: [0, 0, -6], mat: 'shroud' },
+    { j: 'head', type: 'box', s: [0.2, 0.026, 0.04], p: [0, 0.27, 0.088], r: [-38, 0, 0], mat: 'lace' },
+    { j: 'head', type: 'torus', s: [0.128, 0.008], p: [0, 0.262, -0.01], r: [84, 0, 0], seg: 12, mat: 'silver' },
+    // mechones negros a los lados de la cara
+    ...['hairL', 'hairR'].flatMap((j, n) => [
+      { j, type: 'box', s: [0.026, 0.34, 0.014], p: [0, -0.17, 0], mat: 'black' },
+      { j, type: 'box', s: [0.022, 0.28, 0.012], p: [n ? -0.012 : 0.012, -0.14, -0.014], r: [0, 0, n ? -4 : 4], mat: 'black' },
+      { j, type: 'box', s: [0.02, 0.31, 0.01], p: [n ? 0.012 : -0.012, -0.155, 0.01], r: [0, 0, n ? 3 : -3], mat: 'black' },
+    ]),
+    // el velo, que le cae por la espalda, con el borde de encaje
+    { j: 'veil', type: 'box', s: [0.36, 1.2, 0.02], p: [0, -0.58, 0], taper: [1.3, 1], mat: 'shroud', ds: true },
+    { j: 'veil', type: 'box', s: [0.48, 0.05, 0.026], p: [0, -1.17, 0], mat: 'lace' },
+
+    // ---------------------------------------------------------- tronco
+    { j: 'chest', type: 'cyl', s: [0.1, 0.085, 0.09], p: [0, 0.67, 0], seg: 8, mat: 'lace' },
+    { j: 'chest', type: 'box', s: [0.29, 0.68, 0.19], p: [0, 0.28, 0], taper: [0.8, 0.88], mat: 'shroud' },
+    // escote en pico ribeteado de encaje
+    { j: 'chest', type: 'box', s: [0.09, 0.09, 0.01], p: [0, 0.55, 0.096], r: [0, 0, 45], mat: 'skinPale' },
+    { j: 'chest', type: 'box', s: [0.03, 0.2, 0.012], p: [0.048, 0.53, 0.098], r: [0, 0, 24], mat: 'lace' },
+    { j: 'chest', type: 'box', s: [0.03, 0.2, 0.012], p: [-0.048, 0.53, 0.098], r: [0, 0, -24], mat: 'lace' },
+    // la mancha del corazón, que chorrea, y un desgarrón en el costado que
+    // deja ver las costillas
+    { j: 'chest', type: 'box', s: [0.08, 0.1, 0.006], p: [0.06, 0.41, 0.098], r: [0, 0, 20], mat: 'blood' },
+    { j: 'chest', type: 'box', s: [0.05, 0.07, 0.006], p: [0.036, 0.37, 0.1], r: [0, 0, -15], mat: 'blood' },
+    { j: 'chest', type: 'box', s: [0.012, 0.13, 0.005], p: [0.07, 0.3, 0.099], mat: 'blood' },
+    { j: 'chest', type: 'box', s: [0.05, 0.13, 0.008], p: [-0.085, 0.27, 0.094], r: [0, 0, -14], mat: 'black' },
+    { j: 'chest', type: 'box', s: [0.052, 0.01, 0.006], p: [-0.085, 0.25, 0.1], mat: 'bone' },
+    { j: 'chest', type: 'box', s: [0.05, 0.01, 0.006], p: [-0.088, 0.29, 0.1], mat: 'bone' },
+    { j: 'chest', type: 'box', s: [0.25, 0.05, 0.17], p: [0, 0.0, 0], mat: 'black' },
+
+    // ---------------------------------------------------------- cintura
+    { j: 'hips', type: 'box', s: [0.3, 0.56, 0.24], p: [0, -0.13, 0], taper: [1.3, 1.3], mat: 'shroud' },
+    // rosario que cuelga por delante
+    ...Array.from({ length: 9 }, (_, i) => ({ j: 'hips', type: 'sphere', s: [0.014], p: [-0.1 + i * 0.025, -0.03 - 0.15 * Math.sin((Math.PI * i) / 8), 0.17 + 0.03 * Math.sin((Math.PI * i) / 8)], mat: 'silver' })),
+    { j: 'hips', type: 'box', s: [0.012, 0.07, 0.01], p: [0, -0.23, 0.2], mat: 'silver' },
+    { j: 'hips', type: 'box', s: [0.04, 0.012, 0.01], p: [0, -0.215, 0.2], mat: 'silver' },
   ];
+  // ---------------------------------------------------------- brazos
+  for (const s of ['L', 'R']) {
+    const sg = s === 'L' ? 1 : -1;
+    parts.push(
+      // hombro abullonado y la manga estrecha de arriba
+      { j: 'arm' + s, type: 'sphere', s: [0.075, 0.058, 0.075], p: [0, -0.02, 0], seg: 8, seg2: 6, mat: 'shroud' },
+      { j: 'arm' + s, type: 'box', s: [0.09, 0.62, 0.09], p: [0, -0.32, 0], taper: [1.25, 1.25], mat: 'shroud' },
+      { j: 'fore' + s, type: 'ico', s: [0.064], p: [0, 0, 0], mat: 'shroud' },
+      { j: 'fore' + s, type: 'box', s: [0.042, 0.6, 0.042], p: [0, -0.3, 0], taper: [0.8, 0.8], mat: 'skinPale' },
+      { j: 'hand' + s, type: 'ico', s: [0.028], p: [0, 0, 0], mat: 'skinPale' },
+      { j: 'hand' + s, type: 'box', s: [0.058, 0.09, 0.024], p: [0, -0.045, 0], mat: 'skinPale' },
+      { j: 'hand' + s, type: 'box', s: [0.012, 0.09, 0.012], p: [sg * 0.035, -0.07, 0.02], r: [0, 0, sg * 35], mat: 'skinPale' }
+    );
+    // dedos larguísimos, algo curvados
+    for (const x of [-0.021, -0.007, 0.007, 0.021]) {
+      const l = 1 - Math.abs(x) * 6;
+      parts.push(
+        { j: 'hand' + s, type: 'box', s: [0.011, 0.13 * l, 0.011], p: [x, -0.09 - 0.065 * l, 0.004], r: [8, 0, x * 120], mat: 'skinPale' },
+        { j: 'hand' + s, type: 'box', s: [0.009, 0.12 * l, 0.009], p: [x * 1.25, -0.09 - 0.13 * l - 0.055 * l, 0.024], r: [24, 0, x * 150], mat: 'skinPale' },
+        { j: 'hand' + s, type: 'box', s: [0.01, 0.022, 0.01], p: [x * 1.4, -0.09 - 0.25 * l, 0.05], r: [30, 0, 0], mat: 'black' }
+      );
+    }
+    // manga ancha que cuelga a plomo, con jirones
+    parts.push({ j: 'sleeve' + s, type: 'cyl', s: [0.065, 0.165, 0.5], p: [0, -0.25, 0], open: true, seg: 8, mat: 'shroud', ds: true });
+    for (const a of [0.4, 2.2, 4.1]) parts.push({ j: 'sleeve' + s, type: 'box', s: [0.035, 0.18, 0.008], p: [Math.sin(a) * 0.16, -0.58, Math.cos(a) * 0.16], r: [0, a / DEG, 4], mat: 'shroud' });
+  }
+  // ---------------------------------------------------------- falda
+  // paños sueltos alrededor de la cintura, más anchos abajo y rotos
+  for (let i = 0; i < MOURNER_SKIRT; i++) {
+    const L = MOURNER_SKIRT_LEN(i);
+    const j = 'sk' + i;
+    parts.push({ j, type: 'box', s: [0.2, L, 0.014], p: [0, -L / 2, 0], taper: [1.5, 1], mat: 'shroud' });
+    // la punta rota del paño
+    parts.push({ j, type: 'box', s: [0.12, 0.17, 0.01], p: [i % 2 ? 0.065 : -0.065, -L - 0.03, 0.002], r: [0, 0, i % 2 ? 14 : -14], mat: 'shroud' });
+    const Li = L - 0.1;
+    parts.push({ j: 'ski' + i, type: 'box', s: [0.19, Li, 0.012], p: [0, -Li / 2, 0], taper: [1.45, 1], mat: 'shroud' });
+  }
   return new Rig({ joints, parts });
 }
 

@@ -380,6 +380,43 @@ const GEN = {
     });
   },
 
+  // Mortaja: lino blanco con pliegues, tierra y sangre vieja.
+  shroud() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const fold = 0.8 + 0.2 * Math.sin((x / S) * Math.PI * 6 + fbm2(x / 8, y / 8, 2, S / 8, 321) * 3);
+      const n = fbm2(x / 4, y / 4, 3, S / 4, 322);
+      const dirt = fbm2(x / 8, y / 8, 3, S / 8, 323);
+      let c = mix3([186, 188, 194], [224, 224, 228], n).map((v) => v * fold);
+      if (dirt > 0.62) c = mix3(c, [118, 110, 98], Math.min(1, (dirt - 0.62) * 2.5));
+      const w = (x + y) % 2 === 0 ? 1 : 0.94;
+      set(o, c[0] * w, c[1] * w, c[2] * w);
+    });
+  },
+
+  // Encaje: calado de rombos.
+  lace() {
+    const S = 16;
+    return pixels(S, S, (x, y, o) => {
+      const u = Math.abs(((x + y) % 8) - 4),
+        v = Math.abs(((x - y + 16) % 8) - 4);
+      const c = u + v < 3 ? [62, 64, 74] : [232, 232, 236];
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
+  // Piel de muerta: blanca, cerúlea, con venas azuladas.
+  skinPale() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, S / 4, 331);
+      const v = 1 - Math.abs(fbm2(x / 6, y / 6, 3, S / 6, 332) * 2 - 1);
+      let c = mix3([166, 170, 176], [198, 200, 204], n);
+      if (v > 0.88) c = mix3(c, [94, 106, 140], (v - 0.88) * 6);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
   chainmail() {
     const S = 32;
     return pixels(S, S, (x, y, o) => {

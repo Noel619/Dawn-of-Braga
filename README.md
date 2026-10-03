@@ -177,8 +177,17 @@ se encadena el anterior.
 - **Soldado cosido**: yelmo reventado por la carne y un tercer brazo que brota de la espalda; bloquea con el escudo.
 - **Rastrero**: cuerpo supino que camina a cuatro patas como una araña; embosca desde los techos.
 - **Mastín desollado**: perro sin piel con la mandíbula abierta; caza en pareja.
-- **Campanero**: bruto de 2,6 m con una campana fundida en la cabeza; su tañido aturde.
-- **Plañidera**: figura velada que flota y lanza lamentos espectrales.
+- **Campanero**: bruto de casi tres metros con una campana de la catedral por cabeza, fundida sobre los hombros
+  (el bronce chorreó sobre la carne) y encadenada al pecho, con lo que queda del yugo encima y los ojos brillando
+  por dos rendijas; delantal de fundidor, la cuerda de la campana a la cintura y el badajo por maza. Se da un
+  puñetazo en la campana para avisar y para el tañido que aturde; alza el badajo por el costado y lo descarga (la
+  onda sale donde da la bola) o barre por delante a la altura del pecho. La campana se vuelve hacia ti, vibra
+  cuando suena o le hieres, y se agacha para pasar bajo los dinteles.
+- **Plañidera**: una muerta altísima que flota amortajada, con un velo de encaje que le cae por la espalda, la cara
+  cerúlea de cuencas vacías y lágrimas de sangre, mechones negros, la mancha del corazón en el corpiño y un
+  rosario; brazos que le llegan al suelo, con mangas que cuelgan y dedos larguísimos, y una falda de paños rotos
+  que ondea sin tocar el suelo (al morir se extiende por él). Se le descuelga la mandíbula al gritar y el lamento
+  espectral le sale de la boca.
 - **El Empalado** (jefe menor): un gigante atravesado por una pica que carga contra ti.
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -329,6 +338,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        desequilibrio, golpe de gracia, jefes y golpes imparables
                         doorways.mjs   nada tapa los arcos y puertas de las bodegas, las bocas de las
                                        grutas ni las palancas
+                        clipcheck.mjs  interpenetraciones de cada animación de una criatura (campanero,
+                                       plañidera): el arma en el cuerpo, los brazos en la campana, el suelo
                         bossanim.mjs   hojas de fotogramas de cada movimiento del Descoyuntado
                         cellar.mjs     comprueba que el pozo sólo se alcanza por el rastrillo y hace capturas
                                        de cada sala de las bodegas

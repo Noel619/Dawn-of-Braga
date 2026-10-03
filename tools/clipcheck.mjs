@@ -58,6 +58,32 @@ const r = await p.evaluate(
         ],
         ground: ['bell', 'yugo', 'bola', 'cola', 'astil', 'manoL', 'manoR', 'torso', 'cadera', 'joroba', 'tibiaL', 'tibiaR', 'musloL', 'musloR'],
       },
+      mourner: {
+        parts: [
+          ['cabeza', 'head', 's', [[0, 0.15, 0.02], 0.11]],
+          ['torso', 'chest', 'o', [[0, 0.32, 0], [0.13, 0.3, 0.085]]],
+          // la falda en reposo: un cono desde la cintura (ondea y se abre)
+          ['falda', 'hips', 'cone', [-0.08, 0.17, -1.36, 0.45]],
+          ['brazoL', 'armL', 'c', [[0, -0.06, 0], [0, -0.6, 0], 0.055]],
+          ['brazoR', 'armR', 'c', [[0, -0.06, 0], [0, -0.6, 0], 0.055]],
+          ['antebrazoL', 'foreL', 'c', [[0, -0.03, 0], [0, -0.58, 0], 0.028]],
+          ['antebrazoR', 'foreR', 'c', [[0, -0.03, 0], [0, -0.58, 0], 0.028]],
+          ['manoL', 'handL', 'c', [[0, -0.03, 0], [0, -0.3, 0.04], 0.028]],
+          ['manoR', 'handR', 'c', [[0, -0.03, 0], [0, -0.3, 0.04], 0.028]],
+          ['mangaL', 'sleeveL', 'c', [[0, -0.1, 0], [0, -0.46, 0], 0.11]],
+          ['mangaR', 'sleeveR', 'c', [[0, -0.1, 0], [0, -0.46, 0], 0.11]],
+          ['peloL', 'hairL', 'c', [[0, -0.05, 0], [0, -0.32, 0], 0.012]],
+          ['peloR', 'hairR', 'c', [[0, -0.05, 0], [0, -0.32, 0], 0.012]],
+          ['velo', 'veil', 'o', [[0, -0.58, 0], [0.2, 0.6, 0.012]]],
+        ],
+        pairs: [
+          [['manoL', 'manoR', 'antebrazoL', 'antebrazoR', 'mangaL', 'mangaR'], ['falda', 'torso', 'cabeza']],
+          [['velo'], ['torso', 'falda', 'brazoL', 'brazoR']],
+          [['peloL', 'peloR'], ['torso']],
+        ],
+        ground: ['manoL', 'manoR', 'cabeza', 'torso', 'mangaL', 'mangaR', 'velo'],
+        skipDeath: ['falda'],
+      },
     };
     const V = VOL[type];
     if (!V) return { err: 'sin volúmenes para ' + type };
@@ -123,6 +149,20 @@ const r = await p.evaluate(
         }
         return pen;
       }
+      if (kind === 'cone') {
+        // [y0, r0, y1, r1]: cono sólido a lo largo de y (y0 > y1)
+        const [y0, r0, y1, r1] = d;
+        const rr = Math.hypot(_a.x, _a.z);
+        let pen = -9;
+        for (let i = -4; i <= 4; i++) {
+          const y = _a.y + (r * i) / 4.5;
+          if (y > y0 || y < y1) continue;
+          const R = r0 + ((r1 - r0) * (y - y0)) / (y1 - y0);
+          const w = Math.sqrt(Math.max(0, r * r - (y - _a.y) ** 2));
+          pen = Math.max(pen, R + w - rr);
+        }
+        return pen;
+      }
       // esfera/cápsula contra esfera/cápsula
       const S = spheres(q);
       let pen = -9;
@@ -169,6 +209,7 @@ const r = await p.evaluate(
         for (const an of as)
           for (const bn of bs) {
             if (an === bn) continue;
+            if (label === 'death' && V.skipDeath && (V.skipDeath.includes(an) || V.skipDeath.includes(bn))) continue;
             const pen = penPair(byName[an], byName[bn]);
             const k = an + '↔' + bn;
             if (!rec.pairs[k] || pen > rec.pairs[k][0]) rec.pairs[k] = [+pen.toFixed(3), +t.toFixed(2)];

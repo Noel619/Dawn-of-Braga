@@ -49,6 +49,10 @@ export const MAT_DEFS = {
   // el interior de una campana: bronce ennegrecido
   bronzeIn: { tex: 'bronze', uv: 1.0, color: 0x3c3128 },
   rope: { tex: 'rope', uv: 2.2 },
+  // la Plañidera: mortaja y encaje con un leve fulgor frío, piel de muerta
+  shroud: { tex: 'shroud', uv: 1.2, emissive: 0x7f94b8, emissiveIntensity: 0.16 },
+  lace: { tex: 'lace', uv: 3.0, emissive: 0x7f94b8, emissiveIntensity: 0.12 },
+  skinPale: { tex: 'skinPale', uv: 2.0 },
   mossstone: { tex: 'mossstone', uv: 0.5 },
   skulls: { tex: 'skulls', uv: 0.55 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
@@ -88,6 +92,7 @@ export const MAT_DEFS = {
   ember: { tex: 'white', uv: 1, color: 0x220800, emissive: 0xff5a10, emissiveIntensity: 1.6 },
   eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
+  eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },
 };
 
 const matCache = new Map();

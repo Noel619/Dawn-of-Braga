@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { clip, addRot, q2e, Spring } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
-import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER } from './enemy_models.js';
+import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildImpaled, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER, MOURNER_SKIRT, MOURNER_SKIRT_LEN } from './enemy_models.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -437,7 +437,8 @@ function bellRing(e, a) {
 // delantal): su giro local compensa el de su padre, más un vaivén.
 const _hq = new THREE.Quaternion(),
   _hq2 = new THREE.Quaternion(),
-  _he = new THREE.Euler();
+  _he = new THREE.Euler(),
+  _vp = new THREE.Vector3();
 function hangDown(e, pose, j, swX, swZ) {
   const parent = e.rig.joints[j].parent;
   parent.updateWorldMatrix(true, false);
@@ -448,47 +449,67 @@ function hangDown(e, pose, j, swX, swZ) {
 }
 
 // ======================================================================= PLAÑIDERA
-const MOUR_BASE = { chest: [8, 0, 0], head: [15, 0, 12], armL: [5, 0, 6], foreL: [-5, 0, 0], armR: [5, 0, -6], foreR: [-5, 0, 0] };
+// (el velo, el pelo, las mangas y los paños de la falda se mueven solos:
+// postPose)
+const MOUR_BASE = { chest: [8, 0, 0], head: [15, 0, 12], jaw: [8, 0, 0], armL: [5, 0, 7], foreL: [-8, 0, 0], handL: [12, 0, 0], armR: [5, 0, -7], foreR: [-8, 0, 0], handR: [12, 0, 0] };
 const mourClips = {
+  // se echa atrás con la boca descolgada y los brazos abiertos
   alert: clip('alert', 1.1, [
     [0, { ...MOUR_BASE }],
-    [0.4, { chest: [-25, 0, 0], head: [-50, 0, 0], armL: [-20, 0, 60], armR: [-20, 0, -60] }, 'snap'],
+    [0.4, { chest: [-25, 0, 0], head: [-45, 0, 0], jaw: [42, 0, 0], armL: [-20, 0, 62], foreL: [-10, 0, 0], handL: [-20, 0, 0], armR: [-20, 0, -62], foreR: [-10, 0, 0], handR: [-20, 0, 0] }, 'snap'],
+    [0.75, { chest: [-18, 0, 0], head: [-36, 0, 0], jaw: [36, 0, 0], armL: [-16, 0, 56], foreL: [-12, 0, 0], handL: [-14, 0, 0], armR: [-16, 0, -56], foreR: [-12, 0, 0], handR: [-14, 0, 0] }],
     [1.1, { ...MOUR_BASE }],
   ]),
+  // alza los brazos, echa la cabeza atrás... y grita: el lamento sale de la boca
   scream: clip('scream', 1.8, [
     [0, { ...MOUR_BASE }],
-    [0.75, { chest: [-25, 0, 0], head: [-55, 0, 0], armL: [-150, 0, 50], foreL: [-20, 0, 0], armR: [-150, 0, -50], foreR: [-20, 0, 0] }],
-    [0.9, { chest: [25, 0, 0], head: [20, 0, 0], armL: [-80, 0, 70], foreL: [0, 0, 0], armR: [-80, 0, -70], foreR: [0, 0, 0] }, 'snap'],
-    [1.3, { chest: [20, 0, 0], head: [15, 0, 0], armL: [-75, 0, 65], armR: [-75, 0, -65] }],
+    [0.75, { chest: [-25, 0, 0], head: [-50, 0, 0], jaw: [22, 0, 0], armL: [-150, 0, 50], foreL: [-20, 0, 0], handL: [-30, 0, 0], armR: [-150, 0, -50], foreR: [-20, 0, 0], handR: [-30, 0, 0] }, 'hold'],
+    [0.9, { chest: [25, 0, 0], head: [20, 0, 0], jaw: [52, 0, 0], armL: [-80, 0, 70], foreL: [0, 0, 0], handL: [-20, 0, 0], armR: [-80, 0, -70], foreR: [0, 0, 0], handR: [-20, 0, 0] }, 'snap'],
+    [1.3, { chest: [20, 0, 0], head: [15, 0, 0], jaw: [46, 0, 0], armL: [-75, 0, 65], foreL: [-6, 0, 0], handL: [-10, 0, 0], armR: [-75, 0, -65], foreR: [-6, 0, 0], handR: [-10, 0, 0] }],
     [1.8, { ...MOUR_BASE }],
   ]),
   swipe: clip('swipe', 1.4, [
     [0, { ...MOUR_BASE }],
-    [0.55, { chest: [5, -50, 0], armR: [-90, 0, -110], foreR: [-10, 0, 0], armL: [-30, 0, 30] }],
-    [0.7, { chest: [15, 50, 0], armR: [-90, 0, 60], foreR: [0, 0, 0], armL: [-30, 0, 30] }, 'snap'],
-    [1.0, { chest: [15, 55, 0], armR: [-85, 0, 70], foreR: [-10, 0, 0] }],
+    [0.55, { chest: [5, -50, 0], head: [10, 20, 0], jaw: [16, 0, 0], armR: [-90, 0, -110], foreR: [-10, 0, 0], handR: [-25, 0, 0], armL: [-30, 0, 30], foreL: [-10, 0, 0] }, 'hold'],
+    [0.7, { chest: [15, 50, 0], head: [10, -15, 0], jaw: [30, 0, 0], armR: [-90, 0, 60], foreR: [0, 0, 0], handR: [10, 0, 0], armL: [-30, 0, 30], foreL: [-10, 0, 0] }, 'snap'],
+    [1.0, { chest: [15, 55, 0], head: [12, -15, 0], jaw: [20, 0, 0], armR: [-85, 0, 70], foreR: [-10, 0, 0], handR: [12, 0, 0], armL: [-28, 0, 28], foreL: [-10, 0, 0] }],
+    // (vuelve por fuera, por la derecha: no a través de la falda)
+    [1.2, { chest: [12, 20, 0], head: [12, -6, 6], jaw: [14, 0, 0], armR: [-55, 0, -40], foreR: [-14, 0, 0], handR: [12, 0, 0], armL: [-14, 0, 18], foreL: [-10, 0, 0] }],
     [1.4, { ...MOUR_BASE }],
   ]),
   hurt: clip('hurt', 0.5, [
-    [0, { ...MOUR_BASE, chest: [-20, 0, 15], head: [-30, 0, 30], root: [0, 0, -10] }, 'snap'],
+    [0, { ...MOUR_BASE, chest: [-20, 0, 15], head: [-30, 0, 30], jaw: [26, 0, 0], armL: [-8, 0, 16], armR: [-8, 0, -18], root: [0, 0, -10] }, 'snap'],
     [0.5, { ...MOUR_BASE }],
   ]),
   stagger: clip('stagger', 1.1, [
-    [0, { chest: [-30, 0, 20], head: [-40, 0, 40], armL: [-40, 0, 80], armR: [-40, 0, -80], root: [0, -10, -15] }, 'snap'],
+    [0, { chest: [-30, 0, 20], head: [-40, 0, 40], jaw: [34, 0, 0], armL: [-40, 0, 80], foreL: [-10, 0, 0], armR: [-40, 0, -80], foreR: [-10, 0, 0], root: [0, -10, -15] }, 'snap'],
     [1.1, { ...MOUR_BASE }],
   ]),
-  // desequilibrada: retrocede flotando, los brazos abiertos, el velo agitado
-  parried: clip('parried', 1.6, [
-    [0, { chest: [-32, 0, 22], head: [-45, 0, 35], armL: [-60, 0, 90], foreL: [-20, 0, 0], armR: [-130, 0, -60], foreR: [-10, 0, 0], root: [0, 26, -22], veil: [40, 0, 0] }, 'snap'],
-    [0.35, { chest: [-24, 0, 16], head: [-34, 0, 26], armL: [-40, 0, 76], foreL: [-20, 0, 0], armR: [-110, 0, -50], foreR: [-15, 0, 0], root: [0, 24, -24], veil: [30, 0, 0] }],
-    [1.05, { chest: [-6, 0, 6], head: [0, 0, 16], armL: [-10, 0, 30], foreL: [-8, 0, 0], armR: [-30, 0, -20], foreR: [-8, 0, 0], root: [0, 28, -10], veil: [14, 0, 0] }],
-    [1.6, { ...MOUR_BASE, root: [0, 30, 0], veil: [10, 0, 0] }],
-  ]),
-  death: clip('death', 2.0, [
-    [0, { chest: [-30, 0, 0], head: [-60, 0, 0], armL: [-150, 0, 40], armR: [-150, 0, -40] }, 'snap'],
-    [1.0, { chest: [40, 0, 0], head: [50, 0, 0], armL: [0, 0, 30], armR: [0, 0, -30], root: [0, -90, 0] }],
-    [2.0, { chest: [60, 0, 0], head: [60, 0, 0], armL: [10, 0, 50], armR: [10, 0, -50], root: [0, -130, 0] }],
-  ]),
+  // desequilibrada: retrocede flotando, los brazos abiertos
+  parried: clip(
+    'parried',
+    1.6,
+    [
+      [0, { chest: [-32, 0, 22], head: [-45, 0, 35], jaw: [36, 0, 0], armL: [-60, 0, 90], foreL: [-20, 0, 0], armR: [-130, 0, -60], foreR: [-10, 0, 0], root: [0, 26, -22] }, 'snap'],
+      [0.35, { chest: [-24, 0, 16], head: [-34, 0, 26], jaw: [30, 0, 0], armL: [-40, 0, 76], foreL: [-20, 0, 0], armR: [-110, 0, -50], foreR: [-15, 0, 0], root: [0, 24, -24] }],
+      [1.05, { chest: [-6, 0, 6], head: [0, 0, 16], jaw: [14, 0, 0], armL: [-10, 0, 30], foreL: [-8, 0, 0], armR: [-30, 0, -20], foreR: [-8, 0, 0], root: [0, 28, -10] }],
+      [1.6, { ...MOUR_BASE, root: [0, 30, 0] }],
+    ],
+    { mono: true }
+  ),
+  // un último alarido y se derrumba: la falda se extiende por el suelo y ella
+  // se dobla encima, con los brazos por delante
+  death: clip(
+    'death',
+    2.0,
+    [
+      [0, { chest: [-30, 0, 0], head: [-60, 0, 0], jaw: [52, 0, 0], armL: [-150, 0, 40], foreL: [-15, 0, 0], armR: [-150, 0, -40], foreR: [-15, 0, 0] }, 'snap'],
+      [0.7, { chest: [20, 0, 0], head: [20, 0, 6], jaw: [40, 0, 0], armL: [-30, 0, 40], foreL: [-20, 0, 0], armR: [-30, 0, -40], foreR: [-20, 0, 0], root: [0, -60, 0] }],
+      [1.3, { chest: [55, 0, 4], head: [45, 0, 10], jaw: [55, 0, 0], armL: [-118, 0, 38], foreL: [-10, 0, 0], handL: [20, 0, 0], armR: [-118, 0, -38], foreR: [-10, 0, 0], handR: [20, 0, 0], root: [0, -95, 0] }, 'in'],
+      [2.0, { chest: [62, 0, 5], head: [55, 0, 12], jaw: [58, 0, 0], armL: [-124, 0, 42], foreL: [-6, 0, 0], handL: [24, 0, 0], armR: [-124, 0, -42], foreR: [-6, 0, 0], handR: [24, 0, 0], root: [0, -97, 0] }],
+    ],
+    { mono: true }
+  ),
 };
 
 // ======================================================================= EMPALADO
@@ -1118,13 +1139,58 @@ export const TYPES = {
       p.root = [0, 30 + S(t * 1.6 + e.phase) * 8, 0];
       p.chest = [8 + spd * 6, S(t * 0.7) * 8, S(t * 1.1) * 4];
       p.head = [15, S(t * 0.5) * 20, 12 + S(t * 0.9) * 8];
-      p.armL = [5 + spd * 10, 0, 6 + S(t * 1.3) * 4];
-      p.armR = [5 + spd * 10, 0, -6 - S(t * 1.1) * 4];
-      p.veil = [10 + spd * 20 + S(t * 2) * 5, 0, 0];
+      // la boca le tiembla (solloza)
+      p.jaw = [8 + S(t * 5.3 + e.phase) * 3 + S(t * 1.7) * 3, 0, 0];
+      p.armL = [5 + spd * 10, 0, 7 + S(t * 1.3) * 4];
+      p.armR = [5 + spd * 10, 0, -7 - S(t * 1.1) * 4];
       p.legL = [0, 0, 0];
       return rad(p);
     },
     idlePose: (e, kind, t, spd) => TYPES.mourner.loco(e, t, spd),
+    // el velo, los mechones y las mangas cuelgan y se quedan atrás al moverse;
+    // los paños de la falda ondean, se abren por detrás al avanzar y, si el
+    // cuerpo baja (al morir), se extienden por el suelo
+    postPose: (e, pose, dt) => {
+      const d = e.data;
+      const t = e.game.time;
+      const ss = d.sway || (d.sway = { x: new Spring(30, 4), z: new Spring(30, 4) });
+      const cy = Math.cos(e.yaw),
+        sy = Math.sin(e.yaw);
+      const vF = e.vx * sy + e.vz * cy,
+        vS = e.vx * cy - e.vz * sy;
+      const sx = ss.x.update(dt, clamp(vF * 0.22, -0.5, 0.5) + S(t * 1.7 + e.phase) * 0.06),
+        sz = ss.z.update(dt, clamp(-vS * 0.18, -0.4, 0.4) + S(t * 1.3 + e.phase) * 0.05);
+      const dead = e.state === 'dead';
+      const k = dead ? 0.2 : 1;
+      // (los mechones van con la cabeza, que si colgaban a plomo se metían en
+      // el pecho; pero si la ladea, caen rectos)
+      const hz = (pose.head ? pose.head[2] : 0) + (pose.chest ? pose.chest[2] : 0);
+      pose.hairL = [sx * 0.25 * k, 0, -hz * 0.85 + sz * 0.25 * k + 0.03];
+      pose.hairR = [sx * 0.25 * k, 0, -hz * 0.85 + sz * 0.25 * k - 0.03];
+      if (!dead) {
+        // (con el tronco girado, algo más atrás: que no lo atraviese el brazo)
+        hangDown(e, pose, 'veil', sx + 0.16 + Math.abs(pose.chest ? pose.chest[1] : 0) * 0.4, sz);
+        hangDown(e, pose, 'sleeveL', sx * 0.7, sz * 0.6 + 0.05);
+        hangDown(e, pose, 'sleeveR', sx * 0.7, sz * 0.6 - 0.05);
+      } else {
+        // en el suelo: el velo se tiende por detrás y las mangas, por el brazo
+        e.rig.joints.veil.getWorldPosition(_vp);
+        hangDown(e, pose, 'veil', Math.acos(clamp((_vp.y - e.pos.y + e.sink - 0.06) / 1.2, -1, 1)), 0);
+        pose.sleeveL = [0, 0, 0];
+        pose.sleeveR = [0, 0, 0];
+      }
+      const h = 1.1875 + (pose.root ? pose.root[1] : 0) - 0.06;
+      for (let i = 0; i < MOURNER_SKIRT; i++) {
+        const a = (i / MOURNER_SKIRT) * Math.PI * 2;
+        const L = MOURNER_SKIRT_LEN(i) + 0.12;
+        const floor = Math.acos(clamp((h - 0.06) / L, -1, 1));
+        const f = 0.13 + Math.abs(vF) * 0.03 - Math.cos(a) * vF * 0.07 + (S(t * 2.3 + i * 1.7) * 0.05 + S(t * 3.7 + i) * 0.025) * k;
+        pose['sk' + i] = [-Math.max(f, floor), 0, S(t * 1.9 + i * 2.3) * 0.04 * k];
+        // (los de dentro, algo menos abiertos: siempre bajo los de fuera)
+        const fi = 0.1 + Math.abs(vF) * 0.025 - Math.cos(a + 0.3) * vF * 0.06 + S(t * 2.1 + i * 1.3) * 0.03 * k;
+        pose['ski' + i] = [-Math.max(fi, Math.acos(clamp((h - 0.03) / (L - 0.1), -1, 1)) - 0.05), 0, 0];
+      }
+    },
   },
   impaled: {
     name: 'El Empalado',

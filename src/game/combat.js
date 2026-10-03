@@ -269,7 +269,7 @@ export class Combat {
 
   wail(e) {
     const g = this.game;
-    const h = e.rig.worldPos('head');
+    const h = e.rig.worldPos(e.rig.joints.mouth ? 'mouth' : 'head');
     const p = g.player.pos;
     const dir = new THREE.Vector3(p.x - h.x, p.y + 1.2 - h.y, p.z - h.z).normalize();
     const spd = 7.5;

@@ -827,7 +827,7 @@ export class Enemy {
     const stun = this.parryT > 0;
     if (this.flare > 0 || this._flareOn || stun) {
       this.rig.own();
-      if (!this._eyes) this._eyes = this.rig.meshes.filter((m) => m.userData.matName === 'eyeGlow' || m.userData.matName === 'redGlow');
+      if (!this._eyes) this._eyes = this.rig.meshes.filter((m) => m.userData.matName === 'eyeGlow' || m.userData.matName === 'redGlow' || m.userData.matName === 'eyeCold');
       const k = stun ? 0.35 + 0.25 * Math.sin(this.game.time * 9) : 1 + this.flare * this.flare * 4;
       for (const m of this._eyes) {
         m.material.emissiveIntensity = (m.userData.baseEI ?? 2) * k;
