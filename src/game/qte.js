@@ -97,7 +97,9 @@ export class QTE {
     const k = d + ':' + glyph + ':' + q.label;
     if (k !== this._key) {
       this._key = k;
-      $('qte-key').innerHTML = spriteHtml(keyBitmap(glyph, d === 'pad'), 2);
+      // (las teclas de nombre largo, «Espacio», a tamaño normal: no caben en el anillo)
+      const kb = keyBitmap(glyph, d === 'pad');
+      $('qte-key').innerHTML = spriteHtml(kb, kb.w * 2 > R * 2 - 12 ? 1 : 2);
       $('qte-label').textContent = q.label;
     }
     // el anillo: lo que queda de tiempo (o lo que se lleva machacado)

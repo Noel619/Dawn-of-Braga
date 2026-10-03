@@ -893,7 +893,7 @@ export class BeastChase {
       this.toldRun = true;
       g.ui.toast('¡Corre!', 2.5);
     }
-    // si está clavada, se arranca de la piedra
+    // si está clavada, se arranca de la piedra (y te vuelves a mirarla)
     if (b.clipName === 'tear') {
       yield* this.wait(delay);
       b.anim.speed = 1;
@@ -901,6 +901,10 @@ export class BeastChase {
     } else yield* this.wait(delay);
     this.sB = this.path.project(b.pos.x, b.pos.z);
     this.follow = true;
+    if (!this.glanced.has(0)) {
+      this.glanced.add(0);
+      this.glance = { t: 1.4 };
+    }
     yield* this.coRun();
   }
 
