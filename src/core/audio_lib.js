@@ -4,6 +4,9 @@
 
 const TAU = Math.PI * 2;
 const rnd = (a, b) => a + Math.random() * (b - a);
+// alturas de las gotas (de 650 a 2000 Hz): cada gota usa la más próxima
+const DRIPS = Array.from({ length: 12 }, (_, i) => Math.round(650 * Math.pow(2000 / 650, i / 11)));
+const pluckKey = (freq, bright, dur) => 'pluck:' + freq.toFixed(2) + ':' + bright + ':' + dur;
 
 // Pequeño generador pseudoaleatorio con semilla (sonidos reproducibles).
 function mulberry(seed) {
@@ -159,8 +162,7 @@ export class SoundLib {
   pluck(freq, o = {}) {
     const bright = o.bright ?? 0.5,
       dur = o.dur ?? 3.2;
-    const key = 'pluck:' + freq.toFixed(2) + ':' + bright + ':' + dur;
-    return this._get(key, () => {
+    return this._get(pluckKey(freq, bright, dur), () => {
       const b = this._buf(1, dur);
       const d = b.getChannelData(0);
       const sr = this.sr;
@@ -179,16 +181,18 @@ export class SoundLib {
       // factor de pérdida por vuelta para ~dur segundos de caída
       const loss = Math.pow(0.001, 1 / (dur * freq));
       const damp = 0.5 - bright * 0.12;
+      const a0 = (1 - damp) * loss,
+        a1 = damp * loss;
       let idx = 0,
         prev = 0;
       let body1 = 0,
         body2 = 0;
-      for (let i = 0; i < d.length; i++) {
+      // (sin módulos en el bucle: es lo que más costaba)
+      for (let i = 0, n = d.length; i < n; i++) {
+        const nx = idx + 1 === N ? 0 : idx + 1;
         const cur = buf[idx];
-        const next = buf[(idx + 1) % N];
-        const v = (cur * (1 - damp) + next * damp) * loss;
-        buf[idx] = v;
-        idx = (idx + 1) % N;
+        buf[idx] = cur * a0 + buf[nx] * a1;
+        idx = nx;
         // resonancia de caja (pasabanda suave ~ 220 Hz) para cuerpo de madera
         body1 += (cur - body1) * 0.06;
         body2 += (body1 - body2) * 0.06;
@@ -356,9 +360,17 @@ export class SoundLib {
     });
   }
 
-  // Gota de agua: burbuja con subida rápida de tono.
-  drip(freq) {
-    return this._get('drip:' + Math.round(freq), () => {
+  // ¿Está ya sintetizada esta cuerda pulsada?
+  hasPluck(freq, bright, dur) {
+    return this.cache.has(pluckKey(freq, bright, dur));
+  }
+
+  // Gota de agua: burbuja con subida rápida de tono. La frecuencia se lleva a
+  // una de doce alturas: con cualquier frecuencia al azar, cada gota creaba un
+  // buffer nuevo (un tirón) que se quedaba en la caché para siempre.
+  drip(f) {
+    const freq = DRIPS.reduce((a, b) => (Math.abs(b - f) < Math.abs(a - f) ? b : a));
+    return this._get('drip:' + freq, () => {
       const sr = this.sr;
       const b = this._buf(1, 0.35);
       const d = b.getChannelData(0);
@@ -371,6 +383,10 @@ export class SoundLib {
       }
       return b;
     });
+  }
+
+  drips() {
+    for (const f of DRIPS) this.drip(f);
   }
 
   // Cadena que se sacude: muchos clics metálicos.

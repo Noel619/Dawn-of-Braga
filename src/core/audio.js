@@ -1,11 +1,20 @@
 // Motor de audio 100% sintetizado con WebAudio.
-// - Buses de música, efectos, ambiente e interfaz hacia un limitador final;
-//   la música se atenúa (ducking) con los golpes fuertes y se oye «tras una
-//   puerta» en el menú de pausa.
+// - Buses de música, efectos, ambiente e interfaz hacia la mezcla final: margen,
+//   un limitador que solo actúa cerca de 0 dBFS y un recorte suave de seguridad
+//   (nunca sale nada por encima de 0 dBFS). La música se atenúa (ducking) con
+//   los golpes fuertes y se oye «tras una puerta» en el menú de pausa.
 // - Reverberación por convolución con salas generadas (calle, habitación,
-//   capilla, catedral, cripta, exterior) que se funden al cambiar de zona.
+//   capilla, catedral, cripta, exterior) que se funden al cambiar de zona. Cada
+//   sala se crea una sola vez y se reutiliza: crear un convolver cuesta
+//   10-100 ms del hilo principal.
 // - Sonidos posicionales con absorción del aire y oclusión: lo que suena tras
-//   un muro llega apagado.
+//   un muro llega apagado. El panorama y la distancia se calculan aquí (igual
+//   que el panner «equalpower» de WebAudio) y no con PannerNode: con el oyente
+//   moviéndose en cada fotograma, cada PannerNode se calcula muestra a muestra
+//   y cuarenta sonidos llegaban a ocupar medio núcleo.
+// - Presupuesto de voces: cuántos sonidos de cada clase suenan a la vez. Una
+//   horda no apila decenas de pasos y gritos: entran los más cercanos e
+//   importantes y los más débiles se apartan con un fundido breve.
 // - Ambiente por capas (viento a rachas, la ciudad ardiendo, río, fuegos,
 //   moscas, el zumbido de los altares, el miedo) y sucesos propios de cada zona.
 // - Música adaptativa por zona y peligro (audio_music.js).
@@ -15,6 +24,121 @@ import { MusicEngine } from './audio_music.js';
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ganancia de la mezcla antes del limitador (el volumen general del juego)
+const MASTER = 1.25;
+// Cuántos sonidos de cada clase pueden sonar a la vez (y cuántos pueden
+// empezar en un mismo fotograma: crear muchos nodos de golpe es un tirón).
+const CAP = { all: 32, pasos: 6, voz: 5, amb: 4, golpe: 8, jugador: 8, mundo: 10, ui: 8 };
+const PER_FRAME = { pasos: 3, voz: 2, amb: 1, golpe: 4 };
+// tope por nombre para los que se repiten mucho
+const NAME_CAP = { step: 3, crow: 2, drip: 3, boneCrack: 4, scuttle: 3, dig: 3, mimicSteps: 2, whisperNear: 2, giggle: 2, chew: 2 };
+// prioridad (0 relleno ... 5 nunca se aparta) y clase de cada efecto; el
+// resto es [3, 'mundo']
+const FX_PRIO = {
+  crow: [0, 'amb'],
+  drip: [0, 'amb'],
+  step: [4, 'jugador'],
+  land: [4, 'jugador'],
+  roll: [4, 'jugador'],
+  swing: [4, 'jugador'],
+  swingHeavy: [4, 'jugador'],
+  swingKnife: [4, 'jugador'],
+  swingAxe: [4, 'jugador'],
+  thrust: [4, 'jugador'],
+  swingKatana: [4, 'jugador'],
+  iai: [4, 'jugador'],
+  flick: [4, 'jugador'],
+  climb: [4, 'jugador'],
+  burn: [4, 'jugador'],
+  heal: [5, 'jugador'],
+  playerHurt: [5, 'jugador'],
+  death: [5, 'jugador'],
+  rest: [5, 'jugador'],
+  pickup: [5, 'jugador'],
+  item: [5, 'jugador'],
+  paper: [5, 'jugador'],
+  // parry y golpe de gracia: la respuesta a tu acción, nunca se aparta
+  parry: [5, 'jugador'],
+  riposte: [5, 'jugador'],
+  deflect: [4, 'golpe'],
+  // aviso de golpe imparable: hay que oírlo siempre
+  peril: [5, 'mundo'],
+  hit: [3, 'golpe'],
+  hitHeavy: [3, 'golpe'],
+  hitAxe: [3, 'golpe'],
+  axeGround: [3, 'golpe'],
+  clang: [3, 'golpe'],
+  block: [4, 'golpe'],
+  guardbreak: [4, 'golpe'],
+  slam: [3, 'golpe'],
+  slamSoft: [3, 'golpe'],
+  woodHit: [3, 'golpe'],
+  boneBlock: [3, 'golpe'],
+  wailHit: [3, 'golpe'],
+  fireWhoosh: [3, 'golpe'],
+  explosion: [4, 'golpe'],
+  boneCrack: [2, 'mundo'],
+  scuttle: [2, 'mundo'],
+  dig: [2, 'mundo'],
+  boneClatter: [2, 'mundo'],
+  bellToll: [4, 'mundo'],
+  roar: [4, 'mundo'],
+  crack: [4, 'mundo'],
+  rageScream: [5, 'mundo'],
+  descScream: [4, 'mundo'],
+  scare: [5, 'mundo'],
+  grab: [5, 'mundo'],
+  bite: [5, 'mundo'],
+  doorSlam: [5, 'mundo'],
+  amaWhisper: [5, 'mundo'],
+  seal: [4, 'mundo'],
+  pillarBreak: [4, 'mundo'],
+  wallBreak: [4, 'mundo'],
+};
+// las partes de un sonido que empiezan más tarde de esto se crean poco antes
+// de sonar (s)
+const AHEAD = 0.25;
+// efectos que solo tocan la música (no crean voz)
+const MUSIC_ONLY = { stinger: 1, phantom: 1, discover: 1, silence: 1, dread: 1, victory: 1 };
+
+// Ganancia de compensación que el DynamicsCompressor de WebAudio añade por su
+// cuenta (fórmula de Blink/WebKit: curva estática con rodilla exponencial y
+// (1 / ganancia a 0 dBFS) ^ 0,6). Se descuenta para que el limitador no suba
+// toda la mezcla.
+function compMakeup(thr, knee, ratio) {
+  const lin = (db) => Math.pow(10, db / 20);
+  const dB = (x) => 20 * Math.log10(x);
+  const lt = lin(thr);
+  const kc = (x, k) => (x < lt ? x : lt + (1 - Math.exp(-k * (x - lt))) / k);
+  const slope = (x, k) => (x < lt ? 1 : (dB(kc(x * 1.001, k)) - dB(kc(x, k))) / (dB(x * 1.001) - dB(x)));
+  const xk = lin(thr + knee);
+  let k0 = 0.1,
+    k1 = 10000,
+    k = 5;
+  for (let i = 0; i < 15; i++) {
+    if (slope(xk, k) < 1 / ratio) k1 = k;
+    else k0 = k;
+    k = Math.sqrt(k0 * k1);
+  }
+  const yk = dB(kc(xk, k));
+  const full = 1 < xk ? kc(1, k) : lin(yk + (0 - (thr + knee)) / ratio);
+  return Math.pow(1 / full, 0.6);
+}
+
+// Recorte suave de seguridad: lineal hasta 0,85 (-1,4 dBFS) y luego se curva
+// hasta no pasar de 0,96. Solo lo alcanza lo que se escapa del limitador.
+function softClipCurve(n = 4097) {
+  const c = new Float32Array(n);
+  const T = 0.85,
+    C = 0.98;
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    const a = Math.abs(x);
+    c[i] = a <= T ? x : Math.sign(x) * (T + (C - T) * Math.tanh((a - T) / (C - T)));
+  }
+  return c;
+}
 
 // tema musical de cada atmósfera
 const ZONE_MUSIC = {
@@ -112,6 +236,19 @@ export class Audio {
     this._slow = 0;
     this._duckUntil = 0;
     this._duckLvl = 1;
+    // voces que suenan (para el presupuesto, el seguimiento y la limpieza)
+    this.voices = [];
+    this._vc = null; // clase/prioridad del próximo out()
+    this._new = {}; // voces nuevas por clase en este fotograma
+    this._later = []; // voces de criaturas aplazadas al fotograma siguiente
+    this._sched = []; // partes de sonidos que se crearán poco antes de sonar
+    // oyente: posición y ejes (derecha, arriba) de la cámara
+    this.basis = { rx: 1, ry: 0, rz: 0, ux: 0, uy: 1, uz: 0 };
+    this._sp = { pan: 0, att: 1, d: 0 };
+    // salas de reverberación ya creadas (una por tipo)
+    this.rooms = {};
+    this._zoneReq = null;
+    this._zoneReqT = 0;
   }
 
   // ------------------------------------------------------------ arranque
@@ -137,16 +274,23 @@ export class Audio {
     this.brown = lib.noise('brown', 4);
     this.raspCurve = this.makeRasp(4);
 
-    // --- mezcla final con limitador
+    // --- mezcla final: margen -> limitador (solo cerca de 0 dBFS) -> recorte
+    // suave de seguridad. El limitador anterior (umbral -9 dB, ratio 12)
+    // comprimía casi todo lo que sonaba fuerte y bombeaba.
     this.master = ctx.createGain();
-    this.master.gain.value = 0.9;
-    const lim = ctx.createDynamicsCompressor();
-    lim.threshold.value = -9;
-    lim.knee.value = 8;
-    lim.ratio.value = 12;
-    lim.attack.value = 0.002;
-    lim.release.value = 0.22;
-    this.master.connect(lim).connect(ctx.destination);
+    this.master.gain.value = MASTER;
+    const lim = (this.limiter = ctx.createDynamicsCompressor());
+    const L0 = [-4, 3, 20];
+    lim.threshold.value = L0[0];
+    lim.knee.value = L0[1];
+    lim.ratio.value = L0[2];
+    lim.attack.value = 0.003;
+    lim.release.value = 0.2;
+    const trim = ctx.createGain();
+    trim.gain.value = 1 / compMakeup(...L0);
+    const clip = ctx.createWaveShaper();
+    clip.curve = softClipCurve();
+    this.master.connect(lim).connect(trim).connect(clip).connect(ctx.destination);
     // efectos y ambiente -> mundo (se apaga en pausa) -> volumen de efectos
     this.sfxVol = ctx.createGain();
     this.sfxVol.gain.value = this.vol.sfx;
@@ -214,28 +358,70 @@ export class Audio {
     this.prewarm();
   }
 
-  // Precalcula en segundo plano los buffers pesados (salas, campanas...).
+  // Trabajo en los ratos libres del hilo principal (varios por pasada si
+  // sobra tiempo en el fotograma).
+  idle(job) {
+    this._jobs = this._jobs || [];
+    this._jobs.push(job);
+    if (this._jobsOn) return;
+    this._jobsOn = true;
+    const run = (dl) => {
+      do {
+        const j = this._jobs.shift();
+        if (!j) {
+          this._jobsOn = false;
+          return;
+        }
+        try {
+          j();
+        } catch (e) {}
+      } while (dl && dl.timeRemaining && dl.timeRemaining() > 6);
+      next();
+    };
+    const next = () => (typeof requestIdleCallback === 'function' ? requestIdleCallback(run, { timeout: 400 }) : setTimeout(run, 40));
+    setTimeout(next, 100);
+  }
+  // Notas de un tema que aún no están sintetizadas, de dos en dos.
+  warmTheme(name) {
+    this._warm = this._warm || {};
+    if (!name || this._warm[name]) return;
+    this._warm[name] = true;
+    this.idle(() => this.warmPlucks(this.score.pluckKeys([name], false)));
+  }
+  warmPlucks(list) {
+    const lib = this.lib;
+    list = list.filter(([f, b, d]) => !lib.hasPluck(f, b, d));
+    for (let i = 0; i < list.length; i += 2) this.idle(() => list.slice(i, i + 2).forEach(([f, bright, dur]) => lib.pluck(f, { bright, dur })));
+  }
+
+  // Precalcula en los ratos libres todo lo que, hecho en pleno juego, sería un
+  // tirón: las salas y sus convolvers (10-100 ms cada uno), campanas y tambores
+  // (hasta 150 ms), el fuego, las cadenas, las gotas y las notas de salterio y
+  // arpa del título, la ciudad, las casas, los golpes de efecto y la interfaz
+  // (las de cada tema se preparan cuando se va a pedir, ver warmTheme).
   prewarm() {
     const lib = this.lib;
-    const jobs = [
-      () => ['taiko', 'frame', 'tabor', 'thud', 'heart', 'rim', 'gong'].forEach((k) => lib.drum(k)),
-      () => this.churchBell(),
-      () => this.smallBell(),
-      () => lib.chain(1.2),
-      () => lib.ir('room'),
-      () => lib.ir('crypt'),
-      () => lib.ir('open'),
-      () => lib.ir('cathedral'),
-    ];
-    const run = () => {
-      const j = jobs.shift();
-      if (!j) return;
-      try {
-        j();
-      } catch (e) {}
-      setTimeout(run, 80);
-    };
-    setTimeout(run, 150);
+    // primero las salas (lo más caro, y hacen falta al primer cambio de zona)
+    for (const k of ['room', 'street', 'hall', 'crypt', 'open', 'cathedral']) {
+      this.idle(() => lib.ir(k));
+      this.idle(() => this.roomFor(k));
+    }
+    this.idle(() => lib.crackle(6));
+    for (const k of ['title', 'city', 'interior']) (this._warm = this._warm || {})[k] = true;
+    this.idle(() => {
+      const plucks = this.score.pluckKeys(['title', 'city', 'interior'], true);
+      for (const m of [86, 88]) plucks.push([mtof(m), 0.6, 0.6]);
+      for (const m of [64, 71, 76]) plucks.push([mtof(m), 0.7, 1.5]);
+      plucks.push([mtof(52), 0.4, 1.5]);
+      for (const m of [76, 80, 83, 88]) plucks.push([mtof(m), 0.8, 2]);
+      this.warmPlucks(plucks);
+    });
+    for (const k of ['taiko', 'frame', 'tabor', 'thud', 'heart', 'rim', 'gong']) this.idle(() => lib.drum(k));
+    this.idle(() => this.churchBell());
+    this.idle(() => this.smallBell());
+    this.idle(() => lib.static(4));
+    for (const sec of [1.2, 0.9, 0.8]) this.idle(() => lib.chain(sec));
+    this.idle(() => lib.drips());
   }
 
   setVolumes(music, sfx) {
@@ -248,41 +434,86 @@ export class Audio {
     this.uiVol.gain.setTargetAtTime(sfx, t, 0.1);
   }
 
+  // Sala de reverberación de un tipo: se crea una vez y se guarda. Mientras no
+  // suena no recibe nada (y el convolver deja de calcular).
+  roomFor(kind) {
+    let R = this.rooms[kind];
+    if (!R) {
+      const conv = this.ctx.createConvolver();
+      conv.buffer = this.lib.ir(kind);
+      const g = this.ctx.createGain();
+      g.gain.value = 0.0001;
+      conv.connect(g).connect(this.verbOut);
+      R = this.rooms[kind] = { kind, conv, g, on: false, offAt: 0 };
+    }
+    return R;
+  }
   // Cambia la sala de reverberación con un fundido entre las dos.
   setRoom(kind, level, fade = 1.5) {
-    const ctx = this.ctx;
-    const t = ctx.currentTime;
+    const t = this.t();
     this.verbOut.gain.setTargetAtTime(level, t, Math.max(0.01, fade / 3));
     if (this.room && this.room.kind === kind) return;
-    const conv = ctx.createConvolver();
-    conv.buffer = this.lib.ir(kind);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(1, t + fade);
-    this.verbHP.connect(conv).connect(g).connect(this.verbOut);
+    const ramp = (G, v) => {
+      G.cancelScheduledValues(t);
+      G.setValueAtTime(Math.max(0.0001, G.value), t);
+      G.linearRampToValueAtTime(v, t + fade);
+    };
+    const R = this.roomFor(kind);
+    if (!R.on) {
+      this.verbHP.connect(R.conv);
+      R.on = true;
+    }
+    R.offAt = 0;
+    ramp(R.g.gain, 1);
     const old = this.room;
     if (old) {
-      old.g.gain.cancelScheduledValues(t);
-      old.g.gain.setValueAtTime(old.g.gain.value, t);
-      old.g.gain.linearRampToValueAtTime(0.0001, t + fade);
-      setTimeout(() => {
-        try {
-          this.verbHP.disconnect(old.conv);
-          old.conv.disconnect();
-          old.g.disconnect();
-        } catch (e) {}
-      }, (fade + 4) * 1000);
+      ramp(old.g.gain, 0.0001);
+      old.offAt = t + fade + 0.2;
     }
-    this.room = { kind, conv, g };
+    this.room = R;
+  }
+  // Las salas que se han apagado dejan de recibir señal.
+  roomsIdle(t) {
+    for (const k in this.rooms) {
+      const R = this.rooms[k];
+      if (!R.on || R === this.room || !R.offAt || t < R.offAt) continue;
+      try {
+        this.verbHP.disconnect(R.conv);
+      } catch (e) {}
+      R.on = false;
+      R.offAt = 0;
+    }
   }
 
+  // Zona del ambiente. En un umbral la zona puede ir y venir de un fotograma a
+  // otro: el cambio solo se aplica cuando se mantiene un instante.
   setZone(atmo) {
-    if (atmo === this.zone && this._roomSet) return;
-    this.zone = atmo;
-    if (!this.ok) return;
-    this._roomSet = true;
-    const [kind, lvl] = ZONE_ROOM[atmo] || ZONE_ROOM.city;
+    if (!this.ok || !this._roomSet) {
+      this.zone = atmo;
+      if (!this.ok) return;
+      this._roomSet = true;
+      this._zoneReq = null;
+      const [kind, lvl] = ZONE_ROOM[atmo] || ZONE_ROOM.city;
+      this.setRoom(kind, lvl, 0.05);
+      return;
+    }
+    if (atmo === this.zone) {
+      this._zoneReq = null;
+      return;
+    }
+    if (this._zoneReq !== atmo) {
+      this._zoneReq = atmo;
+      this._zoneReqT = this.t();
+    }
+  }
+  applyZone(t) {
+    if (!this._zoneReq || t - this._zoneReqT < 0.2) return;
+    this.zone = this._zoneReq;
+    this._zoneReq = null;
+    const [kind, lvl] = ZONE_ROOM[this.zone] || ZONE_ROOM.city;
     this.setRoom(kind, lvl);
+    // en la bodega puede empezar la caza: sus temas, preparados
+    if (this.zone === 'cellar') for (const k of ['cellarHunt', 'bossCellar', 'bossCellar2']) this.warmTheme(k);
   }
 
   // ------------------------------------------------------------ utilidades
@@ -328,31 +559,203 @@ export class Audio {
     param._v = v;
     param.setTargetAtTime(v, this.ctx.currentTime, tc);
   }
-  panner(ref = 3, roll = 1.1, max = 100) {
-    const p = this.ctx.createPanner();
-    p.panningModel = 'equalpower';
-    p.distanceModel = 'inverse';
-    p.refDistance = ref;
-    p.maxDistance = max;
-    p.rolloffFactor = roll;
-    return p;
+  // Panorama (-1..1) y atenuación de una fuente para el oyente (la cámara):
+  // lo mismo que el PannerNode «equalpower» con distancia «inverse» (que no
+  // tiene tope de distancia), calculado aquí una vez (o unas pocas por
+  // segundo) y no muestra a muestra.
+  spatial(x, y, z, ref = 3, roll = 1.1, out = this._sp) {
+    const L = this.lis,
+      B = this.basis;
+    let vx = x - L.x,
+      vy = y - L.y,
+      vz = z - L.z;
+    const d = Math.hypot(vx, vy, vz);
+    out.d = d;
+    out.att = ref / (ref + roll * (Math.max(d, ref) - ref));
+    out.pan = 0;
+    if (d < 1e-4) return out;
+    // dirección proyectada en el plano horizontal del oyente; el ángulo con
+    // su derecha va de 0 (derecha) a 180 (izquierda), delante y detrás igual
+    const up = (vx * B.ux + vy * B.uy + vz * B.uz) / d;
+    vx = vx / d - up * B.ux;
+    vy = vy / d - up * B.uy;
+    vz = vz / d - up * B.uz;
+    const pl = Math.hypot(vx, vy, vz);
+    if (pl < 1e-6) return out;
+    out.pan = 1 - Math.acos(clamp((vx * B.rx + vy * B.ry + vz * B.rz) / pl, -1, 1)) / (Math.PI / 2);
+    return out;
   }
-  // Coloca un panner; jump = salto inmediato (sin deslizar).
-  setPos(p, x, y, z, glide = true) {
-    const t = this.t();
-    if (p.positionX) {
-      for (const [a, v] of [
-        [p.positionX, x],
-        [p.positionY, y],
-        [p.positionZ, z],
+  // Coloca una capa de ambiente (atenuación + panorama); glide = deslizar.
+  place(on, x, y, z, glide = true) {
+    const S = this.spatial(x, y, z, on.ref, on.roll);
+    if (glide) {
+      this.setP(on.a.gain, S.att, 0.12);
+      this.setP(on.p.pan, S.pan, 0.12);
+    } else {
+      for (const [prm, v] of [
+        [on.a.gain, S.att],
+        [on.p.pan, S.pan],
       ]) {
-        if (glide) a.setTargetAtTime(v, t, 0.08);
-        else {
-          a.cancelScheduledValues(t);
-          a.setValueAtTime(v, t);
+        prm.cancelScheduledValues(this.t());
+        prm.value = v;
+        prm._v = v;
+      }
+    }
+  }
+  // Nodo de panorama de una capa: ganancia por distancia -> StereoPanner.
+  spatNode(ref, roll) {
+    const a = this._gain(0);
+    const p = this.ctx.createStereoPanner();
+    a.connect(p);
+    return { a, p, ref, roll };
+  }
+
+  // ---------------------------------------------------------------- voces
+  // ¿Puede empezar otro sonido? Con la clase o el total llenos, entra solo si
+  // pesa más (prioridad, luego volumen estimado) que el más débil de los que
+  // suenan, que se aparta. Devuelve 1 (entra), 0 (no) o -1 (este fotograma
+  // ya han empezado demasiados de su clase).
+  admit(cat, prio, level = 0.5, name = null) {
+    const now = this.t();
+    let k = 1;
+    if (prio < 5) {
+      const pf = PER_FRAME[cat];
+      if (pf && (this._new[cat] || 0) >= pf) return -1;
+      let nAll = 0,
+        nCat = 0,
+        nName = 0,
+        recent = 0,
+        wAll = null,
+        wCat = null,
+        sAll = 1e9,
+        sCat = 1e9;
+      const me = prio * 10 + level;
+      for (const v of this.voices) {
+        if (v.until <= now) continue;
+        nAll++;
+        const s = v.prio * 10 + v.level;
+        const weaker = v.prio < 5 && s < me;
+        if (weaker && s < sAll) {
+          sAll = s;
+          wAll = v;
+        }
+        if (v.cat === cat) {
+          nCat++;
+          if (weaker && s < sCat) {
+            sCat = s;
+            wCat = v;
+          }
+        }
+        if (name && v.name === name) {
+          nName++;
+          if (now - v.t0 < 0.05) recent++;
         }
       }
-    } else p.setPosition(x, y, z);
+      // el mismo sonido apilado en el mismo instante: el segundo más bajo, el
+      // tercero ya no (no suma nada y dispara el pico)
+      if (recent >= 2) return 0;
+      if (recent === 1) k = 0.7;
+      if (name && NAME_CAP[name] && nName >= NAME_CAP[name]) return 0;
+      if (nCat >= (CAP[cat] ?? 10)) {
+        if (!wCat) return 0;
+        this.steal(wCat);
+        if (wCat === wAll) wAll = null;
+        nAll--;
+      }
+      if (nAll >= CAP.all) {
+        if (!wAll) return 0;
+        this.steal(wAll);
+      }
+    }
+    this._new[cat] = (this._new[cat] || 0) + 1;
+    this._vc = { cat, prio, name, k };
+    return 1;
+  }
+  // Volumen aproximado de una fuente a cierta distancia (para comparar).
+  levelAt(P, gain = 0.8, ref = 3) {
+    if (!P) return gain;
+    const d = this.dist(P);
+    return (gain * ref) / (ref + 1.1 * Math.max(0, d - ref));
+  }
+  // Aparta una voz: fundido de 40 ms y sus fuentes se paran.
+  steal(v) {
+    const t = this.t();
+    v.until = t + 0.06;
+    v.dyn = null;
+    v.dead = true;
+    const G = v.g.gain;
+    G.cancelScheduledValues(t);
+    G.setValueAtTime(G.value, t);
+    G.linearRampToValueAtTime(0, t + 0.04);
+    for (const s of v.src) {
+      try {
+        s.stop(t + 0.05);
+      } catch (e) {}
+    }
+  }
+  // Apunta una fuente en la voz a la que suena (para apartarla y saber
+  // cuándo termina).
+  reg(dest, s, end) {
+    const v = dest._voice;
+    if (!v) return;
+    v.src.push(s);
+    if (end > v.until) v.until = end;
+  }
+  // Las partes de un sonido que empiezan más tarde (los huesos de un alarido,
+  // los cascotes de un derrumbe, las sílabas de un rezo) se crean poco antes
+  // de sonar y no todas a la vez: un alarido son unos 300 nodos.
+  defer(dest, t0, end, fn) {
+    const v = dest._voice;
+    if (!v || t0 - this.ctx.currentTime < AHEAD) return false;
+    if (end > v.until) v.until = end;
+    this._sched.push({ t0, v, fn });
+    return true;
+  }
+  runSched(t) {
+    const S = this._sched;
+    if (!S.length) return;
+    let w = 0;
+    for (let i = 0; i < S.length; i++) {
+      const e = S[i];
+      // (voz apartada, o llegaría tarde: fuera)
+      if (e.v.dead || e.t0 < t - 0.1) continue;
+      if (e.t0 - t < AHEAD) {
+        try {
+          e.fn();
+        } catch (err) {}
+      } else S[w++] = e;
+    }
+    S.length = w;
+  }
+  // Limpia las voces que ya han terminado y sigue a las largas (campanas,
+  // rugidos, sucesos lejanos) mientras la cámara se mueve.
+  voicesUpdate(t, follow) {
+    const V = this.voices;
+    for (let i = V.length - 1; i >= 0; i--) {
+      const v = V[i];
+      if (t > v.until + 0.3) {
+        try {
+          v.g.disconnect();
+          if (v.lp) v.lp.disconnect();
+          if (v.pan) v.pan.disconnect();
+          if (v.send) v.send.disconnect();
+        } catch (e) {}
+        V[i] = V[V.length - 1];
+        V.pop();
+        continue;
+      }
+      const D = v.dyn;
+      if (!follow || !D || t > v.until) continue;
+      const S = this.spatial(D.x, D.y, D.z, D.ref, D.roll);
+      if (Math.abs(S.pan - D.pan) > 0.03) {
+        D.pan = S.pan;
+        v.pan.pan.setTargetAtTime(S.pan, t, 0.06);
+      }
+      if (Math.abs(S.att - D.att) > D.att * 0.06) {
+        D.att = S.att;
+        v.g.gain.setTargetAtTime(D.base * S.att, t, 0.08);
+      }
+    }
   }
   // ¿Hay un muro entre el oyente y la fuente?
   occluded(x, y, z, d) {
@@ -365,61 +768,66 @@ export class Audio {
     return hit < len;
   }
 
-  // Cadena de salida de un sonido: ganancia -> (absorción/oclusión) ->
-  // panorama 3D -> bus, con envío a la reverberación de la sala.
+  // Cadena de salida de un sonido (una voz): ganancia (con la distancia) ->
+  // (absorción/oclusión) -> panorama -> bus, con envío a la reverberación de
+  // la sala. La voz se limpia sola cuando acaban todas sus fuentes.
   out(pos, o = {}) {
     const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const vc = this._vc || { cat: o.bus === this.uiBus ? 'ui' : 'mundo', prio: 3, name: null, k: 1 };
+    this._vc = null;
     const g = ctx.createGain();
-    g.gain.value = o.gain ?? 1;
+    let gain = (o.gain ?? 1) * vc.k;
     let node = g;
     let wet = o.verb ?? 0.25;
+    const v = { g, lp: null, pan: null, send: null, t0: t, until: t + 0.05, cat: vc.cat, prio: vc.prio, name: vc.name, level: gain, src: [], dyn: null };
+    g._voice = v;
     if (pos) {
       const L = this.lis;
       const px = pos.x,
         py = (pos.y ?? L.y - 1) + 1,
         pz = pos.z;
-      const d = Math.hypot(px - L.x, py - L.y, pz - L.z);
+      const ref = o.ref ?? 3,
+        roll = o.roll ?? 1.1;
+      const S = this.spatial(px, py, pz, ref, roll);
+      const d = S.d;
       let cut = 20000 * Math.exp(-d / 38);
       if (o.occlude !== false && d > 2.5 && this.occluded(px, py, pz, d)) {
         cut = Math.min(cut, 650);
-        g.gain.value *= 0.6;
+        gain *= 0.6;
         wet *= 1.5;
       }
       if (cut < 15000) {
-        const lp = ctx.createBiquadFilter();
+        const lp = (v.lp = ctx.createBiquadFilter());
         lp.type = 'lowpass';
         lp.frequency.value = Math.max(350, cut);
         lp.Q.value = 0.5;
         g.connect(lp);
         node = lp;
       }
-      const p = this.panner(o.ref ?? 3, o.roll ?? 1.1);
-      this.setPos(p, px, py, pz, false);
+      const p = (v.pan = ctx.createStereoPanner());
+      p.pan.value = S.pan;
       node.connect(p);
       node = p;
       wet *= 1 + Math.min(1.2, d / 30);
-    }
+      g.gain.value = gain * S.att;
+      v.level = gain * S.att;
+      // los sonidos largos siguen a la cámara (unas pocas veces por segundo)
+      if ((o.life ?? 3) >= 2.5) v.dyn = { x: px, y: py, z: pz, ref, roll, base: gain, pan: S.pan, att: S.att };
+    } else g.gain.value = gain;
     node.connect(o.bus || this.sfx);
-    let send = null;
     if (wet > 0.001) {
-      send = ctx.createGain();
+      const send = (v.send = ctx.createGain());
       send.gain.value = wet;
       node.connect(send).connect(this.verbIn);
     }
-    setTimeout(
-      () => {
-        try {
-          g.disconnect();
-          node.disconnect();
-          if (send) send.disconnect();
-        } catch (e) {}
-      },
-      (o.life ?? 3) * 1000,
-    );
+    this.voices.push(v);
     return g;
   }
 
-  noise(dest, t0, dur, { type = 'bandpass', f0 = 1000, f1 = null, q = 1, gain = 0.5, a = 0.005, buf = null, rate = 1, curve = 'exp' } = {}) {
+  noise(dest, t0, dur, o = {}) {
+    if (this.defer(dest, t0, t0 + dur + 0.05, () => this.noise(dest, t0, dur, o))) return;
+    let { type = 'bandpass', f0 = 1000, f1 = null, q = 1, gain = 0.5, a = 0.005, buf = null, rate = 1, curve = 'exp' } = o;
     const ctx = this.ctx;
     const s = ctx.createBufferSource();
     s.buffer = buf || this.white;
@@ -441,9 +849,12 @@ export class Audio {
     s.connect(f).connect(g).connect(dest);
     s.start(t0, Math.random() * s.buffer.duration * 0.8);
     s.stop(t0 + dur + 0.05);
+    this.reg(dest, s, t0 + dur + 0.05);
     return f;
   }
-  tone(dest, t0, dur, { type = 'sine', f0 = 440, f1 = null, gain = 0.3, a = 0.005, curve = 'exp', detune = 0 } = {}) {
+  tone(dest, t0, dur, opt = {}) {
+    if (this.defer(dest, t0, t0 + dur + 0.05, () => this.tone(dest, t0, dur, opt))) return;
+    let { type = 'sine', f0 = 440, f1 = null, gain = 0.3, a = 0.005, curve = 'exp', detune = 0 } = opt;
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = type;
@@ -462,10 +873,12 @@ export class Audio {
     o.connect(g).connect(dest);
     o.start(t0);
     o.stop(t0 + dur + 0.05);
+    this.reg(dest, o, t0 + dur + 0.05);
     return o;
   }
   // Reproduce un buffer de la biblioteca con filtros y envolvente opcionales.
   smp(dest, t0, buffer, o = {}) {
+    if (this.defer(dest, t0, o.dur ? t0 + o.dur + 0.02 : t0 + (buffer.duration - (o.offset ?? 0)) / (o.rate ?? 1), () => this.smp(dest, t0, buffer, o))) return;
     const ctx = this.ctx;
     const s = ctx.createBufferSource();
     s.buffer = buffer;
@@ -494,12 +907,14 @@ export class Audio {
     n.connect(g).connect(dest);
     s.start(t0, o.offset ?? 0);
     if (o.dur) s.stop(t0 + o.dur + 0.02);
+    this.reg(dest, s, o.dur ? t0 + o.dur + 0.02 : t0 + (buffer.duration - (o.offset ?? 0)) / (o.rate ?? 1));
     return s;
   }
 
   // Voz con formantes: gritos, gruñidos, lamentos. v1 = vocal final (se
   // desliza), rasp = aspereza subarmónica, dist = saturación, jit = temblor.
   voice(dest, t0, dur, o = {}) {
+    if (this.defer(dest, t0, t0 + dur + 0.05, () => this.voice(dest, t0, dur, o))) return;
     const { f0 = 200, f1 = null, vowel = 'a', v1 = null, gain = 0.3, vib = 5, vibD = 6, type = 'sawtooth', breath = 0.1, a = 0.05, rasp = 0, dist = 0, jit = 0, rel = 0.35 } = o;
     const ctx = this.ctx;
     const osc = ctx.createOscillator();
@@ -573,12 +988,14 @@ export class Audio {
     for (const n of nodes) {
       n.start(t0);
       n.stop(t0 + dur + 0.05);
+      this.reg(dest, n, t0 + dur + 0.05);
     }
     if (breath > 0) this.noise(dest, t0, dur, { type: 'bandpass', f0: V[1][0], f1: V1 ? V1[1][0] : null, q: 1.6, gain: breath * gain * 1.2, a: A });
   }
 
   // Chirrido de madera (fricción que se agarra y suelta) con resonancias.
   creak(dest, t0, dur, f, gain = 0.22) {
+    if (this.defer(dest, t0, t0 + dur + 0.05, () => this.creak(dest, t0, dur, f, gain))) return;
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
@@ -607,6 +1024,7 @@ export class Audio {
     mix.connect(g).connect(dest);
     o.start(t0);
     o.stop(t0 + dur + 0.05);
+    this.reg(dest, o, t0 + dur + 0.05);
   }
   // Metal: parciales inarmónicos (espadas, armaduras, rejas).
   metal(dest, t0, base, gain = 0.2, dur = 0.8, o = {}) {
@@ -692,6 +1110,10 @@ export class Audio {
     const t = this.t() + 0.005;
     const P = pos && pos.x !== undefined ? pos : null;
     if (P && this.dist(P) > (FAR[name] ?? 70)) return;
+    if (!MUSIC_ONLY[name] && !o.pre) {
+      const [prio, cat] = FX_PRIO[name] || [3, 'mundo'];
+      if (this.admit(cat, prio, this.levelAt(P), name) !== 1) return;
+    }
     let d;
     switch (name) {
       case 'crow': {
@@ -1509,11 +1931,13 @@ export class Audio {
         this.silenceUntil = Math.max(this.silenceUntil, this.t() + 11);
         break;
     }
+    this._vc = null;
   }
 
   ui(kind) {
     if (!this.ok) return;
     const t = this.t() + 0.003;
+    this.admit('ui', 5);
     const d = this.out(null, { gain: 0.5, verb: 0, life: 2, bus: this.uiBus });
     switch (kind) {
       case 'move':
@@ -1541,13 +1965,20 @@ export class Audio {
   }
 
   // ------------------------------------------------------------ criaturas
-  enemyVoice(e, kind) {
+  // (t0: cuándo se pidió, si viene aplazada)
+  enemyVoice(e, kind, _a = null, t0 = null) {
     if (!this.ok) return;
     const now = this.t();
     if (kind !== 'death' && e._vt && now - e._vt < 0.35) return;
     const v = e.T.voice;
     const big = v === 'boss' || v === 'impaled' || v === 'bell';
     if (this.dist(e.pos) > (big ? 110 : 55)) return;
+    // los gritos de una horda: los más cercanos e importantes, y no todos en
+    // el mismo fotograma (los que no caben se aplazan unos milisegundos)
+    const prio = Math.min(5, (kind === 'death' ? 4 : kind === 'idle' ? 1 : kind === 'attack' ? 2 : 3) + (e.boss || big ? 1 : 0));
+    const r = this.admit('voz', prio, this.levelAt(e.pos, 0.9, big ? 7 : 3));
+    if (r === -1 && this._later.length < 24) this._later.push([t0 ?? now, e, kind]);
+    if (r !== 1) return;
     e._vt = now;
     const t = now + 0.005;
     const d = this.out(e.pos, { gain: 0.9, verb: 0.45, life: 5, ref: big ? 7 : 3 });
@@ -1673,6 +2104,7 @@ export class Audio {
     const v = e.T.voice;
     const big = v === 'bell' || v === 'boss' || v === 'impaled';
     if (this.dist(e.pos) > (big ? 45 : 22)) return;
+    if (this.admit('pasos', e.boss || big ? 3 : 1, this.levelAt(e.pos, big ? 0.9 : 0.6, big ? 5 : 2.5)) !== 1) return;
     const t = this.t() + 0.005;
     const d = this.out(e.pos, { gain: big ? 0.9 : 0.6, verb: 0.25, life: 2.5, ref: big ? 5 : 2.5 });
     if (v === 'bell') {
@@ -1857,9 +2289,10 @@ export class Audio {
         const lfo2 = A._osc(0.37);
         lfo2.connect(A._gain(0.35)).connect(wob.gain);
         src.push(lfo2);
-        const p = A.panner(0.8, 1.6);
-        bf.connect(wob).connect(g).connect(p).connect(A.amb);
-        return { g, out: p, src, p };
+        const sp = A.spatNode(0.8, 1.6);
+        bf.connect(wob).connect(g).connect(sp.a);
+        sp.p.connect(A.amb);
+        return { g, out: sp.p, src, ...sp };
       }),
       // zumbido de los altares: un acorde cálido que respira
       altar: this.layer(() => {
@@ -1881,9 +2314,10 @@ export class Audio {
           o.connect(og).connect(lp);
           src.push(o, l);
         }
-        const p = A.panner(1.5, 1.4);
-        lp.connect(g).connect(p).connect(A.amb);
-        return { g, out: p, src, p };
+        const sp = A.spatNode(1.5, 1.4);
+        lp.connect(g).connect(sp.a);
+        sp.p.connect(A.amb);
+        return { g, out: sp.p, src, ...sp };
       }),
       // estática del miedo
       fear: this.layer(() => {
@@ -1902,9 +2336,10 @@ export class Audio {
         c.connect(A._filt('highpass', 200)).connect(g);
         const r = A._loop(A.brown, 1.2, i);
         r.connect(A._filt('lowpass', 380, 0.8)).connect(A._gain(0.5)).connect(g);
-        const p = A.panner(2, 1.3);
-        g.connect(p).connect(A.amb);
-        return { g, out: p, src: [c, r], p };
+        const sp = A.spatNode(2, 1.3);
+        g.connect(sp.a);
+        sp.p.connect(A.amb);
+        return { g, out: sp.p, src: [c, r], ...sp };
       }),
     }));
   }
@@ -1918,6 +2353,8 @@ export class Audio {
     };
     const near = (r = 8, h = 2) => ({ x: cp.x + rnd(-r, r), y: cp.y + h, z: cp.z + rnd(-r, r) });
     const O = (pos, gain, extra = {}) => this.out(pos, { gain, verb: 0.9, life: 8, ref: 18, roll: 0.35, occlude: false, ...extra });
+    // (con el ambiente lleno, el suceso se aplaza un poco)
+    if (this.admit('amb', 0, 0.3) !== 1) return rnd(1, 3);
     const r = Math.random();
     if (z === 'city' || z === 'ramparts') {
       if (r < 0.13) {
@@ -1930,7 +2367,7 @@ export class Audio {
         const d = O(far(), 0.55); // perro que aúlla
         this.voice(d, t, 2.6, { f0: 280, f1: 430, vowel: 'u', v1: 'o', gain: 0.11, vib: 4, vibD: 30, breath: 0.3, type: 'triangle' });
         this.voice(d, t + 2.4, 1.4, { f0: 430, f1: 300, vowel: 'o', gain: 0.08, vib: 4, vibD: 30, breath: 0.3, type: 'triangle' });
-      } else if (r < 0.48) this.play('crow', far(15, 30, 6));
+      } else if (r < 0.48) this.play('crow', far(15, 30, 6), { pre: true });
       else if (r < 0.57) {
         const d = O(far(20, 40, 3), 0.8); // se desploma una viga
         this.tone(d, t, 0.8, { f0: 60, f1: 30, gain: 0.6 });
@@ -2060,6 +2497,7 @@ export class Audio {
   // ------------------------------------------------------------ música
   music(name) {
     if (!this.ok) return;
+    this.warmTheme(name);
     this.override = name;
     this.score.setTheme(name, name.startsWith('boss') ? 0.8 : 2.5);
   }
@@ -2075,40 +2513,39 @@ export class Audio {
     if (!this.ok) return;
     this.game = game;
     const t = this.t();
-    // oyente = cámara (solo se reprograma si se ha movido o girado)
+    // oyente = cámara. No se toca el AudioListener de WebAudio (moverlo en
+    // cada fotograma obligaba a calcular cada panner muestra a muestra): se
+    // guardan su posición y sus ejes y el panorama se calcula aquí.
     const cam = game.camera;
-    const L = this.ctx.listener;
     const f = (this._fwd = this._fwd || new game.THREE.Vector3()).set(0, 0, -1).applyQuaternion(cam.quaternion);
-    const cp0 = cam.position;
-    const lk = this._lk || (this._lk = [1e9, 0, 0, 0, 0, 0]);
-    if (Math.abs(lk[0] - cp0.x) + Math.abs(lk[1] - cp0.y) + Math.abs(lk[2] - cp0.z) > 0.01 || Math.abs(lk[3] - f.x) + Math.abs(lk[4] - f.y) + Math.abs(lk[5] - f.z) > 0.002) {
-      lk[0] = cp0.x;
-      lk[1] = cp0.y;
-      lk[2] = cp0.z;
-      lk[3] = f.x;
-      lk[4] = f.y;
-      lk[5] = f.z;
-      if (L.positionX) {
-        L.positionX.setTargetAtTime(cp0.x, t, 0.05);
-        L.positionY.setTargetAtTime(cp0.y, t, 0.05);
-        L.positionZ.setTargetAtTime(cp0.z, t, 0.05);
-        L.forwardX.setTargetAtTime(f.x, t, 0.05);
-        L.forwardY.setTargetAtTime(f.y, t, 0.05);
-        L.forwardZ.setTargetAtTime(f.z, t, 0.05);
-        if (!this._upSet) {
-          this._upSet = true;
-          L.upX.value = 0;
-          L.upY.value = 1;
-          L.upZ.value = 0;
-        }
-      } else if (L.setPosition) {
-        L.setPosition(cp0.x, cp0.y, cp0.z);
-        L.setOrientation(f.x, f.y, f.z, 0, 1, 0);
-      }
+    const B = this.basis;
+    const fl = Math.hypot(f.x, f.y, f.z) || 1;
+    const fx = f.x / fl,
+      fy = f.y / fl,
+      fz = f.z / fl;
+    // derecha = adelante x arriba(0,1,0); arriba = derecha x adelante
+    const rl = Math.hypot(fx, fz);
+    if (rl > 1e-5) {
+      B.rx = -fz / rl;
+      B.ry = 0;
+      B.rz = fx / rl;
+      B.ux = -B.rz * fy;
+      B.uy = B.rz * fx - B.rx * fz;
+      B.uz = B.rx * fy;
     }
     this.lis.x = cam.position.x;
     this.lis.y = cam.position.y;
     this.lis.z = cam.position.z;
+    // presupuesto de voces: cuenta nueva en cada fotograma y las voces de
+    // criaturas aplazadas entran ahora
+    this._new = {};
+    this._vc = null;
+    if (this._later.length) {
+      const q = this._later;
+      this._later = [];
+      for (const [t0, e, kind] of q) if (t - t0 < 0.3 && (!e.dead || kind === 'death')) this.enemyVoice(e, kind, null, t0);
+    }
+    this.applyZone(t);
 
     const p = game.player;
     const cp = p.pos;
@@ -2131,7 +2568,8 @@ export class Audio {
     this.gust += (this.gustTo - this.gust) * Math.min(1, dt * 0.8);
 
     this._slow -= dt;
-    if (this._slow <= 0) {
+    const slowTick = this._slow <= 0;
+    if (slowTick) {
       this._slow = 0.1;
       const bed = ZONE_BED[z] || ZONE_BED.city;
       const w = this.layerGain(this.L.wind, bed[0] * (0.45 + this.gust * 0.9), 0.3);
@@ -2165,8 +2603,9 @@ export class Audio {
           s.moved = true;
         }
         const on = this.layerGain(s.L, s.fire ? 0.2 * Math.min(1.6, s.fire.s) : 0, 0.3);
-        if (on && s.fire && (s.moved || !on.placed)) {
-          this.setPos(on.p, s.fire.x, s.fire.y + 0.6, s.fire.z, false);
+        // (al cambiar de fuego salta a su sitio; si no, sigue a la cámara)
+        if (on && s.fire) {
+          this.place(on, s.fire.x, s.fire.y + 0.6, s.fire.z, !s.moved && !!on.placed);
           on.placed = true;
           s.moved = false;
         }
@@ -2176,7 +2615,7 @@ export class Audio {
       const fl = game.fauna && game.state !== 'title' ? game.fauna.nearestFlies(cp, 7) : null;
       const fb = this.layerGain(this.L.flies, fl ? 0.05 : 0, 0.4);
       if (fb && fl) {
-        this.setPos(fb.p, fl.x, fl.y + 0.3, fl.z, !!fb.placed);
+        this.place(fb, fl.x, fl.y + 0.3, fl.z, !!fb.placed);
         fb.placed = true;
       }
 
@@ -2193,7 +2632,7 @@ export class Audio {
       }
       const ah = this.layerGain(this.L.altar, best && (play || paused) ? 0.07 : 0, 0.6);
       if (ah && best) {
-        this.setPos(ah.p, best.x, (best.y || 0) + 1.2, best.z, !!ah.placed && best === this._altar);
+        this.place(ah, best.x, (best.y || 0) + 1.2, best.z, !!ah.placed && best === this._altar);
         ah.placed = true;
         this._altar = best;
       }
@@ -2201,10 +2640,14 @@ export class Audio {
       // miedo
       this.fear = game.fear || 0;
       this.layerGain(this.L.fear, play ? this.fear * this.fear * 0.12 : 0, 0.2);
+      this.roomsIdle(t);
     }
+    // voces terminadas fuera; las largas siguen a la cámara (10 veces/s)
+    this.voicesUpdate(t, slowTick);
+    this.runSched(t);
 
     // susurros cuando algo acecha
-    if (play && this.fear > 0.35 && Math.random() < dt * this.fear * 0.6) {
+    if (play && this.fear > 0.35 && Math.random() < dt * this.fear * 0.6 && this.admit('amb', 1, 0.3) === 1) {
       const a = Math.random() * Math.PI * 2;
       const d = this.out({ x: cp.x + Math.cos(a) * 3, y: cp.y, z: cp.z + Math.sin(a) * 3 }, { gain: 0.5 * this.fear, verb: 0.6, life: 3, occlude: false });
       this.whisper(d, t, rnd(0.6, 1.4), 0.1);
@@ -2216,6 +2659,7 @@ export class Audio {
       this.heartT -= dt;
       if (this.heartT <= 0) {
         this.heartT = 0.55 + hpk * 1.6;
+        this.admit('jugador', 5);
         const d = this.out(null, { gain: 0.9 - hpk, verb: 0.02, life: 1.5 });
         this.smp(d, t, this.lib.drum('heart'), { gain: 0.7, lp: 400 });
       }
@@ -2223,7 +2667,10 @@ export class Audio {
 
     // sucesos ambientales
     this.nextAmb -= dt;
-    if (this.nextAmb <= 0) this.nextAmb = game.state === 'intro' || game.state === 'ending' ? 4 : this.ambEvent(z, cp, t) * (game.state === 'title' ? 1.5 : 1);
+    if (this.nextAmb <= 0) {
+      this.nextAmb = game.state === 'intro' || game.state === 'ending' ? 4 : this.ambEvent(z, cp, t) * (game.state === 'title' ? 1.5 : 1);
+      this._vc = null;
+    }
 
     // música: peligro -> capas de tensión y combate
     let combat = 0;
@@ -2244,12 +2691,19 @@ export class Audio {
     if (this.override) want = this.override;
     else if ((play || paused) && t >= this.silenceUntil) want = ZONE_MUSIC[z] || 'city';
     if (this.vol.music <= 0.001) want = null; // música apagada: no se programa nada
-    // la música de zona espera a que la zona se asiente (umbrales, puertas)
+    // la música de zona espera a que la zona se asiente (umbrales, puertas);
+    // mientras, se preparan sus notas
     if (want && !this.override && cur && cur !== want) {
-      if (!this.zoneMusT) this.zoneMusT = t;
+      if (!this.zoneMusT) {
+        this.zoneMusT = t;
+        this.warmTheme(want);
+      }
       if (t - this.zoneMusT < 1.6) want = cur;
     } else this.zoneMusT = 0;
-    if (want !== cur) this.score.setTheme(want, this.override ? (want && want.startsWith('boss') ? 0.8 : 2.5) : 3.5);
+    if (want !== cur) {
+      this.warmTheme(want);
+      this.score.setTheme(want, this.override ? (want && want.startsWith('boss') ? 0.8 : 2.5) : 3.5);
+    }
     this.score.update();
   }
 }

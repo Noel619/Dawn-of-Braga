@@ -272,6 +272,20 @@ los altares, el río) y sucesos de cada zona (campanas lejanas, gritos, perros, 
 cuernos, ratas, gotas en la cripta, pasos que no son tuyos en la catedral, pájaros al amanecer). La música se atenúa
 con los golpes fuertes y se oye «tras una puerta» en la pausa.
 
+**Mezcla que no se satura.** Todo pasa por un limitador que solo actúa cerca de 0 dBFS y un recorte suave de
+seguridad: nada sale nunca por encima de 0 dBFS y la mezcla no «bombea». Un presupuesto de voces decide cuántos
+sonidos de cada clase suenan a la vez (pasos y voces de criaturas, golpes, ambiente, los del jugador): en una horda
+entran los más cercanos e importantes, los más débiles se apartan con un fundido breve, el mismo golpe repetido en el
+mismo instante no se apila y los gritos de muchas criaturas a la vez se escalonan en fotogramas sucesivos. El
+panorama y la distancia se calculan una vez por sonido (y unas pocas veces por segundo los largos, que siguen a la
+cámara) en lugar de con un `PannerNode` que, con el oyente moviéndose en cada fotograma, se calcula muestra a
+muestra. Cada sala de reverberación se crea una sola vez y se reutiliza, los cambios de zona esperan un instante a
+que la zona se asiente (en un umbral no van y vienen) y, como mucho, un tema musical se funde con el siguiente.
+Lo que costaría un tirón en pleno juego (salas, campanas, tambores, el fuego, cadenas, gotas y las notas de cada
+tema) se calcula en los ratos libres: la pantalla de título o los segundos que espera la música al cambiar de zona.
+Las partes de un sonido que empiezan más tarde (los huesos de un alarido, los cascotes de un derrumbe) se crean
+poco antes de sonar, no todas de golpe.
+
 ## Modo desarrollador
 
 **F2** abre un panel para probar el juego: invulnerable, aguante infinito, volar atravesando muros (WASD según la
@@ -329,6 +343,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
                         audiobench.mjs coste de CPU del audio
+                        audiostress.mjs carga del audio en situaciones de juego con la cámara en movimiento
+                                       (horda, umbral de puerta, recorrido por zonas, jefe, estruendo): CPU del
+                                       hilo de audio, tirones del hilo principal, picos, recorte, limitador,
+                                       nodos, convolvers y presupuesto de voces
                         huntsim.mjs    simula la caza del Descoyuntado sin dibujar (segundos y un jugador
                                        robot: still, wander, fight, parry, levers o escape) y resume sus
                                        modos, cuándo enloquece, qué aprende, lo que te lee y lo que rompe

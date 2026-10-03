@@ -420,15 +420,20 @@ export class MusicEngine {
   setTheme(name, fade = 3) {
     if (this.cur && this.cur.name === name) return;
     const t = this.t();
-    if (this.cur) {
-      const c = this.cur;
+    const fadeOut = (c, f) => {
       c.bus.gain.cancelScheduledValues(t);
       c.bus.gain.setValueAtTime(c.bus.gain.value, t);
-      c.bus.gain.linearRampToValueAtTime(0.0001, t + fade);
-      c.stopAt = t + fade + 0.2;
-      if (c.drone) c.drone.stop(t + fade + 0.1);
-      if (c.drone2) c.drone2.stop(t + fade + 0.1);
-      this.old.push(c);
+      c.bus.gain.linearRampToValueAtTime(0.0001, t + f);
+      c.stopAt = Math.min(c.stopAt ?? Infinity, t + f + 0.2);
+      if (c.drone) c.drone.stop(t + f + 0.1);
+      if (c.drone2) c.drone2.stop(t + f + 0.1);
+    };
+    // como mucho un tema fundiéndose: si se cambia otra vez (ir y venir por
+    // una puerta), los que ya se iban se apagan del todo enseguida
+    for (const o of this.old) fadeOut(o, 0.4);
+    if (this.cur) {
+      fadeOut(this.cur, fade);
+      this.old.push(this.cur);
     }
     this.cur = null;
     if (!name || !THEMES[name]) return;
@@ -525,6 +530,44 @@ export class MusicEngine {
       c.beat++;
       c.next += c.spb;
     }
+  }
+
+  // Notas de cuerda pulsada (salterio, arpa, caja de música) que pueden pedir
+  // los temas y los golpes de efecto: se ensaya la partitura sin sonar, para
+  // sintetizarlas de antemano y no en pleno juego (unos ms cada una).
+  pluckKeys(names = Object.keys(THEMES), stingers = names.length === Object.keys(THEMES).length) {
+    const keys = new Map();
+    const rec = Object.create(this);
+    const nop = () => {};
+    for (const k of ['choir', 'strings', 'vielle', 'brass', 'organ', 'drum', 'bell', 'swell', 'whisper', 'sample']) rec[k] = nop;
+    rec.pluck = (dest, t, midi, vel, o = {}) => {
+      const f = mtof(midi),
+        b = o.bright ?? 0.55,
+        d = o.dur ?? 3;
+      keys.set(f.toFixed(2) + ':' + b + ':' + d, [f, b, d]);
+    };
+    for (const name of names) {
+      const T = THEMES[name];
+      if (!T) continue;
+      const c = { data: {}, chordI: 0 };
+      const meter = T.meter ?? 4,
+        cb = T.chordBars ?? 2;
+      for (let beat = 0; beat < 800; beat++) {
+        const bar = Math.floor(beat / meter),
+          inBar = beat % meter;
+        if (inBar === 0 && bar % cb === 0) c.chordI = Math.floor(bar / cb) % T.prog.length;
+        const S = { m: rec, c, T, t: 0, beat, bar, inBar, spb: 60 / T.bpm, chord: T.prog[c.chordI], L: {}, ten: 1, com: 1 };
+        try {
+          T.step(S);
+        } catch (e) {}
+      }
+    }
+    if (stingers)
+      for (const st of ['alert', 'pickup', 'rest', 'death', 'victory', 'fog', 'discover', 'dread', 'scare', 'phantom'])
+        try {
+          rec.stinger(st);
+        } catch (e) {}
+    return [...keys.values()];
   }
 
   // Grado del modo del tema -> MIDI (oct: octavas sobre la raíz).
