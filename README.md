@@ -50,14 +50,26 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 
 **Mundo.** El castillo (ver más abajo), la Calle del Soto, la Plaza
 del Pan con su fuente, horca (con escalera por la que se sube al cadalso) y picota, la Calle de la Catedral, la Plaza
-de la Catedral con la pira, la catedral (nave con arquerías, vidrieras, bancos con fieles muertos), el claustro, la
+de la Catedral con la pira, la catedral (nave central con bóveda de cañón sobre arcos fajones y columnas adosadas,
+coronas de velas colgadas, naves laterales con techo de vigas, arquerías, vidrieras, bancos con fieles muertos, y
+un tejado con su grueso), el claustro (galerías con un tejado de faldones que se unen en limas, sus pares y faroles), la
 Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la Torre del Postigo, la Calle de la
 Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y taller decorado por dentro), y bajo la
-catedral: osario de calaveras, un templo romano de *Bracara Augusta* con mosaicos, el sepulcro del arzobispo y la
-cisterna del Dios Desconocido. Al final, las orillas del río Este. Tras el Postigo, el adarve del muro este sigue
+catedral, todo abovedado: la escalera de la cripta, que baja por debajo de la nave bajo una bóveda en rampa; la sala
+de llegada, de tres naves sobre columnas y arcos; el osario, un pasillo de calaveras con bóveda de huesos, fajones y
+nichos con sus huesos; un templo romano de *Bracara Augusta* con mosaicos, columnas, arquitrabe caído y techo de
+casetones; el sepulcro del arzobispo, y la cisterna del Dios Desconocido, un corro de columnas con sus arcos bajo una
+cúpula con nervios de la que cuelga una corona de velas. La galería del río sube bajo su bóveda hasta las orillas
+del Este. Tras el Postigo, el adarve del muro este sigue
 hacia el norte (atraviesa una torre), sube en la esquina a la muralla norte y corre hacia poniente por otras dos
 torres hasta la Torre del Fanal, con un tramo de adarve hundido a medio camino; desde allí arriba se ven los
 tejados de toda la ciudad, la Sé y el campamento de los sitiadores.
+
+**El final.** La galería sale a la orilla del Este al amanecer: el río (agua con su corriente y el camino de brillos
+del sol), un embarcadero con la barca amarrada y, enfrente, el prado con chopos, un cruceiro junto al camino a
+contraluz, una ermita en el alto y las sierras detrás. En la escena final el jugador baja al embarcadero y lo anda
+hasta la punta; la cámara le sigue por la ribera, le espera desde el agua (con la muralla y el humo de la ciudad
+detrás) y se alza a su espalda sobre el río y el sol que sale, antes del fundido.
 
 **Los barrios.** Entre las calles principales hay una trama de callejones, pasadizos elevados, soportales y casas
 que se pueden visitar por dentro: el Callejón del Pozo y su plazuela (con el pozo bajo un tejadillo a cuatro aguas,
@@ -414,8 +426,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo
-                        camclip.mjs    la cámara en el castillo y las mazmorras, contra muros, rejas y en
-                                       escaleras, en muchas orientaciones: que no quede tras un muro ni pegada
+                        camclip.mjs    la cámara en el castillo, las mazmorras, la catedral y la cripta, contra
+                                       muros, rejas y en escaleras, en muchas orientaciones: que no quede tras
+                                       un muro ni pegada
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)

@@ -208,7 +208,13 @@ export class WorldBuilder {
   quad(mat, p0, p1, p2, p3, o = {}) {
     const U = new THREE.Vector3().subVectors(p1, p0);
     const V = new THREE.Vector3().subVectors(p3, p0);
-    const N = new THREE.Vector3().crossVectors(U, V).normalize();
+    const N = new THREE.Vector3().crossVectors(U, V);
+    // (un cuadrilátero con dos vértices iguales es un triángulo: su normal se
+    // toma de los otros lados; nula, el sombreado pintaba la malla de negro)
+    if (N.lengthSq() < 1e-12) N.crossVectors(new THREE.Vector3().subVectors(p2, p1), new THREE.Vector3().subVectors(p3, p2));
+    if (N.lengthSq() < 1e-12) N.crossVectors(U, new THREE.Vector3().subVectors(p2, p0));
+    if (N.lengthSq() < 1e-12) return;
+    N.normalize();
     const s = o.uv ?? MAT_DEFS[mat].uv;
     const sub = o.sub ?? 1.6;
     const ul = U.length(),

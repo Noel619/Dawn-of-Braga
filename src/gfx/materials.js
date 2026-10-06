@@ -55,6 +55,8 @@ export const MAT_DEFS = {
   skinPale: { tex: 'skinPale', uv: 2.0 },
   mossstone: { tex: 'mossstone', uv: 0.5 },
   rock: { tex: 'rock', uv: 0.9 },
+  grass: { tex: 'grass', uv: 0.35 },
+  leaves: { tex: 'leaves', uv: 0.9 },
   skulls: { tex: 'skulls', uv: 0.55 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
   bone: { tex: 'bone', uv: 1.6 },

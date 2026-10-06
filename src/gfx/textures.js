@@ -576,6 +576,42 @@ const GEN = {
 
   // Piedra tosca (bolaños, peñas, cascotes): granito sin juntas, con motas,
   // grietas finas y manchas de liquen.
+  // Prado: hierba corta con briznas, matas más oscuras, calvas secas y
+  // alguna flor (la otra orilla del río).
+  grass() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 9, y / 9, 4, S / 9, 171);
+      const m = fbm2(x / 3, y / 3, 2, S / 3, 172);
+      const dry = fbm2(x / 14 + 5, y / 14, 3, S / 14, 173);
+      let c = mix3([58, 76, 40], [92, 104, 54], n);
+      // briznas: rayitas verticales claras y oscuras
+      const b = hash2(x, Math.floor(y / 3), 174);
+      if (b > 0.86) c = mix3(c, [128, 136, 76], 0.55);
+      else if (b < 0.12) c = mix3(c, [34, 46, 26], 0.6);
+      c = mix3(c, [c[0] * 0.8, c[1] * 0.85, c[2] * 0.8], m * 0.6);
+      if (dry > 0.63) c = mix3(c, [124, 112, 70], Math.min(0.7, (dry - 0.63) * 3));
+      const f = hash2(x, y, 175);
+      if (f > 0.993) c = [210, 204, 170];
+      else if (f > 0.988) c = [196, 168, 70];
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
+  // Follaje: racimos de hojas (celdas con el borde en sombra y brillos).
+  leaves() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const [f1, f2] = worley2((x / S) * 10, (y / S) * 10, 10, 176, 0.95);
+      const n = fbm2(x / 6, y / 6, 3, S / 6, 177);
+      let c = mix3([34, 52, 28], [70, 92, 46], n);
+      const edge = f2 - f1;
+      if (edge < 0.08) c = mix3(c, [16, 24, 14], 0.7);
+      else if (f1 < 0.18) c = mix3(c, [104, 124, 66], 0.45 * (1 - f1 / 0.18));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
   rock() {
     const S = 64;
     return pixels(S, S, (x, y, o) => {

@@ -396,6 +396,197 @@ export function barrelVault(ctx, o) {
   return { crown: ys + rise, R, yc, len };
 }
 
+// Bóveda de cañón en rampa (sobre una escalera que corre a lo largo de z):
+// como barrelVault, pero el arranque va de ys0 (en z0) a ys1 (en z1). Con su
+// imposta inclinada a los lados y capas escalonadas para la cámara, con tapa
+// (encima no hay nada: sin ella la cámara salía por la bóveda).
+export function rampVault(ctx, o) {
+  const wb = ctx.wb;
+  const { x0, x1, z0, z1, ys0, ys1 } = o;
+  const span = x1 - x0,
+    c = (x0 + x1) / 2;
+  const inset = o.inset ?? 0.03;
+  const h = span / 2 - inset;
+  const rise = Math.min(o.rise ?? h, h);
+  const R = (h * h + rise * rise) / (2 * rise);
+  const yc = rise - R; // (respecto del arranque)
+  const a0 = Math.atan2(-yc, h);
+  const n = o.n ?? Math.max(8, Math.round(((Math.PI - 2 * a0) * R) / 0.35));
+  const mat = o.mat ?? 'wallstone';
+  const tint = o.tint ?? [0.5, 0.48, 0.46];
+  const room = o.room;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  for (let k = 0; k < n; k++) {
+    const aa = Math.PI - a0 - (k / n) * (Math.PI - 2 * a0),
+      ab = Math.PI - a0 - ((k + 1) / n) * (Math.PI - 2 * a0);
+    const ua = c + R * Math.cos(aa),
+      va = yc + R * Math.sin(aa),
+      ub = c + R * Math.cos(ab),
+      vb = yc + R * Math.sin(ab);
+    wb.quad(mat, V(ub, ys0 + vb, z0), V(ub, ys1 + vb, z1), V(ua, ys1 + va, z1), V(ua, ys0 + va, z0), { ao: false, sub: o.sub ?? 1.2, tint, room });
+  }
+  if (o.impost !== false) {
+    const it = 0.09,
+      ih = 0.14;
+    const im = o.impostMat ?? 'ashlar',
+      itn = o.impostTint ?? tint.map((v) => v * 1.1);
+    const io = { ao: false, sub: 3, tint: itn, room };
+    // caras de delante (hacia dentro) y de abajo, a cada lado
+    wb.quad(im, V(x0 + it, ys0 - ih, z0), V(x0 + it, ys0, z0), V(x0 + it, ys1, z1), V(x0 + it, ys1 - ih, z1), io);
+    wb.quad(im, V(x1 - it, ys0 - ih, z0), V(x1 - it, ys1 - ih, z1), V(x1 - it, ys1, z1), V(x1 - it, ys0, z0), io);
+    wb.quad(im, V(x0, ys0 - ih, z0), V(x0 + it, ys0 - ih, z0), V(x0 + it, ys1 - ih, z1), V(x0, ys1 - ih, z1), io);
+    wb.quad(im, V(x1 - it, ys0 - ih, z0), V(x1, ys0 - ih, z0), V(x1, ys1 - ih, z1), V(x1 - it, ys1 - ih, z1), io);
+  }
+  if (o.cam !== false) {
+    const len = z1 - z0;
+    const m = Math.max(1, Math.ceil(len / (o.camStep ?? 0.5)));
+    for (let j = 0; j < m; j++) {
+      const za = z0 + (len * j) / m,
+        zb = z0 + (len * (j + 1)) / m;
+      const ya0 = ys0 + ((ys1 - ys0) * j) / m,
+        ya1 = ys0 + ((ys1 - ys0) * (j + 1)) / m;
+      const ys = Math.min(ya0, ya1);
+      const steps = 4;
+      for (let i = 0; i < steps; i++) {
+        const ya = ys + (rise * i) / steps,
+          yb = ys + (rise * (i + 1)) / steps;
+        const kk = Math.sqrt(Math.max(0, R * R - (yb - ys - yc) ** 2));
+        if (c - kk - x0 > 0.02) ctx.col.addCam(x0, ya, za, c - kk, yb, zb);
+        if (x1 - c - kk > 0.02) ctx.col.addCam(c + kk, ya, za, x1, yb, zb);
+      }
+      ctx.col.addCam(x0, ys + rise, za, x1, ys + rise + 0.6, zb);
+    }
+  }
+  return { rise, R };
+}
+
+// Luneto: el testero de una bóveda de cañón, del arranque a la rosca (lo que
+// barrelVault deja abierto en los extremos: sin él, por encima del muro se
+// veía el vacío). axis: el de la bóveda; at: el plano del testero; c, span,
+// ys, rise, n: los de la bóveda (mismos tramos: sin rendijas entre los dos);
+// face: hacia dónde mira (+1 / -1 en su eje); hole: { u0, u1, y }, un vano que
+// sube por encima del arranque (bajo él no se dibuja el luneto).
+export function lunette(ctx, o) {
+  const wb = ctx.wb;
+  const { c, span, ys, at } = o;
+  const inset = o.inset ?? 0.03;
+  const h = span / 2 - inset;
+  const rise = Math.min(o.rise ?? h, h);
+  const R = (h * h + rise * rise) / (2 * rise);
+  const yc = ys + rise - R;
+  const a0 = Math.atan2(ys - yc, h);
+  const n = o.n ?? Math.max(6, Math.round(((Math.PI - 2 * a0) * R) / 0.4));
+  const alongZ = o.axis !== 'x';
+  const P = (u, y) => (alongZ ? new THREE.Vector3(u, y, at) : new THREE.Vector3(at, y, u));
+  const fwd = alongZ ? o.face > 0 : o.face < 0;
+  const mat = o.mat ?? 'wallstone';
+  const opt = { ao: false, sub: o.sub ?? 1.2, tint: o.tint, room: o.room };
+  // (un tramo cuyo lado izquierdo o derecho no tiene altura es un triángulo:
+  // dado como cuadrilátero, con dos vértices iguales, su normal salía nula y
+  // el sombreado ponía negro todo el trozo de malla)
+  const strip = (ua, va, ub, vb, y0) => {
+    if (ub - ua < 1e-4) return;
+    const la = va - y0 > 1e-4,
+      lb = vb - y0 > 1e-4;
+    if (!la && !lb) return;
+    if (la && lb) {
+      if (fwd) wb.quad(mat, P(ua, y0), P(ub, y0), P(ub, vb), P(ua, va), opt);
+      else wb.quad(mat, P(ub, y0), P(ua, y0), P(ua, va), P(ub, vb), opt);
+    } else if (lb) {
+      if (fwd) wb.tri(mat, P(ua, y0), P(ub, y0), P(ub, vb), opt);
+      else wb.tri(mat, P(ub, y0), P(ua, y0), P(ub, vb), opt);
+    } else {
+      if (fwd) wb.tri(mat, P(ua, y0), P(ub, y0), P(ua, va), opt);
+      else wb.tri(mat, P(ub, y0), P(ua, y0), P(ua, va), opt);
+    }
+  };
+  const H = o.hole;
+  for (let k = 0; k < n; k++) {
+    const aa = Math.PI - a0 - (k / n) * (Math.PI - 2 * a0),
+      ab = Math.PI - a0 - ((k + 1) / n) * (Math.PI - 2 * a0);
+    const ua = c + R * Math.cos(aa),
+      va = yc + R * Math.sin(aa),
+      ub = c + R * Math.cos(ab),
+      vb = yc + R * Math.sin(ab);
+    if (!H || ub <= H.u0 || ua >= H.u1) {
+      strip(ua, va, ub, vb, ys);
+      continue;
+    }
+    // el tramo cruza el vano: se parte por sus bordes (sobre la misma cuerda)
+    const at2 = (u) => va + ((vb - va) * (u - ua)) / (ub - ua);
+    const cuts = [ua, ...[H.u0, H.u1].filter((u) => u > ua && u < ub), ub];
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const u0 = cuts[i],
+        u1 = cuts[i + 1];
+      const inside = (u0 + u1) / 2 > H.u0 && (u0 + u1) / 2 < H.u1;
+      const y0 = inside ? Math.max(ys, H.y) : ys;
+      if (y0 < Math.min(at2(u0), at2(u1))) strip(u0, at2(u0), u1, at2(u1), y0);
+    }
+  }
+  return { crown: ys + rise, n };
+}
+
+// Cúpula: casquete esférico de radio de base r en (cx, y0, cz) y flecha
+// 'rise', visto desde dentro; con 'ribs' nervios que suben desde la base
+// (desfasados 'ribPhase') hasta una clave en lo alto.
+export function dome(ctx, o) {
+  const wb = ctx.wb;
+  const { cx, cz, r, y0, rise } = o;
+  const R = (r * r + rise * rise) / (2 * rise);
+  const yc = y0 + rise - R;
+  const f0 = Math.asin(Math.min(1, r / R));
+  const n = o.n ?? 32,
+    m = o.m ?? 10;
+  const mat = o.mat ?? 'wallstone';
+  const P = (i, j) => {
+    const th = (i / n) * Math.PI * 2 + (o.phase ?? 0);
+    const f = f0 * (1 - j / m);
+    const rho = R * Math.sin(f);
+    return new THREE.Vector3(cx + Math.cos(th) * rho, yc + R * Math.cos(f), cz + Math.sin(th) * rho);
+  };
+  const opt = { ao: false, sub: o.sub ?? 1.4, tint: o.tint, room: o.room };
+  for (let j = 0; j < m; j++)
+    for (let i = 0; i < n; i++) {
+      if (j === m - 1) wb.tri(mat, P(i, j), P(i + 1, j), P(i, j + 1), opt);
+      else wb.quad(mat, P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1), opt);
+    }
+  if (o.ribs) {
+    const rw = o.ribW ?? 0.32,
+      rd = o.ribD ?? 0.2;
+    for (let k = 0; k < o.ribs; k++) {
+      const th = (k / o.ribs) * Math.PI * 2 + (o.ribPhase ?? 0);
+      for (let j = 0; j < m; j++) {
+        const fa = f0 * (1 - j / m),
+          fb = f0 * (1 - (j + 1) / m);
+        const pa = new THREE.Vector3(cx + Math.cos(th) * (R - rd / 2) * Math.sin(fa), yc + (R - rd / 2) * Math.cos(fa), cz + Math.sin(th) * (R - rd / 2) * Math.sin(fa));
+        const pb = new THREE.Vector3(cx + Math.cos(th) * (R - rd / 2) * Math.sin(fb), yc + (R - rd / 2) * Math.cos(fb), cz + Math.sin(th) * (R - rd / 2) * Math.sin(fb));
+        beam(ctx, o.ribMat ?? 'ashlar', pa, pb, rw, { d: rd, tint: o.ribTint, room: o.room, side: new THREE.Vector3(-Math.sin(th), 0, Math.cos(th)) });
+      }
+    }
+    // la clave
+    wb.cylinder(o.ribMat ?? 'ashlar', cx, y0 + rise - 0.35, cz, 0.7, 0.55, 0.3, 8, { ao: false, capBot: true, tint: o.ribTint, room: o.room });
+  }
+  return { R, yc, crown: y0 + rise };
+}
+
+// Viga (o nervio) de sección w x d entre dos puntos; 'side' fija hacia dónde
+// va el ancho w (la otra cara, d, queda perpendicular): un nervio de cúpula
+// con el ancho de lado y el canto hacia el centro.
+export function beam(ctx, mat, a, b, w, o = {}) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const L = d.length();
+  if (L < 1e-4) return;
+  const y = d.clone().normalize();
+  const q = new THREE.Quaternion();
+  if (o.side) {
+    const x = o.side.clone().addScaledVector(y, -o.side.dot(y)).normalize();
+    const z = new THREE.Vector3().crossVectors(x, y);
+    q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  } else q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), y);
+  const m = new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(w, L, o.d ?? w));
+  ctx.wb.geometry(mat, new THREE.BoxGeometry(1, 1, 1), m, { ao: false, room: o.room, tint: o.tint });
+}
+
 // Tejado a dos aguas con cuerpo: faldones de teja con su grueso (canto en
 // los aleros y tablas de remate en los hastiales), cara de abajo de madera,
 // cumbrera de teja, hastiales de piedra y su capa para la cámara.
@@ -459,21 +650,31 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
   const rw = 0.17;
   if (alongX) wb.box(mat, sA - 0.02, yRidge - 0.06, uc - rw, sB + 0.02, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
   else wb.box(mat, uc - rw, yRidge - 0.06, sA - 0.02, uc + rw, yRidge + 0.15, sB + 0.02, { ao: false, faces: 'tnsewb', tint: o.tint });
-  // hastiales de piedra (por fuera y por dentro)
+  // hastiales de piedra (por fuera y por dentro). gables: [extremo de
+  // menos, extremo de más], cada uno false (sin hastial: ya hay un muro más
+  // alto) o { y0, t } (desde qué altura y con qué grueso: sobre una fachada,
+  // sólo lo que asoma por encima de ella)
   const wt = o.wallT ?? 0.4;
   const sx0 = alongX ? x0 : z0,
     sx1 = alongX ? x1 : z1;
   const gTint = o.wallTint ?? [0.8, 0.78, 0.74];
-  for (const [a, b, outward] of [
-    [sx0, sx0 + wt, -1],
-    [sx1 - wt, sx1, 1],
+  const gs = o.gables ?? [{}, {}];
+  for (const [a0, b0, outward, g] of [
+    [sx0, sx0 + wt, -1, gs[0]],
+    [sx1 - wt, sx1, 1, gs[1]],
   ]) {
+    if (g === false) continue;
+    const gt = g.t ?? wt;
+    const a = outward < 0 ? a0 : b0 - gt,
+      b = outward < 0 ? a0 + gt : b0;
     const so = outward < 0 ? a : b,
       si = outward < 0 ? b : a;
+    const gy = g.y0 ?? yEave;
+    const gh = Math.min(half, (yRidge - tv - gy) / slope);
     // (triángulo: alero a alero bajo los faldones, hasta la cumbrera)
     const tri = (sv, flip, room) => {
-      const p1 = P(sv, yEave, -half),
-        p2 = P(sv, yEave, half),
+      const p1 = P(sv, gy, -gh),
+        p2 = P(sv, gy, gh),
         p3 = P(sv, yRidge - tv, 0);
       const ccw = (outward < 0) !== flip;
       const order = alongX ? ccw : !ccw;

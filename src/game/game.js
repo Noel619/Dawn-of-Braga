@@ -31,6 +31,7 @@ import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
+import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
@@ -930,37 +931,132 @@ export class Game {
     this.saveGame();
   }
 
+  // La escena final, en la orilla del Este al amanecer. El jugador baja al
+  // embarcadero y lo anda hasta la punta, junto a la barca; la cámara hace
+  // tres planos: le sigue por la ribera, le espera desde el agua (con la
+  // muralla y el humo de la ciudad detrás) y, al final, se alza a su espalda
+  // sobre el río y el sol que sale tras la otra orilla. Luego, el fundido y
+  // el pergamino. Todo con el reloj del juego (antes, con temporizadores: un
+  // plano fijo y el jugador andando contra la orilla hasta el fundido).
   ending() {
     this.state = 'ending';
     this.lockTarget = null;
     const p = this.player;
     p.state = 'free';
-    p.autoDir = { x: 0.05, z: -1, m: 0.42 };
     p.blocking = false;
     this.audio.music('ending');
     this.flags.finished = true;
     this.saveGame();
-    this.camRig.override = { pos: new THREE.Vector3(p.pos.x + 2.6, p.pos.y + 1.4, p.pos.z + 3.5), look: new THREE.Vector3(p.pos.x, p.pos.y + 3.5, p.pos.z - 40), speed: 0.5 };
-    setTimeout(() => {
-      this.ui.showHud(false);
+    this.ui.showHud(false);
+    const path = RIVER.path.map(([x, z]) => new THREE.Vector3(x, 0, z));
+    let len = Math.hypot(path[0].x - p.pos.x, path[0].z - p.pos.z);
+    for (let i = 1; i < path.length; i++) len += path[i].distanceTo(path[i - 1]);
+    this.end = {
+      t: 0,
+      path,
+      wp: 0,
+      // (a paso, y algo más deprisa si se entra en la orilla lejos del
+      // embarcadero: que llegue a la punta hacia los diez segundos)
+      m: clamp(len / 9.5 / 4, 0.42, 0.55),
+      head: new THREE.Vector3(path[0].x - p.pos.x, 0, path[0].z - p.pos.z).normalize(),
+      from: { pos: this.camera.position.clone(), look: this.camRig.lookAt.clone() },
+      look: new THREE.Vector3(p.pos.x, p.pos.y + 1.3, p.pos.z),
+      tB: null,
+      tC: null,
+      faded: false,
+      card: false,
+    };
+  }
+
+  updateEnding(dt) {
+    const E = this.end;
+    if (!E) return;
+    const p = this.player;
+    E.t += dt;
+    const t = E.t;
+    // el paseo: de un punto del camino al siguiente; en la punta se para
+    if (E.wp < E.path.length) {
+      const w = E.path[E.wp];
+      const dx = w.x - p.pos.x,
+        dz = w.z - p.pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 0.35) {
+        E.wp++;
+        if (E.wp === 1 && E.tB === null) E.tB = Math.max(t, 3.6);
+        if (E.wp >= E.path.length) {
+          p.autoDir = null;
+          if (E.tC === null) E.tC = Math.max(t, (E.tB ?? t) + 3.8);
+        }
+      } else p.autoDir = { x: dx / d, z: dz / d, m: E.m };
+      if (p.autoDir) E.head.set(p.autoDir.x, 0, p.autoDir.z);
+    }
+    // (por si algo lo detiene por el camino: los planos siguen igual)
+    if (E.tB === null && t > 7) E.tB = t;
+    if (E.tC === null && t > 14) {
+      E.tC = t;
+      p.autoDir = null;
+    }
+    const ease = (u) => {
+      const k = clamp(u, 0, 1);
+      return k * k * (3 - 2 * k);
+    };
+    const pos = new THREE.Vector3(),
+      look = new THREE.Vector3();
+    let fov = 58;
+    // la mirada sigue al jugador con algo de retardo (sin tirones)
+    E.look.x = damp(E.look.x, p.pos.x, 4, dt);
+    E.look.y = damp(E.look.y, p.pos.y + 1.3, 4, dt);
+    E.look.z = damp(E.look.z, p.pos.z, 4, dt);
+    if (E.tC !== null && t >= E.tC) {
+      // plano C: a su espalda y en alto, sobre el río y el sol naciente
+      const u = ease((t - E.tC) / 6.5);
+      pos.set(5.3 - 1.6 * u, 2.3 + 3.2 * u, -214.4 + 4.4 * u);
+      look.set(8.4 + 1.2 * u, 1.7 + 1.0 * u, -236 - 16 * u);
+      fov = 54;
+    } else if (E.tB !== null && t >= E.tB) {
+      // plano B: desde el agua, viéndole venir por el embarcadero
+      const u = ease((t - E.tB) / 5.5);
+      pos.set(10.9 - 0.7 * u, 1.15 + 0.35 * u, -230.2 + 2.4 * u);
+      look.copy(E.look);
+      fov = 46;
+    } else {
+      // plano A: le sigue por la ribera, a su espalda y algo a la izquierda,
+      // saliendo poco a poco de donde estaba la cámara del juego
+      const h = E.head;
+      const left = new THREE.Vector3(-h.z, 0, h.x);
+      pos.set(p.pos.x, p.pos.y + 1.85, p.pos.z).addScaledVector(h, -3.8).addScaledVector(left, 1.25);
+      look.set(p.pos.x, p.pos.y + 1.2, p.pos.z).addScaledVector(h, 7);
+      const k = ease(t / 1.6);
+      pos.lerpVectors(E.from.pos, pos, k);
+      look.lerpVectors(E.from.look, look, k);
+    }
+    this.camRig.override = { pos, look, snap: true, fov };
+    // el fundido (a la luz del amanecer) y el pergamino
+    if (E.tC !== null && !E.faded && t > E.tC + 3.2) {
+      E.faded = true;
       this.post.U.uFadeColor.value.setRGB(1, 0.92, 0.82);
       this.fadeTarget = 0;
-    }, 5000);
-    setTimeout(() => {
-      this.player.autoDir = null;
-      const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
-      const body = document.getElementById('ending-body');
-      const pc = body.querySelector('canvas.pxbg');
-      body.innerHTML = `
+    }
+    if (E.tC !== null && !E.card && t > E.tC + 5.6) {
+      E.card = true;
+      p.autoDir = null;
+      this.showEndingCard();
+    }
+  }
+
+  showEndingCard() {
+    const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
+    const body = document.getElementById('ending-body');
+    const pc = body.querySelector('canvas.pxbg');
+    body.innerHTML = `
         <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
         <div style="display:grid;place-items:center;margin-top:calc(var(--u) * 6)">${this.ui.inkTitleHtml()}</div>
         <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / ${Object.keys(NOTES).length}</b></div>
         <div class="credit f-hand">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>
         <div class="hint f-hand"><span>${this.ui.keyHtml('confirm')} Volver al título</span></div>`;
-      if (pc) body.prepend(pc);
-      body._pxRedraw && body._pxRedraw();
-      setTimeout(() => (s.data.ready = true), 2500);
-    }, 8500);
+    if (pc) body.prepend(pc);
+    body._pxRedraw && body._pxRedraw();
+    setTimeout(() => (s.data.ready = true), 2500);
   }
 
   // ------------------------------------------------------------ fantasmas en la niebla
@@ -1181,7 +1277,9 @@ export class Game {
         const b = this.activeBoss;
         if (b) this.camRig.yaw = Math.atan2(b.pos.x - this.player.pos.x, b.pos.z - this.player.pos.z);
       }
-    } else if (this.state !== 'ending') this.camRig.override = null;
+    } else if (this.state === 'ending') {
+      if (!this.ui.modal) this.updateEnding(dt);
+    } else this.camRig.override = null;
 
     // (los avisos de pulsación corren en tiempo real; el juego, mientras, a
     // cámara lenta)
@@ -1278,7 +1376,6 @@ export class Game {
         this.updatePhantoms(dt);
       } else this.promptTarget = null;
       if (p.pos.y < -40 && !p.dead) p.die();
-      if (p.autoDir && p.pos.z < -211.5) p.autoDir = null;
     }
     // cámara
     this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock));

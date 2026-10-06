@@ -1,5 +1,6 @@
-// La cámara contra muros, rejas y techos: en puntos del castillo y de las
-// mazmorras (pegados a paredes, junto a las rejas de las celdas, en escaleras),
+// La cámara contra muros, rejas y techos: en puntos del castillo, las
+// mazmorras, la catedral y su cripta (pegados a paredes, junto a las rejas de
+// las celdas, en escaleras),
 // doce orientaciones y tres inclinaciones en cada uno. Tras asentarse, ¿queda
 // la cámara tras un muro (el rayo desde el pivote choca antes de llegar a
 // ella) o a menos de 0,12 m de una caja?
@@ -28,6 +29,8 @@ const r = await p.evaluate(() => {
     [-90, 0, -20], [-78, 0, -6], [-90, 4.5, -10.5], [-78, 4.5, -18], [-75.15, 6.5, -9.5], [-88, 9, -8], [-80, 9, -18], [-90, 9, -17],
     // patio y puerta
     [-70, 0, 0], [-72, 0, -10], [-55, 0, -2], [-54.4, 0, 2.5],
+    // la catedral, el claustro, la escalera de la cripta y la cripta
+    [0, 0.6, -80], [-8.5, 0.6, -90], [16, 0, -70], [0, -2.6, -91], [-5, -7, -103], [0, -7, -120], [2, -7, -127.5], [10, -7, -114], [-12, -7, -114], [0, -10, -147], [0, -5.2, -180], [0, 0, -190],
   ];
   let bad = [], n = 0, near = 0;
   for (const [x, y, z] of pts) {

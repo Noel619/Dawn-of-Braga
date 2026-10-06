@@ -20,6 +20,9 @@ function waterMat(o) {
   u.uLamp = { value: new THREE.Vector3(0, -99, 0) };
   u.uLampK = { value: 0 };
   u.uSpot = { value: new THREE.Vector4(...(o.spot || [0, 0, 0, 0])) };
+  // oleaje (alto de las ondas) y corriente (hacia dónde corre el agua)
+  u.uAmp = { value: o.amp ?? 0.035 };
+  u.uFlow = { value: new THREE.Vector2(...(o.flow || [0, 0])) };
   return new THREE.ShaderMaterial({
     uniforms: u,
     fog: true,
@@ -35,15 +38,16 @@ function waterMat(o) {
     fragmentShader: `
       uniform float uTime; uniform vec3 uDeep; uniform vec3 uSky; uniform vec3 uGlint;
       uniform vec3 uLight; uniform float uLightK; uniform vec4 uDrips[${MAX_DRIPS}];
-      uniform vec3 uLamp; uniform float uLampK; uniform vec4 uSpot;
+      uniform vec3 uLamp; uniform float uLampK; uniform vec4 uSpot; uniform float uAmp; uniform vec2 uFlow;
       varying vec3 vW;
       #include <fog_pars_fragment>
       float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
       float ns(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
         return mix(mix(hs(i),hs(i+vec2(1,0)),f.x), mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x), f.y); }
       float H(vec2 p){
-        float h = ns(p*1.3 + vec2(uTime*0.07, -uTime*0.05))*0.5 + ns(p*2.9 - vec2(uTime*0.11, uTime*0.09))*0.25;
-        h *= 0.035;
+        vec2 fl = uFlow * uTime;
+        float h = ns((p - fl)*1.3 + vec2(uTime*0.07, -uTime*0.05))*0.5 + ns((p - fl*1.4)*2.9 - vec2(uTime*0.11, uTime*0.09))*0.25;
+        h *= uAmp;
         for (int i = 0; i < ${MAX_DRIPS}; i++){
           vec4 d = uDrips[i];
           float age = uTime - d.z;
@@ -131,6 +135,7 @@ export class Waters {
         U.uLamp.value.copy(this._lp);
         U.uLampK.value = lamp.visible && g.player.obj.visible ? Math.min(1.5, lamp.intensity / 8) : 0;
       }
+      if (w.drips === false) continue;
       w.next -= dt;
       if (w.next > 0) continue;
       w.next = 1.4 + Math.random() * 3.5;

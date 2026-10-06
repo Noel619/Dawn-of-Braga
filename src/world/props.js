@@ -2545,6 +2545,161 @@ export function ellipsoid(ctx, mat, x, y, z, sx, sy, sz, tint = null, o = {}) {
 }
 
 // Farol colgado de una viga (interiores): cadena, farol y luz.
+// Árbol con copa (para lo lejano: la otra orilla del río): tronco y unas
+// bolas de follaje; 'poplar', un chopo (copa alta y estrecha).
+export function leafyTree(ctx, x, y, z, h, seed, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(seed);
+  const poplar = !!o.poplar;
+  const th = poplar ? h * 0.2 : h * 0.36;
+  const k = h / 7;
+  wb.cylinder('wooddark', x, y - 0.3, z, 0.13 * k, 0.24 * k, th + 0.6, 5, { ao: false, tint: [0.62, 0.54, 0.46] });
+  const blobs = poplar ? 3 : rng.int(3, 5);
+  for (let i = 0; i < blobs; i++) {
+    let cx, cy, cz, sx, sy, sz;
+    if (poplar) {
+      // una columna de follaje: el cuerpo largo y dos bultos que la rompen
+      const H = h - th;
+      const r = h * 0.12;
+      cx = x + rng.range(-0.12, 0.12) * k;
+      cz = z + rng.range(-0.12, 0.12) * k;
+      if (i === 0) {
+        cy = y + th + H * 0.5;
+        sx = r;
+        sz = r * rng.range(0.9, 1.05);
+        sy = H * 0.52;
+      } else {
+        cy = y + th + H * (i === 1 ? 0.3 : 0.68);
+        cx += rng.range(-0.5, 0.5) * r;
+        cz += rng.range(-0.5, 0.5) * r;
+        sx = sz = r * rng.range(0.85, 1.0);
+        sy = H * 0.24;
+      }
+    } else {
+      const r = h * rng.range(0.2, 0.28);
+      cx = x + rng.range(-1, 1) * h * 0.14;
+      cz = z + rng.range(-1, 1) * h * 0.14;
+      cy = y + th + r * 0.7 + rng.range(0, h * 0.22);
+      sx = r * rng.range(0.95, 1.2);
+      sy = r * rng.range(0.75, 0.95);
+      sz = r * rng.range(0.95, 1.2);
+    }
+    const t = o.tint ?? [1, 1, 1];
+    const v = rng.range(0.82, 1.08);
+    wb.geometry('leaves', new THREE.IcosahedronGeometry(1, 1), M4().compose(V(cx, cy, cz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(0, 3), rng.range(0, 3), 0)), V(sx, sy, sz)), { ao: false, uvScale: 2.5, tint: [t[0] * v, t[1] * v, t[2] * v] });
+  }
+}
+
+// Barca de remos: casco de tablas (fondo plano, costados abiertos, proa en
+// punta y espejo de popa), regala, dos bancadas y los remos atravesados. En
+// su marco: eslora a lo largo de z (la proa hacia -z); y es la quilla.
+export function rowboat(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const room = o.room;
+  // cuadernas: [z, medio ancho en la regala, medio ancho en el fondo, alto de la regala]
+  const st = [
+    [2.05, 0.5, 0.32, 0.62],
+    [1.0, 0.66, 0.42, 0.6],
+    [-0.4, 0.64, 0.38, 0.62],
+    [-1.4, 0.44, 0.2, 0.68],
+    [-2.1, 0.02, 0.0, 0.8],
+  ];
+  const out = { ao: false, sub: 1.2, tint: [0.66, 0.54, 0.42], room },
+    inn = { ao: false, sub: 1.2, tint: [0.5, 0.42, 0.34], room };
+  wb.at(x, y, z, rot, () => {
+    for (let i = 0; i < st.length - 1; i++) {
+      const [za, ga, ba, ha] = st[i],
+        [zb, gb, bb, hb] = st[i + 1];
+      for (const sd of [-1, 1]) {
+        const A = V(sd * ba, 0, za),
+          B = V(sd * bb, 0, zb),
+          C = V(sd * gb, hb, zb),
+          D = V(sd * ga, ha, za);
+        // por fuera y por dentro (cada lado con su sentido de giro)
+        if (sd > 0) {
+          wb.quad('planks', A, D, C, B, out);
+          wb.quad('planks', A, B, C, D, inn);
+        } else {
+          wb.quad('planks', A, B, C, D, out);
+          wb.quad('planks', A, D, C, B, inn);
+        }
+        // la regala
+        const m = new THREE.Vector3().addVectors(C, D).multiplyScalar(0.5);
+        const d = new THREE.Vector3().subVectors(C, D);
+        wb.geometry('wooddark', new THREE.BoxGeometry(0.07, d.length() + 0.04, 0.07), M4().compose(m.add(V(sd * 0.015, 0.02, 0)), new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()), V(1, 1, 1)), { ao: false, room });
+      }
+      // el fondo (por dentro y por fuera)
+      if (ba + bb > 0.01) {
+        wb.quad('planks', V(-ba, 0.001, za), V(ba, 0.001, za), V(bb, 0.001, zb), V(-bb, 0.001, zb), inn);
+        wb.quad('planks', V(-ba, 0, za), V(-bb, 0, zb), V(bb, 0, zb), V(ba, 0, za), out);
+      }
+    }
+    // el espejo de popa
+    const [zs, gs, bs, hs] = st[0];
+    wb.quad('planks', V(-bs, 0, zs), V(bs, 0, zs), V(gs, hs, zs), V(-gs, hs, zs), out);
+    wb.quad('planks', V(bs, 0, zs - 0.001), V(-bs, 0, zs - 0.001), V(-gs, hs, zs - 0.001), V(gs, hs, zs - 0.001), inn);
+    // la roda
+    wb.box('wooddark', -0.04, 0, -2.16, 0.04, 0.86, -2.04, { ao: false, room });
+    // bancadas y el agua sucia del fondo
+    for (const [zz, w] of [
+      [0.6, 0.6],
+      [-0.75, 0.58],
+    ])
+      wb.box('wooddark', -w, 0.38, zz - 0.13, w, 0.43, zz + 0.13, { ao: false, faces: 'tnsewb', room });
+    wb.box('black', -0.36, 0.06, -1.1, 0.36, 0.07, 1.7, { faces: 't', ao: false, grime: false, room, tint: [3, 3.2, 3.4] });
+    // los remos, atravesados sobre las bancadas y asomando por la borda
+    for (const [sx, a, sg] of [
+      [-0.1, 0.16, -1],
+      [0.12, -0.12, 1],
+    ]) {
+      const c = V(sx, 0.47, -0.1);
+      const d = V(Math.cos(a) * sg, 0.06, Math.sin(a)).normalize();
+      const A = c.clone().addScaledVector(d, -0.75),
+        B = c.clone().addScaledVector(d, 1.45);
+      const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d);
+      wb.geometry('wooddark', new THREE.CylinderGeometry(0.03, 0.03, A.distanceTo(B), 5), M4().compose(A.clone().add(B).multiplyScalar(0.5), q, V(1, 1, 1)), { ao: false, room });
+      wb.geometry('planks', new THREE.BoxGeometry(0.2, 0.55, 0.03), M4().compose(c.clone().addScaledVector(d, 1.25), q, V(1, 1, 1)), { ao: false, room, tint: [0.7, 0.6, 0.48] });
+    }
+  });
+}
+
+// Corona de luz: un aro de hierro con sus velas, colgado de una cadena desde
+// yTop (una bóveda, una viga) hasta yRing, con su luz horneada.
+export function candleCrown(ctx, x, yRing, z, yTop, o = {}) {
+  const wb = ctx.wb;
+  const r = o.r ?? 1.2,
+    n = o.n ?? 10,
+    room = o.room;
+  const hub = yRing + r * 0.55;
+  const links = Math.max(0, Math.round((yTop - hub) / 0.06));
+  for (let k = 0; k < links; k++) {
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, k % 2 ? Math.PI / 2 : 0, 0));
+    wb.geometry('iron', new THREE.TorusGeometry(0.04, 0.01, 3, 6), M4().compose(V(x, yTop - k * 0.06, z), q, V(1, 1.4, 1)), { ao: false, room });
+  }
+  wb.geometry('iron', new THREE.TorusGeometry(r, 0.05, 4, 24), M4().compose(V(x, yRing, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V(1, 1, 1)), { ao: false, room });
+  wb.geometry('iron', new THREE.TorusGeometry(r * 0.55, 0.035, 4, 16), M4().compose(V(x, yRing - 0.02, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V(1, 1, 1)), { ao: false, room });
+  // tirantes del aro a la argolla
+  for (let k = 0; k < 4; k++) {
+    const a = (k / 4) * Math.PI * 2 + Math.PI / 4;
+    const p = V(x + Math.cos(a) * r, yRing, z + Math.sin(a) * r),
+      h = V(x, hub, z);
+    const d = new THREE.Vector3().subVectors(h, p);
+    wb.geometry('iron', new THREE.BoxGeometry(0.03, d.length(), 0.03), M4().compose(p.clone().add(h).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()), V(1, 1, 1)), { ao: false, room });
+  }
+  // velas en el aro, con su platillo
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * Math.PI * 2;
+    const cx = x + Math.cos(a) * r,
+      cz = z + Math.sin(a) * r;
+    wb.cylinder('iron', cx, yRing + 0.04, cz, 0.07, 0.07, 0.02, 6, { ao: false, capTop: true, capBot: true, room });
+    const h = 0.16 + ((k * 37) % 10) * 0.012;
+    wb.cylinder('candle', cx, yRing + 0.06, cz, 0.035, 0.035, h, 6, { ao: false, capTop: true, room });
+    if (ctx.fires) ctx.fires.push({ x: cx, y: yRing + 0.1 + h, z: cz, s: 0.1, light: false, embers: false, glow: true });
+  }
+  if (ctx.lights) ctx.lights.push({ x, y: yRing + 0.3, z, r: 1, g: 0.62, b: 0.32, radius: o.radius ?? 11, intensity: o.intensity ?? 1.0, room });
+  if (ctx.dynLights && o.dyn) ctx.dynLights.push({ x, y: yRing + 0.3, z, intensity: o.dyn, range: 9 });
+}
+
 export function hangingLamp(ctx, x, yTop, z, o = {}) {
   const wb = ctx.wb;
   const len = o.len ?? 0.7;
