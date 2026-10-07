@@ -560,6 +560,132 @@ const GEN = {
   flesh() {
     return fleshGen(false);
   },
+  // ------------------------------------------------------------ colosos
+  // Piel de cadáver para superficies enormes: ocre pálido con manchas
+  // grandes y suaves, lividez amoratada, poros, venas finas y escasas y
+  // alguna llaga. Menos contraste que la piel de las criaturas (a 3 m por
+  // repetición, un moteado fuerte se vuelve ruido).
+  colSkin() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 8, y / 8, 4, 8, 401);
+      const lv = fbm2(x / 16, y / 16, 3, 4, 402);
+      const m = fbm2(x / 2, y / 2, 2, 32, 403);
+      const v = 1 - Math.abs(fbm2(x / 8, y / 8, 4, 8, 404) * 2 - 1);
+      const [f1, , id] = worley2((x / S) * 4, (y / S) * 4, 4, 405, 0.9);
+      let c = mix3([128, 118, 100], [166, 156, 134], n);
+      if (lv > 0.56) c = mix3(c, [108, 90, 108], Math.min(0.8, (lv - 0.56) * 3));
+      c = c.map((q) => q * (0.94 + m * 0.12));
+      if (v > 0.93) c = mix3(c, [70, 54, 74], Math.min(0.75, (v - 0.93) * 10));
+      if (hash2(id, 3, 406) > 0.86 && f1 < 0.14) {
+        const k = 1 - f1 / 0.14;
+        c = mix3(c, k > 0.55 ? [126, 28, 26] : [84, 40, 42], Math.min(1, k * 1.6));
+      }
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // carne de coloso: las mismas fibras con menos pústulas (y su brillo)
+  colFleshTex() {
+    return fleshGen(false, 0.88);
+  },
+  colFleshEmit() {
+    return fleshGen(true, 0.88);
+  },
+  // Tordo rodado: pelo gris claro con rodelas (círculos claros en una red
+  // más oscura), el pelo peinado en una dirección y mugre.
+  tordo() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const [f1] = worley2((x / S) * 8, (y / S) * 8, 8, 411, 0.8);
+      const n = fbm2(x / 8, y / 8, 3, 8, 412);
+      const dirt = fbm2(x / 16, y / 16, 3, 4, 413);
+      const bl = fbm2(x / 8 + 5, y / 8, 3, 8, 415);
+      const hair = 0.92 + hash2(x, Math.floor(y / 4), 414) * 0.14;
+      // rodelas: círculos claros en una red gris más oscura (menos contraste)
+      let c = mix3([124, 122, 116], [88, 86, 84], Math.min(1, Math.max(0, (f1 - 0.18) * 2.2)));
+      c = mix3(c, [150, 148, 140], Math.max(0, n - 0.62) * 1.4);
+      if (dirt > 0.52) c = mix3(c, [70, 62, 54], Math.min(0.8, (dirt - 0.52) * 2.4));
+      if (bl > 0.66) c = mix3(c, [86, 28, 26], Math.min(0.8, (bl - 0.66) * 3));
+      set(o, c[0] * hair, c[1] * hair, c[2] * hair);
+    });
+  },
+  // Crin y cola: mechones largos, negros y apelmazados.
+  mane() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const st = fbm2(x / 1, y / 16, 2, 0, 421);
+      const k = 0.55 + st * 0.7;
+      set(o, 34 * k, 30 * k, 30 * k);
+    });
+  },
+  // Brocado de oro viejo (las cenefas de la casulla): rombos, mugre y sangre.
+  orphrey() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const u = Math.abs(((x + y) % 16) - 8),
+        v = Math.abs(((x - y + 32) % 16) - 8);
+      const n = fbm2(x / 4, y / 4, 3, 8, 431);
+      const dirt = fbm2(x / 8, y / 8, 3, 4, 432);
+      let c = u + v < 5 ? [176, 138, 62] : u + v < 7 ? [96, 66, 30] : [140, 104, 46];
+      c = c.map((q) => q * (0.8 + n * 0.35));
+      if (dirt > 0.6) c = mix3(c, [70, 16, 14], Math.min(0.85, (dirt - 0.6) * 3));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  clothPurple() {
+    return clothGen([60, 30, 72], 441);
+  },
+  // Lino del alba de un coloso: marfil sucio con trama, manchas de cera,
+  // hollín y sangre vieja (sin pliegues pintados: los pone la malla).
+  albTex() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 8, y / 8, 4, 8, 451);
+      const st = fbm2(x / 16, y / 16, 3, 4, 452);
+      const bl = fbm2(x / 8 + 9, y / 8, 3, 8, 453);
+      const w = (x + y) % 2 === 0 ? 1 : 0.95;
+      let c = mix3([176, 168, 150], [206, 198, 178], n);
+      if (st > 0.56) c = mix3(c, [150, 128, 96], Math.min(0.7, (st - 0.56) * 2.5));
+      if (bl > 0.64) c = mix3(c, [96, 30, 28], Math.min(0.85, (bl - 0.64) * 3.2));
+      set(o, c[0] * w, c[1] * w, c[2] * w);
+    });
+  },
+  // Masa de carne: crema rosada y húmeda, con capilares rojos, estrías más
+  // claras (la piel que no da más de sí), moratones y poros.
+  doughTex() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 8, y / 8, 4, 8, 471);
+      const m = fbm2(x / 16, y / 16, 3, 4, 472);
+      const cap = 1 - Math.abs(fbm2(x / 8, y / 8, 4, 8, 473) * 2 - 1);
+      const wob = fbm2(x / 16, y / 16, 2, 4, 474) * 6;
+      const str = 1 - Math.abs(Math.sin(((y + wob) / S) * Math.PI * 10));
+      const br = fbm2(x / 8 + 7, y / 8, 3, 8, 475);
+      let c = mix3([184, 140, 124], [220, 184, 160], n);
+      c = mix3(c, [162, 112, 104], Math.max(0, m - 0.55) * 1.6);
+      if (str > 0.93 && fbm2(x / 4, y / 16, 2, 16, 476) > 0.55) c = mix3(c, [236, 214, 196], 0.55);
+      if (cap > 0.9) c = mix3(c, [150, 48, 50], Math.min(0.85, (cap - 0.9) * 9));
+      if (br > 0.66) c = mix3(c, [128, 86, 112], Math.min(0.7, (br - 0.66) * 3));
+      if (hash2(x, y, 477) > 0.97) c = c.map((q) => q * 0.8);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // Paño carmesí de la casulla: más vivo que el rojo de las criaturas, con
+  // el brillo del terciopelo gastado, la trama y la mugre.
+  velvetRed() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, 8, 461);
+      const sh = fbm2(x / 8, y / 8, 3, 4, 462);
+      const dirt = fbm2(x / 16, y / 16, 2, 2, 463);
+      const w = (x + y) % 2 === 0 ? 1 : 0.9;
+      let c = mix3([92, 14, 20], [150, 30, 34], n);
+      c = mix3(c, [178, 58, 56], Math.max(0, sh - 0.62) * 1.8);
+      if (dirt > 0.6) c = mix3(c, [46, 12, 14], Math.min(0.7, (dirt - 0.6) * 2.4));
+      set(o, c[0] * w, c[1] * w, c[2] * w);
+    });
+  },
+
   fleshEmit() {
     return fleshGen(true);
   },
@@ -818,7 +944,7 @@ function clothGen(base, seed) {
   });
 }
 
-function fleshGen(emit) {
+function fleshGen(emit, pustK = 0.72) {
   const S = 64;
   return pixels(S, S, (x, y, o) => {
     const n = fbm2(x / 6, y / 6, 4, S / 6, 121);
@@ -829,7 +955,7 @@ function fleshGen(emit) {
     const bruise = fbm2(x / 10 + 3, y / 10, 3, S / 10, 128);
     const fat = fbm2(x / 5, y / 5, 3, S / 5, 123);
     const [f1, , id] = worley2((x / S) * 5, (y / S) * 5, 5, 124, 0.9);
-    const pust = hash2(id, 1, 125) > 0.72 && f1 < 0.16;
+    const pust = hash2(id, 1, 125) > pustK && f1 < 0.16;
     if (emit) {
       if (pust) {
         const k = 1 - f1 / 0.16;

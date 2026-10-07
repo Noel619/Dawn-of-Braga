@@ -86,6 +86,24 @@ export const MAT_DEFS = {
     phong: { specular: 0x6a3a38, shininess: 38 },
   },
   fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.35, phong: { specular: 0x5a3232, shininess: 30 } },
+  // los colosos (carne esculpida, sin UV: triplanar en el espacio del cuerpo)
+  colFlesh: { tex: 'colFleshTex', uv: 1, tri: 0.2, emissiveTex: 'colFleshEmit', emissive: 0xff6a3a, emissiveIntensity: 0.6, phong: { specular: 0x6a3a38, shininess: 30 }, giant: { amp: 0.1, freq: 0.3, speed: 1 } },
+  colSkin: { tex: 'colSkin', uv: 1, tri: 0.3, phong: { specular: 0x3a3430, shininess: 14 } },
+  colDough: { tex: 'doughTex', uv: 1, tri: 0.16, phong: { specular: 0x705050, shininess: 22 } },
+  colFleshDim: { tex: 'colFleshTex', uv: 1, tri: 0.14, emissiveTex: 'colFleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.22, phong: { specular: 0x6a3a38, shininess: 30 }, giant: { amp: 0.25, freq: 0.08, speed: 0.6 } },
+  colRobe: { tex: 'velvetRed', uv: 1, tri: 0.45, phong: { specular: 0x502020, shininess: 12 } },
+  colAlb: { tex: 'albTex', uv: 1, tri: 0.3 },
+  colRobeDark: { tex: 'clothDark', uv: 1, tri: 0.55 },
+  colRobeWhite: { tex: 'albTex', uv: 1, tri: 0.45 },
+  colRobePurple: { tex: 'clothPurple', uv: 1, tri: 0.55 },
+  colOrphrey: { tex: 'orphrey', uv: 1, tri: 0.6, phong: { specular: 0x806030, shininess: 26 } },
+  colTordo: { tex: 'tordo', uv: 1, tri: 0.22 },
+  colMane: { tex: 'mane', uv: 1, tri: 0.5 },
+  clothPurple: { tex: 'clothPurple', uv: 1.4 },
+  mane: { tex: 'mane', uv: 1.0 },
+  colBronze: { tex: 'bronzeAged', uv: 1, tri: 0.12, phong: { specular: 0x806040, shininess: 30 } },
+  colHide: { tex: 'hide', uv: 1, tri: 0.26, phong: { specular: 0x3a2a2a, shininess: 16 } },
+  colBone: { tex: 'bone', uv: 1, tri: 0.45 },
   glass: { tex: 'glass', uv: 0.5, emissiveTex: 'glass', emissive: 0xffffff, emissiveIntensity: 1.3 },
   candle: { tex: 'candle', uv: 2.0, emissive: 0x3a2a10, emissiveIntensity: 1 },
   blood: { tex: 'blood', uv: 0.5 },
@@ -112,7 +130,14 @@ function patch(material, opts = {}) {
   // están (sonda) y oscurecen cerca del suelo como el escenario; así no
   // parecen recortados sobre el fondo
   const probe = !!opts.probe;
-  material.userData.patch = { flesh, bake, wind, probe };
+  // tri: texturizado triplanar (repeticiones por metro) en el espacio del
+  // objeto en reposo: para mallas orgánicas sin UV (los colosos); la textura
+  // se queda pegada a la carne aunque la malla se deforme (piel con huesos)
+  const tri = opts.tri || 0;
+  // giant: carne palpitante a escala de coloso ({ amp: metros, freq: 1/m,
+  // speed }): el latido sigue al cuerpo (espacio del objeto), no al mundo
+  const giant = opts.giant || null;
+  material.userData.patch = { flesh, bake, wind, probe, tri, giant };
   if (probe) material._u = { uProbe: { value: new THREE.Vector3() }, uGround: { value: new THREE.Vector2(0, 0) } };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = G.uTime;
@@ -135,6 +160,7 @@ varying vec3 vAffUv;
 varying float vPulse;
 varying vec3 vSkyDir;
 ${probe ? 'varying float vWY;' : ''}
+${tri ? 'varying vec3 vTriP;\nvarying vec3 vTriN;' : ''}
 ${bake ? 'attribute vec3 aBake;\nvarying vec3 vBake;' : ''}`
     );
     vs = vs.replace(
@@ -148,6 +174,7 @@ ${probe ? 'vWY = (modelMatrix * vec4(transformed, 1.0)).y;' : ''}`
       `#include <begin_vertex>
 vPulse = 0.0;
 ${bake ? 'vBake = aBake;' : ''}
+${tri ? `vTriP = position * ${tri.toFixed(5)};\nvTriN = normal;` : ''}
 ${wind ? `{
   float sway = 1.0 - uv.y;
   transformed += objectNormal * (sin(uTime * 2.3 + position.y * 1.7 + position.x * 0.9) * 0.12 + sin(uTime * 5.1 + position.y * 4.0) * 0.03) * sway;
@@ -160,6 +187,18 @@ ${
   float ph2 = sin(uTime * 4.2 + wp0.x * 3.1 - wp0.z * 2.2);
   vPulse = ph * 0.5 + 0.5;
   transformed += objectNormal * (ph * 0.045 + ph2 * 0.015);
+}`
+    : ''
+}
+${
+  giant
+    ? `{
+  vec3 gp = position * ${(giant.freq ?? 0.25).toFixed(4)};
+  float sp = ${(giant.speed ?? 1).toFixed(3)};
+  float ph = sin(uTime * 1.3 * sp + gp.x * 1.7 + gp.y * 2.3 + gp.z * 1.1);
+  float ph2 = sin(uTime * 2.9 * sp + gp.x * 3.1 - gp.z * 2.6 + gp.y * 0.7);
+  vPulse = ph * 0.5 + 0.5;
+  transformed += normal * (ph * ${(giant.amp ?? 0.2).toFixed(4)} + ph2 * ${((giant.amp ?? 0.2) * 0.3).toFixed(4)});
 }`
     : ''
 }`
@@ -201,6 +240,13 @@ varying float vPulse;
 varying vec3 vSkyDir;
 ${bake ? 'varying vec3 vBake;' : ''}
 ${probe ? 'uniform vec3 uProbe;\nuniform vec2 uGround;\nvarying float vWY;' : ''}
+${tri ? `varying vec3 vTriP;
+varying vec3 vTriN;
+vec4 triSample(sampler2D t){
+  vec3 bw = pow(abs(normalize(vTriN)), vec3(4.0));
+  bw /= (bw.x + bw.y + bw.z);
+  return texture2D(t, vTriP.yz) * bw.x + texture2D(t, vTriP.zx + 0.37) * bw.y + texture2D(t, vTriP.xy + 0.71) * bw.z;
+}` : ''}
 ${SKY_GLSL}`
     );
     fs = fs.replace(
@@ -216,12 +262,23 @@ ${SKY_GLSL}`
     );
     fs = fs.replace(
       '#include <map_fragment>',
-      `#ifdef USE_MAP
+      tri
+        ? `#ifdef USE_MAP
+  diffuseColor *= triSample(map);
+#endif`
+        : `#ifdef USE_MAP
   vec2 muv = mix(vMapUv, vAffUv.xy / vAffUv.z, uAffine);
   vec4 sampledDiffuseColor = texture2D(map, muv);
   diffuseColor *= sampledDiffuseColor;
 #endif`
     );
+    if (tri)
+      fs = fs.replace(
+        '#include <emissivemap_fragment>',
+        `#ifdef USE_EMISSIVEMAP
+  totalEmissiveRadiance *= triSample(emissiveMap).rgb;
+#endif`
+      );
     if (bake) {
       fs = fs.replace(
         '#include <lights_fragment_end>',
@@ -242,16 +299,16 @@ diffuseColor.rgb *= 1.0 - uGround.y * (1.0 - smoothstep(0.0, 1.25, vWY - uGround
 reflectedLight.indirectDiffuse += diffuseColor.rgb * uProbe;`
       );
     }
-    if (flesh) {
+    if (flesh || giant) {
       fs = fs.replace(
-        '#include <emissivemap_fragment>',
-        `#include <emissivemap_fragment>
+        tri ? 'totalEmissiveRadiance *= triSample(emissiveMap).rgb;\n#endif' : '#include <emissivemap_fragment>',
+        `${tri ? 'totalEmissiveRadiance *= triSample(emissiveMap).rgb;\n#endif' : '#include <emissivemap_fragment>'}
 totalEmissiveRadiance *= 0.35 + 0.95 * vPulse * vPulse;`
       );
     }
     shader.fragmentShader = fs;
   };
-  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '') + (wind ? '-wind' : '') + (probe ? '-probe' : '');
+  const ck = 'psx' + (flesh ? '-flesh' : '') + (bake ? '-bake' : '') + (wind ? '-wind' : '') + (probe ? '-probe' : '') + (tri ? '-tri' + tri : '') + (giant ? '-giant' + [giant.amp, giant.freq, giant.speed].join(',') : '');
   material.customProgramCacheKey = () => ck;
   return material;
 }
@@ -267,7 +324,7 @@ export function cloneMat(m) {
   return c;
 }
 
-function build(name, { vertexColors = true, side = THREE.FrontSide, basic = false } = {}) {
+function build(name, { vertexColors = true, side = THREE.FrontSide, basic = false, bake = null, probe = false, tri = 0, giant = null } = {}) {
   const def = MAT_DEFS[name];
   if (!def) throw new Error('Material desconocido: ' + name);
   const params = {
@@ -288,7 +345,7 @@ function build(name, { vertexColors = true, side = THREE.FrontSide, basic = fals
     m = def.phong ? new THREE.MeshPhongMaterial({ ...params, specular: new THREE.Color(def.phong.specular), shininess: def.phong.shininess }) : new THREE.MeshLambertMaterial(params);
   }
   m.userData.def = def;
-  return patch(m, { flesh: def.flesh, bake: vertexColors && !basic });
+  return patch(m, { flesh: def.flesh && !giant, bake: bake ?? (vertexColors && !basic), probe, tri, giant });
 }
 
 // Material de mundo (con colores de vértice horneados).
@@ -303,6 +360,23 @@ export function objMat(name, opts = {}) {
   const key = 'o:' + name + (opts.side === THREE.DoubleSide ? ':ds' : '') + (opts.tint ? ':' + opts.tint : '');
   if (!matCache.has(key)) {
     const m = build(name, { vertexColors: false, side: opts.side });
+    if (opts.tint) m.color = new THREE.Color(opts.tint);
+    matCache.set(key, m);
+  }
+  return matCache.get(key);
+}
+
+// Material de coloso: colores de vértice (oclusión y matices esculpidos), luz
+// horneada del sitio (sonda), triplanar opcional y carne a escala colosal.
+// opts: { tri (repeticiones/m; 0 = usa las UV), giant, side, tint }
+export function colMat(name, opts = {}) {
+  const def = MAT_DEFS[name];
+  if (!def) throw new Error('Material desconocido: ' + name);
+  const tri = opts.tri ?? def.tri ?? 0;
+  const giant = opts.giant === undefined ? def.giant || null : opts.giant;
+  const key = 'col:' + name + ':' + tri + ':' + (giant ? JSON.stringify(giant) : '') + (opts.side === THREE.DoubleSide ? ':ds' : '') + (opts.tint ? ':' + opts.tint : '');
+  if (!matCache.has(key)) {
+    const m = build(name, { vertexColors: true, side: opts.side, bake: false, probe: true, tri, giant });
     if (opts.tint) m.color = new THREE.Color(opts.tint);
     matCache.set(key, m);
   }
