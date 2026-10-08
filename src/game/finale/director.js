@@ -216,8 +216,8 @@ export class Finale {
     const g = this.g,
       p = g.player;
     this.t += dt;
-    // tras el rito no queda nadie entre la cisterna y la plaza
-    if (g.flags['finale:rite'] && !g.flags['boss:turibulario']) {
+    // tras el rito no queda nadie entre la cisterna y la plaza (ni después)
+    if (g.flags['finale:rite']) {
       this._clearT = (this._clearT || 0) - dt;
       if (this._clearT <= 0) {
         this._clearT = 0.5;

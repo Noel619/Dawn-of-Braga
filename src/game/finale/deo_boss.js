@@ -419,7 +419,6 @@ export class DeoBoss {
     this.R.play(C.bow, { blend: 0.4 });
     // suelta las torres y, al caer, se apoya en la plaza y en los tejados
     this.plantT = 2.6;
-    this._deadFrom = null;
     this.onBow && this.onBow();
   }
   _bowPlant() {
