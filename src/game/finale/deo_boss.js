@@ -80,6 +80,13 @@ export class DeoBoss {
     // efectos: los ojos y la boca arden por dentro
     this.fx = new ColFX(M);
     this.eyeGlow = this.E.fx.eyes.map((e) => this.fx.glow(e.bone, e.p, 3.4, 0xffa040, { pulse: 0.25 }));
+    // un brillo que late sobre el sigilo de cada brazo alzado (se lee de lejos)
+    for (const sg of this.sigils) {
+      const d = this.E.sigils.find((q) => q.id === sg.id);
+      if (sg.eye || !d) continue;
+      const n = new THREE.Vector3(...(d.normal || [0, 1, 0])).normalize();
+      sg.glow = this.fx.glow(d.bone, [d.pos[0] + n.x * 0.5, d.pos[1] + n.y * 0.5, d.pos[2] + n.z * 0.5], 4.2, 0xffa040, { pulse: 0.35, opacity: 0.8 });
+    }
     this.mouthGlow = this.fx.glow(this.E.fx.mouth.bone, this.E.fx.mouth.p, 6, 0xff5010, { pulse: 0.3, opacity: 0.7 });
     const L = game.fx.lights;
     this.lights = {
@@ -148,6 +155,7 @@ export class DeoBoss {
     for (const s of this.sigils) {
       s.hp = s.max;
       s.dead = false;
+      if (s.glow) s.glow.visible = true;
       for (const m of s.meshes) {
         m.visible = true;
         if (m.material.emissive) m.material.emissiveIntensity = 2.2;
@@ -512,6 +520,7 @@ export class DeoBoss {
   killSigil(s) {
     const g = this.g;
     s.dead = true;
+    if (s.glow) s.glow.visible = false;
     for (const m of s.meshes) if (m.material.emissive) m.material.emissiveIntensity = 0.05;
     const at = this.sigilPos(s, _v);
     g.fx.blood.emit(at.x, at.y, at.z, 120, { speed: 10, up: 3 });
