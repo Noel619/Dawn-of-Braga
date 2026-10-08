@@ -280,7 +280,8 @@ export function slerpE(a, b, t, out = [0, 0, 0]) {
 // resto (acción superpuesta: la cadera empieza, el pecho la sigue, el brazo
 // después y la hoja llega la última y se pasa de largo). Al final del clip
 // el retraso se recupera suavemente para acabar exactamente en la última clave.
-// Canales que empiezan por 'w' son pesos sin unidades (p. ej. wGrip).
+// Canales que empiezan por 'w' son pesos sin unidades (p. ej. wGrip); los
+// que empiezan por 's_' son escalas añadidas a un hueso (0 = su tamaño).
 // opts.mono: ningún canal rebasa sus claves ni retrocede entre ellas
 // (tangentes limitadas como en Fritsch-Carlson): arcos limpios sin rebotes.
 export function clip(name, dur, keys, opts = {}) {
@@ -296,7 +297,7 @@ export function clip(name, dur, keys, opts = {}) {
         p[j] = [1, 0, 0];
         continue;
       }
-      p[j] = v ? v.map((x) => (j === 'root' || j.startsWith('ik') ? x / 100 : j[0] === 'w' ? x : x * DEG)) : [0, 0, 0];
+      p[j] = v ? v.map((x) => (j === 'root' || j.startsWith('ik') ? x / 100 : j[0] === 'w' || j.startsWith('s_') ? x : x * DEG)) : [0, 0, 0];
     }
     return { t, pose: p, ease: ease || 'smooth', m: {}, tk: (ko && ko.k) || 1 };
   });
@@ -485,7 +486,7 @@ export function blendInto(base, over, w, mask = null, jw = null) {
     const ww = jw ? w * (jw[j] ?? 1) : w;
     if (ww <= 0) continue;
     const b = over[j];
-    if (j === 'root' || j.startsWith('ik') || j.startsWith('elbow') || j[0] === 'w') {
+    if (j === 'root' || j.startsWith('ik') || j.startsWith('elbow') || j[0] === 'w' || j.startsWith('s_')) {
       const a = base[j] || Z3;
       base[j] = [a[0] + (b[0] - a[0]) * ww, a[1] + (b[1] - a[1]) * ww, a[2] + (b[2] - a[2]) * ww];
     } else base[j] = slerpE(base[j] || Z3, b, ww, base[j] && base[j] !== Z3 ? base[j] : [0, 0, 0]);
@@ -590,7 +591,7 @@ export class Animator {
         const f = this.from[j];
         if (f) {
           const fw = this.fromW[j] ?? 1;
-          out[j] = j === 'root' ? [f[0] + (s[j][0] - f[0]) * k, f[1] + (s[j][1] - f[1]) * k, f[2] + (s[j][2] - f[2]) * k] : slerpE(f, s[j], k, out[j] || [0, 0, 0]);
+          out[j] = j === 'root' || j.startsWith('s_') ? [f[0] + (s[j][0] - f[0]) * k, f[1] + (s[j][1] - f[1]) * k, f[2] + (s[j][2] - f[2]) * k] : slerpE(f, s[j], k, out[j] || [0, 0, 0]);
           jw[j] = fw + (1 - fw) * k;
         } else {
           out[j] = (out[j] || [0, 0, 0]).fill(0).map((_, q) => s[j][q]);
