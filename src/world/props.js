@@ -1192,7 +1192,13 @@ export function fleshGrowth(ctx, x, y, z, size = 1, seed = 1, o = {}) {
 // Charco/mancha (decal) -> se agrupa y dibuja con transparencia.
 export function decal(ctx, x, y, z, size, tex = 'splat', rot = null, o = {}) {
   if (!ctx.decals) return;
-  ctx.decals.push({ x, y, z, size, tex, rot: rot ?? (x * 7.13 + z * 3.7) % (Math.PI * 2), wall: o.wall, opacity: o.opacity ?? 0.9 });
+  const d = { x, y, z, size, tex, rot: rot ?? (x * 7.13 + z * 3.7) % (Math.PI * 2), wall: o.wall, opacity: o.opacity ?? 0.9 };
+  // (en un grupo del mundo, se oculta con él: la casa que se viene abajo)
+  if (ctx._grp) {
+    d.group = ctx._grp.name;
+    if (ctx._grpStack && ctx._grpStack.length) d.groups = [...ctx._grpStack.map((q) => q.name), ctx._grp.name];
+  }
+  ctx.decals.push(d);
 }
 
 // Estandarte colgante (malla recortada propia).

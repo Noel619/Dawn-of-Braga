@@ -49,8 +49,8 @@ export function buildNW(ctx, S, L) {
   P.firewood(ctx, -46.1, 0, -20.8, Math.PI / 2, 3);
   house(ctx, { x0: -48, z0: -32, x1: -45, z1: -24.5, front: 'e', seed: 1104, h: 6.2 });
   house(ctx, { x0: -48, z0: -40, x1: -40, z1: -32, front: 's', seed: 1105, h: 7.6, lit: true });
-  house(ctx, { x0: -31, z0: -32, x1: -24, z1: -22, front: 'w', seed: 1106, h: 6.8 });
-  house(ctx, { x0: -31, z0: -40, x1: -24, z1: -32, front: 'n', seed: 1107, h: 7.2, windows: false, jetty: 0 });
+  house(ctx, { x0: -31, z0: -32, x1: -24, z1: -22, front: 'w', seed: 1106, h: 6.8, wreck: 'centroO1' });
+  house(ctx, { x0: -31, z0: -40, x1: -24, z1: -32, front: 'n', seed: 1107, h: 7.2, windows: false, jetty: 0, wreck: 'centroO2' });
   P.niche(ctx, -31, 1.5, -27.5, 'w');
   P.laundry(ctx, -44.95, -27.5, -31.05, -27.5, 4.6, 1103);
   P.laundry(ctx, -38, -31.95, -38, -19.55, 4.9, 1104);
@@ -98,29 +98,36 @@ export function buildNW(ctx, S, L) {
   P.lantern(ctx, -36.85, 2.7, -32, 0, true);
 
   // --- callejón del Arco: de la plazuela a la Calle de la Catedral
+  // (las casas entre la plaza de la catedral y la del pan, y lo que cuelga de
+  // ellas, van en el grupo 'centro': revientan cuando sale el coloso; ver
+  // finale/director.js y las ruinas en level_city.js)
   lane(ctx, S, -31, -22, -3.5, -19.5);
+  ctx.beginGroup('centro');
   house(ctx, { x0: -24, z0: -31, x1: -18, z1: -22, front: 's', seed: 1109, h: 7.4, lit: true });
   overpass(ctx, -23, -22, -19.2, -19.5, 3.5, 6.3, 'x', { lit: true });
   house(ctx, { x0: -15.5, z0: -31, x1: -3.5, z1: -22, front: 'e', seed: 1110, h: 7.8, lit: true });
-  P.sign(ctx, -18.6, 2.95, -19.5, Math.PI, 'cup');
   P.lantern(ctx, -12, 2.75, -22, 0, true);
-  P.lantern(ctx, -27.5, 2.75, -19.5, Math.PI, false);
   P.laundry(ctx, -10, -21.95, -10, -19.55, 4.4, 1107);
+  P.decal(ctx, -24.2, 1.8, -21.97, 1.1, 'sigil', 0, { wall: 'z' });
+  ctx.endGroup();
+  P.sign(ctx, -18.6, 2.95, -19.5, Math.PI, 'cup');
+  P.lantern(ctx, -27.5, 2.75, -19.5, Math.PI, false);
   P.crate(ctx, -29.7, 0, -21.2, 0.8, 0.2);
   P.sacks(ctx, -25.5, 0, -21.5, 3, 1108);
   P.jar(ctx, -6.4, 0, -21.4, 0.9);
   bakeCorpse(wb, -13.6, 0, -20.6, 1.6, 'curl', 'villager', 5);
   P.decal(ctx, -13.6, 0.02, -20.6, 1.6);
-  P.decal(ctx, -24.2, 1.8, -21.97, 1.1, 'sigil', 0, { wall: 'z' });
   ctx.rats.push({ x: -29.2, y: 0, z: -20.2, n: 2 });
 
   // --- travesía de la Sé (con un tramo cubierto) hasta la plaza de la catedral
   lane(ctx, S, -18, -40, -15.5, -22);
+  ctx.beginGroup('centro');
   house(ctx, { x0: -24, z0: -40, x1: -18, z1: -31, front: 'e', seed: 1111, h: 8 });
   house(ctx, { x0: -15.5, z0: -40, x1: -3.5, z1: -31, front: 'n', seed: 1112, h: 8.2 });
   overpass(ctx, -18, -36.2, -15.5, -33, 3.3, 6.6, 'z', {});
   P.wallTorch(ctx, -15.5, 2.5, -27, 'w');
   P.sign(ctx, -18, 2.95, -29.5, -Math.PI / 2, 'spindle');
+  ctx.endGroup();
   P.barrel(ctx, -17.4, 0, -38.6);
   P.decal(ctx, -16.8, 0.02, -30, 1.4);
   P.decal(ctx, -16.6, 0.02, -34.6, 2.2);
@@ -249,7 +256,7 @@ export function buildSW(ctx, S, L) {
   // callejón del Rastro: de la plaza al patio
   lane(ctx, S, -23, 10.5, -14, 14);
   lane(ctx, S, -23, 14, -20.5, 16);
-  house(ctx, { x0: -23, z0: 3.5, x1: -14, z1: 10.5, front: 'e', seed: 1206, h: 7 });
+  house(ctx, { x0: -23, z0: 3.5, x1: -14, z1: 10.5, front: 'e', seed: 1206, h: 7, wreck: 'pracaO' });
   P.sign(ctx, -16.5, 2.95, 14, Math.PI, 1);
   P.laundry(ctx, -18.5, 10.55, -18.5, 13.95, 4.1, 1202);
   P.crate(ctx, -22.3, 0, 11.3, 0.8, 0.5);
@@ -410,11 +417,14 @@ export function buildSW(ctx, S, L) {
 export function buildNE(ctx, S, L) {
   const wb = ctx.wb;
   lane(ctx, S, 3.5, -24.5, 22, -22);
+  // (revientan con el coloso: grupo 'centro')
+  ctx.beginGroup('centro');
   house(ctx, { x0: 3.5, z0: -31, x1: 12.5, z1: -24.5, front: 'w', seed: 1301, h: 7.2 });
   house(ctx, { x0: 12.5, z0: -31, x1: 22, z1: -24.5, front: 's', seed: 1302, h: 6.6, lit: true });
   house(ctx, { x0: 14, z0: -22, x1: 22, z1: -14, front: 'n', seed: 1303, h: 7 });
   P.laundry(ctx, 8, -24.45, 8, -22.05, 4.3, 1301);
   P.lantern(ctx, 12.5, 2.75, -24.5, Math.PI, true);
+  ctx.endGroup();
   P.barrel(ctx, 20.9, 0, -23.8);
   P.crate(ctx, 4.4, 0, -23.8, 0.7, 0.4);
   bakeCorpse(wb, 16.2, 0, -23.3, 1.4, 'face', 'villager', 3);
@@ -449,7 +459,7 @@ export function buildNE(ctx, S, L) {
   P.basket(ctx, 33.2, 0, -31.2, { fill: 'clothBlue', fillTint: [0.3, 0.35, 0.8] });
   bakeCorpse(wb, 24.6, 0, -27.3, 2.2, 'kneel', 'villager', 4);
   P.decal(ctx, 25.4, 0.02, -27.2, 2.4);
-  house(ctx, { x0: 22, z0: -37.5, x1: 34, z1: -32, front: 's', seed: 1304, h: 7.4, lit: true });
+  house(ctx, { x0: 22, z0: -37.5, x1: 34, z1: -32, front: 's', seed: 1304, h: 7.4, lit: true, wreck: 'centroE' });
   house(ctx, { x0: 34, z0: -37.5, x1: 44, z1: -32, front: 's', seed: 1305, h: 7 });
   house(ctx, { x0: 24.5, z0: -20, x1: 34, z1: -12, front: 'n', seed: 1306, h: 6.8 });
   ctx.crows.push({ x: 24.6, y: 0, z: -27.3, r: 1.2, n: 3 });

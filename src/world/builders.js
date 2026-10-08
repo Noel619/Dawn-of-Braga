@@ -911,6 +911,15 @@ function sideFrame(side, x0, z0, x1, z1) {
 //             | x/z (coordenada mundo), w, h }]
 //   walls: [{ x0, z0, x1, z1, doors: [{ at (coordenada mundo a lo largo), w, h }] }]
 export function house(ctx, s) {
+  // (en el bloque que revienta con el coloso, cada casa en su propio grupo:
+  // se vienen abajo una tras otra, en ola; ver finale/director.js)
+  const sub = ctx._grp && ctx._grp.name === 'centro' && ctx.beginGroup ? 'centro:' + (ctx.centroN = (ctx.centroN || 0) + 1) : null;
+  if (sub) ctx.beginGroup(sub);
+  const r = houseBody(ctx, s, sub);
+  if (sub) ctx.endGroup();
+  return r;
+}
+function houseBody(ctx, s, sub) {
   const wb = ctx.wb;
   const { x0, z0, x1, z1 } = s;
   const rng = new RNG(s.seed ?? hashSeed(x0, z0, x1, z1));
@@ -941,7 +950,7 @@ export function house(ctx, s) {
     if (ox > 0.3 && Math.abs(r.z0 - z1) < 0.02) nb.s = true;
     if (ox > 0.3 && Math.abs(r.z1 - z0) < 0.02) nb.n = true;
   }
-  prevHouses.push({ x0, z0, x1, z1, front, jetty, hollow, seed: s.seed });
+  prevHouses.push({ x0, z0, x1, z1, front, jetty, hollow, seed: s.seed, h, style, sub, group: ctx._grp ? ctx._grp.name : null, groups: ctx._grp ? [...(ctx._grpStack || []).map((q) => q.name), ctx._grp.name] : null });
 
   // colisión del volumen (las visitables la llevan pieza a pieza)
   if (s.collide !== false && !hollow) ctx.col.add(x0, 0, z0, x1, h, z1);

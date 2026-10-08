@@ -72,7 +72,7 @@ export class Game {
     const lvl = (this.level = buildLevel());
     this.world = { col: lvl.ctx.col, S: lvl.S, C: lvl.C };
     for (const m of lvl.meshes) this.scene.add(m);
-    buildDecals(this.scene, lvl.ctx.decals);
+    const decalMeshes = buildDecals(this.scene, lvl.ctx.decals);
     const banners = buildBanners(this.scene, lvl.ctx.banners);
     const shafts = new LightShafts(this.scene);
     for (const s of lvl.ctx.shafts) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
@@ -84,31 +84,46 @@ export class Game {
     // grupos del mundo que se ocultan juntos (ver level.js: beginGroup)
     this.groups = {};
     const grp = (name) => this.groups[name] || (this.groups[name] = { meshes: [], boxes: [], fires: [], lights: [], on: true });
-    for (const m of lvl.meshes) if (m.userData.group) grp(m.userData.group).meshes.push(m);
-    for (const m of banners) if (m.userData.group) grp(m.userData.group).meshes.push(m);
-    for (const b of lvl.ctx.col.boxes) if (b.group) grp(b.group).boxes.push(b);
+    // (una pieza puede estar en varios grupos anidados: se ve sólo si lo
+    // están todos; se apunta en cada uno)
+    const reg = (o, names, list) => {
+      o._groups = names;
+      for (const n of names) grp(n)[list].push(o);
+    };
+    const namesOf = (gs, g) => gs || (g ? [g] : null);
+    for (const m of [...lvl.meshes, ...banners, ...decalMeshes]) {
+      const ns = namesOf(m.userData.groups, m.userData.group);
+      if (ns) reg(m, ns, 'meshes');
+    }
+    for (const b of lvl.ctx.col.boxes) {
+      const ns = namesOf(b.groups, b.group);
+      if (ns) reg(b, ns, 'boxes');
+    }
     for (const f of lvl.ctx.fires) {
       const e = this.fx.fires.add(f);
       // (los de un grupo no se purgan al apagarse: vuelven al mostrarlo)
-      if (f.group) {
+      const ns = namesOf(f.groups, f.group);
+      if (ns) {
         e.keep = true;
-        grp(f.group).fires.push(e);
+        reg(e, ns, 'fires');
       }
     }
     this.fx.lights = new LightPool(this.scene, 8);
     for (const f of lvl.ctx.fires) if (f.light !== false && f.s >= 0.4) {
       const l = this.fx.lights.add({ x: f.x, y: f.y + 0.6 + f.s * 0.3, z: f.z, intensity: 8 + f.s * 8, range: 8 + f.s * 3 });
-      if (f.group) grp(f.group).lights.push(l);
+      const ns = namesOf(f.groups, f.group);
+      if (ns) reg(l, ns, 'lights');
     }
     for (const d of lvl.ctx.dynLights) {
       const l = this.fx.lights.add({ ...d, intensity: d.intensity * 2.6, color: d.color ?? 0xff7a30 });
-      if (d.group) grp(d.group).lights.push(l);
+      const ns = namesOf(d.groups, d.group);
+      if (ns) reg(l, ns, 'lights');
     }
     this.bossLight = new THREE.PointLight(0xff6a20, 0, 14, 1.5);
     this.scene.add(this.bossLight);
     // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
     // que deja el rito en la cisterna, hasta entonces
-    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate']) this.setGroupVisible(n, false);
+    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin']) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);
@@ -585,10 +600,12 @@ export class Game {
     const G = this.groups[name];
     if (!G || G.on === on) return;
     G.on = on;
-    for (const m of G.meshes) m.visible = on;
-    for (const b of G.boxes) b.enabled = on;
-    for (const f of G.fires) f.on = on;
-    for (const l of G.lights) l.on = on;
+    // (visible si todos sus grupos lo están)
+    const all = (o) => !o._groups || o._groups.every((n) => this.groups[n].on);
+    for (const m of G.meshes) m.visible = on && all(m);
+    for (const b of G.boxes) b.enabled = on && all(b);
+    for (const f of G.fires) f.on = on && all(f);
+    for (const l of G.lights) l.on = on && all(l);
     this.fx.fires.refresh(this.camera.position.x, this.camera.position.z);
   }
   // Un mensaje del guion en la cola de las pistas (de uno en uno: varios a la
@@ -700,16 +717,37 @@ export class Game {
     p.visY = p.body.pos.y;
     p.yaw = it.axis === 'x' ? (dir < 0 ? Math.PI : 0) : dir < 0 ? -Math.PI / 2 : Math.PI / 2;
     this.camRig.snapTo(p);
-    // en la cisterna ya no hay pelea: el rito (ver finale/rite.js)
-    if (it.boss === 'turibulario') {
-      if (!this.flags['finale:rite'] && !this.cutscene) this.startRite();
-      return;
-    }
+    // (tras el rito, en la cisterna ya no queda nadie)
+    if (it.boss === 'turibulario' && this.flags['finale:rite']) return;
     if (!this.activeBoss) this.startBoss(b);
   }
-  startRite() {
+  // El arzobispo, vencido en la cisterna: no muere, cae de rodillas y empieza
+  // el rito (el dios se lo lleva a través de la cúpula). Devuelve true si se
+  // encarga (Enemy.die no lo mata).
+  archbishopDefeated(e) {
+    if (this.cutscene || this.flags['finale:rite']) return false;
+    e.hp = 1;
+    e.scripted = true;
+    e.state = 'bossIdle';
+    e.atk = null;
+    e.vx = e.vz = 0;
+    e.data.censerTarget = null;
+    // (se le doblan las rodillas: el principio de su muerte)
+    e.anim.play(e.T.clips.death, { blend: 0.06 });
+    this.activeBoss = null;
+    this.lockTarget = null;
+    this.audio.stopMusic();
+    this.audio.enemyVoice(e, 'death');
+    this.hitstop = Math.max(this.hitstop, 0.2);
+    this.slowmo = { t: 0.8, k: 0.35 };
+    this.flash = Math.max(this.flash, 0.4);
+    this.camRig.shake(0.5);
+    this.startRite(e);
+    return true;
+  }
+  startRite(from = null) {
     this.hunt.reset();
-    this.cutscene = new RiteCutscene(this);
+    this.cutscene = new RiteCutscene(this, from);
     this.cutscene.start();
   }
   // el arzobispo de la cisterna ya no está tras el rito (se lo llevó el dios)

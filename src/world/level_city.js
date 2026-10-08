@@ -96,13 +96,16 @@ export function buildPraca(ctx, S, L) {
   floor(ctx, -14, -16.5, 14, 14, 'flag');
   wb.cylinder('cobble', 0, -0.19, 0, 7.5, 7.5, 0.2, 16, { capTop: true, ao: false });
 
-  // soportales en el lado norte: la planta alta vuela sobre columnas
+  // soportales en el lado norte: la planta alta vuela sobre columnas (revientan
+  // con el bloque cuando sale el coloso: grupo 'centro')
+  ctx.beginGroup('centro');
   house(ctx, { x0: -14, z0: -19.5, x1: -3.5, z1: -16.5, front: 's', seed: 201, lit: true, h: 7.4, style: 'timber', jetty: 2.5, arcade: true });
   house(ctx, { x0: 3.5, z0: -22, x1: 14, z1: -16.5, front: 's', seed: 202, h: 8, style: 'plaster', jetty: 2.5, arcade: true });
+  ctx.endGroup();
   house(ctx, { x0: -12.5, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true });
-  house(ctx, { x0: 3.5, z0: 14, x1: 14, z1: 22, front: 'n', seed: 204 });
-  house(ctx, { x0: 14, z0: -14, x1: 22, z1: -3, front: 'w', seed: 205, h: 7 });
-  house(ctx, { x0: 14, z0: 3, x1: 23, z1: 11, front: 'w', seed: 206, lit: true });
+  house(ctx, { x0: 3.5, z0: 14, x1: 14, z1: 22, front: 'n', seed: 204, wreck: 'pracaS' });
+  house(ctx, { x0: 14, z0: -14, x1: 22, z1: -3, front: 'w', seed: 205, h: 7, wreck: 'pracaE1' });
+  house(ctx, { x0: 14, z0: 3, x1: 23, z1: 11, front: 'w', seed: 206, lit: true, wreck: 'pracaE2' });
   // (la taberna ocupa el lado oeste al norte del Soto: level_barrios.js)
 
   P.fountain(ctx, 0, 0, 0);
@@ -144,6 +147,7 @@ export function buildPraca(ctx, S, L) {
   P.dropped(ctx, 3.4, 0, 9.9, 1.4, 'shield');
   P.dropped(ctx, -6.9, 0, -1.4, 0.2, 'sword');
   // bajo los soportales: bancos, cajas y el género que nadie recogió
+  ctx.beginGroup('centro');
   P.bench(ctx, -11.2, 0, -16.1, 1.6, 0);
   P.bench(ctx, 9.4, 0, -16.1, 1.6, 0);
   P.crate(ctx, -5.2, 0, -16, 0.7, 0.2);
@@ -151,9 +155,10 @@ export function buildPraca(ctx, S, L) {
   P.barrel(ctx, 12.8, 0, -15.7);
   P.sign(ctx, -6.2, 2.7, -16.5, 0, 1);
   P.sign(ctx, 6.1, 2.7, -16.5, 0, 2);
-  P.sign(ctx, -9.2, 2.95, 14, Math.PI, 3);
   P.lantern(ctx, -11.9, 2.6, -16.5, 0, true);
   P.lantern(ctx, 1.6, 2.6, -16.5, 0, true);
+  ctx.endGroup();
+  P.sign(ctx, -9.2, 2.95, 14, Math.PI, 3);
   P.lantern(ctx, 14, 2.75, 7.6, -Math.PI / 2, true);
   // cuervos en la horca, en el pilón de la fuente y sobre un cadáver
   ctx.crows.push({ pts: [[-9.6, 5.5, -7.6], [-8.46, 5.5, -8.22], [-7.58, 5.5, -8.7]], yaw: 0.5 });
@@ -180,13 +185,29 @@ export function buildRuaSe(ctx, S, L) {
   // soportales): solapados a la misma altura parpadeaban
   floor(ctx, -3.5, -40, 3.5, -16.5, 'cobble');
   // (fachadas y cruces con los callejones del Arco y de las Ánimas: level_barrios.js)
-  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5, wreck: 'casaS' });
-  // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza
+  // Lo que revienta cuando sale el coloso (grupo 'centro'): la casa de la
+  // esquina, el arco de la Sé y lo que cuelga de las fachadas
+  ctx.beginGroup('centro');
+  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5 });
+  // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza (se
+  // viene abajo con la ola, en su grupo: ver finale/director.js)
+  ctx.beginGroup('centro:arco');
   archWall(ctx, -3.5, 3.5, -38.4, -37.6, 7.4, 0, 4.2, 5.0, { slices: 10 });
   wb.box('ashlar', -3.6, 7.4, -38.5, 3.6, 7.7, -37.5, { ao: false });
   merlons(ctx, -3.5, -38, 3.5, -38, 7.7, { collide: false, w: 0.6, gap: 0.5, h: 0.6, t: 0.5 });
   P.veiledStatue(ctx, 0, 5.95, -37.35, 0, { ped: 0 });
   P.banner(ctx, 0, 5.3, -37.5, 0, 'bannerBlack', 1.2, 2.2);
+  ctx.endGroup();
+  P.veiledStatue(ctx, -3.1, 2.4, -26.5, Math.PI / 2, { ped: 0 });
+  wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false, faces: 'tnsewb' });
+  P.wallTorch(ctx, 3.5, 2.8, -19.2, 'w');
+  P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -37.4, -31] });
+  P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
+  P.laundry(ctx, -3.45, -33.8, 3.45, -33.8, 4.6, 15);
+  P.sign(ctx, -3.5, 2.95, -24.6, Math.PI / 2, 3);
+  P.sign(ctx, 3.5, 2.95, -28.8, -Math.PI / 2, 0);
+  P.lantern(ctx, -3.5, 2.75, -29.6, Math.PI / 2, true);
+  ctx.endGroup();
   // barricada a medio derribar
   P.cart(ctx, 1.6, 0, -29.6, 1.5, { tipped: true });
   P.barrel(ctx, -1.2, 0, -30.9, { lying: true, rot: 0.2 });
@@ -197,15 +218,6 @@ export function buildRuaSe(ctx, S, L) {
   bakeCorpse(wb, 1.8, 0, -35, -2.2, 'back', 'villager', 3);
   P.decal(ctx, -1.6, 0.02, -26.6, 2.2);
   P.decal(ctx, 0, 0.02, -18, 1.6);
-  P.veiledStatue(ctx, -3.1, 2.4, -26.5, Math.PI / 2, { ped: 0 });
-  wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false, faces: 'tnsewb' });
-  P.wallTorch(ctx, 3.5, 2.8, -19.2, 'w');
-  P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -37.4, -31] });
-  P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
-  P.laundry(ctx, -3.45, -33.8, 3.45, -33.8, 4.6, 15);
-  P.sign(ctx, -3.5, 2.95, -24.6, Math.PI / 2, 3);
-  P.sign(ctx, 3.5, 2.95, -28.8, -Math.PI / 2, 0);
-  P.lantern(ctx, -3.5, 2.75, -29.6, Math.PI / 2, true);
   P.dropped(ctx, -1.9, 0, -32.6, 0.3, 'spear');
   P.dropped(ctx, 1.2, 0, -21.6, 2.2, 'helmet');
   P.dropped(ctx, -2.3, 0, -29.2, 1.0, 'shield');
@@ -260,7 +272,9 @@ export function buildLargo(ctx, S, L) {
   floor(ctx, -18, -56, 22, -40, 'flag');
   // (los tejados de las casas de la plaza se vienen abajo con los golpes del
   // jefe final: wreck; ver finale/wrecks.js)
-  house(ctx, { x0: 12.5, z0: -40, x1: 22, z1: -31, front: 'n', seed: 402, lit: true, wreck: 'casaSE' });
+  ctx.beginGroup('centro');
+  house(ctx, { x0: 12.5, z0: -40, x1: 22, z1: -31, front: 'n', seed: 402, lit: true });
+  ctx.endGroup();
   house(ctx, { x0: -27, z0: -48, x1: -18, z1: -40, front: 'e', seed: 403, h: 7.8, wreck: 'casaO' });
   house(ctx, { x0: -27, z0: -56, x1: -18, z1: -48, front: 'e', seed: 404, burned: true });
   // muros al norte flanqueando la Sé (también se rompen: lo alto se cae y
@@ -888,4 +902,97 @@ export function buildFerraria(ctx, S, L) {
     { id: 'ferraria', rects: [[-3.5, 14, 3.5, 42, -1, 10], [-14, 42, 14, 58, -1, 10]], atmo: 'city' }
   );
   L.map.push({ id: 'ferraria', r: [-3.5, 14, 3.5, 42] }, { id: 'ferraria', r: [-14, 42, 14, 58] }, { id: 'smithy', r: [-26, 42, -14, 56] });
+}
+
+// ======================================================================== EL CENTRO EN RUINAS
+// Lo que queda de las manzanas entre la plaza de la catedral y la del pan
+// cuando sale el coloso (grupo 'centroRuin', oculto hasta entonces; las casas
+// enteras van en 'centro'): de cada casa, los muñones de los muros de la planta
+// baja, con huecos por los que se pasa, un montón de cascotes con tejas y
+// vigas en medio y el suelo tiznado; humean, y alguna aún arde. Del arco de la
+// Sé, los sillares en la calle. Así el atrio, la calle y la plaza del pan son
+// un solo campo de batalla.
+export function buildCentroRuin(ctx, houses) {
+  const wb = ctx.wb;
+  ctx.beginGroup('centroRuin');
+  const SOOT = [0.42, 0.38, 0.35];
+  houses.forEach((r, hi) => {
+    // (cada ruina con su casa: aparece cuando ésta se viene abajo)
+    if (r.sub) ctx.beginGroup(r.sub.replace('centro:', 'centroRuin:'));
+    const rng = new RNG((r.seed || hi * 97) * 7 + 13);
+    const { x0, z0, x1, z1 } = r;
+    const W = x1 - x0,
+      D = z1 - z0;
+    const wall = r.style === 'plaster' ? 'plaster' : 'wallstone';
+    // el suelo de la casa, al aire: tierra y losas rotas, tiznado
+    wb.box('dirt', x0, -0.02, z0, x1, 0.025, z1, { faces: 't', ao: false, tint: SOOT, sub: 4 });
+    for (let k = 0; k < 3; k++) {
+      const px = rng.range(x0 + 0.6, x1 - 1.6),
+        pz = rng.range(z0 + 0.6, z1 - 1.6);
+      wb.box('flag', px, 0.02, pz, px + rng.range(0.8, 1.6), 0.05, pz + rng.range(0.8, 1.6), { faces: 't', ao: false, tint: [0.5, 0.46, 0.42] });
+    }
+    // los muñones de los muros, a trozos y con huecos (al menos uno por lado)
+    const T = 0.42;
+    const sides = [
+      [x0, z0, x1, z0 + T, 'x'],
+      [x0, z1 - T, x1, z1, 'x'],
+      [x0, z0, x0 + T, z1, 'z'],
+      [x1 - T, z0, x1, z1, 'z'],
+    ];
+    for (const [a0, b0, a1, b1, ax] of sides) {
+      const L = ax === 'x' ? a1 - a0 : b1 - b0;
+      const gapAt = rng.range(0.2, 0.75) * L;
+      let a = 0;
+      while (a < L - 0.05) {
+        const w = Math.min(L - a, rng.range(0.7, 2.0));
+        const mid = a + w / 2;
+        // el hueco: de 1,6 m o más, y algún otro al azar
+        const gap = Math.abs(mid - gapAt) < 0.9 || rng.chance(0.2);
+        if (!gap) {
+          const hh = rng.chance(0.25) ? rng.range(0.2, 0.5) : rng.range(0.6, 2.6);
+          const p0 = ax === 'x' ? [a0 + a, b0] : [a0, b0 + a];
+          const p1 = ax === 'x' ? [a0 + a + w, b1] : [a1, b0 + a + w];
+          solid(ctx, wall, p0[0], 0, p0[1], p1[0], hh, p1[1], { sub: 2, tint: [0.66, 0.6, 0.55] });
+          // el borde mellado: un sillar suelto encima, de vez en cuando
+          if (hh > 0.6 && rng.chance(0.45)) P.rubble(ctx, (p0[0] + p1[0]) / 2, hh, (p0[1] + p1[1]) / 2, 2, hi * 31 + Math.round(a * 10), 0.25, { scale: 0.7, mat: wall });
+        }
+        a += w;
+      }
+    }
+    // el montón de cascotes, tejas y vigas
+    const cx = (x0 + x1) / 2 + rng.range(-W, W) * 0.12,
+      cz = (z0 + z1) / 2 + rng.range(-D, D) * 0.12;
+    const spread = Math.min(W, D) * 0.3;
+    P.rubble(ctx, cx, 0, cz, 16, hi * 53 + 5, spread, { scale: 1.6, blocks: 0.6, mat: wall });
+    P.rubble(ctx, cx + rng.range(-1, 1), 0.35, cz + rng.range(-1, 1), 7, hi * 53 + 9, spread * 0.6, { scale: 1.2, mat: 'wallstone' });
+    ctx.col.add(cx - spread * 0.6, 0, cz - spread * 0.6, cx + spread * 0.6, 0.85, cz + spread * 0.6);
+    // tejas: faldones partidos que se apoyan en el montón
+    for (let k = 0; k < 2; k++) {
+      const a = rng.range(0, Math.PI * 2);
+      const px = cx + Math.cos(a) * spread * 0.9,
+        pz = cz + Math.sin(a) * spread * 0.9;
+      wb.push();
+      wb.translate(px, 0.45, pz);
+      wb.rotateY(rng.range(0, Math.PI));
+      wb.rotateX(rng.range(0.25, 0.6) * (k ? 1 : -1));
+      wb.box('roof', -rng.range(0.9, 1.6), -0.08, -rng.range(0.6, 1.1), rng.range(0.9, 1.6), 0.08, rng.range(0.6, 1.1), { ao: false, tint: [0.62, 0.56, 0.5] });
+      wb.pop();
+    }
+    // vigas tiradas y alguna clavada en el montón
+    for (let k = 0; k < 3; k++) {
+      const a = rng.range(0, Math.PI * 2),
+        l = rng.range(2, Math.min(4.5, Math.max(W, D) * 0.6));
+      P.beam(ctx, cx + Math.cos(a) * 0.5, cz + Math.sin(a) * 0.5, cx + Math.cos(a) * l, cz + Math.sin(a) * l, k === 0 ? 0.5 : 0, rng.range(0.1, 0.15));
+    }
+    // humo, y en una de cada tres, fuego
+    ctx.fires.push({ x: cx, y: 0.6, z: cz, s: hi % 3 === 0 ? 0.9 : 0.5, smoke: true, light: hi % 3 === 0, embers: hi % 3 === 0, glow: hi % 3 === 0 });
+    // hollín alrededor
+    P.decal(ctx, cx, 0.03, cz, Math.min(W, D) * 1.1, 'shadow', hi, { opacity: 0.6 });
+    if (r.sub) ctx.endGroup();
+  });
+  // el arco de la Sé, en la calle
+  P.rubble(ctx, 0, 0, -37.6, 14, 7731, 2.6, { scale: 1.5, blocks: 0.8, mat: 'ashlar' });
+  ctx.col.add(-1.4, 0, -38.8, 1.6, 0.8, -36.6);
+  P.beam(ctx, -2.6, -36.2, 1.8, -39.4, 0, 0.14);
+  ctx.endGroup();
 }

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { WorldBuilder } from '../gfx/geo.js';
 import { CollisionWorld } from './collision.js';
 import { WalkGrid } from './walkgrid.js';
-import { buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria } from './level_city.js';
+import { buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria, buildCentroRuin } from './level_city.js';
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
 import { buildCanon } from './level_canon.js';
@@ -32,20 +32,34 @@ export function buildLevel() {
   // grupos del mundo (el tejado de la nave que revienta, sus ruinas): la
   // geometría, las colisiones, los fuegos y los estandartes que se añaden
   // entre beginGroup y endGroup llevan su nombre y se ocultan juntos
+  // (se pueden anidar: dentro del bloque que revienta con el coloso hay casas
+  // cuyo tejado se rompe aparte; al cerrar el de dentro se vuelve al de fuera,
+  // y lo de dentro queda en los dos: se oculta con cualquiera de ellos)
+  ctx._grpStack = [];
+  const setG = (G) => {
+    const path = G ? [...ctx._grpStack.map((q) => q.name), G.name] : null;
+    ctx.wb.setGroup(G ? G.name : null, path);
+    ctx.col.group = G ? G.name : null;
+    ctx.col.groupPath = path && path.length > 1 ? path : null;
+  };
   ctx.beginGroup = (name) => {
-    ctx.wb.setGroup(name);
-    ctx.col.group = name;
+    if (ctx._grp) ctx._grpStack.push(ctx._grp);
     ctx._grp = { name, fires: ctx.fires.length, banners: ctx.banners.length, dyn: ctx.dynLights.length };
+    setG(ctx._grp);
   };
   ctx.endGroup = () => {
     const G = ctx._grp;
     if (!G) return;
-    for (let i = G.fires; i < ctx.fires.length; i++) ctx.fires[i].group = G.name;
-    for (let i = G.banners; i < ctx.banners.length; i++) ctx.banners[i].group = G.name;
-    for (let i = G.dyn; i < ctx.dynLights.length; i++) ctx.dynLights[i].group = G.name;
-    ctx.wb.setGroup(null);
-    ctx.col.group = null;
-    ctx._grp = null;
+    const tag = (o) => {
+      if (!o.group) o.group = G.name;
+      else if (o.group !== G.name) (o.groups || (o.groups = [o.group])).includes(G.name) || o.groups.push(G.name);
+    };
+    for (let i = G.fires; i < ctx.fires.length; i++) tag(ctx.fires[i]);
+    for (let i = G.banners; i < ctx.banners.length; i++) tag(ctx.banners[i]);
+    for (let i = G.dyn; i < ctx.dynLights.length; i++) tag(ctx.dynLights[i]);
+    const outer = ctx._grpStack.pop() || null;
+    ctx._grp = outer;
+    setG(outer);
   };
   corpseLog.length = 0;
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
@@ -90,8 +104,18 @@ export function buildLevel() {
   // detritos al pie de los muros
   const clutter = scatterClutter(ctx, S, L, corpseLog);
 
+  // las manzanas del centro (revientan cuando sale el coloso, ver
+  // finale/director.js): su huella no entra en la colisión general sino en la
+  // de su grupo, que se desactiva con ellas; y sus ruinas, aparte
+  const centro = (ctx.houseRects || []).filter((r) => r.sub || (r.groups ? r.groups.includes('centro') : r.group === 'centro'));
+  for (const r of centro) S.repaint(r.x0, r.z0, r.x1, r.z1, 0, 2);
+
   // colisión generada a partir de las zonas transitables
   const nS = S.toColliders(ctx.col, -1, 5.2);
+  ctx.beginGroup('centro');
+  for (const [a, b, c, d] of S.rects(2)) ctx.col.add(a, -1, b, c, 5.2, d, 'block').cam = true;
+  ctx.endGroup();
+  buildCentroRuin(ctx, centro);
   const nC = C.toColliders(ctx.col, -10.6, -1.2);
   const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
   // losa de suelo global con los huecos de las escaleras de la cripta

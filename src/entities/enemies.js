@@ -730,7 +730,7 @@ function censerUpdate(e, dt) {
   });
   if (c.light) {
     c.light.position.copy(c.pos).y += 0.8;
-    c.light.intensity = e.dead ? damp(c.light.intensity, 0, 1, dt) : (e.data.phase === 2 ? 40 : 26) * (0.85 + 0.15 * Math.sin(T * 17));
+    c.light.intensity = e.dead ? damp(c.light.intensity, 0, 1, dt) : (e.data.phase === 2 ? 40 : 26) * (e.data.lightK ?? 1) * (0.85 + 0.15 * Math.sin(T * 17));
   }
   const vis = e.obj.visible;
   c.grp.visible = vis;
@@ -1243,6 +1243,8 @@ export const TYPES = {
       e.data.phase = 1;
       censerReset(e);
     },
+    // vencido no muere: cae de rodillas y el dios se lo lleva (el rito)
+    onDefeat: (e) => !!(e.game.archbishopDefeated && e.game.archbishopDefeated(e)),
     // (jefe: tres parrys seguidos; cada parry le devuelve el incensario)
     parryPosture: 3,
     parryDur: 1.6,

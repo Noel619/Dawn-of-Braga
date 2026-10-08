@@ -24,6 +24,18 @@ export class WalkGrid {
       j1 = Math.min(this.h, this._iz(Math.max(z0, z1)));
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) this.cells[j * this.w + i] = v;
   }
+  // Cambia a 'to' las celdas que valen 'from' en el rectángulo.
+  repaint(x0, z0, x1, z1, from, to) {
+    const i0 = Math.max(0, this._ix(Math.min(x0, x1))),
+      i1 = Math.min(this.w, this._ix(Math.max(x0, x1)));
+    const j0 = Math.max(0, this._iz(Math.min(z0, z1))),
+      j1 = Math.min(this.h, this._iz(Math.max(z0, z1)));
+    for (let j = j0; j < j1; j++)
+      for (let i = i0; i < i1; i++) {
+        const k = j * this.w + i;
+        if (this.cells[k] === from) this.cells[k] = to;
+      }
+  }
   walkable(x, z) {
     const i = Math.floor((x - this.x0) / this.res),
       j = Math.floor((z - this.z0) / this.res);

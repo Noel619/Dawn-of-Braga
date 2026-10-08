@@ -6,12 +6,13 @@ import { registerMaterialPatch } from './materials.js';
 export function buildDecals(scene, decals) {
   const groups = new Map();
   for (const d of decals) {
-    const k = d.tex;
+    const k = d.tex + '|' + (d.groups ? d.groups.join('/') : d.group || '');
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(d);
   }
   const meshes = [];
-  for (const [tex, list] of groups) {
+  for (const [, list] of groups) {
+    const tex = list[0].tex;
     const pos = [],
       uv = [],
       idx = [],
@@ -81,6 +82,8 @@ export function buildDecals(scene, decals) {
     const mesh = new THREE.Mesh(g, m);
     mesh.renderOrder = 1;
     mesh.frustumCulled = false;
+    if (list[0].group) mesh.userData.group = list[0].group;
+    if (list[0].groups) mesh.userData.groups = list[0].groups;
     scene.add(mesh);
     meshes.push(mesh);
   }
@@ -92,7 +95,7 @@ export function buildBanners(scene, banners) {
   const byKind = new Map();
   // (por tipo y por grupo del mundo: los de un grupo se ocultan con él)
   for (const b of banners) {
-    const key = b.kind + '|' + (b.group || '');
+    const key = b.kind + '|' + (b.groups ? b.groups.join('/') : b.group || '');
     if (!byKind.has(key)) byKind.set(key, []);
     byKind.get(key).push(b);
   }
@@ -118,6 +121,7 @@ export function buildBanners(scene, banners) {
     registerMaterialPatch(m, { wind: true });
     const mesh = new THREE.Mesh(merged, m);
     if (list[0].group) mesh.userData.group = list[0].group;
+    if (list[0].groups) mesh.userData.groups = list[0].groups;
     scene.add(mesh);
     out.push(mesh);
     void key;

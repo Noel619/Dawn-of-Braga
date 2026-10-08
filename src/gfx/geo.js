@@ -12,10 +12,11 @@ const _p = new THREE.Vector3();
 const _n = new THREE.Vector3();
 
 class Bucket {
-  constructor(mat, key, group = null) {
+  constructor(mat, key, group = null, groups = null) {
     this.mat = mat;
     this.key = key;
     this.group = group;
+    this.groups = groups;
     this.pos = [];
     this.nor = [];
     this.uv = [];
@@ -39,8 +40,11 @@ export class WorldBuilder {
     // se pueden ocultar (el tejado de la nave, que revienta; sus ruinas)
     this.group = null;
   }
-  setGroup(name) {
+  // name: el grupo; path: los grupos en los que está anidado (de fuera a
+  // dentro, terminando en él)
+  setGroup(name, path = null) {
     this.group = name || null;
+    this.groupPath = name && path && path.length > 1 ? path.slice() : null;
   }
 
   roomId(name) {
@@ -97,10 +101,11 @@ export class WorldBuilder {
     _p.set(lx, 0, lz).applyMatrix4(this.m);
     const cx = Math.floor(_p.x / CHUNK),
       cz = Math.floor(_p.z / CHUNK);
-    const key = (this.group ? this.group + '#' : '') + mat + '|' + cx + '|' + cz;
+    const gk = this.groupPath ? this.groupPath.join('/') : this.group;
+    const key = (gk ? gk + '#' : '') + mat + '|' + cx + '|' + cz;
     let b = this.buckets.get(key);
     if (!b) {
-      b = new Bucket(mat, key, this.group);
+      b = new Bucket(mat, key, this.group, this.groupPath);
       this.buckets.set(key, b);
     }
     return b;
@@ -488,6 +493,7 @@ export class WorldBuilder {
       mesh.updateMatrix();
       mesh.userData.bucket = b.key;
       if (b.group) mesh.userData.group = b.group;
+      if (b.groups) mesh.userData.groups = b.groups;
       meshes.push(mesh);
     }
     return meshes;

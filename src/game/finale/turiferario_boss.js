@@ -1,9 +1,11 @@
-// El Turiferario, coloso: la pelea en el Largo da Sé.
+// El Turiferario, coloso: la pelea en el centro de la ciudad.
 //
-// Sale del empedrado del atrio y pelea en la plaza. No se le hiere a golpes:
-// hay que treparle y apuñalar sus sigilos (la nuca, el dorso de la mano de
-// la cadena y, de rodillas, el núcleo del pecho). Los caminos para subir se
-// abren con sus propios ataques:
+// Sale del empedrado del atrio de la Sé (las manzanas de alrededor revientan
+// con él: ver director.js) y pelea por todo el centro: el atrio, las ruinas y
+// la plaza del pan; si huyes, te sigue entre los escombros. No se le hiere a
+// golpes: hay que treparle y apuñalar sus sigilos (la nuca, el dorso de la
+// mano de la cadena y, de rodillas, el núcleo del pecho). Los caminos para
+// subir se abren con sus propios ataques:
 //   la cola        la arrastra siempre: de la punta a la espalda y la nuca
 //   la cadena      tras el mazazo la campana se queda clavada: hasta la mano
 //   la garra       si el zarpazo falla, la mano se queda plantada: al hombro
@@ -18,14 +20,21 @@ import { BellChain } from './bell.js';
 import { ChainRoute, PLAYER_CLIPS } from './climb.js';
 import { SkinSurface } from './surface.js';
 import { ColBody } from './colbody.js';
+import { Field } from './field.js';
 import { sigilDecal } from '../../entities/colossus/sigil_decal.js';
 import { ColFX } from '../../entities/colossus/colfx.js';
 import { clamp, angleDiff } from '../../core/util.js';
 
-// la plaza: dónde puede plantarse y hasta dónde llegan la cola y la campana
+// el campo de batalla: el atrio de la Sé, las manzanas que revientan al salir
+// él y la plaza del pan. Dónde puede plantarse (la pelvis: y siempre a
+// STAND_R de las casas que quedan en pie, ver field.js) y hasta dónde llegan
+// la cola y la campana (las casas de alrededor las paran: chocan contra las
+// fachadas y les revientan los tejados)
 export const LARGO = { x0: -18, z0: -56, x1: 22, z1: -40 };
-const STAND = { x0: -10, z0: -51.5, x1: 15, z1: -44.5 };
-const WALLS = [-17.3, -55.3, 21.3, -40.7];
+export const BATTLE = { x0: -19, z0: -52.5, x1: 17.5, z1: 10 };
+const STAND = BATTLE;
+const STAND_R = 4.2;
+const WALLS = [-27, -58, 25, 16];
 export const TUR_HOME = { x: 4.5, z: -46.5 };
 
 const _v = new THREE.Vector3(),
@@ -69,12 +78,19 @@ export class TurBoss {
     // (el suelo de la plaza, no los trastos: la pira, el carro)
     this.groundAt = (x, z) => col.groundHeight(x, z, 0.2, 0.7);
     this.R = turRig(M, { groundAt: this.groundAt });
+    // las casas en pie alrededor (las del centro, en ruinas durante la pelea,
+    // no cuentan)
+    const houses = (game.level.ctx.houseRects || []).filter((r) => !r.sub && !(r.groups ? r.groups.includes('centro') : r.group === 'centro'));
+    this.field = new Field(game.level.S, { x0: WALLS[0] - 8, z0: WALLS[1] - 8, x1: WALLS[2] + 8, z1: WALLS[3] + 8 }, { houses });
     this.R.bounds = WALLS;
+    this.R.field = this.field;
     this.R.look.target = new THREE.Vector3();
     this.R.action.onEvent = (e, c) => this.onEvent(e, c);
     this.R.base.onEvent = (e, c) => this.onEvent(e, c);
     // la campana y su cadena
-    this.bell = new BellChain(game.scene, M.groups.bell, { bellH: this.E.sizes.bellH, radius: 3.0, len: this.E.sizes.chain.len, groundAt: this.groundAt, bounds: WALLS });
+    this.bell = new BellChain(game.scene, M.groups.bell, { bellH: this.E.sizes.bellH, radius: 3.0, len: this.E.sizes.chain.len, groundAt: this.groundAt, bounds: WALLS, field: this.field });
+    // contra una fachada: revienta piedra (ver _bellWall)
+    this.bell.onWall = (at, n, sp) => this._bellWall(at, n, sp);
     this.bell.mesh.visible = false;
     this.bell.bell.visible = false;
     // por dónde se trepa: toda su piel (la carne, la casulla y el alba; lo
@@ -265,6 +281,13 @@ export class TurBoss {
     if (z === 'cola') return !(this.st === 'attack' && this.atk && (this.atk.name === 'tail' || this.atk.name === 'spin')) && this.st !== 'emerge' && this.st !== 'dying';
     return this.st !== 'emerge' && this.st !== 'dying' && this.st !== 'dead';
   }
+  // ¿(x, z) cae sobre las ruinas de una casa del centro?
+  onRuins(x, z) {
+    const S = this.g.level.S;
+    const i = Math.floor((x - S.x0) / S.res),
+      j = Math.floor((z - S.z0) / S.res);
+    return i >= 0 && j >= 0 && i < S.w && j < S.h && S.cells[j * S.w + i] === 2;
+  }
   forward(out = _v4) {
     return out.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
   }
@@ -341,6 +364,7 @@ export class TurBoss {
     this.stT += dt;
     for (const k in this.cool) this.cool[k] = (this.cool[k] || 0) - dt;
     this.shakeCool -= dt;
+    this.wallT = (this.wallT || 0) - dt;
     const R = this.R;
     // la cabeza busca al jugador (menos si está encima)
     R.look.target.set(p.pos.x, p.pos.y + 1.2, p.pos.z);
@@ -453,7 +477,11 @@ export class TurBoss {
     // a su espalda: coletazo o se vuelve
     if (A > 110 * DEG && d < 18 && ok('tail')) return this.attack('tail');
     if (A > 38 * DEG) return this.startTurn();
-    if (d > 19.5) return this.startWalk();
+    if (d > 19.5) {
+      // lejos (huyendo por las ruinas): le llueve cera, o va a por él
+      if (d > 23 && ok('wax') && Math.random() < 0.45) return this.attack('wax');
+      return this.startWalk();
+    }
     const C2 = [];
     const add = (n, w) => ok(n) && C2.push([n, w]);
     if (d < 7.5) {
@@ -490,12 +518,13 @@ export class TurBoss {
     this.yaw += clamp(a, -turn * dt, turn * dt);
     const sp = WALK.speed * this.speedK;
     const f = this.forward();
-    let nx = this.pos.x + f.x * sp * dt,
-      nz = this.pos.z + f.z * sp * dt;
-    nx = clamp(nx, STAND.x0, STAND.x1);
-    nz = clamp(nz, STAND.z0, STAND.z1);
-    this.pos.x = nx;
-    this.pos.z = nz;
+    const P = _v3.set(this.pos.x + f.x * sp * dt, 0, this.pos.z + f.z * sp * dt);
+    P.x = clamp(P.x, STAND.x0, STAND.x1);
+    P.z = clamp(P.z, STAND.z0, STAND.z1);
+    // (se arrima a las casas en pie y resbala por sus fachadas)
+    this.field.push(P, STAND_R);
+    this.pos.x = P.x;
+    this.pos.z = P.z;
     if (d < 14 || this.stT > 4.5) this.setIdle(0.3);
   }
   _turn(dt) {
@@ -581,6 +610,7 @@ export class TurBoss {
       _v3.set(this.pos.x + Math.sin(ang) * dd, 0, this.pos.z + Math.cos(ang) * dd);
       _v3.x = clamp(_v3.x, WALLS[0] + 3, WALLS[2] - 3);
       _v3.z = clamp(_v3.z, WALLS[1] + 3, WALLS[3] - 3);
+      this.field.push(_v3, this.bell.R + 0.2);
       _v3.y = this.groundAt(_v3.x, _v3.z);
       this._moveMark(this.mark, _v3, 3.2 + t * 0.6, Math.min(1, t / 0.8));
       if (t >= 1.5) this.slamAt = _v3.clone();
@@ -885,7 +915,8 @@ export class TurBoss {
     } else B.guide = null;
     void dt;
   }
-  // lluvia de cera (fase 2): los cirios gotean fuego sobre la plaza
+  // lluvia de cera (fase 2; y en la 1, si huyes lejos): los cirios gotean
+  // fuego a tu alrededor
   u_wax(t) {
     if (t >= 1.3 && !this.atk.done.wax) {
       this.atk.done.wax = true;
@@ -1067,6 +1098,11 @@ export class TurBoss {
       g.camRig.shake(clamp(0.5 - d * 0.02, 0.06, 0.5));
       g.audio && g.audio.play('beastStep', f, { k: 1.6 });
       g.fx.blood.emit(f.x, f.y + 0.3, f.z, 14, { color: [0.36, 0.33, 0.29], speed: 3, life: 0.7, up: 1.2 });
+      // sobre las ruinas de una casa: las pisotea (cascotes y vigas que saltan)
+      if (this.onRuins(f.x, f.z)) {
+        g.finale.debris.burst(_v2.set(f.x, f.y + 0.4, f.z), 7, { speed: 4, up: 4.5, size: 0.75, spread: 1.6 });
+        if (Math.random() < 0.5) g.audio && g.audio.play(Math.random() < 0.5 ? 'woodBreak' : 'wallBreak', f, { k: 0.9 });
+      }
       if (d < 2.4 && !g.finale.climb.active) this.hurt(45, f, { knock: 9 });
       g.finale.onImpact && g.finale.onImpact(f, 2.5, 'step');
     } else if (e === 'swing') g.audio && g.audio.play('swingHeavy', this.bell.center(_v), { k: 1.6 });
@@ -1100,6 +1136,23 @@ export class TurBoss {
       this._letGo(_v3.set(f.x * 9, 7, f.z * 9));
       g.audio && g.audio.play('pounceWhoosh', g.player.pos);
     }
+  }
+
+  // La campana contra la fachada de una casa en pie: tañe, revienta piedra y
+  // polvo, y si es de las que se rompen, le hunde el tejado.
+  _bellWall(at, n, sp) {
+    const g = this.g;
+    if (this.wallT > 0 || !this.visible || this.st === 'emerge') return;
+    this.wallT = 0.5;
+    const k = clamp((sp - 3.5) / 10, 0, 1);
+    g.finale.debris.burst(at, Math.round(6 + 16 * k), { speed: 2.5 + 5 * k, up: 2.5 + 4 * k, size: 0.55 + 0.5 * k, spread: 1.4, dir: n });
+    g.fx.blood.emit(at.x, at.y, at.z, Math.round(12 + 24 * k), { color: [0.43, 0.4, 0.36], speed: 2 + 3 * k, life: 1.8, up: 1.2, gravity: 1 });
+    g.audio && g.audio.play('bellToll', at, { k: 0.45 + 0.5 * k });
+    if (k > 0.25) g.audio && g.audio.play('wallBreak', at, { k: 0.7 + 0.7 * k });
+    const d = Math.hypot(g.player.pos.x - at.x, g.player.pos.z - at.z);
+    g.camRig.shake(clamp((0.2 + 0.4 * k) * (1 - d / 40), 0.04, 0.6));
+    if (k > 0.3) g.input.rumble(0.3 * k, 0.5 * k, 220);
+    g.finale.onImpact && g.finale.onImpact(at, 2.6 + 2 * k, k > 0.3 ? 'air' : 'bell');
   }
 
   // ---------------------------------------------------------- efectos
@@ -1198,6 +1251,7 @@ export class TurBoss {
     const to = new THREE.Vector3(p.pos.x + p.vx * 0.8 + Math.cos(a) * r, 0, p.pos.z + p.vz * 0.8 + Math.sin(a) * r);
     to.x = clamp(to.x, WALLS[0] + 0.5, WALLS[2] - 0.5);
     to.z = clamp(to.z, WALLS[1] + 0.5, WALLS[3] - 0.5);
+    this.field.push(to, 0.8);
     to.y = this.groundAt(to.x, to.z);
     const T = 1.5;
     const grav = 14;

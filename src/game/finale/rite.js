@@ -1,19 +1,20 @@
-// El rito de la cisterna (una vez, al cruzar la niebla del sello).
+// El rito de la cisterna: el arzobispo, vencido.
 //
-// Ya no hay pelea con el Turiferario de cuatro metros y medio: el arzobispo
-// reza de rodillas ante el altar del Dios Desconocido, de espaldas a la
-// entrada. Se levanta, se vuelve y alza el incensario; la sangre del suelo de
-// la cisterna hierve, la carne del dios brota entre las losas, le sube por
-// las piernas y le envuelve, y le arrastra hacia arriba a través de la
-// cúpula. Temblor, polvo, fundido a negro: «Arriba, la ciudad tiembla. Las
-// campanas de la Sé tocan solas.» Los escombros de la cúpula ciegan la reja
-// del río (ver el grupo 'riteRubble' en level_sacred.js).
+// Primero se pelea con él en la cisterna (el Turiferario de cuatro metros y
+// medio, con su incensario: enemies.js). Cuando le quitas la vida no muere:
+// cae de rodillas ante el altar del Dios Desconocido y empieza esto. Fundido
+// a negro y, de rodillas frente al jugador, jadea, alza la cabeza, se
+// incorpora con lo que le queda y alza el incensario; la sangre del suelo de
+// la cisterna hierve, la carne del dios brota entre las losas, le sube por las
+// piernas y le envuelve, y le arrastra hacia arriba a través de la cúpula.
+// Temblor, polvo, fundido a negro: «Arriba, la ciudad tiembla. Las campanas
+// de la Sé tocan solas.» Los escombros de la cúpula ciegan la reja del río
+// (ver el grupo 'riteRubble' en level_sacred.js).
 //
-//  1. Desde lo alto de la escalera: al fondo, de espaldas, reza.
-//  2. Desde el altar, a ras de suelo: su cara; detrás, el jugador, pequeño.
-//  3. Desde delante y abajo: se levanta, se vuelve y alza el incensario.
-//  4. Plano abierto: la sangre hierve y la carne le sube por el cuerpo.
-//  5. Desde abajo: la carne le arrastra hacia la cúpula y la revienta.
+//  1. Por encima del hombro del jugador: de rodillas, vencido, jadea.
+//  2. De frente y desde abajo: se incorpora y alza el incensario.
+//  3. Plano abierto: la sangre hierve y la carne le sube por el cuerpo.
+//  4. Desde abajo: la carne le arrastra hacia la cúpula y la revienta.
 // Se puede saltar con «interactuar».
 import * as THREE from 'three';
 import { Debris } from './debris.js';
@@ -35,18 +36,21 @@ export const RITE_SPOT = { x: 0, z: -157.6, yaw: Math.PI };
 const STAND_Z = -142.6;
 
 // Guion (segundos)
-const T1 = 3.2; // fin del plano desde la escalera
-const T2 = 6.0; // fin del plano desde el altar
-const T3 = 8.8; // fin del plano de frente
-const T_RISE = 3.9; // se levanta
-const T_TURN = [5.2, 6.8]; // se vuelve hacia la entrada
-const T_RAISE = 7.1; // alza el incensario
-const T_BOIL = 8.4; // la sangre hierve
-const T_GROW = [9.0, 11.8]; // la carne le sube por el cuerpo
-const T_LIFT = [12.2, 14.9]; // le arrastra hacia la cúpula
-const T_BREAK = 14.6; // la revienta
-const T_FADE = 15.0;
-const T_END = 16.2;
+const T_DARK = 0.7; // fundido a negro tras el último golpe
+const T_IN = 1.0; // vuelve la imagen (ya colocados)
+const T1 = 4.0; // fin del plano por encima del hombro
+const T2 = 6.6; // fin del plano de frente
+const T_LOOK = 2.0; // alza la cabeza
+const T_RISE = 2.6; // se incorpora
+const T_RAISE = 4.1; // alza el incensario
+const T_BOIL = 5.4; // la sangre hierve
+const T_GROW = [6.0, 8.8]; // la carne le sube por el cuerpo
+const T_LIFT = [9.2, 11.9]; // le arrastra hacia la cúpula
+const T_BREAK = 11.6; // la revienta
+const T_FADE = 12.0;
+const T_END = 13.2;
+// dónde queda el jugador, frente a él
+const FACE = { x: 0.7, z: RITE_SPOT.z + 6.4 };
 
 // La carne del dios: tentáculos que brotan del suelo alrededor del arzobispo
 // y le suben, enroscándose, hasta el pecho (crecen con el rango de dibujo).
@@ -95,7 +99,9 @@ function buildTendrils() {
 }
 
 export class RiteCutscene {
-  constructor(game) {
+  // from: el arzobispo que acaba de caer vencido (o null: el modo de pruebas
+  // lo pone de rodillas ante el altar)
+  constructor(game, from = null) {
     this.g = game;
     this.rite = true;
     this.t = 0;
@@ -103,36 +109,61 @@ export class RiteCutscene {
     this.pos = new THREE.Vector3();
     this.look = new THREE.Vector3();
     this.boilT = 0;
+    this.from = from;
   }
 
   start() {
     const g = this.g,
       p = g.player;
-    this.boss = g.bosses.turibulario || null;
-    p.state = 'free';
-    p.autoDir = { x: 0, z: -1, m: 0.45 };
+    this.boss = this.from || g.bosses.turibulario || null;
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    p.blocking = false;
+    p.autoDir = null;
     g.lockTarget = null;
     g.activeBoss = null;
     g.ui.showHud(false);
     g.audio.stopMusic();
     g.audio.play('dread');
-    const e = this.boss;
-    if (e) {
-      e.reset();
-      e.scripted = true;
-      e.state = 'bossIdle';
-      e.pos.set(RITE_SPOT.x, AY, RITE_SPOT.z);
-      e.yaw = RITE_SPOT.yaw;
-      e.obj.visible = true;
-      this.showCenser(true);
-    }
     this.home = new THREE.Vector3(RITE_SPOT.x, AY, RITE_SPOT.z);
     this.tend = buildTendrils();
     this.tend.grp.position.copy(this.home);
+    this.tend.grp.visible = false;
     g.scene.add(this.tend.grp);
     this.debris = new Debris(g.scene, 70, { color: 0x7e7c74 });
     this.light = g.fx.lights.add({ x: RITE_SPOT.x, y: AY + 1.4, z: RITE_SPOT.z + 2, color: 0xff3412, intensity: 0, range: 18, flicker: 1, priority: 9, on: true });
+    // (sin pelea, desde el modo de pruebas: ya colocados)
+    if (!this.from) this.place();
+    else g.fadeTarget = 0;
     this.apply(0);
+  }
+  // Bajo el fundido: el arzobispo de rodillas ante el altar, de cara al
+  // jugador, y el jugador frente a él.
+  place() {
+    const g = this.g,
+      p = g.player,
+      e = this.boss;
+    this.placed = true;
+    if (e) {
+      e.scripted = true;
+      e.dead = false;
+      e.state = 'bossIdle';
+      e.atk = null;
+      e.data.censerTarget = null;
+      e.pos.set(RITE_SPOT.x, AY, RITE_SPOT.z);
+      if (e.body) e.body.pos.set(RITE_SPOT.x, AY, RITE_SPOT.z);
+      e.yaw = 0;
+      e.obj.visible = true;
+      e.anim.stop(0.01);
+      if (e.T.onReset) e.T.onReset(e);
+      // (el incensario, en el suelo junto a él, alumbra menos: no le quema)
+      e.data.lightK = 0.32;
+      this.showCenser(true);
+    }
+    p.spawn(FACE.x, AY, FACE.z, Math.PI);
+    p.state = 'cine';
+    this.tend.grp.visible = true;
+    g.combat.clear();
   }
 
   // Un suceso del guion, una sola vez.
@@ -179,17 +210,16 @@ export class RiteCutscene {
     U.uBars.value = 0.115 * bars;
     U.uVignette.value = 1.25 + 0.9 * bars;
 
-    // --- el jugador baja la escalera y se queda al pie
-    if (p.autoDir && p.pos.z <= STAND_Z) {
-      p.autoDir = null;
-      p.state = 'cine';
-    }
-    if (!p.autoDir && p.state !== 'cine') p.state = 'cine';
+    // --- tras el último golpe, a negro; bajo el fundido se colocan
+    if (!this.placed && t >= T_DARK) this.place();
+    if (this.cue('fadeIn', T_IN)) g.fadeTarget = 1;
+    if (p.state !== 'cine' && !p.dead) p.state = 'cine';
 
     // --- el arzobispo
     const lift = Math.pow(lin(t, T_LIFT[0], T_LIFT[1]), 1.7);
     const liftY = lift * (DOME - AY + 3);
-    if (e && !this.cues.has('gone')) {
+    if (e && !this.cues.has('gone') && this.placed) {
+      if (this.cue('look', T_LOOK)) a.enemyVoice(e, 'hurt');
       if (this.cue('rise', T_RISE)) {
         e.state = 'alert';
         e.anim.play(e.T.clips.intro, { blend: 0.05 });
@@ -201,8 +231,8 @@ export class RiteCutscene {
       }
       if (this.cue('struggle', T_GROW[0] + 0.9)) e.anim.play(e.T.clips.roar, { blend: 0.2 });
       if (this.cue('struggle2', T_GROW[0] + 3.3)) e.anim.play(e.T.clips.roar, { blend: 0.3 });
-      // se vuelve hacia la entrada
-      e.yaw = RITE_SPOT.yaw * (1 - seg(t, T_TURN[0], T_TURN[1]));
+      // (de cara al jugador)
+      e.yaw = 0;
       // apresado, se revuelve; arrastrado, sube dando tumbos
       const grip = lin(t, T_GROW[0] + 0.8, T_GROW[1]);
       const sx = Math.sin(t * 17) * 0.06 * grip + Math.sin(t * 5.3) * 0.25 * lift;
@@ -228,6 +258,12 @@ export class RiteCutscene {
         e.shadow.visible = false;
         this.showCenser(false);
       }
+    }
+
+    // (vencido, antes del fundido: de rodillas donde cayó)
+    if (e && !this.placed) {
+      e.vx = e.vz = 0;
+      e.animate(dt);
     }
 
     // --- la carne del dios: brota, le sube por el cuerpo, se estira con él
@@ -284,27 +320,25 @@ export class RiteCutscene {
 
     // --- cámara
     let fov = 56;
-    if (t < T1) {
-      // desde lo alto de la escalera: al fondo, de espaldas, reza
-      const u = seg(t, 0, T1);
-      this.pos.set(lerp(1.1, 0.8, u), TOP + lerp(2.3, 2.0, u), lerp(-136.4, -137.6, u));
-      this.look.set(RITE_SPOT.x, AY + lerp(1.8, 2.0, u), RITE_SPOT.z);
+    let cam = true;
+    if (t < T_IN) {
+      // (el fundido a negro, con la cámara del juego)
+      cam = false;
+    } else if (t < T1) {
+      // por encima del hombro del jugador: de rodillas, vencido, jadea
+      const u = seg(t, T_IN, T1);
+      this.pos.set(FACE.x + lerp(1.25, 1.05, u), AY + lerp(2.35, 2.15, u), FACE.z + lerp(3.4, 2.8, u));
+      this.look.set(RITE_SPOT.x - 0.3, AY + lerp(1.8, 2.3, u), RITE_SPOT.z);
       fov = lerp(50, 44, u);
     } else if (t < T2) {
-      // desde el altar, a ras de suelo: su cara; detrás, el jugador al pie de la escalera
+      // de frente y desde abajo: se incorpora y alza el incensario
       const u = seg(t, T1, T2);
-      this.pos.set(lerp(2.0, 1.6, u), AY + lerp(1.15, 1.35, u), RITE_SPOT.z - lerp(3.6, 3.2, u));
-      this.look.set(RITE_SPOT.x - 0.3, AY + lerp(2.0, 2.6, u), RITE_SPOT.z + 3);
-      fov = lerp(48, 42, u);
-    } else if (t < T3) {
-      // de frente y desde abajo: se vuelve y alza el incensario
-      const u = seg(t, T2, T3);
-      this.pos.set(lerp(-2.8, -2.4, u), AY + lerp(0.9, 1.1, u), RITE_SPOT.z + lerp(5.4, 5.0, u));
-      this.look.set(RITE_SPOT.x, AY + lerp(3.0, 4.6, u), RITE_SPOT.z);
+      this.pos.set(lerp(-2.8, -2.4, u), AY + lerp(0.9, 1.1, u), RITE_SPOT.z + lerp(5.0, 4.6, u));
+      this.look.set(RITE_SPOT.x, AY + lerp(2.8, 4.8, u), RITE_SPOT.z);
       fov = 58;
     } else if (t < T_LIFT[0]) {
       // plano abierto: la sangre hierve y la carne le sube por el cuerpo
-      const u = seg(t, T3, T_LIFT[0]);
+      const u = seg(t, T2, T_LIFT[0]);
       this.pos.set(lerp(-8.6, -7.8, u), AY + lerp(3.2, 2.6, u), lerp(-149.0, -149.8, u));
       this.look.set(RITE_SPOT.x, AY + lerp(1.6, 2.6, u), RITE_SPOT.z);
       fov = lerp(60, 54, u);
@@ -316,13 +350,12 @@ export class RiteCutscene {
       this.look.set(RITE_SPOT.x * 0.6, Math.min(DOME, ly), lerp(RITE_SPOT.z, CZ, u));
       fov = lerp(64, 70, u);
     }
-    if (t < T_END - 0.05) g.camRig.override = { pos: this.pos, look: this.look, fov, snap: true };
+    if (cam && t < T_END - 0.05) g.camRig.override = { pos: this.pos, look: this.look, fov, snap: true };
 
     // --- sonido
     const BP = { x: RITE_SPOT.x, y: AY + 2.4, z: RITE_SPOT.z };
-    if (this.cue('toll', 0.4)) a.play('bellToll', { x: 0, y: 4, z: -150 }, { k: 0.6 });
-    if (this.cue('pray', 1.2) && e) a.enemyVoice(e, 'idle');
-    if (this.cue('pray2', 3.0) && e) a.enemyVoice(e, 'idle');
+    if (this.cue('toll', T_IN + 0.2)) a.play('bellToll', { x: 0, y: 4, z: -150 }, { k: 0.6 });
+    if (this.cue('pray', T_IN + 0.5) && e) a.enemyVoice(e, 'idle');
     if (this.cue('creak', T_RISE + 0.3)) a.play('stoneCreak', BP, { k: 0.7 });
     if (this.cue('call', T_RAISE + 0.7) && e) a.enemyVoice(e, 'alert');
     if (this.cue('boil', T_BOIL)) {
@@ -360,6 +393,7 @@ export class RiteCutscene {
       this.showCenser(false);
     }
     g.bossLight.intensity = 0;
+    if (e) e.data.lightK = 1;
     if (this.tend) {
       g.scene.remove(this.tend.grp);
       for (const q of this.tend.list) q.geo.dispose();
@@ -373,13 +407,14 @@ export class RiteCutscene {
     g.setGroupVisible('cisternCrown', false);
     g.setGroupVisible('riteRubble', true);
     p.autoDir = null;
-    p.spawn(0, AY, STAND_Z, Math.PI);
+    // (al pie de la escalera, de cara a la subida)
+    p.spawn(0, AY, STAND_Z, 0);
     p.state = 'free';
     g.post.U.uBars.value = 0;
     g.post.U.uVignette.value = 1.25;
     g.camRig.override = null;
     g.camRig.snapTo(p);
-    g.camRig.yaw = Math.PI;
+    g.camRig.yaw = 0;
     g.camRig.pitch = 0.15;
     g.flags['finale:rite'] = true;
     // la niebla del sello ya no está

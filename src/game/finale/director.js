@@ -19,14 +19,15 @@
 // siempre: muerto el dios, se abre la reja del río).
 import * as THREE from 'three';
 import { Climb } from './climb.js';
-import { TurBoss, TUR_HOME } from './turiferario_boss.js';
+import { TurBoss, TUR_HOME, BATTLE } from './turiferario_boss.js';
 import { DeoBoss } from './deo_boss.js';
 import { Debris } from './debris.js';
 import { Wrecks } from './wrecks.js';
 
 const _v = new THREE.Vector3();
 const DOOR = { x: 0, z: -60.4 };
-// la plaza durante la pelea: los escombros cierran las salidas
+// la plaza de la catedral (la pelea contra Deo Ignoto, que no sale de la
+// nave, y los planos de cámara)
 const ARENA = { x0: -17.4, z0: -59.6, x1: 21.4, z1: -40.6 };
 const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
@@ -111,9 +112,76 @@ export class Finale {
     if (it.obj) it.obj.visible = !on;
     if (it.box) it.box.enabled = !on && !it.done;
   }
+  // las casas del bloque entre la plaza de la catedral y la del pan (cada una
+  // en su grupo 'centro:n', y su ruina en 'centroRuin:n')
+  get centroHouses() {
+    return this._ch || (this._ch = (this.g.level.ctx.houseRects || []).filter((r) => r.sub));
+  }
+  // el bloque, entero o reventado (revienta cuando sale el coloso y ya se
+  // queda así)
+  setCentroCollapsed(on) {
+    const g = this.g;
+    this.centroDown = on;
+    this.wave = null;
+    for (const r of this.centroHouses) {
+      g.setGroupVisible(r.sub, !on);
+      g.setGroupVisible(r.sub.replace('centro:', 'centroRuin:'), on);
+    }
+    g.setGroupVisible('centro:arco', !on);
+    g.setGroupVisible('centro', !on);
+    g.setGroupVisible('centroRuin', on);
+  }
+  // Revienta en ola desde 'from' (donde sale el coloso) hacia la plaza del pan:
+  // una casa tras otra, con cascotes, polvo y estruendo.
+  collapseCentro(from) {
+    const g = this.g;
+    if (this.centroDown) return;
+    this.centroDown = true;
+    // (y el arco de la Sé, que cruza la calle: sus cascotes ya están en el
+    // grupo de las ruinas)
+    const arch = { sub: 'centro:arco', arch: true, x0: -3.5, z0: -38.4, x1: 3.5, z1: -37.6, h: 7.7 };
+    const list = [...this.centroHouses, arch].map((r) => {
+      const cx = (r.x0 + r.x1) / 2,
+        cz = (r.z0 + r.z1) / 2;
+      return { r, cx, cz, t: Math.hypot(cx - from.x, cz - from.z) / 24 + Math.random() * 0.15, done: false };
+    });
+    list.sort((a, b) => a.t - b.t);
+    for (const q of list) if (!q.r.arch) g.setGroupVisible(q.r.sub.replace('centro:', 'centroRuin:'), false);
+    g.setGroupVisible('centroRuin', true);
+    this.wave = { t: 0, list, end: list.length ? list[list.length - 1].t + 0.25 : 0 };
+    g.audio && g.audio.play('stoneCreak', from, { k: 2 });
+    g.input.rumble(1, 1, 1600);
+  }
+  _wave(dt) {
+    const W = this.wave;
+    if (!W) return;
+    const g = this.g;
+    W.t += dt;
+    for (const q of W.list) {
+      if (q.done || W.t < q.t) continue;
+      q.done = true;
+      const r = q.r;
+      g.setGroupVisible(r.sub, false);
+      if (!r.arch) g.setGroupVisible(r.sub.replace('centro:', 'centroRuin:'), true);
+      const h = r.h || 7;
+      const top = _v.set(q.cx, h * 0.55, q.cz);
+      this.debris.burst(top, r.arch ? 18 : 12, { speed: 6, up: 5, size: 1.1, spread: r.arch ? 2.6 : Math.min(r.x1 - r.x0, r.z1 - r.z0) * 0.35 });
+      // el polvo que sube de la casa al hundirse
+      for (let k = 0; k < 4; k++) g.fx.blood.emit(q.cx + (Math.random() - 0.5) * (r.x1 - r.x0), 0.6 + k * 1.4, q.cz + (Math.random() - 0.5) * (r.z1 - r.z0), 14, { color: [0.46, 0.42, 0.38], speed: 3.2, life: 2.6, up: 1.6, gravity: -1.2 });
+      g.audio && g.audio.play(Math.random() < 0.5 ? 'wallBreak' : 'pillarBreak', _v.set(q.cx, 3, q.cz), { k: 1.3 });
+      if (Math.random() < 0.4) g.audio && g.audio.play('woodBreak', _v.set(q.cx, 5, q.cz), { k: 1 });
+      g.camRig.shake(0.18);
+    }
+    if (W.t >= W.end) {
+      // (lo que colgaba de las casas: faroles, ropa tendida, pasadizos)
+      g.setGroupVisible('centro', false);
+      this.wave = null;
+    }
+  }
   applyFlags() {
     const F = this.g.flags;
     this.setNaveRuined(!!F['boss:turiferario']);
+    this.setCentroCollapsed(!!F['finale:turSeen']);
     this.setFacadeRuined(!!F['boss:turibulario']);
     // la plaza: en ruinas sólo tras vencer (cargar a mitad del final es como
     // volver a empezar: todo entero)
@@ -151,6 +219,7 @@ export class Finale {
   reset() {
     this.setNaveRuined(false);
     this.setFacadeRuined(false);
+    this.setCentroCollapsed(false);
     this.wrecks.reset();
     for (const [n, on] of [
       ['cisternCrown', true],
@@ -236,8 +305,10 @@ export class Finale {
         if (g.flags['finale:turSeen']) this.tur.place(TUR_HOME.x, TUR_HOME.z, this._yawTo(DOOR.x, DOOR.z), { state: 'idle', wait: 1e9 });
       }
       if (this._placed && g.flags['finale:turSeen'] && this.tur.visible) this.tur.update(dt);
-      // al salir por la puerta de la Sé a la plaza
-      if (this.tur && g.state === 'play' && !p.dead && this.inLargo(p.pos) && p.pos.z > -58.8) this.startIntro(!g.flags['finale:turSeen']);
+      // al salir por la puerta de la Sé a la plaza (y, si ya salió, en
+      // cuanto pisas el campo de batalla)
+      const seen = !!g.flags['finale:turSeen'];
+      if (this.tur && g.state === 'play' && !p.dead && (seen ? this.inField(p.pos) : this.inLargo(p.pos) && p.pos.z > -58.8)) this.startIntro(!seen);
     } else if (this.stage === 'intro') {
       this.tur.update(dt);
       this._intro(dt);
@@ -246,6 +317,7 @@ export class Finale {
       this.climb.update(dt);
       this._arena(dt);
       this._bellSweep(dt);
+      this._leash(dt);
       if (this.tur.st === 'dying' && this.deathCam) {
         this.dyingT += dt;
         const k = Math.min(1, this.dyingT / 5);
@@ -286,6 +358,7 @@ export class Finale {
     } else if (this.stage === 'end') {
       this._end(dt);
     }
+    this._wave(dt);
     this._decals(dt);
     this.debris.update(dt, this._ground);
   }
@@ -299,7 +372,7 @@ export class Finale {
       const P = e.pos;
       const crypt = P.y < -3 && P.z < -100 && P.z > -170,
         nave = P.y > -1 && Math.abs(P.x) < 13.5 && P.z < -61 && P.z > -112,
-        largo = P.y > -1 && P.x > -19 && P.x < 23 && P.z > -62 && P.z < -39;
+        largo = P.y > -1 && P.x > BATTLE.x0 - 10 && P.x < BATTLE.x1 + 8 && P.z > -62 && P.z < BATTLE.z1 + 8;
       if (!crypt && !nave && !largo) continue;
       e.dead = true;
       e.state = 'dead';
@@ -332,6 +405,31 @@ export class Finale {
   inLargo(P) {
     return P.x > -18 && P.x < 22 && P.z > -60.2 && P.z < -40 && P.y < 4;
   }
+  // el campo de batalla del Turiferario: el atrio, las ruinas del centro y la
+  // plaza del pan
+  inField(P) {
+    return P.x > BATTLE.x0 - 4 && P.x < BATTLE.x1 + 4 && P.z > -60.2 && P.z < BATTLE.z1 + 5 && P.y < 4;
+  }
+  // Si huyes lejos por la ciudad, el coloso deja de perseguirte: se queda
+  // donde está (con sus heridas) y vuelve a rugir cuando regreses.
+  _leash(dt) {
+    const g = this.g,
+      p = g.player,
+      t = this.tur;
+    if (this.climb.active || p.dead || t.st === 'dying' || t.st === 'kneel' || t.dead) return;
+    const out = !this.inField(p.pos) && Math.hypot(p.pos.x - t.pos.x, p.pos.z - t.pos.z) > 45;
+    this.leashT = out ? (this.leashT || 0) + dt : 0;
+    if (this.leashT < 3) return;
+    this.leashT = 0;
+    this.stage = 'wait';
+    this._placed = true;
+    t.clearDrops();
+    if (t.grabbed) t._letGo(new THREE.Vector3());
+    t.handIK = null;
+    t.setIdle(1e9);
+    g.audio && g.audio.stopMusic();
+    this._leaveFight();
+  }
   _yawTo(x, z) {
     return Math.atan2(x - TUR_HOME.x, z - TUR_HOME.z);
   }
@@ -346,8 +444,10 @@ export class Finale {
     this.first = first;
     this.climb.reset();
     g.lockTarget = null;
-    const yaw = Math.atan2(p.pos.x - TUR_HOME.x, p.pos.z - TUR_HOME.z);
-    t.place(TUR_HOME.x, TUR_HOME.z, yaw, { state: 'idle', wait: 1e9 });
+    if (first || !t.visible) {
+      const yaw = Math.atan2(p.pos.x - TUR_HOME.x, p.pos.z - TUR_HOME.z);
+      t.place(TUR_HOME.x, TUR_HOME.z, yaw, { state: 'idle', wait: 1e9 });
+    }
     if (first) t.emerge();
     else t.attack('roar');
     // la pira salta en pedazos
@@ -355,6 +455,9 @@ export class Finale {
       g.setGroupVisible('pyre', false);
       this.debris.burst(new THREE.Vector3(4.5, 0.5, -47), 24, { speed: 7, up: 9, size: 0.7, spread: 2 });
     }
+    // (sin marcadores; y menos niebla: que se le vea salir entero)
+    g.ui.showHud(false);
+    if (first) g.atmo.override = { density: 0.021, vol: 0.05 };
     // el jugador se para a mirar
     p.state = 'cine';
     p.stT = 0;
@@ -376,7 +479,7 @@ export class Finale {
     this.introT += dt;
     const T = this.introT;
     const H = TUR_HOME;
-    const dur = this.first ? 8.1 : 2.6;
+    const dur = this.first ? 8.8 : 2.6;
     const head = t.M.byName.head.getWorldPosition(new THREE.Vector3());
     const side = Math.sign(p.pos.x - H.x) || 1;
     if (this.first) {
@@ -387,22 +490,26 @@ export class Finale {
         this._shot = 'a';
         // (a ras de suelo, desde el lado del atrio: el empedrado revienta)
         const u = smooth(T / 2.6);
-        pos = new THREE.Vector3(H.x + 9.5 - u * 1.5, 1.1 + u * 0.5, H.z - 7.5);
+        pos = new THREE.Vector3(H.x + 12.5 - u * 1.5, 1.2 + u * 0.6, H.z - 8.5);
         look = new THREE.Vector3(H.x, 1.4 + Math.max(0, head.y) * 0.3, H.z);
         fov = 64;
-      } else if (T < 6.1) {
-        // de lado y de lejos: se ve salir entero
+      } else if (T < 6.6) {
+        // de lejos, desde la Rúa da Sé, entre las casas del bloque: se le ve
+        // salir entero al fondo de la calle y la tierra revienta las manzanas
+        // en ola, desde él hasta la plaza del pan (las últimas, junto a la
+        // cámara); la grúa sube despacio
         cut = this._shot !== 'b';
         this._shot = 'b';
-        const u = smooth((T - 2.6) / 3.5);
-        pos = new THREE.Vector3(H.x - 15.5 - u * 1.2, 3 + u * 2.2, H.z - 6 - u * 3);
-        look = new THREE.Vector3(H.x, Math.max(3, head.y * 0.62), H.z);
-        fov = 72;
+        const u = smooth((T - 2.6) / 4);
+        pos = new THREE.Vector3(1.2 - u * 0.6, 4.2 + u * 4.3, -18.5 + u * 3);
+        look = new THREE.Vector3(H.x, Math.max(6, head.y * 0.62), H.z);
+        fov = 62;
+        if (T > 3.1 && !this.centroDown) this.collapseCentro(new THREE.Vector3(H.x, 0, H.z + 5));
       } else {
         // ruge: desde los pies del jugador, mirando arriba
         cut = this._shot !== 'c';
         this._shot = 'c';
-        const u = smooth((T - 6.1) / 2);
+        const u = smooth((T - 6.6) / 2);
         pos = new THREE.Vector3(p.pos.x - side * 3, p.visY + 1.0 + u * 0.4, p.pos.z + 2.4);
         look = new THREE.Vector3(H.x, head.y - 1 - u * 2, H.z);
         fov = 74;
@@ -423,6 +530,8 @@ export class Finale {
       p = g.player,
       t = this.tur;
     this.stage = 'tur';
+    if (!this.centroDown) this.setCentroCollapsed(true);
+    g.ui.showHud(true);
     g.camRig.override = null;
     g.camRig.snapTo(p);
     g.camRig.yaw = Math.atan2(t.pos.x - p.pos.x, t.pos.z - p.pos.z);
@@ -445,11 +554,12 @@ export class Finale {
     // (el dios, montado de antemano: sale en cuanto revienta el coloso)
     this.ensureDeo();
   }
-  // durante la pelea: no se sale de la plaza; la cámara, más lejos
+  // durante la pelea la cámara va más lejos (con Deo, no se sale de la
+  // plaza; contra el Turiferario el campo de batalla es todo el centro)
   _arena(dt) {
     const g = this.g,
       p = g.player;
-    if (!this.climb.active && !p.puppet && !p.dead) {
+    if (this.stage === 'deo' && !this.climb.active && !p.puppet && !p.dead) {
       const P = p.pos;
       P.x = Math.min(ARENA.x1, Math.max(ARENA.x0, P.x));
       P.z = Math.min(ARENA.z1, Math.max(ARENA.z0, P.z));
@@ -487,16 +597,17 @@ export class Finale {
     const g = this.g,
       t = this.tur;
     this.dyingT = 0;
-    // de lado y algo por delante, por donde la plaza deja más sitio (dentro
-    // de ella: la cámara no se mete en una casa)
+    // de lado y algo por delante, por donde el campo de batalla deja más
+    // sitio (en la calle o la plaza: la cámara no se mete en una casa)
     const f = t.forward();
     const side = new THREE.Vector3(f.z, 0, -f.x);
     let best = null;
     for (const sg of [-1, 1])
       for (const fw of [6, 2, -3]) {
         const c = new THREE.Vector3(t.pos.x + side.x * sg * 20 + f.x * fw, 4.5, t.pos.z + side.z * sg * 20 + f.z * fw);
-        c.x = Math.min(ARENA.x1 - 0.6, Math.max(ARENA.x0 + 0.6, c.x));
-        c.z = Math.min(-41.2, Math.max(-55, c.z));
+        c.x = clamp(c.x, BATTLE.x0 - 6, BATTLE.x1 + 6);
+        c.z = clamp(c.z, -55, BATTLE.z1 + 4);
+        t.field.push(c, 1.2);
         const d = Math.hypot(c.x - t.pos.x, c.z - t.pos.z);
         if (!best || d > best.d) best = { c, d };
       }

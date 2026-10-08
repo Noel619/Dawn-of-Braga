@@ -31,6 +31,7 @@ export class CollisionWorld {
     if (maxy < miny) [miny, maxy] = [maxy, miny];
     if (maxz < minz) [minz, maxz] = [maxz, minz];
     const b = { minx, miny, minz, maxx, maxy, maxz, tag, enabled: true, _s: 0, cam: true, obb: null, group: this.group };
+    if (this.groupPath) b.groups = this.groupPath;
     this.boxes.push(b);
     for (let gx = Math.floor(minx / CELL); gx <= Math.floor(maxx / CELL); gx++)
       for (let gz = Math.floor(minz / CELL); gz <= Math.floor(maxz / CELL); gz++) {

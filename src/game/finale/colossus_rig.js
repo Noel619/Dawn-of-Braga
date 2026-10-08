@@ -65,6 +65,9 @@ export class ColossusRig {
     // plano), ht (altura del hueso de los dedos) }]
     this.feet = o.feet || null;
     this.bounds = o.bounds || null;
+    // las casas en pie (ver finale/field.js) y hasta qué altura cuentan
+    this.field = o.field || null;
+    this.fieldH = o.fieldH ?? 6;
     this.groundOn = true;
     this.gw = 1;
     this.groundOff = 0;
@@ -391,6 +394,15 @@ export class ColossusRig {
           if (d.p.x > B[2] - m) (d.p.x = B[2] - m), (d.v.x *= -0.2);
           if (d.p.z < B[1] + m) (d.p.z = B[1] + m), (d.v.z *= -0.2);
           if (d.p.z > B[3] - m) (d.p.z = B[3] - m), (d.v.z *= -0.2);
+        }
+        // las casas en pie (field.js): a ras de suelo, se dobla contra ellas
+        if (d.bound && this.field && d.p.y < this.fieldH && this.field.push(d.p, d.bound)) {
+          const nn = this.field.n,
+            vn = d.v.x * nn.x + d.v.z * nn.z;
+          if (vn < 0) {
+            d.v.x -= nn.x * vn * 1.2;
+            d.v.z -= nn.z * vn * 1.2;
+          }
         }
         // el suelo (la cola se arrastra); muy por debajo (saliendo de la
         // tierra), sube poco a poco en vez de saltar

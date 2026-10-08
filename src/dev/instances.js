@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 
 export const INSTANCES = [
+  { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
   { id: 'rito', name: 'Final · el rito de la cisterna' },
   { id: 'subida', name: 'Final · la subida, tras el rito' },
   { id: 'turSale', name: 'Final · el Turiferario sale del suelo' },
@@ -96,6 +97,15 @@ function checkpoint(g) {
   }
   if (!F['boss:turiferario'] && g.lastAltar === 'a_cruceiro') g.lastAltar = 'a_cripta';
 }
+// la puerta de la Sé, abierta (se sale de la nave a la plaza: tras el rito
+// se viene de dentro)
+function openSe(g) {
+  const it = g.interact.list.find((i) => i.id === 'd_se');
+  if (it && !it.done) {
+    g.interact.setOpen(it, true);
+    g.flags['door:d_se'] = true;
+  }
+}
 function place(g, x, y, z, yaw) {
   g.player.spawn(x, y, z, yaw);
   g.camRig.snapTo(g.player);
@@ -105,9 +115,9 @@ function place(g, x, y, z, yaw) {
 export async function goInstance(g, id) {
   const F = g.finale;
   switch (id) {
-    case 'rito': {
+    case 'arzobispo': {
       prepare(g, finale({}));
-      // ante la niebla del sello, abierto
+      // ante la niebla del sello, abierto: se cruza y empieza la pelea
       const seal = g.interact.list.find((i) => i.id === 'd_sello');
       if (seal && !seal.done) {
         g.interact.setOpen(seal, true);
@@ -120,6 +130,15 @@ export async function goInstance(g, id) {
       if (fog) g.enterFog(fog);
       return true;
     }
+    case 'rito': {
+      // el arzobispo ya vencido: directamente el rito
+      prepare(g, finale({}));
+      const b = g.bosses.turibulario;
+      if (b) b.reset();
+      place(g, 0, -10, -150, Math.PI);
+      g.startRite(null);
+      return true;
+    }
     case 'subida':
       prepare(g, finale({ 'finale:rite': true }));
       place(g, 0, -10, -142.6, 0);
@@ -127,6 +146,7 @@ export async function goInstance(g, id) {
     case 'turSale':
       // en el pórtico de la Sé, asomado a la plaza: revienta el empedrado
       prepare(g, finale({ 'finale:rite': true }));
+      openSe(g);
       await F.ensureTur();
       place(g, 1, 0.6, -57.6, 0);
       return true;

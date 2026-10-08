@@ -16,6 +16,7 @@ import { colMat } from '../../gfx/materials.js';
 
 const _v = new THREE.Vector3(),
   _v2 = new THREE.Vector3(),
+  _c = new THREE.Vector3(),
   _q = new THREE.Quaternion(),
   _m = new THREE.Matrix4(),
   _s = new THREE.Vector3(1, 1, 1);
@@ -45,6 +46,11 @@ export class BellChain {
     this.stuck = null; // posición del yugo clavado
     this.groundAt = o.groundAt || (() => 0);
     this.bounds = o.bounds || null; // [x0, z0, x1, z1]: no sale de la plaza
+    // las casas en pie (field.js): por debajo de fieldH la campana choca con
+    // sus fachadas (y avisa: onWall(punto, normal, velocidad))
+    this.field = o.field || null;
+    this.fieldH = o.fieldH ?? 9.5;
+    this.onWall = null;
     // eslabones (dos por tramo, girados 90° uno respecto al otro)
     const links = o.links ?? 28;
     this.mesh = new THREE.InstancedMesh(linkGeo(o.linkR ?? 0.32, 0.085), colMat('iron'), links);
@@ -196,6 +202,32 @@ export class BellChain {
             if (p.x > x1) p.x = x1;
             if (p.z < z0) p.z = z0;
             if (p.z > z1) p.z = z1;
+          }
+          if (last && this.field && !this.stuck) {
+            // las casas: la campana (su cuerpo, no el yugo) se estrella
+            // contra la fachada y pierde la velocidad contra ella
+            _c.copy(p).addScaledVector(this.up, -this.H * 0.55);
+            if (_c.y < this.fieldH) {
+              const cx = _c.x,
+                cz = _c.z;
+              const q = Q[i];
+              const sp = Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z) / h;
+              if (this.field.push(_c, this.R)) {
+                const dx = _c.x - cx,
+                  dz = _c.z - cz;
+                const nn = this.field.n;
+                p.x += dx;
+                p.z += dz;
+                q.x += dx;
+                q.z += dz;
+                const vn = (p.x - q.x) * nn.x + (p.z - q.z) * nn.z;
+                if (vn < 0) {
+                  q.x += nn.x * vn * 1.3;
+                  q.z += nn.z * vn * 1.3;
+                }
+                if (this.onWall && sp > 3.5) this.onWall(_c.addScaledVector(nn, -this.R), nn, sp);
+              }
+            }
           }
         }
         if (this.stuck) P[N - 1].copy(this.stuck);

@@ -304,6 +304,8 @@ export class Enemy {
   }
 
   die() {
+    // (el arzobispo no muere: vencido, se lo lleva el dios; ver finale/rite.js)
+    if (this.T.onDefeat && this.T.onDefeat(this)) return;
     this.dead = true;
     this.state = 'dead';
     this.stT = 0;
