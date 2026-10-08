@@ -181,10 +181,10 @@ siempre. La nave reventada es otra versión de la catedral, con la escalera de l
   sigilo, la voz del dios y la máscara que se raja.
 - Barra del jefe con el nombre y los sigilos que le quedan; avisos de agarrarse, aferrarse y apuñalar.
 
-## 8. Modo de pruebas y editor (`devmode2004`)
+## 8. Modo de pruebas y editor
 
-- Escribir **devmode2004** en cualquier momento abre el modo de pruebas (además de F2 en localhost). La
-  contraseña no se guarda en claro: sólo su huella.
+- Escribir la **contraseña del modo de pruebas** en cualquier momento lo abre (además de F2 en localhost).
+  La contraseña no se guarda en claro en ningún sitio, tampoco en este documento: sólo su huella.
 - Sección **Instancias** para ir directo: el rito, la pelea del Turiferario, el Turiferario de
   rodillas, la explosión y Deo Ignoto, la máscara, el final; y las otras peleas (el Empalado, la huida
   de la Bestia, la caza del Descoyuntado).
