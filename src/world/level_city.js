@@ -231,7 +231,11 @@ export function buildLargo(ctx, S, L) {
   stoneWall(ctx, 19, -62, 22, -56, 5);
   wb.box('ashlar', 15.2, 4.6, -60.4, 19.3, 5.4, -59.6, { ao: false, faces: 'tnsewb' });
 
+  // (la pira, en un grupo: el Turiferario sale del suelo justo debajo y la
+  // revienta; ver finale/director.js)
+  ctx.beginGroup('pyre');
   P.pyre(ctx, 4.5, 0, -47, 81);
+  ctx.endGroup();
   P.cruzeiro(ctx, -9.5, 0, -47.5, 0.2);
   P.cart(ctx, 15.5, 0, -43.5, -0.4, {});
   P.barrel(ctx, 20.5, 0, -41.2);
@@ -245,6 +249,9 @@ export function buildLargo(ctx, S, L) {
   P.wallTorch(ctx, -18, 2.8, -44, 'e');
   P.wallTorch(ctx, 22, 2.8, -53, 'w');
   L.interact.push({ kind: 'note', id: 'n_soldado', note: 'soldado', x: 12.6, y: 0.08, z: -43.3, model: 'paper' });
+  // el altar del cruceiro: se enciende cuando revienta el Turiferario (el
+  // punto de control de la pelea contra Deo Ignoto; ver finale/director.js)
+  L.interact.push({ kind: 'altar', id: 'a_cruceiro', name: 'Cruceiro del Largo', x: -9.5, y: 0, z: -47.5, spawn: [-9.5, 0, -45.4], yaw: Math.PI, afterBoss: 'turiferario' });
   // --- el atrio del sacrificio
   P.ritual(ctx, -12.5, 0, -51.5, 1.4, 7);
   P.stake(ctx, 18.2, 0, -52.8, 0.4, 3);

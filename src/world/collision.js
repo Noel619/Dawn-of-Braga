@@ -22,13 +22,15 @@ export class CollisionWorld {
     this.boxes = [];
     this.grid = new Map();
     this.stamp = 0;
+    // (cajas de un grupo del mundo: se desactivan con él)
+    this.group = null;
   }
 
   add(minx, miny, minz, maxx, maxy, maxz, tag = null) {
     if (maxx < minx) [minx, maxx] = [maxx, minx];
     if (maxy < miny) [miny, maxy] = [maxy, miny];
     if (maxz < minz) [minz, maxz] = [maxz, minz];
-    const b = { minx, miny, minz, maxx, maxy, maxz, tag, enabled: true, _s: 0, cam: true, obb: null };
+    const b = { minx, miny, minz, maxx, maxy, maxz, tag, enabled: true, _s: 0, cam: true, obb: null, group: this.group };
     this.boxes.push(b);
     for (let gx = Math.floor(minx / CELL); gx <= Math.floor(maxx / CELL); gx++)
       for (let gz = Math.floor(minz / CELL); gz <= Math.floor(maxz / CELL); gz++) {

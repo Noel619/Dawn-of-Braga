@@ -72,7 +72,7 @@ export class Game {
     this.world = { col: lvl.ctx.col, S: lvl.S, C: lvl.C };
     for (const m of lvl.meshes) this.scene.add(m);
     buildDecals(this.scene, lvl.ctx.decals);
-    buildBanners(this.scene, lvl.ctx.banners);
+    const banners = buildBanners(this.scene, lvl.ctx.banners);
     const shafts = new LightShafts(this.scene);
     for (const s of lvl.ctx.shafts) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
     shafts.build();
@@ -80,12 +80,34 @@ export class Game {
     this.waters = new Waters(this, lvl.ctx.waters || []);
     this.fx = {};
     this.fx.fires = new FireSystem(this.scene, 240);
-    for (const f of lvl.ctx.fires) this.fx.fires.add(f);
+    // grupos del mundo que se ocultan juntos (ver level.js: beginGroup)
+    this.groups = {};
+    const grp = (name) => this.groups[name] || (this.groups[name] = { meshes: [], boxes: [], fires: [], lights: [], on: true });
+    for (const m of lvl.meshes) if (m.userData.group) grp(m.userData.group).meshes.push(m);
+    for (const m of banners) if (m.userData.group) grp(m.userData.group).meshes.push(m);
+    for (const b of lvl.ctx.col.boxes) if (b.group) grp(b.group).boxes.push(b);
+    for (const f of lvl.ctx.fires) {
+      const e = this.fx.fires.add(f);
+      // (los de un grupo no se purgan al apagarse: vuelven al mostrarlo)
+      if (f.group) {
+        e.keep = true;
+        grp(f.group).fires.push(e);
+      }
+    }
     this.fx.lights = new LightPool(this.scene, 8);
-    for (const f of lvl.ctx.fires) if (f.light !== false && f.s >= 0.4) this.fx.lights.add({ x: f.x, y: f.y + 0.6 + f.s * 0.3, z: f.z, intensity: 8 + f.s * 8, range: 8 + f.s * 3 });
-    for (const d of lvl.ctx.dynLights) this.fx.lights.add({ ...d, intensity: d.intensity * 2.6, color: d.color ?? 0xff7a30 });
+    for (const f of lvl.ctx.fires) if (f.light !== false && f.s >= 0.4) {
+      const l = this.fx.lights.add({ x: f.x, y: f.y + 0.6 + f.s * 0.3, z: f.z, intensity: 8 + f.s * 8, range: 8 + f.s * 3 });
+      if (f.group) grp(f.group).lights.push(l);
+    }
+    for (const d of lvl.ctx.dynLights) {
+      const l = this.fx.lights.add({ ...d, intensity: d.intensity * 2.6, color: d.color ?? 0xff7a30 });
+      if (d.group) grp(d.group).lights.push(l);
+    }
     this.bossLight = new THREE.PointLight(0xff6a20, 0, 14, 1.5);
     this.scene.add(this.bossLight);
+    // las ruinas de la nave y de la fachada, ocultas hasta que revientan
+    this.setGroupVisible('naveRuin', false);
+    this.setGroupVisible('fachadaRuin', false);
     this.fx.ash = new AshSystem(this.scene);
     this.fx.blood = new ParticleBurst(this.scene, 900);
     this.fx.bloodDecals = new DecalPool(this.scene, 'splat', 48, { color: 0x9a8080 });
@@ -553,6 +575,18 @@ export class Game {
     this.hintQ = this.hintQ || [];
     this.hintQ.push(H[id]);
     if (!this._hintBusy) this._nextHint();
+  }
+  // Muestra u oculta un grupo del mundo (mallas, colisiones, fuegos y luces):
+  // el tejado de la nave cuando revienta, sus ruinas
+  setGroupVisible(name, on) {
+    const G = this.groups[name];
+    if (!G || G.on === on) return;
+    G.on = on;
+    for (const m of G.meshes) m.visible = on;
+    for (const b of G.boxes) b.enabled = on;
+    for (const f of G.fires) f.on = on;
+    for (const l of G.lights) l.on = on;
+    this.fx.fires.refresh(this.camera.position.x, this.camera.position.z);
   }
   // Un mensaje del guion en la cola de las pistas (de uno en uno: varios a la
   // vez se amontonaban sobre el aviso de botón)

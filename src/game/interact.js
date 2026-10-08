@@ -545,6 +545,8 @@ export class Interactables {
       it.r = s.r ?? 1.7;
     } else if (s.kind === 'altar') {
       it.r = 2.2;
+      // (el del cruceiro, sólo tras reventar el Turiferario)
+      it.hidden = !!s.afterBoss;
     } else if (s.kind === 'fog') {
       const geo = new THREE.PlaneGeometry(s.w, s.h);
       it.obj = new THREE.Mesh(geo, fogWallMat());
@@ -661,6 +663,7 @@ export class Interactables {
       }
       if (it.kind === 'note' && flags['take:' + it.id] && it.glow) it.glow.visible = false;
       if (it.kind === 'fog' && flags['boss:' + it.boss]) this.clearFog(it);
+      if (it.kind === 'altar' && it.afterBoss) it.hidden = !flags['boss:' + it.afterBoss] || !!flags['boss:turibulario'];
       if (it.kind === 'item' && it.afterBoss && flags['boss:' + it.afterBoss] && !flags['take:' + it.id]) {
         it.hidden = false;
         it.obj.visible = true;

@@ -25,10 +25,11 @@ function rockGeo() {
 }
 
 export class Debris {
-  constructor(scene, n = 120) {
+  // o: { color, tex } (piedra por defecto; el bronce de la máscara, otro)
+  constructor(scene, n = 120, o = {}) {
     this.scene = scene;
-    const tex = getTexture('ashlar');
-    this.mat = new THREE.MeshLambertMaterial({ map: tex, color: 0x9a9088 });
+    const tex = getTexture(o.tex || 'ashlar');
+    this.mat = new THREE.MeshLambertMaterial({ map: tex, color: o.color ?? 0x9a9088 });
     this.mesh = new THREE.InstancedMesh(rockGeo(), this.mat, n);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.frustumCulled = false;

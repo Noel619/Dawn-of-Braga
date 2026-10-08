@@ -87,7 +87,8 @@ export class Atmosphere {
     if (player) player.lampBase = c.lamp;
     // el plano lejano se ajusta a la niebla: lo que la niebla oculta no se dibuja
     if (this.camera) {
-      const far = Math.min(170, Math.max(46, 2.6 / Math.max(0.005, c.density)));
+      // (el jefe final puede pedir más: Deo Ignoto mide noventa metros)
+      const far = Math.min(T.far || 170, Math.max(46, 2.6 / Math.max(0.005, c.density)));
       if (Math.abs(this.camera.far - far) > 1) {
         this.camera.far = far;
         this.camera.updateProjectionMatrix();

@@ -118,9 +118,12 @@ export class ColossusRig {
   // rodilla hacia 'pole' (mundo). w: peso (0..1). Se pide cada fotograma.
   // o.rot: giro de la punta en el mundo (la palma contra el suelo);
   // o.stretch: cuánto puede estirarse la cadena si no llega (1.15 = un 15 %:
-  // los brazos de carne de Deo se alargan al golpear lejos).
+  // los brazos de carne de Deo se alargan al golpear lejos);
+  // o.roll: { ref (dirección en el hueso b, en reposo), want (mundo) }: el
+  // segundo hueso gira sobre su eje hasta que ref mira hacia want (el dorso
+  // del antebrazo arriba: por ahí se trepa).
   reach(a, b, c, target, pole, w = 1, o = {}) {
-    this.reqIK.push({ a: this.byName[a], b: this.byName[b], c: this.byName[c], target: target.clone(), pole: pole.clone(), w, rot: o.rot ? o.rot.clone() : null, stretch: o.stretch || 1 });
+    this.reqIK.push({ a: this.byName[a], b: this.byName[b], c: this.byName[c], target: target.clone(), pole: pole.clone(), w, rot: o.rot ? o.rot.clone() : null, stretch: o.stretch || 1, roll: o.roll || null });
   }
 
   // ------------------------------------------------------------ cada fotograma
@@ -310,6 +313,23 @@ export class ColossusRig {
     const Tf = new THREE.Vector3().copy(A).addScaledVector(axis, d);
     this._aim(b, C2.sub(B2).normalize(), Tf.sub(B2).normalize());
     b.updateMatrixWorld(true);
+    // giro sobre el eje del segundo hueso (el dorso hacia arriba)
+    if (r.roll) {
+      const ax = c.getWorldPosition(new THREE.Vector3()).sub(b.getWorldPosition(new THREE.Vector3())).normalize();
+      b.getWorldQuaternion(_q2);
+      const cur = r.roll.ref.clone().applyQuaternion(_q2);
+      cur.addScaledVector(ax, -cur.dot(ax));
+      const want = r.roll.want.clone().addScaledVector(ax, -r.roll.want.dot(ax));
+      if (cur.lengthSq() > 1e-6 && want.lengthSq() > 1e-6) {
+        cur.normalize();
+        want.normalize();
+        const ang = Math.atan2(ax.dot(new THREE.Vector3().crossVectors(cur, want)), cur.dot(want)) * w;
+        _q.setFromAxisAngle(ax, ang).multiply(_q2);
+        b.parent.getWorldQuaternion(_q3);
+        b.quaternion.copy(_q3.invert().multiply(_q));
+        b.updateMatrixWorld(true);
+      }
+    }
     // giro de la punta en el mundo (la palma contra el suelo)
     if (r.rot) {
       c.parent.getWorldQuaternion(_q2);

@@ -29,6 +29,24 @@ export function buildLevel() {
     rats: [], // nidos de ratas {x,y,z,n}
     flies: [], // enjambres de moscas (salen de los cadáveres)
   };
+  // grupos del mundo (el tejado de la nave que revienta, sus ruinas): la
+  // geometría, las colisiones, los fuegos y los estandartes que se añaden
+  // entre beginGroup y endGroup llevan su nombre y se ocultan juntos
+  ctx.beginGroup = (name) => {
+    ctx.wb.setGroup(name);
+    ctx.col.group = name;
+    ctx._grp = { name, fires: ctx.fires.length, banners: ctx.banners.length, dyn: ctx.dynLights.length };
+  };
+  ctx.endGroup = () => {
+    const G = ctx._grp;
+    if (!G) return;
+    for (let i = G.fires; i < ctx.fires.length; i++) ctx.fires[i].group = G.name;
+    for (let i = G.banners; i < ctx.banners.length; i++) ctx.banners[i].group = G.name;
+    for (let i = G.dyn; i < ctx.dynLights.length; i++) ctx.dynLights[i].group = G.name;
+    ctx.wb.setGroup(null);
+    ctx.col.group = null;
+    ctx._grp = null;
+  };
   corpseLog.length = 0;
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie

@@ -90,11 +90,14 @@ export function buildDecals(scene, decals) {
 export function buildBanners(scene, banners) {
   const out = [];
   const byKind = new Map();
+  // (por tipo y por grupo del mundo: los de un grupo se ocultan con él)
   for (const b of banners) {
-    if (!byKind.has(b.kind)) byKind.set(b.kind, []);
-    byKind.get(b.kind).push(b);
+    const key = b.kind + '|' + (b.group || '');
+    if (!byKind.has(key)) byKind.set(key, []);
+    byKind.get(key).push(b);
   }
-  for (const [kind, list] of byKind) {
+  for (const [key, list] of byKind) {
+    const kind = list[0].kind;
     const geos = [];
     for (const b of list) {
       const g = new THREE.PlaneGeometry(b.w, b.h, 1, 6);
@@ -114,8 +117,10 @@ export function buildBanners(scene, banners) {
     const m = new THREE.MeshLambertMaterial({ map: getTexture(kind), alphaTest: 0.5, side: THREE.DoubleSide });
     registerMaterialPatch(m, { wind: true });
     const mesh = new THREE.Mesh(merged, m);
+    if (list[0].group) mesh.userData.group = list[0].group;
     scene.add(mesh);
     out.push(mesh);
+    void key;
   }
   return out;
 }

@@ -5,9 +5,14 @@
 //            salió y has muerto, de pie en la plaza)
 //   intro    sale del empedrado (o se vuelve y ruge, si ya había salido)
 //   tur      la pelea en la plaza
-//   burst    revienta (y detrás se alza Deo Ignoto)
-//   deoWait  la segunda pelea, pendiente (la nave en ruinas)
-//   done     muerto el dios
+//   burst    revienta: la campana cae tañendo
+//   rise     la nave estalla y se alza Deo Ignoto
+//   deoWait  la segunda pelea, pendiente (la nave en ruinas; tras morir, o al
+//            cargar la partida: el dios espera y vuelve a empezar)
+//   deoIntro ruge (al volver a empezar)
+//   deo      la pelea contra el dios
+//   end      muerto el dios: se hunde y se abre el camino al río
+//   done     todo terminado
 //
 // Banderas: finale:rite (visto el rito), finale:turSeen (ya ha salido del
 // suelo una vez), boss:turiferario (fase 1 ganada) y boss:turibulario (la de
@@ -15,6 +20,7 @@
 import * as THREE from 'three';
 import { Climb } from './climb.js';
 import { TurBoss, TUR_HOME } from './turiferario_boss.js';
+import { DeoBoss } from './deo_boss.js';
 import { Debris } from './debris.js';
 
 const _v = new THREE.Vector3();
@@ -22,6 +28,7 @@ const DOOR = { x: 0, z: -60.4 };
 // la plaza durante la pelea: los escombros cierran las salidas
 const ARENA = { x0: -17.4, z0: -59.6, x1: 21.4, z1: -40.6 };
 const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
 export class Finale {
   constructor(game) {
@@ -30,13 +37,17 @@ export class Finale {
     this.debris = new Debris(game.scene);
     this._ground = (x, z) => game.world.col.groundHeight(x, z, 0.1, 2);
     this.tur = null;
+    this.deo = null;
     this.stage = 'off';
     this.decals = [];
     this.t = 0;
     this._placed = false;
   }
   get fighting() {
-    return this.stage === 'tur' || this.stage === 'intro';
+    return this.stage === 'tur' || this.stage === 'intro' || this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise';
+  }
+  get boss() {
+    return this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise' ? this.deo : this.tur;
   }
 
   // ---------------------------------------------------------- modelos
@@ -52,28 +63,80 @@ export class Finale {
         t.onAwake = () => {};
         t.onDying = () => this.onTurDying();
         this.tur = t;
-        this.climb.boss = t;
+        if (!this.climb.boss) this.climb.boss = t;
         return t;
       });
     return this._turP;
   }
+  ensureDeo() {
+    if (this.deo) return Promise.resolve(this.deo);
+    if (!this._deoP)
+      this._deoP = this.g.colossi.model('deo').then((M) => {
+        const d = new DeoBoss(this.g, M);
+        d.onRisen = () => {};
+        d.onPhase = (ph) => this.onDeoPhase(ph);
+        d.onBow = () => this.startBow();
+        d.onFacade = () => this.collapseFacade();
+        d.onDying = () => this.onDeoDying();
+        d.onDead = () => this.onDeoDead();
+        this.deo = d;
+        return d;
+      });
+    return this._deoP;
+  }
 
   // ---------------------------------------------------------- banderas
+  // la nave entera o en ruinas (según haya reventado ya)
+  setNaveRuined(on) {
+    const g = this.g;
+    g.setGroupVisible('naveRoof', !on);
+    g.setGroupVisible('naveRuin', on);
+  }
+  // la fachada de la Sé entera o reventada (por Deo al desplomarse; muerto el
+  // dios se queda así). La puerta se va con ella: queda la brecha.
+  setFacadeRuined(on) {
+    const g = this.g;
+    this.facadeDown = on;
+    g.setGroupVisible('fachada', !on);
+    g.setGroupVisible('fachadaRuin', on);
+    const it = g.interact.list.find((i) => i.id === 'd_se');
+    if (!it) return;
+    it.ruined = on;
+    it.hidden = on;
+    if (it.obj) it.obj.visible = !on;
+    if (it.box) it.box.enabled = !on && !it.done;
+  }
   applyFlags() {
     const F = this.g.flags;
+    this.setNaveRuined(!!F['boss:turiferario']);
+    this.setFacadeRuined(!!F['boss:turibulario']);
+    // la pira del atrio, reventada desde que salió el coloso
+    this.g.setGroupVisible('pyre', !F['finale:turSeen']);
     this.climb.reset();
     this.clearDecals();
+    this.debris.clear();
     this._placed = false;
+    this.bellFall = null;
+    this.deathCam = null;
+    this.cam = null;
     if (this.tur) this.tur.show(false);
+    if (this.deo) this.deo.show(false);
     if (F['boss:turibulario']) this.stage = 'done';
     else if (F['boss:turiferario']) this.stage = 'deoWait';
     else if (F['finale:rite']) this.stage = 'wait';
     else this.stage = 'off';
+    // la campana tumbada en la plaza y el altar del cruceiro encendido
+    if (F['boss:turiferario']) this.ensureTur().then(() => this.layBell());
+    this.cruceiro(!!F['boss:turiferario'] && !F['boss:turibulario']);
     this._leaveFight();
   }
   reset() {
+    this.setNaveRuined(false);
+    this.setFacadeRuined(false);
+    this.g.setGroupVisible('pyre', true);
     this.bellFall = null;
     this.deathCam = null;
+    this.cam = null;
     this.climb.reset();
     this.clearDecals();
     this.debris.clear();
@@ -83,19 +146,28 @@ export class Finale {
       this.tur.show(false);
       this.tur.clearDrops();
     }
+    if (this.deo) this.deo.dispose();
+    this.cruceiro(false);
     this._leaveFight();
   }
-  // al morir: la pelea vuelve a empezar (el coloso espera en la plaza)
+  // al morir: la pelea vuelve a empezar (el coloso espera en la plaza; el
+  // dios, en la nave)
   onRespawn() {
     if (this.stage === 'intro' || this.stage === 'tur') this.stage = 'wait';
+    if (this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise') this.stage = 'deoWait';
+    // (si se había desplomado, vuelve a empezar de pie agarrado a las torres)
+    if (this.stage === 'deoWait' && this.facadeDown) this.setFacadeRuined(false);
+    this.bowCam = null;
     this.climb.reset();
     this.clearDecals();
     this.debris.clear();
     this._placed = false;
-    if (this.tur) {
+    this.cam = null;
+    if (this.tur && this.stage === 'wait') {
       this.tur.show(false);
       this.tur.clearDrops();
     }
+    if (this.deo) this.deo.dispose();
     this._leaveFight();
   }
   _leaveFight() {
@@ -106,7 +178,7 @@ export class Finale {
       g.camRig.distBias = 0;
       g.camRig.pivotBias = 0;
     }
-    if (g.activeBoss && this.tur && g.activeBoss === this.tur.proxy) g.activeBoss = null;
+    if (g.activeBoss && ((this.tur && g.activeBoss === this.tur.proxy) || (this.deo && g.activeBoss === this.deo.proxy))) g.activeBoss = null;
   }
 
   // ---------------------------------------------------------- cada fotograma
@@ -139,6 +211,33 @@ export class Finale {
       }
     } else if (this.stage === 'burst') {
       this._burst(dt);
+    } else if (this.stage === 'rise') {
+      this.deo.update(dt);
+      this._bellFall(dt);
+      this._rise(dt);
+    } else if (this.stage === 'deoWait') {
+      if (!this.deo) this.ensureDeo();
+      if (this.deo && !this._placed && Math.hypot(p.pos.x, p.pos.z + 60) < 110) {
+        this._placed = true;
+        this.deo.place('fight');
+        this.deo.st = 'wait';
+      }
+      if (this._placed) this.deo.update(dt);
+      if (this.deo && this._placed && g.state === 'play' && !p.dead && this.inLargo(p.pos) && p.pos.z > -58.8) this.startDeoIntro();
+    } else if (this.stage === 'deoIntro') {
+      this.deo.update(dt);
+      this.introT += dt;
+      g.camRig.override = { pos: new THREE.Vector3(p.pos.x + 3, 2.4, p.pos.z + 4), look: new THREE.Vector3(0, 34, -70), speed: 2.5, fov: 72 };
+      p.state = 'cine';
+      if (this.introT > 3.4) this.startDeoFight();
+    } else if (this.stage === 'deo') {
+      this.deo.update(dt);
+      this.climb.update(dt);
+      if (this.bowCam) this._bowCam(dt);
+      else this._arena(dt);
+      if (this.deo.st === 'dying' && this.cam) this._camShot(dt);
+    } else if (this.stage === 'end') {
+      this._end(dt);
     }
     this._decals(dt);
     this.debris.update(dt, this._ground);
@@ -164,6 +263,11 @@ export class Finale {
     t.place(TUR_HOME.x, TUR_HOME.z, yaw, { state: 'idle', wait: 1e9 });
     if (first) t.emerge();
     else t.attack('roar');
+    // la pira salta en pedazos
+    if (first) {
+      g.setGroupVisible('pyre', false);
+      this.debris.burst(new THREE.Vector3(4.5, 0.5, -47), 24, { speed: 7, up: 9, size: 0.7, spread: 2 });
+    }
     // el jugador se para a mirar
     p.state = 'cine';
     p.stT = 0;
@@ -248,6 +352,9 @@ export class Finale {
     g.flags['finale:turSeen'] = true;
     if (t.st === 'emerge' || t.st === 'attack') t.setIdle(0.8);
     this.hintsT = 0;
+    this.climb.boss = t;
+    // (el dios, montado de antemano: sale en cuanto revienta el coloso)
+    this.ensureDeo();
   }
   // durante la pelea: no se sale de la plaza; la cámara, más lejos
   _arena(dt) {
@@ -259,11 +366,11 @@ export class Finale {
       P.z = Math.min(ARENA.z1, Math.max(ARENA.z0, P.z));
     }
     const cr = g.camRig;
-    const want = this.climb.active ? 1.6 : 2.4;
+    const want = this.climb.active ? (this.stage === 'deo' ? 2.4 : 1.6) : this.stage === 'deo' ? 3.4 : 2.4;
     cr.distBias = (cr.distBias || 0) + (want - (cr.distBias || 0)) * (1 - Math.exp(-dt * 2));
     // pistas, la primera vez
     this.hintsT += dt;
-    if (this.hintsT > 6 && !g.hintsShown.colossus) {
+    if (this.hintsT > 6 && !g.hintsShown.colossus && this.stage === 'tur') {
       g.hintsShown.colossus = true;
       g.say('No le harás nada a golpes: trépale y apuñala sus sigilos. La cola se arrastra por el suelo: agárrate a ella.');
     }
@@ -364,14 +471,333 @@ export class Finale {
       g.ui.area('EL TURIFERARIO HA REVENTADO');
       g.audio && g.audio.play('victory');
     }
-    if (this.burstT > 6) {
+    // y detrás, la nave estalla
+    if (this.burstT > 5.5 && this.deo) {
       this._burstMsg = false;
-      this.stage = 'deoWait';
-      g.camRig.distBias = 0;
-      g.saveGame();
-      this.onDeoPending && this.onDeoPending();
+      this.startRise();
+    } else if (this.burstT > 5.5 && !this.deo) this.ensureDeo();
+  }
+
+  // ---------------------------------------------------------- se alza Deo Ignoto
+  startRise() {
+    const g = this.g,
+      p = g.player;
+    this.stage = 'rise';
+    this.riseT = 0;
+    this.deathCam = null;
+    this.climb.boss = this.deo;
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    g.lockTarget = null;
+    // menos niebla y el plano lejano más allá: el dios mide noventa metros
+    g.atmo.override = { density: 0.013, vol: 0.05, far: 240, bloom: 1.3 };
+    g.audio && g.audio.play('stoneCreak', { x: 0, y: 10, z: -80 }, { k: 2 });
+    g.audio && g.audio.play('dread', p.pos);
+    g.camRig.shake(0.4);
+    this._riseBoom = false;
+  }
+  _rise(dt) {
+    const g = this.g,
+      p = g.player;
+    this.riseT += dt;
+    const T = this.riseT;
+    // temblores y polvo de la fachada
+    if (T < 1.6) {
+      g.camRig.shake(dt * 0.6);
+      if (Math.random() < dt * 14) g.fx.blood.emit((Math.random() - 0.5) * 22, 12 + Math.random() * 12, -60.5, 5, { color: [0.4, 0.37, 0.33], speed: 1, life: 1.6, up: -1 });
     }
-    void dt;
+    // la nave revienta desde dentro y el dios empieza a salir
+    if (T >= 1.6 && !this._riseBoom) {
+      this._riseBoom = true;
+      this.setNaveRuined(true);
+      for (const z of [-68, -78, -88, -98]) {
+        const at = new THREE.Vector3((Math.random() - 0.5) * 8, 14, z);
+        this.debris.burst(at, 26, { speed: 13, up: 18, size: 2.0, spread: 6 });
+        g.fx.blood.emit(at.x, at.y, at.z, 70, { color: [0.4, 0.37, 0.33], speed: 12, life: 2.4, up: 6 });
+        g.fx.blood.emit(at.x, at.y - 4, at.z, 30, { speed: 9, life: 1.4, up: 6 });
+      }
+      g.audio && g.audio.play('explosion', { x: 0, y: 12, z: -80 }, { k: 2 });
+      g.audio && g.audio.play('wallBreak', { x: 0, y: 12, z: -75 }, { k: 2 });
+      g.audio && g.audio.play('bellToll', { x: 9, y: 18, z: -60 }, { k: 1.4 });
+      g.flash = 0.55;
+      g.flashTint = [1, 0.7, 0.45];
+      g.camRig.shake(1);
+      g.input.rumble(1, 1, 900);
+      this.deo.startRise();
+    }
+    // planos: la fachada desde la plaza; los brazos que salen; la cabeza
+    let pos, look, fov, cut;
+    if (T < 7.5) {
+      cut = this._shot !== 'r1';
+      this._shot = 'r1';
+      const u = smooth(T / 7.5);
+      pos = new THREE.Vector3(7 - u * 3, 2.2 + u * 1.5, -42.5);
+      look = new THREE.Vector3(0, 14 + u * 22, -72);
+      fov = 74;
+    } else if (T < 12.5) {
+      cut = this._shot !== 'r2';
+      this._shot = 'r2';
+      const u = smooth((T - 7.5) / 5);
+      pos = new THREE.Vector3(-15 + u * 2, 4 + u * 3, -44);
+      look = new THREE.Vector3(4, 26 + u * 8, -74);
+      fov = 76;
+    } else {
+      cut = this._shot !== 'r3';
+      this._shot = 'r3';
+      const u = smooth((T - 12.5) / 3.5);
+      const head = this.deo._head(new THREE.Vector3());
+      pos = new THREE.Vector3(p.pos.x + 2.5, p.visY + 1.2 + u * 0.4, p.pos.z + 3);
+      look = head.clone().add(new THREE.Vector3(0, -4 - u * 3, 0));
+      fov = 66;
+    }
+    g.camRig.override = { pos, look, speed: 2.2, snap: cut, fov };
+    if (cut) g.camRig.cam.position.copy(pos);
+    p.state = 'cine';
+    if (T >= 1.6 + 14.6) this.startDeoFight();
+  }
+  startDeoIntro() {
+    const g = this.g,
+      p = g.player;
+    this.stage = 'deoIntro';
+    this.introT = 0;
+    this.climb.boss = this.deo;
+    this.deo.place('fight');
+    this.deo.st = 'wait';
+    this.deo._roar(false);
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    g.lockTarget = null;
+    g.atmo.override = { density: 0.013, vol: 0.05, far: 240, bloom: 1.3 };
+  }
+  startDeoFight() {
+    const g = this.g,
+      p = g.player,
+      d = this.deo;
+    this.stage = 'deo';
+    this._shot = null;
+    g.camRig.override = null;
+    g.camRig.snapTo(p);
+    g.camRig.yaw = Math.atan2(0 - p.pos.x, -70 - p.pos.z);
+    g.camRig.pitch = -0.1;
+    p.state = 'free';
+    d.st = 'fight';
+    d.stT = 0;
+    this.climb.boss = d;
+    g.activeBoss = d.proxy;
+    g.extraTargets = [d.proxy];
+    g.setLock(d.proxy);
+    g.audio && g.audio.music('bossFinal2');
+    g.ui.area(d.proxy.T.name);
+    g.atmo.override = { density: 0.013, vol: 0.05, far: 240, bloom: 1.3 };
+    // el altar del cruceiro: aquí se vuelve si caes
+    this.cruceiro(true);
+    g.lastAltar = 'a_cruceiro';
+    g.flags['altar:a_cruceiro'] = true;
+    g.saveGame();
+    this.hintsT = 0;
+    if (!g.hintsShown.deo) {
+      g.hintsShown.deo = true;
+      g.say('Sus manos alzadas golpean la plaza y se quedan plantadas: trepa por el dorso hasta el sigilo del codo.');
+    }
+  }
+  onDeoPhase(ph) {
+    const g = this.g;
+    g.flash = Math.max(g.flash, 0.4);
+    g.camRig.shake(0.7);
+    if (ph === 2) g.say('Un brazo se desploma sobre las casas. Le queda el otro.');
+  }
+  onDeoDying() {
+    const g = this.g,
+      p = g.player;
+    g.audio && g.audio.stopMusic();
+    g.lockTarget = null;
+    // desde un lado de la plaza (el del jugador), algo apartado de la cara
+    const sx = p.pos.x >= 0 ? 1 : -1;
+    this.cam = { t: 0, pos: new THREE.Vector3(sx * 17, 4.2, -41.2), look: new THREE.Vector3(0, 8, -54), follow: true };
+  }
+  _camShot(dt) {
+    const g = this.g;
+    this.cam.t += dt;
+    let look = this.cam.look.clone().setY(Math.max(4, this.cam.look.y - this.cam.t * 1.5));
+    // (sigue a la cabeza mientras se encabrita y se hunde)
+    if (this.cam.follow && this.deo && this.deo.visible) {
+      const h = this.deo._head(new THREE.Vector3());
+      this.cam.look.lerp(h.setY(Math.max(3, h.y + 2)), 1 - Math.exp(-dt * 2.5));
+      look = this.cam.look.clone();
+    }
+    g.camRig.override = { pos: this.cam.pos, look, speed: this.cam.t < 0.1 ? 40 : 2.5, fov: 70 };
+  }
+
+  // ---------------------------------------------------------- se desploma
+  // Muertos los brazos alzados: un plano del dios encabritándose y otro de la
+  // caída sobre la fachada; el jugador, apartado de donde cae la cabeza.
+  startBow() {
+    const g = this.g,
+      p = g.player;
+    this.bowCam = { t: 0 };
+    this.climb.reset();
+    g.lockTarget = null;
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    // fuera de donde cae la cara (y de las manos de delante)
+    const side = p.pos.x >= 2 ? 1 : -1;
+    const safe = { x: side > 0 ? 9.5 : -6.5, z: -42.2 };
+    if (Math.abs(p.pos.x) < 11 && p.pos.z < -44) p.spawn(safe.x, 0, safe.z, Math.atan2(-safe.x, -54 - safe.z));
+    this.bowSide = side;
+  }
+  _bowCam(dt) {
+    const g = this.g,
+      p = g.player,
+      C = this.bowCam;
+    C.t += dt;
+    const T = C.t;
+    let pos, look, fov, cut;
+    if (T < 2.3) {
+      // se encabrita y ruge: desde abajo, en la plaza
+      cut = C.shot !== 'b1';
+      C.shot = 'b1';
+      const u = smooth(T / 2.3);
+      pos = new THREE.Vector3(this.bowSide * (13 - u * 2), 2.4, -41.4);
+      look = new THREE.Vector3(0, 40 + u * 6, -72);
+      fov = 76;
+    } else if (T < 5.6) {
+      // la caída: plano abierto desde el otro lado de la plaza
+      cut = C.shot !== 'b2';
+      C.shot = 'b2';
+      const u = smooth((T - 2.3) / 3.3);
+      pos = new THREE.Vector3(-this.bowSide * (11 - u * 1.5), 6.5 - u * 2.5, -41.6);
+      look = new THREE.Vector3(this.bowSide * 1.5, 22 - u * 13, -62 + u * 8);
+      fov = 74;
+    } else {
+      // la cara, ya en el suelo: desde el jugador
+      cut = C.shot !== 'b3';
+      C.shot = 'b3';
+      const u = smooth((T - 5.6) / 1.6);
+      // (sin salir de la plaza: detrás están las casas)
+      pos = new THREE.Vector3(clamp(p.pos.x + this.bowSide * 2.2, ARENA.x0 + 0.8, ARENA.x1 - 0.8), p.visY + 1.9 - u * 0.3, Math.min(p.pos.z + 2.6, ARENA.z1 - 0.4));
+      look = new THREE.Vector3(1.2, 7 - u * 1.5, -50);
+      fov = 68;
+    }
+    g.camRig.override = { pos, look, speed: 2.4, snap: cut, fov };
+    if (cut) g.camRig.cam.position.copy(pos);
+    p.state = 'cine';
+    if (T > 7.2) {
+      this.bowCam = null;
+      g.camRig.override = null;
+      g.camRig.snapTo(p);
+      g.camRig.yaw = Math.atan2(1 - p.pos.x, -50 - p.pos.z);
+      g.camRig.pitch = 0.18;
+      p.state = 'free';
+      g.setLock(this.deo.proxy);
+      g.say('Se ha desplomado sobre el atrio: trepa por la grieta de la máscara hasta sus ojos.');
+    }
+  }
+  // el pecho del dios revienta la fachada y las torres
+  collapseFacade() {
+    const g = this.g;
+    if (this.facadeDown) return;
+    this.setFacadeRuined(true);
+    for (const [x, y, z, n] of [
+      [-9, 20, -60, 30],
+      [9, 20, -60, 30],
+      [0, 12, -60.5, 34],
+      [0, 6, -57, 20],
+      [-9, 8, -57, 16],
+      [9, 8, -57, 16],
+    ]) {
+      const at = new THREE.Vector3(x, y, z);
+      this.debris.burst(at, n, { speed: 11, up: 8, size: 2.2, spread: 4.5, dir: new THREE.Vector3(0, 0, 0.5) });
+      g.fx.blood.emit(x, y, z, 60, { color: [0.42, 0.39, 0.35], speed: 11, life: 2.6, up: 4 });
+    }
+    // polvo que se queda flotando sobre el atrio
+    for (let k = 0; k < 10; k++) g.fx.blood.emit(-12 + k * 2.6, 2 + Math.random() * 3, -57 + Math.random() * 4, 18, { color: [0.45, 0.42, 0.38], speed: 3, life: 3.4, up: 1.5, gravity: -0.6 });
+    g.audio && g.audio.play('wallBreak', { x: 0, y: 10, z: -60 }, { k: 2.2 });
+    g.audio && g.audio.play('pillarBreak', { x: -9, y: 14, z: -60 }, { k: 1.8 });
+    g.audio && g.audio.play('pillarBreak', { x: 9, y: 14, z: -60 }, { k: 1.8 });
+    g.audio && g.audio.play('bellToll', { x: 9, y: 10, z: -58 }, { k: 1.2 });
+    g.camRig.shake(1);
+    g.input.rumble(1, 1, 900);
+  }
+  // muerto el dios: se hunde, la reja del río queda abierta
+  onDeoDead() {
+    const g = this.g;
+    this.stage = 'end';
+    this.endT = 0;
+    this.climb.reset();
+    g.activeBoss = null;
+    g.extraTargets = null;
+    g.flags['boss:turibulario'] = true;
+    this.cruceiro(false);
+    g.ui.area('DEO IGNOTO HA CAÍDO');
+    g.audio && g.audio.play('victory');
+    // la puerta de la Sé, reventada; la reja del río, abierta
+    for (const it of g.interact.list) {
+      if (it.kind !== 'door') continue;
+      if (it.id === 'd_se' || (it.lock.type === 'boss' && it.lock.boss === 'turibulario')) {
+        g.interact.setOpen(it);
+        g.flags['door:' + it.id] = true;
+      }
+    }
+    g.saveGame();
+  }
+  _end(dt) {
+    const g = this.g;
+    this.endT += dt;
+    if (this.cam && this.endT < 3) this._camShot(dt);
+    else if (this.cam) {
+      this.cam = null;
+      g.camRig.override = null;
+      g.camRig.snapTo(g.player);
+      g.atmo.override = { density: 0.03, vol: 0.04 };
+    }
+    if (this.endT > 6 && !this._endMsg) {
+      this._endMsg = true;
+      g.say('Bajo las ruinas de la nave sigue la escalera de la cripta. La reja del río está reventada.');
+    }
+    if (this.endT > 10) {
+      this._endMsg = false;
+      this.stage = 'done';
+      g.atmo.override = null;
+    }
+  }
+
+  // ---------------------------------------------------------- la campana y el cruceiro
+  // tras el estallido, la campana se queda tumbada en el atrio (cuando Deo se
+  // desploma, su cara la tapa: al hundirse vuelve a verse)
+  layBell() {
+    const t = this.tur;
+    if (!t || this.bellFall) return;
+    const B = t.bell;
+    B.bell.visible = true;
+    B.mesh.visible = false;
+    if (B.bell.parent !== this.g.scene) this.g.scene.add(B.bell);
+    B.bell.position.set(1.5, t.groundAt(1.5, -49.5) + B.R * 0.95, -49.5);
+    B.bell.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0.94, 0.1, 0.32).normalize());
+    t.bellGlow.scale.set(2.2, 2.2, 1);
+    t.bellGlow.material.opacity = 0.5;
+  }
+  // el altar del cruceiro: velas encendidas al pie de la cruz
+  cruceiro(on) {
+    const g = this.g;
+    const it = g.interact.list.find((i) => i.id === 'a_cruceiro');
+    if (it) it.hidden = !on;
+    if (on && !this._cruFires) {
+      this._cruFires = [];
+      for (let k = 0; k < 7; k++) {
+        const a = (k / 7) * Math.PI * 2;
+        const f = g.fx.fires.add({ x: -9.5 + Math.cos(a) * 0.9, y: 0.25, z: -47.5 + Math.sin(a) * 0.9, s: 0.12, light: false, embers: false, glow: true });
+        f.keep = true;
+        this._cruFires.push(f);
+      }
+      this._cruLight = g.fx.lights.add({ x: -9.5, y: 1.2, z: -47.5, color: 0xffb060, intensity: 10, range: 9 });
+      g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+    } else if (!on && this._cruFires) {
+      for (const f of this._cruFires) f.on = false;
+      this._cruFires = null;
+      if (this._cruLight) this._cruLight.on = false;
+      this._cruLight = null;
+      g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+    }
   }
 
   // la campana cae al empedrado, rebota y se queda tumbada
@@ -412,7 +838,7 @@ export class Finale {
   // ---------------------------------------------------------- jugador
   // el aviso de esta pelea (agarrarse, apuñalar, aferrarse) o undefined
   prompt() {
-    if (this.stage !== 'tur') return undefined;
+    if (this.stage !== 'tur' && this.stage !== 'deo') return undefined;
     return this.climb.prompt();
   }
   interact(it) {
@@ -470,6 +896,32 @@ export class Finale {
     p.spawn(o.x ?? 1, 0, o.z ?? -57.5, o.yaw ?? 0);
     g.camRig.snapTo(p);
     this.update(0);
+  }
+  // (modo de pruebas) directo a la pelea contra Deo Ignoto; rise: con la
+  // nave reventando y el dios saliendo
+  async debugDeo(o = {}) {
+    const g = this.g,
+      p = g.player;
+    await this.ensureTur();
+    await this.ensureDeo();
+    g.flags['finale:rite'] = true;
+    g.flags['finale:turSeen'] = true;
+    g.flags['boss:turiferario'] = true;
+    delete g.flags['boss:turibulario'];
+    this.applyFlags();
+    p.spawn(o.x ?? 2, 0, o.z ?? -48, o.yaw ?? Math.PI);
+    g.camRig.snapTo(p);
+    if (o.rise) {
+      this.setNaveRuined(false);
+      this.tur.show(false);
+      this.burstT = 5.6;
+      this.stage = 'burst';
+      this.startRise();
+    } else {
+      this.stage = 'deoWait';
+      this._placed = false;
+      this.update(0);
+    }
   }
 }
 

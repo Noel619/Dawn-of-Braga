@@ -398,6 +398,8 @@ export class Climb {
       const t0 = this.actT;
       this.actT += dt;
       if (t0 < 0.12 && this.actT >= 0.12) this._stabHit();
+      // (la puñalada que lo mata te suelta: ya no hay ruta)
+      if (this.state !== 'on') return;
       if (this.actT >= 0.62) this.act = null;
     } else if (allow && p.hasSword && inp.down('light') && !this.grip) {
       if (this.act !== 'charge') {
@@ -413,14 +415,14 @@ export class Climb {
       this.stabSig = sig;
       this._play('cl_stab', 0.05);
       p.rig.joints.sword.visible = true;
-      p.useSt(6);
+      p.useSt(4);
     }
     // movimiento
     const mv = allow && !this.grip && !this.act ? inp.move() : { x: 0, y: 0 };
     const mag = Math.min(1, Math.hypot(mv.x, mv.y));
     r.eval(this.frame);
     const rest = r.sample(this.s, this.P, this.T, this.N);
-    const stand = this.N.y > 0.72;
+    const stand = this.N.y > (r.standY ?? 0.72);
     this.mode = stand ? 'stand' : 'hang';
     let ds = 0,
       du = 0;
@@ -464,8 +466,10 @@ export class Climb {
     // aguante
     const moving = Math.abs(ds) + Math.abs(du) > 0.15;
     let dst = stand || rest ? -30 : moving ? 8 : 5;
-    if (this.grip) dst = 14;
-    if (this.act === 'charge') dst = 7;
+    // (aferrarse colgado cansa; de pie, en un sitio de descanso, apenas)
+    if (this.grip) dst = stand || rest ? 3 : 14;
+    // (cargando la puñalada en un sigilo, afianzado: gasta poco)
+    if (this.act === 'charge') dst = sig ? 2.5 : 7;
     if (this.shake > 0.05 && !stand) dst += 6 * this.shake;
     if (dst < 0) {
       p.stDelay -= dt;
@@ -481,7 +485,8 @@ export class Climb {
     }
     // sacudidas: si no te aferras, te tira
     if (this.shake > 0.25 && !this.grip) {
-      this.slip += this.shake * dt * (stand ? 2.4 : 1.7);
+      // (metido en una cuenca o en un hueco cuesta más tirarte)
+      this.slip += this.shake * dt * (rest ? 1.0 : stand ? 2.4 : 1.7);
       if (this.slip >= 1) {
         g.ui.toast('Te ha sacudido de encima.', 2.5);
         this.release(_v.copy(this.N).multiplyScalar(6 + this.shake * 5).addScaledVector(UP, 4));
@@ -531,7 +536,7 @@ export class Climb {
     r.sample(this.s, this.P, this.T, this.N);
     const side = _v.copy(this.T).cross(this.N).normalize();
     const at = _v2.copy(this.P).addScaledVector(side, this.u);
-    const stand = this.N.y > 0.72;
+    const stand = this.N.y > (r.standY ?? 0.72);
     // arriba del jugador: colgado, la vertical proyectada en la superficie;
     // de pie, casi la vertical del mundo
     const up = _v3;

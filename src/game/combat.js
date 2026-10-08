@@ -450,7 +450,7 @@ export class Combat {
     if (this.tempFires.length === 0 && this._hadTemp) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
     this._hadTemp = this.tempFires.length > 0;
     // limpiar fuegos apagados de la lista
-    if (Math.random() < 0.02) g.fx.fires.list = g.fx.fires.list.filter((f) => f.on);
+    if (Math.random() < 0.02) g.fx.fires.list = g.fx.fires.list.filter((f) => f.on || f.keep);
   }
 
   clear() {

@@ -23,8 +23,9 @@ export const ARM = { frenteL: 0, frenteR: 1, ladoL: 2, ladoR: 3, altoL: 4, altoR
 // 'side' (hacia la palma) y se abren girando alrededor de la normal de la palma
 const FRAMES = DEO_ARMS.map((a) => {
   const f = handFrame(a);
-  return { dir: f.dir, side: f.side, pn: f.pn, W: f.W, Hd: f.Hd, palm: f.Hd.distanceTo(f.W) };
+  return { dir: f.dir, side: f.side, pn: f.pn, dors: f.pn.clone().negate(), W: f.W, Hd: f.Hd, palm: f.Hd.distanceTo(f.W) };
 });
+const UPW = new THREE.Vector3(0, 1, 0);
 const _q = new THREE.Quaternion(),
   _q2 = new THREE.Quaternion(),
   _e = new THREE.Euler(),
@@ -160,40 +161,59 @@ C.hurt = clip(
   );
 }
 
-// ------------------------------------------------------------ inclinarse y morir
-// Muertos los dos brazos alzados, se desploma hacia delante por encima de la
-// fachada hundida: el cuerpo se hunde en la cisterna, se arrastra y la cara
-// baja hasta el atrio (la máscara queda al alcance para trepar por la grieta).
-export const BOW = { root: [0, -1000, 800], body: [40, 0, 0], chest: [44, 0, 0], neck: [18, 0, 0], head: [-36, 0, 0], jaw: [10, 0, 0] };
+// ------------------------------------------------------------ desplomarse y morir
+// Muertos los dos brazos alzados, suelta las torres, se encabrita rugiendo y
+// se desploma hacia delante: el pecho revienta la fachada y las torres, el
+// cuerpo se hunde en la cisterna y la cabeza cae sobre la plaza con el mentón
+// en el empedrado y la cara vuelta hacia arriba, hacia el atrio (la máscara
+// queda al alcance: se trepa por la grieta, del mentón a las cuencas). Para
+// mirar al frente con el pecho tumbado, el cuello se dobla hacia atrás.
+export const BOW = { root: [0, -2381, 148], body: [40, 0, 0], chest: [30, 0, 0], neck: [-50, 0, 0], head: [-63, 0, 0], jaw: [6, 0, 0] };
 C.bow = clip(
   'bow',
   6.5,
   [
     K(0, {}),
-    K(1.4, { body: [-6, 0, 0], chest: [-6, 0, 0], neck: [-8, 0, 0], head: [-12, 0, 0], jaw: [30, 0, 0], root: [0, 0, 0] }, 'hold'),
-    K(4.4, { ...BOW, root: [0, -1150, 850], body: [43, 0, 0], chest: [47, 0, 0], jaw: [24, 0, 0] }, 'in'),
+    // se encabrita y ruge (las manos sueltan las torres)
+    K(1.4, { body: [-6, 0, 0], chest: [-6, 0, 0], neck: [-8, 0, 0], head: [-12, 0, 0], jaw: [30, 0, 0] }, 'hold'),
+    K(2.2, { body: [-4, 0, 0], chest: [-2, 0, 0], neck: [-12, 0, 0], head: [-18, 0, 0], jaw: [28, 0, 0] }),
+    // se viene abajo: el cuerpo se hunde y la cabeza se echa atrás
+    K(3.6, { root: [0, -1100, 60], body: [22, 0, 0], chest: [18, 0, 0], neck: [-34, 0, 0], head: [-46, 0, 0], jaw: [18, 0, 0] }, 'in'),
+    // el golpe: el mentón contra el empedrado (un poco más abajo, y rebota)
+    K(4.4, { root: [0, -2520, 160], body: [42, 0, 0], chest: [32, 0, 0], neck: [-52, 0, 0], head: [-60, 0, 0], jaw: [2, 0, 0] }, 'in'),
+    K(5.0, { root: [0, -2320, 150], body: [39, 0, 0], chest: [29, 0, 0], neck: [-49, 0, 0], head: [-65, 0, 0], jaw: [10, 0, 0] }, 'out'),
     K(6.5, BOW, 'settle'),
   ],
-  { ground: false, events: [{ t: 1.4, name: 'roar' }, { t: 4.4, name: 'crash' }] }
+  { ground: false, events: [{ t: 1.4, name: 'roar' }, { t: 3.9, name: 'facade' }, { t: 4.4, name: 'crash' }] }
 );
+// tumbado: respira despacio (poco: le estás trepando por la cara)
 C.bowLoop = clip(
   'bowLoop',
   5,
-  [K(0, BOW), K(2.5, { ...BOW, body: [41, 0, 1], chest: [45.5, -1, 0], neck: [17, 1.5, 0], head: [-35, 2, 0], jaw: [16, 0, 0] }), K(5, BOW)],
+  [K(0, BOW), K(2.5, { ...BOW, body: [40.5, 0, 0.3], chest: [30.4, -0.3, 0], neck: [-50.3, 0.5, 0], head: [-63.2, 0.6, 0], jaw: [9, 0, 0] }), K(5, BOW)],
   { loop: true, ground: false }
 );
-// rota la máscara: convulsiones, se encabrita y se hunde en la cisterna
+// ruge tumbado: alza un poco la cara y abre la boca
+C.bowRoar = clip(
+  'bowRoar',
+  3.2,
+  [K(0, BOW), K(0.9, { ...BOW, neck: [-53, 0, 0], head: [-67, 0, 0], jaw: [36, 0, 0] }, 'snap'), K(2.3, { ...BOW, neck: [-52, 0, 0], head: [-66, 0, 0], jaw: [32, 0, 0] }), K(3.2, BOW)],
+  { ground: false, events: [{ t: 0.9, name: 'roar' }] }
+);
+// rota la máscara: convulsiones con la boca abierta, se encabrita (la cabeza
+// se despega de la plaza) y se hunde de espaldas en la cisterna
 C.death = clip(
   'death',
   9,
   [
     K(0, BOW),
-    K(0.6, { ...BOW, body: [30, 6, 0], chest: [30, -8, 0], neck: [4, 10, 0], head: [-50, 14, 0], jaw: [44, 0, 0] }, 'snap'),
-    K(2.0, { ...BOW, body: [34, -6, 0], chest: [36, 8, 0], neck: [10, -8, 0], head: [-40, -10, 0], jaw: [36, 0, 0] }),
-    K(3.6, { ...BOW, root: [0, -600, 500], body: [6, 0, 0], chest: [-6, 0, 0], neck: [-14, 0, 0], head: [-30, 0, 0], jaw: [46, 0, 0] }, 'snap'),
-    K(9, { ...BOW, root: [0, -4200, 300], body: [-14, 0, 6], chest: [-10, 0, 4], neck: [-20, 0, 0], head: [-20, 0, 0], jaw: [50, 0, 0] }, 'in'),
+    K(0.6, { ...BOW, body: [38, 3, 0], chest: [28, -4, 0], neck: [-56, 6, 0], head: [-70, 10, 4], jaw: [40, 0, 0] }, 'snap'),
+    K(1.4, { ...BOW, neck: [-46, -6, 0], head: [-60, -8, -4], jaw: [30, 0, 0] }),
+    K(2.2, { ...BOW, neck: [-54, 5, 0], head: [-68, 7, 2], jaw: [44, 0, 0] }),
+    K(3.4, { root: [0, -1700, 0], body: [24, 0, 0], chest: [18, 0, 0], neck: [-28, 0, 0], head: [-46, 0, 0], jaw: [50, 0, 0] }, 'snap'),
+    K(9, { root: [0, -5400, -700], body: [8, 0, 3], chest: [4, 0, 2], neck: [-18, 0, 0], head: [-30, 0, 0], jaw: [50, 0, 0] }, 'in'),
   ],
-  { ground: false, events: [{ t: 0.6, name: 'convulse' }, { t: 3.6, name: 'rear' }, { t: 4.5, name: 'sink' }] }
+  { ground: false, events: [{ t: 0.6, name: 'convulse' }, { t: 3.4, name: 'rear' }, { t: 4.5, name: 'sink' }] }
 );
 
 // ------------------------------------------------------------ el esqueleto vivo
@@ -528,6 +548,25 @@ export class DeoArms {
       }
       a.w = w;
     }
+    // al golpear o con una mano alzada plantada, el cuerpo se inclina hacia
+    // la plaza (y gira hacia su lado): el brazo, aun estirándose, llega
+    let lean = 0,
+      twist = 0;
+    for (const i of [4, 5]) {
+      const a = this.arms[i];
+      let k = 0;
+      if (a.st === 'fall') k = clamp01(a.t / a.fallDur);
+      else if (a.st === 'planted') k = 1;
+      else if (a.st === 'lift') k = 1 - clamp01(a.t / a.dur);
+      else if (a.st === 'windup') k = -0.3 * clamp01(a.t / a.dur);
+      if (Math.abs(k) > Math.abs(lean)) {
+        lean = k;
+        twist = a.side * k;
+      }
+    }
+    const e = lean > 0 ? ease.smooth(lean) : lean;
+    R.add.body = [11 * e * DEG, 4 * twist * DEG, -3 * twist * DEG];
+    R.add.chest = [9 * e * DEG, 6 * twist * DEG, 0];
   }
   // dentro de R.update (ctx.pre): la IK de los brazos que la necesitan
   ik() {
@@ -535,7 +574,10 @@ export class DeoArms {
     for (const a of this.arms) {
       if (a.w <= 0.001) continue;
       const i = a.i;
-      R.reach(`a${i}s`, `a${i}e`, `a${i}w`, a.cur, this._pole(i, _v), a.w, { rot: a.useRot === false ? null : a.rot, stretch: i >= 4 ? 1.16 : 1.1 });
+      // (los alzados, con el dorso del antebrazo arriba: es por donde se trepa
+      // y donde está el sigilo)
+      const roll = i >= 4 && (a.st === 'fall' || a.st === 'planted' || a.st === 'lift') ? { ref: FRAMES[i].dors, want: UPW } : null;
+      R.reach(`a${i}s`, `a${i}e`, `a${i}w`, a.cur, this._pole(i, _v), a.w, { rot: a.useRot === false ? null : a.rot, stretch: i >= 4 ? 1.26 : 1.12, roll });
     }
   }
   // la muñeca en reposo (mundo), con el cuerpo como está ahora

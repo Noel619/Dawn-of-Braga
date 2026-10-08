@@ -12,9 +12,10 @@ const _p = new THREE.Vector3();
 const _n = new THREE.Vector3();
 
 class Bucket {
-  constructor(mat, key) {
+  constructor(mat, key, group = null) {
     this.mat = mat;
     this.key = key;
+    this.group = group;
     this.pos = [];
     this.nor = [];
     this.uv = [];
@@ -34,6 +35,12 @@ export class WorldBuilder {
     this.room = 0; // 0 = exterior
     this.roomIds = new Map([['out', 0]]);
     this.tint = null;
+    // grupo: lo que se construye con un grupo puesto va en mallas aparte que
+    // se pueden ocultar (el tejado de la nave, que revienta; sus ruinas)
+    this.group = null;
+  }
+  setGroup(name) {
+    this.group = name || null;
   }
 
   roomId(name) {
@@ -90,10 +97,10 @@ export class WorldBuilder {
     _p.set(lx, 0, lz).applyMatrix4(this.m);
     const cx = Math.floor(_p.x / CHUNK),
       cz = Math.floor(_p.z / CHUNK);
-    const key = mat + '|' + cx + '|' + cz;
+    const key = (this.group ? this.group + '#' : '') + mat + '|' + cx + '|' + cz;
     let b = this.buckets.get(key);
     if (!b) {
-      b = new Bucket(mat, key);
+      b = new Bucket(mat, key, this.group);
       this.buckets.set(key, b);
     }
     return b;
@@ -480,6 +487,7 @@ export class WorldBuilder {
       mesh.matrixAutoUpdate = false;
       mesh.updateMatrix();
       mesh.userData.bucket = b.key;
+      if (b.group) mesh.userData.group = b.group;
       meshes.push(mesh);
     }
     return meshes;

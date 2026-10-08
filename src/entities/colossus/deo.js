@@ -382,12 +382,30 @@ export function deoData(o = {}) {
     const n = V(0, 0, 1).applyQuaternion(mq);
     SIGILS.push({ id, bone: 'head', pos: p.toArray(), normal: n.toArray(), r: 1.2, hp: 2, eye: true });
   }
-  // la grieta, del mentón a las cuencas
+  // la grieta, del mentón a la cuenca izquierda (se mete dentro: en el fondo
+  // de la cuenca se está de pie, junto al ojo); de ahí, por encima del
+  // puente de la nariz, a la cuenca derecha. (Por fuera de la superficie lo
+  // que haga falta: colgado, el pecho queda contra el bronce.)
   {
-    const n = V(0, 0, 1).applyQuaternion(mq);
-    const pts = [];
-    for (const c of [crack[7], crack[6], crack[5], crack[4], [1.85, 0.55, 1.0]]) pts.push({ bone: 'head', p: P(c[0], c[1], c[2] + 0.6), n: n.toArray() });
-    CLIMB.mascara = { width: 2.0, pts, sigils: ['ojoL', 'ojoR'], final: true };
+    const nf = V(0, 0, 1).applyQuaternion(mq).toArray(),
+      nu = V(0, 1, 0).applyQuaternion(mq).toArray();
+    const out = (c, dz = 0.6) => [c[0], c[1], c[2] + dz];
+    const path = [
+      out(crack[7]),
+      out(crack[6]),
+      out(crack[5]),
+      out(crack[4]),
+      [1.85, -0.1, 2.15],
+      [1.85, -0.05, 1.15, 'floor'],
+      [1.55, 0.05, 2.15],
+      [1.0, 1.0, 2.35],
+      [0, 1.45, 2.7],
+      [-1.0, 1.0, 2.35],
+      [-1.55, 0.05, 2.15],
+      [-1.85, -0.05, 1.15, 'floor'],
+    ];
+    const pts = path.map((c) => ({ bone: 'head', p: P(c[0], c[1], c[2]), n: c[3] ? nu : nf, ...(c[3] ? { rest: true } : {}) }));
+    CLIMB.mascara = { width: 1.2, pts, sigils: ['ojoL', 'ojoR'], final: true };
   }
   const FX = {
     eyes: [1, -1].map((s) => ({ bone: 'head', p: P(s * 1.85, 0.6, 0.2) })),
