@@ -240,3 +240,40 @@ archive/colosos_propuestas/  las propuestas no elegidas (y el boceto del Plan A)
 7. La explosión, Deo Ignoto y su pelea; el camino al río.
 8. Instancias y editor en el modo de pruebas.
 9. Pruebas, fluidez, documentación.
+
+## 13. Estado (hecho)
+
+Todo el plan está hecho y probado. Lo que cambió al construirlo:
+
+- **El desplome de Deo.** Con la cara bajando sobre la fachada en pie, la máscara (16 por 21 metros) quedaba
+  mirando al suelo y no cabía entre las torres. Ahora, muertos los brazos alzados, se encabrita rugiendo y **se
+  desploma sobre la fachada, que revienta** con las torres (grupos `fachada` y `fachadaRuin`): queda tumbado como
+  una esfinge, hundido en la cisterna, con el cuello doblado hacia atrás, el mentón en el empedrado y la cara
+  vuelta hacia el atrio; las manos de delante se apoyan a los lados de la cara y las de los lados en los tejados.
+  Cinemática de tres planos con el jugador apartado de donde cae la cabeza. La grieta se trepa del mentón a la
+  cuenca izquierda (en el fondo de cada cuenca se está de pie, junto al ojo) y, por encima del puente de la nariz,
+  a la derecha. Muerto, la máscara se parte, se encabrita y se hunde de espaldas en la cisterna; queda la brecha
+  por la que se entra en la nave hacia la cripta. Si mueres antes, la fachada vuelve a estar en pie.
+- **La puerta de la Sé** no se podía cruzar ni abierta: la rejilla transitable no pintaba el grueso del muro de la
+  fachada y levantaba un muro invisible. Arreglado (ahora la cierran sus sillares y la puerta).
+- **El rito** usa al arzobispo de siempre como actor, la cúpula se queda con un agujero en la clave y la corona de
+  velas cae; la reja del río la ciegan los escombros hasta que muere el dios.
+- **La ciudad que se rompe:** los tejados de las casas de la plaza y lo alto de los muros que flanquean la Sé (cada
+  pieza en dos grupos, entera y hundida) y el carro, los barriles y la caja (rompibles de los de siempre, zona
+  `largo`). Cargar a mitad del final es como volver a empezar: todo entero.
+- **El cruceiro** sigue siendo altar tras la victoria (un sitio para descansar en la plaza).
+- **Sigilos:** cada uno con un brillo que late, para leerlos de lejos entre la niebla y la ceniza.
+
+Pruebas (con `npx vite --port 5199` en marcha):
+
+- `tools/finale.mjs`: un robot juega el final entero agarrándose, trepando y apuñalando de verdad: la nuca por la
+  cola y la espalda, la mano por la cadena tras un mazazo, el núcleo de rodillas, los dos brazos de Deo plantados,
+  los dos ojos; luego entra en la nave por la brecha hasta la reja de la cripta.
+- `tools/progress.mjs`: la progresión completa del juego, ahora con el rito, el Turiferario, Deo y el río.
+- Morir en cada fase (vuelta al altar, el coloso esperando, la fachada en pie, la plaza entera), guardar y cargar
+  a mitad de pelea y tras la victoria: comprobados.
+
+Medición (CPU de la lógica por fotograma, en el contenedor de pruebas; el dibujo allí va por software y no es
+representativo): la plaza sola 4,8 ms; el Turiferario 4,3 ms; la nave estallando 3,2 ms; Deo 4,8 ms; Deo tumbado
+3,8 ms. Llamadas de dibujo: 300–700 según la fase; triángulos: de 340 000 (la plaza) a 740 000 (Deo tumbado, con la
+fachada en ruinas).

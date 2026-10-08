@@ -310,8 +310,25 @@ se encadena el anterior.
   apartarse de un salto cuando vas a golpear y castigarte en la recuperación, cruzar los brazos para parar el resto
   de un combo que ya conoce, adelantarse con un mordisco cuando sabe que vas a atacar y apuntar su segundo zarpazo
   adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
-- **El Turiferario** (jefe final): el arzobispo transfigurado, con una corona de velas y un incensario gigante
-  simulado físicamente como un péndulo en llamas; segunda fase con lluvia de ascuas y charcos de fuego.
+- **El jefe final: el Turiferario y Deo Ignoto**, una pelea a lo *Shadow of the Colossus* dentro de la ciudad
+  (diseño completo en `PLAN_JEFE_FINAL.md`). En la cisterna ya no se pelea: una cinemática (el **rito**) en la que
+  el arzobispo, de rodillas ante el altar del Dios Desconocido, alza el incensario y la carne del dios le envuelve y
+  le arrastra a través de la cúpula; los escombros ciegan la reja del río y la subida hasta la Sé está vacía, entre
+  temblores, polvo y campanas que tocan solas. Al salir por la puerta de la catedral, el empedrado del atrio revienta
+  y se alza **el Turiferario**, un coloso de carne de 21 metros con la campana mayor encadenada a la mano: barre,
+  aplasta, pisotea, agarra, da coletazos, ruge y, en la segunda fase, llueve cera ardiendo. No se le hace nada a
+  golpes: **se le trepa** (por la cola, la espalda y la joroba hasta la nuca; por la cadena de la campana clavada
+  tras un mazazo, hasta la mano; de rodillas, por la casulla hasta el núcleo del pecho) con aguante, sitios donde
+  descansar de pie, sacudidas a las que hay que aferrarse y puñaladas que se cargan. Revienta, la campana cae
+  tañendo, **la nave de la catedral estalla** y detrás se alza **Deo Ignoto**, el dios: 56 metros, máscara de bronce y
+  seis brazos. Los de delante agarran las torres, los de los lados rastrillan los tejados y los alzados golpean la
+  plaza y se quedan plantados: se trepa por el dorso hasta el sigilo del codo. Muertos los dos, **se desploma sobre la
+  fachada**, que revienta, y la cara queda a ras de la plaza: por la grieta de la máscara se sube a las cuencas, de pie
+  junto a cada ojo. **La ciudad se rompe**: tejados, muros, el carro y los barriles caen con los golpes (si mueres
+  todo vuelve a estar entero; muerto el dios, la plaza se queda en ruinas). Puntos de control en el Altar de la
+  Cripta y, tras la explosión, en el cruceiro de la plaza. Los colosos se esculpen por código en un *Web Worker* al
+  cargar el juego, con esqueleto, piel, muelles (la cola, la ropa, los jirones), cinemática inversa y la campana con
+  su cadena simuladas.
 
 **Estética PS1/PS2 hecha a mano con shaders.** Render a baja resolución con escalado entero *nearest*, vértices
 ajustados a la rejilla de pantalla y mapeo afín opcionales (por defecto desactivados para que el suelo no tiemble),
@@ -370,13 +387,24 @@ poco antes de sonar, no todas de golpe.
 
 ## Modo desarrollador
 
-**F2** abre un panel para probar el juego: invulnerable, aguante infinito, volar atravesando muros (WASD según la
+**F2** (o tecleando en cualquier momento la contraseña del modo de pruebas, que el código no guarda en claro: sólo su
+huella) abre un panel para probar el juego: invulnerable, aguante infinito, volar atravesando muros (WASD según la
 cámara, Espacio sube, C baja, Mayús deprisa), velocidad del jugador y del juego (cámara lenta), IA congelada o
 ciega, el estado de cada criatura sobre su cabeza, los puestos del Descoyuntado en el mundo (emboscadas en rojo,
 perchas en azul, grutas en verde, palancas en amarillo), órdenes al Descoyuntado (traerlo, que te siga, emboscada,
 caza, gruta, enloquecer, calmar, matarlo), curar, todas las armas y objetos, cambiar de arma, teletransporte a cada
 zona y altar, guardar y volver a una posición, la ventana de parry en pantalla y un registro de parrys y golpes de
 gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cierra.
+
+- **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el rito de
+  la cisterna, la subida, la salida del Turiferario, su pelea, de rodillas, la nave que estalla, Deo Ignoto (entero,
+  con un brazo menos y desplomado), el dios vencido; y el Empalado, la huida de la Bestia y la caza del Descoyuntado.
+- **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar, el alcance de los sigilos y la
+  cabeza de Deo tumbado.
+- **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
+  jugador al punto al que apunta la cámara y leer las coordenadas de la cámara y de ese punto.
+
+Desde la consola: `__game.dev.instance('deoMascara')`, `__game.dev.act('skipPhase')`.
 
 Sólo se abre en el propio ordenador (localhost: `npm run dev`) o desde la IP del autor: en `src/dev/access.js` se
 guardan las huellas (PBKDF2-SHA256) de las IP autorizadas, nunca la IP. Al pulsar F2 en la versión publicada se
@@ -401,8 +429,12 @@ src/
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha)
-  dev/                  el modo desarrollador (devmode.js) y quién puede abrirlo (access.js)
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA
+  dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
+                        las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
+                        laboratorio de los colosos (colossus_lab.js)
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el
+                        escultor de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario
+                        (turiferario.js), Deo Ignoto (deo.js, deo_skeleton.js) y el Web Worker que los genera
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
@@ -413,11 +445,19 @@ src/
                         iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
-                        pulsaciones rápidas)
+                        pulsaciones rápidas; finale/: el jefe final: director.js, el guion de la cisterna
+                        al río; rite.js, el rito; turiferario_boss.js y deo_boss.js, sus peleas;
+                        turiferario_anim.js, deo_anim.js y colossus_rig.js, sus animaciones (capas, muelles,
+                        IK); climb.js, trepar; bell.js, la campana y su cadena; wrecks.js, la ciudad que se
+                        rompe; debris.js, los cascotes)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
-                        progress.mjs   recorre toda la progresión hasta el final
+                        progress.mjs   recorre toda la progresión hasta el final (el rito, el Turiferario,
+                                       Deo Ignoto y el río)
+                        finale.mjs     un robot juega el jefe final entero: se agarra, trepa y apuñala de
+                                       verdad cada sigilo de los dos colosos y entra en la nave por la brecha
+                        colposes.mjs   hojas de poses de las animaciones de los colosos
                         fuzz.mjs       prueba de estrés con entradas aleatorias
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
                                        en alto y bajo el castillo, recorrido como andaría el jugador)
@@ -463,6 +503,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        de cada sala de las bodegas
                         boss.mjs       capturas del Descoyuntado en posiciones y cámaras dadas
                         cine.mjs       fotogramas de la cinemática de la bodega en los segundos pedidos
+archive/colosos_propuestas/
+                        las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
+                        con su explicación (ver su README)
+PLAN_JEFE_FINAL.md      el diseño del jefe final y su plan de trabajo
 ```
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.
