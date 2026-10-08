@@ -86,7 +86,10 @@ export const MAT_DEFS = {
     phong: { specular: 0x6a3a38, shininess: 38 },
   },
   fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.35, phong: { specular: 0x5a3232, shininess: 30 } },
-  // los colosos (carne esculpida, sin UV: triplanar en el espacio del cuerpo)
+  // los colosos (carne esculpida, sin UV: triplanar en el espacio del cuerpo).
+  // También los usan las propuestas archivadas (archive/colosos_propuestas/):
+  // colTordo, colMane, mane y colDough sólo las usan ellas
+  // (tras cambiar algo aquí, comprobar que siguen funcionando)
   colFlesh: { tex: 'colFleshTex', uv: 1, tri: 0.2, emissiveTex: 'colFleshEmit', emissive: 0xff6a3a, emissiveIntensity: 0.6, phong: { specular: 0x6a3a38, shininess: 30 }, giant: { amp: 0.1, freq: 0.3, speed: 1 } },
   colSkin: { tex: 'colSkin', uv: 1, tri: 0.3, phong: { specular: 0x3a3430, shininess: 14 } },
   colDough: { tex: 'doughTex', uv: 1, tri: 0.16, phong: { specular: 0x705050, shininess: 22 } },

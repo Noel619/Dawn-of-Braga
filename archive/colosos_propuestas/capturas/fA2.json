@@ -1,0 +1,70 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "2,0,-46",
+ "out": "tools/shots/colosos_propuestas",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-14.6, 0.7, -113, 14.6, 40, -64.2); lab.cutWorld(-600, -50, -900, 600, 200, -186); const b = await lab.build('boceto_deo'); lab.place(b, 0, 0, -96, 0); lab.atmo('fire', { density: 0.0085, far: 260 }); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(0.5, 0, -22, 3.14); return { ms: b.ms };",
+ "shots": [
+  {
+   "name": "A2_street",
+   "cam": [
+    0,
+    3.2,
+    -16
+   ],
+   "look": [
+    0,
+    34,
+    -90
+   ],
+   "fov": 64,
+   "steps": 4
+  },
+  {
+   "name": "A2_aerial",
+   "cam": [
+    62,
+    42,
+    -18
+   ],
+   "look": [
+    0,
+    31,
+    -92
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "A2_face",
+   "cam": [
+    14,
+    36,
+    -40
+   ],
+   "look": [
+    0,
+    45,
+    -82
+   ],
+   "fov": 46,
+   "steps": 1
+  },
+  {
+   "name": "A2_west",
+   "cam": [
+    -64,
+    30,
+    -46
+   ],
+   "look": [
+    0,
+    34,
+    -92
+   ],
+   "fov": 60,
+   "steps": 1
+  }
+ ]
+}

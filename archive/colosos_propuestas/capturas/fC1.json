@@ -1,0 +1,85 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "0,0,-24",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-600, -50, -900, 600, 200, -186); const path = [[0.5,3.6,-41.5],[-8,3.6,-45],[-14,3.6,-51],[-8,3.6,-56],[2,3.6,-55],[11,3.6,-52],[18,3.6,-47],[22,6,-40],[28,11.5,-36],[36,13.5,-38],[44,13.5,-43],[50,13.5,-50],[54,13.5,-58]]; const ups = path.map(() => [0,1,0]); const b = await lab.build('procesion', { path, ups }); lab.place(b, 0, 0, 0, 0); lab.atmo('fire', { density: 0.0105, far: 220 }); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(0.5, 0, -27, 3.14); return { ms: b.ms, info: b.info };",
+ "shots": [
+  {
+   "name": "C1_roof",
+   "cam": [
+    -24,
+    16,
+    -30
+   ],
+   "look": [
+    4,
+    6,
+    -50
+   ],
+   "fov": 64,
+   "steps": 4
+  },
+  {
+   "name": "C1_head",
+   "cam": [
+    -9,
+    13,
+    -29
+   ],
+   "look": [
+    0,
+    14,
+    -43
+   ],
+   "fov": 62,
+   "steps": 1
+  },
+  {
+   "name": "C1_arch",
+   "cam": [
+    6,
+    13,
+    -31
+   ],
+   "look": [
+    -4,
+    8,
+    -50
+   ],
+   "fov": 62,
+   "steps": 1
+  },
+  {
+   "name": "C1_east",
+   "cam": [
+    30,
+    18,
+    -32
+   ],
+   "look": [
+    2,
+    6,
+    -50
+   ],
+   "fov": 62,
+   "steps": 1
+  },
+  {
+   "name": "C1_paso",
+   "cam": [
+    -26,
+    13,
+    -38
+   ],
+   "look": [
+    -10,
+    6,
+    -52
+   ],
+   "fov": 56,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

@@ -13,9 +13,9 @@
 // abiertas. En la espalda, los tubos del órgano de la Sé clavados como púas;
 // por el cuerpo, caras de fieles grandes como casas y bultos que laten.
 import * as THREE from 'three';
-import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt.js';
-import { ColFX } from './colfx.js';
-import { RNG } from '../../core/util.js';
+import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt_v1.js';
+import { ColFX } from './colfx_v1.js';
+import { RNG } from '../../src/core/util.js';
 
 const DEG = Math.PI / 180;
 

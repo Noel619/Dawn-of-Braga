@@ -1,0 +1,100 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "10,0,30",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; const st = lab.studio(); const b = await lab.build('procesion'); lab.place(b, 0, 0, 0, 0, st); lab.atmo('studio'); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(8, 0, 30, -0.6); st.add(g.player.obj); window.__colRender = () => lab.renderStudio(); return { ms: b.ms, info: b.info, stats: b.model.stats() };",
+ "shots": [
+  {
+   "name": "C1S_34",
+   "cam": [
+    52,
+    22,
+    60
+   ],
+   "look": [
+    0,
+    5,
+    0
+   ],
+   "fov": 52,
+   "steps": 3
+  },
+  {
+   "name": "C1S_SIDE",
+   "cam": [
+    66,
+    12,
+    -4
+   ],
+   "look": [
+    0,
+    5,
+    -4
+   ],
+   "fov": 58,
+   "steps": 1
+  },
+  {
+   "name": "C1S_HEAD",
+   "cam": [
+    14,
+    11,
+    56
+   ],
+   "look": [
+    1,
+    11,
+    32
+   ],
+   "fov": 52,
+   "steps": 1
+  },
+  {
+   "name": "C1S_TOP",
+   "cam": [
+    30,
+    50,
+    2
+   ],
+   "look": [
+    0,
+    2,
+    -8
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "C1S_PASO",
+   "cam": [
+    20,
+    11,
+    6
+   ],
+   "look": [
+    -5,
+    5,
+    -3
+   ],
+   "fov": 50,
+   "steps": 1
+  },
+  {
+   "name": "C1S_BACK",
+   "cam": [
+    -26,
+    15,
+    -72
+   ],
+   "look": [
+    0,
+    5,
+    -12
+   ],
+   "fov": 52,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

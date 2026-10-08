@@ -1,0 +1,70 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "-5,0,-43",
+ "out": "tools/shots/colosos_propuestas",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-600, -50, -900, 600, 200, -186); const b = await lab.build('boceto_turiferario'); lab.place(b, 3, 0, -47, 0.08); b.api.pose('menace'); lab.atmo('fire'); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(-4.5, 0, -41.5, 2.6); return { ms: b.ms };",
+ "shots": [
+  {
+   "name": "A1_plaza",
+   "cam": [
+    -11,
+    1.6,
+    -38.5
+   ],
+   "look": [
+    0,
+    11.5,
+    -48
+   ],
+   "fov": 70,
+   "steps": 4
+  },
+  {
+   "name": "A1_towers",
+   "cam": [
+    3,
+    9,
+    -21
+   ],
+   "look": [
+    3,
+    12.5,
+    -46
+   ],
+   "fov": 58,
+   "steps": 1
+  },
+  {
+   "name": "A1_roof",
+   "cam": [
+    16,
+    12,
+    -35
+   ],
+   "look": [
+    1,
+    12,
+    -47
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "A1_head",
+   "cam": [
+    9,
+    17.5,
+    -34.5
+   ],
+   "look": [
+    2.5,
+    16.5,
+    -43
+   ],
+   "fov": 50,
+   "steps": 1
+  }
+ ]
+}

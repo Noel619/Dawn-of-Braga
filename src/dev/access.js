@@ -179,6 +179,18 @@ export function pbkdf2Sha256(pass, salt, iters) {
   return toBytes(t);
 }
 
+// ------------------------------------------------------------ contraseña
+// El modo de pruebas también se abre tecleando su contraseña en cualquier
+// momento (en la portada, en la pausa o jugando), en cualquier versión. Aquí
+// tampoco está en claro: sólo su huella (SHA-256 con sal), que se compara
+// con las últimas teclas pulsadas. Para cambiarla: la huella de la nueva es
+// hashPass('nueva') (en la consola, __game.dev.passHash('nueva')).
+const PASS_SALT = 'dawn-of-braga/contraseña';
+export const DEV_PASS = { len: 11, hash: '4909acb86aaed2e76e729d99efa2438ca77f2c71f11e34e51cc6194b4a912f8d' };
+export function hashPass(s) {
+  return hex(toBytes(finish(IV, new TextEncoder().encode(PASS_SALT + s.toLowerCase()), 0)));
+}
+
 // Huella de la IP pública actual (para añadirla a DEV_IP_HASHES).
 export async function myIpHash() {
   const ip = await fetchIp();

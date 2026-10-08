@@ -1,0 +1,25 @@
+{
+ "w": 1280,
+ "h": 540,
+ "res": 540,
+ "at": "-8,0,14",
+ "out": "tools/shots/colosos_propuestas",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; const st = lab.studio(); const a = await lab.build('boceto_turiferario'); lab.place(a, -30, 0, 0, 0.35, st); a.api.pose('idle'); const t = await lab.build('tordo'); lab.place(t, 6, 0, -6, Math.PI / 2 - 0.25, st); const path = [[40,3.6,18],[52,3.6,8],[58,3.6,-6],[48,3.6,-16],[36,3.6,-14],[30,3.6,-26],[36,3.6,-38],[50,3.6,-44],[62,3.6,-40]]; const p = await lab.build('procesion', { path }); lab.place(p, 0, 0, 0, 0, st); lab.atmo('studio'); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(-14, 0, 12, -0.4); st.add(g.player.obj); window.__colRender = () => lab.renderStudio(); return 'ok';",
+ "shots": [
+  {
+   "name": "LINEUP_colosos",
+   "cam": [
+    8,
+    10,
+    66
+   ],
+   "look": [
+    10,
+    12,
+    -4
+   ],
+   "fov": 50,
+   "steps": 4
+  }
+ ]
+}

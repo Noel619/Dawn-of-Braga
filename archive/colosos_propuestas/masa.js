@@ -12,9 +12,9 @@
 // respira vapor y deja ver el corazón encendido. Del caballo sólo quedan las
 // patas de zancos, clavadas en ella como palos, y la calavera hundida.
 import * as THREE from 'three';
-import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt.js';
-import { ColFX } from './colfx.js';
-import { RNG } from '../../core/util.js';
+import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt_v1.js';
+import { ColFX } from './colfx_v1.js';
+import { RNG } from '../../src/core/util.js';
 
 const DEG = Math.PI / 180;
 

@@ -1,0 +1,70 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "0,0,-24",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-600, -50, -900, 600, 200, -186); const cut = lab.cutWorld(-15, 0.7, -113.5, 15, 60, -55.6); const b = await lab.build('se'); lab.place(b, 0, 0, -86, 0); lab.atmo('fire', { density: 0.0085, far: 260 }); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(0.5, 0, -27, 3.14); return { cut, ms: b.ms, info: b.info };",
+ "shots": [
+  {
+   "name": "C2_street",
+   "cam": [
+    0.5,
+    1.7,
+    -20
+   ],
+   "look": [
+    0,
+    26,
+    -62
+   ],
+   "fov": 70,
+   "steps": 4
+  },
+  {
+   "name": "C2_aerial",
+   "cam": [
+    70,
+    52,
+    -14
+   ],
+   "look": [
+    0,
+    22,
+    -84
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "C2_side",
+   "cam": [
+    -70,
+    26,
+    -60
+   ],
+   "look": [
+    0,
+    24,
+    -86
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "C2_plaza",
+   "cam": [
+    -10,
+    1.7,
+    -42
+   ],
+   "look": [
+    0,
+    30,
+    -70
+   ],
+   "fov": 74,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

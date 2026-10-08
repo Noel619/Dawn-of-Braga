@@ -5,16 +5,22 @@ import * as THREE from 'three';
 import { G, colMat } from '../gfx/materials.js';
 import { hardGeo } from '../entities/colossus/sculpt.js';
 
-// (rutas resueltas en tiempo de ejecución: los módulos se van añadiendo)
+// (rutas resueltas en tiempo de ejecución, relativas a este archivo: el
+// juego no importa ninguno de estos módulos)
+const ARCH = '../../archive/colosos_propuestas/';
 const BUILDERS = {
-  turiferario: ['turiferario_col.js', 'buildTuriferarioColossus'],
-  deo: ['deo_ignoto.js', 'buildDeoIgnoto'],
-  tordo: ['tordo.js', 'buildTordo'],
-  masa: ['masa.js', 'buildMasa'],
-  procesion: ['procesion.js', 'buildProcesion'],
-  se: ['se_viva.js', 'buildSeViva'],
+  // el jefe final (Plan A, versión 2)
+  turiferario: ['../entities/colossus/turiferario.js', 'buildTuriferario'],
+  deo: ['../entities/colossus/deo.js', 'buildDeo'],
+  // las propuestas archivadas (ver archive/colosos_propuestas/README.md)
+  boceto_turiferario: [ARCH + 'turiferario_boceto.js', 'buildTuriferarioColossus'],
+  boceto_deo: [ARCH + 'deo_ignoto_boceto.js', 'buildDeoIgnoto'],
+  tordo: [ARCH + 'tordo.js', 'buildTordo'],
+  masa: [ARCH + 'masa.js', 'buildMasa'],
+  procesion: [ARCH + 'procesion.js', 'buildProcesion'],
+  se: [ARCH + 'se_viva.js', 'buildSeViva'],
 };
-const load = ([file, fn]) => import(/* @vite-ignore */ new URL('../entities/colossus/' + file, import.meta.url).href).then((m) => m[fn]);
+const load = ([file, fn]) => import(/* @vite-ignore */ new URL(file, import.meta.url).href).then((m) => m[fn]);
 
 // atmósferas de la pelea (sustituyen a la de la zona)
 export const COL_ATMO = {

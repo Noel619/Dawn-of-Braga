@@ -1,0 +1,70 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "0,0,-6",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-600, -50, -900, 600, 200, -186); const b = await lab.build('masa'); lab.place(b, 2, 0, -47, 0); lab.atmo('fire', { density: 0.0085, far: 260 }); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(0.5, 0, -8, 3.14); return { ms: b.ms, sculpt: b.model.sculptStats, stats: b.model.stats() };",
+ "shots": [
+  {
+   "name": "B2_street",
+   "cam": [
+    0,
+    2.2,
+    10
+   ],
+   "look": [
+    2,
+    20,
+    -48
+   ],
+   "fov": 64,
+   "steps": 4
+  },
+  {
+   "name": "B2_ne",
+   "cam": [
+    46,
+    26,
+    -96
+   ],
+   "look": [
+    2,
+    20,
+    -52
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "B2_aerial",
+   "cam": [
+    62,
+    46,
+    8
+   ],
+   "look": [
+    2,
+    16,
+    -52
+   ],
+   "fov": 60,
+   "steps": 1
+  },
+  {
+   "name": "B2_crater",
+   "cam": [
+    22,
+    46,
+    -28
+   ],
+   "look": [
+    2,
+    32,
+    -49
+   ],
+   "fov": 50,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

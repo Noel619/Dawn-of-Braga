@@ -1,0 +1,71 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "-30,0,0",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; lab.cutWorld(-600, -50, -900, 600, 200, -186); const b = await lab.build('tordo'); lab.place(b, 0, 0, -1, Math.PI); lab.atmo('fire', { density: 0.0115, far: 220 }); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(-24, 0, 1, 1.4); return { ms: b.ms, info: b.info };",
+ "shots": [
+  {
+   "name": "B1_aerial",
+   "cam": [
+    44,
+    40,
+    34
+   ],
+   "look": [
+    0,
+    12,
+    -2
+   ],
+   "fov": 58,
+   "steps": 4
+  },
+  {
+   "name": "B1_street",
+   "cam": [
+    0.5,
+    1.7,
+    30
+   ],
+   "look": [
+    0,
+    19,
+    -3
+   ],
+   "fov": 66,
+   "steps": 1
+  },
+  {
+   "name": "B1_roof",
+   "cam": [
+    -22,
+    14,
+    20
+   ],
+   "look": [
+    0,
+    18,
+    -3
+   ],
+   "fov": 62,
+   "steps": 1
+  },
+  {
+   "name": "B1_rear",
+   "pre": "const { TORDO_POSES } = await import('/archive/colosos_propuestas/tordo.js'); window.__lab.items[0].model.pose(TORDO_POSES.rear);",
+   "cam": [
+    26,
+    10,
+    22
+   ],
+   "look": [
+    0,
+    22,
+    -6
+   ],
+   "fov": 62,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

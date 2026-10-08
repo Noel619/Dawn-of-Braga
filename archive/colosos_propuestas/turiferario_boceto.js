@@ -17,10 +17,10 @@
 // llamas por los agujeros.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt.js';
-import { ColFX } from './colfx.js';
-import { colMat } from '../../gfx/materials.js';
-import { RNG } from '../../core/util.js';
+import { Sculpt, ColossusModel, tubeGeo, hardGeo, V } from './sculpt_v1.js';
+import { ColFX } from './colfx_v1.js';
+import { colMat } from '../../src/gfx/materials.js';
+import { RNG } from '../../src/core/util.js';
 
 const DEG = Math.PI / 180;
 

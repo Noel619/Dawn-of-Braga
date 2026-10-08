@@ -1,0 +1,101 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "9,0,9",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; const st = lab.studio(); const b = await lab.build('tordo'); lab.place(b, 0, 0, 0, 0, st); lab.atmo('studio'); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(8, 0, 12, -0.6); st.add(g.player.obj); window.__colRender = () => lab.renderStudio(); return { ms: b.ms, sculpt: b.model.sculptStats, stats: b.model.stats() };",
+ "shots": [
+  {
+   "name": "B1S_34",
+   "cam": [
+    46,
+    16,
+    40
+   ],
+   "look": [
+    0,
+    16,
+    1
+   ],
+   "fov": 48,
+   "steps": 3
+  },
+  {
+   "name": "B1S_SIDE",
+   "cam": [
+    58,
+    16,
+    2
+   ],
+   "look": [
+    0,
+    16,
+    1
+   ],
+   "fov": 48,
+   "steps": 1
+  },
+  {
+   "name": "B1S_FRONT",
+   "cam": [
+    8,
+    8,
+    48
+   ],
+   "look": [
+    0,
+    19,
+    2
+   ],
+   "fov": 54,
+   "steps": 1
+  },
+  {
+   "name": "B1S_BACK34",
+   "cam": [
+    -38,
+    20,
+    -38
+   ],
+   "look": [
+    0,
+    16,
+    0
+   ],
+   "fov": 48,
+   "steps": 1
+  },
+  {
+   "name": "B1S_HEAD",
+   "cam": [
+    16,
+    31,
+    32
+   ],
+   "look": [
+    0,
+    29,
+    14
+   ],
+   "fov": 42,
+   "steps": 1
+  },
+  {
+   "name": "B1S_REAR",
+   "pre": "const { TORDO_POSES } = await import('/archive/colosos_propuestas/tordo.js'); window.__lab.items[0].model.pose(TORDO_POSES.rear);",
+   "cam": [
+    46,
+    12,
+    32
+   ],
+   "look": [
+    0,
+    21,
+    3
+   ],
+   "fov": 52,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}

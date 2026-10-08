@@ -1,14 +1,15 @@
 // Modo desarrollador: F2 abre un panel para probar el juego (invulnerable,
 // aguante infinito, volar atravesando paredes, velocidad del juego, IA
 // congelada o ciega, el estado de cada criatura sobre su cabeza, órdenes al
-// Descoyuntado, teletransporte, objetos y armas, el parry...). Sólo se abre
-// en localhost o desde la IP del autor (access.js); a cualquier otro
-// jugador F2 no le hace nada.
+// Descoyuntado, teletransporte, objetos y armas, el parry...). Se abre en
+// localhost, desde la IP del autor o, en cualquier sitio, tecleando la
+// contraseña del modo de pruebas en cualquier momento (access.js); a
+// cualquier otro jugador F2 no le hace nada.
 //
 // Desde la consola (o las pruebas automáticas): __game.dev.set('god', true),
 // __game.dev.act('rage'), __game.dev.tp('lagar')...
 import * as THREE from 'three';
-import { checkAccess, isLocalHost, myIpHash } from './access.js';
+import { checkAccess, isLocalHost, myIpHash, DEV_PASS, hashPass } from './access.js';
 import { WEAPONS, WEAPON_ORDER } from '../entities/weapons.js';
 import { ITEMS, AREA_NAMES } from '../game/story.js';
 import { CELLAR } from '../world/level_cellar.js';
@@ -49,11 +50,70 @@ export class DevMode {
     this.marks = false;
     this.parryShow = false;
     this.log = [];
-    addEventListener('keydown', (e) => {
-      if (e.code !== 'F2') return;
-      e.preventDefault();
-      this.toggle();
-    });
+    // la contraseña ya tecleada en este navegador (se guarda su huella)
+    try {
+      if (localStorage.getItem('dob-dev-pass') === DEV_PASS.hash) this.allowed = true;
+    } catch (e) {
+      /* sin almacenamiento: habrá que teclearla otra vez */
+    }
+    this.typed = '';
+    addEventListener(
+      'keydown',
+      (e) => {
+        if (e.code === 'F2') {
+          e.preventDefault();
+          this.toggle();
+          return;
+        }
+        // la contraseña, tecleada en cualquier momento (las últimas teclas)
+        if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          this.typed = (this.typed + e.key.toLowerCase()).slice(-24);
+          if (this.typed.length >= DEV_PASS.len && hashPass(this.typed.slice(-DEV_PASS.len)) === DEV_PASS.hash) {
+            this.typed = '';
+            this.unlock();
+          }
+        }
+      },
+      true
+    );
+  }
+
+  // Contraseña correcta: el modo de pruebas queda abierto en este navegador
+  // (F2 lo muestra y lo esconde) y se abre el panel. Las teclas de la
+  // contraseña que el juego haya tomado por órdenes (la M abre el mapa) no
+  // dejan nada abierto.
+  unlock() {
+    const g = this.g;
+    this.allowed = true;
+    try {
+      localStorage.setItem('dob-dev-pass', DEV_PASS.hash);
+    } catch (e) {
+      /* sólo para esta sesión */
+    }
+    // (y las que aún no ha procesado: durante medio segundo)
+    this._shutMenusT = 0.6;
+    this.shutMenus();
+    g.ui.toast('Modo de pruebas activado · F2 lo muestra y lo esconde', 4);
+    g.audio && g.audio.ui && g.audio.ui('confirm');
+    this.show();
+  }
+  shutMenus() {
+    const g = this.g;
+    if (g.ui.top && (g.ui.top.name === 'map' || g.ui.top.name === 'inv') && g.state === 'paused') g.ui.close();
+  }
+  // Olvida la contraseña en este navegador (vuelve a hacer falta teclearla).
+  lock() {
+    try {
+      localStorage.removeItem('dob-dev-pass');
+    } catch (e) {
+      /* nada guardado */
+    }
+    this.allowed = isLocalHost();
+    this.close();
+  }
+  // Huella de una contraseña nueva (para DEV_PASS en access.js).
+  passHash(s) {
+    return hashPass(s);
   }
 
   // ------------------------------------------------------------ panel
@@ -92,7 +152,7 @@ export class DevMode {
     for (const ev of ['mousedown', 'mouseup', 'click', 'contextmenu', 'wheel']) el.addEventListener(ev, (e) => e.stopPropagation());
     const B = (k, label, kind = 'toggle') => `<button data-${kind === 'toggle' ? 'k' : 'a'}="${k}">${label}</button>`;
     el.innerHTML = `
-      <div class="dh"><span>MODO DESARROLLADOR</span><span>F2</span></div>
+      <div class="dh"><span>MODO DE PRUEBAS</span><span>F2</span></div>
       <div class="di" id="dev-info"></div>
       <div class="ds"><div class="dt">Jugador</div>
         ${B('god', 'Invulnerable')}${B('stamina', 'Aguante infinito')}${B('fly', 'Volar (atraviesa muros)')}
@@ -115,7 +175,7 @@ export class DevMode {
       </div>
       <div class="ds"><div class="dt">Teletransporte</div>
         <select id="dev-tp"><option value="">— elige un sitio —</option></select>
-        ${B('mark', 'Guardar posición', 'act')}${B('back', 'Volver a ella', 'act')}${isLocalHost() ? B('iphash', 'Huella de mi IP', 'act') : ''}
+        ${B('mark', 'Guardar posición', 'act')}${B('back', 'Volver a ella', 'act')}${isLocalHost() ? B('iphash', 'Huella de mi IP', 'act') : ''}${B('lockDev', 'Olvidar la contraseña', 'act')}
       </div>`;
     document.body.appendChild(el);
     el.addEventListener('click', (e) => {
@@ -283,6 +343,9 @@ export class DevMode {
       case 'back':
         if (this.saved) this.teleport(this.saved.x, this.saved.y, this.saved.z, this.saved.yaw);
         break;
+      case 'lockDev':
+        this.lock();
+        break;
       case 'iphash':
         myIpHash().then((r) => this.note(r ? `IP ${r.ip}\nhuella ${r.hash}` : 'No se pudo averiguar la IP pública'));
         break;
@@ -420,6 +483,10 @@ export class DevMode {
     if (!this.allowed) return;
     const g = this.g,
       p = g.player;
+    if (this._shutMenusT > 0) {
+      this._shutMenusT -= dt;
+      this.shutMenus();
+    }
     // (con el panel abierto el ratón es del panel: si el juego lo había
     // capturado a destiempo, se suelta)
     if (this.open && g.input.locked) g.input.exitLock();

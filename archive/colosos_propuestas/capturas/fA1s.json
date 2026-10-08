@@ -1,0 +1,101 @@
+{
+ "w": 960,
+ "h": 540,
+ "res": 540,
+ "at": "7,0,5",
+ "setup": "const { ColossusLab } = await import('/src/dev/colossus_lab.js'); const lab = new ColossusLab(g); window.__lab = lab; const st = lab.studio(); const b = await lab.build('boceto_turiferario'); lab.place(b, 0, 0, 0, 0, st); lab.atmo('studio'); window.__colTick = (dt) => lab.tick(dt); g.player.spawn(7, 0, 6, -0.6); st.add(g.player.obj); window.__colRender = () => lab.renderStudio(); return { ms: b.ms, sculpt: b.model.sculptStats, stats: b.model.stats() };",
+ "shots": [
+  {
+   "name": "A1S_FRONT",
+   "cam": [
+    0,
+    9,
+    44
+   ],
+   "look": [
+    0,
+    10.5,
+    0
+   ],
+   "fov": 42,
+   "steps": 3
+  },
+  {
+   "name": "A1S_34",
+   "cam": [
+    32,
+    11,
+    30
+   ],
+   "look": [
+    0,
+    10,
+    -1
+   ],
+   "fov": 42,
+   "steps": 1
+  },
+  {
+   "name": "A1S_SIDE",
+   "cam": [
+    -44,
+    10,
+    2
+   ],
+   "look": [
+    0,
+    10,
+    -2
+   ],
+   "fov": 42,
+   "steps": 1
+  },
+  {
+   "name": "A1S_BACK34",
+   "cam": [
+    -30,
+    14,
+    -34
+   ],
+   "look": [
+    0,
+    9,
+    -3
+   ],
+   "fov": 42,
+   "steps": 1
+  },
+  {
+   "name": "A1S_BACK",
+   "cam": [
+    2,
+    14,
+    -46
+   ],
+   "look": [
+    0,
+    9,
+    -3
+   ],
+   "fov": 42,
+   "steps": 1
+  },
+  {
+   "name": "A1S_MENACE",
+   "pre": "window.__lab.items[0].api.pose('menace');",
+   "cam": [
+    18,
+    7,
+    36
+   ],
+   "look": [
+    -3,
+    11,
+    0
+   ],
+   "fov": 46,
+   "steps": 1
+  }
+ ],
+ "out": "tools/shots/colosos_propuestas"
+}
