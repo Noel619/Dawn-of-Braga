@@ -83,8 +83,14 @@ const steps = [
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
   "__use('d_sello')",
-  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1);g.bosses.turibulario.hp=1;g.bosses.turibulario.die();__sim(1);return {active:!!g.activeBoss}})()",
-  "new Promise(r=>setTimeout(()=>r({boss:__game.flags['boss:turibulario'], exit:__game.flags['door:d_salida']}),3000))",
+  // el rito de la cisterna: ya no hay pelea (la cinemática se salta)
+  "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1.5);const cine=!!g.cutscene;if(g.cutscene)g.cutscene.skip();__sim(0.3);g.ui.closeAll();__sim(0.5);return {cine,rite:!!g.flags['finale:rite'],gone:!!g.bosses.turibulario.dead,fog:g.fogActive(it),grate:g.groups.riteGrate.on,stage:g.finale.stage}})()",
+  // la subida: al asomarse del pórtico a la plaza, revienta el empedrado
+  "(()=>{const g=__game;g.player.spawn(1,0.6,-57.6,0);__noEnemies();const stages=[];for(let i=0;i<300;i++){__sim(0.1);if(!stages.includes(g.finale.stage))stages.push(g.finale.stage);if(g.finale.stage==='tur')break;}return {stages,tur:g.finale.tur&&g.finale.tur.st}})()",
+  // el Turiferario: la nuca y la mano; de rodillas, el núcleo. Revienta y la nave estalla
+  "(()=>{const g=__game;g.dev.act('skipPhase');for(let i=0;i<150&&g.finale.tur.st!=='kneel';i++)__sim(0.1);const kneel=g.finale.tur.st;g.dev.act('skipPhase');const stages=[];for(let i=0;i<600;i++){__sim(0.1);if(!stages.includes(g.finale.stage))stages.push(g.finale.stage);if(g.finale.stage==='deo')break;}return {kneel,stages,turiferario:!!g.flags['boss:turiferario'],nave:g.groups.naveRuin.on,altar:g.lastAltar}})()",
+  // Deo Ignoto: los dos brazos alzados; desplomado, los dos ojos
+  "(()=>{const g=__game;const d=g.finale.deo;g.dev.act('skipPhase');__sim(1);g.dev.act('skipPhase');for(let i=0;i<250&&d.st!=='bowed';i++)__sim(0.1);const bowed=d.st;for(let i=0;i<120&&g.finale.bowCam;i++)__sim(0.1);const facade=g.finale.facadeDown;g.dev.act('skipPhase');const stages=[];for(let i=0;i<300;i++){__sim(0.1);if(!stages.includes(g.finale.stage))stages.push(g.finale.stage);if(g.finale.stage==='done')break;}g.dev.god=false;return {bowed,facade,stages,boss:!!g.flags['boss:turibulario'],exit:!!g.flags['door:d_salida'],grate:g.groups.riteGrate.on}})()",
   "(()=>{const g=__game;const y=g.world.col.groundHeight(0,-195,0.2,1);g.player.spawn(0,y,-195,Math.PI);__sim(0.5);for(let i=0;i<30;i++){__sim(0.2,['KeyW']);if(g.state==='ending')break;}return {state:g.state,pos:[g.player.pos.x,g.player.pos.y,g.player.pos.z]}})()",
   "({inv:[...__game.inventory.items.entries()], maxHp:__game.player.maxHp, maxSt:__game.player.maxSt, flasks:__game.player.maxFlasks, dmg:__game.player.dmgMul, notes:Object.keys(__game.flags).filter(k=>k.startsWith('note:')).length})",
 ];
