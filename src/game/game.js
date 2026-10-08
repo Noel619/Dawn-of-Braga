@@ -36,6 +36,7 @@ import { DevMode } from '../dev/devmode.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
+import { Finale } from './finale/director.js';
 
 // en la celda de las mazmorras del castillo
 const START = CASTLE.start;
@@ -158,6 +159,9 @@ export class Game {
     // juega (unos segundos de cálculo que así no se notan)
     this.colossi = new ColossusBank();
     setTimeout(() => this.colossi.warm(), 1500);
+    // el jefe final (el Turiferario coloso y Deo Ignoto): su guion
+    this.finale = new Finale(this);
+    this.extraTargets = null;
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
     this.buildPhantom();
 
@@ -266,6 +270,7 @@ export class Game {
     }
     this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
     this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
+    this.finale.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -338,6 +343,7 @@ export class Game {
     this.cine = null;
     this.slowmo = null;
     this.climb = null;
+    this.finale.reset();
     this.introCam = false;
     this.atmo.override = null;
     this.bossLight.intensity = 0;
@@ -548,6 +554,13 @@ export class Game {
     this.hintQ.push(H[id]);
     if (!this._hintBusy) this._nextHint();
   }
+  // Un mensaje del guion en la cola de las pistas (de uno en uno: varios a la
+  // vez se amontonaban sobre el aviso de botón)
+  say(text) {
+    this.hintQ = this.hintQ || [];
+    this.hintQ.push(text);
+    if (!this._hintBusy) this._nextHint();
+  }
   _nextHint() {
     const h = this.hintQ.shift();
     if (!h) {
@@ -598,6 +611,7 @@ export class Game {
     const it = this.promptTarget;
     this.promptTarget = null;
     if (!it || (it.done && (it.kind === 'item' || it.kind === 'door'))) return;
+    if (it.kind === 'colossus') return this.finale.interact(it);
     this.interact.use(it);
   }
 
@@ -763,6 +777,7 @@ export class Game {
     // y lo alto del Postigo, mientras el Empalado siga ahí
     if (!this.flags['boss:impaled']) this.resetArea('postigo');
     this.climb = null;
+    this.finale.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1151,15 +1166,17 @@ export class Game {
     if (dirSign && exclude) curX = v.set(exclude.pos.x, exclude.pos.y + exclude.lockHeight, exclude.pos.z).project(cam).x;
     let best = null,
       bs = 1e9;
-    for (const e of this.activeEnemies) {
+    // (y los colosos del jefe final, que no son criaturas de la lista)
+    const list = this.extraTargets ? this.activeEnemies.concat(this.extraTargets) : this.activeEnemies;
+    for (const e of list) {
       if (!e.lockable || e === exclude) continue;
       const dx = e.pos.x - p.pos.x,
         dz = e.pos.z - p.pos.z;
-      const d = Math.hypot(dx, dz);
+      const d = Math.hypot(dx, dz) - (e.lockRange ? e.body.radius : 0);
       // (sólo a una altura parecida: no la de otro piso, ni la de abajo en el
       // patio desde la muralla)
       const dy = Math.abs(e.pos.y - p.pos.y);
-      if (d > 20 || dy > 3.2) continue;
+      if (d > (e.lockRange ? e.lockRange : 20) || dy > 3.2) continue;
       // ángulo entre la vista y la dirección jugador -> criatura
       const a = Math.abs(angleDiff(camYaw, Math.atan2(dx, dz)));
       let score;
@@ -1217,7 +1234,7 @@ export class Game {
       this.setLock(n && n.distTo(this.player.pos) < 12 ? n : null);
       return;
     }
-    if (d > 24 || Math.abs(t.pos.y - this.player.pos.y) > 7) {
+    if (d > (t.lockRange ?? 24) || Math.abs(t.pos.y - this.player.pos.y) > 7) {
       this.setLock(null);
       return;
     }
@@ -1370,6 +1387,7 @@ export class Game {
         this.hunt.update(dt);
         this.updateClimb(dt);
         this.chase.update(dt);
+        this.finale.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
@@ -1378,6 +1396,9 @@ export class Game {
       if (this.state === 'play') {
         this.interact.triggers(p);
         this.promptTarget = p.state === 'free' && !p.dead ? this.interact.nearest(p) : null;
+        // (el jefe final: agarrarse al coloso, apuñalar, aferrarse)
+        const fp = this.finale.prompt();
+        if (fp !== undefined) this.promptTarget = fp;
         this.updatePhantoms(dt);
       } else this.promptTarget = null;
       if (p.pos.y < -40 && !p.dead) p.die();

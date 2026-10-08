@@ -59,6 +59,12 @@ export const IDLE = {
   shinR: [9, 0, 0],
   footR: [-4, 0, 0],
   toeR: [0, 0, 0],
+  // la cola, curvada hacia su izquierda sobre el empedrado
+  tail1: [0, 6, 0],
+  tail2: [0, 16, 0],
+  tail3: [0, 20, 0],
+  tail4: [0, 18, 0],
+  tail5: [0, 12, 0],
   ...hand('L', 18, 3),
   ...hand('R', 55, 0, 40),
 };
@@ -249,6 +255,61 @@ C.grabBack = clip(
   { lag: { armL: 0.05, foreL: 0.09, handL: 0.12 } }
 );
 
+// te tiene en la garra: la sube hasta la cara y aprieta
+const HOLD = { root: [0, -20, 0], pelvis: [4, 6, 0], spine2: [6, 6, 0], chest: [-4, 12, 0], neck1: [-10, -4, 0], neck2: [-12, -8, 0], head: [-8, -12, 0], jaw: [26, 0, 0], clavL: [0, 0, 10], armL: [-112, -26, 30], foreL: [-84, 0, 0], handL: [6, 0, 0], ...hand('L', 70, 2) };
+C.hold = clip(
+  'hold',
+  2.4,
+  [K(0, HOLD), K(0.6, { ...HOLD, ...hand('L', 84, 1), jaw: [34, 0, 0], head: [-6, -10, 0] }), K(1.2, HOLD), K(1.8, { ...HOLD, ...hand('L', 86, 1), jaw: [36, 0, 0] }), K(2.4, HOLD)],
+  { loop: true }
+);
+// y te tira lejos
+C.throw = clip(
+  'throw',
+  2.0,
+  [
+    K(0, HOLD),
+    K(0.55, { ...HOLD, chest: [-10, 22, 0], armL: [-150, -10, 40], foreL: [-60, 0, 0] }, 'hold'),
+    K(0.85, { root: [0, -40, 0], chest: [16, -18, 0], spine2: [10, -8, 0], neck2: [-4, 8, 0], armL: [-60, 10, 52], foreL: [-12, 0, 0], handL: [-20, 0, 0], ...hand('L', -12, 14) }, 'snap'),
+    K(2.0),
+  ],
+  { lag: { armL: 0.05, foreL: 0.09 }, events: [{ t: 0.78, name: 'throw' }] }
+);
+// doble giro (fase 2): se agacha, abre el brazo de la cadena y gira dos
+// vueltas sobre los pies (la vuelta la da la pelea); luego se tambalea
+{
+  const SPIN = { root: [0, -60, 0], pelvis: [8, 0, 0], spine1: [8, 0, 0], spine2: [10, 6, 0], chest: [8, 10, 0], neck1: [-8, -6, 0], neck2: [-10, -8, 0], head: [-6, -6, 0], armR: [-12, 64, -58], foreR: [-8, 0, 0], handR: [0, 0, 6], armL: [-24, 0, 56], foreL: [-20, 0, 0], legL: [-14, 0, 12], shinL: [26, 0, 0], legR: [-10, 0, -12], shinR: [22, 0, 0] };
+  C.spin = clip(
+    'spin',
+    5.6,
+    [
+      K(0),
+      K(1.0, { ...SPIN, root: [0, -80, 0], chest: [14, -16, 0], spine2: [12, -10, 0], armR: [-12, -30, -60], foreR: [-20, 0, 0] }, 'hold'),
+      K(1.5, SPIN, 'snap'),
+      K(3.0, { ...SPIN, chest: [6, 14, 0], head: [-8, -10, 0] }),
+      K(4.4, SPIN),
+      K(5.0, { ...SPIN, root: [0, -40, 0], chest: [20, 0, 0], spine2: [14, 0, 0], armR: [-30, 40, -30], foreR: [-30, 0, 0], legL: [-20, 0, 8], shinL: [30, 0, 0] }),
+      K(5.6),
+    ],
+    { lag: { chest: 0.05, armR: 0.08, foreR: 0.12 }, events: [{ t: 1.0, name: 'swing' }] }
+  );
+}
+// lluvia de cera (fase 2): alza la cabeza y sacude la aureola; los cirios
+// gotean cera ardiendo sobre la plaza
+C.wax = clip(
+  'wax',
+  4.0,
+  [
+    K(0),
+    K(0.8, { root: [0, -50, 0], chest: [16, 0, 0], neck1: [10, 0, 0], neck2: [8, 0, 0], head: [10, 0, 0], armL: [-20, 0, 30], armR: [-14, 0, -24] }, 'hold'),
+    K(1.3, { root: [0, 10, 0], chest: [-14, 0, 0], neck1: [-26, 6, 0], neck2: [-22, 8, 0], head: [-18, 10, 0], jaw: [30, 0, 0], armL: [-40, 0, 60], foreL: [-30, 0, 0], armR: [-30, 0, -50], foreR: [-30, 0, 0] }, 'snap'),
+    K(2.0, { root: [0, 10, 0], chest: [-14, 0, 0], neck1: [-26, -8, 0], neck2: [-22, -10, 0], head: [-18, -12, 0], jaw: [30, 0, 0], armL: [-40, 0, 60], foreL: [-30, 0, 0], armR: [-30, 0, -50], foreR: [-30, 0, 0] }),
+    K(2.7, { root: [0, 10, 0], chest: [-14, 0, 0], neck1: [-26, 8, 0], neck2: [-22, 10, 0], head: [-18, 12, 0], jaw: [28, 0, 0], armL: [-40, 0, 60], foreL: [-30, 0, 0], armR: [-30, 0, -50], foreR: [-30, 0, 0] }),
+    K(4.0),
+  ],
+  { events: [{ t: 1.3, name: 'wax' }] }
+);
+
 // coletazo: la cadera gira y la cola barre por detrás, de izquierda a derecha
 C.tail = clip(
   'tail',
@@ -426,7 +487,8 @@ export function turRig(model, o = {}) {
   // la aureola de hierro, clavada en el cráneo: tiembla con cada sacudida
   R.addDyn('halo', { len: 3, dir: [0, 1, 0], k: 110, d: 11, w: 0.55, maxAng: 0.3 });
   // la cola de los fieles: pesa y se arrastra por el empedrado
-  for (let i = 1; i <= 5; i++) R.addDyn('tail' + i, { k: 34 - i * 4, d: 6.5, g: 7, ground: 0.45 + (5 - i) * 0.18, fr: 3.5, maxAng: 0.9 });
-  R.addDyn('tail6', { len: 3.0, dir: [0, -0.06, -1], k: 12, d: 5, g: 8, ground: 0.4, fr: 4.5, maxAng: 0.9 });
+  // (se dobla mucho: en la plaza no cabe estirada y se curva contra las fachadas)
+  for (let i = 1; i <= 5; i++) R.addDyn('tail' + i, { k: 34 - i * 4, d: 6.5, g: 7, ground: 0.45 + (5 - i) * 0.18, fr: 3.5, maxAng: 1.5, bound: 1.4 });
+  R.addDyn('tail6', { len: 3.0, dir: [0, -0.06, -1], k: 12, d: 5, g: 8, ground: 0.4, fr: 4.5, maxAng: 1.5, bound: 1.2 });
   return R;
 }

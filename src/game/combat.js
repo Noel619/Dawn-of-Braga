@@ -28,6 +28,8 @@ export class Combat {
   playerSwing(player, atk) {
     const g = this.game;
     if (g.breakables) g.breakables.playerSwing(player, atk);
+    // (los colosos del jefe final)
+    if (g.finale) g.finale.playerSwing(player, atk);
     for (const e of g.activeEnemies) {
       if (e.dead || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
       const dx = e.pos.x - player.pos.x,

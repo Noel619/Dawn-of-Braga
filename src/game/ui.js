@@ -844,7 +844,7 @@ export class UI {
     if ((t || struggle || rip) && !this.modal && g.state === 'play') {
       const label = struggle ? 'Forcejea' : rip ? 'Golpe de gracia' : g.interact.label(t);
       const d = this.device();
-      const glyph = GLYPHS[d][struggle || rip ? 'light' : 'interact'];
+      const glyph = GLYPHS[d][struggle || rip ? 'light' : (t && t.glyph) || 'interact'];
       const k = d + ':' + glyph + ':' + label;
       if (k !== this._promptKey) {
         this._promptKey = k;

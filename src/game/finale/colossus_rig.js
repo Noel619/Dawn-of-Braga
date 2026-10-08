@@ -64,6 +64,8 @@ export class ColossusRig {
     // pies en el suelo: [{ ankle, toe, h (altura del tobillo con el pie
     // plano), ht (altura del hueso de los dedos) }]
     this.feet = o.feet || null;
+    this.bounds = o.bounds || null;
+    this.groundOn = true;
     this.gw = 1;
     this.groundOff = 0;
   }
@@ -90,7 +92,9 @@ export class ColossusRig {
   //      hang (0..1: cuánto cuelga a plomo en vez de girar con su padre; la
   //      tela de un cuerpo encorvado cae vertical, no se inclina con él),
   //      ground (altura mínima de la punta sobre el suelo), fr (roce con el
-  //      suelo), w (peso del muelle), maxAng (giro máximo, radianes) }
+  //      suelo), w (peso del muelle), maxAng (giro máximo, radianes),
+  //      bound (margen: la punta no sale de this.bounds, [x0, z0, x1, z1] en
+  //      el mundo: la cola se dobla contra las fachadas de la plaza) }
   addDyn(name, o = {}) {
     const b = this.byName[name];
     if (!b) return;
@@ -98,7 +102,7 @@ export class ColossusRig {
     const dir = o.dir ? new THREE.Vector3(...o.dir) : child ? child.position.clone() : new THREE.Vector3(0, -1, 0);
     const len = o.len ?? dir.length();
     dir.normalize();
-    this.dyn.push({ b, dir, len, k: o.k ?? 40, d: o.d ?? 6, g: o.g ?? 0, hang: o.hang ?? 0, p: new THREE.Vector3(), v: new THREE.Vector3(), init: false, ground: o.ground ?? null, fr: o.fr ?? 0, w: o.w ?? 1, maxAng: o.maxAng ?? 1.6 });
+    this.dyn.push({ b, dir, len, k: o.k ?? 40, d: o.d ?? 6, g: o.g ?? 0, hang: o.hang ?? 0, p: new THREE.Vector3(), v: new THREE.Vector3(), init: false, ground: o.ground ?? null, fr: o.fr ?? 0, w: o.w ?? 1, maxAng: o.maxAng ?? 1.6, bound: o.bound ?? 0 });
   }
   // los saca de su sitio (al teletransportar o reiniciar)
   resetDyn() {
@@ -359,11 +363,21 @@ export class ColossusRig {
         _v3.copy(d.p).sub(O);
         const L = _v3.length() || 1e-6;
         d.p.copy(O).addScaledVector(_v3, d.len / L);
-        // el suelo (la cola se arrastra)
-        if (d.ground !== null) {
+        // las fachadas (la cola no atraviesa las casas: se dobla contra ellas)
+        if (d.bound && this.bounds) {
+          const B = this.bounds,
+            m = d.bound;
+          if (d.p.x < B[0] + m) (d.p.x = B[0] + m), (d.v.x *= -0.2);
+          if (d.p.x > B[2] - m) (d.p.x = B[2] - m), (d.v.x *= -0.2);
+          if (d.p.z < B[1] + m) (d.p.z = B[1] + m), (d.v.z *= -0.2);
+          if (d.p.z > B[3] - m) (d.p.z = B[3] - m), (d.v.z *= -0.2);
+        }
+        // el suelo (la cola se arrastra); muy por debajo (saliendo de la
+        // tierra), sube poco a poco en vez de saltar
+        if (d.ground !== null && this.groundOn) {
           const gy = this.groundAt(d.p.x, d.p.z) + d.ground;
           if (d.p.y < gy) {
-            d.p.y = gy;
+            d.p.y = gy - d.p.y > 0.6 ? d.p.y + (gy - d.p.y) * 0.06 : gy;
             if (d.v.y < 0) d.v.y = 0;
             const f = Math.exp(-d.fr * h);
             d.v.x *= f;

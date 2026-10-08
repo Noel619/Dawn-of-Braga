@@ -985,6 +985,8 @@ export class Interactables {
         return it.label ?? 'Partir la mesa';
       case 'climb':
         return 'Trepar por el pozo';
+      case 'colossus':
+        return it.label;
       case 'lever':
         return 'Echar la palanca';
       case 'well':

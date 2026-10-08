@@ -84,8 +84,9 @@ export class CameraRig {
     this.side = damp(this.side, sideWant, sideWant < this.side ? 14 : 5, dt);
     const sx = -Math.cos(this.yaw) * this.side,
       sz = Math.sin(this.yaw) * this.side;
+    // (el jefe final aparta la cámara para ver al coloso: distBias, pivotBias)
     const px = player.pos.x + sx,
-      py = player.visY + 1.55,
+      py = player.visY + 1.55 + (this.pivotBias || 0),
       pz = player.pos.z + sz;
     // seguimiento: casi rígido en horizontal (sin mareo), algo de retardo en vertical
     this.pivot.x = damp(this.pivot.x, px, 18, dt);
@@ -109,7 +110,9 @@ export class CameraRig {
       this.yaw += clamp(angleDiff(this.yaw, ny), -maxStep, maxStep);
       const th = target.pos.y + (target.lockHeight ?? 1.4) * 0.75 - (player.visY + 1.4);
       const big = clamp(((target.T && target.T.height) || 1.8) / 1.8, 1, 3);
-      const desiredPitch = clamp(0.24 + (big - 1) * 0.08 + Math.atan2(-th, Math.max(d, 2.5)) * 0.55 + clamp((6 - d) * 0.03, 0, 0.14), -0.1, 0.66);
+      // (un coloso: la cámara baja y mira hacia arriba, para verle entero)
+      const colossal = target.T && target.T.height > 12;
+      const desiredPitch = colossal ? clamp(0.12 + Math.atan2(-th, Math.max(d, 4)) * 0.7, -0.5, 0.45) : clamp(0.24 + (big - 1) * 0.08 + Math.atan2(-th, Math.max(d, 2.5)) * 0.55 + clamp((6 - d) * 0.03, 0, 0.14), -0.1, 0.66);
       this.pitch = damp(this.pitch, desiredPitch, 4.5, dt);
     } else {
       if (Math.abs(look.x) + Math.abs(look.y) > 0.004) this.recenterT = 0;
@@ -124,8 +127,8 @@ export class CameraRig {
       this.pitch = clamp(this.pitch + look.y, -0.6, 1.15);
     }
 
-    let want = this.dist + this.lockW * 0.6;
-    if (target && target.T && target.T.height > 2.6) want += Math.min(2.2, (target.T.height - 2.6) * 0.8) * this.lockW;
+    let want = this.dist + this.lockW * 0.6 + (this.distBias || 0);
+    if (target && target.T && target.T.height > 2.6) want += Math.min(target.T.height > 12 ? 4.5 : 2.2, (target.T.height - 2.6) * 0.8) * this.lockW;
     // techo bajo (interiores, vigas, bóvedas): en vez de pegarse al jugador o
     // meterse entre las vigas, la cámara baja y mira más de frente. El tope
     // se mide sobre la cabeza del jugador y se suaviza (baja deprisa, sube
