@@ -33,6 +33,7 @@ import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
 import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
+import { RiteCutscene } from './finale/rite.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
@@ -105,9 +106,9 @@ export class Game {
     }
     this.bossLight = new THREE.PointLight(0xff6a20, 0, 14, 1.5);
     this.scene.add(this.bossLight);
-    // las ruinas de la nave y de la fachada, ocultas hasta que revientan
-    this.setGroupVisible('naveRuin', false);
-    this.setGroupVisible('fachadaRuin', false);
+    // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
+    // que deja el rito en la cisterna, hasta entonces
+    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate']) this.setGroupVisible(n, false);
     this.fx.ash = new AshSystem(this.scene);
     this.fx.blood = new ParticleBurst(this.scene, 900);
     this.fx.bloodDecals = new DecalPool(this.scene, 'splat', 48, { color: 0x9a8080 });
@@ -282,7 +283,7 @@ export class Game {
     this.phantomA = 0;
     for (const e of this.enemies) {
       e.reset();
-      if (e.boss && this.flags['boss:' + e.type]) {
+      if (this.bossGone(e)) {
         e.dead = true;
         e.state = 'dead';
         e.obj.visible = false;
@@ -672,6 +673,8 @@ export class Game {
 
   fogActive(it) {
     const b = this.bosses[it.boss];
+    // (la de la cisterna: tras el rito, o mientras dura, ya no está)
+    if (it.boss === 'turibulario' && (this.flags['finale:rite'] || (this.cutscene && this.cutscene.rite))) return false;
     return !(this.flags['boss:' + it.boss] || (b && b.dead));
   }
 
@@ -695,7 +698,21 @@ export class Game {
     p.visY = p.body.pos.y;
     p.yaw = it.axis === 'x' ? (dir < 0 ? Math.PI : 0) : dir < 0 ? -Math.PI / 2 : Math.PI / 2;
     this.camRig.snapTo(p);
+    // en la cisterna ya no hay pelea: el rito (ver finale/rite.js)
+    if (it.boss === 'turibulario') {
+      if (!this.flags['finale:rite'] && !this.cutscene) this.startRite();
+      return;
+    }
     if (!this.activeBoss) this.startBoss(b);
+  }
+  startRite() {
+    this.hunt.reset();
+    this.cutscene = new RiteCutscene(this);
+    this.cutscene.start();
+  }
+  // el arzobispo de la cisterna ya no está tras el rito (se lo llevó el dios)
+  bossGone(e) {
+    return e.boss && (this.flags['boss:' + e.type] || (e.type === 'turibulario' && this.flags['finale:rite']));
   }
 
   startBoss(b) {
@@ -816,7 +833,7 @@ export class Game {
     this.activeBoss = null;
     this.atmo.override = null;
     this.combat.clear();
-    for (const e of this.enemies) if (!(e.boss && this.flags['boss:' + e.type])) e.reset();
+    for (const e of this.enemies) if (!this.bossGone(e)) e.reset();
     this.respawnAtAltar();
     this.fadeTarget = 1;
     this.saveGame();
@@ -1351,8 +1368,10 @@ export class Game {
       dt *= this.slowmo.k;
       if (this.slowmo.t <= 0) this.slowmo = null;
     }
-    // (modo desarrollador: cámara lenta o rápida)
+    // (modo desarrollador: cámara lenta o rápida; o el mundo detenido, casi:
+    // con el paso a cero algunas velocidades se dividirían por cero)
     if (this.dev.timeScale !== 1) dt *= this.dev.timeScale;
+    if (this.dev.freezeTime) dt *= 1e-4;
     this.time += dt;
     G.uTime.value = this.time;
     // si había una pantalla abierta, su entrada no debe llegar al juego este fotograma

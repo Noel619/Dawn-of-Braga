@@ -126,6 +126,8 @@ export class DeoBoss {
     this.marks = [];
     this.onDead = null;
     this.onBow = null;
+    // (para el modo de pruebas: ver las esferas de la cabeza)
+    this.HEAD_BALLS = HEAD_BALLS;
   }
 
   // ---------------------------------------------------------- montaje

@@ -1110,8 +1110,78 @@ export function buildCrypt(ctx, S, C, L) {
     }
     const DR = 5.2;
     dome(ctx, { cx: 0, cz, r: rd, y0: YT, rise: DR, n: N, m: 10, mat: 'mossstone', tint: VT, room, ribs: 8, ribPhase: Math.PI / 8, ribMat: 'ashlar', ribTint: AT, ribW: 0.4, ribD: 0.24 });
-    // la corona de hierro con sus velas, colgada de la clave
+    // la corona de hierro con sus velas, colgada de la clave (se viene abajo
+    // en el rito: grupo 'cisternCrown'; ver finale/rite.js)
+    ctx.beginGroup('cisternCrown');
     P.candleCrown(ctx, 0, AY + 6.8, cz, YT + DR - 0.35, { room, r: 1.4, n: 12, radius: 13, intensity: 1.0 });
+    ctx.endGroup();
+    // el altar del Dios Desconocido, ante la masa de carne del norte: aquí
+    // reza el arzobispo
+    wb.box('ashlar', -1.35, AY, -162.1, 1.35, AY + 1.05, -160.7, { room, tint: AT, sub: 1.2 });
+    wb.box('blood', -1.2, AY + 1.05, -161.95, 1.2, AY + 1.07, -160.85, { faces: 't', ao: false, grime: false, room, uv: 0.3 });
+    ctx.col.add(-1.35, AY, -162.1, 1.35, AY + 1.05, -160.7);
+    P.candles(ctx, 0, AY + 1.05, -161.4, 5, 1630, { room, radius: 3, intensity: 0.6, spread: 0.45 });
+    // lo que deja el rito (grupo 'riteRubble', oculto hasta entonces): el
+    // agujero de la clave por donde se lo llevó la carne del dios, la corona
+    // caída, trozos de los nervios y el montón que ciega la reja del río
+    ctx.beginGroup('riteRubble');
+    {
+      const top = YT + DR;
+      wb.cylinder('black', 0, top - 0.32, cz, 1.9, 1.9, 0.08, 14, { ao: false, grime: false, capTop: true, capBot: true, room });
+      const rr = new RNG(1650);
+      for (let k = 0; k < 14; k++) {
+        const a = (k / 14) * Math.PI * 2 + rr.range(-0.1, 0.1);
+        const r = 1.9 + rr.range(-0.15, 0.35);
+        const l = rr.range(0.35, 0.8);
+        wb.push();
+        wb.translate(Math.cos(a) * r, top - 0.45 - l * 0.4, cz + Math.sin(a) * r);
+        wb.rotateY(-a);
+        wb.rotateZ(rr.range(-0.4, 0.4));
+        wb.box('mossstone', -0.18, -l / 2, -0.22, 0.18, l / 2, 0.22, { ao: false, room, tint: VT });
+        wb.pop();
+      }
+      // la corona, ladeada en el suelo
+      wb.geometry('iron', new THREE.TorusGeometry(1.4, 0.05, 4, 24), new THREE.Matrix4().compose(V(1.2, AY + 0.45, cz + 1.4), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 - 0.42, 0.3, 0.1)), V(1, 1, 1)), { ao: false, room });
+      wb.geometry('iron', new THREE.TorusGeometry(0.77, 0.035, 4, 16), new THREE.Matrix4().compose(V(1.25, AY + 0.42, cz + 1.4), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 - 0.42, 0.3, 0.1)), V(1, 1, 1)), { ao: false, room });
+      // trozos de los nervios y dovelas de la cúpula
+      for (let k = 0; k < 9; k++) {
+        const a = rr.range(0, Math.PI * 2),
+          d = rr.range(0.5, 4.5);
+        const x = Math.cos(a) * d,
+          z = cz + Math.sin(a) * d;
+        const L = rr.range(0.6, 1.7);
+        wb.push();
+        wb.translate(x, AY + 0.2, z);
+        wb.rotateY(rr.range(0, Math.PI));
+        wb.rotateZ(rr.range(-0.25, 0.25));
+        wb.box(k % 3 ? 'mossstone' : 'ashlar', -L / 2, -0.2, -0.22, L / 2, 0.2, 0.22, { ao: false, room, tint: k % 3 ? VT : AT });
+        wb.pop();
+      }
+      P.rubble(ctx, -0.8, AY, cz - 0.6, 12, 1651, 2.2, { scale: 1.1, mat: 'mossstone', room });
+    }
+    ctx.endGroup();
+    // el montón que ciega la reja del río (no se llega a ella) hasta que Deo
+    // Ignoto, al morir, la revienta (grupo 'riteGrate')
+    ctx.beginGroup('riteGrate');
+    {
+      P.rubble(ctx, 0, AY, -165.0, 20, 1652, 2.4, { scale: 1.9, mat: 'mossstone', blocks: 0.8, room });
+      P.rubble(ctx, -2.6, AY + 1.2, -166.0, 8, 1653, 1.2, { scale: 1.5, mat: 'mossstone', room });
+      P.rubble(ctx, 2.4, AY + 1.0, -166.1, 8, 1654, 1.2, { scale: 1.5, mat: 'mossstone', room });
+      for (const [x, z, sx, sy, sz, ry] of [
+        [-1.2, -164.4, 1.6, 1.0, 1.1, 0.3],
+        [1.4, -164.9, 1.4, 1.2, 1.0, -0.5],
+        [0.2, -166.2, 2.2, 1.4, 1.2, 0.1],
+      ]) {
+        wb.push();
+        wb.translate(x, AY + sy / 2 - 0.05, z);
+        wb.rotateY(ry);
+        wb.rotateX(0.12);
+        wb.box('mossstone', -sx / 2, -sy / 2, -sz / 2, sx / 2, sy / 2, sz / 2, { ao: false, room, tint: VT, sub: 1.2 });
+        wb.pop();
+      }
+      ctx.col.add(-3.4, AY, -167.2, 3.4, AY + 3.2, -163.4);
+    }
+    ctx.endGroup();
     // la masa de carne del norte que rodea la salida
     P.fleshGrowth(ctx, -6, AY, -166, 2.4, 1601, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });
     P.fleshGrowth(ctx, 6, AY, -166, 2.4, 1602, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });

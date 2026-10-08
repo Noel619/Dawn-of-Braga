@@ -13,6 +13,8 @@ import { checkAccess, isLocalHost, myIpHash, DEV_PASS, hashPass } from './access
 import { WEAPONS, WEAPON_ORDER } from '../entities/weapons.js';
 import { ITEMS, AREA_NAMES } from '../game/story.js';
 import { CELLAR } from '../world/level_cellar.js';
+import { INSTANCES, goInstance, killSigil, skipPhase, BossDebug } from './instances.js';
+import { Editor } from './editor.js';
 
 const CSS = `
 #devpanel { position: fixed; top: 8px; right: 8px; width: 318px; max-height: calc(100vh - 16px); overflow-y: auto; z-index: 50;
@@ -49,6 +51,10 @@ export class DevMode {
     this.tags = false;
     this.marks = false;
     this.parryShow = false;
+    this.routes = false;
+    this.freezeTime = false;
+    this.editor = new Editor(game);
+    this.bossDebug = null;
     this.log = [];
     // la contraseña ya tecleada en este navegador (se guarda su huella)
     try {
@@ -169,6 +175,15 @@ export class DevMode {
         ${B('descHere', 'Traerlo aquí', 'act')}${B('descShadow', 'Que te siga', 'act')}${B('descAmbush', 'Emboscada', 'act')}${B('descHunt', 'Que te cace', 'act')}
         ${B('descBurrow', 'A una gruta', 'act')}${B('rage', 'Enloquecer', 'act')}${B('calm', 'Calmar', 'act')}${B('descKill', 'Matarlo', 'act')}
       </div>
+      <div class="ds"><div class="dt">Instancias</div>
+        <select id="dev-inst"><option value="">— ir a un momento de una pelea —</option></select>
+      </div>
+      <div class="ds"><div class="dt">El jefe</div>
+        ${B('killSigil', 'Matar el sigilo', 'act')}${B('skipPhase', 'Saltar de fase', 'act')}${B('routes', 'Ver rutas y sigilos')}
+      </div>
+      <div class="ds"><div class="dt">Editor</div>
+        ${B('freeCam', 'Cámara libre')}${B('freezeTime', 'Detener el tiempo')}${B('playerHere', 'El jugador, adonde mira', 'act')}
+      </div>
       <div class="ds"><div class="dt">Parry</div>
         ${B('parryShow', 'Mostrar la ventana de parry')}
         <div class="dlog" id="dev-log"></div>
@@ -184,6 +199,17 @@ export class DevMode {
       if (b.dataset.k) this.flip(b.dataset.k);
       else if (b.dataset.a) this.act(b.dataset.a);
       this.refresh();
+    });
+    const inst = el.querySelector('#dev-inst');
+    for (const d of INSTANCES) {
+      const o = document.createElement('option');
+      o.value = d.id;
+      o.textContent = d.name;
+      inst.appendChild(o);
+    }
+    inst.addEventListener('change', () => {
+      if (inst.value) this.instance(inst.value);
+      inst.value = '';
     });
     const sel = el.querySelector('#dev-tp');
     for (const d of this.places()) {
@@ -208,7 +234,7 @@ export class DevMode {
     if (!this.el) return;
     for (const b of this.el.querySelectorAll('button[data-k]')) {
       const k = b.dataset.k;
-      b.classList.toggle('on', k === 'speed' ? this.speed !== 1 : k === 'slow' ? this.timeScale !== 1 : !!this[k]);
+      b.classList.toggle('on', k === 'speed' ? this.speed !== 1 : k === 'slow' ? this.timeScale !== 1 : k === 'freeCam' ? this.editor.free : !!this[k]);
     }
     const q = (s) => this.el.querySelector(s);
     q('button[data-k="speed"]').textContent = `Velocidad ×${this.speed}`;
@@ -226,6 +252,21 @@ export class DevMode {
     this.refresh();
   }
   flip(k) {
+    if (k === 'freeCam') {
+      this.editor.setFree(!this.editor.free);
+      // (con la cámara libre, el ratón mira: se cierra el panel)
+      if (this.editor.free) {
+        this.close();
+        this.g.ui.toast('Cámara libre: WASD, ratón, Espacio y C · F2 vuelve al panel', 4);
+      }
+      return this.refresh();
+    }
+    if (k === 'routes') {
+      if (!this.bossDebug) this.bossDebug = new BossDebug(this.g);
+      this.routes = !this.routes;
+      this.bossDebug.set(this.routes);
+      return this.refresh();
+    }
     if (k === 'speed') return this.set('speed', this.speed === 1 ? 2 : this.speed === 2 ? 4 : 1);
     if (k === 'slow') return this.set('timeScale', this.timeScale === 1 ? 0.5 : this.timeScale === 0.5 ? 0.25 : this.timeScale === 0.25 ? 2 : 1);
     this.set(k, !this[k]);
@@ -346,9 +387,35 @@ export class DevMode {
       case 'lockDev':
         this.lock();
         break;
+      case 'killSigil':
+        this.note(killSigil(g));
+        break;
+      case 'skipPhase':
+        this.note(skipPhase(g));
+        break;
+      case 'playerHere':
+        if (!this.editor.playerHere()) this.note('La cámara no apunta a ningún suelo');
+        break;
       case 'iphash':
         myIpHash().then((r) => this.note(r ? `IP ${r.ip}\nhuella ${r.hash}` : 'No se pudo averiguar la IP pública'));
         break;
+    }
+  }
+
+  // Va a un momento de una pelea (instances.js): __game.dev.instance('tur').
+  async instance(id) {
+    const d = INSTANCES.find((q) => q.id === id);
+    if (!d) return false;
+    this.editor.setFree(false);
+    this.note('Instancia: ' + d.name);
+    try {
+      const ok = await goInstance(this.g, id);
+      this.close();
+      return ok;
+    } catch (e) {
+      this.note('No se pudo: ' + e.message);
+      console.error(e);
+      return false;
     }
   }
 
@@ -492,6 +559,9 @@ export class DevMode {
     if (this.open && g.input.locked) g.input.exitLock();
     if (this.god && !p.dead) p.hp = p.maxHp;
     if (this.stamina) p.st = p.maxSt;
+    // el editor y las rutas del jefe, también con el panel cerrado
+    this.editor.update();
+    if (this.bossDebug) this.bossDebug.update();
     if (!this.open && !this.tags && !this.parryShow) {
       if (this.tagsEl) this.tagsEl.innerHTML = '';
       if (this.parryEl) this.parryEl.textContent = '';
@@ -507,6 +577,12 @@ export class DevMode {
       s += `zona ${z ? z.id : '—'}  ·  ${g.fps} fps  ·  ${p.state}${lt ? '  ·  fijado ' + lt.type : ''}\n`;
       if (D && g.hunt.active) s += `Descoyuntado: ${D.stage} / ${D.mode}${D.atk ? ':' + D.atk.name : ''}  ·  hambre ${D.hunger.toFixed(2)}  ·  frust ${D.frust.toFixed(2)}`;
       else s += `vida ${Math.round(p.hp)}/${p.maxHp}  ·  aguante ${Math.round(p.st)}  ·  ampollas ${p.flasks}`;
+      const F = g.finale;
+      if (F && F.stage !== 'off' && F.stage !== 'done') {
+        const b = F.stage === 'tur' || F.stage === 'intro' ? F.tur : F.deo;
+        s += `\nfinal: ${F.stage}${b ? ' · ' + b.st + (b.phase ? ' · fase ' + b.phase : '') : ''}`;
+      }
+      if (this.editor.free) s += '\n' + this.editor.info();
       this.el.querySelector('#dev-info').textContent = s;
     }
     // el estado de cada criatura, sobre su cabeza

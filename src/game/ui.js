@@ -731,6 +731,14 @@ export class UI {
     setTimeout(() => d.classList.add('out'), dur * 1000);
     setTimeout(() => kill(d), dur * 1000 + 700);
   }
+  // quita los avisos que haya en pantalla (al saltar de un sitio a otro)
+  clearToasts() {
+    while (this.toastsEl.firstChild) {
+      const el = this.toastsEl.firstChild;
+      el._pxRO && el._pxRO.disconnect();
+      el.remove();
+    }
+  }
   area(name) {
     const a = $('area');
     a.querySelector('.name').textContent = name;

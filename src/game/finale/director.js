@@ -110,6 +110,11 @@ export class Finale {
     const F = this.g.flags;
     this.setNaveRuined(!!F['boss:turiferario']);
     this.setFacadeRuined(!!F['boss:turibulario']);
+    // la cisterna tras el rito: la cúpula reventada, la reja del río cegada
+    // hasta que muere el dios
+    this.g.setGroupVisible('cisternCrown', !F['finale:rite']);
+    this.g.setGroupVisible('riteRubble', !!F['finale:rite']);
+    this.g.setGroupVisible('riteGrate', !!F['finale:rite'] && !F['boss:turibulario']);
     // la pira del atrio, reventada desde que salió el coloso
     this.g.setGroupVisible('pyre', !F['finale:turSeen']);
     this.climb.reset();
@@ -133,6 +138,12 @@ export class Finale {
   reset() {
     this.setNaveRuined(false);
     this.setFacadeRuined(false);
+    for (const [n, on] of [
+      ['cisternCrown', true],
+      ['riteRubble', false],
+      ['riteGrate', false],
+    ])
+      this.g.setGroupVisible(n, on);
     this.g.setGroupVisible('pyre', true);
     this.bellFall = null;
     this.deathCam = null;
@@ -186,7 +197,16 @@ export class Finale {
     const g = this.g,
       p = g.player;
     this.t += dt;
+    // tras el rito no queda nadie entre la cisterna y la plaza
+    if (g.flags['finale:rite'] && !g.flags['boss:turibulario']) {
+      this._clearT = (this._clearT || 0) - dt;
+      if (this._clearT <= 0) {
+        this._clearT = 0.5;
+        this.clearPath();
+      }
+    }
     if (this.stage === 'wait') {
+      if (g.flags['finale:rite'] && !g.flags['finale:turSeen']) this._ascent(dt);
       // el coloso, cargado de antemano; si ya salió una vez, espera de pie en la plaza
       if (!this.tur) this.ensureTur();
       const near = Math.hypot(p.pos.x - TUR_HOME.x, p.pos.z - TUR_HOME.z) < 95;
@@ -241,6 +261,46 @@ export class Finale {
     }
     this._decals(dt);
     this.debris.update(dt, this._ground);
+  }
+  // Tras el rito, el camino de vuelta está vacío (la calma antes de la
+  // tormenta): ni en la cripta, ni en la nave, ni en la plaza queda nadie.
+  // (Las criaturas vuelven a su puesto al descansar o al morir: se quitan
+  // otra vez.)
+  clearPath() {
+    for (const e of this.g.enemies) {
+      if (e.boss || (e.dead && !e.obj.visible)) continue;
+      const P = e.pos;
+      const crypt = P.y < -3 && P.z < -100 && P.z > -170,
+        nave = P.y > -1 && Math.abs(P.x) < 13.5 && P.z < -61 && P.z > -112,
+        largo = P.y > -1 && P.x > -19 && P.x < 23 && P.z > -62 && P.z < -39;
+      if (!crypt && !nave && !largo) continue;
+      e.dead = true;
+      e.state = 'dead';
+      e.stT = 99;
+      e.scripted = true;
+      e.obj.visible = false;
+      if (e.shadow) e.shadow.visible = false;
+    }
+  }
+  // La subida, tras el rito: temblores, polvo que cae de las bóvedas,
+  // rugidos lejanos y las campanas de la Sé, que tocan solas.
+  _ascent(dt) {
+    const g = this.g,
+      p = g.player;
+    if (g.state !== 'play' || p.dead || g.cutscene || g.ui.modal) return;
+    this.ascT = (this.ascT ?? 4) - dt;
+    if (this.ascT > 0) return;
+    this.ascT = 7 + Math.random() * 8;
+    const r = (a) => (Math.random() - 0.5) * a;
+    g.camRig.shake(0.22 + Math.random() * 0.2);
+    g.input.rumble(0.4, 0.5, 400);
+    g.audio && g.audio.play('stoneCreak', { x: p.pos.x + r(8), y: p.pos.y + 5, z: p.pos.z + r(8) }, { k: 0.8 });
+    // bajo techo, polvo de las bóvedas
+    const under = p.pos.y < -3 || (Math.abs(p.pos.x) < 13 && p.pos.z < -61.5 && p.pos.z > -108);
+    if (under) for (let k = 0; k < 6; k++) g.fx.blood.emit(p.pos.x + r(8), p.pos.y + (p.pos.y < -3 ? 3.2 : 9), p.pos.z + r(8), 8, { color: [0.45, 0.42, 0.38], speed: 0.6, life: 2.2, up: -1.5 });
+    const k = Math.random();
+    if (k < 0.45) g.audio && g.audio.play('bellToll', { x: 9, y: 18, z: -60 }, { k: 0.7 });
+    else if (k < 0.75) g.audio && g.audio.play('beastRoarBig', { x: 4.5, y: 0, z: -47 }, { k: 0.5 });
   }
   inLargo(P) {
     return P.x > -18 && P.x < 22 && P.z > -60.2 && P.z < -40 && P.y < 4;
@@ -727,6 +787,8 @@ export class Finale {
     g.activeBoss = null;
     g.extraTargets = null;
     g.flags['boss:turibulario'] = true;
+    // (el dios revienta la reja del río al hundirse: el camino queda libre)
+    g.setGroupVisible('riteGrate', false);
     this.cruceiro(false);
     g.ui.area('DEO IGNOTO HA CAÍDO');
     g.audio && g.audio.play('victory');
