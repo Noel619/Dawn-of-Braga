@@ -180,7 +180,7 @@ export function buildRuaSe(ctx, S, L) {
   // soportales): solapados a la misma altura parpadeaban
   floor(ctx, -3.5, -40, 3.5, -16.5, 'cobble');
   // (fachadas y cruces con los callejones del Arco y de las Ánimas: level_barrios.js)
-  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5 });
+  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5, wreck: 'casaS' });
   // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza
   archWall(ctx, -3.5, 3.5, -38.4, -37.6, 7.4, 0, 4.2, 5.0, { slices: 10 });
   wb.box('ashlar', -3.6, 7.4, -38.5, 3.6, 7.7, -37.5, { ao: false });
@@ -217,19 +217,70 @@ export function buildRuaSe(ctx, S, L) {
   L.map.push({ id: 'ruase', r: [-3.5, -40, 3.5, -14] });
 }
 
+// Un muro de piedra al que se le ha caído lo alto (golpes del jefe final): lo
+// que queda, mellado, y los sillares caídos a su pie, con su colisión.
+function brokenWall(ctx, x0, z0, x1, z1, h, seed) {
+  const wb = ctx.wb;
+  const rr = new RNG(seed);
+  const RT = [0.74, 0.7, 0.66];
+  const alongX = x1 - x0 >= z1 - z0;
+  const base = h * 0.42;
+  solid(ctx, 'wallstone', x0, 0, z0, x1, base, z1, { sub: 2, aoH: 1.6 });
+  const L = alongX ? x1 - x0 : z1 - z0;
+  let a = 0;
+  while (a < L - 0.01) {
+    const w = Math.min(L - a, rr.range(0.6, 1.6));
+    const hh = rr.range(0.2, h * 0.5) * (rr.chance(0.25) ? 0.3 : 1);
+    if (alongX) solid(ctx, 'wallstone', x0 + a, base, z0, x0 + a + w, base + hh, z1, { sub: 2, ao: false, tint: RT });
+    else solid(ctx, 'wallstone', x0, base, z0 + a, x1, base + hh, z0 + a + w, { sub: 2, ao: false, tint: RT });
+    a += w;
+  }
+  // los sillares caídos, del lado de la plaza (+z)
+  const cz = z1 + 1.0,
+    cx0 = x0,
+    cx1 = x1;
+  for (let i = 0; i < 12; i++) {
+    const x = rr.range(cx0, cx1),
+      z = cz + rr.range(-0.6, 1.0);
+    const s = rr.range(0.3, 0.6);
+    wb.push();
+    wb.translate(x, s * 0.4, z);
+    wb.rotateY(rr.range(0, Math.PI));
+    wb.rotateZ(rr.range(-0.4, 0.4));
+    wb.box(i % 4 ? 'wallstone' : 'ashlar', -s, -s * 0.45, -s * 0.7, s, s * 0.45, s * 0.7, { ao: false, tint: RT });
+    wb.pop();
+  }
+  ctx.col.add(cx0, 0, z1, cx1, 0.55, z1 + 1.6);
+}
+
 // ======================================================================== LARGO DA SÉ
 export function buildLargo(ctx, S, L) {
   const wb = ctx.wb;
   W(S, -18, -56, 22, -40);
   floor(ctx, -18, -56, 22, -40, 'flag');
-  house(ctx, { x0: 12.5, z0: -40, x1: 22, z1: -31, front: 'n', seed: 402, lit: true });
-  house(ctx, { x0: -27, z0: -48, x1: -18, z1: -40, front: 'e', seed: 403, h: 7.8 });
+  // (los tejados de las casas de la plaza se vienen abajo con los golpes del
+  // jefe final: wreck; ver finale/wrecks.js)
+  house(ctx, { x0: 12.5, z0: -40, x1: 22, z1: -31, front: 'n', seed: 402, lit: true, wreck: 'casaSE' });
+  house(ctx, { x0: -27, z0: -48, x1: -18, z1: -40, front: 'e', seed: 403, h: 7.8, wreck: 'casaO' });
   house(ctx, { x0: -27, z0: -56, x1: -18, z1: -48, front: 'e', seed: 404, burned: true });
-  // muros al norte flanqueando la Sé
-  stoneWall(ctx, -18, -62, -13, -56, 5);
-  stoneWall(ctx, 13, -62, 15.5, -56, 5);
-  stoneWall(ctx, 19, -62, 22, -56, 5);
+  // muros al norte flanqueando la Sé (también se rompen: lo alto se cae y
+  // queda un muro mellado con sus cascotes al pie)
+  for (const [id, x0, x1] of [
+    ['muroO', -18, -13],
+    ['muroE1', 13, 15.5],
+    ['muroE2', 19, 22],
+  ]) {
+    ctx.beginGroup('wreck:' + id);
+    stoneWall(ctx, x0, -62, x1, -56, 5);
+    ctx.endGroup();
+    ctx.beginGroup('wreck:' + id + ':ruin');
+    brokenWall(ctx, x0, -62, x1, -56, 5, 4400 + Math.round(x0 * 7));
+    ctx.endGroup();
+    (ctx.wrecks || (ctx.wrecks = [])).push({ id, kind: 'wall', box: [x0, 2.2, -62, x1, 5.2, -56] });
+  }
+  ctx.beginGroup('wreck:muroE1');
   wb.box('ashlar', 15.2, 4.6, -60.4, 19.3, 5.4, -59.6, { ao: false, faces: 'tnsewb' });
+  ctx.endGroup();
 
   // (la pira, en un grupo: el Turiferario sale del suelo justo debajo y la
   // revienta; ver finale/director.js)
@@ -237,9 +288,14 @@ export function buildLargo(ctx, S, L) {
   P.pyre(ctx, 4.5, 0, -47, 81);
   ctx.endGroup();
   P.cruzeiro(ctx, -9.5, 0, -47.5, 0.2);
-  P.cart(ctx, 15.5, 0, -43.5, -0.4, {});
-  P.barrel(ctx, 20.5, 0, -41.2);
-  P.crate(ctx, -12.4, 0, -41.1, 1, 0.2);
+  // el carro, los barriles y la caja de la plaza se rompen (los arrasan los
+  // colosos; también los rompes tú: van en L.breakables, zona 'largo')
+  L.breakables.push(
+    { kind: 'cart', id: 'carro_largo', area: 'largo', x: 15.5, y: 0, z: -43.5, rot: -0.4, hx: 1.55, hz: 1.2, h: 1.1 },
+    { kind: 'barrel', id: 'barril_largo1', area: 'largo', x: 20.5, y: 0, z: -41.2, hx: 0.42, hz: 0.42, h: 1.0 },
+    { kind: 'barrel', id: 'barril_largo2', area: 'largo', x: -13.6, y: 0, z: -41.3, hx: 0.42, hz: 0.42, h: 1.0 },
+    { kind: 'crate', id: 'caja_largo', area: 'largo', x: -12.4, y: 0, z: -41.1, rot: 0.2, hx: 0.5, hz: 0.5, h: 1.0 }
+  );
   bakeCorpse(wb, 12, 0, -44, 0.9, 'back', 'soldier', 5);
   bakeCorpse(wb, -4, 0, -53, 2.9, 'face', 'villager', 6);
   bakeCorpse(wb, 8.5, 0, -53.5, -1.9, 'kneel', 'villager', 7);
@@ -261,7 +317,6 @@ export function buildLargo(ctx, S, L) {
   P.siegeStone(ctx, 9.6, 0, -41.6, 0.45);
   P.dropped(ctx, 13.5, 0, -45.3, 0.9, 'sword');
   P.dropped(ctx, 10.7, 0, -42.9, 2.4, 'shield');
-  P.barrel(ctx, -13.6, 0, -41.3);
   P.jar(ctx, 21.2, 0, -42.3, 1.0);
   P.basket(ctx, 19.5, 0, -40.7, { tipped: true, rot: 1.2 });
   // vigas quemadas de la casa hundida

@@ -716,6 +716,8 @@ export class DeoBoss {
         const p = g.player;
         if (Math.hypot(p.pos.x - F.to.x, p.pos.z - F.to.z) < F.size + 0.8 && p.pos.y < 2.5) this._hurt(F.kind === 'tile' ? 20 : 36, F.to, { knock: 6 });
         g.finale.debris.burst(F.to, F.kind === 'tile' ? 5 : 8, { speed: 4, up: 4, size: F.size * 0.5, spread: 1 });
+        // (lo que cae encima de un barril o del carro, lo rompe)
+        g.finale.wrecks.hit(F.to, F.size + 0.6, 'step');
         g.fx.blood.emit(F.to.x, 0.3, F.to.z, 14, { color: [0.36, 0.33, 0.29], speed: 4, life: 0.6, up: 2 });
         g.audio && g.audio.play(F.kind === 'tile' ? 'woodBreak' : 'pillarBreak', F.to, { k: 0.9 });
         g.camRig.shake(0.15);

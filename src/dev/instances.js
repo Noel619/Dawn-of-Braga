@@ -72,6 +72,7 @@ function prepare(g, set = {}) {
   }
   g.finale.reset();
   g.applyWorldState();
+  checkpoint(g);
   p.dead = false;
   p.hp = p.maxHp;
   p.st = p.maxSt;
@@ -80,7 +81,21 @@ function prepare(g, set = {}) {
   p.puppet = false;
   p.autoDir = null;
 }
-const finale = (o) => Object.fromEntries(FINALE_FLAGS.map((k) => [k, !!o[k]]));
+// las banderas del final; antes de la victoria, la reja del río cerrada (y el
+// último altar, el de la cripta, si no se ha llegado aún al del cruceiro)
+const finale = (o) => {
+  const f = Object.fromEntries(FINALE_FLAGS.map((k) => [k, !!o[k]]));
+  if (!o['boss:turibulario']) f['door:d_salida'] = false;
+  return f;
+};
+function checkpoint(g) {
+  const F = g.flags;
+  if (!F['boss:turibulario']) {
+    const grate = g.interact.list.find((i) => i.id === 'd_salida');
+    if (grate && grate.done) g.interact.reset(grate);
+  }
+  if (!F['boss:turiferario'] && g.lastAltar === 'a_cruceiro') g.lastAltar = 'a_cripta';
+}
 function place(g, x, y, z, yaw) {
   g.player.spawn(x, y, z, yaw);
   g.camRig.snapTo(g.player);

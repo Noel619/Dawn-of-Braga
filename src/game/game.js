@@ -109,6 +109,8 @@ export class Game {
     // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
     // que deja el rito en la cisterna, hasta entonces
     for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate']) this.setGroupVisible(n, false);
+    // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
+    for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);
     this.fx.blood = new ParticleBurst(this.scene, 900);
     this.fx.bloodDecals = new DecalPool(this.scene, 'splat', 48, { color: 0x9a8080 });

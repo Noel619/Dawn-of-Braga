@@ -664,7 +664,7 @@ export class Interactables {
       if (it.kind === 'note' && flags['take:' + it.id] && it.glow) it.glow.visible = false;
       // (la de la cisterna, también tras el rito: allí ya no hay pelea)
       if (it.kind === 'fog' && (flags['boss:' + it.boss] || (it.boss === 'turibulario' && flags['finale:rite']))) this.clearFog(it);
-      if (it.kind === 'altar' && it.afterBoss) it.hidden = !flags['boss:' + it.afterBoss] || !!flags['boss:turibulario'];
+      if (it.kind === 'altar' && it.afterBoss) it.hidden = !flags['boss:' + it.afterBoss];
       if (it.kind === 'item' && it.afterBoss && flags['boss:' + it.afterBoss] && !flags['take:' + it.id]) {
         it.hidden = false;
         it.obj.visible = true;

@@ -33,6 +33,8 @@ const KIND = {
   barricade: { hp: Infinity, crash: 1, snd: 'barricadeBreak', chunks: 24, wood: true },
   barrel: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10, pitch: true },
   crate: { hp: 2, crash: 1, light: true, snd: 'rackBreak', chunks: 10 },
+  // en el Largo da Sé: el carro (lo arrasan los colosos)
+  cart: { hp: 3, crash: 1, light: true, snd: 'woodBreak', chunks: 16 },
 };
 
 // Charco irregular (varios discos solapados, nunca un cuadrado).
@@ -401,7 +403,33 @@ function crateRubble(s, rng) {
   for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [rng.range(0.4, 0.9), 0.025, 0.14], p: [rng.range(-0.8, 0.8), 0.02 + i * 0.006, rng.range(-0.8, 0.8)], r: [0, rng.range(0, 180), 0], mat: i % 3 ? 'planks' : 'wooddark' });
   return P;
 }
+// el carro de la plaza (con las varas recogidas: así cabe en su caja)
+function cartParts(s) {
+  const P = [
+    { type: 'box', s: [2.2, 0.1, 1.5], p: [0, 0.6, 0], mat: 'planks' },
+    { type: 'box', s: [2.2, 0.4, 0.06], p: [0, 0.85, -0.75], mat: 'planks' },
+    { type: 'box', s: [2.2, 0.4, 0.06], p: [0, 0.85, 0.75], mat: 'planks' },
+    { type: 'box', s: [0.06, 0.4, 1.5], p: [1.07, 0.85, 0], mat: 'planks' },
+    { type: 'box', s: [0.06, 0.4, 1.5], p: [-1.07, 0.85, 0], mat: 'planks' },
+    { type: 'box', s: [0.9, 0.1, 0.1], p: [-1.5, 0.55, -0.45], r: [0, 0, -8], mat: 'wooddark' },
+    { type: 'box', s: [0.9, 0.1, 0.1], p: [-1.5, 0.55, 0.45], r: [0, 0, -8], mat: 'wooddark' },
+  ];
+  for (const sg of [-1, 1]) {
+    P.push({ type: 'cyl', s: [0.52, 0.52, 0.12], p: [0.2, 0.52, sg * 0.85], r: [90, 0, 0], seg: 10, mat: 'wooddark' });
+    P.push({ type: 'cyl', s: [0.12, 0.12, 0.16], p: [0.2, 0.52, sg * 0.85], r: [90, 0, 0], seg: 6, mat: 'iron' });
+  }
+  return P;
+}
+function cartRubble(s, rng) {
+  const P = [];
+  for (let i = 0; i < 12; i++) P.push({ type: 'box', s: [rng.range(0.6, 1.6), 0.04, 0.16], p: [rng.range(-1.3, 1.3), 0.03 + i * 0.008, rng.range(-1.1, 1.1)], r: [0, rng.range(0, 180), rng.range(-5, 5)], mat: i % 3 ? 'planks' : 'wooddark' });
+  P.push({ type: 'cyl', s: [0.52, 0.52, 0.12], p: [0.6, 0.07, 0.7], r: [0, 0, 0], seg: 10, mat: 'wooddark' });
+  P.push({ type: 'torus', s: [0.5, 0.05], p: [-0.7, 0.06, -0.5], r: [90, 0, 0], seg: 12, seg2: 4, mat: 'wooddark' });
+  P.push({ type: 'box', s: [1.4, 0.1, 0.1], p: [-0.4, 0.06, 0.9], r: [0, 30, 0], mat: 'wooddark' });
+  return P;
+}
 const MODELS = {
+  cart: [cartParts, cartRubble],
   merlon: [merlonParts, merlonRubble],
   winch: [winchParts, winchRubble],
   barricade: [barricadeParts, barricadeRubble],

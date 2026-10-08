@@ -22,6 +22,7 @@ import { Climb } from './climb.js';
 import { TurBoss, TUR_HOME } from './turiferario_boss.js';
 import { DeoBoss } from './deo_boss.js';
 import { Debris } from './debris.js';
+import { Wrecks } from './wrecks.js';
 
 const _v = new THREE.Vector3();
 const DOOR = { x: 0, z: -60.4 };
@@ -42,6 +43,10 @@ export class Finale {
     this.decals = [];
     this.t = 0;
     this._placed = false;
+  }
+  // la ciudad que se rompe (se crea al primer uso: el nivel ya está hecho)
+  get wrecks() {
+    return this._wrecks || (this._wrecks = new Wrecks(this.g));
   }
   get fighting() {
     return this.stage === 'tur' || this.stage === 'intro' || this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise';
@@ -110,6 +115,13 @@ export class Finale {
     const F = this.g.flags;
     this.setNaveRuined(!!F['boss:turiferario']);
     this.setFacadeRuined(!!F['boss:turibulario']);
+    // la plaza: en ruinas sólo tras vencer (cargar a mitad del final es como
+    // volver a empezar: todo entero)
+    if (F['boss:turibulario']) this.wrecks.applyFlags(F);
+    else {
+      this.wrecks.reset();
+      this.g.resetArea('largo');
+    }
     // la cisterna tras el rito: la cúpula reventada, la reja del río cegada
     // hasta que muere el dios
     this.g.setGroupVisible('cisternCrown', !F['finale:rite']);
@@ -132,12 +144,14 @@ export class Finale {
     else this.stage = 'off';
     // la campana tumbada en la plaza y el altar del cruceiro encendido
     if (F['boss:turiferario']) this.ensureTur().then(() => this.layBell());
-    this.cruceiro(!!F['boss:turiferario'] && !F['boss:turibulario']);
+    // (y sigue encendido tras la victoria: un sitio para descansar en la plaza)
+    this.cruceiro(!!F['boss:turiferario']);
     this._leaveFight();
   }
   reset() {
     this.setNaveRuined(false);
     this.setFacadeRuined(false);
+    this.wrecks.reset();
     for (const [n, on] of [
       ['cisternCrown', true],
       ['riteRubble', false],
@@ -168,6 +182,11 @@ export class Finale {
     if (this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise') this.stage = 'deoWait';
     // (si se había desplomado, vuelve a empezar de pie agarrado a las torres)
     if (this.stage === 'deoWait' && this.facadeDown) this.setFacadeRuined(false);
+    // y la plaza, entera otra vez (sólo se queda en ruinas al vencer)
+    if (!this.g.flags['boss:turibulario'] && (this.stage === 'wait' || this.stage === 'deoWait')) {
+      this.wrecks.reset();
+      this.g.resetArea('largo');
+    }
     this.bowCam = null;
     this.climb.reset();
     this.clearDecals();
@@ -224,6 +243,7 @@ export class Finale {
       this.tur.update(dt);
       this.climb.update(dt);
       this._arena(dt);
+      this._bellSweep(dt);
       if (this.tur.st === 'dying' && this.deathCam) {
         this.dyingT += dt;
         const k = Math.min(1, this.dyingT / 5);
@@ -255,6 +275,11 @@ export class Finale {
       this.climb.update(dt);
       if (this.bowCam) this._bowCam(dt);
       else this._arena(dt);
+      // los rastrillos de los brazos de los lados rompen tejados y muros
+      for (const i of [2, 3]) {
+        const a = this.deo.arms.arms[i];
+        if (a.st === 'rake' && a.w > 0.5) this.wrecks.hit(this.deo.arms.palm(i, _v), 4.5, 'rake');
+      }
       if (this.deo.st === 'dying' && this.cam) this._camShot(dt);
     } else if (this.stage === 'end') {
       this._end(dt);
@@ -757,6 +782,9 @@ export class Finale {
     const g = this.g;
     if (this.facadeDown) return;
     this.setFacadeRuined(true);
+    // (y lo alto de los muros que la flanquean)
+    this.wrecks.hit(new THREE.Vector3(-15.5, 3.5, -59), 3.5, 'facade');
+    this.wrecks.hit(new THREE.Vector3(17.5, 3.5, -59), 4.5, 'facade');
     for (const [x, y, z, n] of [
       [-9, 20, -60, 30],
       [9, 20, -60, 30],
@@ -789,7 +817,6 @@ export class Finale {
     g.flags['boss:turibulario'] = true;
     // (el dios revienta la reja del río al hundirse: el camino queda libre)
     g.setGroupVisible('riteGrate', false);
-    this.cruceiro(false);
     g.ui.area('DEO IGNOTO HA CAÍDO');
     g.audio && g.audio.play('victory');
     // la puerta de la Sé, reventada; la reja del río, abierta
@@ -909,7 +936,21 @@ export class Finale {
   playerSwing(player, atk) {
     if (this.stage === 'tur' && this.tur) this.tur.playerSwing(player, atk);
   }
-  onImpact() {}
+  // un golpe de un coloso contra el suelo o las casas: lo que se rompe
+  onImpact(at, r, kind) {
+    this.wrecks.hit(at, r, kind);
+  }
+  // la campana, al barrer el aire deprisa, rompe tejados y muros
+  _bellSweep(dt) {
+    const t = this.tur;
+    if (!t || !t.visible || !t.bell) return;
+    const c = t.bell.center(this._bc || (this._bc = new THREE.Vector3()));
+    if (this._bp) {
+      const sp = c.distanceTo(this._bp) / Math.max(dt, 1e-3);
+      if (sp > 7 && c.y > 1.6) this.wrecks.hit(c, t.bell.R + 0.6, 'air');
+    } else this._bp = new THREE.Vector3();
+    this._bp.copy(c);
+  }
 
   // ---------------------------------------------------------- grietas en el suelo
   decal(at, r) {

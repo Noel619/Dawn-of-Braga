@@ -1192,6 +1192,13 @@ export function house(ctx, s) {
   const axis = s.roofAxis ?? (ux1 - ux0 >= uz1 - uz0 ? 'x' : 'z');
   const half = axis === 'x' ? (uz1 - uz0) / 2 : (ux1 - ux0) / 2;
   const ridge = h + half * (s.pitch ?? 0.55);
+  // un tejado que se puede venir abajo (los golpes del jefe final): entero en
+  // el grupo 'wreck:<id>', hundido en 'wreck:<id>:ruin' (ver finale/wrecks.js)
+  const wreck = s.wreck && ctx.beginGroup && !s.noRoof && !burned ? s.wreck : null;
+  if (wreck) {
+    (ctx.wrecks || (ctx.wrecks = [])).push({ id: wreck, kind: 'roof', box: [ux0 - 0.3, h - 0.6, uz0 - 0.3, ux1 + 0.3, ridge + 0.4, uz1 + 0.3], front });
+    ctx.beginGroup('wreck:' + wreck);
+  }
   if (!s.noRoof) {
     if (burned && rng.chance(0.6)) {
       // tejado hundido: sólo vigas quemadas
@@ -1240,7 +1247,94 @@ export function house(ctx, s) {
       if (s.smoke && ctx.fires) ctx.fires.push({ x: cx, y: ridge + 1.3, z: cz, s: 0.9, smoke: true, light: false, embers: s.smoke === 'embers', glow: false });
     }
   }
+  if (wreck) {
+    ctx.endGroup();
+    ctx.beginGroup('wreck:' + wreck + ':ruin');
+    wreckedRoof(ctx, { ux0, uz0, ux1, uz1, h, ridge, axis, front, upperMat, rng: new RNG(hashSeed(x0, z0, 77)) });
+    ctx.endGroup();
+  }
   return { h, ridge, g1 };
+}
+
+// El tejado hundido de una casa (golpes del jefe final): la mitad del
+// faldón que queda en pie, las vigas partidas y colgando, el techo de la
+// planta alta y, en la calle, delante de la fachada, el montón de tejas y
+// cascotes (con su colisión).
+function wreckedRoof(ctx, o) {
+  const wb = ctx.wb;
+  const { ux0, uz0, ux1, uz1, h, ridge, axis, front, rng } = o;
+  const T = [0.62, 0.56, 0.5];
+  // queda en pie un tercio del tejado, por un extremo
+  const keep = rng.range(0.28, 0.4);
+  const end = rng.chance(0.5);
+  if (axis === 'x') {
+    const a = end ? ux0 : ux1 - (ux1 - ux0) * keep,
+      b = end ? ux0 + (ux1 - ux0) * keep : ux1;
+    wb.gableRoof(a, uz0, b, uz1, h, ridge, axis, { wallMat: o.upperMat === 'plaster' ? 'plaster' : 'wallstone' });
+  } else {
+    const a = end ? uz0 : uz1 - (uz1 - uz0) * keep,
+      b = end ? uz0 + (uz1 - uz0) * keep : uz1;
+    wb.gableRoof(ux0, a, ux1, b, h, ridge, axis, { wallMat: o.upperMat === 'plaster' ? 'plaster' : 'wallstone' });
+  }
+  // el techo de la planta alta (no se ve el vacío desde arriba)
+  wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.3, 0.27, 0.24] });
+  // vigas: la cumbrera partida y los pares, unos en su sitio, otros colgando
+  const L = axis === 'x' ? ux1 - ux0 : uz1 - uz0;
+  const n = Math.max(3, Math.floor(L / 1.1));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    if (end ? t < keep : t > 1 - keep) continue;
+    if (rng.chance(0.35)) continue;
+    const along = axis === 'x' ? ux0 + t * (ux1 - ux0) : uz0 + t * (uz1 - uz0);
+    const drop = rng.chance(0.5) ? rng.range(0.4, 1.2) : 0;
+    const len = (axis === 'x' ? uz1 - uz0 : ux1 - ux0) / 2 + 0.2;
+    for (const sg of [-1, 1]) {
+      if (rng.chance(0.3)) continue;
+      const l = len * rng.range(0.4, 1);
+      const ang = Math.atan2(ridge - h, len) * (drop ? 0.3 : 1);
+      wb.push();
+      if (axis === 'x') {
+        wb.translate(along, h + 0.1, (uz0 + uz1) / 2 + sg * (len - l / 2) * Math.cos(ang));
+        wb.rotateX(sg * ang - (drop ? sg * 0.2 : 0));
+        wb.box('timber', -0.07, -0.07, -l / 2, 0.07, 0.07, l / 2, { ao: false, tint: T });
+      } else {
+        wb.translate((ux0 + ux1) / 2 + sg * (len - l / 2) * Math.cos(ang), h + 0.1, along);
+        wb.rotateZ(-sg * ang + (drop ? sg * 0.2 : 0));
+        wb.box('timber', -l / 2, -0.07, -0.07, l / 2, 0.07, 0.07, { ao: false, tint: T });
+      }
+      wb.pop();
+    }
+  }
+  // en la calle, delante de la fachada: el montón de tejas y cascotes
+  const cx = (ux0 + ux1) / 2,
+    cz = (uz0 + uz1) / 2;
+  const off = 1.4;
+  const [px, pz, wx, wz] =
+    front === 'n' ? [cx, uz0 - off, (ux1 - ux0) * 0.32, 1.0] : front === 's' ? [cx, uz1 + off, (ux1 - ux0) * 0.32, 1.0] : front === 'e' ? [ux1 + off, cz, 1.0, (uz1 - uz0) * 0.32] : [ux0 - off, cz, 1.0, (uz1 - uz0) * 0.32];
+  for (let i = 0; i < 26; i++) {
+    const x = px + rng.range(-wx, wx),
+      z = pz + rng.range(-wz, wz);
+    const sz = rng.range(0.25, 0.6);
+    wb.push();
+    wb.translate(x, sz * 0.25, z);
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateX(rng.range(-0.4, 0.4));
+    wb.box(i % 3 ? 'roof' : 'wallstone', -sz, -sz * 0.25, -sz * 0.6, sz, sz * 0.25, sz * 0.6, { ao: false, tint: i % 3 ? [0.8, 0.7, 0.66] : [0.7, 0.66, 0.62] });
+    wb.pop();
+  }
+  for (let i = 0; i < 3; i++) {
+    const x = px + rng.range(-wx, wx) * 0.8,
+      z = pz + rng.range(-wz, wz) * 0.8;
+    const l = rng.range(1.6, 2.6),
+      a = rng.range(0, Math.PI);
+    wb.push();
+    wb.translate(x, 0.16, z);
+    wb.rotateY(a);
+    wb.rotateZ(rng.range(-0.15, 0.15));
+    wb.box('timber', -l / 2, -0.08, -0.08, l / 2, 0.08, 0.08, { ao: false, tint: T });
+    wb.pop();
+  }
+  ctx.col.add(px - wx * 0.8, 0, pz - wz * 0.8, px + wx * 0.8, 0.5, pz + wz * 0.8);
 }
 
 // Rectángulo [x0, z0, x1, z1] menos una lista de huecos: rectángulos que lo cubren.
