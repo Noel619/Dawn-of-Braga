@@ -37,6 +37,7 @@ const _v = new THREE.Vector3(),
   _v3 = new THREE.Vector3(),
   _v4 = new THREE.Vector3(),
   _v5 = new THREE.Vector3(),
+  _v6 = new THREE.Vector3(),
   _q = new THREE.Quaternion(),
   _q2 = new THREE.Quaternion(),
   _q3 = new THREE.Quaternion(),
@@ -364,6 +365,7 @@ export class Climb {
       else p.anim.play(PLAYER_CLIPS.cl_fall, { blend: 0.12 });
     }
     g.camRig.focus = null;
+    g.camRig.skin = null;
     this.boss && this.boss.onClimb && this.boss.onClimb(false, z);
   }
   // el coloso se ha ido (muere, se reinicia): suelta sin más
@@ -384,6 +386,7 @@ export class Climb {
     this.cand = null;
     this.shake = this.shakeWarn = 0;
     this.g.camRig.focus = null;
+    this.g.camRig.skin = null;
   }
   _gear(on) {
     const p = this.g.player;
@@ -505,9 +508,11 @@ export class Climb {
     this.surf.eval(this.att, this.P, this.N, this.F);
   }
   // marco de la superficie: Ut (arriba por la piel) y Rt (a la derecha,
-  // vista desde fuera)
+  // vista desde fuera). En la piel, con la normal suavizada: la de cada punto
+  // cambia de un paso a otro en lo curvo (la cola) y «arriba» se daría la
+  // vuelta, dejando al que trepa temblando entre dos puntos.
   _frame() {
-    const N = this.N,
+    const N = !this.rope && this._nsInit ? this.Ns : this.N,
       cam = this.g.camera;
     const Ut = this.Ut.copy(UP).addScaledVector(N, -N.y);
     let k = Ut.length();
@@ -540,13 +545,11 @@ export class Climb {
     const D = _v3.set(0, 0, 0);
     if (mag > 0.12) {
       if (stand) {
-        // de pie: como andando por el suelo, según la cámara
-        const cam = g.camera;
-        const cf = _v.set(0, 0, -1).applyQuaternion(cam.quaternion);
-        const cr = _v2.set(1, 0, 0).applyQuaternion(cam.quaternion);
-        cf.addScaledVector(this.N, -cf.dot(this.N)).normalize();
-        cr.addScaledVector(this.N, -cr.dot(this.N)).normalize();
-        D.copy(cr).multiplyScalar(mv.x).addScaledVector(cf, mv.y);
+        // de pie: como andando por el suelo, según hacia dónde mira la
+        // cámara en planta (si contara su inclinación, con la cámara mirando
+        // abajo «adelante» bajaría por las cuestas)
+        this._camAxes(_v, _v2);
+        D.copy(_v2).multiplyScalar(mv.x).addScaledVector(_v, mv.y);
       } else D.copy(this.Rt).multiplyScalar(mv.x).addScaledVector(this.Ut, mv.y);
       if (D.lengthSq() > 1) D.normalize();
       dy = mv.y;
@@ -560,7 +563,7 @@ export class Climb {
       // otro lado de un dedo o de la tela: se prefiere la misma cara)
       const T = _v4.copy(this.P).add(D).addScaledVector(this.N, -0.04);
       const c = S.closest(T, Math.max(0.35, want * 3), { out: this._res, prefN: this.N, turnK: 0.6 });
-      if (c && c.N.dot(this.N) > 0.2 && c.d < 0.3 + want) {
+      if (c && c.N.dot(this.N) > 0.2 && c.d < 0.3 + want && !this._underside(c) && !this._ceiling(c)) {
         const moved = _v5.subVectors(c.P, this.P);
         const adv = moved.dot(D) / want;
         if (adv > want * 0.15) {
@@ -571,32 +574,49 @@ export class Climb {
         }
       }
       // atascado (un hueco entre la cola y la ropa, el borde de un jirón):
-      // se alarga la mano a la piel de delante, si la hay a un palmo
-      if (went < want * 0.15) {
-        this._blocked = (this._blocked || 0) + dt;
-        if (this._blocked > 0.12) {
-          const dir = _v2.copy(D).normalize();
-          const pref = _v.copy(this.N).sub(dir).normalize();
-          for (const reach of [0.5, 0.8, 1.1]) {
-            const T2 = _v4.copy(this.P).addScaledVector(dir, reach).addScaledVector(this.N, 0.15);
-            const c2 = S.closest(T2, 0.6, { out: this._res, prefN: pref, turnK: 0.5 });
-            if (!c2) continue;
-            const adv = _v5.subVectors(c2.P, this.P).dot(dir);
-            if (adv < 0.2 || c2.N.dot(this.N) < -0.2) continue;
-            this.att = { k: c2.k, tri: c2.tri, b: c2.b.slice(), side: c2.side };
-            this.moveDir.copy(dir);
-            const old = _v5.copy(this.root).add(this.offset);
-            this._eval();
-            this._body(0);
-            // (el cuerpo llega en un momento: se funde desde donde estaba)
-            this.offset.copy(old).sub(this.root);
-            this._blocked = 0;
-            g.audio && g.audio.play('grab', this.P, { k: 0.5 });
-            went = adv;
-            break;
-          }
-        }
-      } else this._blocked = 0;
+      // se alarga la mano a la piel de delante, si la hay a un palmo. Y si
+      // con el stick pulsado casi no se avanza en un buen rato (en un hueco,
+      // el paso va y viene), más lejos y también en diagonal
+      const P0 = this._prog || (this._prog = { t: 0, P: this.P.clone() });
+      P0.t += dt;
+      let long = false;
+      if (P0.t > 0.9) {
+        long = P0.P.distanceTo(this.P) < 0.3;
+        P0.t = 0;
+        P0.P.copy(this.P);
+      }
+      if (went < want * 0.15) this._blocked = (this._blocked || 0) + dt;
+      else this._blocked = 0;
+      if (this._blocked > 0.12 || long) {
+        const dir0 = _v2.copy(D).normalize();
+        const dir = _v6.copy(dir0);
+        // (por encima de un borde, la piel nueva mira hacia donde se va;
+        // en un rincón, hacia atrás: se prueban las dos)
+        reach: for (const reach of long ? [0.6, 1.0, 1.4] : [0.5, 0.8, 1.1])
+          for (const turn of long ? [0, 0.6, -0.6] : [0])
+            for (const sg of [1, -1]) {
+              dir.copy(dir0);
+              if (turn) dir.applyAxisAngle(this.N, turn);
+              const pref = _v.copy(this.N).addScaledVector(dir, sg).normalize();
+              const T2 = _v4.copy(this.P).addScaledVector(dir, reach).addScaledVector(this.N, 0.15);
+              const c2 = S.closest(T2, 0.6, { out: this._res, prefN: pref, turnK: 0.5 });
+              if (!c2 || this._underside(c2) || this._ceiling(c2)) continue;
+              const adv = _v5.subVectors(c2.P, this.P).dot(dir0);
+              if (adv < (long ? 0.3 : 0.2) || c2.N.dot(this.N) < -0.2) continue;
+              this.att = { k: c2.k, tri: c2.tri, b: c2.b.slice(), side: c2.side };
+              this.moveDir.copy(dir);
+              const old = _v5.copy(this.root).add(this.offset);
+              this._eval();
+              this._body(0);
+              // (el cuerpo llega en un momento: se funde desde donde estaba)
+              this.offset.copy(old).sub(this.root);
+              this._blocked = 0;
+              P0.P.copy(this.P);
+              g.audio && g.audio.play('grab', this.P, { k: 0.5 });
+              went = adv;
+              break reach;
+            }
+      }
       // al pie: se baja al suelo
       if (!stand && dy < -0.3) {
         const gy = this.g.world.col.groundHeight(this.P.x, this.P.z, 0.3, this.P.y + 0.5);
@@ -608,9 +628,35 @@ export class Climb {
           return;
         }
       }
-    } else this._blocked = 0;
+    } else {
+      this._blocked = 0;
+      if (this._prog) {
+        this._prog.t = 0;
+        this._prog.P.copy(this.P);
+      }
+    }
     this.moving = damp(this.moving, Math.min(went, want) / Math.max(dt, 1e-4) / (stand ? WALK_SPEED : HANG_SPEED), 10, dt);
     if (was !== undefined && was !== stand) this._flipT = 0;
+  }
+  // ¿c es un techo (piel que mira al suelo) y no se está ya en uno? Por
+  // debajo de un saliente no se trepa: se rodea
+  _ceiling(c) {
+    return c.N.y < -0.55 && this.N.y >= -0.55;
+  }
+  // ¿la piel de c mira al suelo y está a ras de él? (bajo la palma de una
+  // mano plantada o bajo la cola tendida: ahí no se mete nadie)
+  _underside(c) {
+    if (c.N.y > -0.3) return false;
+    const gy = this.g.world.col.groundHeight(c.P.x, c.P.z, 0.3, c.P.y + 0.2);
+    return c.P.y - gy < 1.3;
+  }
+  // adelante y a la derecha de la cámara, en planta, sobre la piel (de pie)
+  _camAxes(cf, cr) {
+    const yaw = this.g.camRig.yaw;
+    cf.set(Math.sin(yaw), 0, Math.cos(yaw));
+    cr.set(-Math.cos(yaw), 0, Math.sin(yaw));
+    cf.addScaledVector(this.N, -cf.dot(this.N)).normalize();
+    cr.addScaledVector(this.N, -cr.dot(this.N)).normalize();
   }
   // ¿de pie? (la superficie casi llana, con margen para no cambiar en el límite)
   _standing() {
@@ -623,13 +669,20 @@ export class Climb {
   _moveRope(dt, mv, mag) {
     const R = this.rope;
     this._frame();
-    // por la cadena: arriba y abajo (hacia la mano o hacia la campana)
-    const up = R.r.at(R.s, _v, _v2).y <= R.r.at(Math.min(R.r.L, R.s + 0.3), _v3, _v4).y ? 1 : -1;
-    const ds = mag > 0.12 ? mv.y * up : 0;
+    // por la cadena: «arriba», siempre hacia la mano (colgando en comba, el
+    // tramo de la campana también sube, pero lleva al yugo y no a la mano);
+    // tendida en el suelo, como andando: hacia donde mira la cámara
+    R.r.at(R.s, _v, _v2);
+    let dir = 1;
+    if (this.mode === 'stand') {
+      const cf = _v3.set(0, 0, -1).applyQuaternion(this.g.camera.quaternion);
+      dir = cf.x * _v2.x + cf.z * _v2.z >= 0 ? 1 : -1;
+    }
+    const ds = mag > 0.12 ? mv.y * dir : 0;
     const spd = this.grip ? 0 : HANG_SPEED * 0.9;
     R.s = clamp(R.s + ds * spd * dt, 0, R.r.L);
     this.moving = damp(this.moving, Math.abs(ds) * (this.grip ? 0 : 1), 10, dt);
-    this.moveDir.copy(this.Ut).multiplyScalar(Math.sign(ds * up) || 1);
+    this.moveDir.copy(_v2).multiplyScalar(Math.sign(ds) || 1);
     this._eval();
     // tendida a ras de suelo: se anda por encima
     const gy = R.r.groundAt(this.P.x, this.P.z);
@@ -1031,6 +1084,8 @@ export class Climb {
     // (el foco, el pecho del jugador)
     this.camFocus.set(0, 1.25, 0).applyQuaternion(this.quat).add(p.body.pos);
     cr.focus = this.camFocus;
+    // (la cámara no se queda tras la ropa del coloso)
+    cr.skin = this.surf;
     const lk = g.input.look(0);
     this.noLookT = Math.abs(lk.x) + Math.abs(lk.y) > 0.002 ? 0 : this.noLookT + dt;
     if (this.noLookT > 0.9 && dt > 0) {
@@ -1059,7 +1114,7 @@ export class Climb {
     if (this.state !== 'on' || !this.boss) return;
     const hp = this.handPos(new THREE.Vector3());
     const tip = hp.clone().addScaledVector(this.N, -0.2);
-    const sig = this.stabSig && this.boss.sigilNear(hp);
+    const sig = this.stabSig && this.boss.sigilNear(hp, 0.45);
     const k = this.power || 0.34;
     if (sig) {
       this.boss.stab(sig.id, k, tip);
@@ -1144,17 +1199,14 @@ export class Climb {
   // de las pruebas): { x, y } como el stick.
   steerTo(target) {
     if (this.state !== 'on') return { x: 0, y: 0 };
+    const N = !this.rope && this._nsInit ? this.Ns : this.N;
     const d = _v.subVectors(target, this.P);
-    d.addScaledVector(this.N, -d.dot(this.N));
+    d.addScaledVector(N, -d.dot(N));
     if (d.lengthSq() < 0.01) return { x: 0, y: 0 };
     d.normalize();
     if (this.mode === 'stand') {
-      const cam = this.g.camera;
-      const cf = _v2.set(0, 0, -1).applyQuaternion(cam.quaternion);
-      const cr = _v3.set(1, 0, 0).applyQuaternion(cam.quaternion);
-      cf.addScaledVector(this.N, -cf.dot(this.N)).normalize();
-      cr.addScaledVector(this.N, -cr.dot(this.N)).normalize();
-      return { x: d.dot(cr), y: d.dot(cf) };
+      this._camAxes(_v2, _v3);
+      return { x: d.dot(_v3), y: d.dot(_v2) };
     }
     return { x: d.dot(this.Rt), y: d.dot(this.Ut) };
   }

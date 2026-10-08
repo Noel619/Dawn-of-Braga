@@ -288,6 +288,17 @@ export class SkinSurface {
     const B = M.bones;
     this.nb = B.length;
     this.parts = defs.map((d, k) => new Part(M, k, d.mesh, d));
+    // la ropa de una capa (ds) se trepa siempre por fuera: por la cara que
+    // se aparta del eje del cuerpo (d.axis: dos huesos; d.axisY: lo que se
+    // alarga cada punta en vertical). Por dentro, bajo la tela, nunca
+    defs.forEach((d, k) => {
+      const part = this.parts[k];
+      if (!d.axis) return;
+      part.axis = d.axis.map((n) => M.byName[n]);
+      part.axisY = d.axisY || [0, 0];
+      part.axA = new THREE.Vector3();
+      part.axB = new THREE.Vector3();
+    });
     // lo que tapa la ropa (la carne bajo la casulla, el alba bajo ella) no
     // se trepa: se va por fuera, por la tela
     defs.forEach((d, k) => {
@@ -356,6 +367,11 @@ export class SkinSurface {
     this.frame++;
     const B = this.M.bones;
     for (let i = 0; i < this.nb; i++) this.S[i].multiplyMatrices(B[i].matrixWorld, this.boneInv[i]);
+    for (const part of this.parts) {
+      if (!part.axis) continue;
+      part.axA.setFromMatrixPosition(part.axis[0].matrixWorld).y += part.axisY[0];
+      part.axB.setFromMatrixPosition(part.axis[1].matrixWorld).y += part.axisY[1];
+    }
   }
   _inv(b) {
     if (this.siStamp[b] !== this.frame) {
@@ -524,7 +540,17 @@ export class SkinSurface {
               if (nl < 1e-9) continue;
               _n.multiplyScalar(1 / nl);
               let side = 1;
-              if (part.ds) {
+              if (part.ds && part.axis) {
+                // tela de una capa: su cara de fuera, la que se aparta del
+                // eje del cuerpo
+                const A = part.axA;
+                _ab.subVectors(part.axB, A);
+                const L2 = _ab.lengthSq();
+                const u = L2 > 1e-8 ? Math.min(1, Math.max(0, _ap.subVectors(_q, A).dot(_ab) / L2)) : 0;
+                _ap.subVectors(_q, A).addScaledVector(_ab, -u);
+                side = _ap.dot(_n) >= 0 ? 1 : -1;
+                if (side < 0) _n.negate();
+              } else if (part.ds) {
                 // tela de una capa: la cara de fuera (la de la normal
                 // preferida: quien trepa por fuera no se cuela por dentro)
                 const pn = prefN ? _n.dot(prefN) : 0;

@@ -99,11 +99,17 @@ export class TurBoss {
     this.chainRoute = new ChainRoute('cadena', this.bell, { sigil: 'mano' });
     const mesh = (n) => M.meshes.find((m) => m.name === n);
     this.surface = new SkinSurface(M, [
-      { mesh: mesh('body'), tag: 'carne', zone: (t, b) => turZone(b), coveredBy: [1, 2] },
-      { mesh: mesh('casulla'), tag: 'casulla', ds: true, zone: (t, b) => (/^casB/.test(b) ? 'espalda' : 'casulla') },
-      { mesh: mesh('alba'), tag: 'alba', ds: true, zone: () => 'alba', coveredBy: [1], coverDist: 2.2 },
+      // (la carne que tapa la ropa, aunque la tela vaya algo separada del
+      // cuerpo, no: por debajo de la casulla se acababa colgado de su forro)
+      { mesh: mesh('body'), tag: 'carne', zone: (t, b) => turZone(b), coveredBy: [1, 2], coverDist: 2.3 },
+      // (la ropa, siempre por fuera: la cara que se aparta del eje del cuerpo)
+      { mesh: mesh('casulla'), tag: 'casulla', ds: true, axis: ['pelvis', 'neck1'], zone: (t, b) => (/^casB/.test(b) ? 'espalda' : 'casulla') },
+      { mesh: mesh('alba'), tag: 'alba', ds: true, axis: ['pelvis', 'pelvis'], axisY: [0, -9], zone: () => 'alba', coveredBy: [1], coverDist: 2.2 },
     ]);
     this.surface.enabled = (z) => this.zoneOn(z);
+    // (de pie hasta en cuestas de unos 45°: el lomo de la cola, la joroba y
+    // los hombros se andan agachado, aferrado a la ropa)
+    this.standY = 0.64;
     // su cuerpo para chocar (el jugador no lo atraviesa; la cámara no se mete)
     this.col = new ColBody();
     // sigilos: tallados en su propia piel (se doblan y respiran con ella); el
@@ -199,7 +205,8 @@ export class TurBoss {
     }
     this.clearDrops();
   }
-  // en la plaza, de pie, mirando a (lx, lz); todo entero otra vez
+  // en la plaza, de pie, mirando hacia yaw; todo entero otra vez (o.keep:
+  // sólo se recoloca, con sus heridas y su fase)
   place(x, z, yaw, o = {}) {
     this.bellGlow.scale.set(5, 5, 1);
     this.bellGlow.material.opacity = 1;
@@ -207,25 +214,27 @@ export class TurBoss {
     this.bell.noGround = false;
     this.pos.set(x, this.groundAt(x, z), z);
     this.yaw = yaw;
-    this.dead = false;
-    this.phase = 1;
-    this.speedK = 1;
-    this.R.speed = 1;
-    this.cool = {};
-    this.pain = 0;
     this.grabbed = false;
     this.handIK = null;
-    for (const s of this.sigils) {
-      s.hp = s.max;
-      s.dead = false;
-      if (s.glow) s.glow.visible = true;
-      for (const m of s.meshes) {
-        m.visible = true;
-        if (m.material.emissive) m.material.emissiveIntensity = 2.2;
+    if (!o.keep) {
+      this.dead = false;
+      this.phase = 1;
+      this.speedK = 1;
+      this.R.speed = 1;
+      this.cool = {};
+      this.pain = 0;
+      for (const s of this.sigils) {
+        s.hp = s.max;
+        s.dead = false;
+        if (s.glow) s.glow.visible = true;
+        for (const m of s.meshes) {
+          m.visible = true;
+          if (m.material.emissive) m.material.emissiveIntensity = 2.2;
+        }
       }
+      this.coreGlow.visible = true;
+      this.proxy.data.phase = 1;
     }
-    this.coreGlow.visible = true;
-    this.proxy.data.phase = 1;
     this._applyRoot();
     this.R.base = new this.R.base.constructor();
     this.R.action = new this.R.action.constructor();
@@ -993,11 +1002,12 @@ export class TurBoss {
     return out.copy(s.off).applyMatrix4(s.b.matrixWorld);
   }
   // un sigilo vivo al alcance de las manos (el núcleo, sólo de rodillas)
-  sigilNear(hand) {
+  // (extra: holgura, para la puñalada ya cargada: el cuerpo se mece)
+  sigilNear(hand, extra = 0) {
     for (const s of this.sigils) {
       if (s.dead) continue;
       if (s.core && this.st !== 'kneel' && !(this.st === 'shake' && this.phase >= 3)) continue;
-      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + 0.9) return s;
+      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + 0.9 + extra) return s;
     }
     return null;
   }

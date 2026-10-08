@@ -76,7 +76,28 @@ export class DeoBoss {
     // por dónde se trepa: la piel de los brazos alzados (cuando la mano se
     // queda plantada) y la máscara (desplomado)
     const arm = (i) => M.meshes.find((m) => m.name === 'brazo' + i);
-    this.surface = new SkinSurface(M, [{ mesh: arm(4), tag: 'brazo4', zone: () => 'brazo4' }, { mesh: arm(5), tag: 'brazo5', zone: () => 'brazo5' }, ...this.mask.map((m) => ({ mesh: m, tag: 'mascara', zone: () => 'mascara' }))]);
+    // (los dedos, no: tendidos en el suelo forman huecos en los que quien
+    // trepa se queda encajado; se sube por el dorso de la mano)
+    const armZone = (id) => (t, b) => (/^a\df/.test(b) ? null : id);
+    // (la máscara, sólo por fuera: es una lámina con grueso y, rodeando el
+    // borde o la grieta, se acabaría trepando por dentro, boca abajo)
+    const mIn = MASK.c.clone().addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(MASK.q), -3);
+    const ta = new THREE.Vector3(),
+      tb = new THREE.Vector3(),
+      tc = new THREE.Vector3(),
+      tn = new THREE.Vector3(),
+      cen = new THREE.Vector3();
+    const maskZone = (t, b, part) => {
+      const R = part.rest,
+        T = part.tri;
+      ta.fromArray(R, T[t * 3] * 3);
+      tb.fromArray(R, T[t * 3 + 1] * 3);
+      tc.fromArray(R, T[t * 3 + 2] * 3);
+      cen.copy(ta).add(tb).add(tc).multiplyScalar(1 / 3);
+      tn.subVectors(tb, ta).cross(tc.sub(ta));
+      return tn.dot(cen.sub(mIn)) > 0 ? 'mascara' : null;
+    };
+    this.surface = new SkinSurface(M, [{ mesh: arm(4), tag: 'brazo4', zone: armZone('brazo4') }, { mesh: arm(5), tag: 'brazo5', zone: armZone('brazo5') }, ...this.mask.map((m) => ({ mesh: m, tag: 'mascara', zone: maskZone }))]);
     this.surface.enabled = (z) => this.zoneOn(z);
     // (los antebrazos, tendidos hacia la plaza, se andan de pie)
     this.standY = 0.45;
@@ -484,13 +505,14 @@ export class DeoBoss {
   sigilPos(s, out) {
     return out.copy(s.off).applyMatrix4(s.b.matrixWorld);
   }
-  sigilNear(hand) {
+  // (extra: holgura, para la puñalada ya cargada: el cuerpo se mece)
+  sigilNear(hand, extra = 0) {
     for (const s of this.sigils) {
       if (s.dead) continue;
       if (s.eye && this.st !== 'bowed') continue;
       if (!s.eye && !this.arms.planted(s.arm)) continue;
       // (el ojo, al fondo de la cuenca: se alcanza desde cualquier sitio de ella)
-      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + (s.eye ? 2.4 : 1.6)) return s;
+      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + (s.eye ? 2.4 : 1.6) + extra) return s;
     }
     return null;
   }

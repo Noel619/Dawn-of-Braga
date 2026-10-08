@@ -274,6 +274,7 @@ export class Finale {
     g.extraTargets = null;
     g.camRig.body = null;
     g.camRig.focus = null;
+    g.camRig.skin = null;
     if (this.stage !== 'burst' && g.atmo) g.atmo.override = null;
     if (g.camRig) {
       g.camRig.distBias = 0;
@@ -447,6 +448,10 @@ export class Finale {
     if (first || !t.visible) {
       const yaw = Math.atan2(p.pos.x - TUR_HOME.x, p.pos.z - TUR_HOME.z);
       t.place(TUR_HOME.x, TUR_HOME.z, yaw, { state: 'idle', wait: 1e9 });
+    } else {
+      // ya en pie (tras morir o huir): de cara al jugador, en el corte de
+      // cámara, y con sus heridas
+      t.place(t.pos.x, t.pos.z, Math.atan2(p.pos.x - t.pos.x, p.pos.z - t.pos.z), { state: 'idle', wait: 1e9, keep: true });
     }
     if (first) t.emerge();
     else t.attack('roar');
@@ -519,8 +524,16 @@ export class Finale {
       // polvo que cae de las fachadas
       if (Math.random() < dt * 8) g.fx.blood.emit(H.x + (Math.random() - 0.5) * 30, 8 + Math.random() * 4, H.z + (Math.random() - 0.5) * 14, 6, { color: [0.4, 0.37, 0.33], speed: 1, life: 1.4, up: -1 });
     } else {
-      const pos = new THREE.Vector3(p.pos.x + side * 2.5, 2.2, p.pos.z - 3);
-      g.camRig.override = { pos, look: new THREE.Vector3(t.pos.x, 11, t.pos.z), speed: 3, fov: 68 };
+      // (ruge: desde detrás del jugador, de abajo arriba; al corte, sin
+      // transición: se acaba de girar hacia él)
+      const tx = t.pos.x - p.pos.x,
+        tz = t.pos.z - p.pos.z,
+        tl = Math.hypot(tx, tz) || 1;
+      const pos = new THREE.Vector3(p.pos.x - (tx / tl) * 3 + (tz / tl) * side * 1.6, p.visY + 1.6, p.pos.z - (tz / tl) * 3 - (tx / tl) * side * 1.6);
+      const cut = this._shot !== 'r';
+      this._shot = 'r';
+      g.camRig.override = { pos, look: new THREE.Vector3(t.pos.x, 11, t.pos.z), speed: 3, snap: cut, fov: 68 };
+      if (cut) g.camRig.cam.position.copy(pos);
     }
     p.state = 'cine';
     if (T >= dur) this.startFight();

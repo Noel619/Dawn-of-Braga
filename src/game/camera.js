@@ -5,6 +5,7 @@ import { clamp, damp, dampAngle, angleDiff, smoothstep } from '../core/util.js';
 
 const _dir = new THREE.Vector3();
 const _tp = new THREE.Vector3();
+const _tp2 = new THREE.Vector3();
 const camBox = (b) => b.cam !== false;
 // lo más que se arrima la cámara al pivote (más cerca, en vez de meterse en
 // el muro, sube por encima de la cabeza)
@@ -175,6 +176,13 @@ export class CameraRig {
     if (this.body) {
       const d = this.body.ray(this.pivot, _tp.copy(dir).negate(), want + 0.3);
       if (d !== Infinity) hit = Math.min(hit, d);
+    }
+    // la piel y la ropa del coloso al que se trepa (el vuelo de la capa tapa
+    // más que sus cápsulas): desde un metro del jugador hacia la cámara
+    if (this.skin && want > 1.3) {
+      _tp.copy(dir).negate();
+      const d = this.skin.raycast(_tp2.copy(this.pivot).addScaledVector(_tp, 1.0), _tp, want - 0.7, 0.45);
+      if (d !== Infinity) hit = Math.min(hit, d + 1.0);
     }
     let allowed = want;
     if (hit !== Infinity) allowed = Math.max(MIN_D, hit - 0.28);
