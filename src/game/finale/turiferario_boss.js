@@ -15,7 +15,10 @@
 import * as THREE from 'three';
 import { TUR_CLIPS as C, WALK, turRig } from './turiferario_anim.js';
 import { BellChain } from './bell.js';
-import { ClimbRoute, ChainRoute } from './climb.js';
+import { ChainRoute, PLAYER_CLIPS } from './climb.js';
+import { SkinSurface } from './surface.js';
+import { ColBody } from './colbody.js';
+import { sigilDecal } from '../../entities/colossus/sigil_decal.js';
 import { ColFX } from '../../entities/colossus/colfx.js';
 import { clamp, angleDiff } from '../../core/util.js';
 
@@ -46,6 +49,17 @@ function segDist2D(px, pz, ax, az, bx, bz) {
   return { d: Math.hypot(px - cx, pz - cz), cx, cz, t };
 }
 
+// la zona de la piel según su hueso dominante
+function turZone(b) {
+  if (/^tail/.test(b)) return 'cola';
+  if (/^(arm|fore|hand|f\d|th)L/.test(b)) return 'brazoL';
+  if (/^(arm|fore|hand|f\d|th)R/.test(b)) return 'brazoR';
+  if (/^(leg|shin|foot|toe)/.test(b)) return 'pierna';
+  if (b === 'head' || b === 'jaw' || b === 'halo') return 'cabeza';
+  if (/^rib/.test(b)) return 'pecho';
+  return 'espalda';
+}
+
 export class TurBoss {
   constructor(game, M) {
     this.g = game;
@@ -63,31 +77,32 @@ export class TurBoss {
     this.bell = new BellChain(game.scene, M.groups.bell, { bellH: this.E.sizes.bellH, radius: 3.0, len: this.E.sizes.chain.len, groundAt: this.groundAt, bounds: WALLS });
     this.bell.mesh.visible = false;
     this.bell.bell.visible = false;
-    // por dónde se trepa
+    // por dónde se trepa: toda su piel (la carne, la casulla y el alba; lo
+    // que tapa la ropa se trepa por fuera, por la tela) y la cadena de la
+    // campana cuando se queda clavada
     this.chainRoute = new ChainRoute('cadena', this.bell, { sigil: 'mano' });
-    this._routes = Object.entries(this.E.climb).map(([id, def]) => new ClimbRoute(id, def, M, this));
-    this._routes.push(this.chainRoute);
-    this.route = Object.fromEntries(this._routes.map((r) => [r.id, r]));
-    // sigilos (cada uno con su material, para apagarlo al morir)
+    const mesh = (n) => M.meshes.find((m) => m.name === n);
+    this.surface = new SkinSurface(M, [
+      { mesh: mesh('body'), tag: 'carne', zone: (t, b) => turZone(b), coveredBy: [1, 2] },
+      { mesh: mesh('casulla'), tag: 'casulla', ds: true, zone: (t, b) => (/^casB/.test(b) ? 'espalda' : 'casulla') },
+      { mesh: mesh('alba'), tag: 'alba', ds: true, zone: () => 'alba', coveredBy: [1], coverDist: 2.2 },
+    ]);
+    this.surface.enabled = (z) => this.zoneOn(z);
+    // su cuerpo para chocar (el jugador no lo atraviesa; la cámara no se mete)
+    this.col = new ColBody();
+    // sigilos: tallados en su propia piel (se doblan y respiran con ella); el
+    // núcleo, el carbón del pecho
+    const body = M.meshes.find((m) => m.name === 'body');
     this.sigils = this.E.sigils.map((s) => {
       const rw = M.restWorld[s.bone];
-      const meshes = M.parts.filter((m) => m.userData.grp === 'sigil:' + s.id);
-      for (const m of meshes) m.material = m.material.clone();
-      return { id: s.id, b: M.byName[s.bone], off: new THREE.Vector3(s.pos[0] - rw.x, s.pos[1] - rw.y, s.pos[2] - rw.z), r: s.r, max: s.hp, hp: s.hp, core: !!s.core, dead: false, meshes };
+      const meshes = s.core ? [] : [sigilDecal(M, body, s.pos, s.normal, s.r * 1.35, { rot: s.id === 'mano' ? 0.4 : 0 })];
+      return { id: s.id, b: M.byName[s.bone], off: new THREE.Vector3(s.pos[0] - rw.x, s.pos[1] - rw.y, s.pos[2] - rw.z), r: s.r, max: s.hp, hp: s.hp, core: !!s.core, dead: false, meshes, n: new THREE.Vector3(...(s.normal || [0, 0, 1])).normalize() };
     });
     this.sig = Object.fromEntries(this.sigils.map((s) => [s.id, s]));
     // llamas, brillos y luces (las luces, del pool del juego: ningún shader se recompila)
     this.fx = new ColFX(M);
     for (const c of this.E.fx.candles) this.fx.flame(c.bone, c.p, [0.55, 1.05]);
     this.coreGlow = this.fx.glow('chest', [0, 12.25, 1.35], 3.4, 0xff6a20, { pulse: 0.22 });
-    // un brillo que late sobre cada sigilo vivo (se leen de lejos, entre la
-    // niebla y la ceniza), un palmo por fuera de la piel
-    for (const sg of this.sigils) {
-      const d = this.E.sigils.find((q) => q.id === sg.id);
-      if (sg.core || !d) continue;
-      const n = new THREE.Vector3(...(d.normal || [0, 0, 1])).normalize();
-      sg.glow = this.fx.glow(d.bone, [d.pos[0] + n.x * 0.3, d.pos[1] + n.y * 0.3, d.pos[2] + n.z * 0.3], 2.1, 0xffa040, { pulse: 0.35, opacity: 0.8 });
-    }
     this.bellGlow = new THREE.Sprite(this.coreGlow.material.clone());
     this.bellGlow.scale.set(5, 5, 1);
     this.bellGlow.position.set(0, -this.E.sizes.bellH * 0.75, 0);
@@ -242,8 +257,13 @@ export class TurBoss {
   palmL(out) {
     return this.bp('handL', 5.3, 5.3, 2.7, out);
   }
-  routes() {
-    return this._routes;
+  ropes() {
+    return [this.chainRoute];
+  }
+  // ¿se puede trepar ahora por esta zona? (la cola, no mientras barre)
+  zoneOn(z) {
+    if (z === 'cola') return !(this.st === 'attack' && this.atk && (this.atk.name === 'tail' || this.atk.name === 'spin')) && this.st !== 'emerge' && this.st !== 'dying';
+    return this.st !== 'emerge' && this.st !== 'dying' && this.st !== 'dead';
   }
   forward(out = _v4) {
     return out.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
@@ -388,6 +408,10 @@ export class TurBoss {
     R.speed = this.speedK;
     this._applyRoot();
     R.update(dt, { pre: () => this._ik() });
+    // la piel por la que se trepa y el cuerpo para chocar, con la pose de
+    // este fotograma
+    this.surface.update();
+    this._colBody();
     // la campana
     const hand = this.handGrip(_v);
     this.bell.update(dt, hand);
@@ -398,11 +422,8 @@ export class TurBoss {
     this._drops(dt);
     // empuja al jugador fuera de los pies, la cola, la campana y la mano
     if (!climb.active && !this.grabbed) this._push();
-    // rutas que se abren y se cierran
-    this.route.cadena.on = this.st === 'stuck' && !!this.bell.stuck;
-    this.route.brazo.on = this.st === 'planted';
-    this.route.cola.on = !(this.st === 'attack' && (this.atk.name === 'tail' || this.atk.name === 'spin')) && this.st !== 'emerge' && this.st !== 'dying';
-    this.route.pecho.on = this.st === 'kneel' && this.stT > 3.4;
+    // la cadena se trepa con la campana clavada
+    this.chainRoute.on = this.st === 'stuck' && !!this.bell.stuck;
   }
   _ik() {
     if (this.handIK && this.handIK.w > 0.001) {
@@ -639,7 +660,7 @@ export class TurBoss {
       g.camRig.shake(0.4);
       // si estabas en la cadena, te vas con ella
       const cl = g.finale.climb;
-      if (cl.active && cl.route === this.route.cadena) cl.release(_v3.set(-Math.sin(this.yaw) * 5, 9, -Math.cos(this.yaw) * 5));
+      if (cl.active && cl.zone === 'cadena') cl.release(_v3.set(-Math.sin(this.yaw) * 5, 9, -Math.cos(this.yaw) * 5));
     }
   }
   // pisotón: onda alrededor del pie
@@ -783,8 +804,14 @@ export class TurBoss {
     p.body.grounded = false;
     p.obj.quaternion.setFromAxisAngle(_v4.set(0, 1, 0), p.yaw);
     const cl = g.finale.climb;
-    cl.state = 'fall';
+    // muerto en el puño: cae con la muerte (no se levanta como si nada)
+    cl.state = p.dead ? 'dead' : 'fall';
     cl.fallFrom = p.pos.y;
+    cl.fallT = 0;
+    if (p.dead) {
+      p.state = 'dead';
+      p.anim.play(PLAYER_CLIPS.cl_fall, { blend: 0.1 });
+    }
     this.handIK = null;
     this.setIdle(1.2);
   }
@@ -939,7 +966,7 @@ export class TurBoss {
     for (const s of this.sigils) {
       if (s.dead) continue;
       if (s.core && this.st !== 'kneel' && !(this.st === 'shake' && this.phase >= 3)) continue;
-      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + 1.5) return s;
+      if (this.sigilPos(s, _v3).distanceTo(hand) < s.r + 0.9) return s;
     }
     return null;
   }
@@ -960,6 +987,8 @@ export class TurBoss {
     this.R.flinch.z.kick((Math.random() - 0.5) * 1.2);
     this.M.setFlash && this.M.setFlash(0xff8040, 0.6);
     this._flashT = 0.25;
+    // la sangre negra sale a borbotones por la herida
+    (this.spurts || (this.spurts = [])).push({ s, t: 0, dur: 0.8 + power * 1.1, k: 0.6 + power });
     // le duele: se sacudirá antes
     this.shakeCool = Math.min(this.shakeCool, 1.2 + Math.random());
     g.audio && g.audio.play('beastHurt', this._head(_v2), { k: 0.6 + power * 0.5 });
@@ -1100,6 +1129,23 @@ export class TurBoss {
       this._smokeT = 0.12;
       g.fx.blood.emit(bc.x, bc.y - 1.5, bc.z, 2, { color: [1, 0.55, 0.15], speed: 1.2, life: 0.8, up: 2.5, gravity: -1 });
     }
+    // los borbotones de las heridas (negros: la sangre del dios)
+    if (this.spurts && this.spurts.length) {
+      for (let i = this.spurts.length - 1; i >= 0; i--) {
+        const S = this.spurts[i];
+        S.t += dt;
+        if (S.t > S.dur) {
+          this.spurts.splice(i, 1);
+          continue;
+        }
+        const at = this.sigilPos(S.s, _v3);
+        const n = _v4.copy(S.s.n).transformDirection(S.s.b.matrixWorld);
+        // a golpes, como un corazón
+        const beat = 0.5 + 0.5 * Math.sin(S.t * 14);
+        const sp = (3 + 5 * beat) * S.k * (1 - S.t / S.dur);
+        g.fx.blood.emit(at.x + n.x * 0.15, at.y + n.y * 0.15, at.z + n.z * 0.15, Math.max(1, Math.round(4 * beat * S.k)), { color: [0.07, 0.015, 0.012], speed: sp * 0.35, dir: { x: n.x * 1.6, z: n.z * 1.6 }, up: n.y * sp + 1, life: 1.1, gravity: 12 });
+      }
+    }
     // destello de daño
     if (this._flashT > 0) {
       this._flashT -= dt;
@@ -1108,7 +1154,9 @@ export class TurBoss {
     // los sigilos vivos laten
     for (const s of this.sigils) {
       if (s.dead) continue;
-      for (const m of s.meshes) if (m.material.emissive) m.material.emissiveIntensity = 1.8 + Math.sin(g.time * 3 + s.r * 7) * 0.7;
+      // (late como una brasa, más deprisa cuanto más herido)
+      const hurt = 1 - s.hp / s.max;
+      for (const m of s.meshes) if (m.material.emissive) m.material.emissiveIntensity = 1.15 + Math.sin(g.time * (2.4 + hurt * 3) + s.r * 7) * (0.45 + hurt * 0.2);
     }
   }
   // grietas en el empedrado (marcas negras que se desvanecen poco a poco)
@@ -1204,47 +1252,60 @@ export class TurBoss {
   }
 
   // ---------------------------------------------------------- choques con el jugador
+  // El cuerpo en cápsulas: las piernas, el faldón del alba (no se pasa entre
+  // los jirones hasta las piernas), la cola, la campana, la mano plantada; y,
+  // sólo para la cámara, el torso, el cuello, la cabeza y los brazos.
+  _colBody() {
+    const B = this.M.byName,
+      C = this.col;
+    const W = (n, out) => B[n].getWorldPosition(out);
+    const a = _v,
+      b = _v2;
+    C.begin();
+    for (const S of ['L', 'R']) {
+      C.add(W('leg' + S, a), W('shin' + S, b), 0.85);
+      C.add(W('shin' + S, a), W('foot' + S, b), 0.62);
+      C.add(W('foot' + S, a), W('toe' + S, b), 0.55);
+    }
+    const pel = W('pelvis', a);
+    const gy = this.groundAt(pel.x, pel.z);
+    const top = _v3.set(pel.x, pel.y + 0.4, pel.z);
+    C.add(top, b.set(pel.x, Math.min(pel.y - 0.5, gy + 2.6), pel.z), 2.35);
+    // la cola, tramo a tramo, y su punta
+    const radii = [1.45, 1.4, 1.2, 1.0, 0.85];
+    W('tail1', a);
+    for (let i = 2; i <= 6; i++) {
+      W('tail' + i, b);
+      C.add(a, b, radii[i - 2]);
+      a.copy(b);
+    }
+    B.tail6.getWorldQuaternion(_q);
+    C.add(a, b.set(0, -0.15, -2.6).applyQuaternion(_q).add(a), 0.55);
+    // la campana (del yugo a la boca)
+    const Bl = this.bell;
+    C.add(Bl.top, Bl.mouth(b).addScaledVector(Bl.up, Bl.H * 0.12), Bl.R * 0.82);
+    if (this.st === 'planted' || this.st === 'grabBack') {
+      const pl = this.palmL(a);
+      C.add(pl, pl, 1.35);
+    }
+    // (para la cámara)
+    C.add(W('spine1', a), W('chest', b), 2.0, false);
+    C.add(W('chest', a), W('neck2', b), 1.25, false);
+    const hd = this._head(a);
+    C.add(hd, hd, 1.35, false);
+    for (const S of ['L', 'R']) {
+      C.add(W('arm' + S, a), W('fore' + S, b), 0.55, false);
+      C.add(W('fore' + S, a), W('hand' + S, b), 0.42, false);
+    }
+  }
   _push() {
     const g = this.g,
       p = g.player;
     if (p.dead || p.puppet) return;
-    const P = p.pos;
-    const out = (cx, cz, r, y0, y1) => {
-      if (P.y < y0 - 0.5 || P.y > y1) return;
-      const dx = P.x - cx,
-        dz = P.z - cz;
-      const d = Math.hypot(dx, dz);
-      const R = r + p.body.radius;
-      if (d < R && d > 1e-4) {
-        P.x = cx + (dx / d) * R;
-        P.z = cz + (dz / d) * R;
-      }
-    };
-    const seg = (a, b, r, y1) => {
-      const s = segDist2D(P.x, P.z, a.x, a.z, b.x, b.z);
-      const y = a.y + (b.y - a.y) * s.t;
-      if (P.y > y + r + 0.5 || P.y < y - r - 1.8) return;
-      out(s.cx, s.cz, r, -99, y1 ?? 99);
-    };
-    const B = this.M.byName;
-    for (const S of ['L', 'R']) {
-      const shin = B['shin' + S].getWorldPosition(_v);
-      const foot = B['foot' + S].getWorldPosition(_v2);
-      const toe = B['toe' + S].getWorldPosition(_v3);
-      seg(shin, foot, 0.95);
-      seg(foot, toe, 0.9);
-    }
-    let prev = B.tail2.getWorldPosition(_v);
-    for (const n of ['tail3', 'tail4', 'tail5', 'tail6']) {
-      const b = B[n].getWorldPosition(_v2);
-      seg(prev, b, n === 'tail6' ? 0.9 : 1.2);
-      prev = _v.copy(b);
-    }
-    const bc = this.bell.center(_v3);
-    out(bc.x, bc.z, this.bell.R * 0.9, bc.y - this.bell.H * 0.6, bc.y + 2);
-    if (this.st === 'planted' || this.st === 'grabBack') {
-      const pl = this.palmL(_v);
-      out(pl.x, pl.z, 1.5, pl.y - 2, pl.y + 1.5);
+    if (this.col.push(p.pos, p.body.radius, p.body.height) > 0) {
+      // (y que el empujón no le meta en un muro)
+      g.world.col.resolve(p.pos, p.body.radius, p.pos.y, p.body.height, p.body.stepH ?? 0.5);
+      p.visY = p.pos.y;
     }
   }
   // golpes del jugador en el suelo: no le hieren (sólo le irritan)

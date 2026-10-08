@@ -629,7 +629,7 @@ export function turiferarioData(o = {}) {
       candleTops.push([b.x, b.y + h + 0.38, b.z]);
     }
   }
-  // los sigilos del Pacto: discos grabados que brillan (puntos débiles)
+  // los sigilos del Pacto (puntos débiles): dónde están
   const sigilGeo = (c, n, r) => {
     const g = new THREE.CircleGeometry(r, 20).toNonIndexed();
     g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), n.clone().normalize()));
@@ -645,10 +645,9 @@ export function turiferarioData(o = {}) {
     // el núcleo del pecho (se alcanza con el costillar abierto)
     { id: 'nucleo', bone: 'chest', pos: [0, 12.25, 1.7], normal: [0, 0, 1], r: 0.8, hp: 3, core: true },
   ];
-  for (const sg of SIGILS) {
-    if (sg.core) continue;
-    rig(sg.bone, 'colSigil', sigilGeo(V(...sg.pos).addScaledVector(V(...sg.normal).normalize(), 0.06), V(...sg.normal), sg.r), { ds: true, grp: 'sigil:' + sg.id });
-  }
+  // (no se dibujan aquí: se tallan en la propia piel al montar la pelea, ver
+  // sigil_decal.js)
+  void sigilGeo;
 
   // ------------------------------------------------------------ la campana
   const bell = bellParts(TUR.bellH);

@@ -364,7 +364,7 @@ export function deoData(o = {}) {
     const dors = pn.clone().negate();
     const sp = E.clone().lerp(W, 0.16).addScaledVector(dors, 1.75);
     SIGILS.push({ id: 'brazo' + i, arm: i, bone: `a${i}e`, pos: sp.toArray(), normal: dors.toArray(), r: 2.0, hp: 3 });
-    rig(`a${i}e`, 'colSigil', sigilDisc(sp.clone().addScaledVector(dors, 0.08), dors, 2.0), { ds: true, grp: 'sigil:brazo' + i });
+    // (se talla en la piel del brazo al montar la pelea: sigil_decal.js)
     // de los nudillos al sigilo por el dorso de la mano y del antebrazo
     const fj = fingerJoints(a)[1];
     const pts = [];
@@ -427,13 +427,6 @@ export function deoData(o = {}) {
     extra: { sigils: SIGILS, climb: CLIMB, fx: FX, arms: DEO_ARMS.map((a) => ({ id: a.id, sigil: !!a.sigil })), sizes: DEO },
     stats,
   };
-}
-
-function sigilDisc(c, n, r) {
-  const g = new THREE.CircleGeometry(r, 24).toNonIndexed();
-  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), n.clone().normalize()));
-  g.translate(c.x, c.y, c.z);
-  return withColor(g, 1);
 }
 
 export function buildDeo(o = {}) {

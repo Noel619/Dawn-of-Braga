@@ -203,6 +203,8 @@ export class Finale {
   _leaveFight() {
     const g = this.g;
     g.extraTargets = null;
+    g.camRig.body = null;
+    g.camRig.focus = null;
     if (this.stage !== 'burst' && g.atmo) g.atmo.override = null;
     if (g.camRig) {
       g.camRig.distBias = 0;
@@ -438,6 +440,8 @@ export class Finale {
     if (t.st === 'emerge' || t.st === 'attack') t.setIdle(0.8);
     this.hintsT = 0;
     this.climb.boss = t;
+    // (la cámara no se mete dentro del coloso)
+    g.camRig.body = t.col;
     // (el dios, montado de antemano: sale en cuanto revienta el coloso)
     this.ensureDeo();
   }

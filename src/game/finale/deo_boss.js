@@ -16,7 +16,8 @@
 //                       La máscara se parte y el dios se hunde en la cisterna.
 import * as THREE from 'three';
 import { DEO_CLIPS as C, deoRig, DeoArms } from './deo_anim.js';
-import { ClimbRoute } from './climb.js';
+import { SkinSurface } from './surface.js';
+import { sigilDecal } from '../../entities/colossus/sigil_decal.js';
 import { ColFX } from '../../entities/colossus/colfx.js';
 import { Debris } from './debris.js';
 import { clamp } from '../../core/util.js';
@@ -59,34 +60,29 @@ export class DeoBoss {
     this.R.action.onEvent = (e) => this.onEvent(e);
     this.R.base.onEvent = (e) => this.onEvent(e);
     // sigilos: el del codo de cada brazo alzado y los dos ojos
+    // (los de los brazos, tallados en la piel del brazo; los ojos arden en
+    // las cuencas)
     this.sigils = this.E.sigils.map((s) => {
       const rw = M.restWorld[s.bone];
-      const meshes = M.parts.filter((m) => m.userData.grp === 'sigil:' + s.id);
-      for (const m of meshes) m.material = m.material.clone();
-      return { id: s.id, b: M.byName[s.bone], off: new THREE.Vector3(s.pos[0] - rw.x, s.pos[1] - rw.y, s.pos[2] - rw.z), r: s.r, max: s.hp, hp: s.hp, eye: !!s.eye, arm: s.arm ?? null, dead: false, meshes };
+      const arm = s.arm != null ? M.meshes.find((m) => m.name === 'brazo' + s.arm) : null;
+      const meshes = arm ? [sigilDecal(M, arm, s.pos, s.normal, s.r * 1.4, { off: 0.06 })] : [];
+      return { id: s.id, b: M.byName[s.bone], off: new THREE.Vector3(s.pos[0] - rw.x, s.pos[1] - rw.y, s.pos[2] - rw.z), r: s.r, max: s.hp, hp: s.hp, eye: !!s.eye, arm: s.arm ?? null, dead: false, meshes, n: new THREE.Vector3(...(s.normal || [0, 0, 1])).normalize() };
     });
     this.sig = Object.fromEntries(this.sigils.map((s) => [s.id, s]));
-    this._routes = Object.entries(this.E.climb).map(([id, def]) => {
-      const r = new ClimbRoute(id, def, M, this);
-      // (los antebrazos, tendidos hacia la plaza, se andan de pie)
-      r.standY = id === 'mascara' ? 0.72 : 0.35;
-      return r;
-    });
-    this.route = Object.fromEntries(this._routes.map((r) => [r.id, r]));
     // la máscara de bronce y su diadema (se parten al final)
     const bronze = M._mat('colBronze', { side: THREE.FrontSide }),
       gold = M._mat('gold', { side: THREE.FrontSide });
     this.mask = M.byName.head.children.filter((m) => m.isMesh && (m.material === bronze || m.material === gold));
+    // por dónde se trepa: la piel de los brazos alzados (cuando la mano se
+    // queda plantada) y la máscara (desplomado)
+    const arm = (i) => M.meshes.find((m) => m.name === 'brazo' + i);
+    this.surface = new SkinSurface(M, [{ mesh: arm(4), tag: 'brazo4', zone: () => 'brazo4' }, { mesh: arm(5), tag: 'brazo5', zone: () => 'brazo5' }, ...this.mask.map((m) => ({ mesh: m, tag: 'mascara', zone: () => 'mascara' }))]);
+    this.surface.enabled = (z) => this.zoneOn(z);
+    // (los antebrazos, tendidos hacia la plaza, se andan de pie)
+    this.standY = 0.45;
     // efectos: los ojos y la boca arden por dentro
     this.fx = new ColFX(M);
     this.eyeGlow = this.E.fx.eyes.map((e) => this.fx.glow(e.bone, e.p, 3.4, 0xffa040, { pulse: 0.25 }));
-    // un brillo que late sobre el sigilo de cada brazo alzado (se lee de lejos)
-    for (const sg of this.sigils) {
-      const d = this.E.sigils.find((q) => q.id === sg.id);
-      if (sg.eye || !d) continue;
-      const n = new THREE.Vector3(...(d.normal || [0, 1, 0])).normalize();
-      sg.glow = this.fx.glow(d.bone, [d.pos[0] + n.x * 0.5, d.pos[1] + n.y * 0.5, d.pos[2] + n.z * 0.5], 4.2, 0xffa040, { pulse: 0.35, opacity: 0.8 });
-    }
     this.mouthGlow = this.fx.glow(this.E.fx.mouth.bone, this.E.fx.mouth.p, 6, 0xff5010, { pulse: 0.3, opacity: 0.7 });
     const L = game.fx.lights;
     this.lights = {
@@ -197,8 +193,15 @@ export class DeoBoss {
     this.show(false);
     this.clearFalling();
   }
-  routes() {
-    return this._routes;
+  ropes() {
+    return [];
+  }
+  // ¿se puede trepar ahora por esta zona? El brazo alzado plantado y vivo;
+  // la máscara, desplomado
+  zoneOn(z) {
+    if (z === 'mascara') return this.st === 'bowed';
+    const i = +z.slice(5);
+    return this.st === 'fight' && this.arms.planted(i) && !this.sig['brazo' + i].dead;
   }
   center(out) {
     if (this.st === 'bow' || this.st === 'bowed' || this.st === 'dying') return this.maskP(0, 0.5, -1, out);
@@ -295,12 +298,8 @@ export class DeoBoss {
     R.update(dt, { pre: () => this.arms.ik() });
     this._fx(dt);
     this._falling(dt);
-    // rutas: el brazo alzado plantado y vivo; la máscara, desplomado
-    for (const i of [4, 5]) {
-      const r = this.route['brazo' + i];
-      if (r) r.on = this.arms.planted(i) && !this.sig['brazo' + i].dead;
-    }
-    if (this.route.mascara) this.route.mascara.on = this.st === 'bowed';
+    // la piel por la que se trepa, con la pose de este fotograma
+    this.surface.update();
     if (!climb.active) this._push();
   }
 
@@ -311,7 +310,8 @@ export class DeoBoss {
       climb = g.finale.climb;
     const A = this.arms;
     const live = [4, 5].filter((i) => !this.sig['brazo' + i].dead);
-    const onArm = climb.active && climb.route && /^brazo/.test(climb.route.id) ? +climb.route.id.slice(5) : -1;
+    const z = climb.zone;
+    const onArm = z && /^brazo/.test(z) ? +z.slice(5) : -1;
     // una mano plantada: espera; si estás encima, no la levanta (se sacude)
     for (const i of live) {
       const a = A.arms[i];
@@ -448,7 +448,7 @@ export class DeoBoss {
     const g = this.g,
       p = g.player,
       climb = g.finale.climb;
-    const onMask = climb.active && climb.route && climb.route.id === 'mascara';
+    const onMask = climb.zone === 'mascara';
     // acabado el rugido, vuelve a respirar
     const A = this.R.action;
     if (A.clip === C.bowRoar && A.done && A.targetWeight > 0) this.R.stop(0.6);

@@ -252,9 +252,10 @@ export function skipPhase(g) {
   return 'Esperando a que se desplome';
 }
 
-// ------------------------------------------------------------ ver rutas y sigilos
-// Las rutas de trepar (líneas, en verde las activas), los sigilos (esferas
-// del tamaño de su alcance) y las esferas de la cabeza de Deo tumbado.
+// ------------------------------------------------------------ ver cuerdas y sigilos
+// Las cuerdas por las que se trepa (líneas, en verde las activas: la cadena
+// de la campana), los sigilos (esferas del tamaño de su alcance) y las
+// esferas de la cabeza de Deo tumbado.
 export class BossDebug {
   constructor(g) {
     this.g = g;
@@ -312,16 +313,16 @@ export class BossDebug {
     let li = 0,
       bi = 0;
     if (boss && boss.visible !== false) {
-      const routes = boss.routes ? boss.routes() : [];
-      for (const r of routes) {
+      // (la piel entera se trepa: se dibujan las cuerdas, como la cadena)
+      const ropes = boss.ropes ? boss.ropes() : [];
+      for (const r of ropes) {
         if (!r || !r.L) continue;
-        r.eval && r.eval();
         const L = this._line(li++);
         L.material = r.on ? this.matOn : this.matOff;
         const pos = L.geometry.attributes.position;
         const n = 64;
         for (let k = 0; k < n; k++) {
-          r.sample((k / (n - 1)) * r.L, this._p, this._t, this._n);
+          r.at((k / (n - 1)) * r.L, this._p, this._t);
           pos.setXYZ(k, this._p.x, this._p.y, this._p.z);
         }
         pos.needsUpdate = true;

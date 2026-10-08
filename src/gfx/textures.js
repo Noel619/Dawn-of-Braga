@@ -1196,6 +1196,123 @@ function bannerGen(base, sigil, seed) {
   return toTex(c, { repeat: false });
 }
 
+// El sigilo del Pacto tallado en la carne de un coloso (punto débil): los
+// tajos del anillo, la Y y los tres puntos arden como brasas; alrededor, la
+// carne requemada y agrietada, con vetas de fuego que se abren hacia fuera y
+// se deshacen en la piel (transparente en el borde: no es un disco).
+SPRITES.sigilFlesh = () => {
+  const S = 128,
+    c = S / 2 - 0.5;
+  const rng = new RNG(4617);
+  // grietas: polilíneas que salen de la herida hacia fuera
+  const cracks = [];
+  for (let i = 0; i < 11; i++) {
+    let a = (i / 11) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    let r = 30 + rng.range(-3, 6);
+    const pts = [[c + Math.cos(a) * r, c + Math.sin(a) * r]];
+    const n = 3 + Math.floor(rng.range(0, 4));
+    for (let k = 0; k < n; k++) {
+      a += rng.range(-0.45, 0.45);
+      r += rng.range(3, 6.5);
+      pts.push([c + Math.cos(a) * r, c + Math.sin(a) * r]);
+    }
+    cracks.push(pts);
+  }
+  // los tajos: trazos de cuchillo (polilíneas con anchura que se afina en
+  // las puntas). El anillo, abierto y desigual; la Y; tres puntos quemados
+  const strokes = [];
+  {
+    const pts = [];
+    const a0 = -Math.PI / 2 + 0.55,
+      a1 = a0 + Math.PI * 2 - 1.0;
+    for (let k = 0; k <= 26; k++) {
+      const a = a0 + ((a1 - a0) * k) / 26;
+      const r = 33 + Math.sin(a * 3 + 1) * 1.6 + rng.range(-0.8, 0.8);
+      pts.push([c + Math.cos(a) * r, c + Math.sin(a) * r]);
+    }
+    strokes.push({ pts, w: 2.6 });
+  }
+  const jag = (ax, ay, bx, by, n = 5) => {
+    const pts = [];
+    for (let k = 0; k <= n; k++) {
+      const t = k / n;
+      const nx = -(by - ay),
+        ny = bx - ax,
+        l = Math.hypot(nx, ny) || 1;
+      const o = k === 0 || k === n ? 0 : rng.range(-1.1, 1.1);
+      pts.push([ax + (bx - ax) * t + (nx / l) * o, ay + (by - ay) * t + (ny / l) * o]);
+    }
+    return pts;
+  };
+  strokes.push({ pts: jag(c + 0.5, c + 1, c - 1, c + 25), w: 2.8 });
+  strokes.push({ pts: jag(c, c + 1, c - 19, c - 17), w: 2.5 });
+  strokes.push({ pts: jag(c, c + 1, c + 18, c - 18), w: 2.5 });
+  const dots = [
+    [c + 1, c - 13, 3.2],
+    [c - 13, c + 13, 2.8],
+    [c + 13, c + 12, 3.0],
+  ];
+  const segD = (x, y, ax, ay, bx, by) => {
+    const vx = bx - ax,
+      vy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy || 1)));
+    return [Math.hypot(x - (ax + vx * t), y - (ay + vy * t)), t];
+  };
+  const cv = pixels(S, S, (x, y, o) => {
+    const dx = x - c,
+      dy = y - c;
+    const r = Math.hypot(dx, dy);
+    const n = fbm2(x / 9, y / 9, 3, 8, 471);
+    const n2 = fbm2(x / 3.5, y / 3.5, 2, 8, 472);
+    // distancia al tajo más cercano (con su anchura afinada en las puntas)
+    let d = 99;
+    for (const st of strokes) {
+      const L = st.pts.length - 1;
+      for (let k = 0; k < L; k++) {
+        const [dd, t] = segD(x, y, st.pts[k][0], st.pts[k][1], st.pts[k + 1][0], st.pts[k + 1][1]);
+        const u = (k + t) / L;
+        const w = st.w * (0.35 + 0.65 * Math.sin(Math.min(1, u * 1.15) * Math.PI)) * (0.8 + n2 * 0.45);
+        d = Math.min(d, dd - w);
+      }
+    }
+    for (const [px, py, pr] of dots) d = Math.min(d, Math.hypot(x - px, y - py) - pr * (0.85 + n2 * 0.3));
+    // vetas de fuego de las grietas
+    let cr = 99,
+      ct = 0;
+    for (const pts of cracks)
+      for (let k = 0; k < pts.length - 1; k++) {
+        const [dd, t] = segD(x, y, pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1]);
+        const tt = (k + t) / (pts.length - 1);
+        const w = dd - (0.9 - tt * 0.7);
+        if (w < cr) {
+          cr = w;
+          ct = tt;
+        }
+      }
+    // la carne requemada alrededor: irregular, se deshace en la piel
+    const edge = 50 + (n - 0.5) * 22;
+    const burn = Math.max(0, Math.min(1, (edge - r) / 20));
+    // cerca de los tajos, carbonizada
+    const near = Math.exp(-Math.max(0, d) / 5);
+    let col = [44 + n * 26 + n2 * 14, 16 + n * 10, 12 + n * 7];
+    col = mix3(col, [14, 6, 5], near * 0.8);
+    let al = burn * (0.55 + n2 * 0.25) + near * 0.35;
+    // el tajo: brasa roja en el borde y blanca-amarilla en lo hondo
+    const core = d < 0 ? Math.min(1, -d / 1.4) : 0;
+    const rim = d < 0 ? 1 : Math.exp(-d / 1.4) * 0.8;
+    const crack = cr < 0 ? (1 - ct * 0.7) * 0.85 : Math.exp(-cr / 1.1) * (1 - ct) * 0.5;
+    const ember = Math.max(rim, crack);
+    if (ember > 0.02) {
+      col = mix3(col, [196, 52, 18], Math.min(1, ember));
+      al = Math.max(al, ember * 0.95);
+    }
+    if (core > 0) col = mix3(col, [255, 178, 84], core * (0.75 + n2 * 0.25));
+    if (r > 62) al = 0;
+    set(o, col[0], col[1], col[2], Math.min(1, al) * 255);
+  });
+  return toTex(cv, { repeat: false, nearest: false });
+};
+
 export function getTexture(name) {
   if (cache.has(name)) return cache.get(name);
   let t;

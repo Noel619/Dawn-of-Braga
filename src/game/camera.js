@@ -74,7 +74,9 @@ export class CameraRig {
     // hombro: con objetivo fijado, la cámara se aparta un poco para no taparlo
     // (nunca tanto que el pivote se meta en un muro: desde dentro, el rayo de
     // la cámara no lo ve y la cámara acababa al otro lado)
-    let sideWant = target ? 0.72 : 0;
+    // (trepando a un coloso: el foco es el pecho de quien trepa, no sus pies)
+    const F = this.focus;
+    let sideWant = target && !F ? 0.72 : 0;
     if (sideWant > 0) {
       const hx = -Math.cos(this.yaw),
         hz = Math.sin(this.yaw);
@@ -85,9 +87,9 @@ export class CameraRig {
     const sx = -Math.cos(this.yaw) * this.side,
       sz = Math.sin(this.yaw) * this.side;
     // (el jefe final aparta la cámara para ver al coloso: distBias, pivotBias)
-    const px = player.pos.x + sx,
-      py = player.visY + 1.55 + (this.pivotBias || 0),
-      pz = player.pos.z + sz;
+    const px = F ? F.x : player.pos.x + sx,
+      py = F ? F.y : player.visY + 1.55 + (this.pivotBias || 0),
+      pz = F ? F.z : player.pos.z + sz;
     // seguimiento: casi rígido en horizontal (sin mareo), algo de retardo en vertical
     this.pivot.x = damp(this.pivot.x, px, 18, dt);
     this.pivot.z = damp(this.pivot.z, pz, 18, dt);
@@ -169,6 +171,11 @@ export class CameraRig {
         if (d !== Infinity) hit = Math.min(hit, (d * want) / tl);
       }
     }
+    // (el coloso del final no está en el mundo de colisión: su cuerpo, aparte)
+    if (this.body) {
+      const d = this.body.ray(this.pivot, _tp.copy(dir).negate(), want + 0.3);
+      if (d !== Infinity) hit = Math.min(hit, d);
+    }
     let allowed = want;
     if (hit !== Infinity) allowed = Math.max(MIN_D, hit - 0.28);
     // holgura: el rayo da con el muro, pero la cámara no es un punto (su
@@ -192,7 +199,7 @@ export class CameraRig {
 
     cam.position.set(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist + this.lift, this.pivot.z - dir.z * this.curDist);
     // no bajar del suelo
-    const minY = player.visY + 0.3;
+    const minY = (F ? F.y - 1.25 : player.visY) + 0.3;
     if (cam.position.y < minY) cam.position.y = minY;
     // pegada a la cabeza (de espaldas a un muro), el cuerpo taparía media
     // pantalla: mientras tanto no se dibuja

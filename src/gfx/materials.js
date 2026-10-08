@@ -109,6 +109,8 @@ export const MAT_DEFS = {
   colBone: { tex: 'bone', uv: 1, tri: 0.45 },
   // sigilo del Pacto (punto débil de un coloso): la textura arde
   colSigil: { tex: 'sigil', uv: 1, emissiveTex: 'sigil', emissive: 0xffc070, emissiveIntensity: 2.2 },
+  // el sigilo tallado en la carne (calcomanía con piel; ver sigil_decal.js)
+  colSigilFlesh: { tex: 'sigilFlesh', uv: 1, emissiveTex: 'sigilFlesh', emissive: 0xffffff, emissiveIntensity: 1.6 },
   glass: { tex: 'glass', uv: 0.5, emissiveTex: 'glass', emissive: 0xffffff, emissiveIntensity: 1.3 },
   candle: { tex: 'candle', uv: 2.0, emissive: 0x3a2a10, emissiveIntensity: 1 },
   blood: { tex: 'blood', uv: 0.5 },
