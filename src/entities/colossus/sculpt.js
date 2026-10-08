@@ -16,11 +16,12 @@
 //                 (piel que se rasga y deja ver la carne)
 // Para que no tarde: las primitivas se reparten en cubos de la rejilla (cada
 // punto sólo mira las que tiene cerca) y el ruido sólo se calcula cerca de
-// la superficie.
+// la superficie. Es sólo geometría (sin materiales ni texturas): corre igual
+// en un Web Worker (build_worker.js), donde se generan las mallas del jefe
+// final mientras se juega. El modelo con sus materiales está en model.js.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { partGeometry } from '../rig.js';
-import { colMat } from '../../gfx/materials.js';
 
 const DEG = Math.PI / 180;
 
@@ -159,6 +160,9 @@ export class Sculpt {
     this.matFreq = o.matFreq ?? 0.9;
     // manchas grandes en el color: [{ freq, color: [r,g,b], amt, thr }]
     this.macro = o.macro || null;
+    // vueltas de suavizado de los pesos de piel (0: sin suavizar)
+    this.weightSmooth = o.weightSmooth ?? 0;
+    this.weightSmoothK = o.weightSmoothK ?? 0.5;
   }
   _matIndex(m) {
     let i = this.mats.indexOf(m);
@@ -223,6 +227,40 @@ export class Sculpt {
       out.push(this.rc(pts[i], pts[i + 1], radii[i], radii[i + 1], { ...o, bone, k: o.k ?? Math.min(radii[i], radii[i + 1]) * 0.6 }));
     }
     return out;
+  }
+
+  // Pintura: dentro del elipsoide (c, r) la superficie toma el material mat
+  // y el matiz tint (sin cambiar la forma), con un borde roto por ruido:
+  // heridas, carne viva, manchas de cera o de sangre.
+  // o: { mat, tint, k (fuerza 0..1), edge (anchura del borde, relativa), rot, freq }
+  paint(c, r, o = {}) {
+    if (typeof r === 'number') r = [r, r, r];
+    this.paints = this.paints || [];
+    this.paints.push({ cx: c[0], cy: c[1], cz: c[2], rx: r[0], ry: r[1], rz: r[2], m: rotInv(o.rot || [0, 0, 0]), mat: o.mat ? this._matIndex(o.mat) : -1, tint: o.tint || null, k: o.k ?? 1, edge: o.edge ?? 0.35, freq: o.freq ?? 1.2 });
+  }
+  _paintAt(x, y, z, votes, ws, col) {
+    if (!this.paints) return;
+    for (const P of this.paints) {
+      const dx = x - P.cx,
+        dy = y - P.cy,
+        dz = z - P.cz;
+      const m = P.m;
+      const lx = (m[0] * dx + m[3] * dy + m[6] * dz) / P.rx,
+        ly = (m[1] * dx + m[4] * dy + m[7] * dz) / P.ry,
+        lz = (m[2] * dx + m[5] * dy + m[8] * dz) / P.rz;
+      const q = Math.sqrt(lx * lx + ly * ly + lz * lz);
+      if (q > 1 + P.edge) continue;
+      const nn = perlin(x * P.freq + 7.1, y * P.freq - 2.3, z * P.freq + 4.9) * P.edge;
+      let k = (1 + P.edge * 0.5 + nn - q) / Math.max(0.05, P.edge);
+      k = Math.max(0, Math.min(1, k)) * P.k;
+      if (k <= 0) continue;
+      if (P.mat >= 0) votes[P.mat] += ws * k * 4;
+      if (P.tint) {
+        col[0] += (P.tint[0] - col[0]) * k;
+        col[1] += (P.tint[1] - col[1]) * k;
+        col[2] += (P.tint[2] - col[2]) * k;
+      }
+    }
   }
 
   // desplaza las primitivas [i0, i1) (y las tallas [j0, j1)) en (dx, dy, dz)
@@ -560,6 +598,7 @@ export class Sculpt {
     const SI = new Uint16Array(nv * 4);
     const SW = new Float32Array(nv * 4);
     const MV = new Int16Array(nv);
+    let VW = new Array(nv);
     const e = h * 0.35;
     const info = { idx: new Int32Array(this.prims.length), w: new Float64Array(this.prims.length), n: 0 };
     const boneIdx = (name) => {
@@ -647,6 +686,14 @@ export class Sculpt {
           cg += (mc.color[1] - cg) * k;
           cb += (mc.color[2] - cb) * k;
         }
+      const pc = this._pc || (this._pc = [0, 0, 0]);
+      pc[0] = cr;
+      pc[1] = cg;
+      pc[2] = cb;
+      this._paintAt(x, y, z, votes, ws, pc);
+      cr = pc[0];
+      cg = pc[1];
+      cb = pc[2];
       Cc[v * 3] = cr * ao;
       Cc[v * 3 + 1] = cg * ao;
       Cc[v * 3 + 2] = cb * ao;
@@ -665,12 +712,61 @@ export class Sculpt {
         }
         MV[v] = best;
       }
-      const arr = [...bw.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+      // pesos completos (se recortan a cuatro al final, tras suavizarlos)
       let tw = 0;
-      for (const [, w] of arr) tw += w;
+      for (const w of bw.values()) tw += w;
+      const ent = [];
+      for (const [bi, w] of bw) ent.push(bi, w / tw);
+      VW[v] = ent;
+    }
+    // suavizado de los pesos por la malla: las uniones entre huesos se doblan
+    // en una franja ancha y sin escalones (con los pesos sólo por cercanía a
+    // las primitivas, el codo o la rodilla se partían en un pliegue seco)
+    if (this.weightSmooth > 0) {
+      const adj = Array.from({ length: nv }, () => []);
+      const link = (a, b) => {
+        if (!adj[a].includes(b)) adj[a].push(b);
+        if (!adj[b].includes(a)) adj[b].push(a);
+      };
+      for (let t = 0; t < tris.length; t += 3) {
+        link(tris[t], tris[t + 1]);
+        link(tris[t + 1], tris[t + 2]);
+        link(tris[t + 2], tris[t]);
+      }
+      const keep = 1 - (this.weightSmoothK ?? 0.5);
+      const acc = new Map();
+      for (let it = 0; it < this.weightSmooth; it++) {
+        const next = new Array(nv);
+        for (let v = 0; v < nv; v++) {
+          acc.clear();
+          const own = VW[v];
+          for (let q = 0; q < own.length; q += 2) acc.set(own[q], own[q + 1] * keep);
+          const nbs = adj[v];
+          if (nbs.length) {
+            const k = (1 - keep) / nbs.length;
+            for (const n of nbs) {
+              const w = VW[n];
+              for (let q = 0; q < w.length; q += 2) acc.set(w[q], (acc.get(w[q]) || 0) + w[q + 1] * k);
+            }
+          } else for (let q = 0; q < own.length; q += 2) acc.set(own[q], own[q + 1]);
+          const out = [];
+          for (const [bi, w] of acc) if (w > 0.004) out.push(bi, w);
+          next[v] = out;
+        }
+        VW = next;
+      }
+    }
+    for (let v = 0; v < nv; v++) {
+      const w = VW[v];
+      const arr = [];
+      for (let q = 0; q < w.length; q += 2) arr.push([w[q], w[q + 1]]);
+      arr.sort((a, b) => b[1] - a[1]);
+      arr.length = Math.min(4, arr.length);
+      let tw = 0;
+      for (const [, x] of arr) tw += x;
       for (let q = 0; q < 4; q++) {
         SI[v * 4 + q] = arr[q] ? arr[q][0] : 0;
-        SW[v * 4 + q] = arr[q] ? arr[q][1] / tw : 0;
+        SW[v * 4 + q] = arr[q] ? arr[q][1] / (tw || 1) : 0;
       }
     }
     const t3 = performance.now();
@@ -807,105 +903,4 @@ export function hardGeo(pt) {
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   return g;
-}
-
-// ======================================================================= modelo
-// Un coloso: esqueleto (huesos con su posición de reposo en el espacio del
-// modelo), mallas de carne con piel (SkinnedMesh) y piezas rígidas colgadas
-// de los huesos. pose({ hueso: [rx, ry, rz] (grados) }).
-export class ColossusModel {
-  constructor(bonesDef) {
-    this.root = new THREE.Group();
-    this.bones = [];
-    this.byName = {};
-    this.index = {};
-    this.restWorld = {};
-    for (const b of bonesDef) {
-      const bone = new THREE.Bone();
-      bone.name = b.name;
-      const par = b.parent ? this.byName[b.parent] : null;
-      const pp = par ? this.restWorld[b.parent] : V(0, 0, 0);
-      bone.position.set(b.pos[0] - pp.x, b.pos[1] - pp.y, b.pos[2] - pp.z);
-      (par || this.root).add(bone);
-      this.index[b.name] = this.bones.length;
-      this.bones.push(bone);
-      this.byName[b.name] = bone;
-      this.restWorld[b.name] = V(...b.pos);
-    }
-    this.root.updateMatrixWorld(true);
-    this.skeleton = new THREE.Skeleton(this.bones);
-    this.meshes = [];
-    this.parts = [];
-    this.restQ = this.bones.map((b) => b.quaternion.clone());
-  }
-  // malla esculpida con piel
-  skinned(geo, matNames, matOpts = {}) {
-    const mats = matNames.map((m) => colMat(m, matOpts[m] || {}));
-    const mesh = new THREE.SkinnedMesh(geo, mats.length > 1 ? mats : mats[0]);
-    if (mats.length === 1) geo.clearGroups();
-    mesh.frustumCulled = false;
-    this.root.add(mesh);
-    mesh.bind(this.skeleton);
-    this.meshes.push(mesh);
-    return mesh;
-  }
-  // piezas rígidas: geometrías en el espacio del modelo, agrupadas por hueso y material
-  rigid(list) {
-    const groups = new Map();
-    for (const it of list) {
-      const key = it.bone + '|' + it.mat + '|' + (it.ds ? 1 : 0) + '|' + (it.tri || 0) + '|' + (it.grp || '');
-      if (!groups.has(key)) groups.set(key, { ...it, geos: [] });
-      groups.get(key).geos.push(it.geo);
-    }
-    for (const g of groups.values()) {
-      const geo = g.geos.length > 1 ? mergeGeometries(g.geos.map((x) => (x.index ? x.toNonIndexed() : x))) : g.geos[0];
-      const rw = this.restWorld[g.bone];
-      geo.translate(-rw.x, -rw.y, -rw.z);
-      geo.computeBoundingSphere();
-      const mat = colMat(g.mat, { side: g.ds ? THREE.DoubleSide : THREE.FrontSide, tri: g.tri, giant: g.giant });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.frustumCulled = false;
-      if (g.grp) mesh.userData.grp = g.grp;
-      this.byName[g.bone].add(mesh);
-      this.parts.push(mesh);
-    }
-  }
-  pose(p) {
-    const e = new THREE.Euler();
-    const q = new THREE.Quaternion();
-    this.bones.forEach((b, i) => {
-      const r = p[b.name];
-      if (r) {
-        e.set(r[0] * DEG, r[1] * DEG, r[2] * DEG, 'XYZ');
-        q.setFromEuler(e);
-        b.quaternion.copy(this.restQ[i]).multiply(q);
-      } else b.quaternion.copy(this.restQ[i]);
-    });
-    this.root.updateMatrixWorld(true);
-  }
-  // luz del sitio (sonda) y oclusión junto al suelo para todos sus materiales
-  setProbe(r, g, b, groundY = 0, ao = 0.3) {
-    const seen = new Set();
-    this.root.traverse((o) => {
-      if (!o.material) return;
-      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
-        if (seen.has(m) || !m._u) continue;
-        seen.add(m);
-        m._u.uProbe.value.set(r, g, b);
-        m._u.uGround.value.set(groundY, ao);
-      }
-    });
-  }
-  stats() {
-    let tris = 0,
-      calls = 0;
-    this.root.traverse((o) => {
-      if (!o.isMesh) return;
-      const g = o.geometry;
-      const n = g.index ? g.index.count / 3 : g.attributes.position.count / 3;
-      tris += n;
-      calls += Array.isArray(o.material) ? g.groups.length || 1 : 1;
-    });
-    return { tris: Math.round(tris), calls };
-  }
 }

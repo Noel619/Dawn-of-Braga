@@ -635,6 +635,50 @@ const GEN = {
   clothPurple() {
     return clothGen([60, 30, 72], 441);
   },
+  // Sigilo del Pacto grabado en la carne de un coloso: un anillo con marcas,
+  // la Y del palio dentro y tres puntos; las líneas son tajos que arden (la
+  // misma textura hace de emisión) sobre carne requemada.
+  sigil() {
+    const S = 64,
+      c = S / 2 - 0.5;
+    return pixels(S, S, (x, y, o) => {
+      const dx = x - c,
+        dy = y - c;
+      const r = Math.hypot(dx, dy);
+      const a = Math.atan2(dy, dx);
+      const n = fbm2(x / 6, y / 6, 3, 8, 461);
+      let line = 0;
+      // el anillo doble y sus marcas
+      if (Math.abs(r - 27) < 1.6) line = 1;
+      if (Math.abs(r - 22.5) < 0.9) line = 0.8;
+      if (r > 22.5 && r < 27 && Math.abs(((a / (Math.PI * 2)) * 12 + 12) % 1 - 0.5) < 0.07) line = 0.9;
+      // la Y: el palo y los dos brazos
+      const dLine = (ax, ay, bx, by) => {
+        const vx = bx - ax,
+          vy = by - ay;
+        const t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
+        return Math.hypot(x - (ax + vx * t), y - (ay + vy * t));
+      };
+      const w = Math.min(dLine(c, c + 1, c, c + 17), dLine(c, c + 1, c - 13, c - 13), dLine(c, c + 1, c + 13, c - 13));
+      if (w < 1.7) line = 1;
+      for (const [px, py] of [
+        [c, c - 9],
+        [c - 9, c + 8],
+        [c + 9, c + 8],
+      ])
+        if (Math.hypot(x - px, y - py) < 2.2) line = 1;
+      if (r > 30.5) line = 0;
+      // carne requemada alrededor, más oscura junto a los tajos
+      const burn = Math.max(0, 1 - r / 32);
+      let col = [70 + n * 40, 22 + n * 14, 18 + n * 10];
+      col = col.map((q) => q * (0.55 + 0.45 * (1 - burn * 0.5)));
+      if (line > 0) {
+        const k = line * (0.8 + n * 0.3);
+        col = mix3(col, [255, 196, 96], Math.min(1, k));
+      }
+      set(o, col[0], col[1], col[2]);
+    });
+  },
   // Lino del alba de un coloso: marfil sucio con trama, manchas de cera,
   // hollín y sangre vieja (sin pliegues pintados: los pone la malla).
   albTex() {

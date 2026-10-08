@@ -35,6 +35,7 @@ import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
+import { ColossusBank } from '../entities/colossus/bank.js';
 
 // en la celda de las mazmorras del castillo
 const START = CASTLE.start;
@@ -153,6 +154,10 @@ export class Game {
     this.beastTransform = (e) => this.chase.transform(e);
     // modo desarrollador (F2; sólo en localhost o desde la IP del autor)
     this.dev = new DevMode(this);
+    // los colosos del jefe final: se generan en un hilo de fondo mientras se
+    // juega (unos segundos de cálculo que así no se notan)
+    this.colossi = new ColossusBank();
+    setTimeout(() => this.colossi.warm(), 1500);
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
     this.buildPhantom();
 
