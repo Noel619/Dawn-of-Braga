@@ -179,12 +179,23 @@ export class BellChain {
             }
           } else if (p.y < gy + 0.3) p.y = gy + 0.3 - p.y > 1 ? p.y + (gy + 0.3 - p.y) * 0.05 : gy + 0.3;
           if (this.bounds) {
-            const B = this.bounds,
-              m = last ? this.R : 0.3;
-            if (p.x < B[0] + m) p.x = B[0] + m;
-            if (p.x > B[2] - m) p.x = B[2] - m;
-            if (p.z < B[1] + m) p.z = B[1] + m;
-            if (p.z > B[3] - m) p.z = B[3] - m;
+            const B = this.bounds;
+            let x0 = B[0] + this.R,
+              z0 = B[1] + this.R,
+              x1 = B[2] - this.R,
+              z1 = B[3] - this.R;
+            if (!last) {
+              // los eslabones siguen a la mano aunque se salga de la plaza (si
+              // no, el tramo de la mano se estira y la cadena da tirones)
+              x0 = Math.min(B[0] + 0.3, hand.x);
+              z0 = Math.min(B[1] + 0.3, hand.z);
+              x1 = Math.max(B[2] - 0.3, hand.x);
+              z1 = Math.max(B[3] - 0.3, hand.z);
+            }
+            if (p.x < x0) p.x = x0;
+            if (p.x > x1) p.x = x1;
+            if (p.z < z0) p.z = z0;
+            if (p.z > z1) p.z = z1;
           }
         }
         if (this.stuck) P[N - 1].copy(this.stuck);
@@ -265,8 +276,16 @@ export class BellChain {
     const a = this.p[N - 1 - i],
       b = this.p[N - 2 - i];
     out.lerpVectors(a, b, f - i);
-    if (dir) dir.subVectors(b, a).normalize();
+    // la dirección, fundida de un tramo al siguiente (la cadena es una
+    // poligonal: a saltos, quien va agarrado a ella daría tirones)
+    if (dir) dir.lerpVectors(this._tan(i, _v), this._tan(i + 1, _v2), f - i).normalize();
     return out;
+  }
+  // dirección en el nudo k (contando desde la campana)
+  _tan(k, out) {
+    const N = this.N,
+      P = (j) => this.p[N - 1 - Math.max(0, Math.min(N - 1, j))];
+    return out.subVectors(P(k + 1), P(k - 1)).normalize();
   }
 }
 const _qr90 = new THREE.Quaternion().setFromAxisAngle(Y, Math.PI / 2);

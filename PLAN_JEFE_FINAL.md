@@ -263,6 +263,10 @@ Todo el plan está hecho y probado. Lo que cambió al construirlo:
   `largo`). Cargar a mitad del final es como volver a empezar: todo entero.
 - **El cruceiro** sigue siendo altar tras la victoria (un sitio para descansar en la plaza).
 - **Sigilos:** cada uno con un brillo que late, para leerlos de lejos entre la niebla y la ceniza.
+- **La cadena de la campana clavada** hace un bucle sobre el empedrado: donde va tendida y baja se anda por encima
+  (colgado de ella el jugador se metía bajo el suelo) y, donde sube hacia la mano, se trepa colgado; el cuerpo sigue
+  sus tirones con algo de inercia y el paso de ir de pie a colgado (en todas las rutas) se funde en vez de saltar.
+  Los eslabones siguen a la mano aunque se salga de la plaza (antes el tramo de la mano se estiraba metros).
 
 Pruebas (con `npx vite --port 5199` en marcha):
 

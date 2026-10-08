@@ -23,9 +23,12 @@ import { clamp, damp } from '../../core/util.js';
 const _v = new THREE.Vector3(),
   _v2 = new THREE.Vector3(),
   _v3 = new THREE.Vector3(),
+  _cn = new THREE.Vector3(),
+  _pv = new THREE.Vector3(),
   _q = new THREE.Quaternion(),
   _m = new THREE.Matrix4();
 const UP = new THREE.Vector3(0, 1, 0);
+const smooth01 = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
 // ============================================================ animaciones del jugador
 // (de cara a la superficie: +z va hacia ella; ángulos como en el resto del
@@ -185,15 +188,35 @@ export class ChainRoute {
     this.L = chain.len;
     this.on = false;
     this.side = new THREE.Vector3(1, 0, 0);
+    // (la cadena se mueve: más margen para no cambiar de postura a cada tirón,
+    // y el cuerpo sigue sus sacudidas con algo de inercia)
+    this.standHyst = 0.12;
+    this.inertia = 18;
   }
   eval() {}
   sample(s, P, T, N) {
     this.chain.at(s, P, T);
-    // la normal: hacia donde está el jugador (alrededor de la cadena)
+    // la normal: hacia donde está el jugador (alrededor de la cadena), pero
+    // nunca por debajo: agarrado desde el suelo, colgaría bajo ella y se
+    // metería en el empedrado
     N.copy(this.side).addScaledVector(T, -this.side.dot(T));
-    if (N.lengthSq() < 1e-4) N.copy(UP).cross(T);
+    if (N.y < 0) {
+      N.y = 0;
+      N.addScaledVector(T, -N.dot(T));
+    }
+    if (N.lengthSq() < 0.01) N.crossVectors(UP, T);
+    if (N.lengthSq() < 1e-4) N.set(1, 0, 0);
     N.normalize();
+    // donde va tendida a ras de suelo (con la campana clavada hace un bucle
+    // sobre el empedrado) y poco empinada, se anda por encima
+    const h = P.y - this.chain.groundAt(P.x, P.z);
+    const low = smooth01((2.2 - h) / 0.6) * smooth01((0.8 - Math.abs(T.y)) / 0.2);
+    if (low > 0) N.lerp(_cn.copy(UP).addScaledVector(T, -T.y).normalize(), low).normalize();
     return false;
+  }
+  // (colgado cerca del suelo, los pies en el empedrado)
+  floorAt(x, z) {
+    return this.chain.groundAt(x, z);
   }
   nearest(p) {
     const r = this.chain.nearest(p);
@@ -221,6 +244,7 @@ export class Climb {
     this.actT = 0;
     this.grip = false;
     this.offset = new THREE.Vector3(); // fundido al cambiar de ruta
+    this.disp = new THREE.Vector3(); // dónde se ve (la ruta más el fundido)
     this.quat = new THREE.Quaternion();
     this.fwd = new THREE.Vector3(0, 0, 1);
     this.P = new THREE.Vector3();
@@ -276,6 +300,7 @@ export class Climb {
     const from = p.pos.clone();
     this._pose(0, true);
     this.offset.copy(from).sub(this.root);
+    this.disp.copy(from);
     p.body.pos.copy(from);
     p.obj.position.copy(from);
     this._play('cl_hang', 0.15);
@@ -422,7 +447,7 @@ export class Climb {
     const mag = Math.min(1, Math.hypot(mv.x, mv.y));
     r.eval(this.frame);
     const rest = r.sample(this.s, this.P, this.T, this.N);
-    const stand = this.N.y > (r.standY ?? 0.72);
+    const stand = this._standing(r);
     this.mode = stand ? 'stand' : 'hang';
     let ds = 0,
       du = 0;
@@ -525,6 +550,15 @@ export class Climb {
     this.u = clamp(n.u, -r2.width / 2, r2.width / 2);
     this._pose(0, true);
     this.offset.copy(old).sub(this.root);
+    this.disp.copy(old);
+  }
+
+  // ¿de pie? (la superficie casi horizontal; con un margen para no andar
+  // cambiando de postura en el límite)
+  _standing(r) {
+    const k = r.standY ?? 0.72,
+      m = r.standHyst ?? 0.04;
+    return this.N.y > (this._stand ? k - m : k + m);
   }
 
   // dónde va el jugador (raíz en los pies) y hacia dónde mira
@@ -536,7 +570,7 @@ export class Climb {
     r.sample(this.s, this.P, this.T, this.N);
     const side = _v.copy(this.T).cross(this.N).normalize();
     const at = _v2.copy(this.P).addScaledVector(side, this.u);
-    const stand = this.N.y > (r.standY ?? 0.72);
+    const stand = this._standing(r);
     // arriba del jugador: colgado, la vertical proyectada en la superficie;
     // de pie, casi la vertical del mundo
     const up = _v3;
@@ -564,12 +598,27 @@ export class Climb {
     else this.quat.slerp(qT, 1 - Math.exp(-dt * 12));
     // la raíz (los pies): colgado, el pecho contra la superficie
     const root = (this.root = this.root || new THREE.Vector3());
+    // de pie <-> colgado la raíz salta (los pies sobre la superficie o el
+    // pecho contra ella): se funde, como al pasar de una ruta a otra
+    const flip = !snap && this._stand !== undefined && this._stand !== stand;
+    if (flip) _pv.copy(root).add(this.offset);
     if (stand) root.copy(at).addScaledVector(this.N, 0.06);
     else root.copy(at).addScaledVector(this.N, 0.42).addScaledVector(y, -1.22);
-    if (!snap) this.offset.multiplyScalar(Math.exp(-dt * 7));
+    if (r.floorAt) root.y = Math.max(root.y, r.floorAt(root.x, root.z));
+    if (flip) {
+      this.offset.copy(_pv).sub(root);
+      this.flipT = 0;
+    }
+    // (en la cadena, que da tirones, el cuerpo los sigue con algo de inercia)
+    else if (r.inertia && !snap) this.offset.copy(this.disp).sub(root);
+    this._stand = stand;
+    this.flipT = (this.flipT ?? 9) + dt;
+    const rate = r.inertia ? 7 + (r.inertia - 7) * smooth01(this.flipT / 0.6) : 7;
+    if (!snap) this.offset.multiplyScalar(Math.exp(-dt * rate));
     const fx = root.x + this.offset.x,
       fy = root.y + this.offset.y,
       fz = root.z + this.offset.z;
+    this.disp.set(fx, fy, fz);
     p.body.pos.set(fx, fy, fz);
     p.visY = fy;
     p.vx = p.vz = 0;
