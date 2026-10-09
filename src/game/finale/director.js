@@ -247,6 +247,12 @@ export class Finale {
   // al morir: la pelea vuelve a empezar (el coloso espera en la plaza; el
   // dios, en la nave)
   onRespawn() {
+    // (cortada la presentación a medias: vuelven los marcadores y la cámara)
+    if (this.stage === 'intro' || this.stage === 'deoIntro') {
+      this.g.ui.showHud(true);
+      this.g.camRig.override = null;
+      this._shot = null;
+    }
     if (this.stage === 'intro' || this.stage === 'tur') this.stage = 'wait';
     if (this.stage === 'deo' || this.stage === 'deoIntro' || this.stage === 'rise') this.stage = 'deoWait';
     // (si se había desplomado, vuelve a empezar de pie agarrado a las torres)

@@ -84,7 +84,8 @@ const steps = [
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
   "__use('d_sello')",
   // el rito de la cisterna: ya no hay pelea (la cinemática se salta)
-  "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1.5);const cine=!!g.cutscene;if(g.cutscene)g.cutscene.skip();__sim(0.3);g.ui.closeAll();__sim(0.5);return {cine,rite:!!g.flags['finale:rite'],gone:!!g.bosses.turibulario.dead,fog:g.fogActive(it),grate:g.groups.riteGrate.on,stage:g.finale.stage}})()",
+  // el arzobispo pelea en la cisterna; vencido, el rito (y el coloso sale después)
+  "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1.5);const fight=g.activeBoss&&g.activeBoss.type;if(g.cutscene)g.cutscene.skip();__sim(0.5);const b=g.bosses.turibulario;b.die();__sim(1.5);const cine=!!g.cutscene;if(g.cutscene)g.cutscene.skip();__sim(0.3);g.ui.closeAll();__sim(0.5);return {fight,cine,rite:!!g.flags['finale:rite'],gone:!!g.bosses.turibulario.dead,fog:g.fogActive(it),grate:g.groups.riteGrate.on,stage:g.finale.stage}})()",
   // la subida: al asomarse del pórtico a la plaza, revienta el empedrado
   "(()=>{const g=__game;g.player.spawn(1,0.6,-57.6,0);__noEnemies();const stages=[];for(let i=0;i<300;i++){__sim(0.1);if(!stages.includes(g.finale.stage))stages.push(g.finale.stage);if(g.finale.stage==='tur')break;}return {stages,tur:g.finale.tur&&g.finale.tur.st}})()",
   // el Turiferario: la nuca y la mano; de rodillas, el núcleo. Revienta y la nave estalla

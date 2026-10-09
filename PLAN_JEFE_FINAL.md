@@ -11,17 +11,19 @@ cisterna: 56 metros de cuerpo (87 con las manos alzadas), máscara de bronce y s
 
 ## 1. El recorrido, de la cisterna al río
 
-1. **El rito (cisterna).** Con el anillo se abre el sello y se cruza la niebla, como ahora. Dentro ya no
-   hay pelea: una cinemática. El arzobispo (el Turiferario de siempre) está de rodillas ante el altar
-   del Dios Desconocido. Se levanta, se vuelve y alza el incensario; el agua de la cisterna hierve, la
-   carne del dios le sube por las piernas, le envuelve y le arrastra hacia arriba, a través de la
-   cúpula. Temblor, polvo, fundido a negro: *«Arriba, la ciudad tiembla. Las campanas de la Sé tocan
-   solas.»* Los escombros de la cúpula ciegan la reja del río.
+1. **El arzobispo y el rito (cisterna).** Con el anillo se abre el sello y se cruza la niebla, como
+   antes, y **se pelea contra el arzobispo** (el Turiferario de siempre). Vencido, en vez de morir cae
+   de rodillas ante el altar del Dios Desconocido y empieza una cinemática: alza el incensario; el agua
+   de la cisterna hierve, la carne del dios le sube por las piernas, le envuelve y le arrastra hacia
+   arriba, a través de la cúpula. Temblor, polvo, fundido a negro: *«Arriba, la ciudad tiembla. Las
+   campanas de la Sé tocan solas.»* Los escombros de la cúpula ciegan la reja del río.
 2. **La subida.** De vuelta por la cripta hasta la nave: temblores, polvo que cae de las bóvedas,
    rugidos lejanos, las campanas. Nada que pelear: es la calma antes de la tormenta.
-3. **La Plaza de la Catedral.** Al salir por la puerta de la Sé, el empedrado del atrio del sacrificio
-   revienta y se alza el Turiferario coloso (plano de presentación). Los escombros cierran las salidas
-   de la plaza: la arena es el atrio, el pórtico y lo que se vaya rompiendo alrededor.
+3. **El centro de la ciudad.** Al salir por la puerta de la Sé, el empedrado del atrio del sacrificio
+   revienta y se alza el Turiferario coloso; mientras sale, las manzanas entre el atrio y la plaza del
+   pan se vienen abajo en ola, de él hacia la cámara (plano general desde la Rúa da Sé). El campo de
+   batalla es todo el centro: el atrio, las ruinas del bloque y la plaza del pan. No hay muros
+   invisibles: si te vas lejos, el coloso se queda esperando con sus heridas y vuelve a rugir al verte.
 4. **La explosión.** Al apuñalar el núcleo del pecho cae de rodillas, se hincha y revienta en sangre y
    ceniza de incienso; la campana cae tañendo y rueda. La nave estalla desde dentro (la fachada y las
    torres quedan en pie) y Deo Ignoto se alza detrás (cinemática larga). Se enciende un altar nuevo en
@@ -142,17 +144,27 @@ alrededor.
 
 ## 4. Trepar
 
+Se trepa por la **piel que se ve** (`surface.js`): las mallas de carne y de ropa del coloso consultadas en
+la CPU con la misma deformación que en la tarjeta gráfica. Quien trepa va pegado a un triángulo (con sus
+coordenadas baricéntricas), así que sigue al cuerpo cuando anda, se dobla o se sacude y nunca flota ni se
+mete dentro. Manos y pies se plantan en la piel y se sueltan de uno en uno; colgado, el cuerpo es un
+péndulo que se mece con los tirones. La ropa de una capa se trepa siempre por fuera; ni techos, ni lo que
+queda a ras de suelo por debajo (la palma de Deo plantada), ni los dedos de Deo, ni el interior de su
+máscara. Si te atascas en un hueco, alargas la mano por encima del borde o en diagonal.
+
 - **Agarrarse:** junto a una parte por la que se trepa aparece el aviso; con *interactuar* (E / A) te
   agarras. Al caer junto a él o rodar contra una de esas partes también te agarras.
-- **Moverse:** con el stick o WASD por la superficie (arriba, abajo, a los lados); en las partes casi
-  horizontales se anda de pie.
+- **Moverse:** con el stick o WASD por la superficie (arriba, abajo, a los lados); en las partes de menos
+  de unos 45° se anda de pie, hacia donde mira la cámara.
 - **Aguante:** colgado se gasta; si se acaba, te sueltas. De pie en la joroba o en los hombros se
   recupera.
 - **Aferrarse:** cuando se sacude, mantén la guardia (clic derecho / LB) o te tira; aferrado gasta más.
 - **Apuñalar:** mantén el ataque para cargar la puñalada y suéltalo; en un sigilo hiere de verdad, en
   la carne apenas.
 - **Soltarse:** con la esquiva. Caer desde alto hace daño según la altura.
-- **Cámara:** detrás del jugador, apartada de la superficie, y siempre libre para mirar al coloso.
+- **Cámara:** detrás del jugador, apartada de la superficie, y siempre libre para mirar al coloso; de pie
+  sigue la cuesta (subiendo por el antebrazo o por la cola mira hacia arriba) y no se mete detrás de la
+  ropa ni de los brazos del dios (sus cuerpos en cápsulas, `colbody.js`).
 
 ## 5. La ciudad se rompe
 
@@ -281,3 +293,21 @@ Medición (CPU de la lógica por fotograma, en el contenedor de pruebas; el dibu
 representativo): la plaza sola 4,8 ms; el Turiferario 4,3 ms; la nave estallando 3,2 ms; Deo 4,8 ms; Deo tumbado
 3,8 ms. Llamadas de dibujo: 300–700 según la fase; triángulos: de 340 000 (la plaza) a 740 000 (Deo tumbado, con la
 fachada en ruinas).
+
+## 14. Revisión (9 de octubre de 2026), tras jugarlo
+
+Lo que no funcionaba al probarlo y cómo quedó:
+
+- **Morir en la pelea** dejaba al jugador con animaciones rotas (moviéndose en direcciones sin sentido): ahora,
+  muerto colgado del coloso, cae con su animación de muerte, y las pruebas lo comprueban.
+- **Nada más llegar, el coloso**: ya no; primero se pelea contra el arzobispo en la cisterna y luego el rito.
+- **El espacio mínimo** (se bailaba alrededor de él en el atrio) y **se le atravesaba**: el campo de batalla es todo
+  el centro (`field.js`: dónde quedan casas en pie, para que el coloso se arrime a las fachadas sin meterse en
+  ellas y su cola y su campana choquen contra los muros), y su cuerpo empuja al jugador (`colbody.js`).
+- **La escalada** (el personaje iba volando, las animaciones eran pésimas): rehecha sobre la piel que se ve, con
+  manos y pies que se plantan, el cuerpo que cuelga y la cámara que acompaña. El robot de `tools/finale.mjs`
+  destapó y ayudó a arreglar temblores en lo curvo, «arriba» invertido en la cadena en comba, colarse bajo la ropa
+  o bajo la mano plantada y huecos donde uno se quedaba encajado.
+- **Los sigilos** parecían círculos flotando: ahora están tallados en la piel (tajos que arden, sangre negra).
+- **El aura de los colosos:** la salida con la ciudad derrumbándose, la música que se vuelve heroica al subirse,
+  el viento en lo alto, el resuello del coloso, la campana que tañe al estrellarse contra las casas.
