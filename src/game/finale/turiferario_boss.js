@@ -374,6 +374,15 @@ export class TurBoss {
     for (const k in this.cool) this.cool[k] = (this.cool[k] || 0) - dt;
     this.shakeCool -= dt;
     this.wallT = (this.wallT || 0) - dt;
+    // resuella: despacio, cuando no ataca (se le oye respirar desde lejos;
+    // encima de él, más hondo)
+    this.breathT = (this.breathT ?? 3) - dt;
+    if (this.breathT <= 0 && (this.st === 'idle' || this.st === 'walk' || this.st === 'turn' || this.st === 'stuck' || this.st === 'kneel')) {
+      this.breathT = rnd(5.5, 9);
+      g.audio && g.audio.play('colossusBreath', this._head(_v), { k: climb.active ? 1.3 : 1 });
+      // (el pecho se le hincha con el aire)
+      this.R.flinch.x.kick(-0.25);
+    }
     const R = this.R;
     // la cabeza busca al jugador (menos si está encima)
     R.look.target.set(p.pos.x, p.pos.y + 1.2, p.pos.z);
@@ -1107,6 +1116,8 @@ export class TurBoss {
       const d = Math.hypot(p.pos.x - f.x, p.pos.z - f.z);
       g.camRig.shake(clamp(0.5 - d * 0.02, 0.06, 0.5));
       g.audio && g.audio.play('beastStep', f, { k: 1.6 });
+      // (la cadena de la campana, a cada paso)
+      if (Math.random() < 0.6) g.audio && g.audio.play('chainRun', this.bell.center(_v2), { k: 0.5 });
       g.fx.blood.emit(f.x, f.y + 0.3, f.z, 14, { color: [0.36, 0.33, 0.29], speed: 3, life: 0.7, up: 1.2 });
       // sobre las ruinas de una casa: las pisotea (cascotes y vigas que saltan)
       if (this.onRuins(f.x, f.z)) {

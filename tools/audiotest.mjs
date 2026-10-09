@@ -100,6 +100,8 @@ const res = await p.evaluate(async (mode) => {
         (au, g, t) => {
           g.fear = t > 24 ? 0.85 : 0;
           g.activeEnemies = t > 40 ? [{ pos: new V3(3, 0, 0), aware: true, dead: false, boss: false }] : [];
+          // (los temas de los colosos: «combate» es ir encima de él)
+          g.finale = th.startsWith('bossFinal') && t > 40 ? { climb: { active: true } } : null;
         },
       );
       out[th] = { calma: stats(buf, 3, 24), tension: stats(buf, 27, 40), combate: stats(buf, 43, 60), cpu: Math.round((wall / 60) * 1000) / 1000 };
@@ -115,7 +117,7 @@ const res = await p.evaluate(async (mode) => {
     out.zonas = { ciudad: stats(buf, 2, 15), cripta: stats(buf, 20, 30) };
   }
   if (mode === 'efectos' || mode === 'todo') {
-    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory', 'crack', 'scuttle', 'boneCrack', 'breathClose', 'stairCreak', 'lampOut', 'whisperClose', 'scare', 'dread', 'chew', 'silence', 'drip', 'neckTwist', 'descScream', 'amaWhisper', 'doorSlam', 'corpseThud', 'giggle', 'amaCall', 'mimicSteps', 'whisperNear', 'pounceWhoosh', 'slamSoft', 'grab', 'bite', 'stoneCreak', 'pillarBreak', 'wallBreak', 'rackBreak', 'woodHit', 'dropCry', 'boneThrow', 'boneClatter', 'climb', 'leverPull', 'chainRun', 'gateStep', 'rageScream', 'snarl', 'leapBack', 'boneBlock', 'limbSnap', 'bodyFall', 'deathRattle', 'leverCreak', 'leverClunk', 'sackTear', 'dig', 'parry', 'deflect', 'riposte', 'peril', 'ramImpact', 'armorFall', 'armorClank', 'armorHit', 'scrape', 'beastRoar', 'beastRoarBig', 'beastHurt', 'beastStep', 'fleshTear', 'fleshBurst', 'pikeWhoosh', 'leapWind', 'hayLand', 'qte', 'qteOk', 'qteFail', 'qteTick'];
+    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory', 'crack', 'scuttle', 'boneCrack', 'breathClose', 'stairCreak', 'lampOut', 'whisperClose', 'scare', 'dread', 'chew', 'silence', 'drip', 'neckTwist', 'descScream', 'amaWhisper', 'doorSlam', 'corpseThud', 'giggle', 'amaCall', 'mimicSteps', 'whisperNear', 'pounceWhoosh', 'slamSoft', 'grab', 'bite', 'stoneCreak', 'pillarBreak', 'wallBreak', 'rackBreak', 'woodHit', 'dropCry', 'boneThrow', 'boneClatter', 'climb', 'leverPull', 'chainRun', 'gateStep', 'rageScream', 'snarl', 'leapBack', 'boneBlock', 'limbSnap', 'bodyFall', 'deathRattle', 'leverCreak', 'leverClunk', 'sackTear', 'dig', 'parry', 'deflect', 'riposte', 'peril', 'ramImpact', 'armorFall', 'armorClank', 'armorHit', 'scrape', 'beastRoar', 'beastRoarBig', 'colossusBreath', 'beastHurt', 'beastStep', 'fleshTear', 'fleshBurst', 'pikeWhoosh', 'leapWind', 'hayLand', 'qte', 'qteOk', 'qteFail', 'qteTick'];
     for (const n of names) {
       const { buf, wall } = await render(
         6,

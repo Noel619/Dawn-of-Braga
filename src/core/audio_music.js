@@ -31,6 +31,7 @@ export class MusicEngine {
     this.old = [];
     this.tension = 0;
     this.combat = 0;
+    this.climb = 0; // 0..1: trepando a un coloso (los temas con T.climb)
     this.lookahead = 0.3; // segundos que se programan por adelantado
     this.waves = {};
     this._banks = new WeakMap();
@@ -471,6 +472,11 @@ export class MusicEngine {
     this.tension = tension;
     this.combat = combat;
   }
+  // Trepando a un coloso (0..1): en los temas de los colosos (T.climb), la
+  // capa 'combat' es la de ir encima de él.
+  setClimb(k) {
+    this.climb = k;
+  }
 
   // Tempo actual (el combate puede acelerar ciertos temas).
   update() {
@@ -491,7 +497,7 @@ export class MusicEngine {
     const T = c.T;
     // capas según la situación (solo se reprograma si cambia de verdad)
     const ten = T.noTension ? 0 : this.tension;
-    const com = T.noTension ? 0 : this.combat;
+    const com = T.climb ? this.climb : T.noTension ? 0 : this.combat;
     if (Math.abs(ten - (c._ten ?? -1)) > 0.02 || Math.abs(com - (c._com ?? -1)) > 0.02) {
       const up = com > (c._com ?? 0);
       c.L.tension.gain.setTargetAtTime(Math.max(0.0001, ten * (1 - com * 0.5)), t, 0.8);
@@ -1047,6 +1053,8 @@ const THEMES = {
     chordBars: 1,
     verb: 0.8,
     noTension: true,
+    climb: true,
+    duck: 0.3,
     drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 24, T.mode, d)], wave: 'reed', cutoff: 600, level: 0.08, rate: 0.1, detune: [-3, 3] },
     step(S) {
       finalStep(S, 0);
@@ -1060,6 +1068,8 @@ const THEMES = {
     chordBars: 1,
     verb: 0.8,
     noTension: true,
+    climb: true,
+    duck: 0.3,
     drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 24, T.mode, d)], wave: 'reed', cutoff: 900, level: 0.09, rate: 0.2, detune: [-4, 4] },
     step(S) {
       finalStep(S, 1);
@@ -1205,4 +1215,13 @@ function finalStep(S, phase) {
   if (inBar === 0 && bar % 4 === 0) m.drum(L.base, t, 'gong', 0.35);
   if (inBar === 1 && chance(0.5 + phase * 0.3)) for (let k = 0; k < 3; k++) m.bell(L.base, t + k * 0.09, T.root + 30 + pick([0, 1, 6]), 0.035, { kind: 'small', dur: 2.5 });
   if (phase && inBar === 3) m.swell(L.base, t, spb, 0.04, 800, 5000);
+  // Encima del coloso (capa 'combat', ver setClimb): el canto se vuelve
+  // heroico. Metales que sostienen el acorde y responden al canto, cuerdas en
+  // ostinato a corcheas y tambores a cada pulso.
+  const C = L.combat;
+  if (inBar === 0) for (const n of [m.deg(T, chord, 1), m.deg(T, chord + 4, 1)]) m.brass(C, t, spb * 3.6, n, 0.044, { a: 0.18, r: 0.6, bright: 5 });
+  if (inBar === 2) m.brass(C, t, spb * 1.8, m.deg(T, dies[(d.i + 5) % dies.length], 2), 0.04 + phase * 0.008, { a: 0.08, r: 0.35, bright: 7 });
+  for (let k = 0; k < 2; k++) m.strings(C, t + k * spb * 0.5, spb * 0.42, m.deg(T, k ? chord + 4 : chord, 2), 0.034, { a: 0.01, r: 0.07, bright: 5 });
+  m.drum(C, t, 'taiko', inBar === 0 ? 0.42 : 0.26, 1.05);
+  if (phase && inBar % 2 === 1) m.drum(C, t + spb * 0.5, 'taiko', 0.2, 1.2);
 }

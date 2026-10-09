@@ -103,6 +103,7 @@ const FX_PRIO = {
   scrape: [1, 'mundo'],
   beastRoar: [5, 'mundo'],
   beastRoarBig: [5, 'mundo'],
+  colossusBreath: [3, 'mundo'],
   beastHurt: [4, 'mundo'],
   beastStep: [3, 'pasos'],
   fleshTear: [4, 'mundo'],
@@ -204,7 +205,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, ramImpact: 90, fleshBurst: 90 };
+const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -1434,6 +1435,16 @@ export class Audio {
       }
       // ---- la Bestia de Carne
       // bramido de toro con la garganta en carne viva
+      // el resuello de un coloso: inspira (ruido grave que sube) y suelta el
+      // aire despacio con un gruñido hondo que se oye de lejos
+      case 'colossusBreath': {
+        const k = o.k ?? 1;
+        d = this.out(P, { gain: 0.9 * k, verb: 0.75, life: 7, ref: 14, roll: 0.7, occlude: false });
+        this.noise(d, t, 1.7, { type: 'lowpass', f0: 150, f1: 420, gain: 0.3, a: 1.0, buf: this.brown, rate: 2, curve: 'lin' });
+        this.noise(d, t + 1.8, 2.4, { type: 'lowpass', f0: 520, f1: 130, gain: 0.36, a: 0.25, buf: this.brown, rate: 2, curve: 'lin' });
+        this.voice(d, t + 1.85, 2.2, { f0: 41, f1: 33, vowel: 'o', v1: 'u', gain: 0.2, vibD: 8, breath: 1.3, a: 0.35, rasp: 0.9, jit: 30 });
+        break;
+      }
       case 'beastRoar':
       case 'beastRoarBig': {
         const big = name === 'beastRoarBig';
@@ -2736,9 +2747,12 @@ export class Audio {
     if (slowTick) {
       this._slow = 0.1;
       const bed = ZONE_BED[z] || ZONE_BED.city;
-      const w = this.layerGain(this.L.wind, bed[0] * (0.45 + this.gust * 0.9), 0.3);
+      // en lo alto de un coloso, el viento sopla más fuerte y más agudo
+      const cl = game.finale && game.finale.climb;
+      const hk = cl && cl.active ? clamp((cp.y - 3) / 14, 0, 1) : 0;
+      const w = this.layerGain(this.L.wind, bed[0] * (0.45 + this.gust * 0.9) * (1 + hk * 1.4), 0.3);
       if (w) {
-        const wf = 260 + this.gust * 520;
+        const wf = (260 + this.gust * 520) * (1 + hk * 0.5);
         this.setP(w.bp[0].frequency, wf, 0.3);
         this.setP(w.bp[1].frequency, wf * 1.23, 0.3);
         this.setP(w.lp.frequency, OUTDOOR[z] ? 9000 : 450, 0.5);
@@ -2848,6 +2862,11 @@ export class Audio {
     // sube deprisa y baja despacio: no «bombea» al perder de vista a un enemigo
     this.combatK += (combat - this.combatK) * Math.min(1, dt * (combat > this.combatK ? 2.5 : 0.25));
     this.score.setIntensity(play ? clamp((this.fear - 0.12) / 0.7, 0, 1) : 0, clamp(this.combatK, 0, 1));
+    // encima de un coloso, la música de su pelea se vuelve heroica (entra
+    // deprisa al agarrarse; se va despacio al caer)
+    const onCol = !!(game.finale && game.finale.climb && game.finale.climb.active);
+    this.climbK = (this.climbK || 0) + ((onCol ? 1 : 0) - (this.climbK || 0)) * Math.min(1, dt * (onCol ? 1.6 : 0.35));
+    this.score.setClimb(this.climbK);
 
     // música: explícita (título, jefes, final) o la de la zona
     const cur = this.score.cur ? this.score.cur.name : null;
