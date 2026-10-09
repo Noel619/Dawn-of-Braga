@@ -5,7 +5,6 @@ import { clamp, damp, dampAngle, angleDiff, smoothstep } from '../core/util.js';
 
 const _dir = new THREE.Vector3();
 const _tp = new THREE.Vector3();
-const _tp2 = new THREE.Vector3();
 const camBox = (b) => b.cam !== false;
 // lo más que se arrima la cámara al pivote (más cerca, en vez de meterse en
 // el muro, sube por encima de la cabeza)
@@ -177,13 +176,6 @@ export class CameraRig {
       const d = this.body.ray(this.pivot, _tp.copy(dir).negate(), want + 0.3);
       if (d !== Infinity) hit = Math.min(hit, d);
     }
-    // la piel y la ropa del coloso al que se trepa (el vuelo de la capa tapa
-    // más que sus cápsulas): desde un metro del jugador hacia la cámara
-    if (this.skin && want > 1.3) {
-      _tp.copy(dir).negate();
-      const d = this.skin.raycast(_tp2.copy(this.pivot).addScaledVector(_tp, 1.0), _tp, want - 0.7, 0.45);
-      if (d !== Infinity) hit = Math.min(hit, d + 1.0);
-    }
     let allowed = want;
     if (hit !== Infinity) allowed = Math.max(MIN_D, hit - 0.28);
     // holgura: el rayo da con el muro, pero la cámara no es un punto (su
@@ -206,9 +198,26 @@ export class CameraRig {
     this.lift = damp(this.lift, lift, lift > this.lift ? 16 : 6, dt);
 
     cam.position.set(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist + this.lift, this.pivot.z - dir.z * this.curDist);
-    // no bajar del suelo
-    const minY = (F ? F.y - 1.25 : player.visY) + 0.3;
-    if (cam.position.y < minY) cam.position.y = minY;
+    // no bajar del suelo (trepando a un coloso, la cámara puede quedar por
+    // debajo de quien trepa, mirando cuesta arriba, pero no bajo el suelo)
+    let minY = player.visY + 0.3;
+    if (F) {
+      const gy = col.groundHeight(cam.position.x, cam.position.z, 0.2, F.y);
+      minY = Math.max(gy + 0.5, F.y - 4.5);
+    }
+    if (cam.position.y < minY) {
+      cam.position.y = minY;
+      // (subida, el rayo de antes ya no vale: el cuerpo del coloso, otra vez)
+      if (this.body) {
+        _tp.subVectors(cam.position, this.pivot);
+        const L = _tp.length();
+        if (L > 0.5) {
+          _tp.multiplyScalar(1 / L);
+          const d = this.body.ray(this.pivot, _tp, L);
+          if (d < L) cam.position.copy(this.pivot).addScaledVector(_tp, Math.max(MIN_D, d - 0.28));
+        }
+      }
+    }
     // pegada a la cabeza (de espaldas a un muro), el cuerpo taparía media
     // pantalla: mientras tanto no se dibuja
     const body = player.rig && player.rig.joints.hips;

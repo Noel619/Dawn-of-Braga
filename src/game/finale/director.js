@@ -274,7 +274,6 @@ export class Finale {
     g.extraTargets = null;
     g.camRig.body = null;
     g.camRig.focus = null;
-    g.camRig.skin = null;
     if (this.stage !== 'burst' && g.atmo) g.atmo.override = null;
     if (g.camRig) {
       g.camRig.distBias = 0;
@@ -796,6 +795,8 @@ export class Finale {
     d.st = 'fight';
     d.stT = 0;
     this.climb.boss = d;
+    // (la cámara no se mete detrás de sus brazos)
+    g.camRig.body = d.col;
     g.activeBoss = d.proxy;
     g.extraTargets = [d.proxy];
     g.setLock(d.proxy);

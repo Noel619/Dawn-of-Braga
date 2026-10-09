@@ -17,6 +17,8 @@
 import * as THREE from 'three';
 import { DEO_CLIPS as C, deoRig, DeoArms } from './deo_anim.js';
 import { SkinSurface } from './surface.js';
+import { ColBody } from './colbody.js';
+import { DEO_ARMS, fingerJoints } from '../../entities/colossus/deo_skeleton.js';
 import { sigilDecal } from '../../entities/colossus/sigil_decal.js';
 import { ColFX } from '../../entities/colossus/colfx.js';
 import { Debris } from './debris.js';
@@ -99,6 +101,13 @@ export class DeoBoss {
     };
     this.surface = new SkinSurface(M, [{ mesh: arm(4), tag: 'brazo4', zone: armZone('brazo4') }, { mesh: arm(5), tag: 'brazo5', zone: armZone('brazo5') }, ...this.mask.map((m) => ({ mesh: m, tag: 'mascara', zone: maskZone }))]);
     this.surface.enabled = (z) => this.zoneOn(z);
+    // su cuerpo para la cámara (no se queda detrás de un brazo, del tronco o
+    // de la cabeza: el brazo delantero que agarra la torre tapaba al que
+    // trepaba por el otro)
+    this.col = new ColBody();
+    // (las falanges de cada dedo, pegadas al hueso de la segunda: los dedos
+    // se curvan, no siguen rectos)
+    this.fingers = DEO_ARMS.map((a, i) => fingerJoints(a).map((fj) => ({ base: `a${i}f${fj.f}`, b: `a${i}f${fj.f}b`, o2: fj.k2.clone().sub(fj.k1), o3: fj.tip.clone().sub(fj.k1), r: fj.r })));
     // (los antebrazos, tendidos hacia la plaza, se andan de pie)
     this.standY = 0.45;
     // efectos: los ojos y la boca arden por dentro
@@ -321,7 +330,42 @@ export class DeoBoss {
     this._falling(dt);
     // la piel por la que se trepa, con la pose de este fotograma
     this.surface.update();
+    this._colBody();
     if (!climb.active) this._push();
+  }
+  // Cápsulas por los tramos de los seis brazos, el tronco y la cabeza (sólo
+  // para la cámara; no la del brazo por el que se trepa: se taparía a sí mismo)
+  _colBody() {
+    const B = this.M.byName,
+      C = this.col;
+    const W = (n, o) => B[n].getWorldPosition(o);
+    const climb = this.g.finale.climb;
+    const on = climb.active ? climb.zone : null;
+    C.begin();
+    for (let i = 0; i < 6; i++) {
+      if (on === 'brazo' + i) continue;
+      C.add(W(`a${i}s`, _v), W(`a${i}e`, _v2), 2.1, false);
+      C.add(W(`a${i}e`, _v), W(`a${i}w`, _v2), 1.6, false);
+      // la mano y los dedos (los de delante cuelgan sobre las torres)
+      for (const F of this.fingers[i]) {
+        const bb = B[F.b];
+        W(`a${i}w`, _v);
+        W(F.base, _v2);
+        C.add(_v, _v2, 1.4, false);
+        bb.getWorldPosition(_v);
+        C.add(_v2, _v, F.r * 1.15, false);
+        _v3.copy(F.o2).applyMatrix4(bb.matrixWorld);
+        C.add(_v, _v3, F.r * 1.05, false);
+        _v.copy(F.o3).applyMatrix4(bb.matrixWorld);
+        C.add(_v3, _v, F.r * 0.9, false);
+      }
+    }
+    C.add(W('body', _v), W('chest', _v2), 6, false);
+    C.add(W('chest', _v), W('neck', _v2), 4.5, false);
+    if (on !== 'mascara') {
+      const h = W('head', _v);
+      C.add(h, h, 4.2, false);
+    }
   }
 
   // ---------------------------------------------------------- pelea

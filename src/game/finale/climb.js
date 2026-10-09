@@ -365,7 +365,6 @@ export class Climb {
       else p.anim.play(PLAYER_CLIPS.cl_fall, { blend: 0.12 });
     }
     g.camRig.focus = null;
-    g.camRig.skin = null;
     this.boss && this.boss.onClimb && this.boss.onClimb(false, z);
   }
   // el coloso se ha ido (muere, se reinicia): suelta sin más
@@ -386,7 +385,6 @@ export class Climb {
     this.cand = null;
     this.shake = this.shakeWarn = 0;
     this.g.camRig.focus = null;
-    this.g.camRig.skin = null;
   }
   _gear(on) {
     const p = this.g.player;
@@ -451,7 +449,7 @@ export class Climb {
     // aguante
     const stand = this.mode === 'stand';
     const moving = this.moving > 0.15;
-    let dst = stand ? -30 : moving ? 5.2 : 3;
+    let dst = stand ? -30 : moving ? 4.4 : 2.6;
     if (this.grip) dst = stand ? 3 : 13;
     if (this.act === 'charge') dst = sig ? 2.5 : 6;
     if (this.shake > 0.05 && !stand) dst += 6 * this.shake;
@@ -1084,8 +1082,6 @@ export class Climb {
     // (el foco, el pecho del jugador)
     this.camFocus.set(0, 1.25, 0).applyQuaternion(this.quat).add(p.body.pos);
     cr.focus = this.camFocus;
-    // (la cámara no se queda tras la ropa del coloso)
-    cr.skin = this.surf;
     const lk = g.input.look(0);
     this.noLookT = Math.abs(lk.x) + Math.abs(lk.y) > 0.002 ? 0 : this.noLookT + dt;
     if (this.noLookT > 0.9 && dt > 0) {
@@ -1099,7 +1095,16 @@ export class Climb {
       let d = want - cr.yaw;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       cr.yaw += d * (1 - Math.exp(-dt * 1.2));
-      const pw = this.mode === 'stand' ? 0.42 : 0.22;
+      // de pie, la cámara sigue la cuesta: subiendo por el antebrazo o por la
+      // cola mira hacia arriba, hacia donde se va (si no, sólo se ve la piel
+      // de delante); colgado, casi a nivel
+      let pw = 0.12;
+      if (this.mode === 'stand') {
+        const t = _v.set(Math.sin(cr.yaw), 0, Math.cos(cr.yaw));
+        t.addScaledVector(N, -t.dot(N));
+        const up = t.lengthSq() > 1e-4 ? Math.asin(clamp(t.normalize().y, -1, 1)) : 0;
+        pw = clamp(0.42 - up * 1.1, -0.5, 0.6);
+      }
       cr.pitch += (pw - cr.pitch) * (1 - Math.exp(-dt * 1.2));
     }
   }
