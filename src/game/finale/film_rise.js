@@ -15,7 +15,7 @@
 // ruge y le lanza hacia el sur: el vuelo, a cámara lenta (¡Cúbrete!), y el
 // tejado del establo de los Pellejeros.
 import * as THREE from 'three';
-import { sm, smoother, lerp, easeIn, easeOut } from './film.js';
+import { sm, smoother, lerp, easeIn } from './film.js';
 import { FP } from './film_player.js';
 import { CISTERN, PIT_SLAB } from '../../world/level_finale.js';
 import { clamp } from '../../core/util.js';
@@ -600,13 +600,4 @@ function _burstDome(D, cz) {
   }
   D.debris.burst(new V3(0, CISTERN.DOME, cz), 40, { speed: 9, up: 12, size: 1.1, spread: 5 });
   g.fx.blood.emit(0, CISTERN.DOME, cz, 140, { color: [0.42, 0.4, 0.37], speed: 10, life: 3, up: 4, gravity: 0.5 });
-}
-
-// ======================================================================
-// ACTO 2 (y la segunda mitad del 1): en construcción
-// ======================================================================
-export function* actGrab(D, o) {
-  void D;
-  void o;
-  void easeOut;
 }

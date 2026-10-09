@@ -506,6 +506,62 @@ export function buildNE(ctx, S, L) {
   L.map.push({ id: 'tintoreros', r: [22, -32, 34, -20] }, { id: 'tintoreros', r: [3.5, -24.5, 22, -22] }, { id: 'tintoreros', r: [22, -20, 24.5, -3] }, { id: 'tintoreria', r: [34, -32, 42, -20] });
 }
 
+// El techo del establo con el agujero por donde cae el jugador (la película
+// del jefe final): tablas alrededor, las vigas partidas colgando y paja.
+function stableHole(ctx, room) {
+  const wb = ctx.wb;
+  const t = 0.35,
+    g1 = 3.1;
+  const X0 = 30 + t,
+    X1 = 38.5 - t,
+    Z0 = 19.5 + t,
+    Z1 = 31 - t;
+  // el agujero
+  const hx0 = 32.1,
+    hx1 = 34.7,
+    hz0 = 23.4,
+    hz1 = 26.0;
+  ctx.beginGroup('wreck:establo:techoRuin');
+  const ceil = (a, b, c, d) => wb.box('wooddark', a, g1, b, c, g1 + 0.05, d, { faces: 'b', ao: false, room, tint: [0.62, 0.56, 0.5] });
+  ceil(X0, Z0, X1, hz0);
+  ceil(X0, hz1, X1, Z1);
+  ceil(X0, hz0, hx0, hz1);
+  ceil(hx1, hz0, X1, hz1);
+  // las vigas (las que cruzan el agujero, partidas y colgando)
+  const rng = new RNG(1412);
+  for (let z = Z0 - t + 1.1; z < Z1 + t - 0.6; z += 1.7) {
+    if (z < hz0 - 0.1 || z > hz1 + 0.1) {
+      wb.box('timber', X0, g1 - 0.22, z - 0.1, X1, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
+      continue;
+    }
+    wb.box('timber', X0, g1 - 0.22, z - 0.1, hx0 - 0.1, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
+    wb.box('timber', hx1 + 0.1, g1 - 0.22, z - 0.1, X1, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
+    for (const [x, s] of [
+      [hx0 - 0.1, 1],
+      [hx1 + 0.1, -1],
+    ]) {
+      wb.push();
+      wb.translate(x, g1 - 0.1, z);
+      wb.rotateZ(s * rng.range(0.7, 1.1));
+      wb.box('timber', 0, -0.1, -0.1, s * rng.range(0.8, 1.3), 0.1, 0.1, { ao: false, room });
+      wb.pop();
+    }
+  }
+  // tablas rotas por el borde del agujero
+  for (let i = 0; i < 9; i++) {
+    const side = i % 4;
+    const x = side === 0 ? hx0 : side === 1 ? hx1 : rng.range(hx0, hx1),
+      z = side === 2 ? hz0 : side === 3 ? hz1 : rng.range(hz0, hz1);
+    wb.push();
+    wb.translate(x, g1 - 0.02, z);
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateX(rng.range(0.6, 1.2));
+    wb.box('planks', -0.12, -rng.range(0.4, 0.9), -0.02, 0.12, 0, 0.02, { ao: false, room, tint: [0.62, 0.56, 0.5] });
+    wb.pop();
+  }
+  ctx.endGroup();
+}
+
 // ======================================================================== SURESTE
 // Corral de los Pellejeros con su establo: se entra desde la plaza y desde la
 // Calle de la Herrería; una puerta atrancada lo une con los Pellejeros (atajo
@@ -551,8 +607,16 @@ export function buildSE(ctx, S, L) {
 
   // --- establo (visitable)
   const room = 'establo';
-  house(ctx, { x0: 30, z0: 19.5, x1: 38.5, z1: 31, front: 'w', seed: 1409, h: 6, style: 'stone', hollow: true, room, doors: [{ side: 'w', z: 25, w: 1.8, h: 2.6 }, { side: 'n', x: 34.2 }], jetty: 0, floorMat: 'dirt', chimney: false });
+  // (su tejado se hunde en la película del jefe final: el gigante tira al
+  // jugador por encima de la ciudad y cae aquí, en la paja; ver
+  // finale/film_grab.js)
+  house(ctx, { x0: 30, z0: 19.5, x1: 38.5, z1: 31, front: 'w', seed: 1409, h: 6, style: 'stone', hollow: true, room, doors: [{ side: 'w', z: 25, w: 1.8, h: 2.6 }, { side: 'n', x: 34.2 }], jetty: 0, floorMat: 'dirt', chimney: false, wreck: 'establo', ceilGroup: 'wreck:establo:techo' });
   wb.setRoom(room);
+  stableHole(ctx, room);
+  // el montón de paja de en medio (y unas balas alrededor)
+  P.hayMound(ctx, 33.2, 0, 24.6, 1.9, 1409);
+  P.hay(ctx, 31.4, 0, 22.2, -0.4);
+  P.hay(ctx, 34.6, 0, 27.4, 1.2);
   // cuadras
   for (const zz of [22.4, 25.8]) {
     wb.box('planks', 35.1, 0, zz - 0.05, 38.15, 1.35, zz + 0.05, { ao: false, faces: 'tnsew' });

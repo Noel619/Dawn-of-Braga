@@ -228,7 +228,7 @@ function breakCabecera(D) {
   D.debris.burst(new V3(0, 5, -105), 50, { speed: 9, up: 5, size: 1.1, spread: 5, dir: new V3(0, 0, 0.8) });
   for (let k = 0; k < 5; k++) g.fx.blood.emit(rnd(-8, 8), rnd(1, 8), rnd(-106, -100), 40, { color: DUST_IN, speed: 6, life: 3, up: 1, gravity: 0.3 });
   a && a.play('wallBreak', { x: 0, y: 5, z: -105 }, { k: 2.2 });
-  a && a.play('glassBreak', { x: 0, y: 7, z: -104 }, { k: 1.4 });
+  a && a.play('crack', { x: 0, y: 7, z: -104 }, { k: 1.4 });
   a && a.play('pillarBreak', { x: -4, y: 4, z: -104 }, { k: 1.6 });
   g.camRig.shake(1);
   g.input.rumble(1, 1, 600);
@@ -408,7 +408,7 @@ export function* actNave(D, o = {}) {
   F.follow((dt, tt) => {
     const hd = G.head(_v);
     const u = sm(clamp(tt / 1.2, 0, 1));
-    return { pos: new V3(11.2, 1.8, -112.6), look: new V3(lerp(-1, hd.x, u), lerp(7, hd.y - 2, u), lerp(-124, hd.z, u)), fov: 70 };
+    return { pos: new V3(14.2, 2.0, -113.8), look: new V3(lerp(-1, hd.x, u), lerp(7, hd.y - 2, u), lerp(-124, hd.z, u)), fov: 66 };
   });
   F.hand = 0.06;
   yield* F.wait(0.25);
@@ -477,7 +477,7 @@ export function* actNave(D, o = {}) {
   });
   F.hand = 0.03;
   D.windK = 1;
-  a && a.play('wind', p.pos, { k: 1.2 });
+  a && a.play('leapWind', p.pos, { k: 1.2 });
   while (fly.t < 0.72) {
     yield;
     handsIK();
@@ -536,7 +536,7 @@ function setupStandalone(D, G) {
 function hideNaveFolk(g) {
   const hid = [];
   for (const e of g.enemies) {
-    if (e.dead || !e.obj.visible) continue;
+    if (e.dead) continue;
     if (e.pos.x < -14 || e.pos.x > 14 || e.pos.z < -113 || e.pos.z > -55) continue;
     e.scripted = true;
     e.obj.visible = false;
@@ -609,7 +609,7 @@ function* bannerRide(D, G, handsIK) {
   cloth.pin(3, 9, (o2) => hands(o2).add(_v2.set(0.15, 0, 0)));
   F.setP(hand.x, hand.y - 1.9, hand.z, Math.PI);
   F.pClip(FP.banner, { blend: 0.1 });
-  a && a.play('clothRip', hand, { k: 1.4 });
+  a && a.play('sackTear', hand, { k: 1.4 });
   g.camRig.shake(0.3);
   F.slow(0.6, 8);
   let t = 0;
@@ -623,7 +623,7 @@ function* bannerRide(D, G, handsIK) {
     // se rasga por la barra, de izquierda a derecha
     while (ri < rip.length && t > rip[ri]) {
       cloth.unpin(ri, 0);
-      a && a.play('clothRip', { x: B.x - B.w / 2 + (ri / 5) * B.w, y: B.y, z: B.z }, { k: 1.2 });
+      a && a.play('sackTear', { x: B.x - B.w / 2 + (ri / 5) * B.w, y: B.y, z: B.z }, { k: 1.2 });
       ri++;
     }
     // baja: primero un tirón y se queda colgado de un lado; luego cae

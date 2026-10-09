@@ -124,6 +124,33 @@ export function hay(ctx, x, y, z, rot = 0) {
   colOBB(ctx, x, z, 0.72, 0.47, rot, y, y + 0.8);
 }
 
+// Un montón de paja suelta (se cae en él desde un tejado): bultos aplastados
+// unos sobre otros, con briznas por el suelo; se pisa por encima.
+export function hayMound(ctx, x, y, z, r = 1.8, seed = 1) {
+  const rng = new RNG(seed);
+  const geo = new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+  for (let i = 0; i < 6; i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = i === 0 ? 0 : rng.range(0.4, r * 0.7);
+    const sx = rng.range(0.7, 1.1) * r * (i === 0 ? 1 : 0.6),
+      sz = rng.range(0.7, 1.1) * r * (i === 0 ? 1 : 0.6),
+      sy = rng.range(0.45, 0.6) * (i === 0 ? r * 0.6 : r * 0.4);
+    ctx.wb.geometry('straw', geo, M4().compose(V(x + Math.cos(a) * d, y - 0.05, z + Math.sin(a) * d), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rng.range(0, 6), 0)), V(sx, sy, sz)), { ao: false, tint: [0.9, 0.82, 0.62] });
+  }
+  // briznas por el suelo
+  for (let i = 0; i < 14; i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = rng.range(r * 0.8, r * 1.6);
+    ctx.wb.push();
+    ctx.wb.translate(x + Math.cos(a) * d, y + 0.01, z + Math.sin(a) * d);
+    ctx.wb.rotateY(rng.range(0, Math.PI));
+    ctx.wb.box('straw', -0.25, 0, -0.04, 0.25, 0.03, 0.04, { ao: false, faces: 't', tint: [0.8, 0.72, 0.5] });
+    ctx.wb.pop();
+  }
+  // (se pisa: un escalón bajo, con la forma del montón)
+  col(ctx, x - r * 0.75, y, z - r * 0.75, x + r * 0.75, y + r * 0.42, z + r * 0.75);
+}
+
 // Carro de madera (volcado o quemado).
 export function cart(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;

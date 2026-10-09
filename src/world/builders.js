@@ -1030,10 +1030,13 @@ function houseBody(ctx, s, sub) {
     // vigas y su colisión (la cámara no sube a la planta alta)
     for (const r of subtractRects([x0 + t - 0.01, z0 + t - 0.01, x1 - t + 0.01, z1 - t + 0.01], s.floorHoles ?? []))
       wb.box(s.floorMat ?? 'planks', r[0], -0.05, r[1], r[2], 0.02, r[3], { faces: 't', ao: false, room, uv: 0.5, tint: s.floorTint });
+    // (ceilGroup: el techo, en su grupo; algo lo atraviesa y se rompe)
+    if (s.ceilGroup) ctx.beginGroup(s.ceilGroup);
     wb.box('wooddark', x0 + t, g1, z0 + t, x1 - t, g1 + 0.05, z1 - t, { faces: 'b', ao: false, room, tint: [0.62, 0.56, 0.5] });
     const alongX = W >= D;
     if (alongX) for (let x = x0 + 1.1; x < x1 - 0.6; x += 1.7) wb.box('timber', x - 0.1, g1 - 0.22, z0 + t, x + 0.1, g1, z1 - t, { ao: false, room, faces: 'nsewb' });
     else for (let z = z0 + 1.1; z < z1 - 0.6; z += 1.7) wb.box('timber', x0 + t, g1 - 0.22, z - 0.1, x1 - t, g1, z + 0.1, { ao: false, room, faces: 'nsewb' });
+    if (s.ceilGroup) ctx.endGroup();
     ctx.col.add(x0, g1, z0, x1, h + 0.2, z1).cam = true;
     // la cámara se queda por debajo de las vigas (antes se metía entre ellas
     // y las atravesaba al andar); no estorba a nadie más

@@ -155,6 +155,8 @@ export class Finale {
     // el tejado del establo
     on('wreck:establo', !broken);
     on('wreck:establo:ruin', broken);
+    on('wreck:establo:techo', !broken);
+    on('wreck:establo:techoRuin', broken);
     this.worldK = k;
   }
   cpIndex(cp) {
