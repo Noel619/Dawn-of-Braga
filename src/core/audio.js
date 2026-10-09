@@ -445,6 +445,12 @@ export class Audio {
     this.idle(() => lib.drips());
   }
 
+  // (saltando una cinemática: el mundo calla un momento)
+  hushWorld(on) {
+    if (!this.ok) return;
+    this._hush = on;
+    this.worldBus.gain.setTargetAtTime(on ? 0 : this._paused ? 0.25 : 1, this.t(), on ? 0.05 : 0.3);
+  }
   setVolumes(music, sfx) {
     this.vol.music = music;
     this.vol.sfx = sfx;
@@ -2748,8 +2754,9 @@ export class Audio {
       this._slow = 0.1;
       const bed = ZONE_BED[z] || ZONE_BED.city;
       // en lo alto de un coloso, el viento sopla más fuerte y más agudo
+      // (en lo alto: trepando a un coloso o en la película del jefe final)
       const cl = game.finale && game.finale.climb;
-      const hk = cl && cl.active ? clamp((cp.y - 3) / 14, 0, 1) : 0;
+      const hk = Math.max(cl && cl.active ? clamp((cp.y - 3) / 14, 0, 1) : 0, (game.finale && game.finale.windK) || 0);
       const w = this.layerGain(this.L.wind, bed[0] * (0.45 + this.gust * 0.9) * (1 + hk * 1.4), 0.3);
       if (w) {
         const wf = (260 + this.gust * 520) * (1 + hk * 0.5);
@@ -2864,7 +2871,7 @@ export class Audio {
     this.score.setIntensity(play ? clamp((this.fear - 0.12) / 0.7, 0, 1) : 0, clamp(this.combatK, 0, 1));
     // encima de un coloso, la música de su pelea se vuelve heroica (entra
     // deprisa al agarrarse; se va despacio al caer)
-    const onCol = !!(game.finale && game.finale.climb && game.finale.climb.active);
+    const onCol = !!(game.finale && ((game.finale.climb && game.finale.climb.active) || game.finale.heroK > 0.5));
     this.climbK = (this.climbK || 0) + ((onCol ? 1 : 0) - (this.climbK || 0)) * Math.min(1, dt * (onCol ? 1.6 : 0.35));
     this.score.setClimb(this.climbK);
 

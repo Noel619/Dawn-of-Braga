@@ -53,7 +53,9 @@ function boot() {
       requestAnimationFrame(frame);
       return;
     }
-    game.update(dt);
+    // (saltar una cinemática: el juego corre varias veces por fotograma)
+    const n = game.ffSteps > 1 ? game.ffSteps : 1;
+    for (let i = 0; i < n; i++) game.update(dt);
     game.render();
     frames++;
     acc += dt;

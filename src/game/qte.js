@@ -64,6 +64,9 @@ export class QTE {
     if (!q) return;
     const inp = this.g.input;
     q.t += dt;
+    // (modo de pruebas: las pulsaciones se aciertan solas, o se fallan)
+    const auto = this.g.dev && this.g.dev.autoQTE;
+    if (auto && q.t > q.delay + 0.25) return this.finish(auto !== 'fail');
     if (q.t > q.delay) {
       if (inp.pressed(q.action)) {
         if (q.mash) {

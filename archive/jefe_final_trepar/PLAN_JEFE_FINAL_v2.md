@@ -1,0 +1,313 @@
+# Jefe final: el Turiferario y Deo Ignoto (Plan A)
+
+Plan de diseño y de trabajo del jefe final elegido el 8 de octubre de 2026, entre las tres propuestas de
+coloso (las otras dos quedan guardadas en `archive/colosos_propuestas/`, con su explicación).
+
+El jefe final deja de ser el Turiferario de cuatro metros y medio de la cisterna. En su lugar, una pelea
+a lo *Shadow of the Colossus* dentro de la ciudad: el arzobispo convertido en un coloso de carne de
+21 metros al que hay que treparle para apuñalar sus sigilos. Cuando muere, revienta, la nave de la
+catedral estalla desde dentro y detrás se alza su verdadera forma, Deo Ignoto, el dios que dormía en la
+cisterna: 56 metros de cuerpo (87 con las manos alzadas), máscara de bronce y seis brazos.
+
+## 1. El recorrido, de la cisterna al río
+
+1. **El arzobispo y el rito (cisterna).** Con el anillo se abre el sello y se cruza la niebla, como
+   antes, y **se pelea contra el arzobispo** (el Turiferario de siempre). Vencido, en vez de morir cae
+   de rodillas ante el altar del Dios Desconocido y empieza una cinemática: alza el incensario; el agua
+   de la cisterna hierve, la carne del dios le sube por las piernas, le envuelve y le arrastra hacia
+   arriba, a través de la cúpula. Temblor, polvo, fundido a negro: *«Arriba, la ciudad tiembla. Las
+   campanas de la Sé tocan solas.»* Los escombros de la cúpula ciegan la reja del río.
+2. **La subida.** De vuelta por la cripta hasta la nave: temblores, polvo que cae de las bóvedas,
+   rugidos lejanos, las campanas. Nada que pelear: es la calma antes de la tormenta.
+3. **El centro de la ciudad.** Al salir por la puerta de la Sé, el empedrado del atrio del sacrificio
+   revienta y se alza el Turiferario coloso; mientras sale, las manzanas entre el atrio y la plaza del
+   pan se vienen abajo en ola, de él hacia la cámara (plano general desde la Rúa da Sé). El campo de
+   batalla es todo el centro: el atrio, las ruinas del bloque y la plaza del pan. No hay muros
+   invisibles: si te vas lejos, el coloso se queda esperando con sus heridas y vuelve a rugir al verte.
+4. **La explosión.** Al apuñalar el núcleo del pecho cae de rodillas, se hincha y revienta en sangre y
+   ceniza de incienso; la campana cae tañendo y rueda. La nave estalla desde dentro (la fachada y las
+   torres quedan en pie) y Deo Ignoto se alza detrás (cinemática larga). Se enciende un altar nuevo en
+   el cruceiro de la plaza: el punto de control de la segunda pelea.
+5. **Deo Ignoto.** Pelea desde la plaza contra el dios anclado en la nave.
+6. **El río.** Muerto el dios, se desploma en el cráter de la nave. La escalera de la cripta sigue en
+   pie entre las ruinas; la reja del río está reventada (el dios salió por ahí). Por la galería, al
+   amanecer: la escena final de siempre.
+
+## 2. El Turiferario, coloso (fase 1)
+
+### Modelo (versión 2)
+
+El boceto era una sola masa con pocas formas. La versión de producción:
+
+- **Anatomía:** costillar con costillas talladas y esternón partido, clavículas, omóplatos que se marcan
+  al mover los brazos, columna con apófisis, cuello con tendones, cráneo dentro de la jaula, brazos de
+  hueso y piel con codo y muñeca marcados, manos de cinco dedos con falanges y uñas de hueso.
+- **Piernas de verdad** bajo el alba hecha jirones (para andar y pisotear), con los pies de carne y los
+  dedos fundidos; detrás, la **cola de cuerpos**: fieles fundidos con brazos, cabezas y espaldas que se
+  distinguen.
+- **Ropa:** casulla carmesí con pliegues, cenefas de oro con la cruz en Y por la espalda (el camino para
+  trepar), alba de lino manchada de cera y sangre, jirones que cuelgan (cada uno con sus huesos).
+- **Cabeza:** jaula de hierro con púas remachada, mitra partida en dos cuernos de hueso, aureola de
+  hierro con once cirios con sus goterones de cera.
+- **La campana mayor** con su inscripción, el yugo roto y la cadena de eslabones de verdad; arde por
+  dentro y echa llamas y humo por los agujeros.
+- **Puntos para la pelea:** sigilos del Pacto (nuca, dorso de la mano de la cadena, núcleo del pecho) y
+  las zonas por las que se trepa, marcadas en el propio modelo.
+
+### Esqueleto
+
+Raíz, pelvis, tres vértebras, cuello (dos), cabeza, mandíbula, clavículas, brazos, antebrazos, manos y
+dedos (tres falanges en los largos), piernas con rodilla, tobillo y dedos, seis huesos de cola, las dos
+puertas del costillar, la casulla (delante y detrás, con dos tramos) y ocho jirones del alba. La cola,
+la ropa y los jirones se mueven con muelles (inercia, rebote, arrastre); la cadena, con física de
+cuerda.
+
+### Animaciones
+
+Todas con anticipación, golpe y recuperación con inercia, y retrasos escalonados (cadera, pecho, brazo y
+campana llegan unos detrás de otros), sobre una capa procedural: respiración del costillar, latido de la
+carne, temblor de la aureola, la cabeza que sigue al jugador, pies plantados en el suelo por cinemática
+inversa y la cola que se arrastra por el empedrado.
+
+| Animación | Qué hace |
+|---|---|
+| Emerger | Sale del suelo del atrio, se yergue y ruge |
+| Reposo / acecho | Respira encorvado, la campana colgando |
+| Andar | Paso pesado, arrastrando la campana y la cola; cada pisada tiembla la cámara |
+| Girar | Se vuelve sobre los pies, con la campana y la cola detrás |
+| Barrido de campana | La lleva atrás y la suelta en horizontal a la altura de los pisos altos |
+| Mazazo | La alza sobre la cabeza y la descarga donde estás; se queda clavada |
+| Arrancar la campana | Tira de la cadena para sacarla del suelo |
+| Pisotón | Levanta el pie y lo planta: onda de choque |
+| Zarpazo y agarrón | La garra baja a por ti; si te coge, te levanta y te aprieta |
+| Coletazo | Barre por detrás con la cola de cuerpos |
+| Rugido | Echa la cabeza atrás; onda que aturde |
+| Sacudida | Se revuelve para quitarte de encima (al trepar) |
+| Sigilo herido | Se encoge de dolor y se lleva la mano a la herida |
+| De rodillas | Cae de rodillas con el costillar abierto de par en par |
+| Muerte | Se hincha y revienta |
+
+### Ataques
+
+| Ataque | Aviso | Golpe | Cómo se evita | Qué rompe |
+|---|---|---|---|---|
+| Barrido de campana | La campana va atrás, gruñido | Arco de 120° a 3–5 m del suelo | Rodar hacia él o alejarse | Balcones, pisos altos, tejados |
+| Mazazo | La campana sube, su sombra te sigue | Impacto, onda y fuego | Rodar a un lado en el último momento | El empedrado, lo que haya debajo |
+| Pisotón | Levanta el pie | Onda de 6 m | Alejarse de los pies | Carros, barriles, cajas |
+| Agarrón | La garra se abre sobre ti | Te atrapa: forcejear para soltarse | Rodar | — |
+| Coletazo | Gira la cadera | Barrido de 180° por detrás | Rodar por encima | El pórtico, estacas |
+| Rugido | Echa la cabeza atrás | Aturde en 12 m | Rodar justo a tiempo | — |
+| Lluvia de cera (fase 2) | Los cirios chisporrotean | Gotas ardientes con charco de fuego | Mirar arriba y apartarse | — |
+| Doble giro (fase 2) | Se agacha | Dos vueltas con la campana | Alejarse o pegarse a él | Todo lo que alcance |
+
+### Por dónde se trepa
+
+- **La cola**, cuando la arrastra: de la punta a los riñones y, por la cruz en Y de la espalda, hasta la
+  joroba y la nuca (**sigilo 1**).
+- **La cadena**, cuando la campana se queda clavada tras un mazazo: de la campana a la mano
+  (**sigilo 2**). Si tira de ella contigo encima, te vas con la campana.
+- **La garra**, cuando se queda plantada tras un agarrón fallido: de la mano al hombro y, por los
+  hombros, a la nuca.
+- **De rodillas** (sigilos 1 y 2 muertos): por la casulla hasta el costillar abierto y el núcleo
+  (**sigilo 3**).
+- En la joroba y en los hombros se puede estar de pie y recuperar aguante.
+
+### Fases
+
+1. Sigilos 1 y 2 vivos: ataques básicos.
+2. Muerto uno de los dos: más rápido, lluvia de cera, doble giro, la campana arde más.
+3. Muertos los dos: de rodillas con el costillar abierto; se sacude, ruge y escupe ascuas hasta que le
+   apuñalas el núcleo.
+
+## 3. Deo Ignoto (fase 2)
+
+### Modelo (versión 2)
+
+Máscara de bronce romana con más detalle (labios, párpados, la grieta con la carne que asoma, la diadema
+con DEO IGNOTO), cuerpo de carne que sale de la nave hasta la cintura con caras de fieles grandes como
+casas, los tubos del órgano clavados en la espalda, seis brazos de tres tramos con manos de cinco dedos
+que agarran y se plantan, raíces de carne que revientan el suelo de la nave y la nave en ruinas a su
+alrededor.
+
+### Cómo se pelea
+
+- **Brazos de delante:** agarran las torres; cuando ruge, caen sillares de las torres a la plaza.
+- **Brazos de los lados:** sobre los tejados de los barrios; rastrillan los tejados y llueven tejas y
+  vigas sobre la plaza.
+- **Brazos alzados:** golpean la plaza por turnos (sombra y destello antes del golpe). La mano se queda
+  plantada unos segundos: se trepa a ella, se sube por el antebrazo (se corre por encima cuando está
+  casi horizontal) y el brazo se alza contigo. En el codo está su **sigilo**: muerto, el brazo se
+  desploma sobre las casas.
+- **La máscara:** con los dos brazos alzados muertos, el dios ruge, suelta las torres y baja la cabeza
+  hasta la plaza. Se trepa por la grieta hasta las cuencas y se apuñalan los **dos ojos**. La máscara se
+  parte y el dios se desploma.
+
+## 4. Trepar
+
+Se trepa por la **piel que se ve** (`surface.js`): las mallas de carne y de ropa del coloso consultadas en
+la CPU con la misma deformación que en la tarjeta gráfica. Quien trepa va pegado a un triángulo (con sus
+coordenadas baricéntricas), así que sigue al cuerpo cuando anda, se dobla o se sacude y nunca flota ni se
+mete dentro. Manos y pies se plantan en la piel y se sueltan de uno en uno; colgado, el cuerpo es un
+péndulo que se mece con los tirones. La ropa de una capa se trepa siempre por fuera; ni techos, ni lo que
+queda a ras de suelo por debajo (la palma de Deo plantada), ni los dedos de Deo, ni el interior de su
+máscara. Si te atascas en un hueco, alargas la mano por encima del borde o en diagonal.
+
+- **Agarrarse:** junto a una parte por la que se trepa aparece el aviso; con *interactuar* (E / A) te
+  agarras. Al caer junto a él o rodar contra una de esas partes también te agarras.
+- **Moverse:** con el stick o WASD por la superficie (arriba, abajo, a los lados); en las partes de menos
+  de unos 45° se anda de pie, hacia donde mira la cámara.
+- **Aguante:** colgado se gasta; si se acaba, te sueltas. De pie en la joroba o en los hombros se
+  recupera.
+- **Aferrarse:** cuando se sacude, mantén la guardia (clic derecho / LB) o te tira; aferrado gasta más.
+- **Apuñalar:** mantén el ataque para cargar la puñalada y suéltalo; en un sigilo hiere de verdad, en
+  la carne apenas.
+- **Soltarse:** con la esquiva. Caer desde alto hace daño según la altura.
+- **Cámara:** detrás del jugador, apartada de la superficie, y siempre libre para mirar al coloso; de pie
+  sigue la cuesta (subiendo por el antebrazo o por la cola mira hacia arriba) y no se mete detrás de la
+  ropa ni de los brazos del dios (sus cuerpos en cápsulas, `colbody.js`).
+
+## 5. La ciudad se rompe
+
+Las casas del atrio y de la Calle de la Catedral, el pórtico, los muros que flanquean la Sé y el atrezo
+(carro, barriles, cajas, la pira, las estacas, el cruceiro) se construyen como piezas que se pueden
+romper: piso alto, tejado, balcones. Al golpe se cambian por ruinas, saltan cascotes con física y polvo,
+y lo que cae a la plaza deja montones con su colisión. La campana, los pies, la cola y los brazos del
+dios rompen lo que tocan. Si mueres, todo vuelve a estar entero; si ganas, la plaza queda en ruinas para
+siempre. La nave reventada es otra versión de la catedral, con la escalera de la cripta transitable.
+
+## 6. Muerte, puntos de control y guardado
+
+- Fase 1: si mueres, vuelves al Altar de la Cripta y el coloso espera en la plaza (entero, como al
+  principio). La pelea empieza al volver a salir por la puerta de la Sé.
+- Fase 2: el altar del cruceiro (se enciende tras la explosión). Deo Ignoto vuelve a empezar.
+- Banderas nuevas: `finale:rite` (visto el rito), `boss:turiferario` (fase 1 ganada: nave en ruinas) y,
+  al morir el dios, `boss:turibulario` (la de siempre: abre la reja del río y el resto del juego sigue
+  igual).
+
+## 7. Música, sonido e interfaz
+
+- Fase 1: el *Dies irae* del Turiferario (y su segunda fase). Fase 2: tema nuevo de órgano lleno, coro
+  que canta *Deo ignoto* y tambores graves. Después del dios, silencio y el amanecer.
+- Sonidos nuevos: pisadas colosales con cascotes, la campana (barrido, golpe, tañido al rodar), la
+  cadena, rugidos, crujidos de casas que se vienen abajo, la cera que chisporrotea, la puñalada en el
+  sigilo, la voz del dios y la máscara que se raja.
+- Barra del jefe con el nombre y los sigilos que le quedan; avisos de agarrarse, aferrarse y apuñalar.
+
+## 8. Modo de pruebas y editor
+
+- Escribir la **contraseña del modo de pruebas** en cualquier momento lo abre (además de F2 en localhost).
+  La contraseña no se guarda en claro en ningún sitio, tampoco en este documento: sólo su huella.
+- Sección **Instancias** para ir directo: el rito, la pelea del Turiferario, el Turiferario de
+  rodillas, la explosión y Deo Ignoto, la máscara, el final; y las otras peleas (el Empalado, la huida
+  de la Bestia, la caza del Descoyuntado).
+- Controles del jefe: matar el sigilo actual, saltar de fase, congelarlo, ver las zonas de trepar y los
+  golpes.
+- **Modo editor:** cámara libre que se separa del jugador, mover al jugador adonde mira la cámara,
+  detener el tiempo y leer coordenadas.
+
+## 9. Arquitectura
+
+```
+src/entities/colossus/   modelos y escultor
+  sculpt.js              escultor (sólo geometría: también corre en un Web Worker)
+  model.js               ColossusModel: esqueleto, mallas con piel y piezas rígidas
+  turiferario.js         el Turiferario, versión 2
+  deo.js                 Deo Ignoto, versión 2
+  build_worker.js        genera las mallas en segundo plano
+src/game/finale/         la pelea
+  director.js            el guion: el rito, la subida, las fases, las cinemáticas y los puntos de control
+  colossus_rig.js        clips, mezcla, capa procedural, muelles e IK de los colosos
+  turiferario_boss.js    IA, ataques, campana y cadena, sigilos
+  deo_boss.js            IA de los brazos, sigilos, la máscara
+  climb.js               trepar: superficies, aguante, sacudidas, puñaladas, caídas, cámara
+  wrecks.js              la ciudad que se rompe
+src/dev/                 modo de pruebas: contraseña, instancias y editor
+archive/colosos_propuestas/  las propuestas no elegidas (y el boceto del Plan A)
+```
+
+## 10. Fluidez
+
+- Las mallas se generan una vez, en un Web Worker que arranca al cargar el juego: cuando el jugador
+  llega al final (o pide la instancia en el modo de pruebas) ya están hechas.
+- Piel con huesos en la tarjeta gráfica; luces del coloso por el pool fijo de ocho (ningún shader se
+  recompila en plena pelea); cascotes, partículas y fuegos con presupuesto fijo y reutilizados.
+- La niebla y la distancia de dibujo se ajustan a cada fase para ver al gigante sin dibujar de más.
+
+## 11. Pruebas
+
+- Un jugador robot que hace la pelea entera (se agarra, trepa, apuñala, esquiva) y comprueba que se
+  puede ganar, morir y reintentar.
+- `progress.mjs` actualizado: la progresión completa con el final nuevo.
+- Capturas de cada animación y de cada momento de la pelea; medición de fotogramas y de llamadas de
+  dibujo.
+
+## 12. Orden de trabajo
+
+1. Archivar los bocetos y la contraseña del modo de pruebas.
+2. Modelos versión 2 del Turiferario y de Deo Ignoto, generados en segundo plano.
+3. Sistema de animación de los colosos y todas sus animaciones.
+4. El guion: el rito, la subida y el coloso en la plaza, con sus ataques.
+5. Trepar, sigilos y puñaladas.
+6. La ciudad que se rompe.
+7. La explosión, Deo Ignoto y su pelea; el camino al río.
+8. Instancias y editor en el modo de pruebas.
+9. Pruebas, fluidez, documentación.
+
+## 13. Estado (hecho)
+
+Todo el plan está hecho y probado. Lo que cambió al construirlo:
+
+- **El desplome de Deo.** Con la cara bajando sobre la fachada en pie, la máscara (16 por 21 metros) quedaba
+  mirando al suelo y no cabía entre las torres. Ahora, muertos los brazos alzados, se encabrita rugiendo y **se
+  desploma sobre la fachada, que revienta** con las torres (grupos `fachada` y `fachadaRuin`): queda tumbado como
+  una esfinge, hundido en la cisterna, con el cuello doblado hacia atrás, el mentón en el empedrado y la cara
+  vuelta hacia el atrio; las manos de delante se apoyan a los lados de la cara y las de los lados en los tejados.
+  Cinemática de tres planos con el jugador apartado de donde cae la cabeza. La grieta se trepa del mentón a la
+  cuenca izquierda (en el fondo de cada cuenca se está de pie, junto al ojo) y, por encima del puente de la nariz,
+  a la derecha. Muerto, la máscara se parte, se encabrita y se hunde de espaldas en la cisterna; queda la brecha
+  por la que se entra en la nave hacia la cripta. Si mueres antes, la fachada vuelve a estar en pie.
+- **La puerta de la Sé** no se podía cruzar ni abierta: la rejilla transitable no pintaba el grueso del muro de la
+  fachada y levantaba un muro invisible. Arreglado (ahora la cierran sus sillares y la puerta).
+- **El rito** usa al arzobispo de siempre como actor, la cúpula se queda con un agujero en la clave y la corona de
+  velas cae; la reja del río la ciegan los escombros hasta que muere el dios.
+- **La ciudad que se rompe:** los tejados de las casas de la plaza y lo alto de los muros que flanquean la Sé (cada
+  pieza en dos grupos, entera y hundida) y el carro, los barriles y la caja (rompibles de los de siempre, zona
+  `largo`). Cargar a mitad del final es como volver a empezar: todo entero.
+- **El cruceiro** sigue siendo altar tras la victoria (un sitio para descansar en la plaza).
+- **Sigilos:** cada uno con un brillo que late, para leerlos de lejos entre la niebla y la ceniza.
+- **La cadena de la campana clavada** hace un bucle sobre el empedrado: donde va tendida y baja se anda por encima
+  (colgado de ella el jugador se metía bajo el suelo) y, donde sube hacia la mano, se trepa colgado; el cuerpo sigue
+  sus tirones con algo de inercia y el paso de ir de pie a colgado (en todas las rutas) se funde en vez de saltar.
+  Los eslabones siguen a la mano aunque se salga de la plaza (antes el tramo de la mano se estiraba metros).
+
+Pruebas (con `npx vite --port 5199` en marcha):
+
+- `tools/finale.mjs`: un robot juega el final entero agarrándose, trepando y apuñalando de verdad: la nuca por la
+  cola y la espalda, la mano por la cadena tras un mazazo, el núcleo de rodillas, los dos brazos de Deo plantados,
+  los dos ojos; luego entra en la nave por la brecha hasta la reja de la cripta.
+- `tools/progress.mjs`: la progresión completa del juego, ahora con el rito, el Turiferario, Deo y el río.
+- Morir en cada fase (vuelta al altar, el coloso esperando, la fachada en pie, la plaza entera), guardar y cargar
+  a mitad de pelea y tras la victoria: comprobados.
+
+Medición (CPU de la lógica por fotograma, en el contenedor de pruebas; el dibujo allí va por software y no es
+representativo): la plaza sola 4,8 ms; el Turiferario 4,3 ms; la nave estallando 3,2 ms; Deo 4,8 ms; Deo tumbado
+3,8 ms. Llamadas de dibujo: 300–700 según la fase; triángulos: de 340 000 (la plaza) a 740 000 (Deo tumbado, con la
+fachada en ruinas).
+
+## 14. Revisión (9 de octubre de 2026), tras jugarlo
+
+Lo que no funcionaba al probarlo y cómo quedó:
+
+- **Morir en la pelea** dejaba al jugador con animaciones rotas (moviéndose en direcciones sin sentido): ahora,
+  muerto colgado del coloso, cae con su animación de muerte, y las pruebas lo comprueban.
+- **Nada más llegar, el coloso**: ya no; primero se pelea contra el arzobispo en la cisterna y luego el rito.
+- **El espacio mínimo** (se bailaba alrededor de él en el atrio) y **se le atravesaba**: el campo de batalla es todo
+  el centro (`field.js`: dónde quedan casas en pie, para que el coloso se arrime a las fachadas sin meterse en
+  ellas y su cola y su campana choquen contra los muros), y su cuerpo empuja al jugador (`colbody.js`).
+- **La escalada** (el personaje iba volando, las animaciones eran pésimas): rehecha sobre la piel que se ve, con
+  manos y pies que se plantan, el cuerpo que cuelga y la cámara que acompaña. El robot de `tools/finale.mjs`
+  destapó y ayudó a arreglar temblores en lo curvo, «arriba» invertido en la cadena en comba, colarse bajo la ropa
+  o bajo la mano plantada y huecos donde uno se quedaba encajado.
+- **Los sigilos** parecían círculos flotando: ahora están tallados en la piel (tajos que arden, sangre negra).
+- **El aura de los colosos:** la salida con la ciudad derrumbándose, la música que se vuelve heroica al subirse,
+  el viento en lo alto, el resuello del coloso, la campana que tañe al estrellarse contra las casas.

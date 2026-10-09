@@ -55,6 +55,14 @@ export class Atmosphere {
   update(dt, player) {
     const T = this.override ? { ...this.target, ...this.override } : this.target;
     const k = 1.6;
+    // (un corte de plano: la niebla y la luz cambian de golpe)
+    if (this.override && this.override.snap) {
+      this.override.snap = false;
+      for (const key of ['density', 'hemi', 'moon', 'vol', 'ash', 'exposure', 'sat', 'lamp', 'bloom']) this.cur[key] = T[key];
+      this.fogC.set(T.fog);
+      this.skyC.set(T.sky);
+      if (T.moonPos) this.moon.position.set(...T.moonPos);
+    }
     for (const key of ['density', 'hemi', 'moon', 'vol', 'ash', 'exposure', 'sat', 'lamp', 'bloom']) this.cur[key] = damp(this.cur[key], T[key], k, dt);
     this.fogC.lerp(tmpC.set(T.fog), 1 - Math.exp(-k * dt));
     this.skyC.lerp(tmpC.set(T.sky), 1 - Math.exp(-k * dt));
@@ -74,10 +82,12 @@ export class Atmosphere {
     U.uSkyGlow.value = this.name === 'dawn' ? 0 : this.name === 'city' || this.name === 'ramparts' ? 1 : 0;
     U.uSun.value = damp(U.uSun.value, this.name === 'dawn' ? 1 : 0, 1, dt);
     // luz del amanecer: rasante desde el norte
-    const mp = this.name === 'dawn' ? [18, 14, -80] : [-30, 60, 20];
-    this.moon.position.x = damp(this.moon.position.x, mp[0], 1, dt);
-    this.moon.position.y = damp(this.moon.position.y, mp[1], 1, dt);
-    this.moon.position.z = damp(this.moon.position.z, mp[2], 1, dt);
+    // (la película del jefe final puede mover la luna: de contraluz)
+    const mp = T.moonPos || (this.name === 'dawn' ? [18, 14, -80] : [-30, 60, 20]);
+    const mk = T.moonPos ? 6 : 1;
+    this.moon.position.x = damp(this.moon.position.x, mp[0], mk, dt);
+    this.moon.position.y = damp(this.moon.position.y, mp[1], mk, dt);
+    this.moon.position.z = damp(this.moon.position.z, mp[2], mk, dt);
     U.uExposure.value = c.exposure;
     U.uSat.value = c.sat;
     U.uBloom.value = c.bloom;

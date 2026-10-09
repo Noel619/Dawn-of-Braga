@@ -33,7 +33,6 @@ import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
 import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
-import { RiteCutscene } from './finale/rite.js';
 import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
@@ -123,7 +122,7 @@ export class Game {
     this.scene.add(this.bossLight);
     // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
     // que deja el rito en la cisterna, hasta entonces
-    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin']) this.setGroupVisible(n, false);
+    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater']) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);
@@ -693,7 +692,7 @@ export class Game {
   fogActive(it) {
     const b = this.bosses[it.boss];
     // (la de la cisterna: tras el rito, o mientras dura, ya no está)
-    if (it.boss === 'turibulario' && (this.flags['finale:rite'] || (this.cutscene && this.cutscene.rite))) return false;
+    if (it.boss === 'turibulario' && this.flags['finale:rite']) return false;
     return !(this.flags['boss:' + it.boss] || (b && b.dead));
   }
 
@@ -742,13 +741,9 @@ export class Game {
     this.slowmo = { t: 0.8, k: 0.35 };
     this.flash = Math.max(this.flash, 0.4);
     this.camRig.shake(0.5);
-    this.startRite(e);
-    return true;
-  }
-  startRite(from = null) {
     this.hunt.reset();
-    this.cutscene = new RiteCutscene(this, from);
-    this.cutscene.start();
+    this.finale.startFilm(e);
+    return true;
   }
   // el arzobispo de la cisterna ya no está tras el rito (se lo llevó el dios)
   bossGone(e) {
@@ -856,6 +851,20 @@ export class Game {
       for (const e of this.enemies) if (!(e.boss && this.flags['boss:' + e.type]) && e.type !== 'impaled') e.reset();
       this.player.spawn(this.player.pos.x, this.player.pos.y, this.player.pos.z, this.player.yaw);
       this.chase.retry();
+      if (this._pauseAfterDeath) {
+        this._pauseAfterDeath = false;
+        if (this.state === 'play') this.openPause();
+      }
+      return;
+    }
+    // en la película del jefe final: desde su último punto de control
+    if (this.finale.filmActive) {
+      this.combat.clear();
+      this.lockTarget = null;
+      this.activeBoss = null;
+      this.atmo.override = null;
+      this.finale.retry();
+      this.saveGame();
       if (this._pauseAfterDeath) {
         this._pauseAfterDeath = false;
         if (this.state === 'play') this.openPause();
@@ -1408,6 +1417,8 @@ export class Game {
       dt *= this.slowmo.k;
       if (this.slowmo.t <= 0) this.slowmo = null;
     }
+    // (la película: su cámara lenta)
+    if (this.timeK !== undefined && this.timeK !== 1) dt *= this.timeK;
     // (modo desarrollador: cámara lenta o rápida; o el mundo detenido, casi:
     // con el paso a cero algunas velocidades se dividirían por cero)
     if (this.dev.timeScale !== 1) dt *= this.dev.timeScale;

@@ -6,6 +6,7 @@ import { solid, stairs, merlons, cityWall, tower, archWall, stoneWall, archRing,
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { cisternPit, cisternRuins } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1060,9 +1061,42 @@ export function buildCrypt(ctx, S, C, L) {
     C.paint(-15, -167, 15, -137, 1);
     // (la puerta del norte, a la altura de la bóveda de la galería)
     interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 's', at: 0, w: 3, h: 6.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }] });
-    ctx.col.add(-15, YT, -167, 15, YT + 0.6, -137).cam = true;
-    cryptFloor(-15, -167, 15, -137, AY, 'flag');
-    wb.box('blood', -12, AY + 0.02, -164, 12, AY + 0.04, -142, { faces: 't', ao: false, grime: false, room, uv: 0.2 });
+    // (el jefe final: cuando el arzobispo se transforma, el centro del suelo
+    // se hunde en un pozo, el corro de columnas cae y la cúpula revienta; ver
+    // finale/film_rise.js. Lo que se rompe va en grupos: 'cisternFloorC', el
+    // cuadro del suelo que se hunde; 'cisternPit', el pozo; 'cisternCols' y
+    // 'cisternColsRuin', las columnas enteras y sus muñones; 'cisternDome' y
+    // 'cisternDomeRuin', la cúpula entera y lo que queda de ella)
+    // el techo: un anillo fijo y, en medio, lo que revienta con la cúpula
+    for (const [a, b, c, d] of [
+      [-15, -167, 15, -159],
+      [-15, -145, 15, -137],
+      [-15, -159, -7, -145],
+      [7, -159, 15, -145],
+    ])
+      ctx.col.add(a, YT, b, c, YT + 0.6, d).cam = true;
+    ctx.beginGroup('cisternDome');
+    ctx.col.add(-7, YT, -159, 7, YT + 0.6, -145).cam = true;
+    ctx.endGroup();
+    // el suelo: un marco fijo y, en medio, el cuadro que se hunde
+    const PC = 8;
+    for (const [a, b, c, d] of [
+      [-15, -167, 15, cz - PC],
+      [-15, cz + PC, 15, -137],
+      [-15, cz - PC, -PC, cz + PC],
+      [PC, cz - PC, 15, cz + PC],
+    ])
+      cryptFloor(a, b, c, d, AY, 'flag');
+    const bloodBox = (a, b, c, d) => wb.box('blood', a, AY + 0.02, b, c, AY + 0.04, d, { faces: 't', ao: false, grime: false, room, uv: 0.2 });
+    bloodBox(-12, -164, 12, cz - PC);
+    bloodBox(-12, cz + PC, 12, -142);
+    bloodBox(-12, cz - PC, -PC, cz + PC);
+    bloodBox(PC, cz - PC, 12, cz + PC);
+    ctx.beginGroup('cisternFloorC');
+    cryptFloor(-PC, cz - PC, PC, cz + PC, AY, 'flag');
+    bloodBox(-PC, cz - PC, PC, cz + PC);
+    ctx.endGroup();
+    cisternPit(ctx, cz, PC, AY, room, VT, AT);
     stairs(ctx, 0, AY, -141.5, 's', 3, 10, 0.3, 0.45, 'mossstone', { solidBelow: true });
     for (const s of [-1, 1]) {
       solid(ctx, 'mossstone', s * 1.5, AY, -141.5, s * 2.1, Y + 0.9, -137, { sub: 2, room });
@@ -1075,6 +1109,7 @@ export function buildCrypt(ctx, S, C, L) {
       const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
       cols.push([Math.cos(a) * RR, cz + Math.sin(a) * RR, a]);
     }
+    ctx.beginGroup('cisternCols');
     for (const [x, z] of cols) P.column(ctx, x, AY, z, YC - AY, 0.7, { mat: 'ashlar' });
     for (let i = 0; i < 8; i++) {
       const [xa, za] = cols[i],
@@ -1093,9 +1128,11 @@ export function buildCrypt(ctx, S, C, L) {
       wb.box('mossstone', -0.35, YC, -0.55, 0.35, YT, 0.55, { faces: 'nsew', room, tint: CT, sub: 1.6 });
       wb.pop();
     }
+    ctx.endGroup();
     // el techo llano de alrededor (del cuadrado de los muros al círculo de la
-    // cúpula) y la cúpula
+    // cúpula) y la cúpula; lo de dentro del corro revienta con ella
     const rd = 9.9,
+      rm = 12.8,
       N = 32;
     const sq = (t) => {
       const c = Math.cos(t),
@@ -1103,13 +1140,22 @@ export function buildCrypt(ctx, S, C, L) {
       const m = 15 / Math.max(Math.abs(c), Math.abs(s));
       return V3(c * m, YT, cz + s * m);
     };
+    const ring = (t, r) => V3(Math.cos(t) * r, YT, cz + Math.sin(t) * r);
     for (let k = 0; k < N; k++) {
       const t0 = (k / N) * Math.PI * 2,
         t1 = ((k + 1) / N) * Math.PI * 2;
-      wb.quad('mossstone', V3(Math.cos(t0) * rd, YT, cz + Math.sin(t0) * rd), sq(t0), sq(t1), V3(Math.cos(t1) * rd, YT, cz + Math.sin(t1) * rd), { ao: false, sub: 2.5, tint: VT, room });
+      wb.quad('mossstone', ring(t0, rm), sq(t0), sq(t1), ring(t1, rm), { ao: false, sub: 2.5, tint: VT, room });
     }
     const DR = 5.2;
+    ctx.beginGroup('cisternDome');
+    for (let k = 0; k < N; k++) {
+      const t0 = (k / N) * Math.PI * 2,
+        t1 = ((k + 1) / N) * Math.PI * 2;
+      wb.quad('mossstone', ring(t0, rd), ring(t0, rm), ring(t1, rm), ring(t1, rd), { ao: false, sub: 2.5, tint: VT, room });
+    }
     dome(ctx, { cx: 0, cz, r: rd, y0: YT, rise: DR, n: N, m: 10, mat: 'mossstone', tint: VT, room, ribs: 8, ribPhase: Math.PI / 8, ribMat: 'ashlar', ribTint: AT, ribW: 0.4, ribD: 0.24 });
+    ctx.endGroup();
+    cisternRuins(ctx, { cz, rd, rm, YT, YC, AY, cols, room, VT, AT, CT });
     // la corona de hierro con sus velas, colgada de la clave (se viene abajo
     // en el rito: grupo 'cisternCrown'; ver finale/rite.js)
     ctx.beginGroup('cisternCrown');

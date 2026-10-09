@@ -96,11 +96,13 @@ export class CollisionWorld {
   }
 
   // Altura del suelo bajo (x,z) considerando cajas con techo <= yMax.
-  groundHeight(x, z, r, yMax) {
+  // (noBlock: sin los muros invisibles de las zonas que no se pisan; lo que
+  // cae, cascotes y trozos, se para en el suelo de verdad)
+  groundHeight(x, z, r, yMax, noBlock = false) {
     const list = this.query(x - r, z - r, x + r, z + r, this._q1 || (this._q1 = []));
     let g = -100;
     for (const b of list) {
-      if (b.maxy > yMax || b.camOnly) continue;
+      if (b.maxy > yMax || b.camOnly || (noBlock && b.tag === 'block')) continue;
       if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
       if (b.maxy > g) g = b.maxy;
     }

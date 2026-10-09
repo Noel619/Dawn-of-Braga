@@ -18,6 +18,8 @@ const cell = (process.env.CELL || '320,360').split(',').map(Number);
 const cols = +(process.env.COLS || 4);
 const bones = (process.env.BONES || '').split(',').filter(Boolean);
 const fog = +(process.env.FOG || 0);
+// LIFT=metros: sube el modelo (para ver poses con la pelvis bajo el suelo)
+const lift = (process.env.LIFT || '0').split(',').map(Number);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: cell[0], height: cell[1] } });
 const logs = [];
@@ -28,7 +30,7 @@ p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + ' ' + (e.stack ||
 await p.goto('http://localhost:5199/?dev=1&at=0,0,-44&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 90000 });
 const res = await p.evaluate(
-  async ([kind, specs, cam, cell, cols, bones, fog]) => {
+  async ([kind, specs, cam, cell, cols, bones, fog, lift]) => {
     window.__pause = true;
     const g = __game;
     const T = g.THREE;
@@ -51,7 +53,8 @@ const res = await p.evaluate(
     if (kind === 'turiferario') {
       const A = await import('/src/game/finale/turiferario_anim.js');
       R = A.turRig(bld.model, {});
-      clips = A.TUR_CLIPS;
+      const G = await import('/src/game/finale/giant_anim.js');
+      clips = { ...A.TUR_CLIPS, ...G.GIANT_CLIPS };
       scenes = A.TUR_SCENES || {};
     } else {
       const A = await import('/src/game/finale/deo_anim.js');
@@ -105,6 +108,7 @@ const res = await p.evaluate(
         for (let k = 0; k < n; k++) R.update(it.t / n);
         if (it.t === 0) R.update(0);
       }
+      bld.model.root.position.y = lift[i] ?? lift[lift.length - 1] ?? 0;
       bld.model.root.updateMatrixWorld(true);
       setCam(it.cam);
       lab.renderStudio();
@@ -131,7 +135,7 @@ const res = await p.evaluate(
     }
     return { png: cv.toDataURL('image/png'), info };
   },
-  [kind, specs, cam, cell, cols, bones, fog]
+  [kind, specs, cam, cell, cols, bones, fog, lift]
 );
 fs.writeFileSync(out, Buffer.from(res.png.split(',')[1], 'base64'));
 if (res.info.length) console.log(res.info.join('\n'));
