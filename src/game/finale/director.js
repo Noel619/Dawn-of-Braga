@@ -44,6 +44,7 @@ import { Debris } from './debris.js';
 import { Chunks } from './chunks.js';
 import { Wrecks } from './wrecks.js';
 import { ACTS } from './film_acts.js';
+import { NAVE } from '../../world/level_finale.js';
 
 // el objeto verdadero (nombre provisional; ver arriba)
 export const TRUE_ITEM = 'verdadero';
@@ -104,7 +105,9 @@ export class Finale {
 
   // ---------------------------------------------------------- el mundo
   // Cómo está cada cosa en cada punto de control (k: 0 = todo entero, 1 =
-  // establo, 2 = torre sur, 3 = muralla, 4 = vencido).
+  // establo, 2 = torre sur, 3 = muralla, 4 = vencido). Lo que rompe la
+  // película por el camino (los tramos de la nave, los bancos) lo rompen los
+  // actos; aquí, cómo queda.
   setWorld(k) {
     const g = this.g;
     const on = (n, v) => g.setGroupVisible(n, v);
@@ -125,11 +128,30 @@ export class Finale {
     // la brecha de la muralla norte
     on('muroN', !broken);
     on('muroNRuin', broken);
-    // la catedral: la cabecera y la nave
-    on('naveRoof', !broken);
-    on('naveRuin', broken);
+    // la catedral: la cabecera, el tejado y la bóveda por tramos, los
+    // fajones, las coronas, el estandarte, las arquerías y los bancos (las
+    // ruinas de la nave, a la vista: cada tramo sale cuando cae)
+    on('abside', !broken);
+    on('absideRuin', broken);
     on('cabecera', !broken);
     on('cabeceraRuin', broken);
+    on('naveRoof', !broken);
+    on('naveRuin', true);
+    for (let i = 0; i < NAVE.secs.length; i++) {
+      on('naveRoof:' + i, !broken);
+      on('naveRuin:' + i, broken);
+      // (las del sur caen en la cabalgada, acto 5)
+      const arcBroken = i < 3 ? broken : k >= 3;
+      on('naveArc:' + i, !arcBroken);
+      on('naveArcRuin:' + i, arcBroken);
+    }
+    for (let i = 0; i < NAVE.faj.length; i++) on('naveFaj:' + i, !broken);
+    for (let i = 0; i < NAVE.crowns.length; i++) on('naveCrown:' + i, !broken);
+    on('naveBanner', !broken);
+    for (let i = 0; i < NAVE.pews.length; i++) {
+      on('naveBancos:' + i, !broken);
+      on('naveBancosRuin:' + i, broken);
+    }
     // el tejado del establo
     on('wreck:establo', !broken);
     on('wreck:establo:ruin', broken);
@@ -166,6 +188,8 @@ export class Finale {
     this.film.cinema(false);
     this.chunks.clear();
     this.debris.clear();
+    this.clearOwned();
+    this.g.chaseRun = false;
     if (this.giant) this.giant.show(false);
     this.stage = 'off';
     this.cp = null;
@@ -197,6 +221,15 @@ export class Finale {
     this._resumeOnPlay = false;
     this.chunks.clear();
     this.debris.clear();
+    this.clearOwned();
+    this._clothDone = false;
+    g.chaseRun = false;
+    if (this.giant) {
+      this.giant.onEventHook = null;
+      this.giant.rootMotion = false;
+      this.giant.groundFn = null;
+      this.giant.ik = {};
+    }
     this.setWorld(this.cpIndex(cp));
     const act = ACTS[cp];
     this.film.run(act(this, o));
@@ -257,6 +290,28 @@ export class Finale {
     const L = this.g.fx.lights.add({ intensity: 0, range: 12, flicker: 1, priority: 7, on: true, ...o });
     this.lights.push(L);
     return L;
+  }
+  // lo que pone la película en la escena (mallas, telas, haces de luz): se
+  // quita al volver a un punto de control
+  own(o) {
+    (this.owned || (this.owned = [])).push(o);
+    return o;
+  }
+  clearOwned() {
+    const g = this.g;
+    for (const L of this.lights) L.on = false;
+    const src = g.fx.lights.sources;
+    for (const L of this.lights) {
+      const i = src.indexOf(L);
+      if (i >= 0) src.splice(i, 1);
+    }
+    this.lights.length = 0;
+    for (const o of this.owned || []) {
+      if (o.dispose) o.dispose();
+      else if (o.parent) o.parent.remove(o);
+    }
+    this.owned = [];
+    this._clothDone = true;
   }
   dropLight(L) {
     L.on = false;

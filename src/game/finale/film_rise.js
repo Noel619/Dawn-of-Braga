@@ -15,7 +15,7 @@
 // ruge y le lanza hacia el sur: el vuelo, a cámara lenta (¡Cúbrete!), y el
 // tejado del establo de los Pellejeros.
 import * as THREE from 'three';
-import { sm, lerp, easeIn, easeOut } from './film.js';
+import { sm, smoother, lerp, easeIn, easeOut } from './film.js';
 import { FP } from './film_player.js';
 import { CISTERN, PIT_SLAB } from '../../world/level_finale.js';
 import { clamp } from '../../core/util.js';
@@ -39,6 +39,9 @@ const PL = { x: 0.15, z: PIT_SLAB.z + 0.1, yaw: Math.PI };
 const GIANT = { x: 0, z: -154.0, yaw: 0 };
 // la joroba en el espacio del modelo (sobre el hueso 'chest') y su normal
 const HUMP = { p: [0, 15.75, -2.95], n: [0, 0.74, -0.67] };
+// dónde queda al salir del cráter (los pies, en tierra firme al sur del
+// agujero, que tiene 10,5 m de radio)
+export const CLIMB_Z = -139.5;
 
 // ------------------------------------------------------------ la carne del dios
 // Tentáculos que brotan del suelo alrededor del arzobispo y le suben,
@@ -337,7 +340,7 @@ export function* actRise(D, o = {}) {
   F.shot([4.4, AY + 0.75, PIT_SLAB.z - 0.2], [-0.2, AY - 0.9, PIT_SLAB.z - 1.6], { fov: 62 });
   F.hand = 0.06;
   let tilt = 0;
-  const humpM = () => _humpMatrix(G, _m);
+  const humpM = () => humpMatrix(G, _m);
   const playerOnSlab = (slabMatrix, along = 0.2) => {
     // el jugador, tumbado boca abajo sobre la losa, la cabeza hacia el pozo
     const sx = _v.set(1, 0, 0).transformDirection(slabMatrix);
@@ -458,17 +461,27 @@ export function* actRise(D, o = {}) {
   red.range = 26;
   while (G.actT < 7.5) yield;
   // ---------------------------------------------------------- 8. la noche
-  // se iza fuera del cráter; plano general desde el adarve: ruge a la ciudad
+  // se iza fuera del cráter, hacia el borde del sur (se agarra a él y avanza
+  // sobre las manos: la raíz va del centro del pozo a la tierra firme);
+  // plano general desde el adarve, que se le viene encima: ruge a la ciudad
   D.dropLight(red);
-  F.attach = () => _onHump(G, slab);
+  F.attach = () => onHump(G, slab);
   F.pClip(FP.kneelGrip, { blend: 0.4 });
   F.hand = 0.02;
-  F.also(F.move({ pos: [16, 11.6, -125.2], look: [0, 7.5, -153], fov: 58 }, { pos: [13.5, 11.4, -126.2], look: [0, 12.5, -153], fov: 52 }, 5.2));
+  const z0 = G.pos.z;
+  F.follow((dt, tt) => {
+    const u = sm(clamp(tt / 5.2, 0, 1));
+    return { pos: new V3(lerp(16, 13.5, u), lerp(11.6, 11.4, u), lerp(-125.2, -126.0, u)), look: new V3(0, lerp(7.5, 12.5, u), G.pos.z - 1.5), fov: lerp(58, 54, u) };
+  });
   g.atmo.override = { ...g.atmo.override, moonPos: [-16, 26, -30] };
-  while (G.actT < 12.75) yield;
-  // ruge (desde abajo, junto a sus pies: la cabeza contra el cielo; la luna
-  // por detrás le recorta)
-  F.shot([7.5, 1.6, -141], [0, 17, -152], { fov: 70 });
+  while (G.actT < 12.75) {
+    yield;
+    G.pos.z = lerp(z0, CLIMB_Z, smoother(clamp((G.actT - 7.4) / 4.8, 0, 1)));
+  }
+  G.pos.z = CLIMB_Z;
+  // ruge (desde abajo, delante de sus pies: la cabeza contra el cielo; la
+  // luna por detrás le recorta)
+  F.shot([6.8, 1.5, CLIMB_Z + 8.5], [0, 16.5, CLIMB_Z - 1], { fov: 70 });
   g.atmo.override = { ...g.atmo.override, moonPos: [-10, 24, -40], moon: 3.0, snap: true };
   F.hand = 0.05;
   a && a.play('beastRoarBig', G.head(_v), { k: 1.6 });
@@ -496,7 +509,7 @@ function _craterLights(D, cz) {
 }
 
 // la matriz de la losa encajada en la joroba (en el mundo)
-function _humpMatrix(G, out) {
+export function humpMatrix(G, out) {
   const B = G.M.byName.chest;
   const rw = G.M.restWorld.chest;
   _q.setFromUnitVectors(_v.set(0, 1, 0), _v2.set(...HUMP.n).normalize());
@@ -505,7 +518,7 @@ function _humpMatrix(G, out) {
 }
 // el jugador de rodillas en la joroba, agarrado a la púa (mirando hacia la
 // cabeza del gigante)
-function _onHump(G, slab) {
+export function onHump(G, slab) {
   const M = slab.mesh.matrixWorld;
   const up = new V3(0, 1, 0).transformDirection(M);
   const fwd = new V3(0, 0, 1).transformDirection(M);

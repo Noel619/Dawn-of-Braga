@@ -24,6 +24,22 @@ const _v = new THREE.Vector3(),
   _v3 = new THREE.Vector3(),
   _q = new THREE.Quaternion();
 
+// el avance de un clip en el instante t (tabla [segundo, metros])
+export function sampleMove(tab, t) {
+  if (t <= tab[0][0]) return tab[0][1];
+  for (let i = 1; i < tab.length; i++) {
+    if (t <= tab[i][0]) {
+      const [t0, m0] = tab[i - 1],
+        [t1, m1] = tab[i];
+      const u = (t - t0) / Math.max(1e-6, t1 - t0);
+      // (suave dentro de cada tramo: arranca y frena con la zancada)
+      const s = u * u * (3 - 2 * u);
+      return m0 + (m1 - m0) * (0.35 * u + 0.65 * s);
+    }
+  }
+  return tab[tab.length - 1][1];
+}
+
 export class Giant {
   constructor(game, M) {
     this.g = game;
@@ -70,6 +86,10 @@ export class Giant {
     this.onEventHook = null;
     this.speedK = 1;
     this.shake = 0;
+    // el avance de los clips (giant_anim.js: 'move', 'vel'): lo enciende el
+    // guion cuando el gigante va de un sitio a otro
+    this.rootMotion = false;
+    this._mv = { clip: null, t: 0, m: 0 };
   }
 
   // ------------------------------------------------------------ montaje
@@ -230,12 +250,34 @@ export class Giant {
       R.flinch.x.kick(-0.25);
     }
     R.shakeA = this.shake;
+    if (this.rootMotion) this._rootMotion(dt);
     this._applyRoot();
     R.update(dt, { pre: () => this._ik() });
     this._colBody();
     this.bell.update(dt, this.handGrip(_v));
     this._fx(dt);
     if (this.pushPlayer && !p.puppet && !p.dead) this._push();
+  }
+  // El avance del clip de acción (su tabla 'move': metros a lo largo del
+  // frente) o, si no hay, el del bucle base ('vel', m/s)
+  _rootMotion(dt) {
+    const A = this.R.action,
+      B = this.R.base;
+    const c = A.clip;
+    let d = 0;
+    if (c && c.move && A.weight > 0.5) {
+      const m = sampleMove(c.move, Math.min(A.t, c.dur));
+      const M = this._mv;
+      // (un clip nuevo, o el mismo otra vez: se cuenta desde aquí)
+      if (M.clip !== c || A.t < M.t) {
+        M.clip = c;
+        M.m = m;
+      }
+      d = m - M.m;
+      M.m = m;
+      M.t = A.t;
+    } else if (B.clip && B.clip.vel && (!c || A.weight < 0.5)) d = B.clip.vel * B.speed * this.R.speed * dt;
+    if (d) this.pos.addScaledVector(this.forward(_v3), d);
   }
   _ik() {
     for (const S of ['L', 'R']) {

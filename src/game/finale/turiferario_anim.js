@@ -69,7 +69,8 @@ export const IDLE = {
   ...hand('R', 55, 0, 40),
 };
 const K = (t, o = {}, ease, k) => [t, { ...IDLE, ...o }, ease, k ? { k } : undefined];
-const mirror = (o) => {
+// la pose del otro lado (izquierda por derecha)
+export const mirror = (o) => {
   const out = {};
   for (const [j, v] of Object.entries(o)) {
     if (j.startsWith('s_')) {

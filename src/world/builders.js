@@ -600,8 +600,12 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
     under = o.under ?? 'wooddark',
     wall = o.wallMat ?? 'wallstone';
   const alongX = axis === 'x';
-  const sA = (alongX ? x0 : z0) - gv,
-    sB = (alongX ? x1 : z1) + gv;
+  // open: [extremo de menos, extremo de más] que siguen en otro tramo del
+  // mismo tejado (un tejado partido en trozos que se rompen aparte): sin
+  // vuelo, sin tablas de remate y la cumbrera a ras
+  const open = o.open ?? [false, false];
+  const sA = (alongX ? x0 : z0) - (open[0] ? 0 : gv),
+    sB = (alongX ? x1 : z1) + (open[1] ? 0 : gv);
   const uc = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
   const half = (alongX ? z1 - z0 : x1 - x0) / 2;
   const slope = (yRidge - yEave) / half;
@@ -632,6 +636,7 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
     [sA, -1],
     [sB, 1],
   ]) {
+    if (open[out < 0 ? 0 : 1]) continue;
     const B1 = P(sv, ye - tv, ue),
       T1 = P(sv, ye, ue),
       T2 = P(sv, yRidge, 0),
@@ -648,8 +653,10 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
   }
   // cumbrera: caballetes de teja
   const rw = 0.17;
-  if (alongX) wb.box(mat, sA - 0.02, yRidge - 0.06, uc - rw, sB + 0.02, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
-  else wb.box(mat, uc - rw, yRidge - 0.06, sA - 0.02, uc + rw, yRidge + 0.15, sB + 0.02, { ao: false, faces: 'tnsewb', tint: o.tint });
+  const rA = sA - (open[0] ? 0 : 0.02),
+    rB = sB + (open[1] ? 0 : 0.02);
+  if (alongX) wb.box(mat, rA, yRidge - 0.06, uc - rw, rB, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
+  else wb.box(mat, uc - rw, yRidge - 0.06, rA, uc + rw, yRidge + 0.15, rB, { ao: false, faces: 'tnsewb', tint: o.tint });
   // hastiales de piedra (por fuera y por dentro). gables: [extremo de
   // menos, extremo de más], cada uno false (sin hastial: ya hay un muro más
   // alto) o { y0, t } (desde qué altura y con qué grueso: sobre una fachada,

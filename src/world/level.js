@@ -44,7 +44,7 @@ export function buildLevel() {
   };
   ctx.beginGroup = (name) => {
     if (ctx._grp) ctx._grpStack.push(ctx._grp);
-    ctx._grp = { name, fires: ctx.fires.length, banners: ctx.banners.length, dyn: ctx.dynLights.length };
+    ctx._grp = { name, fires: ctx.fires.length, banners: ctx.banners.length, dyn: ctx.dynLights.length, shafts: ctx.shafts.length };
     setG(ctx._grp);
   };
   ctx.endGroup = () => {
@@ -57,6 +57,7 @@ export function buildLevel() {
     for (let i = G.fires; i < ctx.fires.length; i++) tag(ctx.fires[i]);
     for (let i = G.banners; i < ctx.banners.length; i++) tag(ctx.banners[i]);
     for (let i = G.dyn; i < ctx.dynLights.length; i++) tag(ctx.dynLights[i]);
+    for (let i = G.shafts; i < ctx.shafts.length; i++) tag(ctx.shafts[i]);
     const outer = ctx._grpStack.pop() || null;
     ctx._grp = outer;
     setG(outer);

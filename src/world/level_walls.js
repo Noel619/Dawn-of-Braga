@@ -12,6 +12,7 @@ import { RNG } from '../core/util.js';
 import { solid, blocker, stairs, merlons, cityWall, house } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
+import { BREACH, wallBreach } from './level_finale.js';
 
 // Alturas del adarve: muro este (como lo alto del Postigo) y muralla norte.
 const YE = 9,
@@ -171,9 +172,21 @@ export function buildNorthWalls(ctx, S, L) {
       cityWall(ctx, fx1, -126, F.stairX, -122, YN, { merlons: false });
       a = F.stairX;
     }
+    // (el lienzo de en medio, partido: por ahí lo atraviesa el gigante del
+    // jefe final; el tramo, en el grupo 'muroN', y su brecha en 'muroNRuin':
+    // ver level_finale.js)
+    if (a < BREACH.x0 && b > BREACH.x1) {
+      wallRun(ctx, a, -126, BREACH.x0, -122, YN, 'n');
+      ctx.beginGroup('muroN');
+      wallRun(ctx, BREACH.x0, -126, BREACH.x1, -122, YN, 'n');
+      ctx.endGroup();
+      wallRun(ctx, BREACH.x1, -126, b, -122, YN, 'n');
+      continue;
+    }
     // (el de la esquina no lleva parapeto donde llega el adarve del muro este)
     wallRun(ctx, a, -126, b, -122, YN, 'n', { trimB: b === 76 ? 4 : 0 });
   }
+  wallBreach(ctx);
   // la esquina: almenas también al este
   blocker(ctx, 75.4, YN - 0.2, -126, 76, YN + 2.4, -122);
   merlons(ctx, 75.7, -126, 75.7, -122, YN, { collide: false });
@@ -287,7 +300,11 @@ export function buildNorthWalls(ctx, S, L) {
   bakeCorpse(wb, -8, YN, -125, 0.3, 'curl', 'villager', 16);
   P.arrows(ctx, -18, YN, -123.6, 8, 4313, 1.8);
   P.brazier(ctx, -40, YN, -122.9, {});
+  ctx.beginGroup('muroN');
   P.fleshGrowth(ctx, -2, YN, -125.6, 0.9, 4314, { climb: 1.0 });
+  // (un brasero: al reventar el muro, sus brasas arden entre los escombros)
+  P.brazier(ctx, 3.4, YN, -122.9, {});
+  ctx.endGroup();
   P.fleshGrowth(ctx, 75.6, YE, -88, 0.8, 4315, { climb: 1.1 });
   // en las torres atravesadas: pertrechos y un farol
   for (const x of towerX) {
@@ -304,7 +321,7 @@ export function buildNorthWalls(ctx, S, L) {
     ['crate', 47.6, YN, -124.9],
     ['barrel', 33.0, YN, -122.95],
     ['crate', 12.0, YN, -124.9],
-    ['barrel', -4.0, YN, -122.95],
+    ['barrel', -12.0, YN, -122.95],
     ['crate', -21.0, YN, -124.9],
   ])
     L.breakables.push({

@@ -48,11 +48,15 @@ export class Chunks {
   // Un trozo: o = { mat, size: [x, y, z] | geo, pos, quat | rot ([x, y, z] rad),
   //   vel, spin ([x, y, z] rad/s), life, bounce, shatter (velocidad a la que
   //   revienta al chocar), uv, floor (altura del suelo fija), tint, attach:
-  //   () => Matrix4 (pegado a algo), dust }
+  //   () => Matrix4 (pegado a algo), dust, mesh (una malla propia en vez de
+  //   la caja: la corona de velas), onUpdate (c, dt) }
   add(o) {
-    const geo = o.geo || slabGeo(o.size[0], o.size[1], o.size[2], o.uv ?? 0.5);
-    const mat = o.material || objMat(o.mat || 'ashlar', o.tint ? { tint: o.tint } : {});
-    const mesh = new THREE.Mesh(geo, mat);
+    let mesh = o.mesh;
+    if (!mesh) {
+      const geo = o.geo || slabGeo(o.size[0], o.size[1], o.size[2], o.uv ?? 0.5);
+      const mat = o.material || objMat(o.mat || 'ashlar', o.tint ? { tint: o.tint } : {});
+      mesh = new THREE.Mesh(geo, mat);
+    }
     mesh.frustumCulled = false;
     this.g.scene.add(mesh);
     const c = {
@@ -74,6 +78,7 @@ export class Chunks {
       localQ: o.localQ ? o.localQ.clone() : null,
       dust: o.dust ?? true,
       onLand: o.onLand || null,
+      onUpdate: o.onUpdate || null,
       hits: 0,
       size: o.size || null,
       mat: o.mat || 'ashlar',
@@ -101,9 +106,13 @@ export class Chunks {
   }
   update(dt) {
     const g = this.g;
+    const cam = g.camera.position;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const c = this.list[i];
       c.t += dt;
+      // (uno pegado a la cámara la taparía entera: no se dibuja)
+      c.mesh.visible = c.p.distanceTo(cam) > c.R + 0.5;
+      if (c.onUpdate) c.onUpdate(c, dt);
       if (c.attach) {
         // pegado: la matriz del sitio por el desplazamiento local
         if (!c._prev) c._prev = new THREE.Vector3();
@@ -135,7 +144,7 @@ export class Chunks {
             c.v.x *= 0.55;
             c.v.z *= 0.55;
             c.w.multiplyScalar(0.5);
-            if (c.dust) g.fx.blood.emit(c.p.x, gy, c.p.z, 10, { color: [0.42, 0.39, 0.35], speed: 2.2, life: 1.2, up: 0.8, gravity: 1 });
+            if (c.dust) g.fx.blood.emit(c.p.x, gy, c.p.z, 8, { color: [0.2, 0.19, 0.17], speed: 2.2, life: 1.2, up: 0.8, gravity: 1 });
             if (c.hits === 1) g.audio && g.audio.play(c.mat === 'wooddark' || c.mat === 'timber' ? 'woodBreak' : 'pillarBreak', c.p, { k: Math.min(1.4, 0.5 + sp * 0.06) });
             if (c.onLand) c.onLand(c, sp);
           } else {
@@ -164,12 +173,14 @@ export class Chunks {
   _sync(c) {
     c.mesh.position.copy(c.p);
     c.mesh.quaternion.copy(c.q);
+    // (al día ya: lo que va pegado a un trozo lo lee en este fotograma)
+    c.mesh.updateMatrixWorld(true);
   }
   _smash(c, sp) {
     const g = this.g;
     const n = Math.round(Math.min(26, 6 + c.R * 6));
     if (this.debris) this.debris.burst(c.p, n, { speed: 3 + sp * 0.2, up: 3 + sp * 0.15, size: Math.min(1.1, 0.35 + c.R * 0.3), spread: c.R * 0.6 });
-    g.fx.blood.emit(c.p.x, c.p.y, c.p.z, 24, { color: [0.44, 0.41, 0.37], speed: 3.5, life: 1.8, up: 1.2, gravity: 0.6 });
+    g.fx.blood.emit(c.p.x, c.p.y, c.p.z, 18, { color: [0.21, 0.2, 0.18], speed: 3.5, life: 1.8, up: 1.2, gravity: 0.6 });
     g.audio && g.audio.play(c.mat === 'wooddark' || c.mat === 'timber' ? 'woodBreak' : Math.random() < 0.5 ? 'pillarBreak' : 'wallBreak', c.p, { k: Math.min(1.6, 0.6 + sp * 0.05) });
   }
 }

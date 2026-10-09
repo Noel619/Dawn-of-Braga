@@ -356,6 +356,51 @@ export class Film {
   }
 }
 
+// Un recorrido (las huidas guiadas): una poligonal en planta, con su
+// longitud; at(s) da el punto y la dirección a s metros del principio y
+// project(x, z), cuánto se ha avanzado.
+export class Path {
+  constructor(pts) {
+    this.p = pts.map(([x, y, z]) => new V3(x, y, z));
+    this.L = [0];
+    for (let i = 1; i < this.p.length; i++) this.L.push(this.L[i - 1] + Math.hypot(this.p[i].x - this.p[i - 1].x, this.p[i].z - this.p[i - 1].z));
+    this.len = this.L[this.L.length - 1];
+  }
+  at(s, out = {}) {
+    s = clamp(s, 0, this.len);
+    let i = 1;
+    while (i < this.L.length - 1 && this.L[i] < s) i++;
+    const a = this.p[i - 1],
+      b = this.p[i];
+    const segL = this.L[i] - this.L[i - 1] || 1;
+    const u = (s - this.L[i - 1]) / segL;
+    out.x = a.x + (b.x - a.x) * u;
+    out.y = a.y + (b.y - a.y) * u;
+    out.z = a.z + (b.z - a.z) * u;
+    out.tx = (b.x - a.x) / segL;
+    out.tz = (b.z - a.z) / segL;
+    return out;
+  }
+  project(x, z) {
+    let best = 0,
+      bd = Infinity;
+    for (let i = 1; i < this.p.length; i++) {
+      const a = this.p[i - 1],
+        b = this.p[i];
+      const dx = b.x - a.x,
+        dz = b.z - a.z;
+      const l2 = dx * dx + dz * dz || 1;
+      const u = clamp(((x - a.x) * dx + (z - a.z) * dz) / l2, 0, 1);
+      const d = Math.hypot(x - (a.x + dx * u), z - (a.z + dz * u));
+      if (d < bd) {
+        bd = d;
+        best = this.L[i - 1] + u * Math.sqrt(l2);
+      }
+    }
+    return best;
+  }
+}
+
 // Un punto en el espacio de un hueso (o de un objeto): local -> mundo.
 export function boneWorld(obj, x, y, z, out = new V3()) {
   obj.updateMatrixWorld(true);

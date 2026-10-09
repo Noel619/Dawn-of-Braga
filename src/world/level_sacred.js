@@ -6,7 +6,7 @@ import { solid, stairs, merlons, cityWall, tower, archWall, stoneWall, archRing,
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
-import { cisternPit, cisternRuins } from './level_finale.js';
+import { cisternPit, cisternRuins, NAVE, naveSec, naveBreaks } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -216,31 +216,60 @@ export function buildCathedral(ctx, S, L) {
 
   // --- muros de la nave
   W(S, -11, -104, 11, -61.5);
-  // (los muros, en dos: lo de arriba va con el tejado en el grupo 'naveRoof',
-  // que revienta cuando sale Deo Ignoto; las ruinas, en 'naveRuin', al final)
-  const CUT = 11.6;
+  // (los muros, en dos: lo de arriba va con el tejado en el grupo 'naveRoof'.
+  // En la película del jefe final la nave se rompe por tramos, de norte a
+  // sur: el tejado y la bóveda ('naveRoof:k'), los fajones ('naveFaj:i'), las
+  // coronas de velas ('naveCrown:i'), las arquerías ('naveArc:k') y los
+  // bancos ('naveBancos:i'); sus ruinas, en 'naveRuin:k', 'naveArcRuin:k' y
+  // 'naveBancosRuin:i'. Ver NAVE en level_finale.js)
+  const { CUT, YV, RV, za, zb, bays, bw } = NAVE;
+  // un tramo de z partido por los tramos de la nave: fn(z0, z1, k) dentro
+  // del grupo del tramo ('<pre>:k')
+  const bySec = (z0, z1, fn, pre = 'naveRoof') => {
+    NAVE.secs.forEach(([s0, s1], k) => {
+      const a = Math.max(z0, s0),
+        b = Math.min(z1, s1);
+      if (b - a < 0.01) return;
+      ctx.beginGroup(pre + ':' + k);
+      fn(a, b, k);
+      ctx.endGroup();
+    });
+  };
+  // dentro de varios grupos a la vez (anidados)
+  const inG = (names, fn) => {
+    for (const n of names) ctx.beginGroup(n);
+    fn();
+    for (let i = 0; i < names.length; i++) ctx.endGroup();
+  };
   const nave = (x0, z0, x1, z1) => {
     solid(ctx, 'ashlar', x0, 0, z0, x1, CUT, z1, { sub: 2.2, aoH: 2 });
-    ctx.beginGroup('naveRoof');
-    solid(ctx, 'ashlar', x0, CUT, z0, x1, 14, z1, { sub: 2.2, ao: false });
-    ctx.endGroup();
+    inG(['naveRoof'], () => bySec(z0, z1, (a, b) => solid(ctx, 'ashlar', x0, CUT, a, x1, 14, b, { sub: 2.2, ao: false })));
   };
   nave(-13, -104, -11, -64);
   nave(11, -104, 13, -81);
   nave(11, -79, 13, -64);
   solid(ctx, 'ashlar', 11, 3.2, -81, 13, CUT, -79, { sub: 2, ao: false, faces: 'tnsewb' });
-  ctx.beginGroup('naveRoof');
-  solid(ctx, 'ashlar', 11, CUT, -81, 13, 14, -79, { sub: 2, ao: false, faces: 'tnsewb' });
-  ctx.endGroup();
-  nave(-13, -108, 13, -104);
-  // cabecera poligonal
-  solid(ctx, 'ashlar', -7, 0, -112, 7, 12, -108, { sub: 2.2 });
-  ctx.beginGroup('naveRoof');
-  wb.pyramid('roof', 0, -110, 15, 5, 12, 3);
+  inG(['naveRoof', 'naveRoof:' + naveSec(-80)], () => solid(ctx, 'ashlar', 11, CUT, -81, 13, 14, -79, { sub: 2, ao: false, faces: 'tnsewb' }));
+  // la cabecera: el muro del norte de la nave, con sus vidrieras, y el
+  // ábside; el gigante la revienta al meterse en la nave ('cabecera'; sus
+  // ruinas, en 'cabeceraRuin')
+  inG(['cabecera'], () => {
+    solid(ctx, 'ashlar', -13, 0, -108, 13, CUT, -104, { sub: 2.2, aoH: 2 });
+    inG(['naveRoof', 'naveRoof:0'], () => solid(ctx, 'ashlar', -13, CUT, -108, 13, 14, -104, { sub: 2.2, ao: false }));
+  });
+  // (el ábside, aparte: lo pisa antes de reventar el muro: 'abside' y
+  // 'absideRuin')
+  inG(['abside'], () => {
+    solid(ctx, 'ashlar', -7, 0, -112, 7, 12, -108, { sub: 2.2 });
+    inG(['naveRoof', 'naveRoof:0'], () => wb.pyramid('roof', 0, -110, 15, 5, 12, 3));
+  });
   // (con grueso, alero y tablas de remate: antes, un plano de papel; el
   // hastial de delante, sólo lo que asoma por encima de la fachada)
-  solidGableRoof(ctx, -13, -108, 13, -60, 14, 20, 'z', { overhang: 0.8, gableOverhang: 0.3, thick: 0.28, wallMat: 'ashlar', wallT: 0.6, gables: [{}, { y0: 18, t: 1.5 }], room });
-  ctx.endGroup();
+  inG(['naveRoof'], () =>
+    bySec(-108, -60, (a, b, k) =>
+      solidGableRoof(ctx, -13, a, 13, b, 14, 20, 'z', { overhang: 0.8, gableOverhang: 0.3, thick: 0.28, wallMat: 'ashlar', wallT: 0.6, gables: [k === 0 ? {} : false, k === 3 ? { y0: 18, t: 1.5 } : false], open: [k > 0, k < 3], room })
+    )
+  );
   // contrafuertes (lado oeste)
   for (let z = -100; z <= -68; z += 8) solid(ctx, 'ashlar', -14.4, 0, z - 0.6, -13, 11, z + 0.6, { sub: 2 });
   // vidrieras
@@ -257,10 +286,12 @@ export function buildCathedral(ctx, S, L) {
     }
     ctx.lights.push({ x: 9.5, y: 8.5, z, r: 0.9, g: 0.2, b: 0.2, radius: 10, intensity: 0.5, room });
   }
-  lancet(ctx, 0, -103.98, 'z', 5, 7, 2.2);
-  if (ctx.shafts) ctx.shafts.push({ a: [0, 9, -103.9], b: [0, 1.2, -95], w: 2.0, color: 0xff3a28 });
-  lancet(ctx, -4, -103.98, 'z', 6, 5, 1.2);
-  lancet(ctx, 4, -103.98, 'z', 6, 5, 1.2);
+  inG(['cabecera'], () => {
+    lancet(ctx, 0, -103.98, 'z', 5, 7, 2.2);
+    if (ctx.shafts) ctx.shafts.push({ a: [0, 9, -103.9], b: [0, 1.2, -95], w: 2.0, color: 0xff3a28 });
+    lancet(ctx, -4, -103.98, 'z', 6, 5, 1.2);
+    lancet(ctx, 4, -103.98, 'z', 6, 5, 1.2);
+  });
 
   // --- interior
   wb.setRoom(room);
@@ -278,75 +309,78 @@ export function buildCathedral(ctx, S, L) {
   stairs(ctx, 0, FY, -99.1, 'n', 16, 2, 0.3, 0.45, 'ashlar');
   wb.box('ashlar', -8, FY, -104, 8, 1.2, -100, { faces: 'tn', ao: false, room });
   ctx.col.add(-8, FY, -104, 8, 1.2, -100);
-  // arquerías de la nave (dos filas)
-  const bays = 6;
-  const za = -95,
-    zb = -66;
-  const bw = (zb - za) / bays;
+  // arquerías de la nave (dos filas), cada tramo en su grupo
   // la nave central, cubierta con una bóveda de cañón con sus fajones; las
   // laterales, con techo de vigas; sobre las arquerías, el muro sube hasta el
   // arranque de la bóveda (antes, un techo llano de una sola cara a catorce
   // metros, al que no llegaba la luz: se veía negro, como el vacío)
-  const YV = 12.6,
-    RV = 4.0;
   const VT = [0.86, 0.83, 0.78],
     FT = [0.94, 0.9, 0.84];
+  const arc = (k, fn) => inG(['naveArc:' + k], fn);
   for (const x of [-5.5, 5.5]) {
     for (let i = 0; i < bays; i++) {
       const a0 = za + i * bw;
-      archWall(ctx, a0, a0 + bw, x - 0.45, x + 0.45, 11, a0 + bw / 2, bw - 1.2, 7.6, { axis: 'z', mat: 'ashlar', slices: 8, vmat: 'ashlar' });
+      arc(naveSec(a0 + bw / 2), () => archWall(ctx, a0, a0 + bw, x - 0.45, x + 0.45, 11, a0 + bw / 2, bw - 1.2, 7.6, { axis: 'z', mat: 'ashlar', slices: 8, vmat: 'ashlar' }));
     }
     // (algo más gruesos que el machón del arco que se apoya en ellos: con la
     // cara en el mismo plano parpadeaban)
-    solid(ctx, 'ashlar', x - 0.6, 0, za - 0.62, x + 0.6, 11, za + 0.62, { sub: 2 });
-    solid(ctx, 'ashlar', x - 0.6, 0, zb - 0.62, x + 0.6, 11, zb + 0.62, { sub: 2 });
+    arc(0, () => solid(ctx, 'ashlar', x - 0.6, 0, za - 0.62, x + 0.6, 11, za + 0.62, { sub: 2 }));
+    arc(3, () => solid(ctx, 'ashlar', x - 0.6, 0, zb - 0.62, x + 0.6, 11, zb + 0.62, { sub: 2 }));
     // los tramos de los extremos: un arco ancho sobre el presbiterio y, a
     // poniente, el muro hasta las torres
-    archWall(ctx, -104, za - 0.62, x - 0.45, x + 0.45, 11, -99.8, 5.6, 8.6, { axis: 'z', mat: 'ashlar', slices: 9, vmat: 'ashlar' });
-    solid(ctx, 'ashlar', x - 0.45, 0, zb + 0.62, x + 0.45, 11, -64, { sub: 2, faces: 'ew' });
+    arc(0, () => archWall(ctx, -104, za - 0.62, x - 0.45, x + 0.45, 11, -99.8, 5.6, 8.6, { axis: 'z', mat: 'ashlar', slices: 9, vmat: 'ashlar' }));
+    arc(3, () => solid(ctx, 'ashlar', x - 0.45, 0, zb + 0.62, x + 0.45, 11, -64, { sub: 2, faces: 'ew' }));
     // el muro de encima de las arquerías, hasta el arranque de la bóveda
-    ctx.beginGroup('naveRoof');
-    solid(ctx, 'ashlar', x - 0.45, 11, -104, x + 0.45, YV, -64, { sub: 2, faces: 'ew' });
-    ctx.endGroup();
+    inG(['naveRoof'], () => bySec(-104, -64, (a, b) => solid(ctx, 'ashlar', x - 0.45, 11, a, x + 0.45, YV, b, { sub: 2, faces: 'ew' })));
   }
-  ctx.beginGroup('naveRoof');
-  barrelVault(ctx, { x0: -5.05, z0: -104, x1: 5.05, z1: -61.5, axis: 'z', ys: YV, rise: RV, mat: 'ashlar', tint: VT, room, sub: 1.6, impostTint: FT });
-  // (sobre el muro de la cabecera, que llega a 14 m, el testero de la bóveda)
-  lunette(ctx, { axis: 'z', at: -104, c: 0, span: 10.1, ys: YV, rise: RV, face: 1, mat: 'ashlar', tint: VT, room, hole: { u0: -6, u1: 6, y: 14 } });
-  ctx.col.add(-5.05, YV + RV, -104, 5.05, YV + RV + 0.4, -61.5).cam = true;
-  ctx.endGroup();
+  inG(['naveRoof'], () =>
+    bySec(-104, -61.5, (a, b, k) => {
+      barrelVault(ctx, { x0: -5.05, z0: a, x1: 5.05, z1: b, axis: 'z', ys: YV, rise: RV, mat: 'ashlar', tint: VT, room, sub: 1.6, impostTint: FT });
+      ctx.col.add(-5.05, YV + RV, a, 5.05, YV + RV + 0.4, b).cam = true;
+      // (sobre el muro de la cabecera, que llega a 14 m, el testero de la bóveda)
+      if (k === 0) lunette(ctx, { axis: 'z', at: -104, c: 0, span: 10.1, ys: YV, rise: RV, face: 1, mat: 'ashlar', tint: VT, room, hole: { u0: -6, u1: 6, y: 14 } });
+    })
+  );
   // fajones, sobre ménsulas en el muro y, en los machones de las arquerías,
-  // sobre columnas adosadas que bajan hasta el suelo
-  for (const z of [-99.8, ...Array.from({ length: bays + 1 }, (_, i) => za + i * bw), -64.6]) {
-    ctx.beginGroup('naveRoof');
-    archRing(ctx, { axis: 'x', c: 0, w: 9.9, y0: YV, rise: RV - 0.22, ring: 0.32, t0: z - 0.26, t1: z + 0.26, mat: 'ashlar', room, tint: FT, cam: false, n: 15 });
-    ctx.endGroup();
-    for (const sx of [-1, 1]) {
-      const xf = sx * 5.05;
-      // (sin cara de arriba: ahí asientan la imposta y el fajón)
-      ctx.beginGroup('naveRoof');
-      wb.box('ashlar', Math.min(xf, xf - sx * 0.32), YV - 0.42, z - 0.3, Math.max(xf, xf - sx * 0.32), YV, z + 0.3, { ao: false, room, tint: FT, faces: sx < 0 ? 'nseb' : 'nswb' });
-      ctx.endGroup();
-      if (z > za + 0.1 && z < zb - 0.1) pilaster(ctx, xf, z, sx < 0 ? 'e' : 'w', FY, YV - 0.42, { room, tint: FT, w: 0.42, d: 0.14 });
-    }
-  }
+  // sobre columnas adosadas que bajan hasta el suelo (cada fajón en su grupo:
+  // la bóveda se parte entre ellos y caen aparte)
+  NAVE.faj.forEach((z, i) => {
+    inG(['naveRoof', 'naveFaj:' + i], () => {
+      archRing(ctx, { axis: 'x', c: 0, w: 9.9, y0: YV, rise: RV - 0.22, ring: 0.32, t0: z - 0.26, t1: z + 0.26, mat: 'ashlar', room, tint: FT, cam: false, n: 15 });
+      for (const sx of [-1, 1]) {
+        const xf = sx * 5.05;
+        // (sin cara de arriba: ahí asientan la imposta y el fajón)
+        wb.box('ashlar', Math.min(xf, xf - sx * 0.32), YV - 0.42, z - 0.3, Math.max(xf, xf - sx * 0.32), YV, z + 0.3, { ao: false, room, tint: FT, faces: sx < 0 ? 'nseb' : 'nswb' });
+      }
+    });
+    if (z > za + 0.1 && z < zb - 0.1)
+      for (const sx of [-1, 1]) {
+        const xf = sx * 5.05,
+          k = naveSec(z);
+        // la columna, hasta lo alto de la arquería; por encima, con el muro
+        arc(k, () => pilaster(ctx, xf, z, sx < 0 ? 'e' : 'w', FY, 11, { room, tint: FT, w: 0.42, d: 0.14 }));
+        inG(['naveRoof', 'naveRoof:' + k], () => wb.box('ashlar', Math.min(xf, xf - sx * 0.14), 11, z - 0.21, Math.max(xf, xf - sx * 0.14), YV - 0.42, z + 0.21, { ao: false, room, tint: FT, faces: sx < 0 ? 'nse' : 'nsw' }));
+      }
+  });
   // las naves laterales: techo de tablas sobre vigas, a la altura del arranque
-  ctx.beginGroup('naveRoof');
-  for (const [xa, xb] of [
-    [-11, -5.95],
-    [5.95, 11],
-  ]) {
-    wb.box('planks', xa, YV, -104, xb, YV + 0.1, -64, { faces: 'b', ao: false, room, tint: [0.7, 0.6, 0.5], uv: 0.7, sub: 2 });
-    ctx.col.add(xa, YV, -104, xb, YV + 0.4, -64).cam = true;
-    for (let z = -102.4; z < -64.5; z += bw / 2) wb.box('timber', xa, YV - 0.34, z - 0.14, xb, YV, z + 0.14, { ao: false, room, faces: 'nsewb', tint: [0.8, 0.7, 0.6] });
-    const xw = xa < 0 ? xa : xb - 0.3;
-    wb.box('timber', xw, YV - 0.4, -104, xw + 0.3, YV, -64, { ao: false, room, faces: xa < 0 ? 'ewb' : 'ewb', tint: [0.75, 0.66, 0.56] });
-  }
-  // coronas de velas en la nave y lámparas en las laterales: la luz llega a
-  // la bóveda y a los techos
-  for (const z of [-71.5, -82.5, -93.5]) P.candleCrown(ctx, 0, 8.6, z, YV + RV - 0.1, { room, r: 1.3, n: 12, radius: 12, intensity: 1.15 });
-  for (const x of [-8.5, 8.5]) for (const z of [-70, -86, -100]) P.hangingLamp(ctx, x, YV - 0.34, z, { room, len: 2.4, radius: 8, intensity: 0.9 });
-  ctx.endGroup();
+  inG(['naveRoof'], () => {
+    for (const [xa, xb] of [
+      [-11, -5.95],
+      [5.95, 11],
+    ]) {
+      const xw = xa < 0 ? xa : xb - 0.3;
+      bySec(-104, -64, (a, b) => {
+        wb.box('planks', xa, YV, a, xb, YV + 0.1, b, { faces: 'b', ao: false, room, tint: [0.7, 0.6, 0.5], uv: 0.7, sub: 2 });
+        ctx.col.add(xa, YV, a, xb, YV + 0.4, b).cam = true;
+        wb.box('timber', xw, YV - 0.4, a, xw + 0.3, YV, b, { ao: false, room, faces: 'ewb', tint: [0.75, 0.66, 0.56] });
+      });
+      for (let z = -102.4; z < -64.5; z += bw / 2) inG(['naveRoof:' + naveSec(z)], () => wb.box('timber', xa, YV - 0.34, z - 0.14, xb, YV, z + 0.14, { ao: false, room, faces: 'nsewb', tint: [0.8, 0.7, 0.6] }));
+    }
+    // coronas de velas en la nave y lámparas en las laterales: la luz llega a
+    // la bóveda y a los techos
+    NAVE.crowns.forEach((z, i) => inG(['naveCrown:' + i], () => P.candleCrown(ctx, 0, 8.6, z, YV + RV - 0.1, { room, r: 1.3, n: 12, radius: 12, intensity: 1.15 })));
+    for (const x of [-8.5, 8.5]) for (const z of [-70, -86, -100]) inG(['naveRoof:' + naveSec(z)], () => P.hangingLamp(ctx, x, YV - 0.34, z, { room, len: 2.4, radius: 8, intensity: 0.9 }));
+  });
   // barandilla alrededor del hueco de la escalera de la cripta: sólo hasta la
   // boca de su bóveda; de ahí al presbiterio la escalera va bajo el suelo
   // (piezas que no se solapan y pilastras que sobresalen un poco: las caras
@@ -369,30 +403,37 @@ export function buildCathedral(ctx, S, L) {
   wb.pop();
   ctx.col.add(2.8, FY, -85.8, 4.2, FY + 1.3, -85.2);
 
-  // bancos (algunos volcados) con fieles muertos arrodillados
+  // bancos (algunos volcados) con fieles muertos arrodillados (los de más al
+  // norte, en dos grupos: los revienta la mano del gigante)
   const rng = new RNG(1212);
   for (let z = -68; z >= -83; z -= 1.7) {
+    const bi = NAVE.pews.findIndex(([a, b]) => z >= a && z <= b);
+    if (bi >= 0) ctx.beginGroup('naveBancos:' + bi);
     for (const x of [-3.0, 3.0]) {
       const off = rng.chance(0.2) ? rng.range(-0.25, 0.25) : 0;
       P.pew(ctx, x, FY, z, 3.4, off);
       if (rng.chance(0.28)) bakeCorpse(wb, x + rng.range(-1, 1), FY + 0.02, z + 0.45, Math.PI, 'kneel', 'villager', rng.int(0, 5));
     }
+    if (bi >= 0) ctx.endGroup();
   }
   P.pew(ctx, -8.4, FY, -74, 3, Math.PI / 2 + 0.3);
   P.pew(ctx, 8.4, FY, -90, 3, -Math.PI / 2 - 0.2);
-  // presbiterio: altar, cruz invadida por la carne, candelabros
-  P.altarTable(ctx, 0, 1.2, -102.4, 0, 3);
-  wb.box('wooddark', -0.18, 1.2, -103.8, 0.18, 8.2, -103.5, { ao: false });
-  wb.box('wooddark', -2.2, 6.2, -103.8, 2.2, 6.6, -103.5, { ao: false });
-  P.fleshGrowth(ctx, 0, 5.5, -103.4, 1.3, 1301, { room, climb: 1.2, lift: 2, bound: [-4, 4, -103.8, -102.8] });
-  P.candles(ctx, -1, 2.22, -102.4, 5, 1302, { room, radius: 5, intensity: 1.2, spread: 0.3 });
-  P.candles(ctx, 1, 2.22, -102.4, 5, 1303, { room, radius: 5, intensity: 1.2, spread: 0.3 });
-  P.candelabra(ctx, -4.2, 1.2, -101.5, { room });
-  P.candelabra(ctx, 4.2, 1.2, -101.5, { room });
+  // presbiterio: altar, cruz invadida por la carne, candelabros (con la
+  // cabecera: los pisa el gigante)
+  inG(['cabecera'], () => {
+    P.altarTable(ctx, 0, 1.2, -102.4, 0, 3);
+    wb.box('wooddark', -0.18, 1.2, -103.8, 0.18, 8.2, -103.5, { ao: false });
+    wb.box('wooddark', -2.2, 6.2, -103.8, 2.2, 6.6, -103.5, { ao: false });
+    P.fleshGrowth(ctx, 0, 5.5, -103.4, 1.3, 1301, { room, climb: 1.2, lift: 2, bound: [-4, 4, -103.8, -102.8] });
+    P.candles(ctx, -1, 2.22, -102.4, 5, 1302, { room, radius: 5, intensity: 1.2, spread: 0.3 });
+    P.candles(ctx, 1, 2.22, -102.4, 5, 1303, { room, radius: 5, intensity: 1.2, spread: 0.3 });
+    P.candelabra(ctx, -4.2, 1.2, -101.5, { room });
+    P.candelabra(ctx, 4.2, 1.2, -101.5, { room });
+    P.veiledStatue(ctx, -7.2, 1.2, -103, 0.4, { ped: 1.0 });
+    P.veiledStatue(ctx, 7.2, 1.2, -103, -0.4, { ped: 1.0 });
+  });
   P.candelabra(ctx, -8.8, FY, -66, { room });
   P.candelabra(ctx, 8.8, FY, -94, { room });
-  P.veiledStatue(ctx, -7.2, 1.2, -103, 0.4, { ped: 1.0 });
-  P.veiledStatue(ctx, 7.2, 1.2, -103, -0.4, { ped: 1.0 });
   P.veiledStatue(ctx, -10.3, FY, -84, Math.PI / 2, { ped: 1.0, veil: 'burlap' });
   P.veiledStatue(ctx, 10.3, FY, -70, -Math.PI / 2, { ped: 1.0 });
   P.candles(ctx, -9.4, FY, -92, 8, 1304, { room, radius: 5, intensity: 0.9, spread: 0.5 });
@@ -401,8 +442,8 @@ export function buildCathedral(ctx, S, L) {
   // la corrupción brota de la cripta
   P.fleshGrowth(ctx, -2.8, FY, -92, 1.1, 1307, { room, climb: 1.4 });
   P.fleshGrowth(ctx, 2.9, FY, -95, 1.2, 1308, { room, climb: 1.4 });
-  P.fleshGrowth(ctx, -5.5, FY + 0.4, -95, 1.0, 1309, { room, climb: 2.2, lift: 1.5 });
-  P.fleshGrowth(ctx, 5.5, FY + 0.4, -89, 0.9, 1310, { room, climb: 2.4, lift: 1.5 });
+  inG(['naveArc:0'], () => P.fleshGrowth(ctx, -5.5, FY + 0.4, -95, 1.0, 1309, { room, climb: 2.2, lift: 1.5 }));
+  inG(['naveArc:1'], () => P.fleshGrowth(ctx, 5.5, FY + 0.4, -89, 0.9, 1310, { room, climb: 2.4, lift: 1.5 }));
   P.fleshGrowth(ctx, 0.5, FY, -84.6, 0.7, 1311, { room, climb: 0.2 });
   for (const [x, z, s] of [
     [0, -83, 3],
@@ -413,37 +454,45 @@ export function buildCathedral(ctx, S, L) {
     P.decal(ctx, x, FY + 0.02, z, s);
   bakeCorpse(wb, -8, FY, -80, 0.9, 'face', 'villager', 3);
   bakeCorpse(wb, 7.5, FY, -97, -2, 'back', 'soldier', 4);
-  ctx.beginGroup('naveRoof');
-  P.banner(ctx, -4.96, 12.1, -78.1, Math.PI / 2, 'bannerBlack', 1.4, 3.6);
-  P.banner(ctx, 4.96, 12.1, -78.1, -Math.PI / 2, 'bannerBlack', 1.4, 3.6);
+  inG(['naveRoof', 'naveRoof:' + naveSec(-78.1)], () => {
+    P.banner(ctx, -4.96, 12.1, -78.1, Math.PI / 2, 'bannerBlack', 1.4, 3.6);
+    P.banner(ctx, 4.96, 12.1, -78.1, -Math.PI / 2, 'bannerBlack', 1.4, 3.6);
+  });
   // el estandarte grande, colgado del fajón del presbiterio con dos cadenas
-  P.banner(ctx, 0, 12.4, -99.8, 0, 'bannerBlack', 2.4, 5.2);
-  wb.box('wooddark', -1.4, 12.38, -99.85, 1.4, 12.48, -99.75, { ao: false, room });
-  for (const x of [-1.1, 1.1]) P.chains(ctx, x, 16.2, -99.8, Math.round((16.2 - 12.48) / 0.06));
-  ctx.endGroup();
-  // --- las ruinas: ocultas hasta que Deo Ignoto revienta la nave (el tejado,
-  // las bóvedas y lo alto de los muros desaparecen y queda esto)
+  // (aparte: en la película el jugador cae y se agarra a él)
+  {
+    const B = NAVE.banner;
+    inG(['naveRoof', 'naveBanner'], () => P.banner(ctx, B.x, B.y, B.z, 0, 'bannerBlack', B.w, B.h));
+    // (la barra y las cadenas, con el fajón del que cuelgan)
+    inG(['naveRoof', 'naveFaj:0'], () => {
+      wb.box('wooddark', -1.4, 12.38, -99.85, 1.4, 12.48, -99.75, { ao: false, room });
+      for (const x of [-1.1, 1.1]) P.chains(ctx, x, 16.2, -99.8, Math.round((16.2 - 12.48) / 0.06));
+    });
+  }
+  // --- las ruinas: ocultas hasta que se rompe la nave (el tejado, las
+  // bóvedas y lo alto de los muros desaparecen y queda esto), por tramos
   ctx.beginGroup('naveRuin');
   {
     const rr = new RNG(4141);
     const RT = [0.78, 0.74, 0.7];
-    // lo alto de los muros, roto en dientes
-    const jag = (x0, z0, x1, z1, axis) => {
+    // lo alto de un muro, roto en dientes (de y0 hacia arriba, hasta hMax)
+    const jag = (x0, z0, x1, z1, axis, y0 = CUT, hMax = 2.3) => {
       const L = axis === 'z' ? z1 - z0 : x1 - x0;
       let a = 0;
       while (a < L - 0.01) {
         const w = Math.min(L - a, rr.range(0.7, 2.2));
-        const h = rr.range(0.2, 2.3) * (rr.chance(0.2) ? 0.3 : 1);
-        if (axis === 'z') wb.box('ashlar', x0, CUT, z0 + a, x1, CUT + h, z0 + a + w, { ao: false, sub: 1.5, tint: RT });
-        else wb.box('ashlar', x0 + a, CUT, z0, x0 + a + w, CUT + h, z1, { ao: false, sub: 1.5, tint: RT });
+        const h = rr.range(0.2, hMax) * (rr.chance(0.2) ? 0.3 : 1);
+        if (axis === 'z') wb.box('ashlar', x0, y0, z0 + a, x1, y0 + h, z0 + a + w, { ao: false, sub: 1.5, tint: RT });
+        else wb.box('ashlar', x0 + a, y0, z0, x0 + a + w, y0 + h, z1, { ao: false, sub: 1.5, tint: RT });
         a += w;
       }
     };
-    jag(-13, -104, -11, -64, 'z');
-    jag(11, -104, 13, -81, 'z');
-    jag(11, -79, 13, -64, 'z');
-    jag(11, -81, 13, -79, 'z');
-    jag(-13, -108, 13, -104, 'x');
+    bySec(-104, -64, (a, b) => jag(-13, a, -11, b, 'z'), 'naveRuin');
+    bySec(-104, -81, (a, b) => jag(11, a, 13, b, 'z'), 'naveRuin');
+    bySec(-79, -64, (a, b) => jag(11, a, 13, b, 'z'), 'naveRuin');
+    inG(['naveRuin:' + naveSec(-80)], () => jag(11, -81, 13, -79, 'z'));
+    // lo alto de las arquerías, mientras sigan en pie
+    for (const x of [-5.5, 5.5]) bySec(-104, -64, (a, b, k) => inG(['naveArc:' + k], () => jag(x - 0.45, a, x + 0.45, b, 'z', 11, 1.2)), 'naveRuin');
     // montones de escombros (sin tapar el pasillo hasta la reja de la cripta)
     for (const [x, z, n, sp, seed] of [
       [-8, -70, 14, 2.6, 4201],
@@ -454,28 +503,30 @@ export function buildCathedral(ctx, S, L) {
       [5.2, -67, 9, 1.6, 4206],
       [8.6, -88, 10, 2, 4207],
     ])
-      P.rubble(ctx, x, FY, z, n, seed, sp, { scale: 1.6, mat: 'ashlar', collide: true, h: 1.0, room });
+      inG(['naveRuin:' + naveSec(z)], () => P.rubble(ctx, x, FY, z, n, seed, sp, { scale: 1.6, mat: 'ashlar', collide: true, h: 1.0, room }));
     // trozos de la bóveda caídos sobre los bancos
     for (const [x, z, ry, rx, w, d] of [
       [-4.2, -73, 0.4, 0.25, 3.0, 2.2],
-      [4.4, -91.5, -0.6, -0.3, 2.6, 2.0],
+      [7.4, -91.5, -0.6, -0.3, 2.6, 2.0],
       [-6.5, -100.5, 1.1, 0.2, 2.4, 1.8],
       [6.6, -82, 0.2, -0.22, 2.6, 1.6],
-    ]) {
-      wb.push();
-      wb.translate(x, FY + 0.45, z);
-      wb.rotateY(ry);
-      wb.rotateX(rx);
-      wb.box('ashlar', -w / 2, -0.35, -d / 2, w / 2, 0.35, d / 2, { ao: false, sub: 1.2, tint: [0.86, 0.83, 0.78], room });
-      wb.pop();
-      ctx.col.add(x - w * 0.42, FY, z - d * 0.42, x + w * 0.42, FY + 1.0, z + d * 0.42);
-    }
+    ])
+      inG(['naveRuin:' + naveSec(z)], () => {
+        wb.push();
+        wb.translate(x, FY + 0.45, z);
+        wb.rotateY(ry);
+        wb.rotateX(rx);
+        wb.box('ashlar', -w / 2, -0.35, -d / 2, w / 2, 0.35, d / 2, { ao: false, sub: 1.2, tint: [0.86, 0.83, 0.78], room });
+        wb.pop();
+        ctx.col.add(x - w * 0.42, FY, z - d * 0.42, x + w * 0.42, FY + 1.0, z + d * 0.42);
+      });
     // vigas del tejado caídas
-    P.beam(ctx, -9.5, -66, -3, -71, FY + 0.15, 0.16);
-    P.beam(ctx, 9.6, -94, 3.5, -99.5, FY + 0.15, 0.15);
-    P.beam(ctx, -10, -84, -5.6, -78, FY + 0.15, 0.14);
+    inG(['naveRuin:' + naveSec(-68)], () => P.beam(ctx, -9.5, -66, -3, -71, FY + 0.15, 0.16));
+    inG(['naveRuin:' + naveSec(-97)], () => P.beam(ctx, 9.6, -94, 3.5, -99.5, FY + 0.15, 0.15));
+    inG(['naveRuin:' + naveSec(-81)], () => P.beam(ctx, -10, -84, -5.6, -78, FY + 0.15, 0.14));
   }
   ctx.endGroup();
+  naveBreaks(ctx, { room, FY, CUT });
   // candelabros volcados y cera por el suelo de la nave
   P.candles(ctx, 8.6, FY, -70.5, 5, 1312, { room, unlit: true, spread: 0.5 });
   P.candles(ctx, -8.9, FY, -96.8, 4, 1313, { room, unlit: true, spread: 0.4 });

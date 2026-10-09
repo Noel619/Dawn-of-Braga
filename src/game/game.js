@@ -73,9 +73,26 @@ export class Game {
     for (const m of lvl.meshes) this.scene.add(m);
     const decalMeshes = buildDecals(this.scene, lvl.ctx.decals);
     const banners = buildBanners(this.scene, lvl.ctx.banners);
-    const shafts = new LightShafts(this.scene);
-    for (const s of lvl.ctx.shafts) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
-    shafts.build();
+    // los haces de luz de las vidrieras (por grupo del mundo: los de un muro
+    // que se rompe se van con él)
+    const shaftMeshes = [];
+    {
+      const byKey = new Map();
+      for (const s of lvl.ctx.shafts) {
+        const key = s.groups ? s.groups.join('/') : s.group || '';
+        if (!byKey.has(key)) byKey.set(key, []);
+        byKey.get(key).push(s);
+      }
+      for (const list of byKey.values()) {
+        const shafts = new LightShafts(this.scene);
+        for (const s of list) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
+        shafts.build();
+        if (!shafts.mesh) continue;
+        if (list[0].group) shafts.mesh.userData.group = list[0].group;
+        if (list[0].groups) shafts.mesh.userData.groups = list[0].groups;
+        shaftMeshes.push(shafts.mesh);
+      }
+    }
     // agua de la cisterna y del pozo
     this.waters = new Waters(this, lvl.ctx.waters || []);
     this.fx = {};
@@ -90,7 +107,7 @@ export class Game {
       for (const n of names) grp(n)[list].push(o);
     };
     const namesOf = (gs, g) => gs || (g ? [g] : null);
-    for (const m of [...lvl.meshes, ...banners, ...decalMeshes]) {
+    for (const m of [...lvl.meshes, ...banners, ...decalMeshes, ...shaftMeshes]) {
       const ns = namesOf(m.userData.groups, m.userData.group);
       if (ns) reg(m, ns, 'meshes');
     }
@@ -122,7 +139,9 @@ export class Game {
     this.scene.add(this.bossLight);
     // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
     // que deja el rito en la cisterna, hasta entonces
-    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater']) this.setGroupVisible(n, false);
+    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater', 'muroNRuin', 'cabeceraRuin', 'absideRuin']) this.setGroupVisible(n, false);
+    // (y lo que rompe la película del jefe final en la nave: ver level_finale.js)
+    for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin):/.test(n)) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);
