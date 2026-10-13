@@ -5,6 +5,7 @@ import { actNave } from './film_nave.js';
 import { actGrab } from './film_grab.js';
 import { actHerreria } from './film_city.js';
 import { actTorre } from './film_tower.js';
+import { actRide } from './film_ride.js';
 
 export const ACTS = {
   *rito(D, o) {
@@ -38,6 +39,14 @@ export const ACTS = {
     D.setCP('torreSur');
     yield* actTorre(D, { fromCP: !!(o.retry || o.resume || o.debug) });
     if (D.g.player.dead) return;
+    yield* actRide(D, {});
+    if (D.g.player.dead) return;
+    yield* ACTS.muralla(D, {});
+  },
+  // (modo de pruebas: la cabalgada, desde la torre rota)
+  *cabalgada(D, o) {
+    D.gow1 = null;
+    yield* actRide(D, { ...o, fromCP: true });
     yield* ACTS.muralla(D, {});
   },
   *muralla(D, o) {

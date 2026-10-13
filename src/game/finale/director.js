@@ -157,6 +157,13 @@ export class Finale {
     this.waveState('corralN', k >= 2);
     this.waveState('herreria', k >= 2);
     this.waveState('centro', k >= 3);
+    // la fachada de la catedral y las almenas al oeste de la brecha (acto 5)
+    on('fachada', k < 3);
+    on('fachadaRuin', k >= 3);
+    for (const n of Object.keys(g.groups)) {
+      if (n.startsWith('almenaN:')) on(n, k < 3);
+      else if (n.startsWith('almenaNRuin:')) on(n, k >= 3);
+    }
     // lo alto de la torre oeste de la puerta sur y su escalera (acto 4)
     on('torreSurTop', k < 3);
     on('torreSurTopRuin', k >= 3);
@@ -258,6 +265,7 @@ export class Finale {
     g.chaseRun = false;
     this.promptFn = null;
     this.gow1 = null;
+    this.arm = null;
     this._approach = null;
     if (this.giant) {
       this.giant.onEventHook = null;

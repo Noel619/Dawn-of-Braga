@@ -102,7 +102,9 @@ export class CollisionWorld {
     const list = this.query(x - r, z - r, x + r, z + r, this._q1 || (this._q1 = []));
     let g = -100;
     for (const b of list) {
-      if (b.maxy > yMax || b.camOnly || (noBlock && b.tag === 'block')) continue;
+      // (noBlock: sin las paredes invisibles, para lo que cae: los trozos, las
+      // piedras; no se quedan flotando encima de ellas)
+      if (b.maxy > yMax || b.camOnly || (noBlock && (b.tag === 'block' || (b.noSight && b.cam === false)))) continue;
       if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
       if (b.maxy > g) g = b.maxy;
     }

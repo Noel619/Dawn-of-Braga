@@ -12,7 +12,7 @@ import { RNG } from '../core/util.js';
 import { solid, blocker, stairs, merlons, cityWall, house } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
-import { BREACH, wallBreach } from './level_finale.js';
+import { BREACH, wallBreach, MERLONS_N, merlonsN } from './level_finale.js';
 
 // Alturas del adarve: muro este (como lo alto del Postigo) y muralla norte.
 const YE = 9,
@@ -129,7 +129,7 @@ function gateTower(ctx, cx, cz, w, yF, h, axis, o = {}) {
 // Tramo de muralla con su adarve: almenas fuera (con colisión) y parapeto
 // dentro. side: lado de fuera ('n' o 'e').
 function wallRun(ctx, x0, z0, x1, z1, h, out, o = {}) {
-  cityWall(ctx, x0, z0, x1, z1, h, { merlonSides: [out] });
+  cityWall(ctx, x0, z0, x1, z1, h, { merlonSides: [out], merlons: o.merlons });
   // colisión de las almenas (el muro las pone sólo de adorno)
   // (alta: que no se pueda subir encima desde un escalón o una caja)
   if (out === 'n') blocker(ctx, x0, h - 0.2, z0, x1, h + 2.4, z0 + 0.6);
@@ -176,7 +176,11 @@ export function buildNorthWalls(ctx, S, L) {
     // jefe final; el tramo, en el grupo 'muroN', y su brecha en 'muroNRuin':
     // ver level_finale.js)
     if (a < BREACH.x0 && b > BREACH.x1) {
-      wallRun(ctx, a, -126, BREACH.x0, -122, YN, 'n');
+      // (al oeste de la brecha, las almenas sueltas: las revienta el brazo
+      // del gigante, ver level_finale.js: merlonsN)
+      wallRun(ctx, a, -126, MERLONS_N.x0, -122, YN, 'n');
+      wallRun(ctx, MERLONS_N.x0, -126, BREACH.x0, -122, YN, 'n', { merlons: false });
+      merlonsN(ctx);
       ctx.beginGroup('muroN');
       wallRun(ctx, BREACH.x0, -126, BREACH.x1, -122, YN, 'n');
       ctx.endGroup();

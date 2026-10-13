@@ -146,10 +146,7 @@ C.rise = clip(
 // hacia delante (el antebrazo cruzado delante, de escudo, la cabeza metida
 // detrás), se lanza empujando con la pierna de atrás, revienta el muro
 // ('bash') y lo atraviesa dando tumbos, dos pasos, hasta enderezarse.
-C.bash = clip(
-  'bash',
-  3.4,
-  [
+const BASH_KEYS = [
     K(0, { root: [0, -30, 0], pelvis: [12, 9, 4], spine2: [12, -4, -2], chest: [12, -8, -2], neck2: [-14, 4, 0], head: [-8, 3, 0], legR: [-36, -8, -5], shinR: [10, 0, 0], footR: [22, 0, 0], legL: [24, -8, -1], shinL: [30, 0, 0], footL: [-24, 0, 0], armR: [16, 0, -8], armL: [-26, 0, 6], foreL: [-24, 0, 0] }),
     K(0.55, { root: [0, -110, 0], pelvis: [16, -14, 0], spine1: [10, -6, 0], spine2: [14, -10, 0], chest: [16, -22, 6], neck1: [-6, 10, 0], neck2: [-8, 14, 0], head: [4, 16, 0], jaw: [22, 0, 0], clavL: [0, -14, 0], armL: [-40, 0, 6], foreL: [-110, 0, 0], handL: [10, 0, 0], armR: [10, 0, -30], foreR: [-30, 0, 0], legL: [-30, 0, 8], shinL: [60, 0, 0], footL: [-10, 0, 0], legR: [24, 0, -6], shinR: [40, 0, 0], footR: [-20, 0, 0], tail1: [0, -10, 0], tail2: [0, 10, 0], ...hand('L', 80, 0) }, 'hold'),
     K(1.0, { root: [0, -150, 0], pelvis: [26, -20, 0], spine1: [14, -8, 0], spine2: [18, -12, 0], chest: [22, -28, 8], neck1: [-14, 12, 0], neck2: [-16, 16, 0], head: [-6, 18, 0], jaw: [30, 0, 0], clavL: [0, -22, 0], armL: [-50, 0, 4], foreL: [-118, 0, 0], handL: [10, 0, 0], armR: [24, 0, -40], foreR: [-20, 0, 0], legL: [-44, 0, 8], shinL: [56, 0, 0], footL: [-8, 0, 0], legR: [36, 0, -4], shinR: [14, 0, 0], footR: [-30, 0, 0], tail1: [0, -16, 0], tail2: [0, 4, 0], ...hand('L', 84, 0) }, 'strike', 1.3),
@@ -157,8 +154,15 @@ C.bash = clip(
     K(2.2, { root: [0, -90, 0], pelvis: [18, -4, 0], spine2: [12, -2, 0], chest: [16, -6, 2], neck1: [-14, 2, 0], neck2: [-14, 2, 0], head: [-10, 0, 0], jaw: [20, 0, 0], armL: [-30, 0, 40], foreL: [-30, 0, 0], armR: [-20, 0, -40], foreR: [-30, 0, 0], legR: [-26, 0, -6], shinR: [20, 0, 0], footR: [20, 0, 0], legL: [26, 0, 6], shinL: [36, 0, 0], footL: [-24, 0, 0], ...hand('L', 30, 8) }, 'settle'),
     K(2.8, { root: [0, -50, 0], pelvis: [12, 4, 0], spine2: [10, 0, 0], chest: [12, 2, 0], neck2: [-12, 0, 0], head: [-8, 0, 0], armL: [-14, 0, 20], foreL: [-24, 0, 0], armR: [-12, 0, -24], foreR: [-20, 0, 0], legL: [-20, 0, 6], shinL: [16, 0, 0], footL: [16, 0, 0], legR: [18, 0, -4], shinR: [30, 0, 0], footR: [-18, 0, 0] }, 'settle'),
     K(3.4, { root: [0, -20, 0], pelvis: [8, 0, 0], spine2: [9, 0, 0], chest: [8, 0, 0], legL: [-8, 0, 4], shinL: [12, 0, 0], legR: [2, 0, -4], shinR: [16, 0, 0] }),
-  ],
-  { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armL: 0.06, foreL: 0.09, armR: 0.1, foreR: 0.14 }, events: [{ t: 1.0, name: 'bash' }, { t: 2.2, name: 'stepR' }, { t: 2.8, name: 'stepL' }] }
+];
+C.bash = clip('bash', 3.4, BASH_KEYS, { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armL: 0.06, foreL: 0.09, armR: 0.1, foreR: 0.14 }, events: [{ t: 1.0, name: 'bash' }, { t: 2.2, name: 'stepR' }, { t: 2.8, name: 'stepL' }] });
+// (el mismo, con el hombro derecho: en el acto 5 lleva al jugador colgado del
+// brazo izquierdo)
+C.bashR = clip(
+  'bashR',
+  3.4,
+  BASH_KEYS.map(([t, p, e, k]) => [t, mirror(p), e, k]),
+  { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armR: 0.06, foreR: 0.09, armL: 0.1, foreL: 0.14 }, events: [{ t: 1.0, name: 'bash' }, { t: 2.2, name: 'stepL' }, { t: 2.8, name: 'stepR' }] }
 );
 C.bash.move = [
   [0, 0],
@@ -169,6 +173,7 @@ C.bash.move = [
   [2.8, 16.0],
   [3.4, 18.0],
 ];
+C.bashR.move = C.bash.move;
 
 // ------------------------------------------------------------ la cabecera
 // Abre el tejado de la cabecera: alza los dos puños sobre la cabeza
@@ -520,4 +525,114 @@ C.smashTower = clip(
     K(2.2, { ...BRACE, root: [0, -96, 0], pelvis: [12, -12, 0], spine2: [10, -8, 0], chest: [18, -16, 0], head: [-2, -8, 0], legL: [-44, 0, 12], shinL: [60, 0, 0], legR: [18, 0, -10], shinR: [28, 0, 0] }, 'settle'),
   ],
   { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armR: 0.1 }, events: [{ t: 1.05, name: 'smash' }, { t: 1.08, name: 'stepL' }] }
+);
+
+// ------------------------------------------------------------ el acto 5
+// Corre a dos patas, enloquecido, con el brazo del virote en alto delante del
+// pecho (el jugador colgado de él; el brazo, el guion) y la campana a rastras
+// en la derecha: zancadas largas y pesadas, el cuerpo echado adelante, la
+// cabeza baja. Dos pasos por ciclo (1,8 s), unos 10 m/s.
+{
+  const contactL = {
+    root: [0, -40, 0],
+    pelvis: [18, -6, -2],
+    spine1: [8, 2, 1],
+    spine2: [12, 4, 1],
+    chest: [12, 8, 0],
+    neck1: [-16, -4, 0],
+    neck2: [-18, -4, 0],
+    head: [-10, -3, 0],
+    jaw: [24, 0, 0],
+    clavL: [0, 0, 8],
+    armL: [-70, -30, 30],
+    foreL: [-86, 0, 0],
+    ...hand('L', 50, 4),
+    armR: [26, 0, -14],
+    foreR: [-30, 0, 0],
+    legL: [-32, 6, 5],
+    shinL: [18, 0, 0],
+    footL: [18, 0, 0],
+    legR: [28, 6, 1],
+    shinR: [44, 0, 0],
+    footR: [-30, 0, 0],
+    tail1: [-4, 10, 0],
+    tail2: [0, 20, 0],
+  };
+  const passL = {
+    root: [0, 30, 0],
+    pelvis: [14, -2, -1],
+    spine1: [8, 1, 0],
+    spine2: [11, 1, 1],
+    chest: [11, 3, 0],
+    neck1: [-16, -1, 0],
+    neck2: [-17, -1, 0],
+    head: [-9, -1, 0],
+    jaw: [20, 0, 0],
+    clavL: [0, 0, 8],
+    armL: [-70, -30, 30],
+    foreL: [-86, 0, 0],
+    ...hand('L', 50, 4),
+    armR: [-8, 0, -12],
+    foreR: [-22, 0, 0],
+    legL: [6, 2, 3],
+    shinL: [28, 0, 0],
+    footL: [-10, 0, 0],
+    legR: [-58, 2, -1],
+    shinR: [104, 0, 0],
+    footR: [24, 0, 0],
+    tail1: [0, 3, 0],
+  };
+  const ARMS = /^(clav|arm|fore|hand|f\d|th)/;
+  const m = (p) => {
+    // (el espejo de las piernas y del cuerpo; el brazo izquierdo sigue en
+    // alto con la mano igual y el derecho balancea al revés)
+    const q = mirror(p);
+    for (const j of Object.keys(q)) if (ARMS.test(j)) delete q[j];
+    for (const j of Object.keys(p)) if (ARMS.test(j)) q[j] = p[j];
+    q.armR = [p.armR[0] * -0.6, p.armR[1], p.armR[2]];
+    return q;
+  };
+  C.runArm = clip('runArm', 1.8, [K(0, contactL), K(0.45, passL), K(0.9, m(contactL)), K(1.35, m(passL)), K(1.8, contactL)], {
+    loop: true,
+    lag: { chest: 0.05, neck2: 0.08, head: 0.12, armR: 0.1, foreR: 0.14, tail1: 0.1, tail2: 0.16 },
+    events: [
+      { t: 0.02, name: 'stepL' },
+      { t: 0.92, name: 'stepR' },
+    ],
+  });
+  C.runArm.vel = 10;
+}
+// Se lleva el brazo a la boca para arrancarte de un mordisco: el cuerpo se
+// encorva hacia el brazo, la cabeza baja y gira, la boca se abre de par en
+// par ('bite'); el brazo lo lleva el guion
+const BITE = { root: [0, -60, 0], pelvis: [10, 10, 0], spine1: [6, 4, 0], spine2: [8, 8, 0], chest: [10, 14, 0], neck1: [6, 10, 0], neck2: [10, 14, 0], head: [16, 18, 0], jaw: [10, 0, 0], clavL: [0, 0, 10], armL: [-110, -40, 20], foreL: [-110, 0, 0], ...hand('L', 50, 4), armR: [-20, 10, -30], foreR: [-30, 0, 0], legL: [-16, 0, 10], shinL: [24, 0, 0], legR: [10, 0, -10], shinR: [20, 0, 0] };
+C.bite = clip(
+  'bite',
+  1.6,
+  [K(0), K(0.7, { ...BITE, jaw: [52, 0, 0], head: [10, 20, 0] }, 'hold'), K(1.0, { ...BITE, jaw: [44, 0, 0] }), K(1.6, { ...BITE, jaw: [50, 0, 0], head: [12, 22, 0] })],
+  { lag: { neck2: 0.06, head: 0.1, armR: 0.1 }, events: [{ t: 0.7, name: 'open' }] }
+);
+// le apuñalan el labio: la cabeza atrás de golpe, aparta el brazo y grita
+C.biteHurt = clip(
+  'biteHurt',
+  1.8,
+  [
+    K(0, { ...BITE, jaw: [50, 0, 0] }),
+    K(0.1, { ...BITE, root: [0, -40, 0], chest: [-14, 6, 0], neck1: [-20, 0, 0], neck2: [-24, -8, 0], head: [-20, -12, 0], jaw: [40, 0, 0] }, 'snap'),
+    K(1.0, { ...BITE, root: [0, -40, 0], chest: [-8, 4, 0], neck1: [-14, 0, 0], neck2: [-16, -6, 0], head: [-14, -10, 0], jaw: [46, 0, 0] }, 'settle'),
+    K(1.8, { root: [0, -30, 0], pelvis: [10, 0, 0], chest: [4, 0, 0], neck2: [-8, 0, 0], head: [-6, 0, 0], jaw: [30, 0, 0] }),
+  ],
+  { lag: { neck2: 0.05, head: 0.08 }, events: [{ t: 0.1, name: 'hurt' }] }
+);
+// En la brecha de la muralla: se inclina hacia su izquierda y restriega el
+// antebrazo contra el adarve para quitarte de encima (el brazo, el guion)
+C.rubArm = clip(
+  'rubArm',
+  2.0,
+  [
+    K(0, { root: [0, -40, 0], pelvis: [14, 0, 0], chest: [10, 0, 0], neck2: [-12, 0, 0], head: [-8, 0, 0] }),
+    K(0.6, { root: [0, -90, 0], pelvis: [18, 6, -10], spine1: [8, 4, -6], spine2: [10, 8, -8], chest: [12, 14, -10], neck1: [-6, 8, 0], neck2: [-8, 12, 0], head: [-4, 16, 0], jaw: [34, 0, 0], clavL: [0, 0, -6], armR: [-30, 0, -40], foreR: [-30, 0, 0], legL: [-24, 0, 16], shinL: [40, 0, 0], legR: [10, 0, -4], shinR: [24, 0, 0] }, 'hold'),
+    K(2.0, { root: [0, -96, 0], pelvis: [20, 10, -12], spine1: [10, 6, -6], spine2: [12, 10, -8], chest: [14, 18, -10], neck1: [-6, 10, 0], neck2: [-8, 14, 0], head: [-4, 18, 0], jaw: [38, 0, 0], clavL: [0, 0, -6], armR: [-30, 0, -40], foreR: [-30, 0, 0], legL: [-30, 0, 18], shinL: [46, 0, 0], legR: [12, 0, -4], shinR: [26, 0, 0] }),
+  ],
+  { lag: { chest: 0.05, head: 0.1 } }
 );

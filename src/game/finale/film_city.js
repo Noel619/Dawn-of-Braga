@@ -18,6 +18,12 @@ import { FP } from './film_player.js';
 import { ESTABLO, hideFolk } from './film_grab.js';
 import { NAVE, TOWER_S } from '../../world/level_finale.js';
 import { springald1 } from './film_tower.js';
+import { waveHouses, rectDist, breakWave as breakWaveOf, breakArm as breakArmOf, smashBlock, smashHouse } from './film_wave.js';
+
+// los bloques que revientan en esta huida
+const WG3 = ['herreria', 'corralN'];
+const breakWave = (D, G) => breakWaveOf(D, G, WG3);
+const breakArm = (D, G) => breakArmOf(D, G, WG3);
 import { clamp, dampAngle } from '../../core/util.js';
 
 const V3 = THREE.Vector3;
@@ -521,109 +527,6 @@ function* handStrike(D, G, target, o = {}) {
   G.freeHand('L');
 }
 
-// ---------------------------------------------------------------------
-// las casas que revientan a su paso (y lo que cuelga de ellas, y lo que hay
-// por el suelo del corral)
-function waveHouses(g) {
-  const L = g.level.ctx;
-  return L._chaseHouses || (L._chaseHouses = (L.houseRects || []).filter((r) => r.sub && (r.sub.startsWith('herreria:') || r.sub.startsWith('corralN:'))));
-}
-function waveProps(g) {
-  const L = g.level.ctx;
-  return L._chaseProps || (L._chaseProps = (L.waveProps || []).filter((q) => q.wg === 'herreria' || q.wg === 'corralN'));
-}
-const rectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
-// (lo que toca: las manos, los hombros, los pies, las caderas y la cola;
-// cada hueso con lo que abulta)
-const BODY = [
-  ['handL', 1.0],
-  ['handR', 1.0],
-  ['armL', 1.2],
-  ['armR', 1.2],
-  ['footL', 0.9],
-  ['footR', 0.9],
-  ['pelvis', 2.4],
-  ['chest', 2.2],
-  ['tail2', 1.2],
-  ['tail4', 0.9],
-];
-const _pts = BODY.map(() => new V3());
-function breakWave(D, G) {
-  const g = D.g;
-  const B = G.M.byName;
-  BODY.forEach(([n], i) => B[n].getWorldPosition(_pts[i]));
-  for (const r of waveHouses(g)) {
-    if (!g.groups[r.sub] || !g.groups[r.sub].on) continue;
-    const h = (r.h || 7) + 1.5;
-    if (BODY.some(([, R], i) => _pts[i].y < h && rectDist(r, _pts[i].x, _pts[i].z) < R)) smashHouse(D, r, G.pos);
-  }
-  for (const q of waveProps(g)) {
-    if (!g.groups[q.name] || !g.groups[q.name].on) continue;
-    if (BODY.some(([, R], i) => _pts[i].y < 5 && Math.hypot(q.x - _pts[i].x, q.z - _pts[i].z) < R + 1.2)) kickProp(D, q, G.pos);
-  }
-}
-// lo que toca el brazo izquierdo tendido (del hombro a la mano)
-function breakArm(D, G) {
-  const g = D.g;
-  const B = G.M.byName;
-  const a = B.armL.getWorldPosition(new V3()),
-    b = B.foreL.getWorldPosition(new V3()),
-    c = B.handL.getWorldPosition(new V3());
-  const pts = [a.clone().lerp(b, 0.5), b, b.clone().lerp(c, 0.5), c];
-  for (const r of waveHouses(g)) {
-    if (!g.groups[r.sub] || !g.groups[r.sub].on) continue;
-    if (pts.some((q) => q.y < (r.h || 7) + 1.2 && rectDist(r, q.x, q.z) < 1.2)) smashHouse(D, r, G.pos);
-  }
-}
-// todo un bloque, de golpe (donde cae del salto)
-function smashBlock(D, wg, at, r) {
-  const g = D.g;
-  for (const h of waveHouses(g)) if (h.sub.startsWith(wg + ':') && rectDist(h, at.x, at.z) < r) smashHouse(D, h, at);
-  for (const q of waveProps(g)) if (q.wg === wg && Math.hypot(q.x - at.x, q.z - at.z) < r + 2) kickProp(D, q, at);
-}
-// Una casa revienta: sus muros y su tejado, en trozos que salen despedidos
-// lejos del gigante; polvo, tejas, vigas y lo que colgaba de ella
-function smashHouse(D, r, from) {
-  const g = D.g,
-    a = g.audio;
-  if (!D.breakHouse(r.sub)) return;
-  const wg = r.sub.split(':')[0];
-  for (const q of waveProps(g)) if (q.wg === wg && g.groups[q.name] && g.groups[q.name].on && rectDist(r, q.x, q.z) < 1.5) kickProp(D, q, from);
-  const cx = (r.x0 + r.x1) / 2,
-    cz = (r.z0 + r.z1) / 2;
-  const away = _v3.set(cx - from.x, 0, cz - from.z);
-  if (away.lengthSq() < 0.01) away.set(0, 0, 1);
-  away.normalize();
-  const h = r.h || 7;
-  const n = Math.min(16, Math.round(8 + (r.x1 - r.x0) * (r.z1 - r.z0) * 0.08));
-  const wall = r.style === 'plaster' ? 'plaster' : 'wallstone';
-  for (let i = 0; i < n; i++) {
-    const roof = i % 3 === 0;
-    D.chunks.add({ mat: roof ? 'roof' : i % 4 === 1 ? 'timber' : wall, size: roof ? [rnd(0.8, 1.4), 0.14, rnd(0.6, 1.0)] : [rnd(0.6, 1.3), rnd(0.4, 0.9), rnd(0.5, 1.0)], pos: new V3(rnd(r.x0 + 0.4, r.x1 - 0.4), rnd(1.5, h + 0.8), rnd(r.z0 + 0.4, r.z1 - 0.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(away.x * rnd(3, 10) + rnd(-2, 2), rnd(2, 8), away.z * rnd(3, 10) + rnd(-2, 2)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 11, life: 8 });
-  }
-  D.debris.burst(new V3(cx, h * 0.45, cz), 24, { speed: 8, up: 5, size: 1.0, spread: 3, dir: away.clone().multiplyScalar(0.6) });
-  for (let k = 0; k < 3; k++) g.fx.blood.emit(rnd(r.x0, r.x1), rnd(1, h), rnd(r.z0, r.z1), 40, { color: DUST, speed: 5, life: 2.6, up: 1.2, gravity: 0.3 });
-  const at = { x: cx, y: 3, z: cz };
-  a && a.play('wallBreak', at, { k: 1.8 });
-  a && a.play(Math.random() < 0.5 ? 'woodBreak' : 'pillarBreak', at, { k: 1.4 });
-  const dp = Math.hypot(g.player.pos.x - cx, g.player.pos.z - cz);
-  g.camRig.shake(clamp(0.9 - dp * 0.03, 0.15, 0.9));
-  g.input.rumble(0.6, 0.8, 250);
-}
-// lo que había por medio (vallas, paja, leña, ropa tendida, rótulos): fuera,
-// en astillas
-function kickProp(D, q, from) {
-  const g = D.g;
-  if (!g.groups[q.name] || !g.groups[q.name].on) return;
-  g.setGroupVisible(q.name, false);
-  const away = _v2.set(q.x - from.x, 0, q.z - from.z);
-  if (away.lengthSq() < 0.01) away.set(0, 0, 1);
-  away.normalize();
-  for (let i = 0; i < 4; i++) D.chunks.add({ mat: i % 2 ? 'planks' : 'timber', size: [rnd(0.1, 0.2), rnd(0.08, 0.14), rnd(0.8, 1.6)], pos: new V3(q.x + rnd(-0.8, 0.8), rnd(0.4, 2.5), q.z + rnd(-0.8, 0.8)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(away.x * rnd(3, 8), rnd(2, 6), away.z * rnd(3, 8)), spin: [rnd(-9, 9), rnd(-9, 9), rnd(-9, 9)], shatter: 99, life: 6 });
-  g.fx.blood.emit(q.x, 0.8, q.z, 16, { color: DUST, speed: 3, life: 1.2, up: 1 });
-  g.audio && g.audio.play('woodBreak', { x: q.x, y: 1, z: q.z }, { k: 0.9 });
-}
-
 // ======================================================================
 // 3. A la salida de la calle: se alza y descarga la campana donde estás
 // ======================================================================
@@ -721,7 +624,7 @@ function* beatBell(D, G) {
   D.debris.burst(at.clone().setY(0.3), 36, { speed: 10, up: 9, size: 0.9, spread: 3 });
   for (let i = 0; i < 9; i++) D.chunks.add({ mat: 'cobble', size: [rnd(0.5, 1.0), 0.22, rnd(0.4, 0.9)], pos: new V3(at.x + rnd(-2.4, 2.4), 0.3, at.z + rnd(-2.4, 2.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-7, 7), rnd(5, 11), rnd(-7, 7)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 8 });
   // (lo que quede de las casas de al lado, abajo)
-  for (const r of waveHouses(g)) if (g.groups[r.sub] && g.groups[r.sub].on && rectDist(r, at.x, at.z) < 4.5) smashHouse(D, r, at);
+  for (const r of waveHouses(g, WG3)) if (g.groups[r.sub] && g.groups[r.sub].on && rectDist(r, at.x, at.z) < 4.5) smashHouse(D, r, at);
   if (!rolled) {
     // le pilla el borde: sale despedido hacia la esquina
     F.hurt(32, at, { shake: 1.2, heavy: true });

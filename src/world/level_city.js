@@ -998,11 +998,14 @@ export function buildCentroRuin(ctx, houses, wg = 'centro') {
     P.decal(ctx, cx, 0.03, cz, Math.min(W, D) * 1.1, 'shadow', hi, { opacity: 0.6 });
     if (r.sub) ctx.endGroup();
   });
-  // el arco de la Sé, en la calle
+  // el arco de la Sé, en la calle (en su propio grupo: sale cuando cae el
+  // arco, 'centro:arco')
   if (wg === 'centro') {
+    ctx.beginGroup('centroRuin:arco');
     P.rubble(ctx, 0, 0, -37.6, 14, 7731, 2.6, { scale: 1.5, blocks: 0.8, mat: 'ashlar' });
     ctx.col.add(-1.4, 0, -38.8, 1.6, 0.8, -36.6);
     P.beam(ctx, -2.6, -36.2, 1.8, -39.4, 0, 0.14);
+    ctx.endGroup();
   }
   ctx.endGroup();
 }

@@ -678,7 +678,7 @@ function* gow1(D, G, S, bolt) {
   G.rootMotion = false;
   const rope = S.rope;
   // el brazo, por el guion: de donde esté a donde se diga, con su codo
-  const arm = armDriver(D, G);
+  const arm = (D.arm = armDriver(D, G));
   // ---- se mira el brazo atravesado y ruge (la cadena, floja, de la torre
   // a su brazo)
   F.slow(1, 5);
@@ -897,25 +897,33 @@ function gowDone(D) {
 
 // el brazo izquierdo llevado por el guion (IK): hacia una pose (espacio
 // del modelo) o un punto del mundo, en un tiempo; y sacudido si se pide
-function armDriver(D, G) {
+export function armDriver(D, G) {
   const w = new V3(),
     pole = new V3(),
     w0 = new V3(),
-    p0 = new V3();
+    p0 = new V3(),
+    s0 = new V3(),
+    q0 = new V3();
+  const inv = new THREE.Matrix4();
   const A = { from: null, to: null, dur: 0.5, t: 1, shake: 0, world: null, weight: 1 };
   G.M.byName.handL.getWorldPosition(w);
   pole.copy(G.wp(10, 10, 4, new V3()));
+  // (de dónde sale, en el espacio del gigante: si corre, la mano no se queda
+  // atrás en el sitio donde empezó el gesto)
+  const from = () => {
+    inv.copy(G.M.root.matrixWorld).invert();
+    w0.copy(w).applyMatrix4(inv);
+    p0.copy(pole).applyMatrix4(inv);
+  };
   A.to = (pose, dur = 0.5) => {
-    w0.copy(w);
-    p0.copy(pole);
+    from();
     A.pose = pose;
     A.world = null;
     A.dur = dur;
     A.t = 0;
   };
   A.toWorld = (pt, dur = 0.4) => {
-    w0.copy(w);
-    p0.copy(pole);
+    from();
     A.world = pt.clone();
     A.dur = dur;
     A.t = 0;
@@ -928,10 +936,12 @@ function armDriver(D, G) {
         tt += dt;
         A.t = Math.min(1, A.t + dt / Math.max(0.01, A.dur));
         const k = sm(A.t);
-        const tw = A.world ? _v.copy(A.world) : A.pose ? G.wp(...A.pose.w, _v) : _v.copy(w0);
-        const tp = A.world ? G.wp(12, 9, -2, _v2) : A.pose ? G.wp(...A.pose.pole, _v2) : _v2.copy(p0);
-        w.lerpVectors(w0, tw, k);
-        pole.lerpVectors(p0, tp, k);
+        G.wp(w0.x, w0.y, w0.z, s0);
+        G.wp(p0.x, p0.y, p0.z, q0);
+        const tw = A.world ? _v.copy(A.world) : A.pose ? G.wp(...A.pose.w, _v) : _v.copy(s0);
+        const tp = A.world ? G.wp(12, 9, -2, _v2) : A.pose ? G.wp(...A.pose.pole, _v2) : _v2.copy(q0);
+        w.lerpVectors(s0, tw, k);
+        pole.lerpVectors(q0, tp, k);
         if (A.shake > 0) {
           w.x += Math.sin(tt * 17) * 1.3 * A.shake;
           w.y += Math.sin(tt * 13 + 1) * 1.0 * A.shake;
@@ -967,7 +977,7 @@ function armPoint(G) {
   return P;
 }
 // colgado del virote: las manos en el astil, el cuerpo debajo
-function hangOnBolt(bolt) {
+export function hangOnBolt(bolt) {
   const q = bolt.mesh.quaternion;
   const along = _v.set(0, 0, 1).applyQuaternion(q);
   const grip = bolt.tail.clone().addScaledVector(along, BOLT_L - 0.12);

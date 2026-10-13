@@ -141,7 +141,7 @@ export class Game {
     // que deja el rito en la cisterna, hasta entonces
     for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater', 'muroNRuin', 'cabeceraRuin', 'absideRuin', 'wreck:establo:techoRuin', 'herreriaRuin', 'corralNRuin', 'torreSurTopRuin', 'torreSurStairRuin']) this.setGroupVisible(n, false);
     // (y lo que rompe la película del jefe final en la nave: ver level_finale.js)
-    for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin):/.test(n)) this.setGroupVisible(n, false);
+    for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin|almenaNRuin):/.test(n)) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);

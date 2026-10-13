@@ -194,3 +194,29 @@ FP.hangBolt = clip(
   ],
   { loop: true, ground: false }
 );
+
+// ------------------------------------------------------------ el acto 5
+// colgado de una mano, la espada a dos manos hacia arriba: a la boca
+FP.stabUp = clip(
+  'fp_stabUp',
+  0.6,
+  [
+    [0, { ...HANG, armR: [-150, 0, -20], foreR: [-80, 0, 0], chest: [10, 0, 0], head: [-36, 0, 0], legL: [-30, 0, 6], shinL: [50, 0, 0] }],
+    [0.14, { ...HANG, armR: [-178, 0, -8], foreR: [-4, 0, 0], chest: [-14, 0, 0], head: [-40, 0, 0], legL: [-40, 0, 6], shinL: [60, 0, 0], legR: [10, 0, -6], shinR: [40, 0, 0] }, 'snap'],
+    [0.6, { ...HANG, armR: [-170, 0, -12], foreR: [-20, 0, 0], chest: [-8, 0, 0], head: [-34, 0, 0] }],
+  ],
+  { ground: false }
+);
+// arrastrado de rodillas por el adarve bajo el antebrazo, las dos manos en
+// el virote, el cuerpo echado atrás (a tirones)
+const DRAG = { root: [0, -46, 0], hips: [-16, 0, 0], chest: [-12, 0, 0], head: [-6, 0, 0], armL: [-150, 0, 16], foreL: [-24, 0, 0], armR: [-146, 0, -16], foreR: [-28, 0, 0], legL: [-6, 0, 10], shinL: [108, 0, 0], footL: [30, 0, 0], legR: [-14, 0, -8], shinR: [112, 0, 0], footR: [30, 0, 0] };
+FP.dragged = clip(
+  'fp_dragged',
+  0.5,
+  [
+    [0, DRAG],
+    [0.12, { ...DRAG, root: [0, -40, 0], hips: [-22, 6, 0], chest: [-18, 4, 0], head: [-14, 0, 0], legL: [-16, 0, 14] }, 'snap'],
+    [0.5, DRAG],
+  ],
+  { loop: true, ground: false }
+);

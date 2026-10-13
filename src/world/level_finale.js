@@ -320,6 +320,48 @@ export function wallBreach(ctx) {
   ctx.endGroup();
 }
 
+// Las almenas del lienzo al oeste de la brecha, una a una: el gigante
+// restriega el antebrazo por ellas para quitarse de encima al jugador (la
+// película, acto 5) y revientan a su paso. Cada una en 'almenaN:i' y su muñón
+// en 'almenaNRuin:i' (oculto hasta entonces). (Como merlons() en builders.js:
+// 0,9 de ancho, 0,7 de hueco, 1,1 de alto.)
+export const MERLONS_N = { x0: -19, x1: BREACH.x0, z: -125.7, y: 10, w: 0.9, gap: 0.7, h: 1.1, t: 0.6 };
+export function merlonSpans() {
+  const { x0, x1, w, gap } = MERLONS_N;
+  const L = x1 - x0;
+  const n = Math.floor((L + gap) / (w + gap));
+  const start = (L - (n * w + (n - 1) * gap)) / 2;
+  return Array.from({ length: n }, (_, i) => x0 + start + i * (w + gap)).map((a) => [a, a + w]);
+}
+export function merlonsN(ctx) {
+  const wb = ctx.wb;
+  const { z, y, h, t } = MERLONS_N;
+  const rng = new RNG(1919);
+  merlonSpans().forEach(([a, b], i) => {
+    ctx.beginGroup('almenaN:' + i);
+    wb.box('wallstone', a, y, z - t / 2, b, y + h, z + t / 2, { ao: false, sub: 2 });
+    ctx.endGroup();
+    // el muñón, mellado, y un par de piedras en el adarve
+    ctx.beginGroup('almenaNRuin:' + i);
+    let x = a;
+    while (x < b - 0.01) {
+      const w = Math.min(b - x, rng.range(0.25, 0.45));
+      wb.box('wallstone', x, y, z - t / 2 + rng.range(0, 0.12), x + w, y + rng.range(0.12, 0.5), z + t / 2 - rng.range(0, 0.12), { ao: false, sub: 2 });
+      x += w;
+    }
+    for (let k = 0; k < 2; k++) {
+      const s = rng.range(0.22, 0.4);
+      wb.push();
+      wb.translate(rng.range(a - 0.4, b + 0.4), y + s * 0.4, z + rng.range(0.6, 1.8));
+      wb.rotateY(rng.range(0, Math.PI));
+      wb.rotateZ(rng.range(-0.4, 0.4));
+      wb.box('wallstone', -s, -s * 0.45, -s * 0.7, s, s * 0.45, s * 0.7, { ao: false });
+      wb.pop();
+    }
+    ctx.endGroup();
+  });
+}
+
 // ======================================================================
 // LA NAVE DE LA CATEDRAL
 // ======================================================================
