@@ -149,6 +149,8 @@ export const WALK = { dur: 3.4, stride: WALK_STRIDE, speed: (WALK_STRIDE * 2) / 
     [K(0, strikeL), K(0.85, passL), K(1.7, mirror(strikeL)), K(2.55, mirror(passL)), K(3.4, strikeL)],
     { loop: true, events: [{ t: 0.02, name: 'stepL' }, { t: 1.72, name: 'stepR' }] }
   );
+  // (la película: el avance del paso, para la raíz)
+  C.walk.vel = WALK.speed;
 }
 
 // ------------------------------------------------------------ golpes

@@ -4,6 +4,7 @@ import { actRise } from './film_rise.js';
 import { actNave } from './film_nave.js';
 import { actGrab } from './film_grab.js';
 import { actHerreria } from './film_city.js';
+import { actTorre } from './film_tower.js';
 
 export const ACTS = {
   *rito(D, o) {
@@ -35,7 +36,9 @@ export const ACTS = {
   },
   *torreSur(D, o) {
     D.setCP('torreSur');
-    void o;
+    yield* actTorre(D, { fromCP: !!(o.retry || o.resume || o.debug) });
+    if (D.g.player.dead) return;
+    yield* ACTS.muralla(D, {});
   },
   *muralla(D, o) {
     D.setCP('muralla');

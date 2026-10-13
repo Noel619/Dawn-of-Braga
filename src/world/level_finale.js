@@ -554,8 +554,11 @@ export function springaldTowerS(ctx) {
     ])
       wb.box('black', sx - rx - 0.001, y, sz - rz - 0.001, sx + rx + 0.001, y + 1.2, sz + rz + 0.001, { ao: false, grime: false });
   // ---- el cadalso: tablas sobre vigas que vuelan de la torre, y un pretil
+  // (grupo 'torreSurTop': lo revienta el gigante con el brazo; sus restos,
+  // en 'torreSurTopRuin')
   const [dx0, dz0, dx1, dz1] = T.deck;
   const dy = T.deckY;
+  ctx.beginGroup('torreSurTop');
   const PT = [0.62, 0.55, 0.48];
   wb.box('planks', dx0, dy - 0.15, dz0, dx1, dy, dz1, { ao: false, faces: 'tnsewb', uv: 0.5, tint: PT, sub: 2 });
   ctx.col.add(dx0, dy - 0.4, dz0, dx1, dy, dz1);
@@ -599,7 +602,11 @@ export function springaldTowerS(ctx) {
     [T.x, dz1],
   ])
     wb.box('timber', px - 0.12, dy - 0.15, pz - 0.12, px + 0.12, dy + 1.3, pz + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
-  // ---- la escalera, sobre caballetes, con sus pasamanos
+  ctx.endGroup();
+  towerTopRuin(ctx);
+  // ---- la escalera, sobre caballetes, con sus pasamanos (grupo
+  // 'torreSurStair': el gigante se la lleva por delante)
+  ctx.beginGroup('torreSurStair');
   stairs(ctx, S.x, 0, S.z0, 's', S.w, S.n, S.rise, S.run, 'planks', { faces: 'tnsewb' });
   const L = S.n * S.run,
     H = S.n * S.rise;
@@ -630,6 +637,67 @@ export function springaldTowerS(ctx) {
     }
     wb.box('timber', S.x - S.w / 2 - 0.35, y - 0.25, z - 0.12, S.x + S.w / 2 + 0.35, y, z + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
   }
+  ctx.endGroup();
+  stairRuin(ctx);
+}
+// Lo que queda de lo alto de la torre: la cornisa con cascotes y astillas,
+// dos vigas partidas que asoman y cuelgan, un poste del pretil en pie y
+// tablas sueltas
+function towerTopRuin(ctx) {
+  const wb = ctx.wb;
+  const T = TOWER_S;
+  const rng = new RNG(5521);
+  ctx.beginGroup('torreSurTopRuin');
+  const y = T.h;
+  P.rubble(ctx, T.x + 0.4, y, T.z - 0.3, 12, 5522, 1.4, { scale: 0.8, mat: 'wallstone' });
+  for (let k = 0; k < 7; k++) {
+    wb.push();
+    wb.translate(T.x + rng.range(-1.8, 1.8), y + 0.12, T.z + rng.range(-1.8, 1.8));
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateZ(rng.range(-0.25, 0.25));
+    wb.box('planks', -rng.range(0.5, 1.1), -0.04, -0.12, rng.range(0.5, 1.1), 0.04, 0.12, { ao: false, tint: [0.56, 0.5, 0.44] });
+    wb.pop();
+  }
+  // vigas partidas: asoman de la torre y cuelgan
+  for (const [ax, az, bx, by, bz] of [
+    [T.x - 1.2, T.z + 2.2, T.x - 1.0, y - 2.4, T.z + 3.6],
+    [T.x + 2.2, T.z - 0.4, T.x + 3.3, y - 1.6, T.z + 0.2],
+    [T.x + 0.6, T.z - 2.2, T.x + 0.9, y - 3.2, T.z - 3.1],
+  ])
+    strut(wb, new THREE.Vector3(ax, y - 0.55, az), new THREE.Vector3(bx, by, bz), 0.13, 'timber');
+  // un poste del pretil, en pie, con un trozo de tabla
+  wb.box('timber', T.x - 2.32, y - 0.6, T.z + 2.18, T.x - 2.08, y + 1.1, T.z + 2.42, { ao: false, tint: [0.5, 0.42, 0.34] });
+  wb.push();
+  wb.translate(T.x - 1.6, y + 0.6, T.z + 2.3);
+  wb.rotateZ(-0.5);
+  wb.box('planks', -0.6, -0.05, -0.03, 0.6, 0.05, 0.03, { ao: false, tint: [0.5, 0.44, 0.38] });
+  wb.pop();
+  ctx.endGroup();
+}
+// La escalera tras la embestida: el tramo de abajo, y del resto sólo la
+// zanca rota y los peldaños por el suelo
+function stairRuin(ctx) {
+  const wb = ctx.wb;
+  const S = TOWER_S.stair;
+  const rng = new RNG(5531);
+  ctx.beginGroup('torreSurStairRuin');
+  const n = 14;
+  stairs(ctx, S.x, 0, S.z0, 's', S.w, n, S.rise, S.run, 'planks', { faces: 'tnsewb' });
+  for (const sx of [-1, 1]) {
+    const x = S.x + sx * (S.w / 2 + 0.05);
+    strut(wb, new THREE.Vector3(x, -0.05, S.z0), new THREE.Vector3(x, n * S.rise - 0.05, S.z0 + n * S.run), 0.11, 'timber');
+    // (la zanca partida, caída sobre la plaza)
+    strut(wb, new THREE.Vector3(x, n * S.rise - 0.1, S.z0 + n * S.run), new THREE.Vector3(x + sx * 1.6, 0.1, S.z0 + n * S.run + 3.4), 0.1, 'timber');
+  }
+  for (let k = 0; k < 16; k++) {
+    wb.push();
+    wb.translate(S.x + rng.range(-3, 3), 0.06, S.z0 + n * S.run + rng.range(0.5, 9));
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateZ(rng.range(-0.2, 0.2));
+    wb.box('planks', -rng.range(0.5, 0.9), -0.05, -0.15, rng.range(0.5, 0.9), 0.05, 0.15, { ao: false, tint: [0.56, 0.5, 0.44] });
+    wb.pop();
+  }
+  ctx.endGroup();
 }
 const lerp4 = (a, b, k) => a + (b - a) * k;
 // un madero (o una viga) de a a b

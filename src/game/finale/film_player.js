@@ -152,3 +152,45 @@ FP.tuck = clip(
   ],
   { ground: false }
 );
+
+// ------------------------------------------------------------ el acto 4
+// en el torno de la espringala: empuja los espeques hacia abajo, a dos manos,
+// echando el cuerpo encima (un empujón por vuelta del bucle)
+const CRANK = { root: [0, -14, 0], hips: [20, 0, 0], chest: [16, 0, 0], head: [-20, 0, 0], armL: [-104, 0, 14], foreL: [-30, 0, 0], armR: [-106, 0, -12], foreR: [-26, 0, 0], legL: [-30, 0, 6], shinL: [36, 0, 0], legR: [16, 0, -6], shinR: [22, 0, 0], footR: [-12, 0, 0] };
+FP.crank = clip(
+  'fp_crank',
+  0.7,
+  [
+    [0, CRANK],
+    [0.32, { ...CRANK, root: [0, -26, 0], hips: [32, 0, 0], chest: [28, 0, 0], head: [-32, 0, 0], armL: [-50, 0, 14], foreL: [-12, 0, 0], armR: [-54, 0, -12], foreR: [-10, 0, 0], legL: [-42, 0, 6], shinL: [58, 0, 0] }, 'snap'],
+    [0.7, CRANK],
+  ],
+  { loop: true, ground: false }
+);
+// apuntando: las dos manos en la cola de la espringala, un poco agachado
+const AIM = { root: [0, -10, 0], hips: [12, 0, 0], chest: [10, 0, 0], head: [-8, 0, 0], armL: [-72, 0, 22], foreL: [-44, 0, 0], armR: [-74, 0, -20], foreR: [-46, 0, 0], legL: [-22, 0, 8], shinL: [22, 0, 0], legR: [12, 0, -8], shinR: [16, 0, 0] };
+FP.aimGun = clip('fp_aimGun', 2.2, [[0, AIM], [1.1, { ...AIM, root: [0, -12, 0], chest: [12, 2, 0] }], [2.2, AIM]], { loop: true, ground: false });
+// corriendo por la cadena tensa: los brazos abiertos para no caer
+const CR = { hips: [16, 0, 0], chest: [8, 0, 0], head: [-12, 0, 0], armL: [-40, 0, 72], foreL: [-20, 0, 0], armR: [-36, 0, -72], foreR: [-24, 0, 0] };
+FP.chainRun = clip(
+  'fp_chainRun',
+  0.56,
+  [
+    [0, { ...CR, legL: [-46, 0, 4], shinL: [30, 0, 0], legR: [26, 0, -4], shinR: [50, 0, 0], footR: [20, 0, 0] }],
+    [0.28, { ...CR, chest: [8, 4, 0], armL: [-30, 0, 64], armR: [-44, 0, -80], legL: [26, 0, 4], shinL: [50, 0, 0], footL: [20, 0, 0], legR: [-46, 0, -4], shinR: [30, 0, 0] }],
+    [0.56, { ...CR, legL: [-46, 0, 4], shinL: [30, 0, 0], legR: [26, 0, -4], shinR: [50, 0, 0], footR: [20, 0, 0] }],
+  ],
+  { loop: true, ground: false }
+);
+// colgado del virote con las dos manos, las piernas sueltas
+const HANG = { root: [0, 0, 0], hips: [-4, 0, 0], chest: [-6, 0, 0], head: [-24, 0, 0], armL: [-172, 0, 10], foreL: [-12, 0, 0], armR: [-170, 0, -10], foreR: [-14, 0, 0], legL: [-10, 0, 6], shinL: [20, 0, 0], legR: [4, 0, -6], shinR: [30, 0, 0] };
+FP.hangBolt = clip(
+  'fp_hangBolt',
+  1.6,
+  [
+    [0, HANG],
+    [0.8, { ...HANG, chest: [-4, 4, 0], legL: [-22, 0, 6], shinL: [34, 0, 0], legR: [12, 0, -6], shinR: [18, 0, 0] }],
+    [1.6, HANG],
+  ],
+  { loop: true, ground: false }
+);

@@ -13,10 +13,11 @@
 // empedrado. Subes por la escalera de madera de la torre oeste, a la
 // espringala (acto 4).
 import * as THREE from 'three';
-import { sm, lerp, Path } from './film.js';
+import { sm, lerp, Path, camSafe } from './film.js';
 import { FP } from './film_player.js';
 import { ESTABLO, hideFolk } from './film_grab.js';
 import { NAVE, TOWER_S } from '../../world/level_finale.js';
+import { springald1 } from './film_tower.js';
 import { clamp, dampAngle } from '../../core/util.js';
 
 const V3 = THREE.Vector3;
@@ -271,7 +272,7 @@ function* beatLeap(D, G) {
     const away = _v.set(Q.x - G.pos.x, 0, Q.z - G.pos.z).normalize();
     const k = sm(clamp(tt / 2.4, 0, 1));
     const back = lerp(1.9, 2.3, k);
-    const pos = camSafe(D, new V3(Q.x, Q.y + 1.4, Q.z), new V3(Q.x + away.x * back + away.z * 0.9, Q.y + 1.05, Q.z + away.z * back - away.x * 0.9));
+    const pos = camSafe(D.g, new V3(Q.x, Q.y + 1.4, Q.z), new V3(Q.x + away.x * back + away.z * 0.9, Q.y + 1.05, Q.z + away.z * back - away.x * 0.9));
     // (encuadra de los hombros del jugador a la cabeza del gigante)
     return frameUp(pos, new V3(Q.x, Q.y + 1.45, Q.z), G.head(_v2).setY(G.head(_v2).y + 1.5), 12);
   });
@@ -753,6 +754,8 @@ function* climb(D, G) {
   const q = RUN3.at(RUN3.project(p.pos.x, p.pos.z) + 2, {});
   F.release(Math.atan2(q.tx, q.tz), 0.24);
   g.ui.toast('¡Sube a la torre!', 2.6);
+  // (arriba espera la espringala de la guarnición)
+  springald1(D);
   let roar = 2.5;
   while (p.pos.y < TOWER_S.deckY - 0.5) {
     const dt = yield;
@@ -858,17 +861,6 @@ function frameUp(pos, a, b, margin = 10) {
   const l = Math.hypot(hx, hz) || 1;
   const look = new V3(pos.x + (hx / l) * 10, pos.y + Math.tan(e) * 10, pos.z + (hz / l) * 10);
   return { pos, look, fov: clamp((((eb - ea) * 180) / Math.PI + margin) / 0.77, 40, 88) };
-}
-// un sitio para la cámara que no se meta en los muros: del sujeto hacia él,
-// hasta el primer muro
-function camSafe(D, from, to, pad = 0.4) {
-  const d = _v3.subVectors(to, from);
-  const L = d.length();
-  if (L < 1e-3) return to;
-  d.divideScalar(L);
-  const hit = D.g.world.col.raycast(from.x, from.y, from.z, d.x, d.y, d.z, L + pad, (b) => b.cam !== false);
-  if (hit < L + pad) to.copy(from).addScaledVector(d, Math.max(0.5, hit - pad));
-  return to;
 }
 // la raíz del gigante, (dx, dz) más allá en dur segundos (se suma a lo que
 // avance el clip)

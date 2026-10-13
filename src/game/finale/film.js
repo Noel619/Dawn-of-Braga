@@ -401,6 +401,18 @@ export class Path {
   }
 }
 
+// Un sitio para la cámara que no se meta en los muros: del sujeto (from)
+// hacia ella (to), hasta el primer muro (to se modifica y se devuelve)
+export function camSafe(game, from, to, pad = 0.4) {
+  const d = new V3().subVectors(to, from);
+  const L = d.length();
+  if (L < 1e-3) return to;
+  d.divideScalar(L);
+  const hit = game.world.col.raycast(from.x, from.y, from.z, d.x, d.y, d.z, L + pad, (b) => b.cam !== false);
+  if (hit < L + pad) to.copy(from).addScaledVector(d, Math.max(0.5, hit - pad));
+  return to;
+}
+
 // Un punto en el espacio de un hueso (o de un objeto): local -> mundo.
 export function boneWorld(obj, x, y, z, out = new V3()) {
   obj.updateMatrixWorld(true);

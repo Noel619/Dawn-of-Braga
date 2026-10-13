@@ -157,6 +157,11 @@ export class Finale {
     this.waveState('corralN', k >= 2);
     this.waveState('herreria', k >= 2);
     this.waveState('centro', k >= 3);
+    // lo alto de la torre oeste de la puerta sur y su escalera (acto 4)
+    on('torreSurTop', k < 3);
+    on('torreSurTopRuin', k >= 3);
+    on('torreSurStair', k < 3);
+    on('torreSurStairRuin', k >= 3);
     // el tejado del establo
     on('wreck:establo', !broken);
     on('wreck:establo:ruin', broken);
@@ -251,11 +256,15 @@ export class Finale {
     this.clearOwned();
     this._clothDone = false;
     g.chaseRun = false;
+    this.promptFn = null;
+    this.gow1 = null;
+    this._approach = null;
     if (this.giant) {
       this.giant.onEventHook = null;
       this.giant.rootMotion = false;
       this.giant.groundFn = null;
       this.giant.ik = {};
+      this.giant._armScript = false;
     }
     this.setWorld(this.cpIndex(cp));
     const act = ACTS[cp];
@@ -310,6 +319,7 @@ export class Finale {
     }
     // (la cámara libre no se mete dentro del gigante)
     g.camRig.body = this.stage === 'film' && this.giant && this.giant.visible ? this.giant.col : null;
+    if (this.stage === 'film') for (const o of this.ticks || []) o.update(dt);
     this.chunks.update(dt);
     this.debris.update(dt, this._dg || (this._dg = (x, z) => g.world.col.groundHeight(x, z, 0.1, 30, true)));
     this._lights(dt);
@@ -326,6 +336,11 @@ export class Finale {
     (this.owned || (this.owned = [])).push(o);
     return o;
   }
+  // y lo que además se mueve solo cada fotograma (la espringala, su cadena)
+  tick(o) {
+    (this.ticks || (this.ticks = [])).push(o);
+    return this.own(o);
+  }
   clearOwned() {
     const g = this.g;
     for (const L of this.lights) L.on = false;
@@ -340,6 +355,8 @@ export class Finale {
       else if (o.parent) o.parent.remove(o);
     }
     this.owned = [];
+    this.ticks = [];
+    this.springald = null;
     this._clothDone = true;
   }
   dropLight(L) {

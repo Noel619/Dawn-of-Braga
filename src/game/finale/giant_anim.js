@@ -383,3 +383,141 @@ C.leap = clip(
   ],
   { ground: false, lag: { chest: 0.05, head: 0.1, armL: 0.08, armR: 0.1 }, events: [{ t: 1.05, name: 'launch' }, { t: 2.9, name: 'land' }] }
 );
+
+// ------------------------------------------------------------ el acto 4
+// (el brazo izquierdo, el del virote, lo lleva el guion con IK en casi todo
+// el acto: estas claves son el cuerpo y una pose de respaldo para el brazo)
+//
+// Se tapa la cara con el antebrazo izquierdo (el virote viene): se encoge,
+// gira la cabeza a la derecha y la esconde tras el brazo; la campana, atrás.
+const COVER = {
+  root: [0, -50, 0],
+  pelvis: [10, -8, 0],
+  spine1: [4, -4, 0],
+  spine2: [0, -8, 0],
+  chest: [-6, -18, 0],
+  neck1: [6, -8, 0],
+  neck2: [12, -14, 0],
+  head: [18, -20, 0],
+  jaw: [24, 0, 0],
+  clavL: [0, 0, 14],
+  armL: [-105, -55, 5],
+  foreL: [-90, 0, 0],
+  handL: [-10, 0, 0],
+  ...hand('L', -10, 14),
+  clavR: [0, 0, -6],
+  armR: [-16, 16, -34],
+  foreR: [-34, 0, 0],
+  handR: [10, 0, 0],
+  legL: [-22, 0, 10],
+  shinL: [30, 0, 0],
+  footL: [-8, 0, 0],
+  legR: [10, 0, -10],
+  shinR: [22, 0, 0],
+  footR: [-10, 0, 0],
+  tail1: [-8, 0, 0],
+  tail2: [-6, 6, 0],
+};
+C.cover = clip('cover', 1.2, [K(0), K(0.22, COVER, 'snap'), K(1.2, { ...COVER, root: [0, -44, 0], head: [16, -18, 0] }, 'settle')], {
+  lag: { chest: 0.04, neck2: 0.06, head: 0.08, armR: 0.08, foreR: 0.12 },
+});
+// El virote le atraviesa el antebrazo: el golpe le echa atrás, grita y se
+// mira el brazo (que baja delante de él)
+const LOOKARM = {
+  root: [0, -40, 0],
+  pelvis: [6, 10, 0],
+  spine2: [6, 8, 0],
+  chest: [8, 16, 0],
+  neck1: [2, 10, 0],
+  neck2: [8, 16, 0],
+  head: [14, 22, 0],
+  jaw: [36, 0, 0],
+  clavL: [0, 0, 10],
+  armL: [-70, -20, 30],
+  foreL: [-80, 0, 0],
+  ...hand('L', 30, 10),
+  armR: [-20, 10, -30],
+  foreR: [-30, 0, 0],
+  legL: [-16, 0, 10],
+  shinL: [24, 0, 0],
+  legR: [8, 0, -10],
+  shinR: [18, 0, 0],
+};
+C.armHit = clip(
+  'armHit',
+  2.6,
+  [
+    K(0, COVER),
+    K(0.14, { ...COVER, root: [0, -64, 0], pelvis: [2, -12, 0], chest: [-18, -24, 0], neck2: [-8, -18, 0], head: [-10, -22, 0], jaw: [44, 0, 0], legR: [16, 0, -10], shinR: [30, 0, 0] }, 'snap'),
+    K(1.0, LOOKARM, 'settle'),
+    K(2.6, { ...LOOKARM, head: [10, 20, 0], jaw: [30, 0, 0] }),
+  ],
+  { lag: { chest: 0.05, neck2: 0.08, head: 0.12, armR: 0.1 }, events: [{ t: 0.14, name: 'hit' }, { t: 1.0, name: 'roar' }] }
+);
+// Tira de la cadena: se echa atrás, afianza las piernas y da un tirón con el
+// brazo clavado (la torre cruje); luego aguanta tirando ('tug', bucle)
+const BRACE = {
+  root: [0, -90, 0],
+  pelvis: [-8, 16, 0],
+  spine1: [-4, 6, 0],
+  spine2: [-6, 8, 0],
+  chest: [-10, 18, 0],
+  neck1: [4, 6, 0],
+  neck2: [6, 10, 0],
+  head: [8, 14, 0],
+  jaw: [30, 0, 0],
+  clavL: [0, 0, 8],
+  armL: [-40, -10, 20],
+  foreL: [-60, 0, 0],
+  ...hand('L', 70, 2),
+  armR: [-30, 10, -36],
+  foreR: [-40, 0, 0],
+  legL: [-40, 0, 12],
+  shinL: [40, 0, 0],
+  footL: [6, 0, 0],
+  legR: [16, 0, -12],
+  shinR: [30, 0, 0],
+  footR: [-14, 0, 0],
+  tail1: [6, 0, 0],
+};
+export const BRACE_POSE = BRACE;
+C.yank = clip(
+  'yank',
+  1.6,
+  [K(0, LOOKARM), K(0.5, { ...BRACE, root: [0, -70, 0], chest: [6, 24, 0] }, 'hold'), K(0.75, BRACE, 'snap'), K(1.6, { ...BRACE, root: [0, -84, 0] }, 'settle')],
+  { lag: { chest: 0.05, head: 0.1, armR: 0.08 }, events: [{ t: 0.75, name: 'yank' }] }
+);
+C.tug = clip('tug', 1.4, [K(0, BRACE), K(0.7, { ...BRACE, root: [0, -96, 0], pelvis: [-10, 18, 0], chest: [-14, 20, 0] }), K(1.4, BRACE)], { loop: true });
+// se sacude el brazo (el jugador encima): el cuerpo se retuerce; el brazo,
+// el guion
+C.shakeArm = clip(
+  'shakeArm',
+  0.9,
+  [K(0, { ...BRACE, chest: [-6, 26, 0], head: [6, 20, 0] }), K(0.45, { ...BRACE, chest: [-12, 8, 0], head: [12, 4, 0], jaw: [40, 0, 0] }), K(0.9, { ...BRACE, chest: [-6, 26, 0], head: [6, 20, 0] })],
+  { loop: true }
+);
+// apuñalado en el dorso de la mano: grita con la cabeza atrás y se le abren
+// los dedos
+C.handStab = clip(
+  'handStab',
+  1.6,
+  [
+    K(0, BRACE),
+    K(0.1, { ...BRACE, chest: [-16, 20, 0], neck2: [-16, 10, 0], head: [-20, 10, 0], jaw: [46, 0, 0], ...hand('L', -24, 22) }, 'snap'),
+    K(1.6, { ...BRACE, chest: [-10, 20, 0], head: [-12, 12, 0], jaw: [40, 0, 0], ...hand('L', -20, 20) }),
+  ],
+  { lag: { neck2: 0.06, head: 0.1 }, events: [{ t: 0.1, name: 'scream' }] }
+);
+// estrella el brazo contra lo alto de la torre: gira el cuerpo a su
+// izquierda (el brazo atrás), y lo descarga en diagonal con todo el peso
+C.smashTower = clip(
+  'smashTower',
+  2.2,
+  [
+    K(0, BRACE),
+    K(0.7, { ...BRACE, root: [0, -40, 0], pelvis: [0, 24, 0], spine2: [-4, 14, 0], chest: [-12, 34, 0], neck2: [-4, 16, 0], head: [-6, 20, 0], jaw: [36, 0, 0], legL: [-30, 0, 12], shinL: [30, 0, 0], legR: [10, 0, -10], shinR: [20, 0, 0] }, 'hold'),
+    K(1.05, { ...BRACE, root: [0, -110, 0], pelvis: [16, -16, 0], spine2: [14, -10, 0], chest: [26, -22, 0], neck2: [0, -12, 0], head: [-4, -10, 0], jaw: [40, 0, 0], legL: [-50, 0, 12], shinL: [70, 0, 0], footL: [10, 0, 0], legR: [20, 0, -10], shinR: [30, 0, 0], footR: [-16, 0, 0] }, 'strike', 1.5),
+    K(2.2, { ...BRACE, root: [0, -96, 0], pelvis: [12, -12, 0], spine2: [10, -8, 0], chest: [18, -16, 0], head: [-2, -8, 0], legL: [-44, 0, 12], shinL: [60, 0, 0], legR: [18, 0, -10], shinR: [28, 0, 0] }, 'settle'),
+  ],
+  { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armR: 0.1 }, events: [{ t: 1.05, name: 'smash' }, { t: 1.08, name: 'stepL' }] }
+);
