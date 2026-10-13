@@ -122,6 +122,11 @@ export class Finale {
     on('cisternCrown', !broken);
     on('craterLid', !broken);
     on('crater', broken);
+    // (la sangre negra que anega la cisterna: desde la cabalgada)
+    on('cisternBlood', k >= 3);
+    // la trampilla de la torre del oeste de la brecha (acto 6)
+    on('trampillaN', true);
+    on('trampillaNOpen', false);
     // (lo del rito viejo, que ya no se usa)
     on('riteRubble', false);
     on('riteGrate', false);
@@ -163,6 +168,9 @@ export class Finale {
     for (const n of Object.keys(g.groups)) {
       if (n.startsWith('almenaN:')) on(n, k < 3);
       else if (n.startsWith('almenaNRuin:')) on(n, k >= 3);
+      // (las de lo alto de la torre del oeste: el acto 6)
+      else if (n.startsWith('almenaT:')) on(n, k < 4);
+      else if (n.startsWith('almenaTRuin:')) on(n, k >= 4);
     }
     // lo alto de la torre oeste de la puerta sur y su escalera (acto 4)
     on('torreSurTop', k < 3);
@@ -365,6 +373,7 @@ export class Finale {
     this.owned = [];
     this.ticks = [];
     this.springald = null;
+    this.springald2 = null;
     this._clothDone = true;
   }
   dropLight(L) {

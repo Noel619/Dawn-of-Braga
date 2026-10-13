@@ -19,6 +19,8 @@ export const CISTERN = {
   DEPTH: 17, // hondo del pozo (bajo el suelo)
   CRATER: 13.5, // medio lado del cuadro del cráter en la superficie
 };
+// la sangre negra que anega la cisterna tras la cabalgada (sobre su suelo)
+export const BLOOD_Y = 2.4;
 
 // el tramo del borde del pozo que es la losa del jugador (30 tramos: el 7
 // va de 84° a 96°, al sur) y la losa: centro, medidas (x, y, z)
@@ -172,14 +174,60 @@ export function cisternRuins(ctx, o) {
     }
   }
   ctx.endGroup();
+  // ------------------------------------------------------------ la sangre
+  // Tras la cabalgada la cisterna se ha anegado de la sangre negra del dios,
+  // que hierve (en ella se cura el gigante y en ella se hunde: acto 6): un
+  // charco espeso que llena la sala hasta media altura de los muñones
+  ctx.beginGroup('cisternBlood');
+  {
+    const yb = AY + BLOOD_Y;
+    const n = 10;
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++) {
+        const x0 = -15 + (30 * i) / n,
+          x1 = -15 + (30 * (i + 1)) / n,
+          z0 = cz - 15 + (30 * j) / n,
+          z1 = cz - 15 + (30 * (j + 1)) / n;
+        wb.quad('fleshStatic', V3(x0, yb, z0), V3(x0, yb, z1), V3(x1, yb, z1), V3(x1, yb, z0), { ao: false, tint: [0.34, 0.08, 0.06], uv: 0.25, room });
+      }
+    // (hierve: humo y pavesas que suben por el cráter)
+    for (const [x, z, sz] of [
+      [-5, cz + 4, 1.4],
+      [6, cz - 2, 1.2],
+      [-2, cz - 7, 1.0],
+      [3, cz + 8, 1.0],
+    ])
+      ctx.fires.push({ x, y: yb + 0.2, z, s: sz, smoke: true, light: true, embers: true, glow: true });
+  }
+  ctx.endGroup();
   // ------------------------------------------------------------ el cráter
   // (fuera de la muralla norte; la losa de suelo del cuadro va aparte: entera
   // en 'craterLid', y en su lugar, al reventar, el borde roto de 'crater')
   const C = CISTERN.CRATER;
   ctx.floorHoles.push([-C, cz - C, C, cz + C]);
+  // (entero: un otero de tierra en el campo, que tapa lo alto de la cúpula de
+  // la cisterna; del color del campo de alrededor, ver level_sacred.js)
   ctx.beginGroup('craterLid');
   ctx.col.add(-C, -1, cz - C, C, 0, cz + C).cam = true;
-  wb.box('dirt', -C, -0.2, cz - C, C, -0.06, cz + C, { faces: 't', ao: false, sub: 8, tint: [0.62, 0.58, 0.54] });
+  {
+    const n = 18;
+    const hm = (x, z) => {
+      const r = Math.hypot(x, z - cz) / 12.8;
+      return r >= 1 ? -0.06 : -0.06 + 4.86 * Math.pow(1 - r * r, 1.2);
+    };
+    const T0 = [0.56, 0.5, 0.46],
+      T1 = [0.6, 0.66, 0.5];
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++) {
+        const x0 = -C + (2 * C * i) / n,
+          x1 = -C + (2 * C * (i + 1)) / n,
+          za = cz - C + (2 * C * j) / n,
+          zb = cz - C + (2 * C * (j + 1)) / n;
+        const k = Math.min(1, Math.max(0, hm((x0 + x1) / 2, (za + zb) / 2) / 2.5));
+        const tint = T0.map((v, c) => v + (T1[c] - v) * k);
+        wb.quad('dirt', V3(x0, hm(x0, za), za), V3(x0, hm(x0, zb), zb), V3(x1, hm(x1, zb), zb), V3(x1, hm(x1, za), za), { ao: false, tint, uv: 0.35 });
+      }
+  }
   ctx.endGroup();
   ctx.beginGroup('crater');
   {
@@ -360,6 +408,81 @@ export function merlonsN(ctx) {
     }
     ctx.endGroup();
   });
+}
+
+// La torre de la muralla norte al oeste de la brecha (la levanta
+// level_walls.js: gateTower). Dentro, una escala de mano de la sala a una
+// trampilla en lo alto ('trampillaN' cerrada, 'trampillaNOpen' abierta);
+// arriba, la segunda espringala (la película, acto 6).
+export const TOWER_N = {
+  x: -30,
+  z: -124,
+  w: 6,
+  top: 16,
+  // el hueco de la trampilla [x0, z0, x1, z1] y el pie de la escala
+  hatch: [-31.55, -126.1, -30.45, -125.0],
+  ladder: { x: -31, z: -126.1, lean: 0.08 },
+  // la espringala: el pie del pivote y el del bolardo
+  gun: [-29.3, 16, -124.7],
+  bollard: [-31.75, 16, -122.35],
+};
+// las almenas del lado norte de lo alto (las revientan la mano del gigante y
+// la cadena): cada una en 'almenaT:i', su muñón en 'almenaTRuin:i'. La de la
+// esquina del noreste no está: por esa tronera tira la espringala (y la del
+// este de la esquina tampoco: ver level_walls.js, gateTower)
+export function towerNMerlons(ctx) {
+  const wb = ctx.wb;
+  const x0 = TOWER_N.x - TOWER_N.w / 2 - 0.3,
+    L = TOWER_N.w + 0.6,
+    z = TOWER_N.z - TOWER_N.w / 2,
+    y = TOWER_N.top;
+  const n = Math.floor((L + 0.7) / 1.6);
+  const start = (L - (n * 0.9 + (n - 1) * 0.7)) / 2;
+  const rng = new RNG(2121);
+  for (let i = 0; i < n - 1; i++) {
+    const a = x0 + start + i * 1.6,
+      b = a + 0.9;
+    ctx.beginGroup('almenaT:' + i);
+    wb.box('wallstone', a, y, z - 0.3, b, y + 1.1, z + 0.3, { ao: false, sub: 2 });
+    ctx.endGroup();
+    ctx.beginGroup('almenaTRuin:' + i);
+    let x = a;
+    while (x < b - 0.01) {
+      const w = Math.min(b - x, rng.range(0.25, 0.45));
+      wb.box('wallstone', x, y, z - 0.3 + rng.range(0, 0.12), x + w, y + rng.range(0.12, 0.5), z + 0.3 - rng.range(0, 0.12), { ao: false, sub: 2 });
+      x += w;
+    }
+    ctx.endGroup();
+  }
+}
+// la trampilla de lo alto: cerrada (con su colisión) y abierta
+export function towerNHatch(ctx) {
+  const wb = ctx.wb;
+  const [hx0, hz0, hx1, hz1] = TOWER_N.hatch;
+  const y = TOWER_N.top;
+  const lid = (open) => {
+    wb.push();
+    if (open) {
+      // (abierta hacia el sur, de pie sobre su gozne)
+      wb.translate(0, y, hz1 + 0.05);
+      wb.rotateX(-Math.PI * 0.56);
+      wb.translate(0, -y, -(hz1 + 0.05));
+    }
+    for (let i = 0; i < 4; i++) {
+      const a = hx0 - 0.04 + ((hx1 - hx0 + 0.08) * i) / 4;
+      wb.box('planks', a + 0.01, y, hz0 - 0.04, a + (hx1 - hx0 + 0.08) / 4 - 0.01, y + 0.07, hz1 + 0.04, { ao: false });
+    }
+    for (const z of [hz0 + 0.18, hz1 - 0.18]) wb.box('iron', hx0 - 0.02, y + 0.07, z - 0.04, hx1 + 0.02, y + 0.09, z + 0.04, { ao: false });
+    wb.cylinder('iron', (hx0 + hx1) / 2, y + 0.09, (hz0 + hz1) / 2, 0.09, 0.09, 0.02, 8, { ao: false, capTop: true });
+    wb.pop();
+  };
+  ctx.beginGroup('trampillaN');
+  lid(false);
+  ctx.col.add(hx0, y - 0.3, hz0, hx1, y + 0.07, hz1);
+  ctx.endGroup();
+  ctx.beginGroup('trampillaNOpen');
+  lid(true);
+  ctx.endGroup();
 }
 
 // ======================================================================

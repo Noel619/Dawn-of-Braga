@@ -139,9 +139,9 @@ export class Game {
     this.scene.add(this.bossLight);
     // las ruinas de la nave y de la fachada, ocultas hasta que revientan; lo
     // que deja el rito en la cisterna, hasta entonces
-    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater', 'muroNRuin', 'cabeceraRuin', 'absideRuin', 'wreck:establo:techoRuin', 'herreriaRuin', 'corralNRuin', 'torreSurTopRuin', 'torreSurStairRuin']) this.setGroupVisible(n, false);
+    for (const n of ['naveRuin', 'fachadaRuin', 'riteRubble', 'riteGrate', 'centroRuin', 'cisternPit', 'cisternColsRuin', 'cisternDomeRuin', 'crater', 'muroNRuin', 'cabeceraRuin', 'absideRuin', 'wreck:establo:techoRuin', 'herreriaRuin', 'corralNRuin', 'torreSurTopRuin', 'torreSurStairRuin', 'trampillaNOpen', 'cisternBlood']) this.setGroupVisible(n, false);
     // (y lo que rompe la película del jefe final en la nave: ver level_finale.js)
-    for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin|almenaNRuin):/.test(n)) this.setGroupVisible(n, false);
+    for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin|almenaNRuin|almenaTRuin):/.test(n)) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
     this.fx.ash = new AshSystem(this.scene);
@@ -1188,7 +1188,7 @@ export class Game {
     const body = document.getElementById('ending-body');
     const pc = body.querySelector('canvas.pxbg');
     body.innerHTML = `
-        <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, las campanas de Braga siguieron tocando solas.<br>Nadie volvió a entrar en la ciudad.</div>
+        <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, por primera vez desde el asedio, las campanas de Braga callaban.<br>Nadie volvió a entrar en la ciudad.</div>
         <div style="display:grid;place-items:center;margin-top:calc(var(--u) * 6)">${this.ui.inkTitleHtml()}</div>
         <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / ${Object.keys(NOTES).length}</b></div>
         <div class="credit f-hand">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>

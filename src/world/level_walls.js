@@ -9,10 +9,10 @@
 // dieciocho metros, y desde allí sólo queda saltar a la paja de la atalaya de
 // la coracha (level_keep.js).
 import { RNG } from '../core/util.js';
-import { solid, blocker, stairs, merlons, cityWall, house } from './builders.js';
+import { solid, blocker, stairs, merlons, cityWall, house, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
-import { BREACH, wallBreach, MERLONS_N, merlonsN } from './level_finale.js';
+import { BREACH, wallBreach, MERLONS_N, merlonsN, TOWER_N, towerNHatch, towerNMerlons } from './level_finale.js';
 
 // Alturas del adarve: muro este (como lo alto del Postigo) y muralla norte.
 const YE = 9,
@@ -91,20 +91,41 @@ function gateTower(ctx, cx, cz, w, yF, h, axis, o = {}) {
     // con la del muro y parpadeaba)
     for (const s of [-1, 1]) room(a - 0.05, BC + s * (dw / 2) - (s > 0 ? 0.04 : 0.25), b + 0.05, BC + s * (dw / 2) + (s > 0 ? 0.25 : 0.04), yF, yF + dh, 'nsew');
   }
-  // techo de vigas y parte alta maciza
-  wb.box('wooddark', x0 + t, yF + ch - 0.25, z0 + t, x1 - t, yF + ch, z1 - t, { faces: 'b', ao: false });
+  // techo de vigas y parte alta maciza (con el hueco de la trampilla, si
+  // lo hay: o.hatch [x0, z0, x1, z1], y su pozo hasta lo alto)
+  const holes = o.hatch ? [o.hatch] : [];
+  for (const [a, b, c, d] of subtractRects([x0 + t, z0 + t, x1 - t, z1 - t], holes)) wb.box('wooddark', a, yF + ch - 0.25, b, c, yF + ch, d, { faces: 'b', ao: false });
   for (let k = -1; k <= 1; k++) {
     const u = k * (w / 2 - t) * 0.55;
-    if (axis === 'x') wb.box('wooddark', cx + u - 0.14, yF + ch - 0.55, z0 + t, cx + u + 0.14, yF + ch - 0.25, z1 - t, { ao: false, faces: 'nsewb' });
-    else wb.box('wooddark', x0 + t, yF + ch - 0.55, cz + u - 0.14, x1 - t, yF + ch - 0.25, cz + u + 0.14, { ao: false, faces: 'nsewb' });
+    const bm = axis === 'x' ? [cx + u - 0.14, z0 + t, cx + u + 0.14, z1 - t] : [x0 + t, cz + u - 0.14, x1 - t, cz + u + 0.14];
+    for (const [a, b, c, d] of subtractRects(bm, holes)) wb.box('wooddark', a, yF + ch - 0.55, b, c, yF + ch - 0.25, d, { ao: false, faces: 'nsewb' });
   }
-  ctx.col.add(x0, yF + ch - 0.25, z0, x1, h, z1);
+  for (const [a, b, c, d] of subtractRects([x0, z0, x1, z1], holes)) ctx.col.add(a, yF + ch - 0.25, b, c, h, d);
   wb.box('wallstone', x0, yF + ch, z0, x1, h, z1, { sub: 2.2, faces: 'nsew' });
-  wb.box('wallstone', x0 - 0.3, h - 0.5, z0 - 0.3, x1 + 0.3, h, z1 + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' } });
-  merlons(ctx, x0 - 0.3, z0, x1 + 0.3, z0, h, { collide: false });
+  wb.box('wallstone', x0 - 0.3, h - 0.5, z0 - 0.3, x1 + 0.3, h, z1 + 0.3, { ao: false, sub: 3, faces: 'nsewb' });
+  for (const [a, b, c, d] of subtractRects([x0 - 0.3, z0 - 0.3, x1 + 0.3, z1 + 0.3], holes)) wb.box('flag', a, h - 0.02, b, c, h, d, { ao: false, faces: 't', uv: 0.8 });
+  if (o.hatch) {
+    const [hx0, hz0, hx1, hz1] = o.hatch;
+    const ya = yF + ch - 0.25;
+    wb.box('wallstone', hx0 - 0.1, ya, hz0, hx0, h, hz1, { ao: false, faces: 'e' });
+    wb.box('wallstone', hx1, ya, hz0, hx1 + 0.1, h, hz1, { ao: false, faces: 'w' });
+    wb.box('wallstone', hx0, ya, hz0 - 0.1, hx1, h, hz0, { ao: false, faces: 's' });
+    wb.box('wallstone', hx0, ya, hz1, hx1, h, hz1 + 0.1, { ao: false, faces: 'n' });
+  }
+  // (o.top: lo alto se pisa; que nadie se caiga por encima de las almenas)
+  if (o.top) {
+    blocker(ctx, x0 - 0.3, h, z0 - 0.3, x1 + 0.3, h + 2.4, z0 + 0.3);
+    blocker(ctx, x0 - 0.3, h, z1 - 0.3, x1 + 0.3, h + 2.4, z1 + 0.3);
+    blocker(ctx, x0 - 0.3, h, z0 - 0.3, x0 + 0.3, h + 2.4, z1 + 0.3);
+    blocker(ctx, x1 - 0.3, h, z0 - 0.3, x1 + 0.3, h + 2.4, z1 + 0.3);
+  }
+  // (o.top: las del norte, sueltas; ver level_finale.js: towerNMerlons)
+  if (!o.top) merlons(ctx, x0 - 0.3, z0, x1 + 0.3, z0, h, { collide: false });
   merlons(ctx, x0 - 0.3, z1, x1 + 0.3, z1, h, { collide: false });
   merlons(ctx, x0, z0 + 0.3, x0, z1 - 0.3, h, { collide: false });
-  merlons(ctx, x1, z0 + 0.3, x1, z1 - 0.3, h, { collide: false });
+  // (o.top: sin la del norte de este lado: la tronera de la espringala)
+  if (o.top) merlons(ctx, x1, z0 + 1.9, x1, z1 - 0.3, h, { collide: false });
+  else merlons(ctx, x1, z0 + 0.3, x1, z1 - 0.3, h, { collide: false });
   // saeteras (fuera de la sala)
   for (let y = 4; y < yF - 1; y += 4.5)
     for (const [sx, sz, rx, rz] of [
@@ -194,7 +215,15 @@ export function buildNorthWalls(ctx, S, L) {
   // la esquina: almenas también al este
   blocker(ctx, 75.4, YN - 0.2, -126, 76, YN + 2.4, -122);
   merlons(ctx, 75.7, -126, 75.7, -122, YN, { collide: false });
-  for (const x of towerX) gateTower(ctx, x, -124, tw, YN, 16, 'x');
+  // (la del oeste de la brecha, con su escala y su trampilla: arriba va la
+  // segunda espringala del jefe final; ver level_finale.js: TOWER_N)
+  for (const x of towerX) gateTower(ctx, x, -124, tw, YN, 16, 'x', x === TOWER_N.x ? { hatch: TOWER_N.hatch, top: true } : {});
+  {
+    const L2 = TOWER_N.ladder;
+    P.ladder(ctx, L2.x, YN, L2.z, TOWER_N.top - YN, 0, L2.lean);
+    towerNHatch(ctx);
+    towerNMerlons(ctx);
+  }
 
   // el tramo hundido: el adarve se ha venido abajo hasta media altura
   {

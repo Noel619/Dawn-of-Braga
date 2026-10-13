@@ -6,7 +6,7 @@ import { solid, stairs, merlons, cityWall, tower, archWall, stoneWall, archRing,
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
-import { cisternPit, cisternRuins, NAVE, naveSec, naveBreaks } from './level_finale.js';
+import { cisternPit, cisternRuins, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1507,13 +1507,45 @@ export function buildRiver(ctx, S, L) {
   wb.rotateY(0.4);
   for (let x = -1.6; x <= 1.6; x += 0.3) wb.box('iron', x - 0.03, 0, -1.5, x + 0.03, 0.06, 1.5, { ao: false });
   wb.pop();
-  // talud hasta las murallas
-  // (sube desde la orilla y vuelve a bajar hasta el pie de la muralla: desde
-  // el adarve se ve la ladera, no una explanada a la altura de las almenas.
-  // Mirando hacia arriba: antes miraba hacia abajo y, desde lo alto, no se
-  // dibujaba; se veían la galería y la cúpula de la cisterna)
-  wb.quad('dirt', new THREE.Vector3(-70, 5, -194.5), new THREE.Vector3(-70, 7.5, -152), new THREE.Vector3(70, 7.5, -152), new THREE.Vector3(70, 5, -194.5), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
-  wb.quad('dirt', new THREE.Vector3(-70, 7.5, -152), new THREE.Vector3(-70, 2.5, -126.1), new THREE.Vector3(70, 2.5, -126.1), new THREE.Vector3(70, 7.5, -152), { sub: 8, ao: false, tint: [0.6, 0.66, 0.5] });
+  // el campo de fuera de la muralla norte: a ras de la ciudad junto al muro
+  // y alrededor del cráter (por ahí sale el gigante, y desde el adarve y las
+  // torres se ve el cráter abierto), y la ladera que sube hacia el río y
+  // vuelve a bajar a la orilla. Una malla de alturas a cuadros, sin el cuadro
+  // del cráter (lo pone level_finale.js: entero o reventado); hacia él, la
+  // tierra del color de la de su borde
+  {
+    const C = CISTERN.CRATER,
+      cz = CISTERN.cz;
+    const smt = (a, b, t) => {
+      const u = Math.min(1, Math.max(0, (t - a) / (b - a)));
+      return u * u * (3 - 2 * u);
+    };
+    const edge = (x, z) => Math.max(Math.abs(x) - C, Math.abs(z - cz) - C, 0);
+    const hN = (x, z) => {
+      const d = -z;
+      let h = -0.06 + 6.7 * smt(171, 185, d) - 1.64 * smt(186, 194.5, d);
+      h += (Math.sin(x * 0.23 + z * 0.17) * 0.14 + Math.sin(x * 0.09 - z * 0.11) * 0.22) * smt(1.5, 6, edge(x, z)) * (1 - smt(190, 194.5, d));
+      return h;
+    };
+    const steps = (pts, n) => pts.slice(1).flatMap((b, i) => Array.from({ length: n[i] }, (_, k) => pts[i] + ((b - pts[i]) * (k + 1)) / n[i]));
+    const xs = [-70, ...steps([-70, -C, C, 70], [25, 12, 25])];
+    const zs = [-194.5, ...steps([-194.5, cz - C, cz + C, -126.1], [13, 12, 6])];
+    const T0 = [0.56, 0.5, 0.46],
+      T1 = [0.6, 0.66, 0.5];
+    for (let i = 0; i < xs.length - 1; i++)
+      for (let j = 0; j < zs.length - 1; j++) {
+        const x0 = xs[i],
+          x1 = xs[i + 1],
+          za = zs[j],
+          zb = zs[j + 1];
+        const mx = (x0 + x1) / 2,
+          mz = (za + zb) / 2;
+        if (Math.abs(mx) < C && Math.abs(mz - cz) < C) continue;
+        const k = smt(1, 9, edge(mx, mz));
+        const tint = T0.map((v, c) => v + (T1[c] - v) * k);
+        wb.quad('dirt', new THREE.Vector3(x0, hN(x0, za), za), new THREE.Vector3(x0, hN(x0, zb), zb), new THREE.Vector3(x1, hN(x1, zb), zb), new THREE.Vector3(x1, hN(x1, za), za), { ao: false, tint, uv: 0.35 });
+      }
+  }
   // (la muralla norte de la ciudad, recortada contra el cielo con la Sé
   // detrás, la levanta level_walls.js: por su adarve corre la persecución)
 

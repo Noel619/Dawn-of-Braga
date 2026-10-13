@@ -76,6 +76,7 @@ export class Giant {
     this.pos = new THREE.Vector3();
     this.yaw = 0;
     this.fixY = null; // altura fija de la raíz (si no, la del suelo)
+    this.pitch = 0; // todo el cuerpo, inclinado sobre los pies (+: hacia delante)
     this.visible = false;
     this.ik = {}; // { L: { target, pole, w, rot }, R: ... } manos llevadas a un punto
     this.footIK = {}; // { L/R: { target, pole, w } } pies (agarrarse a un borde)
@@ -105,6 +106,8 @@ export class Giant {
   // la campana colgando (o no: la suelta en la cisterna al final)
   setBell(on) {
     this.bellOn = on;
+    // (si la soltó, vuelve a su mano)
+    if (on && this.bell.free) this.bell.reset(this.handGrip(new THREE.Vector3()));
     this.bell.mesh.visible = this.visible && on;
     this.bell.bell.visible = this.visible && on;
   }
@@ -123,6 +126,7 @@ export class Giant {
     this.pos.set(x, 0, z);
     this.yaw = yaw;
     this.fixY = o.y ?? null;
+    this.pitch = 0;
     this.ik = {};
     this.footIK = {};
     this.R.groundOn = o.ground !== false;
@@ -182,7 +186,8 @@ export class Giant {
     const r = this.M.root;
     this.pos.y = this.fixY ?? this.groundAt(this.pos.x, this.pos.z);
     r.position.copy(this.pos);
-    r.rotation.set(0, this.yaw, 0);
+    r.rotation.order = 'YXZ';
+    r.rotation.set(this.pitch, this.yaw, 0);
     r.updateMatrixWorld(true);
   }
   // punto (espacio del modelo en reposo) pegado a un hueso → mundo

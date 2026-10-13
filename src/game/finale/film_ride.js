@@ -318,6 +318,15 @@ function setupRide(D, G) {
   G.place(-1.9, 48.6, Math.atan2(-3.6, 11.4), { base: 'idle' });
   G.setBell(true);
   G.groundFn = null;
+  armBolt(D, G);
+  g.atmo.override = { density: 0.0085, vol: 0.05, far: 320, hemi: 3.2, moon: 3.3, exposure: 1.2, ash: 0.3, snap: true };
+  g.fadeTarget = 1;
+  g.audio && g.audio.music('bossFinal');
+}
+
+// (desde un punto de control: el virote de la primera espringala, clavado
+// en su antebrazo, con su cadena rota colgando)
+export function armBolt(D, G) {
   const S = springald1(D);
   S.root.visible = false;
   S.bollardG.visible = false;
@@ -329,15 +338,13 @@ function setupRide(D, G) {
   const B = G.M.byName;
   const e = B.foreL.getWorldPosition(new V3());
   bolt.stickTo(B.foreL, e, new V3(1, 0, 0), 1.5);
+  restick(bolt, G);
   D.gow1 = { bolt };
-  g.atmo.override = { density: 0.0085, vol: 0.05, far: 320, hemi: 3.2, moon: 3.3, exposure: 1.2, ash: 0.3, snap: true };
-  g.fadeTarget = 1;
-  g.audio && g.audio.music('bossFinal');
+  return bolt;
 }
-
 // El virote, atravesado en el antebrazo de dentro a fuera (la cola junto al
 // cuerpo, la punta asomando por fuera: de ahí se cuelga el jugador)
-function restick(bolt, G) {
+export function restick(bolt, G) {
   const B = G.M.byName;
   const e = B.foreL.getWorldPosition(new V3()),
     w = B.handL.getWorldPosition(new V3());

@@ -220,3 +220,56 @@ FP.dragged = clip(
   ],
   { loop: true, ground: false }
 );
+
+// ------------------------------------------------------------ el acto 6
+// subiendo por una escala de mano: una mano arriba y la otra abajo, la
+// rodilla de ese lado alta (un tramo por medio ciclo)
+const LAD = { hips: [-6, 0, 0], chest: [-4, 0, 0], head: [-16, 0, 0] };
+FP.ladder = clip(
+  'fp_ladder',
+  0.9,
+  [
+    [0, { ...LAD, armL: [-168, 0, 8], foreL: [-30, 0, 0], armR: [-112, 0, -8], foreR: [-70, 0, 0], legL: [-24, 0, 4], shinL: [40, 0, 0], legR: [-70, 0, -4], shinR: [96, 0, 0] }],
+    [0.45, { ...LAD, armL: [-112, 0, 8], foreL: [-70, 0, 0], armR: [-168, 0, -8], foreR: [-30, 0, 0], legL: [-70, 0, 4], shinL: [96, 0, 0], legR: [-24, 0, -4], shinR: [40, 0, 0] }],
+    [0.9, { ...LAD, armL: [-168, 0, 8], foreL: [-30, 0, 0], armR: [-112, 0, -8], foreR: [-70, 0, 0], legL: [-24, 0, 4], shinL: [40, 0, 0], legR: [-70, 0, -4], shinR: [96, 0, 0] }],
+  ],
+  { loop: true, ground: false }
+);
+// agarrado a la jaula de la cara del gigante: las manos en los barrotes, el
+// cuerpo pegado, las piernas buscando apoyo
+const CAGE = { hips: [-8, 0, 0], chest: [6, 0, 0], head: [-10, 0, 0], armL: [-150, 0, 26], foreL: [-60, 0, 0], armR: [-146, 0, -26], foreR: [-64, 0, 0], legL: [-40, 0, 10], shinL: [70, 0, 0], legR: [-10, 0, -8], shinR: [40, 0, 0] };
+FP.cage = clip(
+  'fp_cage',
+  1.0,
+  [
+    [0, CAGE],
+    [0.5, { ...CAGE, legL: [-20, 0, 12], shinL: [50, 0, 0], legR: [-34, 0, -10], shinR: [66, 0, 0], chest: [4, 4, 0] }],
+    [1.0, CAGE],
+  ],
+  { loop: true, ground: false }
+);
+// colgado de la jaula con la izquierda, la espada en la derecha: entre los
+// barrotes, al ojo (una estocada por pulsación)
+FP.stabCage = clip(
+  'fp_stabCage',
+  0.5,
+  [
+    [0, { ...CAGE, armR: [-70, 0, -30], foreR: [-100, 0, 0], chest: [-6, -10, 0] }],
+    [0.12, { ...CAGE, armR: [-100, 0, -6], foreR: [-6, 0, 0], chest: [14, 12, 0], head: [0, 6, 0] }, 'snap'],
+    [0.5, { ...CAGE, armR: [-70, 0, -30], foreR: [-100, 0, 0], chest: [-6, -10, 0] }],
+  ],
+  { loop: true, ground: false }
+);
+// hachazos a la cadena: la espada a dos manos, por encima de la cabeza, y
+// abajo con todo el cuerpo (uno por pulsación)
+const CHOP = { root: [0, -10, 0], hips: [10, 0, 0], chest: [4, 0, 0], head: [-10, 0, 0], legL: [-30, 0, 8], shinL: [30, 0, 0], legR: [16, 0, -8], shinR: [20, 0, 0] };
+FP.chop = clip(
+  'fp_chop',
+  0.55,
+  [
+    [0, { ...CHOP, chest: [-16, 0, 0], armL: [-170, 0, 10], foreL: [-40, 0, 0], armR: [-170, 0, -10], foreR: [-40, 0, 0] }],
+    [0.14, { ...CHOP, root: [0, -30, 0], hips: [26, 0, 0], chest: [30, 0, 0], head: [10, 0, 0], armL: [-60, 0, 8], foreL: [-10, 0, 0], armR: [-60, 0, -8], foreR: [-10, 0, 0] }, 'snap'],
+    [0.55, { ...CHOP, chest: [-16, 0, 0], armL: [-170, 0, 10], foreL: [-40, 0, 0], armR: [-170, 0, -10], foreR: [-40, 0, 0] }],
+  ],
+  { loop: true, ground: false }
+);

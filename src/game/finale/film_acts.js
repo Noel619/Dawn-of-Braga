@@ -6,6 +6,7 @@ import { actGrab } from './film_grab.js';
 import { actHerreria } from './film_city.js';
 import { actTorre } from './film_tower.js';
 import { actRide } from './film_ride.js';
+import { actEnd } from './film_end.js';
 
 export const ACTS = {
   *rito(D, o) {
@@ -51,6 +52,6 @@ export const ACTS = {
   },
   *muralla(D, o) {
     D.setCP('muralla');
-    void o;
+    yield* actEnd(D, { fromCP: !!(o.retry || o.resume || o.debug) });
   },
 };

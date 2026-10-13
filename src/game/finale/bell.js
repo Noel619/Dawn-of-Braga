@@ -44,6 +44,7 @@ export class BellChain {
     this.vel = new THREE.Vector3();
     this.guide = null; // { target: Vector3, k, d }
     this.stuck = null; // posición del yugo clavado
+    this.free = false; // soltada: la cadena ya no va cosida a la mano
     this.groundAt = o.groundAt || (() => 0);
     this.bounds = o.bounds || null; // [x0, z0, x1, z1]: no sale de la plaza
     // las casas en pie (field.js): por debajo de fieldH la campana choca con
@@ -80,6 +81,7 @@ export class BellChain {
   }
   // cuelga recta desde la mano (al colocar al coloso)
   reset(hand) {
+    this.free = false;
     for (let i = 0; i < this.N; i++) {
       this.p[i].set(hand.x, hand.y - i * this.seg, hand.z);
       this.q[i].copy(this.p[i]);
@@ -125,7 +127,7 @@ export class BellChain {
     this._prevTop.copy(this.top);
     for (let s = 0; s < n; s++) {
       // integración (con amortiguación del aire)
-      for (let i = 1; i < N; i++) {
+      for (let i = this.free ? 0 : 1; i < N; i++) {
         const p = P[i],
           q = Q[i];
         const damp = i === N - 1 ? 0.995 : 0.985;
@@ -150,12 +152,12 @@ export class BellChain {
       }
       if (this.stuck) P[N - 1].copy(this.stuck);
       // restricciones de distancia (la mano manda; la campana pesa)
-      P[0].copy(hand);
+      if (!this.free) P[0].copy(hand);
       for (let it = 0; it < 10; it++) {
         for (let i = 0; i < N - 1; i++) {
           const a = P[i],
             b = P[i + 1];
-          const wa = this.w[i],
+          const wa = this.free && i === 0 ? 1 : this.w[i],
             wb = this.stuck && i + 1 === N - 1 ? 0 : this.w[i + 1];
           const ws = wa + wb;
           if (ws <= 0) continue;
@@ -167,9 +169,9 @@ export class BellChain {
           a.addScaledVector(_v, (diff * wa) / ws);
           b.addScaledVector(_v, (-diff * wb) / ws);
         }
-        P[0].copy(hand);
+        if (!this.free) P[0].copy(hand);
         // suelo y límites de la plaza
-        for (let i = 1; i < N; i++) {
+        for (let i = this.free ? 0 : 1; i < N; i++) {
           const p = P[i];
           const last = i === N - 1;
           const gy = this.noGround ? -1e9 : this.groundAt(p.x, p.z);
