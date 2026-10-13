@@ -56,6 +56,20 @@ FP.brace = clip(
   ],
   { loop: true, ground: false }
 );
+// de pie ante el rugido (o lo que se le viene encima): las piernas
+// abiertas, el cuerpo echado contra el viento, el antebrazo izquierdo ante la
+// cara y la derecha abajo con el arma; tiembla con el aire
+const WIND = { root: [0, -12, 0], hips: [8, 0, 0], chest: [12, 6, 0], head: [-16, -4, 0], armL: [-128, 0, 34], foreL: [-96, 0, 0], handL: [10, 0, 0], armR: [-22, 0, -18], foreR: [-34, 0, 0], legL: [-24, 0, 12], shinL: [30, 0, 0], footL: [-6, 0, 0], legR: [16, 0, -10], shinR: [22, 0, 0], footR: [-8, 0, 0] };
+FP.windStand = clip(
+  'fp_windStand',
+  0.9,
+  [
+    [0, WIND],
+    [0.45, { ...WIND, root: [0, -14, 0], chest: [15, 3, 0], head: [-13, -2, 0], armL: [-124, 0, 30], foreL: [-100, 0, 0] }],
+    [0.9, WIND],
+  ],
+  { loop: true, ground: false }
+);
 // cayendo de espaldas, a manotazos
 const FALL = { root: [0, 0, 0], hips: [-30, 0, 0], chest: [-24, 0, 0], head: [-30, 0, 0], armL: [-150, 0, 60], foreL: [-30, 0, 0], armR: [-140, 0, -70], foreR: [-40, 0, 0], legL: [-40, 0, 10], shinL: [60, 0, 0], legR: [-10, 0, -10], shinR: [50, 0, 0] };
 FP.fall = clip(

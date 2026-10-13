@@ -152,12 +152,37 @@ export class Finale {
       on('naveBancos:' + i, !broken);
       on('naveBancosRuin:' + i, broken);
     }
+    // los bloques que revientan casa a casa: el norte del corral y la
+    // Herrería (acto 3), el centro (acto 5)
+    this.waveState('corralN', k >= 2);
+    this.waveState('herreria', k >= 2);
+    this.waveState('centro', k >= 3);
     // el tejado del establo
     on('wreck:establo', !broken);
     on('wreck:establo:ruin', broken);
     on('wreck:establo:techo', !broken);
     on('wreck:establo:techoRuin', broken);
     this.worldK = k;
+  }
+  // un bloque de casas que revienta en ola (ver WAVES en builders.js):
+  // entero, o todo en ruinas; las ruinas de cada casa salen cuando ésta cae
+  waveState(wg, broken) {
+    const g = this.g;
+    const on = (n, v) => g.setGroupVisible(n, v);
+    const keys = Object.keys(g.groups);
+    on(wg, !broken);
+    for (const n of keys) if (n.startsWith(wg + ':') || n.startsWith(wg + 'Prop:')) on(n, !broken);
+    on(wg + 'Ruin', true);
+    for (const n of keys) if (n.startsWith(wg + 'Ruin:')) on(n, broken);
+  }
+  // una casa de un bloque (y lo que cuelga de ella) se viene abajo
+  breakHouse(name) {
+    const g = this.g;
+    if (!g.groups[name] || !g.groups[name].on) return false;
+    const wg = name.split(':')[0];
+    g.setGroupVisible(name, false);
+    g.setGroupVisible(name.replace(wg + ':', wg + 'Ruin:'), true);
+    return true;
   }
   cpIndex(cp) {
     const i = CPS.indexOf(cp);
@@ -283,6 +308,8 @@ export class Finale {
       this.film.update(dt);
       if (this.giant && this.giant.visible) this.giant.update(dt);
     }
+    // (la cámara libre no se mete dentro del gigante)
+    g.camRig.body = this.stage === 'film' && this.giant && this.giant.visible ? this.giant.col : null;
     this.chunks.update(dt);
     this.debris.update(dt, this._dg || (this._dg = (x, z) => g.world.col.groundHeight(x, z, 0.1, 30, true)));
     this._lights(dt);

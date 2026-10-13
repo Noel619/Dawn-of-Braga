@@ -25,8 +25,8 @@ const _v = new V3(),
 export const ESTABLO = {
   roof: [33.4, 7.6, 24.7],
   hay: [33.2, 0.75, 24.6],
-  // donde se queda tras caer (y el punto de control)
-  stand: [33.0, 0, 24.2, -Math.PI / 2],
+  // donde se queda tras caer (y el punto de control): encima del montón
+  stand: [33.2, 0.8, 24.6, -Math.PI / 2],
 };
 
 // ======================================================================

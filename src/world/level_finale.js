@@ -4,7 +4,7 @@
 // la muralla, la cabecera de la catedral y la nave, que se rompe por tramos.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker } from './builders.js';
+import { solid, blocker, stairs } from './builders.js';
 import * as P from './props.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -513,4 +513,128 @@ export function naveBreaks(ctx, o) {
     }
     ctx.endGroup();
   });
+}
+
+// ======================================================================
+// LA TORRE OESTE DE LA PUERTA SUR
+// ======================================================================
+// La de la primera espringala (la película, actos 3 y 4): maciza hasta lo
+// alto, con un cadalso de madera encima, más ancho que la torre y con su
+// pretil de tablas, donde la guarnición montó la espringala (la pone la
+// película: finale/springald.js). Se sube por una escalera larga de madera,
+// sobre caballetes, que sale de la plaza y se apoya en la torre.
+export const TOWER_S = {
+  x: -5.5,
+  z: 60,
+  w: 4.5,
+  h: 12,
+  // el cadalso: [x0, z0, x1, z1] y la altura de su suelo
+  deck: [-8.9, 56.6, -2.1, 63.4],
+  deckY: 12.15,
+  // la escalera: sube hacia el sur desde la plaza
+  stair: { x: -5.5, z0: 43.6, n: 40, rise: 0.3, run: 0.33, w: 1.8 },
+  // la espringala, en medio del cadalso, mirando al norte
+  gun: [-5.5, 12.15, 60.4],
+};
+
+export function springaldTowerS(ctx) {
+  const wb = ctx.wb;
+  const T = TOWER_S;
+  const x0 = T.x - T.w / 2,
+    x1 = T.x + T.w / 2,
+    z0 = T.z - T.w / 2,
+    z1 = T.z + T.w / 2;
+  // el cuerpo de la torre (sin almenas: arriba va el cadalso) y su cornisa
+  solid(ctx, 'wallstone', x0, 0, z0, x1, T.h, z1, { sub: 2.2, aoH: 3, faces: 'nsew' });
+  wb.box('wallstone', x0 - 0.3, T.h - 0.5, z0 - 0.3, x1 + 0.3, T.h, z1 + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' } });
+  for (let y = 4; y < T.h - 2; y += 4.5)
+    for (const [sx, sz, rx, rz] of [
+      [T.x, z1 + 0.02, 0.12, 0],
+      [x0 - 0.02, T.z, 0, 0.12],
+    ])
+      wb.box('black', sx - rx - 0.001, y, sz - rz - 0.001, sx + rx + 0.001, y + 1.2, sz + rz + 0.001, { ao: false, grime: false });
+  // ---- el cadalso: tablas sobre vigas que vuelan de la torre, y un pretil
+  const [dx0, dz0, dx1, dz1] = T.deck;
+  const dy = T.deckY;
+  const PT = [0.62, 0.55, 0.48];
+  wb.box('planks', dx0, dy - 0.15, dz0, dx1, dy, dz1, { ao: false, faces: 'tnsewb', uv: 0.5, tint: PT, sub: 2 });
+  ctx.col.add(dx0, dy - 0.4, dz0, dx1, dy, dz1);
+  // vigas por debajo, que asoman por los cuatro lados, y tornapuntas
+  for (let k = 0; k < 4; k++) {
+    const u = lerp4(dx0 + 0.5, dx1 - 0.5, k / 3);
+    wb.box('timber', u - 0.13, dy - 0.45, dz0 - 0.2, u + 0.13, dy - 0.15, dz1 + 0.2, { ao: false, tint: [0.7, 0.6, 0.5] });
+    const v = lerp4(dz0 + 0.5, dz1 - 0.5, k / 3);
+    wb.box('timber', dx0 - 0.2, dy - 0.72, v - 0.12, dx1 + 0.2, dy - 0.45, v + 0.12, { ao: false, tint: [0.66, 0.56, 0.46] });
+  }
+  for (const [ax, az, bx, bz] of [
+    [x0, T.z, dx0 + 0.2, T.z],
+    [x1, T.z, dx1 - 0.2, T.z],
+    [T.x, z0, T.x, dz0 + 0.2],
+    [T.x, z1, T.x, dz1 - 0.2],
+  ])
+    strut(wb, new THREE.Vector3(ax, T.h - 2.6, az), new THREE.Vector3(bx, dy - 0.5, bz), 0.12);
+  // el pretil: postes y tablas (con un hueco al norte, donde llega la
+  // escalera)
+  const S = T.stair;
+  const gx0 = S.x - S.w / 2 - 0.05,
+    gx1 = S.x + S.w / 2 + 0.05;
+  const rail = (a0, b0, a1, b1) => {
+    wb.box('planks', a0, dy, b0, a1, dy + 1.05, b1, { ao: false, uv: 0.5, tint: [0.56, 0.5, 0.44], faces: 'tnsewb' });
+    blocker(ctx, a0, dy, b0, a1, dy + 1.4, b1);
+  };
+  rail(dx0, dz1 - 0.1, dx1, dz1);
+  rail(dx0, dz0 + 0.1, dx0 + 0.1, dz1 - 0.1);
+  rail(dx1 - 0.1, dz0 + 0.1, dx1, dz1 - 0.1);
+  rail(dx0, dz0, gx0, dz0 + 0.1);
+  rail(gx1, dz0, dx1, dz0 + 0.1);
+  for (const [px, pz] of [
+    [dx0, dz0],
+    [dx1, dz0],
+    [dx0, dz1],
+    [dx1, dz1],
+    [gx0, dz0],
+    [gx1, dz0],
+    [dx0, T.z],
+    [dx1, T.z],
+    [T.x, dz1],
+  ])
+    wb.box('timber', px - 0.12, dy - 0.15, pz - 0.12, px + 0.12, dy + 1.3, pz + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
+  // ---- la escalera, sobre caballetes, con sus pasamanos
+  stairs(ctx, S.x, 0, S.z0, 's', S.w, S.n, S.rise, S.run, 'planks', { faces: 'tnsewb' });
+  const L = S.n * S.run,
+    H = S.n * S.rise;
+  for (const sx of [-1, 1]) {
+    const x = S.x + sx * (S.w / 2 + 0.05);
+    // la zanca y el pasamanos
+    strut(wb, new THREE.Vector3(x, -0.05, S.z0), new THREE.Vector3(x, H - 0.05, S.z0 + L), 0.11, 'timber');
+    strut(wb, new THREE.Vector3(x, 1.05, S.z0 + 0.2), new THREE.Vector3(x, H + 1.05, S.z0 + L), 0.06, 'timber');
+    for (let k = 1; k < 8; k++) {
+      const z = S.z0 + (k / 8) * L,
+        y = (k / 8) * H;
+      wb.box('timber', x - 0.05, y, z - 0.05, x + 0.05, y + 1.05, z + 0.05, { ao: false, tint: [0.62, 0.52, 0.42] });
+    }
+    // que nadie se caiga por los lados
+    for (let k = 0; k < S.n; k += 4) {
+      const za = S.z0 + k * S.run,
+        zb = za + 4 * S.run;
+      const ya = k * S.rise;
+      blocker(ctx, x - 0.08, ya, za, x + 0.08, ya + 1.2 + 4 * S.rise, zb);
+    }
+  }
+  // los caballetes
+  for (const z of [47, 50.5, 54]) {
+    const y = ((z - S.z0) / L) * H - 0.1;
+    for (const sx of [-1, 1]) {
+      const x = S.x + sx * (S.w / 2 + 0.25);
+      strut(wb, new THREE.Vector3(x + sx * 0.6, 0, z), new THREE.Vector3(x, y, z), 0.12, 'timber');
+    }
+    wb.box('timber', S.x - S.w / 2 - 0.35, y - 0.25, z - 0.12, S.x + S.w / 2 + 0.35, y, z + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
+  }
+}
+const lerp4 = (a, b, k) => a + (b - a) * k;
+// un madero (o una viga) de a a b
+function strut(wb, a, b, r, mat = 'timber') {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const len = d.length();
+  wb.geometry(mat, new THREE.BoxGeometry(r * 2, len, r * 2), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()), new THREE.Vector3(1, 1, 1)), { ao: false, tint: [0.62, 0.52, 0.42] });
 }

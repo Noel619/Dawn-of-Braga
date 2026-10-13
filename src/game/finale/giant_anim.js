@@ -315,3 +315,71 @@ C.hurl.move = [
   [1.25, 1.5],
   [2.6, 2.2],
 ];
+
+// ------------------------------------------------------------ el acto 3
+// Galope a cuatro patas, sobre los nudillos (como un gorila enorme): las
+// piernas empujan, los brazos se tienden y plantan los puños delante, el
+// cuerpo pasa por encima de ellos, las piernas llegan por debajo y vuelven a
+// empujar. Encorvado (unos 50°), la cabeza alta, mirando adelante. Sin pies
+// en el suelo: las alturas de 'root' ponen en el suelo lo que apoya en cada
+// clave (los pies detrás al empujar, los nudillos al plantar, los pies otra
+// vez al llegar). Unos 7,6 m/s: el pie y la mano de apoyo no patinan.
+{
+  const G0 = { pelvis: [24, 0, 0], spine1: [10, 0, 0], spine2: [8, 0, 0], chest: [4, 0, 0], neck1: [-30, 0, 0], neck2: [-22, 0, 0], head: [-12, 0, 0], jaw: [24, 0, 0], ...hand('L', 70, 0), ...hand('R', 70, 0, 50) };
+  const push = { ...G0, root: [0, -260, 0], armL: [-95, 0, 16], foreL: [-20, 0, 0], handL: [20, 0, 0], armR: [-91, 0, -16], foreR: [-20, 0, 0], handR: [20, 0, 0], legL: [16, 0, 8], shinL: [34, 0, 0], footL: [-24, 0, 0], legR: [24, 0, -8], shinR: [30, 0, 0], footR: [-30, 0, 0], tail1: [-10, 0, 0], tail2: [-6, 4, 0] };
+  const plant = { ...G0, root: [0, -380, 0], pelvis: [30, 0, 0], spine1: [10, 0, 0], spine2: [8, 0, 0], chest: [6, 0, 0], neck1: [-34, 0, 0], neck2: [-26, 0, 0], head: [-14, 0, 0], armL: [-64, 0, 12], foreL: [-6, 0, 0], handL: [50, 0, 0], armR: [-60, 0, -12], foreR: [-6, 0, 0], handR: [50, 0, 0], legL: [-30, 0, 10], shinL: [110, 0, 0], footL: [30, 0, 0], legR: [-10, 0, -10], shinR: [100, 0, 0], footR: [30, 0, 0], tail1: [4, 0, 0], tail2: [6, -4, 0] };
+  const vault = { ...plant, root: [0, -360, 0], pelvis: [32, 0, 0], armL: [-44, 0, 12], armR: [-40, 0, -12], legL: [-90, 0, 14], shinL: [130, 0, 0], legR: [-80, 0, -14], shinR: [130, 0, 0], tail1: [10, 0, 0], tail2: [10, 0, 0] };
+  const land = { ...plant, root: [0, -150, 0], armL: [-20, 0, 14], foreL: [-30, 0, 0], handL: [30, 0, 0], armR: [-16, 0, -14], foreR: [-30, 0, 0], handR: [30, 0, 0], legL: [-56, 0, 10], shinL: [70, 0, 0], footL: [0, 0, 0], legR: [-46, 0, -10], shinR: [66, 0, 0], footR: [0, 0, 0], tail1: [-4, 0, 0], tail2: [-8, -4, 0] };
+  C.gallop = clip('gallop', 1.8, [K(0, push), K(0.48, plant), K(0.9, vault), K(1.31, land), K(1.8, push)], {
+    loop: true,
+    ground: false,
+    lag: { armR: 0.06, foreR: 0.06, handR: 0.06, legR: 0.07, shinR: 0.07, footR: 0.07 },
+    events: [
+      { t: 0.46, name: 'handL' },
+      { t: 0.53, name: 'handR' },
+      { t: 1.29, name: 'stepL' },
+      { t: 1.37, name: 'stepR' },
+    ],
+  });
+  C.gallop.vel = 7.6;
+}
+
+// Frena derrapando: planta los puños y los pies, resbala sobre ellos (el
+// empedrado salta) y se queda agazapado, alzando el pecho.
+C.skid = clip(
+  'skid',
+  1.4,
+  [
+    K(0, { pelvis: [30, 0, 0], spine1: [10, 0, 0], spine2: [8, 0, 0], chest: [6, 0, 0], neck1: [-34, 0, 0], neck2: [-26, 0, 0], head: [-14, 0, 0], root: [0, -360, 0], armL: [-44, 0, 12], foreL: [-6, 0, 0], handL: [50, 0, 0], armR: [-40, 0, -12], foreR: [-6, 0, 0], handR: [50, 0, 0], legL: [-90, 0, 14], shinL: [130, 0, 0], footL: [30, 0, 0], legR: [-80, 0, -14], shinR: [130, 0, 0], footR: [30, 0, 0], ...hand('L', 70, 0) }),
+    K(0.35, { pelvis: [20, 0, 0], spine1: [8, 0, 0], spine2: [6, 0, 0], chest: [0, 0, 0], neck1: [-30, 0, 0], neck2: [-22, 0, 0], head: [-10, 0, 0], jaw: [30, 0, 0], root: [0, -300, 0], armL: [-80, 0, 30], foreL: [-10, 0, 0], handL: [40, 0, 0], armR: [-76, 0, -30], foreR: [-10, 0, 0], handR: [40, 0, 0], legL: [-60, 0, 14], shinL: [110, 0, 0], footL: [30, 0, 0], legR: [-30, 0, -14], shinR: [80, 0, 0], footR: [10, 0, 0], ...hand('L', 40, 10) }, 'strike'),
+    K(0.9, { pelvis: [14, 0, 0], spine1: [6, 0, 0], spine2: [6, 0, 0], chest: [-4, 0, 0], neck1: [-24, 0, 0], neck2: [-18, 0, 0], head: [-10, 0, 0], jaw: [34, 0, 0], root: [0, -230, 0], armL: [-60, 0, 36], foreL: [-30, 0, 0], handL: [30, 0, 0], armR: [-56, 0, -36], foreR: [-30, 0, 0], handR: [30, 0, 0], legL: [-50, 0, 14], shinL: [96, 0, 0], footL: [26, 0, 0], legR: [-24, 0, -14], shinR: [70, 0, 0], footR: [10, 0, 0], ...hand('L', 50, 4) }, 'settle'),
+    K(1.4, { pelvis: [10, 0, 0], spine1: [6, 0, 0], spine2: [6, 0, 0], chest: [0, 0, 0], neck1: [-18, 0, 0], neck2: [-12, 0, 0], head: [-8, 0, 0], jaw: [24, 0, 0], root: [0, -180, 0], armL: [-40, 0, 30], foreL: [-30, 0, 0], armR: [-36, 0, -30], foreR: [-30, 0, 0], legL: [-40, 0, 12], shinL: [80, 0, 0], footL: [20, 0, 0], legR: [-20, 0, -12], shinR: [60, 0, 0], footR: [10, 0, 0], ...hand('L', 50, 4) }),
+  ],
+  { ground: false, events: [{ t: 0.3, name: 'handL' }, { t: 0.34, name: 'handR' }] }
+);
+C.skid.move = [
+  [0, 0],
+  [0.35, 3.0],
+  [0.9, 5.4],
+  [1.4, 5.8],
+];
+
+// El salto largo (de la catedral al corral): se agacha con los brazos
+// atrás, salta extendiéndose, recoge las piernas en el aire, las tiende para
+// caer y cae agazapado con una mano en el suelo ('land'). Sin suelo: la
+// parábola del vuelo la pone el guion (de 1,05 a 2,9).
+C.leap = clip(
+  'leap',
+  4.4,
+  [
+    K(0),
+    K(0.8, { root: [0, -260, 0], pelvis: [30, 0, 0], spine1: [12, 0, 0], spine2: [8, 0, 0], chest: [4, 0, 0], neck1: [-26, 0, 0], neck2: [-18, 0, 0], head: [-10, 0, 0], jaw: [26, 0, 0], armL: [36, 0, 22], foreL: [-20, 0, 0], armR: [36, 0, -22], foreR: [-20, 0, 0], legL: [-70, 0, 12], shinL: [110, 0, 0], footL: [30, 0, 0], legR: [-70, 0, -12], shinR: [110, 0, 0], footR: [30, 0, 0], ...hand('L', 60, 0) }, 'hold'),
+    K(1.05, { root: [0, 60, 0], pelvis: [-6, 0, 0], spine1: [-2, 0, 0], spine2: [-4, 0, 0], chest: [-10, 0, 0], neck1: [-14, 0, 0], neck2: [-10, 0, 0], head: [-8, 0, 0], jaw: [36, 0, 0], armL: [-150, 0, 20], foreL: [-20, 0, 0], armR: [-146, 0, -20], foreR: [-20, 0, 0], legL: [16, 0, 8], shinL: [6, 0, 0], footL: [-30, 0, 0], legR: [20, 0, -8], shinR: [8, 0, 0], footR: [-34, 0, 0], tail1: [-24, 0, 0], ...hand('L', 20, 10) }, 'snap'),
+    K(1.7, { root: [0, 0, 0], pelvis: [20, 0, 0], spine1: [8, 0, 0], spine2: [6, 0, 0], chest: [6, 0, 0], neck1: [-20, 0, 0], neck2: [-16, 0, 0], head: [-8, 0, 0], jaw: [30, 0, 0], armL: [-90, 0, 34], foreL: [-50, 0, 0], armR: [-86, 0, -34], foreR: [-50, 0, 0], legL: [-90, 0, 14], shinL: [120, 0, 0], footL: [20, 0, 0], legR: [-84, 0, -14], shinR: [124, 0, 0], footR: [24, 0, 0], tail1: [10, 0, 0], tail2: [10, 0, 0] }),
+    K(2.55, { root: [0, -40, 0], pelvis: [10, 0, 0], spine1: [4, 0, 0], spine2: [4, 0, 0], chest: [2, 0, 0], neck1: [-20, 0, 0], neck2: [-16, 0, 0], head: [-6, 0, 0], jaw: [40, 0, 0], armL: [-120, 0, 60], foreL: [-30, 0, 0], armR: [-116, 0, -60], foreR: [-30, 0, 0], legL: [-30, 0, 12], shinL: [40, 0, 0], footL: [-10, 0, 0], legR: [-24, 0, -12], shinR: [34, 0, 0], footR: [-10, 0, 0], tail1: [-10, 0, 0] }, 'hold'),
+    K(2.9, { root: [0, -380, 0], pelvis: [34, 0, 0], spine1: [12, 0, 0], spine2: [10, 0, 0], chest: [8, 0, 0], neck1: [-30, 0, 0], neck2: [-22, 0, 0], head: [-12, 0, 0], jaw: [30, 0, 0], armL: [-52, 0, 14], foreL: [-6, 0, 0], handL: [50, 0, 0], armR: [-20, 0, -50], foreR: [-30, 0, 0], legL: [-80, 0, 14], shinL: [130, 0, 0], footL: [30, 0, 0], legR: [-50, 0, -14], shinR: [110, 0, 0], footR: [20, 0, 0], tail1: [16, 0, 0], ...hand('L', 70, 0) }, 'snap'),
+    K(3.6, { root: [0, -240, 0], pelvis: [24, 0, 0], spine1: [10, 0, 0], spine2: [8, 0, 0], chest: [4, 0, 0], neck1: [-26, 0, 0], neck2: [-18, 0, 0], head: [-10, 0, 0], jaw: [26, 0, 0], armL: [-46, 0, 20], foreL: [-20, 0, 0], handL: [40, 0, 0], armR: [-26, 0, -40], foreR: [-30, 0, 0], legL: [-66, 0, 14], shinL: [110, 0, 0], footL: [24, 0, 0], legR: [-44, 0, -14], shinR: [90, 0, 0], footR: [16, 0, 0] }, 'settle'),
+    K(4.4, { root: [0, -150, 0], pelvis: [18, 0, 0], spine1: [8, 0, 0], spine2: [6, 0, 0], chest: [2, 0, 0], neck1: [-22, 0, 0], neck2: [-14, 0, 0], head: [-8, 0, 0], armL: [-36, 0, 24], foreL: [-30, 0, 0], armR: [-24, 0, -30], foreR: [-30, 0, 0], legL: [-50, 0, 12], shinL: [90, 0, 0], footL: [20, 0, 0], legR: [-34, 0, -12], shinR: [70, 0, 0], footR: [10, 0, 0] }),
+  ],
+  { ground: false, lag: { chest: 0.05, head: 0.1, armL: 0.08, armR: 0.1 }, events: [{ t: 1.05, name: 'launch' }, { t: 2.9, name: 'land' }] }
+);

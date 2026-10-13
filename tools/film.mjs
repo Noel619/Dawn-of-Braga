@@ -83,7 +83,7 @@ for (let i = 0; i < T.length; i++) {
       cx.fillText(label, (k % COLS) * TW + 4, Math.floor(k / COLS) * TH + 12);
       const G = g.finale.giant;
       const pp = g.player.pos;
-      return { t: label, hp: Math.round(g.player.hp), p: [pp.x, pp.y, pp.z].map((v) => +v.toFixed(1)), gt: G && G.R.action.clip ? G.R.action.clip.name + '@' + G.R.action.t.toFixed(2) : null, cp: g.flags['film:cp'], qte: g.qte.active ? g.qte.cur.label : '' };
+      return { t: label, hp: Math.round(g.player.hp), p: [pp.x, pp.y, pp.z].map((v) => +v.toFixed(1)), gt: G && G.R.action.clip ? G.R.action.clip.name + '@' + G.R.action.t.toFixed(2) : null, gb: G ? G.baseName + ' x' + G.speedK.toFixed(2) : null, gp: G ? [G.pos.x, G.pos.y, G.pos.z].map((v) => +v.toFixed(1)) : null, cam: [g.camera.position.x, g.camera.position.y, g.camera.position.z].map((v) => +v.toFixed(1)), pv: g.player.obj.visible, cp: g.flags['film:cp'], qte: g.qte.active ? g.qte.cur.label : '' };
     },
     [T[i] - t, i, COLS, TW, TH, String(T[i])]
   );

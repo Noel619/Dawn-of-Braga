@@ -133,6 +133,8 @@ export class Giant {
     this.R.base.onEvent = (e, c) => this.onEvent(e, c);
     this.R.action.onEvent = (e, c) => this.onEvent(e, c);
     this.R.playBase(this.clip(o.base || 'idle'), { blend: 0.01 });
+    this.baseName = o.base || 'idle';
+    this.actName = o.clip || null;
     if (o.clip) this.R.play(this.clip(o.clip), { blend: 0.01, t0: o.t0 ?? 0 });
     this.R.shakeA = 0;
     for (const j in this.R.add) delete this.R.add[j];

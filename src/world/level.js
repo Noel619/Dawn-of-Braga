@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { WorldBuilder } from '../gfx/geo.js';
 import { CollisionWorld } from './collision.js';
 import { WalkGrid } from './walkgrid.js';
+import { WAVES } from './builders.js';
 import { buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria, buildCentroRuin } from './level_city.js';
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
@@ -105,18 +106,24 @@ export function buildLevel() {
   // detritos al pie de los muros
   const clutter = scatterClutter(ctx, S, L, corpseLog);
 
-  // las manzanas del centro (revientan cuando sale el coloso, ver
-  // finale/director.js): su huella no entra en la colisión general sino en la
-  // de su grupo, que se desactiva con ellas; y sus ruinas, aparte
-  const centro = (ctx.houseRects || []).filter((r) => r.sub || (r.groups ? r.groups.includes('centro') : r.group === 'centro'));
-  for (const r of centro) S.repaint(r.x0, r.z0, r.x1, r.z1, 0, 2);
+  // las manzanas que revientan casa a casa (el centro, la Herrería, el norte
+  // del corral; ver WAVES en builders.js): su huella no entra en la colisión
+  // general sino en la de su grupo, que se desactiva con ellas; y sus
+  // ruinas, aparte
+  const waves = {};
+  for (const [wg, v] of Object.entries(WAVES)) {
+    waves[wg] = (ctx.houseRects || []).filter((r) => (r.sub ? r.sub.startsWith(wg + ':') : r.groups ? r.groups.includes(wg) : r.group === wg));
+    for (const r of waves[wg]) S.repaint(r.x0, r.z0, r.x1, r.z1, 0, v);
+  }
 
   // colisión generada a partir de las zonas transitables
   const nS = S.toColliders(ctx.col, -1, 5.2);
-  ctx.beginGroup('centro');
-  for (const [a, b, c, d] of S.rects(2)) ctx.col.add(a, -1, b, c, 5.2, d, 'block').cam = true;
-  ctx.endGroup();
-  buildCentroRuin(ctx, centro);
+  for (const [wg, v] of Object.entries(WAVES)) {
+    ctx.beginGroup(wg);
+    for (const [a, b, c, d] of S.rects(v)) ctx.col.add(a, -1, b, c, 5.2, d, 'block').cam = true;
+    ctx.endGroup();
+    buildCentroRuin(ctx, waves[wg], wg);
+  }
   const nC = C.toColliders(ctx.col, -10.6, -1.2);
   const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
   // losa de suelo global con los huecos de las escaleras de la cripta

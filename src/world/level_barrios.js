@@ -3,7 +3,7 @@
 // de ser una cruz de calles rectas: cada manzana tiene su trastienda.
 // Norte = -Z. Unidades en metros.
 import { RNG } from '../core/util.js';
-import { house, overpass, stoneWall, cityWall, tower } from './builders.js';
+import { house, overpass, stoneWall, cityWall, tower, waveProp } from './builders.js';
 import * as P from './props.js';
 import { floor } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -547,6 +547,28 @@ function stableHole(ctx, room) {
       wb.pop();
     }
   }
+  // la puerta del norte, tapada por lo que cayó del tejado: una viga
+  // apoyada en el muro, tejas y tablas
+  P.rubble(ctx, 34.2, 0, 20.6, 9, 1413, 0.8, { scale: 0.9, mat: 'wallstone' });
+  wb.push();
+  wb.translate(34.2, 1.05, 20.25);
+  wb.rotateZ(0.42);
+  wb.rotateY(0.12);
+  wb.box('timber', -1.45, -0.13, -0.13, 1.45, 0.13, 0.13, { ao: false, room });
+  wb.pop();
+  for (const [x, z, ry, rx] of [
+    [33.5, 20.7, 0.3, 0.5],
+    [34.9, 20.5, -0.5, -0.4],
+    [34.1, 21.1, 1.2, 0.3],
+  ]) {
+    wb.push();
+    wb.translate(x, 0.32, z);
+    wb.rotateY(ry);
+    wb.rotateX(rx);
+    wb.box('roof', -0.55, -0.05, -0.4, 0.55, 0.05, 0.4, { ao: false, room, tint: [0.62, 0.56, 0.5] });
+    wb.pop();
+  }
+  ctx.col.add(33.1, 0, Z0, 35.3, 1.9, 21.3);
   // tablas rotas por el borde del agujero
   for (let i = 0; i < 9; i++) {
     const side = i % 4;
@@ -571,12 +593,18 @@ export function buildSE(ctx, S, L) {
   // --- callejón del Rastro (desde la esquina de la plaza) y del Muladar (desde la herrería)
   lane(ctx, S, 14, 11, 16.5, 17);
   lane(ctx, S, 3.5, 26, 14, 28.5);
+  // (revientan con el gigante del jefe final: el norte del corral, donde cae
+  // de un salto, y el callejón del Muladar, por donde te persigue)
+  ctx.beginGroup('corralN');
   house(ctx, { x0: 16.5, z0: 11, x1: 23, z1: 17, front: 'w', seed: 1401, h: 6.6 });
+  ctx.endGroup();
+  ctx.beginGroup('herreria');
   house(ctx, { x0: 3.5, z0: 22, x1: 14, z1: 26, front: 'w', seed: 1402, h: 7, lit: true });
   house(ctx, { x0: 3.5, z0: 28.5, x1: 14, z1: 33, front: 'w', seed: 1403, h: 6.4 });
-  P.laundry(ctx, 14.05, 15, 16.45, 15, 4.2, 1401);
-  P.laundry(ctx, 9, 26.05, 9, 28.45, 4.3, 1402);
-  P.lantern(ctx, 16.5, 2.75, 13, -Math.PI / 2, true);
+  ctx.endGroup();
+  waveProp(ctx, 'corralN', 15.2, 15, () => P.laundry(ctx, 14.05, 15, 16.45, 15, 4.2, 1401));
+  waveProp(ctx, 'herreria', 9, 27.2, () => P.laundry(ctx, 9, 26.05, 9, 28.45, 4.3, 1402));
+  waveProp(ctx, 'corralN', 16.5, 13, () => P.lantern(ctx, 16.5, 2.75, 13, -Math.PI / 2, true));
   P.barrel(ctx, 4.5, 0, 27.8);
   P.decal(ctx, 11, 0.02, 27.2, 1.4);
 
@@ -584,26 +612,44 @@ export function buildSE(ctx, S, L) {
   lane(ctx, S, 14, 17, 30, 31, 'dirt');
   P.deadHorse(ctx, 22.6, 0, 23.2, 0.4);
   P.trough(ctx, 15.2, 0, 21.6, Math.PI / 2, { len: 2.6 });
-  P.fence(ctx, 14.5, 26.2, 20.5, 26.2, { broken: true });
-  P.fence(ctx, 20.5, 26.2, 20.5, 30.6, {});
-  P.hay(ctx, 16, 0, 28.2, 0.2);
-  P.hay(ctx, 17.6, 0, 29.6, -0.3);
-  P.hay(ctx, 16.8, 0.8, 28.8, 0.1);
+  // el redil, contra la casa del sur (deja libre la boca del callejón); con
+  // la leña, lo pisotea el gigante del jefe final al cruzar el corral
+  waveProp(ctx, 'corralN', 17.5, 29.2, () => P.fence(ctx, 14.5, 29.2, 20.5, 29.2, { broken: true }));
+  waveProp(ctx, 'corralN', 20.5, 30.1, () => P.fence(ctx, 20.5, 29.2, 20.5, 30.95, {}));
+  waveProp(ctx, 'corralN', 16.6, 30.1, () => {
+    P.hay(ctx, 15.7, 0, 30.1, 0.1);
+    P.hay(ctx, 17.5, 0, 30.2, -0.2);
+    P.hay(ctx, 16.6, 0.8, 30.1, 0.05);
+  });
   P.cart(ctx, 26.4, 0, 28.6, 2.9, { brokenWheel: true });
-  P.firewood(ctx, 26.2, 0, 17.6, Math.PI / 2, 3);
+  waveProp(ctx, 'corralN', 26.2, 17.6, () => P.firewood(ctx, 26.2, 0, 17.6, Math.PI / 2, 3));
   P.rubble(ctx, 27.5, 0, 19.8, 6, 1404, 1.0, { mat: 'dirt', scale: 1.3 });
   P.wallTorch(ctx, 23, 2.6, 17, 's');
   P.lantern(ctx, 30, 2.8, 27.5, Math.PI / 2, true);
   bakeCorpse(wb, 18.6, 0, 19.4, 2.8, 'back', 'villager', 5);
   P.decal(ctx, 18.6, 0.02, 19.4, 1.8);
   ctx.crows.push({ x: 22.6, y: 0, z: 23.2, r: 1.8, n: 4 });
-  ctx.crows.push({ pts: [[14.6, 1.25, 26.2], [16.6, 1.25, 26.2], [18.6, 1.25, 26.2]], yaw: 0 });
+  ctx.crows.push({ pts: [[14.6, 1.25, 29.2], [16.6, 1.25, 29.2], [18.6, 1.25, 29.2]], yaw: 0 });
   ctx.rats.push({ x: 29.2, y: 0, z: 30.2, n: 2 });
   house(ctx, { x0: 14, z0: 31, x1: 24, z1: 42, front: 'n', seed: 1405, h: 7 });
   // (sin voladizo: su fachada da al establo y la planta alta se metía dentro)
   house(ctx, { x0: 24, z0: 31, x1: 38.5, z1: 42, front: 'n', seed: 1406, h: 6.6, windows: false, jetty: 0 });
+  ctx.beginGroup('corralN');
   house(ctx, { x0: 23, z0: 12, x1: 30, z1: 17, front: 's', seed: 1407, h: 6.2 });
   house(ctx, { x0: 30, z0: 12, x1: 36, z1: 17, front: 's', seed: 1408, h: 6.8 });
+  ctx.endGroup();
+  // (cuando el gigante cae sobre ellas, la de la esquina se derrumba sobre la
+  // boca del callejón del Rastro y lo tapa: con sus ruinas, ver
+  // buildCentroRuin)
+  ctx.beginGroup('corralNRuin');
+  ctx.beginGroup('corralNRuin:1');
+  P.rubble(ctx, 15.3, 0, 15.9, 18, 1415, 1.3, { scale: 1.5, blocks: 0.7, mat: 'wallstone' });
+  P.rubble(ctx, 15.0, 0.5, 16.2, 7, 1416, 0.8, { scale: 1.1, mat: 'plaster' });
+  P.beam(ctx, 13.9, 15.1, 17.2, 16.9, 0.55, 0.15);
+  P.beam(ctx, 14.4, 17.0, 16.6, 14.6, 0.2, 0.12);
+  ctx.col.add(14, 0, 14.6, 16.5, 1.7, 17.4);
+  ctx.endGroup();
+  ctx.endGroup();
 
   // --- establo (visitable)
   const room = 'establo';

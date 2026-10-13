@@ -3,7 +3,8 @@
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, overpass } from './builders.js';
+import { springaldTowerS } from './level_finale.js';
+import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, overpass, waveProp } from './builders.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -754,16 +755,22 @@ export function buildFerraria(ctx, S, L) {
   floor(ctx, -8, 44, 8, 56, 'cobble', 0.01);
   // (lado este: callejón del Muladar hacia el corral; lado oeste: callejón del
   // Yunque hacia la trasera de la herrería; ver level_barrios.js)
+  // (las de la calle revientan en ola cuando el gigante del jefe final baja
+  // por ella a cuatro patas: grupo 'herreria')
+  ctx.beginGroup('herreria');
   houseRow(ctx, { axis: 'z', from: 22, to: 33, line: -3.5, side: 'w', seed: 801 });
   house(ctx, { x0: -14, z0: 35.5, x1: -3.5, z1: 42, front: 's', seed: 803 });
   house(ctx, { x0: 3.5, z0: 33, x1: 14, z1: 42, front: 's', seed: 804, burned: true });
+  ctx.endGroup();
   house(ctx, { x0: 14, z0: 42, x1: 24, z1: 50, front: 'w', seed: 805 });
   house(ctx, { x0: 14, z0: 50, x1: 24, z1: 58, front: 'w', seed: 806, lit: true });
   stoneWall(ctx, -26, 56, -14, 58, 5);
   // muralla sur con la puerta hundida
   cityWall(ctx, -30, 58, -3.5, 62, 9, { merlonSides: ['s'] });
   cityWall(ctx, 3.5, 58, 30, 62, 9, { merlonSides: ['s'] });
-  tower(ctx, -5.5, 60, 4.5, 12);
+  // (la torre oeste, la de la espringala del jefe final, con su cadalso y su
+  // escalera de madera: level_finale.js)
+  springaldTowerS(ctx);
   tower(ctx, 5.5, 60, 4.5, 12);
   // el paso de la puerta: bóveda, suelo, rastrillo y, detrás, la carne que lo tapona entero
   solid(ctx, 'wallstone', -3.5, 5, 58, 3.5, 9, 62, { sub: 2, ao: false, faces: 'tnsewb' });
@@ -875,14 +882,14 @@ export function buildFerraria(ctx, S, L) {
   P.decal(ctx, -1.5, 0.02, 50, 2.2);
   P.decal(ctx, 5, 0.02, 53, 1.8);
   P.decal(ctx, 1.5, 0.02, 29, 1.6);
-  P.wallTorch(ctx, -3.5, 2.8, 26, 'e');
+  waveProp(ctx, 'herreria', -3.5, 26, () => P.wallTorch(ctx, -3.5, 2.8, 26, 'e'));
   P.pike(ctx, 7, 0, 44, { tilt: 0.15 });
   P.pike(ctx, 8, 0, 43.4, { tilt: -0.1, skull: true });
-  P.laundry(ctx, -3.45, 24.6, 3.45, 24.6, 4.3, 18);
-  P.laundry(ctx, -3.45, 37.2, 3.45, 37.2, 4.2, 19);
-  P.sign(ctx, -3.5, 2.95, 27.4, Math.PI / 2, 0);
-  P.sign(ctx, 3.5, 2.95, 31.2, -Math.PI / 2, 2);
-  P.lantern(ctx, 3.5, 2.75, 23.6, -Math.PI / 2, true);
+  waveProp(ctx, 'herreria', 0, 24.6, () => P.laundry(ctx, -3.45, 24.6, 3.45, 24.6, 4.3, 18));
+  waveProp(ctx, 'herreria', 0, 37.2, () => P.laundry(ctx, -3.45, 37.2, 3.45, 37.2, 4.2, 19));
+  waveProp(ctx, 'herreria', -3.5, 27.4, () => P.sign(ctx, -3.5, 2.95, 27.4, Math.PI / 2, 0));
+  waveProp(ctx, 'herreria', 3.5, 31.2, () => P.sign(ctx, 3.5, 2.95, 31.2, -Math.PI / 2, 2));
+  waveProp(ctx, 'herreria', 3.5, 23.6, () => P.lantern(ctx, 3.5, 2.75, 23.6, -Math.PI / 2, true));
   P.jar(ctx, 12.9, 0, 43.3, 1.0);
   P.jar(ctx, 13.2, 0, 44.2, 0.8, { lying: true, rot: 2.2 });
   P.dropped(ctx, -2.9, 0, 51.3, 0.5, 'sword');
@@ -912,13 +919,14 @@ export function buildFerraria(ctx, S, L) {
 // vigas en medio y el suelo tiznado; humean, y alguna aún arde. Del arco de la
 // Sé, los sillares en la calle. Así el atrio, la calle y la plaza del pan son
 // un solo campo de batalla.
-export function buildCentroRuin(ctx, houses) {
+// (también las de la Herrería y el norte del corral: wg, el bloque)
+export function buildCentroRuin(ctx, houses, wg = 'centro') {
   const wb = ctx.wb;
-  ctx.beginGroup('centroRuin');
+  ctx.beginGroup(wg + 'Ruin');
   const SOOT = [0.42, 0.38, 0.35];
   houses.forEach((r, hi) => {
     // (cada ruina con su casa: aparece cuando ésta se viene abajo)
-    if (r.sub) ctx.beginGroup(r.sub.replace('centro:', 'centroRuin:'));
+    if (r.sub) ctx.beginGroup(r.sub.replace(wg + ':', wg + 'Ruin:'));
     const rng = new RNG((r.seed || hi * 97) * 7 + 13);
     const { x0, z0, x1, z1 } = r;
     const W = x1 - x0,
@@ -991,8 +999,10 @@ export function buildCentroRuin(ctx, houses) {
     if (r.sub) ctx.endGroup();
   });
   // el arco de la Sé, en la calle
-  P.rubble(ctx, 0, 0, -37.6, 14, 7731, 2.6, { scale: 1.5, blocks: 0.8, mat: 'ashlar' });
-  ctx.col.add(-1.4, 0, -38.8, 1.6, 0.8, -36.6);
-  P.beam(ctx, -2.6, -36.2, 1.8, -39.4, 0, 0.14);
+  if (wg === 'centro') {
+    P.rubble(ctx, 0, 0, -37.6, 14, 7731, 2.6, { scale: 1.5, blocks: 0.8, mat: 'ashlar' });
+    ctx.col.add(-1.4, 0, -38.8, 1.6, 0.8, -36.6);
+    P.beam(ctx, -2.6, -36.2, 1.8, -39.4, 0, 0.14);
+  }
   ctx.endGroup();
 }

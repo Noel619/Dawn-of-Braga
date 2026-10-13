@@ -3,6 +3,7 @@
 import { actRise } from './film_rise.js';
 import { actNave } from './film_nave.js';
 import { actGrab } from './film_grab.js';
+import { actHerreria } from './film_city.js';
 
 export const ACTS = {
   *rito(D, o) {
@@ -24,9 +25,13 @@ export const ACTS = {
     yield* actGrab(D, o);
     yield* ACTS.establo(D, {});
   },
+  // (desde el punto de control: o.retry, o.resume u o.debug; si no, se
+  // viene de la paja, del acto 2)
   *establo(D, o) {
     D.setCP('establo');
-    void o;
+    yield* actHerreria(D, { fromCP: !!(o.retry || o.resume || o.debug) });
+    if (D.g.player.dead) return;
+    yield* ACTS.torreSur(D, {});
   },
   *torreSur(D, o) {
     D.setCP('torreSur');

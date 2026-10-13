@@ -917,10 +917,31 @@ function sideFrame(side, x0, z0, x1, z1) {
 //   doors: [{ side:'n'|'s'|'e'|'w', at (a lo largo de la fachada, como doorAt)
 //             | x/z (coordenada mundo), w, h }]
 //   walls: [{ x0, z0, x1, z1, doors: [{ at (coordenada mundo a lo largo), w, h }] }]
+// Los bloques que revientan casa a casa con el jefe final (cada casa en su
+// propio grupo, '<bloque>:n'; sus ruinas, en '<bloque>Ruin:n': ver
+// level.js y finale/director.js): el centro (de la Sé a la plaza del pan), la
+// Herrería (la calle y el callejón del Muladar) y el norte del corral.
+export const WAVES = { centro: 2, herreria: 3, corralN: 4 };
+// lo que cuelga de las casas de un bloque que revienta (ropa tendida,
+// rótulos, faroles): en su propio grupo ('<bloque>Prop:n') y apuntado con su
+// sitio, para que se venga abajo con la casa más cercana
+export function waveProp(ctx, wg, x, z, fn) {
+  const list = ctx.waveProps || (ctx.waveProps = []);
+  const name = wg + 'Prop:' + (list.filter((q) => q.wg === wg).length + 1);
+  ctx.beginGroup(wg);
+  ctx.beginGroup(name);
+  fn();
+  ctx.endGroup();
+  ctx.endGroup();
+  list.push({ wg, name, x, z });
+}
+
 export function house(ctx, s) {
-  // (en el bloque que revienta con el coloso, cada casa en su propio grupo:
-  // se vienen abajo una tras otra, en ola; ver finale/director.js)
-  const sub = ctx._grp && ctx._grp.name === 'centro' && ctx.beginGroup ? 'centro:' + (ctx.centroN = (ctx.centroN || 0) + 1) : null;
+  // (en un bloque que revienta, cada casa en su propio grupo: se vienen abajo
+  // una tras otra, en ola)
+  const wg = ctx._grp && ctx.beginGroup && WAVES[ctx._grp.name] ? ctx._grp.name : null;
+  const waveN = ctx.waveN || (ctx.waveN = {});
+  const sub = wg ? wg + ':' + (waveN[wg] = (waveN[wg] || 0) + 1) : null;
   if (sub) ctx.beginGroup(sub);
   const r = houseBody(ctx, s, sub);
   if (sub) ctx.endGroup();
