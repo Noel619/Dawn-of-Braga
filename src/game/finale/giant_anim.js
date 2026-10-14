@@ -697,8 +697,9 @@ C.riseKneel = clip(
 );
 // Contra la torre: se agarra a las almenas con la derecha (la mano la lleva
 // el guion), echado sobre ella, la izquierda abierta contra el muro y la cara
-// arriba, a la altura de lo alto
-const TOWER = { root: [0, -10, 0], pelvis: [6, 6, 0], spine1: [2, 4, 0], spine2: [2, 4, 0], chest: [-2, 6, 0], neck1: [-10, 0, 0], neck2: [2, 0, 0], head: [-10, -4, 0], jaw: [30, 0, 0], clavR: [0, 0, -12], armR: [-150, 0, -10], foreR: [-20, 0, 0], handR: [20, 0, 0], ...hand('R', 60, 0, 14), clavL: [0, 0, 8], armL: [-90, -10, 26], foreL: [-50, 0, 0], ...hand('L', 10, 4), legL: [8, 0, 6], shinL: [16, 0, 0], footL: [-6, 0, 0], legR: [-30, 0, -6], shinR: [40, 0, 0], footR: [-10, 0, 0] };
+// arriba, por encima del parapeto (erguido: la pelvis alta, el pecho y el
+// cuello atrás; si no, la cara queda a la altura de las almenas)
+const TOWER = { root: [0, 80, 0], pelvis: [6, 6, 0], spine1: [2, 4, 0], spine2: [2, 4, 0], chest: [-15, 6, 0], neck1: [-26, 0, 0], neck2: [-8, 0, 0], head: [4, -4, 0], jaw: [30, 0, 0], clavR: [0, 0, -12], armR: [-150, 0, -10], foreR: [-20, 0, 0], handR: [20, 0, 0], ...hand('R', 60, 0, 14), clavL: [0, 0, 8], armL: [-90, -10, 26], foreL: [-50, 0, 0], ...hand('L', 10, 4), legL: [8, 0, 6], shinL: [16, 0, 0], footL: [-6, 0, 0], legR: [-30, 0, -6], shinR: [40, 0, 0], footR: [-10, 0, 0] };
 export const TOWER_POSE = TOWER;
 C.grabTower = clip(
   'grabTower',
@@ -710,16 +711,16 @@ C.grabTower = clip(
   ],
   { lag: { chest: 0.04, neck2: 0.07, head: 0.1, armL: 0.08 }, events: [{ t: 0.45, name: 'grab' }] }
 );
-C.towerHold = clip('towerHold', 2.6, [K(0, TOWER), K(1.3, { ...TOWER, chest: [8, 8, 0], neck1: [-26, 2, 0], jaw: [36, 0, 0] }), K(2.6, TOWER)], { loop: true });
+C.towerHold = clip('towerHold', 2.6, [K(0, TOWER), K(1.3, { ...TOWER, chest: [-11, 8, 0], neck1: [-30, 2, 0], jaw: [36, 0, 0] }), K(2.6, TOWER)], { loop: true });
 // la cara a dos metros del jugador: toma aire y ruge
 C.roarTower = clip(
   'roarTower',
   3.0,
   [
     K(0, TOWER),
-    K(0.7, { ...TOWER, chest: [-8, 8, 0], neck1: [-22, 0, 0], neck2: [-6, 0, 0], head: [-22, -6, 0], jaw: [12, 0, 0], ribL: [0, 30, 0], ribR: [0, -30, 0] }, 'hold'),
-    K(1.0, { ...TOWER, chest: [2, 6, 0], neck1: [-12, 0, 0], neck2: [2, 0, 0], head: [-4, -4, 0], jaw: [56, 0, 0], ribL: [0, 40, 0], ribR: [0, -40, 0] }, 'snap'),
-    K(2.4, { ...TOWER, chest: [0, 6, 0], neck1: [-12, 0, 0], neck2: [0, 0, 0], head: [-6, -4, 0], jaw: [52, 0, 0], ribL: [0, 36, 0], ribR: [0, -36, 0] }),
+    K(0.7, { ...TOWER, chest: [-21, 8, 0], neck1: [-33, 0, 0], neck2: [-14, 0, 0], head: [-14, -6, 0], jaw: [12, 0, 0], ribL: [0, 30, 0], ribR: [0, -30, 0] }, 'hold'),
+    K(1.0, { ...TOWER, chest: [-12, 6, 0], neck1: [-22, 0, 0], neck2: [-6, 0, 0], head: [8, -4, 0], jaw: [56, 0, 0], ribL: [0, 40, 0], ribR: [0, -40, 0] }, 'snap'),
+    K(2.4, { ...TOWER, chest: [-13, 6, 0], neck1: [-23, 0, 0], neck2: [-7, 0, 0], head: [6, -4, 0], jaw: [52, 0, 0], ribL: [0, 36, 0], ribR: [0, -36, 0] }),
     K(3.0, TOWER),
   ],
   { lag: { neck2: 0.05, head: 0.08 }, events: [{ t: 1.0, name: 'roar' }] }

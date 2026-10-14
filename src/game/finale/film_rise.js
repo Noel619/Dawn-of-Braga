@@ -303,15 +303,16 @@ export function* actRise(D, o = {}) {
     e.shadow && (e.shadow.visible = false);
   }
   // ---------------------------------------------------------- 5. el pozo (un latido)
-  // por encima del hombro, mirando abajo: oscuridad roja, silencio, latidos,
-  // y algo enorme que sube
+  // oscuridad roja, silencio, latidos, y algo enorme que sube: de lado, a ras
+  // del borde, el jugador agarrado al borde (con su antorcha) y, delante, la
+  // joroba que asoma del pozo con sus púas y las piedras que lleva encima
   F.pClip(FP.kneelGrip, { blend: 0.3 });
-  F.shot([PL.x + 2.4, AY + 1.7, PL.z + 2.6], [0, AY - 3.6, -149.2], { fov: 60 });
+  F.shot([-4.4, AY + 1.2, -145.6], [0.2, AY + 0.2, -145.6], { fov: 56 });
   F.hand = 0.025;
   red.x = 0;
-  red.z = PL.z - 3;
-  red.y = AY - 6;
-  red.range = 16;
+  red.z = PL.z - 3.5;
+  red.y = AY - 5;
+  red.range = 24;
   a && a.play('silence');
   G.show(true);
   G.R.action.speed = 1;
@@ -320,14 +321,18 @@ export function* actRise(D, o = {}) {
   while (t < 2.7) {
     const dt = yield;
     t += dt;
-    // un latido (la luz y el temblor), cada vez más deprisa
+    // un latido (la luz y el temblor), cada vez más deprisa; del fondo suben
+    // pavesas y un vaho rojo
     const b = Math.max(0, Math.sin(t * (4.2 + t * 1.2))) ** 6;
-    red.intensity = 22 + 34 * b;
+    red.intensity = 30 + 52 * b;
+    if (Math.random() < dt * 18) g.fx.blood.emit(rnd(-3, 3), AY - rnd(5, 8), PL.z - rnd(2.5, 7), 1, { color: [1, 0.42, 0.14], speed: 0.8, life: 1.8, up: 4.5, gravity: -1.5 });
     if (b > 0.9 && t - beat > 0.6) {
       beat = t;
       g.camRig.shake(0.16 + t * 0.05);
       g.input.rumble(0.3, 0.6, 140);
       a && a.play('slamSoft', { x: 0, y: AY - 8, z: CZ }, { k: 0.9 });
+      g.fx.blood.emit(0, AY - 7, PL.z - 4.5, 26, { color: [1, 0.36, 0.12], speed: 2.4, life: 1.6, up: 6, gravity: -2 });
+      g.fx.blood.emit(0, AY - 6, PL.z - 4.5, 16, { color: [0.42, 0.08, 0.06], speed: 1.6, life: 2.4, up: 3, gravity: -0.6 });
     }
   }
   // ---------------------------------------------------------- 6. lo que sube

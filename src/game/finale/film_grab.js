@@ -9,7 +9,7 @@
 // fachada, el atrio y la plaza (¡Cúbrete!), y el tejado del establo de los
 // Pellejeros, que se hunde: caes en la paja. Fuera de franjas: control.
 import * as THREE from 'three';
-import { sm, smoother, lerp, easeIn, easeOut } from './film.js';
+import { sm, smoother, lerp, easeIn, easeOut, camSafe } from './film.js';
 import { FP } from './film_player.js';
 import { NAVE } from '../../world/level_finale.js';
 import { clamp } from '../../core/util.js';
@@ -96,8 +96,9 @@ export function* actGrab(D, o = {}) {
     yield* F.wait(0.5);
   }
   // ---------------------------------------------------------- 2. arriba
-  // la mano sube por el agujero de la bóveda hasta su cara; detrás del
-  // jugador, la ciudad entera
+  // la mano sube por el agujero de la bóveda hasta su cara: por delante del
+  // jugador, subiendo con él, el gigante entero y arriba la cara que le
+  // espera, entre la mitra, la corona de velas y el estandarte
   G.rootMotion = false;
   G.play('lift', { blend: 0.4 });
   G.lookW = 0.8;
@@ -105,10 +106,11 @@ export function* actGrab(D, o = {}) {
   const f0 = fist.clone();
   // la muñeca, delante de la cara (espacio del modelo): ahí acaba
   const faceFist = new V3(1.2, 14.6, 7.2);
-  F.follow((dt, tt) => {
+  F.follow(() => {
     const P = p.pos;
-    const u = sm(clamp(tt / 3.4, 0, 1));
-    return { pos: new V3(P.x - lerp(2.5, 4.5, u), P.y + lerp(1.5, 3.2, u), P.z - lerp(4.5, 7, u)), look: new V3(P.x + 1, P.y + lerp(0.5, -3, u), P.z + 14), fov: lerp(60, 70, u) };
+    const f = G.face(new V3());
+    const want = new V3(P.x - 1.8, P.y + 0.2, P.z + 5.0);
+    return { pos: camSafe(g, new V3(P.x, P.y + 0.8, P.z), want), look: f.lerp(P, 0.5), fov: 58 };
   });
   F.hand = 0.04;
   D.windK = 0.7;

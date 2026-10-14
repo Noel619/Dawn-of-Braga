@@ -279,4 +279,12 @@ camino, además de lo de arriba:
   estandarte negro del presbiterio prendido en la aureola (se mece). En el acto 6 la puñalada le revienta el
   ojo derecho: se apaga y la cuenca sangra hasta el final.
 
-Queda: una pasada de pulido de planos.
+- **Pulido de planos**: el pozo del acto 1 (de lado, a ras del borde: el jugador con su antorcha y la
+  joroba que asoma con sus púas y sus piedras; el pozo late en rojo y suelta pavesas), el alzamiento del
+  acto 2 (por delante y subiendo con la mano: la cámara ya no se mete en la cabeza), y en el acto 6 la
+  trampilla, la embestida, el agarre a las almenas, el rugido (contra la torre, erguido: la cara asoma
+  entera por encima del parapeto), la caída (de lado, con la muralla al fondo), el hachazo (de frente, a
+  través de la cadena), el hundimiento (sin fuegos delante; al fondo, la torre) y el amanecer.
+
+Hecho todo el plan. Lo que queda para más adelante (Deo Ignoto y el objeto verdadero) está en las notas de
+`src/game/finale/director.js`.

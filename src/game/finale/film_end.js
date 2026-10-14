@@ -398,8 +398,9 @@ function* climbLadder(D, G, S) {
   a && a.play('stairCreak', HATCH, { k: 1.4 });
   a && a.play('woodHit', HATCH, { k: 1.2 });
   g.fx.blood.emit(HATCH.x, HATCH.y + 0.3, HATCH.z, 30, { color: DUST, speed: 2.5, life: 1.4, up: 1.4, gravity: 0.4 });
-  // (desde lo alto: sale por el hueco)
-  F.shot([HATCH.x + 2.4, TN.top + 1.7, HATCH.z + 2.6], [HATCH.x, TN.top + 0.6, HATCH.z], { fov: 58 });
+  // (desde fuera, por encima de la esquina del noroeste: sale por el hueco;
+  // la espringala queda detrás, no delante)
+  F.shot([TN.x - TN.w / 2 - 0.8, TN.top + 2.2, TOP_N - 0.6], [HATCH.x + 0.3, TN.top + 0.4, HATCH.z + 0.3], { fov: 56 });
   F.pClip(FP.ladder, { blend: 0.1 });
   while (y < TN.top - 1.0) {
     const dt = yield;
@@ -496,10 +497,10 @@ function* gow2(D, G, S, bolt) {
   G.rootMotion = true;
   G.speedK = 1;
   a && a.play('beastRoarBig', G.face(_v), { k: 2.6 });
-  // (a ras del campo, a un lado de su camino: pasa como un toro, hacia la
-  // torre)
-  const camE = new V3(-16.0, 2.4, -127.6);
-  F.follow(() => ({ pos: camE, look: G.head(new V3()).lerp(new V3(TN.x, TN.top, TN.z), 0.25), fov: 60 }));
+  // (a un lado de su camino, alta y abierta para que quepa entero: pasa
+  // como un toro, hacia la torre)
+  const camE = new V3(-16.0, 4.2, -127.6);
+  F.follow(() => ({ pos: camE, look: G.chest(new V3()).lerp(new V3(TN.x, TN.top, TN.z), 0.2), fov: 68 }));
   F.hand = 0.05;
   let t = 0;
   while (t < 6) {
@@ -536,9 +537,10 @@ function* gow2(D, G, S, bolt) {
   F.setP(FACE_P.x, TN.top, FACE_P.z, Math.PI);
   F.pClip(FP.windStand, { blend: 0.2 });
   const P1 = p.pos.clone();
-  // (de lado, desde la tronera, a lo largo del parapeto del norte: la mano
-  // cae sobre las almenas y la cara asoma)
-  F.shot([TN.x + TN.w / 2 - 0.2, TN.top + 1.4, TOP_N + 1.2], [TN.x - 1.2, TN.top + 0.8, TOP_N - 0.8], { fov: 58 });
+  // (desde detrás y por encima del jugador: lo alto de la torre, la
+  // espringala y, por encima del parapeto del norte, la mano que cae sobre
+  // las almenas y la cara que asoma con su corona de velas)
+  F.shot([TN.x + 2.4, TN.top + 3.2, TN.z + 4.2], [TN.x - 0.4, TN.top + 1.6, TOP_N - 1.5], { fov: 60 });
   F.hand = 0.04;
   t = 0;
   while (t < 1.6) {
@@ -554,11 +556,12 @@ function* gow2(D, G, S, bolt) {
   const P = p.pos.clone();
   p.yaw = Math.atan2(G.face(_v).x - P.x, G.face(_v).z - P.z);
   F.pClip(FP.windStand, { blend: 0.2 });
-  // (por encima del hombro del jugador: la cara, a dos metros)
+  // (por encima del hombro izquierdo del jugador: la cara, a dos metros; la
+  // espringala queda a su derecha, fuera del plano)
   F.follow(() => {
     const f = G.face(new V3());
     const d = _v.subVectors(f, P).setY(0).normalize();
-    return { pos: new V3(P.x - d.x * 2.2 - d.z * 1.5, P.y + 2.4, P.z - d.z * 2.2 + d.x * 1.5), look: f.add(_v2.set(0, -0.3, 0)), fov: 52 };
+    return { pos: new V3(P.x - d.x * 2.2 + d.z * 1.5, P.y + 2.4, P.z - d.z * 2.2 - d.x * 1.5), look: f.add(_v2.set(0, -0.3, 0)), fov: 52 };
   });
   F.hand = 0.03;
   while (G.actT < 1.0) yield;
@@ -803,11 +806,14 @@ function* fall(D, G, S) {
   G.fixY = P0.y;
   t = 0;
   let splashed = false;
-  // (desde el otro lado del cráter, a ras de la sangre: cae de espaldas hacia
-  // aquí)
-  const across = _v.subVectors(C0, P0).setY(0).normalize();
-  const camF = C0.clone().addScaledVector(across, 11.5).setY(4.2);
-  F.shot(camF, P0.clone().lerp(C0, 0.35).setY(7.5), { fov: 62 });
+  // (de lado y de lejos, desde el campo del norte: cae de espaldas a lo largo
+  // del cráter; al fondo, la muralla y la torre)
+  const across = new V3().subVectors(C0, P0).setY(0).normalize();
+  const sideF = new V3(across.z, 0, -across.x);
+  if (sideF.z > 0) sideF.negate();
+  const land = P0.clone().lerp(C0, 0.6).setY(4);
+  const camF = P0.clone().lerp(C0, 0.5).addScaledVector(sideF, 17).setY(6.5);
+  F.follow(() => ({ pos: camF, look: G.chest(new V3()).lerp(land, 0.5), fov: 64 }));
   F.hand = 0.05;
   while (t < 2.2) {
     const dt = yield;
@@ -853,8 +859,9 @@ function* fall(D, G, S) {
   const cutAt = ring.clone().addScaledVector(along, 1.1).addScaledVector(sideC, -0.9).setY(TN.top);
   F.setP(cutAt.x, TN.top, cutAt.z, Math.atan2(ring.x + along.x * 1.2 - cutAt.x, ring.z + along.z * 1.2 - cutAt.z));
   F.pClip(FP.chop, { blend: 0.1, speed: 0 });
-  const mid = cutAt.clone().lerp(ring, 0.5);
-  F.shot(camR.clone().setY(TN.top + 1.3), mid.clone().setY(TN.top + 0.9), { fov: 54 });
+  // (de frente, al otro lado de la cadena: el jugador, el hacha y la
+  // cadena tirante que se va hacia el cráter)
+  F.shot(ring.clone().addScaledVector(along, 0.6).addScaledVector(sideC, 2.0).setY(TN.top + 1.3), cutAt.clone().setY(TN.top + 1.0), { fov: 58 });
   const fake = g.dev && g.dev.autoQTE === 'fail';
   const q = fake ? { ok: null } : F.promptAsync({ action: 'heavy', label: '¡Corta!', window: 5, mash: 7, slow: 0.6 });
   let n = 0,
@@ -924,15 +931,17 @@ function* sinkAndDawn(D, G, S) {
     a = g.audio;
   void S;
   G.play('sink', { blend: 0.6 });
-  // (desde el borde del cráter, a ras: se hunde, la mano alzada)
-  const P = p.pos.clone();
-  const hand0 = G.M.byName.handR.getWorldPosition(new V3());
-  const toT = new V3(TN.x - C0.x, 0, TN.z - C0.z).normalize();
-  const camS = C0.clone().addScaledVector(toT, 12.0).setY(3.0);
-  F.follow(() => {
-    const h = G.M.byName.handR.getWorldPosition(new V3());
-    return { pos: camS, look: h.lerp(hand0, 0.5).setY(Math.max(SURF + 1.5, h.y - 2)), fov: 50 };
-  });
+  // (a ras del borde, del lado del norte: la mano alzada que se hunde y, al
+  // fondo, la torre del jugador; ningún fuego de la sangre por delante)
+  const hd = G.head(new V3());
+  const along = new V3(hd.x - G.pos.x, 0, hd.z - G.pos.z).normalize();
+  const across = new V3(along.z, 0, -along.x);
+  if (across.z > 0) across.negate();
+  const camS = G.pos.clone().addScaledVector(along, 9.5).addScaledVector(across, 15.4).setY(3.2);
+  // (quieta, entre la cara que se hunde y donde se alza la mano: la mano
+  // sale de la sangre, se alza contra el cielo y se hunde)
+  const lookS = hd.clone().addScaledVector(across, 5.5).addScaledVector(along, 2.2).setY(2.0);
+  F.shot(camS, lookS, { fov: 52 });
   F.hand = 0.02;
   let t = 0,
     quiet = false;
@@ -964,7 +973,7 @@ function* sinkAndDawn(D, G, S) {
   const W = new V3(topMerlon(0).x + 0.2, TN.top, TOP_N + 0.9);
   F.setP(W.x, W.y, W.z, Math.atan2(C0.x - W.x, C0.z - W.z));
   p.anim.stop(0.4);
-  F.shot([TN.x + 3.5, 9.5, TN.z - 10.5], W.clone().add(_v.set(0, 1.4, 0)), { fov: 50 });
+  F.shot([TN.x + 1.4, 12.8, TN.z - 8.6], W.clone().add(_v.set(0, 1.0, 0)), { fov: 34 });
   yield* F.wait(2.4);
   // (por encima de su hombro: el cráter que humea, el campo, el río)
   const dW = _v.subVectors(C0, W).setY(0).normalize();
