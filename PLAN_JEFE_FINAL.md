@@ -26,7 +26,7 @@ amanecer).
              │  (galería del río, desde la cisterna)
    ┌─────────●─────────┐  cráter: la cisterna reventada (de aquí sale y aquí vuelve)
    │    6    │         │
- ──┴──[T2]═══╪═════════┴──  muralla norte (brecha en x≈0; espringala 2 en la torre de x=25)
+ ──┴──[T2]═══╪═════════┴──  muralla norte (brecha en x≈0; espringala 2 en la torre de x=-30)
              │ 1
          [cabecera]
          [  nave  ]  ←— 1 y 2: la nave revienta, te agarra, te lanza
@@ -129,8 +129,10 @@ nave destripada y la brecha de la muralla.
 ### Acto 6 · La segunda espringala y el final, ~80 s
 
 Herido, va al cráter, se arrodilla en el borde y hunde la mano herida en la sangre que hierve: la carne se
-le cierra. Tramo jugable: por el adarve hasta la torre de x=25, la escala de dentro, lo alto. La
-espringala. Le clavas el virote en la nuca.
+le cierra (y escupe el virote). Tramo jugable: por el adarve hasta la torre de x=-30 (la del oeste de la
+brecha: el brazo del virote es el izquierdo, y al correr hacia el norte queda al oeste), la escala de
+dentro, la trampilla, lo alto. La espringala, en una tronera de la esquina del noreste. Le clavas el virote
+en la nuca.
 
 **Momento God of War 2:** se revuelve y embiste contra la torre, se agarra a las almenas con la derecha
 (la campana cae al cráter tañendo) y su cara llega a lo alto, a dos metros: te ruge — **¡Salta!** a su
@@ -218,9 +220,11 @@ el viento del vuelo, la tierra del cráter.
 
 ## 8. Modo de pruebas
 
-Instancias: el arzobispo, cada acto (1 a 6), cada momento *God of War*, el final y Deo Ignoto (opcional).
-Un robot (`tools/finale.mjs`) juega la película entera (acierta las pulsaciones, apunta y dispara) y
-comprueba que se puede morir y volver al punto de control.
+Instancias: el arzobispo, cada acto (1 a 6, con los dos momentos *God of War* dentro de los actos 4 y 6) y
+el final en el río. Un robot (`tools/finale.mjs`) ve la película entera desde cada punto de control, con las
+pulsaciones acertadas y falladas (las espringalas se cargan, apuntan y disparan solas; el tramo hasta la
+torre se anda solo), y comprueba que pasa por los puntos de control en orden, que nadie muere y que acaba
+en el río. `tools/film.mjs` saca fotogramas de cualquier segundo.
 
 ## 9. El futuro (no se hace ahora)
 
@@ -230,9 +234,9 @@ comprueba que se puede morir y volver al punto de control.
   verdadera, más peligrosa.
 - De momento sólo se usará con **Deo Ignoto**: con el objeto, al hundirse el gigante, una cinemática más
   (su Alma sube de la cisterna) y la pelea contra Deo Ignoto; sin él, el final normal. La pelea de Deo que
-  ya existe (con escalada) se queda en el código, apagada, y se puede probar desde el modo de pruebas;
-  habrá que rehacer su puesta en escena para que salga del cráter. Las notas están en
-  `src/game/finale/director.js`.
+  ya existe (con escalada) se queda en el código, sin enganchar al director nuevo; habrá que rehacer su
+  puesta en escena para que salga del cráter y volver a engancharla (con sus instancias del modo de
+  pruebas). Las notas están en `src/game/finale/director.js`.
 
 ## 10. Orden de trabajo
 
@@ -245,3 +249,21 @@ comprueba que se puede morir y volver al punto de control.
 7. Acto 6 (espringala 2, momento God of War 2 y el final).
 8. El modelo: manos, cabeza y el vestido de catedral.
 9. Modo de pruebas, robot, documentación y la versión jugable.
+
+## 11. Estado
+
+Hechos los puntos 1 a 7 y el modo de pruebas (instancias por acto) y el robot. Lo que se ha añadido por el
+camino, además de lo de arriba:
+
+- **El campo de fuera de la muralla norte**: antes era una ladera que subía hasta las almenas y tapaba el
+  cráter; ahora está a ras de la ciudad junto al muro y alrededor del cráter (desde el adarve y las torres
+  se ve abierto) y sube hacia el río. Entero, el cráter es un otero que tapa lo alto de la cúpula de la
+  cisterna.
+- **La cisterna anegada**: tras la cabalgada, la sangre negra del dios la llena casi hasta el techo; hierve
+  (humo y pavesas) y en ella se cura y se hunde el gigante. El final ya no pasa por la galería del río: tras
+  el amanecer, un fundido y la orilla.
+- **Las almenas que revientan**: las del lienzo al oeste de la brecha (el restregón de la cabalgada) y las
+  del norte de lo alto de la torre de x=-30 (la mano y la cadena).
+- El pergamino del final: las campanas, que antes «siguieron tocando solas», ahora callan.
+
+Queda: el modelo (las manos, la cabeza y el vestido de catedral) y una pasada de pulido de planos.

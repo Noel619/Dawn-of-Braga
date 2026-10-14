@@ -33,8 +33,9 @@
 // contra Deo Ignoto (jefe opcional). Sin el objeto, no hay pelea: se pasa
 // directamente al final normal. La pelea de Deo que ya existe (deo_boss.js,
 // deo_anim.js, climb.js, surface.js; su puesta en escena era la nave y el
-// atrio) se queda en el código y se puede probar desde el modo de pruebas;
-// habrá que rehacer su entrada (que salga del cráter) y su arena.
+// atrio) se queda en el código, sin enganchar a este director: habrá que
+// rehacer su entrada (que salga del cráter) y su arena, y volver a
+// engancharla (con sus instancias del modo de pruebas).
 // Ver hasTrueItem() y endFilm().
 // ------------------------------------------------------------------------
 import * as THREE from 'three';
@@ -300,6 +301,12 @@ export class Finale {
     p.puppet = false;
     g.fadeTarget = 1;
     this.runFrom(this.cp || 'rito', { retry: true });
+  }
+  // al morir fuera de la película (contra el arzobispo, o en cualquier otro
+  // sitio): aquí no hay nada que deshacer, salvo lo que quede volando
+  onRespawn() {
+    this.chunks.clear();
+    this.debris.clear();
   }
   // fin de la película: el gigante, hundido en la cisterna
   endFilm() {

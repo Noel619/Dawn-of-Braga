@@ -1,24 +1,24 @@
 // Instancias del modo de pruebas: ir directamente a un momento de una pelea
-// (el rito, el Turiferario, Deo Ignoto y las otras peleas del juego), con las
-// banderas como estarían en ese momento de una partida. Y los controles de
-// los jefes: matar el sigilo que toca, saltar de fase y ver por dónde se
-// trepa y dónde están los sigilos.
+// (el arzobispo, cada acto de la película del jefe final y las otras peleas
+// del juego), con las banderas como estarían en ese momento de una partida.
+// Y los controles de los jefes de las peleas de siempre: matar el sigilo que
+// toca, saltar de fase y ver por dónde se trepa y dónde están los sigilos.
 //
-// Desde la consola: __game.dev.instance('deoMascara'), __game.dev.act('killSigil').
+// Desde la consola: __game.dev.instance('espringala2').
+// (Deo Ignoto, el jefe opcional, no tiene instancias: su pelea vieja está en
+// el código pero sin enganchar; ver finale/director.js.)
 import * as THREE from 'three';
 
 export const INSTANCES = [
   { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
-  { id: 'rito', name: 'Final · el rito de la cisterna' },
-  { id: 'subida', name: 'Final · la subida, tras el rito' },
-  { id: 'turSale', name: 'Final · el Turiferario sale del suelo' },
-  { id: 'tur', name: 'Final · el Turiferario: la pelea' },
-  { id: 'turRodillas', name: 'Final · el Turiferario, de rodillas' },
-  { id: 'nave', name: 'Final · la nave estalla: se alza Deo' },
-  { id: 'deo', name: 'Final · Deo Ignoto: la pelea' },
-  { id: 'deoBrazo', name: 'Final · Deo Ignoto con un brazo menos' },
-  { id: 'deoMascara', name: 'Final · Deo desplomado: la máscara' },
-  { id: 'fin', name: 'Final · el dios vencido (al río)' },
+  { id: 'pelicula', name: 'Final · la película: el rito y la transformación (acto 1)' },
+  { id: 'nave', name: 'Final · la película: del cráter a la nave (acto 1)' },
+  { id: 'agarron', name: 'Final · la película: te atrapa y te lanza (acto 2)' },
+  { id: 'herreria', name: 'Final · la película: la Herrería (acto 3)' },
+  { id: 'espringala1', name: 'Final · la película: la primera espringala (acto 4)' },
+  { id: 'cabalgada', name: 'Final · la película: la cabalgada (acto 5)' },
+  { id: 'espringala2', name: 'Final · la película: la segunda espringala y el final (acto 6)' },
+  { id: 'fin', name: 'Final · vencido: el río al amanecer' },
   { id: 'empalado', name: 'El Empalado (lo alto del Postigo)' },
   { id: 'bestia', name: 'La huida de la Bestia' },
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
@@ -130,70 +130,25 @@ export async function goInstance(g, id) {
       if (fog) g.enterFog(fog);
       return true;
     }
-    case 'rito': {
-      // el arzobispo ya vencido: directamente el rito
-      prepare(g, finale({}));
-      const b = g.bosses.turibulario;
-      if (b) b.reset();
-      place(g, 0, -10, -150, Math.PI);
-      g.startRite(null);
-      return true;
-    }
-    case 'subida':
-      prepare(g, finale({ 'finale:rite': true }));
-      place(g, 0, -10, -142.6, 0);
-      return true;
-    case 'turSale':
-      // en el pórtico de la Sé, asomado a la plaza: revienta el empedrado
-      prepare(g, finale({ 'finale:rite': true }));
-      openSe(g);
-      await F.ensureTur();
-      place(g, 1, 0.6, -57.6, 0);
-      return true;
-    case 'tur':
-      prepare(g, finale({ 'finale:rite': true, 'finale:turSeen': true }));
-      await F.debugTur({ x: 9, z: -44 });
-      // (la presentación, de corrido: se para al empezar la pelea)
-      ff(g, 8, () => F.stage === 'tur');
-      heal(g);
-      return true;
-    case 'turRodillas': {
-      prepare(g, finale({ 'finale:rite': true, 'finale:turSeen': true }));
-      await F.debugTur({ x: 9, z: -44 });
-      ff(g, 8, () => F.stage === 'tur');
-      const t = F.tur;
-      for (const s of t.sigils) if (!s.core && !s.dead) t.killSigil(s);
-      ff(g, 8, () => t.st === 'kneel' && t.stT > 4);
-      heal(g);
-      return true;
-    }
+    // la película del jefe final, desde cada punto de control (o desde los
+    // de pruebas: la salida del cráter, el agarrón, la cabalgada)
+    case 'pelicula':
     case 'nave':
-      prepare(g, finale({ 'finale:rite': true, 'finale:turSeen': true, 'boss:turiferario': true }));
-      await F.debugDeo({ rise: true });
-      return true;
-    case 'deo':
-    case 'deoBrazo':
-    case 'deoMascara': {
-      prepare(g, finale({ 'finale:rite': true, 'finale:turSeen': true, 'boss:turiferario': true }));
-      await F.debugDeo({ x: 3, z: -46 });
-      ff(g, 0.1);
-      F.startDeoFight();
-      const d = F.deo;
-      if (id === 'deoBrazo') d.killSigil(d.sig.brazo4);
-      if (id === 'deoMascara') {
-        d.killSigil(d.sig.brazo4);
-        d.killSigil(d.sig.brazo5);
-        // el desplome y su cinemática, de corrido
-        ff(g, 12, () => d.st === 'bowed' && !F.bowCam);
-      }
-      heal(g);
+    case 'agarron':
+    case 'herreria':
+    case 'espringala1':
+    case 'cabalgada':
+    case 'espringala2': {
+      prepare(g, finale({}));
+      const cp = { pelicula: 'rito', nave: 'nave', agarron: 'grab', herreria: 'establo', espringala1: 'torreSur', cabalgada: 'cabalgada', espringala2: 'muralla' }[id];
+      await F.debugFilm(cp);
       return true;
     }
+    // vencido: en la orilla, a la boca de la galería (el final de siempre)
     case 'fin':
-      prepare(g, finale({ 'finale:rite': true, 'finale:turSeen': true, 'boss:turiferario': true, 'boss:turibulario': true }));
-      for (const it of g.interact.list) if (it.kind === 'door' && (it.id === 'd_se' || (it.lock.type === 'boss' && it.lock.boss === 'turibulario'))) g.flags['door:' + it.id] = true;
-      g.applyWorldState();
-      place(g, 2, 0, -45, Math.PI);
+      prepare(g, finale({ 'finale:rite': true, 'boss:turiferario': true, 'boss:turibulario': true }));
+      F.setWorld(4);
+      place(g, 0, 0, -198.4, Math.PI);
       return true;
     case 'empalado': {
       prepare(g, { 'boss:impaled': false, 'impaled:beast': false });

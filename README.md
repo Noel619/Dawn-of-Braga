@@ -202,7 +202,7 @@ Tras un parry la criatura queda **desequilibrada**, cada una con su animación (
 atrás, el escudo abierto, el cuerpo de lado, la campana que se le va), y abierta al **golpe de gracia**: con el
 ataque ligero te lanzas hacia ella y le clavas una estocada (o un hachazo) que entra seguro, crítica, con un parón
 largo, un instante a cámara lenta y la cámara cerrándose sobre el golpe. A las pequeñas les basta un parry; el
-Campanero necesita dos seguidos y los jefes tres (mientras, el desvío sólo les corta el golpe); al Turiferario se
+Campanero necesita dos seguidos y los jefes tres (mientras, el desvío sólo les corta el golpe); al arzobispo se
 le devuelve el incensario. El Descoyuntado se echa atrás chillando y, con la postura rota (dos parrys al acecho,
 tres enloquecido, cuatro en frenesí), cae patas arriba; aprende si desvías a menudo (amaga, se queda arriba hasta
 que se te cierra la ventana y prueba los golpes que no se desvían) y sus huesos lanzados se apartan de un golpe.
@@ -310,33 +310,27 @@ se encadena el anterior.
   apartarse de un salto cuando vas a golpear y castigarte en la recuperación, cruzar los brazos para parar el resto
   de un combo que ya conoce, adelantarse con un mordisco cuando sabe que vas a atacar y apuntar su segundo zarpazo
   adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
-- **El jefe final: el Turiferario y Deo Ignoto**, una pelea a lo *Shadow of the Colossus* dentro de la ciudad
-  (diseño completo en `PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra el arzobispo**; vencido, una
-  cinemática (el **rito**): de rodillas ante el altar del Dios Desconocido alza el incensario y la carne del dios le
-  envuelve y le arrastra a través de la cúpula; los escombros ciegan la reja del río y la subida hasta la Sé está
-  vacía, entre temblores, polvo y campanas que tocan solas. Al salir por la puerta de la catedral, el empedrado del
-  atrio revienta y se alza **el Turiferario**, un coloso de carne de 21 metros con la campana mayor encadenada a la
-  mano, y **las manzanas entre el atrio y la plaza del pan se vienen abajo en ola**, de él hacia ti. **Todo el
-  centro es el campo de batalla**: el atrio, las ruinas y la plaza del pan. Te sigue entre los escombros pisoteando
-  las ruinas, se arrima a las casas que quedan en pie sin atravesarlas, su campana y su cola se estrellan contra las
-  fachadas (tañe, revienta piedra y hunde tejados) y, si huyes lejos, te llueve cera ardiendo; si te vas del todo,
-  se queda esperando con sus heridas y vuelve a rugir al verte. Barre, aplasta, pisotea, agarra, da coletazos, ruge
-  y, en la segunda fase, gira y llueve cera. No se le hace nada a golpes: **se le trepa** por su propia piel y su
-  ropa (la escalada va pegada a lo que se ve: carne, casulla y alba, siempre por fuera; manos y pies se plantan uno
-  a uno, el cuerpo cuelga y se mece con sus sacudidas, en lo llano se anda agachado): de la cola a la joroba y la
-  nuca, por la cadena de la campana clavada tras un mazazo hasta la mano, y de rodillas por la ropa hasta el núcleo
-  del pecho. Con aguante, sacudidas a las que hay que aferrarse y puñaladas que se cargan. Los **sigilos** van
-  tallados en la carne (tajos que arden y sangre negra a borbotones), no flotan. No se le atraviesa: su cuerpo empuja
-  y la cámara no se mete dentro. Encima de él la música se vuelve heroica y en lo alto sopla el viento; abajo se le
-  oye resollar. Revienta, la campana cae tañendo, **la nave de la catedral estalla** y detrás se alza **Deo
-  Ignoto**, el dios: 56 metros, máscara de bronce y seis brazos. Los de delante agarran las torres, los de los lados
-  rastrillan los tejados y los alzados golpean la plaza y se quedan plantados: se trepa por el dorso de la mano y el
-  antebrazo hasta el sigilo del codo. Muertos los dos, **se desploma sobre la fachada**, que revienta, y la cara
-  queda a ras de la plaza: por la máscara se sube a las cuencas, de pie junto a cada ojo. **La ciudad se rompe**:
-  tejados, muros, el carro y los barriles caen con los golpes (si mueres todo vuelve a estar entero; muerto el dios,
-  la plaza se queda en ruinas). Puntos de control en el Altar de la Cripta y, tras la explosión, en el cruceiro de
-  la plaza. Los colosos se esculpen por código en un *Web Worker* al cargar el juego, con esqueleto, piel, muelles
-  (la cola, la ropa, los jirones), cinemática inversa y la campana con su cadena simuladas.
+- **El jefe final: la Película**, una película jugable a lo *God of War*, casi toda cinemática, con pulsaciones
+  rápidas y tramos jugables muy guiados (diseño en `PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra
+  el arzobispo**; vencido, el **rito**: la carne del dios le envuelve y en su lugar se alza **el Turiferario**, un
+  gigante de carne de 21 metros con la campana mayor encadenada a la mano, que revienta la cúpula, sale por el
+  cráter, atraviesa la muralla y revienta la nave de la catedral detrás de ti. Seis actos: **la transformación** y
+  la nave que se viene abajo; **el agarrón** (te atrapa, te ruge a la cara y te lanza por encima de la ciudad a la
+  paja de un establo); **la Herrería**, la huida, con las casas reventando en ola a tu paso y la campana
+  descargada donde estabas; **la primera espringala**, en la torre sur (cargar el torno, apuntar con el virote
+  que cae y disparar: se tapa con el antebrazo y el virote se le clava) y el primer momento *God of War*: por la
+  cadena tensa hasta su brazo, la mano, la torre que revienta; **la cabalgada**, colgado del virote mientras
+  cruza la ciudad corriendo (las casas del centro, el arco de la Sé, el mordisco, la fachada de la catedral, la
+  nave y las almenas de la brecha); y **la segunda espringala**: se cura en la sangre negra que hierve en el
+  cráter, subes a la torre del oeste de la brecha y le clavas el virote en la nuca. El segundo momento *God of
+  War*: su cara a dos metros, el salto a la jaula, el ojo, la vuelta a la torre, el borde del cráter que cede,
+  la cadena que arrastra lo alto de la torre y los hachazos que la cortan. Se hunde en la cisterna anegada con
+  la mano alzada; las campanas callan y amanece, y el final de siempre, en el río. Fallar una pulsación en una
+  cinemática hace daño pero no mata; puntos de control en el rito, el establo, la torre sur y la muralla.
+  **Deo Ignoto** queda como jefe opcional para más adelante: hará falta un objeto verdadero que todavía no
+  existe (ver `finale/director.js`). Los colosos se esculpen por código en un *Web Worker* al cargar el juego,
+  con esqueleto, piel, muelles (la cola, la ropa, los jirones), cinemática inversa y la campana con su cadena
+  simuladas.
 
 **Estética PS1/PS2 hecha a mano con shaders.** Render a baja resolución con escalado entero *nearest*, vértices
 ajustados a la rejilla de pantalla y mapeo afín opcionales (por defecto desactivados para que el suelo no tiemble),
@@ -405,11 +399,11 @@ zona y altar, guardar y volver a una posición, la ventana de parry en pantalla 
 gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cierra.
 
 - **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el
-  arzobispo en la cisterna, el rito, la subida, la salida del Turiferario, su pelea, de rodillas, la nave que
-  estalla, Deo Ignoto (entero, con un brazo menos y desplomado), el dios vencido; y el Empalado, la huida de la
-  Bestia y la caza del Descoyuntado.
-- **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar, el alcance de los sigilos y la
-  cabeza de Deo tumbado.
+  arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
+  la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; y el
+  Empalado, la huida de la Bestia y la caza del Descoyuntado.
+- **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar (de las peleas de colosos de
+  antes; la película no los usa).
 - **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
   jugador al punto al que apunta la cámara y leer las coordenadas de la cámara y de ese punto.
 
@@ -454,21 +448,26 @@ src/
                         iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
-                        pulsaciones rápidas; finale/: el jefe final: director.js, el guion de la cisterna
-                        al río; rite.js, el rito; turiferario_boss.js y deo_boss.js, sus peleas;
-                        turiferario_anim.js, deo_anim.js y colossus_rig.js, sus animaciones (capas, muelles,
-                        IK); climb.js, trepar; surface.js, la piel por la que se trepa (las mallas con
-                        su deformación, en la CPU); colbody.js, su cuerpo en cápsulas (choques y cámara);
-                        field.js, el campo de batalla (dónde quedan casas en pie); bell.js, la campana y
-                        su cadena; wrecks.js, la ciudad que se rompe; debris.js, los cascotes)
+                        pulsaciones rápidas; finale/: el jefe final, la película: director.js, los puntos
+                        de control y el estado del mundo; film.js, el armazón (corrutinas, planos, franjas,
+                        pulsaciones, el jugador como marioneta); film_acts.js y film_rise.js, film_nave.js,
+                        film_grab.js, film_city.js, film_tower.js, film_ride.js y film_end.js, los seis
+                        actos; film_gun.js, manejar una espringala; film_wave.js, las casas que revientan
+                        en ola; film_player.js, las poses del jugador; giant.js y giant_anim.js, el gigante
+                        para el guion y sus animaciones; springald.js, las espringalas, su cadena y el
+                        virote; bell.js, la campana y su cadena; colbody.js, su cuerpo en cápsulas (choques
+                        y cámara); wrecks.js, la ciudad que se rompe; debris.js y chunks.js, los cascotes.
+                        De la pelea vieja quedan turiferario_anim.js (animaciones que se siguen usando) y,
+                        sin enganchar, la de Deo Ignoto: deo_boss.js, deo_anim.js, climb.js y surface.js)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
-                        progress.mjs   recorre toda la progresión hasta el final (el rito, el Turiferario,
-                                       Deo Ignoto y el río)
-                        finale.mjs     un robot juega el jefe final entero: se agarra, trepa (con el stick
-                                       simulado, hacia puntos de paso por la piel) y apuñala de verdad cada
-                                       sigilo de los dos colosos y entra en la nave por la brecha
+                        progress.mjs   recorre toda la progresión hasta el final (el arzobispo, la
+                                       película del jefe final entera y el río)
+                        finale.mjs     un robot ve la película del jefe final desde cada punto de control,
+                                       con las pulsaciones acertadas o falladas: pasa por los puntos de
+                                       control en orden, nadie muere y acaba en el río
+                        film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
                         colposes.mjs   hojas de poses de las animaciones de los colosos
                         fuzz.mjs       prueba de estrés con entradas aleatorias
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
