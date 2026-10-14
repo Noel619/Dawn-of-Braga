@@ -330,7 +330,11 @@ se encadena el anterior.
   **Deo Ignoto** queda como jefe opcional para más adelante: hará falta un objeto verdadero que todavía no
   existe (ver `finale/director.js`). Los colosos se esculpen por código en un *Web Worker* al cargar el juego,
   con esqueleto, piel, muelles (la cola, la ropa, los jirones), cinemática inversa y la campana con su cadena
-  simuladas.
+  simuladas. Lo que la película enseña de cerca va aparte y más fino: las manos (tres falanges, nudillos
+  huesudos, tendones, venas y uñas de hueso) y la cara tras la jaula (dos brasas por ojos, la nariz podrida,
+  los labios rotos, los dientes largos y la mandíbula desencajada). Lleva la catedral encima: un fajón partido
+  en la joroba, sillares clavados en la carne, vigas y tejas, la corona de velas encendida en un cuerno y el
+  estandarte negro del presbiterio prendido en la aureola.
 
 **Estética PS1/PS2 hecha a mano con shaders.** Render a baja resolución con escalado entero *nearest*, vértices
 ajustados a la rejilla de pantalla y mapeo afín opcionales (por defecto desactivados para que el suelo no tiemble),
@@ -437,7 +441,9 @@ src/
                         laboratorio de los colosos (colossus_lab.js)
   entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el
                         escultor de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario
-                        (turiferario.js), Deo Ignoto (deo.js, deo_skeleton.js) y el Web Worker que los genera
+                        (turiferario.js; sus manos y su cara, esculpidas aparte y más finas, en
+                        turiferario_hero.js; el vestido de catedral, en turiferario_dress.js), Deo Ignoto
+                        (deo.js, deo_skeleton.js) y el Web Worker que los genera
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y

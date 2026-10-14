@@ -609,15 +609,17 @@ function* gow2(D, G, S, bolt) {
     if (cur > n) {
       n = cur;
       F.pClip(FP.stabCage, { blend: 0.04 });
-      const f = G.face(new V3());
+      const f = G.eye('R', new V3());
       a && a.play('thrust', f, { k: 1.6 });
-      g.fx.blood.emit(f.x, f.y + 0.3, f.z, 18, { color: GORE, speed: 4, life: 1, up: 1 });
+      g.fx.blood.emit(f.x, f.y, f.z, 18, { color: GORE, speed: 4, life: 1, up: 1 });
     }
   }
   const okStab = qStab.ok;
-  // el ojo revienta: grita, suelta la torre y se echa atrás
+  // el ojo revienta (el derecho, el que ve la cámara: la brasa se apaga y
+  // queda la cuenca, sangrando): grita, suelta la torre y se echa atrás
   F.pClip(FP.stabCage, { blend: 0.04 });
-  const eye = G.face(new V3());
+  const eye = G.eye('R', new V3());
+  G.setEye('R', false);
   a && a.play('fleshBurst', eye, { k: 2.2 });
   a && a.play('beastRoarBig', eye, { k: 3 });
   g.fx.blood.emit(eye.x, eye.y + 0.3, eye.z, 90, { color: GORE, speed: 7, life: 1.6, up: 1.5 });
@@ -693,7 +695,10 @@ function cageAttach(G) {
       const fw = _v2.set(0, 0, 1).applyQuaternion(hq);
       fw.y = 0;
       fw.normalize();
+      // (un poco hacia su derecha: delante del ojo que apuñala)
       const pos = f.clone().addScaledVector(fw, 0.85).add(_v3.set(0, -1.55, 0));
+      pos.x -= fw.z * 0.3;
+      pos.z += fw.x * 0.3;
       return { pos, yaw: Math.atan2(-fw.x, -fw.z), tilt: _I };
     },
   };

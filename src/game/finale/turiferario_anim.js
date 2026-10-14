@@ -16,13 +16,15 @@ import { clip } from '../../entities/rig.js';
 import { ColossusRig } from './colossus_rig.js';
 
 const FING = ['f1', 'f2', 'f3', 'f4'];
-// dedos de una mano: curl (grados por falange), abiertos (abanico)
+// dedos de una mano: curl (grados por falange), abiertos (abanico); el
+// cierre se reparte entre las tres falanges (la última, la que menos)
 export function hand(S, curl, spread = 0, thumb = curl) {
   const o = {};
   FING.forEach((f, i) => {
     const sp = (i - 1.5) * spread * (S === 'L' ? 1 : -1);
-    o[f + S] = [curl * 0.8, 0, sp];
-    o[f + S + 'b'] = [curl, 0, 0];
+    o[f + S] = [curl * 0.75, 0, sp];
+    o[f + S + 'b'] = [curl * 0.75, 0, 0];
+    o[f + S + 'c'] = [curl * 0.5, 0, 0];
   });
   o['th' + S] = [thumb * 0.6, 0, (S === 'L' ? -1 : 1) * 10];
   o['th' + S + 'b'] = [thumb * 0.8, 0, 0];
@@ -78,8 +80,8 @@ export const mirror = (o) => {
       continue;
     }
     let n = j;
-    if (/L(b|2)?$/.test(j) || /L$/.test(j)) n = j.replace(/L(b|2)?$/, (m, a) => 'R' + (a || ''));
-    else if (/R(b|2)?$/.test(j)) n = j.replace(/R(b|2)?$/, (m, a) => 'L' + (a || ''));
+    if (/L(b|c|2)?$/.test(j)) n = j.replace(/L(b|c|2)?$/, (m, a) => 'R' + (a || ''));
+    else if (/R(b|c|2)?$/.test(j)) n = j.replace(/R(b|c|2)?$/, (m, a) => 'L' + (a || ''));
     out[n] = j === 'root' ? [-v[0], v[1], v[2]] : [v[0], -v[1], -v[2]];
   }
   return out;
@@ -489,6 +491,12 @@ export function turRig(model, o = {}) {
   }
   // la aureola de hierro, clavada en el cráneo: tiembla con cada sacudida
   R.addDyn('halo', { len: 3, dir: [0, 1, 0], k: 110, d: 11, w: 0.55, maxAng: 0.3 });
+  // (si el modelo los tiene) la corona de velas enganchada en el cuerno, que
+  // tiembla, y el estandarte, que cuelga a plomo del travesaño y se mece
+  R.addDyn('corona', { len: 0.9, dir: [0.2, -1, 0], k: 60, d: 7, g: 3, w: 0.7, maxAng: 0.2 });
+  R.addDyn('ban0', { k: 18, d: 3.8, g: 6, hang: 0.85, maxAng: 0.9 });
+  R.addDyn('ban1', { k: 15, d: 3.2, g: 7, hang: 0.9, maxAng: 0.9 });
+  R.addDyn('ban2', { len: 1.2, dir: [0, -1, 0], k: 12, d: 2.8, g: 8, hang: 0.9, maxAng: 1.0 });
   // la cola de los fieles: pesa y se arrastra por el empedrado
   // (se dobla mucho: en la plaza no cabe estirada y se curva contra las fachadas)
   for (let i = 1; i <= 5; i++) R.addDyn('tail' + i, { k: 34 - i * 4, d: 6.5, g: 7, ground: 0.45 + (5 - i) * 0.18, fr: 3.5, maxAng: 1.5, bound: 1.4 });

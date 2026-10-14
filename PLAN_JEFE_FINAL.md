@@ -265,5 +265,18 @@ camino, además de lo de arriba:
 - **Las almenas que revientan**: las del lienzo al oeste de la brecha (el restregón de la cabalgada) y las
   del norte de lo alto de la torre de x=-30 (la mano y la cadena).
 - El pergamino del final: las campanas, que antes «siguieron tocando solas», ahora callan.
+- **El modelo** (el punto 8): las manos y la cabeza se esculpen aparte, a una celda tres veces más fina
+  (`turiferario_hero.js`). Las manos: tres falanges (un hueso más por dedo), nudillos huesudos con sus
+  arrugas, tendones y venas en el dorso, la palma con sus montes y sus surcos, uñas de hueso; la derecha es
+  el espejo de la izquierda. La cara: la frente surcada, el ceño, los párpados caídos y dos brasas por ojos
+  con la pupila en rendija, la nariz podrida, los pómulos y las mejillas hundidas, los labios rotos, los
+  dientes largos y la mandíbula desencajada (con piel que se estira al abrir la boca). La jaula se ha
+  rehecho para que ningún barrote pase por delante de los ojos. Las costuras: el amito en el cuello, el
+  manípulo y la argolla de la cadena en las muñecas. El vestido de catedral (`turiferario_dress.js`): el
+  fajón partido atravesado en la joroba, sillares y dovelas clavados en la carne (la joroba, los brazos y la
+  cola, con su herida), una viga en el hombro y otra enganchada en la casulla, tejas, cristales de las
+  vidrieras en el brazo de la campana, la corona de velas encendida en el cuerno izquierdo (tiembla) y el
+  estandarte negro del presbiterio prendido en la aureola (se mece). En el acto 6 la puñalada le revienta el
+  ojo derecho: se apaga y la cuenca sangra hasta el final.
 
-Queda: el modelo (las manos, la cabeza y el vestido de catedral) y una pasada de pulido de planos.
+Queda: una pasada de pulido de planos.

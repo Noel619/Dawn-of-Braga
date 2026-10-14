@@ -23,6 +23,8 @@ import { Sculpt, tubeGeo, hardGeo, V, perlin } from './sculpt.js';
 import { clothRing } from './cloth.js';
 import { torusAround, chainGeo, ribbonGeo, spikeGeo, clawGeo, bellParts, withColor, shadeBy, mulberry } from './parts.js';
 import { assemble } from './model.js';
+import { buildHands, buildHead, DIP } from './turiferario_hero.js';
+import { cathedralDress, bannerGeo, WOUNDS, CROWN, BANNER } from './turiferario_dress.js';
 
 const DEG = Math.PI / 180;
 
@@ -69,8 +71,10 @@ function bonesDef() {
       { name: 'fore' + S, parent: 'arm' + S, pos: [4.3 * s, 10.4, 0.6] },
       { name: 'hand' + S, parent: 'fore' + S, pos: [4.9 * s, 6.6, 2.0] }
     );
-    for (const [f, a, b] of HAND(s)) {
+    for (const [f, a, b, c] of HAND(s)) {
       B.push({ name: f + S, parent: 'hand' + S, pos: a }, { name: f + S + 'b', parent: f + S, pos: b });
+      // la última falange (el pulgar tiene dos)
+      if (f !== 'th') B.push({ name: f + S + 'c', parent: f + S + 'b', pos: b.map((q, i) => q + (c[i] - q) * DIP) });
     }
     B.push(
       { name: 'leg' + S, parent: 'pelvis', pos: [1.3 * s, 7.2, -0.1] },
@@ -93,6 +97,11 @@ function bonesDef() {
     [0, 0.75, -15.5],
   ];
   T.forEach((p, i) => B.push({ name: 'tail' + (i + 1), parent: i ? 'tail' + i : 'pelvis', pos: p }));
+  // la corona de velas (en el cuerno izquierdo) y el estandarte (en la
+  // aureola), con sus muelles: ver turiferario_dress.js
+  B.push({ name: 'corona', parent: 'head', pos: CROWN.c });
+  const bt = BANNER.top;
+  B.push({ name: 'ban0', parent: 'halo', pos: bt }, { name: 'ban1', parent: 'ban0', pos: [bt[0], bt[1] - 1.2, bt[2]] }, { name: 'ban2', parent: 'ban1', pos: [bt[0], bt[1] - 2.4, bt[2]] });
   // jirones del alba: dos tramos por jirón
   for (let i = 0; i < TATTERS; i++) {
     const th = tatTh(i);
@@ -186,27 +195,11 @@ export function turiferarioData(o = {}) {
     sc.rc([0.35 * s, 14.55, 0.65], [2.6 * s, 14.45, 0.05], 0.24, 0.26, { bone: 'clav' + S, mat: 'colSkin', k: 0.3 });
     sc.ell([1.7 * s, 14.75, -0.3], [0.9, 0.5, 0.9], { bone: 'clav' + S, mat: 'colSkin', k: 0.7 });
   });
-  // cuello largo con tendones, nuez
-  sc.rc([0, 14.55, -0.1], [0, 15.6, 1.95], 0.88, 0.7, { bone: 'neck1', mat: 'colSkin', k: 0.6 });
-  sc.rc([0, 15.5, 1.65], [0, 15.85, 2.85], 0.7, 0.62, { bone: 'neck2', mat: 'colSkin', k: 0.5 });
-  mir((s) => sc.rc([0.5 * s, 16.0, 3.0], [0.28 * s, 14.65, 0.95], 0.17, 0.2, { bone: 'neck2', mat: 'colSkin', k: 0.25, n: 0.3 }));
+  // cuello largo con tendones, nuez (el de arriba y la cabeza se esculpen
+  // aparte, más finos: ver turiferario_hero.js; la costura, bajo el amito)
+  sc.rc([0, 14.55, -0.1], [0, 15.45, 1.5], 0.88, 0.72, { bone: 'neck1', mat: 'colSkin', k: 0.6 });
+  mir((s) => sc.rc([0.37 * s, 15.18, 1.75], [0.28 * s, 14.65, 0.95], 0.18, 0.2, { bone: 'neck1', mat: 'colSkin', k: 0.25, n: 0.3 }));
   sc.ell([0, 15.05, 1.7], [0.3, 0.36, 0.3], { bone: 'neck1', mat: 'colSkin', k: 0.25 });
-  // la cabeza: cráneo, pómulos, arcos superciliares, cuencas
-  sc.ell([0, 16.6, 3.3], [1.12, 1.24, 1.35], { bone: 'head', mat: 'colSkin', k: 0.5, tint: [0.88, 0.84, 0.8] });
-  sc.ell([0, 16.05, 4.05], [0.82, 0.72, 0.75], { bone: 'head', mat: 'colSkin', k: 0.45 });
-  mir((s) => sc.ell([0.62 * s, 16.05, 4.25], [0.36, 0.26, 0.32], { bone: 'head', mat: 'colBone', k: 0.2 }));
-  sc.rc([-0.78, 16.62, 4.32], [0.78, 16.62, 4.32], 0.2, 0.2, { bone: 'head', mat: 'colBone', k: 0.18 });
-  mir((s) => sc.ell([0.42 * s, 16.3, 4.62], [0.23, 0.21, 0.3], { sub: true, k: 0.1 }));
-  sc.ell([0, 15.98, 4.78], [0.12, 0.22, 0.2], { sub: true, k: 0.06 });
-  mir((s) => sc.ell([0.07 * s, 15.9, 4.78], [0.08, 0.12, 0.16], { sub: true, k: 0.04 }));
-  mir((s) => sc.paint([0.42 * s, 16.3, 4.48], [0.34, 0.32, 0.36], { tint: [0.22, 0.1, 0.09], edge: 0.35 }));
-  sc.paint([0, 15.95, 4.65], [0.22, 0.3, 0.3], { tint: [0.3, 0.14, 0.12], edge: 0.3 });
-  // las mejillas hundidas bajo los pómulos
-  mir((s) => sc.ell([0.62 * s, 15.7, 4.05], [0.2, 0.26, 0.24], { sub: true, k: 0.18 }));
-  // la mandíbula (cuelga, desencajada)
-  mir((s) => sc.rc([0.74 * s, 15.95, 3.55], [0.22 * s, 15.05, 4.35], 0.3, 0.24, { bone: 'jaw', mat: 'colSkin', k: 0.2 }));
-  sc.ell([0, 15.0, 4.45], [0.34, 0.26, 0.28], { bone: 'jaw', mat: 'colSkin', k: 0.2 });
-  sc.ell([0, 15.45, 4.2], [0.5, 0.18, 0.45], { sub: true, k: 0.1 });
   // brazos de hueso y piel
   mir((s, S) => {
     sc.rc([2.85 * s, 14.0, -0.3], [4.22 * s, 10.65, 0.55], 0.74, 0.5, { bone: 'arm' + S, mat: 'colSkin', k: 0.45 });
@@ -215,23 +208,7 @@ export function turiferarioData(o = {}) {
     sc.ell([4.18 * s, 10.5, 0.12], [0.36, 0.42, 0.34], { bone: 'fore' + S, mat: 'colBone', k: 0.18 });
     sc.rc([4.36 * s, 10.25, 0.72], [4.85 * s, 6.85, 2.05], 0.42, 0.3, { bone: 'fore' + S, mat: 'colSkin', k: 0.25 });
     sc.rc([4.2 * s, 10.2, 0.38], [5.06 * s, 6.72, 1.8], 0.36, 0.27, { bone: 'fore' + S, mat: 'colSkin', k: 0.25 });
-    sc.ell([4.9 * s, 6.6, 2.0], [0.4, 0.36, 0.36], { bone: 'hand' + S, mat: 'colSkin', k: 0.25 });
-    // la mano: palma, nudillos, tendones del dorso
-    sc.box([5.22 * s, 5.85, 2.42], [0.56, 0.82, 0.2], { bone: 'hand' + S, mat: 'colSkin', k: 0.3, round: 0.17, rot: [-28, 0, 14 * s] });
-    for (const [f, a, b, c] of HAND(s)) {
-      const th = f === 'th';
-      const r0 = th ? 0.2 : 0.19;
-      sc.ell(a, [0.22, 0.22, 0.22], { bone: 'hand' + S, mat: 'colSkin', k: 0.18 });
-      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-      sc.rc(a, m, r0, r0 * 0.86, { bone: f + S, mat: 'colSkin', k: 0.14 });
-      sc.rc(m, b, r0 * 0.86, r0 * 0.74, { bone: f + S, mat: 'colSkin', k: 0.12 });
-      sc.ell(b, [r0 * 0.85, r0 * 0.85, r0 * 0.85], { bone: f + S + 'b', mat: 'colSkin', k: 0.1 });
-      sc.rc(b, c, r0 * 0.7, r0 * 0.5, { bone: f + S + 'b', mat: 'colSkin', k: 0.1 });
-      // uña de hueso, curva hacia la palma
-      const dir = V(c[0] - b[0], c[1] - b[1], c[2] - b[2]).normalize();
-      rig(f + S + 'b', 'colBone', clawGeo(V(...c).addScaledVector(dir, -0.05), dir, V(0, -0.3, -1).normalize(), th ? 0.55 : 0.75, r0 * 0.55));
-      if (!th) sc.rc([a[0], a[1] + 0.25, a[2] - 0.15], [4.95 * s, 6.55, 1.9], 0.06, 0.08, { bone: 'hand' + S, mat: 'colSkin', k: 0.08, n: 0.2 });
-    }
+    // (la mano: se esculpe aparte, más fina; ver turiferario_hero.js)
   });
   // piernas descarnadas
   mir((s, S) => {
@@ -322,13 +299,17 @@ export function turiferarioData(o = {}) {
     [[0.9, 15.3, 1.3], 0.35],
   ])
     sc.paint(c, r, { mat: 'colFlesh', tint: [0.8, 0.52, 0.48], edge: 0.6 });
-  sc.paint([0, 16.4, 2.6], [1.3, 0.9, 1.2], { tint: [0.68, 0.58, 0.54], edge: 0.5, k: 0.7 });
   // manos y pies sucios de sangre seca y de hollín; moratones en los brazos
   mir((s) => {
-    sc.paint([5.5 * s, 4.2, 2.9], [1.5, 2.0, 1.5], { tint: [0.55, 0.42, 0.4], edge: 0.6, k: 0.8 });
     sc.paint([1.65 * s, 0.6, 0.6], [0.9, 0.8, 1.6], { tint: [0.5, 0.42, 0.38], edge: 0.6, k: 0.85 });
     sc.paint([3.7 * s, 12.0, 0.4], [0.7, 1.0, 0.7], { tint: [0.72, 0.62, 0.7], edge: 0.7, k: 0.6 });
   });
+  // el vestido de catedral (las piedras clavadas dejan su herida en la carne)
+  const dress = cathedralDress(o);
+  for (const w of WOUNDS) {
+    sc.paint(w.p, w.r, { mat: 'colFlesh', tint: [0.62, 0.3, 0.27], edge: 0.55, k: 0.9 });
+    sc.paint(w.p, w.r * 1.8, { tint: [0.6, 0.46, 0.42], edge: 0.7, k: 0.5 });
+  }
   const body = sc.build();
 
   // ------------------------------------------------------------ la casulla
@@ -533,13 +514,17 @@ export function turiferarioData(o = {}) {
     rig(i < 4 ? 'chest' : 'spine2', 'colBone', spikeGeo(V(0, y, z + 0.4), V(0, y + L * 0.55, z - L), 0.32 + L * 0.08, { seg: 6 }));
   }
   // la jaula de hierro: barrotes alrededor de la cabeza (con hueco entre la
-  // jaula y la cara), tres aros remachados y púas hacia fuera
+  // jaula y la cara), tres aros remachados y púas hacia fuera. Ningún barrote
+  // pasa por delante de los ojos (uno por el hueco de la nariz y los otros
+  // por fuera de las cuencas) ni ningún aro (por encima de las cejas y por
+  // debajo de los dientes de arriba): los ojos se ven, y se apuñalan.
   {
     const C = V(0, 16.25, 3.3);
     const rr = (a, y) => 1.62 + 0.1 * Math.cos(a * 2) - Math.abs(y - 16.35) * 0.1;
     const at = (a, y, extra = 0) => V(Math.sin(a) * (rr(a, y) + extra), y, C.z + Math.cos(a) * (rr(a, y) + extra) * 0.92 - 0.1);
+    const BARS = [-1.25, -1.0, -0.78, -0.5, 0, 0.5, 0.78, 1.0, 1.25];
     for (let i = 0; i < 9; i++) {
-      const a = -1.25 + (i / 8) * 2.5;
+      const a = BARS[i];
       const pts = [];
       for (let k = 0; k <= 6; k++) pts.push(at(a, 17.85 - k * 0.5));
       rig('head', 'iron', tubeGeo(pts, [0.075, 0.08, 0.08, 0.08, 0.08, 0.08, 0.075], { radial: 5, perM: 3 }));
@@ -551,7 +536,7 @@ export function turiferarioData(o = {}) {
       }
     }
     // los barrotes se juntan arriba, sobre la frente, en un remate
-    for (const y of [17.75, 16.6, 15.4]) {
+    for (const y of [17.75, 16.74, 15.2]) {
       const pts = [];
       for (let k = 0; k <= 14; k++) pts.push(at(-1.35 + (k / 14) * 2.7, y, 0.05));
       rig('head', 'iron', tubeGeo(pts, pts.map(() => 0.1), { radial: 5, perM: 2.5 }));
@@ -560,16 +545,11 @@ export function turiferarioData(o = {}) {
     // las correas que la atan a la nuca
     for (const s2 of [1, -1]) rig('head', 'leather', ribbonGeo([at(1.35 * s2, 17.0, 0.04), V(1.25 * s2, 17.2, 2.0), V(0.6 * s2, 17.3, 1.75), V(0, 17.35, 1.7)], 0.28, { up: [0, 1, 0], shade: 0.7 }), { ds: true });
   }
-  // dientes: la fila de arriba y la de la mandíbula desencajada
-  for (let k = 0; k < 10; k++) {
-    const a = -0.85 + (k / 9) * 1.7;
-    rig('head', 'colBone', hardGeo({ type: 'box', s: [0.11, 0.24, 0.1], p: [Math.sin(a) * 0.62, 15.72, 3.75 + Math.cos(a) * 0.62], r: [0, a / DEG, 0], mat: 'colBone' }));
-    rig('jaw', 'colBone', hardGeo({ type: 'box', s: [0.1, 0.22, 0.09], p: [Math.sin(a) * 0.55, 15.35, 3.82 + Math.cos(a) * 0.55], r: [0, a / DEG, 0], mat: 'colBone' }));
-  }
   // los cuernos de hueso y la mitra partida
   mir((s) => {
-    const horn = [V(0.45 * s, 17.55, 2.95), V(0.95 * s, 18.55, 2.55), V(1.3 * s, 19.6, 2.65), V(1.42 * s, 20.6, 3.05)];
-    rig('head', 'colBone', tubeGeo(horn, [0.34, 0.26, 0.16, 0.04], { radial: 7, perM: 3, aoEnds: true }));
+    // (largos: en el izquierdo se ha enganchado la corona de velas)
+    const horn = [V(0.45 * s, 17.55, 2.95), V(0.95 * s, 18.55, 2.55), V(1.3 * s, 19.6, 2.65), V(1.48 * s, 20.55, 2.95), V(1.6 * s, 21.4, 3.38)];
+    rig('head', 'colBone', tubeGeo(horn, [0.34, 0.26, 0.17, 0.1, 0.03], { radial: 7, perM: 3, aoEnds: true }));
     // media mitra clavada en el cuerno: un panel apuntado de terciopelo con
     // su cenefa de oro y la cruz
     const sh = new THREE.Shape();
@@ -716,17 +696,28 @@ export function turiferarioData(o = {}) {
 
   // ------------------------------------------------------------ efectos (llamas, brillos, luces)
   const FX = {
-    candles: candleTops.map((p) => ({ bone: 'halo', p })),
+    candles: [...candleTops.map((p) => ({ bone: 'halo', p })), ...dress.flames],
+    crown: { bone: 'corona', p: CROWN.c },
     core: { bone: 'chest', p: [0, 12.25, 1.3] },
   };
 
-  const stats = { body: sc.stats, ms: Math.round(performance.now() - t0) };
+  // ------------------------------------------------------------ las piezas de héroe
+  H.push(...dress.parts);
+  const hands = buildHands(HAND, BI, o);
+  H.push(...hands.rigid);
+  const head = buildHead(BI, o);
+  H.push(...head.rigid);
+
+  const stats = { body: sc.stats, hands: hands.stats, head: head.stats, ms: Math.round(performance.now() - t0) };
   return {
     bones: TUR_BONES,
     skinned: [
       { name: 'body', geo: body, mats: sc.mats, matOpts: {} },
       { name: 'casulla', geo: casula, mats: ['colRobe', 'colOrphrey'], matOpts: { colRobe: { tri: 0 }, colOrphrey: { tri: 0 } }, ds: true },
       { name: 'alba', geo: alba, mats: ['colAlb'], matOpts: { colAlb: { tri: 0 } }, ds: true },
+      ...hands.skinned,
+      ...head.skinned,
+      { name: 'estandarte', geo: bannerGeo(BI), mats: ['colRobeDark', 'colOrphrey'], matOpts: { colRobeDark: { tri: 0 }, colOrphrey: { tri: 0 } }, ds: true },
     ],
     rigid: H,
     groups: { bell },

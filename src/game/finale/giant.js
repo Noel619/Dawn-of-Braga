@@ -66,13 +66,19 @@ export class Giant {
     this.bellGlow.material.color.setHex(0xff5a14);
     this.bell.bell.add(this.bellGlow);
     // los ojos: dos brasas tras la jaula (se ven en los primeros planos)
-    this.eyes = [-1, 1].map((s) => this.fx.glow('head', [0.42 * s, 16.3, 4.42], 0.55, 0xff8a30, { pulse: 0.1 }));
+    this.eyes = [-1, 1].map((s) => this.fx.glow('head', [0.4 * s, 16.32, 4.4], 0.42, 0xff8a30, { pulse: 0.1 }));
+    // (los ojos reventados, escondidos)
+    M.root.traverse((o) => {
+      if (o.userData.grp && /Out$/.test(o.userData.grp)) o.visible = false;
+    });
     const L = game.fx.lights;
     this.lights = {
       core: L.add({ x: 0, y: -50, z: 0, color: 0xff7a30, intensity: 26, range: 15, flicker: 1, priority: 6, on: false }),
       bell: L.add({ x: 0, y: -50, z: 0, color: 0xff6a20, intensity: 20, range: 12, flicker: 1, priority: 5, on: false }),
       halo: L.add({ x: 0, y: -50, z: 0, color: 0xffb060, intensity: 14, range: 13, flicker: 1, priority: 4, on: false }),
     };
+    // la corona de velas del cuerno (si el modelo la tiene)
+    if (this.E.fx.crown) this.lights.crown = L.add({ x: 0, y: -50, z: 0, color: 0xffa050, intensity: 9, range: 9, flicker: 1, priority: 3, on: false });
     this.pos = new THREE.Vector3();
     this.yaw = 0;
     this.fixY = null; // altura fija de la raíz (si no, la del suelo)
@@ -127,6 +133,7 @@ export class Giant {
     this.yaw = yaw;
     this.fixY = o.y ?? null;
     this.pitch = 0;
+    if (this.eyeOut) this.setEye(this.eyeOut, true);
     this.ik = {};
     this.footIK = {};
     this.R.groundOn = o.ground !== false;
@@ -215,6 +222,19 @@ export class Giant {
   // la cara (delante de la jaula: donde mira la cámara en los primeros planos)
   face(out = new THREE.Vector3()) {
     return this.bp('head', 0, 16.2, 4.9, out);
+  }
+  // un ojo (L, su izquierdo; R), por delante
+  eye(S, out = new THREE.Vector3()) {
+    return this.bp('head', S === 'L' ? 0.4 : -0.4, 16.32, 4.36, out);
+  }
+  // un ojo encendido o reventado (el que se le apuñala en el acto 6)
+  setEye(S, on) {
+    this.M.root.traverse((o) => {
+      if (o.userData.grp === 'eye' + S) o.visible = on;
+      if (o.userData.grp === 'eye' + S + 'Out') o.visible = !on;
+    });
+    this.eyes[S === 'L' ? 1 : 0].visible = on;
+    this.eyeOut = on ? null : S;
   }
   handGrip(out = new THREE.Vector3()) {
     return this.bp('handR', -5.3, 5.2, 2.75, out);
@@ -337,6 +357,22 @@ export class Giant {
     L.halo.x = hc.x;
     L.halo.y = hc.y;
     L.halo.z = hc.z;
+    if (L.crown) {
+      const cc = this.E.fx.crown.p;
+      const cw = this.bp('corona', cc[0], cc[1] + 0.6, cc[2], _v3);
+      L.crown.x = cw.x;
+      L.crown.y = cw.y;
+      L.crown.z = cw.z;
+    }
+    // la cuenca vacía gotea
+    if (this.eyeOut) {
+      this._dripT = (this._dripT || 0) - dt;
+      if (this._dripT <= 0) {
+        this._dripT = 0.18;
+        const e = this.eye(this.eyeOut, _v3);
+        g.fx.blood.emit(e.x, e.y - 0.1, e.z, 2, { color: [0.3, 0.04, 0.03], speed: 0.6, life: 1.2, up: 0.2 });
+      }
+    }
     // humo y chispas del incensario
     if (this.bellOn !== false) {
       this._smokeT = (this._smokeT || 0) - dt;
