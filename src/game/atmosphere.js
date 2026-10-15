@@ -13,6 +13,8 @@ export const ATMO = {
   arena: { fog: 0x1a080c, density: 0.028, sky: 0x70404a, ground: 0x241010, hemi: 1.1, moon: 0, vol: 0.02, ash: 0, exposure: 1.2, sat: 0.85, lamp: 11, bloom: 1.3 },
   // la bodega del canónigo: casi a oscuras, sólo el farol y las velas del altar
   cellar: { fog: 0x050404, density: 0.078, sky: 0x403c3a, ground: 0x12100e, hemi: 0.4, moon: 0, vol: 0, ash: 0, exposure: 1.2, sat: 0.76, lamp: 11.5, bloom: 1.15 },
+  // la antesala del Dios Ignoto: honda, roja, con el aire espeso de incienso
+  sanctum: { fog: 0x1c0807, density: 0.032, sky: 0x6a3a3a, ground: 0x1e0c0a, hemi: 0.95, moon: 0, vol: 0.02, ash: 0.15, exposure: 1.25, sat: 0.9, lamp: 11, bloom: 1.35 },
   // la gruta de Leonor: niebla de pus, amarillenta, y el brillo de los charcos
   lair: { fog: 0x0c0d05, density: 0.07, sky: 0x4c5030, ground: 0x15150a, hemi: 0.55, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.85, lamp: 11.5, bloom: 1.25 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },

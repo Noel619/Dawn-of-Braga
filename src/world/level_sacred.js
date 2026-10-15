@@ -811,7 +811,8 @@ export function buildCrypt(ctx, S, C, L) {
     // osario (de su misma bóveda); los de los lados, lisos
     archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z1, t1: z1 + 0.5, y0: Y, y1: YS, openings: [{ c: 0, w: 4, h: CS.spr, rise: 2, ring: 0.32, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z0 - 0.5, t1: z0, y0: Y, y1: YS, openings: [{ c: 0, w: 5, h: 2.5, rise: 1.3, ring: 0.32, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
-    wallFace('mossstone', x0 - 0.5, Y, z0, x0, YS, z1, 'e');
+    // (al oeste, la boca de las catacumbas: ver level_crypt2.js)
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x0 - 0.5, t1: x0, y0: Y, y1: YS, openings: [{ c: -101.75, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     wallFace('mossstone', x1, Y, z0, x1 + 0.5, YS, z1, 'w');
     for (const x of [-4, 4]) {
       for (const z of [-100, -107]) P.column(ctx, x, Y, z, YC - Y, 0.4, { mat: 'ashlar' });
@@ -844,15 +845,15 @@ export function buildCrypt(ctx, S, C, L) {
       lunette(ctx, { axis: 'z', at: z0, c, span, ys: YS, rise, face: 1, mat: 'mossstone', tint: CT, room });
     }
     ceilCol(x0, z0, x1, z1, YS + 1.35);
-    P.sarcophagus(ctx, -5.6, Y, -101.5, Math.PI / 2, { effigy: true, room });
+    P.sarcophagus(ctx, -5.6, Y, -98.6, Math.PI / 2, { effigy: true, room });
     P.sarcophagus(ctx, -5.6, Y, -106, Math.PI / 2, { open: true, room });
     P.candleAltar(ctx, 5.8, Y, -103.5, -Math.PI / 2, room);
-    P.candles(ctx, -6.2, Y, -98, 6, 1501, { room, radius: 4, intensity: 0.9 });
+    P.candles(ctx, -6.3, Y, -103.9, 6, 1501, { room, radius: 4, intensity: 0.9, spread: 0.25 });
     P.candles(ctx, 6.2, Y, -109, 6, 1502, { room, radius: 4, intensity: 0.9 });
     P.bones(ctx, -5.8, Y, -108.8, 8, 1503, 0.6);
     ctx.rats.push({ x: -5.4, y: Y, z: -109.2, n: 2 });
     for (const z of [-100.6, -106.4]) P.hangingLamp(ctx, 0, YS + 1.35, z, { room, len: 1.7, radius: 8.5, intensity: 1.0 });
-    P.wallTorch(ctx, x0, Y + 2.7, -103.75, 'e', { room, radius: 7 });
+    P.wallTorch(ctx, x0, Y + 2.7, -107.6, 'e', { room, radius: 7 });
     P.wallTorch(ctx, x1, Y + 2.7, -99.4, 'w', { room, radius: 7 });
     P.wallTorch(ctx, x1, Y + 2.7, -107.6, 'w', { room, radius: 7 });
     if (ctx.shafts) ctx.shafts.push({ a: [0, Y + 3.8, -97.3], b: [0.4, Y, -100.8], w: 2.0, color: 0xffb070 });
@@ -863,13 +864,14 @@ export function buildCrypt(ctx, S, C, L) {
   // con fajones sobre pilastras, nichos de verdad (con su hondura y los huesos
   // dentro: antes, un rectángulo negro pintado en el muro) y las dos bocas de
   // los lados, al sepulcro y al templo
-  const OS = { x0: -2.5, x1: 2.5, z0: -136, z1: -110.5, YS: Y + 2.5, RISE: 1.3 };
+  // (al fondo, la boca de la Galería del Sello: ver level_crypt2.js)
+  const OS = { x0: -2.5, x1: 2.5, z0: -133, z1: -110.5, YS: Y + 2.5, RISE: 1.3 };
   {
     const { x0, x1, z0, z1, YS, RISE } = OS;
     const ST = [0.85, 0.82, 0.78];
-    C.paint(-2.5, -136, 2.5, -110, 1);
-    cryptFloor(-2.5, -136, 2.5, -110, Y);
-    const NZ = [-113, -117, -125, -129, -133];
+    C.paint(-2.5, -133, 2.5, -110, 1);
+    cryptFloor(-2.5, -133, 2.5, -110, Y);
+    const NZ = [-113, -117, -125, -129];
     const PZ = -120;
     const sp = SIDE_PORTAL;
     for (const side of [-1, 1]) {
@@ -932,7 +934,7 @@ export function buildCrypt(ctx, S, C, L) {
     }
     for (let z = -115; z > -134; z -= 5) for (let k = 0; k < 8; k++) wb.box('iron', -0.03, YS + RISE - k * 0.14, z - 0.03, 0.03, YS + RISE - 0.1 - k * 0.14, z + 0.03, { ao: false, room });
     for (const z of [-112.6, -127.6]) P.hangingLamp(ctx, 0, YS + RISE, z, { room, len: 0.8, radius: 6.5, intensity: 0.95 });
-    P.fleshGrowth(ctx, -1.9, Y, -131, 0.8, 1504, { room, climb: 1.6, tendrils: 2, bound: [-2.4, -1.2, -135.8, -126] });
+    P.fleshGrowth(ctx, -1.9, Y, -130.6, 0.8, 1504, { room, climb: 1.6, tendrils: 2, bound: [-2.4, -1.6, -132.8, -126] });
     ctx.rats.push({ x: 1.4, y: Y, z: -113.5, n: 2 });
   }
 
@@ -1005,7 +1007,8 @@ export function buildCrypt(ctx, S, C, L) {
     cryptFloor(-3.5, -121, -2.5, -119, Y);
     cryptFloor(x0, z0, x1, z1, Y, 'mosaic');
     archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: -3.0, y0: Y, y1: YT, openings: [{ c: -120, w: sp.w, h: sp.h, rise: sp.rise, ring: sp.ring, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
-    wallFace('ashlar', x0 - 0.5, Y, z0, x0, YT, z1, 'e', { tint: RT });
+    // (al oeste, la boca de las catacumbas)
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x0 - 0.5, t1: x0, y0: Y, y1: YT, openings: [{ c: -117.75, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
     wallFace('ashlar', x0, Y, z0 - 0.5, x1, YT, z0, 's', { tint: RT });
     wallFace('ashlar', x0, Y, z1, x1, YT, z1 + 0.5, 'n', { tint: RT });
     // la cornisa (a la altura del arquitrabe) y las pilastras
@@ -1015,7 +1018,8 @@ export function buildCrypt(ctx, S, C, L) {
     wb.box('ashlar', x0 + 0.14, YE, z0, x1 - 0.14, YA, z0 + 0.14, { ...cor, faces: 'sb' });
     wb.box('ashlar', x0 + 0.14, YE, z1 - 0.14, x1 - 0.14, YA, z1, { ...cor, faces: 'nb' });
     for (const z of [-116, -123, -129]) {
-      pilaster(ctx, x0, z, 'e', Y, YE, { room, tint: AT, w: 0.6, d: 0.12 });
+      // (la del oeste, un poco corrida: deja sitio a la boca de las catacumbas)
+      pilaster(ctx, x0, z === -116 ? -115.3 : z, 'e', Y, YE, { room, tint: AT, w: 0.6, d: 0.12 });
       pilaster(ctx, x1, z, 'w', Y, YE, { room, tint: AT, w: 0.6, d: 0.12 });
     }
     // columnas (dos partidas) y el arquitrabe sobre ellas
@@ -1080,7 +1084,7 @@ export function buildCrypt(ctx, S, C, L) {
     P.bones(ctx, -6, Y, -114, 10, 1509, 1.2);
     P.ritual(ctx, -11, Y, -125.5, 1.6, 1510, { room });
     ctx.rats.push({ x: -5.4, y: Y, z: -113.2, n: 2 });
-    for (const z of [-118.4, -126.4]) P.wallTorch(ctx, x0, Y + 2.6, z, 'e', { room, radius: 7.5 });
+    for (const z of [-113.6, -126.4]) P.wallTorch(ctx, x0, Y + 2.6, z, 'e', { room, radius: 7.5 });
     for (const z of [-114.4, -126.4]) P.wallTorch(ctx, x1, Y + 2.6, z, 'w', { room, radius: 7.5 });
     P.brazier(ctx, -14.6, Y, -130.2, {});
     P.brazier(ctx, -7.4, Y, -130.2, {});
@@ -1090,15 +1094,8 @@ export function buildCrypt(ctx, S, C, L) {
     );
   }
 
-  // --- la puerta del jefe: el sello en su marco de sillería, al fondo del osario
-  C.paint(-1.5, -137.2, 1.5, -135.8, 1);
-  cryptFloor(-1.5, -137, 1.5, -136, Y);
-  for (const s of [-1, 1]) wb.box('ashlar', s * 1.5, Y, -136.45, s * 2.0, Y + 3.2, -135.8, { ao: false, room, tint: AT });
-  wb.box('ashlar', -1.9, Y + 3.2, -136.45, 1.9, Y + 3.48, -135.8, { ao: false, room, tint: AT });
-  L.interact.push(
-    { kind: 'door', id: 'd_sello', x: 0, y: Y, z: -136.2, w: 3, h: 3.2, axis: 'x', lock: { type: 'seal', item: 'anillo' }, mat: 'seal' },
-    { kind: 'fog', id: 'f_boss', boss: 'turibulario', x: 0, y: Y, z: -136.8, w: 3, h: 3.2, axis: 'x', enter: -1 }
-  );
+  // (la puerta del jefe ya no está al fondo del osario: es la Puerta del Dios
+  // Ignoto, en la antesala, al oeste de la cisterna; ver level_crypt2.js)
 
   // --- la cisterna (arena del jefe final): un corro de ocho columnas con sus
   // arcos y, encima, una cúpula con nervios de la que cuelga una corona de
@@ -1111,7 +1108,9 @@ export function buildCrypt(ctx, S, C, L) {
       YT = AY + 8.8; // arranque de la cúpula y techo de alrededor
     C.paint(-15, -167, 15, -137, 1);
     // (la puerta del norte, a la altura de la bóveda de la galería)
-    interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 's', at: 0, w: 3, h: 6.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }] });
+    // (la de poniente, la Puerta del Dios Ignoto, desde la antesala; la del
+    // norte, la reja de la galería del río)
+    interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 'w', at: -152, w: 5, h: 5.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }] });
     // (el jefe final: cuando el arzobispo se transforma, el centro del suelo
     // se hunde en un pozo, el corro de columnas cae y la cúpula revienta; ver
     // finale/film_rise.js. Lo que se rompe va en grupos: 'cisternFloorC', el
@@ -1148,11 +1147,6 @@ export function buildCrypt(ctx, S, C, L) {
     bloodBox(-PC, cz - PC, PC, cz + PC);
     ctx.endGroup();
     cisternPit(ctx, cz, PC, AY, room, VT, AT);
-    stairs(ctx, 0, AY, -141.5, 's', 3, 10, 0.3, 0.45, 'mossstone', { solidBelow: true });
-    for (const s of [-1, 1]) {
-      solid(ctx, 'mossstone', s * 1.5, AY, -141.5, s * 2.1, Y + 0.9, -137, { sub: 2, room });
-      wb.box('ashlar', s * 1.45, Y + 0.9, -141.55, s * 2.15, Y + 1.02, -137, { ao: false, room, tint: AT, faces: 'tnsewb' });
-    }
     // el corro de columnas, sus arcos (girados sobre cada lado del octógono)
     // y los macizos sobre los capiteles
     const cols = [];
@@ -1283,7 +1277,7 @@ export function buildCrypt(ctx, S, C, L) {
     P.fleshGrowth(ctx, -6, AY, -166, 2.4, 1601, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });
     P.fleshGrowth(ctx, 6, AY, -166, 2.4, 1602, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });
     P.fleshGrowth(ctx, 0, AY + 4.6, -166.2, 1.8, 1603, { room, climb: 1.5, lift: 2, bound: [-8, 8, -166.8, -164] });
-    P.fleshGrowth(ctx, -14, AY, -150, 1.4, 1604, { room, climb: 2.5 });
+    P.fleshGrowth(ctx, -14, AY, -160.5, 1.4, 1604, { room, climb: 2.5 });
     P.fleshGrowth(ctx, 14, AY, -145, 1.3, 1605, { room, climb: 2.5 });
     for (let i = 0; i < 10; i++) P.bones(ctx, -12 + i * 2.6, AY + 0.04, -140 - (i % 3) * 8, 6, 1610 + i, 1.3);
     P.candles(ctx, -13.5, AY, -139, 8, 1620, { room, radius: 5, intensity: 1.1 });
@@ -1359,19 +1353,19 @@ export function buildCrypt(ctx, S, C, L) {
   }
   wb.setRoom(null);
 
-  L.phantoms.push({ x: 0, y: Y, z: -133, trigger: [0, Y, -113], kind: 'mourner' });
+  L.phantoms.push({ x: 0, y: Y, z: -130.5, trigger: [0, Y, -113], kind: 'mourner' });
   L.zones.push(
     { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena', room: 'crypt' },
     { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
     { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
-    { id: 'ossuary', rects: [[-2.5, -136, 2.5, -110, -8, -2]], atmo: 'crypt', room: 'crypt' },
+    { id: 'ossuary', rects: [[-2.5, -133.5, 2.5, -110, -8, -2]], atmo: 'crypt', room: 'crypt' },
     { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt', room: 'crypt' },
     { id: 'tunnel', rects: [[-2, -196, 2, -167, -11, 4]], atmo: 'tunnel', room: 'tunnel' }
   );
   L.map.push(
     { id: 'crypt', r: [-7, -110, 7, -97], level: 'crypt' },
     { id: 'crypt', r: [-2, -97, 2, -86], level: 'crypt' },
-    { id: 'ossuary', r: [-2.5, -136, 2.5, -110], level: 'crypt' },
+    { id: 'ossuary', r: [-2.5, -133, 2.5, -110], level: 'crypt' },
     { id: 'tomb', r: [3.5, -128, 16, -112], level: 'crypt' },
     { id: 'roman', r: [-19, -132, -3.5, -112], level: 'crypt' },
     { id: 'arena', r: [-15, -167, 15, -137], level: 'crypt' },

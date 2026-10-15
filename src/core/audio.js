@@ -116,6 +116,12 @@ const FX_PRIO = {
   qteOk: [5, 'jugador'],
   qteFail: [5, 'jugador'],
   qteTick: [5, 'jugador'],
+  // la Puerta del Dios Ignoto: siempre se oye
+  godSeal: [5, 'mundo'],
+  godDoor: [5, 'mundo'],
+  clawTurn: [5, 'jugador'],
+  censerLit: [4, 'mundo'],
+  bloodDrain: [3, 'mundo'],
 };
 // las partes de un sonido que empiezan más tarde de esto se crean poco antes
 // de sonar (s)
@@ -174,6 +180,7 @@ const ZONE_MUSIC = {
   arena: 'crypt',
   cellar: 'crypt',
   lair: 'crypt',
+  sanctum: 'sanctum',
   dawn: 'ending',
 };
 // sala (respuesta de impulso) y cantidad de reverberación
@@ -189,6 +196,7 @@ const ZONE_ROOM = {
   arena: ['hall', 0.55],
   cellar: ['crypt', 0.5],
   lair: ['crypt', 0.55],
+  sanctum: ['cathedral', 0.8],
   dawn: ['open', 0.16],
 };
 // capas de fondo: viento, rumor del incendio, tono de sala, dron grave, río
@@ -204,6 +212,7 @@ const ZONE_BED = {
   arena: [0.02, 0, 0.12, 0.07, 0],
   cellar: [0, 0, 0.15, 0.08, 0],
   lair: [0, 0, 0.15, 0.09, 0],
+  sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
@@ -1683,6 +1692,57 @@ export class Audio {
         this.duck(0.3, 3);
         break;
       }
+      // ---- la cripta honda (game/crypt.js)
+      // una pila que se vacía por el sumidero: borbotones graves y gotas
+      case 'bloodDrain': {
+        d = this.out(P, { gain: 0.85 * (o.k ?? 1), verb: 0.7, life: 6, ref: 6 });
+        this.noise(d, t, 4.5, { type: 'lowpass', f0: 380, f1: 140, gain: 0.45, a: 0.4, buf: this.brown, rate: 2.2, curve: 'lin' });
+        for (let i = 0; i < 14; i++) {
+          const tt = t + 0.2 + i * rnd(0.18, 0.36);
+          this.tone(d, tt, rnd(0.08, 0.16), { f0: rnd(120, 220), f1: rnd(260, 420), gain: rnd(0.15, 0.3) });
+        }
+        for (let i = 0; i < 5; i++) this.smp(d, t + 1 + i * rnd(0.4, 0.8), this.lib.drip(rnd(500, 900)), { gain: 0.25 });
+        break;
+      }
+      // los cinco círculos llenos: la piedra zumba y la inscripción prende
+      case 'godSeal': {
+        d = this.out(P, { gain: 1, verb: 0.8, life: 7, ref: 12, occlude: false });
+        this.tone(d, t, 4, { f0: 38, f1: 41, gain: 0.5, a: 1.2, curve: 'lin' });
+        this.noise(d, t, 1.6, { f0: 900, f1: 3000, q: 1.2, gain: 0.12, a: 0.6, buf: this.pink });
+        this.score.stinger('godSeal');
+        this.duck(0.35, 3);
+        break;
+      }
+      // la Garra gira en la cerradura: oro contra piedra y un cerrojo enorme
+      case 'clawTurn': {
+        d = this.out(P, { gain: 1, verb: 0.7, life: 5, ref: 8 });
+        this.metal(d, t, 620, 0.1, 1.6, { ratios: [1, 2.6, 4.3] });
+        this.noise(d, t, 0.7, { f0: 260, f1: 120, q: 3, gain: 0.45, a: 0.08, buf: this.brown, rate: 2, curve: 'lin' });
+        this.tone(d, t + 0.62, 0.5, { f0: 90, f1: 34, gain: 0.85 });
+        this.debris(d, t + 0.62, 10, 0.8, { f0: 400, f1: 1600, gain: 0.6 });
+        break;
+      }
+      // las hojas de piedra se abren: un roce que no acaba, el polvo que cae
+      // de la bóveda y el coro
+      case 'godDoor': {
+        d = this.out(P, { gain: 1, verb: 0.85, life: 10, ref: 14, roll: 0.8, occlude: false });
+        this.noise(d, t, 5, { type: 'lowpass', f0: 180, f1: 320, gain: 0.85, a: 0.6, buf: this.brown, rate: 1.2, curve: 'lin' });
+        this.tone(d, t, 5, { f0: 30, f1: 36, gain: 0.6, a: 0.8, curve: 'lin' });
+        for (let i = 0; i < 6; i++) this.creak(d, t + 0.5 + i * rnd(0.6, 0.9), 0.7, rnd(55, 85), 0.18);
+        this.debris(d, t + 0.3, 30, 4.5, { f0: 300, f1: 1500, gain: 0.8 });
+        this.tone(d, t + 4.6, 0.9, { f0: 60, f1: 24, gain: 0.9 });
+        this.score.stinger('godDoor');
+        this.duck(0.6, 6);
+        break;
+      }
+      // el incensario prende: el incienso chisporrotea y la brasa respira
+      case 'censerLit': {
+        d = this.out(P, { gain: 0.8, verb: 0.6, life: 4, ref: 6 });
+        this.smp(d, t, this.lib.crackle(6), { gain: 0.5, offset: rnd(0, 4), dur: 2.4, hp: 600 });
+        this.noise(d, t + 0.1, 2.2, { f0: 300, f1: 900, q: 0.7, gain: 0.2, a: 0.5, buf: this.brown, rate: 2 });
+        this.smp(d, t + 0.4, this.smallBell(), { gain: 0.06, rate: 0.5 });
+        break;
+      }
       case 'pickup':
       case 'item': {
         d = this.out(null, { gain: 0.6, verb: 0.5, life: 3.5 });
@@ -2270,7 +2330,7 @@ export class Audio {
     const now = this.t();
     if (kind !== 'death' && e._vt && now - e._vt < 0.35) return;
     const v = e.T.voice;
-    const big = v === 'boss' || v === 'impaled' || v === 'bell';
+    const big = v === 'boss' || v === 'impaled' || v === 'bell' || v === 'guardian';
     if (this.dist(e.pos) > (big ? 110 : 55)) return;
     // los gritos de una horda: los más cercanos e importantes, y no todos en
     // el mismo fotograma (los que no caben se aplazan unos milisegundos)
@@ -2292,6 +2352,28 @@ export class Audio {
           V({ dur: 1.2, f0: 135, f1: 70, vowel: 'a', v1: 'o', gain: 0.24, vib: 5, vibD: 12, breath: 0.6, rasp: 0.3 });
           this.bodyFall(d, t + 1.0, 1);
         }
+        break;
+      // los Velados: piedra que se mueve y, bajo el velo, una voz honda que
+      // canta sin boca
+      case 'guardian':
+        if (kind === 'alert') {
+          this.noise(d, t, 1.4, { type: 'lowpass', f0: 260, f1: 140, gain: 0.5, a: 0.2, buf: this.brown, rate: 1.6, curve: 'lin' });
+          this.debris(d, t + 0.1, 12, 1.2, { f0: 500, f1: 1800, gain: 0.6 });
+          V({ dt: 0.3, dur: 2.2, f0: 62 * pv, f1: 55 * pv, vowel: 'u', v1: 'o', gain: 0.3, vib: 3, vibD: 10, breath: 0.4, a: 0.6, rasp: 0.5 });
+          V({ dt: 0.3, dur: 2.2, f0: 93 * pv, f1: 83 * pv, vowel: 'u', gain: 0.12, vib: 3, vibD: 8, breath: 0.3, a: 0.7 });
+        } else if (kind === 'attack') {
+          this.noise(d, t, 0.35, { type: 'lowpass', f0: 400, f1: 180, gain: 0.35, a: 0.02, buf: this.brown, rate: 2.4 });
+          V({ dur: 0.5, f0: 70 * pv, f1: 58 * pv, vowel: 'o', gain: 0.2, breath: 0.5, a: 0.04, rasp: 0.6 });
+        } else if (kind === 'hurt') {
+          this.tone(d, t, 0.18, { f0: 140, f1: 70, gain: 0.35 });
+          this.debris(d, t, 6, 0.4, { f0: 900, f1: 2600, gain: 0.7 });
+        } else if (kind === 'death') {
+          V({ dur: 2.6, f0: 66 * pv, f1: 38, vowel: 'u', v1: 'o', gain: 0.3, vib: 2, vibD: 14, breath: 0.5, a: 0.1, rasp: 0.5 });
+          this.debris(d, t + 0.4, 30, 2.6, { f0: 300, f1: 1400, gain: 0.9 });
+          this.noise(d, t + 0.3, 2.4, { type: 'lowpass', f0: 600, f1: 120, gain: 0.5, a: 0.1, buf: this.brown, rate: 2, curve: 'lin' });
+          this.bodyFall(d, t + 2.0, 2.4);
+          this.duck(0.35, 2.5);
+        } else if (kind === 'idle') V({ dur: 2.4, f0: 58 * pv, vowel: 'u', gain: 0.1, vib: 2, vibD: 6, breath: 0.6, a: 1.0 });
         break;
       case 'penitent':
         if (kind === 'alert') V({ dur: 1.0, f0: 360 * pv, f1: 640 * pv, vowel: 'a', v1: 'i', gain: 0.22, vib: 9, vibD: 45, breath: 0.5, a: 0.04, rasp: 0.35, jit: 30 });
@@ -2429,7 +2511,7 @@ export class Audio {
   enemyStep(e) {
     if (!this.ok) return;
     const v = e.T.voice;
-    const big = v === 'bell' || v === 'boss' || v === 'impaled';
+    const big = v === 'bell' || v === 'boss' || v === 'impaled' || v === 'guardian';
     if (this.dist(e.pos) > (big ? 45 : 22)) return;
     if (this.admit('pasos', e.boss || big ? 3 : 1, this.levelAt(e.pos, big ? 0.9 : 0.6, big ? 5 : 2.5)) !== 1) return;
     const t = this.t() + 0.005;
@@ -2442,6 +2524,11 @@ export class Audio {
       this.noise(d, t, 0.3, { type: 'lowpass', f0: 500, gain: 0.3, a: 0.003 });
       this.debris(d, t + 0.03, 3, 0.25, { f0: 600, f1: 1500, gain: 0.7 });
       if (v === 'impaled') this.jingle(d, t, 0.3, 0.15, 0.6);
+      // (los Velados: piedra contra piedra, y la grava que suelta)
+      if (v === 'guardian') {
+        this.tone(d, t, 0.3, { f0: 70, f1: 40, gain: 0.3 });
+        this.debris(d, t + 0.05, 4, 0.3, { f0: 900, f1: 2200, gain: 0.5 });
+      }
     } else if (v === 'soldier') {
       this.tone(d, t, 0.12, { f0: 90, f1: 48, gain: 0.45 });
       this.noise(d, t, 0.06, { f0: rnd(1500, 2200), q: 1.4, gain: 0.2, a: 0.002 });

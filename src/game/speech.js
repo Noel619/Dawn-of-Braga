@@ -170,8 +170,13 @@ export class Speech {
         if (!b.line) continue;
       }
       // sobre la cabeza, o al pie de la pantalla si no se ve (fuera de
-      // cuadro, muy lejos o detrás de un muro)
+      // cuadro, muy lejos o detrás de un muro); demasiado lejos para oírlo
+      // (otra calle, otro piso), nada
       const p = b.who.head(this._v);
+      const pp = g.player.pos;
+      const far = Math.hypot(p.x - pp.x, (p.y - pp.y) * 1.6, p.z - pp.z) > (b.who.hearR ?? 34);
+      b.el.style.visibility = far ? 'hidden' : '';
+      if (far) continue;
       const d = Math.hypot(p.x - cam.position.x, p.z - cam.position.z);
       b.losT = (b.losT ?? 0) - dt;
       if (b.losT <= 0) {

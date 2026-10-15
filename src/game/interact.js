@@ -283,6 +283,60 @@ function itemMesh(id) {
     const gem = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.03), objMat('redGlow'));
     gem.position.y = 0.045;
     g.add(r, gem);
+  } else if (id === 'tablon') {
+    // un tablón suelto, tirado de través (con un clavo torcido)
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 0.24), objMat('planks'));
+    const n = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.09, 0.012), iron);
+    n.position.set(0.6, 0.06, 0.04);
+    n.rotation.z = 0.5;
+    g.add(b, n);
+    g.rotation.y = 0.4;
+    g.position.y = -0.06;
+  } else if (id === 'garra') {
+    // la Garra de Oro: una mano de cuatro dedos largos y curvos, de oro
+    const gold = objMat('gold');
+    const palm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.12), gold);
+    g.add(palm);
+    for (let k = 0; k < 4; k++) {
+      const f = new THREE.Group();
+      f.position.set(-0.045 + k * 0.03, 0, 0.06);
+      f.rotation.y = (k - 1.5) * 0.12;
+      const a = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.12), gold);
+      a.position.z = 0.06;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.1), gold);
+      b.position.set(0, -0.03, 0.15);
+      b.rotation.x = 0.7;
+      f.add(a, b);
+      g.add(f);
+    }
+    const th = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.1), gold);
+    th.position.set(0.08, 0, 0.02);
+    th.rotation.y = -0.8;
+    g.add(th);
+    g.rotation.y = 0.6;
+  } else if (id === 'incienso') {
+    // la naveta: un cuenco de bronce con forma de barca, tapado, y su cuchara
+    const hull = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 4, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), bronze);
+    hull.scale.set(1.5, 0.7, 0.8);
+    hull.position.y = 0.09;
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.015, 0.16), bronze);
+    lid.position.y = 0.095;
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.04, 6), bronze);
+    const grain = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.06), objMat('black'));
+    grain.position.set(0.05, 0.11, 0);
+    g.add(hull, lid, foot, grain);
+  } else if (id === 'lagrima') {
+    const t = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), objMat('silver'));
+    t.scale.set(1, 1.4, 1);
+    g.add(t);
+  } else if (id === 'llave_sotano') {
+    const r = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.02, 4, 8), iron);
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.28), iron);
+    s.position.z = 0.2;
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.08, 0.05), iron);
+    t.position.set(0, -0.04, 0.3);
+    r.rotation.x = Math.PI / 2;
+    g.add(r, s, t);
   }
   return g;
 }
@@ -462,13 +516,17 @@ export class Interactables {
         if (s.axis === 'z') it.obj.rotation.y = -Math.PI / 2;
         const leaves = [];
         const slides = s.mat === 'grate' || s.mat === 'seal';
+        // (la Puerta del Dios Ignoto: sus hojas de piedra las pone game/crypt.js)
+        const none = s.mat === 'god';
         // Hojas batientes: la bisagra va en la cara del muro hacia la que abre
         // la puerta ('plane', coordenada a lo largo de la normal del muro) y
         // separada 'inset' del canto del hueco. Con la bisagra en mitad del
         // grosor del muro, la hoja atravesaba la jamba al abrirse.
         const inset = slides ? 0 : s.inset ?? 0.06;
         const off = slides || s.plane === undefined ? 0 : s.axis === 'z' ? s.x - s.plane : s.plane - s.z;
-        if (s.double) {
+        if (none) {
+          // nada
+        } else if (s.double) {
           const lw = s.w / 2 - inset - 0.01;
           for (const side of [-1, 1]) {
             const pivot = new THREE.Group();
@@ -644,6 +702,9 @@ export class Interactables {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
       it.r = s.r;
+    } else if (s.kind === 'censer') {
+      // el incensario del estrado (lo cuelga y lo enciende game/crypt.js)
+      it.r = s.r ?? 2.0;
     } else if (s.kind === 'board' || s.kind === 'npc') {
       // tapiar una ventana / hablar con Henrique: los enseña y los esconde
       // el guion de la casa (game/house.js)
@@ -981,6 +1042,7 @@ export class Interactables {
         if (it.lock.type === 'boss') return 'Examinar la reja';
         if (it.lock.type === 'levers') return 'Examinar el rastrillo';
         if (it.lock.type === 'npc') return 'Llamar a la puerta';
+        if (it.lock.type === 'god') return this.game.crypt ? this.game.crypt.doorLabel() : 'Examinar la puerta';
         return 'Abrir';
       case 'item':
         return 'Recoger';
@@ -999,7 +1061,9 @@ export class Interactables {
       case 'colossus':
         return it.label;
       case 'lever':
-        return 'Echar la palanca';
+        return it.font ? 'Tirar de la cadena de la compuerta' : 'Echar la palanca';
+      case 'censer':
+        return this.game.crypt ? this.game.crypt.censerLabel() : 'Examinar el incensario';
       case 'well':
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
       case 'bridge':
@@ -1071,7 +1135,14 @@ export class Interactables {
         // la abre (o no) quien está dentro: ver game/house.js
         if (g.house) g.house.knock(it);
         else g.ui.toast(MSG.doorAleman);
+      } else if (L.type === 'god') {
+        // la Puerta del Dios Ignoto: ver game/crypt.js
+        if (g.crypt) g.crypt.useDoor(it);
       }
+      return true;
+    }
+    if (it.kind === 'censer') {
+      if (g.crypt) g.crypt.useCenser(it);
       return true;
     }
     if (it.kind === 'board') {

@@ -644,6 +644,26 @@ export class MusicEngine {
     } else if (name === 'phantom') {
       for (const m of [58, 59, 64]) this.strings(d, t, 1.4, m, 0.035, { a: 0.9, r: 1.5, trem: 7, bright: 9 });
       this.whisper(d, t, 1.2, 0.05);
+    } else if (name === 'godSeal') {
+      // la sangre llena los cinco círculos: un coro grave que no resuelve,
+      // una campana muy honda y el gong
+      for (const m of [38, 45, 50, 51, 57]) this.choir(d, t, 5.5, m, 0.04, 'o', { a: 1.8, r: 3 });
+      for (const m of [62, 63]) this.choir(d, t + 1.2, 4, m, 0.02, 'u', { a: 1.6, r: 2.5 });
+      this.bell(d, t, 26, 0.32, { dur: 10 });
+      this.drum(d, t, 'gong', 0.35);
+      this.swell(d, t, 2.8, 0.06, 120, 1400);
+    } else if (name === 'godDoor') {
+      // la puerta del dios se abre: el coro sube medio tono, el pedal del
+      // órgano y dos gongs; luego, una campana que no acaba
+      for (const m of [33, 40, 45, 48, 52]) this.choir(d, t, 4.8, m, 0.05, 'o', { a: 2.4, r: 2 });
+      for (const m of [34, 41, 46, 49, 53, 58]) this.choir(d, t + 4.2, 6, m, 0.048, 'a', { a: 1.0, r: 4 });
+      this.organ(d, t + 0.4, 9, 21, 0.08, 'principal', { a: 3, r: 3.5 });
+      this.organ(d, t + 4.2, 6, 28, 0.05, 'principal', { a: 1.5, r: 3.5 });
+      this.drum(d, t, 'gong', 0.45);
+      this.drum(d, t + 4.2, 'gong', 0.6);
+      this.bell(d, t + 4.2, 21, 0.38, { dur: 14 });
+      this.swell(d, t, 4.4, 0.08, 80, 1200);
+      this.whisper(d, t + 2, 3, 0.05);
     }
   }
 }
@@ -1044,6 +1064,65 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- la antesala del Dios Ignoto
+  // Lo más hondo de la Sé: un coro de hombres que sostiene un clúster muy
+  // grave, como si la piedra respirara; el órgano pleno de vez en cuando, una
+  // campana lejanísima y, entre frase y frase, susurros.
+  sanctum: {
+    bpm: 38,
+    root: 33,
+    mode: 'phrygian',
+    prog: [0, 1, 0, 6],
+    chordBars: 4,
+    verb: 1.0,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4), degree(T.root, T.mode, d + 1)], wave: 'principal', cutoff: 520, level: 0.1, rate: 0.02, depth: 0.25, detune: [-4, 4] },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      if (inBar === 0 && bar % 4 === 0) {
+        const r = m.deg(T, chord, 0);
+        for (const n of [r, r + 1, r + 7]) m.choir(L.base, t, spb * 15, n, 0.03, 'o', { a: 3, r: 3, vib: 4 });
+        m.choir(L.base, t + spb * 2, spb * 12, r - 12, 0.035, 'u', { a: 3, r: 3, vib: 3 });
+      }
+      if (inBar === 0 && bar % 8 === 2) for (const n of m.triad(T, chord, 0)) m.organ(L.base, t, spb * 7, n, 0.022, 'full', { a: 1.5, r: 2.5 });
+      if (inBar === 0 && bar % 8 === 0) m.bell(L.base, t, T.root, 0.16, { dur: 10 });
+      if (inBar === 2 && bar % 4 === 3 && chance(0.7)) m.whisper(L.base, t, spb * 3, 0.04);
+      if (inBar === 1 && bar % 6 === 5) m.swell(L.base, t, spb * 3, 0.03, 150, 900);
+      tensionLayer(S, { oct: 0 });
+      combatLayer(S, { pat: [1, 0, 0.4, 0, 0.7, 0, 0.4, 0.3] });
+    },
+  },
+
+  // ---------------------------------------------------------------- jefes: los Velados
+  // Piedra que se mueve: tambores enormes y lentos, un órgano pleno en
+  // quintas, el coro de hombres en una sola nota y yunques. Cuando cae uno,
+  // el otro enloquece: más rápido, metales y el coro arriba.
+  bossGuardians: {
+    bpm: 96,
+    root: 31,
+    mode: 'phrygian',
+    prog: [0, 1, 0, 5],
+    chordBars: 2,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], wave: 'principal', cutoff: 600, level: 0.09, rate: 0.05, detune: [-3, 3] },
+    step(S) {
+      guardStep(S, 0);
+    },
+  },
+  bossGuardians2: {
+    bpm: 112,
+    root: 31,
+    mode: 'phrygian',
+    prog: [0, 1, 6, 1],
+    chordBars: 1,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], wave: 'reed', cutoff: 800, level: 0.1, rate: 0.12, detune: [-4, 4] },
+    step(S) {
+      guardStep(S, 1);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe: Leonor, la Dolorosa
   // Una nana de caja de música en 6/8 (se mece, como la cuna) que canta una
   // voz de mujer sola, rota; debajo, un latido y cuerdas graves. En la
@@ -1248,6 +1327,30 @@ function leonorStep(S, phase) {
   }
   if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root + 12, 0.12, { kind: 'small', dur: 6 });
   if (phase && inBar === 0 && bar % 4 === 2) m.swell(L.base, t, spb * 3, 0.04, 400, 3000);
+}
+
+// Los Velados: tambores lentos y enormes, órgano en quintas, coro en una
+// nota, yunques; en la segunda fase, metales y el coro arriba.
+function guardStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  if (inBar === 0) {
+    m.drum(L.base, t, 'taiko', 0.6);
+    m.drum(L.base, t, 'gong', phase ? 0.22 : 0.14);
+  }
+  if (inBar === 2) m.drum(L.base, t, 'taiko', 0.42, 0.9);
+  if (inBar === 3) m.drum(L.base, t + spb * 0.5, 'taiko', 0.3, 1.1);
+  if (phase && (inBar === 1 || inBar === 3)) m.drum(L.base, t, 'frame', 0.32, 0.95);
+  // el órgano en quintas (cada acorde)
+  if (inBar === 0 && (bar % 2 === 0 || phase)) {
+    const r = m.deg(T, chord, 0);
+    for (const n of [r, r + 7, r + 12]) m.organ(L.base, t, spb * (phase ? 3.8 : 7.6), n, 0.03, 'full', { a: 0.08, r: 0.8 });
+  }
+  // el coro en una nota, a golpes
+  if (inBar === 0 || (phase && inBar === 2)) m.choir(L.base, t, spb * 1.4, m.deg(T, chord, 1), 0.045, 'o', { a: 0.04, r: 0.5 });
+  // los yunques (piedra contra piedra)
+  if (inBar === 1 && bar % 2 === 1) m.bell(L.base, t, T.root + 36 + pick([0, 1]), 0.06, { kind: 'small', dur: 1.5 });
+  if (phase && inBar === 0 && bar % 2 === 0) for (const n of m.triad(T, chord, 1)) m.brass(L.base, t, spb * 3.5, n, 0.035, { a: 0.1, r: 0.6, bright: 7 });
+  if (phase && inBar === 0 && bar % 4 === 0) for (const n of [T.root + 36, T.root + 37]) m.choir(L.base, t, spb * 7, n, 0.02, 'i', { a: 1, r: 1, shift: 1.25 });
 }
 
 // La caza: latidos, notas sueltas de la nana, cuerdas que se arrastran.

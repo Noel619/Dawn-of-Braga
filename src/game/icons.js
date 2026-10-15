@@ -474,6 +474,91 @@ const ICONS = {
     sparkle(b, 23, 8);
     b.outline(P.void);
   },
+  // la Garra de Oro: una mano de cuatro dedos con garras, cortada por la
+  // muñeca (el corte, rojo oscuro)
+  claw(b) {
+    const gold = (l) => (t, s, x, y) => shade(GOLD, l - s * 0.3, x, y);
+    // la muñeca, con el corte abajo
+    seg(b, 16, 30, 16, 23, 3.4, 3.6, (t, s, x, y) => (t < 0.18 ? (s < 0 ? P.blood2 : P.blood1) : shade(GOLD, 0.5 - s * 0.3, x, y)));
+    // los cuatro dedos: dos falanges y la uña, curva hacia dentro
+    const F = [
+      [11.5, 16, 9, 10, 8.5, 6],
+      [14.5, 14.5, 13.5, 8, 13.5, 3.5],
+      [17.5, 14.5, 18.5, 8, 19, 3.5],
+      [20.5, 16, 23, 10.5, 24, 6.5],
+    ];
+    for (const [ax, ay, bx, by, cx, cy] of F) {
+      seg(b, ax, ay, bx, by, 1.7, 1.5, gold(0.62));
+      seg(b, bx, by, cx, cy, 1.5, 1.2, gold(0.7));
+      seg(b, cx, cy, cx + (cx < 16 ? 1.5 : -1.5), cy - 2.6, 1.0, 0.25, (t, s) => (s < 0 ? P.gold4 : P.gold1));
+    }
+    // la palma
+    disc(b, 16, 19, 6, (l, d, x, y) => shade(GOLD, l * 0.8 + 0.1 - (d > 0.85 ? 0.15 : 0), x, y));
+    // el pulgar, de lado, con su garra
+    seg(b, 11, 21, 6.5, 16.5, 1.7, 1.4, gold(0.58));
+    seg(b, 6.5, 16.5, 5, 13.5, 1.0, 0.25, (t, s) => (s < 0 ? P.gold4 : P.gold1));
+    // los nudillos y las líneas de la palma
+    for (const [x, y] of [
+      [13, 17],
+      [16, 16],
+      [19, 17],
+      [15, 21],
+      [17, 22],
+    ])
+      b.set(x, y, P.gold1);
+    sparkle(b, 23, 20);
+    b.outline(P.void);
+  },
+  // naveta de plata con el incienso negro (unos granos humean)
+  incense(b) {
+    const SIL = [P.steel0, P.steel1, P.steel2, P.steel3, P.steel4, P.steel5];
+    // la nave: media elipse, con la borda
+    for (let y = 15; y <= 24; y++)
+      for (let x = 3; x <= 28; x++) {
+        const dx = (x + 0.5 - 16) / 12.5,
+          dy = (y + 0.5 - 15) / 9.5;
+        if (dx * dx + dy * dy > 1) continue;
+        const l = 0.72 - dy * 0.55 - dx * 0.15 + (y === 15 ? 0.2 : 0);
+        b.set(x, y, shade(SIL, l, x, y));
+      }
+    // el pie y la peana
+    for (let y = 24; y <= 27; y++) for (let x = 13; x <= 18; x++) b.set(x, y, shade(SIL, 0.5 - (x - 13) / 12, x, y));
+    for (let x = 10; x <= 21; x++) {
+      b.set(x, 28, x < 13 ? P.steel4 : P.steel2);
+      b.set(x, 29, P.steel1);
+    }
+    // el incienso: granos negros y grasos, con brasa en alguno
+    for (let y = 11; y <= 15; y++)
+      for (let x = 7; x <= 24; x++) {
+        const dx = (x + 0.5 - 16) / 9,
+          dy = (y + 0.5 - 15.5) / 4.5;
+        if (dx * dx + dy * dy > 1) continue;
+        const v = (x * 7 + y * 13) % 5;
+        b.set(x, y, v === 0 ? P.ink3 : v === 1 ? P.ink0 : v === 2 ? P.ink2 : P.void);
+      }
+    b.set(12, 12, P.ember1);
+    b.set(19, 13, P.ember1);
+    b.set(16, 11, P.blood3);
+    // la cucharilla, apoyada
+    seg(b, 23, 14, 28.5, 7, 0.6, 0.6, (t, s) => (s < 0 ? P.steel5 : P.steel2));
+    disc(b, 28.5, 6.5, 1.4, (l, d, x, y) => shade(SIL, l, x, y));
+    // el humo, que no sube derecho
+    for (const [x, y] of [
+      [16, 9],
+      [15, 8],
+      [15, 7],
+      [16, 6],
+      [17, 5],
+      [17, 4],
+      [16, 3],
+      [12, 9],
+      [11, 7],
+      [12, 6],
+    ])
+      b.set(x, y, P.ink3);
+    sparkle(b, 9, 18);
+    b.outline(P.void);
+  },
   // la lágrima de Leonor: una perla clara en forma de gota, con un reflejo
   tear(b) {
     for (let y = 0; y < 32; y++)

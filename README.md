@@ -137,6 +137,40 @@ salida: el **salto de fe** a la paja de la atalaya de la coracha. La Bestia se q
 se va. Si mueres durante la huida, vuelves al último tramo; si sales a mitad, al cruzar la niebla del Postigo
 empieza otra vez la huida.
 
+**El Callejón del Postigo y la Casa del Alemán.** Bajo la Torre del Postigo, un callejón de casas apiñadas lleva a
+la Casa del Alemán, la de Henrique, nieto de un espadero de Solingen que vino con los cruzados de Colonia. Tres
+demonios aporrean su puerta; Henrique, asomado a la ventana alta, reza y grita. Si acabas con ellos, te abre, y
+dentro (un zaguán, la sala con su chimenea y la mesa, la cocina, la despensa y, arriba, la alcoba) te avisa en un
+bocadillo sobre la cabeza de que vienen más: entran en tres oleadas reventando las contraventanas y saltando por
+las ventanas, y hay que defenderle (su barra de vida aparece arriba, en el centro; si cae él, se pierde la defensa y
+vuelve a empezar). Vencidas todas, te cuenta su historia y la de su mujer, Leonor, y te da martillo y clavos:
+con los tablones que hay por la casa y el patio se tapian las ventanas una a una para que su casa sea un lugar
+seguro. Hecho eso, te da la **espada de su abuelo**, una espada del Sacro Imperio forjada en Solingen (hace un 35 %
+más de daño que la espada del carcelero), y la llave del sótano: Leonor hizo un pacto con lo que él llama el
+diablo. Bajo la despensa, el sótano y un túnel bajan a su gruta, donde está **Leonor, la Dolorosa**: una mujer
+convertida en una bestia enorme, hinchada de pus, que llora y acuna un hatillo. Escupe pus que quema en el suelo,
+barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revienta. Al vencerla deja su última
+lágrima (una ampolla más), y Henrique, si vuelves, la llora.
+
+**La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre se abre una red mucho mayor. La
+**Galería del Sello** la cruza de poniente a levante; a poniente, las **Catacumbas de la Sé**, un laberinto de
+pasillos con nichos, osarios y callejones sin salida, con la **Cámara de la Garra** (al coger la Garra de Oro cae
+una reja a tu espalda y los muertos salen de los sepulcros y del techo) y la **Pila de los Inocentes**; a levante,
+las Catacumbas de levante, la **Pila de los Mártires** y la **Sacristía del arzobispo**, que se abre con su anillo.
+La **Capilla de San Martín** tiene altar de descanso. Al fondo, por una escalinata, se baja a la **Antesala del
+Dios Ignoto**: tres naves sobre columnas, con estatuas colosales veladas, estandartes y braseros, y al final un
+estrado con la puerta del dios, dos hojas de piedra negra con un pentáculo invertido dentro de un círculo de
+signos, tres cabezas que lloran sobre el dintel y la inscripción DEO IGNOTO. Ya no basta un anillo: la puerta pide
+**cuatro cosas**, cada una con su sentido (San Martín de Dumio la cerró con cuatro cerrojos, y los documentos lo
+cuentan): vencer a **los Velados**, sus dos guardianes de piedra, que pelean a la vez (uno ataca mientras el otro
+te rodea; cuando cae uno, el otro enloquece); la **Garra de Oro**, que gira en la cerradura del centro como una
+llave; llenar los **cinco círculos de sangre** de las puntas del pentáculo, abriendo las compuertas de las tres
+pilas (siete tirones de cadena cada una: la sangre llora por las cabezas del dintel y corre por los surcos hasta
+los círculos, y con los cinco llenos el pentáculo y la inscripción arden); y **el humo**, porque el dios no oye,
+huele: el incienso negro del arzobispo, echado en el gran incensario del estrado, que la cadena iza sola y se mece
+como un botafumeiro mientras su humo se arrastra hasta la puerta. Al examinarla, la puerta dice qué le falta.
+Abierta, al otro lado espera la cisterna.
+
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
 un giro a la izquierda antes del patio, para que nadie cargue en línea recta). El **patio de armas** tiene su pozo,
@@ -185,11 +219,12 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 
 **Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, una mesa atravesada en
 la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
-puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, un
-sello que exige el anillo del arzobispo, altares de descanso que curan, rellenan las ampollas y devuelven a las
+puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, la
+sacristía que abre el anillo del arzobispo, las ventanas que se tapian con martillo y tablones, la Puerta del Dios
+Ignoto con sus cuatro cerrojos, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Dieciocho documentos breves cuentan la historia junto con el
+canónigo (aguante), que deja el Descoyuntado al morir. Veintiséis documentos breves cuentan la historia junto con el
 escenario.
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
@@ -404,8 +439,9 @@ gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cier
 
 - **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
-  la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; y el
-  Empalado, la huida de la Bestia y la caza del Descoyuntado.
+  la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
+  Empalado, la huida de la Bestia y la caza del Descoyuntado; la defensa de la Casa del Alemán y Leonor; y en la
+  cripta honda, la emboscada de la Garra, los Velados y la Puerta del Dios Ignoto con todo listo para abrirla.
 - **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar (de las peleas de colosos de
   antes; la película no los usa).
 - **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
@@ -435,7 +471,9 @@ src/
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
-                        atalaya y la coracha)
+                        atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
+                        sótano y la gruta de Leonor; level_crypt2.js: la cripta honda, generada por regiones
+                        (catacumbas en laberinto, pilas, sacristía, la antesala y la puerta del dios))
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
@@ -447,11 +485,14 @@ src/
                         (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
-                        beast.js, cómo se mueve la Bestia); armas:
+                        beast.js, cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán;
+                        leonor.js, Leonor, la Dolorosa; guardian.js, los Velados); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
-                        iconos, guardado, textos y cinemáticas (cutscene.js: la de la bodega; hunt.js: la caza
+                        iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
+                        el guion de la Casa del Alemán, sus oleadas y las ventanas; crypt.js: la Puerta del Dios
+                        Ignoto, las pilas, el incensario y la emboscada de la Garra; cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
                         pulsaciones rápidas; finale/: el jefe final, la película: director.js, los puntos
@@ -468,8 +509,8 @@ src/
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
-                        progress.mjs   recorre toda la progresión hasta el final (el arzobispo, la
-                                       película del jefe final entera y el río)
+                        progress.mjs   recorre toda la progresión hasta el final (la cripta honda y su
+                                       puerta, el arzobispo, la película del jefe final entera y el río)
                         finale.mjs     un robot ve la película del jefe final desde cada punto de control,
                                        con las pulsaciones acertadas o falladas: pasa por los puntos de
                                        control en orden, nadie muere y acaba en el río

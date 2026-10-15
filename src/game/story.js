@@ -73,8 +73,20 @@ export const ITEMS = {
   },
   anillo: {
     name: 'Anillo del arzobispo',
-    desc: 'Anillo pastoral de oro. El sello tiene la forma del sigilo pintado en las puertas.',
+    desc: 'Anillo pastoral de oro. El sello tiene la forma del sigilo pintado en las puertas. El arzobispo lo usaba de llave.',
     icon: 'ring',
+    key: true,
+  },
+  garra: {
+    name: 'Garra de Oro',
+    desc: 'Una mano de oro de cuatro dedos con garras, cortada por la muñeca: la que San Martín le quitó al ídolo. Pesa como el plomo y nunca se enfría. Es la llave de la Puerta del Dios Ignoto.',
+    icon: 'claw',
+    key: true,
+  },
+  incienso: {
+    name: 'Incienso negro',
+    desc: 'Una naveta de plata con granos de un incienso negro y graso. Huele a mirra y a carne. El arzobispo lo quemaba para su dios.',
+    icon: 'incense',
     key: true,
   },
   tablon: {
@@ -260,7 +272,7 @@ Debajo, en letra más antigua, alguien ha traducido a carbón:
 
 El Turiferario guarda el camino al río. Arde por mí. Quema el incienso que yo le pedí.
 
-Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar.`,
+Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar. Abre con él mi sacristía, en las catacumbas de levante. Lo que queda del incienso negro está allí.`,
   },
   tabernero: {
     title: 'Cuentas de la taberna del Cuervo',
@@ -309,6 +321,52 @@ Yo, Heinrich, hijo de Konrad el espadero, de Solingen en el condado de Berg, cru
 La espada la forjó mi padre a orillas del Wupper y la bendijo el arzobispo de Colonia antes de embarcar. No la he desenvainado contra cristiano.
 
 A mi nieto: que la saque sólo contra lo que no es de Dios.`,
+  },
+  sanmartin: {
+    title: 'Lápida de San Martín de Dumio',
+    text: `MARTINVS · EPISCOPVS · DVMIENSIS · ET · BRACARENSIS
+
+Debajo, a carbón, en romance:
+
+Martín de Panonia, apóstol de los suevos, que les quitó los ídolos de los montes y de las fuentes. Bajo su sede halló una puerta sin nombre y no la rompió: no se rompe lo que no se conoce.
+
+La cerró con cuatro cerrojos. Le cortó la mano al ídolo. Le cerró las compuertas de las pilas, para que la sangre no le llegara. Le prohibió el humo. Y le puso delante a dos que se cubrieron la cara para no verle.
+
+Que nadie los descorra.`,
+  },
+  garra: {
+    title: 'Nota de un canónigo',
+    text: `Le arrancamos la Garra a la cerradura entre los dos. Quemaba. La puerta se cerró sola y, al otro lado, él siguió cantando.
+
+La devuelvo al relicario de San Martín, donde estuvo mil años. Hemos cerrado las compuertas de las tres pilas. Los Velados vuelven a velar. El incienso se queda en su sacristía, y sólo su anillo la abre: lo dejó él mismo en su sepulcro antes de bajar. Ya se daba por muerto.
+
+Que nadie la saque de aquí. Los muertos de esta cámara la guardan mejor que nosotros.`,
+  },
+  pilas: {
+    title: 'Inscripción de la galería',
+    text: `Grabado en latín, y debajo, a carbón, en romance:
+
+TRES PILAS DE SANGRE TIENE EL DIOS: LA DE LOS INOCENTES, LA DE LOS MÁRTIRES Y LA DE LOS CONDENADOS. CUANDO CORREN, SU PUERTA BEBE.
+
+Y más abajo, de otra mano: «La de los Inocentes, en las catacumbas de poniente. La de los Mártires, en las de levante. La de los Condenados, al fondo de la antesala, donde ya no se sube. Siete tirones de cadena cada compuerta».`,
+  },
+  velados: {
+    title: 'Inscripción de los Velados',
+    text: `Sobre la escalinata, en letras romanas:
+
+AQVI VELAN LOS QVE NO QVISIERON VER SV ROSTRO
+
+Se cubrieron la cara para no ver al dios y, con la cara cubierta, le guardan la puerta. No se apartan sino ante el obispo de Braga. Nadie más la cruza mientras uno de los dos siga en pie.`,
+  },
+  incienso: {
+    title: 'Libro del rito, de mano del arzobispo',
+    text: `Lo que San Martín cerró, yo lo abro.
+
+Cuatro cerrojos le echó el santo. Le cortó la mano al ídolo y la escondió con los inocentes. Cerró las compuertas de las tres pilas, para que la sangre no llegara a la puerta. Puso a los Velados delante. Y prohibió el humo, porque el dios no oye: huele.
+
+Los Velados se apartan ante el obispo de Braga, y el obispo soy yo. La Garra la tengo. Las pilas correrán.
+
+El humo: incienso negro, mirra y lo que Él pide. Se echa al incensario grande, el que cuelga ante su puerta. Guardo aquí lo que queda.`,
   },
   leonor: {
     title: 'Oración de Leonor',
@@ -414,6 +472,29 @@ export const MSG = {
   boardNoPlank: 'Te falta un tablón para tapiar esta ventana.',
   boardDone: (n) => (n > 0 ? `Clavas el tablón de través. Queda${n === 1 ? '' : 'n'} ${n} ventana${n === 1 ? '' : 's'} por tapiar.` : 'Clavas el último tablón. La casa está cerrada.'),
   henriqueFell: 'HENRIQUE HA CAÍDO',
+  // la Puerta del Dios Ignoto (game/crypt.js)
+  godDoor: 'Dos hojas de piedra negra, más altas que tres hombres. En ellas, un pentáculo invertido dentro de un círculo de signos que nadie sabe leer. Sobre el dintel, tres cabezas con los ojos vacíos y una inscripción: DEO IGNOTO. Al dios desconocido.',
+  godGuards: 'Los Velados la guardan. Mientras uno de los dos siga en pie, nadie la cruza.',
+  godGuardsDown: 'Los Velados han caído. Ya no la guarda nadie.',
+  godClaw: 'En el centro del pentáculo hay una cerradura redonda con la huella de una mano de cuatro dedos, con garras. Está vacía.',
+  godClawFits: 'En el centro del pentáculo hay una cerradura redonda con la huella de una mano de cuatro dedos, con garras. La Garra de Oro encajaría en ella.',
+  godBlood: (n) =>
+    n === 0
+      ? 'Las cinco puntas del pentáculo acaban en cinco círculos huecos, secos. Unos surcos bajan hacia ellos desde lo alto de la puerta, y otro sube desde el suelo.'
+      : n < 5
+        ? `De los cinco círculos de las puntas, ${n === 1 ? 'uno está lleno' : n + ' están llenos'} de sangre. ${n === 4 ? 'El otro sigue seco.' : 'Los otros siguen secos.'}`
+        : 'Los cinco círculos de las puntas están llenos de sangre. El pentáculo arde.',
+  godSmoke: 'Ante la puerta, sobre el estrado, cuelga un incensario enorme. Está frío.',
+  godSmokeOn: 'El humo negro del incensario se arrastra por el estrado hasta la puerta y se cuela por sus juntas.',
+  godSealed: 'Los cinco círculos están llenos. Sobre la puerta, la inscripción arde.',
+  godOpen: 'Giras la Garra en la cerradura. Desde muy hondo, la piedra contesta.',
+  godOpenArea: 'DEO IGNOTO',
+  censerCold: 'Un incensario de bronce, enorme, colgado de la bóveda por una sola cadena. Las brasas están frías. Huele a un incienso que no es de iglesia.',
+  censerLight: 'Echas el incienso negro a la boca del incensario. Prende solo. El humo no sube: se arrastra hacia la puerta.',
+  censerLit: 'El incensario se mece solo. Su humo negro se arrastra hacia la puerta.',
+  fontDone: (name, n) => `Tiras de la cadena hasta el final. La compuerta se abre y la pila de ${name} se vacía por el sumidero, camino de la puerta. (${n}/3)`,
+  clawAmbush: 'Una reja cae a tu espalda. En los sepulcros, algo se mueve.',
+  clawFree: 'La reja vuelve a subir.',
   died: 'HAS CAÍDO',
 };
 
@@ -469,6 +550,16 @@ export const AREA_NAMES = {
   smithy: 'Fragua',
   souto_house: 'Casa tapiada',
   crypt: 'Cripta de la Catedral',
+  catacumbas: 'Catacumbas de la Sé',
+  garra: 'Cámara de la Garra',
+  pila_oeste: 'Pila de los Inocentes',
+  galeria: 'Galería del Sello',
+  capilla_martin: 'Capilla de San Martín',
+  antesala: 'Antesala del Dios Ignoto',
+  pila_honda: 'Pila de los Condenados',
+  catacumbas_este: 'Catacumbas de levante',
+  pila_este: 'Pila de los Mártires',
+  sacristia: 'Sacristía del arzobispo',
   ossuary: 'Osario',
   roman: 'Templo de Bracara',
   tomb: 'Sepulcro del arzobispo',

@@ -13,6 +13,7 @@ import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
 import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
+import { buildDeepCrypt } from './level_crypt2.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
@@ -67,7 +68,7 @@ export function buildLevel() {
   corpseLog.length = 0;
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
-  const C = new WalkGrid(-24, -200, 24, -84, 0.5); // cripta
+  const C = new WalkGrid(-62, -200, 36, -84, 0.5); // cripta (y la cripta honda)
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
   const Dg = CASTLE.dun;
   const D = new WalkGrid(Dg.x0, Dg.z0, Dg.x1, Dg.z1, 0.5); // mazmorras del castillo
@@ -97,6 +98,7 @@ export function buildLevel() {
   buildCathedral(ctx, S, L);
   buildCloister(ctx, S, L);
   buildCrypt(ctx, S, C, L);
+  buildDeepCrypt(ctx, C, L);
   buildRiver(ctx, S, L);
   buildFillers(ctx, S, L);
   buildNorthWalls(ctx, S, L);
@@ -129,7 +131,8 @@ export function buildLevel() {
     ctx.endGroup();
     buildCentroRuin(ctx, waves[wg], wg);
   }
-  const nC = C.toColliders(ctx.col, -10.6, -1.2);
+  // (hasta el suelo de la antesala del Dios Ignoto, a -13)
+  const nC = C.toColliders(ctx.col, -14.2, -1.2);
   const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
   const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
   // losa de suelo global con los huecos de las escaleras de la cripta

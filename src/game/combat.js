@@ -73,7 +73,8 @@ export class Combat {
       } else if (r !== 'none') {
         const f = player.forward();
         this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, atk.holy ? 0xffe6a0 : 0xff9070);
-        g.fx.blood.emit(hx, hy, hz, atk.heavy ? 34 : 20, { dir: { x: f.x, z: f.z }, speed: atk.heavy ? 6 : 4.5 });
+        // (de la piedra saltan esquirlas, no sangre)
+        g.fx.blood.emit(hx, hy, hz, atk.heavy ? 34 : 20, { dir: { x: f.x, z: f.z }, speed: atk.heavy ? 6 : 4.5, color: e.T.blood });
         if (atk.holy) g.fx.blood.emit(hx, hy, hz, 10, { color: [1, 0.86, 0.45], speed: 3, life: 0.45, up: 1.2, gravity: -1 });
         g.audio && g.audio.play(atk.hitSnd || (atk.heavy ? 'hitHeavy' : 'hit'), e.pos);
         g.hitstop = Math.max(g.hitstop, atk.heavy ? 0.12 : 0.07);

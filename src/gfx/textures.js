@@ -1055,18 +1055,20 @@ function guardGen(emit) {
   return pixels(S, S, (x, y, o) => {
     const n = fbm2(x / 5, y / 5, 4, S / 5, 421);
     const g = hash2(x, y, 422);
-    // grietas: los bordes de las celdas de Worley, finas y quebradas
-    const [f1, f2] = worley2((x / S) * 4, (y / S) * 4, 4, 423, 1);
-    const crack = f2 - f1 < 0.035 + fbm2(x / 3, y / 3, 2, S / 3, 424) * 0.03;
+    // grietas: los bordes de las celdas de Worley, finas y quebradas; sólo
+    // las más hondas dejan ver la brasa (las demás, surcos oscuros)
+    const [f1, f2] = worley2((x / S) * 2, (y / S) * 2, 2, 423, 1);
+    const crack = f2 - f1 < 0.03 + fbm2(x / 4, y / 4, 2, S / 4, 424) * 0.025;
+    const hot = crack && fbm2(x / 16, y / 16, 2, S / 16, 425) > 0.58;
     if (emit) {
-      if (crack) set(o, 255, 90 + n * 60, 30);
+      if (hot) set(o, 255, 90 + n * 60, 30);
       else set(o, 0, 0, 0);
       return;
     }
-    let c = mix3([70, 66, 62], [104, 98, 90], n);
-    if (g > 0.93) c = mix3(c, [44, 40, 38], 0.7);
-    if (g < 0.04) c = mix3(c, [132, 126, 116], 0.6);
-    if (crack) c = [40, 16, 10];
+    let c = mix3([104, 100, 94], [150, 144, 134], n);
+    if (g > 0.93) c = mix3(c, [54, 50, 46], 0.7);
+    if (g < 0.04) c = mix3(c, [150, 144, 132], 0.6);
+    if (crack) c = hot ? [44, 18, 10] : [48, 44, 40];
     set(o, c[0], c[1], c[2]);
   });
 }

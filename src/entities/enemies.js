@@ -6,6 +6,7 @@ import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, build
 import { IMPALED_TYPE } from './impaled.js';
 import { HENRIQUE_TYPE } from './henrique.js';
 import { LEONOR_TYPE } from './leonor.js';
+import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -1164,6 +1165,8 @@ export const TYPES = {
   impaled: IMPALED_TYPE,
   henrique: HENRIQUE_TYPE,
   leonor: LEONOR_TYPE,
+  guardianL: GUARDIAN_L,
+  guardianR: GUARDIAN_R,
   turibulario: {
     name: 'El Turiferario',
     build: buildTuribulario,

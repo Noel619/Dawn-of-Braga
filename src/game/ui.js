@@ -440,7 +440,7 @@ export class UI {
     for (const w of WEAPON_ORDER) if (inv.has(WEAPONS[w].item)) out.push({ id: WEAPONS[w].item });
     if (inv.has('escudo')) out.push({ id: 'escudo' });
     out.push({ id: '_flask', n: g.player.flasks + '/' + g.player.maxFlasks });
-    for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'llave_sotano']) if (inv.has(k)) out.push({ id: k });
+    for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'llave_sotano', 'garra', 'incienso']) if (inv.has(k)) out.push({ id: k });
     const c = (k) => inv.count(k);
     if (c('tablon')) out.push({ id: 'tablon', n: '×' + c('tablon') });
     if (c('lagrima')) out.push({ id: 'lagrima' });
@@ -826,7 +826,9 @@ export class UI {
   drawBoss(b0, dt) {
     const W = Math.max(120, Math.min(260, Math.floor((innerWidth * 0.62) / this.sc.u))),
       H = 8;
-    const f = clamp(b0.hp / b0.maxHp, 0, 1);
+    // (los Velados: una sola barra con la vida de los dos)
+    const pr = b0.partner;
+    const f = pr ? clamp((Math.max(0, b0.hp) + (pr.dead ? 0 : Math.max(0, pr.hp))) / (b0.maxHp + pr.maxHp), 0, 1) : clamp(b0.hp / b0.maxHp, 0, 1);
     if (f < this.bossLag) this.bossLag = Math.max(f, this.bossLag - dt * 0.35);
     else this.bossLag = f;
     const key = [W, Math.round(f * W), Math.round(this.bossLag * W)].join(',');

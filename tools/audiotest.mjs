@@ -11,6 +11,7 @@ p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message));
 p.on('console', (m) => m.type() === 'error' && errs.push('CONSOLE: ' + m.text()));
 await p.goto('http://localhost:5199/package.json');
 await p.setContent('<html><body>audio</body></html>');
+if (process.env.ONLY) await p.evaluate((o) => (globalThis.__ONLY = o), process.env.ONLY);
 const res = await p.evaluate(async (mode) => {
   const base = 'http://localhost:5199';
   const { Audio } = await import(base + '/src/core/audio.js');
@@ -91,8 +92,9 @@ const res = await p.evaluate(async (mode) => {
   }
   const out = {};
   if (mode === 'temas' || mode === 'todo') {
-    const themes = ['title', 'city', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'chase', 'bossCellar', 'bossCellar2', 'cellarHunt', 'bossFinal', 'bossFinal2', 'ending'];
-    for (const th of themes) {
+    const themes = ['title', 'city', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'chase', 'bossCellar', 'bossCellar2', 'cellarHunt', 'bossFinal', 'bossFinal2', 'ending', 'sanctum', 'bossLeonor', 'bossLeonor2', 'bossGuardians', 'bossGuardians2'];
+    const onlyT = (globalThis.__ONLY || '').split(',').filter(Boolean);
+    for (const th of onlyT.length ? themes.filter((q) => onlyT.includes(q)) : themes) {
       // 0-24 s calma, 24-40 s tensión, 40-60 s combate
       const { buf, wall } = await render(
         60,
@@ -117,8 +119,9 @@ const res = await p.evaluate(async (mode) => {
     out.zonas = { ciudad: stats(buf, 2, 15), cripta: stats(buf, 20, 30) };
   }
   if (mode === 'efectos' || mode === 'todo') {
-    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory', 'crack', 'scuttle', 'boneCrack', 'breathClose', 'stairCreak', 'lampOut', 'whisperClose', 'scare', 'dread', 'chew', 'silence', 'drip', 'neckTwist', 'descScream', 'amaWhisper', 'doorSlam', 'corpseThud', 'giggle', 'amaCall', 'mimicSteps', 'whisperNear', 'pounceWhoosh', 'slamSoft', 'grab', 'bite', 'stoneCreak', 'pillarBreak', 'wallBreak', 'rackBreak', 'woodHit', 'dropCry', 'boneThrow', 'boneClatter', 'climb', 'leverPull', 'chainRun', 'gateStep', 'rageScream', 'snarl', 'leapBack', 'boneBlock', 'limbSnap', 'bodyFall', 'deathRattle', 'leverCreak', 'leverClunk', 'sackTear', 'dig', 'parry', 'deflect', 'riposte', 'peril', 'ramImpact', 'armorFall', 'armorClank', 'armorHit', 'scrape', 'beastRoar', 'beastRoarBig', 'colossusBreath', 'beastHurt', 'beastStep', 'fleshTear', 'fleshBurst', 'pikeWhoosh', 'leapWind', 'hayLand', 'qte', 'qteOk', 'qteFail', 'qteTick'];
-    for (const n of names) {
+    const names = ['crow', 'swing', 'swingHeavy', 'hit', 'hitHeavy', 'clang', 'block', 'guardbreak', 'playerHurt', 'roll', 'step', 'land', 'heal', 'slam', 'bellToll', 'roar', 'wail', 'wailHit', 'fireWhoosh', 'explosion', 'burn', 'doorOpen', 'gateOpen', 'unlock', 'locked', 'bar', 'boards', 'seal', 'pickup', 'paper', 'rest', 'death', 'stinger', 'phantom', 'discover', 'fog', 'victory', 'crack', 'scuttle', 'boneCrack', 'breathClose', 'stairCreak', 'lampOut', 'whisperClose', 'scare', 'dread', 'chew', 'silence', 'drip', 'neckTwist', 'descScream', 'amaWhisper', 'doorSlam', 'corpseThud', 'giggle', 'amaCall', 'mimicSteps', 'whisperNear', 'pounceWhoosh', 'slamSoft', 'grab', 'bite', 'stoneCreak', 'pillarBreak', 'wallBreak', 'rackBreak', 'woodHit', 'dropCry', 'boneThrow', 'boneClatter', 'climb', 'leverPull', 'chainRun', 'gateStep', 'rageScream', 'snarl', 'leapBack', 'boneBlock', 'limbSnap', 'bodyFall', 'deathRattle', 'leverCreak', 'leverClunk', 'sackTear', 'dig', 'parry', 'deflect', 'riposte', 'peril', 'ramImpact', 'armorFall', 'armorClank', 'armorHit', 'scrape', 'beastRoar', 'beastRoarBig', 'colossusBreath', 'beastHurt', 'beastStep', 'fleshTear', 'fleshBurst', 'pikeWhoosh', 'leapWind', 'hayLand', 'qte', 'qteOk', 'qteFail', 'qteTick', 'doorPound', 'shutterPound', 'shutterBreak', 'hammer', 'npcTalk', 'leonorTalk', 'pusSpew', 'pusSplat', 'pusSizzle', 'leonorWail', 'bloodDrain', 'godSeal', 'clawTurn', 'godDoor', 'censerLit'];
+    const only = (globalThis.__ONLY || '').split(',').filter(Boolean);
+    for (const n of only.length ? names.filter((q) => only.includes(q)) : names) {
       const { buf, wall } = await render(
         6,
         (au, g) => {
@@ -131,8 +134,8 @@ const res = await p.evaluate(async (mode) => {
       );
       out['fx:' + n] = { ...stats(buf, 0.4, 6), cpu: Math.round((wall / 6) * 1000) / 1000 };
     }
-    const voices = ['penitent', 'soldier', 'crawler', 'hound', 'bell', 'mourner', 'impaled', 'descoyuntado', 'boss'];
-    for (const v of voices)
+    const voices = ['penitent', 'soldier', 'crawler', 'hound', 'bell', 'mourner', 'impaled', 'descoyuntado', 'boss', 'henrique', 'leonor', 'guardian'];
+    for (const v of only.length ? voices.filter((q) => only.includes(q)) : voices)
       for (const k of ['alert', 'attack', 'hurt', 'death', 'idle', 'pain']) {
         const { buf } = await render(
           5,

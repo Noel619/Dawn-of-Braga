@@ -22,7 +22,16 @@ export const INSTANCES = [
   { id: 'empalado', name: 'El Empalado (lo alto del Postigo)' },
   { id: 'bestia', name: 'La huida de la Bestia' },
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
+  { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
+  { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
+  { id: 'garra', name: 'La cripta honda · la emboscada de la Garra' },
+  { id: 'velados', name: 'La cripta honda · los Velados (pelea)' },
+  { id: 'puerta', name: 'La cripta honda · la Puerta del Dios Ignoto (todo listo)' },
 ];
+
+// lo que pide la Puerta del Dios Ignoto (ver game/crypt.js)
+const GOD = ['boss:guardianes', 'boss:guardianL', 'boss:guardianR', 'lever:p_pila_oeste', 'lever:p_pila_este', 'lever:p_pila_honda', 'god:incense'];
+const DY_DAIS = -10; // el estrado de la puerta (y la cisterna)
 
 const FINALE_FLAGS = ['finale:rite', 'finale:turSeen', 'boss:turiferario', 'boss:turibulario'];
 
@@ -116,16 +125,12 @@ export async function goInstance(g, id) {
   const F = g.finale;
   switch (id) {
     case 'arzobispo': {
-      prepare(g, finale({}));
-      // ante la niebla del sello, abierto: se cruza y empieza la pelea
-      const seal = g.interact.list.find((i) => i.id === 'd_sello');
-      if (seal && !seal.done) {
-        g.interact.setOpen(seal, true);
-        g.flags['door:d_sello'] = true;
-      }
+      // ante la niebla de la cisterna, con la Puerta del Dios Ignoto abierta:
+      // se cruza y empieza la pelea
+      prepare(g, { ...finale({}), ...Object.fromEntries(GOD.map((k) => [k, true])), 'door:d_dios': true });
       const b = g.bosses.turibulario;
       if (b) b.reset();
-      place(g, 0, -7, -135.2, Math.PI);
+      place(g, -17.2, DY_DAIS, -152, Math.PI / 2);
       const fog = g.interact.list.find((i) => i.id === 'f_boss');
       if (fog) g.enterFog(fog);
       return true;
@@ -165,6 +170,43 @@ export async function goInstance(g, id) {
     case 'descoyuntado':
       prepare(g, { 'boss:descoyuntado': false, 'cine:sotano': false });
       g.startCutscene();
+      return true;
+    // la Casa del Alemán desde el principio: en el callejón, ante la puerta
+    // que aporrean
+    case 'casa': {
+      for (const k of Object.keys(g.flags)) if (k.startsWith('board:') || k.startsWith('ale:')) delete g.flags[k];
+      prepare(g, { 'door:d_aleman': false, 'boss:leonor': false });
+      place(g, 50, 0, -94.6, Math.PI);
+      return true;
+    }
+    // Leonor: ante la niebla de su gruta, bajo la casa
+    case 'leonor': {
+      prepare(g, { 'boss:leonor': false, 'door:d_sotano_ale': true, 'ale:door': true, 'ale:def': true, 'ale:lore': true, 'ale:reward': true });
+      const fog = g.interact.list.find((i) => i.id === 'f_leonor');
+      if (!fog) return false;
+      place(g, fog.x, fog.y, fog.z + 1.4, Math.PI);
+      g.enterFog(fog);
+      return true;
+    }
+    // la Cámara de la Garra, ante el relicario (la Garra sin coger)
+    case 'garra':
+      prepare(g, { 'take:i_garra': false, 'garra:ambush': false });
+      if (g.inventory.has('garra')) g.inventory.add('garra', -g.inventory.count('garra'));
+      place(g, -54, -7, -112.4, Math.PI);
+      return true;
+    // los Velados: en lo alto de la escalinata, ante su niebla
+    case 'velados': {
+      prepare(g, { 'boss:guardianes': false, 'boss:guardianL': false, 'boss:guardianR': false });
+      const fog = g.interact.list.find((i) => i.id === 'f_velados');
+      place(g, -48.4, -7, -152, Math.PI / 2);
+      if (fog) g.enterFog(fog);
+      return true;
+    }
+    // la puerta, con todo hecho y la Garra en la mano
+    case 'puerta':
+      prepare(g, { ...Object.fromEntries(GOD.map((k) => [k, true])), 'door:d_dios': false });
+      if (!g.inventory.has('garra')) g.inventory.add('garra');
+      place(g, -18.6, DY_DAIS, -152, Math.PI / 2);
       return true;
   }
   return false;

@@ -82,7 +82,22 @@ const steps = [
   "__use('h_almacen_arriba')", "__use('i_ampolla5')",
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
-  "__use('d_sello')",
+  // la cripta honda: la galería, San Martín, la Garra (su emboscada), las
+  // tres pilas, la sacristía del arzobispo, los Velados, el incensario y la
+  // Puerta del Dios Ignoto
+  "__use('n_pilas')", "__use('a_martin')", "__use('n_martin')", "__use('n_garra')", "__use('i_garra')",
+  "(()=>{const g=__game;for(let i=0;i<8;i++)__sim(0.5);return {garra:g.inventory.has('garra'),ambush:!!g.flags['garra:ambush'],gate:g.crypt.gate.box.enabled}})()",
+  "(()=>{const g=__game;const r=__use('p_pila_oeste');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_oeste']}})()",
+  "__use('d_sacristia')", "__use('i_incienso')", "__use('n_incienso')",
+  "(()=>{const g=__game;const r=__use('p_pila_este');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_este']}})()",
+  "__use('n_velados')",
+  "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_velados');g.enterFog(it);__sim(2);const fight=g.activeBoss&&g.activeBoss.type;const a=g.bosses.guardianL,b=g.bosses.guardianR;a.hp=1;a.die();__sim(1);const next=g.activeBoss&&g.activeBoss.type;b.hp=1;b.die();__sim(1);g.dev.god=false;return {fight,next,all:!!g.flags['boss:guardianes']}})()",
+  "new Promise(r=>setTimeout(()=>r({L:__game.flags['boss:guardianL'],R:__game.flags['boss:guardianR'],fog:__game.fogActive(__game.interact.list.find(i=>i.id==='f_velados'))}),3000))",
+  "(()=>{const g=__game;const r=__use('p_pila_honda');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_honda']}})()",
+  "__use('d_dios')",
+  "__use('x_incensario')",
+  "(()=>{const g=__game;g.player.spawn(-19.5,-10,-152,Math.PI/2);for(let i=0;i<24;i++)__sim(0.5);return {incense:!!g.flags['god:incense'],full:g.crypt.circlesFull(),flows:g.crypt.flows.length,insc:g.crypt.inscK,missing:g.crypt.missing()}})()",
+  "(()=>{const g=__game;const r=__use('d_dios');for(let i=0;i<14;i++)__sim(0.5);return {...r,open:!!g.flags['door:d_dios'],garra:g.inventory.has('garra')}})()",
   // el arzobispo pelea en la cisterna; vencido, el rito: empieza la película
   "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_boss');g.enterFog(it);__sim(1.5);const fight=g.activeBoss&&g.activeBoss.type;if(g.cutscene)g.cutscene.skip();__sim(0.5);const b=g.bosses.turibulario;b.die();__sim(1.5);const cine=!!g.cutscene;if(g.cutscene)g.cutscene.skip();__sim(0.3);g.ui.closeAll();__sim(0.5);return {fight,cine,rite:!!g.flags['finale:rite'],gone:!!g.bosses.turibulario.dead,stage:g.finale.stage,cp:g.flags['film:cp']}})()",
   // la película entera, con las pulsaciones acertadas solas: de la cisterna

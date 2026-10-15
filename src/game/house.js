@@ -831,6 +831,13 @@ export class HouseQuest {
     else if (m === 'lore') {
       // (si se fue sin escucharle: al volver a acercarse)
       if (!this.loreStarted && !this.script && Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < 6) this.startLore();
+    } else if (m === 'after' && this.F['boss:leonor'] && !this.griefSaid) {
+      // vencida Leonor: al volver a la casa, ya no la oye llorar
+      const H = A.house;
+      if (p.pos.x > H.x0 && p.pos.x < H.x1 && p.pos.z > H.z0 && p.pos.z < H.z1 && Math.abs(p.pos.y) < 2 && Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < 9) {
+        this.griefSaid = true;
+        this.run([{ say: DIALOG.henriqueGrief, clip: TALK_CLIPS[2] }]);
+      }
     }
     // la puerta tiembla con los golpes
     const d = this.door;

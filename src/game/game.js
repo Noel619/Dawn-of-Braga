@@ -39,7 +39,9 @@ import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
+import { CryptQuest } from './crypt.js';
 import { ALEMAN } from '../world/level_postigo.js';
+import { cryptFloorY } from '../world/level_crypt2.js';
 
 // en la celda de las mazmorras del castillo
 const START = CASTLE.start;
@@ -47,7 +49,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'] };
+const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -170,7 +172,7 @@ export class Game {
 
     // navegación
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
-    this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
+    this.navCrypt = new NavGrid(lvl.C, this.world.col, cryptFloorY);
     this.navDungeon = new NavGrid(lvl.D, this.world.col, () => CASTLE.dun.y);
     // el sótano del Alemán, el agujero de Leonor y su gruta
     {
@@ -200,6 +202,16 @@ export class Game {
     this.activeEnemies = [];
     this.bosses = {};
     for (const e of this.enemies) if (e.boss) this.bosses[e.type] = e;
+    // los Velados: dos jefes que pelean juntos (uno guarda al otro)
+    {
+      const a = this.bosses.guardianL,
+        b = this.bosses.guardianR;
+      if (a && b) {
+        a.partner = b;
+        b.partner = a;
+        this.bosses.guardianes = a;
+      }
+    }
     this.activeBoss = null;
 
     // cada personaje con sus propios materiales: luz horneada del sitio (sonda)
@@ -221,6 +233,8 @@ export class Game {
     // los bocadillos de diálogo y el guion de la Casa del Alemán
     this.speech = new Speech(this);
     this.house = new HouseQuest(this);
+    // la Puerta del Dios Ignoto: las pilas, el incensario y la Garra
+    this.crypt = new CryptQuest(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -335,6 +349,10 @@ export class Game {
       if (this.bossGone(e)) {
         e.dead = true;
         e.state = 'dead';
+        // (muerto hace mucho: no vuelve a verse de pie unos segundos ni a
+        // deshacerse en ceniza)
+        e.stT = 99;
+        e.data.dissolved = true;
         e.obj.visible = false;
         e.shadow.visible = false;
         if (e.P.censer) e.P.censer.grp.visible = false;
@@ -344,6 +362,7 @@ export class Game {
     this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
     this.finale.applyFlags();
     this.house.applyFlags();
+    this.crypt.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -727,6 +746,8 @@ export class Game {
   onLeaveRest() {}
 
   fogActive(it) {
+    // (la de los Velados: hasta que caen los dos)
+    if (it.boss === 'guardianes') return !this.flags['boss:guardianes'];
     const b = this.bosses[it.boss];
     // (la de la cisterna: tras el rito, o mientras dura, ya no está)
     if (it.boss === 'turibulario' && this.flags['finale:rite']) return false;
@@ -868,6 +889,16 @@ export class Game {
 
   onEnemyDeath(e) {
     if (this.lockTarget === e) this.lockTarget = null;
+    // los Velados: cae uno y el otro enloquece; la pelea sigue con él
+    if (e.boss && e.partner && !e.partner.dead) {
+      const o = e.partner;
+      this.activeBoss = o;
+      if (o.T.enrage) o.T.enrage(o);
+      this.onBossPhase(o);
+      this.ui.toast(`Cae ${e.T.title}. ${o.T.title[0].toUpperCase() + o.T.title.slice(1)} enloquece.`, 4);
+      return;
+    }
+    if (e.boss && e.partner) this.flags['boss:' + e.partner.type] = this.flags['boss:guardianes'] = true;
     if (e.boss) {
       this.flags['boss:' + e.type] = true;
       this.activeBoss = null;
@@ -875,7 +906,7 @@ export class Game {
       this.audio.play('victory');
       this.atmo.override = null;
       this.later(2500, () => {
-        this.ui.area(`${e.T.name.toUpperCase()} HA CAÍDO`);
+        this.ui.area(e.partner ? `${e.T.name.toUpperCase()} HAN CAÍDO` : `${e.T.name.toUpperCase()} HA CAÍDO`);
         this.interact.applyFlags(this.flags);
         for (const it of this.interact.list) if (it.kind === 'door' && it.lock.type === 'boss' && it.lock.boss === e.type) this.interact.setOpen(it), (this.flags['door:' + it.id] = true);
         this.saveGame();
@@ -957,6 +988,7 @@ export class Game {
     this.failing = false;
     this.speech.clear();
     this.house.onRespawn();
+    this.crypt.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -992,14 +1024,16 @@ export class Game {
     if (c) c.end();
   }
 
-  // Las bodegas, como al principio de la caza (tras morir en ellas).
+  // Las bodegas, como al principio de la caza (tras morir en ellas). (Las
+  // cadenas de las pilas de la cripta honda no son de las bodegas.)
   resetCellar() {
     const F = this.flags;
-    for (const k of Object.keys(F)) if (k.startsWith('lever:')) delete F[k];
+    const cellar = (it) => it.kind === 'lever' && !it.font;
+    for (const it of this.interact.list) if (cellar(it)) delete F['lever:' + it.id];
     delete F['door:d_rastrillo'];
     for (const it of this.breakables.list) delete F['broken:' + it.id];
     this.breakables.applyFlags(F, true);
-    for (const it of this.interact.list) if (it.kind === 'lever' || it.id === 'd_rastrillo') this.interact.reset(it);
+    for (const it of this.interact.list) if (cellar(it) || it.id === 'd_rastrillo') this.interact.reset(it);
   }
 
   // Lo que se rompió en una zona vuelve a estar entero (al morir).
@@ -1012,6 +1046,8 @@ export class Game {
   // Una palanca del rastrillo de la cisterna: la cadena corre por la bóveda
   // (se oye pasar por encima, camino del rastrillo) y la reja sube un palmo.
   onLever(it, n, gate) {
+    // (la compuerta de una pila de la cripta honda: ver game/crypt.js)
+    if (it.font) return this.crypt.onFont(it);
     const a = this.audio;
     this.ui.toast(MSG.palanca(n), 4.5);
     this.camRig.shake(0.2);
@@ -1579,6 +1615,7 @@ export class Game {
         this.chase.update(dt);
         this.finale.update(dt);
         this.house.update(dt);
+        this.crypt.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
