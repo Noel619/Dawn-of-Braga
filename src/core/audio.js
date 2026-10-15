@@ -3094,7 +3094,7 @@ export class Audio {
     let combat = 0;
     if (play && !p.dead) {
       for (const e of game.activeEnemies || []) {
-        if (e.dead || !e.aware || e.boss || e.T.friendly || Math.abs(e.pos.y - cp.y) > 6) continue;
+        if (e.dead || !e.aware || e.boss || (e.T && e.T.friendly) || Math.abs(e.pos.y - cp.y) > 6) continue;
         const dd = Math.hypot(e.pos.x - cp.x, e.pos.z - cp.z);
         combat = Math.max(combat, clamp(1.25 - dd / 22, 0, 1));
       }

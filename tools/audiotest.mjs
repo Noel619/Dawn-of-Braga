@@ -79,8 +79,13 @@ const res = await p.evaluate(async (mode) => {
     setup && setup(au, g);
     for (let t = 0.05; t < secs - 0.05; t += 0.05) {
       ctx.suspend(t).then(() => {
-        step && step(au, g, ctx.currentTime);
-        au.update(0.05, g);
+        // (un error aquí dejaba el render suspendido para siempre)
+        try {
+          step && step(au, g, ctx.currentTime);
+          au.update(0.05, g);
+        } catch (e) {
+          if (!render.err) render.err = String((e && e.stack) || e).split('\n').slice(0, 3).join(' | ');
+        }
         ctx.resume();
       });
     }
@@ -167,6 +172,7 @@ const res = await p.evaluate(async (mode) => {
       out['amb:' + z] = { ...stats(buf, 3, 20), cpu: Math.round((wall / 20) * 1000) / 1000 };
     }
   }
+  if (render.err) out.ERROR = render.err;
   return out;
 }, mode);
 for (const [k, v] of Object.entries(res)) console.log(k.padEnd(26), JSON.stringify(v));
