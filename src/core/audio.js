@@ -18,7 +18,7 @@
 // - Ambiente por capas (viento a rachas, la ciudad ardiendo, río, fuegos,
 //   moscas, el zumbido de los altares, el miedo) y sucesos propios de cada zona.
 // - Música adaptativa por zona y peligro (audio_music.js).
-import { SoundLib, mtof } from './audio_lib.js';
+import { SoundLib, mtof, krate } from './audio_lib.js';
 import { MusicEngine } from './audio_music.js';
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -29,10 +29,16 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const MASTER = 1.25;
 // Cuántos sonidos de cada clase pueden sonar a la vez (y cuántos pueden
 // empezar en un mismo fotograma: crear muchos nodos de golpe es un tirón).
-const CAP = { all: 32, pasos: 6, voz: 5, amb: 4, golpe: 8, jugador: 8, mundo: 10, ui: 8 };
-const PER_FRAME = { pasos: 3, voz: 2, amb: 1, golpe: 4 };
+// Los derrumbes van aparte: una manzana que revienta son decenas de muros a
+// la vez, y apilados sólo sumaban graves hasta que el limitador lo aplastaba
+// todo (el sonido «saturado»).
+const CAP = { all: 32, pasos: 6, voz: 5, amb: 4, golpe: 8, jugador: 8, mundo: 10, ui: 8, derrumbe: 4 };
+const PER_FRAME = { pasos: 3, voz: 2, amb: 1, golpe: 4, derrumbe: 2 };
+// (dos derrumbes que empiezan así de cerca en el tiempo suenan como uno: el
+// segundo no entra)
+const CRASH_GAP = 0.14;
 // tope por nombre para los que se repiten mucho
-const NAME_CAP = { step: 3, crow: 2, drip: 3, boneCrack: 4, scuttle: 3, dig: 3, mimicSteps: 2, whisperNear: 2, giggle: 2, chew: 2 };
+const NAME_CAP = { step: 3, crow: 2, drip: 3, boneCrack: 4, scuttle: 3, dig: 3, mimicSteps: 2, whisperNear: 2, giggle: 2, chew: 2, ratchet: 2, beastStep: 3, chainRun: 3, beastRoar: 2, beastRoarBig: 2 };
 // prioridad (0 relleno ... 5 nunca se aparta) y clase de cada efecto; el
 // resto es [3, 'mundo']
 const FX_PRIO = {
@@ -71,13 +77,13 @@ const FX_PRIO = {
   clang: [3, 'golpe'],
   block: [4, 'golpe'],
   guardbreak: [4, 'golpe'],
-  slam: [3, 'golpe'],
+  slam: [3, 'derrumbe'],
   slamSoft: [3, 'golpe'],
   woodHit: [3, 'golpe'],
   boneBlock: [3, 'golpe'],
   wailHit: [3, 'golpe'],
   fireWhoosh: [3, 'golpe'],
-  explosion: [4, 'golpe'],
+  explosion: [4, 'derrumbe'],
   boneCrack: [2, 'mundo'],
   scuttle: [2, 'mundo'],
   dig: [2, 'mundo'],
@@ -93,8 +99,13 @@ const FX_PRIO = {
   doorSlam: [5, 'mundo'],
   amaWhisper: [5, 'mundo'],
   seal: [4, 'mundo'],
-  pillarBreak: [4, 'mundo'],
-  wallBreak: [4, 'mundo'],
+  pillarBreak: [4, 'derrumbe'],
+  wallBreak: [4, 'derrumbe'],
+  woodBreak: [3, 'derrumbe'],
+  rackBreak: [3, 'derrumbe'],
+  houseFall: [4, 'derrumbe'],
+  // el torno de la espringala: un chasquido por diente
+  ratchet: [4, 'jugador'],
   // el Empalado y la Bestia de Carne
   ramImpact: [4, 'golpe'],
   armorFall: [3, 'mundo'],
@@ -128,6 +139,37 @@ const FX_PRIO = {
 const AHEAD = 0.25;
 // efectos que solo tocan la música (no crean voz)
 const MUSIC_ONLY = { stinger: 1, phantom: 1, discover: 1, silence: 1, dread: 1, victory: 1 };
+// Efectos horneados: los pesados que se repiten mucho (derrumbes, rugidos, el
+// gigante) se sintetizan una vez, en unas pocas variantes, en un
+// OfflineAudioContext (en los ratos libres, en su propio hilo) y luego suenan
+// como una muestra. Un derrumbe eran unos 120 nodos y un rugido grande, 80
+// con cuatro distorsiones sobremuestreadas: en la película del jefe final, con
+// casas reventando en ola, el hilo de audio no daba abasto (cortes, chasquidos,
+// silencios). n: variantes; dur: lo que dura como mucho (se recorta la cola);
+// kGain: el efecto usa o.k como volumen. Mientras no esté horneado, suena como
+// siempre.
+const BAKE = {
+  wallBreak: { n: 4, dur: 3.6 },
+  explosion: { n: 3, dur: 3.6 },
+  slam: { n: 3, dur: 2.9 },
+  crack: { n: 2, dur: 2 },
+  stoneCreak: { n: 2, dur: 1.6 },
+  woodBreak: { n: 3, dur: 1.4 },
+  rackBreak: { n: 2, dur: 2 },
+  houseFall: { n: 3, dur: 4.4 },
+  fleshBurst: { n: 3, dur: 2.6 },
+  fleshTear: { n: 2, dur: 1.2 },
+  beastRoar: { n: 3, dur: 3.4 },
+  beastRoarBig: { n: 3, dur: 4.6 },
+  beastHurt: { n: 2, dur: 1.3 },
+  beastStep: { n: 4, dur: 0.8 },
+  colossusBreath: { n: 2, dur: 5, kGain: true },
+  chainRun: { n: 3, dur: 1.5, kGain: true },
+  rageScream: { n: 2, dur: 3.4 },
+  roar: { n: 2, dur: 2.6 },
+};
+// (los que comparten síntesis)
+const BAKE_AS = { pillarBreak: 'wallBreak' };
 
 // Ganancia de compensación que el DynamicsCompressor de WebAudio añade por su
 // cuenta (fórmula de Blink/WebKit: curva estática con rodilla exponencial y
@@ -151,6 +193,18 @@ function compMakeup(thr, knee, ratio) {
   const yk = dB(kc(xk, k));
   const full = 1 < xk ? kc(1, k) : lin(yk + (0 - (thr + knee)) / ratio);
   return Math.pow(1 / full, 0.6);
+}
+
+// Recorta el silencio del final de un buffer horneado (por debajo de -80 dB).
+function trimTail(buf) {
+  const d = buf.getChannelData(0);
+  let n = d.length - 1;
+  while (n > 0 && Math.abs(d[n]) < 1e-4) n--;
+  const len = Math.max(1, Math.min(d.length, n + Math.ceil(buf.sampleRate * 0.02)));
+  if (len >= d.length - 64) return buf;
+  const out = new AudioBuffer({ length: len, numberOfChannels: 1, sampleRate: buf.sampleRate });
+  out.copyToChannel(d.subarray(0, len), 0);
+  return out;
 }
 
 // Recorte suave de seguridad: lineal hasta 0,85 (-1,4 dBFS) y luego se curva
@@ -294,7 +348,10 @@ export class Audio {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       try {
-        ctx = new AC({ latencyHint: 'interactive' });
+        // (un búfer de salida algo mayor que el mínimo: unos milisegundos más
+        // de latencia a cambio de que un tirón del sistema en un portátil no
+        // se convierta en un chasquido o un hueco de silencio)
+        ctx = new AC({ latencyHint: 'balanced' });
       } catch (e) {
         ctx = new AC();
       }
@@ -332,6 +389,20 @@ export class Audio {
     this.worldBus.connect(this.sfxVol);
     this.sfx = ctx.createGain();
     this.sfx.connect(this.worldBus);
+    // los derrumbes, con un compresor que los «pega»: una manzana entera que
+    // revienta suena a una sola cosa enorme y no a veinte golpes que se suman
+    // hasta que el limitador final lo aplasta todo
+    this.crashBus = ctx.createGain();
+    const cc = ctx.createDynamicsCompressor();
+    const C0 = [-14, 8, 3.5];
+    cc.threshold.value = C0[0];
+    cc.knee.value = C0[1];
+    cc.ratio.value = C0[2];
+    cc.attack.value = 0.006;
+    cc.release.value = 0.3;
+    const ctrim = ctx.createGain();
+    ctrim.gain.value = 1 / compMakeup(...C0);
+    this.crashBus.connect(cc).connect(ctrim).connect(this.sfx);
     this.amb = ctx.createGain();
     this.amb.connect(this.worldBus);
     // interfaz: seca y fuera de la pausa
@@ -455,6 +526,99 @@ export class Audio {
     this.idle(() => lib.static(4));
     for (const sec of [1.2, 0.9, 0.8]) this.idle(() => lib.chain(sec));
     this.idle(() => lib.drips());
+    // y los efectos horneados (cada variante, en su propio hilo)
+    this.idle(() => this.bakeAll());
+  }
+
+  // ------------------------------------------------------------ efectos horneados
+  // Todas las variantes de BAKE, de una en una (cada render ocupa un hilo).
+  bakeAll() {
+    if (this._bakeQ || typeof OfflineAudioContext === 'undefined') return;
+    this.baked = this.baked || {};
+    const q = (this._bakeQ = []);
+    // (primero una de cada, luego el resto: lo antes posible, algo para cada uno)
+    const names = Object.keys(BAKE);
+    const most = Math.max(...names.map((n) => BAKE[n].n));
+    for (let i = 0; i < most; i++) for (const n of names) if (i < BAKE[n].n) q.push(n);
+    const next = () => {
+      const name = q.shift();
+      if (!name) return;
+      this.idle(() =>
+        this._bakeOne(name, BAKE[name])
+          .then((v) => {
+            const B = this.baked[name] || (this.baked[name] = { list: [], last: -1 });
+            if (v) B.list.push(v);
+          })
+          .catch(() => {})
+          .finally(next)
+      );
+    };
+    next();
+  }
+  // (para las pruebas) [variantes horneadas, total]
+  bakeProgress() {
+    const total = Object.values(BAKE).reduce((a, s) => a + s.n, 0);
+    const done = Object.values(this.baked || {}).reduce((a, B) => a + B.list.length, 0);
+    return [done, total];
+  }
+  // Una variante: el mismo play(), seco (sin sala ni distancia) y mono, en un
+  // contexto sin conexión. Devuelve { buf, o (lo que pidió a out()), duck }.
+  _bakeOne(name, spec) {
+    const sr = this.ctx.sampleRate;
+    const oc = new OfflineAudioContext(1, Math.ceil(sr * spec.dur), sr);
+    const R = Object.create(Audio.prototype);
+    Object.assign(R, {
+      ctx: oc,
+      ok: true,
+      baking: true,
+      lib: this.lib,
+      white: this.white,
+      pink: this.pink,
+      brown: this.brown,
+      raspCurve: this.raspCurve,
+      vol: this.vol,
+      voices: [],
+      _sched: [],
+      _new: {},
+      _later: [],
+      lis: { x: 0, y: 0, z: 0 },
+      basis: { ...this.basis },
+      _sp: { pan: 0, att: 1, d: 0 },
+      score: { stinger() {} },
+    });
+    const rec = { o: null, duck: null };
+    R.out = (pos, o = {}) => {
+      const g = oc.createGain();
+      g.gain.value = o.gain ?? 1;
+      g.connect(oc.destination);
+      g._voice = { src: [], until: 0 };
+      rec.o = o;
+      return g;
+    };
+    R.duck = (a, h) => {
+      if (!rec.duck || a > rec.duck[0]) rec.duck = [a, h];
+    };
+    R.admit = () => 1;
+    R.defer = () => false;
+    R.play(name, null, { pre: true });
+    if (!rec.o) return Promise.resolve(null);
+    return oc.startRendering().then((buf) => ({ buf: trimTail(buf), o: rec.o, duck: rec.duck }));
+  }
+  // Suena una variante horneada (al azar, sin repetir la última), con un
+  // pellizco de afinación; los derrumbes, por su bus. false si aún no hay.
+  _playBaked(name, P, o, t) {
+    const key = BAKE_AS[name] || name;
+    const B = this.baked && this.baked[key];
+    if (!B || !B.list.length) return false;
+    let i = Math.floor(Math.random() * B.list.length);
+    if (B.list.length > 1 && i === B.last) i = (i + 1) % B.list.length;
+    B.last = i;
+    const v = B.list[i];
+    const k = BAKE[key].kGain ? (o.k ?? 1) : 1;
+    const d = this.out(P, { ...v.o, gain: k * (o.gain ?? 1) });
+    this.smp(d, t, v.buf, { rate: rnd(0.965, 1.035) });
+    if (v.duck) this.duck(v.duck[0], v.duck[1]);
+    return true;
   }
 
   // (saltando una cinemática: el mundo calla un momento)
@@ -664,6 +828,7 @@ export class Audio {
         nCat = 0,
         nName = 0,
         recent = 0,
+        crashes = 0,
         wAll = null,
         wCat = null,
         sAll = 1e9,
@@ -684,6 +849,7 @@ export class Audio {
             sCat = s;
             wCat = v;
           }
+          if (cat === 'derrumbe' && now - v.t0 < CRASH_GAP) crashes++;
         }
         if (name && v.name === name) {
           nName++;
@@ -694,6 +860,10 @@ export class Audio {
       // tercero ya no (no suma nada y dispara el pico)
       if (recent >= 2) return 0;
       if (recent === 1) k = 0.7;
+      // derrumbes casi a la vez: suenan como uno más gordo (el segundo, más
+      // bajo; el tercero, más aún; el cuarto ya no entra)
+      if (crashes >= 3) return 0;
+      if (crashes) k *= crashes === 1 ? 0.62 : 0.42;
       if (name && NAME_CAP[name] && nName >= NAME_CAP[name]) return 0;
       if (nCat >= (CAP[cat] ?? 10)) {
         if (!wCat) return 0;
@@ -854,7 +1024,7 @@ export class Audio {
       // los sonidos largos siguen a la cámara (unas pocas veces por segundo)
       if ((o.life ?? 3) >= 2.5) v.dyn = { x: px, y: py, z: pz, ref, roll, base: gain, pan: S.pan, att: S.att };
     } else g.gain.value = gain;
-    node.connect(o.bus || this.sfx);
+    node.connect(o.bus || (vc.cat === 'derrumbe' && this.crashBus) || this.sfx);
     if (wet > 0.001) {
       const send = (v.send = ctx.createGain());
       send.gain.value = wet;
@@ -875,7 +1045,7 @@ export class Audio {
     const f = ctx.createBiquadFilter();
     f.type = type;
     f.frequency.setValueAtTime(f0, t0);
-    if (f1) f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
+    if (f1) krate(f.frequency).exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
     f.Q.value = q;
     const g = ctx.createGain();
     a = Math.min(a, dur * 0.9);
@@ -899,7 +1069,7 @@ export class Audio {
     o.type = type;
     o.frequency.setValueAtTime(f0, t0);
     o.detune.value = detune;
-    if (f1) o.frequency.exponentialRampToValueAtTime(Math.max(10, f1), t0 + dur);
+    if (f1) krate(o.frequency).exponentialRampToValueAtTime(Math.max(10, f1), t0 + dur);
     const g = ctx.createGain();
     a = Math.min(a, dur * 0.9);
     g.gain.setValueAtTime(0.0001, t0);
@@ -958,6 +1128,9 @@ export class Audio {
     const ctx = this.ctx;
     const osc = ctx.createOscillator();
     osc.type = type;
+    // (el vibrato y el temblor, a bloques: muestra a muestra costaban el doble)
+    krate(osc.frequency);
+    krate(osc.detune);
     osc.frequency.setValueAtTime(f0, t0);
     if (f1) osc.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
     const nodes = [osc];
@@ -987,6 +1160,7 @@ export class Audio {
       // modulación subarmónica: voz rota, gruñido
       const sub = ctx.createOscillator();
       sub.type = 'square';
+      krate(sub.frequency);
       sub.frequency.setValueAtTime(f0 * 0.5, t0);
       if (f1) sub.frequency.exponentialRampToValueAtTime(f1 * 0.5, t0 + dur);
       const sg = ctx.createGain();
@@ -999,7 +1173,10 @@ export class Audio {
     if (dist > 0) {
       const ws = ctx.createWaveShaper();
       ws.curve = this.raspCurve;
-      ws.oversample = '2x';
+      // (sobremuestrear la distorsión cuadruplica su coste: sólo al hornear,
+      // donde no cuesta nada en pleno juego; en directo, la aspereza de más
+      // se pierde en los formantes)
+      ws.oversample = this.baking ? '2x' : 'none';
       src.connect(ws);
       exc = ws;
     }
@@ -1011,7 +1188,7 @@ export class Audio {
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
       bp.frequency.setValueAtTime(fr, t0);
-      if (V1) bp.frequency.linearRampToValueAtTime(V1[i][0], t0 + dur * 0.8);
+      if (V1) krate(bp.frequency).linearRampToValueAtTime(V1[i][0], t0 + dur * 0.8);
       bp.Q.value = fr / bw;
       const fg = ctx.createGain();
       fg.gain.value = amp;
@@ -1038,7 +1215,7 @@ export class Audio {
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
-    o.frequency.setValueAtTime(f, t0);
+    krate(o.frequency).setValueAtTime(f, t0);
     const n = Math.max(3, Math.floor(dur * 7));
     for (let i = 1; i <= n; i++) o.frequency.linearRampToValueAtTime(f * rnd(0.55, 1.6), t0 + (i / n) * dur);
     const mix = ctx.createGain();
@@ -1146,12 +1323,19 @@ export class Audio {
   // ------------------------------------------------------------ efectos
   play(name, pos = null, o = {}) {
     if (!this.ok) return;
+    // (saltando una cinemática el mundo calla: ni se sintetiza; el juego corre
+    // a ocho fotogramas por fotograma y apilaba cientos de sonidos mudos)
+    if (this._hush && !MUSIC_ONLY[name]) return;
     const t = this.t() + 0.005;
     const P = pos && pos.x !== undefined ? pos : null;
     if (P && this.dist(P) > (FAR[name] ?? 70)) return;
     if (!MUSIC_ONLY[name] && !o.pre) {
       const [prio, cat] = FX_PRIO[name] || [3, 'mundo'];
       if (this.admit(cat, prio, this.levelAt(P), name) !== 1) return;
+    }
+    if (!this.baking && (BAKE[name] || BAKE_AS[name]) && this._playBaked(name, P, o, t)) {
+      this._vc = null;
+      return;
     }
     let d;
     switch (name) {
@@ -2122,6 +2306,33 @@ export class Audio {
         this.duck(0.5, 1);
         break;
       }
+      // una casa entera que se viene abajo: el primer golpe, las vigas que se
+      // parten una tras otra, las tejas en cascada, las piedras que ruedan y
+      // el retumbar que tarda en apagarse
+      case 'houseFall': {
+        d = this.out(P, { gain: 1, verb: 0.75, life: 5, ref: 10, roll: 0.6 });
+        this.tone(d, t, 1.5, { f0: 50, f1: 24, gain: 0.85 });
+        this.noise(d, t, 2.8, { type: 'lowpass', f0: 1300, f1: 110, gain: 0.75, a: 0.004 });
+        this.smp(d, t, this.lib.drum('taiko'), { gain: 0.45, rate: 0.42 });
+        for (let i = 0; i < 4; i++) {
+          const tt = t + 0.05 + i * rnd(0.14, 0.32);
+          this.noise(d, tt, 0.06, { type: 'lowpass', f0: 4200, f1: 700, gain: 0.45, a: 0.001 });
+          this.creak(d, tt + 0.01, 0.24, rnd(90, 150), 0.12);
+          this.tone(d, tt, 0.26, { f0: rnd(120, 170), f1: 55, gain: 0.35 });
+        }
+        this.debris(d, t + 0.1, 30, 2.4, { f0: 1800, f1: 5200, gain: 0.85 });
+        this.debris(d, t + 0.3, 18, 2.9, { f0: 380, f1: 1300, gain: 1 });
+        this.noise(d, t + 0.4, 2.9, { f0: 2600, f1: 900, q: 0.9, gain: 0.12, a: 0.3, buf: this.pink, curve: 'lin' });
+        this.duck(0.45, 1.4);
+        break;
+      }
+      // el trinquete del torno: un diente que salta
+      case 'ratchet': {
+        d = this.out(P, { gain: 0.6, verb: 0.25, life: 0.6 });
+        this.noise(d, t, 0.025, { f0: rnd(2600, 3400), q: 6, gain: 0.4, a: 0.0008 });
+        this.tone(d, t, 0.05, { f0: rnd(240, 300), f1: 150, gain: 0.18 });
+        break;
+      }
       case 'rackBreak':
         d = this.out(P, { gain: 1, verb: 0.5, life: 4, ref: 6 });
         this.tone(d, t, 0.4, { f0: 140, f1: 55, gain: 0.8 });
@@ -2326,7 +2537,7 @@ export class Audio {
   // ------------------------------------------------------------ criaturas
   // (t0: cuándo se pidió, si viene aplazada)
   enemyVoice(e, kind, _a = null, t0 = null) {
-    if (!this.ok) return;
+    if (!this.ok || this._hush) return;
     const now = this.t();
     if (kind !== 'death' && e._vt && now - e._vt < 0.35) return;
     const v = e.T.voice;
@@ -2509,7 +2720,7 @@ export class Audio {
   }
 
   enemyStep(e) {
-    if (!this.ok) return;
+    if (!this.ok || this._hush) return;
     const v = e.T.voice;
     const big = v === 'bell' || v === 'boss' || v === 'impaled' || v === 'guardian';
     if (this.dist(e.pos) > (big ? 45 : 22)) return;

@@ -764,6 +764,8 @@ export class HouseQuest {
     const g = this.g;
     const e = this.npc;
     if (!e) return;
+    // (la película del jefe final: aquí no pasa nada mientras tanto)
+    if (g.finale && g.finale.filmActive) return;
     this.t += dt;
     this.mt += dt;
     this.updateWindows(dt);
@@ -776,7 +778,9 @@ export class HouseQuest {
       else {
         // los golpes en la puerta, mientras sigan a lo suyo
         const d = this.door;
-        if (d && alive.some((o) => o.state === 'dormant' && o.idle === 'pound')) {
+        // (no mientras el gigante revienta la ciudad: se oían de fondo en la
+        // película del jefe final)
+        if (d && !(g.finale && g.finale.filmActive) && alive.some((o) => o.state === 'dormant' && o.idle === 'pound')) {
           this.poundT -= dt;
           if (this.poundT <= 0) {
             this.poundT = 1.1 + Math.random() * 1.3;

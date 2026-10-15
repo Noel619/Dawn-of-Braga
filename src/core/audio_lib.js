@@ -8,6 +8,17 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const DRIPS = Array.from({ length: 12 }, (_, i) => Math.round(650 * Math.pow(2000 / 650, i / 11)));
 const pluckKey = (freq, bright, dur) => 'pluck:' + freq.toFixed(2) + ':' + bright + ':' + dur;
 
+// Un parámetro que se mueve despacio (barridos de filtro, vibratos,
+// glisandos): calculado una vez por bloque de 128 muestras y no muestra a
+// muestra. Un filtro que barre o un oscilador con vibrato cuesta así la
+// mitad, y no se oye la diferencia (a 48 kHz son 375 pasos por segundo).
+export function krate(p) {
+  try {
+    p.automationRate = 'k-rate';
+  } catch (e) {}
+  return p;
+}
+
 // Pequeño generador pseudoaleatorio con semilla (sonidos reproducibles).
 function mulberry(seed) {
   let a = seed >>> 0;

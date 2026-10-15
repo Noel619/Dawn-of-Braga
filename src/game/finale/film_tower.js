@@ -57,7 +57,7 @@ export function springald1(D) {
   const g = D.g;
   const [gx, gy, gz] = T.gun;
   const S = new Springald(g, { pos: new V3(gx, gy, gz), yaw: Math.PI, bollard: new V3(gx + 1.9, gy, gz - 1.6), chainLen: 38, pitchLim: [-6, 24], yawLim: 60 });
-  S.onClick = () => g.audio && g.audio.play('unlock', S.base, { k: 0.6 });
+  S.onClick = () => g.audio && g.audio.play('ratchet', S.base);
   D.springald = S;
   D.tick(S);
   return S;

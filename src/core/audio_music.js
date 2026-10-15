@@ -6,7 +6,7 @@
 // Los cambios de zona se funden a compás. Instrumentos: órgano (ondas
 // periódicas), coro con formantes, cuerdas frotadas, zanfona, metales, salterio
 // y arpa (Karplus-Strong), campanas, tambores de guerra, pandero y tamboril.
-import { mtof, degree } from './audio_lib.js';
+import { mtof, degree, krate } from './audio_lib.js';
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -85,6 +85,17 @@ export class MusicEngine {
       } catch (e) {}
     }
   }
+  // Al acabar una nota (su fuente), su cadena se suelta del bus. Si no, cada
+  // nota dejaba sus nodos colgados del bus hasta que pasaba el recolector de
+  // basura y el bus los seguía procesando: la música costaba el doble al cabo
+  // de un minuto (el triple, en un portátil con poca memoria libre).
+  _free(src, head) {
+    src.onended = () => {
+      try {
+        head.disconnect();
+      } catch (e) {}
+    };
+  }
 
   // --------------------------------------------------------------- instrumentos
   // Órgano (una onda periódica por nota) con trémolo suave.
@@ -99,10 +110,12 @@ export class MusicEngine {
     lp.type = 'lowpass';
     lp.frequency.value = o.cutoff ?? Math.min(9000, mtof(midi) * 9);
     osc.connect(lp).connect(g);
-    this._pan(g, o.pan ?? rnd(-0.25, 0.25)).connect(dest);
+    const pan = this._pan(g, o.pan ?? rnd(-0.25, 0.25));
+    pan.connect(dest);
     const end = this.env(g, t, dur, vel, o.a ?? 0.07, o.r ?? 0.5);
     osc.start(t);
     osc.stop(end + 0.05);
+    this._free(osc, pan);
     return osc;
   }
 
@@ -139,7 +152,8 @@ export class MusicEngine {
     const f = mtof(midi);
     const shift = o.shift ?? (midi > 62 ? 1.18 : 1);
     const g = ctx.createGain();
-    this._pan(g, o.pan ?? rnd(-0.35, 0.35)).connect(this._bank(dest, vowel, shift));
+    const pan = this._pan(g, o.pan ?? rnd(-0.35, 0.35));
+    pan.connect(this._bank(dest, vowel, shift));
     const vib = ctx.createOscillator();
     vib.frequency.value = rnd(4.6, 5.6);
     const vg = ctx.createGain();
@@ -150,6 +164,8 @@ export class MusicEngine {
     for (const det of o.solo ? [0] : [-7, 6]) {
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth';
+      krate(osc.frequency);
+      krate(osc.detune);
       osc.frequency.value = f;
       osc.detune.value = det + rnd(-2, 2);
       if (o.glide) osc.frequency.exponentialRampToValueAtTime(mtof(midi + o.glide), t + dur);
@@ -171,6 +187,7 @@ export class MusicEngine {
     }
     const end = this.env(g, t, dur, vel, o.a ?? 0.45, o.r ?? 1.2);
     this._stop(nodes, end);
+    this._free(vib, pan);
   }
 
   // Cuerdas frotadas (conjunto o solista); trem = trémolo (Hz).
@@ -180,7 +197,7 @@ export class MusicEngine {
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.Q.value = 0.7;
-    lp.frequency.setValueAtTime(f * 1.5, t);
+    krate(lp.frequency).setValueAtTime(f * 1.5, t);
     lp.frequency.linearRampToValueAtTime(Math.min(8000, f * (o.bright ?? 5)), t + (o.a ?? 0.3));
     const g = ctx.createGain();
     let dst = g;
@@ -197,26 +214,33 @@ export class MusicEngine {
       dst = tg;
       nodes.push(lfo);
     }
-    const vib = ctx.createOscillator();
-    vib.frequency.value = rnd(5, 6);
-    const vg = ctx.createGain();
-    vg.gain.value = o.vib ?? 7;
-    vib.connect(vg);
-    nodes.push(vib);
+    // (las notas cortas, sin vibrato: no da tiempo a oírlo y cuesta)
+    let vg = null;
+    if (o.vib !== 0) {
+      const vib = ctx.createOscillator();
+      vib.frequency.value = rnd(5, 6);
+      vg = ctx.createGain();
+      vg.gain.value = o.vib ?? 7;
+      vib.connect(vg);
+      nodes.push(vib);
+    }
     for (const det of o.solo ? [0] : [-6, 7]) {
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth';
+      krate(osc.detune);
       osc.frequency.value = f;
       osc.detune.value = det;
-      vg.connect(osc.detune);
+      if (vg) vg.connect(osc.detune);
       osc.connect(lp);
       nodes.push(osc);
     }
     lp.connect(g);
-    this._pan(dst, o.pan ?? rnd(-0.3, 0.3)).connect(dest);
+    const pan = this._pan(dst, o.pan ?? rnd(-0.3, 0.3));
+    pan.connect(dest);
     const end = this.env(g, t, dur, vel, o.a ?? 0.3, o.r ?? 0.6);
     for (const n of nodes) n.start(t);
     this._stop(nodes, end);
+    this._free(nodes[nodes.length - 1], pan);
   }
 
   // Zanfona / viela: voz nasal para las melodías.
@@ -235,7 +259,7 @@ export class MusicEngine {
     vib.frequency.value = rnd(5.2, 6.2);
     const vg = ctx.createGain();
     vg.gain.value = 10;
-    vib.connect(vg).connect(osc.detune);
+    vib.connect(vg).connect(krate(osc.detune));
     const nasal = ctx.createBiquadFilter();
     nasal.type = 'peaking';
     nasal.frequency.value = 1350;
@@ -251,6 +275,7 @@ export class MusicEngine {
     const end = this.env(g, t, dur, vel, o.a ?? 0.06, o.r ?? 0.25);
     for (const n of [osc, osc2, vib]) n.start(t);
     this._stop([osc, osc2, vib], end);
+    this._free(osc, g);
   }
 
   // Metales (cuerno/sacabuche): el filtro se abre con la nota.
@@ -260,7 +285,7 @@ export class MusicEngine {
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.Q.value = 1.2;
-    lp.frequency.setValueAtTime(f * 1.2, t);
+    krate(lp.frequency).setValueAtTime(f * 1.2, t);
     lp.frequency.exponentialRampToValueAtTime(Math.min(7000, f * (o.bright ?? 6)), t + (o.a ?? 0.12) + 0.1);
     lp.frequency.exponentialRampToValueAtTime(Math.min(7000, f * 3), t + dur);
     const g = ctx.createGain();
@@ -268,17 +293,19 @@ export class MusicEngine {
     for (const det of [-5, 4]) {
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(f * 0.985, t);
+      krate(osc.frequency).setValueAtTime(f * 0.985, t);
       osc.frequency.exponentialRampToValueAtTime(f, t + 0.09);
       osc.detune.value = det;
       osc.connect(lp);
       nodes.push(osc);
     }
     lp.connect(g);
-    this._pan(g, o.pan ?? rnd(-0.2, 0.2)).connect(dest);
+    const pan = this._pan(g, o.pan ?? rnd(-0.2, 0.2));
+    pan.connect(dest);
     const end = this.env(g, t, dur, vel, o.a ?? 0.12, o.r ?? 0.4);
     for (const n of nodes) n.start(t);
     this._stop(nodes, end);
+    this._free(nodes[0], pan);
   }
 
   // Muestra de la biblioteca (salterio, campana, tambor...).
@@ -306,6 +333,7 @@ export class MusicEngine {
     node.connect(g).connect(dest);
     s.start(t);
     if (o.dur) s.stop(t + o.dur);
+    this._free(s, g);
     return s;
   }
   pluck(dest, t, midi, vel = 0.2, o = {}) {
@@ -332,7 +360,7 @@ export class MusicEngine {
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
     bp.Q.value = 1.4;
-    bp.frequency.setValueAtTime(f0, t);
+    krate(bp.frequency).setValueAtTime(f0, t);
     bp.frequency.exponentialRampToValueAtTime(f1, t + dur);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
@@ -341,6 +369,7 @@ export class MusicEngine {
     s.connect(bp).connect(g).connect(dest);
     s.start(t, Math.random() * 2);
     s.stop(t + dur + 0.15);
+    this._free(s, g);
   }
 
   // Susurros corales (ruido por formantes).
@@ -366,6 +395,7 @@ export class MusicEngine {
       s.connect(bp).connect(g).connect(p).connect(dest);
       s.start(t0, Math.random());
       s.stop(t0 + d + 0.05);
+      this._free(s, p);
     }
   }
 
@@ -376,7 +406,7 @@ export class MusicEngine {
     g.gain.value = 0;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.value = o.cutoff ?? 300;
+    krate(lp.frequency).value = o.cutoff ?? 300;
     lp.Q.value = o.q ?? 1.5;
     const lfo = ctx.createOscillator();
     lfo.frequency.value = o.rate ?? 0.07;
@@ -390,7 +420,7 @@ export class MusicEngine {
         const osc = ctx.createOscillator();
         if (o.wave && this.waves[o.wave]) osc.setPeriodicWave(this.waves[o.wave]);
         else osc.type = o.type ?? 'sawtooth';
-        osc.frequency.value = mtof(m);
+        krate(osc.frequency).value = mtof(m);
         osc.detune.value = det;
         const og = ctx.createGain();
         og.gain.value = 1 / (midis.length * 1.6);
@@ -401,6 +431,7 @@ export class MusicEngine {
     }
     lp.connect(g).connect(dest);
     const nodes = [...oscs.map((q) => q.osc), lfo];
+    this._free(lfo, g);
     return {
       gain: g,
       // cambia de acorde deslizando cada voz
@@ -1384,8 +1415,8 @@ function finalStep(S, phase) {
     const g = dies[d.i % dies.length];
     const n = degree(T.root + 12, T.mode, g);
     m.choir(L.base, t, spb * 0.98, n, phase ? 0.05 : 0.045, S.beat % 2 ? 'e' : 'a', { a: 0.05, r: 0.25 });
-    m.choir(L.base, t, spb * 0.98, n - 12, 0.035, 'o', { a: 0.05, r: 0.25 });
-    if (phase) m.choir(L.base, t, spb * 0.98, n + 12, 0.025, 'a', { a: 0.05, r: 0.25, shift: 1.25 });
+    m.choir(L.base, t, spb * 0.98, n - 12, 0.04, 'o', { a: 0.05, r: 0.25, solo: true });
+    if (phase) m.choir(L.base, t, spb * 0.98, n + 12, 0.028, 'a', { a: 0.05, r: 0.25, shift: 1.25, solo: true });
     d.i++;
   }
   // órgano de lengüetería en cada compás
@@ -1404,7 +1435,7 @@ function finalStep(S, phase) {
   const C = L.combat;
   if (inBar === 0) for (const n of [m.deg(T, chord, 1), m.deg(T, chord + 4, 1)]) m.brass(C, t, spb * 3.6, n, 0.044, { a: 0.18, r: 0.6, bright: 5 });
   if (inBar === 2) m.brass(C, t, spb * 1.8, m.deg(T, dies[(d.i + 5) % dies.length], 2), 0.04 + phase * 0.008, { a: 0.08, r: 0.35, bright: 7 });
-  for (let k = 0; k < 2; k++) m.strings(C, t + k * spb * 0.5, spb * 0.42, m.deg(T, k ? chord + 4 : chord, 2), 0.034, { a: 0.01, r: 0.07, bright: 5 });
+  for (let k = 0; k < 2; k++) m.strings(C, t + k * spb * 0.5, spb * 0.42, m.deg(T, k ? chord + 4 : chord, 2), 0.034, { a: 0.01, r: 0.07, bright: 5, vib: 0 });
   m.drum(C, t, 'taiko', inBar === 0 ? 0.42 : 0.26, 1.05);
   if (phase && inBar % 2 === 1) m.drum(C, t + spb * 0.5, 'taiko', 0.2, 1.2);
 }

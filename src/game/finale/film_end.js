@@ -68,7 +68,7 @@ export function springald2(D) {
   const [gx, gy, gz] = TN.gun;
   const yaw = Math.atan2(RIM.x - gx, RIM.z - gz);
   const S = new Springald(g, { pos: new V3(gx, gy, gz), yaw, bollard: new V3(...TN.bollard), chainLen: 46, pitchLim: [-26, 14], yawLim: 70 });
-  S.onClick = () => g.audio && g.audio.play('unlock', S.base, { k: 0.6 });
+  S.onClick = () => g.audio && g.audio.play('ratchet', S.base);
   D.springald2 = S;
   D.tick(S);
   return S;
