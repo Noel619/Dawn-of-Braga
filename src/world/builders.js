@@ -993,7 +993,9 @@ function houseBody(ctx, s, sub) {
       if (at === undefined && d.x !== undefined) at = d.side === 's' ? d.x - tx : d.side === 'n' ? tx - d.x : at;
       if (at === undefined && d.z !== undefined) at = d.side === 'e' ? tz - d.z : d.side === 'w' ? d.z - tz : at;
       if (at === undefined) at = L / 2;
-      doorsBySide[d.side].push({ at, w: d.w ?? 1.3, h: d.h ?? 2.3, frame: d.frame !== false });
+      // (sill: una ventana de verdad, un hueco en el muro desde esa altura;
+      // no se pasa por ella)
+      doorsBySide[d.side].push({ at, w: d.w ?? 1.3, h: d.h ?? 2.3, frame: d.frame !== false, sill: d.sill ?? 0 });
     }
   }
 
@@ -1014,10 +1016,17 @@ function houseBody(ctx, s, sub) {
         for (const d of ds) {
           const a = d.at - d.w / 2,
             b = d.at + d.w / 2;
-          seg(cur, a, 0, g1, 'e');
+          // (el tramo que sigue a otro hueco lleva también su jamba: con dos
+          // huecos en la misma fachada, a la segunda le faltaba)
+          seg(cur, a, 0, g1, (cur > 0 ? 'w' : '') + 'e');
           seg(a, b, d.h, g1, '');
+          if (d.sill) {
+            // ventana: el antepecho bajo el hueco, con su alféizar de piedra
+            seg(a, b, 0, d.sill, 't');
+            wb.box('ashlar', a - 0.06, d.sill - 0.06, -t - 0.03, b + 0.06, d.sill + 0.02, 0.1, { ao: false, faces: 'tnsew', room: 'out' });
+          }
           // umbral de piedra
-          wb.box('ashlar', a, 0, -t - 0.02, b, 0.035, 0.12, { ao: false, faces: 'tnsew' });
+          else wb.box('ashlar', a, 0, -t - 0.02, b, 0.035, 0.12, { ao: false, faces: 'tnsew' });
           cur = b;
         }
         seg(cur, L, 0, g1, ds.length ? 'w' : '');
@@ -1030,7 +1039,8 @@ function houseBody(ctx, s, sub) {
         const extS = nb[ends[0]] ? -0.07 : base,
           extE = nb[ends[1]] ? -0.07 : base;
         cur = 0;
-        for (const d of [...ds, { at: L + 10, w: 0 }]) {
+        // (bajo las ventanas sigue de corrido)
+        for (const d of [...ds.filter((q) => !q.sill), { at: L + 10, w: 0 }]) {
           const a = Math.min(L, d.at - d.w / 2);
           if (a - cur > 0.01) wb.box('wallstone', cur - (cur <= 0 ? extS : 0), 0, 0, a + (a >= L ? extE : 0), 0.65, 0.07, { sub: 2, aoH: 0.6, faces: 'ts' + (cur > 0 ? 'w' : '') + (a < L ? 'e' : ''), room: 'out' });
           cur = d.at + d.w / 2;
@@ -1044,6 +1054,7 @@ function houseBody(ctx, s, sub) {
         const a = Math.min(L, d.at - d.w / 2);
         if (a - cur > 0.01) addSideBox(ctx.col, sd, x0, z0, x1, z1, cur, a, t, 0, g1);
         if (d.h) addSideBox(ctx.col, sd, x0, z0, x1, z1, d.at - d.w / 2, d.at + d.w / 2, t, d.h, g1);
+        if (d.sill) addSideBox(ctx.col, sd, x0, z0, x1, z1, d.at - d.w / 2, d.at + d.w / 2, t, 0, d.sill);
         cur = d.at + d.w / 2;
       }
     }
@@ -1069,6 +1080,7 @@ function houseBody(ctx, s, sub) {
       ctx.S.paint(x0 + 0.01, z0 + 0.01, x1 - 0.01, z1 - 0.01, 1);
       for (const sd of ['n', 's', 'e', 'w'])
         for (const d of doorsBySide[sd]) {
+          if (d.sill) continue;
           const [cx, cz] = sidePoint(sd, x0, z0, x1, z1, d.at);
           const hw = d.w / 2;
           if (sd === 'n' || sd === 's') ctx.S.paint(cx - hw, cz - 0.8, cx + hw, cz + 0.8, 1);
@@ -1115,7 +1127,9 @@ function houseBody(ctx, s, sub) {
     sub: 1.6,
     tint: burnTint || (upperMat === 'plaster' ? tint : null),
     ao: false,
-    faces: jetty && !hollow ? 'nsewb' : 'nsew',
+    // (upperFaces: una fachada de la planta alta compuesta a mano, con un
+    // hueco de verdad)
+    faces: s.upperFaces ?? (jetty && !hollow ? 'nsewb' : 'nsew'),
     mats: { b: 'wooddark' },
     room: 'out',
   });

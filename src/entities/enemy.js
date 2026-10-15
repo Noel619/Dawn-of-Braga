@@ -84,8 +84,9 @@ export class Enemy {
     return !this.dead;
   }
   // (data.air: trepando por el techo o cayendo de él, fuera del alcance)
+  // (y Henrique, que es un aliado, nunca)
   get lockable() {
-    return !this.dead && this.obj.visible && this.state !== 'ceiling' && !this.data.air && !this.scripted;
+    return !this.dead && this.obj.visible && this.state !== 'ceiling' && !this.data.air && !this.scripted && !this.T.friendly;
   }
 
   reset() {
@@ -131,6 +132,15 @@ export class Enemy {
     }
     if (this._eyes) for (const m of this._eyes) m.material.emissiveIntensity = m.userData.baseEI ?? 2;
     this._flareOn = false;
+    // (a quién va: al jugador, salvo que el guion diga otra cosa)
+    this.foe = null;
+    // las que esperan fuera de escena a que el guion las llame (las oleadas
+    // de la Casa del Alemán): ocultas y quietas
+    if (s.held) {
+      this.scripted = true;
+      this.obj.visible = false;
+      this.shadow.visible = false;
+    }
     if (this.T.onReset) this.T.onReset(this);
   }
 
@@ -150,7 +160,7 @@ export class Enemy {
     const d = this.distTo(player.pos);
     const dormant = this.state === 'dormant' || this.state === 'ceiling';
     let sight = T.sight;
-    if (dormant && (this.idle === 'eat' || this.idle === 'pray' || this.idle === 'window')) sight *= 0.45;
+    if (dormant && (this.idle === 'eat' || this.idle === 'pray' || this.idle === 'window' || this.idle === 'pound')) sight *= 0.45;
     let hear = T.hear;
     if (player.sprinting) hear *= 2.2;
     if (player.state === 'attack' || player.state === 'roll') hear *= 1.6;
@@ -210,6 +220,7 @@ export class Enemy {
     if (g.navKeep && g.inKeep(this.pos)) return g.navKeep[y > CASTLE_KEEP_F2 ? 1 : 0];
     if (g.navCellar && y < -0.5 && g.inCellar(this.pos)) return g.navCellar;
     if (g.navDungeon && g.inDungeon(this.pos)) return g.navDungeon;
+    if (g.navLair && g.inLair(this.pos)) return g.navLair;
     if (y < -3) return this.game.navCrypt;
     if (y < 3 && y > -1.5) return this.game.navSurface;
     return null;
@@ -715,22 +726,24 @@ export class Enemy {
         const g = this.game.world.col.groundHeight(this.pos.x, this.pos.z, this.body.radius, this.pos.y + 1.5);
         this.pos.y = damp(this.pos.y, g, 6, dt);
       } else moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
-      // no atravesar al jugador (salvo si va por el techo)
-      if (!this.dead && !player.dead && !this.data.air) {
-        const dx = this.pos.x - player.pos.x,
-          dz = this.pos.z - player.pos.z;
+      // no atravesar al jugador (salvo si va por el techo); aunque vaya a
+      // por otro (Henrique), al jugador tampoco lo atraviesa
+      const pl = this.game.player;
+      if (!this.dead && !pl.dead && !this.data.air) {
+        const dx = this.pos.x - pl.pos.x,
+          dz = this.pos.z - pl.pos.z;
         const dd = Math.hypot(dx, dz);
-        const min = this.body.radius + player.body.radius;
-        if (dd < min && dd > 0.001 && Math.abs(this.pos.y - player.pos.y) < 1.5) {
+        const min = this.body.radius + pl.body.radius;
+        if (dd < min && dd > 0.001 && Math.abs(this.pos.y - pl.pos.y) < 1.5) {
           const push = (min - dd) * 0.5;
           this.pos.x += (dx / dd) * push;
           this.pos.z += (dz / dd) * push;
           if (this.T.heavy) {
-            player.pos.x -= (dx / dd) * push;
-            player.pos.z -= (dz / dd) * push;
+            pl.pos.x -= (dx / dd) * push;
+            pl.pos.z -= (dz / dd) * push;
           } else {
-            player.pos.x -= (dx / dd) * push * 0.6;
-            player.pos.z -= (dz / dd) * push * 0.6;
+            pl.pos.x -= (dx / dd) * push * 0.6;
+            pl.pos.z -= (dz / dd) * push * 0.6;
           }
         }
       }

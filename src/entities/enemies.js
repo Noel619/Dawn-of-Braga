@@ -4,6 +4,7 @@ import { clip, addRot, q2e, Spring } from './rig.js';
 import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.js';
 import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER, MOURNER_SKIRT, MOURNER_SKIRT_LEN } from './enemy_models.js';
 import { IMPALED_TYPE } from './impaled.js';
+import { HENRIQUE_TYPE } from './henrique.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -109,6 +110,13 @@ function penIdle(e, kind, t) {
     p = { root: [0, -52, 0], legL: [-98, 0, 6], shinL: [104, 0, 0], legR: [-98, 0, -6], shinR: [104, 0, 0], chest: [18 + w * 16, 0, 0], head: [30 + w * 6, 0, 0], armL: [-55, 0, -20], foreL: [-80, 0, 0], armR: [-55, 0, 20], foreR: [-80, 0, 0], handR: [0, 0, 0] };
   } else if (kind === 'window') {
     p = { chest: [0, 0, 0], head: [5, 0, 18 + w * 4], armL: [0, 0, 4], armR: [0, 0, -4], foreR: [-5, 0, 0] };
+  } else if (kind === 'pound') {
+    // aporreando una puerta o una contraventana con los dos puños, a golpes
+    // desacompasados (cada uno a su ritmo)
+    const k = t * 4.6 + e.phase;
+    const hL = Math.max(0, S(k)) ** 3,
+      hR = Math.max(0, S(k + 2.2)) ** 3;
+    p = { chest: [22 + (hL + hR) * 8, 0, (hL - hR) * 6], head: [-6, 0, (hR - hL) * 8], armL: [-150 + hL * 70, 0, 24], foreL: [-40 + hL * 30, 0, 0], armR: [-145 + hR * 70, 0, -24], foreR: [-44 + hR * 34, 0, 0], handR: [30, 0, 0] };
   } else {
     p = { ...PEN_BASE, chest: [30 + w * 6, 0, w * 6], head: [-15, 0, w * 10] };
   }
@@ -819,6 +827,13 @@ export const TYPES = {
     },
     idlePose: (e, kind, t, spd) => {
       if (kind === 'wander') return TYPES.soldier.loco(e, t, spd);
+      if (kind === 'pound') {
+        // contra la puerta a golpes de escudo y de hombro, con el tercer
+        // brazo arañando la madera
+        const k = t * 3.4 + e.phase;
+        const h = Math.max(0, S(k)) ** 3;
+        return rad({ chest: [18 + h * 12, -10 + h * 20, 0], head: [-8, 0, 0], armR: [-30, 0, -8], foreR: [-62, 0, 0], handR: [38, 0, 0], armL: [-70 + h * 40, 0, 26], foreL: [-80 + h * 30, 0, 0], arm3: [-90 + S(k * 2.3) * 40, 0, 20], fore3: [-30 + S(k * 2.9) * 30, 0, 0] });
+      }
       const p = humanStyle(e, t, { hunch: 6, armR: [-10, 0, -8], foreR: [-20, 0, 0], handR: [60, 0, 0], armL: [-20, 0, 12], foreL: [-60, 0, 0], headX: 20 + S(t * 0.8) * 6, headZ: S(t * 0.5) * 12 });
       p.arm3 = [S(t * 2.7) * 25, 0, S(t * 3.3) * 20];
       return rad(p);
@@ -907,6 +922,15 @@ export const TYPES = {
     loco: houndPose,
     idlePose: (e, kind, t) => {
       const p = houndPose(e, t, 0);
+      if (kind === 'pound') {
+        // de pie contra la madera, arañándola con las patas delanteras
+        const b = S(t * 11 + e.phase);
+        p.neck = [-30 * DEG, 0, b * 0.1];
+        p.head = [-10 * DEG, b * 0.15, 0];
+        p.jaw = [(25 + b * 15) * DEG, 0, 0];
+        p.flA = [(-80 + b * 30) * DEG, 0, 0];
+        p.frA = [(-80 - b * 30) * DEG, 0, 0];
+      }
       if (kind === 'eat') {
         const b = S(t * 9 + e.phase);
         p.neck = [60 * DEG + b * 0.15, 0, 0];
@@ -1137,6 +1161,7 @@ export const TYPES = {
     },
   },
   impaled: IMPALED_TYPE,
+  henrique: HENRIQUE_TYPE,
   turibulario: {
     name: 'El Turiferario',
     build: buildTuribulario,

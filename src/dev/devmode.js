@@ -319,7 +319,7 @@ export class DevMode {
         g.settings.fps = !g.settings.fps;
         break;
       case 'killNear':
-        for (const c of g.activeEnemies) if (!c.dead && !c.boss && c.distTo(p.pos) < 25) c.die();
+        for (const c of g.activeEnemies) if (!c.dead && !c.boss && !c.T.friendly && c.distTo(p.pos) < 25) c.die();
         break;
       case 'resetEnemies':
         for (const c of g.enemies) if (!(c.boss && g.flags['boss:' + c.type])) c.reset();

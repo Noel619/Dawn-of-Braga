@@ -676,7 +676,7 @@ export function buildRamparts(ctx, S, L) {
   houseRow(ctx, { axis: 'x', from: 22, to: 44, line: -50, side: 'n', seed: 701, depth: 9.5 });
   houseRow(ctx, { axis: 'x', from: 22, to: 44, line: -45.5, side: 's', seed: 702, depth: 8 });
   house(ctx, { x0: 44, z0: -45, x1: 64, z1: -40, front: 'n', seed: 703, h: 6.2 });
-  stoneWall(ctx, 40, -62, 48.5, -59.5, 5);
+  // (la tapia del norte, con el arco del Callejón del Postigo: level_postigo.js)
   stoneWall(ctx, 62, -56, 64, -45, 4);
   // (el pozo cae a plomo sobre la cisterna del canónigo, al fondo, lejos del
   // rastrillo)

@@ -242,11 +242,53 @@ export function buildParts(parts, matFn = null) {
   return { group, meshes };
 }
 
+// ------------------------------------------------------------- Solingen
+// La espada del abuelo de Henrique, del Sacro Imperio: hoja ancha y larga de
+// filos paralelos que se afilan al final, con un vaceo hondo y la inscripción
+// incrustada en hierro (IN NOMINE DOMINI), guarda recta y ancha de hierro
+// pavonado, puño de cuero sobre madera y pomo de rueda.
+export function solingenParts(j = 'sword') {
+  const L = 0.96;
+  const parts = [
+    // puño de cuero con dos virolas y el pomo de rueda (un disco grueso)
+    { j, type: 'cyl', s: [0.021, 0.023, 0.19], p: [0, Y, 0.0], r: [90, 0, 0], seg: 6, mat: 'leather' },
+    { j, type: 'cyl', s: [0.025, 0.025, 0.016], p: [0, Y, 0.088], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    { j, type: 'cyl', s: [0.024, 0.024, 0.014], p: [0, Y, -0.088], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    { j, type: 'cyl', s: [0.05, 0.05, 0.03], p: [0, Y, -0.118], r: [0, 0, 90], seg: 10, mat: 'iron' },
+    { j, type: 'cyl', s: [0.028, 0.028, 0.034], p: [0, Y, -0.118], r: [0, 0, 90], seg: 8, mat: 'bronze' },
+    // la guarda: una barra recta, ancha, que se ensancha en las puntas
+    { j, type: 'box', s: [0.3, 0.03, 0.04], p: [0, Y, 0.112], mat: 'iron' },
+    { j, type: 'box', s: [0.03, 0.045, 0.05], p: [0.15, Y, 0.112], mat: 'iron' },
+    { j, type: 'box', s: [0.03, 0.045, 0.05], p: [-0.15, Y, 0.112], mat: 'iron' },
+    // la hoja (filos paralelos y la punta), algo más ancha que la del carcelero
+    profile(
+      [
+        [0, 0.034],
+        [L * 0.78, 0.03],
+        [L * 0.93, 0.016],
+        [L, 0],
+        [L * 0.93, -0.016],
+        [L * 0.78, -0.03],
+        [0, -0.034],
+      ],
+      0.13,
+      0.012,
+      'plate',
+      j
+    ),
+    // el vaceo y la inscripción incrustada (puntos de latón a lo largo)
+    { j, type: 'box', s: [0.016, 0.014, L * 0.72], p: [0, Y, 0.13 + L * 0.38], mat: 'iron' },
+  ];
+  for (let i = 0; i < 9; i++) parts.push({ j, type: 'box', s: [0.018, 0.007, 0.016], p: [0, Y, 0.2 + i * 0.055], mat: 'bronze' });
+  return parts;
+}
+
 export const WEAPON_PARTS = {
   facon: faconParts,
   hacha: axeParts,
   lanza: spearParts,
   espada: (j) => swordParts(j),
+  solingen: solingenParts,
   katana: katanaParts,
 };
 

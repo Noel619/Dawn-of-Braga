@@ -371,6 +371,129 @@ const ICONS = {
     sparkle(b, 22, 16);
     b.outline(P.void);
   },
+  // tablón de pino con dos clavos torcidos donde estuvo clavado
+  plank(b) {
+    seg(b, 3.5, 24, 28.5, 9, 4.4, 4.4, (t, s, x, y) => {
+      if (s < -0.72) return P.wood4;
+      if (s > 0.72) return P.wood1;
+      // las vetas, a lo largo de la tabla
+      const v = Math.sin(t * 34 + s * 2.6 + Math.sin(t * 9) * 1.5);
+      if (v > 0.82) return P.wood1;
+      return shade(WOOD, 0.62 - s * 0.22 + (bayer(x, y) - 0.5) * 0.12, x, y);
+    });
+    // las testas, más oscuras (madera cortada)
+    seg(b, 3.5, 24, 4.6, 23.3, 4.4, 4.4, (t, s, x, y) => shade(WOOD, 0.35 - s * 0.15, x, y));
+    // un nudo
+    disc(b, 17.5, 17, 1.6, (l, d) => (d > 0.6 ? P.wood1 : l > 0.55 ? P.wood2 : P.wood0));
+    // los clavos, doblados
+    const nail = (t, s) => (s < 0 ? P.iron4 : P.iron2);
+    seg(b, 9.5, 21, 9.5, 15.5, 0.65, 0.65, nail);
+    seg(b, 9.5, 15.5, 12.5, 13.5, 0.65, 0.65, nail);
+    seg(b, 22.5, 13.5, 22, 8, 0.65, 0.65, nail);
+    seg(b, 22, 8, 19.5, 6.5, 0.65, 0.65, nail);
+    b.set(9, 21, P.iron5);
+    b.set(22, 13, P.iron5);
+    b.outline(P.void);
+  },
+  // martillo de herrero (cabeza de hierro, mango de fresno) y tres clavos
+  hammer(b) {
+    seg(b, 7, 28, 19, 10, 1.6, 1.4, (t, s, x, y) => (s < -0.3 ? P.wood4 : s > 0.4 ? P.wood1 : shade(WOOD, 0.62 + ((x + y) % 4 === 0 ? 0.12 : 0), x, y)));
+    // la cabeza, atravesada
+    seg(b, 12, 7, 26, 15.5, 3.2, 3.2, (t, s, x, y) => {
+      if (t < 0.12 || t > 0.9) return s < 0 ? P.iron5 : P.iron2; // bocas templadas
+      if (s < -0.55) return P.iron5;
+      if (s > 0.55) return P.iron1;
+      return shade(IRON, 0.58 + (bayer(x, y) - 0.5) * 0.18, x, y);
+    });
+    // la cuña del mango en el ojo de la cabeza
+    b.set(18, 11, P.wood3);
+    b.set(19, 11, P.wood2);
+    // los clavos, sueltos al pie
+    const nail = (t, s) => (s < 0 ? P.iron4 : P.iron2);
+    seg(b, 21, 27, 28, 25, 0.6, 0.6, nail);
+    seg(b, 22, 23.5, 28.5, 22.5, 0.6, 0.6, nail);
+    seg(b, 3, 20, 8, 22.5, 0.6, 0.6, nail);
+    for (const [x, y] of [
+      [21, 27],
+      [22, 23],
+      [3, 20],
+    ])
+      b.set(x, y, P.iron5);
+    b.outline(P.void);
+  },
+  // llave grande de hierro negro (la del sótano)
+  keyIron(b) {
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const dx = x + 0.5 - 9,
+          dy = y + 0.5 - 9;
+        const d = Math.hypot(dx, dy) * (1 + Math.abs(dx * dy) / 120);
+        if (d > 6.6 || d < 3.4) continue;
+        const l = (-dx - dy) / 13 + 0.5 + (d > 5 ? 0.1 : -0.2);
+        b.set(x, y, shade(IRON, l, x, y));
+      }
+    // la caña, larga y gruesa
+    seg(b, 13, 13, 27, 27, 1.7, 1.7, (t, s, x, y) => shade(IRON, s < -0.25 ? 0.95 : s > 0.4 ? 0.28 : 0.6, x, y));
+    // el paletón, en escalera
+    for (const [x, y, w, h] of [
+      [20, 25, 3, 5],
+      [17, 22, 3, 4],
+      [23, 28, 2, 3],
+    ])
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) b.set(x + i - (j >> 1), y + j, i === 0 ? P.iron4 : j === h - 1 ? P.iron1 : P.iron2);
+    // óxido en la anilla
+    for (const [x, y] of [
+      [4, 11],
+      [12, 4],
+      [13, 12],
+    ])
+      b.set(x, y, P.ember1);
+    b.set(6, 4, P.iron5);
+    b.outline(P.void);
+  },
+  // espada de Solingen: hoja ancha con vaceo, guarda recta de hierro y pomo
+  // de rueda; la inscripción incrustada brilla en el acero
+  solingen(b) {
+    seg(b, 12, 20, 28.5, 3.5, 2.6, 2.3, (t, s, x, y) => {
+      if (t > 0.88) {
+        const k = (1 - t) / 0.12;
+        if (Math.abs(s) > k * 1.05) return null;
+      }
+      if (s < -0.5) return P.steel5;
+      if (s > 0.55) return P.steel2;
+      // el vaceo, con la inscripción en hierro (puntos dorados)
+      if (Math.abs(s) < 0.22 && t < 0.78) return t > 0.12 && t < 0.62 && (x + y) % 3 === 0 ? P.gold3 : P.steel1;
+      return P.steel4;
+    });
+    // la guarda: una barra recta, ancha
+    seg(b, 6.5, 14.5, 17.5, 25.5, 1.4, 1.4, (t, s, x, y) => (s < -0.3 ? P.iron5 : s > 0.4 ? P.iron1 : shade(IRON, 0.62 - t * 0.2, x, y)));
+    // el puño de cuero
+    seg(b, 6.5, 25.5, 11.5, 20.5, 1.3, 1.3, (t, s, x, y) => ((x + y) % 2 ? (s < 0 ? P.wood2 : P.wood1) : s < 0 ? P.wood1 : P.wood0));
+    // el pomo de rueda
+    disc(b, 4.8, 27.2, 2.8, (l, d, x, y) => (d < 0.4 ? P.iron2 : shade(IRON, l + 0.1, x, y)));
+    sparkle(b, 23, 8);
+    b.outline(P.void);
+  },
+  // la lágrima de Leonor: una perla clara en forma de gota, con un reflejo
+  tear(b) {
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const dx = x + 0.5 - 16,
+          dy = y + 0.5 - 19;
+        // gota: círculo abajo que se afila hacia arriba
+        const r = dy > 0 ? 8 : 8 * Math.max(0, 1 + dy / 15) ** 1.6;
+        if (Math.abs(dx) > r || dy < -15 || Math.hypot(dx, Math.max(0, dy)) > 8) continue;
+        const l = 0.62 - dx / 18 - dy / 26 + (Math.abs(dx) > r - 1.2 ? -0.18 : 0);
+        b.set(x, y, shade([P.glass1, P.glass2, P.glass3, P.bone3, P.glass4, P.steel5], l, x, y));
+      }
+    // el reflejo
+    b.set(12, 17, P.steel5);
+    b.set(12, 18, P.steel5);
+    b.set(13, 16, P.glass4);
+    b.set(19, 24, P.glass4);
+    sparkle(b, 23, 9);
+    b.outline(P.void);
+  },
   // ampolla con las lágrimas de la santa (líquido ámbar que brilla)
   flask(b) {
     drawFlask(b, true);

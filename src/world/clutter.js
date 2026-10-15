@@ -43,7 +43,7 @@ const PALETTE = {
     ['bone', 0.3],
   ],
 };
-const ZONE_KIND = { castle: 'dirt', tanners: 'tannery', cloister: 'garden' };
+const ZONE_KIND = { castle: 'dirt', tanners: 'tannery', cloister: 'garden', patio_lena: 'dirt' };
 const SKIP_ATMO = new Set(['interior', 'prison', 'chapel', 'cathedral', 'crypt', 'arena', 'tunnel', 'dawn']);
 
 function pick(rng, list) {

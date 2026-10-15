@@ -173,6 +173,7 @@ const ZONE_MUSIC = {
   tunnel: 'crypt',
   arena: 'crypt',
   cellar: 'crypt',
+  lair: 'crypt',
   dawn: 'ending',
 };
 // sala (respuesta de impulso) y cantidad de reverberación
@@ -187,6 +188,7 @@ const ZONE_ROOM = {
   tunnel: ['crypt', 0.55],
   arena: ['hall', 0.55],
   cellar: ['crypt', 0.5],
+  lair: ['crypt', 0.55],
   dawn: ['open', 0.16],
 };
 // capas de fondo: viento, rumor del incendio, tono de sala, dron grave, río
@@ -201,6 +203,7 @@ const ZONE_BED = {
   tunnel: [0.06, 0, 0.12, 0.05, 0],
   arena: [0.02, 0, 0.12, 0.07, 0],
   cellar: [0, 0, 0.15, 0.08, 0],
+  lair: [0, 0, 0.15, 0.09, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
@@ -2106,6 +2109,86 @@ export class Audio {
         this.score.stinger('victory');
         this.silenceUntil = Math.max(this.silenceUntil, this.t() + 11);
         break;
+      // ---- la Casa del Alemán
+      // puñetazos y hoces contra una puerta recia: golpes sordos, la madera
+      // que cruje y los herrajes que tiemblan
+      case 'doorPound': {
+        d = this.out(P, { gain: 0.9, verb: 0.45, life: 2.5, ref: 5 });
+        const n = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < n; i++) {
+          const tt = t + i * rnd(0.16, 0.3);
+          this.tone(d, tt, 0.24, { f0: rnd(80, 105), f1: 45, gain: 0.75 });
+          this.noise(d, tt, 0.1, { type: 'lowpass', f0: 1600, f1: 300, gain: 0.55, a: 0.001, buf: this.brown, rate: 3 });
+          this.metal(d, tt + 0.01, rnd(420, 520), 0.025, 0.3, { ratios: [1, 2.3] });
+        }
+        if (Math.random() < 0.4) this.creak(d, t + n * 0.25, 0.4, rnd(70, 110), 0.1);
+        break;
+      }
+      // contra una contraventana: más seco, la tabla que vibra en sus goznes
+      case 'shutterPound': {
+        d = this.out(P, { gain: 0.8, verb: 0.4, life: 2, ref: 4 });
+        const n = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) {
+          const tt = t + i * rnd(0.12, 0.22);
+          this.tone(d, tt, 0.16, { f0: rnd(120, 160), f1: 70, gain: 0.55 });
+          this.noise(d, tt, 0.07, { type: 'lowpass', f0: 2600, f1: 500, gain: 0.45, a: 0.001 });
+          this.creak(d, tt + 0.03, 0.12, rnd(140, 200), 0.06);
+        }
+        break;
+      }
+      // la contraventana revienta hacia dentro
+      case 'shutterBreak': {
+        d = this.out(P, { gain: 1, verb: 0.45, life: 3, ref: 5 });
+        this.tone(d, t, 0.32, { f0: 130, f1: 45, gain: 0.85 });
+        this.noise(d, t, 0.08, { type: 'lowpass', f0: 4800, f1: 700, gain: 0.85, a: 0.001 });
+        this.noise(d, t + 0.01, 0.3, { f0: rnd(1200, 1800), f1: 600, q: 3, gain: 0.5, a: 0.002, buf: this.brown, rate: 4 });
+        this.debris(d, t + 0.02, 12, 0.35, { f0: 1600, f1: 4400, gain: 1.1 });
+        this.tone(d, t + 0.38, 0.2, { f0: rnd(110, 150), f1: 55, gain: 0.45 });
+        this.metal(d, t + 0.4, rnd(900, 1200), 0.05, 0.4, { ratios: [1, 2.7] }); // un gozne por el suelo
+        this.duck(0.25, 0.4);
+        break;
+      }
+      // el martillo en la cabeza del clavo (tres golpes y el último, a fondo)
+      case 'hammer': {
+        d = this.out(P, { gain: 0.85, verb: 0.35, life: 2.5 });
+        const n = o.n ?? 3;
+        for (let i = 0; i < n; i++) {
+          const tt = t + i * 0.32;
+          const last = i === n - 1;
+          this.metal(d, tt, rnd(1900, 2300) * (last ? 0.85 : 1), last ? 0.07 : 0.05, 0.25, { ratios: [1, 2.6, 4.3] });
+          this.tone(d, tt, 0.12, { f0: rnd(160, 220), f1: 100, gain: last ? 0.5 : 0.35 });
+          this.noise(d, tt, 0.04, { type: 'highpass', f0: 2500, gain: 0.25, a: 0.0005 });
+        }
+        break;
+      }
+      // Henrique habla: sílabas de voz de hombre, con ganas (o.len: segundos)
+      case 'npcTalk': {
+        d = this.out(P, { gain: 0.75, verb: 0.35, life: (o.len ?? 1.5) + 1.5, ref: 4 });
+        const f0 = 118 * (o.k ?? 1);
+        let tt = t;
+        const end = t + Math.min(4, o.len ?? 1.5);
+        while (tt < end) {
+          const l = rnd(0.08, 0.2);
+          this.voice(d, tt, l, { f0: f0 * rnd(0.9, 1.15), f1: f0 * rnd(0.85, 1.0), vowel: pick(['a', 'e', 'o', 'a', 'i']), v1: pick(['a', 'e', 'i', 'o', 'u']), gain: 0.085, vibD: 0, breath: 0.45, a: 0.015, jit: 18, rasp: 0.15 });
+          tt += l + (Math.random() < 0.18 ? rnd(0.15, 0.3) : rnd(0.02, 0.07));
+        }
+        break;
+      }
+      // Leonor: la voz rota por el llanto (hipidos y un gemido largo)
+      case 'leonorTalk': {
+        d = this.out(P, { gain: 0.8, verb: 0.6, life: (o.len ?? 1.5) + 2, ref: 5 });
+        const f0 = 250 * (o.k ?? 1);
+        let tt = t;
+        const end = t + Math.min(4, o.len ?? 1.5);
+        while (tt < end) {
+          const sob = Math.random() < 0.3;
+          const l = sob ? rnd(0.06, 0.1) : rnd(0.14, 0.3);
+          this.voice(d, tt, l, { f0: f0 * rnd(0.88, 1.12), f1: f0 * (sob ? 1.3 : rnd(0.7, 0.9)), vowel: pick(['o', 'a', 'u']), v1: pick(['a', 'u', 'o']), gain: sob ? 0.05 : 0.07, vib: 6, vibD: 18, breath: 1.2, a: 0.02, jit: 30, rasp: 0.35 });
+          tt += l + rnd(0.03, 0.12);
+        }
+        this.voice(d, end, 0.9, { f0: f0 * 1.05, f1: f0 * 0.6, vowel: 'o', v1: 'u', gain: 0.06, vib: 5, vibD: 25, breath: 1.4, a: 0.1, rasp: 0.4, rel: 0.8 });
+        break;
+      }
     }
     this._vc = null;
   }
@@ -2161,6 +2244,15 @@ export class Audio {
     const V = (o) => this.voice(d, t + (o.dt || 0), o.dur ?? 0.6, o);
     const pv = e._pv || (e._pv = rnd(0.9, 1.12)); // cada criatura con su timbre
     switch (v) {
+      // Henrique: un hombre de carne y hueso (gruñe al golpear, se queja)
+      case 'henrique':
+        if (kind === 'attack') V({ dur: 0.34, f0: 128, f1: 104, vowel: 'a', v1: 'o', gain: 0.2, vibD: 0, breath: 0.55, a: 0.01, rasp: 0.2 });
+        else if (kind === 'hurt' || kind === 'alert') V({ dur: 0.36, f0: 150, f1: 110, vowel: 'a', v1: 'u', gain: 0.24, breath: 0.5, a: 0.01, rasp: 0.25, jit: 14 });
+        else if (kind === 'death') {
+          V({ dur: 1.2, f0: 135, f1: 70, vowel: 'a', v1: 'o', gain: 0.24, vib: 5, vibD: 12, breath: 0.6, rasp: 0.3 });
+          this.bodyFall(d, t + 1.0, 1);
+        }
+        break;
       case 'penitent':
         if (kind === 'alert') V({ dur: 1.0, f0: 360 * pv, f1: 640 * pv, vowel: 'a', v1: 'i', gain: 0.22, vib: 9, vibD: 45, breath: 0.5, a: 0.04, rasp: 0.35, jit: 30 });
         else if (kind === 'attack') {
@@ -2861,7 +2953,7 @@ export class Audio {
     let combat = 0;
     if (play && !p.dead) {
       for (const e of game.activeEnemies || []) {
-        if (e.dead || !e.aware || e.boss || Math.abs(e.pos.y - cp.y) > 6) continue;
+        if (e.dead || !e.aware || e.boss || e.T.friendly || Math.abs(e.pos.y - cp.y) > 6) continue;
         const dd = Math.hypot(e.pos.x - cp.x, e.pos.z - cp.z);
         combat = Math.max(combat, clamp(1.25 - dd / 22, 0, 1));
       }

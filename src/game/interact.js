@@ -644,6 +644,11 @@ export class Interactables {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
       it.r = s.r;
+    } else if (s.kind === 'board' || s.kind === 'npc') {
+      // tapiar una ventana / hablar con Henrique: los enseña y los esconde
+      // el guion de la casa (game/house.js)
+      it.r = s.r ?? (s.kind === 'npc' ? 2.4 : 1.7);
+      it.hidden = true;
     }
     this.list.push(it);
     return it;
@@ -677,6 +682,7 @@ export class Interactables {
       }
       if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] || it.open ? 1 : 0);
       if (it.kind === 'bridge' && flags[it.flag]) this.lowerBridge(it, true);
+      if (it.kind === 'board' && flags['board:' + it.win]) it.done = true;
     }
     // los rastrillos de palancas: un palmo por palanca echada
     for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
@@ -974,6 +980,7 @@ export class Interactables {
         if (it.lock.type === 'seal') return 'Examinar la losa';
         if (it.lock.type === 'boss') return 'Examinar la reja';
         if (it.lock.type === 'levers') return 'Examinar el rastrillo';
+        if (it.lock.type === 'npc') return 'Llamar a la puerta';
         return 'Abrir';
       case 'item':
         return 'Recoger';
@@ -997,6 +1004,10 @@ export class Interactables {
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
       case 'bridge':
         return 'Soltar el torno del puente';
+      case 'board':
+        return 'Tapiar la ventana';
+      case 'npc':
+        return it.label ?? 'Hablar';
       case 'hatch':
         if (it.end === 'top') return this.game.flags[it.flag] || it.open ? 'Bajar por la escalera' : 'Abrir la trampilla';
         return this.game.flags[it.flag] || it.open ? 'Subir por la escalera' : 'Examinar la trampilla';
@@ -1056,7 +1067,19 @@ export class Interactables {
       } else if (L.type === 'levers') {
         g.ui.toast(MSG.rastrillo(this.leversDown(it)), 5);
         g.audio && g.audio.play('locked', it);
+      } else if (L.type === 'npc') {
+        // la abre (o no) quien está dentro: ver game/house.js
+        if (g.house) g.house.knock(it);
+        else g.ui.toast(MSG.doorAleman);
       }
+      return true;
+    }
+    if (it.kind === 'board') {
+      if (g.house) g.house.board(it);
+      return true;
+    }
+    if (it.kind === 'npc') {
+      if (g.house) g.house.talk();
       return true;
     }
     if (it.kind === 'lever') {

@@ -37,6 +37,9 @@ import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
+import { Speech } from './speech.js';
+import { HouseQuest } from './house.js';
+import { ALEMAN } from '../world/level_postigo.js';
 
 // en la celda de las mazmorras del castillo
 const START = CASTLE.start;
@@ -169,6 +172,14 @@ export class Game {
     this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
     this.navCrypt = new NavGrid(lvl.C, this.world.col, (x, z) => (z < -137 ? -10 : -7));
     this.navDungeon = new NavGrid(lvl.D, this.world.col, () => CASTLE.dun.y);
+    // el sótano del Alemán, el agujero de Leonor y su gruta
+    {
+      const A = ALEMAN;
+      const T = A.tunnel;
+      const zTop = T.zBot + T.n * T.run;
+      const yBot = A.cellar.y - T.n * T.rise;
+      this.navLair = new NavGrid(lvl.U, this.world.col, (x, z) => (z > A.house.z0 ? A.cellar.y : z < T.zBot ? yBot : z > zTop ? A.cellar.y : yBot + ((z - T.zBot) / (zTop - T.zBot)) * (A.cellar.y - yBot)));
+    }
     // los pisos altos de la torre del homenaje, con sus muros y tabiques
     {
       const K = CASTLE.keep;
@@ -207,6 +218,9 @@ export class Game {
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
+    // los bocadillos de diálogo y el guion de la Casa del Alemán
+    this.speech = new Speech(this);
+    this.house = new HouseQuest(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -329,6 +343,7 @@ export class Game {
     this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
     this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
     this.finale.applyFlags();
+    this.house.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -402,6 +417,9 @@ export class Game {
     this.slowmo = null;
     this.climb = null;
     this.finale.reset();
+    this.speech.clear();
+    this.house.script = null;
+    this.failing = false;
     this.introCam = false;
     this.atmo.override = null;
     this.bossLight.intensity = 0;
@@ -700,7 +718,7 @@ export class Game {
     this.lockTarget = null;
     this.fadeTarget = 0.55;
     this.later(900, () => (this.fadeTarget = 1));
-    for (const e of this.enemies) if (!e.boss) e.reset();
+    for (const e of this.enemies) if (!e.boss && !this.bossGone(e)) e.reset();
     this.fauna.reset();
     this.combat.clear();
     this.saveGame();
@@ -765,7 +783,10 @@ export class Game {
     return true;
   }
   // el arzobispo de la cisterna ya no está tras el rito (se lo llevó el dios)
+  // (y las criaturas de una escena que ya pasó: las que aporreaban la puerta
+  // de Henrique)
   bossGone(e) {
+    if (e.spec.story && this.flags[e.spec.story]) return true;
     return e.boss && (this.flags['boss:' + e.type] || (e.type === 'turibulario' && this.flags['finale:rite']));
   }
 
@@ -805,8 +826,44 @@ export class Game {
   }
 
   onEnemyAlert(e) {
+    if (e.T.friendly) return;
     if (!this.hintsShown.enemy && this.inventory.has('espada')) setTimeout(() => this.hint('enemy'), 600);
     if (!e.boss && Math.random() < 0.35) this.audio.play('stinger');
+    // las de un mismo grupo se vuelven todas a la vez (las que aporrean la
+    // puerta de Henrique)
+    if (e.spec.group) for (const o of this.enemies) if (o !== e && o.spec.group === e.spec.group && !o.dead && !o.aware && !o.scripted) o.alert();
+  }
+
+  // Henrique ha caído defendiendo su casa: la defensa se pierde. Las
+  // criaturas se le echan encima; tú ya no importas. Fundido y, desde el
+  // último altar, otra vez.
+  henriqueFell() {
+    if (this.player.dead || this.failing) return;
+    this.failing = true;
+    this.lockTarget = null;
+    this.audio.stopMusic();
+    this.audio.play('death');
+    const h = this.house.npc;
+    if (h) {
+      const c = this.camera.position;
+      const dx = c.x - h.pos.x,
+        dz = c.z - h.pos.z;
+      const d = Math.hypot(dx, dz) || 1;
+      const k = Math.min(d, 3.4) / d;
+      this.cinematic(5.5, new THREE.Vector3(h.pos.x + dx * k, h.pos.y + 1.9, h.pos.z + dz * k), new THREE.Vector3(h.pos.x, h.pos.y + 0.4, h.pos.z));
+    }
+    for (const e of this.enemies)
+      if (e.spec.wave && !e.dead && !e.scripted) {
+        e.foe = null;
+        e.aware = true;
+        e.atk = null;
+        e.state = 'dormant';
+        e.idle = 'eat';
+        e.anim.stop(0.3);
+      }
+    this.later(1500, () => this.ui.area(MSG.henriqueFell));
+    this.later(4600, () => (this.fadeTarget = 0));
+    this.later(6400, () => this.respawn());
   }
 
   onEnemyDeath(e) {
@@ -897,6 +954,9 @@ export class Game {
     if (!this.flags['boss:impaled']) this.resetArea('postigo');
     this.climb = null;
     this.finale.onRespawn();
+    this.failing = false;
+    this.speech.clear();
+    this.house.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -990,6 +1050,12 @@ export class Game {
   inKeep(p) {
     const K = CASTLE.keep;
     return p.x > K.x0 && p.x < K.x1 && p.z > K.z0 && p.z < K.z1 && p.y > K.F1 - 0.6 && p.y < K.R - 0.5;
+  }
+
+  // Bajo la Casa del Alemán: el sótano, el agujero y la gruta de Leonor.
+  inLair(p) {
+    const A = ALEMAN.grid;
+    return p.x > A[0] && p.x < A[2] && p.z > A[1] && p.z < A[3] && p.y < -1.2 && p.y > ALEMAN.lair.y - 3;
   }
 
   inDungeon(p) {
@@ -1499,7 +1565,8 @@ export class Game {
       }
       // (durante una cinemática las criaturas esperan)
       // (modo desarrollador: con la IA congelada sólo respiran)
-      if (this.state === 'play' && !this.cutscene && !this.dev.freezeAI) for (const e of this.activeEnemies) e.update(dt, p);
+      // (las que van a por otro, a por él: Henrique, en su casa)
+      if (this.state === 'play' && !this.cutscene && !this.dev.freezeAI) for (const e of this.activeEnemies) e.update(dt, e.foe && !e.foe.dead ? e.foe : p);
       else if (this.state === 'title' || this.dev.freezeAI) for (const e of this.activeEnemies) e.animate(dt);
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
@@ -1511,6 +1578,7 @@ export class Game {
         this.updateClimb(dt);
         this.chase.update(dt);
         this.finale.update(dt);
+        this.house.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
@@ -1561,7 +1629,7 @@ export class Game {
     let fear = 0;
     if (this.state === 'play') {
       for (const e of this.activeEnemies) {
-        if (e.dead || Math.abs(e.pos.y - p.pos.y) > 5) continue;
+        if (e.dead || e.T.friendly || !e.obj.visible || Math.abs(e.pos.y - p.pos.y) > 5) continue;
         const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
         fear = Math.max(fear, Math.max(0, 1 - d / (e.boss ? 30 : 18)) * (e.aware ? 1 : 0.7));
       }
@@ -1589,6 +1657,7 @@ export class Game {
 
     // HUD
     if (this.state === 'play' || this.state === 'paused') this.ui.updateHud(dt);
+    this.speech.update(this.ui.modal || this.state !== 'play' ? 0 : dt);
     this.dev.update(dt);
     this.playerShadow.position.set(p.pos.x, p.pos.y + 0.02, p.pos.z);
     this.playerShadow.visible = p.obj.visible;

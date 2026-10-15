@@ -33,6 +33,13 @@ export const ITEMS = {
     key: false,
     weapon: 'espada',
   },
+  solingen: {
+    name: 'Espada de Solingen',
+    desc: 'Espada del Sacro Imperio, forjada a orillas del Wupper, en Solingen, y traída a Braga por un cruzado de Colonia el año en que se tomó Lisboa. Hoja ancha con vaceo, guarda recta y pomo de rueda; en el acero, incrustado en hierro: + IN NOMINE DOMINI +. Corta un tercio más que la espada del carcelero.',
+    icon: 'solingen',
+    key: false,
+    weapon: 'solingen',
+  },
   katana: {
     name: 'Katana sagrada',
     desc: 'Hoja curva traída del Japón por un jesuita y bendecida en la Sé. Su acero reluce en la oscuridad. Se desenvaina y corta en un solo gesto.',
@@ -69,6 +76,31 @@ export const ITEMS = {
     desc: 'Anillo pastoral de oro. El sello tiene la forma del sigilo pintado en las puertas.',
     icon: 'ring',
     key: true,
+  },
+  tablon: {
+    name: 'Tablón',
+    desc: 'Un tablón de pino, recio, con los clavos todavía torcidos donde estuvo. Basta uno para tapiar una ventana.',
+    icon: 'plank',
+    key: true,
+  },
+  martillo: {
+    name: 'Martillo y clavos',
+    desc: 'El martillo de Henrique y una bolsa de clavos de su fragua, cuadrados y largos como un dedo. Con un tablón, se tapia una ventana.',
+    icon: 'hammer',
+    key: true,
+  },
+  llave_sotano: {
+    name: 'Llave del sótano',
+    desc: 'Llave de hierro negro, grande y fría. La de la puerta de la escalera de la despensa, en la Casa del Alemán. Henrique no se atrevió a usarla.',
+    icon: 'keyIron',
+    key: true,
+  },
+  lagrima: {
+    name: 'Lágrima de Leonor',
+    desc: 'La última lágrima de Leonor, limpia, cuajada en una perla clara. Pesa más de lo que parece. Podrás llevar una ampolla más.',
+    icon: 'tear',
+    key: false,
+    upgrade: 'flask',
   },
   ampolla: {
     name: 'Ampolla vacía',
@@ -268,6 +300,81 @@ He echado la tranca de la puerta que da a los Pellejeros. Por aquí no entra nad
 
 NO TE ARRODILLES`,
   },
+  abuelo: {
+    title: 'Carta del abuelo de Henrique',
+    text: `En latín de clérigo, y debajo, en romance, de otra mano:
+
+Yo, Heinrich, hijo de Konrad el espadero, de Solingen en el condado de Berg, crucé el mar con los de Colonia y vi caer Lisboa. Me quedé en esta tierra por una mujer de Braga y por su Dios, que es el mío.
+
+La espada la forjó mi padre a orillas del Wupper y la bendijo el arzobispo de Colonia antes de embarcar. No la he desenvainado contra cristiano.
+
+A mi nieto: que la saque sólo contra lo que no es de Dios.`,
+  },
+  leonor: {
+    title: 'Oración de Leonor',
+    text: `Señora de los Dolores, Madre que viste morir a tu Hijo: devuélveme al mío.
+
+Siete noches te he rezado. Siete velas. Siete puñales tienes en el pecho y ninguno es por mi Tomé.
+
+Tú callas. Henrique calla. Sólo la tierra me contesta: bajo la casa se oye cantar.
+
+Dice que me lo devuelve si bajo a buscarlo. Que me lo devuelve multiplicado.
+
+Voy a rezar más abajo.`,
+  },
+};
+
+// Lo que dicen los personajes (en bocadillos sobre la cabeza).
+export const DIALOG = {
+  // asomado a la ventana alta mientras aporrean su puerta (al azar)
+  henriqueWindow: [
+    '¡Fuera! ¡Fuera de mi casa, engendros!',
+    '¡No entraréis! ¡Por el alma de mi abuelo que no entraréis!',
+    '¡Dios, si me oyes, manda a alguien!',
+    '¡Leonor no está! ¡Aquí no hay nada para vosotros!',
+  ],
+  henriqueSee: '¡Tú! ¡Sí, tú, el de la espada! ¡Ayúdame, por lo que más quieras!',
+  henriqueSaved: ['¡Gracias a Dios! ¡Espera, que bajo!'],
+  henriqueDoor: ['¡Entra, rápido, antes de que vuelvan!'],
+  henriqueShut: ['Escucha... Esos no eran todos.', 'Los oigo rascar las contraventanas. ¡Vienen más, por las ventanas!', '¡No dejes que lleguen a mí!'],
+  // avisos durante la defensa: por dónde entran
+  henriqueWin: {
+    v_taller: '¡Por la ventana del taller!',
+    v_despensa: '¡Por la despensa!',
+    v_oeste: '¡Por el taller, el otro lado!',
+    v_este: '¡Por la despensa, por detrás!',
+    v_cocina: '¡Por la cocina!',
+  },
+  henriqueWave: ['¡Otra vez! ¡Ahí vienen otra vez!', '¡Más! ¡Dios mío, cuántos son!'],
+  henriqueHurt: ['¡Ay, Dios!', '¡Ayúdame!', '¡Que me matan!'],
+  henriqueHit: ['¡Toma, bestia!', '¡Fuera!', '¡A mi casa no!'],
+  // ya a salvo: quién es y lo que pide
+  henriqueLore: [
+    'Se acabó... por ahora. Me llamo Henrique. Henrique Alemão, cuchillero, como mi padre y como el suyo.',
+    'Mi abuelo vino del norte con los cruzados de Colonia, el año que se tomó Lisboa. Era de Solingen, a orillas del Wupper, donde se forjan las mejores hojas de la Cristiandad.',
+    'Se quedó en Braga por una mujer. Y trajo consigo una espada del Sacro Imperio, forjada por su padre y bendecida por el arzobispo de Colonia.',
+    'En la hoja aún se lee: IN NOMINE DOMINI. Nunca la ha tocado nadie más que nosotros.',
+    'No me pidas que me vaya. ¿A dónde? Las puertas de la muralla están cerradas, y la Sé... ya sabes lo que hay en la Sé.',
+    'Pero si me ayudas a hacer de esta casa un sitio seguro, a tapiar las ventanas que han roto, la espada de mi abuelo es tuya. Te lo juro por su alma.',
+    'Clavos y martillo tengo: tómalos. Lo que me falta es madera. Busca tablones: en el taller del carpintero, aquí enfrente, y en el patio de la leña, detrás de la casa. Donde los haya.',
+  ],
+  // mientras faltan ventanas (n: las que faltan)
+  henriqueBoards: (n) => [n === 1 ? 'Sólo falta una ventana. Una.' : `Faltan ${n} ventanas. Un tablón por ventana, y que aguante.`, 'Mira en el taller del carpintero, en el patio de la leña... y en el callejón, que esta noche hay de todo tirado.'],
+  // todas tapiadas: la espada, la llave y Leonor
+  henriqueReward1: ['Ahora sí. Que vengan, que se rompan los dientes contra la madera.', 'Te prometí la espada de mi abuelo. Tómala. Que haga contigo lo que hizo con él: volver vivo.'],
+  henriqueReward2: [
+    'Hay... hay algo más. No te lo he dicho antes porque me avergüenza.',
+    'Mi mujer, Leonor, está en el sótano. Desde que se nos murió Tomé, de las fiebres del asedio, no comía, no dormía. Rezaba a la Dolorosa día y noche.',
+    'Hace tres noches la oí bajar. Hablaba con alguien. Le pedía que le devolviera a su niño. Y algo le contestó desde debajo de la tierra. Hizo un trato con el diablo, te lo juro.',
+    'Desde entonces llora. Llora sin parar, ahí abajo. Y ya no llora como una mujer.',
+  ],
+  henriqueReward3: ['Toma la llave del sótano. Yo no tengo valor.', 'Si todavía es ella... dale descanso.'],
+  henriqueAfter: ['Ve con Dios. Yo me quedo aquí, junto al fuego, con lo que me queda.', 'La oigo llorar a través del suelo. Toda la noche.'],
+  henriqueGrief: ['Ya no la oigo. Por fin calla.', 'Gracias. Que Dios se la lleve con nuestro Tomé.', 'Esa espada es tuya. Mi abuelo diría que está en buenas manos.'],
+  // Leonor, en su gruta (sobre su cabeza)
+  leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
+  leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
+  leonorDeath: ['...Henrique...'],
 };
 
 export const MSG = {
@@ -300,6 +407,11 @@ export const MSG = {
   puenteBaja: 'Sueltas el freno del torno. Con un estruendo de cadenas, el puente levadizo cae sobre el rellano.',
   escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan asoman de la torre, volados sobre el hueco.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
+  doorAleman: 'Está atrancada por dentro. Al otro lado, alguien respira deprisa y reza en voz baja.',
+  boardNoHammer: 'La contraventana está hecha astillas. Con un tablón, martillo y clavos se podría tapiar.',
+  boardNoPlank: 'Te falta un tablón para tapiar esta ventana.',
+  boardDone: (n) => (n > 0 ? `Clavas el tablón de través. Queda${n === 1 ? '' : 'n'} ${n} ventana${n === 1 ? '' : 's'} por tapiar.` : 'Clavas el último tablón. La casa está cerrada.'),
+  henriqueFell: 'HENRIQUE HA CAÍDO',
   died: 'HAS CAÍDO',
 };
 
@@ -344,7 +456,13 @@ export const AREA_NAMES = {
   muralla: 'Calle de la Muralla',
   ramparts: 'Adarve oriental',
   gatehouse: 'Torre del Postigo',
-  postigo: 'Callejón del Postigo',
+  postigo: 'Patio del Postigo',
+  callejon_postigo: 'Callejón del Postigo',
+  casa_aleman: 'Casa del Alemán',
+  sotano_aleman: 'Sótano del Alemán',
+  gruta_leonor: 'La gruta de Leonor',
+  carpinteria: 'Taller del carpintero',
+  patio_lena: 'Patio de la leña',
   ferraria: 'Calle de la Herrería',
   smithy: 'Fragua',
   souto_house: 'Casa tapiada',

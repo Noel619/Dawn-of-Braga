@@ -31,7 +31,8 @@ export class Combat {
     // (los colosos del jefe final)
     if (g.finale) g.finale.playerSwing(player, atk);
     for (const e of g.activeEnemies) {
-      if (e.dead || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
+      // (a Henrique no se le hiere: es un aliado)
+      if (e.dead || e.T.friendly || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
       const dx = e.pos.x - player.pos.x,
         dz = e.pos.z - player.pos.z;
       const d = Math.hypot(dx, dz) || 0.001;
@@ -99,7 +100,7 @@ export class Combat {
     g.camRig.shake(0.3 + (player.atkMul - 1) * 0.4);
     g.input.rumble(0.7, 0.6, 160);
     for (const e of g.activeEnemies) {
-      if (e.dead || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
+      if (e.dead || e.T.friendly || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
       const d = Math.hypot(e.pos.x - tip.x, e.pos.z - tip.z);
       if (d > I.r + e.body.radius || Math.abs(e.pos.y - y) > 1.5) continue;
       player.hitSet.add(e);
@@ -111,6 +112,8 @@ export class Combat {
 
   // ------------------------------------------------------------ enemigos -> jugador
   enemyStrike(e, a, i) {
+    // (va a por otro, no a por ti: Henrique, en su casa)
+    if (e.foe && !e.foe.dead && e.foe !== this.game.player) return this.foeStrike(e, a, e.foe);
     const p = this.game.player;
     if (p.dead) return true;
     const dx = p.pos.x - e.pos.x,
@@ -128,6 +131,35 @@ export class Combat {
     return this.apply(e, a, x, z);
   }
 
+  // Un golpe de una criatura a otra (a Henrique, que defiende su casa): el
+  // mismo alcance y el mismo arco que contra el jugador. Si le alcanza
+  // también a ti, que estás al lado, te alcanza.
+  foeStrike(e, a, f) {
+    const g = this.game;
+    const p = g.player;
+    if (!p.dead && p.state !== 'roll') {
+      const pdx = p.pos.x - e.pos.x,
+        pdz = p.pos.z - e.pos.z;
+      const pd = Math.hypot(pdx, pdz);
+      if (pd < (a.range ?? 2) * 0.8 + p.body.radius && Math.abs(angleDiff(e.yaw, Math.atan2(pdx, pdz))) < (a.arc ?? 90) * 0.4 * DEG && Math.abs(p.pos.y - e.pos.y) < 1.5) return this.apply(e, a, e.pos.x, e.pos.z);
+    }
+    const dx = f.pos.x - e.pos.x,
+      dz = f.pos.z - e.pos.z;
+    const d = Math.hypot(dx, dz) || 0.001;
+    if (Math.abs(f.pos.y - e.pos.y) > 1.5) return false;
+    if (d > (a.range ?? 2) + f.body.radius) return false;
+    if (d > e.body.radius + 0.6 && Math.abs(angleDiff(e.yaw, Math.atan2(dx, dz))) > (a.arc ?? 90) * 0.5 * DEG) return false;
+    const r = f.takeHit(a.dmg, a.stDmg ?? a.dmg * 1.2, e.pos.x, e.pos.z, a.dmg >= 22, 0);
+    if (r === 'none') return false;
+    const hx = f.pos.x - (dx / d) * f.body.radius * 0.6,
+      hy = f.pos.y + 1.2,
+      hz = f.pos.z - (dz / d) * f.body.radius * 0.6;
+    g.fx.blood.emit(hx, hy, hz, 20, { dir: { x: dx / d, z: dz / d }, speed: 4.2 });
+    g.audio && g.audio.play('hit', f.pos);
+    g.audio && g.audio.enemyVoice(f, 'hurt');
+    return 'hit';
+  }
+
   // Un golpe de una criatura (src) que llega al jugador desde (sx, sz).
   // Devuelve false si no le alcanza (esquiva) o lo que pasó: 'hit',
   // 'block', 'guardbreak' o 'parry' (desviado: la criatura queda
@@ -135,6 +167,8 @@ export class Combat {
   apply(src, a, sx, sz) {
     const g = this.game;
     const p = g.player;
+    // (ha caído Henrique: ya nada va a por ti; todo se funde a negro)
+    if (g.failing) return false;
     const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip }, sx, sz);
     if (r === 'dodge' || r === 'none') return false;
     if (r === 'parry') {

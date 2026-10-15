@@ -194,8 +194,10 @@ export class UI {
     // HUD: lienzos a resolución de arte
     this.vit = $('vitals-cv');
     this.boss = $('boss-cv');
+    this.ally = $('ally-cv');
     this.hpLag = 1;
     this.bossLag = 1;
+    this.allyLag = 1;
     this.ebars = [];
     for (let i = 0; i < 6; i++) {
       const d = document.createElement('div');
@@ -438,8 +440,10 @@ export class UI {
     for (const w of WEAPON_ORDER) if (inv.has(WEAPONS[w].item)) out.push({ id: WEAPONS[w].item });
     if (inv.has('escudo')) out.push({ id: 'escudo' });
     out.push({ id: '_flask', n: g.player.flasks + '/' + g.player.maxFlasks });
-    for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo']) if (inv.has(k)) out.push({ id: k });
+    for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'llave_sotano']) if (inv.has(k)) out.push({ id: k });
     const c = (k) => inv.count(k);
+    if (c('tablon')) out.push({ id: 'tablon', n: '×' + c('tablon') });
+    if (c('lagrima')) out.push({ id: 'lagrima' });
     if (c('relicario')) out.push({ id: 'relicario', n: '×' + c('relicario') });
     if (c('ampolla')) out.push({ id: 'ampolla', n: '×' + c('ampolla') });
     if (c('piedra')) out.push({ id: 'piedra' });
@@ -483,11 +487,14 @@ export class UI {
         grid.appendChild(d);
       });
       const e = ents[this.invSel];
+      // (las armas: la que se empuña, y con «confirmar» se cambia a otra)
+      const wpn = e && e.id !== '_flask' && ITEMS[e.id].weapon;
+      const held = wpn && g.player.weaponId === wpn;
       if (e) {
         const it = e.id === '_flask' ? { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' } : ITEMS[e.id];
-        det.innerHTML = `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${sep}${this.statsHtml()}`;
+        det.innerHTML = `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${held ? '<p class="f-small">En la mano</p>' : ''}${sep}${this.statsHtml()}`;
       } else det.innerHTML = this.statsHtml();
-      $('inv-hint').innerHTML = `<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('back')} Cerrar</span>`;
+      $('inv-hint').innerHTML = `${wpn && !held ? `<span>${this.keyHtml('confirm')} Empuñar</span>` : ''}<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('back')} Cerrar</span>`;
     } else {
       const read = Object.keys(NOTES).filter((k) => g.flags['note:' + k]);
       this.invSel = clamp(this.invSel, 0, Math.max(0, read.length - 1));
@@ -838,10 +845,44 @@ export class UI {
     cv.style.height = b.h * this.sc.u + 'px';
   }
 
+  // La vida de Henrique mientras le defiendes: más corta y en verde.
+  drawAlly(e, dt) {
+    const W = 96,
+      H = 6;
+    const f = clamp(e.hp / e.maxHp, 0, 1);
+    if (f < this.allyLag) this.allyLag = Math.max(f, this.allyLag - dt * 0.4);
+    else this.allyLag = f;
+    const key = [Math.round(f * W), Math.round(this.allyLag * W), f < 0.3 && Math.floor(this.g.time * 4) % 2].join(',');
+    if (key === this._allyKey && this._allyU === this.sc.u) return;
+    this._allyKey = key;
+    this._allyU = this.sc.u;
+    const b = new Bitmap(W + 4, H + 2);
+    // (con poca vida, parpadea en rojo)
+    const low = f < 0.3 && Math.floor(this.g.time * 4) % 2;
+    this._bar(b, 1, 0, W, H - 2, f, this.allyLag, low ? [P.blood4, P.blood3, P.blood2, P.blood1] : [P.moss4, P.moss3, P.moss2, P.moss2]);
+    for (const x of [0, W + 3]) b.vline(x, 1, H - 2, P.iron3);
+    const cv = this.ally;
+    cv.width = b.w;
+    cv.height = b.h;
+    b.paint(cv.getContext('2d'));
+    cv.style.width = b.w * this.sc.u + 'px';
+    cv.style.height = b.h * this.sc.u + 'px';
+  }
+
   updateHud(dt) {
     const g = this.g,
       p = g.player;
     this.drawVitals(dt);
+    // aliado
+    const ab = $('allybar');
+    const al = g.house && g.house.allyBar();
+    if (al) {
+      ab.classList.add('show');
+      this.drawAlly(al, dt);
+    } else {
+      ab.classList.remove('show');
+      this.allyLag = 1;
+    }
     // indicación de interacción
     const pr = $('prompt');
     const t = g.promptTarget;
@@ -891,7 +932,8 @@ export class UI {
     let n = 0;
     for (const e of g.activeEnemies) {
       if (n >= this.ebars.length) break;
-      if (e.dead || e.boss || !e.obj.visible) continue;
+      // (Henrique lleva su propia barra, abajo, mientras le defiendes)
+      if (e.dead || e.boss || e.T.friendly || !e.obj.visible) continue;
       if (e.hitShown > 0) e.hitShown -= dt;
       if (!(e.hitShown > 0 || e === lt)) continue;
       const v = this._v.set(e.pos.x, e.pos.y + e.T.height + 0.35, e.pos.z).project(g.camera);
@@ -991,6 +1033,16 @@ export class UI {
               this.renderInv();
               au && au.ui('move');
             }
+          }
+          // empuñar otra arma
+          const e = conf && this.invEntries()[this.invSel];
+          const w = e && e.id !== '_flask' && ITEMS[e.id].weapon;
+          const p = this.g.player;
+          if (w && WEAPONS[w] && p.weaponId !== w) {
+            p.equipWeapon(w);
+            p.setEquipment(this.g.hasWeapon(), this.g.inventory.has('escudo'));
+            au && au.ui('confirm');
+            this.renderInv();
           }
         } else {
           if (dir.y) {

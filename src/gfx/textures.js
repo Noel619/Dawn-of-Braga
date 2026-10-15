@@ -733,6 +733,43 @@ const GEN = {
   fleshEmit() {
     return fleshGen(true);
   },
+  // Pus: amarillo verdoso, grumoso, con burbujas y vetas de sangre (la
+  // gruta de Leonor y su cuerpo); y lo que brilla de él en la oscuridad
+  pus() {
+    return pusGen(false);
+  },
+  pusEmit() {
+    return pusGen(true);
+  },
+  // Piel hinchada de Leonor: blanca, tirante y translúcida, con venas azules,
+  // lividez amoratada y pústulas amarillas
+  skinPus() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 6, y / 6, 4, S / 6, 401);
+      const v = 1 - Math.abs(fbm2(x / 7, y / 7, 4, S / 7, 402) * 2 - 1);
+      const liv = fbm2(x / 12 + 5, y / 12, 3, S / 12, 403);
+      const [f1, , id] = worley2((x / S) * 7, (y / S) * 7, 7, 404, 0.85);
+      const pust = hash2(id, 3, 405) > 0.62 && f1 < 0.2;
+      let c = mix3([168, 160, 150], [206, 198, 186], n);
+      if (liv > 0.6) c = mix3(c, [118, 92, 120], Math.min(1, (liv - 0.6) * 2.6));
+      if (v > 0.88) c = mix3(c, [70, 84, 126], Math.min(1, (v - 0.88) * 7));
+      if (pust) {
+        const k = 1 - f1 / 0.2;
+        c = mix3(c, [212, 186, 86], k * 0.9);
+        if (k > 0.75) c = mix3(c, [244, 232, 170], (k - 0.75) * 3);
+      }
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // Piedra de los guardianes: caliza oscura de grano fino, picada, con vetas
+  // y grietas por las que asoma la brasa (su emisión, aparte)
+  stoneGuard() {
+    return guardGen(false);
+  },
+  stoneGuardEmit() {
+    return guardGen(true);
+  },
 
   bone() {
     const S = 32;
@@ -988,6 +1025,52 @@ function clothGen(base, seed) {
   });
 }
 
+function pusGen(emit) {
+  const S = 64;
+  return pixels(S, S, (x, y, o) => {
+    const n = fbm2(x / 6, y / 6, 4, S / 6, 411);
+    const n2 = fbm2(x / 3, y / 3, 3, S / 3, 412);
+    const vein = 1 - Math.abs(fbm2(x / 10, y / 10, 4, S / 10, 413) * 2 - 1);
+    const [f1, , id] = worley2((x / S) * 6, (y / S) * 6, 6, 414, 0.9);
+    const bub = hash2(id, 2, 415) > 0.5 && f1 < 0.22;
+    if (emit) {
+      const k = bub ? 1 - f1 / 0.22 : 0;
+      const g = 0.25 + n * 0.35 + k * 0.6;
+      set(o, 150 * g, 140 * g, 30 * g);
+      return;
+    }
+    let c = mix3([118, 104, 30], [186, 168, 64], n);
+    c = mix3(c, [96, 112, 34], Math.max(0, n2 - 0.55) * 1.6);
+    if (vein > 0.9) c = mix3(c, [120, 34, 20], Math.min(1, (vein - 0.9) * 8));
+    if (bub) {
+      const k = 1 - f1 / 0.22;
+      c = mix3(c, [236, 224, 140], k * k);
+    }
+    set(o, c[0], c[1], c[2]);
+  });
+}
+
+function guardGen(emit) {
+  const S = 64;
+  return pixels(S, S, (x, y, o) => {
+    const n = fbm2(x / 5, y / 5, 4, S / 5, 421);
+    const g = hash2(x, y, 422);
+    // grietas: los bordes de las celdas de Worley, finas y quebradas
+    const [f1, f2] = worley2((x / S) * 4, (y / S) * 4, 4, 423, 1);
+    const crack = f2 - f1 < 0.035 + fbm2(x / 3, y / 3, 2, S / 3, 424) * 0.03;
+    if (emit) {
+      if (crack) set(o, 255, 90 + n * 60, 30);
+      else set(o, 0, 0, 0);
+      return;
+    }
+    let c = mix3([70, 66, 62], [104, 98, 90], n);
+    if (g > 0.93) c = mix3(c, [44, 40, 38], 0.7);
+    if (g < 0.04) c = mix3(c, [132, 126, 116], 0.6);
+    if (crack) c = [40, 16, 10];
+    set(o, c[0], c[1], c[2]);
+  });
+}
+
 function fleshGen(emit, pustK = 0.72) {
   const S = 64;
   return pixels(S, S, (x, y, o) => {
@@ -1163,6 +1246,40 @@ const SPRITES = {
   },
   bannerRed() {
     return bannerGen([100, 18, 20], false, 162);
+  },
+  // El estandarte del abuelo de Henrique: campo de oro con el águila negra
+  // del Sacro Imperio (las alas abiertas, el pico y las garras rojas)
+  bannerEagle() {
+    const W = 32,
+      H = 64;
+    const c = pixels(W, H, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, 0, 171);
+      const cut = H - 5 - vnoise2(x / 2, 0, 0, 172) * 10;
+      if (y > cut) {
+        set(o, 0, 0, 0, 0);
+        return;
+      }
+      const w = (x + y) % 2 ? 0.9 : 1;
+      const k = (0.75 + n * 0.4) * w;
+      let col = [196 * k, 150 * k, 46 * k];
+      const cx = x - W / 2 + 0.5,
+        cy = y - 24;
+      const ax = Math.abs(cx);
+      // cuerpo y cola
+      const body = (ax < 2.6 && cy > -6 && cy < 8) || (cy >= 8 && cy < 13 && ax < 1.5 + (cy - 8) * 0.7);
+      // alas: plumas que bajan en escalera hacia fuera
+      const wing = ax >= 2 && ax < 13 && cy > -6 + ax * 0.25 && cy < -1 + ax * 0.55 + ((Math.floor(ax / 2.2) % 2) ? 1.5 : 0);
+      // cabeza vuelta (a la izquierda del que mira) y cuello
+      const head = Math.hypot(cx + 1.4, cy + 8.5) < 2.4;
+      const beak = cx < -3 && cx > -5.6 && cy > -9.5 && cy < -7.5;
+      // patas abiertas con las garras
+      const leg = cy >= 6 && cy < 12 && ax > 2.4 && ax < 4.2 + (cy - 6) * 0.4;
+      if (body || wing || head || leg) col = [16, 12, 12];
+      if (beak || (leg && cy > 10.5) || (Math.abs(cx + 3) < 0.6 && cy > -7.6 && cy < -6)) col = [170, 24, 18];
+      if (head && Math.abs(cx + 1.0) < 0.6 && Math.abs(cy + 9.2) < 0.6) col = [220, 200, 120];
+      set(o, col[0], col[1], col[2], 255);
+    });
+    return toTex(c, { repeat: false });
   },
 };
 

@@ -12,6 +12,7 @@ import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
 import { buildCastle, CASTLE } from './level_castle.js';
+import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
@@ -70,6 +71,8 @@ export function buildLevel() {
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
   const Dg = CASTLE.dun;
   const D = new WalkGrid(Dg.x0, Dg.z0, Dg.x1, Dg.z1, 0.5); // mazmorras del castillo
+  const Ag = ALEMAN.grid;
+  const U = new WalkGrid(Ag[0], Ag[1], Ag[2], Ag[3], 0.5); // el sótano del Alemán y la gruta de Leonor
   ctx.S = S; // las casas visitables pintan su huella transitable
   ctx.floorHoles = []; // huecos en la losa de suelo (escaleras que bajan)
 
@@ -88,6 +91,8 @@ export function buildLevel() {
   buildTanners(ctx, S, L);
   const nB = buildCanon(ctx, S, B, L);
   buildRamparts(ctx, S, L);
+  buildPostigoAlley(ctx, S, U, L);
+  buildCarpenter(ctx, S, L);
   buildFerraria(ctx, S, L);
   buildCathedral(ctx, S, L);
   buildCloister(ctx, S, L);
@@ -126,6 +131,7 @@ export function buildLevel() {
   }
   const nC = C.toColliders(ctx.col, -10.6, -1.2);
   const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
+  const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(-96, -232, 84, 72, 1);
   F.paint(-96, -232, 84, 72, 1);
@@ -143,5 +149,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, B, D, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, clutter } };
+  return { ctx, L, meshes, S, C, B, D, U, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, lairBlocks: nU, clutter } };
 }

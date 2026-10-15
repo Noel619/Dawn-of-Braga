@@ -96,6 +96,10 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #bossbar { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); display: grid; gap: var(--u); opacity: 0; transition: opacity 0.8s steps(5); }
 #bossbar.show { opacity: 1; }
 #bossbar .name { font-family: 'Bastarda', serif; font-size: var(--fs-bast); line-height: 1.1; color: var(--bone-hi); text-shadow: var(--sh); padding-left: calc(var(--u) * 2); }
+/* la vida de quien defiendes (Henrique, en su casa) */
+#allybar { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); display: grid; justify-items: center; gap: var(--u); opacity: 0; transition: opacity 0.6s steps(4); }
+#allybar.show { opacity: 1; }
+#allybar .name { font-family: 'Silkscreen', monospace; font-size: var(--fs-small); line-height: calc(11px * var(--un)); letter-spacing: calc(1px * var(--un)); text-transform: uppercase; color: #cfdc8a; text-shadow: var(--sh); }
 
 #lock { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity 0.12s steps(2); }
 #lock.show { opacity: 1; }

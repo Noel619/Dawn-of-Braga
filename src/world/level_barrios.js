@@ -713,7 +713,14 @@ export function buildFillers(ctx, S, L) {
   const rng = new RNG(4242);
   // (sin voladizo: la fachada de una manzana de relleno suele dar a otra casa,
   // y la planta alta en saledizo se metía dentro de la vecina)
-  const block = (x0, z0, x1, z1, o = {}) => house(ctx, { x0, z0, x1, z1, front: o.front ?? rng.pick(['n', 's', 'e', 'w']), seed: Math.floor(rng.next() * 1e9), h: o.h ?? rng.range(5.8, 8.2), windows: o.windows, lit: o.lit, burned: o.burned, jetty: o.jetty ?? 0 });
+  // (skip: la manzana ya no está, pero se gastan sus tiradas para que el
+  // resto no cambie)
+  const block = (x0, z0, x1, z1, o = {}) => {
+    const front = o.front ?? rng.pick(['n', 's', 'e', 'w']),
+      seed = Math.floor(rng.next() * 1e9),
+      h = o.h ?? rng.range(5.8, 8.2);
+    if (!o.skip) house(ctx, { x0, z0, x1, z1, front, seed, h, windows: o.windows, lit: o.lit, burned: o.burned, jetty: o.jetty ?? 0 });
+  };
   // noroeste, detrás de la plaza de la catedral
   block(-48, -48, -38, -40, { front: 'n' });
   block(-38, -48, -27, -40, { front: 'n', lit: true });
@@ -731,14 +738,16 @@ export function buildFillers(ctx, S, L) {
   rng.next();
   rng.range(5.8, 8.2);
   block(42, -32, 48, -21);
-  block(40, -72, 50, -62, { front: 's' });
-  block(50, -72, 62, -62, { front: 's', lit: true });
-  block(37, -84, 48, -72);
-  block(48, -84, 62, -72, { burned: true });
-  block(37, -98, 50, -84);
-  block(50, -98, 64, -84, { lit: true });
+  // (donde estaban estas, el Callejón del Postigo, su plazuela y el taller
+  // del carpintero: level_postigo.js)
+  block(40, -72, 50, -62, { front: 's', skip: true });
+  block(50, -72, 62, -62, { front: 's', lit: true, skip: true });
+  block(37, -84, 48, -72, { skip: true });
+  block(48, -84, 62, -72, { burned: true, skip: true });
+  block(37, -98, 50, -84, { skip: true });
+  block(50, -98, 64, -84, { lit: true, skip: true });
   block(62, -84, 72, -68);
-  block(64, -100, 72, -84);
+  block(64, -100, 72, -84, { skip: true });
   // sureste: detrás de la capilla y hasta la muralla sur
   block(42, 22, 50, 31, { front: 'n' });
   block(50, 22, 58, 31, { front: 'n', lit: true });

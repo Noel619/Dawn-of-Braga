@@ -386,8 +386,18 @@ function swordMoves({ G }) {
   return { clips: C, light, heavy, run, roll };
 }
 
+// ---------------------------------------------------------------- Solingen
+// La espada del abuelo de Henrique: se maneja como la del carcelero (es una
+// espada de su misma familia), pero su acero corta un 35 % más.
+const SOLINGEN_K = 1.35;
+function solingenMoves(o) {
+  const M = swordMoves(o);
+  const up = (a) => ({ ...a, dmg: Math.round(a.dmg * SOLINGEN_K) });
+  return { clips: M.clips, light: M.light.map(up), heavy: M.heavy.map(up), run: up(M.run), roll: up(M.roll) };
+}
+
 // ---------------------------------------------------------------- registro
-export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'espada', 'katana'];
+export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'espada', 'solingen', 'katana'];
 
 export const WEAPONS = {
   espada: {
@@ -410,6 +420,23 @@ export const WEAPONS = {
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: swordMoves,
   },
+  solingen: {
+    id: 'solingen',
+    item: 'solingen',
+    order: 5,
+    hands: 1,
+    trail: [
+      [0, -0.05, 0.2],
+      [0, -0.05, 1.06],
+    ],
+    trailColor: 0xfff0d2,
+    tip: [0, -0.05, 1.09],
+    edge: 'double',
+    guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
+    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
+    block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
+    moves: solingenMoves,
+  },
   ...MOVESETS,
 };
 // Parry y golpe de gracia de cada arma: la ventana (s) que se abre al
@@ -420,6 +447,7 @@ const PARRY = {
   hacha: { win: 0.16, kind: 'haft', riposte: ['light', 2], dmg: 118 },
   lanza: { win: 0.2, kind: 'shield', riposte: ['heavy', 0], dmg: 110 },
   espada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 108 },
+  solingen: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * SOLINGEN_K) },
   katana: { win: 0.24, kind: 'blade', riposte: ['light', 3], dmg: 108 },
 };
 for (const id in WEAPONS) {

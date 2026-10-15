@@ -372,15 +372,22 @@ export function buildNorthWalls(ctx, S, L) {
   // ------------------------------------------------------------ manzanas
   // lo que se ve desde la muralla: tejados entre la muralla norte, la
   // catedral, el claustro y el muro este
-  const block = (x0, z0, x1, z1, o = {}) =>
-    house(ctx, { x0, z0, x1, z1, front: o.front ?? rng.pick(['n', 's', 'e', 'w']), seed: Math.floor(rng.next() * 1e9), h: o.h ?? rng.range(5.8, 8.4), lit: o.lit, burned: o.burned, jetty: 0 });
-  // noreste
+  // (skip: la manzana ya no está, pero se gastan sus tiradas para que el
+  // resto no cambie)
+  const block = (x0, z0, x1, z1, o = {}) => {
+    const front = o.front ?? rng.pick(['n', 's', 'e', 'w']),
+      seed = Math.floor(rng.next() * 1e9),
+      h = o.h ?? rng.range(5.8, 8.4);
+    if (!o.skip) house(ctx, { x0, z0, x1, z1, front, seed, h, lit: o.lit, burned: o.burned, jetty: 0 });
+  };
+  // noreste (donde estaban las dos de en medio, la Casa del Alemán, y la del
+  // este, el patio de la leña: level_postigo.js)
   block(38, -120.5, 50, -110, { front: 's' });
   block(50, -120.5, 61, -110, { burned: true });
   block(61, -120.5, 71, -109);
-  block(38, -110, 49, -98, { lit: true });
-  block(49, -110, 60, -98);
-  block(60, -109, 71, -100, { front: 'w' });
+  block(38, -110, 49, -98, { lit: true, skip: true });
+  block(49, -110, 60, -98, { skip: true });
+  block(60, -109, 71, -100, { front: 'w', skip: true });
   // detrás del claustro
   block(15, -120.5, 26, -109);
   block(26, -120.5, 37, -109, { lit: true });
