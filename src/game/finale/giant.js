@@ -150,6 +150,7 @@ export class Giant {
     if (this.eyeOut) this.setEye(this.eyeOut, true);
     this.coreBoost = 0;
     this.moveK = 1;
+    this.showParts();
     this.lightsOut(true);
     this.ik = {};
     this.footIK = {};
@@ -253,11 +254,23 @@ export class Giant {
     this.eyes[S === 'L' ? 1 : 0].visible = on;
     this.eyeOut = on ? null : S;
   }
+  // piezas del modelo que el guion quita (la aureola que se arranca, el
+  // estandarte que se lleva): fuera, y otra vez en su sitio al colocarlo
+  hidePart(o) {
+    if (!o || !o.visible) return;
+    o.visible = false;
+    (this._hidden || (this._hidden = [])).push(o);
+  }
+  showParts() {
+    for (const o of this._hidden || []) o.visible = true;
+    this._hidden = [];
+    if (this.lights.halo) this.lights.halo.dead = false;
+  }
   // muerto: los ojos y las velas de la corona, apagados (o encendidos otra vez)
   lightsOut(on = false) {
     for (const e of this.eyes) e.visible = on && !(this.eyeOut && e === this.eyes[this.eyeOut === 'L' ? 1 : 0]);
     for (const f of this.fx.flames) f.sp.visible = on;
-    for (const k of ['halo', 'crown']) if (this.lights[k]) this.lights[k].on = on && this.visible;
+    for (const k of ['halo', 'crown']) if (this.lights[k]) this.lights[k].on = on && this.visible && !this.lights[k].dead;
     if (on) this.coreDead = false;
   }
   handGrip(out = new THREE.Vector3()) {
@@ -385,7 +398,8 @@ export class Giant {
     }
     // (la carne que arde: con el núcleo, más; muerto, se apaga despacio)
     const gk = this.coreDead ? 0 : 1 + cb * 0.5;
-    this._glowK += (gk - this._glowK) * Math.min(1, dt * (this.coreDead ? 1.2 : 6));
+    if (this.coreDead && this._glowK > 1) this._glowK = 1;
+    this._glowK += (gk - this._glowK) * Math.min(1, dt * (this.coreDead ? 2.5 : 6));
     for (const m of this.glowMats) m.emissiveIntensity = m.userData.em0 * this._glowK;
     const bc = this.bell.center(_v2);
     L.bell.x = bc.x;

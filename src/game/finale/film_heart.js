@@ -124,6 +124,18 @@ function lagCam(F, want, look, o = {}) {
     return { pos: c.clone(), look: look(dt, tt), fov: typeof o.fov === 'function' ? o.fov(tt) : o.fov ?? 58, roll: o.roll ? o.roll(tt) : 0, inside: !!o.inside, pad: o.pad };
   });
 }
+// donde se pone el jugador para hundir el virote: en lo alto de la joroba
+// (lo más alto del cuerpo: la cabeza cuelga por delante), y el virote, a un
+// palmo, casi a plomo en la base del cuello (espacio del modelo, hueso
+// 'chest')
+const NAPE_STAND = [0, 15.75, -1.75];
+const NAPE_BOLT = { at: [0, 15.9, -0.85], dir: [0, -0.94, 0.34], depth: 0.95 };
+// En el pecho abierto no hay suelo delante del núcleo (la carne baja casi a
+// plomo): el jugador se agarra a su nido, colgado delante, como de la jaula
+// de la cara; y para esquivar se descuelga al borde de abajo del hueco (los
+// pies, espacio del modelo, hueso 'chest')
+const CORE_GRIP = [0, 10.75, 2.45];
+const LEDGE_HANG = [0, 8.85, 1.45];
 // la nuca (el virote) y la garganta, del mundo
 const nape = (G, out = new V3()) => G.bp('neck2', 0, 16.0, 0.6, out);
 const throat = (G, out = new V3()) => G.bp('neck2', 0, 14.55, 2.75, out);
@@ -231,7 +243,7 @@ export function* heartEnd(D, G, S, bolt) {
 // La luz del jugador: entre él y la cámara, un poco por encima (k: cuánto)
 function keyLight(X) {
   const { D, g, p } = X;
-  const L = D.light({ color: 0xffe0c0, intensity: 0, range: 7, flicker: 0, priority: 9 });
+  const L = D.light({ color: 0xe6ecff, intensity: 0, range: 7, flicker: 0, priority: 9 });
   const K = { k: 1, stop: false };
   K.run = function* () {
     let k = 0;
@@ -245,7 +257,7 @@ function keyLight(X) {
       L.x = P.x + (_v.x / d) * 1.8;
       L.y = P.y + 1.9;
       L.z = P.z + (_v.z / d) * 1.8;
-      L.intensity = 7 * k;
+      L.intensity = 10 * k;
     }
     L.intensity = 0;
     D.dropLight(L);
@@ -375,8 +387,93 @@ function* rideHead(X) {
     a && a.play('playerHurt', p.pos);
     F.pClip(FP.slide, { blend: 0.05 });
     yield* F.wait(0.5);
+    F.pClip(FP.brace, { blend: 0.1 });
   }
+  // el último latigazo de la cabeza le arranca la aureola del cráneo: sale
+  // volando, entera, con sus cirios (desde el suelo, de lejos)
+  dropHalo(X);
+  yield* F.wait(1.1);
   a && a.play('beastRoar', G.face(_v), { k: 2 });
+}
+// Las piedras clavadas en la joroba (los sillares de la catedral): fuera, y
+// en su lugar, trozos que salen volando
+function shakeStones(X) {
+  const { D, g, a, G } = X;
+  const B = G.M.byName.chest;
+  for (const c of B.children) {
+    if (!c.isMesh || !c.visible) continue;
+    const d = c.material.userData.def;
+    if (d && d.tex === 'ashlar') G.hidePart(c);
+  }
+  for (let i = 0; i < 10; i++) {
+    const q = G.bp('chest', rnd(-1.5, 1.5), rnd(15.6, 16.6), rnd(-2.6, 0.2), new V3());
+    const v = G.wd(rnd(-6, 6), 0, rnd(-6, 1), new V3()).add(_v.set(0, rnd(4, 9), 0));
+    D.chunks.add({ mat: 'ashlar', size: [rnd(0.5, 0.9), rnd(0.4, 0.7), rnd(0.5, 0.9)], pos: q, rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: v, spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 12 });
+  }
+  a && a.play('wallBreak', G.bp('chest', 0, 16, -1, _v), { k: 1.6 });
+  D.debris.burst(G.bp('chest', 0, 16.2, -1, new V3()), 24, { speed: 7, up: 5, size: 0.7, spread: 1.5 });
+  void g;
+}
+// La aureola se le parte del cráneo y cae entera al campo, con los cirios y
+// el estandarte (se queda allí tirada)
+function dropHalo(X) {
+  const { D, g, a, G } = X;
+  const B = G.M.byName.halo;
+  B.updateWorldMatrix(true, false);
+  const grp = new THREE.Group();
+  for (const c of B.children) {
+    if (!c.isMesh || !c.visible) continue;
+    const m = new THREE.Mesh(c.geometry, c.material);
+    m.frustumCulled = false;
+    grp.add(m);
+    G.hidePart(c);
+  }
+  G.hidePart(G.M.meshes.find((m) => m.name === 'estandarte'));
+  for (let i = 0; i < 11; i++) if (G.fx.flames[i]) G.fx.flames[i].sp.visible = false;
+  if (G.lights.halo) {
+    G.lights.halo.dead = true;
+    G.lights.halo.on = false;
+  }
+  // (y las piedras de la catedral que llevaba clavadas en la joroba, que
+  // salen despedidas con la sacudida)
+  shakeStones(X);
+  const pos = new V3(),
+    quat = new THREE.Quaternion();
+  B.matrixWorld.decompose(pos, quat, _s);
+  const at = G.bp('halo', 0, 18.95, 1.85, new V3());
+  a && a.play('crack', at, { k: 2 });
+  a && a.play('armorFall', at, { k: 2 });
+  a && a.play('fleshTear', at, { k: 1.4 });
+  g.fx.blood.emit(at.x, at.y - 1.5, at.z, 50, { color: BLACK, speed: 5, life: 1.4, up: 2, gravity: 9 });
+  g.fx.blood.emit(at.x, at.y, at.z, 40, { color: EMBER, speed: 6, life: 1, up: 2, gravity: 4 });
+  g.camRig.shake(0.7);
+  // (hacia su derecha, arriba y atrás, dando vueltas; al caer, se queda de
+  // plano en el campo)
+  const hax = new V3(0, 0.24, 0.97).normalize();
+  D.chunks.add({
+    mesh: grp,
+    pos,
+    quat,
+    vel: G.wd(-7, 0, -3, new V3()).add(_v.set(0, 8, 0)),
+    spin: [rnd(-2, 2), rnd(-3, 3), rnd(1.5, 3)],
+    radius: 0.4,
+    shatter: 99,
+    life: 999,
+    bounce: 0.12,
+    quiet: true,
+    dust: true,
+    onLand: (c, sp) => {
+      if (c.hits !== 1) return;
+      a && a.play('armorFall', c.p, { k: 2.2 });
+      a && a.play('wallBreak', c.p, { k: 1.4 });
+      g.camRig.shake(0.5);
+      D.dust.ring(c.p, 14, { color: D.dustColor(c.p), r0: 2.5, speed: 7, size: 2.2, life: 4, grow: 1.5, alpha: 0.45 });
+      // (de plano: el aro, tumbado, con un giro cualquiera)
+      c.q.setFromUnitVectors(hax, _Y).premultiply(_q2.setFromAxisAngle(_Y, rnd(0, 6.28)));
+      c.w.set(0, 0, 0);
+      c.v.multiplyScalar(0.3);
+    },
+  });
 }
 // un cirio de la aureola sale volando (y su llama se apaga)
 function throwCandle(X, k) {
@@ -406,7 +503,7 @@ function* toNape(X) {
   const path = bodyPath(G, [
     { bone: 'head', p: [0, 17.75, 3.15], fwd: [0, 0, 1], upright: 0.3 },
     { bone: 'head', p: [0.15, 17.45, 1.7], fwd: [0, 0, 1], up: [0, 1, -0.4], upright: 0.2 },
-    { bone: 'chest', p: [0, 15.85, -1.65], fwd: [0, 0, 1], upright: 0.5 },
+    { bone: 'chest', p: NAPE_STAND, fwd: [0, 0, 1], upright: 0.5 },
   ]);
   let u = 0;
   F.attach = () => path(u);
@@ -433,19 +530,19 @@ function* driveBolt(X) {
   // (si aún no ha llegado al borde, que llegue; y ahí se queda)
   yield* F.until(() => X.walk.done, 4);
   X.walk.arrive();
-  G.base('thrash', { blend: 0.6, speed: 0.35 });
+  G.base('idle', { blend: 0.6 });
+  restick(X);
   // de pie en la joroba, mirando al virote
   const stand = newPose();
   F.attach = () => {
-    onBone(G, 'chest', [0, 15.85, -1.65], [0, 0, 1], null, 0.55, stand);
+    onBone(G, 'chest', NAPE_STAND, [0, 0, 1], null, 0.55, stand);
     _u.set(0, 1, 0).applyQuaternion(stand.tilt);
     return orient(stand, _u, _v.subVectors(bolt.tail, stand.pos));
   };
   F.pClip(FP.driveBolt, { blend: 0.12 });
-  // (por detrás y por encima, del lado del cráter, por encima de las púas de
-  // la joroba y del lado contrario al estandarte: el jugador agachado sobre
-  // el virote, la cabeza con su aureola y, al fondo, la torre)
-  lagCam(F, () => G.wp(2.8, 22.6, -7.6, new V3()), () => bolt.tail.clone().lerp(p.pos, 0.5).add(_v.set(0, 0.4, 0)), { rate: 4, fov: 46 });
+  // (a su izquierda, del lado contrario al estandarte, y algo por encima de la
+  // joroba: el jugador de pie en lo alto, agarrado al virote)
+  lagCam(F, () => G.wp(5.6, 18.4, -2.4, new V3()), () => bolt.tail.clone().lerp(p.pos, 0.5).add(_v.set(0, 0.3, 0)), { rate: 4, fov: 38 });
   F.hand = 0.04;
   yield* F.wait(0.35);
   let side = false;
@@ -457,13 +554,14 @@ function* driveBolt(X) {
     a && a.play(i % 2 ? 'fleshTear' : 'beastHurt', nk, { k: 1.4 });
     g.fx.blood.emit(nk.x, nk.y + 0.3, nk.z, 26, { color: BLACK, speed: 4, life: 1.2, up: 2.5, gravity: 9 });
     G.R.flinch.x.kick(-1.1);
-    G.shake = 0.5;
+    G.shake = 0.35;
     g.camRig.shake(0.35);
     g.input.rumble(0.7, 0.9, 160);
-    // (a la mitad, de lado: el jugador encima del astil)
+    // (a la mitad, por detrás y por encima: el jugador sobre el astil, la
+    // cabeza colgando delante con su aureola y, al fondo, la torre)
     if (i === 3 && !side) {
       side = true;
-      lagCam(F, () => G.wp(7.2, 20.4, -1.2, new V3()), () => bolt.tail.clone().lerp(p.pos, 0.5).add(_v.set(0, 0.4, 0)), { rate: 6, fov: 40 });
+      lagCam(F, () => G.wp(1.4, 19.0, -5.4, new V3()), () => bolt.tail.clone().lerp(G.head(_v2), 0.25), { rate: 6, fov: 42 });
     }
   });
   G.shake = 0;
@@ -494,6 +592,17 @@ function* driveBolt(X) {
   yield* F.wait(0.35);
   F.slow(1, 4);
 }
+// El virote, en la base del cuello, casi a plomo, con un buen trozo fuera:
+// la cola, a la altura del pecho del jugador en la joroba (el mismo hueso que
+// él: no se mueven el uno respecto del otro)
+function restick(X) {
+  const { G, bolt } = X;
+  const B = G.M.byName.chest;
+  const at = G.bp('chest', ...NAPE_BOLT.at, new V3());
+  const dir = new V3(...NAPE_BOLT.dir).normalize().applyQuaternion(G.boneQ('chest', _q));
+  bolt.stickTo(B, at, dir, NAPE_BOLT.depth);
+  bolt.update(0);
+}
 // el virote, un palmo más adentro (en el espacio de su hueso)
 function sinkBolt(X, d) {
   const s = X.bolt.stuck;
@@ -515,7 +624,7 @@ function* fallKnees(X) {
   F.pClip(FP.brace, { blend: 0.1 });
   // (de lado y desde lo alto: se le doblan las piernas; detrás, el cráter y
   // la sangre negra)
-  F.shot(camSafe(g, X.at(0, 7, 0), X.at(-19, 10.5, 7)), X.at(0, 5, -4), { fov: 56 });
+  F.shot(camSafe(g, X.at(0, 7, 0), X.at(-19, 10.5, 7)), X.at(0, 8.5, -3), { fov: 58 });
   F.hand = 0.03;
   let knees = false,
     open = false;
@@ -603,22 +712,22 @@ function* leapToChest(X) {
   );
   // (detrás del jugador, en la joroba: la mano que viene por su izquierda)
   const stand = newPose();
-  F.attach = () => onBone(G, 'chest', [0, 15.85, -1.65], [0, 0, 1], null, 0.55, stand);
+  F.attach = () => onBone(G, 'chest', NAPE_STAND, [0, 0, 1], null, 0.55, stand);
   F.pClip(FP.windStand, { blend: 0.2 });
-  // (de frente, a su izquierda y en alto: la mano que pasa por encima del
-  // hombro, a la nuca, a por el jugador)
-  lagCam(F, () => X.at(13, 15, 11), () => G.M.byName.handL.getWorldPosition(new V3()).lerp(p.pos, 0.6).add(_v.set(0, 0.5, 0)), { rate: 4, fov: 48 });
+  // (por detrás, a su izquierda y en alto: el jugador en la joroba y la mano
+  // que le viene por encima del hombro)
+  lagCam(F, () => G.wp(7.0, 19.5, -6.5, new V3()), () => G.M.byName.handL.getWorldPosition(new V3()).lerp(p.pos, 0.65).add(_v.set(0, 0.5, 0)), { rate: 4, fov: 46 });
   F.hand = 0.05;
   while (G.actT < 0.5) yield;
   a && a.play('choke', G.face(_v), { k: 1.6 });
   const ok = yield* F.prompt({ action: 'dodge', label: '¡Salta!', window: 0.9, slow: 0.25 });
   // por encima del hombro derecho, y abajo por la casulla
   const path = bodyPath(G, [
-    { bone: 'chest', p: [0, 15.85, -1.65], fwd: [0, 0, 1], upright: 0.55 },
-    { bone: 'clavR', p: [-1.75, 15.5, -0.2], fwd: [0, 0, 1], upright: 0.5, arc: 1.1 },
-    { bone: 'chest', p: [-0.75, 14.6, 1.95], fwd: [0, -1, 0.3], up: [0, 0.35, 1], upright: 0.1 },
-    { bone: 'chest', p: [-0.3, 13.35, 2.55], fwd: [0, -1, 0.15], up: [0, 0.2, 1], upright: 0.1 },
-    { bone: 'chest', p: [0, 11.25, 2.6], fwd: [0, 0, 1], upright: 0.6, arc: 0.3 },
+    { bone: 'chest', p: NAPE_STAND, fwd: [0, 0, 1], upright: 0.55 },
+    { bone: 'clavR', p: [-1.75, 15.25, -0.45], fwd: [0, 0, 1], upright: 0.5, arc: 1.1 },
+    { bone: 'chest', p: [-0.85, 14.3, 1.3], fwd: [0, -1, 0.3], up: [0, 0.35, 1], upright: 0.1 },
+    { bone: 'chest', p: [-0.3, 13.55, 1.45], fwd: [0, -1, 0.15], up: [0, 0.2, 1], upright: 0.1 },
+    { bone: 'chest', p: CORE_GRIP, fwd: [0, 0, -1], upright: 0.85, arc: 0.15 },
   ]);
   let u = 0;
   F.attach = () => path(u);
@@ -649,35 +758,21 @@ function* leapToChest(X) {
       ripBolt(X);
     }
   }
-  // (cae dentro, en el labio del pecho abierto)
-  F.pClip(FP.landCrouch, { blend: 0.05 });
+  // (se agarra al nido del corazón, colgado delante de él)
+  F.pClip(FP.cage, { blend: 0.06 });
   a && a.play('land', p.pos);
-  a && a.play('fleshTear', p.pos, { k: 0.8 });
+  a && a.play('fleshTear', p.pos, { k: 0.9 });
   g.camRig.shake(0.4);
-  landed = true;
   if (!ripped) {
     ripped = true;
     ripBolt(X);
   }
-  void landed;
-  // y se vuelve hacia el corazón
-  const turnA = newPose(),
-    turnB = newPose();
-  let k = 0;
-  F.attach = () => {
-    onBone(G, 'chest', [0, 11.25, 2.6], [0, 0, 1], null, 0.6, turnA);
-    onBone(G, 'chest', [0, 11.2, 2.3], [0, 0, -1], null, 0.6, turnB);
-    return mixPose(turnA, turnB, sm(k), 0, stand);
-  };
-  // (por delante del pecho abierto, a su derecha y algo por encima: el
-  // jugador que se vuelve hacia el núcleo, que le alumbra)
-  lagCam(F, () => G.bp('chest', -1.8, 13.3, 6.4, new V3()), () => p.pos.clone().add(_v.set(0, 1.0, 0)).lerp(coreAt(G, _v2), 0.25), { rate: 4, fov: 52 });
+  F.attach = () => onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, stand);
+  // (por delante del pecho abierto, a su derecha: el jugador colgado ante el
+  // núcleo, que le alumbra)
+  lagCam(F, () => G.bp('chest', -2.3, 12.6, 5.6, new V3()), () => p.pos.clone().add(_v.set(0, 1.1, 0)).lerp(coreAt(G, _v2), 0.3), { rate: 4, fov: 52 });
   F.hand = 0.03;
-  while (k < 1) {
-    const dt = yield;
-    k = Math.min(1, k + dt * 1.6);
-  }
-  F.pClip(FP.windStand, { blend: 0.3 });
+  yield* F.wait(0.9);
   arm.weight = 1;
   void D;
 }
@@ -755,29 +850,38 @@ function* crush(X) {
       G.freeHand('R');
     })()
   );
-  const spot = newPose();
-  F.attach = () => onBone(G, 'chest', [0, 11.2, 2.3], [0, 0, -1], null, 0.6, spot);
-  // (de frente, a su derecha y algo por encima: el jugador en el pecho
-  // abierto y las dos manos que vienen, una por cada lado)
-  F.shot(camSafe(g, G.chest(new V3()), X.at(-6.5, 11.5, 12)), G.chest(new V3()).add(_v.set(0, -0.6, 0)), { fov: 54 });
+  const grip = newPose(),
+    hang = newPose(),
+    mid = newPose();
+  F.attach = () => onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, grip);
+  // (de frente, a su derecha y algo por encima: el jugador colgado ante el
+  // núcleo y las dos manos que vienen, una por cada lado)
+  F.shot(camSafe(g, G.chest(new V3()), X.at(-6.5, 11.5, 12)), G.chest(new V3()).add(_v.set(0, -0.8, 0)), { fov: 54 });
   F.hand = 0.04;
   while (G.actT < 0.42) yield;
   const ok = yield* F.prompt({ action: 'dodge', label: '¡Esquiva!', window: 0.75, slow: 0.22 });
-  const deep = newPose();
-  let k = 0;
+  // (se suelta y se deja caer hasta el borde de abajo del hueco, y se queda
+  // colgado de él: las manos se cierran donde estaba)
+  let k = 0,
+    hung = false;
   if (ok) {
-    F.pClip(FP.tuck, { blend: 0.05 });
-    a && a.play('roll', p.pos);
+    F.pClip(FP.fall, { blend: 0.05 });
     F.attach = () => {
-      onBone(G, 'chest', [0, 11.2, 2.3], [0, 0, -1], null, 0.6, spot);
-      onBone(G, 'chest', [0.85, 11.45, 1.55], [-0.6, 0, -1], null, 0.6, deep);
-      return mixPose(spot, deep, sm(k), 0.25, spot);
+      onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, grip);
+      onBone(G, 'chest', LEDGE_HANG, [0, 0, -1], null, 0.9, hang);
+      return mixPose(grip, hang, k * k, 0, mid);
     };
   }
   let crushed = false;
   while (G.actT < 1.3) {
     const dt = yield;
-    k = Math.min(1, k + dt * 4);
+    k = Math.min(1, k + dt * 3.2);
+    if (ok && !hung && k >= 1) {
+      hung = true;
+      F.pClip('hang', { blend: 0.05 });
+      a && a.play('land', p.pos);
+      g.camRig.shake(0.3);
+    }
     hand.k = sm(clamp((G.actT - 0.55) / 0.3, 0, 1)) * (1 - sm(clamp((G.actT - 1.05) / 0.25, 0, 1)) * 0.55);
     if (!crushed && G.actT >= 0.85) {
       crushed = true;
@@ -786,37 +890,41 @@ function* crush(X) {
       a && a.play('fleshBurst', c, { k: 1.8 });
       a && a.play('choke', G.face(_v2), { k: 2 });
       for (const s of [1, -1]) {
-        const h = G.bp('chest', 1.9 * s, 12.2, 2.4, _v2);
+        const h = G.bp('chest', 1.3 * s, 12.2, 2.6, _v2);
         g.fx.blood.emit(h.x, h.y, h.z, 40, { color: BLACK, speed: 5, life: 1.4, up: 1.5, gravity: 9 });
       }
       g.camRig.shake(1.1);
       g.input.rumble(1, 1, 600);
       if (!ok) {
+        // (le pilla una garra: se queda agarrado, a duras penas)
         F.hurt(24, null, { shake: 1, heavy: true });
-        F.pClip('fallBack', { blend: 0.05 });
+        F.pClip(FP.brace, { blend: 0.05 });
       }
-      // (de fuera, a su izquierda: las garras clavadas en su propio pecho)
-      F.shot(camSafe(g, G.chest(new V3()), X.at(10.5, 9.5, 9.0)), G.chest(new V3()), { fov: 50 });
+      // (de fuera, a su izquierda: las garras clavadas en su propio pecho y,
+      // debajo, el jugador colgado)
+      F.shot(camSafe(g, G.chest(new V3()), X.at(5.0, 5.5, 11.0)), G.chest(new V3()).add(_v.set(0, -1.6, 0)), { fov: 52 });
       F.hand = 0.05;
     }
   }
-  // (las manos se apartan, temblando; vuelve ante el corazón)
+  // (las manos se apartan, temblando; y sube otra vez al nido)
   arm.to({ w: [5.6, 7.5, 5.0], pole: [11, 9, 2] }, 0.6);
   hold = false;
-  const back = newPose();
-  let kb = 0;
-  const from = newPose();
-  from.pos.copy(p.pos);
-  from.tilt.copy(F.tilt);
-  F.attach = () => {
-    onBone(G, 'chest', [0, 11.2, 2.25], [0, 0, -1], null, 0.6, back);
-    return mixPose(from, back, sm(kb), 0, spot);
-  };
-  F.pClip(FP.stabCore, { blend: 0.25, speed: 0 });
-  while (kb < 1) {
-    const dt = yield;
-    kb = Math.min(1, kb + dt * 2.2);
+  if (ok) {
+    F.pClip('climbUp', { blend: 0.08 });
+    a && a.play('climb', p.pos);
+    let kb = 0;
+    F.attach = () => {
+      onBone(G, 'chest', LEDGE_HANG, [0, 0, -1], null, 0.9, hang);
+      onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, grip);
+      return mixPose(hang, grip, sm(kb), 0.2, mid);
+    };
+    while (kb < 1) {
+      const dt = yield;
+      kb = Math.min(1, kb + dt * 1.3);
+    }
   }
+  F.pClip(FP.cage, { blend: 0.15 });
+  F.attach = () => onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, grip);
 }
 
 // ---------------------------------------------------------------------
@@ -825,8 +933,16 @@ function* crush(X) {
 function* stabHeart(X) {
   const { g, F, p, a, G } = X;
   X.arm.weight = 0;
-  const spot = newPose();
-  F.attach = () => onBone(G, 'chest', [0, 11.2, 2.25], [0, 0, -1], null, 0.6, spot);
+  const spot = newPose(),
+    spotIn = newPose(),
+    mid = newPose();
+  let lunge = 0;
+  F.attach = () => {
+    onBone(G, 'chest', CORE_GRIP, [0, 0, -1], null, 0.85, spot);
+    if (!lunge) return spot;
+    onBone(G, 'chest', [CORE_GRIP[0], CORE_GRIP[1] + 0.2, CORE_GRIP[2] - 0.45], [0, 0, -1], null, 0.85, spotIn);
+    return mixPose(spot, spotIn, lunge, 0, mid);
+  };
   G.base('kneelOpen', { blend: 0.4 });
   // (de cerca, por delante del pecho y a su derecha: el jugador contra el
   // núcleo, de tres cuartos)
@@ -837,7 +953,7 @@ function* stabHeart(X) {
   close();
   F.hand = 0.04;
   const ok = yield* mash(X, { action: 'light', label: '¡Apuñala!', window: 3.2, mash: 6, slow: 0.55, every: 0.34 }, (i) => {
-    F.pClip(FP.stabCore, { blend: 0.03 });
+    F.pClip(FP.stabCage, { blend: 0.03 });
     G.play('heartHit', { blend: 0.05 });
     G.coreBoost = Math.min(2.2, G.coreBoost + 0.2);
     const c = coreAt(G, _v);
@@ -857,7 +973,8 @@ function* stabHeart(X) {
     F.hurt(16, null, { shake: 0.6 });
     a && a.play('burn', p.pos);
   }
-  // la última: alzada a dos manos y hasta la empuñadura
+  // la última: se impulsa con los pies contra su pecho, la espada alzada a dos
+  // manos, y adentro hasta la empuñadura
   F.slow(0.32, 6);
   F.pClip(FP.stabCoreEnd, { blend: 0.08 });
   // (de frente y desde abajo, a su izquierda: el jugador con la espada en
@@ -870,6 +987,7 @@ function* stabHeart(X) {
     const dt = yield;
     t += dt;
     G.coreBoost = lerp(2.2, 3.4, clamp(t / 0.75, 0, 1));
+    lunge = sm(clamp((t - 0.55) / 0.2, 0, 1));
   }
 }
 
@@ -942,7 +1060,7 @@ function* burst(X) {
     // (y de lado, con él por el aire: el gigante apagado detrás)
     if (!track && t > 0.55) {
       track = true;
-      lagCam(F, () => pos.clone().addScaledVector(side, -7.5).addScaledVector(fw, 1.5).setY(Math.max(1.2, pos.y + 0.6)), () => pos.clone().lerp(G.chest(_v2), 0.25), { rate: 3, fov: 56 });
+      lagCam(F, () => pos.clone().addScaledVector(side, -4.8).addScaledVector(fw, 3.5).setY(Math.max(1.2, pos.y + 0.4)), () => pos.clone().lerp(G.chest(_v2), 0.2), { rate: 3.5, fov: 60 });
     }
     vel.y -= 9.8 * dt;
     pos.addScaledVector(vel, dt);
@@ -1023,9 +1141,9 @@ function* deadFall(X) {
     const dt = yield;
     t += dt;
     const k = clamp(t / 2.1, 0, 1);
-    G.pitch = -1.75 * easeIn(k);
-    G.pos.copy(P0).addScaledVector(back, 2.5 * k * k);
-    G.fixY = P0.y - 2.2 * k * k;
+    G.pitch = -1.9 * easeIn(k);
+    G.pos.copy(P0).addScaledVector(back, 3.8 * k * k);
+    G.fixY = P0.y - 3.2 * k * k;
     if (!splashed && k > 0.82) {
       splashed = true;
       const s = X.at(0, 0, -11).setY(SURF);
@@ -1050,9 +1168,8 @@ function* deadFall(X) {
   F.setP(P.x, P.y, P.z, Math.atan2(C0.x - P.x, C0.z - P.z));
   F.attach = null;
   F.tilt.identity();
-  // (desde detrás del jugador, de pie y por encima: el cráter que se lo traga)
-  const dW = _v.subVectors(C0, P).setY(0).normalize().clone();
-  F.shot(P.clone().addScaledVector(dW, -3.4).add(_v2.set(dW.z * 1.6, 4.2, -dW.x * 1.6)), X.at(0, -4, -9), { fov: 54 });
+  // (desde lo alto del borde: el cráter, la sangre negra que se lo traga)
+  F.shot(camSafe(g, X.at(0, 4, -8), X.at(-13, 14, -1)), X.at(0, -4, -10), { fov: 58 });
   F.hand = 0.02;
   t = 0;
   const y0 = G.fixY,
@@ -1061,8 +1178,8 @@ function* deadFall(X) {
     const dt = yield;
     t += dt;
     const k = sm(clamp(t / 6.5, 0, 1));
-    G.fixY = y0 - 10 * k;
-    G.pitch = pt0 - 0.25 * k;
+    G.fixY = y0 - 11 * k;
+    G.pitch = pt0 - 0.2 * k;
     if (Math.random() < dt * 3) {
       const ang = rnd(0, Math.PI * 2),
         r = rnd(9.5, 11.5);
@@ -1088,12 +1205,12 @@ function* dawn(X) {
   const dW = new V3().subVectors(C0, W).setY(0).normalize();
   F.setP(W.x, W.y, W.z, Math.atan2(dW.x, dW.z));
   p.anim.stop(0.4);
-  // (desde el campo, de lado y bajo: él, a contraluz del amanecer)
-  const sideW = new V3(dW.z, 0, -dW.x);
-  F.shot(camSafe(g, W.clone().setY(W.y + 1.2), W.clone().addScaledVector(dW, 4.5).addScaledVector(sideW, 7.5).setY(W.y + 0.9)), W.clone().setY(W.y + 1.3), { fov: 34 });
+  // (desde el sur y bajo: él, a contraluz del sol que sale al norte, con el
+  // cráter que humea a un lado)
+  F.shot(camSafe(g, W.clone().setY(W.y + 1.2), W.clone().add(new V3(1.6, 0.7, 5.2))), W.clone().add(new V3(0.6, 1.6, -4)), { fov: 38 });
   yield* F.wait(2.6);
   // (por encima de su hombro: el cráter que humea, el campo, el río)
-  F.shot(W.clone().addScaledVector(dW, -1.8).add(new V3(dW.z * 1.1, 2.0, -dW.x * 1.1)), C0.clone().setY(1.5), { fov: 54 });
+  F.shot(camSafe(g, W.clone().setY(W.y + 1.5), W.clone().addScaledVector(dW, -3.4).add(new V3(dW.z * 1.6, 2.4, -dW.x * 1.6))), C0.clone().setY(0.5), { fov: 52 });
   yield* F.wait(2.8);
   // fundido; y en el río, al amanecer, el final de siempre
   g.fadeTarget = 0;

@@ -678,7 +678,9 @@ export class FlyingBolt {
     const tailW = _v.copy(point).addScaledVector(dir, -(BOLT_L - depth));
     const qW = _q.setFromUnitVectors(_Z, dir);
     const objQ = obj.getWorldQuaternion(new THREE.Quaternion());
-    this.stuck = { obj, local: tailW.applyMatrix4(inv), q: objQ.invert().multiply(qW) };
+    // (local, una copia: _v es de todos y la espringala lo reutiliza cada
+    // fotograma)
+    this.stuck = { obj, local: tailW.applyMatrix4(inv).clone(), q: objQ.invert().multiply(qW) };
     this.vel.set(0, 0, 0);
     this.done = true;
   }
