@@ -208,7 +208,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90 };
+const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -2174,6 +2174,46 @@ export class Audio {
         }
         break;
       }
+      // ---- Leonor
+      // el pus: un borbotón espeso que sale de la boca
+      case 'pusSpew': {
+        d = this.out(P, { gain: 0.85, verb: 0.5, life: 2.5, ref: 5 });
+        this.noise(d, t, 0.45, { type: 'lowpass', f0: 700, f1: 260, gain: 0.55, a: 0.02, buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.03, 0.3, { f0: rnd(500, 800), f1: 300, q: 4, gain: 0.25, a: 0.01, buf: this.brown, rate: 5 });
+        for (let i = 0; i < 4; i++) this.noise(d, t + 0.05 + i * rnd(0.05, 0.1), rnd(0.03, 0.06), { f0: rnd(400, 1100), q: 5, gain: 0.12, a: 0.003, buf: this.brown, rate: 4 });
+        break;
+      }
+      // el pus que revienta contra el suelo
+      case 'pusSplat': {
+        d = this.out(P, { gain: 0.8, verb: 0.5, life: 2, ref: 4 });
+        this.tone(d, t, 0.14, { f0: 120, f1: 50, gain: 0.45 });
+        this.noise(d, t, 0.22, { type: 'lowpass', f0: 1800, f1: 300, gain: 0.5, a: 0.002, buf: this.brown, rate: 4 });
+        for (let i = 0; i < 5; i++) this.noise(d, t + 0.04 + Math.pow(Math.random(), 1.5) * 0.4, rnd(0.02, 0.05), { f0: rnd(600, 1600), q: 4, gain: rnd(0.06, 0.14), a: 0.002, buf: this.brown, rate: 5 });
+        break;
+      }
+      // pisar el charco: quema (chisporroteo húmedo)
+      case 'pusSizzle': {
+        d = this.out(P, { gain: 0.5, verb: 0.15, life: 1.2, occlude: false });
+        this.noise(d, t, 0.3, { type: 'highpass', f0: 2200, gain: 0.18, a: 0.01 });
+        this.noise(d, t, 0.18, { f0: 500, f1: 260, q: 3, gain: 0.16, a: 0.005, buf: this.brown, rate: 4 });
+        break;
+      }
+      // el llanto que rompe la guardia: un grito de mujer, largo, que se
+      // quiebra en sollozos, con un coro de ecos debajo
+      case 'leonorWail': {
+        d = this.out(P, { gain: 1, verb: 0.85, life: 5, ref: 9, occlude: false });
+        for (const [k, g, dt0] of [
+          [1, 0.22, 0],
+          [1.008, 0.14, 0.02],
+          [0.5, 0.1, 0.05],
+          [1.5, 0.05, 0.1],
+        ])
+          this.voice(d, t + dt0, 1.9, { f0: 560 * k, f1: 330 * k, vowel: 'a', v1: 'o', gain: g, vib: 6.5, vibD: 70, breath: 0.6, a: 0.06, jit: 30, rasp: 0.45, rel: 0.6 });
+        for (let i = 0; i < 4; i++) this.voice(d, t + 1.9 + i * rnd(0.22, 0.3), rnd(0.12, 0.18), { f0: rnd(420, 520), f1: rnd(300, 380), vowel: 'o', v1: 'u', gain: 0.09, breath: 1, a: 0.01, jit: 30, rasp: 0.3 });
+        this.noise(d, t, 1.6, { f0: 2400, f1: 700, q: 2.5, gain: 0.07, a: 0.2 });
+        this.duck(0.4, 1.8);
+        break;
+      }
       // Leonor: la voz rota por el llanto (hipidos y un gemido largo)
       case 'leonorTalk': {
         d = this.out(P, { gain: 0.8, verb: 0.6, life: (o.len ?? 1.5) + 2, ref: 5 });
@@ -2320,6 +2360,20 @@ export class Audio {
           V({ dur: 2.1, f0: 70, f1: 34, vowel: 'o', v1: 'u', gain: 0.3, breath: 0.6, rasp: 0.5 });
           this.bodyFall(d, t + 1.3, 1.6, true);
         }
+        break;
+      // Leonor: una mujer que llora (y algo enorme que respira debajo)
+      case 'leonor':
+        if (kind === 'alert') this.play('leonorWail', e.pos);
+        else if (kind === 'attack') {
+          V({ dur: 0.7, f0: 470, f1: 330, vowel: 'a', v1: 'e', gain: 0.18, vib: 6, vibD: 50, breath: 0.7, a: 0.03, jit: 30, rasp: 0.5 });
+          V({ dur: 0.7, f0: 92, f1: 70, vowel: 'o', gain: 0.16, breath: 0.9, rasp: 0.8 });
+        } else if (kind === 'hurt') V({ dur: 0.45, f0: 640, f1: 420, vowel: 'a', v1: 'i', gain: 0.17, breath: 0.6, a: 0.01, jit: 30, rasp: 0.4 });
+        else if (kind === 'death') {
+          V({ dur: 2.6, f0: 560, f1: 160, vowel: 'a', v1: 'o', gain: 0.2, vib: 5, vibD: 70, breath: 0.7, a: 0.05, rasp: 0.4, jit: 25 });
+          for (let i = 0; i < 5; i++) V({ dt: 2.4 + i * 0.45, dur: 0.3, f0: 420 - i * 30, f1: 360 - i * 30, vowel: 'o', gain: 0.07 - i * 0.01, breath: 1, jit: 30 });
+          this.bodyFall(d, t + 2.2, 1.6);
+          this.duck(0.35, 2.5);
+        } else if (kind === 'idle') for (let i = 0; i < 4; i++) V({ dt: i * 0.42, dur: 0.34, f0: 470 - i * 18, f1: 400 - i * 18, vowel: i % 2 ? 'o' : 'a', gain: 0.085, type: 'triangle', breath: 0.9, jit: 30, rasp: 0.25 }); // sollozos
         break;
       case 'mourner':
         if (kind === 'alert') V({ dur: 1.8, f0: 520, f1: 690, vowel: 'i', v1: 'a', gain: 0.17, vib: 5, vibD: 40, breath: 0.4, type: 'triangle', a: 0.2, jit: 20 });

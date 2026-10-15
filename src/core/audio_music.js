@@ -1044,6 +1044,40 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- jefe: Leonor, la Dolorosa
+  // Una nana de caja de música en 6/8 (se mece, como la cuna) que canta una
+  // voz de mujer sola, rota; debajo, un latido y cuerdas graves. En la
+  // segunda forma, tambores, el latido desbocado y el coro que se derrumba
+  // en glissandos hacia abajo, como un llanto.
+  bossLeonor: {
+    bpm: 84,
+    root: 38,
+    mode: 'harmonic',
+    meter: 6,
+    prog: [0, 5, 3, 4],
+    chordBars: 1,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], type: 'sawtooth', cutoff: 210, level: 0.075, rate: 0.08 },
+    step(S) {
+      leonorStep(S, 0);
+    },
+  },
+  bossLeonor2: {
+    bpm: 100,
+    root: 38,
+    mode: 'harmonic',
+    meter: 6,
+    prog: [0, 5, 1, 4],
+    chordBars: 1,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 280, level: 0.09, rate: 0.22 },
+    step(S) {
+      leonorStep(S, 1);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe final: el Turiferario (Dies irae)
   bossFinal: {
     bpm: 104,
@@ -1168,6 +1202,52 @@ function cellarStep(S, phase) {
   if (inBar === 0 && (bar % 2 === 1 || phase)) for (const n of [chord, chord + 1]) m.strings(L.base, t, spb * 5, m.deg(T, n, 1) + 12, 0.02 + phase * 0.01, { trem: 10, a: 0.3, r: 0.6, bright: 8 });
   if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root, 0.18, { dur: 6 });
   if (phase && inBar === 4 && bar % 2 === 0) m.swell(L.base, t, spb * 2, 0.04, 600, 4000);
+}
+
+// Leonor: la nana en la caja de música (una nota por pulso, a veces
+// desafinada), la voz que canta notas largas sobre el acorde, el latido y,
+// en la segunda forma, tambores y glissandos de llanto.
+const NANA_LEONOR = [4, 2, 0, 2, 4, 4, 5, 4, 2, 1, 2, 0, 4, 2, 0, -1, 0, 2, 4, 5, 4, 2, 1, 0];
+function leonorStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  // el latido: dos golpes por compás (fuerte y débil); desbocado en la segunda forma
+  if (inBar === 0) m.drum(L.base, t, 'heart', 0.34 + phase * 0.08, 0.92);
+  if (inBar === 1 || (phase && inBar === 4)) m.drum(L.base, t, 'heart', 0.22, 0.92);
+  if (phase) {
+    if (inBar === 0) m.drum(L.base, t, 'taiko', 0.45);
+    if (inBar === 3) m.drum(L.base, t, 'frame', 0.3, 0.9);
+    if (inBar === 5 && bar % 2) m.drum(L.base, t + spb * 0.5, 'tabor', 0.16, 1.3);
+  }
+  // la nana (en la segunda forma, a doble velocidad y más desafinada)
+  const d = S.c.data;
+  if (d.i === undefined) d.i = 0;
+  const notes = phase ? 2 : 1;
+  for (let k = 0; k < notes; k++) {
+    if (!phase && bar % 4 === 3 && inBar > 3) break; // respira al final de la frase
+    const g = NANA_LEONOR[d.i % NANA_LEONOR.length];
+    const off = chance(phase ? 0.2 : 0.1) ? (chance(0.5) ? 1 : -1) : 0;
+    m.pluck(L.base, t + k * spb * 0.5, degree(T.root + 24, T.mode, chord + g) + off, rnd(0.06, 0.1), { bright: 0.3 });
+    d.i++;
+  }
+  // la voz sola: una nota larga por compás, sobre el acorde (al final de la
+  // frase cae medio tono, como un sollozo)
+  if (inBar === 0) {
+    const n = m.deg(T, chord + (bar % 2 ? 2 : 4), 1) + 12;
+    const end = bar % 4 === 3;
+    m.choir(L.base, t, spb * 5.6, n, phase ? 0.05 : 0.042, bar % 2 ? 'o' : 'a', { solo: true, vib: 16, a: 0.5, r: 1.2, glide: end ? -1 : 0, breath: 0.4 });
+  }
+  // cuerdas graves en el acorde (en trémolo en la segunda forma)
+  if (inBar === 0 && (bar % 2 === 0 || phase)) {
+    const r = m.deg(T, chord, 0);
+    for (const n of [r, r + 7]) m.strings(L.base, t, spb * (phase ? 5.5 : 11), n, 0.026 + phase * 0.008, { a: 0.6, r: 1.2, trem: phase ? 9 : 0, bright: 5 });
+  }
+  // el llanto: el coro se derrumba hacia abajo (cada cuatro compases; cada dos en la segunda forma)
+  if (inBar === 3 && bar % (phase ? 2 : 4) === 1) {
+    const r = m.deg(T, chord, 1) + 12;
+    for (const n of [r, r + 3, r + 7]) m.choir(L.base, t, spb * 3, n, 0.024, 'a', { glide: -7, a: 0.15, r: 0.8 });
+  }
+  if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root + 12, 0.12, { kind: 'small', dur: 6 });
+  if (phase && inBar === 0 && bar % 4 === 2) m.swell(L.base, t, spb * 3, 0.04, 400, 3000);
 }
 
 // La caza: latidos, notas sueltas de la nana, cuerdas que se arrastran.

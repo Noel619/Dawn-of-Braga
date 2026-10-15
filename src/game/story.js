@@ -375,6 +375,8 @@ export const DIALOG = {
   leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
   leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
   leonorDeath: ['...Henrique...'],
+  // en la cuna, antes de la pelea: la nana (se oye desde el agujero)
+  leonorLullaby: ['Duérmete, niño, duérmete ya...', 'Ea, ea, ea... que tu madre está aquí.', 'Mi niño no llora. Mi niño duerme.', 'Siete puñales, Señora... siete...'],
 };
 
 export const MSG = {

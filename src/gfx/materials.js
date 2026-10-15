@@ -87,7 +87,7 @@ export const MAT_DEFS = {
   },
   fleshStatic: { tex: 'flesh', uv: 0.7, emissiveTex: 'fleshEmit', emissive: 0xff5a30, emissiveIntensity: 0.35, phong: { specular: 0x5a3232, shininess: 30 } },
   // el pus de Leonor (late como la carne) y el de su gruta (quieto)
-  pus: { tex: 'pus', uv: 0.8, emissiveTex: 'pusEmit', emissive: 0xc8d040, emissiveIntensity: 0.55, flesh: true, phong: { specular: 0x8a8a40, shininess: 44 } },
+  pus: { tex: 'pus', uv: 0.8, emissiveTex: 'pusEmit', emissive: 0xd8e048, emissiveIntensity: 1.1, flesh: true, phong: { specular: 0xa0a050, shininess: 50 } },
   pusStatic: { tex: 'pus', uv: 0.6, emissiveTex: 'pusEmit', emissive: 0xb8c038, emissiveIntensity: 0.45, phong: { specular: 0x7a7a38, shininess: 40 } },
   skinPus: { tex: 'skinPus', uv: 1.1, phong: { specular: 0x60606a, shininess: 26 } },
   // la piedra de los guardianes, con las grietas encendidas

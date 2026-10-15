@@ -194,20 +194,46 @@ function caveCeil(ctx, x0, z0, x1, z1, y, o = {}) {
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) wb.quad(o.mat ?? 'rock', P(i, j), P(i, j + 1), P(i + 1, j + 1), P(i + 1, j), opt);
 }
 
-// Charco de pus en el suelo: una mancha irregular, algo levantada en el centro.
+// Charco de pus en el suelo: una mancha de borde muy irregular (con lóbulos
+// y salpicaduras alrededor), algo levantada en el centro, con un cerco
+// oscuro donde se seca y alguna burbuja.
 function pusPool(ctx, x, y, z, r, seed, room) {
   const wb = ctx.wb;
   const rng = new RNG(seed);
-  const n = 10;
+  const n = 18;
   const rim = [];
-  for (let k = 0; k < n; k++) rim.push(r * rng.range(0.7, 1.15));
-  const c = V(x, y + 0.035, z);
+  // (lóbulos: dos ondas de distinta frecuencia y algo de azar)
+  const p1 = rng.range(0, 6),
+    p2 = rng.range(0, 6);
   for (let k = 0; k < n; k++) {
-    const a0 = (k / n) * Math.PI * 2,
-      a1 = ((k + 1) / n) * Math.PI * 2;
-    const r0 = rim[k],
-      r1 = rim[(k + 1) % n];
-    wb.tri('pusStatic', c, V(x + Math.cos(a1) * r1, y + 0.012, z + Math.sin(a1) * r1), V(x + Math.cos(a0) * r0, y + 0.012, z + Math.sin(a0) * r0), { ao: false, grime: false, room });
+    const a = (k / n) * Math.PI * 2;
+    rim.push(r * (0.78 + 0.18 * Math.sin(a * 2 + p1) + 0.12 * Math.sin(a * 5 + p2) + rng.range(-0.08, 0.08)));
+  }
+  const ring = (k, f, h) => {
+    const a = (k / n) * Math.PI * 2;
+    return V(x + Math.cos(a) * rim[k % n] * f, y + h, z + Math.sin(a) * rim[k % n] * f);
+  };
+  const c = V(x, y + 0.05, z);
+  for (let k = 0; k < n; k++) {
+    // el centro, brillante; el cerco, oscuro y seco
+    wb.tri('pusStatic', c, ring(k + 1, 0.72, 0.03), ring(k, 0.72, 0.03), { ao: false, grime: false, room });
+    wb.quad('pusStatic', ring(k, 0.72, 0.03), ring(k + 1, 0.72, 0.03), ring(k + 1, 1, 0.012), ring(k, 1, 0.012), { ao: false, grime: false, room, tint: [0.62, 0.55, 0.4] });
+  }
+  // salpicaduras y gotas alrededor
+  for (let i = 0; i < 4 + Math.round(r * 3); i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = r * rng.range(1.05, 1.5),
+      s = rng.range(0.05, 0.14) * (0.6 + r * 0.4);
+    const px = x + Math.cos(a) * d,
+      pz = z + Math.sin(a) * d;
+    wb.tri('pusStatic', V(px + s, y + 0.013, pz), V(px - s * 0.6, y + 0.013, pz - s * 0.8), V(px - s * 0.6, y + 0.013, pz + s * 0.8), { ao: false, grime: false, room, tint: [0.8, 0.74, 0.5] });
+  }
+  // burbujas
+  for (let i = 0; i < Math.round(r * 2.5); i++) {
+    const a = rng.range(0, Math.PI * 2),
+      d = r * rng.range(0, 0.55),
+      s = rng.range(0.04, 0.08);
+    wb.box('pusStatic', x + Math.cos(a) * d - s, y + 0.03, z + Math.sin(a) * d - s, x + Math.cos(a) * d + s, y + 0.03 + s * 1.2, z + Math.sin(a) * d + s, { ao: false, grime: false, room, faces: 'tnsew' });
   }
 }
 
@@ -683,7 +709,8 @@ export function buildPostigoAlley(ctx, S, U, L) {
   }
   P.candles(ctx, 45.4, Y, -109.0, 4, 7181, { room: sroom, radius: 3.4, intensity: 0.7, spread: 0.3 });
   P.candles(ctx, 50.0, Y, -109.2, 3, 7182, { room: sroom, radius: 3, intensity: 0.5, spread: 0.25 });
-  P.decal(ctx, 47.5, Y + 1.5, C.z0 + 0.02, 1.4, 'sigil', 0, { wall: 'z' });
+  // (el sello, en el muro, junto al agujero: no delante de él)
+  P.decal(ctx, 43.4, Y + 1.5, C.z0 + 0.02, 1.4, 'sigil', 0, { wall: 'z' });
   P.hangingLamp(ctx, 50.4, C.top - 0.24, -101.4, { room: sroom, radius: 5.5, intensity: 0.7, len: 0.5 });
   ctx.rats.push({ x: 42.8, y: Y, z: -104.4, n: 2 });
 
@@ -698,9 +725,12 @@ export function buildPostigoAlley(ctx, S, U, L) {
   col.add(T.x0, Y - 1, zTop, T.x1, Y, T.z1, 'floor').cam = true;
   wb.box('rock', T.x0, TB - 0.1, T.z0, T.x1, TB, T.zBot, { faces: 't', ao: false, sub: 2, tint: [0.46, 0.4, 0.34] });
   col.add(T.x0, TB - 1, T.z0, T.x1, TB, T.zBot, 'floor').cam = true;
-  // las paredes y el techo de tierra y roca (escalonado con la bajada)
-  const tunH = 2.5;
+  // las paredes y el techo de tierra y roca (escalonado con la bajada; cada
+  // tramo, a la altura del suelo más alto que cubre: si no, en la bajada se
+  // daba con la cabeza en el techo)
+  const tunH = 2.6;
   const tt = [0.52, 0.45, 0.38];
+  const tunFloor = (z) => (z >= zTop ? Y : z <= T.zBot ? TB : TB + ((z - T.zBot) / (zTop - T.zBot)) * (Y - TB));
   for (const [x, f] of [
     [T.x0, 'e'],
     [T.x1, 'w'],
@@ -708,19 +738,19 @@ export function buildPostigoAlley(ctx, S, U, L) {
     const sx = f === 'e' ? -1 : 1;
     for (let z = T.z1; z > T.z0 - 0.01; z -= 1.2) {
       const za = Math.max(T.z0, z - 1.2);
-      const fy = za >= zTop ? Y : za <= T.zBot ? TB : TB + ((za - T.zBot) / (zTop - T.zBot)) * (Y - TB);
+      const fy = tunFloor(z);
       const j = ((z * 7.3) % 1) * 0.18;
       wb.box('rock', Math.min(x, x + sx * (0.3 + j)), TB - 0.5, za, Math.max(x, x + sx * (0.3 + j)), fy + tunH + 0.2, z, { faces: f, ao: false, sub: 2, room: troom, tint: tt });
     }
   }
   for (let z = T.z1; z > T.z0 - 0.01; z -= 1.2) {
     const za = Math.max(T.z0, z - 1.2);
-    const fy = za >= zTop ? Y : za <= T.zBot ? TB : TB + ((za - T.zBot) / (zTop - T.zBot)) * (Y - TB);
+    const fy = tunFloor(z);
     wb.box('rock', T.x0 - 0.2, fy + tunH, za, T.x1 + 0.2, fy + tunH + 0.3, z, { faces: 'b', ao: false, sub: 2, room: troom, tint: tt });
     col.add(T.x0, fy + tunH, za, T.x1, -1.0, z).cam = true;
   }
   // arañazos y sangre en la roca, raíces colgando
-  for (const z of [-111.8, -114.2, -116.6]) P.decal(ctx, T.x0 + 0.02, Y - 0.6 - (zTop - z) * 0.4, z, 0.7, 'splat', 1.2, { wall: 'x' });
+  for (const z of [-111.8, -114.2, -116.6]) P.decal(ctx, T.x0 + 0.02, tunFloor(z) + 1.3, z, 0.7, 'splat', 1.2, { wall: 'x' });
   P.candles(ctx, 47.6, TB, -119.6, 3, 7183, { room: troom, radius: 3, intensity: 0.5, spread: 0.3, scale: 0.7 });
 
   // ------------------------------------------------------------ la gruta
@@ -821,6 +851,9 @@ export function buildPostigoAlley(ctx, S, U, L) {
   // de Leonor, junto a sus velas del sótano
   L.interact.push({ kind: 'note', id: 'n_abuelo', note: 'abuelo', x: 49.8, y: 0.82, z: -106.4, model: 'paper' });
   L.interact.push({ kind: 'note', id: 'n_leonor', note: 'leonor', x: 46.3, y: Y + 0.02, z: -108.5, model: 'paper' });
+  // la niebla en la boca de la gruta y, vencida Leonor, su lágrima en la cuna
+  L.interact.push({ kind: 'fog', id: 'f_leonor', boss: 'leonor', x: (T.x0 + T.x1) / 2, y: TB, z: G.z1, w: T.x1 - T.x0, h: 2.5, axis: 'x', enter: -1 });
+  L.interact.push({ kind: 'item', id: 'i_lagrima', item: 'lagrima', x: A.cradle.x, y: G.y + 0.62, z: A.cradle.z, afterBoss: 'leonor' });
 
   // Henrique, asomado a la ventana alta; las tres que aporrean su puerta; las
   // que entran por las ventanas (en tres oleadas, ocultas hasta entonces); y
@@ -841,6 +874,8 @@ export function buildPostigoAlley(ctx, S, U, L) {
     wave('e_ale_w3a', 'soldier', 3, 'v_taller'),
     wave('e_ale_w3b', 'penitent', 3, 'v_cocina'),
     wave('e_ale_w3c', 'hound', 3, 'v_despensa'),
+    // Leonor, de rodillas ante la cuna, de espaldas a la boca del agujero
+    { type: 'leonor', x: A.cradle.x, y: A.lair.y, z: A.cradle.z + 1.6, yaw: Math.PI, idle: 'boss', boss: true, id: 'b_leonor' },
     { type: 'hound', x: 44.9, y: 0, z: -74.5, yaw: 2.4, idle: 'eat', id: 'e_ale_h1' },
     { type: 'hound', x: 46.5, y: 0, z: -76.1, yaw: -0.7, idle: 'eat', id: 'e_ale_h2' },
     { type: 'penitent', x: 66.7, y: 0, z: -92.1, yaw: 1.2, idle: 'eat', id: 'e_ale_c1' }

@@ -452,6 +452,8 @@ export const MODES = {
   ionian: [0, 2, 4, 5, 7, 9, 11],
   lydian: [0, 2, 4, 6, 7, 9, 11],
   phrygianDom: [0, 1, 4, 5, 7, 8, 10],
+  // menor armónica (la sensible alzada: el lamento de Leonor)
+  harmonic: [0, 2, 3, 5, 7, 8, 11],
 };
 
 // Grado de la escala (0 = tónica, puede ser negativo o pasar de 6) -> MIDI.

@@ -276,9 +276,10 @@ export class Combat {
   // Tañido / rugido / crujido: onda que aturde (sólo se evita esquivando).
   toll(e, r, dmg, kind = 'bell') {
     const g = this.game;
-    // (crack: el Descoyuntado se parte todas las articulaciones a la vez)
-    this.ring(e.pos.x, e.pos.y + 0.1, e.pos.z, r, kind === 'roar' ? 0xff4020 : kind === 'crack' ? 0xd0c0a8 : 0xc8b070, 0.8);
-    g.audio && g.audio.play(kind === 'roar' ? 'roar' : kind === 'crack' ? 'crack' : 'bellToll', e.pos);
+    // (crack: el Descoyuntado se parte todas las articulaciones a la vez;
+    // wail: el llanto de Leonor)
+    this.ring(e.pos.x, e.pos.y + 0.1, e.pos.z, r, kind === 'roar' ? 0xff4020 : kind === 'crack' ? 0xd0c0a8 : kind === 'wail' ? 0xb8c848 : 0xc8b070, 0.8);
+    g.audio && g.audio.play(kind === 'roar' ? 'roar' : kind === 'crack' ? 'crack' : kind === 'wail' ? 'leonorWail' : 'bellToll', e.pos);
     g.warp = 1;
     g.camRig.shake(0.45);
     const p = g.player;
@@ -337,6 +338,54 @@ export class Combat {
     const vel = new THREE.Vector3((tx - c.x) / T, (p.y - c.y + 0.5 * grav * T * T) / T, (tz - c.z) / T);
     this.projectiles.push({ kind: 'ember', pos: c, vel, grav, life: 3, dmg: 20, src: e, sprite: this._orb(0xff7a20, 1.6), core: this._orb(0xffe0a0, 0.6), color: [1, 0.45, 0.1] });
     g.audio && g.audio.play('fireWhoosh', c);
+  }
+
+  // Una bocanada de pus (Leonor): tiro en parábola hacia el jugador, con
+  // dispersión; donde cae deja un charco.
+  pusGlob(e, from, spread = 0.6) {
+    const g = this.game;
+    const p = g.player;
+    const tx = p.pos.x + p.vx * 0.4 + (Math.random() - 0.5) * 2 * spread,
+      tz = p.pos.z + p.vz * 0.4 + (Math.random() - 0.5) * 2 * spread;
+    const T = 0.75 + Math.random() * 0.25;
+    const grav = 14;
+    const c = from.clone();
+    const vel = new THREE.Vector3((tx - c.x) / T, (p.pos.y - c.y + 0.5 * grav * T * T) / T, (tz - c.z) / T);
+    this.projectiles.push({ kind: 'pus', pos: c, vel, grav, life: 3, dmg: 14, src: e, sprite: this._orb(0xb8c838, 1.1), core: this._orb(0xf0ff9a, 0.4), color: [0.72, 0.76, 0.26] });
+    g.fx.blood.emit(c.x, c.y, c.z, 6, { color: [0.72, 0.76, 0.26], speed: 2.4, life: 0.6, up: 0.4, dir: { x: vel.x / 6, z: vel.z / 6 } });
+    g.audio && g.audio.play('pusSpew', c);
+  }
+
+  // Salpicón de pus (sin daño: lo que salta al reventar o al caer).
+  pusSplash(x, y, z, size = 1) {
+    const g = this.game;
+    g.fx.blood.emit(x, y + 0.3, z, Math.round(26 * size), { color: [0.74, 0.78, 0.27], speed: 4 * size, life: 0.9, up: 2.2 });
+    g.fx.blood.emit(x, y + 0.2, z, Math.round(10 * size), { color: [0.42, 0.4, 0.14], speed: 2 * size, life: 1.1, up: 1 });
+    g.audio && g.audio.play('pusSplat', { x, y, z });
+  }
+
+  // Charco de pus: quema al pisarlo (poco a poco) y se seca al rato.
+  pusPool(x, y, z, r, dur) {
+    const g = this.game;
+    const gy = g.world.col.groundHeight(x, z, 0.2, y + 0.6);
+    const geo = new THREE.CircleGeometry(r, 14).rotateX(-Math.PI / 2);
+    // (borde irregular)
+    const pa = geo.attributes.position;
+    for (let i = 1; i < pa.count; i++) {
+      const k = 0.78 + Math.random() * 0.34;
+      pa.setX(i, pa.getX(i) * k);
+      pa.setZ(i, pa.getZ(i) * k);
+    }
+    const m = new THREE.Mesh(geo, additiveFog(new THREE.MeshBasicMaterial({ map: getTexture('pus'), color: 0xc8c860, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })));
+    m.position.set(x, gy + 0.03, z);
+    m.rotation.y = Math.random() * 6.28;
+    m.renderOrder = 2;
+    g.scene.add(m);
+    const glow = new THREE.Mesh(geo, additiveFog(new THREE.MeshBasicMaterial({ map: getTexture('glow'), color: 0x8a9a20, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })));
+    glow.position.set(x, gy + 0.05, z);
+    glow.renderOrder = 3;
+    g.scene.add(glow);
+    this.pools.push({ kind: 'pus', x, y: gy, z, r, t: dur, dur, fires: [], m, glow, tick: 0.3, grow: 0 });
   }
 
   fireBurst(x, y, z, r, dmg, src) {
@@ -418,7 +467,7 @@ export class Combat {
       P.sprite.position.copy(P.pos);
       P.core.position.copy(P.pos);
       const s = 1 + Math.sin(g.time * 30 + i) * 0.15;
-      P.sprite.scale.setScalar((P.kind === 'wail' ? 1.3 : 1.6) * s);
+      P.sprite.scale.setScalar((P.kind === 'wail' ? 1.3 : P.kind === 'pus' ? 1.1 : 1.6) * s);
       g.fx.blood.emit(P.pos.x, P.pos.y, P.pos.z, 1, { color: P.color, speed: 0.6, life: 0.4, up: 0.2, gravity: -1 });
       let dead = P.life <= 0 || hitWall !== Infinity;
       const pd = Math.hypot(P.pos.x - p.pos.x, P.pos.y - (p.pos.y + 1.1), P.pos.z - p.pos.z);
@@ -441,6 +490,11 @@ export class Combat {
           if (P.src && P.src.data && P.src.data.phase === 2) this.firePool(P.pos.x, gy, P.pos.z, 1.5, 4);
           const d2 = Math.hypot(p.pos.x - P.pos.x, p.pos.z - P.pos.z);
           if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4, noParry: true }, P.pos.x, P.pos.z);
+        } else if (P.kind === 'pus') {
+          // revienta contra el suelo (o contra ti) y deja un charco
+          const gy = g.world.col.groundHeight(P.pos.x, P.pos.z, 0.2, P.pos.y + 0.5);
+          this.pusSplash(P.pos.x, gy, P.pos.z, 0.6);
+          if (Math.abs(P.pos.y - gy) < 1.6) this.pusPool(P.pos.x, gy, P.pos.z, 0.8 + Math.random() * 0.4, 6);
         } else g.audio && g.audio.play('wailHit', P.pos);
         g.scene.remove(P.sprite);
         g.scene.remove(P.core);
@@ -449,18 +503,29 @@ export class Combat {
         this.projectiles.splice(i, 1);
       }
     }
-    // charcos de fuego
+    // charcos de fuego (y de pus)
     for (let i = this.pools.length - 1; i >= 0; i--) {
       const F = this.pools[i];
       F.t -= dt;
       F.tick -= dt;
-      F.m.material.opacity = Math.min(0.8, F.t) * (0.8 + 0.2 * Math.sin(g.time * 12 + i));
+      const pus = F.kind === 'pus';
+      if (pus) {
+        // se extiende al caer y se seca al final
+        F.grow = Math.min(1, F.grow + dt * 4);
+        const sc = 0.4 + 0.6 * (1 - (1 - F.grow) ** 2);
+        F.m.scale.set(sc, 1, sc);
+        F.glow.scale.set(sc, 1, sc);
+        const fade = Math.min(1, F.t / 1.2);
+        F.m.material.opacity = 0.88 * fade;
+        F.glow.material.opacity = (0.3 + 0.12 * Math.sin(g.time * 3 + i)) * fade;
+      } else F.m.material.opacity = Math.min(0.8, F.t) * (0.8 + 0.2 * Math.sin(g.time * 12 + i));
       const d = Math.hypot(p.pos.x - F.x, p.pos.z - F.z);
-      if (d < F.r && F.tick <= 0 && !p.dead && Math.abs(p.pos.y - F.y) < 1 && !p.iframe) {
+      if (d < F.r * (pus ? 0.85 : 1) && F.tick <= 0 && !p.dead && Math.abs(p.pos.y - F.y) < 1 && !p.iframe && !g.failing) {
         F.tick = 0.5;
-        p.hp -= 6;
-        g.hurtFlash = Math.max(g.hurtFlash, 0.6);
-        g.audio && g.audio.play('burn', p.pos);
+        p.hp -= pus ? 4 : 6;
+        g.hurtFlash = Math.max(g.hurtFlash, pus ? 0.4 : 0.6);
+        g.audio && g.audio.play(pus ? 'pusSizzle' : 'burn', p.pos);
+        if (pus) g.fx.blood.emit(p.pos.x, F.y + 0.1, p.pos.z, 4, { color: [0.7, 0.74, 0.25], speed: 1.2, life: 0.5, up: 0.8 });
         if (p.hp <= 0) p.die();
       }
       if (F.t <= 0) {
@@ -468,8 +533,12 @@ export class Combat {
         g.scene.remove(F.m);
         F.m.geometry.dispose();
         F.m.material.dispose();
+        if (F.glow) {
+          g.scene.remove(F.glow);
+          F.glow.material.dispose();
+        }
         this.pools.splice(i, 1);
-        g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+        if (!pus) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
       }
     }
     // fuegos temporales
@@ -501,6 +570,10 @@ export class Combat {
       g.scene.remove(F.m);
       F.m.geometry.dispose();
       F.m.material.dispose();
+      if (F.glow) {
+        g.scene.remove(F.glow);
+        F.glow.material.dispose();
+      }
     }
     this.pools.length = 0;
     for (const T of this.tempFires) T.f.on = false;
