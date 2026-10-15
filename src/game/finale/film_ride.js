@@ -431,7 +431,7 @@ function* runner(D, G, run) {
       if (P.y < (r.h || 7) + 3 && rectDist(r, P.x, P.z) < 0.6) smashHouse(D, r, G.pos, ['centro']);
     }
     // el arco de la Sé
-    if (G.pos.z < -33 && G.pos.z > -42 && D.breakHouse('centro:arco')) smashArch(D, G);
+    if (G.pos.z < -33 && G.pos.z > -42 && D.breakHouse('centro:arco', { from: G.pos.clone(), tilt: 0.2, drop: 6, speed: 1.5, n: 18 })) smashArch(D, G);
     // los muros que flanquean la Sé, los tejados de la plaza
     if (G.pos.z < 0 && G.pos.z > -60) {
       const B = G.M.byName;
@@ -443,9 +443,8 @@ function smashArch(D, G) {
   const g = D.g,
     a = g.audio;
   const c = new V3(0, 5, -38);
-  for (let i = 0; i < 14; i++) D.chunks.add({ mat: 'ashlar', size: [rnd(0.6, 1.1), rnd(0.4, 0.7), rnd(0.5, 0.9)], pos: new V3(rnd(-3.4, 3.4), rnd(3, 7.6), -38 + rnd(-0.4, 0.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-6, 6), rnd(2, 7), rnd(-10, -3)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 8 });
+  for (let i = 0; i < 8; i++) D.chunks.add({ mat: 'ashlar', size: [rnd(0.6, 1.1), rnd(0.4, 0.7), rnd(0.5, 0.9)], pos: new V3(rnd(-3.4, 3.4), rnd(3, 7.6), -38 + rnd(-0.4, 0.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-6, 6), rnd(2, 7), rnd(-10, -3)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 8, quiet: true });
   D.debris.burst(c, 26, { speed: 9, up: 5, size: 1, spread: 3 });
-  g.fx.blood.emit(c.x, c.y, c.z, 60, { color: DUST, speed: 6, life: 2.4, up: 1.5, gravity: 0.3 });
   a && a.play('wallBreak', c, { k: 2 });
   a && a.play('pillarBreak', c, { k: 1.6 });
   g.camRig.shake(0.7);
@@ -455,13 +454,10 @@ function smashArch(D, G) {
 function smashFacade(D, G) {
   const g = D.g,
     a = g.audio;
-  g.setGroupVisible('fachada', false);
-  g.setGroupVisible('fachadaRuin', true);
   const c = new V3(0, 8, -58);
-  for (let i = 0; i < 30; i++)
-    D.chunks.add({ mat: i % 5 ? 'ashlar' : 'roof', size: i % 5 ? [rnd(0.7, 1.4), rnd(0.5, 0.9), rnd(0.6, 1.1)] : [rnd(0.8, 1.3), 0.14, rnd(0.6, 1.0)], pos: new V3(rnd(-12, 12), rnd(3, 22), -60 + rnd(-3, 3)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-7, 7), rnd(0, 6), rnd(-12, -2)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 10 });
+  // (se viene abajo hacia dentro de la nave, entera, y revienta)
+  D.crumble('fachada', { ruin: 'fachadaRuin', from: new V3(0, 8, -46), dir: new V3(0, 0, -1), tilt: 0.3, drop: 12, dur: 1.4, speed: 1.6, up: 0.8, n: 30, size: 1.3, sound: false, shake: false, at: c, dust: 1.8, roof: true });
   D.debris.burst(c, 40, { speed: 12, up: 6, size: 1.2, spread: 6 });
-  for (let k = 0; k < 4; k++) g.fx.blood.emit(rnd(-10, 10), rnd(3, 18), -60, 60, { color: DUST, speed: 8, life: 3, up: 1.5, gravity: 0.25 });
   a && a.play('explosion', c, { k: 2.2 });
   a && a.play('wallBreak', c, { k: 2.2 });
   a && a.play('pillarBreak', c, { k: 2 });
@@ -475,10 +471,8 @@ function smashFacade(D, G) {
 function breakArcade(D, k) {
   const g = D.g;
   if (!g.groups['naveArc:' + k] || !g.groups['naveArc:' + k].on) return;
-  g.setGroupVisible('naveArc:' + k, false);
-  g.setGroupVisible('naveArcRuin:' + k, true);
   const c = new V3(0, 6, -68);
-  for (let i = 0; i < 16; i++) D.chunks.add({ mat: 'ashlar', size: [rnd(0.6, 1.2), rnd(0.4, 0.8), rnd(0.5, 1.0)], pos: new V3((i % 2 ? 1 : -1) * rnd(5, 8), rnd(2, 10), rnd(-75, -61)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3((i % 2 ? 1 : -1) * rnd(2, 7), rnd(1, 5), rnd(-4, 4)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 8 });
+  D.crumble('naveArc:' + k, { ruin: 'naveArcRuin:' + k, from: new V3(0, 6, -64), tilt: 0.05, drop: 8, dur: 0.85, speed: 1.3, n: 22, sound: false, shake: false, at: c });
   g.audio && g.audio.play('pillarBreak', c, { k: 2 });
   g.audio && g.audio.play('wallBreak', c, { k: 1.6 });
   g.camRig.shake(0.8);
@@ -651,7 +645,7 @@ function smashMerlon(D, i, x0, x1, k = 1) {
   for (let j = 0; j < 5; j++)
     D.chunks.add({ mat: 'wallstone', size: [rnd(0.3, 0.55), rnd(0.25, 0.45), rnd(0.3, 0.5)], pos: new V3(rnd(x0, x1), y + rnd(0.3, h), z + rnd(-0.2, 0.2)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-2, 3) * k, rnd(1, 4), rnd(-5, -1.5) * k), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 9, life: 6, floor: 0 });
   D.debris.burst(c, 10, { speed: 5 * k, up: 3, size: 0.6, spread: 0.6 });
-  g.fx.blood.emit(c.x, c.y, c.z, 24, { color: DUST, speed: 3.5, life: 1.6, up: 1.2, gravity: 0.3 });
+  D.puff(c, 2, { size: 1.6, speed: 2.5 * k, up: 1, life: 3, grow: 1.2, alpha: 0.45, dir: new V3(0, 0, -2 * k) });
   a && a.play('wallBreak', c, { k: 1.2 * k });
   g.camRig.shake(0.35 * k);
 }

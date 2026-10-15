@@ -273,3 +273,58 @@ FP.chop = clip(
   ],
   { loop: true, ground: false }
 );
+
+// ------------------------------------------------------------ el final: el corazón
+// encima de la joroba, agachado sobre el virote de la nuca: las dos manos en
+// el astil, y lo hunde con todo el cuerpo encima, de un golpe de riñones
+// (una vez por pulsación: se vuelve a empezar)
+const DRIVE = { root: [0, -34, 0], hips: [40, 0, 0], chest: [22, 0, 0], head: [-30, 0, 0], armL: [-96, 0, 16], foreL: [-34, 0, 0], handL: [10, 0, 0], armR: [-100, 0, -14], foreR: [-30, 0, 0], handR: [10, 0, 0], legL: [-56, 0, 8], shinL: [74, 0, 0], footL: [-10, 0, 0], legR: [8, 0, -8], shinR: [44, 0, 0], footR: [-14, 0, 0] };
+FP.driveBolt = clip(
+  'fp_driveBolt',
+  0.6,
+  [
+    [0, { ...DRIVE, root: [0, -22, 0], hips: [24, 0, 0], chest: [6, 0, 0], head: [-34, 0, 0], armL: [-130, 0, 16], foreL: [-50, 0, 0], armR: [-134, 0, -14], foreR: [-46, 0, 0] }],
+    [0.13, { ...DRIVE, root: [0, -58, 0], hips: [62, 0, 0], chest: [34, 0, 0], head: [-14, 0, 0], armL: [-62, 0, 12], foreL: [-8, 0, 0], armR: [-66, 0, -10], foreR: [-6, 0, 0], legL: [-76, 0, 8], shinL: [102, 0, 0] }, 'snap'],
+    [0.6, DRIVE],
+  ],
+  { ground: false }
+);
+// en el pecho abierto, ante el corazón: la espada a dos manos, atrás y
+// adentro con todo el cuerpo (una estocada por pulsación)
+const CORE = { root: [0, -22, 0], hips: [12, 0, 0], chest: [8, 0, 0], head: [-8, 0, 0], legL: [-42, 0, 8], shinL: [44, 0, 0], footL: [-6, 0, 0], legR: [22, 0, -8], shinR: [26, 0, 0], footR: [-12, 0, 0] };
+FP.stabCore = clip(
+  'fp_stabCore',
+  0.55,
+  [
+    [0, { ...CORE, chest: [-4, -24, 0], head: [-6, 16, 0], armR: [-56, 0, -44], foreR: [-112, 0, 0], armL: [-66, 0, 34], foreL: [-104, 0, 0] }],
+    [0.12, { ...CORE, root: [0, -36, 0], hips: [24, 0, 0], chest: [22, 16, 0], head: [-16, -8, 0], armR: [-94, 0, -6], foreR: [-4, 0, 0], armL: [-90, 0, 12], foreL: [-8, 0, 0], legL: [-58, 0, 8], shinL: [58, 0, 0] }, 'snap'],
+    [0.55, { ...CORE, root: [0, -32, 0], hips: [20, 0, 0], chest: [18, 12, 0], head: [-14, -6, 0], armR: [-90, 0, -8], foreR: [-12, 0, 0], armL: [-86, 0, 14], foreL: [-16, 0, 0], legL: [-52, 0, 8], shinL: [54, 0, 0] }],
+  ],
+  { ground: false }
+);
+// la última: alzada por encima de la cabeza, a dos manos, la punta hacia el
+// corazón; y abajo, hasta la empuñadura
+FP.stabCoreEnd = clip(
+  'fp_stabCoreEnd',
+  1.1,
+  [
+    [0, { ...CORE, chest: [-14, 0, 0], head: [-20, 0, 0], armR: [-168, 0, -14], foreR: [-70, 0, 0], armL: [-164, 0, 16], foreL: [-74, 0, 0] }],
+    [0.6, { ...CORE, root: [0, -10, 0], chest: [-22, 0, 0], head: [-26, 0, 0], armR: [-176, 0, -10], foreR: [-62, 0, 0], armL: [-172, 0, 12], foreL: [-66, 0, 0], legL: [-34, 0, 8], shinL: [34, 0, 0] }, 'hold'],
+    [0.75, { ...CORE, root: [0, -46, 0], hips: [34, 0, 0], chest: [36, 0, 0], head: [-6, 0, 0], armR: [-80, 0, -8], foreR: [-4, 0, 0], armL: [-78, 0, 10], foreL: [-6, 0, 0], legL: [-66, 0, 8], shinL: [72, 0, 0] }, 'snap'],
+    [1.1, { ...CORE, root: [0, -44, 0], hips: [32, 0, 0], chest: [34, 0, 0], head: [-4, 0, 0], armR: [-82, 0, -8], foreR: [-6, 0, 0], armL: [-80, 0, 10], foreL: [-8, 0, 0], legL: [-64, 0, 8], shinL: [70, 0, 0] }],
+  ],
+  { ground: false }
+);
+// resbalando de espaldas por la casulla, los pies por delante: una mano
+// atrás, rozando, y la espada en la otra (la inclinación la pone el guion)
+const SLD = { root: [0, -78, 0], hips: [-74, 0, 0], chest: [26, 0, 0], head: [16, 0, 0], legL: [-12, 0, 10], shinL: [14, 0, 0], footL: [-24, 0, 0], legR: [-4, 0, -10], shinR: [30, 0, 0], footR: [-18, 0, 0], armL: [-20, 0, 50], foreL: [-30, 0, 0], armR: [-70, 0, -40], foreR: [-60, 0, 0] };
+FP.slideDown = clip(
+  'fp_slideDown',
+  0.5,
+  [
+    [0, SLD],
+    [0.25, { ...SLD, chest: [30, 6, 0], armL: [-14, 0, 56], legL: [-18, 0, 12], legR: [2, 0, -12] }],
+    [0.5, SLD],
+  ],
+  { loop: true, ground: false }
+);

@@ -59,10 +59,20 @@ export class Wrecks {
     const g = this.g;
     if (w.broken) return;
     w.broken = true;
+    if (instant) {
+      g.setGroupVisible('wreck:' + w.id, false);
+      g.setGroupVisible('wreck:' + w.id + ':ruin', true);
+      return;
+    }
+    g.flags['wreck:' + w.id] = true;
+    // (se viene abajo de verdad: ver director.crumble)
+    const C = g.finale && g.finale.crumble('wreck:' + w.id, { ruin: 'wreck:' + w.id + ':ruin', from: from || null, tilt: w.kind === 'roof' ? 0.12 : 0.3, drop: w.kind === 'roof' ? 2.5 : 4, dur: 0.7, n: w.kind === 'roof' ? 10 : 14, roof: w.kind === 'roof', sound: false, shake: 0.35 });
+    if (C) {
+      g.audio && g.audio.play(w.kind === 'roof' ? 'woodBreak' : 'wallBreak', _c.set((w.box[0] + w.box[3]) / 2, w.box[4] - 0.4, (w.box[2] + w.box[5]) / 2), { k: 1.4 });
+      return;
+    }
     g.setGroupVisible('wreck:' + w.id, false);
     g.setGroupVisible('wreck:' + w.id + ':ruin', true);
-    if (instant) return;
-    g.flags['wreck:' + w.id] = true;
     const b = w.box;
     _c.set((b[0] + b[3]) / 2, b[4] - 0.4, (b[2] + b[5]) / 2);
     // cascotes y polvo desde lo alto; tejas si es un tejado

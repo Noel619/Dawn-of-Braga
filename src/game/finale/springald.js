@@ -338,7 +338,8 @@ export class Springald {
     this._buildBollard(mats);
     this.ring = new V3(this.bollard.x, this.bollard.y + 0.62, this.bollard.z);
     this.chainLen = o.chainLen ?? 34;
-    this.rope = new Rope(scene, { len: 3, nodes: 30, groundAt: (x, z, y) => game.world.col.groundHeight(x, z, 0.1, y + 0.3) });
+    // (la cadena, sobre lo que se ve: no sobre las paredes invisibles)
+    this.rope = new Rope(scene, { len: 3, nodes: 30, groundAt: (x, z, y) => game.world.col.groundHeight(x, z, 0.1, y + 0.3, true) });
     this.rope.pin(0, this.ring);
     this.tail = new V3();
     this.rope.pin(1, this.tail);

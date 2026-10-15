@@ -20,6 +20,7 @@ import { FP } from './film_player.js';
 import { CISTERN, PIT_SLAB } from '../../world/level_finale.js';
 import { clamp } from '../../core/util.js';
 import { objMat } from '../../gfx/materials.js';
+import { sampleSurface } from './collapse.js';
 
 const V3 = THREE.Vector3;
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -567,42 +568,47 @@ function _floorSlabs(D, cz) {
     if (z > PIT_SLAB.z - 1.6 && Math.abs(x) < 1.6) continue;
     D.chunks.add({ mat: 'flag', size: [rnd(1.6, 2.6), 0.34, rnd(1.4, 2.4)], pos: new V3(x, AY - 0.17, z), rot: [0, rnd(0, 3), 0], vel: new V3(-Math.cos(a) * rnd(0.5, 1.5), rnd(-1, 0), -Math.sin(a) * rnd(0.5, 1.5)), spin: [rnd(-2, 2), rnd(-1, 1), rnd(-2, 2)], floor: AY - 18, shatter: 99, life: 6, tint: 0x9c948c, dust: false });
   }
+  // el polvo que sube del agujero (y el que levanta el borde que se raja)
+  const col = D.dustColor({ x: 0, y: AY, z: cz });
+  D.dust.ring({ x: 0, y: AY, z: cz }, 14, { color: col, r0: 5.5, speed: 3, size: 2.2, life: 4.5, grow: 1.4, alpha: 0.45, up: 0.6 });
+  D.dust.burst({ x: 0, y: AY - 2, z: cz }, 8, { color: col, spread: 4, size: 2.6, speed: 1, up: 3, rise: 1.2, life: 5, grow: 1.2, alpha: 0.4, ground: false, stagger: 0.6 });
 }
 
-// las ocho columnas del corro caen (y sus arcos y los macizos de encima)
+// las ocho columnas del corro se vienen abajo (y sus arcos y los macizos de
+// encima): se hunden hacia fuera del pozo, en trozos de su propia piedra
 function _topple(D, cz) {
   const g = D.g;
-  g.setGroupVisible('cisternCols', false);
-  g.setGroupVisible('cisternColsRuin', true);
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-    const x = Math.cos(a) * 11.2,
-      z = cz + Math.sin(a) * 11.2;
-    // tambores de la columna (por encima del muñón) y dovelas de los arcos
-    for (let k = 0; k < 3; k++) {
-      const y = AY + 3.6 + k * 1.3;
-      D.chunks.add({ mat: 'ashlar', size: [1.2, 1.2, 1.2], pos: new V3(x, y, z), vel: new V3(-Math.cos(a) * rnd(1, 3), rnd(0, 1.5), -Math.sin(a) * rnd(1, 3)), spin: [rnd(-3, 3), rnd(-1, 1), rnd(-3, 3)], shatter: 12, life: 8 });
-    }
-    const b = a + Math.PI / 8;
-    D.chunks.add({ mat: 'ashlar', size: [2.2, 0.8, 0.9], pos: new V3(Math.cos(b) * 10.6, CISTERN.YT - 1.5, cz + Math.sin(b) * 10.6), rot: [0, -b, 0], vel: new V3(-Math.cos(b) * 2, 0, -Math.sin(b) * 2), spin: [rnd(-2, 2), 0, rnd(-2, 2)], shatter: 10, life: 8 });
-  }
+  D.crumble('cisternCols', { ruin: 'cisternColsRuin', from: new V3(0, AY + 3, cz), tilt: 0.05, drop: 7, dur: 1.0, n: 26, size: 1.1, speed: 0.5, up: 0.6, sound: false, shake: 0.6 });
   g.audio && g.audio.play('pillarBreak', { x: 8, y: AY + 3, z: cz }, { k: 2 });
   g.audio && g.audio.play('pillarBreak', { x: -8, y: AY + 3, z: cz }, { k: 2 });
   g.camRig.shake(0.6);
 }
 
-// la cúpula revienta: trozos que saltan hacia arriba y caen alrededor
+// la cúpula revienta: trozos de la cúpula de verdad que saltan hacia arriba
+// y caen alrededor, una columna de polvo y la onda a ras de suelo
 function _burstDome(D, cz) {
   const g = D.g;
+  const G = g.groups.cisternDome;
+  const pts = G ? sampleSurface(G.meshes.filter((m) => m.visible), 30) : [];
   g.setGroupVisible('cisternDome', false);
   g.setGroupVisible('cisternDomeRuin', true);
   g.setGroupVisible('cisternCrown', false);
-  for (let i = 0; i < 26; i++) {
+  for (const q of pts) {
+    const dx = q.p.x,
+      dz = q.p.z - cz;
+    const r = Math.hypot(dx, dz) || 1;
+    const s = rnd(0.7, 1.8);
+    D.chunks.add({ mat: q.mat === 'glass' ? 'mossstone' : q.mat, size: [s * 1.2, s * 0.45, s], pos: q.p, rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3((dx / r) * rnd(2, 7), rnd(6, 14), (dz / r) * rnd(2, 7)), spin: [rnd(-4, 4), rnd(-4, 4), rnd(-4, 4)], shatter: 12, life: 9, quiet: true });
+  }
+  for (let i = 0; i < 10; i++) {
     const a = rnd(0, Math.PI * 2),
       r = rnd(2, 9);
-    const y = CISTERN.YT + rnd(1, 5);
-    D.chunks.add({ mat: 'mossstone', size: [rnd(0.9, 2.2), rnd(0.35, 0.6), rnd(0.8, 1.8)], pos: new V3(Math.cos(a) * r, y, cz + Math.sin(a) * r), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(Math.cos(a) * rnd(2, 7), rnd(6, 14), Math.sin(a) * rnd(2, 7)), spin: [rnd(-4, 4), rnd(-4, 4), rnd(-4, 4)], shatter: 14, life: 9 });
+    D.chunks.add({ mat: 'dirt', size: [rnd(0.8, 1.6), rnd(0.5, 0.9), rnd(0.8, 1.4)], pos: new V3(Math.cos(a) * r, CISTERN.YT + rnd(1, 4), cz + Math.sin(a) * r), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(Math.cos(a) * rnd(2, 6), rnd(7, 13), Math.sin(a) * rnd(2, 6)), spin: [rnd(-4, 4), rnd(-4, 4), rnd(-4, 4)], shatter: 10, life: 8, quiet: true });
   }
-  D.debris.burst(new V3(0, CISTERN.DOME, cz), 40, { speed: 9, up: 12, size: 1.1, spread: 5 });
-  g.fx.blood.emit(0, CISTERN.DOME, cz, 140, { color: [0.42, 0.4, 0.37], speed: 10, life: 3, up: 4, gravity: 0.5 });
+  D.debris.burst(new V3(0, CISTERN.DOME, cz), 50, { speed: 9, up: 12, size: 1.1, spread: 5 });
+  const col = D.dustColor({ x: 0, y: 1, z: cz });
+  // (una columna que sube con él, y la onda que se abre por el campo)
+  D.dust.burst({ x: 0, y: CISTERN.DOME, z: cz }, 16, { color: col, spread: 5, size: 3.2, speed: 4, up: 7, rise: 1.5, life: 6, grow: 2.2, alpha: 0.5, ground: false });
+  D.dust.ring({ x: 0, y: 0.5, z: cz }, 20, { color: col, r0: 8, speed: 11, size: 2.8, life: 6, grow: 2, alpha: 0.5, up: 0.4 });
+  g.fx.blood.emit(0, CISTERN.DOME, cz, 80, { color: [0.3, 0.29, 0.27], speed: 10, life: 3, up: 4, gravity: 0.5 });
 }

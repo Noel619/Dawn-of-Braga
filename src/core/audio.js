@@ -119,6 +119,10 @@ const FX_PRIO = {
   beastStep: [3, 'pasos'],
   fleshTear: [4, 'mundo'],
   fleshBurst: [5, 'mundo'],
+  // el final: el corazón del dios
+  coreBeat: [4, 'mundo'],
+  coreBurst: [5, 'mundo'],
+  choke: [5, 'mundo'],
   pikeWhoosh: [4, 'golpe'],
   leapWind: [5, 'jugador'],
   hayLand: [5, 'jugador'],
@@ -167,6 +171,9 @@ const BAKE = {
   chainRun: { n: 3, dur: 1.5, kGain: true },
   rageScream: { n: 2, dur: 3.4 },
   roar: { n: 2, dur: 2.6 },
+  coreBeat: { n: 2, dur: 1.6, kGain: true },
+  coreBurst: { n: 2, dur: 5.6 },
+  choke: { n: 2, dur: 2.6 },
 };
 // (los que comparten síntesis)
 const BAKE_AS = { pillarBreak: 'wallBreak' };
@@ -271,7 +278,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90 };
+const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -1693,6 +1700,48 @@ export class Audio {
         for (let i = 0; i < 10; i++) this.noise(d, t + 0.25 + Math.pow(Math.random(), 1.5) * 1.4, rnd(0.04, 0.1), { f0: rnd(300, 900), q: 3, gain: rnd(0.08, 0.2), a: 0.004, buf: this.brown, rate: 4 });
         for (let i = 0; i < 6; i++) this.boneCrack(d, t + rnd(0, 0.3), rnd(0.6, 1.1));
         this.duck(0.6, 1.4);
+        break;
+      }
+      // ---- el final: el corazón del dios
+      // el núcleo que late a la vista: dos latidos hondos y húmedos (o.k:
+      // volumen), con un chisporroteo de brasas
+      case 'coreBeat': {
+        const k = o.k ?? 1;
+        d = this.out(P, { gain: 0.95 * k, verb: 0.55, life: 2.6, ref: 9, roll: 0.7, occlude: false });
+        for (const [dt, gk] of [
+          [0, 1],
+          [0.27, 0.7],
+        ]) {
+          this.tone(d, t + dt, 0.42, { f0: 58, f1: 30, gain: 0.85 * gk });
+          this.noise(d, t + dt, 0.3, { type: 'lowpass', f0: 520, f1: 90, gain: 0.55 * gk, a: 0.004, buf: this.brown, rate: 2 });
+          this.noise(d, t + dt + 0.02, 0.22, { f0: 380, f1: 180, q: 2.2, gain: 0.14 * gk, a: 0.01, buf: this.brown, rate: 4 });
+        }
+        this.smp(d, t, this.lib.drum('heart'), { gain: 0.5, rate: 0.7 });
+        this.debris(d, t + 0.05, 5, 0.5, { f0: 2200, f1: 5200, gain: 0.12 });
+        break;
+      }
+      // el corazón revienta: aspira el aire, estalla (grave y brillante a la
+      // vez, con un tañido) y llueven brasas
+      case 'coreBurst': {
+        d = this.out(P, { gain: 1, verb: 0.9, life: 7.5, ref: 14, roll: 0.5, occlude: false });
+        this.noise(d, t, 0.5, { f0: 300, f1: 3200, q: 0.9, gain: 0.25, a: 0.45, curve: 'lin', buf: this.pink });
+        const tb = t + 0.45;
+        this.tone(d, tb, 2.2, { f0: 70, f1: 16, gain: 1 });
+        this.noise(d, tb, 2.6, { type: 'lowpass', f0: 2400, f1: 80, gain: 1, a: 0.003, buf: this.brown, rate: 2 });
+        this.noise(d, tb, 1.2, { f0: 4200, f1: 1200, q: 0.7, gain: 0.3, a: 0.002 });
+        this.metal(d, tb + 0.02, 220, 0.6, 2.5);
+        this.metal(d, tb + 0.05, 331, 0.4, 2.0);
+        this.debris(d, tb + 0.08, 30, 2.4, { f0: 1800, f1: 6000, gain: 0.5 });
+        this.duck(0.75, 2.2);
+        break;
+      }
+      // se ahoga: un estertor sin voz, con la garganta atravesada (el aire
+      // que no pasa, la sangre que gorgotea)
+      case 'choke': {
+        d = this.out(P, { gain: 0.95, verb: 0.6, life: 4, ref: 10, roll: 0.7, occlude: false });
+        this.voice(d, t, 1.6, { f0: 38, f1: 30, vowel: 'u', v1: 'o', gain: 0.22, vib: 17, vibD: 14, breath: 1.6, a: 0.08, rasp: 1, jit: 80 });
+        this.noise(d, t, 1.7, { f0: 600, f1: 260, q: 1.4, gain: 0.3, a: 0.06, buf: this.pink });
+        for (let i = 0; i < 12; i++) this.noise(d, t + 0.1 + Math.random() * 1.5, rnd(0.03, 0.08), { f0: rnd(180, 520), q: 4, gain: rnd(0.08, 0.22), a: 0.004, buf: this.brown, rate: 4 });
         break;
       }
       // la pica (o un sillar) por el aire

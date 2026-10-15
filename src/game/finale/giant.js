@@ -93,9 +93,23 @@ export class Giant {
     this.onEventHook = null;
     this.speedK = 1;
     this.shake = 0;
+    // el núcleo (el corazón de brasa del pecho): cuánto late y brilla de más
+    // (el final), y si está muerto
+    this.coreBoost = 0;
+    this.coreDead = false;
+    // (lo que arde en su carne: el núcleo, su nido, las heridas, la cera; se
+    // apaga al morir)
+    this.glowMats = [...M.mats].filter((m) => {
+      const d = m.userData.def;
+      return d && d.emissive !== undefined && d.emissive !== 0xffffff && m.emissive;
+    });
+    for (const m of this.glowMats) m.userData.em0 = m.emissiveIntensity;
+    this._glowK = 1;
     // el avance de los clips (giant_anim.js: 'move', 'vel'): lo enciende el
     // guion cuando el gigante va de un sitio a otro
     this.rootMotion = false;
+    // (cuánto avanza con lo que manda el clip: más de un paso por zancada)
+    this.moveK = 1;
     this._mv = { clip: null, t: 0, m: 0 };
   }
 
@@ -134,6 +148,9 @@ export class Giant {
     this.fixY = o.y ?? null;
     this.pitch = 0;
     if (this.eyeOut) this.setEye(this.eyeOut, true);
+    this.coreBoost = 0;
+    this.moveK = 1;
+    this.lightsOut(true);
     this.ik = {};
     this.footIK = {};
     this.R.groundOn = o.ground !== false;
@@ -236,6 +253,13 @@ export class Giant {
     this.eyes[S === 'L' ? 1 : 0].visible = on;
     this.eyeOut = on ? null : S;
   }
+  // muerto: los ojos y las velas de la corona, apagados (o encendidos otra vez)
+  lightsOut(on = false) {
+    for (const e of this.eyes) e.visible = on && !(this.eyeOut && e === this.eyes[this.eyeOut === 'L' ? 1 : 0]);
+    for (const f of this.fx.flames) f.sp.visible = on;
+    for (const k of ['halo', 'crown']) if (this.lights[k]) this.lights[k].on = on && this.visible;
+    if (on) this.coreDead = false;
+  }
   handGrip(out = new THREE.Vector3()) {
     return this.bp('handR', -5.3, 5.2, 2.75, out);
   }
@@ -304,7 +328,7 @@ export class Giant {
       M.m = m;
       M.t = A.t;
     } else if (B.clip && B.clip.vel && (!c || A.weight < 0.5)) d = B.clip.vel * B.speed * this.R.speed * dt;
-    if (d) this.pos.addScaledVector(this.forward(_v3), d);
+    if (d) this.pos.addScaledVector(this.forward(_v3), d * this.moveK);
   }
   _ik() {
     for (const S of ['L', 'R']) {
@@ -333,7 +357,10 @@ export class Giant {
       g.input.rumble(0.3 * k, 0.45 * k, 160);
       g.audio && g.audio.play('beastStep', f, { k: 1.7 * k });
       if (Math.random() < 0.5) g.audio && g.audio.play('chainRun', this.bell.center(_v2), { k: 0.5 });
-      g.fx.blood.emit(f.x, f.y + 0.3, f.z, 16, { color: [0.36, 0.33, 0.29], speed: 3.2, life: 0.8, up: 1.3 });
+      g.fx.blood.emit(f.x, f.y + 0.3, f.z, 10, { color: [0.36, 0.33, 0.29], speed: 3.2, life: 0.8, up: 1.3 });
+      // (un anillo de polvo bajo cada pie: lo que pesa)
+      const F = g.finale;
+      if (F && F.dust && d < 70) F.dust.ring(f, 7, { color: F.dustColor(f, 0.9), r0: 1.4, speed: 5 * k, size: 1.8 * k + 0.4, life: 3, grow: 1.2, alpha: 0.4 * k, up: 0.3 });
     }
     if (this.onEventHook) this.onEventHook(e, c);
   }
@@ -347,7 +374,19 @@ export class Giant {
     L.core.x = core.x;
     L.core.y = core.y;
     L.core.z = core.z;
-    L.core.intensity = 22 + Math.sin(g.time * 5) * 4;
+    // (el núcleo: con coreBoost late más deprisa y alumbra más; muerto, nada)
+    const cb = this.coreBoost;
+    L.core.intensity = this.coreDead ? 0 : (22 + Math.sin(g.time * (5 + cb * 5)) * 4) * (1 + cb * 1.6);
+    if (!this._coreG) this._coreG = this.fx.glows.find((q) => q.sp === this.coreGlow) || null;
+    if (this._coreG) {
+      this._coreG.size = 3.4 * (1 + cb * 0.55);
+      this._coreG.pulse = 0.22 + cb * 0.12;
+      this.coreGlow.visible = !this.coreDead;
+    }
+    // (la carne que arde: con el núcleo, más; muerto, se apaga despacio)
+    const gk = this.coreDead ? 0 : 1 + cb * 0.5;
+    this._glowK += (gk - this._glowK) * Math.min(1, dt * (this.coreDead ? 1.2 : 6));
+    for (const m of this.glowMats) m.emissiveIntensity = m.userData.em0 * this._glowK;
     const bc = this.bell.center(_v2);
     L.bell.x = bc.x;
     L.bell.y = bc.y - 1;

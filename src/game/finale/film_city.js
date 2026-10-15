@@ -183,7 +183,8 @@ function* beatLeap(D, G) {
   g.camRig.shake(0.6);
   g.input.rumble(0.8, 1, 500);
   D.debris.burst(f0, 34, { speed: 9, up: 10, size: 1.0, spread: 3.5 });
-  g.fx.blood.emit(f0.x, f0.y + 0.5, f0.z, 70, { color: DUST, speed: 9, life: 2.2, up: 2.5, gravity: 0.3 });
+  D.dust.ring(f0, 16, { color: D.dustColor(f0), r0: 3, speed: 10, size: 2.6, life: 4.5, grow: 1.8, alpha: 0.5 });
+  D.puff(f0, 6, { size: 3, speed: 3, up: 4, rise: 0.8, life: 4, grow: 1.6, alpha: 0.45 });
   for (let i = 0; i < 10; i++) D.chunks.add({ mat: 'flag', size: [rnd(0.7, 1.3), rnd(0.2, 0.35), rnd(0.6, 1.1)], pos: new V3(f0.x + rnd(-3, 3), f0.y + 0.3, f0.z + rnd(-3, 3)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-5, 5), rnd(8, 16), rnd(-5, 5)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 12, life: 8, tint: 0x9c948c });
   // el vuelo: la raíz por una parábola alta (pasa por encima de las torres
   // de la fachada); el clip, despacio en el aire (de 'launch' a 'land')
@@ -247,7 +248,9 @@ function* beatLeap(D, G) {
   g.input.rumble(1, 1, 900);
   g.flash = Math.max(g.flash || 0, 0.22);
   D.debris.burst(hit.clone().setY(0.3), 40, { speed: 12, up: 9, size: 1.1, spread: 4 });
-  for (let k = 0; k < 3; k++) g.fx.blood.emit(hit.x + rnd(-5, 5), 1, hit.z + rnd(-3, 4), 40, { color: DUST, speed: 10, life: 2.2, up: 2, gravity: 0.35 });
+  // (la onda de polvo del golpe: corre por el corral hasta el jugador)
+  D.dust.ring(hit.clone().setY(0.3), 22, { color: D.dustColor(hit), r0: 5, speed: 14, size: 3, life: 6, grow: 2, alpha: 0.55 });
+  D.puff(hit.clone().setY(2), 8, { size: 4, spread: 4, speed: 3, up: 3, rise: 0.6, life: 7, grow: 1.4, alpha: 0.4 });
   // tejas y vigas, hacia el jugador (las que quedan por el suelo se
   // deshacen pronto: no estorban luego a la cámara)
   for (let i = 0; i < 9; i++) {
@@ -514,7 +517,7 @@ function* handStrike(D, G, target, o = {}) {
       const dp = Math.hypot(p.pos.x - h.x, p.pos.z - h.z);
       g.camRig.shake(clamp(1.2 - dp * 0.05, 0.3, 1.2));
       g.input.rumble(1, 1, 400);
-      g.fx.blood.emit(h.x, 0.4, h.z, 50, { color: DUST, speed: 7, life: 1.8, up: 2.5, gravity: 0.3 });
+      D.dust.ring(new V3(h.x, 0.3, h.z), 14, { color: D.dustColor(h), r0: 1.5, speed: 9, size: 2.2, life: 4, grow: 1.5, alpha: 0.5 });
       D.debris.burst(new V3(h.x, 0.3, h.z), 22, { speed: 7, up: 6, size: 0.8, spread: 1.8 });
       for (let i = 0; i < 5; i++) D.chunks.add({ mat: 'cobble', size: [rnd(0.4, 0.8), 0.2, rnd(0.4, 0.8)], pos: new V3(h.x + rnd(-1.5, 1.5), 0.3, h.z + rnd(-1.5, 1.5)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-4, 4), rnd(4, 8), rnd(-4, 4)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 7 });
       if (o.onImpact) o.onImpact(h);
@@ -619,7 +622,8 @@ function* beatBell(D, G) {
   g.camRig.shake(1.3);
   g.flash = Math.max(g.flash || 0, 0.3);
   g.input.rumble(1, 1, 500);
-  g.fx.blood.emit(at.x, 0.5, at.z, 80, { color: DUST, speed: 10, life: 2.2, up: 3, gravity: 0.25 });
+  D.dust.ring(at.clone().setY(0.3), 20, { color: D.dustColor(at), r0: 2.4, speed: 13, size: 2.6, life: 5, grow: 1.8, alpha: 0.55 });
+  D.puff(at.clone().setY(1.5), 6, { size: 3, spread: 2, speed: 2, up: 3, rise: 0.6, life: 5, grow: 1.4, alpha: 0.45 });
   g.fx.blood.emit(at.x, 1, at.z, 30, { color: [1, 0.5, 0.12], speed: 6, life: 0.7, up: 3 });
   D.debris.burst(at.clone().setY(0.3), 36, { speed: 10, up: 9, size: 0.9, spread: 3 });
   for (let i = 0; i < 9; i++) D.chunks.add({ mat: 'cobble', size: [rnd(0.5, 1.0), 0.22, rnd(0.4, 0.9)], pos: new V3(at.x + rnd(-2.4, 2.4), 0.3, at.z + rnd(-2.4, 2.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-7, 7), rnd(5, 11), rnd(-7, 7)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 8 });

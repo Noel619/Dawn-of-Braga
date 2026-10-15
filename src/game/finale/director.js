@@ -43,9 +43,19 @@ import { Film } from './film.js';
 import { Giant } from './giant.js';
 import { Debris } from './debris.js';
 import { Chunks } from './chunks.js';
+import { DustClouds } from './dust.js';
+import { Collapses, sampleSurface } from './collapse.js';
 import { Wrecks } from './wrecks.js';
 import { ACTS } from './film_acts.js';
 import { NAVE } from '../../world/level_finale.js';
+import { clamp } from '../../core/util.js';
+
+const V3 = THREE.Vector3;
+const rnd = (a, b) => a + Math.random() * (b - a);
+// de qué materiales del mundo salen trozos (los demás, telas, velas, sangre,
+// agua, no se parten)
+const SOLID = new Set(['cobble', 'flag', 'wallstone', 'ashlar', 'plaster', 'timber', 'planks', 'wooddark', 'roof', 'dirt', 'mossstone', 'rock', 'mosaic', 'glass', 'straw', 'iron', 'skulls', 'bone']);
+const WOOD = new Set(['timber', 'planks', 'wooddark', 'straw']);
 
 // el objeto verdadero (nombre provisional; ver arriba)
 export const TRUE_ITEM = 'verdadero';
@@ -58,8 +68,15 @@ export class Finale {
   constructor(game) {
     this.g = game;
     this.film = new Film(game);
-    this.debris = new Debris(game.scene, 160);
+    this.debris = new Debris(game.scene, 260);
+    // astillas y tejas, aparte (su material y su forma)
+    this.splinters = new Debris(game.scene, 140, { tex: 'timber', color: 0x8a7a68, shape: 'splinter' });
+    this.tiles = new Debris(game.scene, 140, { tex: 'roof', color: 0xa07060, shape: 'tile' });
+    this.dust = new DustClouds(game.scene, 520);
+    this.dust.groundAt = (x, z, y) => game.world.col.groundHeight(x, z, 0.3, y + 0.5, true);
     this.chunks = new Chunks(game, this.debris);
+    this.chunks.dust = this.dust;
+    this.collapses = new Collapses(game);
     this.giant = null;
     this.stage = 'off';
     this.cp = null;
@@ -196,15 +213,138 @@ export class Finale {
     on(wg + 'Ruin', true);
     for (const n of keys) if (n.startsWith(wg + 'Ruin:')) on(n, broken);
   }
-  // una casa de un bloque (y lo que cuelga de ella) se viene abajo
-  breakHouse(name) {
+  // una casa de un bloque se viene abajo (o: lo de crumble; crumble: false,
+  // de golpe y sin más)
+  breakHouse(name, o = {}) {
     const g = this.g;
     if (!g.groups[name] || !g.groups[name].on) return false;
     const wg = name.split(':')[0];
-    g.setGroupVisible(name, false);
-    g.setGroupVisible(name.replace(wg + ':', wg + 'Ruin:'), true);
+    const ruin = name.replace(wg + ':', wg + 'Ruin:');
+    if (o.crumble === false) {
+      g.setGroupVisible(name, false);
+      g.setGroupVisible(ruin, true);
+      return true;
+    }
+    this.crumble(name, { ruin, ...o });
     return true;
   }
+  // lo que vuela y lo que se está viniendo abajo, fuera (y lo que caía, otra
+  // vez en su sitio)
+  clearBits() {
+    this.collapses.clear();
+    this.chunks.clear();
+    this.debris.clear();
+    this.splinters.clear();
+    this.tiles.clear();
+    this.dust.clear();
+  }
+
+  // ---------------------------------------------------------- derrumbes
+  // El color del polvo en un sitio: el de la luz que hay (la de la luna, la
+  // de las antorchas cercanas)
+  // (como un muro de piedra clara: la luz del cielo y de la luna de la
+  // atmósfera de ahora, más la horneada de las antorchas del sitio; en
+  // lineal, como las luces)
+  dustColor(at, k = 1) {
+    const g = this.g;
+    const z = g.zoneAt(at);
+    const rid = z && z.room && g.level.ctx.wb.roomId ? g.level.ctx.wb.roomId(z.room) : 0;
+    const o = g.probe ? g.probe.sample(at.x, (at.y ?? 0) + 1, at.z, rid) : [0, 0, 0];
+    const A = g.atmo,
+      h = A.hemi,
+      m = A.moon;
+    const alb = 0.3 * (this.dustK ?? 1) * k;
+    const sky = (c, cm) => (c * h.intensity * 0.8 + cm * m.intensity * 0.4) / Math.PI;
+    return [Math.min(0.8, alb * (sky(h.color.r, m.color.r) + o[0])), Math.min(0.8, alb * (sky(h.color.g, m.color.g) + o[1])), Math.min(0.8, alb * (sky(h.color.b, m.color.b) + o[2]))];
+  }
+  // Polvo de un golpe en 'at' (o: lo de DustClouds.burst, y n)
+  puff(at, n = 6, o = {}) {
+    this.dust.burst(at, n, { color: this.dustColor(at), ...o });
+  }
+  // Un pedazo del mundo (un grupo) se viene abajo de verdad: se ladea hacia
+  // donde lo empujan y se hunde (collapse.js); de su superficie salen trozos
+  // con su material, lejos del golpe; polvo en el golpe, una ola de polvo a
+  // ras del suelo alrededor y una nube que se queda flotando; cascotes,
+  // astillas, tejas y el estruendo.
+  // o: { from (de dónde viene el golpe), dir (hacia dónde cae; si no, lejos
+  //   de from), ruin (el grupo de la ruina), n (trozos), size (de los
+  //   trozos), speed, up, tilt, drop, dur, delay, dust (0..2), sound
+  //   ('houseFall', 'wallBreak'... o false), shake, at (el centro del golpe) }
+  // Devuelve lo que cae (o null si ya estaba roto).
+  crumble(name, o = {}) {
+    const g = this.g;
+    const box0 = this._box || (this._box = new THREE.Box3());
+    const G = g.groups[name];
+    if (!G || !G.on) return null;
+    // hacia dónde cae (lejos del golpe)
+    let dir = o.dir ? new V3(o.dir.x, 0, o.dir.z) : null;
+    if (!dir && o.from) {
+      for (const m of G.meshes) if (m.geometry.boundingBox) box0.union(m.geometry.boundingBox);
+      const c0 = box0.getCenter(new V3());
+      box0.makeEmpty();
+      dir = new V3(c0.x - o.from.x, 0, c0.z - o.from.z);
+    }
+    if (dir && dir.lengthSq() > 1e-6) dir.normalize();
+    else dir = null;
+    const C = this.collapses.start(name, { ...o, dir });
+    if (!C) return null;
+    const box = C.box;
+    const ctr = box.getCenter(new V3()),
+      size = box.getSize(new V3());
+    const foot = Math.max(1, size.x * size.z);
+    const at = o.at || ctr;
+    const away = (p, out) => {
+      if (dir) return out.copy(dir);
+      out.set(p.x - (o.from ? o.from.x : ctr.x), 0, p.z - (o.from ? o.from.z : ctr.z));
+      return out.lengthSq() > 1e-6 ? out.normalize() : out.set(0, 0, 1);
+    };
+    // trozos de su superficie (no los del suelo, ni los de lo que no se parte)
+    const n = o.n ?? clamp(Math.round(5 + Math.sqrt(foot) * 1.4 + size.y * 0.6), 5, 26);
+    const pts = sampleSurface(C.meshes, n, (p) => p.y > box.min.y + 0.35);
+    const sp = o.speed ?? 1;
+    let wood = 0,
+      roof = 0;
+    const a = new V3();
+    for (const q of pts) {
+      if (!SOLID.has(q.mat)) continue;
+      const big = Math.random() < 0.28;
+      const s = (o.size ?? 1) * (big ? rnd(0.85, 1.45) : rnd(0.32, 0.75));
+      const isWood = WOOD.has(q.mat),
+        isRoof = q.mat === 'roof';
+      if (isWood) wood++;
+      if (isRoof) roof++;
+      const dim = isRoof ? [s * 1.3, 0.16, s * 0.95] : isWood ? [0.24 + s * 0.08, 0.22 + s * 0.06, s * 2.2] : q.mat === 'glass' ? [s * 0.5, s * 0.7, 0.05] : [s * 1.2, s * 0.72, s];
+      away(q.p, a);
+      // (lejos del golpe, hacia fuera de la cara de la que sale, y arriba)
+      const v = new V3(a.x * rnd(2.5, 8) * sp + q.n.x * rnd(0.5, 2.5) + rnd(-1.2, 1.2), rnd(0.5, 5) * (o.up ?? 1) + q.n.y * 1.5, a.z * rnd(2.5, 8) * sp + q.n.z * rnd(0.5, 2.5) + rnd(-1.2, 1.2));
+      this.chunks.add({ mat: q.mat, size: dim, pos: q.p, rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: v, spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: isWood ? 99 : big ? 9 : 12, life: rnd(8, 12), dust: !isWood, quiet: true });
+    }
+    // cascotes, astillas y tejas
+    const dk = o.dust ?? 1;
+    const top = new V3(ctr.x, box.min.y + size.y * 0.6, ctr.z);
+    const ad = dir ? dir.clone().multiplyScalar(0.5) : null;
+    this.debris.burst(top, Math.round(clamp(10 + foot * 0.25, 10, 34)), { speed: 7 * sp, up: 5, size: 0.9, spread: Math.max(1.2, Math.sqrt(foot) * 0.35), dir: ad });
+    if (wood || o.wood) this.splinters.burst(top, Math.round(8 + wood * 3), { speed: 8 * sp, up: 6, size: 1, spread: 1.5, dir: ad });
+    if (roof || o.roof) this.tiles.burst(new V3(ctr.x, box.max.y - 0.5, ctr.z), Math.round(10 + roof * 3), { speed: 7 * sp, up: 6, size: 1, spread: Math.max(1.5, Math.sqrt(foot) * 0.4), dir: ad });
+    // el polvo: el golpe, la ola a ras de suelo, la nube que se queda
+    const col = this.dustColor(ctr);
+    const D = this.dust;
+    const R = Math.max(1.5, Math.sqrt(foot) * 0.5);
+    D.burst(at, Math.round(4 * dk), { color: col, size: 2.2 + R * 0.4, speed: 7 * sp, up: 1.5, dir: ad ? ad.clone().multiplyScalar(6) : null, life: 3.5, grow: 2, alpha: 0.5 });
+    D.ring({ x: ctr.x, y: box.min.y, z: ctr.z }, Math.round(clamp(8 + R * 2, 8, 18) * dk), { color: col, r0: R * 0.7, speed: 6 + R, size: 2 + R * 0.3, life: 5, grow: 1.6, alpha: 0.45, rise: 0.25, up: 0.3 });
+    D.burst({ x: ctr.x, y: box.min.y + size.y * 0.35, z: ctr.z }, Math.round(clamp(4 + R, 4, 10) * dk), { color: col, size: 3 + R * 0.6, speed: 1.5, up: 1, spread: R, h: size.y * 0.5, life: 7.5, grow: 1, alpha: 0.32, rise: 0.4, stagger: 0.5 });
+    // (y lo que cae aún, en las chispas de polvo de siempre)
+    for (let k = 0; k < 2; k++) g.fx.blood.emit(ctr.x + rnd(-R, R), box.min.y + rnd(0.5, size.y), ctr.z + rnd(-R, R), 24, { color: [col[0] * 0.7, col[1] * 0.7, col[2] * 0.7], speed: 4, life: 2, up: 1, gravity: 0.6 });
+    const snd = o.sound ?? (foot > 30 || size.y > 6 ? 'houseFall' : 'wallBreak');
+    if (snd && g.audio) g.audio.play(snd, { x: ctr.x, y: ctr.y, z: ctr.z }, { k: 1.6 });
+    if (o.shake !== false) {
+      const d = Math.hypot(g.camera.position.x - ctr.x, g.camera.position.z - ctr.z);
+      g.camRig.shake(clamp((o.shake ?? 1) * (1.1 - d * 0.025), 0.12, 1.2));
+      g.input.rumble(0.6, 0.9, 300);
+    }
+    return C;
+  }
+
   cpIndex(cp) {
     const i = CPS.indexOf(cp);
     return i < 0 ? 0 : i;
@@ -214,8 +354,7 @@ export class Finale {
   applyFlags() {
     const F = this.g.flags;
     this.film.stop();
-    this.chunks.clear();
-    this.debris.clear();
+    this.clearBits();
     if (this.giant) this.giant.show(false);
     if (F['boss:turiferario']) {
       this.stage = 'done';
@@ -234,8 +373,7 @@ export class Finale {
   reset() {
     this.film.stop();
     this.film.cinema(false);
-    this.chunks.clear();
-    this.debris.clear();
+    this.clearBits();
     this.clearOwned();
     this.g.chaseRun = false;
     if (this.giant) this.giant.show(false);
@@ -267,8 +405,7 @@ export class Finale {
     const g = this.g;
     this.cp = cp;
     this._resumeOnPlay = false;
-    this.chunks.clear();
-    this.debris.clear();
+    this.clearBits();
     this.clearOwned();
     this._clothDone = false;
     g.chaseRun = false;
@@ -305,8 +442,7 @@ export class Finale {
   // al morir fuera de la película (contra el arzobispo, o en cualquier otro
   // sitio): aquí no hay nada que deshacer, salvo lo que quede volando
   onRespawn() {
-    this.chunks.clear();
-    this.debris.clear();
+    this.clearBits();
   }
   // fin de la película: el gigante, hundido en la cisterna
   endFilm() {
@@ -343,8 +479,13 @@ export class Finale {
     // (la cámara libre no se mete dentro del gigante)
     g.camRig.body = this.stage === 'film' && this.giant && this.giant.visible ? this.giant.col : null;
     if (this.stage === 'film') for (const o of this.ticks || []) o.update(dt);
+    this.collapses.update(dt);
     this.chunks.update(dt);
-    this.debris.update(dt, this._dg || (this._dg = (x, z) => g.world.col.groundHeight(x, z, 0.1, 30, true)));
+    const dg = this._dg || (this._dg = (x, z) => g.world.col.groundHeight(x, z, 0.1, 30, true));
+    this.debris.update(dt, dg);
+    this.splinters.update(dt, dg);
+    this.tiles.update(dt, dg);
+    this.dust.update(dt);
     this._lights(dt);
   }
   // luces propias de la película (del pool del juego)

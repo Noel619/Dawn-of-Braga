@@ -367,11 +367,11 @@ function* flight(D, G) {
 function breakStableRoof(D, at) {
   const g = D.g,
     a = g.audio;
-  g.setGroupVisible('wreck:establo', false);
-  g.setGroupVisible('wreck:establo:ruin', true);
-  g.setGroupVisible('wreck:establo:techo', false);
-  g.setGroupVisible('wreck:establo:techoRuin', true);
-  for (let i = 0; i < 26; i++)
+  const above = new V3(at.x, at.y + 6, at.z);
+  D.crumble('wreck:establo:techo', { ruin: 'wreck:establo:techoRuin', from: above, tilt: 0.08, drop: 3, dur: 0.45, speed: 0.4, up: 0.2, n: 14, size: 0.9, sound: false, shake: 0.5, roof: true, wood: true, dust: 0.8 });
+  D.crumble('wreck:establo', { ruin: 'wreck:establo:ruin', from: above, tilt: 0.04, drop: 1.5, dur: 0.4, n: 6, sound: false, shake: false, dust: 0.5 });
+  D.dust.burst({ x: at.x, y: at.y - 1, z: at.z }, 8, { color: D.dustColor(at), spread: 2.5, size: 2.2, speed: 1.5, up: -2, rise: 0.2, life: 4, grow: 1.2, alpha: 0.45 });
+  for (let i = 0; i < 18; i++)
     D.chunks.add({ mat: Math.random() < 0.75 ? 'roof' : 'planks', size: [rnd(0.7, 1.3), 0.1, rnd(0.5, 0.9)], pos: new V3(at.x + rnd(-2, 2), at.y + rnd(-0.5, 0.5), at.z + rnd(-2, 2)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-3, 3), rnd(-6, 2), rnd(-3, 3)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 8, life: 10 });
   for (let i = 0; i < 3; i++) D.chunks.add({ mat: 'timber', size: [0.25, 0.25, rnd(2.5, 4)], pos: new V3(at.x + rnd(-1, 1), at.y - 0.5, at.z + rnd(-1.5, 1.5)), rot: [rnd(-0.4, 0.4), rnd(0, 3), rnd(-0.4, 0.4)], vel: new V3(rnd(-1, 1), -3, rnd(-1, 1)), spin: [rnd(-2, 2), rnd(-1, 1), rnd(-2, 2)], shatter: 99, life: 12, bounce: 0.15 });
   g.fx.blood.emit(at.x, at.y, at.z, 60, { color: [0.3, 0.26, 0.22], speed: 4, life: 2.4, up: 1, gravity: 0.4 });

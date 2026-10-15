@@ -14,7 +14,7 @@
 // los bucles); lo aplica giant.js si el guion enciende rootMotion. Así los
 // pies no patinan: el avance va con las zancadas.
 import { clip } from '../../entities/rig.js';
-import { IDLE, hand, mirror } from './turiferario_anim.js';
+import { IDLE, hand, mirror, KNEEL_POSE } from './turiferario_anim.js';
 
 const K = (t, o = {}, ease, k) => [t, { ...IDLE, ...o }, ease, k ? { k } : undefined];
 export const GIANT_CLIPS = {};
@@ -785,3 +785,95 @@ C.sink = clip(
   { ground: false, loop: true }
 );
 
+
+// ------------------------------------------------------------ el final: el corazón
+// Con alguien en lo alto de la cabeza: se revuelve para quitárselo, la cabeza
+// de un lado a otro, el pecho que se retuerce y los brazos abiertos para no
+// caerse (el jugador está en la mitra: la cabeza manda)
+{
+  const T0 = { root: [0, -60, 0], pelvis: [10, 0, 0], spine2: [10, 0, 0], chest: [8, 0, 0], neck1: [-14, 0, 0], neck2: [-10, 0, 0], head: [-8, 0, 0], jaw: [40, 0, 0], armL: [-50, 0, 60], foreL: [-40, 0, 0], armR: [-40, 0, -56], foreR: [-40, 0, 0], legL: [-16, 0, 10], shinL: [26, 0, 0], legR: [-14, 0, -10], shinR: [24, 0, 0] };
+  const side = (k) => ({ ...T0, chest: [6, 14 * k, 6 * k], neck1: [-18, 22 * k, 10 * k], neck2: [-14, 24 * k, 12 * k], head: [-12, 26 * k, 16 * k], jaw: [48, 0, 0], armL: [-56, 0, 64 + 8 * k], armR: [-44, 0, -60 + 8 * k] });
+  C.thrash = clip('thrash', 1.4, [K(0, side(1)), K(0.35, { ...T0, neck1: [-26, 0, 0], neck2: [-22, 0, 0], head: [-20, 0, 0], jaw: [54, 0, 0] }, 'snap'), K(0.7, side(-1)), K(1.05, { ...T0, neck1: [-4, 0, 0], neck2: [2, 0, 0], head: [6, 0, 0] }, 'snap'), K(1.4, side(1))], { loop: true, lag: { neck2: 0.05, head: 0.09, armL: 0.12, armR: 0.14 } });
+}
+// El virote hundido en la nuca: se ahoga (la boca abierta, sin voz), las
+// piernas no le sostienen y cae de rodillas; el pecho se le abre de par en
+// par (las costillas, como dos puertas: el núcleo a la vista)
+const KN = KNEEL_POSE;
+const KNOPEN = { ...KN, chest: [-4, 0, 0], neck1: [-20, 0, 0], neck2: [-14, 0, 0], head: [-4, 0, 0], jaw: [46, 0, 0], ribL: [0, 66, 0], ribR: [0, -66, 0], armL: [-24, 0, 40], foreL: [-36, 0, 0], armR: [-28, 0, -38], foreR: [-34, 0, 0] };
+export const KNOPEN_POSE = KNOPEN;
+C.chokeKneel = clip(
+  'chokeKneel',
+  2.6,
+  [
+    K(0, { root: [0, -40, 0], chest: [-10, 0, 0], neck1: [-30, 0, 0], neck2: [-26, 0, 0], head: [-20, 0, 0], jaw: [56, 0, 0], armL: [-90, 0, 50], foreL: [-60, 0, 0], armR: [-80, 0, -46], foreR: [-50, 0, 0] }),
+    K(0.5, { root: [0, -140, 0], pelvis: [16, 0, 0], spine2: [14, 0, 0], chest: [10, 0, 0], neck1: [-34, 0, 0], neck2: [-30, 0, 0], head: [-24, 0, 0], jaw: [58, 0, 0], legL: [-30, 0, 8], shinL: [56, 0, 0], legR: [-34, 0, -8], shinR: [60, 0, 0], armL: [-60, 0, 50], foreL: [-50, 0, 0], armR: [-56, 0, -48], foreR: [-50, 0, 0] }),
+    K(1.1, { ...KN, root: [0, -370, 0], chest: [18, 0, 0], neck1: [-10, 0, 0], head: [10, 0, 0], jaw: [50, 0, 0], ribL: [0, 30, 0], ribR: [0, -30, 0] }, 'in'),
+    K(1.9, { ...KNOPEN, chest: [-10, 0, 0], neck1: [-26, 0, 0], neck2: [-20, 0, 0], head: [-12, 0, 0], ribL: [0, 74, 0], ribR: [0, -74, 0] }, 'snap'),
+    K(2.6, KNOPEN, 'settle'),
+  ],
+  { ground: false, lag: { chest: 0.05, neck2: 0.08, head: 0.12, armL: 0.08, armR: 0.1 }, events: [{ t: 1.1, name: 'knees' }, { t: 1.9, name: 'open' }] }
+);
+// de rodillas, abierto, jadeando (el núcleo late a la vista)
+C.kneelOpen = clip('kneelOpen', 2.4, [K(0, KNOPEN), K(1.2, { ...KNOPEN, chest: [-8, 0, 0], ribL: [0, 70, 0], ribR: [0, -70, 0], neck1: [-24, 2, 0], jaw: [52, 0, 0] }), K(2.4, KNOPEN)], { loop: true, ground: false });
+// la izquierda busca la nuca (donde está el jugador, en el virote)
+C.kneelReach = clip(
+  'kneelReach',
+  1.8,
+  [
+    K(0, KNOPEN),
+    K(0.7, { ...KNOPEN, chest: [4, 12, 0], neck1: [-10, -8, 0], neck2: [-6, -10, 0], head: [0, -12, 0], clavL: [0, 0, 22], armL: [-160, 20, 30], foreL: [-118, 0, 0], handL: [-24, 0, 0], ...hand('L', 4, 16) }, 'hold'),
+    K(1.0, { ...KNOPEN, chest: [8, 16, 0], neck1: [-4, -10, 0], neck2: [0, -12, 0], head: [6, -14, 0], clavL: [0, 0, 26], armL: [-170, 24, 26], foreL: [-128, 0, 0], handL: [-10, 0, 0], ...hand('L', 70, 2) }, 'snap'),
+    K(1.8, KNOPEN, 'settle'),
+  ],
+  { ground: false, lag: { armL: 0.06, foreL: 0.1, handL: 0.13 }, events: [{ t: 1.0, name: 'grab' }] }
+);
+// las dos manos contra su propio pecho: aplastar lo que tiene dentro
+C.crushChest = clip(
+  'crushChest',
+  1.9,
+  [
+    K(0, KNOPEN),
+    K(0.6, { ...KNOPEN, chest: [-14, 0, 0], neck1: [-18, 0, 0], jaw: [54, 0, 0], clavL: [0, 0, 20], clavR: [0, 0, -20], armL: [-60, -10, 90], foreL: [-60, 0, 0], armR: [-58, 10, -88], foreR: [-60, 0, 0], ...hand('L', -10, 16), ...hand('R', -10, 0) }, 'hold'),
+    K(0.85, { ...KNOPEN, chest: [12, 0, 0], neck1: [-4, 0, 0], head: [10, 0, 0], jaw: [40, 0, 0], ribL: [0, 54, 0], ribR: [0, -54, 0], armL: [-68, -40, 20], foreL: [-80, 0, 0], handL: [10, 0, 0], armR: [-66, 40, -20], foreR: [-80, 0, 0], handR: [10, 0, 0], ...hand('L', 40, 4), ...hand('R', 40, 0) }, 'snap'),
+    K(1.9, KNOPEN, 'settle'),
+  ],
+  { ground: false, lag: { armL: 0.04, foreL: 0.07, armR: 0.05, foreR: 0.08 }, events: [{ t: 0.85, name: 'crush' }] }
+);
+// la espada en el corazón: se arquea hacia atrás, la cabeza al cielo y los
+// brazos abiertos (k: cuánto)
+C.heartHit = clip(
+  'heartHit',
+  1.3,
+  [
+    K(0, KNOPEN),
+    K(0.12, { ...KNOPEN, chest: [-22, 0, 0], spine2: [-6, 0, 0], neck1: [-36, 0, 0], neck2: [-30, 0, 0], head: [-26, 0, 0], jaw: [60, 0, 0], ribL: [0, 80, 0], ribR: [0, -80, 0], armL: [-70, 0, 92], foreL: [-20, 0, 0], armR: [-66, 0, -90], foreR: [-20, 0, 0], ...hand('L', -20, 18), ...hand('R', -20, 0) }, 'snap'),
+    K(1.3, KNOPEN, 'settle'),
+  ],
+  { ground: false, lag: { neck2: 0.04, head: 0.07, armL: 0.06, armR: 0.08 } }
+);
+// muerte: el último grito, el núcleo revienta, y se queda flojo (la cabeza
+// cae, los brazos cuelgan); la caída de espaldas la pone el guion
+C.coreDeath = clip(
+  'coreDeath',
+  3.0,
+  [
+    K(0, KNOPEN),
+    K(0.15, { ...KNOPEN, chest: [-26, 0, 0], spine2: [-8, 0, 0], spine1: [-6, 0, 0], neck1: [-40, 0, 0], neck2: [-34, 0, 0], head: [-30, 0, 0], jaw: [64, 0, 0], ribL: [0, 84, 0], ribR: [0, -84, 0], armL: [-90, 0, 100], foreL: [-10, 0, 0], armR: [-86, 0, -98], foreR: [-10, 0, 0], ...hand('L', -30, 20), ...hand('R', -30, 0), s_chest: [0.08, 0.08, 0.1] }, 'snap'),
+    K(1.4, { ...KNOPEN, chest: [-30, 0, 0], spine2: [-10, 0, 0], spine1: [-8, 0, 0], neck1: [-44, 0, 0], neck2: [-38, 0, 0], head: [-34, 0, 0], jaw: [66, 0, 0], ribL: [0, 86, 0], ribR: [0, -86, 0], armL: [-96, 0, 104], foreL: [-8, 0, 0], armR: [-92, 0, -102], foreR: [-8, 0, 0], s_chest: [0.14, 0.14, 0.16] }),
+    K(2.2, { ...KNOPEN, pelvis: [-10, 0, 0], chest: [-12, 0, 0], neck1: [4, 0, 0], neck2: [10, 0, 0], head: [24, 0, 0], jaw: [30, 0, 0], ribL: [0, 60, 0], ribR: [0, -60, 0], armL: [-30, 0, 50], foreL: [-30, 0, 0], armR: [-26, 0, -48], foreR: [-30, 0, 0], ...hand('L', 30, 8), ...hand('R', 40, 0) }, 'in'),
+    K(3.0, { ...KNOPEN, pelvis: [-14, 0, 0], chest: [-8, 0, 0], neck1: [8, 0, 0], neck2: [14, 0, 0], head: [30, 0, 0], jaw: [26, 0, 0], ribL: [0, 58, 0], ribR: [0, -58, 0], armL: [-20, 0, 46], foreL: [-34, 0, 0], armR: [-18, 0, -44], foreR: [-34, 0, 0], ...hand('L', 40, 6), ...hand('R', 50, 0) }),
+  ],
+  { ground: false, lag: { chest: 0.04, neck2: 0.07, head: 0.11, armL: 0.08, armR: 0.1 }, events: [{ t: 0.15, name: 'burst' }] }
+);
+// muerto, cae de espaldas desde las rodillas (el vuelco lo pone el guion):
+// los brazos se abren con la caída
+C.deadFall = clip(
+  'deadFall',
+  2.4,
+  [
+    K(0, { ...KNOPEN, pelvis: [-14, 0, 0], chest: [-8, 0, 0], neck1: [8, 0, 0], neck2: [14, 0, 0], head: [30, 0, 0], jaw: [26, 0, 0], ribL: [0, 58, 0], ribR: [0, -58, 0], armL: [-20, 0, 46], foreL: [-34, 0, 0], armR: [-18, 0, -44], foreR: [-34, 0, 0] }),
+    K(1.2, { ...KNOPEN, pelvis: [-30, 0, 0], chest: [-16, 0, 0], neck1: [16, 0, 0], neck2: [20, 0, 0], head: [26, 0, 0], jaw: [44, 0, 0], ribL: [0, 50, 0], ribR: [0, -50, 0], armL: [-110, 0, 70], foreL: [-20, 0, 0], armR: [-104, 0, -66], foreR: [-20, 0, 0], legL: [-20, 0, 10], shinL: [70, 0, 0], legR: [-20, 0, -10], shinR: [70, 0, 0] }),
+    K(2.4, { ...KNOPEN, pelvis: [-36, 0, 0], chest: [-18, 0, 0], neck1: [18, 0, 0], neck2: [22, 0, 0], head: [24, 0, 0], jaw: [50, 0, 0], ribL: [0, 46, 0], ribR: [0, -46, 0], armL: [-150, 0, 60], foreL: [-14, 0, 0], armR: [-146, 0, -56], foreR: [-14, 0, 0], legL: [-40, 0, 10], shinL: [50, 0, 0], legR: [-40, 0, -10], shinR: [50, 0, 0] }),
+  ],
+  { ground: false, lag: { armL: 0.1, armR: 0.12, head: 0.1 } }
+);

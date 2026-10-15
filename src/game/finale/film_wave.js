@@ -11,7 +11,6 @@ const V3 = THREE.Vector3;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const _v = new V3(),
   _v2 = new V3();
-const DUST = [0.26, 0.24, 0.22];
 
 // las casas (con su grupo) de unos bloques, de la lista del nivel
 export function waveHouses(g, wgs) {
@@ -76,34 +75,21 @@ export function smashBlock(D, wg, at, r) {
   for (const h of waveHouses(g, [wg])) if (rectDist(h, at.x, at.z) < r) smashHouse(D, h, at, [wg]);
   for (const q of waveProps(g, [wg])) if (Math.hypot(q.x - at.x, q.z - at.z) < r + 2) kickProp(D, q, at);
 }
-// Una casa revienta: sus muros y su tejado, en trozos que salen despedidos
-// lejos del gigante; polvo, tejas, vigas y lo que colgaba de ella
+// Una casa revienta: se viene abajo lejos del gigante (se ladea y se hunde),
+// sus muros y su tejado en trozos, con polvo que rueda por la calle, tejas,
+// astillas y lo que colgaba de ella (ver director.crumble)
 export function smashHouse(D, r, from, wgs = null) {
-  const g = D.g,
-    a = g.audio;
-  if (!D.breakHouse(r.sub)) return;
-  const wg = r.sub.split(':')[0];
-  for (const q of waveProps(g, wgs || [wg])) if (q.wg === wg && g.groups[q.name] && g.groups[q.name].on && rectDist(r, q.x, q.z) < 1.5) kickProp(D, q, from);
+  const g = D.g;
   const cx = (r.x0 + r.x1) / 2,
     cz = (r.z0 + r.z1) / 2;
-  const away = _v.set(cx - from.x, 0, cz - from.z);
-  if (away.lengthSq() < 0.01) away.set(0, 0, 1);
-  away.normalize();
   const h = r.h || 7;
-  const n = Math.min(16, Math.round(8 + (r.x1 - r.x0) * (r.z1 - r.z0) * 0.08));
-  const wall = r.style === 'plaster' ? 'plaster' : 'wallstone';
-  for (let i = 0; i < n; i++) {
-    const roof = i % 3 === 0;
-    D.chunks.add({ mat: roof ? 'roof' : i % 4 === 1 ? 'timber' : wall, size: roof ? [rnd(0.8, 1.4), 0.14, rnd(0.6, 1.0)] : [rnd(0.6, 1.3), rnd(0.4, 0.9), rnd(0.5, 1.0)], pos: new V3(rnd(r.x0 + 0.4, r.x1 - 0.4), rnd(1.5, h + 0.8), rnd(r.z0 + 0.4, r.z1 - 0.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(away.x * rnd(3, 10) + rnd(-2, 2), rnd(2, 8), away.z * rnd(3, 10) + rnd(-2, 2)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 11, life: 8 });
-  }
-  D.debris.burst(new V3(cx, h * 0.45, cz), 24, { speed: 8, up: 5, size: 1.0, spread: 3, dir: away.clone().multiplyScalar(0.6) });
-  for (let k = 0; k < 3; k++) g.fx.blood.emit(rnd(r.x0, r.x1), rnd(1, h), rnd(r.z0, r.z1), 40, { color: DUST, speed: 5, life: 2.6, up: 1.2, gravity: 0.3 });
-  const at = { x: cx, y: 3, z: cz };
-  a && a.play('wallBreak', at, { k: 1.8 });
-  a && a.play(Math.random() < 0.5 ? 'woodBreak' : 'pillarBreak', at, { k: 1.4 });
+  // (la casa cae hacia donde la empujan, con poca inclinación: es grande)
+  const foot = (r.x1 - r.x0) * (r.z1 - r.z0);
+  if (!D.breakHouse(r.sub, { from, tilt: 0.16 + Math.random() * 0.12, drop: h * 0.9, dur: 0.9 + Math.random() * 0.4, speed: 1.1, at: new V3(cx, h * 0.55, cz), roof: true, wood: r.style !== 'stone', size: foot > 60 ? 1.15 : 1 })) return;
+  const wg = r.sub.split(':')[0];
+  for (const q of waveProps(g, wgs || [wg])) if (q.wg === wg && g.groups[q.name] && g.groups[q.name].on && rectDist(r, q.x, q.z) < 1.5) kickProp(D, q, from);
   const dp = Math.hypot(g.player.pos.x - cx, g.player.pos.z - cz);
   g.camRig.shake(clamp(0.9 - dp * 0.03, 0.15, 0.9));
-  g.input.rumble(0.6, 0.8, 250);
 }
 // lo que había por medio (vallas, paja, leña, ropa tendida, rótulos): fuera,
 // en astillas
@@ -115,6 +101,7 @@ export function kickProp(D, q, from) {
   if (away.lengthSq() < 0.01) away.set(0, 0, 1);
   away.normalize();
   for (let i = 0; i < 4; i++) D.chunks.add({ mat: i % 2 ? 'planks' : 'timber', size: [rnd(0.1, 0.2), rnd(0.08, 0.14), rnd(0.8, 1.6)], pos: new V3(q.x + rnd(-0.8, 0.8), rnd(0.4, 2.5), q.z + rnd(-0.8, 0.8)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(away.x * rnd(3, 8), rnd(2, 6), away.z * rnd(3, 8)), spin: [rnd(-9, 9), rnd(-9, 9), rnd(-9, 9)], shatter: 99, life: 6 });
-  g.fx.blood.emit(q.x, 0.8, q.z, 16, { color: DUST, speed: 3, life: 1.2, up: 1 });
+  D.splinters.burst(new V3(q.x, 1.2, q.z), 6, { speed: 6, up: 4, size: 0.8, spread: 0.6, dir: away.clone().multiplyScalar(0.6) });
+  D.puff({ x: q.x, y: 0.6, z: q.z }, 2, { size: 1.4, speed: 2, life: 2.5, alpha: 0.4 });
   g.audio && g.audio.play('woodBreak', { x: q.x, y: 1, z: q.z }, { k: 0.9 });
 }

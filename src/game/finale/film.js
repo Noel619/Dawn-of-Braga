@@ -133,6 +133,8 @@ export class Film {
       roll: o.roll ?? 0,
       speed: o.speed ?? 6,
       snap: o.snap ?? true,
+      inside: !!o.inside,
+      pad: o.pad,
     };
     return this.cam;
   }
@@ -352,6 +354,10 @@ export class Film {
       this._look.y += noise(t * 0.8, 5) * h * 0.8;
       this._look.z += noise(t * 0.8, 6) * h;
     }
+    // (la cámara nunca dentro del gigante: fuera de su cuerpo de cápsulas,
+    // salvo en los planos que lo pidan con inside)
+    const G = g.finale && g.finale.giant;
+    if (G && G.visible && !c.inside && G.col.n) G.col.pushOut(this._pos, c.pad ?? 0.4);
     g.camRig.override = { pos: this._pos, look: this._look, fov: c.fov, roll: c.roll, speed: c.speed, snap: c.snap };
   }
 }
@@ -402,13 +408,14 @@ export class Path {
 }
 
 // Un sitio para la cámara que no se meta en los muros: del sujeto (from)
-// hacia ella (to), hasta el primer muro (to se modifica y se devuelve)
+// hacia ella (to), hasta el primer muro (to se modifica y se devuelve). Las
+// paredes invisibles (los límites del mapa) no cuentan: no se ven
 export function camSafe(game, from, to, pad = 0.4) {
   const d = new V3().subVectors(to, from);
   const L = d.length();
   if (L < 1e-3) return to;
   d.divideScalar(L);
-  const hit = game.world.col.raycast(from.x, from.y, from.z, d.x, d.y, d.z, L + pad, (b) => b.cam !== false);
+  const hit = game.world.col.raycast(from.x, from.y, from.z, d.x, d.y, d.z, L + pad, (b) => b.cam !== false && b.tag !== 'block');
   if (hit < L + pad) to.copy(from).addScaledVector(d, Math.max(0.5, hit - pad));
   return to;
 }

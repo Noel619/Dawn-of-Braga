@@ -52,66 +52,45 @@ export const NAV = {
 // ======================================================================
 // lo que se rompe
 // ======================================================================
-// la muralla: el tramo de la brecha, en pedazos hacia la ciudad
+// la muralla: el tramo de la brecha se viene abajo hacia la ciudad (se
+// ladea, se hunde y revienta en sillares), las almenas por el aire, polvo
 function breakWall(D, at) {
   const g = D.g,
     a = g.audio;
-  g.setGroupVisible('muroN', false);
-  g.setGroupVisible('muroNRuin', true);
-  const { x0, x1, z0, z1, h } = BREACH;
-  for (let i = 0; i < 36; i++) {
-    const x = rnd(x0 + 0.4, x1 - 0.4),
-      y = rnd(1.2, h + 0.8),
-      z = rnd(z0, z1);
-    const s = rnd(0.7, 1.4);
-    D.chunks.add({ mat: 'wallstone', size: [s * 1.3, s * 0.7, s], pos: new V3(x, y, z), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-3, 3) + (x - at.x) * 0.5, rnd(1, 8), rnd(6, 16)), spin: [rnd(-5, 5), rnd(-5, 5), rnd(-5, 5)], shatter: 14, life: 10, tint: 0xd8d4cc });
-  }
+  const { x0, x1, z0, h } = BREACH;
+  D.crumble('muroN', { ruin: 'muroNRuin', from: new V3(at.x, 6, z0 - 6), dir: new V3(0, 0, 1), tilt: 0.55, drop: h * 0.6, dur: 0.7, speed: 1.7, up: 1.2, n: 26, size: 1.15, sound: false, shake: 1.3, at: new V3(at.x, 6, -124), dust: 1.6 });
   // almenas enteras, volando
-  for (let i = 0; i < 6; i++) D.chunks.add({ mat: 'wallstone', size: [0.9, 1.2, 0.6], pos: new V3(rnd(x0, x1), h + 0.6, z0 + 0.3), rot: [0, 0, 0], vel: new V3(rnd(-4, 4), rnd(5, 10), rnd(8, 14)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 10, tint: 0xd8d4cc });
-  D.debris.burst(new V3(at.x, 6, -124), 60, { speed: 11, up: 7, size: 1.2, spread: 4, dir: new V3(0, 0, 0.9) });
-  for (let k = 0; k < 5; k++) g.fx.blood.emit(rnd(-6, 6), rnd(1, 9), rnd(-126, -121), 50, { color: DUST_OUT, speed: 6, life: 3.2, up: 1.5, gravity: 0.3 });
+  for (let i = 0; i < 6; i++) D.chunks.add({ mat: 'wallstone', size: [0.9, 1.2, 0.6], pos: new V3(rnd(x0, x1), h + 0.6, z0 + 0.3), rot: [0, 0, 0], vel: new V3(rnd(-4, 4), rnd(5, 10), rnd(8, 14)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 12, life: 10, tint: 0xd8d4cc, quiet: true });
+  D.debris.burst(new V3(at.x, 6, -124), 40, { speed: 11, up: 7, size: 1.2, spread: 4, dir: new V3(0, 0, 0.9) });
   a && a.play('wallBreak', at, { k: 2.2 });
   a && a.play('explosion', at, { k: 1.2 });
-  a && a.play('pillarBreak', { x: at.x + 4, y: 4, z: -123 }, { k: 1.8 });
+  a && a.play('houseFall', { x: at.x + 4, y: 4, z: -123 }, { k: 1.8 });
   g.camRig.shake(1.3);
   g.input.rumble(1, 1, 900);
 }
 
-// un tramo del tejado y la bóveda de la nave se viene abajo
+// un tramo del tejado y la bóveda de la nave se viene abajo: cae entero,
+// cada vez más deprisa, y revienta en dovelas, tejas y vigas; el polvo baja
+// por el agujero como una cortina
 function breakSec(D, k, o = {}) {
   const g = D.g,
     a = g.audio;
   if (!g.groups['naveRoof:' + k] || !g.groups['naveRoof:' + k].on) return;
   const [s0, s1] = NAVE.secs[k];
-  g.setGroupVisible('naveRoof:' + k, false);
-  g.setGroupVisible('naveRuin:' + k, true);
   const z0 = Math.max(s0, -104),
     z1 = Math.min(s1, -61.5);
-  const n = Math.round((z1 - z0) * (o.k ?? 1.5));
+  const zc = (z0 + z1) / 2;
   const push = o.push ?? 0;
-  // dovelas de la bóveda
-  for (let i = 0; i < n; i++) {
-    const z = rnd(z0, z1),
-      x = rnd(-4.6, 4.6);
-    const y = NAVE.YV + Math.sqrt(Math.max(0, 1 - (x / 5.05) ** 2)) * NAVE.RV - 0.2;
-    D.chunks.add({ mat: 'ashlar', size: [rnd(0.8, 1.7), rnd(0.35, 0.5), rnd(0.6, 1.1)], pos: new V3(x, y, z), rot: [rnd(-0.4, 0.4), rnd(0, 3), rnd(-0.4, 0.4)], vel: new V3(rnd(-1.2, 1.2), rnd(-2, 1.5), rnd(-1, 1) + push), spin: [rnd(-3, 3), rnd(-2, 2), rnd(-3, 3)], shatter: 10, life: 9, tint: 0xdcd4c7 });
-  }
-  // tejas y tablas del tejado
-  for (let i = 0; i < n * 0.6; i++) {
-    const side = Math.random() < 0.5 ? -1 : 1;
-    const x = side * rnd(0.5, 12.5);
-    D.chunks.add({ mat: Math.random() < 0.7 ? 'roof' : 'planks', size: [rnd(0.9, 1.5), 0.12, rnd(0.6, 1.0)], pos: new V3(x, 20 - Math.abs(x) * 0.46 + rnd(0, 0.3), rnd(z0, z1)), rot: [rnd(-0.6, 0.6), rnd(0, 3), side * 0.42], vel: new V3(side * rnd(0, 2), rnd(-1, 2), rnd(-1, 1) + push), spin: [rnd(-4, 4), rnd(-3, 3), rnd(-4, 4)], shatter: 7, life: 8 });
-  }
+  D.crumble('naveRoof:' + k, { ruin: 'naveRuin:' + k, from: new V3(0, 40, zc - push * 4), tilt: 0.07, drop: 6.5, dur: 0.75, speed: 0.35, up: 0.15, n: Math.round((z1 - z0) * (o.k ?? 1.5)), size: 1.05, sound: false, shake: o.shake ?? 0.6, at: new V3(0, NAVE.YV + 2, zc), roof: true, wood: true });
   // vigas
-  for (let i = 0; i < Math.max(2, n / 8); i++) D.chunks.add({ mat: 'timber', size: [0.3, 0.3, rnd(3, 5.5)], pos: new V3(rnd(-9, 9), rnd(15, 18.5), rnd(z0 + 1, z1 - 1)), rot: [rnd(-0.3, 0.3), rnd(-0.8, 0.8), rnd(-0.3, 0.3)], vel: new V3(rnd(-1, 1), rnd(-1, 1), push), spin: [rnd(-2, 2), rnd(-1, 1), rnd(-2, 2)], shatter: 99, life: 9, bounce: 0.15 });
-  // polvo que baja y cascotes
-  for (let i = 0; i < 5; i++) g.fx.blood.emit(rnd(-5, 5), NAVE.YV + rnd(0, 3), rnd(z0, z1), 24, { color: DUST_IN, speed: 3, life: 3, up: -0.5, gravity: 0.35 });
-  D.debris.burst(new V3(0, NAVE.YV + 2, (z0 + z1) / 2), 36, { speed: 5, up: 2, size: 0.9, spread: (z1 - z0) * 0.4 });
-  const c = { x: 0, y: NAVE.YV, z: (z0 + z1) / 2 };
-  a && a.play('wallBreak', c, { k: 1.8 });
+  for (let i = 0; i < Math.max(2, (z1 - z0) / 8); i++) D.chunks.add({ mat: 'timber', size: [0.3, 0.3, rnd(3, 5.5)], pos: new V3(rnd(-9, 9), rnd(15, 18.5), rnd(z0 + 1, z1 - 1)), rot: [rnd(-0.3, 0.3), rnd(-0.8, 0.8), rnd(-0.3, 0.3)], vel: new V3(rnd(-1, 1), rnd(-1, 1), push), spin: [rnd(-2, 2), rnd(-1, 1), rnd(-2, 2)], shatter: 99, life: 9, bounce: 0.15, solo: true });
+  // (la cortina de polvo que cae por el agujero)
+  const col = D.dustColor({ x: 0, y: NAVE.YV, z: zc });
+  D.dust.line(new V3(-4, NAVE.YV + 3, z0 + 1), new V3(4, NAVE.YV + 3, z1 - 1), 8, { color: col, size: 2.6, speed: 0.6, up: -2.5, rise: -0.4, life: 4.5, grow: 1.3, alpha: 0.4, ground: true });
+  const c = { x: 0, y: NAVE.YV, z: zc };
+  a && a.play('houseFall', c, { k: 1.8 });
   a && a.play('woodBreak', c, { k: 1.4 });
   a && a.play('pillarBreak', { x: 3, y: NAVE.YV, z: c.z + 2 }, { k: 1.4 });
-  g.camRig.shake(o.shake ?? 0.6);
 }
 
 // un fajón se viene abajo, en trozos (la luz los encuentra)
@@ -214,63 +193,34 @@ function breakCabecera(D) {
   const g = D.g,
     a = g.audio;
   if (!g.groups.cabecera.on) return;
-  g.setGroupVisible('cabecera', false);
-  g.setGroupVisible('cabeceraRuin', true);
-  for (let i = 0; i < 30; i++) {
-    const x = rnd(-9, 9),
-      y = rnd(1, 11),
-      z = rnd(-108, -104);
-    const s = rnd(0.7, 1.4);
-    D.chunks.add({ mat: 'ashlar', size: [s * 1.3, s * 0.7, s], pos: new V3(x, y, z), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(x * 0.25 + rnd(-2, 2), rnd(1, 6), rnd(5, 12)), spin: [rnd(-5, 5), rnd(-5, 5), rnd(-5, 5)], shatter: 12, life: 10, tint: 0xdcd4c7 });
-  }
+  D.crumble('cabecera', { ruin: 'cabeceraRuin', from: new V3(0, 8, -116), dir: new V3(0, 0, 1), tilt: 0.38, drop: 7, dur: 0.95, speed: 1.4, up: 0.9, n: 26, size: 1.15, sound: false, shake: 1, at: new V3(0, 6, -104), dust: 1.4 });
   // trozos de las vidrieras
-  for (let i = 0; i < 10; i++) D.chunks.add({ mat: 'glass', size: [rnd(0.3, 0.7), rnd(0.4, 0.9), 0.05], pos: new V3(rnd(-5, 5), rnd(5, 11), -104), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-3, 3), rnd(0, 4), rnd(4, 9)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 4, life: 6, dust: false });
-  D.debris.burst(new V3(0, 5, -105), 50, { speed: 9, up: 5, size: 1.1, spread: 5, dir: new V3(0, 0, 0.8) });
-  for (let k = 0; k < 5; k++) g.fx.blood.emit(rnd(-8, 8), rnd(1, 8), rnd(-106, -100), 40, { color: DUST_IN, speed: 6, life: 3, up: 1, gravity: 0.3 });
+  for (let i = 0; i < 12; i++) D.chunks.add({ mat: 'glass', size: [rnd(0.3, 0.7), rnd(0.4, 0.9), 0.05], pos: new V3(rnd(-5, 5), rnd(5, 11), -104), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-3, 3), rnd(0, 4), rnd(4, 9)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 4, life: 6, dust: false, quiet: true });
   a && a.play('wallBreak', { x: 0, y: 5, z: -105 }, { k: 2.2 });
   a && a.play('crack', { x: 0, y: 7, z: -104 }, { k: 1.4 });
-  a && a.play('pillarBreak', { x: -4, y: 4, z: -104 }, { k: 1.6 });
-  g.camRig.shake(1);
+  a && a.play('houseFall', { x: -4, y: 4, z: -104 }, { k: 1.6 });
   g.input.rumble(1, 1, 600);
 }
-// el ábside, pisado
+// el ábside, pisado: se hunde bajo el pie
 function breakApse(D) {
   const g = D.g,
     a = g.audio;
   if (!g.groups.abside.on) return;
-  g.setGroupVisible('abside', false);
-  g.setGroupVisible('absideRuin', true);
-  for (let i = 0; i < 22; i++) {
-    const x = rnd(-7, 7),
-      y = rnd(1, 12),
-      z = rnd(-112, -108);
-    const s = rnd(0.7, 1.3);
-    D.chunks.add({ mat: Math.random() < 0.25 ? 'roof' : 'ashlar', size: [s * 1.3, s * 0.6, s], pos: new V3(x, y, z), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(x * 0.6 + rnd(-2, 2), rnd(2, 6), rnd(-3, 3)), spin: [rnd(-5, 5), rnd(-5, 5), rnd(-5, 5)], shatter: 12, life: 10, tint: 0xdcd4c7 });
-  }
-  D.debris.burst(new V3(0, 6, -110), 40, { speed: 8, up: 6, size: 1.1, spread: 4 });
-  for (let k = 0; k < 4; k++) g.fx.blood.emit(rnd(-6, 6), rnd(1, 8), rnd(-112, -108), 40, { color: DUST_OUT, speed: 5, life: 3, up: 1, gravity: 0.3 });
+  D.crumble('abside', { ruin: 'absideRuin', from: new V3(0, 16, -110), tilt: 0.12, drop: 6, dur: 0.7, speed: 1.1, n: 20, size: 1.05, sound: false, shake: 0.8, at: new V3(0, 6, -110), roof: true });
   a && a.play('wallBreak', { x: 0, y: 6, z: -110 }, { k: 2 });
-  a && a.play('pillarBreak', { x: 3, y: 4, z: -110 }, { k: 1.4 });
+  a && a.play('houseFall', { x: 3, y: 4, z: -110 }, { k: 1.4 });
 }
-// las arquerías de un tramo, reventadas por el cuerpo del gigante
+// las arquerías de un tramo, reventadas por el cuerpo del gigante: los
+// arcos y los pilares de los dos lados se vienen abajo hacia fuera
 function breakArc(D, k) {
   const g = D.g,
     a = g.audio;
   if (!g.groups['naveArc:' + k].on) return;
-  g.setGroupVisible('naveArc:' + k, false);
-  g.setGroupVisible('naveArcRuin:' + k, true);
   const [s0, s1] = NAVE.secs[k];
-  const z0 = Math.max(s0, -104),
-    z1 = Math.min(s1, -64);
-  for (const x of [-5.5, 5.5]) {
-    for (let i = 0; i < (z1 - z0) * 1.2; i++) {
-      const s = rnd(0.6, 1.2);
-      D.chunks.add({ mat: 'ashlar', size: [s, s * 0.7, s * 1.2], pos: new V3(x + rnd(-0.4, 0.4), rnd(2, 11), rnd(z0, z1)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(Math.sign(x) * rnd(2, 7), rnd(0, 4), rnd(0, 5)), spin: [rnd(-5, 5), rnd(-5, 5), rnd(-5, 5)], shatter: 11, life: 9, tint: 0xdcd4c7 });
-    }
-    D.debris.burst(new V3(x, 6, (z0 + z1) / 2), 24, { speed: 7, up: 3, size: 1, spread: 3, dir: new V3(Math.sign(x) * 0.7, 0, 0.3) });
-  }
-  a && a.play('pillarBreak', { x: 5.5, y: 5, z: (z0 + z1) / 2 }, { k: 2 });
-  a && a.play('wallBreak', { x: -5.5, y: 5, z: (z0 + z1) / 2 }, { k: 1.8 });
+  const zc = (Math.max(s0, -104) + Math.min(s1, -64)) / 2;
+  D.crumble('naveArc:' + k, { ruin: 'naveArcRuin:' + k, from: new V3(0, 6, zc - 4), tilt: 0.05, drop: 8, dur: 0.85, speed: 1.2, n: 24, size: 1, sound: false, shake: 0.7, at: new V3(0, 6, zc) });
+  a && a.play('pillarBreak', { x: 5.5, y: 5, z: zc }, { k: 2 });
+  a && a.play('wallBreak', { x: -5.5, y: 5, z: zc }, { k: 1.8 });
 }
 // los bancos, aplastados por la mano
 function breakPews(D, i, at) {
@@ -287,6 +237,8 @@ function breakPews(D, i, at) {
     D.chunks.add({ mat: 'wooddark', size: [rnd(0.6, 1.8), 0.08, rnd(0.18, 0.32)], pos: new V3(x, 1.0, z), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(((x - at.x) / d) * rnd(3, 8), rnd(3, 9), ((z - at.z) / d) * rnd(3, 8)), spin: [rnd(-9, 9), rnd(-9, 9), rnd(-9, 9)], shatter: 99, life: 8, bounce: 0.35, dust: false });
   }
   D.debris.burst(new V3(at.x, 1, at.z), 30, { speed: 7, up: 6, size: 0.6, spread: 2 });
+  D.splinters.burst(new V3(at.x, 1.2, at.z), 30, { speed: 9, up: 7, size: 1, spread: 2.5 });
+  D.dust.ring(new V3(at.x, NAVE.FY, at.z), 12, { color: D.dustColor(at), r0: 1.2, speed: 8, size: 1.8, life: 3.5, grow: 1.4, alpha: 0.45 });
   a && a.play('woodBreak', at, { k: 2 });
 }
 

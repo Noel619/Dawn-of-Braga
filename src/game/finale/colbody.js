@@ -151,4 +151,47 @@ export class ColBody {
     }
     return false;
   }
+  // Saca el punto P de todas las cápsulas (más un margen), apartándolo de su
+  // eje por el camino más corto (la cámara de un plano pegado al cuerpo).
+  // Devuelve si lo ha movido.
+  pushOut(P, margin = 0.3, it = 3) {
+    let moved = false;
+    for (let k = 0; k < it; k++) {
+      let any = false;
+      for (let i = 0; i < this.n; i++) {
+        const c = this.caps[i];
+        const ax = c.b.x - c.a.x,
+          ay = c.b.y - c.a.y,
+          az = c.b.z - c.a.z;
+        const L2 = ax * ax + ay * ay + az * az;
+        let t = L2 > 1e-8 ? ((P.x - c.a.x) * ax + (P.y - c.a.y) * ay + (P.z - c.a.z) * az) / L2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const cx = c.a.x + ax * t,
+          cy = c.a.y + ay * t,
+          cz = c.a.z + az * t;
+        let dx = P.x - cx,
+          dy = P.y - cy,
+          dz = P.z - cz;
+        const R = c.r + margin;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 >= R * R) continue;
+        const d = Math.sqrt(d2);
+        if (d < 1e-4) {
+          dx = 0;
+          dy = 1;
+          dz = 0;
+        } else {
+          dx /= d;
+          dy /= d;
+          dz /= d;
+        }
+        P.x = cx + dx * R;
+        P.y = cy + dy * R;
+        P.z = cz + dz * R;
+        any = moved = true;
+      }
+      if (!any) break;
+    }
+    return moved;
+  }
 }

@@ -150,7 +150,8 @@ function* intro(D, G, S) {
     a && a.play('chainRun', at, { k: 1.6 });
     g.camRig.shake(0.5);
     D.debris.burst(at.clone().setY(0.3), 18, { speed: 8, up: 9, size: 0.6, spread: 2.4 });
-    g.fx.blood.emit(at.x, 0.6, at.z, 60, { color: DUST, speed: 7, life: 2, up: 3, gravity: 0.3 });
+    D.dust.ring(at.clone().setY(0.3), 14, { color: D.dustColor(at), r0: 2, speed: 8, size: 2.2, life: 4.5, grow: 1.5, alpha: 0.5 });
+    D.puff(at.clone().setY(1), 5, { size: 2.6, spread: 1.5, speed: 2, up: 4, rise: 0.6, life: 4, grow: 1.3, alpha: 0.45 });
     for (let i = 0; i < 8; i++) D.chunks.add({ mat: 'cobble', size: [rnd(0.5, 0.9), 0.22, rnd(0.4, 0.8)], pos: new V3(at.x + rnd(-2, 2), 0.4, at.z + rnd(-2, 2)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-5, 5), rnd(6, 12), rnd(-5, 5)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 7 });
   };
   while (G.actT < 0.75) yield;
@@ -309,7 +310,7 @@ function* sweepOnce(D, G, lethal, co) {
       g.camRig.shake(1.2);
       g.input.rumble(1, 1, 600);
       D.debris.burst(c, 30, { speed: 9, up: 6, size: 0.9, spread: 2 });
-      g.fx.blood.emit(c.x, c.y, c.z, 60, { color: DUST, speed: 7, life: 2, up: 2, gravity: 0.4 });
+      D.puff(c, 8, { size: 2.6, spread: 1.5, speed: 6, up: 1, life: 4, grow: 1.6, alpha: 0.5, ground: false });
       for (let i = 0; i < 8; i++) D.chunks.add({ mat: lethal ? 'planks' : 'wallstone', size: lethal ? [0.2, 0.08, rnd(1, 2)] : [rnd(0.5, 0.9), rnd(0.35, 0.6), rnd(0.4, 0.8)], pos: c.clone().add(_v.set(rnd(-1.5, 1.5), rnd(-1, 1), rnd(-1.5, 1.5))), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-6, 6), rnd(2, 8), rnd(2, 9)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 7 });
       // la segunda: barre el cadalso (y a quien esté en él)
       if (lethal && p.pos.y > T.deckY - 1 && !p.dead) {
@@ -556,6 +557,7 @@ function gowDone(D) {
   return !!D.gow1;
 }
 
+const POLE_W = [12, 9, -2];
 // el brazo izquierdo llevado por el guion (IK): hacia una pose (espacio
 // del modelo) o un punto del mundo, en un tiempo; y sacudido si se pide
 export function armDriver(D, G) {
@@ -583,9 +585,12 @@ export function armDriver(D, G) {
     A.dur = dur;
     A.t = 0;
   };
-  A.toWorld = (pt, dur = 0.4) => {
+  // (a un punto del mundo; pole: hacia dónde va el codo, en el espacio del
+  // modelo; el punto se puede ir moviendo: A.world)
+  A.toWorld = (pt, dur = 0.4, pole = null) => {
     from();
     A.world = pt.clone();
+    A.wpole = pole;
     A.dur = dur;
     A.t = 0;
   };
@@ -600,7 +605,7 @@ export function armDriver(D, G) {
         G.wp(w0.x, w0.y, w0.z, s0);
         G.wp(p0.x, p0.y, p0.z, q0);
         const tw = A.world ? _v.copy(A.world) : A.pose ? G.wp(...A.pose.w, _v) : _v.copy(s0);
-        const tp = A.world ? G.wp(12, 9, -2, _v2) : A.pose ? G.wp(...A.pose.pole, _v2) : _v2.copy(q0);
+        const tp = A.world ? G.wp(...(A.wpole || POLE_W), _v2) : A.pose ? G.wp(...A.pose.pole, _v2) : _v2.copy(q0);
         w.lerpVectors(s0, tw, k);
         pole.lerpVectors(q0, tp, k);
         if (A.shake > 0) {
@@ -649,10 +654,9 @@ export function hangOnBolt(bolt) {
 function breakStair(D) {
   const g = D.g;
   if (!g.groups.torreSurStair || !g.groups.torreSurStair.on) return;
-  g.setGroupVisible('torreSurStair', false);
-  g.setGroupVisible('torreSurStairRuin', true);
   const S = T.stair;
-  for (let i = 0; i < 14; i++) {
+  D.crumble('torreSurStair', { ruin: 'torreSurStairRuin', from: new V3(S.x + 6, 4, S.z0 + 8), tilt: 0.3, drop: 3, dur: 0.6, speed: 1, n: 10, sound: false, shake: 0.5, wood: true, dust: 0.7 });
+  for (let i = 0; i < 10; i++) {
     const z = S.z0 + rnd(4, 13),
       y = ((z - S.z0) / (S.n * S.run)) * S.n * S.rise;
     D.chunks.add({ mat: 'planks', size: [S.w * rnd(0.6, 1), 0.07, 0.3], pos: new V3(S.x + rnd(-0.6, 0.6), y, z), rot: [rnd(-0.5, 0.5), rnd(0, 3), rnd(-0.5, 0.5)], vel: new V3(rnd(0, 6), rnd(1, 5), rnd(1, 6)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 99, life: 8 });
@@ -665,9 +669,8 @@ function breakStair(D) {
 function smashTop(D, S) {
   const g = D.g,
     a = g.audio;
-  g.setGroupVisible('torreSurTop', false);
-  g.setGroupVisible('torreSurTopRuin', true);
   const c = new V3(T.x, T.deckY + 0.5, T.z);
+  D.crumble('torreSurTop', { ruin: 'torreSurTopRuin', from: new V3(T.x + 4, T.deckY + 2, T.z - 6), tilt: 0.25, drop: 2.5, dur: 0.6, speed: 1.4, n: 16, sound: false, shake: false, wood: true, dust: 1.2, at: c });
   // la espringala, en pedazos
   S.root.visible = false;
   S.bollardG.visible = false;
@@ -676,7 +679,7 @@ function smashTop(D, S) {
   for (let i = 0; i < 22; i++)
     D.chunks.add({ mat: i % 4 ? 'planks' : 'timber', size: i % 4 ? [rnd(0.8, 1.6), 0.08, 0.28] : [0.24, 0.24, rnd(1.4, 2.6)], pos: new V3(rnd(dx0, dx1), T.deckY + rnd(-0.3, 1.2), rnd(dz0, dz1)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-9, 4), rnd(3, 11), rnd(2, 12)), spin: [rnd(-9, 9), rnd(-9, 9), rnd(-9, 9)], shatter: 99, life: 9 });
   D.debris.burst(c, 30, { speed: 10, up: 7, size: 0.9, spread: 2.5 });
-  g.fx.blood.emit(c.x, c.y, c.z, 90, { color: DUST, speed: 9, life: 2.4, up: 2, gravity: 0.3 });
+  D.splinters.burst(c, 30, { speed: 11, up: 8, size: 1.1, spread: 2 });
   a && a.play('explosion', c, { k: 2 });
   a && a.play('rackBreak', c, { k: 2.2 });
   a && a.play('woodBreak', c, { k: 2 });

@@ -9,6 +9,26 @@ const _m = new THREE.Matrix4(),
   _s = new THREE.Vector3(),
   _a = new THREE.Vector3();
 
+// astilla de madera (larga y fina) y teja (curva y delgada)
+function splinterGeo() {
+  const g = new THREE.BoxGeometry(0.16, 0.1, 1.1, 1, 1, 2).toNonIndexed();
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const z = p.getZ(i);
+    // (punta astillada: se estrecha y se tuerce hacia un extremo)
+    const k = 1 - Math.max(0, z) * 1.1;
+    p.setXYZ(i, p.getX(i) * k + z * 0.05, p.getY(i) * k, z);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+function tileGeo() {
+  const g = new THREE.CylinderGeometry(0.34, 0.34, 0.75, 6, 1, true, 0, Math.PI * 0.8).toNonIndexed();
+  g.rotateX(Math.PI / 2);
+  g.computeVertexNormals();
+  return g;
+}
+
 function rockGeo() {
   const g = new THREE.IcosahedronGeometry(0.5, 0).toNonIndexed();
   const p = g.attributes.position;
@@ -25,12 +45,14 @@ function rockGeo() {
 }
 
 export class Debris {
-  // o: { color, tex } (piedra por defecto; el bronce de la máscara, otro)
+  // o: { color, tex, shape } (piedra por defecto; el bronce de la máscara,
+  // otro; shape: 'rock', 'splinter' (astillas) o 'tile' (tejas))
   constructor(scene, n = 120, o = {}) {
     this.scene = scene;
     const tex = getTexture(o.tex || 'ashlar');
-    this.mat = new THREE.MeshLambertMaterial({ map: tex, color: o.color ?? 0x9a9088 });
-    this.mesh = new THREE.InstancedMesh(rockGeo(), this.mat, n);
+    this.mat = new THREE.MeshLambertMaterial({ map: tex, color: o.color ?? 0x9a9088, side: o.shape === 'tile' ? THREE.DoubleSide : THREE.FrontSide });
+    const geo = o.shape === 'splinter' ? splinterGeo() : o.shape === 'tile' ? tileGeo() : rockGeo();
+    this.mesh = new THREE.InstancedMesh(geo, this.mat, n);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.frustumCulled = false;
     this.mesh.count = 0;
