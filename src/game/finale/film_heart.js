@@ -217,10 +217,8 @@ export function* heartEnd(D, G, S, bolt) {
   X.at = frame(X.K, X.yawK);
   X.walk = walker(X);
   F.also(X.walk.run());
-  // (una luz que le sigue, del lado de la cámara: encima del gigante, entre
-  // la jaula, los cuernos y los cirios, que se le vea)
-  X.key = keyLight(X);
-  F.also(X.key.run());
+  // (la luz del jugador: encima del gigante, que se le vea)
+  F.keyLight(1);
   // ------------------------------------------------- 1. a lo alto de la cabeza
   yield* climbHead(X);
   yield* rideHead(X);
@@ -238,31 +236,6 @@ export function* heartEnd(D, G, S, bolt) {
   // ------------------------------------------------- 6. muerto; amanece
   yield* deadFall(X);
   yield* dawn(X);
-}
-
-// La luz del jugador: entre él y la cámara, un poco por encima (k: cuánto)
-function keyLight(X) {
-  const { D, g, p } = X;
-  const L = D.light({ color: 0xe6ecff, intensity: 0, range: 7, flicker: 0, priority: 9 });
-  const K = { k: 1, stop: false };
-  K.run = function* () {
-    let k = 0;
-    while (!K.stop) {
-      const dt = yield;
-      k += (K.k - k) * Math.min(1, dt * 3);
-      const c = g.camera.position,
-        P = p.pos;
-      _v.set(c.x - P.x, 0, c.z - P.z);
-      const d = _v.length() || 1;
-      L.x = P.x + (_v.x / d) * 1.8;
-      L.y = P.y + 1.9;
-      L.z = P.z + (_v.z / d) * 1.8;
-      L.intensity = 10 * k;
-    }
-    L.intensity = 0;
-    D.dropLight(L);
-  };
-  return K;
 }
 
 // Retrocede (a tropezones, de espaldas al cráter) hasta el borde, mientras
@@ -1200,7 +1173,7 @@ function* dawn(X) {
   const { D, g, F, p } = X;
   g.atmo.override = { fog: 0xc8a08a, density: 0.009, far: 420, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.0, moonColor: 0xffa860, moonPos: [10, 14, -80], vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, bloom: 1.1 };
   D.heroK = 0;
-  if (X.key) X.key.stop = true;
+  F.keyLight(0);
   const W = X.land.clone();
   const dW = new V3().subVectors(C0, W).setY(0).normalize();
   F.setP(W.x, W.y, W.z, Math.atan2(dW.x, dW.z));

@@ -477,6 +477,7 @@ function setupStandalone(D, G) {
   const slab = D.chunks.add({ mat: 'flag', size: PIT_SLAB.size, pos: new V3(0, 14, CLIMB_Z), uv: 0.5, attach: humpM, life: 600, tint: 0x9c948c });
   D.rise = { slab, humpM, outLights: [] };
   F.attach = () => onHump(G, slab);
+  F.keyLight(1);
   F.pClip(FP.kneelGrip, { blend: 0.01 });
   g.atmo.override = { density: 0.013, vol: 0.05, far: 230, bloom: 1.3, hemi: 2.4, moon: 3.0, moonPos: [-10, 24, -40], fog: 0x3a2c2a, snap: true };
   g.fadeTarget = 1;
@@ -512,6 +513,7 @@ function launch(D, G, slab) {
   const st = { t: 0, done: false };
   const dur = 1.25;
   F.attach = null;
+  F.keyLight(0);
   F.pClip(FP.fly, { blend: 0.08 });
   D.g.audio && D.g.audio.play('playerHurt', p.pos);
   F.also(

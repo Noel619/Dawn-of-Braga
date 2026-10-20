@@ -59,6 +59,7 @@ export function* actGrab(D, o = {}) {
     return { pos: c.add(_v.set(0, -0.5, 0)), yaw: Math.atan2(f.x - c.x, f.z - c.z) };
   };
   F.attach = held;
+  F.keyLight(1);
   F.pClip(FP.held, { blend: 0.15 });
   // ---------------------------------------------------------- 1. la jaula
   // (dentro de la mano: los dedos alrededor, el jugador forcejea)
@@ -266,6 +267,7 @@ function* flight(D, G) {
   const dir = new V3().subVectors(to, from).setY(0).normalize();
   const yaw = Math.atan2(dir.x, dir.z);
   F.attach = null;
+  F.keyLight(0);
   F.pClip(FP.fly, { blend: 0.08 });
   D.windK = 1;
   const e = new THREE.Euler();

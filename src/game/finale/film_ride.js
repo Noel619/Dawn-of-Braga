@@ -94,6 +94,7 @@ export function* actRide(D, o = {}) {
   // colgado, como un péndulo
   const hang = pendulum(D, bolt);
   F.attach = () => hang.get();
+  F.keyLight(1);
   F.pClip(FP.hangBolt, { blend: 0.2 });
   F.also(hang.run());
   // la campana, arrastrada detrás, a su derecha (la cadena en la mano)
@@ -578,6 +579,7 @@ function* rub(D, G, arm, hang, run, bolt, bell) {
   // suelta el virote: rueda hasta el parapeto, o se estrella contra una almena
   const from = p.pos.clone();
   F.attach = null;
+  F.keyLight(0);
   const ok = !q || q.ok;
   const to = ok ? new V3(from.x - 1.4, YN, -122.95) : new V3(from.x + 0.6, YN, -124.6);
   if (ok) {

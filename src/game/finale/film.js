@@ -59,12 +59,17 @@ export class Film {
     this.t = 0;
     this._pos = new V3();
     this._look = new V3();
+    // la luz del jugador (keyLight)
+    this.keyK = 0;
+    this._keyV = 0;
+    this._keyL = null;
   }
 
   // ------------------------------------------------------------ corrutinas
   run(gen) {
     this.co = gen;
     this.bg = [];
+    this.keyK = 0;
   }
   also(gen) {
     this.bg.push(gen);
@@ -79,6 +84,8 @@ export class Film {
     this.tilt.identity();
     this.cam = null;
     this.camFn = null;
+    this.keyK = this._keyV = 0;
+    if (this._keyL) this._keyL.on = false;
     if (this.skipping) this.skipStop();
   }
   get active() {
@@ -289,6 +296,33 @@ export class Film {
     g.audio && g.audio.hushWorld && g.audio.hushWorld(false);
   }
 
+  // Una luz que sigue al jugador, entre él y la cámara y algo por encima:
+  // encima del gigante, entre tanta piel, hierro y cirios, que se le vea
+  // (k: 0..1; se enciende y se apaga despacio)
+  keyLight(k = 1) {
+    this.keyK = k;
+  }
+  _key(dt) {
+    const g = this.g;
+    this._keyV += (this.keyK - this._keyV) * Math.min(1, dt * 3);
+    if (!this._keyL) {
+      if (this._keyV < 0.01) return;
+      this._keyL = g.fx.lights.add({ x: 0, y: -50, z: 0, color: 0xe6ecff, intensity: 0, range: 7, flicker: 0, priority: 9, on: true });
+    }
+    const L = this._keyL;
+    L.on = this._keyV > 0.01;
+    if (!L.on) return;
+    const c = g.camera.position,
+      P = g.player.pos;
+    let dx = c.x - P.x,
+      dz = c.z - P.z;
+    const d = Math.hypot(dx, dz) || 1;
+    L.x = P.x + (dx / d) * 1.8;
+    L.y = P.y + 1.9;
+    L.z = P.z + (dz / d) * 1.8;
+    L.intensity = 10 * this._keyV;
+  }
+
   // ------------------------------------------------------------ cada fotograma
   update(dt) {
     const g = this.g;
@@ -317,6 +351,7 @@ export class Film {
     U.uVignette.value = 1.25 + 0.9 * this.bars;
     this.applyPlayer();
     this.applyCam(dt);
+    this._key(dt / Math.max(0.05, this.timeK));
   }
   // el jugador sigue a lo que le lleva (la mano, la losa, el virote)
   applyPlayer() {

@@ -29,6 +29,17 @@ const res = await p.evaluate(
     g.input.onPointerLockLost = null;
     await g.colossi.model('turiferario');
     g.dev.autoQTE = true;
+    // (qué plano es: la línea del guion que lo puso)
+    const F0 = g.finale.film;
+    for (const name of ['follow', 'shot', 'move']) {
+      const orig = F0[name];
+      F0[name] = function (...args) {
+        const st = new Error().stack.split('\n').slice(2);
+        const fr = st.map((l) => (l.match(/(film_[a-z]+\.js):(\d+)/) || [])[0]).filter(Boolean);
+        F0._src = fr.slice(0, 2).join('<');
+        return orig.apply(this, args);
+      };
+    }
     await g.finale.debugFilm(cp);
     // una rejilla de rayos desde la cámara (lo que se ve: sin lo transparente,
     // las partículas ni el polvo), hasta NEAR metros
@@ -74,7 +85,7 @@ const res = await p.evaluate(
       cam.updateMatrixWorld();
       const m = measure();
       const G = g.finale.giant;
-      const row = { t: +t.toFixed(2), frac: +m.frac.toFixed(3), near: +m.closest.toFixed(2), what: m.what, cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)), gt: G && G.R.action.clip ? G.R.action.clip.name + '@' + G.R.action.t.toFixed(2) : null, qte: g.qte.active ? g.qte.cur.label : '', cp: g.flags['film:cp'] };
+      const row = { t: +t.toFixed(2), frac: +m.frac.toFixed(3), near: +m.closest.toFixed(2), what: m.what, cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)), gt: G && G.R.action.clip ? G.R.action.clip.name + '@' + G.R.action.t.toFixed(2) : null, qte: g.qte.active ? g.qte.cur.label : '', cp: g.flags['film:cp'], src: F._src || '' };
       all.push(row);
       if (m.frac >= thr) bad.push(row);
     }

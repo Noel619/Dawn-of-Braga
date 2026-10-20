@@ -411,61 +411,33 @@ function* gow1(D, G, S, bolt) {
   }
   G.base('tug', { blend: 0.4 });
   G.stopAction(0.4);
-  // (tensa: la cadena recta de la argolla al virote)
+  // (tensa: la cadena recta de la argolla al virote; floja si se dice:
+  // rope.slack, los metros de más)
+  rope.slack = 0;
   F.also(
     (function* () {
       while (rope.pins[0] && !gowDone(D)) {
         yield;
-        rope.len = Math.max(1, rope.span() * 0.99);
+        rope.len = rope.slack > 0 ? rope.span() + rope.slack : Math.max(1, rope.span() * 0.99);
       }
     })()
   );
-  // ¡Corre!: desde detrás del jugador, a lo largo de la cadena
+  // ¡Corre!: desde el cadalso, a un lado del bolardo: el jugador ante la
+  // cadena que se va, tendida, hasta su brazo
   const ring = S.ring.clone();
-  F.shot(ring.clone().add(_v.set(1.3, 1.4, 2.4)), bolt.tail.clone(), { fov: 60 });
+  const along = _v.subVectors(bolt.tail, ring).setY(0).normalize().clone();
+  const across = new V3(along.z, 0, -along.x);
+  F.shot(camSafe(g, ring.clone().setY(ring.y + 1), ring.clone().addScaledVector(along, -2.2).addScaledVector(across, -2.0).setY(ring.y + 1.7)), bolt.tail.clone().lerp(ring, 0.45), { fov: 58 });
+  F.hand = 0.03;
   const okRun = yield* F.prompt({ action: 'dodge', label: '¡Corre!', window: 1.1, slow: 0.3 });
   if (!okRun) {
     F.hurt(14, null, { shake: 0.6 });
     F.pClip('fallBack', { blend: 0.05 });
     yield* F.wait(0.5);
+    F.pClip('getup', { blend: 0.1 });
+    yield* F.wait(0.6);
   }
-  // corre por la cadena: de la argolla a su brazo
-  F.pClip(FP.chainRun, { blend: 0.08 });
-  a && a.play('leapWind', p.pos, { k: 1 });
-  let s = 0.6;
-  F.attach = () => {
-    const at = rope.at(s, new V3(), _v2);
-    const dir = _v2;
-    return { pos: at.add(_v3.set(0, 0.06, 0)), yaw: Math.atan2(dir.x, dir.z) };
-  };
-  F.slow(0.8, 4);
-  F.follow(() => {
-    const P = p.pos;
-    const dir = new V3();
-    rope.at(s, new V3(), dir);
-    const pos = new V3(P.x, P.y + 1.0, P.z).addScaledVector(dir, -2.7).add(_v.set(dir.z * 0.55, 0, -dir.x * 0.55));
-    const look = new V3(P.x, P.y + 0.9, P.z).addScaledVector(dir, 7).lerp(G.head(_v3), 0.12);
-    return { pos, look, fov: 66 };
-  });
-  F.hand = 0.04;
-  const runEnd = () => rope.length() - 2.2;
-  let shook = false,
-    stepT = 0;
-  while (s < runEnd()) {
-    const dt = yield;
-    s += dt * 8.5;
-    stepT -= dt;
-    if (stepT <= 0) {
-      stepT = 0.28;
-      a && a.play('chainRun', p.pos, { k: 0.6 });
-    }
-    if (!shook && s > runEnd() - 3.5) {
-      shook = true;
-      // se da cuenta: se sacude el brazo
-      G.base('shakeArm', { blend: 0.3 });
-      a && a.play('beastRoar', G.head(_v), { k: 2 });
-    }
-  }
+  yield* chainRun(D, G, S, bolt, along, across);
   // ¡Agárrate!: se tira al antebrazo, junto al virote
   const onArm = armPoint(G);
   F.attach = () => onArm.get();
@@ -474,7 +446,7 @@ function* gow1(D, G, S, bolt) {
   F.slow(1, 6);
   F.follow(() => {
     const P = p.pos;
-    return { pos: G.wp(16.5, 12.5, 5.5, new V3()), look: P.clone().lerp(G.face(_v), 0.35), fov: 50 };
+    return { pos: G.wp(11.5, 12.8, 8.0, new V3()), look: P.clone().lerp(G.face(_v), 0.3), fov: 52 };
   });
   F.hand = 0.06;
   const okHold = yield* F.prompt({ action: 'interact', label: '¡Agárrate!', window: 2.4, mash: 6, slow: 0.6 });
@@ -488,10 +460,9 @@ function* gow1(D, G, S, bolt) {
   onArm.f = 0.92;
   onArm.lift = 0.85;
   yield* F.wait(0.5);
-  F.follow(() => {
-    const P = p.pos;
-    return { pos: G.wp(13.5, 13.5, 10.5, new V3()), look: P.clone().lerp(G.face(_v), 0.4), fov: 48 };
-  });
+  // (de cerca, por delante de la mano: el jugador sobre el dorso, la espada
+  // en alto; detrás, la cara)
+  lagCam(F, () => camSafe(g, p.pos.clone().add(_v.set(0, 1, 0)), p.pos.clone().add(G.wd(2.8, 1.2, 3.8, _v2))), () => bodyMid(D, new V3()), { rate: 4, fov: 56 });
   const okStab = yield* F.prompt({ action: 'light', label: '¡Apuñala!', window: 2.6, mash: 5, slow: 0.5 });
   F.pClip(FP.stabDown, { blend: 0.05 });
   const hp = G.M.byName.handL.getWorldPosition(new V3());
@@ -553,11 +524,176 @@ function* gow1(D, G, S, bolt) {
   yield* F.wait(1.4);
   D.gow1 = { bolt };
 }
+// Por la cadena, de la argolla a su brazo: salta a ella desde el cadalso,
+// corre (de lado, a cámara lenta), la cadena se afloja bajo sus pies y da un
+// latigazo al tensarse: ¡Salta! por encima; y el último tramo, hacia la
+// cámara, con su brazo delante
+function* chainRun(D, G, S, bolt, along, across) {
+  const g = D.g,
+    F = D.film,
+    p = g.player,
+    a = g.audio;
+  const rope = S.rope;
+  const arm = D.arm;
+  const runEnd = () => rope.length() - 2.2;
+  let s = 1.2,
+    lift = 0;
+  const dir = new V3();
+  F.attach = () => {
+    const at = rope.at(s, new V3(), dir);
+    return { pos: at.add(_v3.set(0, 0.06 + lift, 0)), yaw: Math.atan2(dir.x, dir.z) };
+  };
+  // (el salto a la cadena desde el cadalso; la luz del jugador, encendida:
+  // que se le vea por la cadena y en el brazo)
+  F.keyLight(1);
+  const P0 = p.pos.clone();
+  F.pClip('leap', { blend: 0.05 });
+  a && a.play('leapWind', p.pos, { k: 1.1 });
+  F.slow(0.7, 6);
+  // (de lado, a la altura de la cadena: el jugador que salta a ella y echa a
+  // correr; al fondo, él)
+  const side = (k, ahead, up) => {
+    const P = p.pos;
+    return camSafe(g, P.clone().add(_v.set(0, 1, 0)), P.clone().addScaledVector(across, k).addScaledVector(along, ahead).add(_v2.set(0, up, 0)));
+  };
+  lagCam(F, () => side(5.0, -1.6, 1.3), () => p.pos.clone().add(_v.set(0, 0.9, 0)).lerp(G.chest(_v2), 0.3), { rate: 5, fov: 58 });
+  F.hand = 0.04;
+  let t = 0;
+  const att = F.attach;
+  F.attach = () => {
+    const k = sm(clamp(t / 0.45, 0, 1));
+    const to = rope.at(s, new V3(), dir);
+    return { pos: P0.clone().lerp(to, k).add(_v3.set(0, Math.sin(k * Math.PI) * 0.9 + 0.06, 0)), yaw: Math.atan2(dir.x, dir.z) };
+  };
+  while (t < 0.45) t += yield;
+  F.attach = att;
+  a && a.play('chainRun', p.pos, { k: 1.2 });
+  F.pClip(FP.chainRun, { blend: 0.08 });
+  // ---- el primer tramo, de lado
+  let stepT = 0;
+  const steps = (dt) => {
+    stepT -= dt;
+    if (stepT <= 0) {
+      stepT = 0.28;
+      a && a.play('chainRun', p.pos, { k: 0.6 });
+    }
+  };
+  const snapAt = runEnd() * 0.45;
+  while (s < snapAt) {
+    const dt = yield;
+    s += dt * 7.2;
+    steps(dt);
+  }
+  // ---- se le afloja bajo los pies (adelanta el brazo hacia la torre) y se
+  // tensa de golpe: el latigazo. ¡Salta!
+  arm.to(ARM.cover, 0.35);
+  rope.slack = 3.2;
+  F.slow(0.55, 6);
+  a && a.play('chainRun', p.pos, { k: 1.4 });
+  // (desde abajo, a un lado: el jugador contra el cielo, la cadena que se
+  // comba y restalla)
+  lagCam(F, () => side(3.6, 0.8, -3.6), () => p.pos.clone().add(_v.set(0, 1.1, 0)), { rate: 6, fov: 60 });
+  F.hand = 0.05;
+  t = 0;
+  while (t < 0.45) {
+    const dt = yield;
+    t += dt;
+    s += dt * 3;
+  }
+  G.play('yank', { blend: 0.15, t0: 0.55 });
+  arm.to(ARM.yank, 0.22);
+  const q = F.promptAsync({ action: 'dodge', label: '¡Salta!', window: 0.8, slow: 0.25 });
+  let snapped = false;
+  t = 0;
+  while (q.ok === null) {
+    const dt = yield;
+    t += dt;
+    if (!snapped && t > 0.12) {
+      snapped = true;
+      rope.slack = 0;
+      a && a.play('chainRun', p.pos, { k: 2 });
+      a && a.play('crack', p.pos, { k: 1.2 });
+      g.camRig.shake(0.6);
+      g.input.rumble(0.8, 1, 300);
+    }
+  }
+  if (!snapped) {
+    rope.slack = 0;
+    a && a.play('chainRun', p.pos, { k: 2 });
+  }
+  if (q.ok) {
+    // (salta por encima del latigazo y cae otra vez en la cadena, corriendo)
+    F.pClip('jump', { blend: 0.05 });
+    a && a.play('leapWind', p.pos, { k: 0.9 });
+    t = 0;
+    while (t < 0.7) {
+      const dt = yield;
+      t += dt;
+      lift = Math.sin(clamp(t / 0.7, 0, 1) * Math.PI) * 1.7;
+      s += dt * 6;
+    }
+    lift = 0;
+    a && a.play('land', p.pos);
+  } else {
+    // (le tira: cae sobre la cadena y se queda colgado de ella; trepa)
+    F.hurt(14, null, { shake: 0.8 });
+    F.pClip(FP.hangBolt, { blend: 0.05 });
+    t = 0;
+    while (t < 0.9) {
+      const dt = yield;
+      t += dt;
+      lift = -2.05 * sm(clamp(t / 0.2, 0, 1));
+    }
+    F.pClip('climbUp', { blend: 0.08 });
+    t = 0;
+    while (t < 0.8) {
+      const dt = yield;
+      t += dt;
+      lift = -2.05 * (1 - sm(clamp(t / 0.8, 0, 1)));
+    }
+    lift = 0;
+  }
+  G.base('tug', { blend: 0.4 });
+  arm.to(ARM.yank, 0.5);
+  F.slow(1, 4);
+  F.pClip(FP.chainRun, { blend: 0.08 });
+  // ---- el último tramo: hacia la cámara, que espera junto a su brazo
+  const cEnd = () => bolt.tail.clone().addScaledVector(along, -6.0).addScaledVector(across, -3.0).add(_v.set(0, 2.4, 0));
+  lagCam(F, cEnd, () => p.pos.clone().add(_v.set(0, 0.9, 0)), { rate: 3, fov: 56 });
+  F.hand = 0.04;
+  let shook = false;
+  while (s < runEnd()) {
+    const dt = yield;
+    s += dt * 8.5;
+    steps(dt);
+    if (!shook && s > runEnd() - 3.5) {
+      shook = true;
+      // se da cuenta: se sacude el brazo
+      G.base('shakeArm', { blend: 0.3 });
+      a && a.play('beastRoar', G.head(_v), { k: 2 });
+    }
+  }
+}
 function gowDone(D) {
   return !!D.gow1;
 }
 
 const POLE_W = [12, 9, -2];
+// Una cámara que va detrás de un sitio que se mueve (rate: lo deprisa que lo
+// sigue), mirando a otro
+function lagCam(F, want, look, o = {}) {
+  const c = new V3();
+  let first = true;
+  F.follow((dt, tt) => {
+    const w = want(dt, tt);
+    if (first) {
+      c.copy(w);
+      first = false;
+    } else c.lerp(w, Math.min(1, dt * (o.rate ?? 4)));
+    return { pos: c.clone(), look: look(dt, tt), fov: o.fov ?? 58 };
+  });
+}
+
 // el brazo izquierdo llevado por el guion (IK): hacia una pose (espacio
 // del modelo) o un punto del mundo, en un tiempo; y sacudido si se pide
 export function armDriver(D, G) {
@@ -619,6 +755,12 @@ export function armDriver(D, G) {
     })()
   );
   return A;
+}
+// el centro del cuerpo del jugador (tumbado, colgado: a lo largo de su
+// arriba, que no siempre es el del mundo)
+function bodyMid(D, out) {
+  const p = D.g.player;
+  return out.set(0, 0.9, 0).applyQuaternion(D.film.tilt).add(p.pos);
 }
 // un punto en lo alto del antebrazo (f: 0 el codo, 1 la muñeca), para el
 // jugador agarrado a él; con hang, colgado del virote

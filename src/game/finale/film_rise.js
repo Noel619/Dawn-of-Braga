@@ -472,6 +472,7 @@ export function* actRise(D, o = {}) {
   // plano general desde el adarve, que se le viene encima: ruge a la ciudad
   D.dropLight(red);
   F.attach = () => onHump(G, slab);
+  F.keyLight(1);
   F.pClip(FP.kneelGrip, { blend: 0.4 });
   F.hand = 0.02;
   const z0 = G.pos.z;

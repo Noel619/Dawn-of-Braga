@@ -353,14 +353,24 @@ se encadena el anterior.
   la nave que se viene abajo; **el agarrón** (te atrapa, te ruge a la cara y te lanza por encima de la ciudad a la
   paja de un establo); **la Herrería**, la huida, con las casas reventando en ola a tu paso y la campana
   descargada donde estabas; **la primera espringala**, en la torre sur (cargar el torno, apuntar con el virote
-  que cae y disparar: se tapa con el antebrazo y el virote se le clava) y el primer momento *God of War*: por la
-  cadena tensa hasta su brazo, la mano, la torre que revienta; **la cabalgada**, colgado del virote mientras
+  que cae y disparar: se tapa con el antebrazo y el virote se le clava) y el primer momento *God of War*: saltas
+  a la cadena tensa y corres por ella hasta su brazo (se afloja bajo tus pies y da un latigazo al tensarse: hay
+  que saltar por encima), le apuñalas la mano y la torre revienta; **la cabalgada**, colgado del virote mientras
   cruza la ciudad corriendo (las casas del centro, el arco de la Sé, el mordisco, la fachada de la catedral, la
   nave y las almenas de la brecha); y **la segunda espringala**: se cura en la sangre negra que hierve en el
   cráter, subes a la torre del oeste de la brecha y le clavas el virote en la nuca. El segundo momento *God of
-  War*: su cara a dos metros, el salto a la jaula, el ojo, la vuelta a la torre, el borde del cráter que cede,
-  la cadena que arrastra lo alto de la torre y los hachazos que la cortan. Se hunde en la cisterna anegada con
-  la mano alzada; las campanas callan y amanece, y el final de siempre, en el río. Fallar una pulsación en una
+  War*: su cara a dos metros, el salto a la jaula, el ojo; y **el corazón del dios**: los virotes no le matan,
+  le derriban. Retrocede hacia el cráter contigo en la cara: trepas por la jaula hasta lo alto de la cabeza,
+  aguantas mientras se revuelve (la aureola se le arranca y cae entera al campo, con sus cirios), bajas a la
+  joroba y le hundes el virote de la nuca con todo el cuerpo encima; se ahoga sin voz y cae de rodillas al
+  borde del cráter, con el pecho abierto como dos puertas y el núcleo latiendo a la vista. Saltas por encima de
+  la mano que viene a por ti y resbalas por la casulla hasta el corazón, te descuelgas cuando junta las manos
+  para aplastarte contra su propio pecho, y lo apuñalas hasta que revienta: la luz, la onda, el silencio.
+  Muerto, cae de espaldas al cráter y la sangre negra se lo traga; amanece, y el final de siempre, en el río.
+  Lo que revienta a su paso se viene abajo de verdad: las casas, la cúpula y lo alto de las torres se ladean y
+  se hunden, sueltan trozos de su propia piedra, madera y teja y levantan polvo del color de la luz que hay;
+  los derrumbes y los rugidos se hornean una vez y suenan como muestras, para que el audio no se corte ni se
+  sature con una manzana entera cayendo a la vez. Fallar una pulsación en una
   cinemática hace daño pero no mata; puntos de control en el rito, el establo, la torre sur y la muralla.
   **Deo Ignoto** queda como jefe opcional para más adelante: hará falta un objeto verdadero que todavía no
   existe (ver `finale/director.js`). Los colosos se esculpen por código en un *Web Worker* al cargar el juego,
@@ -499,11 +509,14 @@ src/
                         de control y el estado del mundo; film.js, el armazón (corrutinas, planos, franjas,
                         pulsaciones, el jugador como marioneta); film_acts.js y film_rise.js, film_nave.js,
                         film_grab.js, film_city.js, film_tower.js, film_ride.js y film_end.js, los seis
-                        actos; film_gun.js, manejar una espringala; film_wave.js, las casas que revientan
+                        actos, y film_heart.js, el final (el corazón del dios); film_gun.js, manejar una
+                        espringala; film_wave.js, las casas que revientan
                         en ola; film_player.js, las poses del jugador; giant.js y giant_anim.js, el gigante
                         para el guion y sus animaciones; springald.js, las espringalas, su cadena y el
                         virote; bell.js, la campana y su cadena; colbody.js, su cuerpo en cápsulas (choques
-                        y cámara); wrecks.js, la ciudad que se rompe; debris.js y chunks.js, los cascotes.
+                        y cámara); wrecks.js, la ciudad que se rompe; collapse.js, lo que se viene abajo
+                        de verdad (se ladea y se hunde); debris.js y chunks.js, los cascotes y los trozos;
+                        dust.js, las nubes de polvo.
                         De la pelea vieja quedan turiferario_anim.js (animaciones que se siguen usando) y,
                         sin enganchar, la de Deo Ignoto: deo_boss.js, deo_anim.js, climb.js y surface.js)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
@@ -515,6 +528,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        con las pulsaciones acertadas o falladas: pasa por los puntos de
                                        control en orden, nadie muere y acaba en el río
                         film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
+                        filmclip.mjs   busca los momentos de la película con la cámara metida en algo (una
+                                       rejilla de rayos desde la cámara) y dice qué plano del guion es
+                        filmaudio.mjs  mide lo que le cuesta al hilo de audio la película (grabación y
+                                       reproducción limpia en un OfflineAudioContext)
                         colposes.mjs   hojas de poses de las animaciones de los colosos
                         fuzz.mjs       prueba de estrés con entradas aleatorias
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
