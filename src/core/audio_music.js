@@ -675,6 +675,13 @@ export class MusicEngine {
     } else if (name === 'phantom') {
       for (const m of [58, 59, 64]) this.strings(d, t, 1.4, m, 0.035, { a: 0.9, r: 1.5, trem: 7, bright: 9 });
       this.whisper(d, t, 1.2, 0.05);
+    } else if (name === 'relic') {
+      // un objeto bendito: coro que se abre en mayor y campanillas
+      for (const m of [52, 59, 64, 68]) this.choir(d, t, 4.2, m, 0.04, 'a', { a: 1.4, r: 2.6 });
+      for (const m of [71, 76]) this.choir(d, t + 1.0, 3.2, m, 0.022, 'o', { a: 1.2, r: 2.2 });
+      this.bell(d, t + 0.5, 76, 0.08, { kind: 'small', dur: 5 });
+      this.bell(d, t + 1.3, 83, 0.06, { kind: 'small', dur: 5 });
+      this.swell(d, t, 2.2, 0.05, 600, 4000);
     } else if (name === 'godSeal') {
       // la sangre llena los cinco círculos: un coro grave que no resuelve,
       // una campana muy honda y el gong

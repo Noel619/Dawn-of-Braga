@@ -58,6 +58,12 @@ export const MAT_DEFS = {
   grass: { tex: 'grass', uv: 0.35 },
   leaves: { tex: 'leaves', uv: 0.9 },
   skulls: { tex: 'skulls', uv: 0.55 },
+  // los aparejos de los osarios: fémures en hiladas, rosetones, montón
+  femurs: { tex: 'femurs', uv: 0.95 },
+  boneRosette: { tex: 'boneRosette', uv: 0.8 },
+  bonePile: { tex: 'bonePile', uv: 0.7 },
+  letreroOssos1: { tex: 'letreroOssos1', uv: 1 },
+  letreroOssos2: { tex: 'letreroOssos2', uv: 1 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
   bone: { tex: 'bone', uv: 1.6 },
   straw: { tex: 'straw', uv: 1.0 },

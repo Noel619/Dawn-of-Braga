@@ -672,7 +672,8 @@ export class Interactables {
       glow.scale.set(0.6, 0.6, 1);
       it.obj.add(glow);
       it.glow = glow;
-      it.hidden = !!s.afterBoss;
+      // (los objetos benditos de los osarios, hasta resolver su puzle)
+      it.hidden = !!s.afterBoss || !!s.afterFlag;
       it.obj.visible = !it.hidden;
       g.scene.add(it.obj);
       it.r = s.r ?? 1.7;
@@ -789,6 +790,9 @@ export class Interactables {
       it.r = s.r ?? 2;
     } else if (s.kind === 'trigger') {
       it.r = s.r;
+    } else if (s.kind === 'puzzle') {
+      // una pieza de un puzle de osario: lo atiende game/ossuaries.js
+      it.r = s.r ?? 1.25;
     } else if (s.kind === 'censer') {
       // el incensario del estrado (lo cuelga y lo enciende game/crypt.js)
       it.r = s.r ?? 2.0;
@@ -819,6 +823,10 @@ export class Interactables {
       if (it.kind === 'fog' && (flags['boss:' + it.boss] || (it.boss === 'turibulario' && flags['finale:rite']))) this.clearFog(it);
       if (it.kind === 'altar' && it.afterBoss) it.hidden = !flags['boss:' + it.afterBoss];
       if (it.kind === 'item' && it.afterBoss && flags['boss:' + it.afterBoss] && !flags['take:' + it.id]) {
+        it.hidden = false;
+        it.obj.visible = true;
+      }
+      if (it.kind === 'item' && it.afterFlag && flags[it.afterFlag] && !flags['take:' + it.id]) {
         it.hidden = false;
         it.obj.visible = true;
       }
@@ -913,8 +921,9 @@ export class Interactables {
       if (it.mat === 'barricade') it.obj.visible = true;
       this.poseDoor(it, 0);
     } else if (it.kind === 'item') {
-      it.hidden = !!it.afterBoss;
+      it.hidden = !!it.afterBoss || !!it.afterFlag;
       it.obj.visible = !it.hidden;
+      it.obj.position.y = it.y;
     } else if (it.kind === 'note') {
       if (it.glow) it.glow.visible = true;
     } else if (it.kind === 'lever') {
@@ -1159,6 +1168,8 @@ export class Interactables {
         return 'Tapiar la ventana';
       case 'npc':
         return it.label ?? 'Hablar';
+      case 'puzzle':
+        return it.puzzle.label(it);
       case 'hatch':
         if (it.end === 'top') return this.game.flags[it.flag] || it.open ? 'Bajar por la escalera' : 'Abrir la trampilla';
         return this.game.flags[it.flag] || it.open ? 'Subir por la escalera' : 'Examinar la trampilla';
@@ -1230,6 +1241,10 @@ export class Interactables {
     }
     if (it.kind === 'censer') {
       if (g.crypt) g.crypt.useCenser(it);
+      return true;
+    }
+    if (it.kind === 'puzzle') {
+      it.puzzle.use(it);
       return true;
     }
     if (it.kind === 'board') {

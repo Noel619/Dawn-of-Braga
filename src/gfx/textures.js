@@ -92,6 +92,118 @@ function blockLayout(W, H, rowHeights, minW, maxW, seed, stagger = true) {
   return map;
 }
 
+// --- huesos pintados en canvas (los aparejos de los osarios)
+const boneCol = (k, tone) => `rgb(${(k[0] * tone) | 0},${(k[1] * tone) | 0},${(k[2] * tone) | 0})`;
+const BONE_LO = [112, 100, 76],
+  BONE_MID = [156, 144, 112],
+  BONE_HI = [198, 186, 152];
+// dibuja fn(ox, oy) en las copias que hagan falta para que la textura case
+// por los bordes (r: lo que sobresale la pieza de su centro)
+function wrapDraw(S, x, y, r, fn) {
+  for (const ox of x - r < 0 ? [0, S] : x + r > S ? [0, -S] : [0])
+    for (const oy of y - r < 0 ? [0, S] : y + r > S ? [0, -S] : [0]) fn(x + ox, y + oy);
+}
+// un hueso largo de canto: caña y dos cabezas (de a a b, w de grueso)
+function paintBone(g, ax, ay, bx, by, w, tone) {
+  const len = Math.hypot(bx - ax, by - ay);
+  g.save();
+  g.translate(ax, ay);
+  g.rotate(Math.atan2(by - ay, bx - ax));
+  g.fillStyle = '#0d0a08';
+  g.fillRect(0, -w * 0.62, len, w * 1.24);
+  for (const x of [0, len]) {
+    g.beginPath();
+    g.ellipse(x, 0, w * 1.05, w * 1.15, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillStyle = boneCol(BONE_MID, tone);
+  g.fillRect(0, -w * 0.42, len, w * 0.84);
+  for (const x of [0, len])
+    for (const s of [-1, 1]) {
+      g.beginPath();
+      g.ellipse(x, s * w * 0.42, w * 0.62, w * 0.58, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+  g.fillStyle = boneCol(BONE_HI, tone);
+  g.fillRect(w * 0.5, -w * 0.38, len - w, w * 0.26);
+  g.fillStyle = boneCol(BONE_LO, tone);
+  g.fillRect(w * 0.5, w * 0.2, len - w, w * 0.22);
+  g.restore();
+}
+// una calavera de frente (s: medio ancho)
+function paintSkull(g, x, y, s, tone) {
+  g.fillStyle = '#0d0a08';
+  g.beginPath();
+  g.ellipse(x, y, s * 1.12, s * 1.18, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = boneCol(BONE_MID, tone);
+  g.beginPath();
+  g.ellipse(x, y - s * 0.12, s, s * 0.92, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillRect(x - s * 0.55, y + s * 0.3, s * 1.1, s * 0.62);
+  g.fillStyle = boneCol(BONE_HI, tone);
+  g.beginPath();
+  g.ellipse(x - s * 0.18, y - s * 0.5, s * 0.55, s * 0.32, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = '#0b0807';
+  for (const sx of [-1, 1]) {
+    g.beginPath();
+    g.ellipse(x + sx * s * 0.4, y + s * 0.08, s * 0.27, s * 0.3, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillRect(x - s * 0.08, y + s * 0.38, s * 0.16, s * 0.22);
+  g.fillStyle = '#2a211a';
+  for (let k = -2; k <= 2; k++) g.fillRect(x + k * s * 0.2 - 0.5, y + s * 0.7, 1, s * 0.22);
+}
+// Letrero pintado: letras negras sobre una banda de cal, desconchada y
+// ennegrecida por el humo de las velas.
+function paintLetrero(text, W = 256, H = 16, seed = 1) {
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  g.fillStyle = '#b9b09a';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#1a1410';
+  g.font = `bold ${Math.round(H * 0.7)}px serif`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(text, W / 2, H / 2 + 1, W - 8);
+  // filetes arriba y abajo
+  g.fillRect(2, 1, W - 4, 1);
+  g.fillRect(2, H - 2, W - 4, 1);
+  const img = g.getImageData(0, 0, W, H);
+  const rng = new RNG(seed);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const n = fbm2(x / 9, y / 5, 3, 0, seed + 3);
+      // desconchones (se ve la piedra) y humo
+      if (n > 0.72) {
+        img.data[i] = 92;
+        img.data[i + 1] = 86;
+        img.data[i + 2] = 76;
+      }
+      const k = (0.78 + rng.next() * 0.18) * (1 - Math.max(0, n - 0.45) * 0.4);
+      img.data[i] *= k;
+      img.data[i + 1] *= k;
+      img.data[i + 2] *= k;
+    }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+// grano en todo el canvas
+function grain(g, S, a = 0.85, b = 0.25, seed = 1) {
+  const img = g.getImageData(0, 0, S, S);
+  const rng = new RNG(seed);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const k = a + rng.next() * b;
+    img.data[i] *= k;
+    img.data[i + 1] *= k;
+    img.data[i + 2] *= k;
+  }
+  g.putImageData(img, 0, 0);
+}
+
 // -------------------------------------------------------------- superficies
 const GEN = {
   cobble() {
@@ -931,6 +1043,193 @@ const GEN = {
     }
     g.putImageData(img, 0, 0);
     return c;
+  },
+
+  // Fémures apilados de cabeza, en hiladas como de ladrillo (el aparejo de
+  // un osario ordenado): tres hiladas de cabezas (dobles, las del fémur por
+  // abajo; redondas, las de arriba; las de la tibia) y una de huesos tendidos.
+  femurs() {
+    const S = 128;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    g.fillStyle = '#120e0b';
+    g.fillRect(0, 0, S, S);
+    const rng = new RNG(71);
+    for (let row = 0; row < 16; row++) {
+      const y = row * 8 + 4;
+      if (row % 4 === 3) {
+        // la hilada de huesos tendidos (cuatro por vuelta, casan por el borde)
+        const off = rng.range(0, 32);
+        for (let k = 0; k < 4; k++) {
+          const x0 = off + k * 32 + rng.range(-0.6, 0.6),
+            x1 = x0 + 32 - rng.range(1.2, 2.2);
+          const tone = rng.range(0.72, 1.02);
+          const yy = y + rng.range(-0.4, 0.4),
+            yb = yy + rng.range(-0.4, 0.4);
+          for (const ox of [0, -S, S]) paintBone(g, x0 + 3 + ox, yy, x1 - 3 + ox, yb, 2.9, tone);
+        }
+        continue;
+      }
+      for (let k = 0; k < 16; k++) {
+        const x = k * 8 + (row % 2) * 4 + rng.range(-0.7, 0.7);
+        const yy = y + rng.range(-0.5, 0.5);
+        const tone = rng.range(0.66, 1.05);
+        const kind = rng.next();
+        wrapDraw(S, x, yy, 5, (px, py) => {
+          g.fillStyle = '#0b0807';
+          g.beginPath();
+          g.ellipse(px, py + 0.5, 4.3, 4.1, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = boneCol(BONE_MID, tone);
+          if (kind < 0.5) {
+            // los dos cóndilos del fémur
+            for (const s of [-1, 1]) {
+              g.beginPath();
+              g.ellipse(px + s * 1.7, py, 2.35, 3.3, 0, 0, Math.PI * 2);
+              g.fill();
+            }
+            g.fillStyle = boneCol(BONE_HI, tone);
+            for (const s of [-1, 1]) g.fillRect(px + s * 1.7 - 1.3, py - 2.6, 1.9, 1.4);
+            g.fillStyle = boneCol(BONE_LO, tone * 0.9);
+            for (const s of [-1, 1]) g.fillRect(px + s * 1.7 - 1.4, py + 1.8, 2.6, 1.2);
+            g.fillStyle = '#1c1611';
+            g.fillRect(px - 0.4, py - 1.2, 0.8, 3.6);
+          } else if (kind < 0.88) {
+            // la cabeza redonda
+            g.beginPath();
+            g.ellipse(px, py, 3.7, 3.6, 0, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = boneCol(BONE_HI, tone);
+            g.beginPath();
+            g.ellipse(px - 1, py - 1.3, 1.8, 1.3, 0, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = boneCol(BONE_LO, tone);
+            g.fillRect(px - 2, py + 1.8, 4.2, 1.3);
+          } else {
+            // la tibia, de tres caras (redondeada)
+            g.beginPath();
+            g.ellipse(px, py - 0.3, 3.8, 3.2, 0, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = boneCol(BONE_LO, tone);
+            g.fillRect(px - 0.6, py - 2.6, 1.2, 4.4);
+            g.fillStyle = boneCol(BONE_HI, tone);
+            g.fillRect(px - 2.6, py - 2.4, 1.8, 1.2);
+          }
+        });
+      }
+    }
+    grain(g, S, 0.84, 0.26, 72);
+    return c;
+  },
+
+  // Rosetones de huesos (como en las capillas de huesos): una calavera en
+  // medio, ocho huesos en estrella, un aro de vértebras y, en las esquinas,
+  // fémures cruzados; el fondo, de cabezas de hueso.
+  boneRosette() {
+    const S = 128;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    g.fillStyle = '#120e0b';
+    g.fillRect(0, 0, S, S);
+    const rng = new RNG(73);
+    // el relleno: cabezas de hueso pequeñas, apretadas
+    for (let y = 2; y < S; y += 4)
+      for (let x = ((y / 4) | 0) % 2 ? 2 : 0; x < S + 2; x += 4) {
+        const tone = rng.range(0.48, 0.74);
+        wrapDraw(S, x, y, 3, (px, py) => {
+          g.fillStyle = boneCol(BONE_MID, tone);
+          g.beginPath();
+          g.ellipse(px, py, 1.9, 1.8, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = boneCol(BONE_HI, tone);
+          g.fillRect(px - 1, py - 1.2, 1.2, 0.9);
+        });
+      }
+    const cx = 64,
+      cy = 64;
+    // la sombra de la estrella (más honda en medio)
+    for (let r = 46; r > 6; r -= 4) {
+      g.fillStyle = 'rgba(8,6,5,0.16)';
+      g.beginPath();
+      g.arc(cx, cy, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    // la estrella de huesos (los largos en cruz, los cortos en aspa)
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
+      const r0 = 13,
+        r1 = k % 2 ? 34 : 40;
+      paintBone(g, cx + Math.cos(a) * r0, cy + Math.sin(a) * r0, cx + Math.cos(a) * r1, cy + Math.sin(a) * r1, 2.6, rng.range(0.85, 1.05));
+    }
+    // el aro de vértebras
+    for (let k = 0; k < 18; k++) {
+      const a = (k / 18) * Math.PI * 2;
+      const x = cx + Math.cos(a) * 42,
+        y = cy + Math.sin(a) * 42;
+      g.save();
+      g.translate(x, y);
+      g.rotate(a);
+      g.fillStyle = '#0b0807';
+      g.fillRect(-3, -3.6, 6, 7.2);
+      g.fillStyle = boneCol(BONE_MID, rng.range(0.8, 1));
+      g.fillRect(-2.2, -2.8, 4.4, 5.6);
+      g.fillStyle = boneCol(BONE_HI, 1);
+      g.fillRect(-2.2, -2.8, 4.4, 1.2);
+      g.restore();
+    }
+    paintSkull(g, cx, cy, 11, 1.02);
+    // en las esquinas (casan en un rosetón pequeño): dos fémures en aspa y
+    // una calavera chica
+    for (const [x, y] of [
+      [0, 0],
+      [S, 0],
+      [0, S],
+      [S, S],
+    ]) {
+      paintBone(g, x - 16, y - 16, x + 16, y + 16, 2.4, 0.92);
+      paintBone(g, x + 16, y - 16, x - 16, y + 16, 2.4, 0.86);
+      paintSkull(g, x, y, 6.5, 0.95);
+    }
+    grain(g, S, 0.84, 0.26, 74);
+    return c;
+  },
+
+  // Montón de huesos revueltos (los osarios sin orden): huesos largos en
+  // todas las direcciones, alguna calavera, costillas, oscuro entre medias.
+  bonePile() {
+    const S = 128;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    g.fillStyle = '#0f0b09';
+    g.fillRect(0, 0, S, S);
+    const rng = new RNG(75);
+    for (let k = 0; k < 140; k++) {
+      const x = rng.range(0, S),
+        y = rng.range(0, S);
+      const a = rng.range(0, Math.PI * 2),
+        len = rng.range(12, 30);
+      const tone = rng.range(0.45, 0.95);
+      const bx = x + Math.cos(a) * len,
+        by = y + Math.sin(a) * len;
+      for (const ox of [0, -S, S]) for (const oy of [0, -S, S]) paintBone(g, x + ox, y + oy, bx + ox, by + oy, rng.range(1.6, 2.6), tone);
+      if (k % 9 === 0) {
+        const sx = rng.range(0, S),
+          sy = rng.range(0, S),
+          ss = rng.range(6, 8),
+          st = rng.range(0.7, 0.95);
+        wrapDraw(S, sx, sy, 10, (px, py) => paintSkull(g, px, py, ss, st));
+      }
+    }
+    grain(g, S, 0.8, 0.3, 76);
+    return c;
+  },
+
+  // el letrero del osario de la Hermandad (en los dos muros)
+  letreroOssos1() {
+    return paintLetrero('NÓS OSSOS QUE AQUI ESTAMOS', 256, 16, 81);
+  },
+  letreroOssos2() {
+    return paintLetrero('PELOS VOSSOS ESPERAMOS', 256, 16, 82);
   },
 
   // Vidriera gótica: paneles de color emplomados.

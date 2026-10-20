@@ -240,6 +240,17 @@ export class SoundLib {
               [5.433, 0.08, 0.09],
               [6.796, 0.05, 0.06],
             ]
+          : kind === 'helmet'
+          ? [
+              // un yelmo golpeado: cascarón de hierro, parciales muy
+              // inarmónicos que se apagan pronto
+              [1.0, 1.0, 0.7],
+              [1.71, 0.62, 0.42],
+              [2.43, 0.5, 0.3],
+              [3.38, 0.32, 0.2],
+              [4.29, 0.2, 0.14],
+              [5.62, 0.12, 0.09],
+            ]
           : [
               // campanilla/cascabel: más aguda y breve
               [1.0, 1.0, 0.8],

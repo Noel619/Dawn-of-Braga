@@ -89,6 +89,9 @@ const FX_PRIO = {
   dig: [2, 'mundo'],
   boneClatter: [2, 'mundo'],
   bellToll: [4, 'mundo'],
+  helmetRing: [4, 'mundo'],
+  helmetChord: [5, 'mundo'],
+  relicReveal: [5, 'mundo'],
   roar: [4, 'mundo'],
   crack: [4, 'mundo'],
   rageScream: [5, 'mundo'],
@@ -1974,6 +1977,71 @@ export class Audio {
         this.smp(d, t, this.lib.crackle(6), { gain: 0.5, offset: rnd(0, 4), dur: 2.4, hp: 600 });
         this.noise(d, t + 0.1, 2.2, { f0: 300, f1: 900, q: 0.7, gain: 0.2, a: 0.5, buf: this.brown, rate: 2 });
         this.smp(d, t + 0.4, this.smallBell(), { gain: 0.06, rate: 0.5 });
+        break;
+      }
+      // ---- los osarios (game/ossuaries.js)
+      // un yelmo colgado, tañido con la mano: su nota y el golpe del hierro
+      case 'helmetRing': {
+        d = this.out(P, { gain: 0.85, verb: 0.65, life: 4, ref: 6 });
+        const f = mtof(o.note ?? 60);
+        const k = o.kind;
+        this.smp(d, t, this.lib.bell(f, { kind: 'helmet', dur: k === 'cap' ? 1.4 : k === 'kettle' ? 3.2 : 2.4 }), { gain: k === 'cap' ? 0.3 : 0.42 });
+        this.metal(d, t, f * 2.02, 0.05, 0.4, { ratios: [1, 2.3, 3.7] });
+        this.tone(d, t, 0.12, { f0: 160, f1: 90, gain: 0.25, a: 0.001 }); // los nudillos
+        this.noise(d, t, 0.03, { f0: 1800, q: 2, gain: 0.25, a: 0.001 });
+        break;
+      }
+      // los cuatro a la vez, largos, con la campana honda debajo
+      case 'helmetChord': {
+        d = this.out(P, { gain: 0.9, verb: 0.85, life: 8, ref: 9, occlude: false });
+        (o.notes || [57, 60, 64, 69]).forEach((m, i) => this.smp(d, t + i * 0.035, this.lib.bell(mtof(m), { kind: 'helmet', dur: 4 }), { gain: 0.3 }));
+        this.smp(d, t, this.churchBell(), { gain: 0.12, rate: mtof(33) / mtof(45), lp: 900 });
+        this.duck(0.3, 2);
+        break;
+      }
+      // un soplo frío recorre el osario
+      case 'ossuaryDraft': {
+        d = this.out(P, { gain: 0.8, verb: 0.7, life: 4, ref: 8, occlude: false });
+        this.noise(d, t, 1.8, { type: 'bandpass', f0: 300, f1: 1400, q: 0.7, gain: 0.3, a: 0.5, buf: this.pink, curve: 'lin' });
+        this.noise(d, t + 0.2, 1.4, { type: 'highpass', f0: 2500, gain: 0.05, a: 0.4 });
+        this.whisper(d, t + 0.3, 0.9, 0.04);
+        break;
+      }
+      case 'candleOut': {
+        d = this.out(P, { gain: 0.5, verb: 0.25, life: 1.5, ref: 2 });
+        this.noise(d, t, 0.22, { type: 'lowpass', f0: 900, f1: 200, gain: 0.22, a: 0.01, buf: this.brown, rate: 2 });
+        break;
+      }
+      case 'candleLit': {
+        d = this.out(P, { gain: 0.5, verb: 0.3, life: 2, ref: 2 });
+        this.noise(d, t, 0.3, { f0: 400, f1: 1200, q: 0.8, gain: 0.16, a: 0.02, buf: this.brown, rate: 3 });
+        this.smp(d, t + 0.05, this.lib.crackle(6), { gain: 0.16, offset: rnd(0, 4), dur: 0.5, hp: 900 });
+        break;
+      }
+      // la barra del arca se descorre: hierro que roza y la grapa que suena
+      case 'chestBar': {
+        d = this.out(P, { gain: 0.8, verb: 0.5, life: 3, ref: 4 });
+        this.noise(d, t, 0.75, { f0: 1500, f1: 900, q: 3, gain: 0.22, a: 0.05, buf: this.brown, rate: 5, curve: 'lin' });
+        this.metal(d, t + 0.05, rnd(900, 1100), 0.05, 0.4);
+        this.metal(d, t + 0.78, rnd(480, 560), 0.12, 0.9, { ratios: [1, 2.6, 4.3] });
+        this.tone(d, t + 0.8, 0.14, { f0: 150, f1: 80, gain: 0.3 });
+        break;
+      }
+      // la tapa de un arca vieja: gozne y madera
+      case 'chestOpen': {
+        d = this.out(P, { gain: 0.85, verb: 0.45, life: 3.5, ref: 4 });
+        this.creak(d, t, 1.3, rnd(130, 170), 0.2);
+        this.creak(d, t + 0.4, 0.9, rnd(220, 300), 0.08);
+        this.tone(d, t + 1.4, 0.2, { f0: 120, f1: 60, gain: 0.35 });
+        this.debris(d, t + 1.42, 4, 0.3, { f0: 600, f1: 1600, gain: 0.5 });
+        break;
+      }
+      // dentro brilla el objeto bendito
+      case 'relicReveal': {
+        d = this.out(P, { gain: 0.8, verb: 0.8, life: 6, ref: 6, occlude: false });
+        this.noise(d, t, 1.6, { f0: 3000, f1: 7000, q: 1.2, gain: 0.05, a: 0.6, buf: this.pink });
+        [76, 83, 88, 95].forEach((m, i) => this.smp(d, t + 0.2 + i * 0.12, this.smallBell(), { gain: 0.05, rate: mtof(m) / mtof(76) }));
+        this.score.stinger('relic');
         break;
       }
       case 'pickup':

@@ -66,7 +66,7 @@ export function buildLevel() {
     setG(outer);
   };
   corpseLog.length = 0;
-  const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [] };
+  const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [], puzzles: [] };
   const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-100, -200, 36, -84, 0.5); // cripta (y la cripta honda)
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo

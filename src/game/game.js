@@ -41,6 +41,7 @@ import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { CryptQuest } from './crypt.js';
+import { Ossuaries } from './ossuaries.js';
 import { ALEMAN } from '../world/level_postigo.js';
 import { cryptFloorY } from '../world/level_crypt2.js';
 
@@ -239,6 +240,8 @@ export class Game {
     this.crypt = new CryptQuest(this);
     // Dom Paio, el canónigo de la capilla de San Martín (y del pozo)
     this.paio = new PaioQuest(this);
+    // los osarios: sus puzles y sus objetos benditos
+    this.ossuaries = new Ossuaries(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -379,6 +382,7 @@ export class Game {
     this.house.applyFlags();
     this.crypt.applyFlags();
     this.paio.applyFlags();
+    this.ossuaries.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -1018,6 +1022,7 @@ export class Game {
     this.house.onRespawn();
     this.crypt.onRespawn();
     this.paio.onRespawn();
+    this.ossuaries.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1646,6 +1651,7 @@ export class Game {
         this.house.update(dt);
         this.crypt.update(dt);
         this.paio.update(dt);
+        this.ossuaries.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)

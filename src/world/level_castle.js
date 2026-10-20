@@ -27,12 +27,16 @@ import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subt
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
 // Suelo de las mazmorras.
 const YD = -5;
+// el osario de la Hermandad: hundido 0,9 m bajo las galerías, con su bóveda
+// casi hasta la losa del patio
+export const OSARIO_C = { x0: -93.5, x1: -85.5, z: 3, y: YD - 0.9, top: -1.25 };
 
 export const CASTLE = {
   // el patio, dentro de las murallas
@@ -1859,7 +1863,13 @@ function buildDungeon(ctx, D, L) {
     R(-62, 1, -60, 4, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('z') }),
     R(-82, 4, -60, 6, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('x') }),
     R(-77.5, 6, -75.0, 7.5, YD + 2.6, 'mossstone', 'catacumbas', { tint: catT, vault: { axis: 'x', ys: YD + 1.4, rise: 1.0 } }),
-    R(-88, -2, -84, 2, YD + 3.9, 'skulls', 'catacumbas', { tint: [0.85, 0.82, 0.78], vault: { axis: 'x', ys: YD + 1.95, rise: 1.85 } }),
+    // el rellano y el osario de la Hermandad (más hondo, con su escalera)
+    R(OSARIO_C.x1, -1, -84, 1, CR, 'mossstone', 'catacumbas', { tint: catT, vault: gv('x') }),
+    R(OSARIO_C.x0, -OSARIO_C.z, OSARIO_C.x1, OSARIO_C.z, OSARIO_C.top, 'femurs', 'osario_castillo', {
+      y0: OSARIO_C.y,
+      tint: [0.8, 0.76, 0.7],
+      vault: { axis: 'x', ys: OSARIO_C.y + 2.45, rise: OSARIO_C.top - 0.1 - (OSARIO_C.y + 2.45), mat: 'plaster', tint: [0.62, 0.58, 0.52] },
+    }),
     // al aljibe
     R(-66, 6, -64, 8, CR, 'mossstone', 'aljibe', { tint: catT, vault: gv('z') }),
     // el aljibe: andenes y estanque
@@ -1932,7 +1942,7 @@ function buildDungeon(ctx, D, L) {
     }
     if (r.vault) {
       const v = r.vault;
-      barrelVault(ctx, { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1, axis: v.axis, ys: v.ys, rise: v.rise, mat: r.mat === 'skulls' ? 'skulls' : r.mat, tint: (r.tint ?? mazT).map((c) => c * 0.82), room: r.room });
+      barrelVault(ctx, { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1, axis: v.axis, ys: v.ys, rise: v.rise, mat: v.mat ?? r.mat, tint: v.tint ?? (r.tint ?? mazT).map((c) => c * 0.82), room: r.room });
     }
   }
 
@@ -2306,54 +2316,7 @@ function buildDungeon(ctx, D, L) {
     wb.setRoom(null);
   }
 
-  // --- el osario: una capilla de huesos al final de la galería. Muros de
-  // huesos apilados con hileras de calaveras, el altar de huesos con su
-  // letrero, una lámpara de calaveras colgada de la bóveda
-  {
-    const room = 'catacumbas';
-    wb.setRoom(room);
-    portal('x', -84, 0, 2, SG, YD + 3.9, 1, room, { spMat: 'skulls', spTint: [0.75, 0.72, 0.68] });
-    // muros de huesos (hasta el arranque de la bóveda)
-    P.boneWall(ctx, -86.0, YD, -1.94, 0, 3.7, 1.85, { room, seed: 4531 });
-    P.boneWall(ctx, -86.0, YD, 1.94, Math.PI, 3.7, 1.85, { room, seed: 4532 });
-    // el altar de huesos contra el muro del fondo
-    {
-      const ax = -87.55;
-      wb.box('skulls', ax - 0.4, YD, -0.85, ax + 0.4, YD + 0.95, 0.85, { ao: false, faces: 'tnsew', room, tint: [0.7, 0.66, 0.6], mats: { t: 'ashlar' } });
-      wb.box('ashlar', ax - 0.46, YD + 0.95, -0.92, ax + 0.46, YD + 1.05, 0.92, { ao: false, faces: 'tnsewb', room });
-      wb.box('clothWhite', ax - 0.3, YD + 1.05, -0.7, ax + 0.3, YD + 1.06, 0.7, { ao: false, faces: 't', room, tint: [0.7, 0.66, 0.6] });
-      ctx.col.add(ax - 0.46, YD, -0.92, ax + 0.46, YD + 1.05, 0.92);
-      P.skullRow(ctx, ax, YD + 1.06, 0, Math.PI / 2, 5, { room, gap: 0.27 });
-      // la cruz de fémures sobre el altar
-      wb.push();
-      wb.translate(-87.96, YD + 1.95, 0);
-      longBoneX(wb, V(0, -0.5, 0), V(0, 0.5, 0), room);
-      longBoneX(wb, V(0, 0.2, -0.32), V(0, 0.2, 0.32), room);
-      wb.pop();
-      P.candles(ctx, ax, YD + 1.06, -0.62, 3, 4533, { room, radius: 4.5, intensity: 0.9, spread: 0.08 });
-      P.candles(ctx, ax, YD + 1.06, 0.62, 3, 4534, { room, radius: 4.5, intensity: 0.9, spread: 0.08 });
-    }
-    // la lámpara de calaveras
-    {
-      const lx = -86.0,
-        ly = YD + 2.55;
-      P.chains(ctx, lx, YD + 3.8, 0, Math.round((3.8 - 2.6) / 0.06), 0);
-      wb.geometry('iron', new THREE.TorusGeometry(0.42, 0.025, 4, 14), new THREE.Matrix4().compose(V(lx, ly, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V(1, 1, 1)), { ao: false, room });
-      for (let k = 0; k < 6; k++) {
-        const a = (k / 6) * Math.PI * 2;
-        P.skullRow(ctx, lx + Math.cos(a) * 0.42, ly - 0.2, Math.sin(a) * 0.42, -a + Math.PI / 2, 1, { room, seed: 4540 + k });
-        if (k % 2 === 0) {
-          wb.cylinder('candle', lx + Math.cos(a) * 0.42, ly + 0.02, Math.sin(a) * 0.42, 0.03, 0.035, 0.16, 5, { ao: false, capTop: true, grime: false, room });
-          if (ctx.fires) ctx.fires.push({ x: lx + Math.cos(a) * 0.42, y: ly + 0.18, z: Math.sin(a) * 0.42, s: 0.12, light: false, embers: false, glow: true });
-        }
-      }
-      if (ctx.lights) ctx.lights.push({ x: lx, y: ly, z: 0, r: 1, g: 0.58, b: 0.28, radius: 5, intensity: 0.8, room });
-    }
-    P.bones(ctx, -85.4, YD, 1.2, 5, 4501, 0.4);
-    P.bones(ctx, -86.6, YD, -1.2, 4, 4502, 0.35);
-    wb.setRoom(null);
-    L.interact.push({ kind: 'examine', id: 'x_osario', text: 'osarioLetrero', x: -86.6, y: YD, z: 0, r: 1.8 });
-  }
+  buildHermandad(ctx, L, portal);
 
   // --- el aljibe: arquerías sobre columnas, el agua negra y la luz del pozo
   {
@@ -2500,9 +2463,15 @@ function buildDungeon(ctx, D, L) {
       room: 'mazmorra',
     },
     {
+      id: 'osario_castillo',
+      rects: [[OSARIO_C.x0, -OSARIO_C.z, OSARIO_C.x1, OSARIO_C.z, OSARIO_C.y - 1, -1]],
+      atmo: 'crypt',
+      room: 'osario_castillo',
+    },
+    {
       id: 'catacumbas_castillo',
       rects: [
-        [-88, -8.5, -60, 6, YD - 1, -1],
+        [OSARIO_C.x1, -8.5, -60, 6, YD - 1, -1],
         [-77.5, 6, -75.0, 7.5, YD - 1, -1],
         [-66, 6, -64, 8, YD - 1, -1],
       ],
@@ -2515,19 +2484,240 @@ function buildDungeon(ctx, D, L) {
     { id: 'prison', r: [-89, -18, -61, -6], level: 'dungeon' },
     { id: 'prison', r: [PSTAIR.x0, 11, -72, 13], level: 'dungeon' },
     { id: 'prison', r: [PSTAIR.x0 - 2, 7, PSTAIR.x0, 13], level: 'dungeon' },
-    { id: 'catacumbas_castillo', r: [-88, -2, -60, 6], level: 'dungeon' },
+    { id: 'catacumbas_castillo', r: [OSARIO_C.x1, -1, -60, 6], level: 'dungeon' },
+    { id: 'osario_castillo', r: [OSARIO_C.x0, -OSARIO_C.z, OSARIO_C.x1, OSARIO_C.z], level: 'dungeon' },
     { id: 'catacumbas_castillo', r: [-72, -8.5, -70, -1], level: 'dungeon' },
     { id: 'aljibe', r: [-72, 8, -58, 16], level: 'dungeon' },
     { id: 'torre_carcel', r: [PSTAIR.x0, PSTAIR.z0, PSTAIR.x1, PSTAIR.z1], level: 'dungeon' }
   );
 }
 
-// Hueso largo (fémur) de a a b en el marco actual, para la cruz del altar.
-function longBoneX(wb, a, b, room) {
-  const d = new THREE.Vector3().subVectors(b, a);
-  const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
-  wb.geometry('bone', new THREE.CylinderGeometry(0.035, 0.04, d.length(), 6), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, V(1, 1, 1)), { ao: false, room });
-  for (const p of [a, b]) wb.geometry('bone', new THREE.SphereGeometry(0.06, 6, 4), new THREE.Matrix4().compose(p, q, V(1.2, 0.8, 1)), { ao: false, room });
+// ------------------------------------------------------- el osario del castillo
+// El osario de la Hermandad de la Buena Muerte, la cofradía de los soldados
+// de la guarnición: los hermanos en sus filas, como en el cuartel, cada
+// calavera con su yelmo; pirámides de calaveras como balas de bombarda; sobre
+// el altar, el escudo de la Hermandad con su panoplia, y el arca. Delante del
+// altar, colgados de una barra, los cuatro yelmos del toque de alba (el
+// puzle: game/ossuaries.js), cada uno con lo suyo debajo: la llave del que
+// abre la puerta, la ballesta del que vela en el muro, la bocina del que
+// avisa desde lo alto y el cubo del que baja a por el agua.
+function buildHermandad(ctx, L, portal) {
+  const wb = ctx.wb;
+  const O = OSARIO_C;
+  const room = 'osario_castillo';
+  const YO = O.y,
+    OS = O.y + 2.45;
+  const SG = YD + 2.35;
+  const M = (x, y, z, ry = 0, sc = 1) => new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)), V(sc, sc, sc));
+  const bake = (parts, m) => bakeParts(wb, parts, m, { room });
+  const rng = new RNG(4600);
+  const boneT = () => {
+    const k = rng.range(-0.1, 0.05);
+    return [0.92 + k, 0.88 + k, 0.8 + k];
+  };
+  const stoneT = [0.64, 0.61, 0.56];
+  wb.setRoom(room);
+
+  // la portada desde el rellano, y la escalera que baja, entre dos pretiles
+  // coronados de calaveras
+  portal('x', O.x1, 0, 2, SG, O.top, 1, 'catacumbas', { rooms: [room, 'catacumbas'], spMat: 'femurs', spTint: [0.7, 0.66, 0.6] });
+  stairs(ctx, O.x1 - 2, YO, 0, 'e', 2, 5, 0.18, 0.4, 'ashlar', { solidBelow: true });
+  for (const s of [-1, 1]) {
+    const z0 = s > 0 ? 1 : -1.24,
+      z1 = s > 0 ? 1.24 : -1;
+    solid(ctx, 'ashlar', O.x1 - 2.15, YO, z0, O.x1, YD + 0.4, z1, { room, tint: stoneT });
+    for (let k = 0; k < 7; k++) bake(skullParts({ jaw: rng.chance(0.5), tint: boneT() }), M(O.x1 - 1.97 + k * 0.29, YD + 0.4 + 0.088, s * 1.12, (s > 0 ? 0 : Math.PI) + rng.range(-0.3, 0.3)));
+  }
+  // a los lados de la escalera, las pirámides de calaveras (como las balas
+  // de piedra de una bombarda)
+  for (const s of [-1, 1]) {
+    const cx = O.x1 - 0.72,
+      cz = s * 2.12;
+    for (let lv = 0; lv < 4; lv++) {
+      const m = 4 - lv;
+      for (let i = 0; i < m; i++)
+        for (let j = 0; j < m; j++) {
+          const px = cx + (i - (m - 1) / 2) * 0.165,
+            pz = cz + (j - (m - 1) / 2) * 0.165;
+          const face = lv === 3 ? Math.PI / 2 : Math.atan2(px - cx, pz - cz) + rng.range(-0.35, 0.35);
+          bake(skullParts({ jaw: false, tint: boneT() }), M(px, YO + 0.068 + lv * 0.128, pz, face));
+        }
+    }
+    ctx.col.add(cx - 0.34, YO, cz - 0.34, cx + 0.34, YO + 0.52, cz + 0.34);
+    // y encima, en el muro, un escudo con dos lanzas cruzadas detrás
+    bake(shieldParts({ device: s > 0 ? 'band' : 'cross' }), M(O.x1 - 0.04, YO + 2.0, cz, -Math.PI / 2));
+    for (const a of [-0.6, 0.6]) {
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(a, -Math.PI / 2, 0, 'YXZ'));
+      const m = new THREE.Matrix4().compose(V(O.x1 - 0.07, YO + 2.0, cz), q, V(1, 1, 1));
+      wb.geometry('wooddark', new THREE.CylinderGeometry(0.016, 0.016, 1.5, 5), m, { ao: false, room });
+      bake(spearheadParts(0.26), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.75, 0)));
+    }
+  }
+
+  // --- los hermanos, en sus filas: tres repisas en cada muro, en dos tramos
+  // a cada lado de un pilar de huesos con su escudo
+  const tiers = [YO + 0.52, YO + 1.2, YO + 1.88];
+  const bays = [
+    [-90.75, -88.85],
+    [-88.15, -86.25],
+  ];
+  for (const s of [-1, 1]) {
+    const zw = s * O.z,
+      f = -s;
+    const rot = f > 0 ? 0 : Math.PI;
+    for (const [a0, a1] of bays) {
+      tiers.forEach((y, ti) => {
+        const zf = zw + f * 0.32;
+        wb.box('ashlar', a0, y - 0.1, Math.min(zw, zf), a1, y, Math.max(zw, zf), { room, tint: stoneT, ao: false });
+        const n = Math.floor((a1 - a0) / 0.27);
+        for (let k = 0; k < n; k++) {
+          const x = a0 + ((a1 - a0) * (k + 0.5)) / n + rng.range(-0.02, 0.02);
+          // abajo los ballesteros (capacetes), en medio los hombres de armas
+          // (bacinetes y cónicos), arriba los peones (cervilleras); alguno,
+          // sin nada
+          const kind = rng.chance(0.08) ? null : ti === 0 ? (rng.chance(0.75) ? 'kettle' : 'cap') : ti === 1 ? rng.pick(['bascinet', 'nasal', 'bascinet', 'kettle']) : rng.pick(['cap', 'cap', 'nasal', 'kettle']);
+          const parts = kind ? helmetedSkullParts(kind, { tint: boneT(), tilt: rng.range(-0.1, 0.06), roll: rng.range(-0.07, 0.07), jaw: rng.chance(0.7), open: rng.range(0, 0.5) }) : skullParts({ tint: boneT(), jaw: rng.chance(0.5), open: rng.range(0.2, 0.9) });
+          bake(parts, M(x, y + 0.09, zw + f * 0.17, rot + rng.range(-0.14, 0.14)));
+        }
+      });
+      // velas de difuntos en la repisa de abajo
+      P.candles(ctx, (a0 + a1) / 2 + rng.range(-0.4, 0.4), tiers[0], zw + f * 0.28, 2, Math.round(a0 * 17 + s * 5), { room, radius: 3.2, intensity: 0.45, spread: 0.05, scale: 0.7 });
+    }
+    // el pilar de huesos entre los tramos, con su escudo y su calavera
+    const zf = zw + f * 0.36;
+    solid(ctx, 'femurs', -88.83, YO, Math.min(zw, zf), -88.17, OS, Math.max(zw, zf), { room, tint: [0.86, 0.82, 0.74] });
+    bake(shieldParts({ device: s > 0 ? 'cross' : 'band', tint: s > 0 ? [0.16, 0.14, 0.13] : [0.42, 0.1, 0.08] }), M(-88.5, YO + 1.6, zf + f * 0.035, rot));
+    bake(helmetedSkullParts('kettle', { tint: boneT() }), M(-88.5, YO + 0.78, zf + f * 0.09, rot));
+    // el letrero, en lo alto del muro
+    const band = new THREE.PlaneGeometry(4.5, 0.22);
+    wb.geometry(s < 0 ? 'letreroOssos1' : 'letreroOssos2', band, new THREE.Matrix4().compose(V(-88.5, OS - 0.14, zw + f * 0.012), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rot, 0)), V(1, 1, 1)), { ao: false, room, grime: false });
+  }
+
+  // los fajones de la bóveda, sobre los pilares de huesos
+  archRing(ctx, { axis: 'z', c: 0, w: 2 * O.z - 0.72, y0: OS, rise: 1.78, ring: 0.3, t0: -88.79, t1: -88.21, mat: 'ashlar', room, tint: [0.66, 0.63, 0.58], proud: 0.01 });
+
+  // --- el altar de la Hermandad, con su paño negro, el escudo y la panoplia
+  // encima, y el arca (la monta game/ossuaries.js)
+  const ax1 = O.x0 + 1.0;
+  solid(ctx, 'ashlar', O.x0, YO, -1.0, ax1, YO + 0.95, 1.0, { room, tint: stoneT });
+  wb.box('femurs', ax1, YO + 0.1, -0.84, ax1 + 0.02, YO + 0.86, 0.84, { faces: 'e', room, tint: [0.86, 0.82, 0.74], ao: false });
+  solid(ctx, 'ashlar', O.x0, YO + 0.95, -1.1, ax1 + 0.08, YO + 1.05, 1.1, { room, tint: [0.72, 0.69, 0.64] });
+  wb.box('clothDark', ax1 + 0.08, YO + 0.62, -0.52, ax1 + 0.095, YO + 1.05, 0.52, { faces: 'e', room, ao: false });
+  wb.box('clothWhite', ax1 + 0.096, YO + 0.68, -0.035, ax1 + 0.1, YO + 1.0, 0.035, { faces: 'e', room, ao: false, tint: [0.75, 0.72, 0.66] });
+  wb.box('clothWhite', ax1 + 0.096, YO + 0.88, -0.14, ax1 + 0.1, YO + 0.94, 0.14, { faces: 'e', room, ao: false, tint: [0.75, 0.72, 0.66] });
+  P.candles(ctx, O.x0 + 0.55, YO + 1.05, -0.86, 3, 4611, { room, radius: 4.2, intensity: 0.75, spread: 0.08 });
+  P.candles(ctx, O.x0 + 0.55, YO + 1.05, 0.86, 3, 4612, { room, radius: 4.2, intensity: 0.75, spread: 0.08 });
+  bake(trophyParts({ seed: 7 }), M(O.x0 + 0.03, YO + 2.72, 0, Math.PI / 2));
+  for (const s of [-1, 1]) P.banner(ctx, O.x0 + 0.1, YO + 3.1, s * 1.95, Math.PI / 2, 'bannerBlack', 0.8, 2.0);
+
+  // --- los cuatro yelmos del toque de alba, colgados de una barra que cruza
+  // la nave; debajo, cada uno con lo suyo en un cipo, y su vela (apagada)
+  const HX = -91.2,
+    barY = YO + 2.7;
+  wb.geometry('iron', new THREE.CylinderGeometry(0.028, 0.028, 2 * O.z, 6), new THREE.Matrix4().compose(V(HX, barY, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V(1, 1, 1)), { ao: false, room });
+  for (const s of [-1, 1]) wb.box('iron', HX - 0.08, barY - 0.12, s * O.z - (s > 0 ? 0.04 : 0), HX + 0.08, barY + 0.1, s * O.z + (s < 0 ? 0.04 : 0), { room, ao: false });
+  const HEL = [
+    { z: -2.25, emblem: 'bocina', kind: 'nasal', note: 64 },
+    { z: -0.75, emblem: 'llave', kind: 'bascinet', note: 57 },
+    { z: 0.75, emblem: 'cubo', kind: 'cap', note: 69 },
+    { z: 2.25, emblem: 'ballesta', kind: 'kettle', note: 60 },
+  ];
+  const top = YO + 0.92;
+  for (const h of HEL) {
+    // el cipo: basa, fuste y su tablero
+    const cT = [0.74, 0.71, 0.66];
+    solid(ctx, 'ashlar', HX - 0.29, YO, h.z - 0.29, HX + 0.29, YO + 0.14, h.z + 0.29, { room, tint: cT, ao: false });
+    solid(ctx, 'ashlar', HX - 0.2, YO + 0.14, h.z - 0.2, HX + 0.2, YO + 0.78, h.z + 0.2, { room, tint: [0.68, 0.65, 0.6] });
+    wb.box('ashlar', HX - 0.25, YO + 0.78, h.z - 0.25, HX + 0.25, YO + 0.84, h.z + 0.25, { room, tint: cT, ao: false });
+    solid(ctx, 'ashlar', HX - 0.3, YO + 0.84, h.z - 0.3, HX + 0.3, top, h.z + 0.3, { room, tint: [0.78, 0.75, 0.7], ao: false });
+    // una calavera chica en la cara del fuste, mirando a quien tañe
+    bake(skullParts({ jaw: false, tint: boneT() }), M(HX + 0.215, YO + 0.5, h.z, Math.PI / 2, 0.8));
+    if (h.emblem === 'llave') bake(keyParts(), M(HX + 0.04, top, h.z - 0.02, 0.5));
+    else if (h.emblem === 'ballesta') bake(crossbowParts(), M(HX + 0.02, top + 0.002, h.z, Math.PI / 4 + Math.PI, 0.76));
+    else if (h.emblem === 'bocina') bake(hornParts(), M(HX + 0.04, top + 0.062, h.z, -0.3).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)));
+    else bake(bucketParts(), M(HX + 0.06, top, h.z + 0.02, 0.4));
+    // la vela, en la esquina de atrás
+    const cx = HX - 0.17,
+      cz = h.z + 0.17;
+    wb.cylinder('candle', cx, top, cz, 0.032, 0.03, 0.13, 6, { ao: false, capTop: true, grime: false, room });
+    wb.cylinder('candle', cx, top, cz, 0.05, 0.034, 0.025, 6, { ao: false, capTop: true, grime: false, room });
+    h.candle = [cx, top + 0.165, cz];
+    h.x = HX;
+    h.y = YO + 1.62;
+  }
+
+  // --- la lámpara de la Hermandad: un aro de hierro con calaveras que llevan
+  // la vela en la coronilla, y moharras colgando hacia abajo
+  {
+    const lx = -88.7,
+      ly = YO + 3.05,
+      r = 0.6;
+    bake(chainParts(V(lx, O.top - 0.12, 0), V(lx, ly + 0.55, 0)), null);
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2 + Math.PI / 4;
+      bake(chainParts(V(lx, ly + 0.55, 0), V(lx + Math.cos(a) * r, ly + 0.02, Math.sin(a) * r), 0.05), null);
+    }
+    const ring = new THREE.TorusGeometry(r, 0.03, 4, 20);
+    wb.geometry('iron', ring, new THREE.Matrix4().compose(V(lx, ly, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V(1, 1, 1)), { ao: false, room });
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      const px = lx + Math.cos(a) * r,
+        pz = Math.sin(a) * r;
+      const face = Math.atan2(Math.cos(a), Math.sin(a));
+      bake(skullParts({ jaw: true, open: 0.35, tint: boneT() }), M(px, ly + 0.09, pz, face));
+      wb.cylinder('candle', px, ly + 0.17, pz, 0.028, 0.028, 0.12, 5, { ao: false, capTop: true, grime: false, room });
+      if (ctx.fires) ctx.fires.push({ x: px, y: ly + 0.31, z: pz, s: 0.1, light: false, embers: false, glow: k % 2 === 0 });
+      const sm = new THREE.Matrix4().compose(V(px, ly - 0.02, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, 0, 0)), V(1, 1, 1));
+      bake(spearheadParts(0.24), sm);
+    }
+    if (ctx.lights) ctx.lights.push({ x: lx, y: ly + 0.2, z: 0, r: 1, g: 0.6, b: 0.3, radius: 7.5, intensity: 1.05, room });
+  }
+
+  // la losa del fundador (el primer alcaide de la Hermandad), con su espada
+  wb.box('ashlar', -89.35, YO, -0.48, -88.25, YO + 0.025, 0.48, { room, tint: [0.7, 0.67, 0.62], ao: false });
+  wb.box('black', -88.82, YO + 0.026, -0.03, -88.78, YO + 0.027, 0.36, { faces: 't', room, grime: false });
+  wb.box('black', -88.95, YO + 0.026, 0.2, -88.65, YO + 0.027, 0.24, { faces: 't', room, grime: false });
+  wb.box('black', -88.84, YO + 0.026, -0.36, -88.76, YO + 0.027, -0.03, { faces: 't', room, grime: false });
+
+  // el atril con la Regla de la Hermandad
+  {
+    const x = -88.45,
+      z = -2.3,
+      r = 0.65;
+    wb.at(x, YO, z, r, () => {
+      wb.box('wooddark', -0.22, 0, -0.18, 0.22, 0.06, 0.18, { room, ao: false });
+      wb.box('wooddark', -0.05, 0.06, -0.05, 0.05, 1.0, 0.05, { room, ao: false });
+      wb.push();
+      wb.translate(0, 1.0, 0);
+      wb.rotateX(0.42);
+      wb.box('wooddark', -0.26, 0, -0.2, 0.26, 0.04, 0.2, { room, ao: false });
+      wb.box('wooddark', -0.26, 0.04, 0.17, 0.26, 0.07, 0.2, { room, ao: false });
+      wb.pop();
+    });
+    ctx.col.addOBB(x, z, 0.26, 0.22, r, YO, YO + 1.1);
+    L.interact.push({ kind: 'note', id: 'n_hermandad', note: 'hermandad', model: 'book', x: x + Math.sin(r) * 0.02, y: YO + 1.1, z: z + Math.cos(r) * 0.02, r: 1.6 });
+  }
+  ctx.rats.push({ x: -86.6, y: YO, z: 2.5, n: 2 });
+  wb.setRoom(null);
+
+  L.interact.push({ kind: 'examine', id: 'x_osario', text: 'osarioLetrero', x: -88.7, y: YO, z: 0, r: 1.5 });
+  // el objeto bendito, en el arca
+  const A = { x: O.x0 + 0.5, y: YO + 1.05, z: 0, rot: Math.PI / 2 };
+  L.interact.push({ kind: 'item', id: 'i_saeta', item: 'saeta', x: A.x, y: A.y + 0.5, z: A.z, r: 1.7, afterFlag: 'puzzle:castillo' });
+  L.puzzles.push({
+    kind: 'toque',
+    id: 'castillo',
+    item: 'i_saeta',
+    x: -90,
+    y: YO,
+    z: 0,
+    probe: [-90.6, YO + 1.5, 0],
+    barY,
+    face: 1,
+    order: ['llave', 'ballesta', 'bocina', 'cubo'],
+    helmets: HEL,
+    arca: A,
+  });
 }
 
 // Muros de las mazmorras: donde una celda transitable linda con roca, una

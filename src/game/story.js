@@ -183,6 +183,18 @@ export const ITEMS = {
 };
 
 export const NOTES = {
+  hermandad: {
+    title: 'Regla de la Hermandad de la Buena Muerte',
+    text: `Capítulo noveno: del toque de alba.
+
+Los hermanos de la guarnición que mueran en el servicio del castillo serán puestos en el osario, cada uno en su fila, con su yelmo, como estuvieron en vida.
+
+Y cada alba el sargento pasará lista a los muertos como a los vivos, tañendo sus yelmos en el orden de la guardia: primero el que abre la puerta; luego el que vela en el muro; luego el que avisa desde lo alto; y al final el que baja a por el agua.
+
+Que no se tañan fuera de su orden: se apagan las velas de los hermanos y se les quita el sueño.
+
+Al que tañere bien la lista le abrirá la Hermandad su arca, donde guarda la saeta del bienaventurado San Sebastián, soldado y mártir, para quien la haya menester en la última guardia.`,
+  },
   carcelero: {
     title: 'Nota del carcelero',
     text: `Tercera noche del asedio.
@@ -580,7 +592,11 @@ export const MSG = {
   carcelBaja: 'Bajas por la escalera de mano al cuerpo de guardia de la cárcel.',
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
-  osarioLetrero: 'Sobre el altar de huesos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
+  osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
+  // el osario de la guarnición (el toque de alba)
+  arcaCerrada: 'El arca de la Hermandad. Una barra de hierro le atraviesa la tapa, pasada por dos grapas y cerrada con un candado en forma de calavera. No tiene ojo para llave.',
+  toqueMal: 'Un soplo frío baja por la escalera y apaga las velas de los hermanos.',
+  toqueBien: 'Los cuatro yelmos suenan a la vez. La barra del arca se descorre sola.',
   puenteAlzado: 'El puente levadizo de la torre del homenaje está alzado. Sólo se baja con el torno, desde dentro.',
   puenteBaja: 'Sueltas el freno del torno. Con un estruendo de cadenas, el puente levadizo cae sobre el rellano.',
   escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan asoman de la torre, volados sobre el hueco.',
@@ -621,6 +637,7 @@ export const AREA_NAMES = {
   prison: 'Mazmorras del castillo',
   castle: 'Patio de armas',
   catacumbas_castillo: 'Catacumbas del castillo',
+  osario_castillo: 'Osario de la Hermandad',
   aljibe: 'Aljibe del castillo',
   torre_carcel: 'Torre de la cárcel',
   torre_carcel_alta: 'Sala de los guardas de la cárcel',
