@@ -82,17 +82,27 @@ const steps = [
   "__use('h_almacen_arriba')", "__use('i_ampolla5')",
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
-  // la cripta honda: la galería, San Martín, la Garra (su emboscada), las
-  // tres pilas, la sacristía del arzobispo, los Velados, el incensario y la
-  // Puerta del Dios Ignoto
-  "__use('n_pilas')", "__use('a_martin')", "__use('n_martin')", "__use('n_garra')", "__use('i_garra')",
+  // la cripta honda: la Confesión, la sala de los obispos, San Martín (su
+  // capilla y su osario), las catacumbas (el oratorio y el atajo de la sala
+  // de llegada), los Inocentes y la Garra (su emboscada), las tres pilas, la
+  // cripta de los mártires y la sacristía del arzobispo, los Velados, el
+  // incensario y la Puerta del Dios Ignoto
+  "__use('n_confesion')", "__use('n_pilas')", "__use('a_martin')", "__use('n_martin')", "__use('n_osario')",
+  "__use('a_oratorio')", "__use('n_rates')",
+  // (los dos atajos se abren desde abajo: el de la sala de llegada, desde las
+  // catacumbas; el de San Martín, desde los Inocentes)
+  "(()=>{const g=__game;const r=__use('d_atajo_llegada');const it=g.interact.list.find(i=>i.id==='d_atajo_llegada');return {...r,open:!!g.flags['door:d_atajo_llegada'],from:it.lock.side}})()",
+  "(()=>{const g=__game;const r=__use('d_atajo_martin');return {...r,open:!!g.flags['door:d_atajo_martin']}})()",
+  "__use('n_garra')", "__use('i_garra')",
   "(()=>{const g=__game;for(let i=0;i<8;i++)__sim(0.5);return {garra:g.inventory.has('garra'),ambush:!!g.flags['garra:ambush'],gate:g.crypt.gate.box.enabled}})()",
   "(()=>{const g=__game;const r=__use('p_pila_oeste');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_oeste']}})()",
-  "__use('d_sacristia')", "__use('i_incienso')", "__use('n_incienso')",
+  "__use('n_martires')", "__use('d_sacristia')", "__use('i_incienso')", "__use('n_incienso')",
   "(()=>{const g=__game;const r=__use('p_pila_este');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_este']}})()",
   "__use('n_velados')",
-  "(()=>{const g=__game;g.dev.god=true;const it=g.interact.list.find(i=>i.id==='f_velados');g.enterFog(it);__sim(2);const fight=g.activeBoss&&g.activeBoss.type;const a=g.bosses.guardianL,b=g.bosses.guardianR;a.hp=1;a.die();__sim(1);const next=g.activeBoss&&g.activeBoss.type;b.hp=1;b.die();__sim(1);g.dev.god=false;return {fight,next,all:!!g.flags['boss:guardianes']}})()",
-  "new Promise(r=>setTimeout(()=>r({L:__game.flags['boss:guardianL'],R:__game.flags['boss:guardianR'],fog:__game.fogActive(__game.interact.list.find(i=>i.id==='f_velados'))}),3000))",
+  // (los Velados despiertan al pisar la nave: a la espalda sube la reja de
+  // la escalinata; vencidos, baja, y se abre la reja del pozo)
+  "(()=>{const g=__game;g.dev.god=true;g.player.spawn(-55,-8.2,-152,Math.PI/2);__sim(1);const before=!!g.activeBoss;g.player.spawn(-46,-13,-152,Math.PI/2);__sim(2);const fight=g.activeBoss&&g.activeBoss.type;const gate=g.crypt.vgate.target;const a=g.bosses.guardianL,b=g.bosses.guardianR;a.hp=1;a.die();__sim(1);const next=g.activeBoss&&g.activeBoss.type;b.hp=1;b.die();__sim(1);g.dev.god=false;return {before,fight,gate,next,all:!!g.flags['boss:guardianes']}})()",
+  "new Promise(r=>setTimeout(()=>{const g=__game;for(let i=0;i<10;i++)__sim(0.5);r({L:g.flags['boss:guardianL'],R:g.flags['boss:guardianR'],gate:g.crypt.vgate.target,gateUp:g.crypt.vgate.box.enabled,reja:!!g.flags['door:d_reja_pozo']})},3000))",
   "(()=>{const g=__game;const r=__use('p_pila_honda');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_honda']}})()",
   "__use('d_dios')",
   "__use('x_incensario')",
