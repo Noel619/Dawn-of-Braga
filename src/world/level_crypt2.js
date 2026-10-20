@@ -1486,7 +1486,8 @@ function buildInocentes(ctx, L) {
   L.interact.push({ kind: 'note', id: 'n_garra', note: 'garra', x: -78.2, y: YI + 0.05, z: -96.0, model: 'paper' });
 
   // --- el relicario de San Martín: muros y bóveda de huesos, el altar del
-  // arca en el centro, los sepulcros de los lados (de ahí salen los muertos)
+  // arca en el centro y los sepulcros abiertos de los lados (sus muertos y
+  // los de los muros son el Custodio: entities/custodio.js)
   const cxr = (CL.x0 + CL.x1) / 2,
     czr = (CL.z0 + CL.z1) / 2;
   const RYS = YI + 3.4,
@@ -1502,26 +1503,29 @@ function buildInocentes(ctx, L) {
   }
   P.boneWall(ctx, cxr, YI, CL.z0 + 0.06, 0, CL.x1 - CL.x0 - 0.4, 3.2, { room: ROOM, seed: 4432 });
   P.boneWall(ctx, cxr, YI, CL.z1 - 0.06, Math.PI, CL.x1 - CL.x0 - 0.4, 3.2, { room: ROOM, seed: 4433 });
-  // el altar del relicario, con su paño rojo y el arca dorada
+  // el altar del relicario, con su paño rojo y el arca (su tapa, que se abre
+  // al caer el Custodio, la pone game/crypt.js)
   const ax = cxr,
     az = czr;
   wb.box('ashlar', ax - 0.9, YI, az - 0.55, ax + 0.9, YI + 0.95, az + 0.55, { faces: 'tnsew', sub: 2, room: ROOM, tint: AT });
   wb.box('ashlar', ax - 1.0, YI + 0.95, az - 0.62, ax + 1.0, YI + 1.05, az + 0.62, { ao: false, room: ROOM, tint: AT });
   wb.box('clothRed', ax - 0.75, YI + 1.051, az - 0.4, ax + 0.75, YI + 1.06, az + 0.4, { faces: 't', ao: false, room: ROOM });
   wb.box('bronze', ax - 0.32, YI + 1.06, az + 0.12, ax + 0.32, YI + 1.36, az + 0.36, { ao: false, room: ROOM, faces: 'tnsew' });
-  wb.box('bronze', ax - 0.36, YI + 1.36, az + 0.1, ax + 0.36, YI + 1.44, az + 0.38, { ao: false, room: ROOM, faces: 'tnsewb' });
   ctx.col.add(ax - 1.0, YI, az - 0.62, ax + 1.0, YI + 1.05, az + 0.62);
   P.candles(ctx, ax - 0.7, YI + 1.05, az - 0.4, 4, 4430, { room: ROOM, radius: 5, intensity: 1.0, spread: 0.15 });
   P.candles(ctx, ax + 0.7, YI + 1.05, az - 0.4, 4, 4431, { room: ROOM, radius: 4, intensity: 0.6, spread: 0.15 });
-  // los sepulcros de los lados y las cadenas de la bóveda
+  // los sepulcros abiertos de los lados y las cadenas de la bóveda
   for (const [x, z] of CLAW_TOMBS) P.sarcophagus(ctx, x, YI, z, 0, { open: true, room: ROOM, l: 0.9, w: 0.45 });
   for (let k = 0; k < 4; k++) for (let c = 0; c < 9; c++) wb.box('iron', ax - 2 + k * 1.3 - 0.03, RYS + RR - 0.4 - c * 0.14, az - 2.5 + k - 0.03, ax - 2 + k * 1.3 + 0.03, RYS + RR - 0.3 - c * 0.14, az - 2.5 + k + 0.03, { ao: false, room: ROOM });
   P.hangingLamp(ctx, ax, RYS + RR - 0.05, az - 3, { room: ROOM, len: 1.8, radius: 8, intensity: 0.9 });
   ctx.lights.push({ x: ax, y: YI + 1.8, z: az, r: 1, g: 0.78, b: 0.4, radius: 4, intensity: 0.6, room: ROOM });
+  // (y una luz baja que llena la sala: el montón de huesos, detrás del altar)
+  ctx.lights.push({ x: ax - 2, y: YI + 2.6, z: az, r: 1, g: 0.6, b: 0.34, radius: 10, intensity: 0.45, room: ROOM });
   for (const z of [CL.z0 + 2.2, CL.z1 - 2.2]) for (const x of [CL.x0, CL.x1]) P.wallTorch(ctx, x, YI + 2.4, z, x === CL.x0 ? 'e' : 'w', { room: ROOM, radius: 6 });
-  L.interact.push({ kind: 'item', id: 'i_garra', item: 'garra', x: ax, y: YI + 1.12, z: az - 0.12 });
+  // (la Garra, en el arca: aparece al caer el Custodio)
+  L.interact.push({ kind: 'item', id: 'i_garra', item: 'garra', x: ax, y: YI + 1.37, z: az + 0.08, afterBoss: 'custodio' });
 }
-// los sepulcros del relicario, de donde salen los muertos (ver CLAW_AMBUSH)
+// los sepulcros abiertos del relicario
 const CLAW_TOMBS = [
   [-94.9, -100.6],
   [-94.9, -87.4],
@@ -1724,12 +1728,9 @@ function buildCreatures(L) {
     e('mourner', -71, YI, -99.2, 'e_c2a', { idle: 'pray', yaw: Math.PI }),
     e('crawler', -70.5, YI, -93.5, 'e_c2b', { idle: 'ceiling' }),
     e('mourner', -78, YI, -103.5, 'e_c2c', { idle: 'wander' }),
-    // la emboscada del relicario (ocultas hasta que se coge la Garra)
-    e('penitent', CLAW_TOMBS[0][0], YI, CLAW_TOMBS[0][1], 'e_garra1', { yaw: Math.PI / 2, held: true, ambush: 'garra' }),
-    e('penitent', CLAW_TOMBS[3][0], YI, CLAW_TOMBS[3][1], 'e_garra2', { yaw: -Math.PI / 2, held: true, ambush: 'garra' }),
-    e('crawler', cxr - 1.6, YI, CL.z0 + 3.5, 'e_garra3', { idle: 'ceiling', held: true, ambush: 'garra' }),
-    e('crawler', cxr + 1.6, YI, CL.z1 - 3.5, 'e_garra4', { idle: 'ceiling', yaw: Math.PI, held: true, ambush: 'garra' }),
-    e('soldier', CLAW_TOMBS[1][0], YI, CLAW_TOMBS[1][1], 'e_garra5', { yaw: Math.PI / 2, held: true, ambush: 'garra' }),
+    // el Custodio de la Garra: hundido en su montón, detrás del altar del
+    // arca (se levanta al entrar en el relicario: game/crypt.js)
+    { type: 'custodio', x: cxr - 4, y: YI, z: czr, yaw: Math.PI / 2, idle: 'boss', boss: true, id: 'b_custodio' },
     // la cripta de los mártires, su pila y la sacristía
     e('penitent', 28.5, Y1, -130.1, 'e_est1', { idle: 'pray', yaw: Math.PI }),
     e('penitent', 33.2, Y1, -115.3, 'e_est2', { idle: 'eat', yaw: -1.2 }),
@@ -1745,5 +1746,4 @@ function buildCreatures(L) {
     { type: 'guardianL', x: D.guards[0].x, y: AY, z: D.guards[0].z, yaw: -Math.PI / 2, idle: 'boss', boss: true, id: 'b_veladoL' },
     { type: 'guardianR', x: D.guards[1].x, y: AY, z: D.guards[1].z, yaw: -Math.PI / 2, idle: 'boss', boss: true, id: 'b_veladoR' }
   );
-  void czr;
 }

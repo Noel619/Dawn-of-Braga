@@ -1154,6 +1154,41 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- jefe: el Custodio de la Garra
+  // Los muertos del relicario: un xilófono de huesos en compás de 5 (3+2),
+  // tambores secos con sonajas, el coro de los monjes que recita en el tono
+  // de salmo (una nota, y la cadencia al final del verso) y cuerdas graves.
+  // En la segunda forma, más deprisa, los tambores en cada pulso y el coro
+  // abierto en un clúster que se derrumba.
+  bossBones: {
+    bpm: 112,
+    root: 35,
+    mode: 'phrygian',
+    meter: 5,
+    prog: [0, 1, 0, 6],
+    chordBars: 2,
+    verb: 0.75,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d)], type: 'sawtooth', cutoff: 200, level: 0.09, rate: 0.1 },
+    step(S) {
+      bonesStep(S, 0);
+    },
+  },
+  bossBones2: {
+    bpm: 128,
+    root: 35,
+    mode: 'phrygian',
+    meter: 5,
+    prog: [0, 1, 4, 1],
+    chordBars: 1,
+    verb: 0.75,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 260, level: 0.1, rate: 0.22 },
+    step(S) {
+      bonesStep(S, 1);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe: Leonor, la Dolorosa
   // Una nana de caja de música en 6/8 (se mece, como la cuna) que canta una
   // voz de mujer sola, rota; debajo, un latido y cuerdas graves. En la
@@ -1358,6 +1393,47 @@ function leonorStep(S, phase) {
   }
   if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root + 12, 0.12, { kind: 'small', dur: 6 });
   if (phase && inBar === 0 && bar % 4 === 2) m.swell(L.base, t, spb * 3, 0.04, 400, 3000);
+}
+
+// El Custodio: xilófono de huesos a corcheas en 5 (3+2), tambores secos y
+// sonajas, el coro de los monjes en tono de salmo, cuerdas graves y la
+// campana del relicario; en la segunda forma, más tambores y el clúster.
+const XYLO = [0, 3, 1, 4, 2, 0, 5, 3, 1, -1];
+function bonesStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  if (inBar === 0) m.drum(L.base, t, 'taiko', 0.5);
+  if (inBar === 3) m.drum(L.base, t, 'taiko', 0.36, 1.1);
+  if (inBar === 1 || inBar === 2 || inBar === 4) m.drum(L.base, t, 'rim', 0.16 + phase * 0.06, 0.8);
+  if (phase && inBar !== 0) m.drum(L.base, t + spb * 0.5, 'frame', 0.2, 1.2);
+  // sonajas de hueso, a contratiempo
+  for (let k = 0; k < 2; k++) if (chance(0.4 + phase * 0.3)) m.drum(L.base, t + k * spb * 0.5 + spb * 0.25, 'tabor', 0.06, 2.2);
+  // el xilófono: dos notas por pulso
+  const d = S.c.data;
+  if (d.i === undefined) d.i = 0;
+  for (let k = 0; k < 2; k++) {
+    const g = XYLO[d.i % XYLO.length];
+    m.pluck(L.base, t + k * spb * 0.5, degree(T.root + 24, T.mode, chord + g), rnd(0.06, 0.1) + (k === 0 && inBar === 0 ? 0.04 : 0), { bright: 0.9, dur: 0.6 });
+    d.i++;
+  }
+  // el tono de salmo: el coro recita en una nota y cadencia al final del verso
+  if (inBar === 0) {
+    const n = m.deg(T, chord, 1);
+    const end = bar % 4 === 3;
+    m.choir(L.base, t, spb * (end ? 2.6 : 4.6), n, 0.04, 'o', { a: 0.15, r: 0.5 });
+    m.choir(L.base, t, spb * (end ? 2.6 : 4.6), n - 12, 0.03, 'u', { a: 0.15, r: 0.5 });
+    if (end) m.choir(L.base, t + spb * 2.6, spb * 2.2, m.deg(T, chord - 1, 1), 0.04, 'a', { a: 0.1, r: 0.6 });
+  }
+  // cuerdas graves en el acorde
+  if (inBar === 0 && bar % 2 === 0) {
+    const r = m.deg(T, chord, 0);
+    for (const n of [r, r + 7]) m.strings(L.base, t, spb * 9.5, n, 0.022 + phase * 0.008, { a: 0.5, r: 1, trem: phase ? 10 : 0, bright: 5 });
+  }
+  if (inBar === 0 && bar % 4 === 0) m.bell(L.base, t, T.root + 12, 0.12, { dur: 6 });
+  if (phase && inBar === 2 && bar % 2 === 1) {
+    const r = m.deg(T, chord, 1) + 12;
+    for (const n of [r, r + 1, r + 5]) m.choir(L.base, t, spb * 3, n, 0.022, 'a', { glide: -5, a: 0.1, r: 0.6 });
+  }
+  if (phase && inBar === 4 && bar % 4 === 3) m.swell(L.base, t, spb, 0.04, 500, 3500);
 }
 
 // Los Velados: tambores lentos y enormes, órgano en quintas, coro en una

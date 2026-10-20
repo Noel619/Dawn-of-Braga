@@ -50,7 +50,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'] };
+const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {

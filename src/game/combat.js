@@ -467,8 +467,16 @@ export class Combat {
       P.pos.addScaledVector(P.vel, dt);
       P.sprite.position.copy(P.pos);
       P.core.position.copy(P.pos);
+      // (las calaveras del Custodio: la calavera, que gira)
+      if (P.mesh) {
+        P.mesh.position.copy(P.pos);
+        if (P.spin) {
+          P.mesh.rotation.x += P.spin.x * dt;
+          P.mesh.rotation.y += P.spin.y * dt;
+        }
+      }
       const s = 1 + Math.sin(g.time * 30 + i) * 0.15;
-      P.sprite.scale.setScalar((P.kind === 'wail' ? 1.3 : P.kind === 'pus' ? 1.1 : 1.6) * s);
+      P.sprite.scale.setScalar((P.kind === 'wail' ? 1.3 : P.kind === 'pus' ? 1.1 : P.kind === 'skull' ? 0.55 : 1.6) * s);
       g.fx.blood.emit(P.pos.x, P.pos.y, P.pos.z, 1, { color: P.color, speed: 0.6, life: 0.4, up: 0.2, gravity: -1 });
       let dead = P.life <= 0 || hitWall !== Infinity;
       const pd = Math.hypot(P.pos.x - p.pos.x, P.pos.y - (p.pos.y + 1.1), P.pos.z - p.pos.z);
@@ -491,6 +499,10 @@ export class Combat {
           if (P.src && P.src.data && P.src.data.phase === 2) this.firePool(P.pos.x, gy, P.pos.z, 1.5, 4);
           const d2 = Math.hypot(p.pos.x - P.pos.x, p.pos.z - P.pos.z);
           if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4, noParry: true }, P.pos.x, P.pos.z);
+        } else if (P.kind === 'skull') {
+          // se hace añicos
+          g.fx.blood.emit(P.pos.x, P.pos.y, P.pos.z, 16, { color: [0.82, 0.78, 0.7], speed: 4, life: 0.7, up: 1.6 });
+          g.audio && g.audio.play('boneCrack', P.pos, { n: 2 });
         } else if (P.kind === 'pus') {
           // revienta contra el suelo (o contra ti) y deja un charco
           const gy = g.world.col.groundHeight(P.pos.x, P.pos.z, 0.2, P.pos.y + 0.5);
@@ -499,6 +511,7 @@ export class Combat {
         } else g.audio && g.audio.play('wailHit', P.pos);
         g.scene.remove(P.sprite);
         g.scene.remove(P.core);
+        if (P.mesh) g.scene.remove(P.mesh);
         P.sprite.material.dispose();
         P.core.material.dispose();
         this.projectiles.splice(i, 1);
@@ -562,6 +575,7 @@ export class Combat {
     for (const P of this.projectiles) {
       g.scene.remove(P.sprite);
       g.scene.remove(P.core);
+      if (P.mesh) g.scene.remove(P.mesh);
       P.sprite.material.dispose();
       P.core.material.dispose();
     }

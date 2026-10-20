@@ -25,7 +25,8 @@ export const INSTANCES = [
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
   { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
   { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
-  { id: 'garra', name: 'La cripta honda · la emboscada de la Garra' },
+  { id: 'garra', name: 'La cripta honda · el Custodio de la Garra (pelea)' },
+  { id: 'paio', name: 'La cripta honda · Dom Paio, en el pozo (pelea)' },
   { id: 'velados', name: 'La cripta honda · los Velados (pelea)' },
   { id: 'puerta', name: 'La cripta honda · la Puerta del Dios Ignoto (todo listo)' },
 ];
@@ -189,12 +190,21 @@ export async function goInstance(g, id) {
       g.enterFog(fog);
       return true;
     }
-    // el Relicario de San Martín, ante el arca (la Garra sin coger)
+    // el Relicario de San Martín, en su boca (al entrar se levanta el
+    // Custodio y cae la reja)
     case 'garra': {
-      prepare(g, { 'take:i_garra': false, 'garra:ambush': false });
+      prepare(g, { 'boss:custodio': false, 'take:i_garra': false });
       if (g.inventory.has('garra')) g.inventory.add('garra', -g.inventory.count('garra'));
       const C = DEEP.claw;
-      place(g, C.x1 - 1.5, C.y, (C.gate.z0 + C.gate.z1) / 2, -Math.PI / 2);
+      place(g, C.x1 - 0.6, C.y, (C.gate.z0 + C.gate.z1) / 2, -Math.PI / 2);
+      return true;
+    }
+    // Dom Paio, convertido: al pie de la escalera del pozo (los Velados, ya
+    // vencidos; al bajar despierta)
+    case 'paio': {
+      prepare(g, { 'boss:guardianes': true, 'boss:guardianL': true, 'boss:guardianR': true, 'paio:gone': true, 'door:d_reja_pozo': true, 'boss:paioHollow': false, 'lever:p_pila_honda': false });
+      const S = DEEP.pozoStair;
+      place(g, (S.x0 + S.x1) / 2, DEEP.PY, DEEP.pozo.z1 - 0.6, Math.PI);
       return true;
     }
     // los Velados: al pie de la escalinata (al bajar a la nave despiertan y

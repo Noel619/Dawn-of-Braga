@@ -2404,6 +2404,16 @@ export class Audio {
         this.voice(d, t, 0.5, { f0: 700, f1: 1300, vowel: 'i', gain: 0.14, vib: 30, vibD: 100, breath: 0.6, type: 'square', rasp: 0.5, jit: 50 });
         this.chitter(d, t, 0.4, 0.15);
         break;
+      // el Custodio: cientos de huesos que ruedan y se encajan
+      case 'boneAvalanche': {
+        d = this.out(P, { gain: 1, verb: 0.7, life: 4, ref: 8 });
+        this.noise(d, t, 1.6, { type: 'lowpass', f0: 900, f1: 300, gain: 0.45, a: 0.1, buf: this.brown, rate: 2, curve: 'lin' });
+        for (let i = 0; i < 26; i++) this.boneCrack(d, t + Math.pow(Math.random(), 1.3) * 1.5, rnd(0.4, 1.0));
+        for (let i = 0; i < 10; i++) this.tone(d, t + Math.random() * 1.4, 0.05, { f0: rnd(500, 1200), f1: 380, gain: 0.12, type: 'triangle' });
+        this.tone(d, t, 0.8, { f0: 60, f1: 34, gain: 0.5 });
+        this.duck(0.25, 1.2);
+        break;
+      }
       case 'boneThrow':
         d = this.out(P, { gain: 0.7, verb: 0.3, life: 2 });
         this.noise(d, t, 0.3, { f0: 700, f1: 1800, q: 2, gain: 0.25, a: 0.05, curve: 'lin' });
@@ -2590,7 +2600,7 @@ export class Audio {
     const now = this.t();
     if (kind !== 'death' && e._vt && now - e._vt < 0.35) return;
     const v = e.T.voice;
-    const big = v === 'boss' || v === 'impaled' || v === 'bell' || v === 'guardian';
+    const big = v === 'boss' || v === 'impaled' || v === 'bell' || v === 'guardian' || v === 'custodio';
     if (this.dist(e.pos) > (big ? 110 : 55)) return;
     // los gritos de una horda: los más cercanos e importantes, y no todos en
     // el mismo fotograma (los que no caben se aplazan unos milisegundos)
@@ -2612,6 +2622,23 @@ export class Audio {
           V({ dur: 1.2, f0: 135, f1: 70, vowel: 'a', v1: 'o', gain: 0.24, vib: 5, vibD: 12, breath: 0.6, rasp: 0.3 });
           this.bodyFall(d, t + 1.0, 1);
         }
+        break;
+      // el Custodio: un coro de calaveras (muchas voces huecas a la vez) y el
+      // castañeteo de las mandíbulas
+      case 'custodio':
+        if (kind === 'alert') {
+          for (const k of [1, 1.26, 1.5, 0.5]) V({ dur: 2.4, f0: 82 * k * pv, f1: 70 * k * pv, vowel: 'o', v1: 'u', gain: 0.1, vib: 4, vibD: 14, breath: 0.6, a: 0.4, rasp: 0.7, jit: 30 });
+          for (let i = 0; i < 12; i++) this.boneCrack(d, t + i * 0.09, 0.6);
+        } else if (kind === 'attack') {
+          V({ dur: 0.6, f0: 74 * pv, f1: 60, vowel: 'a', v1: 'o', gain: 0.18, breath: 0.6, a: 0.04, rasp: 0.8, jit: 30 });
+          for (let i = 0; i < 4; i++) this.boneCrack(d, t + i * 0.05, 0.5);
+        } else if (kind === 'hurt') {
+          for (let i = 0; i < 5; i++) this.boneCrack(d, t + i * rnd(0.02, 0.05), rnd(0.6, 1.1));
+        } else if (kind === 'death') {
+          for (const k of [1, 1.2, 0.5]) V({ dur: 3.0, f0: 80 * k * pv, f1: 40 * k, vowel: 'o', v1: 'u', gain: 0.12, vib: 3, vibD: 20, breath: 0.7, a: 0.1, rasp: 0.7 });
+          for (let i = 0; i < 30; i++) this.boneCrack(d, t + Math.pow(Math.random(), 1.4) * 2.4, rnd(0.4, 1.1));
+          this.duck(0.35, 2.5);
+        } else if (kind === 'idle') for (let i = 0; i < 6; i++) this.boneCrack(d, t + i * rnd(0.1, 0.3), 0.4);
         break;
       // Dom Paio: un viejo con la voz rota; convertido, ronca y reza a gritos
       case 'paio':

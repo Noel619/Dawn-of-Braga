@@ -95,8 +95,13 @@ const steps = [
   // catacumbas; el de San Martín, desde los Inocentes)
   "(()=>{const g=__game;const r=__use('d_atajo_llegada');const it=g.interact.list.find(i=>i.id==='d_atajo_llegada');return {...r,open:!!g.flags['door:d_atajo_llegada'],from:it.lock.side}})()",
   "(()=>{const g=__game;const r=__use('d_atajo_martin');return {...r,open:!!g.flags['door:d_atajo_martin']}})()",
-  "__use('n_garra')", "__use('i_garra')",
-  "(()=>{const g=__game;for(let i=0;i<8;i++)__sim(0.5);return {garra:g.inventory.has('garra'),ambush:!!g.flags['garra:ambush'],gate:g.crypt.gate.box.enabled}})()",
+  // el Custodio de la Garra: al entrar en el relicario se levanta y cae la
+  // reja; vencido, sube la reja, se abre el arca y la Garra queda a la vista
+  "__use('n_garra')",
+  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='i_garra');const before=it.hidden;g.dev.god=true;g.player.spawn(-84,-12.7,-93.5,-Math.PI/2);__sim(1.5);const fight=g.activeBoss&&g.activeBoss.type;const gate=g.crypt.gate.box.enabled;const b=g.bosses.custodio;b.hp=1;b.takeHit(50,50,g.player.pos.x,g.player.pos.z,false);for(let i=0;i<10;i++)__sim(0.5);g.dev.god=false;return {hiddenBefore:before,fight,gate,dead:b.dead,flag:!!g.flags['boss:custodio'],gateAfter:g.crypt.gate.box.enabled,arca:g.crypt.arca.target,garraShown:!it.hidden}})()",
+  "new Promise(r=>setTimeout(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='i_garra');r({garraShown:!it.hidden})},3000))",
+  "__use('i_garra')",
+  "(()=>{const g=__game;return {garra:g.inventory.has('garra')}})()",
   "(()=>{const g=__game;const r=__use('p_pila_oeste');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_oeste']}})()",
   "__use('n_martires')", "__use('d_sacristia')", "__use('i_incienso')", "__use('n_incienso')",
   "(()=>{const g=__game;const r=__use('p_pila_este');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_este']}})()",

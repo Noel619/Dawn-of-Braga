@@ -6,8 +6,8 @@
 // pudieron. Para abrirla hace falta:
 //  1. Que caigan los Velados, sus dos guardianes de piedra (los dos).
 //  2. La Garra de Oro (la mano que el santo le cortó al ídolo; en su
-//     relicario de la Cámara de la Garra, con su emboscada): gira en la
-//     cerradura del centro del pentáculo.
+//     relicario, en el arca que guarda el Custodio): gira en la cerradura
+//     del centro del pentáculo.
 //  3. Los cinco círculos de sangre de las puntas del pentáculo, llenos. La
 //     sangre viene de las tres pilas (se abre su compuerta con siete tirones
 //     de cadena): la de los Inocentes llena los dos de la izquierda, la de
@@ -18,8 +18,9 @@
 //     sobre el estrado tiene que arder con el incienso negro del arzobispo
 //     (en su sacristía, que se abre con su anillo).
 // Aquí: la puerta (sus hojas, el pentáculo, los regueros de sangre y la
-// cerradura), las pilas que se vacían, el incensario y la emboscada de la
-// Garra.
+// cerradura), las pilas que se vacían, el incensario, la reja de los Velados
+// y, en el relicario, la reja y el arca del Custodio de la Garra (el jefe:
+// entities/custodio.js).
 import * as THREE from 'three';
 import { DEEP } from '../world/level_crypt2.js';
 import { objMat, cloneMat, additiveFog } from '../gfx/materials.js';
@@ -156,13 +157,12 @@ export class CryptQuest {
     const L = g.interact.list;
     this.door = L.find((i) => i.id === 'd_dios') || null;
     this.levers = L.filter((i) => i.kind === 'lever' && i.font);
-    this.ambushers = g.enemies.filter((e) => e.spec.ambush === 'garra');
+    this.custodio = g.bosses.custodio || null;
     this.t = 0;
     this._v = new V3();
     this._w = new V3();
     this.flows = [];
     this.opening = null;
-    this.ambush = null;
     this.toss = null;
     this.flare = 0;
     this.inscK = 0;
@@ -171,6 +171,7 @@ export class CryptQuest {
     this.buildCenser();
     this.buildGate();
     this.buildVGate();
+    this.buildArca();
   }
   get F() {
     return this.g.flags;
@@ -711,15 +712,13 @@ export class CryptQuest {
     this.opening = null;
     for (const lf of this.leaves) lf.rotation.y = open ? lf.userData.s * 1.45 : 0;
     if (this.door && open && !this.door.done) this.g.interact.setOpen(this.door, true);
-    // la emboscada de la Garra: hecha, si ya se cogió
-    this.ambush = null;
+    // las rejas, arriba (el Custodio, si sigue en pie, espera hundido en su
+    // montón) y el arca (abierta, si cayó)
     this.setGate(false, true);
     this.setVGate(false, true);
-    if (F['take:i_garra']) F['garra:ambush'] = true;
+    this.setArca(!!F['boss:custodio'], true);
   }
   onRespawn() {
-    // (si se cae en la emboscada no se repite: la Garra ya es tuya)
-    if (this.ambush) this.F['garra:ambush'] = true;
     // (la sangre que todavía no se vio correr por la puerta, correrá)
     const pending = this.flows.map((fl) => fl.f);
     this.applyFlags();
@@ -935,9 +934,20 @@ export class CryptQuest {
         g.camRig.shake(0.35);
       }
     }
-    // la emboscada: al coger la Garra
-    if (!this.ambush && this.F['take:i_garra'] && !this.F['garra:ambush']) this.startAmbush();
-    if (this.ambush) this.updateAmbush(dt);
+    // el Custodio de la Garra: despierta al entrar en el relicario (cae la
+    // reja); vencido, se abre el arca y sube la reja
+    const Cu = this.custodio,
+      CL = D.claw;
+    if (Cu && !Cu.dead && Cu.state === 'bossIdle' && !this.F['boss:custodio'] && !g.activeBoss && !g.player.dead && p.x > CL.x0 && p.x < CL.x1 - 1.4 && p.z > CL.z0 && p.z < CL.z1 && Math.abs(p.y - GY) < 1.5) this.wakeCustodio();
+    if (this.F['boss:custodio'] && (!Cu || !Cu.dead || Cu.stT > 2.6)) {
+      if (this.arca.target === 0) this.openArca();
+      if (G.target === 1) {
+        this.setGate(false);
+        g.audio && g.audio.play('gateOpen', { x: GATE.x, y: GY + 2, z: (GATE.z0 + GATE.z1) / 2 });
+        g.ui.toast(MSG.clawFree, 4);
+      }
+    }
+    this.updateArca(dt);
   }
 
   updateFlows(dt) {
@@ -1091,109 +1101,54 @@ export class CryptQuest {
     g.saveGame();
   }
 
-  // ------------------------------------------------------------ la emboscada
-  // Se cierra la reja y los muertos salen: los de los sepulcros se levantan,
-  // los del techo se dejan caer.
-  startAmbush() {
+  // ------------------------------------------------------------ el Custodio de la Garra
+  wakeCustodio() {
+    const g = this.g;
+    this.setGate(true);
+    g.audio && g.audio.play('chainRun', { x: GATE.x, y: GY + 3, z: (GATE.z0 + GATE.z1) / 2 });
+    g.startBoss(this.custodio);
+  }
+  // El arca de San Martín, en el altar del relicario: la tapa (con su
+  // bisagra atrás) y la luz de dentro. La caja la pone el nivel.
+  buildArca() {
     const g = this.g;
     const CL = D.claw;
-    const cx = (CL.x0 + CL.x1) / 2;
-    let i = 0;
-    const list = this.ambushers
-      .filter((e) => !e.dead)
-      .map((e) => {
-        const ceil = e.spec.idle === 'ceiling';
-        const sx = e.spec.x,
-          sz = e.spec.z;
-        return { e, ceil, at: 0.8 + (ceil ? 1.6 + i * 0.5 : i++ * 0.9), phase: 'wait', sx, sz, ox: sx + (cx > sx ? 1.4 : -1.4), oz: sz };
-      });
-    this.ambush = { t: 0, end: 0, list };
-    this.setGate(true);
-    if (g.audio) {
-      g.audio.play('chainRun', { x: GATE.x, y: GY + 3, z: (GATE.z0 + GATE.z1) / 2 });
-      g.audio.play('stinger');
-    }
-    g.ui.toast(MSG.clawAmbush, 4.5);
+    const ax = (CL.x0 + CL.x1) / 2,
+      az = (CL.z0 + CL.z1) / 2;
+    const y = D.YI + 1.36;
+    const bronze = this.mat('bronze', ax, y, az, D.YI);
+    const gold = this.mat('gold', ax, y, az, D.YI);
+    const piv = new THREE.Group();
+    piv.position.set(ax, y, az + 0.38);
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.28), bronze);
+    lid.position.set(0, 0.04, -0.14);
+    // la cruz de oro de la tapa
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.2), gold);
+    c1.position.set(0, 0.09, -0.14);
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.05), gold);
+    c2.position.set(0, 0.09, -0.17);
+    piv.add(lid, c1, c2);
+    g.scene.add(piv);
+    const light = g.fx.lights.add({ x: ax, y: y + 0.4, z: az + 0.24, color: 0xffc870, intensity: 0, range: 5, flicker: 0.1, priority: 2 });
+    this.arca = { piv, k: 0, target: 0, light };
   }
-  updateAmbush(dt) {
+  setArca(open, instant = false) {
+    const A = this.arca;
+    A.target = open ? 1 : 0;
+    if (instant) A.k = A.target;
+    A.piv.rotation.x = -A.k * 1.9;
+    A.light.intensity = A.k * 1.4;
+  }
+  openArca() {
     const g = this.g;
-    const A = this.ambush;
-    const Y = GY;
-    A.t += dt;
-    for (const a of A.list) {
-      const e = a.e;
-      if (a.phase === 'wait') {
-        if (A.t < a.at) continue;
-        e.dead = false;
-        e.obj.visible = true;
-        if (a.ceil) {
-          // asoman del techo, colgados, y se dejan caer al poco
-          e.scripted = false;
-          e.aware = true;
-          a.phase = 'ceiling';
-          a.drop = A.t + 0.7 + Math.random() * 0.8;
-          g.audio && g.audio.enemyVoice(e, 'idle');
-        } else {
-          // se levantan dentro del sepulcro abierto, de cara a la sala
-          a.phase = 'rise';
-          a.pt = 0;
-          e.state = 'dormant';
-          e.idle = 'stand';
-          e.yaw = Math.atan2(a.ox - a.sx, a.oz - a.sz);
-          e.body.pos.set(a.sx, Y - 1.3, a.sz);
-          e.shadow.visible = false;
-          g.audio && g.audio.play('stoneCreak', { x: a.sx, y: Y + 1, z: a.sz });
-          g.fx.blood.emit(a.sx, Y + 0.95, a.sz, 20, { color: [0.3, 0.28, 0.25], speed: 1.6, life: 1.0, up: 1.2 });
-        }
-      } else if (a.phase === 'rise') {
-        a.pt += dt;
-        const u = ease(Math.min(1, a.pt / 1.4));
-        e.body.pos.set(a.sx, Y - 1.3 + 2.2 * u, a.sz);
-        e.animate(dt);
-        e.shadow.visible = false;
-        if (a.pt >= 1.4) {
-          a.phase = 'hop';
-          a.pt = 0;
-          e.state = 'alert';
-          if (e.T.clips.alert) e.anim.play(e.T.clips.alert, { blend: 0.1 });
-          g.audio && g.audio.enemyVoice(e, 'alert');
-        }
-      } else if (a.phase === 'hop') {
-        // salta por encima del borde del sepulcro al suelo
-        a.pt += dt;
-        const u = Math.min(1, a.pt / 0.5);
-        e.body.pos.set(a.sx + (a.ox - a.sx) * ease(u), Y + 0.9 * (1 - u) + Math.sin(Math.PI * u) * 0.45, a.sz);
-        e.animate(dt);
-        if (u >= 1) {
-          e.body.pos.set(a.ox, Y, a.oz);
-          e.body.vy = 0;
-          e.body.grounded = true;
-          e.scripted = false;
-          e.aware = true;
-          e.state = 'chase';
-          e.stT = 0;
-          e.cooldown = 0.5;
-          e.home = { x: a.ox, y: Y, z: a.oz, yaw: e.yaw };
-          a.phase = 'fight';
-          g.camRig.shake(0.15);
-        }
-      } else if (a.phase === 'ceiling') {
-        if (e.dead || e.state !== 'ceiling') a.phase = 'fight';
-        else if (A.t >= a.drop) {
-          e.drop();
-          a.phase = 'fight';
-        }
-      }
-    }
-    // todas fuera y todas muertas: la reja vuelve a subir
-    if (!A.list.every((a) => a.phase === 'fight' && a.e.dead)) return;
-    A.end += dt;
-    if (A.end < 1.6) return;
-    this.ambush = null;
-    this.F['garra:ambush'] = true;
-    this.setGate(false);
-    g.audio && g.audio.play('gateOpen', { x: GATE.x, y: Y + 2, z: (GATE.z0 + GATE.z1) / 2 });
-    g.ui.toast(MSG.clawFree, 4);
-    g.saveGame();
+    this.setArca(true);
+    g.audio && g.audio.play('stoneCreak', { x: this.arca.piv.position.x, y: D.YI + 1.5, z: this.arca.piv.position.z });
+  }
+  updateArca(dt) {
+    const A = this.arca;
+    if (A.k === A.target) return;
+    A.k = A.target > A.k ? Math.min(1, A.k + dt / 1.6) : Math.max(0, A.k - dt / 1.6);
+    A.piv.rotation.x = -ease(A.k) * 1.9;
+    A.light.intensity = A.k * 1.4;
   }
 }

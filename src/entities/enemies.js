@@ -6,6 +6,7 @@ import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, build
 import { IMPALED_TYPE } from './impaled.js';
 import { HENRIQUE_TYPE } from './henrique.js';
 import { PAIO_TYPE, PAIO_HOLLOW_TYPE } from './paio.js';
+import { CUSTODIO_TYPE } from './custodio.js';
 import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
@@ -1167,6 +1168,7 @@ export const TYPES = {
   henrique: HENRIQUE_TYPE,
   paio: PAIO_TYPE,
   paioHollow: PAIO_HOLLOW_TYPE,
+  custodio: CUSTODIO_TYPE,
   leonor: LEONOR_TYPE,
   guardianL: GUARDIAN_L,
   guardianR: GUARDIAN_R,

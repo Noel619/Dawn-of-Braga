@@ -152,24 +152,40 @@ convertida en una bestia enorme, hinchada de pus, que llora y acuna un hatillo. 
 barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revienta. Al vencerla deja su última
 lágrima (una ampolla más), y Henrique, si vuelves, la llora.
 
-**La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre se abre una red mucho mayor. La
-**Galería del Sello** la cruza de poniente a levante; a poniente, las **Catacumbas de la Sé**, un laberinto de
-pasillos con nichos, osarios y callejones sin salida, con la **Cámara de la Garra** (al coger la Garra de Oro cae
-una reja a tu espalda y los muertos salen de los sepulcros y del techo) y la **Pila de los Inocentes**; a levante,
-las Catacumbas de levante, la **Pila de los Mártires** y la **Sacristía del arzobispo**, que se abre con su anillo.
-La **Capilla de San Martín** tiene altar de descanso. Al fondo, por una escalinata, se baja a la **Antesala del
-Dios Ignoto**: tres naves sobre columnas, con estatuas colosales veladas, estandartes y braseros, y al final un
-estrado con la puerta del dios, dos hojas de piedra negra con un pentáculo invertido dentro de un círculo de
-signos, tres cabezas que lloran sobre el dintel y la inscripción DEO IGNOTO. Ya no basta un anillo: la puerta pide
-**cuatro cosas**, cada una con su sentido (San Martín de Dumio la cerró con cuatro cerrojos, y los documentos lo
-cuentan): vencer a **los Velados**, sus dos guardianes de piedra, que pelean a la vez (uno ataca mientras el otro
-te rodea; cuando cae uno, el otro enloquece); la **Garra de Oro**, que gira en la cerradura del centro como una
-llave; llenar los **cinco círculos de sangre** de las puntas del pentáculo, abriendo las compuertas de las tres
-pilas (siete tirones de cadena cada una: la sangre llora por las cabezas del dintel y corre por los surcos hasta
-los círculos, y con los cinco llenos el pentáculo y la inscripción arden); y **el humo**, porque el dios no oye,
-huele: el incienso negro del arzobispo, echado en el gran incensario del estrado, que la cadena iza sola y se mece
-como un botafumeiro mientras su humo se arrastra hasta la puerta. Al examinarla, la puerta dice qué le falta.
-Abierta, al otro lado espera la cisterna.
+**La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre hay tres épocas, cada una más honda
+(el diseño, en `PLAN_CRIPTA_HONDA.md`). Por la puerta del templo romano se baja a la **Sala de los Obispos**, un
+bosque de columnas con bóvedas de arista y los sepulcros de los obispos de Braga; por tres arcos se pasa a la
+**cripta de San Martín de Dumio**, una iglesia de tres naves con arquerías de herradura: al fondo, la **Capilla de
+San Martín** (altar de descanso), donde reza **Dom Paio**, el canónigo que bajó tras el arzobispo (al verte se
+levanta de un salto; te cuenta lo que pasó y, cada vez que vuelves, lo que le falta a la puerta); a un lado, un
+**osario** de muros de calaveras; y en el eje, el **Pórtico de los Velados**, que da a la tribuna de la antesala.
+Bajo la sala de los obispos, las **Catacumbas de la Sé** (galerías con nichos en tres alturas, cubículos con su
+arcosolio, un cruce de huesos y el **lucernario**, con el **Oratorio de San Pedro de Rates**, otro altar); más
+abajo, la catacumba de los **Inocentes**, con su pila y el **Relicario de San Martín**, donde los muertos de la
+cámara se juntan en el **Custodio de la Garra**: un coloso de calaveras y fémures que sale de un montón de huesos,
+barre con los brazos, golpea el suelo con los dos (onda), lanza calaveras y agarra; se deshace en su montón para
+rehacerse en otro sitio de la sala y, a media vida, pierde un brazo y se acelera. Al caer se abre el arca y la
+Garra queda a la vista. Por el sepulcro del arzobispo se baja a la **cripta de los Mártires**, con su pila abajo y
+la **Sacristía del arzobispo**, que se abre con su anillo. Dos atajos se abren desde abajo: la escalera de las
+catacumbas a la sala de llegada y la de los Inocentes a San Martín. La **Confesión**, al fondo del osario de
+arriba, mira por una reja a la cisterna, donde reza el arzobispo.
+
+Desde la tribuna se ve entera la **Antesala del Dios Ignoto**: tres naves sobre columnas, con estatuas colosales
+veladas, estandartes y una avenida de braseros que lleva la vista hasta el estrado y la puerta del dios, dos hojas
+de piedra negra con un pentáculo invertido dentro de un círculo de signos, tres cabezas que lloran sobre el dintel
+y la inscripción DEO IGNOTO. La puerta pide **cuatro cosas**, cada una con su sentido (San Martín de Dumio la cerró
+con cuatro cerrojos, y los documentos lo cuentan): vencer a **los Velados**, sus dos guardianes de piedra, que
+despiertan al pisar la nave (a tu espalda sube una reja) y pelean a la vez (uno ataca mientras el otro te rodea;
+cuando cae uno, el otro enloquece); la **Garra de Oro**, que gira en la cerradura del centro como una llave; llenar
+los **cinco círculos de sangre** de las puntas del pentáculo, abriendo las compuertas de las tres pilas (siete
+tirones de cadena cada una: la sangre llora por las cabezas del dintel y corre por los surcos hasta los círculos,
+y con los cinco llenos el pentáculo y la inscripción arden); y **el humo**, porque el dios no oye, huele: el
+incienso negro del arzobispo, echado en el gran incensario del estrado, que la cadena iza sola y se mece como un
+botafumeiro mientras su humo se arrastra hasta la puerta. La tercera pila, la de los **Condenados**, está en el
+**Pozo**, bajo la antesala, tras la reja que abren los Velados al caer: allí espera Dom Paio, convertido, con el
+cirial de hierro de la capilla (un jefe: mazazos, barridos, cera ardiendo y, a media vida, la letanía de fuego), y
+hasta que cae no deja echar la cadena; en la capilla queda su breviario. Al examinarla, la puerta dice qué le
+falta. Abierta, al otro lado espera la cisterna.
 
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
@@ -224,7 +240,7 @@ sacristía que abre el anillo del arzobispo, las ventanas que se tapian con mart
 Ignoto con sus cuatro cerrojos, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Veintiséis documentos breves cuentan la historia junto con el
+canónigo (aguante), que deja el Descoyuntado al morir. Treinta y un documentos breves cuentan la historia junto con el
 escenario.
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
@@ -451,7 +467,8 @@ gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cier
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
   la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
   Empalado, la huida de la Bestia y la caza del Descoyuntado; la defensa de la Casa del Alemán y Leonor; y en la
-  cripta honda, la emboscada de la Garra, los Velados y la Puerta del Dios Ignoto con todo listo para abrirla.
+  cripta honda, el Custodio de la Garra, los Velados, Dom Paio en el pozo y la Puerta del Dios Ignoto con todo
+  listo para abrirla.
 - **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar (de las peleas de colosos de
   antes; la película no los usa).
 - **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
@@ -482,8 +499,9 @@ src/
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
-                        sótano y la gruta de Leonor; level_crypt2.js: la cripta honda, generada por regiones
-                        (catacumbas en laberinto, pilas, sacristía, la antesala y la puerta del dios))
+                        sótano y la gruta de Leonor; level_crypt2.js: la cripta honda, una planta de salas
+                        (la de los obispos, San Martín, las catacumbas, los Inocentes y el relicario, los
+                        Mártires, la antesala y el pozo) de la que salen muros, suelos, navegación y mapa)
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
@@ -496,13 +514,15 @@ src/
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
                         beast.js, cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán;
-                        leonor.js, Leonor, la Dolorosa; guardian.js, los Velados); armas:
+                        leonor.js, Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo
+                        y convertido; custodio.js, el Custodio de la Garra); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
                         el guion de la Casa del Alemán, sus oleadas y las ventanas; crypt.js: la Puerta del Dios
-                        Ignoto, las pilas, el incensario y la emboscada de la Garra; cutscene.js: la de la bodega; hunt.js: la caza
+                        Ignoto, las pilas, el incensario, las rejas y el arca del relicario; paio.js: el guion
+                        de Dom Paio; cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
                         pulsaciones rápidas; finale/: el jefe final, la película: director.js, los puntos
@@ -541,6 +561,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo
+                        cryptwalk.mjs  recorre a pie la cripta honda desde el templo romano: a qué salas de su
+                                       planta se llega (con «abierto», con todas las puertas abiertas) y dónde
+                                       no se ve suelo bajo lo que se pisa
                         camclip.mjs    la cámara en el castillo, las mazmorras, la catedral y la cripta, contra
                                        muros, rejas y en escaleras, en muchas orientaciones: que no quede tras
                                        un muro ni pegada
