@@ -952,7 +952,9 @@ export function buildCrypt(ctx, S, C, L) {
     cryptFloor(2.5, -121, 3.5, -119, Y);
     cryptFloor(x0, z0, x1, z1, Y);
     archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: 3.0, t1: x0, y0: Y, y1: YS, openings: [{ c: -120, w: sp.w, h: sp.h, rise: sp.rise, ring: sp.ring, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
-    wallFace('mossstone', x1, Y, z0, x1 + 0.5, YS, z1, 'w');
+    // (al este, la puerta del paso del arzobispo: baja a la cripta de los
+    // mártires; ver level_crypt2.js)
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: x1 + 0.5, y0: Y, y1: YS, openings: [{ c: -120, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     wallFace('mossstone', x0, Y, z0 - 0.5, x1, YS, z0, 's');
     wallFace('mossstone', x0, Y, z1, x1, YS, z1 + 0.5, 'n');
     const c = (x0 + x1) / 2,
@@ -972,7 +974,7 @@ export function buildCrypt(ctx, S, C, L) {
     P.candelabra(ctx, 7, Y, -115, { room });
     P.candelabra(ctx, 13, Y, -125, { room });
     P.candles(ctx, 15.2, Y, -113, 7, 1505, { room, radius: 4, intensity: 0.8 });
-    P.banner(ctx, 15.9, Y + 3.4, -120, -Math.PI / 2, 'bannerRed', 1.6, 2.7);
+    for (const z of [-123.6, -116.4]) P.banner(ctx, 15.9, Y + 3.4, z, -Math.PI / 2, 'bannerRed', 1.0, 2.4);
     P.sarcophagus(ctx, 5, Y, -126.4, 0, { effigy: true, room });
     P.sarcophagus(ctx, 14.6, Y, -116, Math.PI / 2, { room });
     P.fleshGrowth(ctx, 15.4, Y, -127.4, 1.0, 1506, { room, climb: 1.8 });
@@ -1107,10 +1109,11 @@ export function buildCrypt(ctx, S, C, L) {
     const YC = AY + 6.0, // capiteles
       YT = AY + 8.8; // arranque de la cúpula y techo de alrededor
     C.paint(-15, -167, 15, -137, 1);
-    // (la puerta del norte, a la altura de la bóveda de la galería)
     // (la de poniente, la Puerta del Dios Ignoto, desde la antesala; la del
-    // norte, la reja de la galería del río)
-    interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 'w', at: -152, w: 5, h: 5.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }] });
+    // norte, la reja de la galería del río; al sur, en lo alto, la ventana
+    // enrejada de la Confesión de San Martín, al fondo del osario: ver
+    // level_crypt2.js)
+    interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 'w', at: -152, w: 5, h: 5.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }, { side: 's', at: 0, w: 2.4, h: 5.0, sill: 3.6 }] });
     // (el jefe final: cuando el arzobispo se transforma, el centro del suelo
     // se hunde en un pozo, el corro de columnas cae y la cúpula revienta; ver
     // finale/film_rise.js. Lo que se rompe va en grupos: 'cisternFloorC', el

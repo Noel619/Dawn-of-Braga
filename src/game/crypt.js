@@ -79,8 +79,12 @@ const CENSER_REST = AY + 0.3;
 const CENSER_UP = AY + 4.6;
 const CENSER_TOP = 2.15; // del fondo a la argolla de las cadenas
 const CENSER_T = 3.9; // su vaivén (un péndulo de casi cuatro metros)
-// la reja que cierra la Cámara de la Garra (en el paso a las catacumbas)
-const GATE = { x: D.claw.x1 + 0.25, z0: -115, z1: -112.5, h: 3.1 };
+// el rastrillo que cierra el Relicario de San Martín (la Cámara de la Garra)
+const GATE = { x: D.claw.gate.x, z0: D.claw.gate.z0, z1: D.claw.gate.z1, h: 3.1 };
+const GY = D.claw.y; // el suelo del relicario
+// la reja de la escalinata de la antesala: sale del borde de la tribuna
+// (escondida en su podio) cuando se baja a la nave y despiertan los Velados
+const VGATE = { x: D.stair.x0 + 0.2, z0: D.stair.z - D.stair.w / 2, z1: D.stair.z + D.stair.w / 2, y: D.Y1, h: 3.4 };
 const ramp = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
 const ease = (u) => u * u * (3 - 2 * u);
 
@@ -166,6 +170,7 @@ export class CryptQuest {
     this.buildFonts();
     this.buildCenser();
     this.buildGate();
+    this.buildVGate();
   }
   get F() {
     return this.g.flags;
@@ -585,7 +590,7 @@ export class CryptQuest {
   // ------------------------------------------------------------ la reja de la Garra
   buildGate() {
     const g = this.g;
-    const iron = this.mat('iron', GATE.x - 1.5, D.Y + 1.5, (GATE.z0 + GATE.z1) / 2, D.Y);
+    const iron = this.mat('iron', GATE.x - 1.5, GY + 1.5, (GATE.z0 + GATE.z1) / 2, GY);
     const grp = new THREE.Group();
     const n = 8;
     for (let k = 0; k <= n; k++) {
@@ -602,9 +607,9 @@ export class CryptQuest {
       b.position.set(0, y, (GATE.z0 + GATE.z1) / 2);
       grp.add(b);
     }
-    grp.position.set(GATE.x, D.Y + GATE.h, 0);
+    grp.position.set(GATE.x, GY + GATE.h, 0);
     g.scene.add(grp);
-    this.gate = { grp, box: g.world.col.add(GATE.x - 0.25, D.Y, GATE.z0, GATE.x + 0.25, D.Y + 3.2, GATE.z1), k: 0, target: 0 };
+    this.gate = { grp, box: g.world.col.add(GATE.x - 0.25, GY, GATE.z0, GATE.x + 0.25, GY + 3.2, GATE.z1), k: 0, target: 0 };
     this.gate.box.enabled = false;
   }
   setGate(down, instant = false) {
@@ -613,8 +618,63 @@ export class CryptQuest {
     G.box.enabled = down;
     if (instant) {
       G.k = G.target;
-      G.grp.position.y = D.Y + GATE.h * (1 - G.k);
+      G.grp.position.y = GY + GATE.h * (1 - G.k);
     }
+  }
+
+  // ------------------------------------------------------------ la reja de los Velados
+  buildVGate() {
+    const g = this.g;
+    const iron = this.mat('iron', VGATE.x + 1.5, VGATE.y + 1.5, (VGATE.z0 + VGATE.z1) / 2, VGATE.y);
+    const grp = new THREE.Group();
+    const w = VGATE.z1 - VGATE.z0;
+    const n = 14;
+    for (let k = 0; k <= n; k++) {
+      const z = VGATE.z0 + 0.1 + (k / n) * (w - 0.2);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.08, VGATE.h, 0.08), iron);
+      b.position.set(0, VGATE.h / 2, z);
+      // las puntas, arriba (sube del suelo)
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 4), iron);
+      tip.position.set(0, VGATE.h + 0.11, z);
+      grp.add(b, tip);
+    }
+    for (const y of [0.4, 1.7, 3.0]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, w), iron);
+      b.position.set(0, y, (VGATE.z0 + VGATE.z1) / 2);
+      grp.add(b);
+    }
+    grp.position.set(VGATE.x, VGATE.y - VGATE.h - 0.3, 0);
+    grp.visible = false;
+    g.scene.add(grp);
+    this.vgate = { grp, box: g.world.col.add(VGATE.x - 0.2, VGATE.y, VGATE.z0, VGATE.x + 0.2, VGATE.y + VGATE.h, VGATE.z1), k: 0, target: 0 };
+    this.vgate.box.enabled = false;
+  }
+  setVGate(up, instant = false) {
+    const G = this.vgate;
+    G.target = up ? 1 : 0;
+    if (G.box.enabled !== up) {
+      G.box.enabled = up;
+      const nav = this.g.navCrypt;
+      if (nav) nav.refresh(VGATE.x - 1, VGATE.z0 - 1, VGATE.x + 1, VGATE.z1 + 1);
+    }
+    if (instant) {
+      G.k = G.target;
+      this.poseVGate();
+    }
+  }
+  poseVGate() {
+    const G = this.vgate;
+    G.grp.position.y = VGATE.y - (VGATE.h + 0.3) * (1 - G.k);
+    G.grp.visible = G.k > 0.001;
+  }
+  // Se ha bajado a la nave: la reja sube a la espalda y los Velados despiertan.
+  wakeVelados() {
+    const g = this.g;
+    const b = g.bosses.guardianes;
+    if (!b || b.dead || g.activeBoss) return;
+    this.setVGate(true);
+    g.audio && g.audio.play('chainRun', { x: VGATE.x, y: VGATE.y, z: D.stair.z });
+    g.startBoss(b);
   }
 
   // ------------------------------------------------------------ estado
@@ -654,6 +714,7 @@ export class CryptQuest {
     // la emboscada de la Garra: hecha, si ya se cogió
     this.ambush = null;
     this.setGate(false, true);
+    this.setVGate(false, true);
     if (F['take:i_garra']) F['garra:ambush'] = true;
   }
   onRespawn() {
@@ -848,13 +909,29 @@ export class CryptQuest {
     this.doorLight.on = li > 0.02;
     this.updateCenser(dt);
     this.updateOpening(dt);
+    // los Velados: despiertan cuando se baja por la escalinata a la nave; su
+    // reja sale deprisa y, vencidos, se esconde despacio
+    const p = g.player.pos;
+    const H = D.hall;
+    if (!this.F['boss:guardianes'] && !g.activeBoss && !g.player.dead && p.x > D.stair.x0 + 1.2 && p.x < H.x1 && p.z > H.z0 && p.z < H.z1 && p.y < D.Y1 - 1.6 && p.y > D.DY - 1) this.wakeVelados();
+    const V = this.vgate;
+    if (V.target === 1 && this.F['boss:guardianes']) this.setVGate(false);
+    if (V.k !== V.target) {
+      const k0 = V.k;
+      V.k = V.target > V.k ? Math.min(1, V.k + dt / 0.45) : Math.max(0, V.k - dt / 3.0);
+      this.poseVGate();
+      if (k0 < 1 && V.k >= 1) {
+        g.audio && g.audio.play('slam', { x: VGATE.x, y: VGATE.y + 0.5, z: D.stair.z });
+        g.camRig.shake(0.3);
+      }
+    }
     // la reja de la Garra: cae de golpe, sube despacio
     const G = this.gate;
     if (G.k !== G.target) {
       G.k = G.target > G.k ? Math.min(G.target, G.k + dt / 0.3) : Math.max(G.target, G.k - dt / 2.4);
-      G.grp.position.y = D.Y + GATE.h * (1 - G.k);
+      G.grp.position.y = GY + GATE.h * (1 - G.k);
       if (G.target === 1 && G.k >= 1) {
-        g.audio && g.audio.play('slam', { x: GATE.x, y: D.Y + 0.5, z: (GATE.z0 + GATE.z1) / 2 });
+        g.audio && g.audio.play('slam', { x: GATE.x, y: GY + 0.5, z: (GATE.z0 + GATE.z1) / 2 });
         g.camRig.shake(0.35);
       }
     }
@@ -1033,7 +1110,7 @@ export class CryptQuest {
     this.ambush = { t: 0, end: 0, list };
     this.setGate(true);
     if (g.audio) {
-      g.audio.play('chainRun', { x: GATE.x, y: D.Y + 3, z: (GATE.z0 + GATE.z1) / 2 });
+      g.audio.play('chainRun', { x: GATE.x, y: GY + 3, z: (GATE.z0 + GATE.z1) / 2 });
       g.audio.play('stinger');
     }
     g.ui.toast(MSG.clawAmbush, 4.5);
@@ -1041,7 +1118,7 @@ export class CryptQuest {
   updateAmbush(dt) {
     const g = this.g;
     const A = this.ambush;
-    const Y = D.Y;
+    const Y = GY;
     A.t += dt;
     for (const a of A.list) {
       const e = a.e;

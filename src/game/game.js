@@ -908,7 +908,8 @@ export class Game {
       this.later(2500, () => {
         this.ui.area(e.partner ? `${e.T.name.toUpperCase()} HAN CAÍDO` : `${e.T.name.toUpperCase()} HA CAÍDO`);
         this.interact.applyFlags(this.flags);
-        for (const it of this.interact.list) if (it.kind === 'door' && it.lock.type === 'boss' && it.lock.boss === e.type) this.interact.setOpen(it), (this.flags['door:' + it.id] = true);
+        // (las rejas que guardaba: la de los Velados, cuando caen los dos)
+        for (const it of this.interact.list) if (it.kind === 'door' && it.lock.type === 'boss' && (it.lock.boss === e.type || (e.partner && it.lock.boss === 'guardianes'))) this.interact.setOpen(it), (this.flags['door:' + it.id] = true);
         this.saveGame();
       });
       if (e.type === 'turibulario') this.bossLight.intensity = 0;

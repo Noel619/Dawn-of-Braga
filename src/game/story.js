@@ -272,7 +272,7 @@ Debajo, en letra más antigua, alguien ha traducido a carbón:
 
 El Turiferario guarda el camino al río. Arde por mí. Quema el incienso que yo le pedí.
 
-Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar. Abre con él mi sacristía, en las catacumbas de levante. Lo que queda del incienso negro está allí.`,
+Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar. Abre con él mi sacristía, en la cripta de los mártires: se baja por la puerta de este sepulcro. Lo que queda del incienso negro está allí.`,
   },
   tabernero: {
     title: 'Cuentas de la taberna del Cuervo',
@@ -343,20 +343,56 @@ La devuelvo al relicario de San Martín, donde estuvo mil años. Hemos cerrado l
 Que nadie la saque de aquí. Los muertos de esta cámara la guardan mejor que nosotros.`,
   },
   pilas: {
-    title: 'Inscripción de la galería',
+    title: 'Inscripción de la sala de los obispos',
     text: `Grabado en latín, y debajo, a carbón, en romance:
 
 TRES PILAS DE SANGRE TIENE EL DIOS: LA DE LOS INOCENTES, LA DE LOS MÁRTIRES Y LA DE LOS CONDENADOS. CUANDO CORREN, SU PUERTA BEBE.
 
-Y más abajo, de otra mano: «La de los Inocentes, en las catacumbas de poniente. La de los Mártires, en las de levante. La de los Condenados, al fondo de la antesala, donde ya no se sube. Siete tirones de cadena cada compuerta».`,
+Y más abajo, de otra mano: «La de los Inocentes, en lo más hondo de las catacumbas. La de los Mártires, en su cripta, tras el sepulcro del arzobispo. La de los Condenados, bajo la antesala, donde ya no se sube. Siete tirones de cadena cada compuerta».`,
   },
   velados: {
     title: 'Inscripción de los Velados',
-    text: `Sobre la escalinata, en letras romanas:
+    text: `Junto al pórtico, en letras romanas:
 
 AQVI VELAN LOS QVE NO QVISIERON VER SV ROSTRO
 
 Se cubrieron la cara para no ver al dios y, con la cara cubierta, le guardan la puerta. No se apartan sino ante el obispo de Braga. Nadie más la cruza mientras uno de los dos siga en pie.`,
+  },
+  confesion: {
+    title: 'Inscripción de la Confesión',
+    text: `Sobre la reja, en latín, y debajo, a carbón, en romance:
+
+AQVI VELABA MARTIN LA FVENTE SIN NOMBRE
+
+«Por esta reja miraba el santo el agua de abajo, noche tras noche, para que lo que duerme en ella supiera que alguien lo miraba.»
+
+Y más abajo, reciente, de una mano que tiembla: «Ahora reza ahí dentro el arzobispo. No se vuelve. No deja de cantar.»`,
+  },
+  osario: {
+    title: 'Inscripción del osario',
+    text: `Sobre el altar de calaveras, en letras toscas:
+
+LO QVE TV ERES FVIMOS; LO QVE SOMOS SERAS
+
+Los monjes de San Martín, los que cavaron con él, quisieron quedarse junto a su puerta después de muertos. Los que vinieron detrás los apilaron aquí para hacer sitio, y siguieron velando.`,
+  },
+  rates: {
+    title: 'Pintura del oratorio',
+    text: `Bajo la pintura borrada de un obispo con la mano alzada:
+
+SANCTVS PETRVS RATENSIS · PRIMVS EPISCOPVS BRACARENSIS
+
+Dicen que fue el primero que predicó en Braga, cuando aún mandaban aquí los romanos y su dios sin nombre, y que lo mataron por ello. Los canónigos bajaban a rezarle cuando se moría uno de los suyos.
+
+Las velas están encendidas. Alguien las cambia.`,
+  },
+  martires: {
+    title: 'Inscripción de los mártires',
+    text: `En el muro, una lista de nombres gastados y, al final, de letra más nueva:
+
+«Los mártires de Braga, los que no quisieron echar incienso al dios de abajo. Aquí los trajeron a todos. La rueda, los garfios y la sangre se quedaron con ellos. Su sangre la guarda la pila de abajo: que no corra.»
+
+Debajo, a punta de cuchillo: «La noche de la caída bajó el arzobispo por aquí, solo, con su anillo y su incensario.»`,
   },
   incienso: {
     title: 'Libro del rito, de mano del arzobispo',
@@ -550,14 +586,19 @@ export const AREA_NAMES = {
   smithy: 'Fragua',
   souto_house: 'Casa tapiada',
   crypt: 'Cripta de la Catedral',
-  catacumbas: 'Catacumbas de la Sé',
-  garra: 'Cámara de la Garra',
-  pila_oeste: 'Pila de los Inocentes',
-  galeria: 'Galería del Sello',
+  confesion: 'Confesión de San Martín',
+  obispos: 'Sala de los Obispos',
+  martin: 'Cripta de San Martín',
   capilla_martin: 'Capilla de San Martín',
+  osario_martin: 'Osario de San Martín',
+  catacumbas: 'Catacumbas de la Sé',
+  lucernario: 'Lucernario de San Pedro de Rates',
+  inocentes: 'Catacumba de los Inocentes',
+  pila_oeste: 'Pila de los Inocentes',
+  garra: 'Relicario de San Martín',
   antesala: 'Antesala del Dios Ignoto',
-  pila_honda: 'Pila de los Condenados',
-  catacumbas_este: 'Catacumbas de levante',
+  pila_honda: 'Pozo de los Condenados',
+  catacumbas_este: 'Cripta de los Mártires',
   pila_este: 'Pila de los Mártires',
   sacristia: 'Sacristía del arzobispo',
   ossuary: 'Osario',

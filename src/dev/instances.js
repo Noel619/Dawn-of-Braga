@@ -8,6 +8,7 @@
 // (Deo Ignoto, el jefe opcional, no tiene instancias: su pelea vieja está en
 // el código pero sin enganchar; ver finale/director.js.)
 import * as THREE from 'three';
+import { DEEP } from '../world/level_crypt2.js';
 
 export const INSTANCES = [
   { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
@@ -188,18 +189,21 @@ export async function goInstance(g, id) {
       g.enterFog(fog);
       return true;
     }
-    // la Cámara de la Garra, ante el relicario (la Garra sin coger)
-    case 'garra':
+    // el Relicario de San Martín, ante el arca (la Garra sin coger)
+    case 'garra': {
       prepare(g, { 'take:i_garra': false, 'garra:ambush': false });
       if (g.inventory.has('garra')) g.inventory.add('garra', -g.inventory.count('garra'));
-      place(g, -54, -7, -112.4, Math.PI);
+      const C = DEEP.claw;
+      place(g, C.x1 - 1.5, C.y, (C.gate.z0 + C.gate.z1) / 2, -Math.PI / 2);
       return true;
-    // los Velados: en lo alto de la escalinata, ante su niebla
+    }
+    // los Velados: al pie de la escalinata (al bajar a la nave despiertan y
+    // sale la reja a la espalda)
     case 'velados': {
       prepare(g, { 'boss:guardianes': false, 'boss:guardianL': false, 'boss:guardianR': false });
-      const fog = g.interact.list.find((i) => i.id === 'f_velados');
-      place(g, -48.4, -7, -152, Math.PI / 2);
-      if (fog) g.enterFog(fog);
+      g.crypt.setVGate(false, true);
+      const S = DEEP.stair;
+      place(g, S.x1 + 1.0, DEEP.DY, S.z, Math.PI / 2);
       return true;
     }
     // la puerta, con todo hecho y la Garra en la mano

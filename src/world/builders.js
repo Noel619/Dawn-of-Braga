@@ -396,13 +396,18 @@ export function barrelVault(ctx, o) {
   return { crown: ys + rise, R, yc, len };
 }
 
-// Bóveda de cañón en rampa (sobre una escalera que corre a lo largo de z):
-// como barrelVault, pero el arranque va de ys0 (en z0) a ys1 (en z1). Con su
-// imposta inclinada a los lados y capas escalonadas para la cámara, con tapa
-// (encima no hay nada: sin ella la cámara salía por la bóveda).
+// Bóveda de cañón en rampa (sobre una escalera que corre a lo largo de z, o
+// de x con axis: 'x'): como barrelVault, pero el arranque va de ys0 (en z0, o
+// x0) a ys1 (en z1, o x1). Con su imposta inclinada a los lados y capas
+// escalonadas para la cámara, con tapa (encima no hay nada: sin ella la
+// cámara salía por la bóveda).
 export function rampVault(ctx, o) {
   const wb = ctx.wb;
-  const { x0, x1, z0, z1, ys0, ys1 } = o;
+  const alongX = o.axis === 'x';
+  // u: a lo ancho (la luz); s: a lo largo de la escalera
+  const [x0, x1] = alongX ? [o.z0, o.z1] : [o.x0, o.x1];
+  const [z0, z1] = alongX ? [o.x0, o.x1] : [o.z0, o.z1];
+  const { ys0, ys1 } = o;
   const span = x1 - x0,
     c = (x0 + x1) / 2;
   const inset = o.inset ?? 0.03;
@@ -415,7 +420,10 @@ export function rampVault(ctx, o) {
   const mat = o.mat ?? 'wallstone';
   const tint = o.tint ?? [0.5, 0.48, 0.46];
   const room = o.room;
-  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // (en x se cambian los ejes: es un espejo, y las caras se dan al revés)
+  const V = (u, y, s) => (alongX ? new THREE.Vector3(s, y, u) : new THREE.Vector3(u, y, s));
+  const quad = (m, a, b, cc, d, opt) => (alongX ? wb.quad(m, d, cc, b, a, opt) : wb.quad(m, a, b, cc, d, opt));
+  const cam = (ua, ya, sa, ub, yb, sb) => (alongX ? ctx.col.addCam(sa, ya, ua, sb, yb, ub) : ctx.col.addCam(ua, ya, sa, ub, yb, sb));
   for (let k = 0; k < n; k++) {
     const aa = Math.PI - a0 - (k / n) * (Math.PI - 2 * a0),
       ab = Math.PI - a0 - ((k + 1) / n) * (Math.PI - 2 * a0);
@@ -423,7 +431,7 @@ export function rampVault(ctx, o) {
       va = yc + R * Math.sin(aa),
       ub = c + R * Math.cos(ab),
       vb = yc + R * Math.sin(ab);
-    wb.quad(mat, V(ub, ys0 + vb, z0), V(ub, ys1 + vb, z1), V(ua, ys1 + va, z1), V(ua, ys0 + va, z0), { ao: false, sub: o.sub ?? 1.2, tint, room });
+    quad(mat, V(ub, ys0 + vb, z0), V(ub, ys1 + vb, z1), V(ua, ys1 + va, z1), V(ua, ys0 + va, z0), { ao: false, sub: o.sub ?? 1.2, tint, room });
   }
   if (o.impost !== false) {
     const it = 0.09,
@@ -432,10 +440,10 @@ export function rampVault(ctx, o) {
       itn = o.impostTint ?? tint.map((v) => v * 1.1);
     const io = { ao: false, sub: 3, tint: itn, room };
     // caras de delante (hacia dentro) y de abajo, a cada lado
-    wb.quad(im, V(x0 + it, ys0 - ih, z0), V(x0 + it, ys0, z0), V(x0 + it, ys1, z1), V(x0 + it, ys1 - ih, z1), io);
-    wb.quad(im, V(x1 - it, ys0 - ih, z0), V(x1 - it, ys1 - ih, z1), V(x1 - it, ys1, z1), V(x1 - it, ys0, z0), io);
-    wb.quad(im, V(x0, ys0 - ih, z0), V(x0 + it, ys0 - ih, z0), V(x0 + it, ys1 - ih, z1), V(x0, ys1 - ih, z1), io);
-    wb.quad(im, V(x1 - it, ys0 - ih, z0), V(x1, ys0 - ih, z0), V(x1, ys1 - ih, z1), V(x1 - it, ys1 - ih, z1), io);
+    quad(im, V(x0 + it, ys0 - ih, z0), V(x0 + it, ys0, z0), V(x0 + it, ys1, z1), V(x0 + it, ys1 - ih, z1), io);
+    quad(im, V(x1 - it, ys0 - ih, z0), V(x1 - it, ys1 - ih, z1), V(x1 - it, ys1, z1), V(x1 - it, ys0, z0), io);
+    quad(im, V(x0, ys0 - ih, z0), V(x0 + it, ys0 - ih, z0), V(x0 + it, ys1 - ih, z1), V(x0, ys1 - ih, z1), io);
+    quad(im, V(x1 - it, ys0 - ih, z0), V(x1, ys0 - ih, z0), V(x1, ys1 - ih, z1), V(x1 - it, ys1 - ih, z1), io);
   }
   if (o.cam !== false) {
     const len = z1 - z0;
@@ -451,13 +459,177 @@ export function rampVault(ctx, o) {
         const ya = ys + (rise * i) / steps,
           yb = ys + (rise * (i + 1)) / steps;
         const kk = Math.sqrt(Math.max(0, R * R - (yb - ys - yc) ** 2));
-        if (c - kk - x0 > 0.02) ctx.col.addCam(x0, ya, za, c - kk, yb, zb);
-        if (x1 - c - kk > 0.02) ctx.col.addCam(c + kk, ya, za, x1, yb, zb);
+        if (c - kk - x0 > 0.02) cam(x0, ya, za, c - kk, yb, zb);
+        if (x1 - c - kk > 0.02) cam(c + kk, ya, za, x1, yb, zb);
       }
-      ctx.col.addCam(x0, ys + rise, za, x1, ys + rise + 0.6, zb);
+      cam(x0, ys + rise, za, x1, ys + rise + 0.6, zb);
     }
   }
   return { rise, R };
+}
+
+// Bóvedas de arista sobre una cuadrícula de apoyos: xs y zs son las líneas de
+// los apoyos (columnas o muros), crecientes. Cada tramo es el cruce de dos
+// cañones de la misma flecha (elípticos si el tramo no es cuadrado):
+//   y = ys + rise·√(1 − min(|u|/hu, |v|/hv)²)
+// con las aristas por las diagonales. walls: { n, s, e, w } (los lados de la
+// cuadrícula que dan a un muro: ahí van los lunetos, del arranque a la
+// curva), y holes: [{ side, u0, u1, y }], vanos que suben por encima del
+// arranque en esos lunetos (un arco que entra en la bóveda). Para la cámara,
+// capas escalonadas alrededor de cada apoyo (lo macizo de los riñones) y una
+// tapa por encima de las claves. ribs: arcos fajones (y formeros) por las
+// líneas de los apoyos, de canto ribW.
+export function groinVaults(ctx, o) {
+  const wb = ctx.wb;
+  const { xs, zs, ys, rise } = o;
+  const mat = o.mat ?? 'wallstone';
+  const room = o.room;
+  const n = o.n ?? 8, // tramos del arco (a lo ancho de cada sector)
+    m = o.m ?? 4; // y del centro al borde
+  const opt = { ao: false, sub: o.sub ?? 1.4, tint: o.tint, room };
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  const prof = (k) => ys + rise * Math.sqrt(Math.max(0, 1 - k * k));
+  for (let i = 0; i < xs.length - 1; i++)
+    for (let j = 0; j < zs.length - 1; j++) {
+      const cx = (xs[i] + xs[i + 1]) / 2,
+        cz = (zs[j] + zs[j + 1]) / 2;
+      const hx = (xs[i + 1] - xs[i]) / 2,
+        hz = (zs[j + 1] - zs[j]) / 2;
+      // los cuatro sectores (el este, el oeste, el sur y el norte del tramo):
+      // s, del centro (0) al borde (1); t, a lo ancho (-1..1)
+      for (const [ax, sg] of [
+        ['x', 1],
+        ['x', -1],
+        ['z', 1],
+        ['z', -1],
+      ]) {
+        const P = (s, t) => (ax === 'x' ? V3(cx + sg * s * hx, prof(t * s), cz + t * s * hz) : V3(cx + t * s * hx, prof(t * s), cz + sg * s * hz));
+        // (vistas desde abajo: en el oeste y en el sur el giro se invierte)
+        const flip = ax === 'x' ? sg < 0 : sg > 0;
+        for (let a = 0; a < m; a++)
+          for (let b = 0; b < n; b++) {
+            const s0 = a / m,
+              s1 = (a + 1) / m;
+            const t0 = -1 + (2 * b) / n,
+              t1 = -1 + (2 * (b + 1)) / n;
+            if (a === 0) {
+              if (flip) wb.tri(mat, P(0, 0), P(s1, t1), P(s1, t0), opt);
+              else wb.tri(mat, P(0, 0), P(s1, t0), P(s1, t1), opt);
+            } else if (flip) wb.quad(mat, P(s0, t0), P(s0, t1), P(s1, t1), P(s1, t0), opt);
+            else wb.quad(mat, P(s0, t0), P(s1, t0), P(s1, t1), P(s0, t1), opt);
+          }
+      }
+    }
+  // lunetos de los muros perimetrales: del arranque a la curva de cada tramo
+  const W = o.walls ?? {};
+  const holes = o.holes ?? [];
+  const lun = (side) => {
+    const alongX = side === 'n' || side === 's';
+    const at = side === 'n' ? zs[0] : side === 's' ? zs[zs.length - 1] : side === 'w' ? xs[0] : xs[xs.length - 1];
+    const lines = alongX ? xs : zs;
+    // mira hacia dentro: n -> +z, s -> -z, w -> +x, e -> -x
+    const P = (u, y) => (alongX ? V3(u, y, at) : V3(at, y, u));
+    const inward = side === 'n' || side === 'w';
+    const strip = (ua, ub, ya, yb, y0) => {
+      if (ub - ua < 1e-4 || (ya - y0 < 1e-4 && yb - y0 < 1e-4)) return;
+      const fwd = alongX ? inward : !inward;
+      if (ya - y0 < 1e-4) {
+        if (fwd) wb.tri(mat, P(ua, y0), P(ub, y0), P(ub, yb), opt);
+        else wb.tri(mat, P(ub, y0), P(ua, y0), P(ub, yb), opt);
+      } else if (yb - y0 < 1e-4) {
+        if (fwd) wb.tri(mat, P(ua, y0), P(ub, y0), P(ua, ya), opt);
+        else wb.tri(mat, P(ub, y0), P(ua, y0), P(ua, ya), opt);
+      } else if (fwd) wb.quad(mat, P(ua, y0), P(ub, y0), P(ub, yb), P(ua, ya), opt);
+      else wb.quad(mat, P(ub, y0), P(ua, y0), P(ua, ya), P(ub, yb), opt);
+    };
+    const hs = holes.filter((h) => h.side === side);
+    for (let k = 0; k < lines.length - 1; k++) {
+      const c = (lines[k] + lines[k + 1]) / 2,
+        hw = (lines[k + 1] - lines[k]) / 2;
+      for (let b = 0; b < n; b++) {
+        const t0 = -1 + (2 * b) / n,
+          t1 = -1 + (2 * (b + 1)) / n;
+        let ua = c + t0 * hw,
+          ub = c + t1 * hw;
+        const ya = prof(t0),
+          yb = prof(t1);
+        const at2 = (u) => ya + ((yb - ya) * (u - ua)) / (ub - ua);
+        // (partido por los bordes de los vanos)
+        const cuts = [ua, ...hs.flatMap((h) => [h.u0, h.u1]).filter((u) => u > ua && u < ub), ub].sort((p, q) => p - q);
+        for (let q = 0; q < cuts.length - 1; q++) {
+          const u0 = cuts[q],
+            u1 = cuts[q + 1];
+          const um = (u0 + u1) / 2;
+          const h = hs.find((hh) => um > hh.u0 && um < hh.u1);
+          const y0 = h ? Math.max(ys, h.y) : ys;
+          if (y0 < Math.max(at2(u0), at2(u1))) strip(u0, u1, Math.max(y0, at2(u0)), Math.max(y0, at2(u1)), y0);
+        }
+      }
+    }
+  };
+  for (const side of ['n', 's', 'e', 'w']) if (W[side]) lun(side);
+  // fajones y formeros: arcos de canto ribW por las líneas de los apoyos
+  if (o.ribs) {
+    const rw = o.ribW ?? 0.36,
+      rd = o.ribD ?? 0.22;
+    const rt = o.ribTint ?? o.tint;
+    const rm = o.ribMat ?? 'ashlar';
+    const rib = (alongX, line, a0, a1) => {
+      // un arco a lo largo de x (en z = line) o de z (en x = line), de a0 a a1
+      const c = (a0 + a1) / 2,
+        hw = (a1 - a0) / 2;
+      for (let b = 0; b < n; b++) {
+        const t0 = -1 + (2 * b) / n,
+          t1 = -1 + (2 * (b + 1)) / n;
+        const P = (t, dy, dd) => (alongX ? V3(c + t * hw, prof(t) - dy, line + dd) : V3(line + dd, prof(t) - dy, c + t * hw));
+        const ro = { ao: false, sub: 3, tint: rt, room };
+        // la cara de abajo (intradós) y las dos caras de los lados
+        if (alongX) {
+          wb.quad(rm, P(t0, rd, -rw / 2), P(t1, rd, -rw / 2), P(t1, rd, rw / 2), P(t0, rd, rw / 2), ro);
+          wb.quad(rm, P(t0, 0, -rw / 2), P(t1, 0, -rw / 2), P(t1, rd, -rw / 2), P(t0, rd, -rw / 2), ro);
+          wb.quad(rm, P(t1, 0, rw / 2), P(t0, 0, rw / 2), P(t0, rd, rw / 2), P(t1, rd, rw / 2), ro);
+        } else {
+          wb.quad(rm, P(t0, rd, rw / 2), P(t1, rd, rw / 2), P(t1, rd, -rw / 2), P(t0, rd, -rw / 2), ro);
+          wb.quad(rm, P(t1, 0, -rw / 2), P(t0, 0, -rw / 2), P(t0, rd, -rw / 2), P(t1, rd, -rw / 2), ro);
+          wb.quad(rm, P(t0, 0, rw / 2), P(t1, 0, rw / 2), P(t1, rd, rw / 2), P(t0, rd, rw / 2), ro);
+        }
+      }
+    };
+    for (let j = 0; j < zs.length; j++) {
+      if ((j === 0 && !W.n) || (j === zs.length - 1 && !W.s)) continue;
+      const dd = j === 0 ? rw / 2 : j === zs.length - 1 ? -rw / 2 : 0;
+      for (let i = 0; i < xs.length - 1; i++) rib(true, zs[j] + dd, xs[i], xs[i + 1]);
+    }
+    for (let i = 0; i < xs.length; i++) {
+      if ((i === 0 && !W.w) || (i === xs.length - 1 && !W.e)) continue;
+      const dd = i === 0 ? rw / 2 : i === xs.length - 1 ? -rw / 2 : 0;
+      for (let j = 0; j < zs.length - 1; j++) rib(false, xs[i] + dd, zs[j], zs[j + 1]);
+    }
+  }
+  // la cámara: alrededor de cada apoyo, capas con lo macizo de los riñones
+  if (o.cam !== false) {
+    const steps = 4;
+    for (let i = 0; i < xs.length; i++)
+      for (let j = 0; j < zs.length; j++) {
+        const hxa = i > 0 ? (xs[i] - xs[i - 1]) / 2 : 0,
+          hxb = i < xs.length - 1 ? (xs[i + 1] - xs[i]) / 2 : 0;
+        const hza = j > 0 ? (zs[j] - zs[j - 1]) / 2 : 0,
+          hzb = j < zs.length - 1 ? (zs[j + 1] - zs[j]) / 2 : 0;
+        for (let k = 0; k < steps; k++) {
+          const ya = ys + (rise * k) / steps,
+            yb = ys + (rise * (k + 1)) / steps;
+          // a la altura yb, lo libre llega hasta a·h del centro de cada tramo
+          const a = Math.sqrt(Math.max(0, 1 - ((yb - ys) / rise) ** 2));
+          const ex0 = xs[i] - hxa * (1 - a),
+            ex1 = xs[i] + hxb * (1 - a);
+          const ez0 = zs[j] - hza * (1 - a),
+            ez1 = zs[j] + hzb * (1 - a);
+          if (ex1 - ex0 > 0.02 && ez1 - ez0 > 0.02) ctx.col.addCam(ex0, ya, ez0, ex1, yb, ez1);
+        }
+      }
+    ctx.col.addCam(xs[0], ys + rise, zs[0], xs[xs.length - 1], ys + rise + 0.5, zs[zs.length - 1]);
+  }
+  return { crown: ys + rise };
 }
 
 // Luneto: el testero de una bóveda de cañón, del arranque a la rosca (lo que

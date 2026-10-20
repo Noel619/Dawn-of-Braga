@@ -49,6 +49,8 @@ export function interiorRoom(ctx, x0, z0, x1, z1, y0, h, o = {}) {
         b = d.at + d.w / 2;
       seg(side, cur, a, y0, y0 + h, open + (d.reveal ? (along ? 'e' : 's') : ''));
       seg(side, a, b, y0 + (d.h ?? 2.3), y0 + h, d.reveal ? 'b' : '');
+      // (una ventana: 'sill', la altura del alféizar)
+      if (d.sill) seg(side, a, b, y0, y0 + d.sill, '');
       cur = b;
       open = d.reveal ? (along ? 'w' : 'n') : '';
     }
