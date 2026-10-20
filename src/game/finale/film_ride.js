@@ -152,11 +152,12 @@ export function* actRide(D, o = {}) {
   // ------------------------------------------------- 3. ¡Agárrate!
   arm.shake = 1;
   a && a.play('beastRoar', G.head(_v), { k: 1.8 });
-  // (a su lado, junto al jugador: el brazo arriba, el suelo pasando abajo)
+  // (a su lado, junto al jugador y por encima de la calle, sin meterse en
+  // las fachadas: el brazo arriba, el suelo pasando abajo)
   F.follow(() => {
     const P = p.pos;
-    const pos = G.wp(10.5, 6.5, 9.5, new V3());
-    return { pos: camSafe(g, P.clone(), pos), look: P.clone().add(_v.set(0, 1.4, 0)), fov: 58 };
+    const pos = G.wp(4.4, 7.4, 11.0, new V3());
+    return { pos: camSafe(g, P.clone(), pos), look: P.clone().add(_v.set(0, 1.4, 0)), fov: 60 };
   });
   F.hand = 0.07;
   const okHold = yield* F.prompt({ action: 'interact', label: '¡Agárrate!', window: 2.4, mash: 6, slow: 0.5 });
@@ -192,8 +193,9 @@ export function* actRide(D, o = {}) {
     F.hurt(22, null, { shake: 1, heavy: true });
     a && a.play('boneCrack', p.pos, { k: 1.2 });
   }
-  // (de lado, junto a él: revienta por los tejados)
-  F.follow(nearP([-4.6, -0.6, -1.6], 8));
+  // (de lado y por encima de los tejados que revienta: él, encogido, entre
+  // las tejas que saltan)
+  F.follow(nearP([-3.0, 3.4, 2.4], 8));
   F.hand = 0.07;
   yield* F.wait(1.5);
   arm.to(ARM5.carry, 0.8);
