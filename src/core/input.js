@@ -27,6 +27,8 @@ const KB = {
   mRight: ['ArrowRight', 'KeyD'],
   tabL: ['KeyQ'],
   tabR: ['KeyE'],
+  // (en un documento: muestra u oculta su transcripción)
+  transcribe: ['KeyT'],
   camL: ['KeyJ'],
   camR: ['KeyL'],
   camU: [],
@@ -40,6 +42,7 @@ const PAD = {
   dodge: [1], // B
   back: [1],
   heal: [2], // X
+  transcribe: [2],
   inventory: [3], // Y
   block: [4], // LB
   tabL: [4],
@@ -411,6 +414,7 @@ export const GLYPHS = {
     sprint: 'Mayús',
     tabL: 'Q',
     tabR: 'E',
+    transcribe: 'T',
   },
   pad: {
     interact: 'A',
@@ -428,5 +432,6 @@ export const GLYPHS = {
     sprint: 'B (mant.)',
     tabL: 'LB',
     tabR: 'RB',
+    transcribe: 'X',
   },
 };

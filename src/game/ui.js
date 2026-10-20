@@ -304,7 +304,7 @@ export class UI {
     if (s.name === 'options') this.renderOptions(s);
     if (s.name === 'controls') this.renderControls();
     if (s.name === 'map') this.renderMap();
-    if (s.name === 'note') $('note-hint').innerHTML = `<span>${this.keyHtml('confirm')} Cerrar</span>`;
+    if (s.name === 'note') this.renderNoteHint();
     if (s.name === 'item') $('item-hint').innerHTML = `<span>${this.keyHtml('confirm')} Continuar</span>`;
   }
 
@@ -364,6 +364,7 @@ export class UI {
       { label: 'Deformación de texturas', kind: 'pct', n: () => S.affine, set: (d) => (S.affine = step(S.affine, d, 0.1, 0, 1)) },
       { label: 'Filtro CRT', kind: 'pct', n: () => S.crt, set: (d) => (S.crt = step(S.crt, d, 0.1, 0, 1)) },
       { label: 'Mostrar FPS', kind: 'bool', n: () => S.fps, set: () => (S.fps = !S.fps) },
+      { label: 'Transcribir los documentos', kind: 'bool', n: () => S.transcript, set: () => (S.transcript = !S.transcript) },
     ];
   }
   renderOptions(s) {
@@ -545,12 +546,40 @@ export class UI {
       p.textContent = t;
       box.appendChild(p);
     });
+    // la transcripción: el mismo texto en letra de leer (la bastarda de los
+    // documentos cuesta a veces descifrarla)
+    const tr = $('note-tr-text');
+    tr.innerHTML = '';
+    tr.scrollTop = 0;
+    for (const t of text.split(/\n\s*\n/)) {
+      const p = document.createElement('p');
+      p.textContent = t;
+      tr.appendChild(p);
+    }
+    this.showTranscript(this.g.settings.transcript);
     // lacre al pie
     const parch = box.parentElement;
     parch.querySelector('.seal')?.remove();
     const s = spriteImg(this.seal, 1, 'seal');
     parch.appendChild(s);
     this.open('note');
+  }
+  showTranscript(on) {
+    $('note-wrap').classList.toggle('tr', !!on);
+  }
+  // Muestra u oculta la transcripción (y se recuerda para los siguientes).
+  toggleTranscript() {
+    const S = this.g.settings;
+    S.transcript = !S.transcript;
+    this.g.applySettings();
+    this.showTranscript(S.transcript);
+    this.renderNoteHint();
+    this.g.audio && this.g.audio.ui('move');
+  }
+  renderNoteHint() {
+    const h = $('note-hint');
+    h.innerHTML = `<span>${this.keyHtml('confirm')} Cerrar</span><span class="tg">${this.keyHtml('transcribe')} ${this.g.settings.transcript ? 'Ocultar la transcripción' : 'Transcripción'}</span>`;
+    h.querySelector('.tg').addEventListener('click', () => this.toggleTranscript());
   }
   showItem(id) {
     const it = ITEMS[id];
@@ -1009,8 +1038,13 @@ export class UI {
       case 'item':
         if (s.t === undefined) s.t = 0;
         s.t += dt;
-        // documentos largos en pantallas pequeñas: el texto se desplaza
-        if (s.name === 'note' && dir.y) $('note-text').scrollBy(0, dir.y * 19 * (this.sc.m + 1) * 2);
+        // documentos largos en pantallas pequeñas: el texto se desplaza (y su
+        // transcripción con él)
+        if (s.name === 'note' && dir.y) {
+          $('note-text').scrollBy(0, dir.y * 19 * (this.sc.m + 1) * 2);
+          $('note-tr-text').scrollBy(0, dir.y * 21 * this.sc.m * 2);
+        }
+        if (s.name === 'note' && inp.pressed('transcribe')) this.toggleTranscript();
         if (s.t > 0.35 && (conf || back)) this.close();
         break;
       case 'inv': {

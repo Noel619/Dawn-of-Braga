@@ -172,7 +172,16 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #note .text .drop { float: left; margin: calc(var(--u) * 1) calc(var(--u) * 3) 0 0; }
 #note .text p { margin: 0 0 calc(10px * var(--m)); }
 #note .hint { color: var(--pink2); text-shadow: none; }
+#note .hint .tg { cursor: pointer; }
 #note .parch > img.spr.seal { position: absolute; right: calc(var(--u) * 12); bottom: calc(var(--u) * 7); z-index: 1; }
+/* la transcripción, a la derecha del pergamino (en letra de leer) */
+#note .notewrap { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 6); max-width: 98vw; }
+#note .notewrap .transcript { display: none; }
+#note .notewrap.tr .parch { width: min(calc(var(--u) * 250), 56vw); }
+#note .notewrap.tr .transcript { display: flex; flex-direction: column; width: min(calc(var(--u) * 196), 40vw); max-height: 90vh; padding: calc(var(--u) * 11) calc(var(--u) * 12) calc(var(--u) * 10); }
+#note .transcript .trtext { margin-top: calc(var(--u) * 4); overflow-y: auto; min-height: 0; color: var(--bone); text-shadow: var(--sh); white-space: pre-wrap; scrollbar-width: none; }
+#note .transcript .trtext::-webkit-scrollbar { display: none; }
+#note .transcript .trtext p { margin: 0 0 calc(8px * var(--m)); }
 
 /* objeto obtenido */
 #item .panel { width: min(calc(var(--u) * 232), 94vw); text-align: center; }

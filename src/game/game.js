@@ -62,7 +62,8 @@ export class Game {
     // pero los gráficos vuelven a los nuevos valores por defecto
     const saved = loadSettings() || {};
     if ((saved.v | 0) < 2) for (const k of ['res', 'snap', 'affine', 'crt']) delete saved[k];
-    this.settings = { res: 540, snap: false, affine: 0, crt: 0, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, ...saved, v: 2 };
+    // (transcript: la transcripción de los documentos, a la derecha del pergamino)
+    this.settings = { res: 540, snap: false, affine: 0, crt: 0, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, transcript: true, ...saved, v: 2 };
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }));
     r.setPixelRatio(1);
     setMaxAnisotropy(r.capabilities.getMaxAnisotropy());
