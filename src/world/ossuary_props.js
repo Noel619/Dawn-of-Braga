@@ -436,3 +436,143 @@ export function trophyParts(o = {}) {
   }
   return P;
 }
+
+// ------------------------------------------------------ la caja de música
+// Un rodillo: prisma de seis caras a lo largo de x, cada cara con uno de los
+// símbolos del atlas 'nanaSymbols' (la cara k queda delante, hacia +z, con
+// el rodillo girado k·60° en x).
+export function drumGeometry(r = 0.05, len = 0.075) {
+  return geo('nanaDrum' + r + ':' + len, () => {
+    const pos = [],
+      uv = [],
+      nor = [],
+      idx = [];
+    const d = (a) => [Math.sin(a), Math.cos(a)];
+    for (let k = 0; k < 6; k++) {
+      const c = (k * Math.PI) / 3,
+        a0 = c - Math.PI / 6,
+        a1 = c + Math.PI / 6;
+      const [s0, c0] = d(a0),
+        [s1, c1] = d(a1),
+        [sn, cn] = d(c);
+      const b = pos.length / 3;
+      for (const [x, s, cc, v] of [
+        [-len / 2, s0, c0, 0],
+        [len / 2, s0, c0, 0],
+        [len / 2, s1, c1, 1],
+        [-len / 2, s1, c1, 1],
+      ]) {
+        pos.push(x, s * r, cc * r);
+        nor.push(0, sn, cn);
+        uv.push((k + (x > 0 ? 1 : 0)) / 6, v);
+      }
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    return g;
+  });
+}
+// las tapas del rodillo, con su aro de latón (en el marco del rodillo)
+export function drumCapParts(r = 0.05, len = 0.075) {
+  const hex = geo('drumCap' + r, () => new THREE.CylinderGeometry(r * 1.0, r * 1.0, 0.008, 6));
+  const rim = geo('drumRim' + r, () => new THREE.CylinderGeometry(r * 1.12, r * 1.12, 0.01, 12));
+  const P = [];
+  for (const s of [-1, 1]) {
+    // (la caja de seis caras, con el canto alineado con las del prisma)
+    P.push(part(hex, 'wooddark', TRS(s * (len / 2 + 0.004), 0, 0, Q(0, 0, Math.PI / 2).multiply(Q(0, Math.PI / 6, 0)))));
+    P.push(part(rim, 'bronze', TRS(s * (len / 2 + 0.012), 0, 0, Q(0, 0, Math.PI / 2))));
+  }
+  P.push(part(geo('drumAxle', () => new THREE.CylinderGeometry(0.008, 0.008, 1, 6)), 'iron', TRS(0, 0, 0, Q(0, 0, Math.PI / 2), 1, len + 0.05, 1)));
+  return P;
+}
+
+// La caja de música del ama: de nogal, con cantoneras de latón, cuatro
+// rodillos en su frente, la manivela a la derecha y el cajón abajo.
+// Devuelve el cuerpo, los rodillos (sus centros), la manivela (su eje) y el
+// cajón, por separado. Origen en el centro de la base; el frente hacia +z.
+export const MBOX = { W: 0.58, H: 0.39, D: 0.36, drumY: 0.255, drumR: 0.048, drumLen: 0.072, drumX: [-0.18, -0.06, 0.06, 0.18], crank: [0.312, 0.255, 0.07], drawerY: 0.035, drawerH: 0.1, drawerOpen: 0.22 };
+export function musicBoxParts() {
+  const B = MBOX;
+  const blk = geo('mbBox', () => new THREE.BoxGeometry(1, 1, 1));
+  const wood = 'wooddark';
+  const body = [];
+  const hw = B.W / 2,
+    hd = B.D / 2;
+  const yD1 = B.drawerY + B.drawerH;
+  body.push(part(blk, wood, TRS(0, 0.0175, 0, Q(), B.W + 0.02, 0.035, B.D + 0.02)));
+  // a los lados y detrás del cajón
+  for (const s of [-1, 1]) body.push(part(blk, wood, TRS(s * (hw - 0.03), (B.drawerY + yD1) / 2, 0, Q(), 0.06, B.drawerH, B.D)));
+  body.push(part(blk, wood, TRS(0, (B.drawerY + yD1) / 2, -hd + 0.025, Q(), B.W - 0.12, B.drawerH, 0.05)));
+  body.push(part(blk, 'black', TRS(0, (B.drawerY + yD1) / 2, -0.02, Q(), B.W - 0.12, B.drawerH - 0.004, B.D - 0.1)));
+  // el cuerpo de arriba, la tapa y su moldura
+  const yT = B.H - 0.03;
+  body.push(part(blk, wood, TRS(0, (yD1 + yT) / 2, 0, Q(), B.W, yT - yD1, B.D)));
+  body.push(part(blk, wood, TRS(0, yT + 0.015, 0, Q(), B.W + 0.03, 0.03, B.D + 0.03)));
+  body.push(part(blk, wood, TRS(0, yD1 + 0.008, hd + 0.006, Q(), B.W + 0.012, 0.016, 0.012)));
+  // las ventanas de los rodillos (oscuras) y un marco de latón alrededor
+  for (const x of B.drumX) {
+    body.push(part(blk, 'black', TRS(x, B.drumY, hd + 0.0015, Q(), B.drumLen + 0.024, B.drumR * 1.5, 0.003)));
+    body.push(part(blk, 'bronze', TRS(x, B.drumY + B.drumR * 0.8, hd + 0.004, Q(), B.drumLen + 0.03, 0.008, 0.008)));
+    body.push(part(blk, 'bronze', TRS(x, B.drumY - B.drumR * 0.8, hd + 0.004, Q(), B.drumLen + 0.03, 0.008, 0.008)));
+  }
+  // cantoneras de latón
+  for (const sx of [-1, 1])
+    for (const sz of [-1, 1])
+      for (const y of [0.05, yT + 0.01]) body.push(part(blk, 'bronze', TRS(sx * (hw + 0.004), y, sz * (hd + 0.004), Q(), 0.03, 0.05, 0.03)));
+  // en la tapa: la cruz del Carmen, de latón, y el agujero de la cuerda
+  body.push(part(blk, 'bronze', TRS(0, yT + 0.032, 0, Q(), 0.03, 0.004, 0.16)));
+  body.push(part(blk, 'bronze', TRS(0, yT + 0.032, -0.03, Q(), 0.1, 0.004, 0.03)));
+  // la placa del eje de la manivela
+  body.push(part(geo('mbBoss', () => new THREE.CylinderGeometry(0.04, 0.04, 0.012, 10)), 'bronze', TRS(hw + 0.005, B.crank[1], B.crank[2], Q(0, 0, Math.PI / 2))));
+  // la manivela (marco: el eje, en x)
+  const crank = [
+    part(geo('mbAxle', () => new THREE.CylinderGeometry(0.012, 0.012, 0.06, 6)), 'iron', TRS(0.0, 0, 0, Q(0, 0, Math.PI / 2))),
+    part(blk, 'iron', TRS(0.03, -0.065, 0, Q(), 0.016, 0.145, 0.022)),
+    part(geo('mbKnob', () => new THREE.CylinderGeometry(0.016, 0.019, 0.065, 6)), wood, TRS(0.062, -0.13, 0, Q(0, 0, Math.PI / 2))),
+  ];
+  // el cajón (marco: su frente cerrado, a ras del cuerpo)
+  const dh = B.drawerH - 0.008;
+  const drawer = [
+    part(blk, wood, TRS(0, dh / 2, -0.012, Q(), B.W - 0.13, dh, 0.022)),
+    part(blk, wood, TRS(0, 0.006, -0.16, Q(), B.W - 0.14, 0.012, 0.3)),
+    part(blk, wood, TRS(-(B.W - 0.15) / 2, dh * 0.4, -0.16, Q(), 0.012, dh * 0.8, 0.3)),
+    part(blk, wood, TRS((B.W - 0.15) / 2, dh * 0.4, -0.16, Q(), 0.012, dh * 0.8, 0.3)),
+    part(blk, wood, TRS(0, dh * 0.4, -0.305, Q(), B.W - 0.14, dh * 0.8, 0.012)),
+    part(blk, 'clothRed', TRS(0, 0.014, -0.16, Q(), B.W - 0.16, 0.006, 0.28), [0.45, 0.25, 0.22]),
+    part(geo('mbPull', () => new THREE.SphereGeometry(0.014, 6, 4)), 'bronze', TRS(0, dh / 2, 0.006)),
+  ];
+  return { body, crank, drawer };
+}
+
+// La silla baja del ama, con su chal; el frente hacia +z.
+export function chairParts(o = {}) {
+  const blk = geo('chBox2', () => new THREE.BoxGeometry(1, 1, 1));
+  const P = [];
+  for (const sx of [-1, 1])
+    for (const sz of [-1, 1]) P.push(part(blk, 'wooddark', TRS(sx * 0.18, 0.17, sz * 0.16, Q(), 0.035, 0.34, 0.035)));
+  P.push(part(blk, 'straw', TRS(0, 0.35, 0, Q(), 0.42, 0.04, 0.38), [0.62, 0.52, 0.36]));
+  for (const sx of [-1, 1]) P.push(part(blk, 'wooddark', TRS(sx * 0.18, 0.62, -0.17, Q(-0.1, 0, 0), 0.035, 0.56, 0.035)));
+  for (const y of [0.55, 0.75]) P.push(part(blk, 'wooddark', TRS(0, y, -0.18, Q(-0.1, 0, 0), 0.38, 0.05, 0.02)));
+  // el chal, doblado sobre el respaldo y caído por el asiento
+  if (o.shawl !== false) {
+    P.push(part(blk, 'clothDark', TRS(0, 0.82, -0.17, Q(-0.1, 0, 0.05), 0.44, 0.05, 0.08), [0.42, 0.36, 0.4]));
+    P.push(part(blk, 'clothDark', TRS(0.02, 0.6, -0.21, Q(-0.12, 0, 0.04), 0.4, 0.42, 0.015), [0.42, 0.36, 0.4]));
+    P.push(part(blk, 'clothDark', TRS(0.05, 0.38, 0.04, Q(0, 0.2, 0), 0.24, 0.02, 0.3), [0.42, 0.36, 0.4]));
+  }
+  return P;
+}
+
+// La rueca y el huso del ama (apoyada, a lo largo de +y, con el copo de
+// lana arriba).
+export function distaffParts() {
+  return [
+    part(geo('dfStick', () => new THREE.CylinderGeometry(0.012, 0.016, 1.1, 5)), 'wooddark', TRS(0, 0.55, 0)),
+    part(geo('dfWool', () => new THREE.SphereGeometry(0.075, 6, 5)), 'linen', TRS(0, 1.0, 0, Q(), 1, 1.6, 1), [0.82, 0.78, 0.7]),
+    part(geo('dfSpindle', () => new THREE.CylinderGeometry(0.004, 0.01, 0.26, 5)), 'wooddark', TRS(0.14, 0.4, 0.03, Q(0, 0, 0.3))),
+    part(geo('dfWhorl', () => new THREE.CylinderGeometry(0.02, 0.02, 0.015, 8)), 'bone', TRS(0.12, 0.32, 0.03, Q(0, 0, 0.3))),
+  ];
+}

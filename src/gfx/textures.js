@@ -191,6 +191,54 @@ function paintLetrero(text, W = 256, H = 16, seed = 1) {
   return c;
 }
 
+// Letras arañadas en la piedra (trazos temblones de tres rayas), sobre
+// transparente. lines: una o dos líneas en mayúsculas.
+const SCRATCH = {
+  M: [[0, 1, 0, 0], [0, 0, 0.5, 0.6], [0.5, 0.6, 1, 0], [1, 0, 1, 1]],
+  A: [[0, 1, 0.5, 0], [0.5, 0, 1, 1], [0.2, 0.62, 0.8, 0.62]],
+  S: [[1, 0.05, 0.1, 0.1], [0.1, 0.1, 0.05, 0.45], [0.05, 0.45, 0.95, 0.55], [0.95, 0.55, 0.9, 0.95], [0.9, 0.95, 0, 0.95]],
+  B: [[0, 0, 0, 1], [0, 0, 0.8, 0.12], [0.8, 0.12, 0.75, 0.45], [0.75, 0.45, 0, 0.5], [0, 0.5, 0.95, 0.62], [0.95, 0.62, 0.85, 0.98], [0.85, 0.98, 0, 1]],
+  J: [[0.9, 0, 0.9, 0.8], [0.9, 0.8, 0.5, 1], [0.5, 1, 0.05, 0.8]],
+  O: [[0.5, 0, 0.05, 0.3], [0.05, 0.3, 0.1, 0.75], [0.1, 0.75, 0.5, 1], [0.5, 1, 0.95, 0.7], [0.95, 0.7, 0.9, 0.25], [0.9, 0.25, 0.5, 0]],
+  L: [[0, 0, 0.05, 1], [0.05, 1, 0.9, 0.95]],
+  C: [[0.95, 0.12, 0.5, 0], [0.5, 0, 0.05, 0.3], [0.05, 0.3, 0.1, 0.75], [0.1, 0.75, 0.5, 1], [0.5, 1, 0.95, 0.85]],
+  P: [[0, 1, 0, 0], [0, 0, 0.8, 0.1], [0.8, 0.1, 0.85, 0.42], [0.85, 0.42, 0, 0.52]],
+  N: [[0, 1, 0, 0], [0, 0, 1, 1], [1, 1, 1, 0]],
+  E: [[0.9, 0, 0, 0.02], [0, 0.02, 0.05, 1], [0.05, 1, 0.9, 0.98], [0.02, 0.5, 0.7, 0.48]],
+  R: [[0, 1, 0, 0], [0, 0, 0.8, 0.1], [0.8, 0.1, 0.85, 0.42], [0.85, 0.42, 0, 0.52], [0.3, 0.52, 0.95, 1]],
+  I: [[0.5, 0, 0.5, 1]],
+};
+SCRATCH['Á'] = [...SCRATCH.A, [0.4, -0.22, 0.68, -0.4]];
+SCRATCH['Í'] = [...SCRATCH.I, [0.4, -0.22, 0.68, -0.4]];
+function scratchText(lines, W, H, seed) {
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  const rng = new RNG(seed);
+  const ch = H * 0.31,
+    lh = H / lines.length;
+  lines.forEach((text, li) => {
+    const n = text.length;
+    const cw = Math.min(ch * 0.9, (W - 8) / (n * 1.35)),
+      gap = cw * 0.35;
+    let x = (W - (n * cw + (n - 1) * gap)) / 2;
+    const y0 = li * lh + (lh - ch) / 2 + 2;
+    for (const chr of text) {
+      for (const [a, b, cc, d] of SCRATCH[chr] || [])
+        for (let k = 0; k < 3; k++) {
+          const j = () => rng.range(-0.8, 0.8);
+          g.strokeStyle = k === 1 ? 'rgba(206,196,176,1)' : 'rgba(150,142,128,1)';
+          g.lineWidth = k === 1 ? 1.6 : 1;
+          g.beginPath();
+          g.moveTo(x + a * cw + j() + k * 0.7, y0 + b * ch + j());
+          g.lineTo(x + cc * cw + j() + k * 0.7, y0 + d * ch + j());
+          g.stroke();
+        }
+      x += cw + gap;
+    }
+  });
+  return c;
+}
+
 // grano en todo el canvas
 function grain(g, S, a = 0.85, b = 0.25, seed = 1) {
   const img = g.getImageData(0, 0, S, S);
@@ -1221,6 +1269,183 @@ const GEN = {
       }
     }
     grain(g, S, 0.8, 0.3, 76);
+    return c;
+  },
+
+  // «MÁS ABAJO», arañado en la piedra a punta de hueso (recortado: lo de
+  // alrededor es transparente). Para materiales con alphaTest.
+  scratchMasAbajo() {
+    return scratchText(['MÁS', 'ABAJO'], 128, 64, 91);
+  },
+  scratchCampana() {
+    return scratchText(['LA CAMPANA', 'SÍ ES POR MÍ'], 192, 64, 92);
+  },
+
+  // El círculo de sal del ama en el suelo (granos, con huecos), recortado.
+  saltRing() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const d = Math.hypot(x - S / 2 + 0.5, y - S / 2 + 0.5) / (S / 2);
+      const n = hash2(x, y, 93);
+      const band = Math.abs(d - 0.82) < 0.07 + fbm2(x / 5, y / 5, 2, 0, 94) * 0.05;
+      if (band && n > 0.25) set(o, 236, 232, 222, 255);
+      else if (d < 0.97 && n > 0.985) set(o, 220, 216, 206, 255);
+      else set(o, 0, 0, 0, 0);
+    });
+  },
+
+  // Los símbolos de los rodillos de la caja de música (seis, en fila): el
+  // sol, la luna, la estrella, la campana, el gallo y la cruz, pintados en
+  // marfil.
+  nanaSymbols() {
+    const T = 16,
+      N = 6;
+    const c = makeCanvas(T * N, T);
+    const g = c.getContext('2d');
+    for (let k = 0; k < N; k++) {
+      const x = k * T;
+      g.fillStyle = '#cdbf9c';
+      g.fillRect(x, 0, T, T);
+      g.fillStyle = '#7a6448';
+      g.fillRect(x, 0, T, 1);
+      g.fillRect(x, T - 1, T, 1);
+      const cx = x + T / 2,
+        cy = T / 2;
+      if (k === 0) {
+        // el sol con sus rayos
+        g.fillStyle = '#c07a18';
+        for (let r = 0; r < 8; r++) {
+          const a = (r / 8) * Math.PI * 2;
+          g.fillRect(Math.round(cx + Math.cos(a) * 5.5 - 0.5), Math.round(cy + Math.sin(a) * 5.5 - 0.5), 1.5, 1.5);
+        }
+        g.fillStyle = '#e0a020';
+        g.beginPath();
+        g.arc(cx, cy, 3.6, 0, Math.PI * 2);
+        g.fill();
+      } else if (k === 1) {
+        // la luna, en creciente
+        g.fillStyle = '#5a6a88';
+        g.beginPath();
+        g.arc(cx, cy, 5.2, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = '#cdbf9c';
+        g.beginPath();
+        g.arc(cx + 2.6, cy - 1.2, 4.6, 0, Math.PI * 2);
+        g.fill();
+      } else if (k === 2) {
+        // la estrella de seis puntas
+        g.fillStyle = '#3a5aa0';
+        for (const off of [0, Math.PI / 3]) {
+          g.beginPath();
+          for (let r = 0; r < 3; r++) {
+            const a = off + (r / 3) * Math.PI * 2 - Math.PI / 2;
+            g.lineTo(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6);
+          }
+          g.closePath();
+          g.fill();
+        }
+      } else if (k === 3) {
+        // la campana
+        g.fillStyle = '#5a3c20';
+        g.beginPath();
+        g.moveTo(cx - 1.5, cy - 5);
+        g.lineTo(cx + 1.5, cy - 5);
+        g.quadraticCurveTo(cx + 3.5, cy - 4, cx + 3.6, cy + 1);
+        g.lineTo(cx + 5.5, cy + 4);
+        g.lineTo(cx - 5.5, cy + 4);
+        g.lineTo(cx - 3.6, cy + 1);
+        g.quadraticCurveTo(cx - 3.5, cy - 4, cx - 1.5, cy - 5);
+        g.fill();
+        g.fillRect(cx - 1, cy + 4, 2, 2);
+        g.fillRect(cx - 0.5, cy - 7, 1, 2);
+      } else if (k === 4) {
+        // el gallo, de perfil, con su cresta roja
+        g.fillStyle = '#3a2a1a';
+        g.beginPath();
+        g.ellipse(cx - 0.5, cy + 1.5, 4.2, 3, 0, 0, Math.PI * 2);
+        g.fill();
+        g.beginPath();
+        g.ellipse(cx + 3, cy - 2.5, 1.8, 2.2, 0, 0, Math.PI * 2);
+        g.fill();
+        // la cola
+        g.beginPath();
+        g.moveTo(cx - 4, cy + 1);
+        g.lineTo(cx - 7, cy - 4);
+        g.lineTo(cx - 3, cy - 1);
+        g.fill();
+        g.fillStyle = '#b02018';
+        g.fillRect(cx + 2, cy - 6, 3, 1.6);
+        g.fillRect(cx + 4.5, cy - 2, 1.5, 1.5);
+        g.fillStyle = '#c08a20';
+        g.fillRect(cx + 4.6, cy - 3.2, 2, 1);
+        g.fillRect(cx - 1.5, cy + 4.2, 1, 2.5);
+        g.fillRect(cx + 0.8, cy + 4.2, 1, 2.5);
+      } else {
+        // la cruz
+        g.fillStyle = '#6a1a14';
+        g.fillRect(cx - 1, cy - 6, 2.2, 12);
+        g.fillRect(cx - 4.5, cy - 2.5, 9, 2.2);
+      }
+    }
+    return c;
+  },
+
+  // La Virgen del Carmen del ama: tabla pintada con la Virgen de hábito
+  // pardo y manto blanco, el Niño, el escapulario en la mano y estrellas.
+  virgenCarmen() {
+    const W = 32,
+      H = 48;
+    const c = makeCanvas(W, H);
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#2a3a5a');
+    bg.addColorStop(1, '#1a2238');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+    // estrellas
+    g.fillStyle = '#d8c070';
+    for (const [x, y] of [[4, 6], [27, 5], [6, 20], [26, 18], [3, 34], [28, 31]]) g.fillRect(x, y, 1, 1);
+    // el manto blanco (un arco hasta los pies) y el hábito pardo
+    g.fillStyle = '#d8d0bc';
+    g.beginPath();
+    g.moveTo(16, 7);
+    g.quadraticCurveTo(28, 14, 26, 44);
+    g.lineTo(6, 44);
+    g.quadraticCurveTo(4, 14, 16, 7);
+    g.fill();
+    g.fillStyle = '#6a4a2c';
+    g.beginPath();
+    g.moveTo(16, 13);
+    g.quadraticCurveTo(23, 20, 21, 44);
+    g.lineTo(11, 44);
+    g.quadraticCurveTo(9, 20, 16, 13);
+    g.fill();
+    // el escapulario (un cuadrado pardo en la mano) y el Niño en brazos
+    g.fillStyle = '#4a3018';
+    g.fillRect(20, 26, 4, 4);
+    g.fillStyle = '#e8d8b8';
+    g.fillRect(12, 20, 5, 6);
+    g.fillStyle = '#e0b890';
+    g.beginPath();
+    g.arc(14.5, 19, 1.8, 0, Math.PI * 2);
+    g.fill();
+    // la cara, la toca y la corona con el halo
+    g.fillStyle = '#e8c8a0';
+    g.beginPath();
+    g.arc(16, 10, 2.6, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#e0b030';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.arc(16, 9.5, 5, Math.PI * 1.05, Math.PI * 1.95);
+    g.stroke();
+    g.fillStyle = '#d0a020';
+    g.fillRect(13.5, 5.5, 5, 1.5);
+    // el marco dorado
+    g.strokeStyle = '#8a6a28';
+    g.lineWidth = 2;
+    g.strokeRect(1, 1, W - 2, H - 2);
+    grain(g, W, 0.86, 0.2, 95);
     return c;
   },
 

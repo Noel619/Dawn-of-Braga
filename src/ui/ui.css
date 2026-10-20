@@ -66,6 +66,12 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #prompt { position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 14); color: var(--bone-hi); text-shadow: var(--sh); opacity: 0; transition: opacity 0.15s steps(2); white-space: nowrap; }
 #prompt > :not(canvas.pxbg) { position: relative; z-index: 1; }
 #prompt.show { opacity: 1; }
+/* los controles de un mecanismo visto de cerca (los osarios) */
+#pzhint { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); display: flex; align-items: center; padding: calc(var(--u) * 3) calc(var(--u) * 14); color: var(--bone-hi); text-shadow: var(--sh); opacity: 0; transition: opacity 0.15s steps(2); white-space: nowrap; pointer-events: none; }
+#pzhint > :not(canvas.pxbg) { position: relative; z-index: 1; }
+#pzhint.show { opacity: 1; }
+#pzhint-list { display: flex; align-items: center; gap: calc(var(--u) * 9); }
+#pzhint .it { display: flex; align-items: center; gap: calc(var(--u) * 3); }
 .keys { display: inline-flex; gap: var(--u); vertical-align: middle; }
 /* tecla que parpadea entre sus dos fotogramas (pulsada / suelta) */
 .kblink { position: relative; display: inline-block; line-height: 0; }

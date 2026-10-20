@@ -90,6 +90,9 @@ const FX_PRIO = {
   boneClatter: [2, 'mundo'],
   bellToll: [4, 'mundo'],
   helmetRing: [4, 'mundo'],
+  drumClick: [4, 'mundo'],
+  crankWind: [4, 'mundo'],
+  musicBoxTune: [5, 'mundo'],
   helmetChord: [5, 'mundo'],
   relicReveal: [5, 'mundo'],
   roar: [4, 'mundo'],
@@ -2042,6 +2045,55 @@ export class Audio {
         this.noise(d, t, 1.6, { f0: 3000, f1: 7000, q: 1.2, gain: 0.05, a: 0.6, buf: this.pink });
         [76, 83, 88, 95].forEach((m, i) => this.smp(d, t + 0.2 + i * 0.12, this.smallBell(), { gain: 0.05, rate: mtof(m) / mtof(76) }));
         this.score.stinger('relic');
+        break;
+      }
+      // la caja de música del ama: el rodillo que salta de un diente al otro
+      // (se oye en toda la bodega)
+      case 'drumClick': {
+        d = this.out(P, { gain: 0.9, verb: 0.6, life: 2.5, ref: 9, occlude: false });
+        this.noise(d, t, 0.025, { f0: rnd(2600, 3200), q: 6, gain: 0.5, a: 0.0008 });
+        this.tone(d, t, 0.06, { f0: rnd(420, 520), f1: 260, gain: 0.3, a: 0.001 });
+        this.noise(d, t + 0.05, 0.02, { f0: rnd(1800, 2200), q: 5, gain: 0.25, a: 0.0008 });
+        break;
+      }
+      // la manivela: la cuerda, diente a diente
+      case 'crankWind': {
+        d = this.out(P, { gain: 0.9, verb: 0.55, life: 3, ref: 9, occlude: false });
+        for (let i = 0; i < 14; i++) {
+          const tt = t + i * 0.085 + rnd(0, 0.01);
+          this.noise(d, tt, 0.018, { f0: rnd(3000, 3800), q: 7, gain: 0.32, a: 0.0006 });
+          this.tone(d, tt, 0.03, { f0: rnd(700, 820), f1: 500, gain: 0.08, a: 0.0006 });
+        }
+        this.creak(d, t, 1.2, rnd(240, 300), 0.04);
+        break;
+      }
+      // la nana, en las púas de la caja (o.notes: MIDI, null = silencio)
+      case 'musicBoxTune': {
+        d = this.out(P, { gain: 0.85, verb: 0.75, life: (o.notes?.length ?? 8) * (o.step ?? 0.36) + 4, ref: 10, occlude: false });
+        const st = o.step ?? 0.36;
+        (o.notes || []).forEach((m, i) => {
+          if (m === null) return;
+          const tt = t + i * st + rnd(0, 0.012);
+          const det = o.wrong ? rnd(-0.6, 0.6) : 0;
+          this.smp(d, tt, this.lib.pluck(mtof(m + 12 + det), { bright: 0.95, dur: 2.4 }), { gain: 0.16 });
+          this.smp(d, tt, this.smallBell(), { gain: 0.05, rate: mtof(m + 12 + det) / mtof(76) });
+        });
+        break;
+      }
+      // a media nana, la caja se atasca: un diente que salta y el muelle
+      case 'boxJam': {
+        d = this.out(P, { gain: 0.9, verb: 0.5, life: 2.5, ref: 8, occlude: false });
+        this.noise(d, t, 0.05, { f0: 1500, q: 2, gain: 0.5, a: 0.001 });
+        this.metal(d, t, rnd(900, 1100), 0.08, 0.5, { ratios: [1, 2.3, 4.1] });
+        this.tone(d, t + 0.02, 0.4, { f0: 180, f1: 70, gain: 0.25 });
+        break;
+      }
+      // el cajón de la caja: madera que corre y un chasquido
+      case 'drawerOpen': {
+        d = this.out(P, { gain: 0.7, verb: 0.4, life: 2, ref: 5 });
+        this.noise(d, t, 0.6, { f0: 900, f1: 600, q: 1.5, gain: 0.18, a: 0.05, buf: this.brown, rate: 4, curve: 'lin' });
+        this.noise(d, t + 0.62, 0.03, { f0: 2400, q: 4, gain: 0.3, a: 0.001 });
+        this.tone(d, t + 0.62, 0.08, { f0: 260, f1: 150, gain: 0.2 });
         break;
       }
       case 'pickup':

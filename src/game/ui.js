@@ -180,6 +180,7 @@ export class UI {
     document.querySelectorAll('.panel').forEach((el) => attachBackdrop(el, (w, h) => panelBitmap(w, h, { crest: !!el.dataset.crest, seed: w + h }), U));
     document.querySelectorAll('.parch').forEach((el) => attachBackdrop(el, (w, h) => parchmentBitmap(w, h, w * 7 + h), U));
     attachBackdrop($('prompt'), (w, h) => bannerBitmap(w, h, 'dark'), U);
+    attachBackdrop($('pzhint'), (w, h) => bannerBitmap(w, h, 'dark'), U);
     attachBackdrop($('death-band'), (w, h) => bandBitmap(w, h), U);
     // rótulos con filigrana
     document.querySelectorAll('.eyebrow[data-div]').forEach((el) => {
@@ -260,6 +261,31 @@ export class UI {
   }
   device() {
     return this.g.input.device;
+  }
+  // Los controles de un mecanismo visto de cerca: [{ act | kb/pad, label }]
+  showPuzzleHint(list) {
+    this._pzList = list;
+    this._pzKey = null;
+    this.renderPuzzleHint();
+    $('pzhint').classList.add('show');
+  }
+  renderPuzzleHint() {
+    const list = this._pzList;
+    if (!list) return;
+    const d = this.device();
+    const k = d + ':' + list.map((x) => x.label).join('|');
+    if (k === this._pzKey) return;
+    this._pzKey = k;
+    $('pzhint-list').innerHTML = list
+      .map((x) => {
+        const glyph = x.act ? GLYPHS[d][x.act] || '?' : x[d] ?? x.kb;
+        return `<span class="it"><span class="keys">${spriteHtml(keyBitmap(glyph, d === 'pad'))}</span><span>${x.label}</span></span>`;
+      })
+      .join('');
+  }
+  hidePuzzleHint() {
+    this._pzList = null;
+    $('pzhint').classList.remove('show');
   }
   keyHtml(action) {
     const d = this.device();
@@ -946,6 +972,8 @@ export class UI {
       }
       pr.classList.add('show');
     } else pr.classList.remove('show');
+    // (los controles de un mecanismo, al día con el teclado o el mando)
+    if (this._pzList) this.renderPuzzleHint();
     // jefe
     const bb = $('bossbar');
     const b = g.activeBoss;

@@ -183,6 +183,23 @@ export const ITEMS = {
 };
 
 export const NOTES = {
+  nana: {
+    title: 'La nana del ama',
+    text: `(Una hoja doblada en cuatro, con letra de mujer que apenas sabe escribir.)
+
+Para que no se me olvide, que ya se me van las cosas.
+
+La nana que le cantaba al niño cuando no quería dormir, con la cajita que me dio su madre:
+
+Cuando se va el sol, mi niño,
+la luna sube a mirarte;
+si oyes tocar la campana,
+no es por ti, que no es por nadie.
+Duerme, que el gallo te llama
+cuando amanezca, y no antes.
+
+Ahora ya no quiere que se la cante. Dice que la campana sí es por él.`,
+  },
   hermandad: {
     title: 'Regla de la Hermandad de la Buena Muerte',
     text: `Capítulo noveno: del toque de alba.
@@ -593,6 +610,11 @@ export const MSG = {
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
+  // el osario de las bodegas (la nana del ama)
+  nanaCaja: 'La caja de música del ama: cuatro rodillos con sus símbolos pintados, una manivela y un cajón cerrado. Cada vuelta suena como un hueso que salta.',
+  nanaMal: 'La caja se atasca a media nana. Por la bodega, el eco tarda en irse.',
+  nanaBien: 'La caja toca la nana entera, despacio, hasta la última nota. El cajón se abre solo.',
+  campanaPorMi: 'Arañado en la piedra, una y otra vez, con la letra del canónigo: «LA CAMPANA SÍ ES POR MÍ».',
   // el osario de la guarnición (el toque de alba)
   arcaCerrada: 'El arca de la Hermandad. Una barra de hierro le atraviesa la tapa, pasada por dos grapas y cerrada con un candado en forma de calavera. No tiene ojo para llave.',
   toqueMal: 'Un soplo frío baja por la escalera y apaga las velas de los hermanos.',
@@ -671,6 +693,7 @@ export const AREA_NAMES = {
   cripta: 'Cripta de los canónigos',
   cisterna: 'Cisterna del pozo',
   osario: 'Osario del canónigo',
+  nana: 'Capilla del ama',
   chapel: 'Capilla de San Fructuoso',
   muralla: 'Calle de la Muralla',
   ramparts: 'Adarve oriental',

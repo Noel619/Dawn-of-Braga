@@ -1556,6 +1556,10 @@ export class Game {
       }
     } else if (this.state === 'ending') {
       if (!this.ui.modal) this.updateEnding(dt);
+    } else if (this.ossuaries && this.ossuaries.view) {
+      // (de cerca, delante de un mecanismo de los osarios)
+      const V = this.ossuaries.view;
+      this.camRig.override = { pos: V.pos, look: V.look, speed: 6 };
     } else this.camRig.override = null;
 
     // (los avisos de pulsación corren en tiempo real; el juego, mientras, a
@@ -1591,15 +1595,17 @@ export class Game {
     const playing = this.state === 'play' && !this.ui.modal && !hadModal;
     if (playing) {
       this.playTime += dt;
-      if (inp.pressed('pause')) this.openPause();
-      else if (inp.pressed('inventory') && !this.cutscene) this.openOverlay('inv');
-      else if (inp.pressed('map') && !this.cutscene) this.openOverlay('map');
+      // (de cerca de un mecanismo, «atrás» es dejarlo: ni pausa ni inventario)
+      const free = !this.ossuaries.view;
+      if (free && inp.pressed('pause')) this.openPause();
+      else if (free && inp.pressed('inventory') && !this.cutscene) this.openOverlay('inv');
+      else if (free && inp.pressed('map') && !this.cutscene) this.openOverlay('map');
     }
     if (this.state === 'paused' && !this.ui.modal) this.state = 'play';
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock);
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view;
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -1659,7 +1665,7 @@ export class Game {
       this.interact.update(dt);
       if (this.state === 'play') {
         this.interact.triggers(p);
-        this.promptTarget = p.state === 'free' && !p.dead ? this.interact.nearest(p) : null;
+        this.promptTarget = p.state === 'free' && !p.dead && !this.ossuaries.view ? this.interact.nearest(p) : null;
         // (el jefe final: agarrarse al coloso, apuñalar, aferrarse)
         const fp = this.finale.prompt();
         if (fp !== undefined) this.promptTarget = fp;
@@ -1668,7 +1674,7 @@ export class Game {
       if (p.pos.y < -40 && !p.dead) p.die();
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock));
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view);
 
     // zona y atmósfera
     if (this.state !== 'title') {

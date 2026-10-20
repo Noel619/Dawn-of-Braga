@@ -64,6 +64,12 @@ export const MAT_DEFS = {
   bonePile: { tex: 'bonePile', uv: 0.7 },
   letreroOssos1: { tex: 'letreroOssos1', uv: 1 },
   letreroOssos2: { tex: 'letreroOssos2', uv: 1 },
+  // (recortados: lo transparente de la textura no se dibuja)
+  scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
+  scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },
+  saltRing: { tex: 'saltRing', uv: 1, alphaTest: 0.5 },
+  nanaSymbols: { tex: 'nanaSymbols', uv: 1 },
+  virgenCarmen: { tex: 'virgenCarmen', uv: 1 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
   bone: { tex: 'bone', uv: 1.6 },
   straw: { tex: 'straw', uv: 1.0 },
@@ -354,6 +360,7 @@ function build(name, { vertexColors = true, side = THREE.FrontSide, basic = fals
     side,
   };
   if (def.color !== undefined) params.color = def.color;
+  if (def.alphaTest) params.alphaTest = def.alphaTest;
   let m;
   if (basic) {
     m = new THREE.MeshBasicMaterial(params);

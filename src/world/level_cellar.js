@@ -18,6 +18,7 @@ import { RNG } from '../core/util.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { subtractRects } from './builders.js';
+import { bakeParts, skullParts, chairParts, distaffParts, MBOX } from './ossuary_props.js';
 
 const F = -6.6; // suelo de las bodegas
 const TOP = -1.0; // bajo la losa de la calle
@@ -57,11 +58,17 @@ const REGIONS = [
   { id: 'cripta', r: [40, -83, 58, -73], top: -1.4, ribs: { x: [46, 52], d: 0.5 } },
   // pasillo de la cripta al osario
   { id: 'osario', r: [58, -79, 67, -76.5], top: -2.6 },
-  // osario: galería larga con calaveras en los muros, y su ramal ciego
-  { id: 'osario', r: [67, -79, 70.5, -36.5], top: -2.6, wall: 'skulls', ribs: { z: [-40, -44, -48, -52, -56, -60, -64, -68, -72, -76], d: 0.3 } },
+  // osario: galería larga con los huesos sacados de su sitio, y su ramal ciego
+  { id: 'osario', r: [67, -79, 70.5, -36.5], top: -2.6, wall: 'bonePile', ribs: { z: [-40, -44, -48, -52, -56, -60, -64, -68, -72, -76], d: 0.3 } },
   { id: 'osario', r: [66, -41.8, 67, -38.8], top: -3.3 },
-  { id: 'osario', r: [63, -65, 67, -61], top: -2.6, wall: 'skulls' },
+  { id: 'osario', r: [63, -65, 67, -61], top: -2.6, wall: 'bonePile' },
+  // la capilla del ama (la caja de música), en la roca al oeste de la
+  // galería, y su paso
+  { id: 'nana', r: [61.5, -75.5, 66.6, -67.5], top: -1.6, ribs: { z: [-73.6, -69.4], d: 0.4 } },
+  { id: 'nana', r: [66.6, -71.6, 67, -69.4], top: -3.4 },
 ];
+// la capilla del ama: la mesa con la caja de música, delante del muro oeste
+export const NANA = { x: 62.42, z: -71.5, table: 0.82, rot: Math.PI / 2 };
 
 // Madrigueras: grutas que él mismo ha excavado en la roca, a ras de suelo,
 // comunicadas por dentro (sólo él cabe: tú chocas con la roca). x, z: centro
@@ -241,6 +248,140 @@ export const CELLAR = {
   feast: { x: 59, z: -43.3, yaw: Math.PI, corpse: [59.1, -44.5] },
 };
 
+// ------------------------------------------------------- el osario del canónigo
+// La locura del canónigo: sacó los huesos de su sitio para arrodillarse
+// mejor, puso las calaveras boca arriba («reza con la cara vuelta hacia el
+// techo») y arañó MÁS ABAJO en la piedra. Al oeste, en la roca, la capilla
+// del ama: su Virgen del Carmen, su silla, su sal y sus velas, y la caja de
+// música con la que le cantaba de niño (el puzle: game/ossuaries.js).
+function buildNana(ctx, L, rng, room) {
+  const wb = ctx.wb;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const M = (x, y, z, ry = 0, rx = 0) => new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, 0, 'YXZ')), V(1, 1, 1));
+  const bake = (parts, m) => bakeParts(wb, parts, m, { room });
+  const boneT = () => {
+    const k = rng.range(-0.14, 0.04);
+    return [0.9 + k, 0.86 + k, 0.78 + k];
+  };
+  // una repisa con calaveras boca arriba, a lo largo de z (muro en x = wx,
+  // mirando a f) o de x (muro en z = wz)
+  const shelf = (axis, w, a0, a1, y, f, full = 1) => {
+    const d = 0.28;
+    if (axis === 'x') wb.box('ashlar', Math.min(w, w + f * d), y - 0.08, a0, Math.max(w, w + f * d), y, a1, { ao: false, tint: [0.5, 0.48, 0.44] });
+    else wb.box('ashlar', a0, y - 0.08, Math.min(w, w + f * d), a1, y, Math.max(w, w + f * d), { ao: false, tint: [0.5, 0.48, 0.44] });
+    const n = Math.floor((a1 - a0) / 0.23);
+    for (let k = 0; k < n; k++) {
+      if (rng.next() > full) continue;
+      const a = a0 + ((a1 - a0) * (k + 0.5)) / n + rng.range(-0.03, 0.03);
+      const c = w + f * 0.15;
+      const m = axis === 'x' ? M(c, y + 0.1, a, rng.range(0, Math.PI * 2), -Math.PI / 2 + rng.range(-0.15, 0.15)) : M(a, y + 0.1, c, rng.range(0, Math.PI * 2), -Math.PI / 2 + rng.range(-0.15, 0.15));
+      bake(skullParts({ tint: boneT(), jaw: rng.chance(0.4), open: rng.range(0.3, 1) }), m);
+    }
+  };
+  // el letrero arañado (un plano recortado delante del muro)
+  const scratch = (mat, x, y, z, ry, w, h) => wb.geometry(mat, new THREE.PlaneGeometry(w, h), new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)), V(1, 1, 1)), { ao: false, room, grime: false });
+  const floorDisc = (mat, x, z, r) => wb.geometry(mat, new THREE.PlaneGeometry(2 * r, 2 * r), new THREE.Matrix4().compose(V(x, F + 0.006, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, rng.range(0, 6), 0, 'YXZ')), V(1, 1, 1)), { ao: false, room, grime: false });
+
+  // --- la galería: repisas con sus calaveras boca arriba (en los tramos del
+  // muro oeste entre los pasos), los huesos que sacó, y lo que arañó
+  for (const [a0, a1, two] of [
+    [-75.8, -72.4, true],
+    [-67.8, -65.3, false],
+    [-59.8, -57.2, true],
+    [-54.8, -52.3, false],
+    [-51.7, -48.3, true],
+    [-47.7, -44.3, false],
+  ]) {
+    shelf('x', 67, a0, a1, F + 0.88, 1, 0.85);
+    if (two) shelf('x', 67, a0, a1, F + 1.58, 1, 0.7);
+    P.bones(ctx, 67.6, F, (a0 + a1) / 2, 6, Math.round(-a0 * 31), 0.7);
+  }
+  scratch('scratchMasAbajo', 67.012, F + 1.25, -63.0, Math.PI / 2, 1.0, 0.5);
+  scratch('scratchMasAbajo', 70.488, F + 1.7, -49.0, -Math.PI / 2, 1.1, 0.55);
+  scratch('scratchMasAbajo', 70.488, F + 0.75, -69.0, -Math.PI / 2, 0.9, 0.45);
+  scratch('scratchMasAbajo', 70.488, F + 1.5, -77.8, -Math.PI / 2, 0.9, 0.45);
+  // la sal del ama delante de su capilla (él no la pisa)
+  floorDisc('saltRing', 68.7, -70.5, 1.05);
+  P.candles(ctx, 68.0, F, -71.4, 2, 6201, { room, radius: 3.2, intensity: 0.4, spread: 0.06 });
+
+  // --- la capilla del ama
+  const N = NANA;
+  // la mesa, la caja (la monta game/ossuaries.js) y la Virgen encima
+  const tx0 = N.x - 0.29,
+    tx1 = N.x + 0.29,
+    tz0 = N.z - 0.48,
+    tz1 = N.z + 0.48;
+  wb.box('wooddark', tx0, F + N.table - 0.05, tz0, tx1, F + N.table, tz1, { ao: false, faces: 'tnsewb' });
+  for (const [x, z] of [
+    [tx0 + 0.04, tz0 + 0.04],
+    [tx1 - 0.04, tz0 + 0.04],
+    [tx0 + 0.04, tz1 - 0.04],
+    [tx1 - 0.04, tz1 - 0.04],
+  ])
+    wb.box('wooddark', x - 0.03, F, z - 0.03, x + 0.03, F + N.table - 0.05, z + 0.03, { ao: false });
+  wb.box('linen', tx0 - 0.005, F + N.table - 0.2, tz0 + 0.05, tx1 + 0.005, F + N.table + 0.004, tz1 - 0.05, { ao: false, faces: 'te', tint: [0.8, 0.76, 0.66] });
+  ctx.col.add(tx0, F, tz0, tx1, F + N.table, tz1);
+  const vz = N.z,
+    vy = F + 1.95;
+  wb.geometry('virgenCarmen', new THREE.PlaneGeometry(0.62, 0.93), new THREE.Matrix4().compose(V(61.515, vy, vz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0)), V(1, 1, 1)), { ao: false, room, grime: false });
+  for (const [a, b, c, d] of [
+    [vy - 0.5, vy - 0.44, vz - 0.37, vz + 0.37],
+    [vy + 0.44, vy + 0.5, vz - 0.37, vz + 0.37],
+    [vy - 0.5, vy + 0.5, vz - 0.37, vz - 0.31],
+    [vy - 0.5, vy + 0.5, vz + 0.31, vz + 0.37],
+  ])
+    wb.box('wooddark', 61.5, a, c, 61.56, b, d, { ao: false, tint: [0.7, 0.55, 0.35] });
+  // la repisa de la Virgen, con dos velas y unas flores secas
+  wb.box('wooddark', 61.5, vy - 0.62, vz - 0.32, 61.72, vy - 0.58, vz + 0.32, { ao: false });
+  P.candles(ctx, 61.62, vy - 0.58, vz - 0.2, 1, 6202, { room, radius: 4.5, intensity: 0.75, spread: 0.01 });
+  P.candles(ctx, 61.62, vy - 0.58, vz + 0.2, 1, 6203, { unlit: true, spread: 0.01 });
+  for (let k = 0; k < 5; k++) {
+    const a = rng.range(-0.4, 0.4);
+    wb.geometry('straw', new THREE.CylinderGeometry(0.004, 0.004, 0.3, 3), M(61.62 + Math.sin(a) * 0.05, vy - 0.43, vz + rng.range(-0.05, 0.05), 0, a), { ao: false, room, tint: [0.6, 0.45, 0.3] });
+  }
+  // velas en la mesa (una consumida) y el círculo de sal alrededor
+  // (a la izquierda de la caja: a la derecha queda la manivela)
+  P.candles(ctx, N.x - 0.12, F + N.table, N.z + 0.38, 2, 6204, { room, radius: 3.6, intensity: 0.65, spread: 0.04, scale: 0.8 });
+  floorDisc('saltRing', N.x + 0.85, N.z, 1.25);
+  // (la sal, sin brillar más que la piedra)
+  for (let k = 0; k < 7; k++) {
+    const a = (k / 7) * Math.PI * 2 + 0.3;
+    const x = N.x + 0.85 + Math.cos(a) * 1.02,
+      z = N.z + Math.sin(a) * 1.02;
+    if (x < N.x + 0.35) continue;
+    if (k % 2) P.candles(ctx, x, F, z, 1, 6210 + k, { room, radius: 2.4, intensity: 0.25, spread: 0.01, scale: 0.5 });
+    else P.candles(ctx, x, F, z, 1, 6210 + k, { unlit: true, spread: 0.01, scale: 0.45 });
+  }
+  // la silla del ama, con su chal, mirando a la caja; la rueca contra el muro
+  const cx = 64.3,
+    czz = -74.0;
+  const cr = Math.atan2(N.x - cx, N.z - czz);
+  bake(chairParts(), M(cx, F, czz, cr));
+  ctx.col.addOBB(cx, czz, 0.24, 0.22, cr, F, F + 0.9);
+  bake(distaffParts(), M(62.0, F, -75.25, 0.4, 0.12));
+  // las calaveras del canónigo, también aquí, boca arriba (muro sur)
+  shelf('z', -67.5, 62.2, 65.9, F + 1.05, -1, 0.9);
+  shelf('z', -67.5, 62.2, 65.9, F + 1.75, -1, 0.75);
+  // y lo que arañó en el muro norte, sobre los huesos que sacó
+  scratch('scratchCampana', 64.0, F + 1.45, -75.488, 0, 1.5, 0.5);
+  scratch('scratchMasAbajo', 62.6, F + 0.7, -75.488, 0, 0.8, 0.4);
+  scratch('scratchMasAbajo', 65.7, F + 2.2, -75.488, 0, 0.8, 0.4);
+  P.bones(ctx, 64.2, F, -75.0, 9, 6220, 0.6);
+  P.bones(ctx, 65.6, F, -74.8, 6, 6221, 0.4);
+  // la lámpara del ama, colgada en medio
+  P.hangingLamp(ctx, 64.1, -1.6, -71.3, { len: 2.7, room, radius: 6.5, intensity: 0.85 });
+  P.fleshGrowth(ctx, 66.3, F, -68.0, 0.7, 6222, { room, climb: 1.6 });
+
+  // la nana, la caja y su objeto
+  L.interact.push(
+    { kind: 'note', id: 'n_nana', note: 'nana', x: cx + Math.sin(cr) * 0.02, y: F + 0.39, z: czz + Math.cos(cr) * 0.02, model: 'paper' },
+    { kind: 'examine', id: 'x_campana', text: 'campanaPorMi', x: 64.0, y: F, z: -74.9, r: 1.3 }
+  );
+  const lz = MBOX.D / 2 + MBOX.drawerOpen - 0.16;
+  L.interact.push({ kind: 'item', id: 'i_escapulario', item: 'escapulario', x: N.x + Math.sin(N.rot) * lz, y: F + N.table + MBOX.drawerY + 0.06, z: N.z + Math.cos(N.rot) * lz, r: 1.4, afterFlag: 'puzzle:bodega' });
+  L.puzzles.push({ kind: 'nana', id: 'bodega', item: 'i_escapulario', x: N.x, y: F + N.table, z: N.z, rot: N.rot, table: N.table, order: ['sol', 'luna', 'campana', 'gallo'], start: [2, 5, 0, 3], probe: [N.x + 0.9, F + 1.2, N.z] });
+}
+
 // Altura del techo en (x, z) (null fuera de las bodegas).
 let _tops = null,
   _grid = null;
@@ -393,8 +534,9 @@ export function buildCellar(ctx, B, L, o = {}) {
         faces.push({ ...f, a0: Math.max(f.a0, m0), a1: Math.min(f.a1, m1), y0: F + BURROW.h, mouth: true });
       }
     }
+  const boneMat = (m) => m === 'skulls' || m === 'bonePile' || m === 'femurs';
   for (const f of faces) {
-    const tint = f.mat === 'skulls' ? [0.6, 0.56, 0.5] : f.y0 > F + 0.01 ? [0.46, 0.44, 0.41] : [0.56, 0.54, 0.5];
+    const tint = boneMat(f.mat) ? [0.62, 0.58, 0.52] : f.y0 > F + 0.01 ? [0.46, 0.44, 0.41] : [0.56, 0.54, 0.5];
     const oo = { sub: 2, aoH: 1.6, aoMin: 0.4, baseY: F, tint, uv: f.mat === 'skulls' ? 0.55 : undefined };
     // dir: hacia dónde mira la cara (+1 = hacia +x / +z)
     if (f.axis === 'x') {
@@ -407,7 +549,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   }
   // zócalo de sillería al pie de los muros de piedra (lee mejor el suelo)
   for (const f of faces) {
-    if (f.y0 > F + 0.01 || f.mat === 'skulls' || f.a1 - f.a0 < 0.4) continue;
+    if (f.y0 > F + 0.01 || boneMat(f.mat) || f.a1 - f.a0 < 0.4) continue;
     const k = 0.32,
       d = 0.06;
     const oo = { ao: false, sub: 3, tint: [0.46, 0.44, 0.41] };
@@ -634,6 +776,7 @@ export function buildCellar(ctx, B, L, o = {}) {
   P.fleshGrowth(ctx, 62.6, F, -78.6, 0.9, 6099, { room, climb: 2.2 });
   P.decal(ctx, 68.8, F + 0.02, -49.5, 2.0);
   P.decal(ctx, 63.5, F + 0.02, -77.6, 1.6);
+  buildNana(ctx, L, rng, room);
 
   // ---------------------------------------------------------- palancas
   // placa de hierro en el muro, la ranura por la que baja el mango y la
