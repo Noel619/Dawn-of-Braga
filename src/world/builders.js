@@ -289,6 +289,18 @@ export function archRing(ctx, o) {
       q(spMat, P(ua, va, t1), P(ub, vb, t1), P(ub, o.top, t1), P(ua, o.top, t1), spOpt(rooms[1]));
       q(spMat, P(ua, o.top, t0), P(ub, o.top, t0), P(ub, vb, t0), P(ua, va, t0), spOpt(rooms[0]));
     }
+    // piers: el macizo sobre el apoyo, del arranque a 'top', entre el borde
+    // del tramo y la rosca (en una arquería, sin él quedaba sobre cada
+    // capitel una rendija abierta de lado a lado)
+    if (o.piers)
+      for (const [ua, ub] of [
+        [s0, E[0][0]],
+        [E[n][0], s1],
+      ]) {
+        if (ub - ua < 0.002) continue;
+        q(spMat, P(ua, y0, t1), P(ub, y0, t1), P(ub, o.top, t1), P(ua, o.top, t1), spOpt(rooms[1]));
+        q(spMat, P(ua, o.top, t0), P(ub, o.top, t0), P(ub, y0, t0), P(ua, y0, t0), spOpt(rooms[0]));
+      }
     if (o.topFace) {
       if (axZ) wb.box(spMat, t0, o.top - 0.01, s0, t1, o.top, s1, { faces: 't', ao: false, sub: 2, tint: spTint });
       else wb.box(spMat, s0, o.top - 0.01, t0, s1, o.top, t1, { faces: 't', ao: false, sub: 2, tint: spTint });

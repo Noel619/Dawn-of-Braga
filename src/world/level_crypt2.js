@@ -954,7 +954,7 @@ function buildMartin(ctx, L, rng) {
       const pa = k === 0 ? a : a + 0.62,
         pb = k === zs.length - 2 ? b : b - 0.62;
       const w = pb - pa;
-      arch(ctx, { axis: 'z', c: (pa + pb) / 2, w, y0: MB.YC, rise: Math.min(w / 2, MB.YS - MB.YC - 0.36), ring: 0.36, t0: x - 0.3, t1: x + 0.3, top: MB.YS, clip: [a, b], cam: false });
+      arch(ctx, { axis: 'z', c: (pa + pb) / 2, w, y0: MB.YC, rise: Math.min(w / 2, MB.YS - MB.YC - 0.36), ring: 0.36, t0: x - 0.3, t1: x + 0.3, top: MB.YS, clip: [a, b], cam: false, piers: true });
     }
     // las pilastras de los extremos (donde la arquería nace del muro)
     pilaster(ctx, MB.z0, x, 's', Y1, MB.YC, { room: ROOM, tint: AT, w: 0.6, d: 0.2 });
@@ -1143,7 +1143,7 @@ function buildAntesala(ctx, L) {
       const pa = k === 0 ? a : a + 0.6,
         pb = k === xs.length - 2 ? b : b - 0.6;
       const w = pb - pa;
-      archRing(ctx, { axis: 'x', c: (pa + pb) / 2, w, y0: YC, rise: Math.min(w / 2, YS - YC), ring: 0.36, t0: z - 0.35, t1: z + 0.35, top: YS, clip: [a, b], mat: 'ashlar', spMat: 'ashlar', room: ROOM, tint: AT, spTint: DT, cam: false });
+      archRing(ctx, { axis: 'x', c: (pa + pb) / 2, w, y0: YC, rise: Math.min(w / 2, YS - YC), ring: 0.36, t0: z - 0.35, t1: z + 0.35, top: YS, clip: [a, b], mat: 'ashlar', spMat: 'ashlar', room: ROOM, tint: AT, spTint: DT, cam: false, piers: true });
     }
   }
   // las bóvedas: la de la nave (alta) y las de las naves laterales, con sus
