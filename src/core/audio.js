@@ -1726,8 +1726,8 @@ export class Audio {
         d = this.out(P, { gain: 1, verb: 0.9, life: 7.5, ref: 14, roll: 0.5, occlude: false });
         this.noise(d, t, 0.5, { f0: 300, f1: 3200, q: 0.9, gain: 0.25, a: 0.45, curve: 'lin', buf: this.pink });
         const tb = t + 0.45;
-        this.tone(d, tb, 2.2, { f0: 70, f1: 16, gain: 1 });
-        this.noise(d, tb, 2.6, { type: 'lowpass', f0: 2400, f1: 80, gain: 1, a: 0.003, buf: this.brown, rate: 2 });
+        this.tone(d, tb, 2.2, { f0: 70, f1: 16, gain: 0.85 });
+        this.noise(d, tb, 2.6, { type: 'lowpass', f0: 2400, f1: 80, gain: 0.75, a: 0.003, buf: this.brown, rate: 2 });
         this.noise(d, tb, 1.2, { f0: 4200, f1: 1200, q: 0.7, gain: 0.3, a: 0.002 });
         this.metal(d, tb + 0.02, 220, 0.6, 2.5);
         this.metal(d, tb + 0.05, 331, 0.4, 2.0);

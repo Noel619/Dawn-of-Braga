@@ -623,8 +623,8 @@ function* fallKnees(X) {
       G.coreBoost = 1;
       const c = coreAt(G, _v);
       a && a.play('fleshTear', c, { k: 2 });
-      a && a.play('fleshBurst', c, { k: 1.4 });
-      a && a.play('coreBeat', c, { k: 1.6 });
+      a && a.play('fleshBurst', c, { k: 1.0 });
+      a && a.play('coreBeat', c, { k: 1.1 });
       g.fx.blood.emit(c.x, c.y, c.z, 40, { color: EMBER, speed: 5, life: 1.2, up: 1.5, gravity: 2 });
       g.fx.blood.emit(c.x, c.y, c.z, 30, { color: BLACK, speed: 4, life: 1.2, up: 1, gravity: 9 });
       g.flash = Math.max(g.flash || 0, 0.2);
@@ -652,7 +652,7 @@ function heartbeat(X) {
       t -= yield;
       if (t <= 0) {
         t = 0.95 - Math.min(0.5, G.coreBoost * 0.18);
-        a && a.play('coreBeat', coreAt(G, _v3), { k: 1 + G.coreBoost * 0.25 });
+        a && a.play('coreBeat', coreAt(G, _v3), { k: 0.75 + G.coreBoost * 0.15 });
       }
     }
   };
@@ -927,7 +927,7 @@ function* stabHeart(X) {
     G.coreBoost = Math.min(2.2, G.coreBoost + 0.2);
     const c = coreAt(G, _v);
     a && a.play('thrust', c, { k: 1.8 });
-    a && a.play('fleshBurst', c, { k: 1.1 });
+    a && a.play(i % 2 ? 'fleshTear' : 'fleshBurst', c, { k: i % 2 ? 1.3 : 0.85 });
     // (sin voz: la garganta atravesada; estertores)
     if (i % 2) a && a.play('choke', G.face(_v2), { k: 1.4 });
     g.fx.blood.emit(c.x, c.y, c.z, 30, { color: EMBER, speed: 6, life: 1, up: 1, gravity: 2, dir: G.wd(0, 0.2, 1, _v2) });
@@ -968,9 +968,9 @@ function* burst(X) {
   const c = coreAt(G, new V3());
   if (X.beat) X.beat.stop = true;
   G.play('coreDeath', { blend: 0.04 });
-  a && a.play('coreBurst', c, { k: 2.6 });
-  a && a.play('explosion', c, { k: 2 });
-  a && a.play('fleshBurst', c, { k: 2.4 });
+  a && a.play('coreBurst', c, { k: 2.0 });
+  a && a.play('explosion', c, { k: 1.3 });
+  a && a.play('fleshBurst', c, { k: 1.5 });
   g.flash = 1;
   g.camRig.shake(2.0);
   g.input.rumble(1, 1, 1600);
