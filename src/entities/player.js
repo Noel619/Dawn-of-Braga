@@ -8,6 +8,7 @@ import { buildParts, backShield, hipSaya } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
 import { objMat } from '../gfx/materials.js';
+import { relicMods } from '../game/relics.js';
 
 // Los clips y golpes de cada arma están en weapons.js / weapon_moves.js.
 
@@ -73,8 +74,22 @@ export class Player {
     this.phase = 0;
     this.state = 'free';
     this.stT = 0;
+    // (baseMaxHp: la vitalidad ganada; maxHp, la de verdad, con el objeto
+    // bendito que se lleve)
+    this.baseMaxHp = 100;
     this.maxHp = 100;
     this.hp = 100;
+    // el objeto bendito que se lleva (game/relics.js) y lo suyo: la vida en
+    // el aire (rally), el golpe que devuelve lo parado y el crítico de la
+    // esquiva en el último instante
+    this.relic = null;
+    this.mods = relicMods(null);
+    this.rally = 0;
+    this.rallyHold = 0;
+    this.retaliateT = 0;
+    this.critNextT = 0;
+    this.pdCool = 0;
+    this.atkSpd = 1;
     this.maxSt = 100;
     this.st = 100;
     this.stDelay = 0;
@@ -146,6 +161,25 @@ export class Player {
     this.hasSword = sword;
     this.hasShield = shield;
     this.updateGear();
+  }
+
+  // Se pone (o se quita, con null) un objeto bendito.
+  wearRelic(id) {
+    this.relic = id || null;
+    this.mods = relicMods(this.relic);
+    this.rally = 0;
+    this.retaliateT = this.critNextT = 0;
+    this.refreshMaxHp();
+  }
+  // La vitalidad máxima de verdad (la ganada, por lo que haga el objeto que se
+  // lleve); quitárselo no cura.
+  refreshMaxHp() {
+    this.maxHp = Math.round(this.baseMaxHp * this.mods.hp);
+    this.hp = Math.min(this.hp, this.maxHp);
+  }
+  // ¿Se puede alzar la guardia (bloquear, no sólo desviar)?
+  canGuard() {
+    return this.canBlock() && !this.mods.noBlock;
   }
 
   // Escudo al brazo o a la espalda (la capa lo cubre), saya al cinto.
@@ -225,7 +259,10 @@ export class Player {
     this.chargeDone = !def.charge;
     this.atkMul = 1;
     this.useSt(def.st);
-    this.anim.play(def.clip, { blend: this.anim.weight > 0.3 ? 0.07 : 0.1 });
+    // (el reloj del golpe y su animación, al paso que marque el objeto bendito;
+    // el golpe de gracia, siempre al suyo)
+    this.atkSpd = def.riposte ? 1 : this.mods.atkSpeed;
+    this.anim.play(def.clip, { blend: this.anim.weight > 0.3 ? 0.07 : 0.1, speed: this.atkSpd });
     this.combo = idx;
     this.game.onPlayerAttackStart && this.game.onPlayerAttackStart(def);
     this.game.onPlayerAction && this.game.onPlayerAction('attack', { def, idx, heavy: !!def.heavy, run: def === this.set.run });
@@ -242,7 +279,7 @@ export class Player {
   startRoll(dirx, dirz) {
     this.state = 'roll';
     this.stT = 0;
-    this.useSt(18);
+    this.useSt(18 * this.mods.rollSt);
     const m = Math.hypot(dirx, dirz);
     if (m < 0.1) {
       // paso atrás
@@ -317,7 +354,7 @@ export class Player {
     }
     if (e === 'flick') g.audio && g.audio.play('flick', this.pos);
     if (e === 'drink') {
-      const amt = Math.round(this.maxHp * 0.45);
+      const amt = Math.round(this.maxHp * 0.45 * this.mods.flask);
       this.hp = Math.min(this.maxHp, this.hp + amt);
       this.game.audio && this.game.audio.play('heal', this.pos);
       this.game.fx && this.game.fx.healGlow(this);
@@ -357,25 +394,31 @@ export class Player {
     // (derribado con el Descoyuntado encima o levantándose: eso ya duele bastante)
     if (this.dead || this.state === 'wake' || this.state === 'pinned') return 'none';
     if (this.state === 'getup' && this.stT < 0.75) return 'dodge';
-    if (this.iframe) return 'dodge';
+    if (this.iframe) {
+      if (this.state === 'roll') this.dodged();
+      return 'dodge';
+    }
+    const M = this.mods;
     const dx = fromX - this.pos.x,
       dz = fromZ - this.pos.z;
     const toSrc = Math.atan2(dx, dz);
     const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 80 * DEG;
+    // (el daño de verdad, con lo que haga el objeto bendito que se lleva)
+    const dmg = Math.round(atk.dmg * M.taken);
     // parry: has pulsado la guardia justo antes del golpe (y se puede
     // desviar: los golpes marcados en rojo, no)
     if (this.parryWin > 0 && Math.abs(angleDiff(this.yaw, toSrc)) < 100 * DEG && !atk.noParry && !atk.unblockable && this.canBlock()) return this.doParry(atk, fromX, fromZ);
-    if (this.blocking && this.blockW > 0.5 && facing && !atk.unblockable && this.canBlock()) {
+    if (this.blocking && this.blockW > 0.5 && facing && !atk.unblockable && this.canGuard()) {
       // a dos manos se para con el arma: cuesta más aguante y entra más daño
       const bk = this.twoHanded && this.hasSword ? this.weapon.blockK || { st: 1.3, chip: 0.2 } : null;
-      const cost = (atk.stDmg ?? atk.dmg * 1.1) * (bk ? bk.st : 1);
+      const cost = (atk.stDmg ?? atk.dmg * 1.1) * (bk ? bk.st : 1) * M.blockSt;
       this.useSt(cost);
       const d = Math.hypot(dx, dz) || 1;
       this.vx = (-dx / d) * 3.2;
       this.vz = (-dz / d) * 3.2;
       this.flinchX.kick(-3);
       if (this.st <= 0) {
-        this.hp -= Math.round(atk.dmg * 0.5);
+        this.hp -= Math.round(dmg * 0.5);
         this.state = 'stagger';
         this.stT = 0;
         this.blocking = false;
@@ -383,14 +426,21 @@ export class Player {
         if (this.hp <= 0) this.die();
         return 'guardbreak';
       }
-      this.hp -= Math.round(atk.dmg * (bk ? Math.max(bk.chip, atk.chip ?? 0) : atk.chip ?? 0.08));
+      this.hp -= Math.round(dmg * (bk ? Math.max(bk.chip, atk.chip ?? 0) : atk.chip ?? 0.08) * M.chip);
+      // (la Saeta: lo parado se devuelve con el siguiente golpe)
+      if (M.retaliate) this.retaliateT = M.retaliate.t;
       this.anim.play(this.clips.blockHit, { blend: 0.03 });
       this.state = 'blockhit';
       this.stT = 0;
       if (this.hp <= 0) this.die();
       return 'block';
     }
-    this.hp -= atk.dmg;
+    this.hp -= dmg;
+    // (el Óbolo: lo que te quitan queda en el aire; golpeando se recupera)
+    if (M.rally) {
+      this.rally = Math.min(this.maxHp, this.rally + dmg);
+      this.rallyHold = 1.1;
+    }
     this.lastHitBy = atk;
     this.lastHitT = this.game.time;
     const d = Math.hypot(dx, dz) || 1;
@@ -429,7 +479,7 @@ export class Player {
     this.parryPress = this.parryPress.filter((q) => t - q < 1.0);
     const k = [1, 0.75, 0.5, 0.34][Math.min(3, this.parryPress.length)];
     this.parryPress.push(t);
-    this.parryWin = (this.weapon.parry ? this.weapon.parry.win : 0.2) * k;
+    this.parryWin = (this.weapon.parry ? this.weapon.parry.win : 0.2) * k * this.mods.parryWin;
     const th = target || this.threat();
     this.parryFace = th ? Math.atan2(th.pos.x - this.pos.x, th.pos.z - this.pos.z) : null;
     if (this.state === 'attack') {
@@ -483,10 +533,26 @@ export class Player {
     this.anim.play(c, { blend: 0.03 });
     this.parryFx = 1;
     this.flinchX.kick(-2.5);
-    this.st = Math.min(this.maxSt, this.st + 8);
+    // (el Cerrojo: cada parry devuelve todo el aguante)
+    this.st = this.mods.parrySt ? this.maxSt : Math.min(this.maxSt, this.st + 8);
     this.flask.visible = false;
     g.onPlayerAction && g.onPlayerAction('parry', { atk });
     return 'parry';
+  }
+  // Un golpe que ha pasado por la voltereta: con el Escapulario, si ha sido en
+  // el último instante (te echaste a rodar cuando ya llegaba: en las primeras
+  // décimas de la voltereta), el tiempo se detiene un momento y el siguiente
+  // golpe en 1,5 s es crítico.
+  dodged() {
+    const g = this.game;
+    if (!this.mods.perfectDodge || this.pdCool > 0 || this.stT > 0.32) return;
+    this.pdCool = 1.4;
+    this.critNextT = 1.5;
+    g.slowmo = { t: 0.55, k: 0.35 };
+    g.flash = Math.max(g.flash || 0, 0.18);
+    g.flashTint = [0.75, 0.85, 1];
+    g.audio && g.audio.play('deflect', this.pos, { kind: 'shield' });
+    g.fx && g.fx.blood.emit(this.pos.x, this.pos.y + 1.0, this.pos.z, 14, { color: [0.75, 0.82, 1], speed: 2.2, life: 0.6, up: 1.4, gravity: -1.5 });
   }
   // Un desequilibrado a tu alcance y por delante (tras un parry, o el
   // Descoyuntado patas arriba): el golpe de gracia.
@@ -534,7 +600,12 @@ export class Player {
   }
   receiveBite(dmg) {
     if (this.dead) return;
+    dmg = Math.round(dmg * this.mods.taken);
     this.hp -= dmg;
+    if (this.mods.rally) {
+      this.rally = Math.min(this.maxHp, this.rally + dmg);
+      this.rallyHold = 1.1;
+    }
     this.lastHitT = this.game.time;
     this.flinchX.kick(-7);
     this.flinchY.kick((Math.random() - 0.5) * 10);
@@ -562,7 +633,7 @@ export class Player {
   // invulnerable mientras se incorpora.
   releasePin(escaped, dmg = 0) {
     if (this.dead) return;
-    this.hp -= dmg;
+    this.hp -= Math.round(dmg * this.mods.taken);
     if (this.hp <= 0) return this.die();
     this.state = 'getup';
     this.stT = 0;
@@ -571,7 +642,7 @@ export class Player {
   }
   releaseGrab(knock, fx, fz, dmg = 0) {
     if (this.dead) return;
-    this.hp -= dmg;
+    this.hp -= Math.round(dmg * this.mods.taken);
     if (this.hp <= 0) return this.die();
     this.state = 'stagger';
     this.stT = 0;
@@ -674,8 +745,17 @@ export class Player {
     // regeneración de aguante
     this.stDelay -= dt;
     if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll' && !this.sprinting) {
-      const rate = this.blocking ? 20 : 45;
+      const rate = this.blocking && !this.mods.blockRegen ? 20 : 45;
       this.st = Math.min(this.maxSt, this.st + rate * dt);
+    }
+    // lo del objeto bendito: la vida en el aire se va perdiendo (tras un
+    // respiro) y los golpes que devuelve o remata caducan
+    this.retaliateT = Math.max(0, this.retaliateT - dt);
+    this.critNextT = Math.max(0, this.critNextT - dt);
+    this.pdCool -= dt;
+    if (this.rally > 0) {
+      if (this.rallyHold > 0) this.rallyHold -= dt;
+      else this.rally = Math.max(0, this.rally - dt * Math.max(5, this.rally * 0.35));
     }
 
     let desiredSpeed = 0;
@@ -703,7 +783,7 @@ export class Player {
     }
 
     if (st === 'free' || st === 'blockhit') {
-      const wantBlock = allowControl && input.down('block') && this.canBlock() && st === 'free';
+      const wantBlock = allowControl && input.down('block') && this.canGuard() && st === 'free';
       const wasBlocking = this.blocking;
       this.blocking = wantBlock || st === 'blockhit';
       if (this.blocking && !wasBlocking) this.game.onPlayerAction && this.game.onPlayerAction('block', {});
@@ -711,7 +791,7 @@ export class Player {
       const sprintHeld = allowControl && (input.held('dodge') > 0.3 || input.down('sprint') || !!g.chaseRun);
       this.sprinting = sprintHeld && mag > 0.3 && this.st > 0 && !this.blocking;
       if (this.sprinting && !g.chaseRun) {
-        this.st -= 14 * dt;
+        this.st -= 14 * dt * this.mods.sprintSt;
         this.stDelay = 0.45;
       }
       const base = this.blocking ? BLOCKWALK : this.sprinting ? RUN : target ? STRAFE : mag < 0.55 ? lerp(0, WALK, mag / 0.55) / Math.max(mag, 0.01) : JOG;
@@ -756,7 +836,7 @@ export class Player {
     } else if (st === 'attack') {
       const a = this.atk;
       const M = this.set;
-      this.blocking = !!a.keepBlock && this.canBlock();
+      this.blocking = !!a.keepBlock && this.canGuard();
       // reloj del golpe: se detiene mientras se carga un pesado
       if (a.charge && !this.chargeDone) {
         const c = a.charge;
@@ -770,7 +850,7 @@ export class Player {
           } else {
             this.chargeDone = true;
             this.charging = false;
-            this.anim.speed = 1;
+            this.anim.speed = this.atkSpd;
             this.atkMul = 1 + c.dmg * Math.min(1, this.charge / c.max);
           }
         }
@@ -778,9 +858,9 @@ export class Player {
       // (el golpe de gracia se queda un instante dentro: el reloj va con él)
       if (this.ripHold > 0) {
         this.ripHold -= dt;
-        if (this.ripHold <= 0) this.anim.speed = 1;
+        if (this.ripHold <= 0) this.anim.speed = this.atkSpd;
       }
-      if (!this.charging) this.atkT += dt * (this.ripHold > 0 ? this.anim.speed : 1);
+      if (!this.charging) this.atkT += dt * (this.ripHold > 0 ? this.anim.speed : this.atkSpd);
       const t = this.atkT;
       // seguimiento durante la preparación: giro rápido hacia el objetivo del
       // golpe al empezar, luego corrección suave
@@ -867,7 +947,9 @@ export class Player {
       desiredSpeed = -1;
       this.vx = damp(this.vx, 0, 7, dt);
       this.vz = damp(this.vz, 0, 7, dt);
-      this.blocking = this.canBlock();
+      // (con el Cerrojo no se bloquea: el siguiente golpe del combo, se desvía
+      // otra vez o entra)
+      this.blocking = this.canGuard();
       const rip = this.stT > 0.08 && (has('light') || has('heavy')) && this.hasSword ? this.riposteTarget() : null;
       if (rip) {
         take('light') || take('heavy');
@@ -887,8 +969,10 @@ export class Player {
     } else if (st === 'roll') {
       const dur = this.rollBack ? 0.46 : 0.64;
       const t = this.stT / dur;
-      this.iframe = this.rollBack ? this.stT > 0.03 && this.stT < 0.26 : this.stT > 0.04 && this.stT < 0.42;
-      const spd = this.rollBack ? 5.6 * Math.max(0, 1 - t * 1.6) : 7.6 * Math.pow(Math.max(0, 1 - t), 0.6);
+      // (la invulnerabilidad y el alcance, con lo que haga el objeto bendito)
+      const ie = Math.min(dur - 0.05, (this.rollBack ? 0.26 : 0.42) * this.mods.rollIF);
+      this.iframe = this.rollBack ? this.stT > 0.03 && this.stT < ie : this.stT > 0.04 && this.stT < ie;
+      const spd = (this.rollBack ? 5.6 * Math.max(0, 1 - t * 1.6) : 7.6 * Math.pow(Math.max(0, 1 - t), 0.6)) * this.mods.rollDist;
       this.vx = this.rollDir.x * spd;
       this.vz = this.rollDir.z * spd;
       desiredSpeed = -1;

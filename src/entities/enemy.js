@@ -126,6 +126,7 @@ export class Enemy {
     this.flareRed = 0;
     this.parryT = 0;
     this.parryHits = 0;
+    this.parryK = 1;
     if (this._flashing) {
       this.rig.setTint(null, null);
       this._flashing = false;
@@ -405,7 +406,11 @@ export class Enemy {
     if (this.D) return this.D.parried(a);
     this.parryHits = (g.time - (this.lastParriedT ?? -9) < 4 ? this.parryHits || 0 : 0) + 1;
     this.lastParriedT = g.time;
-    const need = T.parryPosture ?? 1;
+    // (con el Cerrojo de San Martín, a los grandes y a los jefes les basta un
+    // parry menos, y el desequilibrio les dura más)
+    const pm = g.player.mods || {};
+    const need = Math.max(1, (T.parryPosture ?? 1) - (pm.posture || 0));
+    this.parryK = pm.unbalance || 1;
     this.atk = null;
     this.data.blockT = 0;
     const mass = clamp(T.height / 1.8, 1, 3.2);
@@ -430,8 +435,9 @@ export class Enemy {
     this.parryHits = 0;
     this.state = 'parried';
     this.stT = 0;
-    this.parryT = T.parryDur ?? 1.6;
-    this.anim.play(T.clips.parried || T.clips.stagger, { blend: 0.03 });
+    this.parryT = (T.parryDur ?? 1.6) * this.parryK;
+    // (más largo, a cámara algo más lenta: no se queda tieso al acabar el clip)
+    this.anim.play(T.clips.parried || T.clips.stagger, { blend: 0.03, speed: 1 / this.parryK });
     const kb = T.heavy ? 0.6 : 2.2;
     this.vx = (dx / d) * kb;
     this.vz = (dz / d) * kb;
@@ -442,7 +448,7 @@ export class Enemy {
   // Va a recibir el golpe de gracia: se queda desequilibrado hasta que llega.
   onRiposte() {
     if (this.D) return this.D.onRiposte && this.D.onRiposte();
-    const dur = this.T.parryDur ?? 1.6;
+    const dur = (this.T.parryDur ?? 1.6) * (this.parryK || 1);
     if (this.state === 'parried') this.stT = Math.min(this.stT, dur - 0.9);
     this.parryT = Math.max(this.parryT, 0.9);
   }
@@ -650,7 +656,7 @@ export class Enemy {
         this.vx = damp(this.vx, 0, 4, dt);
         this.vz = damp(this.vz, 0, 4, dt);
         this.parryT = Math.max(0, this.parryT - dt);
-        if (this.stT >= (T.parryDur ?? 1.6)) {
+        if (this.stT >= (T.parryDur ?? 1.6) * (this.parryK || 1)) {
           this.state = 'chase';
           this.parryT = 0;
           this.cooldown = 0.35 + Math.random() * 0.3;

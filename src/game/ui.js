@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { GLYPHS } from '../core/input.js';
 import { ITEMS, NOTES, AREA_NAMES } from './story.js';
+import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS } from '../entities/weapons.js';
 import { iconBitmap, smallIcon } from './icons.js';
 import { formatTime, clamp } from '../core/util.js';
@@ -441,6 +442,8 @@ export class UI {
     for (const w of WEAPON_ORDER) if (inv.has(WEAPONS[w].item)) out.push({ id: WEAPONS[w].item });
     if (inv.has('escudo')) out.push({ id: 'escudo' });
     out.push({ id: '_flask', n: g.player.flasks + '/' + g.player.maxFlasks });
+    // los objetos benditos (el que se lleva, marcado)
+    for (const k of RELIC_IDS) if (inv.has(k)) out.push({ id: k, relic: true, worn: g.player.relic === k });
     for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'llave_sotano', 'garra', 'incienso']) if (inv.has(k)) out.push({ id: k });
     const c = (k) => inv.count(k);
     if (c('tablon')) out.push({ id: 'tablon', n: '×' + c('tablon') });
@@ -478,7 +481,7 @@ export class UI {
         d.className = 'slot';
         const ic = e.id === '_flask' ? (g.player.flasks > 0 ? 'flask' : 'flaskEmpty') : ITEMS[e.id].icon;
         const ib = iconBitmap(ic);
-        d.innerHTML = spriteHtml(i === this.invSel ? slotSel : slot) + spriteHtml(ib, 1, 'ic') + (e.n ? `<span class="n f-small">${esc(e.n)}</span>` : '');
+        d.innerHTML = spriteHtml(i === this.invSel ? slotSel : slot) + spriteHtml(ib, 1, 'ic') + (e.n ? `<span class="n f-small">${esc(e.n)}</span>` : '') + (e.worn ? spriteHtml(smallIcon('worn'), 1, 'worn') : '');
         d.addEventListener('mouseenter', () => {
           if (this.invSel !== i) {
             this.invSel = i;
@@ -493,9 +496,12 @@ export class UI {
       const held = wpn && g.player.weaponId === wpn;
       if (e) {
         const it = e.id === '_flask' ? { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' } : ITEMS[e.id];
-        det.innerHTML = `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${held ? '<p class="f-small">En la mano</p>' : ''}${sep}${this.statsHtml()}`;
+        // (los objetos benditos: lo que dan y lo que quitan)
+        const fx = e.relic ? `<ul class="fx">${it.pros.map((t) => `<li class="pro">${esc(t)}</li>`).join('')}${it.cons.map((t) => `<li class="con">${esc(t)}</li>`).join('')}</ul>` : '';
+        det.innerHTML = `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${fx}${held ? '<p class="f-small">En la mano</p>' : ''}${e.worn ? '<p class="f-small">Lo llevas puesto</p>' : ''}${e.relic ? '' : sep + this.statsHtml()}`;
       } else det.innerHTML = this.statsHtml();
-      $('inv-hint').innerHTML = `${wpn && !held ? `<span>${this.keyHtml('confirm')} Empuñar</span>` : ''}<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('back')} Cerrar</span>`;
+      const act = wpn && !held ? 'Empuñar' : e && e.relic ? (e.worn ? 'Quitártelo' : 'Ponértelo') : null;
+      $('inv-hint').innerHTML = `${act ? `<span>${this.keyHtml('confirm')} ${act}</span>` : ''}<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('back')} Cerrar</span>`;
     } else {
       const read = Object.keys(NOTES).filter((k) => g.flags['note:' + k]);
       this.invSel = clamp(this.invSel, 0, Math.max(0, read.length - 1));
@@ -786,11 +792,14 @@ export class UI {
     $('hud').classList.toggle('hidden', !v);
   }
 
-  // Barra con marco de hierro, relleno sombreado y rastro del daño.
-  _bar(b, x, y, len, h, frac, lag, cols) {
+  // Barra con marco de hierro, relleno sombreado y rastro del daño (y, con el
+  // Óbolo de las Ánimas, la vida en el aire que aún se puede recuperar:
+  // dorada, tramada).
+  _bar(b, x, y, len, h, frac, lag, cols, rally = 0) {
     b.rect(x, y, len + 2, h + 2, P.void);
     for (let i = 0; i < len; i++) b.set(x + 1 + i, y, i % 5 === 0 ? P.iron3 : P.iron2);
     const f = Math.round(frac * len),
+      r = Math.round(Math.min(1, frac + rally) * len),
       l = Math.round(Math.max(frac, lag) * len);
     for (let j = 0; j < h; j++)
       for (let i = 0; i < len; i++) {
@@ -798,6 +807,7 @@ export class UI {
           Y = y + 1 + j;
         let c;
         if (i < f) c = cols[Math.min(cols.length - 1, j)];
+        else if (i < r) c = (X + Y) % 2 ? (j === 0 ? P.gold4 : P.gold3) : P.gold2;
         else if (i < l) c = j === 0 ? P.bone3 : P.bone1;
         else c = (X + Y) % 2 ? P.ink0 : P.ink1;
         b.set(X, Y, c);
@@ -820,7 +830,8 @@ export class UI {
       this.hpLag = hf;
       this._lagHold = 0;
     }
-    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks].join(',');
+    const rf = p.rally > 0 ? clamp(p.rally / p.maxHp, 0, 1) : 0;
+    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic].join(',');
     if (key === this._vitKey && this._vitU === this.sc.u) return;
     this._vitKey = key;
     this._vitU = this.sc.u;
@@ -831,7 +842,7 @@ export class UI {
     b.disc(4.6, 5.6, 2.2, P.blood3);
     b.set(4, 4, P.ruby4);
     b.set(3, 5, P.blood4);
-    this._bar(b, 11, 1, hpLen, 6, hf, this.hpLag, [P.blood4, P.blood3, P.blood3, P.blood2, P.blood2, P.blood1]);
+    this._bar(b, 11, 1, hpLen, 6, hf, this.hpLag, [P.blood4, P.blood3, P.blood3, P.blood2, P.blood2, P.blood1], rf);
     const stCols = p.st <= 0 ? [P.ember1, P.blood1, P.blood1, P.blood0] : [P.moss4, P.moss3, P.moss3, P.moss2];
     this._bar(b, 11, 10, stLen, 4, clamp(p.st / p.maxSt, 0, 1), 0, stCols);
     // ampollas (gris cuando no queda ninguna)
@@ -842,6 +853,8 @@ export class UI {
     b.blit(fb, 11, 19);
     const n = textBitmap(String(p.flasks), 'small', { color: p.flasks ? P.bone3 : P.iron3, outline: P.void });
     b.blit(n, 23, 20);
+    // el objeto bendito que se lleva
+    if (p.relic) b.blit(smallIcon(ITEMS[p.relic].icon), 33, 19);
     b.outline(P.void);
     const cv = this.vit;
     if (cv.width !== W || cv.height !== H) {
@@ -1077,6 +1090,12 @@ export class UI {
           if (w && WEAPONS[w] && p.weaponId !== w) {
             p.equipWeapon(w);
             p.setEquipment(this.g.hasWeapon(), this.g.inventory.has('escudo'));
+            au && au.ui('confirm');
+            this.renderInv();
+          }
+          // ponerse o quitarse un objeto bendito
+          if (e && e.relic) {
+            this.g.wearRelic(e.id);
             au && au.ui('confirm');
             this.renderInv();
           }

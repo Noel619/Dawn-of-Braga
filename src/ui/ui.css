@@ -153,6 +153,15 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .slot > img { position: absolute; left: 0; top: 0; }
 .slot > img.ic { left: calc(var(--u) * 2); top: calc(var(--u) * 2); }
 .slot .n { position: absolute; right: calc(var(--u) * 2); bottom: calc(var(--u) * 1); color: var(--bone-hi); text-shadow: var(--sh), calc(-1px * var(--m)) calc(-1px * var(--m)) 0 var(--void); }
+/* el objeto bendito que se lleva puesto */
+.slot > img.worn { left: auto; right: calc(var(--u) * 1); top: calc(var(--u) * 1); }
+.detail ul.fx { list-style: none; margin: calc(var(--u) * 3) 0 0; padding: 0; text-shadow: var(--sh); }
+.detail ul.fx li { padding-left: calc(var(--u) * 6); text-indent: calc(var(--u) * -6); }
+.detail ul.fx li::before { display: inline-block; width: calc(var(--u) * 6); text-indent: 0; }
+.detail ul.fx li.pro { color: var(--gold-hi); }
+.detail ul.fx li.pro::before { content: '+'; }
+.detail ul.fx li.con { color: #e8806a; }
+.detail ul.fx li.con::before { content: '−'; }
 .docs { display: grid; gap: calc(var(--u) * 1); align-content: start; }
 .docs .doc { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 1) calc(var(--u) * 3); color: var(--ash); text-shadow: var(--sh); cursor: pointer; }
 .docs .doc.sel { color: var(--bone-hi); background: rgba(138, 60, 16, 0.28); box-shadow: inset var(--u) 0 0 var(--ember); }

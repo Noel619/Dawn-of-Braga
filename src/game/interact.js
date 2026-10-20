@@ -337,9 +337,96 @@ function itemMesh(id) {
     t.position.set(0, -0.04, 0.3);
     r.rotation.x = Math.PI / 2;
     g.add(r, s, t);
-  }
+  } else if (RELIC_MESH[id]) RELIC_MESH[id](g);
   return g;
 }
+
+// Los objetos benditos de los osarios (game/relics.js), de pie y a la vista.
+const RELIC_MESH = {
+  // la Saeta de San Sebastián: el brazo relicario de plata, con la punta
+  // negra de la flecha asomando por la palma
+  saeta(g) {
+    const silver = objMat('silver'),
+      dark = objMat('iron'),
+      gold = objMat('gold');
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.3, 7), silver);
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.04, 7), gold);
+    cuff.position.y = -0.12;
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.05, 7), silver);
+    base.position.y = -0.17;
+    const palm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.05), silver);
+    palm.position.y = 0.19;
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.16, 4), dark);
+    head.scale.set(1.4, 1, 0.35);
+    head.position.y = 0.3;
+    const win = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.012), objMat('glass'));
+    win.position.set(0, 0.02, 0.052);
+    g.add(arm, cuff, base, palm, head, win);
+  },
+  // el Escapulario del ama: dos paños de lana parda y sus cintas
+  escapulario(g) {
+    const wool = objMat('leather'),
+      tape = objMat('clothWhite', { tint: 0xc8b89a }),
+      blue = objMat('clothBlue'),
+      gold = objMat('gold');
+    for (const [x, y, r] of [
+      [-0.06, 0, 0.2],
+      [0.08, 0.14, -0.15],
+    ]) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.16, 0.012), wool);
+      p.position.set(x, y, 0);
+      p.rotation.z = r;
+      g.add(p);
+    }
+    const v = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.004), blue);
+    v.position.set(-0.06, -0.01, 0.008);
+    v.rotation.z = 0.2;
+    const h = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.004, 3, 8), gold);
+    h.position.set(-0.068, 0.045, 0.01);
+    for (const dx of [-0.03, 0.03]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.2, 0.004), tape);
+      c.position.set(dx + 0.01, 0.12, -0.004);
+      c.rotation.z = -0.6;
+      g.add(c);
+    }
+    g.add(v, h);
+  },
+  // el Óbolo de las Ánimas: la moneda de canto, con su llama grabada
+  obolo(g) {
+    const silver = objMat('silver');
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.014, 14), silver);
+    c.rotation.x = Math.PI / 2;
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.004), objMat('ember'));
+    f.position.set(0, -0.015, 0.009);
+    const x1 = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.05, 0.004), objMat('iron'));
+    x1.position.set(0, 0.03, 0.009);
+    const x2 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.004), objMat('iron'));
+    x2.position.set(0, 0.04, 0.009);
+    g.add(c, f, x1, x2);
+  },
+  // el Cerrojo de San Martín: el pasador de hierro, su tirador y la cruz
+  cerrojo(g) {
+    const iron = objMat('iron'),
+      gold = objMat('gold');
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.42, 6), iron);
+    rod.rotation.z = Math.PI / 2;
+    const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.1, 6), iron);
+    knob.position.set(-0.17, -0.05, 0);
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.026, 6, 4), iron);
+    ball.position.set(-0.17, -0.1, 0);
+    for (const x of [-0.06, 0.12]) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.07, 0.05), iron);
+      st.position.set(x, 0, 0);
+      g.add(st);
+    }
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.05, 0.005), gold);
+    c1.position.set(0.03, 0, 0.02);
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.005), gold);
+    c2.position.set(0.03, 0.008, 0.02);
+    g.add(rod, knob, ball, c1, c2);
+    g.rotation.z = 0.35;
+  },
+};
 
 function noteMesh(model) {
   const g = new THREE.Group();

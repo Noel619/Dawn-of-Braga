@@ -301,11 +301,13 @@ export class Game {
       v: 1,
       flags: this.flags,
       inv: this.inventory.toJSON(),
-      maxHp: p.maxHp,
+      // (la vitalidad ganada, sin lo que quite el objeto bendito que se lleva)
+      maxHp: p.baseMaxHp,
       maxFlasks: p.maxFlasks,
       maxSt: p.maxSt,
       dmgMul: p.dmgMul,
       weapon: p.weaponId,
+      relic: p.relic,
       lastAltar: this.lastAltar,
       playTime: this.playTime,
       deaths: this.deaths,
@@ -324,11 +326,20 @@ export class Game {
     this.lastAltar = s.lastAltar;
     this.hintsShown = s.hints || {};
     const p = this.player;
-    p.maxHp = s.maxHp || 100;
+    p.baseMaxHp = s.maxHp || 100;
+    p.hp = p.baseMaxHp;
+    p.wearRelic(s.relic && this.inventory.has(s.relic) ? s.relic : null);
     p.maxFlasks = s.maxFlasks || 3;
     p.maxSt = s.maxSt || 100;
     p.dmgMul = s.dmgMul || 1;
     this.savedWeapon = s.weapon || null;
+  }
+
+  // Se pone (o se quita) un objeto bendito: de uno en uno (game/relics.js).
+  wearRelic(id) {
+    const p = this.player;
+    p.wearRelic(p.relic === id ? null : id);
+    this.saveGame();
   }
 
   // Armas: ¿tiene alguna? y cuál empuñar (la guardada si aún la tiene; si no,
@@ -502,7 +513,9 @@ export class Game {
     clearSave();
     this.newState();
     const p = this.player;
-    p.maxHp = 100;
+    p.baseMaxHp = 100;
+    p.hp = 100;
+    p.wearRelic(null);
     p.maxFlasks = 3;
     p.maxSt = 100;
     p.dmgMul = 1;
@@ -649,6 +662,8 @@ export class Game {
       enemy: `${k('lock')} Fijar objetivo  ·  ${k('heal')} Beber una ampolla`,
       altar: `Descansar cura y rellena las ampollas, pero las criaturas vuelven a levantarse.`,
       map: `${k('map')} Mapa  ·  ${k('inventory')} Inventario y documentos`,
+      relic: `Llevas puesto un objeto bendito: favorece una manera de pelear y castiga otra. Se llevan de uno en uno; cámbialo en el inventario ${k('inventory')}.`,
+      relic2: `Otro objeto bendito. Se llevan de uno en uno: cámbialo por el que llevas en el inventario ${k('inventory')}.`,
     };
     // las pistas se muestran de una en una
     this.hintQ = this.hintQ || [];
@@ -698,9 +713,14 @@ export class Game {
       p.maxFlasks++;
       p.flasks++;
     } else if (it.upgrade === 'hp') {
-      p.maxHp += 25;
-      p.hp += 25;
+      const was = p.maxHp;
+      p.baseMaxHp += 25;
+      p.refreshMaxHp();
+      p.hp += p.maxHp - was;
     } else if (it.upgrade === 'dmg') p.dmgMul += 0.25;
+    // un objeto bendito: si no se lleva ninguno, se lo pone
+    const relicNew = it.relic && !p.relic;
+    if (relicNew) p.wearRelic(id);
     else if (it.upgrade === 'st') {
       p.maxSt += 30;
       p.st = p.maxSt;
@@ -718,6 +738,7 @@ export class Game {
       }
       if (id === 'escudo') this.hint('shield');
       if (id === 'palanca') this.hint('map');
+      if (it.relic) this.hint(relicNew ? 'relic' : 'relic2');
     };
     this.saveGame();
   }

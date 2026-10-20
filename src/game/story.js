@@ -142,6 +142,44 @@ export const ITEMS = {
     key: false,
     upgrade: 'dmg',
   },
+  // Los objetos benditos de los osarios (game/relics.js): se lleva uno a la
+  // vez; cada uno favorece una manera de pelear (pros) a cambio de otra (cons).
+  saeta: {
+    name: 'Saeta de San Sebastián',
+    desc: 'Una punta de flecha negra en un relicario de plata con forma de brazo. La Hermandad de la guarnición la guardaba en su arca: la sacaron del cuerpo del santo, que la aguantó atado al poste y no murió de ella.',
+    icon: 'saeta',
+    key: false,
+    relic: true,
+    pros: ['Bloquear cuesta la mitad de aguante.', 'Con la guardia alzada recuperas el aguante como sin ella.', 'Los golpes que paras no te hieren.', 'Tras parar un golpe, el siguiente tuyo hace la mitad más de daño.'],
+    cons: ['Las volteretas cuestan el doble de aguante y llegan más corto.', 'La ventana del parry se reduce casi a la mitad.'],
+  },
+  escapulario: {
+    name: 'Escapulario del ama',
+    desc: 'Dos paños de lana parda con la Virgen del Carmen bordada, unidos por dos cintas. El ama se lo colgó al canónigo de niño y él se lo arrancó la noche de la campana. Dicen que la Virgen aparta del golpe a quien lo lleva.',
+    icon: 'escapulario',
+    key: false,
+    relic: true,
+    pros: ['Las volteretas te hacen invulnerable más tiempo y cuestan menos.', 'Correr gasta la mitad de aguante.', 'Esquivar un golpe en el último instante detiene el tiempo un momento: tu siguiente golpe es crítico.'],
+    cons: ['Tu vitalidad máxima baja un tercio.', 'Bloquear cuesta la mitad más de aguante.'],
+  },
+  obolo: {
+    name: 'Óbolo de las Ánimas',
+    desc: 'Una moneda de plata gastada, con un alma entre llamas grabada encima de la cruz. Los canónigos la echaban al cepillo de las ánimas olvidadas, las que no tienen quien rece por ellas. Ellas cobran, pero pagan.',
+    icon: 'obolo',
+    key: false,
+    relic: true,
+    pros: ['La vida que te quitan queda unos segundos en el aire: si golpeas, la recuperas.', 'Tus golpes son más rápidos.'],
+    cons: ['Las ampollas curan la mitad.', 'Los golpes que recibes hacen más daño.'],
+  },
+  cerrojo: {
+    name: 'Cerrojo de San Martín',
+    desc: 'Un pasador de hierro negro, largo como un palmo, con la cruz de Martín grabada. Con él echó el santo el primero de los cuatro cerrojos, y los hermanos de Dumio lo guardaron en su arca. No se abre con él: se cierra.',
+    icon: 'cerrojo',
+    key: false,
+    relic: true,
+    pros: ['La ventana del parry dura mucho más.', 'Cada parry te devuelve todo el aguante.', 'Las criaturas grandes y los jefes quedan desequilibrados con un parry menos, y más tiempo.', 'El golpe de gracia hace el doble de daño.'],
+    cons: ['No puedes bloquear: la guardia sólo sirve para desviar.'],
+  },
 };
 
 export const NOTES = {

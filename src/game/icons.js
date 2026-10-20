@@ -668,6 +668,136 @@ const ICONS = {
       b.set(x, y, c);
     b.outline(P.void);
   },
+  // ---------------------------------------------------------- objetos benditos
+  // la Saeta de San Sebastián: una punta de flecha negra, de hoja ancha, con
+  // el muñón del asta atado con un fleje de plata y una cinta roja
+  saeta(b) {
+    const SIL = [P.steel0, P.steel1, P.steel2, P.steel3, P.steel4, P.steel5];
+    // el asta rota (abajo a la izquierda) y su astilla
+    seg(b, 4.5, 27.5, 15, 17, 1.7, 1.5, (t, s, x, y) => shade(WOOD, 0.62 - s * 0.4 - t * 0.1, x, y));
+    seg(b, 3.5, 28.5, 5.5, 29.5, 0.7, 0.4, () => P.wood1);
+    // el fleje de plata y la cinta
+    seg(b, 12.5, 17.5, 15.5, 20.5, 2.1, 2.1, (t, s, x, y) => shade(SIL, 0.75 - s * 0.35, x, y));
+    seg(b, 13, 21, 9, 27, 1.0, 0.6, (t, s, x, y) => shade(RUBY, 0.7 - s * 0.4 - t * 0.3, x, y));
+    seg(b, 14.5, 21.5, 13, 28.5, 0.9, 0.5, (t, s, x, y) => shade(RUBY, 0.55 - s * 0.4 - t * 0.3, x, y));
+    // la hoja: un rombo largo con su nervio
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        // a lo largo (u) y a lo ancho (v) de la diagonal de la hoja
+        const px = x + 0.5 - 15.5,
+          py = y + 0.5 - 16.5;
+        const u = (px - py) / Math.SQRT2,
+          v = (px + py) / Math.SQRT2;
+        if (u < 0 || u > 15) continue;
+        const w = u < 5 ? (u / 5) * 4.6 : 4.6 * (1 - (u - 5) / 10);
+        if (Math.abs(v) > w) continue;
+        const l = 0.55 - v / 8 + (Math.abs(v) < 0.8 ? 0.22 : 0) + (Math.abs(v) > w - 0.9 ? 0.25 : 0) - u / 60;
+        b.set(x, y, shade(IRON, l, x, y));
+      }
+    holySparkle(b, 27, 5);
+    b.outline(P.void);
+  },
+  // el Escapulario del ama: dos paños de lana parda unidos por dos cintas; en
+  // el de delante, la Virgen del Carmen bordada (manto azul, aureola)
+  escapulario(b) {
+    const WOOL = [P.wood0, P.wood1, P.wood2, P.wood3, P.wood4];
+    const panel = (x0, y0, w, h, front) => {
+      for (let y = y0; y < y0 + h; y++)
+        for (let x = x0; x < x0 + w; x++) {
+          const edge = x === x0 || y === y0 || x === x0 + w - 1 || y === y0 + h - 1;
+          const l = 0.62 - (x - x0) / (w * 3) - (y - y0) / (h * 3) + ((x * 3 + y * 5) % 7 === 0 ? 0.12 : 0);
+          b.set(x, y, edge ? (x === x0 || y === y0 ? P.wood3 : P.wood0) : shade(WOOL, front ? l : l - 0.15, x, y));
+        }
+    };
+    // las cintas: de un paño al otro, por encima
+    seg(b, 9, 10, 20, 4, 0.7, 0.7, () => P.parch2);
+    seg(b, 13, 10, 24, 6, 0.7, 0.7, () => P.parch1);
+    panel(17, 3, 10, 12, false);
+    panel(4, 10, 13, 17, true);
+    // la Virgen: la aureola, la cara, el manto y el Niño
+    for (let y = 12; y <= 14; y++) for (let x = 8; x <= 12; x++) if (Math.hypot(x - 10, y - 13.5) < 2.4 && Math.hypot(x - 10, y - 13.5) > 1.2) b.set(x, y, P.gold3);
+    b.set(10, 14, P.bone3);
+    b.set(9, 14, P.bone2);
+    for (let y = 15; y <= 23; y++) {
+      const hw = 1 + Math.floor((y - 15) / 2);
+      for (let x = 10 - hw; x <= 10 + hw; x++) b.set(x, y, x < 10 ? P.glass2 : P.glass1);
+    }
+    b.set(10, 18, P.bone2);
+    b.set(11, 18, P.bone3);
+    b.set(10, 24, P.gold2);
+    b.outline(P.void);
+  },
+  // el Óbolo de las Ánimas: una moneda de plata, vista algo de lado, con un
+  // alma entre llamas grabada bajo la cruz
+  obolo(b) {
+    const SIL = [P.steel0, P.steel1, P.steel2, P.steel3, P.steel4, P.steel5];
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const dx = (x + 0.5 - 16) / 11,
+          dy = (y + 0.5 - 17) / 9;
+        const d = Math.hypot(dx, dy);
+        if (d > 1) continue;
+        // el canto (abajo, en sombra) y la cara, con el borde en relieve
+        const rim = d > 0.82;
+        const l = 0.6 - dx * 0.3 - dy * 0.35 + (rim ? 0.15 : 0) - (d > 0.95 ? 0.35 : 0);
+        b.set(x, y, shade(SIL, l, x, y));
+      }
+    // el canto de la moneda
+    for (let x = 6; x <= 26; x++) {
+      const yb = 17 + Math.round(9 * Math.sqrt(Math.max(0, 1 - ((x + 0.5 - 16) / 11) ** 2)));
+      b.set(x, yb, P.steel1);
+      b.set(x, yb + 1, P.steel0);
+    }
+    // la cruz y el alma entre llamas
+    for (let y = 9; y <= 13; y++) b.set(16, y, P.steel1);
+    for (let x = 14; x <= 18; x++) b.set(x, 11, P.steel1);
+    for (const [x, y, c] of [
+      [16, 16, P.bone1],
+      [16, 17, P.bone1],
+      [15, 18, P.steel1],
+      [17, 18, P.steel1],
+      [13, 21, P.ember2],
+      [14, 20, P.ember3],
+      [15, 21, P.ember2],
+      [17, 21, P.ember2],
+      [18, 20, P.ember3],
+      [19, 21, P.ember2],
+      [16, 22, P.ember3],
+      [14, 22, P.ember1],
+      [18, 22, P.ember1],
+    ])
+      b.set(x, y, c);
+    sparkle(b, 10, 11);
+    b.outline(P.void);
+  },
+  // el Cerrojo de San Martín: un pasador de hierro con su tirador doblado,
+  // en sus dos grapas, con la cruz grabada
+  cerrojo(b) {
+    // las grapas (abajo y arriba del pasador)
+    for (const [cx, cy] of [
+      [11, 21],
+      [21, 11],
+    ])
+      seg(b, cx - 2.6, cy + 2.6, cx + 2.6, cy - 2.6, 2.6, 2.6, (t, s, x, y) => shade(IRON, 0.35 - s * 0.3, x, y));
+    // el pasador
+    seg(b, 4.5, 27.5, 26.5, 5.5, 1.8, 1.8, (t, s, x, y) => shade(IRON, 0.7 - s * 0.45, x, y));
+    // el tirador, doblado hacia abajo
+    seg(b, 8.5, 23.5, 12.5, 28.5, 1.4, 1.2, (t, s, x, y) => shade(IRON, 0.6 - s * 0.4, x, y));
+    disc(b, 12.8, 28.6, 1.9, (l, d, x, y) => shade(IRON, l, x, y));
+    // la cruz de Martín, en oro, sobre el pasador
+    for (const [x, y] of [
+      [17, 14],
+      [16, 15],
+      [18, 15],
+      [17, 16],
+      [15, 16],
+      [19, 14],
+    ])
+      b.set(x, y, P.gold3);
+    b.set(17, 15, P.gold4);
+    holySparkle(b, 26, 4);
+    b.outline(P.void);
+  },
   // rollo de pergamino con lacre
   note(b) {
     const PA = [P.parch0, P.parch1, P.parch2, P.parch3, P.parch4, P.parch5];
@@ -805,6 +935,46 @@ const SMALL = {
   item(b) {
     b.disc(4, 4, 2.2, P.bone3);
     b.set(4, 4, P.gold4);
+  },
+  // (los objetos benditos, en el HUD; 'worn': el que se lleva, en el inventario)
+  saeta(b) {
+    for (let i = 0; i < 5; i++) b.set(1 + i, 7 - i, i < 2 ? P.wood3 : P.iron2);
+    for (const [x, y] of [
+      [5, 1],
+      [6, 1],
+      [7, 1],
+      [7, 2],
+      [7, 3],
+      [6, 2],
+      [5, 2],
+      [6, 3],
+    ])
+      b.set(x, y, P.iron3);
+    b.set(6, 2, P.iron5);
+    b.set(3, 5, P.steel4);
+  },
+  escapulario(b) {
+    for (let y = 2; y < 8; y++) for (let x = 1; x < 6; x++) b.set(x, y, P.wood2);
+    for (let y = 1; y < 5; y++) for (let x = 5; x < 8; x++) b.set(x, y, P.wood1);
+    b.set(3, 4, P.glass2);
+    b.set(3, 5, P.glass2);
+    b.set(3, 3, P.gold3);
+  },
+  obolo(b) {
+    b.disc(4, 4.5, 3.2, P.steel3);
+    b.disc(3.6, 4.1, 1.8, P.steel4);
+    b.set(4, 5, P.ember3);
+    b.set(4, 3, P.steel1);
+  },
+  cerrojo(b) {
+    for (let i = 0; i < 7; i++) b.set(1 + i, 7 - i, P.iron3), b.set(1 + i, 8 - i, P.iron1);
+    b.set(1, 8, P.iron4);
+    b.set(4, 4, P.gold4);
+  },
+  worn(b) {
+    for (let i = 1; i < 8; i++) b.set(4, i, P.gold3);
+    for (let i = 2; i < 7; i++) b.set(i, 3, P.gold3);
+    b.set(4, 3, P.gold5);
   },
 };
 

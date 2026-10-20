@@ -24,12 +24,28 @@ export class Combat {
     this.flashes.push({ s, t: 0, dur: 0.1, size });
   }
 
+  // El objeto bendito, al acertar un golpe: con el Óbolo se recupera parte de
+  // la vida que quedó en el aire (un destello dorado sube del herido).
+  relicHit(player, dmg, x, y, z) {
+    const R = player.mods.rally;
+    if (!R || player.rally <= 0 || player.dead) return;
+    const h = Math.min(player.rally, dmg * R);
+    player.rally -= h;
+    player.hp = Math.min(player.maxHp, player.hp + h);
+    this.game.fx.blood.emit(x, y, z, 10, { color: [1, 0.82, 0.45], speed: 2, life: 0.7, up: 2, gravity: -2.5 });
+  }
+
   // ------------------------------------------------------------ jugador -> enemigos
   playerSwing(player, atk) {
     const g = this.game;
     if (g.breakables) g.breakables.playerSwing(player, atk);
     // (los colosos del jefe final)
     if (g.finale) g.finale.playerSwing(player, atk);
+    // (el objeto bendito: la Saeta devuelve lo parado; el Escapulario, tras
+    // esquivar en el último instante, deja el siguiente golpe en crítico)
+    const ret = player.retaliateT > 0 && player.mods.retaliate ? player.mods.retaliate.k : 1;
+    const critNext = player.critNextT > 0;
+    let landed = false;
     for (const e of g.activeEnemies) {
       // (a Henrique no se le hiere: es un aliado)
       if (e.dead || e.T.friendly || player.hitSet.has(e) || !e.obj.visible || e.state === 'ceiling') continue;
@@ -47,10 +63,14 @@ export class Combat {
       const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
       // (y el Descoyuntado tirado patas arriba, y quien está desequilibrado
       // tras un parry: todo golpe es crítico)
-      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0;
+      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext;
       // atkMul: pesado cargado; crit: el facón hiere más por la espalda
-      const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * (0.92 + Math.random() * 0.16));
+      const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
+      if (r !== 'blocked' && r !== 'none') {
+        landed = true;
+        this.relicHit(player, dmg, e.pos.x, e.pos.y + Math.min(1.3, e.T.height * 0.55), e.pos.z);
+      }
       if (crit && r !== 'blocked' && r !== 'none') {
         g.hitstop = Math.max(g.hitstop, 0.14);
         g.fx.blood.emit(e.pos.x, e.pos.y + Math.min(1.3, e.T.height * 0.55), e.pos.z, 24, { speed: 5 });
@@ -86,6 +106,16 @@ export class Combat {
         } else g.audio && g.audio.enemyVoice(e, 'hurt');
       }
     }
+    // (lo que devolvía la Saeta o remataba el Escapulario se gasta en el golpe
+    // que entra)
+    if (landed) {
+      if (ret > 1) {
+        player.retaliateT = 0;
+        g.flash = Math.max(g.flash, 0.1);
+        g.flashTint = [1, 0.85, 0.55];
+      }
+      player.critNextT = 0;
+    }
   }
 
   // El arma del jugador muerde el suelo (hacha): polvo, onda y daño a lo que
@@ -105,7 +135,9 @@ export class Combat {
       const d = Math.hypot(e.pos.x - tip.x, e.pos.z - tip.z);
       if (d > I.r + e.body.radius || Math.abs(e.pos.y - y) > 1.5) continue;
       player.hitSet.add(e);
-      const r = e.takeHit(Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1)), atk.poise * 0.5, tip.x, tip.z, true, 0);
+      const dmg = Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1));
+      const r = e.takeHit(dmg, atk.poise * 0.5, tip.x, tip.z, true, 0);
+      if (r !== 'blocked' && r !== 'none') this.relicHit(player, dmg, e.pos.x, e.pos.y + 1, e.pos.z);
       if (r === 'kill') g.audio && g.audio.enemyVoice(e, 'death');
       else if (r !== 'none' && r !== 'blocked') g.audio && g.audio.enemyVoice(e, 'hurt');
     }
@@ -227,9 +259,11 @@ export class Combat {
     const g = this.game;
     if (!e || e.dead || p.hitSet.has(e)) return;
     p.hitSet.add(e);
-    const dmg = Math.round(a.dmg * p.dmgMul * (0.95 + Math.random() * 0.1));
+    // (el Cerrojo de San Martín: el golpe de gracia, el doble)
+    const dmg = Math.round(a.dmg * p.dmgMul * p.mods.ripK * (0.95 + Math.random() * 0.1));
     const r = e.takeRiposte ? e.takeRiposte(dmg, p.pos.x, p.pos.z) : e.takeHit(dmg, 999, p.pos.x, p.pos.z, true, 0);
     if (r === 'none') return;
+    this.relicHit(p, dmg, e.pos.x, e.pos.y + 1, e.pos.z);
     const dx = e.pos.x - p.pos.x,
       dz = e.pos.z - p.pos.z;
     const d = Math.hypot(dx, dz) || 1;
