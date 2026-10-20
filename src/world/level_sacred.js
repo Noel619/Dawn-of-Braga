@@ -6,6 +6,7 @@ import { solid, stairs, merlons, cityWall, tower, archWall, stoneWall, archRing,
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
 import { cisternPit, cisternRuins, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -860,82 +861,206 @@ export function buildCrypt(ctx, S, C, L) {
     L.interact.push({ kind: 'altar', id: 'a_cripta', name: 'Altar de la Cripta', x: 5.8, y: Y, z: -103.5, spawn: [4.2, Y, -103.5], yaw: -Math.PI / 2 });
   }
 
-  // --- el osario: un pasillo de calaveras bajo una bóveda también de huesos,
-  // con fajones sobre pilastras, nichos de verdad (con su hondura y los huesos
-  // dentro: antes, un rectángulo negro pintado en el muro) y las dos bocas de
-  // los lados, al sepulcro y al templo
+  // --- el osario de las ánimas: el de los canónigos de la catedral. Los
+  // muros, un columbario de calaveras en sus nichos chicos; en los nichos
+  // grandes, cada canónigo con su óbolo en la boca y su lápida debajo (tres
+  // sin nombre, y sin lamparilla: los olvidados); bajo la bóveda encalada,
+  // fajones sobre pilastras. Al fondo del muro de poniente, el retablo de
+  // las ánimas con su cepillo (el puzle: game/ossuaries.js). Las dos bocas
+  // de los lados dan al sepulcro y al templo.
   // (al fondo, la boca de la Galería del Sello: ver level_crypt2.js)
   const OS = { x0: -2.5, x1: 2.5, z0: -133, z1: -110.5, YS: Y + 2.5, RISE: 1.3 };
   {
     const { x0, x1, z0, z1, YS, RISE } = OS;
-    const ST = [0.85, 0.82, 0.78];
+    const ST = [0.8, 0.77, 0.72];
+    const rng = new RNG(1580);
     C.paint(-2.5, -133, 2.5, -110, 1);
     cryptFloor(-2.5, -133, 2.5, -110, Y);
     const NZ = [-113, -117, -125, -129];
     const PZ = -120;
+    const RZ = -129; // el retablo, en el muro de poniente
     const sp = SIDE_PORTAL;
+    // los nichos de los canónigos: lápida (fila del atlas) y si se le nombra
+    const LAP = { '-1:-113': 0, '-1:-117': 5, '-1:-125': 1, '1:-113': 4, '1:-117': 2, '1:-125': 3, '1:-129': 6 };
+    const niches = [];
+    const M = (x, y, z, ry) => new THREE.Matrix4().compose(V3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)), V3(1, 1, 1));
+    const bake = (parts, m) => bakeParts(wb, parts, m, { room });
+    // (el retablo: dónde quedó, para el cepillo, el cuaderno y el arca)
+    let R = null;
+    const plaque = (row, x, y, z, ry) => {
+      const geo = new THREE.PlaneGeometry(0.9, 0.16);
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setY(i, (7 - row + uv.getY(i)) / 8);
+      wb.geometry('lapidasAnimas', geo, M(x, y, z, ry), { ao: false, room, grime: false });
+    };
     for (const side of [-1, 1]) {
       const xf = side < 0 ? x0 : x1; // la cara del muro
       const xo = xf + side * 0.5; // el trasdós (pegado al muro de la sala de al lado)
       const xa = Math.min(xf, xo),
         xb = Math.max(xf, xo);
       const f = side < 0 ? 'e' : 'w';
+      const ry = side < 0 ? Math.PI / 2 : -Math.PI / 2; // mirando al pasillo
       const seg = (za, zb, ya, yb, extra = '') => {
         if (zb - za < 0.001 || yb - ya < 0.001) return;
-        wb.box('skulls', xa, ya, za, xb, yb, zb, { faces: f + extra, sub: 1.6, aoH: 1.2, aoMin: 0.55, baseY: Y, room, tint: ST });
+        wb.box('skullNiches', xa, ya, za, xb, yb, zb, { faces: f + extra, sub: 1.6, aoH: 1.2, aoMin: 0.55, baseY: Y, room, tint: ST });
       };
-      const holes = [...NZ.map((z) => ({ a0: z - 0.6, a1: z + 0.6, niche: true })), { a0: PZ - sp.w / 2 - sp.ring, a1: PZ + sp.w / 2 + sp.ring }].sort((p, q) => p.a0 - q.a0);
+      const retablo = side < 0;
+      const holes = [
+        ...NZ.filter((z) => !(retablo && z === RZ)).map((z) => ({ a0: z - 0.6, a1: z + 0.6, niche: true })),
+        ...(retablo ? [{ a0: RZ - 0.8, a1: RZ + 0.8, retablo: true }] : []),
+        { a0: PZ - sp.w / 2 - sp.ring, a1: PZ + sp.w / 2 + sp.ring },
+      ].sort((p, q) => p.a0 - q.a0);
       let cur = z0;
       for (const h of holes) {
         seg(cur, h.a0, Y, YS);
+        const zc = (h.a0 + h.a1) / 2;
+        const NT = [0.5, 0.48, 0.45];
+        const xk = xo - side * 0.03;
+        if (h.niche || h.retablo) {
+          // el hueco en el muro con su fondo, su repisa y su dintel
+          const yb = h.retablo ? Y + 0.62 : Y + 1.0,
+            yt = h.retablo ? Y + 2.42 : Y + 2.0;
+          seg(h.a0, h.a1, Y, yb);
+          seg(h.a0, h.a1, yt, YS);
+          wb.box('mossstone', side < 0 ? xk - 0.05 : xk, yb, h.a0, side < 0 ? xk : xk + 0.05, yt, h.a1, { faces: f, ao: false, room, tint: NT });
+          wb.box('ashlar', xa, yb - 0.06, h.a0, xb, yb, h.a1, { faces: 't', ao: false, room, tint: AT });
+          wb.box('mossstone', xa, yt, h.a0, xb, yt + 0.06, h.a1, { faces: 'b', ao: false, room, tint: NT });
+          wb.box('mossstone', xa, yb, h.a0, xb, yt, h.a0 + 0.001, { faces: 's', ao: false, room, tint: NT });
+          wb.box('mossstone', xa, yb, h.a1 - 0.001, xb, yt, h.a1, { faces: 'n', ao: false, room, tint: NT });
+          // el marco de sillería, por delante
+          for (const [za, zb, ya, yb2] of [
+            [h.a0 - 0.08, h.a0, yb - 0.06, yt + 0.08],
+            [h.a1, h.a1 + 0.08, yb - 0.06, yt + 0.08],
+            [h.a0 - 0.08, h.a1 + 0.08, yt, yt + 0.12],
+          ])
+            wb.box('ashlar', side < 0 ? xf : xf - 0.04, ya, za, side < 0 ? xf + 0.04 : xf, yb2, zb, { ao: false, room, tint: AT });
+        }
         if (h.niche) {
-          // el nicho: hueco en el muro con su fondo, su repisa y su dintel
-          const zc = (h.a0 + h.a1) / 2;
-          seg(h.a0, h.a1, Y, Y + 1.0);
-          seg(h.a0, h.a1, Y + 2.0, YS);
-          const NT = [0.42, 0.4, 0.38];
-          // (el fondo, un dedo por delante del muro de la sala de al lado: con
-          // la cara en el mismo plano parpadeaban)
-          const xk = xo - side * 0.03;
-          wb.box('mossstone', side < 0 ? xk - 0.05 : xk, Y + 1.0, h.a0, side < 0 ? xk : xk + 0.05, Y + 2.0, h.a1, { faces: f, ao: false, room, tint: NT });
-          wb.box('ashlar', xa, Y + 0.94, h.a0, xb, Y + 1.0, h.a1, { faces: 't', ao: false, room, tint: AT });
-          wb.box('mossstone', xa, Y + 2.0, h.a0, xb, Y + 2.06, h.a1, { faces: 'b', ao: false, room, tint: NT });
-          wb.box('mossstone', xa, Y + 1.0, h.a0, xb, Y + 2.0, h.a0 + 0.001, { faces: 's', ao: false, room, tint: NT });
-          wb.box('mossstone', xa, Y + 1.0, h.a1 - 0.001, xb, Y + 2.0, h.a1, { faces: 'n', ao: false, room, tint: NT });
-          const xn = (xf + xo) / 2;
-          P.bones(ctx, xn, Y + 1.0, zc, 4, Math.round(-zc * 7 + side * 3), 0.25);
-          P.skullRow(ctx, xo - side * 0.14, Y + 1.0, zc, side < 0 ? Math.PI / 2 : -Math.PI / 2, 3, { room, gap: 0.3 });
+          // el canónigo: huesos al fondo, la calavera delante (con su óbolo
+          // en la boca: lo pone game/ossuaries.js) y su lápida debajo
+          const row = LAP[side + ':' + zc];
+          const named = row < 4;
+          // (detrás, dos fémures en aspa y unos cuantos más, tendidos)
+          const bx = xf + side * 0.38;
+          for (const [a, b] of [
+            [V3(bx, Y + 1.02, zc - 0.32), V3(bx - side * 0.04, Y + 1.36, zc + 0.3)],
+            [V3(bx, Y + 1.02, zc + 0.32), V3(bx - side * 0.04, Y + 1.36, zc - 0.3)],
+            [V3(bx + side * 0.03, Y + 1.03, zc - 0.42), V3(bx + side * 0.03, Y + 1.03, zc + 0.4)],
+          ])
+            bake(boneParts(a, b, 0.02), null);
+          const sx = xf + side * 0.2;
+          bake(skullParts({ jaw: true, open: 0.22, tint: [0.9, 0.86, 0.78] }), M(sx, Y + 1.1, zc, ry + rng.range(-0.1, 0.1)).multiply(new THREE.Matrix4().makeScale(1.12, 1.12, 1.12)));
+          plaque(row, xf - side * 0.012, Y + 0.72, zc, ry);
+          // la lamparilla de los que tienen quien les rece (roja, encendida);
+          // los olvidados, la suya volcada y vacía
+          const lx = xf + side * 0.06,
+            lz = zc + 0.36;
+          if (named) {
+            wb.cylinder('iron', lx, Y + 1.0, lz, 0.04, 0.05, 0.05, 6, { ao: false, capTop: true, room });
+            wb.cylinder('candle', lx, Y + 1.05, lz, 0.028, 0.028, 0.05, 6, { ao: false, capTop: true, room, grime: false, tint: [0.9, 0.4, 0.35] });
+            if (ctx.fires) ctx.fires.push({ x: lx, y: Y + 1.12, z: lz, s: 0.07, light: false, embers: false, glow: true });
+            if (ctx.lights) ctx.lights.push({ x: lx - side * 0.2, y: Y + 1.3, z: lz, r: 1, g: 0.32, b: 0.18, radius: 2.2, intensity: 0.55, room });
+          } else {
+            wb.push();
+            wb.translate(lx, Y + 1.0, lz);
+            wb.rotateZ(side * 1.35);
+            wb.cylinder('iron', 0, 0, 0, 0.04, 0.05, 0.05, 6, { ao: false, room });
+            wb.pop();
+          }
+          niches.push({ x: sx, z: zc, face: -side, named, row });
+        } else if (h.retablo) {
+          // el retablo de las ánimas: la tabla en el fondo del hueco, con su
+          // marco dorado, y la predela abajo con la portezuela del arca
+          const yb = Y + 0.62,
+            yt = Y + 2.42;
+          wb.geometry('animasRetablo', new THREE.PlaneGeometry(1.36, 1.24), M(xk - side * 0.006, Y + 1.7, zc, ry), { ao: false, room, grime: false });
+          const gold = [0.78, 0.6, 0.3];
+          for (const [ya, yb2, za, zb] of [
+            [Y + 1.04, Y + 1.1, h.a0 + 0.06, h.a1 - 0.06],
+            [Y + 2.3, Y + 2.36, h.a0 + 0.06, h.a1 - 0.06],
+            [Y + 1.04, Y + 2.36, h.a0 + 0.06, h.a0 + 0.12],
+            [Y + 1.04, Y + 2.36, h.a1 - 0.12, h.a1 - 0.06],
+          ])
+            wb.box('wooddark', side < 0 ? xk : xk - 0.06, ya, za, side < 0 ? xk + 0.06 : xk, yb2, zb, { ao: false, room, tint: gold });
+          // la predela (madera dorada), de muro a muro del hueco, con el
+          // arca en medio: un hueco con su portezuela (la monta
+          // game/ossuaries.js) y, dentro, el objeto bendito
+          const pT = [0.72, 0.54, 0.3];
+          const pa = xa + 0.04,
+            pb = xb - 0.03;
+          const pbox = (y0, y1, z0, z1) => wb.box('wooddark', pa, y0, z0, pb, y1, z1, { ao: false, room, tint: pT, faces: 'tnsew' });
+          pbox(yb, Y + 1.0, h.a0 + 0.02, zc - 0.22);
+          pbox(yb, Y + 1.0, zc + 0.22, h.a1 - 0.02);
+          pbox(yb, Y + 0.68, zc - 0.22, zc + 0.22);
+          pbox(Y + 0.94, Y + 1.0, zc - 0.22, zc + 0.22);
+          wb.box('clothRed', pa, Y + 0.68, zc - 0.22, pb, Y + 0.686, zc + 0.22, { ao: false, room, faces: 't', tint: [0.5, 0.2, 0.18] });
+          wb.box('black', side < 0 ? pa : pb - 0.01, Y + 0.68, zc - 0.22, side < 0 ? pa + 0.01 : pb, Y + 0.94, zc + 0.22, { ao: false, room, grime: false, faces: f });
+          // dos velones a los lados y la luz roja de las ánimas
+          for (const dz of [-0.62, 0.62]) {
+            wb.cylinder('candle', xf + side * 0.18, Y + 1.0, zc + dz, 0.035, 0.035, 0.32, 6, { ao: false, capTop: true, room, grime: false });
+            if (ctx.fires) ctx.fires.push({ x: xf + side * 0.18, y: Y + 1.35, z: zc + dz, s: 0.1, light: false, embers: false, glow: true });
+          }
+          if (ctx.lights) ctx.lights.push({ x: xf - side * 0.4, y: Y + 1.6, z: zc, r: 1, g: 0.42, b: 0.24, radius: 4.2, intensity: 0.95, room });
+          // el cepillo de las ánimas, a un lado, en su poste (delante de la
+          // portezuela no: la tapaba)
+          const cx = xf - side * 0.4,
+            cz = zc + 0.95;
+          wb.box('wooddark', cx - 0.05, Y, cz - 0.05, cx + 0.05, Y + 0.82, cz + 0.05, { ao: false, room });
+          wb.box('wooddark', cx - 0.13, Y, cz - 0.13, cx + 0.13, Y + 0.06, cz + 0.13, { ao: false, room });
+          wb.box('wooddark', cx - 0.12, Y + 0.82, cz - 0.15, cx + 0.12, Y + 1.06, cz + 0.15, { ao: false, room, tint: [0.62, 0.48, 0.34] });
+          wb.box('iron', cx - 0.125, Y + 0.9, cz - 0.155, cx + 0.125, Y + 0.93, cz + 0.155, { ao: false, room });
+          wb.box('black', cx - 0.02, Y + 1.061, cz - 0.07, cx + 0.02, Y + 1.062, cz + 0.07, { ao: false, room, grime: false, faces: 't' });
+          ctx.col.add(cx - 0.13, Y, cz - 0.15, cx + 0.13, Y + 1.06, cz + 0.15);
+          R = { x: xf, zc, cx, cz, side, yb };
         } else {
           // la boca: jambas (con su cara de dentro) y el arco con sus enjutas
           seg(h.a0, h.a0 + sp.ring, Y, Y + sp.h, 's');
           seg(h.a1 - sp.ring, h.a1, Y, Y + sp.h, 'n');
-          archRing(ctx, { axis: 'z', c: PZ, w: sp.w, y0: Y + sp.h, rise: sp.rise, ring: sp.ring, t0: xa, t1: xb, top: YS, clip: [h.a0, h.a1], mat: 'ashlar', spMat: 'skulls', room, tint: AT, spTint: ST });
+          archRing(ctx, { axis: 'z', c: PZ, w: sp.w, y0: Y + sp.h, rise: sp.rise, ring: sp.ring, t0: xa, t1: xb, top: YS, clip: [h.a0, h.a1], mat: 'ashlar', spMat: 'skullNiches', room, tint: AT, spTint: ST });
         }
         cur = h.a1;
       }
       seg(cur, z1, Y, YS);
     }
-    // la bóveda de huesos y los fajones sobre sus pilastras
-    barrelVault(ctx, { x0, z0, x1, z1, axis: 'z', ys: YS, rise: RISE, mat: 'skulls', tint: [0.74, 0.71, 0.67], room, sub: 1.0, impostTint: AT });
+    // la bóveda encalada y los fajones sobre sus pilastras
+    barrelVault(ctx, { x0, z0, x1, z1, axis: 'z', ys: YS, rise: RISE, mat: 'plaster', tint: [0.6, 0.56, 0.5], room, sub: 1.0, impostTint: AT });
     for (const z of [-115, -123, -131]) {
       archRing(ctx, { axis: 'x', c: 0, w: 4.64, y0: YS, rise: RISE - 0.28, ring: 0.28, t0: z - 0.2, t1: z + 0.2, mat: 'ashlar', room, tint: AT, cam: false });
       pilaster(ctx, x0, z, 'e', Y, YS, { room, tint: AT, w: 0.4, d: 0.18 });
       pilaster(ctx, x1, z, 'w', Y, YS, { room, tint: AT, w: 0.4, d: 0.18 });
     }
     // el testero del norte, con la puerta del sello
-    wallFace('skulls', x0, Y, z0 - 0.5, -1.5, YS, z0, 's', { tint: ST });
-    wallFace('skulls', 1.5, Y, z0 - 0.5, x1, YS, z0, 's', { tint: ST });
-    lunette(ctx, { axis: 'z', at: z0, c: 0, span: x1 - x0, ys: YS, rise: RISE, face: 1, mat: 'skulls', tint: ST, room, hole: { u0: -1.5, u1: 1.5, y: Y + 3.2 } });
+    wallFace('skullNiches', x0, Y, z0 - 0.5, -1.5, YS, z0, 's', { tint: ST });
+    wallFace('skullNiches', 1.5, Y, z0 - 0.5, x1, YS, z0, 's', { tint: ST });
+    lunette(ctx, { axis: 'z', at: z0, c: 0, span: x1 - x0, ys: YS, rise: RISE, face: 1, mat: 'plaster', tint: [0.6, 0.56, 0.5], room, hole: { u0: -1.5, u1: 1.5, y: Y + 3.2 } });
     ceilCol(x0, z0, x1, z1, YS + RISE);
-    // velas por el suelo, cadenas colgando de la clave y dos lámparas
+    // velas de ánimas por el suelo, cadenas colgando de la clave y dos lámparas
     for (let z = -113; z > -134; z -= 4) {
-      if (Math.abs(z + 120) < 2) continue;
-      P.candles(ctx, z % 8 === 0 ? -2.0 : 2.0, Y, z + 2, 3, Math.round(-z * 3), { room, radius: 3.5, intensity: 0.7, spread: 0.15 });
+      if (Math.abs(z + 120) < 2 || Math.abs(z - RZ + 2) < 1.5) continue;
+      P.candles(ctx, z % 8 === 0 ? -2.0 : 2.0, Y, z + 2, 3, Math.round(-z * 3), { room, radius: 3.5, intensity: 0.55, spread: 0.15 });
     }
     for (let z = -115; z > -134; z -= 5) for (let k = 0; k < 8; k++) wb.box('iron', -0.03, YS + RISE - k * 0.14, z - 0.03, 0.03, YS + RISE - 0.1 - k * 0.14, z + 0.03, { ao: false, room });
-    for (const z of [-112.6, -127.6]) P.hangingLamp(ctx, 0, YS + RISE, z, { room, len: 0.8, radius: 6.5, intensity: 0.95 });
-    P.fleshGrowth(ctx, -1.9, Y, -130.6, 0.8, 1504, { room, climb: 1.6, tendrils: 2, bound: [-2.4, -1.6, -132.8, -126] });
+    for (const z of [-112.6, -127.6]) P.hangingLamp(ctx, 0, YS + RISE, z, { room, len: 0.8, radius: 6.5, intensity: 0.85 });
+    P.fleshGrowth(ctx, 1.9, Y, -131.6, 0.7, 1504, { room, climb: 1.4, tendrils: 2, bound: [1.6, 2.4, -132.8, -130.4] });
     ctx.rats.push({ x: 1.4, y: Y, z: -113.5, n: 2 });
+    // el cuaderno del sacristán, en un taburete junto al cepillo
+    wb.box('wooddark', R.cx + 0.1, Y, RZ - 1.25, R.cx + 0.4, Y + 0.45, RZ - 0.95, { ao: false, room });
+    ctx.col.add(R.cx + 0.1, Y, RZ - 1.25, R.cx + 0.4, Y + 0.45, RZ - 0.95);
+    L.interact.push({ kind: 'note', id: 'n_sacristan', note: 'animas', model: 'book', x: R.cx + 0.25, y: Y + 0.48, z: RZ - 1.1 });
+    // el puzle de las ánimas olvidadas y su objeto bendito
+    L.interact.push({ kind: 'item', id: 'i_obolo', item: 'obolo', x: R.x + R.side * 0.2, y: Y + 0.74, z: R.zc, r: 1.4, afterFlag: 'puzzle:se' });
+    L.puzzles.push({
+      kind: 'animas',
+      id: 'se',
+      item: 'i_obolo',
+      x: 0,
+      y: Y,
+      z: -121,
+      probe: [0, Y + 1.4, -121],
+      niches,
+      cepillo: { x: R.cx, z: R.cz, y: Y + 1.06 },
+      door: { x: R.x, y: Y + 0.68, z: R.zc, side: R.side },
+    });
   }
 
   // --- el sepulcro del arzobispo (al este): bóveda rebajada con dos fajones

@@ -551,7 +551,167 @@ class MusicBox extends Puzzle {
   }
 }
 
-const KINDS = { toque: TolledHelmets, nana: MusicBox };
+// ------------------------------------------------------------ las ánimas
+// El osario de la cripta de la Sé: los canónigos en sus nichos, cada uno con
+// su óbolo en la boca. Hay que llevar al cepillo del retablo los óbolos de
+// los tres que nadie nombra; si coges el de uno que tiene nombre, el muerto
+// lo reclama y lo que llevas vuelve a su sitio. Con los tres en el cepillo
+// se abre la portezuela de la predela.
+class ForgottenSouls extends Puzzle {
+  constructor(g, s) {
+    super(g, s);
+    // (con un brillo propio: se ve en la boca aunque el nicho esté a oscuras)
+    const bronze = this.freshMat('gold', [0.95, 0.72, 0.42]);
+    if (bronze.emissive) bronze.emissive.setRGB(0.3, 0.2, 0.07);
+    const coinGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.006, 12);
+    this.niches = s.niches.map((n, i) => {
+      // el óbolo, entre los dientes de la calavera (vertical, de cara)
+      const ry = n.face > 0 ? Math.PI / 2 : -Math.PI / 2;
+      const coin = new THREE.Mesh(coinGeo, bronze);
+      const fx = Math.sin(ry),
+        fz = Math.cos(ry);
+      // (la calavera, a 1,12: la boca, algo más abajo y más adelante)
+      coin.position.set(n.x + fx * 0.088, s.y + 1.1 - 0.068, n.z + fz * 0.088);
+      coin.rotation.set(Math.PI / 2, 0, 0);
+      coin.rotation.order = 'YXZ';
+      coin.rotation.y = ry;
+      g.scene.add(coin);
+      const it = this.part({ id: 'pz_' + s.id + '_' + i, x: n.x, y: s.y, z: n.z, ix: n.x + n.face * 0.75, iz: n.z, r: 1.05, niche: i });
+      return { ...n, i, coin, it, state: 'home' };
+    });
+    const C = s.cepillo;
+    this.part({ id: 'pz_' + s.id + '_cepillo', x: C.x, y: s.y, z: C.z, ix: C.x - s.door.side * 0.55, iz: C.z, r: 1.15, cepillo: true });
+    // la portezuela de la predela (gira en su canto de un lado)
+    const D = s.door;
+    const piv = new THREE.Group();
+    piv.position.set(D.x - D.side * 0.012, D.y, D.z - 0.2);
+    const wood = this.mat('wooddark', [0.6, 0.45, 0.26]);
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.4), wood);
+    leaf.position.set(0, 0.13, 0.2);
+    piv.add(leaf);
+    const gold = this.mat('gold');
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.14, 0.03), gold);
+    cross.position.set(-D.side * 0.012, 0.13, 0.2);
+    piv.add(cross);
+    const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.1), gold);
+    cross2.position.set(-D.side * 0.012, 0.16, 0.2);
+    piv.add(cross2);
+    g.scene.add(piv);
+    this.door = { piv, k: 0, target: 0 };
+  }
+  carried() {
+    return this.niches.filter((n) => n.state === 'carried');
+  }
+  label(it) {
+    if (it.cepillo) return this.carried().length ? 'Echar los óbolos en el cepillo' : 'Examinar el cepillo';
+    return 'Coger el óbolo';
+  }
+  use(it) {
+    const g = this.g,
+      p = g.player;
+    if (this.busy) return;
+    if (it.cepillo) {
+      const c = this.carried();
+      if (!c.length) {
+        g.ui.toast(MSG.cepilloVacio, 4.5);
+        return;
+      }
+      p.playInteract('interact', Math.atan2(this.s.cepillo.x - p.pos.x, this.s.cepillo.z - p.pos.z));
+      this.busy = true;
+      this.after(0.35, () => this.give(c));
+      return;
+    }
+    const n = this.niches[it.niche];
+    p.playInteract('interact', Math.atan2(n.x - p.pos.x, n.z - p.pos.z));
+    this.busy = true;
+    this.after(0.3, () => this.take(n));
+  }
+  take(n) {
+    this.busy = false;
+    n.state = 'carried';
+    n.coin.visible = false;
+    n.it.hidden = true;
+    this.sound('coinTake', n.coin.position);
+    if (n.named) {
+      // es suyo: lo reclama, y con él todo lo que llevas
+      this.busy = true;
+      this.after(0.7, () => this.claim(n));
+    } else {
+      const k = this.carried().length;
+      this.g.ui.toast(k === 1 ? MSG.oboloUno : MSG.obolos(k), 2.5);
+    }
+  }
+  claim(n) {
+    this.sound('soulClaim', n.coin.position);
+    let k = 0;
+    for (const o of this.carried()) {
+      const oo = o;
+      this.after(0.25 + k++ * 0.12, () => {
+        oo.state = 'home';
+        oo.coin.visible = true;
+        oo.it.hidden = false;
+        this.sound('coinDrop', oo.coin.position, { stone: true });
+      });
+    }
+    this.after(0.4 + k * 0.12, () => {
+      this.busy = false;
+      this.g.ui.toast(MSG.animaReclama, 4.5);
+    });
+  }
+  give(list) {
+    const c = this.s.cepillo;
+    list.forEach((n, k) => {
+      n.state = 'given';
+      this.after(k * 0.22, () => this.sound('coinDrop', { x: c.x, y: c.y, z: c.z }));
+    });
+    const T = list.length * 0.22 + 0.3;
+    const done = this.niches.filter((n) => !n.named).every((n) => n.state === 'given');
+    this.after(T, () => {
+      if (done) return this.complete();
+      this.busy = false;
+      this.g.ui.toast(MSG.cepilloCae, 3.5);
+    });
+  }
+  complete() {
+    const D = this.s.door;
+    const at = { x: D.x, y: D.y + 0.2, z: D.z };
+    this.solve();
+    this.sound('helmetChord', at, { notes: [50, 57, 62, 66] });
+    this.after(0.9, () => {
+      this.door.target = 1;
+      this.sound('chestOpen', at);
+    });
+    this.after(1.6, () => {
+      this.reveal(0.05, 0.8);
+      this.sound('relicReveal', at);
+      this.g.ui.toast(MSG.animasBien, 5);
+      this.busy = false;
+    });
+  }
+  update(dt) {
+    super.update(dt);
+    const D = this.door;
+    if (D.k !== D.target) {
+      D.k = D.target > D.k ? Math.min(1, D.k + dt / 1.1) : 0;
+      // (hacia el pasillo)
+      D.piv.rotation.y = -this.s.door.side * ease(D.k) * 1.8;
+    }
+  }
+  applyFlags() {
+    super.applyFlags();
+    const on = this.solved;
+    this.busy = false;
+    for (const n of this.niches) {
+      n.state = on && !n.named ? 'given' : 'home';
+      n.coin.visible = n.state === 'home';
+      n.it.hidden = n.state !== 'home';
+    }
+    this.door.k = this.door.target = on ? 1 : 0;
+    this.door.piv.rotation.y = -this.s.door.side * (on ? 1.8 : 0);
+  }
+}
+
+const KINDS = { toque: TolledHelmets, nana: MusicBox, animas: ForgottenSouls };
 
 export class Ossuaries {
   constructor(g) {

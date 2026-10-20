@@ -1449,6 +1449,193 @@ const GEN = {
     return c;
   },
 
+  // Columbario de calaveras (el osario de las ánimas): hileras de nichos
+  // chicos de medio punto en la piedra, cada uno con su calavera (alguno
+  // vacío, alguno tapiado).
+  skullNiches() {
+    const S = 128,
+      CW = 16,
+      CH = 32;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    const rng = new RNG(97);
+    // la piedra, con sus juntas
+    const img = g.createImageData(S, S);
+    for (let y = 0; y < S; y++)
+      for (let x = 0; x < S; x++) {
+        const i = (y * S + x) * 4;
+        const n = fbm2(x / 6, y / 6, 3, S / 6, 98);
+        const k = 92 + n * 40;
+        img.data[i] = k * 1.02;
+        img.data[i + 1] = k * 0.97;
+        img.data[i + 2] = k * 0.88;
+        img.data[i + 3] = 255;
+      }
+    g.putImageData(img, 0, 0);
+    for (let row = 0; row < S / CH; row++)
+      for (let col = 0; col < S / CW; col++) {
+        const x = col * CW + (row % 2) * (CW / 2),
+          y = row * CH;
+        const kind = rng.next();
+        const draw = (ox) => {
+          const X = x + ox;
+          // el nicho: medio punto, hondo y oscuro
+          g.fillStyle = kind < 0.1 ? '#6a645a' : '#100c0a';
+          g.beginPath();
+          g.moveTo(X + 2, y + 27);
+          g.lineTo(X + 2, y + 12);
+          g.arc(X + CW / 2, y + 12, CW / 2 - 2, Math.PI, 0);
+          g.lineTo(X + CW - 2, y + 27);
+          g.closePath();
+          g.fill();
+          // la repisa
+          g.fillStyle = '#7e786c';
+          g.fillRect(X + 1, y + 27, CW - 2, 2);
+          g.fillStyle = '#3a342c';
+          g.fillRect(X + 1, y + 29, CW - 2, 1);
+          if (kind < 0.1) {
+            // tapiado: una cruz rayada
+            g.fillStyle = '#3e3a32';
+            g.fillRect(X + CW / 2 - 0.5, y + 10, 1, 12);
+            g.fillRect(X + CW / 2 - 3, y + 14, 6, 1);
+          } else if (kind > 0.16) paintSkull(g, X + CW / 2, y + 21.5, 4.6, rng.range(0.7, 1.0));
+        };
+        draw(0);
+        if (x + CW > S) draw(-S);
+      }
+    grain(g, S, 0.86, 0.22, 99);
+    return c;
+  },
+
+  // El retablo de ánimas: las almas del purgatorio entre las llamas, con las
+  // manos alzadas; un ángel saca a una de una cuerda, y arriba la Virgen.
+  animasRetablo() {
+    const W = 48,
+      H = 64;
+    const c = makeCanvas(W, H);
+    const g = c.getContext('2d');
+    const rng = new RNG(101);
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#3a3050');
+    sky.addColorStop(0.45, '#6a3020');
+    sky.addColorStop(1, '#2a0c06');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, W, H);
+    // las nubes y la Virgen arriba
+    g.fillStyle = '#b8a890';
+    for (let k = 0; k < 7; k++) {
+      g.beginPath();
+      g.ellipse(6 + k * 6.2, 20 + Math.sin(k * 1.7) * 1.5, 5, 2.6, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.fillStyle = '#2a4a8a';
+    g.beginPath();
+    g.moveTo(24, 4);
+    g.quadraticCurveTo(31, 9, 30, 19);
+    g.lineTo(18, 19);
+    g.quadraticCurveTo(17, 9, 24, 4);
+    g.fill();
+    g.fillStyle = '#e8c8a0';
+    g.beginPath();
+    g.arc(24, 6.5, 2, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#e0b030';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.arc(24, 6.5, 3.6, 0, Math.PI * 2);
+    g.stroke();
+    // el ángel con la cuerda
+    g.fillStyle = '#d8d0c0';
+    g.beginPath();
+    g.ellipse(36, 28, 2.5, 4.5, 0.3, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#c8c0b0';
+    g.beginPath();
+    g.moveTo(37, 26);
+    g.lineTo(44, 22);
+    g.lineTo(40, 30);
+    g.fill();
+    g.strokeStyle = '#a08860';
+    g.beginPath();
+    g.moveTo(35, 31);
+    g.lineTo(31, 40);
+    g.stroke();
+    // las llamas
+    for (let y = 36; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const n = fbm2(x / 3, y / 5, 3, 0, 102);
+        const v = (y - 36) / (H - 36);
+        if (n + v * 0.6 > 0.62) {
+          g.fillStyle = n > 0.7 ? '#ffd060' : n > 0.6 ? '#f08020' : '#b02810';
+          g.fillRect(x, y, 1, 1);
+        }
+      }
+    // las ánimas: cuerpos pálidos hasta la cintura, con las manos alzadas
+    for (let k = 0; k < 6; k++) {
+      const x = 5 + k * 7.6 + rng.range(-1, 1),
+        y = 44 + (k % 2) * 4;
+      g.fillStyle = '#e0c0a0';
+      g.fillRect(x - 2, y, 4, 7);
+      g.beginPath();
+      g.arc(x, y - 2, 2, 0, Math.PI * 2);
+      g.fill();
+      g.fillRect(x - 3.5, y - 6, 1, 6);
+      g.fillRect(x + 2.5, y - 6, 1, 6);
+      g.fillStyle = '#3a2010';
+      g.fillRect(x - 0.8, y - 2.6, 0.6, 0.6);
+      g.fillRect(x + 0.3, y - 2.6, 0.6, 0.6);
+    }
+    // otra vez llamas por delante de las ánimas, abajo
+    for (let y = 52; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const n = fbm2(x / 2.5, y / 4, 3, 0, 103);
+        if (n > 0.56) {
+          g.fillStyle = n > 0.66 ? '#ffb040' : '#c83818';
+          g.fillRect(x, y, 1, 1);
+        }
+      }
+    g.strokeStyle = '#8a6a28';
+    g.lineWidth = 2;
+    g.strokeRect(1, 1, W - 2, H - 2);
+    grain(g, W, 0.88, 0.18, 104);
+    return c;
+  },
+
+  // Las lápidas de los nichos del osario de las ánimas (una por fila): los
+  // nombres de cuatro canónigos y tres sin él (lisa, picada y con una cruz).
+  lapidasAnimas() {
+    const W = 128,
+      R = 16,
+      N = 8;
+    const c = makeCanvas(W, R * N);
+    const g = c.getContext('2d');
+    const names = ['D. PELAGIVS', 'D. MENENDVS', 'D. GVNDISALVVS', 'D. FROILA', '', '#', '+', ''];
+    const rng = new RNG(105);
+    names.forEach((t, k) => {
+      const y = k * R;
+      g.fillStyle = '#a49a88';
+      g.fillRect(0, y, W, R);
+      g.fillStyle = '#7a7264';
+      g.fillRect(0, y, W, 1);
+      g.fillRect(0, y + R - 1, W, 1);
+      g.fillStyle = '#2a2420';
+      if (t === '#') {
+        // el nombre, picado a cincel: sólo quedan los golpes
+        for (let i = 0; i < 46; i++) g.fillRect(14 + rng.range(0, 100), y + 4 + rng.range(0, 8), rng.range(1, 3), rng.range(1, 2));
+      } else if (t === '+') {
+        g.fillRect(W / 2 - 0.5, y + 3, 1.5, 10);
+        g.fillRect(W / 2 - 3, y + 6, 6.5, 1.5);
+      } else if (t) {
+        g.font = 'bold 10px serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(t, W / 2, y + R / 2 + 1, W - 10);
+      }
+    });
+    grain(g, W, 0.86, 0.2, 106);
+    return c;
+  },
+
   // el letrero del osario de la Hermandad (en los dos muros)
   letreroOssos1() {
     return paintLetrero('NÓS OSSOS QUE AQUI ESTAMOS', 256, 16, 81);

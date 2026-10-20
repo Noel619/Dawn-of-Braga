@@ -183,6 +183,16 @@ export const ITEMS = {
 };
 
 export const NOTES = {
+  animas: {
+    title: 'Cuaderno del sacristán',
+    text: `Día de Ánimas. Recogido el cepillo del osario: nada. Ya no baja nadie.
+
+A los canónigos que tienen nombre les rezan los suyos, y sus óbolos son suyos: que nadie se los toque, que el muerto que tiene quien le nombre no suelta lo que es suyo.
+
+Pero hay tres en los nichos que nadie nombra: a uno se le picó el nombre de la piedra, a otro no se le puso nunca y el último sólo tiene su cruz. Por esas ánimas, las más olvidadas, se echa en el cepillo el óbolo que se les puso en la boca, y así se les reza aunque nadie las recuerde.
+
+Dicen los viejos que el retablo guarda algo para quien lo hace como es debido. Yo no lo he visto abrirse nunca.`,
+  },
   nana: {
     title: 'La nana del ama',
     text: `(Una hoja doblada en cuatro, con letra de mujer que apenas sabe escribir.)
@@ -610,6 +620,13 @@ export const MSG = {
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
+  // el osario de las ánimas (la cripta de la Sé)
+  cepilloVacio: 'El cepillo de las ánimas, con su ranura y su candado. Pintado en la tabla, debajo: «POR LAS ÁNIMAS QUE NADIE NOMBRA».',
+  oboloUno: 'Llevas un óbolo.',
+  obolos: (k) => `Llevas ${k} óbolos.`,
+  animaReclama: 'Algo frío te cierra la mano. Los óbolos que llevabas vuelven, uno a uno, a sus bocas.',
+  cepilloCae: 'Los óbolos caen al fondo del cepillo.',
+  animasBien: 'El último óbolo cae en el cepillo. Detrás de las llamas pintadas, algo se descorre: se abre la portezuela de la predela.',
   // el osario de las bodegas (la nana del ama)
   nanaCaja: 'La caja de música del ama: cuatro rodillos con sus símbolos pintados, una manivela y un cajón cerrado. Cada vuelta suena como un hueso que salta.',
   nanaMal: 'La caja se atasca a media nana. Por la bodega, el eco tarda en irse.',
@@ -724,7 +741,7 @@ export const AREA_NAMES = {
   catacumbas_este: 'Cripta de los Mártires',
   pila_este: 'Pila de los Mártires',
   sacristia: 'Sacristía del arzobispo',
-  ossuary: 'Osario',
+  ossuary: 'Osario de las Ánimas',
   roman: 'Templo de Bracara',
   tomb: 'Sepulcro del arzobispo',
   arena: 'Cisterna del Dios Desconocido',

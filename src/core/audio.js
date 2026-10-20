@@ -2088,6 +2088,31 @@ export class Audio {
         this.tone(d, t + 0.02, 0.4, { f0: 180, f1: 70, gain: 0.25 });
         break;
       }
+      // un óbolo que sale de entre los dientes
+      case 'coinTake': {
+        d = this.out(P, { gain: 0.6, verb: 0.4, life: 2, ref: 3 });
+        this.noise(d, t, 0.06, { f0: 2400, q: 3, gain: 0.12, a: 0.005 });
+        this.metal(d, t + 0.04, rnd(2600, 3100), 0.05, 0.5, { ratios: [1, 2.4, 3.9] });
+        break;
+      }
+      // un óbolo que cae (en el cepillo, o en la piedra de su nicho)
+      case 'coinDrop': {
+        d = this.out(P, { gain: 0.7, verb: 0.5, life: 2.5, ref: 4 });
+        const f = rnd(2300, 3000);
+        this.metal(d, t, f, 0.08, 0.6, { ratios: [1, 2.4, 3.9] });
+        this.metal(d, t + rnd(0.06, 0.09), f * 1.02, 0.04, 0.4, { ratios: [1, 2.4] });
+        if (!o.stone) this.tone(d, t, 0.08, { f0: 210, f1: 120, gain: 0.25 });
+        break;
+      }
+      // el muerto reclama lo suyo: un susurro muy cerca y el frío
+      case 'soulClaim': {
+        d = this.out(P, { gain: 0.9, verb: 0.75, life: 4, ref: 6, occlude: false });
+        this.whisper(d, t, 1.2, 0.12);
+        this.mutter(d, t + 0.15, 0.8, 110);
+        this.noise(d, t, 1.6, { type: 'bandpass', f0: 500, f1: 1400, q: 0.8, gain: 0.18, a: 0.4, buf: this.pink, curve: 'lin' });
+        this.score.stinger('phantom');
+        break;
+      }
       // el cajón de la caja: madera que corre y un chasquido
       case 'drawerOpen': {
         d = this.out(P, { gain: 0.7, verb: 0.4, life: 2, ref: 5 });
