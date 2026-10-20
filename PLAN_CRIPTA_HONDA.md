@@ -2,7 +2,10 @@
 
 Plan de diseño y de trabajo de la zona que hay bajo la cripta de la Sé, empezado el 20 de octubre de 2026.
 Sustituye a la versión anterior (la Galería del Sello, las dos catacumbas en cuadrícula, el rellano y la
-antesala de 30 × 28 m). Lo que se decidió con el autor:
+antesala de 30 × 28 m). **Hecho:** la planta, sus salas, Dom Paio y el Custodio están en el juego
+(`world/level_crypt2.js`, `game/crypt.js`, `game/paio.js`, `entities/paio.js`, `entities/custodio.js`); lo
+que cambió por el camino respecto a lo planeado está anotado en cada apartado. Lo que se decidió con el
+autor:
 
 - Se rehace **sólo la cripta honda**. La cripta de arriba (la sala de llegada, el osario, el templo romano y el
   sepulcro del arzobispo) se queda; sólo cambian sus bocas hacia abajo. La cisterna no se toca: la película
@@ -25,7 +28,8 @@ Lo que funcionaba:
   marca el tono.
 - **El rompecabezas de la puerta.** Cuatro cerrojos con sentido (los Velados, la Garra, la sangre de las
   tres pilas y el humo), contados por los documentos. Se conserva entero.
-- **Las pilas y sus cadenas**, la emboscada de la Garra y el incensario que se iza solo.
+- **Las pilas y sus cadenas** y el incensario que se iza solo. (La emboscada de la Garra, sí, pero se queda
+  corta para la última zona: la sustituye el Custodio.)
 
 Lo que no:
 
@@ -68,8 +72,9 @@ Reglas del diseño:
   los lados, que llevan a cubículos y salas.
 - **Todo orientado como la catedral de arriba:** los altares, al norte.
 - **Cada sala tiene una función y una época** que se leen en su planta, sus arcos y sus materiales.
-- **Se baja:** -7 (la Sé), -8,2 (San Martín), -10,4 (las catacumbas), -12,6 (los Inocentes), -13 (la
-  antesala) y -16,2 (el pozo).
+- **Se baja:** -7 (la Sé), -8,2 (San Martín, la sala de los obispos y los mártires), -10,6 (las
+  catacumbas y la pila de los mártires), -12,7 (los Inocentes), -13 (la antesala; su estrado, a -10, como
+  la cisterna) y -16 (el pozo).
 - **Hitos que se ven desde lejos:** la luz roja de la antesala por las ventanas de la sala de los obispos, la
   capilla de San Martín al fondo de su nave, el rayo del lucernario, el arzobispo rezando tras la reja.
 
@@ -81,7 +86,7 @@ Reglas del diseño:
         ┌──────────┐ ┌──────────────┐                     │
         │ capilla  │ │ POZO DE LOS  │                ┌────┴──────┐
         │S. MARTÍN │ │  CONDENADOS  │                │           │   ┌───────────┐
-        ├──────────┤ │    -16,2     │                │           │   │   PILA    │
+        ├──────────┤ │     -16      │                │           │   │   PILA    │
  ┌─────┐│          │ └──────┬───────┘                │           │   │    DE     │
  │osa- ││ CRIPTA   │ ┌──┬───┴────────────────┬─────┐ │ CISTERNA  │   │ LOS MÁR-  │
  │rio  ▒▒  DE SAN  │ │t │                     │estr.│ │           │   │  TIRES    │
@@ -89,14 +94,14 @@ Reglas del diseño:
         │  -8,2    │ │a │      -13            │Vela-│ │           │   ┌─────┴─────┐
         │ (nave y  │ │z.│                     │ dos │ │           │   │           │
         │  naves   │ └──┴───▫─────▫─────▫─────┴─────┘ └─────▫─────┘   │ MARTYRIUM │
-        │laterales)│ ┌────────────────────────────┐   confesión      ▒▒   -7      │
-        │          ▒▒▒   SALA DE LOS OBISPOS      │┌──────┐┌──┐┌────┐ │           │
+        │laterales)│ ┌────────────────────────────┐   confesión      ▒▒           │
+        │          ▒▒▒   SALA DE LOS OBISPOS      │┌──────┐┌──┐┌────┐ │   -8,2    │
         │          │ │   -8,2 (bosque de columnas,▒▒templo││os││sep.▒▒           │
         └────┬─────┘ │    bóvedas de arista)      │└──────┘│ar││    │ └─────┬─────┘
            atajo     └─────────────┬──────────────┘        │io││    │ ┌─────┴─────┐
  ┌───────────┴───┐ ┌───────────────┴──────────────────┐ ┌──┴──┴┴──┐ │ sacristía │
- │  INOCENTES    │ │    CATACUMBAS DE LA SÉ -10,4     ├─┤ llegada │ └───────────┘
- │    -12,6      ├─┤  (lucernario y oratorio)         │a│ (altar) │
+ │  INOCENTES    │ │    CATACUMBAS DE LA SÉ -10,6     ├─┤ llegada │ └───────────┘
+ │    -12,7      ├─┤  (lucernario y oratorio)         │a│ (altar) │
  │ [RELICARIO]   │ └──────────────────────────────────┘ └─────────┘
  └───────────────┘
    ▒ arco o puerta   ▓ la Puerta del Dios Ignoto   ▫ ventana enrejada   a: atajo   ══▶ escalera
@@ -109,18 +114,18 @@ Reglas del diseño:
 | 1 | **La Confesión** | -7 | Al fondo del osario: la cámara de San Martín ante el manantial, con su *fenestella* (ventana enrejada) en el muro de la cisterna. | Por la reja se ve al arzobispo rezando ante la masa de carne. El sello del santo, un reclinatorio, velas. Sin salida. |
 | 2 | **Sala de los Obispos** | -8,2 | Se entra desde el templo romano, por una tribuna con escalones: un bosque de columnas bajas con bóvedas de arista. Los sepulcros de los obispos de Braga entre las columnas. | Tres ventanas enrejadas al norte dan a lo alto de la antesala (la luz roja, los Velados al fondo). La inscripción de las pilas. Bajada a las catacumbas al sur; arcos a la cripta de San Martín al oeste. |
 | 3 | **Cripta de San Martín** | -8,2 | La cripta-iglesia del santo: nave y dos naves laterales con arquerías de herradura y bóvedas de cañón; el altar al norte. | **Capilla de San Martín** (altar de descanso, la lápida, **Dom Paio**). El **Pórtico de los Velados** en el muro este, en el eje de la antesala. Un **osario** lateral. Al sur, la puerta del atajo de los Inocentes. |
-| 4 | **Antesala del Dios Ignoto** | -8,2 / -13 / -10 | La basílica romana, más larga (46 × 30 m) y con el doble de suelo para la pelea. | Se entra por el pórtico a una **tribuna** que domina toda la sala: desde ahí se ve el eje entero, hasta la puerta. Escalinata, niebla al pie, nave con columnas y estatuas, estrado, los Velados, el incensario, la puerta. |
-| 5 | **Pozo de los Condenados** | -16,2 | Bajo el lado norte de la antesala, «donde ya no se sube». | La Pila de los Condenados y su cadena, jaulas, quemados. **Dom Paio, convertido**, la guarda. |
-| 6 | **Catacumbas de la Sé** | -10,4 | La necrópolis de los canónigos: galerías cortas con nichos en tres alturas, arcosolios y cubículos. | El **lucernario**, con su pozo de luz y el **oratorio de San Pedro de Rates** (altar de descanso). Una vuelta larga y otra corta. Atajo a la sala de llegada (la puerta, atrancada por este lado). |
-| 7 | **Catacumba de los Inocentes** | -12,6 | El nivel de abajo: nichos pequeños, de niños. | La **Pila de los Inocentes**. El **Relicario de San Martín**: la arena del **Custodio de la Garra**. Escalera de atajo a la cripta de San Martín. |
-| 8 | **Cripta de los Mártires** | -7 / -10,4 | Se entra por una puerta nueva en el sepulcro del arzobispo: su paso privado. Un *martyrium* de columnas con los arcosolios de los mártires. | Al norte, bajando, la **Pila de los Mártires** bajo su cúpula. Al sur, la **Sacristía del arzobispo** (se abre con su anillo): el incienso negro. |
+| 4 | **Antesala del Dios Ignoto** | -8,2 / -13 / -10 | La basílica romana, más larga (46 × 30 m) y con el doble de suelo para la pelea. | Se entra por el pórtico a una **tribuna** que domina toda la sala: desde ahí se ve el eje entero, hasta la puerta (una avenida de braseros lleva la vista). Escalinata, nave con columnas y estatuas, estrado, los Velados, el incensario, la puerta. Sin niebla: al pisar la nave despiertan los Velados y a la espalda sube una reja del borde de la tribuna (la niebla tapaba la vista desde la tribuna). |
+| 5 | **Pozo de los Condenados** | -16 | Bajo el lado norte de la antesala, «donde ya no se sube»: bóvedas de arista sobre dos pilares, tras la reja que abren los Velados al caer. | La Pila de los Condenados y su cadena, jaulas, quemados, cuatro braseros. **Dom Paio, convertido**, la guarda (un jefe; sin más criaturas). |
+| 6 | **Catacumbas de la Sé** | -10,6 | La necrópolis de los canónigos: galerías cortas con nichos en tres alturas, cubículos con su arcosolio y un cruce de huesos. | El **lucernario**, con su pozo de luz y el **oratorio de San Pedro de Rates** (altar de descanso). Atajo a la sala de llegada (la puerta, atrancada por este lado). |
+| 7 | **Catacumba de los Inocentes** | -12,7 | El nivel de abajo: nichos pequeños, de niños. | La **Pila de los Inocentes**. El **Relicario de San Martín**: la arena del **Custodio de la Garra** (y ante su boca, Dom Mendo, muerto, con la nota de la Garra). Escalera de atajo a la cripta de San Martín. |
+| 8 | **Cripta de los Mártires** | -8,2 / -10,6 | Se entra por una puerta nueva en el sepulcro del arzobispo (en su eje): su paso privado, que baja. Un *martyrium* de tres naves con bóvedas de arista y los arcosolios de los mártires; frente a la puerta, su altar. | Al norte, bajando, la **Pila de los Mártires** entre cuatro columnas. Al sur, la **Sacristía del arzobispo** (se abre con su anillo): el incienso negro. |
 
 ## 5. El recorrido
 
 **El camino principal.** Osario → templo romano → tribuna de la Sala de los Obispos (la primera vista: el
 bosque de columnas, la luz roja que se cuela por las rejas del norte) → entre los sepulcros hacia el oeste →
 cripta de San Martín: al fondo de la nave, la capilla encendida (descanso y Dom Paio) → el pórtico, en el
-eje → la tribuna: la antesala entera a los pies, la puerta roja al fondo → la escalinata → la niebla.
+eje → la tribuna: la antesala entera a los pies, la puerta roja al fondo → la escalinata → los Velados.
 
 **La entrada a la antesala** se construye en tres tiempos: se ve (por las rejas de la sala de los obispos,
 desde arriba, sin poder entrar), se anuncia (el pórtico con la inscripción de los Velados y dos estatuas
@@ -146,39 +151,51 @@ los Velados) y el Oratorio de San Pedro de Rates (en el lucernario, a medio cami
 
 Más criaturas que antes, repartidas con intención (no una de cada en cada sitio):
 
-- **Sala de los Obispos:** penitentes rezando ante los sepulcros, un soldado cosido de ronda, rastreros en
-  las bóvedas.
-- **Cripta de San Martín:** casi en calma (es el refugio); una plañidera en el osario.
-- **Catacumbas de la Sé:** mastines comiendo, rastreros en las galerías, un Campanero en el lucernario.
-- **Inocentes:** plañideras (es una catacumba de niños) y rastreros.
-- **Mártires:** penitentes flagelándose, un Campanero junto a la pila, una plañidera en la sacristía.
-- **Antesala:** los Velados. **Pozo:** Dom Paio convertido y dos soldados.
+- **Sala de los Obispos:** penitentes rezando ante los sepulcros, un soldado cosido de ronda, una plañidera y
+  un rastrero en las bóvedas.
+- **Cripta de San Martín:** casi en calma (es el refugio): un soldado y una plañidera en el osario.
+- **Catacumbas de la Sé:** mastines comiendo, rastreros en las bóvedas, un Campanero en el cruce de los
+  huesos, un penitente y un soldado.
+- **Inocentes:** plañideras (es una catacumba de niños) y un rastrero. **Relicario:** el Custodio.
+- **Mártires:** penitentes, un soldado, un Campanero junto a la pila, un rastrero y una plañidera en la
+  sacristía.
+- **Antesala:** los Velados. **Pozo:** Dom Paio, convertido, solo.
 
 ## 7. Dom Paio, el canónigo superviviente
 
-Uno de los dos canónigos que bajaron tras el arzobispo y volvieron a echar los cerrojos que pudieron (la
-nota de la Garra es suya). Se ha refugiado en la capilla de San Martín, junto a la tumba del santo.
+Uno de los dos canónigos que bajaron tras el arzobispo y volvieron a echar los cerrojos que pudieron. El
+otro, **Dom Mendo**, se quedó con la Garra pegada a las manos (quemaba) hasta dejarla en el relicario, y allí
+murió, ante el rastrillo: la nota de la Garra es suya. Paio se ha refugiado en la capilla de San Martín, de
+rodillas a los pies del sepulcro del santo, con una vela (`game/paio.js`, `entities/paio.js`).
 
-- **Al encontrarle:** te toma por otro de los que bajan a abrir; luego reconoce al que no se arrodilló.
-  Cuenta lo que pasó (el arzobispo, Dom Mendo, que se quedó con la Garra) y, según lo que lleves hecho, te dice
-  qué le falta a la puerta.
-- **Mientras tanto:** frases que cambian con lo que llevas (la Garra, las pilas, el incienso).
-- **Tras los Velados:** ya no está. En la capilla quedan su breviario y una nota: el dios le llama por su
-  nombre y baja al pozo a cerrar la última compuerta con sus manos.
-- **En el pozo:** le encuentras convertido, guardando la cadena de la Pila de los Condenados. Hay que
-  matarle para echarla.
+- **Al encontrarle:** reza en latín, de espaldas a la nave; al verte se levanta de un salto («¡Atrás, en
+  nombre de San Martín!»). Al hablarle, te cuenta lo que pasó (el arzobispo, Mendo y la Garra) y reconoce al
+  preso que no se arrodilló: «si de verdad vas a abrir esa puerta, que sea para hacerle callar».
+- **Cada vez que vuelves:** lo siguiente que le falta a la puerta, de lo que no lleves hecho (la Garra, las
+  pilas de los Inocentes y de los Mártires, el incienso, los Velados).
+- **Tras los Velados:** ya no está. En la capilla queda su breviario: el dios le llama por su nombre y baja
+  al pozo a guardar la cadena de los Condenados («que no corra»).
+- **En el pozo:** le encuentras convertido, de rodillas ante la cadena, con el cirial de hierro de la
+  capilla (la vela de la punta sigue ardiendo). Es un jefe, **Dom Paio, el Condenado**: mazazo, barrido,
+  estocada y cera ardiendo; a media vida, la letanía de fuego (clava el cirial y la vela revienta en llamas
+  alrededor). Hasta que cae, la cadena no se echa. Muere diciendo: «...Mendo. Ya no quema.»
 
 ## 8. El Custodio de la Garra (jefe nuevo)
 
-«Los muertos de esta cámara la guardan mejor que nosotros», dejó escrito Dom Paio. Al acercarse al
-relicario, los huesos de los nichos y de los muros se juntan alrededor del arca de oro de San Martín en un
-coloso de calaveras y fémures. Cae el rastrillo de la entrada.
+«Los muertos de esta cámara la guardan mejor que nosotros», dejó escrito Dom Mendo. Al entrar en el
+relicario, los huesos de los nichos y de los muros se juntan en el montón que hay detrás del altar del arca:
+de él sale un coloso de calaveras y fémures (el tronco, de unos cuatro metros, con algo rojo que late en el
+costillar y una corona de calaveras pequeñas). Cae el rastrillo de la entrada (`entities/custodio.js`).
 
-- **Golpes:** barrido con el brazo de huesos, mazazo con los dos brazos (onda), lluvia de calaveras, agarrón.
-- **Lo suyo:** se deshace en un montón y se rehace en otro sitio de la sala (los huesos corren por el suelo
-  hasta allí); a media vida pierde huesos y se vuelve más rápido.
-- **Al caer:** se desmorona, el arca se abre y la Garra queda a la vista; el rastrillo sube.
-- Sustituye a la emboscada de antes.
+- **Golpes:** un barrido con cada brazo, el mazazo con los dos (onda), la lluvia de calaveras (se arranca
+  puñados del pecho y los lanza, una mano y otra) y el agarrón (se lanza con la mano abierta: no se para ni
+  se desvía).
+- **Lo suyo:** se deshace en su montón y se rehace en otro sitio de la sala, a unos seis metros de ti (los
+  huesos corren por el suelo; mientras, no se le puede tocar): cada tanto, o si le pegas mucho seguido. A
+  media vida se sacude, se le cae el antebrazo izquierdo, se acelera y se rehace más a menudo.
+- **Al caer:** se desploma en su montón, el rastrillo sube, el arca se abre y la Garra queda a la vista.
+- Su música: un xilófono de huesos en compás de 5, tambores secos y sonajas, y el coro de los monjes en tono
+  de salmo. Sustituye a la emboscada de antes.
 
 ## 9. Los cuatro cerrojos, ahora
 
@@ -197,14 +214,19 @@ La puerta, su cerradura, los círculos de sangre, las lágrimas del dintel y el 
   sala de llegada a las catacumbas (atajo) y el sepulcro a la cripta de los mártires.
 - La Puerta del Dios Ignoto y su lógica (`game/crypt.js`): mismas coordenadas, el mismo estrado.
 
-## 11. Plan de trabajo
+## 11. Plan de trabajo (hecho)
 
-1. **Arquitectura.** Nueva planta en `world/level_crypt2.js`: piezas nuevas (bóvedas de arista, arcos de
-   herradura, ventanas enrejadas, galerías de catacumba), cada espacio con su luz, sus muebles y su suelo;
-   la rejilla transitable, la colisión, la navegación (`cryptFloorY`), las zonas, el mapa y la música.
-2. **El juego.** Pilas, notas, altares, atajos, criaturas; `game/crypt.js` con las posiciones nuevas.
-3. **Dom Paio** (vivo y convertido).
-4. **El Custodio de la Garra.**
-5. **Comprobaciones.** `tools/progress.mjs` de punta a punta, agujeros (`holes.mjs`), parpadeos
-   (`zfight.mjs`), cámara (`camclip.mjs`), capturas de cada sala; modo de pruebas (teletransportes e
-   instancias) y documentación al día.
+1. **Arquitectura.** Nueva planta en `world/level_crypt2.js` (`LAYOUT`: cada sala, su suelo, su arranque y sus
+   opciones; de ella salen los muros, la altura del suelo para la navegación, las zonas y el mapa). Piezas
+   nuevas en `world/builders.js`: bóvedas de arista con sus nervios y lunetos (`groinVaults`), rampas de
+   bóveda en los dos ejes y arcos de herradura con sus enjutas; ventanas enrejadas; cada espacio con su luz,
+   sus muebles y su suelo.
+2. **El juego.** Pilas, notas, altares, atajos, criaturas; `game/crypt.js` con las posiciones nuevas, la
+   reja de los Velados y la reja y el arca del relicario.
+3. **Dom Paio** (vivo y convertido): `entities/paio.js` y su guion, `game/paio.js`.
+4. **El Custodio de la Garra:** `entities/custodio.js`, con su música (`bossBones`) y su voz.
+5. **Comprobaciones.** `tools/progress.mjs` de punta a punta (con Dom Paio, el Custodio y los Velados);
+   `tools/cryptwalk.mjs` recorre a pie la cripta honda (qué salas se alcanzan con las puertas de partida y
+   con todas abiertas, y dónde no se ve suelo); parpadeos (`zfight.mjs`); cámara (`camclip.mjs`, con
+   puntos en todas las salas nuevas); capturas de cada sala; instancias del modo de pruebas para las tres
+   peleas (el Custodio, los Velados y Dom Paio en el pozo); el README, al día.
