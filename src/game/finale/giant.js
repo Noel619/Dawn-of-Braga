@@ -470,6 +470,8 @@ export class Giant {
     }
     // (para la cámara)
     C.add(W('spine1', a), W('chest', b), 2.0, false);
+    // (las púas del espinazo, en la joroba: salen casi dos metros)
+    C.add(this.bp('chest', 0, 15.9, -4.6, a), this.bp('spine2', 0, 12.4, -5.0, b), 1.3, false);
     C.add(W('chest', a), W('neck2', b), 1.25, false);
     const hd = this.head(a);
     C.add(hd, hd, 1.35, false);

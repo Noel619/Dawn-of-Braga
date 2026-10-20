@@ -109,8 +109,10 @@ Tramo jugable: en lo alto, la espringala de la guarnición. **Cargar** (machacar
 alto de la torre. El gigante se tapa la cara con el brazo izquierdo: el virote se le clava en el
 antebrazo, y la cadena queda tensa entre la torre y su brazo.
 
-**Momento God of War 1:** tira de la cadena (la torre cruje) — **¡Corre!** — saltas a la cadena y corres
-por ella hasta su brazo — se sacude: **¡Agárrate!** — **¡Apuñala!** el dorso de la mano (la que te tiró):
+**Momento God of War 1:** tira de la cadena (la torre cruje) — **¡Corre!** — saltas del cadalso a la
+cadena y corres por ella hasta su brazo; a medio camino adelanta el brazo, la cadena se afloja bajo tus
+pies y restalla al tensarse: **¡Salta!** por encima del latigazo (si fallas, quedas colgado de ella y
+trepas) — se sacude: **¡Agárrate!** — **¡Apuñala!** el dorso de la mano (la que te tiró):
 se le abren los dedos, grita — estrella el brazo contra la torre para aplastarte: lo alto revienta, la
 cadena se parte y tú quedas colgado del virote que lleva clavado.
 
@@ -134,13 +136,27 @@ brecha: el brazo del virote es el izquierdo, y al correr hacia el norte queda al
 dentro, la trampilla, lo alto. La espringala, en una tronera de la esquina del noreste. Le clavas el virote
 en la nuca.
 
-**Momento God of War 2:** se revuelve y embiste contra la torre, se agarra a las almenas con la derecha
-(la campana cae al cráter tañendo) y su cara llega a lo alto, a dos metros: te ruge — **¡Salta!** a su
-cara — te agarras a la jaula — **¡Apuñala!** el ojo, entre los barrotes — retrocede tambaleándose hacia
-el cráter — **¡Salta!** de vuelta a la torre (te agarras a las almenas, **¡Trepa!**) — el borde del
-cráter cede y cae de espaldas a la cisterna; la cadena se tensa y arrastra la torre — **¡Corta!**
-(machacar: hachazos a la cadena con la espada) — la cadena salta; se hunde en la sangre negra, la mano
-alzada; la tierra le cae encima. Silencio. Las campanas callan. Amanece.
+**Momento God of War 2:** se revuelve (la cadena de la nuca salta del ojo del virote: el virote se le
+queda clavado) y embiste contra la torre, se agarra a las almenas con la derecha (la campana cae al cráter
+tañendo) y su cara llega a lo alto, a dos metros: te ruge — **¡Salta!** a su cara — te agarras a la jaula
+— **¡Apuñala!** el ojo, entre los barrotes.
+
+**El corazón del dios** (`film_heart.js`). Los virotes no le matan: le derriban. Retrocede tambaleándose
+hacia el cráter contigo en la cara — **¡Trepa!** por los barrotes y por encima del remate, a lo alto de
+la cabeza, entre los cuernos — se revuelve como un perro mojado: **¡Agárrate!**; los cirios salen
+volando y el último latigazo le arranca la aureola del cráneo (cae entera al campo) y las piedras de la
+joroba — bajas por detrás de la cabeza a la joroba, lo más alto del cuerpo, con el virote clavado a un
+palmo en la base del cuello: **¡Húndelo!** (machacar, con todo el cuerpo encima) — le atraviesa el
+cuello: se ahoga sin voz, las piernas no le sostienen y cae de rodillas al borde del cráter, de espaldas a
+él; el pecho se le abre como dos puertas y el núcleo late a la vista — la izquierda viene a la nuca a por
+ti: **¡Salta!** por encima del hombro y de espaldas por la casulla abajo, hasta el nido del núcleo (no hay
+suelo delante del corazón: te agarras a él, colgado, como de la jaula); la mano se cierra en el virote y
+se lo arranca — junta las dos manos contra su pecho para aplastarte: **¡Esquiva!** (te descuelgas al
+borde de abajo del hueco; las garras se le clavan a él) — **¡Apuñala!** el corazón (machacar: se arquea a
+cada estocada, y el núcleo arde más) — la última, alzada a dos manos y hasta la empuñadura: revienta (la
+luz, la onda, el silencio) y sales despedido. Se le apagan los ojos, los cirios y la carne que ardía;
+muerto, se queda colgando de las rodillas y cae de espaldas al cráter: la sangre negra se lo traga y la
+tierra del borde le cae encima. Amanece: tú, en el borde, a contraluz.
 
 Y al final normal: el río al amanecer (la escena de siempre).
 
@@ -285,6 +301,22 @@ camino, además de lo de arriba:
   trampilla, la embestida, el agarre a las almenas, el rugido (contra la torre, erguido: la cara asoma
   entera por encima del parapeto), la caída (de lado, con la muralla al fondo), el hachazo (de frente, a
   través de la cadena), el hundimiento (sin fuegos delante; al fondo, la torre) y el amanecer.
+
+- **Segunda vuelta de pulido** (lo que pedía quien lo jugó):
+  - *El audio*: los derrumbes, los rugidos y las pisadas del gigante se hornean una vez en un
+    OfflineAudioContext y suenan como muestras; los parámetros lentos, a tasa de bloque; las notas de la
+    música se desconectan al acabar; un bus aparte con su compresor para los derrumbes y un tope de
+    derrumbes que empiezan a la vez. El hilo de audio trabaja unas cuatro veces menos y el limitador ya no
+    aplasta la mezcla (sin cortes, sin silencios, sin saturación). `tools/filmaudio.mjs` lo mide.
+  - *Los derrumbes*: lo que revienta se viene abajo de verdad (`collapse.js`): el grupo se ladea hacia
+    donde le empujan y se hunde mientras salen trozos de su propia superficie (su piedra, su madera, sus
+    tejas, instanciados por material), astillas, tejas sueltas y polvo del color de la luz del sitio
+    (`dust.js`): el golpe, la ola a ras de suelo y la nube que se queda.
+  - *Las cámaras*: nunca dentro del gigante (se las saca de sus cápsulas) ni atrapadas por las paredes
+    invisibles del mapa; `tools/filmclip.mjs` busca los momentos con la cámara metida en algo y dice qué
+    plano del guion es. Una luz sigue al jugador mientras está encima del gigante.
+  - *El final*: el corazón del dios, en lugar de la caída al cráter, la cadena y los hachazos (ver el acto
+    6); y la carrera por la cadena del acto 4, con el salto del cadalso y el latigazo.
 
 Hecho todo el plan. Lo que queda para más adelante (Deo Ignoto y el objeto verdadero) está en las notas de
 `src/game/finale/director.js`.

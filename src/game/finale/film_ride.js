@@ -139,10 +139,11 @@ export function* actRide(D, o = {}) {
   G.speedK = 0.6;
   const run = { s: 0, want: 1 };
   F.also(runner(D, G, run));
-  // (delante de él, calle arriba, mirándole venir)
+  // (delante de él, calle arriba, mirándole venir: por el medio de la calle
+  // y por encima de las vigas de la Herrería en ruinas)
   F.follow((dt, tt) => {
     const f = G.forward(new V3());
-    const pos = G.pos.clone().addScaledVector(f, lerp(16, 12, sm(clamp(tt / 3, 0, 1)))).add(_v.set(f.z * 3.2, 3.6, -f.x * 3.2));
+    const pos = G.pos.clone().addScaledVector(f, lerp(16, 12, sm(clamp(tt / 3, 0, 1)))).add(_v.set(f.z * 1.1, 5.4, -f.x * 1.1));
     const look = G.chest(new V3()).lerp(p.pos, 0.35);
     return { pos: camSafe(g, look.clone(), pos), look, fov: 60 };
   });

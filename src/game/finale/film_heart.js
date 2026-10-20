@@ -40,7 +40,6 @@ const _q = new THREE.Quaternion(),
   _m = new THREE.Matrix4();
 const _Y = new V3(0, 1, 0);
 const _I = new THREE.Quaternion();
-const GORE = [0.32, 0.03, 0.03];
 // la sangre negra del dios (la de la cisterna), las brasas del corazón, el
 // fogonazo
 const BLACK = [0.09, 0.035, 0.03];
@@ -665,7 +664,7 @@ function heartbeat(X) {
 // derecho, y de espaldas por la casulla abajo hasta el pecho abierto. La
 // mano se cierra en el virote y se lo arranca
 function* leapToChest(X) {
-  const { D, g, F, p, a, G } = X;
+  const { g, F, p, a, G } = X;
   const arm = X.arm;
   G.play('kneelReach', { blend: 0.3 });
   // (la mano, a la nuca: la sigue)
@@ -716,8 +715,7 @@ function* leapToChest(X) {
   // el pecho)
   lagCam(F, () => camSafe(g, p.pos.clone(), p.pos.clone().add(G.wd(-5.2, 0.6, 4.4, _v))), () => p.pos.clone().add(_v.set(0, 0.7, 0)), { rate: 6, fov: 58 });
   F.hand = 0.05;
-  let slid = false,
-    landed = false;
+  let slid = false;
   while (u < 4) {
     const dt = yield;
     u = Math.min(4, u + dt * (u < 1 ? 2.1 : u < 3 ? 1.5 : 2.6));
@@ -747,11 +745,10 @@ function* leapToChest(X) {
   F.hand = 0.03;
   yield* F.wait(0.9);
   arm.weight = 1;
-  void D;
 }
 // se arranca el virote de la nuca y lo tira (al cráter)
 function ripBolt(X) {
-  const { D, g, F, a, G, bolt } = X;
+  const { g, F, a, G, bolt } = X;
   const nk = nape(G, new V3());
   a && a.play('fleshTear', nk, { k: 2 });
   a && a.play('choke', G.face(_v), { k: 2 });
@@ -787,7 +784,6 @@ function ripBolt(X) {
       }
     })()
   );
-  void D;
 }
 
 // Junta las dos manos contra su pecho para aplastarte dentro: ¡Esquiva!
@@ -932,7 +928,8 @@ function* stabHeart(X) {
     const c = coreAt(G, _v);
     a && a.play('thrust', c, { k: 1.8 });
     a && a.play('fleshBurst', c, { k: 1.1 });
-    a && a.play(i % 2 ? 'choke' : 'beastHurt', G.face(_v2), { k: 1.4 });
+    // (sin voz: la garganta atravesada; estertores)
+    if (i % 2) a && a.play('choke', G.face(_v2), { k: 1.4 });
     g.fx.blood.emit(c.x, c.y, c.z, 30, { color: EMBER, speed: 6, life: 1, up: 1, gravity: 2, dir: G.wd(0, 0.2, 1, _v2) });
     g.fx.blood.emit(c.x, c.y, c.z, 18, { color: BLACK, speed: 4, life: 1.2, up: 1, gravity: 9 });
     g.flash = Math.max(g.flash || 0, 0.1);
