@@ -1150,11 +1150,17 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'npc') {
-      if (g.house) g.house.talk();
+      const q = it.npc === 'paio' ? g.paio : g.house;
+      if (q) q.talk();
       return true;
     }
     if (it.kind === 'lever') {
       if (it.done || it.pulling) return true;
+      // (la cadena que guarda alguien: hasta que cae, no se echa)
+      if (it.guard && !g.flags['boss:' + it.guard]) {
+        g.ui.toast(MSG.chainGuarded, 3.5);
+        return true;
+      }
       // tirar cuesta: el mango baja a tirones y chirría; si algo te golpea
       // (o te apartas), lo sueltas y vuelve a subir poco a poco
       it.pulling = true;

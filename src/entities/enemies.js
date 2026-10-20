@@ -5,6 +5,7 @@ import { clamp, DEG, damp, lerp, angleDiff, approachAngle } from '../core/util.j
 import { buildPenitent, buildSoldier, buildCrawler, buildHound, buildBell, buildMourner, buildTuribulario, buildDescoyuntado, CANDLE_OFFSETS, CLAPPER, MOURNER_SKIRT, MOURNER_SKIRT_LEN } from './enemy_models.js';
 import { IMPALED_TYPE } from './impaled.js';
 import { HENRIQUE_TYPE } from './henrique.js';
+import { PAIO_TYPE, PAIO_HOLLOW_TYPE } from './paio.js';
 import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
@@ -1164,6 +1165,8 @@ export const TYPES = {
   },
   impaled: IMPALED_TYPE,
   henrique: HENRIQUE_TYPE,
+  paio: PAIO_TYPE,
+  paioHollow: PAIO_HOLLOW_TYPE,
   leonor: LEONOR_TYPE,
   guardianL: GUARDIAN_L,
   guardianR: GUARDIAN_R,

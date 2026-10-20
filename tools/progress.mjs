@@ -88,6 +88,8 @@ const steps = [
   // cripta de los mártires y la sacristía del arzobispo, los Velados, el
   // incensario y la Puerta del Dios Ignoto
   "__use('n_confesion')", "__use('n_pilas')", "__use('a_martin')", "__use('n_martin')", "__use('n_osario')",
+  // Dom Paio, en la capilla: al verte se levanta; al hablarle, lo que pasó
+  "(()=>{const g=__game;const a=__use('t_paio');for(let i=0;i<4;i++)__sim(0.5);const b=__use('t_paio');for(let i=0;i<60&&g.paio.script;i++){__sim(0.5);g.speech.skip(g.paio.who)}return {first:a.ok,talk:b.ok,met:!!g.flags['paio:met'],mode:g.paio.mode}})()",
   "__use('a_oratorio')", "__use('n_rates')",
   // (los dos atajos se abren desde abajo: el de la sala de llegada, desde las
   // catacumbas; el de San Martín, desde los Inocentes)
@@ -102,7 +104,12 @@ const steps = [
   // (los Velados despiertan al pisar la nave: a la espalda sube la reja de
   // la escalinata; vencidos, baja, y se abre la reja del pozo)
   "(()=>{const g=__game;g.dev.god=true;g.player.spawn(-55,-8.2,-152,Math.PI/2);__sim(1);const before=!!g.activeBoss;g.player.spawn(-46,-13,-152,Math.PI/2);__sim(2);const fight=g.activeBoss&&g.activeBoss.type;const gate=g.crypt.vgate.target;const a=g.bosses.guardianL,b=g.bosses.guardianR;a.hp=1;a.die();__sim(1);const next=g.activeBoss&&g.activeBoss.type;b.hp=1;b.die();__sim(1);g.dev.god=false;return {before,fight,gate,next,all:!!g.flags['boss:guardianes']}})()",
-  "new Promise(r=>setTimeout(()=>{const g=__game;for(let i=0;i<10;i++)__sim(0.5);r({L:g.flags['boss:guardianL'],R:g.flags['boss:guardianR'],gate:g.crypt.vgate.target,gateUp:g.crypt.vgate.box.enabled,reja:!!g.flags['door:d_reja_pozo']})},3000))",
+  "new Promise(r=>setTimeout(()=>{const g=__game;for(let i=0;i<10;i++)__sim(0.5);r({L:g.flags['boss:guardianL'],R:g.flags['boss:guardianR'],gate:g.crypt.vgate.target,gateUp:g.crypt.vgate.box.enabled,reja:!!g.flags['door:d_reja_pozo'],paioGone:!!g.flags['paio:gone'],npc:g.paio.npc.obj.visible})},3000))",
+  // (en la capilla queda su breviario; en el pozo, él, convertido: hasta
+  // que cae, la cadena no se echa)
+  "__use('n_paio')",
+  "(()=>{const g=__game;const r=__use('p_pila_honda');for(let i=0;i<4;i++)__sim(0.5);return {guarded:!g.flags['lever:p_pila_honda'],toast:r.toast}})()",
+  "(()=>{const g=__game;g.dev.god=true;g.player.spawn(-36,-16,-176,Math.PI);__sim(2);const fight=g.activeBoss&&g.activeBoss.type;const h=g.bosses.paioHollow;h.hp=1;h.takeHit(50,50,g.player.pos.x,g.player.pos.z,false);__sim(3);g.dev.god=false;return {fight,dead:h.dead,flag:!!g.flags['boss:paioHollow']}})()",
   "(()=>{const g=__game;const r=__use('p_pila_honda');for(let i=0;i<14;i++)__sim(0.5);return {...r,pulled:!!g.flags['lever:p_pila_honda']}})()",
   "__use('d_dios')",
   "__use('x_incensario')",

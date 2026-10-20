@@ -68,6 +68,9 @@ export const DEEP = {
   // la cripta de San Martín: nave (con la capilla al norte) y naves laterales
   martin: { x0: -84, z0: -167, x1: -64, z1: -119, rows: [-78, -70], cols: [-161, -155, -149, -143, -137, -131, -125], YC: Y1 + 2.2, YS: Y1 + 4.8 },
   chapel: { x0: -78, z0: -175, x1: -70, z1: -167, y: Y1 + 0.6 },
+  // donde reza Dom Paio: a los pies del sepulcro del santo, de espaldas a la
+  // nave (game/paio.js)
+  paio: { x: -73.7, z: -167.9 },
   osario: { x0: -94, z0: -150, x1: -85, z1: -142 },
   // el Pórtico de los Velados: de la nave lateral a la tribuna, en el eje
   portal: { z: -152, w: 5, y0: Y1 + 1.9, rise: 2.5 },
@@ -998,9 +1001,14 @@ function buildMartin(ctx, L, rng) {
   P.banner(ctx, CH.x0 + 0.08, CH.y + 3.2, -171, Math.PI / 2, 'bannerRed', 1.1, 2.4);
   P.banner(ctx, CH.x1 - 0.08, CH.y + 3.2, -171, -Math.PI / 2, 'bannerRed', 1.1, 2.4);
   plaque(ctx, CH.x0 + 0.06, CH.y + 1.5, -169.2, 'e', 1.0, 0.7);
+  const PA = DEEP.paio;
   L.interact.push(
     { kind: 'altar', id: 'a_martin', name: 'Capilla de San Martín', x: cx, y: CH.y, z: CH.z0 + 1.6, spawn: [cx, CH.y, -172.4], yaw: Math.PI },
-    { kind: 'note', id: 'n_martin', note: 'sanmartin', x: CH.x0 + 0.4, y: CH.y + 1.4, z: -169.2, model: 'wall', r: 1.8 }
+    { kind: 'note', id: 'n_martin', note: 'sanmartin', x: CH.x0 + 0.4, y: CH.y + 1.4, z: -169.2, model: 'wall', r: 1.8 },
+    // Dom Paio (game/paio.js): hablarle (el interactuable le sigue) y, cuando
+    // se va al pozo, su breviario donde rezaba
+    { kind: 'npc', id: 't_paio', npc: 'paio', label: 'Hablar con Dom Paio', x: PA.x, y: CH.y, z: PA.z },
+    { kind: 'note', id: 'n_paio', note: 'paio', x: PA.x - 0.15, y: CH.y + 0.02, z: PA.z - 0.35, model: 'book' }
   );
 
   // --- la nave: lámparas colgadas, velas al pie de las columnas, sepulcros
@@ -1674,7 +1682,8 @@ function buildFonts(ctx, L) {
   const FONTS = [
     { id: 'oeste', r: D.font1, y: YI, lever: { x: -75.1, z: -103.5, d: 'e' } },
     { id: 'este', r: D.font2, y: YC, lever: { x: D.fontHall.x1 - 0.9, z: (D.font2.z0 + D.font2.z1) / 2, d: 'w' } },
-    { id: 'honda', r: D.font3, y: PY, lever: { x: (D.font3.x0 + D.font3.x1) / 2, z: D.pozo.z0 + 0.9, d: 's' } },
+    // (la de los Condenados la guarda Dom Paio: hasta que cae, no se echa)
+    { id: 'honda', r: D.font3, y: PY, lever: { x: (D.font3.x0 + D.font3.x1) / 2, z: D.pozo.z0 + 0.9, d: 's' }, guard: 'paioHollow' },
   ];
   for (const F of FONTS) {
     const { r, y } = F;
@@ -1682,7 +1691,7 @@ function buildFonts(ctx, L) {
     const lv = F.lever;
     const n = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] }[lv.d];
     chainMount(ctx, lv.x, y, lv.z, lv.d, ROOM);
-    L.interact.push({ kind: 'lever', id: 'p_pila_' + F.id, font: F.id, x: lv.x, y, z: lv.z, nx: n[0], nz: n[1], r: 1.8 });
+    L.interact.push({ kind: 'lever', id: 'p_pila_' + F.id, font: F.id, x: lv.x, y, z: lv.z, nx: n[0], nz: n[1], r: 1.8, guard: F.guard });
   }
 }
 
@@ -1728,10 +1737,10 @@ function buildCreatures(L) {
     e('bell', 28.5, YC, -161.5, 'e_est4', { idle: 'wander', yaw: 0 }),
     e('crawler', 23.6, YC, -153, 'e_est5', { idle: 'ceiling' }),
     e('mourner', 25, Y1, -99.5, 'e_sac1', { idle: 'pray', yaw: Math.PI }),
-    // el pozo de los condenados
-    e('soldier', (D.font3.x0 + D.font3.x1) / 2 - 6, PY, -184, 'e_hon1', { yaw: Math.PI / 2 }),
-    e('soldier', (D.font3.x0 + D.font3.x1) / 2 + 6, PY, -183, 'e_hon2', { yaw: -Math.PI / 2 }),
-    e('crawler', (D.font3.x0 + D.font3.x1) / 2, PY, -178.5, 'e_hon3', { idle: 'ceiling' }),
+    // Dom Paio: vivo, en la capilla de San Martín (le mueve game/paio.js);
+    // convertido, en el pozo, de rodillas ante la cadena de los Condenados
+    e('paio', D.paio.x, D.chapel.y, D.paio.z, 'n_dom_paio', { idle: 'pray', yaw: Math.PI }),
+    { type: 'paioHollow', x: (D.font3.x0 + D.font3.x1) / 2, y: PY, z: D.pozo.z0 + 2.6, yaw: Math.PI, idle: 'boss', boss: true, id: 'b_paio' },
     // los Velados
     { type: 'guardianL', x: D.guards[0].x, y: AY, z: D.guards[0].z, yaw: -Math.PI / 2, idle: 'boss', boss: true, id: 'b_veladoL' },
     { type: 'guardianR', x: D.guards[1].x, y: AY, z: D.guards[1].z, yaw: -Math.PI / 2, idle: 'boss', boss: true, id: 'b_veladoR' }

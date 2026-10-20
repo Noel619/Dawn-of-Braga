@@ -404,6 +404,18 @@ Los Velados se apartan ante el obispo de Braga, y el obispo soy yo. La Garra la 
 
 El humo: incienso negro, mirra y lo que Él pide. Se echa al incensario grande, el que cuelga ante su puerta. Guardo aquí lo que queda.`,
   },
+  paio: {
+    title: 'Breviario de Dom Paio',
+    text: `Entre los salmos, a carbón, con la letra cada vez más torcida:
+
+«Tercera noche. Mendo no ha vuelto del relicario. Le dejé allí con la Garra, como quiso. Cuando salí, los huesos de los nichos se movían.
+
+Los Velados han caído. Lo he oído desde aquí: la piedra gritaba. Ya no queda nadie entre la puerta y la ciudad. Sólo las compuertas.
+
+Me llama. Sabe mi nombre, el de pila, el que me puso mi madre. Dice que Mendo está con Él y que ya no le quema.
+
+Bajo al pozo. La cadena de los Condenados no la echará nadie mientras yo pueda tenerla. Que no corra. Que no corra.»`,
+  },
   leonor: {
     title: 'Oración de Leonor',
     text: `Señora de los Dolores, Madre que viste morir a tu Hijo: devuélveme al mío.
@@ -466,6 +478,38 @@ export const DIALOG = {
   henriqueAfter: ['Ve con Dios. Yo me quedo aquí, junto al fuego, con lo que me queda.', 'La oigo llorar a través del suelo. Toda la noche.'],
   henriqueGrief: ['Ya no la oigo. Por fin calla.', 'Gracias. Que Dios se la lleve con nuestro Tomé.', 'Esa espada es tuya. Mi abuelo diría que está en buenas manos.'],
   // Leonor, en su gruta (sobre su cabeza)
+  // Dom Paio, el canónigo que bajó tras el arzobispo (en la capilla de San
+  // Martín, y luego en el pozo)
+  paioSee: '¿Quién anda ahí? ¡Atrás! ¡Atrás, en nombre de San Martín!',
+  paioPray: ['Sancte Martine, ora pro nobis...', 'Miserere mei, Deus...', 'De profundis clamavi ad te, Domine...', 'Requiem aeternam dona eis, Domine...', 'Libera nos a malo...'],
+  paioMeet: [
+    '...No. No eres de los suyos. Los suyos no traen la cara descubierta.',
+    'Soy Paio, canónigo de esta Sé. O lo que queda de él. Llevo tres noches aquí abajo, con el santo.',
+    'Bajamos dos tras el arzobispo: Mendo y yo. Cuando llegamos, la puerta ya estaba abierta, y él dentro, cantando.',
+    'Le arrancamos la Garra a la cerradura y la puerta se cerró sola. Quemaba. A Mendo se le quedó pegada a las manos, y no la soltó hasta el relicario.',
+    'Allí se quedó, con ella. Los muertos de esa cámara la guardan mejor que nosotros.',
+  ],
+  paioMeet2: [
+    'Tú... tú eres el preso. El de la primera celda. El que no se arrodilló.',
+    'El arzobispo hablaba de ti. Decía que tú terminarías lo que él empezó. No sé si eso es una gracia o una condena.',
+    'Mientras él siga cantando ahí dentro, la ciudad no despierta. Si de verdad vas a abrir esa puerta, que sea para hacerle callar.',
+  ],
+  // lo que le falta a la puerta (uno cada vez que se le habla)
+  paioHint: {
+    garra: ['La Garra está en el relicario de San Martín, con los Inocentes. Se baja por la sala de los obispos a las catacumbas, y de allí, más abajo.', 'Ten cuidado. En esa cámara los huesos no descansan.'],
+    oeste: ['La pila de los Inocentes está en lo más hondo de las catacumbas, junto al relicario. Siete tirones de cadena.', 'La cerramos Mendo y yo con estas manos. Ábrela tú, si tienes que hacerlo.'],
+    este: ['La pila de los Mártires está en su cripta: se baja por el sepulcro del arzobispo. Siete tirones de cadena.'],
+    incienso: ['El incienso negro se quedó en su sacristía, en la cripta de los mártires. Sólo su anillo la abre, y el anillo lo dejó en su sepulcro.', 'Ya se daba por muerto cuando bajó.'],
+    velados: ['Los Velados están al otro lado del pórtico. No se apartan más que ante el obispo de Braga.', 'Tendrás que tumbarlos a los dos. La pila de los Condenados está debajo de ellos.'],
+  },
+  paioRest: ['Yo me quedo aquí, con el santo. Alguien tiene que rezarle.', 'Si caes, vuelve a esta capilla. San Martín no le cierra la puerta a nadie.'],
+  // convertido, en el pozo
+  paioHollowIntro: ['Que no corra... que no corra...', '¡No la echarás! ¡Nadie la echa!'],
+  paioHollowFight: ['¡Que no corra!', 'Mendo... ¿me oyes, Mendo?', 'Sabe mi nombre... sabe mi nombre...', 'De profundis... de profundis...', '¡Atrás, en nombre de...! ¿De quién?'],
+  paioHollowRage: '¡QUE NO CORRA! ¡QUE NO CORRA LA SANGRE!',
+  paioLitany: ['Kyrie eleison...', 'Ora pro nobis... ora...', 'Agnus Dei...'],
+  paioHollowDeath: '...Mendo. Ya no quema.',
+
   leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
   leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
   leonorDeath: ['...Henrique...'],
@@ -529,6 +573,7 @@ export const MSG = {
   censerLight: 'Echas el incienso negro a la boca del incensario. Prende solo. El humo no sube: se arrastra hacia la puerta.',
   censerLit: 'El incensario se mece solo. Su humo negro se arrastra hacia la puerta.',
   fontDone: (name, n) => `Tiras de la cadena hasta el final. La compuerta se abre y la pila de ${name} se vacía por el sumidero, camino de la puerta. (${n}/3)`,
+  chainGuarded: 'Dom Paio guarda la cadena. Mientras siga en pie, no la echarás.',
   clawAmbush: 'Una reja cae a tu espalda. En los sepulcros, algo se mueve.',
   clawFree: 'La reja vuelve a subir.',
   died: 'HAS CAÍDO',

@@ -618,6 +618,29 @@ const GEN = {
       set(o, 34 * k, 30 * k, 30 * k);
     });
   },
+  // Lino de una sobrepelliz: blanco gastado, con la trama, los pliegues y la
+  // mugre de días bajo tierra.
+  linen() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const w = (x + y) % 2 === 0 ? 1 : 0.94;
+      const fold = 0.88 + 0.12 * Math.sin((x / S) * Math.PI * 8 + fbm2(x / 8, y / 8, 2, S / 8, 441) * 2.4);
+      const n = fbm2(x / 4, y / 4, 3, S / 4, 442);
+      const dirt = fbm2(x / 8, y / 8, 3, S / 8, 443);
+      let c = mix3([196, 190, 176], [222, 218, 206], n).map((v) => v * fold * w);
+      if (dirt > 0.64) c = mix3(c, [128, 116, 98], Math.min(0.7, (dirt - 0.64) * 2.5));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // Canas: mechones grises y blancos.
+  hairGrey() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const st = fbm2(x / 1, y / 12, 2, 0, 446);
+      const k = 0.6 + st * 0.55;
+      set(o, 178 * k, 176 * k, 170 * k);
+    });
+  },
   // Brocado de oro viejo (las cenefas de la casulla): rombos, mugre y sangre.
   orphrey() {
     const S = 32;

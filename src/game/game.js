@@ -39,6 +39,7 @@ import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
+import { PaioQuest } from './paio.js';
 import { CryptQuest } from './crypt.js';
 import { ALEMAN } from '../world/level_postigo.js';
 import { cryptFloorY } from '../world/level_crypt2.js';
@@ -49,7 +50,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'] };
+const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -235,6 +236,8 @@ export class Game {
     this.house = new HouseQuest(this);
     // la Puerta del Dios Ignoto: las pilas, el incensario y la Garra
     this.crypt = new CryptQuest(this);
+    // Dom Paio, el canónigo de la capilla de San Martín (y del pozo)
+    this.paio = new PaioQuest(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -363,6 +366,7 @@ export class Game {
     this.finale.applyFlags();
     this.house.applyFlags();
     this.crypt.applyFlags();
+    this.paio.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -438,6 +442,7 @@ export class Game {
     this.finale.reset();
     this.speech.clear();
     this.house.script = null;
+    this.paio.script = null;
     this.failing = false;
     this.introCam = false;
     this.atmo.override = null;
@@ -990,6 +995,7 @@ export class Game {
     this.speech.clear();
     this.house.onRespawn();
     this.crypt.onRespawn();
+    this.paio.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1617,6 +1623,7 @@ export class Game {
         this.finale.update(dt);
         this.house.update(dt);
         this.crypt.update(dt);
+        this.paio.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)

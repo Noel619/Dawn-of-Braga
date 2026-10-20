@@ -66,6 +66,8 @@ export const MAT_DEFS = {
   clothDark: { tex: 'clothDark', uv: 1.4 },
   clothBlue: { tex: 'clothBlue', uv: 1.4 },
   clothWhite: { tex: 'clothWhite', uv: 1.4 },
+  linen: { tex: 'linen', uv: 1.4 },
+  hairGrey: { tex: 'hairGrey', uv: 1.6 },
   leather: { tex: 'leather', uv: 1.6 },
   chainmail: { tex: 'chainmail', uv: 2.2 },
   plate: { tex: 'plate', uv: 1.6 },

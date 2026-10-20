@@ -2613,6 +2613,18 @@ export class Audio {
           this.bodyFall(d, t + 1.0, 1);
         }
         break;
+      // Dom Paio: un viejo con la voz rota; convertido, ronca y reza a gritos
+      case 'paio':
+        if (kind === 'attack') V({ dur: 0.38, f0: 112 * pv, f1: 90, vowel: 'a', v1: 'o', gain: 0.22, vibD: 0, breath: 0.65, a: 0.01, rasp: 0.5, jit: 16 });
+        else if (kind === 'alert') {
+          V({ dur: 1.6, f0: 98 * pv, f1: 132 * pv, vowel: 'o', v1: 'a', gain: 0.26, vib: 5, vibD: 22, breath: 0.6, a: 0.2, rasp: 0.55, jit: 20 });
+          V({ dt: 0.05, dur: 1.5, f0: 49 * pv, f1: 66 * pv, vowel: 'o', gain: 0.1, vib: 5, vibD: 10, breath: 0.4, a: 0.3, rasp: 0.6 });
+        } else if (kind === 'hurt') V({ dur: 0.36, f0: 140 * pv, f1: 96, vowel: 'a', v1: 'u', gain: 0.24, breath: 0.55, a: 0.01, rasp: 0.4, jit: 18 });
+        else if (kind === 'death') {
+          V({ dur: 2.2, f0: 120 * pv, f1: 62, vowel: 'a', v1: 'o', gain: 0.24, vib: 4, vibD: 12, breath: 0.7, rasp: 0.4 });
+          this.bodyFall(d, t + 1.6, 0.9);
+        } else if (kind === 'idle') this.mutter(d, t, 1.8, 100 * pv);
+        break;
       // los Velados: piedra que se mueve y, bajo el velo, una voz honda que
       // canta sin boca
       case 'guardian':
