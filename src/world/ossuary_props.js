@@ -576,3 +576,152 @@ export function distaffParts() {
     part(geo('dfWhorl', () => new THREE.CylinderGeometry(0.02, 0.02, 0.015, 8)), 'bone', TRS(0.12, 0.32, 0.03, Q(0, 0, 0.3))),
   ];
 }
+
+// ------------------------------------------------------- los hermanos de Dumio
+// Un monje muerto de pie con su hábito pardo, la capucha puesta y lo suyo en
+// las manos. Marco: los pies en el origen, mirando a +z. Devuelve el cuerpo,
+// la cabeza (calavera y capucha, en el marco de su eje: el cuello) y dónde va
+// ese eje, para girarla aparte; eyes: las cuencas, en el marco de la cabeza.
+// hold: 'farol', 'libro', 'pico', 'reloj', 'cruz', 'calavera'.
+const HABIT = [0.5, 0.4, 0.31];
+// (el cilindro de arriba con un radio y el de abajo con otro: se hace con su
+// propia geometría)
+function sleeve(a, b, r0, r1, mat, tint) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
+  const g = geo(`sleeve:${r0.toFixed(3)}:${r1.toFixed(3)}`, () => new THREE.CylinderGeometry(r1, r0, 1, 8, 1, false));
+  return part(g, mat, M4().compose(a.clone().add(b).multiplyScalar(0.5), q, V(1, d.length(), 1)), tint);
+}
+// mano de hueso: la palma y los dedos, hacia 'dir' (en el marco del monje)
+function boneHand(p, dir, side) {
+  const P = [];
+  const q = new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), dir.clone().normalize());
+  const m = M4().compose(p, q, V(1, 1, 1));
+  P.push(part(geo('palm', () => new THREE.BoxGeometry(0.055, 0.018, 0.06)), 'bone', m.clone().multiply(TRS(0, 0, 0.02))));
+  for (let k = 0; k < 4; k++) {
+    const x = -0.021 + k * 0.014;
+    P.push(...moveParts(boneParts(V(x, 0, 0.05), V(x, -0.022, 0.09), 0.005), m));
+  }
+  P.push(...moveParts(boneParts(V(side * 0.03, 0, 0.02), V(side * 0.045, -0.012, 0.055), 0.005), m));
+  return P;
+}
+export const MONK_HEAD = { y: 1.5, skull: [0, 0.16, 0.025] };
+export function monkParts(hold = 'cruz', o = {}) {
+  const P = [];
+  const robeT = o.tint ?? HABIT;
+  const prof = [
+    [0.33, 0.0],
+    [0.315, 0.2],
+    [0.28, 0.55],
+    [0.225, 0.92],
+    [0.215, 1.12],
+    [0.235, 1.32],
+    [0.24, 1.42],
+    [0.17, 1.5],
+    [0.08, 1.53],
+  ];
+  P.push(part(geo('habit', () => latheShell(prof, 12)), 'burlap', TRS(0, 0, 0, Q(), 1, 1, 0.8), robeT));
+  P.push(part(geo('habitHem', () => new THREE.CircleGeometry(0.32, 12)), 'black', TRS(0, 0.012, 0, Q(-Math.PI / 2, 0, 0), 1, 1, 0.8)));
+  // los pliegues del hábito (unas tiras más oscuras)
+  for (const a of [-0.9, -0.35, 0.3, 0.85]) {
+    const x = Math.sin(a) * 0.29,
+      z = Math.cos(a) * 0.29 * 0.8;
+    P.push(sleeve(V(x, 0.02, z), V(x * 0.75, 0.9, z * 0.75), 0.022, 0.012, 'burlap', robeT.map((c) => c * 0.75)));
+  }
+  // el cordón, con su caída de nudos
+  P.push(part(geo('cord', () => new THREE.TorusGeometry(0.222, 0.014, 4, 14)), 'rope', TRS(0, 0.93, 0, Q(Math.PI / 2, 0, 0), 1, 1, 0.8)));
+  P.push(sleeve(V(0.06, 0.93, 0.18), V(0.08, 0.45, 0.24), 0.01, 0.01, 'rope', null));
+  for (const y of [0.78, 0.62, 0.48]) P.push(part(geo('knot', () => new THREE.SphereGeometry(0.018, 5, 4)), 'rope', TRS(0.06 + (0.93 - y) * 0.04, y, 0.18 + (0.93 - y) * 0.13)));
+  // la capucha caída sobre los hombros (el cuello)
+  P.push(part(geo('cowl', () => new THREE.TorusGeometry(0.13, 0.055, 5, 12)), 'burlap', TRS(0, 1.47, -0.01, Q(Math.PI / 2, 0, 0), 1.15, 1, 0.75), robeT.map((c) => c * 0.9)));
+  // los pies (los huesos asoman bajo el hábito)
+  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) P.push(...boneParts(V(s * 0.08 + (k - 1) * 0.02, 0.012, 0.22), V(s * 0.085 + (k - 1) * 0.024, 0.012, 0.31), 0.008));
+  // los brazos: manga ancha hasta la muñeca y la mano de hueso
+  const W = {
+    farol: [V(0.17, 1.06, 0.22), V(-0.13, 1.0, 0.17)],
+    libro: [V(0.11, 1.17, 0.24), V(-0.11, 1.17, 0.24)],
+    pico: [V(0.13, 0.98, 0.22), V(-0.12, 1.3, 0.23)],
+    reloj: [V(0.085, 1.1, 0.25), V(-0.085, 1.1, 0.25)],
+    cruz: [V(0.05, 1.2, 0.23), V(-0.05, 1.16, 0.23)],
+    calavera: [V(0.1, 1.03, 0.25), V(-0.1, 1.03, 0.25)],
+  }[hold] || [V(0.05, 1.2, 0.23), V(-0.05, 1.16, 0.23)];
+  W.forEach((w, i) => {
+    const s = i === 0 ? 1 : -1;
+    const sh = V(s * 0.22, 1.4, -0.01);
+    const el = V(s * 0.25, 1.12, 0.06).lerp(V(w.x * 1.3, (w.y + 1.12) / 2, w.z * 0.4), 0.25);
+    P.push(sleeve(sh, el, 0.075, 0.08, 'burlap', robeT));
+    const cuff = w.clone().lerp(el, 0.18);
+    P.push(sleeve(el, cuff, 0.08, 0.1, 'burlap', robeT));
+    P.push(part(geo('cuffIn', () => new THREE.CircleGeometry(0.095, 8)), 'black', M4().compose(cuff.clone().lerp(w, 0.02), new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), w.clone().sub(el).normalize()), V(1, 1, 1))));
+    P.push(...boneParts(cuff, w, 0.012));
+    P.push(...boneHand(w, w.clone().sub(el), -s));
+  });
+  // lo que lleva
+  P.push(...heldParts(hold));
+  // la cabeza: calavera algo más grande que la de las filas y la capucha puesta
+  const head = [];
+  const sk = MONK_HEAD.skull;
+  head.push(...moveParts(skullParts({ jaw: true, open: o.open ?? 0.3, tint: [0.88, 0.84, 0.76] }), TRS(sk[0], sk[1], sk[2], Q(), 1.06)));
+  // (la capucha, abierta por delante: el hueco de la esfera, hacia +z)
+  head.push(part(geo('hood', () => new THREE.SphereGeometry(0.165, 12, 8, Math.PI * 0.86, Math.PI * 1.28, 0, Math.PI * 0.72)), 'burlap', TRS(0, 0.17, -0.01, Q(), 1, 1.12, 1.08), robeT));
+  head.push(part(geo('hoodIn', () => flip(new THREE.SphereGeometry(0.158, 12, 8, Math.PI * 0.86, Math.PI * 1.28, 0, Math.PI * 0.72))), 'black', TRS(0, 0.17, -0.01, Q(), 1, 1.12, 1.08)));
+  head.push(part(geo('hoodPeak', () => new THREE.ConeGeometry(0.06, 0.16, 6)), 'burlap', TRS(0, 0.33, -0.1, Q(-0.6, 0, 0)), robeT));
+  // las cuencas (donde se les encienden los ojos)
+  const eyes = [-1, 1].map((s) => [sk[0] + s * 0.025, sk[1] - 0.013, sk[2] + 0.068]);
+  return { body: P, head, headY: MONK_HEAD.y, eyes };
+}
+
+// lo que tiene en las manos cada hermano
+function heldParts(hold) {
+  const blk = geo('hdBox', () => new THREE.BoxGeometry(1, 1, 1));
+  const P = [];
+  if (hold === 'farol') {
+    // el farol del portero, colgado de la mano derecha (encendido)
+    const x = 0.17,
+      y = 0.86,
+      z = 0.26;
+    P.push(part(geo('lanRing', () => new THREE.TorusGeometry(0.025, 0.005, 3, 8)), 'iron', TRS(x, 1.05, z)));
+    P.push(sleeve(V(x, 1.03, z), V(x, y + 0.12, z), 0.004, 0.004, 'iron'));
+    P.push(part(geo('lanRoof', () => new THREE.ConeGeometry(0.075, 0.07, 4)), 'iron', TRS(x, y + 0.13, z, Q(0, Math.PI / 4, 0))));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) P.push(part(blk, 'iron', TRS(x + sx * 0.048, y + 0.02, z + sz * 0.048, Q(), 0.012, 0.2, 0.012)));
+    P.push(part(blk, 'linen', TRS(x, y + 0.02, z, Q(), 0.09, 0.17, 0.09), [1.0, 0.72, 0.38]));
+    P.push(part(blk, 'iron', TRS(x, y - 0.085, z, Q(), 0.11, 0.015, 0.11)));
+    P.push(part(blk, 'ember', TRS(x, y + 0.0, z, Q(), 0.03, 0.06, 0.03)));
+  } else if (hold === 'libro') {
+    // el libro abierto, entre las dos manos, de cara a él
+    const m = TRS(0, 1.2, 0.27, Q(-0.9, 0, 0));
+    for (const s of [-1, 1]) {
+      P.push(part(blk, 'leather', m.clone().multiply(TRS(s * 0.085, 0, 0, Q(0, 0, s * 0.18), 0.17, 0.012, 0.23)), [0.5, 0.25, 0.18]));
+      P.push(part(blk, 'linen', m.clone().multiply(TRS(s * 0.08, 0.014, 0, Q(0, 0, s * 0.14), 0.155, 0.018, 0.215)), [0.86, 0.82, 0.7]));
+    }
+  } else if (hold === 'pico') {
+    // el pico del cavador, cruzado delante del cuerpo
+    const a = V(0.15, 0.82, 0.24),
+      b = V(-0.17, 1.52, 0.22);
+    P.push(sleeve(a, b, 0.016, 0.018, 'wooddark'));
+    const d = b.clone().sub(a).normalize();
+    const side = V(0, 0, 1).cross(d).normalize();
+    for (const s of [-1, 1]) {
+      const tip = b.clone().add(side.clone().multiplyScalar(s * 0.2)).add(d.clone().multiplyScalar(-0.05));
+      P.push(sleeve(b, tip, 0.024, 0.006, 'iron'));
+    }
+    P.push(part(blk, 'iron', M4().compose(b, new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d), V(0.05, 0.06, 0.05))));
+  } else if (hold === 'reloj') {
+    // el reloj de arena, entre las manos
+    const c = V(0, 1.1, 0.27);
+    for (const s of [-1, 1]) P.push(part(geo('hgDisc', () => new THREE.CylinderGeometry(0.06, 0.06, 0.018, 8)), 'wooddark', TRS(c.x, c.y + s * 0.11, c.z)));
+    for (let k = 0; k < 3; k++) {
+      const a = (k / 3) * Math.PI * 2;
+      P.push(part(geo('hgPost', () => new THREE.CylinderGeometry(0.007, 0.007, 0.22, 4)), 'wooddark', TRS(c.x + Math.cos(a) * 0.05, c.y, c.z + Math.sin(a) * 0.05)));
+    }
+    for (const s of [-1, 1]) P.push(part(geo('hgBulb', () => new THREE.ConeGeometry(0.042, 0.1, 8)), 'linen', TRS(c.x, c.y + s * 0.05, c.z, Q(s > 0 ? Math.PI : 0, 0, 0)), [0.8, 0.84, 0.86]));
+    P.push(part(geo('hgSand', () => new THREE.ConeGeometry(0.03, 0.045, 8)), 'straw', TRS(c.x, c.y - 0.075, c.z), [0.8, 0.62, 0.36]));
+  } else if (hold === 'calavera') {
+    P.push(...moveParts(skullParts({ jaw: false, tint: [0.84, 0.8, 0.72] }), TRS(0, 1.1, 0.29, Q(-0.2, 0, 0), 0.9)));
+  } else {
+    // la cruz de palo, apretada contra el pecho
+    P.push(part(blk, 'wooddark', TRS(0, 1.2, 0.25, Q(-0.15, 0, 0), 0.025, 0.32, 0.025)));
+    P.push(part(blk, 'wooddark', TRS(0, 1.27, 0.26, Q(-0.15, 0, 0), 0.17, 0.025, 0.025)));
+  }
+  return P;
+}

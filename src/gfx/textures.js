@@ -239,9 +239,40 @@ function scratchText(lines, W, H, seed) {
   return c;
 }
 
+// Letras talladas en la piedra (toscas, en dos renglones): el surco oscuro y
+// el canto de abajo, claro.
+function paintCarved(lines, W, H, seed) {
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  const img = g.createImageData(W, H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const n = fbm2(x / 7, y / 7, 3, 0, seed);
+      const k = 128 + n * 46;
+      img.data[i] = k * 1.02;
+      img.data[i + 1] = k * 0.97;
+      img.data[i + 2] = k * 0.88;
+      img.data[i + 3] = 255;
+    }
+  g.putImageData(img, 0, 0);
+  g.font = `bold ${Math.round((H / lines.length) * 0.62)}px serif`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  lines.forEach((t, k) => {
+    const y = ((k + 0.5) * H) / lines.length;
+    g.fillStyle = 'rgba(220,210,190,0.9)';
+    g.fillText(t, W / 2 + 0.6, y + 1.2, W - 10);
+    g.fillStyle = '#2a221c';
+    g.fillText(t, W / 2, y, W - 10);
+  });
+  grain(g, W, 0.88, 0.18, seed + 1);
+  return c;
+}
+
 // grano en todo el canvas
 function grain(g, S, a = 0.85, b = 0.25, seed = 1) {
-  const img = g.getImageData(0, 0, S, S);
+  const img = g.getImageData(0, 0, S, g.canvas.height);
   const rng = new RNG(seed);
   for (let i = 0; i < img.data.length; i += 4) {
     const k = a + rng.next() * b;
@@ -1634,6 +1665,11 @@ const GEN = {
     });
     grain(g, W, 0.86, 0.2, 106);
     return c;
+  },
+
+  // la inscripción del osario de San Martín
+  letreroDumio() {
+    return paintCarved(['LO QVE TV ERES FVIMOS', 'LO QVE SOMOS SERAS'], 256, 80, 111);
   },
 
   // el letrero del osario de la Hermandad (en los dos muros)

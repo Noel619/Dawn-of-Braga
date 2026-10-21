@@ -64,6 +64,7 @@ export const MAT_DEFS = {
   bonePile: { tex: 'bonePile', uv: 0.7 },
   letreroOssos1: { tex: 'letreroOssos1', uv: 1 },
   letreroOssos2: { tex: 'letreroOssos2', uv: 1 },
+  letreroDumio: { tex: 'letreroDumio', uv: 1 },
   // (recortados: lo transparente de la textura no se dibuja)
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
   scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },

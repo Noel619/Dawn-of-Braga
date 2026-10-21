@@ -2088,6 +2088,40 @@ export class Audio {
         this.tone(d, t + 0.02, 0.4, { f0: 180, f1: 70, gain: 0.25 });
         break;
       }
+      // la cabeza de un hermano de Dumio, girada a la fuerza: hueso contra
+      // hueso y la capucha que roza
+      case 'boneTurn': {
+        d = this.out(P, { gain: 0.8, verb: 0.55, life: 2.5, ref: 4 });
+        this.creak(d, t, 0.45, rnd(180, 240), 0.1);
+        for (let i = 0; i < 3; i++) this.boneCrack(d, t + 0.05 + i * rnd(0.07, 0.12), 0.45);
+        this.noise(d, t, 0.35, { f0: 1800, f1: 900, q: 1, gain: 0.08, a: 0.05, buf: this.brown, rate: 4 });
+        break;
+      }
+      // se le encienden los ojos (k: cuál de los cuatro, sube de nota)
+      case 'eyeLight': {
+        d = this.out(P, { gain: 0.8, verb: 0.8, life: 4, ref: 7, occlude: false });
+        this.noise(d, t, 0.6, { f0: 2500, f1: 6000, q: 1.5, gain: 0.06, a: 0.2, buf: this.pink });
+        this.smp(d, t, this.smallBell(), { gain: 0.07, rate: mtof(64 + [0, 3, 7, 12][o.k ?? 0]) / mtof(76) });
+        this.tone(d, t, 1.4, { f0: mtof(40 + [0, 3, 7, 12][o.k ?? 0]), gain: 0.12, a: 0.3 });
+        break;
+      }
+      // un fémur que se descorre de sus anillas de vértebras
+      case 'boneBolt': {
+        d = this.out(P, { gain: 0.85, verb: 0.55, life: 2.5, ref: 5 });
+        this.noise(d, t, 0.35, { f0: 1400, f1: 700, q: 2.5, gain: 0.16, a: 0.03, buf: this.brown, rate: 5, curve: 'lin' });
+        this.boneCrack(d, t + 0.36, 0.9);
+        this.tone(d, t + 0.36, 0.1, { f0: 300, f1: 160, gain: 0.25 });
+        break;
+      }
+      // la losa del arca, que se corre
+      case 'stoneSlide': {
+        d = this.out(P, { gain: 0.9, verb: 0.6, life: 4, ref: 6 });
+        this.noise(d, t, 1.2, { type: 'lowpass', f0: 420, f1: 260, gain: 0.55, a: 0.1, buf: this.brown, rate: 1.6, curve: 'lin' });
+        this.tone(d, t, 1.2, { f0: 52, f1: 46, gain: 0.3, a: 0.1, curve: 'lin' });
+        this.debris(d, t + 0.1, 10, 1.0, { f0: 500, f1: 1600, gain: 0.5 });
+        this.tone(d, t + 1.2, 0.3, { f0: 90, f1: 40, gain: 0.5 });
+        break;
+      }
       // un óbolo que sale de entre los dientes
       case 'coinTake': {
         d = this.out(P, { gain: 0.6, verb: 0.4, life: 2, ref: 3 });

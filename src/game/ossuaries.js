@@ -5,10 +5,11 @@
 // guarda lo resuelto en las banderas ('puzzle:<id>'). Lo que va a medias no
 // se guarda: al morir o al cargar, vuelve a empezar.
 import * as THREE from 'three';
-import { objMat, cloneMat } from '../gfx/materials.js';
+import { objMat, cloneMat, additiveFog } from '../gfx/materials.js';
+import { getTexture } from '../gfx/textures.js';
 import { clamp } from '../core/util.js';
 import { MSG } from './story.js';
-import { meshParts, helmetParts, chainParts, chestParts, musicBoxParts, drumGeometry, drumCapParts, MBOX } from '../world/ossuary_props.js';
+import { meshParts, helmetParts, chainParts, chestParts, musicBoxParts, drumGeometry, drumCapParts, MBOX, monkParts, boneParts, skullParts, moveParts } from '../world/ossuary_props.js';
 
 const V3 = THREE.Vector3;
 const ease = (k) => k * k * (3 - 2 * k);
@@ -711,7 +712,218 @@ class ForgottenSouls extends Puzzle {
   }
 }
 
-const KINDS = { toque: TolledHelmets, nana: MusicBox, animas: ForgottenSouls };
+// ------------------------------------------------------------ la mirada
+// El osario de San Martín: cuatro hermanos de Dumio con lo suyo en las
+// manos (el reloj, el pico, el farol y el libro). A cada uno se le vuelve
+// la cabeza hacia lo que guardó en vida (el arca, la fosa, la puerta y la
+// inscripción); cada vuelta, a la siguiente de las cuatro cosas (o gacha).
+// Con los cuatro mirando a lo suyo se les encienden los ojos, los cuatro
+// fémures que atrancan el arca se descorren uno a uno y la losa se aparta:
+// dentro, el Cerrojo de San Martín.
+class BrothersGaze extends Puzzle {
+  constructor(g, s) {
+    super(g, s);
+    const mf = this.matFn();
+    const glow = getTexture('glow');
+    this.monks = s.monks.map((M, i) => {
+      const piv = new THREE.Group();
+      new THREE.Matrix4().fromArray(M.head).decompose(piv.position, piv.quaternion, piv.scale);
+      const parts = monkParts(M.hold);
+      const head = meshParts(parts.head, mf);
+      piv.add(head);
+      // los ojos: dos brasas en las cuencas (apagadas hasta el final)
+      const eyes = parts.eyes.map((e) => {
+        const sp = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: glow, color: 0x9fe0ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true })));
+        // (por delante de la cara: dentro de la calavera no se vería)
+        sp.position.set(e[0], e[1], e[2] + 0.03);
+        sp.scale.set(0.08, 0.08, 1);
+        sp.visible = false;
+        head.add(sp);
+        return sp;
+      });
+      g.scene.add(piv);
+      piv.updateMatrixWorld(true);
+      // hacia dónde mira en cada postura: gacha, o a cada una de las cosas
+      const sk = 0.16;
+      // (gacha y vuelta a un lado, como dormido: así no se confunde con la
+      // que mira a la fosa, que está delante y abajo)
+      const poses = s.order.map((t) => {
+        if (t === 'bowed') return { yaw: i % 2 ? 0.75 : -0.75, pitch: 0.72 };
+        const p = piv.worldToLocal(new THREE.Vector3(...s.targets[t]));
+        return { yaw: clamp(Math.atan2(p.x, p.z), -1.3, 1.3), pitch: clamp(-Math.atan2(p.y - sk, Math.hypot(p.x, p.z)), -0.5, 0.75) };
+      });
+      const w = piv.position;
+      const dx = s.x - w.x,
+        dz = s.z - w.z,
+        dl = Math.hypot(dx, dz);
+      const it = this.part({ id: 'pz_' + s.id + '_' + i, x: w.x, y: s.y, z: w.z, ix: w.x + (dx / dl) * 1.05, iz: w.z + (dz / dl) * 1.05, r: 1.05, monk: i });
+      return { ...M, piv, head, eyes, poses, k: 0, yaw: poses[0].yaw, pitch: poses[0].pitch, it };
+    });
+    this.buildArca();
+  }
+  // el arca de huesos: piedra, con su losa encima atrancada por cuatro
+  // fémures que pasan por anillas de vértebras (marco: sobre el altar, el
+  // frente hacia la nave)
+  buildArca() {
+    const g = this.g;
+    const mf = this.matFn();
+    const grp = new THREE.Group();
+    new THREE.Matrix4().fromArray(this.s.arca.m).decompose(grp.position, grp.quaternion, grp.scale);
+    const stone = this.mat('ashlar', [0.74, 0.7, 0.64]);
+    const box = (w, h, d, x, y, z, m = stone) => {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+      b.position.set(x, y, z);
+      return b;
+    };
+    const W = 0.96,
+      H = 0.46,
+      Dd = 0.56;
+    // el cuerpo: cuatro paredes y el fondo (hueco por dentro)
+    grp.add(box(W, 0.06, Dd, 0, 0.03, 0));
+    grp.add(box(W, H, 0.07, 0, H / 2, Dd / 2 - 0.035));
+    grp.add(box(W, H, 0.07, 0, H / 2, -Dd / 2 + 0.035));
+    grp.add(box(0.07, H, Dd, W / 2 - 0.035, H / 2, 0));
+    grp.add(box(0.07, H, Dd, -W / 2 + 0.035, H / 2, 0));
+    grp.add(box(W - 0.14, 0.01, Dd - 0.14, 0, 0.065, 0, this.mat('clothRed', [0.45, 0.2, 0.18])));
+    // en el frente, la cruz de Martín (en relieve) y dos calaveras
+    grp.add(box(0.04, 0.24, 0.02, 0, H / 2, Dd / 2 + 0.01));
+    grp.add(box(0.16, 0.04, 0.02, 0, H / 2 + 0.05, Dd / 2 + 0.01));
+    for (const sx of [-1, 1]) grp.add(meshParts(moveParts(skullParts({ jaw: false, tint: [0.88, 0.84, 0.76] }), new THREE.Matrix4().compose(new THREE.Vector3(sx * 0.3, H * 0.45, Dd / 2 + 0.05), new THREE.Quaternion(), new THREE.Vector3(0.7, 0.7, 0.7))), mf));
+    // la losa
+    const lid = new THREE.Group();
+    lid.position.set(0, H, 0);
+    lid.add(box(W + 0.06, 0.1, Dd + 0.06, 0, 0.05, 0));
+    lid.add(box(0.04, 0.012, 0.3, 0, 0.106, 0, this.mat('gold')));
+    lid.add(box(0.18, 0.012, 0.04, 0, 0.106, -0.05, this.mat('gold')));
+    grp.add(lid);
+    // los cuatro fémures (cerrojos de hueso), cruzando el frente por sus
+    // anillas: dos de vértebras en el cuerpo y una en la losa
+    const bolts = [];
+    const ring = new THREE.TorusGeometry(0.03, 0.012, 4, 8);
+    const ys = [H - 0.02, H + 0.05];
+    for (let k = 0; k < 4; k++) {
+      const y = ys[k % 2],
+        z = Dd / 2 + 0.06 + (k >> 1) * 0.0;
+      const xo = k < 2 ? -0.22 : 0.22;
+      const b = new THREE.Group();
+      b.position.set(xo, y, z + (k % 2) * 0.0);
+      b.add(meshParts(boneParts(new THREE.Vector3(-0.22, 0, 0), new THREE.Vector3(0.22, 0, 0), 0.026), mf));
+      grp.add(b);
+      for (const dx of [-0.15, 0.15]) {
+        const r = new THREE.Mesh(ring, this.mat('bone', [0.86, 0.82, 0.74]));
+        r.position.set(xo + dx, y, z);
+        r.rotation.y = Math.PI / 2;
+        grp.add(r);
+      }
+      bolts.push({ g: b, x0: xo, dir: k < 2 ? -1 : 1, k: 0, target: 0 });
+    }
+    g.scene.add(grp);
+    const gp = grp.position;
+    const light = g.fx.lights.add({ x: gp.x, y: gp.y + 0.7, z: gp.z, color: 0x9fd8ff, intensity: 0, range: 5, flicker: 0.1, on: false, priority: 2 });
+    this.arca = { grp, lid, bolts, slide: 0, target: 0, light, H };
+  }
+  label(it) {
+    return 'Volverle la cabeza al hermano';
+  }
+  use(it) {
+    const g = this.g,
+      p = g.player;
+    if (this.busy) return;
+    const m = this.monks[it.monk];
+    p.playInteract('interact', Math.atan2(m.piv.position.x - p.pos.x, m.piv.position.z - p.pos.z));
+    this.busy = true;
+    this.after(0.35, () => {
+      m.k = (m.k + 1) % this.s.order.length;
+      this.sound('boneTurn', m.piv.position);
+      this.busy = false;
+      if (this.monks.every((q) => this.s.order[q.k] === q.target)) this.complete();
+    });
+  }
+  complete() {
+    const A = this.arca;
+    const at = A.grp.position;
+    this.solve();
+    this.busy = true;
+    // los ojos, uno a uno
+    this.monks.forEach((m, i) =>
+      this.after(0.7 + i * 0.45, () => {
+        for (const e of m.eyes) e.visible = true;
+        this.sound('eyeLight', m.piv.position, { k: i });
+      })
+    );
+    // los cerrojos de hueso, uno a uno, y la losa
+    A.bolts.forEach((b, i) =>
+      this.after(2.8 + i * 0.55, () => {
+        b.target = 1;
+        this.sound('boneBolt', at);
+      })
+    );
+    this.after(5.3, () => {
+      A.target = 1;
+      A.light.on = true;
+      this.sound('stoneSlide', at);
+    });
+    this.after(6.4, () => {
+      this.reveal(0.22, 1.4);
+      this.sound('relicReveal', at);
+      this.g.ui.toast(MSG.miradaBien, 5);
+      this.busy = false;
+    });
+  }
+  update(dt) {
+    super.update(dt);
+    for (const m of this.monks) {
+      const P = m.poses[m.k];
+      const k = Math.min(1, dt * 3.2);
+      if (Math.abs(m.yaw - P.yaw) > 1e-4 || Math.abs(m.pitch - P.pitch) > 1e-4) {
+        m.yaw += (P.yaw - m.yaw) * k;
+        m.pitch += (P.pitch - m.pitch) * k;
+        m.head.rotation.set(m.pitch, m.yaw, 0, 'YXZ');
+      }
+    }
+    const A = this.arca;
+    for (const b of A.bolts)
+      if (b.k !== b.target) {
+        b.k = b.target > b.k ? Math.min(1, b.k + dt / 0.4) : 0;
+        b.g.position.x = b.x0 + b.dir * ease(b.k) * 0.36;
+      }
+    if (A.slide !== A.target) {
+      A.slide = A.target > A.slide ? Math.min(1, A.slide + dt / 1.2) : 0;
+      this.poseArca();
+    }
+  }
+  poseArca() {
+    const A = this.arca;
+    const k = ease(A.slide);
+    // (la losa se corre hacia atrás y queda apoyada en el borde)
+    A.lid.position.z = -k * 0.42;
+    A.lid.rotation.x = -Math.max(0, k - 0.6) * 0.45;
+    A.light.intensity = k * 1.6;
+  }
+  applyFlags() {
+    super.applyFlags();
+    const on = this.solved;
+    this.busy = false;
+    for (const m of this.monks) {
+      m.k = on ? this.s.order.indexOf(m.target) : 0;
+      const P = m.poses[m.k];
+      m.yaw = P.yaw;
+      m.pitch = P.pitch;
+      m.head.rotation.set(m.pitch, m.yaw, 0, 'YXZ');
+      for (const e of m.eyes) e.visible = on;
+    }
+    const A = this.arca;
+    for (const b of A.bolts) {
+      b.k = b.target = on ? 1 : 0;
+      b.g.position.x = b.x0 + b.dir * (on ? 0.36 : 0);
+    }
+    A.slide = A.target = on ? 1 : 0;
+    A.light.on = on;
+    this.poseArca();
+  }
+}
+
+const KINDS = { toque: TolledHelmets, nana: MusicBox, animas: ForgottenSouls, mirada: BrothersGaze };
 
 export class Ossuaries {
   constructor(g) {

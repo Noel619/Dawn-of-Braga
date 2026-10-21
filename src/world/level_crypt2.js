@@ -34,6 +34,7 @@ import { RNG } from '../core/util.js';
 import { stairs, archRing, barrelVault, rampVault, groinVaults, lunette, pilaster, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
+import { buildOsarioMartin } from './osario_martin.js';
 
 const Y = -7; // la cripta de arriba (el templo, el osario, el sepulcro)
 const Y1 = -8.2; // San Martín: la sala de los obispos, su cripta, la tribuna
@@ -71,7 +72,9 @@ export const DEEP = {
   // donde reza Dom Paio: a los pies del sepulcro del santo, de espaldas a la
   // nave (game/paio.js)
   paio: { x: -73.7, z: -167.9 },
-  osario: { x0: -94, z0: -150, x1: -85, z1: -142 },
+  // (el osario de los hermanos de Dumio: una capilla de doce lados, ver
+  // osario_martin.js; aquí, el cuadrado que la contiene)
+  osario: { x0: -98, z0: -152, x1: -86, z1: -140 },
   // el Pórtico de los Velados: de la nave lateral a la tribuna, en el eje
   portal: { z: -152, w: 5, y0: Y1 + 1.9, rise: 2.5 },
   // la antesala: la tribuna, la escalinata, la nave, el estrado y la puerta
@@ -161,8 +164,10 @@ function layout() {
   add('martin', [MB.x0, MB.z0, MB.x1, MB.z1], Y1, MB.YS, { ...ash, ceil: false, zone: 'martin' });
   add('capilla', [CH.x0, CH.z0, CH.x1, CH.z1], CH.y, MB.YS, { ...ash, ceil: false, base: Y1, zone: 'capilla_martin' });
   add('capillaPeldanos', [-77, -167, -71, -166.1], Y1, MB.YS, { ceil: false, floor: false, stair: { axis: 'z', a0: -166.1, a1: -167, y0: Y1, y1: CH.y }, zone: 'martin' });
-  add('osario', [OS.x0, OS.z0, OS.x1, OS.z1], Y1, Y1 + 2.6, { mat: 'skulls', tint: ST, ceil: false, zone: 'osario_martin' });
-  add('osarioPuerta', [OS.x1, -147.6, MB.x0, -144.4], Y1, Y1 + 1.6, { ...ash, ceil: false, arch: Y1 + 1.6, zone: 'osario_martin' });
+  // (la capilla la levanta osario_martin.js: aquí sólo cuenta para la
+  // altura del suelo, la zona y el mapa)
+  add('osario', [OS.x0, OS.z0, OS.x1, OS.z1], Y1, Y1 + 6.6, { ghost: true, area: true, zone: 'osario_martin' });
+  add('osarioPuerta', [OS.x1, -147.2, MB.x0, -144.8], Y1, Y1 + 3.2, { ...ash, ceil: false, arch: Y1 + 2.0, zone: 'osario_martin' });
   const PT = D.portal;
   add('portico', [-64, PT.z - PT.w / 2, -62, PT.z + PT.w / 2], Y1, PT.y0, { ...ash, ceil: false, arch: PT.y0, zone: 'martin' });
   // el atajo de los Inocentes: la escalera que baja de la cripta
@@ -662,7 +667,7 @@ export function buildDeepCrypt(ctx, C, L) {
 
   buildConfessio(ctx, L);
   buildObispos(ctx, L, rng);
-  buildMartin(ctx, L, rng);
+  buildMartin(ctx, L, rng, C);
   buildAntesala(ctx, L);
   buildPozo(ctx, L);
   buildCatacumbas(ctx, L, byId);
@@ -694,7 +699,7 @@ export function buildDeepCrypt(ctx, C, L) {
   };
   const zones = new Map();
   for (const g of regs) {
-    if (g.ghost || !g.zone || !ZONES[g.zone]) continue;
+    if ((g.ghost && !g.area) || !g.zone || !ZONES[g.zone]) continue;
     // (la altura: del suelo más hondo de la sala a la bóveda)
     const lo = Math.min(g.y, g.stair ? Math.min(g.stair.y0, g.stair.y1) : g.y) - 1,
       hi = g.top + 4;
@@ -703,7 +708,7 @@ export function buildDeepCrypt(ctx, C, L) {
   }
   L.zones.push(...zones.values());
   for (const g of regs) {
-    if (g.ghost || !g.zone || !ZONES[g.zone]) continue;
+    if ((g.ghost && !g.area) || !g.zone || !ZONES[g.zone]) continue;
     L.map.push({ id: g.zone, r: [g.r[0], g.r[1], g.r[2], g.r[3]], level: 'crypt' });
   }
 }
@@ -937,7 +942,7 @@ function buildObispos(ctx, L, rng) {
 // dos peldaños arriba, la capilla del altar (donde se descansa). En el muro
 // del oeste, el osario; en el del este, el Pórtico de los Velados, en el eje
 // de la antesala; al sur, la puerta del atajo de los Inocentes.
-function buildMartin(ctx, L, rng) {
+function buildMartin(ctx, L, rng, C) {
   const wb = ctx.wb;
   const MB = DEEP.martin,
     CH = DEEP.chapel,
@@ -1036,25 +1041,13 @@ function buildMartin(ctx, L, rng) {
   bakeCorpse(ctx.wb, -66.2, Y1, -158.6, -1.2, 'curl', 'villager', 4735);
   ctx.rats.push({ x: -82.6, y: Y1, z: -164.8, n: 2 });
 
-  // --- el osario: muros y bóveda de calaveras, el altar de huesos al fondo
-  const ocz = (OS.z0 + OS.z1) / 2,
-    ospan = OS.z1 - OS.z0;
-  const OYS = Y1 + 2.6;
-  barrelVault(ctx, { x0: OS.x0, x1: OS.x1, z0: OS.z0, z1: OS.z1, axis: 'x', ys: OYS, rise: 2.0, mat: 'skulls', tint: [0.74, 0.71, 0.67], room: ROOM, sub: 1.0, impostTint: AT });
-  lunette(ctx, { axis: 'x', at: OS.x0, c: ocz, span: ospan, ys: OYS, rise: 2.0, face: 1, mat: 'skulls', tint: ST, room: ROOM });
-  lunette(ctx, { axis: 'x', at: OS.x1, c: ocz, span: ospan, ys: OYS, rise: 2.0, face: -1, mat: 'skulls', tint: ST, room: ROOM, hole: { u0: -147.9, u1: -144.1, y: MB.YS } });
-  crown(ctx, OS.x0, OS.z0, OS.x1, OS.z1, OYS + 2.0);
-  arch(ctx, { axis: 'z', c: -146, w: 3.2, y0: Y1 + 1.6, rise: 1.9, ring: 0.3, t0: OS.x1, t1: MB.x0, top: MB.YS, clip: [-147.9, -144.1], spMat: 'skulls', spTint: ST });
-  for (const z of [OS.z0 + 0.06, OS.z1 - 0.06]) P.boneWall(ctx, (OS.x0 + OS.x1) / 2 - 0.4, Y1, z, z < ocz ? 0 : Math.PI, OS.x1 - OS.x0 - 1.4, 2.5, { room: ROOM, seed: Math.round(-z * 3) });
-  wb.box('ashlar', OS.x0 + 0.2, Y1, ocz - 1.1, OS.x0 + 1.2, Y1 + 1.0, ocz + 1.1, { faces: 'tnsew', ao: false, room: ROOM, tint: AT });
-  ctx.col.add(OS.x0 + 0.2, Y1, ocz - 1.1, OS.x0 + 1.2, Y1 + 1.0, ocz + 1.1);
-  P.skullRow(ctx, OS.x0 + 0.7, Y1 + 1.0, ocz, Math.PI / 2, 6, { room: ROOM, gap: 0.3 });
-  for (const y of [Y1 + 1.5, Y1 + 1.9]) P.skullRow(ctx, OS.x0 + 0.12, y, ocz, Math.PI / 2, 7, { room: ROOM, gap: 0.28 });
-  P.candles(ctx, OS.x0 + 0.7, Y1 + 1.0, ocz - 0.7, 5, 4740, { room: ROOM, radius: 4.5, intensity: 0.9, spread: 0.2 });
-  P.hangingLamp(ctx, ocz < 0 ? -89.5 : -89.5, OYS + 2.0 - 0.1, ocz, { room: ROOM, len: 1.4, radius: 6, intensity: 0.8 });
-  P.bones(ctx, -88.4, Y1, -148.6, 12, 4741, 0.9);
-  plaque(ctx, OS.x0 + 0.06, Y1 + 2.0, ocz, 'e', 1.2, 0.5);
-  L.interact.push({ kind: 'note', id: 'n_osario', note: 'osario', x: OS.x0 + 1.5, y: Y1 + 1.3, z: ocz + 1.4, model: 'wall', r: 1.8 });
+  // --- el osario de los hermanos de Dumio (osario_martin.js) y su paso: el
+  // arco por el grueso del muro (sin enjutas del lado del osario: allí el
+  // muro tiene su hueco a la medida) y, del lado de la cripta, el macizo
+  // hasta la bóveda
+  buildOsarioMartin(ctx, C, L, { y: Y1, room: ROOM });
+  arch(ctx, { axis: 'z', c: -146, w: 2.4, y0: Y1 + 2.0, rise: 1.2, ring: 0.3, t0: OS.x1, t1: MB.x0 - 0.3 });
+  arch(ctx, { axis: 'z', c: -146, w: 2.4, y0: Y1 + 2.0, rise: 1.2, ring: 0.3, t0: MB.x0 - 0.3, t1: MB.x0, top: MB.YS, clip: [-147.5, -144.5] });
 
   // --- el Pórtico de los Velados: el arco por el grueso del muro y, en la
   // cripta, su inscripción

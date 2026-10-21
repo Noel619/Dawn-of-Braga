@@ -447,11 +447,27 @@ Y más abajo, reciente, de una mano que tiembla: «Ahora reza ahí dentro el arz
   },
   osario: {
     title: 'Inscripción del osario',
-    text: `Sobre el altar de calaveras, en letras toscas:
+    text: `Tallada en la piedra, bajo un arco de herradura de fémures, en letras toscas:
 
 LO QVE TV ERES FVIMOS; LO QVE SOMOS SERAS
 
-Los monjes de San Martín, los que cavaron con él, quisieron quedarse junto a su puerta después de muertos. Los que vinieron detrás los apilaron aquí para hacer sitio, y siguieron velando.`,
+Los monjes de Dumio, los que cavaron la cripta con San Martín, quisieron quedarse junto a su puerta después de muertos. Están de pie en sus nichos, con su hábito, y en medio de todos dejaron una fosa abierta: la del siguiente.`,
+  },
+  dumio: {
+    title: 'De los hermanos que cavaron con Martín',
+    text: `(Copiado de la crónica de Dumio, en una hoja suelta.)
+
+Cuatro hermanos cavaron con Martín la cripta bajo su sede, y los cuatro velan en su osario con lo suyo en las manos, mirando a lo que guardaron en vida:
+
+Fray Ordoño, el portero, con su farol, a la puerta, para que no entre el siglo.
+
+Fray Vimara, el lector, con su libro, a la palabra escrita en el muro.
+
+Fray Tructino, el cavador, con su pico, a la fosa, que es nuestra casa.
+
+Fray Sisnando, el que contaba las horas, con su reloj, al arca de Martín, donde se guarda lo que se acaba.
+
+Los que vinieron detrás los movieron para hacer sitio y les dejaron la cabeza gacha. Dicen que el arca no se abrirá mientras no vuelva a mirar cada uno a lo suyo.`,
   },
   rates: {
     title: 'Pintura del oratorio',
@@ -620,6 +636,8 @@ export const MSG = {
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
+  // el osario de los hermanos de Dumio (la cripta de San Martín)
+  miradaBien: 'A los cuatro hermanos se les encienden los ojos. Los fémures que atrancan el arca se descorren uno a uno y la losa se aparta.',
   // el osario de las ánimas (la cripta de la Sé)
   cepilloVacio: 'El cepillo de las ánimas, con su ranura y su candado. Pintado en la tabla, debajo: «POR LAS ÁNIMAS QUE NADIE NOMBRA».',
   oboloUno: 'Llevas un óbolo.',
