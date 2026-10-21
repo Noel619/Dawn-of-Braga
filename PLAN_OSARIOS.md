@@ -15,13 +15,15 @@ la cripta honda:
 - **Las notas** llevan su **transcripción** a la derecha, como en Resident Evil, con un botón que la muestra y
   la oculta (**hecho**: T en el teclado, X en el mando, y en Opciones).
 - **La Sala de los Obispos** era la peor sala: enorme, vacía, columnas y tumbas sin contexto, mal conector y
-  sin personalidad; y en su paso a San Martín unas tumbas tapaban el camino.
+  sin personalidad; y en su paso a San Martín unas tumbas tapaban el camino (**hecho**: el Panteón de los
+  Obispos, ver 3).
 - **La espectacularidad** que se pidió para las salas no estaba.
 - **Las catacumbas del lucernario** eran piedra, sí, pero bajísimas, cuadradas, sin personalidad, sin
-  espectáculo, y con un agua plana que lo empeoraba.
+  espectáculo, y con un agua plana que lo empeoraba (**hecho**, ver 3).
 - **Criaturas nuevas** para la cripta honda (tres, con modelos a la altura del Campanero y la Plañidera): no
-  pueden ser las mismas de la ciudad de arriba.
-- Y una pasada por los **fallos visuales** de otras zonas.
+  pueden ser las mismas de la ciudad de arriba (**hecho**, ver 4).
+- Y una pasada por los **fallos visuales** de otras zonas (**hecho**: caras que se pisaban y parpadeaban,
+  buscadas con `tools/zfight.mjs` por todo el mapa).
 
 ## 1. Los objetos benditos
 
@@ -79,28 +81,40 @@ lámparas, cruces).
 - **El Panteón de los Obispos** sustituye a la Sala de los Obispos: una **rotonda** (redonda, no un cuadrado),
   con un deambulatorio alrededor, un anillo de columnas, una cúpula pintada de estrellas y, colgada en medio,
   **la corona de luz** (una rueda de hierro con sus torres y sus velas, como las de las catedrales
-  románicas). En el centro, **el pozo de los obispos**: el suelo se hunde hasta el nivel de las catacumbas,
-  con sus sepulcros en las paredes y el del primer obispo en el fondo; se baja por una escalera y desde el
-  fondo se sigue a las catacumbas. **Cada salida tiene su luz**, y se ven todas desde la entrada: oro hacia
-  San Martín, rojo hacia la antesala (por una gran reja), azul frío hacia las catacumbas.
+  románicas). En el muro, **ocho obispos** yacentes en sus arcosolios (`bishopTombParts`: la caja de caliza con
+  su arquería ciega y, encima, el obispo con mitra, palio, manos juntas, báculo y el león a los pies; detrás,
+  el fresco de cada uno con su nombre). En el centro, **el pozo de los obispos**: el suelo se hunde hasta el
+  nivel de las catacumbas, con tres sepulcros en las paredes y, en el fondo, el del primer obispo, con la cara
+  tapada como los Velados; se baja por una escalera pegada al muro. **Cada salida tiene su luz**, y se ven todas
+  desde dentro: oro hacia San Martín (la galilea), rojo hacia la antesala (por una gran reja), azul frío hacia
+  las catacumbas (una escalera en el eje del sur) y la del templo (`world/panteon.js`).
 - Entre el panteón y San Martín, **la galilea**: un vestíbulo con los tres arcos de herradura. **Fuera las
   tumbas que tapaban el paso.**
-- **Las catacumbas de la Sé**: más altas, de roca de verdad (muros y bóvedas irregulares, no cajas), con
-  nichos en muchas alturas, y **el lucernario** convertido en lo que es: un pozo de luz alto por el que cae
-  el día sobre **un estanque de agua viva** (ondas, reflejos, gotas, la mancha de luz rota por el agua), con
-  el oratorio de San Pedro de Rates en lo alto.
+- **El lucernario**, convertido en lo que es (`world/lucernario.js`): una cámara redonda y alta tallada en la
+  roca, donde se juntan las cuatro galerías; el muro, de lienzos con cinco alturas de nichos (huesos, sudarios
+  atados, losas lisas, picadas o con su cruz; a los de arriba se sube por escaleras de mano) y otra fila sobre
+  las bocas; la cúpula de roca, labrada a pico, con el ojo del lucernario y su pozo hasta la reja de la calle,
+  por el que cae la luz sobre **una alberca de agua viva** (ondas, reflejos, gotas, la mancha de luz rota por el
+  agua) con su brocal y velas que flotan. El oratorio de San Pedro de Rates, en un ábside con la concha de
+  estrellas, el fresco de su martirio, el altar y los exvotos de cera.
 - **Tres criaturas nuevas** (ver 4) en vez de las de la ciudad.
 
 ## 4. Las criaturas de la cripta honda
 
-1. **El Cavador** — un hermano de Dumio: un esqueleto alto y encorvado con el hábito podrido, la capucha,
-   un farolillo al cinto y un pico. Se le oye antes de verle: cava. Golpe de pico de arriba abajo (se le
-   queda clavado), barrido y arremetida.
-2. **La Emparedada** — una muerta de los lóculos, envuelta en vendas, con un **retrato pintado** atado sobre
-   la cara (como los de las momias romanas): espera dentro de su nicho, con la cara pintada mirando, y sale
-   de la pared cuando pasas. Se arrastra a cuatro patas, se alza para arañar y se te echa encima.
-3. **El Enrodado** — un mártir con el cuerpo roto y trenzado en una rueda de tormento, con sus garfios
-   colgando: rueda. Embiste rodando, se vuelca sobre ti y barre con los garfios.
+(Hechas, en `entities/catacumbas.js`; lo que cambió respecto a lo pensado, aquí.)
+
+1. **El Cavador** — el fosor que abrió las galerías y no dejó de cavar: alto y encorvado, la piel cuarteada de
+   polvo, un gorro de cuero con una vela pegada a la frente, la lucerna al cordón, un cuévano de calaveras a la
+   espalda y el pico, que arrastra. Se le oye antes de verle: cava (cada golpe suena por las galerías). Pico de
+   arriba abajo, barrido de lado y, si lo clava en el suelo, la bóveda suelta piedras (onda).
+2. **La Emparedada** — no una momia, sino la reclusa que se hizo tapiar en vida: la pared se la tragó de
+   cintura para abajo y arrastra la obra (por un hueco se le ve la rodilla). Toca y velo negros, una máscara de
+   yeso con un solo ojo y el ventanuco enrejado del pan. Espera de cara a los nichos, con las manos en la
+   piedra. Agarra (no se desvía), araña dos veces y se deja caer con todo el peso de la obra.
+3. **El Enrodado** — el reo quebrado en la rueda y enterrado con ella, trenzado entre los radios: rueda. Se
+   echa atrás y embiste en línea recta (si se le esquiva y da contra un muro o el brocal, queda aturdido y
+   abierto al golpe de gracia); se aparta rodando para coger carrerilla; zarpazos con el brazo suelto y, de
+   cerca, se vuelca encima.
 
 ## 5. Plan de trabajo
 

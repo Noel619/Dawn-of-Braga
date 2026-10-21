@@ -43,6 +43,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Beber una ampolla | R | X |
 | Interactuar | E | A |
 | Inventario y documentos | Tab / I | Y |
+| Transcripción de un documento (mostrarla u ocultarla) | T | X |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
 
@@ -153,14 +154,22 @@ barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revien
 lágrima (una ampolla más), y Henrique, si vuelves, la llora.
 
 **La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre hay tres épocas, cada una más honda
-(el diseño, en `PLAN_CRIPTA_HONDA.md`). Por la puerta del templo romano se baja a la **Sala de los Obispos**, un
-bosque de columnas con bóvedas de arista y los sepulcros de los obispos de Braga; por tres arcos se pasa a la
+(el diseño, en `PLAN_CRIPTA_HONDA.md` y `PLAN_OSARIOS.md`). Por la puerta del templo romano se baja al **Panteón de
+los Obispos**: una rotonda con ocho obispos yacentes en sus arcosolios (sepulcros de caliza con arquería ciega y,
+detrás, el fresco de cada uno con su nombre), un deambulatorio abovedado, un anillo de doce columnas, la cúpula
+pintada de estrellas y, colgada en medio, la corona de luz; en el centro se hunde el **pozo de los obispos**, con su
+escalera pegada al muro y el sepulcro del primero, que tiene la cara tapada como los Velados. Cuatro salidas en cruz,
+cada una con su luz, que se ven todas desde dentro: el paso al templo, la gran reja que da a la antesala (luz roja),
+la bajada a las catacumbas (azul) y la **galilea** (oro), desde la que se pasa por tres arcos despejados a la
 **cripta de San Martín de Dumio**, una iglesia de tres naves con arquerías de herradura: al fondo, la **Capilla de
 San Martín** (altar de descanso), donde reza **Dom Paio**, el canónigo que bajó tras el arzobispo (al verte se
 levanta de un salto; te cuenta lo que pasó y, cada vez que vuelves, lo que le falta a la puerta); a un lado, un
-**osario** de muros de calaveras; y en el eje, el **Pórtico de los Velados**, que da a la tribuna de la antesala.
-Bajo la sala de los obispos, las **Catacumbas de la Sé** (galerías con nichos en tres alturas, cubículos con su
-arcosolio, un cruce de huesos y el **lucernario**, con el **Oratorio de San Pedro de Rates**, otro altar); más
+**osario de los hermanos de Dumio**; y en el eje, el **Pórtico de los Velados**, que da a la tribuna de la antesala.
+Bajo el panteón, las **Catacumbas de la Sé** (galerías con nichos en tres alturas, cubículos con su arcosolio y un
+cruce de huesos), que se juntan en el **Lucernario de San Pedro de Rates**: una cámara redonda y alta tallada en la
+roca, con cinco alturas de nichos (a los de arriba se sube por escaleras de mano), la cúpula de roca con el ojo del
+lucernario, por donde cae la luz de la calle sobre una alberca de agua viva con velas que flotan, y el
+**Oratorio** del santo en un ábside (otro altar), con el fresco de su martirio y exvotos de cera; más
 abajo, la catacumba de los **Inocentes**, con su pila y el **Relicario de San Martín**, donde los muertos de la
 cámara se juntan en el **Custodio de la Garra**: un coloso de calaveras y fémures que sale de un montón de huesos,
 barre con los brazos, golpea el suelo con los dos (onda), lanza calaveras y agarra; se deshace en su montón para
@@ -240,8 +249,31 @@ sacristía que abre el anillo del arzobispo, las ventanas que se tapian con mart
 Ignoto con sus cuatro cerrojos, altares de descanso que curan, rellenan las ampollas y devuelven a las
 criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Treinta y un documentos breves cuentan la historia junto con el
-escenario.
+canónigo (aguante), que deja el Descoyuntado al morir. Treinta y cinco documentos breves cuentan la historia junto con
+el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
+al lado, en letra de leer.
+
+**Los osarios y los objetos benditos.** Cuatro osarios, cada uno con su gente y su manera de ordenar los huesos,
+guardan un **objeto bendito** tras un puzle con su pista en un documento. Los objetos no suben números a secas:
+**favorecen una manera de pelear y castigan otra**, y se lleva uno a la vez (se pone y se quita en el inventario; su
+icono va junto a la vida).
+- **El osario de la Hermandad** (catacumbas del castillo), el de los soldados: calaveras con yelmo en sus filas,
+  escudos y armas. *El toque de alba*: cuatro yelmos colgados, cada uno con su nota, que se tañen en el orden en que se
+  pasa lista. Guarda la **Saeta de San Sebastián** (la guardia: bloquear cuesta la mitad de aguante, lo que paras no
+  te hiere y tu siguiente golpe hace más daño; a cambio, volteretas caras y cortas y un parry casi la mitad de
+  breve).
+- **El osario del canónigo** (sus bodegas): la nana del ama. Una caja de música de cuatro rodillos con símbolos; cada
+  prueba suena por toda la bodega (y el Descoyuntado viene a ver). Guarda el **Escapulario del ama** (la esquiva:
+  voltereta más larga y barata, y esquivar en el último instante detiene el tiempo y deja un crítico; a cambio, un
+  tercio menos de vida y bloquear cansa más).
+- **El osario de las Ánimas** (cripta de la Sé): óbolos en la boca de las calaveras y los nombres de los muertos en sus
+  lápidas; hay que llevar al cepillo los de las ánimas que nadie nombra. Guarda el **Óbolo de las Ánimas** (aguantar
+  golpeando: la vida que te quitan se recupera golpeando y tus golpes son más rápidos; a cambio, las ampollas curan
+  la mitad y recibes más daño).
+- **El osario de los hermanos de Dumio** (cripta de San Martín): los monjes, de pie en sus nichos con su hábito, bajo
+  arcos de herradura de fémures. Hay que volver la cara de cada uno hacia lo que guarda. Guarda el más fuerte, el
+  **Cerrojo de San Martín** (el desvío: un parry mucho más amplio que devuelve el aguante y desequilibra antes a los
+  grandes, y el golpe de gracia hace el doble; a cambio, no se puede bloquear).
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
 canta, hay un parón seco y un destello, y te vuelves hacia quien te ataca. La ventana dura 0,2 s (la katana, 0,24;
@@ -320,6 +352,16 @@ se encadena el anterior.
   rosario; brazos que le llegan al suelo, con mangas que cuelgan y dedos larguísimos, y una falda de paños rotos
   que ondea sin tocar el suelo (al morir se extiende por él). Se le descuelga la mandíbula al gritar y el lamento
   espectral le sale de la boca.
+- **Cavador** (las catacumbas de la Sé): el fosor que abrió las galerías y no dejó de cavar. Se le oye antes de verlo
+  (el pico contra la piedra) y se le ve por la vela pegada a la frente y la lucerna del cordón; lleva a la espalda un
+  cuévano de calaveras. Descarga el pico de arriba abajo, barre de lado y, si lo clava en el suelo, la bóveda suelta
+  piedras.
+- **Emparedada** (las catacumbas): la reclusa tapiada en vida, a la que la pared se tragó de cintura para abajo y que
+  arrastra la obra. Máscara de yeso con un solo ojo y el ventanuco enrejado del pan; espera de cara a los nichos con
+  las manos en la piedra. Agarra, araña y se deja caer con todo el peso de la obra.
+- **Enrodado** (las catacumbas): el reo quebrado en la rueda y enterrado con ella, trenzado entre los radios. Se echa
+  atrás, aúlla y embiste rodando en línea recta (esquivado, se estrella contra el muro y queda aturdido); se retira
+  rodando para coger carrerilla, da zarpazos con el brazo suelto y se vuelca encima.
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -500,8 +542,12 @@ src/
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
                         sótano y la gruta de Leonor; level_crypt2.js: la cripta honda, una planta de salas
-                        (la de los obispos, San Martín, las catacumbas, los Inocentes y el relicario, los
-                        Mártires, la antesala y el pozo) de la que salen muros, suelos, navegación y mapa)
+                        (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
+                        y el pozo) de la que salen muros, suelos, navegación y mapa; panteon.js: el Panteón
+                        de los Obispos y la galilea; lucernario.js: el Lucernario de San Pedro de Rates;
+                        osario_martin.js: el osario de los hermanos de Dumio; ossuary_props.js: las piezas
+                        de los osarios (calaveras, yelmos, la caja de música, los monjes, los obispos
+                        yacentes) que sirven igual para hornearlas en el mundo que para moverlas)
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
@@ -515,13 +561,16 @@ src/
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
                         beast.js, cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán;
                         leonor.js, Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo
-                        y convertido; custodio.js, el Custodio de la Garra); armas:
+                        y convertido; custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la
+                        Emparedada y el Enrodado); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
                         el guion de la Casa del Alemán, sus oleadas y las ventanas; crypt.js: la Puerta del Dios
-                        Ignoto, las pilas, el incensario, las rejas y el arca del relicario; paio.js: el guion
+                        Ignoto, las pilas, el incensario, las rejas y el arca del relicario; relics.js: los
+                        objetos benditos; ossuaries.js: los puzles de los cuatro osarios y su vista de cerca;
+                        paio.js: el guion
                         de Dom Paio; cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
