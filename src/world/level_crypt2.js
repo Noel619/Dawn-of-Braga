@@ -1544,12 +1544,13 @@ function buildCreatures(L) {
     e('mourner', -89.5, Y1, -143.5, 'e_sm2', { idle: 'pray', yaw: -Math.PI / 2 }),
     // las catacumbas de la Sé: aquí no bajan las criaturas de la ciudad.
     // Los Cavadores (se les oye cavar), las Emparedadas (de cara a la pared)
-    // y el Enrodado (en la galería del sur, que es recta: para que embista;
-    // espera atravesado, que al entrar se le vea la rueda de cara)
+    // y los Enrodados (en el cruce de los huesos y en la galería del sur, que
+    // son rectos: para que embistan; esperan de cara, que al entrar se les
+    // vea la rueda)
     e('cavador', -24, YC, -92.75, 'e_c1a', { idle: 'dig', yaw: 0 }),
     e('emparedada', -42.81, YC, -97.51, 'e_c1b', { idle: 'walled', yaw: -2.53 }),
     e('cavador', -58.5, YC, -94.25, 'e_c1c', { idle: 'dig', yaw: Math.PI }),
-    e('bell', -52, YC, -90.5, 'e_c1d', { idle: 'stand', yaw: 0 }),
+    e('enrodado', -52, YC, -98.2, 'e_c1d', { idle: 'stand', yaw: 0 }),
     e('emparedada', -34.4, YC, -85.75, 'e_c1e', { idle: 'walled', yaw: 0 }),
     e('cavador', -13.6, YC, -96, 'e_c1f', { idle: 'dig', yaw: Math.PI / 2 }),
     e('enrodado', -47.5, YC, -86.25, 'e_c1g', { idle: 'stand', yaw: 0 }),
