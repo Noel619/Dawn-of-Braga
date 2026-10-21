@@ -82,12 +82,12 @@ const steps = [
   "__use('h_almacen_arriba')", "__use('i_ampolla5')",
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
-  // la cripta honda: la Confesión, la sala de los obispos, San Martín (su
+  // la cripta honda: la Confesión, el panteón de los obispos, San Martín (su
   // capilla y su osario), las catacumbas (el oratorio y el atajo de la sala
   // de llegada), los Inocentes y la Garra (su emboscada), las tres pilas, la
   // cripta de los mártires y la sacristía del arzobispo, los Velados, el
   // incensario y la Puerta del Dios Ignoto
-  "__use('n_confesion')", "__use('n_pilas')", "__use('a_martin')", "__use('n_martin')", "__use('n_osario')",
+  "__use('n_confesion')", "__use('n_pilas')", "__use('x_primer_obispo')", "__use('a_martin')", "__use('n_martin')", "__use('n_osario')",
   // Dom Paio, en la capilla: al verte se levanta; al hablarle, lo que pasó
   "(()=>{const g=__game;const a=__use('t_paio');for(let i=0;i<4;i++)__sim(0.5);const b=__use('t_paio');for(let i=0;i<60&&g.paio.script;i++){__sim(0.5);g.speech.skip(g.paio.who)}return {first:a.ok,talk:b.ok,met:!!g.flags['paio:met'],mode:g.paio.mode}})()",
   "__use('a_oratorio')", "__use('n_rates')",

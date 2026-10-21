@@ -420,7 +420,7 @@ La devuelvo al relicario de San Martín, donde estuvo mil años. Hemos cerrado l
 Que nadie la saque de aquí. Los muertos de esta cámara la guardan mejor que nosotros.`,
   },
   pilas: {
-    title: 'Inscripción de la sala de los obispos',
+    title: 'Inscripción del panteón de los obispos',
     text: `Grabado en latín, y debajo, a carbón, en romance:
 
 TRES PILAS DE SANGRE TIENE EL DIOS: LA DE LOS INOCENTES, LA DE LOS MÁRTIRES Y LA DE LOS CONDENADOS. CUANDO CORREN, SU PUERTA BEBE.
@@ -470,12 +470,12 @@ Fray Sisnando, el que contaba las horas, con su reloj, al arca de Martín, donde
 Los que vinieron detrás los movieron para hacer sitio y les dejaron la cabeza gacha. Dicen que el arca no se abrirá mientras no vuelva a mirar cada uno a lo suyo.`,
   },
   rates: {
-    title: 'Pintura del oratorio',
-    text: `Bajo la pintura borrada de un obispo con la mano alzada:
+    title: 'Losa del oratorio',
+    text: `En una losa, junto al fresco del obispo de rodillas ante su altar y del soldado que le levanta la espada por detrás:
 
 SANCTVS PETRVS RATENSIS · PRIMVS EPISCOPVS BRACARENSIS
 
-Dicen que fue el primero que predicó en Braga, cuando aún mandaban aquí los romanos y su dios sin nombre, y que lo mataron por ello. Los canónigos bajaban a rezarle cuando se moría uno de los suyos.
+Dicen que fue el primero que predicó en Braga, cuando aún mandaban aquí los romanos y su dios sin nombre, y que lo mataron rezando. Los canónigos bajaban a rezarle cuando se moría uno de los suyos y le colgaban cera: un brazo, una pierna, una cabeza; lo que el santo hubiera de curar.
 
 Las velas están encendidas. Alguien las cambia.`,
   },
@@ -589,7 +589,7 @@ export const DIALOG = {
   ],
   // lo que le falta a la puerta (uno cada vez que se le habla)
   paioHint: {
-    garra: ['La Garra está en el relicario de San Martín, con los Inocentes. Se baja por la sala de los obispos a las catacumbas, y de allí, más abajo.', 'Ten cuidado. En esa cámara los huesos no descansan.'],
+    garra: ['La Garra está en el relicario de San Martín, con los Inocentes. Se baja por el panteón de los obispos a las catacumbas, y de allí, más abajo.', 'Ten cuidado. En esa cámara los huesos no descansan.'],
     oeste: ['La pila de los Inocentes está en lo más hondo de las catacumbas, junto al relicario. Siete tirones de cadena.', 'La cerramos Mendo y yo con estas manos. Ábrela tú, si tienes que hacerlo.'],
     este: ['La pila de los Mártires está en su cripta: se baja por el sepulcro del arzobispo. Siete tirones de cadena.'],
     incienso: ['El incienso negro se quedó en su sacristía, en la cripta de los mártires. Sólo su anillo la abre, y el anillo lo dejó en su sepulcro.', 'Ya se daba por muerto cuando bajó.'],
@@ -635,6 +635,7 @@ export const MSG = {
   carcelBaja: 'Bajas por la escalera de mano al cuerpo de guardia de la cárcel.',
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
+  primerObispo: 'El sepulcro más viejo del panteón, en el fondo del pozo. El obispo tiene la cara tapada con un paño de piedra, como los Velados. En el canto de la tapa, en latín, y debajo, a carbón, en romance: «FUI EL PRIMERO QUE BAJÓ, Y EL PRIMERO QUE NO QUISO VER».',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
   // el osario de los hermanos de Dumio (la cripta de San Martín)
   miradaBien: 'A los cuatro hermanos se les encienden los ojos. Los fémures que atrancan el arca se descorren uno a uno y la losa se aparta.',
@@ -745,7 +746,7 @@ export const AREA_NAMES = {
   souto_house: 'Casa tapiada',
   crypt: 'Cripta de la Catedral',
   confesion: 'Confesión de San Martín',
-  obispos: 'Sala de los Obispos',
+  obispos: 'Panteón de los Obispos',
   martin: 'Cripta de San Martín',
   capilla_martin: 'Capilla de San Martín',
   osario_martin: 'Osario de San Martín',

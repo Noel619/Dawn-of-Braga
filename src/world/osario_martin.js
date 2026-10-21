@@ -50,7 +50,7 @@ export function sideFrame(k, y0) {
 
 // el contorno de un arco de herradura (en el plano del lado): jambas desde
 // y0 hasta ys a ±hw y el arco de radio ra por encima
-function horseshoe(hw, y0, ys, ra, step = 0.16) {
+export function horseshoe(hw, y0, ys, ra, step = 0.16) {
   const yc = ys + Math.sqrt(Math.max(0, ra * ra - hw * hw));
   const a0 = Math.atan2(ys - yc, hw),
     a1 = Math.PI - a0;
@@ -63,7 +63,7 @@ function horseshoe(hw, y0, ys, ra, step = 0.16) {
   return { pts, yc, a0, a1, top: yc + ra };
 }
 // el de la puerta: jambas y medio punto
-function roundArch(hw, y0, ys, ring) {
+export function roundArch(hw, y0, ys, ring) {
   const pts = [V(-hw, y0, 0), V(hw, y0, 0), V(hw, ys, 0), V(hw + ring, ys, 0)];
   for (let i = 0; i <= 16; i++) {
     const a = (Math.PI * i) / 16;

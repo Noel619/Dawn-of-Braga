@@ -35,6 +35,8 @@ import { stairs, archRing, barrelVault, rampVault, groinVaults, lunette, pilaste
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { buildOsarioMartin } from './osario_martin.js';
+import { buildPanteon, PAN, GAL } from './panteon.js';
+import { buildLucernario, LUC } from './lucernario.js';
 
 const Y = -7; // la cripta de arriba (el templo, el osario, el sepulcro)
 const Y1 = -8.2; // San Martín: la sala de los obispos, su cripta, la tribuna
@@ -144,18 +146,25 @@ function layout() {
   add('confesionBoca', [-1.5, -133.5, 1.5, -133], Y, Y + 3.2, { ...ash, zone: 'confesion' });
   add('confesion', [CF.x0, CF.z0, CF.x1, CF.z1], Y, Y + 3.3, { ...ash, ceil: false, zone: 'confesion' });
 
-  // --- la Sala de los Obispos y el umbral del templo
-  const OB = D.obispos,
-    LD = D.landing;
-  add('obispos', [OB.x0, OB.z0, OB.x1, OB.z1], Y1, OB.YS, { ...ash, ceil: false, zone: 'obispos' });
-  add('obisposRellano', [LD.x0, LD.z0, LD.x1, LD.z1], Y, OB.YS, { ...ash, ceil: false, base: Y1, zone: 'obispos' });
-  add('obisposPeldanos', [-26.3, -120.5, LD.x0, -116.5], Y1, OB.YS, { ceil: false, floor: false, stair: { axis: 'x', a0: -26.3, a1: LD.x0, y0: Y1, y1: Y }, zone: 'obispos' });
+  // --- el Panteón de los Obispos (panteon.js): la galilea, la rotonda (con
+  // su pozo), los pasos de las cuatro salidas y el umbral del templo
+  const LD = D.landing;
+  const pz = PAN.cz;
+  add('galilea', [GAL.x0, GAL.z0, GAL.x1, GAL.z1], Y1, Y1 + GAL.ys, { ...ash, ceil: false, zone: 'obispos' });
+  add('panteon', [PAN.cx - PAN.R, pz - PAN.R, PAN.cx + PAN.R, pz + PAN.R], Y1, Y1 + PAN.top + 1.2, { ghost: true, area: true, zone: 'obispos' });
+  add('panteonPozo', [PAN.cx - PAN.pit, pz - PAN.pit, PAN.cx + PAN.pit, pz + PAN.pit], YC, Y1, { ghost: true });
+  add('panteonOeste', [GAL.x1, pz - 2, PAN.cx - PAN.R + 0.5, pz + 2], Y1, Y1 + 4.1, { ...ash, ceil: false, arch: Y1 + 1.9, zone: 'obispos' });
+  add('panteonEste', [PAN.cx + PAN.R - 0.5, pz - 2, -26.3, pz + 2], Y1, Y + 2.2, { ...ash, ceil: false, zone: 'obispos' });
+  add('panteonNorte', [PAN.cx - 2, -136, PAN.cx + 2, pz - PAN.R + 0.5], Y1, Y1 + 3.4, { ...ash, ceil: false, zone: 'obispos' });
+  add('panteonSur', [PAN.cx - 1.5, pz + PAN.R - 0.5, PAN.cx + 1.5, -106], Y1, Y1 + 3.7, { ...ash, ceil: false, arch: Y1 + 2.2, zone: 'obispos' });
+  add('obisposRellano', [LD.x0, pz - 2, LD.x1, pz + 2], Y, Y + 2.2, { ...ash, ceil: false, base: Y1, zone: 'obispos' });
+  add('obisposPeldanos', [-26.3, pz - 2, LD.x0, pz + 2], Y1, Y + 2.2, { ...ash, ceil: false, floor: false, stair: { axis: 'x', a0: -26.3, a1: LD.x0, y0: Y1, y1: Y }, zone: 'obispos' });
   add('temploPaso', [-22, -119, -19.5, -116.5], Y, Y + 2.2, { ...ash, ceil: false, arch: Y + 2.2, zone: 'obispos' });
   add('temploPuerta', [-19.5, -119, -19, -116.5], Y, Y + 2.2, { ceil: false, walls: false, zone: 'roman' });
   // los tres arcos a la cripta de San Martín
   for (const [c, w] of ARCADE) add('obisposArco', [-64, c - w / 2, -62, c + w / 2], Y1, Y1 + 1.6, { ...ash, ceil: false, arch: Y1 + 1.6, zone: 'obispos' });
-  // la bajada a las catacumbas
-  add('obisposBajada', [-36, -106, -33, -102.4], YC, Y1 + 2.2, { ...rock, ceil: false, floor: false, arch: Y1 + 2.2, stair: { axis: 'z', a0: -106, a1: -102.4, y0: Y1, y1: YC }, zone: 'catacumbas' });
+  // la bajada a las catacumbas (en el eje de la rotonda)
+  add('obisposBajada', [PAN.cx - 1.5, -106, PAN.cx + 1.5, -102.4], YC, Y1 + 2.2, { ...rock, ceil: false, floor: false, arch: Y1 + 2.2, stair: { axis: 'z', a0: -106, a1: -102.4, y0: Y1, y1: YC }, zone: 'catacumbas' });
 
   // --- la cripta de San Martín, su capilla, el osario y el pórtico
   const MB = D.martin,
@@ -203,17 +212,19 @@ function layout() {
   // (vault: el eje de la bóveda; ends: lunetos en sus extremos)
   const cata = (id, r, o = {}) => add(id, r, YC, YC + 2.2, { ...rock, ceil: false, niches: 'loculi', zone: 'catacumbas', ...o });
   const door = (id, r, y, zone, o = {}) => add(id, r, y, y + 1.9, { ...rock, zone, ...o });
-  cata('c1Norte', [-36, -102.4, -33, -99], { vault: 'z', ends: [false, false] });
-  add('lucernario', [-40, -99, -29, -88], YC, YC + 3.6, { ...rock, ceil: false, zone: 'lucernario' });
-  cata('c1Este', [-29, -95, -15.5, -92], { vault: 'x', ends: [false, false] });
+  cata('c1Norte', [PAN.cx - 1.5, -102.4, PAN.cx + 1.5, -99], { vault: 'z', ends: [false, false] });
+  // (el lucernario lo levanta lucernario.js: sus galerías acaban en las caras
+  // de su muro)
+  add('lucernario', [LUC.cx - LUC.d, LUC.cz - LUC.d, LUC.cx + LUC.d, LUC.cz + LUC.d], YC, YC + LUC.crown, { ghost: true, area: true, zone: 'lucernario' });
+  cata('c1Este', [LUC.cx + LUC.d, -95, -15.5, -92], { vault: 'x', ends: [false, false] });
   add('c1Escalera', [-15.5, -103, -12.9, -92], YC, YC + 3.3, { ...rock, niches: 'loculi', zone: 'catacumbas' });
   add('llegadaBajada', [-12.9, -103, -7.5, -100.5], YC, Y + 2.2, { ...rock, ceil: false, floor: false, arch: Y + 2.2, stair: { axis: 'x', a0: -7.5, a1: -12.9, y0: Y, y1: YC }, zone: 'catacumbas' });
   add('llegadaPuerta', [-7.5, -103, -7, -100.5], Y, Y + 2.2, { ceil: false, walls: false, zone: 'crypt' });
-  cata('c1Oeste', [-50, -95, -40, -92], { vault: 'x', ends: [false, false] });
+  cata('c1Oeste', [-50, -95, LUC.cx - LUC.d, -92], { vault: 'x', ends: [false, false] });
   add('c1Cruce', [-54, -100, -50, -85], YC, YC + 3.3, { mat: 'skulls', tint: ST, niches: 'bones', zone: 'catacumbas' });
   cata('c1Poniente', [-62, -95, -54, -92], { vault: 'x', ends: [false, false] });
   cata('c1Sur', [-50, -87.5, -33, -85], { vault: 'x', ends: [false, true] });
-  door('c1SurBoca', [-36, -88, -33, -87.5], YC, 'catacumbas');
+  door('c1SurBoca', [PAN.cx - 1.5, -88, PAN.cx + 1.5, -87.5], YC, 'catacumbas');
   // los cubículos (cada uno con su arcosolio), con su puerta a la galería
   for (const [id, r, d] of CUBICULA) {
     add(id, r, YC, YC + 2.2, { ...rock, ceil: false, vault: 'x', zone: 'catacumbas', cubiculum: true });
@@ -257,7 +268,7 @@ const ARCADE = [
 const CUBICULA = [
   ['c1CubiculoA', [-25.5, -100, -21, -96], [-24, -96, -22.5, -95]],
   ['c1CubiculoB', [-21, -91, -16.5, -87], [-19.5, -92, -18, -91]],
-  ['c1CubiculoC', [-47.5, -100, -43, -96], [-46, -96, -44.5, -95]],
+  ['c1CubiculoC', [-30.5, -100, -26, -96], [-29, -96, -27.5, -95]],
   ['c1CubiculoD', [-61, -100, -56.5, -96], [-59.5, -96, -58, -95]],
 ];
 export const LAYOUT = layout();
@@ -632,12 +643,10 @@ export function buildDeepCrypt(ctx, C, L) {
   const rng = new RNG(4401);
   wb.setRoom(ROOM);
   const regs = LAYOUT.map((g) => ({ ...g }));
-  const byId = (id) => regs.find((g) => g.id === id);
 
-  // las ventanas: las tres de la sala de los obispos (a lo alto de la nave
-  // lateral del sur de la antesala) y la de la Confesión (a la cisterna)
-  const OB = D.obispos;
-  const WIN = [-50.5, -43.5, -36.5].map((x) => ({ x0: x - 0.8, z0: -137, x1: x + 0.8, z1: -136, y0: Y1 + 0.8, y1: Y1 + 2.3 }));
+  // las ventanas: la gran reja del panteón (a la nave lateral del sur de la
+  // antesala) y la de la Confesión (a la cisterna)
+  const WIN = [{ x0: PAN.cx - 1.5, z0: -137, x1: PAN.cx + 1.5, z1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 }];
   const CW = D.confessio.win;
   const holes = [...WIN, { x0: CW.x0, z0: -136.5, x1: CW.x1, z1: -136.3, y0: CW.y0, y1: CW.y1 }];
   const runs = [];
@@ -666,11 +675,15 @@ export function buildDeepCrypt(ctx, C, L) {
   }
 
   buildConfessio(ctx, L);
-  buildObispos(ctx, L, rng);
+  buildPanteon(ctx, C, L, { y: Y1, yc: YC, room: ROOM });
+  // la gran reja a la antesala (por dentro y por fuera, su marco), y el
+  // muerto de la galilea
+  grille(ctx, { axis: 'x', u0: PAN.cx - 1.5, u1: PAN.cx + 1.5, t0: -137, t1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 });
+  L.phantoms.push({ x: -57, y: Y1, z: -131, trigger: [-30, Y1, PAN.cz], kind: 'mourner' });
   buildMartin(ctx, L, rng, C);
   buildAntesala(ctx, L);
   buildPozo(ctx, L);
-  buildCatacumbas(ctx, L, byId);
+  buildCatacumbas(ctx, C, L);
   buildInocentes(ctx, L);
   buildMartires(ctx, L);
   buildFonts(ctx, L);
@@ -801,139 +814,6 @@ function arcosolium(ctx, x, y, z, face, o = {}) {
   const rot = alongX ? 0 : Math.PI / 2;
   const off = sg * 0.62;
   P.sarcophagus(ctx, alongX ? c : x + off, y, alongX ? z + off : c, rot, { room: ROOM, l: w / 2 - 0.15, w: 0.5, effigy: o.effigy, open: o.open });
-}
-
-// ------------------------------------------------------------ la sala de los obispos
-// El primer espacio de lo hondo: un bosque de columnas bajas bajo bóvedas de
-// arista, con los sepulcros de los obispos entre ellas. Se entra por la
-// tribuna del templo (cuatro peldaños); al norte, tres ventanas enrejadas a lo
-// alto de la antesala (la luz roja); al oeste, los tres arcos de la cripta de
-// San Martín; al sur, la bajada a las catacumbas.
-function buildObispos(ctx, L, rng) {
-  const wb = ctx.wb;
-  const OB = DEEP.obispos,
-    LD = DEEP.landing;
-  const xs = [],
-    zs = [];
-  for (let x = OB.x0; x <= OB.x1 + 0.01; x += 5) xs.push(x);
-  for (let z = OB.z0; z <= OB.z1 + 0.01; z += 5) zs.push(z);
-  const MB = DEEP.martin;
-  groinVaults(ctx, {
-    xs,
-    zs,
-    ys: OB.YS,
-    rise: OB.rise,
-    mat: 'mossstone',
-    tint: VT,
-    room: ROOM,
-    walls: { n: true, s: true, e: true, w: true },
-    holes: [{ side: 'e', u0: -119.3, u1: -116.2, y: Y + 3.5 }, ...ARCADE.map(([c, w]) => ({ side: 'w', u0: c - w / 2 - 0.3, u1: c + w / 2 + 0.3, y: MB.YS })), { side: 's', u0: -36.3, u1: -32.7, y: Y1 + 3.5 }],
-    ribs: true,
-    ribMat: 'ashlar',
-    ribTint: AT,
-    ribW: 0.34,
-    ribD: 0.2,
-  });
-  crown(ctx, OB.x0, OB.z0, OB.x1, OB.z1, OB.YS + OB.rise);
-  // las columnas y, en los muros, sus pilastras
-  for (let i = 1; i < xs.length - 1; i++) for (let j = 1; j < zs.length - 1; j++) P.column(ctx, xs[i], Y1, zs[j], OB.YS - Y1, 0.3, { mat: 'ashlar' });
-  const pil = { room: ROOM, tint: AT, w: 0.5, d: 0.16 };
-  for (let i = 1; i < xs.length - 1; i++) {
-    pilaster(ctx, OB.z0, xs[i], 's', Y1, OB.YS, pil);
-    if (Math.abs(xs[i] + 34.5) > 2) pilaster(ctx, OB.z1, xs[i], 'n', Y1, OB.YS, pil);
-  }
-  for (let j = 1; j < zs.length - 1; j++) {
-    if (!ARCADE.some(([c, w]) => Math.abs(zs[j] - c) < w / 2 + 0.6)) pilaster(ctx, OB.x0, zs[j], 'e', Y1, OB.YS, pil);
-    if (zs[j] < -122 || zs[j] > -113) pilaster(ctx, OB.x1, zs[j], 'w', Y1, OB.YS, pil);
-  }
-  // el umbral del templo: la bóveda del paso, su arco, el rellano y los
-  // cuatro peldaños entre dos columnas
-  barrelVault(ctx, { x0: -22, x1: -19.5, z0: -119, z1: -116.5, axis: 'x', ys: Y + 2.2, rise: 1.0, mat: 'ashlar', tint: VT, room: ROOM, sub: 1.0, impostTint: AT });
-  arch(ctx, { axis: 'z', c: -117.75, w: 2.5, y0: Y + 2.2, rise: 1.0, ring: 0.3, t0: -22.15, t1: -22, top: Y + 3.5, clip: [-119.3, -116.2] });
-  stairs(ctx, -26.3, Y1, -118.5, 'e', 4, 4, 0.3, 0.45, 'ashlar', { solidBelow: true });
-  parapet(ctx, 'z', LD.x0 + 0.15, LD.z0 + 0.3, -120.5, Y);
-  parapet(ctx, 'z', LD.x0 + 0.15, -116.5, LD.z1 - 0.3, Y);
-  parapet(ctx, 'x', LD.z0 + 0.15, LD.x0, LD.x1, Y);
-  parapet(ctx, 'x', LD.z1 - 0.15, LD.x0, LD.x1, Y);
-  P.candelabra(ctx, -23.2, Y, -120.6, { room: ROOM });
-  P.candelabra(ctx, -23.2, Y, -114.9, { room: ROOM });
-  // las tres ventanas a la antesala (por dentro, el marco; por fuera, en lo
-  // alto de su nave lateral, también)
-  for (const x of [-50.5, -43.5, -36.5]) grille(ctx, { axis: 'x', u0: x - 0.8, u1: x + 0.8, t0: -137, t1: OB.z0, y0: Y1 + 0.8, y1: Y1 + 2.3 });
-  // la bajada a las catacumbas: los peldaños, la bóveda en rampa y su arco
-  stairs(ctx, -34.5, YC, -102.4, 'n', 3, 8, 0.3, 0.45, 'flag', { solidBelow: true });
-  rampVault(ctx, { x0: -36, x1: -33, z0: -106, z1: -102.4, ys0: Y1 + 2.2, ys1: YC + 2.2, rise: 1.0, mat: 'rock', tint: RK, room: ROOM });
-  arch(ctx, { axis: 'x', c: -34.5, w: 3, y0: Y1 + 2.2, rise: 1.0, ring: 0.3, t0: -106, t1: -105.85, top: Y1 + 3.5, clip: [-36.3, -32.7] });
-  // los sepulcros de los obispos: dos hileras junto a los muros largos y los
-  // del medio, más ricos; losas sepulcrales por el suelo
-  const tombs = [
-    [-54.5, -133.4, 0, { effigy: true }],
-    [-44.5, -133.4, 0, { effigy: true }],
-    [-29.5, -133.4, 0, { open: true }],
-    [-54.5, -108.6, 0, { effigy: true }],
-    [-44.5, -108.6, 0, { open: true }],
-    [-24.5, -108.6, 0, { effigy: true }],
-    [-49.5, -121, Math.PI / 2, { effigy: true }],
-    [-39.5, -121, Math.PI / 2, { effigy: true }],
-    [-59.5, -118.5, Math.PI / 2, { open: true }],
-  ];
-  for (const [x, z, rot, o] of tombs) P.sarcophagus(ctx, x, Y1, z, rot, { room: ROOM, ...o });
-  for (const [x, z] of [
-    [-54.5, -123.5],
-    [-44.5, -116.5],
-    [-34.5, -123.5],
-    [-29.5, -113.5],
-    [-49.5, -128.5],
-    [-39.5, -113.5],
-    [-59.5, -128.5],
-  ])
-    ledger(ctx, x, Y1, z, Math.PI / 2, Math.round(x * 7 + z));
-  // la luz: lámparas en las claves, velas en los sepulcros y antorchas
-  for (const [x, z] of [
-    [-59.5, -133.5],
-    [-49.5, -128.5],
-    [-39.5, -133.5],
-    [-29.5, -128.5],
-    [-54.5, -118.5],
-    [-44.5, -113.5],
-    [-34.5, -118.5],
-    [-59.5, -108.5],
-    [-39.5, -108.5],
-    [-24.5, -113.5],
-  ])
-    P.hangingLamp(ctx, x, OB.YS + OB.rise - 0.1, z, { room: ROOM, len: 1.1, radius: 7.5, intensity: 1.0 });
-  // (luz de relleno: la sala no queda negra entre lámpara y lámpara)
-  for (const x of [-52, -32])
-    for (const z of [-128, -114]) ctx.lights.push({ x, y: Y1 + 2.6, z, r: 1, g: 0.62, b: 0.36, radius: 13, intensity: 0.35, room: ROOM });
-  for (const [x, z, n, s] of [
-    [-55.8, -132.2, 6, 4701],
-    [-43.2, -132.4, 4, 4702],
-    [-53.2, -109.8, 5, 4703],
-    [-25.8, -109.6, 6, 4704],
-    [-48.2, -119.6, 4, 4705],
-    [-38.2, -122.6, 3, 4706],
-  ])
-    P.candles(ctx, x, Y1, z, n, s, { room: ROOM, radius: 4, intensity: 0.8 });
-  for (const z of [-128.5, -111]) P.wallTorch(ctx, OB.x1, Y1 + 2.3, z, 'w', { room: ROOM, radius: 7 });
-  P.wallTorch(ctx, OB.x0, Y1 + 2.3, -113.5, 'e', { room: ROOM, radius: 7 });
-  for (const x of [-59.5, -49.5, -39.5, -24.5]) P.wallTorch(ctx, x, Y1 + 2.3, OB.z1, 'n', { room: ROOM, radius: 7 });
-  for (const x of [-59.5, -47, -32]) P.wallTorch(ctx, x, Y1 + 2.3, OB.z0, 's', { room: ROOM, radius: 7 });
-  // (por las ventanas entra la luz roja de la antesala)
-  for (const x of [-50.5, -43.5, -36.5]) ctx.lights.push({ x, y: Y1 + 1.6, z: -135.2, r: 1, g: 0.32, b: 0.18, radius: 4.5, intensity: 0.7, room: ROOM });
-  // restos y muertos
-  bakeCorpse(ctx.wb, -46.8, Y1, -126.4, 0.6, 'face', 'villager', 4710);
-  P.decal(ctx, -46.8, Y1 + 0.02, -126.4, 1.7);
-  bakeCorpse(ctx.wb, -31.2, Y1, -131.8, 2.3, 'sit', 'villager', 4711);
-  P.bones(ctx, -58.6, Y1, -110.2, 9, 4712, 0.8);
-  P.bones(ctx, -27.4, Y1, -127.2, 6, 4713, 0.6);
-  P.rubble(ctx, -60.4, Y1, -134.2, 6, 4714, 1.0, { mat: 'ashlar', scale: 0.9 });
-  ctx.rats.push({ x: -57.5, y: Y1, z: -109.5, n: 2 });
-  ctx.rats.push({ x: -26, y: Y1, z: -133, n: 2 });
-  // la inscripción de las pilas, junto al umbral
-  plaque(ctx, OB.x1 - 0.06, Y1 + 1.6, -125.5, 'w', 1.1, 0.7);
-  L.interact.push({ kind: 'note', id: 'n_pilas', note: 'pilas', x: OB.x1 - 0.4, y: Y1 + 1.4, z: -125.5, model: 'wall', r: 1.8 });
-  L.phantoms.push({ x: -57, y: Y1, z: -131, trigger: [-30, Y1, -118], kind: 'mourner' });
-  void rng;
 }
 
 // ------------------------------------------------------------ la cripta de San Martín
@@ -1157,9 +1037,11 @@ function buildAntesala(ctx, L) {
   ctx.col.addCam(H.x0, YS + 1.5, H.z0, H.x1, YS + 1.9, zA);
   ctx.col.addCam(H.x0, YS + 1.5, zB, H.x1, YS + 1.9, H.z1);
   // pilastras en los muros de las naves laterales, frente a las columnas
+  // (menos donde se abre, en lo alto, la reja del panteón)
   for (const x of H.cols) {
     pilaster(ctx, H.z0, x, 's', DY, YS, { room: ROOM, tint: AT, w: 0.7, d: 0.2 });
-    pilaster(ctx, H.z1, x, 'n', DY, YS, { room: ROOM, tint: AT, w: 0.7, d: 0.2 });
+    if (x !== PAN.cx) pilaster(ctx, H.z1, x, 'n', DY, YS, { room: ROOM, tint: AT, w: 0.7, d: 0.2 });
+    else pilaster(ctx, H.z1, x, 'n', DY, Y1 + 0.3, { room: ROOM, tint: AT, w: 0.7, d: 0.2 });
   }
   // el suelo de la nave: una alfombra de mosaico de la escalinata al estrado
   wb.box('mosaic', S.x1, DY + 0.005, zA + 1.2, DS.x0, DY + 0.012, zB - 1.2, { faces: 't', ao: false, room: ROOM, uv: 0.2, tint: [0.8, 0.5, 0.45] });
@@ -1333,61 +1215,11 @@ function buildPozo(ctx, L) {
 // los huesos; el lucernario, con su pozo de luz y el oratorio de San Pedro de
 // Rates (un altar donde descansar); la escalera de la sala de llegada (cuya
 // puerta se abre desde aquí) y la que baja a los Inocentes.
-function buildCatacumbas(ctx, L, byId) {
+function buildCatacumbas(ctx, C, L) {
   const wb = ctx.wb;
-  // --- el lucernario: el techo con su pozo de luz, que sube hasta la reja de
-  // la calle
-  const LU = byId('lucernario').r;
-  const top = YC + 3.6;
-  const sx = -34.5,
-    sz = -93.5,
-    sh = 1.2;
-  const lcx = (LU[0] + LU[2]) / 2,
-    lcz = (LU[1] + LU[3]) / 2;
-  for (const [a, b, c, d] of subtractRects([LU[0], LU[1], LU[2], LU[3]], [[sx - sh, sz - sh, sx + sh, sz + sh]])) {
-    wb.box('rock', a, top, b, c, top + 0.3, d, { faces: 'b', ao: false, sub: 2, room: ROOM, tint: RK });
-    ctx.col.add(a, top, b, c, top + 0.5, d).cam = true;
-  }
-  // el pozo: cuatro caras hacia dentro, hasta la reja de lo alto
-  const yTop = -1.6;
-  wb.box('rock', sx - sh, top, sz - sh - 0.05, sx + sh, yTop, sz - sh, { faces: 's', ao: false, room: ROOM, tint: RK });
-  wb.box('rock', sx - sh, top, sz + sh, sx + sh, yTop, sz + sh + 0.05, { faces: 'n', ao: false, room: ROOM, tint: RK });
-  wb.box('rock', sx - sh - 0.05, top, sz - sh, sx - sh, yTop, sz + sh, { faces: 'e', ao: false, room: ROOM, tint: RK });
-  wb.box('rock', sx + sh, top, sz - sh, sx + sh + 0.05, yTop, sz + sh, { faces: 'w', ao: false, room: ROOM, tint: RK });
-  ctx.col.addCam(sx - sh, top + 1.5, sz - sh, sx + sh, yTop, sz + sh);
-  for (let k = 0; k <= 6; k++) wb.box('iron', sx - sh + (k * 2 * sh) / 6 - 0.03, yTop - 0.06, sz - sh, sx - sh + (k * 2 * sh) / 6 + 0.03, yTop, sz + sh, { ao: false, room: ROOM });
-  wb.box('black', sx - sh, yTop + 0.05, sz - sh, sx + sh, yTop + 0.06, sz + sh, { faces: 'b', ao: false, grime: false, room: ROOM });
-  // la luz pálida que baja (y el charco, el musgo y las hierbas debajo)
-  if (ctx.shafts) ctx.shafts.push({ a: [sx, yTop - 0.2, sz], b: [sx + 0.3, YC, sz + 0.2], w: 2.0, color: 0x9fb4d8 });
-  ctx.lights.push({ x: sx, y: YC + 1.4, z: sz, r: 0.55, g: 0.62, b: 0.82, radius: 7, intensity: 0.9, room: ROOM });
-  wb.box('water', sx - 1.1, YC + 0.01, sz - 0.9, sx + 1.2, YC + 0.02, sz + 1.0, { faces: 't', ao: false, grime: false, room: ROOM });
-  P.weeds(ctx, sx - 1.3, YC, sz + 1.1, 7, 4760, 0.6);
-  P.weeds(ctx, sx + 1.3, YC, sz - 1.0, 5, 4761, 0.5);
-  // el oratorio de San Pedro de Rates, en el rincón del noreste: el altar,
-  // la pintura del santo (borrosa) y velas
-  P.candleAltar(ctx, LU[2] - 0.55, YC, -97.3, -Math.PI / 2, ROOM);
-  plaque(ctx, LU[2] - 0.06, YC + 2.3, -97.3, 'w', 1.2, 0.8);
-  P.candles(ctx, LU[2] - 0.6, YC, -98.4, 7, 4762, { room: ROOM, radius: 5, intensity: 1.0 });
-  P.candles(ctx, LU[0] + 0.6, YC, LU[1] + 0.6, 5, 4763, { room: ROOM, radius: 4, intensity: 0.7 });
-  P.hangingLamp(ctx, lcx - 3, top - 0.05, lcz + 3, { room: ROOM, len: 0.9, radius: 6, intensity: 0.8 });
-  ctx.lights.push({ x: lcx, y: YC + 2.0, z: lcz, r: 1, g: 0.62, b: 0.36, radius: 9, intensity: 0.5, room: ROOM });
-  L.interact.push(
-    { kind: 'altar', id: 'a_oratorio', name: 'Oratorio de San Pedro de Rates', x: LU[2] - 0.55, y: YC, z: -97.3, spawn: [LU[2] - 2.2, YC, -97.3], yaw: Math.PI / 2 },
-    { kind: 'note', id: 'n_rates', note: 'rates', x: LU[2] - 0.4, y: YC + 1.6, z: -95.8, model: 'wall', r: 1.8 }
-  );
-  // pilares en las esquinas del lucernario (sostienen el techo junto al pozo)
-  for (const [x, z] of [
-    [sx - 3.4, sz - 3.4],
-    [sx + 3.4, sz - 3.4],
-    [sx - 3.4, sz + 3.4],
-    [sx + 3.4, sz + 3.4],
-  ]) {
-    wb.box('rock', x - 0.45, YC, z - 0.45, x + 0.45, top, z + 0.45, { sub: 2, aoH: 1, room: ROOM, tint: RK });
-    ctx.col.add(x - 0.45, YC, z - 0.45, x + 0.45, top, z + 0.45);
-  }
-  // (exvotos al pie de los dos del este, los que se ven al entrar)
-  P.candles(ctx, sx + 3.4 + 0.75, YC, sz + 3.4 + 0.7, 5, 4764, { room: ROOM, radius: 4, intensity: 0.8 });
-  P.candles(ctx, sx + 3.4 + 0.75, YC, sz - 3.4 - 0.7, 4, 4765, { room: ROOM, radius: 3.5, intensity: 0.6 });
+  // --- el lucernario, con su pozo de luz, la alberca y el oratorio de San
+  // Pedro de Rates (lucernario.js)
+  buildLucernario(ctx, C, L, { y: YC, top: -1.6, room: ROOM });
 
   // --- los cubículos: el arcosolio del fondo, frescos borrados y velas
   for (const [id, r, d] of CUBICULA) {
@@ -1410,7 +1242,7 @@ function buildCatacumbas(ctx, L, byId) {
 
   // --- restos, velas y muertos por las galerías
   for (const [x, z, n, s] of [
-    [-34.5, -100.6, 8, 4770],
+    [-40, -101.2, 8, 4770],
     [-27.8, -93.5, 6, 4771],
     [-14.2, -97.5, 9, 4772],
     [-48.2, -93.5, 7, 4773],
@@ -1430,7 +1262,7 @@ function buildCatacumbas(ctx, L, byId) {
   bakeCorpse(ctx.wb, -41.6, YC, -86.3, -0.4, 'face', 'villager', 4786);
   ctx.rats.push({ x: -45, y: YC, z: -93.5, n: 3 });
   ctx.rats.push({ x: -14, y: YC, z: -90, n: 2 });
-  L.phantoms.push({ x: -58, y: YC, z: -93.5, trigger: [-40, YC, -93.5], kind: 'mourner' });
+  L.phantoms.push({ x: -58, y: YC, z: -93.5, trigger: [-44, YC, -93.5], kind: 'mourner' });
 }
 
 // ------------------------------------------------------------ la catacumba de los Inocentes
@@ -1702,13 +1534,13 @@ function buildCreatures(L) {
   L.enemies.push(
     // la sala de los obispos
     e('penitent', -44.5, Y1, -123.6, 'e_ob1', { idle: 'pray', yaw: Math.PI }),
-    e('penitent', -56.8, Y1, -113.6, 'e_ob2', { idle: 'kneel', yaw: Math.PI / 2 }),
-    e('soldier', -34.5, Y1, -128.5, 'e_ob3', { idle: 'wander', yaw: -Math.PI / 2 }),
-    e('crawler', -49.5, Y1, -116, 'e_ob4', { idle: 'ceiling' }),
-    e('mourner', -29.5, Y1, -110.5, 'e_ob5', { idle: 'wander' }),
+    e('penitent', -57, Y1, -118, 'e_ob2', { idle: 'kneel', yaw: Math.PI / 2 }),
+    e('soldier', -33, Y1, -126, 'e_ob3', { idle: 'wander', yaw: -Math.PI / 2 }),
+    e('crawler', -40, Y1, -131.5, 'e_ob4', { idle: 'ceiling' }),
+    e('mourner', -32, Y1, -112, 'e_ob5', { idle: 'wander' }),
     // la cripta de San Martín (en calma) y su osario
     e('soldier', -81, Y1, -125, 'e_sm1', { yaw: Math.PI }),
-    e('mourner', -90.5, Y1, -146, 'e_sm2', { idle: 'pray', yaw: -Math.PI / 2 }),
+    e('mourner', -89.5, Y1, -143.5, 'e_sm2', { idle: 'pray', yaw: -Math.PI / 2 }),
     // las catacumbas de la Sé
     e('hound', -22.5, YC, -93.5, 'e_c1a', { idle: 'eat', yaw: 1.2 }),
     e('hound', -45.2, YC, -93.4, 'e_c1b', { idle: 'eat', yaw: -0.6 }),
@@ -1716,7 +1548,7 @@ function buildCreatures(L) {
     e('bell', -52, YC, -90.5, 'e_c1d', { idle: 'stand', yaw: 0 }),
     e('penitent', -43.5, YC, -86.3, 'e_c1e', { idle: 'pray', yaw: Math.PI / 2 }),
     e('crawler', -14.2, YC, -95.5, 'e_c1f', { idle: 'ceiling' }),
-    e('soldier', -45.2, YC, -98, 'e_c1g', { idle: 'stand', yaw: Math.PI }),
+    e('soldier', -43.2, YC, -97.2, 'e_c1g', { idle: 'stand', yaw: Math.PI }),
     // los Inocentes
     e('mourner', -71, YI, -99.2, 'e_c2a', { idle: 'pray', yaw: Math.PI }),
     e('crawler', -70.5, YI, -93.5, 'e_c2b', { idle: 'ceiling' }),

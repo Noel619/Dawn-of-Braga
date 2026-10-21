@@ -1667,6 +1667,427 @@ const GEN = {
     return c;
   },
 
+  // La bóveda de estrellas (las de los panteones románicos): azul de lapislázuli
+  // gastado, con estrellas de ocho puntas en oro y su cerco.
+  starVault() {
+    const S = 64;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    const img = g.createImageData(S, S);
+    for (let y = 0; y < S; y++)
+      for (let x = 0; x < S; x++) {
+        const i = (y * S + x) * 4;
+        const n = fbm2(x / 6, y / 6, 3, S / 6, 121);
+        const k = 0.75 + n * 0.4;
+        img.data[i] = 30 * k;
+        img.data[i + 1] = 42 * k;
+        img.data[i + 2] = 78 * k;
+        img.data[i + 3] = 255;
+        // desconchones: se ve la cal
+        if (n > 0.78) {
+          img.data[i] = 120;
+          img.data[i + 1] = 112;
+          img.data[i + 2] = 98;
+        }
+      }
+    g.putImageData(img, 0, 0);
+    const star = (x, y, r) => {
+      g.fillStyle = '#d8b050';
+      g.beginPath();
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * Math.PI * 2;
+        const rr = k % 2 ? r * 0.42 : r;
+        g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      }
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#f0d890';
+      g.fillRect(x - 0.5, y - 0.5, 1.5, 1.5);
+    };
+    for (const [x, y, r] of [
+      [8, 8, 4.2],
+      [40, 8, 4.2],
+      [24, 24, 4.2],
+      [56, 24, 4.2],
+      [8, 40, 4.2],
+      [40, 40, 4.2],
+      [24, 56, 4.2],
+      [56, 56, 4.2],
+    ])
+      wrapDraw(S, x, y, 5, (px, py) => star(px, py, r));
+    grain(g, S, 0.9, 0.16, 122);
+    return c;
+  },
+
+  // Piedra caliza de las efigies y los sepulcros: lisa, con poros y alguna
+  // veta (sin juntas, que el sepulcro es de una pieza).
+  limestone() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 5, y / 5, 3, S / 5, 131);
+      const v = fbm2(x / 9 + n * 1.5, y / 3, 2, 0, 132);
+      let k = 168 + n * 30;
+      if (Math.abs(v - 0.5) < 0.015) k -= 14;
+      if (hash2(x, y, 133) > 0.975) k -= 24;
+      set(o, k * 1.0, k * 0.96, k * 0.88);
+    });
+  },
+
+  // Los frescos del fondo de los arcosolios del panteón: cuatro obispos de
+  // pie (mitra, casulla, palio, báculo y la mano que bendice), con su
+  // nombre en la banda de abajo, desvaídos y desconchados; al último le
+  // rasparon la cara.
+  frescoObispos() {
+    const TW = 64,
+      TH = 72;
+    const c = makeCanvas(TW * 2, TH * 2);
+    const g = c.getContext('2d');
+    const VAR = [
+      { cas: '#8a2e22', name: 'MARTINVS' },
+      { cas: '#3c5a3a', name: 'FRVCTVOSVS' },
+      { cas: '#56304e', name: 'PELAGIVS' },
+      { cas: '#a07a32', name: 'GERALDVS', scraped: true },
+    ];
+    VAR.forEach((V, t) => {
+      const ox = (t % 2) * TW,
+        oy = Math.floor(t / 2) * TH;
+      g.save();
+      g.translate(ox, oy);
+      g.beginPath();
+      g.rect(0, 0, TW, TH);
+      g.clip();
+      // el fondo: el cielo azul, la banda ocre y el zócalo de cortinas
+      g.fillStyle = '#2e3c5c';
+      g.fillRect(0, 0, TW, 40);
+      g.fillStyle = '#b08a48';
+      g.fillRect(0, 40, TW, 20);
+      g.fillStyle = '#7a3a26';
+      g.fillRect(0, 60, TW, 12);
+      g.fillStyle = '#d8c070';
+      for (const [x, y] of [[9, 14], [55, 12], [14, 30], [50, 28], [6, 37], [58, 38]]) g.fillRect(x, y, 1, 1);
+      // la cenefa roja que sigue el arco
+      g.strokeStyle = '#8a2a1c';
+      g.lineWidth = 3;
+      g.beginPath();
+      g.moveTo(3, TH);
+      g.lineTo(3, 33);
+      g.arc(32, 33, 29, Math.PI, 0);
+      g.lineTo(61, TH);
+      g.stroke();
+      g.strokeStyle = '#d0b070';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.arc(32, 33, 26.5, Math.PI, 0);
+      g.stroke();
+      // el báculo (detrás de la mano izquierda)
+      g.strokeStyle = '#c89a38';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(43, 62);
+      g.lineTo(43, 14);
+      g.arc(40, 14, 3, 0, Math.PI * 1.4, true);
+      g.stroke();
+      // el halo
+      g.fillStyle = '#c8a040';
+      g.beginPath();
+      g.arc(32, 19, 8, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = '#7a5a20';
+      g.lineWidth = 1;
+      g.stroke();
+      // el alba hasta los pies, y los zapatos
+      g.fillStyle = '#d8d0bc';
+      g.fillRect(25, 48, 14, 13);
+      g.fillStyle = '#2a1a14';
+      g.fillRect(26, 60, 5, 2);
+      g.fillRect(33, 60, 5, 2);
+      // la casulla (de campana, con su punta)
+      g.fillStyle = V.cas;
+      g.beginPath();
+      g.moveTo(27, 25);
+      g.lineTo(37, 25);
+      g.quadraticCurveTo(47, 34, 45, 50);
+      g.quadraticCurveTo(32, 56, 19, 50);
+      g.quadraticCurveTo(17, 34, 27, 25);
+      g.fill();
+      // los pliegues
+      g.strokeStyle = 'rgba(0,0,0,0.3)';
+      for (const x of [26, 31, 37]) {
+        g.beginPath();
+        g.moveTo(x + 1, 30);
+        g.lineTo(x - 1 + (x - 32) * 0.3, 51);
+        g.stroke();
+      }
+      // el palio: la Y blanca con sus cruces
+      g.strokeStyle = '#e8e0cc';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(26, 27);
+      g.lineTo(32, 33);
+      g.lineTo(38, 27);
+      g.moveTo(32, 33);
+      g.lineTo(32, 52);
+      g.stroke();
+      g.fillStyle = '#1a1410';
+      for (const y of [38, 45]) {
+        g.fillRect(31.5, y - 1, 1, 3);
+        g.fillRect(30.5, y, 3, 1);
+      }
+      // la mano que bendice (dos dedos arriba) y la que lleva el báculo
+      g.fillStyle = V.cas;
+      g.fillRect(20, 31, 5, 6);
+      g.fillStyle = '#d8b088';
+      g.fillRect(20, 28, 3, 3);
+      g.fillRect(20, 25, 1, 3);
+      g.fillRect(22, 25, 1, 3);
+      g.fillRect(42, 37, 3, 3);
+      // la cabeza, la barba y la mitra (blanca con sus galones de oro)
+      g.fillStyle = '#d8b088';
+      g.beginPath();
+      g.arc(32, 21, 4, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#8a7a6a';
+      g.beginPath();
+      g.moveTo(28.5, 22);
+      g.quadraticCurveTo(32, 28, 35.5, 22);
+      g.fill();
+      g.fillStyle = '#1a1410';
+      g.fillRect(30, 20, 1, 1);
+      g.fillRect(33, 20, 1, 1);
+      g.fillStyle = '#e8e2d2';
+      g.beginPath();
+      g.moveTo(27.5, 18);
+      g.lineTo(27.5, 12);
+      g.lineTo(32, 7);
+      g.lineTo(36.5, 12);
+      g.lineTo(36.5, 18);
+      g.fill();
+      g.fillStyle = '#c89a38';
+      g.fillRect(27.5, 16.5, 9, 1.5);
+      g.fillRect(31.3, 8, 1.4, 9);
+      if (V.scraped) {
+        // la cara, raspada a punta de cuchillo
+        g.fillStyle = '#a49884';
+        g.beginPath();
+        g.arc(32, 20, 5.5, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = '#5a5044';
+        g.lineWidth = 1;
+        const r = new RNG(141);
+        for (let k = 0; k < 9; k++) {
+          const a = r.range(-0.6, 0.6);
+          g.beginPath();
+          g.moveTo(27 + r.range(0, 4), 15 + k * 1.2);
+          g.lineTo(37 - r.range(0, 4), 16 + k * 1.2 + a * 3);
+          g.stroke();
+        }
+      }
+      // el nombre, en dos columnas de letras a los lados de la cabeza (lo
+      // de abajo del fresco queda detrás del sepulcro)
+      g.fillStyle = '#e8dcc0';
+      g.font = 'bold 7px serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const half = Math.ceil(V.name.length / 2);
+      [V.name.slice(0, half), V.name.slice(half)].forEach((col, side) => {
+        const x = side ? 52 : 12,
+          y0 = 13 + (half - col.length) * 3.5;
+        [...col].forEach((ch, i) => g.fillText(ch, x, y0 + i * 7));
+      });
+      g.restore();
+    });
+    // desvaído, desconchado (se ve la cal), con chorretones y el humo de
+    // las velas abajo
+    const img = g.getImageData(0, 0, TW * 2, TH * 2);
+    const rng = new RNG(142);
+    for (let y = 0; y < TH * 2; y++)
+      for (let x = 0; x < TW * 2; x++) {
+        const i = (y * TW * 2 + x) * 4;
+        const ly = y % TH;
+        const n = fbm2(x / 7, y / 7, 3, 0, 143);
+        const st = fbm2(x / 2.5, y / 16, 2, 0, 144);
+        let r = img.data[i],
+          gg = img.data[i + 1],
+          b = img.data[i + 2];
+        // (mezclado con la cal: el color se ha ido)
+        r = r * 0.72 + 150 * 0.28;
+        gg = gg * 0.72 + 140 * 0.28;
+        b = b * 0.72 + 122 * 0.28;
+        if (n > 0.7) {
+          const e = n > 0.73 ? 1 : 0.75;
+          r = 156 * e;
+          gg = 146 * e;
+          b = 128 * e;
+        }
+        if (st > 0.68) {
+          r *= 0.82;
+          gg *= 0.8;
+          b *= 0.76;
+        }
+        const soot = Math.max(0, (ly - 54) / 18) * 0.35;
+        const k = (0.86 + rng.next() * 0.16) * (1 - soot);
+        img.data[i] = r * k;
+        img.data[i + 1] = gg * k;
+        img.data[i + 2] = b * k;
+      }
+    g.putImageData(img, 0, 0);
+    return c;
+  },
+
+  // El fresco del oratorio de San Pedro de Rates (el fondo del ábside del
+  // lucernario): el primer obispo de Braga, de rodillas ante su altar, con
+  // la mitra en el suelo; detrás, el soldado que levanta la espada; arriba,
+  // la mano de Dios entre rayos. Su nombre en lo alto; desvaído, con el humo
+  // de siglos de velas.
+  frescoRates() {
+    const W = 96,
+      H = 64;
+    const c = makeCanvas(W, H);
+    const g = c.getContext('2d');
+    g.fillStyle = '#2e3c5c';
+    g.fillRect(0, 0, W, 34);
+    g.fillStyle = '#a8844a';
+    g.fillRect(0, 34, W, 18);
+    g.fillStyle = '#6e3424';
+    g.fillRect(0, 52, W, 12);
+    g.fillStyle = '#d8c070';
+    for (const [x, y] of [[8, 20], [88, 18], [16, 30], [82, 29], [6, 8], [90, 9]]) g.fillRect(x, y, 1, 1);
+    // la mano de Dios, la nube y los rayos
+    g.fillStyle = '#c8c0b0';
+    for (const [x, y, r] of [[44, 6, 4], [49, 5, 5], [55, 6, 4]]) {
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.strokeStyle = 'rgba(232,200,96,0.8)';
+    g.lineWidth = 1;
+    for (let k = 0; k < 5; k++) {
+      g.beginPath();
+      g.moveTo(49, 9);
+      g.lineTo(30 + k * 4, 30);
+      g.stroke();
+    }
+    g.fillStyle = '#d8b088';
+    g.fillRect(48, 9, 3, 4);
+    g.fillRect(48, 13, 1, 2);
+    g.fillRect(50, 13, 1, 2);
+    // el altar (a la derecha) con su cáliz
+    g.fillStyle = '#b8ac94';
+    g.fillRect(58, 38, 16, 14);
+    g.fillStyle = '#8a2e22';
+    g.fillRect(58, 38, 16, 3);
+    g.fillStyle = '#c89a38';
+    g.fillRect(65, 33, 3, 5);
+    g.fillRect(64, 33, 5, 1);
+    // el santo de rodillas, de perfil, mirando al altar: la casulla, el palio,
+    // la cabeza con la tonsura y el halo, las manos juntas
+    g.fillStyle = '#c8a040';
+    g.beginPath();
+    g.arc(46, 25, 6, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#d8d0bc';
+    g.fillRect(36, 44, 14, 8);
+    g.fillStyle = '#8a2e22';
+    g.beginPath();
+    g.moveTo(42, 30);
+    g.lineTo(50, 30);
+    g.quadraticCurveTo(54, 40, 52, 47);
+    g.lineTo(36, 47);
+    g.quadraticCurveTo(38, 36, 42, 30);
+    g.fill();
+    g.strokeStyle = '#e8e0cc';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(46, 31);
+    g.lineTo(47, 45);
+    g.stroke();
+    g.fillStyle = '#d8b088';
+    g.beginPath();
+    g.arc(47, 26, 3.5, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#6a5a4a';
+    g.fillRect(44, 27, 3, 3);
+    g.fillStyle = '#d8b088';
+    g.fillRect(53, 32, 4, 2);
+    g.fillRect(56, 30, 2, 3);
+    // la mitra en el suelo, delante de él
+    g.fillStyle = '#e8e2d2';
+    g.beginPath();
+    g.moveTo(52, 52);
+    g.lineTo(58, 52);
+    g.lineTo(55, 46);
+    g.fill();
+    g.fillStyle = '#c89a38';
+    g.fillRect(54.5, 47, 1, 5);
+    // el soldado, detrás: la túnica, la cota, el yelmo y la espada en alto
+    g.fillStyle = '#5a5a60';
+    g.fillRect(20, 26, 10, 14);
+    g.fillStyle = '#7a2a20';
+    g.fillRect(19, 38, 12, 9);
+    g.fillStyle = '#3a3030';
+    g.fillRect(21, 47, 3, 5);
+    g.fillRect(27, 47, 3, 5);
+    g.fillStyle = '#d0a888';
+    g.beginPath();
+    g.arc(25, 22, 3.2, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#6a6a72';
+    g.beginPath();
+    g.moveTo(21.5, 22);
+    g.lineTo(25, 15.5);
+    g.lineTo(28.5, 22);
+    g.fill();
+    g.fillStyle = '#5a5a60';
+    g.fillRect(29, 24, 5, 3);
+    g.strokeStyle = '#c8ccd4';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(33, 24);
+    g.lineTo(42, 10);
+    g.stroke();
+    g.strokeStyle = '#8a6a28';
+    g.beginPath();
+    g.moveTo(31, 23);
+    g.lineTo(35, 26);
+    g.stroke();
+    // la sangre en el suelo
+    g.fillStyle = '#7a1410';
+    g.fillRect(40, 51, 10, 1);
+    // el nombre, en lo alto, de lado a lado
+    g.fillStyle = '#e8dcc0';
+    g.font = 'bold 7px serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('S · PETRVS · DE · RATES', W / 2, 58, W - 8);
+    // la cenefa, arriba
+    g.fillStyle = '#8a2a1c';
+    g.fillRect(0, 0, W, 2);
+    // desvaído y desconchado
+    const img = g.getImageData(0, 0, W, H);
+    const rng = new RNG(151);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        const n = fbm2(x / 7, y / 7, 3, 0, 152);
+        let r = img.data[i] * 0.74 + 150 * 0.26,
+          gg = img.data[i + 1] * 0.74 + 140 * 0.26,
+          b = img.data[i + 2] * 0.74 + 122 * 0.26;
+        if (n > 0.71) {
+          const e = n > 0.74 ? 1 : 0.75;
+          r = 150 * e;
+          gg = 140 * e;
+          b = 124 * e;
+        }
+        const soot = Math.max(0, (34 - y) / 34) * 0.25;
+        const k = (0.86 + rng.next() * 0.16) * (1 - soot);
+        img.data[i] = r * k;
+        img.data[i + 1] = gg * k;
+        img.data[i + 2] = b * k;
+      }
+    g.putImageData(img, 0, 0);
+    return c;
+  },
+
   // la inscripción del osario de San Martín
   letreroDumio() {
     return paintCarved(['LO QVE TV ERES FVIMOS', 'LO QVE SOMOS SERAS'], 256, 80, 111);

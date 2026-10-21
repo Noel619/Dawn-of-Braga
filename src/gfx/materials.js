@@ -65,6 +65,12 @@ export const MAT_DEFS = {
   letreroOssos1: { tex: 'letreroOssos1', uv: 1 },
   letreroOssos2: { tex: 'letreroOssos2', uv: 1 },
   letreroDumio: { tex: 'letreroDumio', uv: 1 },
+  starVault: { tex: 'starVault', uv: 0.55 },
+  // el panteón de los obispos: los frescos de los arcosolios y la caliza de
+  // los sepulcros
+  frescoObispos: { tex: 'frescoObispos', uv: 1 },
+  limestone: { tex: 'limestone', uv: 0.8 },
+  frescoRates: { tex: 'frescoRates', uv: 1 },
   // (recortados: lo transparente de la textura no se dibuja)
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
   scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },
@@ -149,6 +155,8 @@ export const MAT_DEFS = {
   eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
   eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },
+  // la noche que se ve por la reja del lucernario
+  nightSky: { tex: 'white', uv: 1, color: 0x000000, emissive: 0x5a6a84, emissiveIntensity: 0.55 },
 };
 
 const matCache = new Map();

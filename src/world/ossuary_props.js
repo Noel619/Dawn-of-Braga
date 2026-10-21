@@ -22,7 +22,7 @@ const geo = (key, fn) => {
 };
 // vuelve una geometría del revés (las caras, hacia dentro: el interior de
 // un cubo, de una malla)
-function flip(g) {
+export function flip(g) {
   const a = g.index.array;
   for (let i = 0; i < a.length; i += 3) {
     const t = a[i + 1];
@@ -723,5 +723,164 @@ function heldParts(hold) {
     P.push(part(blk, 'wooddark', TRS(0, 1.2, 0.25, Q(-0.15, 0, 0), 0.025, 0.32, 0.025)));
     P.push(part(blk, 'wooddark', TRS(0, 1.27, 0.26, Q(-0.15, 0, 0), 0.17, 0.025, 0.025)));
   }
+  return P;
+}
+
+// ------------------------------------------------------- los obispos del panteón
+// El sepulcro de un obispo: la caja de caliza con su arquería ciega
+// (columnillas y arcos), la tapa moldurada y, encima, el obispo yacente: la
+// almohada, la cabeza con su mitra, el cuerpo bajo la casulla con el palio,
+// las manos juntas, el báculo al costado y, a los pies, el león. Marco: el
+// suelo en el origen, a lo largo de x (la cabeza hacia +x), el frente hacia
+// +z. L, W: medio largo y medio ancho de la caja; veiled: la cara tapada
+// con un paño de piedra, como los Velados.
+const BODY = [
+  [0.05, 0],
+  [0.13, 0.04],
+  [0.17, 0.25],
+  [0.19, 0.6],
+  [0.21, 0.9],
+  [0.235, 1.12],
+  [0.24, 1.3],
+  [0.2, 1.38],
+  [0.07, 1.42],
+];
+const bodyR = (t) => {
+  for (let i = 1; i < BODY.length; i++)
+    if (t <= BODY[i][1]) {
+      const [r0, t0] = BODY[i - 1],
+        [r1, t1] = BODY[i];
+      return r0 + ((r1 - r0) * (t - t0)) / (t1 - t0);
+    }
+  return BODY[BODY.length - 1][0];
+};
+export function bishopTombParts(o = {}) {
+  const L = o.L ?? 1.05,
+    W = o.W ?? 0.48;
+  const T = o.tint ?? [0.66, 0.63, 0.57];
+  const S = 'limestone';
+  const dk = T.map((c) => c * 0.5);
+  const blk = geo('hdBox', () => new THREE.BoxGeometry(1, 1, 1));
+  const P = [];
+  const box = (x, y, z, sx, sy, sz, tint = T, q = Q()) => P.push(part(blk, S, TRS(x, y, z, q, sx, sy, sz), tint));
+  // el zócalo, la caja y la tapa (la moldura y la losa)
+  const yb = 0.12,
+    yc = 0.78,
+    yl = 0.92;
+  box(0, yb / 2, 0, 2 * L + 0.16, yb, 2 * W + 0.16, T.map((c) => c * 0.88));
+  box(0, (yb + yc) / 2, 0, 2 * L, yc - yb, 2 * W);
+  box(0, yc + 0.035, 0, 2 * L + 0.1, 0.07, 2 * W + 0.1, T.map((c) => c * 0.94));
+  box(0, (yc + 0.07 + yl) / 2, 0, 2 * L + 0.03, yl - yc - 0.07, 2 * W + 0.03);
+  // la arquería ciega del frente y de la espalda
+  const n = Math.max(3, Math.round((2 * L) / 0.42)),
+    bay = (2 * L) / n,
+    a = bay / 2 - 0.045;
+  const ys = yc - 0.07 - a;
+  for (const s of [-1, 1]) {
+    const q = Q(0, s < 0 ? Math.PI : 0, 0),
+      z = s * W;
+    for (let i = 0; i < n; i++) {
+      const x = -L + (i + 0.5) * bay;
+      // el hondo (en sombra) y su medio punto
+      box(x, (yb + 0.04 + ys) / 2, z + s * 0.003, 2 * a - 0.02, ys - yb - 0.04, 0.006, dk);
+      P.push(part(geo('tombArchIn', () => new THREE.CircleGeometry(1, 10, 0, Math.PI)), S, TRS(x, ys, z + s * 0.007, q, a - 0.01), dk));
+      // el arco y las columnillas, con su basa y su capitel
+      P.push(part(geo('tombArch', () => new THREE.TorusGeometry(1, 0.06, 4, 12, Math.PI)), S, TRS(x, ys, z + s * 0.018, q, a, a, 0.3), T));
+      for (const c of [-1, 1]) {
+        const cx = x + c * a;
+        P.push(part(geo('tombCol', () => new THREE.CylinderGeometry(0.022, 0.024, 1, 6)), S, TRS(cx, (yb + 0.05 + ys - 0.03) / 2, z + s * 0.022, Q(), 1, ys - 0.03 - yb - 0.05, 1), T));
+        box(cx, ys - 0.015, z + s * 0.022, 0.07, 0.03, 0.05, T.map((v) => v * 0.95));
+        box(cx, yb + 0.03, z + s * 0.022, 0.065, 0.025, 0.05, T.map((v) => v * 0.95));
+      }
+    }
+  }
+  // las cruces de las cabeceras
+  for (const s of [-1, 1]) {
+    box(s * (L + 0.012), (yb + yc) / 2 + 0.02, 0, 0.025, 0.42, 0.07);
+    box(s * (L + 0.012), (yb + yc) / 2 + 0.1, 0, 0.025, 0.07, 0.28);
+  }
+  if (o.effigy === false) return P;
+
+  // --- el obispo yacente (a escala de la caja)
+  const e = Math.min(1, (2 * L - 0.1) / 2.0);
+  const sy = 0.75;
+  const xf = -L + 0.06 + 0.16 * e; // (donde empiezan los pies)
+  const X = (t) => xf + t * e;
+  const top = (t, z = 0) => {
+    const r = bodyR(t) * e;
+    return yl + sy * r * Math.sqrt(Math.max(0, 1 - (z / r) ** 2));
+  };
+  const ST = T.map((c) => c * 1.04);
+  // el cuerpo (la casulla y el alba: un torno tendido y aplastado)
+  P.push(part(geo('effBody', () => latheShell(BODY.map(([r, t]) => [r, t]), 14)), S, M4().compose(V(xf, yl, 0), Q(0, 0, -Math.PI / 2), V(sy * e, e, e)), ST));
+  // el borde de la casulla y el del alba
+  for (const [t, d] of [
+    [0.62, 0.012],
+    [0.08, 0.01],
+  ])
+    P.push(part(geo('effHem', () => new THREE.TorusGeometry(1, 0.06, 4, 16)), S, M4().compose(V(X(t), yl, 0), Q(0, Math.PI / 2, 0), V(bodyR(t) * e + d, bodyR(t) * e * sy + d, 0.2 * e)), T.map((c) => c * 0.96)));
+  // el palio: la Y sobre el pecho y la tira hasta las rodillas (en tramos
+  // pegados a la casulla)
+  const band = (t0, z0, t1, z1, k = 4) => {
+    for (let i = 0; i < k; i++) {
+      const ta = t0 + ((t1 - t0) * i) / k,
+        tb = t0 + ((t1 - t0) * (i + 1)) / k;
+      const za = z0 + ((z1 - z0) * i) / k,
+        zb = z0 + ((z1 - z0) * (i + 1)) / k;
+      P.push(sleeve(V(X(ta), top(ta, za) - 0.002, za), V(X(tb), top(tb, zb) - 0.002, zb), 0.013 * e, 0.013 * e, S, T.map((c) => c * 1.1)));
+    }
+  };
+  band(0.66, 0, 1.06, 0);
+  for (const s of [-1, 1]) band(1.06, 0, 1.3, s * 0.15 * e, 3);
+  // los antebrazos (salen de la casulla por los costados) y las manos
+  // juntas sobre el pecho, apuntando a la barbilla
+  const wr = (s) => V(X(1.0), top(1.0) + 0.03 * e, s * 0.03 * e);
+  for (const s of [-1, 1]) {
+    const el = V(X(0.84), top(0.84, s * 0.15 * e) - 0.035 * e, s * 0.15 * e);
+    P.push(sleeve(el, wr(s), 0.04 * e, 0.032 * e, S, ST));
+    box(X(1.0) + 0.045 * e, top(1.0) + 0.065 * e, s * 0.013 * e, 0.11 * e, 0.032 * e, 0.024 * e, ST, Q(0, 0, 0.75));
+  }
+  // los pies, y el león echado a sus pies
+  for (const s of [-1, 1]) box(X(0.0) + 0.01, yl + 0.075 * e, s * 0.055 * e, 0.06 * e, 0.13 * e, 0.065 * e, ST, Q(0, 0, -0.15));
+  P.push(part(geo('lionBody', () => new THREE.SphereGeometry(1, 10, 6)), S, TRS(xf - 0.08 * e, yl + 0.06 * e, -0.02, Q(), 0.09 * e, 0.075 * e, 0.2 * e), T));
+  P.push(part(geo('lionBody', () => new THREE.SphereGeometry(1, 10, 6)), S, TRS(xf - 0.08 * e, yl + 0.09 * e, 0.2 * e, Q(), 0.075 * e, 0.075 * e, 0.07 * e), T.map((c) => c * 0.96)));
+  P.push(part(geo('lionBody', () => new THREE.SphereGeometry(1, 10, 6)), S, TRS(xf - 0.1 * e, yl + 0.08 * e, 0.27 * e, Q(), 0.04 * e, 0.035 * e, 0.035 * e), T));
+  // la almohada (con sus borlas), la cabeza, la barba y la mitra
+  const xh = X(1.42) + 0.1 * e,
+    yh = yl + 0.08 * e + 0.085 * e;
+  box(xh + 0.03 * e, yl + 0.04 * e, 0, 0.36 * e, 0.08 * e, 0.42 * e, T.map((c) => c * 0.97), Q(0, 0, -0.05));
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) P.push(part(geo('tassel', () => new THREE.SphereGeometry(1, 5, 4)), S, TRS(xh + 0.03 * e + sx * 0.18 * e, yl + 0.04 * e, sz * 0.21 * e, Q(), 0.022 * e), T));
+  P.push(part(geo('effHead', () => new THREE.SphereGeometry(1, 12, 8)), S, TRS(xh, yh, 0, Q(), 0.1 * e, 0.092 * e, 0.088 * e), ST));
+  if (o.veiled) {
+    // el paño de piedra que le tapa la cara y cae sobre la almohada
+    P.push(part(geo('veilCap', () => new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2)), S, TRS(xh - 0.025 * e, yh - 0.01 * e, 0, Q(), 0.15 * e, 0.1 * e, 0.135 * e), T.map((c) => c * 0.92)));
+    P.push(part(geo('veilSkirt', () => new THREE.CylinderGeometry(1, 1.25, 1, 12, 1, true)), S, TRS(xh - 0.025 * e, yh - 0.06 * e, 0, Q(), 0.15 * e, 0.1 * e, 0.135 * e), T.map((c) => c * 0.9)));
+  } else {
+    box(xh + 0.005, yh + 0.088 * e, 0, 0.055 * e, 0.03 * e, 0.024 * e, ST);
+    P.push(part(geo('effBeard', () => new THREE.SphereGeometry(1, 8, 6)), S, TRS(xh - 0.075 * e, yh + 0.02 * e, 0, Q(0, 0, 0.5), 0.07 * e, 0.045 * e, 0.065 * e), ST));
+  }
+  const mitre = geo('mitre', () => {
+    const sh = new THREE.Shape();
+    sh.moveTo(-0.09, 0);
+    sh.lineTo(0.09, 0);
+    sh.quadraticCurveTo(0.105, 0.15, 0, 0.25);
+    sh.quadraticCurveTo(-0.105, 0.15, -0.09, 0);
+    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.13, bevelEnabled: false, curveSegments: 6 });
+    g.translate(0, 0, -0.065);
+    // (se adelgaza hacia arriba: de perfil, también acaba en punta)
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) * (1 - 0.75 * Math.min(1, p.getY(i) / 0.25)));
+    g.computeVertexNormals();
+    return g;
+  });
+  // (la anchura de la mitra a lo ancho del sepulcro, su alto hacia la
+  // cabecera y su grueso hacia arriba)
+  const mb = M4().makeBasis(V(0, 0, 1), V(1, 0, 0), V(0, 1, 0));
+  P.push(part(mitre, S, M4().setPosition(xh + 0.035 * e, yh + 0.01 * e, 0).multiply(mb).multiply(M4().makeScale(e, e, e)), ST));
+  box(xh + 0.06 * e, yh + 0.01 * e, 0, 0.03 * e, 0.135 * e, 0.185 * e, T.map((c) => c * 1.08));
+  // el báculo, al costado derecho, con su voluta junto a la almohada
+  const zb = 0.24 * e;
+  P.push(sleeve(V(X(0.12), yl + 0.03 * e, zb), V(X(1.5), yl + 0.11 * e, zb), 0.016 * e, 0.016 * e, S, T.map((c) => c * 1.06)));
+  P.push(part(geo('crook', () => new THREE.TorusGeometry(1, 0.22, 5, 12, Math.PI * 1.5)), S, TRS(X(1.5) + 0.06 * e, yl + 0.11 * e, zb - 0.05 * e, Q(-Math.PI / 2, 0, Math.PI), 0.065 * e), T.map((c) => c * 1.06)));
   return P;
 }
