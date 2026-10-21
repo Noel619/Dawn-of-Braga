@@ -9,6 +9,7 @@ import { PAIO_TYPE, PAIO_HOLLOW_TYPE } from './paio.js';
 import { CUSTODIO_TYPE } from './custodio.js';
 import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
+import { CAVADOR_TYPE, EMPAREDADA_TYPE, ENRODADO_TYPE } from './catacumbas.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -1170,6 +1171,9 @@ export const TYPES = {
   paioHollow: PAIO_HOLLOW_TYPE,
   custodio: CUSTODIO_TYPE,
   leonor: LEONOR_TYPE,
+  cavador: CAVADOR_TYPE,
+  emparedada: EMPAREDADA_TYPE,
+  enrodado: ENRODADO_TYPE,
   guardianL: GUARDIAN_L,
   guardianR: GUARDIAN_R,
   turibulario: {

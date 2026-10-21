@@ -1600,6 +1600,36 @@ export class Audio {
         this.duck(0.4, 0.6);
         break;
       }
+      // ---- el Cavador
+      // el pico contra la piedra, a lo lejos por las galerías
+      case 'pickStone': {
+        d = this.out(P, { gain: 0.9, verb: 0.7, life: 4, ref: 6, roll: 0.6 });
+        this.metal(d, t, rnd(1400, 1700), 0.22, 0.35);
+        this.noise(d, t, 0.05, { type: 'highpass', f0: 2600, gain: 0.5, a: 0.001 });
+        this.tone(d, t, 0.18, { f0: 140, f1: 70, gain: 0.35 });
+        this.debris(d, t + 0.03, 5, 0.35, { f0: 900, f1: 2400, gain: 0.5 });
+        break;
+      }
+      // ---- el Enrodado: la rueda contra la piedra (madera que se astilla,
+      // el aro de hierro, el reo que aúlla)
+      case 'wheelCrash': {
+        d = this.out(P, { gain: 1, verb: 0.55, life: 4, ref: 7 });
+        this.tone(d, t, 0.6, { f0: 80, f1: 30, gain: 0.9 });
+        this.noise(d, t, 0.5, { type: 'lowpass', f0: 1500, f1: 200, gain: 0.7, a: 0.002 });
+        this.metal(d, t, rnd(300, 380), 0.35, 1.2);
+        this.creak(d, t + 0.05, 0.6, rnd(140, 180), 0.35);
+        this.debris(d, t + 0.05, 14, 0.9, { gain: 1 });
+        this.duck(0.35, 0.6);
+        break;
+      }
+      // la bóveda que suelta piedras
+      case 'rubble': {
+        d = this.out(P, { gain: 1, verb: 0.6, life: 4, ref: 7 });
+        this.debris(d, t + 0.15, 26, 1.6, { f0: 400, f1: 1800, gain: 1.1 });
+        this.noise(d, t, 1.6, { type: 'lowpass', f0: 500, f1: 140, gain: 0.45, a: 0.1, buf: this.brown, rate: 2 });
+        this.tone(d, t + 0.4, 0.5, { f0: 60, f1: 30, gain: 0.5 });
+        break;
+      }
       case 'bellToll': {
         d = this.out(P, { gain: 0.9, verb: 0.8, life: 20, ref: 10, roll: 0.5, occlude: false });
         this.smp(d, t, this.churchBell(), { gain: 0.45, rate: mtof(43) / mtof(45) });
@@ -2921,6 +2951,66 @@ export class Audio {
           this.bodyFall(d, t + 1.3, 1.6, true);
         }
         break;
+      // el Cavador: polvo en el pecho (tose seco) y una voz de pozo
+      case 'cavador':
+        if (kind === 'alert') {
+          for (let i = 0; i < 3; i++) this.noise(d, t + i * 0.16, 0.12, { f0: rnd(500, 700), q: 1.2, gain: 0.32, a: 0.004, buf: this.brown, rate: 3 });
+          V({ dt: 0.55, dur: 1.4, f0: 82 * pv, f1: 66 * pv, vowel: 'o', v1: 'u', gain: 0.28, vib: 5, vibD: 18, breath: 0.8, a: 0.1, rasp: 0.7, jit: 20 });
+        } else if (kind === 'attack') {
+          V({ dur: 0.4, f0: 96 * pv, f1: 80, vowel: 'a', v1: 'u', gain: 0.24, vibD: 0, breath: 0.8, a: 0.01, rasp: 0.6 });
+          this.noise(d, t + 0.05, 0.3, { f0: 700, q: 0.8, gain: 0.12, a: 0.02, buf: this.pink });
+        } else if (kind === 'hurt') {
+          this.noise(d, t, 0.18, { f0: 600, q: 1.2, gain: 0.3, a: 0.004, buf: this.brown, rate: 3 });
+          V({ dt: 0.05, dur: 0.35, f0: 120 * pv, f1: 86, vowel: 'u', gain: 0.22, breath: 0.7, rasp: 0.5 });
+        } else if (kind === 'death') {
+          V({ dur: 2.2, f0: 90 * pv, f1: 36, vowel: 'o', v1: 'u', gain: 0.26, vib: 4, vibD: 20, breath: 0.9, a: 0.05, rasp: 0.7 });
+          // (el cuévano: las calaveras ruedan por el suelo)
+          for (let i = 0; i < 7; i++) this.boneCrack(d, t + 0.9 + i * rnd(0.08, 0.2), rnd(0.5, 0.9));
+          this.bodyFall(d, t + 1.0, 1.1);
+        } else if (kind === 'idle') {
+          if (Math.random() < 0.5) for (let i = 0; i < 2; i++) this.noise(d, t + i * 0.2, 0.1, { f0: rnd(500, 650), q: 1.2, gain: 0.16, a: 0.004, buf: this.brown, rate: 3 });
+          else this.mutter(d, t, 1.6, 80 * pv);
+        }
+        break;
+      // la Emparedada: una voz de mujer ronca, ahogada tras el yeso (reza
+      // entre dientes), y la obra que cruje
+      case 'emparedada':
+        if (kind === 'alert') {
+          V({ dur: 0.35, f0: 520, f1: 760, vowel: 'a', gain: 0.16, breath: 0.9, a: 0.01, rasp: 0.5 });
+          V({ dt: 0.4, dur: 1.6, f0: 360, f1: 300, vowel: 'o', v1: 'a', gain: 0.17, vib: 7, vibD: 40, breath: 0.8, a: 0.1, rasp: 0.5, jit: 30 });
+          this.debris(d, t + 0.2, 6, 0.6, { f0: 600, f1: 1800, gain: 0.5 });
+        } else if (kind === 'attack') {
+          this.noise(d, t, 0.45, { f0: 2400, q: 1.5, gain: 0.12, a: 0.02 });
+          V({ dur: 0.4, f0: 300, f1: 240, vowel: 'e', gain: 0.14, breath: 0.9, a: 0.02, rasp: 0.6 });
+        } else if (kind === 'hurt') {
+          this.debris(d, t, 4, 0.2, { f0: 1200, f1: 3000, gain: 0.5 });
+          V({ dt: 0.03, dur: 0.4, f0: 480, f1: 360, vowel: 'a', gain: 0.15, breath: 0.7, rasp: 0.4 });
+        } else if (kind === 'death') {
+          V({ dur: 2.4, f0: 340, f1: 140, vowel: 'a', v1: 'o', gain: 0.17, vib: 5, vibD: 40, breath: 0.8, a: 0.05, rasp: 0.5, jit: 25 });
+          this.debris(d, t + 0.9, 24, 1.4, { f0: 300, f1: 1400, gain: 1 });
+          this.bodyFall(d, t + 1.4, 1.5);
+        } else if (kind === 'idle') this.whisper(d, t, 1.8, 0.1);
+        break;
+      // el Enrodado: aúlla con la garganta rota; la rueda cruje
+      case 'enrodado':
+        if (kind === 'alert') {
+          this.creak(d, t, 0.8, rnd(90, 120), 0.3);
+          V({ dt: 0.3, dur: 1.5, f0: 190 * pv, f1: 330 * pv, vowel: 'a', v1: 'o', gain: 0.24, vib: 9, vibD: 60, breath: 0.7, a: 0.05, rasp: 0.8, jit: 40 });
+        } else if (kind === 'attack') {
+          V({ dur: 0.9, f0: 260 * pv, f1: 420 * pv, vowel: 'a', gain: 0.24, vib: 10, vibD: 70, breath: 0.6, a: 0.02, rasp: 0.8, jit: 40 });
+          this.creak(d, t, 0.5, rnd(80, 110), 0.25);
+        } else if (kind === 'hurt') {
+          V({ dur: 0.35, f0: 300 * pv, f1: 200, vowel: 'e', gain: 0.2, breath: 0.6, a: 0.01, rasp: 0.6 });
+          this.boneCrack(d, t, 0.8);
+        } else if (kind === 'death') {
+          V({ dur: 2.0, f0: 240 * pv, f1: 70, vowel: 'a', v1: 'u', gain: 0.24, vib: 6, vibD: 40, breath: 0.7, rasp: 0.7, jit: 30 });
+          this.creak(d, t + 0.5, 1.2, 70, 0.35);
+          this.bodyFall(d, t + 1.2, 1.6, true);
+        } else if (kind === 'idle') {
+          this.creak(d, t, 1.0, rnd(70, 100), 0.18);
+          if (Math.random() < 0.5) V({ dt: 0.6, dur: 0.9, f0: 160 * pv, f1: 140 * pv, vowel: 'o', gain: 0.1, breath: 0.9, rasp: 0.6, jit: 30 });
+        }
+        break;
       // Leonor: una mujer que llora (y algo enorme que respira debajo)
       case 'leonor':
         if (kind === 'alert') this.play('leonorWail', e.pos);
@@ -3019,6 +3109,18 @@ export class Audio {
       if (Math.random() < 0.3) this.boneCrack(d, t + 0.02, 0.5);
     }
     else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
+    // la obra de la Emparedada, a rastras por la piedra
+    else if (v === 'emparedada') {
+      this.noise(d, t, 0.55, { type: 'lowpass', f0: 900, f1: 400, gain: 0.32, a: 0.05, buf: this.brown, rate: 3 });
+      this.debris(d, t + 0.1, 3, 0.4, { f0: 700, f1: 1800, gain: 0.4 });
+    }
+    // la rueda: el aro de hierro en la piedra y la madera que cruje
+    else if (v === 'enrodado') {
+      this.noise(d, t, 0.6, { type: 'lowpass', f0: 500, f1: 260, gain: 0.35, a: 0.08, buf: this.brown, rate: 2 });
+      this.tone(d, t, 0.3, { f0: 58, f1: 40, gain: 0.3 });
+      if (Math.random() < 0.6) this.creak(d, t + 0.1, 0.5, rnd(80, 140), 0.14);
+      if (Math.random() < 0.4) this.metal(d, t + rnd(0, 0.3), rnd(500, 700), 0.05, 0.4);
+    }
     else {
       // pie descalzo que a veces se arrastra
       this.noise(d, t, 0.06, { f0: rnd(700, 1000), q: 1.2, gain: 0.25, a: 0.002 });

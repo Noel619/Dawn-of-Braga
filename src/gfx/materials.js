@@ -98,6 +98,8 @@ export const MAT_DEFS = {
   mailRust: { tex: 'mailRust', uv: 2.0 },
   skin: { tex: 'skin', uv: 2.0 },
   skinCorrupt: { tex: 'skinCorrupt', uv: 1.6 },
+  // el Cavador: la piel cuarteada de polvo de siglos
+  skinDust: { tex: 'skinPale', uv: 2.0, color: 0xb4a690 },
   hide: { tex: 'hide', uv: 1.4, phong: { specular: 0x3a2a2a, shininess: 16 } },
   flesh: {
     tex: 'flesh',

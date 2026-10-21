@@ -1541,14 +1541,17 @@ function buildCreatures(L) {
     // la cripta de San Martín (en calma) y su osario
     e('soldier', -81, Y1, -125, 'e_sm1', { yaw: Math.PI }),
     e('mourner', -89.5, Y1, -143.5, 'e_sm2', { idle: 'pray', yaw: -Math.PI / 2 }),
-    // las catacumbas de la Sé
-    e('hound', -22.5, YC, -93.5, 'e_c1a', { idle: 'eat', yaw: 1.2 }),
-    e('hound', -45.2, YC, -93.4, 'e_c1b', { idle: 'eat', yaw: -0.6 }),
-    e('crawler', -58, YC, -93.5, 'e_c1c', { idle: 'ceiling' }),
+    // las catacumbas de la Sé: aquí no bajan las criaturas de la ciudad.
+    // Los Cavadores (se les oye cavar), las Emparedadas (de cara a la pared)
+    // y el Enrodado (en la galería del sur, que es recta: para que embista;
+    // espera atravesado, que al entrar se le vea la rueda de cara)
+    e('cavador', -24, YC, -92.75, 'e_c1a', { idle: 'dig', yaw: 0 }),
+    e('emparedada', -42.81, YC, -97.51, 'e_c1b', { idle: 'walled', yaw: -2.53 }),
+    e('cavador', -58.5, YC, -94.25, 'e_c1c', { idle: 'dig', yaw: Math.PI }),
     e('bell', -52, YC, -90.5, 'e_c1d', { idle: 'stand', yaw: 0 }),
-    e('penitent', -43.5, YC, -86.3, 'e_c1e', { idle: 'pray', yaw: Math.PI / 2 }),
-    e('crawler', -14.2, YC, -95.5, 'e_c1f', { idle: 'ceiling' }),
-    e('soldier', -43.2, YC, -97.2, 'e_c1g', { idle: 'stand', yaw: Math.PI }),
+    e('emparedada', -34.4, YC, -85.75, 'e_c1e', { idle: 'walled', yaw: 0 }),
+    e('cavador', -13.6, YC, -96, 'e_c1f', { idle: 'dig', yaw: Math.PI / 2 }),
+    e('enrodado', -47.5, YC, -86.25, 'e_c1g', { idle: 'stand', yaw: 0 }),
     // los Inocentes
     e('mourner', -71, YI, -99.2, 'e_c2a', { idle: 'pray', yaw: Math.PI }),
     e('crawler', -70.5, YI, -93.5, 'e_c2b', { idle: 'ceiling' }),
