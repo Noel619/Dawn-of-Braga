@@ -17,7 +17,8 @@ export function buildSouto(ctx, S, L) {
   W(S, -48, -3.5, -14, 3.5);
   floor(ctx, -48, -3.5, -14, 3.5, 'cobble');
   // canalón central
-  wb.box('flag', -48, -0.05, -0.4, -14, 0.005, 0.4, { faces: 't', ao: false, tint: [0.7, 0.7, 0.7] });
+  // (algo levantado sobre el empedrado: a medio centímetro, de lejos parpadeaba)
+  wb.box('flag', -48, -0.05, -0.4, -14, 0.015, 0.4, { faces: 't', ao: false, tint: [0.7, 0.7, 0.7] });
   // (las fachadas de ambos lados, con sus callejones, están en level_barrios.js)
   // pasadizo que cruza la calle por encima: la calle deja de ser un tubo recto
   overpass(ctx, -31.4, -3.5, -28, 3.5, 3.7, 6.7, 'x', { lit: true });

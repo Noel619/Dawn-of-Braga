@@ -101,11 +101,9 @@ export function buildPanteon(ctx, C, L, o = {}) {
   }
   ctx.col.add(cx - PAN.pit, YC - 1, cz - PAN.pit, cx + PAN.pit, YC, cz + PAN.pit);
   {
-    const ring = planarUV(new THREE.RingGeometry(PAN.pit, R + 0.3, 72, 3), MAT_DEFS.flag.uv);
-    geom('flag', ring, M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y, cz), [0.72, 0.68, 0.62], { uvScale: 1, sub: 3 });
     // el anillo de mosaico bajo las columnas
     const band = planarUV(new THREE.RingGeometry(PAN.ring - 0.9, PAN.ring + 0.9, 72, 1), MAT_DEFS.mosaic.uv);
-    geom('mosaic', band, M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y + 0.004, cz), [0.78, 0.6, 0.52], { uvScale: 1 });
+    geom('mosaic', band, M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y + 0.012, cz), [0.78, 0.6, 0.52], { uvScale: 1 });
     const pf = planarUV(new THREE.CircleGeometry(PAN.pit, 40), MAT_DEFS.flag.uv);
     geom('flag', pf, M4().makeRotationX(-Math.PI / 2).setPosition(cx, YC, cz), [0.62, 0.58, 0.54], { uvScale: 1 });
   }
@@ -134,6 +132,25 @@ export function buildPanteon(ctx, C, L, o = {}) {
       wb.quad('ashlar', pt(t0, R - 0.06, Y), pt(t1, R - 0.06, Y), pt(t1, R - 0.06, Y + 0.45), pt(t0, R - 0.06, Y + 0.45), { room, tint: [0.62, 0.58, 0.52], ao: false });
       wb.quad('ashlar', pt(t0, R - 0.06, Y + 0.45), pt(t1, R - 0.06, Y + 0.45), pt(t1, R, Y + 0.45), pt(t0, R, Y + 0.45), { room, tint: [0.7, 0.66, 0.6], ao: false });
     }
+  }
+  // el enlosado: hasta las caras del muro (en las salidas acaba donde
+  // empiezan sus pasos, que tienen el suyo) y con el hueco del pozo
+  {
+    const pts = [];
+    for (let i = 0; i < 12; i++) {
+      const A = faces[i],
+        B = faces[(i + 1) % 12];
+      const ta = A.th + A.al,
+        tb = B.th - B.al + (i === 11 ? Math.PI * 2 : 0);
+      pts.push(pt(A.th - A.al, R, Y), pt(ta, R, Y));
+      const n = Math.max(1, Math.ceil((tb - ta) / (6 * DEG)));
+      for (let j = 1; j < n; j++) pts.push(pt(ta + ((tb - ta) * j) / n, R, Y));
+    }
+    const sh = new THREE.Shape(pts.map((p) => new THREE.Vector2(p.x - cx, -(p.z - cz))));
+    const hole = new THREE.Path();
+    hole.absarc(0, 0, PAN.pit, 0, Math.PI * 2, true);
+    sh.holes.push(hole);
+    geom('flag', new THREE.ShapeGeometry(sh, 40), M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y, cz), [0.72, 0.68, 0.62], { sub: 3 });
   }
   const arcos = [];
   for (const F of faces) {
@@ -380,11 +397,12 @@ export function buildPanteon(ctx, C, L, o = {}) {
       const cp = V(0.75, 0, 0.3).applyMatrix4(m);
       P.candles(ctx, cp.x, YC, cp.z, 2, 5130 + Math.round(a * 10), { room, radius: 2.8, intensity: 0.5, spread: 0.08 });
     }
-    // la escalera: ocho peldaños que bajan pegados al muro (de 250° a 355°)
+    // la escalera: siete peldaños que bajan pegados al muro (de 250° a 345°;
+    // el octavo sería el suelo del pozo)
     const sr0 = 2.75,
       sr1 = PR - 0.02;
     const rm = (sr0 + sr1) / 2;
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 7; i++) {
       const tc = (250 + 7.5 + i * 13.2) * DEG;
       const top = Y - 0.3 * (i + 1);
       const p = pt(tc, rm, 0);
@@ -431,7 +449,7 @@ export function buildPanteon(ctx, C, L, o = {}) {
   {
     const d = DY(6),
       xw = cx - edge(6);
-    archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: GAL.x1, t1: GAL.x1 + 0.3, top: Y + GAL.ys, clip: [cz - d.hw - 0.3, cz + d.hw + 0.3], mat: 'ashlar', spMat: 'ashlar', room, tint: AT, spTint: WT });
+    archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: GAL.x1, t1: GAL.x1 + 0.3, top: Y + GAL.ys, clip: [cz - d.hw, cz + d.hw], mat: 'ashlar', spMat: 'ashlar', room, tint: AT, spTint: WT });
     archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: GAL.x1 + 0.3, t1: xw + 0.02, mat: 'ashlar', room, tint: AT });
   }
   // este: el paso al templo, los cuatro peldaños y el rellano, bajo una
@@ -522,7 +540,7 @@ export function buildPanteon(ctx, C, L, o = {}) {
   function plaque(ctx2, x, y, z, face) {
     const sg = face === 's' ? 1 : -1;
     ctx2.wb.box('ashlar', x - 0.55, y - 0.35, Math.min(z, z + sg * 0.05), x + 0.55, y + 0.35, Math.max(z, z + sg * 0.05), { ao: false, room, tint: [0.78, 0.74, 0.68] });
-    for (let i = 0; i < 4; i++) ctx2.wb.box('black', x - 0.42, y + 0.2 - i * 0.13, Math.min(z + sg * 0.05, z + sg * 0.052), x + 0.42 - (i === 3 ? 0.3 : 0), y + 0.235 - i * 0.13, Math.max(z + sg * 0.05, z + sg * 0.052), { ao: false, room, grime: false });
+    for (let i = 0; i < 4; i++) ctx2.wb.box('black', x - 0.42, y + 0.2 - i * 0.13, Math.min(z + sg * 0.05, z + sg * 0.057), x + 0.42 - (i === 3 ? 0.3 : 0), y + 0.235 - i * 0.13, Math.max(z + sg * 0.05, z + sg * 0.057), { ao: false, room, grime: false });
   }
 }
 
@@ -531,8 +549,9 @@ function ledgerSlab(ctx, x, y, z, rot, rng, room) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
     wb.box('ashlar', -0.5, 0, -1.0, 0.5, 0.03, 1.0, { faces: 'tnsew', ao: false, room, tint: [0.66, 0.62, 0.56].map((v) => v * rng.range(0.92, 1.05)) });
-    wb.box('black', -0.03, 0.031, -0.75, 0.03, 0.033, 0.55, { faces: 't', ao: false, grime: false, room });
-    wb.box('black', -0.24, 0.031, -0.42, 0.24, 0.033, -0.36, { faces: 't', ao: false, grime: false, room });
-    wb.box('black', 0.14, 0.031, 0.35, 0.3, 0.033, 0.41, { faces: 't', ao: false, grime: false, room });
+    // (lo grabado, algo por encima de la losa: pegado, parpadeaba)
+    wb.box('black', -0.03, 0.031, -0.75, 0.03, 0.038, 0.55, { faces: 't', ao: false, grime: false, room });
+    wb.box('black', -0.24, 0.031, -0.42, 0.24, 0.038, -0.36, { faces: 't', ao: false, grime: false, room });
+    wb.box('black', 0.14, 0.031, 0.35, 0.3, 0.038, 0.41, { faces: 't', ao: false, grime: false, room });
   });
 }

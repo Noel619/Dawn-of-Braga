@@ -375,7 +375,9 @@ export function buildPostigoAlley(ctx, S, U, L) {
   P.barrel(ctx, 38.2, 0, -108.6, {});
   P.crate(ctx, 39.3, 0, -107.4, 0.8, 0.3);
   P.hay(ctx, 38.4, 0, -104.8, Math.PI / 2);
-  stoneWall(ctx, A.yard.x0, A.yard.z0 - 0.4, A.yard.x1, A.yard.z0, 3.4);
+  // (5 cm por delante de la fachada de la casa de detrás: si no, las dos caras
+  // se pisaban y parpadeaban)
+  stoneWall(ctx, A.yard.x0, A.yard.z0 - 0.4, A.yard.x1, A.yard.z0 + 0.05, 3.4);
   // el leñero: un tejadillo sobre la leña, contra la tapia del norte
   for (const x of [61.4, 65.2, 69.0]) wb.box('timber', x - 0.1, 0, -108.1, x + 0.1, 2.3, -107.9, { ao: false });
   wb.box('timber', 61.2, 2.3, -108.2, 69.2, 2.45, -107.8, { ao: false, faces: 'tnsewb' });

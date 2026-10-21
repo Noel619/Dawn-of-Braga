@@ -927,22 +927,23 @@ function buildMartin(ctx, L, rng, C) {
   // hasta la bóveda
   buildOsarioMartin(ctx, C, L, { y: Y1, room: ROOM });
   arch(ctx, { axis: 'z', c: -146, w: 2.4, y0: Y1 + 2.0, rise: 1.2, ring: 0.3, t0: OS.x1, t1: MB.x0 - 0.3 });
-  arch(ctx, { axis: 'z', c: -146, w: 2.4, y0: Y1 + 2.0, rise: 1.2, ring: 0.3, t0: MB.x0 - 0.3, t1: MB.x0, top: MB.YS, clip: [-147.5, -144.5] });
+  arch(ctx, { axis: 'z', c: -146, w: 2.4, y0: Y1 + 2.0, rise: 1.2, ring: 0.3, t0: MB.x0 - 0.3, t1: MB.x0, top: MB.YS, clip: [-147.2, -144.8] });
 
   // --- el Pórtico de los Velados: el arco por el grueso del muro y, en la
   // cripta, su inscripción
-  arch(ctx, { axis: 'z', c: PT.z, w: PT.w, y0: PT.y0, rise: PT.rise, ring: 0.36, t0: -64, t1: -62, top: MB.YS, clip: [PT.z - PT.w / 2 - 0.36, PT.z + PT.w / 2 + 0.36], spTint: DT });
+  arch(ctx, { axis: 'z', c: PT.z, w: PT.w, y0: PT.y0, rise: PT.rise, ring: 0.36, t0: -64, t1: -62, top: MB.YS, clip: [PT.z - PT.w / 2, PT.z + PT.w / 2], spTint: DT });
   plaque(ctx, MB.x1 - 0.06, Y1 + 1.7, PT.z - 3.6, 'w', 1.0, 0.7);
   L.interact.push({ kind: 'note', id: 'n_velados', note: 'velados', x: MB.x1 - 0.4, y: Y1 + 1.4, z: PT.z - 3.6, model: 'wall', r: 1.8 });
   // (de la antesala llega la luz roja)
   ctx.lights.push({ x: MB.x1 - 1.2, y: Y1 + 2.2, z: PT.z, r: 1, g: 0.3, b: 0.16, radius: 7, intensity: 0.8, room: ROOM });
 
   // --- los arcos de la sala de los obispos (por el grueso del muro)
-  for (const [c, w] of ARCADE) arch(ctx, { axis: 'z', c, w, y0: Y1 + 1.6, rise: w / 2, ring: 0.3, t0: -64, t1: -62, top: MB.YS, clip: [c - w / 2 - 0.3, c + w / 2 + 0.3] });
+  // (las enjutas, sólo sobre el vano: a los lados está el muro y se pisaban)
+  for (const [c, w] of ARCADE) arch(ctx, { axis: 'z', c, w, y0: Y1 + 1.6, rise: w / 2, ring: 0.3, t0: -64, t1: -62, top: MB.YS, clip: [c - w / 2, c + w / 2] });
 
   // --- la puerta del atajo de los Inocentes (atrancada desde abajo), su
   // escalera y su bóveda
-  arch(ctx, { axis: 'x', c: -74, w: 3, y0: Y1 + 2.4, rise: 1.2, ring: 0.3, t0: MB.z1, t1: MB.z1 + 0.15, top: MB.YS, clip: [-75.8, -72.2] });
+  arch(ctx, { axis: 'x', c: -74, w: 3, y0: Y1 + 2.4, rise: 1.2, ring: 0.3, t0: MB.z1, t1: MB.z1 + 0.15, top: MB.YS, clip: [-75.5, -72.5] });
   stairs(ctx, -74, YI, -112.25, 'n', 3, 15, 0.3, 0.45, 'flag', { solidBelow: true });
   rampVault(ctx, { x0: -75.5, x1: -72.5, z0: MB.z1, z1: -112.25, ys0: Y1 + 2.4, ys1: YI + 2.4, rise: 1.2, mat: 'rock', tint: RK, room: ROOM });
   barrelVault(ctx, { x0: -75.5, x1: -72.5, z0: -112.25, z1: -108, axis: 'z', ys: YI + 2.4, rise: 1.2, mat: 'rock', tint: RK, room: ROOM, sub: 1.0, impostTint: AT });
@@ -1122,7 +1123,7 @@ function buildAntesala(ctx, L) {
   ctx.col.add(CE.x - 0.62, AY, CE.z - 0.62, CE.x + 0.62, AY + 0.3, CE.z + 0.62);
   // la boca de la escalera del pozo, con su reja (sube al caer los Velados)
   const pc = (PS.x0 + PS.x1) / 2;
-  archRing(ctx, { axis: 'x', c: pc, w: PS.x1 - PS.x0, y0: DY + 3.0, rise: 1.2, ring: 0.3, t0: H.z0 - 0.15, t1: H.z0, top: YS, clip: [PS.x0 - 0.3, PS.x1 + 0.3], mat: 'ashlar', spMat: 'ashlar', room: ROOM, tint: AT, spTint: DT });
+  archRing(ctx, { axis: 'x', c: pc, w: PS.x1 - PS.x0, y0: DY + 3.0, rise: 1.2, ring: 0.3, t0: H.z0 - 0.15, t1: H.z0, top: YS, clip: [PS.x0, PS.x1], mat: 'ashlar', spMat: 'ashlar', room: ROOM, tint: AT, spTint: DT });
   L.interact.push(
     { kind: 'door', id: 'd_dios', x: H.x1 + 0.5, y: AY, z: DR.z, w: DR.w, h: DR.h, axis: 'z', lock: { type: 'god' }, mat: 'god', ix: H.x1 - 1.4, iz: DR.z, r: 2.6 },
     { kind: 'censer', id: 'x_incensario', x: CE.x, y: AY, z: CE.z, r: 2.0 },

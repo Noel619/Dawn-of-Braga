@@ -363,7 +363,8 @@ export function gallows(ctx, x, y, z, rot = 0, bodies = 2) {
     for (let px = -hx; px < hx - 0.01; px += 0.3) wb.box('planks', px + 0.01, 0, -hz - 0.03, px + 0.29, H - 0.3, -hz + 0.01, { ao: false, faces: 'nsew', uv: 0.9, tint: [0.8, 0.76, 0.72] });
     for (const sx of [-1, 1]) for (let pz = -hz; pz < hz - 0.01; pz += 0.3) wb.box('planks', sx * hx - 0.02, 0, pz + 0.01, sx * hx + 0.02, H - 0.3, pz + 0.29, { ao: false, faces: 'nsew', uv: 0.9, tint: [0.8, 0.76, 0.72] });
     // trampilla bajo los ahorcados
-    wb.box('black', -1.5, H + 0.001, -0.45, 1.5, H + 0.004, 0.45, { faces: 't', ao: false, grime: false });
+    // (algo levantada sobre las tablas: a 4 mm, de lejos parpadeaba)
+    wb.box('black', -1.5, H + 0.001, -0.45, 1.5, H + 0.012, 0.45, { faces: 't', ao: false, grime: false });
     wb.box('wooddark', -1.55, H, -0.5, 1.55, H + 0.025, -0.45, { ao: false });
     wb.box('wooddark', -1.55, H, 0.45, 1.55, H + 0.025, 0.5, { ao: false });
     // horca: dos pies, travesaño y tornapuntas
