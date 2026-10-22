@@ -175,9 +175,15 @@ cámara se juntan en el **Custodio de la Garra**: un coloso de calaveras y fému
 barre con los brazos, golpea el suelo con los dos (onda), lanza calaveras y agarra; se deshace en su montón para
 rehacerse en otro sitio de la sala y, a media vida, pierde un brazo y se acelera. Al caer se abre el arca y la
 Garra queda a la vista. Por el sepulcro del arzobispo se baja a la **cripta de los Mártires**, con su pila abajo y
-la **Sacristía del arzobispo**, que se abre con su anillo. Dos atajos se abren desde abajo: la escalera de las
-catacumbas a la sala de llegada y la de los Inocentes a San Martín. La **Confesión**, al fondo del osario de
-arriba, mira por una reja a la cisterna, donde reza el arzobispo.
+la **Sacristía del arzobispo**, abovedada, que cierra una losa con el sigilo del Pacto: encajado el anillo del
+arzobispo, la losa se hunde en el suelo. Bajo tierra no hay puertas de madera: dos atajos se abren desde abajo, cada
+uno con su palanca, que cede de un tirón. En lo alto de la escalera de las catacumbas, un **lienzo del muro de la sala
+de llegada** se hunde en el suelo: desde la sala no se nota (la misma piedra, a ras, con la misma luz y la misma
+mugre que el muro) y desde la escalera es una losa entre sus jambas, con la palanca al lado. Y entre los Inocentes
+y San Martín, un **rastrillo** que llena el arco, corre por las ranuras de las jambas y se mete entero en la fábrica
+al subir; su palanca, en la escalera, se ve entre los barrotes. Las puertas de los cubículos de las catacumbas y la
+de la pila de los Inocentes tienen su marco de piedra con la cruz en el dintel. La **Confesión**, al fondo del
+osario de arriba, mira por una reja a la cisterna, donde reza el arzobispo.
 
 Desde la tribuna se ve entera la **Antesala del Dios Ignoto**: tres naves sobre columnas, con estatuas colosales
 veladas, estandartes y una avenida de braseros que lleva la vista hasta el estrado y la puerta del dios, dos hojas
@@ -244,10 +250,12 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 
 **Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, una mesa atravesada en
 la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
-puertas atrancadas que solo se abren desde dentro (atajos), una reja que necesita la manivela del rastrillo, la
-sacristía que abre el anillo del arzobispo, las ventanas que se tapian con martillo y tablones, la Puerta del Dios
-Ignoto con sus cuatro cerrojos, altares de descanso que curan, rellenan las ampollas y devuelven a las
-criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el lado desde el que se quita. Mejoras
+puertas atrancadas que solo se abren desde dentro (atajos), y bajo la Sé, un rastrillo que sube y un lienzo de muro
+que se hunde, cada uno con su palanca al otro lado; una reja que necesita la manivela del rastrillo (el torno la
+baja por su ranura hasta el suelo), la losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
+tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojos, altares de descanso que curan,
+rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
+lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
 canónigo (aguante), que deja el Descoyuntado al morir. Treinta y cinco documentos breves cuentan la historia junto con
 el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
@@ -607,6 +615,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        en alto y bajo el castillo, recorrido como andaría el jugador)
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
+                        voids.mjs      rendijas a la nada en la cripta: fondo magenta y la cámara en cada sala
+                                       de la cripta honda, en ocho rumbos, al frente y hacia arriba; guarda
+                                       las vistas con fondo a la vista (un muro que no llega a su bóveda, un
+                                       luneto con el hueco mal cortado, una cuña sin suelo)
+                        floorgaps.mjs  tiras sin suelo dibujado (cada 5 cm) en los bordes y los vanos de las
+                                       salas de la cripta honda, donde la colisión sí sostiene al jugador
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo

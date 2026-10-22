@@ -91,10 +91,12 @@ const steps = [
   // Dom Paio, en la capilla: al verte se levanta; al hablarle, lo que pasó
   "(()=>{const g=__game;const a=__use('t_paio');for(let i=0;i<4;i++)__sim(0.5);const b=__use('t_paio');for(let i=0;i<60&&g.paio.script;i++){__sim(0.5);g.speech.skip(g.paio.who)}return {first:a.ok,talk:b.ok,met:!!g.flags['paio:met'],mode:g.paio.mode}})()",
   "__use('a_oratorio')", "__use('n_rates')",
-  // (los dos atajos se abren desde abajo: el de la sala de llegada, desde las
-  // catacumbas; el de San Martín, desde los Inocentes)
-  "(()=>{const g=__game;const r=__use('d_atajo_llegada');const it=g.interact.list.find(i=>i.id==='d_atajo_llegada');return {...r,open:!!g.flags['door:d_atajo_llegada'],from:it.lock.side}})()",
-  "(()=>{const g=__game;const r=__use('d_atajo_martin');return {...r,open:!!g.flags['door:d_atajo_martin']}})()",
+  // (los dos atajos se abren desde abajo, con su palanca: el lienzo de muro
+  // de la sala de llegada, desde la escalera de las catacumbas, y la reja de
+  // San Martín, desde la de los Inocentes; el muro, desde la sala, ni se
+  // ofrece)
+  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='d_atajo_llegada');g.player.spawn(-5.6,-7,-101.75,-Math.PI/2);__sim(0.2);const hidden=!(g.promptTarget&&g.promptTarget.id==='d_atajo_llegada');const r=__use('p_atajo_llegada');__sim(2.5);return {...r,hidden,lever:!!g.flags['lever:p_atajo_llegada'],open:!!g.flags['door:d_atajo_llegada'],box:it.box.enabled}})()",
+  "(()=>{const g=__game;const r=__use('p_atajo_martin');__sim(3.5);const it=g.interact.list.find(i=>i.id==='d_atajo_martin');return {...r,lever:!!g.flags['lever:p_atajo_martin'],open:!!g.flags['door:d_atajo_martin'],box:it.box.enabled}})()",
   // el Custodio de la Garra: al entrar en el relicario se levanta y cae la
   // reja; vencido, sube la reja, se abre el arca y la Garra queda a la vista
   "__use('n_garra')",

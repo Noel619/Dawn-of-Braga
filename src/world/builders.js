@@ -936,7 +936,9 @@ export function archedWall(ctx, o) {
   // cara del extremo que mira hacia -u y hacia +u
   const endLo = axZ ? 'n' : 'w',
     endHi = axZ ? 's' : 'e';
-  const base = { sub: 1.6, aoH: 1.2, aoMin: 0.5, baseY: y0 };
+  // (baseY: el suelo para la oclusión, si el lienzo no arranca de él; sub:
+  // cada cuánto se subdivide, para que otra pieza a ras case con él)
+  const base = { sub: o.sub ?? 1.6, aoH: 1.2, aoMin: 0.5, baseY: o.baseY ?? y0 };
   const piece = (u0, v0, u1, v1, lo = false, hi = false) => {
     if (u1 - u0 < 0.005 || v1 - v0 < 0.005) return;
     const b = axZ ? [t0, v0, u0, t1, v1, u1] : [u0, v0, t0, u1, v1, t1];

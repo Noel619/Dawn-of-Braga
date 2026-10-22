@@ -526,12 +526,14 @@ const LEVER_UP = 0.3,
 // echarla cuesta: siete tirones (unos siete segundos y medio)
 export const LEVER_TIME = 7.3;
 const LEVER_HEAVES = 7;
+// la palanca de un atajo: un solo tirón
+const QUICK_TIME = 1.3;
 // cuánto baja el mango con 'pull' segundos de tirones
-function leverAngle(pull) {
-  const k = Math.min(1, pull / LEVER_TIME) * LEVER_HEAVES;
+function leverAngle(pull, time = LEVER_TIME, heaves = LEVER_HEAVES) {
+  const k = Math.min(1, pull / time) * heaves;
   const i = Math.floor(k),
     f = k - i;
-  const u = Math.min(1, (i + (f < 0.55 ? 0.15 * (f / 0.55) : 0.15 + 0.85 * ((f - 0.55) / 0.45) ** 0.6)) / LEVER_HEAVES);
+  const u = Math.min(1, (i + (f < 0.55 ? 0.15 * (f / 0.55) : 0.15 + 0.85 * ((f - 0.55) / 0.45) ** 0.6)) / heaves);
   return LEVER_UP + (LEVER_DOWN - LEVER_UP) * u;
 }
 
@@ -603,8 +605,9 @@ export class Interactables {
         if (s.axis === 'z') it.obj.rotation.y = -Math.PI / 2;
         const leaves = [];
         const slides = s.mat === 'grate' || s.mat === 'seal';
-        // (la Puerta del Dios Ignoto: sus hojas de piedra las pone game/crypt.js)
-        const none = s.mat === 'god';
+        // (la Puerta del Dios Ignoto: sus hojas de piedra las pone game/crypt.js;
+        // la losa que se hunde va horneada con el muro, en el grupo 'puerta:id')
+        const none = s.mat === 'god' || s.mat === 'slab';
         // Hojas batientes: la bisagra va en la cara del muro hacia la que abre
         // la puerta ('plane', coordenada a lo largo de la normal del muro) y
         // separada 'inset' del canto del hueco. Con la bisagra en mitad del
@@ -653,15 +656,23 @@ export class Interactables {
           it.boards.position.x = -s.w / 2;
           it.obj.add(it.boards);
         }
+        if (s.lit) this.bakeLight(it);
       }
+      // (la losa: sus mallas, horneadas con la luz del muro en el que está)
+      if (s.mat === 'slab') it.slab = g.groups['puerta:' + s.id] ? g.groups['puerta:' + s.id].meshes : [];
       g.scene.add(it.obj);
       // colisión
       const t = s.mat === 'barricade' ? 0.5 : 0.25;
       if (s.axis === 'x') it.box = g.world.col.add(s.x - s.w / 2, s.y, s.z - t, s.x + s.w / 2, s.y + s.h, s.z + t, 'door');
       else it.box = g.world.col.add(s.x - t, s.y, s.z - s.w / 2, s.x + t, s.y + s.h, s.z + s.w / 2, 'door');
       it.open = 0;
-      // (un rastrillo cerrado es un muro también para las criaturas)
-      if (s.lock && s.lock.type === 'levers') it.box.navSolid = true;
+      // (un rastrillo cerrado es un muro también para las criaturas; los
+      // atajos de palanca, también, y desde el principio: la rejilla de
+      // navegación se hizo antes que las puertas)
+      if (s.lock && (s.lock.type === 'levers' || s.lock.type === 'lever')) it.box.navSolid = true;
+      if (s.lock && s.lock.type === 'lever') this.refreshDoorNav(it);
+      // (una puerta escondida no se ofrece: se abre desde el otro lado)
+      it.hidden = !!s.hidden;
       it.r = s.r ?? 2.2;
     } else if (s.kind === 'item') {
       it.obj = new THREE.Group();
@@ -739,6 +750,9 @@ export class Interactables {
       it.obj.userData.arm.rotation.x = LEVER_UP;
       g.scene.add(it.obj);
       it.pull = 0;
+      // (la de un atajo cede de un solo tirón)
+      it.time = s.quick ? QUICK_TIME : LEVER_TIME;
+      it.heaves = s.quick ? 1 : LEVER_HEAVES;
       it.r = s.r ?? 1.8;
     } else if (s.kind === 'hatch') {
       it.r = s.r ?? 1.6;
@@ -813,7 +827,10 @@ export class Interactables {
   applyFlags(flags, reset = false) {
     for (const it of this.list) {
       if (reset) this.reset(it);
-      if (it.kind === 'door' && flags['door:' + it.id] && !it.done) this.setOpen(it, true);
+      if (it.kind === 'door' && flags['door:' + it.id] && !it.done) {
+        this.setOpen(it, true);
+        if (it.lock.type === 'lever') this.refreshDoorNav(it);
+      }
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
         it.obj.visible = false;
@@ -831,7 +848,10 @@ export class Interactables {
         it.obj.visible = true;
       }
       if (it.kind === 'breakable' && flags['broken:' + it.id] && !it.done) this.shatter(it, true);
-      if (it.kind === 'lever' && flags['lever:' + it.id]) {
+      // (la de un atajo, también si su puerta ya estaba abierta: en partidas
+      // de antes se abría quitando una tranca)
+      const shortcut = it.kind === 'lever' && it.gate && flags['door:' + it.gate] && this.list.some((q) => q.id === it.gate && q.lock.type === 'lever');
+      if (it.kind === 'lever' && (flags['lever:' + it.id] || shortcut)) {
         it.done = true;
         it.pull = 0;
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
@@ -884,6 +904,29 @@ export class Interactables {
     }
   }
 
+  // Polvo y arenilla por la ranura del suelo, a los dos lados, mientras la
+  // losa se hunde.
+  slabDust(it, dt) {
+    const fx = this.game.fx;
+    it.dustT = (it.dustT ?? 0) - dt;
+    if (!fx || !fx.blood || it.dustT > 0) return;
+    it.dustT = 0.07;
+    for (const s of [-1, 1]) {
+      const u = (Math.random() - 0.5) * it.w;
+      const x = it.axis === 'x' ? it.x + u : it.x + s * 0.3,
+        z = it.axis === 'x' ? it.z + s * 0.3 : it.z + u;
+      fx.blood.emit(x, it.y + 0.05, z, 3, { color: [0.11, 0.1, 0.085], speed: 0.9, life: 1.1, up: 0.7, gravity: 1.5 });
+    }
+  }
+
+  // La palanca de un atajo, echada: su reja sube o su losa se hunde.
+  leverOpen(it, instant = false) {
+    this.game.flags['door:' + it.id] = true;
+    this.setOpen(it, instant);
+    this.refreshDoorNav(it);
+    return 1;
+  }
+
   // Palancas de un rastrillo ya echadas.
   leversDown(it) {
     return it.lock.levers.filter((id) => this.game.flags['lever:' + id]).length;
@@ -917,6 +960,7 @@ export class Interactables {
       }
       it.rise = undefined;
       if (it.box) it.box.enabled = true;
+      if (it.lock && it.lock.type === 'lever') this.refreshDoorNav(it);
       if (it.boards) it.boards.visible = true;
       if (it.mat === 'barricade') it.obj.visible = true;
       this.poseDoor(it, 0);
@@ -1004,8 +1048,18 @@ export class Interactables {
     }
     // la entornada parte de su apertura inicial
     if (it.ajar) k = it.ajar + (1 - it.ajar) * k;
+    if (it.slab) {
+      // (la losa horneada con el muro baja entera por debajo del suelo)
+      for (const m of it.slab) {
+        m.matrix.makeTranslation(0, -k * (it.h + 0.05), 0);
+        m.matrixWorldNeedsUpdate = true;
+      }
+    }
     for (const lf of it.leaves || []) {
-      if (it.mat === 'grate') lf.position.y = k * (it.h - 0.3);
+      // (lift: hasta dónde sube la reja; la que llena un arco, hasta meterse
+      // entera en la fábrica de encima. sink: la que baja por una ranura del
+      // suelo, hasta perderse en él)
+      if (it.mat === 'grate') lf.position.y = it.sink ? -k * (it.lift ?? it.h + 0.05) : k * (it.lift ?? it.h - 0.3);
       else if (it.mat === 'seal') lf.position.y = -k * (it.h + 0.2);
       else {
         // sw = +1 abre hacia -z local (eje 'x': -z del mundo; eje 'z': +x)
@@ -1076,6 +1130,35 @@ export class Interactables {
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
     for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
+  // (lo mismo con una puerta que se cierra o se abre)
+  refreshDoorNav(it) {
+    const g = this.game;
+    const r = it.w / 2 + 1;
+    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+  }
+
+  // La hoja con la luz horneada del sitio, como los muebles del escenario:
+  // sin ella, una reja o una losa de piedra se veían recortadas, más claras
+  // o más oscuras que el muro en el que están.
+  bakeLight(it) {
+    const g = this.game;
+    const zn = g.zoneAt(it);
+    const pr = g.probe.sample(it.x, it.y + Math.min(1.6, it.h / 2), it.z, zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0);
+    const done = new Map();
+    it.obj.traverse((m) => {
+      if (!m.isMesh || m.material.isMeshBasicMaterial) return;
+      let c = done.get(m.material);
+      if (!c) {
+        c = cloneMat(m.material);
+        if (c._u) {
+          c._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+          c._u.uGround.value.set(it.y, 0.34);
+        }
+        done.set(m.material, c);
+      }
+      m.material = c;
+    });
+  }
 
   shatter(it, instant = false) {
     const g = this.game;
@@ -1137,6 +1220,7 @@ export class Interactables {
         if (it.lock.type === 'seal') return 'Examinar la losa';
         if (it.lock.type === 'boss') return 'Examinar la reja';
         if (it.lock.type === 'levers') return 'Examinar el rastrillo';
+        if (it.lock.type === 'lever') return 'Examinar la reja';
         if (it.lock.type === 'npc') return 'Llamar a la puerta';
         if (it.lock.type === 'god') return this.game.crypt ? this.game.crypt.doorLabel() : 'Examinar la puerta';
         return 'Abrir';
@@ -1213,7 +1297,7 @@ export class Interactables {
           g.audio && g.audio.play('locked', it);
         }
       } else if (L.type === 'grate') {
-        if (inv.has('manivela')) openIt('Encajas la manivela y giras el torno. La reja sube chirriando.', 'gateOpen');
+        if (inv.has('manivela')) openIt(it.sink ? MSG.grateDown : 'Encajas la manivela y giras el torno. La reja sube chirriando.', 'gateOpen');
         else {
           g.ui.toast(MSG.grate);
           g.audio && g.audio.play('locked', it);
@@ -1228,6 +1312,11 @@ export class Interactables {
         g.ui.toast('La reja no se mueve. Algo la mantiene cerrada desde la carne.');
       } else if (L.type === 'levers') {
         g.ui.toast(MSG.rastrillo(this.leversDown(it)), 5);
+        g.audio && g.audio.play('locked', it);
+      } else if (L.type === 'lever') {
+        // (la sube una palanca, y la palanca está al otro lado: se ve entre
+        // los barrotes)
+        g.ui.toast(MSG.leverGate, 4);
         g.audio && g.audio.play('locked', it);
       } else if (L.type === 'npc') {
         // la abre (o no) quien está dentro: ver game/house.js
@@ -1268,7 +1357,7 @@ export class Interactables {
       it.pulling = true;
       it.pull = Math.max(0.001, it.pull);
       it.heave = -1;
-      p.playInteract('lever', Math.atan2(-it.nx, -it.nz), LEVER_TIME + 0.15 - it.pull);
+      p.playInteract('lever', Math.atan2(-it.nx, -it.nz), it.time + 0.15 - it.pull, it.heaves === 1 ? 'pullQuick' : null);
       return true;
     }
     if (it.kind === 'item') {
@@ -1373,12 +1462,12 @@ export class Interactables {
         if (it.pulling) {
           it.pull += dt;
           // un chirrido por tirón
-          const k = Math.floor((it.pull / LEVER_TIME) * LEVER_HEAVES);
+          const k = Math.floor((it.pull / it.time) * it.heaves);
           if (k !== it.heave) {
             it.heave = k;
             g.audio && g.audio.play('leverCreak', { x: it.x, y: it.y + 1.2, z: it.z });
           }
-          if (it.pull >= LEVER_TIME) {
+          if (it.pull >= it.time) {
             it.pull = 0;
             it.pulling = false;
             it.done = true;
@@ -1386,14 +1475,14 @@ export class Interactables {
             g.audio && g.audio.play('leverClunk', { x: it.x, y: it.y + 1.2, z: it.z });
             g.flags['lever:' + it.id] = true;
             const gate = this.list.find((q) => q.id === it.gate);
-            const n = gate ? this.leverGate(gate) : 0;
+            const n = gate ? (gate.lock.type === 'lever' ? this.leverOpen(gate) : this.leverGate(gate)) : 0;
             g.onLever && g.onLever(it, n, gate);
             g.saveGame();
-          } else arm.rotation.x = leverAngle(it.pull);
+          } else arm.rotation.x = leverAngle(it.pull, it.time, it.heaves);
         } else {
           // suelta, sube despacio (la mitad de rápido de lo que baja)
           it.pull = Math.max(0, it.pull - dt * 0.5);
-          arm.rotation.x = leverAngle(it.pull);
+          arm.rotation.x = leverAngle(it.pull, it.time, it.heaves);
         }
       }
       if (it.kind === 'door' && it.rise !== undefined && !it.target && it.open < it.rise) {
@@ -1401,10 +1490,12 @@ export class Interactables {
         this.poseDoor(it, it.open);
       }
       if (it.kind === 'door' && it.target && it.open < 1) {
-        const speed = it.mat === 'grate' ? 0.35 : it.mat === 'seal' ? 0.4 : it.mat === 'barricade' ? 1.3 : 1.1;
+        const speed = it.mat === 'grate' ? 0.35 : it.mat === 'seal' ? 0.4 : it.mat === 'slab' ? 0.42 : it.mat === 'barricade' ? 1.3 : 1.1;
         it.open = Math.min(1, it.open + dt * speed);
         const k = it.open;
-        this.poseDoor(it, 1 - Math.pow(1 - k, 2));
+        // (la losa arranca despacio, como lo que cede, y se asienta abajo)
+        this.poseDoor(it, it.slab ? k * k * (3 - 2 * k) : 1 - Math.pow(1 - k, 2));
+        if (it.slab) this.slabDust(it, dt);
         if (k >= 1 && it.mat === 'barricade') it.obj.visible = false;
         if (k >= 1 && it.boards) it.boards.visible = false;
       }

@@ -284,7 +284,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
+const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -2141,6 +2141,22 @@ export class Audio {
         this.noise(d, t, 0.35, { f0: 1400, f1: 700, q: 2.5, gain: 0.16, a: 0.03, buf: this.brown, rate: 5, curve: 'lin' });
         this.boneCrack(d, t + 0.36, 0.9);
         this.tone(d, t + 0.36, 0.1, { f0: 300, f1: 160, gain: 0.25 });
+        break;
+      }
+      // un lienzo de muro que se hunde en el suelo (la puerta escondida de un
+      // atajo): el contrapeso que rueda dentro, el roce largo de la piedra,
+      // la arenilla que cae y el golpe al asentarse abajo
+      case 'slabSink': {
+        d = this.out(P, { gain: 0.95, verb: 0.65, life: 6, ref: 7 });
+        this.tone(d, t, 0.35, { f0: 95, f1: 55, gain: 0.45 });
+        this.noise(d, t, 0.4, { type: 'lowpass', f0: 600, f1: 300, gain: 0.3, a: 0.02, buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.25, 2.3, { type: 'lowpass', f0: 230, f1: 300, gain: 0.75, a: 0.5, buf: this.brown, rate: 1.3, curve: 'lin' });
+        this.tone(d, t + 0.25, 2.3, { f0: 36, f1: 42, gain: 0.45, a: 0.6, curve: 'lin' });
+        for (let i = 0; i < 4; i++) this.creak(d, t + 0.5 + i * rnd(0.4, 0.55), 0.5, rnd(45, 70), 0.12);
+        this.debris(d, t + 0.4, 18, 2.2, { f0: 500, f1: 1800, gain: 0.6 });
+        this.tone(d, t + 2.55, 0.5, { f0: 75, f1: 32, gain: 0.75 });
+        this.debris(d, t + 2.6, 6, 0.4, { f0: 400, f1: 1200, gain: 0.5 });
+        this.duck(0.25, 2.5);
         break;
       }
       // la losa del arca, que se corre

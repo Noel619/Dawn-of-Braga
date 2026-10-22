@@ -1059,10 +1059,11 @@ export class Game {
   }
 
   // Las bodegas, como al principio de la caza (tras morir en ellas). (Las
-  // cadenas de las pilas de la cripta honda no son de las bodegas.)
+  // cadenas de las pilas y las palancas de los atajos de la cripta honda no
+  // son de las bodegas.)
   resetCellar() {
     const F = this.flags;
-    const cellar = (it) => it.kind === 'lever' && !it.font;
+    const cellar = (it) => it.kind === 'lever' && it.gate === 'd_rastrillo';
     for (const it of this.interact.list) if (cellar(it)) delete F['lever:' + it.id];
     delete F['door:d_rastrillo'];
     for (const it of this.breakables.list) delete F['broken:' + it.id];
@@ -1082,6 +1083,7 @@ export class Game {
   onLever(it, n, gate) {
     // (la compuerta de una pila de la cripta honda: ver game/crypt.js)
     if (it.font) return this.crypt.onFont(it);
+    if (gate && gate.lock.type === 'lever') return this.onShortcut(it, gate);
     const a = this.audio;
     this.ui.toast(MSG.palanca(n), 4.5);
     this.camRig.shake(0.2);
@@ -1096,6 +1098,19 @@ export class Game {
       }
     }
     this.hunt && this.hunt.onLever(it, n);
+  }
+  // La palanca de un atajo: la reja sube por las ranuras de sus jambas, o el
+  // lienzo de muro que tapaba el paso se hunde en el suelo (interact.js).
+  onShortcut(it, gate) {
+    const a = this.audio;
+    const slab = gate.mat === 'slab';
+    this.ui.toast(MSG[gate.say] || (slab ? MSG.slabOpen : MSG.gateUp), 4.5);
+    this.camRig.shake(slab ? 0.3 : 0.15);
+    this.input.rumble(0.4, 0.3, slab ? 600 : 250);
+    if (a) {
+      a.play('chainRun', { x: it.x, y: it.y + 2, z: it.z }, { k: 0.7 });
+      setTimeout(() => a.play(slab ? 'slabSink' : 'gateOpen', { x: gate.x, y: gate.y + 1.5, z: gate.z }), 250);
+    }
   }
   // Un golpe desviado (la criatura ya ha reaccionado): la primera vez que
   // queda desequilibrada, la pista del golpe de gracia.

@@ -188,6 +188,15 @@ function commonClips(W, G, GUARD, BLOCK) {
         return K;
       })()
     ),
+    // la palanca de un atajo: la agarra en alto, se afianza y la baja de un
+    // solo tirón, con todo el cuerpo (el mango cede a los 1,3 s)
+    pullQuick: clip('pullQuick', 1.6, [
+      [0, { ...GUARD }],
+      [0.28, { chest: [-8, 0, 0], head: [-15, 0, 0], armL: [-155, 0, 8], foreL: [-20, 0, 0], armR: [-155, 0, -8], foreR: [-20, 0, 0], legL: [-10, 0, 0], shinL: [10, 0, 0], legR: [15, 0, 0], shinR: [5, 0, 0] }],
+      [0.7, { chest: [-4, 0, 0], head: [-8, 0, 0], armL: [-150, 0, 8], foreL: [-30, 0, 0], armR: [-150, 0, -8], foreR: [-30, 0, 0], legL: [-25, 0, 0], shinL: [30, 0, 0], legR: [18, 0, 0], shinR: [22, 0, 0], root: [0, -10, 0] }],
+      [1.3, { chest: [34, 0, 0], head: [20, 0, 0], armL: [-40, 0, 10], foreL: [-22, 0, 0], armR: [-40, 0, -10], foreR: [-22, 0, 0], legL: [-42, 0, 0], shinL: [62, 0, 0], legR: [10, 0, 0], shinR: [50, 0, 0], root: [0, -26, 0] }],
+      [1.6, { ...GUARD }],
+    ]),
     rest: clip('rest', 1.0, [[0, { root: [0, -48, 0], chest: [22, 0, 0], head: [35, 0, 0], legL: [-95, 0, 6], shinL: [95, 0, 0], legR: [5, 0, -4], shinR: [100, 0, 0], armR: [-48, 0, -6], foreR: [-45, 0, 0], handR: [60, 0, 0], armL: [-48, 0, 6], foreL: [-60, 0, 0] }]], { ground: false }),
     // ---- secuencias con la Bestia de Carne (las mueve el guion)
     // salto a la carrera: se impulsa, encoge las piernas y prepara la caída

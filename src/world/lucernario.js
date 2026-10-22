@@ -168,11 +168,41 @@ export function buildLucernario(ctx, C, L, o = {}) {
   // --- el suelo: el polígono de las caras, sin la alberca (y la rejilla:
   // todo transitable; la alberca la cierra su colisión)
   {
-    const sh = new THREE.Shape(floorPts.map((p) => new THREE.Vector2(p.x - cx, -(p.z - cz))));
-    const hole = new THREE.Path();
-    hole.absarc(0, 0, LUC.pool, 0, Math.PI * 2, true);
-    sh.holes.push(hole);
-    geom('flag', new THREE.ShapeGeometry(sh, 24), M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y, cz), [0.6, 0.57, 0.52], { uvScale: MAT_DEFS.flag.uv });
+    // (una corona de cuadriláteros, de bajo el brocal a las caras: el polígono
+    // con el agujero de la alberca, triangulado, dejaba a lo largo del puente
+    // que tiende al agujero una cuña sin suelo que se veía a ras de suelo)
+    const pts = floorPts.filter((p, i) => p.distanceTo(floorPts[(i + floorPts.length - 1) % floorPts.length]) > 1e-3);
+    const pos = [];
+    const r0 = LUC.rim - 0.1;
+    const inner = (p) => {
+      const a = Math.atan2(p.z - cz, p.x - cx);
+      return V(cx + Math.cos(a) * r0, 0, cz + Math.sin(a) * r0);
+    };
+    for (let i = 0; i < pts.length; i++) {
+      const A = pts[i],
+        B = pts[(i + 1) % pts.length];
+      const n = Math.max(1, Math.ceil(Math.abs(Math.atan2((A.x - cx) * (B.z - cz) - (A.z - cz) * (B.x - cx), (A.x - cx) * (B.x - cx) + (A.z - cz) * (B.z - cz))) / (6 * DEG)));
+      for (let k = 0; k < n; k++) {
+        const o0 = A.clone().lerp(B, k / n),
+          o1 = A.clone().lerp(B, (k + 1) / n);
+        const i0 = inner(o0),
+          i1 = inner(o1);
+        for (const [a, b, c] of [
+          [i0, o0, o1],
+          [i0, o1, i1],
+        ]) {
+          // (en el plano de la forma de antes: x, -z; de cara a +z)
+          const q = [a, b, c].map((p) => [p.x - cx, -(p.z - cz)]);
+          if ((q[1][0] - q[0][0]) * (q[2][1] - q[0][1]) - (q[1][1] - q[0][1]) * (q[2][0] - q[0][0]) < 0) q.reverse();
+          for (const [x, y] of q) pos.push(x, y, 0);
+        }
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(pos.map((v, i) => (i % 3 === 2 ? 1 : 0)), 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(pos.filter((v, i) => i % 3 !== 2), 2));
+    geom('flag', g, M4().makeRotationX(-Math.PI / 2).setPosition(cx, Y, cz), [0.6, 0.57, 0.52], { uvScale: MAT_DEFS.flag.uv });
     for (let z = cz - R; z < cz + R; z += 0.5)
       for (let x = cx - R; x < cx + R; x += 0.5) {
         const r = Math.hypot(x + 0.25 - cx, z + 0.25 - cz);

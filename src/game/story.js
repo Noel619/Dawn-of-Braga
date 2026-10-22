@@ -615,7 +615,8 @@ export const MSG = {
   lockedKey: (k) => `Cerrada con llave. Necesitas: ${k}.`,
   barred: 'Está atrancada desde el otro lado.',
   boarded: 'La puerta está cegada con tablones clavados. Necesitas algo para arrancarlos.',
-  grate: 'Una reja de hierro cierra la escalera. El torno que la levanta no tiene manivela.',
+  grate: 'Una reja de hierro cierra la escalera. El torno que la mueve no tiene manivela.',
+  grateDown: 'Encajas la manivela y giras el torno. La reja baja chirriando por su ranura hasta perderse en el suelo.',
   seal: 'Una losa con el sigilo del Pacto sella el paso. Tiene un hueco del tamaño de un anillo.',
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
@@ -626,6 +627,11 @@ export const MSG = {
       : `El rastrillo cuelga de tres cadenas; ${n === 1 ? 'una está tensa' : 'dos están tensas'}. Falta${n === 1 ? 'n dos palancas' : ' una palanca'}.`,
   palanca: (n) => (n >= 3 ? 'La tercera cadena se tensa. Por todas las bodegas retumba el rastrillo al subir.' : `La cadena se tensa y corre por la bóveda. En algún sitio, el rastrillo sube un palmo. (${n}/3)`),
   palancaHecha: 'La palanca ya está echada.',
+  // los atajos de la cripta honda: una reja que sube con su palanca y un
+  // lienzo de muro que se hunde en el suelo
+  leverGate: 'La reja no cede. Corre por las ranuras de las jambas y la sube una palanca que está al otro lado: se ve entre los barrotes.',
+  gateUp: 'La palanca cede de un tirón. A tu lado, la reja sube chirriando por sus ranuras hasta perderse en el muro.',
+  slabOpen: 'La palanca cede de un tirón. Algo rueda dentro del muro: el lienzo del fondo se hunde en el suelo y deja ver la sala de llegada.',
   pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
   hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Una escalera de mano baja al almacén de la torre.',
   hatchShut: 'Una trampilla en el techo, atrancada desde arriba.',

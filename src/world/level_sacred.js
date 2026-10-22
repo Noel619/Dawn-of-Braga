@@ -539,7 +539,10 @@ export function buildCathedral(ctx, S, L) {
   L.interact.push(
     { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 2.38, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
     { kind: 'door', id: 'd_claustro_se', x: 12, y: FY, z: -80, w: 2, h: 2.55, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: 11.05 },
-    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, axis: 'x', lock: { type: 'grate', item: 'manivela' }, mat: 'grate', ix: 3.5, iz: -84.9 }
+    // (la reja de la cripta: el torno la baja por su ranura y se mete entera
+    // en el peldaño de arriba; subiendo, se quedaba colgada en el aire de la
+    // nave, sin nada de lo que colgar)
+    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, sink: true, axis: 'x', lock: { type: 'grate', item: 'manivela' }, mat: 'grate', ix: 3.5, iz: -84.9 }
   );
   // escalón de la puerta lateral y umbral a la altura de la nave bajo la hoja
   // (abre hacia dentro: con la hoja a ras del escalón rozaba el suelo de la nave)
@@ -740,6 +743,19 @@ export function buildCloister(ctx, S, L) {
 // bóveda en rampa. spr: arranque de la bóveda sobre la línea de los peldaños.
 export const CRYPT_STAIR = { zTop: -86, zBot: -97, n: 25, rise: 0.304, run: 0.44, spr: 2.0, mouth: -92.5 };
 
+// Dos bocas de la cripta hacia la honda (lo de detrás lo levanta
+// level_crypt2.js). En el muro oeste de la sala de llegada, el paso escondido
+// de las catacumbas: un lienzo del mismo muro, a ras, que se hunde en el
+// suelo cuando se echa su palanca desde la escalera (aquí, sólo su hueco). Y
+// en el muro este del sepulcro, la puerta del paso del arzobispo. (Sus cantos,
+// en la rejilla de medio metro con la que se levantan los muros de la cripta
+// honda: con la boca a -121,25 el arco, la bóveda y los peldaños quedaban un
+// cuarto de metro corridos respecto del hueco.)
+export const CRYPT_DOORS = {
+  llegada: { x0: -7.5, x1: -7, z0: -103, z1: -100.5, h: 2.2 },
+  paso: { z: -120, w: 2, h: 2.2, rise: 1.0 },
+};
+
 // La cripta, abovedada de punta a punta. Antes eran cajas con un techo plano
 // de una sola cara al que no llegaba la luz (se veía negro, como el vacío),
 // la escalera era un pozo abierto hasta el techo de la nave, entre muros de
@@ -812,8 +828,16 @@ export function buildCrypt(ctx, S, C, L) {
     // osario (de su misma bóveda); los de los lados, lisos
     archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z1, t1: z1 + 0.5, y0: Y, y1: YS, openings: [{ c: 0, w: 4, h: CS.spr, rise: 2, ring: 0.32, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z0 - 0.5, t1: z0, y0: Y, y1: YS, openings: [{ c: 0, w: 5, h: 2.5, rise: 1.3, ring: 0.32, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
-    // (al oeste, la boca de las catacumbas: ver level_crypt2.js)
-    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x0 - 0.5, t1: x0, y0: Y, y1: YS, openings: [{ c: -101.75, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
+    // (al oeste, el paso escondido de las catacumbas: el muro, con su hueco
+    // a la medida y el dintel encima; el lienzo que lo tapa lo pone
+    // level_crypt2.js, con la misma piedra, la misma oclusión y la misma
+    // subdivisión que el muro: con todo el muro partido igual, no se nota)
+    const HD = CRYPT_DOORS.llegada;
+    const westWall = (a0, a1, y0, o = {}) => archedWall(ctx, { axis: 'z', a0, a1, t0: x0 - 0.5, t1: x0, y0, y1: YS, baseY: Y, sub: 0.55, rooms: [room, room], mat: 'mossstone', tint: CT, collide: false, ...o });
+    westWall(z0, HD.z0, Y, { endHi: true });
+    westWall(HD.z1, z1, Y, { endLo: true });
+    westWall(HD.z0, HD.z1, Y + HD.h);
+    wb.box('mossstone', x0 - 0.5, Y + HD.h - 0.01, HD.z0, x0, Y + HD.h, HD.z1, { faces: 'b', ao: false, room, tint: CT });
     wallFace('mossstone', x1, Y, z0, x1 + 0.5, YS, z1, 'w');
     for (const x of [-4, 4]) {
       for (const z of [-100, -107]) P.column(ctx, x, Y, z, YC - Y, 0.4, { mat: 'ashlar' });
@@ -1079,7 +1103,8 @@ export function buildCrypt(ctx, S, C, L) {
     archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: 3.0, t1: x0, y0: Y, y1: YS, openings: [{ c: -120, w: sp.w, h: sp.h, rise: sp.rise, ring: sp.ring, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     // (al este, la puerta del paso del arzobispo: baja a la cripta de los
     // mártires; ver level_crypt2.js)
-    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: x1 + 0.5, y0: Y, y1: YS, openings: [{ c: -120, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
+    const PA = CRYPT_DOORS.paso;
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: x1 + 0.5, y0: Y, y1: YS, openings: [{ c: PA.z, w: PA.w, h: PA.h, rise: PA.rise, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'mossstone', tint: CT, collide: false });
     wallFace('mossstone', x0, Y, z0 - 0.5, x1, YS, z0, 's');
     wallFace('mossstone', x0, Y, z1, x1, YS, z1 + 0.5, 'n');
     const c = (x0 + x1) / 2,

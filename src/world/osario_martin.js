@@ -17,8 +17,10 @@ import { bakeParts, moveParts, skullParts, boneParts, monkParts, spearheadParts,
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const M4 = () => new THREE.Matrix4();
 
-// la planta: centro, apotema, lados, alto del muro y de la cúpula
-export const OSM = { cx: -92, cz: -146, A: 6.0, N: 12, H: 3.6, rise: 3.0 };
+// la planta: centro, apotema, lados, alto del muro y de la cúpula; media luz
+// de la puerta (2 m, en la rejilla de medio metro de los muros de la cripta
+// de San Martín: con 2,4 su arco quedaba más ancho que el paso)
+export const OSM = { cx: -92, cz: -146, A: 6.0, N: 12, H: 3.6, rise: 3.0, door: 1.0 };
 // lo que hay en cada lado (k: el lado; su centro, a k·30° de +x hacia +z)
 // door: la puerta; apse: el ábside del arca; tablet: la inscripción; monk:
 // un hermano (hold: lo que lleva; puzzle: si es de los cuatro del puzle)
@@ -158,7 +160,7 @@ export function buildOsarioMartin(ctx, C, L, o = {}) {
     let hole = null,
       depth = 0,
       hs = null;
-    if (S.kind === 'door') hole = roundArch(1.2, 0, 2.0, 0.3);
+    if (S.kind === 'door') hole = roundArch(O.door, 0, 2.0, 0.3);
     else if (S.kind === 'monk') {
       hs = horseshoe(0.6, 0.3, 2.0, 0.7);
       hole = hs;

@@ -728,6 +728,8 @@ export class UI {
       const x = X(it.x),
         z = Z(it.z);
       let ic = null;
+      // (una puerta escondida no sale en el mapa hasta que se abre)
+      if (it.kind === 'door' && it.hidden && !it.done) continue;
       if (it.kind === 'door') ic = it.done || it.lock.type === 'none' ? 'open' : 'locked';
       else if (it.kind === 'altar') ic = 'altar';
       else if (it.kind === 'item' && !it.done && !it.hidden) ic = 'item';

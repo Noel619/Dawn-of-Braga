@@ -311,7 +311,8 @@ export class Player {
   }
 
   // 'smash': golpe de arriba abajo (romper un mueble); 'yaw' encara el objeto.
-  playInteract(kind = 'interact', yaw = null, dur = null) {
+  // clip: otra animación para lo mismo (la palanca de un atajo, de un tirón).
+  playInteract(kind = 'interact', yaw = null, dur = null, clip = null) {
     this.state = 'interact';
     this.stT = 0;
     this.vx = this.vz = 0;
@@ -319,7 +320,7 @@ export class Player {
     this.interactYaw = yaw;
     // el golpe para romper es el pesado del arma que se empuña
     const smash = this.set.heavy[0].clip;
-    this.anim.play(kind === 'push' ? this.clips.push : kind === 'smash' ? smash : kind === 'lever' ? this.clips.pull : this.clips.interact, { blend: 0.12 });
+    this.anim.play(clip ? this.clips[clip] : kind === 'push' ? this.clips.push : kind === 'smash' ? smash : kind === 'lever' ? this.clips.pull : this.clips.interact, { blend: 0.12 });
     this.interactDur = dur ?? (kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : kind === 'lever' ? 7.45 : 0.7);
   }
 

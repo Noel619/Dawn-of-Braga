@@ -116,9 +116,9 @@ Reglas del diseño:
 | 3 | **Cripta de San Martín** | -8,2 | La cripta-iglesia del santo: nave y dos naves laterales con arquerías de herradura y bóvedas de cañón; el altar al norte. | **Capilla de San Martín** (altar de descanso, la lápida, **Dom Paio**). El **Pórtico de los Velados** en el muro este, en el eje de la antesala. Un **osario** lateral. Al sur, la puerta del atajo de los Inocentes. |
 | 4 | **Antesala del Dios Ignoto** | -8,2 / -13 / -10 | La basílica romana, más larga (46 × 30 m) y con el doble de suelo para la pelea. | Se entra por el pórtico a una **tribuna** que domina toda la sala: desde ahí se ve el eje entero, hasta la puerta (una avenida de braseros lleva la vista). Escalinata, nave con columnas y estatuas, estrado, los Velados, el incensario, la puerta. Sin niebla: al pisar la nave despiertan los Velados y a la espalda sube una reja del borde de la tribuna (la niebla tapaba la vista desde la tribuna). |
 | 5 | **Pozo de los Condenados** | -16 | Bajo el lado norte de la antesala, «donde ya no se sube»: bóvedas de arista sobre dos pilares, tras la reja que abren los Velados al caer. | La Pila de los Condenados y su cadena, jaulas, quemados, cuatro braseros. **Dom Paio, convertido**, la guarda (un jefe; sin más criaturas). |
-| 6 | **Catacumbas de la Sé** | -10,6 | La necrópolis de los canónigos: galerías cortas con nichos en tres alturas, cubículos con su arcosolio y un cruce de huesos. | El **lucernario**, con su pozo de luz y el **oratorio de San Pedro de Rates** (altar de descanso). Atajo a la sala de llegada (la puerta, atrancada por este lado). |
+| 6 | **Catacumbas de la Sé** | -10,6 | La necrópolis de los canónigos: galerías cortas con nichos en tres alturas, cubículos con su arcosolio y un cruce de huesos. | El **lucernario**, con su pozo de luz y el **oratorio de San Pedro de Rates** (altar de descanso). Atajo a la sala de llegada: un lienzo de su muro que se hunde con la palanca de lo alto de la escalera (desde la sala no se nota). |
 | 7 | **Catacumba de los Inocentes** | -12,7 | El nivel de abajo: nichos pequeños, de niños. | La **Pila de los Inocentes**. El **Relicario de San Martín**: la arena del **Custodio de la Garra** (y ante su boca, Dom Mendo, muerto, con la nota de la Garra). Escalera de atajo a la cripta de San Martín. |
-| 8 | **Cripta de los Mártires** | -8,2 / -10,6 | Se entra por una puerta nueva en el sepulcro del arzobispo (en su eje): su paso privado, que baja. Un *martyrium* de tres naves con bóvedas de arista y los arcosolios de los mártires; frente a la puerta, su altar. | Al norte, bajando, la **Pila de los Mártires** entre cuatro columnas. Al sur, la **Sacristía del arzobispo** (se abre con su anillo): el incienso negro. |
+| 8 | **Cripta de los Mártires** | -8,2 / -10,6 | Se entra por una puerta nueva en el sepulcro del arzobispo (en su eje): su paso privado, que baja. Un *martyrium* de tres naves con bóvedas de arista y los arcosolios de los mártires; frente a la puerta, su altar. | Al norte, bajando, la **Pila de los Mártires** entre cuatro columnas. Al sur, la **Sacristía del arzobispo**, abovedada (la cierra una losa con el sigilo del Pacto, que se hunde con su anillo): el incienso negro. |
 
 ## 5. El recorrido
 
@@ -140,9 +140,11 @@ ella). Nunca un pasillo.
   incienso.
 - **Los Condenados:** sólo tras los Velados, desde la antesala.
 
-**Atajos y vueltas.** La puerta oeste de la sala de llegada se abre desde las catacumbas; la del sur de la
-cripta de San Martín, desde los Inocentes. Así se forma un anillo: cripta de arriba → sala de los obispos →
-cripta de San Martín → Inocentes → catacumbas → sala de llegada.
+**Atajos y vueltas.** El paso escondido del muro oeste de la sala de llegada se abre desde las catacumbas (un
+lienzo del muro que se hunde en el suelo con su palanca); el rastrillo del sur de la cripta de San Martín, desde
+los Inocentes (lo sube una palanca de la escalera, que se ve entre los barrotes). Así se forma un anillo: cripta de
+arriba → sala de los obispos → cripta de San Martín → Inocentes → catacumbas → sala de llegada. (Bajo tierra no hay
+puertas de madera atrancadas: eran tablas y trancas a doce metros de profundidad.)
 
 **Descansos.** El Altar de la Cripta (el de siempre), la Capilla de San Martín (a unos 40 m de la niebla de
 los Velados) y el Oratorio de San Pedro de Rates (en el lucernario, a medio camino del Custodio).
