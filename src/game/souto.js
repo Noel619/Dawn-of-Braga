@@ -40,8 +40,9 @@ const WARN_R = 5.6,
 const HANG_Y = FY + 0.5;
 // el equilibrio: lo que se tuerce solo (inestable), el freno, cuánto corrige
 // el jugador y cuánto le zarandea el tablón; la velocidad sobre él
-// (sin corregir, dos de cada tres veces se cae a medio camino, a los dos
-// segundos; corrigiendo, aunque sea tarde, se cruza)
+// (sin corregir, más o menos la mitad de las veces se acaba en la calle; si
+// se pierde el equilibrio sobre el borde del suelo, sólo se trastabilla;
+// corrigiendo, aunque sea tarde, se cruza)
 const B_UNST = 3.0,
   B_DAMP = 1.8,
   B_PUSH = 5.5,
