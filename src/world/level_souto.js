@@ -193,9 +193,11 @@ function partitionUp(ctx, iw, y0, y1, room, tint) {
       const bb = alongX ? [u0, yb, iw.z0 - 0.04, u1, yt, iw.z1 + 0.04] : [iw.x0 - 0.04, yb, u0, iw.x1 + 0.04, yt, u1];
       wb.box('wooddark', ...bb, { ao: false, room, faces: yb > y0 ? 'tnsewb' : 'tnsew' });
     };
-    fr(a - 0.1, a + 0.006, y0, y0 + d.h - 0.006);
-    fr(b - 0.006, b + 0.1, y0, y0 + d.h - 0.006);
-    fr(a - 0.1, b + 0.1, y0 + d.h - 0.006, y0 + d.h + 0.12);
+    // (el marco, un centímetro por dentro del paso: si casi coincide con el
+    // canto del tabique, parpadea)
+    fr(a - 0.1, a + 0.012, y0, y0 + d.h - 0.012);
+    fr(b - 0.012, b + 0.1, y0, y0 + d.h - 0.012);
+    fr(a - 0.1, b + 0.1, y0 + d.h - 0.012, y0 + d.h + 0.12);
     cur = b;
   }
   piece(cur, a1, y0, y1);
@@ -269,9 +271,9 @@ function frame(ctx, side, x, z, w, y0, y1, t, o = {}) {
     wb.box(mat, -hw - 0.11, y0 - 0.02, 0, -hw, y1 + 0.02, 0.07, fo);
     wb.box(mat, hw, y0 - 0.02, 0, hw + 0.11, y1 + 0.02, 0.07, fo);
     wb.box(mat, -hw - 0.15, y1, 0, hw + 0.15, y1 + 0.13, 0.09, { ...fo, faces: 'tsewb' });
-    // (lo que toca las caras del hueco, a unos milímetros de ellas: si
-    // coincidieran, parpadearían)
-    const e = 0.004;
+    // (lo que toca las caras del hueco, a un centímetro de ellas: si
+    // coincidieran, o casi, parpadearían)
+    const e = 0.012;
     if (o.sill !== false) wb.box(o.sillMat ?? mat, -hw - 0.12, y0 - 0.08, -0.02, hw + 0.12, y0 + e, 0.12, { ...fo, faces: 'tsewb' });
     if (o.room) {
       const fi = { ao: false, sub: 3, room: o.room };
