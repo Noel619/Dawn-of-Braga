@@ -335,6 +335,16 @@ Lo que está clavado en la puerta ya no es uno de los nuestros. Lo atravesaron c
 
 Me llevo la manivela del torno conmigo. Que la busquen en mi cadáver.`,
   },
+  huesos: {
+    title: 'Inscripción de la capilla de los huesos',
+    text: `En la lápida de encima del altar, en letras negras, en la lengua de aquí:
+
+NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS
+
+Y debajo, a carbón, alguien lo ha pasado a romance:
+
+«Nosotros, los huesos que aquí estamos, por los vuestros esperamos.»`,
+  },
   romana: {
     title: 'Inscripción romana',
     text: `DEO IGNOTO
@@ -757,6 +767,7 @@ export const AREA_NAMES = {
   capilla_martin: 'Capilla de San Martín',
   osario_martin: 'Osario de San Martín',
   catacumbas: 'Catacumbas de la Sé',
+  huesos: 'Capilla de los Huesos',
   lucernario: 'Lucernario de San Pedro de Rates',
   inocentes: 'Catacumba de los Inocentes',
   pila_oeste: 'Pila de los Inocentes',

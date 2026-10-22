@@ -25,8 +25,12 @@ const KB = {
   mDown: ['ArrowDown', 'KeyS'],
   mLeft: ['ArrowLeft', 'KeyA'],
   mRight: ['ArrowRight', 'KeyD'],
+  // (la pestaña derecha, con la R: la E es «confirmar», y en el inventario
+  // cambiaba de pestaña en vez de elegir el objeto)
   tabL: ['KeyQ'],
-  tabR: ['KeyE'],
+  tabR: ['KeyR'],
+  // (en el inventario: quitarse lo que hay en una ranura)
+  unequip: ['KeyX', 'Delete'],
   // (en un documento: muestra u oculta su transcripción)
   transcribe: ['KeyT'],
   camL: ['KeyJ'],
@@ -44,6 +48,7 @@ const PAD = {
   heal: [2], // X
   transcribe: [2],
   inventory: [3], // Y
+  unequip: [2],
   block: [4], // LB
   tabL: [4],
   light: [5], // RB
@@ -413,7 +418,8 @@ export const GLYPHS = {
     back: 'Esc',
     sprint: 'Mayús',
     tabL: 'Q',
-    tabR: 'E',
+    tabR: 'R',
+    unequip: 'X',
     transcribe: 'T',
   },
   pad: {
@@ -432,6 +438,7 @@ export const GLYPHS = {
     sprint: 'B (mant.)',
     tabL: 'LB',
     tabR: 'RB',
+    unequip: 'X',
     transcribe: 'X',
   },
 };

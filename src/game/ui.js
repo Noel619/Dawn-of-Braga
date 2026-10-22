@@ -7,7 +7,7 @@ import { GLYPHS } from '../core/input.js';
 import { ITEMS, NOTES, AREA_NAMES } from './story.js';
 import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS } from '../entities/weapons.js';
-import { iconBitmap, smallIcon } from './icons.js';
+import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
 import { formatTime, clamp } from '../core/util.js';
 import { PAL as P, Bitmap, bayer, ramp, hash, uiScale, spriteImg, spriteHtml, attachBackdrop, panelBitmap, parchmentBitmap, bannerBitmap, dividerBitmap, cursorSword, greatSword, keyBitmap, reticleBitmap, slotBitmap, arrowBitmap, candleBitmap, notchBitmap, textBitmap } from '../ui/pixel.js';
 
@@ -140,6 +140,66 @@ function titleArt() {
   return b;
 }
 
+// ---------------------------------------------------------------- inventario
+// Las ranuras del equipo, en filas: [ranura, nombre, silueta de la vacía].
+const EQUIP_ROWS = [
+  {
+    label: 'Armas',
+    slots: [
+      ['weapon', 'Mano derecha', 'sword'],
+      ['shield', 'Mano izquierda', 'shield'],
+    ],
+  },
+  {
+    label: 'Armadura',
+    slots: [
+      ['head', 'Cabeza', 'helm'],
+      ['body', 'Torso', 'cuirass'],
+      ['hands', 'Manos', 'gauntlets'],
+      ['legs', 'Piernas', 'greaves'],
+    ],
+  },
+  { label: 'Objeto bendito', slots: [['relic', 'Objeto bendito', 'amulet']] },
+  { label: 'Consumibles', slots: [['_flask', 'Ampollas', 'flask']] },
+];
+// Las clases de los objetos (la pestaña Objetos), en su orden.
+const ITEM_CATS = [
+  ['cons', 'Consumibles'],
+  ['weapon', 'Armas'],
+  ['shield', 'Escudos'],
+  ['armor', 'Armaduras'],
+  ['relic', 'Objetos benditos'],
+  ['key', 'Objetos clave'],
+  ['upgrade', 'Mejoras'],
+];
+const KEY_ORDER = ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'tablon', 'llave_sotano', 'garra', 'incienso'];
+const UPGRADE_ORDER = ['lagrima', 'ampolla', 'relicario', 'rosario', 'piedra'];
+const FLASK = { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' };
+// lo que se dice de una ranura vacía, de «nada» en su lista y de una ranura
+// sin nada que ponerse
+const EMPTY = {
+  weapon: 'Llevas la mano derecha vacía: sin arma no puedes atacar.',
+  shield: 'Llevas la mano izquierda vacía: sin escudo no puedes bloquear ni desviar golpes, salvo con un arma a dos manos.',
+  relic: 'No llevas ningún objeto bendito.',
+  armor: 'No llevas nada en esta ranura.',
+};
+const NOTHING = {
+  weapon: 'Te quedas con la mano derecha vacía. Sin arma no puedes atacar.',
+  shield: 'Te quedas con la mano izquierda vacía. Sin escudo no puedes bloquear ni desviar golpes, salvo con un arma a dos manos.',
+  relic: 'Te quitas el objeto bendito que llevas.',
+  armor: 'Te quitas lo que llevas en esta ranura.',
+};
+const NONE_YET = {
+  weapon: 'Aún no tienes ningún arma.',
+  shield: 'Aún no tienes ningún escudo.',
+  relic: 'Aún no tienes ningún objeto bendito.',
+  armor: 'Aún no has encontrado ninguna pieza de armadura.',
+};
+// lo que se lleva puesto, y cómo se pone y se quita
+const WORN = { weapon: 'En la mano', shield: 'Al brazo', relic: 'Lo llevas puesto', armor: 'La llevas puesta' };
+const PUT_ON = { weapon: 'Empuñar', shield: 'Embrazar', relic: 'Ponértelo', armor: 'Ponértela' };
+const TAKE_OFF = { weapon: 'Envainar', shield: 'Quitártelo', relic: 'Quitártelo', armor: 'Quitártela' };
+
 const LEGEND = [
   ['player', 'Estás aquí'],
   ['altar', 'Altar'],
@@ -155,6 +215,8 @@ export class UI {
     this._v = new THREE.Vector3();
     this.invTab = 0;
     this.invSel = 0;
+    // (la ranura del equipo que se está cambiando: { slot, name, at })
+    this.invPick = null;
     this.sc = uiScale();
     this._applyScale();
     addEventListener('resize', () => {
@@ -209,13 +271,7 @@ export class UI {
       this.ebars.push(d);
     }
     // pestañas con ratón
-    document.querySelectorAll('#inv .tab').forEach((t) =>
-      t.addEventListener('click', () => {
-        this.invTab = +t.dataset.t;
-        this.invSel = 0;
-        this.renderInv();
-      })
-    );
+    document.querySelectorAll('#inv .tab').forEach((t) => t.addEventListener('click', () => this.invSwitch(+t.dataset.t)));
   }
 
   // rótulo gótico dorado como sprite (primera línea de la introducción)
@@ -307,6 +363,8 @@ export class UI {
     el.classList.remove('hidden');
     const s = { name, el, data, sel: 0, fresh: true };
     this.stack.push(s);
+    // (el inventario se abre siempre en el equipo, no en la lista de una ranura)
+    if (name === 'inv') this.invPick = null;
     this.g.input.exitLock();
     document.body.style.cursor = 'default';
     this.render(s);
@@ -460,102 +518,315 @@ export class UI {
   }
 
   // ------------------------------------------------------------ inventario
-  invEntries() {
-    const g = this.g;
+  // A lo Dark Souls, en tres pestañas. El Equipo: las ranuras de lo que se
+  // lleva (las dos manos, la armadura, el objeto bendito y, para verla, la
+  // ampolla); «confirmar» abre lo que se puede poner en la ranura (con
+  // «nada», para quitárselo) y «quitar» la vacía. Los Objetos: lo que se lleva
+  // encima, por clases; lo que se puede llevar puesto se pone o se quita
+  // también desde ahí. Los Documentos. Con el ratón se pincha todo: las
+  // casillas, las pestañas y las teclas de la ayuda.
+  invSwitch(tab) {
+    this.invTab = (tab + 3) % 3;
+    this.invSel = 0;
+    this.invPick = null;
+    this.renderInv();
+  }
+  // las ranuras del equipo, de una en una: { slot, name, ghost }
+  equipSlots() {
+    return EQUIP_ROWS.flatMap((r) => r.slots.map(([slot, name, ghost]) => ({ slot, name, ghost })));
+  }
+  // lo que se puede poner en la ranura que se está cambiando (null: nada)
+  pickOptions() {
+    return [null, ...this.g.equipOptions(this.invPick.slot)];
+  }
+  // lo que se lleva encima, por clases: { id, cat, n?, worn? }
+  itemEntries() {
+    const g = this.g,
+      inv = g.inventory,
+      p = g.player;
     const out = [];
-    const inv = g.inventory;
-    // armas en el orden en que se encuentran
-    for (const w of WEAPON_ORDER) if (inv.has(WEAPONS[w].item)) out.push({ id: WEAPONS[w].item });
-    if (inv.has('escudo')) out.push({ id: 'escudo' });
-    out.push({ id: '_flask', n: g.player.flasks + '/' + g.player.maxFlasks });
-    // los objetos benditos (el que se lleva, marcado)
-    for (const k of RELIC_IDS) if (inv.has(k)) out.push({ id: k, relic: true, worn: g.player.relic === k });
-    for (const k of ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'llave_sotano', 'garra', 'incienso']) if (inv.has(k)) out.push({ id: k });
-    const c = (k) => inv.count(k);
-    if (c('tablon')) out.push({ id: 'tablon', n: '×' + c('tablon') });
-    if (c('lagrima')) out.push({ id: 'lagrima' });
-    if (c('relicario')) out.push({ id: 'relicario', n: '×' + c('relicario') });
-    if (c('ampolla')) out.push({ id: 'ampolla', n: '×' + c('ampolla') });
-    if (c('piedra')) out.push({ id: 'piedra' });
-    // (el rosario del canónigo no aparecía nunca en el inventario)
-    if (c('rosario')) out.push({ id: 'rosario' });
+    const add = (id, cat, o = {}) => out.push({ id, cat, ...o });
+    add('_flask', 'cons', { n: p.flasks + '/' + p.maxFlasks });
+    for (const w of WEAPON_ORDER) {
+      const id = WEAPONS[w].item;
+      if (inv.has(id)) add(id, 'weapon', { worn: g.equipped('weapon') === id });
+    }
+    if (inv.has('escudo')) add('escudo', 'shield', { worn: g.equipped('shield') === 'escudo' });
+    for (const k in ITEMS) if (ITEMS[k].armor && inv.has(k)) add(k, 'armor', { worn: g.equipped(ITEMS[k].armor) === k });
+    for (const k of RELIC_IDS) if (inv.has(k)) add(k, 'relic', { worn: p.relic === k });
+    for (const k of KEY_ORDER) if (inv.has(k)) add(k, 'key', k === 'tablon' ? { n: '×' + inv.count(k) } : {});
+    for (const k in ITEMS) if (ITEMS[k].key && !KEY_ORDER.includes(k) && inv.has(k)) add(k, 'key');
+    for (const k of UPGRADE_ORDER) if (inv.has(k)) add(k, 'upgrade', k === 'relicario' || k === 'ampolla' ? { n: '×' + inv.count(k) } : {});
     return out;
+  }
+  readDocs() {
+    return Object.keys(NOTES).filter((k) => this.g.flags['note:' + k]);
+  }
+  // las filas de casillas de lo que se ve (para moverse con las flechas)
+  invLines() {
+    const chunk = (idx) => {
+      const out = [];
+      for (let k = 0; k < idx.length; k += 4) out.push(idx.slice(k, k + 4));
+      return out;
+    };
+    if (this.invTab === 0) {
+      if (this.invPick) return chunk(this.pickOptions().map((_, i) => i));
+      let i = 0;
+      return EQUIP_ROWS.map((r) => r.slots.map(() => i++));
+    }
+    if (this.invTab === 1) {
+      const ents = this.itemEntries();
+      return ITEM_CATS.flatMap(([cat]) => chunk(ents.map((e, i) => (e.cat === cat ? i : -1)).filter((i) => i >= 0)));
+    }
+    return this.readDocs().map((_, i) => [i]);
+  }
+  invMove(dx, dy) {
+    const lines = this.invLines();
+    let li = lines.findIndex((l) => l.includes(this.invSel));
+    if (li < 0) return;
+    let ci = lines[li].indexOf(this.invSel);
+    if (dx) ci = clamp(ci + dx, 0, lines[li].length - 1);
+    if (dy) {
+      li = clamp(li + dy, 0, lines.length - 1);
+      ci = Math.min(ci, lines[li].length - 1);
+    }
+    const ns = lines[li][ci];
+    if (ns === this.invSel) return;
+    this.invSel = ns;
+    this.renderInv();
+    this.g.audio && this.g.audio.ui('move');
+  }
+  // Lo que hace cada tecla (o su rótulo pinchado): confirm, unequip, back,
+  // tabL, tabR.
+  invAction(a) {
+    const g = this.g,
+      au = g.audio;
+    const done = () => {
+      au && au.ui('confirm');
+      this.renderInv();
+    };
+    if (a === 'tabL' || a === 'tabR') {
+      this.invSwitch(this.invTab + (a === 'tabR' ? 1 : -1));
+      au && au.ui('move');
+      return;
+    }
+    // de la lista de una ranura se vuelve al equipo; si no, se cierra
+    const unpick = () => {
+      this.invSel = this.invPick.at;
+      this.invPick = null;
+    };
+    if (a === 'back') {
+      if (!this.invPick) return this.close();
+      unpick();
+      au && au.ui('move');
+      this.renderInv();
+      return;
+    }
+    if (this.invTab === 0) {
+      if (this.invPick) {
+        if (a !== 'confirm') return;
+        g.equip(this.invPick.slot, this.pickOptions()[this.invSel]);
+        unpick();
+        return done();
+      }
+      const S = this.equipSlots()[this.invSel];
+      if (!S || S.slot === '_flask') return;
+      if (a === 'unequip') {
+        if (!g.equipped(S.slot)) return;
+        g.equip(S.slot, null);
+        return done();
+      }
+      if (a !== 'confirm') return;
+      // (nada que ponerse en ella: no se abre)
+      if (!g.equipOptions(S.slot).length) return au && au.ui('lock');
+      this.invPick = { slot: S.slot, name: S.name, at: this.invSel };
+      this.invSel = Math.max(0, this.pickOptions().indexOf(g.equipped(S.slot)));
+      return done();
+    }
+    if (this.invTab === 1) {
+      const e = this.itemEntries()[this.invSel];
+      const slot = e && g.slotOf(e.id);
+      if (!slot) return;
+      const on = g.equipped(slot) === e.id;
+      if (a === 'confirm') g.equip(slot, on ? null : e.id);
+      else if (a === 'unequip' && on) g.equip(slot, null);
+      else return;
+      return done();
+    }
+    if (a === 'confirm') {
+      const read = this.readDocs();
+      if (read[this.invSel]) this.showNote(NOTES[read[this.invSel]]);
+    }
+  }
+  // Una casilla: el icono (o la silueta de la ranura vacía), la cuenta y la
+  // marca de lo que se lleva puesto. Al pasar el ratón se elige; al
+  // pincharla, se usa.
+  invSlot(i, bm, o = {}) {
+    const d = document.createElement('div');
+    const sel = i === this.invSel;
+    d.className = 'slot' + (sel ? ' sel' : '');
+    this._slot = this._slot || slotBitmap(36, false);
+    this._slotSel = this._slotSel || slotBitmap(36, true);
+    d.innerHTML = spriteHtml(sel ? this._slotSel : this._slot) + (bm ? spriteHtml(bm, 1, 'ic') : '') + (o.n ? `<span class="n f-small">${esc(o.n)}</span>` : '') + (o.worn ? spriteHtml(smallIcon('worn'), 1, 'worn') : '');
+    d.addEventListener('mousemove', (ev) => this.invHover(i, ev));
+    d.addEventListener('click', () => {
+      this.invSel = i;
+      this.invAction('confirm');
+    });
+    return d;
+  }
+  // Al pasar el ratón se elige, pero sólo si se ha movido de verdad: al
+  // repintar con el teclado, el navegador avisa de que el puntero quieto
+  // «entra» en la casilla que queda debajo, y ésta robaba la selección.
+  invHover(i, ev) {
+    if (!ev.movementX && !ev.movementY) return;
+    if (this.invSel !== i) {
+      this.invSel = i;
+      this.renderInv();
+    }
+  }
+  // un grupo de casillas con su rótulo
+  invGroup(label, els) {
+    const g = document.createElement('div');
+    g.className = 'grp';
+    g.innerHTML = `<div class="lbl f-small">${esc(label)}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    for (const e of els) grid.appendChild(e);
+    g.appendChild(grid);
+    return g;
+  }
+  // La barra de ayuda: [acción, rótulo]; 'tabs', las dos pestañas.
+  invHint(acts) {
+    const h = $('inv-hint');
+    h.innerHTML = acts.map(([a, label]) => `<span data-a="${a}">${a === 'tabs' ? this.keyHtml('tabL') + this.keyHtml('tabR') : this.keyHtml(a)} ${esc(label)}</span>`).join('');
+    h.querySelectorAll('span[data-a]').forEach((el) => el.addEventListener('click', () => this.invAction(el.dataset.a === 'tabs' ? 'tabR' : el.dataset.a)));
+  }
+  // Nombre, descripción y lo que hace: los objetos benditos, lo que dan y lo
+  // que quitan; las armas a dos manos, dónde va el escudo; la armadura, lo que
+  // para; y si se lleva puesto.
+  itemInfo(id) {
+    const g = this.g,
+      it = ITEMS[id];
+    const fx = it.relic ? `<ul class="fx">${it.pros.map((t) => `<li class="pro">${esc(t)}</li>`).join('')}${it.cons.map((t) => `<li class="con">${esc(t)}</li>`).join('')}</ul>` : '';
+    const W = it.weapon && WEAPONS[it.weapon];
+    let extra = '';
+    if (W && W.hands === 2) extra += '<p class="f-small">A dos manos: el escudo va a la espalda.</p>';
+    if (it.armor) extra += `<p class="f-small">Defensa: ${it.def || 0}</p>`;
+    const slot = g.slotOf(id);
+    // (el escudo, con un arma a dos manos, a la espalda)
+    if (slot && g.equipped(slot) === id) extra += `<p class="f-small on">${slot === 'shield' && g.player.twoHanded && g.player.hasSword ? 'A la espalda' : WORN[slot] || WORN.armor}</p>`;
+    return `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${fx}${extra}`;
   }
   statsHtml() {
     const g = this.g,
       p = g.player;
     const row = (ic, label, v) => `<span class="ico">${spriteHtml(smallIcon(ic))}${label}</span><b>${v}</b>`;
-    return `<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
+    const def = Math.round(p.armorDef() * 100);
+    return `<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('stamina', 'Aguante', p.maxSt)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${def ? row('shield', 'Defensa', def + '%') : ''}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
   }
   renderInv() {
-    const g = this.g;
     document.querySelectorAll('#inv .tab').forEach((t) => t.classList.toggle('on', +t.dataset.t === this.invTab));
-    const grid = $('inv-grid'),
-      docs = $('inv-docs'),
+    const left = $('inv-left'),
       det = $('inv-detail');
-    grid.classList.toggle('hidden', this.invTab !== 0);
-    docs.classList.toggle('hidden', this.invTab !== 1);
+    left.innerHTML = '';
+    if (this.invTab === 0) this.renderEquip(left, det);
+    else if (this.invTab === 1) this.renderItems(left, det);
+    else this.renderDocs(left, det);
+    // (lo elegido, a la vista: las listas largas se desplazan)
+    left.querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
+  }
+  renderEquip(left, det) {
+    const g = this.g,
+      p = g.player;
     const sep = `<div class="sep">${spriteHtml(dividerBitmap(110))}</div>`;
-    if (this.invTab === 0) {
-      const ents = this.invEntries();
-      this.invSel = clamp(this.invSel, 0, ents.length - 1);
-      grid.innerHTML = '';
-      const slot = slotBitmap(36, false),
-        slotSel = slotBitmap(36, true);
-      ents.forEach((e, i) => {
-        const d = document.createElement('div');
-        d.className = 'slot';
-        const ic = e.id === '_flask' ? (g.player.flasks > 0 ? 'flask' : 'flaskEmpty') : ITEMS[e.id].icon;
-        const ib = iconBitmap(ic);
-        d.innerHTML = spriteHtml(i === this.invSel ? slotSel : slot) + spriteHtml(ib, 1, 'ic') + (e.n ? `<span class="n f-small">${esc(e.n)}</span>` : '') + (e.worn ? spriteHtml(smallIcon('worn'), 1, 'worn') : '');
-        d.addEventListener('mouseenter', () => {
-          if (this.invSel !== i) {
-            this.invSel = i;
-            this.renderInv();
-          }
-        });
-        grid.appendChild(d);
-      });
-      const e = ents[this.invSel];
-      // (las armas: la que se empuña, y con «confirmar» se cambia a otra)
-      const wpn = e && e.id !== '_flask' && ITEMS[e.id].weapon;
-      const held = wpn && g.player.weaponId === wpn;
-      if (e) {
-        const it = e.id === '_flask' ? { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' } : ITEMS[e.id];
-        // (los objetos benditos: lo que dan y lo que quitan)
-        const fx = e.relic ? `<ul class="fx">${it.pros.map((t) => `<li class="pro">${esc(t)}</li>`).join('')}${it.cons.map((t) => `<li class="con">${esc(t)}</li>`).join('')}</ul>` : '';
-        det.innerHTML = `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${fx}${held ? '<p class="f-small">En la mano</p>' : ''}${e.worn ? '<p class="f-small">Lo llevas puesto</p>' : ''}${e.relic ? '' : sep + this.statsHtml()}`;
-      } else det.innerHTML = this.statsHtml();
-      const act = wpn && !held ? 'Empuñar' : e && e.relic ? (e.worn ? 'Quitártelo' : 'Ponértelo') : null;
-      $('inv-hint').innerHTML = `${act ? `<span>${this.keyHtml('confirm')} ${act}</span>` : ''}<span>${this.keyHtml('tabL')}${this.keyHtml('tabR')} Pestañas</span><span>${this.keyHtml('back')} Cerrar</span>`;
-    } else {
-      const read = Object.keys(NOTES).filter((k) => g.flags['note:' + k]);
-      this.invSel = clamp(this.invSel, 0, Math.max(0, read.length - 1));
-      docs.innerHTML = read.length ? '' : '<div class="doc">Aún no has encontrado documentos.</div>';
-      const di = spriteHtml(smallIcon('doc'));
-      read.forEach((k, i) => {
-        const d = document.createElement('div');
-        d.className = 'doc' + (i === this.invSel ? ' sel' : '');
-        d.innerHTML = di + `<span>${esc(NOTES[k].title)}</span>`;
-        d.addEventListener('mouseenter', () => {
-          if (this.invSel !== i) {
-            this.invSel = i;
-            this.renderInv();
-          }
-        });
-        d.addEventListener('click', () => this.showNote(NOTES[k]));
-        docs.appendChild(d);
-      });
-      const k = read[this.invSel];
-      if (k) {
-        const t = NOTES[k].text;
-        const prev = t.length > 230 ? t.slice(0, t.lastIndexOf(' ', 230)) + '…' : t;
-        det.innerHTML = `<h3 class="f-bast">${esc(NOTES[k].title)}</h3><p style="white-space:pre-wrap">${esc(prev)}</p>`;
-      } else det.innerHTML = this.statsHtml();
-      // (con teclado la E lee el documento: no se anuncia también como pestaña)
-      const tabs = this.keyHtml('tabL') + (read.length && this.device() === 'kb' ? '' : this.keyHtml('tabR'));
-      $('inv-hint').innerHTML = `<span>${tabs} Pestañas</span><span>${this.keyHtml('confirm')} Leer</span><span>${this.keyHtml('back')} Cerrar</span>`;
+    const flask = () => iconBitmap(p.flasks > 0 ? 'flask' : 'flaskEmpty');
+    if (this.invPick) {
+      // la lista de lo que se puede poner en la ranura
+      const P0 = this.invPick;
+      const opts = this.pickOptions();
+      this.invSel = clamp(this.invSel, 0, opts.length - 1);
+      const cur = g.equipped(P0.slot);
+      left.appendChild(this.invGroup(P0.name, opts.map((id, i) => this.invSlot(i, iconBitmap(id ? ITEMS[id].icon : 'none'), { worn: id ? id === cur : !cur }))));
+      const id = opts[this.invSel];
+      det.innerHTML = `<div class="eye f-small">${esc(P0.name)}</div>` + (id ? this.itemInfo(id) : `<h3 class="f-bast">Nada</h3><p>${esc(NOTHING[P0.slot] || NOTHING.armor)}</p>`);
+      this.invHint([
+        ['confirm', 'Elegir'],
+        ['back', 'Volver'],
+      ]);
+      return;
     }
+    const slots = this.equipSlots();
+    this.invSel = clamp(this.invSel, 0, slots.length - 1);
+    let i = 0;
+    for (const row of EQUIP_ROWS) {
+      const els = row.slots.map(([slot, , ghost]) => {
+        const k = i++;
+        if (slot === '_flask') return this.invSlot(k, flask(), { n: p.flasks + '/' + p.maxFlasks });
+        const id = g.equipped(slot);
+        return this.invSlot(k, id ? iconBitmap(ITEMS[id].icon) : ghostIcon(ghost));
+      });
+      left.appendChild(this.invGroup(row.label, els));
+    }
+    const S = slots[this.invSel];
+    let h = `<div class="eye f-small">${esc(S.name)}</div>`;
+    const id = S.slot === '_flask' ? null : g.equipped(S.slot);
+    if (S.slot === '_flask') h += `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>`;
+    else if (id) h += this.itemInfo(id);
+    else h += `<h3 class="f-bast dim">Vacía</h3><p>${esc(EMPTY[S.slot] || EMPTY.armor)}</p>`;
+    const can = S.slot !== '_flask' && g.equipOptions(S.slot).length > 0;
+    if (S.slot !== '_flask' && !can) h += `<p class="f-small">${esc(NONE_YET[S.slot] || NONE_YET.armor)}</p>`;
+    if (!(id && ITEMS[id].relic)) h += sep + this.statsHtml();
+    det.innerHTML = h;
+    this.invHint([...(can ? [['confirm', 'Cambiar']] : []), ...(id ? [['unequip', 'Quitar']] : []), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
+  }
+  renderItems(left, det) {
+    const g = this.g,
+      p = g.player;
+    const sep = `<div class="sep">${spriteHtml(dividerBitmap(110))}</div>`;
+    const ents = this.itemEntries();
+    this.invSel = clamp(this.invSel, 0, Math.max(0, ents.length - 1));
+    for (const [cat, label] of ITEM_CATS) {
+      const els = [];
+      ents.forEach((e, i) => {
+        if (e.cat === cat) els.push(this.invSlot(i, iconBitmap(e.id === '_flask' ? (p.flasks > 0 ? 'flask' : 'flaskEmpty') : ITEMS[e.id].icon), e));
+      });
+      if (els.length) left.appendChild(this.invGroup(label, els));
+    }
+    const e = ents[this.invSel];
+    const cat = ITEM_CATS.find((c) => c[0] === e.cat)[1];
+    let h = `<div class="eye f-small">${esc(cat)}</div>`;
+    h += e.id === '_flask' ? `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>` : this.itemInfo(e.id);
+    if (e.cat !== 'relic') h += sep + this.statsHtml();
+    det.innerHTML = h;
+    // (lo que se puede llevar puesto: se pone o se quita)
+    const slot = g.slotOf(e.id);
+    const act = slot ? (g.equipped(slot) === e.id ? TAKE_OFF[slot] || TAKE_OFF.armor : PUT_ON[slot] || PUT_ON.armor) : null;
+    this.invHint([...(act ? [['confirm', act]] : []), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
+  }
+  renderDocs(left, det) {
+    const read = this.readDocs();
+    this.invSel = clamp(this.invSel, 0, Math.max(0, read.length - 1));
+    const box = document.createElement('div');
+    box.className = 'docs f-hand';
+    if (!read.length) box.innerHTML = '<div class="doc">Aún no has encontrado documentos.</div>';
+    const di = spriteHtml(smallIcon('doc'));
+    read.forEach((k, i) => {
+      const d = document.createElement('div');
+      d.className = 'doc' + (i === this.invSel ? ' sel' : '');
+      d.innerHTML = di + `<span>${esc(NOTES[k].title)}</span>`;
+      d.addEventListener('mousemove', (ev) => this.invHover(i, ev));
+      d.addEventListener('click', () => this.showNote(NOTES[k]));
+      box.appendChild(d);
+    });
+    left.appendChild(box);
+    const k = read[this.invSel];
+    if (k) {
+      const t = NOTES[k].text;
+      const prev = t.length > 230 ? t.slice(0, t.lastIndexOf(' ', 230)) + '…' : t;
+      det.innerHTML = `<h3 class="f-bast">${esc(NOTES[k].title)}</h3><p style="white-space:pre-wrap">${esc(prev)}</p>`;
+    } else det.innerHTML = this.statsHtml();
+    this.invHint([...(read.length ? [['confirm', 'Leer']] : []), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
   }
 
   showNote(note) {
@@ -1091,57 +1362,22 @@ export class UI {
         if (s.t > 0.35 && (conf || back)) this.close();
         break;
       case 'inv': {
-        // en Documentos, «confirmar» lee el documento: con teclado la E es a la
-        // vez confirmar y pestaña derecha, y cambiaba de pestaña sin leerlo
-        const reading = this.invTab === 1 && conf && Object.keys(NOTES).some((k) => this.g.flags['note:' + k]);
-        if (!reading && (inp.pressed('tabL') || inp.pressed('tabR') || (this.invTab === 1 && dir.x))) {
-          this.invTab = 1 - this.invTab;
-          this.invSel = 0;
-          this.renderInv();
-          au && au.ui('move');
+        // (Tab o I, con lo que se abre, lo cierran desde cualquier sitio;
+        // «atrás» vuelve de la lista de una ranura al equipo. La pestaña
+        // derecha va con la R: con la E, que es «confirmar», cambiaba de
+        // pestaña en vez de elegir)
+        if (inp.pressed('inventory')) {
+          this.close();
           break;
         }
-        if (this.invTab === 0) {
-          const cols = 4;
-          const d = dir.x + dir.y * cols;
-          if (d) {
-            const nn = this.invEntries().length;
-            const ns = this.invSel + d;
-            if (ns >= 0 && ns < nn) {
-              this.invSel = ns;
-              this.renderInv();
-              au && au.ui('move');
-            }
-          }
-          // empuñar otra arma
-          const e = conf && this.invEntries()[this.invSel];
-          const w = e && e.id !== '_flask' && ITEMS[e.id].weapon;
-          const p = this.g.player;
-          if (w && WEAPONS[w] && p.weaponId !== w) {
-            p.equipWeapon(w);
-            p.setEquipment(this.g.hasWeapon(), this.g.inventory.has('escudo'));
-            au && au.ui('confirm');
-            this.renderInv();
-          }
-          // ponerse o quitarse un objeto bendito
-          if (e && e.relic) {
-            this.g.wearRelic(e.id);
-            au && au.ui('confirm');
-            this.renderInv();
-          }
-        } else {
-          if (dir.y) {
-            this.invSel += dir.y;
-            this.renderInv();
-            au && au.ui('move');
-          }
-          if (conf) {
-            const read = Object.keys(NOTES).filter((k) => this.g.flags['note:' + k]);
-            if (read[this.invSel]) this.showNote(NOTES[read[this.invSel]]);
-            break;
-          }
+        if (back) this.invAction('back');
+        else if (inp.pressed('tabL')) this.invAction('tabL');
+        else if (inp.pressed('tabR')) this.invAction('tabR');
+        else {
+          if (dir.x || dir.y) this.invMove(dir.x, dir.y);
+          if (conf) this.invAction('confirm');
+          else if (inp.pressed('unequip')) this.invAction('unequip');
         }
-        if (back || inp.pressed('inventory')) this.close();
         break;
       }
       case 'story':

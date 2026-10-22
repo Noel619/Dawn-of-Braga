@@ -74,6 +74,17 @@ function holySparkle(b, x, y) {
   b.set(x, y + 1, P.gold4);
 }
 
+// Pieza de armadura: lo que cae dentro de 'inside', en acero con la luz
+// arriba a la izquierda; el canto de la chapa, más oscuro.
+function plate(b, inside, l = (x, y) => 0.8 - (x - 4) / 34 - (y - 3) / 46) {
+  for (let y = 0; y < 32; y++)
+    for (let x = 0; x < 32; x++) {
+      if (!inside(x, y)) continue;
+      const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      b.set(x, y, shade(STEEL, l(x, y) - (edge ? 0.32 : 0), x, y));
+    }
+}
+
 const ICONS = {
   // espada larga en diagonal: pomo abajo a la izquierda, punta arriba a la derecha
   sword(b) {
@@ -798,6 +809,133 @@ const ICONS = {
     holySparkle(b, 26, 4);
     b.outline(P.void);
   },
+  // --- la armadura (y, apagadas, las siluetas de sus ranuras vacías)
+  // yelmo de nasal con la banda de la frente remachada
+  helm(b) {
+    const inside = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 3.5 || py > 28.5) return false;
+      if (py < 15) return ((px - 16) / 10.5) ** 2 + ((py - 15) / 11.5) ** 2 <= 1;
+      return Math.abs(px - 16) <= 10.5 - (py - 15) * 0.2;
+    };
+    plate(b, inside, (x, y) => 0.88 - (x - 5) / 30 - (y - 3) / 48);
+    // la cara, abierta a los lados del nasal: los ojos y, debajo, la boca
+    for (let y = 16; y <= 18; y++) for (let x = 8; x <= 23; x++) if ((x < 15 || x > 16) && inside(x - 1, y) && inside(x + 1, y)) b.set(x, y, P.void);
+    for (let y = 19; y <= 28; y++) for (let x = 11; x <= 20; x++) if ((x < 15 || x > 16 || y > 24) && inside(x, y)) b.set(x, y, P.void);
+    // el nasal y la cresta
+    for (let y = 5; y <= 24; y++) {
+      b.set(15, y, y < 13 ? P.steel5 : P.steel4);
+      b.set(16, y, P.steel2);
+    }
+    // la banda de la frente
+    for (let x = 5; x <= 26; x++)
+      if (inside(x, 13)) {
+        b.set(x, 13, shade(BRONZE, 0.85 - (x - 5) / 30, x, 13));
+        b.set(x, 14, shade(BRONZE, 0.45 - (x - 5) / 40, x, 14));
+      }
+    for (const x of [8, 12, 20, 24]) b.set(x, 13, BRONZE[5]);
+    b.outline(P.void);
+  },
+  // coraza con la arista del pecho, el cinto y las launas del faldar
+  cuirass(b) {
+    const inside = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 4 || py > 29) return false;
+      if ((px - 16) ** 2 + (py - 3) ** 2 < 30) return false; // el cuello
+      const ax = Math.abs(px - 16);
+      if (py < 9.5) return ax <= 13.5 - (py < 6 ? (6 - py) * 1.2 : 0);
+      if (py < 22.5) return ax <= 11 - Math.max(0, py - 14) * 0.2;
+      return ax <= 9.5 + (py - 22.5) * 0.45;
+    };
+    plate(b, inside);
+    // la arista del pecho
+    for (let y = 9; y <= 21; y++) {
+      b.set(15, y, P.steel5);
+      b.set(16, y, P.steel3);
+    }
+    // las hombreras, separadas del peto
+    for (const x of [7, 24]) for (let y = 6; y <= 10; y++) b.set(x, y, P.steel1);
+    // el cinto de cuero con su hebilla
+    for (let x = 6; x <= 26; x++)
+      if (inside(x, 21)) {
+        b.set(x, 21, shade(WOOD, 0.8 - (x - 6) / 30, x, 21));
+        b.set(x, 22, P.wood1);
+      }
+    b.rect(15, 21, 2, 2, P.gold4);
+    b.set(16, 22, P.gold2);
+    // las launas del faldar
+    for (const y of [25, 28]) for (let x = 4; x <= 28; x++) if (inside(x, y)) b.set(x, y, P.steel1);
+    for (const [x, y] of [
+      [6, 7],
+      [25, 7],
+      [9, 12],
+      [22, 12],
+    ])
+      b.set(x, y, P.steel5);
+    b.outline(P.void);
+  },
+  // guantelete: la bocamanga, el dorso, los dedos articulados y el pulgar
+  gauntlets(b) {
+    const finger = (x, y) => y >= 4 && y <= 12 && x >= 9 && x <= 20 && (x - 9) % 3 !== 2;
+    const inside = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (finger(x, y)) return true;
+      if (py >= 12 && py < 21) return Math.abs(px - 15) <= 6.5;
+      if (py >= 21 && py <= 29) return Math.abs(px - 15) <= 6 + (py - 21) * 0.55;
+      return false;
+    };
+    plate(b, inside);
+    // las junturas de los dedos y del dorso
+    for (let x = 9; x <= 20; x++) {
+      if ((x - 9) % 3 === 2) continue;
+      for (const y of [7, 10]) b.set(x, y, P.steel1);
+    }
+    for (const y of [14, 17]) for (let x = 9; x <= 21; x++) if (inside(x, y)) b.set(x, y, P.steel1);
+    // el pulgar
+    seg(b, 21, 18, 25, 12, 1.6, 1.3, (t, s2, x, y) => shade(STEEL, 0.6 - s2 * 0.3, x, y));
+    // el ribete de la bocamanga
+    for (let x = 6; x <= 25; x++) if (inside(x, 21)) b.set(x, 21, BRONZE[4]);
+    b.outline(P.void);
+  },
+  // grebas con sus rodilleras y escarpes
+  greaves(b) {
+    const leg = (cx) => (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 3 || py > 28) return false;
+      if ((px - cx) ** 2 + (py - 8) ** 2 <= 17) return true; // la rodillera
+      if (py < 22) return Math.abs(px - cx) <= 3.4 - (py > 12 ? (py - 12) * 0.05 : 0);
+      // el escarpe, con la punta hacia delante (a la izquierda)
+      return px >= cx - 3.4 - (py - 22) * 1.1 && px <= cx + 3.4;
+    };
+    for (const cx of [10, 22]) {
+      const ins = leg(cx);
+      plate(b, ins);
+      for (let x = cx - 4; x <= cx + 4; x++) if (ins(x, 12)) b.set(x, 12, P.steel1);
+      b.set(cx - 1, 7, P.steel5);
+      b.set(cx, 6, P.steel5);
+    }
+    b.outline(P.void);
+  },
+  // colgante con la cruz y la piedra (la ranura del objeto bendito)
+  amulet(b) {
+    for (let i = 0; i <= 26; i++) {
+      const t = i / 26;
+      b.set(6 + t * 20, 3 + Math.sin(t * Math.PI) * 8, i % 2 ? P.gold2 : P.gold4);
+    }
+    const inCross = (x, y) => (x >= 14 && x <= 17 && y >= 11 && y <= 28) || (x >= 9 && x <= 22 && y >= 15 && y <= 18);
+    for (let y = 10; y < 30; y++) for (let x = 8; x < 24; x++) if (inCross(x, y)) b.set(x, y, shade(GOLD, 0.85 - (x - 9) / 22 - (y - 11) / 40 - (!inCross(x - 1, y) || !inCross(x + 1, y) || !inCross(x, y + 1) ? 0.25 : 0), x, y));
+    disc(b, 16, 17, 1.9, (l, d, x, y) => shade(RUBY, l + 0.15, x, y));
+    b.outline(P.void);
+  },
+  // nada (quitarse lo que hay en la ranura)
+  none(b) {
+    seg(b, 9, 9, 23, 23, 1.1, 1.1, () => P.iron2);
+    seg(b, 23, 9, 9, 23, 1.1, 1.1, () => P.iron2);
+  },
   // rollo de pergamino con lacre
   note(b) {
     const PA = [P.parch0, P.parch1, P.parch2, P.parch3, P.parch4, P.parch5];
@@ -971,6 +1109,31 @@ const SMALL = {
     b.set(1, 8, P.iron4);
     b.set(4, 4, P.gold4);
   },
+  // (las estadísticas del equipo: el aguante y lo que para la armadura)
+  stamina(b) {
+    b.poly(
+      [
+        [5.5, 0],
+        [1, 5],
+        [4, 5],
+        [3, 9],
+        [8, 3.5],
+        [5, 3.5],
+        [6.5, 0],
+      ],
+      P.moss3
+    );
+    b.set(5, 1, P.moss4);
+    b.set(4, 2, P.moss4);
+  },
+  shield(b) {
+    for (let y = 0; y < 9; y++) {
+      const hw = y < 4 ? 3.6 : 3.6 * (1 - (y - 4) / 5.2);
+      for (let x = 0; x < 9; x++) if (Math.abs(x + 0.5 - 4.5) <= hw) b.set(x, y, x < 4 ? P.iron3 : P.iron2);
+    }
+    b.vline(4, 1, 6, P.blood3);
+    b.hline(2, 6, 3, P.blood3);
+  },
   worn(b) {
     for (let i = 1; i < 8; i++) b.set(4, i, P.gold3);
     for (let i = 2; i < 7; i++) b.set(i, 3, P.gold3);
@@ -984,6 +1147,23 @@ export function iconBitmap(name) {
   if (!cache.has(k)) {
     const b = new Bitmap(32, 32);
     (ICONS[name] || ICONS.note)(b);
+    cache.set(k, b);
+  }
+  return cache.get(k);
+}
+// La silueta apagada de un icono, hundida en la casilla: la ranura vacía.
+export function ghostIcon(name) {
+  const k = 'g:' + name;
+  if (!cache.has(k)) {
+    const src = iconBitmap(name);
+    const b = new Bitmap(32, 32);
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const v = src.d[y * 32 + x];
+        if (v >>> 24 === 0) continue;
+        const lum = ((v & 0xff) + ((v >> 8) & 0xff) + ((v >> 16) & 0xff)) / 765;
+        b.set(x, y, lum > 0.42 ? P.iron1 : P.iron0);
+      }
     cache.set(k, b);
   }
   return cache.get(k);

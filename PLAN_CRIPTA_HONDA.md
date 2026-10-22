@@ -232,3 +232,34 @@ La puerta, su cerradura, los círculos de sangre, las lágrimas del dintel y el 
    con todas abiertas, y dónde no se ve suelo); parpadeos (`zfight.mjs`); cámara (`camclip.mjs`, con
    puntos en todas las salas nuevas); capturas de cada sala; instancias del modo de pruebas para las tres
    peleas (el Custodio, los Velados y Dom Paio en el pozo); el README, al día.
+
+## 12. Segunda vuelta (22 de octubre de 2026)
+
+Lo que pidió el autor después de jugarla, y cómo quedó:
+
+- **El templo romano** (lo peor de la zona: columnas sueltas con trozos de arquitrabe colgando en el aire, un
+  techo plano de casetones, un charco de siete metros que parecía agua en el suelo y la puerta del panteón al
+  fondo de un pasadizo torcido) se rehace como **basílica de tres naves**, como la de Porta Maggiore: dos
+  arquerías de cuatro arcos sobre pilares, bóvedas de cañón estucadas desde el mismo arranque, el mosaico sólo
+  en la nave del medio y, al norte, el **ábside** con su bóveda de cuarto de esfera (la misma curva de la nave,
+  que sigue por él), el altar DEO IGNOTO con el relicario y dos braseros. Sus dos puertas dan al tramo del cruce:
+  la del osario y, enfrente, la del paso del panteón, en el eje de su corredor (`TEMPLO`, en
+  `world/level_sacred.js`).
+- **El sepulcro del arzobispo**, reordenado: su sepulcro estaba en medio de la sala, en el paso de una puerta a
+  la otra, con un muerto cualquiera dentro. Ahora el tramo de las puertas queda libre; al norte, en un estrado
+  entre cuatro candeleros y bajo sus estandartes y su cruz, el sepulcro abierto y vacío, con el anillo en el
+  borde y sus últimas palabras a los pies; al sur, en fila, los sepulcros de su cabildo.
+- **El paso del panteón al templo**: recto, en el eje de la rotonda, bajo una sola bóveda de medio punto que
+  arranca donde acaba el trasdós del arco de la salida, con seis peldaños de veinte centímetros y el rellano
+  hasta la puerta del templo (antes: una bóveda rebajada más baja que el arco por el que se entraba, cuatro
+  peldaños de treinta y un pasadizo más estrecho, torcido y con otra bóveda). `PASO`, en `world/panteon.js`.
+- **La bajada a las catacumbas**: el umbral, con la misma sección que el arco de la salida, y doce peldaños
+  bajo una bóveda en rampa que baja con ellos hasta la de la galería (la misma sección: la sigue sin escalón).
+  Antes, la rampa era más baja que el arco y un lienzo tapaba el hueco entre los dos. `BAJADA`, en
+  `world/panteon.js`.
+- **Las galerías de las catacumbas**: bóvedas de medio punto más altas (arranque a 2,4 m), las cámaras donde se
+  juntan, abovedadas (tenían techo plano, más bajo que las claves de las galerías: por eso se veían «paneles»
+  según desde dónde) y, donde una galería da a una cámara, un arco de sillería con sus enjutas por las dos caras.
+- **La sala de las calaveras** del cruce pasa a ser la **Capilla de los Huesos**, como la de Évora, con su lema
+  (un documento más).
+- **El inventario**, rehecho a lo Dark Souls (ver el README).

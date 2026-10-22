@@ -31,7 +31,9 @@ const OPEN = [
   [270, 'arch'], // c1Norte
   [315, 'apse'],
 ];
-const GAL = { hw: 1.5, ys: 2.2, rise: 1.0 }; // (el perfil de sus bóvedas)
+// (el perfil de sus bóvedas: el de las galerías de la cripta honda, GV en
+// level_crypt2.js, de medio punto)
+const GAL = { hw: 1.5, ys: 2.4, rise: 1.45 };
 const APSE = { hw: 1.3, ys: 2.4, hb: 1.7, back: 0.6 }; // (la concha, de radio hw)
 const ROWS = [0.3, 1.05, 1.8, 2.55, 3.3]; // (las cinco alturas de nichos)
 
@@ -127,7 +129,8 @@ export function buildLucernario(ctx, C, L, o = {}) {
     // los nichos: cinco alturas en los lienzos; sobre las bocas, dos
     const nich = [];
     if (F.kind === 'niches') for (const y0 of ROWS) nich.push([0, y0, Math.min(0.82, F.hb - 0.25), 0.5]);
-    if (F.kind === 'arch' || F.kind === 'lintel') for (const s of [-1, 1]) nich.push([s * 0.66, 3.62, 0.48, 0.42]);
+    // (por encima de la rosca del arco de la boca)
+    if (F.kind === 'arch' || F.kind === 'lintel') for (const s of [-1, 1]) nich.push([s * 0.66, 4.25, 0.48, 0.42]);
     for (const [u, y0, hw, h] of nich) holes.push([V(u - hw, y0), V(u + hw, y0), V(u + hw, y0 + h), V(u - hw, y0 + h)]);
     for (const h of holes) shape.holes.push(new THREE.Path(h.map((p) => new THREE.Vector2(p.x, p.y))));
     geom('rock', new THREE.ShapeGeometry(shape, 6), m, RK.map((v) => v * rng.range(0.94, 1.04)), { grime: true });

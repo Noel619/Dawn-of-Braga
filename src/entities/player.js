@@ -9,6 +9,7 @@ import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
 import { objMat } from '../gfx/materials.js';
 import { relicMods } from '../game/relics.js';
+import { ITEMS } from '../game/story.js';
 
 // Los clips y golpes de cada arma están en weapons.js / weapon_moves.js.
 
@@ -83,6 +84,8 @@ export class Player {
     // el aire (rally), el golpe que devuelve lo parado y el crítico de la
     // esquiva en el último instante
     this.relic = null;
+    // la armadura: una pieza (id de ITEMS) o nada en cada ranura
+    this.armor = { head: null, body: null, hands: null, legs: null };
     this.mods = relicMods(null);
     this.rally = 0;
     this.rallyHold = 0;
@@ -166,10 +169,30 @@ export class Player {
   // Se pone (o se quita, con null) un objeto bendito.
   wearRelic(id) {
     this.relic = id || null;
-    this.mods = relicMods(this.relic);
+    this.refreshMods();
     this.rally = 0;
     this.retaliateT = this.critNextT = 0;
     this.refreshMaxHp();
+  }
+  // Se pone (o se quita, con null) una pieza de armadura en su ranura.
+  setArmor(part, id) {
+    if (!(part in this.armor)) return;
+    this.armor[part] = id || null;
+    this.refreshMods();
+  }
+  // Lo que quita la armadura de cada golpe (de 0 a 0,6): la suma de sus
+  // piezas (def: en puntos de cien).
+  armorDef() {
+    let d = 0;
+    for (const k in this.armor) if (this.armor[k] && ITEMS[this.armor[k]]) d += ITEMS[this.armor[k]].def || 0;
+    return Math.min(0.6, d / 100);
+  }
+  // Lo que hacen el objeto bendito y la armadura (la armadura, en el daño
+  // que se recibe: todos los golpes pasan por mods.taken).
+  refreshMods() {
+    this.mods = relicMods(this.relic);
+    const d = this.armorDef();
+    if (d) this.mods = { ...this.mods, taken: this.mods.taken * (1 - d) };
   }
   // La vitalidad máxima de verdad (la ganada, por lo que haga el objeto que se
   // lleve); quitárselo no cura.

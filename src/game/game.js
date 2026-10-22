@@ -42,6 +42,7 @@ import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
+import { RELIC_IDS } from './relics.js';
 import { ALEMAN } from '../world/level_postigo.js';
 import { cryptFloorY } from '../world/level_crypt2.js';
 
@@ -296,6 +297,8 @@ export class Game {
     this.lastAltar = null;
     this.hintsShown = {};
     this.savedWeapon = null;
+    // (lo que se llevaba en las manos: sin arma o sin escudo, si se los quitó)
+    this.savedArmed = this.savedShield = undefined;
   }
 
   saveGame() {
@@ -310,6 +313,9 @@ export class Game {
       maxSt: p.maxSt,
       dmgMul: p.dmgMul,
       weapon: p.weaponId,
+      armed: p.hasSword,
+      shielded: p.hasShield,
+      armor: { ...p.armor },
       relic: p.relic,
       lastAltar: this.lastAltar,
       playTime: this.playTime,
@@ -331,18 +337,57 @@ export class Game {
     const p = this.player;
     p.baseMaxHp = s.maxHp || 100;
     p.hp = p.baseMaxHp;
+    for (const k in p.armor) p.armor[k] = s.armor && s.armor[k] && this.inventory.has(s.armor[k]) ? s.armor[k] : null;
     p.wearRelic(s.relic && this.inventory.has(s.relic) ? s.relic : null);
     p.maxFlasks = s.maxFlasks || 3;
     p.maxSt = s.maxSt || 100;
     p.dmgMul = s.dmgMul || 1;
     this.savedWeapon = s.weapon || null;
+    this.savedArmed = s.armed;
+    this.savedShield = s.shielded;
   }
 
-  // Se pone (o se quita) un objeto bendito: de uno en uno (game/relics.js).
-  wearRelic(id) {
+  // ------------------------------------------------------------ el equipo
+  // Las ranuras del inventario (a lo Dark Souls): la mano derecha (el
+  // arma), la izquierda (el escudo), las cuatro de la armadura (head, body,
+  // hands, legs) y el objeto bendito (de uno en uno: game/relics.js). Lo que
+  // se lleva lo tiene el jugador (weaponId y hasSword, hasShield, armor,
+  // relic); aquí, qué hay en cada ranura y qué se puede poner en ella.
+  equipped(slot) {
     const p = this.player;
-    p.wearRelic(p.relic === id ? null : id);
+    if (slot === 'weapon') return p.hasSword && this.hasWeapon() ? WEAPONS[p.weaponId].item : null;
+    if (slot === 'shield') return p.hasShield && this.inventory.has('escudo') ? 'escudo' : null;
+    if (slot === 'relic') return p.relic;
+    return p.armor[slot] || null;
+  }
+  equipOptions(slot) {
+    const inv = this.inventory;
+    if (slot === 'weapon') return WEAPON_ORDER.filter((w) => inv.has(WEAPONS[w].item)).map((w) => WEAPONS[w].item);
+    if (slot === 'shield') return inv.has('escudo') ? ['escudo'] : [];
+    if (slot === 'relic') return RELIC_IDS.filter((k) => inv.has(k));
+    return Object.keys(ITEMS).filter((k) => ITEMS[k].armor === slot && inv.has(k));
+  }
+  // La ranura de un objeto que se puede llevar puesto (o null).
+  slotOf(id) {
+    const it = ITEMS[id];
+    if (!it) return null;
+    if (it.weapon) return 'weapon';
+    if (id === 'escudo') return 'shield';
+    if (it.relic) return 'relic';
+    return it.armor || null;
+  }
+  // Pone 'id' en su ranura (o la vacía, con null) y lo guarda.
+  equip(slot, id) {
+    const p = this.player;
+    if (id && !this.equipOptions(slot).includes(id)) return false;
+    if (slot === 'weapon') {
+      if (id) p.equipWeapon(ITEMS[id].weapon);
+      p.setEquipment(!!id, p.hasShield);
+    } else if (slot === 'shield') p.setEquipment(p.hasSword, !!id);
+    else if (slot === 'relic') p.wearRelic(id);
+    else p.setArmor(slot, id);
     this.saveGame();
+    return true;
   }
 
   // Armas: ¿tiene alguna? y cuál empuñar (la guardada si aún la tiene; si no,
@@ -377,7 +422,8 @@ export class Game {
       } else if (e.type === 'impaled' && this.flags['impaled:beast']) this.hideImpaled(e);
     }
     this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
-    this.player.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
+    // (desarmado o sin escudo, si se los quitó en el inventario)
+    this.player.setEquipment(this.hasWeapon() && this.savedArmed !== false, this.inventory.has('escudo') && this.savedShield !== false);
     this.finale.applyFlags();
     this.house.applyFlags();
     this.crypt.applyFlags();
@@ -519,6 +565,7 @@ export class Game {
     const p = this.player;
     p.baseMaxHp = 100;
     p.hp = 100;
+    for (const k in p.armor) p.armor[k] = null;
     p.wearRelic(null);
     p.maxFlasks = 3;
     p.maxSt = 100;
@@ -710,9 +757,14 @@ export class Game {
     const p = this.player;
     this.inventory.add(id);
     const it = ITEMS[id];
-    // un arma nueva se empuña al recogerla
-    if (it.weapon && WEAPONS[it.weapon]) p.equipWeapon(it.weapon);
-    if (it.weapon || id === 'escudo') p.setEquipment(this.hasWeapon(), this.inventory.has('escudo'));
+    // un arma nueva se empuña al recogerla; el escudo, al brazo; una pieza
+    // de armadura, si su ranura está vacía
+    if (it.weapon && WEAPONS[it.weapon]) {
+      p.equipWeapon(it.weapon);
+      p.setEquipment(true, p.hasShield);
+    }
+    if (id === 'escudo') p.setEquipment(p.hasSword, true);
+    if (it.armor && !p.armor[it.armor]) p.setArmor(it.armor, id);
     if (it.upgrade === 'flask') {
       p.maxFlasks++;
       p.flasks++;

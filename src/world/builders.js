@@ -704,7 +704,16 @@ export function lunette(ctx, o) {
         u1 = cuts[i + 1];
       const inside = (u0 + u1) / 2 > H.u0 && (u0 + u1) / 2 < H.u1;
       const y0 = inside ? Math.max(ys, H.y) : ys;
-      if (y0 < Math.min(at2(u0), at2(u1))) strip(u0, at2(u0), u1, at2(u1), y0);
+      const y0a = at2(u0),
+        y1a = at2(u1);
+      if (y0 < Math.min(y0a, y1a)) strip(u0, y0a, u1, y1a, y0);
+      else if (y0 < Math.max(y0a, y1a)) {
+        // (la cuerda cruza lo alto del vano: queda el pico de encima; antes se
+        // perdía el tramo entero y quedaba una rendija junto a la bóveda)
+        const uc = u0 + ((y0 - y0a) * (u1 - u0)) / (y1a - y0a);
+        if (y0a < y0) strip(uc, y0, u1, y1a, y0);
+        else strip(u0, y0a, uc, y0, y0);
+      }
     }
   }
   return { crown: ys + rise, n };

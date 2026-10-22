@@ -149,8 +149,19 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #title .foot { position: absolute; bottom: calc(var(--u) * 5); left: 0; right: 0; color: var(--dim); text-shadow: var(--sh); }
 
 /* inventario */
-#inv .panel { width: min(calc(var(--u) * 320), 96vw); }
-#inv .cols { display: grid; grid-template-columns: calc(var(--u) * 150) minmax(0, 1fr); gap: calc(var(--u) * 10); margin-top: calc(var(--u) * 4); min-height: calc(var(--u) * 110); }
+#inv .panel { width: min(calc(var(--u) * 330), 96vw); }
+#inv .cols { display: grid; grid-template-columns: calc(var(--u) * 152) minmax(0, 1fr); gap: calc(var(--u) * 10); margin-top: calc(var(--u) * 4); min-height: calc(var(--u) * 150); }
+#inv .tabs .tab { width: calc(var(--u) * 72); }
+/* la columna de las casillas: grupos con su rótulo (se desplaza si no cabe) */
+.inv-left { display: grid; gap: calc(var(--u) * 3); align-content: start; max-height: min(calc(var(--u) * 212), 60vh); overflow-y: auto; scrollbar-width: none; }
+.inv-left::-webkit-scrollbar { display: none; }
+.inv-left .lbl { margin: 0 0 calc(var(--u) * 1); color: var(--gold); text-shadow: var(--sh); }
+/* el detalle: la ranura o la clase, encima del nombre */
+.detail .eye { margin-bottom: calc(var(--u) * 1); color: var(--dim); text-shadow: var(--sh); }
+.detail h3.dim { color: var(--ash); }
+.detail p.f-small { margin-top: calc(var(--u) * 2); color: var(--ash); }
+.detail p.on { color: var(--gold-hi); }
+#inv-hint span[data-a] { cursor: pointer; }
 .tabs { display: flex; gap: calc(var(--u) * 2); justify-content: center; margin-top: calc(var(--u) * 3); }
 .tabs .tab { position: relative; width: calc(var(--u) * 76); height: calc(var(--u) * var(--ih)); line-height: calc(var(--u) * var(--ih)); text-align: center; color: var(--dim); text-shadow: var(--sh); cursor: pointer; background-size: 100% 100%; image-rendering: pixelated; }
 .tabs .tab.on { color: var(--bone-hi); background-image: var(--banner-tab); }

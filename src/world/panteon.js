@@ -19,6 +19,7 @@ import { dome, barrelVault, rampVault, archRing, pilaster, lunette, stairs } fro
 import * as P from './props.js';
 import { bakeParts, chainParts, flip, bishopTombParts } from './ossuary_props.js';
 import { roundArch } from './osario_martin.js';
+import { TEMPLO } from './level_sacred.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const M4 = () => new THREE.Matrix4();
@@ -33,11 +34,20 @@ export const GAL = { x0: -62, x1: -52, z0: -136, z1: -114.5, ys: 4.2, rise: 2.4 
 // (la luz, la de sus pasos; la rosca no pasa de la cornisa)
 // (jamb: el alto de los muros de su paso)
 const DOORS = {
-  0: { hw: 2.0, ys: 1.9, jamb: 3.4 }, // al templo (este)
-  3: { hw: 1.5, ys: 2.2, jamb: 2.2 }, // a las catacumbas (sur)
+  0: { hw: 2.0, ys: 1.9, jamb: 4.2 }, // al templo (este)
+  3: { hw: 1.5, ys: 2.4, jamb: 2.4 }, // a las catacumbas (sur)
   6: { hw: 2.0, ys: 1.9, jamb: 1.9 }, // a la galilea (oeste)
   9: { hw: 2.0, ys: 1.9, jamb: 3.4 }, // a la reja de la antesala (norte)
 };
+
+// el paso al templo: dónde empieza su escalera, sus peldaños, su huella y el
+// arranque de su bóveda sobre el suelo de la rotonda (donde acaba el trasdós
+// del arco de la salida: 1,9 + 2 + 0,3); el rellano, de la escalera al muro
+// del templo, en level_crypt2.js
+export const PASO = { x0: -26.5, n: 6, run: 0.4, ys: 4.2 };
+// la bajada a las catacumbas: su escalera (de z0, arriba, a z1, abajo), sus
+// peldaños y la flecha de su bóveda (la de las galerías de abajo)
+export const BAJADA = { z0: -106.5, z1: -102, n: 12, rise: 1.45 };
 
 // el marco de una cara plana del muro redondo, a 'th' y a 'd' del centro:
 // x a lo largo (a la derecha de quien la mira desde dentro), y arriba, z
@@ -452,20 +462,31 @@ export function buildPanteon(ctx, C, L, o = {}) {
     archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: GAL.x1, t1: GAL.x1 + 0.3, top: Y + GAL.ys, clip: [cz - d.hw, cz + d.hw], mat: 'ashlar', spMat: 'ashlar', room, tint: AT, spTint: WT });
     archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: GAL.x1 + 0.3, t1: xw + 0.02, mat: 'ashlar', room, tint: AT });
   }
-  // este: el paso al templo, los cuatro peldaños y el rellano, bajo una
-  // bóveda que arranca a la altura del arco del templo
+  // este: el paso al templo, recto, en el eje de la rotonda: el umbral, la
+  // escalera de seis peldaños y el rellano, hasta la puerta del oeste del
+  // templo (en el mismo eje), bajo una sola bóveda de medio punto que arranca
+  // donde acaba el trasdós del arco de la salida; en sus extremos, sobre lo
+  // alto de la cara de la salida y del muro del templo, sus lunetos. (Antes:
+  // una bóveda rebajada, más baja que el arco por el que se entraba, cuatro
+  // peldaños de treinta centímetros y, al fondo, un pasadizo más estrecho y
+  // torcido, con otra bóveda más, hasta una puerta fuera del eje.)
   const YU = Y + 1.2; // (el suelo del templo y de la cripta de arriba)
   {
     const d = DY(0),
       xe = cx + edge(0);
+    const ys = Y + PASO.ys,
+      xt = TEMPLO.x0 - 0.5; // (la cara de fuera del muro del templo)
+    const W = TEMPLO.west;
     archRing(ctx, { axis: 'z', c: cz, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: xe - 0.02, t1: xe + 0.35, mat: 'ashlar', room, tint: AT });
-    barrelVault(ctx, { x0: xe + 0.35, x1: -22, z0: cz - 2, z1: cz + 2, axis: 'x', ys: YU + 2.2, rise: 1.0, mat: 'ashlar', tint: [0.68, 0.64, 0.58], room, sub: 1.0, impostTint: AT });
-    ctx.col.add(xe, YU + 3.2, cz - 2, -22, YU + 3.6, cz + 2).cam = true;
-    stairs(ctx, -26.3, Y, cz, 'e', 4, 4, 0.3, 0.45, 'ashlar', { solidBelow: true });
-    // el paso del templo: su bóveda y el arco de este lado
-    barrelVault(ctx, { x0: -22, x1: -19.5, z0: -119, z1: -116.5, axis: 'x', ys: YU + 2.2, rise: 1.0, mat: 'ashlar', tint: [0.68, 0.64, 0.58], room, sub: 1.0, impostTint: AT });
-    archRing(ctx, { axis: 'z', c: -117.75, w: 2.5, y0: YU + 2.2, rise: 1.0, ring: 0.3, t0: -22.15, t1: -22, top: YU + 3.2, clip: [-119.3, -116.2], mat: 'ashlar', spMat: 'ashlar', room, tint: AT, spTint: WT });
-    P.candelabra(ctx, -23.0, YU, cz - 1.5, { room });
+    const PV = barrelVault(ctx, { x0: xe + 0.02, x1: xt, z0: cz - 2, z1: cz + 2, axis: 'x', ys, mat: 'ashlar', tint: [0.68, 0.64, 0.58], room, sub: 1.0, impostTint: AT });
+    lunette(ctx, { axis: 'x', at: xe + 0.02, c: cz, span: 4, ys, face: 1, hole: { u0: cz - 3, u1: cz + 3, y: Y + H }, mat: 'ashlar', tint: WT, room });
+    lunette(ctx, { axis: 'x', at: xt - 0.02, c: cz, span: 4, ys, face: -1, hole: { u0: cz - 3, u1: cz + 3, y: YU + TEMPLO.ys }, mat: 'ashlar', tint: WT, room });
+    ctx.col.add(xe, PV.crown - 0.05, cz - 2, xt, PV.crown + 0.4, cz + 2).cam = true;
+    stairs(ctx, PASO.x0, Y, cz, 'e', 4, PASO.n, (YU - Y) / PASO.n, PASO.run, 'ashlar', { solidBelow: true });
+    // a los lados de la puerta del templo, dos candeleros; y dos antorchas
+    for (const s of [-1, 1]) P.candelabra(ctx, xt - 0.75, YU, W.z + s * (W.w / 2 + 0.55), { room });
+    P.wallTorch(ctx, -27.7, Y + 2.6, cz + 2, 'n', { room, radius: 7 });
+    P.wallTorch(ctx, -22.6, YU + 2.4, cz - 2, 's', { room, radius: 7 });
   }
   // norte: el paso a la reja de la antesala, entre dos velados
   {
@@ -478,16 +499,23 @@ export function buildPanteon(ctx, C, L, o = {}) {
     for (const s of [-1, 1]) P.veiledStatue(ctx, cx + s * 1.35, Y, -134.9, 0, { ped: 0.45 });
     if (ctx.lights) ctx.lights.push({ x: cx, y: Y + 1.8, z: -135.0, r: 1, g: 0.3, b: 0.16, radius: 8, intensity: 1.0, room });
   }
-  // sur: la bajada a las catacumbas (su escalera, la bóveda en rampa y su luz,
-  // fría)
+  // sur: la bajada a las catacumbas: el umbral, bajo una bóveda de medio
+  // punto con la misma luz, el mismo arranque y la misma flecha que el arco
+  // de la salida, y doce peldaños bajo una bóveda en rampa que baja con ellos
+  // hasta la de la galería de abajo (la misma sección: la sigue sin un
+  // escalón). Su luz, fría. (Antes: una rampa rebajada, más baja que el arco
+  // de la salida, y entre los dos, un lienzo para tapar el hueco; ocho
+  // peldaños de treinta centímetros.)
   {
     const d = DY(3),
       zs = cz + edge(3);
-    archRing(ctx, { axis: 'x', c: cx, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: zs - 0.02, t1: -106, mat: 'ashlar', room, tint: AT });
-    stairs(ctx, cx, YC, -102.4, 'n', 3, 8, 0.3, 0.45, 'flag', { solidBelow: true });
-    rampVault(ctx, { x0: cx - 1.5, x1: cx + 1.5, z0: -106, z1: -102.4, ys0: Y + d.ys, ys1: YC + 2.2, rise: 1.0, mat: 'rock', tint: [0.62, 0.57, 0.5], room });
-    archRing(ctx, { axis: 'x', c: cx, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: -106, t1: -105.85, top: Y + d.ys + d.hw + 0.4, clip: [cx - d.hw - 0.3, cx + d.hw + 0.3], mat: 'ashlar', spMat: 'rock', room, tint: AT, spTint: [0.62, 0.57, 0.5] });
-    if (ctx.lights) ctx.lights.push({ x: cx, y: Y + 0.8, z: -105.2, r: 0.5, g: 0.62, b: 0.9, radius: 7, intensity: 0.85, room });
+    const B = BAJADA;
+    archRing(ctx, { axis: 'x', c: cx, w: 2 * d.hw, y0: Y + d.ys, rise: d.hw, ring: 0.3, t0: zs - 0.02, t1: zs + 0.35, mat: 'ashlar', room, tint: AT });
+    barrelVault(ctx, { x0: cx - d.hw, x1: cx + d.hw, z0: zs + 0.02, z1: B.z0, axis: 'z', ys: Y + d.ys, rise: B.rise, mat: 'ashlar', tint: [0.68, 0.64, 0.58], room, sub: 1.0, impostTint: AT });
+    stairs(ctx, cx, YC, B.z1, 'n', 2 * d.hw, B.n, (Y - YC) / B.n, (B.z1 - B.z0) / B.n, 'ashlar', { solidBelow: true });
+    rampVault(ctx, { x0: cx - d.hw, x1: cx + d.hw, z0: B.z0, z1: B.z1, ys0: Y + d.ys, ys1: YC + d.ys, rise: B.rise, mat: 'ashlar', tint: [0.64, 0.6, 0.54], room, impost: false });
+    if (ctx.lights) ctx.lights.push({ x: cx, y: Y + 0.8, z: zs + 1.2, r: 0.5, g: 0.62, b: 0.9, radius: 7, intensity: 0.85, room });
+    P.wallTorch(ctx, cx - d.hw, YC + 2.2, B.z1 - 0.9, 'e', { room, radius: 6.5 });
   }
 
   // --- la galilea: bóveda de cañón con sus fajones, losas de obispos por

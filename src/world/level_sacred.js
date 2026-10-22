@@ -751,6 +751,13 @@ export const CRYPT_STAIR = { zTop: -86, zBot: -97, n: 25, rise: 0.304, run: 0.44
 // en la rejilla de medio metro con la que se levantan los muros de la cripta
 // honda: con la boca a -121,25 el arco, la bóveda y los peldaños quedaban un
 // cuarto de metro corridos respecto del hueco.)
+// El Templo de Bracara (la basílica romana de tres naves, al oeste del
+// osario): su planta de muro a muro, la luz de la nave del medio (entre las
+// caras de sus arquerías), el grueso de sus pilares, sus tramos, el arranque
+// de las bóvedas sobre el suelo y la flecha de la del medio, y la puerta del
+// oeste (la del paso del panteón, en el eje de su corredor; ver panteon.js).
+export const TEMPLO = { x0: -19, x1: -3.5, z0: -132, z1: -112, nave: 5.9, pier: 0.8, bay: 5, ys: 4.3, rise: 1.3, west: { z: -118.5, w: 2 } };
+
 export const CRYPT_DOORS = {
   llegada: { x0: -7.5, x1: -7, z0: -103, z1: -100.5, h: 2.2 },
   paso: { z: -120, w: 2, h: 2.2, rise: 1.0 },
@@ -769,8 +776,8 @@ export function buildCrypt(ctx, S, C, L) {
     AT = [0.88, 0.85, 0.79]; // arcos, pilastras y columnas
   wb.setRoom(room);
   const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-  const cryptFloor = (x0, z0, x1, z1, y, mat = 'flag') => {
-    wb.box(mat, x0, y - 0.3, z0, x1, y, z1, { faces: 't', ao: false, sub: 2.5, room, uv: mat === 'mosaic' ? 0.2 : 0.5 });
+  const cryptFloor = (x0, z0, x1, z1, y, mat = 'flag', tint) => {
+    wb.box(mat, x0, y - 0.3, z0, x1, y, z1, { faces: 't', ao: false, sub: 2.5, room, uv: mat === 'mosaic' ? 0.2 : 0.5, tint });
     ctx.col.add(x0, y - 1, z0, x1, y, z1);
   };
   // cara de un muro que mira hacia 'f' (n: -z, s: +z, e: +x, w: -x)
@@ -1087,7 +1094,16 @@ export function buildCrypt(ctx, S, C, L) {
     });
   }
 
-  // --- el sepulcro del arzobispo (al este): bóveda rebajada con dos fajones
+  // --- el sepulcro del arzobispo (al este): su capilla funeraria, bajo la
+  // bóveda rebajada con sus dos fajones. Se entra por el tramo del medio, el
+  // de las dos puertas (la del osario y, enfrente, la del paso del
+  // arzobispo, que baja a la cripta de los mártires), y ese paso queda libre.
+  // Al norte, en su estrado, entre cuatro candeleros y bajo sus estandartes,
+  // el sepulcro del arzobispo, abierto y vacío: dejó en él su anillo y sus
+  // últimas palabras antes de bajar, ya dándose por muerto. Al sur, en fila,
+  // los sepulcros de los canónigos de su cabildo. (Antes, el suyo estaba en
+  // medio de la sala, en el paso de una puerta a la otra, con un muerto
+  // cualquiera dentro, y lo demás, repartido sin orden.)
   {
     const x0 = 3.5,
       x1 = 16,
@@ -1118,131 +1134,168 @@ export function buildCrypt(ctx, S, C, L) {
       pilaster(ctx, x1, z, 'w', Y, YS, { room, tint: AT, w: 0.5, d: 0.2 });
     }
     ceilCol(x0, z0, x1, z1, YS + RISE);
-    wb.box('ashlar', 8, Y, -122.5, 12, Y + 0.3, -117.5, { faces: 'tnsew', ao: false, room });
-    P.sarcophagus(ctx, 10, Y + 0.3, -120, 0, { open: true, room });
-    bakeCorpse(wb, 10, Y + 0.72, -120, Math.PI / 2, 'back', 'villager', 1);
-    P.candelabra(ctx, 7, Y, -115, { room });
-    P.candelabra(ctx, 13, Y, -125, { room });
-    P.candles(ctx, 15.2, Y, -113, 7, 1505, { room, radius: 4, intensity: 0.8 });
-    for (const z of [-123.6, -116.4]) P.banner(ctx, 15.9, Y + 3.4, z, -Math.PI / 2, 'bannerRed', 1.0, 2.4);
-    P.sarcophagus(ctx, 5, Y, -126.4, 0, { effigy: true, room });
-    P.sarcophagus(ctx, 14.6, Y, -116, Math.PI / 2, { room });
+    // el estrado del norte, de un escalón, y en él el sepulcro, de través
+    const DZ = -124.6;
+    wb.box('ashlar', x0 + 1.2, Y, z0, x1 - 1.2, Y + 0.3, DZ, { faces: 'tsew', sub: 2, aoH: 0.3, room, tint: AT.map((v) => v * 0.92) });
+    ctx.col.add(x0 + 1.2, Y, z0, x1 - 1.2, Y + 0.3, DZ);
+    // (girado: la tapa corrida, hacia el muro; la boca, hacia quien llega)
+    P.sarcophagus(ctx, c, Y + 0.3, -126.3, Math.PI, { open: true, hollow: true, room, l: 1.25, w: 0.6 });
+    for (const [x, z] of [
+      [x0 + 1.75, DZ - 0.45],
+      [x1 - 1.75, DZ - 0.45],
+      [x0 + 1.75, z0 + 0.65],
+      [x1 - 1.75, z0 + 0.65],
+    ])
+      P.candelabra(ctx, x, Y + 0.3, z, { room });
+    // sus estandartes y su cruz, en el muro
+    for (const s of [-1, 1]) P.banner(ctx, c + s * 2.6, YS - 0.15, z0 + 0.1, 0, 'bannerRed', 1.0, 2.4);
+    wb.box('bronzeAged', c - 0.08, Y + 1.55, z0, c + 0.08, Y + 3.3, z0 + 0.08, { ao: false, room });
+    wb.box('bronzeAged', c - 0.6, Y + 2.62, z0, c + 0.6, Y + 2.78, z0 + 0.08, { ao: false, room });
+    // a los lados de la puerta del paso, dos candeleros
+    for (const s of [-1, 1]) P.candelabra(ctx, x1 - 0.75, Y, PA.z + s * (PA.w / 2 + 0.75), { room });
+    // al sur, los sepulcros de los canónigos, con sus velas
+    for (const x of [c - 3.55, c, c + 3.55]) P.sarcophagus(ctx, x, Y, z1 - 1.35, 0, { effigy: true, room, l: 1.0, w: 0.48 });
+    P.candles(ctx, c - 1.8, Y, z1 - 2.6, 5, 1505, { room, radius: 4, intensity: 0.8 });
+    P.candles(ctx, c + 1.8, Y, z1 - 2.6, 4, 1504, { room, radius: 3.5, intensity: 0.6 });
     P.fleshGrowth(ctx, 15.4, Y, -127.4, 1.0, 1506, { room, climb: 1.8 });
-    ctx.rats.push({ x: 14.9, y: Y, z: -125.8, n: 1 });
+    ctx.rats.push({ x: 4.6, y: Y, z: -113.4, n: 1 });
     P.hangingLamp(ctx, c, YS + RISE, -120, { room, len: 1.9, radius: 9.5, intensity: 1.0 });
     for (const z of [-114.6, -125.4]) {
       P.wallTorch(ctx, x1, Y + 2.6, z, 'w', { room, radius: 7 });
       P.wallTorch(ctx, x0, Y + 2.6, z, 'e', { room, radius: 7 });
     }
     L.interact.push(
-      { kind: 'item', id: 'i_anillo', item: 'anillo', x: 10.1, y: Y + 1.2, z: -119.6 },
-      // (en el estrado, a los pies del sepulcro: a Y + 1,3 flotaba en el aire)
-      { kind: 'note', id: 'n_arzobispo', note: 'arzobispo', x: 9.2, y: Y + 0.31, z: -121.2, model: 'paper' }
+      // (en el borde de su sepulcro vacío, del lado de quien llega)
+      { kind: 'item', id: 'i_anillo', item: 'anillo', x: c + 0.3, y: Y + 1.25, z: -125.745 },
+      // (en el estrado, a los pies del sepulcro)
+      { kind: 'note', id: 'n_arzobispo', note: 'arzobispo', x: c - 0.7, y: Y + 0.31, z: -125.15, model: 'paper' }
     );
   }
 
-  // --- el templo romano (al oeste): columnas con su arquitrabe (caído donde
-  // se partió la columna) y un techo de casetones; muros de sillería con
-  // pilastras y la misma cornisa todo alrededor
+  // --- el Templo de Bracara (al oeste): la basílica romana que quedó
+  // enterrada bajo la Sé, de tres naves, como la de Porta Maggiore en Roma:
+  // dos arquerías sobre pilares, bóvedas de cañón estucadas y, al norte, el
+  // ábside, con su bóveda de cuarto de esfera (la misma curva de la de la
+  // nave, que sigue por ella) y el altar DEO IGNOTO entre dos braseros. Las
+  // dos puertas dan al tramo del cruce: al este, la del osario; al oeste, la
+  // del paso del panteón (ver panteon.js), en el eje de su corredor. (Antes:
+  // columnas sueltas con trozos de arquitrabe colgando en el aire, un techo
+  // plano de casetones, un charco de agua de siete metros pintado en el suelo
+  // y la puerta del panteón al fondo de un pasadizo torcido.)
   {
-    const x0 = -19,
-      x1 = -3.5,
-      z0 = -132,
-      z1 = -112;
-    const YE = Y + 4.6, // capiteles
-      YA = YE + 0.6, // sobre el arquitrabe
-      YT = YA + 0.45; // el techo
-    const RT = [0.64, 0.62, 0.58];
+    const T = TEMPLO;
+    const { x0, x1, z0, z1 } = T;
+    const cx = (x0 + x1) / 2,
+      hn = T.nave / 2;
+    const YS = Y + T.ys;
+    const RT = [0.64, 0.62, 0.58],
+      ST = [0.8, 0.76, 0.68]; // (el estuco de las bóvedas)
     const sp = SIDE_PORTAL;
     C.paint(-3.6, -121, -2.4, -119, 1);
     C.paint(x0, z0, x1, z1, 1);
     cryptFloor(-3.5, -121, -2.5, -119, Y);
-    cryptFloor(x0, z0, x1, z1, Y, 'mosaic');
-    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: -3.0, y0: Y, y1: YT, openings: [{ c: -120, w: sp.w, h: sp.h, rise: sp.rise, ring: sp.ring, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
-    // (al oeste, la boca de las catacumbas)
-    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x0 - 0.5, t1: x0, y0: Y, y1: YT, openings: [{ c: -117.75, w: 2.5, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
-    wallFace('ashlar', x0, Y, z0 - 0.5, x1, YT, z0, 's', { tint: RT });
-    wallFace('ashlar', x0, Y, z1, x1, YT, z1 + 0.5, 'n', { tint: RT });
-    // la cornisa (a la altura del arquitrabe) y las pilastras
-    const cor = { ao: false, room, tint: AT, sub: 2 };
-    wb.box('ashlar', x0, YE, z0, x0 + 0.14, YA, z1, { ...cor, faces: 'eb' });
-    wb.box('ashlar', x1 - 0.14, YE, z0, x1, YA, z1, { ...cor, faces: 'wb' });
-    wb.box('ashlar', x0 + 0.14, YE, z0, x1 - 0.14, YA, z0 + 0.14, { ...cor, faces: 'sb' });
-    wb.box('ashlar', x0 + 0.14, YE, z1 - 0.14, x1 - 0.14, YA, z1, { ...cor, faces: 'nb' });
-    for (const z of [-116, -123, -129]) {
-      // (la del oeste, un poco corrida: deja sitio a la boca de las catacumbas)
-      pilaster(ctx, x0, z === -116 ? -115.3 : z, 'e', Y, YE, { room, tint: AT, w: 0.6, d: 0.12 });
-      pilaster(ctx, x1, z, 'w', Y, YE, { room, tint: AT, w: 0.6, d: 0.12 });
-    }
-    // columnas (dos partidas) y el arquitrabe sobre ellas
-    const cols = [
-      [-15, -116, 0],
-      [-8, -116, 1],
-      [-15, -123, 0],
-      [-8, -123, 0],
-      [-15, -129, 1],
-      [-8, -129, 0],
-    ];
-    for (const [x, z, broken] of cols) {
-      if (broken) {
-        P.column(ctx, x, Y, z, 2.2, 0.45, { mat: 'ashlar' });
-        P.rubble(ctx, x + 1.2, Y, z + 0.5, 4, Math.round(x * z), 1, { mat: 'ashlar', scale: 1.2 });
-      } else P.column(ctx, x, Y, z, YE - Y, 0.45, { mat: 'ashlar' });
-    }
-    const arch = (x, za, zb) => wb.box('ashlar', x - 0.42, YE, za, x + 0.42, YA, zb, { ao: false, room, tint: AT, faces: 'nsewb', sub: 2 });
-    // hilera de x = -15: entera hasta la columna de -123; de ahí al muro del
-    // norte se vino abajo (la columna de -129 está partida): quedan los muñones
-    // (de cornisa a cornisa: metido en ella, sus caras de abajo coincidían)
-    arch(-15, -116, z1 - 0.14);
-    arch(-15, -123, -116);
-    arch(-15, -124.6, -123);
-    arch(-15, z0 + 0.14, -130.6);
-    // hilera de x = -8: caída entre el muro del sur y la columna de -123
-    arch(-8, -113.4, z1 - 0.14);
-    arch(-8, -123, -121.6);
-    arch(-8, -129, -123);
-    arch(-8, z0 + 0.14, -129);
-    // los trozos de arquitrabe por el suelo
-    // (lejos del paso de la puerta y del corro del ritual)
-    for (const [x, z, ry, rz, len] of [
-      [-15.4, -126.4, 0.25, 0.1, 2.2],
-      [-16.4, -127.4, 0.4, -0.06, 1.5],
-      [-8.5, -117.4, 0.12, 0.08, 2.2],
-      [-9.8, -114.5, -0.6, -0.1, 1.6],
+    // el suelo: losas en las naves de los lados y el mosaico en la del medio
+    cryptFloor(x0, z0, cx - hn, z1, Y);
+    cryptFloor(cx + hn, z0, x1, z1, Y);
+    cryptFloor(cx - hn, z0, cx + hn, z1, Y, 'mosaic', [0.62, 0.56, 0.5]);
+    // los muros de fuera, hasta el arranque de las bóvedas, con sus puertas
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x1, t1: -3.0, y0: Y, y1: YS, openings: [{ c: -120, w: sp.w, h: sp.h, rise: sp.rise, ring: sp.ring, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
+    archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: x0 - 0.5, t1: x0, y0: Y, y1: YS, openings: [{ c: T.west.z, w: T.west.w, h: 2.2, rise: 1.0, ring: 0.3, tint: AT }], rooms: [room, room], mat: 'ashlar', tint: RT, collide: false });
+    wallFace('ashlar', x0, Y, z1, x1, YS, z1 + 0.5, 'n', { tint: RT });
+    wallFace('ashlar', x0, Y, z0 - 0.5, cx - hn, YS, z0, 's', { tint: RT });
+    wallFace('ashlar', cx + hn, Y, z0 - 0.5, x1, YS, z0, 's', { tint: RT });
+    // las dos arquerías: cuatro arcos sobre tres pilares, y sus medios
+    // pilares contra los muros del norte y del sur
+    const OP = [0, 1, 2, 3].map((k) => ({ c: z0 + T.bay / 2 + k * T.bay, w: T.bay - T.pier, h: 2.6, rise: 1.2, ring: 0.3, tint: AT }));
+    for (const ax of [cx - hn - T.pier / 2, cx + hn + T.pier / 2]) archedWall(ctx, { axis: 'z', a0: z0, a1: z1, t0: ax - T.pier / 2, t1: ax + T.pier / 2, y0: Y, y1: YS, openings: OP, rooms: [room, room], mat: 'ashlar', tint: RT.map((v) => v * 1.06) });
+    // las bóvedas, todas desde el mismo arranque: la de la nave del medio (que
+    // sigue por el ábside) y las de los lados
+    const NV = barrelVault(ctx, { x0: cx - hn, x1: cx + hn, z0: z0 + 0.3, z1, axis: 'z', ys: YS, rise: T.rise, mat: 'plaster', tint: ST, room, sub: 1.0, impostTint: AT });
+    lunette(ctx, { axis: 'z', at: z1, c: cx, span: T.nave, ys: YS, rise: T.rise, face: -1, mat: 'ashlar', tint: RT, room });
+    ceilCol(cx - hn, z0, cx + hn, z1, YS + T.rise);
+    for (const [a, b] of [
+      [x0, cx - hn - T.pier],
+      [cx + hn + T.pier, x1],
     ]) {
-      wb.push();
-      wb.translate(x, Y, z);
-      wb.rotateY(ry);
-      wb.rotateZ(rz);
-      wb.box('ashlar', -0.42, 0, -len / 2, 0.42, 0.6, len / 2, { ao: false, room, tint: AT, faces: 'tnsew', sub: 2 });
-      wb.pop();
-      ctx.col.addOBB(x, z, 0.42, len / 2, ry, Y, Y + 0.6);
+      barrelVault(ctx, { x0: a, x1: b, z0, z1, axis: 'z', ys: YS, rise: 1.2, mat: 'plaster', tint: ST.map((v) => v * 0.95), room, sub: 1.0, impostTint: AT });
+      for (const [at, f] of [
+        [z0, 1],
+        [z1, -1],
+      ])
+        lunette(ctx, { axis: 'z', at, c: (a + b) / 2, span: b - a, ys: YS, rise: 1.2, face: f, mat: 'ashlar', tint: RT, room });
+      ceilCol(a, z0, b, z1, YS + 1.2);
     }
-    // el techo de casetones: vigas a lo largo y a lo ancho y el fondo pintado
-    const CB = [0.8, 0.76, 0.7];
-    wb.box('ashlar', x0, YT, z0, x1, YT + 0.2, z1, { faces: 'b', ao: false, room, tint: [0.56, 0.4, 0.33], sub: 1.2 });
-    for (let z = z1 - 1.25; z > z0; z -= 2.5) wb.box('ashlar', x0, YA, z - 0.16, x1, YT, z + 0.16, { faces: 'nsb', ao: false, room, tint: CB, sub: 2 });
-    for (const x of [-17.2, -11.5, -5.3]) wb.box('ashlar', x - 0.14, YA + 0.12, z0, x + 0.14, YT, z1, { faces: 'ewb', ao: false, room, tint: CB, sub: 2 });
-    ceilCol(x0, z0, x1, z1, YT);
-    wb.box('water', -18.8, Y + 0.08, -120.5, -12, Y + 0.1, -112.2, { faces: 't', ao: false, grime: false, room });
-    // altar DEO IGNOTO
-    wb.box('ashlar', -13, Y, -131.8, -9, Y + 1.3, -130, { faces: 'tnsew', sub: 2, room });
-    wb.box('ashlar', -13.3, Y + 1.3, -132, -8.7, Y + 1.5, -129.8, { ao: false, room });
-    ctx.col.add(-13.3, Y, -132, -8.7, Y + 1.5, -129.8);
-    P.veiledStatue(ctx, -17.5, Y, -131, 0.3, { ped: 1.0, veil: 'burlap' });
-    P.veiledStatue(ctx, -4.8, Y, -131, -0.3, { ped: 1.0, veil: 'burlap' });
-    P.candles(ctx, -11, Y + 1.5, -130.8, 7, 1507, { room, radius: 6, intensity: 1.3, spread: 1.2 });
-    P.fleshGrowth(ctx, -11, Y + 1.5, -131.7, 1.1, 1508, { room, climb: 2.5, lift: 1.5, bound: [-14, -8, -131.9, -129] });
-    P.bones(ctx, -6, Y, -114, 10, 1509, 1.2);
-    P.ritual(ctx, -11, Y, -125.5, 1.6, 1510, { room });
+    // el arco del ábside, al fondo de la nave
+    archRing(ctx, { axis: 'x', c: cx, w: 2 * (hn - 0.03), y0: YS, rise: T.rise, ring: 0.35, t0: z0, t1: z0 + 0.3, mat: 'ashlar', room, tint: AT, cam: false });
+    // el ábside: el muro (medio cilindro) hasta el arranque, el suelo en
+    // abanico y, encima, la bóveda: un casquete de la esfera de la bóveda de la
+    // nave (en el arranque, su mismo radio)
+    const ar = hn - 0.03;
+    const N = 16,
+      MR = 6;
+    const P2 = (a, r, y) => V(cx + Math.cos(a) * r, y, z0 - Math.sin(a) * r);
+    for (let i = 0; i < N; i++) {
+      const a0 = (Math.PI * i) / N,
+        a1 = (Math.PI * (i + 1)) / N;
+      wb.quad('ashlar', P2(a1, ar, Y), P2(a0, ar, Y), P2(a0, ar, YS), P2(a1, ar, YS), { sub: 1.6, aoH: 1.2, aoMin: 0.5, baseY: Y, room, tint: RT });
+      wb.tri('flag', V(cx, Y, z0), P2(a0, ar, Y), P2(a1, ar, Y), { room });
+      const am = (a0 + a1) / 2,
+        m = P2(am, ar + 0.25, Y);
+      ctx.col.addOBB(m.x, m.z, ar * Math.sin((a1 - a0) / 2) + 0.06, 0.25, am - Math.PI / 2, Y, YS);
+    }
+    ctx.col.add(cx - ar, Y - 1, z0 - ar, cx + ar, Y, z0);
+    for (let z = z0 - ar; z < z0; z += 0.5)
+      for (let x = cx - ar; x < cx + ar; x += 0.5) if (Math.hypot(x + 0.25 - cx, z + 0.25 - z0) < ar - 0.3) C.paint(x, z, x + 0.5, z + 0.5, 1);
+    const al0 = Math.acos((YS - NV.yc) / NV.R);
+    const SP = (a, al) => V(cx + Math.cos(a) * Math.sin(al) * NV.R, NV.yc + Math.cos(al) * NV.R, z0 - Math.sin(a) * Math.sin(al) * NV.R);
+    for (let i = 0; i < N; i++)
+      for (let j = 0; j < MR; j++) {
+        const a0 = (Math.PI * i) / N,
+          a1 = (Math.PI * (i + 1)) / N;
+        const l0 = al0 * (1 - j / MR),
+          l1 = al0 * (1 - (j + 1) / MR);
+        if (j === MR - 1) wb.tri('plaster', SP(a1, l0), SP(a0, l0), SP(a0, 0), { ao: false, room, tint: ST });
+        else wb.quad('plaster', SP(a1, l0), SP(a0, l0), SP(a0, l1), SP(a1, l1), { ao: false, sub: 1.0, room, tint: ST });
+      }
+    // en el ábside, el altar DEO IGNOTO (su letrero, en el frente), con el
+    // relicario encima, la carne que le ha crecido detrás y dos braseros; al
+    // fondo de las naves de los lados, las dos estatuas veladas
+    const az = z0 - 1.55;
+    wb.box('ashlar', cx - 1.4, Y, az - 0.6, cx + 1.4, Y + 1.2, az + 0.6, { faces: 'tnsew', sub: 2, room });
+    wb.box('ashlar', cx - 1.55, Y + 1.2, az - 0.72, cx + 1.55, Y + 1.38, az + 0.72, { ao: false, room });
+    ctx.col.add(cx - 1.55, Y, az - 0.72, cx + 1.55, Y + 1.38, az + 0.72);
+    for (const [a, b] of [
+      [cx - 0.95, cx - 0.12],
+      [cx + 0.12, cx + 1.05],
+    ])
+      wb.box('black', a, Y + 0.78, az + 0.6, b, Y + 0.9, az + 0.606, { faces: 's', ao: false, grime: false, room });
+    P.candles(ctx, cx, Y + 1.38, az - 0.15, 7, 1507, { room, radius: 6, intensity: 1.3, spread: 1.0 });
+    P.fleshGrowth(ctx, cx, Y + 1.38, az - 0.45, 1.1, 1508, { room, climb: 2.5, lift: 1.5, bound: [cx - 1.5, cx + 1.5, z0 - ar + 0.1, az + 0.6] });
+    P.brazier(ctx, cx - 2.0, Y, z0 - 0.55, {});
+    P.brazier(ctx, cx + 2.0, Y, z0 - 0.55, {});
+    P.veiledStatue(ctx, x0 + 1.5, Y, z0 + 1.2, 0.3, { ped: 1.0, veil: 'burlap' });
+    P.veiledStatue(ctx, x1 - 1.5, Y, z0 + 1.2, -0.3, { ped: 1.0, veil: 'burlap' });
+    // en la nave, el corro del rito y las lámparas; en los pilares, antorchas
+    P.ritual(ctx, cx, Y, -123.5, 1.6, 1510, { room });
+    for (const z of [-126.5, -116.5]) P.hangingLamp(ctx, cx, YS + T.rise, z, { room, len: 1.6, radius: 8, intensity: 0.85 });
+    for (const s of [-1, 1]) P.wallTorch(ctx, cx + s * hn, Y + 2.2, -122, s < 0 ? 'e' : 'w', { room, radius: 6.5 });
+    // en las naves de los lados: ánforas, cascotes del estuco caído y huesos
+    for (const [x, z] of [
+      [x1 - 0.45, -126.6],
+      [x1 - 0.5, -125.9],
+      [x1 - 0.45, -114.2],
+    ])
+      P.jar(ctx, x, Y, z, 1, { room });
+    P.rubble(ctx, x0 + 1.3, Y, -127.3, 5, 1511, 0.8, { mat: 'ashlar' });
+    P.bones(ctx, -5.6, Y, -113.6, 10, 1509, 1.0);
     ctx.rats.push({ x: -5.4, y: Y, z: -113.2, n: 2 });
-    for (const z of [-113.6, -126.4]) P.wallTorch(ctx, x0, Y + 2.6, z, 'e', { room, radius: 7.5 });
-    for (const z of [-114.4, -126.4]) P.wallTorch(ctx, x1, Y + 2.6, z, 'w', { room, radius: 7.5 });
-    P.brazier(ctx, -14.6, Y, -130.2, {});
-    P.brazier(ctx, -7.4, Y, -130.2, {});
+    for (const z of [-129.5, -114.5]) {
+      P.wallTorch(ctx, x0, Y + 2.6, z, 'e', { room, radius: 7.5 });
+      P.wallTorch(ctx, x1, Y + 2.6, z, 'w', { room, radius: 7.5 });
+    }
     L.interact.push(
-      { kind: 'note', id: 'n_romana', note: 'romana', x: -11, y: Y + 1.0, z: -129.8, model: 'wall', r: 1.8 },
-      { kind: 'item', id: 'i_relicario2', item: 'relicario', x: -12.3, y: Y + 1.7, z: -130.6 }
+      { kind: 'note', id: 'n_romana', note: 'romana', x: cx, y: Y + 1.0, z: az + 0.75, model: 'wall', r: 1.8 },
+      { kind: 'item', id: 'i_relicario2', item: 'relicario', x: cx - 1.0, y: Y + 1.58, z: az - 0.1 }
     );
   }
 
@@ -1510,7 +1563,7 @@ export function buildCrypt(ctx, S, C, L) {
   L.zones.push(
     { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena', room: 'crypt' },
     { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
-    { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
+    { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1], [-14.5, -135, -8, -132, -8, -1]], atmo: 'crypt', room: 'crypt' },
     { id: 'ossuary', rects: [[-2.5, -133.5, 2.5, -110, -8, -2]], atmo: 'crypt', room: 'crypt' },
     { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt', room: 'crypt' },
     { id: 'tunnel', rects: [[-2, -196, 2, -167, -11, 4]], atmo: 'tunnel', room: 'tunnel' }
@@ -1521,6 +1574,7 @@ export function buildCrypt(ctx, S, C, L) {
     { id: 'ossuary', r: [-2.5, -133, 2.5, -110], level: 'crypt' },
     { id: 'tomb', r: [3.5, -128, 16, -112], level: 'crypt' },
     { id: 'roman', r: [-19, -132, -3.5, -112], level: 'crypt' },
+    { id: 'roman', r: [-14.5, -135, -8, -132], level: 'crypt' },
     { id: 'arena', r: [-15, -167, 15, -137], level: 'crypt' },
     { id: 'tunnel', r: [-2, -196, 2, -167], level: 'crypt' }
   );

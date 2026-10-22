@@ -43,6 +43,8 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Beber una ampolla | R | X |
 | Interactuar | E | A |
 | Inventario y documentos | Tab / I | Y |
+| Inventario: cambiar de pestaña (Equipo, Objetos, Documentos) | Q / R | LB / RB |
+| Inventario: elegir lo de una ranura / quitárselo | E o clic / X | A / X |
 | Transcripción de un documento (mostrarla u ocultarla) | T | X |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
@@ -58,9 +60,12 @@ Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve
 Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y taller decorado por dentro), y bajo la
 catedral, todo abovedado: la escalera de la cripta, que baja por debajo de la nave bajo una bóveda en rampa; la sala
 de llegada, de tres naves sobre columnas y arcos; el osario, un pasillo de calaveras con bóveda de huesos, fajones y
-nichos con sus huesos; un templo romano de *Bracara Augusta* con mosaicos, columnas, arquitrabe caído y techo de
-casetones; el sepulcro del arzobispo, y la cisterna del Dios Desconocido, un corro de columnas con sus arcos bajo una
-cúpula con nervios de la que cuelga una corona de velas. La galería del río sube bajo su bóveda hasta las orillas
+nichos con sus huesos; el templo romano de *Bracara Augusta*, una basílica de tres naves (arquerías sobre pilares,
+bóvedas de cañón estucadas, el mosaico en la nave del medio y, al fondo, el ábside con su cuarto de esfera y el altar
+DEO IGNOTO entre dos braseros); el sepulcro del arzobispo, su capilla funeraria (su sepulcro, abierto y vacío, en un
+estrado entre candeleros y bajo sus estandartes, y los de su cabildo en fila), y la cisterna del Dios Desconocido, un
+corro de columnas con sus arcos bajo una cúpula con nervios de la que cuelga una corona de velas. La galería del río
+sube bajo su bóveda hasta las orillas
 del Este. Tras el Postigo, el adarve del muro este sigue
 hacia el norte (atraviesa una torre), sube en la esquina a la muralla norte y corre hacia poniente por otras dos
 torres hasta la Torre del Fanal, con un tramo de adarve hundido a medio camino; desde allí arriba se ven los
@@ -154,9 +159,10 @@ barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revien
 lágrima (una ampolla más), y Henrique, si vuelves, la llora.
 
 **La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre hay tres épocas, cada una más honda
-(el diseño, en `PLAN_CRIPTA_HONDA.md` y `PLAN_OSARIOS.md`). Por la puerta del templo romano se baja al **Panteón de
-los Obispos**: una rotonda con ocho obispos yacentes en sus arcosolios (sepulcros de caliza con arquería ciega y,
-detrás, el fresco de cada uno con su nombre), un deambulatorio abovedado, un anillo de doce columnas, la cúpula
+(el diseño, en `PLAN_CRIPTA_HONDA.md` y `PLAN_OSARIOS.md`). Por la puerta del oeste del templo romano, un paso recto,
+bajo una sola bóveda, baja por seis peldaños al **Panteón de los Obispos**: una rotonda con ocho obispos yacentes en
+sus arcosolios (sepulcros de caliza con arquería ciega y, detrás, el fresco de cada uno con su nombre), un
+deambulatorio abovedado, un anillo de doce columnas, la cúpula
 pintada de estrellas y, colgada en medio, la corona de luz; en el centro se hunde el **pozo de los obispos**, con su
 escalera pegada al muro y el sepulcro del primero, que tiene la cara tapada como los Velados. Cuatro salidas en cruz,
 cada una con su luz, que se ven todas desde dentro: el paso al templo, la gran reja que da a la antesala (luz roja),
@@ -165,8 +171,11 @@ la bajada a las catacumbas (azul) y la **galilea** (oro), desde la que se pasa p
 San Martín** (altar de descanso), donde reza **Dom Paio**, el canónigo que bajó tras el arzobispo (al verte se
 levanta de un salto; te cuenta lo que pasó y, cada vez que vuelves, lo que le falta a la puerta); a un lado, un
 **osario de los hermanos de Dumio**; y en el eje, el **Pórtico de los Velados**, que da a la tribuna de la antesala.
-Bajo el panteón, las **Catacumbas de la Sé** (galerías con nichos en tres alturas, cubículos con su arcosolio y un
-cruce de huesos), que se juntan en el **Lucernario de San Pedro de Rates**: una cámara redonda y alta tallada en la
+Bajo el panteón (se baja por doce peldaños, bajo una bóveda en rampa que sigue en la de la galería), las
+**Catacumbas de la Sé**: galerías con nichos en tres alturas bajo bóvedas de medio punto, cubículos con su arcosolio
+y, en su cruce, la **Capilla de los Huesos**, como la de Évora (la bóveda encalada sobre fajones de fémures, los muros
+forrados de calaveras y rosetones de huesos, el altar con el lema encima y el osario de los que ya no caben). Se juntan
+en el **Lucernario de San Pedro de Rates**: una cámara redonda y alta tallada en la
 roca, con cinco alturas de nichos (a los de arriba se sube por escaleras de mano), la cúpula de roca con el ojo del
 lucernario, por donde cae la luz de la calle sobre una alberca de agua viva con velas que flotan, y el
 **Oratorio** del santo en un ábside (otro altar), con el fresco de su martirio y exvotos de cera; más
@@ -257,9 +266,17 @@ tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojo
 rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Treinta y cinco documentos breves cuentan la historia junto con
+canónigo (aguante), que deja el Descoyuntado al morir. Treinta y seis documentos breves cuentan la historia junto con
 el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
 al lado, en letra de leer.
+
+**El inventario**, a lo Dark Souls, en tres pestañas. El **Equipo**: las ranuras de la mano derecha (el arma), la
+izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas: aún no hay ninguna pieza en el
+mundo, pero sus ranuras y lo que paran ya están), el objeto bendito y la ampolla; en cada una se elige qué ponerse de
+lo que se lleva encima, o nada, y se puede ir desarmado o sin escudo (se guarda con la partida). Los **Objetos**, por
+clases (consumibles, armas, escudos, armaduras, objetos benditos, objetos clave y mejoras), desde donde también se
+pone y se quita lo que se lleva puesto. Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
+casillas, las pestañas y las teclas de la ayuda).
 
 **Los osarios y los objetos benditos.** Cuatro osarios, cada uno con su gente y su manera de ordenar los huesos,
 guardan un **objeto bendito** tras un puzle con su pista en un documento. Los objetos no suben números a secas:

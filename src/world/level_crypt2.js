@@ -34,10 +34,14 @@ import { RNG } from '../core/util.js';
 import { stairs, archRing, barrelVault, rampVault, groinVaults, lunette, pilaster, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
+import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
 import { buildOsarioMartin, OSM } from './osario_martin.js';
-import { buildPanteon, PAN, GAL } from './panteon.js';
+import { buildPanteon, PAN, GAL, PASO, BAJADA } from './panteon.js';
 import { buildLucernario, LUC } from './lucernario.js';
-import { CRYPT_DOORS } from './level_sacred.js';
+import { CRYPT_DOORS, TEMPLO } from './level_sacred.js';
+
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const M4 = () => new THREE.Matrix4();
 
 const Y = -7; // la cripta de arriba (el templo, el osario, el sepulcro)
 const Y1 = -8.2; // San Martín: la sala de los obispos, su cripta, la tribuna
@@ -70,8 +74,6 @@ export const DEEP = {
   confessio: { x0: -4, z0: -136.5, x1: 4, z1: -133.5, win: { x0: -1.2, x1: 1.2, y0: AY + 3.6, y1: AY + 5.0 } },
   // la Sala de los Obispos: tramos de 5 m (bóvedas de arista sobre columnas)
   obispos: { x0: -62, z0: -136, x1: -22, z1: -106, YS: Y1 + 3.2, rise: 2.5 },
-  // el umbral del templo: un rellano a -7 y cuatro peldaños
-  landing: { x0: -24.5, z0: -121.5, x1: -22, z1: -114 },
   // la cripta de San Martín: nave (con la capilla al norte) y naves laterales
   martin: { x0: -84, z0: -167, x1: -64, z1: -119, rows: [-78, -70], cols: [-161, -155, -149, -143, -137, -131, -125], YC: Y1 + 2.2, YS: Y1 + 4.8 },
   chapel: { x0: -78, z0: -175, x1: -70, z1: -167, y: Y1 + 0.6 },
@@ -101,6 +103,9 @@ export const DEEP = {
   font3: { x0: -42, z0: -190, x1: -30, z1: -178 },
   // el relicario de San Martín (la Cámara de la Garra) y su rastrillo
   claw: { x0: -96, z0: -103, x1: -81, z1: -85, y: YI, gate: { x: -80.5, z0: -95, z1: -92 } },
+  // la capilla de los huesos, en el cruce de las catacumbas de la Sé: su
+  // planta y el tinte de su cal
+  bones: { x0: -55, z0: -100, x1: -49, z1: -85, wall: [0.82, 0.78, 0.7] },
   // la cripta de los mártires (su tramo central, en el eje de la puerta del
   // sepulcro: -120), su pila y la sacristía del arzobispo
   martyr: { x0: 22, z0: -137.5, x1: 35, z1: -107.5 },
@@ -125,6 +130,8 @@ export const DEEP = {
 //  - walls: false: sin muros (sus jambas las pone otro, como el muro del
 //    templo, del que sólo se pinta el hueco).
 //  - base: una plataforma maciza desde 'base' (la tribuna sobre la nave).
+//  - skip: los lados ('n', 's', 'e', 'w') en los que no se le pone muro (lo
+//    pone otro, por las dos caras).
 //  - ceil, floor, mat, tint, floorMat, floorTint, ceilMat, ceilTint, zone.
 //  - niches: los nichos de sus muros ('loculi', 'small', 'bones').
 function layout() {
@@ -140,7 +147,8 @@ function layout() {
 
   // --- lo que ya existe (level_sacred.js)
   add('osarioViejo', [-2.5, -133, 2.5, -110], Y, Y + 3.8, { ghost: true });
-  add('templo', [-19, -132, -3.5, -112], Y, Y + 5.65, { ghost: true });
+  add('templo', [TEMPLO.x0, TEMPLO.z0, TEMPLO.x1, TEMPLO.z1], Y, Y + TEMPLO.ys + TEMPLO.rise, { ghost: true });
+  add('temploAbside', [-14.5, TEMPLO.z0 - 3, -8, TEMPLO.z0], Y, Y + TEMPLO.ys + TEMPLO.rise, { ghost: true });
   add('llegada', [-7, -110, 7, -97], Y, Y + 5.8, { ghost: true });
   add('sepulcro', [3.5, -128, 16, -112], Y, Y + 3.6, { ghost: true });
   add('cisterna', [-15, -167, 15, -137], AY, AY + 8.8, { ghost: true });
@@ -152,23 +160,28 @@ function layout() {
 
   // --- el Panteón de los Obispos (panteon.js): la galilea, la rotonda (con
   // su pozo), los pasos de las cuatro salidas y el umbral del templo
-  const LD = D.landing;
   const pz = PAN.cz;
+  // (el paso del templo: la escalera, de PASO.x0 a lx, y el rellano, de lx al
+  // muro del templo; todo bajo la misma bóveda, que arranca a ys)
+  const lx = PASO.x0 + PASO.n * PASO.run,
+    xt = TEMPLO.x0 - 0.5,
+    ys = Y1 + PASO.ys;
   add('galilea', [GAL.x0, GAL.z0, GAL.x1, GAL.z1], Y1, Y1 + GAL.ys, { ...ash, ceil: false, zone: 'obispos' });
   add('panteon', [PAN.cx - PAN.R, pz - PAN.R, PAN.cx + PAN.R, pz + PAN.R], Y1, Y1 + PAN.top + 1.2, { ghost: true, area: true, zone: 'obispos' });
   add('panteonPozo', [PAN.cx - PAN.pit, pz - PAN.pit, PAN.cx + PAN.pit, pz + PAN.pit], YC, Y1, { ghost: true });
   add('panteonOeste', [GAL.x1, pz - 2, PAN.cx - PAN.R + 0.5, pz + 2], Y1, Y1 + 4.1, { ...ash, ceil: false, arch: Y1 + 1.9, zone: 'obispos' });
-  add('panteonEste', [PAN.cx + PAN.R - 0.5, pz - 2, -26.3, pz + 2], Y1, Y + 2.2, { ...ash, ceil: false, zone: 'obispos' });
+  add('panteonEste', [PAN.cx + PAN.R - 0.5, pz - 2, PASO.x0, pz + 2], Y1, ys, { ...ash, ceil: false, zone: 'obispos' });
   add('panteonNorte', [PAN.cx - 2, -136, PAN.cx + 2, pz - PAN.R + 0.5], Y1, Y1 + 3.4, { ...ash, ceil: false, zone: 'obispos' });
-  add('panteonSur', [PAN.cx - 1.5, pz + PAN.R - 0.5, PAN.cx + 1.5, -106], Y1, Y1 + 3.7, { ...ash, ceil: false, arch: Y1 + 2.2, zone: 'obispos' });
-  add('obisposRellano', [LD.x0, pz - 2, LD.x1, pz + 2], Y, Y + 2.2, { ...ash, ceil: false, base: Y1, zone: 'obispos' });
-  add('obisposPeldanos', [-26.3, pz - 2, LD.x0, pz + 2], Y1, Y + 2.2, { ...ash, ceil: false, floor: false, stair: { axis: 'x', a0: -26.3, a1: LD.x0, y0: Y1, y1: Y }, zone: 'obispos' });
-  add('temploPaso', [-22, -119, -19.5, -116.5], Y, Y + 2.2, { ...ash, ceil: false, arch: Y + 2.2, zone: 'obispos' });
-  add('temploPuerta', [-19.5, -119, -19, -116.5], Y, Y + 2.2, { ceil: false, walls: false, zone: 'roman' });
+  add('panteonSur', [PAN.cx - 1.5, pz + PAN.R - 0.5, PAN.cx + 1.5, BAJADA.z0], Y1, Y1 + 3.9, { ...ash, ceil: false, arch: Y1 + 2.4, zone: 'obispos' });
+  // (al este, el rellano no lleva muro: lo pone el del templo, por sus dos
+  // caras, con la puerta)
+  add('obisposRellano', [lx, pz - 2, xt, pz + 2], Y, ys, { ...ash, ceil: false, base: Y1, skip: 'e', zone: 'obispos' });
+  add('obisposPeldanos', [PASO.x0, pz - 2, lx, pz + 2], Y1, ys, { ...ash, ceil: false, floor: false, stair: { axis: 'x', a0: PASO.x0, a1: lx, y0: Y1, y1: Y }, zone: 'obispos' });
+  add('temploPuerta', [xt, TEMPLO.west.z - TEMPLO.west.w / 2, TEMPLO.x0, TEMPLO.west.z + TEMPLO.west.w / 2], Y, Y + 2.2, { ceil: false, walls: false, zone: 'roman' });
   // los tres arcos a la cripta de San Martín
   for (const [c, w] of ARCADE) add('obisposArco', [-64, c - w / 2, -62, c + w / 2], Y1, Y1 + 1.6, { ...ash, ceil: false, arch: Y1 + 1.6, zone: 'obispos' });
   // la bajada a las catacumbas (en el eje de la rotonda)
-  add('obisposBajada', [PAN.cx - 1.5, -106, PAN.cx + 1.5, -102.4], YC, Y1 + 2.2, { ...rock, ceil: false, floor: false, arch: Y1 + 2.2, stair: { axis: 'z', a0: -106, a1: -102.4, y0: Y1, y1: YC }, zone: 'catacumbas' });
+  add('obisposBajada', [PAN.cx - 1.5, BAJADA.z0, PAN.cx + 1.5, BAJADA.z1], YC, Y1 + 2.4, { ...ash, ceil: false, floor: false, arch: Y1 + 2.4, stair: { axis: 'z', a0: BAJADA.z0, a1: BAJADA.z1, y0: Y1, y1: YC }, zone: 'catacumbas' });
 
   // --- la cripta de San Martín, su capilla, el osario y el pórtico
   const MB = D.martin,
@@ -214,30 +227,37 @@ function layout() {
   // los huesos y la cámara de la escalera), cubículos con su puerta y el
   // lucernario
   // (vault: el eje de la bóveda; ends: lunetos en sus extremos)
-  const cata = (id, r, o = {}) => add(id, r, YC, YC + 2.2, { ...rock, ceil: false, niches: 'loculi', zone: 'catacumbas', ...o });
+  // (framed: donde una galería da a una cámara más alta, su bóveda acaba en
+  // un arco con sus enjutas hasta el arranque de la cámara; ver
+  // buildDeepCrypt)
+  const cata = (id, r, o = {}) => add(id, r, YC, YC + GV.ys, { ...rock, ceil: false, niches: 'loculi', zone: 'catacumbas', vaultRise: GV.rise, framed: true, ...o });
   const door = (id, r, y, zone, o = {}) => add(id, r, y, y + 1.9, { ...rock, zone, ...o });
-  cata('c1Norte', [PAN.cx - 1.5, -102.4, PAN.cx + 1.5, -99], { vault: 'z', ends: [false, false] });
+  cata('c1Norte', [PAN.cx - 1.5, BAJADA.z1, PAN.cx + 1.5, -99], { vault: 'z', ends: [false, false] });
   // (el lucernario lo levanta lucernario.js: sus galerías acaban en las caras
   // de su muro)
   add('lucernario', [LUC.cx - LUC.d, LUC.cz - LUC.d, LUC.cx + LUC.d, LUC.cz + LUC.d], YC, YC + LUC.crown, { ghost: true, area: true, zone: 'lucernario' });
   cata('c1Este', [LUC.cx + LUC.d, -95, -15.5, -92], { vault: 'x', ends: [false, false] });
-  add('c1Escalera', [-15.5, -103, -12.9, -92], YC, YC + 3.3, { ...rock, niches: 'loculi', zone: 'catacumbas' });
+  // (las cámaras, abovedadas: tenían un techo plano, más bajo que las claves
+  // de las galerías que dan a ellas)
+  add('c1Escalera', [-15.5, -103, -12.9, -92], YC, YC + CHAMBER, { ...rock, ceil: false, vault: 'z', niches: 'loculi', zone: 'catacumbas' });
   add('llegadaBajada', [-12.9, -103, -7.5, -100.5], YC, Y + 2.2, { ...rock, ceil: false, floor: false, arch: Y + 2.2, stair: { axis: 'x', a0: -7.5, a1: -12.9, y0: Y, y1: YC }, zone: 'catacumbas' });
   add('llegadaPuerta', [-7.5, -103, -7, -100.5], Y, Y + 2.2, { ceil: false, walls: false, zone: 'crypt' });
-  cata('c1Oeste', [-50, -95, LUC.cx - LUC.d, -92], { vault: 'x', ends: [false, false] });
-  add('c1Cruce', [-54, -100, -50, -85], YC, YC + 3.3, { mat: 'skulls', tint: ST, niches: 'bones', zone: 'catacumbas' });
-  cata('c1Poniente', [-62, -95, -54, -92], { vault: 'x', ends: [false, false] });
-  cata('c1Sur', [-50, -87.5, -33, -85], { vault: 'x', ends: [false, true] });
+  cata('c1Oeste', [D.bones.x1, -95, LUC.cx - LUC.d, -92], { vault: 'x', ends: [false, false] });
+  // (la capilla de los huesos la levanta buildBones: aquí, su planta)
+  const BN = D.bones;
+  add('c1Cruce', [BN.x0, BN.z0, BN.x1, BN.z1], YC, YC + CHAMBER, { mat: 'plaster', tint: BN.wall, ceil: false, zone: 'huesos' });
+  cata('c1Poniente', [-62, -95, BN.x0, -92], { vault: 'x', ends: [false, false] });
+  cata('c1Sur', [BN.x1, -87.5, -33, -85], { vault: 'x', ends: [false, true] });
   door('c1SurBoca', [PAN.cx - 1.5, -88, PAN.cx + 1.5, -87.5], YC, 'catacumbas');
   // los cubículos (cada uno con su arcosolio), con su puerta a la galería
   for (const [id, r, d] of CUBICULA) {
-    add(id, r, YC, YC + 2.2, { ...rock, ceil: false, vault: 'x', zone: 'catacumbas', cubiculum: true });
+    add(id, r, YC, YC + GV.ys, { ...rock, ceil: false, vault: 'x', vaultRise: GV.rise, zone: 'catacumbas', cubiculum: true });
     door(id + 'Puerta', d, YC, 'catacumbas');
   }
-  add('c1Bajada', [-65.15, -95, -62, -92], YI, YC + 2.2, { ...rock, ceil: false, floor: false, arch: YC + 2.2, stair: { axis: 'x', a0: -62, a1: -65.15, y0: YC, y1: YI }, zone: 'inocentes' });
+  add('c1Bajada', [-65.15, -95, -62, -92], YI, YC + GV.ys, { ...rock, ceil: false, floor: false, arch: YC + GV.ys, stair: { axis: 'x', a0: -62, a1: -65.15, y0: YC, y1: YI }, zone: 'inocentes' });
 
   // --- la catacumba de los Inocentes, su pila y el relicario
-  const ino = (id, r, o = {}) => add(id, r, YI, YI + 2.2, { ...rock, ceil: false, niches: 'small', zone: 'inocentes', ...o });
+  const ino = (id, r, o = {}) => add(id, r, YI, YI + GV.ys, { ...rock, ceil: false, niches: 'small', zone: 'inocentes', vaultRise: GV.rise, framed: true, ...o });
   ino('c2Galeria', [-76.5, -95, -65.15, -92], { vault: 'x', ends: [false, false] });
   door('c2PilaPuerta', [-72, -96, -70, -95], YI, 'pila_oeste');
   add('pilaInocentes', [-76, -108, -66, -96], YI, YI + 2.6, { ...rock, ceil: false, zone: 'pila_oeste' });
@@ -246,8 +266,11 @@ function layout() {
   // su bóveda en el aire, y la cadena de su compuerta y una antorcha colgaban
   // de un muro que no estaba; a la pila se entra por su puerta, desde la
   // galería)
-  add('c2Cruce', [-80, -100, -76.5, -88], YI, YI + 3.3, { ...rock, niches: 'small', zone: 'inocentes' });
-  ino('c2Cubiculo', [-80, -106, -76.5, -100], { vault: 'z', ends: [true, false] });
+  add('c2Cruce', [-80, -100, -76.5, -88], YI, YI + CHAMBER, { ...rock, ceil: false, vault: 'z', vaultRise: 1.0, niches: 'small', zone: 'inocentes' });
+  // (el cubículo, con su puerta, como los de arriba: daba al cruce por todo
+  // su ancho, sin muro ni arco)
+  ino('c2Cubiculo', [-80, -106, -76.5, -100.5], { vault: 'z', framed: false });
+  door('c2CubiculoPuerta', [-79, -100.5, -77.5, -100], YI, 'inocentes');
   const CL = D.claw;
   add('relicarioPuerta', [CL.x1, CL.gate.z0, -80, CL.gate.z1], YI, YI + 2.2, { ...rock, ceil: false, arch: YI + 2.2, zone: 'garra' });
   add('relicario', [CL.x0, CL.z0, CL.x1, CL.z1], YI, YI + 3.4, { mat: 'skulls', tint: ST, ceil: false, zone: 'garra' });
@@ -294,6 +317,14 @@ const MARTYR_YS = 3.4;
 // el arranque de la bóveda de la sacristía (sobre su suelo) y su flecha
 const SACRISTY_YS = 2.6,
   SACRISTY_RISE = 1.9;
+// El perfil de las galerías de las catacumbas (y de sus cubículos): el
+// arranque de la bóveda sobre el suelo y su flecha, de medio punto en los
+// 3 m de luz. (Arrancaba a 2,2 m, rebajada, con la clave a 3,2: muy bajas.)
+const GV = { ys: 2.4, rise: 1.45 };
+// El arranque de las bóvedas de las cámaras donde se juntan las galerías (el
+// cruce de los Inocentes, la cámara de la escalera y la capilla de los
+// huesos): por encima de los arcos de las galerías que dan a ellas.
+const CHAMBER = 4.2;
 // los cubículos de las catacumbas de la Sé: [id, sala, puerta]
 const CUBICULA = [
   ['c1CubiculoA', [-25.5, -100, -21, -96], [-24, -96, -22.5, -95]],
@@ -370,7 +401,9 @@ function carve(ctx, C, regs, o = {}) {
   const segsFor = (A, B) => {
     if (!B) return [[A.ybot ?? A.y, A.arch ?? A.top]];
     const out = [];
-    if (A.top > B.top + 0.01 && A.arch === undefined && B.arch === undefined) out.push([Math.max(B.top, A.y), A.top]);
+    // (sobre la boca de una galería que acaba en su arco, nada: lo cierran
+    // las enjutas del arco, por las dos caras; ver buildDeepCrypt)
+    if (A.top > B.top + 0.01 && A.arch === undefined && B.arch === undefined && !B.framed) out.push([Math.max(B.top, A.y), A.top]);
     if (B.y > A.y + 0.01 && !A.stair && !B.stair) out.push([A.y, Math.min(B.y, A.top)]);
     return out;
   };
@@ -385,6 +418,7 @@ function carve(ctx, C, regs, o = {}) {
       const a = own[j * nx + i];
       if (a < 0 || regs[a].ghost || regs[a].walls === false) continue;
       for (const [d, di, dj] of DIRS) {
+        if (regs[a].skip && regs[a].skip.includes(d)) continue;
         const ni = i + di,
           nj = j + dj;
         const b = ni < 0 || nj < 0 || ni >= nx || nj >= nz ? -1 : own[nj * nx + ni];
@@ -763,19 +797,49 @@ export function buildDeepCrypt(ctx, C, L) {
   });
   niches(ctx, runs, 4402);
 
-  // bóvedas de cañón de las galerías de catacumba (con sus lunetos donde
-  // acaban contra la roca)
+  // bóvedas de cañón de las galerías de catacumba y de las cámaras donde se
+  // juntan (con sus lunetos donde acaban contra la roca). Donde una galería
+  // da a una cámara más alta, su bóveda acaba en un arco de sillería, y las
+  // enjutas del arco suben hasta el arranque de la cámara, por las dos caras:
+  // antes la cámara ponía sobre la boca un lienzo de una sola cara, que desde
+  // la galería no estaba, y por él se veía (o no, según desde dónde) el techo
+  // plano de la cámara.
+  const RING = 0.3;
+  // la cámara más alta que hay al otro lado del extremo k (0, 1) de la galería
+  const chamberAt = (g, k) => {
+    const [x0, z0, x1, z1] = g.r;
+    const alongX = g.vault === 'x';
+    const e = alongX ? (k ? x1 : x0) : k ? z1 : z0;
+    return regs.find((A) => {
+      if (A === g || A.ghost || A.stair || A.arch !== undefined || A.top <= g.top + 0.01) return false;
+      const [a0, b0, a1, b1] = A.r;
+      if (alongX) return Math.abs((k ? a0 : a1) - e) < 1e-6 && Math.min(b1, z1) - Math.max(b0, z0) > 0.5;
+      return Math.abs((k ? b0 : b1) - e) < 1e-6 && Math.min(a1, x1) - Math.max(a0, x0) > 0.5;
+    });
+  };
   for (const g of regs) {
     if (!g.vault) continue;
     const [x0, z0, x1, z1] = g.r;
-    const span = g.vault === 'x' ? z1 - z0 : x1 - x0;
+    const alongX = g.vault === 'x';
+    const span = alongX ? z1 - z0 : x1 - x0;
     const rise = Math.min(span / 2 - 0.05, g.vaultRise ?? 1.0);
     const rk = g.mat === 'rock';
-    barrelVault(ctx, { x0, z0, x1, z1, axis: g.vault, ys: g.top, rise, mat: rk ? 'rock' : 'mossstone', tint: rk ? RK.map((v) => v * 0.92) : VT, room: ROOM, sub: 1.0, impostMat: rk ? 'rock' : 'ashlar', impostTint: rk ? RK.map((v) => v * 0.8) : AT });
-    const c = g.vault === 'x' ? (z0 + z1) / 2 : (x0 + x1) / 2;
+    const ch = g.framed ? [chamberAt(g, 0), chamberAt(g, 1)] : [null, null];
+    // (la bóveda, hasta los arcos de los extremos que dan a una cámara)
+    const v = [x0, z0, x1, z1];
+    if (ch[0]) v[alongX ? 0 : 1] += RING;
+    if (ch[1]) v[alongX ? 2 : 3] -= RING;
+    barrelVault(ctx, { x0: v[0], z0: v[1], x1: v[2], z1: v[3], axis: g.vault, ys: g.top, rise, mat: rk ? 'rock' : 'mossstone', tint: rk ? RK.map((q) => q * 0.92) : VT, room: ROOM, sub: 1.0, impostMat: rk ? 'rock' : 'ashlar', impostTint: rk ? RK.map((q) => q * 0.8) : AT });
+    const c = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
     const ends = g.ends ?? [true, true];
-    const ats = g.vault === 'x' ? [x0, x1] : [z0, z1];
-    for (let k = 0; k < 2; k++) if (ends[k]) lunette(ctx, { axis: g.vault, at: ats[k], c, span, ys: g.top, rise, face: k ? -1 : 1, mat: g.mat === 'rock' ? 'rock' : 'mossstone', tint: g.mat === 'rock' ? RK : CT, room: ROOM });
+    const ats = alongX ? [x0, x1] : [z0, z1];
+    for (let k = 0; k < 2; k++) {
+      const A = ch[k];
+      // (el arco, con la misma luz y la misma flecha que la bóveda, que sigue
+      // por su intradós)
+      if (A) archRing(ctx, { axis: alongX ? 'z' : 'x', c, w: span - 0.06, y0: g.top, rise, ring: RING, t0: k ? ats[k] - RING : ats[k], t1: k ? ats[k] : ats[k] + RING, top: A.top, clip: [c - span / 2, c + span / 2], mat: 'ashlar', spMat: A.mat ?? 'rock', room: ROOM, tint: AT, spTint: A.tint ?? RK, cam: false });
+      else if (ends[k]) lunette(ctx, { axis: g.vault, at: ats[k], c, span, ys: g.top, rise, face: k ? -1 : 1, mat: g.mat === 'rock' ? 'rock' : 'mossstone', tint: g.mat === 'rock' ? RK : CT, room: ROOM });
+    }
     crown(ctx, x0, z0, x1, z1, g.top + rise);
   }
 
@@ -807,6 +871,7 @@ export function buildDeepCrypt(ctx, C, L) {
     antesala: 'sanctum',
     pila_honda: 'crypt',
     catacumbas: 'crypt',
+    huesos: 'crypt',
     lucernario: 'crypt',
     inocentes: 'crypt',
     pila_oeste: 'crypt',
@@ -1374,9 +1439,15 @@ function buildCatacumbas(ctx, C, L) {
   // que baja a los Inocentes
   stairs(ctx, -12.9, YC, -101.75, 'e', 2.5, 12, 0.3, 0.45, 'flag', { solidBelow: true });
   rampVault(ctx, { axis: 'x', x0: -12.9, x1: -7.5, z0: -103, z1: -100.5, ys0: YC + 2.2, ys1: Y + 2.2, rise: 1.0, mat: 'rock', tint: RK, room: ROOM });
+  // (al pie, su arco en el muro de la cámara, con las enjutas hasta su
+  // bóveda: sobre la boca quedaba un hueco abierto)
+  archRing(ctx, { axis: 'z', c: -101.75, w: 2.44, y0: YC + 2.2, rise: 1.0, ring: 0.3, t0: -12.92, t1: -12.6, top: YC + CHAMBER, clip: [-103, -100.5], mat: 'ashlar', spMat: 'rock', room: ROOM, tint: AT, spTint: RK, cam: false });
   buildHiddenDoor(ctx, L);
   stairs(ctx, -65.15, YI, -93.5, 'e', 3, 7, 0.3, 0.45, 'flag', { solidBelow: true });
-  rampVault(ctx, { axis: 'x', x0: -65.15, x1: -62, z0: -95, z1: -92, ys0: YI + 2.2, ys1: YC + 2.2, rise: 1.0, mat: 'rock', tint: RK, room: ROOM });
+  rampVault(ctx, { axis: 'x', x0: -65.15, x1: -62, z0: -95, z1: -92, ys0: YI + GV.ys, ys1: YC + GV.ys, rise: GV.rise, mat: 'rock', tint: RK, room: ROOM });
+
+  // --- la capilla de los huesos, en el cruce
+  buildBones(ctx, L);
 
   // --- restos, velas y muertos por las galerías
   for (const [x, z, n, s] of [
@@ -1391,7 +1462,6 @@ function buildCatacumbas(ctx, C, L) {
     P.bones(ctx, x, YC, z, n, s, 0.6);
   for (const [x, z, n, s] of [
     [-16.6, -100.2, 5, 4780],
-    [-52, -98.6, 6, 4781],
     [-34.2, -86.3, 4, 4782],
   ])
     P.candles(ctx, x, YC, z, n, s, { room: ROOM, radius: 4, intensity: 0.7 });
@@ -1401,6 +1471,190 @@ function buildCatacumbas(ctx, C, L) {
   ctx.rats.push({ x: -45, y: YC, z: -93.5, n: 3 });
   ctx.rats.push({ x: -14, y: YC, z: -90, n: 2 });
   L.phantoms.push({ x: -58, y: YC, z: -93.5, trigger: [-44, YC, -93.5], kind: 'mourner' });
+}
+
+// ------------------------------------------------------------ la capilla de los huesos
+// En el cruce de las catacumbas de la Sé, donde había una caja de calaveras
+// de suelo a techo, todas iguales: una capilla de huesos, como la de Évora.
+// La bóveda encalada, sobre dos fajones de fémures y sus pilastras de
+// calaveras; en los muros, el zócalo de fémures, una repisa con su fila de
+// calaveras y, encima, paños de calaveras y de rosetones de huesos en sus
+// marcos de hueso. Al norte, el altar y, encima, la inscripción (NÓS OSSOS
+// QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS); al sur, el osario: el montón de
+// los que ya no caben en los muros, bajo su cruz. En el tramo del medio, el
+// del cruce con las galerías, cuelga una lámpara de calaveras.
+function buildBones(ctx, L) {
+  const wb = ctx.wb;
+  const BN = DEEP.bones;
+  const { x0, z0, x1, z1 } = BN;
+  const cx = (x0 + x1) / 2;
+  const ys = YC + CHAMBER,
+    RISE = 1.8;
+  const BT = [0.86, 0.82, 0.74],
+    WT = BN.wall,
+    DW = [0.55, 0.46, 0.38];
+  // los fajones (el tramo del medio es el del cruce) y las bocas de las
+  // galerías, con su arco (ver buildDeepCrypt)
+  const FAJ = [-97.25, -89.5];
+  const MOUTH = [-95.3, -91.7],
+    SOUTH = [-87.8, z1];
+  barrelVault(ctx, { x0, z0, x1, z1, axis: 'z', ys, rise: RISE, mat: 'plaster', tint: WT.map((v) => v * 0.95), room: ROOM, sub: 1.0, impostMat: 'femurs', impostTint: BT });
+  for (const [at, f] of [
+    [z0, 1],
+    [z1, -1],
+  ])
+    lunette(ctx, { axis: 'z', at, c: cx, span: x1 - x0, ys, rise: RISE, face: f, mat: 'plaster', tint: WT, room: ROOM });
+  crown(ctx, x0, z0, x1, z1, ys + RISE);
+  for (const z of FAJ) {
+    archRing(ctx, { axis: 'x', c: cx, w: x1 - x0 - 0.5, y0: ys, rise: RISE - 0.28, ring: 0.3, t0: z - 0.22, t1: z + 0.22, mat: 'femurs', room: ROOM, tint: BT, cam: false });
+    pilaster(ctx, x0, z, 'e', YC, ys, { room: ROOM, mat: 'skulls', tint: BT, w: 0.56, d: 0.2 });
+    pilaster(ctx, x1, z, 'w', YC, ys, { room: ROOM, mat: 'skulls', tint: BT, w: 0.56, d: 0.2 });
+  }
+  // una pieza salida del muro: face, hacia dónde mira ('e', 'w' en los muros
+  // largos; 's', 'n' en los testeros); at, el plano del muro; de a0 a a1 a lo
+  // largo del muro, de y0 a y1, y d de salida
+  const slab = (face, at, a0, a1, y0, y1, d, mat, tint, sub = 1.5) => {
+    const sg = face === 'e' || face === 's' ? 1 : -1;
+    const p0 = Math.min(at, at + sg * d),
+      p1 = Math.max(at, at + sg * d);
+    const long = face === 'e' || face === 'w';
+    const opt = { faces: face + 'tb' + (long ? 'ns' : 'ew'), ao: false, sub, room: ROOM, tint };
+    if (long) wb.box(mat, p0, y0, a0, p1, y1, a1, opt);
+    else wb.box(mat, a0, y0, p0, a1, y1, p1, opt);
+  };
+  // un paño (de calaveras o de rosetones) en su marco de hueso
+  const field = (face, at, a0, a1, y0, y1, mat) => {
+    slab(face, at, a0 + 0.08, a1 - 0.08, y0 + 0.08, y1 - 0.08, 0.03, mat, BT, 1.2);
+    for (const [b0, b1, c0, c1] of [
+      [a0, a1, y0, y0 + 0.08],
+      [a0, a1, y1 - 0.08, y1],
+      [a0, a0 + 0.08, y0 + 0.08, y1 - 0.08],
+      [a1 - 0.08, a1, y0 + 0.08, y1 - 0.08],
+    ])
+      slab(face, at, b0, b1, c0, c1, 0.06, 'bone', BT, 3);
+  };
+  // un tramo de muro: el zócalo de fémures, la repisa con su fila de
+  // calaveras y, encima, su paño
+  const run = (face, at, a0, a1, mat, frieze = true) => {
+    if (a1 - a0 < 0.5) return;
+    slab(face, at, a0, a1, YC, YC + 0.95, 0.05, 'femurs', BT);
+    slab(face, at, a0, a1, YC + 0.95, YC + 1.01, 0.16, 'ashlar', AT, 2);
+    const sg = face === 'e' || face === 's' ? 1 : -1;
+    const n = Math.floor((a1 - a0 - 0.08) / 0.27);
+    const u = (a0 + a1) / 2;
+    if (frieze && n > 0) {
+      const [x, z] = face === 'e' || face === 'w' ? [at + sg * 0.09, u] : [u, at + sg * 0.09];
+      P.skullRow(ctx, x, YC + 1.01, z, { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 }[face], n, { gap: 0.27, room: ROOM, seed: Math.round(Math.abs(u * 17 + at * 3)) });
+    }
+    if (mat && a1 - a0 >= 0.8) field(face, at, a0 + 0.04, a1 - 0.04, YC + 1.26, YC + 3.56, mat);
+  };
+  // los muros largos, por tramos (sin las pilastras ni las bocas): rosetones
+  // en el del medio y calaveras en los otros dos
+  const cuts = (holes) => {
+    const hs = [...FAJ.map((z) => [z - 0.34, z + 0.34]), ...holes].sort((p, q) => p[0] - q[0]);
+    const out = [];
+    let cur = z0;
+    for (const [a, b] of hs) {
+      if (a > cur) out.push([cur, a]);
+      cur = Math.max(cur, b);
+    }
+    if (z1 > cur) out.push([cur, z1]);
+    return out;
+  };
+  const mid = (a0, a1) => (a0 > FAJ[0] && a1 < FAJ[1] ? 'boneRosette' : 'skulls');
+  for (const [a0, a1] of cuts([MOUTH])) run('e', x0, a0, a1, mid(a0, a1));
+  for (const [a0, a1] of cuts([MOUTH, SOUTH])) run('w', x1, a0, a1, mid(a0, a1));
+
+  // --- al norte, el altar: a sus lados, los tramos con su repisa; detrás, el
+  // zócalo y el paño grande con la cruz; encima, la inscripción
+  P.candleAltar(ctx, cx, YC, z0 + 0.62, 0, ROOM);
+  run('s', z0, x0 + 0.17, cx - 1.0, 'boneRosette');
+  run('s', z0, cx + 1.0, x1 - 0.17, 'boneRosette');
+  slab('s', z0, cx - 1.0, cx + 1.0, YC, YC + 0.95, 0.05, 'femurs', BT);
+  field('s', z0, cx - 0.96, cx + 0.96, YC + 1.26, YC + 3.56, 'skulls');
+  slab('s', z0, cx - 0.07, cx + 0.07, YC + 1.45, YC + 3.4, 0.11, 'wooddark', DW, 2);
+  slab('s', z0, cx - 0.55, cx + 0.55, YC + 2.72, YC + 2.86, 0.11, 'wooddark', DW, 2);
+  // la inscripción: la lápida y sus dos renglones, una raya negra por palabra
+  slab('s', z0, cx - 1.65, cx + 1.65, YC + 3.64, YC + 4.12, 0.05, 'ashlar', [0.8, 0.76, 0.7], 2);
+  for (const [y, words] of [
+    [YC + 3.96, [3, 5, 3, 4, 7]],
+    [YC + 3.78, [5, 6, 9]],
+  ]) {
+    const w = words.reduce((a, b) => a + b * 0.075, 0) + (words.length - 1) * 0.1;
+    let a = cx - w / 2;
+    for (const n of words) {
+      wb.box('black', a, y - 0.035, z0 + 0.05, a + n * 0.075, y + 0.035, z0 + 0.056, { faces: 's', ao: false, grime: false, room: ROOM });
+      a += n * 0.075 + 0.1;
+    }
+  }
+  // dos pirámides de calaveras a los lados del altar, en su peana
+  for (const s of [-1, 1]) {
+    const px = cx + s * 1.75,
+      pz = z0 + 0.5;
+    wb.box('ashlar', px - 0.42, YC, pz - 0.32, px + 0.42, YC + 0.5, pz + 0.32, { faces: 'tnsew', sub: 2, aoH: 0.4, room: ROOM, tint: AT });
+    ctx.col.add(px - 0.42, YC, pz - 0.32, px + 0.42, YC + 1.3, pz + 0.32);
+    for (const [k, n] of [
+      [0, 3],
+      [1, 2],
+      [2, 1],
+    ])
+      P.skullRow(ctx, px, YC + 0.5 + k * 0.19, pz + 0.04 - k * 0.04, 0, n, { gap: 0.25, room: ROOM, seed: 4950 + k + (s > 0 ? 7 : 0) });
+  }
+  L.interact.push({ kind: 'note', id: 'n_huesos', note: 'huesos', x: cx, y: YC + 1.2, z: z0 + 1.25, model: 'wall', r: 2.2 });
+
+  // --- al sur, el osario: el montón de huesos bajo su cruz de fémures, y a
+  // sus lados, los tramos con su repisa
+  const hw = 1.75;
+  run('n', z1, x0 + 0.17, cx - hw - 0.05, 'boneRosette');
+  run('n', z1, cx + hw + 0.05, x1 - 0.17, 'boneRosette');
+  slab('n', z1, cx - hw - 0.05, cx + hw + 0.05, YC, YC + 0.95, 0.05, 'femurs', BT);
+  field('n', z1, cx - hw, cx + hw, YC + 1.26, YC + 3.56, 'skulls');
+  slab('n', z1, cx - 0.09, cx + 0.09, YC + 1.5, YC + 3.45, 0.12, 'femurs', BT, 2);
+  slab('n', z1, cx - 0.7, cx + 0.7, YC + 2.78, YC + 2.96, 0.12, 'femurs', BT, 2);
+  // (el montón, en gradas de fémures apilados con una fila de calaveras en el
+  // borde de cada grada, como se ordenan los huesos en los osarios)
+  for (const [k, w, d, y0, y1] of [
+    [0, hw, 1.1, YC, YC + 0.45],
+    [1, hw - 0.4, 0.78, YC + 0.45, YC + 0.86],
+    [2, hw - 0.85, 0.46, YC + 0.86, YC + 1.24],
+  ]) {
+    wb.box('femurs', cx - w, y0, z1 - d, cx + w, y1, z1, { faces: 'tnew', sub: 1.2, aoH: 0.6, aoMin: 0.55, baseY: YC, room: ROOM, tint: BT.map((v) => v * (0.94 + k * 0.03)) });
+    P.skullRow(ctx, cx, y1, z1 - d + 0.12, Math.PI, Math.floor((2 * w - 0.1) / 0.25), { gap: 0.25, room: ROOM, seed: 4960 + k });
+  }
+  ctx.col.add(cx - hw, YC, z1 - 1.1, cx + hw, YC + 1.0, z1);
+  P.bones(ctx, cx - 1.2, YC, z1 - 1.5, 7, 4961, 0.5);
+  P.bones(ctx, cx + 1.4, YC, z1 - 1.4, 6, 4962, 0.5);
+  P.candles(ctx, cx + 0.2, YC, z1 - 1.45, 5, 4963, { room: ROOM, radius: 4, intensity: 0.7, spread: 0.35 });
+
+  // --- la lámpara de calaveras, en el tramo del medio: el aro de hierro,
+  // colgado de la clave, con ocho calaveras mirando fuera y una vela entre
+  // cada dos
+  const lz = (FAJ[0] + FAJ[1]) / 2,
+    ly = YC + 3.3,
+    RR = 0.62;
+  wb.geometry('iron', new THREE.TorusGeometry(RR, 0.03, 4, 24), M4().makeRotationX(Math.PI / 2).setPosition(cx, ly, lz), { ao: false, room: ROOM });
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2;
+    const m = M4().compose(V(cx + Math.cos(a) * RR, ly + 0.02, lz + Math.sin(a) * RR), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(Math.cos(a), Math.sin(a)), 0)), V(1.3, 1.3, 1.3));
+    bakeParts(wb, skullParts({ jaw: true, open: 0.15, tint: BT }), m, { room: ROOM });
+    const b = a + Math.PI / 8;
+    const vx = cx + Math.cos(b) * RR,
+      vz = lz + Math.sin(b) * RR;
+    wb.cylinder('iron', vx, ly - 0.02, vz, 0.035, 0.04, 0.05, 6, { ao: false, capTop: true, room: ROOM });
+    wb.cylinder('candle', vx, ly + 0.03, vz, 0.025, 0.025, 0.12, 5, { ao: false, capTop: true, grime: false, room: ROOM });
+    if (ctx.fires) ctx.fires.push({ x: vx, y: ly + 0.16, z: vz, s: 0.1, light: false, embers: false, glow: true });
+  }
+  // (tres varillas al aro y la cadena hasta la clave)
+  const top = V(cx, ly + 0.7, lz);
+  for (let k = 0; k < 3; k++) {
+    const a = (k / 3) * Math.PI * 2 + 0.3;
+    bakeParts(wb, boneParts(V(cx + Math.cos(a) * RR, ly, lz + Math.sin(a) * RR), top, 0.012, 'iron'), null, { room: ROOM });
+  }
+  P.chains(ctx, cx, ys + RISE - 0.03, lz, Math.round((ys + RISE - top.y) / 0.06), 0);
+  ctx.lights.push({ x: cx, y: ly + 0.25, z: lz, r: 1, g: 0.64, b: 0.34, radius: 9, intensity: 1.1, room: ROOM });
+  // las losas de los que ya están bajo el suelo
+  ledger(ctx, cx, YC, lz, Math.PI / 2, 4964);
+  ledger(ctx, cx, YC, -88.1, Math.PI / 2, 4965);
 }
 
 // El paso escondido de la escalera de las catacumbas a la sala de llegada: un
@@ -1481,6 +1735,11 @@ function buildInocentes(ctx, L) {
     G = CL.gate;
   // (las enjutas, sólo sobre el vano: a los lados, los muros de las dos salas)
   arch(ctx, { axis: 'z', c: (G.z0 + G.z1) / 2, w: G.z1 - G.z0, y0: YI + 2.2, rise: 0.9, ring: 0.3, t0: CL.x1, t1: -80, top: YI + 3.4, clip: [G.z0, G.z1], spMat: 'rock', spTint: RK });
+  // (por el lado del cruce, su muro hasta el arranque de la bóveda del cruce,
+  // más alto que la del relicario)
+  wb.box('rock', CL.x1, YI + 3.4, G.z0, -80, YI + CHAMBER, G.z1, { faces: 'e', sub: 1.2, aoH: 1.2, aoMin: 0.5, baseY: YI, room: ROOM, tint: RK });
+  // la puerta del cubículo, en su marco
+  doorFrame(ctx, { face: 's', at: -100, c: -78.25, w: 1.5, y: YI, h: 1.9, jw: 0.25, lh: 0.32, tint: [0.78, 0.74, 0.68], cross: true });
   // Dom Mendo, el otro canónigo, muerto ante el rastrillo (con su nota)
   bakeCorpse(ctx.wb, -78.6, YI, -96.8, 2.6, 'sit', 'villager', 4795);
   L.interact.push({ kind: 'note', id: 'n_garra', note: 'garra', x: -78.2, y: YI + 0.05, z: -96.0, model: 'paper' });
@@ -1752,7 +2011,7 @@ function buildCreatures(L) {
     e('cavador', -24, YC, -92.75, 'e_c1a', { idle: 'dig', yaw: 0 }),
     e('emparedada', -42.81, YC, -97.51, 'e_c1b', { idle: 'walled', yaw: -2.53 }),
     e('cavador', -58.5, YC, -94.25, 'e_c1c', { idle: 'dig', yaw: Math.PI }),
-    e('enrodado', -52, YC, -98.2, 'e_c1d', { idle: 'stand', yaw: 0 }),
+    e('enrodado', -52, YC, -96.6, 'e_c1d', { idle: 'stand', yaw: 0 }),
     e('emparedada', -34.4, YC, -85.75, 'e_c1e', { idle: 'walled', yaw: 0 }),
     e('cavador', -13.6, YC, -96, 'e_c1f', { idle: 'dig', yaw: Math.PI / 2 }),
     e('enrodado', -47.5, YC, -86.25, 'e_c1g', { idle: 'stand', yaw: 0 }),
