@@ -2784,6 +2784,22 @@ export class Audio {
         this.voice(d, end, 0.9, { f0: f0 * 1.05, f1: f0 * 0.6, vowel: 'o', v1: 'u', gain: 0.06, vib: 5, vibD: 25, breath: 1.4, a: 0.1, rasp: 0.4, rel: 0.8 });
         break;
       }
+      // Miguel, el tonelero: un hombre que habla entre sollozos (la voz se
+      // le quiebra hacia arriba) y se queda sin aire al acabar
+      case 'miguelTalk': {
+        d = this.out(P, { gain: 0.8, verb: 0.45, life: (o.len ?? 1.5) + 2, ref: 4 });
+        const f0 = 124 * (o.k ?? 1);
+        let tt = t;
+        const end = t + Math.min(4, o.len ?? 1.5);
+        while (tt < end) {
+          const sob = Math.random() < 0.22;
+          const l = sob ? rnd(0.07, 0.11) : rnd(0.1, 0.22);
+          this.voice(d, tt, l, { f0: f0 * (sob ? rnd(1.35, 1.6) : rnd(0.9, 1.15)), f1: f0 * (sob ? 1.1 : rnd(0.8, 0.95)), vowel: pick(['a', 'e', 'o', 'u']), v1: pick(['a', 'o', 'u']), gain: sob ? 0.055 : 0.08, vib: 5, vibD: 10, breath: 0.9, a: 0.015, jit: 26, rasp: 0.3 });
+          tt += l + (Math.random() < 0.2 ? rnd(0.12, 0.28) : rnd(0.02, 0.08));
+        }
+        for (let i = 0; i < 2; i++) this.noise(d, end + i * 0.22, 0.16, { f0: rnd(600, 900), q: 1.4, gain: 0.07, a: 0.04, buf: this.pink });
+        break;
+      }
     }
     this._vc = null;
   }
@@ -3026,6 +3042,19 @@ export class Audio {
           this.creak(d, t, 1.0, rnd(70, 100), 0.18);
           if (Math.random() < 0.5) V({ dt: 0.6, dur: 0.9, f0: 160 * pv, f1: 140 * pv, vowel: 'o', gain: 0.1, breath: 0.9, rasp: 0.6, jit: 30 });
         }
+        break;
+      // Miguel: un hombre que llora (sollozos ahogados y sorber), el
+      // sobresalto al verte y, cuando le cuesta contenerse, un gruñido entre
+      // dientes que acaba en grito
+      case 'morador':
+        if (kind === 'idle') {
+          for (let i = 0; i < 4; i++) V({ dt: i * rnd(0.32, 0.45), dur: rnd(0.2, 0.3), f0: (190 - i * 10) * pv, f1: (150 - i * 10) * pv, vowel: i % 2 ? 'o' : 'u', gain: 0.07, breath: 1.2, jit: 30, rasp: 0.35, a: 0.01 });
+          this.noise(d, t + 1.6, 0.45, { f0: 700, f1: 400, q: 1.2, gain: 0.05, a: 0.15, buf: this.pink });
+        } else if (kind === 'alert') V({ dur: 0.7, f0: 170 * pv, f1: 230 * pv, vowel: 'a', v1: 'o', gain: 0.22, vib: 6, vibD: 20, breath: 0.7, a: 0.02, rasp: 0.4, jit: 18 });
+        else if (kind === 'attack') {
+          V({ dur: 0.9, f0: 105 * pv, f1: 90 * pv, vowel: 'u', v1: 'a', gain: 0.18, vib: 9, vibD: 30, breath: 1.0, a: 0.05, rasp: 0.85, jit: 35 });
+          V({ dt: 0.6, dur: 0.5, f0: 210 * pv, f1: 160 * pv, vowel: 'a', gain: 0.12, breath: 0.9, rasp: 0.5 });
+        } else if (kind === 'hurt') V({ dur: 0.35, f0: 180 * pv, f1: 140, vowel: 'u', gain: 0.18, breath: 0.6, rasp: 0.3 });
         break;
       // Leonor: una mujer que llora (y algo enorme que respira debajo)
       case 'leonor':

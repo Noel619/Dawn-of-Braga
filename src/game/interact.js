@@ -438,6 +438,15 @@ function noteMesh(model) {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.01, 0.3), objMat('clothWhite', { tint: 0xd8c8a0 }));
     p.rotation.y = 0.3;
     g.add(p);
+  } else if (model === 'stave') {
+    // una duela de tonel, curva, escrita a carbón
+    const d = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.78), objMat('planks'));
+    d.position.y = 0.01;
+    d.rotation.y = 0.9;
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.004, 0.5), objMat('black'));
+    c.position.y = 0.022;
+    c.rotation.y = 0.9;
+    g.add(d, c);
   }
   return g;
 }
@@ -810,6 +819,9 @@ export class Interactables {
     } else if (s.kind === 'censer') {
       // el incensario del estrado (lo cuelga y lo enciende game/crypt.js)
       it.r = s.r ?? 2.0;
+    } else if (s.kind === 'plank') {
+      // el hueco del pasadizo del Soto: lo enseña y lo esconde game/souto.js
+      it.r = s.r ?? 1.8;
     } else if (s.kind === 'board' || s.kind === 'npc') {
       // tapiar una ventana / hablar con Henrique: los enseña y los esconde
       // el guion de la casa (game/house.js)
@@ -1250,6 +1262,8 @@ export class Interactables {
         return 'Soltar el torno del puente';
       case 'board':
         return 'Tapiar la ventana';
+      case 'plank':
+        return this.game.souto ? this.game.souto.plankLabel() : 'Examinar el hueco';
       case 'npc':
         return it.label ?? 'Hablar';
       case 'puzzle':
@@ -1287,7 +1301,7 @@ export class Interactables {
         const n = it.axis === 'x' ? p.pos.z - it.z : p.pos.x - it.x;
         if (Math.sign(n) === L.side) openIt('Retiras la tranca.', 'bar');
         else {
-          g.ui.toast(MSG.barred);
+          g.ui.toast(MSG[it.barredMsg] || MSG.barred);
           g.audio && g.audio.play('locked', it);
         }
       } else if (L.type === 'boards') {
@@ -1338,6 +1352,10 @@ export class Interactables {
     }
     if (it.kind === 'board') {
       if (g.house) g.house.board(it);
+      return true;
+    }
+    if (it.kind === 'plank') {
+      if (g.souto) g.souto.usePlank(it);
       return true;
     }
     if (it.kind === 'npc') {

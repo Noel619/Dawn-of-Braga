@@ -246,7 +246,7 @@ export function buildSW(ctx, S, L) {
   house(ctx, { x0: -48, z0: 3.5, x1: -41, z1: 12.5, front: 'n', seed: 1201, h: 6.8 });
   house(ctx, { x0: -41, z0: 3.5, x1: -35, z1: 12.5, front: 'n', seed: 1202, burned: true, h: 6.2 });
   lane(ctx, S, -35, 3.5, -32.5, 16);
-  house(ctx, { x0: -32.5, z0: 3.5, x1: -23, z1: 12.5, front: 'n', seed: 1203, lit: true, h: 7.4 });
+  // (la casa de enfrente de la tapiada, la del tonelero: level_souto.js)
   house(ctx, { x0: -41, z0: 12.5, x1: -35, z1: 17, front: 'e', seed: 1204, h: 6.4 });
   house(ctx, { x0: -32.5, z0: 12.5, x1: -23, z1: 16, front: 's', seed: 1205, h: 6.6 });
   P.laundry(ctx, -34.95, 7, -32.55, 7, 4.3, 1201);

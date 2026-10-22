@@ -18,7 +18,8 @@ const WALK = 2.2,
   JOG = 4.5,
   RUN = 6.7,
   STRAFE = 3.6,
-  BLOCKWALK = 1.9;
+  BLOCKWALK = 1.9,
+  BALANCE = 0.95;
 
 export class Player {
   constructor(game) {
@@ -252,6 +253,7 @@ export class Player {
     this.parryFx = 0;
     this.ripE = null;
     this.gait._yaw = null;
+    this.balance = null;
     this.obj.position.set(x, y, z);
     this.obj.rotation.y = yaw;
   }
@@ -806,7 +808,28 @@ export class Player {
       this.anim.speed = 1;
     }
 
-    if (st === 'free' || st === 'blockhit') {
+    if (st === 'free' && this.balance) {
+      // haciendo equilibrio sobre un tablón (ver game/souto.js): se anda
+      // despacio a lo largo, sin correr, rodar ni golpear; lo que se empuja
+      // hacia los lados es para no caerse (balance.input) y el cuerpo se va
+      // hacia donde se inclina
+      const b = this.balance;
+      const along = wx * b.ax + wz * b.az;
+      b.input = mag > 0.05 ? wx * b.az - wz * b.ax : 0;
+      this.blocking = false;
+      this.buffer = null;
+      const va = clamp(along, -1, 1) * BALANCE * (1 - Math.min(0.6, Math.abs(b.lean) * 0.5));
+      const off = (this.pos.x - b.cx) * b.az - (this.pos.z - (b.cz ?? this.pos.z)) * b.ax;
+      const vl = -off * 5 + b.lean * 0.3;
+      this.vx = damp(this.vx, b.ax * va + b.az * vl, 8, dt);
+      this.vz = damp(this.vz, b.az * va - b.ax * vl, 8, dt);
+      if (Math.abs(along) > 0.15) {
+        const sg = Math.sign(along);
+        faceTarget = Math.atan2(b.ax * sg, b.az * sg);
+        turnRate = 6;
+      }
+      desiredSpeed = -1;
+    } else if (st === 'free' || st === 'blockhit') {
       const wantBlock = allowControl && input.down('block') && this.canGuard() && st === 'free';
       const wasBlocking = this.blocking;
       this.blocking = wantBlock || st === 'blockhit';
@@ -1142,6 +1165,9 @@ export class Player {
     const t = g.time;
     const target = g.lockTarget;
     const gait = this.gait;
+    // (sobre un tablón, un pie delante del otro)
+    if (this._gw === undefined) this._gw = gait.S.width;
+    gait.S.width = this._gw * (1 - 0.8 * (this.balW || 0));
     const pose = gait.update(dt, this.vx, this.vz, this.yaw, {
       time: t,
       grounded: this.body.grounded,
@@ -1185,6 +1211,36 @@ export class Player {
     // bloqueo (tren superior): con escudo o con el arma
     if (this.blockW > 0.01) blendInto(pose, this.blockRad, this.blockW, UPPER);
     this.resolveArms(pose);
+    // haciendo equilibrio: los brazos en cruz, la vista en el tablón y el
+    // cuerpo que se va hacia un lado (y, cerca de caer, los brazos que bracean)
+    // (la inclinación, del lado del mundo hacia el que se va al de la izquierda
+    // o la derecha del cuerpo, según hacia dónde mira)
+    this.balW = damp(this.balW || 0, this.balance ? 1 : 0, 6, dt);
+    if (this.balance) {
+      const B = this.balance;
+      this.balLean = B.lean * (B.az * Math.cos(this.yaw) + B.ax * Math.sin(this.yaw));
+    }
+    if (this.balW > 0.01) {
+      const L = clamp(this.balLean || 0, -1.2, 1.2);
+      const fl = Math.max(0, Math.abs(L) - 0.55) * Math.sin(t * 17) * 0.5;
+      const d = DEG;
+      blendInto(
+        pose,
+        {
+          chest: [12 * d, 0, -L * 20 * d],
+          head: [24 * d, 0, L * 12 * d],
+          armL: [(-14 + fl * 40) * d, 0, (78 + L * 22 + fl * 30) * d],
+          foreL: [-16 * d, 0, 0],
+          handL: [0, 0, 0],
+          armR: [(-14 - fl * 40) * d, 0, (-78 + L * 22 - fl * 30) * d],
+          foreR: [-16 * d, 0, 0],
+          handR: [20 * d, 0, 0],
+        },
+        this.balW,
+        null
+      );
+      addRot(pose, 'hips', [0, 0, -L * 7 * d * this.balW]);
+    }
     // clip de acción
     const ap = this.anim.update(dt);
     const c = this.anim.clip;

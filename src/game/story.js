@@ -91,7 +91,7 @@ export const ITEMS = {
   },
   tablon: {
     name: 'Tablón',
-    desc: 'Un tablón de pino, recio, con los clavos todavía torcidos donde estuvo. Basta uno para tapiar una ventana.',
+    desc: 'Un tablón de pino, largo y recio, con los clavos todavía torcidos donde estuvo. Basta uno para tapiar una ventana, o para salvar un hueco.',
     icon: 'plank',
     key: true,
   },
@@ -238,7 +238,31 @@ Al preso de la primera celda lo dejo sin comer. Que Dios me perdone: no pienso a
 
 Tu hermana dejó de toser anoche. Por la mañana estaba de pie junto a la ventana, mirando hacia la catedral. No contesta. No parpadea.
 
-He clavado la puerta. Ya no sé si es para que no entren o para que no salga.`,
+He clavado la puerta. Ya no sé si es para que no entren o para que no salga.
+
+Voy a buscarte a la muralla. Si vuelves antes que yo, no la abras.`,
+  },
+  recetario: {
+    title: 'Recetario de Joana, la herbolera',
+    text: `Para la tos, tomillo, malva y miel, tres veces al día. Para las calenturas, corteza de sauce. Para el mal de ojo, ruda, y no contárselo a nadie.
+
+Al final, de otra tinta y con prisa:
+
+Inés, primera noche. Tose sangre negra. Cataplasma de mostaza, agua de llantén.
+Segunda noche. Ya no quiere caldo. Pide carne cruda. No se la doy.
+Tercera noche. Ya no tose. Ya no respira. Pero se levanta.
+
+No hay hierba para esto.`,
+  },
+  miguel: {
+    title: 'Escrito a carbón en una duela',
+    text: `Me llamo Miguel, hijo de Joana, la de las hierbas, y de Afonso, que en paz descanse. Tonelero. Lo escribo para no olvidarlo: ya se me van las palabras.
+
+Catarina, te pido perdón. No te lo puedo pedir de otra manera.
+
+Madre, arranqué las tablas del pasadizo para no ir a buscarte. No las vuelvas a poner.
+
+Lo hago ahora, mientras todavía soy yo.`,
   },
   herrero: {
     title: 'Libro de cuentas del herrero',
@@ -613,6 +637,41 @@ export const DIALOG = {
   paioLitany: ['Kyrie eleison...', 'Ora pro nobis... ora...', 'Agnus Dei...'],
   paioHollowDeath: '...Mendo. Ya no quema.',
 
+  // Miguel, el tonelero, el hijo de la casa tapiada: infectado, en un rincón
+  // de su alcoba. No ataca: grita que te vayas (game/souto.js)
+  // (para sí, llorando, cuando no le ves o estás lejos)
+  miguelSob: [
+    'Me llamo Miguel. Miguel, el tonelero. El hijo de Joana.',
+    'No tengo hambre. No tengo hambre. No tengo hambre.',
+    'Catarina... perdóname, Catarina.',
+    'Dios te salve, María, llena eres de... de...',
+    'Todavía soy yo. Todavía.',
+    'Me crecen los dientes. Los noto con la lengua.',
+    'Arranqué las tablas. Que no cruce nadie. Que no cruce yo.',
+    'Toda la casa huele a ella.',
+    'Madre... ¿dónde estás, madre?',
+    'La campana no. Que no suene la campana.',
+    'Tengo las manos frías. Ya no son mías.',
+  ],
+  // te ve
+  miguelSee: '¿Quién anda ahí...? ¡No! ¡No te acerques!',
+  // a unos pasos: que te vayas
+  miguelWarn: ['¡Quieto ahí! ¡Ni un paso más!', '¡Vete! ¡Déjame solo!', 'Te oigo el corazón desde aquí. Vete, por Dios.', 'No sé cuánto me queda de mí. No me lo gastes.'],
+  // demasiado cerca
+  miguelNear: ['¡VETE! ¡NO VOY A PODER!', '¡Atrás! ¡No me fío de mis manos!', '¡Te huelo! ¡Vete, vete, vete!', '¡No me mires la boca!', '¡No... no... NO!'],
+  // a distancia, entre ruego y ruego, lo que pasó (en orden, una vez)
+  miguelTale: [
+    'Volví de la muralla con calentura. Uno de los de fuera me mordió en el adarve.',
+    'Ella me cuidó. Tres noches me estuvo cuidando.',
+    'Me desperté con su sangre en la boca.',
+    'Arranqué las tablas del pasadizo para no cruzar. Las huelo desde aquí, a mi madre y a mi hermana.',
+    '¿Vienes de enfrente? ¿De casa de mi madre?... No. No me lo digas.',
+  ],
+  // te alejas
+  miguelCalm: ['Así. Ahí. No te acerques más.', 'Gracias... gracias.', 'Vete ya. Por lo que más quieras.'],
+  // vuelves (aún vive)
+  miguelBack: ['¿Otra vez tú? ¿Por qué has vuelto?', 'Te dije que te fueras.'],
+
   leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
   leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
   leonorDeath: ['...Henrique...'],
@@ -680,6 +739,13 @@ export const MSG = {
   boardNoPlank: 'Te falta un tablón para tapiar esta ventana.',
   boardDone: (n) => (n > 0 ? `Clavas el tablón de través. Queda${n === 1 ? '' : 'n'} ${n} ventana${n === 1 ? '' : 's'} por tapiar.` : 'Clavas el último tablón. La casa está cerrada.'),
   henriqueFell: 'HENRIQUE HA CAÍDO',
+  // el pasadizo del Soto (game/souto.js)
+  hueco: 'Han arrancado el suelo del pasadizo a hachazos: las tablas y las vigas que las sostenían. Los trozos están abajo, en la calle. Al otro lado, en el marco de la puerta, alguien ha escrito a carbón: NO CRUCES. Con un tablón largo se podría tender un paso.',
+  tablaPuesta: 'Tiendes el tablón de un borde al otro del hueco. Cruje, pero aguanta.',
+  equilibrio: 'El tablón se cimbrea bajo tus pies. Si te inclinas, échate hacia el otro lado.',
+  caida: 'Pierdes el equilibrio.',
+  catarina: 'Una mujer joven, tapada con una sábana empapada de sangre. Alguien le ha cruzado las manos sobre el pecho y le ha puesto una vela.',
+  doorMiguel: 'Está atrancada desde el otro lado. Dentro, muy bajo, alguien llora.',
   // la Puerta del Dios Ignoto (game/crypt.js)
   godDoor: 'Dos hojas de piedra negra, más altas que tres hombres. En ellas, un pentáculo invertido dentro de un círculo de signos que nadie sabe leer. Sobre el dintel, tres cabezas con los ojos vacíos y una inscripción: DEO IGNOTO. Al dios desconocido.',
   godGuards: 'Los Velados la guardan. Mientras uno de los dos siga en pie, nadie la cruza.',
@@ -760,6 +826,10 @@ export const AREA_NAMES = {
   ferraria: 'Calle de la Herrería',
   smithy: 'Fragua',
   souto_house: 'Casa tapiada',
+  souto_alta: 'Sobrado de la casa tapiada',
+  pasadizo: 'Pasadizo del Soto',
+  tonelero: 'Tonelería',
+  tonelero_alta: 'Sobrado del tonelero',
   crypt: 'Cripta de la Catedral',
   confesion: 'Confesión de San Martín',
   obispos: 'Panteón de los Obispos',

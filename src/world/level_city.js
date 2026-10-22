@@ -4,7 +4,8 @@
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { springaldTowerS } from './level_finale.js';
-import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, overpass, waveProp } from './builders.js';
+import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, waveProp } from './builders.js';
+import { buildCasaTapiada, buildPasadizo, buildCasaTonelero, soutoZones } from './level_souto.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -20,25 +21,12 @@ export function buildSouto(ctx, S, L) {
   // (algo levantado sobre el empedrado: a medio centímetro, de lejos parpadeaba)
   wb.box('flag', -48, -0.05, -0.4, -14, 0.015, 0.4, { faces: 't', ao: false, tint: [0.7, 0.7, 0.7] });
   // (las fachadas de ambos lados, con sus callejones, están en level_barrios.js)
-  // pasadizo que cruza la calle por encima: la calle deja de ser un tubo recto
-  overpass(ctx, -31.4, -3.5, -28, 3.5, 3.7, 6.7, 'x', { lit: true });
-
-  // casa tapiada (interior visitable)
-  const room = 'souto_house';
-  house(ctx, { x0: -33, z0: -12.5, x1: -26.5, z1: -3.5, front: 's', seed: 106, hollow: true, h: 6.8, style: 'plaster', doorAt: 3.25, room, windows: true, jetty: 0 });
-  wb.setRoom(room);
-  P.table(ctx, -31, 0, -10.5, 1.4, 0.8, 0.2);
-  P.shelf(ctx, -27.3, 0, -9, -Math.PI / 2, 1.4);
-  P.bed(ctx, -31.4, 0, -6.2, 0);
-  P.candles(ctx, -31.2, 0.8, -10.4, 3, 14, { room, radius: 4.5, intensity: 1.0, spread: 0.2 });
-  P.decal(ctx, -29.5, 0.03, -7.5, 2);
-  wb.setRoom(null);
-  L.interact.push(
-    { kind: 'door', id: 'd_souto', x: -29.75, y: 0, z: -3.5, w: 1.3, h: 2.25, axis: 'x', lock: { type: 'boards' }, mat: 'planks', hinge: -1, swing: 1, plane: -3.8 },
-    { kind: 'note', id: 'n_madre', note: 'madre', x: -30.8, y: 0.82, z: -10.4, model: 'paper' },
-    { kind: 'item', id: 'i_ampolla1', item: 'ampolla', x: -27.4, y: 1.4, z: -9 }
-  );
-  L.enemies.push({ type: 'penitent', x: -28.2, y: 0, z: -11.4, yaw: Math.PI, idle: 'window', id: 'e_hija' });
+  // la casa tapiada, el pasadizo que cruza la calle por encima (la calle
+  // deja de ser un tubo recto) y la casa del tonelero, enfrente: ver
+  // level_souto.js
+  buildCasaTapiada(ctx, S, L);
+  buildPasadizo(ctx, S, L);
+  buildCasaTonelero(ctx, S, L);
 
   // atrezo de la calle
   P.cart(ctx, -38, 0, 1.6, 0.3, { tipped: true });
@@ -68,7 +56,6 @@ export function buildSouto(ctx, S, L) {
   P.laundry(ctx, -35.2, -3.45, -35.2, 3.45, 4.7, 12);
   P.laundry(ctx, -24.8, -3.45, -24.8, 3.45, 4.4, 13);
   P.sign(ctx, -45.6, 2.95, -3.5, 0, 0);
-  P.sign(ctx, -30.4, 2.95, 3.5, Math.PI, 1);
   P.lantern(ctx, -37.9, 2.75, -3.5, 0, false);
   P.lantern(ctx, -26.1, 2.75, 3.5, Math.PI, true);
   P.lantern(ctx, -15.6, 2.75, 3.5, Math.PI, false);
@@ -79,15 +66,18 @@ export function buildSouto(ctx, S, L) {
   P.crate(ctx, -46.9, 0, -2.7, 0.7, 0.3);
   P.dropped(ctx, -31.5, 0, 1.3, 0.4, 'spear');
   P.dropped(ctx, -22.3, 0, 0.8, 2.2, 'helmet');
-  ctx.rats.push({ x: -45.4, y: 0, z: -2.5, n: 2 }, { x: -31.8, y: 0, z: -8.2, n: 1 });
+  ctx.rats.push({ x: -45.4, y: 0, z: -2.5, n: 2 });
 
   L.enemies.push(
     { type: 'hound', x: -37, y: 0, z: -1, yaw: 1.2, idle: 'eat', id: 'e_souto1' },
     { type: 'hound', x: -35.5, y: 0, z: 0.5, yaw: 1.6, idle: 'eat', id: 'e_souto2' },
     { type: 'penitent', x: -19.5, y: 0, z: -1.8, yaw: -1, idle: 'eat', id: 'e_souto3' }
   );
-  L.zones.push({ id: 'souto_house', rects: [[-33, -12.5, -26.5, -3.6, -1, 4]], atmo: 'interior', room: 'souto_house' }, { id: 'souto', rects: [[-48, -3.5, -14, 3.5, -1, 8]], atmo: 'city' });
-  L.map.push({ id: 'souto', r: [-48, -3.5, -14, 3.5] }, { id: 'souto_house', r: [-32.6, -12.1, -26.9, -3.85] });
+  // (las casas y el pasadizo, antes que la calle: la zona de la calle
+  // también cubre lo que vuela sobre ella)
+  soutoZones(L);
+  L.zones.push({ id: 'souto', rects: [[-48, -3.5, -14, 3.5, -1, 8]], atmo: 'city' });
+  L.map.push({ id: 'souto', r: [-48, -3.5, -14, 3.5] });
   L.phantoms.push({ x: -16, y: 0, z: 0, trigger: [-40, 0, 0], kind: 'penitent' });
 }
 

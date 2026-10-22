@@ -158,6 +158,30 @@ convertida en una bestia enorme, hinchada de pus, que llora y acuna un hatillo. 
 barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revienta. Al vencerla deja su última
 lágrima (una ampolla más), y Henrique, si vuelves, la llora.
 
+**La casa tapiada, el pasadizo del Soto y la casa del tonelero.** En la Calle del Soto, la herbolería de Joana
+tiene la puerta y las ventanas clavadas con tablones, pero entre tabla y tabla quedan rendijas y dentro hay luz:
+desde la calle se ve el mostrador y, arriba, a Inés, la hija, de pie en la ventana del sobrado, mirando hacia la
+catedral. La puerta se arranca con la palanca. Abajo, la tienda (el mostrador con el almirez, la balanza, los
+albarelos y las velas, la estantería de botes, la mesa de trabajo con el recetario de Joana, que acaba en tres
+noches escritas con prisa, y manojos de hierbas colgados de las vigas) y, tras un tabique, la cocina con el
+hogar en brasas, la artesa y las ristras de ajos. Una escalera de madera sube al sobrado: la sala con el torno de
+hilar, las hierbas tendidas a secar y la carta de la madre sobre la mesa, y la alcoba con dos camas y sangre. La
+puerta del sobrado da al **pasadizo**, la casa de entramado que cruza por encima de la calle; a mitad, alguien
+ha arrancado el suelo a hachazos (las tablas y las vigas están abajo, en el empedrado) y en el marco de enfrente
+ha escrito a carbón NO CRUCES. El tablón que sobra de las ventanas de Henrique (hay seis para cinco) se tiende de
+borde a borde y se cruza **haciendo equilibrio**: despacio, con los brazos en cruz, mientras el cuerpo se va
+inclinando y hay que echarse hacia el otro lado (izquierda o derecha); quien se pasa cae a la calle y se lleva un
+buen golpe. Al otro lado, la **casa del tonelero**: abajo, la tonelería (el fuego para curvar las duelas con su
+corro de duelas, toneles, aros, la tabla de herramientas, el banco de desbastar y virutas), con la puerta a la
+calle atrancada por dentro (un atajo de vuelta); arriba, la sala con la comida sin tocar, la ballesta, el hacha
+con la que se arrancó el suelo, y la alcoba, donde Catarina yace en la cama bajo una sábana empapada, con las
+manos cruzadas y una vela. En el rincón, de cara a la esquina y a la luz de la luna, **Miguel**, el hijo de
+Joana: un morador infectado que aún conserva parte de sí. Llora y habla solo («No tengo hambre. No tengo
+hambre.», «Todavía soy yo. Todavía.»). Si te ve, te grita que te vayas, que no va a poder contenerse; de cerca
+se encoge, tiembla y se muerde el brazo para no lanzarse sobre ti, pero nunca ataca, y entre ruego y ruego
+cuenta lo que pasó. Si sales de su casa y tardas en volver (o descansas, o caes), lo encuentras ahorcado de la
+viga de la alcoba: el taburete volcado, la soga que cruje y, en el suelo, una duela escrita a carbón.
+
 **La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre hay tres épocas, cada una más honda
 (el diseño, en `PLAN_CRIPTA_HONDA.md` y `PLAN_OSARIOS.md`). Por la puerta del oeste del templo romano, un paso recto,
 bajo una sola bóveda, baja por seis peldaños al **Panteón de los Obispos**: una rotonda con ocho obispos yacentes en
@@ -266,7 +290,7 @@ tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojo
 rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Treinta y seis documentos breves cuentan la historia junto con
+canónigo (aguante), que deja el Descoyuntado al morir. Treinta y ocho documentos breves cuentan la historia junto con
 el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
 al lado, en letra de leer.
 
@@ -533,9 +557,9 @@ gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cier
 - **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
   la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
-  Empalado, la huida de la Bestia y la caza del Descoyuntado; la defensa de la Casa del Alemán y Leonor; y en la
-  cripta honda, el Custodio de la Garra, los Velados, Dom Paio en el pozo y la Puerta del Dios Ignoto con todo
-  listo para abrirla.
+  Empalado, la huida de la Bestia y la caza del Descoyuntado; la defensa de la Casa del Alemán y Leonor; el
+  pasadizo del Soto con un tablón en la mano, y Miguel, en su rincón o ahorcado; y en la cripta honda, el Custodio
+  de la Garra, los Velados, Dom Paio en el pozo y la Puerta del Dios Ignoto con todo listo para abrirla.
 - **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar (de las peleas de colosos de
   antes; la película no los usa).
 - **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
@@ -566,7 +590,8 @@ src/
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
-                        sótano y la gruta de Leonor; level_crypt2.js: la cripta honda, una planta de salas
+                        sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
+                        la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
                         y el pozo) de la que salen muros, suelos, navegación y mapa; panteon.js: el Panteón
                         de los Obispos y la galilea; lucernario.js: el Lucernario de San Pedro de Rates;
@@ -585,17 +610,19 @@ src/
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
                         beast.js, cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán;
-                        leonor.js, Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo
-                        y convertido; custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la
-                        Emparedada y el Enrodado); armas:
+                        morador.js, Miguel, el tonelero infectado (sus posturas: llorar, encogerse, morderse
+                        el brazo, ahorcado); leonor.js, Leonor, la Dolorosa; guardian.js, los Velados;
+                        paio.js, Dom Paio, vivo y convertido; custodio.js, el Custodio de la Garra;
+                        catacumbas.js, el Cavador, la Emparedada y el Enrodado); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
                         iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
-                        el guion de la Casa del Alemán, sus oleadas y las ventanas; crypt.js: la Puerta del Dios
-                        Ignoto, las pilas, el incensario, las rejas y el arca del relicario; relics.js: los
-                        objetos benditos; ossuaries.js: los puzles de los cuatro osarios y su vista de cerca;
-                        paio.js: el guion
+                        el guion de la Casa del Alemán, sus oleadas y las ventanas; souto.js: el pasadizo del
+                        Soto (el tablón y el equilibrio) y Miguel (lo que dice, cuándo se ahorca); crypt.js: la
+                        Puerta del Dios Ignoto, las pilas, el incensario, las rejas y el arca del relicario;
+                        relics.js: los objetos benditos; ossuaries.js: los puzles de los cuatro osarios y su
+                        vista de cerca; paio.js: el guion
                         de Dom Paio; cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
@@ -681,6 +708,11 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        de cada sala de las bodegas
                         boss.mjs       capturas del Descoyuntado en posiciones y cámaras dadas
                         cine.mjs       fotogramas de la cinemática de la bodega en los segundos pedidos
+                        souto.mjs      la casa tapiada, el pasadizo y la casa del tonelero: la puerta, las
+                                       escaleras, el tablón, cruzar sin corregir y corrigiendo, Miguel (lo
+                                       que dice de lejos y de cerca, que no hace daño), sus puertas y que se
+                                       ahorca si te vas (SHOTS=1: capturas)
+                        morador.mjs    hoja de posturas de Miguel, desde delante y desde atrás
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)

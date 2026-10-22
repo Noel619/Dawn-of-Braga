@@ -25,6 +25,9 @@ export const INSTANCES = [
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
   { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
   { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
+  { id: 'tablon', name: 'La casa tapiada · el pasadizo, con un tablón' },
+  { id: 'tonelero', name: 'La casa del tonelero · Miguel, en su rincón' },
+  { id: 'ahorcado', name: 'La casa del tonelero · Miguel, ahorcado' },
   { id: 'garra', name: 'La cripta honda · el Custodio de la Garra (pelea)' },
   { id: 'paio', name: 'La cripta honda · Dom Paio, en el pozo (pelea)' },
   { id: 'velados', name: 'La cripta honda · los Velados (pelea)' },
@@ -190,6 +193,23 @@ export async function goInstance(g, id) {
       g.enterFog(fog);
       return true;
     }
+    // el sobrado de la casa tapiada, ante el hueco del pasadizo, con un tablón
+    case 'tablon': {
+      prepare(g, { 'door:d_souto': true, 'souto:tabla': false, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });
+      if (!g.inventory.has('tablon')) g.inventory.add('tablon');
+      place(g, -29.7, 3.8, -3.2, 0);
+      return true;
+    }
+    // la casa del tonelero: en la sala, recién cruzado el pasadizo (Miguel,
+    // en su rincón, sin haberte visto)
+    case 'tonelero':
+      prepare(g, { 'door:d_souto': true, 'souto:tabla': true, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });
+      place(g, -29.7, 3.8, 4.6, 0);
+      return true;
+    case 'ahorcado':
+      prepare(g, { 'door:d_souto': true, 'souto:tabla': true, 'morador:met': true, 'morador:ahorcado': true, 'morador:visto': false });
+      place(g, -25.3, 3.8, 7.6, 0);
+      return true;
     // el Relicario de San Martín, en su boca (al entrar se levanta el
     // Custodio y cae la reja)
     case 'garra': {

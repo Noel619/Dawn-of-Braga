@@ -1825,6 +1825,24 @@ export function sign(ctx, x, y, z, rot = 0, kind = 0) {
     } else if (kind === 'cup') {
       wb.cylinder('bronze', 0, -0.42, 0, 0.06, 0.1, 0.18, 7, { ao: false, capTop: true, capBot: true });
       wb.cylinder('bronze', 0, -0.46, 0, 0.08, 0.02, 0.04, 7, { ao: false, capBot: true });
+    } else if (kind === 'mortar') {
+      // la herbolera: el mortero con su mano y una ramita
+      wb.cylinder('bronze', 0, -0.44, 0, 0.09, 0.12, 0.13, 7, { ao: false, capTop: true, capBot: true });
+      wb.push();
+      wb.translate(0.02, -0.31, 0.03);
+      wb.rotateX(0.5);
+      wb.cylinder(mat, 0, 0, 0, 0.022, 0.03, 0.2, 5, { ao: false, capTop: true });
+      wb.pop();
+      wb.box('leaves', -0.05, -0.28, -0.16, 0.05, -0.12, -0.12, { ao: false, tint: [0.42, 0.52, 0.32] });
+    } else if (kind === 'barrel') {
+      // el tonelero: un tonel tallado, con sus aros
+      wb.push();
+      wb.translate(0, -0.27, 0);
+      wb.rotateX(Math.PI / 2);
+      wb.cylinder(mat, 0, -0.1, 0, 0.1, 0.1, 0.2, 8, { ao: false, capTop: true, capBot: true });
+      wb.cylinder(mat, 0, -0.05, 0, 0.115, 0.115, 0.1, 8, { ao: false });
+      for (const yy of [-0.085, 0.065]) wb.cylinder('iron', 0, yy, 0, 0.112, 0.112, 0.02, 8, { ao: false });
+      wb.pop();
     } else if (kind % 4 === 0) {
       wb.box(mat, -0.04, -0.36, -0.12, 0.04, -0.14, -0.04, { ao: false });
       wb.box(mat, -0.04, -0.36, -0.04, 0.04, -0.28, 0.14, { ao: false });

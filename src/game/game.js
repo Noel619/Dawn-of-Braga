@@ -40,6 +40,7 @@ import { Finale } from './finale/director.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
+import { SoutoQuest } from './souto.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
 import { RELIC_IDS } from './relics.js';
@@ -243,6 +244,8 @@ export class Game {
     this.paio = new PaioQuest(this);
     // los osarios: sus puzles y sus objetos benditos
     this.ossuaries = new Ossuaries(this);
+    // la casa tapiada, el pasadizo del Soto y Miguel, el tonelero
+    this.souto = new SoutoQuest(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -429,6 +432,7 @@ export class Game {
     this.crypt.applyFlags();
     this.paio.applyFlags();
     this.ossuaries.applyFlags();
+    this.souto.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -505,6 +509,7 @@ export class Game {
     this.speech.clear();
     this.house.script = null;
     this.paio.script = null;
+    this.souto.reset();
     this.failing = false;
     this.introCam = false;
     this.atmo.override = null;
@@ -1075,6 +1080,7 @@ export class Game {
     this.crypt.onRespawn();
     this.paio.onRespawn();
     this.ossuaries.onRespawn();
+    this.souto.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1725,6 +1731,7 @@ export class Game {
         this.crypt.update(dt);
         this.paio.update(dt);
         this.ossuaries.update(dt);
+        this.souto.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)
