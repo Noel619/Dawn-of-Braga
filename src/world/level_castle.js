@@ -23,7 +23,7 @@
 // hasta la escalera que sube a la torre de la cárcel, en el patio.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subtractRects, solidGableRoof, archedWall, archRing, barrelVault, pilaster } from './builders.js';
+import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subtractRects, solidGableRoof, archedWall, archRing, barrelVault, crossVault, groinVaults, pilaster } from './builders.js';
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -62,11 +62,21 @@ export const CASTLE = {
   ptHatch: { x: -83.0, z: 12.0 },
   // las mazmorras
   dun: { y: YD, x0: -94, z0: -24, x1: -46, z1: 24 },
-  // el pozo del patio (baja al aljibe)
-  well: { x: -62.8, z: 13.0 },
+  // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
+  well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador
   start: { x: -87.6, y: YD, z: -16.2, yaw: 0 },
 };
+
+// El aljibe, bajo el patio: el agua de lluvia guardada para el asedio. Tres
+// naves de cinco tramos con bóvedas de arista sobre columnas (xs, zs: las
+// líneas de los apoyos, de muro a muro; ys y rise: su arranque y su flecha).
+// El estanque ocupa casi todo; al norte y a poniente, el andén (sus bordes:
+// walkN y walkW), con su pretil, lleva de la galería de las catacumbas al
+// pasadizo de la cárcel, y las dos puertas y el pozo caen en el centro de un
+// tramo. Está a la mitad («que nadie lave nada»): water, el agua; full, la
+// marca de cuando estaba lleno, un palmo bajo el andén; floor, el fondo.
+export const ALJIBE = { xs: [-73, -69.8, -66.6, -63.4, -60.2, -57], zs: [7.5, 10.5, 13.5, 16.5], ys: -2.45, rise: 1.5, walkN: 10, walkW: -70.5, floor: -7.4, water: -6.3, full: -5.25 };
 
 // Las estancias de la torre del homenaje, planta a planta: la luz (room),
 // la zona (zone: el rótulo al entrar), su planta (rects) y los muros de fuera
@@ -406,17 +416,20 @@ function buildGate(ctx, S, L) {
   floor(ctx, -55.8, -1.4, -47.8, 1.4, 'flag', 0.02, { tint: [0.85, 0.83, 0.8] });
   floor(ctx, -55.8, 1.4, -53, G.z1 + 0.6, 'flag', 0.02, { tint: [0.85, 0.83, 0.8] });
   wb.box('ashlar', -49.8, 0.02, -1.4, -49.4, 0.07, 1.4, { faces: 'tnsew', ao: false });
-  // rastrillo medio alzado en su ranura
+  // rastrillo medio alzado en su ranura: las ranuras de las jambas, del
+  // umbral a la bóveda, y los travesaños metidos en ellas (sin ellas el
+  // rastrillo parecía colgado en el aire)
+  for (const s of [-1, 1]) wb.box('black', -49.74, 0.07, s * 1.4 - (s > 0 ? 0.012 : 0), -49.46, ph, s * 1.4 + (s < 0 ? 0.012 : 0), { faces: s > 0 ? 'n' : 's', ao: false, grime: false });
   for (let z = -1.15; z <= 1.16; z += 0.46) wb.box('iron', -49.7, 2.7, z - 0.04, -49.5, ph, z + 0.04, { ao: false });
-  for (let y = 2.9; y < ph; y += 0.5) wb.box('iron', -49.72, y, -1.3, -49.48, y + 0.07, 1.3, { ao: false });
+  for (let y = 2.9; y < ph; y += 0.5) wb.box('iron', -49.72, y, -1.4, -49.48, y + 0.07, 1.4, { ao: false, faces: 'tbew' });
   for (let z = -1.15; z <= 1.16; z += 0.46) wb.box('iron', -49.66, 2.4, z - 0.02, -49.54, 2.7, z + 0.02, { ao: false });
-  // buhederas en la bóveda y saeteras a los lados del paso
+  // buhederas en la bóveda y saeteras a los lados del paso (al sur, sólo
+  // donde hay muro: en x = -53,8 se abre el tramo que va al patio y la
+  // saetera se quedaba flotando en el aire, en mitad del hueco)
   for (const x of [-51.4, -53.6]) wb.box('black', x - 0.3, ph - 0.02, -0.3, x + 0.3, ph - 0.01, 0.3, { faces: 'b', ao: false, grime: false });
   wb.box('black', -54.7, ph - 0.02, 2.9, -54.1, ph - 0.01, 3.5, { faces: 'b', ao: false, grime: false });
-  for (const x of [-51.2, -53.8]) {
-    slit(ctx, x, 1.2, -1.4, 's');
-    slit(ctx, x, 1.2, 1.4, 'n');
-  }
+  for (const x of [-51.2, -53.8]) slit(ctx, x, 1.2, -1.4, 's');
+  slit(ctx, -51.2, 1.2, 1.4, 'n');
   slit(ctx, -55.8, 1.2, 0, 'e');
   // las puertas de dentro: una hoja abierta contra el muro (colgada de sus
   // pernios junto al arco), la otra arrancada y tirada en el suelo
@@ -469,13 +482,14 @@ function buildGate(ctx, S, L) {
   P.banner(ctx, G.x1 + 0.12, 7.6, -4.6, Math.PI / 2, 'bannerBlack', 1.4, 3.4);
   P.banner(ctx, G.x1 + 0.12, 7.6, 3.6, Math.PI / 2, 'bannerBlack', 1.4, 3.4);
   // ante la puerta de dentro: la barricada apartada y caballos de frisa
-  // (cerrando el paso a lo ancho, a los lados del camino de la puerta)
+  // (cerrando el paso a lo ancho, a los lados del camino de la puerta; el
+  // brocal del pozo hace de un tramo de la barricada)
   P.cart(ctx, -52.8, 0, 11.2, 1.9, { tipped: true });
   P.barrel(ctx, -52.2, 0, 13.6, {});
   P.barrel(ctx, -53.3, 0, 14.4, { lying: true, rot: 0.6 });
   P.sacks(ctx, -58.6, 0, 9.4, 4, 4410);
   for (const [x, z, r] of [
-    [-60.4, 11.0, Math.PI / 2 + 0.12],
+    [-65.3, 11.0, Math.PI / 2 + 0.12],
     [-56.3, 11.6, Math.PI / 2 - 0.22],
   ])
     chevaux(ctx, x, z, r);
@@ -876,6 +890,10 @@ function buildKeep(ctx, S, L) {
       P.rubble(ctx, DR.x, 0, z1 + 1.3, 6, 4426, 1.0, { mat: 'rock', scale: 0.8, blocks: 0.2 });
       bakeCorpse(wb, DR.x + 0.4, 0, z1 + 1.6, 1.9, 'curl', 'soldier', 26);
       P.decal(ctx, DR.x, 0.01, z1 + 1.4, 2.2);
+      // quien cae desde el rellano (con el puente alzado) se clava en las
+      // estacas: el foso no tiene salida (y0..y1: de su fondo a las puntas;
+      // debajo, a otra altura, pasan las catacumbas)
+      L.pits.push({ r: [fx0, z1, fx1, LD.z0], y0: -0.5, y1: 1.6, impale: true });
     }
     // el puente levadizo y el aviso de que está alzado
     L.interact.push(
@@ -1368,7 +1386,7 @@ function buildYard(ctx, S, L, rng) {
     floor(ctx, r[0], r[1], r[2], r[3], 'dirt');
   // enlosado del camino de la puerta a la torre y del pozo
   floor(ctx, -80, 6.4, -53, 8.2, 'flag', 0.02);
-  floor(ctx, -64.8, 8.2, -61.2, 10.6, 'flag', 0.02);
+  floor(ctx, CASTLE.well.x - 1.8, 8.2, CASTLE.well.x + 1.8, CASTLE.well.z - 1.1, 'flag', 0.02);
 
   // --- la capilla (el altar del castillo), que acabó de hospital
   const croomC = 'castle_chapel';
@@ -1514,10 +1532,10 @@ function buildYard(ctx, S, L, rng) {
   wb.box('wooddark', -58.4, 2.95, -13.8, -58.2, 3.1, -7.6, { ao: false, faces: 'nsewb' });
 
   // --- el pozo del aljibe y el fundíbulo partido
-  P.well(ctx, CASTLE.well.x, 0, CASTLE.well.z);
+  P.well(ctx, CASTLE.well.x, 0, CASTLE.well.z, { deep: true });
   // (los toneles del agua, arrimados al brocal y no encima del camino)
-  P.barrel(ctx, CASTLE.well.x - 1.62, 0, CASTLE.well.z - 0.55, {});
-  P.barrel(ctx, CASTLE.well.x - 1.55, 0, CASTLE.well.z + 0.4, { lying: true, rot: 1.35 });
+  P.barrel(ctx, CASTLE.well.x + 1.62, 0, CASTLE.well.z - 0.55, {});
+  P.barrel(ctx, CASTLE.well.x + 1.55, 0, CASTLE.well.z + 0.4, { lying: true, rot: 1.35 });
   trebuchet(ctx, -66.2, -9.2);
   // bolaños para el fundíbulo: piedras labradas a pico, de tamaños dispares y
   // amontonadas de cualquier manera, alguna rodada lejos y otra partida
@@ -1844,6 +1862,7 @@ function buildDungeon(ctx, D, L) {
   const SG = YD + 2.35,
     CR = YD + 3.35;
   const gv = (axis) => ({ axis, ys: SG });
+  const AJ = ALJIBE;
   const regs = [
     // el pasillo de las celdas y las celdas
     R(-89, -18, -75.5, -6, YD + 3.8, 'wallstone', 'mazmorra', { tint: mazT }),
@@ -1871,13 +1890,15 @@ function buildDungeon(ctx, D, L) {
       vault: { axis: 'x', ys: OSARIO_C.y + 2.45, rise: OSARIO_C.top - 0.1 - (OSARIO_C.y + 2.45), mat: 'plaster', tint: [0.62, 0.58, 0.52] },
     }),
     // al aljibe
-    R(-66, 6, -64, 8, CR, 'mossstone', 'aljibe', { tint: catT, vault: gv('z') }),
-    // el aljibe: andenes y estanque
-    R(-72, 8, -58, 9.5, -1.3, 'ashlar', 'aljibe', { tint: aljT }),
-    R(-72, 9.5, -70.5, 16, -1.3, 'ashlar', 'aljibe', { tint: aljT }),
-    R(-70.5, 9.5, -58, 16, -1.3, 'ashlar', 'aljibe', { y0: -6.4, tint: [0.55, 0.58, 0.58], floorMat: 'mossstone', noCeil: true }),
+    R(-66, 6, -64, AJ.zs[0], CR, 'mossstone', 'aljibe', { tint: catT, vault: gv('z') }),
+    // el aljibe: el andén (al norte y a poniente) y el estanque; sus muros
+    // suben hasta las claves (lo de encima de cada arco de la bóveda, en los
+    // muros, es su luneto)
+    R(AJ.xs[0], AJ.zs[0], AJ.xs[5], AJ.walkN, AJ.ys + AJ.rise, 'ashlar', 'aljibe', { tint: aljT, noCeil: true }),
+    R(AJ.xs[0], AJ.walkN, AJ.walkW, AJ.zs[3], AJ.ys + AJ.rise, 'ashlar', 'aljibe', { tint: aljT, noCeil: true }),
+    R(AJ.walkW, AJ.walkN, AJ.xs[5], AJ.zs[3], AJ.ys + AJ.rise, 'ashlar', 'aljibe', { y0: AJ.floor, tint: [0.52, 0.55, 0.55], floorMat: 'mossstone', noCeil: true }),
     // el pasadizo, el rellano bajo la muralla y la escalera de la torre
-    R(PSTAIR.x0, 11, -72, 13, CR, 'wallstone', 'mazmorra', { tint: mazT, vault: gv('x') }),
+    R(PSTAIR.x0, 11, AJ.xs[0], 13, CR, 'wallstone', 'mazmorra', { tint: mazT, vault: gv('x') }),
     R(PSTAIR.x0 - 2, 7, PSTAIR.x0, 13, -1.0, 'wallstone', 'mazmorra', { tint: mazT }),
     R(PSTAIR.x0, 7, -89, 9, -1.0, 'wallstone', 'mazmorra', { tint: mazT, noFloor: true }),
     R(-89, 7, PSTAIR.x1, 9, 0, 'wallstone', 'mazmorra', { tint: mazT, noFloor: true, noCeil: true }),
@@ -1930,6 +1951,35 @@ function buildDungeon(ctx, D, L) {
   for (const x of [-82.8, -76.8]) addNiche('z', 13, -1, x - 0.6, x + 0.6, YD, YD + 1.9, 0.95, 'cell', 'mazmorra');
 
   dungeonWalls(ctx, D, regs, holes);
+  // los cruces: donde una galería abovedada desemboca de lado en otra (de la
+  // misma luz y con el mismo arranque), el tramo del cruce lleva bóveda de
+  // arista y el cañón de la que llega sigue hasta las aristas. Antes las dos
+  // bóvedas se quedaban a medias en la junta: la de la galería de paso tapaba
+  // la boca de la otra vista desde dentro (sólo tiene cara hacia abajo) y,
+  // vista desde la travesía, se veía a través de ella, al vacío.
+  const crossings = [];
+  const CI = 0.03; // (el retranqueo de las bóvedas en los muros, el de barrelVault)
+  const plainVault = (r) => r.vault && r.vault.rise === undefined && !r.vault.mat;
+  for (const A of regs) {
+    if (!plainVault(A)) continue;
+    const ax = A.vault.axis === 'x';
+    for (const B of regs) {
+      if (B === A || !plainVault(B) || B.vault.axis === A.vault.axis || B.vault.ys !== A.vault.ys) continue;
+      // A sigue a lo largo de la junta; B llega de lado
+      const [a0, a1, b0, b1] = ax ? [A.x0, A.x1, B.x0, B.x1] : [A.z0, A.z1, B.z0, B.z1];
+      const [t0, t1, s0, s1] = ax ? [A.z0, A.z1, B.z0, B.z1] : [A.x0, A.x1, B.x0, B.x1];
+      if (b0 < a0 - 1e-6 || b1 > a1 + 1e-6 || Math.abs(b1 - b0 - (t1 - t0)) > 1e-6) continue;
+      const side = Math.abs(s1 - t0) < 1e-6 ? -1 : Math.abs(s0 - t1) < 1e-6 ? 1 : 0;
+      if (!side) continue;
+      let c = crossings.find((q) => q.A === A && Math.abs(q.a0 - b0) < 1e-6);
+      if (!c) crossings.push((c = { A, a0: b0, a1: b1, sides: new Set() }));
+      c.sides.add(side);
+      // (y el cañón de B entra hasta el borde del tramo)
+      if (side < 0) B.extHi = true;
+      else B.extLo = true;
+    }
+  }
+  const vaultTint = (r) => r.vault.tint ?? (r.tint ?? mazT).map((c) => c * 0.82);
   for (const r of regs) {
     if (!r.noFloor) {
       wb.box(r.floorMat, r.x0, r.y0 - 0.3, r.z0, r.x1, r.y0, r.z1, { faces: 't', ao: false, room: r.room, uv: 0.6, tint: r.tint ? r.tint.map((v) => v * 1.15) : null });
@@ -1942,8 +1992,30 @@ function buildDungeon(ctx, D, L) {
     }
     if (r.vault) {
       const v = r.vault;
-      barrelVault(ctx, { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1, axis: v.axis, ys: v.ys, rise: v.rise, mat: v.mat ?? r.mat, tint: v.tint ?? (r.tint ?? mazT).map((c) => c * 0.82), room: r.room });
+      const ax = v.axis === 'x';
+      // (con los mismos tramos que la de arista de sus cruces: par)
+      const crossed = r.extLo || r.extHi || crossings.some((q) => q.A === r);
+      const n = crossed ? 2 * Math.max(3, Math.round((Math.PI * ((ax ? r.z1 - r.z0 : r.x1 - r.x0) / 2 - CI)) / 0.8)) : undefined;
+      const base = { axis: v.axis, ys: v.ys, rise: v.rise, mat: v.mat ?? r.mat, tint: vaultTint(r), room: r.room, n };
+      let [s0, s1] = ax ? [r.x0, r.x1] : [r.z0, r.z1];
+      if (r.extLo) s0 -= CI;
+      if (r.extHi) s1 += CI;
+      // (partido por los tramos de sus cruces)
+      let cur = s0;
+      for (const c of [...crossings.filter((q) => q.A === r).sort((p, q) => p.a0 - q.a0), null]) {
+        const end = c ? c.a0 + CI : s1;
+        if (end - cur > 0.05) barrelVault(ctx, { ...base, ...(ax ? { x0: cur, x1: end, z0: r.z0, z1: r.z1 } : { x0: r.x0, x1: r.x1, z0: cur, z1: end }) });
+        if (c) cur = c.a1 - CI;
+      }
     }
+  }
+  for (const c of crossings) {
+    const A = c.A,
+      ax = A.vault.axis === 'x';
+    // (a muro, los lados por los que no llega otra galería)
+    const walls = ax ? { n: !c.sides.has(-1), s: !c.sides.has(1), w: c.a0 <= A.x0 + 1e-6, e: c.a1 >= A.x1 - 1e-6 } : { w: !c.sides.has(-1), e: !c.sides.has(1), n: c.a0 <= A.z0 + 1e-6, s: c.a1 >= A.z1 - 1e-6 };
+    const sq = ax ? { x0: c.a0, x1: c.a1, z0: A.z0, z1: A.z1 } : { x0: A.x0, x1: A.x1, z0: c.a0, z1: c.a1 };
+    crossVault(ctx, { ...sq, ys: A.vault.ys, mat: A.mat, tint: vaultTint(A), room: A.room, walls, inset: CI });
   }
 
   // --- arcos: fajones sobre pilastras a lo largo de las galerías y
@@ -2318,80 +2390,140 @@ function buildDungeon(ctx, D, L) {
 
   buildHermandad(ctx, L, portal);
 
-  // --- el aljibe: arquerías sobre columnas, el agua negra y la luz del pozo
+  // --- el aljibe: bóvedas de arista sobre columnas, el agua negra a la
+  // mitad y la luz del pozo. Antes era un techo plano con arcos pegados, el
+  // estribo de uno de ellos se metía en la puerta de las catacumbas y del
+  // andén al agua había un escalón seco con un muro invisible.
   {
     const room = 'aljibe';
     wb.setRoom(room);
-    const px0 = -70.5,
-      pz0 = 9.5,
-      px1 = -58,
-      pz1 = 16;
-    portal('z', 8, -65, 2, SG, -1.3, -1, room, { spMat: 'ashlar', spTint: aljT, rooms: ['aljibe', 'aljibe'] });
-    fajon('z', 6.25, -65, 2, SG, room);
-    // el agua (con la luz del pozo reflejada)
+    const { xs, zs, ys, rise } = AJ;
+    const x0 = xs[0],
+      x1 = xs[5],
+      z0 = zs[0],
+      z1 = zs[3];
     const W2 = CASTLE.well;
-    if (ctx.waters) ctx.waters.push({ shape: 'rect', r: [px0 + 0.02, pz0 + 0.02, px1 - 0.02, pz1 - 0.02], y: -5.7, light: [W2.x, -1.2, W2.z], lightK: 0.9, sky: 0x1c2228 });
-    // que nadie se caiga al estanque (la cámara sí pasa por encima)
-    blocker(ctx, px0, -6.4, pz0, px1, -3.4, pz1);
-    // columnas en el agua y arcos de medio punto entre ellas y hasta los muros
-    const yS = -3.0;
-    // (las hileras dejan libre la boca del pasadizo, en el muro oeste entre
-    // z 11 y 13, y la del pozo, en la bóveda)
-    const XS = [-67.6, -64.4, -61.2],
-      ZS = [10.3, 14.0];
-    for (const z of ZS) for (const x of XS) P.column(ctx, x, -6.4, z, yS + 6.4, 0.32, { mat: 'ashlar', collide: false });
-    // (los de través, sin asiento: sobre las columnas, el de la hilera ya lo
-    // pone y los dos coincidirían)
-    const arc = (axis, a, b, at) => {
-      const c = (a + b) / 2,
-        w = b - a;
-      const rise = Math.min(w / 2, -1.55 - yS);
-      archRing(ctx, { axis, c, w, y0: yS, rise, ring: 0.25, t0: at - 0.24, t1: at + 0.24, top: -1.3, mat: 'ashlar', spMat: 'ashlar', room, tint: [0.6, 0.62, 0.6], spTint: aljT, proud: 0.02, seats: axis === 'x' });
+    const stoneT = [0.6, 0.62, 0.6],
+      capT = [0.66, 0.67, 0.64],
+      markT = [0.3, 0.34, 0.28];
+    portal('z', z0, -65, 2, SG, -1.3, -1, room, { spMat: 'ashlar', spTint: aljT, rooms: ['aljibe', 'aljibe'] });
+    fajon('z', 6.25, -65, 2, SG, room);
+    // la bóveda: tres naves de cinco tramos, con sus fajones; en la clave del
+    // tramo del pozo, el óculo por el que baja
+    const wi = xs.findIndex((x, i) => i < 5 && W2.x > x && W2.x < xs[i + 1]),
+      wj = zs.findIndex((z, j) => j < 3 && W2.z > z && W2.z < zs[j + 1]);
+    const shaftTop = -0.65;
+    groinVaults(ctx, { xs, zs, ys, rise, mat: 'ashlar', tint: [0.5, 0.52, 0.5], room, ribs: true, ribMat: 'ashlar', ribTint: capT, ribW: 0.36, ribD: 0.2, oculi: [{ i: wi, j: wj, k: 2, top: shaftTop, mat: 'wallstone', tint: [0.42, 0.44, 0.42] }] });
+    {
+      // (la boca de arriba del tiro: a oscuras, la noche del patio)
+      const hx = (xs[wi + 1] - xs[wi]) / 4,
+        hz = (zs[wj + 1] - zs[wj]) / 4;
+      wb.box('black', W2.x - hx, shaftTop - 0.02, W2.z - hz, W2.x + hx, shaftTop, W2.z + hz, { faces: 'b', ao: false, grime: false, room });
+    }
+    // las columnas: basa (bajo el agua), fuste, capitel de ocho caras y ábaco;
+    // en el fuste, la franja verdosa de lo que ha bajado el agua
+    const column = (x, z) => {
+      const yb = AJ.floor + 0.45,
+        yc = ys - 0.45;
+      wb.box('ashlar', x - 0.42, AJ.floor, z - 0.42, x + 0.42, yb, z + 0.42, { ao: false, faces: 'tnsew', room, tint: stoneT });
+      wb.cylinder('ashlar', x, yb, z, 0.3, 0.27, yc - yb, 8, { ao: false, sub: 2, room, tint: stoneT });
+      wb.cylinder('ashlar', x, yc, z, 0.27, 0.46, 0.33, 8, { ao: false, room, tint: capT });
+      wb.box('ashlar', x - 0.5, ys - 0.12, z - 0.5, x + 0.5, ys, z + 0.5, { ao: false, faces: 'tnsewb', room, tint: capT });
+      const k = (y) => 0.3 - (0.03 * (y - yb)) / (yc - yb) + 0.006;
+      wb.cylinder('mossstone', x, AJ.water - 0.05, z, k(AJ.water), k(AJ.full), AJ.full - AJ.water + 0.05, 8, { ao: false, room, tint: markT });
+      ctx.col.add(x - 0.32, AJ.floor, z - 0.32, x + 0.32, ys, z + 0.32);
     };
-    // a lo largo (x), en cada hilera: del muro oeste a la primera columna,
-    // entre columnas y hasta el muro este
-    for (const z of ZS) {
-      arc('x', -71.85, XS[0] - 0.3, z);
-      arc('x', XS[0] + 0.3, XS[1] - 0.3, z);
-      arc('x', XS[1] + 0.3, XS[2] - 0.3, z);
-      arc('x', XS[2] + 0.3, px1 - 0.15, z);
-      pilaster(ctx, -72, z, 'e', YD, yS, { room, tint: [0.6, 0.62, 0.6], w: 0.5, d: 0.15 });
-      pilaster(ctx, px1, z, 'w', -6.4, yS, { room, tint: [0.6, 0.62, 0.6], w: 0.5, d: 0.15 });
+    for (let i = 1; i < 5; i++) for (let j = 1; j < 3; j++) column(xs[i], zs[j]);
+    // pilastras en los muros, bajo cada fajón (en el estanque, desde el
+    // fondo y con la marca del agua); en el muro de levante, donde baja la
+    // escalera, ménsulas
+    const pil = (line, a, dir, wet) => {
+      pilaster(ctx, line, a, dir, wet ? AJ.floor : YD, ys, { room, tint: stoneT, w: 0.5, d: 0.15 });
+      if (!wet) return;
+      const sg = dir === 'n' || dir === 'w' ? -1 : 1,
+        q0 = line,
+        q1 = line + sg * 0.162;
+      const f = dir + (dir === 'n' || dir === 's' ? 'ew' : 'ns');
+      if (dir === 'n' || dir === 's') wb.box('mossstone', a - 0.262, AJ.water - 0.05, Math.min(q0, q1), a + 0.262, AJ.full, Math.max(q0, q1), { faces: f, ao: false, room, tint: markT });
+      else wb.box('mossstone', Math.min(q0, q1), AJ.water - 0.05, a - 0.262, Math.max(q0, q1), AJ.full, a + 0.262, { faces: f, ao: false, room, tint: markT });
+    };
+    for (let i = 1; i < 5; i++) {
+      pil(z0, xs[i], 's', false);
+      pil(z1, xs[i], 'n', xs[i] > AJ.walkW);
     }
-    // de través (z): del muro norte a la primera hilera, entre hileras y
-    // hasta el muro sur
-    for (const x of XS) {
-      arc('z', 8.15, ZS[0] - 0.3, x);
-      arc('z', ZS[0] + 0.3, ZS[1] - 0.3, x);
-      arc('z', ZS[1] + 0.3, pz1 - 0.15, x);
-      pilaster(ctx, 8, x, 's', YD, yS, { room, tint: [0.6, 0.62, 0.6], w: 0.5, d: 0.15 });
-      pilaster(ctx, pz1, x, 'n', -6.4, yS, { room, tint: [0.6, 0.62, 0.6], w: 0.5, d: 0.15 });
+    for (let j = 1; j < 3; j++) {
+      pil(x0, zs[j], 'e', false);
+      wb.box('ashlar', x1 - 0.24, ys - 0.26, zs[j] - 0.3, x1, ys, zs[j] + 0.3, { ao: false, faces: 'bnsw', room, tint: capT });
+      wb.box('ashlar', x1 - 0.13, ys - 0.5, zs[j] - 0.22, x1, ys - 0.26, zs[j] + 0.22, { ao: false, faces: 'bnsw', room, tint: stoneT });
     }
-    // la bóveda, con la boca del pozo
-    for (const r of subtractRects([px0, pz0, px1, pz1], [[W2.x - 0.7, W2.z - 0.7, W2.x + 0.7, W2.z + 0.7]])) {
-      wb.box('ashlar', r[0], -1.3, r[1], r[2], -1.0, r[3], { faces: 'b', ao: false, room, tint: [0.5, 0.52, 0.52] });
-      ctx.col.add(r[0], -1.3, r[1], r[2], -1.0, r[3]).cam = true;
+    // el agua, a la mitad, con la luz del pozo
+    if (ctx.waters) ctx.waters.push({ shape: 'rect', r: [AJ.walkW + 0.02, AJ.walkN + 0.02, x1 - 0.02, z1 - 0.02], y: AJ.water, light: [W2.x, ys + rise, W2.z], lightK: 0.9, sky: 0x1c2228, spot: [W2.x + 0.2, W2.z + 0.15, 1.0, 0.7] });
+    // la marca del lleno en los muros del estanque, de cara al agua
+    const band = (bx0, bz0, bx1, bz1, f) => wb.box('mossstone', bx0, AJ.water - 0.05, bz0, bx1, AJ.full, bz1, { faces: f, ao: false, room, tint: markT });
+    band(AJ.walkW, AJ.walkN, x1, AJ.walkN + 0.012, 's');
+    band(AJ.walkW, z1 - 0.012, x1, z1, 'n');
+    band(AJ.walkW, AJ.walkN, AJ.walkW + 0.012, z1, 'e');
+    band(x1 - 0.012, AJ.walkN, x1, z1, 'w');
+    // la escalera que baja del andén al agua, pegada al muro de levante, con
+    // su pretil escalonado al lado del agua; se pierde en el agua negra
+    const SW = 1.4,
+      sn = 13,
+      srise = (YD - AJ.floor) / sn,
+      srun = 0.3;
+    const sx0 = x1 - SW,
+      sz1 = AJ.walkN + sn * srun;
+    stairs(ctx, x1 - SW / 2, AJ.floor, sz1, 'n', SW, sn, srise, srun, 'ashlar', { solidBelow: true });
+    for (let i = 0; i < sn; i++) {
+      const za = sz1 - srun * (i + 1),
+        zb = sz1 - srun * i,
+        top = AJ.floor + srise * (i + 1);
+      solid(ctx, 'ashlar', sx0, top, za, sx0 + 0.2, top + 0.85, zb, { room, tint: stoneT, ao: false, faces: 'tnsew' });
     }
-    for (const [a, b, c, d, f] of [
-      [W2.x - 0.7, W2.z - 0.72, W2.x + 0.7, W2.z - 0.7, 's'],
-      [W2.x - 0.7, W2.z + 0.7, W2.x + 0.7, W2.z + 0.72, 'n'],
-      [W2.x - 0.72, W2.z - 0.7, W2.x - 0.7, W2.z + 0.7, 'e'],
-      [W2.x + 0.7, W2.z - 0.7, W2.x + 0.72, W2.z + 0.7, 'w'],
-    ])
-      wb.box('wallstone', a, -1.3, b, c, 0.2, d, { faces: f, ao: false, room });
-    wb.box('black', W2.x - 0.7, 0.05, W2.z - 0.7, W2.x + 0.7, 0.1, W2.z + 0.7, { faces: 'b', ao: false, grime: false, room });
-    // la soga y el cubo
-    wb.box('burlap', W2.x - 0.01, -3.2, W2.z - 0.01, W2.x + 0.01, -1.3, W2.z + 0.01, { ao: false, room, tint: [0.8, 0.7, 0.55] });
-    wb.cylinder('planks', W2.x, -3.5, W2.z, 0.16, 0.19, 0.3, 8, { ao: false, capBot: true, room });
-    if (ctx.shafts) ctx.shafts.push({ a: [W2.x, -1.0, W2.z], b: [W2.x + 0.3, -5.7, W2.z + 0.2], w: 1.3, color: 0xb8c8e0 });
-    if (ctx.lights) ctx.lights.push({ x: W2.x, y: -4.4, z: W2.z, r: 0.55, g: 0.66, b: 0.85, radius: 9, intensity: 0.9, room });
-    // antorchas en los andenes y un caído
-    P.wallTorch(ctx, -71.0, YD + 2.2, 8.0, 's', { room, radius: 7 });
-    P.wallTorch(ctx, -72.0, YD + 2.2, 15.0, 'e', { room, radius: 6 });
-    P.wallTorch(ctx, -59.6, YD + 2.2, 8.0, 's', { room, radius: 6 });
-    bakeCorpse(wb, -71.2, YD, 15.2, 0.6, 'face', 'soldier', 40);
-    P.decal(ctx, -71.2, YD + 0.01, 15.0, 1.6);
-    P.barrel(ctx, -59.0, YD, 8.7, {});
+    // el pretil del andén, hasta la escalera, con su albardilla (en la
+    // esquina, una sola: dos encima una de otra parpadeaban)
+    const PH = 0.9;
+    solid(ctx, 'ashlar', AJ.walkW - 0.3, YD, AJ.walkN - 0.3, sx0, YD + PH, AJ.walkN, { sub: 2, ao: false, faces: 'nsew', room, tint: stoneT });
+    solid(ctx, 'ashlar', AJ.walkW - 0.3, YD, AJ.walkN, AJ.walkW, YD + PH, z1, { sub: 2, ao: false, faces: 'ew', room, tint: stoneT });
+    wb.box('ashlar', AJ.walkW - 0.35, YD + PH, AJ.walkN - 0.35, sx0 + 0.05, YD + PH + 0.12, AJ.walkN + 0.05, { ao: false, faces: 'tnsewb', room, tint: capT });
+    wb.box('ashlar', AJ.walkW - 0.35, YD + PH, AJ.walkN + 0.05, AJ.walkW + 0.05, YD + PH + 0.12, z1, { ao: false, faces: 'tewb', room, tint: capT });
+    // que nadie se meta en el agua (la cámara sí pasa por encima): todo el
+    // estanque salvo la escalera, que se puede bajar hasta el último peldaño
+    // seco
+    const dry = AJ.walkN + srun * (Math.floor((YD - AJ.water) / srise) + 1) - 0.05;
+    for (const r of subtractRects([AJ.walkW, AJ.walkN, x1, z1], [[sx0 + 0.2, AJ.walkN, x1, dry]])) blocker(ctx, r[0], AJ.floor, r[1], r[2], ys, r[3]);
+    // la soga del pozo con el cubo, que cuelga hasta casi tocar el agua
+    wb.box('burlap', W2.x - 0.012, AJ.water + 0.62, W2.z - 0.012, W2.x + 0.012, shaftTop, W2.z + 0.012, { ao: false, room, tint: [0.8, 0.7, 0.55] });
+    wb.cylinder('planks', W2.x, AJ.water + 0.25, W2.z, 0.16, 0.19, 0.3, 8, { ao: false, capBot: true, room });
+    for (const yy of [0.29, 0.47]) wb.cylinder('iron', W2.x, AJ.water + yy, W2.z, 0.185 - (yy - 0.29) * 0.1, 0.18 - (yy - 0.29) * 0.1, 0.03, 8, { ao: false, room });
+    wb.box('iron', W2.x - 0.015, AJ.water + 0.55, W2.z - 0.17, W2.x + 0.015, AJ.water + 0.58, W2.z + 0.17, { ao: false, room });
+    if (ctx.shafts) ctx.shafts.push({ a: [W2.x, shaftTop, W2.z], b: [W2.x + 0.3, AJ.water, W2.z + 0.2], w: 1.3, color: 0xb8c8e0 });
+    if (ctx.lights) ctx.lights.push({ x: W2.x, y: AJ.water + 1.6, z: W2.z, r: 0.55, g: 0.66, b: 0.85, radius: 9, intensity: 0.9, room });
+    // el caño por el que entra el agua de lluvia del patio (en el muro del
+    // sur, en medio de un tramo), con el chorreón negro hasta el agua
+    {
+      const cx = (xs[2] + xs[3]) / 2,
+        cy = ys - 0.35;
+      wb.box('ashlar', cx - 0.16, cy - 0.2, z1 - 0.34, cx + 0.16, cy, z1, { ao: false, faces: 'tnewb', room, tint: capT });
+      wb.box('black', cx - 0.07, cy - 0.15, z1 - 0.345, cx + 0.07, cy - 0.05, z1 - 0.34, { ao: false, faces: 'n', grime: false, room });
+      wb.box('mossstone', cx - 0.22, AJ.full, z1 - 0.006, cx + 0.22, cy - 0.2, z1 - 0.003, { ao: false, faces: 'n', room, tint: markT });
+    }
+    // antorchas en el andén, cubos para sacar agua, un tonel y un caído
+    P.wallTorch(ctx, x0 + 1.7, YD + 2.2, z0, 's', { room, radius: 7 });
+    P.wallTorch(ctx, x1 - 1.6, YD + 2.2, z0, 's', { room, radius: 6 });
+    P.wallTorch(ctx, x0, YD + 2.2, 15.0, 'e', { room, radius: 6 });
+    for (const [bx, bz] of [
+      [-59.6, 8.2],
+      [-59.1, 8.6],
+    ]) {
+      wb.cylinder('planks', bx, YD, bz, 0.19, 0.16, 0.32, 8, { ao: false, capTop: true, room });
+      wb.cylinder('iron', bx, YD + 0.06, bz, 0.188, 0.186, 0.03, 8, { ao: false, room });
+    }
+    P.barrel(ctx, x1 - 0.6, YD, z0 + 0.7, {});
+    bakeCorpse(wb, x0 + 1.2, YD, 15.6, 0.6, 'face', 'soldier', 40);
+    P.decal(ctx, x0 + 1.2, YD + 0.01, 15.4, 1.6);
+    // y en el agua, boca abajo, alguien amortajado que tiraron por el pozo
+    P.ellipsoid(ctx, 'shroud', -66.0, AJ.water + 0.02, 15.1, 0.82, 0.11, 0.25, [0.36, 0.34, 0.3], { room });
+    P.ellipsoid(ctx, 'shroud', -65.2, AJ.water + 0.03, 15.15, 0.15, 0.1, 0.14, [0.36, 0.34, 0.3], { room });
     wb.setRoom(null);
   }
 
@@ -2400,7 +2532,7 @@ function buildDungeon(ctx, D, L) {
   {
     const room = 'mazmorra';
     wb.setRoom(room);
-    portal('x', -72, 12, 2, SG, -1.3, -1, room, { rooms: [room, 'aljibe'], spMat: 'wallstone' });
+    portal('x', AJ.xs[0], 12, 2, SG, -1.3, -1, room, { rooms: [room, 'aljibe'], spMat: 'wallstone' });
     portal('x', PSTAIR.x0, 12, 2, SG, -1.0, 1, room);
     for (const x of [-87.3, -84.3, -81.3, -78.3, -75.3]) fajon('x', x, 12, 2, SG, room);
     // las celdas de castigo: reja con candado y lo que queda dentro
@@ -2473,21 +2605,21 @@ function buildDungeon(ctx, D, L) {
       rects: [
         [OSARIO_C.x1, -8.5, -60, 6, YD - 1, -1],
         [-77.5, 6, -75.0, 7.5, YD - 1, -1],
-        [-66, 6, -64, 8, YD - 1, -1],
+        [-66, 6, -64, ALJIBE.zs[0], YD - 1, -1],
       ],
       atmo: 'crypt',
       room: 'catacumbas',
     },
-    { id: 'aljibe', rects: [[-72, 8, -58, 16, YD - 2, -0.9]], atmo: 'crypt', room: 'aljibe' }
+    { id: 'aljibe', rects: [[ALJIBE.xs[0], ALJIBE.zs[0], ALJIBE.xs[5], ALJIBE.zs[3], ALJIBE.floor - 0.5, ALJIBE.ys + ALJIBE.rise + 0.3]], atmo: 'crypt', room: 'aljibe' }
   );
   L.map.push(
     { id: 'prison', r: [-89, -18, -61, -6], level: 'dungeon' },
-    { id: 'prison', r: [PSTAIR.x0, 11, -72, 13], level: 'dungeon' },
+    { id: 'prison', r: [PSTAIR.x0, 11, ALJIBE.xs[0], 13], level: 'dungeon' },
     { id: 'prison', r: [PSTAIR.x0 - 2, 7, PSTAIR.x0, 13], level: 'dungeon' },
     { id: 'catacumbas_castillo', r: [OSARIO_C.x1, -1, -60, 6], level: 'dungeon' },
     { id: 'osario_castillo', r: [OSARIO_C.x0, -OSARIO_C.z, OSARIO_C.x1, OSARIO_C.z], level: 'dungeon' },
     { id: 'catacumbas_castillo', r: [-72, -8.5, -70, -1], level: 'dungeon' },
-    { id: 'aljibe', r: [-72, 8, -58, 16], level: 'dungeon' },
+    { id: 'aljibe', r: [ALJIBE.xs[0], ALJIBE.zs[0], ALJIBE.xs[5], ALJIBE.zs[3]], level: 'dungeon' },
     { id: 'torre_carcel', r: [PSTAIR.x0, PSTAIR.z0, PSTAIR.x1, PSTAIR.z1], level: 'dungeon' }
   );
 }

@@ -490,7 +490,10 @@ export function rampVault(ctx, o) {
 // arranque en esos lunetos (un arco que entra en la bóveda). Para la cámara,
 // capas escalonadas alrededor de cada apoyo (lo macizo de los riñones) y una
 // tapa por encima de las claves. ribs: arcos fajones (y formeros) por las
-// líneas de los apoyos, de canto ribW.
+// líneas de los apoyos, de canto ribW. oculi: [{ i, j, k, top }], óculos en la
+// clave de los tramos (i, j): sin los k primeros anillos (de m) alrededor del
+// centro y, del borde del hueco a top, las paredes del tiro (un pozo que baja
+// por la bóveda).
 export function groinVaults(ctx, o) {
   const wb = ctx.wb;
   const { xs, zs, ys, rise } = o;
@@ -507,6 +510,8 @@ export function groinVaults(ctx, o) {
         cz = (zs[j] + zs[j + 1]) / 2;
       const hx = (xs[i + 1] - xs[i]) / 2,
         hz = (zs[j + 1] - zs[j]) / 2;
+      const oc = (o.oculi || []).find((q) => q.i === i && q.j === j);
+      const hole = oc ? oc.k : 0;
       // los cuatro sectores (el este, el oeste, el sur y el norte del tramo):
       // s, del centro (0) al borde (1); t, a lo ancho (-1..1)
       for (const [ax, sg] of [
@@ -518,7 +523,7 @@ export function groinVaults(ctx, o) {
         const P = (s, t) => (ax === 'x' ? V3(cx + sg * s * hx, prof(t * s), cz + t * s * hz) : V3(cx + t * s * hx, prof(t * s), cz + sg * s * hz));
         // (vistas desde abajo: en el oeste y en el sur el giro se invierte)
         const flip = ax === 'x' ? sg < 0 : sg > 0;
-        for (let a = 0; a < m; a++)
+        for (let a = hole; a < m; a++)
           for (let b = 0; b < n; b++) {
             const s0 = a / m,
               s1 = (a + 1) / m;
@@ -529,6 +534,18 @@ export function groinVaults(ctx, o) {
               else wb.tri(mat, P(0, 0), P(s1, t0), P(s1, t1), opt);
             } else if (flip) wb.quad(mat, P(s0, t0), P(s0, t1), P(s1, t1), P(s1, t0), opt);
             else wb.quad(mat, P(s0, t0), P(s1, t0), P(s1, t1), P(s0, t1), opt);
+          }
+        // el tiro del óculo: del borde del hueco (que sigue la bóveda) arriba,
+        // con la cara hacia dentro
+        if (hole)
+          for (let b = 0; b < n; b++) {
+            const s0 = hole / m;
+            const pa = P(s0, -1 + (2 * b) / n),
+              pb = P(s0, -1 + (2 * (b + 1)) / n);
+            const q = [pa, pb, V3(pb.x, oc.top, pb.z), V3(pa.x, oc.top, pa.z)];
+            const N = new THREE.Vector3().subVectors(q[1], q[0]).cross(new THREE.Vector3().subVectors(q[3], q[0]));
+            if (N.x * (cx - pa.x) + N.z * (cz - pa.z) < 0) q.reverse();
+            wb.quad(oc.mat ?? mat, q[0], q[1], q[2], q[3], { ...opt, tint: oc.tint ?? o.tint });
           }
       }
     }
@@ -642,6 +659,106 @@ export function groinVaults(ctx, o) {
     ctx.col.addCam(xs[0], ys + rise, zs[0], xs[xs.length - 1], ys + rise + 0.5, zs[zs.length - 1]);
   }
   return { crown: ys + rise };
+}
+
+// Bóveda de arista en el cruce de dos galerías de cañón de medio punto de la
+// misma luz y el mismo arranque: el tramo cuadrado x0..x1 × z0..z1, de muro a
+// muro. Cada cañón sigue hasta las aristas (las diagonales del tramo), con los
+// mismos tramos que barrelVault (n, par; el mismo retranqueo, inset): sin
+// rendijas en las juntas con los cañones que llegan. walls: { n, s, e, w },
+// los lados que dan a un muro y no a otra galería: ahí van su luneto (del
+// arranque a la curva) y su imposta.
+export function crossVault(ctx, o) {
+  const wb = ctx.wb;
+  const { x0, z0, x1, z1, ys } = o;
+  const inset = o.inset ?? 0.03;
+  const xc = (x0 + x1) / 2,
+    zc = (z0 + z1) / 2;
+  const r = Math.min(x1 - x0, z1 - z0) / 2 - inset;
+  const n = o.n ?? 2 * Math.max(3, Math.round((Math.PI * r) / 0.8));
+  const mat = o.mat ?? 'wallstone';
+  const tint = o.tint ?? [0.5, 0.48, 0.46];
+  const room = o.room;
+  const opt = { ao: false, sub: o.sub ?? 2, tint, room };
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  const _u = new THREE.Vector3(),
+    _v = new THREE.Vector3();
+  // un tramo (tres o cuatro puntos, sin repetidos) con la cara hacia dentro:
+  // hacia el eje del cañón que lo forma
+  const put = (pts, inside) => {
+    const p = pts.filter((q, i) => !pts.slice(0, i).some((s) => s.distanceToSquared(q) < 1e-10));
+    if (p.length < 3) return;
+    _u.subVectors(p[1], p[0]).cross(_v.subVectors(p[p.length - 1], p[0]));
+    const c = p.reduce((a, q) => a.add(q), V3(0, 0, 0)).multiplyScalar(1 / p.length);
+    if (_u.dot(inside(c).sub(c)) < 0) p.reverse();
+    if (p.length === 3) wb.tri(mat, p[0], p[1], p[2], opt);
+    else wb.quad(mat, p[0], p[1], p[2], p[3], opt);
+  };
+  const toX = (p) => V3(p.x, ys, zc); // el eje del cañón a lo largo de x
+  const toZ = (p) => V3(xc, ys, p.z); // el del cañón a lo largo de z
+  for (let k = 0; k < n; k++) {
+    const ta = Math.PI - (k / n) * Math.PI,
+      tb = Math.PI - ((k + 1) / n) * Math.PI;
+    const da = r * Math.cos(ta),
+      db = r * Math.cos(tb),
+      ya = ys + r * Math.sin(ta),
+      yb = ys + r * Math.sin(tb);
+    const ea = Math.abs(da),
+      eb = Math.abs(db);
+    for (const s of [-1, 1]) {
+      // levante y poniente: el cañón a lo largo de x, de la arista al borde
+      put([V3(xc + s * ea, ya, zc + da), V3(xc + s * r, ya, zc + da), V3(xc + s * r, yb, zc + db), V3(xc + s * eb, yb, zc + db)], toX);
+      // sur y norte: el de z
+      put([V3(xc + da, ya, zc + s * ea), V3(xc + da, ya, zc + s * r), V3(xc + db, yb, zc + s * r), V3(xc + db, yb, zc + s * eb)], toZ);
+    }
+  }
+  // lunetos e impostas de los lados que dan a un muro
+  const W = o.walls ?? {};
+  const L = { ys, rise: r, span: 2 * r, inset: 0, n, mat, tint, room };
+  if (W.n) lunette(ctx, { ...L, axis: 'z', at: zc - r, c: xc, face: 1 });
+  if (W.s) lunette(ctx, { ...L, axis: 'z', at: zc + r, c: xc, face: -1 });
+  if (W.w) lunette(ctx, { ...L, axis: 'x', at: xc - r, c: zc, face: 1 });
+  if (W.e) lunette(ctx, { ...L, axis: 'x', at: xc + r, c: zc, face: -1 });
+  if (o.impost !== false) {
+    const it = 0.09,
+      ih = 0.14;
+    const im = o.impostMat ?? 'ashlar',
+      io = { ao: false, sub: 3, tint: o.impostTint ?? tint.map((v) => v * 1.1), room };
+    // (empalman con las de los cañones vecinos, que llegan hasta el
+    // retranqueo, y entre sí en las esquinas: sin caras solapadas que
+    // parpadeen)
+    const xa = W.w ? x0 : x0 + inset,
+      xb = W.e ? x1 : x1 - inset;
+    const za = W.n ? z0 + it : z0 + inset,
+      zb = W.s ? z1 - it : z1 - inset;
+    if (W.n) wb.box(im, xa, ys - ih, z0, xb, ys, z0 + it, { ...io, faces: 'tbs' });
+    if (W.s) wb.box(im, xa, ys - ih, z1 - it, xb, ys, z1, { ...io, faces: 'tbn' });
+    if (W.w) wb.box(im, x0, ys - ih, za, x0 + it, ys, zb, { ...io, faces: 'tbe' });
+    if (W.e) wb.box(im, x1 - it, ys - ih, za, x1, ys, zb, { ...io, faces: 'tbw' });
+  }
+  // la cámara: lo macizo de los riñones, en capas, en las esquinas y a lo
+  // largo de los muros
+  if (o.cam !== false) {
+    const steps = 4;
+    for (let i = 0; i < steps; i++) {
+      const ya = ys + (r * i) / steps,
+        yb = ys + (r * (i + 1)) / steps;
+      const e = (x1 - x0) / 2 - Math.sqrt(Math.max(0, r * r - (yb - ys) ** 2));
+      if (e < 0.02) continue;
+      for (const [cx, cz] of [
+        [x0, z0],
+        [x1, z0],
+        [x0, z1],
+        [x1, z1],
+      ])
+        ctx.col.addCam(Math.min(cx, cx === x0 ? cx + e : cx - e), ya, Math.min(cz, cz === z0 ? cz + e : cz - e), Math.max(cx, cx === x0 ? cx + e : cx - e), yb, Math.max(cz, cz === z0 ? cz + e : cz - e));
+      if (W.n) ctx.col.addCam(x0, ya, z0, x1, yb, z0 + e);
+      if (W.s) ctx.col.addCam(x0, ya, z1 - e, x1, yb, z1);
+      if (W.w) ctx.col.addCam(x0, ya, z0, x0 + e, yb, z1);
+      if (W.e) ctx.col.addCam(x1 - e, ya, z0, x1, yb, z1);
+    }
+  }
+  return { crown: ys + r, n };
 }
 
 // Luneto: el testero de una bóveda de cañón, del arranque a la rosca (lo que

@@ -23,6 +23,9 @@ const r = await p.evaluate(() => {
     // mazmorras: pasillo de las celdas, junto a las rejas, galerías, escalera
     [-80, -5, -12.0], [-87.5, -5, -12.9], [-84.0, -5, -11.1], [-71, -5, -4], [-75, -5, 0.4], [-66, -5, 5.2],
     [-86.5, -5, 0], [-91.5, -5, 10], [-87, -2.2, 8], [-80, -5, 12.4], [-64, -5, -11.5], [-71, -5, 8.7],
+    // los cruces de las catacumbas (bóvedas de arista) y el aljibe: los
+    // andenes, junto al pretil, la escalera que baja al agua
+    [-81, -5, 0], [-71, -5, 0.2], [-61, -5, 5], [-65, -5, 5], [-65, -5, 8.6], [-72, -5, 12], [-71.8, -5, 15.6], [-58.4, -5, 8.6], [-61.8, -5, 9.3], [-57.6, -5.92, 11.6],
     // torre de la cárcel y su sala de arriba
     [-85.5, 0, 11.5], [-83, 0, 6], [-86, 4.4, 9],
     // torre del homenaje, plantas y escaleras

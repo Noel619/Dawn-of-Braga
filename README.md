@@ -248,27 +248,31 @@ en talud y quedan los peldaños volados y el escombro al pie; desde el patio no 
 La **torre del homenaje**, el último reducto, ocupa la esquina noroeste y los adarves entran en ella. Se sube por una
 escalera exenta, metida en un antecuerpo de sillería que llega a la muralla y a la torre de la cárcel (sin callejones
 a los lados), hasta un rellano frente a la puerta, en la planta primera; un **puente levadizo** sobre un foso con
-estacas la une con él, alzado desde dentro. Cada planta está partida por el muro de carga y tabiques con puertas de
-arco. Planta baja: el **granero**, la **bodega**, el **almacén** y el **pozo** de la torre, a los que sólo se baja por
-una trampilla. Primera: el **cuerpo de guardia** con el **torno del puente** y el pañol de la trampilla, y tras un muro
-la **armería** (picas, escudos) y el **taller del ballestero**. Segunda: la **sala del alcaide**, partida por un arco
-diafragma, con la mesa del plano de la defensa, la mesa del consejo y el libro de la guarnición; el **escritorio**,
-con el alcaide muerto sobre sus cuentas junto a la chimenea y la manivela del torno que abre la reja de la cripta de
-la Sé, y tras él su **alcoba**. Arriba, la **terraza** de combate: amplia, con su matacán sobre la puerta, la caseta
-de la escalera con su tejado a dos aguas, la chimenea, el fanal, la caldera de la pez y piedras para tirar (ahí se
-peleará con la Bestia de Carne; el escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y
-pilares de sillería.
+estacas (quien cae en él se clava en ellas: no tiene salida) la une con él, alzado desde dentro. Cada planta está
+partida por el muro de carga y tabiques con puertas de arco. Planta baja: el **granero**, la **bodega**, el
+**almacén** y el **pozo** de la torre, a los que sólo se baja por una trampilla. Primera: el **cuerpo de guardia**
+con el **torno del puente** y el pañol de la trampilla, y tras un muro la **armería** (picas, escudos) y el **taller
+del ballestero**. Segunda: la **sala del alcaide**, partida por un arco diafragma, con la mesa del plano de la
+defensa, la mesa del consejo y el libro de la guarnición; el **escritorio**, con el alcaide muerto sobre sus cuentas
+junto a la chimenea y la manivela del torno que abre la reja de la cripta de la Sé, y tras él su **alcoba**. Arriba,
+la **terraza** de combate: amplia, con su matacán sobre la puerta, la caseta de la escalera con su tejado a dos
+aguas, la chimenea, el fanal, la caldera de la pez y piedras para tirar (ahí se peleará con la Bestia de Carne; el
+escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y pilares de sillería.
 
-**Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras y portadas de
-arco en cada paso: el pasillo de las celdas (donde despiertas; cada celda con su arco y su reja, que también para
-la cámara), el cuarto del carcelero (con la espada y el escudo) y la sala del tormento (el potro con su condenado
-atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los hierros). Cavadas junto a una
-necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros abiertos con el muerto
-tendido dentro, un arcosolio con el sarcófago destapado y su tapa partida, y al fondo el **osario**, una capilla de
-huesos con su altar de calaveras. Llegan hasta el **aljibe** del castillo: arquerías sobre columnas, agua negra y la
-luz pálida que baja por el pozo del patio. Un pasadizo, con dos celdas de castigo, lleva a un rellano bajo la
-muralla y a la escalera de la **torre de la cárcel**, que sube de frente a la puerta de la torre (y se baja igual).
-En la torre, la escalera de mano sube a la sala de los guardas, con sus jergones y el libro de presos.
+**Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras, portadas de arco
+en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
+con su arco y su reja, que también para la cámara), el cuarto del carcelero (con la espada y el escudo) y la sala del
+tormento (el potro con su condenado atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los
+hierros). Cavadas junto a una necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros
+abiertos con el muerto tendido dentro, un arcosolio con el sarcófago destapado y su tapa partida, y al fondo el
+**osario**, una capilla de huesos con su altar de calaveras. Llegan hasta el **aljibe** del castillo, el agua de
+lluvia del patio guardada para el asedio: tres naves de bóvedas de arista sobre columnas que salen del agua negra, un
+andén en escuadra con su pretil (las dos puertas y el pozo, cada una en el centro de un tramo), la marca verdosa de
+cuando estaba lleno en columnas y muros (ahora, a la mitad: «que nadie lave nada»), una escalera que baja del andén y
+se pierde en el agua, el caño por el que entra la lluvia, un amortajado boca abajo y la luz pálida que cae por el
+pozo del patio, con su cubo colgando sobre el agua. Un pasadizo, con dos celdas de castigo, lleva a un rellano bajo
+la muralla y a la escalera de la **torre de la cárcel**, que sube de frente a la puerta de la torre (y se baja
+igual). En la torre, la escalera de mano sube a la sala de los guardas, con sus jergones y el libro de presos.
 
 **Lo alto del castillo.** A donde lleva el salto: la atalaya (la cabeza de la coracha, con la paja y la leña del
 fanal), la coracha, un muro almenado que baja desde la muralla norte hasta el castillo con una torre en medio (y en

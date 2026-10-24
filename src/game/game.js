@@ -1019,6 +1019,26 @@ export class Game {
     }
   }
 
+  // Los fosos sin salida (L.pits): quien cae en ellos muere. En el del puente
+  // levadizo se clava en las estacas (antes se caía al fondo y allí se
+  // quedaba, vivo y sin poder salir).
+  checkPits(p) {
+    if (this.dev.fly || this.dev.god) return;
+    for (const f of this.level.L.pits) {
+      const [x0, z0, x1, z1] = f.r;
+      if (p.pos.y > f.y1 || p.pos.y < f.y0 || p.pos.x < x0 || p.pos.x > x1 || p.pos.z < z0 || p.pos.z > z1) continue;
+      if (f.impale) {
+        this.fx.blood.emit(p.pos.x, p.pos.y + 0.8, p.pos.z, 40, { speed: 4, up: 1.6 });
+        this.audio.play('fleshTear', p.pos);
+        this.hurtFlash = 1;
+        this.camRig.shake(0.6);
+        this.input.rumble(1, 0.8, 300);
+      }
+      p.die();
+      return;
+    }
+  }
+
   onPlayerDeath() {
     this.deaths++;
     this.lockTarget = null;
@@ -1748,6 +1768,7 @@ export class Game {
         this.updatePhantoms(dt);
       } else this.promptTarget = null;
       if (p.pos.y < -40 && !p.dead) p.die();
+      if (this.state === 'play' && !p.dead) this.checkPits(p);
     }
     // cámara
     this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view);

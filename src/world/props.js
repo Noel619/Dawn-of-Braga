@@ -547,12 +547,15 @@ export function fountain(ctx, x, y, z) {
 // la plazuela—, era un triángulo oscuro: parecía que no tenía tejado.) El
 // tejadillo tiene cara inferior de tablas y canto: se ve igual desde abajo,
 // desde cerca y desde cualquier lado.
-export function well(ctx, x, y, z) {
+// (deep: el pozo baja de verdad, como el del aljibe del castillo: dentro del
+// brocal no se ve el agua, sólo la oscuridad)
+export function well(ctx, x, y, z, o = {}) {
   const wb = ctx.wb;
   const R = 1.1,
     rIn = 0.84,
     top = y + 1.02;
   const seg = 12;
+  const yIn = o.deep ? y + 0.02 : y + 0.15;
   wb.cylinder('wallstone', x, y, z, R, R, 0.9, seg, { sub: 2 });
   wb.cylinder('ashlar', x, y + 0.9, z, R + 0.06, R + 0.06, 0.12, seg, { ao: false });
   // corona del brocal y pared interior del pozo (se ve bajar a la oscuridad)
@@ -565,9 +568,10 @@ export function well(ctx, x, y, z) {
       s1 = Math.sin(a1);
     const Ro = R + 0.06;
     wb.quad('ashlar', V(x + c1 * Ro, top, z + s1 * Ro), V(x + c0 * Ro, top, z + s0 * Ro), V(x + c0 * rIn, top, z + s0 * rIn), V(x + c1 * rIn, top, z + s1 * rIn), { ao: false, sub: 3 });
-    wb.quad('wallstone', V(x + c0 * rIn, y + 0.15, z + s0 * rIn), V(x + c1 * rIn, y + 0.15, z + s1 * rIn), V(x + c1 * rIn, top, z + s1 * rIn), V(x + c0 * rIn, top, z + s0 * rIn), { ao: true, aoH: 0.8, aoMin: 0.15, baseY: y + 0.15, sub: 3 });
+    wb.quad('wallstone', V(x + c0 * rIn, yIn, z + s0 * rIn), V(x + c1 * rIn, yIn, z + s1 * rIn), V(x + c1 * rIn, top, z + s1 * rIn), V(x + c0 * rIn, top, z + s0 * rIn), { ao: true, aoH: 0.8, aoMin: 0.15, baseY: yIn, sub: 3 });
   }
-  wb.cylinder('water', x, y + 0.18, z, rIn, rIn, 0.02, seg, { capTop: true, ao: false, grime: false, tint: [0.12, 0.13, 0.14] });
+  if (o.deep) wb.cylinder('black', x, yIn, z, rIn, rIn, 0.02, seg, { capTop: true, ao: false, grime: false });
+  else wb.cylinder('water', x, y + 0.18, z, rIn, rIn, 0.02, seg, { capTop: true, ao: false, grime: false, tint: [0.12, 0.13, 0.14] });
   // cuatro postes sobre el brocal y el marco que sostiene el tejadillo
   const p = 0.76,
     eave = y + 2.5;
