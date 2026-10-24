@@ -18,7 +18,7 @@ import { Audio } from '../core/audio.js';
 import { Combat } from './combat.js';
 import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
-import { NavGrid } from './nav.js';
+import { NavGrid, LayerNav } from './nav.js';
 import { WalkGrid } from '../world/walkgrid.js';
 import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
@@ -175,10 +175,12 @@ export class Game {
     this.playerShadow = makeBlobShadow(1.2);
     this.scene.add(this.playerShadow);
 
-    // navegación
-    this.navSurface = new NavGrid(lvl.S, this.world.col, (x, z) => (x > -13 && x < 13 && z < -61 && z > -108 ? 0.6 : 0));
+    // navegación (la calle, el patio, las murallas y las mazmorras, por capas:
+    // con sus escaleras, rellanos y adarves; ver nav.js)
+    const tn = performance.now();
+    this.navSurface = new LayerNav(lvl.S, this.world.col, { yMin: -1.6, yMax: 16 });
     this.navCrypt = new NavGrid(lvl.C, this.world.col, cryptFloorY);
-    this.navDungeon = new NavGrid(lvl.D, this.world.col, () => CASTLE.dun.y);
+    this.navDungeon = new LayerNav(lvl.D, this.world.col, { yMin: CASTLE.dun.y - 3, yMax: 0.4 });
     // el sótano del Alemán, el agujero de Leonor y su gruta
     {
       const A = ALEMAN;
@@ -187,15 +189,13 @@ export class Game {
       const yBot = A.cellar.y - T.n * T.rise;
       this.navLair = new NavGrid(lvl.U, this.world.col, (x, z) => (z > A.house.z0 ? A.cellar.y : z < T.zBot ? yBot : z > zTop ? A.cellar.y : yBot + ((z - T.zBot) / (zTop - T.zBot)) * (A.cellar.y - yBot)));
     }
-    // los pisos altos de la torre del homenaje, con sus muros y tabiques
+    // los pisos altos de la torre del homenaje, con sus muros, tabiques y
+    // escaleras, hasta la terraza
     {
       const K = CASTLE.keep;
-      this.navKeep = [K.F1, K.F2].map((fy) => {
-        const w = new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5);
-        w.paint(K.x0 + K.t, K.z0 + K.t, K.x1 - K.t, K.z1 - K.t, 1);
-        return new NavGrid(w, this.world.col, () => fy);
-      });
+      this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.F1 - 0.6, yMax: K.R + 1, layers: 4 })];
     }
+    this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
     // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
     // lado, está a ras de la bodega)

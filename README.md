@@ -350,10 +350,13 @@ las ondas de choque y los tañidos, el fuego y los lamentos de la Plañidera. Se
 bloqueo con coste de aguante (y rotura de guardia), esquiva con fotogramas de invulnerabilidad, curación con
 animación, *hitstop*, golpes críticos, estela de la espada, retroceso y estremecimiento de las criaturas, aviso en
 los ojos antes de sus golpes, vibración del mando, *poise*, un *buffer* de entradas y cancelación de la recuperación
-al moverse. El fijado elige al enemigo que tienes delante (con línea de visión) y la cámara lo encuadra con un
-barrido suave, sin saltos. Bajo techos bajos y vigas la cámara se agacha en vez de atravesarlos; contra los muros
-mide con un haz de rayos y guarda holgura a su alrededor (no se ve a través de paredes ni rejas), y de espaldas a
-una pared, en vez de meterse en ella, sube sobre la cabeza y deja de dibujar el cuerpo.
+al moverse. Las criaturas te siguen por escaleras, rellanos, adarves y de un piso a otro (navegación por capas: en
+cada celda, las superficies donde se puede estar de pie, unidas si se pasa de una a otra andando como el cuerpo,
+peldaño a peldaño), no te atacan al aire desde abajo y no se tiran por los bordes. El fijado elige al enemigo que
+tienes delante (con línea de visión) y la cámara lo encuadra con un barrido suave, sin saltos. Bajo techos bajos y
+vigas la cámara se agacha en vez de atravesarlos; contra los muros mide con un haz de rayos y guarda holgura a su
+alrededor (no se ve a través de paredes ni rejas), y de espaldas a una pared, en vez de meterse en ella, sube sobre
+la cabeza y deja de dibujar el cuerpo.
 
 **Animación procedural.** Clips con interpolación de Hermite y mezcla por cuaterniones, marcha bípeda con zancada
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
@@ -620,7 +623,8 @@ src/
                         catacumbas.js, el Cavador, la Emparedada y el Enrodado); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
-  game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A*, interfaz,
+  game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la
+                        rejilla plana y la de capas, con escaleras y pisos), interfaz,
                         iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
                         el guion de la Casa del Alemán, sus oleadas y las ventanas; souto.js: el pasadizo del
                         Soto (el tablón y el equilibrio) y Miguel (lo que dice, cuándo se ahorca); crypt.js: la

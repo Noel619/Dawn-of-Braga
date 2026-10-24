@@ -8,7 +8,7 @@ import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/u
 import { getTexture } from '../gfx/textures.js';
 import { CASTLE } from '../world/level_castle.js';
 
-const CASTLE_KEEP_F2 = CASTLE.keep.F2 - 0.6;
+const KEEP = CASTLE.keep;
 import { registerMaterialPatch } from '../gfx/materials.js';
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -215,32 +215,62 @@ export class Enemy {
     if (face && d > 0.1) this.yaw = approachAngle(this.yaw, Math.atan2(wx, wz), (this.T.turn ?? 5) * dt);
   }
 
-  nav() {
-    const y = this.pos.y;
+  // La rejilla por la que ir, según dónde está y a dónde va (tx, ty, tz).
+  nav(tx, ty, tz) {
+    const p = this.pos,
+      y = p.y;
     const g = this.game;
-    if (g.navKeep && g.inKeep(this.pos)) return g.navKeep[y > CASTLE_KEEP_F2 ? 1 : 0];
-    if (g.navCellar && y < -0.5 && g.inCellar(this.pos)) return g.navCellar;
-    if (g.navDungeon && g.inDungeon(this.pos)) return g.navDungeon;
-    if (g.navLair && g.inLair(this.pos)) return g.navLair;
+    const t = ty === undefined ? null : { x: tx, y: ty, z: tz };
+    // (la torre del homenaje, de la planta primera a la terraza, con sus
+    // escaleras, si va de una planta a otra; si sale o entra, la de la
+    // calle, que también tiene sus plantas)
+    const inKeep = (q) => q.x > KEEP.x0 && q.x < KEEP.x1 && q.z > KEEP.z0 && q.z < KEEP.z1 && q.y > KEEP.F1 - 0.6;
+    if (g.navKeep && inKeep(p) && (!t || inKeep(t))) return g.navKeep[0];
+    if (g.navCellar && y < -0.5 && g.inCellar(p)) return g.navCellar;
+    // (las mazmorras, que por la escalera de la cárcel llegan hasta el patio:
+    // también desde arriba, si va a por alguien que está abajo)
+    const D = CASTLE.dun;
+    if (g.navDungeon && (g.inDungeon(p) || (t && g.inDungeon(t) && y < 0.5 && p.x > D.x0 && p.x < D.x1 && p.z > D.z0 && p.z < D.z1))) return g.navDungeon;
+    if (g.navLair && g.inLair(p)) return g.navLair;
     if (y < -3) return this.game.navCrypt;
-    if (y < 3 && y > -1.5) return this.game.navSurface;
+    if (y > -1.5 && y < 16) return this.game.navSurface;
     return null;
   }
 
-  // Persigue un punto con A* cuando no hay línea directa.
-  chaseTo(tx, tz, speed, dt) {
-    const nav = this.nav();
-    if (!nav || nav.line(this.pos.x, this.pos.z, tx, tz)) {
+  // ¿Moviéndose a (vx, vz) se iría por un borde (más de 1,2 m de caída)?
+  ledge(vx, vz, sp, r, dt) {
+    if (sp < 0.05) return false;
+    const x = this.pos.x + (vx / sp) * r + vx * dt,
+      z = this.pos.z + (vz / sp) * r + vz * dt;
+    return this.game.world.col.groundHeight(x, z, 0.1, this.pos.y + 0.6) < this.pos.y - 1.2;
+  }
+
+  // Persigue un punto (a la altura ty) con A* cuando no hay línea directa.
+  // (Con la navegación por capas, la línea tiene que llegar a esa altura: si
+  // estás arriba de una escalera, la criatura va por la escalera y no por
+  // debajo del rellano.)
+  chaseTo(tx, tz, speed, dt, ty) {
+    const nav = this.nav(tx, ty, tz);
+    if (!nav || nav.line(this.pos.x, this.pos.z, tx, tz, this.pos.y, ty)) {
       this.path = null;
       this.steerTo(tx, tz, speed, dt);
       return;
     }
     this.pathT -= dt;
     if (!this.path || this.pathT <= 0) {
-      const r = nav.path(this.pos.x, this.pos.z, tx, tz, 5000);
-      this.path = r ? r.pts : null;
-      this.pathI = 1;
-      this.pathT = 0.7 + Math.random() * 0.3;
+      // (si no había camino hasta ahí —arriba de algo a lo que no se sube— y
+      // el objetivo apenas se ha movido, no vuelve a buscarlo: un A* que no
+      // llega gasta todo su presupuesto)
+      const G = this.pathGoal;
+      if (this.path && this.pathFail && G && Math.hypot(tx - G[0], tz - G[2]) < 1 && Math.abs((ty ?? 0) - G[1]) < 0.6) this.pathT = 1.2;
+      else {
+        const r = nav.path(this.pos.x, this.pos.z, tx, tz, 5000, this.pos.y, ty);
+        this.path = r ? r.pts : null;
+        this.pathFail = !r || !r.complete;
+        this.pathGoal = [tx, ty ?? 0, tz];
+        this.pathI = 1;
+        this.pathT = 0.7 + Math.random() * 0.3;
+      }
     }
     if (this.path && this.pathI < this.path.length) {
       const [px, pz] = this.path[this.pathI];
@@ -528,7 +558,7 @@ export class Enemy {
             w.t = 4 + Math.random() * 4;
           }
           const nav = this.nav();
-          if (!nav || nav.walkable(w.x, w.z)) this.steerTo(w.x, w.z, T.walk * 0.55, dt);
+          if (!nav || nav.walkable(w.x, w.z, this.pos.y)) this.steerTo(w.x, w.z, T.walk * 0.55, dt);
           else w.t = 0;
         }
         // si estás cerca sin que te vea, se le oye: rezos, jadeos, sollozos
@@ -575,7 +605,13 @@ export class Enemy {
           const r = T.think(this, player, d, dt);
           if (r === 'handled') break;
         }
-        if (this.cooldown <= 0) {
+        // (si estás en otro piso —arriba de una escalera, en un rellano—, no
+        // te ataca al aire desde abajo ni se queda rondando debajo: va a por
+        // ti por donde se sube)
+        const dy = player.pos.y - this.pos.y;
+        const level = Math.abs(dy) < 0.9,
+          reach = level || (dy > -1.5 && dy < Math.min(1.6, T.height * 0.8) && d < 1.4);
+        if (this.cooldown <= 0 && reach) {
           const a = this.pickAttack(d);
           if (a) {
             this.startAttack(a);
@@ -583,9 +619,9 @@ export class Enemy {
           }
         }
         const keep = T.keepDist ?? 0;
-        if (d > (T.approach ?? 1.6) + keep) {
-          speed = d > (T.runDist ?? 6) && T.run ? T.run : T.walk;
-          this.chaseTo(player.pos.x, player.pos.z, speed, dt);
+        if (!level || d > (T.approach ?? 1.6) + keep) {
+          speed = d + Math.abs(dy) > (T.runDist ?? 6) && T.run ? T.run : T.walk;
+          this.chaseTo(player.pos.x, player.pos.z, speed, dt, player.pos.y);
         } else {
           // rodear lentamente
           const side = this.data.side || (this.data.side = Math.random() < 0.5 ? -1 : 1);
@@ -688,7 +724,7 @@ export class Enemy {
           this.hp = this.maxHp;
           this.vx = this.vz = 0;
           this.yaw = this.home.yaw;
-        } else this.chaseTo(this.home.x, this.home.z, T.walk, dt);
+        } else this.chaseTo(this.home.x, this.home.z, T.walk, dt, this.home.y);
         break;
       }
       case 'dead': {
@@ -731,7 +767,25 @@ export class Enemy {
         this.game.world.col.resolve(this.pos, this.body.radius, this.pos.y, this.body.height, 0.5);
         const g = this.game.world.col.groundHeight(this.pos.x, this.pos.z, this.body.radius, this.pos.y + 1.5);
         this.pos.y = damp(this.pos.y, g, 6, dt);
-      } else moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
+      } else {
+        // no se tira por el borde de un rellano, un adarve o una escalera, ni
+        // andando ni al embestir (si se le empuja de un golpe, sí cae); a lo
+        // largo del borde sigue
+        if (this.body.grounded && this.state !== 'hurt' && this.state !== 'stagger' && this.state !== 'dead') {
+          const sp = Math.hypot(this.vx, this.vz);
+          if (sp > 0.05) {
+            const r = this.body.radius + 0.15;
+            if (this.ledge(this.vx, this.vz, sp, r, dt)) {
+              const kx = this.ledge(this.vx, 0, Math.abs(this.vx), r, dt),
+                kz = this.ledge(0, this.vz, Math.abs(this.vz), r, dt);
+              if (kx) this.vx = 0;
+              if (kz) this.vz = 0;
+              if (!kx && !kz) this.vx = this.vz = 0;
+            }
+          }
+        }
+        moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
+      }
       // no atravesar al jugador (salvo si va por el techo); aunque vaya a
       // por otro (Henrique), al jugador tampoco lo atraviesa
       const pl = this.game.player;

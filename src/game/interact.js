@@ -910,6 +910,7 @@ export class Interactables {
       this.poseBridge(it, 1);
       it.upBox.enabled = false;
       it.deckBox.enabled = true;
+      this.refreshBridgeNav(it);
     } else {
       it.lowering = true;
       it.fall = 0;
@@ -994,6 +995,7 @@ export class Interactables {
       it.upBox.enabled = true;
       it.deckBox.enabled = false;
       this.poseBridge(it, 0);
+      this.refreshBridgeNav(it);
     } else if (it.kind === 'breakable') {
       it.smash = 0;
       it.bk = undefined;
@@ -1141,6 +1143,13 @@ export class Interactables {
     const g = this.game;
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
     for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+  }
+  // (y con el puente levadizo: bajado, su tablero se pisa)
+  refreshBridgeNav(it) {
+    const g = this.game;
+    const [hx, , hz] = it.hinge;
+    const r = it.w / 2 + 1;
+    for (const n of [g.navSurface, g.navKeep && g.navKeep[0]]) if (n) n.refresh(hx - r, Math.min(hz, hz + it.len) - 1, hx + r, Math.max(hz, hz + it.len) + 1);
   }
   // (lo mismo con una puerta que se cierra o se abre)
   refreshDoorNav(it) {
@@ -1526,6 +1535,7 @@ export class Interactables {
           it.lowering = false;
           it.upBox.enabled = false;
           it.deckBox.enabled = true;
+          this.refreshBridgeNav(it);
           const g = this.game;
           const [hx, hy, hz] = it.hinge;
           const tip = { x: hx, y: hy, z: hz + it.len };
