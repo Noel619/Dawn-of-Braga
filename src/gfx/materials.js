@@ -217,8 +217,10 @@ vPulse = 0.0;
 ${bake ? 'vBake = aBake;' : ''}
 ${tri ? `vTriP = position * ${tri.toFixed(5)};\nvTriN = normal;` : ''}
 ${wind ? `{
+  // (las banderas: el viento las separa del muro que tienen detrás, nunca
+  // las mete en él)
   float sway = 1.0 - uv.y;
-  transformed += objectNormal * (sin(uTime * 2.3 + position.y * 1.7 + position.x * 0.9) * 0.12 + sin(uTime * 5.1 + position.y * 4.0) * 0.03) * sway;
+  transformed += objectNormal * ((sin(uTime * 2.3 + position.y * 1.7 + position.x * 0.9) * 0.5 + 0.5) * 0.12 + (sin(uTime * 5.1 + position.y * 4.0) * 0.5 + 0.5) * 0.03) * sway;
 }` : ''}
 ${
   flesh

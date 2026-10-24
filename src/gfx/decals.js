@@ -105,11 +105,13 @@ export function buildBanners(scene, banners) {
     for (const b of list) {
       const g = new THREE.PlaneGeometry(b.w, b.h, 1, 6);
       g.translate(0, -b.h / 2, 0);
-      // ondulación estática para que no parezca una tabla
+      // ondulación estática para que no parezca una tabla (sólo hacia
+      // delante: todas cuelgan de un muro que tienen detrás, a unos
+      // centímetros, y la tela se metía en él)
       const p = g.attributes.position;
       for (let i = 0; i < p.count; i++) {
         const y = p.getY(i);
-        p.setZ(i, Math.sin(y * 2.3 + b.x) * 0.08 * (-y / b.h));
+        p.setZ(i, (0.5 + 0.5 * Math.sin(y * 2.3 + b.x)) * 0.1 * (-y / b.h));
       }
       g.rotateY(b.rot);
       g.translate(b.x, b.y, b.z);
