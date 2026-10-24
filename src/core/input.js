@@ -92,14 +92,27 @@ export class Input {
     this.enabledPointerLock = true;
     this.stickMenu = { x: 0, y: 0, t: 0 };
     this.onPointerLockLost = null;
+    // (lo pone el juego: si ahora mismo quiere el ratón capturado, jugando y
+    // sin ninguna pantalla abierta)
+    this.lockAllowed = null;
+    this._lockReqAt = -1e9;
     this.anyPressed = false;
 
+    // Firefox sólo concede la captura dentro de un gesto del jugador (no desde
+    // el bucle del juego): si al volver al juego no se pudo recapturar, se
+    // pide con la primera tecla o el primer clic (no con las que abren un
+    // menú, que la soltaría enseguida)
+    const MENU_KEYS = new Set([...KB.pause, ...KB.inventory, ...KB.map]);
+    const regain = (code) => {
+      if (!this.locked && !MENU_KEYS.has(code) && this.lockAllowed && this.lockAllowed()) this.requestLock();
+    };
     addEventListener('keydown', (e) => {
       if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
       if (!this.keys.has(e.code)) this.kPressed.add(e.code);
       this.keys.add(e.code);
       this.device = 'kb';
       this.anyPressed = true;
+      regain(e.code);
     });
     addEventListener('keyup', (e) => {
       this.keys.delete(e.code);
@@ -116,6 +129,7 @@ export class Input {
       this.keys.add(c);
       this.device = 'kb';
       this.anyPressed = true;
+      regain(c);
     });
     addEventListener('mouseup', (e) => {
       const c = 'M' + e.button;
@@ -164,14 +178,22 @@ export class Input {
     document.addEventListener('pointerlockchange', () => {
       const was = this.locked;
       this.locked = document.pointerLockElement === canvas;
+      this._lockReqAt = -1e9;
       if (this.locked) {
         this.freeLook = false;
         this._lockAt = performance.now();
         this._mPend = null;
         this._mAvg = 0;
+        // (una petición que llega tarde, con un menú ya abierto: el ratón es
+        // del menú)
+        if (this.lockAllowed && !this.lockAllowed()) {
+          this.exitLock();
+          return;
+        }
       }
       if (was && !this.locked && this.onPointerLockLost) this.onPointerLockLost();
     });
+    document.addEventListener('pointerlockerror', () => (this._lockReqAt = -1e9));
     addEventListener('gamepadconnected', () => {
       this.device = 'pad';
     });
@@ -187,8 +209,12 @@ export class Input {
 
   requestLock() {
     if (!this.enabledPointerLock || this.locked) return;
+    // (ya hay una pedida y sin respuesta: pedirla otra vez la rechaza)
+    const now = performance.now();
+    if (now - this._lockReqAt < 800) return;
     const c = this.canvas;
     if (!c.requestPointerLock) return;
+    this._lockReqAt = now;
     const plain = () => {
       try {
         const p = c.requestPointerLock();

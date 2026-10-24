@@ -376,7 +376,13 @@ export class UI {
     if (!s) return;
     s.el.classList.add('hidden');
     if (s.data.onClose) s.data.onClose();
-    if (!this.modal) document.body.style.cursor = '';
+    if (!this.modal) {
+      document.body.style.cursor = '';
+      // de vuelta al juego, se vuelve a capturar el ratón (al cerrar un
+      // documento o un objeto recogido no se pedía, y la cámara no se movía
+      // hasta hacer clic)
+      if (this.g.state === 'play') this.g.input.requestLock();
+    }
     this.g.audio && this.g.audio.ui('close');
   }
   closeAll() {

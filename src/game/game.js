@@ -280,6 +280,8 @@ export class Game {
       // (con el panel del modo desarrollador abierto el juego sigue)
       if (this.state === 'play' && !this.ui.modal && !this.input.freeLook && !this.dev.open) this.openPause();
     };
+    // el ratón se captura sólo jugando, sin menús ni el panel abiertos
+    this.input.lockAllowed = () => this.state === 'play' && !this.ui.modal && !this.dev.open;
     this.canvas.addEventListener('click', () => {
       // (un clic en el juego cierra el panel del modo desarrollador)
       if (this.dev.open) this.dev.close();
