@@ -57,8 +57,8 @@ Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del docume
   juego, visto con la cámara de cada lámina): **I · El arzobispo, consumido** (de rodillas y de espaldas ante él,
   con los brazos en alto, el ojo abierto y las almas que gritan, la cisterna roja hasta los bordes y los que se
   arrodillaron en la penumbra) y **II · Los que la encontraron primero** (los romanos rompen la roca a la luz de las
-  antorchas y dan con él, todavía con la garra de oro en alto). Las de la estatua quedan en
-  `archive/bocetos_estatua/`. Se dibujan con `tools/bocetos/`.
+  antorchas y dan con él, todavía con la garra de oro en alto). Las de la estatua se guardan al lado, en
+  `arte/bocetos/estatua/` (en `arte/` no se borra nada). Se dibujan con `tools/bocetos/`.
 
 ## 1. Lo que el juego ya cuenta
 

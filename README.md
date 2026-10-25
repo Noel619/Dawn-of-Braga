@@ -792,11 +792,13 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        la cámara de una lámina (su silueta, su tono y lo que arde, para el
                                        grabado); `node tools/bocetos/render.mjs arzobispo [salida.png]` (o
                                        `romanos`) dibuja una (tarda un minuto)
-arte/bocetos/           las láminas: «I · El arzobispo, consumido» (de rodillas y de espaldas ante el
+arte/                   el arte (aquí no se borra nada: cada versión se guarda al lado; ver su README)
+  bocetos/              las láminas: «I · El arzobispo, consumido» (de rodillas y de espaldas ante el
                         monolito lleno de almas, con el ojo abierto, en la cisterna roja, la noche de la
                         campana) y «II · Los que la encontraron primero» (los romanos, que rompen la roca y
                         dan con el monolito, todavía con la garra de oro en alto)
-archive/bocetos_estatua/ las mismas láminas cuando el ídolo era la estatua
+  bocetos/estatua/      las mismas láminas cuando el ídolo era la estatua (la II, también en su primera
+                        versión, sin la mano)
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)
