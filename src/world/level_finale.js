@@ -93,6 +93,169 @@ export function cisternPit(ctx, cz, PC, AY, room, VT, AT) {
   ctx.endGroup();
 }
 
+// La fuente sin nombre: el manantial que los romanos cubrieron con la cúpula
+// y Martín con su reja, en el centro de la cisterna. Por ella toca el mundo
+// lo que hay detrás de la puerta: el arzobispo metió las manos en el agua para
+// pactar con él y se quedó atado a ella (el cordón de carne: game/spring.js).
+// El brocal de piedra vieja, a ras del suelo; la reja, reventada en el medio;
+// el pozo, y en el agua negra, hundido hasta el pecho y con la cara vuelta
+// hacia la reja, el ídolo: sin rostro, con el muñón de la mano que le cortó
+// Martín (la Garra) alzado. Del brocal salen por el suelo las venas de carne.
+// (r: la boca; rim: el brocal; water: el agua; hole: el boquete de la reja;
+// chest: de dónde sale el cordón)
+export const SPRING = { x: 0, z: CISTERN.cz, r: 1.95, rim: 2.4, water: CISTERN.AY - 1.4, holeR: 0.48, chest: [0, CISTERN.AY - 0.92, CISTERN.cz + 0.24] };
+
+// Un anillo plano del círculo de radio R al cuadrado de medio lado PC (en
+// y), partido en M anillos para la luz horneada, con la textura alineada con
+// el mundo (u = x, v = z): sin juntas en estrella entre los gajos
+function planarRing(cx, cz, y, R, PC, N, M) {
+  const pos = [],
+    nor = [],
+    uv = [];
+  const P = (t, j) => {
+    const c = Math.cos(t),
+      s = Math.sin(t);
+    const m = PC / Math.max(Math.abs(c), Math.abs(s));
+    const r = R + (m - R) * (j / M);
+    return [cx + c * r, y, cz + s * r];
+  };
+  for (let k = 0; k < N; k++) {
+    const t0 = (k / N) * Math.PI * 2,
+      t1 = ((k + 1) / N) * Math.PI * 2;
+    for (let j = 0; j < M; j++) {
+      const a = P(t0, j),
+        b = P(t1, j),
+        c = P(t1, j + 1),
+        d = P(t0, j + 1);
+      for (const v of [a, b, c, a, c, d]) {
+        pos.push(...v);
+        nor.push(0, 1, 0);
+        uv.push(v[0], v[2]);
+      }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  return g;
+}
+
+export function cisternSpring(ctx, room, VT) {
+  const wb = ctx.wb;
+  const { AY } = CISTERN;
+  const { x: cx, z: cz, r: R1, rim: R2, water: YW, holeR } = SPRING;
+  const PC = 8,
+    N = 28;
+  const rng = new RNG(1691);
+  const C = (t, r, y) => V3(cx + Math.cos(t) * r, y, cz + Math.sin(t) * r);
+  // el suelo de alrededor (del brocal al cuadro) y la sangre encima
+  wb.geometry('flag', planarRing(cx, cz, AY, R2, PC, N, 4), null, { ao: false, room, uvScale: 0.5 });
+  wb.geometry('blood', planarRing(cx, cz, AY + 0.04, R2 + 0.06, PC, N, 4), null, { ao: false, grime: false, room, uvScale: 0.2 });
+  for (let k = 0; k < N; k++) {
+    const t0 = (k / N) * Math.PI * 2,
+      t1 = ((k + 1) / N) * Math.PI * 2;
+    // el brocal: un aro de piedra negra y gastada, un dedo por encima del
+    // suelo, con su canto por fuera
+    const rimT = [0.32, 0.3, 0.29];
+    wb.quad('mossstone', C(t0, R1, AY + 0.04), C(t1, R1, AY + 0.04), C(t1, R2, AY + 0.04), C(t0, R2, AY + 0.04), { ao: false, sub: 1, room, tint: rimT });
+    wb.quad('mossstone', C(t0, R2, AY + 0.04), C(t1, R2, AY + 0.04), C(t1, R2, AY - 0.02), C(t0, R2, AY - 0.02), { ao: false, sub: 1, room, tint: rimT });
+    // el pozo, hasta el agua y algo más (caras hacia dentro)
+    wb.quad('mossstone', C(t0, R1, AY + 0.04), C(t0, R1, YW - 0.3), C(t1, R1, YW - 0.3), C(t1, R1, AY + 0.04), { ao: false, sub: 1.2, room, tint: VT.map((v) => v * 0.55) });
+  }
+  // la reja de Martín: barrotes cruzados a ras del suelo, cortados por la
+  // boca; en el medio, el boquete por el que el arzobispo metió los brazos
+  const yb = AY - 0.055;
+  for (const ax of [0, 1])
+    for (let o = -R1 + 0.16; o < R1 - 0.1; o += 0.3) {
+      const half = Math.sqrt(Math.max(0, R1 * R1 - o * o)) - 0.02;
+      // (los tramos fuera del boquete)
+      const hole = Math.abs(o) < holeR ? Math.sqrt(holeR * holeR - o * o) : 0;
+      for (const [a, b] of hole ? [[-half, -hole], [hole, half]] : [[-half, half]]) {
+        if (b - a < 0.05) continue;
+        if (ax === 0) wb.box('iron', cx + a, yb, cz + o - 0.03, cx + b, AY - 0.005, cz + o + 0.03, { ao: false, room });
+        else wb.box('iron', cx + o - 0.03, yb, cz + a, cx + o + 0.03, AY - 0.005, cz + b, { ao: false, room });
+      }
+    }
+  // los barrotes arrancados del boquete, doblados hacia arriba
+  for (let k = 0; k < 6; k++) {
+    const t = (k / 6) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    const L = rng.range(0.3, 0.55);
+    wb.push();
+    wb.translate(cx + Math.cos(t) * holeR, AY - 0.03, cz + Math.sin(t) * holeR);
+    wb.rotateY(-t);
+    wb.rotateZ(rng.range(0.5, 1.2));
+    wb.box('iron', 0, -0.03, -0.03, L, 0.03, 0.03, { ao: false, room });
+    wb.pop();
+  }
+  // el ídolo: de piedra negra con las grietas encendidas, hundido hasta el
+  // pecho y echado hacia atrás, con la cara (lisa: no tiene) vuelta hacia la
+  // reja; contra el agua roja se recorta negro
+  const M = new THREE.Matrix4();
+  const IT = [0.3, 0.27, 0.27];
+  const P3 = (a) => V3(cx + a[0], a[1], cz + a[2]);
+  // un miembro: un tronco de cono de a (radio r0) a b (radio r1)
+  const limb = (a, b, r0, r1) => {
+    const A = P3(a),
+      B = P3(b);
+    const d = new THREE.Vector3().subVectors(B, A);
+    const L = d.length();
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+    wb.geometry('stoneGuard', new THREE.CylinderGeometry(r1, r0, L, 7), M.compose(A.clone().lerp(B, 0.5), q, V3(1, 1, 1)), { ao: false, room, tint: IT });
+  };
+  const neck = [0, AY - 0.66, 0.78];
+  limb([0, AY - 2.3, 0.05], neck, 0.5, 0.34);
+  limb(neck, [0, AY - 0.5, 0.92], 0.15, 0.13);
+  // la cabeza: un huevo de piedra sin rasgos, mirando arriba
+  wb.geometry('stoneGuard', new THREE.SphereGeometry(0.27, 8, 6), M.compose(P3([0, AY - 0.36, 0.98]), new THREE.Quaternion().setFromEuler(new THREE.Euler(-1.05, 0, 0)), V3(0.85, 1.25, 0.92)), { ao: false, room, tint: IT });
+  // el brazo derecho, alzado hacia el boquete: el muñón donde estuvo la mano
+  // que le cortó Martín (la Garra), abierto y en carne viva
+  const sR = [-0.42, AY - 0.86, 0.5],
+    eR = [-0.7, AY - 0.5, 0.08],
+    wR = [-0.42, AY - 0.13, -0.18];
+  limb(sR, eR, 0.13, 0.11);
+  limb(eR, wR, 0.11, 0.09);
+  wb.geometry('fleshStatic', new THREE.SphereGeometry(0.09, 6, 4), M.compose(P3(wR), new THREE.Quaternion(), V3(1, 0.45, 1)), { ao: false, room });
+  // el izquierdo, cruzado sobre el pecho
+  const sL = [0.42, AY - 0.86, 0.5],
+    eL = [0.52, AY - 1.2, 0.05];
+  limb(sL, eL, 0.13, 0.11);
+  limb(eL, [0.08, AY - 0.98, 0.18], 0.11, 0.09);
+  // las venas: salen del brocal y corren por el suelo, medio hundidas en él,
+  // cada vez más finas; hacia el altar sobre todo (y dentro del cuadro que
+  // se hunde)
+  for (let k = 0; k < 10; k++) {
+    let a = k < 4 ? -Math.PI / 2 + rng.range(-0.75, 0.75) : rng.range(0, Math.PI * 2);
+    const len = rng.range(1.8, k < 4 ? 4.0 : 3.0);
+    const pts = [];
+    for (let s = 0; s <= 8; s++) {
+      const d = Math.min(6.2, R2 - 0.2 + (s / 8) * len);
+      a += rng.range(-0.16, 0.16);
+      pts.push(V3(cx + Math.cos(a) * d, AY, cz + Math.sin(a) * d));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const S = 24,
+      Q = 5;
+    const geo = new THREE.TubeGeometry(curve, S, 1, Q, false);
+    const P = geo.attributes.position;
+    const c = new THREE.Vector3();
+    const r0 = rng.range(0.09, 0.13);
+    for (let j = 0; j <= S; j++) {
+      const u = j / S;
+      curve.getPointAt(u, c);
+      const r = (r0 + (0.022 - r0) * u) * (1 + 0.28 * Math.sin(u * 19 + k * 1.7));
+      for (let q = 0; q <= Q; q++) {
+        const i = j * (Q + 1) + q;
+        P.setXYZ(i, c.x + (P.getX(i) - c.x) * r, c.y + (P.getY(i) - c.y) * r * 0.55, c.z + (P.getZ(i) - c.z) * r);
+      }
+    }
+    geo.computeVertexNormals();
+    wb.geometry('fleshStatic', geo, null, { ao: false, room });
+  }
+  // la luz roja del fondo del pozo (la que late la pone game/spring.js)
+  ctx.lights.push({ x: cx, y: AY - 0.9, z: cz, r: 1, g: 0.2, b: 0.1, radius: 3.6, intensity: 1.3, room });
+}
+
 // Lo que queda de la cisterna tras salir el gigante (muñones de las columnas,
 // arcos por el suelo, lo bajo de la cúpula) y el cráter de la superficie.
 export function cisternRuins(ctx, o) {

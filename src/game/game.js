@@ -29,6 +29,7 @@ import { CellarCutscene } from './cutscene.js';
 import { Breakables } from './breakables.js';
 import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
+import { Spring } from './spring.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
 import { RIVER } from '../world/level_sacred.js';
@@ -162,6 +163,9 @@ export class Game {
     this.fx.dissolve = (e) => {
       for (let i = 0; i < 4; i++) this.fx.blood.emit(e.pos.x, e.pos.y + 0.5 + i * 0.3, e.pos.z, 12, { color: [0.12, 0.1, 0.09], speed: 1.5, life: 1.8, up: 1.2, gravity: -0.8 });
     };
+    // la fuente sin nombre de la cisterna (su agua, su luz y el cordón del
+    // arzobispo)
+    this.spring = new Spring(this);
 
     this.fx.trail = new SwordTrail(this.scene);
     this.fauna = new Fauna(this, { crows: lvl.ctx.crows, rats: lvl.ctx.rats, flies: lvl.ctx.flies });
@@ -1744,6 +1748,7 @@ export class Game {
       this.combat.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);
+      this.spring.update(dt);
       if (this.state === 'play') {
         this.hunt.update(dt);
         this.updateClimb(dt);

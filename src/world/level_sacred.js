@@ -7,7 +7,7 @@ import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
-import { cisternPit, cisternRuins, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
+import { cisternPit, cisternRuins, cisternSpring, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1348,9 +1348,11 @@ export function buildCrypt(ctx, S, C, L) {
     bloodBox(-12, cz + PC, 12, -142);
     bloodBox(-12, cz - PC, -PC, cz + PC);
     bloodBox(PC, cz - PC, 12, cz + PC);
+    // (en medio, la fuente sin nombre: el suelo se le abre alrededor; se pisa
+    // por encima de la reja, así que la colisión es la del cuadro entero)
     ctx.beginGroup('cisternFloorC');
-    cryptFloor(-PC, cz - PC, PC, cz + PC, AY, 'flag');
-    bloodBox(-PC, cz - PC, PC, cz + PC);
+    ctx.col.add(-PC, AY - 1, cz - PC, PC, AY, cz + PC);
+    cisternSpring(ctx, room, VT);
     ctx.endGroup();
     cisternPit(ctx, cz, PC, AY, room, VT, AT);
     // el corro de columnas, sus arcos (girados sobre cada lado del octógono)
@@ -1500,7 +1502,8 @@ export function buildCrypt(ctx, S, C, L) {
     }
     ctx.lights.push({ x: 0, y: AY + 3, z: cz, r: 0.8, g: 0.2, b: 0.12, radius: 16, intensity: 0.6, room });
     L.interact.push({ kind: 'door', id: 'd_salida', x: 0, y: AY, z: -167.2, w: 4, h: 4.2, axis: 'x', lock: { type: 'boss', boss: 'turibulario' }, mat: 'grate' });
-    L.enemies.push({ type: 'turibulario', x: 0, y: AY, z: -155, yaw: 0, idle: 'boss', id: 'b_turibulario', boss: true });
+    // (de rodillas sobre la fuente, de cara a la puerta por la que vendrás)
+    L.enemies.push({ type: 'turibulario', x: 0, y: AY, z: cz, yaw: -Math.PI / 2, idle: 'boss', id: 'b_turibulario', boss: true });
   }
 
   // --- enemigos de la cripta
