@@ -38,10 +38,12 @@ const PER_FRAME = { pasos: 3, voz: 2, amb: 1, golpe: 4, derrumbe: 2 };
 // segundo no entra)
 const CRASH_GAP = 0.14;
 // tope por nombre para los que se repiten mucho
-const NAME_CAP = { step: 3, crow: 2, drip: 3, boneCrack: 4, scuttle: 3, dig: 3, mimicSteps: 2, whisperNear: 2, giggle: 2, chew: 2, ratchet: 2, beastStep: 3, chainRun: 3, beastRoar: 2, beastRoarBig: 2 };
+const NAME_CAP = { soulPlea: 2, soulScream: 2, step: 3, crow: 2, drip: 3, boneCrack: 4, scuttle: 3, dig: 3, mimicSteps: 2, whisperNear: 2, giggle: 2, chew: 2, ratchet: 2, beastStep: 3, chainRun: 3, beastRoar: 2, beastRoarBig: 2 };
 // prioridad (0 relleno ... 5 nunca se aparta) y clase de cada efecto; el
 // resto es [3, 'mundo']
 const FX_PRIO = {
+  soulPlea: [2, 'mundo'],
+  soulScream: [2, 'mundo'],
   crow: [0, 'amb'],
   drip: [0, 'amb'],
   step: [4, 'jugador'],
@@ -284,7 +286,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, ramparts: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
+const FAR = { soulPlea: 38, soulScream: 45, bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -2529,6 +2531,33 @@ export class Audio {
       case 'mimicSteps': {
         d = this.out(P, { gain: 0.55, verb: 0.35, life: 4, ref: 3 });
         for (let i = 0; i < 4; i++) this.stepSound(d, t + i * rnd(0.42, 0.5), 0.8, i % 2, 'stone');
+        break;
+      }
+      // un alma dentro de la piedra del ídolo: ahogada (la piedra se come
+      // los agudos) y con mucha sala. La súplica lleva las vocales de
+      // «¡auxilio!», sin la palabra; el grito, a pelo
+      case 'soulPlea':
+      case 'soulScream': {
+        d = this.out(P, { gain: 0.9, verb: 0.8, life: 3.5, ref: 3, roll: 1, occlude: false });
+        const lp = this.ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = rnd(950, 1500);
+        lp.Q.value = 0.9;
+        lp.connect(d);
+        lp._voice = d._voice;
+        const f = Math.random() < 0.5 ? rnd(165, 235) : rnd(290, 410);
+        if (name === 'soulScream') {
+          this.voice(lp, t, 1.3, { f0: f * 1.25, f1: f * 1.62, vowel: 'a', v1: 'e', gain: 0.22, vib: 7, vibD: 70, breath: 0.45, rasp: 0.55, jit: 45, a: 0.05, rel: 0.5 });
+          this.voice(lp, t + 0.03, 1.25, { f0: f * 1.24, f1: f * 1.5, vowel: 'a', v1: 'i', gain: 0.1, vib: 5, vibD: 50, breath: 0.3, jit: 30, a: 0.06, rel: 0.5, type: 'triangle' });
+        } else {
+          const k = rnd(0.95, 1.08);
+          const o = { vib: 6, vibD: 45, breath: 0.4, jit: 25, rasp: 0.2, a: 0.04, rel: 0.4 };
+          this.voice(lp, t, 0.36, { ...o, f0: f * k, f1: f * k * 1.1, vowel: 'a', v1: 'u', gain: 0.17 });
+          this.noise(lp, t + 0.31, 0.09, { f0: 2200, q: 1.2, gain: 0.05, a: 0.01 });
+          this.voice(lp, t + 0.38, 0.3, { ...o, f0: f * k * 1.24, f1: f * k * 1.3, vowel: 'i', gain: 0.19 });
+          this.voice(lp, t + 0.66, 0.24, { ...o, f0: f * k * 1.28, f1: f * k * 1.14, vowel: 'e', v1: 'i', gain: 0.15 });
+          this.voice(lp, t + 0.88, 1.0, { ...o, f0: f * k * 1.12, f1: f * k * 0.74, vowel: 'i', v1: 'o', gain: 0.18, vibD: 60, rel: 0.6 });
+        }
         break;
       }
       case 'whisperNear': {

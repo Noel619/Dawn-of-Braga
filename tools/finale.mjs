@@ -23,7 +23,7 @@ for (const cp of starts) {
     if (m.type() === 'error' && !m.text().includes('404')) logs.push('console.error: ' + m.text());
   });
   await p.goto('http://localhost:5199/?dev=1&at=0,-10,-144&yaw=180');
-  await p.waitForFunction(() => window.__ready, null, { timeout: 120000 });
+  await p.waitForFunction(() => window.__ready && __game.spring.idol, null, { timeout: 120000 });
   const r = await p.evaluate(
     async ([cp, mode]) => {
       window.__pause = true;

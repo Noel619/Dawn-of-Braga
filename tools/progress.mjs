@@ -6,7 +6,7 @@ const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' | ')));
 p.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('ERR_CERT') && !m.text().includes('404')) logs.push('console.error: ' + m.text()); });
 await p.goto('http://localhost:5199/?dev=1&items=');
-await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
+await p.waitForFunction(() => window.__ready && __game.spring.idol, null, { timeout: 90000 });
 await p.evaluate(() => {
   window.__pause = true;
   const g = __game;

@@ -65,8 +65,9 @@ const DOOR = { x: -16, z: -152 };
 const MEM = { sat: 0.36, bloom: 1.35 };
 // la celda del fondo
 const CELL = { x: -87.6, z: -16.2, wall: -18 };
-// el ojo del ídolo de la fuente (mira a poniente: su +z es el -x del mundo)
-const EYE = { x: SPRING.x - IDOL.eye[2], y: AY + IDOL.eye[1], z: SPRING.z + IDOL.eye[0] };
+// el ojo del ídolo de la fuente (mira a poniente: su +z es el -x del mundo;
+// cambia con la forma del ídolo)
+const eyeAt = () => ({ x: SPRING.x - IDOL.eye[2], y: AY + IDOL.eye[1], z: SPRING.z + IDOL.eye[0] });
 
 const CUTS = {
   intro: ['fuente', 'ara', 'cerrojos', 'asedio', 'rodillas', 'campana', 'gente', 'celda', 'mirada', 'titulo'],
@@ -206,6 +207,9 @@ export class Intro {
     const self = this;
     this.F.run(
       (function* () {
+        // (el ídolo de la fuente, si todavía se está haciendo en el hilo de
+        // fondo: se espera a oscuras)
+        for (let t = 0; g.spring && !g.spring.idol && t < 8; ) t += yield;
         for (const name of order.slice(from)) {
           self.shot = name;
           yield* self[(self.cut === 'intro' && name !== 'titulo' ? 'c_' : 's_') + name]();
@@ -317,6 +321,7 @@ export class Intro {
   // 1. Negro, el goteo; la fuente: del agua roja, a los pies del ídolo, se
   // sube por él hasta la cara (la costura, el ojo que no se ha abierto)
   *c_fuente() {
+    const EYE = eyeAt();
     const g = this.g,
       F = this.F,
       a = g.audio,
@@ -507,6 +512,7 @@ export class Intro {
   // 1. La fuente: desde la cúpula de la cisterna, con su corona de velas,
   // hasta la cara del ídolo
   *s_fuente() {
+    const EYE = eyeAt();
     const g = this.g,
       F = this.F,
       a = g.audio;
@@ -817,6 +823,7 @@ export class Intro {
   // 8. El pacto: de rodillas ante el ídolo, mete las manos por el boquete de
   // la reja; el agua se enciende, se vuelve rojo y el ídolo abre el ojo
   *s_pacto() {
+    const EYE = eyeAt();
     const g = this.g,
       F = this.F,
       a = g.audio,
@@ -1198,6 +1205,7 @@ export class Intro {
   // 12. La mirada: el ídolo vuelve la cara hacia aquí y abre el ojo, con el
   // latido. Algo se fija en él
   *s_mirada(text = 'Algo, desde abajo, se fijó en él.') {
+    const EYE = eyeAt();
     const g = this.g,
       F = this.F,
       a = g.audio,
@@ -1205,8 +1213,10 @@ export class Intro {
     this.look('arena', { fog: 0x000000, sat: 0.7, density: 0.06, snap: true });
     // la cara del ídolo, de cerca y algo de lado: la vuelve hacia aquí y el
     // ojo se le abre con el latido
-    const C = new V3(EYE.x - 2.0, EYE.y - 0.1, EYE.z + 0.95);
-    F.also(F.move({ pos: C.toArray(), look: [EYE.x, EYE.y, EYE.z], fov: 38 }, { pos: [EYE.x - 1.55, EYE.y - 0.05, EYE.z + 0.72], look: [EYE.x, EYE.y, EYE.z], fov: 36 }, 5.4, sm));
+    const mono = IDOL.kind === 'monolito';
+    const C = mono ? new V3(EYE.x - 2.3, EYE.y - 0.15, EYE.z + 0.42) : new V3(EYE.x - 2.0, EYE.y - 0.1, EYE.z + 0.95);
+    const C1 = mono ? [EYE.x - 1.5, EYE.y - 0.07, EYE.z + 0.26] : [EYE.x - 1.55, EYE.y - 0.05, EYE.z + 0.72];
+    F.also(F.move({ pos: C.toArray(), look: [EYE.x, EYE.y, EYE.z], fov: 38 }, { pos: C1, look: [EYE.x, EYE.y, EYE.z], fov: mono ? 34 : 36 }, 5.4, sm));
     if (S) {
       S.eyeTo = 0;
       S.lookAt = C;

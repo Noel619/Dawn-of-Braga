@@ -127,6 +127,10 @@ export const MAT_DEFS = {
   idolGold: { tex: 'bronze', uv: 1.2, color: 0xc89a48, phong: { specular: 0xb08a40, shininess: 48 } },
   idolGlyph: { tex: 'white', uv: 1, color: 0x1a0402, emissive: 0xff3412, emissiveIntensity: 1.2 },
   idolNail: { tex: 'bronze', uv: 1.2, color: 0x5a3e18, phong: { specular: 0x806030, shininess: 40 } },
+  // el monolito: piedra tosca y mojada (el color, en los vértices) y su ojo,
+  // húmedo, del rojo de la carne
+  idolMono: { tex: 'idolMono', uv: 1, phong: { specular: 0x46403c, shininess: 22 } },
+  idolEyeball: { tex: 'white', uv: 1, color: 0x2a0606, emissive: 0x4a0804, emissiveIntensity: 1, phong: { specular: 0xffe0d0, shininess: 70 } },
   // la piedra de los guardianes, con las grietas encendidas
   stoneGuard: { tex: 'stoneGuard', uv: 0.9, emissiveTex: 'stoneGuardEmit', emissive: 0xff5a20, emissiveIntensity: 0.42 },
   // los colosos (carne esculpida, sin UV: triplanar en el espacio del cuerpo).

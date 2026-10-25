@@ -1,13 +1,17 @@
 // El ídolo de la fuente sin nombre: aquello por lo que Deo Ignoto toca el
-// mundo. Nadie lo talló: no tiene una sola marca de herramienta, ni un
-// desconchón, ni el verdín de todo lo que lo rodea; la piedra negra está
-// pulida como el primer día y se bebe la luz. Se alza sobre el agua de la
-// fuente, en medio de la reja de Martín, con los zunchos de hierro con que él
-// quiso sujetarlo: podridos, y el de arriba reventado. Lo que se le cortó (la
-// mano de oro: la Garra) lo tiene ahora quien la encuentre. Dos formas (se
-// elige con ?idolo=monolito; de momento, para comparar):
+// mundo. Se alza sobre el agua de la fuente, en medio de la reja de Martín,
+// con los zunchos de hierro con que él quiso sujetarlo: podridos, y el de
+// arriba reventado. Lo que se le cortó (la mano de oro: la Garra) lo tiene
+// ahora quien la encuentre. Dos formas, que se eligen en el modo de pruebas
+// (F2, «Diseño»; o con ?idolo=estatua / ?idolo=monolito) y se recuerdan en
+// el navegador:
 //
-// 'estatua': una figura de seis metros y medio, erguida, que mira de frente
+// 'monolito' (la de siempre): una piedra que nadie labró, llena de almas que
+//  empujan desde dentro (entities/idol_monolith_geo.js, su geometría, que se
+//  calcula en un hilo de fondo: idol_worker.js; idol_monolith.js, el montaje
+//  y lo que se mueve);
+// 'estatua': una figura de seis metros y medio de piedra negra pulida,
+//  erguida, que mira de frente
 //  - la cara lisa, sin rasgos, partida de arriba abajo por una costura que
 //    rezuma luz roja, como un ojo que todavía no se ha abierto (y que se abre
 //    cuando algo le interesa); dos regueros oscuros le bajan por la barbilla;
@@ -21,29 +25,66 @@
 //    que por dentro no es piedra); el izquierdo, caído bajo el manto;
 //  - glifos de oro de una escritura que no es de nadie (la que alguien picó
 //    del ara romana) en dos cenefas y en una columna; algunos arden.
-// 'monolito': una losa de más de siete metros, torcida sobre sí misma, de
-//  aristas que cortan y la cima tronchada en bisel. En la cara, en relieve,
-//  la misma figura sin rostro, con su halo y el brazo alzado: donde estuvo la
-//  mano queda un engaste de oro vacío, con los clavos arrancados; la costura
-//  roja la parte de arriba abajo y en la cara del relieve está el ojo. Por
-//  los costados bajan columnas de glifos.
+// Las dos tienen la misma huella al pie y el zuncho de abajo en el mismo
+// sitio: la reja, el collar, las cadenas y la colisión (que se hornean con
+// la cisterna) valen para las dos, y se puede cambiar de una a otra en
+// pleno juego.
 // Mira hacia +z; el origen, en el centro de la fuente a ras del suelo (el
 // agua queda 1,4 m más abajo y lo que está bajo el agua no se ve).
 import * as THREE from 'three';
 import { Rig } from './rig.js';
 import { DEG, RNG } from '../core/util.js';
+import { monolithData, monoEye, MONO } from './idol_monolith_geo.js';
+import { Monolith } from './idol_monolith.js';
+import IdolWorker from './idol_worker.js?worker&inline';
 
-export const IDOL_KIND = typeof location !== 'undefined' && new URLSearchParams(location.search).get('idolo') === 'monolito' ? 'monolito' : 'estatua';
+export const IDOL_KINDS = ['monolito', 'estatua'];
+const KEY = 'dob-idolo';
+function savedKind() {
+  const q = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('idolo') : null;
+  if (IDOL_KINDS.includes(q)) return q;
+  try {
+    const s = localStorage.getItem(KEY);
+    if (IDOL_KINDS.includes(s)) return s;
+  } catch (e) {
+    /* sin almacenamiento */
+  }
+  return 'monolito';
+}
 
-// las alturas de los zunchos de Martín (la reja y las cadenas los usan) y,
-// para la introducción, dónde tiene el ojo y lo alto que es
+// la forma elegida, las alturas de los zunchos de Martín (la reja y las
+// cadenas los usan) y, para la introducción, dónde tiene el ojo y lo alto
+// que es (cambian con la forma: setIdolKind)
 export const IDOL = {
-  kind: IDOL_KIND,
+  kind: savedKind(),
   bandA: 0.35,
   bandB: 1.55,
-  eye: IDOL_KIND === 'monolito' ? [0, 5.42, 0.72] : [0, 6.02, 0.36],
-  height: IDOL_KIND === 'monolito' ? 7.5 : 7.4,
+  eye: [0, 6.02, 0.36],
+  height: 7.4,
 };
+function measure() {
+  if (IDOL.kind === 'monolito') {
+    IDOL.eye = monoEye();
+    IDOL.height = MONO.rim;
+  } else {
+    IDOL.eye = [0, 6.02, 0.36];
+    IDOL.height = 7.4;
+  }
+}
+measure();
+// Cambia la forma (y la recuerda en este navegador). ¿Ha cambiado?
+export function setIdolKind(kind) {
+  if (!IDOL_KINDS.includes(kind)) return false;
+  try {
+    localStorage.setItem(KEY, kind);
+  } catch (e) {
+    /* sólo para esta sesión */
+  }
+  if (kind === IDOL.kind) return false;
+  IDOL.kind = kind;
+  measure();
+  return true;
+}
 
 // ------------------------------------------------------------ utilidades
 const _m = new THREE.Matrix4(),
@@ -461,229 +502,70 @@ function statueBands(parts) {
   }
 }
 
-// ============================================================ el monolito
-// medidas de la losa: medio ancho (x) y medio grueso (z) abajo y arriba, el
-// giro de abajo arriba y la cima en bisel (alturas de sus cuatro esquinas:
-// delante izquierda, delante derecha, detrás derecha, detrás izquierda)
-export const MONO = { ax0: 0.84, az0: 0.6, ax1: 0.58, az1: 0.42, y0: -2.3, twist: 0.16, top: [7.05, 7.45, 7.75, 7.3] };
-// el marco de la losa a la altura y: medidas, giro y esquinas
-function monoFrame(y) {
-  const M = MONO;
-  const u = Math.max(0, Math.min(1, (y - M.y0) / (7.4 - M.y0)));
-  const ax = M.ax0 + (M.ax1 - M.ax0) * u,
-    az = M.az0 + (M.az1 - M.az0) * u;
-  const tw = M.twist * u;
-  const c = Math.cos(tw),
-    s = Math.sin(tw);
-  const R = (x, z) => [x * c + z * s, y, -x * s + z * c];
-  return { ax, az, tw, R, corners: [R(ax, az), R(-ax, az), R(-ax, -az), R(ax, -az)] };
-}
-// un punto de la cara de delante (u: de -1 a 1 a lo ancho), su normal y su
-// tangente
-function onFront(u, y, out = 0) {
-  const F = monoFrame(y);
-  return { p: F.R(u * F.ax, F.az + out), n: [Math.sin(F.tw), 0, Math.cos(F.tw)], t: [Math.cos(F.tw), 0, -Math.sin(F.tw)] };
-}
-function onSide(sx, u, y, out = 0) {
-  const F = monoFrame(y);
-  return { p: F.R(sx * (F.ax + out), u * F.az), n: [sx * Math.cos(F.tw), 0, -sx * Math.sin(F.tw)], t: [Math.sin(F.tw), 0, Math.cos(F.tw)] };
-}
-function monolithGeo() {
-  const M = MONO;
-  const NY = 14;
-  const levels = [];
-  for (let j = 0; j <= NY; j++) levels.push(monoFrame(M.y0 + ((7.0 - M.y0) * j) / NY).corners);
-  // la última fila, a la altura de cada esquina de la cima
-  const topC = monoFrame(7.4).corners.map((c, i) => [c[0], M.top[i], c[2]]);
-  levels.push(topC);
-  const pos = [];
-  // (cada cara con sus vértices: aristas vivas; triángulos en el orden que
-  // deja las caras hacia fuera)
-  const quad = (a, b, c, d) => pos.push(...a, ...b, ...c, ...a, ...c, ...d);
-  for (let j = 0; j < levels.length - 1; j++) {
-    const A = levels[j],
-      B = levels[j + 1];
-    for (let f = 0; f < 4; f++) {
-      const f1 = (f + 1) % 4;
-      quad(A[f], A[f1], B[f1], B[f]);
-    }
+// la línea media del zuncho de abajo (la de la estatua: por ella pasan las
+// cadenas de la reja), para que el monolito lleve el suyo en el mismo sitio
+function bandLine() {
+  const y = IDOL.bandA;
+  const pts = [];
+  for (const d of [0, 45, 90, 135, 180, 225, 270, 315]) {
+    const t = (d * Math.PI) / 180;
+    if (d % 90 === 0) {
+      const r = robeRadius(y) + 0.035;
+      pts.push([Math.sin(t) * r, y, Math.cos(t) * r * RZ]);
+    } else pts.push(onRobe(t, y, 0.035).p);
   }
-  quad(topC[0], topC[1], topC[2], topC[3]);
-  let g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.computeVertexNormals();
-  // ¿hacia fuera? (la primera cara es la de delante: su normal, hacia +z)
-  if (g.attributes.normal.getZ(0) < 0) {
-    for (let i = 0; i < pos.length; i += 9) for (let c = 0; c < 3; c++) [pos[i + 3 + c], pos[i + 6 + c]] = [pos[i + 6 + c], pos[i + 3 + c]];
-    g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.computeVertexNormals();
-  }
-  // UV en metros, en el plano de cada cara
-  const P = g.attributes.position,
-    N = g.attributes.normal;
-  const uv = new Float32Array(P.count * 2);
-  for (let i = 0; i < P.count; i++) {
-    const nx = Math.abs(N.getX(i)),
-      ny = Math.abs(N.getY(i));
-    uv[i * 2] = ny > 0.7 || nx < 0.7 ? P.getX(i) : P.getZ(i);
-    uv[i * 2 + 1] = ny > 0.7 ? P.getZ(i) : P.getY(i);
-  }
-  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-  return g;
+  return pts;
 }
 
-function buildMonolith(rng) {
-  const joints = [{ name: 'base', pos: [0, 0, 0] }];
-  const parts = [];
-  const add = (...p) => parts.push(...p);
-  add({ j: 'base', type: 'geo', geo: monolithGeo(), uvk: 1, mat: S });
-  // un filete de oro por el bisel de la cima
-  {
-    const T = monoFrame(7.4).corners.map((c, i) => [c[0], MONO.top[i] + 0.01, c[2]]);
-    for (let i = 0; i < 4; i++) add(strip('base', T[i], T[(i + 1) % 4], 0.035, 0.035, AU, [0, 1, 0]));
-  }
-  // ---------------------------------------------------------- el relieve
-  // la figura sin rostro, de cuerpo largo, con su halo y el brazo alzado;
-  // en relieve sobre la cara de delante
-  const RL = 0.035;
-  const fr = (u, y, out = RL) => onFront(u, y, out);
-  // (de x en metros a u)
-  const U = (x, y) => x / monoFrame(y).ax;
-  // el cuerpo: una tira ancha que se estrecha hacia los hombros
-  for (let y = 0.4; y < 4.3; y += 0.3) {
-    const w = 0.62 - ((y + 0.15) / 4.3) * 0.26;
-    const a = fr(0, y),
-      b = fr(0, Math.min(4.3, y + 0.3));
-    add(strip('base', a.p, b.p, w * 1.25, 0.05, S, a.n));
-  }
-  // los hombros, el cuello y la cabeza (un óvalo), y el halo de púas
-  add(strip('base', fr(U(-0.42, 4.32), 4.32).p, fr(U(0.42, 4.32), 4.32).p, 0.24, 0.05, S, fr(0, 4.32).n));
-  add(strip('base', fr(0, 4.4).p, fr(0, 4.95).p, 0.13, 0.05, S, fr(0, 4.6).n));
-  const hc = fr(0, IDOL.eye[1], RL + 0.012);
-  const ryF = Math.atan2(hc.n[0], hc.n[2]) / DEG;
-  add({ j: 'base', type: 'sphere', s: [0.22, 0.36, 0.06], p: hc.p, r: [0, ryF, 0], seg: 12, seg2: 8, mat: S });
-  for (let i = 0; i < 13; i++) {
-    const a = -100 * DEG + (i / 12) * 200 * DEG;
-    const L = i % 2 ? 0.42 : 0.62;
-    const y0 = IDOL.eye[1] + Math.cos(a) * 0.5,
-      y1 = IDOL.eye[1] + Math.cos(a) * (0.5 + L);
-    const A = fr(U(Math.sin(a) * 0.4, y0), y0),
-      B = fr(U(Math.sin(a) * (0.4 + L), y1), y1);
-    add(strip('base', A.p, B.p, 0.05, 0.035, S, A.n, { taper: [2.2, 1] }));
-    add({ j: 'base', type: 'ico', s: [0.022], p: fr(U(Math.sin(a) * (0.4 + L), y1), y1, RL + 0.012).p, mat: AU });
-  }
-  // el brazo izquierdo, cruzado por delante; el derecho, alzado hasta la
-  // altura de la cabeza: donde estuvo la mano, el engaste de oro vacío, con
-  // los clavos arrancados y la luz dentro
-  add(strip('base', fr(U(0.36, 4.15), 4.15).p, fr(U(0.22, 3.2), 3.2).p, 0.12, 0.05, S, fr(0, 3.6).n));
-  add(strip('base', fr(U(0.22, 3.2), 3.2).p, fr(U(-0.3, 2.95), 2.95).p, 0.11, 0.05, S, fr(0, 3.0).n));
-  add(strip('base', fr(U(-0.38, 4.2), 4.2).p, fr(U(-0.6, 4.75), 4.75).p, 0.12, 0.05, S, fr(0, 4.4).n));
-  add(strip('base', fr(U(-0.6, 4.75), 4.75).p, fr(U(-0.58, 5.55), 5.55).p, 0.1, 0.05, S, fr(0, 5.1).n));
-  {
-    const sk = fr(U(-0.58, 5.7), 5.7, RL + 0.02);
-    add({ j: 'base', type: 'torus', s: [0.09, 0.024], seg: 12, seg2: 4, p: sk.p, r: [0, ryF, 0], mat: AU });
-    add({ j: 'base', type: 'cyl', s: [0.075, 0.075, 0.03], p: sk.p, r: [90, ryF, 0], seg: 10, mat: 'black' });
-    add({ j: 'base', type: 'ico', s: [0.035], p: fr(U(-0.58, 5.7), 5.7, RL + 0.025).p, mat: 'redGlow' });
-    for (const [dx, dy, rz] of [
-      [-0.13, 0.05, 30],
-      [0.12, 0.08, -40],
-      [0.0, 0.16, 10],
-    ]) {
-      const a = fr(U(-0.58 + dx, 5.7 + dy), 5.7 + dy, RL + 0.02);
-      add({ j: 'base', type: 'box', s: [0.018, 0.09, 0.018], p: a.p, r: [60, ryF, rz], mat: 'iron' });
+// Los datos del monolito: se calculan una vez, en un hilo de fondo (si el
+// navegador no lo deja abrir, en el principal: un tirón de un segundo)
+let monoData = null,
+  monoJob = null;
+export function monolithReady() {
+  return !!monoData;
+}
+export function loadMonolith() {
+  if (monoData) return Promise.resolve(monoData);
+  if (monoJob) return monoJob;
+  const opts = { bandA: bandLine() };
+  const main = () => monolithData(1667, opts);
+  monoJob = new Promise((res) => {
+    let w;
+    try {
+      w = new IdolWorker();
+    } catch (e) {
+      return res(main());
     }
-  }
-  // ---------------------------------------------------------- la costura
-  // de arriba abajo por el medio de la cara (y por la del relieve); el ojo,
-  // en la cara (en su malla: se abre)
-  for (let y = -1.3; y < 7.0; y += 0.5) {
-    const top = Math.min(6.98, y + 0.5);
-    const mid = (y + top) / 2;
-    const out = mid > 4.95 && mid < 5.95 ? RL + 0.07 : mid > 0.35 && mid < 4.4 ? RL + 0.05 : 0.004;
-    const a = fr(0, y, out),
-      b = fr(0, top, out);
-    add(strip('base', a.p, b.p, 0.03, 0.02, 'black', a.n));
-    add(strip('base', fr(0, y, out + 0.012).p, fr(0, top, out + 0.012).p, 0.009, 0.01, 'redGlow', a.n));
-  }
-  {
-    const e = fr(0, IDOL.eye[1], RL + 0.085);
-    add({ j: 'base', type: 'ico', s: [0.04, 0.19, 0.025], p: e.p, r: [0, ryF, 0], mat: 'black', grp: 'eye' });
-    add({ j: 'base', type: 'ico', s: [0.015, 0.14, 0.02], p: fr(0, IDOL.eye[1], RL + 0.1).p, r: [0, ryF, 0], mat: 'redGlow', grp: 'eye' });
-    // lo que gotea del ojo, por la costura
-    add(strip('base', fr(U(0.03, 5.25), 5.25, RL + 0.08).p, fr(U(0.035, 4.75), 4.75, RL + 0.065).p, 0.02, 0.012, 'blood', e.n));
-  }
-  // ---------------------------------------------------------- los glifos
-  // columnas por los costados y una cenefa sobre el agua
-  let gi = 0;
-  for (const sx of [1, -1])
-    for (const u of [-0.45, 0.45])
-      for (let y = 6.2; y > -0.9; y -= 0.3) {
-        const s = onSide(sx, u, y, 0.012);
-        glyph(parts, rng, 'base', s.p, s.n, s.t, 0.17, gi++ % 6 === 3 ? GL : AU);
-      }
-  for (const y of [-1.02, -0.62]) {
-    const C = monoFrame(y).corners;
-    for (let i = 0; i < 4; i++) {
-      const a = C[i],
-        b = C[(i + 1) % 4];
-      add(strip('base', [a[0] * 1.012, y, a[2] * 1.012], [b[0] * 1.012, y, b[2] * 1.012], 0.03, 0.016, AU, [(a[0] + b[0]) / 2, 0, (a[2] + b[2]) / 2]));
-    }
-  }
-  for (let i = 0; i < 8; i++) {
-    const f = fr(-0.85 + i * 0.24, -0.82, 0.012);
-    glyph(parts, rng, 'base', f.p, f.n, f.t, 0.16, i === 5 ? GL : AU);
-  }
-  // ---------------------------------------------------------- los zunchos
-  for (const [y, broken] of [
-    [IDOL.bandA, false],
-    [IDOL.bandB, true],
-  ]) {
-    const C = monoFrame(y).corners.map((c) => [c[0] * 1.045, y, c[2] * 1.045]);
-    for (let i = 0; i < 4; i++) {
-      if (broken && i === 3) continue;
-      const a = C[i],
-        b = C[(i + 1) % 4];
-      const n = [(a[0] + b[0]) / 2, 0, (a[2] + b[2]) / 2];
-      add(strip('base', a, b, 0.12, 0.035, 'plateRust', n));
-      // la cruz remachada, en el medio de la cara
-      const nl = Math.hypot(n[0], n[2]);
-      const m = [(a[0] + b[0]) / 2 + (n[0] / nl) * 0.04, y, (a[2] + b[2]) / 2 + (n[2] / nl) * 0.04];
-      if (i % 2 === 0) {
-        add(strip('base', [m[0], y - 0.2, m[2]], [m[0], y + 0.24, m[2]], 0.05, 0.03, 'iron', n));
-        const t = [b[0] - a[0], 0, b[2] - a[2]],
-          tl = Math.hypot(t[0], t[2]);
-        add(strip('base', [m[0] - (t[0] / tl) * 0.12, y + 0.1, m[2] - (t[2] / tl) * 0.12], [m[0] + (t[0] / tl) * 0.12, y + 0.1, m[2] + (t[2] / tl) * 0.12], 0.045, 0.03, 'iron', n));
-      } else add({ j: 'base', type: 'sphere', s: [0.032], p: m, seg: 5, seg2: 3, mat: 'iron' });
-    }
-    if (broken)
-      for (const [c, d] of [
-        [C[3], C[2]],
-        [C[0], C[1]],
-      ]) {
-        // los cabos reventados, doblados hacia fuera
-        const dir = [c[0] - d[0], 0, c[2] - d[2]],
-          l = Math.hypot(dir[0], dir[2]);
-        add(strip('base', c, [c[0] + (dir[0] / l) * 0.25 + c[0] * 0.25, y + 0.14, c[2] + (dir[2] / l) * 0.25 + c[2] * 0.25], 0.12, 0.03, 'plateRust', [c[0], 0, c[2]]));
-      }
-  }
-  return new Rig({ joints, parts });
+    w.onmessage = (ev) => {
+      w.terminate();
+      if (!ev.data.ok) console.warn('[ídolo] el hilo de fondo falló; se hace en el principal', ev.data.error);
+      res(ev.data.ok ? ev.data.data : main());
+    };
+    w.onerror = (e) => {
+      w.terminate();
+      console.warn('[ídolo] el hilo de fondo falló; se hace en el principal', e.message || e);
+      res(main());
+    };
+    w.postMessage({ seed: 1667, opts });
+  }).then((d) => {
+    monoData = d;
+    monoJob = null;
+    return d;
+  });
+  return monoJob;
 }
 
-export function buildIdol(kind = IDOL_KIND, seed = 1667) {
-  const rng = new RNG(seed);
-  return kind === 'monolito' ? buildMonolith(rng) : buildStatue(rng);
+// El ídolo de la forma pedida; el monolito, sólo si ya están sus datos
+// (si no, null: loadMonolith() y volver a pedirlo)
+export function buildIdol(kind = IDOL.kind, seed = 1667) {
+  if (kind === 'monolito') return monoData ? new Monolith(monoData) : null;
+  return buildStatue(new RNG(seed));
 }
 
 // La huella del ídolo a ras del suelo y sus zunchos (para la reja, las
-// cadenas y la colisión), en su espacio (x a lo ancho, z de delante atrás)
-export function idolFootprint(kind = IDOL_KIND) {
-  if (kind === 'monolito') {
-    const F = monoFrame(0);
-    // (de cada esquina del zuncho de abajo sale una cadena)
-    const anchors = monoFrame(IDOL.bandA).corners.map((c) => [c[0] * 1.06, IDOL.bandA, c[2] * 1.06]);
-    return { kind, rect: true, ax: F.ax, az: F.az, tw: F.tw, anchors, half: [F.ax + 0.05, F.az + 0.05] };
-  }
+// cadenas y la colisión), en su espacio (x a lo ancho, z de delante atrás):
+// la misma para las dos formas
+export function idolFootprint() {
   const anchors = [45, 135, 225, 315].map((d) => onRobe((d * Math.PI) / 180, IDOL.bandA, 0.06).p);
-  return { kind, rect: false, rx: robeRadius(0), rz: robeRadius(0) * RZ, anchors, half: [robeRadius(0) * 0.92, robeRadius(0) * RZ * 0.92] };
+  return { rect: false, rx: robeRadius(0), rz: robeRadius(0) * RZ, anchors, half: [robeRadius(0) * 0.92, robeRadius(0) * RZ * 0.92] };
 }

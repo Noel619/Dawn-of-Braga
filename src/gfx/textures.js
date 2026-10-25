@@ -1139,6 +1139,85 @@ const GEN = {
   stoneGuardEmit() {
     return guardGen(true);
   },
+  // el monolito de la fuente: piedra tosca y mojada, de grano gordo, con
+  // lajas, poros y algún cristal suelto (lo demás, la luz y las almas, va en
+  // los colores de sus vértices)
+  idolMono() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const w = fbm2(x / 10, y / 10, 3, S / 10, 921) * 4;
+      const n = fbm2((x + w) / 6, (y + w) / 6, 4, S / 6, 922);
+      const m = fbm2(x / 2.2, y / 2.2, 2, S / 2.2, 923);
+      const lj = Math.abs(fbm2((x + w * 2) / 13, y / 5, 3, S / 13, 924) - 0.5);
+      let k = 0.78 + n * 0.3 + (m - 0.5) * 0.14;
+      if (lj < 0.025) k *= 0.78 + lj * 8;
+      const sp = hash2(x, y, 925);
+      if (sp > 0.97) k *= 0.8;
+      else if (sp < 0.015) k *= 1.18;
+      let c = [98 * k, 90 * k, 92 * k];
+      const rust = fbm2(x / 9, y / 9, 3, S / 9, 926);
+      if (rust > 0.62) c = mix3(c, [104 * k, 74 * k, 62 * k], Math.min(0.5, (rust - 0.62) * 3));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // el ojo del monolito: un iris de brasa con la pupila de cabra (una raja de
+  // arriba abajo), venas que salen de ella y el blanco, que no es blanco
+  idolIris() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const dx = (x + 0.5 - S / 2) / (S / 2),
+        dy = (y + 0.5 - S / 2) / (S / 2);
+      const r = Math.hypot(dx, dy),
+        a = Math.atan2(dy, dx);
+      const fib = fbm2((a / (Math.PI * 2)) * 48, r * 6, 3, 48, 931);
+      let c;
+      if (r > 0.86) c = mix3([46, 6, 4], [20, 2, 2], Math.min(1, (r - 0.86) * 5));
+      else {
+        const k = r / 0.86;
+        c = mix3([255, 214, 120], [236, 70, 18], Math.min(1, k * 1.4));
+        c = mix3(c, [120, 12, 6], Math.max(0, k - 0.55) * 2);
+        c = mix3(c, [70, 6, 4], (fib - 0.5) * 0.9 + 0.2);
+        if (r > 0.8) c = mix3(c, [30, 2, 2], (r - 0.8) * 12);
+      }
+      // la raja: ancha en medio, en punta arriba y abajo
+      const half = 0.17 * Math.pow(Math.max(0, 1 - (dy / 0.78) ** 2), 0.8);
+      if (Math.abs(dx) < half && Math.abs(dy) < 0.78) c = [6, 1, 1];
+      else if (Math.abs(dx) < half + 0.05 && Math.abs(dy) < 0.8) c = mix3(c, [24, 3, 2], 0.7);
+      if (Math.hypot(dx + 0.32, dy + 0.36) < 0.07) c = [255, 236, 210];
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // una mano en negativo, soplada con almagre contra la piedra (como las de
+  // las cuevas): la mancha alrededor y, en medio, el hueco de la mano.
+  // Recortada (alphaTest)
+  ochreHand() {
+    const S = 64;
+    const seg = (px, py, ax, ay, bx, by) => {
+      const vx = bx - ax,
+        vy = by - ay;
+      const t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy)));
+      return Math.hypot(px - ax - vx * t, py - ay - vy * t);
+    };
+    // (la mano, de la muñeca abajo a las yemas arriba, en píxeles)
+    const F = [
+      [27, 33, 13, 21, 4.2],
+      [30, 30, 25, 10, 4.4],
+      [34, 30, 34, 8, 4.4],
+      [38, 31, 42, 11, 4.2],
+      [41, 35, 49, 20, 3.8],
+    ];
+    return pixels(S, S, (x, y, o) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      let hand = Math.hypot((px - 34) / 9.5, (py - 40) / 10.5) < 1 || seg(px, py, 34, 44, 34, 60) < 6.5;
+      for (const [ax, ay, bx, by, r] of F) if (seg(px, py, ax, ay, bx, by) < r) hand = true;
+      const d = Math.hypot(px - 34, py - 34) / 30;
+      const n = fbm2(x / 3, y / 3, 3, S / 3, 941);
+      const spray = Math.max(0, 1 - d * d) * (0.65 + n * 0.7) - hash2(x, y, 942) * 0.25;
+      const a = hand ? 0 : spray > 0.42 ? 255 : 0;
+      set(o, 150 + n * 40, 54 + n * 18, 30 + n * 10, a);
+    });
+  },
 
   bone() {
     const S = 32;
