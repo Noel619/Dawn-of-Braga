@@ -614,57 +614,8 @@ export function buildMourner() {
 // (El Empalado: impaled_model.js)
 
 // ------------------------------------------------------------ El Turiferario
-// El arzobispo transfigurado: casulla carmesí, jaula de hierro por rostro,
-// corona de velas, costillar abierto con un núcleo ardiente.
-export function buildTuribulario() {
-  const k = 2.35;
-  const joints = humanoidJoints(k, { arm: 1.18 });
-  const parts = [
-    { j: 'hips', type: 'box', s: [0.5 * k, 1.05 * k, 0.4 * k], p: [0, -0.42 * k, 0], taper: [1.6, 1.4], mat: 'clothRed' },
-    { j: 'hips', type: 'box', s: [0.12 * k, 1.0 * k, 0.02], p: [0, -0.42 * k, 0.21 * k], taper: [1.3, 1], mat: 'bronze' },
-    { j: 'chest', type: 'box', s: [0.46 * k, 0.6 * k, 0.3 * k], p: [0, 0.3 * k, -0.02 * k], taper: [0.85, 0.9], mat: 'clothRed' },
-    { j: 'chest', type: 'box', s: [0.5 * k, 0.12 * k, 0.34 * k], p: [0, 0.54 * k, 0], mat: 'bronze' },
-    // costillar abierto con núcleo
-    { j: 'chest', type: 'sphere', s: [0.1 * k], p: [0, 0.32 * k, 0.1 * k], mat: 'redGlow' },
-    ...[0.2, 0.28, 0.36, 0.44].map((y) => ({ j: 'chest', type: 'box', s: [0.04 * k, 0.03 * k, 0.16 * k], p: [0.11 * k, y * k, 0.16 * k], r: [0, -35, 0], mat: 'bone' })),
-    ...[0.2, 0.28, 0.36, 0.44].map((y) => ({ j: 'chest', type: 'box', s: [0.04 * k, 0.03 * k, 0.16 * k], p: [-0.11 * k, y * k, 0.16 * k], r: [0, 35, 0], mat: 'bone' })),
-    { j: 'chest', type: 'ico', s: [0.12 * k, 0.1 * k, 0.1 * k], p: [0.14 * k, 0.12 * k, 0.12 * k], mat: 'flesh' },
-    // cabeza: jaula de hierro, mitra y corona de velas
-    { j: 'head', type: 'box', s: [0.22 * k, 0.26 * k, 0.24 * k], p: [0, 0.12 * k, 0], mat: 'skinCorrupt' },
-    ...[-0.08, -0.03, 0.03, 0.08].map((x) => ({ j: 'head', type: 'box', s: [0.015 * k, 0.28 * k, 0.015 * k], p: [x * k, 0.12 * k, 0.13 * k], mat: 'iron' })),
-    { j: 'head', type: 'box', s: [0.25 * k, 0.02 * k, 0.26 * k], p: [0, 0.2 * k, 0], mat: 'iron' },
-    { j: 'head', type: 'box', s: [0.25 * k, 0.02 * k, 0.26 * k], p: [0, 0.03 * k, 0], mat: 'iron' },
-    { j: 'head', type: 'sphere', s: [0.02 * k], p: [-0.05 * k, 0.14 * k, 0.12 * k], mat: 'eyeGlow' },
-    { j: 'head', type: 'sphere', s: [0.02 * k], p: [0.05 * k, 0.14 * k, 0.12 * k], mat: 'eyeGlow' },
-    { j: 'head', type: 'box', s: [0.22 * k, 0.34 * k, 0.1 * k], p: [0, 0.4 * k, 0], taper: [1.4, 1.2], r: [180, 0, 0], mat: 'clothWhite' },
-    { j: 'head', type: 'box', s: [0.03 * k, 0.3 * k, 0.11 * k], p: [0, 0.38 * k, 0], mat: 'bronze' },
-    { j: 'head', type: 'torus', s: [0.2 * k, 0.012 * k], p: [0, 0.3 * k, -0.08 * k], r: [10, 0, 0], seg: 12, mat: 'iron' },
-    ...[0, 1, 2, 3, 4, 5, 6].map((i) => {
-      const a = Math.PI * (0.1 + (i / 6) * 0.8);
-      return { j: 'head', type: 'cyl', s: [0.018 * k, 0.018 * k, 0.1 * k], p: [Math.cos(a) * 0.2 * k, 0.3 * k + Math.sin(a) * 0.2 * k, -0.08 * k], mat: 'candle' };
-    }),
-    // brazos: mangas y antebrazos descarnados
-    { j: 'armL', type: 'box', s: [0.16 * k, 0.34 * k, 0.16 * k], p: [0, -0.15 * k, 0], taper: [1.3, 1.3], mat: 'clothRed' },
-    { j: 'foreL', type: 'box', s: [0.07 * k, 0.3 * k, 0.07 * k], p: [0, -0.14 * k, 0], taper: [0.7, 0.7], mat: 'skinCorrupt' },
-    { j: 'foreL', type: 'box', s: [0.03 * k, 0.28 * k, 0.03 * k], p: [0.03 * k, -0.14 * k, 0.03 * k], mat: 'bone' },
-    { j: 'handL', type: 'box', s: [0.07 * k, 0.12 * k, 0.04 * k], p: [0, -0.06 * k, 0], mat: 'skinCorrupt' },
-    { j: 'armR', type: 'box', s: [0.16 * k, 0.34 * k, 0.16 * k], p: [0, -0.15 * k, 0], taper: [1.3, 1.3], mat: 'clothRed' },
-    { j: 'foreR', type: 'box', s: [0.07 * k, 0.3 * k, 0.07 * k], p: [0, -0.14 * k, 0], taper: [0.7, 0.7], mat: 'skinCorrupt' },
-    { j: 'foreR', type: 'box', s: [0.03 * k, 0.28 * k, 0.03 * k], p: [-0.03 * k, -0.14 * k, 0.03 * k], mat: 'bone' },
-    { j: 'handR', type: 'box', s: [0.07 * k, 0.12 * k, 0.04 * k], p: [0, -0.06 * k, 0], mat: 'skinCorrupt' },
-    // piernas ocultas: sólo pies bajo la casulla
-    { j: 'shinL', type: 'box', s: [0.08 * k, 0.44 * k, 0.08 * k], p: [0, -0.2 * k, 0], mat: 'skinCorrupt' },
-    { j: 'shinR', type: 'box', s: [0.08 * k, 0.44 * k, 0.08 * k], p: [0, -0.2 * k, 0], mat: 'skinCorrupt' },
-    ...feetParts(k, 'skinCorrupt', { w: 0.085, h: 0.05, l: 0.21 }),
-  ];
-  return new Rig({ joints, parts });
-}
-
-export const CANDLE_OFFSETS = (k = 2.35) =>
-  [0, 1, 2, 3, 4, 5, 6].map((i) => {
-    const a = Math.PI * (0.1 + (i / 6) * 0.8);
-    return new THREE.Vector3(Math.cos(a) * 0.2 * k, 0.3 * k + Math.sin(a) * 0.2 * k + 0.07 * k, -0.08 * k);
-  });
+// (el arzobispo transfigurado: turibulario_model.js)
+export { buildTuribulario, CANDLE_OFFSETS } from './turibulario_model.js';
 
 // ------------------------------------------------------------ El Descoyuntado
 // El canónigo, boca arriba sobre cuatro miembros descoyuntados como una
