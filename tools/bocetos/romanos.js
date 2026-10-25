@@ -4,7 +4,8 @@
 // Picando para los cimientos de algo, rompieron la roca y salieron a una
 // cueva con un lago negro; en medio del agua, de pie, la estatua: más alta
 // que cuatro hombres, de una piedra que no es de aquí, pulida como el
-// primer día, con la aureola de púas y el brazo alzado sin mano. Nadie la
+// primer día, con la aureola de púas y, en lo alto del brazo alzado, la
+// mano de oro (la Garra: la que Martín le cortaría siglos después). Nadie la
 // talló. El centurión, con la cresta de través, alza la antorcha; un
 // legionario se mete en el agua con el pilo por delante; el sacerdote, con
 // la toga sobre la cabeza, se tapa la boca; el esclavo que abrió el
@@ -57,7 +58,7 @@ const ST = {
   ],
   head: [SX, 136, 36, 58],
   halo: [SX, 126, 70],
-  arm: { sh: [SX - 82, 300], el: [SX - 150, 322], st: [SX - 140, 116] },
+  arm: { sh: [SX - 82, 300], el: [SX - 150, 322], st: [SX - 140, 156] },
 };
 const mirrorAt = (pts, cx) => pts.map(([a, b]) => [2 * cx - a, b]).reverse();
 function statueBody(x, fill) {
@@ -89,6 +90,51 @@ function statueBody(x, fill) {
     [SX - 118, 388],
   ], fill, 0.5);
 }
+// La mano de oro (la Garra, la que Martín le cortaría siglos después):
+// cuatro dedos largos con sus uñas curvas y el pulgar, abiertos hacia arriba
+const HANDF = [
+  [-0.62, 58],
+  [-0.22, 70],
+  [0.14, 68],
+  [0.5, 56],
+];
+function goldHand(x, fill) {
+  const [wx, wy] = ST.arm.st;
+  // la palma
+  blob(x, [
+    [wx - 17, wy + 8],
+    [wx - 20, wy - 14],
+    [wx - 14, wy - 34],
+    [wx + 2, wy - 40],
+    [wx + 16, wy - 32],
+    [wx + 19, wy - 12],
+    [wx + 15, wy + 8],
+  ], fill, 0.5);
+  for (const [a0, L] of HANDF) {
+    const a = -Math.PI / 2 + a0;
+    const bx = wx + Math.cos(a) * 26,
+      by = wy - 20 + Math.sin(a) * 26;
+    const mid = [bx + Math.cos(a) * L * 0.55, by + Math.sin(a) * L * 0.55];
+    // (la punta se dobla hacia dentro, como una garra)
+    const a2 = a + (a0 < 0 ? 0.55 : -0.55);
+    const tip = [mid[0] + Math.cos(a2) * L * 0.45, mid[1] + Math.sin(a2) * L * 0.45];
+    capsule(x, [bx, by], mid, 6.5, 5.5, fill);
+    capsule(x, mid, tip, 5.5, 4.2, fill);
+    const a3 = a2 + (a0 < 0 ? 0.6 : -0.6);
+    poly(x, [
+      [tip[0] - 4, tip[1]],
+      [tip[0] + Math.cos(a3) * 24, tip[1] + Math.sin(a3) * 24],
+      [tip[0] + 4, tip[1]],
+    ], fill);
+  }
+  // el pulgar, de lado
+  capsule(x, [wx + 14, wy - 6], [wx + 40, wy - 26], 6, 4.6, fill);
+  poly(x, [
+    [wx + 38, wy - 30],
+    [wx + 58, wy - 46],
+    [wx + 42, wy - 22],
+  ], fill);
+}
 function statueHead(x, fill) {
   ellipse(x, ST.head[0], ST.head[1], ST.head[2], ST.head[3], fill);
   for (let i = 0; i < 7; i++) {
@@ -116,6 +162,7 @@ function statue(x, fill) {
   statueHalo(x, fill);
   statueBody(x, fill);
   statueHead(x, fill);
+  goldHand(x, fill);
 }
 // su reflejo en el agua: al revés, roto
 function reflection(x, fill) {
@@ -472,6 +519,7 @@ export async function draw(c, o = {}) {
   const Msb = mk((m) => statueBody(m, gray(1)));
   const Msh = mk((m) => statueHead(m, gray(1)));
   const Mhalo = mk((m) => statueHalo(m, gray(1)));
+  const Mhand = mk((m) => goldHand(m, gray(1)));
   const Mref = mk((m) => reflection(m, gray(1)));
   const Mrock = mk((m) => {
     rocks(m, gray(1));
@@ -579,6 +627,14 @@ export async function draw(c, o = {}) {
     const rimL = Math.max(0, -fx) * Math.pow(1 - fz, 1.2);
     return clamp(0.03 + 0.22 * dif * att + 0.55 * rimL * att + 0.95 * spec);
   });
+  // la mano de oro: metal que coge la luz de la antorcha
+  shadeInto(T, Mhand, 3, [1360, 0, 1620, 200], (px, py, nx, ny, nz) => {
+    const lx = TORCH[0] - px,
+      ly = TORCH[1] - py,
+      d = Math.hypot(lx, ly);
+    const dif = Math.max(0, (nx * lx + ny * ly) / d);
+    return clamp(0.35 + 0.55 * dif + 0.15 * nz);
+  });
   // ellos: el canto encendido por sus antorchas
   shadeInto(T, Mr, 4, [300, 650, 1360, 1290], (px, py, nx, ny, nz) => {
     const lx = TORCH[0] - px,
@@ -665,6 +721,7 @@ export async function draw(c, o = {}) {
     S([[st[0] - 15, st[1] + 26], [st[0], st[1] + 30], [st[0] + 15, st[1] + 26]], 9);
     for (const sgn of [1, -1]) S(ST.mantleL.slice(9).map(([a, b]) => [sgn > 0 ? a : 2 * SX - a, b]), 5);
     for (const s of spikeTips(SX, 126, 70, 196, 15, [4, 11])) if (!s.broken) ellipse(m, s.p[0] - Math.cos(s.a) * 8, s.p[1] - Math.sin(s.a) * 8, 4, 4, gray(1));
+    goldHand(m, gray(1));
   });
   wash(x, GOLD, [214, 162, 80], { ...tools, alpha: 0.8, blur: 1.5, edge: 0.25, nb: 0.02 });
   if (o.stage === 'wash') return;
@@ -725,7 +782,8 @@ export async function draw(c, o = {}) {
       const py = mix(90, 1080, s);
       return [px + Math.sin(py * 0.006 + px * 0.05) * 3 + (px - SX) * 0.05 * (1 - s), py];
     });
-    engrave(x, T, v, { ...burin, region: Msb, max: 2.6, t0: 0.1 });
+    engrave(x, T, v, { ...burin, region: maskMinus(Msb, Mhand), max: 2.6, t0: 0.1 });
+    engrave(x, T, parallel(-0.8, 3, [1380, 0, 1640, 200]), { ...burin, region: Mhand, max: 1.8, t0: 0.4, color: 'rgba(70,40,10,0.8)' });
     const rings = family(140, (u, s) => {
       const py = mix(200, 1080, u);
       const px = mix(1400, 1800, s);
@@ -850,8 +908,16 @@ export async function draw(c, o = {}) {
         const { el, st } = ST.arm;
         pen(d, [[el[0] - 6, el[1] - 10], [st[0] - 6, st[1] + 34]], { ...P1, w: 1.3, color: 'rgba(120,96,80,0.7)' });
         pen(d, [[el[0] + 6, el[1] - 12], [st[0] + 7, st[1] + 38]], { ...P1, w: 1.3, color: 'rgba(120,96,80,0.7)' });
-        ellipse(d, st[0], st[1] - 2, 13, 5.5, 'rgba(30,10,8,0.95)');
-        ellipse(d, st[0], st[1] - 3, 8, 3, 'rgba(160,40,24,0.9)');
+        // la mano de oro: su contorno, los nudillos y los brillos
+        for (const l of contours(Mhand, 0.5, 1)) if (l.length > 5) pen(d, simplify(l, 0.6), { ...P1, w: 1.4, lift: 400 });
+        for (const [a0, L] of HANDF) {
+          const a = -Math.PI / 2 + a0;
+          const bx = st[0] + Math.cos(a) * 26,
+            by = st[1] - 20 + Math.sin(a) * 26;
+          ellipse(d, bx + Math.cos(a) * L * 0.55, by + Math.sin(a) * L * 0.55, 3, 2, 'rgba(90,60,20,0.8)');
+          brush(d, [[bx - 3, by], [bx - 3 + Math.cos(a) * L * 0.5, by + Math.sin(a) * L * 0.5]], { ...tools, w: 1.8, color: 'rgba(255,240,190,0.85)' });
+        }
+        brush(d, [[st[0] - 12, st[1] - 4], [st[0] - 14, st[1] - 30]], { ...tools, w: 2.2, color: 'rgba(255,244,200,0.9)' });
         // los brillos de la piedra pulida: rayas de la llama, a la izquierda
         for (let i = 0; i < 40; i++) {
           const px = SX - 130 + r() * 150;
