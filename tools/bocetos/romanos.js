@@ -2,16 +2,22 @@
 // dos tintas, con la luz de las antorchas.
 //
 // Picando para los cimientos de algo, rompieron la roca y salieron a una
-// cueva con un lago negro; en medio del agua, de pie, la estatua: más alta
-// que cuatro hombres, de una piedra que no es de aquí, pulida como el
-// primer día, con la aureola de púas y, en lo alto del brazo alzado, la
-// mano de oro (la Garra: la que Martín le cortaría siglos después). Nadie la
-// talló. El centurión, con la cresta de través, alza la antorcha; un
-// legionario se mete en el agua con el pilo por delante; el sacerdote, con
-// la toga sobre la cabeza, se tapa la boca; el esclavo que abrió el
-// boquete ya se ha arrodillado. En la orilla hay huesos que no son de
-// romanos, y en una peña, espirales que alguien grabó antes que ellos.
-import { mulberry, Noise, Field, gray, clamp, mix, sstep, blob, poly, capsule, ellipse, glow, contours, simplify, pen, pencil, brush, ash, wash, paper, vignette, splatter, engrave, parallel, family, layer, maskImage, maskMinus, haloSpikes, spikeTips, shadeInto, toCanvasF, plate } from './lib.js';
+// cueva con un lago negro; en medio del agua, de pie, el monolito: más alto
+// que cuatro hombres, de una piedra que no es de aquí, lleno de caras y de
+// manos que empujan desde dentro, con la grieta encendida, el ojo cerrado
+// entre sus anillos y, en lo alto, entre los brazos que salen de la boca
+// rota, el brazo negro con la mano de oro (la Garra: la que Martín le
+// cortaría siglos después). Nadie lo talló. El centurión, con la cresta de
+// través, alza la antorcha; un legionario se mete en el agua con el pilo por
+// delante; el sacerdote, con la toga sobre la cabeza, se tapa la boca; el
+// esclavo que abrió el boquete ya se ha arrodillado. En la orilla hay
+// huesos que no son de romanos, y en una peña, espirales que alguien grabó
+// antes que ellos.
+//
+// El monolito es el del juego (mono3d.js lo monta y le saca la silueta, el
+// tono a la luz de la antorcha y el oro de la mano).
+import { mulberry, Noise, Field, gray, clamp, mix, sstep, blob, poly, capsule, ellipse, glow, contours, simplify, pen, pencil, brush, ash, wash, paper, vignette, splatter, engrave, parallel, family, layer, maskImage, maskMinus, shadeInto, toCanvasF, plate, cv } from './lib.js';
+import { renderMonolith } from './mono3d.js';
 
 const W = 2400,
   H = 1500;
@@ -22,76 +28,26 @@ const TORCH = [944, 604],
   LAMP = [690, 958];
 const WATER = 1069; // el agua, a los pies de la estatua
 
-// ------------------------------------------------------------ la estatua
-// (de frente, a 9 m, en el agua; SX su centro)
+// ------------------------------------------------------------ el monolito
+// (a 10 m, en el agua, vuelto hacia ellos; SX, el centro de su pie. La
+// silueta y el tono salen del monolito de verdad: draw() lo monta antes de
+// nada; aquí, sólo cómo se dibuja con ellos)
 const SX = 1600;
-const Ys = (h) => WATER - 127.8 * h;
-const ST = {
-  robe: [
-    [SX - 76, Ys(4.3)],
-    [SX - 84, Ys(3.0)],
-    [SX - 94, Ys(1.8)],
-    [SX - 104, Ys(0.7)],
-    [SX - 110, WATER + 4],
-    [SX + 110, WATER + 4],
-    [SX + 104, Ys(0.7)],
-    [SX + 94, Ys(1.8)],
-    [SX + 84, Ys(3.0)],
-    [SX + 76, Ys(4.3)],
-  ],
-  mantleL: [
-    [SX - 22, Ys(6.32)],
-    [SX - 58, Ys(6.26)],
-    [SX - 94, Ys(6.08)],
-    [SX - 108, Ys(5.7)],
-    [SX - 114, Ys(5.0)],
-    [SX - 118, Ys(4.0)],
-    [SX - 124, Ys(2.8)],
-    [SX - 132, Ys(1.4)],
-    [SX - 142, WATER + 4],
-    [SX - 84, WATER + 4],
-    [SX - 80, Ys(1.0)],
-    [SX - 66, Ys(2.6)],
-    [SX - 50, Ys(3.9)],
-    [SX - 36, Ys(5.0)],
-    [SX - 24, Ys(5.9)],
-  ],
-  head: [SX, 136, 36, 58],
-  halo: [SX, 126, 70],
-  arm: { sh: [SX - 82, 300], el: [SX - 150, 322], st: [SX - 140, 156] },
-};
-const mirrorAt = (pts, cx) => pts.map(([a, b]) => [2 * cx - a, b]).reverse();
-function statueBody(x, fill) {
-  blob(x, ST.robe, fill, 0.3);
-  blob(x, ST.mantleL, fill, 0.42);
-  blob(x, mirrorAt(ST.mantleL, SX), fill, 0.42);
-  poly(x, [
-    [SX - 34, Ys(6.2)],
-    [SX + 34, Ys(6.2)],
-    [SX + 54, Ys(4.3)],
-    [SX - 54, Ys(4.3)],
-  ], fill);
-  for (let i = 0; i < 6; i++) ellipse(x, SX, Ys(6.2) - i * 17, 21 - i, 8, fill);
-  poly(x, [
-    [SX - 16, Ys(6.2)],
-    [SX + 16, Ys(6.2)],
-    [SX + 14, 186],
-    [SX - 14, 186],
-  ], fill);
-  const { sh, el, st } = ST.arm;
-  capsule(x, sh, el, 24, 19, fill);
-  capsule(x, el, st, 19, 15, fill);
-  blob(x, [
-    [SX - 80, 288],
-    [SX - 128, 308],
-    [SX - 166, 336],
-    [SX - 160, 400],
-    [SX - 140, 466],
-    [SX - 118, 388],
-  ], fill, 0.5);
+let MONO = null;
+// la silueta, del color fill (y su reflejo en el agua: al revés, roto)
+function statue(x, fill, img = 'img') {
+  if (!MONO) return;
+  const c = cv(W, H),
+    d = c.getContext('2d');
+  d.fillStyle = fill;
+  d.fillRect(0, 0, W, H);
+  d.globalCompositeOperation = 'destination-in';
+  d.drawImage(MONO[img], 0, 0);
+  x.drawImage(c, 0, 0);
 }
-// La mano de oro (la Garra, la que Martín le cortaría siglos después):
-// cuatro dedos largos con sus uñas curvas y el pulgar, abiertos hacia arriba
+// la mano de oro: una garra alzada, los cuatro dedos doblados hacia dentro
+// y el pulgar de lado (en la muñeca del brazo grande: MONO.stump; S, su
+// tamaño)
 const HANDF = [
   [-0.62, 58],
   [-0.22, 70],
@@ -99,8 +55,13 @@ const HANDF = [
   [0.5, 56],
 ];
 function goldHand(x, fill) {
-  const [wx, wy] = ST.arm.st;
-  // la palma
+  if (!MONO) return;
+  const [wx, wy] = MONO.stump;
+  const S = 1.5;
+  x.save();
+  x.translate(wx, wy);
+  x.scale(S, S);
+  x.translate(-wx, -wy + 10);
   blob(x, [
     [wx - 17, wy + 8],
     [wx - 20, wy - 14],
@@ -127,51 +88,19 @@ function goldHand(x, fill) {
       [tip[0] + 4, tip[1]],
     ], fill);
   }
-  // el pulgar, de lado
   capsule(x, [wx + 14, wy - 6], [wx + 40, wy - 26], 6, 4.6, fill);
   poly(x, [
     [wx + 38, wy - 30],
     [wx + 58, wy - 46],
     [wx + 42, wy - 22],
   ], fill);
-}
-function statueHead(x, fill) {
-  ellipse(x, ST.head[0], ST.head[1], ST.head[2], ST.head[3], fill);
-  for (let i = 0; i < 7; i++) {
-    const a = -Math.PI / 2 + (i - 3) * 0.3;
-    const bx = SX + Math.cos(a) * 30,
-      by = 108 + Math.sin(a) * 22;
-    poly(x, [
-      [bx - 4.5, by + 6],
-      [SX + Math.cos(a) * 56, 108 + Math.sin(a) * 60],
-      [bx + 4.5, by + 6],
-    ], fill);
-  }
-}
-function statueHalo(x, fill) {
-  x.save();
-  x.lineWidth = 12;
-  x.strokeStyle = fill;
-  x.beginPath();
-  x.arc(ST.halo[0], ST.halo[1], ST.halo[2], 0, Math.PI * 2);
-  x.stroke();
   x.restore();
-  haloSpikes(x, fill, ST.halo[0], ST.halo[1], ST.halo[2], 196, 15, [4, 11]);
 }
-function statue(x, fill) {
-  statueHalo(x, fill);
-  statueBody(x, fill);
-  statueHead(x, fill);
-  goldHand(x, fill);
-}
-// su reflejo en el agua: al revés, roto
 function reflection(x, fill) {
   x.save();
   x.translate(0, 2 * WATER + 8);
   x.scale(1, -0.62);
-  x.translate(0, 0);
-  statueBody(x, fill);
-  statueHead(x, fill);
+  statue(x, fill);
   x.restore();
 }
 
@@ -514,12 +443,47 @@ export async function draw(c, o = {}) {
   };
   const P1 = { ...tools, w: 1.6, jit: 0.7, color: INK };
 
-  // ---------------------------------------------------- las máscaras
-  const Ms = mk((m) => statue(m, gray(1)));
-  const Msb = mk((m) => statueBody(m, gray(1)));
-  const Msh = mk((m) => statueHead(m, gray(1)));
-  const Mhalo = mk((m) => statueHalo(m, gray(1)));
+  // ---------------------------------------------------- el monolito
+  // (de verdad: a 10 m, vuelto hacia la antorcha, con el ojo cerrado y la
+  // mano de oro; lo de debajo del agua no se ve)
+  const ZM = 11.6,
+    FM = 1150,
+    HCM = 1.7;
+  const R = renderMonolith({
+    W,
+    H,
+    F: FM,
+    CX: 1200,
+    HY: WATER - (FM / ZM) * HCM,
+    HC: HCM,
+    at: [((SX - 1200) * ZM) / FM, ZM],
+    yaw: -0.5,
+    open: 0,
+    golden: true,
+    handK: 0,
+    contrast: 2.0,
+    lights: [
+      { p: [-1.2, 2.8, 7.4], color: 0xffa456, k: 9, decay: 1.25 },
+      { p: [-6, 1.6, 6], color: 0xffc080, k: 2.5, decay: 1.2 },
+    ],
+    hemi: [0x504038, 0x0c0806, 0.1],
+  });
+  for (let k = 0; k < R.alpha.length; k++) R.alpha[k] *= sstep(WATER + 6, WATER - 2, (k / W) | 0);
+  const fromArr = (arr) => {
+    const f = new Field(W, H);
+    f.d = arr;
+    return toCanvasF(f);
+  };
+  MONO = { stump: R.stump };
   const Mhand = mk((m) => goldHand(m, gray(1)));
+  for (let k = 0; k < R.alpha.length; k++) {
+    if (R.kind[k] === 3) Mhand.d[k] = Math.max(Mhand.d[k], R.alpha[k]);
+    R.alpha[k] = Math.max(R.alpha[k], Mhand.d[k]);
+  }
+  toCanvasF(Mhand);
+  const Ms = fromArr(R.alpha);
+  const Msb = maskMinus(Ms, Mhand);
+  MONO.img = maskImage(Ms).c;
   const Mref = mk((m) => reflection(m, gray(1)));
   const Mrock = mk((m) => {
     rocks(m, gray(1));
@@ -548,9 +512,8 @@ export async function draw(c, o = {}) {
     blob(t, BACK, gray(0.06), 0.4);
     glow(t, TORCH[0] + 60, TORCH[1], 760, gray(0.34, 0.9), gray(0.06, 0), 0.75);
     glow(t, TORCH[0], TORCH[1], 300, gray(0.85, 0.95), gray(0.4, 0), 1);
-    // detrás de la estatua, la negrura (y apenas un rojo en la cabeza)
+    // detrás del monolito, la negrura
     glow(t, SX, 520, 560, gray(0.05, 0.85), gray(0.2, 0), 1.3);
-    glow(t, SX, 128, 240, gray(0.4, 0.85), gray(0.05, 0), 1);
     // la roca de cerca: más oscura, encendida donde le da la antorcha
     rocks(t, gray(0.1));
     stalactites(t, gray(0.12));
@@ -603,38 +566,26 @@ export async function draw(c, o = {}) {
       d = Math.hypot(lx, ly);
     return clamp(0.12 + 0.8 * Math.max(0, (nx * lx + ny * ly) / d) + 0.25 * nz);
   });
-  // la estatua: piedra negra pulida; la luz de la antorcha por la izquierda,
-  // brillos finos en las crestas de los pliegues
-  shadeInto(T, Ms, 7, [1360, 0, 1840, 1080], (px, py, nx, ny, nz) => {
-    const head = Msh.at(px, py) > 0.5 || Mhalo.at(px, py) > 0.5;
-    let fx = nx;
-    if (!head) {
-      const ph = (px - SX) * 0.11 + Math.sin(py * 0.006) * 1.3;
-      fx = clamp(nx + Math.cos(ph) * 0.5 * sstep(300, 460, py), -1, 1);
-    }
-    const fz = Math.sqrt(Math.max(0.02, 1 - fx * fx - ny * ny));
-    const lx = TORCH[0] - px,
-      ly = TORCH[1] - py,
-      ld = Math.hypot(lx, ly, 500);
-    const dif = Math.max(0, (fx * lx + ny * ly + fz * 500) / ld);
-    // (pulida: el reflejo de la llama es una raya estrecha)
-    const hx = lx / ld,
-      hy = ly / ld,
-      hz = 500 / ld + 1;
-    const hl = Math.hypot(hx, hy, hz);
-    const spec = Math.pow(Math.max(0, (fx * hx + ny * hy + fz * hz) / hl), 90);
-    const att = Math.exp(-Math.hypot(lx, ly) / 1100);
-    const rimL = Math.max(0, -fx) * Math.pow(1 - fz, 1.2);
-    return clamp(0.03 + 0.22 * dif * att + 0.55 * rimL * att + 0.95 * spec);
-  });
-  // la mano de oro: metal que coge la luz de la antorcha
-  shadeInto(T, Mhand, 3, [1360, 0, 1620, 200], (px, py, nx, ny, nz) => {
-    const lx = TORCH[0] - px,
-      ly = TORCH[1] - py,
-      d = Math.hypot(lx, ly);
-    const dif = Math.max(0, (nx * lx + ny * ly) / d);
-    return clamp(0.35 + 0.55 * dif + 0.15 * nz);
-  });
+  // el monolito y la mano de oro: el tono que les da la antorcha (las almas,
+  // más claras que la piedra)
+  for (let k = 0; k < T.d.length; k++) {
+    const al = R.alpha[k];
+    if (al < 0.01) continue;
+    const soul = sstep(0.55, 0.9, R.alb[k]);
+    if (Mhand.d[k] > 0.5) continue;
+    const v = clamp(0.02 + Math.pow(R.lum[k], 1.1) * (1.1 + 0.6 * soul) + R.glow[k] * 0.5);
+    T.d[k] = mix(T.d[k], v, al);
+  }
+  {
+    const [hx, hy] = R.stump;
+    shadeInto(T, Mhand, 3, [hx - 160, hy - 200, hx + 160, hy + 60], (px, py, nx, ny, nz) => {
+      const lx = TORCH[0] - px,
+        ly = TORCH[1] - py,
+        d = Math.hypot(lx, ly);
+      const dif = Math.max(0, (nx * lx + ny * ly) / d);
+      return clamp(0.35 + 0.55 * dif + 0.15 * nz);
+    });
+  }
   // ellos: el canto encendido por sus antorchas
   shadeInto(T, Mr, 4, [300, 650, 1360, 1290], (px, py, nx, ny, nz) => {
     const lx = TORCH[0] - px,
@@ -657,10 +608,10 @@ export async function draw(c, o = {}) {
     pencil(x, [[0, 820], [W, 820]], pc);
     pencil(x, [[SX, 0], [SX, 1100]], pc);
     const circ = [];
-    for (let i = 0; i <= 60; i++) circ.push([SX + Math.cos((i / 60) * Math.PI * 2) * 206, 126 + Math.sin((i / 60) * Math.PI * 2) * 206]);
+    for (let i = 0; i <= 60; i++) circ.push([R.eyeC[0] + Math.cos((i / 60) * Math.PI * 2) * 104, R.eyeC[1] + Math.sin((i / 60) * Math.PI * 2) * 104]);
     pencil(x, circ, pc);
-    pencil(x, [TORCH, [SX - 140, 116]], { ...pc, color: 'rgba(60,52,48,0.14)' });
-    pencil(x, [TORCH, [SX, 136]], { ...pc, color: 'rgba(60,52,48,0.14)' });
+    pencil(x, [TORCH, R.stump], { ...pc, color: 'rgba(60,52,48,0.14)' });
+    pencil(x, [TORCH, R.eyeC], { ...pc, color: 'rgba(60,52,48,0.14)' });
   }
 
   // ---------------------------------------------------- las planchas de color
@@ -688,41 +639,12 @@ export async function draw(c, o = {}) {
   INKW.d = T.d.map((v) => clamp((0.24 - v) / 0.16));
   toCanvasF(INKW);
   wash(x, INKW, [34, 22, 18], { ...tools, alpha: 0.8, blur: 5, edge: 0.3, nb: 0.1, ns: 0.004, streak: [0.03, 0.002, 0.25] });
-  // lo rojo: la costura de la cara, la brasa del pecho, apenas el halo
-  const RED = mk((m) => {
-    glow(m, SX, 128, 240, gray(0.6), gray(0, 0), 1);
-    capsule(m, [SX, 84], [SX, 192], 5, 5, gray(1));
-    capsule(m, [SX, Ys(5.6)], [SX, Ys(4.7)], 6, 6, gray(1));
-  });
+  // lo rojo: lo que arde dentro del monolito (la grieta, las bocas, la raja
+  // del ojo cerrado)
+  const RED = fromArr(R.glow.map((g) => sstep(0.08, 0.6, g)));
   wash(x, RED, [196, 30, 18], { ...tools, alpha: 0.8, blur: 6, edge: 0.3, nb: 0.06 });
-  // el oro de la estatua
-  const GOLD = mk((m) => {
-    m.lineCap = 'round';
-    m.strokeStyle = gray(1);
-    const S = (pts, w) => {
-      m.lineWidth = w;
-      m.beginPath();
-      m.moveTo(pts[0][0], pts[0][1]);
-      for (const p of pts) m.lineTo(p[0], p[1]);
-      m.stroke();
-    };
-    S([[SX - 36, 114], [SX, 108], [SX + 36, 114]], 6);
-    S([[SX - 76, Ys(4.3) + 14], [SX, Ys(4.3) + 22], [SX + 76, Ys(4.3) + 14]], 8);
-    S([[SX - 12, Ys(4.3) + 20], [SX - 20, Ys(3.6)], [SX - 24, Ys(2.9)]], 6);
-    for (const h of [3.2, 1.6]) {
-      const pts = [];
-      for (let xx = SX - 100; xx <= SX + 100; xx += 8) {
-        const q = (xx - SX) / 200;
-        pts.push([xx, Ys(h) - 12 * (1 - q * q)]);
-      }
-      S(pts, 12);
-    }
-    const st = ST.arm.st;
-    S([[st[0] - 15, st[1] + 26], [st[0], st[1] + 30], [st[0] + 15, st[1] + 26]], 9);
-    for (const sgn of [1, -1]) S(ST.mantleL.slice(9).map(([a, b]) => [sgn > 0 ? a : 2 * SX - a, b]), 5);
-    for (const s of spikeTips(SX, 126, 70, 196, 15, [4, 11])) if (!s.broken) ellipse(m, s.p[0] - Math.cos(s.a) * 8, s.p[1] - Math.sin(s.a) * 8, 4, 4, gray(1));
-    goldHand(m, gray(1));
-  });
+  // el oro: la mano
+  const GOLD = Mhand;
   wash(x, GOLD, [214, 162, 80], { ...tools, alpha: 0.8, blur: 1.5, edge: 0.25, nb: 0.02 });
   if (o.stage === 'wash') return;
 
@@ -775,48 +697,22 @@ export async function draw(c, o = {}) {
     rayReg.d = air.d.map((v, i) => (v > 0.5 ? 1 : 0));
     engrave(x, T, rays, { ...burin, region: rayReg, max: 1.2, t0: 0.55, color: 'rgba(30,18,12,0.5)' });
   }
-  // la estatua: los pliegues y los aros; la cabeza; la aureola
+  // el monolito: de arriba abajo; las almas, por sus curvas de nivel; la
+  // mano de oro, sesgadas
   {
-    const v = family(190, (u, s) => {
-      const px = mix(1380, 1820, u);
-      const py = mix(90, 1080, s);
-      return [px + Math.sin(py * 0.006 + px * 0.05) * 3 + (px - SX) * 0.05 * (1 - s), py];
+    const v = family(220, (u, s) => {
+      const px = mix(1340, 1860, u);
+      const py = mix(40, 1080, s);
+      return [px + Math.sin(py * 0.006 + px * 0.05) * 3 + N.n2(px * 0.01, py * 0.004) * 4, py];
     });
-    engrave(x, T, v, { ...burin, region: maskMinus(Msb, Mhand), max: 2.6, t0: 0.1 });
-    engrave(x, T, parallel(-0.8, 3, [1380, 0, 1640, 200]), { ...burin, region: Mhand, max: 1.8, t0: 0.4, color: 'rgba(70,40,10,0.8)' });
-    const rings = family(140, (u, s) => {
-      const py = mix(200, 1080, u);
-      const px = mix(1400, 1800, s);
-      const q = (px - SX) / 210;
-      return [px, py - 12 * (1 - q * q)];
-    });
-    engrave(x, T, rings, { ...burin, region: Msb, max: 1.7, t0: 0.8 });
-    const heads = [];
-    for (let k = 0; k < 18; k++) {
-      const l = [];
-      for (let i = 0; i <= 44; i++) {
-        const a = (i / 44) * Math.PI * 2;
-        l.push([SX + Math.cos(a) * (36 - k * 2), 136 + Math.sin(a) * (58 - k * 3.2)]);
-      }
-      heads.push(l);
-    }
-    engrave(x, T, heads, { ...burin, region: Msh, max: 2.4, t0: 0.1 });
-    const spk = [];
-    for (const s of spikeTips(SX, 126, 70, 196, 15, [4, 11]))
-      for (let k = -2; k <= 2; k++) {
-        const ca = Math.cos(s.a),
-          sa = Math.sin(s.a);
-        spk.push([[SX + ca * 64 - sa * k * 2.6, 126 + sa * 64 + ca * k * 2.6], [SX + ca * (s.L + 4), 126 + sa * (s.L + 4)]]);
-      }
-    for (let k = -2; k <= 2; k++) {
-      const l = [];
-      for (let i = 0; i <= 90; i++) {
-        const a = (i / 90) * Math.PI * 2;
-        l.push([SX + Math.cos(a) * (70 + k * 2.6), 126 + Math.sin(a) * (70 + k * 2.6)]);
-      }
-      spk.push(l);
-    }
-    engrave(x, T, spk, { ...burin, region: Mhalo, max: 2.6, t0: 0.08 });
+    engrave(x, T, v, { ...burin, region: Msb, max: 2.5, t0: 0.14 });
+    const L = fromArr(R.lum.map((q, k) => (R.alpha[k] > 0.5 ? q : 0)));
+    const Lb = L.blurred(2.2).read();
+    const souls = fromArr(R.alb.map((q, k) => (q > 0.62 && Msb.d[k] > 0.5 ? 1 : 0)));
+    const iso = [];
+    for (let lv = 0.12; lv < 0.85; lv += 0.12) for (const l of contours(Lb, lv, 2)) if (l.length > 10) iso.push(simplify(l, 0.8));
+    engrave(x, T, iso, { ...burin, region: souls, max: 1.6, t0: 0.12 });
+    engrave(x, T, parallel(-0.8, 3, [R.stump[0] - 160, R.stump[1] - 220, R.stump[0] + 160, R.stump[1] + 60]), { ...burin, region: Mhand, max: 1.8, t0: 0.4, color: 'rgba(70,40,10,0.8)' });
     // el reflejo: tendidas finas
     engrave(x, T, parallel(0.0, 3.2, [1300, 1060, 1900, 1500], { noise: N, wob: 1.5 }), { ...burin, region: maskMinus(Mref, Mr), max: 3, t0: 0.05 });
   }
@@ -871,61 +767,32 @@ export async function draw(c, o = {}) {
       W,
       H,
       (d) => {
-        for (let i = 0; i < 6; i++) {
-          const y = Ys(6.2) - i * 17;
-          pen(d, [[SX - 20 + i, y + 5], [SX, y + 9], [SX + 20 - i, y + 5]], { ...P1, w: 1.2 });
-        }
-        for (let i = 0; i < 7; i++) {
-          const y = Ys(5.9) + i * 22;
-          for (const sx of [-1, 1]) pen(d, [[SX + sx * (30 + i * 2), y], [SX + sx * 16, y + 6], [SX + sx * 6, y + 8]], { ...P1, w: 1.8, color: 'rgba(120,96,80,0.75)' });
-        }
-        ellipse(d, SX, Ys(5.15), 6, 50, 'rgba(8,4,4,0.96)');
-        ellipse(d, SX, Ys(5.15) + 2, 1.4, 16, 'rgba(255,120,70,0.9)');
-        // las cenefas de glifos (de oro, y nada arde todavía)
-        for (const h of [3.2, 1.6]) {
-          const yy = Ys(h);
-          const arcY = (gx, off) => {
-            const q = (gx - SX) / 200;
-            return yy + off - 12 * (1 - q * q);
-          };
-          for (const off of [-6, 6]) pen(d, Array.from({ length: 21 }, (_, i) => [mix(SX - 100, SX + 100, i / 20), arcY(mix(SX - 100, SX + 100, i / 20), off)]), { ...P1, w: 1.2 });
-          for (let gx = SX - 92; gx < SX + 92; gx += 13) {
-            const gy = arcY(gx, 0);
-            const k = Math.floor(r() * 4);
-            const segs = [
-              [[gx - 3, gy - 4], [gx + 2, gy + 4]],
-              [[gx, gy - 4], [gx, gy + 4], [gx + 3, gy + 1]],
-              [[gx - 3, gy], [gx + 3, gy], [gx, gy - 4]],
-              [[gx - 3, gy + 4], [gx, gy - 4], [gx + 3, gy + 4]],
-            ][k];
-            pen(d, segs, { ...P1, w: 1.5, lift: 999 });
+        // lo más hondo de las almas (las cuencas, las bocas), a plumilla
+        const L = fromArr(R.lum.map((q, k) => (R.alpha[k] > 0.5 && R.alb[k] > 0.62 ? q : 1)));
+        const Lb = L.blurred(1.6).read();
+        for (const lv of [0.12, 0.22])
+          for (const l of contours(Lb, lv, 2)) {
+            if (l.length < 8 || l.length > 200) continue;
+            pen(d, simplify(l, 1.0), { ...P1, w: lv < 0.2 ? 1.4 : 1.0, color: 'rgba(16,6,4,0.9)', lift: 999 });
           }
-        }
-        // la costura de la cara, cerrada: un hilo rojo
-        pen(d, [[SX, 82], [SX, 192]], { ...P1, w: 2.2, color: 'rgba(200,40,24,0.95)', lift: 999 });
-        ellipse(d, SX, 128, 1.6, 8, 'rgba(255,170,120,0.9)');
-        // los tendones del brazo y el muñón (limpio, sin sangre: ya era así)
-        const { el, st } = ST.arm;
-        pen(d, [[el[0] - 6, el[1] - 10], [st[0] - 6, st[1] + 34]], { ...P1, w: 1.3, color: 'rgba(120,96,80,0.7)' });
-        pen(d, [[el[0] + 6, el[1] - 12], [st[0] + 7, st[1] + 38]], { ...P1, w: 1.3, color: 'rgba(120,96,80,0.7)' });
+        // el ojo, cerrado: un hilo rojo entre los párpados
+        const [ex, ey] = R.eyeC;
+        pen(d, [[ex - 1, ey - 30], [ex + 1, ey], [ex - 1, ey + 30]], { ...P1, w: 2.2, color: 'rgba(200,40,24,0.95)', lift: 999 });
         // la mano de oro: su contorno, los nudillos y los brillos
         for (const l of contours(Mhand, 0.5, 1)) if (l.length > 5) pen(d, simplify(l, 0.6), { ...P1, w: 1.4, lift: 400 });
-        for (const [a0, L] of HANDF) {
-          const a = -Math.PI / 2 + a0;
-          const bx = st[0] + Math.cos(a) * 26,
-            by = st[1] - 20 + Math.sin(a) * 26;
-          ellipse(d, bx + Math.cos(a) * L * 0.55, by + Math.sin(a) * L * 0.55, 3, 2, 'rgba(90,60,20,0.8)');
-          brush(d, [[bx - 3, by], [bx - 3 + Math.cos(a) * L * 0.5, by + Math.sin(a) * L * 0.5]], { ...tools, w: 1.8, color: 'rgba(255,240,190,0.85)' });
-        }
-        brush(d, [[st[0] - 12, st[1] - 4], [st[0] - 14, st[1] - 30]], { ...tools, w: 2.2, color: 'rgba(255,244,200,0.9)' });
-        // los brillos de la piedra pulida: rayas de la llama, a la izquierda
-        for (let i = 0; i < 40; i++) {
-          const px = SX - 130 + r() * 150;
-          if (Msb.at(px, 600) < 0.5 && Msb.at(px, 900) < 0.5) continue;
-          const y0 = 240 + r() * 700,
-            len = 50 + r() * 200;
-          if (Msb.at(px, y0) < 0.5) continue;
-          brush(d, [[px, y0], [px + (r() - 0.5) * 5, y0 + len]], { ...tools, w: 1.3 + r() * 1.8, color: `rgba(255,${210 + Math.floor(r() * 40)},${160 + Math.floor(r() * 50)},${0.3 + r() * 0.45})` });
+        {
+          const [wx, wy] = R.stump;
+          const S = 1.5;
+          const at = (px, py) => [wx + (px - wx) * S, wy + (py - wy + 10) * S];
+          for (const [a0, L] of HANDF) {
+            const a = -Math.PI / 2 + a0;
+            const bx = wx + Math.cos(a) * 26,
+              by = wy - 20 + Math.sin(a) * 26;
+            const k1 = at(bx + Math.cos(a) * L * 0.55, by + Math.sin(a) * L * 0.55);
+            ellipse(d, k1[0], k1[1], 3.4, 2.4, 'rgba(90,60,20,0.8)');
+            brush(d, [at(bx - 3, by), at(bx - 3 + Math.cos(a) * L * 0.5, by + Math.sin(a) * L * 0.5)], { ...tools, w: 2.2, color: 'rgba(255,240,190,0.85)' });
+          }
+          brush(d, [at(wx - 12, wy - 4), at(wx - 14, wy - 30)], { ...tools, w: 2.6, color: 'rgba(255,244,200,0.9)' });
         }
       },
       rImg

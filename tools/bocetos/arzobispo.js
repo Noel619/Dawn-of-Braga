@@ -2,14 +2,20 @@
 //
 // De espaldas, de rodillas en el brocal de la fuente, con los brazos en alto
 // como quien ofrece algo, recortado contra la niebla que arde en el pozo;
-// detrás, el ídolo, negro y enorme (la aureola no cabe en la lámina), con
-// la costura de la cara abierta en un ojo; a los costados, la cisterna
-// entera en rojo, y en la niebla roja, otros que también se arrodillaron.
-// No hay cordón ni nada que los una: se le ve irse. Las manos se le deshacen
-// en ceniza, la cruz de la espalda se le agrieta con la luz de dentro, el
-// bajo de la casulla se le quema, y detrás de la mitra le empieza a brotar
-// una aureola de púas como la del ídolo.
-import { mulberry, Noise, Field, gray, clamp, mix, sstep, blob, poly, capsule, ellipse, glow, contours, simplify, pen, pencil, brush, ash, wash, paper, vignette, splatter, engrave, parallel, family, layer, maskImage, maskMinus, haloSpikes, spikeTips, shadeInto, toCanvasF, plate } from './lib.js';
+// detrás, el ídolo: el monolito, negro y enorme (no cabe en la lámina),
+// lleno de almas que empujan la piedra desde dentro, las bocas abiertas y
+// con luz, y arriba el ojo, abierto entre los anillos que le picaron los de
+// los castros; a los costados, la cisterna entera en rojo, y en la niebla
+// roja, otros que también se arrodillaron. No hay cordón ni nada que los
+// una: se le ve irse. Las manos se le deshacen en ceniza, la cruz de la
+// espalda se le agrieta con la luz de dentro, el bajo de la casulla se le
+// quema, y detrás de la mitra le empieza a brotar una aureola de púas como
+// la del Turiferario en que se va a convertir.
+//
+// El monolito es el del juego (mono3d.js lo monta y le saca la silueta, el
+// tono a la luz del pozo y lo que arde); el buril lo graba como lo demás.
+import { mulberry, Noise, Field, gray, clamp, mix, sstep, blob, poly, capsule, ellipse, glow, contours, simplify, pen, pencil, brush, ash, wash, paper, vignette, splatter, engrave, parallel, family, layer, maskImage, maskMinus, haloSpikes, spikeTips, shadeInto, toCanvasF, plate, cv } from './lib.js';
+import { renderMonolith } from './mono3d.js';
 
 const W = 2400,
   H = 1500;
@@ -144,102 +150,20 @@ function blindArches(s) {
 }
 
 // ------------------------------------------------------------ el ídolo
-// (a 8 m; lo de abajo se mete en el pozo)
+// (a 8 m; lo de abajo se mete en el pozo. La silueta y el tono salen del
+// monolito de verdad: draw() lo monta antes de nada)
 const PIT = { cy: 1054, rx: 350, ry: 86 };
 const Yi = (Y) => 760 - 143.75 * (Y - 1.9);
-const ID = {
-  robe: [
-    [1122, Yi(2.95)],
-    [1112, Yi(2.3)],
-    [1100, Yi(1.5)],
-    [1088, Yi(0.7)],
-    [1078, Yi(0)],
-    [1070, 1150],
-    [1330, 1150],
-    [1322, Yi(0)],
-    [1312, Yi(0.7)],
-    [1300, Yi(1.5)],
-    [1288, Yi(2.3)],
-    [1278, Yi(2.95)],
-  ],
-  mantleL: [
-    [1178, Yi(4.84)],
-    [1146, Yi(4.8)],
-    [1112, Yi(4.68)],
-    [1094, Yi(4.4)],
-    [1084, Yi(3.8)],
-    [1074, Yi(3.0)],
-    [1060, Yi(2.1)],
-    [1040, Yi(1.2)],
-    [1010, Yi(0.4)],
-    [976, 1150],
-    [1100, 1150],
-    [1110, Yi(0.6)],
-    [1122, Yi(1.6)],
-    [1136, Yi(2.6)],
-    [1152, Yi(3.5)],
-    [1170, Yi(4.3)],
-  ],
-  head: [CX, 182, 40, 62],
-  halo: [CX, 162, 80],
-  arm: { sh: [1114, 356], el: [1030, 378], st: [1040, 160] },
-};
-function idolBody(x, fill) {
-  blob(x, ID.robe, fill, 0.3);
-  blob(x, ID.mantleL, fill, 0.42);
-  blob(x, mirror(ID.mantleL), fill, 0.42);
-  poly(x, [
-    [1166, Yi(4.7)],
-    [1234, Yi(4.7)],
-    [1256, Yi(2.9)],
-    [1144, Yi(2.9)],
-  ], fill);
-  for (let i = 0; i < 6; i++) ellipse(x, CX, 352 - i * 18, 24 - i, 9, fill);
-  poly(x, [
-    [1184, 356],
-    [1216, 356],
-    [1214, 226],
-    [1186, 226],
-  ], fill);
-  const { sh, el, st } = ID.arm;
-  capsule(x, sh, el, 26, 21, fill);
-  capsule(x, el, st, 21, 17, fill);
-  blob(x, [
-    [1114, 340],
-    [1060, 362],
-    [1030, 398],
-    [1040, 462],
-    [1064, 520],
-    [1086, 440],
-  ], fill, 0.5);
-}
-function idolHead(x, fill) {
-  ellipse(x, ID.head[0], ID.head[1], ID.head[2], ID.head[3], fill);
-  for (let i = 0; i < 7; i++) {
-    const a = -Math.PI / 2 + (i - 3) * 0.3;
-    const bx = CX + Math.cos(a) * 32,
-      by = 152 + Math.sin(a) * 24;
-    poly(x, [
-      [bx - 5, by + 7],
-      [CX + Math.cos(a) * 60, 152 + Math.sin(a) * 64],
-      [bx + 5, by + 7],
-    ], fill);
-  }
-}
-function idolHalo(x, fill) {
-  x.save();
-  x.lineWidth = 13;
-  x.strokeStyle = fill;
-  x.beginPath();
-  x.arc(ID.halo[0], ID.halo[1], ID.halo[2], 0, Math.PI * 2);
-  x.stroke();
-  x.restore();
-  haloSpikes(x, fill, ID.halo[0], ID.halo[1], ID.halo[2], 214);
-}
+let MONO = null;
 function idol(x, fill) {
-  idolHalo(x, fill);
-  idolBody(x, fill);
-  idolHead(x, fill);
+  if (!MONO) return;
+  const c = cv(W, H),
+    d = c.getContext('2d');
+  d.fillStyle = fill;
+  d.fillRect(0, 0, W, H);
+  d.globalCompositeOperation = 'destination-in';
+  d.drawImage(MONO.img, 0, 0);
+  x.drawImage(c, 0, 0);
 }
 
 // ------------------------------------------------------------ el arzobispo
@@ -510,11 +434,37 @@ export async function draw(c, o = {}) {
   };
   const tips = [];
 
-  // ---------------------------------------------------- las máscaras
-  const Mi = mk((m) => idol(m, gray(1)));
-  const Mib = mk((m) => idolBody(m, gray(1)));
-  const Mih = mk((m) => idolHead(m, gray(1)));
-  const Mh = mk((m) => idolHalo(m, gray(1)));
+  // ---------------------------------------------------- el monolito
+  // (el de verdad, a 8 m, de frente, con el ojo abierto y algunas almas
+  // gritando; la luz, la del pozo, desde abajo y por delante, y un rojo
+  // que le baja por detrás)
+  const R = renderMonolith({
+    W,
+    H,
+    F,
+    CX,
+    HY,
+    HC,
+    at: [0, 7.1],
+    open: 1,
+    cry: [0, 2, 4, 5, 9, 13],
+    contrast: 2.2,
+    lights: [
+      { p: [0, -0.2, 5.6], color: 0xffd0a0, k: 7, decay: 1.3 },
+      { p: [-3, 1.0, 6.5], color: 0xff6a3a, k: 2, decay: 1.3 },
+      { p: [0, 10, 11], color: 0xff3018, k: 5, decay: 1.2 },
+    ],
+    hemi: [0x602018, 0x100404, 0.14],
+  });
+  // (lo de abajo se mete en el pozo, en la niebla)
+  for (let k = 0; k < R.alpha.length; k++) R.alpha[k] *= sstep(1090, 1000, (k / W) | 0);
+  const Mi = new Field(W, H);
+  Mi.d = R.alpha;
+  toCanvasF(Mi);
+  const hotF = new Field(W, H);
+  hotF.d = R.glow.map((g) => sstep(0.25, 0.75, g));
+  MONO = { img: maskImage(Mi).c, hot: maskImage(hotF).c, R };
+  const Mib = Mi;
   const Ma = mk((m) => archbishop(m, gray(1), tips));
   const Mn = mk((m) => newHalo(m, gray(1)));
   const Mc = mk((m) => eachCol((X, Z) => column(m, gray(1), X, Z)));
@@ -552,7 +502,8 @@ export async function draw(c, o = {}) {
     niches(t, gray(0.66), gray(0.08));
     // detrás del ídolo, la nada; alrededor de la cabeza, la luz roja
     glow(t, CX, 540, 520, gray(0.04, 0.96), gray(0.4, 0), 1.25);
-    glow(t, CX, 160, 340, gray(0.84, 0.97), gray(0.4, 0), 1);
+    glow(t, R.eyeC[0], R.eyeC[1], 300, gray(0.8, 0.95), gray(0.4, 0), 1);
+    glow(t, CX, 320, 560, gray(0.62, 0.7), gray(0.4, 0), 1.6);
     for (const a of ARC) strokeCurve(t, a.pts, a.w, gray(0.14, 0.92));
     for (const [cx, cy, k] of OTHERS) kneeler(t, gray(0.24, 0.92), cx, cy, k);
     // el suelo, más claro delante del pozo
@@ -596,28 +547,17 @@ export async function draw(c, o = {}) {
       return (0.07 + 0.64 * lit * lit) * joint + 0.04 * N.n2(px * 0.05, py * 0.004);
     });
   });
-  shadeInto(T, Mi, 7, [860, 0, 1540, 1160], (px, py, nx, ny, nz) => {
-    const isHead = Mih.at(px, py) > 0.5 || Mh.at(px, py) > 0.5;
-    let fx = nx;
-    if (!isHead) {
-      const ph = (px - CX) * 0.1 + Math.sin(py * 0.006) * 1.3 + Math.sin(py * 0.0021 + px * 0.01) * 0.8;
-      fx = clamp(nx + Math.cos(ph) * 0.55 * sstep(380, 540, py), -1, 1);
-    }
-    const fz = Math.sqrt(Math.max(0.02, 1 - fx * fx - ny * ny));
-    const lx = CX - px,
-      ly = 1080 - py,
-      ld = Math.hypot(lx, ly, 280);
-    const dif = Math.max(0, (fx * lx + ny * ly + fz * 280) / ld);
-    const att = Math.exp(-(1080 - py) / 320);
-    // (la luz de la aureola, sólo en la cabeza, el cuello y los hombros:
-    // el brazo alzado sigue siendo piedra negra)
-    const onArm = px < 1086 && py < 420;
-    const aur = Math.exp(-Math.hypot(px - CX, py - 160) / 250) * (onArm ? 0.18 : 1);
-    const rim = Math.pow(1 - fz, 1.6);
-    const spec = Math.pow(Math.max(0, fx * 0.25 + ny * 0.2 + fz * 0.95), 70);
-    const veil = sstep(700, 1080, py) * 0.85;
-    return clamp(mix(0.03 + 0.5 * dif * att + 0.8 * rim * aur + 0.5 * rim * att + 0.7 * spec * (att * 0.8 + 0.2), 0.92, veil));
-  });
+  // el monolito: el tono que le da la luz del pozo (y lo que arde, claro);
+  // abajo, la niebla que sube
+  for (let k = 0; k < T.d.length; k++) {
+    const al = R.alpha[k];
+    if (al < 0.01) continue;
+    const py = (k / W) | 0;
+    // (las almas, más claras que la piedra: que se lean)
+    const soul = sstep(0.55, 0.9, R.alb[k]);
+    const v = clamp(0.015 + Math.pow(R.lum[k], 1.1) * (1.05 + 0.5 * soul) + R.glow[k] * 0.75);
+    T.d[k] = mix(T.d[k], mix(v, 0.92, sstep(760, 1080, py) * 0.85), al);
+  }
   shadeInto(T, Mn, 2, [1000, 700, 1400, 1000], () => 0.14);
   shadeInto(T, Ma, 5, [940, 640, 1460, 1340], (px, py, nx, ny, nz) => {
     const rim = Math.pow(1 - nz, 1.4);
@@ -647,22 +587,6 @@ export async function draw(c, o = {}) {
       for (const p of pts) d.lineTo(p[0], p[1]);
       d.stroke();
     };
-    // la diadema; el fajín y su nudo; las cenefas; el brazal; los ribetes
-    S([[1162, 160], [CX, 154], [1238, 160]], 6);
-    S([[1122, Yi(2.95) + 14], [CX, Yi(2.95) + 24], [1278, Yi(2.95) + 14]], 8);
-    S([[1186, Yi(2.95) + 22], [1176, Yi(2.95) + 96], [1170, Yi(2.95) + 180]], 6);
-    S([[1198, Yi(2.95) + 24], [1196, Yi(2.95) + 110], [1200, Yi(2.95) + 200]], 6);
-    for (const yy of [Yi(2.1), Yi(1.2)]) {
-      const pts = [];
-      for (let xx = 1096; xx <= 1304; xx += 8) {
-        const q = (xx - CX) / 210;
-        pts.push([xx, yy - 12 * (1 - q * q)]);
-      }
-      S(pts, 14);
-    }
-    const st = ID.arm.st;
-    S([[st[0] - 16, st[1] + 26], [st[0], st[1] + 30], [st[0] + 16, st[1] + 26]], 9);
-    for (const sgn of [1, -1]) S(ID.mantleL.slice(10).map(([a, b]) => [sgn > 0 ? a : 2 * CX - a, b]), 5);
     // la cruz en Y del arzobispo y la mitra
     S([[CX, 1322], [CX, 1072]], 18);
     S([[CX, 1072], [1164, 1018], [1144, 980]], 18);
@@ -674,16 +598,7 @@ export async function draw(c, o = {}) {
   };
   const Mgold = gold(GOLDI);
   const HOTI = (d) => {
-    d.lineCap = 'round';
-    d.strokeStyle = gray(1);
-    d.lineWidth = 6;
-    d.beginPath();
-    d.moveTo(CX, 122);
-    d.lineTo(CX, 244);
-    d.stroke();
-    ellipse(d, CX, 176, 9, 20, gray(1));
-    ellipse(d, CX, Yi(3.85), 6, 44, gray(1));
-    ellipse(d, ID.arm.st[0], ID.arm.st[1] - 2, 14, 7, gray(1));
+    d.drawImage(MONO.hot, 0, 0);
     for (const [cx, cy, h] of CANDLES) ellipse(d, cx, cy - h - 10, 5, 11, gray(1));
   };
   paint(HOTI);
@@ -707,7 +622,7 @@ export async function draw(c, o = {}) {
       [CX, 1330],
     ], pc);
     const circ = [];
-    for (let i = 0; i <= 60; i++) circ.push([CX + Math.cos((i / 60) * Math.PI * 2) * 228, 162 + Math.sin((i / 60) * Math.PI * 2) * 228]);
+    for (let i = 0; i <= 60; i++) circ.push([R.eyeC[0] + Math.cos((i / 60) * Math.PI * 2) * 132, R.eyeC[1] + Math.sin((i / 60) * Math.PI * 2) * 132]);
     pencil(x, circ, pc);
     pencil(x, [
       [CX, 1320],
@@ -748,7 +663,7 @@ export async function draw(c, o = {}) {
       m.fillStyle = g;
       m.fillRect(s < 0 ? 0 : W - 1020, 0, 1020, H);
     }
-    glow(m, CX, 160, 360, gray(1), gray(0, 0), 1);
+    glow(m, R.eyeC[0], R.eyeC[1], 340, gray(1), gray(0, 0), 1);
   });
   {
     // (la luz del pozo no le tiñe a él: está delante; sólo sus grietas)
@@ -838,51 +753,27 @@ export async function draw(c, o = {}) {
     for (let xx = xa - 34; xx <= xb + 34; xx += 3.2) ls.push([[xx, yt - 90], [xx, yb + 20]]);
     engrave(x, T, ls, { ...burin, region: Mc, max: 3.0 });
   });
-  for (const a of ARC) engrave(x, T, offsets(a.pts, a.w, 3.6), { ...burin, region: Marc, max: 3.2 });
+  for (const a of ARC) engrave(x, T, offsets(a.pts, a.w, 3.6), { ...burin, region: maskMinus(Marc, Mi), max: 3.2 });
   engrave(x, T, parallel(Math.PI / 2 - 0.2, 3, [300, 600, 2300, 960]), { ...burin, region: Mk, max: 2.8 });
   {
-    const v = family(180, (u, s) => {
-      const px = mix(990, 1410, u);
-      const py = mix(130, 1160, s);
-      return [px + Math.sin(py * 0.006 + px * 0.05) * 3 + (px - CX) * 0.06 * (1 - s), py];
+    // la piedra, de arriba abajo, y las formas (las caras, las manos, los
+    // anillos) por sus curvas de nivel
+    const v = family(210, (u, s) => {
+      const px = mix(960, 1440, u);
+      const py = mix(-10, 1160, s);
+      return [px + Math.sin(py * 0.006 + px * 0.05) * 3 + N.n2(px * 0.01, py * 0.004) * 4, py];
     });
-    engrave(x, T, v, { ...burin, region: MibA, max: 2.6, t0: 0.1 });
-    const rings = family(150, (u, s) => {
-      const py = mix(330, 1160, u);
-      const px = mix(1000, 1400, s);
-      const q = (px - CX) / 210;
-      return [px, py - 14 * (1 - q * q)];
-    });
-    engrave(x, T, rings, { ...burin, region: MibA, max: 1.6, t0: 0.84 });
-    const heads = [];
-    for (let k = 0; k < 20; k++) {
-      const l = [];
-      for (let i = 0; i <= 48; i++) {
-        const a = (i / 48) * Math.PI * 2;
-        l.push([CX + Math.cos(a) * (40 - k * 2), 182 + Math.sin(a) * (62 - k * 3.1)]);
-      }
-      heads.push(l);
-    }
-    engrave(x, T, heads, { ...burin, region: Mih, max: 2.4, t0: 0.1 });
-    const spk = [];
-    for (const s of spikeTips(CX, 162, 80, 214))
-      for (let k = -2; k <= 2; k++) {
-        const ca = Math.cos(s.a),
-          sa = Math.sin(s.a);
-        spk.push([
-          [CX + ca * 74 - sa * k * 2.6, 162 + sa * 74 + ca * k * 2.6],
-          [CX + ca * (s.L + 4), 162 + sa * (s.L + 4)],
-        ]);
-      }
-    for (let k = -2; k <= 2; k++) {
-      const l = [];
-      for (let i = 0; i <= 90; i++) {
-        const a = (i / 90) * Math.PI * 2;
-        l.push([CX + Math.cos(a) * (80 + k * 2.6), 162 + Math.sin(a) * (80 + k * 2.6)]);
-      }
-      spk.push(l);
-    }
-    engrave(x, T, spk, { ...burin, region: Mh, max: 2.6, t0: 0.08 });
+    engrave(x, T, v, { ...burin, region: MibA, max: 2.4, t0: 0.16 });
+    const L = new Field(W, H);
+    L.d = R.lum.map((q, k) => (R.alpha[k] > 0.5 ? q : 0));
+    toCanvasF(L);
+    const Lb = L.blurred(2.2).read();
+    const souls = new Field(W, H);
+    souls.d = R.alb.map((q, k) => (q > 0.62 && MibA.d[k] > 0.5 ? 1 : 0));
+    toCanvasF(souls);
+    const iso = [];
+    for (let lv = 0.12; lv < 0.85; lv += 0.12) for (const l of contours(Lb, lv, 2)) if (l.length > 10) iso.push(simplify(l, 0.8));
+    engrave(x, T, iso, { ...burin, region: souls, max: 1.7, t0: 0.12 });
   }
   {
     const spk = [];
@@ -918,7 +809,7 @@ export async function draw(c, o = {}) {
     }
   };
   outline(Mc, 2.0, 1, 'rgba(26,8,6,0.85)');
-  outline(Marc, 1.6, 1, 'rgba(26,8,6,0.7)');
+  outline(maskMinus(Marc, Mi), 1.6, 1, 'rgba(26,8,6,0.7)');
   outline(Mk, 1.4, 1, 'rgba(40,10,8,0.65)');
   outline(Mp, 1.8, 1);
   outline(Mf, 1.5, 1, 'rgba(26,12,8,0.85)');
@@ -933,75 +824,19 @@ export async function draw(c, o = {}) {
     W,
     H,
     (d) => {
-      for (let i = 0; i < 6; i++) {
-        const y = 352 - i * 18;
-        pen(d, [
-          [CX - 22 + i, y + 5],
-          [CX, y + 9],
-          [CX + 22 - i, y + 5],
-        ], { ...P1, w: 1.2 });
-      }
-      for (let i = 0; i < 7; i++) {
-        const y = Yi(4.45) + i * 24;
-        for (const sx of [-1, 1])
-          pen(d, [
-            [CX + sx * (34 + i * 2), y],
-            [CX + sx * 18, y + 7],
-            [CX + sx * 7, y + 9],
-          ], { ...P1, w: 2, color: 'rgba(130,110,96,0.8)' });
-      }
-      // los glifos de las cenefas y sus filetes
-      for (const yy of [Yi(2.1), Yi(1.2)]) {
-        const arcY = (gx, off) => {
-          const q = (gx - CX) / 210;
-          return yy + off - 12 * (1 - q * q);
-        };
-        for (const off of [-7, 7]) pen(d, Array.from({ length: 21 }, (_, i) => [mix(1096, 1304, i / 20), arcY(mix(1096, 1304, i / 20), off)]), { ...P1, w: 1.2 });
-        for (let gx = 1104; gx < 1298; gx += 14) {
-          const gy = arcY(gx, 0);
-          const k = Math.floor(r() * 4);
-          const segs = [
-            [[gx - 3, gy - 4], [gx + 2, gy + 4]],
-            [[gx, gy - 4], [gx, gy + 4], [gx + 3, gy + 1]],
-            [[gx - 3, gy], [gx + 3, gy], [gx, gy - 4]],
-            [[gx - 3, gy + 4], [gx, gy - 4], [gx + 3, gy + 4]],
-          ][k];
-          pen(d, segs, { ...P1, w: 1.6, lift: 999, color: r() < 0.25 ? 'rgba(220,60,30,0.95)' : INK });
+      // lo más hondo de las almas (las cuencas, las bocas, entre los dedos),
+      // repasado a plumilla
+      // (sólo en las almas: lo pálido)
+      const L = new Field(W, H);
+      L.d = R.lum.map((q, k) => (R.alpha[k] > 0.5 && R.alb[k] > 0.62 ? q : 1));
+      toCanvasF(L);
+      const Lb = L.blurred(1.6).read();
+      for (const lv of [0.14, 0.24])
+        for (const l of contours(Lb, lv, 2)) {
+          if (l.length < 8 || l.length > 200) continue;
+          pen(d, simplify(l, 1.0), { ...P1, w: lv < 0.2 ? 1.5 : 1.0, color: 'rgba(16,6,4,0.9)', lift: 999 });
         }
-      }
-      // los zunchos de Martín
-      for (const [yy, broken] of [
-        [Yi(0.35), false],
-        [Yi(1.55), true],
-      ]) {
-        const spans = broken
-          ? [
-              [1054, 1174],
-              [1228, 1346],
-            ]
-          : [[1036, 1364]];
-        const by = (xx) => {
-          const q = (xx - CX) / 210;
-          return yy - 13 * (1 - q * q);
-        };
-        for (const [a, b] of spans) {
-          const pts = [];
-          for (let xx = a; xx <= b; xx += 8) pts.push([xx, by(xx)]);
-          pen(d, pts, { ...P1, w: 10, color: 'rgba(42,22,16,0.97)', lift: 999 });
-          pen(d, pts.map(([u, v]) => [u, v - 4]), { ...P1, w: 1.5, color: 'rgba(176,96,62,0.75)', lift: 999 });
-          for (let xx = a + 14; xx < b; xx += 34) ellipse(d, xx, by(xx), 2.8, 2.8, 'rgba(160,86,54,0.95)');
-        }
-        if (broken) {
-          pen(d, [[1174, by(1174)], [1186, by(1174) - 18], [1178, by(1174) - 34]], { ...P1, w: 9, color: 'rgba(42,22,16,0.97)', lift: 999 });
-          pen(d, [[1228, by(1228)], [1216, by(1228) - 14], [1226, by(1228) - 30]], { ...P1, w: 9, color: 'rgba(42,22,16,0.97)', lift: 999 });
-        }
-        for (const xx of [1110, 1290]) {
-          const yc = by(xx);
-          pen(d, [[xx, yc - 16], [xx, yc + 16]], { ...P1, w: 3.4, color: 'rgba(42,22,16,0.97)', lift: 999 });
-          pen(d, [[xx - 9, yc - 6], [xx + 9, yc - 6]], { ...P1, w: 3.4, color: 'rgba(42,22,16,0.97)', lift: 999 });
-        }
-      }
-      // las cadenas, del zuncho al brocal (una rota)
+      // las cadenas, del zuncho de abajo al brocal
       const chainLine = (a, b, sag, n) => {
         const pts = [];
         for (let i = 0; i <= n; i++) {
@@ -1025,44 +860,44 @@ export async function draw(c, o = {}) {
           d.restore();
         }
       };
-      chainLine([1060, Yi(0.35) - 6], [880, 1060], 34, 16);
-      chainLine([1340, Yi(0.35) - 6], [1520, 1060], 34, 16);
-      chainLine([1060, Yi(1.55) - 6], [1000, Yi(0.4)], 14, 11);
-      // el brazo alzado: tendones y lo que gotea del muñón
-      const { el, st } = ID.arm;
-      pen(d, [[el[0] - 6, el[1] - 10], [st[0] - 6, st[1] + 34]], { ...P1, w: 1.3, color: 'rgba(130,110,96,0.7)' });
-      pen(d, [[el[0] + 6, el[1] - 12], [st[0] + 7, st[1] + 38]], { ...P1, w: 1.3, color: 'rgba(130,110,96,0.7)' });
-      for (const [dx, l] of [
-        [-7, 70],
-        [3, 130],
-        [9, 46],
-      ])
-        pen(d, [[st[0] + dx, st[1] + 4], [st[0] + dx + 1, st[1] + 4 + l * 0.6], [st[0] + dx - 1, st[1] + 4 + l]], { ...P1, w: 3.2, color: 'rgba(10,4,4,0.95)', lift: 999 });
-      // los brillos de la piedra pulida
-      for (let i = 0; i < 30; i++) {
-        const px = 1060 + r() * 280;
-        if (Mib.at(px, 700) < 0.5) continue;
-        const y0 = 480 + r() * 300,
-          len = 60 + r() * 180;
-        brush(d, [[px, y0], [px + (r() - 0.5) * 6, y0 + len]], { ...tools, w: 1.4 + r() * 1.6, color: `rgba(255,${206 + Math.floor(r() * 40)},${180 + Math.floor(r() * 50)},${0.25 + r() * 0.35})` });
-      }
-      // lo que arde: la raja del pecho, el muñón, las puntas de la aureola
-      ellipse(d, CX, Yi(3.85) + 2, 1.6, 22, 'rgba(255,236,200,1)');
-      ellipse(d, ID.arm.st[0], ID.arm.st[1] - 3, 5.5, 2.2, 'rgba(255,236,200,1)');
-      for (const s of spikeTips(CX, 162, 80, 214)) if (!s.broken) ellipse(d, s.p[0] - Math.cos(s.a) * 9, s.p[1] - Math.sin(s.a) * 9, 3.4, 3.4, 'rgba(232,190,108,0.96)');
+      const yb = Math.round(Yi(0.35));
+      let xl = W,
+        xr = 0;
+      for (let xx = 700; xx < 1700; xx++)
+        if (R.alpha[yb * W + xx] > 0.5) {
+          xl = Math.min(xl, xx);
+          xr = Math.max(xr, xx);
+        }
+      chainLine([xl + 6, yb - 4], [880, 1060], 34, 16);
+      chainLine([xr - 6, yb - 4], [1520, 1060], 34, 16);
     },
     archImg
   );
   x.drawImage(idolDetails, 0, 0);
-  // la cara: la costura abierta en el ojo, y las lágrimas negras
-  brush(x, [[CX, 124], [CX, 160]], { ...tools, w: 2.4, color: 'rgba(255,90,50,0.95)' });
-  brush(x, [[CX, 192], [CX, 240]], { ...tools, w: 2.4, color: 'rgba(255,90,50,0.95)' });
-  ellipse(x, CX, 176, 3.4, 11, 'rgba(255,240,210,1)');
-  pen(x, Array.from({ length: 25 }, (_, i) => {
-    const a = (i / 24) * Math.PI * 2;
-    return [CX + Math.cos(a) * 8, 176 + Math.sin(a) * 19];
-  }), { ...P1, w: 1.4 });
-  for (const dx of [-9, 8]) pen(x, [[CX + dx, 192], [CX + dx * 1.2, 220], [CX + dx * 1.1, 248]], { ...P1, w: 3.4, color: 'rgba(8,2,2,0.95)', lift: 999 });
+  // el ojo: abierto, con la pupila de cabra; y lo que arde en las bocas
+  {
+    const [ex, ey] = R.eyeC;
+    x.drawImage(
+      layer(
+        W,
+        H,
+        (d) => {
+          d.globalCompositeOperation = 'lighter';
+          d.filter = 'blur(5px)';
+          d.globalAlpha = 0.85;
+          d.drawImage(MONO.hot, 0, 0);
+          d.filter = 'none';
+          d.globalAlpha = 1;
+          glow(d, ex, ey, 70, 'rgba(255,170,90,0.55)', 'rgba(255,120,60,0)', 1.5);
+        },
+        archImg
+      ),
+      0,
+      0
+    );
+    pen(x, [[ex, ey - 26], [ex + 1, ey], [ex, ey + 26]], { ...P1, w: 5, color: 'rgba(10,3,2,0.96)', lift: 999 });
+    ellipse(x, ex - 6, ey - 9, 2.4, 2.4, 'rgba(255,244,226,1)');
+  }
 
   // el arzobispo: las ínfulas con su fleco, el pelo blanco, la cruz
   for (const [x0, x1] of [
