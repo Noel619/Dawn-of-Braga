@@ -1160,6 +1160,28 @@ const GEN = {
       set(o, c[0], c[1], c[2]);
     });
   },
+  // la estatua de la fuente: piedra oscura de grano fino, gastada y mojada,
+  // con poros, desconchones más claros y vetas finas (no pulida: lo demás,
+  // la luz y las tallas, va en los colores de sus vértices)
+  idolRock() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const w = fbm2(x / 11, y / 11, 3, S / 11, 941) * 4;
+      const n = fbm2((x + w) / 5, (y + w) / 5, 4, S / 5, 942);
+      const m = fbm2(x / 1.8, y / 1.8, 2, S / 1.8, 943);
+      let k = 0.74 + n * 0.32 + (m - 0.5) * 0.16;
+      const vein = Math.abs(fbm2((x + w * 2) / 9, (y - w) / 9, 3, S / 9, 944) - 0.5);
+      if (vein < 0.018) k *= 0.7 + vein * 12;
+      const chip = fbm2(x / 6, y / 6, 3, S / 6, 945);
+      if (chip > 0.7) k *= 1.08 + (chip - 0.7) * 0.6;
+      const sp = hash2(x, y, 946);
+      if (sp > 0.965) k *= 0.72;
+      let c = [88 * k, 84 * k, 82 * k];
+      const salt = fbm2(x / 8, y / 14, 3, S / 8, 947);
+      if (salt > 0.64) c = mix3(c, [118 * k, 116 * k, 108 * k], Math.min(0.45, (salt - 0.64) * 2.5));
+      set(o, c[0], c[1], c[2]);
+    });
+  },
   // el ojo del monolito: un iris de brasa con la pupila de cabra (una raja de
   // arriba abajo), venas que salen de ella y el blanco, que no es blanco
   idolIris() {

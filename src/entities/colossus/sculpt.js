@@ -219,6 +219,12 @@ export class Sculpt {
     p.aabb = [c[0] - B, c[1] - B, c[2] - B, c[0] + B, c[1] + B, c[2] + B];
     return this._add(p, o);
   }
+  // primitiva a medida: fn(x, y, z) da la distancia (aproximada) y aabb, su
+  // caja [x0, y0, z0, x1, y1, z1] (telas, hábitos con sus pliegues)
+  custom(fn, aabb, o = {}) {
+    const p = { t: 4, fn, aabb: aabb.slice() };
+    return this._add(p, o);
+  }
   // tubo por una polilínea de puntos con radio en cada punto (conos encadenados)
   tube(pts, radii, o = {}) {
     const out = [];
@@ -327,6 +333,8 @@ export class Sculpt {
           oz = Math.max(qz, 0);
         return Math.sqrt(ox * ox + oy * oy + oz * oz) + Math.min(Math.max(qx, qy, qz), 0) - p.rd;
       }
+      case 4:
+        return p.fn(x, y, z);
       default: {
         const dx = x - p.cx,
           dy = y - p.cy,

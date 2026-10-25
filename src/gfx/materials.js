@@ -130,6 +130,8 @@ export const MAT_DEFS = {
   // el monolito: piedra tosca y mojada (el color, en los vértices) y su ojo,
   // húmedo, del rojo de la carne
   idolMono: { tex: 'idolMono', uv: 1, phong: { specular: 0x46403c, shininess: 22 } },
+  idolRock: { tex: 'idolRock', uv: 1, tri: 0.85, phong: { specular: 0x2c2826, shininess: 14 } },
+  idolEmber: { tex: 'white', uv: 1, color: 0x1a0302, emissive: 0xff4214, emissiveIntensity: 1.4 },
   idolEyeball: { tex: 'white', uv: 1, color: 0x2a0606, emissive: 0x4a0804, emissiveIntensity: 1, phong: { specular: 0xffe0d0, shininess: 70 } },
   // la piedra de los guardianes, con las grietas encendidas
   stoneGuard: { tex: 'stoneGuard', uv: 0.9, emissiveTex: 'stoneGuardEmit', emissive: 0xff5a20, emissiveIntensity: 0.42 },
