@@ -1,20 +1,15 @@
-// La fuente sin nombre, en el centro de la cisterna (su piedra, su reja y el
-// ídolo: world/level_finale.js, cisternSpring). Aquí lo que se mueve: el agua
-// negra, que respira con una luz roja por debajo, a latidos; las pavesas que
-// suben por la reja; el latido que se oye; y, mientras el arzobispo pelea, el
-// cordón de carne que le ata a ella: sale del pecho del ídolo, sube por el
-// boquete de la reja, se arrastra por el suelo y se le mete por la espalda.
-// Por ahí le llega lo que hay detrás de la puerta: es su cuerpo en el mundo.
-// Cuando el rito empieza (el suelo se hunde: grupo 'cisternFloorC'), todo esto
-// se va con él.
+// La fuente sin nombre, en el centro de la cisterna (su piedra y su reja:
+// world/level_finale.js, cisternSpring; el ídolo que se alza en ella:
+// entities/idol.js). Aquí lo que se mueve: el agua negra, que respira con una
+// luz roja por debajo, a latidos; las pavesas que suben por la reja; el latido
+// que se oye. Lo que ata al arzobispo con ella no se ve. Cuando el rito
+// empieza (el suelo se hunde: grupo 'cisternFloorC'), todo esto se va con él.
 import * as THREE from 'three';
 import { SPRING, CISTERN } from '../world/level_finale.js';
-import { objMat, cloneMat, G } from '../gfx/materials.js';
+import { G } from '../gfx/materials.js';
+import { buildIdol, IDOL } from '../entities/idol.js';
 
-const V3 = THREE.Vector3;
 const { AY } = CISTERN;
-const SEG = 56,
-  RAD = 7;
 
 // el latido: dos golpes y un silencio (0..1)
 export function beat(t, period = 1.7) {
@@ -51,8 +46,8 @@ function waterMat() {
       void main(){
         vec2 q = vW.xz - uC;
         float r = length(q) / uR;
-        // anillos lentos que salen del medio (donde entra el cordón) y una
-        // luz roja muy honda que se mueve como si algo nadase debajo
+        // anillos lentos que salen del medio y una luz roja muy honda que se
+        // mueve como si algo nadase debajo
         float ring = sin(r * 22.0 - uTime * 1.6) * exp(-r * 1.6) * 0.5 + 0.5;
         float deep = ns(q * 1.7 + vec2(uTime * 0.13, -uTime * 0.09)) * ns(q * 3.1 - vec2(uTime * 0.07, uTime * 0.11));
         float glow = (0.38 + 0.62 * uPulse) * (0.45 + 0.55 * deep) * smoothstep(1.05, 0.0, r);
@@ -79,49 +74,96 @@ export class Spring {
     this.water.position.set(SPRING.x, SPRING.water, SPRING.z);
     game.scene.add(this.water);
     this.light = game.fx.lights.add({ x: SPRING.x, y: AY - 0.75, z: SPRING.z, color: 0xff2a10, intensity: 0, range: 7.5, flicker: 0, priority: 5, on: false });
+    // la de la corona de velas que cuelga encima: la que le saca al ídolo la
+    // cabeza, los hombros y el halo
+    this.topLight = game.fx.lights.add({ x: SPRING.x - 2.4, y: AY + 8.9, z: SPRING.z + 0.8, color: 0xffc896, intensity: 0, range: 12, flicker: 0.25, priority: 4, on: false });
     this.t = 0;
     this.beatT = 0;
     this.emberT = 0;
-    // el cordón
-    const n = (SEG + 1) * (RAD + 1);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-    g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-    const uv = new Float32Array(n * 2);
-    for (let j = 0; j <= SEG; j++) for (let k = 0; k <= RAD; k++) uv.set([(k / RAD) * 1.2, j * 0.35], (j * (RAD + 1) + k) * 2);
-    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-    const idx = [];
-    for (let j = 0; j < SEG; j++)
-      for (let k = 0; k < RAD; k++) {
-        const a = j * (RAD + 1) + k,
-          b = a + RAD + 1;
-        idx.push(a, a + 1, b, a + 1, b + 1, b);
-      }
-    g.setIndex(idx);
-    g.boundingSphere = new THREE.Sphere(new V3(SPRING.x, AY, SPRING.z), 30);
-    this.cordMat = cloneMat(objMat('flesh'));
-    // (la luz del sitio: la de la cisterna, roja y baja)
-    if (this.cordMat._u) this.cordMat._u.uProbe.value.set(0.42, 0.22, 0.2);
-    this.cord = new THREE.Mesh(g, this.cordMat);
-    this.cord.frustumCulled = false;
-    this.cord.visible = false;
-    game.scene.add(this.cord);
-    this.curve = new THREE.CatmullRomCurve3([new V3(), new V3(), new V3(), new V3()], false, 'centripetal');
-    this._pts = [];
-    this._c = [];
-    for (let j = 0; j <= SEG; j++) this._c.push(new V3());
-    this._t = new V3();
-    this._n = new V3();
-    this._b = new V3();
-    this._v = new V3();
-    this._back = new V3();
-    // (en la espalda del arzobispo, sobre la cadera; su modelo mira hacia +z)
-    this._attach = new V3(0, -0.12, -0.5);
-    this.on = true;
-    // la introducción ata el cordón a otro (el eco del arzobispo: { pos,
-    // yaw, attach(out), phase }) y aviva la fuente (boost: 0..1)
-    this.cordFor = null;
+    // (la introducción aviva la fuente: 0..1)
     this.boost = 0;
+    // el ídolo, mirando a poniente: a la puerta, y al que se arrodilla
+    // delante. Su cabeza sigue, muy despacio, a quien se acerca (o lo que
+    // diga la introducción: lookAt = Vector3), y el ojo de la costura se le
+    // entreabre (eye: 0..1, o lo que diga la introducción: eyeTo)
+    this.idol = buildIdol();
+    const R = this.idol.root;
+    R.position.set(SPRING.x, AY, SPRING.z);
+    R.rotation.y = -Math.PI / 2;
+    R.traverse((o) => (o.frustumCulled = false));
+    game.scene.add(R);
+    this.idol.own();
+    this.glows = this.idol.mats.filter((m) => m.emissive && m.emissiveIntensity > 0.9);
+    for (const m of this.glows) m.userData.baseEI = m.emissiveIntensity;
+    this.eye = this.idol.meshes.filter((m) => m.userData.grp === 'eye');
+    // (el monolito no tiene cabeza que volver: sólo el ojo)
+    this.head = this.idol.joints.head || null;
+    this.headQ = this.head ? this.idol.restQ.head.clone() : null;
+    this.yaw = 0;
+    this.pitch = 0;
+    this.open = 0;
+    this.lookAt = null;
+    this.eyeTo = null;
+    this.sink = 0; // el rito: cuánto se ha hundido con el suelo
+    this.whisperT = 0;
+    this._lp = new THREE.Vector3();
+    this._q = new THREE.Quaternion();
+    this._e = new THREE.Euler();
+  }
+
+  // la luz del sitio (la de la cisterna), una vez que el juego tiene sondas
+  probeIdol() {
+    const g = this.g;
+    if (this._probed || !g.probe) return;
+    this._probed = true;
+    const P = { x: SPRING.x - 2, y: AY + 1, z: SPRING.z };
+    const zn = g.zoneAt(P);
+    const rid = zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0;
+    const o = g.probe.sample(P.x, AY + 2.5, P.z, rid);
+    this.idol.setProbe(Math.max(0.24, o[0]), Math.max(0.13, o[1]), Math.max(0.11, o[2]), AY - 1.4, 0.2);
+  }
+
+  updateIdol(dt, pulse, near) {
+    const g = this.g,
+      R = this.idol.root;
+    R.position.y = AY - this.sink;
+    R.visible = (this.intact && this.sink <= 0) || (this.sink > 0 && this.sink < 9);
+    if (!R.visible || !near) return;
+    this.probeIdol();
+    // a quién mira: lo que diga la introducción o el jugador, si anda cerca
+    const p = g.player.pos;
+    let T = this.lookAt;
+    const dp = Math.hypot(p.x - SPRING.x, p.z - SPRING.z);
+    if (!T && g.state === 'play' && dp < 16 && Math.abs(p.y - AY) < 4) T = this._lp.set(p.x, p.y + 1.6, p.z);
+    let wy = 0,
+      wp = 0;
+    if (T) {
+      const L = R.worldToLocal(this._lp.copy(T));
+      wy = Math.max(-0.8, Math.min(0.8, Math.atan2(L.x, L.z)));
+      // (mira al frente: apenas baja la cabeza hacia lo que mira)
+      const down = Math.atan2(IDOL.eye[1] - L.y, Math.max(1, Math.hypot(L.x, L.z)));
+      wp = Math.max(0, Math.min(0.14, down * 0.2));
+    }
+    // despacio: una piedra que no debería moverse
+    const k = this.lookAt ? 0.6 : 0.22;
+    this.yaw += Math.max(-k * dt, Math.min(k * dt, wy - this.yaw));
+    this.pitch += Math.max(-k * dt, Math.min(k * dt, wp - this.pitch));
+    if (this.head) {
+      this._q.setFromEuler(this._e.set(this.pitch, this.yaw, 0));
+      this.head.quaternion.copy(this.headQ).multiply(this._q);
+    }
+    // el ojo: se entreabre al que se acerca (del todo, a dos pasos)
+    const want = this.eyeTo ?? (g.state === 'play' ? Math.max(0, Math.min(1, (6 - dp) / 3.5)) : 0);
+    this.open += (want - this.open) * Math.min(1, dt * 1.2);
+    for (const m of this.eye) m.scale.set(1 + this.open * 2.6, 1 + this.open * 0.25, 1);
+    // la luz de la costura, del ojo y de los glifos late con la fuente
+    for (const m of this.glows) m.emissiveIntensity = m.userData.baseEI * (0.45 + 0.75 * pulse + this.open * 0.8);
+    // y de cerca se oye lo que dice (no se entiende)
+    this.whisperT -= dt;
+    if (g.state === 'play' && dp < 5 && this.whisperT <= 0) {
+      this.whisperT = 1.6 + Math.random() * 2.4;
+      g.audio && g.audio.play(Math.random() < 0.5 ? 'whisperNear' : 'whisperClose', { x: SPRING.x + (Math.random() - 0.5) * 2, y: AY + 4.5, z: SPRING.z + (Math.random() - 0.5) * 2 });
+    }
   }
 
   // ¿está la fuente (el suelo de la cisterna, entero)?
@@ -141,10 +183,10 @@ export class Spring {
     this.water.material.uniforms.uPulse.value = pulse;
     this.light.on = near;
     this.light.intensity = 1.6 + 6.5 * pulse + this.boost * 9;
-    if (!near) {
-      this.cord.visible = false;
-      return;
-    }
+    this.topLight.on = near && this.idol.root.visible;
+    this.topLight.intensity = 2.6;
+    this.updateIdol(dt, pulse, near || this.sink > 0);
+    if (!near) return;
     // las pavesas que suben por la reja
     this.emberT -= dt;
     if (this.emberT <= 0) {
@@ -160,107 +202,5 @@ export class Spring {
       this.beatT = this.t - ((this.t % 1.7) - 0.04);
       g.audio && g.audio.play('coreBeat', { x: SPRING.x, y: AY - 0.8, z: SPRING.z }, { k: 0.18 + 0.3 * Math.max(0, 1 - dp / 16) });
     }
-    this.updateCord(dt);
-  }
-
-  // El arzobispo, si está vivo y en su cisterna (ni vencido, ni en el rito)
-  archbishop() {
-    const g = this.g;
-    if (g.flags['finale:rite'] || (g.finale && g.finale.filmActive)) return null;
-    const e = g.bosses && g.bosses.turibulario;
-    if (!e || e.dead || e.scripted || !e.obj.visible) return null;
-    if (Math.abs(e.pos.y - AY) > 3 || Math.hypot(e.pos.x - SPRING.x, e.pos.z - SPRING.z) > 14) return null;
-    return e;
-  }
-
-  // a quién se ata el cordón: el arzobispo de la pelea o el que diga la
-  // introducción
-  target() {
-    if (this.cordFor) return this.cordFor;
-    const e = this.archbishop();
-    if (!e) return null;
-    const T = this._bossT || (this._bossT = {});
-    T.pos = e.pos;
-    T.yaw = e.yaw;
-    T.phase = e.data.phase;
-    T.attach = (out) => e.rig.worldPos('hips', out, this._attach);
-    return T;
-  }
-
-  updateCord() {
-    const e = this.target();
-    this.cord.visible = !!(e && this.intact);
-    if (!this.cord.visible) return;
-    const g = this.g;
-    const R = 0.14;
-    // dónde se le mete: en la espalda, sobre la cadera
-    const B = e.attach(this._v).clone();
-    const fx = Math.sin(e.yaw),
-      fz = Math.cos(e.yaw);
-    const C = new V3(SPRING.x, AY + R, SPRING.z);
-    const A = new V3(...SPRING.chest);
-    const pts = [A, new V3(A.x + 0.05, AY - 0.45, A.z + 0.05), new V3(SPRING.x + 0.1, AY + 0.25, SPRING.z + 0.08)];
-    // detrás de él, en el suelo
-    const behind = new V3(e.pos.x - fx * 1.1, AY + R, e.pos.z - fz * 1.1);
-    const dC = Math.hypot(e.pos.x - C.x, e.pos.z - C.z);
-    if (dC > 1.6) {
-      // del boquete hacia él por el suelo; si el camino recto le pasa por
-      // debajo (la fuente le queda delante), lo rodea por un lado
-      const out = new V3(e.pos.x - C.x, 0, e.pos.z - C.z).normalize();
-      const f1 = new V3(C.x + out.x * 0.9, AY + R, C.z + out.z * 0.9);
-      pts.push(f1);
-      const sx = -fz,
-        sz = fx;
-      const toC = (C.x - e.pos.x) * fx + (C.z - e.pos.z) * fz;
-      if (toC > -0.4) {
-        const side = (C.x - e.pos.x) * sx + (C.z - e.pos.z) * sz >= 0 ? 1 : -1;
-        pts.push(new V3(e.pos.x + sx * side * 1.6 + fx * 0.3, AY + R, e.pos.z + sz * side * 1.6 + fz * 0.3));
-      }
-      pts.push(behind);
-    } else pts.push(new V3((behind.x + C.x) / 2, AY + 0.4, (behind.z + C.z) / 2));
-    // y sube a la espalda
-    pts.push(new V3((behind.x + B.x) / 2, (behind.y + B.y) / 2 - 0.2, (behind.z + B.z) / 2), B);
-    this.curve.points = pts;
-    this.curve.updateArcLengths();
-    const c = this._c;
-    for (let j = 0; j <= SEG; j++) this.curve.getPointAt(j / SEG, c[j]);
-    // marcos que no se retuercen (transporte paralelo)
-    const P = this.cord.geometry.attributes.position,
-      Nn = this.cord.geometry.attributes.normal;
-    const T = this._t,
-      Nv = this._n,
-      Bv = this._b;
-    T.subVectors(c[1], c[0]).normalize();
-    Nv.set(1, 0, 0);
-    if (Math.abs(T.x) > 0.9) Nv.set(0, 0, 1);
-    Nv.addScaledVector(T, -Nv.dot(T)).normalize();
-    const time = g.time;
-    // la carne late y algo corre por dentro hacia él
-    const glow = 0.5 + 0.9 * beat(this.t);
-    this.cordMat.emissiveIntensity = glow * (e.phase === 2 ? 1.5 : 1);
-    for (let j = 0; j <= SEG; j++) {
-      const u = j / SEG;
-      if (j > 0) {
-        const t2 = this._v.subVectors(c[Math.min(SEG, j + 1)], c[j - 1]).normalize();
-        Nv.addScaledVector(t2, -Nv.dot(t2)).normalize();
-        T.copy(t2);
-      }
-      Bv.crossVectors(T, Nv).normalize();
-      const swell = 1 + 0.35 * Math.max(0, Math.sin(u * 26 - time * 5.5)) ** 3;
-      const r = (u < 0.12 ? 0.17 : u > 0.82 ? R + (u - 0.82) * 0.6 : R) * swell;
-      for (let k = 0; k <= RAD; k++) {
-        const a = (k / RAD) * Math.PI * 2;
-        const ca = Math.cos(a),
-          sa = Math.sin(a);
-        const nx = Nv.x * ca + Bv.x * sa,
-          ny = Nv.y * ca + Bv.y * sa,
-          nz = Nv.z * ca + Bv.z * sa;
-        const i = j * (RAD + 1) + k;
-        P.setXYZ(i, c[j].x + nx * r, c[j].y + ny * r, c[j].z + nz * r);
-        Nn.setXYZ(i, nx, ny, nz);
-      }
-    }
-    P.needsUpdate = true;
-    Nn.needsUpdate = true;
   }
 }

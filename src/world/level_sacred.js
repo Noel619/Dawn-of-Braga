@@ -6,11 +6,27 @@ import { solid, stairs, merlons, cityWall, belfryTower, archWall, stoneWall, arc
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { BELL_OUT, BELL_IN } from '../entities/enemy_models.js';
+import { idolFootprint } from '../entities/idol.js';
 import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
 import { cisternPit, cisternRuins, cisternSpring, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// Una campana de verdad, con el perfil de la del Campanero (k = 1: 0,93 m de
+// boca): por fuera bronce viejo, por dentro ennegrecido, y la corona de asas.
+// m: dónde y cómo, con la boca en y = 0 y la corona hacia +y.
+export function churchBell(ctx, m, k, o = {}) {
+  const wb = ctx.wb;
+  const lathe = (P) => new THREE.LatheGeometry(P.map(([r, y]) => new THREE.Vector2(r * k, (y - 0.1) * k)), 16);
+  wb.geometry('bronzeAged', lathe(BELL_OUT), m, { ao: false, ...o });
+  wb.geometry('bronzeIn', lathe(BELL_IN), m, { ao: false, ...o });
+  for (const ry of [0, Math.PI / 2]) {
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0));
+    wb.geometry('bronzeAged', new THREE.TorusGeometry(0.085 * k, 0.024 * k, 4, 10), m.clone().multiply(new THREE.Matrix4().compose(V(0, 0.805 * k, 0), q, V(1, 1, 1))), { ao: false, ...o });
+  }
+}
 
 // Vidriera (caja de vidrio emisivo) + luz roja horneada hacia dentro.
 function lancet(ctx, x, z, face, y0 = 6, h = 5, w = 1.3, room = 'cathedral') {
@@ -115,12 +131,7 @@ function facadeRuin(ctx, FY) {
   }
   wb.pop();
   // la campana de la torre este, tumbada entre los escombros
-  wb.push();
-  wb.translate(12.4, 1.05, -53.2);
-  wb.rotateY(-0.5);
-  wb.rotateZ(Math.PI / 2 - 0.22);
-  wb.cylinder('bronze', 0, -0.9, 0, 1.1, 0.55, 1.8, 10, { ao: false, capTop: true });
-  wb.pop();
+  churchBell(ctx, new THREE.Matrix4().makeTranslation(12.4, 1.05, -53.2).multiply(new THREE.Matrix4().makeRotationY(-0.5)).multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2 - 0.22)).multiply(new THREE.Matrix4().makeTranslation(0, -0.9, 0)), 2.42);
   P.beam(ctx, 9.4, -55.6, 14.8, -52.2, 0.2, 0.18);
   P.beam(ctx, -14.2, -55.4, -9.6, -58.8, 0.6, 0.16);
   // ascuas entre las piedras
@@ -147,7 +158,7 @@ export function buildCathedral(ctx, S, L) {
   // game/intro)
   wb.box('wooddark', 7.4, 20.55, -60.22, 10.6, 21, -59.78, { ao: false });
   ctx.beginGroup('campanaSe');
-  wb.cylinder('bronze', 9, 18.2, -60, 1.1, 0.55, 1.8, 10, { ao: false, capTop: true });
+  churchBell(ctx, new THREE.Matrix4().makeTranslation(9, 18.2, -60), 2.42);
   wb.box('iron', 8.9, 20.0, -60.1, 9.1, 20.55, -59.9, { ao: false });
   ctx.endGroup();
   ctx.endGroup();
@@ -1346,6 +1357,13 @@ export function buildCrypt(ctx, S, C, L) {
     ctx.beginGroup('cisternFloorC');
     ctx.col.add(-PC, AY - 1, cz - PC, PC, AY, cz + PC);
     cisternSpring(ctx, room, VT);
+    // el ídolo (lo pone game/spring.js; mira a poniente: su ancho va en z):
+    // no se le atraviesa, y se le rodea
+    {
+      const [hx, hz] = idolFootprint().half;
+      ctx.col.add(-hz, AY, cz - hx, hz, AY + 6.5, cz + hx);
+      C.paint(-hz - 0.05, cz - hx - 0.05, hz + 0.05, cz + hx + 0.05, 0);
+    }
     ctx.endGroup();
     cisternPit(ctx, cz, PC, AY, room, VT, AT);
     // el corro de columnas, sus arcos (girados sobre cada lado del octógono)
@@ -1405,7 +1423,8 @@ export function buildCrypt(ctx, S, C, L) {
     // la corona de hierro con sus velas, colgada de la clave (se viene abajo
     // en el rito: grupo 'cisternCrown'; ver finale/rite.js)
     ctx.beginGroup('cisternCrown');
-    P.candleCrown(ctx, 0, AY + 6.8, cz, YT + DR - 0.35, { room, r: 1.4, n: 12, radius: 13, intensity: 1.0 });
+    // (alta: debajo se alza el ídolo, con su halo)
+    P.candleCrown(ctx, 0, AY + 9.4, cz, YT + DR - 0.35, { room, r: 1.4, n: 12, radius: 13, intensity: 1.0 });
     ctx.endGroup();
     // el altar del Dios Desconocido, ante la masa de carne del norte: aquí
     // reza el arzobispo
@@ -1496,7 +1515,8 @@ export function buildCrypt(ctx, S, C, L) {
     ctx.lights.push({ x: 0, y: AY + 3, z: cz, r: 0.8, g: 0.2, b: 0.12, radius: 16, intensity: 0.6, room });
     L.interact.push({ kind: 'door', id: 'd_salida', x: 0, y: AY, z: -167.2, w: 4, h: 4.2, axis: 'x', lock: { type: 'boss', boss: 'turibulario' }, mat: 'grate' });
     // (de rodillas sobre la fuente, de cara a la puerta por la que vendrás)
-    L.enemies.push({ type: 'turibulario', x: 0, y: AY, z: cz, yaw: -Math.PI / 2, idle: 'boss', id: 'b_turibulario', boss: true });
+    // (de rodillas ante el ídolo, de espaldas a la puerta)
+    L.enemies.push({ type: 'turibulario', x: -3.4, y: AY, z: cz, yaw: Math.PI / 2, idle: 'boss', id: 'b_turibulario', boss: true });
   }
 
   // --- enemigos de la cripta
@@ -1850,7 +1870,8 @@ export function buildRiver(ctx, S, L) {
     wb.box('plaster', ex - 1.2, y0 + 3.6, fzE - 0.35, ex - 0.45, y0 + 7.0, fzE, { ao: false, tint: wt2 });
     wb.box('plaster', ex + 0.45, y0 + 3.6, fzE - 0.35, ex + 1.2, y0 + 7.0, fzE, { ao: false, tint: wt2 });
     wb.box('plaster', ex - 1.2, y0 + 7.0, fzE - 0.35, ex + 1.2, y0 + 7.6, fzE, { ao: false, tint: wt2 });
-    wb.cylinder('bronze', ex, y0 + 5.9, fzE - 0.18, 0.34, 0.16, 0.55, 8, { ao: false, capTop: true });
+    churchBell(ctx, new THREE.Matrix4().makeTranslation(ex, y0 + 5.82, fzE - 0.18), 0.74);
+    wb.box('iron', ex - 0.03, y0 + 6.36, fzE - 0.21, ex + 0.03, y0 + 7.0, fzE - 0.15, { ao: false });
     wb.box('wooddark', ex - 0.7, y0, fzE, ex + 0.7, y0 + 2.3, fzE + 0.02, { faces: 's', ao: false });
   }
 

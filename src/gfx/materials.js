@@ -121,6 +121,12 @@ export const MAT_DEFS = {
   pus: { tex: 'pus', uv: 0.8, emissiveTex: 'pusEmit', emissive: 0xd8e048, emissiveIntensity: 1.1, flesh: true, phong: { specular: 0xa0a050, shininess: 50 } },
   pusStatic: { tex: 'pus', uv: 0.6, emissiveTex: 'pusEmit', emissive: 0xb8c038, emissiveIntensity: 0.45, phong: { specular: 0x7a7a38, shininess: 40 } },
   skinPus: { tex: 'skinPus', uv: 1.1, phong: { specular: 0x60606a, shininess: 26 } },
+  // el ídolo de la fuente: piedra negra pulida que se bebe la luz, oro viejo,
+  // los glifos que arden y las uñas
+  idolStone: { tex: 'idolStone', uv: 0.9, phong: { specular: 0x8a8296, shininess: 34 } },
+  idolGold: { tex: 'bronze', uv: 1.2, color: 0xc89a48, phong: { specular: 0xb08a40, shininess: 48 } },
+  idolGlyph: { tex: 'white', uv: 1, color: 0x1a0402, emissive: 0xff3412, emissiveIntensity: 1.2 },
+  idolNail: { tex: 'bronze', uv: 1.2, color: 0x5a3e18, phong: { specular: 0x806030, shininess: 40 } },
   // la piedra de los guardianes, con las grietas encendidas
   stoneGuard: { tex: 'stoneGuard', uv: 0.9, emissiveTex: 'stoneGuardEmit', emissive: 0xff5a20, emissiveIntensity: 0.42 },
   // los colosos (carne esculpida, sin UV: triplanar en el espacio del cuerpo).

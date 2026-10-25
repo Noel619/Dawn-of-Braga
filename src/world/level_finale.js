@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { solid, blocker, stairs } from './builders.js';
 import * as P from './props.js';
+import { idolFootprint } from '../entities/idol.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -94,16 +95,16 @@ export function cisternPit(ctx, cz, PC, AY, room, VT, AT) {
 }
 
 // La fuente sin nombre: el manantial que los romanos cubrieron con la cúpula
-// y Martín con su reja, en el centro de la cisterna. Por ella toca el mundo
-// lo que hay detrás de la puerta: el arzobispo metió las manos en el agua para
-// pactar con él y se quedó atado a ella (el cordón de carne: game/spring.js).
-// El brocal de piedra vieja, a ras del suelo; la reja, reventada en el medio;
-// el pozo, y en el agua negra, hundido hasta el pecho y con la cara vuelta
-// hacia la reja, el ídolo: sin rostro, con el muñón de la mano que le cortó
-// Martín (la Garra) alzado. Del brocal salen por el suelo las venas de carne.
-// (r: la boca; rim: el brocal; water: el agua; hole: el boquete de la reja;
-// chest: de dónde sale el cordón)
-export const SPRING = { x: 0, z: CISTERN.cz, r: 1.95, rim: 2.4, water: CISTERN.AY - 1.4, holeR: 0.48, chest: [0, CISTERN.AY - 0.92, CISTERN.cz + 0.24] };
+// y Martín con su reja, en el centro de la cisterna. Por ella toca el mundo lo
+// que hay detrás de la puerta, y en ella se alza su ídolo (entities/idol.js;
+// lo pone y lo mueve game/spring.js). El arzobispo se arrodilló delante para
+// pactar con él y se quedó atado a él, sin que se vea nada que los ate.
+// El brocal de piedra vieja, a ras del suelo; la reja de Martín, con un
+// collar que abraza el hábito del ídolo y, a poniente, el boquete donde se
+// arrodilló el arzobispo; las cadenas de los zunchos; lo que le han traído;
+// y el suelo, agrietado alrededor.
+// (r: la boca; rim: el brocal; water: el agua; holeR: el boquete de la reja)
+export const SPRING = { x: 0, z: CISTERN.cz, r: 1.95, rim: 2.4, water: CISTERN.AY - 1.4, holeR: 0.48 };
 
 // Un anillo plano del círculo de radio R al cuadrado de medio lado PC (en
 // y), partido en M anillos para la luz horneada, con la textura alineada con
@@ -163,94 +164,189 @@ export function cisternSpring(ctx, room, VT) {
     // el pozo, hasta el agua y algo más (caras hacia dentro)
     wb.quad('mossstone', C(t0, R1, AY + 0.04), C(t0, R1, YW - 0.3), C(t1, R1, YW - 0.3), C(t1, R1, AY + 0.04), { ao: false, sub: 1.2, room, tint: VT.map((v) => v * 0.55) });
   }
-  // la reja de Martín: barrotes cruzados a ras del suelo, cortados por la
-  // boca; en el medio, el boquete por el que el arzobispo metió los brazos
+  // En el medio se alza el ídolo (entities/idol.js; lo pone y lo mueve
+  // game/spring.js): mira a poniente (su +z es el -x del mundo). Del ídolo
+  // al mundo: (x, y, z) suyo -> (cx - z, y, cz + x)
+  const W = (lx, ly, lz) => V3(cx - lz, ly, cz + lx);
+  const FP = idolFootprint();
+  const tc = Math.cos(FP.tw || 0),
+    ts = Math.sin(FP.tw || 0);
+  // ¿dentro del collar? (la estatua: un óvalo; el monolito: su losa, girada)
+  const inColl = FP.rect
+    ? (x, z) => {
+        const lx = z - cz,
+          lz = cx - x;
+        return Math.abs(lx * tc - lz * ts) < FP.ax + 0.12 && Math.abs(lx * ts + lz * tc) < FP.az + 0.12;
+      }
+    : (x, z) => ((x - cx) / (FP.rz + 0.09)) ** 2 + ((z - cz) / (FP.rx + 0.09)) ** 2 < 1;
+  // la reja de Martín: barrotes cruzados a ras del suelo, de la boca a un
+  // collar de hierro que abraza al ídolo; a poniente, donde se arrodilló el
+  // arzobispo, arrancados y doblados hacia arriba
   const yb = AY - 0.055;
+  const breach = (x, z) => x - cx < -0.5 && Math.abs(z - cz) < 1.05;
   for (const ax of [0, 1])
     for (let o = -R1 + 0.16; o < R1 - 0.1; o += 0.3) {
       const half = Math.sqrt(Math.max(0, R1 * R1 - o * o)) - 0.02;
-      // (los tramos fuera del boquete)
-      const hole = Math.abs(o) < holeR ? Math.sqrt(holeR * holeR - o * o) : 0;
-      for (const [a, b] of hole ? [[-half, -hole], [hole, half]] : [[-half, half]]) {
-        if (b - a < 0.05) continue;
-        if (ax === 0) wb.box('iron', cx + a, yb, cz + o - 0.03, cx + b, AY - 0.005, cz + o + 0.03, { ao: false, room });
-        else wb.box('iron', cx + o - 0.03, yb, cz + a, cx + o + 0.03, AY - 0.005, cz + b, { ao: false, room });
+      // (los tramos: de la boca al collar, sin lo de dentro ni el boquete)
+      let a = -half;
+      const step = 0.05;
+      for (let u = -half; u <= half + 1e-6; u += step) {
+        const [x, z] = ax === 0 ? [cx + u, cz + o] : [cx + o, cz + u];
+        const cut = inColl(x, z) || breach(x, z);
+        const end = u + step > half + 1e-6;
+        if (cut || end) {
+          const b = cut ? u - step * 0.5 : half;
+          if (b - a > 0.08) {
+            if (ax === 0) wb.box('iron', cx + a, yb, cz + o - 0.03, cx + b, AY - 0.005, cz + o + 0.03, { ao: false, room });
+            else wb.box('iron', cx + o - 0.03, yb, cz + a, cx + o + 0.03, AY - 0.005, cz + b, { ao: false, room });
+          }
+          a = u + step;
+        }
       }
     }
+  // el collar
+  if (FP.rect) {
+    const C = [
+      [FP.ax + 0.12, FP.az + 0.12],
+      [-FP.ax - 0.12, FP.az + 0.12],
+      [-FP.ax - 0.12, -FP.az - 0.12],
+      [FP.ax + 0.12, -FP.az - 0.12],
+    ].map(([x, z]) => W(x * tc + z * ts, AY - 0.02, -x * ts + z * tc));
+    for (let i = 0; i < 4; i++) {
+      const a = C[i],
+        b = C[(i + 1) % 4];
+      const len = a.distanceTo(b);
+      wb.geometry('iron', new THREE.BoxGeometry(0.1, 0.07, len + 0.1), new THREE.Matrix4().compose(a.clone().lerp(b, 0.5), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(b.x - a.x, b.z - a.z), 0)), V3(1, 1, 1)), { ao: false, room });
+    }
+  } else wb.geometry('iron', new THREE.TorusGeometry(1, 0.05, 4, 26), new THREE.Matrix4().compose(V3(cx, AY - 0.02, cz), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V3(FP.rz + 0.09, FP.rx + 0.09, 1)), { ao: false, room });
   // los barrotes arrancados del boquete, doblados hacia arriba
-  for (let k = 0; k < 6; k++) {
-    const t = (k / 6) * Math.PI * 2 + rng.range(-0.3, 0.3);
-    const L = rng.range(0.3, 0.55);
+  for (let k = 0; k < 9; k++) {
+    const z = cz - 0.95 + k * 0.24 + rng.range(-0.04, 0.04);
+    const x = cx - Math.sqrt(Math.max(0, R1 * R1 - (z - cz) ** 2)) + 0.05;
+    const L = rng.range(0.35, 0.75);
     wb.push();
-    wb.translate(cx + Math.cos(t) * holeR, AY - 0.03, cz + Math.sin(t) * holeR);
-    wb.rotateY(-t);
-    wb.rotateZ(rng.range(0.5, 1.2));
+    wb.translate(x + rng.range(0.15, 0.55), AY - 0.03, z);
+    wb.rotateY(Math.PI + rng.range(-0.35, 0.35));
+    wb.rotateZ(rng.range(0.55, 1.25));
     wb.box('iron', 0, -0.03, -0.03, L, 0.03, 0.03, { ao: false, room });
     wb.pop();
   }
-  // el ídolo: de piedra negra con las grietas encendidas, hundido hasta el
-  // pecho y echado hacia atrás, con la cara (lisa: no tiene) vuelta hacia la
-  // reja; contra el agua roja se recorta negro
-  const M = new THREE.Matrix4();
-  const IT = [0.3, 0.27, 0.27];
-  const P3 = (a) => V3(cx + a[0], a[1], cz + a[2]);
-  // un miembro: un tronco de cono de a (radio r0) a b (radio r1)
-  const limb = (a, b, r0, r1) => {
-    const A = P3(a),
-      B = P3(b);
-    const d = new THREE.Vector3().subVectors(B, A);
-    const L = d.length();
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
-    wb.geometry('stoneGuard', new THREE.CylinderGeometry(r1, r0, L, 7), M.compose(A.clone().lerp(B, 0.5), q, V3(1, 1, 1)), { ao: false, room, tint: IT });
+  // las cadenas: del zuncho de abajo a unas argollas del brocal, flojas; dos
+  // reventadas (una tirada sobre la reja, otra que cuelga del zuncho)
+  // (un eslabón: el aro de pie a lo largo de la cadena, estirado, y uno sí
+  // y otro no girado un cuarto de vuelta)
+  const link = (p, q, i) => {
+    const d = p.distanceTo(q);
+    const M = new THREE.Matrix4().makeTranslation((p.x + q.x) / 2, (p.y + q.y) / 2, (p.z + q.z) / 2);
+    M.multiply(new THREE.Matrix4().lookAt(p, q, Math.abs(q.y - p.y) > d * 0.95 ? V3(1, 0, 0) : V3(0, 1, 0)));
+    M.multiply(new THREE.Matrix4().makeRotationZ(i % 2 ? Math.PI / 2 : 0));
+    M.multiply(new THREE.Matrix4().makeScale(1, 1, Math.max(1, (d + 0.03) / 0.09)));
+    M.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+    wb.geometry('iron', new THREE.TorusGeometry(0.045, 0.013, 3, 6), M, { ao: false, room });
   };
-  const neck = [0, AY - 0.66, 0.78];
-  limb([0, AY - 2.3, 0.05], neck, 0.5, 0.34);
-  limb(neck, [0, AY - 0.5, 0.92], 0.15, 0.13);
-  // la cabeza: un huevo de piedra sin rasgos, mirando arriba
-  wb.geometry('stoneGuard', new THREE.SphereGeometry(0.27, 8, 6), M.compose(P3([0, AY - 0.36, 0.98]), new THREE.Quaternion().setFromEuler(new THREE.Euler(-1.05, 0, 0)), V3(0.85, 1.25, 0.92)), { ao: false, room, tint: IT });
-  // el brazo derecho, alzado hacia el boquete: el muñón donde estuvo la mano
-  // que le cortó Martín (la Garra), abierto y en carne viva
-  const sR = [-0.42, AY - 0.86, 0.5],
-    eR = [-0.7, AY - 0.5, 0.08],
-    wR = [-0.42, AY - 0.13, -0.18];
-  limb(sR, eR, 0.13, 0.11);
-  limb(eR, wR, 0.11, 0.09);
-  wb.geometry('fleshStatic', new THREE.SphereGeometry(0.09, 6, 4), M.compose(P3(wR), new THREE.Quaternion(), V3(1, 0.45, 1)), { ao: false, room });
-  // el izquierdo, cruzado sobre el pecho
-  const sL = [0.42, AY - 0.86, 0.5],
-    eL = [0.52, AY - 1.2, 0.05];
-  limb(sL, eL, 0.13, 0.11);
-  limb(eL, [0.08, AY - 0.98, 0.18], 0.11, 0.09);
-  // las venas: salen del brocal y corren por el suelo, medio hundidas en él,
-  // cada vez más finas; hacia el altar sobre todo (y dentro del cuadro que
-  // se hunde)
-  for (let k = 0; k < 10; k++) {
-    let a = k < 4 ? -Math.PI / 2 + rng.range(-0.75, 0.75) : rng.range(0, Math.PI * 2);
-    const len = rng.range(1.8, k < 4 ? 4.0 : 3.0);
+  for (const [k, kind] of [
+    [0, 'broken'],
+    [1, 'stub'],
+    [2, 'whole'],
+    [3, 'whole'],
+  ]) {
+    const A = FP.anchors[k];
+    const p0 = W(A[0], AY + A[1], A[2]);
+    const dir = V3(p0.x - cx, 0, p0.z - cz).normalize();
+    const p1 = V3(cx + dir.x * 2.18, AY + 0.07, cz + dir.z * 2.18);
+    // la argolla del brocal
+    wb.geometry('iron', new THREE.TorusGeometry(0.07, 0.018, 4, 8), new THREE.Matrix4().compose(V3(p1.x, AY + 0.06, p1.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(dir.x, dir.z), 0)), V3(1, 1, 1)), { ao: false, room });
+    wb.box('iron', p1.x - 0.08, AY + 0.04, p1.z - 0.08, p1.x + 0.08, AY + 0.06, p1.z + 0.08, { ao: false, room });
+    const n = 16;
     const pts = [];
-    for (let s = 0; s <= 8; s++) {
-      const d = Math.min(6.2, R2 - 0.2 + (s / 8) * len);
-      a += rng.range(-0.16, 0.16);
-      pts.push(V3(cx + Math.cos(a) * d, AY, cz + Math.sin(a) * d));
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      const pt = V3(p0.x + (p1.x - p0.x) * u, p0.y + (p1.y - p0.y) * u - Math.sin(u * Math.PI) * 0.22, p0.z + (p1.z - p0.z) * u);
+      pt.y = Math.max(AY + 0.025, pt.y);
+      pts.push(pt);
     }
-    const curve = new THREE.CatmullRomCurve3(pts);
-    const S = 24,
-      Q = 5;
-    const geo = new THREE.TubeGeometry(curve, S, 1, Q, false);
-    const P = geo.attributes.position;
-    const c = new THREE.Vector3();
-    const r0 = rng.range(0.09, 0.13);
-    for (let j = 0; j <= S; j++) {
-      const u = j / S;
-      curve.getPointAt(u, c);
-      const r = (r0 + (0.022 - r0) * u) * (1 + 0.28 * Math.sin(u * 19 + k * 1.7));
-      for (let q = 0; q <= Q; q++) {
-        const i = j * (Q + 1) + q;
-        P.setXYZ(i, c.x + (P.getX(i) - c.x) * r, c.y + (P.getY(i) - c.y) * r * 0.55, c.z + (P.getZ(i) - c.z) * r);
+    const upto = kind === 'stub' ? 5 : n;
+    for (let i = 0; i < upto; i++) {
+      if (kind === 'broken' && i === 9) continue;
+      const p = pts[i].clone(),
+        q = pts[i + 1].clone();
+      // (lo reventado: los eslabones de la punta, caídos sobre la reja)
+      if (kind === 'broken' && i < 9) {
+        p.y = Math.max(AY + 0.02, p.y - 0.05 * i);
+        q.y = Math.max(AY + 0.02, q.y - 0.05 * (i + 1));
       }
+      if (kind === 'stub') {
+        p.lerp(V3(p0.x, AY + 0.05, p0.z), (i / 5) * 0.4);
+        q.y = Math.max(AY + 0.02, q.y - 0.12 * (i + 1));
+      }
+      link(p, q, i);
     }
-    geo.computeVertexNormals();
-    wb.geometry('fleshStatic', geo, null, { ao: false, room });
+  }
+  // lo que le han traído, de todas las épocas, al borde del agua: lucernas
+  // romanas, monedas, una espada comida por el óxido, huesos, un rosario y
+  // cabos de vela; casi todo a poniente, donde se arrodilla el que pide
+  const lamp = (x, z, rot) => {
+    const m = new THREE.Matrix4().compose(V3(x, AY + 0.045, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rot, 0)), V3(1, 1, 1));
+    wb.geometry('plaster', new THREE.SphereGeometry(0.065, 8, 4), m.clone().multiply(new THREE.Matrix4().makeScale(1, 0.45, 1.1)), { ao: false, room, tint: [0.62, 0.36, 0.24] });
+    wb.geometry('plaster', new THREE.BoxGeometry(0.04, 0.025, 0.07), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.005, 0.09)), { ao: false, room, tint: [0.56, 0.32, 0.22] });
+    wb.geometry('black', new THREE.CylinderGeometry(0.012, 0.012, 0.01, 6), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.03, 0)), { ao: false, room });
+  };
+  for (const [a, r] of [
+    [3.0, 2.15],
+    [3.35, 2.2],
+    [2.75, 2.25],
+    [3.62, 2.12],
+    [2.2, 2.3],
+    [4.1, 2.25],
+  ])
+    lamp(cx + Math.cos(a) * r, cz + Math.sin(a) * r, a + rng.range(-0.6, 0.6));
+  for (let i = 0; i < 28; i++) {
+    const a = Math.PI + rng.range(-1.3, 1.3),
+      r = rng.range(1.9, 2.5);
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.2, 0.2), 0, rng.range(-0.2, 0.2)));
+    wb.geometry(rng.chance(0.3) ? 'gold' : 'bronzeAged', new THREE.CylinderGeometry(0.014, 0.014, 0.004, 7), new THREE.Matrix4().compose(V3(cx + Math.cos(a) * r, AY + 0.046, cz + Math.sin(a) * r), q, V3(1, 1, 1)), { ao: false, room });
+  }
+  // la espada romana, comida por el óxido
+  {
+    const m = new THREE.Matrix4().compose(V3(cx - 2.25, AY + 0.055, cz + 1.0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.5, 0.04)), V3(1, 1, 1));
+    wb.geometry('plateRust', new THREE.BoxGeometry(0.05, 0.012, 0.5), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.12)), { ao: false, room });
+    wb.geometry('plateRust', new THREE.BoxGeometry(0.11, 0.02, 0.03), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.004, -0.14)), { ao: false, room });
+    wb.geometry('wooddark', new THREE.CylinderGeometry(0.016, 0.016, 0.1, 5), m.clone().multiply(new THREE.Matrix4().compose(V3(0, 0.006, -0.21), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V3(1, 1, 1))), { ao: false, room });
+  }
+  // el rosario, en un corro sobre el brocal, y los cabos de vela
+  for (let i = 0; i < 22; i++) {
+    const a = (i / 22) * Math.PI * 2;
+    wb.geometry('bone', new THREE.SphereGeometry(0.013, 5, 3), new THREE.Matrix4().makeTranslation(cx - 2.0 + Math.cos(a) * 0.1, AY + 0.052, cz - 1.05 + Math.sin(a) * 0.075), { ao: false, room });
+  }
+  for (const [x, z, h] of [
+    [-2.3, -0.4, 0.07],
+    [-2.2, 0.35, 0.12],
+    [-2.35, 0.75, 0.05],
+    [-1.95, -1.35, 0.09],
+  ])
+    wb.cylinder('candle', cx + x, AY + 0.04, cz + z, 0.03, 0.026, h, 6, { ao: false, capTop: true, room });
+  P.bones(ctx, cx + 1.6, AY + 0.04, cz + 1.7, 5, 1693, 0.5);
+  // grietas en el suelo, alrededor de la fuente: el suelo no aguanta lo que
+  // tiene encima (oscuras; alguna, con el rojo de abajo)
+  for (let k = 0; k < 12; k++) {
+    let a = (k / 12) * Math.PI * 2 + rng.range(-0.2, 0.2);
+    let r = R2 + 0.05;
+    let x = cx + Math.cos(a) * r,
+      z = cz + Math.sin(a) * r;
+    const len = rng.range(1.2, 3.2);
+    for (let d = 0; d < len; d += 0.22) {
+      a += rng.range(-0.25, 0.25);
+      r += 0.22;
+      const nx = cx + Math.cos(a) * r,
+        nz = cz + Math.sin(a) * r;
+      const w = 0.05 * (1 - d / len) + 0.012;
+      const mx = (x + nx) / 2,
+        mz = (z + nz) / 2;
+      const hot = k % 4 === 0 && d < len * 0.4;
+      wb.geometry(hot ? 'redGlow' : 'black', new THREE.BoxGeometry(w, 0.012, Math.hypot(nx - x, nz - z) + w), new THREE.Matrix4().compose(V3(mx, AY + 0.046, mz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(nx - x, nz - z), 0)), V3(1, 1, 1)), { ao: false, grime: false, room });
+      x = nx;
+      z = nz;
+    }
   }
   // la luz roja del fondo del pozo (la que late la pone game/spring.js)
   ctx.lights.push({ x: cx, y: AY - 0.9, z: cz, r: 1, g: 0.2, b: 0.1, radius: 3.6, intensity: 1.3, room });

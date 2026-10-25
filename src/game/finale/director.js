@@ -132,6 +132,8 @@ export class Finale {
     const broken = k >= 1;
     // la cisterna y el cráter
     on('cisternFloorC', !broken);
+    // (el ídolo, en su fuente o ya hundido con ella)
+    if (g.spring) g.spring.sink = broken ? 99 : 0;
     on('cisternPit', broken);
     on('cisternCols', !broken);
     on('cisternColsRuin', broken);

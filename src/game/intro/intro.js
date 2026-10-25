@@ -15,7 +15,7 @@
 //   rodillas   alguien de rodillas sobre una luz roja, con los brazos en alto
 //   campana    la campana de la Sé toca sola
 //   gente      la calle: los que la oyen se arrodillan
-//   celda      la pared de la celda del fondo: NO TE ARRODILLES. Todos, menos uno
+//   celda      la pared de la celda del fondo: NO TE ARRODILLES. No todos
 //   mirada     el agua late: lo que no tiene nombre se fija en él
 //   titulo     Dawn of Braga; «Braga. Tercera noche después de la caída.»
 //
@@ -45,6 +45,7 @@ import { Ghost } from './ghosts.js';
 import { SPRING, CISTERN } from '../../world/level_finale.js';
 import { TEMPLO } from '../../world/level_sacred.js';
 import { objMat } from '../../gfx/materials.js';
+import { BELL_OUT, BELL_IN } from '../../entities/enemy_models.js';
 import { sampleClip } from '../../entities/rig.js';
 import { DEG } from '../../core/util.js';
 import { MSG } from '../story.js';
@@ -147,36 +148,29 @@ export class Intro {
     } else e.obj.visible = false;
   }
 
-  // la campana de la torre este, que se mueve sola
+  // la campana de la torre este, que se mueve sola (el perfil de la del
+  // campanario: boca abajo, colgada de la corona; el pivote, arriba)
   bell() {
     if (this._bell) return this._bell;
-    const pts = [
-      [0.0, -1.82],
-      [0.4, -1.8],
-      [0.58, -1.55],
-      [0.66, -1.05],
-      [0.86, -0.5],
-      [1.08, -0.12],
-      [1.12, 0.0],
-      [0.98, 0.02],
-    ].map(([r, y]) => new THREE.Vector2(r, y + 1.82));
+    const k = 2.42;
+    const lathe = (P) => new THREE.LatheGeometry(P.map(([r, y]) => new THREE.Vector2(r * k, (y - 0.855) * k)), 18);
     const g = new THREE.Group();
-    const geo = new THREE.LatheGeometry(pts, 14);
-    geo.translate(0, -1.82, 0);
-    const m = new THREE.Mesh(geo, objMat('bronze', { side: THREE.DoubleSide }));
-    g.add(m);
-    // (la corona, con la que cuelga del cabezal)
-    const crown = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.55, 0.2), objMat('iron'));
-    crown.position.y = 0.27;
-    g.add(crown);
-    const clap = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 6), objMat('iron'));
-    clap.position.y = -0.8;
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), objMat('iron'));
-    ball.position.y = -1.5;
+    g.add(new THREE.Mesh(lathe(BELL_OUT), objMat('bronzeAged')), new THREE.Mesh(lathe(BELL_IN), objMat('bronzeIn')));
+    for (const ry of [0, Math.PI / 2]) {
+      const loop = new THREE.Mesh(new THREE.TorusGeometry(0.085 * k, 0.024 * k, 4, 10), objMat('bronzeAged'));
+      loop.position.y = 0.05 * k;
+      loop.rotation.y = ry;
+      g.add(loop);
+    }
+    // el badajo, dentro: la caña y la bola, cerca de la boca
     const cl = new THREE.Group();
-    cl.add(clap, ball);
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 6), objMat('iron'));
+    rod.position.y = -0.75;
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), objMat('iron'));
+    ball.position.y = -1.5;
+    cl.add(rod, ball);
     g.add(cl);
-    g.position.set(9, 20.02, -60);
+    g.position.set(9, 20.03, -60);
     g.visible = false;
     this.g.scene.add(g);
     this._bell = { g, cl, a: 0, v: 0, on: false };
@@ -249,10 +243,7 @@ export class Intro {
     g.setGroupVisible('campanaSe', true);
     g.setGroupVisible('carneAra', true);
     if (g.crypt) g.crypt.applyFlags();
-    if (g.spring) {
-      g.spring.cordFor = null;
-      g.spring.boost = 0;
-    }
+    if (g.spring) g.spring.boost = 0;
     if (this._light) this._light.on = false;
     g.atmo.override = null;
   }
@@ -467,7 +458,8 @@ export class Intro {
   }
 
   // 8. La pared de la celda del fondo, de cerca: NO TE ARRODILLES, y la mano
-  // que lo escribe; se cae y las letras se quedan
+  // que lo escribe; se cae y las letras se quedan. (No todos: otros también
+  // la oyeron sin arrodillarse; éste es uno de ellos)
   *c_celda() {
     const g = this.g,
       F = this.F,
@@ -480,7 +472,7 @@ export class Intro {
     F.also(
       (function* (self) {
         yield* F.wait(1.8);
-        self.say('Todos, menos uno.', 4.6);
+        self.say('No todos.', 4.6);
       })(this)
     );
     F.also(F.move({ pos: [CELL.x + 1.15, YD + 1.5, CELL.wall + 1.75], look: [CELL.x + 0.15, YD + 1.3, CELL.wall], fov: 44 }, { pos: [CELL.x + 1.05, YD + 1.55, CELL.wall + 2.0], look: [CELL.x + 0.05, YD + 1.3, CELL.wall], fov: 46 }, 7.6, sm));
@@ -492,9 +484,9 @@ export class Intro {
     g.player.obj.visible = false;
   }
 
-  // 9. El agua late: lo que no tiene nombre se fija en él
+  // 9. El agua late: lo que no tiene nombre se fija en uno de ellos
   *c_mirada() {
-    yield* this.s_mirada('Y lo que no tiene nombre se fijó en él.');
+    yield* this.s_mirada('Y lo que no tiene nombre se fijó en uno de ellos.');
   }
 
   // ------------------------------------------------------------ la crónica
@@ -841,14 +833,6 @@ export class Intro {
       ar.color([0.7 + 0.3 * k, 0.63 - 0.45 * k, 0.52 - 0.42 * k]);
       g.camRig.shake(dt * 0.3);
     }
-    // el cordón, de la fuente a su espalda
-    if (S)
-      S.cordFor = {
-        pos: ar.root.position,
-        yaw: ar.root.rotation.y,
-        phase: 2,
-        attach: (out) => ar.rig.worldPos('hips', out, new V3(0, -0.05, -0.2)),
-      };
     a && a.play('fleshTear', { x: 0, y: AY, z: CZ }, { k: 1.2 });
     ar.pose('kneel', 1.2);
     yield* F.move({ pos: [-3.4, AY + 2.5, CZ + 3.0], look: [0.3, AY + 0.1, CZ], fov: 48 }, { pos: [-3.0, AY + 1.5, CZ + 2.6], look: [0.5, AY + 0.8, CZ], fov: 46 }, 2.4, sm);
@@ -857,10 +841,7 @@ export class Intro {
     if (S) S.boost = 0.4;
     g.fadeTarget = 0;
     yield* F.wait(0.9);
-    if (S) {
-      S.cordFor = null;
-      S.boost = 0;
-    }
+    if (S) S.boost = 0;
     this.dropGhosts();
   }
 

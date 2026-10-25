@@ -224,7 +224,7 @@ export const BELL_OUT = [
   [0.184, 0.846],
   [0.001, 0.855],
 ];
-const BELL_IN = [
+export const BELL_IN = [
   [0.001, 0.8],
   [0.166, 0.79],
   [0.239, 0.744],

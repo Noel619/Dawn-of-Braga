@@ -1122,6 +1122,20 @@ const GEN = {
   stoneGuard() {
     return guardGen(false);
   },
+  // el ídolo de la fuente: piedra negra, casi sin grano, con vetas hondas del
+  // color de la sangre seca y algún brillo suelto (está pulida)
+  idolStone() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const w = fbm2(x / 12, y / 12, 3, S / 12, 911) * 5;
+      const n = fbm2((x + w) / 7, (y + w * 0.7) / 7, 4, S / 7, 912);
+      const vein = Math.abs(fbm2((x + w * 1.5) / 10, y / 10, 3, S / 10, 913) - 0.5);
+      let c = mix3([26, 24, 30], [54, 50, 60], n);
+      if (vein < 0.025) c = mix3(c, [92, 28, 22], 1 - vein / 0.025);
+      if (hash2(x, y, 914) > 0.985) c = mix3(c, [120, 116, 128], 0.5);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
   stoneGuardEmit() {
     return guardGen(true);
   },

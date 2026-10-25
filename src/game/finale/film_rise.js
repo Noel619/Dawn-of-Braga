@@ -30,9 +30,10 @@ const _v = new V3(),
   _m = new THREE.Matrix4();
 
 const { cz: CZ, AY } = CISTERN;
-// dónde se arrodilla el arzobispo (el centro de la cisterna, bajo la corona,
-// de cara al jugador) y dónde queda el jugador (en la losa del borde del pozo)
-const ARCH = { x: 0, z: CZ, yaw: 0 };
+// dónde se arrodilla el arzobispo (donde se arrodilló: delante del ídolo, que
+// se alza en el centro de la fuente; de cara al jugador) y dónde queda el
+// jugador (en la losa del borde del pozo)
+const ARCH = { x: -3.4, z: CZ, yaw: 0 };
 const PL = { x: 0.15, z: PIT_SLAB.z + 0.1, yaw: Math.PI };
 // el gigante sube del pozo mirando al sur: su raíz, tan al norte que la
 // joroba (7,3 m por delante de la raíz cuando está encogido) asoma junto a
@@ -294,11 +295,14 @@ export function* actRise(D, o = {}) {
     const dt = yield;
     t += dt;
     st.sink = easeIn(t / 1.6) * 9;
+    // (el ídolo se hunde con el suelo: se lo lleva lo que sube)
+    if (g.spring) g.spring.sink = Math.max(0.001, st.sink);
     flesh.grp.position.y = AY - st.sink;
     red.y = AY - st.sink * 0.6;
   }
   st.gone = true;
   flesh.grp.visible = false;
+  if (g.spring) g.spring.sink = 99;
   if (e) {
     e.obj.visible = false;
     e.shadow && (e.shadow.visible = false);

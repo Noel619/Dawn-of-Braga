@@ -56,6 +56,10 @@ export function partGeometry(pt) {
       g = new THREE.ExtrudeGeometry(pt.shape, { depth: s[2] ?? 0.05, bevelEnabled: false });
       g.translate(0, 0, -(s[2] ?? 0.05) / 2);
       break;
+    case 'geo':
+      // una geometría hecha a mano (con sus UV): pt.geo
+      g = pt.geo.clone();
+      break;
     case 'lathe':
       // phi: [inicio, amplitud] en grados (0 = +z): petos y espaldares curvos
       g = new THREE.LatheGeometry(
