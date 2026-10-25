@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>bocetos</title></head>
+<body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+const q = new URLSearchParams(location.search);
+const name = q.get('b') || 'arzobispo';
+try {
+  const mod = await import('./' + name + '.js?t=' + Date.now());
+  const c = document.getElementById('c');
+  await mod.draw(c, { stage: q.get('stage') || 'all' });
+  window.__done = true;
+} catch (e) {
+  window.__err = e.message + '\n' + e.stack;
+  window.__done = true;
+}
+</script>
+</body></html>
