@@ -1,9 +1,11 @@
 // Los ecos de la introducción: lo que pasó, visto en los sitios de ahora.
 // Figuras de luz pálida (más viva en los bordes, como la llama vista de
 // lado) que aparecen y se deshacen en ceniza que sube. Cada una es un rig
-// de primitivas con un único material propio (su color y su fundido), sus
-// poses (en grados, relativas al reposo: de pie, los brazos colgando) y,
-// por encima, una respiración y, si anda, el paso.
+// esculpido (ghost_models.js: quién era cada uno está en lo que lleva) con un
+// único material propio (su color y su fundido), sus poses (en grados,
+// relativas al reposo: de pie, los brazos colgando) y, por encima, una
+// respiración y, si anda, el paso. Lo que cuelga (el incensario, el farol,
+// la casulla de los brazos) cuelga a plomo.
 //
 //   kind     roman, cantero, martin, monk, veiled, arch, canon, soldier,
 //            almohad, standard, man, woman
@@ -13,28 +15,31 @@
 //            'turnR', 'staff', 'lantern', 'spear', 'shield', 'limp'
 import * as THREE from 'three';
 import { Rig, slerpE } from '../../entities/rig.js';
-import { humanoidJoints } from '../../entities/models.js';
 import { G, additiveFog } from '../../gfx/materials.js';
 import { getTexture } from '../../gfx/textures.js';
 import { DEG } from '../../core/util.js';
+import { ghostModel } from './ghost_models.js';
 
 const V3 = THREE.Vector3;
 
 // ------------------------------------------------------------ el material
-export function ghostMat(color = [0.7, 0.63, 0.52], seed = 0) {
-  const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
-  u.uTime = G.uTime;
-  u.uColor = { value: new THREE.Color(color[0], color[1], color[2]) };
-  u.uFade = { value: 0 };
-  u.uSeed = { value: seed };
-  u.uGain = { value: 1 };
-  u.uBase = { value: 0 }; // la altura de los pies: de ahí para abajo, se apaga
+export function ghostMat(color = [0.7, 0.63, 0.52], seed = 0, shared = null) {
+  const u = shared || THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
+  if (!shared) {
+    u.uTime = G.uTime;
+    u.uColor = { value: new THREE.Color(color[0], color[1], color[2]) };
+    u.uFade = { value: 0 };
+    u.uSeed = { value: seed };
+    u.uGain = { value: 1 };
+    u.uBase = { value: 0 }; // la altura de los pies: de ahí para abajo, se apaga
+  }
   return new THREE.ShaderMaterial({
     uniforms: u,
     fog: true,
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
+    side: shared ? THREE.DoubleSide : THREE.FrontSide,
     vertexShader: `varying vec3 vN; varying vec3 vV; varying vec3 vW;
       #include <fog_pars_vertex>
       void main(){
@@ -83,110 +88,6 @@ export function ghostMat(color = [0.7, 0.63, 0.52], seed = 0) {
   });
 }
 
-// ------------------------------------------------------------ las figuras
-const box = (j, s, p, o = {}) => ({ j, type: 'box', s, p, mat: 'g', ...o });
-// cuerpo común: torso, cuello, cabeza, brazos con manos, piernas y pies
-function body(o = {}) {
-  const w = o.w ?? 1;
-  return [
-    box('hips', [0.36 * w, 0.2, 0.24], [0, -0.02, 0]),
-    box('chest', [0.42 * w, 0.52, 0.26], [0, 0.26, 0], { taper: [0.84, 0.9] }),
-    { j: 'chest', type: 'cyl', s: [0.07, 0.09, 0.12], p: [0, 0.54, 0], mat: 'g' },
-    { j: 'head', type: 'sphere', s: [0.115, 0.14, 0.125], p: [0, 0.12, 0.01], seg: 8, seg2: 6, mat: 'g' },
-    box('armL', [0.12, 0.31, 0.12], [0, -0.14, 0], { taper: [0.85, 0.85] }),
-    box('foreL', [0.1, 0.27, 0.1], [0, -0.13, 0], { taper: [0.8, 0.8] }),
-    box('handL', [0.08, 0.1, 0.09], [0, -0.05, 0.01]),
-    box('armR', [0.12, 0.31, 0.12], [0, -0.14, 0], { taper: [0.85, 0.85] }),
-    box('foreR', [0.1, 0.27, 0.1], [0, -0.13, 0], { taper: [0.8, 0.8] }),
-    box('handR', [0.08, 0.1, 0.09], [0, -0.05, 0.01]),
-    box('legL', [0.15, 0.46, 0.16], [0, -0.22, 0], { taper: [0.8, 0.85] }),
-    box('shinL', [0.12, 0.42, 0.13], [0, -0.2, 0], { taper: [0.9, 0.9] }),
-    box('legR', [0.15, 0.46, 0.16], [0, -0.22, 0], { taper: [0.8, 0.85] }),
-    box('shinR', [0.12, 0.42, 0.13], [0, -0.2, 0], { taper: [0.9, 0.9] }),
-    box('footL', [0.11, 0.07, 0.24], [0, -0.03, 0.05]),
-    box('footR', [0.11, 0.07, 0.24], [0, -0.03, 0.05]),
-  ];
-}
-// el hábito, la túnica larga, la alba: de la cadera a los tobillos
-const robe = (len = 1.0, wb = 1.42) => box('hips', [0.46, len, 0.34], [0, -len / 2, 0], { taper: [wb, 1.3] });
-// la capucha caída sobre la espalda, o puesta
-const hood = (up = true) => (up ? { j: 'head', type: 'sphere', s: [0.16, 0.17, 0.17], p: [0, 0.13, -0.03], seg: 8, seg2: 6, mat: 'g' } : box('chest', [0.3, 0.14, 0.16], [0, 0.52, -0.12]));
-// un asta en la mano (vertical con el antebrazo en horizontal hacia delante)
-const shaft = (hand, len, lo = 0.42, r = 0.022) => ({ j: hand, type: 'cyl', s: [r, r, len], p: [0, -0.04, len / 2 - lo - 0.42 + 0.42], r: [90, 0, 0], mat: 'g' });
-
-const DEFS = {
-  // el sacerdote romano, con la toga sobre la cabeza
-  roman: () => [...body(), robe(1.0, 1.5), box('head', [0.28, 0.2, 0.27], [0, 0.17, -0.04]), box('chest', [0.5, 0.3, 0.3], [0.04, 0.38, 0], { r: [0, 0, -12] })],
-  // el cantero: la túnica corta, el mazo y el cincel
-  cantero: () => [...body(), box('hips', [0.44, 0.42, 0.3], [0, -0.2, 0], { taper: [1.25, 1.15] }), shaft('handR', 0.32, 0.12, 0.02), box('handR', [0.12, 0.09, 0.09], [0, -0.04, 0.3]), shaft('handL', 0.2, 0.06, 0.012)],
-  // Martín: el hábito, la capucha, el báculo (izquierda) y el farol (derecha)
-  martin: () => [
-    ...body(),
-    robe(1.0, 1.4),
-    hood(true),
-    { j: 'handL', type: 'cyl', s: [0.022, 0.022, 1.78], p: [0, -0.04, -0.42], r: [90, 0, 0], mat: 'g' },
-    { j: 'handL', type: 'torus', s: [0.09, 0.018], seg: 10, seg2: 4, p: [0, -0.04, 0.55], r: [0, 90, 0], mat: 'g' },
-    box('handR', [0.12, 0.16, 0.12], [0, -0.22, 0.02]),
-  ],
-  monk: () => [...body(), robe(1.0, 1.4), hood(true)],
-  // los que se taparon la cara: el velo les cae por delante hasta el pecho
-  veiled: () => [...body(), robe(1.0, 1.4), hood(true), box('head', [0.3, 0.46, 0.05], [0, 0.0, 0.15], { taper: [1.25, 1] })],
-  // el arzobispo: la alba, la casulla, el palio en Y, la mitra y el incensario
-  arch: () => [
-    ...body(),
-    robe(1.0, 1.35),
-    { j: 'chest', type: 'cyl', s: [0.25, 0.4, 1.02], p: [0, 0.02, 0], seg: 10, sc: [1, 1, 0.66], mat: 'g' },
-    box('chest', [0.06, 0.5, 0.02], [0, 0.18, 0.19]),
-    box('chest', [0.05, 0.26, 0.02], [0.09, 0.42, 0.19], { r: [0, 0, 40] }),
-    box('chest', [0.05, 0.26, 0.02], [-0.09, 0.42, 0.19], { r: [0, 0, -40] }),
-    { j: 'head', type: 'cone', s: [0.15, 0.36], seg: 4, p: [0, 0.38, 0], r: [0, 45, 0], sc: [1, 1, 0.62], mat: 'g' },
-    { j: 'censer', type: 'cyl', s: [0.008, 0.008, 0.62], p: [0, -0.31, 0], mat: 'g' },
-    { j: 'censer', type: 'sphere', s: [0.11, 0.12, 0.11], p: [0, -0.68, 0], seg: 8, seg2: 6, mat: 'g' },
-    { j: 'censer', type: 'cone', s: [0.07, 0.12], seg: 6, p: [0, -0.56, 0], mat: 'g' },
-  ],
-  // el canónigo: la sotana y la sobrepelliz
-  canon: () => [...body(), robe(1.0, 1.35), box('chest', [0.56, 0.78, 0.34], [0, 0.08, 0], { taper: [1.35, 1.15] }), hood(false)],
-  // un soldado de la guarnición: la malla, el yelmo de nasal, el escudo de
-  // lágrima y la lanza
-  soldier: () => [
-    ...body(),
-    box('hips', [0.42, 0.36, 0.28], [0, -0.16, 0], { taper: [1.15, 1.1] }),
-    { j: 'head', type: 'cone', s: [0.15, 0.24], seg: 8, p: [0, 0.26, 0], mat: 'g' },
-    box('foreL', [0.06, 0.62, 0.48], [0.07, -0.16, 0.08], { taper: [0.4, 1] }),
-    { j: 'handR', type: 'cyl', s: [0.02, 0.02, 2.4], p: [0, -0.04, 0.18], r: [90, 0, 0], mat: 'g' },
-    { j: 'handR', type: 'cone', s: [0.04, 0.22], seg: 4, p: [0, -0.04, 1.46], r: [90, 0, 0], mat: 'g' },
-  ],
-  // un soldado almohade: la túnica larga, el turbante sobre el casco, la
-  // adarga (el escudo de cuero de dos lóbulos) y la lanza
-  almohad: () => [
-    ...body(),
-    box('hips', [0.48, 0.72, 0.34], [0, -0.34, 0], { taper: [1.3, 1.2] }),
-    { j: 'head', type: 'sphere', s: [0.15, 0.13, 0.15], p: [0, 0.2, 0], seg: 8, seg2: 5, mat: 'g' },
-    { j: 'head', type: 'torus', s: [0.13, 0.05], seg: 10, seg2: 4, p: [0, 0.17, 0], r: [90, 0, 0], mat: 'g' },
-    { j: 'foreL', type: 'sphere', s: [0.05, 0.26, 0.2], p: [0.07, -0.08, 0.1], seg: 8, seg2: 6, mat: 'g' },
-    { j: 'foreL', type: 'sphere', s: [0.05, 0.22, 0.18], p: [0.07, -0.32, 0.1], seg: 8, seg2: 6, mat: 'g' },
-    { j: 'handR', type: 'cyl', s: [0.02, 0.02, 2.5], p: [0, -0.04, 0.2], r: [90, 0, 0], mat: 'g' },
-    { j: 'handR', type: 'cone', s: [0.04, 0.24], seg: 4, p: [0, -0.04, 1.55], r: [90, 0, 0], mat: 'g' },
-  ],
-  // el abanderado almohade: la bandera, en un asta alta a su lado
-  standard: () => [
-    ...body(),
-    box('hips', [0.48, 0.72, 0.34], [0, -0.34, 0], { taper: [1.3, 1.2] }),
-    { j: 'head', type: 'sphere', s: [0.15, 0.13, 0.15], p: [0, 0.2, 0], seg: 8, seg2: 5, mat: 'g' },
-    { j: 'head', type: 'torus', s: [0.13, 0.05], seg: 10, seg2: 4, p: [0, 0.17, 0], r: [90, 0, 0], mat: 'g' },
-    { j: 'hips', type: 'cyl', s: [0.025, 0.025, 4.2], p: [0.32, 1.1, 0.12], mat: 'g' },
-    box('hips', [0.95, 1.25, 0.03], [0.8, 2.55, 0.12]),
-  ],
-  man: () => [...body(), box('hips', [0.44, 0.5, 0.3], [0, -0.22, 0], { taper: [1.22, 1.12] }), hood(false)],
-  woman: () => [...body({ w: 0.92 }), robe(0.98, 1.55), box('head', [0.27, 0.32, 0.27], [0, 0.1, -0.02], { taper: [1.25, 1.15] })],
-};
-
-const JOINTS = (kind) => {
-  const j = humanoidJoints(kind === 'arch' ? 1.02 : 1);
-  if (kind === 'arch') j.push({ name: 'censer', parent: 'handR', pos: [0, -0.08, 0.02] });
-  return j;
-};
-
 // ------------------------------------------------------------ las poses
 const KN = { root: [0, -0.41, 0], legL: [-4, 0, 5], shinL: [92, 0, 0], legR: [-4, 0, -5], shinR: [92, 0, 0], footL: [-10, 0, 0], footR: [-10, 0, 0] };
 export const POSES = {
@@ -215,7 +116,7 @@ export const POSES = {
   shield: { armR: [-28, 0, -10], foreR: [-62, 0, 0], armL: [-52, 0, 28], foreL: [-78, 0, -36] },
   limp: { chest: [10, 0, 0], head: [22, 0, 0], armL: [0, 0, 4], armR: [0, 0, -4] },
 };
-const JN = ['root', 'hips', 'chest', 'head', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'legL', 'shinL', 'legR', 'shinR', 'footL', 'footR', 'censer'];
+const JN = ['root', 'hips', 'chest', 'head', 'armL', 'foreL', 'handL', 'armR', 'foreR', 'handR', 'legL', 'shinL', 'legR', 'shinR', 'footL', 'footR', 'censer', 'lamp', 'drapeL', 'drapeR'];
 function toRad(p) {
   const o = {};
   for (const j of JN) {
@@ -234,16 +135,21 @@ export class Ghost {
     this.kind = kind;
     this.seed = SEED++ * 0.37;
     this.mat = ghostMat(o.color, this.seed);
-    this.rig = new Rig({ joints: JOINTS(kind), parts: DEFS[kind]() }, { matFn: () => this.mat });
+    // (la misma luz, por las dos caras: las telas)
+    this.matDS = ghostMat(o.color, this.seed, this.mat.uniforms);
+    this.def = ghostModel(kind, o.variant ?? null);
+    this.rig = new Rig({ joints: this.def.joints, parts: this.def.parts }, { matFn: (name, ds) => (ds ? this.matDS : this.mat) });
     this.root = this.rig.root;
     // antes que la luz, sólo la profundidad (con el mismo fundido): así de
     // cada figura se ve la cáscara de fuera, y no las piezas de dentro unas
     // a través de otras
-    this.dmat = new THREE.ShaderMaterial({ uniforms: this.mat.uniforms, vertexShader: this.mat.vertexShader, fragmentShader: this.mat.fragmentShader, fog: true, transparent: true, colorWrite: false, depthWrite: true });
+    const depth = (side) => new THREE.ShaderMaterial({ uniforms: this.mat.uniforms, vertexShader: this.mat.vertexShader, fragmentShader: this.mat.fragmentShader, fog: true, transparent: true, colorWrite: false, depthWrite: true, side });
+    this.dmat = depth(THREE.FrontSide);
+    this.dmatDS = depth(THREE.DoubleSide);
     for (const m of this.rig.meshes) {
       m.frustumCulled = false;
       m.renderOrder = 3;
-      const d = new THREE.Mesh(m.geometry, this.dmat);
+      const d = new THREE.Mesh(m.geometry, m.material === this.matDS ? this.dmatDS : this.dmat);
       d.frustumCulled = false;
       d.renderOrder = 2;
       m.add(d);
@@ -256,18 +162,22 @@ export class Ghost {
     this.halo.renderOrder = 3;
     this.halo.frustumCulled = false;
     this.rig.joints.chest.add(this.halo);
-    // el farol de Martín: una llama de verdad
-    if (kind === 'martin') {
+    // el farol de Martín: una llama de verdad, dentro
+    if (this.rig.joints.lamp) {
       this.lamp = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: getTexture('glow'), color: 0xffb050, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 })));
       this.lamp.scale.set(0.9, 0.9, 1);
-      this.lamp.position.set(0, -0.22, 0.02);
+      this.lamp.position.set(0, this.def.lampY ?? -0.19, 0);
       this.lamp.renderOrder = 4;
       this.lamp.frustumCulled = false;
-      this.rig.joints.handR.add(this.lamp);
+      this.rig.joints.lamp.add(this.lamp);
     }
+    // la postura de cada uno (se suma siempre) y lo que lleva en las manos
+    // (los brazos, si la pose no dice otra cosa)
+    this.base = this.def.base ? toRad(this.def.base) : null;
+    this.hold = this.def.hold || {};
     this.root.visible = false;
     game.scene.add(this.root);
-    this.cur = toRad(POSES[o.pose || 'stand']);
+    this.cur = toRad({ ...this.hold, ...POSES[o.pose || 'stand'] });
     this.from = this.cur;
     this.to = this.cur;
     this.k = 1;
@@ -295,7 +205,7 @@ export class Ghost {
   }
   pose(name, dur = 0.8) {
     this.from = this.cur;
-    this.to = toRad(typeof name === 'string' ? POSES[name] : name);
+    this.to = toRad({ ...this.hold, ...(typeof name === 'string' ? POSES[name] : name) });
     this.k = dur > 0 ? 0 : 1;
     this.dur = dur;
     if (dur <= 0) this.cur = this.to;
@@ -382,13 +292,23 @@ export class Ghost {
       P.armR[0] += -s * 0.22;
       P.root[1] += -Math.abs(c) * 0.025;
     }
+    // la postura
+    if (this.base) for (const j in this.def.base) for (let i = 0; i < 3; i++) P[j][i] += this.base[j][i];
     // la respiración
     P.chest[0] += Math.sin(this.t * 1.3) * 0.025;
     P.head[0] += Math.sin(this.t * 0.9 + 1) * 0.02;
-    // el incensario se mece colgado de su cadena
-    if (this.kind === 'arch') {
+    // lo que cuelga, a plomo (contra el giro de lo que lo sostiene): el
+    // incensario se mece en su cadena; el farol, apenas
+    const pitch = P.hips[0] + P.chest[0];
+    if (this.rig.joints.censer) {
       this.swing += dt;
-      P.censer = [Math.sin(this.swing * 2.2) * 0.45 - P.foreR[0] - P.armR[0], 0, Math.sin(this.swing * 1.1) * 0.12];
+      P.censer = [Math.sin(this.swing * 2.2) * 0.45 - pitch - P.armR[0] - P.foreR[0] - P.handR[0], 0, Math.sin(this.swing * 1.1) * 0.12 - P.armR[2] - P.foreR[2]];
+    }
+    if (this.rig.joints.lamp) P.lamp = [Math.sin(this.t * 1.6) * 0.06 - pitch - P.armR[0] - P.foreR[0] - P.handR[0], 0, Math.sin(this.t * 1.1) * 0.04 - P.armR[2] - P.foreR[2]];
+    // la casulla que cae de los brazos
+    if (this.rig.joints.drapeL) {
+      P.drapeL = [-pitch - P.armL[0], 0, -P.armL[2] * 0.7];
+      P.drapeR = [-pitch - P.armR[0], 0, -P.armR[2] * 0.7];
     }
     this.rig.apply(P, P.root);
     // la ceniza que se le va (más cuando se deshace)
@@ -405,7 +325,9 @@ export class Ghost {
     this.g.scene.remove(this.root);
     for (const m of this.rig.meshes) m.geometry.dispose();
     this.mat.dispose();
+    this.matDS.dispose();
     this.dmat.dispose();
+    this.dmatDS.dispose();
     this.halo.material.dispose();
     if (this.lamp) this.lamp.material.dispose();
   }
