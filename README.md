@@ -54,11 +54,16 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 
 **La introducción.** Al empezar partida, poco más de un minuto contado como las de Dark Souls o Elden Ring: frases
 sueltas que no explican nada (lo que significan se va sabiendo jugando) sobre planos casi a oscuras, para que no
-se vea dónde: la fuente sin nombre, las letras del ara romana, un monje con un farol y cuatro cerrojos, la hueste
-almohade ante la muralla, alguien de rodillas sobre una luz roja, la campana que toca sola, la gente que se
-arrodilla, la pared de la celda escrita con sangre («Todos, menos uno») y el agua que late. Es en tiempo real, en
-los sitios de verdad del juego, y lo que pasó en ellos lo cuentan los **ecos**: figuras de luz pálida (de la
-cáscara de fuera, sin verse las piezas de dentro) que se deshacen en ceniza. Se salta manteniendo «interactuar».
+se vea dónde: la fuente sin nombre y su ídolo, las letras del ara romana, un monje con un farol y cuatro cerrojos,
+la hueste almohade ante la muralla, alguien de rodillas ante el ídolo sobre una luz roja, la campana que toca sola,
+los que la oyen y se arrodillan, la pared de la celda escrita con sangre («No todos.»: no fue el único que la oyó
+sin arrodillarse) y el ídolo que abre el ojo. Es en tiempo real, en los sitios de verdad del juego, y lo que pasó
+en ellos lo cuentan los **ecos**: figuras de luz pálida que se deshacen en ceniza, esculpidas (no cajas) y cada una
+con su cara y con lo suyo, que es lo que dice quién era: el arzobispo, viejo y seco, con la mitra y sus ínfulas, la
+casulla, el palio y el incensario; San Martín, encorvado bajo la capucha, con la barba partida, el cayado y el
+farol; el sacerdote romano con la toga sobre la cabeza; el cantero con su mazo; los Velados con la cara bajo el
+paño; los canónigos (uno seco, otro gordo) con la muceta; los almohades con turbante, lizam, albornoz y adarga; y
+la gente de Braga, cada cual con lo suyo. Se salta manteniendo «interactuar».
 Al vencer al arzobispo por primera vez se desbloquea en el menú del título la **Crónica de Braga**: la versión
 larga (casi tres minutos), que sí lo cuenta todo y en orden, de Roma al sello (para verla antes: `?cronica=1`).
 
@@ -68,7 +73,7 @@ supieron después se perdió con ellos. San Martín de Dumio no lo rompió, porq
 cortó la mano al ídolo, le echó cuatro cerrojos y puso delante a dos que se taparon la cara, los Velados. En el
 asedio de 1167 el arzobispo bajó a pedirle que salvara la ciudad: abrió la puerta con la Garra, se arrodilló
 sobre la fuente, metió las manos por la reja... y lo de dentro se quedó con él: desde entonces es su cuerpo en la
-tierra, atado al agua por un cordón de carne. Dos canónigos le arrancaron la llave a la puerta y la cerraron con él
+tierra, y algo que no se ve le ata a la fuente. Dos canónigos le arrancaron la llave a la puerta y la cerraron con él
 dentro, y la campana de la Sé tocó sola: los que la oyeron se arrodillaron y los de fuera entraron como si alguien
 los llamara. Tú eres el preso de la celda del fondo, el que resistió: con las uñas arrancadas escribiste NO TE
 ARRODILLES por las paredes y te costó parte de la memoria. Por eso se fijó en ti: no eres un elegido por gracia,
@@ -260,7 +265,16 @@ botafumeiro mientras su humo se arrastra hasta la puerta. La tercera pila, la de
 **Pozo**, bajo la antesala, tras la reja que abren los Velados al caer: allí espera Dom Paio, convertido, con el
 cirial de hierro de la capilla (un jefe: mazazos, barridos, cera ardiendo y, a media vida, la letanía de fuego), y
 hasta que cae no deja echar la cadena; en la capilla queda su breviario. Al examinarla, la puerta dice qué le
-falta. Abierta, al otro lado espera la cisterna.
+falta. Abierta, al otro lado espera la cisterna y, en su centro, **la fuente sin nombre**, por donde el dios toca el
+mundo: la reja de Martín, arrancada donde se arrodilló el arzobispo, el agua negra que late con una luz roja por
+debajo y, encima, **el ídolo**, una estatua de seis metros y medio que nadie talló (piedra negra pulida
+como el primer día, sin una marca de herramienta), erguida y de frente: la cara lisa partida de arriba abajo por
+una costura roja con un ojo que se entreabre al que se acerca, la diadema y el halo de púas, el cuello de anillos,
+el manto abierto sobre un costillar con una brasa al fondo, glifos de oro de una escritura que no es de nadie y el
+brazo derecho alzado, terminado en el muñón de la mano que le cortó Martín (la Garra, que es la que llevas). La
+cabeza sigue muy despacio a quien se acerca y de cerca se le oye susurrar. Para comparar, con `?idolo=monolito`
+es en su lugar un monolito torcido de más de siete metros con la misma figura en relieve y el engaste vacío de la
+mano (la forma definitiva está por decidir).
 
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
@@ -488,7 +502,11 @@ se encadena el anterior.
   adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
 - **El jefe final: la Película**, una película jugable a lo *God of War*, casi toda cinemática, con pulsaciones
   rápidas y tramos jugables muy guiados (diseño en `PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra
-  el arzobispo**; vencido, el **rito**: la carne del dios le envuelve y en su lugar se alza **el Turiferario**, un
+  el arzobispo**, que espera de rodillas ante el ídolo y ya anuncia lo que viene: cuatro metros de sacerdote enjuto
+  con joroba de buitre y la cabeza colgando de un cuello larguísimo, por cara una jaula de hierro con púas (detrás,
+  dos brasas y los dientes), la mitra partida en dos y clavada en dos cuernos de hueso, la aureola de hierro con
+  siete cirios que chorrean, la casulla carmesí abierta sobre el pecho de costillas con el núcleo que arde y el
+  grillete del incensario; vencido, el **rito**: la carne del dios le envuelve y en su lugar se alza **el Turiferario**, un
   gigante de carne de 21 metros con la campana mayor encadenada a la mano, que revienta la cúpula, sale por el
   cráter, atraviesa la muralla y revienta la nave de la catedral detrás de ti. Seis actos: **la transformación** y
   la nave que se viene abajo; **el agarrón** (te atrapa, te ruge a la cara y te lanza por encima de la ciudad a la
@@ -647,37 +665,40 @@ src/
                         morador.js, Miguel, el tonelero infectado (sus posturas: llorar, encogerse, morderse
                         el brazo, ahorcado); leonor.js, Leonor, la Dolorosa; guardian.js, los Velados;
                         paio.js, Dom Paio, vivo y convertido; custodio.js, el Custodio de la Garra;
-                        catacumbas.js, el Cavador, la Emparedada y el Enrodado); armas:
+                        catacumbas.js, el Cavador, la Emparedada y el Enrodado; turibulario_model.js, el
+                        arzobispo transfigurado de la cisterna; idol.js, el ídolo de la fuente, la estatua y
+                        el monolito); sculpt.js (no el de colossus/), geometrías esculpidas para los rigs
+                        (superficies, troncos, telas con sus pliegues, faldones, cabezas con rasgos y manos
+                        con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan los ecos
+                        y el arzobispo); armas:
                         weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
                         hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
-  game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la
-                        rejilla plana y la de capas, con escaleras y pisos), interfaz,
-                        iconos, guardado, textos y cinemáticas (speech.js: los bocadillos de diálogo; house.js:
-                        el guion de la Casa del Alemán, sus oleadas y las ventanas; souto.js: el pasadizo del
-                        Soto (el tablón y el equilibrio) y Miguel (lo que dice, cuándo se ahorca); crypt.js: la
-                        Puerta del Dios Ignoto, las pilas, el incensario, las rejas y el arca del relicario;
-                        relics.js: los objetos benditos; ossuaries.js: los puzles de los cuatro osarios y su
-                        vista de cerca; paio.js: el guion
-                        de Dom Paio; intro/: las introducciones (intro.js, el director: la corta, al empezar
-                        partida, y la crónica, larga; ghosts.js, los ecos: figuras de luz con sus poses, su
-                        material y su ceniza); spring.js: la fuente sin nombre de la cisterna (el agua roja,
-                        su latido y el cordón de carne que ata al arzobispo); cutscene.js: la de la bodega; hunt.js: la caza
-                        en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
-                        rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
-                        pulsaciones rápidas; finale/: el jefe final, la película: director.js, los puntos
-                        de control y el estado del mundo; film.js, el armazón (corrutinas, planos, franjas,
-                        pulsaciones, el jugador como marioneta); film_acts.js y film_rise.js, film_nave.js,
-                        film_grab.js, film_city.js, film_tower.js, film_ride.js y film_end.js, los seis
-                        actos, y film_heart.js, el final (el corazón del dios); film_gun.js, manejar una
-                        espringala; film_wave.js, las casas que revientan
-                        en ola; film_player.js, las poses del jugador; giant.js y giant_anim.js, el gigante
-                        para el guion y sus animaciones; springald.js, las espringalas, su cadena y el
-                        virote; bell.js, la campana y su cadena; colbody.js, su cuerpo en cápsulas (choques
-                        y cámara); wrecks.js, la ciudad que se rompe; collapse.js, lo que se viene abajo
-                        de verdad (se ladea y se hunde); debris.js y chunks.js, los cascotes y los trozos;
-                        dust.js, las nubes de polvo.
-                        De la pelea vieja quedan turiferario_anim.js (animaciones que se siguen usando) y,
-                        sin enganchar, la de Deo Ignoto: deo_boss.js, deo_anim.js, climb.js y surface.js)
+  game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
+                        y la de capas, con escaleras y pisos), interfaz, iconos, guardado, textos y cinemáticas
+                        (speech.js: los bocadillos de diálogo; house.js: el guion de la Casa del Alemán, sus oleadas y
+                        las ventanas; souto.js: el pasadizo del Soto (el tablón y el equilibrio) y Miguel (lo que
+                        dice, cuándo se ahorca); crypt.js: la Puerta del Dios Ignoto, las pilas, el incensario, las
+                        rejas y el arca del relicario; relics.js: los objetos benditos; ossuaries.js: los puzles de
+                        los cuatro osarios y su vista de cerca; paio.js: el guion de Dom Paio; intro/: las
+                        introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
+                        ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
+                        sus figuras, cada una con su cara y su ropa); spring.js: la fuente sin nombre de la cisterna
+                        (el agua roja, su latido, las pavesas y el ídolo, que vuelve la cabeza, abre el ojo y susurra
+                        a quien se acerca); cutscene.js: la de la bodega; hunt.js: la caza en las bodegas;
+                        breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
+                        beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
+                        finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
+                        film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
+                        film_acts.js y film_rise.js, film_nave.js, film_grab.js, film_city.js, film_tower.js,
+                        film_ride.js y film_end.js, los seis actos, y film_heart.js, el final (el corazón del dios);
+                        film_gun.js, manejar una espringala; film_wave.js, las casas que revientan en ola;
+                        film_player.js, las poses del jugador; giant.js y giant_anim.js, el gigante para el guion y
+                        sus animaciones; springald.js, las espringalas, su cadena y el virote; bell.js, la campana y
+                        su cadena; colbody.js, su cuerpo en cápsulas (choques y cámara); wrecks.js, la ciudad que se
+                        rompe; collapse.js, lo que se viene abajo de verdad (se ladea y se hunde); debris.js y
+                        chunks.js, los cascotes y los trozos; dust.js, las nubes de polvo. De la pelea vieja quedan
+                        turiferario_anim.js (animaciones que se siguen usando) y, sin enganchar, la de Deo Ignoto:
+                        deo_boss.js, deo_anim.js, climb.js y surface.js)
   ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
@@ -689,7 +710,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
                         intro.mjs      fotogramas de la introducción (o de la crónica: CUT=cronica) desde un
                                        plano, en los segundos que se pidan, con sus rótulos; END=1 sigue hasta
-                                       el final y comprueba que la partida empieza bien
+                                       el final y comprueba que la partida empieza bien; IDOLO=monolito, con
+                                       el ídolo en forma de monolito
                         filmclip.mjs   busca los momentos de la película con la cámara metida en algo (una
                                        rejilla de rayos desde la cámara) y dice qué plano del guion es
                         filmaudio.mjs  mide lo que le cuesta al hilo de audio la película (grabación y
@@ -754,6 +776,15 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        que dice de lejos y de cerca, que no hace daño), sus puertas y que se
                                        ahorca si te vas (SHOTS=1: capturas)
                         morador.mjs    hoja de posturas de Miguel, desde delante y desde atrás
+                        bocetos/       las láminas de arte, dibujadas por código como grabados iluminados (un
+                                       estudio de valores que se graba a buril con líneas que siguen la forma,
+                                       contornos a pluma y aguadas de color): lib.js, el motor; arzobispo.js y
+                                       romanos.js, las dos láminas; `node tools/bocetos/render.mjs arzobispo
+                                       [salida.png]` (o `romanos`) dibuja una (tarda unos minutos)
+arte/bocetos/           las láminas: «I · El arzobispo, consumido» (de rodillas y de espaldas ante el
+                        ídolo, en la cisterna roja, la noche de la campana) y «II · Los que la
+                        encontraron primero» (los romanos, que rompen la roca y dan con la estatua,
+                        todavía con su mano de oro)
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)

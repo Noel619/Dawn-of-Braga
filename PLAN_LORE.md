@@ -14,8 +14,20 @@ Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del docume
   ni el arzobispo (los papeles de los romanos se perdieron hace mucho). Arrodillarse ante él es ceder, no un trato:
   no te devuelve nada. El arzobispo bajó a pedirle que salvara Braga, se arrodilló sobre la fuente y lo de dentro se
   quedó con él: es su cuerpo en la tierra. En la cisterna, lo que une al dios con el mundo es **la fuente sin
-  nombre**: la reja de Martín con el boquete, el agua roja, el ídolo sin mano y el **cordón de carne** que ata al
-  arzobispo durante la pelea.
+  nombre**: la reja de Martín con el boquete, el agua roja y **el ídolo sin mano**. Lo que ata al arzobispo con ella
+  **no se ve** (nada de cordón de carne: es cosa del dios, no de la carne).
+- **El ídolo.** Nadie lo talló: piedra negra pulida como el primer día, sin una marca de herramienta. Mira de frente
+  (no hacia abajo), con la cara lisa partida por una costura roja y un ojo que se abre cuando algo le interesa; el
+  brazo derecho alzado acaba en un muñón. **La mano de oro es la Garra**: Martín se la cortó y la escondió con los
+  Inocentes, y hoy la lleva el jugador; por eso los romanos la vieron entera (la lámina II) y en el presente no la
+  tiene. Hay dos formas para elegir: **la estatua** (la de por defecto) y **el monolito** (`?idolo=monolito`: una
+  losa torcida con la figura en relieve y el engaste vacío de la mano). **Lo decide el autor.**
+- **Los ecos tienen personalidad**: figuras esculpidas, cada una con su cara y con lo suyo (la mitra, el palio y el
+  incensario del arzobispo; la capucha, la barba partida, el cayado y el farol de Martín...). El arzobispo de la
+  cisterna, la primera forma del jefe, anuncia al coloso: la joroba, la jaula por cara, la mitra partida en dos
+  cuernos y la aureola de cirios.
+- **«No todos.»** La campana no dobló a todos los que la oyeron: el preso no fue el único que no se arrodilló, sólo
+  el más fuerte de los que quedaron (en la intro, tras «Los que la oyeron se arrodillaron.»).
 - **La puerta.** Una sola puerta, la de los cuatro pasos, sella al dios. El arzobispo la abrió con la Garra; dos
   canónigos (Paio y Mendo) le arrancaron la llave y la cerraron con él dentro.
 - **El preso.** Nada de un acto público de «no arrodillarse»: la campana y el contagio doblan a la gente por dentro;
@@ -35,6 +47,10 @@ Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del docume
     sin resolver nada, casi a oscuras, sin enseñar lo que luego se juega (ni la puerta, ni los Velados, ni el pacto);
   - **la Crónica de Braga**, la larga (~3 min), que lo cuenta todo en orden; se desbloquea en el menú del título al
     vencer al arzobispo (o con `?cronica=1`).
+- **Dos láminas**, dibujadas (no en 3D) como grabados iluminados, en `arte/bocetos/`: **I · El arzobispo,
+  consumido** (de rodillas y de espaldas ante el ídolo, con los brazos en alto, la cisterna roja hasta los bordes y
+  los que se arrodillaron en la penumbra) y **II · Los que la encontraron primero** (los romanos rompen la roca a la
+  luz de las antorchas y dan con la estatua, todavía con su mano de oro). Se dibujan con `tools/bocetos/`.
 
 ## 1. Lo que el juego ya cuenta
 
