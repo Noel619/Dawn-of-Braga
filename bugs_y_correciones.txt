@@ -1,0 +1,18 @@
+En esta lista se van a detallar distintos bugs que se encuentren In-Game. Con el tiempo deben ser corregidos. Se va a establecer el bug, y su estado actual.
+
+1 - [CULLING] En "Callejón de la Fragua", hay una rueda de madera que varias de sus caras no están detalladas.
+2 - [CULLING] En "Callejón de la Fragua", el cartel que está al lado de la puerta tiene problemas de Culling al ser mirado de abajo hacia arriba.
+3 - En "Calle del Soto", y en otros muchos lugares de la ciudad, tienes vigas de madera que atraviesan las ventanas de formas incoherentes.  
+4 - En "Calle del Soto", al lado de Taberna del Cuervo, hay un cartel mal colocado, y un círculo maldito pintado en la pared que se superpone con una ventana.  
+5 - En "Taberna del Cuervo", el mostrador no tiene sentido. No tiene espacio detrás del mismo, y hay barriles que ocupan ese espacio.
+6 - En "Taberna del Cuervo", hay una escotilla que no conecta con ningún lugar y se encuentra en la mitad de una habitación.
+7 - [CULLING] En "Calle de la Herrería", el techito exterior que tiene la herrería, tiene graves problemas de Culling. También, hay una rueda con el mismo problema y un cartel de herrería mal colocado.
+8 - En "Corral de los Pellejeros", hay una casa completamente cerrada por vallas y con unos "Bloques de heno que la cierran por completo. Quitando el sentido de las vallas para una zona tan pequeña.
+9 - [CULLING] En "Calle de la Muralla", concretamente en la estructura "Capilla de San Fructuoso", hay una estructura extraña en el techo que no tan solo se ve mal, sino que esta mal hecha.
+10 - En "Casa del Canoningo", hay [CULLING], con ciertos objetos que están cerca de la estufa. Hay ropa que está flotando, que se supone que es la del Canoningo?. Y objetos superposicionados.
+11 - Hay muchas casas dentro de la ciudad que directamente no tienen techo lógico, sino un techo completamente plano.
+12 - En "Calle de la Muralla, hay, al final del pasillo, casas superpuestas y problemas de [CULLING].
+13 - La Torre de Asedio que está al lado de "Adarve Oriental", no tiene una estructura o modelo 3D, bien definido. Es un coso de palos mal hecho.
+14 - En "Calle de la Catedral", hay un objeto enorme que está volando arriba de una puerta, y también hay uno igual justo arriba de la bandera, flotando en el aire. También en la misma calle, donde está el Arco de Piedra, hay dos ventanas que lo atraviesan.  
+15 - En "Plaza de la Catedral", el PJ puede atravesar las puertas, y quedar atravesado por ellas. Las puertas son cuadradas y el arco es redondo. 
+16 - En "Casa Tapiada", la escalera conecta directo con escalera a pared. No hay un espacio que tengas como para poder salir de la escalera. Eso arréglalo. 
