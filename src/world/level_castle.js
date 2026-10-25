@@ -2164,6 +2164,20 @@ function buildDungeon(ctx, D, L) {
     P.decal(ctx, -87.0, YD + 0.01, -14.6, 1.6);
     P.decal(ctx, -77, YD + 0.01, -11.4, 2.4);
     P.decal(ctx, -77.2, YD + 0.01, -7.8, 2.0);
+    // la celda del fondo, la del jugador: por las tres paredes, escrito a dedo
+    // con sangre una y otra vez, NO TE ARRODILLES (la de abajo, a medias: se
+    // fue escurriendo hasta el suelo). A unos milímetros del muro, y cada una
+    // a su distancia, para que no parpadeen donde se pisan
+    for (const [mat, x, y, z, ry, w, h, roll] of [
+      ['bloodNoTe1', -87.5, YD + 1.45, -17.984, 0, 1.9, 0.76, -0.03],
+      ['bloodNoTe2', -87.6, YD + 2.1, -17.978, 0, 2.1, 0.26, 0.02],
+      ['bloodNoTe4', -87.05, YD + 0.5, -17.981, 0, 1.0, 0.4, 0.08],
+      ['bloodNoTe3', -88.984, YD + 1.35, -16.2, Math.PI / 2, 1.6, 0.64, 0.04],
+      ['bloodNoTe2', -88.979, YD + 0.72, -14.9, Math.PI / 2, 1.4, 0.18, -0.05],
+      ['bloodNoTe1', -86.016, YD + 1.55, -16.4, -Math.PI / 2, 1.5, 0.6, 0.03],
+      ['bloodNoTe2', -86.021, YD + 0.85, -15.0, -Math.PI / 2, 1.3, 0.16, -0.04],
+    ])
+      wb.geometry(mat, new THREE.PlaneGeometry(w, h), new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, roll, 'YXZ')), new THREE.Vector3(1, 1, 1)), { ao: false, room, grime: false });
     P.wallTorch(ctx, -82.4, YD + 2.0, zS - 0.22, 'n', { room, radius: 7 });
     P.wallTorch(ctx, -79.0, YD + 2.0, zN + 0.22, 's', { room, radius: 6, dyn: 2.2 });
     P.wallTorch(ctx, -85.8, YD + 2.0, zN + 0.22, 's', { room, radius: 5 });

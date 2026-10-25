@@ -208,6 +208,8 @@ const SCRATCH = {
   R: [[0, 1, 0, 0], [0, 0, 0.8, 0.1], [0.8, 0.1, 0.85, 0.42], [0.85, 0.42, 0, 0.52], [0.3, 0.52, 0.95, 1]],
   I: [[0.5, 0, 0.5, 1]],
 };
+SCRATCH.T = [[0, 0.02, 1, 0], [0.5, 0, 0.48, 1]];
+SCRATCH.D = [[0.05, 0, 0.05, 1], [0.05, 0, 0.6, 0.08], [0.6, 0.08, 0.95, 0.42], [0.95, 0.42, 0.88, 0.78], [0.88, 0.78, 0.5, 1], [0.5, 1, 0.05, 1]];
 SCRATCH['Á'] = [...SCRATCH.A, [0.4, -0.22, 0.68, -0.4]];
 SCRATCH['Í'] = [...SCRATCH.I, [0.4, -0.22, 0.68, -0.4]];
 function scratchText(lines, W, H, seed) {
@@ -236,6 +238,99 @@ function scratchText(lines, W, H, seed) {
       x += cw + gap;
     }
   });
+  return c;
+}
+
+// Letras escritas a dedo con sangre, sobre transparente (para materiales con
+// alphaTest): el trazo grueso, que se va quedando sin sangre al final;
+// goterones que bajan de los trazos; y, en algunas letras, la uña que se
+// quedó pegada. lines: uno o dos renglones; o.upTo: cuántas letras llegó a
+// escribir del último (el resto, sin escribir).
+function bloodText(lines, W, H, seed, o = {}) {
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  const rng = new RNG(seed);
+  const lh = H / lines.length;
+  const ch = lh * 0.7;
+  const col = (k) => {
+    // de la sangre fresca (roja) a la seca (casi negra)
+    const r = lerp(150, 66, k),
+      gg = lerp(18, 7, k),
+      b = lerp(14, 6, k);
+    return `rgb(${r | 0},${gg | 0},${b | 0})`;
+  };
+  const dot = (x, y, r, k) => {
+    g.fillStyle = col(k);
+    g.beginPath();
+    g.arc(x, y, Math.max(0.6, r), 0, Math.PI * 2);
+    g.fill();
+  };
+  // un goterón: baja recto, cada vez más fino, y acaba en una gota
+  const drip = (x, y, r, len) => {
+    const n = Math.max(2, Math.round(len));
+    for (let k = 0; k <= n; k++) {
+      const u = k / n;
+      dot(x + Math.sin(u * 3 + x) * 0.4, y + u * len, r * (1 - u * 0.55), 0.35 + u * 0.4);
+    }
+    dot(x, y + len + r * 0.4, r * 0.75, 0.6);
+  };
+  const nails = [];
+  lines.forEach((text, li) => {
+    const last = li === lines.length - 1;
+    const upTo = last && o.upTo !== undefined ? o.upTo : text.length;
+    const n = text.length;
+    const cw = Math.min(ch * 0.7, (W - 10) / (n * 1.18)),
+      gap = cw * 0.22;
+    const R = Math.max(1.4, ch * 0.1);
+    let x = (W - (n * cw + (n - 1) * gap)) / 2 + rng.range(-3, 3);
+    const slope = rng.range(-0.05, 0.05);
+    let written = 0;
+    for (const chr of text) {
+      if (chr !== ' ' && written >= upTo) break;
+      if (chr === ' ') {
+        x += cw * 0.55;
+        continue;
+      }
+      written++;
+      const y0 = li * lh + (lh - ch) / 2 + (x - W / 2) * slope + rng.range(-ch * 0.05, ch * 0.05);
+      const w = cw * rng.range(0.9, 1.08),
+        h = ch * rng.range(0.92, 1.06);
+      const lean = rng.range(-0.08, 0.12);
+      for (const [a, b, cc, d] of SCRATCH[chr] || []) {
+        const ax = x + a * w + (1 - b) * lean * w,
+          ay = y0 + b * h,
+          bx = x + cc * w + (1 - d) * lean * w,
+          by = y0 + d * h;
+        const L = Math.hypot(bx - ax, by - ay);
+        const steps = Math.max(3, Math.ceil(L / 0.6));
+        // la yema apretada al empezar, y la sangre que se acaba al final
+        dot(ax, ay, R * 1.25, 0.15);
+        for (let s = 0; s <= steps; s++) {
+          const u = s / steps;
+          const px = ax + (bx - ax) * u + rng.range(-0.35, 0.35),
+            py = ay + (by - ay) * u + rng.range(-0.35, 0.35);
+          const r = R * (1.05 - 0.5 * u) * rng.range(0.85, 1.15);
+          // (al final del trazo, la sangre ya no cubre: huecos)
+          if (u > 0.7 && rng.chance((u - 0.7) * 1.2)) continue;
+          dot(px, py, r, 0.12 + u * 0.55 + rng.range(-0.1, 0.1));
+        }
+        // de los trazos que van de lado, chorrea
+        if (Math.abs(by - ay) < L * 0.6 && rng.chance(0.55)) {
+          const u = rng.range(0.15, 0.6);
+          drip(ax + (bx - ax) * u, ay + (by - ay) * u + R * 0.5, R * 0.62, rng.range(0.25, 1.1) * ch);
+        }
+        if (rng.chance(0.06)) nails.push([ax, ay]);
+      }
+      x += w + gap + rng.range(-gap * 0.25, gap * 0.25);
+    }
+  });
+  // la uña pegada en la sangre: un trocito claro, de lado
+  for (const [x, y] of nails.slice(0, o.nails ?? 1)) {
+    g.fillStyle = 'rgb(214,196,170)';
+    g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+    g.fillStyle = 'rgb(150,120,100)';
+    g.fillRect(Math.round(x) + 1, Math.round(y), 1, 1);
+  }
   return c;
 }
 
@@ -1310,6 +1405,20 @@ const GEN = {
   },
   scratchCampana() {
     return scratchText(['LA CAMPANA', 'SÍ ES POR MÍ'], 192, 64, 92);
+  },
+  // «NO TE ARRODILLES», escrito a dedo con sangre por las paredes de la
+  // celda del fondo, una y otra vez (la última, a medias)
+  bloodNoTe1() {
+    return bloodText(['NO TE', 'ARRODILLES'], 320, 128, 701, { nails: 1 });
+  },
+  bloodNoTe2() {
+    return bloodText(['NO TE ARRODILLES'], 512, 64, 702, { nails: 0 });
+  },
+  bloodNoTe3() {
+    return bloodText(['NO TE', 'ARRODILLES'], 320, 128, 703, { nails: 2 });
+  },
+  bloodNoTe4() {
+    return bloodText(['NO TE', 'ARRODILLES'], 320, 128, 704, { upTo: 4, nails: 0 });
   },
 
   // El círculo de sal del ama en el suelo (granos, con huecos), recortado.
@@ -2440,7 +2549,7 @@ const SPRITES = {
   bannerRed() {
     return bannerGen([100, 18, 20], false, 162);
   },
-  // El estandarte del abuelo de Henrique: campo de oro con el águila negra
+  // El estandarte del padre de Henrique: campo de oro con el águila negra
   // del Sacro Imperio (las alas abiertas, el pico y las garras rojas)
   bannerEagle() {
     const W = 32,

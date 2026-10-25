@@ -74,6 +74,10 @@ export const MAT_DEFS = {
   // (recortados: lo transparente de la textura no se dibuja)
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
   scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },
+  bloodNoTe1: { tex: 'bloodNoTe1', uv: 1, alphaTest: 0.5 },
+  bloodNoTe2: { tex: 'bloodNoTe2', uv: 1, alphaTest: 0.5 },
+  bloodNoTe3: { tex: 'bloodNoTe3', uv: 1, alphaTest: 0.5 },
+  bloodNoTe4: { tex: 'bloodNoTe4', uv: 1, alphaTest: 0.5 },
   saltRing: { tex: 'saltRing', uv: 1, alphaTest: 0.5 },
   nanaSymbols: { tex: 'nanaSymbols', uv: 1 },
   skullNiches: { tex: 'skullNiches', uv: 0.62 },
