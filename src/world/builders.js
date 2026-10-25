@@ -150,6 +150,42 @@ export function tower(ctx, cx, cz, w, h, o = {}) {
   }
 }
 
+// Torre con el campanario abierto: maciza hasta el suelo del campanario (y0),
+// cuatro machones en las esquinas, con un vano de o.vano metros en cada cara,
+// hasta y1; encima, el último cuerpo, la cornisa y el chapitel. Sin
+// colisión arriba (no se llega).
+export function belfryTower(ctx, cx, cz, w, h, y0, y1, o = {}) {
+  const wb = ctx.wb;
+  const mat = o.mat ?? 'wallstone';
+  const x0 = cx - w / 2,
+    x1 = cx + w / 2,
+    z0 = cz - w / 2,
+    z1 = cz + w / 2;
+  const p = (w - (o.vano ?? 3)) / 2;
+  solid(ctx, mat, x0, 0, z0, x1, y0, z1, { sub: 2.2, aoH: 3, faces: 'nsewt' });
+  for (const [a, b] of [
+    [x0, z0],
+    [x1 - p, z0],
+    [x0, z1 - p],
+    [x1 - p, z1 - p],
+  ])
+    wb.box(mat, a, y0, b, a + p, y1, b + p, { sub: 2.2, ao: false, faces: 'nsew' });
+  wb.box(mat, x0, y1, z0, x1, h, z1, { sub: 2.2, ao: false, faces: 'nsewb' });
+  // cornisa (con su cara inferior) y chapitel
+  wb.box(mat, x0 - 0.3, h - 0.5, z0 - 0.3, x1 + 0.3, h, z1 + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' } });
+  wb.pyramid('roof', cx, cz, w + 0.8, w + 0.8, h, w * 0.9);
+  // la imposta del campanario, y las saeteras por debajo
+  wb.box(mat, x0 - 0.15, y0 - 0.3, z0 - 0.15, x1 + 0.15, y0, z1 + 0.15, { ao: false, faces: 'nsewb' });
+  for (let y = 4; y < y0 - 2; y += 4.5)
+    for (const [sx, sz, rx, rz] of [
+      [cx, z1 + 0.02, 0.12, 0],
+      [cx, z0 - 0.02, 0.12, 0],
+      [x1 + 0.02, cz, 0, 0.12],
+      [x0 - 0.02, cz, 0, 0.12],
+    ])
+      wb.box('black', sx - rx - 0.001, y, sz - rz - 0.001, sx + rx + 0.001, y + 1.2, sz + rz + 0.001, { ao: false, grime: false });
+}
+
 // Muro con un arco (medio punto) atravesable. Muro a lo largo de X (grosor en Z)
 // o de Z si axis='z'. La abertura va centrada en 'c' con ancho 'w' y altura 'ah'.
 export function archWall(ctx, a0, a1, t0, t1, h, c, w, ah, o = {}) {

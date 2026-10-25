@@ -118,6 +118,10 @@ export class Spring {
     // (en la espalda del arzobispo, sobre la cadera; su modelo mira hacia +z)
     this._attach = new V3(0, -0.12, -0.5);
     this.on = true;
+    // la introducción ata el cordón a otro (el eco del arzobispo: { pos,
+    // yaw, attach(out), phase }) y aviva la fuente (boost: 0..1)
+    this.cordFor = null;
+    this.boost = 0;
   }
 
   // ¿está la fuente (el suelo de la cisterna, entero)?
@@ -133,10 +137,10 @@ export class Spring {
     const cam = g.camera.position;
     const near = intact && Math.abs(cam.y - AY) < 14 && Math.hypot(cam.x - SPRING.x, cam.z - SPRING.z) < 40;
     this.water.visible = intact;
-    const pulse = beat(this.t);
+    const pulse = Math.min(1, beat(this.t) + this.boost);
     this.water.material.uniforms.uPulse.value = pulse;
     this.light.on = near;
-    this.light.intensity = 1.6 + 6.5 * pulse;
+    this.light.intensity = 1.6 + 6.5 * pulse + this.boost * 9;
     if (!near) {
       this.cord.visible = false;
       return;
@@ -169,14 +173,28 @@ export class Spring {
     return e;
   }
 
-  updateCord() {
+  // a quién se ata el cordón: el arzobispo de la pelea o el que diga la
+  // introducción
+  target() {
+    if (this.cordFor) return this.cordFor;
     const e = this.archbishop();
+    if (!e) return null;
+    const T = this._bossT || (this._bossT = {});
+    T.pos = e.pos;
+    T.yaw = e.yaw;
+    T.phase = e.data.phase;
+    T.attach = (out) => e.rig.worldPos('hips', out, this._attach);
+    return T;
+  }
+
+  updateCord() {
+    const e = this.target();
     this.cord.visible = !!(e && this.intact);
     if (!this.cord.visible) return;
     const g = this.g;
     const R = 0.14;
     // dónde se le mete: en la espalda, sobre la cadera
-    const B = e.rig.worldPos('hips', this._v, this._attach).clone();
+    const B = e.attach(this._v).clone();
     const fx = Math.sin(e.yaw),
       fz = Math.cos(e.yaw);
     const C = new V3(SPRING.x, AY + R, SPRING.z);
@@ -219,7 +237,7 @@ export class Spring {
     const time = g.time;
     // la carne late y algo corre por dentro hacia él
     const glow = 0.5 + 0.9 * beat(this.t);
-    this.cordMat.emissiveIntensity = glow * (e.data.phase === 2 ? 1.5 : 1);
+    this.cordMat.emissiveIntensity = glow * (e.phase === 2 ? 1.5 : 1);
     for (let j = 0; j <= SEG; j++) {
       const u = j / SEG;
       if (j > 0) {

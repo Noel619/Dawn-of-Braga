@@ -257,5 +257,15 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #ending .hint { color: var(--pink2); text-shadow: none; }
 #ending .credit { margin-top: calc(var(--u) * 5); color: var(--pink2); }
 #story .big img { margin: 0 auto; }
+/* la introducción: los rótulos en la franja de abajo, el título y el aviso
+   de saltar (aparecen y se van a saltos, como el resto) */
+#intro-cap { position: fixed; left: 0; right: 0; bottom: 2.6%; min-height: 8%; display: grid; place-items: center; align-content: center; padding: 0 8vw; text-align: center; color: var(--bone); text-shadow: var(--sh); opacity: 0; transition: opacity 1.2s steps(6); pointer-events: none; z-index: 5; }
+#intro-cap.show { opacity: 1; }
+#intro-cap .big { font-family: 'Bastarda', serif; font-size: var(--fs-bastL); line-height: 1.15; color: var(--bone-hi); letter-spacing: 0.08em; }
+#intro-title { position: fixed; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 2.2s steps(11); pointer-events: none; z-index: 5; }
+#intro-title.show { opacity: 1; }
+#intro-title img { margin: 0 auto; }
+#intro-skip { position: fixed; right: calc(var(--u) * 8); top: calc(var(--u) * 6); color: var(--ash); text-shadow: var(--sh); opacity: 0; transition: opacity 0.6s steps(3); pointer-events: none; z-index: 6; }
+#intro-skip.show { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

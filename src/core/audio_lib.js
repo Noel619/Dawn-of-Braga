@@ -476,6 +476,8 @@ export const MODES = {
   phrygianDom: [0, 1, 4, 5, 7, 8, 10],
   // menor armónica (la sensible alzada: el lamento de Leonor)
   harmonic: [0, 2, 3, 5, 7, 8, 11],
+  // la quinta disminuida: la campana de la caída (la introducción)
+  locrian: [0, 1, 3, 5, 6, 8, 10],
 };
 
 // Grado de la escala (0 = tónica, puede ser negativo o pasar de 6) -> MIDI.

@@ -365,6 +365,52 @@ function paintCarved(lines, W, H, seed) {
   return c;
 }
 
+// Letras romanas talladas en la piedra, sobre transparente (para materiales
+// con alphaTest, encima de la piedra de verdad): el surco oscuro con la luz
+// en el labio de abajo. o.erased: debajo, un renglón picado a cincel (las
+// muescas y algún trazo que se salvó).
+function carvedCut(text, W, H, seed, o = {}) {
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  const rng = new RNG(seed);
+  const rowH = o.erased ? H * 0.5 : H;
+  const fs = Math.round(rowH * 0.62);
+  g.font = `bold ${fs}px "Times New Roman", Georgia, serif`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  if ('letterSpacing' in g) g.letterSpacing = `${Math.round(fs * 0.22)}px`;
+  const y = rowH / 2 + 1;
+  g.fillStyle = 'rgba(214,202,180,0.95)';
+  g.fillText(text, W / 2 + 0.5, y + 1.5, W - 8);
+  g.fillStyle = 'rgba(16,12,10,1)';
+  g.fillText(text, W / 2, y, W - 8);
+  if (o.erased) {
+    // el renglón picado: golpes de cincel, más apretados por el medio
+    const y0 = rowH + rowH * 0.18,
+      y1 = H - rowH * 0.2;
+    const x0 = W * 0.08,
+      x1 = W * 0.92;
+    for (let k = 0; k < (W * H) / 9; k++) {
+      const px = rng.range(x0, x1),
+        py = rng.range(y0, y1);
+      const edge = Math.min(px - x0, x1 - px, (py - y0) * 3, (y1 - py) * 3);
+      if (edge < rng.range(0, 10)) continue;
+      const w = rng.range(1, 3),
+        h = rng.range(1, 2.4);
+      g.fillStyle = rng.chance(0.62) ? `rgba(${(30 + rng.range(0, 24)) | 0},${(24 + rng.range(0, 18)) | 0},${(20 + rng.range(0, 14)) | 0},1)` : `rgba(${(150 + rng.range(0, 50)) | 0},${(140 + rng.range(0, 44)) | 0},${(124 + rng.range(0, 38)) | 0},1)`;
+      g.fillRect(Math.round(px), Math.round(py), Math.round(w), Math.round(h));
+    }
+    // lo que se salvó: algún asta de letra, medio comida
+    for (let k = 0; k < 7; k++) {
+      const px = Math.round(rng.range(x0 + 6, x1 - 6)),
+        h = Math.round((y1 - y0) * rng.range(0.4, 0.8));
+      g.fillStyle = 'rgba(16,12,10,1)';
+      g.fillRect(px, Math.round(y0 + rng.range(0, (y1 - y0) - h)), 2, h);
+    }
+  }
+  return c;
+}
+
 // grano en todo el canvas
 function grain(g, S, a = 0.85, b = 0.25, seed = 1) {
   const img = g.getImageData(0, 0, S, g.canvas.height);
@@ -2200,6 +2246,11 @@ const GEN = {
   // la inscripción del osario de San Martín
   letreroDumio() {
     return paintCarved(['LO QVE TV ERES FVIMOS', 'LO QVE SOMOS SERAS'], 256, 80, 111);
+  },
+
+  // el ara del templo romano: DEO IGNOTO y, debajo, lo que alguien picó
+  araDeoIgnoto() {
+    return carvedCut('DEO · IGNOTO', 256, 64, 1201, { erased: true });
   },
 
   // el letrero del osario de la Hermandad (en los dos muros)

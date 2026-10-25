@@ -38,6 +38,7 @@ import { QTE } from './qte.js';
 import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
+import { Intro } from './intro/intro.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
@@ -262,6 +263,8 @@ export class Game {
     setTimeout(() => this.colossi.warm(), 1500);
     // el jefe final (el Turiferario coloso y Deo Ignoto): su guion
     this.finale = new Finale(this);
+    // la introducción (al empezar una partida nueva)
+    this.intro = new Intro(this);
     this.extraTargets = null;
     this.phantoms = lvl.L.phantoms.map((p) => ({ ...p, state: 'wait' }));
     this.buildPhantom();
@@ -512,6 +515,7 @@ export class Game {
     this.slowmo = null;
     this.climb = null;
     this.finale.reset();
+    if (this.intro && this.intro.active) this.intro.abort();
     this.speech.clear();
     this.house.script = null;
     this.paio.script = null;
@@ -593,7 +597,7 @@ export class Game {
     this.camRig.snapTo(this.player);
     this.camRig.yaw = -2.5;
     this.camRig.pitch = 0.62;
-    this.story(MSG.intro, () => this.beginPlay(true));
+    this.intro.start(() => this.beginPlay(true));
   }
 
   continueGame() {
@@ -840,6 +844,8 @@ export class Game {
   onLeaveRest() {}
 
   fogActive(it) {
+    // (en la introducción no hay nieblas: lo que se ve es lo que pasó)
+    if (this.state === 'intro') return false;
     // (la de los Velados: hasta que caen los dos)
     if (it.boss === 'guardianes') return !this.flags['boss:guardianes'];
     const b = this.bosses[it.boss];
@@ -1627,6 +1633,9 @@ export class Game {
       this.titleT += dt;
       const a = this.titleT * 0.035 + 0.6;
       this.camRig.override = { pos: new THREE.Vector3(Math.sin(a) * 13, 4.2 + Math.sin(this.titleT * 0.2) * 0.4, Math.cos(a) * 13), look: new THREE.Vector3(0, 2.5, 0), speed: 2 };
+    } else if (this.intro.active) {
+      // la introducción (su cámara la pone su película)
+      this.intro.update(dt);
     } else if (this.introCam) {
       // plano fijo del despertar; al levantarse, la cámara pasa detrás del jugador
       if (this.player.state !== 'wake') {
@@ -1742,7 +1751,7 @@ export class Game {
       // (modo desarrollador: con la IA congelada sólo respiran)
       // (las que van a por otro, a por él: Henrique, en su casa)
       if (this.state === 'play' && !this.cutscene && !this.dev.freezeAI) for (const e of this.activeEnemies) e.update(dt, e.foe && !e.foe.dead ? e.foe : p);
-      else if (this.state === 'title' || this.dev.freezeAI) for (const e of this.activeEnemies) e.animate(dt);
+      else if (this.state === 'title' || this.state === 'intro' || this.dev.freezeAI) for (const e of this.activeEnemies) e.animate(dt);
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
@@ -1885,7 +1894,9 @@ export class Game {
       this._fireT = this.time;
       this.fx.fires.refresh(c.x, c.z, FX_FAR.value + 2);
     }
-    const lp = this.state === 'title' ? c : this.player.pos;
+    // (en el título y en la introducción, las luces se reparten alrededor de la
+    // cámara: el jugador está en su celda)
+    const lp = this.state === 'title' || this.state === 'intro' ? c : this.player.pos;
     this.fx.lights.update(lp.x, lp.y + 1, lp.z, this.time);
     this.fx.ash.update(c);
     this.post.render(this.scene, this.camera, this.time);

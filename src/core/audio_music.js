@@ -805,6 +805,100 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- la introducción
+  // El mito (la fuente, Roma, Martín): un órgano muy grave y canto llano en
+  // organum, despacio, con una campana honda al empezar cada frase.
+  introMito: {
+    bpm: 46,
+    root: 38,
+    mode: 'phrygian',
+    prog: [0, 0, 1, 0, 6, 0],
+    chordBars: 2,
+    level: 0.95,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], wave: 'principal', cutoff: 760, level: 0.11, rate: 0.04, depth: 0.15, detune: [-3, 3] },
+    step(S) {
+      const { m, T, t, spb, L } = S;
+      const mel = [0, 1, 0, -2, 0, 3, 1, 0, -2, -4, -2, 0];
+      const lens = [2, 1, 2, 1, 2, 2, 1, 2, 1, 2, 1, 4];
+      const d = S.c.data;
+      if (d.i === undefined) {
+        d.i = 0;
+        d.wait = 2;
+      }
+      if (d.wait > 0) {
+        d.wait--;
+        return;
+      }
+      if (d.i >= mel.length) {
+        d.i = 0;
+        d.wait = 5;
+        m.bell(L.base, t, 38, 0.16, { dur: 9, lp: 1100 });
+        return;
+      }
+      if (d.i === 0) m.bell(L.base, t, 50, 0.08, { dur: 8, lp: 1500 });
+      const midi = T.root + 12 + mel[d.i];
+      const len = lens[d.i];
+      m.choir(L.base, t, spb * len * 1.04, midi, 0.055, d.i % 3 ? 'o' : 'u', { a: 0.25, r: 0.7 });
+      m.choir(L.base, t, spb * len * 1.04, midi - 7, 0.038, 'o', { a: 0.3, r: 0.7 });
+      d.i++;
+      d.wait = len - 1;
+    },
+  },
+  // El asedio: tambores de guerra que se acercan, metales graves y cuerdas
+  // en ostinato; un cuerno de vez en cuando.
+  introAsedio: {
+    bpm: 68,
+    root: 36,
+    mode: 'phrygian',
+    prog: [0, 1, 0, 6],
+    chordBars: 2,
+    level: 0.9,
+    verb: 0.7,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 24, T.mode, d)], wave: 'reed', cutoff: 420, level: 0.08, rate: 0.08, detune: [-4, 4] },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      const e = spb / 2;
+      if (inBar === 0) {
+        m.drum(L.base, t, 'taiko', 0.5);
+        if (bar % 2 === 0) {
+          const r = m.deg(T, chord, 0);
+          m.brass(L.base, t, spb * 3, r, 0.05, { a: 0.3, bright: 5 });
+          m.brass(L.base, t, spb * 3, r + 7, 0.035, { a: 0.3, bright: 5 });
+        }
+      }
+      if (inBar === 2) m.drum(L.base, t, 'taiko', 0.3, 1.12);
+      for (let k = 0; k < 2; k++) if ((inBar * 2 + k) % 3 === 0) m.drum(L.base, t + k * e, 'frame', 0.18, 1.04);
+      const r0 = m.deg(T, chord, 0);
+      for (let k = 0; k < 2; k++) m.strings(L.base, t + k * e, e * 0.8, r0 + ((inBar * 2 + k) % 4 === 3 ? 1 : 0), 0.026, { a: 0.01, r: 0.08, bright: 6, solo: true });
+      if (inBar === 0 && bar % 4 === 3) m.brass(L.base, t, spb * 4, m.deg(T, chord, 1), 0.04, { a: 0.6, bright: 4 });
+    },
+  },
+  // La campana y la caída: cada compás, un tañido enorme; el coro se cierra
+  // en clústeres, el órgano de lengüeta debajo y susurros.
+  introCampana: {
+    bpm: 40,
+    root: 37,
+    mode: 'locrian',
+    prog: [0, 0, 1, 0],
+    chordBars: 2,
+    level: 1,
+    verb: 0.9,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 1)], wave: 'reed', cutoff: 520, level: 0.1, rate: 0.12, detune: [-6, 6] },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      if (inBar === 0) {
+        m.bell(L.base, t, 37, 0.24, { dur: 10, lp: 1300 });
+        m.bell(L.base, t + 0.02, 49, 0.1, { dur: 7, lp: 2400 });
+        if (bar % 2 === 0) for (const n of [m.deg(T, chord, 1), m.deg(T, chord, 1) + 1, m.deg(T, chord + 4, 1)]) m.choir(L.base, t, spb * 7.5, n, 0.035, 'a', { a: 2.2, r: 2.5 });
+      }
+      if (inBar === 2) m.whisper(L.base, t, spb * 1.6, 0.05);
+    },
+  },
+
   // ---------------------------------------------------------------- calles
   city: {
     bpm: 56,

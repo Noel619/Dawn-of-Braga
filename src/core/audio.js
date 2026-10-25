@@ -2655,6 +2655,11 @@ export class Audio {
           this.jingle(d, t + i * 0.24 + 0.05, 0.1, 0.06);
         }
         break;
+      // un cuerno de guerra lejano (la introducción: el campamento)
+      case 'warHorn':
+        d = this.out(P, { gain: 0.8 * (o.k ?? 1), verb: 0.9, life: 8, ref: 18, roll: 0.35, occlude: false });
+        this.warHorn(d, t);
+        break;
       // al asomarse a la escalera de la bodega: pavor
       case 'dread':
         this.score.stinger('dread');

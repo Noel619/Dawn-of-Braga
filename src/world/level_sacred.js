@@ -2,7 +2,7 @@
 // cisterna del jefe final, galería y orillas del río.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, stairs, merlons, cityWall, tower, archWall, stoneWall, archRing, archedWall, barrelVault, rampVault, lunette, dome, pilaster, beam, solidGableRoof } from './builders.js';
+import { solid, stairs, merlons, cityWall, belfryTower, archWall, stoneWall, archRing, archedWall, barrelVault, rampVault, lunette, dome, pilaster, beam, solidGableRoof } from './builders.js';
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -140,23 +140,16 @@ export function buildCathedral(ctx, S, L) {
   // revienta con el pecho; las ruinas, en 'fachadaRuin', más abajo. El suelo
   // del pórtico, la escalinata y el umbral se quedan)
   ctx.beginGroup('fachada');
-  tower(ctx, -9, -60, 8, 24, { mat: 'ashlar', roof: 'pyramid' });
-  tower(ctx, 9, -60, 8, 24, { mat: 'ashlar', roof: 'pyramid' });
-  for (const cx of [-9, 9]) {
-    for (const [dx, dz, ax] of [
-      [0, 4.02, 'z'],
-      [0, -4.02, 'z'],
-      [4.02, 0, 'x'],
-      [-4.02, 0, 'x'],
-    ]) {
-      const x = cx + dx,
-        z = -60 + dz;
-      if (ax === 'z') wb.box('black', x - 1, 17.5, z - 0.02, x + 1, 21, z + 0.02, { ao: false, grime: false });
-      else wb.box('black', x - 0.02, 17.5, z - 1, x + 0.02, 21, z + 1, { ao: false, grime: false });
-    }
-  }
-  // campana visible en la torre este
+  // (con el campanario abierto: cuatro machones y un vano en cada cara)
+  for (const cx of [-9, 9]) belfryTower(ctx, cx, -60, 8, 24, 17.5, 21, { mat: 'ashlar', vano: 3 });
+  // la campana de la torre este, colgada del cabezal (en su grupo: en la
+  // introducción la cambia una que se mueve, la noche que tocó sola; ver
+  // game/intro)
+  wb.box('wooddark', 7.4, 20.55, -60.22, 10.6, 21, -59.78, { ao: false });
+  ctx.beginGroup('campanaSe');
   wb.cylinder('bronze', 9, 18.2, -60, 1.1, 0.55, 1.8, 10, { ao: false, capTop: true });
+  wb.box('iron', 8.9, 20.0, -60.1, 9.1, 20.55, -59.9, { ao: false });
+  ctx.endGroup();
   ctx.endGroup();
   // pórtico
   W(S, -5, -60, 5, -55);
@@ -1264,13 +1257,13 @@ export function buildCrypt(ctx, S, C, L) {
     wb.box('ashlar', cx - 1.4, Y, az - 0.6, cx + 1.4, Y + 1.2, az + 0.6, { faces: 'tnsew', sub: 2, room });
     wb.box('ashlar', cx - 1.55, Y + 1.2, az - 0.72, cx + 1.55, Y + 1.38, az + 0.72, { ao: false, room });
     ctx.col.add(cx - 1.55, Y, az - 0.72, cx + 1.55, Y + 1.38, az + 0.72);
-    for (const [a, b] of [
-      [cx - 0.95, cx - 0.12],
-      [cx + 0.12, cx + 1.05],
-    ])
-      wb.box('black', a, Y + 0.78, az + 0.6, b, Y + 0.9, az + 0.606, { faces: 's', ao: false, grime: false, room });
+    // (DEO IGNOTO tallado en el frente; debajo, un renglón picado a cincel)
+    wb.geometry('araDeoIgnoto', new THREE.PlaneGeometry(2.4, 0.6), new THREE.Matrix4().makeTranslation(cx, Y + 0.68, az + 0.606), { ao: false, room, grime: false });
     P.candles(ctx, cx, Y + 1.38, az - 0.15, 7, 1507, { room, radius: 6, intensity: 1.3, spread: 1.0 });
+    // (la carne, en su grupo: en la introducción, el templo es el de antes)
+    ctx.beginGroup('carneAra');
     P.fleshGrowth(ctx, cx, Y + 1.38, az - 0.45, 1.1, 1508, { room, climb: 2.5, lift: 1.5, bound: [cx - 1.5, cx + 1.5, z0 - ar + 0.1, az + 0.6] });
+    ctx.endGroup();
     P.brazier(ctx, cx - 2.0, Y, z0 - 0.55, {});
     P.brazier(ctx, cx + 2.0, Y, z0 - 0.55, {});
     P.veiledStatue(ctx, x0 + 1.5, Y, z0 + 1.2, 0.3, { ped: 1.0, veil: 'burlap' });
