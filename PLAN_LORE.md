@@ -6,6 +6,36 @@ manera de las de *Dark Souls* o *Elden Ring*: un mito contado en dos minutos y m
 sabiendo lo justo. **Todavía no hay nada hecho.** Aquí están lo que no encaja, lo que se puede fijar ya, tres planes
 para elegir, la intro escrita plano a plano y las preguntas que hay que contestar antes de tocar una línea.
 
+## 0. Lo decidido y lo hecho (25 de octubre)
+
+Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del documento queda como el plan de partida.
+
+- **El plan B, a la manera del autor.** Deo Ignoto es una fuerza de la oscuridad, mala sin más, y **nadie lo sabe**:
+  ni el arzobispo (los papeles de los romanos se perdieron hace mucho). Arrodillarse ante él es ceder, no un trato:
+  no te devuelve nada. El arzobispo bajó a pedirle que salvara Braga, se arrodilló sobre la fuente y lo de dentro se
+  quedó con él: es su cuerpo en la tierra. En la cisterna, lo que une al dios con el mundo es **la fuente sin
+  nombre**: la reja de Martín con el boquete, el agua roja, el ídolo sin mano y el **cordón de carne** que ata al
+  arzobispo durante la pelea.
+- **La puerta.** Una sola puerta, la de los cuatro pasos, sella al dios. El arzobispo la abrió con la Garra; dos
+  canónigos (Paio y Mendo) le arrancaron la llave y la cerraron con él dentro.
+- **El preso.** Nada de un acto público de «no arrodillarse»: la campana y el contagio doblan a la gente por dentro;
+  él resistió, y le costó las uñas (NO TE ARRODILLES, escrito con sangre por las paredes de su celda) y parte de la
+  memoria. No es un elegido porque sí: es el más fuerte de los que quedaron, y **le levanta quien piensa usarle**.
+  Dom Paio sabe de él porque oye al arzobispo cantarlo por la reja de la Confesión, y le avisa de su propia
+  ignorancia: que nadie sabe lo que hay tras la puerta y que no se crea más fuerte que ello.
+- **El carcelero** deja sin comer al de la primera celda (un infectado), no al preso, que está en la última.
+- **1167 y los almohades.** Desde 1164 Portugal pierde tierra ante ellos (en este mundo, casi la mitad); en octubre de
+  1167 llegan a Braga. Son enemigos normales, sin pacto ninguno: lo que pasó, pasó por Braga.
+- **El dios no tiene nombre**: Deo Ignoto, y así se queda.
+- **El facón y la katana**, fuera de la historia: quedan para huevos de pascua. **La rogativa** y lo del humo que
+  infecta la ciudad, descartados. **El final**, por ahora igual (queda la idea de una sola vida tras liberarlo, más
+  de película).
+- **La introducción**, en tiempo real en los sitios de verdad, con los ecos (figuras de luz). Hay dos:
+  - **la de empezar partida**, corta (~80 s) y a la manera de FromSoftware: frases sueltas que despiertan misterio
+    sin resolver nada, casi a oscuras, sin enseñar lo que luego se juega (ni la puerta, ni los Velados, ni el pacto);
+  - **la Crónica de Braga**, la larga (~3 min), que lo cuenta todo en orden; se desbloquea en el menú del título al
+    vencer al arzobispo (o con `?cronica=1`).
+
 ## 1. Lo que el juego ya cuenta
 
 En pocas líneas, lo que dicen los documentos, los diálogos y los escenarios:

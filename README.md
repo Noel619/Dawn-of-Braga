@@ -1,7 +1,8 @@
 # Dawn of Braga · *Amanecer en Braga*
 
-Survival horror medieval en 3D con combate **Soulslike**, ambientado en una Braga ficticia durante la Reconquista.
-La ciudad ha caído tras un asedio: los sitiadores respondieron a la llamada de algo que dormía bajo la catedral, y la
+Survival horror medieval en 3D con combate **Soulslike**, ambientado en una Braga ficticia en octubre de 1167: desde
+hace tres años Portugal pierde tierra ante los almohades, que han vuelto a llegar a sus murallas. La ciudad ha caído:
+la campana de la catedral tocó sola, los que la oyeron se arrodillaron ante algo que dormía bajo ella, y la
 corrupción ha deformado a vivos y muertos. Despiertas en una celda de las mazmorras del castillo. Tu única meta: **salir de Braga**.
 
 *Dark Souls + Resident Evil 2 + Silent Hill*, en pequeño: un mapa compacto e interconectado, llaves y herramientas
@@ -50,6 +51,32 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Pausa y opciones | Esc | Start |
 
 ## Qué hay dentro
+
+**La introducción.** Al empezar partida, poco más de un minuto contado como las de Dark Souls o Elden Ring: frases
+sueltas que no explican nada (lo que significan se va sabiendo jugando) sobre planos casi a oscuras, para que no
+se vea dónde: la fuente sin nombre, las letras del ara romana, un monje con un farol y cuatro cerrojos, la hueste
+almohade ante la muralla, alguien de rodillas sobre una luz roja, la campana que toca sola, la gente que se
+arrodilla, la pared de la celda escrita con sangre («Todos, menos uno») y el agua que late. Es en tiempo real, en
+los sitios de verdad del juego, y lo que pasó en ellos lo cuentan los **ecos**: figuras de luz pálida (de la
+cáscara de fuera, sin verse las piezas de dentro) que se deshacen en ceniza. Se salta manteniendo «interactuar».
+Al vencer al arzobispo por primera vez se desbloquea en el menú del título la **Crónica de Braga**: la versión
+larga (casi tres minutos), que sí lo cuenta todo y en orden, de Roma al sello (para verla antes: `?cronica=1`).
+
+**La historia** (lo que se sabe al final; destripa el juego). Bajo Braga hay una fuente sin nombre y, en ella, algo
+estrictamente malo que nadie conoce. Los romanos le alzaron un templo sin saber a quién (DEO IGNOTO) y lo que
+supieron después se perdió con ellos. San Martín de Dumio no lo rompió, porque no se rompe lo que no se conoce: le
+cortó la mano al ídolo, le echó cuatro cerrojos y puso delante a dos que se taparon la cara, los Velados. En el
+asedio de 1167 el arzobispo bajó a pedirle que salvara la ciudad: abrió la puerta con la Garra, se arrodilló
+sobre la fuente, metió las manos por la reja... y lo de dentro se quedó con él: desde entonces es su cuerpo en la
+tierra, atado al agua por un cordón de carne. Dos canónigos le arrancaron la llave a la puerta y la cerraron con él
+dentro, y la campana de la Sé tocó sola: los que la oyeron se arrodillaron y los de fuera entraron como si alguien
+los llamara. Tú eres el preso de la celda del fondo, el que resistió: con las uñas arrancadas escribiste NO TE
+ARRODILLES por las paredes y te costó parte de la memoria. Por eso se fijó en ti: no eres un elegido por gracia,
+eres el más fuerte de los que quedaron, y quien te levanta cada vez que caes es quien piensa usarte. Dom Paio, uno
+de los dos canónigos, lo sabe a medias (por la reja de la Confesión oye al arzobispo cantar que vendrás) y te avisa
+de lo único seguro: que nadie sabe lo que hay detrás de esa puerta, y que no te creas más fuerte que ello, porque
+eso mismo creía el arzobispo. Se cuenta por los documentos (el carcelero, el canónigo, la inscripción romana, las
+últimas palabras del arzobispo, la pared de la celda, el libro de presos) y por Dom Paio.
 
 **Mundo.** El castillo (ver más abajo), la Calle del Soto, la Plaza
 del Pan con su fuente, horca (con escalera por la que se sube al cadalso) y picota, la Calle de la Catedral, la Plaza
@@ -368,7 +395,7 @@ y correr la hoja va por delante.
 **Armas.** Cinco armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
 pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación). Por el orden en que se
 encontrarán:
-- **Facón criollo** (una mano, con escudo): agazapado, cuatro cortes cortos que se encadenan (tajo, revés con el
+- **Facón criollo** (una mano, con escudo; no cuadra con la historia: quedará como huevo de pascua): agazapado, cuatro cortes cortos que se encadenan (tajo, revés con el
   contrafilo, tajo corrido y puñalada), molinete de dos tajos y puñalada a fondo; hiere más por la espalda.
 - **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango): golpes lentos y demoledores que
   desequilibran a casi cualquiera, barrido con las manos deslizándose por el mango y un hachazo del verdugo que se
@@ -376,7 +403,7 @@ encontrarán:
 - **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
   que se lanza sin bajar el escudo.
 - **Espada del carcelero**: la de siempre, sin cambios.
-- **Katana sagrada** (dos manos): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
+- **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
   al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
 
 Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
@@ -631,7 +658,10 @@ src/
                         Puerta del Dios Ignoto, las pilas, el incensario, las rejas y el arca del relicario;
                         relics.js: los objetos benditos; ossuaries.js: los puzles de los cuatro osarios y su
                         vista de cerca; paio.js: el guion
-                        de Dom Paio; cutscene.js: la de la bodega; hunt.js: la caza
+                        de Dom Paio; intro/: las introducciones (intro.js, el director: la corta, al empezar
+                        partida, y la crónica, larga; ghosts.js, los ecos: figuras de luz con sus poses, su
+                        material y su ceniza); spring.js: la fuente sin nombre de la cisterna (el agua roja,
+                        su latido y el cordón de carne que ata al arzobispo); cutscene.js: la de la bodega; hunt.js: la caza
                         en las bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se
                         rompen; beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las
                         pulsaciones rápidas; finale/: el jefe final, la película: director.js, los puntos
@@ -657,6 +687,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        con las pulsaciones acertadas o falladas: pasa por los puntos de
                                        control en orden, nadie muere y acaba en el río
                         film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
+                        intro.mjs      fotogramas de la introducción (o de la crónica: CUT=cronica) desde un
+                                       plano, en los segundos que se pidan, con sus rótulos; END=1 sigue hasta
+                                       el final y comprueba que la partida empieza bien
                         filmclip.mjs   busca los momentos de la película con la cámara metida en algo (una
                                        rejilla de rayos desde la cámara) y dice qué plano del guion es
                         filmaudio.mjs  mide lo que le cuesta al hilo de audio la película (grabación y
@@ -725,6 +758,7 @@ archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)
 PLAN_JEFE_FINAL.md      el diseño del jefe final y su plan de trabajo
+PLAN_LORE.md            el rediseño del lore (1167, los almohades, el plan B) y de la introducción
 ```
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.

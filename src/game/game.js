@@ -22,7 +22,7 @@ import { NavGrid, LayerNav } from './nav.js';
 import { WalkGrid } from '../world/walkgrid.js';
 import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
-import { loadSave, writeSave, clearSave, loadSettings, writeSettings, Inventory } from './save.js';
+import { loadSave, writeSave, clearSave, loadSettings, writeSettings, chronicleUnlocked, unlockChronicle, Inventory } from './save.js';
 import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
 import { CANON, stairY } from '../world/level_canon.js';
 import { CellarCutscene } from './cutscene.js';
@@ -315,6 +315,8 @@ export class Game {
 
   saveGame() {
     const p = this.player;
+    // (las partidas que ya pasaron del arzobispo también la desbloquean)
+    if (this.flags['finale:rite'] || this.flags['boss:turibulario']) unlockChronicle();
     writeSave({
       v: 1,
       flags: this.flags,
@@ -553,6 +555,9 @@ export class Game {
         else this.newGame();
       },
     });
+    // (la crónica: lo que pasó en Braga, en orden; desde que se vence al
+    // arzobispo por primera vez)
+    if (chronicleUnlocked()) entries.push({ label: 'Crónica de Braga', action: () => this.playChronicle() });
     entries.push({ label: 'Opciones', action: () => this.ui.open('options') });
     entries.push({ label: 'Controles', action: () => this.ui.open('controls') });
     s.data.entries = entries;
@@ -598,6 +603,20 @@ export class Game {
     this.camRig.yaw = -2.5;
     this.camRig.pitch = 0.62;
     this.intro.start(() => this.beginPlay(true));
+  }
+
+  // La crónica (la introducción larga), vista desde el título: el mundo como
+  // al empezar, sin tocar la partida guardada; al acabar, de vuelta al título
+  playChronicle() {
+    this.newState();
+    this.applyWorldState();
+    this.ui.closeAll();
+    this.audio.stopMusic();
+    this.state = 'intro';
+    this.fadeTarget = 0;
+    this.player.spawn(START.x, START.y, START.z, START.yaw);
+    this.camRig.snapTo(this.player);
+    this.intro.start(() => this.toTitle(), { cut: 'cronica' });
   }
 
   continueGame() {
@@ -883,6 +902,7 @@ export class Game {
   // encarga (Enemy.die no lo mata).
   archbishopDefeated(e) {
     if (this.cutscene || this.flags['finale:rite']) return false;
+    unlockChronicle();
     e.hp = 1;
     e.scripted = true;
     e.state = 'bossIdle';

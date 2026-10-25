@@ -1,27 +1,44 @@
-// La introducción: lo que pasó en Braga, contado como en las de Dark Souls o
-// Elden Ring, de lo más viejo a lo de ahora, y al final el preso en su celda,
-// donde se empieza a jugar. Los sitios son los de verdad (la cisterna, el
-// templo romano, la antesala, la Sé, la muralla, la celda), tal como están
-// ahora; lo que pasó en ellos lo cuentan los ecos (ghosts.js), figuras de
-// luz que aparecen y se deshacen en ceniza. Sin voz: rótulos en la franja de
-// abajo, con la letra de los documentos.
+// Las introducciones: lo que pasó en Braga, contado como en las de Dark
+// Souls o Elden Ring. Los sitios son los de verdad, tal como están ahora; lo
+// que pasó en ellos lo cuentan los ecos (ghosts.js), figuras de luz que
+// aparecen y se deshacen en ceniza. Sin voz: rótulos en la franja de abajo,
+// con la letra de los documentos. Hay dos montajes:
 //
-//   la fuente   la cisterna: la reja, el agua roja, el ídolo
-//   roma        el templo romano: el ara, DEO IGNOTO
-//   martin      la antesala: Martín ante la puerta, los que se taparon la cara
-//   se          la Sé encima, en la niebla
-//   asedio      1167: la muralla, el campamento almohade, los defensores
-//   arzobispo   el templo: de rodillas ante el ara; sus canónigos
-//   puerta      la antesala: abre lo que Martín cerró
-//   pacto       la cisterna: mete las manos en el agua; el cordón
-//   campana     la campana de la Sé toca sola: la calle, la muralla, el campo
-//   sello       la antesala: dos canónigos arrancan la Garra y cierran
-//   preso       la celda del fondo: NO TE ARRODILLES, con los dedos
-//   mirada      el ídolo, desde la reja: algo se fija en él
-//   titulo      Dawn of Braga; «Braga. Tercera noche después de la caída.»
+// 'intro', la de empezar partida: corta, frases sueltas que no explican nada
+// (lo que significan se va sabiendo jugando) y casi nada de lo que luego se
+// juega a la vista: nada de la puerta, los Velados ni el pacto.
 //
-// Se salta manteniendo «interactuar». Al acabar (o al saltarla) todo vuelve
-// a como estaba y empieza la partida (beginPlay).
+//   fuente     negro; se baja por el boquete de la reja hasta el agua roja
+//   ara        las letras del ara romana, de muy cerca: DEO IGNOTO
+//   cerrojos   un monje con un farol, de espaldas, en lo oscuro; cuatro golpes
+//   asedio     1167: la hueste almohade ante la muralla
+//   rodillas   alguien de rodillas sobre una luz roja, con los brazos en alto
+//   campana    la campana de la Sé toca sola
+//   gente      la calle: los que la oyen se arrodillan
+//   celda      la pared de la celda del fondo: NO TE ARRODILLES. Todos, menos uno
+//   mirada     el agua late: lo que no tiene nombre se fija en él
+//   titulo     Dawn of Braga; «Braga. Tercera noche después de la caída.»
+//
+// 'cronica', lo que pasó, en orden y explicado (larga; se desbloquea al
+// vencer al arzobispo y se ve desde el título):
+//
+//   fuente     la cisterna: la reja, el agua roja, el ídolo
+//   roma       el templo romano: el ara, DEO IGNOTO
+//   martin     la antesala: Martín ante la puerta, los que se taparon la cara
+//   se         la Sé encima, en la niebla
+//   asedio     1167: la muralla, el campamento almohade, los defensores
+//   arzobispo  el templo: de rodillas ante el ara; sus canónigos
+//   puerta     la antesala: abre lo que Martín cerró
+//   pacto      la cisterna: mete las manos en el agua; el cordón
+//   campana    la campana de la Sé toca sola: la calle, el campo
+//   sello      la antesala: dos canónigos arrancan la Garra y cierran
+//   preso      la celda del fondo: NO TE ARRODILLES, con los dedos
+//   mirada     el ídolo, desde la reja: algo se fija en él
+//   titulo     Dawn of Braga
+//
+// Se saltan manteniendo «interactuar». Al acabar (o al saltarla) todo vuelve
+// a como estaba y se llama a done (la intro: empieza la partida; la crónica:
+// de vuelta al título).
 import * as THREE from 'three';
 import { Film, sm, smoother } from '../finale/film.js';
 import { Ghost } from './ghosts.js';
@@ -46,6 +63,11 @@ const DOOR = { x: -16, z: -152 };
 const MEM = { sat: 0.36, bloom: 1.35 };
 // la celda del fondo
 const CELL = { x: -87.6, z: -16.2, wall: -18 };
+
+const CUTS = {
+  intro: ['fuente', 'ara', 'cerrojos', 'asedio', 'rodillas', 'campana', 'gente', 'celda', 'mirada', 'titulo'],
+  cronica: ['fuente', 'roma', 'martin', 'se', 'asedio', 'arzobispo', 'puerta', 'pacto', 'campana', 'sello', 'preso', 'mirada', 'titulo'],
+};
 
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
@@ -179,14 +201,17 @@ export class Intro {
     this.F.setBars(1, true);
     g.fade = 0;
     g.fadeTarget = 0;
-    const order = ['fuente', 'roma', 'martin', 'se', 'asedio', 'arzobispo', 'puerta', 'pacto', 'campana', 'sello', 'preso', 'mirada', 'titulo'];
-    const from = Math.max(0, order.indexOf(o.from || 'fuente'));
+    // (los planos de la corta son c_*; los de la crónica, s_*; el título,
+    // el mismo)
+    this.cut = CUTS[o.cut] ? o.cut : 'intro';
+    const order = CUTS[this.cut];
+    const from = Math.max(0, order.indexOf(o.from || order[0]));
     const self = this;
     this.F.run(
       (function* () {
         for (const name of order.slice(from)) {
           self.shot = name;
-          yield* self['s_' + name]();
+          yield* self[(self.cut === 'intro' && name !== 'titulo' ? 'c_' : 's_') + name]();
         }
       })()
     );
@@ -250,6 +275,8 @@ export class Intro {
     g.post.U.uBars.value = 0;
     g.post.U.uVignette.value = 1.25;
     g.camRig.override = null;
+    // (el preso, que la intro esconde y mueve a mano: a despertar)
+    g.player.obj.visible = true;
     this.active = false;
     const d = this.done;
     this.done = null;
@@ -286,7 +313,191 @@ export class Intro {
     if (!this.F.active) this.finish();
   }
 
-  // ------------------------------------------------------------ los planos
+  // ------------------------------------------------------------ la corta
+  // (la de empezar partida: lo justo, sin explicar; casi todo a oscuras,
+  // para que no se vea dónde)
+  // 1. Negro, el goteo; la fuente: se baja por el boquete de la reja hasta el
+  // agua roja, donde está lo que no tiene nombre
+  *c_fuente() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio,
+      S = g.spring;
+    this.look('arena', { fog: 0x000000, density: 0.11, hemi: 0.35, vol: 0, sat: 0.55, bloom: 1.4 });
+    a && a.music('introMito');
+    const A = { pos: [0.25, AY + 1.5, CZ + 0.4], look: [0, AY - 1.5, CZ - 0.05], fov: 50 };
+    F.shot(A.pos, A.look, { fov: A.fov });
+    yield* F.wait(1.2);
+    this.say('Bajo Braga hay una fuente sin nombre.', 6);
+    a && a.play('drip', { x: 0.2, y: AY - 1.2, z: CZ });
+    yield* F.wait(1.8);
+    g.fadeTarget = 1;
+    if (S) S.boost = 0.15;
+    // (y abajo, la cabeza sin cara del ídolo, que mira hacia arriba)
+    yield* F.move(A, { pos: [0.15, AY - 0.15, CZ], look: [0, AY - 0.45, CZ + 0.9], fov: 50 }, 7.5, smoother);
+    g.fadeTarget = 0;
+    yield* F.wait(0.9);
+    if (S) S.boost = 0;
+  }
+
+  // 2. Las letras del ara (sin la carne de ahora), de muy cerca, a la luz de
+  // una vela
+  *c_ara() {
+    const g = this.g,
+      F = this.F;
+    this.look('crypt', { ...MEM, density: 0.09, sat: 0.45 });
+    g.setGroupVisible('carneAra', false);
+    this.light(TX + 0.2, TY + 1.25, TAZ + 1.7, 0xffb060, 1.5, 4);
+    g.fadeTarget = 1;
+    F.also(
+      (function* (self) {
+        yield* F.wait(0.8);
+        self.say('Roma no supo a quién rezaba.', 5);
+      })(this)
+    );
+    yield* F.move({ pos: [TX - 0.9, TY + 0.95, TAZ + 1.95], look: [TX - 0.55, TY + 0.83, TAZ + 0.6], fov: 40 }, { pos: [TX + 0.6, TY + 0.92, TAZ + 1.85], look: [TX + 0.75, TY + 0.82, TAZ + 0.6], fov: 38 }, 7, sm);
+    g.fadeTarget = 0;
+    yield* F.wait(0.9);
+    this.light(0, 0, 0, 0, 0, 0);
+    g.setGroupVisible('carneAra', true);
+  }
+
+  // 3. Un monje con un farol, de espaldas, en lo oscuro, ante algo que no se
+  // ve; cuatro golpes de cerrojo, y se apaga
+  *c_cerrojos() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
+    this.look('sanctum', { ...MEM, fog: 0x000000, density: 0.3, hemi: 0.2, vol: 0, ash: 0 });
+    const m = this.ghost('martin').at(DOOR.x - 3.4, AY, DOOR.z - 0.2, Math.PI / 2).pose('lantern', 0).show(1.6);
+    m.mat.uniforms.uGain.value = 1.3;
+    this.light(DOOR.x - 3.0, AY + 1.5, DOOR.z + 0.1, 0xffc070, 2.6, 5);
+    g.fadeTarget = 1;
+    F.also(F.move({ pos: [DOOR.x - 5.7, AY + 1.45, DOOR.z + 1.5], look: [DOOR.x - 2.6, AY + 1.35, DOOR.z - 0.3], fov: 48 }, { pos: [DOOR.x - 5.3, AY + 1.55, DOOR.z + 1.2], look: [DOOR.x - 2.4, AY + 1.45, DOOR.z - 0.3], fov: 46 }, 10, sm));
+    F.also(
+      (function* (self) {
+        yield* F.wait(0.9);
+        self.say('Un santo le echó cuatro cerrojos.', 4.6);
+        yield* F.wait(5.2);
+        self.say('Y Braga olvidó.', 3.2);
+      })(this)
+    );
+    yield* F.wait(1.8);
+    for (let k = 0; k < 4; k++) {
+      a && a.play('clawTurn', { x: DOOR.x, y: AY + 2, z: DOOR.z }, { k: 1.1 });
+      g.camRig.shake(0.16);
+      yield* F.wait(0.95);
+    }
+    m.pose('limp', 1.4);
+    yield* F.wait(1.4);
+    m.hide(1.8);
+    this.light(DOOR.x - 3.0, AY + 1.5, DOOR.z + 0.1, 0xffc070, 1.2, 4);
+    yield* F.wait(1.2);
+    g.fadeTarget = 0;
+    yield* F.wait(1.0);
+    this.light(0, 0, 0, 0, 0, 0);
+    this.dropGhosts();
+  }
+
+  // 4. 1167: la hueste almohade ante la muralla este (y en el adarve, los
+  // nuestros)
+  *c_asedio() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
+    this.look('ramparts', { ...MEM, sat: 0.45, density: 0.016 });
+    a && a.music('introAsedio');
+    this.defenders();
+    this.host(1.5);
+    g.fadeTarget = 1;
+    F.also(
+      (function* (self) {
+        yield* F.wait(1.0);
+        self.say('Otoño de 1167. Los almohades, a las puertas.', 5.2);
+        yield* F.wait(2.2);
+        a && a.play('warHorn', { x: 110, y: 3, z: -30 }, { k: 0.8 });
+      })(this)
+    );
+    yield* F.move({ pos: [105, 5.0, -12.5], look: [78, 6.5, -30], fov: 46 }, { pos: [101.5, 3.2, -16.5], look: [77, 7.2, -31], fov: 47 }, 8.5, sm);
+    g.fadeTarget = 0;
+    yield* this.fadeGhosts(0.9);
+  }
+
+  // 5. Alguien, de espaldas, de rodillas sobre una luz roja que sube de
+  // abajo, alza los brazos (no se ve dónde, ni quién: la mitra, si acaso)
+  *c_rodillas() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio,
+      S = g.spring;
+    // (el primer color de la película: el rojo que sube del agua, delante
+    // de él, y que le tiñe)
+    this.look('arena', { ...MEM, fog: 0x000000, density: 0.2, hemi: 0.25, vol: 0, sat: 0.95 });
+    // (desde aquí hasta la calle, la de la campana)
+    a && a.music('introCampana');
+    const ar = this.ghost('arch').at(SPRING.x + 0.72, AY, SPRING.z, -Math.PI / 2).pose('kneel', 0).color([1.0, 0.42, 0.32]).show(1.6);
+    ar.mat.uniforms.uGain.value = 1.5;
+    if (S) S.boost = 0.5;
+    this.light(SPRING.x + 0.1, AY + 0.25, SPRING.z, 0xff3018, 4, 5);
+    g.fadeTarget = 1;
+    F.also(
+      (function* (self) {
+        yield* F.wait(0.9);
+        self.say('Alguien bajó a pedirle que salvara Braga.', 5.4);
+        yield* F.wait(1.8);
+        ar.pose('kraise', 1.8);
+      })(this)
+    );
+    yield* F.move({ pos: [3.9, AY + 0.95, CZ + 1.2], look: [0.4, AY + 0.75, CZ - 0.1], fov: 46 }, { pos: [3.0, AY + 0.9, CZ + 0.8], look: [0.4, AY + 1.0, CZ - 0.1], fov: 44 }, 8, sm);
+    g.fadeTarget = 0;
+    yield* F.wait(0.9);
+    if (S) S.boost = 0;
+    this.light(0, 0, 0, 0, 0, 0);
+    this.dropGhosts();
+  }
+
+  // 6. La campana de la Sé toca sola
+  *c_campana() {
+    yield* this.p_campana('Y la campana tocó sola.');
+  }
+
+  // 7. Los que la oyen se vuelven hacia ella y se arrodillan
+  *c_gente() {
+    yield* this.p_calle('Los que la oyeron se arrodillaron.');
+  }
+
+  // 8. La pared de la celda del fondo, de cerca: NO TE ARRODILLES, y la mano
+  // que lo escribe; se cae y las letras se quedan
+  *c_celda() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
+    this.look('prison', {});
+    g.atmo.override = null;
+    a && a.stopMusic();
+    const P = this.prisoner();
+    g.fadeTarget = 1;
+    F.also(
+      (function* (self) {
+        yield* F.wait(1.8);
+        self.say('Todos, menos uno.', 4.6);
+      })(this)
+    );
+    F.also(F.move({ pos: [CELL.x + 1.15, YD + 1.5, CELL.wall + 1.75], look: [CELL.x + 0.15, YD + 1.3, CELL.wall], fov: 44 }, { pos: [CELL.x + 1.05, YD + 1.55, CELL.wall + 2.0], look: [CELL.x + 0.05, YD + 1.3, CELL.wall], fov: 46 }, 7.6, sm));
+    yield* P.write(7.0, { toll: 3.4 });
+    yield* P.fall(false);
+    yield* F.wait(1.0);
+    g.fadeTarget = 0;
+    yield* F.wait(1.0);
+    g.player.obj.visible = false;
+  }
+
+  // 9. El agua late: lo que no tiene nombre se fija en él
+  *c_mirada() {
+    yield* this.s_mirada('Y lo que no tiene nombre se fijó en él.');
+  }
+
+  // ------------------------------------------------------------ la crónica
   // 1. La fuente: se baja desde la cúpula de la cisterna hasta la reja
   *s_fuente() {
     const g = this.g,
@@ -437,12 +648,7 @@ export class Intro {
       a = g.audio;
     this.look('ramparts', { ...MEM, sat: 0.45, density: 0.016 });
     a && a.music('introAsedio');
-    for (const [z, pose] of [
-      [-31.4, 'shield'],
-      [-29.2, 'spear'],
-      [-26.8, 'shield'],
-    ])
-      this.ghost('soldier').at(74.9, 9, z, Math.PI / 2 + (Math.random() - 0.5) * 0.2).pose(pose, 0).show(1.6 + Math.random());
+    this.defenders();
     this.host(1.5);
     g.fadeTarget = 1;
     F.also(
@@ -457,6 +663,16 @@ export class Intro {
     yield* F.move({ pos: [105, 5.0, -12.5], look: [78, 6.5, -30], fov: 46 }, { pos: [99.5, 2.4, -18.5], look: [77, 7.5, -31], fov: 48 }, 12.5, sm);
     g.fadeTarget = 0;
     yield* this.fadeGhosts(0.9);
+  }
+
+  // los del adarve de la muralla este, entre las almenas
+  defenders() {
+    for (const [z, pose] of [
+      [-31.4, 'shield'],
+      [-29.2, 'spear'],
+      [-26.8, 'shield'],
+    ])
+      this.ghost('soldier').at(74.9, 9, z, Math.PI / 2 + (Math.random() - 0.5) * 0.2).pose(pose, 0).show(1.6 + Math.random());
   }
 
   // la hueste almohade: tres filas frente a la muralla este, mirándola
@@ -651,10 +867,17 @@ export class Intro {
   // 9. La campana toca sola: la torre; la calle, que se vuelve hacia ella;
   // el campo, donde los de fuera dejan las armas y vienen
   *s_campana() {
+    yield* this.p_campana('Entonces la campana de la Sé tocó sola.');
+    yield* this.p_calle('Los que la oyeron se volvieron hacia ella.');
+    yield* this.p_campo('Los de fuera abrieron nuestras puertas, como si alguien los llamara.');
+  }
+
+  // la campana de la torre este, que toca sola: de frente al vano del sur, a
+  // la altura del campanario (una luz fría, para que se vea el bronce)
+  *p_campana(text) {
     const g = this.g,
       F = this.F,
       a = g.audio;
-    // a) la campana
     this.look('city', { ...MEM, sat: 0.42, density: 0.045 });
     const B = this.bell();
     g.setGroupVisible('campanaSe', false);
@@ -662,14 +885,12 @@ export class Intro {
     B.a = 0;
     B.v = 0;
     g.fadeTarget = 1;
-    // (de frente al vano del sur, a la altura del campanario; una luz fría
-    // para que se vea el bronce)
     this.light(9, 19.4, -57.2, 0xaebcff, 2.2, 5);
     F.also(F.move({ pos: [9.4, 18.4, -45.5], look: [9, 19.2, -60], fov: 36 }, { pos: [9.2, 18.9, -49.0], look: [9, 19.3, -60], fov: 34 }, 6.6, sm));
     F.also(
       (function* (self) {
         yield* F.wait(1.4);
-        self.say('Entonces la campana de la Sé tocó sola.', 4.4);
+        self.say(text, 4.4);
       })(this)
     );
     yield* F.wait(1.6);
@@ -684,7 +905,16 @@ export class Intro {
     g.fadeTarget = 0;
     yield* F.wait(0.6);
     this.light(0, 0, 0, 0, 0, 0);
-    // b) la calle: la gente se para, se vuelve hacia la Sé y se arrodilla
+    B.g.visible = false;
+    g.setGroupVisible('campanaSe', true);
+  }
+
+  // la calle: la gente se para, se vuelve hacia la Sé (hacia aquí: la cámara,
+  // calle arriba, los mira de cara) y se arrodilla
+  *p_calle(text) {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
     this.look('city', { ...MEM, sat: 0.4, density: 0.04 });
     const folk = [];
     const spots = [
@@ -697,12 +927,11 @@ export class Intro {
     ];
     for (const [x, z, k] of spots) folk.push(this.ghost(k).at(x, 0, z, Math.random() * 6).pose('stand', 0).show(0.9));
     g.fadeTarget = 1;
-    // (calle arriba, de cara a ellos: se vuelven hacia aquí, hacia la Sé)
     F.also(F.move({ pos: [0.3, 1.7, -27.8], look: [0, 1.4, -12], fov: 50 }, { pos: [0.2, 2.3, -26.8], look: [0, 1.0, -14], fov: 48 }, 7.4, sm));
     F.also(
       (function* (self) {
         yield* F.wait(0.8);
-        self.say('Los que la oyeron se volvieron hacia ella.', 4.2);
+        self.say(text, 4.2);
       })(this)
     );
     a && a.play('bellToll', { x: 9, y: 19, z: -60 }, { k: 0.9 });
@@ -720,8 +949,14 @@ export class Intro {
     yield* F.wait(1.6);
     g.fadeTarget = 0;
     yield* this.fadeGhosts(0.6);
-    // c) el campo: los de fuera bajan las armas, se vuelven hacia la ciudad
-    // y van hacia la puerta, como sonámbulos
+  }
+
+  // el campo: los de fuera bajan las armas, se vuelven hacia la ciudad y van
+  // hacia la puerta, como sonámbulos
+  *p_campo(text) {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
     this.look('ramparts', { ...MEM, sat: 0.42, density: 0.016 });
     const host = this.host(0.6);
     g.fadeTarget = 1;
@@ -729,7 +964,7 @@ export class Intro {
     F.also(
       (function* (self) {
         yield* F.wait(0.9);
-        self.say('Los de fuera abrieron nuestras puertas, como si alguien los llamara.', 5);
+        self.say(text, 5);
       })(this)
     );
     a && a.play('bellToll', { x: 9, y: 19, z: -60 }, { k: 0.6 });
@@ -747,8 +982,6 @@ export class Intro {
     yield* F.wait(3.8);
     g.fadeTarget = 0;
     yield* this.fadeGhosts(0.8);
-    B.g.visible = false;
-    g.setGroupVisible('campanaSe', true);
   }
 
   // 10. El sello: dos canónigos le arrancan la Garra a la puerta, que se
@@ -839,16 +1072,14 @@ export class Intro {
     if (C) C.applyFlags();
   }
 
-  // 11. El preso: en la celda del fondo, escribe con los dedos lo mismo una
-  // y otra vez, hasta que se cae
-  *s_preso() {
+  // El preso (el jugador), de rodillas ante la pared de la celda del fondo:
+  // escribe con los dedos, a trazos (write), y se cae hacia atrás, donde
+  // despertará (fall). Lo mueve el guion, hueso a hueso.
+  prisoner() {
     const g = this.g,
       F = this.F,
       a = g.audio,
       p = g.player;
-    this.look('prison', {});
-    g.atmo.override = null;
-    a && a.stopMusic();
     p.obj.visible = true;
     p.anim.stop(0.01);
     const at = new V3(CELL.x + 0.2, YD, CELL.wall + 0.66);
@@ -870,12 +1101,8 @@ export class Intro {
       foreL: [-44, 0, 0],
     };
     const lying = sampleClip(p.clips.wake, 0, {});
-    const toR = (P) => {
-      const o = {};
-      for (const j in P) o[j] = j === 'root' ? P[j] : P[j].map((v) => v * DEG);
-      return o;
-    };
-    const Wr = toR(W);
+    const Wr = {};
+    for (const j in W) Wr[j] = j === 'root' ? W[j] : W[j].map((v) => v * DEG);
     const pose = (k, t) => {
       // escribe: el brazo va y viene contra la pared, a trazos
       const s = Math.sin(t * 2.7),
@@ -890,6 +1117,61 @@ export class Intro {
       }
       return o;
     };
+    let clock = 0;
+    return {
+      // dur segundos escribiendo, con los susurros alrededor (o.toll: a qué
+      // segundo se oye la campana, lejos; o.step(t): cada fotograma)
+      *write(dur, o = {}) {
+        let t = 0,
+          wh = 0,
+          tolled = false;
+        while (t < dur) {
+          const dt = yield;
+          t += dt;
+          clock += dt;
+          R.apply(pose(0, clock), Wr.root);
+          wh -= dt;
+          if (wh <= 0) {
+            wh = 0.9 + Math.random() * 0.9;
+            a && a.play(Math.random() < 0.5 ? 'whisperNear' : 'whisperClose', { x: CELL.x + (Math.random() - 0.5) * 3, y: YD + 1.6, z: CELL.wall + 1.4 });
+          }
+          if (o.toll !== undefined && t > o.toll && !tolled) {
+            tolled = true;
+            a && a.play('bellToll', { x: 9, y: 19, z: -60 }, { k: 0.5 });
+          }
+          if (o.step) o.step(t);
+        }
+      },
+      // se cae hacia atrás (follow: la cámara le sigue con la mirada)
+      *fall(follow = true) {
+        const from = at.clone(),
+          to = new V3(CELL.x, YD, CELL.z);
+        let t = 0;
+        a && a.play('bodyFall', p.pos);
+        while (t < 1.6) {
+          const dt = yield;
+          t += dt;
+          const k = smoother(t / 1.6);
+          p.obj.position.lerpVectors(from, to, k);
+          p.obj.rotation.y = Math.PI + k * Math.PI;
+          const P = pose(k, clock + t);
+          R.apply(P, P.root);
+          if (follow) F.cam.look.lerp(new V3(CELL.x, YD + 0.4, CELL.z), dt * 2.5);
+        }
+      },
+    };
+  }
+
+  // 11. El preso: en la celda del fondo, escribe con los dedos lo mismo una
+  // y otra vez, hasta que se cae
+  *s_preso() {
+    const g = this.g,
+      F = this.F,
+      a = g.audio;
+    this.look('prison', {});
+    g.atmo.override = null;
+    a && a.stopMusic();
+    const P = this.prisoner();
     g.fadeTarget = 1;
     F.also(
       (function* (self) {
@@ -899,49 +1181,19 @@ export class Intro {
         self.say('Le costó las uñas y la memoria.', 4);
       })(this)
     );
-    let t = 0;
-    let wh = 0;
     // por encima de su hombro, contra la pared escrita
     F.shot([CELL.x - 1.0, YD + 1.65, CELL.wall + 2.6], [CELL.x + 0.1, YD + 1.25, CELL.wall], { fov: 50 });
-    while (t < 9.5) {
-      const dt = yield;
-      t += dt;
-      R.apply(pose(0, t), Wr.root);
-      wh -= dt;
-      if (wh <= 0) {
-        wh = 0.9 + Math.random() * 0.9;
-        a && a.play(Math.random() < 0.5 ? 'whisperNear' : 'whisperClose', { x: CELL.x + (Math.random() - 0.5) * 3, y: YD + 1.6, z: CELL.wall + 1.4 });
-      }
-      if (t > 4.2 && !this._toll) {
-        this._toll = true;
-        a && a.play('bellToll', { x: 9, y: 19, z: -60 }, { k: 0.5 });
-      }
-      if (t < 4.5) F.cam.pos.x = CELL.x - 1.0 + t * 0.06;
-    }
-    this._toll = false;
+    yield* P.write(9.5, { toll: 4.2, step: (t) => t < 4.5 && (F.cam.pos.x = CELL.x - 1.0 + t * 0.06) });
     // se cae hacia atrás, donde despertará
-    const from = at.clone(),
-      to = new V3(CELL.x, YD, CELL.z);
-    t = 0;
-    a && a.play('bodyFall', p.pos);
-    while (t < 1.6) {
-      const dt = yield;
-      t += dt;
-      const k = smoother(t / 1.6);
-      p.obj.position.lerpVectors(from, to, k);
-      p.obj.rotation.y = Math.PI + k * Math.PI;
-      const P = pose(k, 9.5 + t);
-      R.apply(P, P.root);
-      F.cam.look.lerp(new V3(CELL.x, YD + 0.4, CELL.z), dt * 2.5);
-    }
+    yield* P.fall();
     yield* F.wait(1.2);
     g.fadeTarget = 0;
     yield* F.wait(1.0);
-    p.obj.visible = false;
+    g.player.obj.visible = false;
   }
 
   // 12. La mirada: desde la reja, el ídolo; late una vez. Algo se fija en él
-  *s_mirada() {
+  *s_mirada(text = 'Algo, desde abajo, se fijó en él.') {
     const g = this.g,
       F = this.F,
       a = g.audio,
@@ -949,7 +1201,7 @@ export class Intro {
     this.look('arena', { sat: 0.7, density: 0.04, snap: true });
     F.shot([0.35, AY + 0.9, CZ - 0.05], [0.0, AY - 0.9, CZ + 0.6], { fov: 40 });
     g.fadeTarget = 1;
-    this.say('Algo, desde abajo, se fijó en él.', 4.2);
+    this.say(text, 4.2);
     yield* F.wait(1.4);
     if (S) S.boost = 1;
     a && a.play('coreBeat', { x: 0, y: AY - 1, z: CZ }, { k: 1 });
@@ -962,7 +1214,7 @@ export class Intro {
     if (S) S.boost = 0;
   }
 
-  // 13. El título y el rótulo de siempre; y a despertar
+  // 13. El título y, al empezar partida, el rótulo de siempre; y a despertar
   *s_titulo(skipped = false) {
     const g = this.g,
       F = this.F,
@@ -979,6 +1231,7 @@ export class Intro {
     yield* F.wait(skipped ? 2.2 : 4.0);
     this.titleEl.classList.remove('show');
     yield* F.wait(1.6);
+    if (this.cut !== 'intro') return;
     this.say(MSG.intro[0] + '\n' + MSG.intro[1], 3.8);
     yield* F.wait(4.4);
     this.unsay();

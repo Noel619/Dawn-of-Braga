@@ -1,9 +1,11 @@
 // Fotogramas de la introducción (game/intro/intro.js) en los segundos
 // pedidos, en una hoja; debajo de cada uno, el plano y el rótulo que se ve.
 //   node tools/intro.mjs [plano] t1,t2,... [salida.png]
-//   (plano: fuente, roma, martin, se, asedio, arzobispo, puerta, pacto,
-//   campana, sello, preso, mirada, titulo; los segundos, desde que empieza)
-//   COLS=n (4)  W,H (tamaño de cada fotograma: 480x270)
+//   (plano, de la corta: fuente, ara, cerrojos, asedio, rodillas, campana,
+//   gente, celda, mirada, titulo; de la crónica (CUT=cronica): fuente, roma,
+//   martin, se, asedio, arzobispo, puerta, pacto, campana, sello, preso,
+//   mirada, titulo; los segundos, desde que empieza)
+//   CUT=intro|cronica (intro)  COLS=n (4)  W,H (tamaño de cada fotograma: 480x270)
 //   FULL=1  además, una captura de la página entera en cada segundo (con los
 //   rótulos de verdad): tools/shots/intro/<plano>_<t>.png
 //   END=1  sigue hasta que acaba y comprueba que la partida empieza bien
@@ -27,7 +29,7 @@ p.on('console', (m) => {
 await p.goto('http://localhost:5199/?dev=1');
 await p.waitForFunction(() => window.__ready, null, { timeout: 120000 });
 await p.evaluate(
-  ([from, n, COLS, TW, TH]) => {
+  ([from, n, COLS, TW, TH, cut]) => {
     window.__pause = true;
     const g = __game;
     g.ui.closeAll();
@@ -36,9 +38,9 @@ await p.evaluate(
     g.settings.res = 540;
     g.resize();
     g.newGame();
-    if (from !== 'fuente') {
+    if (from !== 'fuente' || cut !== 'intro') {
       g.intro.abort();
-      g.intro.start(() => g.beginPlay(true), { from });
+      g.intro.start(() => g.beginPlay(true), { from, cut });
     }
     const c = document.createElement('canvas');
     c.width = TW * COLS;
@@ -47,7 +49,7 @@ await p.evaluate(
     c.style.cssText = 'display:none';
     document.body.appendChild(c);
   },
-  [from, T.length, COLS, TW, TH]
+  [from, T.length, COLS, TW, TH, process.env.CUT || 'intro']
 );
 let t = 0;
 for (let i = 0; i < T.length; i++) {

@@ -1549,6 +1549,8 @@ export class Interactables {
         this.poseHatch(it, k);
         if (k >= 1) it.opening = false;
       }
+      // (en la introducción, sin el brillo que marca lo que se coge)
+      if ((it.kind === 'item' || it.kind === 'note') && it.glow) it.glow.material.visible = g.state !== 'intro';
       if ((it.kind === 'item' || it.kind === 'note') && it.glow && it.obj.visible) {
         const s = (it.kind === 'item' ? 0.55 : 0.3) * (0.8 + 0.25 * Math.sin(t * 3 + it.x));
         it.glow.scale.set(s, s, 1);

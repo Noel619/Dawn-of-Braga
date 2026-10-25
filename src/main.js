@@ -1,6 +1,7 @@
 // Punto de entrada: carga, bucle principal y ganchos de depuración.
 import './ui/ui.css';
 import { Game } from './game/game.js';
+import { unlockChronicle } from './game/save.js';
 import { loadFonts } from './ui/pixel.js';
 
 const canvas = document.getElementById('gl');
@@ -24,6 +25,9 @@ function boot() {
   window.__game = game;
   document.getElementById('loading').classList.add('hidden');
 
+  // ?cronica=1: la crónica (la introducción larga) en el menú del título,
+  // sin tener que vencer antes al arzobispo
+  if (q.get('cronica')) unlockChronicle();
   if (q.get('dev')) {
     // arranque directo para pruebas: ?dev=1&at=x,y,z&yaw=grados&items=a,b&arma=id
     const items = (q.get('items') || 'espada,escudo').split(',').filter(Boolean);

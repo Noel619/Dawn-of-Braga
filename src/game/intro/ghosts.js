@@ -256,6 +256,15 @@ export class Ghost {
     this.halo.renderOrder = 3;
     this.halo.frustumCulled = false;
     this.rig.joints.chest.add(this.halo);
+    // el farol de Martín: una llama de verdad
+    if (kind === 'martin') {
+      this.lamp = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: getTexture('glow'), color: 0xffb050, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 })));
+      this.lamp.scale.set(0.9, 0.9, 1);
+      this.lamp.position.set(0, -0.22, 0.02);
+      this.lamp.renderOrder = 4;
+      this.lamp.frustumCulled = false;
+      this.rig.joints.handR.add(this.lamp);
+    }
     this.root.visible = false;
     game.scene.add(this.root);
     this.cur = toRad(POSES[o.pose || 'stand']);
@@ -327,6 +336,7 @@ export class Ghost {
     this.mat.uniforms.uFade.value = this.fade;
     this.mat.uniforms.uBase.value = this.root.position.y;
     this.halo.material.opacity = 0.16 * this.fade * this.mat.uniforms.uGain.value;
+    if (this.lamp) this.lamp.material.opacity = this.fade * (0.75 + 0.25 * Math.sin(this.t * 11) * Math.sin(this.t * 3.7));
     this.root.visible = this.fade > 0.002;
     if (!this.root.visible) return;
     // la pose
@@ -397,5 +407,6 @@ export class Ghost {
     this.mat.dispose();
     this.dmat.dispose();
     this.halo.material.dispose();
+    if (this.lamp) this.lamp.material.dispose();
   }
 }

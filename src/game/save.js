@@ -1,6 +1,8 @@
 // Guardado local (localStorage) con tolerancia a fallos.
 const KEY = 'dawnOfBraga.save.v1';
 const SKEY = 'dawnOfBraga.settings.v1';
+// (la crónica, la introducción larga: se desbloquea una vez y para siempre)
+const CKEY = 'dawnOfBraga.cronica.v1';
 
 export function loadSave() {
   try {
@@ -21,6 +23,18 @@ export function writeSave(data) {
 export function clearSave() {
   try {
     localStorage.removeItem(KEY);
+  } catch (e) {}
+}
+export function chronicleUnlocked() {
+  try {
+    return localStorage.getItem(CKEY) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+export function unlockChronicle() {
+  try {
+    localStorage.setItem(CKEY, '1');
   } catch (e) {}
 }
 export function loadSettings() {
