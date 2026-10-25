@@ -16,12 +16,18 @@ Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del docume
   quedó con él: es su cuerpo en la tierra. En la cisterna, lo que une al dios con el mundo es **la fuente sin
   nombre**: la reja de Martín con el boquete, el agua roja y **el ídolo sin mano**. Lo que ata al arzobispo con ella
   **no se ve** (nada de cordón de carne: es cosa del dios, no de la carne).
-- **El ídolo.** Nadie lo talló: piedra negra pulida como el primer día, sin una marca de herramienta. Mira de frente
-  (no hacia abajo), con la cara lisa partida por una costura roja y un ojo que se abre cuando algo le interesa; el
-  brazo derecho alzado acaba en un muñón. **La mano de oro es la Garra**: Martín se la cortó y la escondió con los
-  Inocentes, y hoy la lleva el jugador; por eso los romanos la vieron entera (la lámina II) y en el presente no la
-  tiene. Hay dos formas para elegir: **la estatua** (la de por defecto) y **el monolito** (`?idolo=monolito`: una
-  losa torcida con la figura en relieve y el engaste vacío de la mano). **Lo decide el autor.**
+- **El ídolo es un monolito** (lo decidió el autor: la estatua parecía un robot). Grotesco, tribal, algo que se
+  mira y no se entiende del todo: una piedra de pie que nadie labró, tosca y vencida hacia el que se arrodilla, con
+  la cima rota y hueca, **llena de almas**: caras y manos que empujan la piedra desde dentro, de todos los tamaños,
+  con la boca abierta en un grito y luz dentro; de vez en cuando una grita de verdad y se la oye **pedir auxilio**,
+  ahogada (las vocales de «¡auxilio!», sin la palabra). Por el costado, una grieta encendida con manos agarradas a
+  los bordes; por la espalda, espinazo y costillas; del hueco de arriba, brazos que se estiran o se agarran al
+  borde y, entre ellos, **uno negro y sin mano: la mano de oro es la Garra**, la que Martín le cortó y escondió con
+  los Inocentes y la que hoy lleva el jugador (por eso en la lámina II, con los romanos, la tiene). Lo tribal es lo
+  de los castros: anillos picados alrededor del ojo, espirales, cazoletas, un laberinto, dientes de sierra y manos
+  en negativo de almagre; lo de Martín, los dos zunchos de hierro. El ojo, en la cara de delante: la piedra se
+  retira como unos párpados y lo de dentro (pupila de cabra) mira. La estatua sigue en el modo de pruebas (F2,
+  «Diseño»), para comparar; cuál se ve se recuerda en el navegador.
 - **Los ecos tienen personalidad**: figuras esculpidas, cada una con su cara y con lo suyo (la mitra, el palio y el
   incensario del arzobispo; la capucha, la barba partida, el cayado y el farol de Martín...). El arzobispo de la
   cisterna, la primera forma del jefe, anuncia al coloso: la joroba, la jaula por cara, la mitra partida en dos
@@ -47,10 +53,12 @@ Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del docume
     sin resolver nada, casi a oscuras, sin enseñar lo que luego se juega (ni la puerta, ni los Velados, ni el pacto);
   - **la Crónica de Braga**, la larga (~3 min), que lo cuenta todo en orden; se desbloquea en el menú del título al
     vencer al arzobispo (o con `?cronica=1`).
-- **Dos láminas**, dibujadas (no en 3D) como grabados iluminados, en `arte/bocetos/`: **I · El arzobispo,
-  consumido** (de rodillas y de espaldas ante el ídolo, con los brazos en alto, la cisterna roja hasta los bordes y
-  los que se arrodillaron en la penumbra) y **II · Los que la encontraron primero** (los romanos rompen la roca a la
-  luz de las antorchas y dan con la estatua, todavía con su mano de oro). Se dibujan con `tools/bocetos/`.
+- **Dos láminas**, dibujadas (no en 3D) como grabados iluminados, en `arte/bocetos/`, ya con el monolito (el del
+  juego, visto con la cámara de cada lámina): **I · El arzobispo, consumido** (de rodillas y de espaldas ante él,
+  con los brazos en alto, el ojo abierto y las almas que gritan, la cisterna roja hasta los bordes y los que se
+  arrodillaron en la penumbra) y **II · Los que la encontraron primero** (los romanos rompen la roca a la luz de las
+  antorchas y dan con él, todavía con la garra de oro en alto). Las de la estatua quedan en
+  `archive/bocetos_estatua/`. Se dibujan con `tools/bocetos/`.
 
 ## 1. Lo que el juego ya cuenta
 

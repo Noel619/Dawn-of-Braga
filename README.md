@@ -267,14 +267,19 @@ cirial de hierro de la capilla (un jefe: mazazos, barridos, cera ardiendo y, a m
 hasta que cae no deja echar la cadena; en la capilla queda su breviario. Al examinarla, la puerta dice qué le
 falta. Abierta, al otro lado espera la cisterna y, en su centro, **la fuente sin nombre**, por donde el dios toca el
 mundo: la reja de Martín, arrancada donde se arrodilló el arzobispo, el agua negra que late con una luz roja por
-debajo y, encima, **el ídolo**, una estatua de seis metros y medio que nadie talló (piedra negra pulida
-como el primer día, sin una marca de herramienta), erguida y de frente: la cara lisa partida de arriba abajo por
-una costura roja con un ojo que se entreabre al que se acerca, la diadema y el halo de púas, el cuello de anillos,
-el manto abierto sobre un costillar con una brasa al fondo, glifos de oro de una escritura que no es de nadie y el
-brazo derecho alzado, terminado en el muñón de la mano que le cortó Martín (la Garra, que es la que llevas). La
-cabeza sigue muy despacio a quien se acerca y de cerca se le oye susurrar. Para comparar, con `?idolo=monolito`
-es en su lugar un monolito torcido de más de siete metros con la misma figura en relieve y el engaste vacío de la
-mano (la forma definitiva está por decidir).
+debajo y, encima, **el ídolo: un monolito** de siete metros y medio que nadie labró, tosco, partido en lajas,
+vencido hacia el que se arrodilla y con la cima rota y hueca, **lleno de almas**: por toda la piedra empujan
+desde dentro caras y manos de todos los tamaños (algunas más grandes que un hombre, alguna del revés, alguna que
+se derrite, alguna a medio salir), con la boca abierta en un grito y luz dentro. Respiran; de vez en cuando una
+grita de verdad (empuja más, se le enciende la boca y se la oye, ahogada por la piedra, pedir auxilio), y más
+cuanto más te acercas. Por el costado le baja una grieta honda y encendida a cuyos bordes se agarran manos; por la
+espalda se le marcan un espinazo y unas costillas; del hueco de arriba salen brazos que se estiran hacia la
+cúpula o se agarran al borde y, entre ellos, uno negro con dos codos que se arquea sobre el que se arrodilla y no
+tiene mano: la mano de oro es la Garra, la que le cortó Martín y la que llevas. Encima, lo de los de los castros:
+anillos picados alrededor del ojo, espirales, cazoletas, un laberinto, dientes de sierra y manos en negativo de
+almagre al pie; y los dos zunchos de hierro de Martín. En la cara de delante, el ojo: la piedra se le retira como
+unos párpados y lo de dentro, con la pupila de cabra, mira a quien se acerca. (La otra forma, la estatua, sigue en
+el modo de pruebas: «Diseño», F2.)
 
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
@@ -606,6 +611,10 @@ caza, gruta, enloquecer, calmar, matarlo), curar, todas las armas y objetos, cam
 zona y altar, guardar y volver a una posición, la ventana de parry en pantalla y un registro de parrys y golpes de
 gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cierra.
 
+- **Diseño (por decidir):** las variantes que aún se están eligiendo, sin tocar la dirección: la forma del ídolo
+  de la fuente (el monolito o la estatua; se cambia en pleno juego, vale también para la introducción y se
+  recuerda en el navegador), ir a la cisterna a verlo, ver la introducción o la crónica (vuelven al título) y
+  poner la crónica en el menú del título.
 - **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
   la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
@@ -653,26 +662,26 @@ src/
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el
-                        escultor de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario
-                        (turiferario.js; sus manos y su cara, esculpidas aparte y más finas, en
-                        turiferario_hero.js; el vestido de catedral, en turiferario_dress.js), Deo Ignoto
-                        (deo.js, deo_skeleton.js) y el Web Worker que los genera
-                        (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el escultor
+                        de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario (turiferario.js; sus
+                        manos y su cara, esculpidas aparte y más finas, en turiferario_hero.js; el vestido de
+                        catedral, en turiferario_dress.js), Deo Ignoto (deo.js, deo_skeleton.js) y el Web Worker que
+                        los genera (el Descoyuntado: descoyuntado.js, el cuerpo; desc_moves.js, golpes, esquivas y
                         guardia; desc_mind.js, el acecho, la furia y lo que aprende de ti; el Empalado:
-                        impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y
-                        beast.js, cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán;
-                        morador.js, Miguel, el tonelero infectado (sus posturas: llorar, encogerse, morderse
-                        el brazo, ahorcado); leonor.js, Leonor, la Dolorosa; guardian.js, los Velados;
-                        paio.js, Dom Paio, vivo y convertido; custodio.js, el Custodio de la Garra;
-                        catacumbas.js, el Cavador, la Emparedada y el Enrodado; turibulario_model.js, el
-                        arzobispo transfigurado de la cisterna; idol.js, el ídolo de la fuente, la estatua y
-                        el monolito); sculpt.js (no el de colossus/), geometrías esculpidas para los rigs
-                        (superficies, troncos, telas con sus pliegues, faldones, cabezas con rasgos y manos
-                        con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan los ecos
-                        y el arzobispo); armas:
-                        weapons.js (registro y clips comunes), weapon_moves.js (golpes del facón, el
-                        hacha, la lanza y la katana), weapon_models.js (modelos) y weapon_common.js (agarre)
+                        impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y beast.js,
+                        cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán; morador.js, Miguel, el
+                        tonelero infectado (sus posturas: llorar, encogerse, morderse el brazo, ahorcado); leonor.js,
+                        Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido;
+                        custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la Emparedada y el Enrodado;
+                        turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, el ídolo de la
+                        fuente: cuál de las dos formas, la estatua y lo que comparten; idol_monolith_geo.js, la
+                        geometría del monolito y sus almas, que se calcula en un hilo de fondo (idol_worker.js), e
+                        idol_monolith.js, su montaje y lo que se mueve); sculpt.js (no el de colossus/), geometrías
+                        esculpidas para los rigs (superficies, troncos, telas con sus pliegues, faldones, cabezas con
+                        rasgos y manos con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan
+                        los ecos y el arzobispo); armas: weapons.js (registro y clips comunes), weapon_moves.js
+                        (golpes del facón, el hacha, la lanza y la katana), weapon_models.js (modelos) y
+                        weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
                         y la de capas, con escaleras y pisos), interfaz, iconos, guardado, textos y cinemáticas
                         (speech.js: los bocadillos de diálogo; house.js: el guion de la Casa del Alemán, sus oleadas y
@@ -683,9 +692,9 @@ src/
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
                         sus figuras, cada una con su cara y su ropa); spring.js: la fuente sin nombre de la cisterna
-                        (el agua roja, su latido, las pavesas y el ídolo, que vuelve la cabeza, abre el ojo y susurra
-                        a quien se acerca); cutscene.js: la de la bodega; hunt.js: la caza en las bodegas;
-                        breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
+                        (el agua roja, su latido, las pavesas y el ídolo, que mira, abre el ojo y susurra, y sus
+                        almas, que gritan a quien se acerca); cutscene.js: la de la bodega; hunt.js: la caza en las
+                        bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
                         film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
@@ -710,8 +719,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
                         intro.mjs      fotogramas de la introducción (o de la crónica: CUT=cronica) desde un
                                        plano, en los segundos que se pidan, con sus rótulos; END=1 sigue hasta
-                                       el final y comprueba que la partida empieza bien; IDOLO=monolito, con
-                                       el ídolo en forma de monolito
+                                       el final y comprueba que la partida empieza bien; IDOLO=estatua, con
+                                       la estatua en vez del monolito
                         filmclip.mjs   busca los momentos de la película con la cámara metida en algo (una
                                        rejilla de rayos desde la cámara) y dice qué plano del guion es
                         filmaudio.mjs  mide lo que le cuesta al hilo de audio la película (grabación y
@@ -779,12 +788,15 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         bocetos/       las láminas de arte, dibujadas por código como grabados iluminados (un
                                        estudio de valores que se graba a buril con líneas que siguen la forma,
                                        contornos a pluma y aguadas de color): lib.js, el motor; arzobispo.js y
-                                       romanos.js, las dos láminas; `node tools/bocetos/render.mjs arzobispo
-                                       [salida.png]` (o `romanos`) dibuja una (tarda unos minutos)
+                                       romanos.js, las dos láminas; mono3d.js, el monolito del juego visto con
+                                       la cámara de una lámina (su silueta, su tono y lo que arde, para el
+                                       grabado); `node tools/bocetos/render.mjs arzobispo [salida.png]` (o
+                                       `romanos`) dibuja una (tarda un minuto)
 arte/bocetos/           las láminas: «I · El arzobispo, consumido» (de rodillas y de espaldas ante el
-                        ídolo, en la cisterna roja, la noche de la campana) y «II · Los que la
-                        encontraron primero» (los romanos, que rompen la roca y dan con la estatua,
-                        todavía con su mano de oro)
+                        monolito lleno de almas, con el ojo abierto, en la cisterna roja, la noche de la
+                        campana) y «II · Los que la encontraron primero» (los romanos, que rompen la roca y
+                        dan con el monolito, todavía con la garra de oro en alto)
+archive/bocetos_estatua/ las mismas láminas cuando el ídolo era la estatua
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)
