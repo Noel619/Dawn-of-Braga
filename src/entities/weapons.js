@@ -396,7 +396,7 @@ function swordMoves({ G }) {
 }
 
 // ---------------------------------------------------------------- Solingen
-// La espada del abuelo de Henrique: se maneja como la del carcelero (es una
+// La espada del padre de Henrique: se maneja como la del carcelero (es una
 // espada de su misma familia), pero su acero corta un 35 % más.
 const SOLINGEN_K = 1.35;
 function solingenMoves(o) {

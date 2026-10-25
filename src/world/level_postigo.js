@@ -3,7 +3,7 @@
 // Del patio del Postigo sale hacia el norte, bajo un arco, un callejón que
 // tuerce en un recodo (con unas alminhas, el retablillo de las ánimas) y
 // desemboca en una plazuela. Al fondo, la Casa del Alemán: una casa grande de
-// entramado, como las de la tierra del abuelo, con la chimenea humeando y una
+// entramado, como las de la tierra del padre, con la chimenea humeando y una
 // luz en la ventana alta. Ahí resiste Henrique, el cuchillero, mientras los
 // demonios aporrean su puerta. Dentro: la sala con el hogar, el taller, la
 // alcoba, la cocina y la despensa, de donde baja la escalera del sótano. Del
@@ -529,7 +529,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
 
   // ------------------------------------------------------------ dentro
   wb.setRoom(room);
-  // --- la sala: el hogar con el escudo del abuelo y el estandarte del
+  // --- la sala: el hogar con el escudo del padre y el estandarte del
   // águila negra del Imperio, la mesa larga y los bancos
   P.hearth(ctx, 50, 0, H.z0 + H.t, 's', { room, w: 2.2, pot: true, fire: 0.5, radius: 7 });
   // el escudo del cruzado (amarillo con el águila negra) y su espada que ya
@@ -849,7 +849,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
     ['i_tablon6', 38.6, 0.12, -100.6],
   ])
     L.interact.push({ kind: 'item', id, item: 'tablon', x, y, z });
-  // los documentos: la carta del abuelo, en la mesa de la sala; la oración
+  // los documentos: la carta del padre, en la mesa de la sala; la oración
   // de Leonor, junto a sus velas del sótano
   L.interact.push({ kind: 'note', id: 'n_abuelo', note: 'abuelo', x: 49.8, y: 0.82, z: -106.4, model: 'paper' });
   L.interact.push({ kind: 'note', id: 'n_leonor', note: 'leonor', x: 46.3, y: Y + 0.02, z: -108.5, model: 'paper' });

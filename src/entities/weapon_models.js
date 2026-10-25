@@ -243,7 +243,7 @@ export function buildParts(parts, matFn = null) {
 }
 
 // ------------------------------------------------------------- Solingen
-// La espada del abuelo de Henrique, del Sacro Imperio: hoja ancha y larga de
+// La espada del padre de Henrique, del Sacro Imperio: hoja ancha y larga de
 // filos paralelos que se afilan al final, con un vaceo hondo y la inscripción
 // incrustada en hierro (IN NOMINE DOMINI), guarda recta y ancha de hierro
 // pavonado, puño de cuero sobre madera y pomo de rueda.

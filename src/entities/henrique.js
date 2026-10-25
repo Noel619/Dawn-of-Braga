@@ -113,7 +113,7 @@ export const HENRIQUE_CLIPS = {
     [1.4, { hips: [80, 0, 0], chest: [8, 0, 0], head: [20, 30, 0], root: [0, -76, 0], armL: [-150, 0, 30], armR: [-30, 0, -50], legL: [-10, 0, 5], legR: [-5, 0, -5] }, 'in'],
     [2.0, { hips: [86, 0, 0], chest: [4, 0, 0], head: [20, 30, 0], root: [0, -79, 0], armL: [-150, 0, 30], armR: [-30, 0, -50], legL: [-4, 0, 5], legR: [-4, 0, -5] }],
   ]),
-  // ofrece algo con las dos manos (la espada del abuelo, la llave)
+  // ofrece algo con las dos manos (la espada del padre, la llave)
   give: clip('give', 2.2, [
     [0, { ...BASE }],
     [0.6, { ...BASE, chest: [16, 0, 0], head: [10, 0, 0], armL: [-62, 0, 8], foreL: [-34, 0, 0], handL: [-20, 0, 0], armR: [-58, 0, -6], foreR: [-40, 0, 0], handR: [10, 0, 0] }],

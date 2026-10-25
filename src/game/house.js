@@ -11,7 +11,7 @@
 //  4. Vencidas: abre la puerta, cuenta quién es y te pide que le ayudes a
 //     hacer de la casa un sitio seguro: tapiar las cinco ventanas rotas (un
 //     tablón cada una; él te da martillo y clavos). Los tablones, por ahí.
-//  5. Tapiadas las cinco: te da la espada de su abuelo (de Solingen) y la
+//  5. Tapiadas las cinco: te da la espada de su padre (de Solingen) y la
 //     llave del sótano, y te cuenta lo de Leonor.
 //  6. Después reza junto al hogar; vencida Leonor, por fin descansa.
 //

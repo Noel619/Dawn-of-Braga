@@ -2,9 +2,10 @@
 // la historia se cuenta sobre todo con el escenario.
 
 export const ITEMS = {
-  // Armas (weapon: id en src/entities/weapons.js). Orden en el que se
-  // encontrarán: facón, hacha, lanza, espada y katana sagrada. Las cuatro
-  // nuevas todavía no están colocadas en el mundo.
+  // Armas (weapon: id en src/entities/weapons.js). El hacha y la lanza
+  // todavía no están colocadas en el mundo. El facón y la katana no son de
+  // su tiempo (el juego pasa en 1167): no se colocan; quedan para algún
+  // guiño escondido.
   facon: {
     name: 'Facón criollo',
     desc: 'Cuchillo largo de un marinero del Río de la Plata, con guardas de plata en S. Corto y veloz: tajos que se encadenan y una puñalada que remata.',
@@ -224,13 +225,13 @@ Al que tañere bien la lista le abrirá la Hermandad su arca, donde guarda la sa
   },
   carcelero: {
     title: 'Nota del carcelero',
-    text: `Tercera noche del asedio.
+    text: `Duodécima noche del asedio.
 
-Los de fuera ya no gritan. Cantan, toda la noche, frente a la muralla, en una lengua que no es de hombres.
+Los de fuera ya no gritan. Cantan, toda la noche, frente a la muralla, y no en su lengua: en una que no es de hombres.
 
 El arzobispo bajó otra vez a la cripta con dos canónigos. Sólo subieron ellos dos.
 
-Al preso de la primera celda lo dejo sin comer. Que Dios me perdone: no pienso abrir esa puerta.`,
+Al preso de la primera celda lo dejo sin comer. Ya no es un hombre. Que Dios me perdone: no pienso abrir esa puerta.`,
   },
   madre: {
     title: 'Carta sin terminar',
@@ -276,7 +277,7 @@ Dejo la palanca junto al yunque. Con ella se arrancan los tablones de la barrica
     title: 'Diario del canónigo',
     text: `El arzobispo lo encontró bajo la cripta, en lo que dejaron los romanos: un altar sin nombre. DEO IGNOTO.
 
-Dijo que era un regalo. Que nos protegería del asedio.
+Dijo que era un regalo. Que San Pablo ya lo había anunciado en Atenas: al dios desconocido. Que nos protegería del asedio.
 
 Los sitiadores no lo trajeron: lo oyeron. La campana de la catedral tocó sola la noche de la caída, y ellos abrieron nuestras puertas como si alguien los llamara.
 
@@ -373,17 +374,19 @@ Y debajo, a carbón, alguien lo ha pasado a romance:
     title: 'Inscripción romana',
     text: `DEO IGNOTO
 
-Debajo, en letra más antigua, alguien ha traducido a carbón:
+Debajo hubo más, en letra más antigua, pero alguien lo picó a cincel hace mucho: sólo quedan las muescas.
 
-«Lo que se ofrece a la oscuridad, la oscuridad lo devuelve multiplicado.»`,
+Y debajo, a carbón, de una mano reciente y firme:
+
+«Lo que vosotros adoráis sin conocerlo, eso os anuncio yo.»`,
   },
   arzobispo: {
     title: 'Últimas palabras del arzobispo',
-    text: `Yo abrí la puerta. Le di la ciudad para salvarla.
+    text: `Esta noche bajo a la fuente que cerró Martín. Me ha hablado desde el agua: salvará Braga si alguien baja a pedírselo de rodillas.
 
-El Turiferario guarda el camino al río. Arde por mí. Quema el incienso que yo le pedí.
+Si no vuelvo, otro terminará lo que yo empiece. Me ha dicho quién: el preso de la celda del fondo, bajo el castillo. El que no se arrodilla.
 
-Si eres tú, condenado, tú que no te arrodillaste: toma mi anillo y termina lo que yo no supe terminar. Abre con él mi sacristía, en la cripta de los mártires: se baja por la puerta de este sepulcro. Lo que queda del incienso negro está allí.`,
+Si eres tú, condenado, toma mi anillo. Abre con él mi sacristía, en la cripta de los mártires: se baja por la puerta de este sepulcro. Lo que queda del incienso negro está allí.`,
   },
   tabernero: {
     title: 'Cuentas de la taberna del Cuervo',
@@ -418,20 +421,25 @@ Anoche el tordo del canónigo se tumbó y no volvió a levantarse. Esta mañana 
 He echado la tranca de la puerta que da a los Pellejeros. Por aquí no entra nadie más.`,
   },
   celda: {
-    title: 'Arañazos en la pared',
-    text: `Alguien grabó con las uñas, una y otra vez:
+    title: 'En la pared de la celda',
+    text: `Con sangre, a dedo, una y otra vez, por las cuatro paredes:
 
-NO TE ARRODILLES`,
+NO TE ARRODILLES
+
+En algunas letras se ha quedado pegada una uña.
+
+Te miras las manos.`,
   },
+  // (el id se queda: es el que guardan las partidas)
   abuelo: {
-    title: 'Carta del abuelo de Henrique',
+    title: 'Carta del padre de Henrique',
     text: `En latín de clérigo, y debajo, en romance, de otra mano:
 
 Yo, Heinrich, hijo de Konrad el espadero, de Solingen en el condado de Berg, crucé el mar con los de Colonia y vi caer Lisboa. Me quedé en esta tierra por una mujer de Braga y por su Dios, que es el mío.
 
 La espada la forjó mi padre a orillas del Wupper y la bendijo el arzobispo de Colonia antes de embarcar. No la he desenvainado contra cristiano.
 
-A mi nieto: que la saque sólo contra lo que no es de Dios.`,
+A mi hijo: que la saque sólo contra lo que no es de Dios.`,
   },
   sanmartin: {
     title: 'Lápida de San Martín de Dumio',
@@ -519,7 +527,7 @@ Las velas están encendidas. Alguien las cambia.`,
 
 «Los mártires de Braga, los que no quisieron echar incienso al dios de abajo. Aquí los trajeron a todos. La rueda, los garfios y la sangre se quedaron con ellos. Su sangre la guarda la pila de abajo: que no corra.»
 
-Debajo, a punta de cuchillo: «La noche de la caída bajó el arzobispo por aquí, solo, con su anillo y su incensario.»`,
+Debajo, a punta de cuchillo: «La noche de la caída bajó el arzobispo por aquí, solo, con su incensario y algo de oro envuelto en la estola.»`,
   },
   incienso: {
     title: 'Libro del rito, de mano del arzobispo',
@@ -551,7 +559,7 @@ Siete noches te he rezado. Siete velas. Siete puñales tienes en el pecho y ning
 
 Tú callas. Henrique calla. Sólo la tierra me contesta: bajo la casa se oye cantar.
 
-Dice que me lo devuelve si bajo a buscarlo. Que me lo devuelve multiplicado.
+Dice que me lo devuelve si bajo a buscarlo.
 
 Voy a rezar más abajo.`,
   },
@@ -562,7 +570,7 @@ export const DIALOG = {
   // asomado a la ventana alta mientras aporrean su puerta (al azar)
   henriqueWindow: [
     '¡Fuera! ¡Fuera de mi casa, engendros!',
-    '¡No entraréis! ¡Por el alma de mi abuelo que no entraréis!',
+    '¡No entraréis! ¡Por el alma de mi padre que no entraréis!',
     '¡Dios, si me oyes, manda a alguien!',
     '¡Leonor no está! ¡Aquí no hay nada para vosotros!',
   ],
@@ -583,18 +591,18 @@ export const DIALOG = {
   henriqueHit: ['¡Toma, bestia!', '¡Fuera!', '¡A mi casa no!'],
   // ya a salvo: quién es y lo que pide
   henriqueLore: [
-    'Se acabó... por ahora. Me llamo Henrique. Henrique Alemão, cuchillero, como mi padre y como el suyo.',
-    'Mi abuelo vino del norte con los cruzados de Colonia, el año que se tomó Lisboa. Era de Solingen, a orillas del Wupper, donde se forjan las mejores hojas de la Cristiandad.',
+    'Se acabó... por ahora. Me llamo Henrique. Henrique Alemão, cuchillero, como mi padre. Y su padre forjaba espadas.',
+    'Mi padre vino del norte con los cruzados de Colonia, el año que se tomó Lisboa. Era de Solingen, a orillas del Wupper, donde se forjan las mejores hojas de la Cristiandad.',
     'Se quedó en Braga por una mujer. Y trajo consigo una espada del Sacro Imperio, forjada por su padre y bendecida por el arzobispo de Colonia.',
     'En la hoja aún se lee: IN NOMINE DOMINI. Nunca la ha tocado nadie más que nosotros.',
     'No me pidas que me vaya. ¿A dónde? Las puertas de la muralla están cerradas, y la Sé... ya sabes lo que hay en la Sé.',
-    'Pero si me ayudas a hacer de esta casa un sitio seguro, a tapiar las ventanas que han roto, la espada de mi abuelo es tuya. Te lo juro por su alma.',
+    'Pero si me ayudas a hacer de esta casa un sitio seguro, a tapiar las ventanas que han roto, la espada de mi padre es tuya. Te lo juro por su alma.',
     'Clavos y martillo tengo: tómalos. Lo que me falta es madera. Busca tablones: en el taller del carpintero, aquí enfrente, y en el patio de la leña, detrás de la casa. Donde los haya.',
   ],
   // mientras faltan ventanas (n: las que faltan)
   henriqueBoards: (n) => [n === 1 ? 'Sólo falta una ventana. Una.' : `Faltan ${n} ventanas. Un tablón por ventana, y que aguante.`, 'Mira en el taller del carpintero, en el patio de la leña... y en el callejón, que esta noche hay de todo tirado.'],
   // todas tapiadas: la espada, la llave y Leonor
-  henriqueReward1: ['Ahora sí. Que vengan, que se rompan los dientes contra la madera.', 'Te prometí la espada de mi abuelo. Tómala. Que haga contigo lo que hizo con él: volver vivo.'],
+  henriqueReward1: ['Ahora sí. Que vengan, que se rompan los dientes contra la madera.', 'Te prometí la espada de mi padre. Tómala. Que haga contigo lo que hizo con él: volver vivo.'],
   henriqueReward2: [
     'Hay... hay algo más. No te lo he dicho antes porque me avergüenza.',
     'Mi mujer, Leonor, está en el sótano. Desde que se nos murió Tomé, de las fiebres del asedio, no comía, no dormía. Rezaba a la Dolorosa día y noche.',
@@ -603,7 +611,7 @@ export const DIALOG = {
   ],
   henriqueReward3: ['Toma la llave del sótano. Yo no tengo valor.', 'Si todavía es ella... dale descanso.'],
   henriqueAfter: ['Ve con Dios. Yo me quedo aquí, junto al fuego, con lo que me queda.', 'La oigo llorar a través del suelo. Toda la noche.'],
-  henriqueGrief: ['Ya no la oigo. Por fin calla.', 'Gracias. Que Dios se la lleve con nuestro Tomé.', 'Esa espada es tuya. Mi abuelo diría que está en buenas manos.'],
+  henriqueGrief: ['Ya no la oigo. Por fin calla.', 'Gracias. Que Dios se la lleve con nuestro Tomé.', 'Esa espada es tuya. Mi padre diría que está en buenas manos.'],
   // Leonor, en su gruta (sobre su cabeza)
   // Dom Paio, el canónigo que bajó tras el arzobispo (en la capilla de San
   // Martín, y luego en el pozo)
@@ -616,10 +624,15 @@ export const DIALOG = {
     'Le arrancamos la Garra a la cerradura y la puerta se cerró sola. Quemaba. A Mendo se le quedó pegada a las manos, y no la soltó hasta el relicario.',
     'Allí se quedó, con ella. Los muertos de esa cámara la guardan mejor que nosotros.',
   ],
+  // (te conoce por lo que canta el arzobispo, que se oye por la reja de la
+  // Confesión; y te avisa: nadie sabe lo que hay detrás de la puerta)
   paioMeet2: [
-    'Tú... tú eres el preso. El de la primera celda. El que no se arrodilló.',
-    'El arzobispo hablaba de ti. Decía que tú terminarías lo que él empezó. No sé si eso es una gracia o una condena.',
-    'Mientras él siga cantando ahí dentro, la ciudad no despierta. Si de verdad vas a abrir esa puerta, que sea para hacerle callar.',
+    'Tus manos... Tú eres el preso de la celda del fondo, bajo el castillo. El que no se arrodilla.',
+    'Lo sé porque él canta de ti. Por la reja de la Confesión se le oye, noche tras noche: canta que vendrás.',
+    'Canta que caerás muchas veces, y que cada vez te levantarán. No sé quién. No sé si eso es una gracia o una condena.',
+    'Escúchame bien: no sabes lo que hay detrás de esa puerta. Yo tampoco. Nadie lo sabe. El arzobispo creía saberlo.',
+    'Mientras él siga cantando, la ciudad no despierta. Si abres esa puerta, que sea para hacerle callar.',
+    'Y no te creas más fuerte que lo que te espera. Eso mismo creía él.',
   ],
   // lo que le falta a la puerta (uno cada vez que se le habla)
   paioHint: {
@@ -629,7 +642,7 @@ export const DIALOG = {
     incienso: ['El incienso negro se quedó en su sacristía, en la cripta de los mártires. Sólo su anillo la abre, y el anillo lo dejó en su sepulcro.', 'Ya se daba por muerto cuando bajó.'],
     velados: ['Los Velados están al otro lado del pórtico. No se apartan más que ante el obispo de Braga.', 'Tendrás que tumbarlos a los dos. La pila de los Condenados está debajo de ellos.'],
   },
-  paioRest: ['Yo me quedo aquí, con el santo. Alguien tiene que rezarle.', 'Si caes, vuelve a esta capilla. San Martín no le cierra la puerta a nadie.'],
+  paioRest: ['Yo me quedo aquí, con el santo. Alguien tiene que rezarle.', 'Si caes, te levantarás en alguna capilla. Reza por que sea el santo quien te levanta.'],
   // convertido, en el pozo
   paioHollowIntro: ['Que no corra... que no corra...', '¡No la echarás! ¡Nadie la echa!'],
   paioHollowFight: ['¡Que no corra!', 'Mendo... ¿me oyes, Mendo?', 'Sabe mi nombre... sabe mi nombre...', 'De profundis... de profundis...', '¡Atrás, en nombre de...! ¿De quién?'],
@@ -709,7 +722,7 @@ export const MSG = {
   carcelSube: 'Subes por la escalera de mano a la sala de los guardas.',
   carcelBaja: 'Bajas por la escalera de mano al cuerpo de guardia de la cárcel.',
   libroPresos:
-    'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo ya no come. Reza de noche, pero no a Dios. Los otros se arriman a la reja para no oírle.»',
+    'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo no come. Toda la noche discute con alguien que no está, y le dice que no. Escribe en la pared con los dedos; ya no tiene uñas. Los otros se arriman a la reja para no oírle.»',
   primerObispo: 'El sepulcro más viejo del panteón, en el fondo del pozo. El obispo tiene la cara tapada con un paño de piedra, como los Velados. En el canto de la tapa, en latín, y debajo, a carbón, en romance: «FUI EL PRIMERO QUE BAJÓ, Y EL PRIMERO QUE NO QUISO VER».',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
   // el osario de los hermanos de Dumio (la cripta de San Martín)
