@@ -1,7 +1,9 @@
 // Modo desarrollador: F2 abre un panel para probar el juego (invulnerable,
 // aguante infinito, volar atravesando paredes, velocidad del juego, IA
 // congelada o ciega, el estado de cada criatura sobre su cabeza, órdenes al
-// Descoyuntado, teletransporte, objetos y armas, el parry...). Se abre en
+// Descoyuntado, teletransporte, objetos y armas, el parry...) y elegir entre
+// las variantes de diseño que están por decidir (la forma del ídolo de la
+// fuente; se recuerda en el navegador), sin tocar la dirección. Se abre en
 // localhost, desde la IP del autor o, en cualquier sitio, tecleando la
 // contraseña del modo de pruebas en cualquier momento (access.js); a
 // cualquier otro jugador F2 no le hace nada.
@@ -15,6 +17,9 @@ import { ITEMS, AREA_NAMES } from '../game/story.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { INSTANCES, goInstance, killSigil, skipPhase, BossDebug } from './instances.js';
 import { Editor } from './editor.js';
+import { IDOL, IDOL_KINDS } from '../entities/idol.js';
+import { SPRING, CISTERN } from '../world/level_finale.js';
+import { unlockChronicle, chronicleUnlocked } from '../game/save.js';
 
 const CSS = `
 #devpanel { position: fixed; top: 8px; right: 8px; width: 318px; max-height: calc(100vh - 16px); overflow-y: auto; z-index: 50;
@@ -160,6 +165,10 @@ export class DevMode {
     el.innerHTML = `
       <div class="dh"><span>MODO DE PRUEBAS</span><span>F2</span></div>
       <div class="di" id="dev-info"></div>
+      <div class="ds"><div class="dt">Diseño (por decidir)</div>
+        ${B('idolKind', 'Ídolo: —', 'act')}${B('seeIdol', 'Ir a verlo', 'act')}
+        ${B('intro', 'Ver la introducción', 'act')}${B('chronicle', 'Ver la crónica', 'act')}${B('chronTitle', 'Crónica en el título', 'act')}
+      </div>
       <div class="ds"><div class="dt">Jugador</div>
         ${B('god', 'Invulnerable')}${B('stamina', 'Aguante infinito')}${B('fly', 'Volar (atraviesa muros)')}
         ${B('speed', 'Velocidad ×1')}${B('heal', 'Curar', 'act')}${B('weapons', 'Todas las armas', 'act')}${B('items', 'Todos los objetos', 'act')}${B('weapon', 'Arma: —', 'act')}
@@ -241,6 +250,8 @@ export class DevMode {
     q('button[data-k="slow"]').textContent = `Velocidad del juego ×${this.timeScale}`;
     const w = this.g.player.weapon;
     q('button[data-a="weapon"]').textContent = `Arma: ${w ? w.id : '—'}`;
+    q('button[data-a="idolKind"]').textContent = `Ídolo: ${IDOL.kind}`;
+    q('button[data-a="chronTitle"]').classList.toggle('on', chronicleUnlocked());
   }
 
   // ------------------------------------------------------------ ajustes y órdenes
@@ -395,6 +406,30 @@ export class DevMode {
         break;
       case 'playerHere':
         if (!this.editor.playerHere()) this.note('La cámara no apunta a ningún suelo');
+        break;
+      // ---- variantes de diseño
+      case 'idolKind': {
+        // la estatua o el monolito, en pleno juego (y la próxima vez)
+        const next = IDOL_KINDS[(IDOL_KINDS.indexOf(IDOL.kind) + 1) % IDOL_KINDS.length];
+        g.spring.setKind(next);
+        this.note(`El ídolo de la fuente: ${next}. Se recuerda en este navegador (y vale también para la introducción).`);
+        break;
+      }
+      case 'seeIdol':
+        // a la cisterna, a la entrada, mirándolo
+        this.teleport(SPRING.x - 12, CISTERN.AY, SPRING.z, Math.PI / 2);
+        break;
+      case 'intro':
+      case 'chronicle':
+        // (como la crónica desde el título: el mundo como al empezar, sin
+        // tocar la partida guardada; al acabar, al título)
+        this.close();
+        if (a === 'intro') g.playIntro();
+        else g.playChronicle();
+        break;
+      case 'chronTitle':
+        unlockChronicle();
+        this.note('La Crónica de Braga ya está en el menú del título.');
         break;
       case 'iphash':
         myIpHash().then((r) => this.note(r ? `IP ${r.ip}\nhuella ${r.hash}` : 'No se pudo averiguar la IP pública'));

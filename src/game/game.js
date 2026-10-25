@@ -605,6 +605,19 @@ export class Game {
     this.intro.start(() => this.beginPlay(true));
   }
 
+  // La introducción corta, vista desde el modo de pruebas: como la crónica
+  playIntro() {
+    this.newState();
+    this.applyWorldState();
+    this.ui.closeAll();
+    this.audio.stopMusic();
+    this.state = 'intro';
+    this.fadeTarget = 0;
+    this.player.spawn(START.x, START.y, START.z, START.yaw);
+    this.camRig.snapTo(this.player);
+    this.intro.start(() => this.toTitle());
+  }
+
   // La crónica (la introducción larga), vista desde el título: el mundo como
   // al empezar, sin tocar la partida guardada; al acabar, de vuelta al título
   playChronicle() {
