@@ -559,12 +559,13 @@ function weather(geo) {
 }
 // el ojo y la costura: para cada vértice de la cabeza, cuánto se cierra la
 // piedra sobre la cuenca (aLid: lo que se mueve con el ojo cerrado) y lo que
-// arde (aGlow: x, la costura; y, la brasa del pecho; z, el muñón)
+// arde (aGlow: x, la costura; y, la brasa del pecho; z, el muñón; w, el
+// borde de la cuenca, que arde con el ojo abierto)
 function lidsAndGlow(geo, which) {
   const P = geo.attributes.position.array;
   const n = P.length / 3;
   const lid = new Float32Array(n * 3);
-  const glow = new Float32Array(n * 3);
+  const glow = new Float32Array(n * 4);
   const qi = HQ.clone().invert();
   const v = V(0, 0, 0);
   for (let i = 0; i < n; i++) {
@@ -577,6 +578,8 @@ function lidsAndGlow(geo, which) {
         const half = eyeHalf(h.y);
         const ax = Math.abs(h.x);
         const inside = ax <= half + 0.03;
+        // el borde de la cuenca, en carne viva (se ve con el ojo abierto)
+        glow[i * 4 + 3] = Math.exp(-(((ax - half) / 0.035) ** 2)) * (1 - sstep(0.6, 0.95, Math.abs(dy)));
         // dentro de la cuenca y en su borde: se cierra del todo; fuera, se
         // estira un poco
         const w = inside ? 1 : Math.max(0, 1 - (ax - half - 0.03) / 0.16);
@@ -592,7 +595,7 @@ function lidsAndGlow(geo, which) {
             const z2 = faceZ(x2, h.y) - 0.045 * Math.exp(-((x2 / 0.022) ** 2));
             off = V(x2 - h.x, 0, (z2 - h.z) * wy);
             // la costura: lo que queda en el fondo del surco
-            glow[i * 3] = Math.exp(-((x2 / 0.012) ** 2)) * wy;
+            glow[i * 4] = Math.exp(-((x2 / 0.012) ** 2)) * wy;
           } else off = V(-Math.sign(h.x) * (half + 0.03) * 0.3 * k, 0, 0);
           off.applyQuaternion(HQ);
           lid[i * 3] = off.x;
@@ -603,18 +606,18 @@ function lidsAndGlow(geo, which) {
     } else if (which === 'body') {
       // la brasa: el fondo del hueco del pecho
       const d = Math.hypot(v.x / 0.7, (v.y - 9.05) / 1.1, (v.z - 1.1) / 0.5);
-      if (d < 1 && v.z < 1.75) glow[i * 3 + 1] = Math.pow(1 - d, 1.4);
+      if (d < 1 && v.z < 1.75) glow[i * 4 + 1] = Math.pow(1 - d, 1.4);
       // el muñón: la cara del corte
       const A = ARM.R;
       const dd = A.wr.clone().sub(A.el).normalize();
       const rel = v.clone().sub(A.wr);
       const along = rel.dot(dd);
       const across = rel.clone().addScaledVector(dd, -along).length();
-      if (Math.abs(along) < 0.08 && across < 0.38) glow[i * 3 + 2] = 1 - across / 0.38;
+      if (Math.abs(along) < 0.08 && across < 0.38) glow[i * 4 + 2] = 1 - across / 0.38;
     }
   }
   geo.setAttribute('aLid', new THREE.BufferAttribute(lid, 3));
-  geo.setAttribute('aGlow', new THREE.BufferAttribute(glow, 3));
+  geo.setAttribute('aGlow', new THREE.BufferAttribute(glow, 4));
   return geo;
 }
 

@@ -9,6 +9,7 @@
 // el código pero sin enganchar; ver finale/director.js.)
 import * as THREE from 'three';
 import { DEEP } from '../world/level_crypt2.js';
+import { SANCT } from '../world/level_finale.js';
 
 export const INSTANCES = [
   { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
@@ -130,12 +131,13 @@ export async function goInstance(g, id) {
   const F = g.finale;
   switch (id) {
     case 'arzobispo': {
-      // ante la niebla de la cisterna, con la Puerta del Dios Ignoto abierta:
-      // se cruza y empieza la pelea
+      // ante la niebla de la cisterna (en la boca del Círculo, al fondo del
+      // Pasillo de los Gigantes), con la Puerta del Dios Ignoto abierta: se
+      // cruza y empieza la pelea
       prepare(g, { ...finale({}), ...Object.fromEntries(GOD.map((k) => [k, true])), 'door:d_dios': true });
       const b = g.bosses.turibulario;
       if (b) b.reset();
-      place(g, -17.2, DY_DAIS, -152, Math.PI / 2);
+      place(g, 0, DY_DAIS, SANCT.portal.z0 - 1.5, 0);
       const fog = g.interact.list.find((i) => i.id === 'f_boss');
       if (fog) g.enterFog(fog);
       return true;

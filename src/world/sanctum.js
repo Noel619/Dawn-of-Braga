@@ -271,6 +271,8 @@ function circleFloor(ctx, room) {
     const m = PC / Math.max(Math.abs(c), Math.abs(s));
     return V3(c * m, AY, CZ + s * m);
   };
+  const Pt = SANCT.portal,
+    D = SANCT.door;
   const outer = (t) => {
     const c = Math.cos(t),
       s = Math.sin(t);
@@ -278,12 +280,17 @@ function circleFloor(ctx, room) {
     // (hasta el borde de la sima)
     if (s > 0 && Math.abs(c * r) < A.x1 + 0.3) r = Math.min(r, (A.lip - CZ) / s);
     if (s > 0 && Math.abs(c) * ((A.lip - CZ) / s) < A.x1 && CZ + s * RO > A.lip) r = Math.min(r, (A.lip - CZ) / s);
+    // (y hasta el suelo de la boca del norte y el de la galería del este: si
+    // no, los dos suelos, uno encima del otro, parpadean)
+    if (s < 0 && Math.abs(c * r) < Pt.w / 2 + 0.8) r = Math.min(r, (CZ - Pt.z1) / -s);
+    if (c > 0 && Math.abs(s * r) < D.w / 2 + 0.7) r = Math.min(r, (SANCT.R + 0.3) / c);
     return V3(c * r, AY, CZ + s * r);
   };
   for (let k = 0; k < N; k++) {
     const t0 = (k / N) * TAU,
       t1 = ((k + 1) / N) * TAU;
-    wb.quad('flag', sq(t0), outer(t0), outer(t1), sq(t1), { ao: false, sub: 2.5, room, uv: 0.5, tint: [0.62, 0.58, 0.54] });
+    // (cara arriba: del cuadro hacia el muro, en el sentido de t)
+    wb.quad('flag', sq(t0), sq(t1), outer(t1), outer(t0), { ao: false, sub: 2.5, room, uv: 0.5, tint: [0.62, 0.58, 0.54] });
   }
   // (la colisión: el marco del cuadro, hasta el muro y el borde de la sima)
   const R = SANCT.R + 0.4;
@@ -448,7 +455,8 @@ function portal(ctx, room) {
   const Pt = SANCT.portal,
     hw = Pt.w / 2;
   const top = SANCT.nave.ceil[SANCT.nave.ceil.length - 1][1];
-  wb.box('flag', -hw, AY - 0.3, Pt.z0, hw, AY, Pt.z1, { faces: 't', ao: false, sub: 2, room, uv: 0.5 });
+  // (el suelo, también bajo las jambas: la rejilla deja pisar un dedo más)
+  wb.box('flag', -hw - 0.7, AY - 0.3, Pt.z0, hw + 0.7, AY, Pt.z1, { faces: 't', ao: false, sub: 2, room, uv: 0.5 });
   ctx.col.add(-hw, AY - 1, Pt.z0, hw, AY, Pt.z1);
   // las jambas y los machones, hasta el arranque
   for (const s of [-1, 1]) {
@@ -522,7 +530,9 @@ function nave(ctx, room, C) {
     const z = segs[k][0],
       yHi = segs[k - 1][2],
       yLo = segs[k][2];
-    wb.box('ashlar', N.x0, yLo, z - 0.5, N.x1, yHi, z, { faces: 'n', sub: 1.6, ao: false, room, tint: AT });
+    // (con su cara de abajo: desde el pasillo, mirando arriba, se veía el
+    // vacío por la rendija entre los dos techos)
+    wb.box('ashlar', N.x0, yLo, z - 0.5, N.x1, yHi, z, { faces: 'nb', sub: 1.6, ao: false, room, tint: AT });
   }
   // el muro del sur (el de la boca del círculo) y el del norte (el del arco
   // del atrio), con sus vanos
@@ -534,7 +544,8 @@ function nave(ctx, room, C) {
     [hw, N.x1],
   ]) {
     wb.box('ashlar', a, AY, N.z1, b, yS, N.z1 + 0.4, { faces: 'n', sub: 1.6, aoH: 1.6, room, tint: CT });
-    wb.box('ashlar', a, AY, N.z0 - 0.4, b, yN, N.z0, { faces: 's', sub: 1.6, aoH: 1.6, room, tint: CT });
+    // (el del norte, por las dos caras: por la otra da al atrio)
+    wb.box('ashlar', a, AY, N.z0 - 0.4, b, yN, N.z0, { faces: 'ns', sub: 1.6, aoH: 1.6, room, tint: CT });
   }
   // el arco grande del atrio
   const aw = SANCT.nave.aisle * 2;
@@ -576,7 +587,9 @@ function narthexAndPaso(ctx, room) {
   const Nx = SANCT.narthex,
     Ps = SANCT.paso;
   // el atrio
-  wb.box('flag', Nx.x0, AY - 0.3, Nx.z0, Nx.x1, AY, Nx.z1, { faces: 't', ao: false, sub: 2.5, room, uv: 0.5 });
+  // (el suelo, hasta debajo de los muros: en la esquina del este quedaba un
+  // palmo sin él)
+  wb.box('flag', Nx.x0 - 0.5, AY - 0.3, Nx.z0 - 0.5, Nx.x1 + 0.5, AY, Nx.z1, { faces: 't', ao: false, sub: 2.5, room, uv: 0.5 });
   ctx.col.add(Nx.x0, AY - 1, Nx.z0, Nx.x1, AY, Nx.z1);
   wb.box('ashlar', Nx.x0, AY, Nx.z0 - 0.5, Nx.x1, Nx.top, Nx.z0, { faces: 's', sub: 1.6, aoH: 1.6, room, tint: CT });
   wb.box('ashlar', Nx.x0 - 0.5, AY, Nx.z0, Nx.x0, Nx.top, Nx.z1, { faces: 'e', sub: 1.6, aoH: 1.6, room, tint: CT });
@@ -600,6 +613,9 @@ function narthexAndPaso(ctx, room) {
   wb.box('ashlar', Ps.x1, AY, Ps.z0, Ps.x1 + 0.5, Ps.top, Ps.z1, { faces: 'w', sub: 1.6, aoH: 1.6, room, tint: CT });
   wb.box('ashlar', Ps.x0, AY, Ps.z1, Ps.x1, Ps.top, Ps.z1 + 0.4, { faces: 'n', sub: 1.6, aoH: 1.6, room, tint: CT });
   barrelVault(ctx, { x0: Ps.x0, z0: Ps.z0, x1: Ps.x1, z1: Ps.z1, axis: 'z', ys: Ps.top - 1.35, rise: 1.35, mat: 'mossstone', tint: VT, room, sub: 1.0, impostTint: AT });
+  // su boca en el atrio: un arco con sus enjutas (la clave del paso queda por
+  // encima del arranque de la bóveda del atrio: sin ellas, una rendija)
+  archRing(ctx, { axis: 'x', c: (Ps.x0 + Ps.x1) / 2, w: Ps.x1 - Ps.x0, y0: Ps.top - 1.35, rise: 1.35, ring: 0.25, t0: Nx.z1, t1: Nx.z1 + 0.3, top: Nx.top, clip: [Ps.x0, Ps.x1], mat: 'ashlar', spMat: 'ashlar', room, tint: AT, spTint: CT, cam: true });
   ctx.col.add(Ps.x0, Ps.top, Ps.z0, Ps.x1, Ps.top + 0.5, Ps.z1).cam = true;
   for (const z of [-158.5, -169, -179.5]) P.wallTorch(ctx, Ps.x1 - 0.02, AY + 2.4, z, 'w', { room, radius: 6, dyn: 2 });
   // huesos y velas apagadas por el suelo
@@ -667,6 +683,21 @@ function riverGallery(ctx, C, L) {
   ctx.col.add(-2, -1, -196.4, 2, 0, zW);
   ctx.col.add(-2.6, 0, zN, x0, spr + 1.4, zN + 0.5);
   ctx.col.add(2, 0, zW - 0.5, x1, spr + 1.4, zW);
+  // la boca, en la roca del círculo: jambas y un arco de sillería con sus
+  // enjutas (cierran lo que dejaba la roca entre el círculo y la galería)
+  {
+    const room = 'crypt';
+    const ta = SANCT.R - 0.7,
+      tb = SANCT.R + 0.8;
+    for (const [za, zb, f] of [
+      [zA - 0.6, zA, 'ws'],
+      [zB, zB + 0.6, 'wn'],
+    ]) {
+      wb.box('ashlar', ta, AY, za, tb, AY + spr, zb, { faces: f, sub: 1.4, aoH: 1.2, room, tint: AT });
+      ctx.col.add(ta, AY, za, tb, AY + spr + 2, zb);
+    }
+    archRing(ctx, { axis: 'z', c: D.z, w: D.w, y0: AY + spr, rise: D.w / 2, ring: 0.5, t0: ta, t1: tb, top: AY + D.h + 0.8, clip: [zA - 0.6, zB + 0.6], mat: 'ashlar', spMat: 'ashlar', rooms: [room, tr], tint: AT, spTint: CT, cam: true });
+  }
   // las bóvedas
   barrelVault(ctx, { x0: SANCT.R + 0.3, x1: x1, z0: zA, z1: zB, axis: 'x', ys: AY + spr, mat: 'mossstone', tint: VT, room: tr, sub: 1.0, impostTint: AT });
   barrelVault(ctx, { x0, x1, z0: zS, z1: zA, axis: 'z', ys: AY + spr, mat: 'mossstone', tint: VT, room: tr, sub: 1.0, impostTint: AT });

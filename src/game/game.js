@@ -898,10 +898,17 @@ export class Game {
     }
     if (!b || b.dead) return;
     this.audio.play('fog');
-    // cruzar la niebla
+    // cruzar la niebla (y quedar dentro de su vano, aunque se llame desde
+    // lejos: las pruebas y las instancias del modo desarrollador)
     const dir = it.enter ?? -1;
-    if (it.axis === 'x') p.body.pos.z = it.z + dir * 2.2;
-    else p.body.pos.x = it.x + dir * 2.2;
+    const half = Math.max(0, (it.w ?? 2) / 2 - 0.5);
+    if (it.axis === 'x') {
+      p.body.pos.z = it.z + dir * 2.2;
+      p.body.pos.x = Math.max(it.x - half, Math.min(it.x + half, p.body.pos.x));
+    } else {
+      p.body.pos.x = it.x + dir * 2.2;
+      p.body.pos.z = Math.max(it.z - half, Math.min(it.z + half, p.body.pos.z));
+    }
     p.body.pos.y = this.world.col.groundHeight(p.body.pos.x, p.body.pos.z, 0.3, p.body.pos.y + 1);
     p.visY = p.body.pos.y;
     p.yaw = it.axis === 'x' ? (dir < 0 ? Math.PI : 0) : dir < 0 ? -Math.PI / 2 : Math.PI / 2;

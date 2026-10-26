@@ -8,32 +8,32 @@
 // (lo que significan se va sabiendo jugando) y casi nada de lo que luego se
 // juega a la vista: nada de la puerta, los Velados ni el pacto.
 //
-//   fuente     negro; del agua roja se sube por el ídolo hasta su cara
+//   fuente     negro; de la fuente se sube, hacia el fondo, a la cara de la estatua
 //   ara        las letras del ara romana, de muy cerca: DEO IGNOTO
 //   cerrojos   un monje con un farol, de espaldas, en lo oscuro; cuatro golpes
 //   asedio     1167: la hueste almohade ante la muralla
-//   rodillas   alguien de rodillas ante el ídolo, con los brazos en alto
+//   rodillas   alguien de rodillas ante la estatua, con los brazos en alto
 //   campana    la campana de la Sé toca sola
 //   gente      la calle: los que la oyen se arrodillan
 //   celda      la pared de la celda del fondo: NO TE ARRODILLES. No todos
-//   mirada     el ídolo vuelve la cara y abre el ojo: se fija en uno de ellos
+//   mirada     la estatua vuelve la cara y abre el ojo: se fija en uno de ellos
 //   titulo     Dawn of Braga; «Braga. Tercera noche después de la caída.»
 //
 // 'cronica', lo que pasó, en orden y explicado (larga; se desbloquea al
 // vencer al arzobispo y se ve desde el título):
 //
-//   fuente     la cisterna: de la cúpula a la cara del ídolo
+//   fuente     la cisterna: de lo alto del círculo a la cara de la estatua
 //   roma       el templo romano: el ara, DEO IGNOTO
 //   martin     la antesala: Martín ante la puerta, los que se taparon la cara
 //   se         la Sé encima, en la niebla
 //   asedio     1167: la muralla, el campamento almohade, los defensores
 //   arzobispo  el templo: de rodillas ante el ara; sus canónigos
 //   puerta     la antesala: abre lo que Martín cerró
-//   pacto      la cisterna: mete las manos en el agua; el ídolo abre el ojo
+//   pacto      la cisterna: mete las manos en el agua; la estatua abre el ojo
 //   campana    la campana de la Sé toca sola: la calle, el campo
 //   sello      la antesala: dos canónigos arrancan la Garra y cierran
 //   preso      la celda del fondo: NO TE ARRODILLES, con los dedos
-//   mirada     el ídolo vuelve la cara y abre el ojo: algo se fija en él
+//   mirada     la estatua vuelve la cara y abre el ojo: algo se fija en él
 //   titulo     Dawn of Braga
 //
 // Se saltan manteniendo «interactuar». Al acabar (o al saltarla) todo vuelve
@@ -321,8 +321,9 @@ export class Intro {
   // ------------------------------------------------------------ la corta
   // (la de empezar partida: lo justo, sin explicar; casi todo a oscuras,
   // para que no se vea dónde)
-  // 1. Negro, el goteo; la fuente: del agua roja, a los pies del ídolo, se
-  // sube por él hasta la cara (la costura, el ojo que no se ha abierto)
+  // 1. Negro, el goteo; la fuente: del agua negra del centro del círculo se
+  // sube, hacia el fondo, hasta la cara de la estatua (la costura, el ojo
+  // que no se ha abierto)
   *c_fuente() {
     const EYE = eyeAt();
     const g = this.g,
@@ -339,7 +340,7 @@ export class Intro {
     yield* F.wait(1.8);
     g.fadeTarget = 1;
     if (S) S.boost = 0.15;
-    yield* F.move(A, { pos: [-3.1, EYE.y - 0.55, CZ + 1.0], look: [EYE.x, EYE.y + 0.05, EYE.z], fov: 42 }, 8.5, smoother);
+    yield* F.move(A, { pos: [EYE.x - 1.4, EYE.y - 0.45, EYE.z - 4.6], look: [EYE.x, EYE.y + 0.05, EYE.z], fov: 42 }, 8.5, smoother);
     g.fadeTarget = 0;
     yield* F.wait(0.9);
     if (S) S.boost = 0;
@@ -428,8 +429,9 @@ export class Intro {
     yield* this.fadeGhosts(0.9);
   }
 
-  // 5. Alguien, de espaldas, de rodillas ante el ídolo, sobre la luz roja que
-  // sube del agua, alza los brazos (no se ve quién: la mitra, si acaso)
+  // 5. Alguien, de espaldas, de rodillas en la fuente, cara a la estatua del
+  // fondo, sobre la luz roja que sube del agua, alza los brazos (no se ve
+  // quién: la mitra, si acaso)
   *c_rodillas() {
     const g = this.g,
       F = this.F,
@@ -437,16 +439,16 @@ export class Intro {
       S = g.spring;
     // (el primer color de la película: el rojo que sube del agua, delante
     // de él, y que le tiñe)
-    this.look('arena', { ...MEM, fog: 0x050000, density: 0.08, hemi: 0.25, vol: 0, sat: 0.95 });
+    this.look('arena', { ...MEM, fog: 0x050000, density: 0.045, hemi: 0.25, vol: 0, sat: 0.95 });
     // (desde aquí hasta la calle, la de la campana)
     a && a.music('introCampana');
-    const ar = this.ghost('arch').at(SPRING.x - 2.3, AY, SPRING.z, Math.PI / 2).pose('kneel', 0).color([1.0, 0.42, 0.32]).show(1.6);
+    const ar = this.ghost('arch').at(SPRING.x, AY, SPRING.z - 2.7, 0).pose('kneel', 0).color([1.0, 0.42, 0.32]).show(1.6);
     ar.mat.uniforms.uGain.value = 1.5;
     if (S) {
       S.boost = 0.5;
       S.eyeTo = 0.25;
     }
-    this.light(SPRING.x - 1.2, AY + 0.4, SPRING.z, 0xff2a14, 9, 9);
+    this.light(SPRING.x, AY + 0.4, SPRING.z - 1.4, 0xff2a14, 9, 9);
     g.fadeTarget = 1;
     F.also(
       (function* (self) {
@@ -456,8 +458,9 @@ export class Intro {
         ar.pose('kraise', 1.8);
       })(this)
     );
-    // por detrás de él, bajo: él contra la luz y, encima, el ídolo
-    yield* F.move({ pos: [-8.3, AY + 0.95, CZ + 1.7], look: [0, AY + 2.5, CZ], fov: 56 }, { pos: [-7.5, AY + 1.05, CZ + 1.2], look: [0, AY + 2.9, CZ], fov: 54 }, 8, sm);
+    // por detrás de él, bajo: él contra la luz y, al fondo, encima de todo,
+    // la estatua
+    yield* F.move({ pos: [-1.6, AY + 0.95, CZ - 9.4], look: [0, AY + 3.0, CZ + 5], fov: 56 }, { pos: [-1.0, AY + 1.05, CZ - 8.6], look: [0, AY + 3.5, CZ + 5], fov: 54 }, 8, sm);
     g.fadeTarget = 0;
     yield* F.wait(0.9);
     if (S) {
@@ -512,8 +515,8 @@ export class Intro {
   }
 
   // ------------------------------------------------------------ la crónica
-  // 1. La fuente: desde la cúpula de la cisterna, con su corona de velas,
-  // hasta la cara del ídolo
+  // 1. La fuente: desde lo alto del círculo de la cisterna, con su corona de
+  // velas, hasta la cara de la estatua del fondo
   *s_fuente() {
     const EYE = eyeAt();
     const g = this.g,
@@ -532,8 +535,9 @@ export class Intro {
         self.say('Nadie sabe qué duerme en ella.', 4.2);
       })(this)
     );
-    // de la cúpula, con la corona de velas, a la cara del ídolo
-    yield* F.move({ pos: [-4.5, AY + 8.2, CZ + 4.5], look: [0, AY + 2.0, CZ], fov: 50 }, { pos: [-3.2, EYE.y - 0.4, CZ + 1.2], look: [EYE.x, EYE.y, EYE.z], fov: 44 }, 12.5, smoother);
+    // de lo alto, con la corona de velas y la fuente debajo, a la cara de la
+    // estatua
+    yield* F.move({ pos: [-4.5, AY + 8.2, CZ - 4.5], look: [0, AY + 1.0, CZ], fov: 50 }, { pos: [EYE.x - 1.8, EYE.y - 0.3, EYE.z - 5.2], look: [EYE.x, EYE.y, EYE.z], fov: 44 }, 12.5, smoother);
     g.fadeTarget = 0;
     yield* F.wait(0.9);
   }
@@ -823,8 +827,9 @@ export class Intro {
     this.showEnemy(VR, false);
   }
 
-  // 8. El pacto: de rodillas ante el ídolo, mete las manos por el boquete de
-  // la reja; el agua se enciende, se vuelve rojo y el ídolo abre el ojo
+  // 8. El pacto: de rodillas en la fuente, cara a la estatua, mete las manos
+  // por el boquete de la reja; el agua se enciende, se vuelve rojo y la
+  // estatua abre el ojo
   *s_pacto() {
     const EYE = eyeAt();
     const g = this.g,
@@ -833,7 +838,7 @@ export class Intro {
       S = g.spring;
     this.look('arena', { ...MEM, sat: 0.6, density: 0.03 });
     // (de rodillas en el boquete de la reja, ante el ídolo: las manos, al agua)
-    const ar = this.ghost('arch').at(SPRING.x - 1.8, AY, SPRING.z, Math.PI / 2).pose('kneel', 0).show(1.4);
+    const ar = this.ghost('arch').at(SPRING.x, AY, SPRING.z - 2.35, 0).pose('kneel', 0).show(1.4);
     ar.mat.uniforms.uGain.value = 1.4;
     if (S) S.eyeTo = 0;
     g.fadeTarget = 1;
@@ -845,14 +850,14 @@ export class Intro {
         self.say('Y lo que había dentro se quedó con él.', 4.6);
       })(this)
     );
-    // de lado: él, de perfil, y encima el ídolo
-    F.shot([-3.2, AY + 1.5, CZ + 3.6], [-0.9, AY + 1.6, CZ], { fov: 50 });
+    // de lado y algo por detrás: él, casi de perfil, y al fondo la estatua
+    F.shot([-4.2, AY + 1.4, CZ - 5.2], [0, AY + 1.8, CZ - 1.2], { fov: 50 });
     yield* F.wait(1.6);
     ar.pose('reach', 1.6);
     yield* F.wait(1.8);
     // el agua se enciende
     let t = 0;
-    a && a.play('burn', { x: -1.2, y: AY, z: CZ }, { k: 1.2 });
+    a && a.play('burn', { x: 0, y: AY, z: CZ - 1.5 }, { k: 1.2 });
     while (t < 2.4) {
       const dt = yield;
       t += dt;
@@ -865,7 +870,7 @@ export class Intro {
     if (S) S.eyeTo = 1;
     a && a.play('coreBeat', { x: 0, y: AY + 4, z: CZ }, { k: 1.1 });
     ar.pose('kraise', 0.9);
-    yield* F.move({ pos: [-3.2, AY + 1.5, CZ + 3.6], look: [-0.9, AY + 1.6, CZ], fov: 50 }, { pos: [-4.2, AY + 1.2, CZ + 2.9], look: [EYE.x, EYE.y - 0.6, EYE.z], fov: 48 }, 2.6, sm);
+    yield* F.move({ pos: [-4.2, AY + 1.4, CZ - 5.2], look: [0, AY + 1.8, CZ - 1.2], fov: 50 }, { pos: [-4.6, AY + 1.3, CZ - 5.6], look: [EYE.x, EYE.y - 0.5, EYE.z], fov: 30 }, 2.6, sm);
     yield* F.wait(2.4);
     if (S) S.boost = 0.4;
     g.fadeTarget = 0;

@@ -177,8 +177,10 @@ export function cisternSpring(ctx, room, VT) {
   const wb = ctx.wb;
   const { AY } = CISTERN;
   const { x: cx, z: cz, r: R1, rim: R2, water: YW, holeR } = SPRING;
+  // (N, múltiplo de 8: el anillo llega justo a las esquinas del cuadro; con
+  // 28 quedaban cuatro rendijas sin suelo)
   const PC = FLOOR_C,
-    N = 28;
+    N = 32;
   const rng = new RNG(1691);
   const C = (t, r, y) => V3(cx + Math.cos(t) * r, y, cz + Math.sin(t) * r);
   // el suelo de alrededor (del brocal al cuadro) y la sangre encima

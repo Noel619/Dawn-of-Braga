@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { sm, smoother, lerp, easeIn } from './film.js';
 import { FP } from './film_player.js';
 import { CISTERN, PIT_SLAB } from '../../world/level_finale.js';
+import { idolEye } from '../../entities/idol.js';
 import { clamp } from '../../core/util.js';
 import { objMat } from '../../gfx/materials.js';
 import { sampleSurface } from './collapse.js';
@@ -30,10 +31,10 @@ const _v = new V3(),
   _m = new THREE.Matrix4();
 
 const { cz: CZ, AY } = CISTERN;
-// dónde se arrodilla el arzobispo (donde se arrodilló: delante del ídolo, que
-// se alza en el centro de la fuente; de cara al jugador) y dónde queda el
-// jugador (en la losa del borde del pozo)
-const ARCH = { x: -3.4, z: CZ, yaw: 0 };
+// dónde se arrodilla el arzobispo (donde se arrodilló: en la fuente, por el
+// boquete de la reja, de cara a la estatua del fondo y al jugador, que queda
+// entre los dos, en la losa del borde del pozo, de espaldas a la sima)
+const ARCH = { x: 0, z: CZ - 2.6, yaw: 0 };
 const PL = { x: 0.15, z: PIT_SLAB.z + 0.1, yaw: Math.PI };
 // el gigante sube del pozo mirando al sur: su raíz, tan al norte que la
 // joroba (7,3 m por delante de la raíz cuando está encogido) asoma junto a
@@ -163,6 +164,12 @@ export function* actRise(D, o = {}) {
   }
   F.setP(PL.x, AY, PL.z, PL.yaw);
   F.pClip(FP.kneelGrip, { blend: 0.01 });
+  // la estatua del fondo lo mira todo, con el ojo abierto: a él
+  const S = g.spring;
+  if (S) {
+    S.eyeTo = 1;
+    S.lookAt = new V3(home.x, AY + 1.2, home.z);
+  }
   p.anim.stop(0.01);
   g.combat.clear();
   const flesh = buildFlesh();
@@ -184,8 +191,8 @@ export function* actRise(D, o = {}) {
   g.fadeTarget = 1;
   let t = 0;
   const boil = { t: 0, k: 0 };
-  // por encima del hombro del jugador
-  F.shot([PL.x + 1.25, AY + 2.3, PL.z + 2.9], [home.x - 0.3, AY + 1.9, home.z], { fov: 48 });
+  // por encima del hombro del jugador (desde el borde de la sima)
+  F.shot([PL.x + 1.25, AY + 2.3, PL.z + 1.1], [home.x - 0.3, AY + 1.9, home.z], { fov: 48 });
   F.hand = 0.03;
   if (e) a && a.enemyVoice(e, 'hurt');
   a && a.play('bellToll', { x: 0, y: 4, z: CZ }, { k: 0.6 });
@@ -229,7 +236,20 @@ export function* actRise(D, o = {}) {
     a && a.enemyVoice(e, 'alert');
     a && a.play('stoneCreak', home, { k: 0.7 });
   }
-  yield* F.wait(1.4);
+  yield* F.wait(0.5);
+  // lo que mira: la cara de la estatua del fondo, de cerca y desde abajo; el
+  // ojo, abierto del todo, clavado en él, y la sima que se enciende
+  {
+    const E = idolEye();
+    F.also(F.move({ pos: [E.x - 0.9, E.y - 1.4, E.z - 2.7], look: [E.x, E.y - 0.1, E.z], fov: 40 }, { pos: [E.x - 0.6, E.y - 1.1, E.z - 2.2], look: [E.x, E.y, E.z], fov: 36 }, 1.7, sm));
+    a && a.play('coreBeat', E, { k: 1 });
+    t = 0;
+    while (t < 1.7) {
+      const dt = yield;
+      t += dt;
+      if (S) S.boost = Math.min(0.8, t * 0.9);
+    }
+  }
   // ---------------------------------------------------------- 3. la carne
   // la sangre hierve; la carne del dios brota, le sube por el cuerpo y le
   // envuelve en un capullo que se hincha
@@ -277,7 +297,7 @@ export function* actRise(D, o = {}) {
   // ---------------------------------------------------------- 4. el suelo se hunde
   // grietas, polvo; el cuadro del centro se parte en losas que caen al pozo y
   // el capullo se hunde con ellas. El jugador se tambalea en el borde
-  F.shot([4.6, AY + 1.3, PL.z + 1.4], [0, AY - 1.0, CZ + 0.5], { fov: 62 });
+  F.shot([4.6, AY + 1.3, PL.z + 0.6], [0, AY - 1.0, CZ + 0.5], { fov: 62 });
   a && a.play('stoneCreak', home, { k: 1.6 });
   a && a.play('crack', home, { k: 1.4 });
   g.camRig.shake(0.6);
@@ -295,14 +315,16 @@ export function* actRise(D, o = {}) {
     const dt = yield;
     t += dt;
     st.sink = easeIn(t / 1.6) * 9;
-    // (el ídolo se hunde con el suelo: se lo lleva lo que sube)
-    if (g.spring) g.spring.sink = Math.max(0.001, st.sink);
     flesh.grp.position.y = AY - st.sink;
     red.y = AY - st.sink * 0.6;
   }
   st.gone = true;
   flesh.grp.visible = false;
-  if (g.spring) g.spring.sink = 99;
+  // (la estatua se queda en su sima, mirando el pozo)
+  if (S) {
+    S.boost = 0.25;
+    S.lookAt = new V3(0, AY - 4, CZ);
+  }
   if (e) {
     e.obj.visible = false;
     e.shadow && (e.shadow.visible = false);
@@ -433,8 +455,8 @@ export function* actRise(D, o = {}) {
     }
     red.intensity = 40;
   }
-  // (b) desde abajo, junto al muro: la espalda empuja la cúpula, que se raja
-  F.shot([9.5, AY + 1.2, -141.2], [0, CISTERN.YT + 1, CZ], { fov: 70 });
+  // (b) desde abajo, junto al muro: la espalda empuja la bóveda, que se raja
+  F.shot([8.2, AY + 1.2, CZ + 5.6], [0, CISTERN.YT + 1, CZ], { fov: 70 });
   F.hand = 0.04;
   a && a.play('stoneCreak', { x: 0, y: 2, z: CZ }, { k: 2 });
   g.camRig.shake(0.5);

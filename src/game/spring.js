@@ -165,7 +165,6 @@ export class Spring {
     this.open = 0;
     this.lookAt = null;
     this.eyeTo = null;
-    this.sink = 0; // (el rito: cuánto se ha hundido el suelo; la estatua se queda)
     this.whisperT = 0;
     this.groanT = 4;
     this._lp = new THREE.Vector3();

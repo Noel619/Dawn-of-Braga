@@ -40,7 +40,7 @@ function stoneMaterial(base) {
         '#include <common>',
         `#include <common>
 attribute vec3 aLid;
-attribute vec3 aGlow;
+attribute vec4 aGlow;
 uniform float uOpen;
 uniform float uPulse;
 uniform float uWake;
@@ -50,8 +50,9 @@ varying vec3 vSGlow;`
         '#include <begin_vertex>',
         `#include <begin_vertex>
 transformed += aLid * (1.0 - uOpen);
-// la costura arde con el ojo cerrado; la brasa y el muñón, con el latido
-vSGlow = vec3(aGlow.x * (1.0 - uOpen) * (0.35 + 0.65 * uPulse + uWake), aGlow.y * (0.45 + 0.9 * uPulse + uWake), aGlow.z * (0.5 + 0.6 * uPulse + uWake));`
+// la costura arde con el ojo cerrado, y el borde de la cuenca, abierto; la
+// brasa y el muñón, con el latido
+vSGlow = vec3(aGlow.x * (1.0 - uOpen) * (0.35 + 0.65 * uPulse + uWake) + aGlow.w * uOpen * (0.12 + 0.18 * uPulse + 0.35 * uWake), aGlow.y * (0.45 + 0.9 * uPulse + uWake), aGlow.z * (0.5 + 0.6 * uPulse + uWake));`
       );
     sh.fragmentShader = sh.fragmentShader
       .replace(
@@ -100,12 +101,16 @@ export class Statue {
     // ---------------------------------------------- el ojo
     const E = d.extra.eye;
     const head = M.byName.head;
-    const eye = (this.eye = new THREE.Group());
-    // (en el espacio del hueso de la cabeza)
+    // (la cuenca, en el espacio del hueso de la cabeza: es una almendra alta,
+    // y el globo, estirado a lo alto, la llena; lo de dentro gira en ella)
+    const frame = (this.eyeFrame = new THREE.Group());
     const hw = M.restWorld.head;
-    eye.position.set(E.c[0] - hw.x, E.c[1] - hw.y, E.c[2] - hw.z);
-    eye.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(...E.n));
-    this.eyeRest = eye.quaternion.clone();
+    frame.position.set(E.c[0] - hw.x, E.c[1] - hw.y, E.c[2] - hw.z);
+    frame.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(...E.n));
+    frame.scale.set(1, 1.45, 1);
+    this.eyeRest = frame.quaternion.clone();
+    const eye = (this.eye = new THREE.Group());
+    frame.add(eye);
     const ballM = cloneMat(objMat('idolEyeball'));
     ballM.color.setHex(0x120404);
     ballM.emissive.setHex(0x1a0302);
@@ -120,7 +125,7 @@ export class Statue {
     const irisM = registerMaterialPatch(new THREE.MeshBasicMaterial({ map: getTexture('idolIris') }));
     const iris = new THREE.Mesh(cap, irisM);
     eye.add(ball, iris);
-    head.add(eye);
+    head.add(frame);
     this.mats.push(ball.material, irisM);
     this.irisMat = irisM;
     this.meshes = [...M.meshes, ...M.parts, ball, iris];
@@ -174,15 +179,16 @@ export class Statue {
   }
   // lo de dentro del ojo: que mire a un punto (en el espacio de la estatua)
   lookAt(L, dt, k = 0.6) {
-    const e = this.eye;
-    e.parent.updateWorldMatrix(true, false);
+    const e = this.eye,
+      f = this.eyeFrame;
+    f.parent.updateWorldMatrix(true, false);
     const W = this.root.localToWorld(this._v.copy(L));
-    const loc = e.parent.worldToLocal(W).sub(e.position).normalize().applyQuaternion(this._qi);
+    const loc = f.parent.worldToLocal(W).sub(f.position).normalize().applyQuaternion(this._qi);
     const yaw = Math.max(-0.6, Math.min(0.6, Math.atan2(loc.x, loc.z)));
     const pitch = Math.max(-0.5, Math.min(0.45, Math.atan2(loc.y, Math.hypot(loc.x, loc.z))));
     this._yaw += Math.max(-k * dt, Math.min(k * dt, yaw - this._yaw));
     this._pitch += Math.max(-k * dt, Math.min(k * dt, pitch - this._pitch));
-    e.quaternion.copy(this.eyeRest).multiply(this._q.setFromEuler(this._e.set(-this._pitch, this._yaw, 0, 'YXZ')));
+    e.quaternion.setFromEuler(this._e.set(-this._pitch, this._yaw, 0, 'YXZ'));
   }
   update() {}
   dispose() {

@@ -248,7 +248,8 @@ mugre que el muro) y desde la escalera es una losa entre sus jambas, con la pala
 y San Martín, un **rastrillo** que llena el arco, corre por las ranuras de las jambas y se mete entero en la fábrica
 al subir; su palanca, en la escalera, se ve entre los barrotes. Las puertas de los cubículos de las catacumbas y la
 de la pila de los Inocentes tienen su marco de piedra con la cruz en el dintel. La **Confesión**, al fondo del
-osario de arriba, mira por una reja a la cisterna, donde reza el arzobispo.
+osario de arriba, mira por una reja a la cisterna: por ella miraba Martín el agua de abajo y hoy sólo se ve piedra
+negra, la espalda de lo que ha subido de la sima.
 
 Desde la tribuna se ve entera la **Antesala del Dios Ignoto**: tres naves sobre columnas, con estatuas colosales
 veladas, estandartes y una avenida de braseros que lleva la vista hasta el estrado y la puerta del dios, dos hojas
@@ -265,21 +266,28 @@ botafumeiro mientras su humo se arrastra hasta la puerta. La tercera pila, la de
 **Pozo**, bajo la antesala, tras la reja que abren los Velados al caer: allí espera Dom Paio, convertido, con el
 cirial de hierro de la capilla (un jefe: mazazos, barridos, cera ardiendo y, a media vida, la letanía de fuego), y
 hasta que cae no deja echar la cadena; en la capilla queda su breviario. Al examinarla, la puerta dice qué le
-falta. Abierta, al otro lado espera la cisterna y, en su centro, **la fuente sin nombre**, por donde el dios toca el
-mundo: la reja de Martín, arrancada donde se arrodilló el arzobispo, el agua negra que late con una luz roja por
-debajo y, encima, **el ídolo: un monolito** de siete metros y medio que nadie labró, tosco, partido en lajas,
-vencido hacia el que se arrodilla y con la cima rota y hueca, **lleno de almas**: por toda la piedra empujan
-desde dentro caras y manos de todos los tamaños (algunas más grandes que un hombre, alguna del revés, alguna que
-se derrite, alguna a medio salir), con la boca abierta en un grito y luz dentro. Respiran; de vez en cuando una
-grita de verdad (empuja más, se le enciende la boca y se la oye, ahogada por la piedra, pedir auxilio), y más
-cuanto más te acercas. Por el costado le baja una grieta honda y encendida a cuyos bordes se agarran manos; por la
-espalda se le marcan un espinazo y unas costillas; del hueco de arriba salen brazos que se estiran hacia la
-cúpula o se agarran al borde y, entre ellos, uno negro con dos codos que se arquea sobre el que se arrodilla y no
-tiene mano: la mano de oro es la Garra, la que le cortó Martín y la que llevas. Encima, lo de los de los castros:
-anillos picados alrededor del ojo, espirales, cazoletas, un laberinto, dientes de sierra y manos en negativo de
-almagre al pie; y los dos zunchos de hierro de Martín. En la cara de delante, el ojo: la piedra se le retira como
-unos párpados y lo de dentro, con la pupila de cabra, mira a quien se acerca. (La otra forma, la estatua, sigue en
-el modo de pruebas: «Diseño», F2.)
+falta. Abierta, no da a ninguna cúpula: se baja por **el Paso**, estrecho y a oscuras, pegado a la roca, hasta un
+atrio con un monje muerto de rodillas y, por un arco, al **Pasillo de los Gigantes**: cuatro pares de columnas
+inmensas, lo que levantó Roma, bajo un techo que baja con el monte de encima; braseros, antorchas en los muros y
+monjes muertos de rodillas con sus velas, todos cara al fondo. Al fondo, una boca de sillería con DEO · IGNOTO en el
+dintel y la niebla del jefe, hilachas de humo rojo entre las que ya se adivina algo con cuernos contra un
+resplandor. Detrás, **el Círculo**, de antes de Roma: un corro de roca viva bajo una bóveda de cueva, con seis
+contrafuertes de roca y, entre ellos, nichos con velas, huesos y lo que han ido dejando; de la bóveda cuelga una
+corona de hierro con sus velas. En el centro, **la fuente sin nombre**, por donde el dios toca el mundo: la reja de
+Martín, arrancada al norte, donde se arrodilla el arzobispo, y el agua negra que late con una luz roja por debajo.
+Y al fondo, no en el centro, en una sima abierta en la roca, **la estatua**: catorce metros de piedra negra y
+mojada que nadie talló (tres veces y media el arzobispo), que se alza del agua roja de abajo y se agarra con una
+mano de garras al borde, como si fuera a salir. El hábito de pliegues hondos, con los dos zunchos de hierro de
+Martín (el de arriba, reventado) y sus cadenas tendidas hasta unas argollas del suelo; el manto, pesado, abierto
+sobre un costillar que se abre como dos puertas y, al fondo del pecho, una brasa que late con la fuente; una
+joroba de buitre (la misma que le salió al arzobispo); el brazo derecho alzado, descarnado, acabado en el muñón que
+le dejó Martín (la mano de oro es la Garra, la que llevas); el cuello largo, de tendones y vértebras, y una cara
+larga de hueso que no es de nada que se conozca, con dos cuernos (uno, roto), la corona de espinas de lo que fue
+su halo y la diadema de oro hundida en la frente. Se recorta, negra, contra el rojo que arde en la roca de detrás
+de la cabeza y que late con la fuente. Vuelve la cabeza, muy despacio, hacia quien entra, y la costura que le
+parte la cara es un ojo: cuando te acercas (o empieza la pelea) rechinan los párpados de piedra, se oye detrás una
+respiración honda y lo de dentro, alto como una almendra y con la pupila de cabra, te sigue; de cerca se le oye
+susurrar. Por el este, la reja de la galería del río, que no se abre hasta que cae el jefe.
 
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
@@ -507,7 +515,7 @@ se encadena el anterior.
   adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
 - **El jefe final: la Película**, una película jugable a lo *God of War*, casi toda cinemática, con pulsaciones
   rápidas y tramos jugables muy guiados (diseño en `PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra
-  el arzobispo**, que espera de rodillas ante el ídolo y ya anuncia lo que viene: cuatro metros de sacerdote enjuto
+  el arzobispo**, que espera de rodillas en la fuente, cara a la estatua, y ya anuncia lo que viene: cuatro metros de sacerdote enjuto
   con joroba de buitre y la cabeza colgando de un cuello larguísimo, por cara una jaula de hierro con púas (detrás,
   dos brasas y los dientes), la mitra partida en dos y clavada en dos cuernos de hueso, la aureola de hierro con
   siete cirios que chorrean, la casulla carmesí abierta sobre el pecho de costillas con el núcleo que arde y el
@@ -611,10 +619,9 @@ caza, gruta, enloquecer, calmar, matarlo), curar, todas las armas y objetos, cam
 zona y altar, guardar y volver a una posición, la ventana de parry en pantalla y un registro de parrys y golpes de
 gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cierra.
 
-- **Diseño (por decidir):** las variantes que aún se están eligiendo, sin tocar la dirección: la forma del ídolo
-  de la fuente (el monolito o la estatua; se cambia en pleno juego, vale también para la introducción y se
-  recuerda en el navegador), ir a la cisterna a verlo, ver la introducción o la crónica (vuelven al título) y
-  poner la crónica en el menú del título.
+- **Diseño:** ir a la estatua (a la boca del Círculo) o al principio del Pasillo de los Gigantes, abrirle o
+  cerrarle el ojo a mano, ver la introducción o la crónica (vuelven al título) y poner la crónica en el menú del
+  título.
 - **Instancias:** ir directamente a un momento de una pelea, con las banderas como estarían en una partida: el
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
   la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
@@ -654,7 +661,9 @@ src/
                         sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
-                        y el pozo) de la que salen muros, suelos, navegación y mapa; panteon.js: el Panteón
+                        y el pozo) de la que salen muros, suelos, navegación y mapa; sanctum.js: lo que hay tras
+                        la puerta del dios (el Paso, el Pasillo de los Gigantes, el Círculo con la fuente, la
+                        sima de la estatua y la galería del río); panteon.js: el Panteón
                         de los Obispos y la galilea; lucernario.js: el Lucernario de San Pedro de Rates;
                         osario_martin.js: el osario de los hermanos de Dumio; ossuary_props.js: las piezas
                         de los osarios (calaveras, yelmos, la caja de música, los monjes, los obispos
@@ -673,10 +682,10 @@ src/
                         tonelero infectado (sus posturas: llorar, encogerse, morderse el brazo, ahorcado); leonor.js,
                         Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido;
                         custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la Emparedada y el Enrodado;
-                        turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, el ídolo de la
-                        fuente: cuál de las dos formas, la estatua y lo que comparten; idol_monolith_geo.js, la
-                        geometría del monolito y sus almas, que se calcula en un hilo de fondo (idol_worker.js), e
-                        idol_monolith.js, su montaje y lo que se mueve); sculpt.js (no el de colossus/), geometrías
+                        turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, la estatua de la
+                        sima de la cisterna: dónde está y cómo se carga; idol_statue_geo.js, su geometría,
+                        esculpida como los colosos, que se calcula en un hilo de fondo (idol_worker.js), e
+                        idol_statue.js, su montaje y lo que se mueve: la cabeza, el ojo y lo que arde); sculpt.js (no el de colossus/), geometrías
                         esculpidas para los rigs (superficies, troncos, telas con sus pliegues, faldones, cabezas con
                         rasgos y manos con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan
                         los ecos y el arzobispo); armas: weapons.js (registro y clips comunes), weapon_moves.js
@@ -692,8 +701,9 @@ src/
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
                         sus figuras, cada una con su cara y su ropa); spring.js: la fuente sin nombre de la cisterna
-                        (el agua roja, su latido, las pavesas y el ídolo, que mira, abre el ojo y susurra, y sus
-                        almas, que gritan a quien se acerca); cutscene.js: la de la bodega; hunt.js: la caza en las
+                        (el agua negra y su latido, las pavesas, el agua roja de la sima, el rojo que late detrás
+                        de la cabeza de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y
+                        susurra); cutscene.js: la de la bodega; hunt.js: la caza en las
                         bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
@@ -719,8 +729,7 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         film.mjs       fotogramas de la película en los segundos que se pidan, en una hoja
                         intro.mjs      fotogramas de la introducción (o de la crónica: CUT=cronica) desde un
                                        plano, en los segundos que se pidan, con sus rótulos; END=1 sigue hasta
-                                       el final y comprueba que la partida empieza bien; IDOLO=estatua, con
-                                       la estatua en vez del monolito
+                                       el final y comprueba que la partida empieza bien
                         filmclip.mjs   busca los momentos de la película con la cámara metida en algo (una
                                        rejilla de rayos desde la cámara) y dice qué plano del guion es
                         filmaudio.mjs  mide lo que le cuesta al hilo de audio la película (grabación y
@@ -796,9 +805,15 @@ arte/                   el arte (aquí no se borra nada: cada versión se guarda
   bocetos/              las láminas: «I · El arzobispo, consumido» (de rodillas y de espaldas ante el
                         monolito lleno de almas, con el ojo abierto, en la cisterna roja, la noche de la
                         campana) y «II · Los que la encontraron primero» (los romanos, que rompen la roca y
-                        dan con el monolito, todavía con la garra de oro en alto)
-  bocetos/estatua/      las mismas láminas cuando el ídolo era la estatua (la II, también en su primera
-                        versión, sin la mano)
+                        dan con el monolito, todavía con la garra de oro en alto): son de cuando el ídolo
+                        fue el monolito; el juego ha vuelto a la estatua
+  bocetos/estatua/      las mismas láminas con la estatua (la II, también en su primera versión, sin la
+                        mano), la forma que se quedó (en el juego, rediseñada: más grande, de piedra negra y
+                        con el ojo que se abre)
+archive/monolito/       el monolito lleno de almas, el ídolo que hubo antes de volver a la estatua: su
+                        geometría, su montaje y su hilo de fondo, guardados con su explicación (ver su README)
+archive/estatua_primera/
+                        el montaje de la primera estatua, la que parecía una máquina (ver su README)
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)

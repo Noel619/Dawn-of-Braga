@@ -25,7 +25,7 @@ p.on('console', (m) => {
   if (m.type() === 'error' || m.text().startsWith('[f]')) logs.push(m.type() + ': ' + m.text());
 });
 await p.goto('http://localhost:5199/?dev=1&at=0,-10,-144&yaw=180');
-await p.waitForFunction(() => window.__ready, null, { timeout: 120000 });
+await p.waitForFunction(() => window.__ready && __game.spring.idol, null, { timeout: 120000 });
 await p.evaluate(
   async ([cp, qte, set, n, COLS, TW, TH, cam]) => {
     window.__pause = true;

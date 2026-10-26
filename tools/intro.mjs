@@ -9,7 +9,6 @@
 //   FULL=1  además, una captura de la página entera en cada segundo (con los
 //   rótulos de verdad): tools/shots/intro/<plano>_<t>.png
 //   END=1  sigue hasta que acaba y comprueba que la partida empieza bien
-//   IDOLO=estatua  con el ídolo en forma de estatua (si no, el monolito)
 // Requiere npx vite --port 5199.
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -27,7 +26,7 @@ p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + ' ' + (e.stack ||
 p.on('console', (m) => {
   if (m.type() === 'error') logs.push(m.type() + ': ' + m.text());
 });
-await p.goto('http://localhost:5199/?dev=1' + (process.env.IDOLO ? '&idolo=' + process.env.IDOLO : ''));
+await p.goto('http://localhost:5199/?dev=1');
 await p.waitForFunction(() => window.__ready && __game.spring.idol, null, { timeout: 120000 });
 await p.evaluate(
   ([from, n, COLS, TW, TH, cut]) => {
