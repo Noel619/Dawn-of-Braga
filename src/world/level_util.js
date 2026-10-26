@@ -2,6 +2,10 @@
 import { RNG } from '../core/util.js';
 import { house } from './builders.js';
 
+// El arco de la Sé, en la Calle de la Catedral (level_city.js), con su
+// albardilla: las casas de los lados no ponen ventanas donde se apoya.
+export const ARCO_SE = [-3.6, 0, -38.5, 3.6, 7.8, -37.5];
+
 // Suelo visual (sin colisión: la colisión la aporta la losa global).
 export function floor(ctx, x0, z0, x1, z1, mat, y = 0, o = {}) {
   ctx.wb.box(mat, x0, y - 0.2, z0, x1, y, z1, { faces: 't', ao: false, sub: o.sub ?? 2.5, tint: o.tint, grime: o.grime, room: o.room });

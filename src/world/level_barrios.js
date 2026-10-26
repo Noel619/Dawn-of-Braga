@@ -5,7 +5,7 @@
 import { RNG } from '../core/util.js';
 import { house, overpass, stoneWall, cityWall, tower, waveProp } from './builders.js';
 import * as P from './props.js';
-import { floor } from './level_util.js';
+import { floor, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -124,7 +124,7 @@ export function buildNW(ctx, S, L) {
   lane(ctx, S, -18, -40, -15.5, -22);
   ctx.beginGroup('centro');
   house(ctx, { x0: -24, z0: -40, x1: -18, z1: -31, front: 'e', seed: 1111, h: 8 });
-  house(ctx, { x0: -15.5, z0: -40, x1: -3.5, z1: -31, front: 'n', seed: 1112, h: 8.2 });
+  house(ctx, { x0: -15.5, z0: -40, x1: -3.5, z1: -31, front: 'n', seed: 1112, h: 8.2, winSkip: [ARCO_SE] });
   overpass(ctx, -18, -36.2, -15.5, -33, 3.3, 6.6, 'z', {});
   P.wallTorch(ctx, -15.5, 2.5, -27, 'w');
   P.sign(ctx, -18, 2.95, -29.5, -Math.PI / 2, 'spindle');

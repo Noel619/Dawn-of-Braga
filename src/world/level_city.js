@@ -7,7 +7,7 @@ import { springaldTowerS } from './level_finale.js';
 import { house, solid, stairs, merlons, cityWall, tower, archWall, archRing, stoneWall, waveProp, solidGableRoof } from './builders.js';
 import { buildCasaTapiada, buildPasadizo, buildCasaTonelero, soutoZones } from './level_souto.js';
 import * as P from './props.js';
-import { floor, houseRow, interiorRoom } from './level_util.js';
+import { floor, houseRow, interiorRoom, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -181,20 +181,35 @@ export function buildRuaSe(ctx, S, L) {
   // Lo que revienta cuando sale el coloso (grupo 'centro'): la casa de la
   // esquina, el arco de la Sé y lo que cuelga de las fachadas
   ctx.beginGroup('centro');
-  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5 });
+  house(ctx, { x0: 3.5, z0: -40, x1: 12.5, z1: -31, front: 'n', seed: 304, h: 7.5, winSkip: [ARCO_SE] });
   // arco de la Sé: la calle se estrecha bajo un arco antes de la plaza (se
   // viene abajo con la ola, en su grupo: ver finale/director.js)
   ctx.beginGroup('centro:arco');
   archWall(ctx, -3.5, 3.5, -38.4, -37.6, 7.4, 0, 4.2, 5.0, { slices: 10 });
   wb.box('ashlar', -3.6, 7.4, -38.5, 3.6, 7.7, -37.5, { ao: false });
   merlons(ctx, -3.5, -38, 3.5, -38, 7.7, { collide: false, w: 0.6, gap: 0.5, h: 0.6, t: 0.5 });
-  P.veiledStatue(ctx, 0, 5.95, -37.35, 0, { ped: 0 });
-  P.banner(ctx, 0, 5.3, -37.5, 0, 'bannerBlack', 1.2, 2.2);
+  // la imagen velada sobre la clave, en su ménsula y bajo su chambrana (antes
+  // flotaba delante del muro, sin nada debajo, medio metida en la piedra)
+  {
+    const zf = -37.6;
+    wb.box('ashlar', -0.55, 5.47, zf, 0.55, 5.62, zf + 0.62, { ao: false, faces: 'tnsewb', tint: [0.7, 0.68, 0.64] });
+    wb.box('ashlar', -0.42, 5.3, zf, 0.42, 5.47, zf + 0.46, { ao: false, faces: 'tnsewb', tint: [0.66, 0.64, 0.6] });
+    wb.box('ashlar', -0.28, 5.12, zf, 0.28, 5.3, zf + 0.28, { ao: false, faces: 'nsewb', tint: [0.62, 0.6, 0.57] });
+    P.veiledStatue(ctx, 0, 5.62, zf + 0.33, 0, { ped: 0, s: 0.78 });
+    const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+    const [h0, h1, hz] = [7.12, 7.4, zf + 0.6];
+    wb.quad('ashlar', V3(-0.6, h0, hz), V3(0, h1, hz), V3(0, h1, zf), V3(-0.6, h0, zf), { ao: false, tint: [0.66, 0.64, 0.6] });
+    wb.quad('ashlar', V3(0, h1, hz), V3(0.6, h0, hz), V3(0.6, h0, zf), V3(0, h1, zf), { ao: false, tint: [0.66, 0.64, 0.6] });
+    wb.tri('ashlar', V3(-0.6, h0, hz), V3(0.6, h0, hz), V3(0, h1, hz), { ao: false, tint: [0.7, 0.68, 0.64] });
+    wb.quad('ashlar', V3(-0.6, h0, zf), V3(0.6, h0, zf), V3(0.6, h0, hz), V3(-0.6, h0, hz), { ao: false, tint: [0.5, 0.48, 0.45] });
+  }
+  P.banner(ctx, 0, 5.1, -37.5, 0, 'bannerBlack', 1.2, 2.0);
+  // otra, de tamaño natural, al pie del arco (estaba de pie encima de la
+  // puerta de la casa del oeste, sobre una losa, tapando la ventana de arriba)
+  P.veiledStatue(ctx, -2.95, 0, -37.02, 0.25, { ped: 0.75 });
   ctx.endGroup();
-  P.veiledStatue(ctx, -3.1, 2.4, -26.5, Math.PI / 2, { ped: 0 });
-  wb.box('ashlar', -3.5, 2.2, -27.3, -2.6, 2.4, -25.7, { ao: false, faces: 'tnsewb' });
   P.wallTorch(ctx, 3.5, 2.8, -19.2, 'w');
-  P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -37.4, -31] });
+  P.fleshGrowth(ctx, -3.2, 0, -35.4, 0.8, 71, { climb: 1.5, bound: [-3.5, -2.5, -36.4, -31] });
   P.laundry(ctx, -3.45, -17.6, 3.45, -17.6, 4.4, 14);
   P.laundry(ctx, -3.45, -33.8, 3.45, -33.8, 4.6, 15);
   P.sign(ctx, -3.5, 2.95, -24.6, Math.PI / 2, 3);

@@ -634,8 +634,11 @@ export function column(ctx, x, y, z, h, r = 0.4, o = {}) {
 export function veiledStatue(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
   const ped = o.ped ?? 1.0;
+  // (s: la escala de la figura; 1, de tamaño natural)
+  const sc = o.s ?? 1;
   if (ped > 0) solid(ctx, 'ashlar', x - 0.55, y, z - 0.55, x + 0.55, y + ped, z + 0.55, { sub: 2 });
   wb.at(x, y + ped, z, rot, () => {
+    if (sc !== 1) wb.scale(sc, sc, sc);
     wb.cylinder('ashlar', 0, 0, 0, 0.45, 0.28, 1.5, 8, { ao: false });
     wb.cylinder('ashlar', 0, 1.5, 0, 0.28, 0.2, 0.35, 8, { ao: false });
     // velo sobre la cabeza y los hombros
@@ -644,7 +647,7 @@ export function veiledStatue(ctx, x, y, z, rot = 0, o = {}) {
     // manos juntas
     wb.box('ashlar', -0.1, 1.0, 0.25, 0.1, 1.25, 0.4, { ao: false });
   });
-  if (!ped) ctx.col.add(x - 0.45, y, z - 0.45, x + 0.45, y + 2.5, z + 0.45);
+  if (!ped) ctx.col.add(x - 0.45 * sc, y, z - 0.45 * sc, x + 0.45 * sc, y + 2.5 * sc, z + 0.45 * sc);
 }
 
 // Sarcófago con tapa (opcionalmente desplazada).

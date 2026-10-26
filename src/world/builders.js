@@ -1167,9 +1167,14 @@ const PLASTER_TINTS = [
 ];
 
 // Ventana en coordenadas de fachada (x a lo largo, y altura, z hacia fuera).
+// (o.skip: no hay ventana, pero se gastan sus tiradas: el resto de la casa no
+// cambia)
 export function windowAt(ctx, x, y, w, h, o, rng) {
   const wb = ctx.wb;
   const lit = o.lit;
+  const kind = rng.next();
+  const swing = kind >= 0.3 && kind < 0.65 ? [rng.range(-0.4, 0.5), rng.range(-0.4, 0.5)] : null;
+  if (o.skip) return;
   wb.box(lit ? 'ember' : 'black', x - w / 2, y, 0, x + w / 2, y + h, 0.03, { ao: false, grime: false, faces: 's' });
   // marco
   const fm = o.frameMat ?? 'timber';
@@ -1177,7 +1182,6 @@ export function windowAt(ctx, x, y, w, h, o, rng) {
   wb.box(fm, x - w / 2 - 0.1, y + h, 0, x + w / 2 + 0.1, y + h + 0.1, 0.1, { ao: false, sub: 3, faces: 'tsewb' });
   wb.box(fm, x - w / 2 - 0.1, y, 0, x - w / 2, y + h, 0.08, { ao: false, sub: 3 });
   wb.box(fm, x + w / 2, y, 0, x + w / 2 + 0.1, y + h, 0.08, { ao: false, sub: 3 });
-  const kind = rng.next();
   if (kind < 0.3) {
     // contraventanas cerradas (tablas), por delante de los pies derechos del
     // entramado (a su misma profundidad parpadeaban)
@@ -1187,7 +1191,7 @@ export function windowAt(ctx, x, y, w, h, o, rng) {
     for (const s of [-1, 1]) {
       wb.push();
       wb.translate(x + (s * w) / 2, y, 0.05);
-      wb.rotateY(s * (0.9 + rng.range(-0.4, 0.5)));
+      wb.rotateY(s * (0.9 + swing[(s + 1) / 2]));
       wb.box('planks', s > 0 ? 0 : -w / 2, 0, -0.03, s > 0 ? w / 2 : 0, h, 0.03, { ao: false, sub: 3 });
       wb.pop();
     }
@@ -1594,6 +1598,16 @@ function houseBody(ctx, s, sub) {
   }
 
   // fachadas
+  // (winSkip: cajas [x0, y0, z0, x1, y1, z1] del mundo donde no puede haber
+  // ventana: un arco o un muro que se apoya en la fachada la atravesaban)
+  const winFree = (a, y, w, hh) => {
+    if (!s.winSkip) return true;
+    const p0 = V(a - w / 2 - 0.12, y - 0.12, 0).applyMatrix4(wb.m),
+      p1 = V(a + w / 2 + 0.12, y + hh + 0.12, 0.12).applyMatrix4(wb.m);
+    const [ax0, ax1] = [Math.min(p0.x, p1.x), Math.max(p0.x, p1.x)],
+      [az0, az1] = [Math.min(p0.z, p1.z), Math.max(p0.z, p1.z)];
+    return !s.winSkip.some((r) => ax0 < r[3] && ax1 > r[0] && p0.y < r[4] && p1.y > r[1] && az0 < r[5] && az1 > r[2]);
+  };
   const prevRoom = wb.room;
   wb.setRoom(null);
   for (const side of sides) {
@@ -1615,8 +1629,9 @@ function houseBody(ctx, s, sub) {
           const a = ((i + 0.5) / n) * L;
           const lit = !!s.lit && rng.chance(s.litChance ?? 0.35);
           const at = a + rng.range(-0.2, 0.2);
-          windowAt(ctx, at, g1 + 0.9, 0.7, 1.05, { lit }, rng);
-          wins.push(at);
+          const free = winFree(at, g1 + 0.9, 0.7, 1.05);
+          windowAt(ctx, at, g1 + 0.9, 0.7, 1.05, { lit, skip: !free }, rng);
+          if (free) wins.push(at);
         }
       }
       if (style === 'timber') timberFrame(ctx, L, g1, h, wins, braces);
@@ -1628,7 +1643,7 @@ function houseBody(ctx, s, sub) {
         // ventanas ciegas lejos de las puertas
         if (LL > 3.4 && s.windows !== false && s.lowerWindows !== false) {
           const cand = [LL * 0.25, LL * 0.75];
-          for (const a of cand) if (ds.every((d) => Math.abs(d.at - a) > d.w / 2 + 0.9) && rng.chance(0.7)) windowAt(ctx, a, 1.25, 0.6, 0.8, { lit: !!s.lit && rng.chance(0.5) }, rng);
+          for (const a of cand) if (ds.every((d) => Math.abs(d.at - a) > d.w / 2 + 0.9) && rng.chance(0.7)) windowAt(ctx, a, 1.25, 0.6, 0.8, { lit: !!s.lit && rng.chance(0.5), skip: !winFree(a, 1.25, 0.6, 0.8) }, rng);
         }
       } else if (side === front && s.door !== false) {
         const da = s.doorAt ?? LL / 2;
@@ -1636,9 +1651,11 @@ function houseBody(ctx, s, sub) {
         // aparte para no cambiar el resto de la casa)
         const dr = new RNG((s.seed ?? hashSeed(x0, z0, x1, z1)) ^ 0x5bd1e995).next();
         doorAt(ctx, da, 1.3, 2.3, { boards: s.boards ?? dr < 0.2, bar: s.boards === undefined && dr >= 0.2 && dr < 0.3, open: s.doorOpen });
-        if (LL > 5) windowAt(ctx, da > LL / 2 ? da - 2.2 : da + 2.2, 1.2, 0.6, 0.8, { lit: false }, rng);
+        const wa = da > LL / 2 ? da - 2.2 : da + 2.2;
+        if (LL > 5) windowAt(ctx, wa, 1.2, 0.6, 0.8, { lit: false, skip: !winFree(wa, 1.2, 0.6, 0.8) }, rng);
       } else if (LL > 3 && s.windows !== false && rng.chance(0.5)) {
-        windowAt(ctx, LL * rng.range(0.3, 0.7), 1.3, 0.6, 0.8, { lit: false }, rng);
+        const wa = LL * rng.range(0.3, 0.7);
+        windowAt(ctx, wa, 1.3, 0.6, 0.8, { lit: false, skip: !winFree(wa, 1.3, 0.6, 0.8) }, rng);
       }
     });
   }
