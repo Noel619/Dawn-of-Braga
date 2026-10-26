@@ -17,6 +17,13 @@ const TAU = Math.PI * 2;
 // (aLid: lo que se mueve con el ojo cerrado) y lo que arde (aGlow).
 function stoneMaterial(base) {
   const m = cloneMat(base);
+  // piedra negra y mojada: poco color, pero un brillo que coge las luces
+  // rojas de la sima (así se le lee la forma sin dejar de ser negra)
+  m.color.multiplyScalar(1.35);
+  if (m.specular) {
+    m.specular.setHex(0x6a544c);
+    m.shininess = 24;
+  }
   const U = {
     uOpen: { value: 0 },
     uPulse: { value: 0 },
@@ -142,7 +149,7 @@ export class Statue {
   setPulse(p, wake = 0) {
     this.U.uPulse.value = p;
     this.U.uWake.value = wake;
-    if (this.ember) this.ember.material.color.setScalar(0.55 + 0.9 * p + wake * 1.5);
+    if (this.ember) this.ember.material.color.setScalar(0.32 + 0.6 * p + wake * 1.5);
   }
   // el ojo: 0, cerrado (la costura); 1, abierto del todo
   setOpen(v) {

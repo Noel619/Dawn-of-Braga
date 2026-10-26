@@ -485,7 +485,7 @@ AQVI VELABA MARTIN LA FVENTE SIN NOMBRE
 
 «Por esta reja miraba el santo el agua de abajo, noche tras noche, para que lo que duerme en ella supiera que alguien lo miraba.»
 
-Y más abajo, reciente, de una mano que tiembla: «Ahora reza ahí dentro el arzobispo. No se vuelve. No deja de cantar.»`,
+Y más abajo, reciente, de una mano que tiembla: «Ya no se ve el agua. Lo de abajo ha subido y tapa la reja con la espalda. Ahora reza ahí dentro el arzobispo. No se vuelve. No deja de cantar.»`,
   },
   osario: {
     title: 'Inscripción del osario',

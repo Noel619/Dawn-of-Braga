@@ -123,7 +123,7 @@ export const SANCT = {
   R: 11, // el radio del círculo (su centro, el de la fuente)
   // la sima: de lado a lado (x), del borde a la pared del fondo (z), su
   // suelo y su agua
-  apse: { x0: -6.6, x1: 6.6, lip: -143.5, back: -136.9, floor: -16.3, water: -15.3 },
+  apse: { x0: -6.9, x1: 6.9, lip: -143.5, back: -135.9, floor: -16.3, water: -15.3 },
   // la estatua: el pie, en el agua de la sima; mira al norte
   idol: { x: 0, y: -15.3, z: -139.8 },
   // el pasillo de las columnas: sus muros, la nave, las dos filas (x y

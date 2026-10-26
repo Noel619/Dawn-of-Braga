@@ -71,8 +71,10 @@ export const DEEP = {
   // la Confesión, al fondo del osario, y su ventana en el muro de la cisterna
   // (sus cantos, como los de todas las salas, en la rejilla de medio metro de
   // carve(): con el fondo a -136,4 el muro quedaba a -136,5 y entre los dos,
-  // una rendija sin suelo y el marco de la ventana despegado del muro)
-  confessio: { x0: -4, z0: -136.5, x1: 4, z1: -133.5, win: { x0: -1.2, x1: 1.2, y0: AY + 3.6, y1: AY + 5.0 } },
+  // una rendija sin suelo y el marco de la ventana despegado del muro). Dos
+  // metros de fondo: el muro de la cisterna, detrás, deja sitio a la espalda
+  // de la estatua de la sima (SANCT.apse.back, 0,4 más allá)
+  confessio: { x0: -4, z0: -135.5, x1: 4, z1: -133.5, win: { x0: -1.2, x1: 1.2, y0: AY + 3.6, y1: AY + 5.0 } },
   // la Sala de los Obispos: tramos de 5 m (bóvedas de arista sobre columnas)
   obispos: { x0: -62, z0: -136, x1: -22, z1: -106, YS: Y1 + 3.2, rise: 2.5 },
   // la cripta de San Martín: nave (con la capilla al norte) y naves laterales
@@ -793,7 +795,7 @@ export function buildDeepCrypt(ctx, C, L) {
   // antesala) y la de la Confesión (a la cisterna)
   const WIN = [{ x0: PAN.cx - 1.5, z0: -137, x1: PAN.cx + 1.5, z1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 }];
   const CW = D.confessio.win;
-  const holes = [...WIN, { x0: CW.x0, z0: -136.5, x1: CW.x1, z1: -136.3, y0: CW.y0, y1: CW.y1 }];
+  const holes = [...WIN, { x0: CW.x0, z0: D.confessio.z0, x1: CW.x1, z1: D.confessio.z0 + 0.2, y0: CW.y0, y1: CW.y1 }];
   const runs = [];
   carve(ctx, C, regs, {
     holes,
@@ -921,22 +923,23 @@ function buildConfessio(ctx, L) {
   wb.box('ashlar', -1.8, Y + 3.2, -133.62, 1.8, Y + 3.42, -133.5, { ao: false, room: ROOM, tint: AT, faces: 'nb' });
   // la fenestella: el derrame por los dos muros (el de la cisterna y el de la
   // cámara) y los barrotes
-  grille(ctx, { axis: 'x', u0: CW.x0, u1: CW.x1, t0: -137, t1: CF.z0, y0: CW.y0, y1: CW.y1, frame: [false, true] });
+  grille(ctx, { axis: 'x', u0: CW.x0, u1: CW.x1, t0: CF.z0 - 0.5, t1: CF.z0, y0: CW.y0, y1: CW.y1, frame: [false, true] });
   // el reclinatorio ante la reja, velas en el suelo y el sello del santo
-  wb.box('wooddark', -0.6, Y, -135.6, 0.6, Y + 0.18, -135.2, { faces: 'tnsew', ao: false, room: ROOM });
-  wb.box('wooddark', -0.6, Y, -136.3, 0.6, Y + 0.9, -136.0, { faces: 'tnsew', ao: false, room: ROOM });
-  ctx.col.add(-0.6, Y, -136.3, 0.6, Y + 0.9, -135.2);
-  P.candles(ctx, -2.8, Y, -135.6, 7, 4603, { room: ROOM, radius: 4, intensity: 0.8, spread: 0.4 });
-  P.candles(ctx, 2.9, Y, -134.3, 4, 4604, { room: ROOM, radius: 3, intensity: 0.5, spread: 0.3 });
+  const z0 = CF.z0;
+  wb.box('wooddark', -0.6, Y, z0 + 0.9, 0.6, Y + 0.18, z0 + 1.3, { faces: 'tnsew', ao: false, room: ROOM });
+  wb.box('wooddark', -0.6, Y, z0 + 0.2, 0.6, Y + 0.9, z0 + 0.5, { faces: 'tnsew', ao: false, room: ROOM });
+  ctx.col.add(-0.6, Y, z0 + 0.2, 0.6, Y + 0.9, z0 + 1.3);
+  P.candles(ctx, -2.8, Y, z0 + 0.7, 7, 4603, { room: ROOM, radius: 4, intensity: 0.8, spread: 0.4 });
+  P.candles(ctx, 2.9, Y, z0 + 1.5, 4, 4604, { room: ROOM, radius: 3, intensity: 0.5, spread: 0.3 });
   for (const x of [-3.97, 3.97]) {
     // el sello de San Martín: una cruz grabada en cada testero
     const f = x < 0 ? 'e' : 'w';
     wb.box('black', x - 0.01, Y + 1.0, cz - 0.04, x + 0.01, Y + 2.2, cz + 0.04, { faces: f, ao: false, grime: false, room: ROOM });
     wb.box('black', x - 0.01, Y + 1.75, cz - 0.4, x + 0.01, Y + 1.83, cz + 0.4, { faces: f, ao: false, grime: false, room: ROOM });
   }
-  P.bones(ctx, 3.0, Y, -135.7, 6, 4605, 0.5);
+  P.bones(ctx, 3.0, Y, z0 + 0.8, 6, 4605, 0.5);
   // (desde dentro de la cisterna llega una luz roja)
-  ctx.lights.push({ x: 0, y: Y + 1.6, z: -136.9, r: 0.9, g: 0.2, b: 0.12, radius: 3.5, intensity: 0.6, room: ROOM });
+  ctx.lights.push({ x: 0, y: Y + 1.6, z: z0 - 0.4, r: 0.9, g: 0.2, b: 0.12, radius: 3.5, intensity: 0.6, room: ROOM });
   L.interact.push({ kind: 'note', id: 'n_confesion', note: 'confesion', x: -3.7, y: Y + 1.4, z: cz + 0.4, model: 'wall', r: 1.8 });
 }
 

@@ -551,11 +551,12 @@ function leverAngle(pull, time = LEVER_TIME, heaves = LEVER_HEAVES) {
 // distancia, como una mancha blanca en lo alto de la muralla)
 // (tint: su color; thin: lo que tapa, de 0 a 1; la de la boca del círculo
 // de la cisterna es una bruma roja que deja ver lo de detrás)
-function fogWallMat(tint = [0.85, 0.88, 0.9], thin = 1) {
+function fogWallMat(tint = [0.85, 0.88, 0.9], thin = 1, base = 0.35) {
   const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
   u.uTime = G.uTime;
   u.uTint = { value: new THREE.Vector3(...tint) };
   u.uThin = { value: thin };
+  u.uBase = { value: base };
   return new THREE.ShaderMaterial({
     uniforms: u,
     fog: true,
@@ -568,7 +569,7 @@ function fogWallMat(tint = [0.85, 0.88, 0.9], thin = 1) {
         #include <fog_vertex>
       }`,
     fragmentShader: `
-      uniform float uTime; uniform vec3 uTint; uniform float uThin; varying vec2 vUv;
+      uniform float uTime; uniform vec3 uTint; uniform float uThin; uniform float uBase; varying vec2 vUv;
       #include <fog_pars_fragment>
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
       float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
@@ -576,7 +577,9 @@ function fogWallMat(tint = [0.85, 0.88, 0.9], thin = 1) {
         vec2 p = vUv * vec2(4.0, 3.0);
         float a = n(p + vec2(0.0, -uTime*0.6)) * 0.6 + n(p*2.3 + vec2(uTime*0.3, -uTime*1.1)) * 0.4;
         float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(1.0, 0.85, vUv.x) * smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.8, vUv.y);
-        float alpha = (0.35 + a * 0.55) * edge * uThin;
+        // (uBase: lo que tapa siempre; con poco, hilachas de humo y huecos)
+        float w = uBase < 0.3 ? smoothstep(0.3, 1.0, a) : a;
+        float alpha = (uBase + w * 0.55) * edge * uThin;
         #ifdef USE_FOG
           #ifdef FOG_EXP2
             alpha *= exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
@@ -719,7 +722,7 @@ export class Interactables {
       it.hidden = !!s.afterBoss;
     } else if (s.kind === 'fog') {
       const geo = new THREE.PlaneGeometry(s.w, s.h);
-      it.obj = new THREE.Mesh(geo, fogWallMat(s.tint, s.thin));
+      it.obj = new THREE.Mesh(geo, fogWallMat(s.tint, s.thin, s.base));
       it.obj.position.set(s.x, s.y + s.h / 2, s.z);
       if (s.axis === 'z') it.obj.rotation.y = Math.PI / 2;
       it.obj.renderOrder = 8;

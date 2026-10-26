@@ -403,6 +403,12 @@ function apse(ctx, room) {
   // la luz roja del agua de abajo (la que late, la pone spring.js)
   ctx.lights.push({ x: 0, y: A.water + 1.2, z: (A.lip + A.back) / 2, r: 1, g: 0.16, b: 0.06, radius: 14, intensity: 2.0, room });
   ctx.lights.push({ x: 0, y: A.water + 0.6, z: A.lip + 0.8, r: 1, g: 0.18, b: 0.07, radius: 8, intensity: 1.4, room });
+  // y detrás de la cabeza, en la roca del fondo y en la bóveda, el rojo
+  // contra el que se recorta (lo que queda del halo; el resplandor que late,
+  // en spring.js)
+  ctx.lights.push({ x: 0, y: AY + 7.0, z: A.back - 0.7, r: 1, g: 0.19, b: 0.07, radius: 7.5, intensity: 2.4, room });
+  ctx.lights.push({ x: 0, y: AY + 8.2, z: A.back - 1.6, r: 1, g: 0.18, b: 0.07, radius: 5.5, intensity: 1.4, room });
+  ctx.lights.push({ x: 0, y: AY + 1.5, z: A.back - 0.5, r: 1, g: 0.17, b: 0.06, radius: 6, intensity: 1.2, room });
 }
 
 // un candelabro de hierro de tres pisos, cargado de velas, con su luz
@@ -431,7 +437,7 @@ function candelabrum(ctx, x, z, room, seed) {
   }
   P.candles(ctx, x, AY, z, 7, seed + 9, { room, radius: 3, intensity: 0.5, spread: 0.7 });
   ctx.lights.push({ x, y: AY + 2.2, z, r: 1, g: 0.66, b: 0.36, radius: 11, intensity: 1.5, room });
-  if (ctx.dynLights) ctx.dynLights.push({ x, y: AY + 2.6, z, intensity: 5, range: 12 });
+  if (ctx.dynLights) ctx.dynLights.push({ x, y: AY + 2.6, z, intensity: 5, range: 12, priority: 3 });
   ctx.col.add(x - 0.5, AY, z - 0.5, x + 0.5, AY + 2.5, z + 0.5);
 }
 
@@ -770,7 +776,7 @@ export function buildSanctum(ctx, C, L) {
   L.interact.push(
     // la niebla del arzobispo, en la boca del círculo: una bruma roja que
     // deja ver lo de dentro (la estatua, al fondo)
-    { kind: 'fog', id: 'f_boss', boss: 'turibulario', x: 0, y: AY, z: (SANCT.portal.z0 + SANCT.portal.z1) / 2, w: SANCT.portal.w, h: SANCT.portal.h - 0.4, axis: 'x', enter: 1, tint: [0.85, 0.2, 0.1], thin: 0.32 },
+    { kind: 'fog', id: 'f_boss', boss: 'turibulario', x: 0, y: AY, z: (SANCT.portal.z0 + SANCT.portal.z1) / 2, w: SANCT.portal.w, h: SANCT.portal.h - 0.4, axis: 'x', enter: 1, tint: [0.85, 0.16, 0.07], thin: 0.5, base: 0.02 },
     // la reja de la galería del río
     { kind: 'door', id: 'd_salida', x: SANCT.door.x, y: AY, z: SANCT.door.z, w: SANCT.door.w, h: SANCT.door.h, axis: 'z', lock: { type: 'boss', boss: 'turibulario' }, mat: 'grate' }
   );

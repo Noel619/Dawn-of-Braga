@@ -30,7 +30,7 @@ function tileGeo() {
 }
 
 function rockGeo() {
-  const g = new THREE.IcosahedronGeometry(0.5, 0).toNonIndexed();
+  const g = new THREE.IcosahedronGeometry(0.5, 0); // (ya viene sin índices)
   const p = g.attributes.position;
   // irregular: cada vértice desplazado (los compartidos, igual)
   const seen = new Map();

@@ -74,6 +74,46 @@ function waterMat(cx, czz, R, k = 1) {
   });
 }
 
+// el resplandor de detrás de la cabeza de la estatua: luz roja sobre la roca
+// del fondo, que late (aditivo, se apaga con la niebla)
+function haloMat() {
+  const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
+  u.uPulse = { value: 0 };
+  u.uK = { value: 1 };
+  return new THREE.ShaderMaterial({
+    uniforms: u,
+    fog: true,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main(){
+        vUv = uv;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader: `uniform float uPulse; uniform float uK; varying vec2 vUv;
+      #include <fog_pars_fragment>
+      void main(){
+        vec2 q = (vUv - 0.5) * 2.0;
+        float r2 = dot(q, q);
+        // (redondo y sin borde: se apaga del todo antes del canto del plano)
+        float g = (exp(-r2 * 3.0) * 0.8 + exp(-r2 * 11.0) * 0.45) * smoothstep(1.0, 0.55, sqrt(r2)) * (0.6 + 0.4 * uPulse) * uK;
+        #ifdef USE_FOG
+          #ifdef FOG_EXP2
+            // (es luz: la niebla se la come menos que a la piedra)
+            g *= exp(-0.4 * fogDensity * fogDensity * vFogDepth * vFogDepth);
+          #else
+            g *= 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
+          #endif
+        #endif
+        gl_FragColor = vec4(vec3(1.0, 0.15, 0.045) * g, 1.0);
+      }`,
+  });
+}
+
 // ¿está p dentro del santuario (el círculo o el pasillo de las columnas)?
 function inSanctum(p) {
   if (p.y < AY - 2 || p.y > AY + 8) return false;
@@ -97,16 +137,26 @@ export class Spring {
     this.pool = new THREE.Mesh(pg, waterMat(0, pz, 6.5, 0.8));
     this.pool.position.set((A.x0 + A.x1) / 2, A.water, pz);
     game.scene.add(this.pool);
+    // el halo: el rojo de la roca de detrás de la cabeza
+    // (por debajo de la bóveda: si no, la bóveda lo corta en seco)
+    const hg = new THREE.PlaneGeometry(10.5, 6);
+    hg.rotateY(Math.PI);
+    this.halo = new THREE.Mesh(hg, haloMat());
+    this.halo.position.set(0, AY + 6.0, A.back - 0.3);
+    this.halo.renderOrder = 2;
+    this.halo.material.uniforms.uK.value = 0.75;
+    game.scene.add(this.halo);
     this.light = game.fx.lights.add({ x: SPRING.x, y: AY - 0.75, z: SPRING.z, color: 0xff2a10, intensity: 0, range: 7.5, flicker: 0, priority: 5, on: false });
     // la de la corona de velas que cuelga de la bóveda
     this.topLight = game.fx.lights.add({ x: 0, y: AY + 8.1, z: CZ, color: 0xffc896, intensity: 0, range: 16, flicker: 0.25, priority: 4, on: false });
-    // la roja de la sima, que le sube por el cuerpo a la estatua: una por
-    // delante, a ras del borde, y otra abajo, junto al agua
+    // la roja de la sima, que le sube por el cuerpo a la estatua desde el
+    // borde; la de detrás, que la recorta (y enciende la roca del fondo); y
+    // la de delante, que le da en la cara al que se acerca
     this.abyssLight = game.fx.lights.add({ x: 0, y: AY - 1.6, z: A.lip + 0.4, color: 0xff2a0c, intensity: 0, range: 17, flicker: 0.08, priority: 6, on: false });
-    this.poolLight = game.fx.lights.add({ x: 0, y: A.water + 0.9, z: A.lip + 2.4, color: 0xff3010, intensity: 0, range: 9, flicker: 0.12, priority: 4, on: false });
-    this.faceLight = game.fx.lights.add({ x: 0, y: AY + 3.2, z: A.lip - 2.2, color: 0xff4a1c, intensity: 0, range: 10, flicker: 0.1, priority: 5, on: false });
+    this.backLight = game.fx.lights.add({ x: 2.2, y: AY + 5.0, z: A.back - 0.45, color: 0xff3412, intensity: 0, range: 8, flicker: 0.06, priority: 6, on: false });
+    this.faceLight = game.fx.lights.add({ x: 0, y: AY + 4.0, z: A.lip - 0.8, color: 0xff4a1c, intensity: 0, range: 10, flicker: 0.1, priority: 5, on: false });
     // la de la brasa del pecho
-    this.emberLight = game.fx.lights.add({ x: 0, y: AY + 3.6, z: -141.7, color: 0xff4a18, intensity: 0, range: 4.5, flicker: 0.3, priority: 3, on: false });
+    this.emberLight = game.fx.lights.add({ x: 0, y: AY + 3.6, z: -141.7, color: 0xff4a18, intensity: 0, range: 4.5, flicker: 0.3, priority: 2, on: false });
     this.t = 0;
     this.beatT = 0;
     this.emberT = 0;
@@ -184,8 +234,17 @@ export class Spring {
     const dLip = Math.hypot(p.x, Math.max(0, A.lip - p.z));
     const inRing = inside && Math.hypot(p.x, p.z - CZ) < SANCT.R + 0.5;
     const want = this.eyeTo ?? (inRing ? (g.activeBoss ? 1 : Math.max(0, Math.min(1, (17 - dLip) / 9))) : 0);
+    const was = this.open;
     this.open += (want - this.open) * Math.min(1, dt * (want > this.open ? 0.7 : 1.4));
     I.setOpen(this.open);
+    // (cuando empieza a abrirse: la piedra de los párpados que rechina y,
+    // detrás, una respiración honda)
+    if (was < 0.12 && this.open >= 0.12 && g.audio && this.t - (this._eyeT ?? -99) > 20) {
+      this._eyeT = this.t;
+      const h = idolToWorld([0, 12.2, 2.4]);
+      g.audio.play('stoneCreak', h, { k: 0.75 });
+      g.audio.play('colossusBreath', h, { k: 0.45 });
+    }
     I.setPulse(pulse, this.boost * 0.8);
     // de cerca se le oye lo que dice (no se entiende) y, cuando se mueve,
     // la piedra que cruje
@@ -217,21 +276,30 @@ export class Spring {
     const nearRing = near && Math.abs(cam.y - AY) < 16 && Math.hypot(cam.x, cam.z - CZ) < 40;
     this.water.visible = intact;
     this.pool.visible = near;
+    this.halo.visible = near;
     const pulse = Math.min(1, beat(this.t) + this.boost);
     this.water.material.uniforms.uPulse.value = pulse;
     this.pool.material.uniforms.uPulse.value = pulse;
+    this.halo.material.uniforms.uPulse.value = pulse;
     this.light.on = nearRing && intact;
     this.light.intensity = 1.6 + 6.5 * pulse + this.boost * 9;
     const shown = !!this.idol && this.idol.root.visible;
+    // (las luces de la estatua, sólo desde el círculo o su boca: desde el
+    // pasillo se ve negra contra el rojo, y así no les quitan el sitio a los
+    // braseros; por la reja de la Confesión se le ve la espalda, con la luz
+    // de detrás)
+    const low = cam.y < AY + 8;
+    const confes = low && cam.z > A.back;
+    const lit = near && shown && !(low && (cam.z < SANCT.portal.z0 - 5 || confes));
     this.topLight.on = nearRing && intact;
     this.topLight.intensity = 2.4;
-    this.abyssLight.on = near && shown;
-    this.abyssLight.intensity = 9 + 7 * pulse + this.boost * 6;
-    this.poolLight.on = near && shown;
-    this.poolLight.intensity = 4 + 4 * pulse + this.boost * 4;
-    this.faceLight.on = near && shown;
-    this.faceLight.intensity = 3.5 + 2.5 * pulse + this.boost * 3 + this.open * 2;
-    this.emberLight.on = near && shown;
+    this.abyssLight.on = lit;
+    this.abyssLight.intensity = 13 + 8 * pulse + this.boost * 6;
+    this.backLight.on = lit || (near && shown && confes);
+    this.backLight.intensity = 6 + 4 * pulse + this.boost * 5;
+    this.faceLight.on = lit;
+    this.faceLight.intensity = 4.5 + 3 * pulse + this.boost * 3 + this.open * 4;
+    this.emberLight.on = lit;
     this.emberLight.intensity = 0.8 + 2.4 * pulse + this.boost * 3;
     this.updateIdol(dt, pulse, near);
     if (!nearRing || !intact) return;
