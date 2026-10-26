@@ -1657,41 +1657,15 @@ function houseBody(ctx, s, sub) {
   }
   if (!s.noRoof) {
     if (burned && rng.chance(0.6)) {
-      // tejado hundido: sólo vigas quemadas
-      const n = Math.floor((axis === 'x' ? W : D) / 1.2);
-      for (let i = 0; i <= n; i++) {
-        const t = i / n;
-        if (axis === 'x') {
-          const x = ux0 + t * (ux1 - ux0);
-          wb.box('wooddark', x - 0.1, h, uz0, x + 0.1, h + 0.2, uz1, { ao: false, tint: [0.3, 0.25, 0.22] });
-        } else {
-          const z = uz0 + t * (uz1 - uz0);
-          wb.box('wooddark', ux0, h, z - 0.1, ux1, h + 0.2, z + 0.1, { ao: false, tint: [0.3, 0.25, 0.22] });
-        }
-      }
-      // techo de la última planta, ennegrecido, para no ver el vacío desde arriba
-      wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.22, 0.19, 0.17] });
+      // tejado quemado: en pie, los hastiales, la cumbrera y los pares
+      // tiznados; de las tejas, lo que queda junto a los hastiales (antes eran
+      // vigas sueltas sobre una tapa plana: de lejos, una casa de techo plano)
+      burnedRoof(ctx, { ux0, uz0, ux1, uz1, h, ridge, axis, upperMat, rng: new RNG(hashSeed(x0, z0, x1, z1, 91)) });
       if (ctx.fires && rng.chance(0.8)) ctx.fires.push({ x: (ux0 + ux1) / 2, y: h + 0.2, z: (uz0 + uz1) / 2, s: 2.2, light: true, smoke: true });
+      if (s.roofCol !== false) roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis);
     } else {
       wb.gableRoof(ux0, uz0, ux1, uz1, h, ridge, axis, { wallMat: upperMat === 'plaster' ? 'plaster' : 'wallstone' });
-      // la cámara no atraviesa el tejado: tres rebanadas escalonadas
-      if (s.roofCol !== false) {
-        const nS = 3;
-        for (let i = 0; i < nS; i++) {
-          const ya = h + ((ridge - h) * i) / nS,
-            yb = h + ((ridge - h) * (i + 1)) / nS;
-          const k = 1 - (i + 0.5) / nS;
-          if (axis === 'x') {
-            const zc = (uz0 + uz1) / 2,
-              hw = ((uz1 - uz0) / 2) * k;
-            addCam(ctx.col, ux0, ya, zc - hw, ux1, yb, zc + hw);
-          } else {
-            const xc = (ux0 + ux1) / 2,
-              hw = ((ux1 - ux0) / 2) * k;
-            addCam(ctx.col, xc - hw, ya, uz0, xc + hw, yb, uz1);
-          }
-        }
-      }
+      if (s.roofCol !== false) roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis);
     }
     // chimenea
     if (s.chimney ?? rng.chance(0.5)) {
@@ -1710,6 +1684,187 @@ function houseBody(ctx, s, sub) {
     ctx.endGroup();
   }
   return { h, ridge, g1 };
+}
+
+// La cámara no atraviesa un tejado a dos aguas: tres rebanadas escalonadas.
+function roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis) {
+  const nS = 3;
+  for (let i = 0; i < nS; i++) {
+    const ya = h + ((ridge - h) * i) / nS,
+      yb = h + ((ridge - h) * (i + 1)) / nS;
+    const k = 1 - (i + 0.5) / nS;
+    if (axis === 'x') {
+      const zc = (uz0 + uz1) / 2,
+        hw = ((uz1 - uz0) / 2) * k;
+      addCam(ctx.col, ux0, ya, zc - hw, ux1, yb, zc + hw);
+    } else {
+      const xc = (ux0 + ux1) / 2,
+        hw = ((ux1 - ux0) / 2) * k;
+      addCam(ctx.col, xc - hw, ya, uz0, xc + hw, yb, uz1);
+    }
+  }
+}
+
+// El tejado de una casa quemada: un tejado a dos aguas con el fuego abierto
+// en medio, más ancho arriba que abajo (el fuego sube), de borde mellado y
+// tiznado; por el hueco, la cumbrera partida, los pares, unos enteros y otros
+// rotos, y el desván negro de ceniza con tejas caídas. Los hastiales, en pie.
+function burnedRoof(ctx, o) {
+  const wb = ctx.wb;
+  const { ux0, uz0, ux1, uz1, h, ridge, axis, rng } = o;
+  const alongX = axis === 'x';
+  const SOOT = [0.3, 0.25, 0.22];
+  // (u: a lo largo de la cumbrera; v: de un alero al otro)
+  const s0 = alongX ? ux0 : uz0,
+    s1 = alongX ? ux1 : uz1;
+  const vc = alongX ? (uz0 + uz1) / 2 : (ux0 + ux1) / 2;
+  const half = alongX ? (uz1 - uz0) / 2 : (ux1 - ux0) / 2;
+  const L = s1 - s0;
+  const P = (u, y, v) => (alongX ? new THREE.Vector3(u, y, vc + v) : new THREE.Vector3(vc + v, y, u));
+  // en 'z' se invierte el sentido de giro de las caras
+  const q = (m, a, b, c, d, opt) => (alongX ? wb.quad(m, a, b, c, d, opt) : wb.quad(m, d, c, b, a, opt));
+  const tri = (m, a, b, c, opt) => (alongX ? wb.tri(m, a, b, c, opt) : wb.tri(m, c, b, a, opt));
+  const slope = (ridge - h) / half;
+  // vuelo de los aleros y de los hastiales, como en un tejado entero
+  const ov = 0.45,
+    gv = 0.3;
+  const th = 0.16;
+  const yAt = (v) => ridge - Math.abs(v) * slope;
+  // el desván, al aire: tablas negras de ceniza (desde arriba no se ve el
+  // vacío) y, encima, tejas y cascotes
+  wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.22, 0.19, 0.17] });
+  // el hueco: centrado en uh, con su semiancho junto a la cumbrera (w0) que
+  // mengua hacia el alero
+  const uh = s0 + L * rng.range(0.35, 0.65);
+  const w0 = Math.max(0.9, L * rng.range(0.16, 0.26));
+  for (let i = 0; i < 9; i++) {
+    const u = uh + rng.range(-w0, w0),
+      v = rng.range(-half + 0.5, half - 0.5),
+      sz = rng.range(0.2, 0.45);
+    const c = P(u, h + sz * 0.2, v);
+    wb.push();
+    wb.translate(c.x, c.y, c.z);
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateX(rng.range(-0.3, 0.3));
+    wb.box(i % 3 ? 'roof' : 'wallstone', -sz, -sz * 0.2, -sz * 0.6, sz, sz * 0.2, sz * 0.6, { ao: false, tint: i % 3 ? [0.45, 0.36, 0.32] : SOOT });
+    wb.pop();
+  }
+  // los hastiales, por fuera y por dentro (por dentro, tiznados)
+  const wall = o.upperMat === 'plaster' ? 'plaster' : 'wallstone';
+  for (const [u, out] of [
+    [s0, -1],
+    [s1, 1],
+  ]) {
+    const a = P(u, h, -half),
+      b = P(u, h, half),
+      c = P(u, ridge - th, 0);
+    const opt = { ao: false, tint: [0.62, 0.57, 0.53] };
+    if (out < 0) {
+      tri(wall, a, b, c, opt);
+      tri(wall, b, a, c, { ...opt, tint: SOOT });
+    } else {
+      tri(wall, b, a, c, opt);
+      tri(wall, a, b, c, { ...opt, tint: SOOT });
+    }
+  }
+  // el faldón, a trozos: nU tramos a lo largo y tres bandas de la cumbrera
+  // al alero (b = 0 junto a la cumbrera); falta lo que se ha comido el fuego
+  const nU = Math.max(4, Math.round((L + 2 * gv) / 0.9));
+  const uA = s0 - gv,
+    du = (L + 2 * gv) / nU;
+  const NB = 3;
+  const vEave = half + ov;
+  const gone = (i, b) => {
+    const uc = uA + (i + 0.5) * du;
+    return Math.abs(uc - uh) < w0 * (1 - 0.28 * b) + (rng.next() - 0.5) * 0.7;
+  };
+  const cells = {};
+  for (const sg of [-1, 1]) for (let b = 0; b < NB; b++) for (let i = 0; i < nU; i++) cells[sg + ':' + b + ':' + i] = !gone(i, b);
+  const has = (sg, b, i) => b >= 0 && b < NB && i >= 0 && i < nU && cells[sg + ':' + b + ':' + i];
+  const top = (u, v) => P(u, yAt(v) + 0.02, v);
+  const bot = (u, v) => P(u, yAt(v) + 0.02 - th, v);
+  for (const sg of [-1, 1]) {
+    for (let b = 0; b < NB; b++) {
+      const va = (sg * vEave * b) / NB,
+        vb = (sg * vEave * (b + 1)) / NB;
+      for (let i = 0; i < nU; i++) {
+        if (!has(sg, b, i)) continue;
+        const ua = uA + i * du,
+          ub = ua + du;
+        // (más tiznado cuanto más cerca del hueco)
+        const near = Math.max(0, 1 - Math.max(0, Math.abs(ua + du / 2 - uh) - w0) / 2.5);
+        const tint = [0.62, 0.5, 0.44].map((t) => t * (1 - 0.45 * near) * rng.range(0.88, 1));
+        const T = { ao: false, sub: 2.2, tint };
+        const E = { ao: false, sub: 3, tint: SOOT };
+        if (sg > 0) {
+          q('roof', top(ua, vb), top(ub, vb), top(ub, va), top(ua, va), T);
+          q('wooddark', bot(ua, va), bot(ub, va), bot(ub, vb), bot(ua, vb), E);
+        } else {
+          q('roof', top(ub, vb), top(ua, vb), top(ua, va), top(ub, va), T);
+          q('wooddark', bot(ub, va), bot(ua, va), bot(ua, vb), bot(ub, vb), E);
+        }
+        // cantos: hacia un tramo que falta, el alero y los extremos del
+        // tejado (las tablas de remate)
+        const edgeU = (u, toMinus) => {
+          if ((sg > 0) === toMinus) q('wooddark', bot(u, va), bot(u, vb), top(u, vb), top(u, va), E);
+          else q('wooddark', bot(u, vb), bot(u, va), top(u, va), top(u, vb), E);
+        };
+        if (!has(sg, b, i - 1)) edgeU(ua, true);
+        if (!has(sg, b, i + 1)) edgeU(ub, false);
+        const edgeV = (v, outward) => {
+          if (outward) q('wooddark', bot(ua, v), bot(ub, v), top(ub, v), top(ua, v), E);
+          else q('wooddark', bot(ub, v), bot(ua, v), top(ua, v), top(ub, v), E);
+        };
+        // (hacia el alero, la cara mira afuera; hacia la cumbrera, adentro)
+        const outV = (out) => (sg > 0 ? out : !out);
+        if (b === NB - 1 || !has(sg, b + 1, i)) edgeV(vb, outV(true));
+        if (b > 0 && !has(sg, b - 1, i)) edgeV(va, outV(false));
+      }
+    }
+  }
+  // la cumbrera: caballetes donde quedan tejas a los dos lados; la viga,
+  // partida sobre el hueco
+  for (let i = 0; i < nU; i++) {
+    if (!has(1, 0, i) || !has(-1, 0, i)) continue;
+    const ua = uA + i * du,
+      ub = ua + du;
+    const a = P(ua, ridge - 0.04, -0.16),
+      c = P(ub, ridge + 0.14, 0.16);
+    wb.box('roof', Math.min(a.x, c.x), a.y, Math.min(a.z, c.z), Math.max(a.x, c.x), c.y, Math.max(a.z, c.z), { ao: false, faces: 'tnsewb', tint: [0.5, 0.4, 0.36] });
+  }
+  const ridgeBeam = (a, b) => {
+    if (b - a < 0.1) return;
+    beam(ctx, 'timber', P(a, ridge - th - 0.09, 0), P(b, ridge - th - 0.09, 0), 0.18, { tint: SOOT });
+  };
+  const broken = w0 > 1.2 && rng.chance(0.7);
+  if (broken) {
+    ridgeBeam(s0, uh - rng.range(0.2, 0.6));
+    ridgeBeam(uh + rng.range(0.2, 0.6), s1);
+  } else ridgeBeam(s0, s1);
+  for (const sg of [-1, 1]) beam(ctx, 'timber', P(s0, h + 0.08, sg * (half - 0.12)), P(s1, h + 0.08, sg * (half - 0.12)), 0.16, { tint: SOOT });
+  // los pares bajo el hueco (cada 0,6 m): unos enteros, otros partidos con
+  // el cabo de arriba colgando de la cumbrera, y alguno que falta
+  const n = Math.max(3, Math.round(L / 0.6));
+  for (let i = 0; i <= n; i++) {
+    const u = s0 + 0.12 + (i / n) * (L - 0.24);
+    if (Math.abs(u - uh) > w0 + 0.9) continue;
+    for (const sg of [-1, 1]) {
+      const r = rng.next();
+      if (r < 0.2) continue;
+      const foot = P(u, h + 0.1, sg * (half - 0.1)),
+        head = P(u, ridge - th - 0.09, 0);
+      if (r < 0.6) beam(ctx, 'timber', foot, head, 0.12, { tint: SOOT });
+      else {
+        const k = rng.range(0.35, 0.7);
+        const mid = foot.clone().lerp(head, k);
+        beam(ctx, 'timber', foot, mid, 0.12, { tint: SOOT });
+        if (rng.chance(0.5) && !(broken && Math.abs(u - uh) < 0.6)) {
+          const hang = head.clone().add(new THREE.Vector3(0, -rng.range(0.9, 1.6), 0)).lerp(mid, 0.25);
+          beam(ctx, 'timber', head, hang, 0.11, { tint: SOOT });
+        }
+      }
+    }
+  }
 }
 
 // El tejado hundido de una casa (golpes del jefe final): la mitad del
