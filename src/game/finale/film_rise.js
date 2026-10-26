@@ -5,7 +5,8 @@
 // envuelve. El suelo se hunde en un pozo y se lo traga. Un latido. Lo que sube
 // es el gigante, encogido, con la joroba por delante: la losa del borde, con
 // el jugador encima, cae sobre ella (¡Agárrate!) y sube con él: el ascensor.
-// La cúpula revienta; sale a la noche por fuera de la muralla norte, se iza
+// (Todo lo mira, desde su sima, la estatua del fondo, con el ojo abierto.)
+// La bóveda revienta; sale a la noche por fuera de la muralla norte, se iza
 // fuera del cráter y ruge a la ciudad. Atraviesa la muralla (¡Agárrate!),
 // abre la cabecera y la nave de la catedral; el golpe suelta al jugador, que
 // cae dentro agarrado al estandarte. La bóveda se viene abajo mientras corre
@@ -497,6 +498,12 @@ export function* actRise(D, o = {}) {
   // sobre las manos: la raíz va del centro del pozo a la tierra firme);
   // plano general desde el adarve, que se le viene encima: ruge a la ciudad
   D.dropLight(red);
+  // (la estatua de la sima, otra vez a lo suyo: ya no queda nadie abajo)
+  if (S) {
+    S.eyeTo = null;
+    S.lookAt = null;
+    S.boost = 0;
+  }
   F.attach = () => onHump(G, slab);
   F.keyLight(1);
   F.pClip(FP.kneelGrip, { blend: 0.4 });
