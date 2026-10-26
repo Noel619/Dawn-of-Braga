@@ -51,7 +51,8 @@ export function buildNW(ctx, S, L) {
   house(ctx, { x0: -48, z0: -40, x1: -40, z1: -32, front: 's', seed: 1105, h: 7.6, lit: true });
   house(ctx, { x0: -31, z0: -32, x1: -24, z1: -22, front: 'w', seed: 1106, h: 6.8, wreck: 'centroO1' });
   house(ctx, { x0: -31, z0: -40, x1: -24, z1: -32, front: 'n', seed: 1107, h: 7.2, windows: false, jetty: 0, wreck: 'centroO2' });
-  P.niche(ctx, -31, 1.5, -27.5, 'w');
+  // (la hornacina, a un lado de la puerta: estaba encima de su marco)
+  P.niche(ctx, -31, 1.5, -29.6, 'w');
   P.laundry(ctx, -44.95, -27.5, -31.05, -27.5, 4.6, 1103);
   P.laundry(ctx, -38, -31.95, -38, -19.55, 4.9, 1104);
   P.wallTorch(ctx, -45, 2.6, -28, 'e');
@@ -68,7 +69,7 @@ export function buildNW(ctx, S, L) {
   bakeCorpse(wb, -42, 0, -29.2, 0.9, 'back', 'soldier', 6);
   P.decal(ctx, -39.6, 0.02, -23.4, 2);
   P.decal(ctx, -42, 0.02, -29.2, 2.2);
-  P.decal(ctx, -31.05, 1.9, -25.5, 1.1, 'sigil', -Math.PI / 2, { wall: 'x' });
+  P.decal(ctx, -31.05, 1.9, -23.2, 1.1, 'sigil', -Math.PI / 2, { wall: 'x' });
   ctx.crows.push({ x: -42, y: 0, z: -29.2, r: 1.4, n: 3 });
   ctx.crows.push({ pts: [[-38.9, 3.25, -25.8], [-37.1, 3.25, -25.8]], yaw: 0 });
   ctx.rats.push({ x: -45.8, y: 0, z: -22.2, n: 2 });
@@ -161,7 +162,9 @@ export function buildNW(ctx, S, L) {
       { x0: -20.1, z0: -19.15, x1: -19.9, z1: -12.1, doors: [{ at: -15.6, w: 1.1 }] },
     ],
   });
-  P.sign(ctx, -20.6, 2.95, -3.5, 0, 'cup');
+  // (el rótulo, junto a la puerta, entre ella y la ventana: colgaba delante
+  // del hueco, a la altura del dintel)
+  P.sign(ctx, -21.95, 2.95, -3.5, 0, 'cup');
   wb.setRoom(room);
   // sala: hogar, barra, mesas
   P.hearth(ctx, -26.15, 0, -7.4, 'e', { room, w: 2 });

@@ -4,8 +4,10 @@ En esta lista se van a detallar distintos bugs que se encuentren In-Game. Con el
     -> La rueda tiene ahora llanta con grueso (cara de fuera, de dentro y coronas), aro de hierro, cubo y radios macizos.
 2 - [ARREGLADO] [CULLING] En "Callejón de la Fragua", el cartel que está al lado de la puerta tiene problemas de Culling al ser mirado de abajo hacia arriba.
     -> Las piezas que no apoyan en el suelo (carteles, vigas, alféizares...) dibujan también su cara de abajo: ya no se ve a través desde abajo.
-3 - En "Calle del Soto", y en otros muchos lugares de la ciudad, tienes vigas de madera que atraviesan las ventanas de formas incoherentes.  
-4 - En "Calle del Soto", al lado de Taberna del Cuervo, hay un cartel mal colocado, y un círculo maldito pintado en la pared que se superpone con una ventana.  
+3 - [ARREGLADO] En "Calle del Soto", y en otros muchos lugares de la ciudad, tienes vigas de madera que atraviesan las ventanas de formas incoherentes.  
+    -> El entramado de todas las casas se reparte según las ventanas: pies derechos a sus lados, solera bajo los alféizares y sobre los dinteles, y aspas sólo en los paños sin ventana.
+4 - [ARREGLADO] En "Calle del Soto", al lado de Taberna del Cuervo, hay un cartel mal colocado, y un círculo maldito pintado en la pared que se superpone con una ventana.  
+    -> El rótulo de la taberna cuelga entre la puerta y la ventana (estaba delante del hueco de la puerta) y el sigilo, en el muro libre. Lo mismo en la Plazuela del Pozo (hornacina sobre el marco de una puerta y sigilo sobre una ventana) y un rótulo de los soportales de la Plaza del Pan.
 5 - En "Taberna del Cuervo", el mostrador no tiene sentido. No tiene espacio detrás del mismo, y hay barriles que ocupan ese espacio.
 6 - En "Taberna del Cuervo", hay una escotilla que no conecta con ningún lugar y se encuentra en la mitad de una habitación.
 7 - [ARREGLADO] [CULLING] En "Calle de la Herrería", el techito exterior que tiene la herrería, tiene graves problemas de Culling. También, hay una rueda con el mismo problema y un cartel de herrería mal colocado.

@@ -41,11 +41,12 @@ export function buildSouto(ctx, S, L) {
   P.decal(ctx, -27, 0.02, 1.8, 1.8);
   P.decal(ctx, -31, 0.02, 0, 1.2);
   P.decal(ctx, -22, 0.02, -1, 1.6);
-  // sigilo del pacto pintado en puertas
+  // sigilo del pacto pintado en puertas (el de la taberna, en el muro, lejos
+  // de la ventana: se montaba sobre ella)
   for (const [x, z, r] of [
     [-37.2, -3.44, 0],
     [-36.2, 3.44, Math.PI],
-    [-23.6, -3.44, 0],
+    [-25.1, -3.44, 0],
   ])
     P.decal(ctx, x, 1.8, z, 1.2, 'sigil', r, { wall: 'z' });
   P.wallTorch(ctx, -44, 2.6, 3.5, 'n');
@@ -145,7 +146,7 @@ export function buildPraca(ctx, S, L) {
   P.crate(ctx, -5.2, 0, -16, 0.7, 0.2);
   P.sacks(ctx, 5, 0, -15.8, 3, 19);
   P.barrel(ctx, 12.8, 0, -15.7);
-  P.sign(ctx, -6.2, 2.7, -16.5, 0, 1);
+  P.sign(ctx, -5.2, 2.7, -16.5, 0, 1);
   P.sign(ctx, 6.1, 2.7, -16.5, 0, 2);
   P.lantern(ctx, -11.9, 2.6, -16.5, 0, true);
   P.lantern(ctx, 1.6, 2.6, -16.5, 0, true);

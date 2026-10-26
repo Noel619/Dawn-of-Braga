@@ -1210,6 +1210,66 @@ export function windowAt(ctx, x, y, w, h, o, rng) {
   }
 }
 
+// Entramado de la planta alta de una fachada (coordenadas de fachada: a lo
+// largo, de 0 a L; z hacia fuera): pies derechos a los lados de cada ventana
+// y repartidos por los paños anchos, la solera bajo los alféizares, la de
+// encima de los dinteles, la carrera de arriba y tornapuntas sólo donde no
+// hay ventana (la carrera y las aspas de antes cruzaban las ventanas).
+// wins: centros de las ventanas (0,7 m de ancho, de g1 + 0,9 a g1 + 1,95);
+// braces: hacia dónde va la tornapunta de cada paño (0: sin ella).
+function timberFrame(ctx, L, g1, h, wins, braces) {
+  const wb = ctx.wb;
+  const T = { ao: false, sub: 3 };
+  const pw = 0.1,
+    half = 0.45;
+  const ySill = g1 + 0.7,
+    yHead = g1 + 2.13,
+    yTop = h - 0.1;
+  const head = yTop - 0.1 - (yHead + 0.08) > 0.35;
+  // pies derechos
+  const cand = [0.1, L - 0.1];
+  for (const a of wins) cand.push(a - half - pw, a + half + pw);
+  cand.sort((p, q) => p - q);
+  const fixed = [];
+  for (const a of cand) if (!fixed.length || a - fixed[fixed.length - 1] > 2 * pw + 0.02) fixed.push(Math.min(L - 0.1, Math.max(0.1, a)));
+  const hasWin = (p, q) => wins.some((a) => a > p && a < q);
+  const posts = [];
+  for (let i = 0; i < fixed.length; i++) {
+    posts.push(fixed[i]);
+    const p = fixed[i],
+      q = fixed[i + 1];
+    if (q === undefined || hasWin(p, q)) continue;
+    const m = Math.round((q - p) / 1.5);
+    for (let k = 1; k < m; k++) posts.push(p + ((q - p) * k) / m);
+  }
+  for (const a of posts) wb.box('timber', a - pw, g1 + 0.2, 0, a + pw, h, 0.07, T);
+  // la carrera de arriba y las soleras, algo por detrás de pies derechos y
+  // tornapuntas (a la misma profundidad, cada cruce parpadeaba)
+  wb.box('timber', 0, h - 0.2, 0, L, h, 0.08, T);
+  wb.box('timber', 0, ySill - 0.08, 0, L, ySill + 0.08, 0.055, T);
+  if (head) wb.box('timber', 0, yHead - 0.08, 0, L, yHead + 0.08, 0.055, T);
+  // tornapuntas (de eje a eje: los cabos quedan dentro de pies y soleras)
+  let k = 0;
+  const brace = (a0, a1, y0, y1) => {
+    const dir = braces.length ? braces[k++ % braces.length] : 0;
+    if (!dir) return;
+    const dw = a1 - a0,
+      dh = y1 - y0;
+    const len = Math.hypot(dw, dh);
+    wb.push();
+    wb.translate((a0 + a1) / 2, (y0 + y1) / 2, 0.035);
+    wb.rotateZ(Math.atan2(dh, dw) * dir);
+    wb.box('timber', -len / 2, -0.07, -0.03, len / 2, 0.07, 0.03, { ao: false, sub: 4 });
+    wb.pop();
+  };
+  for (let i = 0; i + 1 < posts.length; i++) {
+    const p = posts[i],
+      q = posts[i + 1];
+    if (!hasWin(p, q)) brace(p, q, ySill, head ? yHead : yTop);
+    if (head && yTop - yHead > 1.0) brace(p, q, yHead, yTop);
+  }
+}
+
 export function doorAt(ctx, x, w, h, o = {}) {
   const wb = ctx.wb;
   // jambas y dintel de piedra (el dintel descansa sobre las jambas y vuela
@@ -1539,45 +1599,27 @@ function houseBody(ctx, s, sub) {
   for (const side of sides) {
     const [tx, tz, rot, L] = sideFrame(side, ux0, uz0, ux1, uz1);
     const [ltx, ltz, , LL] = sideFrame(side, x0, z0, x1, z1);
-    // entramado planta alta
+    // planta alta: ventanas y entramado
     wb.at(tx, 0, tz, rot, () => {
+      // (las tiradas del entramado van antes que las de las ventanas, como
+      // siempre: así el resto de la casa no cambia)
+      const braces = [];
       if (style === 'timber') {
         const n = Math.max(2, Math.round(L / 1.5));
-        for (let i = 0; i <= n; i++) {
-          const a = 0.1 + (i / n) * (L - 0.2);
-          wb.box('timber', a - 0.1, g1 + 0.2, 0, a + 0.1, h, 0.07, { ao: false, sub: 3 });
-        }
-        wb.box('timber', 0, h - 0.2, 0, L, h, 0.08, { ao: false, sub: 3 });
-        // la carrera intermedia, algo por detrás de pies derechos y tornapuntas
-        // (a la misma profundidad, cada cruce parpadeaba)
-        wb.box('timber', 0, g1 + 1.0, 0, L, g1 + 1.16, 0.055, { ao: false, sub: 3 });
-        // tornapuntas en aspa
-        for (let i = 0; i < n; i++) {
-          if (rng.chance(0.45)) continue;
-          const a0 = 0.1 + (i / n) * (L - 0.2),
-            a1 = 0.1 + ((i + 1) / n) * (L - 0.2);
-          const cx = (a0 + a1) / 2,
-            cy = (g1 + 1.16 + h - 0.2) / 2;
-          const dw = a1 - a0,
-            dh = h - 0.2 - (g1 + 1.16);
-          const len = Math.hypot(dw, dh);
-          const ang = Math.atan2(dh, dw) * (rng.chance(0.5) ? 1 : -1);
-          wb.push();
-          wb.translate(cx, cy, 0.035);
-          wb.rotateZ(ang);
-          wb.box('timber', -len / 2, -0.07, -0.03, len / 2, 0.07, 0.03, { ao: false, sub: 4 });
-          wb.pop();
-        }
+        for (let i = 0; i < n; i++) braces.push(rng.chance(0.45) ? 0 : rng.chance(0.5) ? 1 : -1);
       }
-      // ventanas planta alta
+      const wins = [];
       if (L > 2.2 && s.windows !== false) {
         const n = Math.max(1, Math.floor(L / 2.6));
         for (let i = 0; i < n; i++) {
           const a = ((i + 0.5) / n) * L;
           const lit = !!s.lit && rng.chance(s.litChance ?? 0.35);
-          windowAt(ctx, a + rng.range(-0.2, 0.2), g1 + 0.9, 0.7, 1.05, { lit }, rng);
+          const at = a + rng.range(-0.2, 0.2);
+          windowAt(ctx, at, g1 + 0.9, 0.7, 1.05, { lit }, rng);
+          wins.push(at);
         }
       }
+      if (style === 'timber') timberFrame(ctx, L, g1, h, wins, braces);
     });
     // planta baja: puerta y ventanas
     wb.at(ltx, 0, ltz, rot, () => {
