@@ -6,11 +6,12 @@ import { ITEMS, NOTES, MSG } from './story.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
 import { G } from '../gfx/materials.js';
 import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const glowTex = () => getTexture('glow');
 
 // ------------------------------------------------------------ mallas
-function doorLeaf(w, h, mat) {
+function doorLeaf(w, h, mat, hAt = null) {
   const g = new THREE.Group();
   if (mat === 'irongate' || mat === 'grate') {
     const iron = objMat('iron');
@@ -61,10 +62,31 @@ function doorLeaf(w, h, mat) {
   // madera con herrajes
   const wood = objMat('planks'),
     iron = objMat('iron');
-  const leaf = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.09), wood);
-  leaf.position.set(w / 2, h / 2, 0);
-  g.add(leaf);
-  for (const y of [0.35, h * 0.5, h - 0.4]) {
+  // (hAt: bajo un arco, la altura de la hoja a lo largo de su ancho; la hoja
+  // se hace de tablas verticales, cada una con la cabeza cortada en el sesgo
+  // del arco)
+  let hs = h;
+  if (hAt) {
+    const n = Math.max(3, Math.round(w / 0.19));
+    const geos = [];
+    for (let i = 0; i < n; i++) {
+      const x0 = (i / n) * w,
+        x1 = ((i + 1) / n) * w;
+      const g1 = new THREE.BoxGeometry(x1 - x0, 1, 0.09).translate((x0 + x1) / 2, 0.5, 0);
+      const P = g1.attributes.position;
+      for (let k = 0; k < P.count; k++) if (P.getY(k) > 0.5) P.setY(k, hAt(P.getX(k)) - 0.02);
+      g1.computeVertexNormals();
+      hs = Math.min(hs, hAt(x0) - 0.02, hAt(x1) - 0.02);
+      geos.push(g1);
+    }
+    const leaf = new THREE.Mesh(mergeGeometries(geos), wood);
+    g.add(leaf);
+  } else {
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.09), wood);
+    leaf.position.set(w / 2, h / 2, 0);
+    g.add(leaf);
+  }
+  for (const y of [0.35, hs * 0.5, hs - 0.4]) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, 0.08, 0.12), iron);
     s.position.set(w * 0.44, y, 0);
     g.add(s);
@@ -630,6 +652,10 @@ export class Interactables {
         // grosor del muro, la hoja atravesaba la jamba al abrirse.
         const inset = slides ? 0 : s.inset ?? 0.06;
         const off = slides || s.plane === undefined ? 0 : s.axis === 'z' ? s.x - s.plane : s.plane - s.z;
+        // (arch: el hueco acaba en medio punto; la hoja sigue el arco: de
+        // s.h - w/2 en las jambas a s.h en la clave. u0: dónde empieza la
+        // hoja, desde el centro del hueco)
+        const archH = (u0) => (s.arch ? (x) => s.h - s.w / 2 + Math.sqrt(Math.max(0, (s.w / 2) ** 2 - (u0 + x) ** 2)) : null);
         if (none) {
           // nada
         } else if (s.double) {
@@ -637,7 +663,7 @@ export class Interactables {
           for (const side of [-1, 1]) {
             const pivot = new THREE.Group();
             pivot.position.set(side * (s.w / 2 - inset), 0, off);
-            const leaf = doorLeaf(lw, s.h, s.mat);
+            const leaf = doorLeaf(lw, s.h, s.mat, archH(side < 0 ? -(s.w / 2 - inset) : s.w / 2 - inset - lw));
             if (side > 0) leaf.position.x = -lw;
             pivot.add(leaf);
             pivot.userData.side = side;
@@ -648,7 +674,7 @@ export class Interactables {
           const lw = s.w - 2 * inset;
           const pivot = new THREE.Group();
           pivot.position.set(slides ? -s.w / 2 : hinge * (s.w / 2 - inset), 0, off);
-          const leaf = doorLeaf(lw, s.h, s.mat);
+          const leaf = doorLeaf(lw, s.h, s.mat, archH(-s.w / 2 + inset));
           if (hinge > 0 && !slides) leaf.position.x = -lw;
           pivot.add(leaf);
           it.obj.add(pivot);
@@ -682,6 +708,28 @@ export class Interactables {
       if (s.axis === 'x') it.box = g.world.col.add(s.x - s.w / 2, s.y, s.z - t, s.x + s.w / 2, s.y + s.h, s.z + t, 'door');
       else it.box = g.world.col.add(s.x - t, s.y, s.z - s.w / 2, s.x + t, s.y + s.h, s.z + s.w / 2, 'door');
       it.open = 0;
+      // las hojas abiertas también chocan (antes, abierta la puerta, se
+      // atravesaban las hojas y uno se quedaba metido en ellas): una caja
+      // delgada por hoja, donde queda abierta del todo
+      if (it.leaves && it.leaves.length && s.mat !== 'grate' && s.mat !== 'seal' && s.mat !== 'barricade') {
+        this.poseDoor(it, 1);
+        it.obj.updateMatrixWorld(true);
+        it.leafBoxes = it.leaves.map((pv) => {
+          const lg = pv.children[0];
+          const lw = s.double ? s.w / 2 - (s.inset ?? 0.06) - 0.01 : s.w - 2 * (s.inset ?? 0.06);
+          const a = lg.localToWorld(new THREE.Vector3(0.04, 0, 0)),
+            b = lg.localToWorld(new THREE.Vector3(lw - 0.04, 0, 0));
+          const dx = b.x - a.x,
+            dz = b.z - a.z;
+          const L = Math.hypot(dx, dz);
+          const box = g.world.col.addOBB((a.x + b.x) / 2, (a.z + b.z) / 2, L / 2, 0.07, Math.atan2(-dz, dx), s.y, s.y + s.h);
+          box.cam = false;
+          box.noSight = true;
+          box.enabled = false;
+          return box;
+        });
+        this.poseDoor(it, 0);
+      }
       // (un rastrillo cerrado es un muro también para las criaturas; los
       // atajos de palanca, también, y desde el principio: la rejilla de
       // navegación se hizo antes que las puertas)
@@ -980,6 +1028,7 @@ export class Interactables {
       }
       it.rise = undefined;
       if (it.box) it.box.enabled = true;
+      for (const b of it.leafBoxes || []) b.enabled = false;
       if (it.lock && it.lock.type === 'lever') this.refreshDoorNav(it);
       if (it.boards) it.boards.visible = true;
       if (it.mat === 'barricade') it.obj.visible = true;
@@ -1017,6 +1066,7 @@ export class Interactables {
   setOpen(it, instant = false) {
     it.done = true;
     if (it.box) it.box.enabled = false;
+    for (const b of it.leafBoxes || []) b.enabled = true;
     it.target = 1;
     if (instant) {
       it.open = 1;
@@ -1033,6 +1083,7 @@ export class Interactables {
     it.target = 0;
     it.closing = 1;
     if (it.box) it.box.enabled = true;
+    for (const b of it.leafBoxes || []) b.enabled = false;
     delete this.game.flags['door:' + it.id];
   }
 

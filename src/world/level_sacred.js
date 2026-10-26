@@ -174,24 +174,9 @@ export function buildCathedral(ctx, S, L) {
   wb.box('wooddark', -5, 8.3, -60, 5, 8.5, -56.6, { faces: 'b', ao: false });
   P.wallTorch(ctx, -4.9, 3, -58, 'e');
   P.wallTorch(ctx, 4.9, 3, -58, 'w');
-  // fachada con portada
+  // fachada con portada (las hojas de la puerta llenan el medio punto: ver
+  // d_se, más abajo; antes eran cuadradas, bajo un tímpano de piedra)
   archWall(ctx, -5, 5, -61.5, -60, 18, 0, 3.2, 4.6, { mat: 'ashlar', slices: 8 });
-  // tímpano de piedra que cierra el medio punto sobre las hojas de la puerta
-  // (las hojas rectangulares no caben en el arco: antes lo atravesaban)
-  {
-    const R = 1.6,
-      spring = 4.6 - R,
-      N = 8;
-    for (let i = 0; i < N; i++) {
-      const u0 = -R + (i / N) * 2 * R,
-        u1 = -R + ((i + 1) / N) * 2 * R;
-      const um = (u0 + u1) / 2;
-      const yy = spring + Math.sqrt(Math.max(0, R * R - um * um));
-      wb.box('ashlar', u0, spring, -60.12, u1, yy, -60.0, { ao: false, faces: 'nsbew', tint: [0.8, 0.78, 0.74] });
-    }
-    const tb = ctx.col.add(-R, spring, -60.12, R, spring + R, -60.0);
-    tb.noSight = true;
-  }
   ctx.endGroup();
   wb.box('ashlar', -1.6, 0, -61.5, 1.6, FY, -60, { faces: 't', ao: false });
   ctx.col.add(-1.6, 0, -61.5, 1.6, FY, -60);
@@ -541,7 +526,8 @@ export function buildCathedral(ctx, S, L) {
   ctx.rats.push({ x: -10.0, y: FY, z: -102.6, n: 2 });
 
   L.interact.push(
-    { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 2.38, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
+    // (de medio punto: de 2,4 m en las jambas a 4 en la clave, como el arco)
+    { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 4.0, arch: true, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
     { kind: 'door', id: 'd_claustro_se', x: 12, y: FY, z: -80, w: 2, h: 2.55, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: 11.05 },
     // (la reja de la cripta: el torno la baja por su ranura y se mete entera
     // en el peldaño de arriba; subiendo, se quedaba colgada en el aire de la

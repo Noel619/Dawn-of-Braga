@@ -432,16 +432,30 @@ function buildGate(ctx, S, L) {
   slit(ctx, -51.2, 1.2, 1.4, 'n');
   slit(ctx, -55.8, 1.2, 0, 'e');
   // las puertas de dentro: una hoja abierta contra el muro (colgada de sus
-  // pernios junto al arco), la otra arrancada y tirada en el suelo
-  wb.box('planks', -55.75, 0.02, 3.1, -55.6, 3.4, 4.4, { ao: false, faces: 'tnsewb', tint: [0.7, 0.62, 0.55] });
-  for (const y of [0.6, 2.6]) {
-    wb.box('iron', -55.6, y, 3.12, -55.56, y + 0.08, 4.38, { ao: false });
-    wb.box('iron', -55.8, y - 0.06, 4.3, -55.6, y + 0.14, 4.42, { ao: false });
+  // pernios junto al arco), la otra arrancada y tirada en el suelo. Son de
+  // medio punto, como el arco (eran rectángulos): de 3 m en las jambas a
+  // 4,4 en la clave
+  {
+    const R = 1.4,
+      spring = ph - R;
+    // (d: desde la bisagra, en la jamba)
+    const hAt = (d) => spring + Math.sqrt(Math.max(0, R * R - (R - d) ** 2)) - 0.05;
+    wb.push();
+    wb.translate(-55.675, 0.02, 4.4);
+    wb.rotateY(Math.PI / 2);
+    P.archedLeaf(ctx, 1.33, hAt, { t: 0.15, tint: [0.7, 0.62, 0.55], straps: [0.6, 2.6] });
+    wb.pop();
+    // los pernios, en la jamba
+    for (const y of [0.6, 2.6]) wb.box('iron', -55.8, y - 0.06, 4.3, -55.6, y + 0.14, 4.42, { ao: false });
+    // la otra, tumbada en el suelo (la bisagra hacia el arco)
+    wb.push();
+    wb.translate(-52.6, 0.09, 7.0);
+    wb.rotateY(0.5);
+    wb.translate(-0.7, 0, 2.2);
+    wb.rotateX(-Math.PI / 2);
+    P.archedLeaf(ctx, 1.4, (x) => hAt(1.4 - x), { t: 0.14, tint: [0.62, 0.55, 0.5], straps: [1.0, 2.6] });
+    wb.pop();
   }
-  wb.at(-52.6, 0.02, 7.0, 0.5, () => {
-    wb.box('planks', -0.7, 0, -1.7, 0.7, 0.14, 1.7, { ao: false, faces: 'tnsewb', tint: [0.62, 0.55, 0.5] });
-    for (const z of [-1.1, 1.1]) wb.box('iron', -0.72, 0.14, z - 0.04, 0.72, 0.17, z + 0.04, { ao: false });
-  });
   // la tranca, partida en dos, en el suelo junto a la hoja
   wb.at(-50.9, 0.0, 6.0, 1.25, () => {
     wb.box('wooddark', -1.05, 0, -0.08, -0.06, 0.16, 0.08, { ao: false });

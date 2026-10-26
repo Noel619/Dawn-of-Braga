@@ -2688,6 +2688,31 @@ export function leafyTree(ctx, x, y, z, h, seed, o = {}) {
 // Barca de remos: casco de tablas (fondo plano, costados abiertos, proa en
 // punta y espejo de popa), regala, dos bancadas y los remos atravesados. En
 // su marco: eslora a lo largo de z (la proa hacia -z); y es la quilla.
+// Hoja de puerta de tablas que acaba en un arco (o en lo que diga hAt): en el
+// marco actual, de x = 0 (la bisagra) a w, de y = 0 a hAt(x), con el grueso
+// t centrado en z = 0. Tablas verticales, cada una hasta donde le deja el
+// arco, y bandas de hierro (straps: sus alturas) por las dos caras.
+export function archedLeaf(ctx, w, hAt, o = {}) {
+  const wb = ctx.wb;
+  const t = o.t ?? 0.12;
+  const n = Math.max(3, Math.round(w / 0.19));
+  const rng = new RNG(o.seed ?? Math.round(w * 100));
+  let hmin = Infinity;
+  for (let i = 0; i < n; i++) {
+    const x0 = (i / n) * w,
+      x1 = ((i + 1) / n) * w;
+    hmin = Math.min(hmin, hAt(x0), hAt(x1));
+    const tint = (o.tint ?? [0.72, 0.64, 0.56]).map((v) => v * rng.range(0.88, 1.06));
+    // (la cabeza de la tabla, cortada en el sesgo del arco)
+    const g = new THREE.BoxGeometry(x1 - x0, 1, t).translate((x0 + x1) / 2, 0.5, 0);
+    const P = g.attributes.position;
+    for (let k = 0; k < P.count; k++) if (P.getY(k) > 0.5) P.setY(k, hAt(P.getX(k)));
+    g.computeVertexNormals();
+    wb.geometry('planks', g, null, { ao: false, tint, room: o.room });
+  }
+  for (const y of o.straps ?? [0.5, hmin - 0.5]) for (const s of [-1, 1]) wb.box('iron', 0, y, s > 0 ? t / 2 : -t / 2 - 0.025, w * 0.9, y + 0.08, s > 0 ? t / 2 + 0.025 : -t / 2, { ao: false, faces: 'tnsewb', room: o.room });
+}
+
 // Torre de asedio de madera, quemada y atascada a medio camino de la
 // muralla: el carro con sus cuatro ruedas macizas, cuatro esquinales que se
 // estrechan hacia arriba, tres pisos con sus carreras, tablazón y aspas, los
