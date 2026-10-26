@@ -2685,6 +2685,144 @@ export function leafyTree(ctx, x, y, z, h, seed, o = {}) {
 // Barca de remos: casco de tablas (fondo plano, costados abiertos, proa en
 // punta y espejo de popa), regala, dos bancadas y los remos atravesados. En
 // su marco: eslora a lo largo de z (la proa hacia -z); y es la quilla.
+// Torre de asedio de madera, quemada y atascada a medio camino de la
+// muralla: el carro con sus cuatro ruedas macizas, cuatro esquinales que se
+// estrechan hacia arriba, tres pisos con sus carreras, tablazón y aspas, los
+// cueros en el frente, la plataforma de arriba con su parapeto y, delante,
+// el puente levadizo alzado con sus cadenas. Frente: +z local. lean: cuánto
+// se ladea hacia delante (una rueda se ha hundido).
+export function siegeTower(ctx, x, y, z, rot = 0, o = {}) {
+  const wb = ctx.wb;
+  const rng = new RNG(o.seed ?? 4211);
+  // (madera vieja, tiznada a trozos: muy oscura, de lejos era una mancha negra)
+  const BURN = [0.78, 0.66, 0.58];
+  const DARK = [0.62, 0.53, 0.47];
+  const H = o.h ?? 11.2; // la plataforma de arriba
+  const B = 2.3,
+    Tp = 1.85; // medio ancho abajo y arriba
+  const y0 = 1.0; // el piso del carro
+  const hs = (yy) => B + ((Tp - B) * (yy - y0)) / (H - y0);
+  const tint = () => BURN.map((v) => v * (rng.chance(0.25) ? rng.range(0.35, 0.55) : rng.range(0.8, 1.1)));
+  const bm = (a, b, w, t = tint(), side, mat = 'wooddark') => beamAB(ctx, mat, a, b, w, { tint: t, side });
+  wb.push();
+  wb.translate(x, y, z);
+  wb.rotateY(rot);
+  wb.rotateX(o.lean ?? 0.05);
+  // --- el carro: largueros, traviesas y ejes
+  for (const s of [-1, 1]) {
+    wb.box('wooddark', s * B - 0.22, 0.55, -B - 0.3, s * B + 0.22, y0, B + 0.3, { ao: false, faces: 'tnsewb', tint: DARK });
+    wb.box('wooddark', -B - 0.3, 0.6, s * B - 0.2, B + 0.3, y0 - 0.05, s * B + 0.2, { ao: false, faces: 'tnsewb', tint: DARK });
+  }
+  for (const zz of [-1.55, 1.55]) {
+    wb.push();
+    wb.translate(0, 0.72, zz);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('wooddark', 0, -B - 0.75, 0, 0.11, 0.11, 2 * B + 1.5, 6, { ao: false, capTop: true, capBot: true, tint: DARK });
+    wb.pop();
+  }
+  // --- las ruedas: discos de tablones con su llanta de hierro y su cubo
+  for (const s of [-1, 1])
+    for (const zz of [-1.55, 1.55]) {
+      const sunk = s < 0 && zz > 0;
+      wb.push();
+      wb.translate(s * (B + 0.55), sunk ? 0.6 : 0.75, zz);
+      wb.rotateZ(Math.PI / 2 + (sunk ? 0.18 : 0));
+      wb.cylinder('wooddark', 0, -0.16, 0, 0.75, 0.75, 0.32, 12, { ao: false, capTop: true, capBot: true, tint: tint() });
+      wb.ring('iron', 0, -0.17, 0, 0.78, 0.74, 0.34, 12, {});
+      wb.cylinder('iron', 0, -0.24, 0, 0.16, 0.16, 0.48, 8, { ao: false, capTop: true, capBot: true });
+      wb.pop();
+    }
+  // --- los esquinales, de la base a lo alto del parapeto
+  const Ht = H + 1.25;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) bm(new THREE.Vector3(sx * B, y0, sz * B), new THREE.Vector3(sx * hs(Ht), Ht, sz * hs(Ht)), 0.34, DARK);
+  // --- los pisos: carreras alrededor y el entablado
+  const floors = [y0, 4.4, 7.8, H];
+  for (const fy of floors) {
+    const e = hs(fy);
+    wb.box('planks', -e, fy - 0.12, -e, e, fy, e, { ao: false, faces: 'tnsewb', tint: tint(), uv: 0.8 });
+    for (const s of [-1, 1]) {
+      wb.box('wooddark', -e - 0.05, fy - 0.36, s * e - 0.16, e + 0.05, fy - 0.12, s * e + 0.16, { ao: false, faces: 'tnsewb', tint: DARK });
+      wb.box('wooddark', s * e - 0.16, fy - 0.36, -e + 0.16, s * e + 0.16, fy - 0.12, e - 0.16, { ao: false, faces: 'tnsewb', tint: DARK });
+    }
+  }
+  // --- la tablazón de los costados y de atrás (tablas verticales, alguna
+  // que falta o que el fuego ha dejado corta) y las aspas por fuera
+  const board = (face, a0, a1, ya, yb) => {
+    // face: 'w' | 'e' | 'n' (atrás, -z); a: a lo largo de la cara
+    const e0 = hs(ya),
+      e1 = hs(yb);
+    const n = Math.round((a1 - a0) / 0.3);
+    for (let i = 0; i < n; i++) {
+      if (rng.chance(0.08)) continue;
+      const u = a0 + ((i + 0.5) * (a1 - a0)) / n;
+      // (lo de arriba, más quemado: tablas más cortas)
+      const top = ya + (yb - ya) * (rng.chance(yb > 8 ? 0.35 : 0.12) ? rng.range(0.45, 0.9) : 1);
+      const k0 = e0 / B,
+        k1 = (e0 + ((e1 - e0) * (top - ya)) / (yb - ya)) / B;
+      const P = (k, yy, d) => (face === 'n' ? new THREE.Vector3(u * k, yy, -k * B - d) : new THREE.Vector3((face === 'e' ? 1 : -1) * (k * B + d), yy, u * k));
+      bm(P(k0, ya, 0.04), P(k1, top, 0.04), 0.28, tint(), face === 'n' ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1), 'planks');
+    }
+  };
+  for (let f = 0; f < 3; f++) {
+    const ya = floors[f],
+      yb = floors[f + 1] - 0.36;
+    for (const face of ['w', 'e', 'n']) board(face, -B + 0.2, B - 0.2, ya, yb);
+    // aspas en los costados
+    for (const sx of [-1, 1]) {
+      const ea = hs(ya) + 0.12,
+        eb = hs(yb) + 0.12;
+      bm(new THREE.Vector3(sx * ea, ya + 0.1, -ea + 0.2), new THREE.Vector3(sx * eb, yb - 0.1, eb - 0.2), 0.16, DARK, new THREE.Vector3(0, 0, 1));
+      if (f !== 1) bm(new THREE.Vector3(sx * ea, ya + 0.1, ea - 0.2), new THREE.Vector3(sx * eb, yb - 0.1, -eb + 0.2), 0.16, DARK, new THREE.Vector3(0, 0, 1));
+    }
+  }
+  // --- el frente: los cueros (mojados contra el fuego; algunos se han
+  // quemado hasta la mitad), clavados bajo cada carrera
+  for (let f = 0; f < 3; f++) {
+    const ya = floors[f] + 0.05,
+      yb = floors[f + 1] - 0.36;
+    const n = 4;
+    for (let i = 0; i < n; i++) {
+      const ea = hs(yb),
+        u0 = -ea + 0.1 + ((2 * ea - 0.2) * i) / n,
+        u1 = u0 + (2 * ea - 0.2) / n - 0.06;
+      const hang = rng.chance(0.3) ? rng.range(0.35, 0.7) : rng.range(0.85, 1);
+      const yl = yb - (yb - ya) * hang;
+      const ez = (yy) => hs(yy) + 0.06;
+      const lt = [0.62, 0.48, 0.38].map((v) => v * rng.range(0.6, 0.9));
+      const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+      wb.quad('leather', V3(u0, yl, ez(yl)), V3(u1, yl, ez(yl)), V3(u1, yb, ez(yb)), V3(u0, yb, ez(yb)), { ao: false, sub: 3, tint: lt });
+      wb.quad('leather', V3(u1, yl, ez(yl) - 0.01), V3(u0, yl, ez(yl) - 0.01), V3(u0, yb, ez(yb) - 0.01), V3(u1, yb, ez(yb) - 0.01), { ao: false, sub: 3, tint: lt.map((v) => v * 0.6) });
+    }
+  }
+  // --- arriba: el parapeto (atrás y a los lados, con almenas de tablas) y
+  // el puente levadizo, alzado, en el frente, con sus cadenas
+  const e = hs(H);
+  for (const face of ['w', 'e', 'n']) {
+    const n = 6;
+    for (let i = 0; i < n; i++) {
+      if (i % 2 && rng.chance(0.6)) continue;
+      const a0 = -e + 0.1 + ((2 * e - 0.2) * i) / n,
+        a1 = a0 + (2 * e - 0.2) / n - 0.04;
+      const top = H + (i % 2 ? 0.9 : 1.25) * (rng.chance(0.25) ? rng.range(0.5, 0.8) : 1);
+      if (face === 'n') wb.box('planks', a0, H, -e - 0.08, a1, top, -e + 0.02, { ao: false, faces: 'tnsewb', tint: tint(), uv: 0.8 });
+      else {
+        const sx = face === 'e' ? 1 : -1;
+        wb.box('planks', sx * e - 0.05, H, a0, sx * e + 0.05, top, a1, { ao: false, faces: 'tnsewb', tint: tint(), uv: 0.8 });
+      }
+    }
+  }
+  const bh = 3.4; // el puente, de alto (alzado)
+  wb.box('planks', -e + 0.15, H, e, e - 0.15, H + bh, e + 0.12, { ao: false, faces: 'tnsewb', tint: tint(), uv: 0.8 });
+  for (const yy of [H + 0.5, H + 1.7, H + bh - 0.4]) wb.box('iron', -e + 0.15, yy, e + 0.12, e - 0.15, yy + 0.08, e + 0.15, { ao: false, faces: 'tnsewb' });
+  for (const sx of [-1, 1]) {
+    // las cadenas, de lo alto del puente a los esquinales de atrás
+    const a = new THREE.Vector3(sx * (e - 0.3), H + bh - 0.1, e + 0.08),
+      b = new THREE.Vector3(sx * hs(Ht), Ht - 0.1, -hs(Ht) + 0.2);
+    beamAB(ctx, 'iron', a, b, 0.05, {});
+  }
+  wb.pop();
+}
+
 export function rowboat(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
   const room = o.room;

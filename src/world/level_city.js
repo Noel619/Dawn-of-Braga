@@ -757,20 +757,11 @@ export function buildRamparts(ctx, S, L) {
     }
     if (rng.chance(0.6)) P.pike(ctx, x - 3, 0, z + rng.range(-2, 2), { h: 3, skull: rng.chance(0.5) });
   }
-  // torre de asedio quemada
-  wb.push();
-  wb.translate(84, 0, -50);
-  wb.rotateZ(0.12);
-  for (const [a, b] of [
-    [-2, -2],
-    [2, -2],
-    [-2, 2],
-    [2, 2],
-  ])
-    wb.box('wooddark', a - 0.2, 0, b - 0.2, a + 0.2, 11, b + 0.2, { ao: false, tint: [0.3, 0.26, 0.24] });
-  for (let y = 2; y < 11; y += 3) wb.box('planks', -2.2, y, -2.2, 2.2, y + 0.2, 2.2, { ao: false, tint: [0.3, 0.26, 0.24], faces: 'tnsewb' });
-  wb.pop();
-  ctx.fires.push({ x: 84, y: 8, z: -50, s: 2.4, smoke: true });
+  // torre de asedio quemada, atascada a ocho metros de la muralla, con el
+  // frente hacia ella (era un amasijo de cuatro palos y tres tablas)
+  P.siegeTower(ctx, 84, 0, -50, -Math.PI / 2, { lean: 0.05 });
+  ctx.fires.push({ x: 84, y: 9.2, z: -50, s: 2.0, smoke: true });
+  ctx.fires.push({ x: 84.6, y: 5.6, z: -49.2, s: 0.9, smoke: false, embers: true });
 
   L.zones.push(
     { id: 'ramparts', rects: [[69.4, -56, 76.5, 26, 6, 20]], atmo: 'ramparts' },
