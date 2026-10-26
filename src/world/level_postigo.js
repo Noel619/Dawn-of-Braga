@@ -531,7 +531,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
   wb.setRoom(room);
   // --- la sala: el hogar con el escudo del padre y el estandarte del
   // águila negra del Imperio, la mesa larga y los bancos
-  P.hearth(ctx, 50, 0, H.z0 + H.t, 's', { room, w: 2.2, pot: true, fire: 0.5, radius: 7 });
+  P.hearth(ctx, 50, 0, H.z0 + H.t, 's', { room, w: 2.2, pot: true, fire: 0.5, radius: 7, ceil: H.g1 });
   // el escudo del cruzado (amarillo con el águila negra) y su espada que ya
   // no está: los dos ganchos vacíos
   wb.box('wooddark', 49.15, 2.15, H.z0 + H.t, 50.85, 2.2, H.z0 + H.t + 0.06, { ao: false });
@@ -617,7 +617,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
   wb.box('clothWhite', 43.4, 0.02, -105.6, 44.2, 0.025, -105.0, { ao: false, faces: 't', tint: [0.74, 0.66, 0.54] });
 
   // --- la cocina: el fogón, la mesa, la artesa y los cacharros
-  P.hearth(ctx, H.x1 - H.t, 0, -108.2, 'w', { room, w: 1.6, pot: true, fire: 0.25, radius: 5, lit: true });
+  P.hearth(ctx, H.x1 - H.t, 0, -108.2, 'w', { room, w: 1.6, pot: true, fire: 0.25, radius: 5, lit: true, ceil: H.g1 });
   P.table(ctx, 55.6, 0, -106.6, 1.6, 0.9, 0.1);
   P.stool(ctx, 55.0, 0, -105.6, { room });
   P.stool(ctx, 56.6, 0, -107.6, { room, tipped: true });

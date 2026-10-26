@@ -1242,7 +1242,7 @@ function buildKeep(ctx, S, L) {
     bakeCorpse(wb, -88.3, y + 0.02, -7.5, 0, 'sit', 'soldier', 23);
     P.decal(ctx, -88.3, y + 0.01, -7.7, 1.4);
     P.candles(ctx, -87.3, y + 0.82, -6.4, 3, 5208, { room, radius: 5, intensity: 1.1, spread: 0.15 });
-    P.hearth(ctx, ix0, y, -9.8, 'e', { room, lit: true });
+    P.hearth(ctx, ix0, y, -9.8, 'e', { room, lit: true, ceil: ceilY[2] });
     P.armorStand(ctx, -86.4, y, iz1 - 0.6, Math.PI);
     P.shelf(ctx, SP0 - 0.22, y, -10.9, -Math.PI / 2, 1.8);
     P.shelf(ctx, -89.7, y, -12.48, 0, 1.8);

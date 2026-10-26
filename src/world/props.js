@@ -2084,9 +2084,12 @@ export function hearth(ctx, x, y, z, dir, o = {}) {
     wb.quad('wallstone', V3(-w / 2, 1.45, 0.6), V3(w / 2, 1.45, 0.6), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), 0.1), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), 0.1), { ao: false, sub: 2, room: o.room });
     wb.quad('wallstone', V3(w / 2, 1.45, 0.6), V3(w / 2, 1.45, -0.1), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), -0.1), V3(w / 2 - 0.35, (o.hoodTop ?? 2.9), 0.1), { ao: false, sub: 2, room: o.room });
     wb.quad('wallstone', V3(-w / 2, 1.45, -0.1), V3(-w / 2, 1.45, 0.6), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), 0.1), V3(-w / 2 + 0.35, (o.hoodTop ?? 2.9), -0.1), { ao: false, sub: 2, room: o.room });
+    // el cañón, de la campana al techo (ceil: la altura del techo; sin él, la
+    // campana acababa en el aire, abierta por arriba)
+    if (o.ceil !== undefined && o.ceil - y > (o.hoodTop ?? 2.9)) wb.box('wallstone', -w / 2 + 0.35, o.hoodTop ?? 2.9, -0.1, w / 2 - 0.35, o.ceil - y, 0.1, { faces: 'sew', ao: false, sub: 2, room: o.room });
     // fondo tiznado y hogar
     wb.box('black', -w / 2 + 0.35, 0.02, -0.1, w / 2 - 0.35, 1.25, -0.08, { faces: 's', ao: false, grime: false, room: o.room });
-    wb.box('wallstone', -w / 2 + 0.35, 0, -0.08, w / 2 - 0.35, 0.12, 0.5, { faces: 't', ao: false, room: o.room, tint: [0.4, 0.37, 0.35] });
+    wb.box('wallstone', -w / 2 + 0.35, 0, -0.08, w / 2 - 0.35, 0.12, 0.5, { faces: 'ts', ao: false, room: o.room, tint: [0.4, 0.37, 0.35] });
     if (lit) wb.box('ember', -0.3, 0.12, 0.05, 0.3, 0.16, 0.35, { faces: 't', ao: false, grime: false, room: o.room });
     // morillos y leños
     for (const sx of [-0.35, 0.35]) wb.box('iron', sx - 0.03, 0.12, 0.05, sx + 0.03, 0.4, 0.4, { ao: false, room: o.room });

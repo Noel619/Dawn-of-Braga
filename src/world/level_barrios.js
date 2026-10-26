@@ -169,7 +169,7 @@ export function buildNW(ctx, S, L) {
   // sala: hogar, barra, mesas. Detrás de la barra, un pasillo para el
   // tabernero y, contra el tabique, los toneles y la vasera (antes la barra
   // estaba pegada a los toneles y no quedaba sitio para nadie)
-  P.hearth(ctx, -26.15, 0, -7.4, 'e', { room, w: 2 });
+  P.hearth(ctx, -26.15, 0, -7.4, 'e', { room, w: 2, ceil: 3.1 });
   P.counter(ctx, -17.8, 0, -9.6, 0, 3.0, { room });
   P.cask(ctx, -18.8, 0, -11.45, 0, { room, r: 0.4, len: 1.1 });
   P.cask(ctx, -16.2, 0, -11.45, 0, { room, r: 0.4, len: 1.1 });
@@ -203,7 +203,7 @@ export function buildNW(ctx, S, L) {
   P.decal(ctx, -24.8, 0.03, -9.6, 1.4);
   // cocina: fogón con caldero, mesa de despiece, jamones colgados. La mesa,
   // atravesada tras la puerta de la sala, se parte de un golpe (interact).
-  P.hearth(ctx, -26.15, 0, -15.6, 'e', { room, w: 2.1, pot: true });
+  P.hearth(ctx, -26.15, 0, -15.6, 'e', { room, w: 2.1, pot: true, ceil: 3.1 });
   L.interact.push({ kind: 'breakable', id: 'x_mesa_taberna', x: -22.4, y: 0, z: -13.1, w: 2.0, d: 0.8, rot: 0 });
   P.shelf(ctx, -23.8, 0, -18.8, 0, 1.8);
   P.sacks(ctx, -21, 0, -18.4, 4, 1112);

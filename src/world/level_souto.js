@@ -665,7 +665,7 @@ export function buildCasaTapiada(ctx, S, L) {
   // ------------------------------------------------------------ la cocina
   // el hogar (sólo brasas: hace tres días que nadie lo atiza)
   // (un poco por delante del muro: si no, el muro tapa el fondo tiznado)
-  P.hearth(ctx, CI.x0 + 0.1, 0, -10.3, 'e', { room, w: 1.6, pot: true, lit: false });
+  P.hearth(ctx, CI.x0 + 0.1, 0, -10.3, 'e', { room, w: 1.6, pot: true, lit: false, ceil: G1 });
   wb.box('ember', CI.x0 + 0.5, 0.12, -10.6, CI.x0 + 0.8, 0.15, -10.0, { faces: 't', ao: false, grime: false });
   ctx.fires.push({ x: CI.x0 + 0.65, y: 0.16, z: -10.3, s: 0.18, light: false, embers: true, glow: true });
   ctx.lights.push({ x: CI.x0 + 0.9, y: 0.6, z: -10.3, r: 1, g: 0.4, b: 0.14, radius: 4.5, intensity: 0.85, room });

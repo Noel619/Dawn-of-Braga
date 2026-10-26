@@ -313,13 +313,52 @@ export function buildCanon(ctx, S, B, L) {
   for (const x of [62.45, 63.4]) wb.box('iron', x - 0.03, 0, -18.58, x + 0.03, 0.57, -17.82, { ao: false });
   wb.box('wooddark', 62.28, 0.55, -18.57, 63.57, 0.62, -17.83, { ao: false, faces: 'tnsewb' });
   col.add(62.3, 0, -18.55, 63.55, 0.62, -17.85);
-  // perchero con la capa negra y el capelo del canónigo
-  wb.box('wooddark', 63.6, 1.8, -17.2, 63.65, 1.9, -15.6, { ao: false, faces: 'w' });
-  for (const z of [-16.9, -16.4, -15.9]) wb.box('wooddark', 63.35, 1.82, z - 0.02, 63.62, 1.86, z + 0.02, { ao: false });
-  wb.box('clothDark', 63.4, 0.55, -17.15, 63.52, 1.84, -16.6, { ao: false, faces: 'nswt' });
-  wb.cylinder('clothDark', 63.3, 1.88, -15.9, 0.32, 0.32, 0.03, 10, { ao: false, capTop: true, capBot: true });
-  wb.cylinder('clothDark', 63.3, 1.91, -15.9, 0.15, 0.13, 0.1, 8, { ao: false, capTop: true });
-  for (const s of [-1, 1]) tassel(wb, 63.3, 1.25, -15.9 + s * 0.25, 'clothRed', [0.5, 0.2, 0.2]);
+  // perchero con la capa negra y el capelo del canónigo: la tabla en el muro
+  // con sus colgaderos, la capa colgada de uno (estrecha arriba, abierta
+  // abajo, con sus pliegues) y el capelo de otro, de canto contra el muro y
+  // con las borlas colgando (antes era una tabla que sólo se veía de frente,
+  // un tablón negro separado del muro y un disco en el aire)
+  {
+    const WX = 63.65;
+    wb.box('wooddark', WX - 0.05, 1.74, -17.35, WX, 1.92, -15.4, { ao: false, faces: 'tnswb' });
+    for (const z of [-16.9, -16.4, -15.9]) {
+      wb.push();
+      wb.translate(WX - 0.05, 1.83, z);
+      wb.rotateZ(Math.PI / 2 - 0.25);
+      wb.cylinder('wooddark', 0, 0, 0, 0.022, 0.018, 0.2, 5, { ao: false, capTop: true });
+      wb.pop();
+    }
+    // la capa: un cono partido de paño, colgado del primer colgadero
+    const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    const top = 1.9,
+      bot = 0.32,
+      zc = -16.9;
+    const cloak = [];
+    for (let i = 0; i <= 8; i++) {
+      const a = (i / 8) * Math.PI;
+      // (pliegues: el borde de abajo ondula)
+      const fold = i % 2 ? 0.05 : 0;
+      cloak.push([V3(WX - 0.03 - Math.sin(a) * 0.12, top, zc - Math.cos(a) * 0.12), V3(WX - 0.03 - Math.sin(a) * (0.26 + fold), bot, zc - Math.cos(a) * (0.38 + fold))]);
+    }
+    for (let i = 0; i < 8; i++) {
+      const [t0, b0] = cloak[i],
+        [t1, b1] = cloak[i + 1];
+      wb.quad('clothDark', b0, b1, t1, t0, { ao: false, sub: 3, tint: [1, 1, 1].map((v) => v * (i % 2 ? 0.85 : 1)) });
+      wb.quad('clothDark', t0, t1, b1, b0, { ao: false, sub: 3, tint: [0.55, 0.55, 0.55] });
+    }
+    wb.cylinder('clothDark', WX - 0.06, top - 0.02, zc, 0.07, 0.07, 0.06, 6, { ao: false, capTop: true, capBot: true });
+    // el capelo, colgado de canto del último colgadero
+    wb.push();
+    wb.translate(WX - 0.06, 1.62, -15.9);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('clothDark', 0, 0, 0, 0.32, 0.32, 0.03, 12, { ao: false, capTop: true, capBot: true });
+    wb.cylinder('clothDark', 0, 0.03, 0, 0.15, 0.13, 0.1, 10, { ao: false, capTop: true });
+    wb.pop();
+    for (const s of [-1, 1]) {
+      wb.box('clothRed', WX - 0.09, 1.0, -15.9 + s * 0.24 - 0.008, WX - 0.075, 1.55, -15.9 + s * 0.24 + 0.008, { ao: false, tint: [0.5, 0.2, 0.2] });
+      tassel(wb, WX - 0.1, 0.86, -15.9 + s * 0.24, 'clothRed', [0.5, 0.2, 0.2]);
+    }
+  }
   P.crate(ctx, 62.8, 0, -13.4, 0.8, 0.2);
   // rastro de sangre del portal a la alcoba
   for (const [x, z, s] of [
@@ -388,20 +427,33 @@ export function buildCanon(ctx, S, B, L) {
   P.hangingLamp(ctx, 58.9, G1 - 0.22, -22.2, { room, radius: 5, intensity: 0.7, len: 0.7, lit: true });
 
   // --- cocina
-  P.hearth(ctx, 51.2, 0, -31.65, 's', { room, w: 2.0, pot: true, fire: 0.4, radius: 6.5 });
+  P.hearth(ctx, 51.2, 0, -31.65, 's', { room, w: 2.0, pot: true, fire: 0.4, radius: 6.5, ceil: G1 });
   P.table(ctx, 54.6, 0, -28.7, 1.8, 0.9, 0.08);
   wb.cylinder('bronze', 54.3, 0.8, -28.6, 0.14, 0.1, 0.1, 7, { ao: false, capBot: true });
   wb.box('clothWhite', 55.0, 0.8, -28.9, 55.3, 0.82, -28.5, { ao: false, faces: 't', tint: [0.75, 0.66, 0.5] });
-  P.stool(ctx, 53.6, 0, -28.3, { room });
+  // (apartado de la pata de la mesa: se metían la una en la otra)
+  P.stool(ctx, 53.25, 0, -28.05, { room });
   P.stool(ctx, 55.6, 0, -29.5, { room, tipped: true });
   P.cask(ctx, 49.2, 0, -28.2, Math.PI / 2, { room, r: 0.42, len: 1.1 });
   P.firewood(ctx, 53.3, 0, -30.9, 0, 3);
   P.jar(ctx, 56.9, 0, -30.9, 1.0);
   P.jar(ctx, 56.4, 0, -31.2, 0.8, { broken: true });
   P.sacks(ctx, 49.2, 0, -30.8, 3, 6065);
+  // los cazos, colgados por el asa de una barra de hierro (antes, cada uno
+  // flotaba bajo un gancho suelto)
+  wb.box('iron', 48.6, 2.1, -31.6, 50.2, 2.14, -31.55, { ao: false, faces: 'tnsewb' });
+  for (const x of [48.68, 50.12]) wb.box('iron', x - 0.02, 2.04, -31.65, x + 0.02, 2.14, -31.55, { ao: false });
   for (const x of [48.9, 49.4, 49.9]) {
-    wb.box('iron', x - 0.01, 1.9, -31.65, x + 0.01, 2.2, -31.55, { ao: false });
-    wb.cylinder('iron', x, 1.62, -31.45, 0.14, 0.12, 0.26, 7, { ao: false, capBot: true });
+    wb.box('iron', x - 0.01, 1.96, -31.59, x + 0.01, 2.12, -31.57, { ao: false });
+    wb.cylinder('iron', x, 1.54, -31.49, 0.14, 0.12, 0.24, 7, { ao: false, capBot: true });
+    wb.cylinder('black', x, 1.77, -31.49, 0.13, 0.13, 0.005, 7, { ao: false, capTop: true, grime: false });
+    for (const s of [-1, 1]) {
+      wb.push();
+      wb.translate(x + s * 0.07, 1.87, -31.53);
+      wb.rotateZ(s * 0.95);
+      wb.box('iron', -0.008, -0.13, -0.008, 0.008, 0.13, 0.008, { ao: false });
+      wb.pop();
+    }
   }
   P.decal(ctx, 55.2, 0.03, -27.2, 1.4);
   L.interact.push({ kind: 'note', id: 'n_ama', note: 'ama', x: 57.3, y: 0.47, z: -24.9, model: 'paper' });
