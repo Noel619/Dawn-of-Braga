@@ -705,7 +705,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
       wb.push();
       wb.translate(x + Math.cos(a) * r, Y, z + Math.sin(a) * r);
       wb.rotateY(a);
-      wb.box('dirt', -0.32 * s, 0, -0.26 * s, 0.32 * s, 0.22 * s * (1 - (k % 3) * 0.25), 0.26 * s, { ao: false, tint: [0.56, 0.48, 0.4] });
+      wb.box('dirt', -0.32 * s, 0, -0.26 * s, 0.32 * s, 0.22 * s * (1 - (k % 3) * 0.25), 0.26 * s, { ao: false, faces: 'tnsew', tint: [0.56, 0.48, 0.4] });
       wb.pop();
     }
   }

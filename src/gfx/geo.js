@@ -175,12 +175,23 @@ export class WorldBuilder {
       }
   }
 
+  // Caras de una caja sin 'faces': todas menos la de abajo si descansa en el
+  // suelo de la calle; si no (un rótulo, una viga, un alféizar, una rueda
+  // apoyada en el muro), también la de abajo: vistas desde abajo o de lado se
+  // veía a través de ellas.
+  _defFaces(x0, y0, z0, x1, z1) {
+    _n.set(0, -1, 0).applyMatrix3(this.nm).normalize();
+    if (_n.y > -0.999) return 'tnsewb';
+    _p.set((x0 + x1) / 2, y0, (z0 + z1) / 2).applyMatrix4(this.m);
+    return Math.abs(_p.y) < 0.06 ? 'tnsew' : 'tnsewb';
+  }
+
   // Caja alineada a ejes (en el espacio local actual).
   box(mat, x0, y0, z0, x1, y1, z1, o = {}) {
     if (x1 < x0) [x0, x1] = [x1, x0];
     if (y1 < y0) [y0, y1] = [y1, y0];
     if (z1 < z0) [z0, z1] = [z1, z0];
-    const faces = o.faces ?? 'tnsew';
+    const faces = o.faces ?? this._defFaces(x0, y0, z0, x1, z1);
     const sub = o.sub ?? 1.6;
     const W = x1 - x0,
       H = y1 - y0,
@@ -320,6 +331,22 @@ export class WorldBuilder {
       }
     if (o.capTop && rTop > 0.001) this._cap(mat, cx, y0 + h, cz, rTop, segs, 1, s, o, a0);
     if (o.capBot) this._cap(mat, cx, y0, cz, rBot, segs, -1, s, o, a0);
+  }
+
+  // Aro con grueso a lo largo de Y (llantas, zunchos): cara de fuera, cara de
+  // dentro y las dos coronas, de y0 a y0 + h, entre rIn y rOut.
+  ring(mat, cx, y0, cz, rOut, rIn, h, segs = 12, o = {}) {
+    const V = (r, a, y) => new THREE.Vector3(cx + Math.cos(a) * r, y, cz + Math.sin(a) * r);
+    const y1 = y0 + h;
+    const oo = { ao: false, sub: 99, ...o };
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * Math.PI * 2,
+        a1 = ((i + 1) / segs) * Math.PI * 2;
+      this.quad(mat, V(rOut, a1, y0), V(rOut, a0, y0), V(rOut, a0, y1), V(rOut, a1, y1), oo);
+      this.quad(mat, V(rIn, a0, y0), V(rIn, a1, y0), V(rIn, a1, y1), V(rIn, a0, y1), oo);
+      this.quad(mat, V(rOut, a0, y1), V(rIn, a0, y1), V(rIn, a1, y1), V(rOut, a1, y1), oo);
+      this.quad(mat, V(rIn, a0, y0), V(rOut, a0, y0), V(rOut, a1, y0), V(rIn, a1, y0), oo);
+    }
   }
 
   _cap(mat, cx, y, cz, r, segs, dir, s, o, a0) {

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { RNG, fbm3 } from '../core/util.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { solid } from './builders.js';
+import { solid, beam as beamAB } from './builders.js';
 import { bakeCorpse } from '../entities/models.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -2325,12 +2325,15 @@ export function cartWheel(ctx, x, y, z, rot = 0, o = {}) {
   wb.translate(x, y + 0.5, z);
   wb.rotateY(rot);
   wb.rotateX(Math.PI / 2 - 0.2);
-  wb.cylinder('wooddark', 0, -0.05, 0, 0.55, 0.55, 0.1, 12, { ao: false, open: true, room: o.room });
-  wb.cylinder('wooddark', 0, -0.06, 0, 0.12, 0.12, 0.12, 8, { ao: false, capTop: true, capBot: true, room: o.room });
+  // las pinas con su grueso y el aro de hierro (era un tubo sin grueso: por
+  // dentro y de canto no se veía)
+  wb.ring('wooddark', 0, -0.05, 0, 0.55, 0.46, 0.1, 14, { room: o.room });
+  wb.ring('iron', 0, -0.04, 0, 0.57, 0.55, 0.08, 14, { room: o.room });
+  wb.cylinder('wooddark', 0, -0.08, 0, 0.12, 0.12, 0.16, 8, { ao: false, capTop: true, capBot: true, room: o.room });
   for (let i = 0; i < 6; i++) {
     wb.push();
     wb.rotateY((i / 6) * Math.PI * 2);
-    wb.box('wooddark', 0.1, -0.03, -0.025, 0.52, 0.03, 0.025, { ao: false, room: o.room });
+    wb.box('wooddark', 0.1, -0.03, -0.025, 0.5, 0.03, 0.025, { ao: false, room: o.room });
     wb.pop();
   }
   wb.pop();
@@ -2575,20 +2578,50 @@ export function leanTo(ctx, x0, z0, x1, z1, wall, yHi, yLo, o = {}) {
   const d = 0.12;
   const q = p.map((v) => v.clone().add(V3(0, -d, 0)));
   wb.quad('wooddark', q[3], q[2], q[1], q[0], { ao: false, sub: 3, tint: [0.5, 0.48, 0.45] });
-  // pies derechos en el lado bajo
+  // los cantos de la cubierta: el alero y los dos lados (abiertos, de lado y
+  // desde abajo se veía a través de ella)
+  const edge = { ao: false, sub: 3, tint: [0.42, 0.4, 0.38] };
+  wb.quad('wooddark', q[0], q[1], p[1], p[0], edge);
+  wb.quad('wooddark', q[1], q[2], p[2], p[1], edge);
+  wb.quad('wooddark', q[3], q[0], p[0], p[3], edge);
+  // hacia fuera del muro, el vuelo de la cubierta y su pendiente
+  const out = { w: V3(1, 0, 0), e: V3(-1, 0, 0), n: V3(0, 0, 1), s: V3(0, 0, -1) }[wall];
+  const slope = (yHi - yLo) / p[0].distanceTo(V3(p[3].x, yLo, p[3].z));
+  // (bajo la cubierta, a u del alero hacia el muro)
+  const under = (u) => yLo - d + slope * u;
   const lowA = p[0],
     lowB = p[1];
-  const n = Math.max(2, Math.round(lowA.distanceTo(lowB) / 2.4));
+  const along = lowB.clone().sub(lowA);
+  const len = along.length();
+  along.normalize();
+  const at = (t, u, y) => lowA.clone().addScaledVector(along, t).addScaledVector(out, -u).setY(y);
+  // pies derechos en el lado bajo (metidos un palmo hacia el muro para que
+  // queden bajo la cubierta), la carrera encima de ellos y sus tornapuntas
+  const inset = 0.15;
+  const yb = yLo - 0.25;
+  const n = Math.max(2, Math.round(len / 2.4));
   for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    // (metidos un palmo hacia el muro para que queden bajo la cubierta)
-    const inset = 0.15;
-    const px = lowA.x + (lowB.x - lowA.x) * t + (wall === 'w' ? -inset : wall === 'e' ? inset : 0),
-      pz = lowA.z + (lowB.z - lowA.z) * t + (wall === 'n' ? -inset : wall === 's' ? inset : 0);
-    wb.box('wooddark', px - 0.08, 0, pz - 0.08, px + 0.08, yLo - 0.08, pz + 0.08, { aoH: 0.5 });
-    if (o.collide !== false) col(ctx, px - 0.1, 0, pz - 0.1, px + 0.1, yLo, pz + 0.1);
+    const t = (i / n) * len;
+    const c = at(t, inset, 0);
+    wb.box('wooddark', c.x - 0.08, 0, c.z - 0.08, c.x + 0.08, yb, c.z + 0.08, { aoH: 0.5 });
+    if (o.collide !== false) col(ctx, c.x - 0.1, 0, c.z - 0.1, c.x + 0.1, yLo, c.z + 0.1);
+    for (const s of [-1, 1]) {
+      if ((i === 0 && s < 0) || (i === n && s > 0)) continue;
+      beamAB(ctx, 'wooddark', at(t, inset, yb - 0.55), at(t + s * 0.55, inset, yb + 0.02), 0.08, { side: out, room: o.room });
+    }
   }
-  wb.box('wooddark', Math.min(lowA.x, lowB.x) - 0.05, yLo - 0.2, Math.min(lowA.z, lowB.z) - 0.05, Math.max(lowA.x, lowB.x) + 0.05, yLo - 0.05, Math.max(lowA.z, lowB.z) + 0.05, { ao: false });
+  const c0 = at(-0.05, inset, 0),
+    c1 = at(len + 0.05, inset, 0);
+  const bx = (a, b, y0, y1) => wb.box('wooddark', Math.min(a.x, b.x) - 0.1 * Math.abs(out.x), y0, Math.min(a.z, b.z) - 0.1 * Math.abs(out.z), Math.max(a.x, b.x) + 0.1 * Math.abs(out.x), y1, Math.max(a.z, b.z) + 0.1 * Math.abs(out.z), { ao: false, faces: 'tnsewb' });
+  bx(c0, c1, yb, under(inset + 0.1));
+  // la solera contra el muro y los cabios, del muro al alero
+  const deep = p[0].distanceTo(V3(p[3].x, yLo, p[3].z));
+  bx(at(-0.05, deep - 0.07, 0), at(len + 0.05, deep - 0.07, 0), yHi - d - 0.18, under(deep));
+  const nr = Math.max(2, Math.round(len / 1.2));
+  for (let i = 0; i <= nr; i++) {
+    const t = 0.1 + (i / nr) * (len - 0.2);
+    beamAB(ctx, 'wooddark', at(t, deep, under(deep) - 0.06), at(t, -0.02, under(-0.02) - 0.06), 0.09, { side: along, d: 0.12, room: o.room });
+  }
   // la cámara no atraviesa la cubierta
   const cb = ctx.col.add(x0, yLo - 0.1, z0, x1, yHi, z1);
   cb.cam = true;

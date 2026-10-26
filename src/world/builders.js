@@ -1864,7 +1864,8 @@ export function overpass(ctx, x0, z0, x1, z1, y0, y1, axis, o = {}) {
     wb.at(tx, 0, tz, rot, () => {
       wb.box('timber', 0, y0, 0, LL, y0 + 0.18, 0.08, { ao: false });
       wb.box('timber', 0, y1 - 0.18, 0, LL, y1, 0.08, { ao: false });
-      for (const a of [0.1, LL / 2, LL - 0.1]) wb.box('timber', a - 0.09, y0, 0, a + 0.09, y1, 0.07, { ao: false });
+      // (los pies derechos, entre la solera y la carrera: no se solapan con ellas)
+      for (const a of [0.1, LL / 2, LL - 0.1]) wb.box('timber', a - 0.09, y0 + 0.18, 0, a + 0.09, y1 - 0.18, 0.07, { ao: false });
       if (LL > 1.6) windowAt(ctx, LL * 0.3, y0 + 0.9, 0.55, 0.8, { lit: !!o.lit && rng.chance(0.6) }, rng);
       if (LL > 2.6) windowAt(ctx, LL * 0.72, y0 + 0.9, 0.55, 0.8, { lit: false }, rng);
     });

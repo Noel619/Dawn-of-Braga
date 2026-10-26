@@ -856,7 +856,7 @@ export function naveBreaks(ctx, o) {
         // el corte, mellado
         for (let q = 0; q < 2; q++) {
           const za0 = a + rng.range(0, (b - a) * 0.5);
-          wb.box('ashlar', x - t * rng.range(0.4, 1), h, za0, x + t * rng.range(0.4, 1), h + rng.range(0.2, 0.9), Math.min(b, za0 + rng.range(0.3, 0.8)), { ao: false, tint: RT, room });
+          wb.box('ashlar', x - t * rng.range(0.4, 1), h, za0, x + t * rng.range(0.4, 1), h + rng.range(0.2, 0.9), Math.min(b, za0 + rng.range(0.3, 0.8)), { ao: false, faces: 'tnsew', tint: RT, room });
         }
       }
       // las dovelas y los trozos de los arcos, por el suelo, a los dos lados

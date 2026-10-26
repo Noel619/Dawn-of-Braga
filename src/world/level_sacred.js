@@ -126,7 +126,7 @@ function facadeRuin(ctx, FY) {
   for (let i = 0; i < 6; i++) {
     wb.push();
     wb.rotateY((i / 6) * Math.PI);
-    wb.box('ashlar', -2.2, 0.0, -0.06, 2.2, 0.12, 0.06, { ao: false });
+    wb.box('ashlar', -2.2, -0.04, -0.06, 2.2, 0.12, 0.06, { ao: false });
     wb.pop();
   }
   wb.pop();

@@ -806,16 +806,19 @@ export function buildFerraria(ctx, S, L) {
   });
   // soportal delantero con el taller al aire libre
   P.leanTo(ctx, -14, 43, -11.2, 55, 'w', 3.75, 2.75);
-  P.sign(ctx, -11.25, 2.62, 46.2, Math.PI / 2, 'anvil');
-  P.sign(ctx, -14, 2.9, 51.4, Math.PI / 2, 'horseshoe');
+  // el rótulo del yunque, en la fachada por encima del soportal y entre dos
+  // ventanas: se ve desde toda la calle (colgado del alero del soportal quedaba
+  // a la altura de la cabeza, y el de la herradura, debajo, entre la antorcha
+  // y el farol)
+  P.sign(ctx, -14, 4.95, 47.6, Math.PI / 2, 'anvil');
   P.anvil(ctx, -12.4, 0, 45.4, 0.3);
   P.dyeVat(ctx, -12.5, 0, 53.4, [0.2, 0.24, 0.26], { r: 0.5 });
   P.cartWheel(ctx, -13.8, 0, 51.9, Math.PI / 2);
-  P.toolBoard(ctx, -14, 0, 46.9, Math.PI / 2);
+  P.toolBoard(ctx, -14, 0, 47.0, Math.PI / 2);
   P.firewood(ctx, -13.35, 0, 44.1, 0, 3);
   P.sacks(ctx, -12.4, 0, 54.5, 3, 24);
   P.coalPile(ctx, -11.8, 0, 43.6, 0.8);
-  P.wallTorch(ctx, -14, 2.4, 50.9, 'e');
+  P.wallTorch(ctx, -14, 2.4, 53.6, 'e');
   P.brazier(ctx, -12.5, 0, 47.6, { s: 0.9, radius: 7 });
   P.ironBars(ctx, -12.2, 0, 50.9, Math.PI / 2 + 0.1);
   wb.setRoom(room);
