@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { springaldTowerS } from './level_finale.js';
-import { house, solid, stairs, merlons, cityWall, tower, archWall, stoneWall, waveProp } from './builders.js';
+import { house, solid, stairs, merlons, cityWall, tower, archWall, archRing, stoneWall, waveProp, solidGableRoof } from './builders.js';
 import { buildCasaTapiada, buildPasadizo, buildCasaTonelero, soutoZones } from './level_souto.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom } from './level_util.js';
@@ -448,13 +448,52 @@ export function buildTanners(ctx, S, L) {
   solid(ctx, 'wallstone', 44, 0, 21.4, 54, 6, 22, { sub: 2 });
   solid(ctx, 'wallstone', 44, 0, 12.6, 44.6, 6, 21.4, { sub: 2 });
   solid(ctx, 'wallstone', 53.4, 0, 12.6, 54, 6, 21.4, { sub: 2 });
-  wb.gableRoof(44, 12, 54, 22, 6, 9, 'z', { wallMat: 'wallstone' });
+  // (con poco vuelo en los hastiales: por delante, la espadaña)
+  solidGableRoof(ctx, 44, 12, 54, 22, 6, 9, 'z', { overhang: 0.5, gableOverhang: 0.12, thick: 0.2, wallT: 0.6, room: croom });
   wb.box('wooddark', 44.6, 6, 12.6, 53.4, 6.2, 21.4, { faces: 'b', ao: false, room: croom });
   ctx.col.add(44, 6, 12, 54, 6.4, 22).cam = true;
-  // espadaña con campana
-  wb.box('wallstone', 47.8, 9, 11.8, 50.2, 11.5, 12.6, { sub: 2 });
-  wb.box('black', 48.5, 9.6, 11.78, 49.5, 10.9, 11.8, { ao: false, grime: false });
-  wb.cylinder('bronze', 49, 9.7, 12.2, 0.35, 0.18, 0.6, 8, { ao: false });
+  // espadaña sobre la portada: un paño de muro que sube del hastial, con un
+  // vano de medio punto de lado a lado, la campana colgada de su yugo, la
+  // albardilla y la cruz (era un bloque sobre la cumbrera, que no tocaba el
+  // tejado más que por la arista, con el vano pintado de negro y la campana
+  // metida dentro de la piedra)
+  {
+    const [e0, e1, t0, t1] = [47.8, 50.2, 11.85, 12.6];
+    const [v0, v1, yS, yT] = [48.5, 49.5, 9.0, 11.3];
+    const spring = 10.1;
+    const tint = [0.74, 0.71, 0.67];
+    wb.box('wallstone', e0, 6, t0, e1, yS, t1, { sub: 2, faces: 'tnsew', tint });
+    for (const [a, b] of [
+      [e0, v0],
+      [v1, e1],
+    ])
+      wb.box('wallstone', a, yS, t0, b, spring, t1, { sub: 2, faces: 'nsew', ao: false, tint });
+    const ring = 0.22;
+    for (const [a, b] of [
+      [e0, v0 - ring],
+      [v1 + ring, e1],
+    ])
+      wb.box('wallstone', a, spring, t0, b, yT, t1, { sub: 2, faces: 'nsew', ao: false, tint });
+    archRing(ctx, { axis: 'x', c: 49, w: v1 - v0, y0: spring, ring, t0, t1, top: yT, clip: [e0, e1], mat: 'ashlar', spMat: 'wallstone', spTint: tint, topFace: true, cam: false });
+    // albardilla a dos aguas y la cruz
+    const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+    const [c0, c1, cy] = [t0 - 0.1, t1 + 0.1, yT + 0.42];
+    wb.quad('ashlar', V3(e0 - 0.12, yT, c0), V3(49, cy, c0), V3(49, cy, c1), V3(e0 - 0.12, yT, c1), { ao: false, tint: [0.66, 0.63, 0.6] });
+    wb.quad('ashlar', V3(49, cy, c0), V3(e1 + 0.12, yT, c0), V3(e1 + 0.12, yT, c1), V3(49, cy, c1), { ao: false, tint: [0.66, 0.63, 0.6] });
+    wb.tri('ashlar', V3(e0 - 0.12, yT, c0), V3(e1 + 0.12, yT, c0), V3(49, cy, c0), { ao: false, tint: [0.7, 0.67, 0.63] });
+    wb.tri('ashlar', V3(e1 + 0.12, yT, c1), V3(e0 - 0.12, yT, c1), V3(49, cy, c1), { ao: false, tint: [0.7, 0.67, 0.63] });
+    wb.box('ashlar', e0 - 0.12, yT - 0.08, c0, e1 + 0.12, yT, c1, { ao: false, faces: 'nsewb', tint: [0.66, 0.63, 0.6] });
+    wb.box('iron', 48.97, cy - 0.05, 12.19, 49.03, cy + 0.75, 12.25, { ao: false });
+    wb.box('iron', 48.75, cy + 0.42, 12.19, 49.25, cy + 0.48, 12.25, { ao: false });
+    // la campana, colgada de su yugo dentro del vano
+    const bz = (t0 + t1) / 2;
+    wb.box('wooddark', v0 - 0.05, spring - 0.14, bz - 0.09, v1 + 0.05, spring, bz + 0.09, { ao: false, faces: 'tnsewb' });
+    wb.box('iron', 48.96, spring - 0.26, bz - 0.03, 49.04, spring - 0.14, bz + 0.03, { ao: false });
+    wb.cylinder('bronze', 49, 9.34, bz, 0.31, 0.16, 0.5, 10, { ao: false, capTop: true });
+    wb.cylinder('bronze', 49, 9.3, bz, 0.335, 0.335, 0.07, 10, { ao: false, capTop: true });
+    wb.cylinder('black', 49, 9.3, bz, 0.3, 0.3, 0.01, 10, { ao: false, capBot: true, grime: false });
+    P.ellipsoid(ctx, 'iron', 49, 9.4, bz, 0.06, 0.07, 0.06);
+  }
   wb.box('ashlar', 47.9, 0, 11.8, 48.2, 3.2, 12, { ao: false });
   wb.box('ashlar', 49.8, 0, 11.8, 50.1, 3.2, 12, { ao: false });
   wb.box('ashlar', 47.88, 3.2, 11.79, 50.12, 3.5, 12, { ao: false, faces: 'tnsewb' });
