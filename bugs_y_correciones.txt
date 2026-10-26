@@ -23,5 +23,6 @@ En esta lista se van a detallar distintos bugs que se encuentren In-Game. Con el
 14 - En "Calle de la Catedral", hay un objeto enorme que está volando arriba de una puerta, y también hay uno igual justo arriba de la bandera, flotando en el aire. También en la misma calle, donde está el Arco de Piedra, hay dos ventanas que lo atraviesan.  
 15 - En "Plaza de la Catedral", el PJ puede atravesar las puertas, y quedar atravesado por ellas. Las puertas son cuadradas y el arco es redondo. 
 16 - En "Casa Tapiada", la escalera conecta directo con escalera a pared. No hay un espacio que tengas como para poder salir de la escalera. Eso arréglalo. 
-17 - En "Plazuela del Pozo", hay tres objetos que se superponen con una puerta, y hay un símbolo satánico que se superpone levemente con una ventana.
+17 - [ARREGLADO] En "Plazuela del Pozo", hay tres objetos que se superponen con una puerta, y hay un símbolo satánico que se superpone levemente con una ventana.
+    -> La hornacina (con su imagen velada y sus velas) estaba montada sobre el marco de la puerta: ahora está a un lado. El sigilo, al otro lado de la ventana.
 18 - En "Puerta del Castillo", la puerta es cuadrada, pero el marco es circular. La puerta debería ser circular.
