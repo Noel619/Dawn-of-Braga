@@ -8,15 +8,19 @@ import { fbm3, clamp, smoothstep } from '../core/util.js';
 import { worldMat, MAT_DEFS } from './materials.js';
 
 const CHUNK = 32;
+// Lo que queda entero bajo el suelo de la calle (la capa 'sub') va al final de
+// las mallas, para no dibujarlo cuando no se puede ver (game/culling.js).
+const LAYER_Y = -0.55;
 const _p = new THREE.Vector3();
 const _n = new THREE.Vector3();
 
 class Bucket {
-  constructor(mat, key, group = null, groups = null) {
+  constructor(mat, key, group = null, groups = null, layer = null) {
     this.mat = mat;
     this.key = key;
     this.group = group;
     this.groups = groups;
+    this.layer = layer;
     this.pos = [];
     this.nor = [];
     this.uv = [];
@@ -102,13 +106,32 @@ export class WorldBuilder {
     const cx = Math.floor(_p.x / CHUNK),
       cz = Math.floor(_p.z / CHUNK);
     const gk = this.groupPath ? this.groupPath.join('/') : this.group;
-    const key = (gk ? gk + '#' : '') + mat + '|' + cx + '|' + cz;
+    // (la capa, por la altura de la pieza que se está añadiendo: _span)
+    const ly = this._y1 < LAYER_Y ? 'sub' : null;
+    const key = (gk ? gk + '#' : '') + mat + '|' + cx + '|' + cz + (ly ? '|' + ly : '');
     let b = this.buckets.get(key);
     if (!b) {
-      b = new Bucket(mat, key, this.group, this.groupPath);
+      b = new Bucket(mat, key, this.group, this.groupPath, ly);
       this.buckets.set(key, b);
     }
     return b;
+  }
+  // La altura (en el mundo) de lo que se va a añadir: de unos puntos locales
+  // o de las esquinas de una caja local.
+  _span(pts) {
+    this._y0 = Infinity;
+    this._y1 = -Infinity;
+    for (const q of pts) this._spanPt(q.x, q.y, q.z);
+  }
+  _spanBox(x0, y0, z0, x1, y1, z1) {
+    this._y0 = Infinity;
+    this._y1 = -Infinity;
+    for (const X of [x0, x1]) for (const Y of [y0, y1]) for (const Z of [z0, z1]) this._spanPt(X, Y, Z);
+  }
+  _spanPt(x, y, z) {
+    _p.set(x, y, z).applyMatrix4(this.m);
+    if (_p.y < this._y0) this._y0 = _p.y;
+    if (_p.y > this._y1) this._y1 = _p.y;
   }
 
   _vert(b, lx, ly, lz, nx, ny, nz, u, v, ao, o) {
@@ -192,6 +215,7 @@ export class WorldBuilder {
     if (y1 < y0) [y0, y1] = [y1, y0];
     if (z1 < z0) [z0, z1] = [z1, z0];
     const faces = o.faces ?? this._defFaces(x0, y0, z0, x1, z1);
+    this._spanBox(x0, y0, z0, x1, y1, z1);
     const sub = o.sub ?? 1.6;
     const W = x1 - x0,
       H = y1 - y0,
@@ -238,6 +262,7 @@ export class WorldBuilder {
     if (N.lengthSq() < 1e-12) N.crossVectors(U, new THREE.Vector3().subVectors(p2, p0));
     if (N.lengthSq() < 1e-12) return;
     N.normalize();
+    this._span([p0, p1, p2, p3]);
     const s = o.uv ?? MAT_DEFS[mat].uv;
     const sub = o.sub ?? 1.6;
     const ul = U.length(),
@@ -285,6 +310,7 @@ export class WorldBuilder {
     const V = new THREE.Vector3().subVectors(p2, p0);
     const N = new THREE.Vector3().crossVectors(U, V).normalize();
     const s = o.uv ?? MAT_DEFS[mat].uv;
+    this._span([p0, p1, p2]);
     const b = this._bucket(mat, (p0.x + p1.x + p2.x) / 3, (p0.z + p1.z + p2.z) / 3);
     // ejes UV: horizontal del plano y vertical
     const up = Math.abs(N.y) > 0.9 ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
@@ -304,6 +330,8 @@ export class WorldBuilder {
   // Cilindro/cono a lo largo de Y (en espacio local).
   cylinder(mat, cx, y0, cz, rBot, rTop, h, segs = 8, o = {}) {
     const s = o.uv ?? MAT_DEFS[mat].uv;
+    const rm = Math.max(rBot, rTop);
+    this._spanBox(cx - rm, y0, cz - rm, cx + rm, y0 + h, cz + rm);
     const b = this._bucket(mat, cx, cz);
     const nv = Math.max(1, Math.ceil(h / (o.sub ?? 1.6)));
     const start = b.count;
@@ -432,6 +460,9 @@ export class WorldBuilder {
     this.push();
     if (matrix) this.m.multiply(matrix);
     this.nm.getNormalMatrix(this.m);
+    this._y0 = Infinity;
+    this._y1 = -Infinity;
+    for (let i = 0; i < P.count; i++) this._spanPt(P.getX(i), P.getY(i), P.getZ(i));
     const cxz = new THREE.Vector3(0, 0, 0);
     const b = this._bucket(mat, cxz.x, cxz.z);
     const start = b.count;
@@ -504,6 +535,28 @@ export class WorldBuilder {
 
   build() {
     const meshes = [];
+    // (lo del subsuelo va al final de la malla de su trozo y material, si la
+    // hay: para no dibujarlo basta con acortar lo que se dibuja de ella, sin
+    // más llamadas de dibujo que antes; si no, en una malla suya)
+    for (const b of this.buckets.values()) {
+      if (b.layer !== 'sub' || b.count === 0) continue;
+      const a = this.buckets.get(b.key.slice(0, -4));
+      if (!a || a.count === 0) continue;
+      a.subStart = a.idx.length;
+      for (const i of b.idx) a.idx.push(i + a.count);
+      a.pos = a.pos.concat(b.pos);
+      a.nor = a.nor.concat(b.nor);
+      a.uv = a.uv.concat(b.uv);
+      a.col = a.col.concat(b.col);
+      if (a.bake || b.bake) {
+        const k = new Float32Array((a.count + b.count) * 3);
+        if (a.bake) k.set(a.bake);
+        if (b.bake) k.set(b.bake, a.count * 3);
+        a.bake = k;
+      }
+      a.count += b.count;
+      b.count = 0;
+    }
     for (const b of this.buckets.values()) {
       if (b.count === 0) continue;
       const g = new THREE.BufferGeometry();
@@ -519,6 +572,8 @@ export class WorldBuilder {
       mesh.matrixAutoUpdate = false;
       mesh.updateMatrix();
       mesh.userData.bucket = b.key;
+      if (b.layer) mesh.userData.layer = b.layer;
+      if (b.subStart !== undefined) mesh.userData.subStart = b.subStart;
       if (b.group) mesh.userData.group = b.group;
       if (b.groups) mesh.userData.groups = b.groups;
       meshes.push(mesh);

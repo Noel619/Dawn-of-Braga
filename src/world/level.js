@@ -139,9 +139,11 @@ export function buildLevel() {
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(-96, -232, 84, 72, 1);
   F.paint(-96, -232, 84, 72, 1);
-  F.paint(-2, -97, 2, -86, 0);
-  F.paint(58, -32, 61, -27, 0); // escalera de la bodega del canónigo
-  for (const h of ctx.floorHoles) F.paint(h[0], h[1], h[2], h[3], 0);
+  // (la escalera de la cripta, la de la bodega del canónigo y las demás; los
+  // huecos son también por donde se ve desde la calle lo de abajo: ver
+  // game/culling.js)
+  ctx.portals = [[-2, -97, 2, -86], [58, -32, 61, -27], ...ctx.floorHoles];
+  for (const h of ctx.portals) F.paint(h[0], h[1], h[2], h[3], 0);
   for (const [a, b, c, d] of F.rects(1)) {
     ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
     // suelo visual de fondo (tierra), un poco por debajo de calles e

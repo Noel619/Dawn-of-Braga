@@ -39,6 +39,7 @@ import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
 import { Intro } from './intro/intro.js';
+import { Culling } from './culling.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
@@ -1939,6 +1940,10 @@ export class Game {
     const lp = this.state === 'title' || this.state === 'intro' ? c : this.player.pos;
     this.fx.lights.update(lp.x, lp.y + 1, lp.z, this.time);
     this.fx.ash.update(c);
+    // (lo que no se ve no se dibuja: ver culling.js)
+    const cull = this.culling || (this.culling = new Culling(this));
+    cull.begin();
     this.post.render(this.scene, this.camera, this.time);
+    cull.end();
   }
 }

@@ -560,6 +560,12 @@ exponencial más niebla volumétrica por *raymarching* (bancos que se arrastran 
 iluminación horneada por vértice (antorchas, velas, vidrieras) combinada con un pool de luces dinámicas
 parpadeantes, ceniza cayendo, brasas, humo, sangre, sombras de mancha, filtro CRT opcional y siluetas en la niebla.
 
+**Rendimiento.** Lo que no se ve no se dibuja. Lo que queda entero bajo la calle (la cripta, las bodegas, las
+mazmorras) no se dibuja con la cámara en la calle, salvo cuando se ve uno de los huecos que llevan abajo (las
+escaleras, el cráter, el río) o la cámara está junto a él: lo demás lo tapa la losa de tierra de la calle. Tampoco se
+dibujan las criaturas ni los objetos de muchas piezas (rejas, puentes, puertas) que tapa un muro. En la calle se
+dibujan así, según el sitio, entre un 14 y un 54 % menos de triángulos, y hasta un 47 % menos de llamadas de dibujo.
+
 **Interfaz en pixel art.** Todos los menús se dibujan con sprites generados por código a resolución de arte y
 escalado entero: marcos de hierro con esquineras doradas, estandartes carmesí con espadas como cursor, una gran espada
 en la portada, pergamino rasgado con capitular iluminada y lacre para los documentos, iconos 32×32, mapa sobre
@@ -640,7 +646,9 @@ guardan las huellas (PBKDF2-SHA256) de las IP autorizadas, nunca la IP. Al pulsa
 pregunta la IP pública a un servicio externo y se compara su huella; si no coincide, el panel no aparece. Sin
 huellas en la lista no se pregunta nada, y quien no pulsa F2 no contacta con nadie. La huella de tu IP se saca con
 el botón «Huella de mi IP» del panel (en localhost) o, en la consola, `__game.dev.ipHash()`. Desde la consola
-también: `__game.dev.set('god', true)`, `__game.dev.act('rage')`, `__game.dev.tp('lagar')`.
+también: `__game.dev.set('god', true)`, `__game.dev.act('rage')`, `__game.dev.tp('lagar')`, y
+`__game.culling.on = false` para dibujarlo todo (sin ocultar lo que no se ve; `__game.culling.stats` dice si se
+dibuja el subsuelo y cuántos objetos se han quitado).
 
 ## Estructura del código
 
@@ -706,6 +714,8 @@ src/
                         susurra); cutscene.js: la de la bodega; hunt.js: la caza en las
                         bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
+                        culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
+                        los objetos que tapa un muro);
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
                         film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
                         film_acts.js y film_rise.js, film_nave.js, film_grab.js, film_city.js, film_tower.js,
