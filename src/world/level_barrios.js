@@ -394,7 +394,9 @@ export function buildSW(ctx, S, L) {
   L.interact.push({ kind: 'altar', id: 'a_praca', name: 'Oratorio de Santa Bárbara', x: -39.9, y: 0, z: 21.5, spawn: [-38.2, 0, 21.5], yaw: Math.PI / 2 });
 
   // --- casas alrededor del patio
-  house(ctx, { x0: -48, z0: 12.5, x1: -41, z1: 30, front: 'e', seed: 1209, h: 7.2, windows: false });
+  // (hasta z = 36, y la de detrás desde ahí: la de x = -41 a -35 se metía un
+  // metro en ella)
+  house(ctx, { x0: -48, z0: 12.5, x1: -41, z1: 36, front: 'e', seed: 1209, h: 7.2, windows: false });
   house(ctx, { x0: -41, z0: 26, x1: -35, z1: 36, front: 'e', seed: 1210, h: 6.6 });
   house(ctx, { x0: -35, z0: 28, x1: -28.5, z1: 36, front: 'n', seed: 1211, h: 7 });
   house(ctx, { x0: -26, z0: 28, x1: -20.5, z1: 33, front: 'n', seed: 1212, h: 6.4 });
@@ -405,7 +407,7 @@ export function buildSW(ctx, S, L) {
   lane(ctx, S, -26, 33, -3.5, 35.5);
   house(ctx, { x0: -40, z0: 36, x1: -28.5, z1: 46, front: 'e', seed: 1214, h: 7 });
   house(ctx, { x0: -40, z0: 46, x1: -28.5, z1: 58, front: 'e', seed: 1215, h: 6.6 });
-  house(ctx, { x0: -48, z0: 30, x1: -40, z1: 44, front: 'e', seed: 1216, h: 6.8, windows: false, jetty: 0 });
+  house(ctx, { x0: -48, z0: 36, x1: -40, z1: 44, front: 'e', seed: 1216, h: 6.8, windows: false, jetty: 0 });
   house(ctx, { x0: -48, z0: 44, x1: -40, z1: 58, front: 'e', seed: 1217, h: 7.4, windows: false, jetty: 0 });
   house(ctx, { x0: -26, z0: 35.5, x1: -14, z1: 42, front: 'n', seed: 1218, h: 7.2 });
   stoneWall(ctx, -28.5, 51, -26, 51.6, 4.2);

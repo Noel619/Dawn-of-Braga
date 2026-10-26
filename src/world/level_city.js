@@ -528,8 +528,12 @@ export function buildTanners(ctx, S, L) {
   P.rubble(ctx, 74, 9, -16, 14, 97, 1.6, { collide: false, scale: 1.4 });
   ctx.col.add(72, 9, -17.5, 76, 11, -14.5);
   // derrumbe que cierra la Calle de la Muralla al norte: la casa quemada que
-  // cayó sobre la calle (detrás, hasta la torre del Postigo, todo es casa)
-  house(ctx, { x0: 64, z0: -56, x1: 72, z1: -41, front: 's', seed: 950, h: 7.2, burned: true, boards: true, style: 'stone' });
+  // cayó sobre la calle (detrás, hasta la torre del Postigo, todo es casa).
+  // Llega hasta la torre intermedia, no dentro de ella: antes se metía metro
+  // y medio en la torre y su tejado y una ventana la atravesaban; entre la
+  // casa y la muralla, un contrafuerte macizo hasta el adarve
+  house(ctx, { x0: 64, z0: -56, x1: 70.5, z1: -41, front: 's', seed: 950, h: 7.2, burned: true, boards: true, style: 'stone' });
+  solid(ctx, 'wallstone', 70.5, 0, -56, 72, 9, -42, { sub: 2.2, aoH: 2.5, faces: 'tnsew', mats: { t: 'flag' } });
   for (let i = 0; i < 5; i++) P.rubble(ctx, 65 + i * 1.5, 0, -40.4, 7, 980 + i, 0.8, { scale: 1.2 });
   P.rubble(ctx, 68, 0, -40.6, 10, 98, 3.4, { scale: 0.9 });
   ctx.col.add(64, 0, -41, 72, 1.0, -39.9).noSight = true;
