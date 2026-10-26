@@ -592,9 +592,12 @@ export function buildCasaTapiada(ctx, S, L) {
   joists(ctx, CI, [-4.75, -6.5, -9.9, -11.5], CT_HOLE, room);
   for (const side of ['n', 'e', 'w']) innerWall(ctx, CI, side, FY, CT.ceil, up, tin, [CT.x0, CT.z0, CT.x1, CT.z1]);
   ceiling(ctx, CI, CT.ceil, CT.h, [-5.1, -6.95, -9.7, -11.35], up);
-  partitionUp(ctx, { x0: CI.x0, z0: -8.4, x1: CI.x1, z1: -8.2, doors: [{ at: -30.6, w: 1.0, h: 2.2 }] }, FY, CT.ceil, up, tin);
-  // la escalera, con la barandilla del hueco arriba (se sale por el oeste,
-  // junto al tabique)
+  // (el tabique de la alcoba, un metro más al norte que el de abajo: arriba
+  // de la escalera queda un rellano; antes el último peldaño daba de frente
+  // contra el tabique y había que salir de lado)
+  partitionUp(ctx, { x0: CI.x0, z0: -9.4, x1: CI.x1, z1: -9.2, doors: [{ at: -30.6, w: 1.0, h: 2.2 }] }, FY, CT.ceil, up, tin);
+  // la escalera, con la barandilla del hueco arriba (se sale de frente, al
+  // rellano, o por el oeste)
   wb.setRoom(room);
   woodStair(ctx, CT_STAIR, room, -7.3);
   wb.setRoom(up);
