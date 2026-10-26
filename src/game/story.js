@@ -703,6 +703,7 @@ export const MSG = {
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
   southGate: 'La Puerta Sur está hundida bajo escombros y carne. No hay salida.',
+  trampillaTaberna: 'La trampilla de la bodega, clavada con dos tablones. Abajo, en lo oscuro, algo rasca las cubas.',
   rastrillo: (n) =>
     n === 0
       ? 'Un rastrillo de hierro cierra la cisterna. Al otro lado, bajo una luz pálida que cae de lo alto, el agua negra de un pozo. De la reja suben tres cadenas que se pierden en la bóveda.'

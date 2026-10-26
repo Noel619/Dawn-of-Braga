@@ -8,8 +8,10 @@ En esta lista se van a detallar distintos bugs que se encuentren In-Game. Con el
     -> El entramado de todas las casas se reparte según las ventanas: pies derechos a sus lados, solera bajo los alféizares y sobre los dinteles, y aspas sólo en los paños sin ventana.
 4 - [ARREGLADO] En "Calle del Soto", al lado de Taberna del Cuervo, hay un cartel mal colocado, y un círculo maldito pintado en la pared que se superpone con una ventana.  
     -> El rótulo de la taberna cuelga entre la puerta y la ventana (estaba delante del hueco de la puerta) y el sigilo, en el muro libre. Lo mismo en la Plazuela del Pozo (hornacina sobre el marco de una puerta y sigilo sobre una ventana) y un rótulo de los soportales de la Plaza del Pan.
-5 - En "Taberna del Cuervo", el mostrador no tiene sentido. No tiene espacio detrás del mismo, y hay barriles que ocupan ese espacio.
-6 - En "Taberna del Cuervo", hay una escotilla que no conecta con ningún lugar y se encuentra en la mitad de una habitación.
+5 - [ARREGLADO] En "Taberna del Cuervo", el mostrador no tiene sentido. No tiene espacio detrás del mismo, y hay barriles que ocupan ese espacio.
+    -> La barra se adelanta: detrás queda un pasillo de un metro para el tabernero; los toneles, contra el tabique, con una vasera de dos baldas encima.
+6 - [ARREGLADO] En "Taberna del Cuervo", hay una escotilla que no conecta con ningún lugar y se encuentra en la mitad de una habitación.
+    -> La trampilla pasa al rincón de la despensa, clavada con dos tablones (la nota del tabernero dice que cerró la bodega); al examinarla: «Abajo, en lo oscuro, algo rasca las cubas».
 7 - [ARREGLADO] [CULLING] En "Calle de la Herrería", el techito exterior que tiene la herrería, tiene graves problemas de Culling. También, hay una rueda con el mismo problema y un cartel de herrería mal colocado.
     -> Tejadillo rehecho: cantos cerrados, carrera sobre los pies derechos, tornapuntas, cabios y solera. Rueda arreglada (ver 1). El cartel del yunque, en la fachada sobre el tejadillo; fuera el de la herradura que quedaba entre la antorcha y el farol.
 8 - En "Corral de los Pellejeros", hay una casa completamente cerrada por vallas y con unos "Bloques de heno que la cierran por completo. Quitando el sentido de las vallas para una zona tan pequeña.

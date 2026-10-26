@@ -166,11 +166,25 @@ export function buildNW(ctx, S, L) {
   // del hueco, a la altura del dintel)
   P.sign(ctx, -21.95, 2.95, -3.5, 0, 'cup');
   wb.setRoom(room);
-  // sala: hogar, barra, mesas
+  // sala: hogar, barra, mesas. Detrás de la barra, un pasillo para el
+  // tabernero y, contra el tabique, los toneles y la vasera (antes la barra
+  // estaba pegada a los toneles y no quedaba sitio para nadie)
   P.hearth(ctx, -26.15, 0, -7.4, 'e', { room, w: 2 });
-  P.counter(ctx, -17.4, 0, -10.7, 0, 3.4, { room });
+  P.counter(ctx, -17.8, 0, -9.6, 0, 3.0, { room });
   P.cask(ctx, -18.8, 0, -11.45, 0, { room, r: 0.4, len: 1.1 });
   P.cask(ctx, -16.2, 0, -11.45, 0, { room, r: 0.4, len: 1.1 });
+  {
+    const vr = new RNG(1114);
+    for (const yy of [1.5, 2.05]) {
+      wb.box('wooddark', -19.5, yy - 0.05, -11.9, -15.5, yy, -11.62, { ao: false, faces: 'tnsewb', room });
+      for (const bx of [-19.2, -17.5, -15.8]) wb.box('wooddark', bx - 0.03, yy - 0.3, -11.9, bx + 0.03, yy - 0.05, -11.7, { ao: false, room });
+      for (let x = -19.3; x < -15.7; x += vr.range(0.28, 0.5)) {
+        if (vr.chance(0.25)) continue;
+        if (vr.chance(0.55)) wb.cylinder('bronze', x, yy, -11.76, 0.05, 0.06, 0.14, 6, { ao: false, capTop: true, room });
+        else P.jar(ctx, x, yy, -11.76, 0.38, { collide: false, rot: vr.range(0, 6) });
+      }
+    }
+  }
   P.shelf(ctx, -14.6, 0, -6.2, -Math.PI / 2, 1.6);
   P.table(ctx, -22.6, 0, -5.6, 1.8, 0.9, 0.1);
   P.bench(ctx, -22.6, 0, -6.4, 1.6, 0.1);
@@ -181,11 +195,11 @@ export function buildNW(ctx, S, L) {
   P.stool(ctx, -23.1, 0, -10.8, { room });
   P.candles(ctx, -22.2, 0.8, -5.5, 3, 1109, { room, radius: 5, intensity: 1.0, spread: 0.25 });
   P.candles(ctx, -17.9, 0.8, -6.3, 2, 1110, { room, radius: 4, intensity: 0.8, spread: 0.2 });
-  P.candles(ctx, -17.4, 1.08, -10.6, 3, 1111, { room, radius: 4.5, intensity: 0.9, spread: 0.3 });
+  P.candles(ctx, -17.9, 1.08, -9.5, 3, 1111, { room, radius: 4.5, intensity: 0.9, spread: 0.3 });
   for (const [jx, jz] of [[-22.9, -5.4], [-21.9, -5.9], [-18.3, -6.2]]) P.jar(ctx, jx, 0.8, jz, 0.35, { collide: false });
   bakeCorpse(wb, -23.4, 0.02, -7.25, 0.1, 'sit', 'soldier', 5);
-  bakeCorpse(wb, -19.6, 0, -8.6, 2.6, 'face', 'villager', 3);
-  P.decal(ctx, -19.6, 0.03, -8.6, 2.2);
+  bakeCorpse(wb, -20.3, 0, -7.6, 2.6, 'face', 'villager', 3);
+  P.decal(ctx, -20.3, 0.03, -7.6, 2.2);
   P.decal(ctx, -24.8, 0.03, -9.6, 1.4);
   // cocina: fogón con caldero, mesa de despiece, jamones colgados. La mesa,
   // atravesada tras la puerta de la sala, se parte de un golpe (interact).
@@ -200,16 +214,37 @@ export function buildNW(ctx, S, L) {
   }
   bakeCorpse(wb, -23.2, 0, -16.6, 1.2, 'back', 'villager', 0);
   P.decal(ctx, -23.2, 0.03, -16.4, 2.4);
-  // despensa: toneles, cajas y la trampilla de la bodega
+  // despensa: toneles, cajas y, en el rincón, la trampilla de la bodega,
+  // clavada con dos tablones («He cerrado la bodega: algo rasca las cubas
+  // desde dentro», dice la nota del tabernero; antes estaba suelta en medio
+  // de la despensa, como si llevara a alguna parte)
   P.cask(ctx, -15.4, 0, -17.8, Math.PI / 2, { room });
   P.cask(ctx, -15.4, 0, -15.2, Math.PI / 2, { room });
   P.crate(ctx, -18.8, 0, -18.6, 0.8, 0.3);
   P.crate(ctx, -18.9, 0.8, -18.5, 0.6, 0.9);
   P.sacks(ctx, -17.6, 0, -13, 3, 1113);
-  wb.box('wooddark', -18.3, 0.02, -15.4, -16.9, 0.06, -14.1, { ao: false, faces: 'tnsew' });
-  wb.box('iron', -17.7, 0.06, -14.8, -17.5, 0.08, -14.6, { ao: false });
+  {
+    const [tx0, tz0, tx1, tz1] = [-15.85, -13.65, -14.6, -12.4];
+    const cx = (tx0 + tx1) / 2,
+      cz = (tz0 + tz1) / 2;
+    wb.box('wooddark', tx0 - 0.08, 0.02, tz0 - 0.08, tx1 + 0.08, 0.035, tz1 + 0.08, { ao: false, faces: 'tnsew', tint: [0.42, 0.38, 0.34] });
+    wb.box('wooddark', tx0, 0.035, tz0, tx1, 0.05, tz1, { ao: false, faces: 'tnsew', tint: [0.75, 0.7, 0.64] });
+    wb.box('iron', cx - 0.4, 0.05, cz - 0.03, cx - 0.2, 0.065, cz + 0.03, { ao: false });
+    for (const [dz, r] of [
+      [-0.34, 0.12],
+      [0.3, -0.08],
+    ]) {
+      wb.push();
+      wb.translate(cx, 0.07, cz + dz);
+      wb.rotateY(r);
+      wb.box('planks', -0.82, -0.02, -0.11, 0.82, 0.02, 0.11, { ao: false, tint: [0.8, 0.72, 0.62] });
+      for (const nx of [-0.72, 0.72]) wb.box('iron', nx - 0.02, 0.02, -0.02, nx + 0.02, 0.03, 0.02, { ao: false });
+      wb.pop();
+    }
+  }
   wb.setRoom(null);
-  L.interact.push({ kind: 'note', id: 'n_tabernero', note: 'tabernero', x: -16.6, y: 1.1, z: -10.6, model: 'book' });
+  L.interact.push({ kind: 'note', id: 'n_tabernero', note: 'tabernero', x: -17.0, y: 1.1, z: -9.5, model: 'book' });
+  L.interact.push({ kind: 'examine', id: 'x_trampilla_taberna', text: 'trampillaTaberna', x: -15.2, y: 0, z: -13.0, r: 1.4 });
   ctx.rats.push({ x: -15.2, y: 0, z: -13.4, n: 2 }, { x: -25.6, y: 0, z: -18.6, n: 1 });
 
   // --- enemigos
