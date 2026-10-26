@@ -14,7 +14,8 @@ En esta lista se van a detallar distintos bugs que se encuentren In-Game. Con el
     -> La trampilla pasa al rincón de la despensa, clavada con dos tablones (la nota del tabernero dice que cerró la bodega); al examinarla: «Abajo, en lo oscuro, algo rasca las cubas».
 7 - [ARREGLADO] [CULLING] En "Calle de la Herrería", el techito exterior que tiene la herrería, tiene graves problemas de Culling. También, hay una rueda con el mismo problema y un cartel de herrería mal colocado.
     -> Tejadillo rehecho: cantos cerrados, carrera sobre los pies derechos, tornapuntas, cabios y solera. Rueda arreglada (ver 1). El cartel del yunque, en la fachada sobre el tejadillo; fuera el de la herradura que quedaba entre la antorcha y el farol.
-8 - En "Corral de los Pellejeros", hay una casa completamente cerrada por vallas y con unos "Bloques de heno que la cierran por completo. Quitando el sentido de las vallas para una zona tan pequeña.
+8 - [ARREGLADO] En "Corral de los Pellejeros", hay una casa completamente cerrada por vallas y con unos "Bloques de heno que la cierran por completo. Quitando el sentido de las vallas para una zona tan pequeña.
+    -> El redil pasa al rincón entre el establo y la casa del sur (por ahí sin puerta ni ventanas): más grande, con valla en dos lados, portillo abierto y la paja dentro. La casa queda con la puerta libre; el carro roto, a su lado. De paso, el farol del corral apuntaba hacia dentro del establo.
 9 - [CULLING] En "Calle de la Muralla", concretamente en la estructura "Capilla de San Fructuoso", hay una estructura extraña en el techo que no tan solo se ve mal, sino que esta mal hecha.
 10 - En "Casa del Canoningo", hay [CULLING], con ciertos objetos que están cerca de la estufa. Hay ropa que está flotando, que se supone que es la del Canoningo?. Y objetos superposicionados.
 11 - Hay muchas casas dentro de la ciudad que directamente no tienen techo lógico, sino un techo completamente plano.

@@ -650,24 +650,40 @@ export function buildSE(ctx, S, L) {
   lane(ctx, S, 14, 17, 30, 31, 'dirt');
   P.deadHorse(ctx, 22.6, 0, 23.2, 0.4);
   P.trough(ctx, 15.2, 0, 21.6, Math.PI / 2, { len: 2.6 });
-  // el redil, contra la casa del sur (deja libre la boca del callejón); con
-  // la leña, lo pisotea el gigante del jefe final al cruzar el corral
-  waveProp(ctx, 'corralN', 17.5, 29.2, () => P.fence(ctx, 14.5, 29.2, 20.5, 29.2, { broken: true }));
-  waveProp(ctx, 'corralN', 20.5, 30.1, () => P.fence(ctx, 20.5, 29.2, 20.5, 30.95, {}));
-  waveProp(ctx, 'corralN', 16.6, 30.1, () => {
-    P.hay(ctx, 15.7, 0, 30.1, 0.1);
-    P.hay(ctx, 17.5, 0, 30.2, -0.2);
-    P.hay(ctx, 16.6, 0.8, 30.1, 0.05);
+  // el redil, en el rincón entre el establo y la casa del sur, que por ese
+  // lado no tiene puerta ni ventanas: valla en los otros dos lados, con su
+  // portillo abierto, y la paja dentro (antes, en una franja de palmo y medio
+  // delante de la casa de al lado, le cerraba la puerta con vallas y balas)
+  P.fence(ctx, 24.45, 27.3, 24.45, 30.95, {});
+  P.fence(ctx, 24.45, 27.3, 26.0, 27.3, {});
+  P.fence(ctx, 27.25, 27.3, 29.95, 27.3, { broken: true });
+  wb.at(26.05, 0, 27.3, 0.8, () => {
+    for (const yy of [0.3, 0.85]) wb.box('planks', 0.06, yy, -0.03, 1.12, yy + 0.1, 0.03, { ao: false, faces: 'tnsewb', tint: [0.75, 0.68, 0.6] });
+    for (const xx of [0, 1.1]) wb.box('wooddark', xx, 0.12, -0.04, xx + 0.07, 1.02, 0.04, { ao: false });
+    wb.push();
+    wb.translate(0.58, 0.62, 0);
+    wb.rotateZ(Math.atan2(0.55, 1.04));
+    wb.box('planks', -0.58, -0.04, -0.025, 0.58, 0.04, 0.025, { ao: false, tint: [0.75, 0.68, 0.6] });
+    wb.pop();
   });
-  P.cart(ctx, 26.4, 0, 28.6, 2.9, { brokenWheel: true });
+  P.colOBB(ctx, 26.05 + Math.cos(0.8) * 0.58, 27.3 - Math.sin(0.8) * 0.58, 0.6, 0.06, 0.8, 0, 1.0);
+  P.hay(ctx, 28.95, 0, 30.4, 0.05);
+  P.hay(ctx, 27.45, 0, 30.42, -0.08);
+  P.hay(ctx, 28.2, 0.8, 30.38, 0.1);
+  P.hay(ctx, 29.4, 0, 28.7, Math.PI / 2 + 0.06);
+  P.hayMound(ctx, 26.1, 0, 29.6, 0.8, 1417);
+  // (el carro roto, fuera del redil: al lado de la puerta de la casa, sin
+  // tapársela)
+  P.cart(ctx, 21.0, 0, 29.2, 2.9, { brokenWheel: true });
   waveProp(ctx, 'corralN', 26.2, 17.6, () => P.firewood(ctx, 26.2, 0, 17.6, Math.PI / 2, 3));
   P.rubble(ctx, 27.5, 0, 19.8, 6, 1404, 1.0, { mat: 'dirt', scale: 1.3 });
   P.wallTorch(ctx, 23, 2.6, 17, 's');
-  P.lantern(ctx, 30, 2.8, 27.5, Math.PI / 2, true);
+  // (hacia el corral: girado al revés, quedaba dentro del establo)
+  P.lantern(ctx, 30, 2.8, 27.5, -Math.PI / 2, true);
   bakeCorpse(wb, 18.6, 0, 19.4, 2.8, 'back', 'villager', 5);
   P.decal(ctx, 18.6, 0.02, 19.4, 1.8);
   ctx.crows.push({ x: 22.6, y: 0, z: 23.2, r: 1.8, n: 4 });
-  ctx.crows.push({ pts: [[14.6, 1.25, 29.2], [16.6, 1.25, 29.2], [18.6, 1.25, 29.2]], yaw: 0 });
+  ctx.crows.push({ pts: [[24.45, 1.25, 27.3], [27.25, 1.25, 27.3], [28.6, 1.25, 27.3]], yaw: 0 });
   ctx.rats.push({ x: 29.2, y: 0, z: 30.2, n: 2 });
   house(ctx, { x0: 14, z0: 31, x1: 24, z1: 42, front: 'n', seed: 1405, h: 7 });
   // (sin voladizo: su fachada da al establo y la planta alta se metía dentro)
