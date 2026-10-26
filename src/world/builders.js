@@ -1247,11 +1247,13 @@ function timberFrame(ctx, L, g1, h, wins, braces) {
     for (let k = 1; k < m; k++) posts.push(p + ((q - p) * k) / m);
   }
   for (const a of posts) wb.box('timber', a - pw, g1 + 0.2, 0, a + pw, h, 0.07, T);
-  // la carrera de arriba y las soleras, algo por detrás de pies derechos y
-  // tornapuntas (a la misma profundidad, cada cruce parpadeaba)
+  // la carrera de arriba y las soleras, por detrás de las tornapuntas, y
+  // éstas por detrás de los pies derechos: un centímetro entre unas caras y
+  // otras (a la misma profundidad, o a medio centímetro, cada cruce
+  // parpadeaba)
   wb.box('timber', 0, h - 0.2, 0, L, h, 0.08, T);
-  wb.box('timber', 0, ySill - 0.08, 0, L, ySill + 0.08, 0.055, T);
-  if (head) wb.box('timber', 0, yHead - 0.08, 0, L, yHead + 0.08, 0.055, T);
+  wb.box('timber', 0, ySill - 0.08, 0, L, ySill + 0.08, 0.05, T);
+  if (head) wb.box('timber', 0, yHead - 0.08, 0, L, yHead + 0.08, 0.05, T);
   // tornapuntas (de eje a eje: los cabos quedan dentro de pies y soleras)
   let k = 0;
   const brace = (a0, a1, y0, y1) => {
@@ -1261,9 +1263,9 @@ function timberFrame(ctx, L, g1, h, wins, braces) {
       dh = y1 - y0;
     const len = Math.hypot(dw, dh);
     wb.push();
-    wb.translate((a0 + a1) / 2, (y0 + y1) / 2, 0.035);
+    wb.translate((a0 + a1) / 2, (y0 + y1) / 2, 0.034);
     wb.rotateZ(Math.atan2(dh, dw) * dir);
-    wb.box('timber', -len / 2, -0.07, -0.03, len / 2, 0.07, 0.03, { ao: false, sub: 4 });
+    wb.box('timber', -len / 2, -0.07, -0.026, len / 2, 0.07, 0.026, { ao: false, sub: 4 });
     wb.pop();
   };
   for (let i = 0; i + 1 < posts.length; i++) {

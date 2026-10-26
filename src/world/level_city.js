@@ -477,7 +477,8 @@ export function buildTanners(ctx, S, L) {
     const [v0, v1, yS, yT] = [48.5, 49.5, 9.0, 11.3];
     const spring = 10.1;
     const tint = [0.74, 0.71, 0.67];
-    wb.box('wallstone', e0, 6, t0, e1, yS, t1, { sub: 2, faces: 'tnsew', tint });
+    // (sin la cara de detrás: dentro del hastial)
+    wb.box('wallstone', e0, 6, t0, e1, yS, t1, { sub: 2, faces: 'tnew', tint });
     for (const [a, b] of [
       [e0, v0],
       [v1, e1],
