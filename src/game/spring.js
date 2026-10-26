@@ -1,18 +1,21 @@
-// La fuente sin nombre, en el centro de la cisterna (su piedra y su reja:
-// world/level_finale.js, cisternSpring; el ídolo que se alza en ella:
-// entities/idol.js). Aquí lo que se mueve: el agua negra, que respira con una
-// luz roja por debajo, a latidos; las pavesas que suben por la reja; el latido
-// que se oye; y el ídolo: el ojo que se abre y mira a quien se acerca y, en el
-// monolito, las almas, que gritan de una en una y piden auxilio desde dentro
-// de la piedra. Lo que ata al arzobispo con ella no se ve. Cuando el rito
-// empieza (el suelo se hunde: grupo 'cisternFloorC'), todo esto se va con él.
+// La fuente sin nombre, en el centro del círculo de la cisterna (su piedra y
+// su reja: world/level_finale.js, cisternSpring), y la estatua de la sima del
+// fondo (entities/idol*.js). Aquí lo que se mueve: el agua negra de la
+// fuente, que respira con una luz roja por debajo, a latidos; las pavesas
+// que suben por la reja; el latido que se oye; el agua roja de la sima, que
+// late con ella; y la estatua: vuelve la cabeza, muy despacio, hacia quien
+// entra en el círculo; la costura de la cara se le abre (es un ojo) cuando
+// se le acerca, y lo de dentro le sigue; la brasa del pecho late. Lo que ata
+// al arzobispo con la fuente no se ve. Cuando el rito empieza (el suelo se
+// hunde: grupo 'cisternFloorC'), la fuente se va con él; la estatua se queda
+// en su sima.
 import * as THREE from 'three';
-import { SPRING, CISTERN } from '../world/level_finale.js';
+import { SPRING, SANCT, CISTERN } from '../world/level_finale.js';
 import { G } from '../gfx/materials.js';
-import { buildIdol, IDOL, setIdolKind, loadMonolith } from '../entities/idol.js';
-import { spine as monoSpine } from '../entities/idol_monolith_geo.js';
+import { buildIdol, IDOL, loadIdol, idolToWorld } from '../entities/idol.js';
 
-const { AY } = CISTERN;
+const { AY, cz: CZ } = CISTERN;
+const A = SANCT.apse;
 
 // el latido: dos golpes y un silencio (0..1)
 export function beat(t, period = 1.7) {
@@ -22,12 +25,15 @@ export function beat(t, period = 1.7) {
   return Math.min(1, a + b);
 }
 
-function waterMat() {
+// el agua: negra, con una luz roja que se mueve por debajo; más encendida
+// hacia el centro (c) en un radio R
+function waterMat(cx, czz, R, k = 1) {
   const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
   u.uTime = G.uTime;
   u.uPulse = { value: 0 };
-  u.uC = { value: new THREE.Vector2(SPRING.x, SPRING.z) };
-  u.uR = { value: SPRING.r };
+  u.uC = { value: new THREE.Vector2(cx, czz) };
+  u.uR = { value: R };
+  u.uK = { value: k };
   return new THREE.ShaderMaterial({
     uniforms: u,
     fog: true,
@@ -40,7 +46,7 @@ function waterMat() {
         gl_Position = projectionMatrix * mvPosition;
         #include <fog_vertex>
       }`,
-    fragmentShader: `uniform float uTime; uniform float uPulse; uniform vec2 uC; uniform float uR;
+    fragmentShader: `uniform float uTime; uniform float uPulse; uniform vec2 uC; uniform float uR; uniform float uK;
       varying vec3 vW;
       #include <fog_pars_fragment>
       float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
@@ -53,7 +59,7 @@ function waterMat() {
         // mueve como si algo nadase debajo
         float ring = sin(r * 22.0 - uTime * 1.6) * exp(-r * 1.6) * 0.5 + 0.5;
         float deep = ns(q * 1.7 + vec2(uTime * 0.13, -uTime * 0.09)) * ns(q * 3.1 - vec2(uTime * 0.07, uTime * 0.11));
-        float glow = (0.38 + 0.62 * uPulse) * (0.45 + 0.55 * deep) * smoothstep(1.05, 0.0, r);
+        float glow = (0.38 + 0.62 * uPulse) * (0.45 + 0.55 * deep) * smoothstep(1.05, 0.0, r) * uK;
         vec3 col = vec3(0.012, 0.006, 0.008) + vec3(0.95, 0.12, 0.05) * glow + vec3(0.3, 0.06, 0.03) * ring * 0.08 * (0.4 + uPulse);
         gl_FragColor = vec4(col, 1.0);
         #ifdef USE_FOG
@@ -68,185 +74,134 @@ function waterMat() {
   });
 }
 
+// ¿está p dentro del santuario (el círculo o el pasillo de las columnas)?
+function inSanctum(p) {
+  if (p.y < AY - 2 || p.y > AY + 8) return false;
+  if (Math.hypot(p.x, p.z - CZ) < SANCT.R + 0.5) return true;
+  const N = SANCT.nave;
+  return p.x > N.x0 && p.x < N.x1 && p.z > N.z0 && p.z < N.z1 + 2;
+}
+
 export class Spring {
   constructor(game) {
     this.g = game;
     const geo = new THREE.CircleGeometry(SPRING.r, 28);
     geo.rotateX(-Math.PI / 2);
-    this.water = new THREE.Mesh(geo, waterMat());
+    this.water = new THREE.Mesh(geo, waterMat(SPRING.x, SPRING.z, SPRING.r));
     this.water.position.set(SPRING.x, SPRING.water, SPRING.z);
     game.scene.add(this.water);
+    // el agua de la sima, al pie de la estatua
+    const pg = new THREE.PlaneGeometry(A.x1 - A.x0, A.back - A.lip);
+    pg.rotateX(-Math.PI / 2);
+    const pz = (A.lip + A.back) / 2;
+    this.pool = new THREE.Mesh(pg, waterMat(0, pz, 6.5, 0.8));
+    this.pool.position.set((A.x0 + A.x1) / 2, A.water, pz);
+    game.scene.add(this.pool);
     this.light = game.fx.lights.add({ x: SPRING.x, y: AY - 0.75, z: SPRING.z, color: 0xff2a10, intensity: 0, range: 7.5, flicker: 0, priority: 5, on: false });
-    // la de la corona de velas que cuelga encima: la que le saca al ídolo lo
-    // de arriba
-    this.topLight = game.fx.lights.add({ x: SPRING.x - 2.4, y: AY + 8.9, z: SPRING.z + 0.8, color: 0xffc896, intensity: 0, range: 12, flicker: 0.25, priority: 4, on: false });
-    // la luz roja del hueco de arriba del monolito (le enciende los brazos
-    // por debajo)
-    this.hollowLight = game.fx.lights.add({ x: SPRING.x, y: AY + 6.9, z: SPRING.z, color: 0xff3412, intensity: 0, range: 3.4, flicker: 0.2, priority: 3, on: false });
+    // la de la corona de velas que cuelga de la bóveda
+    this.topLight = game.fx.lights.add({ x: 0, y: AY + 8.1, z: CZ, color: 0xffc896, intensity: 0, range: 16, flicker: 0.25, priority: 4, on: false });
+    // la roja de la sima, que le sube por el cuerpo a la estatua: una por
+    // delante, a ras del borde, y otra abajo, junto al agua
+    this.abyssLight = game.fx.lights.add({ x: 0, y: AY - 1.6, z: A.lip + 0.4, color: 0xff2a0c, intensity: 0, range: 17, flicker: 0.08, priority: 6, on: false });
+    this.poolLight = game.fx.lights.add({ x: 0, y: A.water + 0.9, z: A.lip + 2.4, color: 0xff3010, intensity: 0, range: 9, flicker: 0.12, priority: 4, on: false });
+    this.faceLight = game.fx.lights.add({ x: 0, y: AY + 3.2, z: A.lip - 2.2, color: 0xff4a1c, intensity: 0, range: 10, flicker: 0.1, priority: 5, on: false });
+    // la de la brasa del pecho
+    this.emberLight = game.fx.lights.add({ x: 0, y: AY + 3.6, z: -141.7, color: 0xff4a18, intensity: 0, range: 4.5, flicker: 0.3, priority: 3, on: false });
     this.t = 0;
     this.beatT = 0;
     this.emberT = 0;
     // (la introducción aviva la fuente: 0..1)
     this.boost = 0;
-    this.yaw = 0;
-    this.pitch = 0;
     this.open = 0;
     this.lookAt = null;
     this.eyeTo = null;
-    this.sink = 0; // el rito: cuánto se ha hundido con el suelo
+    this.sink = 0; // (el rito: cuánto se ha hundido el suelo; la estatua se queda)
     this.whisperT = 0;
-    this.cryT = 2;
+    this.groanT = 4;
     this._lp = new THREE.Vector3();
-    this._q = new THREE.Quaternion();
-    this._e = new THREE.Euler();
+    this._lq = new THREE.Vector3();
     this.makeIdol();
   }
 
-  // El ídolo, mirando a poniente: a la puerta, y al que se arrodilla
-  // delante. Su cabeza (la estatua) o su ojo (el monolito) sigue, muy
-  // despacio, a quien se acerca (o lo que diga la introducción: lookAt =
-  // Vector3), y el ojo se le entreabre (eye: 0..1, o lo que diga la
-  // introducción: eyeTo). Se rehace al cambiar de forma (setKind).
+  // La estatua, en su sima, mirando al norte: a la boca del círculo y al
+  // que se arrodilla en la fuente. Mientras se esculpe en el hilo de fondo,
+  // nada.
   makeIdol() {
-    const game = this.g;
-    if (this.idol) {
-      game.scene.remove(this.idol.root);
-      this.idol.root.traverse((o) => o.geometry && o.geometry.dispose());
-      for (const m of this.idol.mats || []) m.dispose();
-    }
-    this.idol = buildIdol();
-    if (!this.idol) {
-      // (el monolito, mientras se hace en el hilo de fondo: nada)
-      const kind = IDOL.kind;
-      loadMonolith().then(() => {
-        if (IDOL.kind === kind && !this.idol) this.makeIdol();
-      });
+    if (this.idol) return;
+    const I = buildIdol();
+    if (!I) {
+      loadIdol().then(() => this.makeIdol());
       return;
     }
-    const R = this.idol.root;
-    R.position.set(SPRING.x, AY - this.sink, SPRING.z);
-    R.rotation.y = -Math.PI / 2;
-    R.traverse((o) => (o.frustumCulled = false));
-    game.scene.add(R);
-    this.idol.own();
-    this.glows = this.idol.mats.filter((m) => m.emissive && m.emissiveIntensity > 0.9 && !m.userData.U);
-    for (const m of this.glows) m.userData.baseEI = m.emissiveIntensity;
-    this.eye = this.idol.meshes.filter((m) => m.userData.grp === 'eye');
-    // (el monolito no tiene cabeza que volver: vuelve el ojo)
-    this.head = this.idol.joints.head || null;
-    this.headQ = this.head ? this.idol.restQ.head.clone() : null;
-    this.yaw = this.pitch = 0;
+    this.idol = I;
+    const R = I.root;
+    R.position.set(IDOL.x, IDOL.y, IDOL.z);
+    R.rotation.y = IDOL.yaw;
+    R.updateMatrixWorld(true);
+    this.g.scene.add(R);
+    I.own();
+    const e = idolToWorld(I.extra.ember);
+    this.emberLight.x = e.x;
+    this.emberLight.y = e.y;
+    this.emberLight.z = e.z - 0.6;
     this._probed = false;
-    const c = this.idol.isMonolith ? monoSpine(6.9) : [0, 0];
-    this.hollowLight.x = SPRING.x - c[1];
-    this.hollowLight.z = SPRING.z + c[0];
-  }
-  // Cambia la forma del ídolo (la estatua o el monolito), en pleno juego
-  setKind(kind) {
-    if (!setIdolKind(kind)) return false;
-    this.makeIdol();
-    return true;
   }
 
-  // la luz del sitio (la de la cisterna), una vez que el juego tiene sondas
+  // la luz del sitio (la del círculo), una vez que el juego tiene sondas
   probeIdol() {
     const g = this.g;
     if (this._probed || !g.probe) return;
     this._probed = true;
-    const P = { x: SPRING.x - 2, y: AY + 1, z: SPRING.z };
+    const P = { x: 0, y: AY + 1, z: A.lip - 2.5 };
     const zn = g.zoneAt(P);
     const rid = zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0;
     const o = g.probe.sample(P.x, AY + 2.5, P.z, rid);
-    this.idol.setProbe(Math.max(0.24, o[0]), Math.max(0.13, o[1]), Math.max(0.11, o[2]), AY - 1.4, 0.2);
+    this.idol.setProbe(Math.max(0.34, o[0]), Math.max(0.2, o[1]), Math.max(0.18, o[2]), A.water, 0.25);
   }
 
   updateIdol(dt, pulse, near) {
-    if (!this.idol) return;
-    const g = this.g,
-      R = this.idol.root;
-    R.position.y = AY - this.sink;
-    R.visible = (this.intact && this.sink <= 0) || (this.sink > 0 && this.sink < 9);
-    if (!R.visible || !near) return;
-    this.probeIdol();
-    // a quién mira: lo que diga la introducción o el jugador, si anda cerca
-    const p = g.player.pos;
-    let T = this.lookAt;
-    const dp = Math.hypot(p.x - SPRING.x, p.z - SPRING.z);
-    if (!T && g.state === 'play' && dp < 16 && Math.abs(p.y - AY) < 4) T = this._lp.set(p.x, p.y + 1.6, p.z);
-    let wy = 0,
-      wp = 0;
-    if (T) {
-      const L = R.worldToLocal(this._lp.copy(T));
-      wy = Math.max(-0.8, Math.min(0.8, Math.atan2(L.x, L.z)));
-      // (mira al frente: apenas baja la cabeza hacia lo que mira)
-      const down = Math.atan2(IDOL.eye[1] - L.y, Math.max(1, Math.hypot(L.x, L.z)));
-      wp = Math.max(0, Math.min(0.14, down * 0.2));
-    }
-    // despacio: una piedra que no debería moverse
-    const k = this.lookAt ? 0.6 : 0.22;
-    this.yaw += Math.max(-k * dt, Math.min(k * dt, wy - this.yaw));
-    this.pitch += Math.max(-k * dt, Math.min(k * dt, wp - this.pitch));
-    if (this.head) {
-      this._q.setFromEuler(this._e.set(this.pitch, this.yaw, 0));
-      this.head.quaternion.copy(this.headQ).multiply(this._q);
-    }
-    // el ojo: se entreabre al que se acerca (del todo, a dos pasos)
-    const want = this.eyeTo ?? (g.state === 'play' ? Math.max(0, Math.min(1, (6 - dp) / 3.5)) : 0);
-    this.open += (want - this.open) * Math.min(1, dt * 1.2);
     const I = this.idol;
-    if (I.isMonolith) {
-      // (en el monolito, lo que mira es lo de dentro del ojo, y más deprisa)
-      if (T) I.lookAt(R.worldToLocal(this._lp.copy(T)), dt, this.lookAt ? 0.9 : 0.4);
-      I.setOpen(this.open);
-      I.setPulse(pulse, this.boost * 0.8);
-      this.souls(dt, dp);
-      I.update(dt);
-    } else for (const m of this.eye) m.scale.set(1 + this.open * 2.6, 1 + this.open * 0.25, 1);
-    // la luz de la costura, del ojo y de los glifos late con la fuente
-    for (const m of this.glows) m.emissiveIntensity = m.userData.baseEI * (0.45 + 0.75 * pulse + this.open * 0.8);
-    // y de cerca se oye lo que dice (no se entiende)
-    this.whisperT -= dt;
-    if (g.state === 'play' && dp < 5 && this.whisperT <= 0) {
-      this.whisperT = 1.6 + Math.random() * 2.4;
-      g.audio && g.audio.play(Math.random() < 0.5 ? 'whisperNear' : 'whisperClose', { x: SPRING.x + (Math.random() - 0.5) * 2, y: AY + 4.5, z: SPRING.z + (Math.random() - 0.5) * 2 });
-    }
-  }
-
-  // Las almas del monolito: de vez en cuando una grita (empuja la piedra y
-  // se le enciende la boca) y, jugando, se la oye pedir auxilio, ahogada.
-  // Gritan más a menudo cuanto más cerca se está y, sobre todo, cuando el
-  // ojo se abre; mejor las que dan a quien mira.
-  souls(dt, dp) {
+    if (!I) return;
     const g = this.g,
-      I = this.idol;
-    this.cryT -= dt;
-    if (this.cryT > 0) return;
+      R = I.root;
+    R.visible = near;
+    if (!near) return;
+    this.probeIdol();
+    // a quién mira: a lo que diga la introducción o al jugador, si está en el
+    // círculo o en el pasillo
+    const p = g.player.pos;
     const play = g.state === 'play';
-    const close = play ? Math.max(0, Math.min(1, (12 - dp) / 8)) : 0.4;
-    this.cryT = (7.5 - 3.6 * close - 1.8 * this.open) * (0.6 + Math.random() * 0.8);
-    const cam = g.camera.position;
-    const R = I.root;
-    const L = R.worldToLocal(this._lp.copy(cam));
-    const pick = [];
-    I.souls.forEach((S, i) => {
-      if (!S) return;
-      const dx = L.x - S.p.x,
-        dy = L.y - S.p.y,
-        dz = L.z - S.p.z;
-      if (dx * S.n.x + dy * S.n.y + dz * S.n.z > 0) pick.push(i);
-    });
-    if (!pick.length) return;
-    const i = pick[Math.floor(Math.random() * pick.length)];
-    const S = I.souls[i];
-    const loud = Math.random() < 0.45;
-    I.cry(i, loud ? 1.1 : 0.7 + Math.random() * 0.5);
-    if (play && g.audio) {
-      const W = R.localToWorld(this._lp.copy(S.p));
-      g.audio.play(loud ? 'soulScream' : 'soulPlea', { x: W.x, y: W.y, z: W.z });
+    const inside = play && inSanctum(p);
+    let T = this.lookAt;
+    if (!T && inside) T = this._lp.set(p.x, p.y + 1.6, p.z);
+    if (T) {
+      const L = R.worldToLocal(this._lq.copy(T));
+      I.setLook(L, dt, this.lookAt ? 0.5 : 0.14);
+      I.lookAt(L, dt, this.lookAt ? 0.9 : 0.5);
+    }
+    // el ojo: se abre al que entra en el círculo y se acerca (del todo, a
+    // unos pasos del borde de la sima); en la pelea, abierto
+    const dLip = Math.hypot(p.x, Math.max(0, A.lip - p.z));
+    const inRing = inside && Math.hypot(p.x, p.z - CZ) < SANCT.R + 0.5;
+    const want = this.eyeTo ?? (inRing ? (g.activeBoss ? 1 : Math.max(0, Math.min(1, (17 - dLip) / 9))) : 0);
+    this.open += (want - this.open) * Math.min(1, dt * (want > this.open ? 0.7 : 1.4));
+    I.setOpen(this.open);
+    I.setPulse(pulse, this.boost * 0.8);
+    // de cerca se le oye lo que dice (no se entiende) y, cuando se mueve,
+    // la piedra que cruje
+    this.whisperT -= dt;
+    if (inRing && dLip < 9 && this.whisperT <= 0) {
+      this.whisperT = 1.8 + Math.random() * 2.6;
+      g.audio && g.audio.play(Math.random() < 0.5 ? 'whisperNear' : 'whisperClose', { x: (Math.random() - 0.5) * 4, y: AY + 2 + Math.random() * 3, z: A.lip + 1.5 });
+    }
+    this.groanT -= dt;
+    if (inRing && this.groanT <= 0) {
+      this.groanT = 9 + Math.random() * 9;
+      g.audio && g.audio.play('stoneCreak', { x: 0, y: AY + 3, z: A.lip + 2 }, { k: 0.35 });
     }
   }
 
-  // ¿está la fuente (el suelo de la cisterna, entero)?
+  // ¿está la fuente (el suelo del círculo, entero)?
   get intact() {
     const G0 = this.g.groups && this.g.groups.cisternFloorC;
     return !G0 || G0.on;
@@ -257,20 +212,29 @@ export class Spring {
     this.t += dt;
     const intact = this.intact;
     const cam = g.camera.position;
-    const near = intact && Math.abs(cam.y - AY) < 14 && Math.hypot(cam.x - SPRING.x, cam.z - SPRING.z) < 40;
+    // (cerca: la cámara en el santuario, o en el cráter que lo abre)
+    const near = cam.y > AY - 9 && cam.y < 40 && cam.x > -18 && cam.x < 20 && cam.z > -194 && cam.z < -128;
+    const nearRing = near && Math.abs(cam.y - AY) < 16 && Math.hypot(cam.x, cam.z - CZ) < 40;
     this.water.visible = intact;
+    this.pool.visible = near;
     const pulse = Math.min(1, beat(this.t) + this.boost);
     this.water.material.uniforms.uPulse.value = pulse;
-    this.light.on = near;
+    this.pool.material.uniforms.uPulse.value = pulse;
+    this.light.on = nearRing && intact;
     this.light.intensity = 1.6 + 6.5 * pulse + this.boost * 9;
     const shown = !!this.idol && this.idol.root.visible;
-    this.topLight.on = near && shown;
-    this.topLight.intensity = 2.6;
-    this.hollowLight.on = near && shown && !!this.idol.isMonolith;
-    this.hollowLight.y = AY + 6.9 - this.sink;
-    this.hollowLight.intensity = 1.1 + 2.6 * pulse + this.boost * 3;
-    this.updateIdol(dt, pulse, near || this.sink > 0);
-    if (!near) return;
+    this.topLight.on = nearRing && intact;
+    this.topLight.intensity = 2.4;
+    this.abyssLight.on = near && shown;
+    this.abyssLight.intensity = 9 + 7 * pulse + this.boost * 6;
+    this.poolLight.on = near && shown;
+    this.poolLight.intensity = 4 + 4 * pulse + this.boost * 4;
+    this.faceLight.on = near && shown;
+    this.faceLight.intensity = 3.5 + 2.5 * pulse + this.boost * 3 + this.open * 2;
+    this.emberLight.on = near && shown;
+    this.emberLight.intensity = 0.8 + 2.4 * pulse + this.boost * 3;
+    this.updateIdol(dt, pulse, near);
+    if (!nearRing || !intact) return;
     // las pavesas que suben por la reja
     this.emberT -= dt;
     if (this.emberT <= 0) {

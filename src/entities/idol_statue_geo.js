@@ -55,11 +55,11 @@ const BONES = [
 
 // matices (por el color de la piedra; la textura y la luz, aparte): gris
 // frío, lo de hueso algo más claro
-const ROBE = [0.4, 0.41, 0.43],
-  MANT = [0.35, 0.36, 0.38],
-  BODY = [0.5, 0.5, 0.51],
-  BONE = [0.62, 0.6, 0.57],
-  HORN = [0.5, 0.47, 0.42],
+const ROBE = [0.5, 0.51, 0.53],
+  MANT = [0.44, 0.45, 0.47],
+  BODY = [0.62, 0.62, 0.62],
+  BONE = [0.76, 0.74, 0.7],
+  HORN = [0.62, 0.58, 0.52],
   DEEP = [0.16, 0.14, 0.14];
 
 // ------------------------------------------------------------ utilidades
@@ -632,6 +632,17 @@ function onSurface(sc, t, y) {
     else hi = m;
   }
   return V(Math.sin(t) * rx * hi, y, 0.05 + Math.cos(t) * rz * hi);
+}
+
+// el ojo, con la cabeza en reposo (en el espacio del modelo)
+export function eyeRest() {
+  return H(...EYE.c).toArray();
+}
+
+// los cabos de las cadenas de delante del zuncho de arriba, en el suelo del
+// círculo (para sus argollas: ver world/sanctum.js), en el espacio del modelo
+export function chainFloorAnchors() {
+  return [-0.95, 0.95].map((t) => [Math.sin(t) * 6.6, STATUE.floor + 0.06, STATUE.lip + 0.65]);
 }
 
 // ------------------------------------------------------------ todo

@@ -2367,6 +2367,10 @@ const GEN = {
   araDeoIgnoto() {
     return carvedCut('DEO · IGNOTO', 256, 64, 1201, { erased: true });
   },
+  // la boca del círculo de la cisterna: DEO · IGNOTO en el dintel, grande
+  portalDeoIgnoto() {
+    return carvedCut('DEO · IGNOTO', 512, 64, 1203);
+  },
 
   // el letrero del osario de la Hermandad (en los dos muros)
   letreroOssos1() {

@@ -1,5 +1,5 @@
-// El monolito para las láminas: se monta el de verdad (el del juego,
-// src/entities/idol_monolith_geo.js) y se le saca con three.js lo que el
+// El monolito para las láminas: se monta el de verdad (el que tuvo el juego,
+// archive/monolito/idol_monolith_geo.js) y se le saca con three.js lo que el
 // grabado necesita, visto con la cámara de la lámina: su silueta, el tono a
 // la luz que diga la lámina (para el estudio de valores) y lo que arde (las
 // bocas, los ojos, la grieta, el ojo grande). Con o.golden, en la punta del
@@ -9,7 +9,7 @@
 // focal F (px) y el centro en (CX, HY): un punto (X, Y, Z) cae en
 // (CX + F X / Z, HY - F (Y - HC) / Z).
 import * as THREE from 'three';
-import { monolithData, MONO, spine } from '../../src/entities/idol_monolith_geo.js';
+import { monolithData, MONO, spine } from '../../archive/monolito/idol_monolith_geo.js';
 import { hand } from '../../src/entities/sculpt.js';
 
 let DATA = null;

@@ -31,8 +31,8 @@
 // fondo (idol_worker.js) y se monta en el principal.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { RNG, fbm3, vnoise3 } from '../core/util.js';
-import { tube, hand, sstep, mix, table } from './sculpt.js';
+import { RNG, fbm3, vnoise3 } from '../../src/core/util.js';
+import { tube, hand, sstep, mix, table } from '../../src/entities/sculpt.js';
 
 const TAU = Math.PI * 2;
 const V3 = THREE.Vector3;

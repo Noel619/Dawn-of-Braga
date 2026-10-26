@@ -39,6 +39,7 @@ import { buildOsarioMartin, OSM } from './osario_martin.js';
 import { buildPanteon, PAN, GAL, PASO, BAJADA } from './panteon.js';
 import { buildLucernario, LUC } from './lucernario.js';
 import { CRYPT_DOORS, TEMPLO } from './level_sacred.js';
+import { SANCT } from './level_finale.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const M4 = () => new THREE.Matrix4();
@@ -151,7 +152,12 @@ function layout() {
   add('temploAbside', [-14.5, TEMPLO.z0 - 3, -8, TEMPLO.z0], Y, Y + TEMPLO.ys + TEMPLO.rise, { ghost: true });
   add('llegada', [-7, -110, 7, -97], Y, Y + 5.8, { ghost: true });
   add('sepulcro', [3.5, -128, 16, -112], Y, Y + 3.6, { ghost: true });
-  add('cisterna', [-15, -167, 15, -137], AY, AY + 8.8, { ghost: true });
+  // (la cisterna: el paso, el atrio, el pasillo de las columnas y el
+  // círculo; los levanta sanctum.js)
+  add('paso', [SANCT.paso.x0, SANCT.paso.z0, SANCT.paso.x1, SANCT.paso.z1], AY, SANCT.paso.top, { ghost: true });
+  add('atrio', [SANCT.narthex.x0, SANCT.narthex.z0, SANCT.narthex.x1, SANCT.narthex.z1], AY, SANCT.narthex.top, { ghost: true });
+  add('columnata', [SANCT.nave.x0, SANCT.nave.z0, SANCT.nave.x1, SANCT.nave.z1], AY, AY + 9, { ghost: true });
+  add('circulo', [-SANCT.R - 0.7, SANCT.portal.z0, SANCT.R + 0.7, SANCT.apse.back], AY, AY + 9, { ghost: true });
 
   // --- la Confesión (la boca del osario y la cámara)
   const CF = D.confessio;
@@ -1321,9 +1327,8 @@ function buildAntesala(ctx, L) {
     { kind: 'door', id: 'd_dios', x: H.x1 + 0.5, y: AY, z: DR.z, w: DR.w, h: DR.h, axis: 'z', lock: { type: 'god' }, mat: 'god', ix: H.x1 - 1.4, iz: DR.z, r: 2.6 },
     { kind: 'censer', id: 'x_incensario', x: CE.x, y: AY, z: CE.z, r: 2.0 },
     // (los Velados no tienen niebla: despiertan al bajar a la nave, y a la
-    // espalda sale una reja del borde de la tribuna; ver game/crypt.js)
-    // la niebla del arzobispo, ya dentro de la cisterna (tras la puerta)
-    { kind: 'fog', id: 'f_boss', boss: 'turibulario', x: H.x1 + 1.6, y: AY, z: DR.z, w: DR.w, h: DR.h, axis: 'z', enter: 1 },
+    // espalda sale una reja del borde de la tribuna; ver game/crypt.js; la
+    // niebla del arzobispo está en la boca del círculo: ver sanctum.js)
     { kind: 'door', id: 'd_reja_pozo', x: pc, y: DY, z: H.z0 - 0.075, w: PS.x1 - PS.x0, h: 4.2, lift: 4.55, axis: 'x', lock: { type: 'boss', boss: 'guardianes' }, mat: 'grate', lit: true }
   );
 }

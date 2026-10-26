@@ -11,6 +11,9 @@ export const ATMO = {
   ramparts: { fog: 0x666d6a, density: 0.036, sky: 0xa6b2bc, ground: 0x2c2723, hemi: 2.4, moon: 1.1, vol: 0.048, ash: 1.4, exposure: 1.0, sat: 0.68, lamp: 8, bloom: 0.9 },
   crypt: { fog: 0x070809, density: 0.065, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.75, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.1 },
   arena: { fog: 0x1a080c, density: 0.028, sky: 0x70404a, ground: 0x241010, hemi: 1.1, moon: 0, vol: 0.02, ash: 0, exposure: 1.2, sat: 0.85, lamp: 11, bloom: 1.3 },
+  // el pasillo de las columnas de la cisterna: hondo y a oscuras (la niebla,
+  // fina: se ve lejos, hasta el rojo del círculo del fondo)
+  colonnade: { fog: 0x0e0607, density: 0.034, sky: 0x5a3c3e, ground: 0x160c0a, hemi: 0.8, moon: 0, vol: 0.015, ash: 0, exposure: 1.25, sat: 0.85, lamp: 11.5, bloom: 1.25 },
   // la bodega del canónigo: casi a oscuras, sólo el farol y las velas del altar
   cellar: { fog: 0x050404, density: 0.078, sky: 0x403c3a, ground: 0x12100e, hemi: 0.4, moon: 0, vol: 0, ash: 0, exposure: 1.2, sat: 0.76, lamp: 11.5, bloom: 1.15 },
   // la antesala del Dios Ignoto: honda, roja, con el aire espeso de incienso

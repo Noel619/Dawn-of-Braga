@@ -140,7 +140,6 @@ export function buildLevel() {
   const F = new WalkGrid(-96, -232, 84, 72, 1);
   F.paint(-96, -232, 84, 72, 1);
   F.paint(-2, -97, 2, -86, 0);
-  F.paint(-2, -186, 2, -167, 0);
   F.paint(58, -32, 61, -27, 0); // escalera de la bodega del canónigo
   for (const h of ctx.floorHoles) F.paint(h[0], h[1], h[2], h[3], 0);
   for (const [a, b, c, d] of F.rects(1)) {

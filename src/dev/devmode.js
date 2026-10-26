@@ -1,9 +1,9 @@
 // Modo desarrollador: F2 abre un panel para probar el juego (invulnerable,
 // aguante infinito, volar atravesando paredes, velocidad del juego, IA
 // congelada o ciega, el estado de cada criatura sobre su cabeza, órdenes al
-// Descoyuntado, teletransporte, objetos y armas, el parry...) y elegir entre
-// las variantes de diseño que están por decidir (la forma del ídolo de la
-// fuente; se recuerda en el navegador), sin tocar la dirección. Se abre en
+// Descoyuntado, teletransporte, objetos y armas, el parry...) y ver lo de
+// diseño (la estatua de la fuente y su ojo, el pasillo de las columnas, la
+// introducción y la crónica), sin tocar la dirección. Se abre en
 // localhost, desde la IP del autor o, en cualquier sitio, tecleando la
 // contraseña del modo de pruebas en cualquier momento (access.js); a
 // cualquier otro jugador F2 no le hace nada.
@@ -17,8 +17,7 @@ import { ITEMS, AREA_NAMES } from '../game/story.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { INSTANCES, goInstance, killSigil, skipPhase, BossDebug } from './instances.js';
 import { Editor } from './editor.js';
-import { IDOL, IDOL_KINDS } from '../entities/idol.js';
-import { SPRING, CISTERN } from '../world/level_finale.js';
+import { SANCT, CISTERN } from '../world/level_finale.js';
 import { unlockChronicle, chronicleUnlocked } from '../game/save.js';
 
 const CSS = `
@@ -165,8 +164,8 @@ export class DevMode {
     el.innerHTML = `
       <div class="dh"><span>MODO DE PRUEBAS</span><span>F2</span></div>
       <div class="di" id="dev-info"></div>
-      <div class="ds"><div class="dt">Diseño (por decidir)</div>
-        ${B('idolKind', 'Ídolo: —', 'act')}${B('seeIdol', 'Ir a verlo', 'act')}
+      <div class="ds"><div class="dt">Diseño</div>
+        ${B('seeIdol', 'Ir a la estatua', 'act')}${B('seeNave', 'Ir al pasillo', 'act')}${B('statueEye', 'Ojo de la estatua: abrir', 'act')}
         ${B('intro', 'Ver la introducción', 'act')}${B('chronicle', 'Ver la crónica', 'act')}${B('chronTitle', 'Crónica en el título', 'act')}
       </div>
       <div class="ds"><div class="dt">Jugador</div>
@@ -250,7 +249,7 @@ export class DevMode {
     q('button[data-k="slow"]').textContent = `Velocidad del juego ×${this.timeScale}`;
     const w = this.g.player.weapon;
     q('button[data-a="weapon"]').textContent = `Arma: ${w ? w.id : '—'}`;
-    q('button[data-a="idolKind"]').textContent = `Ídolo: ${IDOL.kind}`;
+    q('button[data-a="statueEye"]').classList.toggle('on', g.spring && g.spring.eyeTo === 1);
     q('button[data-a="chronTitle"]').classList.toggle('on', chronicleUnlocked());
   }
 
@@ -408,16 +407,18 @@ export class DevMode {
         if (!this.editor.playerHere()) this.note('La cámara no apunta a ningún suelo');
         break;
       // ---- variantes de diseño
-      case 'idolKind': {
-        // la estatua o el monolito, en pleno juego (y la próxima vez)
-        const next = IDOL_KINDS[(IDOL_KINDS.indexOf(IDOL.kind) + 1) % IDOL_KINDS.length];
-        g.spring.setKind(next);
-        this.note(`El ídolo de la fuente: ${next}. Se recuerda en este navegador (y vale también para la introducción).`);
-        break;
-      }
       case 'seeIdol':
-        // a la cisterna, a la entrada, mirándolo
-        this.teleport(SPRING.x - 12, CISTERN.AY, SPRING.z, Math.PI / 2);
+        // al círculo de la cisterna, en su boca, de cara a la estatua
+        this.teleport(0, CISTERN.AY, SANCT.portal.z1 + 1.2, 0);
+        break;
+      case 'seeNave':
+        // al arco del atrio, de cara al pasillo de las columnas
+        this.teleport(0, CISTERN.AY, SANCT.nave.z0 + 0.6, 0);
+        break;
+      case 'statueEye':
+        // que abra el ojo (o que haga lo suyo)
+        g.spring.eyeTo = g.spring.eyeTo === 1 ? null : 1;
+        this.note(g.spring.eyeTo === 1 ? 'La estatua abre el ojo.' : 'El ojo de la estatua, a lo suyo: se abre cuando te acercas.');
         break;
       case 'intro':
       case 'chronicle':

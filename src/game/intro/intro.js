@@ -43,7 +43,7 @@ import * as THREE from 'three';
 import { Film, sm, smoother } from '../finale/film.js';
 import { Ghost } from './ghosts.js';
 import { SPRING, CISTERN } from '../../world/level_finale.js';
-import { IDOL } from '../../entities/idol.js';
+import { idolEye } from '../../entities/idol.js';
 import { TEMPLO } from '../../world/level_sacred.js';
 import { objMat } from '../../gfx/materials.js';
 import { BELL_OUT, BELL_IN } from '../../entities/enemy_models.js';
@@ -65,9 +65,12 @@ const DOOR = { x: -16, z: -152 };
 const MEM = { sat: 0.36, bloom: 1.35 };
 // la celda del fondo
 const CELL = { x: -87.6, z: -16.2, wall: -18 };
-// el ojo del ídolo de la fuente (mira a poniente: su +z es el -x del mundo;
-// cambia con la forma del ídolo)
-const eyeAt = () => ({ x: SPRING.x - IDOL.eye[2], y: AY + IDOL.eye[1], z: SPRING.z + IDOL.eye[0] });
+// el ojo de la estatua de la fuente (en su sima, al fondo del círculo; mira
+// al norte, vencida hacia la fuente)
+const eyeAt = () => {
+  const e = idolEye();
+  return { x: e.x, y: e.y, z: e.z };
+};
 
 const CUTS = {
   intro: ['fuente', 'ara', 'cerrojos', 'asedio', 'rodillas', 'campana', 'gente', 'celda', 'mirada', 'titulo'],
@@ -1213,10 +1216,9 @@ export class Intro {
     this.look('arena', { fog: 0x000000, sat: 0.7, density: 0.06, snap: true });
     // la cara del ídolo, de cerca y algo de lado: la vuelve hacia aquí y el
     // ojo se le abre con el latido
-    const mono = IDOL.kind === 'monolito';
-    const C = mono ? new V3(EYE.x - 2.3, EYE.y - 0.15, EYE.z + 0.42) : new V3(EYE.x - 2.0, EYE.y - 0.1, EYE.z + 0.95);
-    const C1 = mono ? [EYE.x - 1.5, EYE.y - 0.07, EYE.z + 0.26] : [EYE.x - 1.55, EYE.y - 0.05, EYE.z + 0.72];
-    F.also(F.move({ pos: C.toArray(), look: [EYE.x, EYE.y, EYE.z], fov: 38 }, { pos: C1, look: [EYE.x, EYE.y, EYE.z], fov: mono ? 34 : 36 }, 5.4, sm));
+    const C = new V3(EYE.x + 0.35, EYE.y - 1.25, EYE.z - 2.4);
+    const C1 = [EYE.x + 0.18, EYE.y - 0.8, EYE.z - 1.55];
+    F.also(F.move({ pos: C.toArray(), look: [EYE.x, EYE.y, EYE.z], fov: 38 }, { pos: C1, look: [EYE.x, EYE.y, EYE.z], fov: 34 }, 5.4, sm));
     if (S) {
       S.eyeTo = 0;
       S.lookAt = C;

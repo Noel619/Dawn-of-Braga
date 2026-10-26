@@ -7,8 +7,8 @@
 // del ojo se abultan cerrados y se retiran abiertos (setOpen). Lo de dentro
 // del ojo mira (lookAt).
 import * as THREE from 'three';
-import { objMat, cloneMat, colMat, cutoutMat, registerMaterialPatch } from '../gfx/materials.js';
-import { getTexture } from '../gfx/textures.js';
+import { objMat, cloneMat, colMat, cutoutMat, registerMaterialPatch } from '../../src/gfx/materials.js';
+import { getTexture } from '../../src/gfx/textures.js';
 import { NSOUL, MONO } from './idol_monolith_geo.js';
 
 const TAU = Math.PI * 2;

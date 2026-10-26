@@ -2,14 +2,14 @@
 // cisterna del jefe final, galería y orillas del río.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, stairs, merlons, cityWall, belfryTower, archWall, stoneWall, archRing, archedWall, barrelVault, rampVault, lunette, dome, pilaster, beam, solidGableRoof } from './builders.js';
+import { solid, stairs, merlons, cityWall, belfryTower, archWall, stoneWall, archRing, archedWall, barrelVault, rampVault, lunette, pilaster, beam, solidGableRoof } from './builders.js';
 import * as P from './props.js';
-import { floor, interiorRoom } from './level_util.js';
+import { floor } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 import { BELL_OUT, BELL_IN } from '../entities/enemy_models.js';
-import { idolFootprint } from '../entities/idol.js';
 import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
-import { cisternPit, cisternRuins, cisternSpring, NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
+import { NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
+import { buildSanctum } from './sanctum.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1306,218 +1306,10 @@ export function buildCrypt(ctx, S, C, L) {
   // (la puerta del jefe ya no está al fondo del osario: es la Puerta del Dios
   // Ignoto, en la antesala, al oeste de la cisterna; ver level_crypt2.js)
 
-  // --- la cisterna (arena del jefe final): un corro de ocho columnas con sus
-  // arcos y, encima, una cúpula con nervios de la que cuelga una corona de
-  // velas; alrededor, un techo llano que asienta en los muros y en los arcos
-  const AY = -10;
-  {
-    const cz = -152,
-      RR = 11.2;
-    const YC = AY + 6.0, // capiteles
-      YT = AY + 8.8; // arranque de la cúpula y techo de alrededor
-    C.paint(-15, -167, 15, -137, 1);
-    // (la de poniente, la Puerta del Dios Ignoto, desde la antesala; la del
-    // norte, la reja de la galería del río; al sur, en lo alto, la ventana
-    // enrejada de la Confesión de San Martín, al fondo del osario: ver
-    // level_crypt2.js)
-    interiorRoom(ctx, -15, -167, 15, -137, AY, 8.8, { wall: 'mossstone', t: 0.6, room, floor: false, ceil: false, beams: false, skirting: false, tint: [0.7, 0.7, 0.68], doors: [{ side: 'w', at: -152, w: 5, h: 5.2 }, { side: 'n', at: 0, w: 4, h: 4.0 }, { side: 's', at: 0, w: 2.4, h: 5.0, sill: 3.6 }] });
-    // (el jefe final: cuando el arzobispo se transforma, el centro del suelo
-    // se hunde en un pozo, el corro de columnas cae y la cúpula revienta; ver
-    // finale/film_rise.js. Lo que se rompe va en grupos: 'cisternFloorC', el
-    // cuadro del suelo que se hunde; 'cisternPit', el pozo; 'cisternCols' y
-    // 'cisternColsRuin', las columnas enteras y sus muñones; 'cisternDome' y
-    // 'cisternDomeRuin', la cúpula entera y lo que queda de ella)
-    // el techo: un anillo fijo y, en medio, lo que revienta con la cúpula
-    for (const [a, b, c, d] of [
-      [-15, -167, 15, -159],
-      [-15, -145, 15, -137],
-      [-15, -159, -7, -145],
-      [7, -159, 15, -145],
-    ])
-      ctx.col.add(a, YT, b, c, YT + 0.6, d).cam = true;
-    ctx.beginGroup('cisternDome');
-    ctx.col.add(-7, YT, -159, 7, YT + 0.6, -145).cam = true;
-    ctx.endGroup();
-    // el suelo: un marco fijo y, en medio, el cuadro que se hunde
-    const PC = 8;
-    for (const [a, b, c, d] of [
-      [-15, -167, 15, cz - PC],
-      [-15, cz + PC, 15, -137],
-      [-15, cz - PC, -PC, cz + PC],
-      [PC, cz - PC, 15, cz + PC],
-    ])
-      cryptFloor(a, b, c, d, AY, 'flag');
-    const bloodBox = (a, b, c, d) => wb.box('blood', a, AY + 0.02, b, c, AY + 0.04, d, { faces: 't', ao: false, grime: false, room, uv: 0.2 });
-    bloodBox(-12, -164, 12, cz - PC);
-    bloodBox(-12, cz + PC, 12, -142);
-    bloodBox(-12, cz - PC, -PC, cz + PC);
-    bloodBox(PC, cz - PC, 12, cz + PC);
-    // (en medio, la fuente sin nombre: el suelo se le abre alrededor; se pisa
-    // por encima de la reja, así que la colisión es la del cuadro entero)
-    ctx.beginGroup('cisternFloorC');
-    ctx.col.add(-PC, AY - 1, cz - PC, PC, AY, cz + PC);
-    cisternSpring(ctx, room, VT);
-    // el ídolo (lo pone game/spring.js; mira a poniente: su ancho va en z):
-    // no se le atraviesa, y se le rodea
-    {
-      const [hx, hz] = idolFootprint().half;
-      ctx.col.add(-hz, AY, cz - hx, hz, AY + 6.5, cz + hx);
-      C.paint(-hz - 0.05, cz - hx - 0.05, hz + 0.05, cz + hx + 0.05, 0);
-    }
-    ctx.endGroup();
-    cisternPit(ctx, cz, PC, AY, room, VT, AT);
-    // el corro de columnas, sus arcos (girados sobre cada lado del octógono)
-    // y los macizos sobre los capiteles
-    const cols = [];
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-      cols.push([Math.cos(a) * RR, cz + Math.sin(a) * RR, a]);
-    }
-    ctx.beginGroup('cisternCols');
-    for (const [x, z] of cols) P.column(ctx, x, AY, z, YC - AY, 0.7, { mat: 'ashlar' });
-    for (let i = 0; i < 8; i++) {
-      const [xa, za] = cols[i],
-        [xb, zb] = cols[(i + 1) % 8];
-      const len = Math.hypot(xb - xa, zb - za);
-      wb.push();
-      wb.translate((xa + xb) / 2, 0, (za + zb) / 2);
-      wb.rotateY(Math.atan2(-(zb - za), xb - xa));
-      archRing(ctx, { axis: 'x', c: 0, w: len - 1.6, y0: YC, rise: 2.0, ring: 0.4, t0: -0.35, t1: 0.35, top: YT, clip: [-len / 2, len / 2], mat: 'ashlar', spMat: 'mossstone', room, tint: AT, spTint: CT, cam: false });
-      wb.pop();
-    }
-    for (const [x, z, a] of cols) {
-      wb.push();
-      wb.translate(x, 0, z);
-      wb.rotateY(-a);
-      wb.box('mossstone', -0.35, YC, -0.55, 0.35, YT, 0.55, { faces: 'nsew', room, tint: CT, sub: 1.6 });
-      wb.pop();
-    }
-    ctx.endGroup();
-    // el techo llano de alrededor (del cuadrado de los muros al círculo de la
-    // cúpula) y la cúpula; lo de dentro del corro revienta con ella
-    const rd = 9.9,
-      rm = 12.8,
-      N = 32;
-    const sq = (t) => {
-      const c = Math.cos(t),
-        s = Math.sin(t);
-      const m = 15 / Math.max(Math.abs(c), Math.abs(s));
-      return V3(c * m, YT, cz + s * m);
-    };
-    const ring = (t, r) => V3(Math.cos(t) * r, YT, cz + Math.sin(t) * r);
-    for (let k = 0; k < N; k++) {
-      const t0 = (k / N) * Math.PI * 2,
-        t1 = ((k + 1) / N) * Math.PI * 2;
-      wb.quad('mossstone', ring(t0, rm), sq(t0), sq(t1), ring(t1, rm), { ao: false, sub: 2.5, tint: VT, room });
-    }
-    const DR = 5.2;
-    ctx.beginGroup('cisternDome');
-    for (let k = 0; k < N; k++) {
-      const t0 = (k / N) * Math.PI * 2,
-        t1 = ((k + 1) / N) * Math.PI * 2;
-      wb.quad('mossstone', ring(t0, rd), ring(t0, rm), ring(t1, rm), ring(t1, rd), { ao: false, sub: 2.5, tint: VT, room });
-    }
-    dome(ctx, { cx: 0, cz, r: rd, y0: YT, rise: DR, n: N, m: 10, mat: 'mossstone', tint: VT, room, ribs: 8, ribPhase: Math.PI / 8, ribMat: 'ashlar', ribTint: AT, ribW: 0.4, ribD: 0.24 });
-    ctx.endGroup();
-    cisternRuins(ctx, { cz, rd, rm, YT, YC, AY, cols, room, VT, AT, CT });
-    // la corona de hierro con sus velas, colgada de la clave (se viene abajo
-    // en el rito: grupo 'cisternCrown'; ver finale/rite.js)
-    ctx.beginGroup('cisternCrown');
-    // (alta: debajo se alza el ídolo, con su halo)
-    P.candleCrown(ctx, 0, AY + 9.4, cz, YT + DR - 0.35, { room, r: 1.4, n: 12, radius: 13, intensity: 1.0 });
-    ctx.endGroup();
-    // el altar del Dios Desconocido, ante la masa de carne del norte: aquí
-    // reza el arzobispo
-    wb.box('ashlar', -1.35, AY, -162.1, 1.35, AY + 1.05, -160.7, { room, tint: AT, sub: 1.2 });
-    wb.box('blood', -1.2, AY + 1.05, -161.95, 1.2, AY + 1.07, -160.85, { faces: 't', ao: false, grime: false, room, uv: 0.3 });
-    ctx.col.add(-1.35, AY, -162.1, 1.35, AY + 1.05, -160.7);
-    P.candles(ctx, 0, AY + 1.05, -161.4, 5, 1630, { room, radius: 3, intensity: 0.6, spread: 0.45 });
-    // lo que deja el rito (grupo 'riteRubble', oculto hasta entonces): el
-    // agujero de la clave por donde se lo llevó la carne del dios, la corona
-    // caída, trozos de los nervios y el montón que ciega la reja del río
-    ctx.beginGroup('riteRubble');
-    {
-      const top = YT + DR;
-      wb.cylinder('black', 0, top - 0.32, cz, 1.9, 1.9, 0.08, 14, { ao: false, grime: false, capTop: true, capBot: true, room });
-      const rr = new RNG(1650);
-      for (let k = 0; k < 14; k++) {
-        const a = (k / 14) * Math.PI * 2 + rr.range(-0.1, 0.1);
-        const r = 1.9 + rr.range(-0.15, 0.35);
-        const l = rr.range(0.35, 0.8);
-        wb.push();
-        wb.translate(Math.cos(a) * r, top - 0.45 - l * 0.4, cz + Math.sin(a) * r);
-        wb.rotateY(-a);
-        wb.rotateZ(rr.range(-0.4, 0.4));
-        wb.box('mossstone', -0.18, -l / 2, -0.22, 0.18, l / 2, 0.22, { ao: false, room, tint: VT });
-        wb.pop();
-      }
-      // la corona, ladeada en el suelo
-      wb.geometry('iron', new THREE.TorusGeometry(1.4, 0.05, 4, 24), new THREE.Matrix4().compose(V(1.2, AY + 0.45, cz + 1.4), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 - 0.42, 0.3, 0.1)), V(1, 1, 1)), { ao: false, room });
-      wb.geometry('iron', new THREE.TorusGeometry(0.77, 0.035, 4, 16), new THREE.Matrix4().compose(V(1.25, AY + 0.42, cz + 1.4), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2 - 0.42, 0.3, 0.1)), V(1, 1, 1)), { ao: false, room });
-      // trozos de los nervios y dovelas de la cúpula
-      for (let k = 0; k < 9; k++) {
-        const a = rr.range(0, Math.PI * 2),
-          d = rr.range(0.5, 4.5);
-        const x = Math.cos(a) * d,
-          z = cz + Math.sin(a) * d;
-        const L = rr.range(0.6, 1.7);
-        wb.push();
-        wb.translate(x, AY + 0.2, z);
-        wb.rotateY(rr.range(0, Math.PI));
-        wb.rotateZ(rr.range(-0.25, 0.25));
-        wb.box(k % 3 ? 'mossstone' : 'ashlar', -L / 2, -0.2, -0.22, L / 2, 0.2, 0.22, { ao: false, room, tint: k % 3 ? VT : AT });
-        wb.pop();
-      }
-      P.rubble(ctx, -0.8, AY, cz - 0.6, 12, 1651, 2.2, { scale: 1.1, mat: 'mossstone', room });
-    }
-    ctx.endGroup();
-    // el montón que ciega la reja del río (no se llega a ella) hasta que Deo
-    // Ignoto, al morir, la revienta (grupo 'riteGrate')
-    ctx.beginGroup('riteGrate');
-    {
-      P.rubble(ctx, 0, AY, -165.0, 20, 1652, 2.4, { scale: 1.9, mat: 'mossstone', blocks: 0.8, room });
-      P.rubble(ctx, -2.6, AY + 1.2, -166.0, 8, 1653, 1.2, { scale: 1.5, mat: 'mossstone', room });
-      P.rubble(ctx, 2.4, AY + 1.0, -166.1, 8, 1654, 1.2, { scale: 1.5, mat: 'mossstone', room });
-      for (const [x, z, sx, sy, sz, ry] of [
-        [-1.2, -164.4, 1.6, 1.0, 1.1, 0.3],
-        [1.4, -164.9, 1.4, 1.2, 1.0, -0.5],
-        [0.2, -166.2, 2.2, 1.4, 1.2, 0.1],
-      ]) {
-        wb.push();
-        wb.translate(x, AY + sy / 2 - 0.05, z);
-        wb.rotateY(ry);
-        wb.rotateX(0.12);
-        wb.box('mossstone', -sx / 2, -sy / 2, -sz / 2, sx / 2, sy / 2, sz / 2, { ao: false, room, tint: VT, sub: 1.2 });
-        wb.pop();
-      }
-      ctx.col.add(-3.4, AY, -167.2, 3.4, AY + 3.2, -163.4);
-    }
-    ctx.endGroup();
-    // la masa de carne del norte que rodea la salida
-    P.fleshGrowth(ctx, -6, AY, -166, 2.4, 1601, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });
-    P.fleshGrowth(ctx, 6, AY, -166, 2.4, 1602, { room, climb: 2.8, lift: 3, bound: [-15, 15, -166.8, -160] });
-    P.fleshGrowth(ctx, 0, AY + 4.6, -166.2, 1.8, 1603, { room, climb: 1.5, lift: 2, bound: [-8, 8, -166.8, -164] });
-    P.fleshGrowth(ctx, -14, AY, -160.5, 1.4, 1604, { room, climb: 2.5 });
-    P.fleshGrowth(ctx, 14, AY, -145, 1.3, 1605, { room, climb: 2.5 });
-    for (let i = 0; i < 10; i++) P.bones(ctx, -12 + i * 2.6, AY + 0.04, -140 - (i % 3) * 8, 6, 1610 + i, 1.3);
-    P.candles(ctx, -13.5, AY, -139, 8, 1620, { room, radius: 5, intensity: 1.1 });
-    P.candles(ctx, 13.5, AY, -139, 8, 1621, { room, radius: 5, intensity: 1.1 });
-    P.candles(ctx, -13.5, AY, -165, 8, 1622, { room, radius: 5, intensity: 1.0 });
-    P.candles(ctx, 13.5, AY, -165, 8, 1623, { room, radius: 5, intensity: 1.0 });
-    for (const z of [-145, -159]) {
-      P.wallTorch(ctx, -15, AY + 3.4, z, 'e', { room, radius: 8 });
-      P.wallTorch(ctx, 15, AY + 3.4, z, 'w', { room, radius: 8 });
-    }
-    for (const x of [-7.5, 7.5]) {
-      P.wallTorch(ctx, x, AY + 3.4, -167, 's', { room, radius: 8 });
-      P.wallTorch(ctx, x, AY + 3.4, -137, 'n', { room, radius: 8 });
-    }
-    ctx.lights.push({ x: 0, y: AY + 3, z: cz, r: 0.8, g: 0.2, b: 0.12, radius: 16, intensity: 0.6, room });
-    L.interact.push({ kind: 'door', id: 'd_salida', x: 0, y: AY, z: -167.2, w: 4, h: 4.2, axis: 'x', lock: { type: 'boss', boss: 'turibulario' }, mat: 'grate' });
-    // (de rodillas sobre la fuente, de cara a la puerta por la que vendrás)
-    // (de rodillas ante el ídolo, de espaldas a la puerta)
-    L.enemies.push({ type: 'turibulario', x: -3.4, y: AY, z: cz, yaw: Math.PI / 2, idle: 'boss', id: 'b_turibulario', boss: true });
-  }
+  // --- la cisterna (arena del jefe final): el santuario del Dios
+  // Desconocido, tras la puerta de la antesala: el paso, el pasillo de las
+  // columnas y el círculo con la fuente y la estatua (ver sanctum.js)
+  buildSanctum(ctx, C, L);
 
   // --- enemigos de la cripta
   L.enemies.push(
@@ -1530,59 +1322,14 @@ export function buildCrypt(ctx, S, C, L) {
     { type: 'bell', x: -6, y: Y, z: -119.5, yaw: -1.5, idle: 'wander', id: 'e_cr7' }
   );
 
-  // --- la galería de salida al río: sube hacia el norte bajo una bóveda en
-  // rampa, entre dos tramos llanos (antes, un techo escalonado con rendijas)
-  {
-    const tr = 'tunnel';
-    const zS = -170,
-      zE = -170 - 34 * 0.45, // fin de la escalera
-      zW = -194; // la cara de dentro del muro del río
-    const spr = 2.0;
-    const yG = (z) => (z > zS ? AY : z < zE ? 0 : AY + ((zS - z) / (zS - zE)) * 10);
-    const TT = [0.66, 0.68, 0.64];
-    C.paint(-2, -196, 2, -167, 1);
-    W(S, -2, -196, 2, -167);
-    cryptFloor(-2, -170, 2, -167, AY);
-    stairs(ctx, 0, AY, zS, 'n', 4, 34, 10 / 34, 0.45, 'mossstone', { solidBelow: true });
-    // tramo llano final (antes sin suelo visible)
-    wb.box('mossstone', -2, -0.3, -196.4, 2, 0, zE, { faces: 't', ao: false, room: tr, sub: 2 });
-    for (const x of [-2.6, 2]) ctx.col.add(x, AY, -196, x + 0.6, 3.8, -167);
-    // muros hasta el arranque de la bóveda, y las jambas en el muro del río
-    for (const [x, f] of [
-      [-2, 1],
-      [2, -1],
-    ])
-      for (const [za, zb] of [
-        [zS, -167],
-        [zE, zS],
-        [zW, zE],
-      ])
-        slopeWall('mossstone', x, f, za, zb, AY - 0.5, yG(za) + spr, yG(zb) + spr, { room: tr, tint: TT });
-    wallFace('mossstone', -2.6, 0, -196.4, -2, spr, zW, 'e', { room: tr, tint: TT });
-    wallFace('mossstone', 2, 0, -196.4, 2.6, spr, zW, 'w', { room: tr, tint: TT });
-    barrelVault(ctx, { x0: -2, x1: 2, z0: zS, z1: -167, axis: 'z', ys: AY + spr, mat: 'mossstone', tint: VT, room: tr, sub: 1.0, impostTint: AT });
-    rampVault(ctx, { x0: -2, x1: 2, z0: zE, z1: zS, ys0: spr, ys1: AY + spr, mat: 'mossstone', tint: VT, room: tr, impostTint: AT });
-    barrelVault(ctx, { x0: -2, x1: 2, z0: zW, z1: zE, axis: 'z', ys: spr, mat: 'mossstone', tint: VT, room: tr, sub: 1.0, impostTint: AT });
-    ctx.col.addCam(-2, AY + spr + 2, zS, 2, AY + spr + 2.6, -167);
-    ctx.col.addCam(-2, spr + 2, zW, 2, spr + 2.6, zE);
-    for (const [z, s] of [
-      [-174.5, -1],
-      [-180.5, 1],
-      [-186.5, -1],
-      [-191.5, 1],
-    ])
-      P.wallTorch(ctx, s * 2, yG(z) + 1.55, z, s < 0 ? 'e' : 'w', { room: tr, radius: 6.5, dyn: 2 });
-  }
   wb.setRoom(null);
 
   L.phantoms.push({ x: 0, y: Y, z: -130.5, trigger: [0, Y, -113], kind: 'mourner' });
   L.zones.push(
-    { id: 'arena', rects: [[-15, -167, 15, -137, -11, -1]], atmo: 'arena', room: 'crypt' },
     { id: 'tomb', rects: [[3.5, -128, 16, -112, -8, -1]], atmo: 'crypt', room: 'crypt' },
     { id: 'roman', rects: [[-19, -132, -3.5, -112, -8, -1], [-14.5, -135, -8, -132, -8, -1]], atmo: 'crypt', room: 'crypt' },
     { id: 'ossuary', rects: [[-2.5, -133.5, 2.5, -110, -8, -2]], atmo: 'crypt', room: 'crypt' },
-    { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt', room: 'crypt' },
-    { id: 'tunnel', rects: [[-2, -196, 2, -167, -11, 4]], atmo: 'tunnel', room: 'tunnel' }
+    { id: 'crypt', rects: [[-7, -110, 7, -97, -8, -1.5], [-2, -97, 2, -86, -8, -1.3]], atmo: 'crypt', room: 'crypt' }
   );
   L.map.push(
     { id: 'crypt', r: [-7, -110, 7, -97], level: 'crypt' },
@@ -1590,9 +1337,7 @@ export function buildCrypt(ctx, S, C, L) {
     { id: 'ossuary', r: [-2.5, -133, 2.5, -110], level: 'crypt' },
     { id: 'tomb', r: [3.5, -128, 16, -112], level: 'crypt' },
     { id: 'roman', r: [-19, -132, -3.5, -112], level: 'crypt' },
-    { id: 'roman', r: [-14.5, -135, -8, -132], level: 'crypt' },
-    { id: 'arena', r: [-15, -167, 15, -137], level: 'crypt' },
-    { id: 'tunnel', r: [-2, -196, 2, -167], level: 'crypt' }
+    { id: 'roman', r: [-14.5, -135, -8, -132], level: 'crypt' }
   );
 }
 

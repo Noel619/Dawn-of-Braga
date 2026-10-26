@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { solid, blocker, stairs } from './builders.js';
 import * as P from './props.js';
-import { idolFootprint } from '../entities/idol.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -14,14 +13,23 @@ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 export const CISTERN = {
   cz: -152, // centro
   AY: -10, // suelo
-  YT: -1.2, // techo llano y arranque de la cúpula
-  DOME: 4.0, // clave de la cúpula
+  YT: 0.5, // la bóveda del círculo, junto al muro
+  DOME: 5.2, // y en medio, lo más alto
   RP: 6.6, // radio del pozo
   DEPTH: 17, // hondo del pozo (bajo el suelo)
   CRATER: 13.5, // medio lado del cuadro del cráter en la superficie
 };
 // la sangre negra que anega la cisterna tras la cabalgada (sobre su suelo)
 export const BLOOD_Y = 2.4;
+
+// el otero de tierra que tapa la cisterna en el campo (antes de que el
+// gigante lo reviente): su radio y su alto en medio; la bóveda del círculo,
+// por debajo (ver sanctum.js)
+export const MOUND = { r: 13.4, h: 6.2 };
+export const moundY = (x, z) => {
+  const r = Math.hypot(x, z - CISTERN.cz) / MOUND.r;
+  return r >= 1 ? -0.06 : -0.06 + MOUND.h * Math.pow(1 - r * r, 1.2);
+};
 
 // el tramo del borde del pozo que es la losa del jugador (30 tramos: el 7
 // va de 84° a 96°, al sur) y la losa: centro, medidas (x, y, z)
@@ -94,17 +102,40 @@ export function cisternPit(ctx, cz, PC, AY, room, VT, AT) {
   ctx.endGroup();
 }
 
-// La fuente sin nombre: el manantial que los romanos cubrieron con la cúpula
-// y Martín con su reja, en el centro de la cisterna. Por ella toca el mundo lo
-// que hay detrás de la puerta, y en ella se alza su ídolo (entities/idol.js;
-// lo pone y lo mueve game/spring.js). El arzobispo se arrodilló delante para
-// pactar con él y se quedó atado a él, sin que se vea nada que los ate.
-// El brocal de piedra vieja, a ras del suelo; la reja de Martín, con un
-// collar que abraza el hábito del ídolo y, a poniente, el boquete donde se
-// arrodilló el arzobispo; las cadenas de los zunchos; lo que le han traído;
-// y el suelo, agrietado alrededor.
+// La fuente sin nombre: el manantial que Martín cerró con su reja, en el
+// centro del círculo de la cisterna. Por ella toca el mundo lo que hay
+// detrás de la puerta; al fondo del círculo, en la sima, se alza su estatua
+// (entities/idol_statue*.js; la pone y la mueve game/spring.js). El
+// arzobispo se arrodilló sobre la fuente, de cara a la estatua, para pactar
+// con ella y se quedó atado a ella, sin que se vea nada que los ate.
+// El brocal de piedra vieja, a ras del suelo; la reja de Martín y, al norte,
+// el boquete donde se arrodilló el arzobispo; lo que le han traído; y el
+// suelo, agrietado alrededor.
 // (r: la boca; rim: el brocal; water: el agua; holeR: el boquete de la reja)
 export const SPRING = { x: 0, z: CISTERN.cz, r: 1.95, rim: 2.4, water: CISTERN.AY - 1.4, holeR: 0.48 };
+// el cuadro del suelo que se hunde con el rito (medio lado; ver cisternPit)
+export const FLOOR_C = 7.5;
+
+// El santuario de la cisterna (world/sanctum.js): el círculo de roca con la
+// fuente en el centro; al sur, la sima de la estatua; al norte, el pasillo
+// de las columnas, su atrio y el paso que viene de la puerta del dios.
+export const SANCT = {
+  R: 11, // el radio del círculo (su centro, el de la fuente)
+  // la sima: de lado a lado (x), del borde a la pared del fondo (z), su
+  // suelo y su agua
+  apse: { x0: -6.6, x1: 6.6, lip: -143.5, back: -136.9, floor: -16.3, water: -15.3 },
+  // la estatua: el pie, en el agua de la sima; mira al norte
+  idol: { x: 0, y: -15.3, z: -139.8 },
+  // el pasillo de las columnas: sus muros, la nave, las dos filas (x y
+  // radio) con sus tramos (z) y el techo, que baja hacia el sur con el monte
+  // de encima ([hasta z, altura])
+  nave: { x0: -10, x1: 10, z0: -188, z1: -163.6, aisle: 4.4, colX: 6, colR: 1.2, cols: [-184, -178, -172, -166], ceil: [[-180, 3.0], [-175, 0.5], [-163.6, -1.0]] },
+  narthex: { x0: -15, x1: 5, z0: -192, z1: -188, top: -4 },
+  paso: { x0: -15, x1: -12.3, z0: -188, z1: -149.5, top: -5.4 },
+  // la boca del círculo (la del pasillo) y la puerta del río, al este
+  portal: { w: 8.8, h: 7.6, z0: -163.6, z1: -161.9 },
+  door: { x: 11.35, z: -152, w: 4, h: 4.2 },
+};
 
 // Un anillo plano del círculo de radio R al cuadrado de medio lado PC (en
 // y), partido en M anillos para la luz horneada, con la textura alineada con
@@ -146,7 +177,7 @@ export function cisternSpring(ctx, room, VT) {
   const wb = ctx.wb;
   const { AY } = CISTERN;
   const { x: cx, z: cz, r: R1, rim: R2, water: YW, holeR } = SPRING;
-  const PC = 8,
+  const PC = FLOOR_C,
     N = 28;
   const rng = new RNG(1691);
   const C = (t, r, y) => V3(cx + Math.cos(t) * r, y, cz + Math.sin(t) * r);
@@ -164,35 +195,20 @@ export function cisternSpring(ctx, room, VT) {
     // el pozo, hasta el agua y algo más (caras hacia dentro)
     wb.quad('mossstone', C(t0, R1, AY + 0.04), C(t0, R1, YW - 0.3), C(t1, R1, YW - 0.3), C(t1, R1, AY + 0.04), { ao: false, sub: 1.2, room, tint: VT.map((v) => v * 0.55) });
   }
-  // En el medio se alza el ídolo (entities/idol.js; lo pone y lo mueve
-  // game/spring.js): mira a poniente (su +z es el -x del mundo). Del ídolo
-  // al mundo: (x, y, z) suyo -> (cx - z, y, cz + x)
-  const W = (lx, ly, lz) => V3(cx - lz, ly, cz + lx);
-  const FP = idolFootprint();
-  const tc = Math.cos(FP.tw || 0),
-    ts = Math.sin(FP.tw || 0);
-  // ¿dentro del collar? (la estatua: un óvalo; el monolito: su losa, girada)
-  const inColl = FP.rect
-    ? (x, z) => {
-        const lx = z - cz,
-          lz = cx - x;
-        return Math.abs(lx * tc - lz * ts) < FP.ax + 0.12 && Math.abs(lx * ts + lz * tc) < FP.az + 0.12;
-      }
-    : (x, z) => ((x - cx) / (FP.rz + 0.09)) ** 2 + ((z - cz) / (FP.rx + 0.09)) ** 2 < 1;
-  // la reja de Martín: barrotes cruzados a ras del suelo, de la boca a un
-  // collar de hierro que abraza al ídolo; a poniente, donde se arrodilló el
-  // arzobispo, arrancados y doblados hacia arriba
+  // la reja de Martín: barrotes cruzados a ras del suelo, de lado a lado de
+  // la boca; al norte, donde se arrodilló el arzobispo, arrancados y doblados
+  // hacia arriba
   const yb = AY - 0.055;
-  const breach = (x, z) => x - cx < -0.5 && Math.abs(z - cz) < 1.05;
+  const breach = (x, z) => z - cz < -0.5 && Math.abs(x - cx) < 1.05;
   for (const ax of [0, 1])
     for (let o = -R1 + 0.16; o < R1 - 0.1; o += 0.3) {
       const half = Math.sqrt(Math.max(0, R1 * R1 - o * o)) - 0.02;
-      // (los tramos: de la boca al collar, sin lo de dentro ni el boquete)
+      // (los tramos: de lado a lado, sin el boquete)
       let a = -half;
       const step = 0.05;
       for (let u = -half; u <= half + 1e-6; u += step) {
         const [x, z] = ax === 0 ? [cx + u, cz + o] : [cx + o, cz + u];
-        const cut = inColl(x, z) || breach(x, z);
+        const cut = breach(x, z);
         const end = u + step > half + 1e-6;
         if (cut || end) {
           const b = cut ? u - step * 0.5 : half;
@@ -204,87 +220,23 @@ export function cisternSpring(ctx, room, VT) {
         }
       }
     }
-  // el collar
-  if (FP.rect) {
-    const C = [
-      [FP.ax + 0.12, FP.az + 0.12],
-      [-FP.ax - 0.12, FP.az + 0.12],
-      [-FP.ax - 0.12, -FP.az - 0.12],
-      [FP.ax + 0.12, -FP.az - 0.12],
-    ].map(([x, z]) => W(x * tc + z * ts, AY - 0.02, -x * ts + z * tc));
-    for (let i = 0; i < 4; i++) {
-      const a = C[i],
-        b = C[(i + 1) % 4];
-      const len = a.distanceTo(b);
-      wb.geometry('iron', new THREE.BoxGeometry(0.1, 0.07, len + 0.1), new THREE.Matrix4().compose(a.clone().lerp(b, 0.5), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(b.x - a.x, b.z - a.z), 0)), V3(1, 1, 1)), { ao: false, room });
-    }
-  } else wb.geometry('iron', new THREE.TorusGeometry(1, 0.05, 4, 26), new THREE.Matrix4().compose(V3(cx, AY - 0.02, cz), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V3(FP.rz + 0.09, FP.rx + 0.09, 1)), { ao: false, room });
+  // un aro de hierro en el borde, donde se clavan los barrotes
+  wb.geometry('iron', new THREE.TorusGeometry(R1 - 0.02, 0.045, 4, 32), new THREE.Matrix4().compose(V3(cx, AY - 0.02, cz), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V3(1, 1, 1)), { ao: false, room });
   // los barrotes arrancados del boquete, doblados hacia arriba
   for (let k = 0; k < 9; k++) {
-    const z = cz - 0.95 + k * 0.24 + rng.range(-0.04, 0.04);
-    const x = cx - Math.sqrt(Math.max(0, R1 * R1 - (z - cz) ** 2)) + 0.05;
+    const x = cx - 0.95 + k * 0.24 + rng.range(-0.04, 0.04);
+    const z = cz - Math.sqrt(Math.max(0, R1 * R1 - (x - cx) ** 2)) + 0.05;
     const L = rng.range(0.35, 0.75);
     wb.push();
-    wb.translate(x + rng.range(0.15, 0.55), AY - 0.03, z);
-    wb.rotateY(Math.PI + rng.range(-0.35, 0.35));
+    wb.translate(x, AY - 0.03, z + rng.range(0.15, 0.55));
+    wb.rotateY(Math.PI / 2 + rng.range(-0.35, 0.35));
     wb.rotateZ(rng.range(0.55, 1.25));
     wb.box('iron', 0, -0.03, -0.03, L, 0.03, 0.03, { ao: false, room });
     wb.pop();
   }
-  // las cadenas: del zuncho de abajo a unas argollas del brocal, flojas; dos
-  // reventadas (una tirada sobre la reja, otra que cuelga del zuncho)
-  // (un eslabón: el aro de pie a lo largo de la cadena, estirado, y uno sí
-  // y otro no girado un cuarto de vuelta)
-  const link = (p, q, i) => {
-    const d = p.distanceTo(q);
-    const M = new THREE.Matrix4().makeTranslation((p.x + q.x) / 2, (p.y + q.y) / 2, (p.z + q.z) / 2);
-    M.multiply(new THREE.Matrix4().lookAt(p, q, Math.abs(q.y - p.y) > d * 0.95 ? V3(1, 0, 0) : V3(0, 1, 0)));
-    M.multiply(new THREE.Matrix4().makeRotationZ(i % 2 ? Math.PI / 2 : 0));
-    M.multiply(new THREE.Matrix4().makeScale(1, 1, Math.max(1, (d + 0.03) / 0.09)));
-    M.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
-    wb.geometry('iron', new THREE.TorusGeometry(0.045, 0.013, 3, 6), M, { ao: false, room });
-  };
-  for (const [k, kind] of [
-    [0, 'broken'],
-    [1, 'stub'],
-    [2, 'whole'],
-    [3, 'whole'],
-  ]) {
-    const A = FP.anchors[k];
-    const p0 = W(A[0], AY + A[1], A[2]);
-    const dir = V3(p0.x - cx, 0, p0.z - cz).normalize();
-    const p1 = V3(cx + dir.x * 2.18, AY + 0.07, cz + dir.z * 2.18);
-    // la argolla del brocal
-    wb.geometry('iron', new THREE.TorusGeometry(0.07, 0.018, 4, 8), new THREE.Matrix4().compose(V3(p1.x, AY + 0.06, p1.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(dir.x, dir.z), 0)), V3(1, 1, 1)), { ao: false, room });
-    wb.box('iron', p1.x - 0.08, AY + 0.04, p1.z - 0.08, p1.x + 0.08, AY + 0.06, p1.z + 0.08, { ao: false, room });
-    const n = 16;
-    const pts = [];
-    for (let i = 0; i <= n; i++) {
-      const u = i / n;
-      const pt = V3(p0.x + (p1.x - p0.x) * u, p0.y + (p1.y - p0.y) * u - Math.sin(u * Math.PI) * 0.22, p0.z + (p1.z - p0.z) * u);
-      pt.y = Math.max(AY + 0.025, pt.y);
-      pts.push(pt);
-    }
-    const upto = kind === 'stub' ? 5 : n;
-    for (let i = 0; i < upto; i++) {
-      if (kind === 'broken' && i === 9) continue;
-      const p = pts[i].clone(),
-        q = pts[i + 1].clone();
-      // (lo reventado: los eslabones de la punta, caídos sobre la reja)
-      if (kind === 'broken' && i < 9) {
-        p.y = Math.max(AY + 0.02, p.y - 0.05 * i);
-        q.y = Math.max(AY + 0.02, q.y - 0.05 * (i + 1));
-      }
-      if (kind === 'stub') {
-        p.lerp(V3(p0.x, AY + 0.05, p0.z), (i / 5) * 0.4);
-        q.y = Math.max(AY + 0.02, q.y - 0.12 * (i + 1));
-      }
-      link(p, q, i);
-    }
-  }
   // lo que le han traído, de todas las épocas, al borde del agua: lucernas
   // romanas, monedas, una espada comida por el óxido, huesos, un rosario y
-  // cabos de vela; casi todo a poniente, donde se arrodilla el que pide
+  // cabos de vela; casi todo al norte, donde se arrodilla el que pide
   const lamp = (x, z, rot) => {
     const m = new THREE.Matrix4().compose(V3(x, AY + 0.045, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rot, 0)), V3(1, 1, 1));
     wb.geometry('plaster', new THREE.SphereGeometry(0.065, 8, 4), m.clone().multiply(new THREE.Matrix4().makeScale(1, 0.45, 1.1)), { ao: false, room, tint: [0.62, 0.36, 0.24] });
@@ -292,23 +244,23 @@ export function cisternSpring(ctx, room, VT) {
     wb.geometry('black', new THREE.CylinderGeometry(0.012, 0.012, 0.01, 6), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.03, 0)), { ao: false, room });
   };
   for (const [a, r] of [
-    [3.0, 2.15],
-    [3.35, 2.2],
-    [2.75, 2.25],
-    [3.62, 2.12],
-    [2.2, 2.3],
-    [4.1, 2.25],
+    [4.4, 2.15],
+    [4.75, 2.2],
+    [4.15, 2.25],
+    [5.02, 2.12],
+    [3.6, 2.3],
+    [5.5, 2.25],
   ])
     lamp(cx + Math.cos(a) * r, cz + Math.sin(a) * r, a + rng.range(-0.6, 0.6));
   for (let i = 0; i < 28; i++) {
-    const a = Math.PI + rng.range(-1.3, 1.3),
+    const a = -Math.PI / 2 + rng.range(-1.3, 1.3),
       r = rng.range(1.9, 2.5);
     const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.2, 0.2), 0, rng.range(-0.2, 0.2)));
     wb.geometry(rng.chance(0.3) ? 'gold' : 'bronzeAged', new THREE.CylinderGeometry(0.014, 0.014, 0.004, 7), new THREE.Matrix4().compose(V3(cx + Math.cos(a) * r, AY + 0.046, cz + Math.sin(a) * r), q, V3(1, 1, 1)), { ao: false, room });
   }
   // la espada romana, comida por el óxido
   {
-    const m = new THREE.Matrix4().compose(V3(cx - 2.25, AY + 0.055, cz + 1.0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.5, 0.04)), V3(1, 1, 1));
+    const m = new THREE.Matrix4().compose(V3(cx + 1.0, AY + 0.055, cz - 2.25), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 2.07, 0.04)), V3(1, 1, 1));
     wb.geometry('plateRust', new THREE.BoxGeometry(0.05, 0.012, 0.5), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.12)), { ao: false, room });
     wb.geometry('plateRust', new THREE.BoxGeometry(0.11, 0.02, 0.03), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0.004, -0.14)), { ao: false, room });
     wb.geometry('wooddark', new THREE.CylinderGeometry(0.016, 0.016, 0.1, 5), m.clone().multiply(new THREE.Matrix4().compose(V3(0, 0.006, -0.21), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), V3(1, 1, 1))), { ao: false, room });
@@ -316,9 +268,9 @@ export function cisternSpring(ctx, room, VT) {
   // el rosario, en un corro sobre el brocal, y los cabos de vela
   for (let i = 0; i < 22; i++) {
     const a = (i / 22) * Math.PI * 2;
-    wb.geometry('bone', new THREE.SphereGeometry(0.013, 5, 3), new THREE.Matrix4().makeTranslation(cx - 2.0 + Math.cos(a) * 0.1, AY + 0.052, cz - 1.05 + Math.sin(a) * 0.075), { ao: false, room });
+    wb.geometry('bone', new THREE.SphereGeometry(0.013, 5, 3), new THREE.Matrix4().makeTranslation(cx - 1.05 + Math.cos(a) * 0.075, AY + 0.052, cz - 2.0 + Math.sin(a) * 0.1), { ao: false, room });
   }
-  for (const [x, z, h] of [
+  for (const [z, x, h] of [
     [-2.3, -0.4, 0.07],
     [-2.2, 0.35, 0.12],
     [-2.35, 0.75, 0.05],
@@ -352,101 +304,102 @@ export function cisternSpring(ctx, room, VT) {
   ctx.lights.push({ x: cx, y: AY - 0.9, z: cz, r: 1, g: 0.2, b: 0.1, radius: 3.6, intensity: 1.3, room });
 }
 
-// Lo que queda de la cisterna tras salir el gigante (muñones de las columnas,
-// arcos por el suelo, lo bajo de la cúpula) y el cráter de la superficie.
+// Lo que queda de la cisterna tras salir el gigante (los muñones de los
+// contrafuertes del círculo, el borde roto de la bóveda) y el cráter de la
+// superficie. o: { room, buttresses: [{ x, z, t, w, d }] (t: hacia dentro),
+// ceilY(x, z): la bóveda }
 export function cisternRuins(ctx, o) {
   const wb = ctx.wb;
-  const { cz, rd, rm, YT, YC, AY, cols, room, VT, AT, CT } = o;
+  const { room } = o;
+  const { cz, AY } = CISTERN;
+  const R = SANCT.R;
   const rng = new RNG(1671);
-  // ------------------------------------------------------------ las columnas
+  const RT = [0.5, 0.48, 0.46],
+    VT = [0.68, 0.68, 0.65],
+    AT = [0.88, 0.85, 0.79];
+  // ------------------------------------------------------------ los contrafuertes
   ctx.beginGroup('cisternColsRuin');
-  for (let i = 0; i < cols.length; i++) {
-    const [x, z, a] = cols[i];
-    const h = rng.range(1.2, 3.6);
-    wb.box('ashlar', x - 0.85, AY, z - 0.85, x + 0.85, AY + 0.4, z + 0.85, { sub: 2, aoH: 0.3, room, tint: AT });
-    wb.cylinder('ashlar', x, AY + 0.4, z, 0.7, 0.66, h, 8, { ao: false, sub: 2, room, tint: AT });
-    // el corte, mellado
+  o.buttresses.forEach((B, i) => {
+    const h = rng.range(1.4, 3.8);
+    // el muñón: bloques de roca apilados, el de arriba roto en dientes
+    wb.push();
+    wb.translate(B.x, AY, B.z);
+    wb.rotateY(Math.atan2(B.t[0], B.t[1]));
+    wb.box('rock', -B.w / 2, 0, -B.d / 2, B.w / 2, h, B.d / 2, { sub: 1.2, aoH: 1.2, room, tint: RT, uv: 0.9 });
     for (let k = 0; k < 4; k++) {
-      const t = rng.range(0, Math.PI * 2);
-      wb.push();
-      wb.translate(x + Math.cos(t) * 0.35, AY + 0.4 + h, z + Math.sin(t) * 0.35);
-      wb.rotateY(t);
-      wb.box('ashlar', -0.25, 0, -0.2, 0.25, rng.range(0.2, 0.55), 0.2, { ao: false, room, tint: AT });
-      wb.pop();
+      const x = rng.range(-B.w / 2 + 0.2, B.w / 2 - 0.2),
+        z = rng.range(-B.d / 2 + 0.2, B.d / 2 - 0.2);
+      wb.box('rock', x - 0.25, h, z - 0.22, x + 0.25, h + rng.range(0.25, 0.8), z + 0.22, { ao: false, room, tint: RT, uv: 0.9 });
     }
-    ctx.col.add(x - 0.7, AY, z - 0.7, x + 0.7, AY + 0.4 + h, z + 0.7);
-    // tambores y dovelas por el suelo, hacia fuera del corro
+    wb.pop();
+    // lo que cayó, hacia el centro (lo que no fue al pozo)
     for (let k = 0; k < 3; k++) {
-      const d = rng.range(1.2, 3.2);
-      const t = a + rng.range(-0.5, 0.5);
-      const px = x + Math.cos(t) * d,
-        pz = z + Math.sin(t) * d;
+      const d = rng.range(1.0, 2.6);
+      const px = B.x + B.t[0] * d + rng.range(-0.8, 0.8),
+        pz = B.z + B.t[1] * d + rng.range(-0.8, 0.8);
       if (Math.hypot(px, pz - cz) < CISTERN.RP + 0.8) continue;
+      const sz = rng.range(0.5, 1.0);
       wb.push();
-      wb.translate(px, AY + 0.62, pz);
+      wb.translate(px, AY + sz * 0.45, pz);
       wb.rotateY(rng.range(0, Math.PI));
-      wb.rotateZ(Math.PI / 2 + rng.range(-0.2, 0.2));
-      wb.cylinder('ashlar', 0, -0.6, 0, 0.66, 0.64, 1.2, 8, { ao: false, room, tint: AT, capTop: true, capBot: true });
+      wb.rotateZ(rng.range(-0.4, 0.4));
+      wb.box('rock', -sz, -sz * 0.5, -sz * 0.8, sz, sz * 0.5, sz * 0.8, { ao: false, room, tint: RT, uv: 0.9, faces: 'tnsewb' });
       wb.pop();
     }
-    P.rubble(ctx, x + Math.cos(a) * 1.4, AY, z + Math.sin(a) * 1.4, 7, 1680 + i, 1.2, { scale: 1.2, mat: 'mossstone', room });
-  }
+    P.rubble(ctx, B.x + B.t[0] * 1.4, AY, B.z + B.t[1] * 1.4, 7, 1680 + i, 1.2, { scale: 1.2, mat: 'rock', room });
+  });
   ctx.endGroup();
-  // ------------------------------------------------------------ la cúpula
-  // (lo bajo de la cúpula, mellado; con las dos caras: se ve desde dentro y
-  // desde el cráter)
+  // ------------------------------------------------------------ la bóveda
+  // (el borde del agujero, mellado: dientes de roca que cuelgan)
   ctx.beginGroup('cisternDomeRuin');
-  {
-    const rise = CISTERN.DOME - YT;
-    const R = (rd * rd + rise * rise) / (2 * rise);
-    const yc = YT + rise - R;
-    const f0 = Math.asin(Math.min(1, rd / R));
-    const n = 32,
-      m = 10;
-    const Pt = (i, j) => {
-      const th = (i / n) * Math.PI * 2;
-      const f = f0 * (1 - j / m);
-      return V3(Math.cos(th) * R * Math.sin(f), yc + R * Math.cos(f), cz + Math.sin(th) * R * Math.sin(f));
-    };
-    for (let i = 0; i < n; i++) {
-      const top = rng.chance(0.3) ? 0 : rng.int(1, 3);
-      for (let j = 0; j < top; j++) {
-        const a = Pt(i, j),
-          b = Pt(i + 1, j),
-          c = Pt(i + 1, j + 1),
-          d = Pt(i, j + 1);
-        wb.quad('mossstone', a, b, c, d, { ao: false, sub: 1.4, tint: VT, room });
-        wb.quad('mossstone', a, d, c, b, { ao: false, sub: 1.4, tint: [0.5, 0.5, 0.48], room });
-      }
-    }
-    // el anillo del techo llano, roto por dentro
-    for (let k = 0; k < n; k++) {
-      const t = ((k + 0.5) / n) * Math.PI * 2;
-      if (rng.chance(0.45)) continue;
-      const r = rm - rng.range(0.2, 1.4);
-      wb.push();
-      wb.translate(Math.cos(t) * r, YT + 0.1, cz + Math.sin(t) * r);
-      wb.rotateY(-t);
-      wb.rotateZ(rng.range(-0.35, 0.1));
-      wb.box('mossstone', -0.9, -0.25, -0.9, 0.3, 0.25, 0.9, { ao: false, room, tint: VT, faces: 'tnsewb' });
-      wb.pop();
-    }
+  for (let k = 0; k < 40; k++) {
+    const t = (k / 40) * Math.PI * 2 + rng.range(-0.05, 0.05);
+    const r = rng.range(9.9, 10.7);
+    const x = Math.cos(t) * r,
+      z = cz + Math.sin(t) * r;
+    if (z > SANCT.apse.lip - 0.3 && Math.abs(x) < SANCT.apse.x1 + 0.4) continue;
+    const y = o.ceilY(x, z);
+    const L = rng.range(0.6, 2.2),
+      w = rng.range(0.35, 0.8);
+    const g = new THREE.ConeGeometry(w, L, 5).toNonIndexed();
+    g.rotateX(Math.PI);
+    g.translate(0, -L / 2 + 0.25, 0);
+    wb.geometry('rock', g, new THREE.Matrix4().compose(V3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rng.range(-0.35, 0.35), rng.range(0, 3), rng.range(-0.35, 0.35))), V3(1, 1, 1)), { ao: false, room, tint: RT });
+  }
+  // peñascos de la bóveda por el suelo que queda
+  for (let k = 0; k < 9; k++) {
+    const t = rng.range(0, Math.PI * 2),
+      r = rng.range(8.3, R - 0.8);
+    const x = Math.cos(t) * r,
+      z = cz + Math.sin(t) * r;
+    if (z > SANCT.apse.lip - 0.5 && Math.abs(x) < SANCT.apse.x1 + 0.5) continue;
+    const sz = rng.range(0.5, 1.1);
+    wb.push();
+    wb.translate(x, AY + sz * 0.4, z);
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateX(rng.range(-0.3, 0.3));
+    wb.box('rock', -sz, -sz * 0.55, -sz * 0.75, sz, sz * 0.55, sz * 0.75, { ao: false, room, tint: RT, uv: 0.9, faces: 'tnsewb' });
+    wb.pop();
   }
   ctx.endGroup();
   // ------------------------------------------------------------ la sangre
   // Tras la cabalgada la cisterna se ha anegado de la sangre negra del dios,
   // que hierve (en ella se cura el gigante y en ella se hunde: acto 6): un
-  // charco espeso que llena la sala hasta media altura de los muñones
+  // charco espeso que llena el círculo y la sima, hasta la cintura de la
+  // estatua
   ctx.beginGroup('cisternBlood');
   {
     const yb = AY + BLOOD_Y;
-    const n = 10;
+    const A = SANCT.apse;
+    const n = 24;
+    const inside = (x, z) => Math.hypot(x, z - cz) < R + 0.6 || (Math.abs(x) < A.x1 + 0.05 && z > A.lip - 0.2 && z < A.back + 0.05);
     for (let i = 0; i < n; i++)
       for (let j = 0; j < n; j++) {
-        const x0 = -15 + (30 * i) / n,
-          x1 = -15 + (30 * (i + 1)) / n,
-          z0 = cz - 15 + (30 * j) / n,
-          z1 = cz - 15 + (30 * (j + 1)) / n;
+        const x0 = -12 + (24 * i) / n,
+          x1 = -12 + (24 * (i + 1)) / n,
+          z0 = cz - 12 + (27 * j) / n,
+          z1 = cz - 12 + (27 * (j + 1)) / n;
+        if (!inside((x0 + x1) / 2, (z0 + z1) / 2)) continue;
         wb.quad('fleshStatic', V3(x0, yb, z0), V3(x0, yb, z1), V3(x1, yb, z1), V3(x1, yb, z0), { ao: false, tint: [0.34, 0.08, 0.06], uv: 0.25, room });
       }
     // (hierve: humo y pavesas que suben por el cráter)
@@ -471,8 +424,8 @@ export function cisternRuins(ctx, o) {
   {
     const n = 18;
     const hm = (x, z) => {
-      const r = Math.hypot(x, z - cz) / 12.8;
-      return r >= 1 ? -0.06 : -0.06 + 4.86 * Math.pow(1 - r * r, 1.2);
+      const r = Math.hypot(x, z - cz) / MOUND.r;
+      return r >= 1 ? -0.06 : -0.06 + MOUND.h * Math.pow(1 - r * r, 1.2);
     };
     const T0 = [0.56, 0.5, 0.46],
       T1 = [0.6, 0.66, 0.5];
@@ -490,7 +443,7 @@ export function cisternRuins(ctx, o) {
   ctx.endGroup();
   ctx.beginGroup('crater');
   {
-    const RC = rd + 0.6; // el agujero
+    const RC = 10.5; // el agujero (el de la bóveda del círculo)
     const N = 36;
     const sq = (t) => {
       const c = Math.cos(t),
@@ -511,7 +464,7 @@ export function cisternRuins(ctx, o) {
         t1 = ((k + 1) / N) * Math.PI * 2;
       wb.quad('dirt', L(k, 1.1), L(k + 1, 1.1), sq(t1), sq(t0), { ao: false, sub: 3, tint: [0.56, 0.5, 0.46], uv: 0.35 });
       // la cara del borde, que cae hacia la cisterna
-      wb.quad('dirt', L(k, 1.1), L(k, YT - 0.4, 0.94), L(k + 1, YT - 0.4, 0.94), L(k + 1, 1.1), { ao: false, sub: 2, tint: [0.4, 0.34, 0.3], uv: 0.4 });
+      wb.quad('dirt', L(k, 1.1), L(k, -0.6, 0.94), L(k + 1, -0.6, 0.94), L(k + 1, 1.1), { ao: false, sub: 2, tint: [0.4, 0.34, 0.3], uv: 0.4 });
     }
     // losas de tierra levantadas y partidas, de canto, alrededor del borde
     for (let k = 0; k < 22; k++) {
@@ -527,7 +480,7 @@ export function cisternRuins(ctx, o) {
       wb.box('dirt', -d / 2, -h / 2, -w / 2, d / 2, h / 2, w / 2, { ao: false, faces: 'tnsewb', tint: [0.5, 0.45, 0.41], uv: 0.4 });
       wb.pop();
     }
-    // trozos de la cúpula y sillares por la tierra
+    // trozos de la bóveda y de la roca por la tierra
     for (let k = 0; k < 16; k++) {
       const t = rng.range(0, Math.PI * 2),
         r = RC + rng.range(1.5, 6);
