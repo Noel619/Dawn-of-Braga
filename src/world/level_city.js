@@ -6,6 +6,7 @@ import { RNG } from '../core/util.js';
 import { springaldTowerS, TOWER_S } from './level_finale.js';
 import { house, solid, stairs, merlons, cityWall, tower, archWall, archRing, stoneWall, waveProp, solidGableRoof } from './builders.js';
 import { buildCasaTapiada, buildPasadizo, buildCasaTonelero, soutoZones } from './level_souto.js';
+import { buildFragua } from './level_fragua.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -827,94 +828,11 @@ export function buildFerraria(ctx, S, L) {
   L.interact.push({ kind: 'examine', id: 'x_portasul', text: 'southGate', x: 0, y: 1, z: 56.5, r: 3.2 });
 
   // ------------------------------------------------------------ fragua (visitable)
-  // Se ve desde lejos: chimenea grande humeante, soportal con yunque y pila
-  // de templar, rótulo de hierro y las ventanas encendidas por el fuego.
-  const room = 'smithy';
-  house(ctx, {
-    x0: -26,
-    z0: 42,
-    x1: -14,
-    z1: 56,
-    front: 'e',
-    seed: 807,
-    h: 6.4,
-    style: 'stone',
-    hollow: true,
-    room,
-    lit: true,
-    litChance: 1,
-    jetty: 0,
-    floorMat: 'flag',
-    floorTint: [0.6, 0.56, 0.52],
-    chimney: true,
-    chimneyAt: [-21.5, 43.2],
-    chimneySize: 0.75,
-    smoke: 'embers',
-    doors: [
-      { side: 'e', z: 49, w: 1.5, h: 2.5 },
-      { side: 'w', z: 46 },
-    ],
-  });
-  // soportal delantero con el taller al aire libre
-  P.leanTo(ctx, -14, 43, -11.2, 55, 'w', 3.75, 2.75);
-  // el rótulo del yunque, en la fachada por encima del soportal y entre dos
-  // ventanas: se ve desde toda la calle (colgado del alero del soportal quedaba
-  // a la altura de la cabeza, y el de la herradura, debajo, entre la antorcha
-  // y el farol)
-  P.sign(ctx, -14, 4.95, 47.6, Math.PI / 2, 'anvil');
-  P.anvil(ctx, -12.4, 0, 45.4, 0.3);
-  P.dyeVat(ctx, -12.5, 0, 53.4, [0.2, 0.24, 0.26], { r: 0.5 });
-  P.cartWheel(ctx, -13.8, 0, 51.9, Math.PI / 2);
-  P.toolBoard(ctx, -14, 0, 47.0, Math.PI / 2);
-  P.firewood(ctx, -13.35, 0, 44.1, 0, 3);
-  P.sacks(ctx, -12.4, 0, 54.5, 3, 24);
-  P.coalPile(ctx, -11.8, 0, 43.6, 0.8);
-  P.wallTorch(ctx, -14, 2.4, 53.6, 'e');
-  P.brazier(ctx, -12.5, 0, 47.6, { s: 0.9, radius: 7 });
-  P.ironBars(ctx, -12.2, 0, 50.9, Math.PI / 2 + 0.1);
-  wb.setRoom(room);
-  // interior: fragua con su campana, fuelle, yunque, pila de templar, carbón
-  P.forge(ctx, -21.5, 0, 43.5, 0, room);
-  P.fleshMail(ctx, -21.6, 0.95, 43.4, 0.4, { room });
-  P.bellows(ctx, -23.85, 0, 43.4, 0, { room });
-  P.coalPile(ctx, -25, 0, 43.1, 0.8, { room });
-  P.trough(ctx, -18.7, 0, 43.1, 0, { len: 2, room, tint: [0.35, 0.4, 0.42] });
-  P.toolBoard(ctx, -18.7, 0, 42.36, 0, { room });
-  P.anvil(ctx, -20.6, 0, 46.7, 0.4);
-  wb.box('iron', -20.95, 0.9, 46.55, -20.4, 0.95, 46.62, { ao: false });
-  P.ironBars(ctx, -15.2, 0, 44.4, Math.PI / 2);
-  P.barrel(ctx, -15.1, 0, 46.3);
-  P.table(ctx, -18, 0, 54.4, 2.2, 0.9, 0);
-  P.weaponRack(ctx, -25.4, 0, 51.2, Math.PI / 2);
-  P.toolBoard(ctx, -25.64, 0, 53.6, Math.PI / 2, { room });
-  P.armorStand(ctx, -24.6, 0, 55, Math.PI + 0.3, { room, flesh: true });
-  P.crate(ctx, -15.4, 0, 55, 0.8, 0.2);
-  P.barrel(ctx, -16.4, 0, 55.1, { lying: true, rot: 0.1 });
-  P.fleshMail(ctx, -19.4, 0, 44.6, 2.1, { room });
-  // piedra de amolar
-  wb.push();
-  wb.translate(-22.4, 0.8, 54);
-  wb.rotateX(Math.PI / 2);
-  wb.cylinder('wallstone', 0, -0.1, 0, 0.5, 0.5, 0.2, 10, { ao: false, capTop: true, capBot: true });
-  wb.pop();
-  wb.box('wooddark', -23, 0, 53.8, -21.8, 0.35, 54.2, { ao: false });
-  bakeCorpse(wb, -20.2, 0, 47.4, 0.4, 'kneel', 'villager', 0);
-  P.fleshGrowth(ctx, -20.1, 0.5, 48, 0.7, 131, { room, climb: 0.4 });
-  P.fleshGrowth(ctx, -25, 0, 55, 0.9, 132, { room, climb: 1.4, bound: [-25.6, -14.4, 42.4, 55.6] });
-  P.decal(ctx, -19.5, 0.05, 48, 2.4);
-  P.decal(ctx, -21.5, 0.05, 45, 3.6, 'shadow');
-  P.candles(ctx, -17.2, 0.8, 54.6, 3, 133, { room, radius: 5, intensity: 1.0, spread: 0.25 });
-  P.hangingLamp(ctx, -19.8, 2.88, 50.4, { room, radius: 8, intensity: 1.2, dyn: 2.2 });
-  P.hangingLamp(ctx, -23.4, 2.88, 49.2, { room, radius: 6, intensity: 0.9 });
-  wb.setRoom(null);
-  L.interact.push(
-    { kind: 'item', id: 'i_palanca', item: 'palanca', x: -18.2, y: 0.86, z: 54.4 },
-    { kind: 'note', id: 'n_herrero', note: 'herrero', x: -17.2, y: 0.82, z: 54.3, model: 'book' },
-    { kind: 'item', id: 'i_piedra', item: 'piedra', x: -22.4, y: 1.35, z: 54 },
-    // entornada: por la rendija se ve el resplandor de la forja
-    { kind: 'door', id: 'd_fragua', x: -14, y: 0, z: 49, w: 1.5, h: 2.45, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: -14.3, ajar: 0.3 }
-  );
-  P.lantern(ctx, -14, 2.75, 50.45, Math.PI / 2, true);
+  // La de maese Lourenço: la nave a doble altura con la forja, el sobrado de
+  // la vivienda y el soportal con el potro de herrar (level_fragua.js). Se ve
+  // desde toda la plaza: el portalón abierto de par en par, el resplandor de
+  // la forja en las ventanas altas y el humo y las chispas de su cañón.
+  buildFragua(ctx, S, L);
   // atrezo
   P.barrel(ctx, -12.6, 0, 56.4);
   P.barrel(ctx, -11.8, 0, 57);
@@ -947,10 +865,11 @@ export function buildFerraria(ctx, S, L) {
     { type: 'soldier', x: -4, y: 0, z: 49, yaw: 0, idle: 'stand', id: 'e_fer1' },
     { type: 'soldier', x: 7, y: 0, z: 52, yaw: -2.5, idle: 'wander', id: 'e_fer2' },
     { type: 'hound', x: 0.5, y: 0, z: 30, yaw: 3, idle: 'eat', id: 'e_fer3' },
-    { type: 'crawler', x: -19, y: 2.6, z: 51.5, yaw: 1, idle: 'ceiling', id: 'e_fer4' }
+    // (colgado bajo el sobrado de la fragua, en el almacén)
+    { type: 'crawler', x: -23.6, y: 2.6, z: 50.4, yaw: 1, idle: 'ceiling', id: 'e_fer4' }
   );
   L.zones.push(
-    { id: 'smithy', rects: [[-26, 42, -14.2, 56, -1, 4]], atmo: 'interior', room: 'smithy' },
+    { id: 'smithy', rects: [[-26, 42, -14.1, 56, -1, 9]], atmo: 'interior', room: 'smithy' },
     { id: 'ferraria', rects: [[-3.5, 14, 3.5, 42, -1, 10], [-14, 42, 14, 58, -1, 10]], atmo: 'city' }
   );
   L.map.push({ id: 'ferraria', r: [-3.5, 14, 3.5, 42] }, { id: 'ferraria', r: [-14, 42, 14, 58] }, { id: 'smithy', r: [-26, 42, -14, 56] });

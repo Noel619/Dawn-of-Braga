@@ -188,6 +188,9 @@ export const CORPSE_POSES = {
   curl: { hips: [-90, 0, 90], chest: [40, 0, 0], head: [30, 0, 0], armL: [-80, 0, 0], foreL: [-100, 0, 0], armR: [-90, 0, 0], foreR: [-110, 0, 0], legL: [-90, 0, 0], shinL: [120, 0, 0], legR: [-80, 0, 0], shinR: [110, 0, 0] },
   hang: { hips: [0, 0, 0], chest: [5, 0, 3], head: [40, 0, 20], armL: [0, 0, 6], armR: [0, 0, -6], legL: [3, 0, 0], legR: [-4, 0, 0], shinL: [4, 0, 0] },
   kneel: { hips: [15, 0, 0], chest: [35, 0, 0], head: [30, 0, 0], armL: [-40, 0, 10], foreL: [-60, 0, 0], armR: [-40, 0, -10], foreR: [-60, 0, 0], legL: [-100, 0, 5], shinL: [100, 0, 0], legR: [-100, 0, -5], shinR: [100, 0, 0] },
+  // de rodillas ante la forja, echado sobre el hogar: la izquierda apoyada en
+  // el borde y la derecha metida en las brasas (el herrero de la fragua)
+  forge: { hips: [8, 0, 0], chest: [26, 8, 0], head: [24, -18, 8], armL: [-46, 0, 34], foreL: [-70, 0, 0], armR: [-98, -6, -4], foreR: [-8, 0, 0], legL: [-96, 0, 6], shinL: [100, 0, 0], legR: [-100, 0, -6], shinR: [96, 0, 0] },
   // tendido boca arriba en el potro: brazos atados por encima de la cabeza y
   // piernas juntas y estiradas
   rack: { hips: [-90, 0, 0], chest: [-4, 0, 0], head: [-6, 32, 0], armL: [-174, 0, 9], foreL: [-4, 0, 0], armR: [-174, 0, -9], foreR: [-4, 0, 0], legL: [0, 0, 3], shinL: [2, 0, 0], legR: [0, 0, -3], shinR: [2, 0, 0] },
@@ -209,9 +212,10 @@ export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed =
   rig.apply(pose);
   // altura de la cadera según la pose
   const lie = poseName === 'back' || poseName === 'face' || poseName === 'curl' || poseName === 'rack';
-  const hipY = lie ? 0.16 : poseName === 'sit' ? 0.2 : poseName === 'kneel' ? 0.5 : 0;
+  const knee = poseName === 'kneel' || poseName === 'forge';
+  const hipY = lie ? 0.16 : poseName === 'sit' ? 0.2 : knee ? 0.5 : 0;
   if (poseName !== 'hang') rig.joints.hips.position.y = hipY;
-  const torso = poseName === 'hang' ? 0.8 : lie ? 0.05 : poseName === 'sit' ? 0.25 : poseName === 'kneel' ? 0.5 : 0.3;
+  const torso = poseName === 'hang' ? 0.8 : lie ? 0.05 : poseName === 'sit' ? 0.25 : knee ? 0.5 : 0.3;
   corpseLog.push(new THREE.Vector3(x, y + torso, z).applyMatrix4(wb.m));
   rig.root.position.set(x, y, z);
   rig.root.rotation.y = yaw;

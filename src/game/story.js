@@ -56,7 +56,7 @@ export const ITEMS = {
   },
   palanca: {
     name: 'Palanca de hierro',
-    desc: 'Barra de hierro de la fragua. Sirve para arrancar tablones clavados.',
+    desc: 'Barra de hierro de la fragua de maese Lourenço, con la uña partida. Sirve para arrancar tablones clavados.',
     icon: 'crowbar',
     key: true,
   },
@@ -271,7 +271,15 @@ Lo hago ahora, mientras todavía soy yo.`,
 
 Las eché a la fragua. Gritaron.
 
-Dejo la palanca junto al yunque. Con ella se arrancan los tablones de la barricada de la Calle de los Pellejeros.`,
+Clavos para las puertas de media ciudad, y para la barricada de los Pellejeros, que los soldados apuntalaron por el otro lado: desde aquí ya no la mueve nadie.
+
+Los de la casa de enfrente se han encerrado con sus muertos y han clavado la puerta. Van de una casa a otra por dentro, y por los tejados, como los gatos. Al chico le he dado la piedra bendita, para que afile lo que lleve. Se ha ido con ellos.
+
+Esta mañana me ha salido en el brazo. La fragua está caliente.
+
+Dejo la palanca en el yunque.
+
+Lourenço, herrero.`,
   },
   canonigo: {
     title: 'Diario del canónigo',
@@ -839,7 +847,7 @@ export const AREA_NAMES = {
   carpinteria: 'Taller del carpintero',
   patio_lena: 'Patio de la leña',
   ferraria: 'Calle de la Herrería',
-  smithy: 'Fragua',
+  smithy: 'Fragua de maese Lourenço',
   souto_house: 'Casa tapiada',
   souto_alta: 'Sobrado de la casa tapiada',
   pasadizo: 'Pasadizo del Soto',

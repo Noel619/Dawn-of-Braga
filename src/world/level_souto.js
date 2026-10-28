@@ -82,7 +82,7 @@ export const SOUTO = {
 // dentro del grueso (de la sala: los ilumina su luz). outRoom: la luz de la
 // cara de fuera ('out' por defecto; dentro del pasadizo, la suya). bottom:
 // también la cara de abajo (un muro que vuela sobre la calle).
-function holedWall(ctx, o) {
+export function holedWall(ctx, o) {
   const wb = ctx.wb;
   const { axis, a0, a1, t0, t1, y0, y1, out, room } = o;
   const inF = { n: 's', s: 'n', e: 'w', w: 'e' }[out];
@@ -205,7 +205,7 @@ function partitionUp(ctx, iw, y0, y1, room, tint) {
 
 // Barandilla de madera (pasamanos, balaústres y su colisión) de (x0,z0) a
 // (x1,z1), a lo largo de x o de z.
-function railing(ctx, x0, z0, x1, z1, y, room) {
+export function railing(ctx, x0, z0, x1, z1, y, room) {
   const wb = ctx.wb;
   const alongX = Math.abs(x1 - x0) >= Math.abs(z1 - z0);
   const L = alongX ? x1 - x0 : z1 - z0;
@@ -262,7 +262,7 @@ function woodStair(ctx, S, room, railEnd) {
 // Marco de madera de una ventana o puerta, por fuera (y su alféizar) y, si
 // se le da la sala, el cerco por dentro. side: la fachada; (x, z): el centro
 // del hueco en la cara de fuera; y0, y1: alféizar y dintel; t: grueso.
-function frame(ctx, side, x, z, w, y0, y1, t, o = {}) {
+export function frame(ctx, side, x, z, w, y0, y1, t, o = {}) {
   const wb = ctx.wb;
   const hw = w / 2;
   const mat = o.mat ?? 'timber';
@@ -287,7 +287,7 @@ function frame(ctx, side, x, z, w, y0, y1, t, o = {}) {
 
 // Tablones clavados de prisa sobre una ventana (por fuera), con rendijas
 // entre uno y otro por las que se ve la sala.
-function boardUp(ctx, side, x, z, w, ys, seed) {
+export function boardUp(ctx, side, x, z, w, ys, seed) {
   const wb = ctx.wb;
   const rng = new RNG(seed);
   wb.at(x, 0, z, ROT[side], () => {
@@ -306,7 +306,7 @@ function boardUp(ctx, side, x, z, w, ys, seed) {
 
 // Contraventana de tablas (una hoja) que gira en su gozne: hinge -1/+1 (el
 // lado del hueco), ang (0 cerrada; abierta, hacia fuera), por fuera.
-function shutter(ctx, side, x, z, w, y0, y1, hinge, ang, o = {}) {
+export function shutter(ctx, side, x, z, w, y0, y1, hinge, ang, o = {}) {
   const wb = ctx.wb;
   const lw = w / 2;
   wb.at(x, 0, z, ROT[side], () => {
@@ -324,7 +324,7 @@ function shutter(ctx, side, x, z, w, y0, y1, hinge, ang, o = {}) {
 
 // Ventana cerrada (no hay hueco): el negro, las dos hojas y el marco, por
 // fuera; por dentro, si se le da la sala, las hojas cerradas en su cerco.
-function closedWindow(ctx, side, x, z, w, y0, y1, t, room, o = {}) {
+export function closedWindow(ctx, side, x, z, w, y0, y1, t, room, o = {}) {
   const wb = ctx.wb;
   wb.at(x, 0, z, ROT[side], () => {
     wb.box('black', -w / 2, y0, 0, w / 2, y1, 0.02, { ao: false, grime: false, faces: 's' });
@@ -349,7 +349,7 @@ const HERBS = [
   [0.36, 0.46, 0.3],
   [0.62, 0.58, 0.36],
 ];
-function herbBunch(ctx, x, yTop, z, seed, room, len = 0.3) {
+export function herbBunch(ctx, x, yTop, z, seed, room, len = 0.3) {
   const wb = ctx.wb;
   const rng = new RNG(seed);
   const tint = rng.pick(HERBS);
@@ -439,14 +439,14 @@ function scales(ctx, x, y, z, rot, room) {
 }
 
 // Cuenco de madera (con algo dentro: fill = [material, tinte]).
-function bowl(ctx, x, y, z, r, room, fill) {
+export function bowl(ctx, x, y, z, r, room, fill) {
   const wb = ctx.wb;
   wb.cylinder('wooddark', x, y, z, r * 0.6, r, r * 0.55, 8, { ao: false, capBot: true, room });
   if (fill) wb.cylinder(fill[0], x, y + r * 0.4, z, r * 0.92, r * 0.92, 0.01, 8, { ao: false, capTop: true, room, tint: fill[1], grime: false });
 }
 
 // Arca de madera con herrajes.
-function chest(ctx, x, y, z, rot, room, w = 1.1) {
+export function chest(ctx, x, y, z, rot, room, w = 1.1) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
     wb.box('wooddark', -w / 2, 0, -0.28, w / 2, 0.5, 0.28, { faces: 'tnsew', aoH: 0.5, room });
@@ -458,7 +458,7 @@ function chest(ctx, x, y, z, rot, room, w = 1.1) {
 }
 
 // Tabla con una imagen pintada (un santo) y su repisa con velas.
-function saint(ctx, side, x, y, z, room, seed, cloth = 'clothBlue') {
+export function saint(ctx, side, x, y, z, room, seed, cloth = 'clothBlue') {
   const wb = ctx.wb;
   wb.at(x, 0, z, ROT[side], () => {
     wb.box('wooddark', -0.32, y, 0, 0.32, y + 0.85, 0.05, { ao: false, room });
