@@ -805,18 +805,22 @@ export function buildFillers(ctx, S, L) {
   block(62, -84, 72, -68);
   block(64, -100, 72, -84, { skip: true });
   // sureste: detrás de la capilla y hasta la muralla sur
-  block(42, 22, 50, 31, { front: 'n' });
-  block(50, 22, 58, 31, { front: 'n', lit: true });
-  block(58, 21, 66, 31, { front: 'n' });
-  block(66, 21, 72, 31, { front: 'n' });
-  block(24, 42, 36, 50, { front: 'w' });
+  // (entre éstas y el curtidor, el callejón ciego; la de la pasarela, la del
+  // palomero, la del secadero y la estrecha del rincón, en level_tejados.js)
+  block(42, 22, 51, 31, { front: 'n' });
+  block(50, 22, 58, 31, { front: 'n', lit: true, skip: true });
+  block(61, 21, 66, 30, { front: 'n', skip: true });
+  block(64, 21, 72, 30, { front: 'n' });
+  // (la del pellejero y la de los vecinos, por las que se pasa a los
+  // tejados: level_tejados.js)
+  block(24, 42, 36, 50, { front: 'w', skip: true });
   block(24, 50, 36, 58, { front: 'w', burned: true });
-  block(36, 42, 48, 50);
+  block(36, 42, 48, 50, { skip: true });
   block(36, 50, 48, 58);
-  block(48, 31, 60, 44, { lit: true });
-  block(60, 31, 72, 44);
-  block(48, 44, 60, 58);
-  block(60, 44, 72, 58, { burned: true });
+  block(48, 31, 60, 44, { lit: true, skip: true });
+  block(61, 30, 72, 44);
+  block(48, 50, 61, 58);
+  block(61, 44, 72, 58, { burned: true });
   block(38.5, 31, 48, 42);
 
   // murallas que faltaban: oeste (del castillo a la puerta sur), sur y este

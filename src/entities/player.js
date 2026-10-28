@@ -235,6 +235,7 @@ export class Player {
   spawn(x, y, z, yaw) {
     this.body.pos.set(x, y, z);
     this.body.vy = 0;
+    this.groundY = y;
     this.visY = y;
     this.yaw = yaw;
     this.vx = this.vz = 0;
@@ -1133,10 +1134,14 @@ export class Player {
     }
     if (faceTarget !== null) this.yaw = dampAngle(this.yaw, faceTarget, turnRate, dt);
 
-    // física (y golpe al aterrizar tras una caída)
+    // física (y golpe al aterrizar tras una caída: de lo alto que se cayó,
+    // lo que diga el juego; ver Game.playerLanded)
     const airVy = this.body.grounded ? 0 : this.body.vy || 0;
+    const wasAir = !this.body.grounded;
+    if (!wasAir) this.groundY = this.body.pos.y;
     moveBody(g.world.col, this.body, this.vx * dt, this.vz * dt, dt);
     if (airVy < -5.5 && this.body.grounded && g.state === 'play') g.audio && g.audio.play('land', this.pos, { v: -airVy });
+    if (wasAir && this.body.grounded && g.playerLanded) g.playerLanded((this.groundY ?? this.body.pos.y) - this.body.pos.y);
 
     // escudo arriba/abajo
     this.blockW = damp(this.blockW, this.blocking ? 1 : 0, 16, dt);

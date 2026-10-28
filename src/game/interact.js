@@ -11,7 +11,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 const glowTex = () => getTexture('glow');
 
 // ------------------------------------------------------------ mallas
-function doorLeaf(w, h, mat, hAt = null) {
+function doorLeaf(w, h, mat, hAt = null, mark = null) {
   const g = new THREE.Group();
   if (mat === 'irongate' || mat === 'grate') {
     const iron = objMat('iron');
@@ -94,6 +94,21 @@ function doorLeaf(w, h, mat, hAt = null) {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.015, 4, 8), iron);
   ring.position.set(w * 0.85, h * 0.48, 0.07);
   g.add(ring);
+  // la cruz de cal de la casa de un muerto, pintada a brochazos por fuera
+  if (mark === 'cross') {
+    const lime = objMat('plaster', { tint: 0xf2efe6 });
+    for (const [x, y, sw, sh, r] of [
+      [w * 0.5, h * 0.6, 0.075, 1.0, 0.02],
+      [w * 0.51, h * 0.58, 0.05, 0.86, -0.03],
+      [w * 0.5, h * 0.71, 0.62, 0.075, -0.04],
+      [w * 0.49, h * 0.705, 0.5, 0.05, 0.03],
+    ]) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sw, sh, 0.008), lime);
+      m.position.set(x, y, 0.066);
+      m.rotation.z = r;
+      g.add(m);
+    }
+  }
   return g;
 }
 
@@ -663,7 +678,7 @@ export class Interactables {
           for (const side of [-1, 1]) {
             const pivot = new THREE.Group();
             pivot.position.set(side * (s.w / 2 - inset), 0, off);
-            const leaf = doorLeaf(lw, s.h, s.mat, archH(side < 0 ? -(s.w / 2 - inset) : s.w / 2 - inset - lw));
+            const leaf = doorLeaf(lw, s.h, s.mat, archH(side < 0 ? -(s.w / 2 - inset) : s.w / 2 - inset - lw), s.mark);
             if (side > 0) leaf.position.x = -lw;
             pivot.add(leaf);
             pivot.userData.side = side;
@@ -674,7 +689,7 @@ export class Interactables {
           const lw = s.w - 2 * inset;
           const pivot = new THREE.Group();
           pivot.position.set(slides ? -s.w / 2 : hinge * (s.w / 2 - inset), 0, off);
-          const leaf = doorLeaf(lw, s.h, s.mat, archH(-s.w / 2 + inset));
+          const leaf = doorLeaf(lw, s.h, s.mat, archH(-s.w / 2 + inset), s.mark);
           if (hinge > 0 && !slides) leaf.position.x = -lw;
           pivot.add(leaf);
           it.obj.add(pivot);
@@ -696,6 +711,11 @@ export class Interactables {
         if (s.lock && s.lock.type === 'boards') {
           it.boards = boardsOverDoor(s.w, s.h);
           it.boards.position.x = -s.w / 2;
+          // (inner: clavadas por dentro, por el lado de -z local)
+          if (s.lock.inner) {
+            it.boards.rotation.y = Math.PI;
+            it.boards.position.x = s.w / 2;
+          }
           it.obj.add(it.boards);
         }
         if (s.lit) this.bakeLight(it);
@@ -1372,9 +1392,16 @@ export class Interactables {
           g.audio && g.audio.play('locked', it);
         }
       } else if (L.type === 'boards') {
-        if (inv.has('palanca')) openIt('Arrancas los tablones con la palanca.', 'boards');
+        // (side: sólo se arranca desde ese lado, como una tranca; desde el
+        // otro no se alcanza: la barricada de los Pellejeros, apuntalada desde
+        // las Curtidurías. msg/shut: lo que se dice al abrir y si no se puede)
+        const n = it.axis === 'x' ? p.pos.z - it.z : p.pos.x - it.x;
+        if (L.side && Math.sign(n) !== L.side) {
+          g.ui.toast(MSG[L.front] || MSG.boarded, 5);
+          g.audio && g.audio.play('locked', it);
+        } else if (inv.has('palanca')) openIt(MSG[L.msg] || 'Arrancas los tablones con la palanca.', 'boards');
         else {
-          g.ui.toast(MSG.boarded);
+          g.ui.toast(MSG[L.shut] || MSG.boarded);
           g.audio && g.audio.play('locked', it);
         }
       } else if (L.type === 'grate') {

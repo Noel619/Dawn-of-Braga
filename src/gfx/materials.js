@@ -51,6 +51,8 @@ export const MAT_DEFS = {
   rope: { tex: 'rope', uv: 2.2 },
   // la Plañidera: mortaja y encaje con un leve fulgor frío, piel de muerta
   shroud: { tex: 'shroud', uv: 1.2, emissive: 0x7f94b8, emissiveIntensity: 0.16 },
+  // la mortaja de los muertos de la manzana: lienzo sucio, sin fulgor
+  mortaja: { tex: 'shroud', uv: 1.5, color: 0xa39a86 },
   lace: { tex: 'lace', uv: 3.0, emissive: 0x7f94b8, emissiveIntensity: 0.12 },
   skinPale: { tex: 'skinPale', uv: 2.0 },
   mossstone: { tex: 'mossstone', uv: 0.5 },

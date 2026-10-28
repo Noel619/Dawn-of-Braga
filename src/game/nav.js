@@ -26,7 +26,7 @@ export class NavGrid {
   // transitable por mala que sea la alineación con la rejilla); vale también
   // para cajas giradas.
   block(b, lim = null) {
-    if (b.tag === 'floor' || (b.tag === 'door' && !b.navSolid) || !b.enabled || b.camOnly) return;
+    if (b.ramp || b.tag === 'floor' || (b.tag === 'door' && !b.navSolid) || !b.enabled || b.camOnly) return;
     const fy = this.floorY((b.minx + b.maxx) / 2, (b.minz + b.maxz) / 2);
     if (fy === null) return;
     if (!(b.maxy > fy + 0.65 && b.miny < fy + 1.7)) return;
@@ -275,7 +275,7 @@ export class LayerNav {
         // celda (en una escalera, su peldaño; el de al lado ya es otra altura)
         cand.length = 0;
         for (const b of q) {
-          if (b.camOnly || b.tag === 'block' || (b.tag === 'door' && !b.navSolid)) continue;
+          if (b.ramp || b.camOnly || b.tag === 'block' || (b.tag === 'door' && !b.navSolid)) continue;
           if (b.maxy < this.yMin || b.maxy > this.yMax) continue;
           if (col.overlapXZ(b, x, z, 0.06)) cand.push(b.maxy);
         }
@@ -292,11 +292,11 @@ export class LayerNav {
           for (const b of q) {
             // (enterrada en otra caja —el suelo bajo el primer peldaño de una
             // escalera—: no se pisa)
-            if (b.miny < y - 0.01 && b.maxy > y + 0.01 && !b.camOnly && b.tag !== 'block' && !(b.tag === 'door' && !b.navSolid) && col.overlapXZ(b, x, z, 0.04)) {
+            if (b.miny < y - 0.01 && b.maxy > y + 0.01 && !b.ramp && !b.camOnly && b.tag !== 'block' && !(b.tag === 'door' && !b.navSolid) && col.overlapXZ(b, x, z, 0.04)) {
               free = false;
               break;
             }
-            if (b.camOnly || b.tag === 'floor' || (b.tag === 'door' && !b.navSolid)) continue;
+            if (b.ramp || b.camOnly || b.tag === 'floor' || (b.tag === 'door' && !b.navSolid)) continue;
             if (!(b.maxy > y + low && b.miny < y + head)) continue;
             if (col.overlapXZ(b, x, z, pad - 0.01)) {
               free = false;

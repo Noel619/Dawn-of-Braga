@@ -16,6 +16,12 @@ function toLocal(o, x, z) {
 const _l = [0, 0];
 // Lo estrecho de una caja en planta (para distinguir un forjado de un mueble).
 const slabWidth = (b) => (b.obb ? 2 * Math.min(b.obb.hx, b.obb.hz) : Math.min(b.maxx - b.minx, b.maxz - b.minz));
+// La altura de una rampa en (x, z): de un extremo al otro, en línea recta.
+function rampTop(b, x, z) {
+  const R = b.ramp;
+  const y = R.y0 + ((R.axis === 'x' ? x : z) - R.u0) * R.k;
+  return y < R.lo ? R.lo : y > R.hi ? R.hi : y;
+}
 
 export class CollisionWorld {
   constructor() {
@@ -49,6 +55,21 @@ export class CollisionWorld {
   addCam(minx, miny, minz, maxx, maxy, maxz) {
     const b = this.add(minx, miny, minz, maxx, maxy, maxz, 'cam');
     b.camOnly = true;
+    b.noSight = true;
+    return b;
+  }
+
+  // Rampa: sólo suelo (un faldón de tejado por el que se anda, un montón de
+  // escombros), que sube a lo largo de 'axis' ('x' o 'z') de y0 (en u0) a y1
+  // (en u1). Se pisa a su altura en cada punto; no para a nadie de lado (eso
+  // lo hacen los muros), ni a la cámara, ni tapa la vista: los rayos y la
+  // navegación no la ven.
+  addRamp(x0, z0, x1, z1, axis, u0, y0, u1, y1) {
+    const lo = Math.min(y0, y1),
+      hi = Math.max(y0, y1);
+    const b = this.add(x0, lo - 0.3, z0, x1, hi, z1, 'ramp');
+    b.ramp = { axis, u0, y0, k: (y1 - y0) / (u1 - u0), lo, hi };
+    b.cam = false;
     b.noSight = true;
     return b;
   }
@@ -104,9 +125,10 @@ export class CollisionWorld {
     for (const b of list) {
       // (noBlock: sin las paredes invisibles, para lo que cae: los trozos, las
       // piedras; no se quedan flotando encima de ellas)
-      if (b.maxy > yMax || b.camOnly || (noBlock && (b.tag === 'block' || (b.noSight && b.cam === false)))) continue;
+      const top = b.ramp ? rampTop(b, x, z) : b.maxy;
+      if (top > yMax || b.camOnly || (noBlock && !b.ramp && (b.tag === 'block' || (b.noSight && b.cam === false)))) continue;
       if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
-      if (b.maxy > g) g = b.maxy;
+      if (top > g) g = top;
     }
     return g;
   }
@@ -118,7 +140,7 @@ export class CollisionWorld {
       const list = this.query(pos.x - r, pos.z - r, pos.x + r, pos.z + r, this._q2 || (this._q2 = []));
       let moved = false;
       for (const b of list) {
-        if (b.maxy <= feet + stepH || b.miny >= feet + height || b.camOnly) continue;
+        if (b.ramp || b.maxy <= feet + stepH || b.miny >= feet + height || b.camOnly) continue;
         if (b.obb) {
           if (this._resolveOBB(b.obb, pos, r)) moved = hit = true;
           continue;
@@ -195,7 +217,7 @@ export class CollisionWorld {
     let found = false;
     const iy = 1 / (dy || 1e-9);
     for (const b of list) {
-      if (filter && !filter(b)) continue;
+      if (b.ramp || (filter && !filter(b))) continue;
       let px, pz, qx, qz, x0, x1, z0, z1;
       if (b.obb) {
         const o = b.obb;
@@ -246,7 +268,7 @@ export class CollisionWorld {
     const list = this.query(x - r, z - r, x + r, z + r, this._q4 || (this._q4 = []));
     const r2 = r * r;
     for (const b of list) {
-      if (filter && !filter(b)) continue;
+      if (b.ramp || (filter && !filter(b))) continue;
       const dy = y < b.miny ? b.miny - y : y > b.maxy ? y - b.maxy : 0;
       if (dy >= r) continue;
       let px = x,

@@ -1306,6 +1306,32 @@ export class Game {
     this.fadeTarget = 0;
     this.audio.play('climb', p.pos);
   }
+  // Una caída desde lo alto, en los sitios donde se anda por los tejados
+  // (L.fallZones: los de los Pellejeros): de más de 3 m duele, y más cuanto
+  // más alto; de 5,5 m o más, mata (y no se libra uno de caer a la calle).
+  playerLanded(drop) {
+    const p = this.player;
+    if (drop < 3 || p.dead || this.state !== 'play') return;
+    const zs = this.level.L.fallZones;
+    if (!zs || !zs.some(([x0, z0, x1, z1]) => p.pos.x > x0 && p.pos.x < x1 && p.pos.z > z0 && p.pos.z < z1)) return;
+    this.camRig.shake(drop >= 5.5 ? 0.8 : 0.5);
+    this.input.rumble && this.input.rumble(1, 0.8, 220);
+    this.audio && this.audio.play('playerHurt', p.pos);
+    if (drop >= 5.5) {
+      this.hurtFlash = 1;
+      p.die();
+      return;
+    }
+    if (this.dev && this.dev.god) return;
+    p.hp = Math.max(1, p.hp - Math.round(p.maxHp * Math.min(0.6, 0.15 + (drop - 3) * 0.18)));
+    p.state = 'stagger';
+    p.stT = 0;
+    p.vx = p.vz = 0;
+    p.anim.play(p.clips.stagger, { blend: 0.04 });
+    p.flinchX && p.flinchX.kick(-8);
+    this.hurtFlash = Math.max(this.hurtFlash, 0.7);
+  }
+
   // La escalera de mano de la trampilla (sala de armas <-> cárcel).
   hatchMove(it) {
     const p = this.player;

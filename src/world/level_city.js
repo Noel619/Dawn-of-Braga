@@ -448,7 +448,8 @@ export function buildTanners(ctx, S, L) {
 
   // casas alrededor
   house(ctx, { x0: 42, z0: -21, x1: 48, z1: -12, front: 's', seed: 601, h: 6.5 });
-  house(ctx, { x0: 54, z0: 12, x1: 64, z1: 21, front: 'n', seed: 602, lit: true });
+  // (la del curtidor, por cuyo tejado hundido se baja de los tejados de los
+  // Pellejeros: level_tejados.js)
   house(ctx, { x0: 64, z0: 12, x1: 72, z1: 21, front: 'n', seed: 603 });
   // (la casa del canónigo, más grande, llega ahora hasta z = -32: level_canon.js)
   house(ctx, { x0: 55, z0: -40, x1: 64, z1: -32, front: 'e', seed: 605, burned: true });
@@ -805,7 +806,8 @@ export function buildFerraria(ctx, S, L) {
   house(ctx, { x0: -14, z0: 35.5, x1: -3.5, z1: 42, front: 's', seed: 803 });
   house(ctx, { x0: 3.5, z0: 33, x1: 14, z1: 42, front: 's', seed: 804, burned: true });
   ctx.endGroup();
-  house(ctx, { x0: 14, z0: 42, x1: 24, z1: 50, front: 'w', seed: 805 });
+  // (la de la esquina, enfrente de la fragua, es la del velatorio: con la
+  // manzana entera, en level_tejados.js)
   house(ctx, { x0: 14, z0: 50, x1: 24, z1: 58, front: 'w', seed: 806, lit: true });
   stoneWall(ctx, -26, 56, -14, 58, 5);
   // muralla sur con la puerta hundida (hasta la torre del oeste, que es hueca)

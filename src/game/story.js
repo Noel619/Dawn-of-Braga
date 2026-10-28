@@ -265,6 +265,63 @@ Madre, arranqué las tablas del pasadizo para no ir a buscarte. No las vuelvas a
 
 Lo hago ahora, mientras todavía soy yo.`,
   },
+  velatorio: {
+    title: 'Escrito con carbón en el muro del velatorio',
+    text: `(Nombres, uno debajo de otro, con letras distintas. Al lado de cada uno, una cruz.)
+
+Vasco, el pellejero viejo. El martes de la campana.
+Mor, su mujer. El miércoles.
+La niña de Aldonza, que no tenía nombre todavía.
+Gonzalo, el aprendiz del curtidor. El jueves.
+Pedro Anes, que bajó a por agua y no volvió entero.
+Joana, la de los cueros.
+
+(Debajo, con otra letra, más grande:)
+
+Los hemos lavado y cosido con hilo doble, y atados por si acaso. Que Dios nos perdone si no está bien hecho.
+
+(Y más abajo, torcido:)
+
+SE MUEVEN`,
+  },
+  vecinos: {
+    title: 'Papel en la mesa del sobrado',
+    text: `Lo dejo escrito por si vuelve Fernán de la muralla y no nos encuentra.
+
+Estamos todos en el sobrado de los Anes: los del pellejero, los del curtidor, Tomé el de la fragua, mi madre y yo. Hemos subido la escalera y hemos tapado la trampilla con el arcón.
+
+Abajo, en el velatorio, rascan. Toda la noche. Se oye el hilo, cómo se rompe.
+
+Esta tarde han roto la pared del pellejero. Ya están en su taller. Hemos tumbado el armario contra el boquete de arriba.
+
+Tomé dice que por los tejados se llega al palomar, que allí hay grano y agua de lluvia, y que desde allí se baja a las Curtidurías, detrás de la barricada. Mañana, con luz, nos vamos.
+
+Aldonza`,
+  },
+  desvan: {
+    title: 'Escrito con carbón en una viga del desván',
+    text: `(Una flecha, dibujada con carbón, apunta a la puerta del secadero.)
+
+Por aquí. Al secadero, y por la escalera de tablas, al palomar. Del palomar, por la cumbrera de al lado y el tablón, al tejado del curtidor.
+
+No corráis. Los de las mortajas no ven: oyen.
+
+Los cuervos sí ven.
+
+Tomé`,
+  },
+  aprendiz: {
+    title: 'Rayado en la pared del palomar',
+    text: `(Con la punta de algo de hierro, en la cal, letras grandes de quien no sabe escribir bien.)
+
+TOME DE LA FRAGUA
+
+Los demas se fueron por el tablon. Yo me quede con la piedra porque maese Lourenço me dijo que no la soltara.
+
+Entran por la ventana. Son muchos. Tienen tres ojos.
+
+Si la encuentras afila lo que lleves y bajate de los tejados. No te pares.`,
+  },
   herrero: {
     title: 'Libro de cuentas del herrero',
     text: `Doce cotas de la guarnición para remendar. En tres había carne dentro. No de muerto: carne que crecía, cosida a las anillas, caliente.
@@ -705,6 +762,14 @@ export const MSG = {
   lockedKey: (k) => `Cerrada con llave. Necesitas: ${k}.`,
   barred: 'Está atrancada desde el otro lado.',
   boarded: 'La puerta está cegada con tablones clavados. Necesitas algo para arrancarlos.',
+  velatorioShut: 'La puerta no cede: la han clavado por dentro. Con algo de hierro se podría hacer palanca.',
+  velatorioOpen: 'Metes la palanca entre la hoja y el marco y empujas. Por dentro saltan, una a una, las tablas clavadas.',
+  desvanSube: 'Subes por la escala al desván.',
+  desvanBaja: 'Bajas por la escala al sobrado.',
+  palomarSube: 'Subes por la escala al palomar.',
+  palomarBaja: 'Bajas por la escala al desván del palomero.',
+  curtidorSube: 'Subes por la escala al desván.',
+  curtidorBaja: 'Bajas por la escala al sobrado del curtidor.',
   torreSurDoor: 'La puerta de la torre está atrancada por dentro. Arriba no se oye nada.',
   grate: 'Una reja de hierro cierra la escalera. El torno que la mueve no tiene manivela.',
   grateDown: 'Encajas la manivela y giras el torno. La reja baja chirriando por su ranura hasta perderse en el suelo.',
@@ -848,6 +913,18 @@ export const AREA_NAMES = {
   patio_lena: 'Patio de la leña',
   ferraria: 'Calle de la Herrería',
   smithy: 'Fragua de maese Lourenço',
+  velatorio: 'La casa del velatorio',
+  pellejero: 'Casa del pellejero',
+  pellejero_alto: 'Sobrado del pellejero',
+  vecinos: 'El sobrado de los vecinos',
+  desvan_cueros: 'El desván de los cueros',
+  secadero: 'El secadero',
+  palomero: 'El desván del palomero',
+  palomar: 'El palomar',
+  tejados: 'Los tejados de los Pellejeros',
+  curtidor: 'Casa del curtidor',
+  curtidor_alto: 'Sobrado del curtidor',
+  curtidor_desvan: 'Desván del curtidor',
   souto_house: 'Casa tapiada',
   souto_alta: 'Sobrado de la casa tapiada',
   pasadizo: 'Pasadizo del Soto',

@@ -955,26 +955,59 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
   const uc = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
   const half = (alongX ? z1 - z0 : x1 - x0) / 2;
   const slope = (yRidge - yEave) / half;
-  const ue = half + ov,
-    ye = yEave - ov * slope;
+  // (ovs: el vuelo de cada alero, [el de menos, el de más], si no es el mismo:
+  // contra el muro de una casa más alta, sin vuelo)
+  const ovs = o.ovs ?? [ov, ov];
+  const ueOf = (sg) => half + ovs[sg > 0 ? 1 : 0],
+    yeOf = (sg) => yEave - ovs[sg > 0 ? 1 : 0] * slope;
   // grueso medido en vertical (el faldón es inclinado)
   const tv = th * Math.sqrt(1 + slope * slope);
   const P = (sv, y, u) => (alongX ? new THREE.Vector3(sv, y, uc + u) : new THREE.Vector3(uc + u, y, sv));
   // en 'z' (s -> z, u -> x) se invierte el sentido de giro
   const q = (m, a, b, c, d, opt) => (alongX ? wb.quad(m, a, b, c, d, opt) : wb.quad(m, d, c, b, a, opt));
+  // (underRoom: la cara de abajo, de la sala que cubre: un desván, que la
+  // ilumine su luz)
   const top = { ao: false, sub: 2.2, tint: o.tint },
-    bot = { ao: false, sub: 3, tint: [0.5, 0.47, 0.44] },
+    bot = { ao: false, sub: 3, tint: [0.5, 0.47, 0.44], room: o.underRoom },
     edge = { ao: false, sub: 3, tint: [0.58, 0.52, 0.46] };
+  // holes: huecos en los faldones (las tejas hundidas): { side: 1 | -1 (el
+  // faldón de más o el de menos), s0, s1 (a lo largo de la cumbrera, en
+  // coordenadas del mundo), u0, u1 (desde la cumbrera hacia el alero) }. El
+  // faldón se parte en trozos alrededor y el hueco lleva su canto.
+  const Y = (u) => yRidge - u * slope;
   for (const sg of [1, -1]) {
-    // faldón (arriba), su cara de abajo y el canto del alero
-    if (sg > 0) {
-      q(mat, P(sA, ye, ue), P(sB, ye, ue), P(sB, yRidge, 0), P(sA, yRidge, 0), top);
-      q(under, P(sA, yRidge - tv, 0), P(sB, yRidge - tv, 0), P(sB, ye - tv, ue), P(sA, ye - tv, ue), bot);
-      q('wooddark', P(sA, ye - tv, ue), P(sB, ye - tv, ue), P(sB, ye, ue), P(sA, ye, ue), edge);
-    } else {
-      q(mat, P(sB, ye, -ue), P(sA, ye, -ue), P(sA, yRidge, 0), P(sB, yRidge, 0), top);
-      q(under, P(sB, yRidge - tv, 0), P(sA, yRidge - tv, 0), P(sA, ye - tv, -ue), P(sB, ye - tv, -ue), bot);
-      q('wooddark', P(sB, ye - tv, -ue), P(sA, ye - tv, -ue), P(sA, ye, -ue), P(sB, ye, -ue), edge);
+    const ue = ueOf(sg),
+      ye = yeOf(sg);
+    const hs = (o.holes ?? []).filter((h) => h.side === sg).map((h) => [h.s0, h.u0, h.s1, h.u1]);
+    for (const [s0, u0, s1, u1] of hs.length ? subtractRects([sA, 0, sB, ue], hs) : [[sA, 0, sB, ue]]) {
+      const ya = Y(u0),
+        yb = Y(u1);
+      // faldón (arriba) y su cara de abajo
+      if (sg > 0) {
+        q(mat, P(s0, yb, u1), P(s1, yb, u1), P(s1, ya, u0), P(s0, ya, u0), top);
+        q(under, P(s0, ya - tv, u0), P(s1, ya - tv, u0), P(s1, yb - tv, u1), P(s0, yb - tv, u1), bot);
+      } else {
+        q(mat, P(s1, yb, -u1), P(s0, yb, -u1), P(s0, ya, -u0), P(s1, ya, -u0), top);
+        q(under, P(s1, ya - tv, -u0), P(s0, ya - tv, -u0), P(s0, yb - tv, -u1), P(s1, yb - tv, -u1), bot);
+      }
+      // el canto del alero
+      if (u1 < ue - 1e-6) continue;
+      if (sg > 0) q('wooddark', P(s0, ye - tv, ue), P(s1, ye - tv, ue), P(s1, ye, ue), P(s0, ye, ue), edge);
+      else q('wooddark', P(s1, ye - tv, -ue), P(s0, ye - tv, -ue), P(s0, ye, -ue), P(s1, ye, -ue), edge);
+    }
+    // el canto de cada hueco (el grueso de las tejas y las tablas)
+    for (const [s0, u0, s1, u1] of hs) {
+      const ya = Y(u0),
+        yb = Y(u1),
+        a = sg * u0,
+        b = sg * u1;
+      const e = { ...edge, tint: [0.42, 0.38, 0.34] };
+      // (todos miran hacia dentro del hueco)
+      const cut = (p0, p1, p2, p3) => (sg > 0 ? q('wooddark', p3, p2, p1, p0, e) : q('wooddark', p0, p1, p2, p3, e));
+      cut(P(s1, ya - tv, a), P(s0, ya - tv, a), P(s0, ya, a), P(s1, ya, a));
+      cut(P(s0, yb - tv, b), P(s1, yb - tv, b), P(s1, yb, b), P(s0, yb, b));
+      cut(P(s0, ya - tv, a), P(s0, yb - tv, b), P(s0, yb, b), P(s0, ya, a));
+      cut(P(s1, yb - tv, b), P(s1, ya - tv, a), P(s1, ya, a), P(s1, yb, b));
     }
   }
   // tablas de remate en los hastiales (el canto inclinado de los faldones)
@@ -983,12 +1016,21 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
     [sB, 1],
   ]) {
     if (open[out < 0 ? 0 : 1]) continue;
-    const B1 = P(sv, ye - tv, ue),
-      T1 = P(sv, ye, ue),
+    // (hasta donde llegue el faldón por ese hastial: un hueco que llega a él
+    // se lleva también la tabla)
+    const reach = (sg) => {
+      let u = ueOf(sg);
+      for (const h of o.holes ?? []) if (h.side === sg && (out < 0 ? h.s0 <= sv + 1e-3 : h.s1 >= sv - 1e-3)) u = Math.min(u, h.u0);
+      return u;
+    };
+    const ue = reach(1),
+      uen = reach(-1);
+    const B1 = P(sv, Y(ue) - tv, ue),
+      T1 = P(sv, Y(ue), ue),
       T2 = P(sv, yRidge, 0),
       B2 = P(sv, yRidge - tv, 0),
-      B1n = P(sv, ye - tv, -ue),
-      T1n = P(sv, ye, -ue);
+      B1n = P(sv, Y(uen) - tv, -uen),
+      T1n = P(sv, Y(uen), -uen);
     if (out < 0) {
       q('wooddark', B1, T1, T2, B2, edge);
       q('wooddark', B2, T2, T1n, B1n, edge);
@@ -1001,8 +1043,12 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
   const rw = 0.17;
   const rA = sA - (open[0] ? 0 : 0.02),
     rB = sB + (open[1] ? 0 : 0.02);
-  if (alongX) wb.box(mat, rA, yRidge - 0.06, uc - rw, rB, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
-  else wb.box(mat, uc - rw, yRidge - 0.06, rA, uc + rw, yRidge + 0.15, rB, { ao: false, faces: 'tnsewb', tint: o.tint });
+  // (partida donde un hueco llega a la cumbrera)
+  const cuts = (o.holes ?? []).filter((h) => h.u0 < rw).map((h) => [h.s0, -1, h.s1, 1]);
+  for (const [a0, , a1] of subtractRects([rA, -1, rB, 1], cuts)) {
+    if (alongX) wb.box(mat, a0, yRidge - 0.06, uc - rw, a1, yRidge + 0.15, uc + rw, { ao: false, faces: 'tnsewb', tint: o.tint });
+    else wb.box(mat, uc - rw, yRidge - 0.06, a0, uc + rw, yRidge + 0.15, a1, { ao: false, faces: 'tnsewb', tint: o.tint });
+  }
   // hastiales de piedra (por fuera y por dentro). gables: [extremo de
   // menos, extremo de más], cada uno false (sin hastial: ya hay un muro más
   // alto) o { y0, t } (desde qué altura y con qué grueso: sobre una fachada,
@@ -1221,7 +1267,7 @@ export function windowAt(ctx, x, y, w, h, o, rng) {
 // hay ventana (la carrera y las aspas de antes cruzaban las ventanas).
 // wins: centros de las ventanas (0,7 m de ancho, de g1 + 0,9 a g1 + 1,95);
 // braces: hacia dónde va la tornapunta de cada paño (0: sin ella).
-function timberFrame(ctx, L, g1, h, wins, braces) {
+export function timberFrame(ctx, L, g1, h, wins, braces) {
   const wb = ctx.wb;
   const T = { ao: false, sub: 3 };
   const pw = 0.1,
