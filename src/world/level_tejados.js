@@ -1189,6 +1189,9 @@ function buildSecadero(ctx, S, L) {
       wb.pop();
     }
   }
+  // un cuervo cebado, posado en lo alto de un bastidor (y otros dos, en el
+  // remate del palomar y en el hastial del curtidor: entities/cuervo.js)
+  L.enemies.push({ type: 'cuervo', x: 57.4, y: Y + 2.4, z: 48.41, yaw: -2.5, idle: 'perch', id: 'e_cuervo_secadero', guard: [47.5, 39.5, 61.5, 50.5] });
   // el farol de la puerta del palomar, encendido (lo dejaron así)
   P.lantern(ctx, PA.door.x + 0.95, PA.F + 2.2, PA.z1, 0, true);
 
@@ -1321,6 +1324,9 @@ function buildPalomero(ctx, S, L) {
   ctx.col.add(BN.a0, R.F - 0.3, R.z0 - 0.02, BN.a1, R.F - 0.08, I.z0);
   const fallen = { side: 1, s0: BS.z, s1: R.z1 + 0.31, u0: BS.a0 - xc, u1: 5.41 };
   solidGableRoof(ctx, R.x0, R.z0, R.x1, R.z1, R.h, R.ridge, 'z', { overhang: 0.4, gableOverhang: 0.3, thick: 0.2, wallT: T, gables: [false, false], underRoom: room, cam: false, holes: [fallen] });
+  // en la punta de la cumbrera, sobre el boquete del hastial, un cuervo
+  // cebado: guarda el tejado quemado
+  L.enemies.push({ type: 'cuervo', x: (R.x0 + R.x1) / 2, y: R.ridge + 0.25, z: R.z0 - 0.15, yaw: Math.PI, idle: 'perch', id: 'e_cuervo_palomar', guard: [53, 18.5, 64.5, 30.2] });
   roofTruss(ctx, R, room, 'z', [31.9, 34.2], { tieY: 10.75, holes: [[BS.a0 - 0.15, BS.z - 0.15, R.x1 + 0.5, R.z1 + 0.4]] });
   // la puerta del sur (a la que ya no se llega): el cerco y la hoja, abierta
   frame(ctx, 's', D.x, R.z1, D.w, R.F, R.F + D.h, T, { room, sill: false, innerSill: false });
@@ -1584,6 +1590,7 @@ function buildDovecote(ctx, S, L) {
   wb.box('iron', Dv.x - 0.02, Dv.top + RH + 0.15, Dv.z - 0.02, Dv.x + 0.02, Dv.top + RH + 0.75, Dv.z + 0.02, { ao: false });
   wb.box('iron', Dv.x - 0.02, Dv.top + RH + 0.5, Dv.z - 0.2, Dv.x + 0.02, Dv.top + RH + 0.54, Dv.z + 0.2, { ao: false });
   ctx.col.add(O.x0, Dv.top, O.z0, O.x1, Dv.top + RH, O.z1).cam = true;
+
 
   // ---- dentro: los nidales en los muros, el nido de los cuervos, el
   // aprendiz
@@ -1890,6 +1897,9 @@ function buildCurtidor(ctx, S, L) {
   roofTruss(ctx, R, top, 'x', [59.6, 61.9], { tieY: 8.15, holes: [[Hh.x0 - 0.1, hz0 - 0.1, Hh.x1 + 0.1, hz1 + 0.1]] });
   steppedGable(ctx, R, 'x', R.x0, 1);
   steppedGable(ctx, R, 'x', R.x1, -1);
+  // en lo alto del hastial del oeste, un cuervo cebado: guarda el tejado
+  // quemado y el del curtidor
+  L.enemies.push({ type: 'cuervo', x: R.x0 + 0.14, y: R.ridge + 0.63, z: zc, yaw: 0.2, idle: 'perch', id: 'e_cuervo_curtidor', guard: [53, 11.5, 64.5, 31] });
   // lo que se pisa del tejado (por el norte, se cae uno a las Curtidurías);
   // contra la casa del este, más alta, no se pasa
   roofRamps(ctx, R, 'x', { ovs, s: [R.x0 + 0.3, R.x1 - 0.3], holes: [[Hh.x0 - 0.15, hz0 - 0.15, Hh.x1 + 0.15, hz1 + 0.25]] });

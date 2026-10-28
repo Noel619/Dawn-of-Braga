@@ -964,6 +964,24 @@ const GEN = {
       set(o, c[0], c[1], c[2]);
     });
   },
+  // Plumas de cuervo: hileras de plumas montadas unas sobre otras (la punta
+  // redondeada con el borde algo más claro, el cañón en medio), negras con
+  // un brillo azul verdoso que va y viene.
+  feathers() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const row = Math.floor(y / 8);
+      const xo = ((x + (row & 1) * 4) % 8) - 3.5,
+        yo = y % 8;
+      const edge = Math.hypot(xo / 4, (yo - 2.5) / 5.5);
+      const st = fbm2(x / 1, y / 6, 2, 0, 451);
+      let k = 0.55 + st * 0.5;
+      if (Math.abs(xo) < 0.6) k *= 1.22;
+      if (edge > 0.8 && edge < 1.02) k *= 1.4;
+      const sh = Math.max(0, Math.sin((x + y * 0.6) * 0.35 + fbm2(x / 8, y / 8, 2, 4, 452) * 3)) * 0.5;
+      set(o, (24 + 4 * sh) * k, (26 + 16 * sh) * k, (32 + 26 * sh) * k);
+    });
+  },
   // Canas: mechones grises y blancos.
   hairGrey() {
     const S = 32;

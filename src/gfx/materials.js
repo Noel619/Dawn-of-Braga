@@ -53,6 +53,11 @@ export const MAT_DEFS = {
   shroud: { tex: 'shroud', uv: 1.2, emissive: 0x7f94b8, emissiveIntensity: 0.16 },
   // la mortaja de los muertos de la manzana: lienzo sucio, sin fulgor
   mortaja: { tex: 'shroud', uv: 1.5, color: 0xa39a86 },
+  // el cuervo cebado: las plumas, la piel pelada del pescuezo y la pechuga,
+  // el pico y las patas
+  feathers: { tex: 'feathers', uv: 1.8, phong: { specular: 0x405070, shininess: 26 } },
+  crowSkin: { tex: 'skinPale', uv: 2.0, color: 0xb08c86 },
+  beak: { tex: 'bone', uv: 1.6, color: 0x2c2826, phong: { specular: 0x6a6a6a, shininess: 40 } },
   lace: { tex: 'lace', uv: 3.0, emissive: 0x7f94b8, emissiveIntensity: 0.12 },
   skinPale: { tex: 'skinPale', uv: 2.0 },
   mossstone: { tex: 'mossstone', uv: 0.5 },

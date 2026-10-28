@@ -3089,6 +3089,24 @@ export class Audio {
         }
         break;
       }
+      // el cuervo cebado: grazna como un cuervo, pero hondo y roto, del
+      // tamaño que tiene; antes del picado, un chillido
+      case 'cuervo':
+        if (kind === 'alert' || kind === 'idle') {
+          const n = kind === 'alert' ? 3 : 1 + Math.floor(Math.random() * 2);
+          const base = rnd(300, 380) * pv;
+          for (let i = 0; i < n; i++) V({ dt: i * rnd(0.3, 0.4), dur: rnd(0.24, 0.34), f0: base * rnd(0.95, 1.05), f1: base * 0.66, vowel: 'a', v1: 'o', gain: kind === 'alert' ? 0.3 : 0.2, vib: 26, vibD: 50, breath: 0.5, a: 0.012, rasp: 0.85, jit: 30, dist: 1 });
+        } else if (kind === 'attack') {
+          V({ dur: 0.7, f0: 520 * pv, f1: 760 * pv, vowel: 'a', v1: 'e', gain: 0.28, vib: 30, vibD: 80, breath: 0.5, a: 0.01, rasp: 0.9, jit: 40, dist: 1 });
+          this.noise(d, t + 0.1, 0.5, { type: 'lowpass', f0: 1200, gain: 0.18, a: 0.02, buf: this.pink });
+        } else if (kind === 'hurt') {
+          V({ dur: 0.22, f0: 640 * pv, f1: 420, vowel: 'e', gain: 0.24, breath: 0.5, a: 0.005, rasp: 0.8, dist: 1 });
+          for (let i = 0; i < 4; i++) this.noise(d, t + i * 0.07, 0.06, { type: 'lowpass', f0: 1000, gain: 0.14, a: 0.01, buf: this.pink });
+        } else if (kind === 'death') {
+          V({ dur: 1.1, f0: 420 * pv, f1: 140, vowel: 'a', v1: 'o', gain: 0.26, vib: 20, vibD: 60, breath: 0.6, a: 0.01, rasp: 0.85, dist: 1 });
+          for (let i = 0; i < 6; i++) this.noise(d, t + 0.1 + i * 0.09, 0.07, { type: 'lowpass', f0: 900, gain: 0.12, a: 0.01, buf: this.pink });
+        }
+        break;
       // el Enrodado: aúlla con la garganta rota; la rueda cruje
       case 'enrodado':
         if (kind === 'alert') {
@@ -3220,6 +3238,8 @@ export class Audio {
       if (Math.random() < 0.3) this.boneCrack(d, t + 0.02, 0.5);
     }
     else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
+    // el aletazo del cuervo cebado: el aire que mueve
+    else if (v === 'cuervo') this.noise(d, t, 0.22, { type: 'lowpass', f0: 700, f1: 260, gain: 0.32, a: 0.05, buf: this.pink });
     // el Amortajado cae con los dos pies a la vez, y el lienzo roza
     else if (v === 'amortajado') {
       this.tone(d, t, 0.12, { f0: 80, f1: 42, gain: 0.4 });
