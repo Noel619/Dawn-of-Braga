@@ -89,7 +89,11 @@ de la Catedral con la pira, la catedral (nave central con bóveda de cañón sob
 coronas de velas colgadas, naves laterales con techo de vigas, arquerías, vidrieras, bancos con fieles muertos, y
 un tejado con su grueso), el claustro (galerías con un tejado de faldones que se unen en limas, sus pares y faroles), la
 Calle de los Pellejeros y las curtidurías, la Calle de la Muralla con su adarve y la Torre del Postigo, la Calle de la
-Herrería con la fragua (rótulo del yunque, fuego visible desde la calle y taller decorado por dentro), y bajo la
+Herrería con la fragua de maese Lourenço (una nave a doble altura, negra de hollín hasta las vigas, que se abre a la
+plaza por un portalón: la forja con su campana y su cañón echando chispas, el fuelle de dos cámaras, el yunque sobre
+su tajo, la pila de templar, la clavera; el herrero, de rodillas, con el brazo metido en las brasas; las cotas de la
+guarnición con carne cosida a las anillas, apiladas para el fuego; la vivienda en un sobrado, San Eloy con sus
+exvotos y, fuera, el soportal con el potro de herrar y la mula muerta dentro), y bajo la
 catedral, todo abovedado: la escalera de la cripta, que baja por debajo de la nave bajo una bóveda en rampa; la sala
 de llegada, de tres naves sobre columnas y arcos; el osario, un pasillo de calaveras con bóveda de huesos, fajones y
 nichos con sus huesos; el templo romano de *Bracara Augusta*, una basílica de tres naves (arquerías sobre pilares,
@@ -118,6 +122,20 @@ la cerca de la ciudad cerrando cada barrio. Los altares de descanso están en lu
 guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torre de la coracha y la cripta. Las casas que se pueden visitar
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
+
+**Los tejados de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
+la plaza no se mueve. Para llegar detrás hay que cruzar la manzana por dentro y por arriba, por donde se fueron los
+vecinos: la casa del velatorio, enfrente de la fragua (la puerta, clavada por dentro, se arranca con la palanca;
+dentro, los muertos de la manzana amortajados en sus andas, entre velas consumidas); por un boquete en la medianera,
+el taller del pellejero, con las pieles colgadas de las vigas, y su escalera al sobrado; por otro boquete, el sobrado
+donde se escondían los vecinos, y una escala al desván de los cueros, con las pieles en filas y la luna entrando por
+las celosías; el secadero, una azotea con sus bastidores; por los escombros de la esquina hundida, el desván del
+palomero y, por una escala, el palomar, donde murió el aprendiz del herrero con la piedra de afilar bendita; por el
+boquete del hastial, el tejado de una casa quemada, que se anda por las tejas rodeando el hundimiento; y el tejado
+del curtidor, por cuyo agujero se cae a su desván. La escala, el sobrado, el taller, la tranca de la puerta, y las
+Curtidurías: desde allí, la barricada se viene abajo con la palanca (el atajo de vuelta). Sin pasarelas: se va
+escalando, por las tejas y por los desvanes. En los tejados, caer más de tres metros hiere, y más de cinco y medio,
+mata.
 
 **La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
@@ -472,6 +490,20 @@ se encadena el anterior.
 - **Enrodado** (las catacumbas): el reo quebrado en la rueda y enterrado con ella, trenzado entre los radios. Se echa
   atrás, aúlla y embiste rodando en línea recta (esquivado, se estrella contra el muro y queda aturdido); se retira
   rodando para coger carrerilla, da zarpazos con el brazo suelto y se vuelca encima.
+- **Amortajado** (las casas de los Pellejeros): uno de los muertos de la manzana, cosido en su mortaja con hilo doble
+  y atado con cordeles; la cara se le marca en el lienzo, con la boca cosida. No ve: oye (andando lejos de él no se
+  entera; corriendo, rodando o peleando cerca, sí; un ruido fuerte, como una puerta clavada que se arranca, lo
+  despierta, y si dejas de hacer ruido va a donde te oyó y se queda escuchando). Se incorpora de sus andas tieso, de
+  una pieza, girando sobre los talones, y anda a saltos con las piernas atadas. Cabezazo y desplome: se deja caer de
+  bruces entero, como un árbol (tirado, todo golpe es crítico), y se levanta igual. A media vida revienta la mortaja:
+  le salen los brazos, con las uñas como clavos, la boca se le rasga hasta las orejas, y da zarpazos y dentelladas al
+  salto.
+- **Cuervo cebado** (los tejados de los Pellejeros): un cuervo que comió tanto de los muertos que creció como un perro,
+  con dos metros de alas, la pechuga pelada, el pescuezo desnudo lleno de bultos, tres pares de ojos y el pico
+  ganchudo como una reja. Se posa en lo alto y mira (estos sí ven; bajo techo, no): grazna, se tira, vuela en círculos
+  sobre ti, se queda en el aire con las alas arriba y chilla, y se lanza en picado. Ruédate o desvíalo: desviado, cae
+  aturdido al tejado, a merced del golpe de gracia. El golpe empuja (cuidado con el alero). A veces se posa cerca y
+  da picotazos.
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -666,6 +698,9 @@ src/
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
+                        level_tejados.js: los tejados de los Pellejeros, de la casa del velatorio a la del curtidor
+                        (las casas por dentro, los desvanes, el secadero, el palomar y los tejados que se andan,
+                        con sus rampas de tejas); level_fragua.js: la fragua del maestre Lourenço;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
                         sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
@@ -692,6 +727,8 @@ src/
                         tonelero infectado (sus posturas: llorar, encogerse, morderse el brazo, ahorcado); leonor.js,
                         Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido;
                         custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la Emparedada y el Enrodado;
+                        amortajado.js, el Amortajado (y los muertos amortajados que se hornean en el escenario);
+                        cuervo.js, el cuervo cebado, que se lleva solo en el aire (posarse, rondar, el picado);
                         turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, la estatua de la
                         sima de la cisterna: dónde está y cómo se carga; idol_statue_geo.js, su geometría,
                         esculpida como los colosos, que se calcula en un hilo de fondo (idol_worker.js), e

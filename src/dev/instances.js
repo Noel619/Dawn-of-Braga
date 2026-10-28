@@ -26,6 +26,9 @@ export const INSTANCES = [
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
   { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
   { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
+  { id: 'velatorio', name: 'Los tejados · la puerta del velatorio, con la palanca (el Amortajado)' },
+  { id: 'secadero', name: 'Los tejados · el secadero (el primer cuervo)' },
+  { id: 'quemado', name: 'Los tejados · el tejado quemado (dos cuervos)' },
   { id: 'tablon', name: 'La casa tapiada · el pasadizo, con un tablón' },
   { id: 'tonelero', name: 'La casa del tonelero · Miguel, en su rincón' },
   { id: 'ahorcado', name: 'La casa del tonelero · Miguel, ahorcado' },
@@ -196,6 +199,23 @@ export async function goInstance(g, id) {
       return true;
     }
     // el sobrado de la casa tapiada, ante el hueco del pasadizo, con un tablón
+    // los tejados de los Pellejeros: ante la puerta clavada del velatorio,
+    // con la palanca (al arrancarla, el de las andas lo oye y se levanta)
+    case 'velatorio':
+      prepare(g, { 'door:d_velatorio': false, 'door:d_curtidor': false, 'door:d_barricada': false });
+      if (!g.inventory.has('palanca')) g.inventory.add('palanca');
+      place(g, 12.6, 0, 46, Math.PI / 2);
+      return true;
+    // en la puerta del desván de los cueros, saliendo al secadero
+    case 'secadero':
+      prepare(g, { 'door:d_velatorio': true });
+      place(g, 47.3, 6.1, 46, Math.PI / 2);
+      return true;
+    // en el boquete del hastial del palomero, saliendo al tejado quemado
+    case 'quemado':
+      prepare(g, { 'door:d_velatorio': true });
+      place(g, 57.5, 8.7, 31.2, Math.PI);
+      return true;
     case 'tablon': {
       prepare(g, { 'door:d_souto': true, 'souto:tabla': false, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });
       if (!g.inventory.has('tablon')) g.inventory.add('tablon');

@@ -796,14 +796,16 @@ function buildVecinos(ctx, S, L) {
   wb.box('planks', 0, 0.02, -0.04, D.w - 0.08, D.h - 0.04, 0, { ao: false, room: up, tint: [0.7, 0.62, 0.54] });
   wb.pop();
   {
-    const y = R.h - 0.2;
-    wb.box('timber', R.x1 - 0.3, y - 0.12, D.z - 0.09, R.x1 + 1.15, y + 0.08, D.z + 0.09, { ao: false, faces: 'tnsewb' });
-    strut(wb, V(R.x1 + 0.02, y - 0.9, D.z), V(R.x1 + 0.8, y - 0.1, D.z), 0.06);
-    wb.cylinder('wooddark', R.x1 + 0.95, y - 0.32, D.z, 0.12, 0.12, 0.05, 9, { ao: false, capTop: true, capBot: true });
-    wb.box('iron', R.x1 + 0.93, y - 0.24, D.z - 0.015, R.x1 + 0.97, y - 0.12, D.z + 0.015, { ao: false });
-    wb.box('rope', R.x1 + 1.06, F2 + 0.25, D.z - 0.012, R.x1 + 1.084, y - 0.32, D.z + 0.012, { ao: false });
+    // (a un lado de la puerta, que el cabo no cuelgue delante)
+    const y = R.h - 0.2,
+      hz = D.z - D.w / 2 - 0.45;
+    wb.box('timber', R.x1 - 0.3, y - 0.12, hz - 0.09, R.x1 + 1.15, y + 0.08, hz + 0.09, { ao: false, faces: 'tnsewb' });
+    strut(wb, V(R.x1 + 0.02, y - 0.9, hz), V(R.x1 + 0.8, y - 0.1, hz), 0.06);
+    wb.cylinder('wooddark', R.x1 + 0.95, y - 0.32, hz, 0.12, 0.12, 0.05, 9, { ao: false, capTop: true, capBot: true });
+    wb.box('iron', R.x1 + 0.93, y - 0.24, hz - 0.015, R.x1 + 0.97, y - 0.12, hz + 0.015, { ao: false });
+    wb.box('rope', R.x1 + 1.06, F2 + 0.25, hz - 0.012, R.x1 + 1.084, y - 0.32, hz + 0.012, { ao: false });
     // (el gancho y una piel enganchada, a medio subir)
-    wb.box('iron', R.x1 + 1.05, F2 + 0.15, D.z - 0.02, R.x1 + 1.09, F2 + 0.26, D.z + 0.02, { ao: false });
+    wb.box('iron', R.x1 + 1.05, F2 + 0.15, hz - 0.02, R.x1 + 1.09, F2 + 0.26, hz + 0.02, { ao: false });
   }
 
   // ---- el sobrado de los vecinos: los jergones por el suelo, la mesa con
@@ -951,7 +953,7 @@ function buildVecinos(ctx, S, L) {
     [42.0, 49.0],
     [45.4, 49.0],
   ])
-    ctx.lights.push({ x, y: 7.45, z, r: 0.55, g: 0.62, b: 0.85, radius: 3.0, intensity: 0.45, room: up });
+    ctx.lights.push({ x, y: 7.45, z, r: 0.55, g: 0.62, b: 0.85, radius: 3.4, intensity: 0.58, room: up });
   ctx.lights.push({ x: I.x1 - 0.6, y: 7.0, z: D.z, r: 0.6, g: 0.66, b: 0.88, radius: 4.5, intensity: 0.55, room: up });
   wb.setRoom(null);
   // la nota de los vecinos que se fueron por los tejados, clavada en la viga
