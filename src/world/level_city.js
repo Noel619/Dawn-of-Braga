@@ -367,11 +367,14 @@ export function buildPelames(ctx, S, L) {
   // (al norte, el pasaje de los Tintoreros; al sur, la puerta atrancada del corral)
   houseRow(ctx, { axis: 'x', from: 24.5, to: 42, line: -3, side: 'n', seed: 501 });
   houseRow(ctx, { axis: 'x', from: 23, to: 36, line: 3, side: 's', seed: 502, opts: (r, i) => ({ lit: i === 0 }) });
-  // barricada (se arranca con la palanca)
+  // la barricada: clavada y apuntalada por el lado de las Curtidurías (los
+  // soldados), desde aquí no se mueve; desde allí, con la palanca, se le
+  // quitan los puntales y cae: el atajo de vuelta. (Se llega allí por las
+  // casas y los tejados: level_tejados.js)
   P.cart(ctx, 30.5, 0, -1.6, 1.6, { brokenWheel: true });
   P.barrel(ctx, 29.8, 0, 2.2);
   P.sacks(ctx, 31, 0, 1.5, 3, 13);
-  L.interact.push({ kind: 'door', id: 'd_barricada', x: 28.3, y: 0, z: 0, w: 6, h: 2.6, axis: 'z', lock: { type: 'boards' }, mat: 'barricade', hinge: 0 });
+  L.interact.push({ kind: 'door', id: 'd_barricada', x: 28.3, y: 0, z: 0, w: 6, h: 2.6, axis: 'z', lock: { type: 'boards', side: 1, front: 'barricadaFrente', msg: 'barricadaCae', shut: 'barricadaPuntales' }, mat: 'barricade', hinge: 0 });
   bakeCorpse(wb, 25.5, 0, 1.6, 0.5, 'sit', 'soldier', 8);
   P.decal(ctx, 25.5, 0.02, 1.2, 1.4);
   P.wallTorch(ctx, 20, 2.8, -3, 's');

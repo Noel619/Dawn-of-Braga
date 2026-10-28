@@ -128,11 +128,32 @@ function barMesh(w) {
   return g;
 }
 
-function barricadeMesh(w, h) {
+// (props: los puntales que la sostienen por ese lado, -1 o 1 en x local)
+function barricadeMesh(w, h, props = 0) {
   const g = new THREE.Group();
   const wood = objMat('planks');
   const dark = objMat('wooddark');
   const planks = [];
+  if (props) {
+    // tres puntales en diagonal, del suelo a lo alto de la barricada, con
+    // su calzo, y un travesaño clavado que los une
+    for (const z of [-w * 0.36, 0.02, w * 0.36]) {
+      const L = Math.hypot(1.5, h - 0.35);
+      const p = new THREE.Mesh(new THREE.BoxGeometry(0.15, L, 0.15), dark);
+      p.position.set(props * 0.85, (h - 0.35) / 2, z);
+      p.rotation.z = props * Math.atan2(1.5, h - 0.35);
+      g.add(p);
+      planks.push(p);
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.26), wood);
+      c.position.set(props * 1.55, 0.06, z);
+      g.add(c);
+      planks.push(c);
+    }
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, w * 0.85), wood);
+    t.position.set(props * 0.75, h * 0.42, 0);
+    g.add(t);
+    planks.push(t);
+  }
   for (let i = 0; i < 9; i++) {
     const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, w * (0.8 + Math.random() * 0.3)), i % 3 ? wood : dark);
     b.position.set((Math.random() - 0.5) * 0.3, 0.3 + (i / 9) * (h - 0.4), 0);
@@ -280,6 +301,29 @@ function itemMesh(id) {
     t.rotation.x = 0.6;
     g.add(b, t);
     g.rotation.y = 0.7;
+  } else if (id === 'piedra') {
+    // la piedra de afilar del aprendiz: un canto alargado, gastado por el
+    // medio de tanto pasarle hierro, atado con su tira de cuero, sobre el
+    // trapo del aceite
+    const stone = objMat('rock', { tint: 0xa8a49a });
+    for (const [x, r] of [
+      [-0.085, 0.05],
+      [0, 0.042],
+      [0.085, 0.05],
+    ]) {
+      const s = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.09, 6), stone);
+      s.rotation.z = Math.PI / 2;
+      s.scale.set(0.6, 1, 1);
+      s.position.set(x, 0.035, 0);
+      g.add(s);
+    }
+    const strap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.11), leather);
+    strap.position.set(0.06, 0.036, 0);
+    const rag = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.012, 0.2), objMat('clothWhite', { tint: 0x5a4a38 }));
+    rag.position.set(0.02, -0.006, 0.02);
+    rag.rotation.y = 0.35;
+    g.add(strap, rag);
+    g.rotation.y = -0.4;
   } else if (id === 'llave_claustro') {
     const r = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.018, 4, 8), bronze);
     const s = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.22), bronze);
@@ -649,7 +693,7 @@ export class Interactables {
     if (s.kind === 'door') {
       const hinge = s.hinge ?? -1;
       if (s.mat === 'barricade') {
-        it.obj = barricadeMesh(s.w, s.h);
+        it.obj = barricadeMesh(s.w, s.h, s.lock && s.lock.side);
         it.obj.position.set(s.x, s.y, s.z);
         if (s.axis === 'x') it.obj.rotation.y = Math.PI / 2;
       } else {
@@ -1118,7 +1162,7 @@ export class Interactables {
     if (it.mat === 'barricade') {
       const pl = it.obj.userData.planks;
       pl.forEach((p, i) => {
-        p.rotation.z = -k * (1.2 + (i % 3) * 0.3);
+        p.rotation.z = (p.userData.rz0 ?? (p.userData.rz0 = p.rotation.z)) - k * (1.2 + (i % 3) * 0.3);
         p.position.y = Math.max(0.05, p.userData.y0 ?? (p.userData.y0 = p.position.y)) * (1 - k) + k * 0.08 * (i % 3);
         p.position.x = (p.userData.x0 ?? (p.userData.x0 = p.position.x)) + k * (0.4 + (i % 4) * 0.3) * (i % 2 ? 1 : -1);
       });

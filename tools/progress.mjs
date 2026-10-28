@@ -37,12 +37,66 @@ await p.evaluate(() => {
     }
     return { ok: false, id, prompt: g.promptTarget && g.promptTarget.id, pos: [g.player.pos.x, g.player.pos.y, g.player.pos.z], st: g.state, ps: g.player.state, modal: g.ui.stack.map(s=>s.name), dead: g.player.dead };
   };
+  window.__toast = () => [...document.querySelectorAll('.toast')].map((t) => t.textContent).slice(-1)[0];
+  // usa el interactuable id desde donde esté el jugador (de cara a él)
+  window.__useHere = (id) => {
+    const it = g.interact.list.find((i) => i.id === id);
+    if (!it) return 'NO EXISTE ' + id;
+    const pl = g.player;
+    pl.yaw = Math.atan2((it.ix ?? it.x) - pl.pos.x, (it.iz ?? it.z) - pl.pos.z);
+    __sim(0.1);
+    if (!g.promptTarget || g.promptTarget.id !== id) return { ok: false, id, prompt: g.promptTarget && g.promptTarget.id, pos: [pl.pos.x, pl.pos.y, pl.pos.z].map((v) => +v.toFixed(2)) };
+    __sim(0.2, [], ['KeyE']);
+    for (let k = 0; k < 3; k++) if (g.ui.modal) { __sim(0.5); __sim(0.1, [], ['KeyE']); }
+    __sim(2.5);
+    return { ok: true, id, done: it.done, toast: __toast(), pos: [pl.pos.x, pl.pos.y, pl.pos.z].map((v) => +v.toFixed(2)) };
+  };
+  // anda de punto en punto (x, z), como con el stick; dice dónde se atasca
+  window.__walk = (pts) => {
+    const pl = g.player;
+    for (const [x, z] of pts) {
+      let t = 0;
+      for (; t < 20; t += 1 / 30) {
+        const dx = x - pl.pos.x, dz = z - pl.pos.z, d = Math.hypot(dx, dz);
+        if (d < 0.25) break;
+        pl.autoDir = { x: dx / d, z: dz / d, m: 1 };
+        __noEnemies();
+        g.update(1 / 30);
+      }
+      pl.autoDir = null;
+      if (t >= 20 || pl.dead) return { stuck: [x, z], pos: [pl.pos.x, pl.pos.y, pl.pos.z].map((v) => +v.toFixed(2)), dead: pl.dead };
+    }
+    __sim(0.3);
+    return { pos: [pl.pos.x, pl.pos.y, pl.pos.z].map((v) => +v.toFixed(2)), zone: g.zone && g.zone.id, hp: Math.round(pl.hp) };
+  };
 });
 const steps = [
   "__use('i_espada')", "__use('i_escudo')", "__use('n_carcelero')", "__use('d_carcel')",
-  "__use('d_barricada')",
-  "__use('d_fragua')", "__use('i_palanca')", "__use('i_piedra')", "__use('n_herrero')",
-  "__use('d_barricada')", "__use('d_souto')", "__use('i_ampolla1')", "__use('n_madre')",
+  // la barricada de los Pelames, desde este lado, ni con la palanca se mueve
+  "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
+  "__use('i_palanca')", "__use('n_herrero')",
+  "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
+  // los tejados de los Pellejeros, andando: la puerta del velatorio (clavada
+  // por dentro: la palanca), el boquete al taller del pellejero, su escalera
+  // y su sobrado, el boquete al de los vecinos y su escala al desván
+  "(()=>{const g=__game;g.player.spawn(12.2,0,46,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_velatorio')})()",
+  "__walk([[15.5,46],[15.5,47.2]])", "__useHere('n_velatorio')",
+  "__walk([[19,46.3],[22.9,46.6],[25.3,46.6],[25.5,49],[29.9,49.05],[30.8,48],[33.5,44],[35.3,43.6],[37.2,43.6],[40.6,46.2]])", "__useHere('n_vecinos')",
+  "__walk([[41.2,47],[42,48.3]])", "__useHere('h_desvan_abajo')",
+  // el desván de los cueros (la nota de Tomé, al fondo), el secadero, los
+  // escombros hasta el desván del palomero y el palomar: la piedra de afilar
+  "__walk([[40,47.2],[37.8,46]])", "__useHere('n_desvan')",
+  "__walk([[40,47.2],[44.5,46],[47.3,46],[48.8,46],[50.5,45],[58.9,44.8],[58.9,41.2],[58.9,40.2],[58.3,38.6],[56.2,37]])",
+  "__useHere('h_palomar_abajo')", "__useHere('i_piedra')", "__walk([[56.5,35]])", "__useHere('n_aprendiz')", "__useHere('h_palomar_arriba')",
+  // por el boquete del hastial, al tejado quemado; rodeando su hundimiento,
+  // al del curtidor, y por su agujero al desván; la escala, la escalera y la
+  // tranca de la puerta: las Curtidurías
+  "__walk([[57.5,31.2],[57.5,30.5],[57.5,29.4],[57.5,27.4],[60.2,27],[60.2,23],[57.5,21.6],[57.5,19.2],[57.5,17.6],[57.5,16.6],[60,16],[62,16.6]])",
+  "__useHere('h_curtidor_arriba')",
+  "__walk([[58.2,17.9],[55,17.6],[54.95,16.4],[54.95,12.9],[57,12.9],[59,12.9]])", "__useHere('d_curtidor')",
+  // y la barricada, desde detrás: se viene abajo (el atajo de vuelta)
+  "__walk([[59,11],[55,10],[45,0],[30,0]])", "__useHere('d_barricada')", "__walk([[20,0]])",
+  "__use('d_souto')", "__use('i_ampolla1')", "__use('n_madre')",
   "__use('a_praca')", "__use('a_castelo')",
   "__use('n_tabernero')", "__use('x_mesa_taberna')", "__use('n_tejedora')", "__use('n_panadero')", "__use('n_mozo')", "__use('i_ampolla3')", "__use('d_corral')",
   "__use('d_canon')", "__use('i_llave')", "__use('n_canonigo')",
