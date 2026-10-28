@@ -72,7 +72,7 @@ export function zapatero(ctx, L, h) {
   // ---- la cocina (detrás): el hogar apagado, la mesa puesta y el hijo
   P.hearth(ctx, I.x0 + 0.1, 0, 33.9, 'e', { room: r0, lit: true, w: 1.6, ceil: 3.8 });
   P.table(ctx, 23.2, 0, 33.7, 1.6, 0.85, Math.PI / 2);
-  P.stool(ctx, 22.5, 0, 33.2, { room: r0 });
+  P.stool(ctx, 22.5, 0, 33.2, { room: r0, tipped: true }); // (sin choque: en él se sienta el hijo)
   P.stool(ctx, 23.95, 0, 34.4, { room: r0, tipped: true });
   bowl(ctx, 23.05, 0.8, 33.3, 0.12, r0, ['water', [0.4, 0.1, 0.08]]);
   bowl(ctx, 23.35, 0.8, 34.15, 0.12, r0, ['water', [0.5, 0.42, 0.3]]);

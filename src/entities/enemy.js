@@ -156,7 +156,7 @@ export class Enemy {
     // (modo desarrollador: invisible para la IA)
     if (player.dead || (this.game.dev && this.game.dev.invisible)) return false;
     const T = this.T;
-    // (las que no ven, a su manera: el Amortajado oye)
+    // (las que perciben a su manera: T.perceive)
     if (T.perceive) return T.perceive(this, player);
     const dy = player.pos.y - this.pos.y;
     if (Math.abs(dy) > (this.state === 'ceiling' ? 5 : 3.2)) return false;
@@ -180,8 +180,8 @@ export class Enemy {
   alert() {
     if (this.aware) return;
     this.aware = true;
-    // (la que se levanta de algún sitio lo hace a su manera: el Amortajado,
-    // de sus andas)
+    // (la que despierta a su manera: T.wake; si devuelve true, se encarga
+    // ella de todo)
     if (this.T.wake && this.T.wake(this)) {
       this.game.audio && this.game.audio.enemyVoice(this, 'alert');
       this.game.onEnemyAlert && this.game.onEnemyAlert(this);
@@ -737,8 +737,8 @@ export class Enemy {
         break;
       }
       default:
-        // (los estados propios de una criatura: el Amortajado se levanta de
-        // sus andas, revienta la mortaja)
+        // (los estados propios de una criatura: el Coronado que te tiene
+        // agarrado)
         if (T.states && T.states[this.state] && T.states[this.state](this, dt, player, d) === false) move = false;
         break;
       case 'dead': {

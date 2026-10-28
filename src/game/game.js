@@ -1034,7 +1034,8 @@ export class Game {
 
   // Un ruido fuerte en (x, y, z), que se oye hasta r: una puerta clavada que
   // se arranca, una mesa que revienta. Lo oyen las criaturas que se guían
-  // por el oído (T.hearsNoise: el Amortajado) y van a ver qué ha sido.
+  // por el oído (T.hearsNoise) y van a ver qué ha sido; y el Físico, que lo
+  // oye todo.
   noise(x, y, z, r) {
     for (const e of this.enemies) {
       if (e.dead || e.aware || e.scripted || !e.T.hearsNoise) continue;

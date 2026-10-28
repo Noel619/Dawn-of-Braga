@@ -93,6 +93,7 @@ export function buildBarrio(ctx, S, L) {
   plazuela(ctx, S, L);
   levante(ctx, S, L);
   cordeleria(ctx, S, L);
+  vecinos(L);
   zonas(L);
 }
 
@@ -501,6 +502,31 @@ function cordeleria(ctx, S, L) {
     sides: { e: { low: 'wallstone' } },
     open: [{ side: 'e', lv: 0, at: 5.0, w: 1.3, h: 2.4, door: { id: 'd_cordeleria_atras', lock: { type: 'key', item: 'llave_cordeleria' } } }],
   });
+}
+
+// ------------------------------------------------------------ los vecinos
+// Los Coronados (los curados del Físico: entities/coronado.js) y los cuervos
+// cebados de los tejados (entities/cuervo.js).
+function vecinos(L) {
+  const y1 = P1,
+    y2 = P2;
+  L.enemies.push(
+    // el hijo del zapatero, sentado a la mesa de la cocina, ante su cuenco
+    { type: 'coronado', x: 22.4, y: 0, z: 33.2, yaw: Math.PI / 2, idle: 'sit', id: 'e_hijo_zapatero' },
+    // en la tintorería, entre las tinas, junto a la escalera
+    { type: 'coronado', x: 39.6, y: 0, z: 33.3, yaw: 0.3, idle: 'stand', id: 'e_coronado_tinte' },
+    // a la puerta de la Casa de los Inocentes, de cara a la plazuela,
+    // esperando a que le abran (si te ve cruzarla, el Físico lo sabrá)
+    { type: 'coronado', x: 48.2, y: 0, z: 45.0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_coronado_puerta' },
+    // dentro: en la sala de los inocentes, mirando por la reja, y en el
+    // desván, ante el banco de las coronas
+    { type: 'coronado', x: 58.0, y: y1, z: 35.1, yaw: Math.PI, idle: 'window', id: 'e_coronado_sala' },
+    { type: 'coronado', x: 55.25, y: y2, z: 37.35, yaw: Math.PI, idle: 'stand', id: 'e_coronado_desvan' },
+    // los cuervos: en la cumbrera del aguador (guarda los tejados del sur) y
+    // en la punta del palomar (los del levante y el boquete del palomero)
+    { type: 'cuervo', x: 41.75, y: 9.25, z: 54.5, yaw: -2.6, idle: 'perch', id: 'e_cuervo_aguador', guard: [33, 46, 50, 59] },
+    { type: 'cuervo', x: 66.5, y: 17.8, z: 35.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [49.5, 40, 73, 59] }
+  );
 }
 
 // ------------------------------------------------------------ zonas y mapa

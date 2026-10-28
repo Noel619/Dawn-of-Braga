@@ -26,9 +26,11 @@ export const INSTANCES = [
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
   { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
   { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
-  { id: 'velatorio', name: 'Los tejados · la puerta del velatorio, con la palanca (el Amortajado)' },
-  { id: 'secadero', name: 'Los tejados · el secadero (el primer cuervo)' },
-  { id: 'quemado', name: 'Los tejados · el tejado quemado (dos cuervos)' },
+  { id: 'porton', name: 'Los Pellejeros · el portón de la calleja, con la palanca' },
+  { id: 'cornisa', name: 'Los Pellejeros · la sala de la viuda, ante la cornisa' },
+  { id: 'tintoreria', name: 'Los Pellejeros · la puerta de la tintorería, con la llave' },
+  { id: 'pescante', name: 'Los Pellejeros · la puerta del pescante: a los tejados' },
+  { id: 'claraboya', name: 'Los Pellejeros · la claraboya de la Casa de los Inocentes' },
   { id: 'tablon', name: 'La casa tapiada · el pasadizo, con un tablón' },
   { id: 'tonelero', name: 'La casa del tonelero · Miguel, en su rincón' },
   { id: 'ahorcado', name: 'La casa del tonelero · Miguel, ahorcado' },
@@ -199,22 +201,33 @@ export async function goInstance(g, id) {
       return true;
     }
     // el sobrado de la casa tapiada, ante el hueco del pasadizo, con un tablón
-    // los tejados de los Pellejeros: ante la puerta clavada del velatorio,
-    // con la palanca (al arrancarla, el de las andas lo oye y se levanta)
-    case 'velatorio':
-      prepare(g, { 'door:d_velatorio': false, 'door:d_curtidor': false, 'door:d_barricada': false });
+    // el barrio de los Pellejeros: en la plaza de la Herrería, ante el portón
+    // clavado de la calleja, con la palanca
+    case 'porton':
+      prepare(g, { 'door:d_porton': false });
       if (!g.inventory.has('palanca')) g.inventory.add('palanca');
-      place(g, 12.6, 0, 46, Math.PI / 2);
+      place(g, 12.4, 0, 44, Math.PI / 2);
       return true;
-    // en la puerta del desván de los cueros, saliendo al secadero
-    case 'secadero':
-      prepare(g, { 'door:d_velatorio': true });
-      place(g, 47.3, 6.1, 46, Math.PI / 2);
+    // arriba, en la sala de la viuda, ante la ventana de la cornisa
+    case 'cornisa':
+      prepare(g, { 'door:d_porton': true });
+      place(g, 27.4, 4.05, 47.3, Math.PI);
       return true;
-    // en el boquete del hastial del palomero, saliendo al tejado quemado
-    case 'quemado':
-      prepare(g, { 'door:d_velatorio': true });
-      place(g, 57.5, 8.7, 31.2, Math.PI);
+    // en la plazuela, ante la puerta de la tintorería, con su llave
+    case 'tintoreria':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': false });
+      if (!g.inventory.has('llave_tinte')) g.inventory.add('llave_tinte');
+      place(g, 40, 0, 40.2, Math.PI);
+      return true;
+    // en el secadero de la tintorería, ante la puerta del pescante
+    case 'pescante':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true });
+      place(g, 35.2, 7.25, 34.1, -Math.PI / 2);
+      return true;
+    // en el tejado de la Casa de los Inocentes, junto a la claraboya
+    case 'claraboya':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true });
+      place(g, 58.5, 8.85, 40.9, -Math.PI / 2);
       return true;
     case 'tablon': {
       prepare(g, { 'door:d_souto': true, 'souto:tabla': false, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });

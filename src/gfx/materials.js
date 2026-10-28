@@ -51,10 +51,18 @@ export const MAT_DEFS = {
   rope: { tex: 'rope', uv: 2.2 },
   // la Plañidera: mortaja y encaje con un leve fulgor frío, piel de muerta
   shroud: { tex: 'shroud', uv: 1.2, emissive: 0x7f94b8, emissiveIntensity: 0.16 },
-  // la mortaja de los muertos de la manzana: lienzo sucio, sin fulgor
-  mortaja: { tex: 'shroud', uv: 1.5, color: 0xa39a86 },
   // el cuervo cebado: las plumas, la piel pelada del pescuezo y la pechuga,
   // el pico y las patas
+  // el Coronado: la piel de enfermo, el moratón del ojo cosido, el camisón
+  // de lino sucio (y su bajo, negro de arrastrarlo), las vendas, la sangre
+  // seca
+  coSkin: { tex: 'skinPale', uv: 2.0, color: 0xcfbcae },
+  coBruise: { tex: 'skinPale', uv: 2.0, color: 0x8a6474 },
+  coStubble: { tex: 'skinPale', uv: 2.0, color: 0x5e5450 },
+  coLinen: { tex: 'linen', uv: 1.4, color: 0xb2a68e },
+  coDirt: { tex: 'linen', uv: 1.4, color: 0x5c5044 },
+  coBandage: { tex: 'linen', uv: 1.4, color: 0xd8ceb6 },
+  coBlood: { tex: 'blood', uv: 0.5, color: 0xa65a4c },
   feathers: { tex: 'feathers', uv: 1.8, phong: { specular: 0x405070, shininess: 26 } },
   crowSkin: { tex: 'skinPale', uv: 2.0, color: 0xb08c86 },
   beak: { tex: 'bone', uv: 1.6, color: 0x2c2826, phong: { specular: 0x6a6a6a, shininess: 40 } },
