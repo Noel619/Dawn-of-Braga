@@ -11,6 +11,7 @@ import { CUSTODIO_TYPE } from './custodio.js';
 import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
 import { CAVADOR_TYPE, EMPAREDADA_TYPE, ENRODADO_TYPE } from './catacumbas.js';
+import { AMORTAJADO_TYPE } from './amortajado.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -1176,6 +1177,7 @@ export const TYPES = {
   cavador: CAVADOR_TYPE,
   emparedada: EMPAREDADA_TYPE,
   enrodado: ENRODADO_TYPE,
+  amortajado: AMORTAJADO_TYPE,
   guardianL: GUARDIAN_L,
   guardianR: GUARDIAN_R,
   turibulario: {

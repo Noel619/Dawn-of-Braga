@@ -1418,6 +1418,8 @@ export class Interactables {
         g.flags['door:' + it.id] = true;
         if (msg) g.ui.toast(msg);
         g.audio && g.audio.play(sound, { x: it.x, y: it.y, z: it.z });
+        // (arrancar tablones clavados se oye: lo que duerme cerca despierta)
+        if (sound === 'boards') g.noise(it.x, it.y, it.z, 9);
         p.playInteract('push');
         g.saveGame();
       };

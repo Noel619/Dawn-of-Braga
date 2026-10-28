@@ -3057,6 +3057,38 @@ export class Audio {
           this.bodyFall(d, t + 1.4, 1.5);
         } else if (kind === 'idle') this.whisper(d, t, 1.8, 0.1);
         break;
+      // el Amortajado: gime por la nariz tras la boca cosida (rasgado,
+      // chilla); crujen los cordeles y se rasga el lienzo
+      case 'amortajado': {
+        const torn = e.data && e.data.torn;
+        if (kind === 'alert') {
+          this.creak(d, t, 0.6, rnd(150, 200), 0.2);
+          V({ dt: 0.25, dur: 1.3, f0: 118 * pv, f1: 150 * pv, vowel: 'u', gain: 0.2, vib: 6, vibD: 25, breath: 0.9, a: 0.2, rasp: 0.6, jit: 25 });
+        } else if (kind === 'attack') {
+          if (torn) V({ dur: 0.55, f0: 330 * pv, f1: 250 * pv, vowel: 'a', v1: 'e', gain: 0.2, breath: 0.7, a: 0.02, rasp: 0.6, jit: 30 });
+          else V({ dur: 0.45, f0: 110 * pv, f1: 95, vowel: 'u', gain: 0.18, breath: 0.9, a: 0.02, rasp: 0.5 });
+          this.creak(d, t, 0.25, rnd(160, 220), 0.12);
+        } else if (kind === 'hurt') {
+          V({ dur: 0.3, f0: (torn ? 260 : 140) * pv, f1: 100, vowel: torn ? 'a' : 'u', gain: 0.18, breath: 0.8, a: 0.01, rasp: 0.4 });
+          this.noise(d, t, 0.12, { type: 'highpass', f0: 2200, gain: 0.12, a: 0.003 });
+        } else if (kind === 'death') {
+          V({ dur: 2.0, f0: (torn ? 220 : 130) * pv, f1: 60, vowel: torn ? 'a' : 'u', v1: 'o', gain: 0.2, vib: 4, vibD: 20, breath: 0.9, a: 0.05, rasp: 0.5 });
+          this.bodyFall(d, t + 0.75, 1.0);
+        } else if (kind === 'idle') {
+          if (Math.random() < 0.55) V({ dur: 1.4, f0: 100 * pv, f1: 92 * pv, vowel: 'u', gain: 0.08, vib: 3, vibD: 10, breath: 1.0, a: 0.4, rasp: 0.5, jit: 20 });
+          else this.creak(d, t, 0.7, rnd(150, 210), 0.12);
+        } else if (kind === 'slam') {
+          // se estrella de bruces contra el suelo
+          this.bodyFall(d, t, 1.3);
+          this.noise(d, t, 0.5, { type: 'lowpass', f0: 420, f1: 160, gain: 0.45, a: 0.004, buf: this.brown, rate: 2 });
+        } else if (kind === 'burst') {
+          // revientan los cordeles y el lienzo, y la boca se rasga: el chillido
+          for (let i = 0; i < 4; i++) this.creak(d, t + i * 0.09, 0.12, rnd(220, 320), 0.3);
+          this.noise(d, t + 0.4, 0.5, { type: 'highpass', f0: 1800, f1: 3600, gain: 0.32, a: 0.01 });
+          V({ dt: 0.5, dur: 1.4, f0: 300 * pv, f1: 520 * pv, vowel: 'a', v1: 'i', gain: 0.24, vib: 9, vibD: 60, breath: 0.6, a: 0.03, rasp: 0.7, jit: 40 });
+        }
+        break;
+      }
       // el Enrodado: aúlla con la garganta rota; la rueda cruje
       case 'enrodado':
         if (kind === 'alert') {
@@ -3188,6 +3220,12 @@ export class Audio {
       if (Math.random() < 0.3) this.boneCrack(d, t + 0.02, 0.5);
     }
     else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
+    // el Amortajado cae con los dos pies a la vez, y el lienzo roza
+    else if (v === 'amortajado') {
+      this.tone(d, t, 0.12, { f0: 80, f1: 42, gain: 0.4 });
+      this.noise(d, t, 0.08, { type: 'lowpass', f0: 600, gain: 0.3, a: 0.002, buf: this.brown, rate: 4 });
+      this.noise(d, t + 0.02, 0.2, { f0: 1500, f1: 900, q: 0.8, gain: 0.05, a: 0.03 });
+    }
     // la obra de la Emparedada, a rastras por la piedra
     else if (v === 'emparedada') {
       this.noise(d, t, 0.55, { type: 'lowpass', f0: 900, f1: 400, gain: 0.32, a: 0.05, buf: this.brown, rate: 3 });

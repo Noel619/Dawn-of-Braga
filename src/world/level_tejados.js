@@ -513,6 +513,8 @@ function buildVelatorio(ctx, S, L) {
       hz = -Math.cos(rot);
     for (const s of [-1, 1]) deathCandle(ctx, x + hx * 1.25 + Math.cos(rot) * s * 0.42, 0, z + hz * 1.25 - Math.sin(rot) * s * 0.42, room, i === 1 && s > 0, 0.12 + (((i * 7 + s * 3) % 5) + 5) % 5 * 0.03);
   });
+  // el que se levanta (al arrancar la puerta lo oye): entities/amortajado.js
+  L.enemies.push({ type: 'amortajado', x: 19.0, y: BIER_H, z: 43.75, yaw: 0, idle: 'bier', id: 'e_amort_velatorio' });
   // las andas vacías: la mortaja rajada de arriba abajo y los cordeles, por
   // el suelo
   {
@@ -694,6 +696,9 @@ function buildPellejero(ctx, S, L) {
     [33.5, 46.2, 4],
   ])
     hide(ctx, x, G1 - 0.22, z, Math.PI / 2 + 0.08 * (s - 2.5), 0.8, 1.05, 8100 + s, room);
+  // (entre las pieles colgadas, de pie, uno más: el de las andas vacías del
+  // velatorio, que se vino por el boquete y se quedó aquí, escuchando)
+  L.enemies.push({ type: 'amortajado', x: 31.55, y: 0, z: 46.75, yaw: -1.25, idle: 'listen', id: 'e_amort_pellejero' });
   // el banco con las cuchillas, los raspadores y la piedra de asentar
   P.table(ctx, 32.6, 0, I.z0 + 0.42, 1.8, 0.7, 0);
   for (let k = 0; k < 4; k++) wb.box('iron', 32.0 + k * 0.32, 0.8, I.z0 + 0.3, 32.06 + k * 0.32, 0.812, I.z0 + 0.55, { ao: false, room });
@@ -846,6 +851,17 @@ function buildVecinos(ctx, S, L) {
     wb.pop();
     P.sacks(ctx, x - 0.6, F1, z + 0.9, 3, 8210);
     ctx.col.add(x - 0.85, F1, z - 0.7, x + 0.85, F1 + 1.5, z + 0.7);
+  }
+  // el abuelo, que se les murió aquí arriba: lo amortajaron y lo tendieron en
+  // el suelo, sobre una sábana, con dos cabos de vela a la cabecera (se
+  // levanta: entities/amortajado.js)
+  {
+    const x = 39.35,
+      z = 43.2;
+    wb.box('linen', x - 1.05, F1, z - 0.42, x + 1.0, F1 + 0.015, z + 0.4, { ao: false, room, faces: 'tnsew', tint: [0.8, 0.77, 0.7] });
+    deathCandle(ctx, x + 1.2, F1, z - 0.3, room, false, 0.1);
+    deathCandle(ctx, x + 1.25, F1, z + 0.28, room, false, 0.16);
+    L.enemies.push({ type: 'amortajado', x, y: F1 + 0.015, z, yaw: -Math.PI / 2, idle: 'floor', id: 'e_amort_vecinos' });
   }
   // la cuna, vacía, y los juguetes: un caballo de madera, una muñeca de trapo
   cradleV(ctx, 40.4, F1, 49.05, 0.1, room);

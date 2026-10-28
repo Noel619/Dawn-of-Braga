@@ -156,6 +156,8 @@ export class Enemy {
     // (modo desarrollador: invisible para la IA)
     if (player.dead || (this.game.dev && this.game.dev.invisible)) return false;
     const T = this.T;
+    // (las que no ven, a su manera: el Amortajado oye)
+    if (T.perceive) return T.perceive(this, player);
     const dy = player.pos.y - this.pos.y;
     if (Math.abs(dy) > (this.state === 'ceiling' ? 5 : 3.2)) return false;
     const d = this.distTo(player.pos);
@@ -178,6 +180,13 @@ export class Enemy {
   alert() {
     if (this.aware) return;
     this.aware = true;
+    // (la que se levanta de algún sitio lo hace a su manera: el Amortajado,
+    // de sus andas)
+    if (this.T.wake && this.T.wake(this)) {
+      this.game.audio && this.game.audio.enemyVoice(this, 'alert');
+      this.game.onEnemyAlert && this.game.onEnemyAlert(this);
+      return;
+    }
     this.state = 'alert';
     this.stT = 0;
     if (this.T.clips.alert) this.anim.play(this.T.clips.alert, { blend: 0.15 });
@@ -727,6 +736,11 @@ export class Enemy {
         } else this.chaseTo(this.home.x, this.home.z, T.walk, dt, this.home.y);
         break;
       }
+      default:
+        // (los estados propios de una criatura: el Amortajado se levanta de
+        // sus andas, revienta la mortaja)
+        if (T.states && T.states[this.state] && T.states[this.state](this, dt, player, d) === false) move = false;
+        break;
       case 'dead': {
         this.vx = damp(this.vx, 0, 6, dt);
         this.vz = damp(this.vz, 0, 6, dt);
@@ -784,7 +798,9 @@ export class Enemy {
             }
           }
         }
-        moveBody(this.game.world.col, this.body, this.vx * dt, this.vz * dt, dt);
+        // (la que anda a saltos avanza en el aire, no en el suelo)
+        const mk = T.moveMul ? T.moveMul(this) : 1;
+        moveBody(this.game.world.col, this.body, this.vx * dt * mk, this.vz * dt * mk, dt);
       }
       // no atravesar al jugador (salvo si va por el techo); aunque vaya a
       // por otro (Henrique), al jugador tampoco lo atraviesa

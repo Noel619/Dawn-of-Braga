@@ -580,6 +580,7 @@ export class Breakables {
       for (const c of this.chunks.splice(0, this.chunks.length - 90)) g.scene.remove(c.m);
     }
     g.audio && g.audio.play(it.K.snd, { x: it.x, y: it.y + 1, z: it.z });
+    g.noise(it.x, it.y, it.z, stone ? 12 : 8);
     g.camRig.shake(stone ? 0.65 : 0.3);
     g.hitstop = Math.max(g.hitstop, 0.06);
     g.input.rumble(0.8, 0.8, 260);

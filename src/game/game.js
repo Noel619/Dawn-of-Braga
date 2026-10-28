@@ -1028,6 +1028,18 @@ export class Game {
     this.later(6400, () => this.respawn());
   }
 
+  // Un ruido fuerte en (x, y, z), que se oye hasta r: una puerta clavada que
+  // se arranca, una mesa que revienta. Lo oyen las criaturas que se guían
+  // por el oído (T.hearsNoise: el Amortajado) y van a ver qué ha sido.
+  noise(x, y, z, r) {
+    for (const e of this.enemies) {
+      if (e.dead || e.aware || e.scripted || !e.T.hearsNoise) continue;
+      if (Math.abs(e.pos.y - y) > 3 || Math.hypot(e.pos.x - x, e.pos.z - z) > r) continue;
+      e.data.heard = [x, y, z];
+      e.alert();
+    }
+  }
+
   onEnemyDeath(e) {
     if (this.lockTarget === e) this.lockTarget = null;
     // los Velados: cae uno y el otro enloquece; la pelea sigue con él
