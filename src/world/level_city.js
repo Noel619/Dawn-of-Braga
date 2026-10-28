@@ -451,7 +451,7 @@ export function buildTanners(ctx, S, L) {
 
   // casas alrededor
   house(ctx, { x0: 42, z0: -21, x1: 48, z1: -12, front: 's', seed: 601, h: 6.5 });
-  // (hasta el patio del Barbero: z = 22)
+  // (hasta el patio de la Casa de los Inocentes: z = 22)
   house(ctx, { x0: 54, z0: 12, x1: 64, z1: 22, front: 'n', seed: 602, lit: true });
   house(ctx, { x0: 64, z0: 12, x1: 72, z1: 21, front: 'n', seed: 603 });
   // (la casa del canónigo, más grande, llega ahora hasta z = -32: level_canon.js)

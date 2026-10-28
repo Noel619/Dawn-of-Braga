@@ -23,10 +23,13 @@ const COLORES = {
 };
 
 // ------------------------------------------------------------ el zapatero
-// Maese Afonso, zapatero. El Barbero le sangró a la mujer, que murió en la
-// cama de arriba; luego se llevó al hijo «para prepararlo» y se lo devolvió
-// con la corona de hierro. El padre lo ató en su cuarto; luego, en la cocina,
-// le sirvió la cena cada noche. Ahora el hijo sigue sentado a la mesa.
+// Maese Afonso, zapatero. La noche de la campana su mujer se arrodilló, y la
+// carne se la llevó en la cama de arriba; el físico ni la miró («ésa ya está
+// curada»). Al hijo, que estaba sano, le tomó el pulso, le miró los ojos y
+// dijo que era el caso más claro que había visto: se lo llevó «para curarlo»
+// y se lo devolvió con la corona de hierro. El padre lo ató en su cuarto;
+// luego, en la cocina, le sirvió la cena cada noche. Ahora el hijo sigue
+// sentado a la mesa.
 export function zapatero(ctx, L, h) {
   const wb = ctx.wb;
   const [r0, r1] = h.rooms;
@@ -107,9 +110,10 @@ export function zapatero(ctx, L, h) {
 
 // ------------------------------------------------------------ la viuda
 // Dona Inês, cerera, viuda. Hacía las velas de la capilla y de medio Braga.
-// Cuando el Barbero vino a «prepararla», se encerró en su alcoba, atrancó la
-// puerta y no volvió a abrir. Él reventó un tablero de la puerta a hachazos;
-// no pudo con la tranca. Ella sigue en la cama, con su vela encendida.
+// Cuando el físico vino a curarla (estaba sana), se encerró en su alcoba,
+// atrancó la puerta y no volvió a abrir. Él reventó un tablero de la puerta a
+// hachazos; no pudo con la tranca. Volvió muchas noches a hablarle por el
+// agujero, a leerle. Ella sigue en la cama, con su vela encendida.
 export function viuda(ctx, L, h) {
   const wb = ctx.wb;
   const [r0, r1] = h.rooms;
@@ -229,8 +233,9 @@ function cornisaBalcon(ctx, L) {
 }
 
 // ------------------------------------------------------------ la quemada
-// La casa de al lado de la viuda: el Barbero la quemó con los que había
-// dentro. Arriba, el suelo hundido; el tejado, abierto.
+// La casa de al lado de la viuda: los de dentro no se dejaron curar, y el
+// físico les aplicó lo último que dice Hipócrates, el fuego. Arriba, el suelo
+// hundido; el tejado, abierto.
 export function quemada(ctx, L, h) {
   const wb = ctx.wb;
   const [r0, r1] = h.rooms;
@@ -274,7 +279,7 @@ export function tintoreria(ctx, L, h) {
   // la mesa de doblar, con un paño a medio doblar y las tijeras
   P.table(ctx, 41.6, 0, 37.4, 1.8, 0.8, 0);
   wb.box('clothWhite', 41.0, 0.8, 37.15, 42.1, 0.86, 37.65, { ao: false, room: r0, grime: false, tint: C.anil });
-  // las campanillas del Barbero: entre las tinas, por donde se pasa
+  // las campanillas del Físico: entre las tinas, por donde se pasa
   campanillas(ctx, 37.75, 34.15, 37.75, 38.05, 0.35, r0);
   (L.bells || (L.bells = [])).push({ id: 'b_tinte', a: [37.75, 34.15], b: [37.75, 38.05], y: 0, room: r0 });
   luna(ctx, 36.5, 1.8, 37.9, r0, 0.35);

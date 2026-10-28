@@ -258,6 +258,10 @@ export function hueco(ctx, side, x, z, w, y0, y1, t, o = {}) {
     shutter(ctx, side, x, z, w, y0, y1, 1, 1.8, { tint: o.tint });
   } else if (sh === 'broken') {
     shutter(ctx, side, x, z, w, y0, y1, -1, 1.7, { tint: o.tint, droop: 0.35 });
+  } else if (sh === 'closed') {
+    // (cerradas por fuera: desde dentro se ven sus tablas por el hueco)
+    shutter(ctx, side, x, z, w, y0, y1, -1, 0.03, { tint: o.tint });
+    shutter(ctx, side, x, z, w, y0, y1, 1, 0.03, { tint: o.tint });
   } else if (sh === 'boarded') boardUp(ctx, side, x, z, w, [y0 + 0.2, y0 + (y1 - y0) * 0.5, y1 - 0.2], o.seed ?? Math.floor(x * 13 + z * 7));
   if (o.bars) {
     wb.at(x, 0, z, ROT[side], () => {
@@ -791,7 +795,7 @@ function hoja(ctx, side, x, z, w, y0, y1, t, kind, seed) {
       for (const yy of [0.5, h - 0.6]) wb.box('planks', -w / 2 - 0.2, yy - 0.1, 0.05, w / 2 + 0.2, yy + 0.1, 0.1, { ao: false, sub: 3, tint: [0.86, 0.8, 0.72] });
     }
     if (kind === 'cross') {
-      // la cruz de cal del Barbero, encima de los tablones
+      // la cruz de cal del Físico, encima de los tablones
       wb.box('plaster', -0.05, h * 0.25, 0.1, 0.05, h * 0.85, 0.105, { ao: false, faces: 's', tint: [1.15, 1.13, 1.08] });
       wb.box('plaster', -0.3, h * 0.6, 0.1, 0.3, h * 0.68, 0.105, { ao: false, faces: 's', tint: [1.15, 1.13, 1.08] });
     }

@@ -1,6 +1,6 @@
 // El atrezo del barrio de los Pellejeros: lo que hay en las casas de los
-// oficios (el zapatero, la cerera, el tintorero, el barbero, el cordelero) y
-// lo que dejó el Barbero (las cruces de cal, los cepos, las campanillas).
+// oficios (el zapatero, la cerera, el tintorero, el cordelero) y lo que dejó
+// el Físico (las cruces de cal, los cepos, las campanillas, los camastros).
 // Todo se dibuja en la sala que se le dé (room); las colisiones, aparte.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
@@ -257,10 +257,10 @@ export function rollos(ctx, x, y, z, rot, n, colors, room, seed = 1) {
   P.colOBB(ctx, x, z, 0.75, 0.6, rot, y, y + 0.15 + Math.ceil(n / 3) * 0.27);
 }
 
-// ------------------------------------------------------------ el Barbero
+// ------------------------------------------------------------ el Físico
 // La cuerda con campanillas, tendida a la altura de la espinilla entre dos
 // clavos: si se tropieza en ella, suenan (y viene). Sólo la cuerda y las
-// campanillas: lo que pasa al tocarla, en game/barbero.js.
+// campanillas: lo que pasa al tocarla, en game/fisico.js.
 export function campanillas(ctx, x0, z0, x1, z1, y, room) {
   const wb = ctx.wb;
   palo(wb, V(x0, y, z0), V(x1, y - 0.03, z1), 0.006, 'burlap', { room, round: true, tint: [0.7, 0.62, 0.5] });
@@ -325,23 +325,4 @@ export function camastro(ctx, x, y, z, rot, room, o = {}) {
     }
   });
   P.colOBB(ctx, x, z, 0.98, 0.46, rot, y, y + 0.6);
-}
-
-// La bacía de latón (la de afeitar, con la escotadura para el cuello),
-// colgada de su palomilla como rótulo, o en una repisa.
-export function bacia(wb, x, y, z, rot, s = 1, room = 'out') {
-  wb.at(x, y, z, rot, () => {
-    const pts = [
-      [0.001, 0.0],
-      [0.12, 0.0],
-      [0.17, 0.03],
-      [0.19, 0.07],
-      [0.32, 0.075],
-      [0.33, 0.09],
-    ].map(([r, h]) => new THREE.Vector2(r * s, h * s));
-    wb.push();
-    wb.rotateX(-Math.PI / 2);
-    wb.geometry('gold', new THREE.LatheGeometry(pts, 16), M4(), { ao: false, room, tint: [0.95, 0.75, 0.45] });
-    wb.pop();
-  });
 }

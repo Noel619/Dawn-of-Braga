@@ -2,22 +2,26 @@
 // entre la plaza de la Herrería, el corral, la capilla y la muralla.
 //
 // Cuando la carne subió por las calles, los vecinos se encerraron en sus
-// casas y clavaron las puertas. Maese Gonzalo Pires, el barbero, no se
-// encerró: salía de noche con su farol, llamaba a las puertas, sangraba,
-// cauterizaba, cortaba. A los que sobrevivieron les atornilló una corona de
-// hierro con cascabeles. Luego cerró el barrio con tablas, puso cepos entre
-// la paja y marcó con una cruz de cal las casas que ya había vaciado.
+// casas y clavaron las puertas. Mestre Clemente, el físico de los inocentes
+// (los locos de Braga, que guardaba en su casa de la plazuela), no se
+// encerró: vio a los suyos arrodillarse y callarse, curados, y entendió que
+// los enfermos eran los otros, los sanos. Salía de noche con su máscara de
+// pico, llamaba a las puertas, dormía a los sanos con su esponja, les abría
+// el cráneo. A los que sobrevivieron les atornilló una corona de hierro con
+// cascabeles. Luego puso el barrio en cuarentena: cerró la calleja con
+// tablas, puso cepos entre la paja y marcó con una cruz de cal las casas que
+// ya había curado.
 //
 // El recorrido (ver PLAN_BARRIO.md):
 //  1. El portón de la calleja, en la plaza de la Herrería (la palanca).
 //  2. La calleja: la casa del zapatero (abierta), la de la viuda (la cerera:
 //     la alcoba cerrada, la cornisa, la llave de la tintorería), la quemada.
-//  3. La plazuela del Pozo: la barbería, cerrada; la tintorería.
+//  3. La plazuela del Pozo: la Casa de los Inocentes, cerrada; la tintorería.
 //  4. La tintorería: los tintes, el secadero de paños y, por su puerta de
 //     arriba, los tejados: la viga caída sobre la calleja, la casa quemada,
 //     el aguador, las casas del sur, la del palomero (su desván, el palomar)
-//     y el tejado de la barbería, con su claraboya.
-//  5. La casa del Barbero, por arriba; su quirófano; su patio; el callejón
+//     y el tejado de la Casa de los Inocentes, con su claraboya.
+//  5. La Casa de los Inocentes, por arriba; su quirófano; su patio; el callejón
 //     de la capilla y la cordelería, cuya puerta da a los Pelames, detrás de
 //     la barricada.
 // Norte = -Z. Unidades en metros.
@@ -28,7 +32,7 @@ import { floor } from './level_util.js';
 import * as P from './props.js';
 import { casa, tapia, rotulo, piel, V, LIME } from './kit_casa.js';
 import { zapatero, viuda, quemada, tintoreria } from './barrio_casas.js';
-import { barberia, patioBarbero } from './barberia.js';
+import { casaInocentes, patioInocentes } from './inocentes.js';
 import { palomero, vigaCalleja, tejadoQuemado, chimenea } from './barrio_tejados.js';
 
 // las plantas: la baja (de 0 a 3,8), la primera (su suelo, a 4,05; su techo,
@@ -60,12 +64,12 @@ export const BR = {
   hundido: { x0: 30.2, z0: 46.65, x1: 33.3, z1: 49.6 },
   viga: { xa: 33.45, z0: 41.4, y0: 7.85, xb: 31.4, z1: 50.25, y1: 9.8, w: 0.34 },
   // la plazuela: la tintorería (norte), el aguador y su vecina (sur), la
-  // barbería (este)
+  // Casa de los Inocentes (este)
   tin: { x0: 34, z0: 31, x1: 46, z1: 38.5 },
   agu: { x0: 34, z0: 51, x1: 42, z1: 58 },
   s5: { x0: 42, z0: 51, x1: 49.5, z1: 58 },
-  bar: { x0: 49.5, z0: 34, x1: 61, z1: 49 },
-  // la claraboya del desván del Barbero, en el faldón del este
+  ino: { x0: 49.5, z0: 34, x1: 61, z1: 49 },
+  // la claraboya del desván del Físico, en el faldón del este
   claraboya: { x0: 56.6, z0: 40.3, x1: 57.8, z1: 41.5 },
   // el quirófano: la mesa (y la lámpara encima)
   mesa: { x: 54.6, z: 37.6 },
@@ -265,7 +269,7 @@ function calleja(ctx, S, L) {
 
 // ------------------------------------------------------------ la plazuela
 function plazuela(ctx, S, L) {
-  const { tin, agu, s5, bar } = BR;
+  const { tin, agu, s5, ino } = BR;
   // la tintorería: la planta baja de los tintes, la de encima (los paños
   // teñidos) y el secadero, bajo el tejado
   const hTin = casa(ctx, S, L, {
@@ -321,25 +325,25 @@ function plazuela(ctx, S, L) {
       { side: 'n', lv: 1, at: 5.4, w: 1.0, sill: 0.8, h: 1.2 },
     ],
   });
-  // la barbería: abajo, la tienda, el zaguán de la escalera y el quirófano
-  // (todo lo ancho de la casa, detrás, con su puerta al patio); arriba, la
-  // alcoba del Barbero (la de la cortina), el rellano, el cuarto de los
-  // frascos y el de los pacientes; el desván, con su claraboya
-  const hBar = casa(ctx, S, L, {
-    id: 'bar',
-    ...bar,
+  // la Casa de los Inocentes: abajo, la sala de visitas, el zaguán de la
+  // escalera y el quirófano (todo lo ancho de la casa, detrás, con su puerta
+  // al patio); arriba, la alcoba del Físico (la de la cortina), el rellano,
+  // la botica y la sala de los inocentes; el desván, con su claraboya
+  const hIno = casa(ctx, S, L, {
+    id: 'ino',
+    ...ino,
     levels: [
       L0({
         areas: [
-          { r: [49.95, 34.45, 60.55, 40.9], room: 'bar_quir' },
-          { r: [49.95, 40.9, 55.4, 48.55], room: 'bar_tienda' },
+          { r: [49.95, 34.45, 60.55, 40.9], room: 'ino_quir' },
+          { r: [49.95, 40.9, 55.4, 48.55], room: 'ino_consulta' },
         ],
       }),
       L1({
         areas: [
-          { r: [49.95, 40.9, 55.4, 48.55], room: 'bar_alcoba' },
-          { r: [49.95, 34.45, 55.4, 40.9], room: 'bar_frascos' },
-          { r: [55.4, 34.45, 60.55, 40.9], room: 'bar_pacientes' },
+          { r: [49.95, 40.9, 55.4, 48.55], room: 'ino_alcoba' },
+          { r: [49.95, 34.45, 55.4, 40.9], room: 'ino_botica' },
+          { r: [55.4, 34.45, 60.55, 40.9], room: 'ino_sala' },
         ],
       }),
       { y: P2, top: 7.4, attic: true },
@@ -359,7 +363,7 @@ function plazuela(ctx, S, L) {
     },
     sides: { w: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'plaster' }, n: { low: 'wallstone', up: 'plaster' } },
     open: [
-      { side: 'w', lv: 0, at: 11.0, w: 1.4, h: 2.5, door: { id: 'd_barberia', lock: { type: 'barred', side: 1 }, barredMsg: 'barberiaTranca' } },
+      { side: 'w', lv: 0, at: 11.0, w: 1.4, h: 2.5, door: { id: 'd_inocentes', lock: { type: 'barred', side: 1 }, barredMsg: 'inocentesTranca' } },
       { side: 'w', lv: 0, at: 8.0, w: 1.3, sill: 0.9, h: 1.4, shutters: 'closed' },
       { side: 'w', lv: 0, at: 13.6, w: 1.0, sill: 1.0, h: 1.2, shutters: 'closed' },
       // la ventana de la cortina: en el eje de la calleja
@@ -373,23 +377,23 @@ function plazuela(ctx, S, L) {
       { side: 's', lv: 1, at: 3.0, w: 0.9, sill: 0.9, h: 1.2, shutters: 'closed' },
     ],
     walls: [
-      // abajo: el quirófano (al norte) y la tienda y el zaguán (al sur)
-      { lv: 0, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['bar_quir', 'bar_tienda'] },
-      { lv: 0, x0: 55.3, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 57.6, w: 1.2, h: 2.3 }], rooms: ['bar_quir', 'bar0'] },
-      { lv: 0, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 46.4, w: 1.1, h: 2.3 }], rooms: ['bar_tienda', 'bar0'] },
-      // arriba: la alcoba, el rellano, los frascos y los pacientes
-      { lv: 1, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['bar_frascos', 'bar_alcoba'] },
-      { lv: 1, x0: 55.5, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 58.2, w: 1.1, h: 2.2 }], rooms: ['bar_pacientes', 'bar1'] },
-      { lv: 1, x0: 55.3, z0: 34.45, x1: 55.5, z1: 41.0, doors: [{ at: 37.7, w: 1.0, h: 2.2 }], rooms: ['bar_frascos', 'bar_pacientes'] },
-      { lv: 1, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 42.4, w: 1.0, h: 2.2 }], rooms: ['bar_alcoba', 'bar1'] },
+      // abajo: el quirófano (al norte) y la sala de visitas y el zaguán (al sur)
+      { lv: 0, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['ino_quir', 'ino_consulta'] },
+      { lv: 0, x0: 55.3, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 57.6, w: 1.2, h: 2.3 }], rooms: ['ino_quir', 'ino0'] },
+      { lv: 0, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 46.4, w: 1.1, h: 2.3 }], rooms: ['ino_consulta', 'ino0'] },
+      // arriba: la alcoba, el rellano, la botica y la sala de los inocentes
+      { lv: 1, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['ino_botica', 'ino_alcoba'] },
+      { lv: 1, x0: 55.5, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 58.2, w: 1.1, h: 2.2 }], rooms: ['ino_sala', 'ino1'] },
+      { lv: 1, x0: 55.3, z0: 34.45, x1: 55.5, z1: 41.0, doors: [{ at: 37.7, w: 1.0, h: 2.2 }], rooms: ['ino_botica', 'ino_sala'] },
+      { lv: 1, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 42.4, w: 1.0, h: 2.2 }], rooms: ['ino_alcoba', 'ino1'] },
     ],
     stairs: [
       { lv: 0, x: 60.0, z: 48.4, dir: 'n', w: 1.1, n: 14, open: 'w' },
       { lv: 1, x: 56.15, z: 48.3, dir: 'n', w: 1.0, n: 11, open: 'e' },
     ],
   });
-  barberia(ctx, L, hBar);
-  patioBarbero(ctx, S, L);
+  casaInocentes(ctx, L, hIno);
+  patioInocentes(ctx, S, L);
 }
 
 // ------------------------------------------------------------ el levante
@@ -522,7 +526,7 @@ function zonas(L) {
     { id: 'viuda', rects: [r(BR.viu, -1, 7.2)], atmo: 'interior', room: 'viu0' },
     { id: 'quemada', rects: [r(BR.s3, -1, 7.2)], atmo: 'interior', room: 's30' },
     { id: 'tintoreria', rects: [r(BR.tin, -1, 11)], atmo: 'interior', room: 'tin0' },
-    { id: 'barberia', rects: [r(BR.bar, -1, 11)], atmo: 'interior', room: 'bar0' },
+    { id: 'inocentes', rects: [r(BR.ino, -1, 11)], atmo: 'interior', room: 'ino0' },
     { id: 'palomero', rects: [r(BR.pal, -1, 14)], atmo: 'interior', room: 'pal2' },
     { id: 'cordeleria', rects: [r(BR.cor, -1, 8), r(BR.cor2, -1, 5)], atmo: 'interior', room: 'cor0' }
   );
@@ -535,7 +539,7 @@ function zonas(L) {
     ['viuda', BR.viu],
     ['quemada', BR.s3],
     ['tintoreria', BR.tin],
-    ['barberia', BR.bar],
+    ['inocentes', BR.ino],
     ['cordeleria', BR.cor],
     ['cordeleria', BR.cor2],
   ])
