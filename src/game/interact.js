@@ -81,12 +81,32 @@ function doorLeaf(w, h, mat, hAt = null, mark = null) {
     }
     const leaf = new THREE.Mesh(mergeGeometries(geos), wood);
     g.add(leaf);
+  } else if (mark === 'broken') {
+    // (una hoja reventada: a la altura de los ojos le faltan dos o tres
+    // tablas, rotas a golpes; por el agujero se ve lo que hay dentro)
+    const n = Math.max(4, Math.round(w / 0.17));
+    const geos = [];
+    for (let i = 0; i < n; i++) {
+      const x0 = (i / n) * w,
+        x1 = ((i + 1) / n) * w;
+      const hole = i >= Math.floor(n * 0.3) && i <= Math.floor(n * 0.62);
+      const k = (i * 7) % 5;
+      const parts = hole ? [[0, h * (0.42 + k * 0.025)], [h * (0.86 - k * 0.02), h]] : [[0, h]];
+      for (const [y0, y1] of parts) geos.push(new THREE.BoxGeometry(x1 - x0 - 0.008, y1 - y0, 0.09).translate((x0 + x1) / 2, (y0 + y1) / 2, 0));
+      // las astillas de los bordes del agujero
+      if (hole) {
+        geos.push(new THREE.BoxGeometry(0.03, 0.12 + k * 0.03, 0.05).translate(x0 + 0.03 + k * 0.015, h * (0.42 + k * 0.025) + 0.06, 0));
+        geos.push(new THREE.BoxGeometry(0.025, 0.1 + k * 0.02, 0.05).translate(x1 - 0.04, h * (0.86 - k * 0.02) - 0.05, 0));
+      }
+    }
+    const leaf = new THREE.Mesh(mergeGeometries(geos), wood);
+    g.add(leaf);
   } else {
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.09), wood);
     leaf.position.set(w / 2, h / 2, 0);
     g.add(leaf);
   }
-  for (const y of [0.35, hs * 0.5, hs - 0.4]) {
+  for (const y of mark === 'broken' ? [0.35, hs - 0.25] : [0.35, hs * 0.5, hs - 0.4]) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, 0.08, 0.12), iron);
     s.position.set(w * 0.44, y, 0);
     g.add(s);

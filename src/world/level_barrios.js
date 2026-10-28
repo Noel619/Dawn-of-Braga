@@ -4,6 +4,7 @@
 // Norte = -Z. Unidades en metros.
 import { RNG } from '../core/util.js';
 import { house, overpass, stoneWall, cityWall, tower, waveProp } from './builders.js';
+import { rampasTejado } from './kit_casa.js';
 import * as P from './props.js';
 import { floor, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -687,9 +688,8 @@ export function buildSE(ctx, S, L) {
   ctx.crows.push({ x: 22.6, y: 0, z: 23.2, r: 1.8, n: 4 });
   ctx.crows.push({ pts: [[24.45, 1.25, 27.3], [27.25, 1.25, 27.3], [28.6, 1.25, 27.3]], yaw: 0 });
   ctx.rats.push({ x: 29.2, y: 0, z: 30.2, n: 2 });
-  house(ctx, { x0: 14, z0: 31, x1: 24, z1: 42, front: 'n', seed: 1405, h: 7 });
-  // (sin voladizo: su fachada da al establo y la planta alta se metía dentro)
-  house(ctx, { x0: 24, z0: 31, x1: 38.5, z1: 42, front: 'n', seed: 1406, h: 6.6, windows: false, jetty: 0 });
+  // (las casas del sur del corral son las de la calleja de los Pellejeros, que
+  // dan a él por detrás: level_barrio.js)
   ctx.beginGroup('corralN');
   house(ctx, { x0: 23, z0: 12, x1: 30, z1: 17, front: 's', seed: 1407, h: 6.2 });
   house(ctx, { x0: 30, z0: 12, x1: 36, z1: 17, front: 's', seed: 1408, h: 6.8 });
@@ -712,7 +712,12 @@ export function buildSE(ctx, S, L) {
   // (su tejado se hunde en la película del jefe final: el gigante tira al
   // jugador por encima de la ciudad y cae aquí, en la paja; ver
   // finale/film_grab.js)
-  house(ctx, { x0: 30, z0: 19.5, x1: 38.5, z1: 31, front: 'w', seed: 1409, h: 6, style: 'stone', hollow: true, room, doors: [{ side: 'w', z: 25, w: 1.8, h: 2.6 }, { side: 'n', x: 34.2 }], jetty: 0, floorMat: 'dirt', chimney: false, wreck: 'establo', ceilGroup: 'wreck:establo:techo' });
+  // (con poco vuelo: se mete entre las casas del barrio de los Pellejeros; y
+  // se anda por él: desde los tejados del barrio se baja a sus tejas)
+  const est = house(ctx, { x0: 30, z0: 19.5, x1: 38.5, z1: 31, front: 'w', seed: 1409, h: 6, style: 'stone', hollow: true, room, doors: [{ side: 'w', z: 25, w: 1.8, h: 2.6 }, { side: 'n', x: 34.2 }], jetty: 0, floorMat: 'dirt', chimney: false, wreck: 'establo', ceilGroup: 'wreck:establo:techo', roofOverhang: 0.12 });
+  ctx.beginGroup('wreck:establo');
+  rampasTejado(ctx, { x0: 30, z0: 19.5, x1: 38.5, z1: 31, h: est.h, ridge: est.ridge }, 'z', { ovs: [0.12, 0.12], s: [19.38, 31.12] });
+  ctx.endGroup();
   wb.setRoom(room);
   stableHole(ctx, room);
   // el montón de paja de en medio (y unas balas alrededor)
@@ -741,8 +746,7 @@ export function buildSE(ctx, S, L) {
   // --- pasaje de la puerta atrancada
   lane(ctx, S, 30, 17, 36, 19.5);
   lane(ctx, S, 36, 3, 38.5, 19.5);
-  house(ctx, { x0: 38.5, z0: 3, x1: 42, z1: 19.5, front: 'w', seed: 1410, h: 6.8 });
-  house(ctx, { x0: 38.5, z0: 19.5, x1: 42, z1: 31, front: 'w', seed: 1411, h: 6.4, windows: false, jetty: 0 });
+  // (al otro lado del pasaje, el costado de la cordelería: level_barrio.js)
   P.wallTorch(ctx, 36, 2.6, 9, 'e');
   P.crate(ctx, 37.9, 0, 17.8, 0.7, 0.2);
   P.barrel(ctx, 36.6, 0, 12.4, { lying: true, rot: 1.4 });
@@ -804,24 +808,21 @@ export function buildFillers(ctx, S, L) {
   block(50, -98, 64, -84, { lit: true, skip: true });
   block(62, -84, 72, -68);
   block(64, -100, 72, -84, { skip: true });
-  // sureste: detrás de la capilla y hasta la muralla sur
-  // (entre éstas y el curtidor, el callejón ciego; la de la pasarela, la del
-  // palomero, la del secadero y la estrecha del rincón, en level_tejados.js)
-  block(42, 22, 51, 31, { front: 'n' });
+  // sureste: detrás de la capilla y hasta la muralla sur (ahora, el barrio de
+  // los Pellejeros, con sus casas: level_barrio.js; se gastan sus tiradas)
+  block(42, 22, 51, 31, { front: 'n', skip: true });
   block(50, 22, 58, 31, { front: 'n', lit: true, skip: true });
   block(61, 21, 66, 30, { front: 'n', skip: true });
-  block(64, 21, 72, 30, { front: 'n' });
-  // (la del pellejero y la de los vecinos, por las que se pasa a los
-  // tejados: level_tejados.js)
+  block(64, 21, 72, 30, { front: 'n', skip: true });
   block(24, 42, 36, 50, { front: 'w', skip: true });
-  block(24, 50, 36, 58, { front: 'w', burned: true });
+  block(24, 50, 36, 58, { front: 'w', burned: true, skip: true });
   block(36, 42, 48, 50, { skip: true });
-  block(36, 50, 48, 58);
+  block(36, 50, 48, 58, { skip: true });
   block(48, 31, 60, 44, { lit: true, skip: true });
-  block(61, 30, 72, 44);
-  block(48, 50, 61, 58);
-  block(61, 44, 72, 58, { burned: true });
-  block(38.5, 31, 48, 42);
+  block(61, 30, 72, 44, { skip: true });
+  block(48, 50, 61, 58, { skip: true });
+  block(61, 44, 72, 58, { burned: true, skip: true });
+  block(38.5, 31, 48, 42, { skip: true });
 
   // murallas que faltaban: oeste (del castillo a la puerta sur), sur y este
   cityWall(ctx, -52, 24.5, -48, 62, 9, { merlonSides: ['w'] });

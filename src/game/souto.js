@@ -250,7 +250,7 @@ export class SoutoQuest {
   startBalance(p) {
     const g = this.g;
     // (a lo largo del tablón, de una casa a la otra; lean > 0: hacia +x)
-    p.balance = { ax: 0, az: 1, cx: PL.x, lean: (Math.random() < 0.5 ? -1 : 1) * (0.05 + Math.random() * 0.05), vel: 0, input: 0 };
+    p.balance = { src: 'souto', ax: 0, az: 1, cx: PL.x, lean: (Math.random() < 0.5 ? -1 : 1) * (0.05 + Math.random() * 0.05), vel: 0, input: 0 };
     p.state = 'free';
     p.buffer = null;
     this.balT = 0;
@@ -268,10 +268,11 @@ export class SoutoQuest {
     const g = this.g;
     const p = g.player;
     const on = this.onPlank(p) && p.state === 'free';
+    // (sólo el suyo: el de las cornisas lo lleva game/cornisas.js)
     if (on && !p.balance) this.startBalance(p);
-    else if (!on && p.balance) this.endBalance(p);
+    else if (!on && p.balance && p.balance.src === 'souto') this.endBalance(p);
     const b = p.balance;
-    if (!b) return;
+    if (!b || b.src !== 'souto') return;
     this.balT += dt;
     const t = g.time;
     const walk = clamp(Math.abs(p.vz) / B_SPEED, 0, 1);

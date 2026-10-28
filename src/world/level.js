@@ -7,7 +7,7 @@ import { WalkGrid } from './walkgrid.js';
 import { WAVES } from './builders.js';
 import { buildSouto, buildPraca, buildRuaSe, buildLargo, buildPelames, buildTanners, buildRamparts, buildFerraria, buildCentroRuin } from './level_city.js';
 import { buildNW, buildSW, buildNE, buildSE, buildFillers } from './level_barrios.js';
-import { buildTejados } from './level_tejados.js';
+import { buildBarrio } from './level_barrio.js';
 import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_sacred.js';
 import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
@@ -97,8 +97,8 @@ export function buildLevel() {
   buildPostigoAlley(ctx, S, U, L);
   buildCarpenter(ctx, S, L);
   buildFerraria(ctx, S, L);
-  // (de la plaza de la Herrería a las Curtidurías por las casas y los tejados)
-  buildTejados(ctx, S, L);
+  // (de la plaza de la Herrería a los Pelames por el barrio de los Pellejeros)
+  buildBarrio(ctx, S, L);
   buildCathedral(ctx, S, L);
   buildCloister(ctx, S, L);
   buildCrypt(ctx, S, C, L);

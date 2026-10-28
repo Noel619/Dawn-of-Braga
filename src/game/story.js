@@ -835,6 +835,7 @@ export const MSG = {
   tablaPuesta: 'Tiendes el tablón de un borde al otro del hueco. Cruje, pero aguanta.',
   equilibrio: 'El tablón se cimbrea bajo tus pies. Si te inclinas, échate hacia el otro lado.',
   caida: 'Pierdes el equilibrio.',
+  equilibrioViga: 'La viga apenas tiene un palmo de ancho. Si el cuerpo se te va hacia un lado, échate hacia el otro.',
   catarina: 'Una mujer joven, tapada con una sábana empapada de sangre. Alguien le ha cruzado las manos sobre el pecho y le ha puesto una vela.',
   doorMiguel: 'Está atrancada desde el otro lado. Dentro, muy bajo, alguien llora.',
   // la Puerta del Dios Ignoto (game/crypt.js)

@@ -369,8 +369,8 @@ export function buildPelames(ctx, S, L) {
   houseRow(ctx, { axis: 'x', from: 23, to: 36, line: 3, side: 's', seed: 502, opts: (r, i) => ({ lit: i === 0 }) });
   // la barricada: clavada y apuntalada por el lado de las Curtidurías (los
   // soldados), desde aquí no se mueve; desde allí, con la palanca, se le
-  // quitan los puntales y cae: el atajo de vuelta. (Se llega allí por las
-  // casas y los tejados: level_tejados.js)
+  // quitan los puntales y cae: el atajo de vuelta. (Se llega allí por el
+  // barrio de los Pellejeros y la cordelería: level_barrio.js)
   P.cart(ctx, 30.5, 0, -1.6, 1.6, { brokenWheel: true });
   P.barrel(ctx, 29.8, 0, 2.2);
   P.sacks(ctx, 31, 0, 1.5, 3, 13);
@@ -438,7 +438,7 @@ export function buildTanners(ctx, S, L) {
   ])
     P.decal(ctx, x, 0.02, z, s);
   P.fleshGrowth(ctx, 63.2, 0, 7, 1.1, 91, { climb: 1.6 });
-  P.fleshGrowth(ctx, 42.8, 0, 9, 0.8, 92, { climb: 1.2 });
+  P.fleshGrowth(ctx, 44.8, 0, 9, 0.8, 92, { climb: 1.2 });
   P.jar(ctx, 44.1, 0, -2.6, 1.1);
   P.jar(ctx, 44.8, 0, -3.5, 0.9);
   P.jar(ctx, 43.6, 0, -4.2, 1.0, { broken: true });
@@ -451,12 +451,13 @@ export function buildTanners(ctx, S, L) {
 
   // casas alrededor
   house(ctx, { x0: 42, z0: -21, x1: 48, z1: -12, front: 's', seed: 601, h: 6.5 });
-  // (la del curtidor, por cuyo tejado hundido se baja de los tejados de los
-  // Pellejeros: level_tejados.js)
+  // (hasta el patio del Barbero: z = 22)
+  house(ctx, { x0: 54, z0: 12, x1: 64, z1: 22, front: 'n', seed: 602, lit: true });
   house(ctx, { x0: 64, z0: 12, x1: 72, z1: 21, front: 'n', seed: 603 });
   // (la casa del canónigo, más grande, llega ahora hasta z = -32: level_canon.js)
   house(ctx, { x0: 55, z0: -40, x1: 64, z1: -32, front: 'e', seed: 605, burned: true });
-  stoneWall(ctx, 42, 12, 44, 22, 4.5);
+  // (entre la cordelería y la capilla ya no hay tapia: la cordelería llega
+  // hasta ella; level_barrio.js)
 
   // capilla con altar (punto de descanso)
   const croom = 'chapel';
@@ -809,9 +810,8 @@ export function buildFerraria(ctx, S, L) {
   house(ctx, { x0: -14, z0: 35.5, x1: -3.5, z1: 42, front: 's', seed: 803 });
   house(ctx, { x0: 3.5, z0: 33, x1: 14, z1: 42, front: 's', seed: 804, burned: true });
   ctx.endGroup();
-  // (la de la esquina, enfrente de la fragua, es la del velatorio: con la
-  // manzana entera, en level_tejados.js)
-  house(ctx, { x0: 14, z0: 50, x1: 24, z1: 58, front: 'w', seed: 806, lit: true });
+  // (enfrente de la fragua, la boca de la calleja de los Pellejeros, con su
+  // portón, y las casas de las esquinas: level_barrio.js)
   stoneWall(ctx, -26, 56, -14, 58, 5);
   // muralla sur con la puerta hundida (hasta la torre del oeste, que es hueca)
   cityWall(ctx, -30, 58, TOWER_S.x - TOWER_S.w / 2, 62, 9, { merlonSides: ['s'] });

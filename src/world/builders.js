@@ -67,9 +67,12 @@ export function stairs(ctx, x, y, z, dir, width, count, rise = 0.3, run = 0.42, 
       x1 = x - a;
       x0 = x - b;
     }
-    const bottom = o.solidBelow ? y - 0.5 : top - rise - 0.02;
+    // (base: de dónde sale el macizo; el de una escalera que sube de una
+    // planta alta, de su suelo: medio metro más abajo asomaba por el techo de
+    // la de debajo)
+    const bottom = o.base ?? (o.solidBelow ? y - 0.5 : top - rise - 0.02);
     wb.box(mat, x0, bottom, z0, x1, top, z1, { ao: false, faces: o.faces ?? 'tnsew', sub: 3 });
-    col.add(x0, o.solidBelow ? y - 0.5 : y - 0.5, z0, x1, top, z1);
+    col.add(x0, o.base ?? y - 0.5, z0, x1, top, z1);
   }
 }
 
@@ -1729,7 +1732,10 @@ function houseBody(ctx, s, sub) {
       if (ctx.fires && rng.chance(0.8)) ctx.fires.push({ x: (ux0 + ux1) / 2, y: h + 0.2, z: (uz0 + uz1) / 2, s: 2.2, light: true, smoke: true });
       if (s.roofCol !== false) roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis);
     } else {
-      wb.gableRoof(ux0, uz0, ux1, uz1, h, ridge, axis, { wallMat: upperMat === 'plaster' ? 'plaster' : 'wallstone' });
+      // (roofOverhang: el vuelo del tejado, si no es el de siempre: el del
+      // establo, contra las casas del barrio de los Pellejeros, se metía en
+      // ellas)
+      wb.gableRoof(ux0, uz0, ux1, uz1, h, ridge, axis, { wallMat: upperMat === 'plaster' ? 'plaster' : 'wallstone', overhang: s.roofOverhang });
       if (s.roofCol !== false) roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis);
     }
     // chimenea
