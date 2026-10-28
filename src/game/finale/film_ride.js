@@ -317,8 +317,6 @@ function setupRide(D, G) {
   D.setWorld(2);
   g.setGroupVisible('torreSurTop', false);
   g.setGroupVisible('torreSurTopRuin', true);
-  g.setGroupVisible('torreSurStair', false);
-  g.setGroupVisible('torreSurStairRuin', true);
   G.place(-1.9, 48.6, Math.atan2(-3.6, 11.4), { base: 'idle' });
   G.setBell(true);
   G.groundFn = null;

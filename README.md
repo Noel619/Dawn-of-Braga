@@ -524,7 +524,9 @@ se encadena el anterior.
   cráter, atraviesa la muralla y revienta la nave de la catedral detrás de ti. Seis actos: **la transformación** y
   la nave que se viene abajo; **el agarrón** (te atrapa, te ruge a la cara y te lanza por encima de la ciudad a la
   paja de un establo); **la Herrería**, la huida, con las casas reventando en ola a tu paso y la campana
-  descargada donde estabas; **la primera espringala**, en la torre sur (cargar el torno, apuntar con el virote
+  descargada donde estabas (un adoquín revienta la puerta atrancada de la torre del oeste de la puerta sur, y
+  se sube por su husillo y por la escala de la sala de los guardas hasta la trampilla del cadalso); **la
+  primera espringala**, en esa torre (cargar el torno, apuntar con el virote
   que cae y disparar: se tapa con el antebrazo y el virote se le clava) y el primer momento *God of War*: saltas
   a la cadena tensa y corres por ella hasta su brazo (se afloja bajo tus pies y da un latigazo al tensarse: hay
   que saltar por encima), le apuñalas la mano y la torre revienta; **la cabalgada**, colgado del virote mientras

@@ -4,7 +4,8 @@
 // la muralla, la cabecera de la catedral y la nave, que se rompe por tramos.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker, stairs } from './builders.js';
+import { solid, blocker, subtractRects, archRing } from './builders.js';
+import { bakeCorpse } from '../entities/models.js';
 import * as P from './props.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -897,147 +898,427 @@ export function naveBreaks(ctx, o) {
 // ======================================================================
 // LA TORRE OESTE DE LA PUERTA SUR
 // ======================================================================
-// La de la primera espringala (la película, actos 3 y 4): maciza hasta lo
-// alto, con un cadalso de madera encima, más ancho que la torre y con su
-// pretil de tablas, donde la guarnición montó la espringala (la pone la
-// película: finale/springald.js). Se sube por una escalera larga de madera,
-// sobre caballetes, que sale de la plaza y se apoya en la torre.
+// La de la primera espringala (la película, actos 3 y 4). Encima, un cadalso
+// de madera, más ancho que la torre y con su pretil de tablas, donde la
+// guarnición montó la espringala (la pone la película: finale/springald.js).
+// La torre es hueca: abajo tiene su puerta, de cara a la plaza, y dentro un
+// husillo (una escalera de caracol de piedra alrededor de un machón) sube a
+// la sala de los guardas; de ella, una escala lleva a la trampilla del
+// cadalso. (Antes se subía por una escalera de madera de trece metros, sobre
+// caballetes, plantada en medio de la plaza.) La puerta está atrancada por
+// dentro: los de la torre se encerraron arriba, y arriba siguen. En la
+// película la revienta la campana del gigante ('torreSurDoor', entera;
+// 'torreSurDoorOpen', reventada).
 export const TOWER_S = {
   x: -5.5,
   z: 60,
   w: 4.5,
   h: 12,
+  // el grueso de los muros
+  t: 0.7,
   // el cadalso: [x0, z0, x1, z1] y la altura de su suelo
   deck: [-8.9, 56.6, -2.1, 63.4],
   deckY: 12.15,
-  // la escalera: sube hacia el sur desde la plaza
-  stair: { x: -5.5, z0: 43.6, n: 40, rise: 0.3, run: 0.33, w: 1.8 },
+  // la puerta, en el muro del norte (x: su centro)
+  door: { x: -5.5, w: 1.1, h: 2.3 },
+  // el husillo: arranca junto a la puerta (a0: el ángulo, en grados, desde
+  // +x hacia +z: 270, el norte) y sube girando hacia el este, da grados por
+  // peldaño; n peldaños (dos vueltas), alrededor del machón (radio r0)
+  spiral: { a0: 270, da: 22.5, n: 32, r0: 0.2 },
+  // el suelo de la sala de los guardas: la mitad del este (por la otra sube
+  // el husillo, que llega por el norte)
+  roomY: 8.4,
+  // la trampilla del cadalso (en el rincón del sureste) y la escala, contra
+  // el muro del sur
+  hatch: [-4.95, 60.6, -4.05, 61.5],
+  ladder: { x: -4.5, z: 61.55, lean: 0.08 },
   // la espringala, en medio del cadalso, mirando al norte
   gun: [-5.5, 12.15, 60.4],
 };
+const TS_IN = (() => {
+  const T = TOWER_S;
+  const h = T.w / 2 - T.t;
+  return { x0: T.x - h, z0: T.z - h, x1: T.x + h, z1: T.z + h, h };
+})();
+// Por dónde se sube el husillo: a u peldaños de la puerta (de 0 a n), a r
+// del machón; la altura del peldaño que se pisa y el rumbo de quien sube.
+export function towerSpiral(u, r = 0.95) {
+  const T = TOWER_S,
+    S = T.spiral;
+  const a = ((S.a0 + S.da * u) * Math.PI) / 180;
+  const rise = T.roomY / S.n;
+  return { x: T.x + Math.cos(a) * r, y: Math.min(T.roomY, Math.max(0, Math.ceil(u - 0.001)) * rise), z: T.z + Math.sin(a) * r, yaw: Math.atan2(-Math.sin(a), Math.cos(a)) };
+}
 
-export function springaldTowerS(ctx) {
+// Prisma recto: el polígono de planta pts ([x, z], convexo, en cualquier
+// sentido) de y0 a y1, con su tapa, su fondo y sus costados.
+function prism(wb, mat, pts, y0, y1, o = {}) {
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [ax, az] = pts[i],
+      [bx, bz] = pts[(i + 1) % pts.length];
+    area += az * bx - ax * bz;
+  }
+  // (la tapa mira arriba si se recorre así; si no, se da la vuelta)
+  const P = area > 0 ? pts : [...pts].reverse();
+  const n = P.length;
+  const top = P.map(([x, z]) => V3(x, y1, z)),
+    bot = P.map(([x, z]) => V3(x, y0, z));
+  if (o.top !== false) for (let i = 1; i < n - 1; i++) wb.tri(mat, top[0], top[i], top[i + 1], o);
+  if (o.bottom !== false) for (let i = 1; i < n - 1; i++) wb.tri(mat, bot[0], bot[i + 1], bot[i], o);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    if (o.skipSide && o.skipSide(P[i], P[j])) continue;
+    wb.quad(mat, bot[i], bot[j], top[j], top[i], o);
+  }
+}
+
+// Una cara de un muro de la torre (de fuera, 'out', o de dentro) con su
+// colisión: caja [x0, y0, z0, x1, y1, z1] y las caras que se ven.
+function towerWall(ctx, b, outF, inF, room, o = {}) {
+  const wb = ctx.wb;
+  const T = [0.74, 0.71, 0.67];
+  if (outF) wb.box('wallstone', ...b, { faces: outF, sub: 2.2, aoH: 3, room: 'out', tint: o.tint });
+  if (inF) wb.box('wallstone', ...b, { faces: inF, sub: 1.6, aoH: 1.4, room, tint: T, baseY: o.baseY ?? 0 });
+  if (o.collide !== false) ctx.col.add(...b);
+}
+
+export function springaldTowerS(ctx, S, L) {
   const wb = ctx.wb;
   const T = TOWER_S;
+  const room = 'torreSur';
   const x0 = T.x - T.w / 2,
     x1 = T.x + T.w / 2,
     z0 = T.z - T.w / 2,
     z1 = T.z + T.w / 2;
-  // el cuerpo de la torre (sin almenas: arriba va el cadalso) y su cornisa
-  solid(ctx, 'wallstone', x0, 0, z0, x1, T.h, z1, { sub: 2.2, aoH: 3, faces: 'nsew' });
-  wb.box('wallstone', x0 - 0.3, T.h - 0.5, z0 - 0.3, x1 + 0.3, T.h, z1 + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' } });
-  for (let y = 4; y < T.h - 2; y += 4.5)
+  const { x0: ix0, z0: iz0, x1: ix1, z1: iz1 } = TS_IN;
+  const D = T.door;
+  const dx0 = D.x - D.w / 2,
+    dx1 = D.x + D.w / 2;
+  const H = T.h;
+  // ---- los muros (por fuera, de la calle; por dentro, de la torre): el del
+  // norte, con la puerta y su dintel
+  towerWall(ctx, [x0, 0, z0, dx0, H, iz0], 'nwt', 's', room);
+  towerWall(ctx, [dx1, 0, z0, x1, H, iz0], 'net', 's', room);
+  towerWall(ctx, [dx0, D.h, z0, dx1, H, iz0], 'nt', 's', room);
+  // (el hueco: jambas y dintel por dentro del grueso)
+  wb.box('wallstone', dx0 - 0.01, 0, z0, dx0, D.h, iz0, { faces: 'e', ao: false, room: 'out', tint: [0.7, 0.67, 0.63] });
+  wb.box('wallstone', dx1, 0, z0, dx1 + 0.01, D.h, iz0, { faces: 'w', ao: false, room: 'out', tint: [0.7, 0.67, 0.63] });
+  wb.box('wallstone', dx0, D.h, z0, dx1, D.h + 0.01, iz0, { faces: 'b', ao: false, room: 'out', tint: [0.6, 0.57, 0.53] });
+  towerWall(ctx, [x0, 0, iz1, x1, H, z1], 'swet', 'n', room);
+  towerWall(ctx, [x0, 0, iz0, ix0, H, iz1], 'wt', 'e', room);
+  towerWall(ctx, [ix1, 0, iz0, x1, H, iz1], 'et', 'w', room);
+  // la cornisa, alrededor (lo de dentro lo tapa el cadalso; sin él, el hueco
+  // queda abierto)
+  const CT = { ao: false, sub: 3, mats: { t: 'flag' } };
+  wb.box('wallstone', x0 - 0.3, H - 0.5, z0 - 0.3, x1 + 0.3, H, z0, { ...CT, faces: 'tnsewb' });
+  wb.box('wallstone', x0 - 0.3, H - 0.5, z1, x1 + 0.3, H, z1 + 0.3, { ...CT, faces: 'tnsewb' });
+  wb.box('wallstone', x0 - 0.3, H - 0.5, z0, x0, H, z1, { ...CT, faces: 'twb' });
+  wb.box('wallstone', x1, H - 0.5, z0, x1 + 0.3, H, z1, { ...CT, faces: 'teb' });
+  // las saeteras: por fuera (la del norte, sobre la puerta) y por dentro
+  for (let y = 4; y < H - 2; y += 4.5)
     for (const [sx, sz, rx, rz] of [
-      [T.x, z1 + 0.02, 0.12, 0],
+      [T.x, z0 - 0.02, 0.12, 0],
       [x0 - 0.02, T.z, 0, 0.12],
+      [T.x, z1 + 0.02, 0.12, 0],
     ])
       wb.box('black', sx - rx - 0.001, y, sz - rz - 0.001, sx + rx + 0.001, y + 1.2, sz + rz + 0.001, { ao: false, grime: false });
+  for (let y = 4; y < H - 2; y += 4.5)
+    for (const [sx, sz, rx, rz, f] of [
+      [T.x, iz0 + 0.01, 0.2, 0, 's'],
+      [ix0 + 0.01, T.z, 0, 0.2, 'e'],
+      [T.x, iz1 - 0.01, 0.2, 0, 'n'],
+    ])
+      wb.box('black', sx - rx - 0.005, y - 0.1, sz - rz - 0.005, sx + rx + 0.005, y + 1.3, sz + rz + 0.005, { ao: false, grime: false, faces: f, room });
+  // el umbral y el marco de sillería: jambas, el dintel de una pieza y, por
+  // encima, el arco de descarga
+  wb.box('ashlar', dx0, 0, z0 - 0.04, dx1, 0.04, iz0, { ao: false, faces: 'tnsew' });
+  for (const [a, b] of [
+    [dx0 - 0.26, dx0],
+    [dx1, dx1 + 0.26],
+  ])
+    for (let k = 0; k < 4; k++) wb.box('ashlar', a, (k * D.h) / 4, z0 - 0.06, b, ((k + 1) * D.h) / 4 - 0.015, z0 + 0.01, { ao: false, faces: 'nsewt', tint: k % 2 ? [0.62, 0.6, 0.57] : [0.68, 0.66, 0.62] });
+  wb.box('ashlar', dx0 - 0.34, D.h, z0 - 0.08, dx1 + 0.34, D.h + 0.42, z0 + 0.01, { ao: false, faces: 'tnsewb', tint: [0.7, 0.68, 0.64] });
+  archRing(ctx, { axis: 'x', c: D.x, w: D.w + 0.5, y0: D.h + 0.42, rise: 0.38, ring: 0.2, t0: z0 - 0.04, t1: z0 + 0.002, proud: 0, mat: 'ashlar', cam: false, seats: false });
+  // ---- dentro: el suelo y lo que queda junto a la puerta
+  wb.box('flag', ix0, -0.05, iz0, ix1, 0.02, iz1, { faces: 't', ao: false, room, tint: [0.62, 0.58, 0.54] });
+  // las grapas de la tranca, a los lados del hueco
+  for (const x of [dx0 - 0.12, dx1 + 0.12]) wb.box('iron', x - 0.06, 1.0, iz0, x + 0.06, 1.28, iz0 + 0.14, { ao: false, room });
+  // una antorcha que todavía arde, de cara al husillo (sin luz que salga a
+  // la plaza por el muro: sólo la de dentro)
+  {
+    const [tx, ty, tz] = [ix1 - 0.3, 2.0, 59.0];
+    wb.box('iron', ix1 - 0.32, ty - 0.03, tz - 0.03, ix1, ty + 0.03, tz + 0.03, { ao: false, room });
+    wb.cylinder('wooddark', tx, ty - 0.1, tz, 0.035, 0.05, 0.5, 5, { ao: false, room });
+    ctx.fires.push({ x: tx, y: ty + 0.38, z: tz, s: 0.4, light: false, embers: true });
+    ctx.lights.push({ x: tx - 0.4, y: ty + 0.5, z: tz + 0.3, r: 1, g: 0.5, b: 0.18, radius: 6.5, intensity: 1.3, room });
+  }
+  // ---- el husillo: el machón y los peldaños, de piedra, cada uno una cuña
+  // del machón al muro (en los rincones, más larga)
+  const Sp = T.spiral;
+  const rise = T.roomY / Sp.n;
+  wb.cylinder('ashlar', T.x, 0, T.z, Sp.r0, Sp.r0, T.roomY + 0.02, 8, { room, capTop: true, tint: [0.66, 0.64, 0.6] });
+  ctx.col.add(T.x - Sp.r0, 0, T.z - Sp.r0, T.x + Sp.r0, T.roomY, T.z + Sp.r0);
+  const rad = (d) => (d * Math.PI) / 180;
+  const edge = (a) => TS_IN.h / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
+  const pt = (a, r) => [T.x + Math.cos(a) * r, T.z + Math.sin(a) * r];
+  // (los costados que quedan contra el machón o contra el muro no se ven)
+  const onWall = (q) => Math.abs(Math.abs(q[0] - T.x) - TS_IN.h) < 1e-3 || Math.abs(Math.abs(q[1] - T.z) - TS_IN.h) < 1e-3;
+  const onNewel = (q) => Math.abs(Math.hypot(q[0] - T.x, q[1] - T.z) - Sp.r0) < 1e-3;
+  const hidden = (p, q) => (onWall(p) && onWall(q)) || (onNewel(p) && onNewel(q));
+  for (let i = 0; i < Sp.n; i++) {
+    const a0 = rad(Sp.a0 + Sp.da * i),
+      a1 = rad(Sp.a0 + Sp.da * (i + 1));
+    // el contorno: del machón, por el muro (con el rincón, si cae dentro)
+    const poly = [pt(a0, Sp.r0), pt(a0, edge(a0))];
+    for (let c = Math.ceil((a0 - Math.PI / 4) / (Math.PI / 2)); ; c++) {
+      const ac = Math.PI / 4 + (c * Math.PI) / 2;
+      if (ac <= a0 + 1e-4) continue;
+      if (ac >= a1 - 1e-4) break;
+      poly.push(pt(ac, edge(ac)));
+    }
+    poly.push(pt(a1, edge(a1)), pt(a1, Sp.r0));
+    const yt = (i + 1) * rise,
+      yb = i ? i * rise - 0.3 : 0;
+    const tint = i % 2 ? [0.64, 0.62, 0.58] : [0.7, 0.68, 0.64];
+    prism(wb, 'ashlar', poly, yb, yt, { room, ao: false, tint, sub: 4, bottom: i > 0, skipSide: hidden });
+    // (su colisión: lo que se pisa, por la mitad de la huella)
+    const am = (a0 + a1) / 2,
+      ro = edge(am) - 0.08,
+      rm = (Sp.r0 + ro) / 2;
+    ctx.col.addOBB(T.x + Math.cos(am) * rm, T.z + Math.sin(am) * rm, (ro - Sp.r0) / 2, Math.max(0.12, rm * Math.sin(rad(Sp.da) / 2) * 0.95), -am, yb, yt);
+  }
+  // ---- la sala de los guardas: el suelo de tablas en la mitad del este,
+  // sobre su viga, con su barandilla al hueco del husillo (abierta por el
+  // norte, por donde llega)
+  const RY = T.roomY;
+  wb.box('planks', T.x, RY - 0.12, iz0, ix1, RY, iz1, { faces: 'twb', ao: false, room, uv: 0.5, tint: [0.78, 0.72, 0.64] });
+  wb.box('timber', T.x - 0.02, RY - 0.34, iz0, T.x + 0.2, RY - 0.12, iz1, { ao: false, room, faces: 'nsewb', tint: [0.66, 0.56, 0.46] });
+  for (const z of [59.2, 60.8]) wb.box('timber', T.x + 0.2, RY - 0.3, z - 0.09, ix1, RY - 0.12, z + 0.09, { ao: false, room, faces: 'nsewb', tint: [0.62, 0.52, 0.42] });
+  ctx.col.add(T.x, RY - 0.34, iz0, ix1, RY, iz1).cam = true;
+  railingTS(ctx, T.x + 0.06, 59.75, T.x + 0.06, iz1, RY, room);
+  // las cuatro paredes de la sala, hasta las vigas del cadalso: el hueco de
+  // la torre queda abierto por arriba en la ruina
+  // la escala hasta la trampilla
+  P.ladder(ctx, T.ladder.x, RY, T.ladder.z, T.deckY - RY - 0.02, Math.PI, T.ladder.lean);
+  // los guardas que atrancaron la puerta: uno sentado contra el muro, con su
+  // ballesta, y el otro tendido junto a la escala; un tonel, virotes, un
+  // farol que aún alumbra
+  bakeCorpse(wb, -4.55, RY, iz0 + 0.32, 0.25, 'sit', 'soldier', 13);
+  P.decal(ctx, -4.5, RY + 0.02, 59.1, 0.9);
+  P.barrel(ctx, ix1 - 0.34, RY, 60.15, { r: 0.28, h: 0.78 });
+  P.arrows(ctx, -4.75, RY, 59.75, 4, 5541, 0.35);
+  P.dropped(ctx, -5.0, RY, 59.25, 2.2, 'helmet');
+  P.hangingLamp(ctx, -4.7, T.deckY - 0.72, 59.6, { room, radius: 6, intensity: 1.1, dyn: 0, len: 0.45 });
   // ---- el cadalso: tablas sobre vigas que vuelan de la torre, y un pretil
   // (grupo 'torreSurTop': lo revienta el gigante con el brazo; sus restos,
   // en 'torreSurTopRuin')
-  const [dx0, dz0, dx1, dz1] = T.deck;
+  const [ex0, ez0, ex1, ez1] = T.deck;
   const dy = T.deckY;
+  const [hx0, hz0, hx1, hz1] = T.hatch;
   ctx.beginGroup('torreSurTop');
   const PT = [0.62, 0.55, 0.48];
-  wb.box('planks', dx0, dy - 0.15, dz0, dx1, dy, dz1, { ao: false, faces: 'tnsewb', uv: 0.5, tint: PT, sub: 2 });
-  ctx.col.add(dx0, dy - 0.4, dz0, dx1, dy, dz1);
-  // vigas por debajo, que asoman por los cuatro lados, y tornapuntas
-  for (let k = 0; k < 4; k++) {
-    const u = lerp4(dx0 + 0.5, dx1 - 0.5, k / 3);
-    wb.box('timber', u - 0.13, dy - 0.45, dz0 - 0.2, u + 0.13, dy - 0.15, dz1 + 0.2, { ao: false, tint: [0.7, 0.6, 0.5] });
-    const v = lerp4(dz0 + 0.5, dz1 - 0.5, k / 3);
-    wb.box('timber', dx0 - 0.2, dy - 0.72, v - 0.12, dx1 + 0.2, dy - 0.45, v + 0.12, { ao: false, tint: [0.66, 0.56, 0.46] });
+  for (const r of subtractRects([ex0, ez0, ex1, ez1], [T.hatch])) {
+    wb.box('planks', r[0], dy - 0.13, r[1], r[2], dy, r[3], { ao: false, faces: 'tnsewb', uv: 0.5, tint: PT, sub: 2 });
+    ctx.col.add(r[0], dy - 0.4, r[1], r[2], dy, r[3]);
   }
+  // vigas por debajo, que asoman por los cuatro lados (ninguna pasa por la
+  // trampilla: por dentro son el techo de la sala), y tornapuntas
+  // (lo que queda dentro de la torre, de la luz de la sala)
+  const beam = (b, tint) => {
+    const inside = (lo, hi, a0, a1) => [
+      [lo, a0, 'out'],
+      [a0, a1, room],
+      [a1, hi, 'out'],
+    ];
+    const along = b.ax === 'z';
+    const crosses = along ? b.u > ix0 && b.u < ix1 : b.u > iz0 && b.u < iz1;
+    const parts = crosses ? inside(b.lo, b.hi, along ? iz0 : ix0, along ? iz1 : ix1) : [[b.lo, b.hi, 'out']];
+    for (const [a0, a1, rm] of parts) {
+      if (along) wb.box('timber', b.u - b.r, b.y0, a0, b.u + b.r, b.y1, a1, { ao: false, tint, room: rm, faces: 'nsewb' });
+      else wb.box('timber', a0, b.y0, b.u - b.r, a1, b.y1, b.u + b.r, { ao: false, tint, room: rm, faces: 'nsewb' });
+    }
+  };
+  for (const u of [-8.4, -7.4, -5.6, -3.6, -2.6]) beam({ ax: 'z', u, r: 0.13, lo: ez0 - 0.2, hi: ez1 + 0.2, y0: dy - 0.43, y1: dy - 0.13 }, [0.7, 0.6, 0.5]);
+  for (const u of [57.1, 58.75, 60.3, 62.0, 62.9]) beam({ ax: 'x', u, r: 0.12, lo: ex0 - 0.2, hi: ex1 + 0.2, y0: dy - 0.7, y1: dy - 0.43 }, [0.66, 0.56, 0.46]);
+  // (la trampilla, en su marco)
+  for (const [a, b, c, d] of [
+    [hx0 - 0.08, hz0 - 0.08, hx1 + 0.08, hz0],
+    [hx0 - 0.08, hz1, hx1 + 0.08, hz1 + 0.08],
+    [hx0 - 0.08, hz0, hx0, hz1],
+    [hx1, hz0, hx1 + 0.08, hz1],
+  ])
+    wb.box('wooddark', a, dy - 0.13, b, c, dy + 0.012, d, { ao: false, faces: 'tnsewb' });
   for (const [ax, az, bx, bz] of [
-    [x0, T.z, dx0 + 0.2, T.z],
-    [x1, T.z, dx1 - 0.2, T.z],
-    [T.x, z0, T.x, dz0 + 0.2],
-    [T.x, z1, T.x, dz1 - 0.2],
+    [x0, T.z, ex0 + 0.2, T.z],
+    [x1, T.z, ex1 - 0.2, T.z],
+    [T.x, z0, T.x, ez0 + 0.2],
+    [T.x, z1, T.x, ez1 - 0.2],
   ])
     strut(wb, new THREE.Vector3(ax, T.h - 2.6, az), new THREE.Vector3(bx, dy - 0.5, bz), 0.12);
-  // el pretil: postes y tablas (con un hueco al norte, donde llega la
-  // escalera)
-  const S = T.stair;
-  const gx0 = S.x - S.w / 2 - 0.05,
-    gx1 = S.x + S.w / 2 + 0.05;
+  // el pretil: postes y tablas, cerrado
   const rail = (a0, b0, a1, b1) => {
     wb.box('planks', a0, dy, b0, a1, dy + 1.05, b1, { ao: false, uv: 0.5, tint: [0.56, 0.5, 0.44], faces: 'tnsewb' });
     blocker(ctx, a0, dy, b0, a1, dy + 1.4, b1);
   };
-  rail(dx0, dz1 - 0.1, dx1, dz1);
-  rail(dx0, dz0 + 0.1, dx0 + 0.1, dz1 - 0.1);
-  rail(dx1 - 0.1, dz0 + 0.1, dx1, dz1 - 0.1);
-  rail(dx0, dz0, gx0, dz0 + 0.1);
-  rail(gx1, dz0, dx1, dz0 + 0.1);
+  rail(ex0, ez1 - 0.1, ex1, ez1);
+  rail(ex0, ez0 + 0.1, ex0 + 0.1, ez1 - 0.1);
+  rail(ex1 - 0.1, ez0 + 0.1, ex1, ez1 - 0.1);
+  rail(ex0, ez0, ex1, ez0 + 0.1);
   for (const [px, pz] of [
-    [dx0, dz0],
-    [dx1, dz0],
-    [dx0, dz1],
-    [dx1, dz1],
-    [gx0, dz0],
-    [gx1, dz0],
-    [dx0, T.z],
-    [dx1, T.z],
-    [T.x, dz1],
+    [ex0, ez0],
+    [ex1, ez0],
+    [ex0, ez1],
+    [ex1, ez1],
+    [T.x, ez0],
+    [ex0, T.z],
+    [ex1, T.z],
+    [T.x, ez1],
   ])
     wb.box('timber', px - 0.12, dy - 0.15, pz - 0.12, px + 0.12, dy + 1.3, pz + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
+  // la tapa de la trampilla: cerrada ('trampillaS', con su colisión) y
+  // abierta ('trampillaSOpen', de pie sobre su gozne, hacia el norte)
+  const lid = (open) => {
+    wb.push();
+    if (open) {
+      wb.translate(0, dy, hz0 - 0.04);
+      wb.rotateX(Math.PI * 0.56);
+      wb.translate(0, -dy, -(hz0 - 0.04));
+    }
+    for (let i = 0; i < 4; i++) {
+      const a = hx0 - 0.04 + ((hx1 - hx0 + 0.08) * i) / 4;
+      wb.box('planks', a + 0.01, dy, hz0 - 0.04, a + (hx1 - hx0 + 0.08) / 4 - 0.01, dy + 0.07, hz1 + 0.04, { ao: false });
+    }
+    for (const z of [hz0 + 0.18, hz1 - 0.18]) wb.box('iron', hx0 - 0.02, dy + 0.07, z - 0.04, hx1 + 0.02, dy + 0.09, z + 0.04, { ao: false });
+    wb.cylinder('iron', (hx0 + hx1) / 2, dy + 0.09, (hz0 + hz1) / 2, 0.09, 0.09, 0.02, 8, { ao: false, capTop: true });
+    wb.pop();
+  };
+  ctx.beginGroup('trampillaS');
+  lid(false);
+  ctx.col.add(hx0, dy - 0.3, hz0, hx1, dy + 0.07, hz1);
+  ctx.endGroup();
+  ctx.beginGroup('trampillaSOpen');
+  lid(true);
+  ctx.endGroup();
   ctx.endGroup();
   towerTopRuin(ctx);
-  // ---- la escalera, sobre caballetes, con sus pasamanos (grupo
-  // 'torreSurStair': el gigante se la lleva por delante)
-  ctx.beginGroup('torreSurStair');
-  stairs(ctx, S.x, 0, S.z0, 's', S.w, S.n, S.rise, S.run, 'planks', { faces: 'tnsewb' });
-  const L = S.n * S.run,
-    H = S.n * S.rise;
-  for (const sx of [-1, 1]) {
-    const x = S.x + sx * (S.w / 2 + 0.05);
-    // la zanca y el pasamanos
-    strut(wb, new THREE.Vector3(x, -0.05, S.z0), new THREE.Vector3(x, H - 0.05, S.z0 + L), 0.11, 'timber');
-    strut(wb, new THREE.Vector3(x, 1.05, S.z0 + 0.2), new THREE.Vector3(x, H + 1.05, S.z0 + L), 0.06, 'timber');
-    for (let k = 1; k < 8; k++) {
-      const z = S.z0 + (k / 8) * L,
-        y = (k / 8) * H;
-      wb.box('timber', x - 0.05, y, z - 0.05, x + 0.05, y + 1.05, z + 0.05, { ao: false, tint: [0.62, 0.52, 0.42] });
-    }
-    // que nadie se caiga por los lados
-    for (let k = 0; k < S.n; k += 4) {
-      const za = S.z0 + k * S.run,
-        zb = za + 4 * S.run;
-      const ya = k * S.rise;
-      blocker(ctx, x - 0.08, ya, za, x + 0.08, ya + 1.2 + 4 * S.rise, zb);
-    }
+  // ---- la puerta: atrancada ('torreSurDoor': la hoja de tablas con sus
+  // herrajes, por fuera, y la tranca, por dentro) y reventada por la campana
+  // ('torreSurDoorOpen': la hoja colgando de un gozne, la tranca partida en el
+  // suelo y astillas)
+  const zd = z0 + 0.22;
+  ctx.beginGroup('torreSurDoor');
+  wb.box('planks', dx0 + 0.01, 0.02, zd - 0.05, dx1 - 0.01, D.h - 0.01, zd + 0.05, { ao: false, faces: 'nsb', tint: [0.7, 0.62, 0.54], room: 'out' });
+  wb.box('planks', dx0 + 0.01, 0.02, zd - 0.05, dx1 - 0.01, D.h - 0.01, zd + 0.05, { ao: false, faces: 's', tint: [0.6, 0.54, 0.48], room });
+  for (const y of [0.35, 1.15, 1.95]) {
+    wb.box('iron', dx0 + 0.04, y, zd - 0.08, dx1 - 0.04, y + 0.07, zd - 0.05, { ao: false, faces: 'tnsewb', room: 'out' });
+    for (const x of [dx0 + 0.18, D.x, dx1 - 0.18]) wb.box('iron', x - 0.025, y + 0.01, zd - 0.1, x + 0.025, y + 0.06, zd - 0.08, { ao: false, room: 'out' });
   }
-  // los caballetes
-  for (const z of [47, 50.5, 54]) {
-    const y = ((z - S.z0) / L) * H - 0.1;
-    for (const sx of [-1, 1]) {
-      const x = S.x + sx * (S.w / 2 + 0.25);
-      strut(wb, new THREE.Vector3(x + sx * 0.6, 0, z), new THREE.Vector3(x, y, z), 0.12, 'timber');
+  wb.box('iron', dx1 - 0.2, 1.05, zd - 0.12, dx1 - 0.14, 1.2, zd - 0.05, { ao: false, room: 'out' });
+  wb.box('timber', dx0 - 0.2, 1.05, iz0 + 0.02, dx1 + 0.2, 1.23, iz0 + 0.16, { ao: false, room, tint: [0.66, 0.56, 0.46] });
+  ctx.col.add(dx0, 0, z0, dx1, D.h, iz0);
+  ctx.endGroup();
+  ctx.beginGroup('torreSurDoorOpen');
+  {
+    // (colgando del gozne de arriba, del lado del oeste, y caída hacia dentro)
+    wb.push();
+    wb.translate(dx0 + 0.04, D.h - 0.12, zd);
+    wb.rotateY(-1.15);
+    wb.rotateZ(-0.22);
+    wb.box('planks', 0, -(D.h - 0.2), -0.05, D.w - 0.08, 0.08, 0.05, { ao: false, faces: 'tnsewb', tint: [0.66, 0.58, 0.5] });
+    for (const y of [-1.85, -1.05, -0.25]) wb.box('iron', 0.03, y, -0.08, D.w - 0.12, y + 0.07, -0.05, { ao: false, faces: 'tnsewb' });
+    wb.pop();
+    // la tranca, partida, y astillas por dentro y por fuera
+    for (const [x, z, r, l] of [
+      [-5.9, 59.05, 0.5, 0.8],
+      [-5.0, 58.85, -0.3, 0.62],
+    ]) {
+      wb.push();
+      wb.translate(x, 0.09, z);
+      wb.rotateY(r);
+      wb.box('timber', -l / 2, -0.09, -0.07, l / 2, 0.09, 0.07, { ao: false, room, tint: [0.66, 0.56, 0.46] });
+      wb.box('timber', l / 2, -0.06, -0.05, l / 2 + 0.12, 0.05, 0.02, { ao: false, room, tint: [0.86, 0.78, 0.66] });
+      wb.pop();
     }
-    wb.box('timber', S.x - S.w / 2 - 0.35, y - 0.25, z - 0.12, S.x + S.w / 2 + 0.35, y, z + 0.12, { ao: false, tint: [0.62, 0.52, 0.42] });
+    const rr = new RNG(5551);
+    for (let i = 0; i < 9; i++) {
+      wb.push();
+      wb.translate(D.x + rr.range(-1.1, 1.1), 0.03, z0 + rr.range(-1.6, 1.4));
+      wb.rotateY(rr.range(0, Math.PI));
+      wb.box('planks', -rr.range(0.12, 0.4), -0.02, -0.04, rr.range(0.12, 0.4), 0.02, 0.04, { ao: false, tint: [0.8, 0.72, 0.62] });
+      wb.pop();
+    }
   }
   ctx.endGroup();
-  stairRuin(ctx);
+  // ---- lo transitable (sin muros invisibles de la rejilla dentro de la
+  // torre: los pone ella), la puerta y la zona de dentro (sin rótulo: sólo
+  // se entra en la película)
+  if (S) {
+    S.paint(dx0, z0, dx1, iz0 + 0.1, 1);
+    S.paint(ix0, iz0, ix1, iz1, 1);
+  }
+  if (L) {
+    L.interact.push({ kind: 'examine', id: 'x_torre_sur', text: 'torreSurDoor', x: D.x, y: 1, z: z0 - 0.5, r: 1.7 });
+    L.zones.push({ id: 'torre_sur', rects: [[ix0, iz0, ix1, iz1, -1, 12]], atmo: 'interior', room });
+  }
 }
-// Lo que queda de lo alto de la torre: la cornisa con cascotes y astillas,
-// dos vigas partidas que asoman y cuelgan, un poste del pretil en pie y
-// tablas sueltas
+// Barandilla de la sala de los guardas (pasamanos, balaústres y colisión) a
+// lo largo de z.
+function railingTS(ctx, x, za, _x, zb, y, room) {
+  const wb = ctx.wb;
+  const n = Math.max(2, Math.round((zb - za) / 0.34));
+  for (let i = 0; i <= n; i++) {
+    const z = za + ((zb - za) * i) / n;
+    const s = i === 0 || i === n ? 0.05 : 0.022;
+    wb.box('wooddark', x - s, y, z - s, x + s, y + 0.92, z + s, { ao: false, room });
+  }
+  wb.box('wooddark', x - 0.045, y + 0.9, za - 0.05, x + 0.045, y + 0.97, zb, { ao: false, room, faces: 'tnsewb' });
+  ctx.col.add(x - 0.06, y, za - 0.05, x + 0.06, y + 0.97, zb).noSight = true;
+}
+// Lo que queda de lo alto de la torre: los muros mellados, con cascotes y
+// astillas encima; dos tablas que se quedaron atravesadas sobre el hueco y
+// las que cayeron dentro, a la sala de los guardas; tres vigas partidas que
+// asoman y cuelgan, y un poste del pretil en pie
 function towerTopRuin(ctx) {
   const wb = ctx.wb;
   const T = TOWER_S;
   const rng = new RNG(5521);
   ctx.beginGroup('torreSurTopRuin');
   const y = T.h;
-  P.rubble(ctx, T.x + 0.4, y, T.z - 0.3, 12, 5522, 1.4, { scale: 0.8, mat: 'wallstone' });
-  for (let k = 0; k < 7; k++) {
+  const x0 = T.x - T.w / 2,
+    x1 = T.x + T.w / 2,
+    z0 = T.z - T.w / 2,
+    z1 = T.z + T.w / 2;
+  const t = T.t / 2;
+  for (const [x, z, n, s] of [
+    [T.x - 0.3, z0 + t, 5, 0.6],
+    [T.x + 0.7, z1 - t, 6, 0.7],
+    [x0 + t, T.z - 0.5, 4, 0.6],
+    [x1 - t, T.z + 0.6, 5, 0.5],
+  ])
+    P.rubble(ctx, x, y, z, n, 5522 + n * 7 + Math.round(x * 3), s * 0.5, { scale: 0.55, mat: 'wallstone', collide: false });
+  // (atravesadas de muro a muro, sobre el hueco)
+  for (const [x, z, r, l] of [
+    [T.x + 0.3, T.z + 0.2, 0.25, 3.9],
+    [T.x - 0.4, T.z - 0.5, -1.2, 3.7],
+  ]) {
     wb.push();
-    wb.translate(T.x + rng.range(-1.8, 1.8), y + 0.12, T.z + rng.range(-1.8, 1.8));
-    wb.rotateY(rng.range(0, Math.PI));
-    wb.rotateZ(rng.range(-0.25, 0.25));
-    wb.box('planks', -rng.range(0.5, 1.1), -0.04, -0.12, rng.range(0.5, 1.1), 0.04, 0.12, { ao: false, tint: [0.56, 0.5, 0.44] });
+    wb.translate(x, y + 0.05, z);
+    wb.rotateY(r);
+    wb.rotateZ(rng.range(-0.05, 0.05));
+    wb.box('planks', -l / 2, -0.04, -0.13, l / 2, 0.04, 0.13, { ao: false, faces: 'tnsewb', tint: [0.56, 0.5, 0.44] });
     wb.pop();
   }
-  // vigas partidas: asoman de la torre y cuelgan
+  // (las que cayeron por el hueco, sobre el suelo de la sala)
+  for (let k = 0; k < 4; k++) {
+    wb.push();
+    wb.translate(T.x + rng.range(0.4, 1.2), T.roomY + 0.05 + k * 0.03, T.z + rng.range(-1.1, 1.1));
+    wb.rotateY(rng.range(0, Math.PI));
+    wb.rotateZ(rng.range(-0.12, 0.12));
+    wb.box('planks', -rng.range(0.5, 0.9), -0.04, -0.12, rng.range(0.5, 0.9), 0.04, 0.12, { ao: false, faces: 'tnsewb', tint: [0.56, 0.5, 0.44] });
+    wb.pop();
+  }
+  // vigas partidas: asoman de los muros y cuelgan
   for (const [ax, az, bx, by, bz] of [
     [T.x - 1.2, T.z + 2.2, T.x - 1.0, y - 2.4, T.z + 3.6],
     [T.x + 2.2, T.z - 0.4, T.x + 3.3, y - 1.6, T.z + 0.2],
@@ -1051,31 +1332,6 @@ function towerTopRuin(ctx) {
   wb.rotateZ(-0.5);
   wb.box('planks', -0.6, -0.05, -0.03, 0.6, 0.05, 0.03, { ao: false, tint: [0.5, 0.44, 0.38] });
   wb.pop();
-  ctx.endGroup();
-}
-// La escalera tras la embestida: el tramo de abajo, y del resto sólo la
-// zanca rota y los peldaños por el suelo
-function stairRuin(ctx) {
-  const wb = ctx.wb;
-  const S = TOWER_S.stair;
-  const rng = new RNG(5531);
-  ctx.beginGroup('torreSurStairRuin');
-  const n = 14;
-  stairs(ctx, S.x, 0, S.z0, 's', S.w, n, S.rise, S.run, 'planks', { faces: 'tnsewb' });
-  for (const sx of [-1, 1]) {
-    const x = S.x + sx * (S.w / 2 + 0.05);
-    strut(wb, new THREE.Vector3(x, -0.05, S.z0), new THREE.Vector3(x, n * S.rise - 0.05, S.z0 + n * S.run), 0.11, 'timber');
-    // (la zanca partida, caída sobre la plaza)
-    strut(wb, new THREE.Vector3(x, n * S.rise - 0.1, S.z0 + n * S.run), new THREE.Vector3(x + sx * 1.6, 0.1, S.z0 + n * S.run + 3.4), 0.1, 'timber');
-  }
-  for (let k = 0; k < 16; k++) {
-    wb.push();
-    wb.translate(S.x + rng.range(-3, 3), 0.06, S.z0 + n * S.run + rng.range(0.5, 9));
-    wb.rotateY(rng.range(0, Math.PI));
-    wb.rotateZ(rng.range(-0.2, 0.2));
-    wb.box('planks', -rng.range(0.5, 0.9), -0.05, -0.15, rng.range(0.5, 0.9), 0.05, 0.15, { ao: false, tint: [0.56, 0.5, 0.44] });
-    wb.pop();
-  }
   ctx.endGroup();
 }
 const lerp4 = (a, b, k) => a + (b - a) * k;

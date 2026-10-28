@@ -10,13 +10,14 @@
 // las casas de los lados revientan a su paso. En la boca del callejón te echa
 // la mano a través de las casas (¡Esquiva!); a la salida de la calle se alza
 // y descarga la campana donde estás (¡Rueda!): se le queda clavada en el
-// empedrado. Subes por la escalera de madera de la torre oeste, a la
-// espringala (acto 4).
+// empedrado, y un adoquín que sale despedido revienta la puerta atrancada de
+// la torre oeste. Corres hasta ella y subes por su husillo, a la sala de los
+// guardas y por la escala a la trampilla del cadalso: la espringala (acto 4).
 import * as THREE from 'three';
 import { sm, lerp, Path, camSafe } from './film.js';
 import { FP } from './film_player.js';
 import { ESTABLO, hideFolk } from './film_grab.js';
-import { NAVE, TOWER_S } from '../../world/level_finale.js';
+import { NAVE, TOWER_S, towerSpiral } from '../../world/level_finale.js';
 import { springald1 } from './film_tower.js';
 import { waveHouses, rectDist, breakWave as breakWaveOf, breakArm as breakArmOf, smashBlock, smashHouse } from './film_wave.js';
 
@@ -34,8 +35,8 @@ const _v = new V3(),
 const DUST = [0.26, 0.24, 0.22];
 
 // El recorrido del jugador: de la paja a la puerta del establo, el corral,
-// el callejón, la calle abajo, la esquina de la plaza y la escalera arriba
-const ST = TOWER_S.stair;
+// el callejón, la calle abajo, la esquina de la plaza y la puerta de la torre
+const TD = { x: TOWER_S.door.x, z: TOWER_S.z - TOWER_S.w / 2 };
 export const RUN3 = new Path([
   [32.2, 0, 24.6],
   [29.4, 0, 25.0],
@@ -46,8 +47,9 @@ export const RUN3 = new Path([
   [0.6, 0, 29.4],
   [0.2, 0, 40.0],
   [-3.0, 0, 42.6],
-  [ST.x, 0, ST.z0 - 0.35],
-  [ST.x, ST.n * ST.rise, ST.z0 + ST.n * ST.run + 0.4],
+  [-4.6, 0, 47.6],
+  [TD.x, 0, 53.6],
+  [TD.x, 0, TD.z - 0.4],
 ]);
 // El del gigante: de donde cae (las casas del norte del corral), por el
 // corral (lejos del caballo muerto), el callejón y la calle
@@ -108,7 +110,7 @@ export function* actHerreria(D, o = {}) {
   // ------------------------------------------------- 3. la campana
   yield* beatBell(D, G);
   if (p.dead) return;
-  // ------------------------------------------------- 4. la escalera
+  // ------------------------------------------------- 4. la torre
   yield* climb(D, G);
 }
 
@@ -629,26 +631,81 @@ function* beatBell(D, G) {
   for (let i = 0; i < 9; i++) D.chunks.add({ mat: 'cobble', size: [rnd(0.5, 1.0), 0.22, rnd(0.4, 0.9)], pos: new V3(at.x + rnd(-2.4, 2.4), 0.3, at.z + rnd(-2.4, 2.4)), rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)], vel: new V3(rnd(-7, 7), rnd(5, 11), rnd(-7, 7)), spin: [rnd(-8, 8), rnd(-8, 8), rnd(-8, 8)], shatter: 99, life: 8 });
   // (lo que quede de las casas de al lado, abajo)
   for (const r of waveHouses(g, WG3)) if (g.groups[r.sub] && g.groups[r.sub].on && rectDist(r, at.x, at.z) < 4.5) smashHouse(D, r, at);
+  // (un adoquín sale despedido hacia la torre: revienta su puerta)
+  let burst = false;
+  F.also(doorBurst(D, at, () => (burst = true)));
   if (!rolled) {
     // le pilla el borde: sale despedido hacia la esquina
     F.hurt(32, at, { shake: 1.2, heavy: true });
     const q = RUN3.at(RUN3.project(p.pos.x, p.pos.z) + 3.4, {});
-    yield* knockTo3(D, new V3(q.x, 0, q.z));
+    F.also(knockTo3(D, new V3(q.x, 0, q.z)));
+    yield* F.wait(0.3);
   } else {
-    yield* F.wait(0.55);
+    yield* F.wait(0.3);
     F.pClip(FP.brace, { blend: 0.25 });
   }
+  // (la puerta de la torre, desde la plaza: el adoquín la revienta)
+  F.shot([TD.x - 3.1, 1.45, TD.z - 3.9], [TD.x, 1.25, TD.z + 0.1], { fov: 54 });
+  F.hand = 0.02;
+  while (!burst) yield;
+  yield* F.wait(0.55);
   G.play('stuck', { blend: 0.5 });
   // (la campana clavada, el gigante tirando de la cadena; el jugador, en la
-  // esquina de la plaza, junto a la escalera)
+  // esquina de la plaza, camino de la torre)
   F.shot([-9.2, 2.5, 46.4], [0.4, 5.0, 37.0], { fov: 60 });
   F.hand = 0.03;
   p.yaw = Math.atan2(at.x - p.pos.x, at.z - p.pos.z);
   yield* F.wait(1.3);
 }
+// El adoquín que sale despedido del golpe de la campana y revienta la puerta
+// atrancada de la torre: la hoja salta hacia dentro, colgando de un gozne,
+// y la tranca se parte (onBurst, cuando revienta)
+function* doorBurst(D, from, onBurst) {
+  const g = D.g,
+    a = g.audio;
+  const T = 1.0;
+  const to = new V3(TD.x + 0.15, 1.1, TD.z + 0.1);
+  const p0 = new V3(from.x - 0.4, 0.7, from.z + 0.9);
+  const v = new V3((to.x - p0.x) / T, (to.y - p0.y + 8 * T * T) / T, (to.z - p0.z) / T);
+  let hit = false;
+  const boom = () => {
+    if (hit) return;
+    hit = true;
+    g.setGroupVisible('torreSurDoor', false);
+    g.setGroupVisible('torreSurDoorOpen', true);
+    const td = g.interact.list.find((i) => i.id === 'x_torre_sur');
+    if (td) td.hidden = true;
+    a && a.play('woodBreak', to, { k: 1.8 });
+    a && a.play('rackBreak', to, { k: 1.4 });
+    a && a.play('crack', to, { k: 1.2 });
+    D.splinters.burst(to, 24, { speed: 6, up: 3, size: 0.8, spread: 0.6 });
+    g.fx.blood.emit(to.x, to.y, to.z + 0.4, 26, { color: DUST, speed: 3, life: 1.3, up: 1.1, gravity: 0.6 });
+    onBurst && onBurst();
+  };
+  D.chunks.add({
+    mat: 'cobble',
+    size: [0.52, 0.3, 0.46],
+    pos: p0,
+    rot: [rnd(0, 3), rnd(0, 3), rnd(0, 3)],
+    vel: v,
+    spin: [rnd(-9, 9), rnd(-9, 9), rnd(-9, 9)],
+    shatter: 99,
+    life: 6,
+    // (al cruzar el umbral, la puerta revienta y él sigue, frenado, hacia dentro)
+    onUpdate: (c) => {
+      if (!hit && c.p.z > TD.z - 0.15) {
+        boom();
+        c.v.multiplyScalar(0.12);
+      }
+    },
+  });
+  let t = 0;
+  while (!hit && t < T + 0.4) t += yield;
+  boom();
+}
 
 // ======================================================================
-// 4. Escalera arriba (con control); él, tirando de la campana clavada
+// 4. A la torre (con control): la puerta reventada; dentro, el husillo
 // ======================================================================
 function* climb(D, G) {
   const g = D.g,
@@ -664,18 +721,11 @@ function* climb(D, G) {
   // (arriba espera la espringala de la guarnición)
   springald1(D);
   let roar = 2.5;
-  while (p.pos.y < TOWER_S.deckY - 0.5) {
+  // (hasta el umbral de la puerta)
+  const atDoor = () => Math.abs(p.pos.x - TD.x) < 0.9 && p.pos.z > TD.z - 1.1 && p.pos.z < TD.z + 0.9;
+  while (!atDoor()) {
     const dt = yield;
-    // en la escalera: de lado, desde el oeste; abajo, en la boca de la
-    // calle, el gigante tirando de la cadena (el mando sigue igual: arriba
-    // es subir)
-    const on = p.pos.z > ST.z0 + 0.6 && Math.abs(p.pos.x - ST.x) < 1.4;
     runStep3(D, dt);
-    if (on) F.cam = climbShot(D, G);
-    else if (F.cam) {
-      F.cam = null;
-      g.camRig.override = null;
-    }
     if (p.dead) return;
     roar -= dt;
     if (roar <= 0) {
@@ -686,15 +736,151 @@ function* climb(D, G) {
     }
   }
   p.autoDir = null;
-  F.cam = null;
-  g.camRig.override = null;
+  yield* climbTower(D, G);
 }
-// subiendo: de lado, un poco por debajo y por delante; la cámara sube con él
-function climbShot(D, G) {
-  const P = D.g.player.pos;
-  const hd = G.head(new V3());
-  const look = new V3(P.x + 1.2, P.y + 1.0, P.z - 1.6).lerp(hd, 0.12);
-  return { pos: new V3(ST.x - 6.6, P.y + 2.0, P.z + 1.4), look, fov: 62, speed: 7, snap: false };
+
+// Dentro de la torre (cinemática): el husillo, de abajo arriba, con la
+// cámara detrás y por dentro de la vuelta; fuera, él tira de la cadena y la
+// torre tiembla; la sala de los guardas, la escala y la trampilla, que se
+// abre de un empujón, y lo alto del cadalso
+function* climbTower(D, G) {
+  const g = D.g,
+    F = D.film,
+    p = g.player,
+    a = g.audio;
+  const T = TOWER_S,
+    Sp = T.spiral;
+  F.cinema(true);
+  F.puppet(true);
+  p.autoDir = null;
+  // ---- (a) desde la plaza: se mete por la puerta reventada
+  F.pClip('run', { blend: 0.1 });
+  F.shot([TD.x - 2.7, 1.55, TD.z - 4.4], [TD.x + 0.2, 1.4, TD.z + 0.6], { fov: 58 });
+  F.hand = 0.02;
+  const s0 = towerSpiral(0);
+  yield* runTo3(D, new V3(TD.x, 0, TD.z + 0.35), 4.6);
+  yield* runTo3(D, new V3(s0.x, 0, s0.z), 4.0);
+  // ---- (b) el husillo: la cámara, unos peldaños por delante y pegada al
+  // machón, mirando abajo al que sube
+  const STEP = 0.46; // (lo que se anda por peldaño, por la mitad de la huella)
+  let u = 0,
+    shook = false;
+  F.follow(() => {
+    const c = towerSpiral(Math.min(Sp.n, u + 2.6), 0.5);
+    const P = p.pos;
+    return { pos: new V3(c.x, c.y + 1.75, c.z), look: new V3(P.x, P.y + 1.05, P.z), fov: 70, inside: true };
+  });
+  F.hand = 0.03;
+  while (u < 19) {
+    const dt = yield;
+    u = Math.min(Sp.n, u + (dt * 3.9) / STEP);
+    const q = towerSpiral(u);
+    F.setP(q.x, q.y, q.z, q.yaw);
+    // (un tirón de la cadena, fuera: la torre tiembla y suelta polvo)
+    if (!shook && u > 9) {
+      shook = true;
+      towerShake(D, G);
+    }
+  }
+  // ---- (c) fuera, desde lo alto de la torre, por encima del pretil: la
+  // plaza abajo y él, en la boca de la calle, tirando de la campana (sigue
+  // subiendo)
+  F.shot([T.x - 0.6, T.deckY + 1.55, T.deck[1] - 0.45], [G.pos.x * 0.7 + T.x * 0.3, 4.5, G.pos.z + 2], { fov: 60 });
+  F.hand = 0.03;
+  towerShake(D, G);
+  let t = 0;
+  while (u < Sp.n) {
+    const dt = yield;
+    t += dt;
+    u = Math.min(Sp.n, u + (dt * 3.9) / STEP);
+    const q = towerSpiral(u);
+    F.setP(q.x, q.y, q.z, q.yaw);
+  }
+  while (t < 1.2) t += yield;
+  // ---- (d) la sala de los guardas: sale del hueco y cruza hasta la escala
+  const RY = T.roomY,
+    Ld = T.ladder;
+  const top = T.deckY - 0.02;
+  const zL = (y) => Ld.z - 0.05 - (top - y) * Math.sin(Ld.lean) - 0.4;
+  F.shot([T.x + 1.22, RY + 2.25, T.z - 1.3], [T.x + 0.1, RY + 0.9, T.z + 0.6], { fov: 66, inside: true });
+  F.hand = 0.02;
+  const s1 = towerSpiral(Sp.n);
+  F.setP(s1.x, RY, s1.z, s1.yaw);
+  yield* runTo3(D, new V3(T.x + 0.35, RY, T.z - 0.55), 2.6);
+  yield* runTo3(D, new V3(Ld.x, RY, zL(RY)), 2.6);
+  // la escala
+  p.yaw = 0;
+  F.pClip(FP.ladder, { blend: 0.15 });
+  a && a.play('climb', p.pos);
+  let y = RY;
+  while (y < T.deckY - 2.25) {
+    const dt = yield;
+    y = Math.min(T.deckY - 2.25, y + dt * 2.1);
+    F.setP(Ld.x, y, zL(y), 0);
+  }
+  // ---- (e) la trampilla, de un empujón; desde lo alto del cadalso
+  const [hx0, hz0, hx1, hz1] = T.hatch;
+  const HC = new V3((hx0 + hx1) / 2, T.deckY, (hz0 + hz1) / 2);
+  F.pClip('interact', { blend: 0.1 });
+  yield* F.wait(0.25);
+  g.setGroupVisible('trampillaS', false);
+  g.setGroupVisible('trampillaSOpen', true);
+  a && a.play('stairCreak', HC, { k: 1.4 });
+  a && a.play('woodHit', HC, { k: 1.2 });
+  g.fx.blood.emit(HC.x, HC.y + 0.3, HC.z, 30, { color: DUST, speed: 2.5, life: 1.4, up: 1.4, gravity: 0.4 });
+  F.shot([T.deck[2] - 0.35, T.deckY + 2.1, T.deck[3] - 0.25], [HC.x - 0.2, T.deckY + 0.5, HC.z - 0.4], { fov: 58 });
+  F.pClip(FP.ladder, { blend: 0.1 });
+  while (y < T.deckY - 1.0) {
+    const dt = yield;
+    y = Math.min(T.deckY - 1.0, y + dt * 2.0);
+    F.setP(Ld.x, y, zL(y), 0);
+  }
+  // se encarama y sale hacia el sur; la tapa, detrás, se cierra
+  F.pClip('climbUp', { blend: 0.08 });
+  const from = new V3(Ld.x, y, zL(y)),
+    to = new V3(HC.x, T.deckY, hz1 + 0.85);
+  t = 0;
+  while (t < 0.9) {
+    const dt = yield;
+    t += dt;
+    const k = sm(clamp(t / 0.9, 0, 1));
+    F.setP(lerp(from.x, to.x, k), lerp(from.y, to.y, Math.min(1, k * 1.6)), lerp(from.z, to.z, k), 0);
+  }
+  g.setGroupVisible('trampillaS', true);
+  g.setGroupVisible('trampillaSOpen', false);
+  a && a.play('woodHit', HC, { k: 1.0 });
+  p.anim.stop(0.2);
+  yield* F.wait(0.4);
+}
+// Un tirón de la cadena: el gigante tira de la campana clavada y la torre
+// tiembla (cruje, suelta polvo de lo alto)
+function towerShake(D, G) {
+  const g = D.g,
+    a = g.audio,
+    T = TOWER_S;
+  a && a.play('chainRun', G.head(_v), { k: 1.6 });
+  a && a.play('stoneCreak', { x: T.x, y: 6, z: T.z }, { k: 1.8 });
+  a && a.play('beastRoar', G.head(_v), { k: 1.3 });
+  G.R.flinch.x.kick(-0.35);
+  g.camRig.shake(0.45);
+  g.input.rumble(0.6, 0.8, 320);
+  const p = g.player.pos;
+  for (let k = 0; k < 3; k++) g.fx.blood.emit(T.x + rnd(-1, 1), Math.min(T.roomY + 2.8, p.y + 3.2), T.z + rnd(-1, 1), 14, { color: DUST, speed: 1.2, life: 1.6, up: -0.5, gravity: 0.5 });
+}
+// el jugador (marioneta) corre de donde está a 'to' (a v m/s), mirando hacia allí
+function* runTo3(D, to, v) {
+  const F = D.film,
+    p = D.g.player;
+  const from = p.pos.clone();
+  const L = Math.hypot(to.x - from.x, to.z - from.z);
+  const yaw = Math.atan2(to.x - from.x, to.z - from.z);
+  const dur = Math.max(0.05, L / v);
+  let t = 0;
+  while (t < dur) {
+    t += yield;
+    const k = Math.min(1, t / dur);
+    F.setP(lerp(from.x, to.x, k), lerp(from.y, to.y, k), lerp(from.z, to.z, k), L > 0.05 ? yaw : p.yaw);
+  }
 }
 
 // ---------------------------------------------------------------------

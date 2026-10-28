@@ -697,6 +697,7 @@ export const MSG = {
   lockedKey: (k) => `Cerrada con llave. Necesitas: ${k}.`,
   barred: 'Está atrancada desde el otro lado.',
   boarded: 'La puerta está cegada con tablones clavados. Necesitas algo para arrancarlos.',
+  torreSurDoor: 'La puerta de la torre está atrancada por dentro. Arriba no se oye nada.',
   grate: 'Una reja de hierro cierra la escalera. El torno que la mueve no tiene manivela.',
   grateDown: 'Encajas la manivela y giras el torno. La reja baja chirriando por su ranura hasta perderse en el suelo.',
   seal: 'Una losa con el sigilo del Pacto sella el paso. Tiene un hueco del tamaño de un anillo.',

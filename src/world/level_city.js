@@ -3,7 +3,7 @@
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { springaldTowerS } from './level_finale.js';
+import { springaldTowerS, TOWER_S } from './level_finale.js';
 import { house, solid, stairs, merlons, cityWall, tower, archWall, archRing, stoneWall, waveProp, solidGableRoof } from './builders.js';
 import { buildCasaTapiada, buildPasadizo, buildCasaTonelero, soutoZones } from './level_souto.js';
 import * as P from './props.js';
@@ -807,12 +807,12 @@ export function buildFerraria(ctx, S, L) {
   house(ctx, { x0: 14, z0: 42, x1: 24, z1: 50, front: 'w', seed: 805 });
   house(ctx, { x0: 14, z0: 50, x1: 24, z1: 58, front: 'w', seed: 806, lit: true });
   stoneWall(ctx, -26, 56, -14, 58, 5);
-  // muralla sur con la puerta hundida
-  cityWall(ctx, -30, 58, -3.5, 62, 9, { merlonSides: ['s'] });
+  // muralla sur con la puerta hundida (hasta la torre del oeste, que es hueca)
+  cityWall(ctx, -30, 58, TOWER_S.x - TOWER_S.w / 2, 62, 9, { merlonSides: ['s'] });
   cityWall(ctx, 3.5, 58, 30, 62, 9, { merlonSides: ['s'] });
-  // (la torre oeste, la de la espringala del jefe final, con su cadalso y su
-  // escalera de madera: level_finale.js)
-  springaldTowerS(ctx);
+  // (la torre oeste, la de la espringala del jefe final, con su puerta, su
+  // husillo, la sala de los guardas y el cadalso: level_finale.js)
+  springaldTowerS(ctx, S, L);
   tower(ctx, 5.5, 60, 4.5, 12);
   // el paso de la puerta: bóveda, suelo, rastrillo y, detrás, la carne que lo tapona entero
   solid(ctx, 'wallstone', -3.5, 5, 58, 3.5, 9, 62, { sub: 2, ao: false, faces: 'tnsewb' });

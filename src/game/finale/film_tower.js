@@ -487,7 +487,7 @@ function* gow1(D, G, S, bolt) {
   // (desde la plaza, al oeste y bajo: el brazo contra lo alto de la torre)
   F.shot([-13.2, 8.5, 49.5], [-3.0, 11, 54.5], { fov: 66 });
   F.hand = 0.04;
-  // (da un paso: se lleva la escalera por delante)
+  // (da un paso hacia la torre)
   const want = new V3(T.x + 3.6, 0, T.deck[1] - 8.0);
   const dx = want.x - G.pos.x,
     dz = want.z - G.pos.z;
@@ -505,7 +505,6 @@ function* gow1(D, G, S, bolt) {
       struck = true;
       arm.toWorld(DECK.clone().add(_v.set(0.5, -0.6, -1.2)), 0.33);
     }
-    if (!smashed && G.actT > 0.62) breakStair(D);
     if (!smashed && G.actT > 1.05) {
       smashed = true;
       smashTop(D, S);
@@ -792,20 +791,6 @@ export function hangOnBolt(bolt) {
   return { pos: grip.add(_v2.set(0, -2.15, 0)), yaw: Math.atan2(along.x, along.z) + Math.PI / 2, tilt: new THREE.Quaternion() };
 }
 
-// la escalera, aplastada al paso
-function breakStair(D) {
-  const g = D.g;
-  if (!g.groups.torreSurStair || !g.groups.torreSurStair.on) return;
-  const S = T.stair;
-  D.crumble('torreSurStair', { ruin: 'torreSurStairRuin', from: new V3(S.x + 6, 4, S.z0 + 8), tilt: 0.3, drop: 3, dur: 0.6, speed: 1, n: 10, sound: false, shake: 0.5, wood: true, dust: 0.7 });
-  for (let i = 0; i < 10; i++) {
-    const z = S.z0 + rnd(4, 13),
-      y = ((z - S.z0) / (S.n * S.run)) * S.n * S.rise;
-    D.chunks.add({ mat: 'planks', size: [S.w * rnd(0.6, 1), 0.07, 0.3], pos: new V3(S.x + rnd(-0.6, 0.6), y, z), rot: [rnd(-0.5, 0.5), rnd(0, 3), rnd(-0.5, 0.5)], vel: new V3(rnd(0, 6), rnd(1, 5), rnd(1, 6)), spin: [rnd(-6, 6), rnd(-6, 6), rnd(-6, 6)], shatter: 99, life: 8 });
-  }
-  g.audio && g.audio.play('rackBreak', { x: S.x, y: 4, z: S.z0 + 8 }, { k: 2 });
-  g.audio && g.audio.play('woodBreak', { x: S.x, y: 4, z: S.z0 + 8 }, { k: 2 });
-}
 // lo alto de la torre revienta: el cadalso, el pretil, la espringala; la
 // cadena se parte (cuelga del virote)
 function smashTop(D, S) {

@@ -196,11 +196,16 @@ export class Finale {
       else if (n.startsWith('almenaT:')) on(n, k < 4);
       else if (n.startsWith('almenaTRuin:')) on(n, k >= 4);
     }
-    // lo alto de la torre oeste de la puerta sur y su escalera (acto 4)
+    // lo alto de la torre oeste de la puerta sur (acto 4), su trampilla y su
+    // puerta, que revienta la campana (acto 3: desde ahí, ya no se examina)
     on('torreSurTop', k < 3);
     on('torreSurTopRuin', k >= 3);
-    on('torreSurStair', k < 3);
-    on('torreSurStairRuin', k >= 3);
+    on('trampillaS', true);
+    on('trampillaSOpen', false);
+    on('torreSurDoor', k < 2);
+    on('torreSurDoorOpen', k >= 2);
+    const td = g.interact.list.find((i) => i.id === 'x_torre_sur');
+    if (td) td.hidden = k >= 2;
     // el tejado del establo
     on('wreck:establo', !broken);
     on('wreck:establo:ruin', broken);

@@ -100,7 +100,10 @@ plaza de la puerta. El gigante va detrás (lejos: es grande; cuando se acerca, a
 - En el corral: cae sobre las casas del lado norte; cascotes y tejas: **¡Esquiva!**
 - En la Herrería: embiste calle abajo, a cuatro patas, y las casas de los dos lados revientan en ola
   detrás de ti. Al llegar a la plaza de la puerta, descarga la campana donde estás: **¡Rueda!** La
-  campana se queda clavada; tú subes por la escalera de madera de la torre oeste.
+  campana se queda clavada y un adoquín que sale despedido revienta la puerta atrancada de la torre oeste;
+  corres hasta ella y subes por su husillo, a la sala de los guardas y por la escala a la trampilla del
+  cadalso (antes había una escalera de madera de trece metros plantada en la plaza: ver
+  `PLAN_TEJADOS.md`).
 
 ### Acto 4 · La primera espringala (torre oeste de la puerta sur), ~50 s
 
