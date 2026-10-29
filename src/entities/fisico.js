@@ -1029,9 +1029,14 @@ export const FISICO_TYPE = {
     if (e.state === 'sedando' || e.state === 'trepanando') return { dmg: dmg * 0.5, poise: 0 };
     return F ? F.preHit(e, dmg, poise) : null;
   },
-  // vencido: no cae, se sienta en su mesa (game/fisico_pelea.js)
+  // vencido: no cae, se sienta en su mesa (game/fisico_pelea.js); fuera de
+  // la pelea no muere (lleva al cinto la llave de la cordelería)
   onDefeat: (e) => {
     const F = e.game.fisico;
+    if (F && F.modo !== 'pelea') {
+      e.hp = 1;
+      return true;
+    }
     return F ? F.pelea.muere(e) : false;
   },
   onHit: (e, r, dmg) => {

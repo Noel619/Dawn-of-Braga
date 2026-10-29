@@ -597,7 +597,7 @@ export function buildTanners(ctx, S, L) {
     { id: 'muralla', rects: [[64, -40, 72, 12, -1, 7]], atmo: 'city' }
   );
   L.phantoms.push({ x: 68, y: 0, z: -34, trigger: [66, 0, -4], kind: 'mourner' });
-  L.map.push({ id: 'tanners', r: [42, -12, 64, 12] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
+  L.map.push({ id: 'tanners', r: [44, -12, 64, 12] }, { id: 'tanners', r: [42, -12, 44, 3] }, { id: 'muralla', r: [64, -40, 72, 12] }, { id: 'chapel', r: [44.6, 12.6, 53.4, 21.4] });
 }
 
 // Almenas rompibles en la cima del Postigo (cada una, su pieza) y el parapeto

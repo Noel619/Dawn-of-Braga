@@ -292,7 +292,9 @@ function palomar(ctx, L) {
       holes.push({ a0: u - 0.11, a1: u + 0.11, y0: D.y + 1.75, y1: D.y + 1.95 });
     }
     if (side === 'w') holes.splice(0, holes.length, { a0: 33.9, a1: 34.9, y0: D.y + 0.9, y1: D.y + 2.0 });
-    if (side === 's') holes.splice(0, holes.length, { a0: 65.85, a1: 67.15, y0: y0, y1: D.y + 1.65 });
+    // (la boca de la escalera, alta como una puerta: más baja, bajando se
+    // daba con la cabeza en el dintel)
+    if (side === 's') holes.splice(0, holes.length, { a0: 65.85, a1: 67.15, y0: y0, y1: D.y + 2.15 });
     const outF = side,
       inF = { n: 's', s: 'n', e: 'w', w: 'e' }[side];
     let cur = a0;

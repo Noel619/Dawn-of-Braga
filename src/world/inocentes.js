@@ -625,7 +625,9 @@ export function casaInocentes(ctx, L, h) {
     wb.box('iron', x - 0.05, y1 + 1.45, z - 0.05, x + 0.05, y1 + 1.55, z + 0.05, { ao: false, room: r });
     P.chains(ctx, x, y1 + 1.45, z, 12, 0);
   }
-  P.barrel(ctx, 56.0, y1, 37.7, { r: 0.25 });
+  // (el cubo de los camastros, en el rincón: no delante de la puerta de la
+  // botica)
+  P.barrel(ctx, 60.1, y1, 35.0, { r: 0.25 });
   luna(ctx, 58.5, y1 + 1.6, 34.7, r, 0.35);
   wb.setRoom(null);
   // ---- el rellano

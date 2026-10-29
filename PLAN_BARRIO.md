@@ -34,7 +34,7 @@ Lo que pide:
 
 **El Físico de los Inocentes.** Mestre Clemente, físico. Estudió en Salerno y en Toledo; leyó a Hipócrates, a
 Galeno, a Boecio y a Séneca, y escribe como lee: despacio, en latín cuando no le alcanza el romance. Hace
-veinte años abrió en la plazuela del Pozo la **Casa de los Inocentes**, donde guardaba a los locos de Braga: los
+veinte años abrió en la plazuela de los Inocentes la **Casa de los Inocentes**, donde guardaba a los locos de Braga: los
 que oyen lo que nadie oye, los melancólicos que no se levantan, los furiosos que se arrancan la piel. Las
 familias le pagaban por tenerlos. Los escuchó, los sangró, los purgó, los ató, los tuvo a oscuras, les leyó.
 No curó a ninguno.
@@ -129,7 +129,7 @@ de los Pelames.
      oye martillear y hablar solo; desde la ventana se le ve irse). Se sale por el patio: por encima de la
      tapia, al patio de la casa de al lado y de ahí a la plazuela.
    - En la casa, un rincón con un altar (el oratorio de la viuda): **un altar de descanso**.
-4. **La Plazuela del Pozo**: el pozo con su polea, una cruz de piedra, un árbol muerto con una jaula colgada.
+4. **La Plazuela de los Inocentes**: el pozo con su polea, una cruz de piedra, un árbol muerto con una jaula colgada.
    Alrededor, la **Casa de los Inocentes** (al este: sobre la puerta, el rótulo del físico, la vara con la
    serpiente enroscada; la puerta, atrancada por dentro), la **tintorería** (al norte) y otra casa al sur.
    Cepos entre la paja.

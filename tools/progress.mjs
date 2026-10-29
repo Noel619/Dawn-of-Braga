@@ -76,26 +76,43 @@ const steps = [
   "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
   "__use('i_palanca')", "__use('n_herrero')",
   "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
-  // los tejados de los Pellejeros, andando: la puerta del velatorio (clavada
-  // por dentro: la palanca), el boquete al taller del pellejero, su escalera
-  // y su sobrado, el boquete al de los vecinos y su escala al desván
-  "(()=>{const g=__game;g.player.spawn(12.2,0,46,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_velatorio')})()",
-  "__walk([[15.5,46],[15.5,47.2]])", "__useHere('n_velatorio')",
-  "__walk([[19,46.3],[22.9,46.6],[25.3,46.6],[25.5,49],[29.9,49.05],[30.8,48],[33.5,44],[35.3,43.6],[37.2,43.6],[40.6,46.2]])", "__useHere('n_vecinos')",
-  "__walk([[41.2,47],[42,48.3]])", "__useHere('h_desvan_abajo')",
-  // el desván de los cueros (la nota de Tomé, al fondo), el secadero, los
-  // escombros hasta el desván del palomero y el palomar: la piedra de afilar
-  "__walk([[40,47.2],[37.8,46]])", "__useHere('n_desvan')",
-  "__walk([[40,47.2],[44.5,46],[47.3,46],[48.8,46],[50.5,45],[58.9,44.8],[58.9,41.2],[58.9,40.2],[58.3,38.6],[56.2,37]])",
-  "__useHere('h_palomar_abajo')", "__useHere('i_piedra')", "__walk([[56.5,35]])", "__useHere('n_aprendiz')", "__useHere('h_palomar_arriba')",
-  // por el boquete del hastial, al tejado quemado; rodeando su hundimiento,
-  // al del curtidor, y por su agujero al desván; la escala, la escalera y la
-  // tranca de la puerta: las Curtidurías
-  "__walk([[57.5,31.2],[57.5,30.5],[57.5,29.4],[57.5,27.4],[60.2,27],[60.2,23],[57.5,21.6],[57.5,19.2],[57.5,17.6],[57.5,16.6],[60,16],[62,16.6]])",
-  "__useHere('h_curtidor_arriba')",
-  "__walk([[58.2,17.9],[55,17.6],[54.95,16.4],[54.95,12.9],[57,12.9],[59,12.9]])", "__useHere('d_curtidor')",
+  // el barrio de los Pellejeros, andando (sin el Físico, sus trampas ni el
+  // equilibrio de las cornisas: lo suyo se prueba aparte; aquí, lo que se
+  // abre, se coge y se lee): el portón de la cuarentena (la palanca); la
+  // casa de la viuda: la escalera, la cornisa, la llave de la tintorería en
+  // el arcón de la alcoba, la tranca de la alcoba, la puerta del patio, las
+  // cajas de la tapia; la quemada; la tintorería (la llave), la nota del
+  // tintorero, el secadero, el pescante; los tejados (la viga de la
+  // calleja); el palomero y su palomar (la piedra de afilar); el tejado de la
+  // Casa de los Inocentes y la claraboya; el tratado (desván), la historia
+  // clínica (alcoba), el otro tratado (botica); el quirófano: la pelea (se le
+  // vence de un golpe; la escena, saltada): la llave de la cordelería y la
+  // puerta del patio; el patio, el callejón, la cordelería (la nota del
+  // cordelero) y su puerta a los Pelames
+  "(()=>{const g=__game;window.__fu=g.fisico.update;window.__tu=g.trampas.update;window.__cu=g.cornisas.update;g.fisico.update=()=>{};g.trampas.update=()=>{};g.cornisas.update=()=>{};g.flags['fisico:intro']=true;g.player.spawn(12.4,0,44,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_porton')})()",
+  "__walk([[20,43.6],[24,43.6],[24,43]])", "__useHere('d_zapatero')",
+  "__walk([[24,40.4],[23.6,39.4]])", "__useHere('n_zapatero')",
+  "__walk([[24,40.4],[24,42.6],[25.2,45.2]])", "__useHere('d_viuda')",
+  "__walk([[25.2,47.6],[25,50],[25,51.6],[27.3,53.6],[27.4,54.15],[28.45,54],[28.45,50.4],[28.4,49.6],[27.6,49.4],[27.4,46.8],[27.4,45.74],[23.15,45.74],[23.15,46.6],[24.2,46.7],[24.3,47.3]])", "__useHere('i_llave_tinte')",
+  "__walk([[24.6,49.55]])", "__useHere('d_alcoba')",
+  "__walk([[26,49.55],[28.4,49.7],[28.45,53.9],[27.3,54.15],[25.5,54.2]])", "__useHere('d_viuda_patio')",
+  "__walk([[25.5,56.3],[26.4,56.9],[27.3,56.9],[28.2,56.9],[29,56.9],[29.5,56.9],[30.4,56.9],[31.75,55.7]])", "__useHere('d_quemada_patio')",
+  "__walk([[31.75,54.3],[32,52],[32.6,49],[33.3,48.4]])", "__useHere('d_quemada')",
+  "__walk([[35,48.4],[40,40]])", "__useHere('d_tinte')",
+  "__walk([[40,38],[39.9,33],[40.6,32.1],[45,32.1],[45,33.3],[42.4,35.2]])", "__useHere('n_tintorero')",
+  "__walk([[38.2,37.2],[37,37.3],[37,34],[36.2,34.1],[34.6,34.1],[33.7,34.1],[33.5,41],[33.45,41.6],[31.45,50.1],[32.5,51.6],[34.3,52],[41.5,53.5],[48.5,53.5],[55,50],[60.8,49.6],[61.6,49.6],[63.9,45.2],[64,43.6],[66.5,43.1],[66.5,39.7],[66.5,36],[65.9,35.6]])", "__useHere('n_aprendiz')",
+  "__walk([[66.6,34.8]])", "__useHere('i_piedra')",
+  "__walk([[66.5,36.6],[66.5,39.9],[66.5,42.9],[64,42.6],[62.6,41.5],[61.6,40],[60.6,40],[58.6,40.9],[57.2,40.9],[56.6,38.6],[55.8,37]])", "__useHere('n_tratado2')",
+  "__walk([[56.15,43],[56.15,44.5],[56.15,47.9],[57.1,48.1],[56.6,42.4],[54.6,42.4],[53.3,42.2]])", "__useHere('n_historia')",
+  "__walk([[54.6,42.4],[56.6,42.4],[58.2,41.6],[58.2,39.8],[56.2,37.7],[54.6,37.7],[54.2,38.2]])", "__useHere('n_tratado1')",
+  "__walk([[54.6,37.7],[56.2,37.7],[58.2,39.8],[58.2,41.6],[60,43.4],[60,47.9],[59,48.1],[57.6,42],[57.6,40]])",
+  "(()=>{const g=__game;g.flags['fisico:caza']=true;g.fisico.update=window.__fu;__sim(0.5);const F=g.fisico,e=F.e;const st=F.modo;e.hp=1;e.die();for(let i=0;i<30&&g.cutscene;i++){g.cutscene.skip();__sim(0.2)}g.ui.closeAll();__sim(1);g.ui.closeAll();g.fisico.update=()=>{};return {pelea:st,boss:!!g.flags['boss:fisico'],llave:g.inventory.has('llave_cordeleria'),patio:!!g.flags['door:d_quirofano_patio'],sentado:e.dead&&e.obj.visible}})()",
+  "__walk([[54.5,35],[54.5,33],[50.6,28.1]])", "__useHere('d_patio_inocentes')",
+  "__walk([[48,28],[46.7,27]])", "__useHere('d_cordeleria_atras')",
+  "__walk([[44,26.5],[40.9,23],[41.8,20.9],[42.3,20.9],[42.85,20.4],[42.85,16],[42.6,12],[39.75,11.9],[39.7,11.3],[39.7,6.6],[41.6,8.6]])", "__useHere('n_cordelero')",
+  "__walk([[40.9,3.8]])", "__useHere('d_cordeleria')",
   // y la barricada, desde detrás: se viene abajo (el atajo de vuelta)
-  "__walk([[59,11],[55,10],[45,0],[30,0]])", "__useHere('d_barricada')", "__walk([[20,0]])",
+  "(()=>{const g=__game;g.fisico.update=window.__fu;g.trampas.update=window.__tu;g.cornisas.update=window.__cu;return __walk([[40.9,1.5],[30,0]])})()", "__useHere('d_barricada')", "__walk([[20,0]])",
   "__use('d_souto')", "__use('i_ampolla1')", "__use('n_madre')",
   "__use('a_praca')", "__use('a_castelo')",
   "__use('n_tabernero')", "__use('x_mesa_taberna')", "__use('n_tejedora')", "__use('n_panadero')", "__use('n_mozo')", "__use('i_ampolla3')", "__use('d_corral')",

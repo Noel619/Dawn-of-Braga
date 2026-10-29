@@ -123,19 +123,30 @@ guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torr
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 
-**Los tejados de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
-la plaza no se mueve. Para llegar detrás hay que cruzar la manzana por dentro y por arriba, por donde se fueron los
-vecinos: la casa del velatorio, enfrente de la fragua (la puerta, clavada por dentro, se arranca con la palanca;
-dentro, los muertos de la manzana amortajados en sus andas, entre velas consumidas); por un boquete en la medianera,
-el taller del pellejero, con las pieles colgadas de las vigas, y su escalera al sobrado; por otro boquete, el sobrado
-donde se escondían los vecinos, y una escala al desván de los cueros, con las pieles en filas y la luna entrando por
-las celosías; el secadero, una azotea con sus bastidores; por los escombros de la esquina hundida, el desván del
-palomero y, por una escala, el palomar, donde murió el aprendiz del herrero con la piedra de afilar bendita; por el
-boquete del hastial, el tejado de una casa quemada, que se anda por las tejas rodeando el hundimiento; y el tejado
-del curtidor, por cuyo agujero se cae a su desván. La escala, el sobrado, el taller, la tranca de la puerta, y las
-Curtidurías: desde allí, la barricada se viene abajo con la palanca (el atajo de vuelta). Sin pasarelas: se va
-escalando, por las tejas y por los desvanes. En los tejados, caer más de tres metros hiere, y más de cinco y medio,
-mata.
+**El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
+la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
+los Inocentes, ha puesto en cuarentena: la boca de la calleja, enfrente de la fragua, está cerrada con un portón de
+tablas con la cruz de cal y el cartel de CVARENTENA (se arranca con la palanca). Dentro, nada más entrar, una
+escena: al fondo de la calleja, en la ventana de su alcoba, la cortina se aparta y asoma el pico; te mira, ladea la
+cabeza como un pájaro: «Ah. Uno sano.» El barrio, casa por casa (todas con sus puertas a la calle, sus ventanas y
+sus habitaciones, con su escalera de verdad): la Calleja de los Pellejeros (la ropa tendida, las pieles clavadas en
+las fachadas, el carro volcado, los rótulos); la casa del zapatero, abierta (su hijo, ya curado, sentado a la mesa de
+la cocina ante su cuenco); la de la cerera, la viuda (la tienda de las velas, la cocina, la sala y el oratorio, con
+un altar de descanso, y la alcoba, atrancada por dentro: por la ventana de la sala se sale a la viga de lo que fue el
+balcón y, haciendo equilibrio, se entra por la de la alcoba, donde está la llave de la tintorería; mientras tanto, el
+Físico clava tablas en la puerta de la calle, por fuera, y se sale por el patio, por encima de la tapia, a la casa
+quemada); la Plazuela de los Inocentes (el pozo con su polea, la cruz de piedra, el árbol muerto con su jaula, la paja con
+sus cepos); la tintorería de maese Rodrigo (las tinas de añil, de rubia y de gualda, la cuerda con campanillas, y
+arriba el secadero de los paños y la puerta del pescante); los tejados (la viga caída de la casa quemada, que cruza
+la calleja: equilibrio; los tejados del sur, con sus cuervos; la casa del palomero, con su desván y el palomar de la
+cumbrera, donde murió el aprendiz del herrero con la piedra de afilar bendita); la Casa de los Inocentes, por la
+claraboya de su desván (las coronas a medio hacer y lo que les quitó a todos; su alcoba, con su mesa de escribir; la
+botica, con el alambique, los frascos de adormidera y el cuenco de las piedras; la sala de los inocentes, con sus
+camastros y sus cadenas; y el quirófano, donde se le pelea); su patio, el callejón y la cordelería (el almacén del
+cáñamo, el obrador de las sogas y la tienda), con su puerta a los Pelames, detrás de la barricada: desde allí, la
+barricada se viene abajo con la palanca (el atajo de vuelta). En los tejados, caer más de tres metros hiere, y más de
+cinco y medio, mata. Las notas cuentan lo que pasó: el tratado del Físico, *De peste sanorum*, en dos partes, tu
+historia clínica, el libro de cuentas del zapatero, el aviso del tintorero, lo que dejó escrito el cordelero.
 
 **La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
@@ -490,20 +501,36 @@ se encadena el anterior.
 - **Enrodado** (las catacumbas): el reo quebrado en la rueda y enterrado con ella, trenzado entre los radios. Se echa
   atrás, aúlla y embiste rodando en línea recta (esquivado, se estrella contra el muro y queda aturdido); se retira
   rodando para coger carrerilla, da zarpazos con el brazo suelto y se vuelca encima.
-- **Amortajado** (las casas de los Pellejeros): uno de los muertos de la manzana, cosido en su mortaja con hilo doble
-  y atado con cordeles; la cara se le marca en el lienzo, con la boca cosida. No ve: oye (andando lejos de él no se
-  entera; corriendo, rodando o peleando cerca, sí; un ruido fuerte, como una puerta clavada que se arranca, lo
-  despierta, y si dejas de hacer ruido va a donde te oyó y se queda escuchando). Se incorpora de sus andas tieso, de
-  una pieza, girando sobre los talones, y anda a saltos con las piernas atadas. Cabezazo y desplome: se deja caer de
-  bruces entero, como un árbol (tirado, todo golpe es crítico), y se levanta igual. A media vida revienta la mortaja:
-  le salen los brazos, con las uñas como clavos, la boca se le rasga hasta las orejas, y da zarpazos y dentelladas al
-  salto.
-- **Cuervo cebado** (los tejados de los Pellejeros): un cuervo que comió tanto de los muertos que creció como un perro,
+- **Coronado** (las casas del barrio de los Pellejeros): un vecino que el Físico encontró sano y curó. Le abrió el
+  cráneo y le atornilló una corona de hierro para que la herida no se cerrase, con un cascabel en cada varilla (el que
+  lleva cascabel no se esconde); le cosió un ojo y le ató la boca con una correa. Va en camisón de lino sucio,
+  descalzo, con los brazos vendados de las sangrías y la cruz de cal a la espalda, la cabeza vencida por el peso de la
+  corona. No está infectado: está curado. Si te ve, sacude la cabeza: los cascabeles suenan por todo el barrio y el
+  Físico viene. Garfio, embestida y agarrón (te sujeta para que llegue él).
+- **Cuervo cebado** (los tejados del barrio de los Pellejeros): un cuervo que comió tanto de los muertos que creció como un perro,
   con dos metros de alas, la pechuga pelada, el pescuezo desnudo lleno de bultos, tres pares de ojos y el pico
   ganchudo como una reja. Se posa en lo alto y mira (estos sí ven; bajo techo, no): grazna, se tira, vuela en círculos
   sobre ti, se queda en el aire con las alas arriba y chilla, y se lanza en picado. Ruédate o desvíalo: desviado, cae
   aturdido al tejado, a merced del golpe de gracia. El golpe empuja (cuidado con el alero). A veces se posa cerca y
   da picotazos.
+- **Mestre Clemente, el Físico de los Inocentes** (jefe del barrio de los Pellejeros): el médico de los locos de
+  Braga, que la noche de la campana vio a sus inocentes quedarse quietos, curados por la carne, y entendió que la
+  peste son los signos de los sanos (el pulso que corre, los ojos abiertos, el esperar). Ropón encerado, guantes,
+  sombrero de ala ancha y la máscara de pico con dos ojos de vidrio; habla bajo, despacio, en frases que parecen
+  versos. No es una criatura que espera en su sitio: el barrio es suyo y lo recorre. Te vigila desde que entras (la
+  cortina, el fondo de la calleja), clava las puertas de las casas en las que te metes, pone cepos entre la paja (los
+  pone donde más has pasado) y cuerdas con campanillas; lo que suena (un cascabel, una campanilla, un cepo, una puerta
+  arrancada) le trae, por la puerta de una de las casas que ya curó, la que no ves; te busca donde estuviste, te huele
+  por el pico y, por los tejados, te sigue desde la calle sin quitarte los ojos de encima. No quiere matarte: quiere
+  curarte. La vara del gancho te trae; la esponja de beleño te duerme (forcejea); herido, te echa cal viva a los ojos
+  y se retira. Si te duerme, la camilla: despiertas atado boca arriba mientras te lleva por la calleja hasta su
+  quirófano, donde te toma el pulso y se va a la fragua a poner el cauterio al rojo; tres correas, machacando, antes
+  de que vuelva, o el hierro. La pelea, en su quirófano, en los tres tiempos de su aforismo: las medicinas (la vara,
+  la esponja, el sahumerio de beleño, que todo lo vuelve lento, y la campanilla, que llama a dos Coronados); el hierro
+  (a media vida se quita la máscara: debajo, la cara lavada y en la frente el agujero de su propia trepanación; la
+  sierra, la lanceta y el trépano, que te taladra si te coge); y el fuego (los cauterios del brasero, que prenden la
+  paja del suelo). Vencido, se sienta en el canto de su mesa y se toma el pulso: «…y lo que el fuego no cura…
+  *insanabilia*».
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -698,9 +725,13 @@ src/
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
-                        level_tejados.js: los tejados de los Pellejeros, de la casa del velatorio a la del curtidor
-                        (las casas por dentro, los desvanes, el secadero, el palomar y los tejados que se andan,
-                        con sus rampas de tejas); level_fragua.js: la fragua del maestre Lourenço;
+                        level_barrio.js: el barrio de los Pellejeros (la calleja, la plazuela, el portón, sus
+                        casas y sus calles), con kit_casa.js, el kit de las casas (muros con sus huecos, puertas,
+                        ventanas, forjados, escaleras, tejados que se andan), barrio_casas.js (el zapatero, la
+                        cerera, la quemada, la tintorería, por dentro), barrio_atrezo.js (lo de los oficios y lo
+                        del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
+                        inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
+                        fragua del maestre Lourenço;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
                         atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
                         sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
@@ -727,7 +758,8 @@ src/
                         tonelero infectado (sus posturas: llorar, encogerse, morderse el brazo, ahorcado); leonor.js,
                         Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido;
                         custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la Emparedada y el Enrodado;
-                        amortajado.js, el Amortajado (y los muertos amortajados que se hornean en el escenario);
+                        coronado.js, el Coronado; fisico.js, el Físico de los Inocentes (su figura, sus hierros,
+                        sus golpes por tiempos);
                         cuervo.js, el cuervo cebado, que se lleva solo en el aire (posarse, rondar, el picado);
                         turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, la estatua de la
                         sima de la cisterna: dónde está y cómo se carga; idol_statue_geo.js, su geometría,
@@ -752,6 +784,10 @@ src/
                         de la cabeza de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y
                         susurra); cutscene.js: la de la bodega; hunt.js: la caza en las
                         bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
+                        fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, la camilla);
+                        fisico_cine.js: sus escenas (la cortina, la camilla y el forcejeo, su muerte);
+                        fisico_pelea.js: la pelea de su quirófano; trampas.js: sus cepos y sus campanillas;
+                        cornisas.js: el equilibrio en vigas y cornisas;
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
                         los objetos que tapa un muro);

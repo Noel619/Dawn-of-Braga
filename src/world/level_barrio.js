@@ -1,4 +1,4 @@
-// El barrio de los Pellejeros: la calleja, la plazuela del Pozo y sus casas,
+// El barrio de los Pellejeros: la calleja, la plazuela de los Inocentes y sus casas,
 // entre la plaza de la Herrería, el corral, la capilla y la muralla.
 //
 // Cuando la carne subió por las calles, los vecinos se encerraron en sus
@@ -16,7 +16,7 @@
 //  1. El portón de la calleja, en la plaza de la Herrería (la palanca).
 //  2. La calleja: la casa del zapatero (abierta), la de la viuda (la cerera:
 //     la alcoba cerrada, la cornisa, la llave de la tintorería), la quemada.
-//  3. La plazuela del Pozo: la Casa de los Inocentes, cerrada; la tintorería.
+//  3. La plazuela de los Inocentes: la Casa de los Inocentes, cerrada; la tintorería.
 //  4. La tintorería: los tintes, el secadero de paños y, por su puerta de
 //     arriba, los tejados: la viga caída sobre la calleja, la casa quemada,
 //     el aguador, las casas del sur, la del palomero (su desván, el palomar)
@@ -572,8 +572,9 @@ function adorno(ctx) {
   P.laundry(ctx, 17.6, 42.1, 17.9, 45.9, 5.75, 3101);
   P.laundry(ctx, 24.8, 42.1, 24.4, 45.9, 5.6, 3102);
   P.laundry(ctx, 30.2, 42.1, 30.5, 45.9, 5.8, 3103);
-  // (el carro, volcado contra la casa de la viuda)
-  P.cart(ctx, 23.0, 0, 45.15, 0.06, { tipped: true });
+  // (el carro, con la rueda rota, contra la casa de la esquina: volcado en
+  // medio, cerraba media calleja)
+  P.cart(ctx, 19.0, 0, 45.2, 0.04, { brokenWheel: true });
   // las pieles: entre las puertas de abajo y las ventanas de arriba (al norte,
   // de cara al sur; al sur, de cara al norte)
   for (const [x, z, rot] of [
@@ -753,6 +754,7 @@ function zonas(L) {
     ['quemada', BR.s3],
     ['tintoreria_pellejeros', BR.tin],
     ['casa_inocentes', BR.ino],
+    ['palomero', BR.pal],
     ['cordeleria', BR.cor],
     ['cordeleria', BR.cor2],
   ])
