@@ -446,7 +446,7 @@ function engancha(e, g) {
     fz = Math.cos(e.yaw);
   p.releaseGrab && p.releaseGrab(Math.min(7, 2.2 + d * 1.4), -fx, -fz, e.D && e.D.engaged ? 9 : 3);
   e.data.hookT = g.time;
-  g.audio && g.audio.play('hitFlesh', p.pos);
+  g.audio && g.audio.play('hit', p.pos);
   g.camRig.shake(0.3);
   g.fisico && g.fisico.onHook(e);
 }
@@ -457,7 +457,10 @@ function esponja(e, g) {
   const p = g.player;
   const d = e.distTo(p.pos);
   const a = Math.abs(angleDiff(e.yaw, e.angleTo(p.pos)));
-  if (p.dead || p.iframe || d > 1.55 || a > 55 * DEG || Math.abs(p.pos.y - e.pos.y) > 0.9 || p.state === 'grabbed' || p.state === 'pinned') return;
+  // (cogido en un cepo, también: le abre el cepo para llevárselo)
+  const cepo = g.trampas && g.trampas.held;
+  if (p.dead || p.iframe || d > 1.55 || a > 55 * DEG || Math.abs(p.pos.y - e.pos.y) > 0.9 || (p.state === 'grabbed' && !cepo) || p.state === 'pinned') return;
+  if (cepo) g.trampas.abre();
   p.startGrabbed && p.startGrabbed(e);
   e.state = 'sedando';
   e.stT = 0;
@@ -498,14 +501,15 @@ function cal(e, g) {
 
 // (cazando no quiere matarte, quiere dormirte: la vara apenas hiere, pero
 // derriba y cansa; en la pelea de su casa, ya no se contiene)
-const caza = (e) => !(e.D && e.D.engaged);
+// (cogido en un cepo, cazando no le pega: va a por él con la esponja)
+const caza = (e) => !(e.D && e.D.engaged) && !(e.game.trampas && e.game.trampas.held);
 const pelea = (e) => !!(e.D && e.D.engaged);
 const A = {
   barrido: { name: 'barrido', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 18, stDmg: 22, range: 3.0, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 3, cd: 0.9, cond: pelea },
   pica: { name: 'pica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 16, range: 3.7, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 2.4, cd: 0.8, cond: pelea },
   barridoCaza: { name: 'barrido', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 5, stDmg: 45, stagger: true, knock: 4.5, range: 3.0, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 2.2, cd: 1.1, cond: (e) => caza(e) && e.game.player.hp > e.game.player.maxHp * 0.35 },
   picaCaza: { name: 'pica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 4, stDmg: 40, knock: 5, range: 3.7, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 1.6, cd: 1.0, cond: (e) => caza(e) && e.game.player.hp > e.game.player.maxHp * 0.35 },
-  gancho: { name: 'gancho', clip: FI_CLIPS.gancho, dur: 1.8, min: 2.0, max: 3.9, hits: [], dmg: 0, range: 4.0, arc: 40, weight: 2.2, cd: 0.6, noParry: true, trackUntil: 0.55, events: [{ t: 0.64, fn: engancha }, { t: 0.72, fn: engancha }], cond: (e) => e.game.time - (e.data.hookT ?? -99) > 4 },
+  gancho: { name: 'gancho', clip: FI_CLIPS.gancho, dur: 1.8, min: 2.0, max: 3.9, hits: [], dmg: 0, range: 4.0, arc: 40, weight: 2.2, cd: 0.6, noParry: true, trackUntil: 0.55, events: [{ t: 0.64, fn: engancha }, { t: 0.72, fn: engancha }], cond: (e) => e.game.time - (e.data.hookT ?? -99) > 4 && !(e.game.trampas && e.game.trampas.held) },
   esponja: {
     name: 'esponja',
     clip: FI_CLIPS.esponja,
@@ -585,8 +589,8 @@ export const FISICO_TYPE = {
   },
   think: (e, pl, d, dt) => {
     const g = e.game;
-    // tras engancharte, la esponja, enseguida
-    if (e.data.hookT && g.time - e.data.hookT < 1.3 && d < 2.6 && pl.state !== 'grabbed') {
+    // tras engancharte, la esponja, enseguida; y si estás cogido en un cepo
+    if ((e.data.hookT && g.time - e.data.hookT < 1.3 && d < 2.6 && pl.state !== 'grabbed') || (g.trampas && g.trampas.held && d < 2.4 && pl.state === 'grabbed')) {
       e.data.hookT = 0;
       e.startAttack(A.esponja);
       return 'handled';

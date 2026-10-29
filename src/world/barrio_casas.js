@@ -279,9 +279,10 @@ export function tintoreria(ctx, L, h) {
   // la mesa de doblar, con un paño a medio doblar y las tijeras
   P.table(ctx, 41.6, 0, 37.4, 1.8, 0.8, 0);
   wb.box('clothWhite', 41.0, 0.8, 37.15, 42.1, 0.86, 37.65, { ao: false, room: r0, grime: false, tint: C.anil });
-  // las campanillas del Físico: entre las tinas, por donde se pasa
-  campanillas(ctx, 37.75, 34.15, 37.75, 38.05, 0.35, r0);
-  (L.bells || (L.bells = [])).push({ id: 'b_tinte', a: [37.75, 34.15], b: [37.75, 38.05], y: 0, room: r0 });
+  // las campanillas del Físico: nada más entrar, de la tina de la rubia a la
+  // pata de la mesa, por donde se pasa (o se rodea la mesa, o se corta)
+  campanillas(ctx, 39.6, 37.1, 40.75, 37.1, 0.35, r0);
+  (L.bells || (L.bells = [])).push({ id: 'b_tinte', a: [39.6, 37.1], b: [40.75, 37.1], y: 0, h: 0.35, room: r0 });
   luna(ctx, 36.5, 1.8, 37.9, r0, 0.35);
   luna(ctx, 43.5, 1.8, 37.9, r0, 0.35);
   wb.setRoom(null);

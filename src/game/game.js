@@ -47,6 +47,7 @@ import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
 import { FisicoCine } from './fisico_cine.js';
+import { Trampas } from './trampas.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
 import { RELIC_IDS } from './relics.js';
@@ -260,6 +261,8 @@ export class Game {
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
     this.fisico = new Fisico(this);
     this.fisicoCine = new FisicoCine(this);
+    // sus cepos y sus cuerdas con campanillas
+    this.trampas = new Trampas(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -534,6 +537,7 @@ export class Game {
     this.souto.reset();
     this.cornisas.reset();
     this.fisico.reset();
+    this.trampas.reset();
     this.failing = false;
     this.introCam = false;
     this.atmo.override = null;
@@ -1181,6 +1185,7 @@ export class Game {
     this.souto.onRespawn();
     this.cornisas.onRespawn();
     this.fisico.onRespawn();
+    this.trampas.reset();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1864,6 +1869,7 @@ export class Game {
         this.souto.update(dt);
         this.cornisas.update(dt);
         this.fisico.update(dt);
+        this.trampas.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)

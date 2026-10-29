@@ -94,6 +94,7 @@ export function buildBarrio(ctx, S, L) {
   levante(ctx, S, L);
   cordeleria(ctx, S, L);
   vecinos(L);
+  trampas(L);
   zonas(L);
 }
 
@@ -529,6 +530,18 @@ function vecinos(L) {
     // y él: Mestre Clemente, el Físico (no está en ningún sitio: lo saca y lo
     // guarda game/fisico.js)
     { type: 'fisico', x: 54.6, y: 0, z: 39.4, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
+  );
+}
+
+// ------------------------------------------------------------ las trampas
+// Los cepos que dejó el Físico entre la paja de la plazuela (game/trampas.js;
+// las cuerdas con campanillas, en las casas: barrio_casas.js).
+function trampas(L) {
+  (L.cepos || (L.cepos = [])).push(
+    // en el camino de la calleja a la tintorería, donde se pisa sin mirar
+    { id: 'c_plazuela', x: 37.4, y: 0, z: 41.6 },
+    // hacia la casa del aguador
+    { id: 'c_aguador', x: 43.8, y: 0, z: 47.2 }
   );
 }
 

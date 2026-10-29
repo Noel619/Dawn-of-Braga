@@ -799,6 +799,12 @@ export const DIALOG = {
   fisicoGancho: ['Ven.', 'Aquí, conmigo.'],
   fisicoEsponja: ['Respira. Hondo.', 'Shh. Es beleño. Pesa en los párpados, ¿verdad?'],
   fisicoSuelta: ['Qué fuerza. Así es la peste al principio: fuerte.', 'Bien. Eso también es un síntoma.'],
+  // te encuentra cogido en un cepo (cazando: viene a dormirte) o antes de
+  // la caza (te mira, y se va)
+  fisicoCepo: ['Quieto. El hierro no muerde al que no tira.', 'Ya está, ya está. El dolor es la salud, que se resiste.', 'Mira qué tobillo. Lo que corría tanto.'],
+  fisicoCepoTodavia: ['Todavía no. La fruta se coge cuando cae sola.', 'Tira, tira. Así se aprende dónde no pisar.'],
+  // donde sonaron las campanillas
+  fisicoCampanillas: ['Las campanillas no mienten nunca.', 'Alguien ha pasado por aquí con prisa. La prisa es un síntoma.'],
   // herido: se retira (con la cal)
   fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
 };
@@ -890,6 +896,8 @@ export const MSG = {
   tapiadaArranca: 'Arrancas los tablones del Físico. La cruz de cal se deshace en polvo.',
   tapiadaFuera: 'Clavada con tablas, y con la cruz de cal encima. Con algo para hacer palanca...',
   inocentesTranca: 'Atrancada por dentro. Sobre la puerta cuelga la vara con la serpiente: la casa del físico.',
+  cepoForcejea: '¡Ábrelo!',
+  cepoPista: 'Un cepo, escondido en la paja. Machaca el botón para abrirle las quijadas antes de que llegue él. (Un tajo hace saltar los que veas; brillan los dientes.)',
   catarina: 'Una mujer joven, tapada con una sábana empapada de sangre. Alguien le ha cruzado las manos sobre el pecho y le ha puesto una vela.',
   doorMiguel: 'Está atrancada desde el otro lado. Dentro, muy bajo, alguien llora.',
   // la Puerta del Dios Ignoto (game/crypt.js)

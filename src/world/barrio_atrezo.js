@@ -259,26 +259,15 @@ export function rollos(ctx, x, y, z, rot, n, colors, room, seed = 1) {
 
 // ------------------------------------------------------------ el Físico
 // La cuerda con campanillas, tendida a la altura de la espinilla entre dos
-// clavos: si se tropieza en ella, suenan (y viene). Sólo la cuerda y las
-// campanillas: lo que pasa al tocarla, en game/fisico.js.
+// clavos: aquí, sólo los clavos (la cuerda y las campanillas, que suenan, se
+// cortan y caen, son de game/trampas.js: L.bells).
 export function campanillas(ctx, x0, z0, x1, z1, y, room) {
   const wb = ctx.wb;
-  palo(wb, V(x0, y, z0), V(x1, y - 0.03, z1), 0.006, 'burlap', { room, round: true, tint: [0.7, 0.62, 0.5] });
   for (const [x, z] of [
     [x0, z0],
     [x1, z1],
   ])
     wb.box('iron', x - 0.02, y - 0.03, z - 0.02, x + 0.02, y + 0.03, z + 0.02, { ao: false, room });
-  const L = Math.hypot(x1 - x0, z1 - z0);
-  const n = Math.max(2, Math.round(L / 0.4));
-  for (let i = 1; i < n; i++) {
-    const t = i / n;
-    const x = x0 + (x1 - x0) * t,
-      z = z0 + (z1 - z0) * t,
-      yy = y - 0.03 * t - 0.02;
-    wb.box('burlap', x - 0.003, yy - 0.05, z - 0.003, x + 0.003, yy, z + 0.003, { ao: false, room, tint: [0.7, 0.62, 0.5] });
-    wb.geometry('bronze', new THREE.SphereGeometry(0.03, 6, 4), M4().makeTranslation(x, yy - 0.07, z), { ao: false, room });
-  }
 }
 
 // La cruz de cal, pintada a brochazos en una pared o en unas tablas: en el

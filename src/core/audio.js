@@ -2754,6 +2754,32 @@ export class Audio {
         this.noise(d, t + 0.05, 0.7, { type: 'highpass', f0: 3200, f1: 5200, gain: 0.12, a: 0.06 });
         break;
       }
+      // las campanillas de una cuerda del Físico: alguien tropieza en ella y
+      // suenan todas, unas contra otras (o.k: lo fuerte; flojo, al caer
+      // cortadas)
+      case 'campanillas': {
+        const k = o.k ?? 1;
+        d = this.out(P, { gain: 0.8 * k, verb: 0.45, life: 3 });
+        const n = Math.round(4 + 8 * k);
+        for (let i = 0; i < n; i++) {
+          const dt = Math.pow(Math.random(), 1.4) * (0.35 + 0.9 * k);
+          this.metal(d, t + dt, rnd(1700, 3100), rnd(0.035, 0.08) * (1 - dt * 0.4), rnd(0.5, 1.1), { ratios: [1, 2.02, 2.74, 5.2] });
+        }
+        this.jingle(d, t, 0.2, 0.06 * k, 1.6);
+        break;
+      }
+      // el cepo que salta: las quijadas que se cierran de golpe y el muelle
+      // que se queda vibrando
+      case 'cepo': {
+        d = this.out(P, { gain: 0.95, verb: 0.35, life: 2.5 });
+        this.metal(d, t, rnd(700, 900), 0.2, 0.35, { ratios: [1, 1.7, 2.9] });
+        this.metal(d, t + 0.004, rnd(2200, 2600), 0.08, 0.25);
+        this.tone(d, t, 0.09, { f0: 190, f1: 90, gain: 0.5 });
+        this.noise(d, t, 0.05, { type: 'highpass', f0: 2000, gain: 0.35, a: 0.0005 });
+        this.tone(d, t + 0.01, 0.7, { type: 'triangle', f0: 132, f1: 118, gain: 0.07 });
+        this.jingle(d, t + 0.03, 0.25, 0.12, 0.8);
+        break;
+      }
       // el martillo en la cabeza del clavo (tres golpes y el último, a fondo)
       case 'hammer': {
         d = this.out(P, { gain: 0.85, verb: 0.35, life: 2.5 });

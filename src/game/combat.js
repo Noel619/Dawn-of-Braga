@@ -39,6 +39,8 @@ export class Combat {
   playerSwing(player, atk) {
     const g = this.game;
     if (g.breakables) g.breakables.playerSwing(player, atk);
+    // (los cepos y las cuerdas del Físico)
+    if (g.trampas) g.trampas.playerSwing(player, atk);
     // (los colosos del jefe final)
     if (g.finale) g.finale.playerSwing(player, atk);
     // (el objeto bendito: la Saeta devuelve lo parado; el Escapulario, tras

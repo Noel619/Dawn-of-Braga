@@ -205,13 +205,13 @@ export class Fisico {
   // ------------------------------------------------------------ entradas
   // La puerta por la que sale para ir a (x, z): la más cercana que no
   // ves; si las ves todas, la más lejana de ti.
-  entrada(x, z, salir = false) {
+  entrada(x, z, salir = false, lejos = 6) {
     const p = this.g.player.pos;
     let best = null,
       bd = Infinity;
     for (const E of ENTRADAS) {
       const dp = Math.hypot(E.x - p.x, E.z - p.z);
-      if (dp < 6) continue;
+      if (dp < lejos) continue;
       const seen = this.visto(E.x, 0, E.z);
       const d = Math.hypot(E.x - x, E.z - z) + (seen ? 60 : 0) + (salir ? -dp * 0.15 : 0);
       if (d < bd) {
@@ -278,11 +278,11 @@ export class Fisico {
     if (!this.enBarrio({ x, y, z })) return;
     this.alarm = { x, y, z, src, t: g.time };
     // (si ya anda cerca, va directamente)
-    if (this.modo === 'busca' || this.modo === 'marcha' || this.modo === 'sombra') this.busca(x, z);
+    if (this.modo === 'busca' || this.modo === 'marcha' || this.modo === 'sombra') this.busca(x, z, y, src);
     else if (this.modo === 'fuera') this.cool = Math.min(this.cool, src === 'cepo' || src === 'campanillas' ? 1.5 : 3);
   }
   // Va a ver qué ha sido (o a donde te vio por última vez).
-  busca(x, z, y = 0) {
+  busca(x, z, y = 0, src = null) {
     const g = this.g;
     const e = this.e;
     if (!g.flags['fisico:caza']) return this.vigila(x, z);
@@ -292,7 +292,7 @@ export class Fisico {
       this.walk(x, z, e.T.walk * 1.35, () => {
         // llega: husmea, mira alrededor; luego busca donde te vio, o se va
         this.searchN++;
-        this.say(DIALOG.fisicoBusca, 3.2);
+        this.say(src === 'campanillas' ? DIALOG.fisicoCampanillas : DIALOG.fisicoBusca, 3.2);
         this.look(2.6, () => {
           if (this.last && this.searchN < 3 && Math.hypot(this.last[0] - e.pos.x, this.last[2] - e.pos.z) > 2) this.busca(this.last[0], this.last[2], this.last[1]);
           else this.marcha();
@@ -306,15 +306,18 @@ export class Fisico {
     const g = this.g;
     if (this.shown) return;
     const p = g.player.pos;
-    // (se pone en la calle, a una distancia, donde le veas)
-    const E = this.entrada(x, z);
+    // (se pone en la calle, a una distancia, donde le veas; sale por una
+    // puerta lejos de ti: de cerca no se deja ver)
+    const E = this.entrada(x, z, false, 10);
     this.show(E.x, E.z, E.yaw);
     this.modo = 'vigia';
     const tx = clamp(p.x + Math.sign(E.x - p.x) * 11, BR.calleja.x0 + 1, BR.plazuela.x1 - 1);
     const tz = inR(BR.calleja, tx, 44) ? 44 : clamp(p.z, BR.plazuela.z0 + 1, BR.plazuela.z1 - 1);
     this.walk(tx, tz, null, () => {
-      this.say(DIALOG.fisicoVigila, 3.4);
-      this.look(4, () => this.marcha(), { clip: 'ladea' });
+      // (cogido en un cepo: te mira forcejear, y se va)
+      const cepo = g.trampas && g.trampas.held;
+      this.say(cepo ? DIALOG.fisicoCepoTodavia : DIALOG.fisicoVigila, 3.4);
+      this.look(cepo ? 5 : 4, () => this.marcha(), { clip: 'ladea' });
     }, { r: 1.5 });
   }
 
@@ -358,7 +361,11 @@ export class Fisico {
       return 'handled';
     }
     this.sayT -= dt;
-    if (this.sayT <= 0 && e.sees && d < 12) this.say(d < 4 ? DIALOG.fisicoCerca : DIALOG.fisicoVe, 3);
+    const cepo = g.trampas && g.trampas.held;
+    if (cepo && e.sees && d < 9 && this.cepoDicho !== cepo) {
+      this.cepoDicho = cepo;
+      this.say(DIALOG.fisicoCepo, 3);
+    } else if (this.sayT <= 0 && e.sees && d < 12) this.say(d < 4 ? DIALOG.fisicoCerca : DIALOG.fisicoVe, 3);
     // la cal, sólo cuando se va a retirar (o en la pelea)
     e.data.calOk = !!e.data.retirada || this.modo === 'pelea';
     return null;
@@ -594,7 +601,7 @@ export class Fisico {
     }
     // (la tintorería: entra detrás de ti y empieza la caza)
     if (casa && casa.zona === 'tintoreria_pellejeros') this.inT += dt;
-    if (!F['fisico:caza'] && F['door:d_tinte'] && casa && casa.zona === 'tintoreria_pellejeros' && (p.pos.y > 3 || this.inT > 12) && this.modo !== 'tapia') {
+    if (!F['fisico:caza'] && F['door:d_tinte'] && casa && casa.zona === 'tintoreria_pellejeros' && (p.pos.y > 3 || this.inT > 12 || F['campanillas:b_tinte']) && this.modo !== 'tapia') {
       F['fisico:caza'] = true;
       g.saveGame();
       this.tintoreria();
@@ -615,8 +622,8 @@ export class Fisico {
           this.alarm = null;
           if (F['fisico:caza']) {
             this.aparece(A.x, A.z, null, e.T.walk * 1.35);
-            this.busca(A.x, A.z);
-          } else if (F['fisico:calleja']) this.vigila(A.x, A.z);
+            this.busca(A.x, A.z, A.y < 1 ? 0 : A.y, A.src);
+          } else if (F['fisico:calleja'] || A.src === 'cepo') this.vigila(A.x, A.z);
           break;
         }
         // cazando, por los tejados: sale a acompañarte

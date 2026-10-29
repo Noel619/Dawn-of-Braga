@@ -605,7 +605,7 @@ function release(e, escaped) {
     if (escaped) p.releaseGrab && p.releaseGrab(2.6, -fx * 0.2 + fx, fz, 0);
     else {
       // el cabezazo con la corona
-      g.audio && g.audio.play('hitFlesh', p.pos);
+      g.audio && g.audio.play('hit', p.pos);
       p.releaseGrab && p.releaseGrab(4.5, fx, fz, 16);
       g.camRig.shake(0.45);
     }
