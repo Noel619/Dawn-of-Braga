@@ -463,7 +463,8 @@ const ICONS = {
     b.outline(P.void);
   },
   // espada de Solingen: hoja ancha con vaceo, guarda recta de hierro y pomo
-  // de rueda; la inscripción incrustada brilla en el acero
+  // de rueda con su cruz de latón; las letras de latón del vaceo brillan en
+  // el acero
   solingen(b) {
     seg(b, 12, 20, 28.5, 3.5, 2.6, 2.3, (t, s, x, y) => {
       if (t > 0.88) {
@@ -480,8 +481,8 @@ const ICONS = {
     seg(b, 6.5, 14.5, 17.5, 25.5, 1.4, 1.4, (t, s, x, y) => (s < -0.3 ? P.iron5 : s > 0.4 ? P.iron1 : shade(IRON, 0.62 - t * 0.2, x, y)));
     // el puño de cuero
     seg(b, 6.5, 25.5, 11.5, 20.5, 1.3, 1.3, (t, s, x, y) => ((x + y) % 2 ? (s < 0 ? P.wood2 : P.wood1) : s < 0 ? P.wood1 : P.wood0));
-    // el pomo de rueda
-    disc(b, 4.8, 27.2, 2.8, (l, d, x, y) => (d < 0.4 ? P.iron2 : shade(IRON, l + 0.1, x, y)));
+    // el pomo de rueda, con la cruz
+    disc(b, 4.8, 27.2, 2.8, (l, d, x, y) => ((x === 5 && Math.abs(y - 27) <= 1) || (y === 27 && Math.abs(x - 5) <= 1) ? P.gold3 : d < 0.4 ? P.iron2 : shade(IRON, l + 0.1, x, y)));
     sparkle(b, 23, 8);
     b.outline(P.void);
   },

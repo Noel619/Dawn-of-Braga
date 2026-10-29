@@ -1,29 +1,38 @@
 // El guion de la Casa del Alemán (Callejón del Postigo).
 //
-//  1. En la calle: tres criaturas aporrean la puerta; Henrique les grita
-//     desde la ventana alta (y te pide ayuda en cuanto te ve).
-//  2. Muertas las tres, baja y abre: «¡Entra, rápido!». Al entrar, cierra de
-//     un portazo y echa la tranca: vienen más, por las ventanas.
+//  1. Llegas a la plazuela: la puerta de la casa, reventada; dentro, en la
+//     planta baja, las criaturas. Tres aporrean la puerta de la escalera para
+//     subir a por Henrique, que se ha atrancado arriba; las otras, por la
+//     casa. Él te llama desde la ventana de la sala alta.
+//  2. Muertas las de dentro, baja: de verdad, de la ventana a la escalera,
+//     escalera abajo, le quita la tranca a la puerta y sale a la sala. Si
+//     estás dentro, va a la puerta de la calle, la encaja como puede y le
+//     echa la barra de la fragua; si no, te espera junto a ella: «¡Entra,
+//     rápido!». Vienen más, por las ventanas.
 //  3. La defensa: tres oleadas. Cada criatura llega a una ventana, aporrea
 //     la contraventana hasta reventarla, salta dentro y va a por ti o a por
 //     él (él se defiende con su falcata, pero no aguanta solo). Si cae
 //     Henrique, o caes tú, todo vuelve a empezar desde el último altar.
 //  4. Vencidas: abre la puerta, cuenta quién es y te pide que le ayudes a
 //     hacer de la casa un sitio seguro: tapiar las cinco ventanas rotas (un
-//     tablón cada una; él te da martillo y clavos). Los tablones, por ahí.
-//  5. Tapiadas las cinco: te da la espada de su padre (de Solingen) y la
-//     llave del sótano, y te cuenta lo de Leonor.
+//     tablón cada una; él te da martillo y clavos). Los tablones, por ahí (y
+//     uno arriba, en el granero).
+//  5. Tapiadas las cinco: te lleva al hogar, donde está clavada la espada de
+//     su padre, la de Solingen, y te dice que la saques tú. Luego, la llave
+//     del sótano y lo de Leonor.
 //  6. Después reza junto al hogar; vencida Leonor, por fin descansa.
 //
-// Banderas: ale:door (la puerta, abierta: los de la calle, muertos), ale:def
+// Banderas: ale:door (las de dentro, muertas: Henrique ha bajado), ale:def
 // (la defensa, ganada), ale:lore (lo ha contado y te ha dado el martillo),
-// board:<ventana> (tapiada), ale:reward (la espada y la llave) y boss:leonor.
+// board:<ventana> (tapiada), ale:espada (la espada, sacada del hogar),
+// ale:reward (la llave) y boss:leonor.
 import * as THREE from 'three';
 import { ALEMAN } from '../world/level_postigo.js';
 import { DIALOG, MSG } from './story.js';
 import { objMat, cloneMat } from '../gfx/materials.js';
 import { moveBody } from '../world/collision.js';
 import { TALK_CLIPS, HENRIQUE_CLIPS } from '../entities/henrique.js';
+import { buildParts, solingenParts } from '../entities/weapon_models.js';
 import { angleDiff, approachAngle, damp, clamp, DEG } from '../core/util.js';
 
 const V3 = THREE.Vector3;
@@ -42,6 +51,25 @@ const TO_PRAY = [
   [51.95, -107.3],
   [PRAY.x, PRAY.z],
 ];
+// junto al hogar, mientras sacas tú la espada de su padre
+const BY_HEARTH = { x: 51.6, z: -107.35 };
+// lo que anda al bajar: de la ventana de la sala alta a la cuchillería, al
+// rellano, escalera abajo hasta el rellanito de su puerta (ahí le quita la
+// tranca: AT_DOOR) y a la sala; y, en la sala, a la puerta de la calle
+const DOWN = [
+  [50.6, -98.4],
+  [52.3, -99.0],
+  [53.9, -99.0],
+  [58.2, -99.9],
+  [59.15, -100.7],
+  [59.15, -101.9],
+  [58.3, -102.0],
+  [53.95, -102.0],
+  [53.45, -102.0],
+  [52.2, -102.0],
+  [DOOR_IN.x, DOOR_IN.z],
+];
+const AT_DOOR = 8;
 
 export class HouseQuest {
   constructor(g) {
@@ -50,6 +78,8 @@ export class HouseQuest {
     this.doorDemons = g.enemies.filter((e) => e.spec.story === 'ale:door');
     this.waveEnemies = g.enemies.filter((e) => e.spec.wave);
     this.door = g.interact.list.find((i) => i.id === 'd_aleman');
+    this.stairDoor = g.interact.list.find((i) => i.id === 'd_escalera_ale');
+    this.relicIt = g.interact.list.find((i) => i.id === 'r_solingen');
     this.talkIt = g.interact.list.find((i) => i.id === 't_henrique');
     this.boards = g.interact.list.filter((i) => i.kind === 'board');
     this.who = {
@@ -60,6 +90,7 @@ export class HouseQuest {
     };
     this._hOff = new V3(0, 0.5, 0);
     this.windows = A.windows.map((w) => this.buildWindow(w));
+    this.relic = this.buildRelic();
     this.mode = 'street';
     this.t = 0;
     this.mt = 0;
@@ -200,6 +231,83 @@ export class HouseQuest {
     }
   }
 
+  // ------------------------------------------------------------ la espada
+  // La espada de Solingen, clavada de punta en la repisa del hogar (el mismo
+  // modelo que se empuña, con la luz de la sala): la hoja de canto, con IN
+  // NOMINE DOMINI en la cara que mira a la sala, leído de arriba abajo.
+  buildRelic() {
+    const g = this.g;
+    const M = A.mantel;
+    const zn = g.zoneAt({ x: M.x, y: 1.5, z: M.z + 0.5 });
+    const pr = g.probe.sample(M.x, 2.0, M.z + 0.4, zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0);
+    const { group } = buildParts(solingenParts('x'), (name, ds) => {
+      const m = cloneMat(objMat(name, ds ? { side: THREE.DoubleSide } : {}));
+      if (m._u) {
+        m._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+        m._u.uGround.value.set(0, 0.34);
+      }
+      return m;
+    });
+    const grp = new THREE.Group();
+    grp.add(group);
+    // (de la mano al mundo: +X de la mano, hacia la sala; +Y, hacia el oeste;
+    // la hoja, +Z, hacia abajo. La punta, en (0, -0.05, 1.09) de la mano,
+    // diez centímetros dentro de la madera)
+    grp.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new V3(0, 0, 1), new V3(-1, 0, 0), new V3(0, -1, 0)));
+    grp.position.set(M.x - 0.05, M.y - 0.1 + 1.09, M.z);
+    grp.userData.y0 = grp.position.y;
+    g.scene.add(grp);
+    return grp;
+  }
+  relicGone() {
+    return !!(this.F['ale:espada'] || this.F['ale:reward']);
+  }
+  relicLabel() {
+    return this.relicReady ? 'Sacar la espada' : 'Examinar la espada';
+  }
+  // Examinarla; o, cuando él te la da, sacarla.
+  useRelic() {
+    const g = this.g;
+    if (this.relicReady) {
+      this.pullSword();
+      return;
+    }
+    g.ui.toast(MSG.reliquia, 5);
+    const e = this.npc;
+    if (e && (this.mode === 'lore' || this.mode === 'boards') && Math.hypot(g.player.pos.x - e.pos.x, g.player.pos.z - e.pos.z) < 9) this.bark(pick(DIALOG.henriqueNoToques), 3);
+  }
+  pullSword() {
+    const g = this.g;
+    if (this.pull || this.relicGone()) return;
+    const p = g.player;
+    const M = A.mantel;
+    this.relicReady = false;
+    p.playInteract('interact', Math.atan2(M.x - p.pos.x, M.z - p.pos.z), 1.3);
+    g.audio && g.audio.play('scrape', { x: M.x, y: M.y + 0.6, z: M.z });
+    this.pull = { t: 0 };
+  }
+  updateRelic(dt) {
+    const r = this.relic;
+    if (this.pull) {
+      // sale de la madera, despacio al principio
+      this.pull.t += dt;
+      const u = Math.min(1, this.pull.t / 0.85);
+      r.position.y = r.userData.y0 + u * u * 0.34;
+      if (u >= 1) {
+        this.pull = null;
+        r.visible = false;
+        r.position.y = r.userData.y0;
+        this.F['ale:espada'] = true;
+        const g = this.g;
+        g.audio && g.audio.play('relicReveal');
+        g.giveItem('solingen');
+        g.saveGame();
+      }
+    } else r.visible = !this.relicGone();
+    const it = this.relicIt;
+    if (it) it.hidden = !r.visible || !!this.pull;
+  }
+
   // ------------------------------------------------------------ estado
   // Desde las banderas (partida nueva, cargada, tras morir).
   applyFlags() {
@@ -210,6 +318,10 @@ export class HouseQuest {
     const def = !!F['ale:def'];
     for (const w of this.windows) this.setWindow(w, def ? (this.boarded(w.spec.id) ? 'boarded' : 'broken') : 'intact');
     for (const e of this.waveEnemies) e.foe = null;
+    this.relicReady = false;
+    this.pull = null;
+    this.goTo = null;
+    this.openT = 0;
     if (!F['ale:door']) this.mode = 'street';
     else if (!def) this.mode = 'waiting';
     else if (!F['ale:lore']) this.mode = 'lore';
@@ -220,15 +332,24 @@ export class HouseQuest {
     this.seen = false;
     this.loreStarted = false;
     this.route = null;
-    this.opened = false;
-    // la puerta: cerrada mientras aporrean; abierta desde que la abre (y,
-    // ganada la defensa, para siempre)
+    this.ri = 0;
+    this.waitT = 0;
+    // la puerta de la calle: reventada (abierta) hasta la defensa, en la que
+    // la cierra él, y abierta desde que la gana; la de la escalera, atrancada
+    // hasta que baja
     const d = this.door;
     if (d) {
-      if (F['ale:door']) {
-        if (!d.done) this.g.interact.setOpen(d, true);
-        F['door:d_aleman'] = true;
-      }
+      if (!d.done) this.g.interact.setOpen(d, true);
+      F['door:d_aleman'] = true;
+    }
+    const sd = this.stairDoor;
+    if (sd && F['ale:door']) {
+      if (!sd.done) this.g.interact.setOpen(sd, true);
+      F['door:d_escalera_ale'] = true;
+    } else if (sd && sd.done) this.g.interact.slamShut(sd);
+    if (this.relic) {
+      this.relic.visible = !this.relicGone();
+      this.relic.position.y = this.relic.userData.y0;
     }
     if (this.npc) this.npcReset(this.npc);
   }
@@ -248,7 +369,7 @@ export class HouseQuest {
     e.hp = e.maxHp;
     const m = this.mode;
     if (m === 'street') this.place(e, WINDOW_AT.x, WINDOW_AT.y, WINDOW_AT.z, 0, 'window');
-    else if (m === 'waiting' || m === 'opening') this.place(e, DOOR_IN.x, 0, DOOR_IN.z, 0, 'stand');
+    else if (m === 'waiting') this.place(e, DOOR_IN.x, 0, DOOR_IN.z, 0, 'stand');
     else if (m === 'after') this.place(e, PRAY.x, 0, PRAY.z, Math.PI, this.F['boss:leonor'] ? 'grief' : 'pray');
     else this.place(e, POST.x, 0, POST.z, 0, 'stand');
   }
@@ -314,13 +435,33 @@ export class HouseQuest {
         e.anim.stop(0.15);
         if (Math.random() < 0.5) this.bark(pick(DIALOG.henriqueHurt), 1.6);
       }
-    } else if (m === 'street' || (m === 'opening' && !this.opened)) {
-      // en la ventana alta: ni se mueve ni choca (no hay suelo ahí arriba)
+    } else if (m === 'street') {
+      // asomado a la ventana de la sala alta: quieto, medio cuerpo fuera
       move = false;
       e.body.pos.set(WINDOW_AT.x, WINDOW_AT.y, WINDOW_AT.z);
       e.yaw = 0;
       e.state = 'dormant';
       e.idle = 'window';
+    } else if (m === 'coming') {
+      // baja: corre por la planta alta hasta la escalera, escalera abajo; al
+      // pie le quita la tranca a la puerta (se para un momento) y sale a la
+      // sala, hacia la puerta de la calle
+      e.data.guard = false;
+      const r = DOWN[this.ri];
+      if (this.waitT > 0) this.waitT -= dt;
+      else if (r) {
+        const dp = Math.hypot(r[0] - e.pos.x, r[1] - e.pos.z);
+        if (dp < (this.ri === DOWN.length - 1 ? 0.35 : 0.5)) {
+          if (this.ri === AT_DOOR) this.openStair();
+          this.ri++;
+        } else {
+          tx = r[0];
+          tz = r[1];
+          speed = this.ri >= AT_DOOR + 1 ? e.T.walk * 1.3 : e.T.run;
+        }
+      }
+      e.state = speed > 0 ? 'chase' : 'dormant';
+      e.idle = 'stand';
     } else if (m === 'failed' || e.state === 'down') {
       move = false;
       e.vx = e.vz = 0;
@@ -381,9 +522,10 @@ export class HouseQuest {
       if (e.state !== 'attack') e.state = speed > 0 ? 'chase' : 'dormant';
       e.idle = 'guard';
     } else {
-      // tranquilo: en su sitio, mirándote si estás cerca
+      // tranquilo: en su sitio, mirándote si estás cerca (o a donde le
+      // lleve el guion: junto al hogar, para la espada)
       e.data.guard = false;
-      const home = m === 'waiting' || m === 'opening' ? DOOR_IN : m === 'after' ? PRAY : POST;
+      const home = this.goTo || (m === 'waiting' ? DOOR_IN : m === 'after' ? PRAY : POST);
       // (a rezar, rodeando la mesa)
       const r = this.route;
       if (r && r.length && m === 'after') {
@@ -459,7 +601,8 @@ export class HouseQuest {
     this.lastBark = this.g.time;
     s.say(this.who, text, { dur });
   }
-  // Un guion de pasos: { say: [...] }, { give: 'objeto' }, { clip }, { wait: s }, { fn }.
+  // Un guion de pasos: { say: [...] }, { give: 'objeto' }, { clip }, { wait: s },
+  // { walk: [x, z] } (va hasta ahí), { until: () => bool } (espera) y { fn }.
   run(steps) {
     this.script = { steps: steps.slice(), cur: null, t: 0 };
   }
@@ -473,6 +616,8 @@ export class HouseQuest {
       const c = S.cur;
       if (c.say && g.speech.busy(this.who)) return;
       if (c.wait !== undefined && S.t < c.wait) return;
+      if (c.walk && this.npc && Math.hypot(c.walk[0] - this.npc.pos.x, c.walk[1] - this.npc.pos.z) > 0.5) return;
+      if (c.until && !c.until()) return;
       S.cur = null;
     }
     const st = S.steps.shift();
@@ -490,6 +635,7 @@ export class HouseQuest {
       if (this.npc) this.npc.anim.play(HENRIQUE_CLIPS.give, { blend: 0.2 });
       g.giveItem(st.give);
     }
+    this.goTo = st.walk ? { x: st.walk[0], z: st.walk[1] } : this.goTo;
     if (st.fn) st.fn();
   }
   // Hablar con él (el interactuable que le sigue).
@@ -527,12 +673,21 @@ export class HouseQuest {
       },
     ]);
   }
+  // Tapiadas las ventanas: al hogar, a por la espada (la sacas tú), y luego
+  // lo de Leonor y la llave. (Sacada ya la espada, sólo lo segundo.)
   startReward() {
     if (this.script) return;
-    this.run([
-      { say: DIALOG.henriqueReward1, clip: TALK_CLIPS[1] },
-      { give: 'solingen' },
-      { wait: 0.6 },
+    const steps = [];
+    if (!this.relicGone())
+      steps.push(
+        { say: DIALOG.henriqueReward1, clip: TALK_CLIPS[1] },
+        { walk: [BY_HEARTH.x, BY_HEARTH.z] },
+        { say: DIALOG.henriqueReliquia, clip: TALK_CLIPS[3] },
+        { fn: () => (this.relicReady = true) },
+        { until: () => !!this.F['ale:espada'] && !this.g.ui.modal },
+        { wait: 1.0 }
+      );
+    steps.push(
       { say: DIALOG.henriqueReward2, clip: TALK_CLIPS[2] },
       { say: DIALOG.henriqueReward3, clip: TALK_CLIPS[0] },
       { give: 'llave_sotano' },
@@ -540,24 +695,32 @@ export class HouseQuest {
         fn: () => {
           this.F['ale:reward'] = true;
           this.mode = 'after';
-          this.route = TO_PRAY.map((p) => p.slice());
+          this.goTo = null;
+          const e = this.npc;
+          this.route = e && Math.hypot(e.pos.x - PRAY.x, e.pos.z - PRAY.z) < 3 ? [[PRAY.x, PRAY.z]] : TO_PRAY.map((p) => p.slice());
           this.g.saveGame();
         },
-      },
-    ]);
+      }
+    );
+    this.run(steps);
   }
 
-  // Llamar a la puerta (atrancada por dentro).
+  // Llamar a una puerta: la de la escalera (atrancada desde arriba) o la de
+  // la calle (cerrada en la defensa).
   knock(it) {
     const g = this.g;
     g.audio && g.audio.play('doorPound', { x: it.x, y: 1.2, z: it.z });
     const m = this.mode;
+    if (it === this.stairDoor) {
+      g.ui.toast(MSG.escaleraAleman, 4);
+      if (this.npc && !g.speech.busy(this.who)) g.speech.say(this.who, this.doorDemons.some((d) => !d.dead) ? '¡No abro! ¡No mientras esas bestias sigan ahí abajo!' : '¡Ya bajo, ya bajo!', { dur: 3 });
+      return;
+    }
     if (m === 'shut' || m === 'waves') {
       this.bark('¡No abras! ¡Que no entren por la puerta también!', 2.6);
       return;
     }
     g.ui.toast(MSG.doorAleman, 4);
-    if (m === 'street' && this.npc && !g.speech.busy(this.who)) g.speech.say(this.who, '¡No abro! ¡No mientras esas bestias sigan ahí fuera!', { dur: 3 });
   }
 
   // ------------------------------------------------------------ tapiar
@@ -596,13 +759,34 @@ export class HouseQuest {
   }
 
   // ------------------------------------------------------------ la defensa
-  toOpening() {
+  // Muertas las de dentro: baja (ver npcAI). Desde ya no vuelven, aunque
+  // caigas antes de que llegue abajo.
+  toComing() {
     const g = this.g;
-    this.mode = 'opening';
+    this.mode = 'coming';
     this.mt = 0;
+    this.ri = 0;
+    this.waitT = 0;
     this.F['ale:door'] = true;
-    g.speech.say(this.who, DIALOG.henriqueSaved[0], { dur: 2.4 });
+    g.speech.hush(this.who);
+    g.speech.say(this.who, DIALOG.henriqueSaved[0], { dur: 2.6 });
     g.saveGame();
+  }
+  // Al pie de la escalera: la tranca fuera y, un momento después, la puerta
+  // abierta (en tiempo de juego: ver update).
+  openStair() {
+    const g = this.g;
+    const d = this.stairDoor;
+    this.waitT = 0.9;
+    if (!d || d.done) return;
+    g.audio && g.audio.play('bar', { x: d.x, y: 1.2, z: d.z });
+    this.openT = 0.45;
+  }
+  // ¿Estás dentro de la casa, lejos de la puerta (y abajo)?
+  playerInside() {
+    const p = this.g.player;
+    const H = A.house;
+    return p.pos.x > H.x0 && p.pos.x < H.x1 && p.pos.z < H.z1 - 1.5 && p.pos.z > H.z0 && p.pos.y > -0.5 && p.pos.y < 2 && !p.dead;
   }
   toShut() {
     const g = this.g;
@@ -770,17 +954,24 @@ export class HouseQuest {
     this.mt += dt;
     this.updateWindows(dt);
     this.updateScript(dt);
+    if (this.openT > 0) {
+      this.openT -= dt;
+      const d = this.stairDoor;
+      if (this.openT <= 0 && d && !d.done) {
+        g.interact.setOpen(d);
+        this.F['door:d_escalera_ale'] = true;
+        g.audio && g.audio.play('doorOpen', { x: d.x, y: 1.2, z: d.z });
+      }
+    }
     const p = g.player;
     const m = this.mode;
     if (m === 'street') {
       const alive = this.doorDemons.filter((d) => !d.dead);
-      if (!alive.length) this.toOpening();
+      if (!alive.length) this.toComing();
       else {
-        // los golpes en la puerta, mientras sigan a lo suyo
-        const d = this.door;
-        // (no mientras el gigante revienta la ciudad: se oían de fondo en la
-        // película del jefe final)
-        if (d && !(g.finale && g.finale.filmActive) && alive.some((o) => o.state === 'dormant' && o.idle === 'pound')) {
+        // los golpes en la puerta de la escalera, mientras sigan a lo suyo
+        const d = this.stairDoor;
+        if (d && alive.some((o) => o.state === 'dormant' && o.idle === 'pound')) {
           this.poundT -= dt;
           if (this.poundT <= 0) {
             this.poundT = 1.1 + Math.random() * 1.3;
@@ -788,7 +979,8 @@ export class HouseQuest {
             d.shake = 1;
           }
         }
-        // los gritos de la ventana, cuando hay alguien cerca para oírlos
+        // los gritos desde arriba, cuando hay alguien cerca para oírlos
+        // (dentro de la casa, otros)
         const dd = Math.hypot(p.pos.x - A.door.x, p.pos.z - A.door.z);
         if (dd < 30 && p.pos.y > -1) {
           if (!this.seen && dd < 17) {
@@ -799,38 +991,23 @@ export class HouseQuest {
           this.shoutT -= dt;
           if (this.shoutT <= 0) {
             this.shoutT = 6 + Math.random() * 4;
-            if (!g.speech.busy(this.who)) g.speech.say(this.who, pick(DIALOG.henriqueWindow), { dur: 3 });
+            if (!g.speech.busy(this.who)) g.speech.say(this.who, pick(this.playerInside() ? DIALOG.henriqueArriba : DIALOG.henriqueWindow), { dur: 3 });
           }
         }
       }
-    } else if (m === 'opening') {
-      // baja (un momento sin verle) y abre la puerta
-      if (this.mt > 1.6 && !this.opened) {
-        this.opened = true;
-        this.place(e, DOOR_IN.x, 0, DOOR_IN.z, 0, 'stand');
-        const d = this.door;
-        if (d && !d.done) {
-          g.interact.setOpen(d);
-          this.F['door:d_aleman'] = true;
-          g.audio && g.audio.play('bar', { x: d.x, y: 1.2, z: d.z });
-          setTimeout(() => g.audio && g.audio.play('doorOpen', { x: d.x, y: 1.2, z: d.z }), 600);
+    } else if (m === 'coming') {
+      // ya abajo, junto a la puerta de la calle: si estás dentro, la cierra;
+      // si no, te espera
+      if (this.ri >= DOWN.length) {
+        if (this.playerInside()) this.toShut();
+        else {
+          this.mode = 'waiting';
+          g.speech.say(this.who, DIALOG.henriqueDoor[0], { dur: 3 });
         }
-        g.speech.say(this.who, DIALOG.henriqueDoor[0], { dur: 3 });
-        g.saveGame();
-      } else if (this.mt > 0.3 && this.mt < 1.6 && !e.scripted) {
-        // (se retira de la ventana: un momento sin verle)
-        e.scripted = true;
-        e.obj.visible = false;
-        e.shadow.visible = false;
-      }
-      if (this.mt > 2.2) {
-        this.mode = 'waiting';
-        this.opened = false;
       }
     } else if (m === 'waiting') {
       // al entrar (bien dentro, lejos del umbral) cierra de un portazo
-      const H = A.house;
-      if (p.pos.x > H.x0 && p.pos.x < H.x1 && p.pos.z < H.z1 - 1.5 && p.pos.z > H.z0 && p.pos.y > -0.5 && p.pos.y < 2 && !p.dead) this.toShut();
+      if (this.playerInside()) this.toShut();
     } else if (m === 'waves') this.updateWaves(dt);
     else if (m === 'lore') {
       // (si se fue sin escucharle: al volver a acercarse)
@@ -843,12 +1020,13 @@ export class HouseQuest {
         this.run([{ say: DIALOG.henriqueGrief, clip: TALK_CLIPS[2] }]);
       }
     }
-    // la puerta tiembla con los golpes
-    const d = this.door;
-    if (d && d.shake > 0 && !d.done) {
-      d.shake = Math.max(0, d.shake - dt * 4);
-      for (const lf of d.leaves || []) lf.rotation.y = Math.sin(this.t * 70) * 0.015 * d.shake;
-    }
+    // la puerta de la escalera tiembla con los golpes
+    for (const d of [this.door, this.stairDoor])
+      if (d && d.shake > 0 && !d.done) {
+        d.shake = Math.max(0, d.shake - dt * 4);
+        for (const lf of d.leaves || []) lf.rotation.y = Math.sin(this.t * 70) * 0.015 * d.shake;
+      }
+    this.updateRelic(dt);
     // el interactuable de hablar le sigue
     const it = this.talkIt;
     if (it) {

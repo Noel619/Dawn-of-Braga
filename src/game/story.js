@@ -36,7 +36,7 @@ export const ITEMS = {
   },
   solingen: {
     name: 'Espada de Solingen',
-    desc: 'Espada del Sacro Imperio, forjada a orillas del Wupper, en Solingen, y traída a Braga por un cruzado de Colonia el año en que se tomó Lisboa. Hoja ancha con vaceo, guarda recta y pomo de rueda; en el acero, incrustado en hierro: + IN NOMINE DOMINI +. Corta un tercio más que la espada del carcelero.',
+    desc: 'Espada del Sacro Imperio, forjada a orillas del Wupper, en Solingen, y traída a Braga por un cruzado de Colonia el año en que se tomó Lisboa. Hoja ancha con vaceo, guarda recta de hierro pavonado y pomo de rueda con una cruz de latón. En el vaceo, letras de latón incrustadas: en una cara, + IN NOMINE DOMINI +; en la otra, + CONRADVS ME FECIT +. Estuvo clavada en el hogar de Henrique desde el día en que su padre colgó la cruz. Corta un tercio más que la espada del carcelero.',
     icon: 'solingen',
     key: false,
     weapon: 'solingen',
@@ -693,17 +693,29 @@ Voy a rezar más abajo.`,
 
 // Lo que dicen los personajes (en bocadillos sobre la cabeza).
 export const DIALOG = {
-  // asomado a la ventana alta mientras aporrean su puerta (al azar)
+  // asomado a la ventana de la sala alta, mientras las de dentro aporrean la
+  // puerta de su escalera (al azar)
   henriqueWindow: [
-    '¡Fuera! ¡Fuera de mi casa, engendros!',
-    '¡No entraréis! ¡Por el alma de mi padre que no entraréis!',
+    '¡Han reventado la puerta! ¡Están abajo, en mi casa!',
+    '¡No subiréis! ¡Por el alma de mi padre que no subiréis!',
     '¡Dios, si me oyes, manda a alguien!',
     '¡Leonor no está! ¡Aquí no hay nada para vosotros!',
   ],
-  henriqueSee: '¡Tú! ¡Sí, tú, el de la espada! ¡Ayúdame, por lo que más quieras!',
-  henriqueSaved: ['¡Gracias a Dios! ¡Espera, que bajo!'],
+  // lo mismo, pero estás tú dentro, abajo
+  henriqueArriba: [
+    '¡Estoy arriba! ¡He atrancado la escalera!',
+    '¡La puerta de la escalera no aguantará mucho más!',
+    '¡Mátalas! ¡Mátalas a todas y bajo!',
+    '¡Cuidado, que hay más por la casa!',
+  ],
+  henriqueSee: '¡Tú! ¡Sí, tú, el de la espada! ¡Están dentro, abajo! ¡Ayúdame, por lo que más quieras!',
+  henriqueSaved: ['¡Ya no se oyen! ¡Gracias a Dios! ¡Espera, que bajo!'],
   henriqueDoor: ['¡Entra, rápido, antes de que vuelvan!'],
-  henriqueShut: ['Escucha... Esos no eran todos.', 'Los oigo rascar las contraventanas. ¡Vienen más, por las ventanas!', '¡No dejes que lleguen a mí!'],
+  henriqueShut: [
+    'Ayúdame con la puerta... Ya. Con la barra de la fragua aguantará más que con la tranca.',
+    'Escucha... Esos no eran todos. Los oigo rascar las contraventanas.',
+    '¡Vienen por las ventanas! ¡No dejes que lleguen a mí!',
+  ],
   // avisos durante la defensa: por dónde entran
   henriqueWin: {
     v_taller: '¡Por la ventana del taller!',
@@ -723,12 +735,19 @@ export const DIALOG = {
     'En la hoja aún se lee: IN NOMINE DOMINI. Nunca la ha tocado nadie más que nosotros.',
     'No me pidas que me vaya. ¿A dónde? Las puertas de la muralla están cerradas, y la Sé... ya sabes lo que hay en la Sé.',
     'Pero si me ayudas a hacer de esta casa un sitio seguro, a tapiar las ventanas que han roto, la espada de mi padre es tuya. Te lo juro por su alma.',
-    'Clavos y martillo tengo: tómalos. Lo que me falta es madera. Busca tablones: en el taller del carpintero, aquí enfrente, y en el patio de la leña, detrás de la casa. Donde los haya.',
+    'Clavos y martillo tengo: tómalos. Lo que me falta es madera. Busca tablones: en el taller del carpintero, aquí enfrente, en el patio de la leña, detrás de la casa, y arriba, en el granero. Donde los haya.',
   ],
   // mientras faltan ventanas (n: las que faltan)
-  henriqueBoards: (n) => [n === 1 ? 'Sólo falta una ventana. Una.' : `Faltan ${n} ventanas. Un tablón por ventana, y que aguante.`, 'Mira en el taller del carpintero, en el patio de la leña... y en el callejón, que esta noche hay de todo tirado.'],
-  // todas tapiadas: la espada, la llave y Leonor
-  henriqueReward1: ['Ahora sí. Que vengan, que se rompan los dientes contra la madera.', 'Te prometí la espada de mi padre. Tómala. Que haga contigo lo que hizo con él: volver vivo.'],
+  henriqueBoards: (n) => [n === 1 ? 'Sólo falta una ventana. Una.' : `Faltan ${n} ventanas. Un tablón por ventana, y que aguante.`, 'Mira en el taller del carpintero, en el patio de la leña, arriba en el granero... y en el callejón, que esta noche hay de todo tirado.'],
+  // todas tapiadas: la espada (te lleva al hogar y la sacas tú), la llave y
+  // Leonor
+  henriqueReward1: ['Ahora sí. Que vengan, que se rompan los dientes contra la madera.', 'Te prometí la espada de mi padre. Ven.'],
+  henriqueReliquia: [
+    'Ahí la tienes. La clavó él en esa repisa el día que colgó la cruz, y juró no volver a sacarla contra cristiano.',
+    'Yo nunca la he sacado. Sácala tú, y que haga contigo lo que hizo con él: volver vivo.',
+  ],
+  // si la tocas antes de tiempo
+  henriqueNoToques: ['¡Eh! Esa no se toca. Primero, las ventanas.', 'La espada de mi padre, cuando la casa esté cerrada. Te lo he jurado.'],
   henriqueReward2: [
     'Hay... hay algo más. No te lo he dicho antes porque me avergüenza.',
     'Mi mujer, Leonor, está en el sótano. Desde que se nos murió Tomé, de las fiebres del asedio, no comía, no dormía. Rezaba a la Dolorosa día y noche.',
@@ -962,6 +981,8 @@ export const MSG = {
   escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan asoman de la torre, volados sobre el hueco.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   doorAleman: 'Está atrancada por dentro. Al otro lado, alguien respira deprisa y reza en voz baja.',
+  escaleraAleman: 'La puerta de la escalera, atrancada desde arriba. Está llena de arañazos, astillada a golpes.',
+  reliquia: 'Una espada clavada de punta en la repisa del hogar, entre dos velas. En el vaceo, letras de latón: + IN NOMINE DOMINI +. Encima, el escudo del águila negra. No es tuya.',
   boardNoHammer: 'La contraventana está hecha astillas. Con un tablón, martillo y clavos se podría tapiar.',
   boardNoPlank: 'Te falta un tablón para tapiar esta ventana.',
   boardDone: (n) => (n > 0 ? `Clavas el tablón de través. Queda${n === 1 ? '' : 'n'} ${n} ventana${n === 1 ? '' : 's'} por tapiar.` : 'Clavas el último tablón. La casa está cerrada.'),
@@ -1059,6 +1080,7 @@ export const AREA_NAMES = {
   postigo: 'Patio del Postigo',
   callejon_postigo: 'Callejón del Postigo',
   casa_aleman: 'Casa del Alemán',
+  sobrado_aleman: 'Sobrado del Alemán',
   sotano_aleman: 'Sótano del Alemán',
   gruta_leonor: 'La gruta de Leonor',
   carpinteria: 'Taller del carpintero',

@@ -194,17 +194,17 @@ export async function goInstance(g, id) {
       prepare(g, { 'boss:descoyuntado': false, 'cine:sotano': false });
       g.startCutscene();
       return true;
-    // la Casa del Alemán desde el principio: en el callejón, ante la puerta
-    // que aporrean
+    // la Casa del Alemán desde el principio: en la plazuela, ante la puerta
+    // reventada (dentro, las que aporrean la puerta de la escalera)
     case 'casa': {
       for (const k of Object.keys(g.flags)) if (k.startsWith('board:') || k.startsWith('ale:')) delete g.flags[k];
-      prepare(g, { 'door:d_aleman': false, 'boss:leonor': false });
+      prepare(g, { 'door:d_aleman': false, 'door:d_escalera_ale': false, 'boss:leonor': false });
       place(g, 50, 0, -94.6, Math.PI);
       return true;
     }
     // Leonor: ante la niebla de su gruta, bajo la casa
     case 'leonor': {
-      prepare(g, { 'boss:leonor': false, 'door:d_sotano_ale': true, 'ale:door': true, 'ale:def': true, 'ale:lore': true, 'ale:reward': true });
+      prepare(g, { 'boss:leonor': false, 'door:d_sotano_ale': true, 'ale:door': true, 'ale:def': true, 'ale:lore': true, 'ale:espada': true, 'ale:reward': true });
       const fog = g.interact.list.find((i) => i.id === 'f_leonor');
       if (!fog) return false;
       place(g, fog.x, fog.y, fog.z + 1.4, Math.PI);

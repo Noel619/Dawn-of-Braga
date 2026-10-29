@@ -14,11 +14,20 @@
 // Las ventanas de la planta baja son huecos de verdad: por ellas entran las
 // criaturas (sus contraventanas y los tablones que las tapian los pone el
 // juego: game/house.js).
+//
+// La planta alta (el sobrado) también es de verdad: la sala alta, sobre la
+// sala, donde se ha encerrado Henrique (la ventana que da a la plazuela); la
+// cuchillería, con el rellano de la escalera; la alcoba de su padre, que
+// sigue como la dejó; el cuarto de los oficiales y el granero. Se sube por
+// una escalera que arranca en la sala, tras su puerta, y pasa por encima de
+// la del sótano (las dos en el mismo cuartucho).
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { house, solid, stairs, stoneWall, archRing } from './builders.js';
 import { floor } from './level_util.js';
+import { hueco, forjado, vigas, tabique, cadaViga, quadN, ROT } from './kit_casa.js';
+import { holedWall, railing, chest } from './level_souto.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 
@@ -28,6 +37,14 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const H = { x0: 40, z0: -110, x1: 60, z1: -97, g1: 3.6, h: 7.6, t: 0.35 };
 const WIN = { w: 1.15, sill: 0.95, top: 2.15 };
 const NRM = { s: [0, 1], n: [0, -1], e: [1, 0], w: [-1, 0] };
+// la planta alta: su suelo (el forjado, de g1 a FY) y su techo (encima, el
+// desván, al que no se sube); sus ventanas (alféizar y alto)
+const FY = 3.8;
+const UPC = 6.9;
+const UPW = { w: 0.8, y0: FY + 0.95, h: 1.1 };
+// la cal de la casa, por fuera y por dentro
+const TINT = [1.02, 0.95, 0.84];
+const TINT_IN = [0.88, 0.84, 0.76];
 const WINDOWS = [
   { id: 'v_taller', side: 's', x: 43.6, z: H.z1, where: 'el taller' },
   { id: 'v_despensa', side: 's', x: 56.4, z: H.z1, where: 'la despensa' },
@@ -46,8 +63,22 @@ export const ALEMAN = {
     return { ...w, nx, nz, out: [w.x + nx * 1.6, w.z + nz * 1.6], in: [w.x - nx * 1.45, w.z - nz * 1.45], inner: [w.x - nx * H.t, w.z - nz * H.t] };
   }),
   door: { x: 50, z: H.z1, w: 1.6, h: 2.5 },
-  // la ventana alta sobre la puerta (y su hueco, con la sala de detrás)
-  upWin: { x: 50, z: H.z1, y0: 4.4, y1: 5.6, w: 1.1, floor: 3.72 },
+  // la ventana alta sobre la puerta, la de la sala alta (ahí se asoma
+  // Henrique), y la planta alta: su suelo y su techo
+  upWin: { x: 50, z: H.z1, y0: UPW.y0, y1: UPW.y0 + 1.2, w: 1.1, floor: FY },
+  fy: FY,
+  upCeil: UPC,
+  // la escalera de la planta alta: sube hacia el este por encima de la del
+  // sótano, en el mismo cuartucho (la de abajo pasa bajo ésta con metro y
+  // medio de sobra). Se entra desde la sala por su puerta (atrancada desde
+  // dentro mientras Henrique está arriba) a un rellanito sobre el hueco de
+  // la del sótano (foot: de dónde a dónde, en x). hole: el hueco que deja en
+  // el suelo de arriba (con su barandilla); empieza donde, bajando, la
+  // cabeza del más alto (1,85 m) ya no da en el canto del forjado
+  upStair: { x0: 53.8, z0: -103, z1: -101, n: 13, rise: FY / 13, run: 0.37, foot: 53.0, hole: [54.5, -103, 58.61, -101], door: { x: 53.0, z: -102, w: 1.1, h: 2.2 } },
+  // la repisa del hogar de la sala, donde está clavada la espada del padre
+  // (su punta, en la madera: x, y de la cara de arriba, z)
+  mantel: { x: 50, y: 1.58, z: -108.925 },
   // la escalera del sótano, en la despensa: sube hacia el este; arriba, el
   // rellano, junto a la puerta del cuartucho. (El hueco de la losa de la
   // calle va por metros enteros: de x 53 a 59 y de z -103 a -101; lo que le
@@ -116,6 +147,317 @@ function windowFrame(ctx, w, room) {
     wb.box('wooddark', hw, sill, -t - 0.01, hw + 0.1, top, -t + 0.04, { ...fi, faces: 'nwe' });
     wb.box('wooddark', -hw - 0.1, top, -t - 0.01, hw + 0.1, top + 0.1, -t + 0.04, { ...fi, faces: 'nweb' });
   });
+}
+
+// ------------------------------------------------------------ la planta alta
+// Sus ventanas: la fachada, dónde (a lo largo de ella, en coordenadas del
+// mundo: x en las del norte y del sur, z en las del este y del oeste) y sus
+// hojas. La de la sala alta, sobre la puerta, más grande y abierta: ahí se
+// asoma Henrique.
+const UPWINS = [
+  { side: 's', at: 44.15, sh: 'closed' },
+  { side: 's', at: 50, w: 1.1, h: 1.2, sh: 'open' },
+  { side: 's', at: 55.85, sh: 'closed' },
+  { side: 'n', at: 44.15, sh: 'ajar' },
+  { side: 'n', at: 55.85, sh: 'closed' },
+  { side: 'e', at: -99.0, sh: 'closed' },
+  { side: 'e', at: -105.6, sh: 'closed' },
+  { side: 'w', at: -100.9, sh: 'ajar' },
+  { side: 'w', at: -106.1, sh: 'closed' },
+];
+// El entramado de cada fachada: los pies derechos (a lo largo, como las
+// ventanas; nunca delante de una) y los tramos con aspas, las cruces de San
+// Andrés de las casas de la tierra del padre.
+const FACHWERK = {
+  s: { posts: [40.1, 42.8, 45.5, 48.2, 51.8, 54.5, 57.2, 59.9], aspas: [[40.1, 42.8], [57.2, 59.9]] },
+  n: { posts: [40.1, 42.8, 45.5, 48.2, 51.8, 54.5, 57.2, 59.9], aspas: [[40.1, 42.8], [48.2, 51.8], [57.2, 59.9]] },
+  e: { posts: [-97.1, -100.3, -103.5, -106.7, -109.9], aspas: [[-100.3, -103.5], [-106.7, -109.9]] },
+  w: { posts: [-109.9, -107.4, -104.8, -102.2, -99.6, -97.1], aspas: [[-104.8, -102.2]] },
+};
+
+// Un muro de fuera de la planta alta, del forjado al alero: cal por fuera y
+// por dentro, sus ventanas de verdad (el cerco, el alféizar y las hojas) y,
+// por fuera, el entramado (pies derechos, la carrera, la riostra de bajo los
+// alféizares y las aspas).
+function fachadaAlta(ctx, side, room) {
+  const wb = ctx.wb;
+  const t = H.t;
+  const axis = side === 'n' || side === 's' ? 'x' : 'z';
+  const [a0, a1] = axis === 'x' ? [H.x0, H.x1] : [H.z0, H.z1];
+  const [t0, t1] = side === 'n' ? [H.z0, H.z0 + t] : side === 's' ? [H.z1 - t, H.z1] : side === 'w' ? [H.x0, H.x0 + t] : [H.x1 - t, H.x1];
+  const ws = UPWINS.filter((w) => w.side === side).map((w) => ({ ...w, w: w.w ?? UPW.w, y0: UPW.y0, y1: UPW.y0 + (w.h ?? UPW.h) }));
+  holedWall(ctx, { axis, a0, a1, t0, t1, y0: H.g1, y1: H.h, out: side, room, mat: 'plaster', tint: TINT, tintIn: TINT_IN, floorY: FY, holes: ws.map((w) => ({ a0: w.at - w.w / 2, a1: w.at + w.w / 2, y0: w.y0, y1: w.y1 })) });
+  for (const w of ws) {
+    const fx = axis === 'x' ? w.at : side === 'w' ? H.x0 : H.x1;
+    const fz = axis === 'x' ? (side === 'n' ? H.z0 : H.z1) : w.at;
+    hueco(ctx, side, fx, fz, w.w, w.y0, w.y1, t, { room, shutters: w.sh });
+  }
+  // el entramado, en el marco de la fachada (x a lo largo, desde su esquina;
+  // z hacia fuera)
+  const F = FACHWERK[side];
+  const org = { s: [H.x0, H.z1], n: [H.x1, H.z0], e: [H.x1, H.z1], w: [H.x0, H.z0] }[side];
+  const loc = (u) => (side === 's' ? u - H.x0 : side === 'n' ? H.x1 - u : side === 'e' ? H.z1 - u : u - H.z0);
+  const yb = H.g1 + 0.22,
+    yt = H.h - 0.2,
+    ym = UPW.y0 - 0.16;
+  const T = { ao: false, sub: 3, room: 'out' };
+  wb.at(org[0], 0, org[1], ROT[side], () => {
+    for (const u of F.posts) {
+      const x = loc(u);
+      wb.box('timber', x - 0.1, yb, 0, x + 0.1, yt, 0.07, T);
+    }
+    wb.box('timber', 0, yt, 0, a1 - a0, H.h, 0.08, T);
+    wb.box('timber', 0, ym, 0, a1 - a0, ym + 0.16, 0.055, T);
+    for (const [ua, ub] of F.aspas) {
+      const xa = Math.min(loc(ua), loc(ub)) + 0.1,
+        xb = Math.max(loc(ua), loc(ub)) - 0.1;
+      const y0 = ym + 0.16;
+      const dw = xb - xa,
+        dh = yt - y0;
+      const len = Math.hypot(dw, dh);
+      for (const sg of [1, -1]) {
+        wb.push();
+        wb.translate((xa + xb) / 2, (y0 + yt) / 2, 0.035);
+        wb.rotateZ(Math.atan2(dh, dw) * sg);
+        wb.box('timber', -len / 2, -0.07, -0.03, len / 2, 0.07, 0.03, { ...T, sub: 4 });
+        wb.pop();
+      }
+    }
+  });
+}
+
+// La escalera de la planta alta (ALEMAN.upStair): el rellanito de abajo,
+// sobre el hueco de la del sótano; los peldaños (la huella con su vuelo y la
+// tabica) y las zancas contra los tabiques; por debajo, un plano inclinado
+// paralelo a la escalera (lo que se ve desde la del sótano) y, de cada
+// peldaño, una colisión delgada: por debajo pasa la otra.
+function escaleraAlta(ctx, room, roomDown) {
+  const wb = ctx.wb;
+  const col = ctx.col;
+  const S = ALEMAN.upStair;
+  const { x0, z0, z1, n, rise, run } = S;
+  const xe = x0 + n * run;
+  const o = { ao: false, room, tint: [0.62, 0.54, 0.46] };
+  // el rellanito: su tabla (desde donde acaba el suelo de la sala), su cara
+  // de abajo y su canto
+  wb.box('planks', 53.4, -0.05, z0, x0, 0.02, z1, { ...o, faces: 't', tint: [0.92, 0.86, 0.8] });
+  wb.box('wooddark', 53.4, -0.3, z0, x0, -0.26, z1, { ...o, faces: 'b', room: roomDown });
+  wb.box('wooddark', x0 - 0.01, -0.3, z0, x0, 0, z1, { ...o, faces: 'e', room: roomDown });
+  col.add(S.foot, -0.3, z0, x0, 0, z1);
+  for (let i = 0; i < n; i++) {
+    const xa = x0 + i * run,
+      xb = xa + run;
+    const top = (i + 1) * rise;
+    wb.box('wooddark', xa - 0.025, top - 0.035, z0, xb, top, z1, { ...o, faces: 'tw', tint: [0.7, 0.6, 0.5] });
+    wb.box('wooddark', xa, top - rise, z0, xa + 0.02, top - 0.035, z1, { ...o, faces: 'w' });
+    col.add(xa, top - 0.34, z0, xb + 0.005, top, z1);
+  }
+  quadN(wb, 'wooddark', [V(x0, -0.3, z0), V(xe, FY - 0.3, z0), V(xe, FY - 0.3, z1), V(x0, -0.3, z1)], V(rise, -run, 0), { ...o, room: roomDown, tint: [0.5, 0.44, 0.38] });
+  const ang = Math.atan2(FY, xe - x0),
+    len = Math.hypot(FY, xe - x0);
+  for (const zz of [z0 + 0.025, z1 - 0.025]) {
+    wb.push();
+    wb.translate((x0 + xe) / 2, FY / 2 + 0.06, zz);
+    wb.rotateZ(ang);
+    wb.box('wooddark', -len / 2, -0.17, -0.02, len / 2, 0.17, 0.02, { ao: false, room, tint: [0.55, 0.47, 0.4] });
+    wb.pop();
+  }
+}
+
+// La silueta de un escudo de lágrima (ancho w, alto h; centrado).
+function heater(w, h) {
+  const s = new THREE.Shape();
+  s.moveTo(-w / 2, h / 2);
+  s.lineTo(w / 2, h / 2);
+  s.lineTo(w / 2, h * 0.08);
+  s.quadraticCurveTo(w / 2, -h * 0.28, 0, -h / 2);
+  s.quadraticCurveTo(-w / 2, -h * 0.28, -w / 2, h * 0.08);
+  s.lineTo(-w / 2, h / 2);
+  return s;
+}
+// El escudo del padre de Henrique, colgado (cara hacia +z; su centro en x,
+// y, z): el águila en campo de oro, el canto de hierro y los clavos.
+function escudo(ctx, x, y, z, room) {
+  const wb = ctx.wb;
+  const w = 0.5,
+    h = 0.58;
+  const face = new THREE.ShapeGeometry(heater(w, h), 6);
+  const uv = face.attributes.uv,
+    pos = face.attributes.position;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + w / 2) / w, (pos.getY(i) + h / 2) / h);
+  const M = (dz) => new THREE.Matrix4().makeTranslation(x, y, z + dz);
+  wb.geometry('iron', new THREE.ShapeGeometry(heater(w + 0.045, h + 0.05), 6), M(-0.012), { ao: false, room, tint: [0.7, 0.68, 0.66] });
+  wb.geometry('escudoAguila', face, M(0), { ao: false, room });
+  for (const [px, py] of [
+    [-0.19, 0.25],
+    [0.19, 0.25],
+    [0, 0.265],
+    [-0.215, 0.03],
+    [0.215, 0.03],
+  ])
+    wb.box('iron', x + px - 0.012, y + py - 0.012, z, x + px + 0.012, y + py + 0.012, z + 0.015, { ao: false, room });
+}
+
+// La planta alta (ver el comentario de arriba): sus muros de fuera, el
+// forjado con sus vigas, el techo (encima, el desván, cerrado), los tabiques,
+// los cañones de las chimeneas, la escalera y la barandilla de su hueco, y lo
+// que hay en cada pieza.
+function sobrado(ctx) {
+  const wb = ctx.wb;
+  const col = ctx.col;
+  const up = 'alemanAlta',
+    down = 'aleman';
+  const I = { x0: H.x0 + H.t, z0: H.z0 + H.t, x1: H.x1 - H.t, z1: H.z1 - H.t };
+  const S = ALEMAN.upStair;
+  for (const side of ['s', 'n', 'e', 'w']) fachadaAlta(ctx, side, up);
+  forjado(ctx, I, FY, [S.hole], up, down, { th: FY - H.g1, tint: [0.84, 0.78, 0.7] });
+  const xs = cadaViga(I.x0, I.x1, 1.75);
+  vigas(ctx, I, H.g1, 'z', xs, [S.hole], down);
+  wb.box('wooddark', I.x0, UPC, I.z0, I.x1, UPC + 0.05, I.z1, { faces: 'b', room: up, ao: false, tint: [0.6, 0.54, 0.48] });
+  for (const x of xs) wb.box('timber', x - 0.1, UPC - 0.22, I.z0, x + 0.1, UPC, I.z1, { ao: false, room: up, faces: 'nsewb' });
+  col.add(I.x0, UPC, I.z0, I.x1, H.h + 0.2, I.z1).cam = true;
+  col.addCam(I.x0, UPC - 0.27, I.z0, I.x1, UPC, I.z1);
+  // los tabiques: sobre los de abajo (el del rellano de la escalera, sobre
+  // el del cuartucho, con la puerta a la alcoba del viejo)
+  const tb = (x0, z0, x1, z1, doors) => tabique(ctx, { x0, z0, x1, z1 }, FY, UPC, up, { doors: doors.map(([at, w]) => ({ at, w, h: 2.2 })), tint: TINT_IN });
+  tb(46.8, I.z0, 47.2, I.z1, [
+    [-99.5, 1.0],
+    [-107.0, 1.0],
+  ]);
+  tb(52.8, I.z0, 53.2, I.z1, [
+    [-99.0, 1.0],
+    [-107.0, 1.0],
+  ]);
+  tb(I.x0, -103.2, 46.8, -102.8, [[43.6, 1.0]]);
+  tb(53.2, -103.4, I.x1, -103.0, [[59.05, 0.9]]);
+  // los cañones de las chimeneas (el del hogar de la sala, el de la cocina y
+  // el de la fragua del taller) y, por encima del tejado, las dos que le
+  // faltaban a la casa
+  const breast = (x0, z0, x1, z1, faces) => {
+    wb.box('wallstone', x0, FY, z0, x1, UPC, z1, { faces, sub: 2, aoH: 1.2, baseY: FY, room: up, tint: [0.8, 0.76, 0.7] });
+    col.add(x0, FY, z0, x1, UPC, z1);
+  };
+  breast(49.4, I.z0, 50.6, -108.65, 'sew');
+  breast(59.1, -108.65, I.x1, -107.75, 'nsw');
+  breast(I.x0, -102.8, 41.3, -102.1, 'se');
+  const ridge = H.h + ((H.z1 - H.z0) / 2) * 0.55,
+    zc = (H.z0 + H.z1) / 2;
+  for (const [cx, cz] of [
+    [59.37, -108.2],
+    [40.83, -102.45],
+  ]) {
+    const top = ridge - Math.abs(cz - zc) * 0.55 + 0.95;
+    wb.box('wallstone', cx - 0.28, H.h, cz - 0.28, cx + 0.28, top, cz + 0.28, { ao: false, sub: 2, room: 'out' });
+    wb.box('wallstone', cx - 0.36, top, cz - 0.36, cx + 0.36, top + 0.16, cz + 0.36, { ao: false, room: 'out' });
+    ctx.fires.push({ x: cx, y: top + 0.3, z: cz, s: 0.6, smoke: true, light: false, embers: false, glow: false });
+  }
+  escaleraAlta(ctx, up, down);
+  railing(ctx, S.hole[0], S.hole[3] + 0.05, S.hole[2] + 0.05, S.hole[3] + 0.05, FY, up);
+  railing(ctx, S.hole[0] - 0.05, S.hole[1], S.hole[0] - 0.05, S.hole[3] + 0.05, FY, up);
+
+  wb.setRoom(up);
+  // --- la escalera: un farol en el muro, sobre el rellano de arriba, y lo
+  // que entra de la sala por su puerta
+  P.lantern(ctx, I.x1, FY + 2.25, -102.0, -Math.PI / 2, true, { room: up });
+  ctx.lights.push({ x: 54.7, y: 1.9, z: -102.0, r: 1, g: 0.55, b: 0.22, radius: 3.6, intensity: 0.5, room: up });
+  ctx.lights.push({ x: 56.6, y: 1.9, z: -102.0, r: 1, g: 0.55, b: 0.22, radius: 3.0, intensity: 0.4, room: down });
+  // --- la sala alta: junto a la ventana, el refugio de Henrique (el jergón
+  // con su manta, las velas en el taburete, el cántaro y el pan); la mesa
+  // larga de las fiestas con sus bancos, el aparador, el arcón y los
+  // estandartes del águila a los lados de la chimenea
+  wb.box('straw', 47.5, FY, -98.8, 49.1, FY + 0.16, -97.55, { faces: 'tnsew', ao: false, room: up, tint: [0.8, 0.7, 0.5] });
+  wb.box('clothDark', 47.7, FY + 0.16, -98.7, 48.8, FY + 0.2, -97.7, { faces: 'tnsew', ao: false, room: up, tint: [0.55, 0.45, 0.4] });
+  col.add(47.5, FY, -98.8, 49.1, FY + 0.2, -97.55);
+  P.stool(ctx, 51.1, FY, -97.9, { room: up });
+  P.candles(ctx, 51.1, FY + 0.47, -97.9, 2, 7300, { room: up, radius: 4.5, intensity: 0.95, spread: 0.06, scale: 0.7 });
+  P.jar(ctx, 49.25, FY, -99.0, 0.6);
+  wb.box('straw', 48.9, FY + 0.2, -98.45, 49.15, FY + 0.28, -98.25, { ao: false, room: up, tint: [0.9, 0.6, 0.32] });
+  P.table(ctx, 50, FY, -104.4, 1.0, 3.0, 0);
+  P.bench(ctx, 49.1, FY, -104.4, 2.6, Math.PI / 2);
+  P.bench(ctx, 50.9, FY, -104.4, 2.6, Math.PI / 2);
+  P.candles(ctx, 50.0, FY + 0.8, -104.0, 3, 7301, { room: up, radius: 4.5, intensity: 0.7, spread: 0.2 });
+  P.shelf(ctx, 47.42, FY, -102.5, Math.PI / 2, 1.6);
+  chest(ctx, 52.2, FY, -108.6, Math.PI / 2, up, 1.0);
+  P.banner(ctx, 48.4, FY + 2.75, I.z0 + 0.06, 0, 'bannerEagle', 0.8, 1.6);
+  P.banner(ctx, 51.6, FY + 2.75, I.z0 + 0.06, 0, 'bannerEagle', 0.8, 1.6);
+  P.hangingLamp(ctx, 50, UPC - 0.22, -101.0, { room: up, radius: 6, intensity: 0.6, len: 0.6 });
+
+  // --- la cuchillería: el banco con las hojas a medio acabar, la tabla con
+  // las que ya tienen mango y, junto al hueco de la escalera, sacos y cajas
+  P.counter(ctx, 57.6, FY, -97.75, 0, 2.0, { room: up });
+  for (let i = 0; i < 5; i++) {
+    const x = 56.85 + i * 0.32;
+    wb.box('plate', x - 0.02, FY + 1.08, -97.95, x + 0.02, FY + 1.095, -97.55, { ao: false, room: up });
+    wb.box('wooddark', x - 0.022, FY + 1.08, -97.55, x + 0.022, FY + 1.11, -97.42, { ao: false, room: up });
+  }
+  wb.box('planks', 53.5, FY + 1.0, I.z1 - 0.05, 55.25, FY + 1.85, I.z1, { ao: false, room: up, tint: [0.75, 0.68, 0.6] });
+  for (let i = 0; i < 6; i++) {
+    const x = 53.72 + i * 0.27;
+    wb.box('wooddark', x - 0.025, FY + 1.58, I.z1 - 0.09, x + 0.025, FY + 1.76, I.z1 - 0.05, { ao: false, room: up });
+    wb.box('plate', x - 0.018, FY + 1.12, I.z1 - 0.085, x + 0.018, FY + 1.58, I.z1 - 0.07, { ao: false, room: up });
+  }
+  P.crate(ctx, 54.0, FY, -97.95, 0.55, 0.2);
+  P.sacks(ctx, 53.75, FY, -102.3, 3, 7302);
+  P.crate(ctx, 53.85, FY, -101.45, 0.45, -0.3);
+  P.candles(ctx, 57.0, FY + 1.08, -97.8, 2, 7303, { room: up, radius: 4.5, intensity: 0.7, spread: 0.1 });
+
+  // --- la alcoba del viejo Heinrich: la cama hecha, el arca del cruzado con
+  // su yelmo encima, la capa blanca de la cruzada colgada de un clavo y un
+  // altarcillo bajo la ventana, con su crucifijo y sus velas (las enciende
+  // Henrique cada noche)
+  P.bed(ctx, 56.4, FY, -109.05, 0);
+  chest(ctx, 58.15, FY, -109.2, 0, up, 0.9);
+  wb.cylinder('iron', 58.15, FY + 0.58, -109.2, 0.03, 0.13, 0.2, 8, { ao: false, capTop: true, room: up });
+  wb.box('iron', 58.14, FY + 0.6, -108.99, 58.16, FY + 0.74, -108.96, { ao: false, room: up });
+  wb.box('clothWhite', 55.95, FY + 0.55, -103.47, 57.05, FY + 2.0, -103.4, { faces: 'nsewb', ao: false, room: up, tint: [0.82, 0.78, 0.7] });
+  wb.box('clothRed', 56.43, FY + 0.95, -103.49, 56.57, FY + 1.75, -103.47, { faces: 'n', ao: false, room: up });
+  wb.box('clothRed', 56.15, FY + 1.42, -103.49, 56.85, FY + 1.56, -103.47, { faces: 'n', ao: false, room: up });
+  wb.box('iron', 56.47, FY + 1.98, -103.52, 56.53, FY + 2.04, -103.4, { ao: false, room: up });
+  P.table(ctx, 59.25, FY, -106.9, 0.6, 0.9, 0);
+  wb.box('wooddark', I.x1 - 0.04, FY + 1.3, -106.93, I.x1, FY + 1.95, -106.87, { ao: false, room: up });
+  wb.box('wooddark', I.x1 - 0.04, FY + 1.72, -107.12, I.x1, FY + 1.78, -106.68, { ao: false, room: up });
+  P.candles(ctx, 59.25, FY + 0.8, -106.9, 3, 7304, { room: up, radius: 4.0, intensity: 0.75, spread: 0.12, scale: 0.7 });
+  P.stool(ctx, 54.6, FY, -108.6, { room: up });
+
+  // --- el cuarto de los oficiales: dos camas, sus arcas, los mandiles en
+  // la pared y la jofaina (se fueron a la muralla y no han vuelto)
+  P.bed(ctx, 40.95, FY, -99.6, Math.PI / 2);
+  P.bed(ctx, 46.2, FY, -101.45, Math.PI / 2);
+  chest(ctx, 42.2, FY, -97.8, 0, up, 0.8);
+  chest(ctx, 45.4, FY, -97.8, 0, up, 0.8);
+  for (const x of [42.2, 42.9]) wb.box('leather', x - 0.24, FY + 0.95, -102.8, x + 0.24, FY + 1.85, -102.75, { faces: 'sewb', ao: false, room: up, tint: [0.6, 0.5, 0.42] });
+  P.stool(ctx, 44.0, FY, -101.6, { room: up });
+  wb.cylinder('bronze', 44.0, FY + 0.47, -101.6, 0.17, 0.12, 0.09, 8, { ao: false, capBot: true, room: up });
+
+  // --- el granero: sacos de grano, toneles, cestos, leña, tablas sueltas
+  // contra el tabique y, de las vigas, jamones y ristras de cebollas
+  P.sacks(ctx, 41.5, FY, -109.0, 4, 7305);
+  P.sacks(ctx, 43.2, FY, -109.1, 3, 7306);
+  P.barrel(ctx, 45.9, FY, -109.0, {});
+  P.barrel(ctx, 46.2, FY, -108.2, {});
+  P.basket(ctx, 44.4, FY, -108.9, {});
+  P.firewood(ctx, 41.1, FY, -105.0, Math.PI / 2, 3);
+  for (let i = 0; i < 3; i++) {
+    wb.push();
+    wb.translate(44.6 + i * 0.32, FY, -103.3);
+    wb.rotateX(-0.22 - i * 0.04);
+    wb.box('planks', -0.13, 0, -0.03, 0.13, 2.1, 0.0, { ao: false, room: up, tint: [0.86, 0.8, 0.72] });
+    wb.pop();
+  }
+  for (const [x, z, k] of [
+    [42.98, -106.0, 0],
+    [42.98, -107.0, 1],
+    [44.74, -105.4, 2],
+    [44.74, -106.6, 3],
+  ]) {
+    wb.box('burlap', x - 0.006, UPC - 0.22 - 0.35, z - 0.006, x + 0.006, UPC - 0.22, z + 0.006, { ao: false, room: up });
+    if (k % 2) wb.box('leather', x - 0.09, UPC - 0.95, z - 0.07, x + 0.09, UPC - 0.57, z + 0.07, { ao: false, room: up, tint: [0.7, 0.42, 0.36] });
+    else for (let j = 0; j < 4; j++) P.ellipsoid(ctx, 'bone', x + (j % 2 ? 0.04 : -0.04), UPC - 0.66 - j * 0.1, z, 0.05, 0.055, 0.05, [0.92, 0.82, 0.62]);
+  }
+  // la luz de la luna por las ventanas entornadas
+  ctx.lights.push({ x: 44.15, y: FY + 1.3, z: I.z0 + 0.8, r: 0.5, g: 0.6, b: 0.75, radius: 4.5, intensity: 0.45, room: up });
+  ctx.lights.push({ x: I.x0 + 0.8, y: FY + 1.3, z: -100.9, r: 0.5, g: 0.6, b: 0.75, radius: 4.5, intensity: 0.4, room: up });
+  wb.setRoom(null);
 }
 
 // Muro de cueva: una cadena de puntos en el plano, en el sentido de las agujas
@@ -399,10 +741,13 @@ export function buildPostigoAlley(ctx, S, U, L) {
   const room = 'aleman';
   const D = A.door;
   const ST = A.stair;
+  const US = A.upStair;
   const holes = [[ST.x0, ST.z0, ST.landing[0], ST.z1]];
   ctx.floorHoles.push(ST.hole);
   // el rellano de arriba, donde la losa tiene el hueco (de x 58,6 a 59)
   col.add(ST.landing[0] - 0.05, -0.6, ST.z0, ST.hole[2] + 0.05, 0, ST.z1);
+  // (la casa pone la planta baja y el tejado; la planta alta, con su
+  // forjado, sus muros, sus ventanas y su techo, la pone sobrado())
   house(ctx, {
     x0: H.x0,
     z0: H.z0,
@@ -412,19 +757,18 @@ export function buildPostigoAlley(ctx, S, U, L) {
     seed: 7171,
     hollow: true,
     collide: false,
+    ceil: false,
     h: H.h,
     g1: H.g1,
     style: 'timber',
-    tint: [1.02, 0.95, 0.84],
+    tint: TINT,
     room,
     jetty: 0,
-    sides: ['n', 'e', 'w'],
-    upperFaces: 'new',
+    sides: [],
+    upperFaces: '',
     lowerWindows: false,
-    lit: true,
-    litChance: 0.35,
     chimney: true,
-    chimneyAt: [50, -108.9],
+    chimneyAt: [50, -109.15],
     chimneySize: 0.5,
     smoke: true,
     floorTint: [0.92, 0.86, 0.8],
@@ -435,8 +779,9 @@ export function buildPostigoAlley(ctx, S, U, L) {
       // taller y alcoba | sala (del taller a la sala, un vano ancho: la sala
       // y el taller son casi una sola pieza)
       { x0: 46.8, z0: H.z0 + H.t, x1: 47.2, z1: H.z1 - H.t, doors: [{ at: -100.6, w: 2.2, h: 2.6 }, { at: -106.6, w: 1.1 }] },
-      // sala | despensa y cocina
-      { x0: 52.8, z0: H.z0 + H.t, x1: 53.2, z1: H.z1 - H.t, doors: [{ at: -99.1, w: 1.8, h: 2.5 }, { at: -106.6, w: 1.1 }] },
+      // sala | despensa, escalera y cocina (en medio, la puerta de la
+      // escalera de arriba)
+      { x0: 52.8, z0: H.z0 + H.t, x1: 53.2, z1: H.z1 - H.t, doors: [{ at: -99.1, w: 1.8, h: 2.5 }, { at: US.door.z, w: US.door.w, h: US.door.h }, { at: -106.6, w: 1.1 }] },
       // taller | alcoba
       { x0: H.x0 + H.t, z0: -103.2, x1: 46.8, z1: -102.8, doors: [{ at: 43.6, w: 1.1 }] },
       // cocina | escalera del sótano
@@ -452,91 +797,36 @@ export function buildPostigoAlley(ctx, S, U, L) {
   // las marcas de las garras en la fachada, junto a la puerta
   P.decal(ctx, D.x - 1.05, 1.4, H.z1 + 0.012, 0.8, 'splat', 0.4, { wall: 'z' });
   P.decal(ctx, D.x + 1.1, 1.0, H.z1 + 0.012, 0.6, 'splat', 2.2, { wall: 'z' });
-
-  // --- la fachada sur de la planta alta, compuesta a mano: entramado,
-  // ventanas cerradas y, sobre la puerta, la ventana abierta con luz detrás
+  // la planta alta, y la luz de las velas de Henrique, que sale por su
+  // ventana a la plazuela
+  sobrado(ctx);
   const UW = A.upWin;
-  const g1 = H.g1;
-  const zf = H.z1;
-  const plT = [1.02, 0.95, 0.84];
-  const up = (x0, y0, x1, y1) => wb.box('plaster', x0, y0, zf - 0.05, x1, y1, zf, { faces: 's', sub: 1.6, ao: false, tint: plT, room: 'out' });
-  up(H.x0, g1, UW.x - UW.w / 2, H.h);
-  up(UW.x + UW.w / 2, g1, H.x1, H.h);
-  up(UW.x - UW.w / 2, g1, UW.x + UW.w / 2, UW.y0);
-  up(UW.x - UW.w / 2, UW.y1, UW.x + UW.w / 2, H.h);
-  // el entramado: pies derechos, la carrera y aspas (algo por delante)
-  const posts = [40.1, 42.8, 45.5, 48.2, 51.8, 54.5, 57.2, 59.9];
-  for (const x of posts) wb.box('timber', x - 0.1, g1 + 0.2, zf, x + 0.1, H.h, zf + 0.07, { ao: false, sub: 3 });
-  wb.box('timber', H.x0, H.h - 0.2, zf, H.x1, H.h, zf + 0.08, { ao: false, sub: 3 });
-  wb.box('timber', H.x0, g1 + 1.0, zf, UW.x - UW.w / 2 - 0.12, g1 + 1.16, zf + 0.055, { ao: false, sub: 3 });
-  wb.box('timber', UW.x + UW.w / 2 + 0.12, g1 + 1.0, zf, H.x1, g1 + 1.16, zf + 0.055, { ao: false, sub: 3 });
-  for (const [xa, xb] of [
-    [40.1, 42.8],
-    [57.2, 59.9],
-  ]) {
-    const cx = (xa + xb) / 2,
-      cy = (g1 + 1.16 + H.h - 0.2) / 2;
-    const dw = xb - xa,
-      dh = H.h - 0.2 - (g1 + 1.16);
-    const len = Math.hypot(dw, dh);
-    for (const sg of [1, -1]) {
-      wb.push();
-      wb.translate(cx, cy, zf + 0.035);
-      wb.rotateZ(Math.atan2(dh, dw) * sg);
-      wb.box('timber', -len / 2, -0.07, -0.03, len / 2, 0.07, 0.03, { ao: false, sub: 4 });
-      wb.pop();
-    }
-  }
-  // ventanas cerradas a los lados (contraventanas de tablas)
-  for (const x of [44.15, 55.85]) {
-    wb.box('black', x - 0.36, g1 + 1.1, zf, x + 0.36, g1 + 2.1, zf + 0.03, { ao: false, grime: false, faces: 's' });
-    wb.box('planks', x - 0.36, g1 + 1.1, zf + 0.03, x + 0.36, g1 + 2.1, zf + 0.075, { ao: false, sub: 3 });
-    wb.box('timber', x - 0.46, g1 + 0.98, zf, x + 0.46, g1 + 1.1, zf + 0.12, { ao: false, sub: 3 });
-    wb.box('timber', x - 0.46, g1 + 2.1, zf, x + 0.46, g1 + 2.2, zf + 0.1, { ao: false, sub: 3, faces: 'tsewb' });
-  }
-  // la ventana alta, abierta: marco, contraventanas abiertas y, detrás, el
-  // cuartucho con una vela (ahí se asoma Henrique)
-  {
-    const x0 = UW.x - UW.w / 2,
-      x1 = UW.x + UW.w / 2;
-    wb.box('timber', x0 - 0.12, UW.y0 - 0.14, zf, x1 + 0.12, UW.y0, zf + 0.14, { ao: false, sub: 3 });
-    wb.box('timber', x0 - 0.12, UW.y1, zf, x1 + 0.12, UW.y1 + 0.12, zf + 0.1, { ao: false, sub: 3, faces: 'tsewb' });
-    wb.box('timber', x0 - 0.12, UW.y0, zf, x0, UW.y1, zf + 0.08, { ao: false, sub: 3 });
-    wb.box('timber', x1, UW.y0, zf, x1 + 0.12, UW.y1, zf + 0.08, { ao: false, sub: 3 });
-    for (const s of [-1, 1]) {
-      wb.push();
-      wb.translate(UW.x + (s * UW.w) / 2, UW.y0, zf + 0.06);
-      wb.rotateY(s * 1.9);
-      wb.box('planks', s > 0 ? 0 : -UW.w / 2, 0, -0.03, s > 0 ? UW.w / 2 : 0, UW.y1 - UW.y0, 0.03, { ao: false, sub: 3 });
-      wb.pop();
-    }
-    // el cuartucho de detrás (sus caras miran hacia dentro)
-    const r = 'alemanUp';
-    const bz = zf - 1.5;
-    const io = { ao: false, sub: 2, room: r, tint: [0.62, 0.55, 0.48] };
-    wb.box('plaster', x0 - 0.5, UW.floor, bz - 0.05, x1 + 0.5, UW.y1 + 0.6, bz, { ...io, faces: 's' });
-    wb.box('plaster', x0 - 0.55, UW.floor, bz, x0 - 0.5, UW.y1 + 0.6, zf - 0.05, { ...io, faces: 'e' });
-    wb.box('plaster', x1 + 0.5, UW.floor, bz, x1 + 0.55, UW.y1 + 0.6, zf - 0.05, { ...io, faces: 'w' });
-    wb.box('planks', x0 - 0.5, UW.floor - 0.05, bz, x1 + 0.5, UW.floor, zf - 0.05, { ...io, faces: 't' });
-    wb.box('wooddark', x0 - 0.5, UW.y1 + 0.6, bz, x1 + 0.5, UW.y1 + 0.65, zf - 0.05, { ...io, faces: 'b' });
-    wb.box('plaster', x0 - 0.5, UW.floor, zf - 0.06, x0, UW.y1 + 0.6, zf - 0.05, { ...io, faces: 'n' });
-    wb.box('plaster', x1, UW.floor, zf - 0.06, x1 + 0.5, UW.y1 + 0.6, zf - 0.05, { ...io, faces: 'n' });
-    wb.box('plaster', x0, UW.y1, zf - 0.06, x1, UW.y1 + 0.6, zf - 0.05, { ...io, faces: 'n' });
-    wb.box('plaster', x0, UW.floor, zf - 0.06, x1, UW.y0, zf - 0.05, { ...io, faces: 'n' });
-    P.candles(ctx, x1 + 0.25, UW.floor, bz + 0.35, 3, 7172, { room: r, radius: 2.2, intensity: 0.9, spread: 0.12, scale: 0.7 });
-    ctx.lights.push({ x: UW.x, y: UW.y0 + 0.5, z: zf + 0.6, r: 1, g: 0.5, b: 0.2, radius: 3.4, intensity: 0.8 });
-  }
+  ctx.lights.push({ x: UW.x, y: UW.y0 + 0.5, z: H.z1 + 0.6, r: 1, g: 0.5, b: 0.2, radius: 3.4, intensity: 0.8 });
 
   // ------------------------------------------------------------ dentro
   wb.setRoom(room);
-  // --- la sala: el hogar con el escudo del padre y el estandarte del
-  // águila negra del Imperio, la mesa larga y los bancos
+  // --- la sala: el hogar, con la espada del padre clavada en la repisa y su
+  // escudo encima; los estandartes del águila negra del Imperio, la mesa
+  // larga y los bancos
   P.hearth(ctx, 50, 0, H.z0 + H.t, 's', { room, w: 2.2, pot: true, fire: 0.5, radius: 7, ceil: H.g1 });
-  // el escudo del cruzado (amarillo con el águila negra) y su espada que ya
-  // no está: los dos ganchos vacíos
-  wb.box('wooddark', 49.15, 2.15, H.z0 + H.t, 50.85, 2.2, H.z0 + H.t + 0.06, { ao: false });
-  wb.box('iron', 49.3, 2.1, H.z0 + H.t + 0.03, 49.36, 2.32, H.z0 + H.t + 0.14, { ao: false });
-  wb.box('iron', 50.64, 2.1, H.z0 + H.t + 0.03, 50.7, 2.32, H.z0 + H.t + 0.14, { ao: false });
+  {
+    // la repisa: una viga de roble sobre el dintel, en dos ménsulas. En
+    // medio, clavada de punta, la espada de Solingen (la pone game/house.js:
+    // se saca); el corte que deja en la madera, un paño blanco con su cruz
+    // y dos velas. El escudo del cruzado, colgado del cañón, sobre la campana
+    const zw = H.z0 + H.t;
+    const M = A.mantel;
+    wb.box('wooddark', 48.7, 1.45, zw + 0.55, 51.3, M.y, zw + 0.88, { ao: false, faces: 'tnsewb', room, tint: [0.72, 0.62, 0.52] });
+    for (const x of [48.9, 51.1]) wb.box('wooddark', x - 0.06, 1.18, zw + 0.6, x + 0.06, 1.45, zw + 0.84, { ao: false, room, tint: [0.6, 0.52, 0.44] });
+    wb.box('black', M.x - 0.02, M.y, M.z - 0.005, M.x + 0.02, M.y + 0.002, M.z + 0.005, { ao: false, faces: 't', grime: false, room });
+    wb.box('clothWhite', 49.45, M.y, zw + 0.6, 50.55, M.y + 0.006, zw + 0.88, { ao: false, faces: 't', room, tint: [0.82, 0.78, 0.7] });
+    wb.box('clothWhite', 49.45, 1.24, zw + 0.88, 50.55, M.y + 0.006, zw + 0.886, { ao: false, faces: 's', room, tint: [0.82, 0.78, 0.7] });
+    wb.box('clothRed', 49.97, 1.3, zw + 0.887, 50.03, 1.52, zw + 0.889, { ao: false, faces: 's', room });
+    wb.box('clothRed', 49.9, 1.43, zw + 0.887, 50.1, 1.47, zw + 0.889, { ao: false, faces: 's', room });
+    P.candles(ctx, 49.2, M.y, zw + 0.72, 2, 7186, { room, radius: 3, intensity: 0.55, spread: 0.05, scale: 0.6 });
+    P.candles(ctx, 50.8, M.y, zw + 0.72, 2, 7187, { room, radius: 3, intensity: 0.55, spread: 0.05, scale: 0.6 });
+    escudo(ctx, 50, 3.08, zw + 0.135, room);
+  }
   P.banner(ctx, 48.0, 3.2, H.z0 + H.t + 0.06, 0, 'bannerEagle', 0.9, 1.9);
   P.banner(ctx, 52.0, 3.2, H.z0 + H.t + 0.06, 0, 'bannerEagle', 0.9, 1.9);
   // (la mesa, hacia el hogar: la mitad de la sala, junto a la puerta, queda
@@ -546,13 +836,44 @@ export function buildPostigoAlley(ctx, S, U, L) {
   P.bench(ctx, 50.95, 0, -105.2, 2.6, Math.PI / 2);
   P.candles(ctx, 50.1, 0.8, -104.4, 3, 7173, { room, radius: 4.5, intensity: 0.9, spread: 0.2 });
   P.candles(ctx, 49.9, 0.8, -106.2, 2, 7174, { room, radius: 3.5, intensity: 0.6, spread: 0.15 });
-  P.hangingLamp(ctx, 50, g1 - 0.22, -100.6, { room, radius: 6, intensity: 0.9, len: 0.7 });
+  P.hangingLamp(ctx, 50, H.g1 - 0.22, -100.6, { room, radius: 6, intensity: 0.9, len: 0.7 });
   wb.cylinder('bronze', 50.3, 0.8, -105.8, 0.1, 0.08, 0.16, 7, { ao: false, capBot: true });
   // un arcón junto a la puerta, atrancando con él la puerta por las noches
   wb.box('wooddark', 47.6, 0, -98.4, 48.9, 0.6, -97.75, { faces: 'tnsew', aoH: 0.5 });
   for (const x of [47.75, 48.75]) wb.box('iron', x - 0.03, 0, -98.43, x + 0.03, 0.62, -97.72, { ao: false });
   col.add(47.6, 0, -98.4, 48.9, 0.62, -97.75);
   P.decal(ctx, 50.6, 0.03, -99.4, 1.0);
+  // la puerta reventada esta noche: la tranca, partida en dos en el suelo,
+  // una de las grapas arrancada del muro y astillas por todas partes
+  {
+    const zi = H.z1 - H.t;
+    wb.box('iron', D.x - 1.0, 1.2, zi - 0.16, D.x - 0.9, 1.45, zi, { ao: false, room });
+    wb.push();
+    wb.translate(D.x + 0.95, 1.18, zi - 0.05);
+    wb.rotateZ(0.7);
+    wb.box('iron', -0.05, -0.12, -0.08, 0.05, 0.12, 0.06, { ao: false, room });
+    wb.pop();
+    for (const [x, z, r, L] of [
+      [49.1, -98.35, 0.35, 1.0],
+      [51.2, -99.1, -0.9, 0.85],
+    ]) {
+      wb.push();
+      wb.translate(x, 0.09, z);
+      wb.rotateY(r);
+      wb.box('timber', -L / 2, -0.09, -0.07, L / 2, 0.09, 0.07, { ao: false, room, tint: [0.8, 0.72, 0.64] });
+      wb.box('timber', L / 2 - 0.02, -0.07, -0.05, L / 2 + 0.1, 0.05, 0.03, { ao: false, room, tint: [0.9, 0.84, 0.74] });
+      wb.pop();
+      col.addOBB(x, z, L / 2, 0.08, r, 0, 0.18);
+    }
+    const rng2 = new RNG(7191);
+    for (let i = 0; i < 9; i++) {
+      wb.push();
+      wb.translate(D.x + rng2.range(-1.2, 1.2), 0.025, H.z1 - 0.6 - rng2.range(0, 1.6));
+      wb.rotateY(rng2.range(0, Math.PI));
+      wb.box('planks', -rng2.range(0.08, 0.22), -0.012, -0.02, rng2.range(0.08, 0.22), 0.012, 0.02, { ao: false, room, tint: [0.92, 0.86, 0.76] });
+      wb.pop();
+    }
+  }
 
   // --- el taller del cuchillero: la fragua pequeña con su fuelle, la muela,
   // el banco con las hojas a medio hacer, el yunque y las herramientas
@@ -587,6 +908,10 @@ export function buildPostigoAlley(ctx, S, U, L) {
   for (let i = 0; i < 5; i++) wb.box('plate', 44.6 + i * 0.3, 1.08, -102.5, 44.64 + i * 0.3, 1.1, -101.9, { ao: false });
   P.coalPile(ctx, 41.0, 0, -97.9, 0.6, { room });
   P.candles(ctx, 46.0, 1.08, -102.4, 2, 7175, { room, radius: 3.5, intensity: 0.6, spread: 0.2 });
+  // Gonçalo, el oficial que no subió a tiempo
+  bakeCorpse(wb, 42.8, 0, -100.9, 0.6, 'back', 'villager', 11);
+  P.decal(ctx, 42.8, 0.03, -100.9, 1.9);
+  P.decal(ctx, 44.6, 0.03, -100.2, 0.7);
 
   // --- la alcoba: la cama de los dos, la cuna vacía de Tomé, el torno de
   // hilar de Leonor y una imagen de la Dolorosa con siete puñales
@@ -830,23 +1155,30 @@ export function buildPostigoAlley(ctx, S, U, L) {
 
   // ------------------------------------------------------------ el guion
   // (lo mueve game/house.js)
-  // la puerta de la casa: atrancada por dentro; la abre Henrique
-  L.interact.push({ kind: 'door', id: 'd_aleman', x: D.x, y: 0, z: H.z1, w: D.w, h: D.h, axis: 'x', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: 1, plane: H.z1 - H.t, inset: 0.08 });
+  // la puerta de la casa: la han reventado esta noche (por ahí entraron);
+  // la cierra Henrique, a la defensa, y luego la abre
+  L.interact.push({ kind: 'door', id: 'd_aleman', x: D.x, y: 0, z: H.z1, w: D.w, h: D.h, axis: 'x', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: 1, plane: H.z1 - H.t, inset: 0.08, mark: 'broken' });
+  // la de la escalera de arriba, en la sala: atrancada desde dentro; la abre
+  // Henrique cuando baja (abre hacia la sala)
+  L.interact.push({ kind: 'door', id: 'd_escalera_ale', x: US.door.x, y: 0, z: US.door.z, w: US.door.w, h: US.door.h, axis: 'z', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: -1, plane: 52.8, inset: 0.06 });
+  // la espada del padre, clavada en la repisa del hogar: se examina; cuando
+  // Henrique te la da, se saca (ver game/house.js)
+  L.interact.push({ kind: 'relic', id: 'r_solingen', x: A.mantel.x, y: 0, z: A.mantel.z + 0.85, r: 1.9 });
   // la del cuartucho de la escalera del sótano: con llave (se la da él)
   L.interact.push({ kind: 'door', id: 'd_sotano_ale', x: ST.door.x, y: 0, z: ST.z1 + 0.4, w: ST.door.w, h: ST.door.h, axis: 'x', lock: { type: 'key', item: 'llave_sotano' }, mat: 'planks', hinge: -1, swing: 1, plane: ST.z1 });
   // hablar con Henrique (el punto le sigue) y tapiar cada ventana (por dentro)
   L.interact.push({ kind: 'npc', id: 't_henrique', label: 'Hablar con Henrique', x: 50, y: 0, z: -101.6 });
   for (const w of A.windows) L.interact.push({ kind: 'board', id: 'b_' + w.id, win: w.id, x: w.inner[0] - w.nx * 0.3, y: 0, z: w.inner[1] - w.nz * 0.3, r: 1.9 });
   // los tablones para tapiarlas (seis para cinco ventanas): en el taller del
-  // carpintero, en el patio de la leña, en el carro volcado del recodo y en
-  // el pasadizo del oeste
+  // carpintero, en el patio de la leña, en el carro volcado del recodo y,
+  // arriba, en el granero
   for (const [id, x, y, z] of [
     ['i_tablon1', 64.2, 0.62, -98.8],
     ['i_tablon2', 65.0, 0.95, -88.6],
     ['i_tablon3', 65.4, 0.12, -106.4],
     ['i_tablon4', 68.6, 0.12, -103.4],
     ['i_tablon5', 43.1, 0.3, -75.6],
-    ['i_tablon6', 38.6, 0.12, -100.6],
+    ['i_tablon6', 45.4, FY + 0.12, -104.1],
   ])
     L.interact.push({ kind: 'item', id, item: 'tablon', x, y, z });
   // los documentos: la carta del padre, en la mesa de la sala; la oración
@@ -857,17 +1189,23 @@ export function buildPostigoAlley(ctx, S, U, L) {
   L.interact.push({ kind: 'fog', id: 'f_leonor', boss: 'leonor', x: (T.x0 + T.x1) / 2, y: TB, z: G.z1, w: T.x1 - T.x0, h: 2.5, axis: 'x', enter: -1 });
   L.interact.push({ kind: 'item', id: 'i_lagrima', item: 'lagrima', x: A.cradle.x, y: G.y + 0.62, z: A.cradle.z, afterBoss: 'leonor' });
 
-  // Henrique, asomado a la ventana alta; las tres que aporrean su puerta; las
-  // que entran por las ventanas (en tres oleadas, ocultas hasta entonces); y
-  // las de los alrededores
+  // Henrique, asomado a la ventana de la sala alta; las que están dentro,
+  // abajo (las tres que aporrean la puerta de la escalera para subir a por
+  // él, la que roe al oficial muerto en el taller, la que husmea en la
+  // cocina y la que se ha quedado mirando la cuna en la alcoba); las que
+  // entran por las ventanas (en tres oleadas, ocultas hasta entonces); y las
+  // de los alrededores
   const yIn = (w) => Math.atan2(-w.nx, -w.nz);
   const WN = Object.fromEntries(A.windows.map((w) => [w.id, w]));
   const wave = (id, type, n, win) => ({ type, x: WN[win].out[0], y: 0, z: WN[win].out[1], yaw: yIn(WN[win]), idle: 'pound', id, held: true, wave: n, win });
   L.enemies.push(
     { type: 'henrique', x: 50, y: A.upWin.floor, z: H.z1 - 0.5, yaw: 0, idle: 'window', id: 'npc_henrique' },
-    { type: 'penitent', x: 49.2, y: 0, z: -96.1, yaw: Math.PI - 0.1, idle: 'pound', id: 'e_ale_p1', story: 'ale:door', group: 'aleDoor' },
-    { type: 'penitent', x: 50.9, y: 0, z: -96.2, yaw: Math.PI + 0.15, idle: 'pound', id: 'e_ale_p2', story: 'ale:door', group: 'aleDoor' },
-    { type: 'soldier', x: 50.1, y: 0, z: -95.3, yaw: Math.PI, idle: 'pound', id: 'e_ale_s1', story: 'ale:door', group: 'aleDoor' },
+    { type: 'penitent', x: 52.05, y: 0, z: -102.45, yaw: Math.PI / 2 - 0.1, idle: 'pound', id: 'e_ale_p1', story: 'ale:door', group: 'aleEsc' },
+    { type: 'penitent', x: 52.1, y: 0, z: -101.5, yaw: Math.PI / 2 + 0.12, idle: 'pound', id: 'e_ale_p2', story: 'ale:door', group: 'aleEsc' },
+    { type: 'soldier', x: 51.25, y: 0, z: -102.0, yaw: Math.PI / 2, idle: 'pound', id: 'e_ale_s1', story: 'ale:door', group: 'aleEsc' },
+    { type: 'penitent', x: 43.45, y: 0, z: -100.45, yaw: -2.16, idle: 'eat', id: 'e_ale_i1', story: 'ale:door' },
+    { type: 'hound', x: 56.0, y: 0, z: -105.1, yaw: -2.0, idle: 'eat', id: 'e_ale_i2', story: 'ale:door' },
+    { type: 'penitent', x: 44.2, y: 0, z: -106.75, yaw: 2.63, idle: 'pray', id: 'e_ale_i3', story: 'ale:door' },
     wave('e_ale_w1a', 'penitent', 1, 'v_taller'),
     wave('e_ale_w1b', 'penitent', 1, 'v_cocina'),
     wave('e_ale_w2a', 'hound', 2, 'v_oeste'),
@@ -885,7 +1223,8 @@ export function buildPostigoAlley(ctx, S, U, L) {
 
   // ------------------------------------------------------------ zonas y mapa
   L.zones.push(
-    { id: 'casa_aleman', rects: [[H.x0, H.z0, H.x1, H.z1, -1, 4.5]], atmo: 'interior', room },
+    { id: 'casa_aleman', rects: [[H.x0, H.z0, H.x1, H.z1, -1, 3.2]], atmo: 'interior', room },
+    { id: 'sobrado_aleman', rects: [[H.x0, H.z0, H.x1, H.z1, 3.2, UPC]], atmo: 'interior', room: 'alemanAlta' },
     { id: 'sotano_aleman', rects: [[H.x0, H.z0, H.x1, H.z1, -5, -1]], atmo: 'cellar', room: sroom },
     { id: 'gruta_leonor', rects: [[G.x0 - 1, G.z0 - 1.5, G.x1 + 1, G.z1, GY - 1, -1], [T.x0, T.z0, T.x1, T.z1, GY - 1, -1]], atmo: 'lair', room: troom },
     { id: 'patio_lena', rects: [[A.yard.x0, A.yard.z0, A.yard.x1, A.yard.z1, -1, 8], [60, -100, 62, -97, -1, 8]], atmo: 'city' },
@@ -899,6 +1238,7 @@ export function buildPostigoAlley(ctx, S, U, L) {
     { id: 'patio_lena', r: [A.yard.x0, A.yard.z0, A.yard.x1, A.yard.z1] },
     { id: 'patio_lena', r: [60, -100, 62, -97] },
     { id: 'casa_aleman', r: [H.x0 + H.t, H.z0 + H.t, H.x1 - H.t, H.z1 - H.t] },
+    { id: 'sobrado_aleman', r: [H.x0 + H.t, H.z0 + H.t, H.x1 - H.t, H.z1 - H.t] },
     { id: 'sotano_aleman', r: [C.x0, C.z0, C.x1, C.z1], level: 'lair' },
     { id: 'gruta_leonor', r: [T.x0, T.z0, T.x1, T.z1], level: 'lair' },
     { id: 'gruta_leonor', r: [G.x0, G.z0, G.x1, G.z1], level: 'lair' }

@@ -1013,9 +1013,9 @@ export class Interactables {
     } else if (s.kind === 'plank') {
       // el hueco del pasadizo del Soto: lo enseña y lo esconde game/souto.js
       it.r = s.r ?? 1.8;
-    } else if (s.kind === 'board' || s.kind === 'npc') {
-      // tapiar una ventana / hablar con Henrique: los enseña y los esconde
-      // el guion de la casa (game/house.js)
+    } else if (s.kind === 'board' || s.kind === 'npc' || s.kind === 'relic') {
+      // tapiar una ventana / hablar con Henrique / la espada clavada en el
+      // hogar: los enseña y los esconde el guion de la casa (game/house.js)
       it.r = s.r ?? (s.kind === 'npc' ? 2.4 : 1.7);
       it.hidden = true;
     }
@@ -1512,6 +1512,8 @@ export class Interactables {
         return this.game.souto ? this.game.souto.plankLabel() : 'Examinar el hueco';
       case 'npc':
         return it.label ?? 'Hablar';
+      case 'relic':
+        return this.game.house ? this.game.house.relicLabel() : 'Examinar la espada';
       case 'puzzle':
         return it.puzzle.label(it);
       case 'hatch':
@@ -1607,6 +1609,10 @@ export class Interactables {
     }
     if (it.kind === 'board') {
       if (g.house) g.house.board(it);
+      return true;
+    }
+    if (it.kind === 'relic') {
+      if (g.house) g.house.useRelic(it);
       return true;
     }
     if (it.kind === 'plank') {

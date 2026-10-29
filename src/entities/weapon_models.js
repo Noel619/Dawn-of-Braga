@@ -243,43 +243,134 @@ export function buildParts(parts, matFn = null) {
 }
 
 // ------------------------------------------------------------- Solingen
-// La espada del padre de Henrique, del Sacro Imperio: hoja ancha y larga de
-// filos paralelos que se afilan al final, con un vaceo hondo y la inscripción
-// incrustada en hierro (IN NOMINE DOMINI), guarda recta y ancha de hierro
-// pavonado, puño de cuero sobre madera y pomo de rueda.
+// La espada del padre de Henrique, del Sacro Imperio, de las de hace cien
+// años: hoja ancha de filos paralelos que se afilan en el último tercio, con
+// sus biseles y un vaceo ancho que llega casi a la punta; en el vaceo, letras
+// de latón incrustadas, en una cara + IN NOMINE DOMINI + y en la otra el
+// nombre del que la forjó, + CONRADVS ME FECIT +. Guarda recta de hierro, en
+// el plano de la hoja, que se ensancha en las puntas; puño de cuero sobre
+// madera con tres anillos de cordel debajo; pomo de rueda con su chaflán, el
+// botón y una cruz de latón en cada cara; encima, el remache de la espiga.
+// Es la espada que está clavada en la repisa del hogar de Henrique: de cerca
+// se tiene que poder leer.
+const SOL_L = 0.96; // la hoja, de la guarda a la punta
+const SOL_B = 0.13; // donde arranca la hoja
+// la inscripción: de dónde a dónde, a lo largo de la hoja, y su ancho (el del
+// vaceo); en la textura, cada cara su franja (de 0 a 1 en v, de abajo arriba)
+const SOL_INS = { z0: SOL_B + 0.04, z1: SOL_B + 0.34, w: 0.02, x: 0.0065, bands: [[0.875, 0.59375], [0.375, 0.09375]] };
+
+// Las dos tiras de la inscripción, sobre el vaceo: la de +X lleva la primera
+// franja de la textura y la de -X, la segunda. Se leen de la guarda a la
+// punta (en la de +X, con la cabeza de las letras hacia -Y; en la de -X,
+// hacia +Y: así las dos se leen de izquierda a derecha).
+function inscriptionGeo() {
+  const I = SOL_INS;
+  const pos = [],
+    nor = [],
+    uv = [];
+  for (const [sx, band] of [
+    [1, I.bands[0]],
+    [-1, I.bands[1]],
+  ]) {
+    const x = sx * I.x;
+    const up = -sx; // hacia dónde va la cabeza de las letras (en y)
+    const yT = Y + (up * I.w) / 2,
+      yB = Y - (up * I.w) / 2;
+    const [vT, vB] = band;
+    // A (z0, arriba), B (z1, arriba), C (z1, abajo), D (z0, abajo)
+    const A = [x, yT, I.z0, 0, vT],
+      B = [x, yT, I.z1, 1, vT],
+      C = [x, yB, I.z1, 1, vB],
+      D = [x, yB, I.z0, 0, vB];
+    // (el orden de los vértices, según la cara: la normal hacia fuera)
+    const n = (D[1] - A[1]) * (C[2] - A[2]) - (D[2] - A[2]) * (C[1] - A[1]);
+    const tris = Math.sign(n) === sx ? [A, D, C, A, C, B] : [A, C, D, A, B, C];
+    for (const v of tris) {
+      pos.push(v[0], v[1], v[2]);
+      nor.push(sx, 0, 0);
+      uv.push(v[3], v[4]);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  return g;
+}
+let INS_GEO = null;
+
 export function solingenParts(j = 'sword') {
-  const L = 0.96;
+  const L = SOL_L,
+    B = SOL_B;
+  const mirror = (pts) => [...pts, ...pts.slice(0, -1).reverse().map(([u, v]) => [u, -v])];
+  INS_GEO = INS_GEO || inscriptionGeo();
   const parts = [
-    // puño de cuero con dos virolas y el pomo de rueda (un disco grueso)
-    { j, type: 'cyl', s: [0.021, 0.023, 0.19], p: [0, Y, 0.0], r: [90, 0, 0], seg: 6, mat: 'leather' },
-    { j, type: 'cyl', s: [0.025, 0.025, 0.016], p: [0, Y, 0.088], r: [90, 0, 0], seg: 6, mat: 'iron' },
-    { j, type: 'cyl', s: [0.024, 0.024, 0.014], p: [0, Y, -0.088], r: [90, 0, 0], seg: 6, mat: 'iron' },
-    { j, type: 'cyl', s: [0.05, 0.05, 0.03], p: [0, Y, -0.118], r: [0, 0, 90], seg: 10, mat: 'iron' },
-    { j, type: 'cyl', s: [0.028, 0.028, 0.034], p: [0, Y, -0.118], r: [0, 0, 90], seg: 8, mat: 'bronze' },
-    // la guarda: una barra recta, ancha, que se ensancha en las puntas
-    { j, type: 'box', s: [0.3, 0.03, 0.04], p: [0, Y, 0.112], mat: 'iron' },
-    { j, type: 'box', s: [0.03, 0.045, 0.05], p: [0.15, Y, 0.112], mat: 'iron' },
-    { j, type: 'box', s: [0.03, 0.045, 0.05], p: [-0.15, Y, 0.112], mat: 'iron' },
-    // la hoja (filos paralelos y la punta), algo más ancha que la del carcelero
+    // el puño: algo panzudo, de cuero; debajo, tres anillos de cordel
+    { j, type: 'cyl', s: [0.0205, 0.0215, 0.184], p: [0, Y, -0.004], r: [90, 0, 0], seg: 8, mat: 'leather' },
+    ...[-0.052, -0.004, 0.044].map((z) => ({ j, type: 'cyl', s: [0.0232, 0.0232, 0.009], p: [0, Y, z], r: [90, 0, 0], seg: 8, mat: 'leather' })),
+    // las virolas, junto a la guarda y junto al pomo
+    { j, type: 'cyl', s: [0.0245, 0.023, 0.016], p: [0, Y, 0.09], r: [90, 0, 0], seg: 8, mat: 'pavonado' },
+    { j, type: 'cyl', s: [0.023, 0.0255, 0.014], p: [0, Y, -0.098], r: [90, 0, 0], seg: 8, mat: 'pavonado' },
+    // el pomo de rueda (en el plano de la hoja): el disco, el chaflán, el
+    // botón; la cruz de latón en cada cara y el remache encima
+    { j, type: 'cyl', s: [0.047, 0.047, 0.022], p: [0, Y, -0.13], r: [0, 0, 90], seg: 12, mat: 'pavonado' },
+    { j, type: 'cyl', s: [0.039, 0.039, 0.031], p: [0, Y, -0.13], r: [0, 0, 90], seg: 12, mat: 'pavonado' },
+    { j, type: 'cyl', s: [0.025, 0.025, 0.041], p: [0, Y, -0.13], r: [0, 0, 90], seg: 10, mat: 'pavonado' },
+    ...[1, -1].flatMap((sx) => [
+      { j, type: 'box', s: [0.003, 0.0065, 0.034], p: [sx * 0.0215, Y, -0.13], mat: 'gold' },
+      { j, type: 'box', s: [0.003, 0.034, 0.0065], p: [sx * 0.0215, Y, -0.13], mat: 'gold' },
+    ]),
+    { j, type: 'cyl', s: [0.0085, 0.011, 0.012], p: [0, Y, -0.182], r: [90, 0, 0], seg: 6, mat: 'pavonado' },
+    // la guarda: en medio, el escusón; los brazos, que engordan hacia las
+    // puntas, y los remates
+    { j, type: 'box', s: [0.03, 0.05, 0.036], p: [0, Y, 0.112], mat: 'pavonado' },
+    { j, type: 'box', s: [0.022, 0.11, 0.026], p: [0, Y + 0.08, 0.112], taper: [0.78, 0.8], mat: 'pavonado' },
+    { j, type: 'box', s: [0.022, 0.11, 0.026], p: [0, Y - 0.08, 0.112], r: [0, 0, 180], taper: [0.78, 0.8], mat: 'pavonado' },
+    { j, type: 'box', s: [0.029, 0.02, 0.033], p: [0, Y + 0.143, 0.112], mat: 'pavonado' },
+    { j, type: 'box', s: [0.029, 0.02, 0.033], p: [0, Y - 0.143, 0.112], mat: 'pavonado' },
+    // la hoja: los filos (finos, a todo lo ancho), el lomo de los biseles
+    // (más grueso y más estrecho) y el vaceo, oscuro
     profile(
-      [
-        [0, 0.034],
-        [L * 0.78, 0.03],
-        [L * 0.93, 0.016],
+      mirror([
+        [0, 0.03],
+        [L * 0.6, 0.0285],
+        [L * 0.84, 0.021],
+        [L * 0.95, 0.0095],
         [L, 0],
-        [L * 0.93, -0.016],
-        [L * 0.78, -0.03],
-        [0, -0.034],
-      ],
-      0.13,
-      0.012,
+      ]),
+      B,
+      0.006,
       'plate',
       j
     ),
-    // el vaceo y la inscripción incrustada (puntos de latón a lo largo)
-    { j, type: 'box', s: [0.016, 0.014, L * 0.72], p: [0, Y, 0.13 + L * 0.38], mat: 'iron' },
+    profile(
+      mirror([
+        [0, 0.0195],
+        [L * 0.6, 0.0182],
+        [L * 0.84, 0.0128],
+        [L * 0.95, 0.005],
+        [L * 0.985, 0],
+      ]),
+      B,
+      0.0105,
+      'plate',
+      j
+    ),
+    profile(
+      mirror([
+        [0, 0.0105],
+        [L * 0.55, 0.0094],
+        [L * 0.78, 0.004],
+        [L * 0.82, 0],
+      ]),
+      B + 0.012,
+      0.0118,
+      'vaceo',
+      j
+    ),
+    // las letras, en el vaceo
+    { j, type: 'geo', geo: INS_GEO, uvk: 1, mat: 'inscripcion' },
   ];
-  for (let i = 0; i < 9; i++) parts.push({ j, type: 'box', s: [0.018, 0.007, 0.016], p: [0, Y, 0.2 + i * 0.055], mat: 'bronze' });
   return parts;
 }
 

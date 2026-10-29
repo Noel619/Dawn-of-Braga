@@ -2771,6 +2771,81 @@ const SPRITES = {
     });
     return toTex(c, { repeat: false });
   },
+
+  // Las letras de latón incrustadas en el vaceo de la espada de Solingen:
+  // dos franjas, una por cara de la hoja (+ IN NOMINE DOMINI + y el nombre
+  // del espadero, + CONRADVS ME FECIT +), sobre el acero oscuro del vaceo y
+  // con el surco alrededor de cada letra. Letra de 7 de alto y ancho variable.
+  inscription() {
+    const W = 128,
+      H = 32;
+    const F = {
+      '+': ['.....', '..#..', '..#..', '#####', '..#..', '..#..', '.....'],
+      ' ': ['...', '...', '...', '...', '...', '...', '...'],
+      A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+      C: ['.###', '#...', '#...', '#...', '#...', '#...', '.###'],
+      D: ['####.', '#...#', '#...#', '#...#', '#...#', '#...#', '####.'],
+      E: ['####', '#...', '#...', '###.', '#...', '#...', '####'],
+      F: ['####', '#...', '#...', '###.', '#...', '#...', '#...'],
+      I: ['###', '.#.', '.#.', '.#.', '.#.', '.#.', '###'],
+      M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'],
+      N: ['#...#', '##..#', '#.#.#', '#.#.#', '#..##', '#...#', '#...#'],
+      O: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+      R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'],
+      S: ['.###', '#...', '#...', '.##.', '...#', '...#', '###.'],
+      T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
+      V: ['#...#', '#...#', '#...#', '#...#', '.#.#.', '.#.#.', '..#..'],
+    };
+    const lit = new Uint8Array(W * H);
+    const write = (text, row) => {
+      const ws = [...text].map((ch) => F[ch][0].length);
+      let x = Math.floor((W - (ws.reduce((a, b) => a + b, 0) + ws.length - 1)) / 2);
+      for (const ch of text) {
+        const gl = F[ch];
+        for (let r = 0; r < 7; r++) for (let k = 0; k < gl[r].length; k++) if (gl[r][k] === '#') lit[(row + r) * W + x + k] = 1;
+        x += gl[0].length + 1;
+      }
+    };
+    write('+IN NOMINE DOMINI+', 5);
+    write('+CONRADVS ME FECIT+', 21);
+    const on = (x, y) => x >= 0 && x < W && y >= 0 && y < H && lit[y * W + x] === 1;
+    const c = pixels(W, H, (x, y, o) => {
+      const n = fbm2(x / 3, y / 3, 3, 0, 611);
+      let col = on(x, y) ? mix3([170, 126, 54], [226, 184, 94], n) : mix3([42, 42, 46], [66, 66, 70], n);
+      if (!on(x, y) && (on(x + 1, y) || on(x - 1, y) || on(x, y + 1) || on(x, y - 1))) col = col.map((v) => v * 0.55);
+      set(o, col[0], col[1], col[2]);
+    });
+    return toTex(c, { repeat: false });
+  },
+
+  // El escudo del padre de Henrique, el que trajo de Colonia: en campo de
+  // oro, el águila negra del Imperio con el pico y las garras de gules (la
+  // misma que la de los estandartes de la sala), gastado y con mellas.
+  shieldEagle() {
+    const W = 32,
+      H = 40;
+    const c = pixels(W, H, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, 0, 621);
+      const scuff = fbm2(x / 2, y / 2, 2, 0, 622);
+      const k = 0.72 + n * 0.4;
+      let col = [196 * k, 150 * k, 46 * k];
+      const cx = x - W / 2 + 0.5,
+        cy = y - 19;
+      const ax = Math.abs(cx);
+      const body = (ax < 2.6 && cy > -6 && cy < 8) || (cy >= 8 && cy < 13 && ax < 1.5 + (cy - 8) * 0.7);
+      const wing = ax >= 2 && ax < 13 && cy > -6 + ax * 0.25 && cy < -1 + ax * 0.55 + (Math.floor(ax / 2.2) % 2 ? 1.5 : 0);
+      const head = Math.hypot(cx + 1.4, cy + 8.5) < 2.4;
+      const beak = cx < -3 && cx > -5.6 && cy > -9.5 && cy < -7.5;
+      const leg = cy >= 6 && cy < 12 && ax > 2.4 && ax < 4.2 + (cy - 6) * 0.4;
+      if (body || wing || head || leg) col = [16, 12, 12];
+      if (beak || (leg && cy > 10.5) || (Math.abs(cx + 3) < 0.6 && cy > -7.6 && cy < -6)) col = [170, 24, 18];
+      if (head && Math.abs(cx + 1.0) < 0.6 && Math.abs(cy + 9.2) < 0.6) col = [220, 200, 120];
+      // (la pintura saltada: asoma la madera)
+      if (scuff > 0.74) col = mix3(col, [92, 66, 44], 0.8);
+      set(o, col[0], col[1], col[2]);
+    });
+    return toTex(c, { repeat: false });
+  },
 };
 
 function bannerGen(base, sigil, seed) {

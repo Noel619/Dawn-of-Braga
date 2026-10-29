@@ -195,6 +195,18 @@ export const MAT_DEFS = {
   silver: { tex: 'plate', uv: 1.6, color: 0xe4e6ee },
   gold: { tex: 'bronze', uv: 1.0, color: 0xffd67a },
   holySteel: { tex: 'plate', uv: 1.6, color: 0xf4f1ea, emissive: 0xffdf9a, emissiveIntensity: 0.3 },
+  // las letras de latón del vaceo de la espada de Solingen (su textura lleva
+  // las dos caras, una franja cada una)
+  inscripcion: { tex: 'inscription', uv: 1 },
+  // acero pavonado, oscuro y sin óxido (la guarda y el pomo de la espada de
+  // Solingen: un cuchillero no deja que se le oxide la espada de su padre)
+  pavonado: { tex: 'plate', uv: 1.6, color: 0x7a8090 },
+  // el vaceo de esa hoja: acero oscuro y liso (con la textura de la placa,
+  // tan estrecho, se estiraba una fila de óxido a lo largo)
+  vaceo: { tex: 'white', uv: 1, color: 0x3a3f48 },
+  // el escudo del padre de Henrique: el águila negra del Imperio en campo de
+  // oro (toda la textura, una vez)
+  escudoAguila: { tex: 'shieldEagle', uv: 1 },
   lacquer: { tex: 'wooddark', uv: 0.8, color: 0x3a1410 },
   ember: { tex: 'white', uv: 1, color: 0x220800, emissive: 0xff5a10, emissiveIntensity: 1.6 },
   eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
