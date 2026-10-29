@@ -395,7 +395,8 @@ export function buildPelames(ctx, S, L) {
   P.sign(ctx, 26.4, 2.95, -3, 0, 2);
   P.sign(ctx, 34.8, 2.95, 3, Math.PI, 3);
   P.barrel(ctx, 40.6, 0, -2.45);
-  P.barrel(ctx, 41, 0, 2.2, { lying: true, rot: 0.3 });
+  // (tumbado, a un lado de la puerta de la cordelería: no delante de ella)
+  P.barrel(ctx, 42.8, 0, 2.2, { lying: true, rot: 0.3 });
   P.jar(ctx, 16.2, 0, 2.5, 0.9);
   ctx.rats.push({ x: 32.6, y: 0, z: 2.4, n: 2 });
   L.enemies.push({ type: 'penitent', x: 36, y: 0, z: 0.5, yaw: -1.6, idle: 'stand', id: 'e_pelames1' });

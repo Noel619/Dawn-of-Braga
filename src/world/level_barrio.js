@@ -173,7 +173,9 @@ function calleja(ctx, S, L) {
       { lv: 0, x0: zap.x0 + 0.45, z0: 36.3, x1: zap.x1 - 0.45, z1: 36.5, doors: [{ at: 22.1, w: 1.2, h: 2.3 }] },
       { lv: 1, x0: zap.x0 + 0.45, z0: 36.3, x1: 25.2, z1: 36.5, doors: [{ at: 22.1, w: 1.1, h: 2.2 }] },
     ],
-    stairs: [{ lv: 0, x: 25.95, z: 41.45, dir: 'n', w: 1.2, n: 14, open: 'w' }],
+    // (el pie de cada escalera, a medio metro del muro: si no, no se sube;
+    // de lado no se puede, por el pasamanos)
+    stairs: [{ lv: 0, x: 25.95, z: 41.05, dir: 'n', w: 1.2, n: 14, open: 'w' }],
   });
   casa(ctx, S, L, {
     id: 'n3',
@@ -241,7 +243,7 @@ function calleja(ctx, S, L) {
     // (arriba, los tabiques de la alcoba y del oratorio, con la puerta de la
     // alcoba: barrio_casas.js)
     walls: [{ lv: 0, x0: viu.x0 + 0.45, z0: 50.6, x1: 27.7, z1: 50.8, doors: [{ at: 25.0, w: 1.2, h: 2.3 }] }],
-    stairs: [{ lv: 0, x: 28.45, z: 54.4, dir: 'n', w: 1.2, n: 14, run: 0.28, open: 'w' }],
+    stairs: [{ lv: 0, x: 28.45, z: 54.05, dir: 'n', w: 1.2, n: 14, run: 0.28, open: 'w' }],
   });
   const hS3 = casa(ctx, S, L, {
     id: 's3',
@@ -268,7 +270,7 @@ function calleja(ctx, S, L) {
       { side: 'n', lv: 1, at: 2.25, w: 1.0, sill: 0.9, h: 1.3, shutters: 'broken' },
       { side: 'e', lv: 1, at: 2.4, w: 1.0, sill: 0.9, h: 1.3 },
     ],
-    stairs: [{ lv: 0, x: 33.0, z: 54.4, dir: 'n', w: 1.0, n: 14, run: 0.28, open: 'w' }],
+    stairs: [{ lv: 0, x: 33.0, z: 54.05, dir: 'n', w: 1.0, n: 14, run: 0.28, open: 'w' }],
   });
   zapatero(ctx, L, hZap);
   viuda(ctx, L, hViu);
@@ -301,7 +303,7 @@ function plazuela(ctx, S, L) {
     ],
     stairs: [
       { lv: 0, x: 41.0, z: 32.1, dir: 'e', w: 1.2, n: 14, open: 's' },
-      { lv: 1, x: 37.0, z: 37.85, dir: 'n', w: 1.1, n: 11, open: 'e' },
+      { lv: 1, x: 37.0, z: 37.55, dir: 'n', w: 1.1, n: 11, open: 'e' },
     ],
   });
   tintoreria(ctx, L, hTin);
@@ -398,8 +400,8 @@ function plazuela(ctx, S, L) {
       { lv: 1, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 42.4, w: 1.0, h: 2.2 }], rooms: ['ino_alcoba', 'ino1'] },
     ],
     stairs: [
-      { lv: 0, x: 60.0, z: 48.4, dir: 'n', w: 1.1, n: 14, open: 'w' },
-      { lv: 1, x: 56.15, z: 48.3, dir: 'n', w: 1.0, n: 11, open: 'e' },
+      { lv: 0, x: 60.0, z: 48.05, dir: 'n', w: 1.1, n: 14, open: 'w' },
+      { lv: 1, x: 56.15, z: 48.05, dir: 'n', w: 1.0, n: 11, open: 'e' },
     ],
   });
   casaInocentes(ctx, L, hIno);
@@ -508,12 +510,6 @@ function cordeleria(ctx, S, L) {
     stairs: [
       { lv: 0, x: 42.85, z: 20.8, dir: 'n', w: 1.0, n: 14, open: 'w' },
       { lv: 0, x: 39.65, z: 7.0, dir: 's', w: 1.0, n: 14, open: 'e' },
-    ],
-    // (los huecos de las dos escaleras, algo más largos: bajando, la cabeza
-    // daba en el canto del forjado)
-    holes: [
-      { lv: 1, r: [39.1, 8.0, 40.2, 8.7] },
-      { lv: 1, r: [42.3, 19.1, 43.4, 19.8] },
     ],
   });
   const hCor2 = casa(ctx, S, L, {

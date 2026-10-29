@@ -137,7 +137,8 @@ export function viuda(ctx, L, h) {
   P.table(ctx, 25.2, 0, 52.7, 1.4, 0.8, 0);
   P.stool(ctx, 25.2, 0, 53.4, { room: r0 });
   bowl(ctx, 24.9, 0.8, 52.6, 0.12, r0);
-  P.jar(ctx, 26.8, 0, 54.2, 1.0);
+  // (la tinaja, en el rincón: al pie de la escalera se pasa al patio)
+  P.jar(ctx, 23.05, 0, 54.1, 1.0);
   herbBunch(ctx, 24.0, 3.55, 53.5, 3, r0);
   luna(ctx, 23.4, 1.6, 54.3, r0, 0.3);
   wb.setRoom(null);
@@ -146,7 +147,8 @@ export function viuda(ctx, L, h) {
   // la sala: la mesa, la rueca, el arcón; las velas que dejó encendidas
   P.table(ctx, 26.6, y1, 48.6, 1.3, 0.8, Math.PI / 2);
   P.stool(ctx, 26.0, y1, 48.3, { room: r1 });
-  P.spinningWheel(ctx, 27.9, y1, 49.9, 0.3, { room: r1 });
+  // (la rueca, contra el muro del este: en lo alto de la escalera se pasa)
+  P.spinningWheel(ctx, 28.75, y1, 47.3, -1.3, { room: r1 });
   chest(ctx, 25.95, y1, 46.75, 0, r1, 0.9);
   P.candles(ctx, 26.6, y1 + 0.8, 48.9, 2, 2203, { room: r1, radius: 4.2, intensity: 0.6, spread: 0.1 });
   luna(ctx, 27.4, y1 + 1.6, 46.8, r1, 0.5, 4.5);
@@ -175,13 +177,15 @@ export function viuda(ctx, L, h) {
   luna(ctx, 23.5, y1 + 1.5, 54.3, ro, 0.3);
   wb.setRoom(null);
   L.interact.push({ kind: 'altar', id: 'a_viuda', name: 'Oratorio de la cerera', x: 23.5, y: y1, z: 52.7, spawn: [24.8, y1, 52.7], yaw: -Math.PI / 2 });
-  // ---- la alcoba: la viuda en su cama, la vela, el arcón con la llave
+  // ---- la alcoba: la viuda en su cama (contra el muro), la vela en la mesilla
+  // de la cabecera y, a los pies, bajo la ventana, el arcón con la llave
+  // (entre la cama y el tabique queda el paso, de la ventana a la puerta)
   wb.setRoom(ra);
-  P.bed(ctx, 23.6, y1, 48.9, Math.PI / 2);
-  bakeCorpse(wb, 23.6, y1 + 0.55, 48.75, Math.PI, 'back', 'villager', 22);
-  P.table(ctx, 24.75, y1, 47.5, 0.5, 0.45, 0);
-  P.candles(ctx, 24.75, y1 + 0.8, 47.5, 1, 2207, { room: ra, radius: 4.5, intensity: 1.0, spread: 0.01 });
-  chest(ctx, 22.9, y1, 50.15, -Math.PI / 2, ra, 0.9);
+  P.bed(ctx, 23.02, y1, 48.9, Math.PI / 2);
+  bakeCorpse(wb, 23.02, y1 + 0.55, 48.75, Math.PI, 'back', 'villager', 22);
+  P.table(ctx, 23.95, y1, 50.15, 0.5, 0.45, 0);
+  P.candles(ctx, 23.95, y1 + 0.8, 50.15, 1, 2207, { room: ra, radius: 4.5, intensity: 1.0, spread: 0.01 });
+  chest(ctx, 23.0, y1, 47.4, Math.PI, ra, 0.9);
   saint(ctx, 'e', I.x0, y1 + 1.4, 47.6, ra, 2208, 'clothWhite');
   luna(ctx, 23.15, y1 + 1.6, 46.8, ra, 0.4);
   wb.setRoom(null);
@@ -191,7 +195,7 @@ export function viuda(ctx, L, h) {
   tabique(ctx, { x0: I.x0, z0: 50.6, x1: 25.3, z1: 50.8 }, y1, 7.0, [ra, 'viu_oratorio']);
   tabique(ctx, { x0: 25.3, z0: 50.6, x1: 27.7, z1: 50.8 }, y1, 7.0, [r1, 'viu_oratorio'], { doors: [{ at: 26.5, w: 1.1, h: 2.2 }] });
   L.interact.push({ kind: 'door', id: 'd_alcoba', x: 25.4, y: y1, z: 49.55, w: 1.0, h: 2.2, axis: 'z', mat: 'planks', hinge: 1, swing: 1, plane: 25.3, inset: 0.05, mark: 'broken', lock: { type: 'barred', side: -1 }, barredMsg: 'alcobaTranca' });
-  L.interact.push({ kind: 'item', id: 'i_llave_tinte', item: 'llave_tinte', x: 22.9, y: y1 + 0.6, z: 50.15 });
+  L.interact.push({ kind: 'item', id: 'i_llave_tinte', item: 'llave_tinte', x: 23.0, y: y1 + 0.6, z: 47.4 });
   // la viga del balcón que se cayó: de la sacada de la sala a la de la alcoba
   cornisaBalcon(ctx, L);
 }

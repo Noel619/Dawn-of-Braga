@@ -136,9 +136,11 @@ export function escalera(ctx, o) {
   const L = n * run;
   const H = n * rise;
   // el hueco: de donde la cabeza (1,9 m sobre el peldaño) alcanza la cara de
-  // abajo del forjado, hasta el final del tramo
+  // abajo del forjado, hasta el final del tramo; y medio metro más hacia el
+  // pie (lo que ocupa el cuerpo por delante de la cabeza: bajando, se daba
+  // con la frente en el canto del forjado y no se podía seguir)
   const kHead = Math.max(0, Math.floor((H - SLAB - 2.05) / rise));
-  const ua = kHead * run - 0.15,
+  const ua = Math.max(0, kHead * run - 0.65),
     ub = L + 0.02;
   const hole = along === 'x' ? [Math.min(x + sgn * ua, x + sgn * ub), z - w / 2 - 0.05, Math.max(x + sgn * ua, x + sgn * ub), z + w / 2 + 0.05] : [x - w / 2 - 0.05, Math.min(z + sgn * ua, z + sgn * ub), x + w / 2 + 0.05, Math.max(z + sgn * ua, z + sgn * ub)];
   if (o.open) {
