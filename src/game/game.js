@@ -46,6 +46,7 @@ import { PaioQuest } from './paio.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
+import { FisicoCine } from './fisico_cine.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
 import { RELIC_IDS } from './relics.js';
@@ -258,6 +259,7 @@ export class Game {
     this.cornisas = new Cornisas(this);
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
     this.fisico = new Fisico(this);
+    this.fisicoCine = new FisicoCine(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);

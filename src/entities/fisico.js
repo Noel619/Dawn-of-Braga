@@ -271,6 +271,8 @@ const K_ = (o) => ({ ...B, ...o });
 // la izquierda, sacada de la espalda y adelante (la esponja, la cal, la
 // campanilla)
 const IZQ = { armL: [-60, 0, 14], foreL: [-50, 0, 0], handL: [0, 0, 0] };
+// la izquierda en alto, sujetando el paño de la cortina a un lado
+const PANO = { armL: [-98, 0, 56], foreL: [-38, 0, 0], handL: [0, 0, 22] };
 
 export const FI_CLIPS = {
   // te ve: se queda quieto y ladea la cabeza, como un pájaro (de un golpe),
@@ -305,6 +307,21 @@ export const FI_CLIPS = {
     [0.45, K_({ armR: [-62, 0, -8], foreR: [-28, 0, 0], handR: [62, 0, 0], chest: [8, 8, 0], head: [6, 0, -14] })],
     [1.25, K_({ armR: [-64, 0, -8], foreR: [-26, 0, 0], handR: [64, 0, 0], chest: [8, 8, 0], head: [6, 0, -16] }), 'hold'],
     [1.8, K_({})],
+  ]),
+  // la cortina (fisico_cine.js; los tiempos, los de la escena): aparta el
+  // paño con la izquierda, se asoma, ladea la cabeza y lo suelta
+  cortina: clip('fi_cortina', 9.0, [
+    [0, K_({})],
+    [3.35, K_({}), 'hold'],
+    [3.8, K_({ armL: [-112, 0, 20], foreL: [-50, 0, 0], handL: [0, 0, 10], chest: [6, 0, 0], head: [6, 0, -6] })],
+    [4.35, K_({ ...PANO, chest: [10, -6, 0], head: [10, 4, -4] })],
+    [5.15, K_({ ...PANO, chest: [10, -6, 0], head: [11, 3, -5] }), 'hold'],
+    [5.35, K_({ ...PANO, chest: [10, -2, 0], head: [9, 12, -34] }), 'snap'],
+    [6.4, K_({ ...PANO, chest: [10, -2, 0], head: [10, 12, -36] }), 'hold'],
+    [6.6, K_({ ...PANO, chest: [10, -6, 0], head: [11, -4, 10] }), 'snap'],
+    [7.35, K_({ ...PANO, chest: [10, -6, 0], head: [10, 0, -6] }), 'hold'],
+    [8.0, K_({ armL: [-30, -40, 20], foreL: [-85, 0, 0] })],
+    [9.0, K_({})],
   ]),
   // ---------------------------------------------------------- golpes
   // el barrido: se lleva la vara atrás, a la derecha, y la pasa de lado a
