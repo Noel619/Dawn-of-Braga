@@ -52,6 +52,9 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 
 /* ---------------------------------------------------------------- HUD */
 #hud { position: fixed; inset: 0; pointer-events: none; }
+/* en las escenas del guion: del HUD sólo quedan los bocadillos de los que
+   hablan (y los avisos) */
+#hud.cine > :not(#speech):not(#toasts) { display: none !important; }
 #vitals { position: absolute; top: calc(var(--u) * 6); left: calc(var(--u) * 6); }
 #area { position: absolute; top: 17%; left: 0; right: 0; display: grid; justify-items: center; gap: calc(var(--u) * 2); opacity: 0; transition: opacity 1.2s steps(6); }
 #area .name { font-family: 'Bastarda', serif; font-size: var(--fs-bastL); line-height: 1.1; color: var(--bone-hi); text-shadow: var(--sh), calc(-1px * var(--m)) 0 0 var(--void), 0 calc(-1px * var(--m)) 0 var(--void), calc(2px * var(--m)) calc(2px * var(--m)) 0 rgba(0,0,0,0.6); }

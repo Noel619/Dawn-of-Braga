@@ -287,7 +287,7 @@ export class Player {
     this.useSt(def.st);
     // (el reloj del golpe y su animación, al paso que marque el objeto bendito;
     // el golpe de gracia, siempre al suyo)
-    this.atkSpd = def.riposte ? 1 : this.mods.atkSpeed;
+    this.atkSpd = def.riposte ? 1 : this.mods.atkSpeed * (this.lento || 1);
     this.anim.play(def.clip, { blend: this.anim.weight > 0.3 ? 0.07 : 0.1, speed: this.atkSpd });
     this.combo = idx;
     this.game.onPlayerAttackStart && this.game.onPlayerAttackStart(def);
@@ -843,7 +843,8 @@ export class Player {
         this.stDelay = 0.45;
       }
       const base = this.blocking ? BLOCKWALK : this.sprinting ? RUN : target ? STRAFE : mag < 0.55 ? lerp(0, WALK, mag / 0.55) / Math.max(mag, 0.01) : JOG;
-      desiredSpeed = base * mag * (g.dev ? g.dev.speed : 1);
+      // (lento: dentro de la nube de beleño del Físico)
+      desiredSpeed = base * mag * (g.dev ? g.dev.speed : 1) * (this.lento || 1);
       if (st === 'blockhit') {
         desiredSpeed = 0;
         if (this.anim.done) this.state = 'free';

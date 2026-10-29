@@ -12,6 +12,7 @@ import { registerMaterialPatch, objMat, cloneMat } from '../gfx/materials.js';
 import { clip } from '../entities/rig.js';
 import { DIALOG, MSG } from './story.js';
 import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
+import { MESA_CANTO } from './fisico_pelea.js';
 
 const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -82,7 +83,7 @@ export class CortinaCine {
     p.state = 'free';
     p.autoDir = { x: 1, z: 0, m: 0.32 };
     g.lockTarget = null;
-    g.ui.showHud(false);
+    g.ui.cineHud(true);
     g.audio && g.audio.play('dread');
     // él, en la alcoba (quieto: lo mueve el guion)
     const e = F.e;
@@ -369,7 +370,7 @@ export class CamillaCine {
     F.sleep = 1;
     g.fade = g.fadeTarget = 0;
     g.lockTarget = null;
-    g.ui.showHud(false);
+    g.ui.cineHud(true);
     g.audio && g.audio.stopMusic();
     if (g.qte && g.qte.active) g.qte.cancel();
     if (g.trampas) g.trampas.abre();
@@ -781,9 +782,11 @@ export class CamillaCine {
       p.die();
       return;
     }
-    // suelto (o saltada la escena por lo que sea): se baja de la mesa
+    // suelto (o saltada la escena por lo que sea): se baja de la mesa (y
+    // hasta que no salga de la casa, aquí no se pelea: se huye)
     F.hide();
     F.modo = 'fragua';
+    F.huyendo = true;
     F.fraguaT = F.fraguaT || VUELVE;
     F.sleep = 0;
     p.body.pos.set(MESA.x, 0, MESA.z + 0.85);
@@ -797,6 +800,130 @@ export class CamillaCine {
     g.camera.fov = g.camRig.fovBase;
     g.camera.updateProjectionMatrix();
     g.fadeTarget = 1;
+  }
+}
+
+// ======================================================================
+// VENCIDO. Se le caen los hierros; va, despacio, a su mesa; se sienta en el
+// canto, se toma el pulso (dos dedos de la derecha en la muñeca izquierda) y
+// escucha. «...y lo que el fuego no cura...» «...insanabilia.» Y se queda
+// quieto, por fin. (Luego, fisico_pelea.js: la llave, la puerta del patio.)
+const M_SIENTA = 3.4;
+const M_DICE = [5.0, 8.7];
+const M_QUIETO = 11.0;
+const M_END = 13.4;
+
+export class MuerteCine {
+  constructor(g, F) {
+    this.g = g;
+    this.F = F;
+    this.t = 0;
+    this.cues = new Set();
+    this.pos = new V3();
+    this.look = new V3();
+  }
+  cue(id, at) {
+    if (this.t >= at && !this.cues.has(id)) {
+      this.cues.add(id);
+      return true;
+    }
+    return false;
+  }
+  start() {
+    const g = this.g;
+    const F = this.F;
+    const e = F.e;
+    const p = g.player;
+    F.modo = 'cine';
+    e.scripted = true;
+    e.atk = null;
+    e.vx = e.vz = 0;
+    e.D.engaged = false;
+    g.activeBoss = null;
+    g.lockTarget = null;
+    g.audio && g.audio.stopMusic();
+    g.ui.cineHud(true);
+    if (g.qte && g.qte.active) g.qte.cancel();
+    if (p.state === 'grabbed') p.releaseGrab(0.5, 0, 0, 0);
+    p.vx = p.vz = 0;
+    g.slowmo = { t: 0.9, k: 0.35 };
+    g.flash = Math.max(g.flash, 0.3);
+    g.audio && g.audio.enemyVoice(e, 'death');
+    // (se le caen los hierros de las manos)
+    for (const k of ['hierro', 'sierra', 'lanceta', 'trepano', 'esponja', 'campanilla', 'vara', 'mascara', 'sombrero']) fiGrp(e, k, false);
+    g.audio && g.audio.play('clang', e.pos);
+    g.fx.blood.emit(e.pos.x, 0.3, e.pos.z, 14, { color: [1, 0.6, 0.2], speed: 2.5, life: 0.5, up: 1.4 });
+    e.anim.stop(0.3);
+    this.a = { x: e.pos.x, z: e.pos.z };
+  }
+  update(dt) {
+    const g = this.g;
+    const F = this.F;
+    const e = F.e;
+    const p = g.player;
+    this.t += dt;
+    const t = this.t;
+    if (p.state !== 'cine' && p.state !== 'getup' && !p.dead) p.state = 'cine';
+    g.post.U.uBars.value = 0.11 * Math.min(seg(t, 0, 0.8), 1 - seg(t, M_END - 0.6, M_END));
+    const C = MESA_CANTO;
+    if (t < M_SIENTA) {
+      // a su mesa, arrastrando los pies
+      const u = sm(t / M_SIENTA);
+      const x = lerp(this.a.x, C.x, u),
+        z = lerp(this.a.z, C.z, u);
+      const vx = (x - e.pos.x) / Math.max(dt, 1e-3),
+        vz = (z - e.pos.z) / Math.max(dt, 1e-3);
+      e.pos.set(x, g.world.col.groundHeight(x, z, 0.3, 1), z);
+      if (Math.hypot(vx, vz) > 0.05) e.yaw = Math.atan2(vx, vz);
+      e.vx = vx * 0.8;
+      e.vz = vz * 0.8;
+    }
+    if (this.cue('sienta', M_SIENTA)) {
+      e.vx = e.vz = 0;
+      e.pos.set(C.x, 0, C.z);
+      e.yaw = 0;
+      e.anim.play(FI_CLIPS.sienta, { blend: 0.6 });
+    }
+    if (this.cue('dice1', M_DICE[0])) fiSay(e, DIALOG.fisicoMuere[0], 3.4);
+    if (this.cue('dice2', M_DICE[1])) fiSay(e, DIALOG.fisicoMuere[1], 2.8);
+    if (this.cue('quieto', M_QUIETO)) e.anim.play(FI_CLIPS.muerto, { blend: 0.3 });
+    e.animate(dt);
+    // la cámara: él, yendo a la mesa (por encima de tu hombro); luego, de
+    // frente, sentado, cada vez más cerca
+    if (t < M_SIENTA) {
+      this.pos.set(p.pos.x - Math.sin(p.yaw) * 1.8 + Math.cos(p.yaw) * 0.6, p.visY + 1.9, p.pos.z - Math.cos(p.yaw) * 1.8 - Math.sin(p.yaw) * 0.6);
+      e.rig.worldPos('chest', this.look);
+      g.camRig.override = { pos: this.pos, look: this.look, fov: 50, snap: true };
+    } else {
+      const s = seg(t, M_SIENTA, M_END);
+      this.pos.set(lerp(57.0, 56.3, s), lerp(1.75, 1.6, s), lerp(40.45, 39.95, s));
+      this.look.set(C.x, lerp(1.45, 1.35, s), C.z);
+      g.camRig.override = { pos: this.pos, look: this.look, fov: lerp(44, 34, s), snap: true };
+    }
+    return t < M_END;
+  }
+  skip() {
+    this.t = Math.max(this.t, M_END - 0.05);
+  }
+  end() {
+    const g = this.g;
+    const F = this.F;
+    const e = F.e;
+    const p = g.player;
+    g.post.U.uBars.value = 0;
+    g.camRig.override = null;
+    g.camRig.snapTo(p);
+    g.camera.fov = g.camRig.fovBase;
+    g.camera.updateProjectionMatrix();
+    g.ui.showHud(true);
+    if (p.state === 'cine') p.state = 'free';
+    // (sentado, muerto, para siempre)
+    e.pos.set(MESA_CANTO.x, 0, MESA_CANTO.z);
+    e.yaw = 0;
+    e.vx = e.vz = 0;
+    e.anim.play(FI_CLIPS.muerto, { blend: 0, t0: FI_CLIPS.muerto.dur });
+    e.animate(0.05);
+    F.pelea.final();
   }
 }
 
@@ -816,6 +943,12 @@ export class FisicoCine {
     const g = this.g;
     if (g.cutscene) g.endCutscene();
     g.cutscene = new CamillaCine(g, F);
+    g.cutscene.start();
+  }
+  muerte(F) {
+    const g = this.g;
+    if (g.cutscene) g.endCutscene();
+    g.cutscene = new MuerteCine(g, F);
     g.cutscene.start();
   }
 }

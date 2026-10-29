@@ -27,6 +27,7 @@ import * as THREE from 'three';
 import { BR } from '../world/level_barrio.js';
 import { DIALOG, MSG } from './story.js';
 import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
+import { PeleaFisico } from './fisico_pelea.js';
 import { clamp } from '../core/util.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -71,6 +72,8 @@ export class Fisico {
   constructor(g) {
     this.g = g;
     this.e = g.enemies.find((x) => x.type === 'fisico') || null;
+    // la pelea de su quirófano (fisico_pelea.js)
+    this.pelea = new PeleaFisico(g, this);
     this.reset();
   }
 
@@ -95,6 +98,8 @@ export class Fisico {
     this.vigia = null;
     this.tapiado = null;
     this.fraguaT = 0;
+    this.huyendo = false;
+    this.pelea.reset();
     if (this.e && !(this.g.flags && this.g.flags['boss:fisico'])) this.hide();
   }
   onRespawn() {
@@ -105,6 +110,8 @@ export class Fisico {
   applyFlags() {
     const g = this.g;
     for (const c of CASAS) if (g.flags['tapia:' + c.puerta]) this.tapiar(c, true);
+    // (vencido: sentado en su mesa, muerto)
+    if (g.flags['boss:fisico']) this.pelea.sentado();
   }
 
   // ¿Está en el barrio? ¿En la calle? ¿En una casa (cuál)? ¿En los tejados?
@@ -326,6 +333,7 @@ export class Fisico {
   // Te ve (por primera vez en esta aparición): ¿se te echa encima?
   onWake(e) {
     const g = this.g;
+    if (this.modo === 'pelea') return false;
     // antes de la caza, no: se queda mirándote
     if (!g.flags['fisico:caza'] || this.modo === 'sombra' || this.modo === 'vigia' || this.modo === 'marcha') {
       e.aware = false;
@@ -340,6 +348,7 @@ export class Fisico {
   // Persiguiéndote: lo que piensa (lo demás, el tipo: los golpes).
   think(e, pl, d, dt) {
     const g = this.g;
+    if (this.modo === 'pelea') return this.pelea.think(e, pl, d, dt);
     if (e.sees) {
       this.last = [pl.pos.x, pl.pos.y, pl.pos.z];
       this.lostT = 0;
@@ -373,7 +382,7 @@ export class Fisico {
   }
   // (fuera de la pelea no muere: aguanta un poco y se retira)
   preHit(e, dmg, poise) {
-    if (this.modo === 'pelea') return null;
+    if (this.modo === 'pelea') return this.pelea.preHit(e, dmg, poise);
     const lost = this.hp0 - (e.hp - dmg);
     if (lost > e.maxHp * AGUANTA && !e.data.retirada) {
       e.data.retirada = true;
@@ -385,7 +394,7 @@ export class Fisico {
   }
   onHit(e, r) {
     // (herido, te busca: aunque no te viera)
-    if (r === 'hit' && this.g.flags['fisico:caza'] && !e.aware && this.modo !== 'marcha') {
+    if (r === 'hit' && this.g.flags['fisico:caza'] && !e.aware && this.modo !== 'marcha' && this.modo !== 'pelea') {
       e.aware = true;
       e.state = 'chase';
       this.modo = 'caza';
@@ -577,8 +586,16 @@ export class Fisico {
       g.post.U.uSleep.value = this.sleep;
       g.post.U.uBlind.value = this.blind > 0 ? Math.min(1, this.blind) : 0;
     }
+    this.pelea.update(dt);
     if (p.dead || this.modo === 'cine' || this.modo === 'pelea') return;
     const inB = this.enBarrio(p.pos);
+    // (la pelea: en su quirófano; no recién soltado de su mesa: hasta que
+    // no sale de la casa, huye)
+    if (this.huyendo && this.g.zoneAt(p.pos)?.id !== 'casa_inocentes') this.huyendo = false;
+    if (F['fisico:caza'] && !this.huyendo && this.modo !== 'fragua' && this.pelea.quiere(p)) {
+      this.pelea.empieza();
+      return;
+    }
     // ---- el guion
     // (la cortina: al pasar el portón, la primera vez)
     if (!F['fisico:intro'] && F['door:d_porton'] && inR(BR.calleja, p.pos.x, p.pos.z) && p.pos.x > 15.6 && p.pos.y < 1) {

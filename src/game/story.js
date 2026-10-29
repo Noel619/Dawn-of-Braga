@@ -108,6 +108,19 @@ export const ITEMS = {
     icon: 'keyIron',
     key: true,
   },
+  // el barrio de los Pellejeros
+  llave_tinte: {
+    name: 'Llave de la tintorería',
+    desc: 'Llave de latón, verde de cardenillo, con un cordón teñido de añil. Estaba en el arcón de la viuda, envuelta en un paño: «La del tinte, por si vuelve Duarte». Duarte no volvió.',
+    icon: 'key',
+    key: true,
+  },
+  llave_cordeleria: {
+    name: 'Llave de la cordelería',
+    desc: 'La llevaba el Físico al cinto, con las de su casa. En la anilla, una tablilla con su letra menuda: «Cordelería. Cuarentena. No abrir hasta que se curen».',
+    icon: 'keyIron',
+    key: true,
+  },
   lagrima: {
     name: 'Lágrima de Leonor',
     desc: 'La última lágrima de Leonor, limpia, cuajada en una perla clara. Pesa más de lo que parece. Podrás llevar una ampolla más.',
@@ -816,6 +829,16 @@ export const DIALOG = {
   // vuelve de la fragua: sigues atado (te mata) o te has soltado
   fisicoAlRojo: 'Ya está al rojo. Lo que no cura el hierro...',
   fisicoSuelto: ['¿Ya? Qué prisa. La prisa también es un síntoma.', 'Te has soltado. Bien: los fuertes curan mejor.'],
+  // la pelea, en su quirófano
+  fisicoPelea: ['Has vuelto tú solo. Los pacientes no vuelven solos nunca.', 'Bien. Hay enfermedades que vienen a que las curen.'],
+  fisicoSahumerio: ['Respira. El beleño no hace daño: quita las ganas.', 'Despacio. Todo despacio. Así se cura.'],
+  fisicoLlama: 'Venid, hijos. Hay uno que no se deja curar.',
+  fisicoMascara: 'Ya no hace falta la máscara. El único aire malo que queda aquí es el tuyo.',
+  fisicoTrepano: ['Quieto. Un agujero pequeño, y sale todo.', 'Yo también lo tuve dentro. Mira: por aquí salió.'],
+  fisicoFuego: 'Lo que no cura el hierro, lo cura el fuego.',
+  // vencido: sentado en su mesa, se toma el pulso
+  fisicoMuere: ['...y lo que el fuego no cura...', '...insanabilia.'],
+  fisicoLlave: 'En su cinto, entre las llaves de su casa, la de la cordelería.',
   // herido: se retira (con la cal)
   fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
 };

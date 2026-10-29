@@ -11,6 +11,9 @@ const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + ' ' + e.stack));
 p.on('console', (m) => { if (m.type() === 'error') logs.push('ERR: ' + m.text()); });
 if (process.env.POSE) await p.addInitScript((j) => (window.__POSE = JSON.parse(j)), process.env.POSE);
+if (process.env.JOINTS) await p.addInitScript((j) => (window.__JOINTS = j.split(',')), process.env.JOINTS);
+if (process.env.HIDE) await p.addInitScript((j) => (window.__HIDE = j.split(',')), process.env.HIDE);
+if (process.env.SHOW) await p.addInitScript((j) => (window.__SHOW = j.split(',')), process.env.SHOW);
 await p.goto('http://localhost:5199/?dev=1');
 await p.waitForFunction(() => window.__ready, null, { timeout: 120000 });
 const views = viewsArg.split(';').map((v) => v.split(',').map(Number));
@@ -60,10 +63,23 @@ const res = await p.evaluate(
       for (const k in window.__POSE) cur[k] = window.__POSE[k].map((v) => (v * Math.PI) / 180);
       rig.apply(cur);
     }
+    // (HIDE: grupos de piezas a ocultar, separados por comas; SHOW: a mostrar)
+    for (const m of rig.meshes) {
+      const gr = m.userData.grp;
+      if (!gr) continue;
+      if ((window.__HIDE || []).includes(gr)) m.visible = false;
+      if ((window.__SHOW || []).includes(gr)) m.visible = true;
+    }
     rig.root.updateMatrixWorld(true);
     window.__RIG = rig;
     window.__AT = at;
-    return info + ' keys:' + Object.keys(M).join(',');
+    // (JOINTS: dónde quedan esas articulaciones, respecto a AT)
+    let jinfo = '';
+    for (const j of window.__JOINTS || []) {
+      const v = rig.worldPos(j, new T.Vector3());
+      jinfo += ` ${j}=(${(v.x - x).toFixed(2)},${(v.y - y).toFixed(2)},${(v.z - z).toFixed(2)})`;
+    }
+    return info + ' keys:' + Object.keys(M).join(',') + jinfo;
   },
   [mod, fn, clipArg, (process.env.AT || '-10,0,44').split(',').map(Number), (process.env.PROBE || '1.15,1.1,1.05').split(',').map(Number)]
 );

@@ -275,6 +275,41 @@ export function buildFisico() {
     parts.push(P('handL', 'iron', gSph(0.01, [0.004, -0.07, -0.118], [1, 1, 1], 5, 4), { grp: 'campanilla' }));
   }
 
+  // ---------------------------------------------------------- los hierros
+  // (la pelea, a media vida: game/fisico_pelea.js) la sierra de huesos, en la
+  // derecha (a lo largo de su z, como la vara): el mango, el arco y la hoja
+  // dentada; la lanceta, en la izquierda; el trépano, para el agarrón: el
+  // travesaño, la barrena y la corona
+  {
+    const y = -0.07;
+    parts.push(P('handR', 'timber', gCyl(0.02, 0.018, 0.16, 7, [0.004, y, 0.0], [90, 0, 0]), { grp: 'sierra' }));
+    parts.push(
+      P(
+        'handR',
+        'iron',
+        tube(
+          [
+            [0.004, y, 0.07],
+            [0.004, y + 0.1, 0.1],
+            [0.004, y + 0.11, 0.3],
+            [0.004, y + 0.1, 0.5],
+            [0.004, y + 0.01, 0.55],
+          ],
+          0.007,
+          { n: 12, seg: 5 }
+        ),
+        { grp: 'sierra' }
+      )
+    );
+    const hoja = [gBox(0.003, 0.036, 0.46, [0.004, y - 0.004, 0.32])];
+    for (let i = 0; i < 14; i++) hoja.push(gBox(0.003, 0.012, 0.012, [0.004, y - 0.024, 0.11 + i * 0.032], [45, 0, 0]));
+    parts.push(P('handR', 'iron', merge(hoja), { grp: 'sierra' }));
+    parts.push(P('handL', 'timber', gCyl(0.012, 0.011, 0.1, 6, [0.004, y, 0.0], [90, 0, 0]), { grp: 'lanceta' }));
+    parts.push(P('handL', 'silver', tube([[0.004, y, 0.05], [0.004, y, 0.21]], (q) => [mix(0.014, 0.001, q * q), 0.0026], { n: 6, seg: 6 }), { grp: 'lanceta' }));
+    parts.push(P('handR', 'timber', gCyl(0.015, 0.015, 0.17, 6, [0.004, y, -0.01], [0, 0, 90]), { grp: 'trepano' }));
+    parts.push(P('handR', 'iron', merge([gCyl(0.008, 0.008, 0.26, 6, [0.004, y, 0.12], [90, 0, 0]), gCyl(0.02, 0.02, 0.03, 10, [0.004, y, 0.26], [90, 0, 0])]), { grp: 'trepano' }));
+  }
+
   // ---------------------------------------------------------- el cauterio
   // (en la derecha, como la vara: a lo largo de su z) el mango de madera, la
   // varilla y la oliva al rojo
@@ -313,6 +348,9 @@ const PANO = { armL: [-98, 0, 56], foreL: [-38, 0, 0], handL: [0, 0, 22] };
 const EMPUJA = { chest: [14, 0, 0], head: [2, 0, -4], armR: [-36, 0, -12], foreR: [-40, 0, 0], handR: [0, 0, 0], armL: [-36, 0, 12], foreL: [-40, 0, 0], handL: [0, 0, 0] };
 const ORDENA = { chest: [20, 0, 0], head: [22, 0, -6], armR: [-30, 0, -8], foreR: [-58, 0, 0], handR: [0, 0, 0], armL: [-34, 0, 10], foreL: [-52, 0, 0], handL: [0, 0, 0] };
 const PULSO = { chest: [26, 0, 0], head: [30, 0, -18], armL: [-44, 0, 8], foreL: [-48, 0, 0], handL: [0, 0, 20], armR: [-14, 0, -10], foreR: [-30, 0, 0] };
+// sentado en el canto de la mesa (las piernas colgando), tomándose el pulso
+// (las manos juntas en el regazo: la derecha, sobre la muñeca izquierda)
+const SIENTA = { root: [0, -10, 0], legL: [-82, 0, 4], shinL: [76, 0, 0], legR: [-80, 0, -4], shinR: [80, 0, 0], chest: [20, 0, 0], head: [30, 0, -14], armL: [-14, -30, -8], foreL: [-60, 0, 0], handL: [0, 0, 0], armR: [-14, 30, 10], foreR: [-66, 0, 0], handR: [0, 0, 0] };
 
 export const FI_CLIPS = {
   // te ve: se queda quieto y ladea la cabeza, como un pájaro (de un golpe),
@@ -416,6 +454,78 @@ export const FI_CLIPS = {
     [0.7, K_({ chest: [4, -10, 0], head: [8, 6, -12], armR: [-118, 0, -16], foreR: [-46, 0, 0], handR: [74, 0, 0] })],
     [1.4, K_({ chest: [6, -10, 0], head: [10, 6, -14], armR: [-120, 0, -16], foreR: [-44, 0, 0], handR: [76, 0, 0] }), 'hold'],
   ]),
+  // ---------------------------------------------------------- la pelea
+  // (a media vida) se quita la máscara: las dos manos a la cara, tira de ella
+  // hacia delante, la deja caer; la cabeza, ladeada, la cara al aire
+  quita: clip('fi_quita', 2.8, [
+    [0, K_({})],
+    [0.5, K_({ head: [12, 0, 0], armL: [-62, 0, 30], foreL: [-128, 0, 0], handL: [0, 0, 0], armR: [-62, 0, -30], foreR: [-128, 0, 0], handR: [0, 0, 0] }), 'hold'],
+    [1.3, K_({ head: [-8, 0, 0], chest: [-4, 0, 0], armL: [-84, 0, 18], foreL: [-66, 0, 0], handL: [0, 0, 0], armR: [-84, 0, -18], foreR: [-66, 0, 0], handR: [0, 0, 0] }), 'snap'],
+    [1.8, K_({ head: [6, 0, -14], chest: [2, 0, 0], armL: [-12, 0, 14], foreL: [-24, 0, 0], handL: [0, 0, 0], armR: [-12, 0, -14], foreR: [-24, 0, 0], handR: [0, 0, 0] }), 'hold'],
+    [2.8, K_({})],
+  ]),
+  // la sierra: tres tajos seguidos (de derecha a izquierda, de vuelta, y de
+  // arriba abajo)
+  sierra: clip('fi_sierra', 1.9, [
+    [0, K_({})],
+    [0.28, K_({ chest: [6, 30, 0], head: [6, -16, -6], armR: [-60, 0, -50], foreR: [-60, 0, 0], handR: [70, 0, 30] }), 'hold'],
+    [0.44, K_({ chest: [12, -30, 0], head: [8, 14, -6], armR: [-82, 0, 10], foreR: [-18, 0, 0], handR: [82, 0, -30], legL: [-14, 0, 0], legR: [8, 0, 0], root: [0, -3, 5] }), 'strike'],
+    [0.62, K_({ chest: [12, -34, 0], head: [8, 14, -6], armR: [-82, 0, 14], foreR: [-22, 0, 0], handR: [82, 0, -34] }), 'hold'],
+    [0.86, K_({ chest: [10, 28, 0], head: [6, -12, -6], armR: [-78, 0, -44], foreR: [-26, 0, 0], handR: [80, 0, 30], legL: [-8, 0, 0], legR: [12, 0, 0], root: [0, -3, 5] }), 'strike'],
+    [1.08, K_({ chest: [-2, 4, 0], head: [2, 0, -6], armR: [-152, 0, -12], foreR: [-50, 0, 0], handR: [40, 0, 0] }), 'hold'],
+    [1.32, K_({ chest: [26, 0, 0], head: [16, 0, -6], armR: [-70, 0, -6], foreR: [-10, 0, 0], handR: [92, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 12] }), 'strike'],
+    [1.55, K_({ chest: [24, 0, 0], head: [14, 0, -6], armR: [-68, 0, -6], foreR: [-12, 0, 0], handR: [90, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 10] }), 'settle'],
+    [1.9, K_({})],
+  ]),
+  // la lanceta: de la izquierda, de punta, rápida
+  lanceta: clip('fi_lanceta', 1.1, [
+    [0, K_({})],
+    [0.3, K_({ chest: [0, -20, 0], head: [6, 10, -6], armL: [-40, 0, 20], foreL: [-110, 0, 0], handL: [0, 0, 0] }), 'hold'],
+    [0.44, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-88, 0, 6], foreL: [-6, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 14] }), 'strike'],
+    [0.64, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-86, 0, 6], foreL: [-10, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 12] }), 'settle'],
+    [1.1, K_({})],
+  ]),
+  // el trépano: se te echa encima con las dos manos (la izquierda, a tu
+  // cabeza; la derecha, la barrena)
+  trepano: clip('fi_trepano', 1.6, [
+    [0, K_({})],
+    [0.45, K_({ chest: [-4, 0, 0], head: [0, 0, -8], armR: [-40, 0, -10], foreR: [-92, 0, 0], handR: [80, 0, 0], armL: [-40, 0, 10], foreL: [-92, 0, 0], handL: [0, 0, 0] }), 'hold'],
+    [0.64, K_({ chest: [26, 0, 0], head: [12, 0, -6], armR: [-92, 0, -4], foreR: [-10, 0, 0], handR: [90, 0, 0], armL: [-88, 0, 8], foreL: [-14, 0, 0], handL: [0, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 16] }), 'strike'],
+    [0.92, K_({ chest: [24, 0, 0], head: [12, 0, -6], armR: [-90, 0, -4], foreR: [-12, 0, 0], handR: [90, 0, 0], armL: [-86, 0, 8], foreL: [-16, 0, 0], handL: [0, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 14] }), 'settle'],
+    [1.6, K_({})],
+  ]),
+  // taladrando: te sujeta la cabeza con la izquierda y da vueltas a la
+  // barrena con la derecha
+  taladra: clip(
+    'fi_taladra',
+    0.5,
+    [
+      [0, K_({ chest: [22, 0, 0], head: [20, 0, -12], armL: [-82, 0, 12], foreL: [-36, 0, 0], handL: [0, 0, 0], armR: [-74, 0, -8], foreR: [-46, 0, 0], handR: [86, 14, 0], root: [0, -6, 8] })],
+      [0.25, K_({ chest: [22, 2, 0], head: [20, 0, -14], armL: [-82, 0, 12], foreL: [-36, 0, 0], handL: [0, 0, 0], armR: [-76, 0, -12], foreR: [-44, 0, 0], handR: [86, -14, 0], root: [0, -6, 8] })],
+      [0.5, K_({ chest: [22, 0, 0], head: [20, 0, -12], armL: [-82, 0, 12], foreL: [-36, 0, 0], handL: [0, 0, 0], armR: [-74, 0, -8], foreR: [-46, 0, 0], handR: [86, 14, 0], root: [0, -6, 8] })],
+    ],
+    { loop: true }
+  ),
+  // (con un cuarto de vida) al brasero: se agacha y saca los cauterios
+  brasero: clip('fi_brasero', 2.0, [
+    [0, K_({})],
+    [0.6, K_({ chest: [30, 0, 0], head: [24, 0, -6], armR: [-62, 0, -10], foreR: [-30, 0, 0], handR: [60, 0, 0], legL: [-16, 0, 0], shinL: [20, 0, 0], legR: [-10, 0, 0], shinR: [14, 0, 0], root: [0, -10, 0] }), 'hold'],
+    [1.2, K_({ chest: [4, 0, 0], head: [-2, 0, -10], armR: [-120, 0, -14], foreR: [-40, 0, 0], handR: [70, 0, 0] })],
+    [2.0, K_({})],
+  ]),
+  // vencido: sentado en el canto de su mesa, se toma el pulso (dos dedos de
+  // la derecha en la muñeca izquierda), escucha; luego, quieto, la barbilla
+  // en el pecho
+  sienta: clip(
+    'fi_sienta',
+    2.0,
+    [
+      [0, K_({ ...SIENTA, head: [10, 0, -6], armL: [-20, 0, 10], foreL: [-30, 0, 0], armR: [-20, 0, -10], foreR: [-30, 0, 0] })],
+      [2.0, K_({ ...SIENTA })],
+    ],
+    { ground: false }
+  ),
+  muerto: clip('fi_muerto', 2.4, [[0, K_({ ...SIENTA })], [2.4, K_({ ...SIENTA, chest: [32, 0, 4], head: [50, 0, -22], armR: [-8, 26, 8], foreR: [-52, 0, 0], armL: [-8, -26, -6], foreL: [-50, 0, 0] })]], { ground: false }),
   // ---------------------------------------------------------- golpes
   // el barrido: se lleva la vara atrás, a la derecha, y la pasa de lado a
   // lado a la altura del pecho, el gancho por delante
@@ -592,17 +702,73 @@ function cal(e, g) {
   g.fisico && g.fisico.cal(e);
 }
 
+// El trépano: si te alcanza, te sujeta la cabeza y te taladra; forcejeando
+// te sueltas (state 'trepanando').
+function taladra(e, g) {
+  const p = g.player;
+  const d = e.distTo(p.pos);
+  const a = Math.abs(angleDiff(e.yaw, e.angleTo(p.pos)));
+  if (p.dead || p.iframe || d > 1.6 || a > 50 * DEG || Math.abs(p.pos.y - e.pos.y) > 0.9 || p.state === 'grabbed' || p.state === 'pinned') return;
+  p.startGrabbed && p.startGrabbed(e);
+  e.state = 'trepanando';
+  e.stT = 0;
+  e.atk = null;
+  e.data.trepT = g.time;
+  e.data.mash0 = p.mash || 0;
+  e.data.drillT = 0;
+  e.anim.play(FI_CLIPS.taladra, { blend: 0.08 });
+  g.audio && g.audio.play('grab', p.pos);
+  g.camRig.shake(0.35);
+  g.fisico && g.fisico.pelea.onTrepano(e);
+}
+function sueltaTrepano(e, escaped) {
+  const g = e.game;
+  const p = g.player;
+  const fx = Math.sin(e.yaw),
+    fz = Math.cos(e.yaw);
+  e.anim.stop(0.15);
+  fiGrp(e, 'trepano', false);
+  fiGrp(e, 'sierra', true);
+  if (g.qte && g.qte.active) g.qte.cancel();
+  if (escaped) {
+    if (p.state === 'grabbed') p.releaseGrab && p.releaseGrab(2.4, fx, fz, 0);
+    e.state = 'stagger';
+    e.stT = 0;
+    e.anim.play(FI_CLIPS.stagger, { blend: 0.05 });
+  } else {
+    // (te ha hecho el agujero)
+    if (p.state === 'grabbed') p.releaseGrab && p.releaseGrab(4.5, fx, fz, 30);
+    g.fx.blood.emit(p.pos.x, p.pos.y + 1.7, p.pos.z, 40, { speed: 3, up: 2.2, stain: true });
+    g.audio && g.audio.play('boneCrack', p.pos);
+    g.hurtFlash = 1;
+    g.camRig.shake(0.6);
+    e.state = 'chase';
+    e.stT = 0;
+    e.cooldown = 1.4;
+  }
+}
+
+// El cauterio, donde da (delante de él, en el suelo), prende la paja.
+function prende(e, g) {
+  const fx = Math.sin(e.yaw),
+    fz = Math.cos(e.yaw);
+  g.fisico && g.fisico.pelea.prende(e.pos.x + fx * 1.9, e.pos.z + fz * 1.9);
+}
+
 // (cazando no quiere matarte, quiere dormirte: la vara apenas hiere, pero
 // derriba y cansa; en la pelea de su casa, ya no se contiene)
 // (cogido en un cepo, cazando no le pega: va a por él con la esponja)
 const caza = (e) => !(e.D && e.D.engaged) && !(e.game.trampas && e.game.trampas.held);
-const pelea = (e) => !!(e.D && e.D.engaged);
+// la pelea, en sus tres tiempos (game/fisico_pelea.js): 1, las medicinas; 2,
+// el hierro; 3, el fuego
+const fase = (e) => (e.D && e.D.engaged ? e.data.fase || 1 : 0);
+const pelea = (e) => fase(e) === 1;
 const A = {
   barrido: { name: 'barrido', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 18, stDmg: 22, range: 3.0, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 3, cd: 0.9, cond: pelea },
   pica: { name: 'pica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 16, range: 3.7, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 2.4, cd: 0.8, cond: pelea },
   barridoCaza: { name: 'barrido', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 5, stDmg: 45, stagger: true, knock: 4.5, range: 3.0, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 2.2, cd: 1.1, cond: (e) => caza(e) && e.game.player.hp > e.game.player.maxHp * 0.35 },
   picaCaza: { name: 'pica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 4, stDmg: 40, knock: 5, range: 3.7, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 1.6, cd: 1.0, cond: (e) => caza(e) && e.game.player.hp > e.game.player.maxHp * 0.35 },
-  gancho: { name: 'gancho', clip: FI_CLIPS.gancho, dur: 1.8, min: 2.0, max: 3.9, hits: [], dmg: 0, range: 4.0, arc: 40, weight: 2.2, cd: 0.6, noParry: true, trackUntil: 0.55, events: [{ t: 0.64, fn: engancha }, { t: 0.72, fn: engancha }], cond: (e) => e.game.time - (e.data.hookT ?? -99) > 4 && !(e.game.trampas && e.game.trampas.held) },
+  gancho: { name: 'gancho', clip: FI_CLIPS.gancho, dur: 1.8, min: 2.0, max: 3.9, hits: [], dmg: 0, range: 4.0, arc: 40, weight: 2.2, cd: 0.6, noParry: true, trackUntil: 0.55, events: [{ t: 0.64, fn: engancha }, { t: 0.72, fn: engancha }], cond: (e) => fase(e) <= 1 && e.game.time - (e.data.hookT ?? -99) > 4 && !(e.game.trampas && e.game.trampas.held) },
   esponja: {
     name: 'esponja',
     clip: FI_CLIPS.esponja,
@@ -620,9 +786,63 @@ const A = {
     trackUntil: 0.56,
     events: [{ t: 0.72, fn: esponja }, { t: 0.84, fn: esponja }],
     onStart: (e) => fiGrp(e, 'esponja', true),
-    cond: (e) => e.game.time - (e.data.spongeT ?? -99) > 5,
+    cond: (e) => fase(e) <= 1 && e.game.time - (e.data.spongeT ?? -99) > (fase(e) ? 9 : 5),
   },
   cal: { name: 'cal', clip: FI_CLIPS.cal, dur: 1.4, min: 1.4, max: 5.5, hits: [], dmg: 0, range: 5.5, arc: 50, weight: 0.9, cd: 1.8, noParry: true, events: [{ t: 0.6, fn: cal }], cond: (e) => !!e.data.calOk },
+  // ---------------------------------------------------------- la pelea
+  // (las medicinas) el sahumerio de beleño: le tira a los pies la olla de
+  // barro con las hierbas humeando (la nube: game/fisico_pelea.js)
+  sahumerio: { name: 'sahumerio', clip: FI_CLIPS.cal, dur: 1.4, min: 1.2, max: 9, hits: [], dmg: 0, range: 9, arc: 60, weight: 1.6, cd: 1.4, noParry: true, events: [{ t: 0.6, fn: (e, g) => g.fisico && g.fisico.pelea.sahumerio(e) }], cond: (e) => pelea(e) && e.game.time - (e.data.humoT ?? -99) > 14 },
+  // la campanilla: llama a los suyos (una vez)
+  llama: {
+    name: 'campanilla',
+    clip: FI_CLIPS.campanilla,
+    dur: 2.2,
+    min: 0,
+    max: 40,
+    hits: [],
+    dmg: 0,
+    range: 40,
+    arc: 360,
+    weight: 4,
+    cd: 1.4,
+    noParry: true,
+    onStart: (e) => fiGrp(e, 'campanilla', true),
+    events: [...[0.6, 0.85, 1.1, 1.35].map((t) => ({ t, fn: (e, g) => g.audio && g.audio.play('campanilla', e.pos) })), { t: 1.6, fn: (e, g) => g.fisico && g.fisico.pelea.llama(e) }],
+    cond: (e) => pelea(e) && e.hp < e.maxHp * 0.82 && !e.data.llamo,
+  },
+  // (el hierro) la sierra: tres tajos seguidos; la lanceta, de la izquierda;
+  // el trépano: el agarrón (si te coge, te taladra)
+  sierra: { name: 'sierra', clip: FI_CLIPS.sierra, dur: 1.9, min: 0, max: 2.6, hits: [[0.38, 0.5], [0.8, 0.92], [1.26, 1.4]], dmg: 11, stDmg: 16, range: 2.5, arc: 120, lunge: [[0.36, 0.48, 1.2], [0.78, 0.9, 1.0], [1.22, 1.36, 1.4]], weight: 3, cd: 0.7, cond: (e) => fase(e) === 2 },
+  lanceta: { name: 'lanceta', clip: FI_CLIPS.lanceta, dur: 1.1, min: 0.8, max: 3.2, hits: [[0.42, 0.54]], dmg: 14, range: 2.6, arc: 40, lunge: [[0.36, 0.5, 3.4]], weight: 2.2, cd: 0.5, cond: (e) => fase(e) === 2 },
+  trepano: {
+    name: 'trepano',
+    clip: FI_CLIPS.trepano,
+    dur: 1.6,
+    min: 0,
+    max: 2.4,
+    hits: [],
+    dmg: 0,
+    range: 1.6,
+    arc: 50,
+    lunge: [[0.55, 0.72, 3.6]],
+    weight: 1.8,
+    cd: 1.0,
+    noParry: true,
+    trackUntil: 0.5,
+    onStart: (e) => {
+      fiGrp(e, 'sierra', false);
+      fiGrp(e, 'trepano', true);
+    },
+    events: [
+      { t: 0.66, fn: taladra },
+      { t: 0.76, fn: taladra },
+    ],
+    cond: (e) => fase(e) === 2 && e.game.time - (e.data.trepT ?? -99) > 8,
+  },
+  // (el fuego) el cauterio al rojo: barre y pica, y donde da, prende la paja
+  cauterio: { name: 'cauterio', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 17, stDmg: 24, range: 2.9, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 3, cd: 0.8, events: [{ t: 0.76, fn: prende }], cond: (e) => fase(e) === 3 },
+  cauterioPica: { name: 'cauterioPica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 16, range: 3.4, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 2.2, cd: 0.7, events: [{ t: 0.62, fn: prende }], cond: (e) => fase(e) === 3 },
 };
 export const FI_ATTACKS = A;
 
@@ -657,7 +877,7 @@ export const FISICO_TYPE = {
   voice: 'fisico',
   blood: [0.4, 0.05, 0.04],
   biped: { scale: K, style: { strideBase: 1.0, strideK: 0.42, liftWalk: 0.08, bobWalk: 0.008, swayWalk: 0.012, rollWalk: 1.5, twistWalk: 3, chestTwistWalk: 2, lean: 2, leanRun: 8, armWalk: 0, armRun: 6 }, stance: 0.06 },
-  attacks: [A.barrido, A.pica, A.barridoCaza, A.picaCaza, A.gancho, A.esponja, A.cal],
+  attacks: [A.barrido, A.pica, A.barridoCaza, A.picaCaza, A.gancho, A.esponja, A.cal, A.sahumerio, A.llama, A.sierra, A.lanceta, A.trepano, A.cauterio, A.cauterioPica],
   // ve de lejos y huele de cerca (aunque estés a su espalda, tras una
   // esquina): por el pico
   perceive: (e, pl) => {
@@ -713,6 +933,42 @@ export const FISICO_TYPE = {
       if ((pl.mash || 0) - (e.data.mash0 || 0) >= 9) sueltaEsponja(e, true);
       else if (e.stT > 2.8) sueltaEsponja(e, false);
       return false;
+    },
+    // el trépano: te sujeta la cabeza y da vueltas a la barrena; forcejea o
+    // te hace el agujero
+    trepanando: (e, dt, pl) => {
+      e.vx = damp(e.vx, 0, 10, dt);
+      e.vz = damp(e.vz, 0, 10, dt);
+      if (pl.state !== 'grabbed' || pl.dead) {
+        e.state = 'chase';
+        e.stT = 0;
+        e.anim.stop(0.15);
+        fiGrp(e, 'trepano', false);
+        fiGrp(e, 'sierra', true);
+        return false;
+      }
+      const fx = Math.sin(e.yaw),
+        fz = Math.cos(e.yaw);
+      pl.pos.x = damp(pl.pos.x, e.pos.x + fx * 0.74, 12, dt);
+      pl.pos.z = damp(pl.pos.z, e.pos.z + fz * 0.74, 12, dt);
+      pl.yaw = Math.atan2(e.pos.x - pl.pos.x, e.pos.z - pl.pos.z);
+      // (la barrena: chirría y sangra)
+      e.data.drillT -= dt;
+      if (e.stT > 0.6 && e.data.drillT <= 0) {
+        e.data.drillT = 0.32;
+        e.game.audio && e.game.audio.play('ratchet', pl.pos);
+        e.game.fx.blood.emit(pl.pos.x, pl.pos.y + 1.75, pl.pos.z, 5, { speed: 1.4, up: 1.2 });
+        pl.receiveBite && pl.receiveBite(2);
+      }
+      if ((pl.mash || 0) - (e.data.mash0 || 0) >= 10) sueltaTrepano(e, true);
+      else if (e.stT > 3.0) sueltaTrepano(e, false);
+      return false;
+    },
+    // los momentos de la pelea (se quita la máscara, va al brasero):
+    // game/fisico_pelea.js
+    guion: (e, dt, pl) => {
+      const F = e.game.fisico;
+      return F ? F.pelea.guion(e, dt, pl) : false;
     },
     // va a un sitio (y al llegar, lo que diga el guion): data.goal
     camina: (e, dt, pl) => {
@@ -770,8 +1026,13 @@ export const FISICO_TYPE = {
   // (fuera de la pelea no muere: se retira; game/fisico.js)
   preHit: (e, dmg, poise) => {
     const F = e.game.fisico;
-    if (e.state === 'sedando') return { dmg: dmg * 0.5, poise: 0 };
+    if (e.state === 'sedando' || e.state === 'trepanando') return { dmg: dmg * 0.5, poise: 0 };
     return F ? F.preHit(e, dmg, poise) : null;
+  },
+  // vencido: no cae, se sienta en su mesa (game/fisico_pelea.js)
+  onDefeat: (e) => {
+    const F = e.game.fisico;
+    return F ? F.pelea.muere(e) : false;
   },
   onHit: (e, r, dmg) => {
     const F = e.game.fisico;
@@ -780,7 +1041,7 @@ export const FISICO_TYPE = {
   onReset: (e) => {
     e.data = {};
     for (const g of ['mascara', 'sombrero', 'vara']) fiGrp(e, g, true);
-    for (const g of ['esponja', 'campanilla', 'hierro']) fiGrp(e, g, false);
+    for (const g of ['esponja', 'campanilla', 'hierro', 'sierra', 'lanceta', 'trepano']) fiGrp(e, g, false);
     if (e.game.speech && e.P.who) e.game.speech.hush(e.P.who);
   },
   update: (e, dt, pl) => {

@@ -2768,6 +2768,14 @@ export class Audio {
         this.jingle(d, t, 0.2, 0.06 * k, 1.6);
         break;
       }
+      // la campanilla de mano del Físico: un toque claro, que se queda
+      // sonando
+      case 'campanilla': {
+        d = this.out(P, { gain: 0.85, verb: 0.55, life: 3.5 });
+        this.metal(d, t, rnd(1850, 1950), 0.09, 1.6, { ratios: [1, 2.02, 2.76, 4.2, 5.4] });
+        this.metal(d, t + 0.09, rnd(1850, 1950), 0.04, 1.0, { ratios: [1, 2.02, 2.76] });
+        break;
+      }
       // el cepo que salta: las quijadas que se cierran de golpe y el muelle
       // que se queda vibrando
       case 'cepo': {

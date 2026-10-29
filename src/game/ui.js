@@ -1095,6 +1095,12 @@ export class UI {
   }
   showHud(v) {
     $('hud').classList.toggle('hidden', !v);
+    if (v) $('hud').classList.remove('cine');
+  }
+  // En una escena: el HUD fuera, salvo los bocadillos (y los avisos).
+  cineHud(on) {
+    $('hud').classList.toggle('cine', on);
+    if (on) $('hud').classList.remove('hidden');
   }
 
   // Barra con marco de hierro, relleno sombreado y rastro del daño (y, con el

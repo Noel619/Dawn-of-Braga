@@ -527,6 +527,10 @@ function vecinos(L) {
     // en la punta del palomar (los del levante y el boquete del palomero)
     { type: 'cuervo', x: 41.75, y: 9.25, z: 54.5, yaw: -2.6, idle: 'perch', id: 'e_cuervo_aguador', guard: [33, 46, 50, 59] },
     { type: 'cuervo', x: 66.5, y: 17.8, z: 35.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [49.5, 40, 73, 59] },
+    // los que llama la campanilla en la pelea: esperan en el zaguán, fuera de
+    // escena (game/fisico_pelea.js)
+    { type: 'coronado', x: 58.4, y: 0, z: 44.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado1' },
+    { type: 'coronado', x: 59.4, y: 0, z: 45.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado2' },
     // y él: Mestre Clemente, el Físico (no está en ningún sitio: lo saca y lo
     // guarda game/fisico.js)
     { type: 'fisico', x: 54.6, y: 0, z: 39.4, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
