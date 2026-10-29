@@ -205,19 +205,28 @@ se va. Si mueres durante la huida, vuelves al último tramo; si sales a mitad, a
 empieza otra vez la huida.
 
 **El Callejón del Postigo y la Casa del Alemán.** Bajo la Torre del Postigo, un callejón de casas apiñadas lleva a
-la Casa del Alemán, la de Henrique, nieto de un espadero de Solingen que vino con los cruzados de Colonia. Tres
-demonios aporrean su puerta; Henrique, asomado a la ventana alta, reza y grita. Si acabas con ellos, te abre, y
-dentro (un zaguán, la sala con su chimenea y la mesa, la cocina, la despensa y, arriba, la alcoba) te avisa en un
-bocadillo sobre la cabeza de que vienen más: entran en tres oleadas reventando las contraventanas y saltando por
-las ventanas, y hay que defenderle (su barra de vida aparece arriba, en el centro; si cae él, se pierde la defensa y
-vuelve a empezar). Vencidas todas, te cuenta su historia y la de su mujer, Leonor, y te da martillo y clavos:
-con los tablones que hay por la casa y el patio se tapian las ventanas una a una para que su casa sea un lugar
-seguro. Hecho eso, te da la **espada de su abuelo**, una espada del Sacro Imperio forjada en Solingen (hace un 35 %
-más de daño que la espada del carcelero), y la llave del sótano: Leonor hizo un pacto con lo que él llama el
-diablo. Bajo la despensa, el sótano y un túnel bajan a su gruta, donde está **Leonor, la Dolorosa**: una mujer
+la Casa del Alemán, la de Henrique, nieto de un espadero de Solingen que vino con los cruzados de Colonia: una
+casa grande, de piedra abajo y de entramado arriba, como las de la tierra del padre. Esta noche le han reventado la
+puerta y la planta baja está infestada: tres criaturas aporrean la puerta de la escalera para subir a por él, otra
+roe al oficial muerto en el taller, otra husmea en la cocina y otra se ha quedado de rodillas ante la cuna vacía.
+Henrique, atrancado arriba, te llama desde la ventana de la sala alta. Muertas las de dentro, baja de verdad: cruza
+el sobrado, baja por su escalera (sube desde la sala, tras su puerta, por encima de la del sótano), le quita la
+tranca a la puerta, sale a la sala y cierra la de la calle con la barra de la fragua. Te avisa en un bocadillo
+sobre la cabeza de que vienen más: entran en tres oleadas reventando las contraventanas y saltando por las
+ventanas, y hay que defenderle (su barra de vida aparece arriba, en el centro; si cae él, se pierde la defensa y
+vuelve a empezar). Vencidas todas, te cuenta su historia y la de su mujer, Leonor, y te da martillo y clavos: con
+los tablones que hay por el callejón, el patio de la leña y el granero de arriba se tapian las ventanas una a una
+para que su casa sea un lugar seguro. Hecho eso, te lleva al hogar de la sala: en la repisa, entre dos velas y
+bajo el escudo del águila, está clavada de punta la **espada de su padre**, una espada del Sacro Imperio forjada en
+Solingen, con + IN NOMINE DOMINI + en letras de latón en el vaceo y, en la otra cara, el nombre del que la forjó
+(hace un 35 % más de daño que la espada del carcelero). Su padre la clavó ahí el día que colgó la cruz; la sacas
+tú. Luego te da la llave del sótano: Leonor hizo un pacto con lo que él llama el diablo. Arriba, en el sobrado, se
+anda por la sala alta (su refugio, con el jergón junto a la ventana), la cuchillería, la alcoba de su padre (la
+capa blanca de cruzado colgada de un clavo, el yelmo sobre el arca, el altarcillo), el cuarto de los oficiales y
+el granero. Bajo la despensa, el sótano y un túnel bajan a su gruta, donde está **Leonor, la Dolorosa**: una mujer
 convertida en una bestia enorme, hinchada de pus, que llora y acuna un hatillo. Escupe pus que quema en el suelo,
 barre con los brazos, se arrastra para abrazarte, aúlla y, a media vida, revienta. Al vencerla deja su última
-lágrima (una ampolla más), y Henrique, si vuelves, la llora.
+lágrima (una ampolla más), y Henrique, si vuelves, la llora ante la repisa vacía.
 
 **La casa tapiada, el pasadizo del Soto y la casa del tonelero.** En la Calle del Soto, la herbolería de Joana
 tiene la puerta y las ventanas clavadas con tablones, pero entre tabla y tabla quedan rendijas y dentro hay luz:
@@ -733,8 +742,8 @@ src/
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
                         level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
-                        atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán, su
-                        sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
+                        atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
                         y el pozo) de la que salen muros, suelos, navegación y mapa; sanctum.js: lo que hay tras
@@ -772,8 +781,8 @@ src/
                         weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
                         y la de capas, con escaleras y pisos), interfaz, iconos, guardado, textos y cinemáticas
-                        (speech.js: los bocadillos de diálogo; house.js: el guion de la Casa del Alemán, sus oleadas y
-                        las ventanas; souto.js: el pasadizo del Soto (el tablón y el equilibrio) y Miguel (lo que
+                        (speech.js: los bocadillos de diálogo; house.js: el guion de la Casa del Alemán (la bajada de Henrique, sus
+                        oleadas, las ventanas y la espada del hogar); souto.js: el pasadizo del Soto (el tablón y el equilibrio) y Miguel (lo que
                         dice, cuándo se ahorca); crypt.js: la Puerta del Dios Ignoto, las pilas, el incensario, las
                         rejas y el arca del relicario; relics.js: los objetos benditos; ossuaries.js: los puzles de
                         los cuatro osarios y su vista de cerca; paio.js: el guion de Dom Paio; intro/: las
