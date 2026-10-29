@@ -2747,6 +2747,13 @@ export class Audio {
         this.duck(0.25, 0.4);
         break;
       }
+      // un puñado de cal viva a los ojos: el soplo y el polvo que se abre
+      case 'calViva': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2 });
+        this.noise(d, t, 0.35, { type: 'lowpass', f0: 1800, f1: 600, gain: 0.35, a: 0.01, buf: this.pink });
+        this.noise(d, t + 0.05, 0.7, { type: 'highpass', f0: 3200, f1: 5200, gain: 0.12, a: 0.06 });
+        break;
+      }
       // el martillo en la cabeza del clavo (tres golpes y el último, a fondo)
       case 'hammer': {
         d = this.out(P, { gain: 0.85, verb: 0.35, life: 2.5 });
@@ -3067,6 +3074,29 @@ export class Audio {
           this.bodyFall(d, t + 1.4, 1.5);
         } else if (kind === 'idle') this.whisper(d, t, 1.8, 0.1);
         break;
+      // el Físico: la voz baja tras la máscara (un «hm»), el resoplido por
+      // el pico al golpear (hueco, como un silbido), la respiración entre las
+      // hierbas del pico
+      case 'fisico': {
+        const beak = (tt, dur, g0, f) => this.noise(d, tt, dur, { f0: f ?? 950, f1: (f ?? 950) * 0.7, q: 5, gain: g0, a: 0.04, buf: this.pink });
+        if (kind === 'alert') {
+          V({ dur: 0.7, f0: 96 * pv, f1: 88 * pv, vowel: 'u', v1: 'o', gain: 0.16, vib: 3, vibD: 6, breath: 0.6, a: 0.08, rasp: 0.2 });
+          beak(t + 0.6, 0.6, 0.06, 800);
+        } else if (kind === 'attack') {
+          beak(t, 0.32, 0.16, 1100);
+          V({ dur: 0.22, f0: 110 * pv, f1: 92, vowel: 'u', gain: 0.1, breath: 0.8, a: 0.01, rasp: 0.2 });
+        } else if (kind === 'hurt') {
+          V({ dur: 0.34, f0: 130 * pv, f1: 96, vowel: 'u', v1: 'o', gain: 0.18, breath: 0.6, a: 0.01, rasp: 0.35 });
+          beak(t + 0.05, 0.25, 0.08, 900);
+        } else if (kind === 'death') {
+          V({ dur: 2.2, f0: 100 * pv, f1: 60, vowel: 'o', v1: 'u', gain: 0.16, vib: 3, vibD: 10, breath: 0.8, a: 0.1, rasp: 0.3 });
+          beak(t + 0.4, 2.0, 0.07, 700);
+        } else if (kind === 'idle') {
+          beak(t, 0.9, 0.035, 760);
+          beak(t + 1.3, 1.1, 0.03, 680);
+        }
+        break;
+      }
       // el Coronado: gime por la nariz tras la correa de la boca, y la corona
       // suena con cada cosa que hace (8 cascabeles, cada uno con su nota)
       case 'coronado': {
@@ -3246,6 +3276,17 @@ export class Audio {
     else if (v === 'mourner') this.noise(d, t, 0.3, { f0: 600, f1: 300, q: 0.8, gain: 0.05, a: 0.1, buf: this.pink });
     // el aletazo del cuervo cebado: el aire que mueve
     else if (v === 'cuervo') this.noise(d, t, 0.22, { type: 'lowpass', f0: 700, f1: 260, gain: 0.32, a: 0.05, buf: this.pink });
+    // el Físico: la bota en la losa y, un paso de cada dos, la contera de la
+    // vara
+    else if (v === 'fisico') {
+      this.tone(d, t, 0.1, { f0: 92, f1: 50, gain: 0.32 });
+      this.noise(d, t, 0.05, { type: 'lowpass', f0: 900, gain: 0.22, a: 0.002, buf: this.brown, rate: 4 });
+      e._fs = !e._fs;
+      if (e._fs) {
+        this.metal(d, t + 0.05, rnd(1500, 1800), 0.025, 0.14, { ratios: [1, 2.4] });
+        this.tone(d, t + 0.05, 0.06, { f0: 260, f1: 140, gain: 0.12 });
+      }
+    }
     // el Coronado: el pie descalzo en la losa, y los cascabeles
     else if (v === 'coronado') {
       this.noise(d, t, 0.06, { type: 'lowpass', f0: 520, gain: 0.28, a: 0.002, buf: this.brown, rate: 4 });

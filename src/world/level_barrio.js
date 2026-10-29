@@ -525,7 +525,10 @@ function vecinos(L) {
     // los cuervos: en la cumbrera del aguador (guarda los tejados del sur) y
     // en la punta del palomar (los del levante y el boquete del palomero)
     { type: 'cuervo', x: 41.75, y: 9.25, z: 54.5, yaw: -2.6, idle: 'perch', id: 'e_cuervo_aguador', guard: [33, 46, 50, 59] },
-    { type: 'cuervo', x: 66.5, y: 17.8, z: 35.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [49.5, 40, 73, 59] }
+    { type: 'cuervo', x: 66.5, y: 17.8, z: 35.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [49.5, 40, 73, 59] },
+    // y él: Mestre Clemente, el Físico (no está en ningún sitio: lo saca y lo
+    // guarda game/fisico.js)
+    { type: 'fisico', x: 54.6, y: 0, z: 39.4, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
   );
 }
 
@@ -551,8 +554,8 @@ function zonas(L) {
     { id: 'zapatero', rects: [r(BR.zap, -1, 7.2)], atmo: 'interior', room: 'zap0' },
     { id: 'viuda', rects: [r(BR.viu, -1, 7.2)], atmo: 'interior', room: 'viu0' },
     { id: 'quemada', rects: [r(BR.s3, -1, 7.2)], atmo: 'interior', room: 's30' },
-    { id: 'tintoreria', rects: [r(BR.tin, -1, 11)], atmo: 'interior', room: 'tin0' },
-    { id: 'inocentes', rects: [r(BR.ino, -1, 11)], atmo: 'interior', room: 'ino0' },
+    { id: 'tintoreria_pellejeros', rects: [r(BR.tin, -1, 11)], atmo: 'interior', room: 'tin0' },
+    { id: 'casa_inocentes', rects: [r(BR.ino, -1, 11)], atmo: 'interior', room: 'ino0' },
     { id: 'palomero', rects: [r(BR.pal, -1, 14)], atmo: 'interior', room: 'pal2' },
     { id: 'cordeleria', rects: [r(BR.cor, -1, 8), r(BR.cor2, -1, 5)], atmo: 'interior', room: 'cor0' }
   );
@@ -564,8 +567,8 @@ function zonas(L) {
     ['zapatero', BR.zap],
     ['viuda', BR.viu],
     ['quemada', BR.s3],
-    ['tintoreria', BR.tin],
-    ['inocentes', BR.ino],
+    ['tintoreria_pellejeros', BR.tin],
+    ['casa_inocentes', BR.ino],
     ['cordeleria', BR.cor],
     ['cordeleria', BR.cor2],
   ])

@@ -156,15 +156,18 @@ export function escalera(ctx, o) {
     if (along === 'x') wb.box('timber', -len / 2, -0.17, -0.035, len / 2, 0.17, 0.035, { ao: false, room });
     else wb.box('timber', -0.035, -0.17, -len / 2, 0.035, 0.17, len / 2, { ao: false, room });
     wb.pop();
-    // el pasamanos, del poste de abajo al de arriba
-    const k = Math.min(n, o.railTo ?? n) - 1;
-    const ua2 = run * 0.5,
+    // el pasamanos, del poste de abajo al de arriba: empieza dos peldaños
+    // arriba y acaba dos antes del final (al pie y en lo alto se entra y se
+    // sale también de lado: muchas arrancan pegadas al muro)
+    const k0 = o.railFrom ?? 2;
+    const k = Math.min(n, o.railTo ?? n - 2) - 1;
+    const ua2 = run * (k0 + 0.5),
       ub2 = run * (k + 0.5);
-    const ya = y0 + rise + 0.92,
+    const ya = y0 + rise * (k0 + 1) + 0.92,
       yb = y0 + rise * (k + 1) + 0.92;
     const pa = P0(ua2, 0, 0.07),
       pb = P0(ub2, 0, 0.07);
-    wb.box('wooddark', pa.x - 0.045, y0, pa.z - 0.045, pa.x + 0.045, ya + 0.06, pa.z + 0.045, { ao: false, room });
+    wb.box('wooddark', pa.x - 0.045, y0 + rise * k0, pa.z - 0.045, pa.x + 0.045, ya + 0.06, pa.z + 0.045, { ao: false, room });
     wb.box('wooddark', pb.x - 0.045, y0 + rise * k, pb.z - 0.045, pb.x + 0.045, yb + 0.06, pb.z + 0.045, { ao: false, room });
     const rl = Math.hypot(ub2 - ua2, yb - ya);
     wb.push();
@@ -188,7 +191,7 @@ export function escalera(ctx, o) {
       hi = Math.max(pa.x, pb.x),
       lz = Math.min(pa.z, pb.z),
       hz = Math.max(pa.z, pb.z);
-    ctx.col.add(lo - 0.05, y0, lz - 0.05, hi + 0.05, yb, hz + 0.05).noSight = true;
+    ctx.col.add(lo - 0.05, y0 + rise * k0, lz - 0.05, hi + 0.05, yb, hz + 0.05).noSight = true;
   }
   wb.setRoom(null);
   return hole;

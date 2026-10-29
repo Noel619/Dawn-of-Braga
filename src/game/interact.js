@@ -192,6 +192,9 @@ function barricadeMesh(w, h, props = 0) {
   return g;
 }
 
+// (las puertas del barrio de los Pellejeros: el Físico pasa por ellas)
+const enBarrio = (it) => it.x > 13.5 && it.x < 73 && it.z > 2 && it.z < 59 && it.y < 2;
+
 function boardsOverDoor(w, h) {
   const g = new THREE.Group();
   const wood = objMat('planks');
@@ -1114,7 +1117,12 @@ export class Interactables {
       if (it.box) it.box.enabled = true;
       for (const b of it.leafBoxes || []) b.enabled = false;
       if (it.lock && it.lock.type === 'lever') this.refreshDoorNav(it);
-      if (it.boards) it.boards.visible = true;
+      // (las que clavó el Físico vuelven a ser como eran)
+      if (it.tapiada) {
+        it.tapiada = false;
+        it.lock = it.lock0;
+      }
+      if (it.boards) it.boards.visible = it.lock.type === 'boards';
       if (it.mat === 'barricade') it.obj.visible = true;
       this.poseDoor(it, 0);
     } else if (it.kind === 'item') {
@@ -1152,6 +1160,9 @@ export class Interactables {
     if (it.box) it.box.enabled = false;
     for (const b of it.leafBoxes || []) b.enabled = true;
     it.target = 1;
+    // (en el barrio de los Pellejeros, el Físico entra por las puertas que
+    // abres: el paso, a su red)
+    if (it.kind === 'door' && enBarrio(it)) this.refreshDoorNav(it);
     if (instant) {
       it.open = 1;
       this.poseDoor(it, 1);
@@ -1169,6 +1180,41 @@ export class Interactables {
     if (it.box) it.box.enabled = true;
     for (const b of it.leafBoxes || []) b.enabled = false;
     delete this.game.flags['door:' + it.id];
+    if (enBarrio(it)) this.refreshDoorNav(it);
+  }
+
+  // La cuarentena del Físico: cierra una puerta y la clava por fuera, por el
+  // lado side (+1 / -1 a lo largo de su normal, en el mundo), con su cruz de
+  // cal. Desde ese lado se arranca con la palanca; desde el otro, no se abre.
+  tapiar(it, side) {
+    const g = this.game;
+    if (it.tapiada) return;
+    it.tapiada = true;
+    it.lock0 = it.lock0 || it.lock;
+    it.lock = { type: 'boards', side, front: 'tapiadaDentro', msg: 'tapiadaArranca', shut: 'tapiadaFuera' };
+    if (!it.boards) {
+      it.boards = boardsOverDoor(it.w, it.h);
+      // (eje 'x': +z local = +z del mundo; eje 'z': +z local = -x del mundo)
+      const ls = (it.axis === 'z' ? -1 : 1) * side;
+      it.boards.position.x = ls > 0 ? -it.w / 2 : it.w / 2;
+      if (ls < 0) it.boards.rotation.y = Math.PI;
+      const cal = objMat('plaster');
+      const v = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.15, 0.02), cal);
+      v.position.set(it.w / 2, 1.35, 0.15);
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.1, 0.02), cal);
+      h.position.set(it.w / 2, 1.62, 0.15);
+      it.boards.add(v, h);
+      it.obj.add(it.boards);
+      if (it.lit) this.bakeLight(it);
+    }
+    it.boards.visible = true;
+    it.done = false;
+    it.target = 0;
+    it.closing = 1;
+    if (it.box) it.box.enabled = true;
+    for (const b of it.leafBoxes || []) b.enabled = false;
+    delete g.flags['door:' + it.id];
+    this.refreshDoorNav(it);
   }
 
   clearFog(it) {

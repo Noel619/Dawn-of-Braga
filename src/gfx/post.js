@@ -61,6 +61,7 @@ uniform vec3 uFogColor; uniform float uVol; uniform float uVolY; uniform float u
 uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
 uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness, uBars;
+uniform float uSleep, uBlind;
 uniform vec3 uFadeColor, uFlashColor;
 varying vec2 vUv;
 ${NOISE}
@@ -133,6 +134,19 @@ void main(){
   // grano de película
   float gr = h13(vec3(gl_FragCoord.xy, floor(uTime * 24.0))) - 0.5;
   col += gr * uGain.x * uGrain;
+  // el sueño del beleño (la esponja del Físico): la vista amarillea, se
+  // apaga por los bordes y los párpados se cierran de arriba y de abajo
+  if (uSleep > 0.0) {
+    col = mix(col, col * vec3(1.06, 0.94, 0.58), uSleep * 0.7);
+    col *= 1.0 - uSleep * 0.55 * smoothstep(0.15, 0.7, length(c));
+    float lid = smoothstep(0.5 - 0.5 * uSleep, 0.5 - 0.5 * uSleep + 0.1, abs(vUv.y - 0.5) + 0.03 * sin(vUv.x * 9.0 + uTime));
+    col *= 1.0 - lid;
+  }
+  // la cal en los ojos: todo blanco, que se va yendo
+  if (uBlind > 0.0) {
+    float bn = h13(vec3(floor(gl_FragCoord.xy * 0.25), floor(uTime * 10.0)));
+    col = mix(col, vec3(0.96, 0.95, 0.9) - bn * 0.08, clamp(uBlind, 0.0, 1.0) * 0.94);
+  }
   // destello y fundido
   col = mix(col, uFlashColor, uFlash);
   col = mix(uFadeColor, col, uFade);
@@ -216,6 +230,8 @@ export class PostPipeline {
       uWarp: { value: 0 },
       uDesat: { value: 0 },
       uBars: { value: 0 },
+      uSleep: { value: 0 },
+      uBlind: { value: 0 },
     };
     this.composite = fsMat(COMPOSITE_FS, this.U);
     this.blit = fsMat(BLIT_FS, {

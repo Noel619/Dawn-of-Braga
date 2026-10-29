@@ -45,6 +45,7 @@ import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
+import { Fisico } from './fisico.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
 import { RELIC_IDS } from './relics.js';
@@ -255,6 +256,8 @@ export class Game {
     this.souto = new SoutoQuest(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
     this.cornisas = new Cornisas(this);
+    // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
+    this.fisico = new Fisico(this);
     // la segunda forma del Empalado y la huida por la muralla norte
     this.qte = new QTE(this);
     this.chase = new BeastChase(this);
@@ -448,6 +451,7 @@ export class Game {
     this.paio.applyFlags();
     this.ossuaries.applyFlags();
     this.souto.applyFlags();
+    this.fisico.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -527,6 +531,7 @@ export class Game {
     this.paio.script = null;
     this.souto.reset();
     this.cornisas.reset();
+    this.fisico.reset();
     this.failing = false;
     this.introCam = false;
     this.atmo.override = null;
@@ -1037,6 +1042,7 @@ export class Game {
   // por el oído (T.hearsNoise) y van a ver qué ha sido; y el Físico, que lo
   // oye todo.
   noise(x, y, z, r) {
+    this.fisico && this.fisico.alarma(x, y, z, 'ruido');
     for (const e of this.enemies) {
       if (e.dead || e.aware || e.scripted || !e.T.hearsNoise) continue;
       if (Math.abs(e.pos.y - y) > 3 || Math.hypot(e.pos.x - x, e.pos.z - z) > r) continue;
@@ -1172,6 +1178,7 @@ export class Game {
     this.ossuaries.onRespawn();
     this.souto.onRespawn();
     this.cornisas.onRespawn();
+    this.fisico.onRespawn();
     const b = this.activeBoss;
     this.activeBoss = null;
     this.atmo.override = null;
@@ -1854,6 +1861,7 @@ export class Game {
         this.ossuaries.update(dt);
         this.souto.update(dt);
         this.cornisas.update(dt);
+        this.fisico.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:
       // en pantallas de 120-144 Hz volaban al doble de velocidad)

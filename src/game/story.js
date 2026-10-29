@@ -755,6 +755,52 @@ export const DIALOG = {
   leonorDeath: ['...Henrique...'],
   // en la cuna, antes de la pelea: la nana (se oye desde el agujero)
   leonorLullaby: ['Duérmete, niño, duérmete ya...', 'Ea, ea, ea... que tu madre está aquí.', 'Mi niño no llora. Mi niño duerme.', 'Siete puñales, Señora... siete...'],
+
+  // Mestre Clemente, el Físico de los Inocentes: habla bajo, despacio, con
+  // una cortesía perfecta; piensa en voz alta. Ve la peste en los sanos.
+  // (la cortina, al entrar en el barrio)
+  fisicoCortina: 'Ah. Uno sano.',
+  // al fondo de la calleja, la primera vez
+  fisicoCalleja: ['Bienvenido al barrio. Aquí ya no enferma nadie.', 'No corras. Todavía no.'],
+  // viene a mirar (antes de la caza) y se va si te acercas
+  fisicoVigila: ['Te miro el color desde aquí. Malo. Muy malo.', 'Andas como andan los que todavía esperan algo.', 'No te acerques. Aún no.'],
+  fisicoTodavia: ['Todavía no. Aún no estás maduro.', 'Paciencia. Los dos.'],
+  // cuarentena: clava una puerta
+  fisicoTapia: ['Cuarentena. Es por tu bien.', 'Esta casa ya está enferma. La cierro.', 'Un clavo por cada uno de los que tosían aquí.'],
+  fisicoViudaVentana: ['Doña Inês tampoco quería abrirme. Ahora duerme tranquila.', 'Desde esa ventana ella miraba la calle. Esperaba. Eso fue lo que la enfermó.'],
+  // la tintorería: entra detrás de ti (empieza la caza)
+  fisicoTintoreria: ['Ah. La llave de la viuda. Qué casa más triste, ésta.', 'Hueles a añil y a miedo. Las dos cosas manchan.'],
+  // te ve, cazando
+  fisicoVe: [
+    'Ah. Ahí estás.',
+    'No tengas miedo. El miedo es el primer síntoma.',
+    'Qué color tan sano. Qué pena.',
+    'Te huelo desde aquí: a sudor, a prisa, a mañana.',
+    'Toda fiebre es una pregunta. La tuya no deja de preguntar.',
+  ],
+  // de cerca, peleando
+  fisicoCerca: ['Quieto. El que se mueve se cura peor.', 'Así. Así. Que salga.', 'No me odies. Nadie odia al que le quita la fiebre.', 'Tienes el pulso de un pájaro.'],
+  // te busca
+  fisicoBusca: [
+    'Sal. No voy a hacerte daño: voy a curarte, que es más difícil.',
+    'Toda la ciudad duerme, y tú despierto. ¿No ves que estás enfermo?',
+    'Escondido, el pulso se te oye mejor.',
+    'Los de la carne ya no se esconden. Se han curado de esconderse.',
+    'Por aquí ha pasado alguien sano. Lo deja todo oliendo a mañana.',
+  ],
+  // desde la calle, mientras vas por los tejados
+  fisicoTejado: [
+    'Por arriba, como la peste: de casa en casa, sin tocar el suelo.',
+    'Ya bajarás. Todos bajan.',
+    'Míralo desde ahí arriba, el barrio. Qué quieto. Qué sano.',
+    'Las tejas resbalan. La caída también cura, pero mal.',
+  ],
+  // el gancho, la esponja
+  fisicoGancho: ['Ven.', 'Aquí, conmigo.'],
+  fisicoEsponja: ['Respira. Hondo.', 'Shh. Es beleño. Pesa en los párpados, ¿verdad?'],
+  fisicoSuelta: ['Qué fuerza. Así es la peste al principio: fuerte.', 'Bien. Eso también es un síntoma.'],
+  // herido: se retira (con la cal)
+  fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
 };
 
 export const MSG = {
@@ -836,6 +882,14 @@ export const MSG = {
   equilibrio: 'El tablón se cimbrea bajo tus pies. Si te inclinas, échate hacia el otro lado.',
   caida: 'Pierdes el equilibrio.',
   equilibrioViga: 'La viga apenas tiene un palmo de ancho. Si el cuerpo se te va hacia un lado, échate hacia el otro.',
+  // el Físico: su esponja, su cal, su cuarentena
+  forcejea: '¡Forcejea!',
+  calOjos: 'La cal en los ojos: no ves nada.',
+  tapiada: 'Al otro lado, alguien termina de clavar la puerta.',
+  tapiadaDentro: 'La puerta no cede: la han clavado por fuera. Por la rendija huele a cal.',
+  tapiadaArranca: 'Arrancas los tablones del Físico. La cruz de cal se deshace en polvo.',
+  tapiadaFuera: 'Clavada con tablas, y con la cruz de cal encima. Con algo para hacer palanca...',
+  inocentesTranca: 'Atrancada por dentro. Sobre la puerta cuelga la vara con la serpiente: la casa del físico.',
   catarina: 'Una mujer joven, tapada con una sábana empapada de sangre. Alguien le ha cruzado las manos sobre el pecho y le ha puesto una vela.',
   doorMiguel: 'Está atrancada desde el otro lado. Dentro, muy bajo, alguien llora.',
   // la Puerta del Dios Ignoto (game/crypt.js)
