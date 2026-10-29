@@ -123,6 +123,10 @@ function calles(ctx, S, L) {
   // las tapias entre patio y patio
   tapia(ctx, BR.viu.x0 - 0.2, 55, BR.viu.x0 + 0.2, 58, 2.6);
   tapia(ctx, BR.s3.x0 - 0.2, 55, BR.s3.x0 + 0.2, 58, 2.2);
+  // contra la de la viuda y la quemada, las cajas de la cerera apiladas en
+  // escalera (por ahí se sale cuando el Físico te clava la puerta de la
+  // calle): del patio a lo alto de la tapia, y abajo, al de la quemada
+  cajasTapia(ctx, BR.s3.x0 - 0.2, 56.3);
 }
 
 // ------------------------------------------------------------ la calleja
@@ -642,6 +646,19 @@ function adorno(ctx) {
   chimenea(ctx, 68.2, 26.0, 7.5, 9.4, 0.35);
   chimenea(ctx, 42.6, 17.0, 7.9, 9.6, 0.35);
   chimenea(ctx, 53.8, 35.4, 9.5, 11.3, 0.4, { smoke: true });
+}
+
+// Cajas en escalera contra una tapia (de cara al oeste, hasta xt): cuatro
+// gradas de 0,45 m, que se suben andando; la última, a medio metro de lo alto
+// de la tapia.
+function cajasTapia(ctx, xt, z0) {
+  const s = 0.45;
+  const cols = [1, 2, 3, 4, 4];
+  cols.forEach((n, i) => {
+    const x = xt - (cols.length - i - 0.5) * s;
+    for (let k = 0; k < n; k++) for (let j = 0; j < 3; j++) P.crate(ctx, x, k * s, z0 + j * s, s - 0.01, (i * 7 + k * 3 + j) % 2 ? 0.04 : -0.03, { collide: false });
+    ctx.col.add(x - s / 2, 0, z0 - s / 2, x + s / 2, n * s, z0 + 2.5 * s);
+  });
 }
 
 // La cruz de piedra de la plazuela: dos gradas, el fuste y la cruz.
