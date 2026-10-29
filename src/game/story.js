@@ -111,7 +111,7 @@ export const ITEMS = {
   // el barrio de los Pellejeros
   llave_tinte: {
     name: 'Llave de la tintorería',
-    desc: 'Llave de latón, verde de cardenillo, con un cordón teñido de añil. Estaba en el arcón de la viuda, envuelta en un paño: «La del tinte, por si vuelve Duarte». Duarte no volvió.',
+    desc: 'Llave de latón, verde de cardenillo, con un cordón teñido de añil. Estaba en el arcón de la viuda, envuelta en un paño: «La del tinte, por si vuelve Rodrigo». Rodrigo no volvió.',
     icon: 'key',
     key: true,
   },
@@ -197,6 +197,99 @@ export const ITEMS = {
 };
 
 export const NOTES = {
+  // ---- el barrio de los Pellejeros
+  tratado1: {
+    title: 'De peste sanorum (I)',
+    text: `(Cuadernillo cosido con hilo encerado. Letra menuda, pareja, sin una tachadura.)
+
+DE LA PESTE DE LOS SANOS. Libro primero, de los signos.
+
+Veinte años guardé a los inocentes de Braga y no curé a ninguno. La noche de la campana se curaron todos a la vez, sin mí. Se arrodillaron; se les fue el miedo; se quedaron quietos como se quedan los árboles. Yo no supe darles eso.
+
+Anoto los signos, como enseña Hipócrates: el calor de la piel; el pulso ligero, que corre como un perro suelto; el sudor; los ojos abiertos de par en par; el no dormir; el mirar a todas partes; el huir; el esperar.
+
+Ninguno de mis inocentes tiene ya ninguno de ellos.
+
+Todos los tienen los sanos.
+
+Luego la carne no es la enfermedad. La carne es la crisis, y la crisis es la cura. Los apestados son los otros: los que corren de casa en casa, los que llaman a las puertas, los que todavía quieren algo.
+
+Sólo el médico puede ver esto, porque sólo el médico mira el pulso y no la cara.`,
+  },
+  tratado2: {
+    title: 'De peste sanorum (II)',
+    text: `Libro segundo, del método.
+
+Quae medicamenta non sanant, ferrum sanat; quae ferrum non sanat, ignis sanat; quae vero ignis non sanat, ea insanabilia existimare oportet.
+
+Primero, la esponja: adormidera, mandrágora, beleño y zumo de cicuta, embebidos y secados al sol; se mojan en agua tibia y se ponen sobre la boca y la nariz. El enfermo deja de resistirse, que es lo que más le enferma.
+
+Después, el hierro. Con el trépano se abre una corona en el hueso de la frente, por donde sale el vapor caliente de la peste, y con él la piedra (la piedra de querer, la que hace que uno espere). A algunos se la encuentro. A otros no: la llevan más hondo.
+
+Después, el fuego, que cierra lo que el hierro abrió.
+
+La herida no debe cerrarse del todo: el alma tiene que respirar. Para eso, la corona de hierro, atornillada al hueso. De cada varilla, un cascabel: el que lleva cascabel no se esconde, y yo sé siempre dónde está mi rebaño.
+
+Me la puse yo el primero. No soy de los que mandan beber lo que no beben.`,
+  },
+  historia: {
+    title: 'Historia clínica (sin nombre)',
+    text: `(Una hoja suelta, encima de las demás, con la tinta aún brillante.)
+
+Varón. Edad, la de la fuerza. Entró por el portón de la calleja después de la campana, arrancando con hierro mis tablas de la cuarentena.
+
+No se arrodilló. Oyó la campana como la oyeron todos, y no se arrodilló.
+
+Signos: todos. El pulso, de pájaro; los ojos, que no paran; corre; lleva armas; mira las ventanas. Duerme poco o nada. Espera algo; no sabe qué, pero lo espera con todo el cuerpo, que es la peor manera.
+
+Es el caso más grave que he visto. Lleva la peste de la ciudad entera, porque es el último que la lleva.
+
+Pronóstico: curable por el hierro. Si no, por el fuego.
+
+Nota: no odiarle. El odio también es un síntoma, y yo no estoy enfermo.`,
+  },
+  zapatero: {
+    title: 'Libro de cuentas de maese Afonso',
+    text: `(Entre las cuentas de los zapatos, letra torcida, cada vez más grande.)
+
+Vino el físico, el de los locos de la plazuela, con su máscara de pájaro. A mi Constança ni la miró: «ésa ya está curada», dijo, y ella arriba, que ya no era ella.
+
+Al chico le tomó el pulso. Le miró los ojos con un vidrio. Dijo que era el caso más claro que había visto en su vida, que daba gusto verlo de tan claro, y que se lo llevaba para curarlo.
+
+Me lo devolvió a los tres días, con la corona de hierro atornillada en la frente y un ojo cosido. Dijo que ya no tendría miedo. Es verdad: no tiene.
+
+Lo até en su cuarto con las correas de cortar suela. Le pongo la cena todas las noches. Se la come, despacio, y me mira con el ojo que le queda, y cuando le hablo mueve la cabeza para que suenen los cascabeles.
+
+Esta noche le he puesto dos cuencos. Me voy a sentar con él.`,
+  },
+  tintorero: {
+    title: 'Aviso de maese Rodrigo, tintorero',
+    text: `(Clavado con una lezna en la mesa de doblar, escrito con añil.)
+
+Al que entre:
+
+Abajo, entre las tinas, el físico ha tendido una cuerda con campanillas, a la altura de la espinilla. Si suena, viene. Viene siempre. No sé cómo lo oye desde su casa, pero lo oye.
+
+No sale de día. De noche anda por la calle con su vara, mirando las ventanas, y habla solo, muy bajo, muy amable. Clava las puertas de los que se esconden y les pinta una cruz de cal. A los Gomes los quemó dentro de su casa porque no le abrieron.
+
+Por arriba se sale. En el secadero está la puerta del pescante: da al tejado de al lado, y por los tejados no te sigue. Te mira desde abajo, eso sí. No mires tú.
+
+Me voy por ahí esta noche. Si te encuentras a Inês, la cerera, dile que me fui por los tejados, que ella tiene la otra llave.`,
+  },
+  cordelero: {
+    title: 'Lo que dejó escrito el cordelero',
+    text: `(En una tabla del mostrador, con un clavo, las letras hondas.)
+
+La puerta de la calle, atrancada. Fuera, en los Pelames, los soldados han hecho una barricada y la han apuntalado por su lado: no salimos nosotros, no entran ellos.
+
+Por dentro, el físico. Me compró soga buena, de cáñamo de tres cabos, mucha. Para las camillas, dijo. Para las correas. Me pagó en plata y me preguntó si dormía bien.
+
+Le dije que sí, y era mentira, y lo supo. Me miró el pulso desde la puerta, sin tocarme.
+
+Sigo torciendo. Mientras se tuerce no se piensa, y si no se piensa no tengo los signos. La rueda da vueltas y yo con ella.
+
+Si alguien viene por detrás, por el almacén, la tienda está abajo. Se baja por la escalera del fondo del obrador. La tranca de la calle se levanta fácil: no la puse para que no se saliera nadie.`,
+  },
   animas: {
     title: 'Cuaderno del sacristán',
     text: `Día de Ánimas. Recogido el cepillo del osario: nada. Ya no baja nadie.
@@ -849,6 +942,10 @@ export const MSG = {
   barred: 'Está atrancada desde el otro lado.',
   boarded: 'La puerta está cegada con tablones clavados. Necesitas algo para arrancarlos.',
   barricadaFrente: 'La barricada no se mueve: está clavada y apuntalada desde el otro lado. Por aquí no se pasa.',
+  cordeleriaTranca: 'Atrancada por el otro lado. Al otro lado, la tienda del cordelero.',
+  portonCerrado: 'La boca de la calleja, cerrada con tablas clavadas por dentro. En las tablas, una cruz de cal y un cartel: CVARENTENA. Detrás, ni un ruido. Con algo de hierro se arrancarían.',
+  portonArranca: 'Metes la palanca entre las tablas y tiras. Saltan los clavos, y el portón de la cuarentena se viene abajo. Huele a cal y a vinagre.',
+  portonDentro: 'Clavado por fuera. Desde aquí no se mueve.',
   barricadaCae: 'Haces palanca bajo los puntales y los arrancas uno a uno. La barricada se viene abajo.',
   barricadaPuntales: 'Los puntales están clavados al suelo. Sin algo de hierro no se arrancan.',
   velatorioShut: 'La puerta no cede: la han clavado por dentro. Con algo de hierro se podría hacer palanca.',

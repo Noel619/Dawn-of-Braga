@@ -34,6 +34,8 @@ import { casa, tapia, rotulo, piel, V, LIME } from './kit_casa.js';
 import { zapatero, viuda, quemada, tintoreria } from './barrio_casas.js';
 import { casaInocentes, patioInocentes } from './inocentes.js';
 import { palomero, vigaCalleja, tejadoQuemado, chimenea } from './barrio_tejados.js';
+import { cordeleriaDentro } from './cordeleria.js';
+import { horma, palo } from './barrio_atrezo.js';
 
 // las plantas: la baja (de 0 a 3,8), la primera (su suelo, a 4,05; su techo,
 // a 7) y la de encima (a 7,25)
@@ -93,6 +95,8 @@ export function buildBarrio(ctx, S, L) {
   plazuela(ctx, S, L);
   levante(ctx, S, L);
   cordeleria(ctx, S, L);
+  porton(L);
+  adorno(ctx);
   vecinos(L);
   trampas(L);
   zonas(L);
@@ -471,7 +475,7 @@ function levante(ctx, S, L) {
 // ------------------------------------------------------------ la cordelería
 function cordeleria(ctx, S, L) {
   const { cor, cor2 } = BR;
-  casa(ctx, S, L, {
+  const hCor = casa(ctx, S, L, {
     id: 'cor',
     ...cor,
     // (de muros gruesos: el alero de la capilla se mete en el del este)
@@ -489,20 +493,38 @@ function cordeleria(ctx, S, L) {
       { side: 'w', lv: 0, at: 5.0, w: 0.8, sill: 1.3, h: 0.9, bars: true },
       { side: 'e', lv: 0, at: 4.5, w: 1.0, sill: 1.0, h: 1.2, bars: true },
       { side: 'e', lv: 1, at: 4.5, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      // (al almacén del cáñamo, el anejo de atrás)
+      { side: 's', lv: 0, at: 2.4, w: 1.3, h: 2.4, frame: 'wood' },
     ],
+    // el tabique de la tienda (al norte) y el almacén (al sur), con su
+    // puerta (atrancada desde la tienda: game/interact, d_cordeleria_tienda)
+    walls: [{ lv: 0, x0: 38.95, z0: 12.4, x1: 43.55, z1: 12.6, doors: [{ at: 41.6, w: 1.2, h: 2.3 }] }],
+    // (apartadas de los muros, que aquí son gruesos: si no, el pie de una y
+    // un costado de la otra no se pisaban)
     stairs: [
-      { lv: 0, x: 43.0, z: 21.4, dir: 'n', w: 1.0, n: 14, open: 'w' },
-      { lv: 0, x: 39.4, z: 7.0, dir: 's', w: 1.0, n: 14, open: 'e' },
+      { lv: 0, x: 42.85, z: 20.8, dir: 'n', w: 1.0, n: 14, open: 'w' },
+      { lv: 0, x: 39.65, z: 7.0, dir: 's', w: 1.0, n: 14, open: 'e' },
+    ],
+    // (los huecos de las dos escaleras, algo más largos: bajando, la cabeza
+    // daba en el canto del forjado)
+    holes: [
+      { lv: 1, r: [39.1, 8.0, 40.2, 8.7] },
+      { lv: 1, r: [42.3, 19.1, 43.4, 19.8] },
     ],
   });
-  casa(ctx, S, L, {
+  const hCor2 = casa(ctx, S, L, {
     id: 'cor2',
     ...cor2,
     levels: [L0({ top: 3.6 })],
     roof: { axis: 'x', h: 3.85, ridge: 5.4, ovs: [0, 0], gov: 0.3, open: [true, false] },
     sides: { e: { low: 'wallstone' } },
-    open: [{ side: 'e', lv: 0, at: 5.0, w: 1.3, h: 2.4, door: { id: 'd_cordeleria_atras', lock: { type: 'key', item: 'llave_cordeleria' } } }],
+    open: [
+      { side: 'e', lv: 0, at: 5.0, w: 1.3, h: 2.4, door: { id: 'd_cordeleria_atras', lock: { type: 'key', item: 'llave_cordeleria' } } },
+      { side: 'n', lv: 0, at: 2.4, w: 1.3, h: 2.4, frame: 'wood' },
+    ],
   });
+  L.interact.push({ kind: 'door', id: 'd_cordeleria_tienda', x: 41.6, y: 0, z: 12.5, w: 1.2, h: 2.3, axis: 'x', mat: 'planks', hinge: -1, plane: 12.6, inset: 0.05, lock: { type: 'barred', side: -1 }, barredMsg: 'cordeleriaTranca' });
+  cordeleriaDentro(ctx, L, hCor, hCor2);
 }
 
 // ------------------------------------------------------------ los vecinos
@@ -535,6 +557,138 @@ function vecinos(L) {
     // guarda game/fisico.js)
     { type: 'fisico', x: 54.6, y: 0, z: 39.4, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
   );
+}
+
+// ------------------------------------------------------------ lo que hay en las calles
+// En la calleja: la ropa tendida de lado a lado, las pieles clavadas a secar
+// en las fachadas, el carro volcado y los rótulos de los oficios. En la
+// plazuela: el pozo con su polea, la cruz de piedra, el árbol muerto con su
+// jaula colgada y la paja (con los cepos del Físico: trampas). Y, por los
+// tejados, las chimeneas (la de su casa, con humo: está en casa).
+function adorno(ctx) {
+  const wb = ctx.wb;
+  const rng = new RNG(3100);
+  // ---- la calleja
+  P.laundry(ctx, 17.6, 42.1, 17.9, 45.9, 5.75, 3101);
+  P.laundry(ctx, 24.8, 42.1, 24.4, 45.9, 5.6, 3102);
+  P.laundry(ctx, 30.2, 42.1, 30.5, 45.9, 5.8, 3103);
+  // (el carro, volcado contra la casa de la viuda)
+  P.cart(ctx, 23.0, 0, 45.15, 0.06, { tipped: true });
+  // las pieles: entre las puertas de abajo y las ventanas de arriba (al norte,
+  // de cara al sur; al sur, de cara al norte)
+  for (const [x, z, rot] of [
+    [15.3, 42.07, 0],
+    [18.4, 42.07, 0],
+    [20.9, 42.07, 0],
+    [28.6, 42.07, 0],
+    [31.4, 42.07, 0],
+    [15.9, 45.93, Math.PI],
+    [19.2, 45.93, Math.PI],
+    [24.0, 45.93, Math.PI],
+  ])
+    piel(ctx, x, 3.75, z, rot, rng.range(0.9, 1.25), rng.range(0.85, 1.1), rng.int(1, 999), undefined);
+  // los rótulos: el zapatero (la bota), la cerera (la vela), el tintorero
+  // (las madejas)
+  rotulo(ctx, 's', 23.6, 3.3, 42.0, (w) => {
+    palo(w, V(-0.12, -0.04, 0), V(-0.12, -0.24, 0), 0.005, 'iron', { round: true });
+    palo(w, V(0.12, -0.04, 0), V(0.12, -0.24, 0), 0.005, 'iron', { round: true });
+    w.box('wooddark', -0.2, -0.27, -0.02, 0.2, -0.24, 0.02, { ao: false });
+    horma(w, 0, -0.62, 0, 0.42, undefined, true, Math.PI / 2);
+  });
+  rotulo(ctx, 'n', 27.4, 3.3, 46.0, (w) => {
+    palo(w, V(-0.18, -0.04, 0), V(-0.18, -0.2, 0), 0.005, 'iron', { round: true });
+    palo(w, V(0.18, -0.04, 0), V(0.18, -0.2, 0), 0.005, 'iron', { round: true });
+    w.box('wooddark', -0.27, -0.62, -0.02, 0.27, -0.2, 0.02, { ao: false, faces: 'tnsewb' });
+    for (const zz of [-0.025, 0.025]) {
+      w.box('candle', -0.04, -0.56, zz - 0.003, 0.04, -0.32, zz + 0.003, { ao: false, faces: zz < 0 ? 'n' : 's' });
+      w.box('ember', -0.018, -0.31, zz - 0.003, 0.018, -0.25, zz + 0.003, { ao: false, faces: zz < 0 ? 'n' : 's', grime: false });
+    }
+  });
+  rotulo(ctx, 's', 43.2, 3.5, 38.5, (w) => {
+    palo(w, V(-0.25, -0.06, 0), V(0.25, -0.06, 0), 0.02, 'wooddark', { round: true });
+    [
+      [0.22, 0.3, 0.62],
+      [0.62, 0.16, 0.12],
+      [0.78, 0.66, 0.2],
+    ].forEach((t, i) => w.box('clothWhite', -0.2 + i * 0.2 - 0.05, -0.62, -0.05, -0.2 + i * 0.2 + 0.05, -0.08, 0.05, { ao: false, grime: false, tint: t }));
+  });
+  // ---- la plazuela
+  P.well(ctx, 41.5, 0, 47.9);
+  cruzPiedra(ctx, 35.6, 39.7);
+  // el árbol muerto, con la jaula colgada de una rama (dentro, lo que queda
+  // de uno que no se dejó curar)
+  P.deadTree(ctx, 45.6, 0, 41.2, 3201, 5.2);
+  palo(wb, V(45.6, 3.7, 41.2), V(46.9, 4.25, 41.35), 0.07, 'wooddark', {});
+  P.chains(ctx, 46.75, 4.2, 41.35, 7, 0);
+  jaula(ctx, 46.75, 3.0, 41.35, rng);
+  ctx.col.add(45.3, 0, 40.9, 45.9, 3.5, 41.5);
+  // la paja, alrededor de los cepos
+  P.hay(ctx, 38.7, 0, 42.8, 0.4);
+  P.hay(ctx, 45.1, 0, 48.6, 1.1);
+  for (const [cx, cz] of [
+    [37.4, 41.6],
+    [43.8, 47.2],
+  ])
+    for (let i = 0; i < 10; i++) {
+      const a = rng.range(0, Math.PI * 2),
+        d = rng.range(0.7, 1.8);
+      const x = cx + Math.cos(a) * d,
+        z = cz + Math.sin(a) * d;
+      wb.box('straw', x - rng.range(0.15, 0.35), 0.012, z - rng.range(0.1, 0.25), x + rng.range(0.15, 0.35), 0.03, z + rng.range(0.1, 0.25), { ao: false, tint: [0.62, 0.56, 0.4] });
+    }
+  // ---- las chimeneas (fuera del paso de los tejados)
+  chimenea(ctx, 16.2, 35.0, 8.5, 10.4, 0.35);
+  chimenea(ctx, 25.8, 38.0, 9.7, 11.6, 0.38);
+  chimenea(ctx, 68.2, 26.0, 7.5, 9.4, 0.35);
+  chimenea(ctx, 42.6, 17.0, 7.9, 9.6, 0.35);
+  chimenea(ctx, 53.8, 35.4, 9.5, 11.3, 0.4, { smoke: true });
+}
+
+// La cruz de piedra de la plazuela: dos gradas, el fuste y la cruz.
+function cruzPiedra(ctx, x, z) {
+  const wb = ctx.wb;
+  wb.box('ashlar', x - 0.75, 0, z - 0.75, x + 0.75, 0.25, z + 0.75, { sub: 2, faces: 'tnsew', aoH: 0.3 });
+  wb.box('ashlar', x - 0.48, 0.25, z - 0.48, x + 0.48, 0.5, z + 0.48, { sub: 2, faces: 'tnsew', aoH: 0.3 });
+  wb.box('ashlar', x - 0.22, 0.5, z - 0.22, x + 0.22, 0.9, z + 0.22, { faces: 'tnsew' });
+  wb.cylinder('ashlar', x, 0.9, z, 0.12, 0.1, 2.3, 8, { ao: false });
+  wb.box('ashlar', x - 0.08, 3.2, z - 0.08, x + 0.08, 3.95, z + 0.08, { ao: false });
+  wb.box('ashlar', x - 0.36, 3.55, z - 0.08, x + 0.36, 3.71, z + 0.08, { ao: false });
+  // (manchada de cal: también a ella la curó)
+  wb.box('plaster', x - 0.081, 3.25, z + 0.081, x + 0.081, 3.9, z + 0.083, { ao: false, faces: 's', tint: [1.1, 1.08, 1.02] });
+  ctx.col.add(x - 0.75, 0, z - 0.75, x + 0.75, 0.25, z + 0.75);
+  ctx.col.add(x - 0.48, 0.25, z - 0.48, x + 0.48, 0.5, z + 0.48);
+  ctx.col.add(x - 0.22, 0.5, z - 0.22, x + 0.22, 4.0, z + 0.22);
+}
+
+// Una jaula de colgar, de hierro, con su argolla arriba (y dentro, huesos).
+function jaula(ctx, x, y, z, rng) {
+  const wb = ctx.wb;
+  const r = 0.32,
+    h = 0.85;
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    palo(wb, V(x + Math.cos(a) * r, y, z + Math.sin(a) * r), V(x + Math.cos(a) * r * 0.9, y + h, z + Math.sin(a) * r * 0.9), 0.012, 'iron', { round: true });
+  }
+  for (const [yy, rr] of [
+    [y, r],
+    [y + h * 0.5, r * 0.97],
+    [y + h, r * 0.9],
+  ])
+    wb.geometry('iron', new THREE.TorusGeometry(rr, 0.016, 4, 14), new THREE.Matrix4().compose(V(x, yy, z), new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), Math.PI / 2), V(1, 1, 1)), { ao: false });
+  wb.cylinder('iron', x, y - 0.02, z, r, r, 0.03, 10, { ao: false, capTop: true, capBot: true });
+  palo(wb, V(x, y + h, z), V(x, y + h + 0.25, z), 0.012, 'iron', { round: true });
+  // los huesos
+  wb.geometry('bone', new THREE.SphereGeometry(0.09, 7, 5), new THREE.Matrix4().compose(V(x + 0.05, y + 0.1, z - 0.04), new THREE.Quaternion(), V(1, 0.9, 1.1)), { ao: false });
+  for (let i = 0; i < 4; i++) palo(wb, V(x + rng.range(-0.2, 0.2), y + 0.03, z + rng.range(-0.2, 0.2)), V(x + rng.range(-0.2, 0.2), y + rng.range(0.03, 0.2), z + rng.range(-0.2, 0.2)), 0.018, 'bone', { round: true });
+}
+
+// ------------------------------------------------------------ el portón
+// La boca de la calleja, en la plaza de la Herrería: el portón de tablas de la
+// cuarentena del Físico (la cruz de cal, el cartel), clavado y apuntalado por
+// dentro; se arranca con la palanca, desde la plaza.
+function porton(L) {
+  const { x, z, w } = BR.porton;
+  L.interact.push({ kind: 'door', id: 'd_porton', x: x + 0.15, y: 0, z, w, h: 2.8, axis: 'z', lock: { type: 'boards', side: -1, front: 'portonDentro', msg: 'portonArranca', shut: 'portonCerrado' }, mat: 'barricade', hinge: 0, props: 1, cuarentena: true, lit: true });
 }
 
 // ------------------------------------------------------------ las trampas

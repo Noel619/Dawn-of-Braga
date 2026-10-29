@@ -1,6 +1,6 @@
 // Interactuables: puertas y cierres, objetos, documentos, altares, niebla.
 import * as THREE from 'three';
-import { objMat, additiveFog, cloneMat } from '../gfx/materials.js';
+import { objMat, additiveFog, cloneMat, registerMaterialPatch } from '../gfx/materials.js';
 import { getTexture } from '../gfx/textures.js';
 import { ITEMS, NOTES, MSG } from './story.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
@@ -190,6 +190,52 @@ function barricadeMesh(w, h, props = 0) {
   }
   g.userData.planks = planks;
   return g;
+}
+
+// El cartel de la cuarentena del Físico: una tabla con letras de almagre,
+// clavada en el portón de la calleja de los Pellejeros.
+function cartelCuarentena() {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 32;
+  const x = c.getContext('2d');
+  x.fillStyle = '#b8aa8c';
+  x.fillRect(0, 0, 128, 32);
+  for (let i = 0; i < 40; i++) {
+    x.fillStyle = `rgba(70,50,30,${0.08 + Math.random() * 0.12})`;
+    x.fillRect(0, Math.random() * 32, 128, 1);
+  }
+  x.fillStyle = '#6a1c12';
+  x.font = 'bold 21px serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillText('CVARENTENA', 64, 17);
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = THREE.NearestFilter;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+// (sobre la barricada, por la cara de -x local: la cruz de cal y el cartel;
+// caen con las tablas)
+function cuarentena(g, w, h) {
+  const planks = g.userData.planks;
+  const cal = objMat('plaster', { tint: 0xf2eee4 });
+  const v = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.2, 0.14), cal);
+  v.position.set(-0.2, h * 0.48, -w * 0.18);
+  const hz = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.78), cal);
+  hz.position.set(-0.2, h * 0.48 + 0.3, -w * 0.18);
+  // la tabla y, por delante (de cara a la plaza), las letras
+  const cartel = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.34, 1.36), objMat('planks'));
+  cartel.position.set(-0.22, h * 0.78, w * 0.1);
+  cartel.rotation.x = 0.06;
+  const letras = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.3), registerMaterialPatch(new THREE.MeshLambertMaterial({ map: cartelCuarentena() })));
+  letras.rotation.y = -Math.PI / 2;
+  letras.position.x = -0.0155;
+  cartel.add(letras);
+  for (const m of [v, hz, cartel]) {
+    g.add(m);
+    planks.push(m);
+  }
 }
 
 // (las puertas del barrio de los Pellejeros: el Físico pasa por ellas)
@@ -716,9 +762,12 @@ export class Interactables {
     if (s.kind === 'door') {
       const hinge = s.hinge ?? -1;
       if (s.mat === 'barricade') {
-        it.obj = barricadeMesh(s.w, s.h, s.lock && s.lock.side);
+        // (props: de qué lado van los puntales; por defecto, del de la tranca)
+        it.obj = barricadeMesh(s.w, s.h, s.props ?? (s.lock && s.lock.side));
+        if (s.cuarentena) cuarentena(it.obj, s.w, s.h);
         it.obj.position.set(s.x, s.y, s.z);
         if (s.axis === 'x') it.obj.rotation.y = Math.PI / 2;
+        if (s.lit) this.bakeLight(it);
       } else {
         it.obj = new THREE.Group();
         it.obj.position.set(s.x, s.y, s.z);

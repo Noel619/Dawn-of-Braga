@@ -11,6 +11,11 @@ import * as THREE from 'three';
 import { DEEP } from '../world/level_crypt2.js';
 import { SANCT } from '../world/level_finale.js';
 
+// las banderas del guion del Físico (game/fisico.js), hasta un punto: 1, ya
+// visto (la cortina, la calleja); 2, la viuda tapiada; 3, la caza empezada.
+// (Vivo, siempre.)
+const fisico = (n) => ({ 'fisico:intro': true, 'fisico:calleja': true, 'fisico:viuda': n >= 2, 'fisico:caza': n >= 3, 'boss:fisico': false });
+
 export const INSTANCES = [
   { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
   { id: 'pelicula', name: 'Final · la película: el rito y la transformación (acto 1)' },
@@ -31,6 +36,8 @@ export const INSTANCES = [
   { id: 'tintoreria', name: 'Los Pellejeros · la puerta de la tintorería, con la llave' },
   { id: 'pescante', name: 'Los Pellejeros · la puerta del pescante: a los tejados' },
   { id: 'claraboya', name: 'Los Pellejeros · la claraboya de la Casa de los Inocentes' },
+  { id: 'captura', name: 'Los Pellejeros · la camilla del Físico (te ha dormido)' },
+  { id: 'fisico', name: 'Los Pellejeros · el Físico, en su quirófano (pelea)' },
   { id: 'tablon', name: 'La casa tapiada · el pasadizo, con un tablón' },
   { id: 'tonelero', name: 'La casa del tonelero · Miguel, en su rincón' },
   { id: 'ahorcado', name: 'La casa del tonelero · Miguel, ahorcado' },
@@ -100,7 +107,11 @@ function prepare(g, set = {}) {
   p.flasks = p.maxFlasks;
   p.state = 'free';
   p.puppet = false;
+  p.tumbado = false;
+  p.lento = 1;
   p.autoDir = null;
+  // (el Físico, fuera de escena: lo saca el guion)
+  if (g.fisico && !g.flags['boss:fisico']) g.fisico.reset();
 }
 // las banderas del final; antes de la victoria, la reja del río cerrada (y el
 // último altar, el de la cripta, si no se ha llegado aún al del cruceiro)
@@ -204,30 +215,41 @@ export async function goInstance(g, id) {
     // el barrio de los Pellejeros: en la plaza de la Herrería, ante el portón
     // clavado de la calleja, con la palanca
     case 'porton':
-      prepare(g, { 'door:d_porton': false });
+      prepare(g, { 'door:d_porton': false, 'fisico:intro': false, 'fisico:calleja': false, 'fisico:viuda': false, 'fisico:caza': false, 'boss:fisico': false });
       if (!g.inventory.has('palanca')) g.inventory.add('palanca');
       place(g, 12.4, 0, 44, Math.PI / 2);
       return true;
     // arriba, en la sala de la viuda, ante la ventana de la cornisa
     case 'cornisa':
-      prepare(g, { 'door:d_porton': true });
+      prepare(g, { 'door:d_porton': true, ...fisico(1) });
       place(g, 27.4, 4.05, 47.3, Math.PI);
       return true;
     // en la plazuela, ante la puerta de la tintorería, con su llave
     case 'tintoreria':
-      prepare(g, { 'door:d_porton': true, 'door:d_tinte': false });
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': false, ...fisico(2) });
       if (!g.inventory.has('llave_tinte')) g.inventory.add('llave_tinte');
       place(g, 40, 0, 40.2, Math.PI);
       return true;
     // en el secadero de la tintorería, ante la puerta del pescante
     case 'pescante':
-      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true });
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
       place(g, 35.2, 7.25, 34.1, -Math.PI / 2);
       return true;
     // en el tejado de la Casa de los Inocentes, junto a la claraboya
     case 'claraboya':
-      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true });
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
       place(g, 58.5, 8.85, 40.9, -Math.PI / 2);
+      return true;
+    // te ha dormido en la plazuela: la camilla, el quirófano y el forcejeo
+    case 'captura':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
+      place(g, 40, 0, 44, Math.PI / 2);
+      g.fisico.captura();
+      return true;
+    // en su quirófano (bajado por la claraboya): la pelea empieza al pisarlo
+    case 'fisico':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
+      place(g, 52.6, 0, 39.8, Math.PI / 2);
       return true;
     case 'tablon': {
       prepare(g, { 'door:d_souto': true, 'souto:tabla': false, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });

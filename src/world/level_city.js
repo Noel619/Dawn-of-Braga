@@ -591,7 +591,8 @@ export function buildTanners(ctx, S, L) {
   );
   L.zones.push(
     { id: 'chapel', rects: [[44, 12.2, 54, 22, -1, 6]], atmo: 'chapel', room: 'chapel' },
-    { id: 'tanners', rects: [[42, -12, 64, 12, -1, 10]], atmo: 'city' },
+    // (sin la punta de la cordelería, que entra por el oeste hasta x = 44)
+    { id: 'tanners', rects: [[44, -12, 64, 12, -1, 10], [42, -12, 44, 3, -1, 10]], atmo: 'city' },
     { id: 'muralla', rects: [[64, -40, 72, 12, -1, 7]], atmo: 'city' }
   );
   L.phantoms.push({ x: 68, y: 0, z: -34, trigger: [66, 0, -4], kind: 'mourner' });
