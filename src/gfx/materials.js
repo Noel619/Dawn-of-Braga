@@ -66,11 +66,13 @@ export const MAT_DEFS = {
   // el Físico: el ropón encerado (con su brillo de cera), el cuero de la
   // máscara, los guantes, los vidrios de los ojos (que cogen la luz) y su
   // cara, lavada
-  fiWax: { tex: 'leather', uv: 1.6, color: 0x4e3e32, phong: { specular: 0x9a8a78, shininess: 46 } },
+  fiWax: { tex: 'leather', uv: 1.6, color: 0x4e3e32, phong: { specular: 0x40382e, shininess: 34 } },
   fiMask: { tex: 'leather', uv: 1.6, color: 0xa07c58, phong: { specular: 0x6a5a4a, shininess: 30 } },
   fiGlove: { tex: 'leather', uv: 1.6, color: 0x221c1a, phong: { specular: 0x707070, shininess: 40 } },
   fiLens: { tex: 'white', uv: 1, color: 0x3a1606, emissive: 0xff8a3c, emissiveIntensity: 1.3 },
   fiSkin: { tex: 'skinPale', uv: 2.0, color: 0xdccdbd },
+  // la esponja soporífera, empapada (adormidera, mandrágora, beleño)
+  fiSponge: { tex: 'burlap', uv: 3.0, color: 0x8c6a3c, phong: { specular: 0x5a4a30, shininess: 60 } },
   feathers: { tex: 'feathers', uv: 1.8, phong: { specular: 0x405070, shininess: 26 } },
   crowSkin: { tex: 'skinPale', uv: 2.0, color: 0xb08c86 },
   beak: { tex: 'bone', uv: 1.6, color: 0x2c2826, phong: { specular: 0x6a6a6a, shininess: 40 } },

@@ -1282,7 +1282,9 @@ export class Player {
     // la capa cuelga hacia abajo: compensa la inclinación del torso
     const chestP = pose.chest ? wrapAngle(pose.chest[0]) : 0;
     const hipsP = pose.hips ? wrapAngle(pose.hips[0]) : 0;
-    const rollW = this.state === 'roll' ? 0 : 1;
+    // (rodando, o tumbado boca arriba: atado en la camilla del Físico, la
+    // capa va debajo, no cuelga)
+    const rollW = this.state === 'roll' || this.tumbado ? 0 : 1;
     pose.cloak = [cx + 0.07 - (chestP * 0.6 + hipsP * 0.5) * rollW + Math.sin(gait.phase * Math.PI * 4) * 0.025 * gait.mw, 0, cz];
     const ls = this.lampS.update(dt, clamp(-fwdSp * 0.05, -0.4, 0.4));
     pose.lantern = [ls + Math.sin(gait.phase * Math.PI * 4) * 0.08 * gait.mw, 0, 0];

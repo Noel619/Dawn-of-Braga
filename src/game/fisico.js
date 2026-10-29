@@ -94,6 +94,7 @@ export class Fisico {
     this.music = null;
     this.vigia = null;
     this.tapiado = null;
+    this.fraguaT = 0;
     if (this.e && !(this.g.flags && this.g.flags['boss:fisico'])) this.hide();
   }
   onRespawn() {
@@ -645,6 +646,11 @@ export class Fisico {
       case 'sombra':
         this.updateSombra(dt);
         break;
+      // (te has soltado de la mesa: él sigue en la fragua, y vuelve)
+      case 'fragua':
+        this.fraguaT -= dt;
+        if (this.fraguaT <= 0) this.vuelveFragua();
+        break;
       case 'busca': {
         // si te ve buscando, a por ti
         if (e.sees && !this.enTejado(p.pos)) {
@@ -664,6 +670,32 @@ export class Fisico {
         }
         break;
     }
+  }
+
+  // Vuelve de la fragua y la mesa está vacía: a buscarte (por su casa,
+  // primero; si te ve, a por ti).
+  vuelveFragua() {
+    const g = this.g;
+    const e = this.e;
+    this.show(55.0, 35.2, 0);
+    this.setMusic('busca');
+    this.say(DIALOG.fisicoSuelto, 3.2);
+    this.last = [54.6, 0, 38.4];
+    this.searchN = 0;
+    const d = g.interact.list.find((i) => i.id === 'd_quirofano_patio');
+    if (d) g.interact.setOpen(d, true);
+    g.audio && g.audio.play('doorOpen', { x: 55.0, y: 1, z: 34.6 });
+    if (e.T.perceive(e, g.player)) {
+      this.modo = 'caza';
+      this.setMusic('caza');
+      e.aware = true;
+      e.state = 'chase';
+      e.stT = 0;
+      return;
+    }
+    // (si no te ve: a la puerta de la calle, por donde huiría cualquiera; y
+    // de allí, a buscarte)
+    this.busca(48.6, 45.45, 0);
   }
 
   // ------------------------------------------------------------ escenas

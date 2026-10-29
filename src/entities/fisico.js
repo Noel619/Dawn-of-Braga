@@ -250,6 +250,41 @@ export function buildFisico() {
     parts.push(P('handR', 'iron', v.iron, { grp: 'vara' }));
   }
 
+  // ---------------------------------------------------------- en la izquierda
+  // (lo que saca del cinto: la esponja empapada y la campanilla; ocultas,
+  // FISICO_TYPE.onReset, hasta que las saca)
+  {
+    const sp = [gSph(1, [0.012, -0.09, 0.012], [0.056, 0.064, 0.05], 9, 7), gSph(1, [-0.022, -0.072, 0.03], [0.032, 0.03, 0.028], 6, 5), gSph(1, [0.03, -0.12, -0.012], [0.028, 0.026, 0.03], 6, 5)];
+    parts.push(P('handL', 'fiSponge', merge(sp), { grp: 'esponja' }));
+    // la campanilla: el mango de boj en el puño y la campana de latón, boca
+    // abajo (con el antebrazo adelante, su -z va hacia el suelo)
+    const bell = new THREE.LatheGeometry(
+      [
+        [0.003, 0],
+        [0.012, -0.006],
+        [0.016, -0.022],
+        [0.023, -0.046],
+        [0.034, -0.07],
+        [0.037, -0.078],
+        [0.031, -0.078],
+      ].map(([r, y]) => new THREE.Vector2(r, y)),
+      12
+    );
+    parts.push(P('handL', 'bronze', place(bell, [0.004, -0.07, -0.05], [90, 0, 0]), { grp: 'campanilla' }));
+    parts.push(P('handL', 'timber', gCyl(0.009, 0.011, 0.11, 6, [0.004, -0.07, 0.0], [90, 0, 0]), { grp: 'campanilla' }));
+    parts.push(P('handL', 'iron', gSph(0.01, [0.004, -0.07, -0.118], [1, 1, 1], 5, 4), { grp: 'campanilla' }));
+  }
+
+  // ---------------------------------------------------------- el cauterio
+  // (en la derecha, como la vara: a lo largo de su z) el mango de madera, la
+  // varilla y la oliva al rojo
+  {
+    const y = -0.07;
+    parts.push(P('handR', 'timber', gCyl(0.019, 0.017, 0.2, 7, [0.004, y, 0.0], [90, 0, 0]), { grp: 'hierro' }));
+    parts.push(P('handR', 'iron', gCyl(0.008, 0.008, 0.5, 6, [0.004, y, 0.35], [90, 0, 0]), { grp: 'hierro' }));
+    parts.push(P('handR', 'ember', gSph(1, [0.004, y, 0.62], [0.022, 0.016, 0.04], 8, 6), { grp: 'hierro' }));
+  }
+
   // (todo hecho para una altura de 1: se escala)
   const out = parts.map((pt) => ({ ...pt, p: (pt.p || [0, 0, 0]).map((x) => x * K), sc: (pt.sc || [1, 1, 1]).map((x) => x * K) }));
   return new Rig({ joints, parts: out });
@@ -273,6 +308,11 @@ const K_ = (o) => ({ ...B, ...o });
 const IZQ = { armL: [-60, 0, 14], foreL: [-50, 0, 0], handL: [0, 0, 0] };
 // la izquierda en alto, sujetando el paño de la cortina a un lado
 const PANO = { armL: [-98, 0, 56], foreL: [-38, 0, 0], handL: [0, 0, 22] };
+// las manos en los mangos de la camilla; sobre la mesa de los hierros; en tu
+// muñeca
+const EMPUJA = { chest: [14, 0, 0], head: [2, 0, -4], armR: [-36, 0, -12], foreR: [-40, 0, 0], handR: [0, 0, 0], armL: [-36, 0, 12], foreL: [-40, 0, 0], handL: [0, 0, 0] };
+const ORDENA = { chest: [20, 0, 0], head: [22, 0, -6], armR: [-30, 0, -8], foreR: [-58, 0, 0], handR: [0, 0, 0], armL: [-34, 0, 10], foreL: [-52, 0, 0], handL: [0, 0, 0] };
+const PULSO = { chest: [26, 0, 0], head: [30, 0, -18], armL: [-44, 0, 8], foreL: [-48, 0, 0], handL: [0, 0, 20], armR: [-14, 0, -10], foreR: [-30, 0, 0] };
 
 export const FI_CLIPS = {
   // te ve: se queda quieto y ladea la cabeza, como un pájaro (de un golpe),
@@ -323,6 +363,59 @@ export const FI_CLIPS = {
     [8.0, K_({ armL: [-30, -40, 20], foreL: [-85, 0, 0] })],
     [9.0, K_({})],
   ]),
+  // ---------------------------------------------------------- la camilla
+  // (fisico_cine.js) empujándola por los mangos, cargado de hombros
+  empuja: clip(
+    'fi_empuja',
+    1.2,
+    [
+      [0, K_({ ...EMPUJA })],
+      [0.6, K_({ ...EMPUJA, chest: [15, 2, 0], head: [3, -3, -5] })],
+      [1.2, K_({ ...EMPUJA })],
+    ],
+    { loop: true }
+  ),
+  // (empujando) se asoma por encima de la cabecera a mirarte la cara
+  asoma: clip(
+    'fi_asoma',
+    1.6,
+    [
+      [0, K_({ ...EMPUJA, chest: [34, 0, 0], head: [40, 0, -14] })],
+      [0.8, K_({ ...EMPUJA, chest: [35, 0, 0], head: [42, 4, -22] })],
+      [1.6, K_({ ...EMPUJA, chest: [34, 0, 0], head: [40, 0, -14] })],
+    ],
+    { loop: true }
+  ),
+  // ordena los hierros en la mesa: las dos manos, despacio, uno a uno
+  ordena: clip(
+    'fi_ordena',
+    2.4,
+    [
+      [0, K_({ ...ORDENA })],
+      [0.8, K_({ ...ORDENA, armR: [-36, 0, -4], foreR: [-50, 0, 0], head: [22, 8, -8] })],
+      [1.6, K_({ ...ORDENA, armL: [-40, 0, 12], foreL: [-46, 0, 0], head: [20, -6, -4] })],
+      [2.4, K_({ ...ORDENA })],
+    ],
+    { loop: true }
+  ),
+  // te toma el pulso: inclinado sobre ti, dos dedos en la muñeca, la cabeza
+  // ladeada (escucha)
+  pulso: clip(
+    'fi_pulso',
+    3.0,
+    [
+      [0, K_({ ...PULSO })],
+      [1.5, K_({ ...PULSO, head: [28, 4, -26] })],
+      [3.0, K_({ ...PULSO })],
+    ],
+    { loop: true }
+  ),
+  // el hierro al rojo, en alto (lo que no cura el hierro...)
+  hierro: clip('fi_hierro', 1.4, [
+    [0, K_({})],
+    [0.7, K_({ chest: [4, -10, 0], head: [8, 6, -12], armR: [-118, 0, -16], foreR: [-46, 0, 0], handR: [74, 0, 0] })],
+    [1.4, K_({ chest: [6, -10, 0], head: [10, 6, -14], armR: [-120, 0, -16], foreR: [-44, 0, 0], handR: [76, 0, 0] }), 'hold'],
+  ]),
   // ---------------------------------------------------------- golpes
   // el barrido: se lleva la vara atrás, a la derecha, y la pasa de lado a
   // lado a la altura del pecho, el gancho por delante
@@ -365,7 +458,7 @@ export const FI_CLIPS = {
     [0, K_({ chest: [16, 6, 0], head: [16, -6, -16], armL: [-80, 0, 6], foreL: [-30, 0, 0], handL: [-30, 0, 0], armR: [-30, 0, -24], foreR: [-60, 0, 0], handR: [20, 0, 0], root: [0, -6, 6] })],
     [0.6, K_({ chest: [18, 4, 0], head: [18, -4, -22], armL: [-82, 0, 6], foreL: [-26, 0, 0], handL: [-34, 0, 0], armR: [-30, 0, -24], foreR: [-60, 0, 0], handR: [20, 0, 0], root: [0, -7, 7] })],
     [1.2, K_({ chest: [16, 6, 0], head: [16, -6, -16], armL: [-80, 0, 6], foreL: [-30, 0, 0], handL: [-30, 0, 0], armR: [-30, 0, -24], foreR: [-60, 0, 0], handR: [20, 0, 0], root: [0, -6, 6] })],
-  ]),
+  ], { loop: true }),
   // la cal: un puñado de la bolsa, a los ojos
   cal: clip('fi_cal', 1.4, [
     [0, K_({})],
@@ -687,7 +780,7 @@ export const FISICO_TYPE = {
   onReset: (e) => {
     e.data = {};
     for (const g of ['mascara', 'sombrero', 'vara']) fiGrp(e, g, true);
-    for (const g of ['esponja', 'campanilla']) fiGrp(e, g, false);
+    for (const g of ['esponja', 'campanilla', 'hierro']) fiGrp(e, g, false);
     if (e.game.speech && e.P.who) e.game.speech.hush(e.P.who);
   },
   update: (e, dt, pl) => {

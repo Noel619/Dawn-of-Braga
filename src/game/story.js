@@ -805,6 +805,17 @@ export const DIALOG = {
   fisicoCepoTodavia: ['Todavía no. La fruta se coge cuando cae sola.', 'Tira, tira. Así se aprende dónde no pisar.'],
   // donde sonaron las campanillas
   fisicoCampanillas: ['Las campanillas no mienten nunca.', 'Alguien ha pasado por aquí con prisa. La prisa es un síntoma.'],
+  // la camilla (te ha dormido): a oscuras, por la calleja, a la puerta de su
+  // casa, en el quirófano
+  fisicoDuerme: 'Shh. Ya está. Ya pasó lo peor, que es el miedo.',
+  fisicoCamilla: ['Mira qué cielo. Hace años que nadie lo miraba en este barrio.', 'Pesas lo que pesa la salud. Demasiado.'],
+  fisicoCasa: 'La Casa de los Inocentes. Aquí no ha muerto nadie de peste. Ni uno.',
+  fisicoHierros: 'Primero, el hierro. Luego, el fuego.',
+  fisicoPulso: 'Corre, corre. Así no hay quien cure a nadie.',
+  fisicoFragua: 'El hierro está tibio, y lo tibio no cura. Voy a la fragua. No te muevas: es por tu bien.',
+  // vuelve de la fragua: sigues atado (te mata) o te has soltado
+  fisicoAlRojo: 'Ya está al rojo. Lo que no cura el hierro...',
+  fisicoSuelto: ['¿Ya? Qué prisa. La prisa también es un síntoma.', 'Te has soltado. Bien: los fuertes curan mejor.'],
   // herido: se retira (con la cal)
   fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
 };
@@ -897,6 +908,8 @@ export const MSG = {
   tapiadaFuera: 'Clavada con tablas, y con la cruz de cal encima. Con algo para hacer palanca...',
   inocentesTranca: 'Atrancada por dentro. Sobre la puerta cuelga la vara con la serpiente: la casa del físico.',
   cepoForcejea: '¡Ábrelo!',
+  correas: 'Atado a la mesa de su quirófano. Machaca para soltar las correas antes de que vuelva.',
+  correa: ['¡La muñeca!', '¡La otra muñeca!', '¡El pecho!'],
   cepoPista: 'Un cepo, escondido en la paja. Machaca el botón para abrirle las quijadas antes de que llegue él. (Un tajo hace saltar los que veas; brillan los dientes.)',
   catarina: 'Una mujer joven, tapada con una sábana empapada de sangre. Alguien le ha cruzado las manos sobre el pecho y le ha puesto una vela.',
   doorMiguel: 'Está atrancada desde el otro lado. Dentro, muy bajo, alguien llora.',

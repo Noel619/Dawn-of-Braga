@@ -517,7 +517,7 @@ export const CO_CLIPS = {
     [1.75, { ...CO_BASE }],
   ]),
   // sacudiendo la cabeza mientras te tiene agarrado (en bucle)
-  sacude: clip('co_sacude', 0.84, [[0, { chest: [26, 0, 0], head: [16, 0, 0], armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0], handR: [10, 0, 0] }], ...shake(0.0, 8, 0.105, 38, { bend: 6 }).map(([t, p, e]) => [t, { ...p, armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0] }, e]), [0.84, { chest: [26, 0, 0], head: [16, 0, 0], armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0], handR: [10, 0, 0] }]]),
+  sacude: clip('co_sacude', 0.84, [[0, { chest: [26, 0, 0], head: [16, 0, 0], armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0], handR: [10, 0, 0] }], ...shake(0.0, 8, 0.105, 38, { bend: 6 }).map(([t, p, e]) => [t, { ...p, armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0] }, e]), [0.84, { chest: [26, 0, 0], head: [16, 0, 0], armL: [-80, 0, 18], foreL: [-30, 0, 0], armR: [-80, 0, -18], foreR: [-30, 0, 0], handR: [10, 0, 0] }]], { loop: true }),
   // el garfio: lo levanta por encima del hombro y lo baja en diagonal
   garfio: clip('co_garfio', 1.45, [
     [0, { ...CO_BASE }],
