@@ -591,37 +591,100 @@ const ICONS = {
     sparkle(b, 23, 9);
     b.outline(P.void);
   },
-  // el rey de marfil del Cerco: peana, manto, cabeza y la corona de oro
+  // el rey de marfil del Cerco, como la pieza del tablero: torneado, con la
+  // peana de bocel y escocia, el manto acampanado con sus pliegues tallados,
+  // el cuello de armiño, la cabeza barbada y la corona de oro de cinco puntas
+  // con su cruz, gastada de tanto cogerla. Marfil amarillento, más oscuro en
+  // lo hondo de la talla y hacia la peana.
   reyMarfil(b) {
-    const IV = [P.bone0, P.bone1, P.bone2, P.bone3];
-    for (let y = 0; y < 32; y++)
-      for (let x = 0; x < 32; x++) {
-        const dx = x + 0.5 - 16;
-        let w = 0;
-        // la peana (un óvalo), el manto que se ensancha abajo y el cuello
-        if (y >= 25 && y <= 29) w = 10 - Math.abs(y - 27) * 0.9;
-        else if (y >= 13 && y < 25) w = 4 + (y - 13) * 0.42;
-        else if (y >= 11 && y < 13) w = 5.5;
-        if (w > 0 && Math.abs(dx) <= w) {
-          const l = 0.62 - dx / (w * 2.2) - (y >= 25 ? 0.12 : 0) - (y === 24 || y === 12 ? 0.15 : 0);
-          b.set(x, y, shade(IV, l, x, y));
-        }
-        // la cabeza
-        const hd = Math.hypot(dx, y + 0.5 - 8.5);
-        if (hd <= 3.8) b.set(x, y, shade(IV, 0.75 - dx / 9 - (y - 8) / 12, x, y));
+    const IV = [P.ink3, P.parch0, P.parch1, P.parch2, P.parch3, P.parch4, P.parch5, P.bone3];
+    const cx = 16;
+    // el perfil, fila a fila: medio ancho y la pieza a la que pertenece
+    // (t: de 0 a 1 dentro de la pieza, para el sombreado de los toros)
+    const rows = [];
+    const put = (y0, y1, w0, w1, part) => {
+      for (let y = y0; y <= y1; y++) {
+        const t = y1 > y0 ? (y - y0) / (y1 - y0) : 0.5;
+        rows[y] = { w: w0 + (w1 - w0) * (part === 'mantle' ? t ** 1.35 : t), part, t };
       }
-    // la corona: el aro y tres puntas, de oro
-    for (let x = 12; x <= 20; x++) for (let y = 4; y <= 5; y++) b.set(x, y, shade(GOLD, 0.7 - (x - 16) / 10 - (y - 4) * 0.2, x, y));
-    for (const [x, h] of [
-      [12, 2],
-      [16, 3],
-      [20, 2],
+    };
+    put(12, 13, 5.7, 5.4, 'collar');
+    put(14, 23, 4.5, 7.1, 'mantle');
+    put(24, 24, 6.6, 6.6, 'fillet');
+    put(25, 26, 8.5, 8.7, 'torus');
+    put(27, 27, 8.0, 8.0, 'cove');
+    put(28, 30, 10.0, 9.4, 'foot');
+    for (let y = 12; y <= 30; y++) {
+      const R = rows[y];
+      for (let x = 0; x < 32; x++) {
+        const nx = (x + 0.5 - cx) / R.w;
+        if (Math.abs(nx) > 1) continue;
+        // un cilindro con la luz arriba a la izquierda: los cantos, oscuros
+        let l = 0.62 - nx * 0.4 - nx * nx * 0.22 - (y - 12) * 0.009;
+        if (R.part === 'torus' || R.part === 'collar') l += 0.16 - R.t * 0.34;
+        if (R.part === 'fillet' || R.part === 'cove') l -= 0.22;
+        if (R.part === 'foot') l += y === 28 ? 0.12 : y === 30 ? -0.28 : 0;
+        // los pliegues del manto, que se juntan hacia los hombros, y la
+        // abertura de delante
+        if (R.part === 'mantle' && y > 14) for (const f of [-0.52, 0.06, 0.58]) if (Math.abs(nx - f) * R.w < 0.5) l -= f === 0.06 ? 0.3 : 0.24;
+        b.set(x, y, shade(IV, l, x, y));
+      }
+    }
+    // el armiño del cuello: motas negras
+    for (const [x, y] of [
+      [12, 12],
+      [15, 13],
+      [18, 12],
+      [20, 13],
     ])
-      for (let k = 1; k <= h; k++) b.set(x, 4 - k, k === h ? P.gold5 : P.gold3);
-    b.set(16, 0, P.gold4);
-    b.set(13, 15, P.bone3);
-    b.set(13, 16, P.bone3);
-    sparkle(b, 22, 6);
+      b.set(x, y, P.ink2);
+    // la cabeza: una bola, con los ojos y la barba tallados
+    for (let y = 4; y <= 12; y++)
+      for (let x = 11; x <= 21; x++) {
+        const dx = x + 0.5 - cx,
+          dy = y + 0.5 - 9.0;
+        if (Math.hypot(dx, dy * 1.05) > 3.9) continue;
+        let l = 0.78 - dx / 7.5 - dy / 10 - (dx * dx + dy * dy) / 40;
+        // la barba: más abajo de la boca, con sus surcos
+        if (dy > 1.0) l -= 0.1 + (Math.abs(dx - 0.5) % 2 < 0.6 ? 0.18 : 0);
+        b.set(x, y, shade(IV, l, x, y));
+      }
+    b.set(14, 8, P.parch1);
+    b.set(17, 8, P.parch1);
+    b.set(16, 10, P.parch2);
+    b.set(15, 10, P.parch3);
+    // la corona: el aro (con su rubí delante), las cinco puntas (las de
+    // detrás, más bajas y en sombra) y la cruz
+    for (let y = 4; y <= 5; y++)
+      for (let x = 11; x <= 21; x++) {
+        const nx = (x + 0.5 - cx) / 5.0;
+        if (Math.abs(nx) > 1) continue;
+        b.set(x, y, shade(GOLD, 0.74 - nx * 0.45 - nx * nx * 0.2 - (y - 4) * 0.22, x, y));
+      }
+    b.set(16, 5, P.ruby3);
+    b.set(13, 5, P.glass3);
+    b.set(19, 5, P.glass2);
+    for (const [x, top, c] of [
+      [12, 2, P.gold3],
+      [20, 2, P.gold2],
+      [14, 3, P.gold1],
+      [18, 3, P.gold1],
+      [16, 2, P.gold4],
+    ])
+      for (let y = top; y < 4; y++) b.set(x, y, y === top ? c : P.gold2);
+    b.vline(16, 0, 2, P.gold4);
+    b.set(15, 1, P.gold3);
+    b.set(17, 1, P.gold2);
+    // el brillo del marfil, a lo largo del manto, por el lado de la luz
+    for (const [x, y] of [
+      [12, 16],
+      [12, 17],
+      [11, 19],
+      [11, 20],
+      [10, 22],
+    ])
+      b.set(x, y, P.bone3);
+    sparkle(b, 23, 7);
     b.outline(P.void);
   },
   // ampolla con las lágrimas de la santa (líquido ámbar que brilla)
