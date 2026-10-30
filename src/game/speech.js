@@ -189,8 +189,9 @@ export class Speech {
       const sub = !onScreen || !!b.who.subtitle;
       this._backdrop(b, sub);
       if (sub) {
+        // (quien lo pide, arriba: el Rey, cuando se mira el tablero)
         b.el.style.left = Math.round(W / 2) + 'px';
-        b.el.style.top = Math.round(H * 0.66) + 'px';
+        b.el.style.top = Math.round(H * (b.who.subY ?? 0.66)) + 'px';
       } else {
         b.el.style.left = Math.round(((v.x + 1) / 2) * W) + 'px';
         b.el.style.top = Math.round(((1 - v.y) / 2) * H) + 'px';

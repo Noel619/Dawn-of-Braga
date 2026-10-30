@@ -591,6 +591,39 @@ const ICONS = {
     sparkle(b, 23, 9);
     b.outline(P.void);
   },
+  // el rey de marfil del Cerco: peana, manto, cabeza y la corona de oro
+  reyMarfil(b) {
+    const IV = [P.bone0, P.bone1, P.bone2, P.bone3];
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const dx = x + 0.5 - 16;
+        let w = 0;
+        // la peana (un óvalo), el manto que se ensancha abajo y el cuello
+        if (y >= 25 && y <= 29) w = 10 - Math.abs(y - 27) * 0.9;
+        else if (y >= 13 && y < 25) w = 4 + (y - 13) * 0.42;
+        else if (y >= 11 && y < 13) w = 5.5;
+        if (w > 0 && Math.abs(dx) <= w) {
+          const l = 0.62 - dx / (w * 2.2) - (y >= 25 ? 0.12 : 0) - (y === 24 || y === 12 ? 0.15 : 0);
+          b.set(x, y, shade(IV, l, x, y));
+        }
+        // la cabeza
+        const hd = Math.hypot(dx, y + 0.5 - 8.5);
+        if (hd <= 3.8) b.set(x, y, shade(IV, 0.75 - dx / 9 - (y - 8) / 12, x, y));
+      }
+    // la corona: el aro y tres puntas, de oro
+    for (let x = 12; x <= 20; x++) for (let y = 4; y <= 5; y++) b.set(x, y, shade(GOLD, 0.7 - (x - 16) / 10 - (y - 4) * 0.2, x, y));
+    for (const [x, h] of [
+      [12, 2],
+      [16, 3],
+      [20, 2],
+    ])
+      for (let k = 1; k <= h; k++) b.set(x, 4 - k, k === h ? P.gold5 : P.gold3);
+    b.set(16, 0, P.gold4);
+    b.set(13, 15, P.bone3);
+    b.set(13, 16, P.bone3);
+    sparkle(b, 22, 6);
+    b.outline(P.void);
+  },
   // ampolla con las lágrimas de la santa (líquido ámbar que brilla)
   flask(b) {
     drawFlask(b, true);

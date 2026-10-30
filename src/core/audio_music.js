@@ -1356,6 +1356,79 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- la mesa del Rey
+  // un salterio lento y cansado, con huecos, como una caja de música que se
+  // para; un bordón bajo y, cada ocho compases, una frase de zanfona
+  cerco: {
+    bpm: 52,
+    root: 43,
+    mode: 'dorian',
+    prog: [0, 3, 6, 4, 0, 5, 3, 4],
+    chordBars: 2,
+    verb: 0.6,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], type: 'triangle', cutoff: 340, level: 0.05, rate: 0.06 },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      const tri = m.triad(T, chord, 1);
+      if (!(bar % 8 === 7 && inBar > 1)) {
+        if (!chance(0.15)) m.pluck(L.base, t, tri[inBar % 3] + (inBar === 3 ? 12 : 0), rnd(0.05, 0.085), { bright: 0.35 });
+        if (inBar % 2 === 1 && chance(0.4)) m.pluck(L.base, t + spb * 0.5, tri[(inBar + 1) % 3], 0.04, { bright: 0.3 });
+      }
+      if (inBar === 0 && bar % 8 === 4) {
+        const mel = [
+          [4, 1.5],
+          [3, 0.5],
+          [2, 1],
+          [1, 1],
+          [0, 2],
+          [-1, 1],
+          [0, 1],
+        ];
+        let tt = t;
+        for (const [g, l] of mel) {
+          m.vielle(L.base, tt, spb * l * 0.95, m.deg(T, chord + g, 1), 0.02, { a: 0.12 });
+          tt += spb * l;
+        }
+      }
+    },
+  },
+  // la muerte del Rey: cuerdas graves, el coro muy bajo, una campana lejos y
+  // la zanfona que baja
+  reyFin: {
+    bpm: 44,
+    root: 41,
+    mode: 'aeolian',
+    prog: [0, 5, 3, 4, 0, 6, 5, 4],
+    chordBars: 2,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 24, T.mode, d), degree(T.root - 12, T.mode, d)], type: 'triangle', cutoff: 260, level: 0.06, rate: 0.05 },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      if (inBar === 0 && bar % 2 === 0) {
+        for (const n of m.triad(T, chord, -1)) m.strings(L.base, t, spb * 7.6, n, 0.02, { a: 1.6, r: 2, bright: 3 });
+        for (const n of m.triad(T, chord, 0)) m.choir(L.base, t, spb * 7.4, n, 0.011, 'u', { a: 2, r: 2.4 });
+      }
+      if (inBar === 0 && bar % 4 === 3) m.bell(L.base, t, T.root, 0.07, { dur: 7 });
+      if (inBar === 0 && bar % 4 === 1) {
+        const mel = [
+          [4, 1],
+          [3, 1],
+          [2, 2],
+          [1, 1],
+          [0, 3],
+        ];
+        let tt = t;
+        for (const [g, l] of mel) {
+          m.vielle(L.base, tt, spb * l * 0.95, m.deg(T, chord + g, 1), 0.02, { a: 0.2 });
+          tt += spb * l;
+        }
+      }
+      if (inBar === 2 && chance(0.5)) m.pluck(L.base, t, m.deg(T, chord + 4, 1), 0.035, { bright: 0.3, dur: 4 });
+    },
+  },
+
   // ---------------------------------------------------------------- amanecer
   ending: {
     bpm: 60,

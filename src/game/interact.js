@@ -1620,7 +1620,7 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'npc') {
-      const q = it.npc === 'paio' ? g.paio : g.house;
+      const q = it.npc === 'paio' ? g.paio : it.npc === 'rey' ? g.rey : g.house;
       if (q) q.talk();
       return true;
     }

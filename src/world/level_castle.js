@@ -27,6 +27,7 @@ import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subt
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { buildReyMesa, REY_MESA } from './rey_mesa.js';
 import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -1187,33 +1188,11 @@ function buildKeep(ctx, S, L) {
     const room = 'homenaje2';
     const y = F2;
     wb.setRoom(room);
-    // la mesa del plano: la ciudad dibujada sobre un pergamino, con fichas
-    const mx = -78.8,
-      mz = -17.6;
-    P.table(ctx, mx, y, mz, 2.8, 1.6, 0);
-    wb.box('clothWhite', mx - 1.25, y + 0.83, mz - 0.65, mx + 1.25, y + 0.845, mz + 0.65, { ao: false, faces: 't', tint: [0.86, 0.76, 0.56], room });
-    {
-      const r2 = new RNG(4441);
-      // murallas y calles en tinta
-      for (const [a2, b2, c2, d2] of [
-        [-1.1, -0.55, 1.1, -0.5],
-        [-1.1, 0.5, 1.1, 0.55],
-        [-1.1, -0.55, -1.05, 0.55],
-        [1.05, -0.55, 1.1, 0.55],
-        [-0.7, -0.1, 0.8, -0.06],
-        [0.0, -0.55, 0.04, 0.55],
-      ])
-        wb.box('black', mx + a2, y + 0.846, mz + b2, mx + c2, y + 0.849, mz + d2, { ao: false, faces: 't', grime: false, room });
-      // fichas: rojas los de fuera, blancas las nuestras
-      for (let k = 0; k < 12; k++) {
-        const ox = mx + r2.range(-1.0, 1.0),
-          oz = mz + r2.range(-0.5, 0.5);
-        wb.box(k < 7 ? 'clothRed' : 'bone', ox - 0.03, y + 0.846, oz - 0.03, ox + 0.03, y + 0.9, oz + 0.03, { ao: false, room });
-      }
-    }
-    P.bench(ctx, mx, y, mz - 1.1, 2.4, 0);
-    P.candles(ctx, mx + 1.2, y + 0.84, mz + 0.5, 3, 4442, { room, radius: 5, intensity: 1.0, spread: 0.15 });
-    P.hangingLamp(ctx, mx, R - SL, mz, { room, len: 1.0, radius: 8 });
+    // la mesa del Rey: el tablero del Cerco, su sitial y el banco (ver
+    // world/rey_mesa.js); encima, la lámpara que tenía la mesa del plano
+    buildReyMesa(ctx, room);
+    wb.setRoom(room);
+    P.hangingLamp(ctx, REY_MESA.table.x, R - SL, REY_MESA.table.z, { room, len: 1.0, radius: 8 });
     P.wallTorch(ctx, -76.4, y + 2.3, iz0, 's', { room, radius: 7 });
     // al otro lado del arco: el atril del libro de la guarnición, la mesa
     // del consejo, las armas del alcaide y su estandarte
@@ -1231,15 +1210,34 @@ function buildKeep(ctx, S, L) {
       });
       ctx.col.add(lx - 0.3, y, lz - 0.25, lx + 0.3, y + 1.1, lz + 0.25);
     }
-    P.table(ctx, -77.6, y, -7.4, 2.6, 1.1, 0);
-    P.bench(ctx, -77.6, y, -8.3, 2.4, 0);
-    P.bench(ctx, -77.6, y, -6.5, 2.4, Math.PI);
-    for (const x of [-78.6, -77.3]) P.jar(ctx, x, y + 0.82, -7.3, 0.5);
-    for (const [x, z, r] of [
-      [-76.8, -7.6, 0.3],
-      [-78.0, -7.2, -0.2],
-    ])
-      wb.at(x, y + 0.83, z, r, () => wb.box('clothWhite', -0.22, 0, -0.16, 0.22, 0.01, 0.16, { ao: false, faces: 't', tint: [0.9, 0.82, 0.62], room }));
+    // la mesa del consejo, con el plano de la defensa: la ciudad dibujada
+    // sobre un pergamino, con fichas (rojas los de fuera, blancas las
+    // nuestras); estaba en la mesa del Rey, que la quiso para su juego
+    {
+      const mx = -77.6,
+        mz = -7.4;
+      P.table(ctx, mx, y, mz, 2.6, 1.1, 0);
+      P.bench(ctx, mx, y, mz - 0.9, 2.4, 0);
+      P.bench(ctx, mx, y, mz + 0.9, 2.4, Math.PI);
+      wb.box('clothWhite', mx - 1.05, y + 0.8, mz - 0.42, mx + 1.05, y + 0.815, mz + 0.42, { ao: false, faces: 't', tint: [0.86, 0.76, 0.56], room });
+      const r2 = new RNG(4441);
+      // murallas y calles en tinta
+      for (const [a2, b2, c2, d2] of [
+        [-0.95, -0.36, 0.95, -0.32],
+        [-0.95, 0.32, 0.95, 0.36],
+        [-0.95, -0.36, -0.91, 0.36],
+        [0.91, -0.36, 0.95, 0.36],
+        [-0.6, -0.06, 0.7, -0.03],
+        [0.0, -0.36, 0.035, 0.36],
+      ])
+        wb.box('black', mx + a2, y + 0.816, mz + b2, mx + c2, y + 0.819, mz + d2, { ao: false, faces: 't', grime: false, room });
+      for (let k = 0; k < 12; k++) {
+        const ox = mx + r2.range(-0.85, 0.85),
+          oz = mz + r2.range(-0.3, 0.3);
+        wb.box(k < 7 ? 'clothRed' : 'bone', ox - 0.025, y + 0.816, oz - 0.025, ox + 0.025, y + 0.86, oz + 0.025, { ao: false, room });
+      }
+      P.jar(ctx, mx + 1.1, y + 0.8, mz + 0.3, 0.5);
+    }
     P.weaponRack(ctx, -76.6, y, iz1 - 0.3, Math.PI);
     P.banner(ctx, -80.0, y + 2.6, iz1 - 0.12, Math.PI, 'bannerBlack', 1.4, 2.8);
     P.wallTorch(ctx, ix1, y + 2.3, -7.6, 'w', { room, radius: 6 });
@@ -1302,6 +1300,7 @@ function buildKeep(ctx, S, L) {
       { kind: 'item', id: 'i_manivela', item: 'manivela', x: -87.7, y: y + 0.86, z: -6.55 },
       { kind: 'note', id: 'n_alcaide', note: 'alcaide', x: -88.4, y: y + 0.84, z: -6.4, model: 'paper' },
       { kind: 'note', id: 'n_guarnicion', note: 'guarnicion', x: -76.8, y: y + 1.12, z: -12.4, model: 'paper' },
+      { kind: 'npc', npc: 'rey', id: 't_rey', x: REY_MESA.table.x, y, z: REY_MESA.table.z, r: 2.2 },
       { kind: 'item', id: 'i_relicario3', item: 'relicario', x: -90.1, y: y + 0.75, z: -19.45 },
       { kind: 'door', id: 'd_poterna', x: (ix1 + x1) / 2, y, z: (PO.z0 + PO.z1) / 2, w: PO.z1 - PO.z0, h: PO.h, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: 1, swing: 1, plane: ix1 }
     );
@@ -1371,7 +1370,10 @@ function buildKeep(ctx, S, L) {
     { type: 'penitent', x: -88.4, y: 0, z: -18.2, yaw: 0.6, idle: 'eat', id: 'e_alm1' },
     { type: 'soldier', x: -80.4, y: F1, z: -15.2, yaw: -0.4, idle: 'stand', id: 'e_arm1' },
     { type: 'soldier', x: -86.4, y: F1, z: -17.8, yaw: 2.6, idle: 'wander', id: 'e_arm2' },
-    { type: 'mourner', x: -80.4, y: F2, z: -10.6, yaw: 1.6, idle: 'stand', id: 'e_alc1' }
+    // (en la alcoba: en la sala está la mesa del Rey)
+    { type: 'mourner', x: -88.3, y: F2, z: -17.1, yaw: -Math.PI / 2, idle: 'stand', id: 'e_alc1' },
+    // el Rey, en su sitial (game/rey.js)
+    { type: 'rey', x: REY_MESA.seat.x, y: F2, z: REY_MESA.seat.z, yaw: REY_MESA.seat.yaw, idle: 'sit', id: 'n_rey' }
   );
   // (el almacén, por la trampilla de la guardia)
   const HT = CASTLE.hatch;

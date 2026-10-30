@@ -185,6 +185,20 @@ export const ITEMS = {
     pros: ['La vida que te quitan queda unos segundos en el aire: si golpeas, la recuperas.', 'Tus golpes son más rápidos.'],
     cons: ['Las ampollas curan la mitad.', 'Los golpes que recibes hacen más daño.'],
   },
+  // Lo que deja el Rey (game/rey.js): la misma pieza, de dos maneras
+  rey_marfil: {
+    name: 'El rey de marfil',
+    desc: 'La pieza del rey del Cerco, de marfil amarillento, con la corona de oro gastada de tanto cogerla. El Rey te la tendió por encima de la mesa cuando la sacaste del tablero: «Llévatelo. Sácalo de aquí. De verdad». Abriga como una mano. Tu vitalidad aumenta.',
+    icon: 'reyMarfil',
+    key: false,
+    upgrade: 'hp',
+  },
+  rey_caido: {
+    name: 'El rey de marfil',
+    desc: 'La pieza del rey del Cerco, de marfil amarillento, con la corona de oro gastada de tanto cogerla. Se le cayó al Rey de los dedos cuando la llevaba al trono para empezar otra partida, la cuarta. No llegó.',
+    icon: 'reyMarfil',
+    key: true,
+  },
   cerrojo: {
     name: 'Cerrojo de San Martín',
     desc: 'Un pasador de hierro negro, largo como un palmo, con la cruz de Martín grabada. Con él echó el santo el primero de los cuatro cerrojos, y los hermanos de Dumio lo guardaron en su arca. No se abre con él: se cierra.',
@@ -289,6 +303,24 @@ Le dije que sí, y era mentira, y lo supo. Me miró el pulso desde la puerta, si
 Sigo torciendo. Mientras se tuerce no se piensa, y si no se piensa no tengo los signos. La rueda da vueltas y yo con ella.
 
 Si alguien viene por detrás, por el almacén, la tienda está abajo. Se baja por la escalera del fondo del obrador. La tranca de la calle se levanta fácil: no la puse para que no se saliera nadie.`,
+  },
+  cerco: {
+    title: 'El Cerco',
+    text: `Para mi hijo, que todavía no llega a la mesa.
+
+El tablero es la ciudad. En medio está el trono. La fila de fuera son las afueras.
+
+Los de dentro son el rey y sus ocho. Los de fuera son dieciséis, cuatro en medio de cada lado. Empiezan los de fuera.
+
+Todas las piezas andan en línea recta, tantas casillas como quieras, sin saltar a nadie. El trono es del rey: nadie más se para en él ni pasa por encima.
+
+Se mata cogiendo en medio: la pieza que dejas entre dos de las tuyas, en línea, muere. El que se mete solo entre dos no muere. El rey también mata. El trono vacío muerde a todos; con el rey sentado en él, sólo a los de fuera.
+
+El rey gana si llega a las afueras, a cualquier casilla. Los de fuera ganan si lo atrapan: en el trono, por los cuatro lados; junto al trono, por los tres que le quedan; en cualquier otro sitio, cogiéndolo en medio, como a cualquiera.
+
+Si una partida no se acaba nunca, son tablas.
+
+Un rey que se queda en su trono se muere en él. Sácalo.`,
   },
   animas: {
     title: 'Cuaderno del sacristán',
@@ -830,6 +862,81 @@ export const DIALOG = {
   // vuelves (aún vive)
   miguelBack: ['¿Otra vez tú? ¿Por qué has vuelto?', 'Te dije que te fueras.'],
 
+  // El Rey, en su sitial de la sala del alcaide (game/rey.js)
+  // (solo, colocando las piezas, antes de verte)
+  reyMutter: ['El rey, en su trono. Los ocho, alrededor...', 'Dieciséis. Quince... dieciséis.', 'Así. Así estaba.', '¿Dónde te has metido? Siempre se me pierde uno.', 'Empiezan los de fuera. Siempre empiezan los de fuera.'],
+  // te ve: se intenta levantar y no puede
+  reySee: '¿Quién...? No. No eres de los suyos. Los suyos no suben andando.',
+  reySee2: ['Perdona que no me levante. Ya no puedo.'],
+  // al hablarle
+  reyMeet: [
+    'No, no te arrodilles. Ya se ha arrodillado bastante gente en esta ciudad.',
+    'Soy el Rey. Lo que queda de él: esto, la corona y un tablero.',
+    'Te conozco. Te oía de noche rascar la pared de tu celda. Esta torre está encima de la cárcel: aquí arriba se oye todo.',
+    'Cuando sonó la campana, mi corte entera se arrodilló. Yo también. Tú no.',
+    'Desde entonces algo me come por dentro. Toso negro. No le voy a dar el gusto: me voy a morir siendo yo.',
+    'Pero antes, una partida. Una última. ¿Sabes jugar al Cerco?',
+  ],
+  reyMeetEnd: ['Da igual. Te enseño. Siéntate.'],
+  // mientras no te sientas
+  reyWait: ['Siéntate. Por lo que más quieras.', '¿Juegas o no?', 'No tengo toda la noche. Ya no.', 'El tablero está puesto.'],
+  reyThreatNear: ['Ahora no. Escucha: algo anda cerca.'],
+  // las reglas, la primera vez
+  reyRules: [
+    'Tú llevas a los de dentro: el rey, en su trono, y sus ocho. Yo, a los de fuera.',
+    'Todo anda en línea recta, lo que quieras, sin saltar a nadie. Como el roque del ajedrez.',
+    'Se mata cogiendo en medio: entre dos de los tuyos, en línea. Tu rey también mata.',
+    'Tu rey gana si llega a cualquier borde. Yo, si lo atrapo.',
+    'Lo demás está en el pergamino. Lo escribió mi padre para mí, cuando no llegaba a la mesa.',
+  ],
+  // al empezar cada partida
+  reyStart: ['Empiezo yo. Siempre empiezan los de fuera.', 'Otra vez. Ahora ya sabes cómo juego.', 'La última. Esta va en serio.'],
+  reyBack: ['Has vuelto. Bien.', 'Sabía que volverías. No hay nada más que hacer en esta ciudad.'],
+  // mientras piensa, alguna vez: lo que recuerda (en orden)
+  reyMemory: [
+    'Mi padre me enseñó en esta misma mesa. Yo me subía a un banco para llegar.',
+    'Mi hijo me ganó una vez. Una. Tenía once años. Le dejé creer que había sido suerte.',
+    'Mi reina se murió en la Cuaresma. Odiaba este juego: decía que era muy largo. Tenía razón.',
+    'Mi alcaide está ahí al lado, sobre sus cuentas. No he tenido valor de cerrarle los ojos.',
+    'Eso que ruge en la muralla era Don Gonçalo Mendes. El mejor de mis caballeros. Lo armé yo.',
+    'El pequeño estaba en la sala la noche de la campana. A veces le oigo subir la escalera. No sube nunca.',
+  ],
+  reyHmm: ['Hm.', 'Espera. Espera...', 'Déjame ver.'],
+  // mata una de las tuyas
+  reyTake: ['Uno menos.', 'Eso es mío.', 'En línea. Te lo dije.', 'Así cayeron los del adarve.', 'No llores por él. Cuida a los otros.'],
+  // le matas una de las suyas
+  reyLost: ['¡Ja! Bien. Bien...', 'Esa no la vi.', 'Te enseño demasiado.', 'Eso es. Eso es...'],
+  // tu rey ve una salida: él la tapa
+  reyThreat: ['No, no, no. Por ahí no se sale.', 'Te veo.', 'Ah. Ahí.'],
+  reyBlock: ['Cerrado.', 'Esa puerta, cerrada.'],
+  // dos salidas a la vez: no puede tapar las dos
+  reyFork: ['...Ay.', 'Ay, ay. Ya lo veo.', 'Eso... eso ha estado bien.'],
+  // tu rey, en peligro (te avisa)
+  reyDanger: ['Cuidado con tu rey. Está solo.', 'Mira bien a tu rey.'],
+  // tose
+  reyCough: ['...Perdona.', 'No es nada.', 'Sigue. Sigue, que no es nada.'],
+  // se ha adormilado mientras pensaba
+  reyDoze: ['¿Eh? ¿Me toca? ...Me toca.', 'Me he ido un momento. Ya estoy.', '¿Dónde...? Ah. El tablero.'],
+  // juega cansado (y lo sabe)
+  reyTired: ['Antes no me habría dejado eso...', 'Se me escapa. Se me escapa todo.'],
+  // gana él una partida (y te pide otra)
+  reyWin1: ['Uno. No está mal para ser la primera.', 'Tu rey no ha salido. El mío no salió nunca.', '¿Otra? Que no se diga que el Rey se retira ganando.'],
+  reyWin2: ['Dos. Juegas mejor: lo noto.', 'Me queda poco. Una más. La última.'],
+  reyDraw: ['Tablas. Ni tú ni yo. Como esta guerra.', '¿Otra?'],
+  // te levantas
+  reyForfeit: ['En el Cerco, el que se levanta pierde. Eso cuenta.', 'Te vas. Cuenta como perdida, ¿eh? Aquí estaré.'],
+  reyLeaveBetween: ['Vete, vete. Aquí estaré. Si sigo.', 'No tardes.'],
+  // el final, si le ganas
+  reyEndWin: [
+    '...Ha salido.',
+    'Ha salido. ¿Lo ves? Se podía. Siempre se pudo.',
+    'Toda la vida jugando a esto, y nunca lo saqué yo. Llévatelo. Sácalo de aquí. De verdad.',
+    'Gracias.',
+    'Qué bien se está aquí. Qué bien...',
+  ],
+  // el final, si pierdes las tres
+  reyEndLose: ['Tres.', 'No te lo tomes a mal. Es lo único que se me ha dado bien.', 'Otra. Una más. La última, te lo prometo.'],
+  reyEndLoseMutter: ['Los de fuera... en medio de cada lado...', 'Dieciséis... quince...', 'Y el rey... en su trono...'],
   leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
   leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
   leonorDeath: ['...Henrique...'],
@@ -911,6 +1018,13 @@ export const DIALOG = {
 };
 
 export const MSG = {
+  // el Rey y su mesa (game/rey.js)
+  reyAhoraNo: 'Ahora no: algo anda cerca.',
+  reyInterrumpido: 'Te levantas de la mesa.',
+  cercoLeave: 'Otra vez: levantarte (la partida cuenta como perdida)',
+  reyHaMuerto: 'El Rey ha muerto',
+  reyMuertoA: 'El Rey, echado atrás en su sitial, con los ojos cerrados. Sonríe.',
+  reyMuertoB: 'El Rey, doblado sobre el tablero, con la mano abierta junto al trono.',
   intro: ['Braga.', 'Tercera noche después de la caída.'],
   lockedKey: (k) => `Cerrada con llave. Necesitas: ${k}.`,
   barred: 'Está atrancada desde el otro lado.',

@@ -2814,6 +2814,114 @@ export class Audio {
         }
         break;
       }
+      // ---- el Rey (game/rey.js) y su mesa
+      // habla: sílabas de voz de viejo, rota y con poco aire, que tiembla
+      case 'reyTalk': {
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: (o.len ?? 1.5) + 1.5, ref: 4 });
+        const f0 = 96 * (o.k ?? 1);
+        let tt = t;
+        const end = t + Math.min(4, o.len ?? 1.5);
+        while (tt < end) {
+          const l = rnd(0.09, 0.22);
+          this.voice(d, tt, l, { f0: f0 * rnd(0.88, 1.12), f1: f0 * rnd(0.8, 0.98), vowel: pick(['a', 'e', 'o', 'a', 'u']), v1: pick(['a', 'e', 'i', 'o', 'u']), gain: 0.08, vib: 7, vibD: 22, breath: 0.85, a: 0.02, jit: 26, rasp: 0.35 });
+          tt += l + (Math.random() < 0.22 ? rnd(0.2, 0.4) : rnd(0.03, 0.09));
+        }
+        break;
+      }
+      // la tos: golpes de aire con la garganta rota y lo húmedo del pecho;
+      // entre uno y otro, a veces, el aire que entra silbando
+      case 'reyCough': {
+        const n = o.n ?? 3;
+        d = this.out(P, { gain: 0.95, verb: 0.35, life: n * 0.45 + 2, ref: 4 });
+        let tt = t;
+        for (let i = 0; i < n; i++) {
+          const k = 1 - i / (n + 2);
+          this.noise(d, tt, 0.16, { f0: rnd(900, 1400), f1: 380, q: 1.1, gain: 0.5 * k, a: 0.006, buf: this.pink });
+          this.voice(d, tt, 0.13, { f0: rnd(130, 170), f1: 90, vowel: 'a', v1: 'o', gain: 0.12 * k, vibD: 0, breath: 0.9, a: 0.005, rasp: 0.8, dist: 0.6, rel: 0.6 });
+          this.noise(d, tt + 0.05, 0.14, { type: 'lowpass', f0: 420, gain: 0.25 * k, a: 0.01, buf: this.brown, rate: 5 });
+          tt += rnd(0.24, 0.36);
+          if (i < n - 1 && Math.random() < 0.3) {
+            this.noise(d, tt, 0.3, { f0: 1800, f1: 2600, q: 6, gain: 0.08, a: 0.15 });
+            tt += 0.3;
+          }
+        }
+        // la bocanada larga del final
+        this.noise(d, tt + 0.1, 0.55, { f0: 1500, f1: 2400, q: 5, gain: 0.1, a: 0.35 });
+        this.tone(d, tt + 0.15, 0.4, { f0: 2100, f1: 2400, gain: 0.012, a: 0.2 });
+        break;
+      }
+      // se ríe: soplos de voz que bajan, con el pecho que silba (o.long:
+      // la risa de verdad, la del final)
+      case 'reyLaugh': {
+        d = this.out(P, { gain: 0.85, verb: 0.3, life: 3, ref: 4 });
+        const n = o.long ? 7 : 4;
+        for (let i = 0; i < n; i++) {
+          const tt = t + i * rnd(0.17, 0.22);
+          const f = 150 - i * 6;
+          this.voice(d, tt, 0.12, { f0: f, f1: f * 0.85, vowel: 'e', v1: 'a', gain: 0.075, vibD: 0, breath: 1, a: 0.01, rasp: 0.4, rel: 0.6 });
+          this.noise(d, tt, 0.1, { f0: 1700, q: 2, gain: 0.05, a: 0.01 });
+        }
+        this.noise(d, t + n * 0.2, 0.5, { f0: 1600, f1: 2500, q: 5, gain: 0.07, a: 0.3 });
+        break;
+      }
+      // despierta de golpe: una bocanada corta
+      case 'reyGasp': {
+        d = this.out(P, { gain: 0.8, verb: 0.25, life: 1.2, ref: 4 });
+        this.noise(d, t, 0.32, { f0: 900, f1: 2600, q: 2.2, gain: 0.22, a: 0.06 });
+        this.voice(d, t + 0.05, 0.18, { f0: 170, f1: 210, vowel: 'a', v1: 'e', gain: 0.04, vibD: 0, breath: 1, a: 0.02, rel: 0.5 });
+        break;
+      }
+      // el esfuerzo de alargar el brazo
+      case 'reyBreath': {
+        d = this.out(P, { gain: 0.6, verb: 0.2, life: 1.5, ref: 3 });
+        this.noise(d, t, 0.7, { f0: 700, f1: 380, q: 1.2, gain: 0.12, a: 0.12, buf: this.pink });
+        this.voice(d, t + 0.1, 0.45, { f0: 110, f1: 92, vowel: 'o', v1: 'u', gain: 0.03, vibD: 10, breath: 1, a: 0.08, rasp: 0.3, rel: 0.7 });
+        break;
+      }
+      // el último aliento: el aire que sale, largo, y la voz que se apaga
+      case 'reyLastBreath': {
+        d = this.out(P, { gain: 0.9, verb: 0.45, life: 5, ref: 4 });
+        this.noise(d, t, 3.2, { type: 'lowpass', f0: 1200, f1: 260, gain: 0.16, a: 0.4, buf: this.pink, curve: 'lin' });
+        this.voice(d, t + 0.3, 1.8, { f0: 104, f1: 78, vowel: 'a', v1: 'o', gain: 0.035, vib: 5, vibD: 18, breath: 1, a: 0.2, rasp: 0.35, rel: 0.8 });
+        break;
+      }
+      // una pieza que se posa en el tablero (madera sobre madera; o.k < 1,
+      // más grave: el rey)
+      case 'pieceTap': {
+        d = this.out(P, { gain: 0.7, verb: 0.2, life: 1, ref: 2 });
+        const k = o.k ?? 1;
+        this.tone(d, t, 0.06, { type: 'triangle', f0: rnd(1250, 1600) * k, f1: 900 * k, gain: 0.22, a: 0.001 });
+        this.tone(d, t, 0.08, { f0: rnd(230, 280) * k, f1: 160, gain: 0.28, a: 0.001 });
+        this.noise(d, t, 0.025, { type: 'highpass', f0: 3200, gain: 0.18, a: 0.0005 });
+        break;
+      }
+      // la pieza que se levanta y roza
+      case 'pieceSlide': {
+        d = this.out(P, { gain: 0.5, verb: 0.15, life: 1, ref: 2 });
+        this.noise(d, t, 0.12, { f0: 2400, f1: 1500, q: 1.5, gain: 0.08 * (o.k ?? 1), a: 0.02 });
+        break;
+      }
+      // una pieza que cae: el golpe y un par de botes
+      case 'pieceTopple': {
+        d = this.out(P, { gain: 0.7, verb: 0.2, life: 1.2, ref: 2 });
+        for (let i = 0; i < 3; i++) {
+          const tt = t + [0, 0.11, 0.18][i];
+          const g2 = [0.24, 0.1, 0.05][i];
+          this.tone(d, tt, 0.05, { type: 'triangle', f0: rnd(1100, 1400), f1: 800, gain: g2, a: 0.001 });
+          this.tone(d, tt, 0.06, { f0: rnd(200, 260), f1: 150, gain: g2 * 1.2, a: 0.001 });
+        }
+        break;
+      }
+      // se colocan las piezas para una partida
+      case 'pieceSet': {
+        d = this.out(P, { gain: 0.6, verb: 0.2, life: 2.5, ref: 2 });
+        for (let i = 0; i < 14; i++) {
+          const tt = t + i * rnd(0.05, 0.1);
+          this.tone(d, tt, 0.05, { type: 'triangle', f0: rnd(1200, 1650), f1: 900, gain: rnd(0.06, 0.12), a: 0.001 });
+          this.tone(d, tt, 0.06, { f0: rnd(220, 280), f1: 160, gain: 0.1, a: 0.001 });
+        }
+        break;
+      }
       // ---- Leonor
       // el pus: un borbotón espeso que sale de la boca
       case 'pusSpew': {

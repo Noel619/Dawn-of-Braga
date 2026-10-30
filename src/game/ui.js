@@ -173,7 +173,7 @@ const ITEM_CATS = [
   ['upgrade', 'Mejoras'],
 ];
 const KEY_ORDER = ['palanca', 'llave_claustro', 'manivela', 'anillo', 'martillo', 'tablon', 'llave_sotano', 'garra', 'incienso'];
-const UPGRADE_ORDER = ['lagrima', 'ampolla', 'relicario', 'rosario', 'piedra'];
+const UPGRADE_ORDER = ['lagrima', 'rey_marfil', 'ampolla', 'relicario', 'rosario', 'piedra'];
 const FLASK = { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' };
 // lo que se dice de una ranura vacía, de «nada» en su lista y de una ranura
 // sin nada que ponerse

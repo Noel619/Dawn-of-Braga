@@ -43,6 +43,7 @@ import { Culling } from './culling.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
+import { ReyQuest } from './rey.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
@@ -252,6 +253,8 @@ export class Game {
     this.crypt = new CryptQuest(this);
     // Dom Paio, el canónigo de la capilla de San Martín (y del pozo)
     this.paio = new PaioQuest(this);
+    // el Rey, en la sala del alcaide, y su juego (el Cerco)
+    this.rey = new ReyQuest(this);
     // los osarios: sus puzles y sus objetos benditos
     this.ossuaries = new Ossuaries(this);
     // la casa tapiada, el pasadizo del Soto y Miguel, el tonelero
@@ -297,14 +300,16 @@ export class Game {
 
     this.input.onPointerLockLost = () => {
       // (con el panel del modo desarrollador abierto el juego sigue)
-      if (this.state === 'play' && !this.ui.modal && !this.input.freeLook && !this.dev.open) this.openPause();
+      // (sentado a la mesa del Rey el ratón va suelto: soltarlo no es pausa)
+      if (this.state === 'play' && !this.ui.modal && !this.input.freeLook && !this.dev.open && !(this.rey && this.rey.seat)) this.openPause();
     };
-    // el ratón se captura sólo jugando, sin menús ni el panel abiertos
-    this.input.lockAllowed = () => this.state === 'play' && !this.ui.modal && !this.dev.open;
+    // el ratón se captura sólo jugando, sin menús ni el panel abiertos (ni
+    // sentado a la mesa del Rey: ahí se señala con él)
+    this.input.lockAllowed = () => this.state === 'play' && !this.ui.modal && !this.dev.open && !(this.rey && this.rey.seat);
     this.canvas.addEventListener('click', () => {
       // (un clic en el juego cierra el panel del modo desarrollador)
       if (this.dev.open) this.dev.close();
-      else if (this.state === 'play' && !this.ui.modal) this.input.requestLock();
+      else if (this.state === 'play' && !this.ui.modal && !(this.rey && this.rey.seat)) this.input.requestLock();
     });
     this.resize();
     addEventListener('resize', () => this.resize());
@@ -454,6 +459,7 @@ export class Game {
     this.house.applyFlags();
     this.crypt.applyFlags();
     this.paio.applyFlags();
+    this.rey.applyFlags();
     this.ossuaries.applyFlags();
     this.souto.applyFlags();
     this.fisico.applyFlags();
@@ -534,6 +540,7 @@ export class Game {
     this.speech.clear();
     this.house.script = null;
     this.paio.script = null;
+    this.rey.onRespawn();
     this.souto.reset();
     this.cornisas.reset();
     this.fisico.reset();
@@ -1181,6 +1188,7 @@ export class Game {
     this.house.onRespawn();
     this.crypt.onRespawn();
     this.paio.onRespawn();
+    this.rey.onRespawn();
     this.ossuaries.onRespawn();
     this.souto.onRespawn();
     this.cornisas.onRespawn();
@@ -1767,6 +1775,10 @@ export class Game {
       // (de cerca, delante de un mecanismo de los osarios)
       const V = this.ossuaries.view;
       this.camRig.override = { pos: V.pos, look: V.look, speed: 6 };
+    } else if (this.rey && this.rey.view) {
+      // (sentado a la mesa del Rey: el plano lo mueve su guion)
+      const V = this.rey.view;
+      this.camRig.override = { pos: V.pos, look: V.look, speed: 30 };
     } else this.camRig.override = null;
 
     // (los avisos de pulsación corren en tiempo real; el juego, mientras, a
@@ -1803,7 +1815,7 @@ export class Game {
     if (playing) {
       this.playTime += dt;
       // (de cerca de un mecanismo, «atrás» es dejarlo: ni pausa ni inventario)
-      const free = !this.ossuaries.view;
+      const free = !this.ossuaries.view && !this.rey.seat;
       if (free && inp.pressed('pause')) this.openPause();
       else if (free && inp.pressed('inventory') && !this.cutscene) this.openOverlay('inv');
       else if (free && inp.pressed('map') && !this.cutscene) this.openOverlay('map');
@@ -1812,7 +1824,7 @@ export class Game {
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
     if (simulate && !this.ui.modal) {
-      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view;
+      const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view && !this.rey.seat;
       if (this.state === 'play' || this.state === 'ending') {
         p.update(dt, inp, this.camRig, control);
         if (control) this.updateLock(dt);
@@ -1865,6 +1877,7 @@ export class Game {
         this.house.update(dt);
         this.crypt.update(dt);
         this.paio.update(dt);
+        this.rey.update(dt);
         this.ossuaries.update(dt);
         this.souto.update(dt);
         this.cornisas.update(dt);
@@ -1877,7 +1890,7 @@ export class Game {
       this.interact.update(dt);
       if (this.state === 'play') {
         this.interact.triggers(p);
-        this.promptTarget = p.state === 'free' && !p.dead && !this.ossuaries.view ? this.interact.nearest(p) : null;
+        this.promptTarget = p.state === 'free' && !p.dead && !this.ossuaries.view && !this.rey.seat ? this.interact.nearest(p) : null;
         // (el jefe final: agarrarse al coloso, apuñalar, aferrarse)
         const fp = this.finale.prompt();
         if (fp !== undefined) this.promptTarget = fp;
@@ -1887,7 +1900,7 @@ export class Game {
       if (this.state === 'play' && !p.dead) this.checkPits(p);
     }
     // cámara
-    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view);
+    this.camRig.update(dt, inp, p, this.state === 'play' ? this.lockTarget : null, this.world.col, this.state === 'play' && !this.ui.modal && !p.dead && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view && !this.rey.seat);
 
     // zona y atmósfera
     if (this.state !== 'title') {

@@ -344,12 +344,45 @@ estacas (quien cae en él se clava en ellas: no tiene salida) la une con él, al
 partida por el muro de carga y tabiques con puertas de arco. Planta baja: el **granero**, la **bodega**, el
 **almacén** y el **pozo** de la torre, a los que sólo se baja por una trampilla. Primera: el **cuerpo de guardia**
 con el **torno del puente** y el pañol de la trampilla, y tras un muro la **armería** (picas, escudos) y el **taller
-del ballestero**. Segunda: la **sala del alcaide**, partida por un arco diafragma, con la mesa del plano de la
-defensa, la mesa del consejo y el libro de la guarnición; el **escritorio**, con el alcaide muerto sobre sus cuentas
+del ballestero**. Segunda: la **sala del alcaide**, partida por un arco diafragma, con la mesa del Rey (ver más
+abajo), la mesa del consejo con el plano de la defensa y el libro de la guarnición; el **escritorio**, con el alcaide muerto sobre sus cuentas
 junto a la chimenea y la manivela del torno que abre la reja de la cripta de la Sé, y tras él su **alcoba**. Arriba,
 la **terraza** de combate: amplia, con su matacán sobre la puerta, la caseta de la escalera con su tejado a dos
 aguas, la chimenea, el fanal, la caldera de la pez y piedras para tirar (ahí se peleará con la Bestia de Carne; el
 escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y pilares de sillería.
+
+**El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
+las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
+un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
+de piel, una venda manchada de negro bajo el pecho, la manta sobre las rodillas y un pañuelo en la mano. Cuando sonó
+la campana se arrodilló, como toda su corte, y algo le come por dentro: tose negro, tiembla y se le van las fuerzas.
+No piensa darle el gusto: quiere morirse siendo él, y antes jugar una última partida a **El Cerco**, el juego que le
+enseñó su padre en esa misma torre (sabe quién eres: la torre está encima de la cárcel y te oía rascar la pared).
+Antes de conocerte murmura inclinado sobre el tablero; al verte intenta levantarse agarrado a los brazos del
+sitial y las piernas no le sostienen.
+El Cerco es de la familia de los *tafl*: un tablero de 9 × 9 con el trono en medio y las afueras alrededor; tú
+llevas a los de dentro (el rey de marfil y sus ocho) y él a los dieciséis de fuera. Todo anda en línea recta sin
+saltar a nadie, se mata cogiendo en medio (el trono vacío también muerde), tu rey gana si llega a cualquier
+casilla de las afueras y él gana si lo atrapa (por los cuatro lados en el trono, por los tres que le quedan junto a
+él, cogido en medio en cualquier otro sitio); las reglas las cuenta él y están en el pergamino de su padre (un
+documento más). Se juega en una vista de cerca, sobre el tablero y con él enfrente: el cursor con W A S D (o la
+cruceta; sentado, el ratón va suelto y señala la casilla que tiene debajo), E (A o el clic) para elegir la pieza y
+la casilla, con las casillas posibles marcadas (las que matan, en rojo; la que sale, en blanco) y su última jugada
+también; R (X) para releer las reglas, P (Start) para la pausa y Esc (B) dos veces para levantarse (a media
+partida, cuenta como perdida). Él piensa en un hilo de fondo (búsqueda
+alfa-beta con profundización iterativa, tabla de transposición y una búsqueda de amenazas que ve las horquillas):
+juega muy bien en la primera partida y peor según se apaga. Mientras, piensa con la mano en la barbilla, alarga el
+brazo tembloroso hasta la pieza (cinemática inversa, inclinándose más cuanto más lejos), la lleva, a veces titubea a
+mitad de camino, y la deja con un golpe seco; comenta lo que pasa (lo que mata, lo que pierde, cuando tu rey se
+asoma a una salida, cuando no puede tapar dos a la vez), recuerda (su padre, su hijo, su reina, su alcaide, Don
+Gonçalo, el pequeño que estaba en la sala la noche de la campana), tose cada vez más (el pañuelo a la boca), se
+adormila mientras piensa y despierta de golpe («¿Me toca?»). Se juegan **tres partidas como mucho**: si le ganas
+una, se queda mirando el tablero («Ha salido»), se ríe hasta toser, coge tu rey del borde y te lo tiende por
+encima de la mesa; al tomarlo se echa atrás en el sitial, cierra los ojos y ya no los abre (te deja **el rey de
+marfil**: más vitalidad). Si pierdes las tres, se ríe, flojo, y se pone a colocar otra partida («Una más. La
+última, te lo prometo»); a la cuarta pieza, tu rey, se le para la mano a medio camino del trono, la pieza se le
+cae y él se queda doblado sobre el tablero (la pieza, **el rey de marfil**, te la quedas: un recuerdo). Después
+su cuerpo sigue en el sitial y el tablero como quedó. La Plañidera que esperaba en la sala llora ahora en la alcoba.
 
 **Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras, portadas de arco
 en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
@@ -741,8 +774,9 @@ src/
                         del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
-                        level_castle.js: el castillo, la torre del homenaje y las mazmorras; level_keep.js: la
-                        atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        level_castle.js: el castillo, la torre del homenaje y las mazmorras; rey_mesa.js: la
+                        mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
+                        level_keep.js: la atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
@@ -765,7 +799,9 @@ src/
                         impaled_model.js, los modelos del Empalado y de la Bestia, impaled.js, su pelea, y beast.js,
                         cómo se mueve la Bestia; henrique.js, el aliado de la Casa del Alemán; morador.js, Miguel, el
                         tonelero infectado (sus posturas: llorar, encogerse, morderse el brazo, ahorcado); leonor.js,
-                        Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido;
+                        Leonor, la Dolorosa; guardian.js, los Velados; paio.js, Dom Paio, vivo y convertido; rey.js,
+                        el Rey (sentado: su cara con mandíbula, párpados y cejas, la respiración, el temblor, las
+                        toses con la mano a la boca, el brazo que va a las casillas y sus dos muertes);
                         custodio.js, el Custodio de la Garra; catacumbas.js, el Cavador, la Emparedada y el Enrodado;
                         coronado.js, el Coronado; fisico.js, el Físico de los Inocentes (su figura, sus hierros,
                         sus golpes por tiempos);
@@ -785,7 +821,11 @@ src/
                         oleadas, las ventanas y la espada del hogar); souto.js: el pasadizo del Soto (el tablón y el equilibrio) y Miguel (lo que
                         dice, cuándo se ahorca); crypt.js: la Puerta del Dios Ignoto, las pilas, el incensario, las
                         rejas y el arca del relicario; relics.js: los objetos benditos; ossuaries.js: los puzles de
-                        los cuatro osarios y su vista de cerca; paio.js: el guion de Dom Paio; intro/: las
+                        los cuatro osarios y su vista de cerca; paio.js: el guion de Dom Paio; rey.js: el guion del
+                        Rey y su mesa (el encuentro, las partidas, los dos finales); cerco/: el Cerco (rules.js, las
+                        reglas, sin three.js; ai.js, cómo piensa el Rey; ai_worker.js y thinker.js, su hilo de
+                        fondo; levels.js, su fuerza en cada partida; board.js, las piezas, el cursor y las marcas
+                        en el mundo); intro/: las
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
                         sus figuras, cada una con su cara y su ropa); spring.js: la fuente sin nombre de la cisterna
@@ -840,6 +880,11 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        luneto con el hueco mal cortado, una cuña sin suelo)
                         floorgaps.mjs  tiras sin suelo dibujado (cada 5 cm) en los bordes y los vanos de las
                                        salas de la cripta honda, donde la colisión sí sostiene al jugador
+                        rey.mjs        el Rey y su mesa: fotos, sentarse a jugar (reglas, su turno y el
+                                       tuyo), los dos finales, tres partidas seguidas y retratos de sus
+                                       gestos (`node tools/rey.mjs fotos|mesa|final a|final b|tres|retratos`)
+                        cerco.mjs      el Cerco en la consola (sin navegador): las reglas, la velocidad de
+                                       la IA y una liga del Rey contra jugadores de prueba
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo
