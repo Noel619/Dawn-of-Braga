@@ -20,6 +20,7 @@ Plan de diseño y de trabajo, empezado el 30 de octubre de 2026 y rehecho el mis
 | La ballesta | **A dos manos.** Los virotes, por ahora, **sólo en el castillo**. Queda por pensar cómo se integran del todo. | §9. |
 | ¿Pelea en el Paço? | **La Corte de los Infieles**: todos los cortesanos que traicionaron al Rey van a por ti con cuchillos, como en el asesinato de Julio César. **Muy rítmica**, muchos enemigos, no un jefe solo. | §8. |
 | La recompensa del Rey | **Sólo la pieza de marfil**, que necesita **un sprite nuevo** (el de ahora es feo). | El icono del rey de marfil, rehecho (hecho). Nada más. |
+| (añadido después) | **Un jefe opcional, el más difícil del juego**: el Caballero de la Orden, el mejor del ejército portugués, ya infectado, en lo más alto del mapa, mirando la luna. Rápido, de críticos, de habilidades a distancia una tras otra, que desvía tus golpes; **una danza**. Con **defensa de armadura**: todas las armas le hacen menos daño según su calidad, salvo la espada del alemán y la sagrada. | §10. |
 
 **La medida.** El mapa de la ciudad (lo que dibuja el mapa del juego, sin el río) va de x = −93 a 80 y de
 z = −126 a 58: unos 173 × 184 m, **31.800 m²**. El 25 % son **unos 8.000 m²**. El Paço que sigue tiene unos
@@ -322,7 +323,47 @@ cualquier arma.
 - **Sirve para** cortar cuerdas: el contrapeso de la bajada tapiada (§4.3) y, más adelante, la jaula colgada del
   tormento y otros atajos.
 
-## 10. Fases y orden de trabajo
+## 10. El Caballero de la Orden (jefe opcional)
+
+**Lo que pide el autor** (sus palabras, en el apéndice): el jefe más difícil del juego, **por lejos**, y opcional.
+En lo más alto del mapa, **mirando la luna**, melancólico, con el viento. Un caballero, el mejor de los hombres
+del ejército portugués, ya contaminado. Apoyado en su espada, se da la vuelta y te mira; se pone en guardia y la
+cámara pasa a **un plano lateral**: el Prisionero a la izquierda, el Caballero a la derecha, el viento y las
+hojas pasando entre los dos mientras la cámara se aleja despacio; luego, la pelea. **Ataques rápidos que son
+críticos**, **acometidas en línea recta**, mucha frecuencia; **apenas deja huecos** y **desvía tus golpes** si no
+le pillas desprevenido; **habilidades una tras otra**, nada de los golpes cortos de las criaturas de siempre.
+Difícil, de **memorizar** y de ir **preparado**. Y una estadística nueva, **la defensa de armadura**.
+
+**Dónde** (propuesta): **la terraza de la torre del homenaje rehecha**, lo más alto del mapa (la terraza a
+18,4 m y las torrecillas a 22; la Torre del Fanal llega a 18). De noche siempre, con la luna grande sobre el
+Paço, el estandarte del Rey restallando y el humo de la ciudad abajo. Se sube por la escalera de la galería de la
+sala del Rey: **es opcional** porque nada del recorrido obliga a subir. (La terraza se guardaba para la Bestia de
+Carne: ver §12.)
+
+**Quién** (propuesta): un **caballero de una orden militar** (en 1167 están el Temple, que hizo Tomar en 1160, y
+la milicia de Évora, recién nacida), el alférez de las hazañas del Rey. Sin nombre en el juego, como el Rey; los
+documentos lo llaman «el Caballero de la Orden». Cota de malla y sobreveste blanca con la cruz, yelmo cerrado
+de cimera, la espada larga y la capa, todo hecho jirones y con la infección asomando por las juntas.
+
+**Cómo pelea** (propuesta, para afinar con el autor). Un repertorio de **habilidades** que encadena sin parar,
+cada una con su aviso propio (un sonido y una pose que se aprenden):
+
+| Habilidad | Qué hace |
+|---|---|
+| **La acometida** | cruza la terraza en línea recta, de un extremo a otro, con la espada por delante (de una a tres seguidas, cambiando de rumbo) |
+| **El tajo del viento** | un tajo a distancia: la hoja levanta una cuchilla de aire que corre por el suelo |
+| **La cruz** | dos tajos en cruz que dejan una estela que corta un instante después |
+| **El salto** | salta alto, cae de punta donde estabas y barre al levantarse |
+| **El desvío** | si le atacas de frente sin que esté abierto, para y contraataca (crítico) |
+| **La carga del pendón** | arranca el estandarte del Rey de su asta y barre con él toda la terraza (sólo a media vida) |
+
+**Sus golpes son críticos** (hacen el daño de un golpe de gracia) y **sus huecos, muy cortos**: tras la tercera
+acometida, al clavar la espada en el salto y cuando un desvío tuyo le pilla (el parry sí le abre). **La defensa
+de armadura**: cada arma tiene su calidad, y contra él (y sólo contra él, por ahora) hace menos daño cuanto peor
+es: la espada oxidada (nueva, por añadir) un 50 % menos; el facón, el hacha, la lanza y la espada del carcelero,
+entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada menos**.
+
+## 11. Fases y orden de trabajo
 
 | Fase | Qué | Notas |
 |---|---|---|
@@ -340,10 +381,11 @@ cualquier arma.
 | 4g | **La reja de las cinco llaves** | fuera la manivela; documentos; `progress.mjs` |
 | 5 | **Por fuera** | muralla más alta, torres nuevas, barbacana, cadalsos, estandartes, la brecha; la silueta desde la ciudad |
 | 6 | **Repaso** | documentos, sonido de cada sala, música del Paço, recorridos de prueba, rendimiento |
+| 7 | **El Caballero de la Orden** | la escena de la luna (el plano lateral), el modelo, las habilidades, la defensa de armadura, la espada oxidada |
 
 Cada fase deja el juego jugable de principio a fin.
 
-## 11. Preguntas para el autor (las nuevas)
+## 12. Preguntas para el autor (las nuevas)
 
 1. **¿Llaves o amuletos?** Van como cinco llaves de los cinco oficiales (la cerradura de cinco llaves tiene su
    lógica: las arcas de varias llaves existieron). Si prefieres amuletos, cambian el modelo y los textos.
@@ -351,8 +393,12 @@ Cada fase deja el juego jugable de principio a fin.
 3. **El pasadizo quemado se cruza haciendo equilibrio** (de las cámaras a la torre). ¿O que no se cruce y sólo
    se vea?
 4. **¿Se recogen los virotes disparados** de lo que no se rompe (madera, cuerpos)? Por ahora, no.
+5. **El Caballero, en la terraza de la torre del homenaje** (lo más alto). Ahí estaba pensada la pelea con la
+   Bestia de Carne, que ahora sólo es la huida: ¿la Bestia se queda en la huida, o su pelea va a otro sitio?
+6. **¿Quién es el Caballero?** Va como un caballero de una orden militar, sin nombre (como el Rey). ¿Templario,
+   de Évora (la que será de Avis), o del Rey sin más?
 
-## 12. Riesgos técnicos
+## 13. Riesgos técnicos
 
 - **`level_castle.js` tiene casi 3.000 líneas** y la torre está escrita a mano, estancia a estancia: hay que
   pasarla a medidas (fase 1) antes de crecer.
@@ -388,3 +434,36 @@ Cada fase deja el juego jugable de principio a fin.
 - La barbacana, la coracha, la albarrana y la torre del homenaje metida en el muro entre dos recintos (Tomar):
   [Aedos (UFRGS)](https://seer.ufrgs.br/index.php/aedos/article/download/22304/13120/83157),
   [Castelo Rodrigo](https://aldeiashistoricasdeportugal.com/en/?p=8487).
+
+## Apéndice: las respuestas del autor, tal cual
+
+(Las preguntas eran las de la primera versión de este plan; se copian sin tocar.)
+
+1. **¿El Rey o el alcaide?** Hecho con el Rey (§4.1); cambiarlo es poco trabajo.
+   -Respuesta: Rey, posiblemente un Alfonso I de Portugal, sumamente deteriorado por la guerra. En esta historia alternativa, y como se dice en la intro, Portugal, en vez de haber logrado conquistar Lisboa, sufrió una grave contraofensiva por parte de los musulmanes. Lo que lo llevó a un grave estado de salúd, tal como se ve en el juego.
+   
+3. **¿Nombre para el Rey?** Ahora es sólo «el Rey» (sin fecha ni nombre que choque con la historia de verdad).
+   -Alfonso I, aunque no vamos a nombrarlo como tal dentro del juego. No vamos a agregar diálogos respecto a ello. Documentos o notas dentro del castillo, sí. U otros personajes, pero el rey no se mencionará a sí mismo como Alfonso I. Tal cual como está integrado el rey actualmente, está bien. No lo toques.
+   
+5. **¿El Paço en el camino principal o como gran zona opcional?** Propuesta: principal, entrando por la coracha.
+6. **¿Dónde va el Paço?** Al norte, bajo la coracha (propuesta), o al oeste, ampliando el mapa.
+
+-Respuesta 5 y 6. Esta nueva área debe de ser de un tamaño GRANDE. En comparación, debería de ser aproximadamente del tamaño del 25% del mapa actual de la ciudad, un poco más, o un poco menos. Pero esto tiene una explicación. Hacen falta diseñar estas zonas: Palacio del Rey, Jardines del Palacio, Castillo y todo lo que conlleva. La idea es que busques información real, de cómo se componían este tipo de estructuras, para que sea una zona coherente y MUY BIEN DISEÑADA. La idea es que para abrir la compuerta de la Compuerta al interior de la Iglesia, al sótano. Se precisen 5 amuletos, o llaves por así decirlo. Aunque ahora que lo pienso no tiene mucha lógica en el lore. Pero debemos hacer que tengas que recorrer esta zona sí o sí para poder abrir la compuerta. Quitarémos el tema de la palanca, porque se ve demasiado soso tener que agarrar una palanca. 
+   
+8. **La ballesta**: ¿en la mano izquierda en lugar del escudo (propuesta), a dos manos, o como herramienta con
+   virotes contados para puzles?
+   -La ballesta se utiliza a dos manos. Todavía queda pensar cómo integrarémos el sistema de flechas/virotes. Por ahora, el único lugar en el que se podrán encontrar flechas y virotes será el castillo.
+ 
+9. **¿Pelea en el Paço?** Un jefe propio (la corte arrodillada hecha una sola cosa, la reina...) o sólo
+   criaturas.
+   -Posiblemente sí. La Corte de los Infieles, se llamaría, y sería una batalla muy rítmica, con muchos enemigos. No sería un único boss. Serían todos los cortesanos del rey, que lo traicionaron. Quiero que metafóricamente sea parecido al intento de asesinato de Julio Cesar. Todos van a por ti con cuchillos. Algo así. Todavía queda pensarlo mejor, pero posiblemente sea algo como eso.
+
+Vale, además de estos, va a haber un Boss Opcional, que va a ser el más difícil del juego, por lejos. Se va a encontrar en la parte más elevada del mapa. Posiblemente en la cima del Castillo, o en la cima del Palacio del Rey. Mirando la Luna, de forma melancólica, mientras el viento corre. Es un caballero, 
+concretamente, el mejor de los hombres del ejército portugués. Apoyado sobre su espada, se da la vuelta y te observa. Ya contaminado por la infección.
+Se pone en posición y la cámara se pone en un plano lateral. El Prisionero a la izquierda, y el Caballero de la Orden, a la derecha. El viento y las hojas pasan a sus lados, mientras la cámara se aleja lentamente. Luego el combate inicia. Los ataques del caballero son rápidos y son críticos automáticos. Tiene que tener varios ataques en los que avanza rápidamente en línea recta, o similares. La batalla tiene que sentirse intensa, rápida, muy ágil y con mucha frecuencia de ataques. La ventana que él deja para poder golpearlo, ha de ser muy muy baja. Prácticamente no deja puntos fáciles para atacarlo, y puede hacer parry a tus ataques si no lo toman desprevenido. La batalla tiene que sentirse casi como una danza. Este enemigo NO PUEDE tener los ataques de los enemigos típicos del juego, que son en su mayoría de un área muy muy baja, y se tienen que acercar mucho para pegarte. Este boss es de lanzar habilidades una tras otra de forma constante. La idea es que sea un combate DIFÍCIL, y requiera MUCHA MEMORIZACIÓN e ir BIEN PREPARADO. Va a tener una estadística, Defensa de Armadura. Todas las
+armas a exepción de la espada del alemán, y la espada sagrada, hacen un tanto % menos de daño, en función de la calidad del arma. Por ejemplo la espada oxidada, que se agregará al juego hará un 50% menos de daño. Y así con cada una. La espada de Solstein, del alemán o como se le diga y la sagrada hacen un 0% más o menos de daño. No sufren este defecto. 
+
+  
+11. **La recompensa del Rey**: ahora, vitalidad si le ganas. ¿Otra cosa (su anillo, una llave del Paço)?
+- Por ahora no va a haber recompensa mas que la pieza de marfil que necesita un rediseño de su sprite. Actualmente se ve muy feo su sprite actual.
+
