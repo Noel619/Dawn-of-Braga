@@ -307,14 +307,26 @@ Cada fase deja el juego jugable de principio a fin.
 ## 8. Preguntas para el autor
 
 1. **¿El Rey o el alcaide?** Hecho con el Rey (§4.1); cambiarlo es poco trabajo.
-2. **¿Nombre para el Rey?** Ahora es sólo «el Rey» (sin fecha ni nombre que choque con la historia de verdad).
-3. **¿El Paço en el camino principal o como gran zona opcional?** Propuesta: principal, entrando por la coracha.
-4. **¿Dónde va el Paço?** Al norte, bajo la coracha (propuesta), o al oeste, ampliando el mapa.
-5. **La ballesta**: ¿en la mano izquierda en lugar del escudo (propuesta), a dos manos, o como herramienta con
+   -Respuesta: Rey, posiblemente un Alfonso I de Portugal, sumamente deteriorado por la guerra. En esta historia alternativa, y como se dice en la intro, Portugal, en vez de haber logrado conquistar Lisboa, sufrió una grave contraofensiva por parte de los musulmanes. Lo que lo llevó a un grave estado de salúd, tal como se ve en el juego.
+   
+3. **¿Nombre para el Rey?** Ahora es sólo «el Rey» (sin fecha ni nombre que choque con la historia de verdad).
+   -Alfonso I, aunque no vamos a nombrarlo como tal dentro del juego. No vamos a agregar diálogos respecto a ello. Documentos o notas dentro del castillo, sí. U otros personajes, pero el rey no se mencionará a sí mismo como Alfonso I. Tal cual como está integrado el rey actualmente, está bien. No lo toques.
+   
+5. **¿El Paço en el camino principal o como gran zona opcional?** Propuesta: principal, entrando por la coracha.
+6. **¿Dónde va el Paço?** Al norte, bajo la coracha (propuesta), o al oeste, ampliando el mapa.
+
+-Respuesta 5 y 6. Esta nueva área debe de ser de un tamaño GRANDE. En comparación, debería de ser aproximadamente del tamaño del 25% del mapa actual de la ciudad, un poco más, o un poco menos. Pero esto tiene una explicación. Hacen falta diseñar estas zonas: Palacio del Rey, Jardines del Palacio, Castillo y todo lo que conlleva. La idea es que busques información real, de cómo se componían este tipo de estructuras, para que sea una zona coherente y MUY BIEN DISEÑADA. La idea es que para abrir la compuerta de la Compuerta al interior de la Iglesia, al sótano. Se precisen 5 amuletos, o llaves por así decirlo. Aunque ahora que lo pienso no tiene mucha lógica en el lore. Pero debemos hacer que tengas que recorrer esta zona sí o sí para poder abrir la compuerta. Quitarémos el tema de la palanca, porque se ve demasiado soso tener que agarrar una palanca. 
+   
+8. **La ballesta**: ¿en la mano izquierda en lugar del escudo (propuesta), a dos manos, o como herramienta con
    virotes contados para puzles?
-6. **¿Pelea en el Paço?** Un jefe propio (la corte arrodillada hecha una sola cosa, la reina...) o sólo
+   -La ballesta se utiliza a dos manos. Todavía queda pensar cómo integrarémos el sistema de flechas/virotes. Por ahora, el único lugar en el que se podrán encontrar flechas y virotes será el castillo.
+ 
+9. **¿Pelea en el Paço?** Un jefe propio (la corte arrodillada hecha una sola cosa, la reina...) o sólo
    criaturas.
-7. **La recompensa del Rey**: ahora, vitalidad si le ganas. ¿Otra cosa (su anillo, una llave del Paço)?
+   -Posiblemente sí. La Corte de los Infieles, se llamaría, y sería una batalla muy rítmica, con muchos enemigos. No sería un único boss. Serían todos los cortesanos del rey, que lo traicionaron. Quiero que metafóricamente sea parecido al intento de asesinato de Julio Cesar. Todos van a por ti con cuchillos. Algo así. Todavía queda pensarlo mejor, pero posiblemente sea algo como eso.
+  
+11. **La recompensa del Rey**: ahora, vitalidad si le ganas. ¿Otra cosa (su anillo, una llave del Paço)?
+- Por ahora no va a haber recompensa mas que la pieza de marfil que necesita un rediseño de su sprite. Actualmente se ve muy feo su sprite actual.
 
 ## 9. Riesgos técnicos
 
