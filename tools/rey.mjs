@@ -17,6 +17,9 @@ await p.goto((process.env.URL_BASE || 'http://localhost:5199') + '/?dev=1&at=-78
 await p.waitForFunction(() => window.__ready, null, { timeout: 90000 });
 await p.evaluate(() => {
   const g = __game;
+  // (sólo avanza lo que avanza la prueba: el bucle del navegador, quieto; si
+  // no, el juego corría a la vez a su ritmo y los tiempos cambiaban)
+  window.__pause = true;
   g.ui.closeAll();
   g.input.enabledPointerLock = false;
   // sin criaturas despiertas cerca
@@ -165,6 +168,8 @@ if (cmd === 'fotos') {
   // 1. levantarse antes de mover: no cuenta
   await sit();
   ok('tu turno', await untilPhase('you'));
+  // (lo que se pulsa en la primera décima del turno no cuenta: a propósito)
+  await sim(0.4);
   await sim(0.3, ['Escape']);
   ok('primer Esc: avisa', await p.evaluate(() => __game.rey.seat && __game.rey.seat.leaveT > 0));
   await sim(0.3, ['Escape']);
@@ -179,7 +184,9 @@ if (cmd === 'fotos') {
     const ms = q.cerco.moves().filter((m) => q.cerco.b[Math.floor(m / 81)] !== 3);
     q.playerMove(ms[0]);
   });
+  await sim(1);
   await untilPhase('you');
+  await sim(0.4);
   await sim(0.3, ['Escape']);
   await sim(0.3, ['Escape']);
   s = await state();
@@ -188,6 +195,8 @@ if (cmd === 'fotos') {
   await sim(1);
   await sit();
   await untilPhase('you');
+  // (lo que se pulsa en la primera décima del turno no cuenta: a propósito)
+  await sim(0.4);
   await sim(0.3, ['KeyR']);
   s = await state();
   ok('R abre las reglas', s.modal.includes('note') && s.phase === 'you');
