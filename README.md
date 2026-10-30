@@ -337,19 +337,27 @@ defensa, partido por un tiro de los de fuera, con sus bolaños labrados a pico; 
 la puerta. La escalera del adarve, pegada a la torre del homenaje, la partió un tiro: el tramo de arriba se desmoronó
 en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
 
-La **torre del homenaje**, el último reducto, ocupa la esquina noroeste y los adarves entran en ella. Se sube por una
-escalera exenta, metida en un antecuerpo de sillería que llega a la muralla y a la torre de la cárcel (sin callejones
-a los lados), hasta un rellano frente a la puerta, en la planta primera; un **puente levadizo** sobre un foso con
-estacas (quien cae en él se clava en ellas: no tiene salida) la une con él, alzado desde dentro. Cada planta está
-partida por el muro de carga y tabiques con puertas de arco. Planta baja: el **granero**, la **bodega**, el
-**almacén** y el **pozo** de la torre, a los que sólo se baja por una trampilla. Primera: el **cuerpo de guardia**
-con el **torno del puente** y el pañol de la trampilla, y tras un muro la **armería** (picas, escudos) y el **taller
-del ballestero**. Segunda: la **sala del alcaide**, partida por un arco diafragma, con la mesa del Rey (ver más
-abajo), la mesa del consejo con el plano de la defensa y el libro de la guarnición; el **escritorio**, con el alcaide muerto sobre sus cuentas
-junto a la chimenea y la manivela del torno que abre la reja de la cripta de la Sé, y tras él su **alcoba**. Arriba,
-la **terraza** de combate: amplia, con su matacán sobre la puerta, la caseta de la escalera con su tejado a dos
-aguas, la chimenea, el fanal, la caldera de la pez y piedras para tirar (ahí se peleará con la Bestia de Carne; el
-escenario está listo, la pelea todavía no). Pisos sobre una viga maestra y pilares de sillería.
+La **torre del homenaje**, el último reducto, rehecha como las románicas que se conservan enteras (Rochester,
+Castle Hedingham): 26 × 26 m, a caballo de la muralla norte (asoma al foso del lado del Paço), con muros de casi
+dos metros y medio, pilastras en las esquinas y en medio de cada lienzo, un zócalo en escalones, una imposta en
+cada planta, ventanas geminadas de medio punto en la sala y cuatro torrecillas por encima de la terraza, a 22 m:
+manda sobre el patio y sobre la ciudad. Se sube por una escalera exenta, metida en un antecuerpo de sillería que
+llega a la muralla y a la torre de la cárcel, hasta un rellano frente a la puerta, en la planta primera; un
+**puente levadizo** sobre un foso con estacas (quien cae en él se clava en ellas) la une con él, alzado desde
+dentro. Cada planta la parte un muro de carga, con tabiques y puertas de arco. Planta baja: el **granero**, la
+**bodega**, el **almacén** y el **pozo** de la torre, a los que sólo se baja por una trampilla. Primera: el
+**cuerpo de guardia** con el **torno del puente**, el **dormitorio de los ballesteros** (con la trampilla), la
+**armería** y el **taller del ballestero**. Segunda: la **sala del alcaide**, **a doble altura**, partida por un
+**gran arco diafragma** de muro a muro, con una **galería** de madera sobre canes a lo largo de dos lienzos, dos
+coronas de velas y el estandarte del Rey; bajo el arco, la mesa del Rey (ver más abajo), y al otro lado la mesa
+del consejo con el plano de la defensa y el atril del libro de la guarnición; el **escritorio**, con el alcaide
+muerto sobre sus cuentas junto a la chimenea y la manivela del torno que abre la reja de la cripta de la Sé, y
+tras él su **alcoba**. Tercera, sobre ellos: la **cámara alta**, con los arcones del Rey que el alcaide subió del
+Paço, su armadura de la frontera, su estandarte enrollado y un camastro junto al cañón de la chimenea; de ella
+sale la puerta de la galería y la escalera de la terraza. Arriba, la **terraza** de combate: la caseta de la
+escalera con su tejado a dos aguas, el matacán sobre la puerta, la chimenea, el fanal, la caldera de la pez,
+piedras para tirar y, en su asta, el estandarte del Rey (la cruz azul en campo blanco). Forjados de tablas sobre
+viguetas; la sala, bajo vigas gruesas de muro a muro. Todo sale de unas pocas medidas (`world/level_torre.js`).
 
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
@@ -774,7 +782,8 @@ src/
                         del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
-                        level_castle.js: el castillo, la torre del homenaje y las mazmorras; rey_mesa.js: la
+                        level_castle.js: el castillo y las mazmorras; level_torre.js: la torre del homenaje,
+                        generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y

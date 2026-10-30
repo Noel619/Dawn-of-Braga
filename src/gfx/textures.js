@@ -2737,6 +2737,29 @@ const SPRITES = {
   bannerRed() {
     return bannerGen([100, 18, 20], false, 162);
   },
+  // El estandarte del Rey: las primeras armas de Portugal, la cruz azul en
+  // campo blanco (de lino, ahumado y roto por abajo)
+  bannerRey() {
+    const W = 32,
+      H = 64;
+    const c = pixels(W, H, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, 0, 181);
+      const tear = fbm2(x / 3, y / 5, 3, 0, 182);
+      const cut = H - 6 - vnoise2(x / 2, 0, 0, 183) * 12;
+      if (y > cut || (tear > 0.74 && y > H * 0.4)) {
+        set(o, 0, 0, 0, 0);
+        return;
+      }
+      const w = (x + y) % 2 ? 0.9 : 1;
+      const k = (0.72 + n * 0.36) * w * (1 - (y / H) * 0.18);
+      let col = [214 * k, 206 * k, 186 * k];
+      const cx = x - W / 2 + 0.5,
+        cy = y - 24;
+      if ((Math.abs(cx) < 3.2 && cy > -21 && cy < 30) || (Math.abs(cy) < 3.2 && Math.abs(cx) < 13)) col = [34 * k, 62 * k, 128 * k];
+      set(o, col[0], col[1], col[2], 255);
+    });
+    return toTex(c, { repeat: false });
+  },
   // El estandarte del padre de Henrique: campo de oro con el águila negra
   // del Sacro Imperio (las alas abiertas, el pico y las garras rojas)
   bannerEagle() {

@@ -18,6 +18,10 @@ import { buildDeepCrypt } from './level_crypt2.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
+// Donde empieza el mundo por el oeste (la ciudad creció hacia poniente con el
+// Paço: PLAN_CASTILLO.md, §3).
+export const WORLD_X0 = -150;
+
 export function buildLevel() {
   const ctx = {
     wb: new WorldBuilder(),
@@ -69,7 +73,7 @@ export function buildLevel() {
   corpseLog.length = 0;
   // (pits: fosos sin salida en los que quien cae muere: { r: [x0, z0, x1, z1], y0, y1 })
   const L = { interact: [], enemies: [], zones: [], map: [], phantoms: [], breakables: [], puzzles: [], pits: [] };
-  const S = new WalkGrid(-96, -232, 84, 72, 0.5); // superficie
+  const S = new WalkGrid(WORLD_X0, -232, 84, 72, 0.5); // superficie
   const C = new WalkGrid(-100, -200, 36, -84, 0.5); // cripta (y la cripta honda)
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
   const Dg = CASTLE.dun;
@@ -140,8 +144,8 @@ export function buildLevel() {
   const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
   const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
   // losa de suelo global con los huecos de las escaleras de la cripta
-  const F = new WalkGrid(-96, -232, 84, 72, 1);
-  F.paint(-96, -232, 84, 72, 1);
+  const F = new WalkGrid(WORLD_X0, -232, 84, 72, 1);
+  F.paint(WORLD_X0, -232, 84, 72, 1);
   // (la escalera de la cripta, la de la bodega del canónigo y las demás; los
   // huecos son también por donde se ve desde la calle lo de abajo: ver
   // game/culling.js)

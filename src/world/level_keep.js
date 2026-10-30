@@ -21,7 +21,7 @@ export const KEEP = {
   coracTower: { x: -60, z: -64, w: 7, h: 15 },
   // el adarve del castillo (muro norte): de la torre del homenaje a la
   // torre del nordeste
-  walk: { x0: -73, x1: -52.5, z0: -23, z1: -20, y: 9 },
+  walk: { x0: -71, x1: -52.5, z0: -23, z1: -20, y: 9 },
 };
 
 // Montón de paja (cúpula achatada) con haces sueltos alrededor.

@@ -204,7 +204,7 @@ export class Game {
     // escaleras, hasta la terraza
     {
       const K = CASTLE.keep;
-      this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.F1 - 0.6, yMax: K.R + 1, layers: 4 })];
+      this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.F1 - 0.6, yMax: K.R + 1, layers: 5 })];
     }
     this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
