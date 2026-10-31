@@ -818,7 +818,9 @@ capas que se funden según lo que pasa: exploración, tensión (clúster de cuer
 algo acecha) y combate (tambores de guerra, pandero, metales y ostinato cuando te persiguen). Las calles suenan en
 mi frigio con dron grave, coro lejano, zanfona y salterio; la muralla, con cuernos y los tambores de los sitiadores
 al otro lado; las casas, con una caja de música olvidada; las capillas con altar, con órgano de flautado y un coro
-en paz (ahí no entra la tensión); la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
+en paz (ahí no entra la tensión); los patios y los jardines del Paço, con una pavana de salterio en dórico que de
+cuando en cuando se calla a media frase (alguien ha dejado de tocar), la zanfona debajo, un coro de dueñas muy lejos
+y la campana de la Capilla Real; la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
 coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
 fase, y desbocada en la huida de la Bestia); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
 y un coro que salmodia en una sola nota (y, mientras te caza, un latido lento en 7/8 con la caja de música a medio

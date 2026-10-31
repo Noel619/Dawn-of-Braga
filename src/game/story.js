@@ -556,7 +556,7 @@ Señor, perdonadnos. O no nos perdonéis, y volveremos a arrodillarnos aquí has
 
 Cerré por dentro. La llave de la reja la tengo yo, y la del tesoro, y no se las doy a nadie.
 
-Los otros cuatro bajaron con el arzobispo hasta la reja. Yo no bajé. Yo abrí, que es peor.
+Los otros cuatro bajaron con el arzobispo hasta la reja, y mi llave con ellos: se la di al mayordomo. Yo no bajé. Abrí sin bajar, que es peor. Me la devolvió al alba.
 
 Arriba han quemado el pasadizo con el Rey al otro lado. Huele a humo por las rendijas del techo. Si se hunde, que se hunda.
 
@@ -619,7 +619,7 @@ Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo cl
 
 Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
 
-La reja de la cripta de la Sé tiene cinco cerraduras, y las cinco llaves están en el Paço, con los cinco de la corte que las guardan. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
+La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, aquí abajo, en la planta de armas, y los otros cuatro en el Paço. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
 He mandado alzar el puente de la torre. Que no suba nadie del patio.`,
   },
