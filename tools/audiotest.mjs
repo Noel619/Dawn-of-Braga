@@ -97,7 +97,7 @@ const res = await p.evaluate(async (mode) => {
   }
   const out = {};
   if (mode === 'temas' || mode === 'todo') {
-    const themes = ['title', 'city', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'chase', 'bossCellar', 'bossCellar2', 'cellarHunt', 'bossFinal', 'bossFinal2', 'ending', 'sanctum', 'bossLeonor', 'bossLeonor2', 'bossGuardians', 'bossGuardians2', 'cerco', 'reyFin'];
+    const themes = ['title', 'city', 'paco', 'ramparts', 'interior', 'prison', 'sanctuary', 'cathedral', 'crypt', 'boss', 'boss2', 'chase', 'bossCellar', 'bossCellar2', 'cellarHunt', 'bossFinal', 'bossFinal2', 'ending', 'sanctum', 'bossLeonor', 'bossLeonor2', 'bossGuardians', 'bossGuardians2', 'cerco', 'reyFin'];
     const onlyT = (globalThis.__ONLY || '').split(',').filter(Boolean);
     for (const th of onlyT.length ? themes.filter((q) => onlyT.includes(q)) : themes) {
       // 0-24 s calma, 24-40 s tensión, 40-60 s combate
@@ -159,7 +159,7 @@ const res = await p.evaluate(async (mode) => {
         out['voz:' + v + ':' + k] = stats(buf, 0.4, 5);
       }
     // ambiente de cada zona, sin música
-    for (const z of ['city', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'cellar', 'dawn']) {
+    for (const z of ['city', 'paco', 'sala', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'cellar', 'dawn']) {
       const { buf, wall } = await render(
         20,
         (au, g) => {

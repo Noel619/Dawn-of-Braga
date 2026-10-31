@@ -711,6 +711,17 @@ export class MusicEngine {
 // que se llama en cada pulso y programa las notas de sus capas.
 
 // Motivos de canto llano (grados; se transportan al acorde).
+// la pavana del Paço: grados sobre el acorde, un compás por fila (null: silencio)
+const PAVANA = [
+  [0, null, 2, 1],
+  [0, null, -1, null],
+  [2, 4, 2, 1],
+  [0, null, null, null],
+  [4, null, 2, 3],
+  [2, 1, 0, null],
+  [-1, 0, 1, null],
+  [0, null, null, null],
+];
 const CHANT = [
   [0, 1, 2, 1, 0, -1, 0],
   [4, 5, 4, 3, 2, 3, 4],
@@ -986,6 +997,40 @@ const THEMES = {
       if (inBar === 0 && bar % 4 === 2 && chance(0.6)) m.choir(L.base, t, spb * 5, m.deg(T, chord, 0), 0.02, 'u', { a: 1.8, r: 2 });
       tensionLayer(S, { oct: 1 });
       combatLayer(S, { pat: [0.8, 0, 0.5, 0, 0.8, 0.4, 0.5, 0] });
+    },
+  },
+
+  // ---------------------------------------------------------------- el Paço del Rey
+  // La corte que ya no baila: una pavana de salterio que se queda a medias
+  // (de cada tantas frases, una se calla: alguien deja de tocar), el bordón
+  // de la zanfona debajo, un coro de dueñas muy lejos y, de cuando en cuando,
+  // la campana de la Capilla Real.
+  paco: {
+    bpm: 46,
+    root: 43,
+    mode: 'dorian',
+    prog: [0, 6, 3, 4],
+    chordBars: 2,
+    verb: 0.55,
+    drone: { notes: (T) => [degree(T.root - 12, T.mode, 0), degree(T.root - 12, T.mode, 4)], type: 'sawtooth', cutoff: 320, q: 1.5, level: 0.06, rate: 0.05 },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      const d = S.c.data;
+      if (inBar === 0 && bar % 4 === 0) d.calla = chance(0.25);
+      if (!d.calla) {
+        if (inBar === 0) m.pluck(L.base, t, m.deg(T, chord, -1), 0.09, { bright: 0.3, dur: 3 });
+        const g = PAVANA[bar % PAVANA.length][inBar];
+        if (g !== null && g !== undefined) m.pluck(L.base, t, m.deg(T, chord + g, 1), rnd(0.07, 0.1), { bright: 0.5, dur: 2.4 });
+        if (inBar === 2 && chance(0.35)) m.pluck(L.base, t + spb * 0.5, m.deg(T, chord + pick([2, 4]), 1), 0.05, { bright: 0.45 });
+      }
+      // la zanfona, sosteniendo la del acorde
+      if (inBar === 0 && bar % 4 === 2 && chance(0.55)) m.vielle(L.base, t, spb * 6, m.deg(T, chord, 0), 0.025, { a: 0.8, r: 1.4 });
+      // el coro de las dueñas, lejos
+      if (inBar === 0 && bar % 8 === 6 && chance(0.6)) for (const n of m.triad(T, chord, 0)) m.choir(L.base, t, spb * 6, n, 0.016, 'a', { a: 2, r: 2.5 });
+      // la campana de la capilla
+      if (inBar === 0 && bar % 16 === 11) m.bell(L.base, t, T.root + 2, 0.06, { dur: 9, lp: 1400 });
+      tensionLayer(S);
+      combatLayer(S);
     },
   },
 

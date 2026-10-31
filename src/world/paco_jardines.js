@@ -722,18 +722,18 @@ function zonas(L) {
     { id: 'torre_reina', rects: [[ix0, iz0, ix1, iz1, -1, R.F1 - 0.3]], atmo: 'interior', room: 'reina_zaguan' },
     { id: 'camara_reina', rects: [[ix0, iz0, ix1, iz1, R.F1 - 0.4, R.eave]], atmo: 'interior', room: 'reina_camara' },
     { id: 'mirador_rey', rects: [[NO.x + NO.w / 2, PACO.zN - 4, PACO.torreN - 3.0, PACO.zN, YN - 1, YN + 4]], atmo: 'ramparts' },
-    { id: 'halconera', rects: [[H.x0, H.z0, H.x1, H.z1, -1, 4]], atmo: 'city' },
+    { id: 'halconera', rects: [[H.x0, H.z0, H.x1, H.z1, -1, 4]], atmo: 'paco' },
     {
       id: 'jardin_reina',
       rects: [
         [PACO.xi, R.z1, C.x0, gz1, -1, 12],
         [R.x1, R.z0, C.x0, R.z1, -1, 12],
       ],
-      atmo: 'city',
+      atmo: 'paco',
     },
-    { id: 'pomar', rects: [[PACO.xi, PACO.zN, Po.xj - 0.6, R.z0 - 0.6, -1, 9]], atmo: 'city' },
-    { id: 'jardin_rey', rects: [[J.x0, J.z0, J.x1, J.z1, -1, 9]], atmo: 'city' },
-    { id: 'patio_cocinas', rects: [[K.x0 + 0.6, K.z0, K.x1, K.z1, -1, 12]], atmo: 'city' }
+    { id: 'pomar', rects: [[PACO.xi, PACO.zN, Po.xj - 0.6, R.z0 - 0.6, -1, 9]], atmo: 'paco' },
+    { id: 'jardin_rey', rects: [[J.x0, J.z0, J.x1, J.z1, -1, 9]], atmo: 'paco' },
+    { id: 'patio_cocinas', rects: [[K.x0 + 0.6, K.z0, K.x1, K.z1, -1, 12]], atmo: 'paco' }
   );
   L.map.push(
     { id: 'torre_reina', r: [R.x0, R.z0, R.x1, R.z1] },

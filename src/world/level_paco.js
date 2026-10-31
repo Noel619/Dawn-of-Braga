@@ -1218,7 +1218,7 @@ function alas(ctx, S, L) {
   P.well(ctx, (px0 + px1) / 2, 0, -63.0, {});
   P.deadTree(ctx, (px0 + px1) / 2 - 1.5, 0, -70.5, 6601, 4.2);
   solid(ctx, 'ashlar', px0 + 0.1, 0, -70, px0 + 0.6, 0.45, -66, { faces: 'tnsew', ao: false });
-  L.zones.push({ id: 'patinillo', rects: [[px0, pz0, px1, pz1, -1, 12]], atmo: 'city' });
+  L.zones.push({ id: 'patinillo', rects: [[px0, pz0, px1, pz1, -1, 12]], atmo: 'paco' });
   L.map.push({ id: 'patinillo', r: [px0, pz0, px1, pz1] });
   L.enemies.push({ type: 'cortesanoSuelto', x: (px0 + px1) / 2 + 1.2, y: 0, z: -66.5, yaw: Math.PI, idle: 'kneel', id: 'e_pat1' });
 }
@@ -2080,7 +2080,7 @@ function zonas(L) {
   L.zones.push(
     { id: 'sala_botilleria', rects: [[Sa.screens + 0.5, sz0, sx1, szc - 0.25, Sa.y - 0.5, Sa.y + 3.4]], atmo: 'interior', room: 'sala_botilleria' },
     { id: 'sala_despensa', rects: [[Sa.screens + 0.5, szc + 0.25, sx1, sz1, Sa.y - 0.5, Sa.y + 3.4]], atmo: 'interior', room: 'sala_despensa' },
-    { id: 'sala_corte', rects: [[sx0, sz0, Sa.screens + 0.5, sz1, Sa.y - 0.5, Sa.ridge]], atmo: 'interior', room: 'sala' },
+    { id: 'sala_corte', rects: [[sx0, sz0, Sa.screens + 0.5, sz1, Sa.y - 0.5, Sa.ridge]], atmo: 'sala', room: 'sala' },
     { id: 'paso_servicio', rects: [[Pa.x0 + 0.4, Pa.z0, Pa.x1 - 0.4, Pa.z1, -1, 4.3]], atmo: 'interior', room: 'paso_servicio' },
     { id: 'cocina_paco', rects: [[Ck.x - Ck.w / 2 + 0.8, Ck.z - Ck.w / 2 + 0.8, Ck.x + Ck.w / 2 - 0.8, Ck.z + Ck.w / 2 - 0.8, -1, 8]], atmo: 'interior', room: 'cocina_paco' },
     {
@@ -2089,12 +2089,12 @@ function zonas(L) {
         [Cu.x0, Cu.z0, Cu.x1, Cu.z1, -1, 12],
         [Sa.x1, Sa.z0, PACO.x1, Sa.z1, -1, 12],
       ],
-      atmo: 'city',
+      atmo: 'paco',
     },
     { id: 'paco_guardia', rects: [[A.x0 + A.t, A.z0 + A.t, A.x1 - A.t, A.z1, -1, A.h]], atmo: 'interior', room: 'paco_guardia' },
-    { id: 'puerta_paco', rects: [[G.px0, G.z0, G.px1, G.z1, -1, G.ph + 1.6]], atmo: 'city' },
-    { id: 'paco_galeria', rects: [[Cm.gx, Cm.z0, Cm.x1, Cm.z1, -1, Cm.F1]], atmo: 'city', room: 'paco_galeria' },
-    { id: 'paco_patio', rects: [[Pt.x0, Sa.z1 - Sa.t, Pt.x1, Pt.z1, -1, 20]], atmo: 'city' },
+    { id: 'puerta_paco', rects: [[G.px0, G.z0, G.px1, G.z1, -1, G.ph + 1.6]], atmo: 'paco' },
+    { id: 'paco_galeria', rects: [[Cm.gx, Cm.z0, Cm.x1, Cm.z1, -1, Cm.F1]], atmo: 'paco', room: 'paco_galeria' },
+    { id: 'paco_patio', rects: [[Pt.x0, Sa.z1 - Sa.t, Pt.x1, Pt.z1, -1, 20]], atmo: 'paco' },
     { id: 'puente_paco', rects: [[B.x0, G.z1, B.x1, CASTLE.puertaNorte.z0, -1, 8]], atmo: 'city' },
     {
       id: 'foso_rey',

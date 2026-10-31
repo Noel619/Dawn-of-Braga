@@ -1959,7 +1959,7 @@ export class Game {
         this.zone = z;
         this.atmo.set(z.atmo);
         this.audio.setZone(z.atmo);
-        this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' ? 'dirt' : 'stone';
+        this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' || z.id === 'pomar' ? 'dirt' : 'stone';
         if (!this.visited.has(z.id)) {
           this.visited.add(z.id);
           if (AREA_NAMES[z.id] && this.state === 'play' && (!this.activeBoss || this.activeBoss.T.stalker) && !(this.chase.active && this.chase.lock)) {

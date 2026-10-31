@@ -720,7 +720,7 @@ function zonas(L) {
     L.map.push({ id: names[k], r: [T.x0, T.z0, T.x1, T.z1] });
   });
   L.zones.push(
-    { id: 'paso_tombo', rects: [[T.x1 - T.t, T.paso - 1.0, PACO.xi, T.paso + 1.0, T.fl[0] - 0.5, T.fl[0] + 3]], atmo: 'city' },
+    { id: 'paso_tombo', rects: [[T.x1 - T.t, T.paso - 1.0, PACO.xi, T.paso + 1.0, T.fl[0] - 0.5, T.fl[0] + 3]], atmo: 'paco' },
     { id: 'cancilleria', rects: [[Cn.x0 + Cn.t, Cn.z0 + Cn.t, Cn.x1, Cn.z1, -1, Cn.ridge]], atmo: 'interior', room: 'cancilleria' },
     {
       id: 'patio_cancilleria',
@@ -728,7 +728,7 @@ function zonas(L) {
         [E.x0, Cn.pz0, Cm.x0, Cn.z0, -1, 12],
         [E.x0, Cn.z0, Cn.x0, zSO, -1, 12],
       ],
-      atmo: 'city',
+      atmo: 'paco',
     }
   );
   L.map.push(
