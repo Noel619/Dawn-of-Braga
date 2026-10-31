@@ -61,6 +61,12 @@ export const ITEMS = {
     icon: 'llaveMayordomo',
     key: true,
   },
+  llave_camarero: {
+    name: 'Llave del camarero',
+    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda azul clara, del color de las ropas del Rey. La guardaba el camarero, el de la cámara del Rey y lo que hay en ella. En la caña, grabado: CAMERARIUS.',
+    icon: 'llaveCamarero',
+    key: true,
+  },
   ballesta: {
     name: 'Ballesta de estribo',
     desc: 'La ballesta del maestro ballestero de la torre: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
@@ -537,6 +543,20 @@ Las cinco llaves abrieron la reja. El arzobispo bajó con los suyos y la volvimo
 Esta noche subimos a la sala a velar. Cuando suene, nos levantaremos todos a la vez, para que no sea de ninguno. Yo, el primero: soy el que más le quiere.
 
 Señor, perdonadnos. O no nos perdonéis, y volveremos a arrodillarnos aquí hasta que volváis.`,
+  },
+  camarero: {
+    title: 'Lo último del camarero',
+    text: `Escrito con un carbón en la tapa de un arca, de abajo arriba, cada vez más torcido:
+
+Cerré por dentro. La llave de la reja la tengo yo, y la del tesoro, y no se las doy a nadie.
+
+Los otros cuatro bajaron con el arzobispo hasta la reja. Yo no bajé. Yo abrí, que es peor.
+
+Arriba han quemado el pasadizo con el Rey al otro lado. Huele a humo por las rendijas del techo. Si se hunde, que se hunda.
+
+Aquí está lo que es del Rey: la plata, el sello de la cámara, la corona de diario, su espada de la frontera. Nadie se lo va a llevar mientras yo esté sentado encima.
+
+Tengo sed.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
@@ -1088,7 +1108,10 @@ export const MSG = {
   corteArea: 'LA CORTE DE LOS INFIELES',
   corteVencida: 'LA CORTE HA CAÍDO',
   corteCerrada: 'La puerta del servicio no cede: la han atrancado por fuera. Detrás, nadie.',
-  camarasPrivada: 'La puerta de las cámaras del Rey, tras el estrado. Atrancada por el otro lado.',
+  camarasPrivada: 'La puerta del estrado, atrancada por el otro lado: da a la sala grande.',
+  camarasTranca: 'Quitas la tranca de la puerta privada del Rey. Detrás, una escalera sube a sus cámaras.',
+  tesoroCerrado: 'La puerta del tesoro de la cámara, forrada de hierro y atrancada por dentro. No se oye nada.',
+  tesoroTranca: 'Retiras la barra de la puerta del tesoro. Da a la galería del patio.',
   cocinaAtrancada: 'Atrancada por el otro lado. Huele a leña mojada y a algo que se pudre al sol.',
   pacoAtrancada: 'La Puerta del Paço, atrancada por dentro. Por encima de las torres asoma la chimenea de las cocinas del Rey.',
   pacoTranca: 'Retiras la tranca de la Puerta del Paço. El puente cruza el foso hasta el patio de armas del castillo.',
@@ -1360,4 +1383,13 @@ export const AREA_NAMES = {
   paso_servicio: 'Paso de la cocina',
   cocina_paco: 'Cocina del Rey',
   patio_cuadras: 'Patio de las caballerizas',
+  camaras_escalera_rey: 'Escalera del Rey',
+  camaras_guardarropa: 'Guardarropa del Rey',
+  camaras_escalera: 'Escalera de las cámaras',
+  camaras_tesoro: 'Tesoro de la cámara',
+  camaras_antecamara: 'Antecámara del Rey',
+  camaras_dormir: 'Cámara del Rey',
+  camaras_pasadizo: 'Cámara del pasadizo',
+  patinillo: 'Patinillo de las cámaras',
+  pasadizo_quemado: 'El pasadizo quemado',
 };

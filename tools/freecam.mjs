@@ -15,6 +15,9 @@ await p.evaluate((clear) => {
   g.ui.showHud(false);
   g.enemies.forEach((e) => { e.obj.visible = false; e.shadow.visible = false; });
   g.player.obj.visible = false;
+  // (el cuerpo va con la cámara: sin caídas que maten, sobre el foso)
+  g.level.L.fallZones = [];
+  g.player.maxHp = g.player.hp = 99999;
   g.playerShadow.visible = false;
   // la fauna no se asusta del jugador invisible que acompaña a la cámara
   if (g.fauna) {

@@ -413,6 +413,18 @@ abre la puerta del servicio, las puertas grandes se desatrancan desde dentro (el
 quedan en la sala y en el suelo queda **la llave del mayordomo**, la segunda de las cinco. Si mueres, vuelven a sus
 sitios, de rodillas (`game/corte.js`, `entities/cortesano.js`).
 
+**Las Cámaras del Rey.** Tras el estrado, la puerta privada del Rey (se desatranca desde la sala) da a **su
+escalera**, que sube pegada al muro de la sala a la planta noble: la **antecámara**, con su guarda muerto, la
+**cámara del Rey**, con la cama bajo su dosel y el arcón de la reina con su toca, y la **cámara del pasadizo**,
+tiznada: por su puerta, en el muro del foso, se iba a la torre, y el fuego que la quemó entró por ella y hundió un
+trozo del suelo. Por ahí se baja al **tesoro de la cámara**, que el camarero cerró por dentro y en el que murió,
+sentado sobre el arca del Rey, con sus velas casi consumidas, la plata y **la llave del camarero**; su puerta,
+forrada de hierro, se desatranca por dentro y da a la galería del patio. Abajo están también el guardarropa y la
+escalera de las cámaras, que sale al **patinillo**, con su pozo y un naranjo seco. Y desde la cámara del pasadizo,
+**el pasadizo quemado**: de la galería que cruzaba el foso hasta la planta del Rey en la torre quedan los dos arcos,
+el machón de en medio, los pies derechos negros y la viga maestra, en dos tramos en cuesta, por la que se pasa
+**haciendo equilibrio** hasta la alcoba del alcaide (quien cae al foso, no se levanta).
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -847,7 +859,8 @@ src/
                         generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,
-                        el foso del Rey, el puente, la puerta, el patio, la sala y el servicio), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        el foso del Rey, el puente, la puerta, el patio, la sala, el servicio, las cámaras del Rey y el
+                        pasadizo quemado), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala

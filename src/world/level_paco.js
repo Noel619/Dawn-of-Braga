@@ -18,7 +18,7 @@
 // cámaras); por dentro, lo demás se hace en sus fases.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker, stairs, merlons, cityWall, tower, archedWall, archRing, solidGableRoof } from './builders.js';
+import { solid, blocker, stairs, merlons, cityWall, tower, archedWall, archRing, solidGableRoof, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
@@ -76,11 +76,19 @@ export const PACO = {
   // portada (en el último tramo, el de abajo: por ahí se entraba) y el muro
   // del servicio (screens); entre ella y la coracha, el callejón de las
   // caballerizas (de x1 a la coracha), con su puerta al patio
-  sala: { x0: -104, x1: -66, z0: -104, z1: -86, t: 1.2, y: 1.5, eave: 12, ridge: 18, arcos: [-98.4, -94.0, -89.6, -85.2, -80.8, -76.4], portada: -74.2, screens: -72, estrado: -98.6, privada: -101.6, servicio: -74.9 },
+  sala: { x0: -104, x1: -66, z0: -104, z1: -86, t: 1.2, y: 1.5, eave: 12, ridge: 18, arcos: [-98.4, -94.0, -89.6, -85.2, -80.8, -76.4], portada: -74.2, screens: -72, estrado: -98.6, privada: -99.9, servicio: -74.9 },
   // las Cámaras del Rey: su planta (cuatro crujías en torno a un patinillo) y
   // la crujía de levante, con su galería al patio (arquería de x1 - 0.6 a x1,
   // la galería hasta gx, el muro de las cámaras hasta gx - 0.8)
-  camaras: { x0: -118, x1: -90, z0: -86, z1: -47, e0: -100, gx: -93.4, F1: 4.9, eave: 10, ridge: 13.5 },
+  // las crujías: la de levante (de e0 a x1, con su muro de poniente hasta ew),
+  // la del norte (hasta zN), la del sur (desde zS) y la de poniente (hasta w1),
+  // en torno al patinillo; las estancias de la de levante, de norte a sur: la
+  // escalera del Rey (hasta zR), el guardarropa y la antecámara (hasta z1a),
+  // la escalera y la cámara de dormir (de z2a a z2b) y el tesoro y la cámara
+  // del pasadizo (desde z3a)
+  camaras: { x0: -118, x1: -90, z0: -86, z1: -47, e0: -101.5, ew: -100.7, gx: -93.4, F1: 4.9, eave: 10, ridge: 13.5, zN: -76, zS: -57, w1: -110, zR: -84.36, z1a: -74.2, z2a: -73.4, z2b: -60.8, z3a: -60 },
+  // el pasadizo quemado sobre el foso: el machón de en medio (de z0 a z1, hasta y)
+  pasadizo: { z0: -38.6, z1: -36.6, y: 7.0 },
   // las cocinas: la grande, exenta y cuadrada, con su chimenea cónica
   cocina: { x: -78, z: -113, w: 11, h: 7.5, top: 30 },
   // el servicio: el patio de las caballerizas (de la cocina a la coracha, de
@@ -145,9 +153,19 @@ function muros(ctx) {
   tower(ctx, SO.x, SO.z, SO.w, SO.h);
   // el muro del foso: de la torre del suroeste a la Puerta del Paço
   const xa = SO.x + SO.w / 2;
-  cityWall(ctx, xa, zSi, G.x0, zS, hS, { merlonSides: ['s'] });
+  const PZ = CASTLE.pasadizo,
+    Cm = PACO.camaras;
+  const pa = PZ.x - PZ.w / 2,
+    pb = PZ.x + PZ.w / 2;
+  cityWall(ctx, xa, zSi, pa, zS, hS, { merlonSides: ['s'] });
+  cityWall(ctx, pb, zSi, G.x0, zS, hS, { merlonSides: ['s'] });
+  // (el paso del pasadizo, quemado: el vano, ennegrecido)
+  holedWall(ctx, 'wallstone', 'x', pa, pb, zSi, zS, 0, hS, [{ a0: pa, a1: pb, y0: Cm.F1, y1: Cm.F1 + PZ.h }], 'nst', { mats: { t: 'flag' } });
+  merlons(ctx, pa - 0.2, zS - 0.3, pb + 0.2, zS - 0.3, hS, { collide: false });
   blocker(ctx, xa, hS - 0.2, zS - 0.6, G.x0, hS + 2.4, zS);
-  parapet(ctx, xa, zSi, G.x0, zSi + 0.5, hS);
+  // (por dentro, el parapeto sólo donde no hay crujías del Paço apoyadas: sobre
+  // el cuerpo de guardia)
+  parapet(ctx, PACO.guardia.x0, zSi, G.x0, zSi + 0.5, hS);
   // (sobre el foso, desde su fondo: un zócalo en talud)
   wb.noSub = true;
   solid(ctx, 'wallstone', C.x0, F.y - 0.3, zSi, G.x0, 0, zS, { faces: 's', sub: 2.2, aoH: 2, tint: [0.8, 0.78, 0.74] });
@@ -606,7 +624,7 @@ function sala(ctx, S, L) {
     y1: eave,
     openings: [
       { c: Sa.portada, w: pw, h: ps, rise: pw / 2, ring: 0.36 },
-      { c: Sa.privada, w: 1.3, h: Sa.y + 2.1, rise: 0.65, ring: 0.24 },
+      { c: Sa.privada, w: 1.1, h: Sa.y + 0.45 + 2.1, rise: 0.55, ring: 0.24 },
     ],
     mat: 'ashlar',
     tint,
@@ -615,11 +633,11 @@ function sala(ctx, S, L) {
   });
   archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z0, t1: z0 + t, y0: 0, y1: eave, openings: [{ c: Sa.servicio, w: 1.6, h: Sa.y + 2.2, rise: 0.8, ring: 0.26 }], mat: 'ashlar', tint, rooms: ['out', 'sala'], sub: 2.2 });
   // (los umbrales, macizos hasta el suelo de la sala)
-  for (const [c, w, za, zb] of [
-    [Sa.privada, 1.3, z1 - t, z1],
-    [Sa.servicio, 1.6, z0, z0 + t],
+  for (const [c, w, za, zb, yu] of [
+    [Sa.privada, 1.1, z1 - t, z1, Sa.y + 0.45],
+    [Sa.servicio, 1.6, z0, z0 + t, Sa.y],
   ]) {
-    solid(ctx, 'flag', c - w / 2, 0, za, c + w / 2, Sa.y, zb, { faces: 't', ao: false, uv: 0.8 });
+    solid(ctx, 'flag', c - w / 2, 0, za, c + w / 2, yu, zb, { faces: 't', ao: false, uv: 0.8 });
     W(S, c - w / 2, za, c + w / 2, zb);
   }
   // los hastiales (sus caras, de esquina a esquina)
@@ -642,8 +660,9 @@ function sala(ctx, S, L) {
       [z1, z1 + 1.1],
       [z0 - 1.1, z0],
     ]) {
-      // (junto a la escalinata, no: su pretil hace de estribo)
-      if (za === z1 && Math.abs(x - Sa.portada) < 4) continue;
+      // (junto a la escalinata, no: su pretil hace de estribo; ni donde se
+      // apoyan las cámaras del Rey)
+      if (za === z1 && (Math.abs(x - Sa.portada) < 4 || x < PACO.camaras.x1 - 0.2)) continue;
       solid(ctx, 'ashlar', x - 0.55, 0, za, x + 0.55, eave - 2.2, zb, { faces: za === z1 ? 'sew' : 'new', sub: 2, aoH: 2, tint });
       // (el remate en talud)
       const out = za === z1 ? zb : za,
@@ -676,7 +695,7 @@ function sala(ctx, S, L) {
   for (let i = 0; i + 1 < bays.length; i++) {
     const xc = (bays[i] + bays[i + 1]) / 2;
     win(xc, 'n');
-    if (Math.abs(xc - Sa.portada) > 1.5) win(xc, 's');
+    if (Math.abs(xc - Sa.portada) > 1.5 && xc > PACO.camaras.x1) win(xc, 's');
   }
   // la cornisa con sus canecillos
   for (const [za, zb, f] of [
@@ -760,7 +779,6 @@ function camaras(ctx, S, L) {
   wb.box('wooddark', gx, F1 - 0.12, z0, ax0, F1, z1, { faces: 'b', ao: false, room, tint: [0.6, 0.55, 0.5] });
   for (let z = z0 + 1.0; z < z1 - 0.5; z += 1.6) wb.box('timber', gx, F1 - 0.38, z - 0.12, ax0, F1 - 0.12, z + 0.12, { ao: false, faces: 'nsewb', room });
   solid(ctx, 'ashlar', ax0, F1, z0, x1, eave, z1, { faces: 'e', sub: 2.2, aoH: 1, tint: [0.84, 0.81, 0.76] });
-  ctx.col.add(gx, F1, z0, ax0, eave, z1);
   // el muro de las cámaras, con sus puertas (cerradas: se abren por dentro)
   const doors = [z0 + 6.3, (z0 + z1) / 2, z1 - 6.3];
   const holes = doors.map((c) => ({ c, w: 1.5, h: 2.5 }));
@@ -800,7 +818,456 @@ function camaras(ctx, S, L) {
     ctx.lights.push({ x: (gx + ax0) / 2, y: F1 - 1.6, z, r: 1, g: 0.6, b: 0.3, radius: 7, intensity: 0.9, room });
   }
   P.banner(ctx, x1 + 0.12, eave - 1.0, (z0 + z1) / 2, Math.PI / 2, 'bannerRey', 1.4, 3.6);
-  L.enemies.push({ type: 'penitent', x: gx + 1.2, y: 0.12, z: doors[1] + 1.4, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_pc1' });
+  L.enemies.push({ type: 'cortesanoSuelto', x: gx + 1.2, y: 0.12, z: doors[1] + 1.4, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_pc1' });
+  camarasDentro(ctx, S, L, { za, aw, step, n, doors });
+  alas(ctx, S, L);
+  pasadizo(ctx, S, L);
+}
+
+// ------------------------------------------------------------------------ las cámaras (por dentro)
+// La crujía de levante, en dos plantas. Abajo: el guardarropa, la escalera
+// (y la puerta al patinillo) y el tesoro de la cámara, que el camarero cerró
+// por dentro y en el que murió; tras la puerta privada del estrado, la
+// escalera del Rey, que sube de la sala a su planta. Arriba: la antecámara, la
+// cámara de dormir y la cámara del pasadizo, por cuya puerta (en el muro del
+// foso) se iba a la torre; el fuego del pasadizo entró por ella y hundió un
+// trozo del suelo: por ahí se baja al tesoro.
+function camarasDentro(ctx, S, L, A) {
+  const wb = ctx.wb;
+  const Cm = PACO.camaras,
+    Sa = PACO.sala,
+    PZ = CASTLE.pasadizo;
+  const { e0, ew, gx, F1, zR, z1a, z2a, z2b, z3a } = Cm;
+  const zN0 = Cm.z0 + 0.04,
+    zS1 = Cm.z1 - 0.04,
+    xg = gx - 0.8,
+    xu = Cm.x1 - 0.6;
+  const yG = 0.12,
+    hG = F1 - 0.3 - yG,
+    hU = 4.5;
+  const tint = [0.78, 0.74, 0.68],
+    tintU = [0.82, 0.78, 0.7];
+  const yd = Sa.y + 0.45; // (la altura del estrado y de su puerta)
+  // el muro de poniente de la crujía (al patinillo) y los de en medio
+  holedWall(ctx, 'ashlar', 'z', Cm.zN, Cm.zS, e0, ew, 0, Cm.eave, [{ a0: -72.6, a1: -71.4, y0: 0, y1: 2.4 }], 'w', { tint: [0.84, 0.81, 0.76] });
+  solid(ctx, 'ashlar', e0, 0, Cm.z0, ew, Cm.eave, Cm.zN, { faces: '', sub: 2.2 });
+  solid(ctx, 'ashlar', e0, 0, Cm.zS, ew, Cm.eave, Cm.z1, { faces: '', sub: 2.2 });
+  const wallZ = (za, zb, x0, x1, y0, y1, holes = []) => {
+    // muro de través (a lo largo de x), con sus puertas: sólo la colisión y
+    // las caras las ponen las estancias
+    let cur = x0;
+    for (const h of [...holes, null]) {
+      const end = h ? h.a0 : x1;
+      if (end - cur > 0.01) ctx.col.add(cur, y0, za, end, y1, zb);
+      if (!h) break;
+      ctx.col.add(h.a0, y0 + h.h, za, h.a1, y1, zb);
+      cur = h.a1;
+    }
+  };
+  // --- los forjados (con sus huecos: la escalera del Rey, la de en medio y el
+  // suelo quemado de la cámara del pasadizo)
+  const EH = { x0: ew, x1: ew + 1.6, z0: -68.3, z1: -61.6 };
+  const QH = { x0: -97.8, x1: -95.6, z0: -53.0, z1: -50.8 };
+  const KR = { x0: ew, x1: xg, z0: zN0, z1: zR, n: 10, run: 0.42, l: 1.8 };
+  KR.top = KR.x0 + KR.l + KR.n * KR.run;
+  const holes = [
+    [KR.x0, KR.z0, KR.top, KR.z1],
+    [EH.x0, EH.z0, EH.x1, EH.z1],
+    [QH.x0, QH.z0, QH.x1, QH.z1],
+  ];
+  for (const [a, b, c, d] of subtractRects([ew, zN0, xu, zS1], holes)) {
+    wb.box('planks', a, F1 - 0.06, b, c, F1, d, { faces: 't', ao: false, sub: 2, tint: [0.66, 0.58, 0.5], room: 'cam_alta' });
+    wb.box('wooddark', a, F1 - 0.3, b, c, F1 - 0.24, d, { faces: 'b', ao: false, sub: 2.5, tint: [0.55, 0.5, 0.45], room: 'cam_baja' });
+    ctx.col.add(a, F1 - 0.3, b, c, F1, d);
+  }
+  // (el canto del suelo quemado: tablas negras partidas)
+  for (const [a, b, c, d] of [
+    [QH.x0, QH.z0, QH.x1, QH.z0 + 0.08],
+    [QH.x0, QH.z1 - 0.08, QH.x1, QH.z1],
+    [QH.x0, QH.z0 + 0.08, QH.x0 + 0.08, QH.z1 - 0.08],
+    [QH.x1 - 0.08, QH.z0 + 0.08, QH.x1, QH.z1 - 0.08],
+  ])
+    wb.box('wooddark', a, F1 - 0.3, b, c, F1, d, { ao: false, faces: 'tnsewb', tint: [0.18, 0.15, 0.13] });
+  // --- planta baja
+  W(S, ew, zR, gx - 0.8, zS1);
+  // el guardarropa
+  interiorRoom(ctx, ew, zR + 0.16, xg, z1a, yG, hG, {
+    room: 'cam_guardarropa',
+    wall: 'plaster',
+    tint,
+    floorMat: 'planks',
+    ceil: false,
+    doors: [
+      { side: 'e', at: A.doors[0], w: 1.5, h: 2.5 },
+      { side: 's', at: -97.0, w: 1.2, h: 2.3 },
+    ],
+  });
+  wallZ(zR, zR + 0.16, ew, xg, 0, F1);
+  wallZ(z1a, z2a, ew, xg, 0, F1, [{ a0: -97.6, a1: -96.4, h: 2.3 }]);
+  // la escalera, con la puerta al patinillo
+  interiorRoom(ctx, ew, z2a, xg, z2b, yG, hG, {
+    room: 'cam_escalera',
+    wall: 'plaster',
+    tint,
+    floorMat: 'flag',
+    ceil: false,
+    doors: [
+      { side: 'n', at: -97.0, w: 1.2, h: 2.3 },
+      { side: 'e', at: A.doors[1], w: 1.5, h: 2.5 },
+      { side: 'w', at: -72.0, w: 1.2, h: 2.4 },
+    ],
+  });
+  wallZ(z2b, z3a, ew, xg, 0, F1);
+  // el tesoro: cerrado por dentro (su puerta de hierro, a la galería)
+  interiorRoom(ctx, ew, z3a, xg, zS1, yG, hG, { room: 'cam_tesoro', wall: 'wallstone', tint: [0.6, 0.56, 0.5], floorMat: 'flag', ceil: false, doors: [{ side: 'e', at: A.doors[2], w: 1.5, h: 2.5 }] });
+  // (la escalera, de la planta baja a la de arriba, pegada al muro de poniente)
+  {
+    const n = 16,
+      run = 0.42;
+    stairs(ctx, EH.x0 + 0.8, yG, EH.z1, 'n', 1.6, n, (F1 - yG) / n, run, 'wallstone', { base: 0 });
+    // el pretil de arriba, alrededor del hueco
+    for (const [a, b, c, d] of [
+      [EH.x1, EH.z0, EH.x1 + 0.1, EH.z1],
+      [EH.x0, EH.z1, EH.x1 + 0.1, EH.z1 + 0.1],
+    ]) {
+      wb.box('wooddark', a, F1, b, c, F1 + 1.0, d, { ao: false, faces: 'tnsewb', room: 'cam_dormir' });
+      ctx.col.add(a, F1, b, c, F1 + 1.0, d);
+    }
+  }
+  // la escalera del Rey: de la puerta del estrado, un rellano y doce peldaños
+  // pegados al muro de la sala, hasta la antecámara
+  {
+    const room = 'cam_escalera_rey';
+    const { n, run } = KR,
+      xl = KR.x0 + KR.l;
+    W(S, KR.x0, KR.z0, KR.x1, KR.z1);
+    solid(ctx, 'flag', KR.x0, 0, KR.z0, xl, yd, KR.z1, { faces: 't', ao: false, room });
+    stairs(ctx, xl, yd, (KR.z0 + KR.z1) / 2, 'e', KR.z1 - KR.z0, n, (F1 - yd) / n, run, 'wallstone', { base: 0 });
+    interiorRoom(ctx, KR.x0, KR.z0, KR.top, KR.z1, 0, F1 + hU, {
+      room,
+      wall: 'plaster',
+      tint: tintU,
+      floor: false,
+      ceil: false,
+      skip: ['e', 's'],
+      doors: [{ side: 'n', at: Sa.privada, w: 1.1, h: yd + 2.65 }],
+    });
+    // (el muro del lado del guardarropa, hasta la planta de arriba; arriba,
+    // abierta a la antecámara, con su barandilla)
+    wb.box('plaster', KR.x0, 0, KR.z1, KR.top, F1, KR.z1 + 0.16, { faces: 'n', room, tint: tintU, aoH: 1.2, aoMin: 0.5 });
+    ctx.col.add(KR.x0, 0, KR.z1, KR.top, F1, KR.z1 + 0.16);
+    wb.box('wooddark', KR.x0, F1, KR.z1, KR.top, F1 + 1.0, KR.z1 + 0.1, { ao: false, faces: 'tnsewb', room: 'cam_antecamara' });
+    ctx.col.add(KR.x0, F1, KR.z1, KR.top, F1 + 1.0, KR.z1 + 0.1);
+    for (let xx = KR.x0 + 0.6; xx < KR.top; xx += 1.2) wb.box('wooddark', xx - 0.05, F1, KR.z1 - 0.02, xx + 0.05, F1 + 1.0, KR.z1 + 0.12, { ao: false, room: 'cam_antecamara' });
+    P.wallTorch(ctx, KR.x0 + 0.05, yd + 2.0, (KR.z0 + KR.z1) / 2, 'e', { room });
+  }
+  // --- planta de arriba
+  const yU = F1;
+  W(S, ew, zN0, xu, zS1);
+  // las ventanas al patio (las mismas que por fuera)
+  const wins = [];
+  for (let k = 0; k < A.n; k += 2) wins.push(A.za + A.aw / 2 + k * A.step);
+  const winDoors = (za, zb) => wins.filter((z) => z > za + 0.8 && z < zb - 0.8).map((z) => ({ side: 'e', at: z, w: 1.0, h: 3.3, sill: 1.3 }));
+  interiorRoom(ctx, ew, zR, xu, z1a, yU, hU, { room: 'cam_antecamara', wall: 'plaster', tint: tintU, floor: false, ceilMat: 'wooddark', skip: ['n'], doors: [...winDoors(zR, z1a), { side: 's', at: -97.0, w: 1.2, h: 2.4 }] });
+  // (por donde llega la escalera del Rey: la antecámara, abierta al norte
+  // sobre el rellano de arriba)
+  interiorRoom(ctx, KR.top, zN0, xu, zR, yU, hU, { room: 'cam_antecamara', wall: 'plaster', tint: tintU, floor: false, skip: ['s', 'w'] });
+  wallZ(z1a, z2a, ew, xu, F1, F1 + hU, [{ a0: -97.6, a1: -96.4, h: 2.4 }]);
+  interiorRoom(ctx, ew, z2a, xu, z2b, yU, hU, { room: 'cam_dormir', wall: 'plaster', tint: tintU, floor: false, ceilMat: 'wooddark', doors: [...winDoors(z2a, z2b), { side: 'n', at: -97.0, w: 1.2, h: 2.4 }, { side: 's', at: -97.0, w: 1.2, h: 2.4 }] });
+  wallZ(z2b, z3a, ew, xu, F1, F1 + hU, [{ a0: -97.6, a1: -96.4, h: 2.4 }]);
+  interiorRoom(ctx, ew, z3a, xu, zS1, yU, hU, { room: 'cam_pasadizo', wall: 'plaster', tint: [0.62, 0.56, 0.5], floor: false, ceilMat: 'wooddark', doors: [...winDoors(z3a, zS1), { side: 's', at: PZ.x, w: PZ.w, h: PZ.h }] });
+  // (por dentro, los vanos de las ventanas: negros, con su marco)
+  for (const z of wins)
+    if (z > zR + 0.8) {
+      wb.box('black', xu - 0.02, yU + 1.3, z - 0.5, xu, yU + 3.3, z + 0.5, { ao: false, grime: false, faces: 'w' });
+      wb.box('ashlar', xu - 0.18, yU + 1.15, z - 0.62, xu, yU + 1.3, z + 0.62, { ao: false, faces: 'tnswb' });
+    }
+  // (y el muro de poniente, alto, por encima del de abajo)
+  // --- lo que hay dentro
+  // el guardarropa: arcones, la ropa del Rey colgada, un maniquí con su manto
+  wb.setRoom('cam_guardarropa');
+  for (let z = zR + 1.4; z < z1a - 1; z += 1.5) {
+    wb.box('wooddark', ew + 0.15, yG, z - 0.55, ew + 0.95, yG + 0.7, z + 0.55, { ao: false, room: 'cam_guardarropa', tint: [0.7, 0.6, 0.5] });
+    wb.box('iron', ew + 0.13, yG + 0.36, z - 0.57, ew + 0.97, yG + 0.42, z + 0.57, { ao: false, room: 'cam_guardarropa' });
+    ctx.col.add(ew + 0.15, yG, z - 0.55, ew + 0.95, yG + 0.7, z + 0.55);
+  }
+  wb.box('wooddark', xg - 0.5, yG + 2.0, zR + 1.0, xg - 0.44, yG + 2.06, z1a - 1.4, { ao: false, room: 'cam_guardarropa' });
+  for (let z = zR + 1.3; z < z1a - 1.6; z += 0.55) wb.box(['clothRed', 'clothBlue', 'clothPurple', 'clothDark'][Math.floor(z * 7) & 3], xg - 0.62, yG + 0.8, z - 0.22, xg - 0.32, yG + 2.0, z + 0.22, { ao: false, faces: 'tnsewb', room: 'cam_guardarropa' });
+  wb.setRoom(null);
+  ctx.lights.push({ x: -97.5, y: yG + 2.6, z: (zR + z1a) / 2, r: 1, g: 0.55, b: 0.26, radius: 7, intensity: 1.0, room: 'cam_guardarropa' });
+  P.wallTorch(ctx, xg - 0.02, yG + 2.2, (zR + z1a) / 2 + 2.0, 'w', { room: 'cam_guardarropa' });
+  // la escalera
+  ctx.lights.push({ x: -96.5, y: yG + 2.8, z: (z2a + z2b) / 2, r: 1, g: 0.55, b: 0.26, radius: 7, intensity: 0.8, room: 'cam_escalera' });
+  P.wallTorch(ctx, xg - 0.02, yG + 2.2, -64.2, 'w', { room: 'cam_escalera' });
+  // el tesoro: las arcas, la plata en sus estantes, el escombro del suelo
+  // quemado de arriba y el camarero, sentado sobre el arca de la cámara
+  {
+    const room = 'cam_tesoro';
+    wb.setRoom(room);
+    for (const [z, w] of [
+      [z3a + 1.0, 1.4],
+      [z3a + 2.8, 1.2],
+      [z3a + 4.4, 1.4],
+    ]) {
+      wb.box('wooddark', ew + 0.2, yG, z - w / 2, ew + 1.1, yG + 0.75, z + w / 2, { ao: false, room, tint: [0.62, 0.5, 0.4] });
+      for (const dz of [-w / 2 + 0.15, w / 2 - 0.15]) wb.box('iron', ew + 0.18, yG, z + dz - 0.04, ew + 1.12, yG + 0.77, z + dz + 0.04, { ao: false, room });
+      ctx.col.add(ew + 0.2, yG, z - w / 2, ew + 1.1, yG + 0.75, z + w / 2);
+    }
+    P.shelf(ctx, xg - 0.3, yG, z3a + 2.4, -Math.PI / 2, 2.2);
+    for (let k = 0; k < 6; k++) wb.cylinder('silver', xg - 0.35, yG + 0.45 + (k % 3) * 0.6, z3a + 1.6 + (k > 2 ? 1.3 : 0.2) + (k % 3) * 0.1, 0.09, 0.07, 0.2, 8, { ao: false, capTop: true, room });
+    // el arca de la cámara, con su cerraja, y el camarero encima
+    wb.box('wooddark', -98.6, yG, zS1 - 2.2, -96.6, yG + 0.85, zS1 - 1.0, { ao: false, room, tint: [0.7, 0.5, 0.36] });
+    wb.box('iron', -98.62, yG + 0.4, zS1 - 2.22, -96.58, yG + 0.48, zS1 - 0.98, { ao: false, room });
+    ctx.col.add(-98.6, yG, zS1 - 2.2, -96.6, yG + 0.85, zS1 - 1.0);
+    bakeCorpse(wb, -97.6, yG + 0.85, zS1 - 1.6, Math.PI, 'sit', 'villager', 73);
+    // las monedas por el suelo y el escombro de lo que se hundió
+    for (let k = 0; k < 18; k++) {
+      const x = -99.6 + ((k * 37) % 23) / 6,
+        z = z3a + 6 + ((k * 53) % 31) / 6;
+      wb.cylinder('gold', x, yG, z, 0.05, 0.05, 0.015, 6, { ao: false, capTop: true, room });
+    }
+    solid(ctx, 'wooddark', QH.x0 - 0.3, yG, QH.z0 - 0.2, QH.x1 + 0.3, yG + 1.3, QH.z1 + 0.2, { faces: 'tnsew', ao: false, room, tint: [0.2, 0.17, 0.15] });
+    P.rubble(ctx, (QH.x0 + QH.x1) / 2, yG + 1.3, (QH.z0 + QH.z1) / 2, 7, 6501, 0.8, { mat: 'wooddark', scale: 0.8, tint: [0.25, 0.2, 0.18] });
+    wb.setRoom(null);
+    // (las velas que encendió el camarero, ya casi consumidas)
+    P.candles(ctx, -98.1, yG + 0.85, zS1 - 1.25, 3, 6504, { room, radius: 6, intensity: 1.0, spread: 0.12 });
+    P.candles(ctx, ew + 0.6, yG + 0.75, z3a + 2.8, 2, 6505, { room, radius: 5, intensity: 0.8, spread: 0.1 });
+    L.interact.push({ kind: 'item', id: 'i_llave_camarero', item: 'llave_camarero', x: -97.4, y: yG + 0.9, z: zS1 - 1.4 });
+    L.interact.push({ kind: 'note', id: 'n_camarero', note: 'camarero', x: -98.0, y: yG + 0.86, z: zS1 - 2.0, model: 'paper' });
+  }
+  // la antecámara: los escaños, la mesa, el guarda del Rey
+  wb.setRoom('cam_antecamara');
+  P.bench(ctx, ew + 0.5, yU, (zR + z1a) / 2, 3.0, Math.PI / 2);
+  P.table(ctx, -92.4, yU, (zR + z1a) / 2 + 1.5, 1.8, 0.9, Math.PI / 2, {});
+  P.candles(ctx, -92.4, yU + 0.82, (zR + z1a) / 2 + 1.5, 3, 6502, { room: 'cam_antecamara', radius: 6, intensity: 0.9 });
+  P.banner(ctx, ew + 0.08, yU + 3.4, (zR + z1a) / 2, Math.PI / 2, 'bannerRey', 1.4, 2.4);
+  P.wallTorch(ctx, ew + 0.02, yU + 2.3, (zR + z1a) / 2 - 2.2, 'e', { room: 'cam_antecamara' });
+  P.wallTorch(ctx, ew + 0.02, yU + 2.3, (zR + z1a) / 2 + 2.2, 'e', { room: 'cam_antecamara' });
+  bakeCorpse(wb, -93.2, yU, z1a - 1.2, 0.8, 'back', 'soldier', 74);
+  P.decal(ctx, -93.2, yU + 0.01, z1a - 1.2, 1.8);
+  wb.setRoom(null);
+  // la cámara de dormir: la cama del Rey bajo su dosel, el reclinatorio, los
+  // arcones (y el de la reina, con su toca)
+  {
+    const room = 'cam_dormir';
+    wb.setRoom(room);
+    const bx = -95.6,
+      bz = (z2a + z2b) / 2 + 1.5;
+    wb.box('wooddark', bx - 1.1, yU, bz - 1.2, bx + 1.1, yU + 0.6, bz + 1.2, { ao: false, room });
+    wb.box('linen', bx - 1.05, yU + 0.6, bz - 1.15, bx + 1.05, yU + 0.75, bz + 1.15, { ao: false, room, tint: [0.84, 0.82, 0.78] });
+    wb.box('clothRed', bx - 1.08, yU + 0.75, bz - 1.18, bx + 1.08, yU + 0.82, bz + 0.6, { ao: false, room });
+    for (const dx of [-0.5, 0.5]) wb.box('linen', bx + dx - 0.4, yU + 0.75, bz + 0.75, bx + dx + 0.4, yU + 0.95, bz + 1.1, { ao: false, room });
+    for (const [dx, dz] of [
+      [-1.1, -1.2],
+      [1.1, -1.2],
+      [-1.1, 1.2],
+      [1.1, 1.2],
+    ])
+      wb.box('wooddark', bx + dx - 0.06, yU, bz + dz - 0.06, bx + dx + 0.06, yU + 3.4, bz + dz + 0.06, { ao: false, room });
+    wb.box('clothRed', bx - 1.16, yU + 3.4, bz - 1.26, bx + 1.16, yU + 3.5, bz + 1.26, { ao: false, faces: 'tbnsew', room });
+    for (const s2 of [-1, 1]) wb.box('clothRed', bx + s2 * 1.12 - 0.02, yU + 1.2, bz - 1.2, bx + s2 * 1.12 + 0.02, yU + 3.4, bz + 1.2, { ao: false, faces: 'tbnsew', room, tint: [0.75, 0.6, 0.55] });
+    ctx.col.add(bx - 1.15, yU, bz - 1.25, bx + 1.15, yU + 0.95, bz + 1.25);
+    wb.box('wooddark', -99.6, yU, z2a + 0.6, -98.4, yU + 0.7, z2a + 1.4, { ao: false, room, tint: [0.66, 0.54, 0.44] });
+    wb.box('linen', -99.5, yU + 0.7, z2a + 0.7, -98.6, yU + 0.74, z2a + 1.3, { ao: false, room, tint: [0.9, 0.88, 0.84] });
+    ctx.col.add(-99.6, yU, z2a + 0.6, -98.4, yU + 0.7, z2a + 1.4);
+    wb.box('wooddark', -93.0, yU, z2b - 1.6, -92.4, yU + 0.2, z2b - 1.0, { ao: false, room });
+    wb.box('wooddark', -93.0, yU, z2b - 1.1, -92.4, yU + 1.0, z2b - 0.95, { ao: false, room });
+    P.brazier(ctx, -97.6, yU, bz - 2.6, { room, radius: 8 });
+    P.candles(ctx, -99.0, yU + 0.74, z2a + 1.0, 3, 6506, { room, radius: 5, intensity: 0.8, spread: 0.12 });
+    P.wallTorch(ctx, xu - 0.02, yU + 2.3, z2b - 1.6, 'w', { room });
+    wb.setRoom(null);
+  }
+  // la cámara del pasadizo: tiznada, con la puerta del pasadizo quemada
+  {
+    const room = 'cam_pasadizo';
+    wb.setRoom(room);
+    wb.box('black', PZ.x - PZ.w / 2 - 0.5, yU + 0.01, zS1 - 2.6, PZ.x + PZ.w / 2 + 0.5, yU + 0.015, zS1, { ao: false, faces: 't', grime: false, room, tint: [0.4, 0.4, 0.4] });
+    for (const s2 of [-1, 1]) wb.box('wooddark', PZ.x + s2 * (PZ.w / 2 + 0.07) - 0.07, yU, zS1 - 0.14, PZ.x + s2 * (PZ.w / 2 + 0.07) + 0.07, yU + PZ.h + 0.1, zS1, { ao: false, room, tint: [0.15, 0.12, 0.1] });
+    wb.box('wooddark', PZ.x - PZ.w / 2 - 0.14, yU + PZ.h, zS1 - 0.14, PZ.x + PZ.w / 2 + 0.14, yU + PZ.h + 0.2, zS1, { ao: false, room, tint: [0.15, 0.12, 0.1] });
+    P.rubble(ctx, -93.0, yU, zS1 - 3.4, 6, 6503, 0.9, { mat: 'wooddark', scale: 0.7, tint: [0.22, 0.18, 0.15] });
+    wb.setRoom(null);
+    ctx.lights.push({ x: -96, y: yU + 2.6, z: (z3a + zS1) / 2, r: 0.6, g: 0.62, b: 0.7, radius: 8, intensity: 0.7, room });
+    P.wallTorch(ctx, ew + 0.02, yU + 2.3, z3a + 2.0, 'e', { room });
+  }
+  // los que quedan dentro
+  L.enemies.push(
+    { type: 'soldier', x: -96.0, y: yU, z: (zR + z1a) / 2 - 1.0, yaw: Math.PI, idle: 'stand', id: 'e_cam1' },
+    { type: 'cortesanoSuelto', x: -98.0, y: yU, z: (z2a + z2b) / 2 - 2.5, yaw: Math.PI / 2, idle: 'kneel', id: 'e_cam2' },
+    { type: 'mourner', x: -95.0, y: yU, z: z3a + 3.0, yaw: Math.PI, idle: 'stand', id: 'e_cam3' }
+  );
+  // la puerta del tesoro (a la galería: se desatranca por dentro)
+  const it = L.interact.find((i) => i.id === 'd_camara3');
+  if (it) Object.assign(it, { lock: { type: 'barred', side: -1, msg: 'tesoroTranca' }, barredMsg: 'tesoroCerrado' });
+  // las zonas: la escalera del Rey primero (sube por todo lo alto), luego cada
+  // estancia en su planta
+  const Z = (id, room, x0, z0, x1, z1, y0, y1) => ({ id, rects: [[x0, z0, x1, z1, y0, y1]], atmo: 'interior', room });
+  L.zones.push(
+    Z('camaras_escalera_rey', 'cam_escalera_rey', ew, zN0, KR.top, zR, 0.4, F1 + 0.4),
+    Z('camaras_guardarropa', 'cam_guardarropa', ew, zR, xg, z1a, -0.5, F1 - 0.4),
+    Z('camaras_escalera', 'cam_escalera', ew, z2a, xg, z2b, -0.5, F1 - 0.4),
+    Z('camaras_tesoro', 'cam_tesoro', ew, z3a, xg, zS1, -0.5, F1 - 0.4),
+    Z('camaras_antecamara', 'cam_antecamara', ew, zN0, xu, z1a, F1 - 0.4, F1 + hU),
+    Z('camaras_dormir', 'cam_dormir', ew, z2a, xu, z2b, F1 - 0.4, F1 + hU),
+    Z('camaras_pasadizo', 'cam_pasadizo', ew, z3a, xu, zS1, F1 - 0.4, F1 + hU)
+  );
+  L.map.push(
+    { id: 'camaras_guardarropa', r: [ew, zR, xg, z1a] },
+    { id: 'camaras_escalera', r: [ew, z2a, xg, z2b] },
+    { id: 'camaras_tesoro', r: [ew, z3a, xg, zS1] },
+    { id: 'camaras_escalera_rey', r: [ew, zN0, KR.top, zR] }
+  );
+}
+
+// ------------------------------------------------------------------------ las otras crujías
+// La del norte (contra la sala y, más allá, al jardín), la del sur (contra el
+// muro del foso) y la de poniente, cerradas por ahora; y el patinillo entre
+// ellas, con su pozo y su naranjo seco, al que se sale de la escalera.
+function alas(ctx, S, L) {
+  const wb = ctx.wb;
+  const Cm = PACO.camaras;
+  const { x0, e0, zN, zS, w1, z0, z1, F1, eave } = Cm;
+  const tint = [0.84, 0.81, 0.76];
+  const t = 0.8;
+  // los muros de fuera y los del patinillo, con sus ventanas cegadas
+  solid(ctx, 'ashlar', x0, 0, z0, e0, eave, zN, { faces: 'ns', sub: 2.2, aoH: 2, tint });
+  solid(ctx, 'ashlar', x0, 0, zS, e0, eave, z1, { faces: 'n', sub: 2.2, aoH: 2, tint });
+  solid(ctx, 'ashlar', x0, 0, zN, w1, eave, zS, { faces: 'e', sub: 2.2, aoH: 2, tint });
+  solid(ctx, 'ashlar', x0, 0, z0, x0 + t, eave, z1, { faces: 'w', sub: 2.2, aoH: 2, tint, collide: false });
+  const blind = (face, a, b, y, line) => {
+    for (let c = a + 1.6; c < b - 1; c += 3.2) {
+      const o = { ao: false, grime: false };
+      if (face === 'n') wb.box('black', c - 0.45, y, line - 0.02, c + 0.45, y + 1.9, line, { ...o, faces: 'n' });
+      if (face === 's') wb.box('black', c - 0.45, y, line, c + 0.45, y + 1.9, line + 0.02, { ...o, faces: 's' });
+      if (face === 'e') wb.box('black', line, y, c - 0.45, line + 0.02, y + 1.9, c + 0.45, { ...o, faces: 'e' });
+      if (face === 'w') wb.box('black', line - 0.02, y, c - 0.45, line, y + 1.9, c + 0.45, { ...o, faces: 'w' });
+    }
+  };
+  blind('s', w1, e0, F1 + 1.3, zN);
+  blind('n', w1, e0, F1 + 1.3, zS);
+  blind('e', zN, zS, F1 + 1.3, w1);
+  blind('w', zN, zS, F1 + 1.3, e0);
+  blind('n', x0, PACO.sala.x0, F1 + 1.3, z0);
+  blind('w', z0, z1, F1 + 1.3, x0);
+  // las cornisas y los tejados (los de las crujías del norte y del sur, metidos
+  // bajo el de levante; el de poniente, bajo los otros dos)
+  solidGableRoof(ctx, x0, z0, e0 + 5, zN, eave, eave + 3.2, 'x', { overhang: 0.5, gables: [{}, false], wallMat: 'ashlar', wallTint: tint, open: [false, true] });
+  solidGableRoof(ctx, x0, zS, e0 + 5, z1, eave, eave + 3.2, 'x', { overhang: 0.5, gables: [{}, false], wallMat: 'ashlar', wallTint: tint, open: [false, true] });
+  solidGableRoof(ctx, x0, zN - 4, w1, zS + 4, eave, eave + 2.6, 'z', { overhang: 0.5, gables: [false, false], wallMat: 'ashlar', wallTint: tint, open: [true, true] });
+  // el patinillo: enlosado, su pozo, un naranjo seco y un banco de piedra
+  const px0 = w1,
+    px1 = e0,
+    pz0 = zN,
+    pz1 = zS;
+  W(S, px0, pz0, px1, pz1);
+  W(S, Cm.ew - 0.1, -72.6, px1 + 0.1, -71.4);
+  floor(ctx, px0, pz0, px1, pz1, 'flag', 0, { sub: 2.5, tint: [0.7, 0.68, 0.64] });
+  P.well(ctx, (px0 + px1) / 2, 0, -63.0, {});
+  P.deadTree(ctx, (px0 + px1) / 2 - 1.5, 0, -70.5, 6601, 4.2);
+  solid(ctx, 'ashlar', px0 + 0.1, 0, -70, px0 + 0.6, 0.45, -66, { faces: 'tnsew', ao: false });
+  L.zones.push({ id: 'patinillo', rects: [[px0, pz0, px1, pz1, -1, 12]], atmo: 'city' });
+  L.map.push({ id: 'patinillo', r: [px0, pz0, px1, pz1] });
+  L.enemies.push({ type: 'cortesanoSuelto', x: (px0 + px1) / 2 + 1.2, y: 0, z: -66.5, yaw: Math.PI, idle: 'kneel', id: 'e_pat1' });
+}
+
+// ------------------------------------------------------------------------ el pasadizo quemado
+// De la cámara del pasadizo a la alcoba del alcaide, en la planta del Rey de
+// la torre: una galería cubierta sobre arcos, a través del foso. El alcaide la
+// quemó detrás de sí la noche de la caída: quedan los dos arcos, el machón de
+// en medio, los pies derechos negros y la viga maestra, en dos tramos en
+// cuesta, por la que se pasa haciendo equilibrio (game/cornisas.js). Abajo,
+// el foso: quien cae, no se levanta.
+function pasadizo(ctx, S, L) {
+  const wb = ctx.wb;
+  const PZ = CASTLE.pasadizo,
+    Pz = PACO.pasadizo,
+    F = PACO.foso,
+    K = CASTLE.keep,
+    Cm = PACO.camaras;
+  const x = PZ.x,
+    xa = x - 0.8,
+    xb = x + 0.8;
+  const soot = [0.2, 0.17, 0.15];
+  wb.noSub = true;
+  // el machón de en medio y los dos arcos
+  solid(ctx, 'wallstone', xa, F.y - 0.3, Pz.z0, xb, Pz.y, Pz.z1, { faces: 'tnsew', sub: 2, aoH: 2, tint: [0.62, 0.58, 0.54], mats: { t: 'flag' } });
+  for (const [za, zb, top] of [
+    [PACO.zS, Pz.z0, 3.6],
+    [Pz.z1, F.z1 - F.b, 5.0],
+  ]) {
+    const c = (za + zb) / 2,
+      w = zb - za - 0.6;
+    archRing(ctx, { axis: 'z', c, w, y0: F.y + 1.0, rise: w / 2, ring: 0.4, t0: xa, t1: xb, top, clip: [za, zb], piers: true, topFace: true, mat: 'wallstone', spMat: 'wallstone', tint: [0.5, 0.46, 0.42], spTint: [0.58, 0.54, 0.5] });
+    for (const z of [za + 0.3, zb - 0.3]) solid(ctx, 'wallstone', xa, F.y - 0.3, z - 0.3, xb, F.y + 1.0, z + 0.3, { faces: 'nsew', sub: 2, ao: false, tint: [0.58, 0.54, 0.5] });
+    ctx.col.add(xa, F.y + 1.0 + (w / 2) * 0.6, za, xb, top, zb);
+  }
+  wb.noSub = false;
+  // la viga maestra, en dos tramos en cuesta, con su rampa por encima (por
+  // donde se anda) y su sitio para el equilibrio
+  const tramos = [
+    [V(x, Cm.F1, PACO.zS), V(x, Pz.y, Pz.z0)],
+    [V(x, Pz.y, Pz.z1), V(x, K.F2, K.z0 - 0.33)],
+  ];
+  const r = 0.16;
+  tramos.forEach(([a, b], i) => {
+    const n = Math.ceil(Math.abs(b.z - a.z) / 0.4);
+    for (let k = 0; k < n; k++) {
+      const u0 = k / n,
+        u1 = (k + 1) / n;
+      const za = a.z + (b.z - a.z) * u0,
+        zb = a.z + (b.z - a.z) * u1;
+      ctx.col.addRamp(x - r, Math.min(za, zb), x + r, Math.max(za, zb), 'z', za, a.y + (b.y - a.y) * u0, zb, a.y + (b.y - a.y) * u1);
+    }
+    const m = new THREE.Matrix4().lookAt(a, b, V(0, 1, 0));
+    const len = a.distanceTo(b);
+    const mid = a.clone().add(b).multiplyScalar(0.5).add(V(0, -0.15, 0));
+    m.setPosition(mid);
+    wb.geometry('wooddark', new THREE.BoxGeometry(0.3, 0.3, len), m, { ao: false, tint: soot });
+    // (las astillas negras a los lados)
+    for (let k = 1; k < 5; k++) {
+      const p = a.clone().lerp(b, k / 5);
+      wb.box('wooddark', x - 0.24, p.y - 0.42, p.z - 0.05, x + 0.24, p.y - 0.3, p.z + 0.05, { ao: false, tint: soot });
+    }
+    (L.ledges || (L.ledges = [])).push({ id: 'pasadizo' + (i + 1), a: [a.x, a.y, a.z], b: [b.x, b.y, b.z], w: 0.34 });
+  });
+  // los pies derechos que quedan, negros y partidos, y los canes de los muros
+  const posts = [
+    [xa + 0.1, -43.0, 2.2],
+    [xb - 0.1, -41.2, 3.1],
+    [xa + 0.1, -39.4, 1.4],
+    [xb - 0.1, -35.2, 2.6],
+    [xa + 0.1, -33.0, 3.4],
+    [xb - 0.1, -31.0, 1.8],
+  ];
+  for (const [px, pz, h] of posts) {
+    const yb = pz < Pz.z0 ? 3.6 : pz > Pz.z1 ? 5.0 : Pz.y;
+    wb.box('wooddark', px - 0.1, yb, pz - 0.1, px + 0.1, yb + h, pz + 0.1, { ao: false, tint: soot });
+    wb.box('black', px - 0.11, yb + h - 0.12, pz - 0.11, px + 0.11, yb + h + 0.01, pz + 0.11, { ao: false, grime: false });
+  }
+  for (const z of [PACO.zS + 0.02, K.z0 - 0.32])
+    for (const dx of [-0.6, 0.6]) {
+      const y0 = z < -40 ? Cm.F1 - 0.4 : K.F2 - 0.4;
+      wb.box('wooddark', x + dx - 0.09, y0, Math.min(z, z + (z < -40 ? 0.8 : -0.8)), x + dx + 0.09, y0 + 0.2, Math.max(z, z + (z < -40 ? 0.8 : -0.8)), { ao: false, tint: soot });
+    }
+  // abajo, en el foso: los maderos que cayeron ardiendo
+  wb.noSub = true;
+  for (const [cx, cz, rot, l] of [
+    [x + 0.8, -40.5, 0.4, 3.2],
+    [x - 0.6, -34.0, -0.7, 2.6],
+    [x + 1.6, -31.6, 1.2, 2.2],
+  ]) {
+    wb.push();
+    wb.translate(cx, F.y, cz);
+    wb.rotateY(rot);
+    wb.rotateZ(0.12);
+    wb.box('wooddark', -l / 2, 0, -0.14, l / 2, 0.26, 0.14, { ao: false, faces: 'tnsewb', tint: soot });
+    wb.pop();
+  }
+  P.rubble(ctx, x + 1.2, F.y, -37.5, 9, 6601, 1.2, { mat: 'wooddark', scale: 0.8, tint: soot });
+  wb.noSub = false;
+  // quien cae del pasadizo cae al foso: muerto
+  (L.fallZones || (L.fallZones = [])).push([F.x0, F.z0, F.x1, F.ez1]);
+  L.zones.push({ id: 'pasadizo_quemado', rects: [[xa - 0.4, PACO.zS, xb + 0.4, K.z0, 2.5, 12]], atmo: 'ramparts' });
+  L.map.push({ id: 'pasadizo_quemado', r: [xa, PACO.zS, xb, K.z0] });
 }
 
 // ------------------------------------------------------------------------ la sala (por dentro)
@@ -914,7 +1381,7 @@ function salaDentro(ctx, S, L) {
       [iz0, 1, 's'],
       [iz1, -1, 'n'],
     ]) {
-      if (f === 'n' && Math.abs(xc - Sa.portada) < 1.5) continue;
+      if (f === 'n' && (Math.abs(xc - Sa.portada) < 1.5 || xc < PACO.camaras.x1)) continue;
       for (const s2 of [-1, 1]) {
         const c = xc + s2 * 0.45;
         wb.box('black', c - 0.31, 6.4, Math.min(zf, zf + sg * 0.02), c + 0.31, 9.4, Math.max(zf, zf + sg * 0.02), { ao: false, grime: false, faces: f, room });
@@ -990,7 +1457,7 @@ function salaDentro(ctx, S, L) {
   // cámaras del Rey, tras el estrado (se abre desde ellas)
   L.interact.push(
     { kind: 'door', id: 'd_servicio', x: Sa.servicio, y, z: Sa.z0 + Sa.t / 2, w: 1.6, h: 3.0, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'none' } },
-    { kind: 'door', id: 'd_sala_camaras', x: Sa.privada, y, z: Sa.z1 - Sa.t / 2, w: 1.3, h: 2.75, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: iz1, inset: 0.06, lock: { type: 'barred', side: 1 }, barredMsg: 'camarasPrivada' }
+    { kind: 'door', id: 'd_sala_camaras', x: Sa.privada, y: y + 0.45, z: Sa.z1 - Sa.t / 2, w: 1.1, h: 2.65, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: iz1, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'camarasTranca' }, barredMsg: 'camarasPrivada' }
   );
 }
 

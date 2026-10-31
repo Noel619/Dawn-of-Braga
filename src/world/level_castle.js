@@ -68,6 +68,9 @@ export const CASTLE = {
   // la puerta nueva de la muralla norte: al puente del foso del Rey y a la
   // Puerta del Paço (level_paco.js); su paso, de z0 (la cara de fuera) a z1
   puertaNorte: { x: -66.5, w: 3.0, h: 2.4, z0: -23, z1: -20 },
+  // el pasadizo quemado: de las cámaras del Rey en el Paço a la planta del
+  // Rey de la torre (la alcoba del alcaide), sobre el foso; su eje y su puerta
+  pasadizo: { x: -93.2, w: 1.2, h: 2.4 },
   // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
   well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador

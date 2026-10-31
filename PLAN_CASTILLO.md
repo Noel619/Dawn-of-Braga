@@ -143,7 +143,7 @@ z −45  └───────────┴───────┴──�
   los estandartes blancos y azules; al este, **el pasillo de servicio** con las puertas a la despensa, a la
   botillería y al paso de la cocina; detrás del estrado, **la puerta privada** a las cámaras del Rey. Ahí espera
   la Corte de los Infieles (§8).
-- **Las Cámaras del Rey** (≈ 28 × 35 m, dos plantas en torno a un patinillo): abajo, el guardarropa, el tesoro
+- **Las Cámaras del Rey** (**hecho**: la crujía de levante y el patinillo; 28 × 39 m, dos plantas en torno a un patinillo): abajo, el guardarropa, el tesoro
   de la cámara (la llave del camarero) y la escalera; arriba, la antecámara, la cámara de dormir, el oratorio con
   su ventana a la capilla y **la puerta del pasadizo**: una galería cubierta sobre arcos que cruza el foso hasta
   la planta del Rey en la torre del homenaje. **Quemada**: quedan los arcos, los pies derechos negros y una viga
@@ -379,7 +379,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 3 | **La planta baja y la bajada tapiada** (**hecho**) | §4.3; la pared nueva en el pasillo de las celdas desde el principio; la escalera baja del almacén (no de la bodega: así no pisa la cárcel) y el sillar cuelga sobre el tapiado (`game/cuerdas.js`) |
 | 4a | **El recinto del Paço** (**hecho**) | `level_paco.js`: la ciudad hacia el oeste, los muros, el foso del rey (un hueco en la losa que no es portal del subsuelo y se dibuja siempre), el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha, la sala y la galería de las cámaras por fuera, el cuerpo de guardia; zonas y mapa |
 | 4b | **La Sala de la Corte y la Corte de los Infieles** (**hecho**) | `game/corte.js` (el director del compás), `entities/cortesano.js` (el cortesano y el mayordomo); la sala por dentro y el camino del servicio (el callejón, las caballerizas, la cocina, el paso cubierto), que venía de la 4f; la llave del mayordomo y su cuaderno |
-| 4c | **Las Cámaras del Rey y el pasadizo** | la llave del camarero; el equilibrio hasta la torre |
+| 4c | **Las Cámaras del Rey y el pasadizo** (**hecho**) | la crujía de levante en dos plantas (la escalera del Rey desde el estrado, la antecámara, la cámara, la del pasadizo; el guardarropa, la escalera y el tesoro), el patinillo; la llave del camarero; el pasadizo, dos vigas en cuesta sobre el foso (`game/cornisas.js`) hasta la alcoba del alcaide; el cortesano suelto |
 | 4d | **La Capilla Real** | la tribuna, la espadaña, la llave del capellán |
 | 4e | **La Cancillería y la Torre del Tombo** | el registro y las arcas, la llave del canciller |
 | 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** | el camino por el servicio; lo opcional |

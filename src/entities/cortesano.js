@@ -270,3 +270,22 @@ export const MAYORDOMO_TYPE = {
   think: null,
   onHit: (e) => e.game.corte && e.game.corte.provoked(e),
 };
+
+// Los sueltos por el Paço: rezan de rodillas por los pasillos y las cámaras y
+// se levantan al verte; sin compás, cada uno a lo suyo.
+export const CORTESANO_SUELTO_TYPE = {
+  ...CORTESANO_TYPE,
+  sight: 11,
+  hear: 4,
+  fov: 140,
+  approach: 1.5,
+  perceive: undefined,
+  think: null,
+  onHit: null,
+  keepCorpse: false,
+  deathDur: undefined,
+  attacks: [
+    { ...STAB_ATK, min: 0, max: 2.1, weight: 3, cd: 0.7 },
+    { ...STAB_ATK, name: 'lunge', min: 2.0, max: 4.2, weight: 1.5, cd: 0.9, lunge: [[0.2, 0.44, 8]], trackUntil: 0.3 },
+  ],
+};

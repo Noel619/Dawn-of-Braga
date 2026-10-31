@@ -2,7 +2,8 @@
 // su escalera al patio; el cuerpo de guardia; la puerta (se desatranca), el
 // puente y la puerta nueva del castillo; la escalera del foso, el foso y de
 // vuelta; y por el servicio (el callejón, las caballerizas, la cocina y el
-// paso) a la Sala de la Corte. Dice dónde se atasca, si se atasca.
+// paso) a la Sala de la Corte; las cámaras del Rey y su tesoro, y el pasadizo
+// quemado hasta la torre. Dice dónde se atasca, si se atasca.
 //   node tools/pacowalk.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -37,13 +38,21 @@ const r = await p.evaluate(() => {
           d = Math.hypot(dx, dz);
         if (d < 0.45) break;
         P.autoDir = { x: dx / d, z: dz / d, m: 1 };
+        // (en una viga, lo que se empuja de lado endereza: contra lo que se
+        // tuerce, y a lo largo, hacia donde se va)
+        if (P.balance) {
+          const B = P.balance;
+          const along = Math.sign(dx * B.ax + dz * B.az || 1);
+          const corr = -Math.sign(B.lean) * Math.min(0.9, Math.abs(B.lean) * 2.5 + 0.15);
+          P.autoDir = { x: B.ax * along + B.az * corr, z: B.az * along - B.ax * corr, m: 1 };
+        }
         g.update(1 / 60);
         t += 1 / 60;
         if (d < best - 0.02) {
           best = d;
           still = 0;
         } else still += 1 / 60;
-        if (still > 3) {
+        if (still > 3 || P.dead) {
           P.autoDir = null;
           return `${name}: atascado yendo a (${x}, ${z}) en (${P.pos.x.toFixed(2)}, ${P.pos.y.toFixed(2)}, ${P.pos.z.toFixed(2)})`;
         }
@@ -83,6 +92,25 @@ const r = await p.evaluate(() => {
   at('sala');
   out.push(go([[-88, -95], [-95, -95]], 'por el pasillo de la corte'));
   at('ante el estrado');
+  // las cámaras del Rey (fase 4c), con la corte ya vencida: la puerta del
+  // estrado, la escalera del Rey, la antecámara, la cámara, la del pasadizo,
+  // el boquete al tesoro, la llave del camarero y la puerta a la galería; y
+  // el pasadizo quemado, viga a viga, hasta la alcoba de la torre
+  g.flags['corte:vencida'] = true;
+  g.corte.applyFlags();
+  P.spawn(-99.9, 1.95, -88.4, 0);
+  for (let i = 0; i < 30; i++) g.update(1 / 60);
+  out.push(go([[-99.9, -87.0, 'd_sala_camaras'], [-99.9, -85.3], [-98.6, -85.1], [-94.9, -85.1], [-93.5, -84.0], [-96.0, -79.0], [-97.0, -74.8], [-97.0, -72.6], [-98.0, -70.0], [-98.0, -62.0], [-97.0, -61.4], [-97.0, -59.2], [-95.5, -55.0], [-96.7, -51.9]], 'estrado → cámaras → boquete'));
+  for (let i = 0; i < 90; i++) g.update(1 / 60);
+  at('en el tesoro');
+  g.interact.use(g.interact.list.find((i) => i.id === 'i_llave_camarero'));
+  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  g.ui.closeAll();
+  out.push('llave del camarero: ' + g.inventory.has('llave_camarero'));
+  out.push(go([[-95.0, -53.3], [-94.6, -53.3, 'd_camara3'], [-92.0, -53.3], [-91.8, -60]], 'tesoro → galería'));
+  P.spawn(-93.2, 4.9, -50.0, Math.PI);
+  for (let i = 0; i < 30; i++) g.update(1 / 60);
+  out.push(go([[-93.2, -47.8], [-93.2, -46.0], [-93.2, -44.0], [-93.2, -39.0], [-93.2, -37.6], [-93.2, -35.0], [-93.2, -30.0], [-93.2, -27.5], [-93.2, -24.0]], 'el pasadizo quemado'));
   return out;
 });
 console.log(r.join('\n'));
