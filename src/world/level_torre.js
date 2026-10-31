@@ -73,6 +73,26 @@ const ST = {
   s3R: { x: -85.9, z: -25.85, dir: 'w', w: 1.5, n: 16, hole: [-92.64, null, -87.6, -24.95] },
 };
 
+// La bajada tapiada (§4.3): una escalera en un hueco del suelo del almacén
+// baja a un pasadizo, bajo tierra, que acaba en el fondo del pasillo de las
+// celdas; ahí la tapiaron (ladrillo nuevo y cal, y por este lado sacos y
+// piedras). Encima del tapiado, colgado de una cuerda, el sillar que hacía de
+// contrapeso del polipasto de la trampilla: un virote a la cuerda, y cae.
+export const BAJADA = {
+  // la escalera, pegada al muro oeste del almacén: arriba al norte (z1), abajo
+  // al sur (z0 + ... : baja hacia el sur)
+  stair: { x0: -94.5, x1: -93.0, top: -13.0, bottom: -5.86, n: 17 },
+  hole: [-94.5, -13.0, -93.0, -5.86],
+  // abajo: el rellano (al pie, al sur), el pasadizo que vuelve hacia el norte
+  // y el tramo hasta el tapiado, al fondo del pasillo de las celdas
+  // (a medios metros: la rejilla de las mazmorras)
+  rellano: [-94.5, -6.0, -91.0, -4.5],
+  norte: [-92.5, -13.0, -91.0, -6.0],
+  este: [-91.0, -13.0, -89.0, -11.0],
+  tapia: { x: -89.0, z: -12.0, w: 2.0, h: 2.4 },
+  sillar: { x: -89.75, z: -12.0, y0: -3.75, y1: -2.68, s: [0.6, 0.44, 0.5] },
+};
+
 // Medidas que salen de las de la torre.
 export function torreDims() {
   const K = CASTLE.keep;
@@ -308,7 +328,7 @@ export function buildTorre(ctx, S, L) {
   const H12 = hole(ST.s12.hole),
     H23 = hole(ST.s23.hole),
     H3R = hole(ST.s3R.hole);
-  for (const r of KR[0]) for (const q of r.rects) wb.box('flag', q[0], -0.1, q[1], q[2], 0, q[3], { faces: 't', ao: false, uv: 0.7, room: r.room, tint: [0.78, 0.76, 0.72] });
+  for (const r of KR[0]) for (const q of r.rects) for (const m of subtractRects(q, [BAJADA.hole])) wb.box('flag', m[0], -0.1, m[1], m[2], 0, m[3], { faces: 't', ao: false, uv: 0.7, room: r.room, tint: [0.78, 0.76, 0.72] });
   // (f: la planta de debajo; area: lo que cubre; above: las estancias de
   // encima; joists: viguetas)
   const slab = (f, area, holes, above) => {
@@ -450,6 +470,8 @@ export function buildTorre(ctx, S, L) {
   furnish(ctx, L, K, { ix0, ix1, iz0, iz1, s0, s1 });
   // --- la planta de armas: el recorrido hasta la ballesta (§4.2)
   armas(ctx, S, L, K, { ix0, ix1, iz0, iz1, s0, s1 });
+  // --- la bajada tapiada a las celdas (§4.3)
+  bajada(ctx, S, L, K, { ix0, ix1, iz0, iz1, s0, s1 });
 }
 
 // ------------------------------------------------------------------------ por fuera
@@ -838,18 +860,17 @@ function furnish(ctx, L, K, d) {
     P.ladder(ctx, HT.x - 0.62, 0, HT.z, F1 - SL - 0.05, Math.PI / 2, 0.1);
     wb.box('wooddark', HT.x - 0.62, F1 - SL - 0.04, HT.z - 0.62, HT.x + 0.62, F1 - SL, HT.z + 0.62, { ao: false, faces: 'b', room });
     for (const [x, z, sc] of [
-      [-93.7, -13.8, 1.3],
-      [-93.8, -12.4, 1.2],
-      [-93.6, -11.0, 1.35],
-      [-92.7, -9.7, 1.1],
-      [-93.7, -8.4, 1.25],
+      [-85.2, -14.0, 1.3],
+      [-86.4, -14.2, 1.2],
+      [-85.3, -12.8, 1.35],
+      [-86.5, -12.9, 1.1],
     ])
       P.jar(ctx, x, 0, z, sc);
     P.firewood(ctx, -87.0, 0, -6.4, 0, 4);
     P.firewood(ctx, -85.4, 0, -6.4, 0, 3);
     for (const [x, z] of [
-      [-93.6, -6.4],
-      [-93.2, -7.5],
+      [-91.6, -6.3],
+      [-91.4, -7.4],
     ])
       for (let k = 0; k < 4; k++) wb.cylinder('rope', x, 0.02 + k * 0.07, z, 0.36 - k * 0.04, 0.36 - k * 0.04, 0.07, 10, { ao: false, room });
     P.shelf(ctx, -90.4, 0, iz1 - 0.25, Math.PI, 1.8);
@@ -1529,4 +1550,93 @@ function armas(ctx, S, L, K, d) {
 
   // --- criaturas: una come en la bodega, a oscuras
   L.enemies.push({ type: 'penitent', x: -77.4, y: 0, z: -18.4, yaw: 2.2, idle: 'eat', id: 'e_bod1' });
+}
+
+// ------------------------------------------------------------------------ la bajada tapiada
+// La escalera baja en su hueco, con sus pretiles y el marco de su puerta, que
+// quedó abierta; en los muros del hueco, los arañazos de algo grande que
+// subía. Abajo, el pasadizo hasta el tapiado: por este lado, sacos, piedras y
+// cal contra el ladrillo; por el del pasillo de las celdas, el ladrillo nuevo
+// con lo que alguien arañó en la cal fresca. El sillar cuelga de su viga
+// sobre el tapiado (lo deja caer game/cuerdas.js).
+function bajada(ctx, S, L, K, d) {
+  const wb = ctx.wb;
+  const B = BAJADA;
+  const YD = CASTLE.dun.y;
+  const rr = new RNG(4521);
+  const st = B.stair;
+  const xc = (st.x0 + st.x1) / 2;
+  // (la losa de tierra va por metros: el hueco, a metros enteros)
+  ctx.floorHoles.push([Math.floor(B.hole[0]), Math.floor(B.hole[1]), Math.ceil(B.hole[2]), Math.ceil(B.hole[3])]);
+  // la escalera (sube hacia el norte)
+  wb.setRoom('bajada');
+  stairs(ctx, xc, YD, st.bottom, 'n', st.x1 - st.x0, st.n, -YD / st.n, (st.bottom - st.top) / st.n, 'wallstone', { solidBelow: true });
+  wb.setRoom(null);
+  // los pretiles del hueco, en el almacén, y el marco de la boca, al norte
+  const room = 'homenaje0';
+  parapet(ctx, st.x1, st.top + 0.32, st.x1 + 0.25, st.bottom - 0.06, 0, 1.0, { room });
+  parapet(ctx, st.x0, st.bottom, st.x1, st.bottom + 0.25, 0, 1.0, { room });
+  solid(ctx, 'ashlar', st.x1, 0, st.top - 0.05, st.x1 + 0.3, 2.3, st.top + 0.25, { sub: 1.4, aoH: 1, room, tint: [0.7, 0.68, 0.64] });
+  wb.box('ashlar', st.x0 - 0.1, 2.3, st.top - 0.09, st.x1 + 0.34, 2.62, st.top + 0.29, { ao: false, faces: 'tnsewb', room, tint: [0.66, 0.64, 0.6] });
+  // (la hoja ya no está: la arrancaron, y sus tablas están en el suelo)
+  for (let k = 0; k < 3; k++) wb.at(st.x1 + 0.9 + k * 0.3, 0.02 + k * 0.045, st.top - 0.5 - k * 0.2, 0.3 + k * 0.5, () => wb.box('planks', -0.55, 0, -0.1, 0.55, 0.04, 0.1, { ao: false, room, tint: [0.62, 0.55, 0.48] }));
+  // los arañazos en los muros del hueco: surcos de cuatro en cuatro
+  for (let k = 0; k < 5; k++) {
+    const z = st.bottom - 0.8 - k * 1.3,
+      y = YD + 0.9 + k * 0.85;
+    for (const xf of [st.x0 + 0.012, st.x1 - 0.012]) {
+      if (rr.chance(0.35)) continue;
+      for (let j = 0; j < 4; j++) {
+        const g = new THREE.BoxGeometry(0.006, 0.75, 0.03);
+        wb.geometry('black', g, new THREE.Matrix4().compose(V(xf, y + rr.range(-0.1, 0.1), z - j * 0.09), new THREE.Quaternion().setFromEuler(new THREE.Euler(0.35 + rr.range(-0.08, 0.08), 0, 0)), V(1, 1, 1)), { ao: false, grime: false, room: 'bajada' });
+      }
+    }
+  }
+  const pasillo = B.este;
+  // el pasadizo: antorcha, un caído, huesos
+  P.wallTorch(ctx, B.norte[2], YD + 1.8, -9.0, 'w', { room: 'bajada', radius: 6 });
+  P.wallTorch(ctx, B.rellano[0], YD + 1.8, -5.1, 'e', { room: 'bajada', radius: 5 });
+  bakeCorpse(wb, -92.1, YD, -8.6, 1.4, 'curl', 'soldier', 4523);
+  P.bones(ctx, -92.0, YD, -10.4, 4, 4524, 0.4);
+  // la viga del sillar, de muro a muro
+  const SI = B.sillar;
+  wb.box('timber', SI.x - 0.12, SI.y1, pasillo[1], SI.x + 0.12, SI.y1 + 0.08, pasillo[3], { ao: false, faces: 'nsewb', room: 'bajada' });
+  wb.box('iron', SI.x - 0.05, SI.y1 - 0.08, SI.z - 0.05, SI.x + 0.05, SI.y1, SI.z + 0.05, { ao: false, room: 'bajada' });
+  L.cuerdas = L.cuerdas || [];
+  L.cuerdas.push({ id: 'cuerda_sillar', a: [SI.x, SI.y0, SI.z], b: [SI.x, SI.y1 - 0.08, SI.z], stone: SI.s, floor: YD, door: 'd_tapia_celdas', room: 'bajada' });
+
+  // --- el tapiado: el ladrillo nuevo y su cal (por el lado de las celdas, lo
+  // arañado; por el del pasadizo, sacos y piedras contra él)
+  const T = B.tapia;
+  ctx.beginGroup('puerta:d_tapia_celdas');
+  {
+    const z0 = T.z - T.w / 2,
+      z1 = T.z + T.w / 2;
+    wb.box('plaster', T.x - 0.18, YD, z0, T.x + 0.18, YD + T.h, z1, { sub: 0.8, aoH: 1, faces: 'ew', room: 'mazmorra', tint: [0.94, 0.9, 0.84] });
+    // las hiladas de ladrillo, que asoman bajo la cal
+    for (let k = 1; k < 10; k++) {
+      const y = YD + k * 0.24;
+      wb.box('wooddark', T.x + 0.18, y, z0 + 0.02, T.x + 0.185, y + 0.018, z1 - 0.02, { ao: false, faces: 'e', room: 'mazmorra', tint: [0.5, 0.36, 0.3] });
+      for (let x = z0 + (k % 2 ? 0.1 : 0.22); x < z1 - 0.05; x += 0.26) wb.box('wooddark', T.x + 0.18, y - 0.24, x, T.x + 0.185, y, x + 0.018, { ao: false, faces: 'e', room: 'mazmorra', tint: [0.5, 0.36, 0.3] });
+    }
+    // LO QUE SUBE NO ES NUESTRO, arañado en la cal
+    wb.geometry('scratchNoEsNuestro', new THREE.PlaneGeometry(1.4, 0.5), new THREE.Matrix4().compose(V(T.x + 0.192, YD + 1.45, T.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0.03)), V(1, 1, 1)), { ao: false, grime: false, room: 'mazmorra' });
+    // por detrás: sacos, piedras y cal
+    P.sacks(ctx, T.x - 0.55, YD, T.z - 0.45, 4, 4525);
+    P.sacks(ctx, T.x - 0.55, YD, T.z + 0.45, 3, 4526);
+    P.sacks(ctx, T.x - 0.45, YD + 0.5, T.z, 2, 4527);
+    for (let k = 0; k < 6; k++) P.roughStone(ctx, T.x - 0.3 - rr.range(0, 0.4), YD + 0.2 + k * 0.32, T.z + rr.range(-0.6, 0.6), rr.range(0.16, 0.24), 4529 + k, { block: true, mat: 'wallstone', sink: 0, uvScale: 0.7 });
+  }
+  ctx.endGroup();
+  ctx.beginGroup('puerta:d_tapia_celdas:ruina');
+  P.rubble(ctx, T.x, YD, T.z, 10, 4537, 1.1, { mat: 'wallstone', scale: 0.9, blocks: 0.5 });
+  wb.geometry('ashlar', new THREE.BoxGeometry(...SI.s), new THREE.Matrix4().compose(V(T.x - 0.2, YD + 0.3, T.z + 0.15), new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3, 0.6, 0.2)), V(1, 1, 1)), { room: 'bajada' });
+  for (let k = 0; k < 3; k++) wb.at(T.x - 0.8 + k * 0.4, YD + 0.02 + k * 0.03, T.z + rr.range(-0.5, 0.5), rr.range(0, 3), () => wb.box('burlap', -0.3, 0, -0.2, 0.3, 0.12, 0.2, { ao: false, room: 'bajada', tint: [0.7, 0.62, 0.5] }));
+  ctx.endGroup();
+  L.interact.push(
+    { kind: 'door', id: 'd_tapia_celdas', x: T.x, y: YD, z: T.z, w: T.w, h: T.h, axis: 'z', mat: 'tabique', lock: { type: 'rope', side: 1, msgA: 'tapiaCeldas', msgB: 'tapiaArriba' } }
+  );
+  // la zona y el mapa (bajo el castillo)
+  L.zones.unshift({ id: 'bajada_torre', rects: [B.rellano, B.norte, B.este, [st.x0, st.top, st.x1, st.bottom]].map((r) => [...r, YD - 0.5, r === B.rellano || r === B.norte || r === B.este ? YD + 2.3 : -0.3]), atmo: 'prison', room: 'bajada' });
+  L.map.push({ id: 'bajada_torre', r: [B.rellano[0], B.este[1], B.este[2], B.rellano[3]], level: 'dungeon' });
 }

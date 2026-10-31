@@ -371,7 +371,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 0b | **Las respuestas** (**hecho**): este plan rehecho y el icono del rey de marfil | |
 | 1 | **La torre del homenaje, rehecha** (**hecho**) | `level_torre.js`, por medidas; la navegación por capas con más plantas; `castlewalk torre` y `rey.mjs` siguen pasando |
 | 2 | **La planta de armas, la ballesta y el alférez** (**hecho**) | el recorrido de §4.2; el arma (`game/virotes.js`: tiro, recarga, cuenta, cuerdas); el alférez (`entities/alferez.js`); la primera llave |
-| 3 | **La planta baja y la bajada tapiada** | §4.3; la pared nueva en el pasillo de las celdas desde el principio |
+| 3 | **La planta baja y la bajada tapiada** (**hecho**) | §4.3; la pared nueva en el pasillo de las celdas desde el principio; la escalera baja del almacén (no de la bodega: así no pisa la cárcel) y el sillar cuelga sobre el tapiado (`game/cuerdas.js`) |
 | 4a | **El recinto del Paço** | la ciudad hacia el oeste, los muros, el foso del rey, el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha; zonas, mapa y descarte de lo que no se ve |
 | 4b | **La Sala de la Corte y la Corte de los Infieles** | el cortesano, el director del compás, la llave del mayordomo |
 | 4c | **Las Cámaras del Rey y el pasadizo** | la llave del camarero; el equilibrio hasta la torre |

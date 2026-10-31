@@ -98,6 +98,7 @@ export const MAT_DEFS = {
   frescoRates: { tex: 'frescoRates', uv: 1 },
   // (recortados: lo transparente de la textura no se dibuja)
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
+  scratchNoEsNuestro: { tex: 'scratchNoEsNuestro', uv: 1, alphaTest: 0.5 },
   scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },
   araDeoIgnoto: { tex: 'araDeoIgnoto', uv: 1, alphaTest: 0.5 },
   portalDeoIgnoto: { tex: 'portalDeoIgnoto', uv: 1, alphaTest: 0.5 },

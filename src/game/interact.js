@@ -1635,6 +1635,12 @@ export class Interactables {
           g.ui.toast(MSG.seal);
           g.audio && g.audio.play('locked', it);
         }
+      } else if (L.type === 'rope') {
+        // (un tapiado que no se abre a mano: lo revienta algo que cae; ver
+        // game/cuerdas.js) dice una cosa por cada lado
+        const n = it.axis === 'x' ? p.pos.z - it.z : p.pos.x - it.x;
+        g.ui.toast(MSG[Math.sign(n) === L.side ? L.msgA : L.msgB], 5);
+        g.audio && g.audio.play('locked', it);
       } else if (L.type === 'boss') {
         g.ui.toast('La reja no se mueve. Algo la mantiene cerrada desde la carne.');
       } else if (L.type === 'levers') {

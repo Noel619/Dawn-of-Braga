@@ -27,7 +27,7 @@ import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subt
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
-import { buildTorre, torreZones } from './level_torre.js';
+import { buildTorre, torreZones, BAJADA } from './level_torre.js';
 import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -64,7 +64,7 @@ export const CASTLE = {
   ptower: { x0: -90, x1: -81, z0: 4, z1: 14, t: 1, h: 12 },
   ptHatch: { x: -83.0, z: 12.0 },
   // las mazmorras
-  dun: { y: YD, x0: -94, z0: -24, x1: -46, z1: 24 },
+  dun: { y: YD, x0: -96, z0: -24, x1: -46, z1: 24 },
   // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
   well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador
@@ -963,9 +963,17 @@ function buildDungeon(ctx, D, L) {
     CR = YD + 3.35;
   const gv = (axis) => ({ axis, ys: SG });
   const AJ = ALJIBE;
+  const BJ = BAJADA;
   const regs = [
     // el pasillo de las celdas y las celdas
     R(-89, -18, -75.5, -6, YD + 3.8, 'wallstone', 'mazmorra', { tint: mazT }),
+    // la bajada de la torre del homenaje (level_torre.js): el pasadizo hasta
+    // el tapiado del fondo del pasillo de las celdas, su rellano (abierto por
+    // arriba, al hueco de la escalera) y el hueco de la escalera
+    R(BJ.rellano[0], BJ.rellano[1], BJ.rellano[2], BJ.rellano[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
+    R(BJ.norte[0], BJ.norte[1], BJ.norte[2], BJ.norte[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
+    R(BJ.este[0], BJ.este[1], BJ.este[2], BJ.este[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
+    R(BJ.stair.x0, BJ.stair.top, BJ.stair.x1, BJ.stair.bottom, 0, 'wallstone', 'bajada', { tint: mazT, noFloor: true, noCeil: true }),
     R(-75.5, -12.5, -75, -11.5, YD + 2.8, 'wallstone', 'mazmorra', { tint: mazT }),
     // el cuarto del carcelero
     R(-75, -15, -67, -8.5, YD + 3.8, 'wallstone', 'mazmorra', { tint: mazT, vault: { axis: 'x', ys: YD + 2.5, rise: 1.25 } }),

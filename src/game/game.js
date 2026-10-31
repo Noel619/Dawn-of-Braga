@@ -45,6 +45,7 @@ import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { ReyQuest } from './rey.js';
 import { Virotes } from './virotes.js';
+import { Cuerdas } from './cuerdas.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
@@ -245,6 +246,8 @@ export class Game {
     this.combat = new Combat(this);
     // los virotes de las ballestas (los tuyos y los de los ballesteros)
     this.virotes = new Virotes(this);
+    // las cuerdas que se cortan de un virote (y lo que cuelga de ellas)
+    this.cuerdas = new Cuerdas(this, lvl.L.cuerdas);
     this.interact = new Interactables(this, lvl.L.interact);
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
@@ -438,6 +441,7 @@ export class Game {
 
   applyWorldState() {
     this.interact.applyFlags(this.flags, true);
+    this.cuerdas.applyFlags(this.flags);
     this.breakables.applyFlags(this.flags, true);
     for (const ph of this.phantoms) ph.state = 'wait';
     this.phantomA = 0;
@@ -565,6 +569,7 @@ export class Game {
     this.titleT = 0;
     for (const e of this.enemies) e.reset();
     this.interact.applyFlags({}, true);
+    this.cuerdas.applyFlags({});
     this.breakables.applyFlags({}, true);
     const s = this.ui.open('title', { entries: [] });
     const has = !!loadSave();
@@ -1891,6 +1896,7 @@ export class Game {
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
       this.virotes.update(dt);
+      this.cuerdas.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);
       this.spring.update(dt);

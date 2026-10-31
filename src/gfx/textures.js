@@ -212,7 +212,7 @@ SCRATCH.T = [[0, 0.02, 1, 0], [0.5, 0, 0.48, 1]];
 SCRATCH.D = [[0.05, 0, 0.05, 1], [0.05, 0, 0.6, 0.08], [0.6, 0.08, 0.95, 0.42], [0.95, 0.42, 0.88, 0.78], [0.88, 0.78, 0.5, 1], [0.5, 1, 0.05, 1]];
 SCRATCH['Á'] = [...SCRATCH.A, [0.4, -0.22, 0.68, -0.4]];
 SCRATCH['Í'] = [...SCRATCH.I, [0.4, -0.22, 0.68, -0.4]];
-function scratchText(lines, W, H, seed) {
+function scratchText(lines, W, H, seed, cols = ['rgba(206,196,176,1)', 'rgba(150,142,128,1)']) {
   const c = makeCanvas(W, H);
   const g = c.getContext('2d');
   const rng = new RNG(seed);
@@ -228,7 +228,7 @@ function scratchText(lines, W, H, seed) {
       for (const [a, b, cc, d] of SCRATCH[chr] || [])
         for (let k = 0; k < 3; k++) {
           const j = () => rng.range(-0.8, 0.8);
-          g.strokeStyle = k === 1 ? 'rgba(206,196,176,1)' : 'rgba(150,142,128,1)';
+          g.strokeStyle = k === 1 ? cols[0] : cols[1];
           g.lineWidth = k === 1 ? 1.6 : 1;
           g.beginPath();
           g.moveTo(x + a * cw + j() + k * 0.7, y0 + b * ch + j());
@@ -1581,6 +1581,10 @@ const GEN = {
   // alrededor es transparente). Para materiales con alphaTest.
   scratchMasAbajo() {
     return scratchText(['MÁS', 'ABAJO'], 128, 64, 91);
+  },
+  scratchNoEsNuestro() {
+    // (en la cal fresca: lo arañado deja ver el ladrillo)
+    return scratchText(['LO QUE SUBE', 'NO ES NUESTRO'], 256, 72, 93, ['rgba(112,60,44,1)', 'rgba(74,40,32,1)']);
   },
   scratchCampana() {
     return scratchText(['LA CAMPANA', 'SÍ ES POR MÍ'], 192, 64, 92);

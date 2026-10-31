@@ -372,6 +372,14 @@ cinco de la reja de la Sé. Por la ventana del taller se entra en él: el suelo 
 colgando, el maestro ballestero bajo una de ellas, su tabla rayada con un clavo y, en su banco, **la ballesta**.
 El tabique se derriba desde dentro: el atajo a la guardia.
 
+**La bajada tapiada.** Bajo la torre está la cárcel (la celda del fondo, la del jugador, queda justo debajo). Al
+principio del juego, al fondo del pasillo de las celdas, una pared de ladrillo nuevo con la cal todavía fresca, donde
+antes hubo una puerta; arañado en ella, LO QUE SUBE NO ES NUESTRO. Mucho después, desde el almacén de la torre, una
+escalera baja por su hueco (los pretiles, el marco de la puerta arrancada, los surcos de algo grande en los muros) a
+un pasadizo en recodo que acaba en el revés de ese tapiado: sacos, piedras y cal contra el ladrillo y, encima,
+colgado de su viga, el sillar que hacía de contrapeso. Un virote a la cuerda y el sillar cae y se lleva el tapiado
+por delante: el atajo de la torre a las celdas y a las catacumbas.
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
