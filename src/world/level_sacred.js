@@ -383,15 +383,40 @@ export function buildCathedral(ctx, S, L) {
   wb.box('flag', -2, FY - 0.3, -97, 2, FY, CM, { faces: 't', ao: false, sub: 2.5, room, uv: 0.4 });
   ctx.col.add(-2, 0.2, -97, 2, FY, CM);
   for (const x of [-2.2, 2.2]) wb.box('ashlar', x - 0.26, FY, -86.5, x + 0.26, FY + 1.4, -85.98, { ao: false });
-  // torno junto a la reja
-  wb.box('wooddark', 2.9, FY, -85.6, 3.1, FY + 1.2, -85.4, { ao: false });
-  wb.box('wooddark', 3.9, FY, -85.6, 4.1, FY + 1.2, -85.4, { ao: false });
-  wb.push();
-  wb.translate(3.5, FY + 1.0, -85.5);
-  wb.rotateZ(Math.PI / 2);
-  wb.cylinder('wooddark', 0, -0.5, 0, 0.18, 0.18, 1.0, 8, { ao: false, capTop: true, capBot: true });
-  wb.pop();
-  ctx.col.add(2.8, FY, -85.8, 4.2, FY + 1.3, -85.2);
+  // junto a la reja, en su pilar, la pletina de las cinco cerraduras
+  // (PLAN_CASTILLO.md, §7): cada una con su marca, del color de la cinta de su
+  // llave (el alférez, el mayordomo, el camarero, el capellán y el
+  // canciller); las cinco llaves, metidas en ellas, sólo al abrirla (el
+  // grupo 'llaves:d_cripta': game/interact.js, la cerradura 'cinco')
+  {
+    const px = 3.5,
+      pz = -85.5,
+      zf = pz + 0.2;
+    const cols = [
+      [0.62, 0.09, 0.06],
+      [0.85, 0.68, 0.2],
+      [0.55, 0.72, 0.9],
+      [0.92, 0.9, 0.84],
+      [0.22, 0.45, 0.2],
+    ];
+    solid(ctx, 'ashlar', px - 0.45, FY, pz - 0.3, px + 0.45, FY + 1.3, zf, { faces: 'tnsew', ao: false, sub: 1.5, room });
+    wb.box('ashlar', px - 0.52, FY + 1.3, pz - 0.36, px + 0.52, FY + 1.4, zf + 0.06, { faces: 'tnsewb', ao: false, room });
+    wb.box('iron', px - 0.4, FY + 0.72, zf, px + 0.4, FY + 1.2, zf + 0.03, { faces: 'tsewb', ao: false, room, tint: [0.7, 0.68, 0.66] });
+    for (let k = 0; k < 5; k++) {
+      const x = px - 0.3 + k * 0.15;
+      wb.box('iron', x - 0.045, FY + 0.86, zf + 0.03, x + 0.045, FY + 1.0, zf + 0.055, { faces: 'tsewb', ao: false, room });
+      wb.box('black', x - 0.01, FY + 0.895, zf + 0.055, x + 0.01, FY + 0.965, zf + 0.057, { faces: 's', ao: false, grime: false, room });
+      wb.box('clothRed', x - 0.04, FY + 1.06, zf + 0.03, x + 0.04, FY + 1.12, zf + 0.034, { faces: 's', ao: false, grime: false, room, tint: cols[k] });
+    }
+    ctx.beginGroup('llaves:d_cripta');
+    for (let k = 0; k < 5; k++) {
+      const x = px - 0.3 + k * 0.15;
+      wb.box('iron', x - 0.008, FY + 0.922, zf + 0.055, x + 0.008, FY + 0.938, zf + 0.15, { ao: false, room });
+      wb.geometry('iron', new THREE.TorusGeometry(0.032, 0.008, 4, 10), new THREE.Matrix4().makeTranslation(x, FY + 0.93, zf + 0.165), { ao: false, room });
+      wb.box('clothRed', x - 0.008, FY + 0.78, zf + 0.16, x + 0.008, FY + 0.9, zf + 0.168, { ao: false, grime: false, room, tint: cols[k] });
+    }
+    ctx.endGroup();
+  }
 
   // bancos (algunos volcados) con fieles muertos arrodillados (los de más al
   // norte, en dos grupos: los revienta la mano del gigante)
@@ -529,10 +554,10 @@ export function buildCathedral(ctx, S, L) {
     // (de medio punto: de 2,4 m en las jambas a 4 en la clave, como el arco)
     { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 4.0, arch: true, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
     { kind: 'door', id: 'd_claustro_se', x: 12, y: FY, z: -80, w: 2, h: 2.55, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: 11.05 },
-    // (la reja de la cripta: el torno la baja por su ranura y se mete entera
-    // en el peldaño de arriba; subiendo, se quedaba colgada en el aire de la
-    // nave, sin nada de lo que colgar)
-    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, sink: true, axis: 'x', lock: { type: 'grate', item: 'manivela' }, mat: 'grate', ix: 3.5, iz: -84.9 }
+    // (la reja de la cripta: con las cinco llaves baja por su ranura y se
+    // mete entera en el peldaño de arriba; subiendo, se quedaba colgada en el
+    // aire de la nave, sin nada de lo que colgar)
+    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, sink: true, axis: 'x', lock: { type: 'cinco', keys: ['llave_alferez', 'llave_mayordomo', 'llave_camarero', 'llave_capellan', 'llave_canciller'] }, mat: 'grate', ix: 3.5, iz: -84.7 }
   );
   // escalón de la puerta lateral y umbral a la altura de la nave bajo la hoja
   // (abre hacia dentro: con la hoja a ras del escalón rozaba el suelo de la nave)

@@ -351,8 +351,8 @@ dentro. Cada planta la parte un muro de carga, con tabiques y puertas de arco. P
 **gran arco diafragma** de muro a muro, con una **galería** de madera sobre canes a lo largo de dos lienzos, dos
 coronas de velas y el estandarte del Rey; bajo el arco, la mesa del Rey (ver más abajo), y al otro lado la mesa
 del consejo con el plano de la defensa y el atril del libro de la guarnición; el **escritorio**, con el alcaide
-muerto sobre sus cuentas junto a la chimenea y la manivela del torno que abre la reja de la cripta de la Sé, y
-tras él su **alcoba**. Tercera, sobre ellos: la **cámara alta**, con los arcones del Rey que el alcaide subió del
+muerto sobre sus cuentas junto a la chimenea (sus últimas líneas cuentan dónde están las cinco llaves de la reja
+de la cripta de la Sé), y tras él su **alcoba**. Tercera, sobre ellos: la **cámara alta**, con los arcones del Rey que el alcaide subió del
 Paço, su armadura de la frontera, su estandarte enrollado y un camastro junto al cañón de la chimenea; de ella
 sale la puerta de la galería y la escalera de la terraza. Arriba, la **terraza** de combate: la caseta de la
 escalera con su tejado a dos aguas, el matacán sobre la puerta, la chimenea, el fanal, la caldera de la pez,
@@ -465,6 +465,12 @@ patio de las cocinas** (el pozo, la leñera, el horno de fuera, el muladar y los
 poniente de la cocina se desatranca: el atajo al servicio. En el patio de las caballerizas, contra la coracha, **la
 halconera**, con los halcones del Rey encapirotados y muertos en sus alcándaras (`world/paco_jardines.js`).
 
+**La reja de las cinco llaves.** La reja de la escalera de la cripta de la Sé ya no tiene torno: junto a ella, en
+su pilar, una pletina de hierro con cinco cerraduras, cada una con la marca del color de la cinta de su llave. Al
+examinarla dice cuáles faltan; con las cinco (la del alférez, la del mayordomo, la del camarero, la del capellán y
+la del canciller) se echan una a una, se quedan metidas en la pletina y la reja baja por su ranura. La carta del
+Rey que la mandó hacer, en la cancillería, dice para qué: que nadie bajara sin que lo supiera la corte entera.
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -527,8 +533,9 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 **Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, una mesa atravesada en
 la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
 puertas atrancadas que solo se abren desde dentro (atajos), y bajo la Sé, un rastrillo que sube y un lienzo de muro
-que se hunde, cada uno con su palanca al otro lado; una reja que necesita la manivela del rastrillo (el torno la
-baja por su ranura hasta el suelo), la losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
+que se hunde, cada uno con su palanca al otro lado; la reja de la cripta, con cinco cerraduras en una pletina de
+hierro (las cinco llaves de los cinco oficiales de la corte, en el Paço: con las cinco, se echan una a una y baja
+por su ranura hasta el suelo), la losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
 tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojos, altares de descanso que curan,
 rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras

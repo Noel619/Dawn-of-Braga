@@ -373,23 +373,6 @@ const ICONS = {
     b.set(8, 5, BRONZE[5]);
     b.outline(P.void);
   },
-  // manivela del torno: encaje cuadrado, brazo y mango de madera
-  crank(b) {
-    // brazo
-    seg(b, 8, 22, 23, 9, 1.6, 1.6, (t, s, x, y) => (s < -0.3 ? P.iron5 : s > 0.4 ? P.iron1 : shade(IRON, 0.62, x, y)));
-    // encaje cuadrado
-    for (let y = 18; y <= 26; y++)
-      for (let x = 4; x <= 12; x++) {
-        const d = Math.min(x - 4, y - 18, 12 - x, 26 - y);
-        const hole = x >= 7 && x <= 9 && y >= 21 && y <= 23;
-        b.set(x, y, hole ? P.void : d === 0 ? (x === 4 || y === 18 ? P.iron4 : P.iron1) : shade(IRON, 0.55 - (y - 18) / 30, x, y));
-      }
-    // mango de madera
-    seg(b, 23, 9, 23, 2, 2, 2, (t, s, x, y) => (s < -0.3 ? P.wood4 : s > 0.4 ? P.wood1 : shade(WOOD, 0.6 + ((y & 1) ? 0.1 : 0), x, y)));
-    seg(b, 21, 10, 25, 10, 1.1, 1.1, (t, s) => (s < 0 ? P.iron4 : P.iron2));
-    b.set(22, 3, P.wood4);
-    b.outline(P.void);
-  },
   // las cinco llaves de la reja de la Sé: hierro negro, de paletón grande, y
   // la cinta del oficio atada a la anilla
   llaveAlferez(b) {

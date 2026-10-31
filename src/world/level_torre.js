@@ -1188,10 +1188,7 @@ function furnish(ctx, L, K, d) {
       wb.at(x, y + 0.005, z, r, () => wb.box('clothWhite', -0.2, 0, -0.14, 0.2, 0.01, 0.14, { ao: false, faces: 't', tint: [0.88, 0.8, 0.62], room }));
     P.hangingLamp(ctx, -89.0, F3 - SL, -9.4, { room, len: 0.9, radius: 6 });
     wb.setRoom(null);
-    L.interact.push(
-      { kind: 'item', id: 'i_manivela', item: 'manivela', x: -88.2, y: y + 0.86, z: -10.35 },
-      { kind: 'note', id: 'n_alcaide', note: 'alcaide', x: -88.9, y: y + 0.84, z: -10.2, model: 'paper' }
-    );
+    L.interact.push({ kind: 'note', id: 'n_alcaide', note: 'alcaide', x: -88.9, y: y + 0.84, z: -10.2, model: 'paper' });
   }
   // la alcoba del alcaide: la cama, el arcón de la paga bajo el tapiz de la
   // ciudad, un reclinatorio ante la cruz y la alfombra

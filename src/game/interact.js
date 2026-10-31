@@ -432,11 +432,6 @@ function itemMesh(id) {
     t.position.set(0, -0.03, 0.24);
     r.rotation.x = Math.PI / 2;
     g.add(r, s, t);
-  } else if (id === 'manivela') {
-    const a = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.4), iron);
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 5), objMat('wooddark'));
-    b.position.set(0, 0.12, 0.2);
-    g.add(a, b);
   } else if (id === 'rosario') {
     // cuentas de azabache en un lazo y la cruz de plata colgando
     const jet = objMat('black'),
@@ -875,6 +870,8 @@ export class Interactables {
         it.tabique = true;
         g.setGroupVisible('puerta:' + s.id + ':ruina', false);
       }
+      // (las cinco llaves, metidas en sus cerraduras: se ven al abrirla)
+      if (s.lock && s.lock.type === 'cinco') g.setGroupVisible('llaves:' + s.id, false);
       g.scene.add(it.obj);
       // colisión
       const t = s.mat === 'barricade' ? 0.5 : 0.25;
@@ -1076,6 +1073,7 @@ export class Interactables {
       if (it.kind === 'door' && flags['door:' + it.id] && !it.done) {
         this.setOpen(it, true);
         if (it.lock.type === 'lever') this.refreshDoorNav(it);
+        if (it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, true);
       }
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
@@ -1224,6 +1222,7 @@ export class Interactables {
       }
       if (it.boards) it.boards.visible = it.lock.type === 'boards';
       if (it.mat === 'barricade') it.obj.visible = true;
+      if (it.lock && it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, false);
       this.poseDoor(it, 0);
     } else if (it.kind === 'item') {
       it.hidden = !!it.afterBoss || !!it.afterFlag;
@@ -1541,7 +1540,7 @@ export class Interactables {
   label(it) {
     switch (it.kind) {
       case 'door':
-        if (it.lock.type === 'grate') return 'Usar el torno';
+        if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
         if (it.lock.type === 'seal') return 'Examinar la losa';
         if (it.lock.type === 'boss') return 'Examinar la reja';
@@ -1641,11 +1640,21 @@ export class Interactables {
           g.ui.toast(MSG[L.shut] || MSG.boarded);
           g.audio && g.audio.play('locked', it);
         }
-      } else if (L.type === 'grate') {
-        if (inv.has('manivela')) openIt(it.sink ? MSG.grateDown : 'Encajas la manivela y giras el torno. La reja sube chirriando.', 'gateOpen');
-        else {
-          g.ui.toast(MSG.grate);
+      } else if (L.type === 'cinco') {
+        // (la reja de la cripta: cinco cerraduras en su pletina; dice cuáles
+        // faltan y, con las cinco, se echan una a una y la reja baja)
+        const faltan = L.keys.filter((k) => !inv.has(k));
+        if (faltan.length) {
+          const de = (k) => 'la ' + ITEMS[k].name.replace(/^Llave /, '');
+          const NUM = ['', 'una', 'dos', 'tres', 'cuatro'];
+          const lista = faltan.length === L.keys.length ? 'No tienes ninguna de sus llaves.' : `Te falta${faltan.length > 1 ? 'n' : ''} ${NUM[faltan.length]}: ${faltan.map(de).join(', ').replace(/, ([^,]*)$/, ' y $1')}.`;
+          g.ui.toast(MSG.rejaFaltan(lista), 7);
           g.audio && g.audio.play('locked', it);
+        } else {
+          L.keys.forEach((k, i) => g.later(280 * i, () => g.audio && g.audio.play('unlock', it)));
+          g.setGroupVisible('llaves:' + it.id, true);
+          openIt(null, 'gateOpen');
+          g.ui.toast(MSG.rejaCinco, 8);
         }
       } else if (L.type === 'seal') {
         if (inv.has('anillo')) openIt('Encajas el anillo en el sello. La losa se hunde en el suelo.', 'seal');

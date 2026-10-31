@@ -111,12 +111,6 @@ export const ITEMS = {
     icon: 'key',
     key: true,
   },
-  manivela: {
-    name: 'Manivela del rastrillo',
-    desc: 'Manivela de hierro de un torno. Encaja en los mecanismos de reja de la ciudad.',
-    icon: 'crank',
-    key: true,
-  },
   anillo: {
     name: 'Anillo del arzobispo',
     desc: 'Anillo pastoral de oro. El sello tiene la forma del sigilo pintado en las puertas. El arzobispo lo usaba de llave.',
@@ -625,7 +619,7 @@ Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo cl
 
 Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
 
-La manivela del torno abre también la reja de la cripta de la Sé. El arzobispo bajó con sus canónigos y no ha vuelto a subir. No pienso dársela a nadie.
+La reja de la cripta de la Sé tiene cinco cerraduras, y las cinco llaves están en el Paço, con los cinco de la corte que las guardan. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
 He mandado alzar el puente de la torre. Que no suba nadie del patio.`,
   },
@@ -648,7 +642,7 @@ Día trece. Los heridos de la capilla ya no se quejan. No están muertos.`,
 
 Lo que está clavado en la puerta ya no es uno de los nuestros. Lo atravesaron con una pica y aun así sigue en pie.
 
-Me llevo la manivela del torno conmigo. Que la busquen en mi cadáver.`,
+He mandado clavar el torno. Que nadie lo suba, aunque se lo pida yo.`,
   },
   huesos: {
     title: 'Inscripción de la capilla de los huesos',
@@ -1242,8 +1236,9 @@ export const MSG = {
   curtidorSube: 'Subes por la escala al desván.',
   curtidorBaja: 'Bajas por la escala al sobrado del curtidor.',
   torreSurDoor: 'La puerta de la torre está atrancada por dentro. Arriba no se oye nada.',
-  grate: 'Una reja de hierro cierra la escalera. El torno que la mueve no tiene manivela.',
-  grateDown: 'Encajas la manivela y giras el torno. La reja baja chirriando por su ranura hasta perderse en el suelo.',
+  // la reja de la cripta de la Sé: cinco cerraduras, cinco llaves
+  rejaFaltan: (n) => `La reja de la cripta: una pletina de hierro con cinco cerraduras, cada una con su marca. ${n}`,
+  rejaCinco: 'Echas las cinco llaves, una tras otra: la del alférez, la del mayordomo, la del camarero, la del capellán y la del canciller. La reja baja chirriando por su ranura hasta perderse en el suelo.',
   seal: 'Una losa con el sigilo del Pacto sella el paso. Tiene un hueco del tamaño de un anillo.',
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',

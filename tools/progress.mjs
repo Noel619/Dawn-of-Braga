@@ -145,7 +145,13 @@ const steps = [
   "__use('i_ampolla2')", "__use('n_muralla')",
   "(()=>{const g=__game;g.bosses.impaled.hp=1;g.bosses.impaled.die();__sim(3);return {boss:g.flags['boss:impaled'], deadState:g.bosses.impaled.state}})()",
   "new Promise(r=>setTimeout(()=>r(__game.flags['boss:impaled']),3000))",
-  "__use('i_manivela')",
+  // las cinco llaves de la reja (PLAN_CASTILLO.md, §7): las del alférez y
+  // el mayordomo, en el suelo donde cayeron (vencidos: se dan por vencidos);
+  // la del camarero, en su tesoro; la del capellán, en el cordón de la
+  // campana; la del canciller, en el arca de los tres sellos bermejos
+  "(()=>{const g=__game;g.flags['dead:alferez']=true;g.flags['dead:mayordomo']=true;g.flags['corte:vencida']=true;g.corte.applyFlags();g.interact.applyFlags(g.flags);return 'vencidos'})()",
+  "__use('i_llave_alferez')", "__use('i_llave_mayordomo')", "__use('i_llave_camarero')", "__use('i_llave_capellan')", "__use('a_camara3')",
+  "new Promise(r=>setTimeout(()=>{__game.ui.closeAll();r(['llave_alferez','llave_mayordomo','llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' '))},1500))",
   // la torre del homenaje: la poterna del adarve, el libro de la guarnición,
   // el torno del puente levadizo (atajo al patio) y el almacén
   "__use('d_poterna')", "__use('n_guarnicion')", "__use('i_relicario3')", "__use('b_homenaje')",

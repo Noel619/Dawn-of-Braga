@@ -208,8 +208,8 @@ constantes** en `world/level_torre.js` (antes, cada estancia tenía sus coordena
 Lo que hay (ver §6): el Rey en su sitial ante la mesa del Cerco, bajo el arco diafragma; el escritorio con el
 alcaide muerto sobre sus cuentas; la alcoba, con la Plañidera. Con la torre nueva, la sala sube a doble altura,
 con su galería; del escritorio sale la escalera a la galería y de la galería, la de la terraza y **la puerta del
-pasadizo** a las cámaras del Rey. **La manivela desaparece** del escritorio: la reja de la cripta pide las cinco
-llaves (§7). La última línea del alcaide cuenta la cerradura de cinco llaves.
+pasadizo** a las cámaras del Rey. **La manivela desaparece** del escritorio (**hecho**): la reja de la cripta
+pide las cinco llaves (§7). Las últimas líneas del alcaide cuentan la cerradura de cinco llaves.
 
 ### 4.2 En medio: la planta de armas y la ballesta
 
@@ -281,10 +281,12 @@ transposición, ordenación de jugadas y una búsqueda de amenazas que ve las ho
 
 ## 7. Las cinco llaves y la reja de la Sé
 
-**La reja** de la escalera de la cripta (`d_cripta`) ya no tiene torno: tiene **cinco cerraduras** en una
-pletina de hierro, cada una con su marca, y al examinarla dice cuáles faltan. Con las cinco, se echan una a una y
-la reja baja por su ranura. **La manivela desaparece** (el objeto, su sitio en el escritorio, su icono en las
-llaves y las frases que la nombran).
+**La reja** de la escalera de la cripta (`d_cripta`) ya no tiene torno (**hecho**): tiene **cinco cerraduras** en
+una pletina de hierro, en su pilar junto a la reja, cada una con su marca (del color de la cinta de su llave), y al
+examinarla dice cuáles faltan. Con las cinco, se echan una a una (se quedan metidas en la pletina) y la reja baja
+por su ranura (`interact.js`: la cerradura `cinco`). **La manivela desaparece** (el objeto, su sitio en el
+escritorio, su modelo, su icono en las llaves y las frases que la nombran; la orden del alcaide en la muralla
+habla ahora del torno del Postigo, clavado).
 
 | Llave | De quién | Dónde | Cómo |
 |---|---|---|---|
@@ -393,7 +395,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 4d | **La Capilla Real** (**hecho**) | de norte a sur, pegada a la crujía de poniente de las cámaras (su muro de levante es el de ellas), con el ábside al norte; la tribuna a los pies, desde el oratorio del Rey (arriba, en la crujía de poniente, por la galería alta de la del sur); la espadaña y la llave en el cordón de la campana (suena al soltarla); la confesión del capellán |
 | 4e | **La Cancillería y la Torre del Tombo** (**hecho**) | `world/paco_cancilleria.js`: el patio (a él se sale por la puerta de la fachada de la capilla, atrancada por dentro), la tapia y el postigo del jardín de la reina; la sala de los escribanos y la carta del Rey; la escalera por la cara de dentro de la muralla, el paso por ella y el arco a la torre; sus cuatro sobrados, el registro, y las arcas selladas (`interact.js`: el arca, con su tapa en dos grupos del mundo; las de dos sellos negros, con resorte); la llave del canciller; el campo de fuera de la muralla de poniente |
 | 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** (**hecho**) | `world/paco_jardines.js`: la torre de la reina y su jardincillo (el relicario), el pomar (palomar, colmenas, vivero, eras), el jardín del Rey (claustro, fuente, alberca), la escalera del pomar al adarve y el mirador (una ampolla; el campamento de los sitiadores al norte), el patio de las cocinas (y la puerta de poniente de la cocina, el atajo) y la halconera; la puerta de poniente de la capilla, al norte de la escalera de la tribuna; `jardineswalk.mjs` |
-| 4g | **La reja de las cinco llaves** | fuera la manivela; documentos; `progress.mjs` |
+| 4g | **La reja de las cinco llaves** (**hecho**) | fuera la manivela; la pletina de las cinco cerraduras; los documentos (la carta del Rey, la confesión del capellán, el registro del Tombo, lo último del camarero, el cuaderno del mayordomo, las últimas líneas del alcaide); `progress.mjs` consigue las cinco llaves |
 | 5 | **Por fuera** | muralla más alta, torres nuevas, barbacana, cadalsos, estandartes, la brecha; la silueta desde la ciudad |
 | 6 | **Repaso** | documentos, sonido de cada sala, música del Paço, recorridos de prueba, rendimiento |
 | 7 | **El Caballero de la Orden** | la escena de la luna (el plano lateral), el modelo, las habilidades, la defensa de armadura, la espada oxidada |
