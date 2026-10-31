@@ -106,8 +106,10 @@ export class WorldBuilder {
     const cx = Math.floor(_p.x / CHUNK),
       cz = Math.floor(_p.z / CHUNK);
     const gk = this.groupPath ? this.groupPath.join('/') : this.group;
-    // (la capa, por la altura de la pieza que se está añadiendo: _span)
-    const ly = this._y1 < LAYER_Y ? 'sub' : null;
+    // (la capa, por la altura de la pieza que se está añadiendo: _span; lo
+    // que se hace con noSub —el foso del rey, hondo pero a cielo abierto—
+    // nunca va a ella)
+    const ly = !this.noSub && this._y1 < LAYER_Y ? 'sub' : null;
     const key = (gk ? gk + '#' : '') + mat + '|' + cx + '|' + cz + (ly ? '|' + ly : '');
     let b = this.buckets.get(key);
     if (!b) {

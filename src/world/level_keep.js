@@ -22,6 +22,9 @@ export const KEEP = {
   // el adarve del castillo (muro norte): de la torre del homenaje a la
   // torre del nordeste
   walk: { x0: -71, x1: -52.5, z0: -23, z1: -20, y: 9 },
+  // el hueco del parapeto de poniente de la coracha, junto a su torre: por
+  // ahí baja la escalera al Patio de la Corte del Paço (level_paco.js)
+  paso: { z0: -69.5, z1: -67.5 },
 };
 
 // Montón de paja (cúpula achatada) con haces sueltos alrededor.
@@ -152,7 +155,8 @@ export function buildCastleTop(ctx, S, L) {
       [zs, tz0],
       [tz1, C.z1 - 0.3],
     ]) {
-      merlons(ctx, C.x0 + 0.3, a, C.x0 + 0.3, b, C.y, { collide: true });
+      // (al oeste, junto a la torre, el hueco de la escalera del Paço)
+      merlons(ctx, C.x0 + 0.3, a, C.x0 + 0.3, b === tz0 ? KEEP.paso.z0 : b, C.y, { collide: true });
       merlons(ctx, C.x1 - 0.3, a, C.x1 - 0.3, b, C.y, { collide: true });
     }
     passTower(ctx, CT.x, CT.z, CT.w, C.y, CT.h);
@@ -183,9 +187,15 @@ export function buildCastleTop(ctx, S, L) {
   }
 
   // ------------------------------------------------------------ manzanas
-  // a los dos lados de la coracha, entre la muralla norte y el castillo
-  const block = (x0, z0, x1, z1, o = {}) =>
-    house(ctx, { x0, z0, x1, z1, front: o.front ?? rng.pick(['n', 's', 'e', 'w']), seed: Math.floor(rng.next() * 1e9), h: o.h ?? rng.range(5.6, 7.8), lit: o.lit, burned: o.burned, jetty: 0 });
+  // al este de la coracha, entre la muralla norte y el castillo (las del
+  // oeste ya no están: ahí va el Paço, level_paco.js; se gastan sus tiradas
+  // para que las de este lado no cambien)
+  const block = (x0, z0, x1, z1, o = {}) => {
+    const front = o.front ?? rng.pick(['n', 's', 'e', 'w']),
+      seed = Math.floor(rng.next() * 1e9),
+      h = o.h ?? rng.range(5.6, 7.8);
+    if (x1 > C.x1) house(ctx, { x0, z0, x1, z1, front, seed, h, lit: o.lit, burned: o.burned, jetty: 0 });
+  };
   for (const [z0, z1] of [
     [-120.5, -114],
     [-104, -92],
@@ -201,18 +211,10 @@ export function buildCastleTop(ctx, S, L) {
   block(-77, -112, -64.5, -106, { burned: true });
   block(-55.5, -112, -48, -106, { front: 'w' });
   block(-55.5, -120.5, -48, -114, { lit: true });
-  // ante el castillo: el foso seco y las ruinas que dejó el asedio
-  P.rubble(ctx, -80, 0, -38, 14, 5211, 6, { mat: 'wallstone', scale: 1.8 });
+  // ante el castillo, al este de la coracha: las ruinas que dejó el asedio
+  // (al oeste, el foso del Rey: level_paco.js)
   P.rubble(ctx, -52, 0, -34, 10, 5212, 4, { mat: 'wallstone', scale: 1.4 });
-  P.deadTree(ctx, -86, 0, -44, 5213, 6.5);
-  P.deadTree(ctx, -70, 0, -31, 5214, 5);
   P.gibbet(ctx, -54, 0, -42, 4.4);
-  for (const [x, z] of [
-    [-74, -46],
-    [-66, -40],
-    [-88, -30],
-  ])
-    P.stake(ctx, x, 0, z, rng.range(0, 3), Math.round(x * z));
 
   // ------------------------------------------------------------ zonas
   // (delante de las del castillo: el patio lo abarca todo, hasta lo alto)

@@ -241,6 +241,7 @@ export class Enemy {
     const D = CASTLE.dun;
     if (g.navDungeon && (g.inDungeon(p) || (t && g.inDungeon(t) && y < 0.5 && p.x > D.x0 && p.x < D.x1 && p.z > D.z0 && p.z < D.z1))) return g.navDungeon;
     if (g.navLair && g.inLair(p)) return g.navLair;
+    if (g.navFoso && g.inFoso(p)) return g.navFoso;
     if (y < -3) return this.game.navCrypt;
     if (y > -1.5 && y < 16) return this.game.navSurface;
     return null;

@@ -93,48 +93,52 @@ armas de Portugal) en el Paço y en lo alto de la torre; los negros, en las mura
 ## 3. El plano nuevo
 
 **Dónde.** Al norte del castillo y a poniente de la coracha, hasta la muralla norte, y la ciudad crece hacia el
-oeste (de x = −96 a −150: ahí no había nada). El recinto del Paço va de x = −146 a −62 y de z = −122 a −45
-(84 × 77 m). Las manzanas de relleno al oeste de la coracha desaparecen; las del este se quedan. La huida, el
-salto de fe y la coracha **no se tocan** (el Paço no pisa la línea de la atalaya).
+oeste (de x = −96 a −156: ahí no había nada; la Torre del Tombo asoma por fuera de la muralla). El recinto del
+Paço va de x = −146 a −62 y de z = −122 a −45 (84 × 77 m, con el foso unos 7.600 m²). Las manzanas de relleno al
+oeste de la coracha desaparecen; las del este se quedan. La huida, el salto de fe y la coracha **no se tocan**
+(el Paço no pisa la línea de la atalaya). Todas las medidas están en `PACO` (`world/level_paco.js`).
 
 ```
- x: −146          −118           −90       −70   −62
-z −122 ┌─────────────┬──────────────┬──────────┬────┐  muralla norte · Torre del Fanal
-       │ POMAR Y     │ JARDÍN DEL   │ COCINAS  │CA- │       [atalaya]
-       │ HUERTA      │ REY          │ y patio  │BA- │          ║
-       │ palomar,    │ claustro,    │ de serv. │LLE-│          ║
-       │ colmenas,   │ fuente, ala- │ horno,   │RI- │          ║ la coracha
-       │ vivero      │ berca, mira- │ despensa,│ZAS │          ║
-z −98  ├────────┬────┴──────────────┴──────────┴────┤          ║
-       │CAPILLA │  SALA DE LA CORTE (40 × 18 m)      │          ║
-       │ REAL   │  estrado al oeste · servicio al este│          ║
-z −80  ├────────┼──────────────────┬────────────────┤          ║
-       │ TORRE  │ CÁMARAS DEL REY  │ PATIO DE LA    │ ←── escalera de la coracha
-       │ DE LA  │ (dos plantas)    │ CORTE          │   [torre de la coracha, z −64]
-       │ REINA  │                  │                │          ║
-       ├────────┤                  ├──────┬─────────┤          ║
-       │CANCILL.│                  │ cuer-│ PUERTA  │          ║
-       │+ TORRE │                  │ po de│ DEL     │          ║
-       │DEL TOMBO│                 │guardia│ PAÇO   │          ║
-z −45  └────────┴───────┬──────────┴──────┴────┬────┘          ║
-                   pasadizo      FOSO DEL REY   puente           ║
-       ┌────────────────┴─[TORRE DEL HOMENAJE]──┴──────────────╨──┐
-       │   PATIO DE ARMAS                                         ├─[torre-puerta]
-       └──────────────────────────────────────────────────────────┘
+ x: −146       −120      −104                    −72   −66 −62
+z −122 ┌─────────┬─────────┬──────────────────────┬─────┬───┐  muralla norte · Torre del Fanal
+       │ POMAR Y │ JARDÍN  │ PATIO DE LAS COCINAS │CABA-│ c │       [atalaya]
+       │ HUERTA  │ DEL REY │  [cocina, chimenea   │LLE- │ a │          ║
+       │ palomar,│ claus-  │   cónica]  horno,    │RIZAS│ l │          ║ la coracha
+       │ colmenas│ tro,    │   despensa           │     │ l │          ║
+z −104 │ vivero  │ fuente, ├──────────────────────┴─────┤ e │          ║
+       │         │ alberca │ SALA DE LA CORTE (38 × 18) │ j │          ║
+       │         │         │ estrado al oeste · servicio│ ó │          ║
+z −86  ├─────────┴─┬───────┼────────┬───────────────────┴─n─┤          ║
+       │ CAPILLA   │ CÁMA- │galería │ PATIO DE LA CORTE      │ ←── escalera de la coracha
+       │ REAL      │ RAS   │        │  pozo · olmo seco      │   [torre de la coracha, z −64]
+       ├───────────┤ DEL   │        │                        │          ║
+       │ TORRE DE  │ REY   │        │                        │          ║
+       │ LA REINA  │ (patin│        ├──────────────┬─────────┤          ║
+       ├───────────┤ -illo)│        │ archeros     │ PUERTA  │          ║
+       │ CANCILL.  │       │        │              │ DEL PAÇO│          ║
+z −45  └───────────┴───────┴────────┴──────────────┴────┬────┘          ║
+   [TOMBO]                   pasadizo   FOSO DEL REY    puente           ║
+                       ┌──────────[TORRE DEL HOMENAJE]──┴───────────────╨──┐
+                       │   PATIO DE ARMAS                                  ├─[torre-puerta]
+                       └───────────────────────────────────────────────────┘
 ```
 
 **Las piezas** (medidas de partida; se afinan al construir):
 
-- **El foso del rey** (x −97 a −62; z −45 a −29 al norte de la torre, a −23 al este): seco y hondo (4 m), con
-  estacas, la horca y lo que tiraron desde arriba. Un **puente de piedra** va de una puerta nueva en la muralla
-  norte del castillo (al este de la torre) a la **Puerta del Paço**, dos torres con su paso y una barbacana.
-  La puerta está **atrancada por dentro**: abrirla es el atajo al patio de armas.
-- **El Patio de la Corte** (≈ 28 × 35 m): el patio de honor. Al norte, la portada de la sala con su
+- **El foso del rey** (**hecho**; x −94 a −62; z −45 a −30 al norte de la torre, a −24 al este): seco y hondo
+  (4 m), con sus escarpas en talud, dos hileras de estacas aguzadas, tres empalados, la horca y lo que tiraron
+  desde arriba (y un carcaj de virotes). Lo cierra por poniente un muro que baja de la torre al muro del Paço.
+  Un **puente de piedra** de tres arcos va de una puerta nueva en la muralla norte del castillo (al este de la
+  torre) a la **Puerta del Paço**: dos torres que asoman al foso, el paso abovedado con el rastrillo alzado y el
+  matacán (la barbacana, en la fase 5). La puerta está **atrancada por dentro**: abrirla es el atajo al patio de
+  armas. Del puente baja al fondo una escalera de servicio.
+- **El Patio de la Corte** (**hecho**; 28 × 34 m): el patio de honor. Al norte, la portada de la sala con su
   **escalinata**; al oeste, la galería de las cámaras; al sur, el cuerpo de guardia de los archeros (la guardia
   del Rey: Sintra y Coimbra conservan su Sala dos Archeiros) junto a la puerta; al este, la coracha, por cuya
-  cara de dentro **baja una escalera** desde su torre: **por ahí se entra la primera vez**. Un pozo con brocal y
-  un olmo seco.
-- **La Sala de la Corte** (≈ 40 × 18 m): el aula régia. Seis arcos diafragma y la armadura de madera encima; el
+  cara de dentro **baja una escalera** desde su torre (sobre tres arcos cegados): **por ahí se entra la primera
+  vez**. Un pozo con brocal y un olmo seco. Al pie de la escalera, entre la sala y la coracha, el **callejón de
+  las caballerizas**: por ahí se va al servicio.
+- **La Sala de la Corte** (38 × 18 m; por fuera, **hecha**): el aula régia, en alto sobre su escalinata. Seis arcos diafragma y la armadura de madera encima; el
   estrado al oeste con el trono bajo su dosel y la mesa alta; las mesas largas de caballetes; el hogar en medio;
   los estandartes blancos y azules; al este, **el pasillo de servicio** con las puertas a la despensa, a la
   botillería y al paso de la cocina; detrás del estrado, **la puerta privada** a las cámaras del Rey. Ahí espera
@@ -372,7 +376,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 1 | **La torre del homenaje, rehecha** (**hecho**) | `level_torre.js`, por medidas; la navegación por capas con más plantas; `castlewalk torre` y `rey.mjs` siguen pasando |
 | 2 | **La planta de armas, la ballesta y el alférez** (**hecho**) | el recorrido de §4.2; el arma (`game/virotes.js`: tiro, recarga, cuenta, cuerdas); el alférez (`entities/alferez.js`); la primera llave |
 | 3 | **La planta baja y la bajada tapiada** (**hecho**) | §4.3; la pared nueva en el pasillo de las celdas desde el principio; la escalera baja del almacén (no de la bodega: así no pisa la cárcel) y el sillar cuelga sobre el tapiado (`game/cuerdas.js`) |
-| 4a | **El recinto del Paço** | la ciudad hacia el oeste, los muros, el foso del rey, el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha; zonas, mapa y descarte de lo que no se ve |
+| 4a | **El recinto del Paço** (**hecho**) | `level_paco.js`: la ciudad hacia el oeste, los muros, el foso del rey (un hueco en la losa que no es portal del subsuelo y se dibuja siempre), el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha, la sala y la galería de las cámaras por fuera, el cuerpo de guardia; zonas y mapa |
 | 4b | **La Sala de la Corte y la Corte de los Infieles** | el cortesano, el director del compás, la llave del mayordomo |
 | 4c | **Las Cámaras del Rey y el pasadizo** | la llave del camarero; el equilibrio hasta la torre |
 | 4d | **La Capilla Real** | la tribuna, la espadaña, la llave del capellán |

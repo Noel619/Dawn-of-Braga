@@ -12,6 +12,7 @@ import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_s
 import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
+import { buildPaco } from './level_paco.js';
 import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
@@ -19,8 +20,8 @@ import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
 // Donde empieza el mundo por el oeste (la ciudad creció hacia poniente con el
-// Paço: PLAN_CASTILLO.md, §3).
-export const WORLD_X0 = -150;
+// Paço: PLAN_CASTILLO.md, §3; la Torre del Tombo asoma por fuera de su muralla).
+export const WORLD_X0 = -156;
 
 export function buildLevel() {
   const ctx = {
@@ -82,6 +83,9 @@ export function buildLevel() {
   const U = new WalkGrid(Ag[0], Ag[1], Ag[2], Ag[3], 0.5); // el sótano del Alemán y la gruta de Leonor
   ctx.S = S; // las casas visitables pintan su huella transitable
   ctx.floorHoles = []; // huecos en la losa de suelo (escaleras que bajan)
+  // (huecos de la losa que no son portales del subsuelo: el foso del rey, que
+  // tiene su fondo y sus muros y no deja ver nada de lo de abajo)
+  ctx.slabHoles = [];
 
   buildCastle(ctx, S, D, L);
   // los barrios primero: sus fachadas son los muros en los que trepan las
@@ -111,6 +115,7 @@ export function buildLevel() {
   buildFillers(ctx, S, L);
   buildNorthWalls(ctx, S, L);
   buildCastleTop(ctx, S, L);
+  buildPaco(ctx, S, L);
 
   // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
   for (const c of corpseLog) {
@@ -150,7 +155,7 @@ export function buildLevel() {
   // huecos son también por donde se ve desde la calle lo de abajo: ver
   // game/culling.js)
   ctx.portals = [[-2, -97, 2, -86], [58, -32, 61, -27], ...ctx.floorHoles];
-  for (const h of ctx.portals) F.paint(h[0], h[1], h[2], h[3], 0);
+  for (const h of [...ctx.portals, ...ctx.slabHoles]) F.paint(h[0], h[1], h[2], h[3], 0);
   for (const [a, b, c, d] of F.rects(1)) {
     ctx.col.add(a, -1, b, c, 0, d, 'floor').cam = true;
     // suelo visual de fondo (tierra), un poco por debajo de calles e

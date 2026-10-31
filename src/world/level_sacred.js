@@ -1354,7 +1354,7 @@ export function buildRiver(ctx, S, L) {
   // fuera del muro, sin la losa de suelo de la ciudad (su capa de tierra, a
   // ras de cero, tapaba el agua hasta veinte metros dentro del río): el suelo
   // que se pisa, la ribera y el tablero del embarcadero
-  ctx.floorHoles.push([-150, -232, 84, -196.5]);
+  ctx.floorHoles.push([-156, -232, 84, -196.5]);
   ctx.col.add(-30, -1, -212.2, 30, 0, -196).cam = true;
   ctx.col.add(DK.x0, -0.4, DK.z1, DK.x1, 0, -212.2);
   const rng = new RNG(1701);

@@ -9,10 +9,11 @@
 // dieciocho metros, y desde allí sólo queda saltar a la paja de la atalaya de
 // la coracha (level_keep.js).
 import { RNG } from '../core/util.js';
-import { solid, blocker, stairs, merlons, cityWall, house, subtractRects } from './builders.js';
+import { solid, blocker, stairs, merlons, cityWall, house, subtractRects, tower } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { BREACH, wallBreach, MERLONS_N, merlonsN, TOWER_N, towerNHatch, towerNMerlons } from './level_finale.js';
+import { PACO } from './level_paco.js';
 
 // Alturas del adarve: muro este (como lo alto del Postigo) y muralla norte.
 const YE = 9,
@@ -183,7 +184,11 @@ export function buildNorthWalls(ctx, S, L) {
   const tw = 6;
   const towerX = CHASE.towersN;
   // tramos entre torres (de este a oeste)
-  const cuts = [76, towerX[0] + tw / 2, towerX[0] - tw / 2, G.x1, G.x0, towerX[1] + tw / 2, towerX[1] - tw / 2, towerX[2] + tw / 2, towerX[2] - tw / 2, fx1, fx0, -93];
+  // (al oeste del fanal, la del Paço, hasta su torre y la de la esquina:
+  // level_paco.js)
+  const tN = PACO.torreN,
+    NO = PACO.esqNO;
+  const cuts = [76, towerX[0] + tw / 2, towerX[0] - tw / 2, G.x1, G.x0, towerX[1] + tw / 2, towerX[1] - tw / 2, towerX[2] + tw / 2, towerX[2] - tw / 2, fx1, fx0, tN + tw / 2, tN - tw / 2, NO.x + NO.w / 2];
   for (let i = 0; i < cuts.length; i += 2) {
     let a = cuts[i + 1];
     const b = cuts[i];
@@ -218,6 +223,8 @@ export function buildNorthWalls(ctx, S, L) {
   // (la del oeste de la brecha, con su escala y su trampilla: arriba va la
   // segunda espringala del jefe final; ver level_finale.js: TOWER_N)
   for (const x of towerX) gateTower(ctx, x, -124, tw, YN, 16, 'x', x === TOWER_N.x ? { hatch: TOWER_N.hatch, top: true } : {});
+  // (la del Paço, maciza: su adarve no se anda)
+  tower(ctx, tN, -124, tw + 1, YN + 5.5);
   {
     const L2 = TOWER_N.ladder;
     P.ladder(ctx, L2.x, YN, L2.z, TOWER_N.top - YN, 0, L2.lean);

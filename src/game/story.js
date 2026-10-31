@@ -1064,6 +1064,13 @@ export const MSG = {
   hatchUpTorre: 'Subes por la escalera de mano al dormitorio de los ballesteros.',
   cuerdaArriba: 'Trepas por la cuerda del montacargas, mano sobre mano, hasta el pañol.',
   cuerdaAbajo: 'Te descuelgas por la cuerda del montacargas hasta la bodega.',
+  // el Paço
+  pacoAtrancada: 'La Puerta del Paço, atrancada por dentro. Por encima de las torres asoma la chimenea de las cocinas del Rey.',
+  pacoTranca: 'Retiras la tranca de la Puerta del Paço. El puente cruza el foso hasta el patio de armas del castillo.',
+  salaAtrancada: 'Las puertas de la sala, atrancadas por dentro. Pegando el oído, se oye rezar a mucha gente a la vez, muy bajo.',
+  cuadrasAtrancada: 'Atrancada por el otro lado. Por las rendijas huele a cuadra y a paja vieja.',
+  camaraCerrada: 'Cerrada por dentro. Por la cerradura sale un aire frío que huele a cera y a ropa guardada.',
+  olmoRey: 'El olmo del patio. Dicen que lo plantó el Rey con sus manos el año que subió la corte a Braga. Está seco desde la Cuaresma, y lleva clavados en la corteza cien papelillos con nombres.',
   // la ballesta
   sinVirotes: 'No te quedan virotes.',
   virotes: (n) => `Virotes ×${n}.`,
@@ -1315,4 +1322,11 @@ export const AREA_NAMES = {
   coracha: 'La Coracha',
   coracha_torre: 'Torre de la coracha',
   adarve_castillo: 'Adarve del castillo',
+  // el Paço del Rey
+  paco_patio: 'Patio de la Corte',
+  paco_galeria: 'Galería de las cámaras',
+  paco_guardia: 'Sala de los archeros',
+  puerta_paco: 'Puerta del Paço',
+  puente_paco: 'Puente del Rey',
+  foso_rey: 'Foso del Rey',
 };

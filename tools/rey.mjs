@@ -32,7 +32,8 @@ const snap = async (name) => {
     if (g.rey.view == null && window.__hidePlayer) g.player.obj.visible = false;
     g.render();
   });
-  await p.screenshot({ path: `tools/shots/rey_${name || shot++}.png` });
+  // (con el render por software, la primera vista de algo nuevo tarda: margen)
+  await p.screenshot({ path: `tools/shots/rey_${name || shot++}.png`, timeout: 120000 });
 };
 // avanza el juego n segundos (a 30 por segundo); keys: teclas pulsadas al principio
 const sim = (sec, tap = []) => p.evaluate(([sec, tap]) => window.__sim(sec, [], tap), [sec, tap]);

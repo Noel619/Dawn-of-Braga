@@ -65,6 +65,9 @@ export const CASTLE = {
   ptHatch: { x: -83.0, z: 12.0 },
   // las mazmorras
   dun: { y: YD, x0: -96, z0: -24, x1: -46, z1: 24 },
+  // la puerta nueva de la muralla norte: al puente del foso del Rey y a la
+  // Puerta del Paço (level_paco.js); su paso, de z0 (la cara de fuera) a z1
+  puertaNorte: { x: -66.5, w: 3.0, h: 2.4, z0: -23, z1: -20 },
   // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
   well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador
@@ -200,7 +203,19 @@ function buildWalls(ctx, S, L, rng) {
     cx1 = -58;
   // norte (de la torre del homenaje a la torre del nordeste): su adarve se
   // pisa (llega de la coracha y entra en la torre por la poterna)
-  cityWall(ctx, K.x1, -23, -48, -20, H, { merlons: false });
+  // (con la puerta nueva al puente del foso del Rey: level_paco.js)
+  const PN = CASTLE.puertaNorte;
+  const pa = PN.x - PN.w / 2 - 0.7,
+    pb = PN.x + PN.w / 2 + 0.7;
+  cityWall(ctx, K.x1, PN.z0, pa, PN.z1, H, { merlons: false });
+  cityWall(ctx, pb, PN.z0, -48, PN.z1, H, { merlons: false });
+  archedWall(ctx, { axis: 'x', a0: pa, a1: pb, t0: PN.z0, t1: PN.z1, y0: 0, y1: H, openings: [{ c: PN.x, w: PN.w, h: PN.h, rise: PN.w / 2, ring: 0.32 }], mat: 'wallstone', tint: [1, 1, 1], rooms: ['out', 'out'], sub: 2.2 });
+  wb.box('flag', pa, H - 0.02, PN.z0, pb, H, PN.z1, { faces: 't', ao: false, uv: 0.5 });
+  wb.box('flag', PN.x - PN.w / 2, -0.06, PN.z0, PN.x + PN.w / 2, 0, PN.z1, { faces: 't', ao: false, uv: 0.8 });
+  W(S, PN.x - PN.w / 2, PN.z0 - 0.2, PN.x + PN.w / 2, PN.z1 + 0.2);
+  // (las hojas, rotas: una en el suelo, otra colgando de un gozne)
+  wb.at(PN.x + 0.9, 0, PN.z1 + 1.1, 0.35, () => wb.box('planks', -0.75, 0, -1.3, 0.75, 0.1, 1.3, { ao: false, faces: 'tnsewb', tint: [0.6, 0.52, 0.45] }));
+  wb.at(PN.x - PN.w / 2 + 0.06, 0.15, PN.z1 + 0.05, -1.75, () => wb.box('planks', 0, 0, -0.05, 1.45, 2.6, 0.05, { ao: false, faces: 'tnsewb', tint: [0.6, 0.52, 0.45] }));
   merlons(ctx, K.x1, -22.7, cx0, -22.7, H, { collide: false });
   merlons(ctx, cx1, -22.7, -48, -22.7, H, { collide: false });
   // (la colisión de las almenas, alta: que no se ande por encima)

@@ -380,6 +380,19 @@ un pasadizo en recodo que acaba en el revés de ese tapiado: sacos, piedras y ca
 colgado de su viga, el sillar que hacía de contrapeso. Un virote a la cuerda y el sillar cae y se lleva el tapiado
 por delante: el atajo de la torre a las celdas y a las catacumbas.
 
+**El Paço del Rey.** Al norte del castillo, al otro lado de un **foso** seco y hondo, la casa que el Rey se hizo
+cuando subió con su corte a la ciudad vieja (la ciudad crece hacia poniente para hacerle sitio). No un edificio
+sino un recinto: sus murallas y torres; la **Puerta del Paço**, dos torres que asoman al foso con el paso
+abovedado, el rastrillo alzado y el matacán, atrancada por dentro (desatrancarla deja el atajo al patio de armas,
+por el **puente de piedra** de tres arcos y una puerta nueva en la muralla norte del castillo); y dentro, el
+**Patio de la Corte**, con su pozo y un olmo seco: al norte, la **Sala de la Corte** en alto sobre su escalinata,
+con sus contrafuertes, sus ventanas geminadas, los estandartes del Rey y las puertas atrancadas por dentro; al
+oeste, la **galería de las cámaras** del Rey, una arquería con su techo de vigas; al sur, la **sala de los
+archeros**, la guardia del Rey; y, detrás de la sala, la chimenea cónica de las cocinas. La primera vez se entra
+por arriba: por la **escalera de la coracha**, que baja pegada a su cara de dentro desde lo alto, junto a su torre.
+En el foso, al que baja una escalera de servicio desde el puente, las estacas aguzadas, tres empalados, la horca y
+lo que tiraron desde la torre. Todo sale de unas pocas medidas (`world/level_paco.js`).
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -813,7 +826,8 @@ src/
                         level_castle.js: el castillo y las mazmorras; level_torre.js: la torre del homenaje,
                         generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
-                        level_keep.js: la atalaya y la coracha; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,
+                        el foso del Rey, el puente, la puerta, el patio y lo que da a él), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala

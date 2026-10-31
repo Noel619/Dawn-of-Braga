@@ -27,18 +27,19 @@ await p.evaluate((clear) => {
 let i = 0;
 for (const v of views) {
   const [cx, cy, cz, tx, ty, tz] = v.split(',').map(Number);
-  await p.evaluate(([cx, cy, cz, tx, ty, tz]) => {
+  await p.evaluate(([cx, cy, cz, tx, ty, tz, steps]) => {
     const g = __game, T = g.THREE;
     g.player.body.pos.set(cx, cy - 1.5, cz);
     g.camera.position.set(cx, cy, cz);
     g.camera.lookAt(tx, ty, tz);
     g.camera.updateMatrixWorld();
     g.camRig.override = { pos: new T.Vector3(cx, cy, cz), look: new T.Vector3(tx, ty, tz), speed: 1000 };
-    for (let k = 0; k < 3; k++) g.update(1 / 30);
+    // (STEPS: más pasos por vista, para que el descarte se asiente)
+    for (let k = 0; k < steps; k++) g.update(1 / 30);
     g.camera.position.set(cx, cy, cz);
     g.camera.lookAt(tx, ty, tz);
     g.render();
-  }, [cx, cy, cz, tx, ty, tz]);
+  }, [cx, cy, cz, tx, ty, tz, +(process.env.STEPS || 3)]);
   await p.screenshot({ path: `tools/shots/${prefix}${i++}.png` });
 }
 console.log(logs.join('\n'));
