@@ -425,6 +425,15 @@ escalera de las cámaras, que sale al **patinillo**, con su pozo y un naranjo se
 el machón de en medio, los pies derechos negros y la viga maestra, en dos tramos en cuesta, por la que se pasa
 **haciendo equilibrio** hasta la alcoba del alcaide (quien cae al foso, no se levanta).
 
+**La Capilla Real.** Pegada a las cámaras, de norte a sur: la nave enlucida bajo la armadura, con sus bancos, sus
+coronas de velas y los que rezan; el ábside tras el arco triunfal, con su media cúpula azul y el altar, ante el que
+sigue de rodillas el capellán mayor (y en el reclinatorio, su confesión); a los pies, sobre tres arcos, **la tribuna
+del Rey**, con su escaño, a la que se entra desde **su oratorio** (arriba, en la crujía de poniente de las cámaras,
+al que se llega por la galería alta: el reclinatorio ante la ventana enrejada que da a la nave y el altarcillo con
+su tríptico) y de la que baja una escalera a la nave. Sobre la fachada, **la espadaña** con su campana: por una
+escala desde la tribuna se sube a su desván, y allí, atada al cordón, **la llave del capellán**. Al soltarla, la
+campana suena una vez, sola, por toda la ciudad.
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -859,8 +868,8 @@ src/
                         generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,
-                        el foso del Rey, el puente, la puerta, el patio, la sala, el servicio, las cámaras del Rey y el
-                        pasadizo quemado), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        el foso del Rey, el puente, la puerta, el patio, la sala, el servicio, las cámaras del Rey, el
+                        pasadizo quemado y la Capilla Real), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala

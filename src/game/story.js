@@ -67,6 +67,12 @@ export const ITEMS = {
     icon: 'llaveCamarero',
     key: true,
   },
+  llave_capellan: {
+    name: 'Llave del capellán',
+    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta blanca de lino, de las de los manípulos. Estaba atada al cordón de la campana de la Capilla Real: quien la quitara, tocaría. En la caña, grabado: CAPELLANUS.',
+    icon: 'llaveCapellan',
+    key: true,
+  },
   ballesta: {
     name: 'Ballesta de estribo',
     desc: 'La ballesta del maestro ballestero de la torre: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
@@ -557,6 +563,18 @@ Arriba han quemado el pasadizo con el Rey al otro lado. Huele a humo por las ren
 Aquí está lo que es del Rey: la plata, el sello de la cámara, la corona de diario, su espada de la frontera. Nadie se lo va a llevar mientras yo esté sentado encima.
 
 Tengo sed.`,
+  },
+  capellan: {
+    title: 'Confesión del capellán mayor',
+    text: `En el reclinatorio del altar, doblada, sin firmar; la letra de alguien que sabía escribir bien y ya no puede:
+
+Me acuso de haber abierto. Éramos cinco y cinco cerraduras, como manda la carta del Rey, para que no bajara nadie sin que lo supiera la corte entera; y bajó, y la corte entera lo supo. El arzobispo nos dijo que abajo se arreglaba todo. No dijo qué.
+
+Me acuso de haber oído lo que subía por la escalera de la cripta y de haber dicho que eran cánticos.
+
+Me acuso de la campana. Tocó sola, a medianoche, y me arrodillé con todos. Cuando nos levantamos, no éramos nosotros los que nos levantábamos.
+
+He atado mi llave al cordón. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
@@ -1110,6 +1128,10 @@ export const MSG = {
   corteCerrada: 'La puerta del servicio no cede: la han atrancado por fuera. Detrás, nadie.',
   camarasPrivada: 'La puerta del estrado, atrancada por el otro lado: da a la sala grande.',
   camarasTranca: 'Quitas la tranca de la puerta privada del Rey. Detrás, una escalera sube a sus cámaras.',
+  espadanaSube: 'Subes por la escala al desván de la espadaña. Arriba, la campana; su cordón cuelga hasta las tablas.',
+  espadanaBaja: 'Bajas por la escala a la tribuna del Rey.',
+  campanaSuena: 'Al soltar la llave, el cordón tira de la campana. Suena una vez, sola, por toda la ciudad.',
+  capillaAtrancada: 'Atrancada por fuera. Al otro lado se oye el viento entre ramas secas.',
   tesoroCerrado: 'La puerta del tesoro de la cámara, forrada de hierro y atrancada por dentro. No se oye nada.',
   tesoroTranca: 'Retiras la barra de la puerta del tesoro. Da a la galería del patio.',
   cocinaAtrancada: 'Atrancada por el otro lado. Huele a leña mojada y a algo que se pudre al sol.',
@@ -1392,4 +1414,8 @@ export const AREA_NAMES = {
   camaras_pasadizo: 'Cámara del pasadizo',
   patinillo: 'Patinillo de las cámaras',
   pasadizo_quemado: 'El pasadizo quemado',
+  camaras_galeria_alta: 'Galería alta de las cámaras',
+  camaras_oratorio: 'Oratorio del Rey',
+  capilla_real: 'Capilla Real',
+  capilla_espadana: 'Espadaña de la Capilla Real',
 };

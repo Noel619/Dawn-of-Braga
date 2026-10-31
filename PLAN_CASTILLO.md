@@ -148,8 +148,10 @@ z −45  └───────────┴───────┴──�
   su ventana a la capilla y **la puerta del pasadizo**: una galería cubierta sobre arcos que cruza el foso hasta
   la planta del Rey en la torre del homenaje. **Quemada**: quedan los arcos, los pies derechos negros y una viga
   por la que se pasa **haciendo equilibrio** (como en los tejados de los Pellejeros).
-- **La Capilla Real** (≈ 24 × 12 m, de este a oeste): nave, ábside con el altar, espadaña con su campana; a los
-  pies, **la tribuna del Rey**, a la que se sube desde las cámaras. La llave del capellán (§7).
+- **La Capilla Real** (**hecho**; 24 × 11,5 m, de norte a sur, contra las cámaras): nave, ábside con el altar,
+  espadaña con su campana; a los pies, **la tribuna del Rey**, a la que se sube desde las cámaras (su oratorio, con
+  la ventana a la nave). La llave del capellán (§7). Sus puertas (al jardín de la reina y a la cancillería),
+  atrancadas por fuera hasta que existan esos sitios.
 - **La Cancillería y la Torre del Tombo** (esquina suroeste): la sala de los escribanos (mesas de escribir, el
   sello, la cera, los registros) y, adelantada sobre la muralla de poniente como una **albarrana**, la torre del
   archivo y del tesoro, de cuatro sobrados de arcas. La llave del canciller, arriba (§7).
@@ -380,7 +382,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 4a | **El recinto del Paço** (**hecho**) | `level_paco.js`: la ciudad hacia el oeste, los muros, el foso del rey (un hueco en la losa que no es portal del subsuelo y se dibuja siempre), el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha, la sala y la galería de las cámaras por fuera, el cuerpo de guardia; zonas y mapa |
 | 4b | **La Sala de la Corte y la Corte de los Infieles** (**hecho**) | `game/corte.js` (el director del compás), `entities/cortesano.js` (el cortesano y el mayordomo); la sala por dentro y el camino del servicio (el callejón, las caballerizas, la cocina, el paso cubierto), que venía de la 4f; la llave del mayordomo y su cuaderno |
 | 4c | **Las Cámaras del Rey y el pasadizo** (**hecho**) | la crujía de levante en dos plantas (la escalera del Rey desde el estrado, la antecámara, la cámara, la del pasadizo; el guardarropa, la escalera y el tesoro), el patinillo; la llave del camarero; el pasadizo, dos vigas en cuesta sobre el foso (`game/cornisas.js`) hasta la alcoba del alcaide; el cortesano suelto |
-| 4d | **La Capilla Real** | la tribuna, la espadaña, la llave del capellán |
+| 4d | **La Capilla Real** (**hecho**) | de norte a sur, pegada a la crujía de poniente de las cámaras (su muro de levante es el de ellas), con el ábside al norte; la tribuna a los pies, desde el oratorio del Rey (arriba, en la crujía de poniente, por la galería alta de la del sur); la espadaña y la llave en el cordón de la campana (suena al soltarla); la confesión del capellán |
 | 4e | **La Cancillería y la Torre del Tombo** | el registro y las arcas, la llave del canciller |
 | 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** | el camino por el servicio; lo opcional |
 | 4g | **La reja de las cinco llaves** | fuera la manivela; documentos; `progress.mjs` |

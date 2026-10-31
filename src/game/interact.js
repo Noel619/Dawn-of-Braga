@@ -1708,6 +1708,10 @@ export class Interactables {
       g.audio && g.audio.play('pickup');
       g.giveItem(it.item, it.n ?? 1);
       setTimeout(() => (it.obj.visible = false), 300);
+      // (lo que pasa al cogerlo: la llave atada al cordón de la campana la hace
+      // sonar; it.sound / it.soundAt, it.msg)
+      if (it.sound) g.later(250, () => g.audio && g.audio.play(it.sound, it.soundAt ? { x: it.soundAt[0], y: it.soundAt[1], z: it.soundAt[2] } : it));
+      if (it.msg) g.later(900, () => g.ui.toast(MSG[it.msg] || it.msg, 5));
       return true;
     }
     if (it.kind === 'note') {

@@ -3,7 +3,8 @@
 // puente y la puerta nueva del castillo; la escalera del foso, el foso y de
 // vuelta; y por el servicio (el callejón, las caballerizas, la cocina y el
 // paso) a la Sala de la Corte; las cámaras del Rey y su tesoro, y el pasadizo
-// quemado hasta la torre. Dice dónde se atasca, si se atasca.
+// quemado hasta la torre; la Capilla Real, de la tribuna a la espadaña y al
+// altar. Dice dónde se atasca, si se atasca.
 //   node tools/pacowalk.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -111,6 +112,19 @@ const r = await p.evaluate(() => {
   P.spawn(-93.2, 4.9, -50.0, Math.PI);
   for (let i = 0; i < 30; i++) g.update(1 / 60);
   out.push(go([[-93.2, -47.8], [-93.2, -46.0], [-93.2, -44.0], [-93.2, -39.0], [-93.2, -37.6], [-93.2, -35.0], [-93.2, -30.0], [-93.2, -27.5], [-93.2, -24.0]], 'el pasadizo quemado'));
+  // la Capilla Real (fase 4d): por la galería alta al oratorio y a la tribuna;
+  // la escala de la espadaña, la llave del capellán; la escalera a la nave
+  P.spawn(-93.5, 4.9, -56.0, -Math.PI / 2);
+  for (let i = 0; i < 30; i++) g.update(1 / 60);
+  out.push(go([[-99.5, -52.0], [-102.5, -52.0], [-108, -52.0], [-114.0, -54.0], [-114.0, -64.7], [-118.6, -64.7], [-120.5, -64.5], [-121.85, -64.1, 'h_espadana_abajo']], 'galería alta → oratorio → tribuna → espadaña'));
+  g.interact.use(g.interact.list.find((i) => i.id === 'i_llave_capellan'));
+  for (let i = 0; i < 90; i++) g.update(1 / 60);
+  g.ui.closeAll();
+  out.push('llave del capellán: ' + g.inventory.has('llave_capellan'));
+  g.interact.use(g.interact.list.find((i) => i.id === 'h_espadana_arriba'));
+  for (let i = 0; i < 150; i++) g.update(1 / 60);
+  g.ui.closeAll();
+  out.push(go([[-125.0, -65.5], [-128.0, -65.6], [-128.0, -73.5], [-124.0, -76.0], [-123.75, -86.6]], 'tribuna → nave → altar'));
   return out;
 });
 console.log(r.join('\n'));

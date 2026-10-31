@@ -89,6 +89,13 @@ export const PACO = {
   camaras: { x0: -118, x1: -90, z0: -86, z1: -47, e0: -101.5, ew: -100.7, gx: -93.4, F1: 4.9, eave: 10, ridge: 13.5, zN: -76, zS: -57, w1: -110, zR: -84.36, z1a: -74.2, z2a: -73.4, z2b: -60.8, z3a: -60 },
   // el pasadizo quemado sobre el foso: el machón de en medio (de z0 a z1, hasta y)
   pasadizo: { z0: -38.6, z1: -36.6, y: 7.0 },
+  // la Capilla Real: de norte a sur, pegada a la crujía de poniente de las
+  // cámaras (su muro de levante es el de ellas), con el ábside al norte; su
+  // suelo, el alero y la cumbrera; la tribuna del Rey a los pies (hasta tz, a
+  // la altura de la planta noble de las cámaras); la espadaña sobre la
+  // fachada; el oratorio del Rey (en la crujía de poniente), con su ventana
+  // (wz) y la puerta de la tribuna (dz)
+  capilla: { x0: -129.5, x1: -118, z0: -86, z1: -62, t: 0.9, y: 0.3, eave: 9, ridge: 12.8, apse: 3.5, tz: -66.9, esp: 4.6, espTop: 15.6, wz: -71.5, dz: -64.7 },
   // las cocinas: la grande, exenta y cuadrada, con su chimenea cónica
   cocina: { x: -78, z: -113, w: 11, h: 7.5, top: 30 },
   // el servicio: el patio de las caballerizas (de la cocina a la coracha, de
@@ -821,6 +828,7 @@ function camaras(ctx, S, L) {
   L.enemies.push({ type: 'cortesanoSuelto', x: gx + 1.2, y: 0.12, z: doors[1] + 1.4, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_pc1' });
   camarasDentro(ctx, S, L, { za, aw, step, n, doors });
   alas(ctx, S, L);
+  capilla(ctx, S, L);
   pasadizo(ctx, S, L);
 }
 
@@ -851,7 +859,7 @@ function camarasDentro(ctx, S, L, A) {
   // el muro de poniente de la crujía (al patinillo) y los de en medio
   holedWall(ctx, 'ashlar', 'z', Cm.zN, Cm.zS, e0, ew, 0, Cm.eave, [{ a0: -72.6, a1: -71.4, y0: 0, y1: 2.4 }], 'w', { tint: [0.84, 0.81, 0.76] });
   solid(ctx, 'ashlar', e0, 0, Cm.z0, ew, Cm.eave, Cm.zN, { faces: '', sub: 2.2 });
-  solid(ctx, 'ashlar', e0, 0, Cm.zS, ew, Cm.eave, Cm.z1, { faces: '', sub: 2.2 });
+  holedWall(ctx, 'ashlar', 'z', Cm.zS, Cm.z1, e0, ew, 0, Cm.eave, [{ a0: -52.6, a1: -51.4, y0: F1, y1: F1 + 2.4 }], '');
   const wallZ = (za, zb, x0, x1, y0, y1, holes = []) => {
     // muro de través (a lo largo de x), con sus puertas: sólo la colisión y
     // las caras las ponen las estancias
@@ -975,7 +983,7 @@ function camarasDentro(ctx, S, L, A) {
   wallZ(z1a, z2a, ew, xu, F1, F1 + hU, [{ a0: -97.6, a1: -96.4, h: 2.4 }]);
   interiorRoom(ctx, ew, z2a, xu, z2b, yU, hU, { room: 'cam_dormir', wall: 'plaster', tint: tintU, floor: false, ceilMat: 'wooddark', doors: [...winDoors(z2a, z2b), { side: 'n', at: -97.0, w: 1.2, h: 2.4 }, { side: 's', at: -97.0, w: 1.2, h: 2.4 }] });
   wallZ(z2b, z3a, ew, xu, F1, F1 + hU, [{ a0: -97.6, a1: -96.4, h: 2.4 }]);
-  interiorRoom(ctx, ew, z3a, xu, zS1, yU, hU, { room: 'cam_pasadizo', wall: 'plaster', tint: [0.62, 0.56, 0.5], floor: false, ceilMat: 'wooddark', doors: [...winDoors(z3a, zS1), { side: 's', at: PZ.x, w: PZ.w, h: PZ.h }] });
+  interiorRoom(ctx, ew, z3a, xu, zS1, yU, hU, { room: 'cam_pasadizo', wall: 'plaster', tint: [0.62, 0.56, 0.5], floor: false, ceilMat: 'wooddark', doors: [...winDoors(z3a, zS1), { side: 's', at: PZ.x, w: PZ.w, h: PZ.h }, { side: 'w', at: -52.0, w: 1.2, h: 2.4 }] });
   // (por dentro, los vanos de las ventanas: negros, con su marco)
   for (const z of wins)
     if (z > zR + 0.8) {
@@ -1128,11 +1136,16 @@ function alas(ctx, S, L) {
   const { x0, e0, zN, zS, w1, z0, z1, F1, eave } = Cm;
   const tint = [0.84, 0.81, 0.76];
   const t = 0.8;
-  // los muros de fuera y los del patinillo, con sus ventanas cegadas
+  // los muros de fuera y los del patinillo, con sus ventanas cegadas (la del
+  // norte, maciza; las del sur y de poniente, macizas abajo y, arriba, la
+  // galería y el oratorio del Rey: camaraAlta)
+  const C = PACO.capilla;
   solid(ctx, 'ashlar', x0, 0, z0, e0, eave, zN, { faces: 'ns', sub: 2.2, aoH: 2, tint });
-  solid(ctx, 'ashlar', x0, 0, zS, e0, eave, z1, { faces: 'n', sub: 2.2, aoH: 2, tint });
-  solid(ctx, 'ashlar', x0, 0, zN, w1, eave, zS, { faces: 'e', sub: 2.2, aoH: 2, tint });
-  solid(ctx, 'ashlar', x0, 0, z0, x0 + t, eave, z1, { faces: 'w', sub: 2.2, aoH: 2, tint, collide: false });
+  solid(ctx, 'ashlar', x0 + t, 0, zS, e0, F1 - 0.3, z1, { faces: 'n', sub: 2.2, aoH: 2, tint });
+  solid(ctx, 'ashlar', x0 + t, 0, zN, w1, F1 - 0.3, zS, { faces: 'e', sub: 2.2, aoH: 2, tint });
+  // (el muro de poniente, al sur de la capilla: a la cancillería)
+  solid(ctx, 'ashlar', x0, 0, C.z1, x0 + t, eave, z1, { faces: 'w', sub: 2.2, aoH: 2, tint });
+  camaraAlta(ctx, S, L);
   const blind = (face, a, b, y, line) => {
     for (let c = a + 1.6; c < b - 1; c += 3.2) {
       const o = { ao: false, grime: false };
@@ -1147,7 +1160,7 @@ function alas(ctx, S, L) {
   blind('e', zN, zS, F1 + 1.3, w1);
   blind('w', zN, zS, F1 + 1.3, e0);
   blind('n', x0, PACO.sala.x0, F1 + 1.3, z0);
-  blind('w', z0, z1, F1 + 1.3, x0);
+  blind('w', C.z1, z1, F1 + 1.3, x0);
   // las cornisas y los tejados (los de las crujías del norte y del sur, metidos
   // bajo el de levante; el de poniente, bajo los otros dos)
   solidGableRoof(ctx, x0, z0, e0 + 5, zN, eave, eave + 3.2, 'x', { overhang: 0.5, gables: [{}, false], wallMat: 'ashlar', wallTint: tint, open: [false, true] });
@@ -1167,6 +1180,304 @@ function alas(ctx, S, L) {
   L.zones.push({ id: 'patinillo', rects: [[px0, pz0, px1, pz1, -1, 12]], atmo: 'city' });
   L.map.push({ id: 'patinillo', r: [px0, pz0, px1, pz1] });
   L.enemies.push({ type: 'cortesanoSuelto', x: (px0 + px1) / 2 + 1.2, y: 0, z: -66.5, yaw: Math.PI, idle: 'kneel', id: 'e_pat1' });
+}
+
+// ------------------------------------------------------------------------ la galería alta y el oratorio
+// Arriba, en la crujía del sur, una galería de la cámara del pasadizo a la de
+// poniente, donde el Rey tenía su oratorio: un reclinatorio ante la ventana
+// que da a la capilla, y la puerta de su tribuna.
+function camaraAlta(ctx, S, L) {
+  const wb = ctx.wb;
+  const Cm = PACO.camaras,
+    C = PACO.capilla;
+  const { x0, e0, zN, zS, w1, z1, F1 } = Cm;
+  const t = 0.8,
+    hU = 4.5,
+    yU = F1;
+  const tint = [0.8, 0.76, 0.68];
+  // la galería (de la crujía de levante a la de poniente)
+  const g = { x0: x0 + t, x1: e0, z0: zS + t, z1: z1 - 0.04 };
+  // el oratorio (la crujía de poniente, arriba)
+  const o = { x0: x0 + t, x1: w1 - t, z0: zN + t, z1: zS + t };
+  for (const [a, b, c, d, room] of [
+    [g.x0, g.z0, g.x1, g.z1, 'cam_galeria_alta'],
+    [o.x0, o.z0, o.x1, o.z1, 'cam_oratorio'],
+  ]) {
+    wb.box('planks', a, F1 - 0.06, b, c, F1, d, { faces: 't', ao: false, sub: 2, tint: [0.62, 0.54, 0.46], room });
+    ctx.col.add(a, F1 - 0.3, b, c, F1, d);
+    W(S, a, b, c, d);
+  }
+  // los muros de arriba: el del patinillo (al norte de la galería, y al este
+  // del oratorio) y el de fuera (al oeste del oratorio es el de la capilla)
+  solid(ctx, 'ashlar', o.x1, F1 - 0.3, zS, e0, Cm.eave, zS + t, { faces: 'n', sub: 2.2, aoH: 1, tint: [0.84, 0.81, 0.76] });
+  solid(ctx, 'ashlar', w1 - t, F1 - 0.3, zN, w1, Cm.eave, zS, { faces: 'e', sub: 2.2, aoH: 1, tint: [0.84, 0.81, 0.76] });
+  solid(ctx, 'ashlar', x0, F1 - 0.3, zN, x0 + t, Cm.eave, zN + t, { faces: '', sub: 2.2 });
+  interiorRoom(ctx, g.x0, g.z0, g.x1, g.z1, yU, hU, { room: 'cam_galeria_alta', wall: 'plaster', tint, floor: false, ceilMat: 'wooddark', skip: ['n', 'w'], doors: [{ side: 'e', at: -52.0, w: 1.2, h: 2.4 }] });
+  wb.box('plaster', o.x1, yU, g.z0 - 0.15, g.x1, yU + hU, g.z0, { faces: 's', room: 'cam_galeria_alta', tint, aoH: 1.2, aoMin: 0.5 });
+  // (las puertas de arriba, por encima de lo que la rejilla de la calle da
+  // por macizo hasta 5,2 m)
+  W(S, e0 - 0.1, -52.6, Cm.ew + 0.1, -51.4);
+  W(S, x0 - 0.2, C.dz - 0.6, x0 + t + 0.1, C.dz + 0.6);
+  ctx.col.add(x0, F1, zN, w1, Cm.eave, zN + t);
+  interiorRoom(ctx, o.x0, o.z0, o.x1, o.z1, yU, hU, {
+    room: 'cam_oratorio',
+    wall: 'plaster',
+    tint,
+    floor: false,
+    ceilMat: 'wooddark',
+    skip: ['s'],
+    doors: [
+      { side: 'w', at: C.wz, w: 1.3, h: 3.0, sill: 1.0 },
+      { side: 'w', at: C.dz, w: 1.2, h: 2.4 },
+    ],
+  });
+  // (la esquina: de la galería al oratorio; su cabecera, al oeste)
+  wb.box('plaster', g.x0 - 0.15, yU, g.z0, g.x0, yU + hU, g.z1, { faces: 'e', room: 'cam_galeria_alta', tint });
+  ctx.col.add(x0, F1, zS, x0 + t, Cm.eave, z1);
+  // lo de dentro: el reclinatorio ante la ventana de la capilla, el altarcillo
+  // con su tríptico, los bancos de la galería
+  wb.setRoom('cam_oratorio');
+  {
+    const room = 'cam_oratorio';
+    const xp = o.x0 + 1.1;
+    wb.box('wooddark', xp - 0.3, yU, C.wz - 0.4, xp + 0.3, yU + 0.22, C.wz + 0.4, { ao: false, room });
+    wb.box('wooddark', xp - 0.42, yU, C.wz - 0.4, xp - 0.3, yU + 1.0, C.wz + 0.4, { ao: false, room });
+    wb.box('clothRed', xp - 0.3, yU + 0.22, C.wz - 0.36, xp + 0.25, yU + 0.3, C.wz + 0.36, { ao: false, room });
+    ctx.col.add(xp - 0.42, yU, C.wz - 0.4, xp + 0.3, yU + 1.0, C.wz + 0.4);
+    P.altarTable(ctx, o.x1 - 0.7, yU, (o.z0 + C.wz) / 2 - 1.0, -Math.PI / 2, 1.4);
+    P.candles(ctx, o.x1 - 0.7, yU + 1.0, (o.z0 + C.wz) / 2 - 1.0, 4, 6701, { room, radius: 6, intensity: 1.0 });
+    wb.box('gold', o.x1 - 0.12, yU + 1.3, (o.z0 + C.wz) / 2 - 1.6, o.x1 - 0.06, yU + 2.3, (o.z0 + C.wz) / 2 - 0.4, { ao: false, room });
+    for (let z = (o.z0 + C.wz) / 2 - 1.5; z < (o.z0 + C.wz) / 2 - 0.4; z += 0.4) wb.box('clothBlue', o.x1 - 0.13, yU + 1.4, z, o.x1 - 0.12, yU + 2.2, z + 0.32, { ao: false, faces: 'w', room });
+  }
+  wb.setRoom('cam_galeria_alta');
+  for (let x = g.x1 - 3; x > g.x0 + 3; x -= 4.5) P.bench(ctx, x, yU, g.z1 - 0.5, 2.6, 0);
+  P.wallTorch(ctx, (g.x0 + g.x1) / 2, yU + 2.3, g.z0 + 0.02, 's', { room: 'cam_galeria_alta' });
+  wb.setRoom(null);
+  ctx.lights.push({ x: (g.x0 + g.x1) / 2 - 4, y: yU + 2.6, z: (g.z0 + g.z1) / 2, r: 1, g: 0.55, b: 0.26, radius: 8, intensity: 0.8, room: 'cam_galeria_alta' });
+  L.zones.push(
+    { id: 'camaras_oratorio', rects: [[o.x0, o.z0, o.x1, o.z1, F1 - 0.4, F1 + hU]], atmo: 'interior', room: 'cam_oratorio' },
+    { id: 'camaras_galeria_alta', rects: [[g.x0, g.z0, g.x1, g.z1, F1 - 0.4, F1 + hU]], atmo: 'interior', room: 'cam_galeria_alta' }
+  );
+  L.enemies.push({ type: 'cortesanoSuelto', x: (g.x0 + g.x1) / 2, y: yU, z: (g.z0 + g.z1) / 2, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_gal1' });
+}
+
+// ------------------------------------------------------------------------ la Capilla Real
+// Nave de muros lisos bajo la armadura, el ábside al norte con su altar tras
+// el arco triunfal y su media cúpula, la tribuna del Rey a los pies (sobre
+// tres arcos, a la que se entra desde su oratorio y de la que baja una
+// escalera a la nave) y, en la fachada, la espadaña con su campana. La llave
+// del capellán, atada al cordón de la campana: se sube por la escala de la
+// tribuna al desván de la espadaña. El capellán, de rodillas ante el altar.
+function capilla(ctx, S, L) {
+  const wb = ctx.wb;
+  const C = PACO.capilla,
+    Cm = PACO.camaras;
+  const room = 'capilla';
+  const { x0, x1, z0, z1, t, y, eave, ridge } = C;
+  const ix0 = x0 + t,
+    ix1 = x1 - 0.04,
+    iz0 = z0 + t,
+    iz1 = z1 - t,
+    cx = (x0 + x1) / 2;
+  const F1 = Cm.F1;
+  const tint = [0.86, 0.83, 0.78],
+    tin = [0.78, 0.75, 0.7];
+  W(S, ix0, iz0, x1, iz1);
+  // el suelo
+  solid(ctx, 'flag', ix0, 0, iz0, x1, y, iz1, { faces: 't', ao: false, sub: 2.5, uv: 0.7, room, tint: [0.76, 0.73, 0.68] });
+  // los muros: el de poniente (con su puerta), el de la fachada (con la suya;
+  // las dos, atrancadas desde fuera por ahora), el del ábside (con el arco
+  // triunfal) y, al este, el de las cámaras (con la ventana del oratorio y la
+  // puerta de la tribuna)
+  const dW = -68.0,
+    dS = cx;
+  holedWall(ctx, 'ashlar', 'z', z0, z1, x0, ix0, 0, eave, [{ a0: dW - 0.8, a1: dW + 0.8, y0: 0, y1: 3.0 }], 'w', { tint });
+  holedWall(ctx, 'ashlar', 'x', x0, x1, iz1, z1, 0, eave, [{ a0: dS - 1.0, a1: dS + 1.0, y0: 0, y1: 3.4 }], 's', { tint });
+  archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z0, t1: iz0, y0: 0, y1: eave, openings: [{ c: cx, w: 7.0, h: 4.4, rise: 3.5, ring: 0.45 }], mat: 'ashlar', tint, rooms: ['out', room], sub: 2.2 });
+  holedWall(ctx, 'ashlar', 'z', z0, z1, Cm.x0, Cm.x0 + 0.8, 0, Cm.eave, [
+    { a0: C.wz - 0.65, a1: C.wz + 0.65, y0: F1 + 1.0, y1: F1 + 3.0 },
+    { a0: C.dz - 0.6, a1: C.dz + 0.6, y0: F1, y1: F1 + 2.4 },
+  ], '', { tint });
+  // (las caras de dentro: enlucido, con su zócalo)
+  interiorRoom(ctx, ix0, iz0, ix1, iz1, y, eave - y, {
+    room,
+    wall: 'plaster',
+    tint: [0.84, 0.8, 0.72],
+    floor: false,
+    ceil: false,
+    skip: ['n'],
+    doors: [
+      { side: 'w', at: dW, w: 1.6, h: 3.0 - y },
+      { side: 's', at: dS, w: 2.0, h: 3.4 - y },
+      { side: 'e', at: C.wz, w: 1.3, h: F1 + 3.0 - y, sill: F1 + 1.0 - y },
+      { side: 'e', at: C.dz, w: 1.2, h: F1 + 2.4 - y, sill: F1 - y },
+    ],
+  });
+  // (la ventana del oratorio, con su reja)
+  for (let k = -2; k <= 2; k++) wb.box('iron', Cm.x0 - 0.02, F1 + 1.0, C.wz + k * 0.25 - 0.02, Cm.x0 + 0.02, F1 + 3.0, C.wz + k * 0.25 + 0.02, { ao: false, room });
+  // las ventanas altas de la nave (vanos negros) y el óculo de la fachada
+  for (const z of [-82.0, -77.0, -72.0]) {
+    wb.box('black', ix0, 5.0, z - 0.35, ix0 + 0.02, 7.2, z + 0.35, { ao: false, grime: false, faces: 'e', room });
+    wb.box('black', x0 - 0.02, 5.0, z - 0.35, x0, 7.2, z + 0.35, { ao: false, grime: false, faces: 'w' });
+    wb.box('ashlar', x0 - 0.16, 4.85, z - 0.5, x0, 5.0, z + 0.5, { ao: false, faces: 'tnswb' });
+  }
+  {
+    // (el óculo, sobre la puerta y bajo la espadaña)
+    const yc = eave - 2.4;
+    const g2 = new THREE.TorusGeometry(0.85, 0.12, 6, 18);
+    wb.geometry('ashlar', g2, new THREE.Matrix4().makeTranslation(cx, yc, z1 + 0.06), { ao: false });
+    wb.box('black', cx - 0.8, yc - 0.8, z1, cx + 0.8, yc + 0.8, z1 + 0.02, { ao: false, grime: false, faces: 's' });
+  }
+  // el tejado y los hastiales
+  solidGableRoof(ctx, x0, z0, x1, z1, eave, ridge, 'z', { overhang: 0.4, gableOverhang: 0.06, gables: [{}, false], open: [false, true], wallT: t, wallMat: 'ashlar', wallTint: tint, room, underRoom: room });
+  // el ábside: medio cilindro de piedra, su media cúpula y su tejado
+  {
+    const r = C.apse,
+      ro = r + 0.8,
+      N = 12;
+    const yA = eave - 3.6;
+    for (let k = 0; k < N; k++) {
+      const a0 = Math.PI + (k / N) * Math.PI,
+        a1 = Math.PI + ((k + 1) / N) * Math.PI;
+      const P0 = (rr, yy) => V(cx + Math.cos(a0) * rr, yy, z0 + Math.sin(a0) * rr),
+        P1 = (rr, yy) => V(cx + Math.cos(a1) * rr, yy, z0 + Math.sin(a1) * rr);
+      const am = (a0 + a1) / 2;
+      cara(wb, 'plaster', P0(r, y), P1(r, y), P1(r, yA), P0(r, yA), V(-Math.cos(am), 0, -Math.sin(am)), { ao: false, room, tint: [0.8, 0.74, 0.62] });
+      cara(wb, 'ashlar', P0(ro, 0), P1(ro, 0), P1(ro, yA), P0(ro, yA), V(Math.cos(am), 0, Math.sin(am)), { aoH: 1.5, tint });
+      const mx = cx + Math.cos(am) * (r + 0.4),
+        mz = z0 + Math.sin(am) * (r + 0.4);
+      ctx.col.addOBB(mx, mz, 0.45, (Math.PI * ro) / N / 2 + 0.05, -am, 0, yA);
+      // el tejado: un cono de teja
+      cara(wb, 'roof', P0(ro + 0.35, yA - 0.2), P1(ro + 0.35, yA - 0.2), V(cx, yA + 4.0, z0), V(cx, yA + 4.0, z0), V(Math.cos(am), 0.6, Math.sin(am)), { ao: false });
+      // la media cúpula (por dentro)
+      const M = 5;
+      for (let j = 0; j < M; j++) {
+        const fa = (j / M) * (Math.PI / 2),
+          fb = ((j + 1) / M) * (Math.PI / 2);
+        const Q = (a, f) => V(cx + Math.cos(a) * r * Math.cos(f), yA + r * Math.sin(f), z0 + Math.sin(a) * r * Math.cos(f));
+        cara(wb, 'plaster', Q(a0, fa), Q(a1, fa), Q(a1, fb), Q(a0, fb), V(-Math.cos(am), -1, -Math.sin(am)), { ao: false, room, tint: [0.42, 0.46, 0.62] });
+      }
+    }
+    // (el suelo del presbiterio, un escalón más alto, y el altar)
+    W(S, cx - r, z0 - r, cx + r, z0);
+    W(S, cx - 3.5, z0 - 0.1, cx + 3.5, iz0 + 0.1);
+    for (let k = 0; k < N; k++) {
+      const a0 = Math.PI + (k / N) * Math.PI,
+        a1 = Math.PI + ((k + 1) / N) * Math.PI;
+      wb.tri('flag', V(cx, y + 0.2, z0), V(cx + Math.cos(a1) * r, y + 0.2, z0 + Math.sin(a1) * r), V(cx + Math.cos(a0) * r, y + 0.2, z0 + Math.sin(a0) * r), { ao: false, room, tint: [0.7, 0.66, 0.6] });
+    }
+    solid(ctx, 'flag', cx - 3.5, y, z0, cx + 3.5, y + 0.2, iz0, { faces: 'ts', ao: false, room, tint: [0.7, 0.66, 0.6] });
+    ctx.col.add(cx - r, 0, z0 - r, cx + r, y + 0.2, z0);
+    wb.setRoom(room);
+    P.altarTable(ctx, cx, y + 0.2, z0 - 1.9, 0, 2.0);
+    wb.setRoom(null);
+    P.candles(ctx, cx - 0.6, y + 1.2, z0 - 1.9, 3, 6702, { room, radius: 7, intensity: 1.1 });
+    P.candles(ctx, cx + 0.6, y + 1.2, z0 - 1.9, 3, 6703, { room, radius: 7, intensity: 1.1 });
+    wb.box('gold', cx - 0.04, y + 1.3, z0 - 2.3, cx + 0.04, y + 2.5, z0 - 2.24, { ao: false, room });
+    wb.box('gold', cx - 0.32, y + 2.05, z0 - 2.3, cx + 0.32, y + 2.13, z0 - 2.24, { ao: false, room });
+    bakeCorpse(wb, cx, y + 0.2, z0 - 0.6, Math.PI, 'kneel', 'villager', 75);
+  }
+  // la tribuna del Rey: sobre tres arcos, a la altura de su oratorio; su
+  // antepecho y la escalera que baja a la nave, pegada al muro de poniente
+  {
+    const tz = C.tz;
+    archedWall(ctx, { axis: 'x', a0: ix0 + 1.2, a1: ix1, t0: tz, t1: tz + 0.4, y0: y, y1: F1 - 0.3, openings: [-125.66, -122.72, -119.78].map((c) => ({ c, w: 2.4, h: 2.0, rise: 1.2, ring: 0.26 })), mat: 'ashlar', tint: tin, rooms: [room, room], sub: 1.6 });
+    wb.box('planks', ix0 + 1.2, F1 - 0.06, tz, ix1, F1, iz1, { faces: 't', ao: false, sub: 2, tint: [0.62, 0.54, 0.46], room });
+    wb.box('planks', ix0, F1 - 0.06, tz + 0.6, ix0 + 1.2, F1, iz1, { faces: 't', ao: false, sub: 2, tint: [0.62, 0.54, 0.46], room });
+    wb.box('wooddark', ix0, F1 - 0.3, tz + 0.4, ix1, F1 - 0.24, iz1, { faces: 'b', ao: false, room, tint: [0.5, 0.46, 0.42] });
+    ctx.col.add(ix0 + 1.2, F1 - 0.3, tz, ix1, F1, iz1);
+    ctx.col.add(ix0, F1 - 0.3, tz + 0.6, ix0 + 1.2, F1, iz1);
+    solid(ctx, 'wooddark', ix0 + 1.2, F1, tz, ix1, F1 + 1.0, tz + 0.12, { faces: 'tnsew', ao: false, room });
+    for (let x = ix0 + 1.5; x < ix1; x += 0.55) wb.box('wooddark', x - 0.04, F1, tz + 0.02, x + 0.04, F1 + 1.0, tz + 0.1, { ao: false, room });
+    // la escalera: de la nave (al norte) a la tribuna
+    const n = 15,
+      run = 0.42;
+    stairs(ctx, ix0 + 0.6, y, tz + 0.6 - n * run, 's', 1.2, n, (F1 - y) / n, run, 'wooddark', { base: 0 });
+    // el escaño del Rey y su cojín, ante el antepecho
+    wb.box('wooddark', cx - 0.6, F1, tz + 0.6, cx + 0.6, F1 + 0.5, tz + 1.2, { ao: false, room });
+    wb.box('wooddark', cx - 0.6, F1, tz + 1.2, cx + 0.6, F1 + 1.6, tz + 1.32, { ao: false, room });
+    wb.box('clothRed', cx - 0.55, F1 + 0.5, tz + 0.62, cx + 0.55, F1 + 0.58, tz + 1.18, { ao: false, room });
+    ctx.col.add(cx - 0.6, F1, tz + 0.6, cx + 0.6, F1 + 0.6, tz + 1.32);
+  }
+  // la espadaña sobre la fachada: su vano con la campana; detrás, bajo el
+  // tejado, el desván al que se sube por una escala desde la tribuna
+  {
+    const w = C.esp,
+      ya = eave,
+      yb = C.espTop;
+    const ex0 = cx - w / 2,
+      ex1 = cx + w / 2;
+    const vx0 = cx - 0.85,
+      vx1 = cx + 0.85,
+      vy0 = 12.2,
+      vy1 = 14.2;
+    holedWall(ctx, 'ashlar', 'x', ex0, ex1, iz1 - 0.04, z1 + 0.04, ya, yb, [{ a0: vx0, a1: vx1, y0: vy0, y1: vy1 }], 'nsew', { tint, collide: false });
+    archRing(ctx, { axis: 'x', c: cx, w: vx1 - vx0, y0: vy1, rise: 0.85, ring: 0.2, t0: iz1 - 0.04, t1: z1 + 0.04, mat: 'ashlar', tint: [0.7, 0.68, 0.64] });
+    {
+      const slope = (ridge - eave) / ((x1 - x0) / 2);
+      const yE = (x) => ridge - Math.abs(x - cx) * slope;
+      for (const [xa, xb] of [
+        [x0, ex0],
+        [ex1, x1],
+      ]) {
+        const xin = Math.abs(xa - cx) < Math.abs(xb - cx) ? xa : xb,
+          xout = xin === xa ? xb : xa;
+        const tri = (zz, dir, rm) => cara(wb, 'ashlar', V(xout, eave, zz), V(xin, eave, zz), V(xin, yE(xin), zz), V(xin, yE(xin), zz), V(0, 0, dir), { ao: false, tint, room: rm });
+        tri(z1, 1, 'out');
+        tri(iz1, -1, room);
+      }
+    }
+    wb.box('ashlar', ex0 - 0.12, yb, iz1 - 0.1, ex1 + 0.12, yb + 0.25, z1 + 0.1, { ao: false, faces: 'tnsewb' });
+    wb.box('iron', cx - 0.03, yb + 0.25, z1 - 0.48, cx + 0.03, yb + 1.3, z1 - 0.42, { ao: false });
+    wb.box('iron', cx - 0.3, yb + 0.85, z1 - 0.48, cx + 0.3, yb + 0.91, z1 - 0.42, { ao: false });
+    // la campana, colgada de su yugo, y su cordón hasta el desván
+    const bz = (iz1 + z1) / 2;
+    wb.box('wooddark', vx0, vy1 - 0.25, bz - 0.12, vx1, vy1 - 0.05, bz + 0.12, { ao: false, faces: 'tnsewb' });
+    wb.cylinder('bronzeAged', cx, vy1 - 1.15, bz, 0.52, 0.26, 0.9, 12, { ao: false, capTop: true });
+    wb.cylinder('bronzeIn', cx, vy1 - 1.16, bz, 0.5, 0.5, 0.01, 12, { ao: false, capBot: true });
+    wb.box('rope', cx - 0.015, 9.9, bz - 0.015, cx + 0.015, vy1 - 1.0, bz + 0.015, { ao: false });
+    // el desván: tablas bajo el tejado, detrás de la espadaña
+    const ld = { x0: ex0, x1: ex1, z0: iz1 - 1.8, z1: iz1, y: 9.6 };
+    wb.box('planks', ld.x0, ld.y - 0.12, ld.z0, ld.x1, ld.y, ld.z1, { faces: 'tnsewb', ao: false, room, tint: [0.6, 0.52, 0.44] });
+    ctx.col.add(ld.x0, ld.y - 0.12, ld.z0, ld.x1, ld.y, ld.z1);
+    for (const x of [ld.x0 + 0.1, ld.x1 - 0.1]) wb.box('wooddark', x - 0.07, F1, ld.z0 + 0.1, x + 0.07, ld.y - 0.12, ld.z0 + 0.24, { ao: false, room });
+    // (que no se caiga del desván a la nave: su antepecho)
+    wb.box('wooddark', ld.x0, ld.y, ld.z0, ld.x1, ld.y + 0.9, ld.z0 + 0.08, { ao: false, faces: 'tnsewb', room });
+    ctx.col.add(ld.x0, ld.y, ld.z0, ld.x1, ld.y + 0.9, ld.z0 + 0.08);
+    // la escala, de la tribuna al desván
+    const lx = ex1 - 0.6;
+    P.ladder(ctx, lx, F1, ld.z0 + 0.2, ld.y - F1, Math.PI, 0.18);
+    L.interact.push(
+      { kind: 'hatch', id: 'h_espadana_abajo', end: 'bottom', flag: 'hatch:espadana', open: true, labels: ['Bajar por la escala', 'Subir por la escala'], msgUp: 'espadanaSube', x: lx, y: F1, z: ld.z0 - 0.4, r: 1.4, to: [lx - 0.8, ld.y, ld.z0 + 0.9, Math.PI] },
+      { kind: 'hatch', id: 'h_espadana_arriba', end: 'top', flag: 'hatch:espadana', open: true, labels: ['Bajar por la escala', 'Subir por la escala'], msgDown: 'espadanaBaja', x: lx, y: ld.y, z: ld.z0 + 0.6, r: 1.3, to: [lx, F1, ld.z0 - 0.8, 0] }
+    );
+    // la llave del capellán, atada al cordón: al soltarla, la campana suena
+    L.interact.push({ kind: 'item', id: 'i_llave_capellan', item: 'llave_capellan', x: cx, y: ld.y + 0.55, z: bz - 0.15, sound: 'bellToll', soundAt: [cx, vy1 - 0.6, bz], msg: 'campanaSuena' });
+    L.zones.push({ id: 'capilla_espadana', rects: [[ld.x0, ld.z0, ld.x1, z1, ld.y - 0.3, ld.y + 3]], atmo: 'interior', room });
+  }
+  // la confesión del capellán, en el reclinatorio del altar; la luz de la nave
+  L.interact.push({ kind: 'note', id: 'n_capellan', note: 'capellan', x: cx + 1.4, y: y + 1.0, z: z0 - 1.2, model: 'paper' });
+  for (const z of [-80, -71]) P.candleCrown(ctx, cx, 6.2, z, ridge - 0.6, { room, r: 0.9, n: 8 });
+  for (const z of [-80, -71]) ctx.lights.push({ x: cx, y: 5.6, z, r: 1, g: 0.6, b: 0.3, radius: 9, intensity: 1.0, room });
+  ctx.lights.push({ x: cx, y: F1 + 2.0, z: (C.tz + iz1) / 2, r: 1, g: 0.55, b: 0.26, radius: 6, intensity: 0.7, room });
+  // los bancos de la nave y los que rezan en ellos
+  for (let z = -82.0; z < -70; z += 2.2) {
+    P.bench(ctx, cx - 2.4, y, z, 3.0, 0);
+    P.bench(ctx, cx + 2.4, y, z, 3.0, 0);
+  }
+  L.enemies.push(
+    { type: 'cortesanoSuelto', x: cx - 2.4, y, z: -78.9, yaw: Math.PI, idle: 'kneel', id: 'e_cap1' },
+    { type: 'cortesanoSuelto', x: cx + 2.2, y, z: -74.5, yaw: Math.PI, idle: 'kneel', id: 'e_cap2' },
+    { type: 'mourner', x: cx + 1.0, y, z: -84.0, yaw: Math.PI, idle: 'stand', id: 'e_cap3' }
+  );
+  // las puertas (atrancadas por fuera, por ahora: dan al jardín de la reina y
+  // al patio de la cancillería)
+  L.interact.push(
+    { kind: 'door', id: 'd_capilla_o', x: x0 + t / 2, y: 0, z: dW, w: 1.6, h: 3.0, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: 0 }, barredMsg: 'capillaAtrancada' },
+    { kind: 'door', id: 'd_capilla_s', x: dS, y: 0, z: z1 - t / 2, w: 2.0, h: 3.4, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: iz1, inset: 0.06, mark: 'cross', lock: { type: 'barred', side: 0 }, barredMsg: 'capillaAtrancada' }
+  );
+  L.zones.push({ id: 'capilla_real', rects: [[ix0, z0 - C.apse, x1, iz1, -0.5, ridge]], atmo: 'chapel', room });
+  L.map.push({ id: 'capilla_real', r: [x0, z0 - C.apse - 0.8, x1, z1] });
 }
 
 // ------------------------------------------------------------------------ el pasadizo quemado
