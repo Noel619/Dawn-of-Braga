@@ -727,6 +727,71 @@ function spearMoves(ctx) {
   return { clips: C, light, heavy, run, roll, guard };
 }
 
+// ================================================================ BALLESTA
+// La ballesta de estribo, a dos manos: se lleva a la cadera, apuntando al
+// suelo; se alza a la cara para tirar (el virote sale en «shoot»); tras el
+// tiro se monta sola: la cabeza al suelo, el pie en el estribo, las dos manos
+// tiran de la cuerda hasta la nuez y se pone otro virote (casi dos segundos,
+// quieto). El pesado, un culatazo con la cabeza de hierro por delante.
+const XST = { legL: [12, 0, 6], shinL: [16, 0, 0], legR: [-18, 0, -6], shinR: [20, 0, 0], root: [0, -4, 0] };
+function ballestaMoves(ctx) {
+  const { G, rig } = ctx;
+  const g = { ...XST, ...G };
+  // a la cara: la culata al hombro, la cureña a nivel, la cabeza por detrás
+  const aimBody = { ...XST, chest: [2, 10, 0], head: [4, -12, 0] };
+  const aim = { ...W2C(rig, aimBody, [-9, 146, 20], [0, 0, 0]), elbowR: [-0.8, -0.3, -0.5] };
+  const kick = { ...W2C(rig, { ...aimBody, chest: [-4, 10, 0] }, [-9, 149, 14], [0, 7, 0]), elbowR: [-0.8, -0.3, -0.5] };
+  // montarla: agachado, la cabeza en el suelo con el pie dentro del estribo,
+  // las manos en la cuerda (la izquierda suelta la cureña)
+  const down = { legL: [-46, 0, 8], shinL: [70, 0, 0], legR: [-8, 0, -10], shinR: [24, 0, 0], root: [0, -26, 4], chest: [40, 0, 0], head: [10, 0, 0] };
+  const low = { ...W2C(rig, down, [-6, 80, 34], [0, -78, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
+  const pull = { ...W2C(rig, { ...down, root: [0, -14, 2], chest: [26, 0, 0] }, [-6, 92, 30], [0, -82, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
+  const C = {
+    x_shoot: clip(
+      'x_shoot',
+      0.62,
+      [
+        [0, { ...g }],
+        [0.16, aim, 'hold'],
+        [0.22, kick, 'snap'],
+        [0.36, aim],
+        [0.62, { ...g }],
+      ],
+      { lag: LAG_THRUST }
+    ),
+    x_reload: clip(
+      'x_reload',
+      1.75,
+      [
+        [0, { ...g }],
+        [0.32, { ...low, ikL: [10, -12, 26] }],
+        [0.6, { ...low, ikL: [2, -16, 30] }, 'hold'],
+        [1.05, { ...pull, ikL: [2, -2, 24] }],
+        [1.3, { ...pull, ikL: [-2, 8, 22], root: [0, -10, 0] }],
+        [1.5, { ...g, ikL: [-4, 10, 30], wGrip: [0, 0, 0] }],
+        [1.75, { ...g }],
+      ],
+      { lag: LAG_MED, events: [{ t: 0.55, name: 'step' }] }
+    ),
+    x_bash: clip(
+      'x_bash',
+      0.82,
+      [
+        [0, { ...g }],
+        [0.18, { ...W2C(rig, { ...XST, chest: [0, -26, 0], head: [0, 12, 0] }, [-22, 104, 4], [10, 2, 0]), elbowR: [-0.5, -0.4, -0.8] }, 'hold'],
+        [0.32, { ...W2C(rig, { ...LUNGE, chest: [16, 12, 0], head: [-6, -6, 0] }, [-8, 112, 58], [4, 2, 0]), elbowR: [-0.4, -0.9, 0.1] }, 'strike'],
+        [0.46, { ...W2C(rig, { ...LUNGE, chest: [14, 10, 0], head: [-6, -6, 0] }, [-8, 111, 54], [4, 1, 0]), elbowR: [-0.4, -0.9, 0.1] }],
+        [0.82, { ...g }],
+      ],
+      { lag: LAG_THRUST, events: [{ t: 0.2, name: 'swing' }] }
+    ),
+  };
+  const shoot = attack({ name: 'shoot', clip: C.x_shoot, shoot: 0.22, hits: [[0.22, 0.23]], dmg: 48, poise: 34, st: 6, cancel: 0.42, move: 0.44, lunge: [0, 0, 0], range: 32, arc: 8 });
+  const reload = attack({ name: 'reload', clip: C.x_reload, reload: true, hits: [[9, 9]], dmg: 0, st: 0, cancel: 9, move: 9, lunge: [0, 0, 0] });
+  const bash = attack({ clip: C.x_bash, snd: 'swing', thrust: true, dmg: 24, st: 16, hits: [[0.3, 0.42]], cancel: 0.6, move: 0.66, lunge: [0.18, 0.34, 3.2], range: 1.9, arc: 60, poise: 38, heavy: true });
+  return { clips: C, light: [shoot], heavy: [bash], run: bash, roll: bash, reload };
+}
+
 // ================================================================ KATANA
 // Kendo: guardia media, pie derecho delante; cuatro cortes fluidos que se
 // encadenan (kesa, gyaku-kesa, yoko y tsuki) y el iai del Juicio: la hoja
@@ -910,6 +975,32 @@ function katanaMoves(ctx) {
 
 // ================================================================ registro
 export const MOVESETS = {
+  ballesta: {
+    id: 'ballesta',
+    item: 'ballesta',
+    order: 6,
+    wristMode: 'euler',
+    hands: 2,
+    ranged: true,
+    // (la izquierda, por delante de la derecha, bajo la cureña)
+    grip2: 0.26,
+    freeL: [0.24, 0.1, 0.14],
+    elbowL: [0.6, -0.7, -0.3],
+    trail: [
+      [0, -0.05, 0.3],
+      [0, -0.05, 0.52],
+    ],
+    trailColor: 0xffd8a8,
+    tip: [0, -0.05, 0.52],
+    edge: [0, 1, 0],
+    guard: { ikR: [-18, -16, 22], bladeR: [2, -10, 0], elbowR: [-0.6, -0.6, -0.5] },
+    runPose: { ikR: [-24, -10, 12], bladeR: [-6, -30, 0], elbowR: [-0.7, -0.5, -0.5] },
+    swing: [4, 12],
+    block: { ikR: [-10, 22, 26], bladeR: [-80, 6, 0], elbowR: [-0.4, -0.8, -0.2], chest: [4, -6, 0], head: [8, 4, 0] },
+    blockK: { st: 1.3, chip: 0.2 },
+    healR: { ikR: [-26, -6, 14], bladeR: [-10, -60, 0] },
+    moves: ballestaMoves,
+  },
   facon: {
     id: 'facon',
     item: 'facon',

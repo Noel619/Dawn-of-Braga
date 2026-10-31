@@ -4,12 +4,12 @@ import { buildPlayer } from './models.js';
 import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
 import { WEAPONS, weaponSet, resolveWeaponArms } from './weapons.js';
-import { buildParts, backShield, hipSaya } from './weapon_models.js';
+import { buildParts, backShield, hipSaya, viroteParts } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
 import { objMat } from '../gfx/materials.js';
 import { relicMods } from '../game/relics.js';
-import { ITEMS } from '../game/story.js';
+import { ITEMS, MSG } from '../game/story.js';
 
 // Los clips y golpes de cada arma están en weapons.js / weapon_moves.js.
 
@@ -37,6 +37,14 @@ export class Player {
       this.rig.meshes.push(...o.meshes);
       this.weaponObjs[id] = o;
     }
+    // el virote montado en la ballesta (sólo se ve con ella cargada)
+    if (this.weaponObjs.ballesta) {
+      this.xbowBolt = buildParts(viroteParts('x'));
+      this.weaponObjs.ballesta.group.add(this.xbowBolt.group);
+      this.rig.meshes.push(...this.xbowBolt.meshes);
+      this.xbowBolt.group.visible = false;
+    }
+    this.xbowLoaded = false;
     // escudo a la espalda (armas a dos manos) y saya de la katana
     this.shieldBack = backShield();
     this.rig.joints.chest.add(this.shieldBack.group);
@@ -161,6 +169,24 @@ export class Player {
     this.updateGear();
   }
 
+  // La ballesta: si está montada, tira; si no, la monta (si quedan virotes);
+  // sin virotes, la llave en vacío.
+  startShot(target, wx, wz, mag) {
+    const g = this.game;
+    this.orientForAttack(target, wx, wz, mag);
+    if (this.xbowLoaded) return this.startAttack(this.set.light[0], 0);
+    if (g.inventory.count('virote') > 0) return this.startAttack(this.set.reload, 0);
+    g.audio && g.audio.play('dryFire', this.pos);
+    g.ui && g.ui.toast(MSG.sinVirotes, 2.2);
+  }
+  // Montada del todo: un virote menos en la aljaba, uno en la canal.
+  finishReload() {
+    const inv = this.game.inventory;
+    if (inv.count('virote') <= 0) return;
+    inv.add('virote', -1);
+    this.xbowLoaded = true;
+  }
+
   setEquipment(sword, shield) {
     this.hasSword = sword;
     this.hasShield = shield;
@@ -280,6 +306,8 @@ export class Player {
     this.atk = def;
     this.hitSet.clear();
     this.hitWin = -1;
+    this.shotDone = false;
+    this.spanSnd = false;
     this.charge = 0;
     this.charging = false;
     this.chargeDone = !def.charge;
@@ -697,6 +725,7 @@ export class Player {
   // ------------------------------------------------------------ update
   update(dt, input, cam, allowControl = true) {
     const g = this.game;
+    if (this.xbowBolt) this.xbowBolt.group.visible = this.xbowLoaded;
     // (modo desarrollador: volando, atravesando muros)
     if (g.dev && g.dev.fly && allowControl && !this.dead) {
       if (this.state !== 'free') {
@@ -867,6 +896,9 @@ export class Player {
           // golpe de gracia al desequilibrado
           take('light') || take('heavy');
           this.startRiposte(rip);
+        } else if (has('light') && this.hasSword && this.canAct() && this.weapon.ranged) {
+          take('light');
+          this.startShot(target, wx, wz, mag);
         } else if (has('light') && this.hasSword && this.canAct()) {
           take('light');
           const idx = this.comboT > 0 ? (this.combo + 1) % M.light.length : 0;
@@ -944,8 +976,21 @@ export class Player {
         this.vx = damp(this.vx, 0, 12, dt);
         this.vz = damp(this.vz, 0, 12, dt);
       }
+      // la ballesta: el virote sale una vez, en su momento
+      if (a.shoot !== undefined) {
+        if (!this.shotDone && t >= a.shoot) {
+          this.shotDone = true;
+          this.xbowLoaded = false;
+          g.virotes && g.virotes.playerShoot(this, target, a);
+        }
+      }
+      // (y al montarla, el tirón de la cuerda)
+      if (a.reload && !this.spanSnd && t >= 0.55) {
+        this.spanSnd = true;
+        g.audio && g.audio.play('xbowSpan', this.pos);
+      }
       // ventanas de impacto (un golpe puede tener varias: cada una vuelve a herir)
-      for (let i = 0; i < a.hits.length; i++) {
+      for (let i = 0; i < (a.shoot !== undefined || a.reload ? 0 : a.hits.length); i++) {
         const [h0, h1] = a.hits[i];
         if (t >= h0 && t <= h1) {
           if (this.hitWin !== i) {
@@ -961,7 +1006,10 @@ export class Player {
       }
       // encadenar
       if (t >= a.cancel) {
-        if (has('light') && this.canAct() && !a.heavy && this.hasSword) {
+        if (has('light') && this.canAct() && !a.heavy && this.hasSword && this.weapon.ranged) {
+          take('light');
+          this.startShot(target, wx, wz, mag);
+        } else if (has('light') && this.canAct() && !a.heavy && this.hasSword) {
           take('light');
           this.orientForAttack(target, wx, wz, mag);
           if (a.keepBlock && M.guard && input.down('block')) this.startAttack(M.guard, this.combo);
@@ -987,7 +1035,9 @@ export class Player {
       if (this.state === 'attack' && this.atkT >= a.clip.dur) {
         this.state = 'free';
         this.comboT = 0.35;
-        this.anim.stop(0.14);
+        if (a.reload) this.finishReload();
+        if (a.shoot !== undefined && !this.xbowLoaded && g.inventory.count('virote') > 0) this.startAttack(this.set.reload, 0);
+        else this.anim.stop(0.14);
       }
       desiredSpeed = -1; // velocidad gestionada arriba
     } else if (st === 'parry') {

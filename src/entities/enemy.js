@@ -362,6 +362,8 @@ export class Enemy {
     this.stT = 0;
     this.hp = 0;
     this.anim.play(this.T.clips.death, { blend: 0.05 });
+    // (los que no vuelven: muertos, se apunta; ver game.bossGone)
+    if (this.spec.dies) this.game.flags[this.spec.dies] = true;
     this.game.onEnemyDeath && this.game.onEnemyDeath(this);
   }
 

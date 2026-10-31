@@ -343,6 +343,37 @@ function weaponItemMesh(id) {
 function itemMesh(id) {
   if (id === 'facon' || id === 'hacha' || id === 'lanza' || id === 'katana') return weaponItemMesh(id);
   const g = new THREE.Group();
+  // la ballesta, tumbada sobre su banco
+  if (id === 'ballesta') {
+    const w = buildParts(WEAPON_PARTS.ballesta('x')).group;
+    w.position.set(0, 0.07, -0.1);
+    w.rotation.y = 0.45;
+    g.add(w);
+    return g;
+  }
+  // un haz de virotes atados
+  if (id === 'virote') {
+    const wood = objMat('wooddark'),
+      iron = objMat('iron'),
+      cloth = objMat('clothWhite');
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2;
+      const sh = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.38), wood);
+      sh.position.set(Math.cos(a) * 0.016, 0.02 + Math.sin(a) * 0.016, 0);
+      const hd = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.05, 4), iron);
+      hd.rotation.x = Math.PI / 2;
+      hd.position.set(sh.position.x, sh.position.y, 0.21);
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.028, 0.06), cloth);
+      fl.position.set(sh.position.x, sh.position.y + 0.012, -0.16);
+      g.add(sh, hd, fl);
+    }
+    const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.03, 6), objMat('rope'));
+    tie.rotation.x = Math.PI / 2;
+    tie.position.set(0, 0.02, 0);
+    g.add(tie);
+    g.rotation.y = 0.6;
+    return g;
+  }
   const iron = objMat('iron'),
     plate = objMat('plate'),
     leather = objMat('leather'),
@@ -776,7 +807,7 @@ export class Interactables {
         const slides = s.mat === 'grate' || s.mat === 'seal';
         // (la Puerta del Dios Ignoto: sus hojas de piedra las pone game/crypt.js;
         // la losa que se hunde va horneada con el muro, en el grupo 'puerta:id')
-        const none = s.mat === 'god' || s.mat === 'slab';
+        const none = s.mat === 'god' || s.mat === 'slab' || s.mat === 'tabique';
         // Hojas batientes: la bisagra va en la cara del muro hacia la que abre
         // la puerta ('plane', coordenada a lo largo de la normal del muro) y
         // separada 'inset' del canto del hueco. Con la bisagra en mitad del
@@ -838,6 +869,12 @@ export class Interactables {
       }
       // (la losa: sus mallas, horneadas con la luz del muro en el que está)
       if (s.mat === 'slab') it.slab = g.groups['puerta:' + s.id] ? g.groups['puerta:' + s.id].meshes : [];
+      // (un tabique de piedra y cal que se derriba: su muro y, ya caído, sus
+      // escombros, en dos grupos del mundo)
+      if (s.mat === 'tabique') {
+        it.tabique = true;
+        g.setGroupVisible('puerta:' + s.id + ':ruina', false);
+      }
       g.scene.add(it.obj);
       // colisión
       const t = s.mat === 'barricade' ? 0.5 : 0.25;
@@ -1206,6 +1243,7 @@ export class Interactables {
 
   setOpen(it, instant = false) {
     it.done = true;
+    if (it.tabique) this.knockDown(it, instant);
     if (it.box) it.box.enabled = false;
     for (const b of it.leafBoxes || []) b.enabled = true;
     it.target = 1;
@@ -1218,6 +1256,20 @@ export class Interactables {
       if (it.boards) it.boards.visible = false;
       if (it.mat === 'barricade') it.obj.visible = false;
     }
+  }
+
+  // El tabique se viene abajo: el muro desaparece entre polvo y cascotes y
+  // quedan sus escombros en el suelo.
+  knockDown(it, instant) {
+    const g = this.game;
+    it.open = 1;
+    g.setGroupVisible('puerta:' + it.id, false);
+    g.setGroupVisible('puerta:' + it.id + ':ruina', true);
+    if (instant) return;
+    for (let k = 0; k < 4; k++) g.fx.blood.emit(it.x + (Math.random() - 0.5) * it.w, it.y + 0.4 + k * 0.5, it.z, 18, { color: [0.62, 0.6, 0.56], speed: 4, life: 0.9, up: 1.4 });
+    g.audio && g.audio.play('rubble', { x: it.x, y: it.y, z: it.z });
+    g.camRig.shake(0.45);
+    g.noise && g.noise(it.x, it.y, it.z, 12);
   }
 
   // Cierra de golpe una puerta abierta y le echa la tranca (por su lado de
@@ -1516,9 +1568,13 @@ export class Interactables {
         return this.game.house ? this.game.house.relicLabel() : 'Examinar la espada';
       case 'puzzle':
         return it.puzzle.label(it);
-      case 'hatch':
-        if (it.end === 'top') return this.game.flags[it.flag] || it.open ? 'Bajar por la escalera' : 'Abrir la trampilla';
-        return this.game.flags[it.flag] || it.open ? 'Subir por la escalera' : 'Examinar la trampilla';
+      case 'hatch': {
+        const op = this.game.flags[it.flag] || it.open;
+        // (la cuerda del montacargas y otras: sus propios rótulos)
+        if (it.labels) return it.labels[it.end === 'top' ? 0 : 1];
+        if (it.end === (it.opensFrom || 'top')) return op ? (it.end === 'top' ? 'Bajar por la escalera' : 'Subir por la escalera') : it.end === 'top' ? 'Abrir la trampilla' : 'Desatrancar la trampilla';
+        return op ? (it.end === 'top' ? 'Bajar por la escalera' : 'Subir por la escalera') : 'Examinar la trampilla';
+      }
     }
     return 'Interactuar';
   }
@@ -1549,7 +1605,7 @@ export class Interactables {
         }
       } else if (L.type === 'barred') {
         const n = it.axis === 'x' ? p.pos.z - it.z : p.pos.x - it.x;
-        if (Math.sign(n) === L.side) openIt('Retiras la tranca.', 'bar');
+        if (Math.sign(n) === L.side) openIt(MSG[L.msg] || 'Retiras la tranca.', L.sound || 'bar');
         else {
           g.ui.toast(MSG[it.barredMsg] || MSG.barred);
           g.audio && g.audio.play('locked', it);
@@ -1644,7 +1700,7 @@ export class Interactables {
       g.flags['take:' + it.id] = true;
       p.playInteract('interact');
       g.audio && g.audio.play('pickup');
-      g.giveItem(it.item);
+      g.giveItem(it.item, it.n ?? 1);
       setTimeout(() => (it.obj.visible = false), 300);
       return true;
     }
@@ -1674,17 +1730,18 @@ export class Interactables {
     }
     if (it.kind === 'hatch') {
       if (g.flags[it.flag] || it.open) g.hatchMove(it);
-      else if (it.end === 'top') {
-        // se descorre el cerrojo y la tapa se abre: el atajo a la cárcel
+      else if (it.end === (it.opensFrom || 'top')) {
+        // se descorre el cerrojo y la tapa se abre: el atajo (a la cárcel, o
+        // desde el almacén de la torre al dormitorio de arriba)
         g.flags[it.flag] = true;
-        it.opening = true;
+        for (const q of this.list) if (q.kind === 'hatch' && q.flag === it.flag && q.obj) q.opening = true;
         p.playInteract('interact', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
         g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z });
         setTimeout(() => g.audio && g.audio.play('doorOpen', { x: it.x, y: it.y, z: it.z }), 350);
-        g.ui.toast(MSG.hatchOpen, 4.5);
+        g.ui.toast(MSG[it.openMsg] ?? MSG.hatchOpen, 4.5);
         g.saveGame();
       } else {
-        g.ui.toast(MSG.hatchShut, 4);
+        g.ui.toast(MSG[it.shutMsg] ?? MSG.hatchShut, 4);
         g.audio && g.audio.play('locked', { x: it.x, y: it.y + 4, z: it.z });
       }
       return true;

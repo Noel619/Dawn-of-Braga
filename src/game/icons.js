@@ -58,6 +58,36 @@ const WOOD = [P.wood0, P.wood1, P.wood2, P.wood3, P.wood4];
 const IRON = [P.void, P.iron0, P.iron1, P.iron2, P.iron3, P.iron4, P.iron5];
 const RUBY = [P.ruby0, P.ruby1, P.ruby2, P.ruby3, P.ruby4];
 
+// Llave grande de hierro (la de una de las cinco cerraduras de la reja de la
+// Sé): la anilla con su cinta (rib: cuatro tonos), la caña y el paletón.
+function royalKey(b, rib) {
+  // la cinta, anudada a la anilla, con sus dos cabos
+  seg(b, 6, 9, 3, 18, 1.6, 1.1, (t, s, x, y) => shade(rib, 0.6 - t * 0.3 - (s > 0 ? 0.2 : 0), x, y));
+  seg(b, 7, 9, 9, 19, 1.5, 1.0, (t, s, x, y) => shade(rib, 0.7 - t * 0.3 - (s > 0 ? 0.2 : 0), x, y));
+  // la anilla
+  for (let y = 0; y < 32; y++)
+    for (let x = 0; x < 32; x++) {
+      const dx = x + 0.5 - 10,
+        dy = y + 0.5 - 8;
+      const d = Math.hypot(dx, dy);
+      if (d > 5.6 || d < 3.2) continue;
+      b.set(x, y, shade(IRON, 0.62 - dx / 14 - dy / 16 + (d > 4.4 ? 0.08 : -0.12), x, y));
+    }
+  // la caña, en diagonal, con su collar
+  seg(b, 14, 12, 26, 24, 1.6, 1.5, (t, s, x, y) => (s < -0.4 ? P.iron5 : s > 0.45 ? P.iron1 : shade(IRON, 0.55 - t * 0.1, x, y)));
+  seg(b, 13, 14, 16, 11, 1.4, 1.4, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+  // el paletón: tres dientes
+  for (const [x0, y0, x1, y1] of [
+    [22, 22, 19, 26],
+    [24, 24, 21, 28],
+    [26, 25, 24, 28],
+  ])
+    seg(b, x0, y0, x1, y1, 1.4, 1.4, (t, s, x, y) => (s < -0.3 ? P.iron4 : shade(IRON, 0.45, x, y)));
+  b.set(18, 16, P.iron5);
+  sparkle(b, 25, 8);
+  b.outline(P.void);
+}
+
 function sparkle(b, x, y) {
   b.set(x, y, P.steel5);
   b.set(x - 1, y, P.steel4);
@@ -358,6 +388,80 @@ const ICONS = {
     seg(b, 23, 9, 23, 2, 2, 2, (t, s, x, y) => (s < -0.3 ? P.wood4 : s > 0.4 ? P.wood1 : shade(WOOD, 0.6 + ((y & 1) ? 0.1 : 0), x, y)));
     seg(b, 21, 10, 25, 10, 1.1, 1.1, (t, s) => (s < 0 ? P.iron4 : P.iron2));
     b.set(22, 3, P.wood4);
+    b.outline(P.void);
+  },
+  // las cinco llaves de la reja de la Sé: hierro negro, de paletón grande, y
+  // la cinta del oficio atada a la anilla
+  llaveAlferez(b) {
+    royalKey(b, [P.blood1, P.blood2, P.blood3, P.blood4]);
+  },
+  llaveMayordomo(b) {
+    royalKey(b, [P.gold1, P.gold2, P.gold3, P.gold4]);
+  },
+  llaveCamarero(b) {
+    royalKey(b, [P.glass0, P.glass1, P.glass2, P.glass3]);
+  },
+  llaveCapellan(b) {
+    royalKey(b, [P.bone0, P.bone1, P.bone2, P.bone3]);
+  },
+  llaveCanciller(b) {
+    royalKey(b, [P.moss0, P.moss1, P.moss2, P.moss3]);
+  },
+  // la ballesta de estribo: la cureña en diagonal (la culata abajo), el arco
+  // de acero de través, la cuerda tensa hasta la nuez y el estribo delante
+  crossbow(b) {
+    // la cureña
+    seg(b, 5, 27, 22, 10, 2.4, 1.8, (t, s, x, y) => (s < -0.4 ? P.wood4 : s > 0.45 ? P.wood0 : shade(WOOD, 0.62 - t * 0.12 + ((x + y) & 1 ? 0.06 : 0), x, y)));
+    // la culata, más alta
+    seg(b, 4, 28, 8, 24, 3.2, 2.6, (t, s, x, y) => (s < -0.4 ? P.wood3 : s > 0.5 ? P.wood0 : shade(WOOD, 0.5, x, y)));
+    // la llave, por debajo
+    seg(b, 9, 26, 14, 23, 0.7, 0.7, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+    // el arco: de una punta a otra, curvado hacia la culata
+    const pts = [];
+    for (let k = 0; k <= 8; k++) {
+      const u = k / 8 - 0.5;
+      pts.push([21 + u * 20 * 0.707 - (1 - 4 * u * u) * 2.2 * 0.707, 11 + u * 20 * 0.707 + (1 - 4 * u * u) * 2.2 * 0.707]);
+    }
+    for (let k = 0; k < 8; k++) seg(b, pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1], 1.3, 1.3, (t, s, x, y) => (s < -0.2 ? P.steel4 : s > 0.4 ? P.steel1 : shade(STEEL, 0.55, x, y)));
+    // la cuerda, de las puntas a la nuez
+    const nut = [14.2, 17.6];
+    for (const q of [pts[0], pts[8]]) seg(b, q[0], q[1], nut[0], nut[1], 0.5, 0.5, () => P.parch3);
+    b.set(14, 17, P.bone3);
+    b.set(15, 18, P.bone2);
+    // la atadura de la cabeza y el estribo
+    for (const [x, y] of [
+      [21, 11],
+      [22, 11],
+      [21, 12],
+      [20, 11],
+    ])
+      b.set(x, y, P.parch2);
+    for (let a = 0; a < 12; a++) {
+      const ang = (a / 12) * Math.PI * 2;
+      b.set(Math.round(25.5 + Math.cos(ang) * 2.4), Math.round(6.5 + Math.sin(ang) * 2.4), a < 6 ? P.iron4 : P.iron2);
+    }
+    sparkle(b, 9, 7);
+    b.outline(P.void);
+  },
+  // un haz de virotes atados, con sus puntas de hierro y sus plumas
+  bolts(b) {
+    for (const [o, k] of [
+      [-3.2, 0],
+      [0, 1],
+      [3.2, 2],
+    ]) {
+      const ax = 6 + o * 0.7,
+        ay = 26 + o * 0.7,
+        bx = 25 + o * 0.7,
+        by = 7 + o * 0.7;
+      seg(b, ax, ay, bx, by, 0.9, 0.9, (t, s, x, y) => (s < 0 ? P.wood4 : shade(WOOD, 0.55 + k * 0.04, x, y)));
+      // la punta
+      seg(b, bx - 1.4, by + 1.4, bx + 1.6, by - 1.6, 1.4, 0.3, (t, s) => (s < 0 ? P.iron5 : P.iron3));
+      // las plumas
+      for (const sd of [-1, 1]) seg(b, ax + 1.5, ay - 1.5, ax + 4.4 + sd * 0.9, ay - 4.4 - sd * -0.9, 0.6, 0.4, () => (k === 1 ? P.bone3 : P.bone2));
+    }
+    // la cuerda que los ata
+    seg(b, 13, 22, 20, 15, 1.4, 1.4, (t, s, x, y) => ((x + y) & 1 ? P.parch2 : P.parch1));
     b.outline(P.void);
   },
   // anillo pastoral de oro con un gran rubí
@@ -1083,6 +1187,15 @@ function drawFlask(b, full) {
 
 // ---------------------------------------------------------------- pequeños (9x9)
 const SMALL = {
+  bolt(b) {
+    b.line(0, 8, 6, 2, P.wood4);
+    b.line(1, 8, 6, 3, P.wood2);
+    b.set(7, 1, P.iron5);
+    b.set(8, 0, P.iron4);
+    b.set(7, 0, P.iron3);
+    b.set(0, 6, P.bone3);
+    b.set(2, 8, P.bone2);
+  },
   heart(b) {
     for (const [x, y, w] of [
       [1, 1, 3],

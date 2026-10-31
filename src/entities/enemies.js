@@ -13,6 +13,7 @@ import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
 import { CAVADOR_TYPE, EMPAREDADA_TYPE, ENRODADO_TYPE } from './catacumbas.js';
 import { CORONADO_TYPE } from './coronado.js';
+import { ALFEREZ_TYPE } from './alferez.js';
 import { FISICO_TYPE } from './fisico.js';
 import { CUERVO_TYPE } from './cuervo.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
@@ -1182,6 +1183,7 @@ export const TYPES = {
   emparedada: EMPAREDADA_TYPE,
   enrodado: ENRODADO_TYPE,
   coronado: CORONADO_TYPE,
+  alferez: ALFEREZ_TYPE,
   fisico: FISICO_TYPE,
   cuervo: CUERVO_TYPE,
   guardianL: GUARDIAN_L,

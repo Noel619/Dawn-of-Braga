@@ -553,6 +553,7 @@ export class UI {
     const out = [];
     const add = (id, cat, o = {}) => out.push({ id, cat, ...o });
     add('_flask', 'cons', { n: p.flasks + '/' + p.maxFlasks });
+    if (inv.has('virote') || p.xbowLoaded) add('virote', 'cons', { n: '×' + inv.count('virote') });
     for (const w of WEAPON_ORDER) {
       const id = WEAPONS[w].item;
       if (inv.has(id)) add(id, 'weapon', { worn: g.equipped('weapon') === id });
@@ -1142,7 +1143,10 @@ export class UI {
       this._lagHold = 0;
     }
     const rf = p.rally > 0 ? clamp(p.rally / p.maxHp, 0, 1) : 0;
-    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic].join(',');
+    // (con la ballesta en la mano: los virotes que quedan, y si está montada)
+    const xb = p.weapon && p.weapon.ranged && p.hasSword;
+    const nb = xb ? this.g.inventory.count('virote') : 0;
+    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded].join(',');
     if (key === this._vitKey && this._vitU === this.sc.u) return;
     this._vitKey = key;
     this._vitU = this.sc.u;
@@ -1164,8 +1168,22 @@ export class UI {
     b.blit(fb, 11, 19);
     const n = textBitmap(String(p.flasks), 'small', { color: p.flasks ? P.bone3 : P.iron3, outline: P.void });
     b.blit(n, 23, 20);
+    // los virotes (con la ballesta): gris si no queda ninguno; una rayita
+    // clara bajo el icono si está montada
+    let rx = 33;
+    if (xb) {
+      const bi = smallIcon('bolt');
+      const bb = new Bitmap(bi.w, bi.h);
+      bb.blit(bi, 0, 0);
+      if (nb === 0 && !p.xbowLoaded) bb.map((x, y, v) => (v >>> 24 ? (bayer(x, y) < 0.5 ? P.iron1 : P.iron2) : undefined));
+      b.blit(bb, 33, 19);
+      if (p.xbowLoaded) b.hline(34, 42, 30, P.gold4);
+      const nn = textBitmap(String(nb), 'small', { color: nb ? P.bone3 : P.iron3, outline: P.void });
+      b.blit(nn, 45, 20);
+      rx = 45 + nn.w + 3;
+    }
     // el objeto bendito que se lleva
-    if (p.relic) b.blit(smallIcon(ITEMS[p.relic].icon), 33, 19);
+    if (p.relic) b.blit(smallIcon(ITEMS[p.relic].icon), rx, 19);
     b.outline(P.void);
     const cv = this.vit;
     if (cv.width !== W || cv.height !== H) {

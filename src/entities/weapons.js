@@ -406,7 +406,7 @@ function solingenMoves(o) {
 }
 
 // ---------------------------------------------------------------- registro
-export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'espada', 'solingen', 'katana'];
+export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'espada', 'solingen', 'katana', 'ballesta'];
 
 export const WEAPONS = {
   espada: {
@@ -458,6 +458,8 @@ const PARRY = {
   espada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 108 },
   solingen: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * SOLINGEN_K) },
   katana: { win: 0.24, kind: 'blade', riposte: ['light', 3], dmg: 108 },
+  // (la ballesta para con la cureña; remata con un culatazo)
+  ballesta: { win: 0.14, kind: 'haft', riposte: ['heavy', 0], dmg: 92 },
 };
 for (const id in WEAPONS) {
   const W = WEAPONS[id];
@@ -492,6 +494,8 @@ export function weaponSet(W, rig) {
     run: M.run,
     roll: M.roll,
     guard: M.guard || null,
+    // (la ballesta: montarla)
+    reload: M.reload || null,
     riposte,
     blockRad: rad(BLOCK),
   };

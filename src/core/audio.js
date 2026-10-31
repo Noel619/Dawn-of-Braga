@@ -1420,6 +1420,61 @@ export class Audio {
         this.jingle(d, t, 0.12, 0.06);
         break;
       }
+      // ---- la ballesta
+      case 'xbowShot': {
+        // la cuerda que se suelta (un chasquido grave que vibra), el golpe del
+        // arco de acero contra sus topes y el virote que silba
+        d = this.out(P, { gain: 0.9, verb: 0.25, life: 2.2, occlude: false });
+        this.tone(d, t, 0.22, { f0: rnd(150, 175), f1: 70, gain: 0.5, type: 'triangle', a: 0.002 });
+        this.noise(d, t, 0.05, { type: 'lowpass', f0: 2600, f1: 500, gain: 0.7, a: 0.001 });
+        this.metal(d, t + 0.004, rnd(700, 820), 0.06, 0.5, { ratios: [1, 2.4, 3.9] });
+        this.creak(d, t + 0.01, 0.08, rnd(90, 120), 0.08);
+        this.noise(d, t + 0.02, 0.24, { f0: 2600, f1: 1200, q: 4, gain: 0.16, a: 0.02 });
+        this.duck(0.12, 0.2);
+        break;
+      }
+      case 'xbowThud': {
+        // el virote que se clava (en madera o entre las piedras)
+        d = this.out(P, { gain: 0.7, verb: 0.3, life: 1.6 });
+        this.noise(d, t, 0.06, { type: 'lowpass', f0: 1800, f1: 300, gain: 0.6, a: 0.001, buf: this.brown, rate: 3 });
+        this.tone(d, t, 0.12, { f0: rnd(220, 280), f1: 120, gain: 0.25, type: 'triangle' });
+        this.tone(d, t + 0.01, 0.25, { f0: rnd(560, 640), f1: rnd(540, 600), gain: 0.04, type: 'triangle', vib: 30, vibD: 40 });
+        break;
+      }
+      case 'xbowHit': {
+        // en carne: seco, hondo
+        d = this.out(P, { gain: 0.9, verb: 0.2, life: 1.5 });
+        this.tone(d, t, 0.16, { f0: 150, f1: 46, gain: 0.7 });
+        this.noise(d, t, 0.07, { type: 'lowpass', f0: 3000, f1: 500, gain: 0.6, a: 0.001 });
+        this.noise(d, t + 0.01, 0.18, { f0: 700, f1: 250, q: 3, gain: 0.35, buf: this.brown, rate: 3 });
+        this.duck(0.1, 0.2);
+        break;
+      }
+      case 'xbowSpan': {
+        // montarla: la cuerda que se estira (crujido), el esfuerzo y la nuez
+        // que la coge (un clic de hueso)
+        d = this.out(P, { gain: 0.6, verb: 0.2, life: 2 });
+        this.creak(d, t, 0.5, rnd(70, 95), 0.12);
+        this.voice(d, t + 0.05, 0.4, { f0: 118, f1: 100, vowel: 'u', v1: 'a', gain: 0.07, vibD: 0, breath: 0.8, a: 0.05, rasp: 0.4, rel: 0.5 });
+        this.noise(d, t + 0.52, 0.03, { type: 'highpass', f0: 2600, gain: 0.3, a: 0.001 });
+        this.tone(d, t + 0.52, 0.05, { f0: 1500, f1: 900, gain: 0.08, type: 'square' });
+        break;
+      }
+      case 'dryFire': {
+        // sin virote: la llave, en vacío
+        d = this.out(P, { gain: 0.5, verb: 0.1, life: 1 });
+        this.tone(d, t, 0.04, { type: 'square', f0: 1100, f1: 700, gain: 0.05 });
+        this.metal(d, t + 0.01, 1900, 0.02, 0.2);
+        break;
+      }
+      case 'ropeSnap': {
+        // una cuerda tensa que se corta y restalla
+        d = this.out(P, { gain: 0.8, verb: 0.3, life: 2 });
+        this.noise(d, t, 0.05, { type: 'highpass', f0: 1800, gain: 0.5, a: 0.001 });
+        this.tone(d, t, 0.3, { f0: rnd(200, 260), f1: 60, gain: 0.3, type: 'triangle' });
+        this.noise(d, t + 0.03, 0.3, { f0: 1200, f1: 300, q: 2, gain: 0.2, a: 0.02 });
+        break;
+      }
       case 'swingKatana': {
         // katana: silbido limpio y afinado, con un leve brillo sagrado
         d = this.out(P, { gain: 0.6, verb: 0.12, life: 1.6, occlude: false });

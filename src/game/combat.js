@@ -607,6 +607,8 @@ export class Combat {
   }
 
   clear() {
+    // (los virotes que vuelan, también)
+    if (this.game.virotes) this.game.virotes.clear();
     const g = this.game;
     for (const P of this.projectiles) {
       g.scene.remove(P.sprite);

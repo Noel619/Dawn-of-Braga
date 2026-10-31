@@ -48,6 +48,27 @@ export const ITEMS = {
     key: false,
     weapon: 'katana',
   },
+  // las cinco llaves de la reja de la cripta de la Sé (PLAN_CASTILLO.md, §7)
+  llave_alferez: {
+    name: 'Llave del alférez',
+    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta roja, del color del pendón. La llevaba al cinto el alférez mayor. En la caña, grabado: SIGNIFER.',
+    icon: 'llaveAlferez',
+    key: true,
+  },
+  ballesta: {
+    name: 'Ballesta de estribo',
+    desc: 'La ballesta del maestro ballestero de la torre: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
+    icon: 'crossbow',
+    key: false,
+    weapon: 'ballesta',
+  },
+  virote: {
+    name: 'Virotes',
+    desc: 'Virotes de ballesta, de fresno, con la punta cuadrada de hierro y las plumas de ganso. Los de la guarnición: sólo se encuentran en el castillo.',
+    icon: 'bolts',
+    key: false,
+    ammo: true,
+  },
   escudo: {
     name: 'Escudo de la guardia',
     desc: 'Escudo de lágrima con la cruz de Braga, casi borrada a golpes.',
@@ -484,6 +505,18 @@ Después, sólo la campana.`,
 Al alba, la tierra estaba removida.
 
 Desde dentro.`,
+  },
+  ballestero: {
+    title: 'Tabla del maestro ballestero',
+    text: `Rayado con un clavo en la tabla de su banco:
+
+El bolaño entró por el muro del norte a media mañana y se llevó el suelo del taller. Por el agujero subieron los de abajo. Tapiamos lo que pudimos: el arco de la guardia, la armería con tablones, la trampilla por debajo.
+
+El alférez ha subido al cadalso con la ballesta de la guardia. Dice que desde ahí defiende al Rey. El Rey está arriba, alférez, y abajo no queda nadie a quien tirar.
+
+Le he visto los ojos bajo el nasal. Ya no es él. Lleva al cinto la llave que le dio el Rey, la de la reja de la Sé, y no la suelta.
+
+La mía está en el banco. Se monta con el pie en el estribo y las dos manos en la cuerda, hasta la nuez. No tiene más ciencia. Lo que tiene es que mientras se monta no se defiende uno.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
@@ -1018,6 +1051,19 @@ export const DIALOG = {
 };
 
 export const MSG = {
+  // la planta de armas de la torre del homenaje
+  escombroTaller: 'Escombro hasta la clave del arco: las piedras del muro del taller, que se vino abajo. Entre ellas se ve luz, y algo de madera. Por aquí no se pasa.',
+  tabique: 'Un tabique de piedra y cal, nuevo, cierra el arco. Desde este lado no hay dónde hincar nada.',
+  tabiqueCae: 'Embistes el tabique con el hombro. La cal aún estaba tierna: se viene abajo. La guardia queda a un paso.',
+  armeriaTablones: 'Arrancas los tablones con la palanca. Dentro huele a aceite de armas y a cuero podrido.',
+  hatchShutBelow: 'La trampilla no cede: está atrancada por debajo.',
+  hatchOpenBelow: 'Quitas la tranca de la trampilla y la empujas. La escalera de mano sube al dormitorio de los ballesteros.',
+  hatchUpTorre: 'Subes por la escalera de mano al dormitorio de los ballesteros.',
+  cuerdaArriba: 'Trepas por la cuerda del montacargas, mano sobre mano, hasta el pañol.',
+  cuerdaAbajo: 'Te descuelgas por la cuerda del montacargas hasta la bodega.',
+  // la ballesta
+  sinVirotes: 'No te quedan virotes.',
+  virotes: (n) => `Virotes ×${n}.`,
   // el Rey y su mesa (game/rey.js)
   reyAhoraNo: 'Ahora no: algo anda cerca.',
   reyInterrumpido: 'Te levantas de la mesa.',
@@ -1165,6 +1211,8 @@ export const AREA_NAMES = {
   homenaje_pozo: 'Pozo de la torre',
   homenaje_guardia: 'Cuerpo de guardia',
   homenaje_dormitorio: 'Dormitorio de los ballesteros',
+  homenaje_panol: 'Pañol de los virotes',
+  homenaje_cadalso: 'Cadalso de la torre',
   homenaje_armeria: 'Armería',
   homenaje_ballestero: 'Taller del ballestero',
   homenaje_alcaide: 'Sala del alcaide',

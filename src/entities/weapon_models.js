@@ -374,6 +374,55 @@ export function solingenParts(j = 'sword') {
   return parts;
 }
 
+// ------------------------------------------------------------- ballesta
+// La ballesta de estribo del maestro ballestero: cureña de nogal con la
+// culata alta, el arco de acero atado con cuerda a la cabeza, la cuerda tensa
+// hasta la nuez, la llave larga por debajo y el estribo de hierro delante,
+// donde se mete el pie para montarla. La mano derecha agarra la cureña junto
+// a la llave; la izquierda, más adelante (grip2).
+const XB = { z0: -0.27, z1: 0.46, prodZ: 0.42, tip: 0.33, nut: 0.06 };
+export function ballestaParts(j = 'sword') {
+  const P = [
+    // la cureña, que se ensancha hacia la culata
+    { j, type: 'box', s: [0.048, 0.056, XB.z1 - XB.z0 - 0.1], p: [0, Y + 0.004, (XB.z0 + XB.z1) / 2 + 0.05], mat: 'wooddark' },
+    { j, type: 'box', s: [0.056, 0.1, 0.16], p: [0, Y - 0.018, XB.z0 + 0.08], taper: [0.85, 1.0], mat: 'wooddark' },
+    { j, type: 'box', s: [0.06, 0.012, 0.05], p: [0, Y - 0.06, XB.z0 + 0.03], mat: 'iron' },
+    // la canal del virote, la nuez y su pasador
+    { j, type: 'box', s: [0.012, 0.004, 0.36], p: [0, Y + 0.0325, 0.22], mat: 'black' },
+    { j, type: 'cyl', s: [0.022, 0.022, 0.05], p: [0, Y + 0.04, XB.nut], r: [0, 0, 90], seg: 8, mat: 'bone' },
+    // la llave, larga, por debajo
+    { j, type: 'box', s: [0.012, 0.012, 0.22], p: [0, Y - 0.05, -0.06], r: [6, 0, 0], mat: 'iron' },
+    // los herrajes de la cabeza
+    { j, type: 'box', s: [0.062, 0.068, 0.03], p: [0, Y + 0.004, XB.prodZ - 0.05], mat: 'iron' },
+    { j, type: 'box', s: [0.07, 0.06, 0.07], p: [0, Y + 0.012, XB.prodZ], mat: 'rope' },
+    // el estribo
+    { j, type: 'torus', s: [0.055, 0.009], p: [0, Y + 0.005, XB.z1 + 0.05], r: [0, 90, 0], seg: 10, seg2: 3, mat: 'iron' },
+  ];
+  // el arco de acero: dos palas que se curvan hacia atrás
+  for (const sx of [-1, 1]) {
+    const tx = sx * XB.tip,
+      tz = XB.prodZ - 0.07;
+    const mx = tx / 2,
+      mz = (XB.prodZ + tz) / 2;
+    const L = Math.hypot(tx, tz - XB.prodZ);
+    P.push({ j, type: 'box', s: [L, 0.026, 0.018], p: [mx, Y + 0.012, mz], r: [0, (Math.atan2(XB.prodZ - tz, sx * XB.tip) * 180) / Math.PI, 0], taper: [1, 0.7], mat: 'iron' });
+    // la cuerda, de la punta a la nuez
+    const dx = -tx,
+      dz = XB.nut - tz;
+    const Ls = Math.hypot(dx, dz);
+    P.push({ j, type: 'box', s: [0.006, 0.006, Ls], p: [tx / 2, Y + 0.03, (tz + XB.nut) / 2], r: [0, (Math.atan2(dx, dz) * 180) / Math.PI, 0], mat: 'rope' });
+  }
+  return P;
+}
+// El virote montado en la canal (se ve sólo con la ballesta cargada).
+export function viroteParts(j = 'sword') {
+  return [
+    { j, type: 'box', s: [0.011, 0.011, 0.34], p: [0, Y + 0.044, 0.25], mat: 'wooddark' },
+    { j, type: 'cone', s: [0.013, 0.05], p: [0, Y + 0.044, 0.445], r: [90, 0, 0], seg: 4, mat: 'iron' },
+    { j, type: 'box', s: [0.002, 0.026, 0.06], p: [0, Y + 0.058, 0.11], mat: 'clothWhite' },
+  ];
+}
+
 export const WEAPON_PARTS = {
   facon: faconParts,
   hacha: axeParts,
@@ -381,6 +430,7 @@ export const WEAPON_PARTS = {
   espada: (j) => swordParts(j),
   solingen: solingenParts,
   katana: katanaParts,
+  ballesta: ballestaParts,
 };
 
 // Escudo colgado a la espalda (cuando se empuña un arma a dos manos).

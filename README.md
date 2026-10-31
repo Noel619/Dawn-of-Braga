@@ -359,6 +359,19 @@ escalera con su tejado a dos aguas, el matacán sobre la puerta, la chimenea, el
 piedras para tirar y, en su asta, el estandarte del Rey (la cruz azul en campo blanco). Forjados de tablas sobre
 viguetas; la sala, bajo vigas gruesas de muro a muro. Todo sale de unas pocas medidas (`world/level_torre.js`).
 
+**La planta de armas** (el camino hasta la ballesta). Un bolaño entró por el muro norte del taller y se llevó su
+suelo; los de dentro tapiaron lo que pudieron. Del cuerpo de guardia al taller, un arco está lleno de escombro hasta
+la clave (se ve la luz entre las piedras) y el otro, tapiado. La **armería**, clavada con tablones (la palanca);
+dentro, el agujero del bolaño baja al **granero**. La trampilla del dormitorio la atrancaron por abajo: se abre desde
+el almacén (el atajo de vuelta). En la **bodega**, la cuerda del **montacargas** sube al **pañol de los virotes**,
+y del pañol, por una saetera que alguien ensanchó a mazazos, se sale al **cadalso**: la galería de madera colgada
+por fuera de la torre, al norte y al este, con su pantalla de tablas, sus troneras, su tejadillo y tablas que faltan.
+En la garita de la esquina vigila **el alférez mayor**, convertido, con la ballesta de la guardia (se planta lejos,
+tira y la monta; si te le echas encima, culatazo; no vuelve). Lleva al cinto **la llave del alférez**, una de las
+cinco de la reja de la Sé. Por la ventana del taller se entra en él: el suelo hundido hacia el agujero, las vigas
+colgando, el maestro ballestero bajo una de ellas, su tabla rayada con un clavo y, en su banco, **la ballesta**.
+El tabique se derriba desde dentro: el atajo a la guardia.
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -427,7 +440,7 @@ tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojo
 rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
-canónigo (aguante), que deja el Descoyuntado al morir. Treinta y ocho documentos breves cuentan la historia junto con
+canónigo (aguante), que deja el Descoyuntado al morir. Casi cincuenta documentos breves cuentan la historia junto con
 el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
 al lado, en letra de leer.
 
@@ -511,6 +524,13 @@ encontrarán:
 - **Espada del carcelero**: la de siempre, sin cambios.
 - **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
   al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
+- **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller de la torre del homenaje): el ataque
+  ligero la alza a la cara y tira un virote, que vuela recto y deprisa (cae un poco), se clava donde da y tumba a las
+  criaturas pequeñas; fijado un objetivo, va a su pecho. Tras el tiro se monta sola, con el pie en el estribo y las
+  dos manos en la cuerda hasta la nuez: casi dos segundos quieto y a merced (si te golpean, se pierde). El pesado es
+  un culatazo. Los **virotes se cuentan** (junto a las ampollas, con una raya dorada si está montada) y por ahora
+  sólo los hay en el castillo: en el pañol, en el taller, en el cadalso y en el carcaj del alférez. También cortan
+  cuerdas.
 
 Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
 queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`

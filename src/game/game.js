@@ -44,6 +44,7 @@ import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { ReyQuest } from './rey.js';
+import { Virotes } from './virotes.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
@@ -242,6 +243,8 @@ export class Game {
     this.CELLAR = CELLAR; // (para las herramientas de prueba)
 
     this.combat = new Combat(this);
+    // los virotes de las ballestas (los tuyos y los de los ballesteros)
+    this.virotes = new Virotes(this);
     this.interact = new Interactables(this, lvl.L.interact);
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
@@ -823,10 +826,17 @@ export class Game {
     this.later(6200, () => this._nextHint());
   }
 
-  giveItem(id) {
+  giveItem(id, n = 1) {
     const p = this.player;
-    this.inventory.add(id);
+    this.inventory.add(id, n);
     const it = ITEMS[id];
+    // (la munición: la primera vez se enseña; luego, un aviso y ya)
+    if (it.ammo && this.flags['seen:' + id]) {
+      this.ui.toast(MSG.virotes(n), 2.4);
+      this.saveGame();
+      return;
+    }
+    if (it.ammo) this.flags['seen:' + id] = true;
     // un arma nueva se empuña al recogerla; el escudo, al brazo; una pieza
     // de armadura, si su ranura está vacía
     if (it.weapon && WEAPONS[it.weapon]) {
@@ -1066,6 +1076,20 @@ export class Game {
 
   onEnemyDeath(e) {
     if (this.lockTarget === e) this.lockTarget = null;
+    // (los que no vuelven, como el alférez: lo que dejan aparece donde caen)
+    if (e.spec.dies) {
+      for (const it of this.interact.list)
+        if (it.kind === 'item' && it.afterFlag === e.spec.dies && !this.flags['take:' + it.id]) {
+          it.hidden = false;
+          it.obj.visible = true;
+          // (donde ha caído él)
+          it.x = it.ix = e.pos.x + (it.x - e.home.x);
+          it.z = it.iz = e.pos.z + (it.z - e.home.z);
+          it.y = e.pos.y + (it.y - e.home.y);
+          it.obj.position.set(it.x, it.y, it.z);
+        }
+      this.saveGame();
+    }
     // los Velados: cae uno y el otro enloquece; la pelea sigue con él
     if (e.boss && e.partner && !e.partner.dead) {
       const o = e.partner;
@@ -1866,6 +1890,7 @@ export class Game {
       this.updateProbes(dt);
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
+      this.virotes.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);
       this.spring.update(dt);

@@ -45,6 +45,26 @@ const CROSS = [
 const ARCH = { z0: -15.05, z1: -14.55, w: 8.0, spring: 13.2, rise: 4.0 };
 // la galería de la sala, a la altura de la planta tercera: su ancho
 const GAL = 1.6;
+// La planta de armas (§4.2): el pañol de los virotes, tabicado en la esquina
+// del taller (x1, z1: su planta por dentro; xw, zw: donde empieza el taller,
+// tras el tabique); la saetera del pañol, ensanchada a mazazos, que sale al
+// cadalso; la ventana del taller, que entra desde él; los huecos del suelo
+// (el agujero del bolaño en la armería, el del taller y el pozo del
+// montacargas); las dos bocas del tabique entre el taller y la guardia (la
+// del escombro y la que se tapió) y el cadalso, la galería de madera colgada
+// por fuera de la torre al norte y al este, con la garita del alférez en la
+// esquina.
+export const ARMAS = {
+  panol: { x1: -78.8, xw: -78.4, z1: -22.6, zw: -22.2 },
+  saetera: { x: -81.2, w: 1.25, h: 1.95 },
+  ventana: { z: -25.2, w: 1.25, h: 2.0 },
+  holeArm: [-91.5, -20.5, -89.5, -18.7],
+  holeTaller: [-78.0, -21.9, -75.4, -19.6],
+  holeHoist: [-81.5, -25.0, -80.3, -23.8],
+  escombro: -80.4,
+  tabique: -75.8,
+  cadalso: { w: 1.8, x0: -83.2, z1: -23.6 },
+};
 // las escaleras (x, z: el pie; dir; ancho; peldaños) y sus huecos en el
 // forjado de arriba
 const ST = {
@@ -83,7 +103,28 @@ export function torreRooms() {
       R('homenaje1', 'homenaje_guardia', [s1, b1, ix1, iz1], 'se', { doors: [{ side: 's', at: DR.x, w: DR.w, h: DR.h }], extra: [[DR.x - DR.w / 2, iz1, DR.x + DR.w / 2, K.z1]] }),
       R('homenaje1p', 'homenaje_dormitorio', [ix0, b1, s0, iz1], 'sw'),
       R('homenaje1a', 'homenaje_armeria', [ix0, iz0, s0, b0], 'nw'),
-      R('homenaje1t', 'homenaje_ballestero', [s1, iz0, ix1, b0], 'ne'),
+      (() => {
+        const A = ARMAS.panol,
+          V = ARMAS.ventana;
+        return {
+          room: 'homenaje1t',
+          zone: 'homenaje_ballestero',
+          rects: [
+            [s1, A.zw, ix1, b0],
+            [A.xw, iz0, ix1, A.zw],
+          ],
+          walls: [
+            { r: [s1, A.zw, ix1, b0], sides: 'e' },
+            { r: [A.xw, iz0, ix1, A.zw], sides: 'ne', doors: [{ side: 'e', at: V.z, w: V.w, h: V.h }] },
+          ],
+        };
+      })(),
+      {
+        room: 'homenaje1q',
+        zone: 'homenaje_panol',
+        rects: [[s1, iz0, ARMAS.panol.x1, ARMAS.panol.z1]],
+        walls: [{ r: [s1, iz0, ARMAS.panol.x1, ARMAS.panol.z1], sides: 'n', doors: [{ side: 'n', at: ARMAS.saetera.x, w: ARMAS.saetera.w, h: ARMAS.saetera.h }] }],
+      },
     ],
     [
       R('homenaje2', 'homenaje_alcaide', [s1, iz0, ix1, iz1], 'nse', { tall: true, doors: [{ side: 'e', at: (PO.z0 + PO.z1) / 2, w: PO.z1 - PO.z0, h: PO.h }], extra: [[ix1, PO.z0, K.x1, PO.z1]] }),
@@ -114,6 +155,16 @@ export function torreZones() {
   torreRooms().forEach((fl, f) =>
     fl.forEach((r) => zones.push({ id: r.zone, rects: [...r.rects, ...(r.extra ?? [])].map((q) => [...q, f ? fy[f] - 0.2 : -0.5, (r.tall ? K.R : top[f]) - 0.2]), atmo: 'interior', room: r.room }))
   );
+  // el cadalso, por fuera (antes que la terraza)
+  const C = ARMAS.cadalso;
+  zones.push({
+    id: 'homenaje_cadalso',
+    rects: [
+      [C.x0, K.z0 - C.w, K.x1 + C.w, K.z0, K.F1 - 0.6, K.F1 + 3],
+      [K.x1, K.z0, K.x1 + C.w, C.z1, K.F1 - 0.6, K.F1 + 3],
+    ],
+    atmo: 'ramparts',
+  });
   zones.push({ id: 'homenaje_terraza', rects: [[K.x0, K.z0, K.x1, K.z1 + 0.8, K.R - 0.3, K.R + 10]], atmo: 'ramparts' });
   return zones;
 }
@@ -143,12 +194,32 @@ export function buildTorre(ctx, S, L) {
   S.paint(x0, z0, x1, z1, 0);
   W(S, ix0, iz0, ix1, iz1);
   W(S, dx0, iz1, dx1, z1);
+  // (y los de la planta de armas: la saetera del pañol y la ventana del taller)
+  W(S, ARMAS.saetera.x - ARMAS.saetera.w / 2 - 0.25, z0 - 0.1, ARMAS.saetera.x + ARMAS.saetera.w / 2 + 0.25, iz0 + 0.1);
+  W(S, ix1 - 0.1, ARMAS.ventana.z - ARMAS.ventana.w / 2 - 0.25, x1 + 0.1, ARMAS.ventana.z + ARMAS.ventana.w / 2 + 0.25);
 
   // --- muros de fuera (la puerta del puente al sur, la poterna al este)
-  holedWall(ctx, 'wallstone', 'x', x0, x1, z0, iz0, 0, R, [], 'nwe');
+  const SA = ARMAS.saetera,
+    VE = ARMAS.ventana;
+  holedWall(ctx, 'wallstone', 'x', x0, x1, z0, iz0, 0, R, [{ a0: SA.x - SA.w / 2, a1: SA.x + SA.w / 2, y0: F1, y1: F1 + SA.h }], 'nwe');
   holedWall(ctx, 'wallstone', 'x', x0, x1, iz1, z1, 0, R, [{ a0: dx0, a1: dx1, y0: F1, y1: F1 + DR.h }], 'swe');
   holedWall(ctx, 'wallstone', 'z', iz0, iz1, x0, ix0, 0, R, [], 'w');
-  holedWall(ctx, 'wallstone', 'z', iz0, iz1, ix1, x1, 0, R, [{ a0: PO.z0, a1: PO.z1, y0: F2, y1: F2 + PO.h }], 'e');
+  holedWall(
+    ctx,
+    'wallstone',
+    'z',
+    iz0,
+    iz1,
+    ix1,
+    x1,
+    0,
+    R,
+    [
+      { a0: VE.z - VE.w / 2, a1: VE.z + VE.w / 2, y0: F1, y1: F1 + VE.h },
+      { a0: PO.z0, a1: PO.z1, y0: F2, y1: F2 + PO.h },
+    ],
+    'e'
+  );
   // (la jamba norte de la poterna es el muro norte de la sala)
   wb.box('wallstone', ix1, F2, iz0, x1, F2 + PO.h, iz0 + 0.01, { faces: 's', sub: 2 });
   exterior(ctx, K, DR);
@@ -194,10 +265,19 @@ export function buildTorre(ctx, S, L) {
   wall({ f: 0, axis: 'x', a0: ix0, a1: s0, t0: CROSS[0][0], t1: CROSS[0][1], y0: 0, y1: ceilY[0], rooms: ['homenaje0n', 'homenaje0'], openings: [door(-89.5)] });
   wall({ f: 0, axis: 'x', a0: s1, a1: ix1, t0: CROSS[0][0], t1: CROSS[0][1], y0: 0, y1: ceilY[0], rooms: ['homenaje0b', 'homenaje0p'], openings: [door(-78.5)] });
   // primera
-  wall({ f: 1, axis: 'z', a0: iz0, a1: zc(1), t0: s0, t1: s1, y0: F1, y1: ceilY[1], rooms: ['homenaje1a', 'homenaje1t'], openings: [door(-20.5)] });
+  // (entre la armería y el taller, tapiado: no hay paso)
+  wall({ f: 1, axis: 'z', a0: iz0, a1: ARMAS.panol.z1 + 0.2, t0: s0, t1: s1, y0: F1, y1: ceilY[1], rooms: ['homenaje1a', 'homenaje1q'] });
+  wall({ f: 1, axis: 'z', a0: ARMAS.panol.z1 + 0.2, a1: zc(1), t0: s0, t1: s1, y0: F1, y1: ceilY[1], rooms: ['homenaje1a', 'homenaje1t'] });
   wall({ f: 1, axis: 'z', a0: zc(1), a1: iz1, t0: s0, t1: s1, y0: F1, y1: ceilY[1], rooms: ['homenaje1p', 'homenaje1'], openings: [door(-12.6)] });
   wall({ f: 1, axis: 'x', a0: ix0, a1: s0, t0: CROSS[1][0], t1: CROSS[1][1], y0: F1, y1: ceilY[1], rooms: ['homenaje1a', 'homenaje1p'], openings: [door(-89.5)] });
-  wall({ f: 1, axis: 'x', a0: s1, a1: ix1, t0: CROSS[1][0], t1: CROSS[1][1], y0: F1, y1: ceilY[1], rooms: ['homenaje1t', 'homenaje1'], openings: [door(-78.5)] });
+  wall({ f: 1, axis: 'x', a0: s1, a1: ix1, t0: CROSS[1][0], t1: CROSS[1][1], y0: F1, y1: ceilY[1], rooms: ['homenaje1t', 'homenaje1'], openings: [door(ARMAS.escombro), door(ARMAS.tabique)], sill: false });
+  // el pañol, tabicado en su esquina (sin puerta: sólo el montacargas y la
+  // saetera)
+  {
+    const A = ARMAS.panol;
+    wall({ f: 1, axis: 'x', a0: s1, a1: A.xw, t0: A.z1, t1: A.zw, y0: F1, y1: ceilY[1], rooms: ['homenaje1q', 'homenaje1t'] });
+    wall({ f: 1, axis: 'z', a0: iz0, a1: A.z1, t0: A.x1, t1: A.xw, y0: F1, y1: ceilY[1], rooms: ['homenaje1q', 'homenaje1t'] });
+  }
   // segunda: el muro de carga sube entero hasta la terraza (la sala es de
   // doble altura); al oeste, el escritorio y la alcoba, y encima la cámara
   wall({ f: 2, axis: 'z', a0: iz0, a1: zc(2), t0: s0, t1: s1, y0: F2, y1: F3, rooms: ['homenaje2c', 'homenaje2'] });
@@ -250,13 +330,13 @@ export function buildTorre(ctx, S, L) {
       if (r.tall) continue;
       for (const q of r.rects)
         for (let z = q[1] + 0.8; z < q[3] - 0.4; z += 1.45) {
-          const cut = holes.find((h) => z > h[1] - 0.15 && z < h[3] + 0.15);
-          const segs = cut ? subtractRects([q[0], z - 0.1, q[2], z + 0.1], [[cut[0] - 0.1, z - 1, cut[2] + 0.1, z + 1]]) : [[q[0], z - 0.1, q[2], z + 0.1]];
+          const cuts = holes.filter((h) => z > h[1] - 0.15 && z < h[3] + 0.15).map((h) => [h[0] - 0.1, z - 1, h[2] + 0.1, z + 1]);
+          const segs = subtractRects([q[0], z - 0.1, q[2], z + 0.1], cuts);
           for (const sg of segs) if (sg[2] - sg[0] > 0.05) wb.box('wooddark', sg[0], yb - 0.2, sg[1], sg[2], yb, sg[3], { ao: false, faces: 'nsewb', room: r.room });
         }
     }
   };
-  slab(0, [ix0, iz0, ix1, iz1], [], KR[1]);
+  slab(0, [ix0, iz0, ix1, iz1], [ARMAS.holeArm, ARMAS.holeTaller, ARMAS.holeHoist], KR[1]);
   slab(1, [ix0, iz0, ix1, iz1], [H12], KR[2]);
   slab(2, [ix0, iz0, s0, iz1], [H23], KR[3]);
   // la terraza: losas sobre toda la torre (muros incluidos)
@@ -368,6 +448,8 @@ export function buildTorre(ctx, S, L) {
 
   // --- lo de dentro, estancia a estancia
   furnish(ctx, L, K, { ix0, ix1, iz0, iz1, s0, s1 });
+  // --- la planta de armas: el recorrido hasta la ballesta (§4.2)
+  armas(ctx, S, L, K, { ix0, ix1, iz0, iz1, s0, s1 });
 }
 
 // ------------------------------------------------------------------------ por fuera
@@ -967,43 +1049,6 @@ function furnish(ctx, L, K, d) {
     P.wallTorch(ctx, -90.0, y + 2.2, iz0, 's', { room, radius: 7 });
     wb.setRoom(null);
   }
-  // el taller del ballestero: escudos, ballestas y aljabas, las cajas de
-  // virotes y el banco del flechero (astiles, plumas, puntas)
-  {
-    const room = 'homenaje1t';
-    const y = F1;
-    wb.setRoom(room);
-    for (let x = -82.4; x < -77.2; x += 0.95) {
-      wb.at(x, y, iz0 + 0.25, 0, () => {
-        wb.box('planks', -0.33, 0, -0.04, 0.33, 0.85, 0.04, { ao: false, faces: 'tnsewb', tint: [0.6, 0.5, 0.42], room });
-        wb.box('iron', -0.06, 0.38, 0.04, 0.06, 0.5, 0.08, { ao: false, room });
-      });
-    }
-    wb.box('planks', -82.6, y + 1.5, iz0, -77.4, y + 2.6, iz0 + 0.06, { ao: false, room, tint: [0.62, 0.55, 0.48] });
-    for (let x = -82.1; x < -77.7; x += 0.9) {
-      beam3(ctx, 'wooddark', V(x, y + 1.6, iz0 + 0.1), V(x, y + 2.45, iz0 + 0.1), 0.07, { room });
-      beam3(ctx, 'wooddark', V(x - 0.32, y + 2.25, iz0 + 0.1), V(x + 0.32, y + 2.25, iz0 + 0.1), 0.06, { room });
-    }
-    for (const [x, z] of [
-      [-75.9, -25.4],
-      [-75.9, -24.4],
-    ]) {
-      P.crate(ctx, x, y, z, 0.75, 0);
-      for (let k = 0; k < 12; k++)
-        wb.box('timber', x - 0.3 + (k % 6) * 0.1, y + 0.75, z - 0.2 + Math.floor(k / 6) * 0.25, x - 0.28 + (k % 6) * 0.1, y + 1.05, z - 0.18 + Math.floor(k / 6) * 0.25, { ao: false, room });
-    }
-    const tx = -79.6,
-      tz = -20.8;
-    P.table(ctx, tx, y, tz, 1.6, 0.8, 0);
-    for (let k = 0; k < 16; k++)
-      wb.box('timber', tx - 0.6 + (k % 8) * 0.14, y + 0.82, tz - 0.3 + Math.floor(k / 8) * 0.25, tx - 0.58 + (k % 8) * 0.14, y + 0.835, tz + 0.2 + Math.floor(k / 8) * 0.25, { ao: false, room });
-    for (let k = 0; k < 6; k++) wb.box('clothWhite', tx + 0.25 + k * 0.08, y + 0.82, tz + 0.3, tx + 0.29 + k * 0.08, y + 0.83, tz + 0.45, { ao: false, faces: 't', room });
-    P.stool(ctx, tx, y, tz + 0.8, { room });
-    bakeCorpse(wb, -76.4, y, -19.6, -1.0, 'sit', 'soldier', 33);
-    P.wallTorch(ctx, ix1, y + 2.2, -18.4, 'w', { room, radius: 7 });
-    wb.setRoom(null);
-  }
-
   // --- la sala del alcaide, a doble altura: la mesa del Rey bajo el arco,
   // la mesa del consejo con el plano de la defensa, el atril del libro de la
   // guarnición, las armas del alcaide, los estandartes y dos coronas de luz
@@ -1171,7 +1216,7 @@ function furnish(ctx, L, K, d) {
   // --- criaturas de la torre
   L.enemies.push(
     { type: 'penitent', x: -91.4, y: 0, z: -22.4, yaw: 0.6, idle: 'eat', id: 'e_alm1' },
-    { type: 'soldier', x: -79.4, y: F1, z: -22.6, yaw: -0.4, idle: 'stand', id: 'e_arm1' },
+    { type: 'soldier', x: -75.6, y: F1, z: -17.4, yaw: -0.4, idle: 'stand', id: 'e_arm1' },
     { type: 'soldier', x: -89.4, y: F1, z: -22.6, yaw: 2.6, idle: 'wander', id: 'e_arm2' },
     // (en la alcoba: en la sala está la mesa del Rey)
     { type: 'mourner', x: -89.4, y: F2, z: -22.4, yaw: -Math.PI / 2, idle: 'stand', id: 'e_alc1' },
@@ -1184,7 +1229,304 @@ function furnish(ctx, L, K, d) {
     { kind: 'npc', npc: 'rey', id: 't_rey', x: REY_MESA.table.x, y: F2, z: REY_MESA.table.z, r: 2.2 },
     { kind: 'door', id: 'd_poterna', x: ix1 + 0.25, y: F2, z: (PO.z0 + PO.z1) / 2, w: PO.z1 - PO.z0, h: PO.h, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: 1, swing: 1, plane: ix1 },
     // (el almacén, por la trampilla del dormitorio)
-    { kind: 'hatch', id: 'h_almacen_arriba', end: 'top', flag: 'hatch:almacen', x: HT.x, y: F1, z: HT.z, r: 1.6, to: [HT.x + 0.75, 0, HT.z, Math.PI / 2] },
-    { kind: 'hatch', id: 'h_almacen_abajo', end: 'bottom', flag: 'hatch:almacen', x: HT.x - 0.3, y: 0, z: HT.z, r: 1.6, to: [HT.x + 1.0, F1, HT.z, Math.PI / 2] }
+    { kind: 'hatch', id: 'h_almacen_arriba', end: 'top', flag: 'hatch:almacen', opensFrom: 'bottom', shutMsg: 'hatchShutBelow', msgDown: 'hatchDown', x: HT.x, y: F1, z: HT.z, r: 1.6, to: [HT.x + 0.75, 0, HT.z, Math.PI / 2] },
+    { kind: 'hatch', id: 'h_almacen_abajo', end: 'bottom', flag: 'hatch:almacen', opensFrom: 'bottom', openMsg: 'hatchOpenBelow', msgUp: 'hatchUpTorre', x: HT.x - 0.3, y: 0, z: HT.z, r: 1.6, to: [HT.x + 1.0, F1, HT.z, Math.PI / 2] }
   );
+}
+
+// ------------------------------------------------------------------------ la planta de armas
+// El recorrido de §4.2. Del cuerpo de guardia al taller, el paso directo está
+// lleno de escombro hasta el techo (se ve la luz del taller entre las
+// piedras) y el otro, tapiado. La armería, clavada con tablones; dentro, el
+// agujero del bolaño baja al granero. La trampilla del dormitorio la
+// atrancaron por abajo: se abre desde el almacén. En la bodega, la cuerda del
+// montacargas sube al pañol de los virotes; del pañol, por la saetera que
+// alguien ensanchó a mazazos, se sale al cadalso, la galería de madera
+// colgada por fuera de la torre, donde vigila el alférez desde su garita; y
+// por la ventana del taller se entra en él: el suelo hundido hacia el
+// agujero, las vigas colgando, el maestro ballestero bajo una de ellas y la
+// ballesta en su banco. El tabique se derriba desde el taller: el atajo.
+function armas(ctx, S, L, K, d) {
+  const wb = ctx.wb;
+  const { ix1, iz0, s1 } = d;
+  const { x1, z0, F1, F2 } = K;
+  const SL = K.slab;
+  const A = ARMAS;
+  const rr = new RNG(4461);
+  const zc = (CROSS[1][0] + CROSS[1][1]) / 2;
+
+  // --- el escombro entre la guardia y el taller (no se pasa)
+  {
+    const x = A.escombro;
+    for (const [sz, seed] of [
+      [-0.55, 4471],
+      [0.55, 4472],
+    ])
+      P.rubble(ctx, x, F1, zc + sz, 9, seed, 0.9, { mat: 'wallstone', scale: 1.15, blocks: 0.8 });
+    for (let k = 0; k < 7; k++) P.roughStone(ctx, x + rr.range(-0.5, 0.5), F1 + 0.3 + k * 0.33, zc + rr.range(-0.25, 0.25), rr.range(0.24, 0.34), 4473 + k, { block: true, mat: 'wallstone', uvScale: 0.7, sink: 0, scl: [1, 0.7, 0.8] });
+    ctx.col.add(x - 0.68, F1, CROSS[1][0] - 0.2, x + 0.68, F1 + 2.8, CROSS[1][1] + 0.2);
+    L.interact.push({ kind: 'examine', id: 'x_escombro_taller', text: 'escombroTaller', x, y: F1, z: CROSS[1][1] + 1.0, r: 1.8 });
+  }
+
+  // --- el tabique (se derriba desde el taller) y, ya caído, sus escombros
+  {
+    const x = A.tabique,
+      w = 1.3;
+    wb.box('ashlar', x - w / 2, F1 - 0.05, CROSS[1][0], x + w / 2, F1, CROSS[1][1], { faces: 't', ao: false, room: 'homenaje1' });
+    ctx.beginGroup('puerta:d_tabique_taller');
+    const tint = [0.94, 0.92, 0.86];
+    wb.box('wallstone', x - w / 2, F1, zc - 0.22, x + w / 2, F1 + 2.05, zc + 0.22, { sub: 1.2, aoH: 1, faces: 'ns', room: 'homenaje1', tint });
+    for (const [y0, y1, k] of [
+      [2.05, 2.3, 0.0],
+      [2.3, 2.5, 0.12],
+      [2.5, 2.64, 0.3],
+    ])
+      wb.box('wallstone', x - w / 2 + k, F1 + y0, zc - 0.22, x + w / 2 - k, F1 + y1, zc + 0.22, { sub: 1.2, ao: false, faces: 'nst', room: 'homenaje1', tint });
+    // la cal, fresca, que rebosa por las juntas
+    for (let k = 0; k < 5; k++) wb.box('plaster', x - w / 2 + 0.05, F1 + 0.35 + k * 0.42, zc + 0.22, x + w / 2 - 0.05, F1 + 0.39 + k * 0.42, zc + 0.24, { ao: false, faces: 's', room: 'homenaje1', tint: [1.0, 0.98, 0.92] });
+    ctx.endGroup();
+    ctx.beginGroup('puerta:d_tabique_taller:ruina');
+    P.rubble(ctx, x, F1, zc + 0.9, 8, 4476, 0.8, { mat: 'wallstone', scale: 0.85, blocks: 0.4 });
+    P.rubble(ctx, x, F1, zc - 0.5, 4, 4477, 0.5, { mat: 'wallstone', scale: 0.6 });
+    ctx.endGroup();
+    L.interact.push({ kind: 'door', id: 'd_tabique_taller', x, y: F1, z: zc, w, h: 2.6, axis: 'x', lock: { type: 'barred', side: -1, msg: 'tabiqueCae', sound: 'swingHeavy' }, barredMsg: 'tabique', mat: 'tabique' });
+  }
+
+  // --- la armería, clavada con tablones; el agujero del bolaño en su suelo
+  {
+    L.interact.push({ kind: 'door', id: 'd_armeria', x: -89.5, y: F1, z: zc, w: 1.3, h: 2.7, arch: true, axis: 'x', lock: { type: 'boards', msg: 'armeriaTablones' }, mat: 'planks', hinge: 1, swing: -1, plane: CROSS[1][0] });
+    const [hx0, hz0, hx1, hz1] = A.holeArm;
+    const room = 'homenaje1a';
+    // tablas rotas que asoman sobre el agujero, alguna colgando hacia abajo
+    for (let k = 0; k < 6; k++) {
+      const z = hz0 + 0.15 + k * ((hz1 - hz0 - 0.3) / 5);
+      const L0 = rr.range(0.15, 0.55);
+      wb.box('planks', hx0, F1 - 0.05, z - 0.09, hx0 + L0, F1, z + 0.09, { ao: false, faces: 'tnsewb', room, tint: [0.7, 0.6, 0.5] });
+      const L1 = rr.range(0.1, 0.4);
+      wb.box('planks', hx1 - L1, F1 - 0.05, z - 0.09, hx1, F1, z + 0.09, { ao: false, faces: 'tnsewb', room, tint: [0.7, 0.6, 0.5] });
+    }
+    for (const [x, z, a] of [
+      [hx0 + 0.6, hz0 + 0.5, 0.9],
+      [hx1 - 0.5, hz1 - 0.4, -1.1],
+    ])
+      beam3(ctx, 'planks', V(x, F1 - 0.05, z), V(x + Math.sin(a) * 0.3, F1 - 1.4, z + Math.cos(a) * 0.4), 0.18, { room: 'homenaje0n', d: 0.04 });
+    P.decal(ctx, (hx0 + hx1) / 2, F1 + 0.01, (hz0 + hz1) / 2 + 1.0, 2.0);
+    // abajo, en el granero: el bolaño, los sacos reventados y el trigo
+    const bx = (hx0 + hx1) / 2,
+      bz = (hz0 + hz1) / 2;
+    // (el bolaño rodó un poco más allá de donde cayó; debajo del agujero, el
+    // trigo de los sacos reventados)
+    wb.geometry('wallstone', new THREE.SphereGeometry(0.42, 9, 7), new THREE.Matrix4().compose(V(bx + 1.6, 0.38, bz - 0.9), new THREE.Quaternion(), V(1, 0.92, 1)), { room: 'homenaje0n' });
+    ctx.col.add(bx + 1.25, 0, bz - 1.25, bx + 1.95, 0.7, bz - 0.55);
+    P.ellipsoid(ctx, 'straw', bx - 0.3, 0.05, bz + 0.6, 1.1, 0.12, 0.8, [0.86, 0.72, 0.42], { room: 'homenaje0n' });
+    for (let k = 0; k < 5; k++) wb.at(bx + rr.range(-1, 1), 0.02 + k * 0.045, bz + rr.range(-1, 1), rr.range(0, 3), () => wb.box('planks', -0.5, 0, -0.08, 0.5, 0.04, 0.08, { ao: false, room: 'homenaje0n', tint: [0.7, 0.6, 0.5] }));
+    P.dropped(ctx, -86.4, F1, -18.6, 1.8, 'helmet');
+  }
+
+  // --- la cuerda del montacargas: de la bodega al pañol
+  {
+    const [hx0, hz0, hx1, hz1] = A.holeHoist;
+    const hx = (hx0 + hx1) / 2,
+      hz = (hz0 + hz1) / 2;
+    // el marco del pozo, arriba, y la polea en su viga
+    for (const [a, b, c, e] of [
+      [hx0 - 0.08, hz0 - 0.08, hx1 + 0.08, hz0],
+      [hx0 - 0.08, hz1, hx1 + 0.08, hz1 + 0.08],
+      [hx0 - 0.08, hz0, hx0, hz1],
+      [hx1, hz0, hx1 + 0.08, hz1],
+    ])
+      wb.box('wooddark', a, F1, b, c, F1 + 0.12, e, { ao: false, room: 'homenaje1q' });
+    wb.box('timber', hx - 0.12, F2 - SL - 0.42, iz0, hx + 0.12, F2 - SL - 0.18, A.panol.z1, { ao: false, faces: 'nsewb', room: 'homenaje1q' });
+    wb.push();
+    wb.translate(hx, F2 - SL - 0.7, hz);
+    wb.rotateZ(Math.PI / 2);
+    wb.cylinder('wooddark', 0, -0.06, 0, 0.22, 0.22, 0.12, 10, { ao: false, capTop: true, capBot: true, room: 'homenaje1q' });
+    wb.pop();
+    // la cuerda, de la polea a la plataforma de abajo, y la otra, floja
+    wb.box('rope', hx - 0.02, 1.0, hz - 0.02, hx + 0.02, F2 - SL - 0.7, hz + 0.02, { ao: false, room: 'homenaje0b' });
+    wb.box('rope', hx + 0.2, F1 - 0.6, hz - 0.02, hx + 0.24, F2 - SL - 0.7, hz + 0.02, { ao: false, room: 'homenaje1q' });
+    // la plataforma (una caja abierta) abajo, con sacos
+    P.crate(ctx, hx, 0, hz, 0.9, 0.1);
+    P.sacks(ctx, hx + 0.9, 0, hz + 0.4, 2, 4479);
+    L.interact.push(
+      { kind: 'hatch', id: 'h_montacargas_abajo', end: 'bottom', flag: 'hatch:montacargas', open: true, labels: ['Bajar por la cuerda', 'Trepar por la cuerda'], msgUp: 'cuerdaArriba', x: hx, y: 0, z: hz + 1.1, r: 1.5, to: [hx - 1.3, F1, hz, Math.PI / 2] },
+      { kind: 'hatch', id: 'h_montacargas_arriba', end: 'top', flag: 'hatch:montacargas', open: true, labels: ['Bajar por la cuerda', 'Trepar por la cuerda'], msgDown: 'cuerdaAbajo', x: hx - 1.1, y: F1, z: hz, r: 1.4, to: [hx, 0, hz + 1.3, 0] }
+    );
+  }
+
+  // --- el pañol de los virotes: cajas, haces en sus estantes, y la saetera
+  // ensanchada a mazazos (los cascotes, al pie)
+  {
+    const room = 'homenaje1q';
+    wb.setRoom(room);
+    for (const [x, z] of [
+      [-82.7, -22.95],
+      [-81.8, -22.95],
+    ])
+      P.crate(ctx, x, F1, z, 0.7, 0);
+    for (let k = 0; k < 3; k++) {
+      const y = F1 + 0.6 + k * 0.55;
+      wb.box('wooddark', s1 + 0.05, y, -26.0, s1 + 0.45, y + 0.05, -23.4, { ao: false, room });
+      for (let j = 0; j < 8; j++) wb.box('timber', s1 + 0.08, y + 0.05, -25.9 + j * 0.3, s1 + 0.42, y + 0.09, -25.86 + j * 0.3, { ao: false, room });
+    }
+    ctx.col.add(s1, F1, -26.1, s1 + 0.5, F1 + 2.0, -23.3);
+    const SA = A.saetera;
+    for (let k = 0; k < 6; k++) P.roughStone(ctx, SA.x + rr.range(-0.9, 0.9), F1, iz0 + rr.range(0.3, 1.0), rr.range(0.08, 0.16), 4481 + k, { mat: 'wallstone', sink: 0 });
+    for (const s of [-1, 1]) for (let k = 0; k < 3; k++) P.roughStone(ctx, SA.x + s * (SA.w / 2 + 0.18), F1 + 0.4 + k * 0.6, iz0 - 0.1, 0.16, 4487 + k + (s > 0 ? 3 : 0), { mat: 'wallstone', sink: 0 });
+    P.lantern(ctx, -79.0, F1 + 2.1, -25.4, -Math.PI / 2, true, { room });
+    bakeCorpse(wb, -80.2, F1, -25.8, 2.4, 'curl', 'soldier', 4489);
+    wb.setRoom(null);
+    L.interact.push({ kind: 'item', id: 'i_virotes_panol', item: 'virote', n: 12, x: -82.25, y: F1 + 0.74, z: -22.95 });
+  }
+
+  // --- el cadalso: la galería de madera colgada por fuera de la torre (al
+  // norte y al este), con su pantalla de tablas, sus troneras, su tejadillo y
+  // tablas que faltan; en la esquina, la garita del alférez
+  {
+    const C = A.cadalso;
+    const w = C.w;
+    const y = F1;
+    const runs = [
+      { x0: C.x0, z0: z0 - w, x1: x1, z1: z0, ax: 'x' },
+      { x0: x1, z0: z0 - w, x1: x1 + w, z1: C.z1, ax: 'z' },
+    ];
+    // (las pilastras de la esquina asoman 0,32: el suelo, por delante)
+    const pil = [
+      [x1 - 2.0, z0 - 0.32, x1, z0],
+      [x1, z0, x1 + 0.32, z0 + 2.0],
+    ];
+    // tablas que faltan: [x0, z0, x1, z1]
+    const gaps = [
+      [-79.6, z0 - w, -78.4, z0 - w / 2],
+      [-75.4, z0 - w / 2, -74.5, z0],
+      [x1 + w / 2, -27.1, x1 + w, -26.3],
+    ];
+    for (const R of runs) {
+      W(S, R.x0, R.z0, R.x1, R.z1);
+      for (const m of subtractRects([R.x0, R.z0, R.x1, R.z1], [...gaps, ...pil])) {
+        wb.box('planks', m[0], y - 0.08, m[1], m[2], y, m[3], { faces: 'tb', ao: false, uv: 0.8, tint: [0.66, 0.58, 0.5] });
+        ctx.col.add(m[0], y - 0.4, m[1], m[2], y, m[3]);
+      }
+      // las vigas que salen del muro, con sus tornapuntas
+      if (R.ax === 'x')
+        for (let x = R.x0 + 0.5; x < R.x1; x += 1.4) {
+          wb.box('timber', x - 0.1, y - 0.32, R.z0, x + 0.1, y - 0.08, R.z1, { ao: false, faces: 'nsewb' });
+          beam3(ctx, 'timber', V(x, y - 1.6, R.z1), V(x, y - 0.3, R.z0 + 0.25), 0.12);
+        }
+      else
+        for (let z = R.z0 + 0.5; z < R.z1; z += 1.4) {
+          wb.box('timber', R.x0, y - 0.32, z - 0.1, R.x1, y - 0.08, z + 0.1, { ao: false, faces: 'nsewb' });
+          beam3(ctx, 'timber', V(R.x0, y - 1.6, z), V(R.x1 - 0.25, y - 0.3, z), 0.12);
+        }
+    }
+    // la pantalla de tablas por fuera (con sus troneras), cerrada en los cabos
+    const scr = (a, b, c, e, f) => {
+      wb.box('planks', a, y, b, c, y + 2.0, e, { faces: f, ao: false, uv: 0.9, tint: [0.6, 0.52, 0.45] });
+      ctx.col.add(a, y, b, c, y + 2.4, e);
+    };
+    scr(C.x0, z0 - w - 0.06, x1 + w + 0.06, z0 - w, 'nsewt');
+    scr(x1 + w, z0 - w, x1 + w + 0.06, C.z1, 'nsewt');
+    scr(C.x0 - 0.06, z0 - w, C.x0, z0, 'nsewt');
+    scr(x1, C.z1, x1 + w, C.z1 + 0.06, 'nsewt');
+    for (let x = C.x0 + 1.1; x < x1 - 0.5; x += 1.6) wb.box('black', x - 0.07, y + 0.7, z0 - w - 0.08, x + 0.07, y + 1.6, z0 - w - 0.075, { ao: false, faces: 'n', grime: false });
+    for (let z = z0 + 0.6; z < C.z1 - 0.5; z += 1.6) wb.box('black', x1 + w + 0.075, y + 0.7, z - 0.07, x1 + w + 0.08, y + 1.6, z + 0.07, { ao: false, faces: 'e', grime: false });
+    // el tejadillo: tablas del muro a la pantalla, en pendiente
+    wb.quad('wooddark', V(C.x0, y + 2.9, z0), V(x1 + w, y + 2.9, z0), V(x1 + w, y + 2.2, z0 - w - 0.2), V(C.x0, y + 2.2, z0 - w - 0.2), { ao: false, sub: 2, tint: [0.55, 0.48, 0.42] });
+    wb.quad('wooddark', V(C.x0, y + 2.2, z0 - w - 0.2), V(x1 + w, y + 2.2, z0 - w - 0.2), V(x1 + w, y + 2.9, z0), V(C.x0, y + 2.9, z0), { ao: false, sub: 2, tint: [0.45, 0.4, 0.36] });
+    wb.quad('wooddark', V(x1, y + 2.9, z0), V(x1, y + 2.9, C.z1), V(x1 + w + 0.2, y + 2.2, C.z1), V(x1 + w + 0.2, y + 2.2, z0), { ao: false, sub: 2, tint: [0.55, 0.48, 0.42] });
+    wb.quad('wooddark', V(x1 + w + 0.2, y + 2.2, z0), V(x1 + w + 0.2, y + 2.2, C.z1), V(x1, y + 2.9, C.z1), V(x1, y + 2.9, z0), { ao: false, sub: 2, tint: [0.45, 0.4, 0.36] });
+    // la garita de la esquina: un cuarto de tablas con su tejado a cuatro aguas
+    {
+      const gx0 = x1,
+        gz0 = z0 - w,
+        gx1 = x1 + w,
+        gz1 = z0,
+        top = y + 2.5;
+      wb.box('planks', gx0, y + 2.0, gz0, gx1, top, gz0 + 0.06, { ao: false, tint: [0.6, 0.52, 0.45] });
+      wb.box('planks', gx1 - 0.06, y + 2.0, gz0, gx1, top, gz1, { ao: false, tint: [0.6, 0.52, 0.45] });
+      const cx = (gx0 + gx1) / 2,
+        cz = (gz0 + gz1) / 2;
+      for (const [a, b] of [
+        [V(gx0 - 0.15, top, gz0 - 0.15), V(gx1 + 0.15, top, gz0 - 0.15)],
+        [V(gx1 + 0.15, top, gz0 - 0.15), V(gx1 + 0.15, top, gz1 + 0.15)],
+        [V(gx1 + 0.15, top, gz1 + 0.15), V(gx0 - 0.15, top, gz1 + 0.15)],
+        [V(gx0 - 0.15, top, gz1 + 0.15), V(gx0 - 0.15, top, gz0 - 0.15)],
+      ])
+        wb.quad('wooddark', a, b, V(cx, top + 1.1, cz), V(cx, top + 1.1, cz), { ao: false, tint: [0.5, 0.44, 0.4] });
+      P.brazier(ctx, gx1 - 0.45, y, gz0 + 0.45, {});
+    }
+    // un caído de la guardia, un haz de virotes y las tablas que se hundieron
+    bakeCorpse(wb, -77.0, y, z0 - 1.0, 1.4, 'back', 'soldier', 4491);
+    P.decal(ctx, -77.0, y + 0.01, z0 - 1.0, 1.8);
+    for (const g of gaps) for (let k = 0; k < 2; k++) wb.at((g[0] + g[2]) / 2 + rr.range(-0.3, 0.3), 0.02 + k * 0.055, (g[1] + g[3]) / 2 + rr.range(-0.3, 0.3), rr.range(0, 3), () => wb.box('planks', -0.5, 0, -0.1, 0.5, 0.05, 0.1, { ao: false, tint: [0.6, 0.52, 0.45] }));
+    L.interact.push({ kind: 'item', id: 'i_virotes_cadalso', item: 'virote', n: 4, x: -73.0, y: y + 0.1, z: z0 - 1.2 });
+    // el alférez, en su garita, vigilando el cadalso; su llave y su carcaj,
+    // donde caiga
+    L.enemies.push({ type: 'alferez', x: x1 + w / 2, y, z: z0 - w / 2, yaw: -Math.PI / 2, idle: 'watch', id: 'e_alferez', story: 'dead:alferez', dies: 'dead:alferez' });
+    L.interact.push(
+      { kind: 'item', id: 'i_llave_alferez', item: 'llave_alferez', afterFlag: 'dead:alferez', x: x1 + w / 2 - 0.4, y: y + 0.08, z: z0 - w / 2 + 0.3 },
+      { kind: 'item', id: 'i_virotes_alferez', item: 'virote', n: 6, afterFlag: 'dead:alferez', x: x1 + w / 2 + 0.3, y: y + 0.08, z: z0 - w / 2 - 0.3 }
+    );
+  }
+
+  // --- el taller, hundido: el suelo que se inclina hacia el agujero, las
+  // vigas que cuelgan, el maestro ballestero bajo una, la ballesta en su
+  // banco y los virotes en su caja
+  {
+    const room = 'homenaje1t';
+    const y = F1;
+    wb.setRoom(room);
+    const [hx0, hz0, hx1, hz1] = A.holeTaller;
+    // tablas inclinadas hacia el hueco y astillas
+    for (let k = 0; k < 5; k++) {
+      const z = hz0 + 0.2 + k * ((hz1 - hz0 - 0.4) / 4);
+      beam3(ctx, 'planks', V(hx0 - 0.1, y - 0.03, z), V(hx0 + rr.range(0.7, 1.1), y - rr.range(0.5, 0.9), z + rr.range(-0.1, 0.1)), 0.2, { room, d: 0.05 });
+      beam3(ctx, 'planks', V(hx1 + 0.1, y - 0.03, z), V(hx1 - rr.range(0.5, 0.8), y - rr.range(0.4, 0.8), z + rr.range(-0.1, 0.1)), 0.2, { room, d: 0.05 });
+    }
+    // vigas del techo partidas, colgando
+    for (const [x, z, a] of [
+      [-77.2, -20.0, 0.6],
+      [-75.8, -21.4, -0.4],
+    ])
+      beam3(ctx, 'wooddark', V(x, F2 - SL - 0.1, z), V(x + Math.sin(a) * 1.4, F2 - SL - 2.0, z + Math.cos(a) * 0.4), 0.2, { room });
+    // la viga que mató al maestro: tumbada, sobre él
+    bakeCorpse(wb, -81.6, y, -19.4, 0.3, 'back', 'villager', 4493);
+    beam3(ctx, 'timber', V(-83.2, y + 0.05, -20.2), V(-79.8, y + 0.32, -18.6), 0.26, { room });
+    ctx.col.add(-83.2, y, -20.4, -79.8, y + 0.5, -18.4);
+    P.decal(ctx, -81.6, y + 0.01, -19.4, 2.0);
+    // el banco, con la ballesta encima
+    P.table(ctx, -81.4, y, -16.6, 1.6, 0.8, 0);
+    P.stool(ctx, -81.4, y, -15.9, { room });
+    for (let k = 0; k < 8; k++) wb.box('timber', -82.0 + k * 0.14, y + 0.82, -16.85, -81.98 + k * 0.14, y + 0.835, -16.45, { ao: false, room });
+    // la caja de los virotes
+    P.crate(ctx, -82.7, y, -21.2, 0.75, 0);
+    for (let k = 0; k < 12; k++) wb.box('timber', -83.0 + (k % 6) * 0.1, y + 0.75, -21.4 + Math.floor(k / 6) * 0.25, -82.98 + (k % 6) * 0.1, y + 1.05, -21.38 + Math.floor(k / 6) * 0.25, { ao: false, room });
+    // escudos y ballestas colgados en el muro norte
+    for (let x = -77.9; x < -73.8; x += 0.95) {
+      wb.at(x, y, iz0 + 0.25, 0, () => {
+        wb.box('planks', -0.33, 0, -0.04, 0.33, 0.85, 0.04, { ao: false, faces: 'tnsewb', tint: [0.6, 0.5, 0.42], room });
+        wb.box('iron', -0.06, 0.38, 0.04, 0.06, 0.5, 0.08, { ao: false, room });
+      });
+    }
+    wb.box('planks', -78.1, y + 1.5, iz0, -73.7, y + 2.6, iz0 + 0.06, { ao: false, room, tint: [0.62, 0.55, 0.48] });
+    for (let x = -77.6; x < -74.0; x += 0.9) {
+      beam3(ctx, 'wooddark', V(x, y + 1.6, iz0 + 0.1), V(x, y + 2.45, iz0 + 0.1), 0.07, { room });
+      beam3(ctx, 'wooddark', V(x - 0.32, y + 2.25, iz0 + 0.1), V(x + 0.32, y + 2.25, iz0 + 0.1), 0.06, { room });
+    }
+    // (la luz del taller se ve entre las piedras del escombro)
+    P.wallTorch(ctx, s1, y + 2.0, -17.6, 'e', { room, radius: 7 });
+    P.wallTorch(ctx, ix1, y + 2.2, -18.4, 'w', { room, radius: 7 });
+    wb.setRoom(null);
+    // abajo, en la bodega: lo que cayó
+    P.rubble(ctx, (hx0 + hx1) / 2, 0, (hz0 + hz1) / 2, 7, 4495, 1.0, { mat: 'wallstone', scale: 0.9, blocks: 0.3 });
+    for (let k = 0; k < 4; k++) wb.at((hx0 + hx1) / 2 + rr.range(-1, 1), 0.03 + k * 0.055, (hz0 + hz1) / 2 + rr.range(-1, 1), rr.range(0, 3), () => wb.box('planks', -0.6, 0, -0.09, 0.6, 0.05, 0.09, { ao: false, room: 'homenaje0b', tint: [0.7, 0.6, 0.5] }));
+    L.interact.push(
+      { kind: 'item', id: 'i_ballesta', item: 'ballesta', x: -81.4, y: y + 0.84, z: -16.6 },
+      { kind: 'note', id: 'n_ballestero', note: 'ballestero', x: -80.85, y: y + 0.84, z: -16.75, model: 'paper' },
+      { kind: 'item', id: 'i_virotes_taller', item: 'virote', n: 10, x: -82.7, y: y + 0.8, z: -21.2 }
+    );
+  }
+
+  // --- criaturas: una come en la bodega, a oscuras
+  L.enemies.push({ type: 'penitent', x: -77.4, y: 0, z: -18.4, yaw: 2.2, idle: 'eat', id: 'e_bod1' });
 }
