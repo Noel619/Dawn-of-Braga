@@ -31,8 +31,8 @@ export function buildSouto(ctx, S, L) {
 
   // atrezo de la calle
   P.cart(ctx, -38, 0, 1.6, 0.3, { tipped: true });
-  P.barrel(ctx, -44, 0, -2.6);
-  P.barrel(ctx, -43.2, 0, -2.9, { lying: true, rot: 1.2 });
+  P.barrel(ctx, -41.6, 0, -2.6);
+  P.barrel(ctx, -40.8, 0, -2.9, { lying: true, rot: 1.2 });
   P.crate(ctx, -24.5, 0, 2.6, 0.9, 0.4);
   P.sacks(ctx, -41, 0, 2.7, 3, 7);
   bakeCorpse(wb, -34.5, 0, -1.4, 1.9, 'face', 'villager', 1);
@@ -50,11 +50,11 @@ export function buildSouto(ctx, S, L) {
     [-25.1, -3.44, 0],
   ])
     P.decal(ctx, x, 1.8, z, 1.2, 'sigil', r, { wall: 'z' });
-  P.wallTorch(ctx, -44, 2.6, 3.5, 'n');
+  P.wallTorch(ctx, -42.2, 2.6, 3.5, 'n');
   P.wallTorch(ctx, -17, 2.6, -3.5, 's');
   P.fleshGrowth(ctx, -46, 0, 3.2, 0.8, 61, { climb: 1.2, bound: [-48, -44, 3, 4] });
   // --- vida de la calle: ropa tendida, rótulos, faroles y cacharros
-  P.laundry(ctx, -44.8, -3.45, -44.8, 3.45, 4.5, 11);
+  P.laundry(ctx, -46.3, -3.45, -46.3, 3.45, 4.5, 11);
   P.laundry(ctx, -35.2, -3.45, -35.2, 3.45, 4.7, 12);
   P.laundry(ctx, -24.8, -3.45, -24.8, 3.45, 4.4, 13);
   P.sign(ctx, -45.6, 2.95, -3.5, 0, 0);

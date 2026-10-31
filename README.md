@@ -337,6 +337,15 @@ defensa, partido por un tiro de los de fuera, con sus bolaños labrados a pico; 
 la puerta. La escalera del adarve, pegada a la torre del homenaje, la partió un tiro: el tramo de arriba se desmoronó
 en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
 
+**Por fuera**, el castillo manda sobre la ciudad: las murallas del sur, de levante y de poniente, más altas que la
+del norte (la que se anda), las torres de las esquinas por encima de ellas y dos torres nuevas en medio de los
+lienzos largos, con los estandartes negros de la guarnición colgando de lo alto; en las torres de levante, las que
+dan a la ciudad, los **cadalsos**, galerías de madera colgadas sobre sus canes, con sus troneras y su tejadillo. La
+boca de la Calle del Soto la cierra la **barbacana**: un muro almenado entre las casas de los dos lados, con su
+arco, las armas del Rey labradas encima, el matacán y la hoja de fuera arrancada de sus goznes. En la muralla del
+sur, **la brecha** que abrió un bolo de los trabucos, tapada con una empalizada de troncos aguzados, con el cascajo
+al pie (`world/castillo_fuera.js`).
+
 La **torre del homenaje**, el último reducto, rehecha como las románicas que se conservan enteras (Rochester,
 Castle Hedingham): 26 × 26 m, a caballo de la muralla norte (asoma al foso del lado del Paço), con muros de casi
 dos metros y medio, pilastras en las esquinas y en medio de cada lienzo, un zócalo en escalones, una imposta en
@@ -902,7 +911,8 @@ src/
                         del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
-                        level_castle.js: el castillo y las mazmorras; level_torre.js: la torre del homenaje,
+                        level_castle.js: el castillo y las mazmorras; castillo_fuera.js: lo de fuera (las
+                        torres nuevas, los cadalsos, la barbacana, la brecha); level_torre.js: la torre del homenaje,
                         generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,

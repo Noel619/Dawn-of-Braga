@@ -29,6 +29,7 @@ import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 import { buildTorre, torreZones, BAJADA } from './level_torre.js';
 import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
+import { buildCastilloFuera, FUERA } from './castillo_fuera.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -42,7 +43,11 @@ export const OSARIO_C = { x0: -93.5, x1: -85.5, z: 3, y: YD - 0.9, top: -1.25 };
 export const CASTLE = {
   // el patio, dentro de las murallas
   yard: { x0: -90, z0: -20, x1: -51, z1: 20 },
+  // la muralla: la del norte, a la altura de la poterna (se anda); las otras
+  // tres, más altas (no se andan); y las torres de las esquinas
   wallH: 9,
+  wallH2: 11,
+  towerH: 14.5,
   // la torre del homenaje (esquina noroeste, a caballo de la muralla norte):
   // planta, muros, plantas, la terraza y el grueso de los forjados (lo demás
   // sale de aquí: world/level_torre.js)
@@ -155,6 +160,8 @@ export function buildCastle(ctx, S, D, L) {
   // --- lo transitable a ras de suelo
   W(S, Y.x0, Y.z0, Y.x1, Y.z1);
   buildWalls(ctx, S, L, rng);
+  // lo de fuera: las torres nuevas, los cadalsos, la barbacana y la brecha
+  buildCastilloFuera(ctx, S, L, CASTLE);
   buildGate(ctx, S, L);
   buildTorre(ctx, S, L);
   buildYard(ctx, S, L, rng);
@@ -320,17 +327,24 @@ function buildWalls(ctx, S, L, rng) {
   bakeCorpse(wb, -66.8, H, -21.6, 0.4, 'back', 'soldier', 21);
   P.decal(ctx, -66.8, H + 0.01, -21.6, 2.0);
   P.arrows(ctx, -60.5, H, -21.4, 8, 5205, 1.4);
-  // oeste (al sur de la torre), sur y este (con la torre-puerta en medio)
-  cityWall(ctx, -93, K.z1, -90, 20, H, { merlonSides: ['w'] });
-  cityWall(ctx, -93, 20, -48, 23, H, { merlonSides: ['s'] });
-  cityWall(ctx, -51, -20, -48, G.z0, H, { merlonSides: ['e'] });
-  cityWall(ctx, -51, G.z1, -48, 20, H, { merlonSides: ['e'] });
+  // oeste (al sur de la torre), sur y este (con la torre-puerta en medio):
+  // más altas que la del norte, que se anda; en la del sur, la brecha que
+  // abrió un tiro de los trabucos (lo de en ella: castillo_fuera.js)
+  const H2 = CASTLE.wallH2,
+    TH = CASTLE.towerH,
+    Bx = FUERA.brecha;
+  cityWall(ctx, -93, K.z1, -90, 20, H2, { merlonSides: ['w'] });
+  holedWall(ctx, 'wallstone', 'x', -93, -48, 20, 23, 0, H2, [{ a0: Bx.x0, a1: Bx.x1, y0: Bx.y, y1: H2 }], 'tnsew', { mats: { t: 'flag' } });
+  merlons(ctx, -93, 22.7, Bx.x0, 22.7, H2, {});
+  merlons(ctx, Bx.x1, 22.7, -48, 22.7, H2, {});
+  cityWall(ctx, -51, -20, -48, G.z0, H2, { merlonSides: ['e'] });
+  cityWall(ctx, -51, G.z1, -48, 20, H2, { merlonSides: ['e'] });
   // torres de las esquinas (la del noroeste es la del homenaje)
-  tower(ctx, -91.5, 21.5, 6, 12);
-  tower(ctx, -49.5, 21.5, 6, 12);
-  tower(ctx, -49.5, -21.5, 6, 12);
-  P.banner(ctx, -46.4, 10.2, -21.5, Math.PI / 2, 'bannerBlack', 1.6, 4);
-  P.banner(ctx, -46.4, 10.2, 21.5, Math.PI / 2, 'bannerBlack', 1.6, 4);
+  tower(ctx, -91.5, 21.5, 6, TH);
+  tower(ctx, -49.5, 21.5, 6, TH);
+  tower(ctx, -49.5, -21.5, 6, TH);
+  P.banner(ctx, -46.4, TH - 3.1, -21.5, Math.PI / 2, 'bannerBlack', 1.6, 4);
+  P.banner(ctx, -46.4, TH - 3.1, 21.5, Math.PI / 2, 'bannerBlack', 1.6, 4);
   // fuera, al norte: el foso seco (lo que dejó el asedio está en level_keep.js)
 }
 

@@ -105,6 +105,9 @@ const r = await p.evaluate((torre) => {
         [-54.4, 0.0],
         [-50, 0],
         [-44, 0],
+        // (por el arco de la barbacana, a la calle del Soto)
+        [-40, 0],
+        [-36, 0.6],
       ],
       'patio → calle'
     )
