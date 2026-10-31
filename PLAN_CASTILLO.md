@@ -158,19 +158,24 @@ z −45  └───────────┴───────┴──�
   torre del archivo y del tesoro, de cuatro sobrados: los registros, los legajos, las cartas y las arcas del Rey,
   cada una con sus sellos. Se sube por una escalera pegada a la muralla, por dentro, y se pasa por ella y por un
   arco. La llave del canciller, arriba, en el arca que dice el registro (§7).
-- **La Torre de la Reina** y su jardincillo: cerrada desde la Cuaresma (el Rey: «Mi reina se murió en la
-  Cuaresma»). Sus cosas tapadas con paños. Opcional.
-- **Las Cocinas** (≈ 28 × 24 m): la cocina grande, exenta, cuadrada, con **la chimenea cónica** que se ve desde
-  toda la ciudad; la despensa, la botillería y el horno; el patio de servicio con el pozo y la leña. Se llega a
-  la sala por el extremo bajo, como se llegaba de verdad.
-- **Las Caballerizas y la halconera**, a lo largo de la coracha: los pesebres vacíos (los caballos del Rey
-  también se los comieron), las sillas en sus potros y, en la halconera, los halcones encapirotados, muertos en
-  sus alcándaras.
-- **El Jardín del Rey** (≈ 28 × 24 m): un claustro con su galería en dos lados; cuatro cuadros con setos de
-  arrayán y naranjos amargos (secos), los dos paseos que se cruzan en la fuente, la alberca larga y, en la
-  muralla norte, el **mirador** (desde ahí se ve el campamento de los sitiadores).
-- **El Pomar y la Huerta** (≈ 28 × 24 m): los frutales en filas (muertos), los bancales, el **palomar** redondo,
-  las colmenas y el vivero de los peces.
+- **La Torre de la Reina** y su jardincillo (**hecho**; entre la muralla, la capilla y la cancillería):
+  cerrada desde la Cuaresma (el Rey: «Mi reina se murió en la Cuaresma»). Sus cosas tapadas con paños; arriba, su
+  cámara, con la cama bajo el dosel, una de sus dueñas y, en el reclinatorio, su libro de horas y su relicario.
+  Se entra por la puerta de poniente de la capilla. Opcional.
+- **Las Cocinas** (**hecho**; ≈ 28 × 24 m): la cocina grande, exenta, cuadrada, con **la chimenea cónica** que
+  se ve desde toda la ciudad; la despensa, la botillería y el horno; el patio de servicio con el pozo, la leñera,
+  el horno de fuera y los perros. Se llega a la sala por el extremo bajo, como se llegaba de verdad; la puerta de
+  poniente de la cocina se desatranca desde el patio (el atajo de los jardines al servicio).
+- **Las Caballerizas y la halconera** (**hecho**), a lo largo de la coracha: los pesebres vacíos (los caballos
+  del Rey también se los comieron), las sillas en sus potros y, en la halconera, los halcones encapirotados,
+  muertos en sus alcándaras.
+- **El Jardín del Rey** (**hecho**; 15 × 36 m, entre el pomar y la sala): un claustro con su galería en dos
+  lados; cuatro cuadros con setos de arrayán y naranjos amargos (secos), los dos paseos que se cruzan en la
+  fuente, la alberca larga y, en la muralla norte, el **mirador** (desde ahí se ven las hogueras del campamento
+  de los sitiadores), al que se sube desde el pomar por una escalera pegada a la muralla.
+- **El Pomar y la Huerta** (**hecho**; 24 × 35 m, al norte de la torre de la reina): los frutales en filas
+  (muertos), las eras, el **palomar** redondo (con un cuervo cebado en lo alto), las colmenas y el vivero de los
+  peces.
 - **Los muros**: la muralla norte sigue hasta la nueva esquina noroeste; la de poniente, nueva, con dos torres;
   al sur, el muro del Paço sobre el foso (al oeste de la torre, sobre el talud de fuera).
 
@@ -387,7 +392,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 4c | **Las Cámaras del Rey y el pasadizo** (**hecho**) | la crujía de levante en dos plantas (la escalera del Rey desde el estrado, la antecámara, la cámara, la del pasadizo; el guardarropa, la escalera y el tesoro), el patinillo; la llave del camarero; el pasadizo, dos vigas en cuesta sobre el foso (`game/cornisas.js`) hasta la alcoba del alcaide; el cortesano suelto |
 | 4d | **La Capilla Real** (**hecho**) | de norte a sur, pegada a la crujía de poniente de las cámaras (su muro de levante es el de ellas), con el ábside al norte; la tribuna a los pies, desde el oratorio del Rey (arriba, en la crujía de poniente, por la galería alta de la del sur); la espadaña y la llave en el cordón de la campana (suena al soltarla); la confesión del capellán |
 | 4e | **La Cancillería y la Torre del Tombo** (**hecho**) | `world/paco_cancilleria.js`: el patio (a él se sale por la puerta de la fachada de la capilla, atrancada por dentro), la tapia y el postigo del jardín de la reina; la sala de los escribanos y la carta del Rey; la escalera por la cara de dentro de la muralla, el paso por ella y el arco a la torre; sus cuatro sobrados, el registro, y las arcas selladas (`interact.js`: el arca, con su tapa en dos grupos del mundo; las de dos sellos negros, con resorte); la llave del canciller; el campo de fuera de la muralla de poniente |
-| 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** | el camino por el servicio; lo opcional |
+| 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** (**hecho**) | `world/paco_jardines.js`: la torre de la reina y su jardincillo (el relicario), el pomar (palomar, colmenas, vivero, eras), el jardín del Rey (claustro, fuente, alberca), la escalera del pomar al adarve y el mirador (una ampolla; el campamento de los sitiadores al norte), el patio de las cocinas (y la puerta de poniente de la cocina, el atajo) y la halconera; la puerta de poniente de la capilla, al norte de la escalera de la tribuna; `jardineswalk.mjs` |
 | 4g | **La reja de las cinco llaves** | fuera la manivela; documentos; `progress.mjs` |
 | 5 | **Por fuera** | muralla más alta, torres nuevas, barbacana, cadalsos, estandartes, la brecha; la silueta desde la ciudad |
 | 6 | **Repaso** | documentos, sonido de cada sala, música del Paço, recorridos de prueba, rendimiento |

@@ -25,6 +25,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { CASTLE, parapet, slit, holedWall } from './level_castle.js';
 import { KEEP } from './level_keep.js';
 import { buildCancilleria } from './paco_cancilleria.js';
+import { buildJardines } from './paco_jardines.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -95,8 +96,9 @@ export const PACO = {
   // suelo, el alero y la cumbrera; la tribuna del Rey a los pies (hasta tz, a
   // la altura de la planta noble de las cámaras); la espadaña sobre la
   // fachada; el oratorio del Rey (en la crujía de poniente), con su ventana
-  // (wz) y la puerta de la tribuna (dz)
-  capilla: { x0: -129.5, x1: -118, z0: -86, z1: -62, t: 0.9, y: 0.3, eave: 9, ridge: 12.8, apse: 3.5, tz: -66.9, esp: 4.6, espTop: 15.6, wz: -71.5, dz: -64.7 },
+  // (wz) y la puerta de la tribuna (dz); la puerta de poniente (dw: al norte
+  // de la escalera de la tribuna, entre los bancos)
+  capilla: { x0: -129.5, x1: -118, z0: -86, z1: -62, t: 0.9, y: 0.3, eave: 9, ridge: 12.8, apse: 3.5, tz: -66.9, esp: 4.6, espTop: 15.6, wz: -71.5, dz: -64.7, dw: -76.0 },
   // la Cancillería: su patio (de la muralla, px0, a las cámaras; de la tapia
   // del jardín de la reina, pz0, con su postigo en reina, a la sala), la sala
   // de los escribanos (de x0 a x1, de z0 al muro del foso; el grueso de sus
@@ -109,6 +111,26 @@ export const PACO = {
   // muros, sus cuatro sobrados (el primero, a la altura del paso), lo alto y
   // el paso (su z: por la muralla, el arco y la puerta)
   tombo: { x0: -155, x1: -148, z0: -63.5, z1: -56.5, t: 1.0, fl: [5.2, 9.4, 13.6, 17.8], top: 21.6, paso: -60.0 },
+  // la torre de la reina, en la esquina de su jardincillo, contra la muralla
+  // (de x0 a x1, de z0 a z1): su planta de arriba, el alero, el chapitel y
+  // la puerta (x); la tapia del pomar (de la torre a la capilla, por fuera
+  // en z0) con su puerta (gx)
+  reina: { x0: -143, x1: -135, z0: -86, z1: -78, t: 0.8, F1: 4.6, eave: 9.4, top: 13.4, door: -138.4, gx: -132.3 },
+  // el pomar: de la muralla a la tapia del jardín del Rey (xj); su palomar,
+  // su vivero (x0, z0, x1, z1) y la escalera del mirador, pegada a la
+  // muralla norte (de su pie, x0, a su cabeza, x1)
+  pomar: { xj: -119, palomar: { x: -137.5, z: -113, r: 2.6, h: 6.2 }, vivero: [-131.0, -118.4, -123.0, -114.6], esc: { x0: -131.6, x1: -119.7, n: 34 } },
+  // el jardín del Rey: de la tapia del pomar a la del patio de las cocinas
+  // (y la sala), de la muralla norte a las cámaras; sus galerías (la de
+  // levante, desde gx; la del sur, desde gz), la fuente y la alberca
+  jardin: { x0: -119, x1: -104, z0: -122, z1: -86, gx: -107.2, gz: -89.2, fuente: { x: -113, z: -112 }, alberca: [-114.2, -108.6, -111.8, -92.6] },
+  // el mirador del Rey, sobre la muralla norte (de x0 a x1, junto a su torre)
+  mirador: { x0: -119.6, x1: -114.0 },
+  // el patio de las cocinas: de la tapia del jardín (de x0 a x0 + 0.6) a la
+  // cocina, de la muralla norte a la sala; y la halconera, contra la coracha
+  // en el patio de las caballerizas
+  cocinas: { x0: -104, x1: -83.5, z0: -122, z1: -104 },
+  halconera: { x0: -64.8, x1: -62, z0: -114.4, z1: -106.2 },
   // las cocinas: la grande, exenta y cuadrada, con su chimenea cónica
   cocina: { x: -78, z: -113, w: 11, h: 7.5, top: 30 },
   // el servicio: el patio de las caballerizas (de la cocina a la coracha, de
@@ -147,6 +169,7 @@ export function buildPaco(ctx, S, L) {
   camaras(ctx, S, L);
   buildCancilleria(ctx, S, L);
   cocina(ctx, S, L);
+  buildJardines(ctx, S, L);
   servicio(ctx, S, L);
   zonas(L);
 }
@@ -1307,7 +1330,7 @@ function capilla(ctx, S, L) {
   // las dos, atrancadas desde fuera por ahora), el del ábside (con el arco
   // triunfal) y, al este, el de las cámaras (con la ventana del oratorio y la
   // puerta de la tribuna)
-  const dW = -68.0,
+  const dW = C.dw,
     dS = cx;
   holedWall(ctx, 'ashlar', 'z', z0, z1, x0, ix0, 0, eave, [{ a0: dW - 0.8, a1: dW + 0.8, y0: 0, y1: 3.0 }], 'w', { tint });
   holedWall(ctx, 'ashlar', 'x', x0, x1, iz1, z1, 0, eave, [{ a0: dS - 1.0, a1: dS + 1.0, y0: 0, y1: 3.4 }], 's', { tint });
@@ -1488,11 +1511,10 @@ function capilla(ctx, S, L) {
     { type: 'cortesanoSuelto', x: cx + 2.2, y, z: -74.5, yaw: Math.PI, idle: 'kneel', id: 'e_cap2' },
     { type: 'mourner', x: cx + 1.0, y, z: -84.0, yaw: Math.PI, idle: 'stand', id: 'e_cap3' }
   );
-  // las puertas: la de poniente, al jardín de la reina (atrancada por fuera,
-  // por ahora); la de la fachada, al patio de la cancillería, atrancada por
-  // dentro
+  // las puertas, atrancadas por dentro: la de poniente, al jardín de la
+  // reina; la de la fachada, al patio de la cancillería
   L.interact.push(
-    { kind: 'door', id: 'd_capilla_o', x: x0 + t / 2, y: 0, z: dW, w: 1.6, h: 3.0, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: 0 }, barredMsg: 'capillaAtrancada' },
+    { kind: 'door', id: 'd_capilla_o', x: x0 + t / 2, y: 0, z: dW, w: 1.6, h: 3.0, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: 1, msg: 'capillaOTranca' }, barredMsg: 'capillaOeste' },
     { kind: 'door', id: 'd_capilla_s', x: dS, y: 0, z: z1 - t / 2, w: 2.0, h: 3.4, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: iz1, inset: 0.06, mark: 'cross', lock: { type: 'barred', side: -1, msg: 'capillaTranca' }, barredMsg: 'capillaSur' }
   );
   L.zones.push({ id: 'capilla_real', rects: [[ix0, z0 - C.apse, x1, iz1, -0.5, ridge]], atmo: 'chapel', room });
@@ -1930,7 +1952,7 @@ function cocina(ctx, S, L) {
   wb.setRoom(null);
   L.interact.push({ kind: 'door', id: 'd_cocina_e', x: x1 - t / 2, y: 0, z: K.z, w: dw, h: dh, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: ix1, inset: 0.06, ajar: 0.15, lock: { type: 'none' } });
   L.interact.push({ kind: 'door', id: 'd_cocina_s', x: Sa.servicio, y: 0, z: z1 - t / 2, w: dw, h: dh, axis: 'x', mat: 'planks', hinge: 1, swing: -1, plane: iz1, inset: 0.06, lock: { type: 'none' } });
-  L.interact.push({ kind: 'door', id: 'd_cocina_o', x: x0 + t / 2, y: 0, z: K.z, w: dw, h: dh, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'cocinaAtrancada' });
+  L.interact.push({ kind: 'door', id: 'd_cocina_o', x: x0 + t / 2, y: 0, z: K.z, w: dw, h: dh, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'cocinaTranca' }, barredMsg: 'cocinaAtrancada' });
   L.enemies.push({ type: 'penitent', x: K.x - 2.6, y: 0, z: K.z + 2.4, yaw: 2.4, idle: 'eat', id: 'e_cocina1' });
   // por fuera: la cornisa, el tejado a cuatro aguas y la chimenea, un cono
   // de sillería, ennegrecido arriba, con su boca
@@ -2001,8 +2023,8 @@ function servicio(ctx, S, L) {
       wb.box('wooddark', x - 0.5, 0.95, C.zc - 1.15, x + 0.5, 1.05, C.zc - 0.85, { ao: false, faces: 'tnsewb' });
       for (const s2 of [-1, 1]) wb.box('wooddark', x + s2 * 0.42 - 0.05, 0, C.zc - 1.05, x + s2 * 0.42 + 0.05, 0.95, C.zc - 0.95, { ao: false });
       wb.box('leather', x - 0.32, 1.02, C.zc - 1.3, x + 0.32, 1.22, C.zc - 0.7, { ao: false, faces: 'tnsew', tint: [0.6, 0.42, 0.3] });
-      wb.box('leather', x - 0.3, 0.55, C.zc - 1.25, x - 0.26, 1.05, C.zc - 0.75, { ao: false });
-      wb.box('leather', x + 0.26, 0.55, C.zc - 1.25, x + 0.3, 1.05, C.zc - 0.75, { ao: false });
+      wb.box('leather', x - 0.3, 0.55, C.zc - 1.25, x - 0.26, 1.04, C.zc - 0.75, { ao: false });
+      wb.box('leather', x + 0.26, 0.55, C.zc - 1.25, x + 0.3, 1.04, C.zc - 0.75, { ao: false });
     }
     ctx.lights.push({ x: (C.x0 + C.x1) / 2, y: 2.6, z: (C.z0 + C.zc) / 2, r: 0.6, g: 0.62, b: 0.7, radius: 6, intensity: 0.4, room });
     P.lantern(ctx, C.x1 - 5.2, yF - 0.1, C.zc - 0.32, Math.PI, true, {});
@@ -2016,7 +2038,7 @@ function servicio(ctx, S, L) {
   ctx.crows.push({ x: C.x0 + 4.0, y: 0, z: C.z0 + 2.6, r: 1.0, n: 3 });
   L.enemies.push(
     { type: 'hound', x: -67.0, y: 0, z: -109.5, yaw: 0.3, idle: 'eat', id: 'e_cuadras1' },
-    { type: 'hound', x: -64.5, y: 0, z: -111.5, yaw: -0.8, idle: 'stand', id: 'e_cuadras2' }
+    { type: 'hound', x: -67.8, y: 0, z: -112.6, yaw: -0.8, idle: 'stand', id: 'e_cuadras2' }
   );
   // el paso cubierto de la cocina a la sala: llano y luego cinco peldaños
   {

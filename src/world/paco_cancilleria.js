@@ -102,7 +102,7 @@ function patio(ctx, S, L) {
   holedWall(ctx, 'wallstone', 'x', E.x0, C.x0, tz0, Cn.pz0, 0, 3.4, [{ a0: R - 0.7, a1: R + 0.7, y0: 0, y1: 2.4 }], 'nst', { tint, sub: 2 });
   wb.box('ashlar', E.x0, 3.4, tz0 - 0.08, C.x0, 3.55, Cn.pz0 + 0.08, { ao: false, faces: 'tnsewb' });
   wb.box('ashlar', R - 0.85, 2.4, Cn.pz0, R + 0.85, 2.6, Cn.pz0 + 0.06, { ao: false, faces: 'tswbe' });
-  L.interact.push({ kind: 'door', id: 'd_jardin_reina', x: R, y: 0, z: Cn.pz0 - 0.3, w: 1.4, h: 2.4, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: tz0, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'reinaAtrancada' });
+  L.interact.push({ kind: 'door', id: 'd_jardin_reina', x: R, y: 0, z: Cn.pz0 - 0.3, w: 1.4, h: 2.4, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: tz0, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'reinaTranca' }, barredMsg: 'reinaAtrancada' });
 
   // --- lo que hay en el patio: un correo muerto con su bolsa de cartas
   // delante de la sala, las cartas por el suelo; un banco de piedra contra la
@@ -237,7 +237,7 @@ function sala(ctx, S, L) {
   // --- la esquina del sello: la caldera de la cera (fría), un banco con los
   // panes de cera y los cordones de los sellos, y un arcón
   calderaCera(ctx, ix1 - 1.0, 0, iz0 + 1.1, room, { lit: false });
-  P.colOBB(ctx, ix1 - 1.0, iz0 + 1.1, 0.3, 0.3, 0, 0, 0.66);
+  P.colOBB(ctx, ix1 - 1.0, iz0 + 1.1, 0.24, 0.24, 0, 0, 0.66);
   P.table(ctx, ix1 - 0.6, 0, zc + 0.6, 2.2, 0.8, Math.PI / 2);
   panesCera(ctx, ix1 - 0.6, 0.8, zc - 0.1, 3, room, 7207);
   panesCera(ctx, ix1 - 0.6, 0.8, zc + 0.4, 2, room, 7208);

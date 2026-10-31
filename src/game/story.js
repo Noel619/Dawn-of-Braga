@@ -582,6 +582,16 @@ Me acuso de la campana. Tocó sola, a medianoche, y me arrodillé con todos. Cua
 
 He atado mi llave al cordón. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
   },
+  reina: {
+    title: 'Las horas de la reina',
+    text: `En el reclinatorio de su cámara, un libro de horas pequeño, de los que caben en una mano, con las letras capitales en oro y azul. Entre las hojas, una cinta y un papel doblado, de otra letra:
+
+Señora: cerramos vuestra torre el día que os bajaron a la Sé, como mandó el Rey, y tapamos vuestras cosas, que no las viera nadie. Él sube cada noche. No dice nada; se sienta junto a la cama, con una vela, hasta que se acaba, y baja.
+
+Anoche no bajó solo. Subió con él el arzobispo, y le hablaba muy bajo, como a un niño enfermo. Le decía que abajo, en la Sé, se arregla todo.
+
+Yo me quedo con vos. No sé rezar de otra manera.`,
+  },
   cartaRey: {
     title: 'Carta del Rey sobre la reja',
     text: `En la mesa del canciller, el traslado de una carta, con su romance debajo, de mano de un escribano:
@@ -1164,6 +1174,21 @@ export const MSG = {
   campanaSuena: 'Al soltar la llave, el cordón tira de la campana. Suena una vez, sola, por toda la ciudad.',
   capillaAtrancada: 'Atrancada por fuera. Al otro lado se oye el viento entre ramas secas.',
   capillaTranca: 'Retiras la tranca de la puerta de la capilla. Da a un patio estrecho, al sur, delante de la cancillería.',
+  capillaOTranca: 'Retiras la tranca de la puerta de poniente de la capilla. Da al jardín de la reina.',
+  capillaOeste: 'La puerta de la capilla, atrancada por dentro. Al otro lado, alguien canta muy bajo.',
+  reinaTranca: 'Retiras la tranca del postigo. Da al patio de la cancillería.',
+  cocinaTranca: 'Retiras la tranca de la puerta de la cocina. Dentro, el hogar sigue ardiendo.',
+  // los jardines del Paço
+  jardinReina: 'El jardín de la reina: cuatro cuadros de rosales secos alrededor de una pila. En el agua flotan pétalos negros, como si alguien los echara todavía.',
+  bultos: 'Las cosas de la reina, tapadas con paños desde la Cuaresma: un arcón, una mesa, un armario. Nadie ha levantado los paños.',
+  camaReina: 'La cama de la reina, bajo su dosel, con el paño encima. En la almohada se nota todavía la forma de una cabeza. En el suelo, la vela que se acabó.',
+  palomar: 'El palomar del Rey, y ni una paloma. En los nidales, plumas y huesecillos limpios. Lo que anida ahora en lo alto no es una paloma.',
+  colmenas: 'Las colmenas, mudas. Al acercar el oído a una, algo dentro no zumba: respira.',
+  vivero: 'El vivero de los peces del Rey. Las carpas flotan panza arriba en el agua negra, hinchadas, todas vueltas hacia el mismo lado: hacia la Sé.',
+  fuenteRey: 'La fuente del jardín del Rey no corre. En la taza, hojas secas y una corona de flores, seca también.',
+  alberca: 'La alberca larga, verde y quieta. En el fondo brillan monedas, muchas, echadas de una en una. Pedían algo.',
+  mirador: 'Desde el mirador del Rey se ve el campamento de los sitiadores: las hogueras en la niebla, las tiendas, y más cerca la fila de picas, con lo que hay clavado en ellas. Allí abajo no se mueve nadie.',
+  halcones: 'Los halcones del Rey, encapirotados, muertos en sus alcándaras. Nadie les quitó la caperuza: murieron sin ver lo que pasaba.',
   capillaSur: 'La puerta de la capilla, atrancada por dentro. Por la rendija huele a cera.',
   reinaAtrancada: 'El postigo del jardín de la reina, atrancado del otro lado. Por encima de la tapia asoman ramas secas.',
   // las arcas del Tombo
@@ -1473,4 +1498,12 @@ export const AREA_NAMES = {
   tombo_legajos: 'Torre del Tombo · los legajos',
   tombo_cartas: 'Torre del Tombo · las cartas',
   tombo_arcas: 'Torre del Tombo · las arcas del Rey',
+  jardin_reina: 'Jardín de la reina',
+  torre_reina: 'Torre de la reina',
+  camara_reina: 'Cámara de la reina',
+  pomar: 'El pomar del Rey',
+  jardin_rey: 'Jardín del Rey',
+  mirador_rey: 'Mirador del Rey',
+  patio_cocinas: 'Patio de las cocinas',
+  halconera: 'Halconera del Rey',
 };

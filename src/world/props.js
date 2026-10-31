@@ -2179,7 +2179,7 @@ export function loom(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
     for (const sx of [-0.9, 0.9]) {
-      wb.box('wooddark', sx - 0.06, 0, -0.6, sx + 0.06, 1.7, -0.5, { ao: false, room: o.room });
+      wb.box('wooddark', sx - 0.06, 0, -0.6, sx + 0.06, 1.74, -0.5, { ao: false, room: o.room });
       wb.box('wooddark', sx - 0.06, 0, 0.5, sx + 0.06, 1.0, 0.6, { ao: false, room: o.room });
       wb.box('wooddark', sx - 0.05, 0.9, -0.6, sx + 0.05, 1.0, 0.6, { ao: false, room: o.room });
     }

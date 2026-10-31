@@ -213,8 +213,10 @@ export function buildNorthWalls(ctx, S, L) {
       wallRun(ctx, BREACH.x1, -126, b, -122, YN, 'n');
       continue;
     }
-    // (el de la esquina no lleva parapeto donde llega el adarve del muro este)
-    wallRun(ctx, a, -126, b, -122, YN, 'n', { trimB: b === 76 ? 4 : 0 });
+    // (el de la esquina no lleva parapeto donde llega el adarve del muro este;
+    // el del Paço lo pone él, con el hueco por el que se sube al mirador:
+    // paco_jardines.js)
+    wallRun(ctx, a, -126, b, -122, YN, 'n', { trimB: b === 76 ? 4 : 0, inner: a === NO.x + NO.w / 2 ? false : undefined });
   }
   wallBreach(ctx);
   // la esquina: almenas también al este

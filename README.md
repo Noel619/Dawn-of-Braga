@@ -451,6 +451,20 @@ guardan; las de dos sellos negros tienen **cerradura de resorte** (un virote a q
 bermejos está **la llave del canciller**. Entre ellas, sentado contra el muro con el sello del Rey en el regazo y
 su farol aún encendido, el canciller, Mestre Alberto (`world/paco_cancilleria.js`).
 
+**Los jardines del Paço.** La puerta de poniente de la capilla, atrancada por dentro, da al **jardín de la
+reina**: cuatro cuadros de rosales secos alrededor de una pila, y en la esquina **su torre**, cerrada desde la
+Cuaresma, con sus cosas tapadas con paños; arriba, su cámara, con la cama bajo el dosel, una de sus dueñas sentada
+contra ella y, en el reclinatorio ante la ventana, su libro de horas (con la nota de la dueña) y su relicario. El
+postigo del jardín da al patio de la cancillería. Al norte, **el pomar**: los frutales secos en filas, las eras,
+las colmenas mudas en su poyo, el vivero con los peces muertos y el palomar redondo, sin palomas y con un cuervo
+cebado en lo alto; y, pegada a la muralla norte, una escalera que sube al adarve y, por él, al **mirador del
+Rey**, un templete de madera desde el que se ven, en la niebla, las hogueras del campamento de los sitiadores.
+Al este, **el jardín del Rey**: un claustro con su galería en dos lados, los cuatro cuadros de arrayán y naranjos
+secos, la fuente en el cruce de los paseos y la alberca larga, con monedas en el fondo. Detrás de la sala, **el
+patio de las cocinas** (el pozo, la leñera, el horno de fuera, el muladar y los perros), y desde él la puerta de
+poniente de la cocina se desatranca: el atajo al servicio. En el patio de las caballerizas, contra la coracha, **la
+halconera**, con los halcones del Rey encapirotados y muertos en sus alcándaras (`world/paco_jardines.js`).
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -888,7 +902,9 @@ src/
                         el foso del Rey, el puente, la puerta, el patio, la sala, el servicio, las cámaras del Rey, el
                         pasadizo quemado y la Capilla Real), generado por medidas; paco_cancilleria.js: la
                         Cancillería y la Torre del Tombo (el patio, la sala de los escribanos, la escalera de la
-                        muralla, el paso y la torre, con sus arcas selladas); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        muralla, el paso y la torre, con sus arcas selladas); paco_jardines.js: los jardines
+                        (la torre de la reina, el pomar, el jardín del Rey, el mirador y su vista, el patio
+                        de las cocinas y la halconera); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
@@ -1000,6 +1016,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
                                        terraza y el puente levadizo
+                        pacowalk.mjs   recorre a pie el Paço: la coracha, el patio, la puerta y el foso, el
+                                       servicio y la sala, las cámaras y el pasadizo quemado, la capilla, la
+                                       cancillería y la Torre del Tombo, hasta sus arcas
+                        jardineswalk.mjs los jardines del Paço: de la capilla a la torre de la reina, el
+                                       pomar, el mirador, el jardín del Rey y, por el patio, la cocina
+                        corte.mjs      la Corte de los Infieles, de principio a fin
                         cryptwalk.mjs  recorre a pie la cripta honda desde el templo romano: a qué salas de su
                                        planta se llega (con «abierto», con todas las puertas abiertas) y dónde
                                        no se ve suelo bajo lo que se pisa
