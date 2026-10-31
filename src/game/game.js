@@ -33,6 +33,7 @@ import { Spring } from './spring.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
 import { PACO, enFoso } from '../world/level_paco.js';
+import { Corte } from './corte.js';
 import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
 import { QTE } from './qte.js';
@@ -255,6 +256,8 @@ export class Game {
     // las cuerdas que se cortan de un virote (y lo que cuelga de ellas)
     this.cuerdas = new Cuerdas(this, lvl.L.cuerdas);
     this.interact = new Interactables(this, lvl.L.interact);
+    // la Corte de los Infieles: el director del compás (game/corte.js)
+    this.corte = new Corte(this);
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
@@ -447,6 +450,7 @@ export class Game {
 
   applyWorldState() {
     this.interact.applyFlags(this.flags, true);
+    if (this.corte) this.corte.applyFlags();
     this.cuerdas.applyFlags(this.flags);
     this.breakables.applyFlags(this.flags, true);
     for (const ph of this.phantoms) ph.state = 'wait';
@@ -463,6 +467,8 @@ export class Game {
         e.obj.visible = false;
         e.shadow.visible = false;
         if (e.P.censer) e.P.censer.grp.visible = false;
+        // (los que se quedan donde cayeron: tendidos, a la vista)
+        if (e.T.keepCorpse) e.anim.play(e.T.clips.death, { blend: 0, t0: e.T.clips.death.dur });
       } else if (e.type === 'impaled' && this.flags['impaled:beast']) this.hideImpaled(e);
     }
     this.equipBestWeapon(this.savedWeapon || this.player.weaponId);
@@ -554,6 +560,7 @@ export class Game {
     this.house.script = null;
     this.paio.script = null;
     this.rey.onRespawn();
+    this.corte.reset();
     this.souto.reset();
     this.cornisas.reset();
     this.fisico.reset();
@@ -1224,6 +1231,7 @@ export class Game {
     this.crypt.onRespawn();
     this.paio.onRespawn();
     this.rey.onRespawn();
+    this.corte.onRespawn();
     this.ossuaries.onRespawn();
     this.souto.onRespawn();
     this.cornisas.onRespawn();
@@ -1919,6 +1927,7 @@ export class Game {
         this.crypt.update(dt);
         this.paio.update(dt);
         this.rey.update(dt);
+        this.corte.update(dt);
         this.ossuaries.update(dt);
         this.souto.update(dt);
         this.cornisas.update(dt);

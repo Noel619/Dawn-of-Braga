@@ -297,10 +297,11 @@ Entre ellos, al pie del estrado, el mayordomo.
 **Cómo empieza.** Al pisar el estrado, las puertas del pasillo de servicio se cierran solas y empieza un tambor
 (o sus palmas, a compás). Se levantan de uno en uno, en el orden en que estaban, y te rodean.
 
-**Cómo pelean** (la parte rítmica). Un director lleva **el compás**: en cada golpe del tambor **ataca uno solo**,
+**Cómo pelean** (la parte rítmica; **hecho**). Un director lleva **el compás**: en cada golpe del tambor **ataca uno solo**,
 el que el compás señala (alza el cuchillo un tiempo antes: se ve venir); los demás cierran el corro con los
 cuchillos en alto. Los cortesanos **caen pronto** (dos golpes; un parry a compás los deja abiertos y el
-golpe de gracia los mata), pero el corro no para: **tres oleadas** (siete, ocho y ocho), y cada una con el compás
+golpe de gracia los mata), pero el corro no para: **tres oleadas** (siete, ocho y siete: veintidós, y con el mayordomo
+las veintitrés), y cada una con el compás
 más deprisa. Romper el corro con una voltereta o una carga lo deshace unos tiempos. El último, solo y en
 silencio, **el mayordomo**: el que más quería el Rey. Cae y se acaba el tambor; se abren las puertas, la llave.
 
@@ -377,7 +378,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 2 | **La planta de armas, la ballesta y el alférez** (**hecho**) | el recorrido de §4.2; el arma (`game/virotes.js`: tiro, recarga, cuenta, cuerdas); el alférez (`entities/alferez.js`); la primera llave |
 | 3 | **La planta baja y la bajada tapiada** (**hecho**) | §4.3; la pared nueva en el pasillo de las celdas desde el principio; la escalera baja del almacén (no de la bodega: así no pisa la cárcel) y el sillar cuelga sobre el tapiado (`game/cuerdas.js`) |
 | 4a | **El recinto del Paço** (**hecho**) | `level_paco.js`: la ciudad hacia el oeste, los muros, el foso del rey (un hueco en la losa que no es portal del subsuelo y se dibuja siempre), el puente, la Puerta del Paço, el Patio de la Corte, la escalera de la coracha, la sala y la galería de las cámaras por fuera, el cuerpo de guardia; zonas y mapa |
-| 4b | **La Sala de la Corte y la Corte de los Infieles** | el cortesano, el director del compás, la llave del mayordomo |
+| 4b | **La Sala de la Corte y la Corte de los Infieles** (**hecho**) | `game/corte.js` (el director del compás), `entities/cortesano.js` (el cortesano y el mayordomo); la sala por dentro y el camino del servicio (el callejón, las caballerizas, la cocina, el paso cubierto), que venía de la 4f; la llave del mayordomo y su cuaderno |
 | 4c | **Las Cámaras del Rey y el pasadizo** | la llave del camarero; el equilibrio hasta la torre |
 | 4d | **La Capilla Real** | la tribuna, la espadaña, la llave del capellán |
 | 4e | **La Cancillería y la Torre del Tombo** | el registro y las arcas, la llave del canciller |

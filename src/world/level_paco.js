@@ -22,7 +22,7 @@ import { solid, blocker, stairs, merlons, cityWall, tower, archedWall, archRing,
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
-import { CASTLE, parapet, slit } from './level_castle.js';
+import { CASTLE, parapet, slit, holedWall } from './level_castle.js';
 import { KEEP } from './level_keep.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -76,13 +76,20 @@ export const PACO = {
   // portada (en el último tramo, el de abajo: por ahí se entraba) y el muro
   // del servicio (screens); entre ella y la coracha, el callejón de las
   // caballerizas (de x1 a la coracha), con su puerta al patio
-  sala: { x0: -104, x1: -66, z0: -104, z1: -86, t: 1.2, y: 1.5, eave: 12, ridge: 18, arcos: [-98.4, -94.0, -89.6, -85.2, -80.8, -76.4], portada: -74.2, screens: -72 },
+  sala: { x0: -104, x1: -66, z0: -104, z1: -86, t: 1.2, y: 1.5, eave: 12, ridge: 18, arcos: [-98.4, -94.0, -89.6, -85.2, -80.8, -76.4], portada: -74.2, screens: -72, estrado: -98.6, privada: -101.6, servicio: -74.9 },
   // las Cámaras del Rey: su planta (cuatro crujías en torno a un patinillo) y
   // la crujía de levante, con su galería al patio (arquería de x1 - 0.6 a x1,
   // la galería hasta gx, el muro de las cámaras hasta gx - 0.8)
   camaras: { x0: -118, x1: -90, z0: -86, z1: -47, e0: -100, gx: -93.4, F1: 4.9, eave: 10, ridge: 13.5 },
   // las cocinas: la grande, exenta y cuadrada, con su chimenea cónica
-  cocina: { x: -88, z: -113, w: 11, h: 7.5, top: 30 },
+  cocina: { x: -78, z: -113, w: 11, h: 7.5, top: 30 },
+  // el servicio: el patio de las caballerizas (de la cocina a la coracha, de
+  // las caballerizas, contra la muralla, hasta zc, a la sala), el muro que
+  // cierra la coracha hasta la muralla por detrás de la atalaya, y el paso
+  // cubierto de la cocina a la sala
+  cuadras: { x0: -72.5, x1: -62, z0: -122, zc: -115, z1: -104 },
+  cierreN: { x0: -62, x1: -58, z0: -122, z1: -112.5 },
+  paso: { x0: -76.5, x1: -73.3, z0: -107.5, z1: -104 },
 };
 
 // ¿Está en el foso (abajo, en su fondo)?
@@ -107,8 +114,11 @@ export function buildPaco(ctx, S, L) {
   guardia(ctx, S, L);
   patio(ctx, S, L);
   sala(ctx, S, L);
+  salaDentro(ctx, S, L);
+  corte(L);
   camaras(ctx, S, L);
-  cocina(ctx);
+  cocina(ctx, S, L);
+  servicio(ctx, S, L);
   zonas(L);
 }
 
@@ -552,7 +562,7 @@ function patio(ctx, S, L) {
   P.barrel(ctx, -75.6, 0, -53.2, {});
   P.barrel(ctx, -74.9, 0, -54.1, {});
   P.crate(ctx, -88.6, 0, -54.0, 0.8, 0.3);
-  P.firewood(ctx, -66.0, 0, -84.4, 0, 3);
+  P.firewood(ctx, -88.4, 0, -84.4, 0, 3);
   bakeCorpse(wb, -70.2, 0, -57.2, 2.2, 'back', 'soldier', 67);
   bakeCorpse(wb, -81.4, 0, -79.0, -0.6, 'face', 'villager', 68);
   bakeCorpse(wb, -73.6, 1.5, -84.1, 0.2, 'curl', 'villager', 69);
@@ -584,9 +594,34 @@ function sala(ctx, S, L) {
   const tint = [0.86, 0.83, 0.78];
   const pw = 2.6,
     ps = Sa.y + 2.4; // (el arranque del arco de la portada)
-  // los muros largos: el del patio, con la portada; el del norte, entero
-  archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z1 - t, t1: z1, y0: 0, y1: eave, openings: [{ c: Sa.portada, w: pw, h: ps, rise: pw / 2, ring: 0.36 }], mat: 'ashlar', tint, rooms: ['sala', 'out'], sub: 2.2 });
-  solid(ctx, 'ashlar', x0, 0, z0, x1, eave, z0 + t, { faces: 'n', sub: 2.2, aoH: 2.5, tint });
+  // los muros largos: el del patio, con la portada y la puerta privada de
+  // las cámaras (tras el estrado); el del norte, con la del servicio
+  archedWall(ctx, {
+    axis: 'x',
+    a0: x0,
+    a1: x1,
+    t0: z1 - t,
+    t1: z1,
+    y0: 0,
+    y1: eave,
+    openings: [
+      { c: Sa.portada, w: pw, h: ps, rise: pw / 2, ring: 0.36 },
+      { c: Sa.privada, w: 1.3, h: Sa.y + 2.1, rise: 0.65, ring: 0.24 },
+    ],
+    mat: 'ashlar',
+    tint,
+    rooms: ['sala', 'out'],
+    sub: 2.2,
+  });
+  archedWall(ctx, { axis: 'x', a0: x0, a1: x1, t0: z0, t1: z0 + t, y0: 0, y1: eave, openings: [{ c: Sa.servicio, w: 1.6, h: Sa.y + 2.2, rise: 0.8, ring: 0.26 }], mat: 'ashlar', tint, rooms: ['out', 'sala'], sub: 2.2 });
+  // (los umbrales, macizos hasta el suelo de la sala)
+  for (const [c, w, za, zb] of [
+    [Sa.privada, 1.3, z1 - t, z1],
+    [Sa.servicio, 1.6, z0, z0 + t],
+  ]) {
+    solid(ctx, 'flag', c - w / 2, 0, za, c + w / 2, Sa.y, zb, { faces: 't', ao: false, uv: 0.8 });
+    W(S, c - w / 2, za, c + w / 2, zb);
+  }
   // los hastiales (sus caras, de esquina a esquina)
   solid(ctx, 'ashlar', x0, 0, z0 + t, x0 + t, eave, z1 - t, { faces: '', sub: 2.2 });
   solid(ctx, 'ashlar', x1 - t, 0, z0 + t, x1, eave, z1 - t, { faces: '', sub: 2.2 });
@@ -680,7 +715,7 @@ function sala(ctx, S, L) {
       aw = 2.8;
     archedWall(ctx, { axis: 'x', a0: ax0, a1: ax1, t0: z1 - 0.7, t1: z1, y0: 0, y1: 4.6, openings: [{ c: ac, w: aw, h: 2.2, rise: aw / 2, ring: 0.3 }], mat: 'ashlar', tint, rooms: ['out', 'out'] });
     wb.box('ashlar', ax0, 4.6, z1 - 0.8, ax1, 4.85, z1 + 0.1, { ao: false, faces: 'tnsb', tint: [0.72, 0.7, 0.66] });
-    L.interact.push({ kind: 'door', id: 'd_cuadras', x: ac, y: 0, z: z1 - 0.35, w: aw, h: 2.2 + aw / 2, arch: true, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: z1 - 0.7, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'cuadrasAtrancada' });
+    L.interact.push({ kind: 'door', id: 'd_cuadras', x: ac, y: 0, z: z1 - 0.35, w: aw, h: 2.2 + aw / 2, arch: true, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: z1 - 0.7, inset: 0.06, ajar: 0.2, lock: { type: 'none' } });
   }
   // los estandartes del Rey a los lados de la portada
   P.banner(ctx, Sa.portada - 4.6, eave - 1.0, z1 + 0.16, 0, 'bannerRey', 1.5, 4.8);
@@ -768,23 +803,442 @@ function camaras(ctx, S, L) {
   L.enemies.push({ type: 'penitent', x: gx + 1.2, y: 0.12, z: doors[1] + 1.4, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_pc1' });
 }
 
-// ------------------------------------------------------------------------ las cocinas (por fuera)
-// La cocina grande, exenta y cuadrada como las de los monasterios, con su
-// chimenea cónica: se ve desde toda la ciudad, por detrás de la sala.
-function cocina(ctx) {
+// ------------------------------------------------------------------------ la sala (por dentro)
+// El aula régia: el suelo en alto; seis arcos diafragma de muro a muro que
+// cargan la armadura; el estrado al oeste, con el trono bajo su dosel y la
+// mesa alta; las mesas largas de caballetes contra los muros; el hogar en
+// medio del tramo de abajo; y al este, tras el cancel, el pasillo del
+// servicio, con la portada al patio, la puerta del paso de la cocina y las
+// de la botillería y la despensa.
+function salaDentro(ctx, S, L) {
   const wb = ctx.wb;
-  const K = PACO.cocina;
-  const h = K.w / 2;
-  solid(ctx, 'ashlar', K.x - h, 0, K.z - h, K.x + h, K.h, K.z + h, { faces: 'nsew', sub: 2.2, aoH: 2.5, tint: [0.84, 0.8, 0.74] });
-  wb.box('ashlar', K.x - h - 0.25, K.h - 0.3, K.z - h - 0.25, K.x + h + 0.25, K.h, K.z + h + 0.25, { ao: false, faces: 'nsewb', tint: [0.72, 0.7, 0.66] });
+  const Sa = PACO.sala;
+  const room = 'sala';
+  const ix0 = Sa.x0 + Sa.t,
+    ix1 = Sa.x1 - Sa.t,
+    iz0 = Sa.z0 + Sa.t,
+    iz1 = Sa.z1 - Sa.t,
+    y = Sa.y,
+    zc = (iz0 + iz1) / 2;
+  const tint = [0.8, 0.77, 0.72];
+  W(S, ix0, iz0, Sa.screens, iz1);
+  // el suelo (macizo, en alto) y el estrado, en dos escalones
+  solid(ctx, 'flag', ix0, 0, iz0, ix1, y, iz1, { faces: 't', ao: false, sub: 2.5, uv: 0.7, room, tint: [0.78, 0.75, 0.7] });
+  solid(ctx, 'planks', ix0, y, iz0, Sa.estrado, y + 0.45, iz1, { faces: 'te', ao: false, sub: 2, room, tint: [0.7, 0.62, 0.55] });
+  solid(ctx, 'planks', Sa.estrado, y, iz0, Sa.estrado + 0.4, y + 0.225, iz1, { faces: 'te', ao: false, sub: 2, room, tint: [0.7, 0.62, 0.55] });
+  // las caras de dentro de los hastiales
+  wb.box('ashlar', ix0 - 0.01, y, iz0, ix0, Sa.eave, iz1, { faces: 'e', sub: 2.2, aoH: 2, baseY: y, room, tint });
+  // los arcos diafragma, con sus responsiones
+  const spring = y + 3.2,
+    rise = 6.4,
+    aw = iz1 - iz0 - 1.2;
+  for (const x of Sa.arcos) {
+    archRing(ctx, { axis: 'z', c: zc, w: aw, y0: spring, rise, ring: 0.6, t0: x - 0.35, t1: x + 0.35, top: Sa.eave, clip: [iz0, iz1], piers: true, mat: 'ashlar', spMat: 'ashlar', rooms: [room, room], tint: [0.7, 0.67, 0.62], spTint: tint });
+    for (const [za, zb] of [
+      [iz0, iz0 + 0.6],
+      [iz1 - 0.6, iz1],
+    ]) {
+      solid(ctx, 'ashlar', x - 0.4, y, za, x + 0.4, spring, zb, { faces: 'ewns', sub: 2, aoH: 1.2, baseY: y, room, tint });
+      wb.box('ashlar', x - 0.52, spring - 0.25, za - (za === iz0 ? 0 : 0.12), x + 0.52, spring, zb + (za === iz0 ? 0.12 : 0), { ao: false, faces: 'tbnsew', room, tint: [0.66, 0.63, 0.58] });
+    }
+    // (lo de encima, hasta la armadura: el hastial del arco)
+    const yr = Sa.ridge - 0.25,
+      half = (Sa.z1 - Sa.z0) / 2;
+    const slope = (Sa.ridge - Sa.eave) / half;
+    const ze0 = iz0,
+      ze1 = iz1,
+      yAt = (z) => Sa.ridge - 0.25 - Math.abs(z - (Sa.z0 + Sa.z1) / 2) * slope;
+    for (const [xx, dir] of [
+      [x - 0.35, -1],
+      [x + 0.35, 1],
+    ])
+      cara(wb, 'ashlar', V(xx, Sa.eave, ze0), V(xx, Sa.eave, ze1), V(xx, yAt(ze1), ze1), V(xx, yAt(ze0), ze0), V(dir, 0, 0), { ao: false, sub: 2.5, room, tint });
+    for (const [xx, dir] of [
+      [x - 0.35, -1],
+      [x + 0.35, 1],
+    ])
+      wb.tri('ashlar', V(xx, yAt(ze0), ze0), V(xx, yAt(ze1), ze1), V(xx, yr, (Sa.z0 + Sa.z1) / 2), { ao: false, room, tint });
+  }
+  // el cancel: dos paneles de tablas bajo el último arco, con el paso en medio
+  {
+    const xs = Sa.arcos[Sa.arcos.length - 1] + 0.5;
+    for (const [za, zb] of [
+      [iz0 + 0.6, zc - 2.6],
+      [zc + 2.6, iz1 - 0.6],
+    ]) {
+      solid(ctx, 'planks', xs, y, za, xs + 0.12, y + 3.0, zb, { faces: 'tnsew', ao: false, sub: 2, room, tint: [0.62, 0.52, 0.44] });
+      wb.box('wooddark', xs - 0.06, y + 3.0, za, xs + 0.18, y + 3.2, zb, { ao: false, faces: 'tbnsew', room });
+      for (let z = za; z <= zb + 0.01; z += (zb - za) / 3) wb.box('wooddark', xs - 0.05, y, z - 0.08, xs + 0.17, y + 3.0, z + 0.08, { ao: false, faces: 'nsew', room });
+    }
+  }
+  // el muro del servicio (de la botillería y la despensa), con sus puertas
+  {
+    const xw = Sa.screens;
+    const zb = zc; // (la botillería al norte, la despensa al sur)
+    holedWallIn(ctx, 'ashlar', xw, xw + 0.5, iz0, iz1, y, Sa.eave, [
+      { a0: zc - 4.4, a1: zc - 3.2, y0: y, y1: y + 2.3 },
+      { a0: zc + 3.2, a1: zc + 4.4, y0: y, y1: y + 2.3 },
+    ], room, tint);
+    // (sus caras, un pelo por delante de los muros de la sala, que quedan
+    // detrás; el suelo, el de la sala)
+    for (const [za, zb2, rm] of [
+      [iz0 + 0.04, zb - 0.25, 'sala_botilleria'],
+      [zb + 0.25, iz1 - 0.04, 'sala_despensa'],
+    ]) {
+      W(S, xw + 0.5, za, ix1, zb2);
+      interiorRoom(ctx, xw + 0.5, za, ix1 - 0.04, zb2, y, 3.4, { room: rm, wall: 'wallstone', tint: [0.66, 0.62, 0.56], floor: false, doors: [{ side: 'w', at: za < zc ? zc - 3.8 : zc + 3.8, w: 1.2, h: 2.3 }], skip: ['w'] });
+    }
+    solid(ctx, 'wallstone', xw + 0.5, y, zb - 0.25, ix1, Sa.eave, zb + 0.25, { faces: '', sub: 2 });
+    // la botillería: los toneles y las jarras; la despensa: los estantes, los
+    // sacos y los quesos (vacíos: se lo comieron todo)
+    wb.setRoom('sala_botilleria');
+    P.cask(ctx, ix1 - 0.8, y, iz0 + 1.2, Math.PI / 2, { room: 'sala_botilleria' });
+    P.cask(ctx, ix1 - 0.8, y, iz0 + 2.8, Math.PI / 2, { room: 'sala_botilleria' });
+    P.barrel(ctx, xw + 1.3, y, iz0 + 0.9, {});
+    P.jar(ctx, xw + 1.1, y, zb - 1.0, 1.1, { room: 'sala_botilleria' });
+    P.jar(ctx, xw + 1.7, y, zb - 0.9, 0.9, { room: 'sala_botilleria' });
+    wb.setRoom('sala_despensa');
+    P.shelf(ctx, ix1 - 0.3, y, zc + 2.6, -Math.PI / 2, 2.0);
+    P.sacks(ctx, xw + 1.3, y, iz1 - 1.0, 3, 6301);
+    P.basket(ctx, ix1 - 1.2, y, iz1 - 0.8, { room: 'sala_despensa' });
+    wb.setRoom(null);
+    ctx.lights.push({ x: (xw + ix1) / 2, y: y + 2.4, z: (iz0 + zb) / 2, r: 1, g: 0.5, b: 0.24, radius: 4.5, intensity: 0.5, room: 'sala_botilleria' });
+    ctx.lights.push({ x: (xw + ix1) / 2, y: y + 2.4, z: (zb + iz1) / 2, r: 1, g: 0.5, b: 0.24, radius: 4.5, intensity: 0.5, room: 'sala_despensa' });
+    L.interact.push({ kind: 'item', id: 'i_ampolla_despensa', item: 'ampolla', x: ix1 - 0.4, y: y + 1.25, z: zc + 2.6 });
+  }
+  // las ventanas, por dentro (las mismas que por fuera)
+  const bays = [ix0, ...Sa.arcos, Sa.screens];
+  for (let i = 0; i + 1 < bays.length; i++) {
+    const xc = (bays[i] + bays[i + 1]) / 2;
+    for (const [zf, sg, f] of [
+      [iz0, 1, 's'],
+      [iz1, -1, 'n'],
+    ]) {
+      if (f === 'n' && Math.abs(xc - Sa.portada) < 1.5) continue;
+      for (const s2 of [-1, 1]) {
+        const c = xc + s2 * 0.45;
+        wb.box('black', c - 0.31, 6.4, Math.min(zf, zf + sg * 0.02), c + 0.31, 9.4, Math.max(zf, zf + sg * 0.02), { ao: false, grime: false, faces: f, room });
+      }
+      wb.box('ashlar', xc - 1.0, 6.2, Math.min(zf, zf + sg * 0.22), xc + 1.0, 6.4, Math.max(zf, zf + sg * 0.22), { ao: false, faces: 'tnsew'.replace(f === 's' ? 'n' : 's', ''), room, tint });
+    }
+  }
+  // el estrado: el trono bajo su dosel, la mesa alta y sus escaños
+  {
+    const yE = y + 0.45;
+    const xt = ix0 + 0.9;
+    solid(ctx, 'planks', ix0, yE, zc - 1.6, ix0 + 1.8, yE + 0.3, zc + 1.6, { faces: 'tnse', ao: false, room, tint: [0.62, 0.55, 0.48] });
+    const yT = yE + 0.3;
+    // el trono: la silla de respaldo alto, con sus brazos y su cojín
+    wb.box('wooddark', xt - 0.4, yT, zc - 0.5, xt + 0.35, yT + 0.5, zc + 0.5, { ao: false, faces: 'tnsew', room });
+    wb.box('clothRed', xt - 0.38, yT + 0.5, zc - 0.44, xt + 0.3, yT + 0.6, zc + 0.44, { ao: false, faces: 'tnsew', room });
+    wb.box('wooddark', xt - 0.55, yT, zc - 0.55, xt - 0.4, yT + 2.3, zc + 0.55, { ao: false, faces: 'tnsew', room });
+    wb.box('gold', xt - 0.6, yT + 2.1, zc - 0.2, xt - 0.38, yT + 2.45, zc + 0.2, { ao: false, faces: 'tnsew', room });
+    for (const s2 of [-1, 1]) wb.box('wooddark', xt - 0.4, yT + 0.5, zc + s2 * 0.5 - 0.05, xt + 0.36, yT + 1.0, zc + s2 * 0.5 + 0.05, { ao: false, faces: 'tnsew', room });
+    ctx.col.add(xt - 0.6, yT, zc - 0.56, xt + 0.38, yT + 1.0, zc + 0.56);
+    // el dosel: el paño del Rey en el muro y su tejadillo de tela
+    P.banner(ctx, ix0 + 0.06, yT + 4.4, zc, Math.PI / 2, 'bannerRey', 2.4, 4.0);
+    wb.box('clothRed', ix0, yT + 4.5, zc - 1.6, ix0 + 1.7, yT + 4.62, zc + 1.6, { ao: false, faces: 'tbnsew', room });
+    wb.box('clothRed', ix0 + 1.6, yT + 4.05, zc - 1.6, ix0 + 1.7, yT + 4.5, zc + 1.6, { ao: false, faces: 'tbnsew', room, tint: [0.8, 0.8, 0.8] });
+    for (const s2 of [-1, 1]) wb.box('gold', ix0 + 1.58, yT + 1.4, zc + s2 * 1.55 - 0.04, ix0 + 1.66, yT + 4.5, zc + s2 * 1.55 + 0.04, { ao: false, room });
+    // la mesa alta, de través, con su mantel; los escaños detrás
+    const xm = Sa.estrado - 1.2;
+    P.table(ctx, xm, yE, zc - 2.2, 3.6, 1.0, Math.PI / 2, {});
+    P.table(ctx, xm, yE, zc + 2.2, 3.6, 1.0, Math.PI / 2, {});
+    for (const zz of [zc - 2.2, zc + 2.2]) wb.box('linen', xm - 0.52, yE + 0.8, zz - 1.82, xm + 0.52, yE + 0.82, zz + 1.82, { ao: false, faces: 'tnsew', room, tint: [0.86, 0.84, 0.8] });
+    P.bench(ctx, xm - 0.9, yE, zc - 2.2, 3.2, Math.PI / 2);
+    P.bench(ctx, xm - 0.9, yE, zc + 2.2, 3.2, Math.PI / 2);
+    P.candles(ctx, xm, yE + 0.82, zc - 2.6, 4, 6302, { room, radius: 6, intensity: 0.9 });
+    P.candles(ctx, xm, yE + 0.82, zc + 2.6, 4, 6303, { room, radius: 6, intensity: 0.9 });
+    P.jar(ctx, xm + 0.1, yE + 0.82, zc + 1.4, 0.6, { room });
+    L.interact.push({ kind: 'note', id: 'n_mayordomo', note: 'mayordomo', x: xm + 0.05, y: yE + 0.84, z: zc - 1.5, model: 'paper' });
+  }
+  // las mesas largas de caballetes, contra los muros, con sus bancos
+  for (const zt of [iz0 + 1.7, iz1 - 1.7]) {
+    for (let x = -96.6; x < -79; x += 4.0) {
+      P.table(ctx, x, y, zt, 3.6, 0.9, 0, {});
+      P.bench(ctx, x, y, zt + (zt < zc ? 0.75 : -0.75), 3.2, 0);
+    }
+    wb.box('linen', -98.5, y + 0.8, zt - 0.47, -78.9, y + 0.82, zt + 0.47, { ao: false, faces: 't', room, tint: [0.7, 0.68, 0.64] });
+  }
+  P.jar(ctx, -92.3, y + 0.82, iz0 + 1.6, 0.6, { room });
+  P.jar(ctx, -84.1, y + 0.82, iz1 - 1.8, 0.7, { room });
+  P.dropped(ctx, -88.6, y + 0.82, iz0 + 1.75, 0.6, 'sword');
+  // el hogar, en medio del tramo de abajo: las brasas todavía rojas
+  {
+    const hx = (Sa.arcos[4] + Sa.arcos[5]) / 2,
+      hz = zc;
+    solid(ctx, 'wallstone', hx - 1.1, y, hz - 1.1, hx + 1.1, y + 0.32, hz + 1.1, { faces: 'tnsew', ao: false, sub: 2, room, mats: { t: 'flag' }, tint: [0.62, 0.58, 0.54] });
+    wb.cylinder('ember', hx, y + 0.32, hz, 0.8, 0.7, 0.04, 10, { ao: false, grime: false, capTop: true, room });
+    P.firewood(ctx, hx - 0.2, y + 0.32, hz + 0.1, 0.6, 2);
+    ctx.fires.push({ x: hx, y: y + 0.4, z: hz, s: 1.1, smoke: true, embers: true });
+    ctx.lights.push({ x: hx, y: y + 1.4, z: hz, r: 1, g: 0.42, b: 0.14, radius: 13, intensity: 1.6, room });
+    if (ctx.dynLights) ctx.dynLights.push({ x: hx, y: y + 1.4, z: hz, intensity: 6, range: 12 });
+  }
+  // las coronas de luz colgadas de los arcos, las antorchas y los estandartes
+  for (const x of [Sa.arcos[1], Sa.arcos[3]]) P.candleCrown(ctx, x + 2.2, y + 4.6, zc, Sa.eave + 1.2, { room, r: 1.0, n: 10 });
+  for (const x of [Sa.arcos[1] + 2.2, Sa.arcos[3] + 2.2]) ctx.lights.push({ x, y: y + 4.2, z: zc, r: 1, g: 0.6, b: 0.28, radius: 10, intensity: 1.1, room });
+  for (const x of Sa.arcos.slice(0, 5)) {
+    P.wallTorch(ctx, x, y + 2.6, iz0 + 0.62, 's', { room });
+    P.wallTorch(ctx, x, y + 2.6, iz1 - 0.62, 'n', { room });
+  }
+  for (let i = 0; i < 6; i++) {
+    const xc = (bays[i] + bays[i + 1]) / 2;
+    P.banner(ctx, xc, Sa.eave - 2.6, iz0 + 0.12, 0, 'bannerRey', 1.2, 3.0);
+    if (Math.abs(xc - Sa.portada) > 1.5) P.banner(ctx, xc, Sa.eave - 2.6, iz1 - 0.12, Math.PI, 'bannerRey', 1.2, 3.0);
+  }
+  // la puerta del paso de la cocina (por donde se entra) y la privada de las
+  // cámaras del Rey, tras el estrado (se abre desde ellas)
+  L.interact.push(
+    { kind: 'door', id: 'd_servicio', x: Sa.servicio, y, z: Sa.z0 + Sa.t / 2, w: 1.6, h: 3.0, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'none' } },
+    { kind: 'door', id: 'd_sala_camaras', x: Sa.privada, y, z: Sa.z1 - Sa.t / 2, w: 1.3, h: 2.75, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: iz1, inset: 0.06, lock: { type: 'barred', side: 1 }, barredMsg: 'camarasPrivada' }
+  );
+}
+
+// Muro macizo a lo largo de z (de z0 a z1, grueso de x0 a x1) con huecos
+// [{ a0, a1, y0, y1 }], visto sólo desde el oeste (dentro de la sala).
+function holedWallIn(ctx, mat, x0, x1, z0, z1, y0, y1, holes, room, tint) {
+  const wb = ctx.wb;
+  let cur = z0;
+  const hs = [...holes].sort((a, b) => a.a0 - b.a0);
+  for (const h of [...hs, null]) {
+    const end = h ? h.a0 : z1;
+    if (end - cur > 0.01) solid(ctx, mat, x0, y0, cur, x1, y1, end, { faces: 'w', sub: 2, aoH: 1.5, baseY: y0, room, tint });
+    if (!h) break;
+    solid(ctx, mat, x0, h.y1, h.a0, x1, y1, h.a1, { faces: 'wb', sub: 2, room, tint });
+    // (las jambas)
+    wb.box(mat, x0, h.y0, h.a0 - 0.01, x1, h.y1, h.a0, { faces: 's', ao: false, room, tint });
+    wb.box(mat, x0, h.y0, h.a1, x1, h.y1, h.a1 + 0.01, { faces: 'n', ao: false, room, tint });
+    cur = h.a1;
+  }
+}
+
+// ------------------------------------------------------------------------ la corte
+// Veintidós cortesanos de rodillas en dos filas, mirando al trono, y el
+// mayordomo al pie del estrado (game/corte.js). El orden: de delante atrás,
+// una fila y la otra. Vencidos, no vuelven (corte:vencida); la llave del
+// mayordomo queda donde cae.
+function corte(L) {
+  const Sa = PACO.sala;
+  const zc = (Sa.z0 + Sa.z1) / 2,
+    y = Sa.y;
+  let n = 0;
+  for (let k = 0; k < 11; k++) {
+    const x = Sa.estrado + 2.1 + k * 1.45;
+    for (const z of [zc - 2.6, zc + 2.6]) {
+      n++;
+      L.enemies.push({ type: 'cortesano', x, y, z: z + (k % 2 ? 0.12 : -0.12), yaw: -Math.PI / 2, idle: 'kneel', id: 'e_corte' + n, orden: n, story: 'corte:vencida' });
+    }
+  }
+  L.enemies.push({ type: 'mayordomo', x: Sa.estrado + 0.8, y, z: zc, yaw: -Math.PI / 2, idle: 'kneel', id: 'e_mayordomo', story: 'corte:vencida', dies: 'dead:mayordomo' });
+  L.interact.push({ kind: 'item', id: 'i_llave_mayordomo', item: 'llave_mayordomo', afterFlag: 'dead:mayordomo', x: Sa.estrado + 0.8, y: y + 0.08, z: zc });
+}
+
+// ------------------------------------------------------------------------ las cocinas
+// La cocina grande, exenta y cuadrada como las de los monasterios, con su
+// chimenea cónica (se ve desde toda la ciudad, por detrás de la sala): por
+// dentro, el hogar en medio, bajo la campana, con su caldero y sus asadores;
+// el horno del pan, las mesas, la leña. Tres puertas: al patio de las
+// caballerizas, al paso de la sala y al patio de las cocinas (atrancada).
+function cocina(ctx, S, L) {
+  const wb = ctx.wb;
+  const K = PACO.cocina,
+    Sa = PACO.sala;
+  const h = K.w / 2,
+    t = 0.8;
+  const room = 'cocina_paco';
+  const x0 = K.x - h,
+    x1 = K.x + h,
+    z0 = K.z - h,
+    z1 = K.z + h;
+  const ix0 = x0 + t,
+    ix1 = x1 - t,
+    iz0 = z0 + t,
+    iz1 = z1 - t;
+  const tint = [0.84, 0.8, 0.74];
+  const dw = 1.6,
+    dh = 2.5;
+  W(S, ix0, iz0, ix1, iz1);
+  // los muros (por fuera, la sillería; por dentro, la piedra ahumada)
+  const dE = { a0: K.z - dw / 2, a1: K.z + dw / 2, y0: 0, y1: dh };
+  const dS = { a0: Sa.servicio - dw / 2, a1: Sa.servicio + dw / 2, y0: 0, y1: dh };
+  const dO = { a0: K.z - dw / 2, a1: K.z + dw / 2, y0: 0, y1: dh };
+  holedWall(ctx, 'ashlar', 'z', z0, z1, x1 - t, x1, 0, K.h, [dE], 'e', { tint, sub: 2.2 });
+  holedWall(ctx, 'ashlar', 'z', z0, z1, x0, x0 + t, 0, K.h, [dO], 'w', { tint, sub: 2.2 });
+  holedWall(ctx, 'ashlar', 'x', x0 + t, x1 - t, z1 - t, z1, 0, K.h, [dS], 's', { tint, sub: 2.2 });
+  solid(ctx, 'ashlar', x0 + t, 0, z0, x1 - t, K.h, z0 + t, { faces: 'n', sub: 2.2, aoH: 2.5, tint });
+  W(S, x1 - t - 0.1, dE.a0, x1 + 0.2, dE.a1);
+  W(S, dS.a0, z1 - t - 0.1, dS.a1, z1 + 0.2);
+  const soot = [0.42, 0.38, 0.34];
+  interiorRoom(ctx, ix0, iz0, ix1, iz1, 0, K.h - 0.3, {
+    room,
+    wall: 'wallstone',
+    tint: soot,
+    floorMat: 'flag',
+    ceil: false,
+    skirting: false,
+    // (sin derrame: las jambas y el intradós los pone el muro)
+    doors: [
+      { side: 'e', at: K.z, w: dw, h: dh },
+      { side: 's', at: Sa.servicio, w: dw, h: dh },
+      { side: 'w', at: K.z, w: dw, h: dh },
+    ],
+  });
+  // el techo, con la boca de la campana en medio, y la campana por dentro:
+  // un cono de hollín hasta el cielo
+  const yC = K.h - 0.3,
+    rB = 3.0,
+    rT = 0.7,
+    yT = K.top - 1.5,
+    N = 16;
+  const down = V(0, -1, 0);
+  for (let k = 0; k < N; k++) {
+    const a0 = (k / N) * Math.PI * 2,
+      a1 = ((k + 1) / N) * Math.PI * 2;
+    const sq = (a) => (h - t) / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
+    const P0 = V(K.x + rB * Math.cos(a0), yC, K.z + rB * Math.sin(a0)),
+      P1 = V(K.x + rB * Math.cos(a1), yC, K.z + rB * Math.sin(a1)),
+      Q0 = V(K.x + sq(a0) * Math.cos(a0), yC, K.z + sq(a0) * Math.sin(a0)),
+      Q1 = V(K.x + sq(a1) * Math.cos(a1), yC, K.z + sq(a1) * Math.sin(a1));
+    cara(wb, 'wooddark', P0, P1, Q1, Q0, down, { ao: false, room, tint: [0.4, 0.36, 0.32] });
+    const T0 = V(K.x + rT * Math.cos(a0), yT, K.z + rT * Math.sin(a0)),
+      T1 = V(K.x + rT * Math.cos(a1), yT, K.z + rT * Math.sin(a1));
+    const am = (a0 + a1) / 2;
+    cara(wb, 'wallstone', P0, P1, T1, T0, V(-Math.cos(am), 0.2, -Math.sin(am)), { ao: false, sub: 3, room, tint: [0.2, 0.18, 0.16] });
+  }
+  // el hogar, bajo la campana: las brasas, el caldero colgado y los asadores
+  solid(ctx, 'wallstone', K.x - 1.6, 0, K.z - 1.6, K.x + 1.6, 0.42, K.z + 1.6, { faces: 'tnsew', ao: false, sub: 2, room, mats: { t: 'flag' }, tint: [0.5, 0.46, 0.42] });
+  wb.cylinder('ember', K.x, 0.42, K.z, 1.0, 0.9, 0.04, 10, { ao: false, grime: false, capTop: true, room });
+  P.firewood(ctx, K.x + 0.4, 0.42, K.z - 0.3, 1.2, 3);
+  ctx.fires.push({ x: K.x, y: 0.5, z: K.z, s: 1.0, smoke: true, embers: true });
+  ctx.lights.push({ x: K.x, y: 1.6, z: K.z, r: 1, g: 0.4, b: 0.12, radius: 11, intensity: 1.5, room });
+  if (ctx.dynLights) ctx.dynLights.push({ x: K.x, y: 1.6, z: K.z, intensity: 5, range: 10 });
+  for (const s2 of [-1, 1]) wb.box('iron', K.x + s2 * 1.4 - 0.05, 0.42, K.z - 0.05, K.x + s2 * 1.4 + 0.05, 2.6, K.z + 0.05, { ao: false, room });
+  wb.box('iron', K.x - 1.45, 2.5, K.z - 0.04, K.x + 1.45, 2.58, K.z + 0.04, { ao: false, room });
+  P.chains(ctx, K.x, 2.5, K.z, 9, 0);
+  wb.cylinder('iron', K.x, 1.45, K.z, 0.36, 0.46, 0.55, 10, { ao: false, capBot: true, room });
+  wb.cylinder('black', K.x, 2.0, K.z, 0.4, 0.4, 0.01, 10, { ao: false, grime: false, capTop: true, room });
+  ctx.col.add(K.x - 1.6, 0, K.z - 1.6, K.x + 1.6, 0.9, K.z + 1.6);
+  // el horno del pan, las mesas, los cuchillos, la leña; el cocinero muerto
+  P.breadOven(ctx, ix0 + 1.5, 0, iz0 + 1.5, Math.PI / 4, { room });
+  P.table(ctx, ix1 - 0.6, 0, K.z - 2.6, 2.4, 0.9, Math.PI / 2, {});
+  P.table(ctx, K.x - 1.0, 0, iz1 - 0.65, 3.0, 0.9, 0, {});
+  P.firewood(ctx, ix0 + 0.6, 0, iz1 - 1.6, Math.PI / 2, 4);
+  P.sacks(ctx, ix1 - 0.9, 0, iz0 + 0.9, 3, 6304);
+  P.jar(ctx, ix0 + 0.5, 0, K.z + 0.8, 1.2, { room });
+  P.jar(ctx, ix0 + 0.6, 0, K.z + 1.6, 1.0, { room });
+  P.dropped(ctx, ix1 - 0.6, 0.82, K.z - 2.9, 0.4, 'knife');
+  bakeCorpse(wb, K.x + 2.2, 0, K.z + 2.6, -2.4, 'sit', 'villager', 70);
+  bakeCorpse(wb, ix0 + 1.2, 0, K.z - 1.6, 0.8, 'face', 'villager', 71);
+  P.decal(ctx, ix0 + 1.2, 0.01, K.z - 1.6, 1.6);
+  wb.setRoom(null);
+  L.interact.push({ kind: 'door', id: 'd_cocina_e', x: x1 - t / 2, y: 0, z: K.z, w: dw, h: dh, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: ix1, inset: 0.06, ajar: 0.15, lock: { type: 'none' } });
+  L.interact.push({ kind: 'door', id: 'd_cocina_s', x: Sa.servicio, y: 0, z: z1 - t / 2, w: dw, h: dh, axis: 'x', mat: 'planks', hinge: 1, swing: -1, plane: iz1, inset: 0.06, lock: { type: 'none' } });
+  L.interact.push({ kind: 'door', id: 'd_cocina_o', x: x0 + t / 2, y: 0, z: K.z, w: dw, h: dh, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'cocinaAtrancada' });
+  L.enemies.push({ type: 'penitent', x: K.x - 2.6, y: 0, z: K.z + 2.4, yaw: 2.4, idle: 'eat', id: 'e_cocina1' });
+  // por fuera: la cornisa, el tejado a cuatro aguas y la chimenea, un cono
+  // de sillería, ennegrecido arriba, con su boca
+  const cor = { ao: false, tint: [0.72, 0.7, 0.66] };
+  wb.box('ashlar', x0 - 0.25, K.h - 0.3, z0 - 0.25, x1 + 0.25, K.h, z1 + 0.25, { ...cor, faces: 'nsew' });
+  wb.box('ashlar', x0 - 0.25, K.h - 0.3, z0 - 0.25, x0, K.h, z1 + 0.25, { ...cor, faces: 'b' });
+  wb.box('ashlar', x1, K.h - 0.3, z0 - 0.25, x1 + 0.25, K.h, z1 + 0.25, { ...cor, faces: 'b' });
+  wb.box('ashlar', x0, K.h - 0.3, z0 - 0.25, x1, K.h, z0, { ...cor, faces: 'b' });
+  wb.box('ashlar', x0, K.h - 0.3, z1, x1, K.h, z1 + 0.25, { ...cor, faces: 'b' });
   wb.pyramid('roof', K.x, K.z, K.w + 0.8, K.w + 0.8, K.h, 2.6);
-  // la chimenea: un cono de sillería, ennegrecido arriba, con su boca
   const y0 = K.h + 1.2;
   wb.cylinder('ashlar', K.x, y0, K.z, h - 0.6, 0.85, K.top - y0, 16, { ao: false, sub: 2.5, tint: [0.8, 0.77, 0.72] });
   wb.cylinder('ashlar', K.x, K.top - 3.5, K.z, 1.62, 0.85, 3.5, 16, { ao: false, sub: 2, tint: [0.42, 0.4, 0.38] });
   wb.cylinder('ashlar', K.x, K.top, K.z, 1.0, 1.0, 0.35, 12, { ao: false, tint: [0.36, 0.34, 0.32] });
-  wb.cylinder('black', K.x, K.top + 0.34, K.z, 0.78, 0.78, 0.02, 12, { ao: false, grime: false, capTop: true });
-  ctx.col.addCam(K.x - h, K.h, K.z - h, K.x + h, K.top, K.z + h);
+  ctx.col.addCam(x0, K.h, z0, x1, K.top, z1);
+}
+
+// ------------------------------------------------------------------------ el servicio
+// Por donde se entra en la sala, como se entraba de verdad: el callejón de
+// las caballerizas (entre la sala y la coracha), su patio, las caballerizas
+// (los pesebres vacíos: los caballos del Rey también se los comieron, y las
+// sillas en sus potros), la cocina y el paso cubierto de la cocina al
+// extremo bajo de la sala.
+function servicio(ctx, S, L) {
+  const wb = ctx.wb;
+  const Sa = PACO.sala,
+    C = PACO.cuadras,
+    N = PACO.cierreN,
+    Pa = PACO.paso;
+  // el callejón
+  W(S, Sa.x1, Sa.z0, PACO.x1, Sa.z1);
+  floor(ctx, Sa.x1, Sa.z0, PACO.x1, Sa.z1, 'cobble', 0, { sub: 3, tint: [0.74, 0.72, 0.68] });
+  // el patio de las caballerizas
+  W(S, C.x0, C.zc, C.x1, C.z1);
+  floor(ctx, C.x0, C.zc, C.x1, C.z1, 'cobble', 0, { sub: 3, tint: [0.7, 0.66, 0.6] });
+  // el muro que cierra la coracha hasta la muralla, por detrás de la atalaya
+  solid(ctx, 'wallstone', N.x0, 0, N.z0, N.x1, KEEP.coracha.y, N.z1, { faces: 'tew', sub: 2.2, aoH: 2.5, mats: { t: 'flag' } });
+  merlons(ctx, N.x1 - 0.3, N.z0, N.x1 - 0.3, N.z1, KEEP.coracha.y, { collide: false });
+  // las caballerizas: abiertas al patio, bajo un tejado a un agua contra la
+  // muralla, con sus pesebres, sus divisiones y sus pies derechos
+  {
+    const room = 'cuadras';
+    const yB = 5.6,
+      yF = 3.7;
+    W(S, C.x0 + 0.5, C.z0, C.x1 - 0.1, C.zc);
+    floor(ctx, C.x0 + 0.5, C.z0, C.x1, C.zc, 'dirt', 0.02, { sub: 3, tint: [0.62, 0.56, 0.46], room });
+    solid(ctx, 'wallstone', C.x0, 0, C.z0, C.x0 + 0.5, yB, C.zc, { faces: 'ens', sub: 2, room });
+    for (let x = C.x0 + 2.6; x < C.x1 - 1; x += 2.6) {
+      wb.box('wooddark', x - 0.12, 0, C.zc - 0.3, x + 0.12, yF, C.zc - 0.06, { ao: false, faces: 'nsew' });
+      ctx.col.add(x - 0.14, 0, C.zc - 0.32, x + 0.14, yF, C.zc - 0.04);
+      // la división de tablas entre pesebres
+      wb.box('planks', x - 0.04, 0, C.z0 + 0.4, x + 0.04, 1.5, C.zc - 1.6, { ao: false, faces: 'tnsew', room, tint: [0.6, 0.5, 0.42] });
+      ctx.col.add(x - 0.06, 0, C.z0 + 0.4, x + 0.06, 1.5, C.zc - 1.6);
+    }
+    wb.box('wooddark', C.x0, yF, C.zc - 0.34, C.x1, yF + 0.26, C.zc - 0.02, { ao: false, faces: 'tnsewb' });
+    const o = { ao: false, sub: 2.2 };
+    wb.quad('roof', V(C.x1, yF + 0.2, C.zc + 0.5), V(C.x0, yF + 0.2, C.zc + 0.5), V(C.x0, yB + 0.4, C.z0), V(C.x1, yB + 0.4, C.z0), o);
+    wb.quad('wooddark', V(C.x0, yF + 0.02, C.zc + 0.5), V(C.x1, yF + 0.02, C.zc + 0.5), V(C.x1, yB + 0.22, C.z0), V(C.x0, yB + 0.22, C.z0), { ...o, tint: [0.5, 0.45, 0.4], room });
+    ctx.col.addCam(C.x0, yF, C.z0, C.x1, yB + 0.5, C.zc + 0.5);
+    for (let x = C.x0 + 1.3; x < C.x1 - 1; x += 2.6) {
+      P.trough(ctx, x, 0, C.z0 + 0.55, 0, { room, len: 1.9 });
+      if ((x | 0) % 2) P.hay(ctx, x + 0.3, 0, C.z0 + 1.6, 0.4);
+    }
+    // de los caballos, los huesos; las sillas en sus potros
+    P.bones(ctx, C.x0 + 4.0, 0, C.z0 + 2.6, 16, 6401, 1.2);
+    P.bones(ctx, C.x0 + 9.1, 0, C.z0 + 2.2, 12, 6402, 1.0);
+    for (const x of [C.x1 - 1.6, C.x1 - 3.0]) {
+      wb.box('wooddark', x - 0.5, 0.95, C.zc - 1.15, x + 0.5, 1.05, C.zc - 0.85, { ao: false, faces: 'tnsewb' });
+      for (const s2 of [-1, 1]) wb.box('wooddark', x + s2 * 0.42 - 0.05, 0, C.zc - 1.05, x + s2 * 0.42 + 0.05, 0.95, C.zc - 0.95, { ao: false });
+      wb.box('leather', x - 0.32, 1.02, C.zc - 1.3, x + 0.32, 1.22, C.zc - 0.7, { ao: false, faces: 'tnsew', tint: [0.6, 0.42, 0.3] });
+      wb.box('leather', x - 0.3, 0.55, C.zc - 1.25, x - 0.26, 1.05, C.zc - 0.75, { ao: false });
+      wb.box('leather', x + 0.26, 0.55, C.zc - 1.25, x + 0.3, 1.05, C.zc - 0.75, { ao: false });
+    }
+    ctx.lights.push({ x: (C.x0 + C.x1) / 2, y: 2.6, z: (C.z0 + C.zc) / 2, r: 0.6, g: 0.62, b: 0.7, radius: 6, intensity: 0.4, room });
+    P.lantern(ctx, C.x1 - 5.2, yF - 0.1, C.zc - 0.32, Math.PI, true, {});
+  }
+  // en el patio: el abrevadero, un carro, la leña
+  P.trough(ctx, C.x1 - 3.4, 0, C.z1 - 0.7, Math.PI, {});
+  P.cart(ctx, C.x0 + 3.0, 0, C.z1 - 3.2, 1.2, {});
+  P.firewood(ctx, C.x0 + 1.0, 0, C.z1 - 1.3, 0, 3);
+  bakeCorpse(wb, C.x0 + 6.0, 0, C.zc + 2.4, 0.6, 'back', 'soldier', 72);
+  P.decal(ctx, C.x0 + 6.0, 0.01, C.zc + 2.4, 2.0);
+  ctx.crows.push({ x: C.x0 + 4.0, y: 0, z: C.z0 + 2.6, r: 1.0, n: 3 });
+  L.enemies.push(
+    { type: 'hound', x: -67.0, y: 0, z: -109.5, yaw: 0.3, idle: 'eat', id: 'e_cuadras1' },
+    { type: 'hound', x: -64.5, y: 0, z: -111.5, yaw: -0.8, idle: 'stand', id: 'e_cuadras2' }
+  );
+  // el paso cubierto de la cocina a la sala: llano y luego cinco peldaños
+  {
+    const room = 'paso_servicio';
+    const ix0 = Pa.x0 + 0.4,
+      ix1 = Pa.x1 - 0.4;
+    const n = 5,
+      run = 0.42,
+      zs = Pa.z1 - n * run;
+    W(S, ix0, Pa.z0, ix1, Pa.z1);
+    floor(ctx, ix0, zs, ix1, Pa.z0, 'flag', 0, { room });
+    stairs(ctx, (ix0 + ix1) / 2, 0, zs, 's', ix1 - ix0, n, Sa.y / n, run, 'wallstone', { base: 0, faces: 'tn' });
+    solid(ctx, 'wallstone', Pa.x0, 0, Pa.z0, ix0, 4.6, Pa.z1, { faces: 'ew', sub: 2, room });
+    solid(ctx, 'wallstone', ix1, 0, Pa.z0, C.x0, 4.6, Pa.z1, { faces: 'we', sub: 2, room });
+    wb.box('wooddark', ix0, 4.3, Pa.z0, ix1, 4.6, Pa.z1, { faces: 'b', ao: false, room, tint: [0.5, 0.45, 0.4] });
+    wb.box('roof', Pa.x0 - 0.2, 4.6, Pa.z0, C.x0 + 0.2, 4.85, Pa.z1, { faces: 'tew', ao: false });
+    ctx.col.add(Pa.x0, 4.3, Pa.z0, C.x0, 4.85, Pa.z1);
+    P.lantern(ctx, ix1 - 0.02, 3.0, (Pa.z0 + zs) / 2, Math.PI / 2, true, { room });
+  }
 }
 
 // ------------------------------------------------------------------------ zonas y mapa
@@ -796,7 +1250,28 @@ function zonas(L) {
     B = PACO.puente,
     Cm = PACO.camaras,
     Sa = PACO.sala;
+  const Ck = PACO.cocina,
+    Cu = PACO.cuadras,
+    Pa = PACO.paso;
+  const sx0 = Sa.x0 + Sa.t,
+    sx1 = Sa.x1 - Sa.t,
+    sz0 = Sa.z0 + Sa.t,
+    sz1 = Sa.z1 - Sa.t,
+    szc = (Sa.z0 + Sa.z1) / 2;
   L.zones.push(
+    { id: 'sala_botilleria', rects: [[Sa.screens + 0.5, sz0, sx1, szc - 0.25, Sa.y - 0.5, Sa.y + 3.4]], atmo: 'interior', room: 'sala_botilleria' },
+    { id: 'sala_despensa', rects: [[Sa.screens + 0.5, szc + 0.25, sx1, sz1, Sa.y - 0.5, Sa.y + 3.4]], atmo: 'interior', room: 'sala_despensa' },
+    { id: 'sala_corte', rects: [[sx0, sz0, Sa.screens + 0.5, sz1, Sa.y - 0.5, Sa.ridge]], atmo: 'interior', room: 'sala' },
+    { id: 'paso_servicio', rects: [[Pa.x0 + 0.4, Pa.z0, Pa.x1 - 0.4, Pa.z1, -1, 4.3]], atmo: 'interior', room: 'paso_servicio' },
+    { id: 'cocina_paco', rects: [[Ck.x - Ck.w / 2 + 0.8, Ck.z - Ck.w / 2 + 0.8, Ck.x + Ck.w / 2 - 0.8, Ck.z + Ck.w / 2 - 0.8, -1, 8]], atmo: 'interior', room: 'cocina_paco' },
+    {
+      id: 'patio_cuadras',
+      rects: [
+        [Cu.x0, Cu.z0, Cu.x1, Cu.z1, -1, 12],
+        [Sa.x1, Sa.z0, PACO.x1, Sa.z1, -1, 12],
+      ],
+      atmo: 'city',
+    },
     { id: 'paco_guardia', rects: [[A.x0 + A.t, A.z0 + A.t, A.x1 - A.t, A.z1, -1, A.h]], atmo: 'interior', room: 'paco_guardia' },
     { id: 'puerta_paco', rects: [[G.px0, G.z0, G.px1, G.z1, -1, G.ph + 1.6]], atmo: 'city' },
     { id: 'paco_galeria', rects: [[Cm.gx, Cm.z0, Cm.x1, Cm.z1, -1, Cm.F1]], atmo: 'city', room: 'paco_galeria' },
@@ -812,6 +1287,13 @@ function zonas(L) {
     }
   );
   L.map.push(
+    { id: 'sala_corte', r: [Sa.x0, Sa.z0, Sa.screens, Sa.z1] },
+    { id: 'sala_botilleria', r: [Sa.screens, Sa.z0, Sa.x1, szc] },
+    { id: 'sala_despensa', r: [Sa.screens, szc, Sa.x1, Sa.z1] },
+    { id: 'paso_servicio', r: [Pa.x0, Pa.z0, Pa.x1, Pa.z1] },
+    { id: 'cocina_paco', r: [Ck.x - Ck.w / 2, Ck.z - Ck.w / 2, Ck.x + Ck.w / 2, Ck.z + Ck.w / 2] },
+    { id: 'patio_cuadras', r: [Cu.x0, Cu.z0, Cu.x1, Cu.z1] },
+    { id: 'patio_cuadras', r: [Sa.x1, Sa.z0, PACO.x1, Sa.z1] },
     { id: 'paco_patio', r: [Pt.x0, Pt.z0, Pt.x1, Pt.z1] },
     { id: 'paco_galeria', r: [Cm.gx, Cm.z0, Cm.x1, Cm.z1] },
     { id: 'paco_guardia', r: [A.x0, A.z0, A.x1, A.z1] },

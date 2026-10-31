@@ -393,6 +393,26 @@ por arriba: por la **escalera de la coracha**, que baja pegada a su cara de dent
 En el foso, al que baja una escalera de servicio desde el puente, las estacas aguzadas, tres empalados, la horca y
 lo que tiraron desde la torre. Todo sale de unas pocas medidas (`world/level_paco.js`).
 
+**La Corte de los Infieles.** Las puertas grandes de la sala están atrancadas por dentro: se entra **por el
+servicio**, como se entraba de verdad. Del patio, por el callejón que queda entre la sala y la coracha, al **patio
+de las caballerizas** (los pesebres vacíos y sus huesos: los caballos del Rey también se los comieron; las sillas
+en sus potros; los perros); de ahí a **la cocina**, cuadrada y exenta, con el hogar en medio bajo la campana cónica
+de la chimenea, el caldero colgado, el horno del pan y el cocinero, que sigue comiendo; y por **el paso cubierto**,
+cinco peldaños arriba, al extremo bajo de la sala, tras el cancel, con la botillería y la despensa. **La Sala de
+la Corte**, en alto: seis arcos diafragma de muro a muro bajo la armadura, coronas de velas, las mesas largas
+contra los muros, el hogar con sus brasas, los estandartes del Rey y, al fondo, el estrado con el trono vacío bajo
+su dosel y la mesa alta (y en ella el cuaderno del mayordomo). En medio, de rodillas en dos filas ante el trono,
+con los cuchillos en las manos como quien lleva una ofrenda, **la corte**: veintidós cortesanos y, al pie del
+estrado, el mayordomo. Al pisar el estrado, la puerta del servicio se cierra de golpe y empieza **el tambor**. Se
+levantan de uno en uno, en su orden, y te rodean; **el compás manda**: en cada golpe ataca uno solo, el que el
+compás señala, que alza el cuchillo un tiempo antes (se ve venir y se oye) y lo clava en el golpe siguiente; los
+demás cierran el corro con los cuchillos en alto. Caen pronto (dos golpes; desviado a compás, el de gracia); si te
+sales del corro, se deshace unos tiempos mientras te vuelven a rodear. Tres oleadas, siete, ocho y siete, cada una
+más deprisa. Callado el tambor, **el mayordomo**, solo y en silencio, con su abrazo que no se desvía. Vencido: se
+abre la puerta del servicio, las puertas grandes se desatrancan desde dentro (el atajo al patio), los cuerpos se
+quedan en la sala y en el suelo queda **la llave del mayordomo**, la segunda de las cinco. Si mueres, vuelven a sus
+sitios, de rodillas (`game/corte.js`, `entities/cortesano.js`).
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -827,7 +847,7 @@ src/
                         generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,
-                        el foso del Rey, el puente, la puerta, el patio y lo que da a él), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        el foso del Rey, el puente, la puerta, el patio, la sala y el servicio), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala

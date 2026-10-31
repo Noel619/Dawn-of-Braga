@@ -747,6 +747,8 @@ export class Enemy {
       case 'dead': {
         this.vx = damp(this.vx, 0, 6, dt);
         this.vz = damp(this.vz, 0, 6, dt);
+        // (los que se quedan donde caen: la corte del Rey)
+        if (T.keepCorpse) break;
         if (this.stT > 2.4) {
           this.sink += dt * 0.35;
           if (this.stT > 2.4 && !this.data.dissolved) {

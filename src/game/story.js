@@ -55,6 +55,12 @@ export const ITEMS = {
     icon: 'llaveAlferez',
     key: true,
   },
+  llave_mayordomo: {
+    name: 'Llave del mayordomo',
+    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda amarilla, del color de los dineros del Rey. La llevaba el mayordomo mayor, el primero de la corte. En la caña, grabado: MAIORDOMUS.',
+    icon: 'llaveMayordomo',
+    key: true,
+  },
   ballesta: {
     name: 'Ballesta de estribo',
     desc: 'La ballesta del maestro ballestero de la torre: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
@@ -517,6 +523,20 @@ El alférez ha subido al cadalso con la ballesta de la guardia. Dice que desde a
 Le he visto los ojos bajo el nasal. Ya no es él. Lleva al cinto la llave que le dio el Rey, la de la reja de la Sé, y no la suelta.
 
 La mía está en el banco. Se monta con el pie en el estribo y las dos manos en la cuerda, hasta la nuez. No tiene más ciencia. Lo que tiene es que mientras se monta no se defiende uno.`,
+  },
+  mayordomo: {
+    title: 'Cuaderno del mayordomo mayor',
+    text: `Las cuentas de la casa del Rey, de su mano, hasta la última hoja:
+
+Del trigo de los graneros, nada. Del vino, tres toneles en la botillería, y uno picado. De la cera, la de la capilla. De los caballos de la cuadra del Rey, ninguno: el último, el tordo de la frontera, el día doce; se lo comió la guardia, con el Rey delante, que lo quiso así.
+
+En la última hoja, la misma mano, más grande y torcida:
+
+Las cinco llaves abrieron la reja. El arzobispo bajó con los suyos y la volvimos a cerrar tras ellos, como manda la carta del Rey: que no baje nadie sin que lo sepa la corte entera. La corte entera lo sabía.
+
+Esta noche subimos a la sala a velar. Cuando suene, nos levantaremos todos a la vez, para que no sea de ninguno. Yo, el primero: soy el que más le quiere.
+
+Señor, perdonadnos. O no nos perdonéis, y volveremos a arrodillarnos aquí hasta que volváis.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
@@ -1065,6 +1085,11 @@ export const MSG = {
   cuerdaArriba: 'Trepas por la cuerda del montacargas, mano sobre mano, hasta el pañol.',
   cuerdaAbajo: 'Te descuelgas por la cuerda del montacargas hasta la bodega.',
   // el Paço
+  corteArea: 'LA CORTE DE LOS INFIELES',
+  corteVencida: 'LA CORTE HA CAÍDO',
+  corteCerrada: 'La puerta del servicio no cede: la han atrancado por fuera. Detrás, nadie.',
+  camarasPrivada: 'La puerta de las cámaras del Rey, tras el estrado. Atrancada por el otro lado.',
+  cocinaAtrancada: 'Atrancada por el otro lado. Huele a leña mojada y a algo que se pudre al sol.',
   pacoAtrancada: 'La Puerta del Paço, atrancada por dentro. Por encima de las torres asoma la chimenea de las cocinas del Rey.',
   pacoTranca: 'Retiras la tranca de la Puerta del Paço. El puente cruza el foso hasta el patio de armas del castillo.',
   salaAtrancada: 'Las puertas de la sala, atrancadas por dentro. Pegando el oído, se oye rezar a mucha gente a la vez, muy bajo.',
@@ -1329,4 +1354,10 @@ export const AREA_NAMES = {
   puerta_paco: 'Puerta del Paço',
   puente_paco: 'Puente del Rey',
   foso_rey: 'Foso del Rey',
+  sala_corte: 'Sala de la Corte',
+  sala_botilleria: 'Botillería de la sala',
+  sala_despensa: 'Despensa de la sala',
+  paso_servicio: 'Paso de la cocina',
+  cocina_paco: 'Cocina del Rey',
+  patio_cuadras: 'Patio de las caballerizas',
 };

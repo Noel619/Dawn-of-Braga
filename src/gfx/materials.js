@@ -132,6 +132,8 @@ export const MAT_DEFS = {
   skinCorrupt: { tex: 'skinCorrupt', uv: 1.6 },
   // el Cavador: la piel cuarteada de polvo de siglos
   skinDust: { tex: 'skinPale', uv: 2.0, color: 0xb4a690 },
+  // la piel de la corte del Rey: gris, como de quien lleva días muerto
+  skinGris: { tex: 'skinPale', uv: 2.0, color: 0x9c9a94 },
   // (el Rey: pálido, gris, enfermo)
   skinSick: { tex: 'skinPale', uv: 2.0, color: 0x948a7e },
   hide: { tex: 'hide', uv: 1.4, phong: { specular: 0x3a2a2a, shininess: 16 } },

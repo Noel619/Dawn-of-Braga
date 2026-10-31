@@ -93,6 +93,10 @@ const FX_PRIO = {
   bellToll: [4, 'mundo'],
   helmetRing: [4, 'mundo'],
   drumClick: [4, 'mundo'],
+  // la Corte de los Infieles: el compás no se aparta nunca
+  corteTambor: [5, 'mundo'],
+  corteMarca: [5, 'golpe'],
+  corteFin: [5, 'mundo'],
   crankWind: [4, 'mundo'],
   musicBoxTune: [5, 'mundo'],
   helmetChord: [5, 'mundo'],
@@ -2142,6 +2146,31 @@ export class Audio {
         this.noise(d, t, 1.6, { f0: 3000, f1: 7000, q: 1.2, gain: 0.05, a: 0.6, buf: this.pink });
         [76, 83, 88, 95].forEach((m, i) => this.smp(d, t + 0.2 + i * 0.12, this.smallBell(), { gain: 0.05, rate: mtof(m) / mtof(76) }));
         this.score.stinger('relic');
+        break;
+      }
+      // la Corte de los Infieles: el tambor que lleva el compás (más seco y
+      // más vivo en cada oleada), el cuchillo que se alza en el que señala (un
+      // filo y un siseo) y el último golpe, antes del silencio
+      case 'corteTambor': {
+        d = this.out(P, { gain: 1, verb: 0.6, life: 2.4, ref: 16, occlude: false });
+        const k = o.k || 0;
+        this.smp(d, t, this.lib.drum('tabor'), { gain: 0.7, rate: 0.82 + k * 0.07 });
+        this.smp(d, t, this.lib.drum('frame'), { gain: 0.32, rate: 0.66 + k * 0.05 });
+        this.noise(d, t, 0.05, { f0: 700, q: 1.1, gain: 0.07, a: 0.002 });
+        break;
+      }
+      case 'corteMarca': {
+        d = this.out(P, { gain: 0.8, verb: 0.35, life: 1.5, ref: 7 });
+        this.metal(d, t, 2300, 0.045, 0.45);
+        this.noise(d, t, 0.2, { type: 'highpass', f0: 3000, f1: 5200, gain: 0.1, a: 0.04 });
+        this.whisper(d, t + 0.02, 0.4, 0.05);
+        break;
+      }
+      case 'corteFin': {
+        d = this.out(P, { gain: 1, verb: 0.75, life: 4, ref: 16, occlude: false });
+        this.smp(d, t, this.lib.drum('tabor'), { gain: 0.95, rate: 0.55 });
+        this.smp(d, t, this.lib.drum('taiko'), { gain: 0.4, rate: 0.5 });
+        this.duck(0.5, 1.4);
         break;
       }
       // la caja de música del ama: el rodillo que salta de un diente al otro

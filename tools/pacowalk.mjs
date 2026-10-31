@@ -1,7 +1,8 @@
 // Recorre el recinto del Paço a pie (fase 4a): de la torre de la coracha por
 // su escalera al patio; el cuerpo de guardia; la puerta (se desatranca), el
 // puente y la puerta nueva del castillo; la escalera del foso, el foso y de
-// vuelta. Dice dónde se atasca, si se atasca.
+// vuelta; y por el servicio (el callejón, las caballerizas, la cocina y el
+// paso) a la Sala de la Corte. Dice dónde se atasca, si se atasca.
 //   node tools/pacowalk.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -76,6 +77,12 @@ const r = await p.evaluate(() => {
   out.push(go([[-71, -42.35], [-68.9, -42.35], [-66.5, -42.3], [-66.5, -46], [-66.5, -56]], 'de vuelta al patio'));
   at('patio');
   out.push('d_paco abierta: ' + !!g.flags['door:d_paco']);
+  // por el servicio a la sala (fase 4b): el callejón, el patio de las
+  // caballerizas, la cocina, el paso y la puerta del servicio
+  out.push(go([[-67.8, -60], [-67.8, -84.2], [-64, -84.6], [-64, -85.6, 'd_cuadras'], [-64, -95], [-64, -108], [-70.5, -110], [-71.8, -113, 'd_cocina_e'], [-74, -113], [-76, -111], [-74.9, -109.3, 'd_cocina_s'], [-74.9, -107], [-74.9, -104.6, 'd_servicio'], [-74.9, -102], [-74.5, -96], [-80, -95]], 'patio → servicio → sala'));
+  at('sala');
+  out.push(go([[-88, -95], [-95, -95]], 'por el pasillo de la corte'));
+  at('ante el estrado');
   return out;
 });
 console.log(r.join('\n'));
