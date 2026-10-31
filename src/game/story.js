@@ -67,6 +67,12 @@ export const ITEMS = {
     icon: 'llaveCamarero',
     key: true,
   },
+  llave_canciller: {
+    name: 'Llave del canciller',
+    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda verde, como los cordones de los sellos de las cartas del Rey. La guardaba el canciller, Mestre Alberto, el que guardaba también el sello. En la caña, grabado: CANCELLARIUS.',
+    icon: 'llaveCanciller',
+    key: true,
+  },
   llave_capellan: {
     name: 'Llave del capellán',
     desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta blanca de lino, de las de los manípulos. Estaba atada al cordón de la campana de la Capilla Real: quien la quitara, tocaría. En la caña, grabado: CAPELLANUS.',
@@ -575,6 +581,31 @@ Me acuso de haber oído lo que subía por la escalera de la cripta y de haber di
 Me acuso de la campana. Tocó sola, a medianoche, y me arrodillé con todos. Cuando nos levantamos, no éramos nosotros los que nos levantábamos.
 
 He atado mi llave al cordón. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
+  },
+  cartaRey: {
+    title: 'Carta del Rey sobre la reja',
+    text: `En la mesa del canciller, el traslado de una carta, con su romance debajo, de mano de un escribano:
+
+In Dei nomine. Ego Alfonsus, Portugalensium rex, mando fieri cratem ferream in gradibus criptae Sanctae Mariae Bracarensis, cum quinque seris; et do quinque claves quinque de curia mea: signifero, maiordomo, camerario, capellano et cancellario; ut nemo descendat nisi tota curia sciente. Qui autem solus descenderit, sit maledictus. Facta carta Era MCCIV. Magister Albertus, cancellarius regis, notuit.
+
+En romance:
+En el nombre de Dios. Yo, Alfonso, rey de los portugueses, mando hacer una reja de hierro en la escalera de la cripta de Santa María de Braga, con cinco cerraduras; y doy las cinco llaves a cinco de mi corte: al alférez, al mayordomo, al camarero, al capellán y al canciller; para que nadie baje sin que lo sepa la corte entera. Y el que baje solo, sea maldito.
+
+Al margen, de otra mano: lo supo la corte entera.`,
+  },
+  registro: {
+    title: 'Registro del Tombo',
+    text: `En el atril del primer sobrado, el libro grande de la torre, de mano del canciller:
+
+Lo que se guarda en esta torre del Rey, sobrado por sobrado.
+En el primero, los libros de los registros, por eras.
+En el segundo, los legajos de las cartas de coto y de las heredades.
+En el tercero, los fueros, las paces con los reyes vecinos y las bulas de Roma.
+En el cuarto, las arcas del Rey, cada una con sus sellos: de cera bermeja, las de su cámara; de cera negra, las de su guarda; de cera verde, las del cabildo de la Sé.
+
+Lo último, de otra tinta y de prisa:
+La llave de la reja que me toca la guardo en el arca de la cámara del Rey, la de los tres sellos bermejos. En la de tres, no en otra. Las de dos sellos negros tienen cerradura de resorte, que las mandó poner el alférez para los ladrones: que no las abra quien no sepa.
+Me subo con el sello. Que no lo use nadie mientras yo viva.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
@@ -1132,6 +1163,23 @@ export const MSG = {
   espadanaBaja: 'Bajas por la escala a la tribuna del Rey.',
   campanaSuena: 'Al soltar la llave, el cordón tira de la campana. Suena una vez, sola, por toda la ciudad.',
   capillaAtrancada: 'Atrancada por fuera. Al otro lado se oye el viento entre ramas secas.',
+  capillaTranca: 'Retiras la tranca de la puerta de la capilla. Da a un patio estrecho, al sur, delante de la cancillería.',
+  capillaSur: 'La puerta de la capilla, atrancada por dentro. Por la rendija huele a cera.',
+  reinaAtrancada: 'El postigo del jardín de la reina, atrancado del otro lado. Por encima de la tapia asoman ramas secas.',
+  // las arcas del Tombo
+  arcaCamara3: 'Rompes los tres sellos bermejos. Dentro, envuelta en un paño de seda de la cámara del Rey, la llave del canciller, con su cinta verde.',
+  arcaCamara3Ya: 'El arca de la cámara del Rey, la de los tres sellos. Ya no guarda nada.',
+  arcaCamara2: 'Rompes los dos sellos bermejos. Dentro, el inventario de la plata de la cámara del Rey, pieza por pieza, hasta la última copa. La plata no está.',
+  arcaCamara2Ya: 'El inventario de la plata del Rey. Sólo papeles.',
+  arcaGuarda3: 'Tres sellos negros, y ningún resorte. Dentro, virotes de la guarda del Rey, en sus haces, con las plumas blancas.',
+  arcaGuarda3Ya: 'El arca de la guarda, vacía.',
+  arcaResorte1: 'Al levantar la tapa salta el resorte: un virote a quemarropa. Dentro, cuerdas de ballesta, enceradas.',
+  arcaResorte1Ya: 'El arca del resorte. Dentro, cuerdas de ballesta.',
+  arcaResorte2: 'Rompes los dos sellos negros y la cerradura dispara: un virote te entra por el costado. Dentro no hay nada: el arca era la trampa.',
+  arcaResorte2Ya: 'Vacía. Era la trampa.',
+  arcaSe: 'Rompes los sellos verdes del cabildo. Dentro, las cartas del arzobispo al Rey, atadas: ninguna abierta. La de encima lleva escrito por fuera, de su mano: QUE LA LEA EL REY Y NO OTRO.',
+  arcaSeYa: 'Las cartas del arzobispo, sin abrir.',
+  canciller: 'Mestre Alberto, el canciller, sentado contra el muro entre las arcas del Rey, con el sello en el regazo: una matriz de plata del tamaño de una mano, con su cordón verde. No se lo quitas.',
   tesoroCerrado: 'La puerta del tesoro de la cámara, forrada de hierro y atrancada por dentro. No se oye nada.',
   tesoroTranca: 'Retiras la barra de la puerta del tesoro. Da a la galería del patio.',
   cocinaAtrancada: 'Atrancada por el otro lado. Huele a leña mojada y a algo que se pudre al sol.',
@@ -1418,4 +1466,11 @@ export const AREA_NAMES = {
   camaras_oratorio: 'Oratorio del Rey',
   capilla_real: 'Capilla Real',
   capilla_espadana: 'Espadaña de la Capilla Real',
+  patio_cancilleria: 'Patio de la Cancillería',
+  cancilleria: 'Cancillería del Rey',
+  paso_tombo: 'Paso del Tombo',
+  tombo_registros: 'Torre del Tombo',
+  tombo_legajos: 'Torre del Tombo · los legajos',
+  tombo_cartas: 'Torre del Tombo · las cartas',
+  tombo_arcas: 'Torre del Tombo · las arcas del Rey',
 };

@@ -434,6 +434,23 @@ su tríptico) y de la que baja una escalera a la nave. Sobre la fachada, **la es
 escala desde la tribuna se sube a su desván, y allí, atada al cordón, **la llave del capellán**. Al soltarla, la
 campana suena una vez, sola, por toda la ciudad.
 
+**La Cancillería y la Torre del Tombo.** La puerta de la fachada de la capilla se desatranca desde dentro y da a un
+patio estrecho, cerrado al jardín de la reina por una tapia con su postigo (atrancado del otro lado): en él, un
+correo muerto con sus cartas por el suelo. Al sur, **la sala de los escribanos**, bajo su armadura: los pupitres
+bajo las ventanas, las dos mesas largas de copiar, los estantes de los registros, la caldera de la cera (fría), los
+panes y los cordones de los sellos y, en el testero, sobre su tarima y bajo el estandarte del Rey, la mesa del
+canciller con el traslado de **la carta del Rey** que mandó hacer la reja de las cinco cerraduras (en latín y en
+romance). El sello no está. Por el callejón que queda entre la sala y la muralla sube una escalera de piedra, pegada
+a la muralla, a un rellano; de ahí, **el paso**: por el grueso de la muralla y sobre un arco, a **la Torre del
+Tombo**, el archivo y el tesoro del Rey, adelantada sobre la muralla de poniente como una albarrana, con su chapitel
+de teja. Cuatro sobrados unidos por escaleras de un tramo: los registros (y en su atril **el registro de la torre**,
+que dice qué hay en cada sobrado y, de prisa, dónde guardó el canciller su llave), los legajos, las cartas y, en lo
+alto, **las arcas del Rey**, cada una con sus sellos de cera colgando sobre la cerradura: bermejos, los de la cámara
+del Rey; negros, los de su guarda; verdes, los del cabildo de la Sé. Al abrirlas se rompen los sellos y se ve lo que
+guardan; las de dos sellos negros tienen **cerradura de resorte** (un virote a quemarropa); en la de los tres sellos
+bermejos está **la llave del canciller**. Entre ellas, sentado contra el muro con el sello del Rey en el regazo y
+su farol aún encendido, el canciller, Mestre Alberto (`world/paco_cancilleria.js`).
+
 **El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
@@ -869,7 +886,9 @@ src/
                         mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; level_paco.js: el Paço del Rey (su recinto,
                         el foso del Rey, el puente, la puerta, el patio, la sala, el servicio, las cámaras del Rey, el
-                        pasadizo quemado y la Capilla Real), generado por medidas; level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        pasadizo quemado y la Capilla Real), generado por medidas; paco_cancilleria.js: la
+                        Cancillería y la Torre del Tombo (el patio, la sala de los escribanos, la escalera de la
+                        muralla, el paso y la torre, con sus arcas selladas); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala

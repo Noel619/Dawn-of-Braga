@@ -4,7 +4,9 @@
 // vuelta; y por el servicio (el callejón, las caballerizas, la cocina y el
 // paso) a la Sala de la Corte; las cámaras del Rey y su tesoro, y el pasadizo
 // quemado hasta la torre; la Capilla Real, de la tribuna a la espadaña y al
-// altar. Dice dónde se atasca, si se atasca.
+// altar; y de ella al patio de la Cancillería, la sala de los escribanos, la
+// escalera de la muralla, el paso y la Torre del Tombo, hasta sus arcas. Dice
+// dónde se atasca, si se atasca.
 //   node tools/pacowalk.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -125,8 +127,36 @@ const r = await p.evaluate(() => {
   for (let i = 0; i < 150; i++) g.update(1 / 60);
   g.ui.closeAll();
   out.push(go([[-125.0, -65.5], [-128.0, -65.6], [-128.0, -73.5], [-124.0, -76.0], [-123.75, -86.6]], 'tribuna → nave → altar'));
+  // la Cancillería y la Torre del Tombo (fase 4e): por la puerta de la
+  // fachada de la capilla (se desatranca) al patio; la sala de los
+  // escribanos y la carta del Rey; el callejón, la escalera de la muralla, el
+  // paso y la torre, sobrado a sobrado; las arcas (una con resorte, la de la
+  // llave)
+  out.push(go([[-123.75, -80], [-123.75, -70.0], [-122.72, -68.6], [-122.72, -65.5], [-123.75, -64.0, 'd_capilla_s'], [-123.75, -61.0], [-128, -58.6, 'd_cancilleria'], [-128, -55.0], [-128, -53.6], [-128, -49.9], [-135.6, -49.9], [-136.3, -52.0, 'n_carta_rey']], 'capilla → patio → cancillería'));
+  g.ui.closeAll();
+  out.push(go([[-128, -49.9], [-128, -55.0], [-128, -58.4], [-140.6, -58.6], [-140.7, -57.0], [-140.7, -50.7], [-142.35, -50.5], [-142.35, -54.0], [-142.35, -57.2], [-142.35, -59.2], [-142.6, -60.0], [-144.5, -60.0], [-147.3, -60.0, 'd_tombo'], [-149.4, -60.0], [-151.4, -59.7, 'n_registro']], 'patio → escalera → paso → Tombo'));
+  g.ui.closeAll();
+  at('primer sobrado');
+  out.push(go([[-149.4, -61.0], [-149.4, -62.0], [-151.0, -62.0], [-153.75, -62.0], [-153.75, -61.0], [-153.6, -59.0], [-153.6, -58.0], [-151.0, -58.0], [-149.3, -58.0], [-149.4, -59.2], [-149.4, -61.0], [-149.4, -62.0], [-151.0, -62.0], [-153.75, -62.0], [-153.75, -61.1]], 'escaleras del Tombo'));
+  at('cuarto sobrado');
+  // (lo que hace el arca al abrirse va con g.later, en tiempo real: se mira
+  // después, fuera de este bucle)
+  window.__hp0 = P.hp;
+  out.push(go([[-152.6, -61.0], [-150.4, -59.7, 'a_guarda1']], 'arca de dos sellos negros'));
+  g.ui.closeAll();
+  out.push(go([[-150.4, -58.6, 'a_camara3'], [-151.0, -58.7, 'x_canciller']], 'arca de los tres sellos bermejos'));
+  g.ui.closeAll();
   return out;
 });
 console.log(r.join('\n'));
+await p.waitForTimeout(1500);
+console.log(
+  await p.evaluate(() => {
+    const g = __game;
+    g.ui.closeAll();
+    const on = (n) => (g.groups[n] || {}).on;
+    return `  resorte: ${window.__hp0 - g.player.hp} de daño\nllave del canciller: ${g.inventory.has('llave_canciller')} · tapa abierta: ${on('arca:a_camara3:abierta')} · cerrada: ${on('arca:a_camara3')} · otra, intacta: ${on('arca:a_se')}`;
+  })
+);
 console.log(errs.join('\n'));
 await b.close();

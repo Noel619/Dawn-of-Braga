@@ -24,6 +24,7 @@ import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
 import { CASTLE, parapet, slit, holedWall } from './level_castle.js';
 import { KEEP } from './level_keep.js';
+import { buildCancilleria } from './paco_cancilleria.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -96,6 +97,18 @@ export const PACO = {
   // fachada; el oratorio del Rey (en la crujía de poniente), con su ventana
   // (wz) y la puerta de la tribuna (dz)
   capilla: { x0: -129.5, x1: -118, z0: -86, z1: -62, t: 0.9, y: 0.3, eave: 9, ridge: 12.8, apse: 3.5, tz: -66.9, esp: 4.6, espTop: 15.6, wz: -71.5, dz: -64.7 },
+  // la Cancillería: su patio (de la muralla, px0, a las cámaras; de la tapia
+  // del jardín de la reina, pz0, con su postigo en reina, a la sala), la sala
+  // de los escribanos (de x0 a x1, de z0 al muro del foso; el grueso de sus
+  // muros, el alero, la cumbrera y la puerta) y la escalera que sube por la
+  // cara de dentro de la muralla al paso del Tombo (de x0 a x1; su pie,
+  // abajo; su cabeza, top, y de ahí el rellano hasta la tapia)
+  canc: { px0: -143, pz0: -62, reina: -136, x0: -140, x1: -118, z0: -57, z1: -47, t: 0.8, eave: 6.2, ridge: 8.8, door: -128, esc: { x0: -143, x1: -141.4, foot: -51.0, top: -57.4, n: 16 } },
+  // la Torre del Tombo, el archivo y el tesoro del Rey: adelantada sobre la
+  // muralla de poniente como una albarrana, unida a ella por un arco; sus
+  // muros, sus cuatro sobrados (el primero, a la altura del paso), lo alto y
+  // el paso (su z: por la muralla, el arco y la puerta)
+  tombo: { x0: -155, x1: -148, z0: -63.5, z1: -56.5, t: 1.0, fl: [5.2, 9.4, 13.6, 17.8], top: 21.6, paso: -60.0 },
   // las cocinas: la grande, exenta y cuadrada, con su chimenea cónica
   cocina: { x: -78, z: -113, w: 11, h: 7.5, top: 30 },
   // el servicio: el patio de las caballerizas (de la cocina a la coracha, de
@@ -115,7 +128,7 @@ export function enFoso(p) {
 }
 
 // Cara plana de cuatro puntos, vuelta hacia 'dir' (sea cual sea su orden).
-function cara(wb, mat, a, b, c, d, dir, o) {
+export function cara(wb, mat, a, b, c, d, dir, o) {
   const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(d, a));
   if (n.dot(dir) >= 0) wb.quad(mat, a, b, c, d, o);
   else wb.quad(mat, d, c, b, a, o);
@@ -132,6 +145,7 @@ export function buildPaco(ctx, S, L) {
   salaDentro(ctx, S, L);
   corte(L);
   camaras(ctx, S, L);
+  buildCancilleria(ctx, S, L);
   cocina(ctx, S, L);
   servicio(ctx, S, L);
   zonas(L);
@@ -152,7 +166,11 @@ function muros(ctx) {
     G = PACO.puerta;
   const zA = NO.z + NO.w / 2,
     zB = SO.z - SO.w / 2;
-  cityWall(ctx, x0, zA, xi, zB, hO, { merlonSides: ['w'] });
+  // (con el paso a la Torre del Tombo, a la altura del rellano de su escalera:
+  // paco_cancilleria.js)
+  const T = PACO.tombo;
+  holedWall(ctx, 'wallstone', 'z', zA, zB, x0, xi, 0, hO, [{ a0: T.paso - 0.6, a1: T.paso + 0.6, y0: T.fl[0], y1: T.fl[0] + 2.4 }], 'tewns', { mats: { t: 'flag' } });
+  merlons(ctx, x0 + 0.3, zA, x0 + 0.3, zB, hO, {});
   blocker(ctx, x0, hO - 0.2, zA, x0 + 0.6, hO + 2.4, zB);
   parapet(ctx, xi - 0.5, zA, xi, zB, hO);
   for (const z of PACO.torresO) tower(ctx, x0 + 0.5, z, 6, hO + 4.5);
@@ -188,7 +206,7 @@ function muros(ctx) {
   // saeteras
   for (let z = -43; z < -31; z += 5) slit(ctx, C.x0, 3.2, z, 'w');
   for (let x = xa + 6; x < G.x0 - 3; x += 9) slit(ctx, x, 3.6, zS, 's');
-  for (let z = zA + 5; z < zB - 3; z += 9) if (!PACO.torresO.some((t) => Math.abs(t - z) < 4.5)) slit(ctx, x0, 3.6, z, 'w');
+  for (let z = zA + 5; z < zB - 3; z += 9) if (![...PACO.torresO, T.paso].some((t) => Math.abs(t - z) < 4.5)) slit(ctx, x0, 3.6, z, 'w');
   // los estandartes del Rey, en las torres de las esquinas
   P.banner(ctx, NO.x - NO.w / 2 - 0.32, NO.h - 1.6, NO.z, -Math.PI / 2, 'bannerRey', 1.6, 4.4);
   P.banner(ctx, SO.x - SO.w / 2 - 0.32, SO.h - 1.6, SO.z, -Math.PI / 2, 'bannerRey', 1.6, 4.4);
@@ -1437,7 +1455,7 @@ function capilla(ctx, S, L) {
     wb.cylinder('bronzeIn', cx, vy1 - 1.16, bz, 0.5, 0.5, 0.01, 12, { ao: false, capBot: true });
     wb.box('rope', cx - 0.015, 9.9, bz - 0.015, cx + 0.015, vy1 - 1.0, bz + 0.015, { ao: false });
     // el desván: tablas bajo el tejado, detrás de la espadaña
-    const ld = { x0: ex0, x1: ex1, z0: iz1 - 1.8, z1: iz1, y: 9.6 };
+    const ld = { x0: ex0, x1: ex1, z0: iz1 - 1.8, z1: iz1 - 0.04, y: 9.6 };
     wb.box('planks', ld.x0, ld.y - 0.12, ld.z0, ld.x1, ld.y, ld.z1, { faces: 'tnsewb', ao: false, room, tint: [0.6, 0.52, 0.44] });
     ctx.col.add(ld.x0, ld.y - 0.12, ld.z0, ld.x1, ld.y, ld.z1);
     for (const x of [ld.x0 + 0.1, ld.x1 - 0.1]) wb.box('wooddark', x - 0.07, F1, ld.z0 + 0.1, x + 0.07, ld.y - 0.12, ld.z0 + 0.24, { ao: false, room });
@@ -1470,11 +1488,12 @@ function capilla(ctx, S, L) {
     { type: 'cortesanoSuelto', x: cx + 2.2, y, z: -74.5, yaw: Math.PI, idle: 'kneel', id: 'e_cap2' },
     { type: 'mourner', x: cx + 1.0, y, z: -84.0, yaw: Math.PI, idle: 'stand', id: 'e_cap3' }
   );
-  // las puertas (atrancadas por fuera, por ahora: dan al jardín de la reina y
-  // al patio de la cancillería)
+  // las puertas: la de poniente, al jardín de la reina (atrancada por fuera,
+  // por ahora); la de la fachada, al patio de la cancillería, atrancada por
+  // dentro
   L.interact.push(
     { kind: 'door', id: 'd_capilla_o', x: x0 + t / 2, y: 0, z: dW, w: 1.6, h: 3.0, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix0, inset: 0.06, lock: { type: 'barred', side: 0 }, barredMsg: 'capillaAtrancada' },
-    { kind: 'door', id: 'd_capilla_s', x: dS, y: 0, z: z1 - t / 2, w: 2.0, h: 3.4, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: iz1, inset: 0.06, mark: 'cross', lock: { type: 'barred', side: 0 }, barredMsg: 'capillaAtrancada' }
+    { kind: 'door', id: 'd_capilla_s', x: dS, y: 0, z: z1 - t / 2, w: 2.0, h: 3.4, axis: 'x', mat: 'planks', double: true, hinge: 0, swing: 1, plane: iz1, inset: 0.06, mark: 'cross', lock: { type: 'barred', side: -1, msg: 'capillaTranca' }, barredMsg: 'capillaSur' }
   );
   L.zones.push({ id: 'capilla_real', rects: [[ix0, z0 - C.apse, x1, iz1, -0.5, ridge]], atmo: 'chapel', room });
   L.map.push({ id: 'capilla_real', r: [x0, z0 - C.apse - 0.8, x1, z1] });

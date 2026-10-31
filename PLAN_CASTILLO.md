@@ -150,11 +150,14 @@ z −45  └───────────┴───────┴──�
   por la que se pasa **haciendo equilibrio** (como en los tejados de los Pellejeros).
 - **La Capilla Real** (**hecho**; 24 × 11,5 m, de norte a sur, contra las cámaras): nave, ábside con el altar,
   espadaña con su campana; a los pies, **la tribuna del Rey**, a la que se sube desde las cámaras (su oratorio, con
-  la ventana a la nave). La llave del capellán (§7). Sus puertas (al jardín de la reina y a la cancillería),
-  atrancadas por fuera hasta que existan esos sitios.
-- **La Cancillería y la Torre del Tombo** (esquina suroeste): la sala de los escribanos (mesas de escribir, el
-  sello, la cera, los registros) y, adelantada sobre la muralla de poniente como una **albarrana**, la torre del
-  archivo y del tesoro, de cuatro sobrados de arcas. La llave del canciller, arriba (§7).
+  la ventana a la nave). La llave del capellán (§7). Sus puertas: la de la fachada, al patio de la cancillería,
+  atrancada por dentro (se abre desde la nave); la de poniente, al jardín de la reina, atrancada por fuera hasta la
+  4f.
+- **La Cancillería y la Torre del Tombo** (**hecho**; esquina suroeste): la sala de los escribanos (mesas de
+  escribir, el sello, la cera, los registros) y, adelantada sobre la muralla de poniente como una **albarrana**, la
+  torre del archivo y del tesoro, de cuatro sobrados: los registros, los legajos, las cartas y las arcas del Rey,
+  cada una con sus sellos. Se sube por una escalera pegada a la muralla, por dentro, y se pasa por ella y por un
+  arco. La llave del canciller, arriba, en el arca que dice el registro (§7).
 - **La Torre de la Reina** y su jardincillo: cerrada desde la Cuaresma (el Rey: «Mi reina se murió en la
   Cuaresma»). Sus cosas tapadas con paños. Opcional.
 - **Las Cocinas** (≈ 28 × 24 m): la cocina grande, exenta, cuadrada, con **la chimenea cónica** que se ve desde
@@ -383,7 +386,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 4b | **La Sala de la Corte y la Corte de los Infieles** (**hecho**) | `game/corte.js` (el director del compás), `entities/cortesano.js` (el cortesano y el mayordomo); la sala por dentro y el camino del servicio (el callejón, las caballerizas, la cocina, el paso cubierto), que venía de la 4f; la llave del mayordomo y su cuaderno |
 | 4c | **Las Cámaras del Rey y el pasadizo** (**hecho**) | la crujía de levante en dos plantas (la escalera del Rey desde el estrado, la antecámara, la cámara, la del pasadizo; el guardarropa, la escalera y el tesoro), el patinillo; la llave del camarero; el pasadizo, dos vigas en cuesta sobre el foso (`game/cornisas.js`) hasta la alcoba del alcaide; el cortesano suelto |
 | 4d | **La Capilla Real** (**hecho**) | de norte a sur, pegada a la crujía de poniente de las cámaras (su muro de levante es el de ellas), con el ábside al norte; la tribuna a los pies, desde el oratorio del Rey (arriba, en la crujía de poniente, por la galería alta de la del sur); la espadaña y la llave en el cordón de la campana (suena al soltarla); la confesión del capellán |
-| 4e | **La Cancillería y la Torre del Tombo** | el registro y las arcas, la llave del canciller |
+| 4e | **La Cancillería y la Torre del Tombo** (**hecho**) | `world/paco_cancilleria.js`: el patio (a él se sale por la puerta de la fachada de la capilla, atrancada por dentro), la tapia y el postigo del jardín de la reina; la sala de los escribanos y la carta del Rey; la escalera por la cara de dentro de la muralla, el paso por ella y el arco a la torre; sus cuatro sobrados, el registro, y las arcas selladas (`interact.js`: el arca, con su tapa en dos grupos del mundo; las de dos sellos negros, con resorte); la llave del canciller; el campo de fuera de la muralla de poniente |
 | 4f | **Cocinas, caballerizas, jardín, pomar y torre de la reina** | el camino por el servicio; lo opcional |
 | 4g | **La reja de las cinco llaves** | fuera la manivela; documentos; `progress.mjs` |
 | 5 | **Por fuera** | muralla más alta, torres nuevas, barbacana, cadalsos, estandartes, la brecha; la silueta desde la ciudad |

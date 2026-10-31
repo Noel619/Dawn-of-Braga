@@ -1039,6 +1039,12 @@ export class Interactables {
       it.r = s.r ?? 2;
     } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
       it.r = s.r ?? 2;
+    } else if (s.kind === 'arca') {
+      // un arca del archivo: se abre una vez (lo que dice, lo que guarda, la
+      // trampa de su cerradura); luego sólo se mira. Su tapa, cerrada con sus
+      // sellos o abierta, son dos grupos del mundo (paco_cancilleria.js)
+      it.r = s.r ?? 1.3;
+      this.poseArca(it, false);
     } else if (s.kind === 'trigger') {
       it.r = s.r;
     } else if (s.kind === 'puzzle') {
@@ -1088,6 +1094,7 @@ export class Interactables {
         it.obj.visible = true;
       }
       if (it.kind === 'breakable' && flags['broken:' + it.id] && !it.done) this.shatter(it, true);
+      if (it.kind === 'arca' && flags['arca:' + it.id]) this.poseArca(it, true);
       // (la de un atajo, también si su puerta ya estaba abierta: en partidas
       // de antes se abría quitando una tranca)
       const shortcut = it.kind === 'lever' && it.gate && flags['door:' + it.gate] && this.list.some((q) => q.id === it.gate && q.lock.type === 'lever');
@@ -1102,6 +1109,13 @@ export class Interactables {
     }
     // los rastrillos de palancas: un palmo por palanca echada
     for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
+  }
+
+  // La tapa de un arca: cerrada con sus sellos o abierta, con ellos rotos.
+  poseArca(it, open) {
+    const g = this.game;
+    g.setGroupVisible('arca:' + it.id, !open);
+    g.setGroupVisible('arca:' + it.id + ':abierta', !!open);
   }
 
   // Tapa de la trampilla: 0 cerrada, 1 abierta (tumbada sobre el suelo).
@@ -1221,6 +1235,8 @@ export class Interactables {
       it.pull = 0;
       it.pulling = false;
       it.obj.userData.arm.rotation.x = LEVER_UP;
+    } else if (it.kind === 'arca') {
+      this.poseArca(it, false);
     } else if (it.kind === 'hatch') {
       it.opening = false;
       if (it.obj) this.poseHatch(it, it.open ? 1 : 0);
@@ -1544,6 +1560,8 @@ export class Interactables {
         return 'Atravesar la niebla';
       case 'examine':
         return 'Examinar';
+      case 'arca':
+        return this.game.flags['arca:' + it.id] ? 'Mirar el arca' : it.label || 'Abrir el arca';
       case 'breakable':
         return it.label ?? 'Partir la mesa';
       case 'climb':
@@ -1732,6 +1750,28 @@ export class Interactables {
     }
     if (it.kind === 'examine') {
       g.ui.toast(MSG[it.text] || it.text);
+      return true;
+    }
+    if (it.kind === 'arca') {
+      const first = !g.flags['arca:' + it.id];
+      g.flags['arca:' + it.id] = true;
+      p.playInteract('interact');
+      if (first) {
+        g.audio && g.audio.play('chestOpen', it);
+        g.later(220, () => this.poseArca(it, true));
+        // (la cerradura con resorte: un virote a quemarropa)
+        if (it.trap)
+          g.later(350, () => {
+            g.audio && g.audio.play('xbowShot', it);
+            g.combat.apply({ pos: { x: it.x, y: it.y, z: it.z }, T: { name: 'resorte' } }, { dmg: it.trap, noParry: true, knock: 2, stagger: true }, it.x, it.z);
+          });
+        if (it.item && !g.flags['take:' + it.id]) {
+          g.flags['take:' + it.id] = true;
+          g.later(500, () => g.giveItem(it.item, it.n ?? 1));
+        }
+        g.saveGame();
+      }
+      g.ui.toast(MSG[first ? it.text : it.after || it.text] || it.text, 6);
       return true;
     }
     if (it.kind === 'climb') {
