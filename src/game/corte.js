@@ -16,7 +16,7 @@
 // Si mueres, vuelven a sus sitios, de rodillas. Vencidos, sus cuerpos se
 // quedan en la sala (e.spec.story: 'corte:vencida').
 import { MSG } from './story.js';
-import { PACO } from '../world/level_paco.js';
+import { FORT } from '../world/fortaleza_medidas.js';
 import { approachAngle, damp } from '../core/util.js';
 
 const OLAS = [7, 8, 7];
@@ -53,8 +53,8 @@ export class Corte {
 
   // ¿Sobre el estrado? (lo que la despierta)
   enEstrado(p) {
-    const Sa = PACO.sala;
-    return p.x > Sa.x0 + Sa.t && p.x < Sa.estrado && p.z > Sa.z0 + Sa.t && p.z < Sa.z1 - Sa.t && p.y > Sa.y + 0.2 && p.y < Sa.y + 3;
+    const E = FORT.salon.estrado;
+    return p.x > E.x0 && p.x < E.x1 && p.z > E.z0 && p.z < E.z1 && p.y > E.y - 0.3 && p.y < E.y + 3;
   }
 
   servicio() {

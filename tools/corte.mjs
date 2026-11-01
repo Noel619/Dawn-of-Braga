@@ -21,13 +21,14 @@ const r = await p.evaluate(() => {
   const out = [];
   const C = g.corte;
   out.push(`cortesanos ${C.list.length}, mayordomo ${!!C.may}, estado ${C.state}`);
-  P.spawn(-74, 1.5, -95, -Math.PI / 2);
+  // (en el gran salón, ante el cancel, mirando al estrado)
+  P.spawn(-128.4, 0, -60, Math.PI);
   for (let i = 0; i < 30; i++) g.update(1 / 60);
   out.push(`en la sala: (${P.pos.x.toFixed(1)}, ${P.pos.y.toFixed(2)}, ${P.pos.z.toFixed(1)}) zona ${g.zone && g.zone.id}`);
   // al estrado, andando por el pasillo de en medio
   let t = 0;
   while (t < 15 && C.state === 'idle') {
-    const dx = -100 - P.pos.x, dz = -95 - P.pos.z, d = Math.hypot(dx, dz);
+    const dx = -127.2 - P.pos.x, dz = -84.2 - P.pos.z, d = Math.hypot(dx, dz);
     P.autoDir = { x: dx / d, z: dz / d, m: 1 };
     g.update(1 / 60);
     t += 1 / 60;

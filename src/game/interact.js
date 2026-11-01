@@ -1039,7 +1039,7 @@ export class Interactables {
     } else if (s.kind === 'arca') {
       // un arca del archivo: se abre una vez (lo que dice, lo que guarda, la
       // trampa de su cerradura); luego sólo se mira. Su tapa, cerrada con sus
-      // sellos o abierta, son dos grupos del mundo (paco_cancilleria.js)
+      // sellos o abierta, son dos grupos del mundo (fortaleza_atrezo.js)
       it.r = s.r ?? 1.3;
       this.poseArca(it, false);
     } else if (s.kind === 'trigger') {

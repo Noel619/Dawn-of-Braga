@@ -2150,3 +2150,96 @@ export function stoneWall(ctx, x0, z0, x1, z1, h, o = {}) {
   solid(ctx, o.mat ?? 'wallstone', x0, 0, z0, x1, h, z1, { sub: 2, aoH: 1.6, mats: { t: o.topMat ?? 'wallstone' } });
   if (o.cap !== false) ctx.wb.box('ashlar', x0 - 0.08, h, z0 - 0.08, x1 + 0.08, h + 0.2, z1 + 0.08, { ao: false, sub: 3 });
 }
+
+// Prisma recto: el polígono de planta pts ([x, z], convexo, en cualquier
+// sentido) de y0 a y1, con su tapa, su fondo y sus costados (skipSide(p, q):
+// el costado de p a q no se dibuja).
+export function prism(wb, mat, pts, y0, y1, o = {}) {
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [ax, az] = pts[i],
+      [bx, bz] = pts[(i + 1) % pts.length];
+    area += az * bx - ax * bz;
+  }
+  // (la tapa mira arriba si se recorre así; si no, se da la vuelta)
+  const Pp = area > 0 ? pts : [...pts].reverse();
+  const n = Pp.length;
+  const top = Pp.map(([x, z]) => V(x, y1, z)),
+    bot = Pp.map(([x, z]) => V(x, y0, z));
+  if (o.top !== false) for (let i = 1; i < n - 1; i++) wb.tri(mat, top[0], top[i], top[i + 1], o);
+  if (o.bottom !== false) for (let i = 1; i < n - 1; i++) wb.tri(mat, bot[0], bot[i + 1], bot[i], o);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    if (o.skipSide && o.skipSide(Pp[i], Pp[j])) continue;
+    wb.quad(mat, bot[i], bot[j], top[j], top[i], o);
+  }
+}
+
+// Husillo: escalera de caracol de piedra alrededor de un machón, en una caja
+// cuadrada (de centro x, z y medio lado libre h), desde y0: n peldaños de
+// 'rise', cada uno una cuña del machón (radio r0) al muro que gira 'da' grados
+// desde 'a0' (en grados, de +x hacia +z: 270 es el norte, y sube girando hacia
+// el este). Con dieciséis peldaños por vuelta, cada vuelta acaba encima de
+// donde empezó: las puertas de cada planta caen una sobre otra. walls: los
+// lados de la caja que son muro (las caras de los peldaños contra ellos no se
+// dibujan). Devuelve at(u): por dónde se pisa a u peldaños del pie.
+export function husillo(ctx, o) {
+  const wb = ctx.wb;
+  const { x, z, h, y0, n, rise } = o;
+  const a0 = o.a0 ?? 270,
+    da = o.da ?? 22.5,
+    r0 = o.r0 ?? 0.22;
+  const room = o.room,
+    mat = o.mat ?? 'ashlar';
+  const walls = o.walls ?? ['n', 's', 'e', 'w'];
+  wb.cylinder(mat, x, y0, z, r0, r0, n * rise + 0.02, 8, { room, capTop: true, tint: o.newelTint ?? [0.66, 0.64, 0.6] });
+  ctx.col.add(x - r0, y0, z - r0, x + r0, y0 + n * rise, z + r0);
+  const rad = (d) => (d * Math.PI) / 180;
+  const edge = (a) => h / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
+  const pt = (a, r) => [x + Math.cos(a) * r, z + Math.sin(a) * r];
+  const side = (q) => {
+    if (Math.abs(q[0] - (x + h)) < 1e-3) return 'e';
+    if (Math.abs(q[0] - (x - h)) < 1e-3) return 'w';
+    if (Math.abs(q[1] - (z + h)) < 1e-3) return 's';
+    if (Math.abs(q[1] - (z - h)) < 1e-3) return 'n';
+    return null;
+  };
+  const onNewel = (q) => Math.abs(Math.hypot(q[0] - x, q[1] - z) - r0) < 1e-3;
+  const hidden = (p, q) => {
+    if (onNewel(p) && onNewel(q)) return true;
+    const sp = side(p),
+      sq = side(q);
+    if (!sp || !sq) return false;
+    // (los dos en el mismo lado, o en el rincón entre dos muros)
+    const common = sp === sq ? sp : null;
+    if (common) return walls.includes(common);
+    return walls.includes(sp) && walls.includes(sq);
+  };
+  for (let i = 0; i < n; i++) {
+    const A0 = rad(a0 + da * i),
+      A1 = rad(a0 + da * (i + 1));
+    // el contorno: del machón, por el muro (con el rincón, si cae dentro)
+    const poly = [pt(A0, r0), pt(A0, edge(A0))];
+    for (let c = Math.ceil((A0 - Math.PI / 4) / (Math.PI / 2)); ; c++) {
+      const ac = Math.PI / 4 + (c * Math.PI) / 2;
+      if (ac <= A0 + 1e-4) continue;
+      if (ac >= A1 - 1e-4) break;
+      poly.push(pt(ac, edge(ac)));
+    }
+    poly.push(pt(A1, edge(A1)), pt(A1, r0));
+    const yt = y0 + (i + 1) * rise,
+      yb = i ? y0 + i * rise - 0.3 : y0;
+    const tint = i % 2 ? [0.64, 0.62, 0.58] : [0.7, 0.68, 0.64];
+    prism(wb, mat, poly, yb, yt, { room, ao: false, tint: o.tint ? tint.map((v, k) => v * o.tint[k]) : tint, sub: 4, bottom: i > 0, skipSide: hidden });
+    // (su colisión: lo que se pisa, por la mitad de la huella)
+    const am = (A0 + A1) / 2,
+      ro = edge(am) - 0.08,
+      rm = (r0 + ro) / 2;
+    ctx.col.addOBB(x + Math.cos(am) * rm, z + Math.sin(am) * rm, (ro - r0) / 2, Math.max(0.12, rm * Math.sin(rad(da) / 2) * 0.95), -am, yb, yt);
+  }
+  const at = (u, r = (h + r0) / 2) => {
+    const a = rad(a0 + da * u);
+    return { x: x + Math.cos(a) * r, y: y0 + Math.min(n, Math.max(0, Math.ceil(u - 0.001))) * rise, z: z + Math.sin(a) * r };
+  };
+  return { at, top: y0 + n * rise };
+}

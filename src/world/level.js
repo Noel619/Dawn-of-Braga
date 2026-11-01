@@ -12,15 +12,15 @@ import { buildCathedral, buildCloister, buildCrypt, buildRiver } from './level_s
 import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
-import { buildPaco } from './level_paco.js';
+import { buildFortaleza } from './fortaleza.js';
 import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
 import { scatterClutter } from './clutter.js';
 import { corpseLog } from '../entities/models.js';
 
-// Donde empieza el mundo por el oeste (la ciudad creció hacia poniente con el
-// Paço: PLAN_CASTILLO.md, §3; la Torre del Tombo asoma por fuera de su muralla).
+// Donde empieza el mundo por el oeste (la ciudad creció hacia poniente con la
+// fortaleza: PLAN_FORTALEZA.md, §4; el campo de poniente sigue por fuera).
 export const WORLD_X0 = -156;
 
 export function buildLevel() {
@@ -115,7 +115,7 @@ export function buildLevel() {
   buildFillers(ctx, S, L);
   buildNorthWalls(ctx, S, L);
   buildCastleTop(ctx, S, L);
-  buildPaco(ctx, S, L);
+  buildFortaleza(ctx, S, L);
 
   // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
   for (const c of corpseLog) {

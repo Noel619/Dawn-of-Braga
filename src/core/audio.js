@@ -243,7 +243,7 @@ function softClipCurve(n = 4097) {
 // tema musical de cada atmósfera
 const ZONE_MUSIC = {
   city: 'city',
-  paco: 'paco',
+  castillo: 'paco',
   sala: 'interior',
   luna: 'luna',
   ramparts: 'ramparts',
@@ -262,7 +262,7 @@ const ZONE_MUSIC = {
 // sala (respuesta de impulso) y cantidad de reverberación
 const ZONE_ROOM = {
   city: ['street', 0.3],
-  paco: ['street', 0.28],
+  castillo: ['street', 0.26],
   sala: ['hall', 0.52],
   luna: ['open', 0.24],
   ramparts: ['open', 0.2],
@@ -281,7 +281,7 @@ const ZONE_ROOM = {
 // capas de fondo: viento, rumor del incendio, tono de sala, dron grave, río
 const ZONE_BED = {
   city: [0.22, 0.1, 0, 0, 0],
-  paco: [0.18, 0.06, 0, 0, 0],
+  castillo: [0.2, 0.05, 0, 0, 0],
   sala: [0.04, 0.03, 0.12, 0, 0],
   luna: [0.5, 0.05, 0, 0, 0],
   ramparts: [0.42, 0.07, 0, 0, 0],
@@ -297,7 +297,7 @@ const ZONE_BED = {
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
-const OUTDOOR = { city: 1, paco: 1, ramparts: 1, luna: 1, dawn: 1 };
+const OUTDOOR = { city: 1, castillo: 1, ramparts: 1, luna: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
 const FAR = { soulPlea: 38, soulScream: 45, bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
@@ -3768,7 +3768,7 @@ export class Audio {
     // (con el ambiente lleno, el suceso se aplaza un poco)
     if (this.admit('amb', 0, 0.3) !== 1) return rnd(1, 3);
     const r = Math.random();
-    if (z === 'city' || z === 'paco' || z === 'ramparts' || z === 'luna') {
+    if (z === 'city' || z === 'castillo' || z === 'ramparts' || z === 'luna') {
       if (r < 0.13) {
         const d = O(far(40, 70, 15), 0.8, { life: 18 });
         this.smp(d, t, this.churchBell(), { gain: 0.3, rate: mtof(pick([40, 43, 45])) / mtof(45), lp: 1800 });

@@ -4,12 +4,13 @@ import { damp } from '../core/util.js';
 
 export const ATMO = {
   city: { fog: 0x5c625e, density: 0.042, sky: 0x9aa6b2, ground: 0x2c2723, hemi: 2.2, moon: 0.9, vol: 0.038, ash: 1, exposure: 1.0, sat: 0.7, lamp: 9, bloom: 0.9 },
-  // los patios y los jardines del Paço: la ciudad, algo más quieta y apagada
-  paco: { fog: 0x5a5d58, density: 0.04, sky: 0x969fa6, ground: 0x2c2723, hemi: 2.1, moon: 0.95, vol: 0.034, ash: 0.7, exposure: 1.0, sat: 0.64, lamp: 9, bloom: 0.9 },
+  // la fortaleza (su patio de honor, sus jardines): el aire más limpio, por
+  // encima del humo de la ciudad; las siluetas se leen a sesenta metros
+  castillo: { fog: 0x56606a, density: 0.02, sky: 0x95a3b4, ground: 0x2c2723, hemi: 2.25, moon: 1.15, vol: 0.022, ash: 0.5, exposure: 1.02, sat: 0.68, lamp: 9, bloom: 0.95 },
   // lo alto de la torre del homenaje: por encima del humo, la noche clara y
-  // la luna grande sobre el Paço (moonDisc: el disco en el cielo)
+  // la luna grande sobre la fortaleza (moonDisc: el disco en el cielo)
   luna: { fog: 0x4d5563, density: 0.026, sky: 0x95a5bc, ground: 0x2c2723, hemi: 2.3, moon: 1.8, moonPos: [25, 16, -54], moonColor: 0xaebfdc, vol: 0.016, ash: 0.45, exposure: 1.05, sat: 0.72, lamp: 9, bloom: 1.0, moonDisc: 1 },
-  // la Sala de la Corte: un interior (suena como una nave)
+  // el gran salón: un interior (suena como una nave)
   sala: { fog: 0x16110e, density: 0.045, sky: 0x8a8278, ground: 0x2a221c, hemi: 1.3, moon: 0.05, vol: 0, ash: 0, exposure: 1.15, sat: 0.8, lamp: 10, bloom: 1.05 },
   prison: { fog: 0x100d0b, density: 0.06, sky: 0x8a8278, ground: 0x2a221c, hemi: 1.1, moon: 0, vol: 0, ash: 0, exposure: 1.2, sat: 0.8, lamp: 10, bloom: 1.0 },
   interior: { fog: 0x15110e, density: 0.055, sky: 0x8a8278, ground: 0x2a221c, hemi: 1.2, moon: 0.05, vol: 0, ash: 0, exposure: 1.15, sat: 0.8, lamp: 10, bloom: 1.0 },
@@ -95,7 +96,7 @@ export class Atmosphere {
     const U = this.post.U;
     U.uFogColor.value.copy(this.fogC);
     U.uVol.value = c.vol;
-    U.uSkyGlow.value = this.name === 'dawn' ? 0 : this.name === 'city' || this.name === 'paco' || this.name === 'ramparts' || this.name === 'luna' ? 1 : 0;
+    U.uSkyGlow.value = this.name === 'dawn' ? 0 : this.name === 'city' || this.name === 'castillo' || this.name === 'ramparts' || this.name === 'luna' ? 1 : 0;
     U.uMoonK.value = damp(U.uMoonK.value, T.moonDisc || 0, 1.5, dt);
     U.uMoonDir.value.copy(this.moon.position).normalize();
     U.uSun.value = damp(U.uSun.value, this.name === 'dawn' ? 1 : 0, 1, dt);

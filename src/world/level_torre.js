@@ -150,8 +150,8 @@ export function torreRooms() {
     [
       R('homenaje2', 'homenaje_alcaide', [s1, iz0, ix1, iz1], 'nse', { tall: true, doors: [{ side: 'e', at: (PO.z0 + PO.z1) / 2, w: PO.z1 - PO.z0, h: PO.h }], extra: [[ix1, PO.z0, K.x1, PO.z1]] }),
       R('homenaje2e', 'homenaje_escritorio', [ix0, c1, s0, iz1], 'sw'),
-      // (la alcoba, con la puerta del pasadizo quemado del Paço, al norte)
-      R('homenaje2c', 'homenaje_alcoba', [ix0, iz0, s0, c0], 'nw', { doors: [{ side: 'n', at: CASTLE.pasadizo.x, w: CASTLE.pasadizo.w, h: CASTLE.pasadizo.h }], extra: [[CASTLE.pasadizo.x - CASTLE.pasadizo.w / 2, K.z0, CASTLE.pasadizo.x + CASTLE.pasadizo.w / 2, iz0]] }),
+      // (la alcoba: al norte, la puerta quemada del pasadizo, tapiada)
+      R('homenaje2c', 'homenaje_alcoba', [ix0, iz0, s0, c0], 'nw'),
     ],
     [R('homenaje3', 'homenaje_camara', [ix0, iz0, s0, iz1], 'nsw')],
   ];
@@ -226,7 +226,6 @@ export function buildTorre(ctx, S, L) {
   // --- muros de fuera (la puerta del puente al sur, la poterna al este)
   const SA = ARMAS.saetera,
     VE = ARMAS.ventana;
-  const PZ = CASTLE.pasadizo;
   holedWall(
     ctx,
     'wallstone',
@@ -239,8 +238,6 @@ export function buildTorre(ctx, S, L) {
     R,
     [
       { a0: SA.x - SA.w / 2, a1: SA.x + SA.w / 2, y0: F1, y1: F1 + SA.h },
-      // (la puerta del pasadizo quemado, en la planta del Rey: level_paco.js)
-      { a0: PZ.x - PZ.w / 2, a1: PZ.x + PZ.w / 2, y0: F2, y1: F2 + PZ.h },
     ],
     'nwe'
   );
@@ -1227,10 +1224,23 @@ function furnish(ctx, L, K, d) {
     ctx.col.add(-93.9, y, -21.4, -92.3, y + 0.62, -20.7);
     wb.box('clothRed', -91.6, y + 1.2, iz0 + 0.02, -88.8, y + 3.4, iz0 + 0.05, { ao: false, faces: 's', tint: [0.7, 0.5, 0.45], room });
     wb.box('gold', -90.3, y + 2.1, iz0 + 0.05, -90.1, y + 2.6, iz0 + 0.06, { ao: false, faces: 's', room });
-    // la puerta del pasadizo, quemada: el marco negro y el tizne en el suelo
+    // la puerta del pasadizo, quemada y tapiada: el marco negro, las tablas
+    // carbonizadas clavadas de través y el tizne en el suelo
     {
       const PZ = CASTLE.pasadizo;
       for (const sg of [-1, 1]) wb.box('wooddark', PZ.x + sg * (PZ.w / 2 + 0.05) - 0.05, y, iz0, PZ.x + sg * (PZ.w / 2 + 0.05) + 0.05, y + PZ.h, iz0 + 0.12, { ao: false, room, tint: [0.16, 0.13, 0.11] });
+      wb.box('black', PZ.x - PZ.w / 2, y, iz0 + 0.004, PZ.x + PZ.w / 2, y + PZ.h, iz0 + 0.012, { ao: false, grime: false, faces: 's', room, tint: [0.35, 0.33, 0.32] });
+      for (const [yy, a] of [
+        [0.6, 0.12],
+        [1.3, -0.18],
+        [1.9, 0.08],
+      ])
+        wb.at(PZ.x, y + yy, iz0 + 0.06, 0, () => {
+          wb.push();
+          wb.rotateZ(a);
+          wb.box('wooddark', -PZ.w / 2 - 0.2, -0.1, -0.03, PZ.w / 2 + 0.2, 0.1, 0.03, { ao: false, room, tint: [0.2, 0.17, 0.15] });
+          wb.pop();
+        });
       wb.box('black', PZ.x - PZ.w / 2 - 0.4, y + 0.004, iz0, PZ.x + PZ.w / 2 + 0.4, y + 0.008, iz0 + 1.4, { ao: false, grime: false, faces: 't', room, tint: [0.5, 0.5, 0.5] });
     }
     P.bed(ctx, -93.85, y, -18.6, Math.PI / 2);

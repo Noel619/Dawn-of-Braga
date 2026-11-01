@@ -159,7 +159,7 @@ const res = await p.evaluate(async (mode) => {
         out['voz:' + v + ':' + k] = stats(buf, 0.4, 5);
       }
     // ambiente de cada zona, sin música
-    for (const z of ['city', 'paco', 'sala', 'luna', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'cellar', 'dawn']) {
+    for (const z of ['city', 'castillo', 'sala', 'luna', 'ramparts', 'interior', 'prison', 'chapel', 'cathedral', 'crypt', 'tunnel', 'cellar', 'dawn']) {
       const { buf, wall } = await render(
         20,
         (au, g) => {

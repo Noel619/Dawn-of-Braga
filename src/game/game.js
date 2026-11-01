@@ -32,7 +32,6 @@ import { Waters } from '../gfx/water.js';
 import { Spring } from './spring.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
-import { PACO, enFoso } from '../world/level_paco.js';
 import { Corte } from './corte.js';
 import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
@@ -210,11 +209,6 @@ export class Game {
     {
       const K = CASTLE.keep;
       this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.F1 - 0.6, yMax: K.R + 1, layers: 5 })];
-    }
-    // el fondo del foso del Rey (bajo la calle, pero a cielo abierto)
-    {
-      const F = PACO.foso;
-      this.navFoso = new LayerNav(new WalkGrid(F.x0, F.z0, F.x1, F.ez1, 0.5), this.world.col, { yMin: F.y - 0.6, yMax: F.y + 0.8, layers: 1 });
     }
     this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
@@ -1396,11 +1390,12 @@ export class Game {
   // El pozo del Postigo: la salida de las bodegas (y, una vez descubierta,
   // un camino de vuelta desde la calle).
   canClimbWell() {
-    return !this.climb && this.player.pos.y < -3 && !enFoso(this.player.pos);
+    return !this.climb && this.player.pos.y < -3;
   }
-  // ¿En el fondo del foso del Rey? (bajo la calle, pero no es el subsuelo)
-  inFoso(p) {
-    return enFoso(p);
+  // ¿En el fondo de un foso a cielo abierto? (bajo la calle, pero no es el
+  // subsuelo; el del Paço ya no está: ninguno, por ahora)
+  inFoso() {
+    return false;
   }
   climbWell() {
     this.wellMove('up');

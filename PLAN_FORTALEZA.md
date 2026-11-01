@@ -143,11 +143,13 @@ Norte = −z (arriba). La ciudad, al este. Medidas en metros. (El plano dibujado
    TK torre de la cocina · TT torre del Tombo · TR torre de la reina · TC torre de la coracha
 ```
 
-- **La fortaleza:** x −138 a −64, z −100 a −32 (74 × 68 m). Cuatro torres de esquina de 11 × 11 m y 20 m de alto.
-  Las alas, de 14 m de fondo y dos plantas (+5,5 y el adarve a +12, con las cubiertas vertiendo al patio).
-- **El patio de honor:** x −124 a −78, z −86 a −46 (46 × 40 m), con claustro de arcos en dos alturas en tres
-  lados (sur, este y oeste: 4 m de fondo) y la escalinata de la torre en el cuarto (norte).
-- **La torre del homenaje:** x −114 a −88, z −112 a −86 (26 × 26 m), en el eje de la puerta (x −101). Sobresale
+- **La fortaleza:** x −138 a −62, z −100 a −32 (76 × 68 m). Cuatro torres de esquina de 14 m de lado (la de la
+  reina, 19 m de alto con su chapitel; la cocina, 17 y su chimenea; la de la coracha, 18; el Tombo, 22 con su
+  chapitel). Las alas, de 14 m de fondo (la del gran salón, 18) y dos plantas (+5,5 y el adarve a +12): el salón,
+  la capilla y las cámaras, con tejado a dos aguas; las del sur y la cancillería, con terraza.
+- **El patio de honor:** x −120 a −76, z −86 a −46 (44 × 40 m), con claustro de arcos en tres lados (sur, este y
+  oeste: 4 m de fondo; de una altura en la fase 1) y la escalinata de la torre en el cuarto (norte).
+- **La torre del homenaje:** x −111 a −85, z −112 a −86 (26 × 26 m), en el eje de la puerta (x −98). Sobresale
   12 m hacia el jardín. Tiene cinco niveles: la planta baja (0), la sala de la guardia (+6, adonde da la
   escalinata), las cámaras privadas del Rey (+12), la **sala del trono** (+18, a doble altura, con la galería en el
   grueso del muro a +22,5) y la terraza (+28). Las garitas suben a +34.
@@ -288,6 +290,32 @@ Repartidos con intención:
   la reja nueva al norte.
 - **La escena del Rey y la del Caballero** usan posiciones absolutas: se mudan con medidas, y sus pruebas (`rey.mjs`,
   `caballero.mjs`) deben seguir pasando.
+
+## 12. Lo hecho
+
+**Fase 1 (hecha).** La fortaleza por fuera (`world/fortaleza.js`, con sus medidas en `world/fortaleza_medidas.js` y
+sus piezas en `world/fortaleza_atrezo.js`: el talud con su cordón, las esquinas de sillería, el parapeto almenado,
+los ajimeces, los matacanes, la arquería del claustro y su tejaroz, los muros con vanos y el caracol de las torres),
+el patio de honor (`world/fortaleza_patio.js`) y la planta baja de las salas, con lo que había en el Paço
+(`world/fortaleza_alas.js`). Fuera el Paço (`level_paco.js`, `paco_cancilleria.js`, `paco_jardines.js`), su foso y
+la puerta nueva de la muralla norte del castillo (vuelve a ser un lienzo corrido); fuera la torre de en medio de la
+coracha (su altar va a la torre de la coracha de la fortaleza). La atmósfera `castillo` (densidad 0,02) sustituye a
+la del Paço. Lo provisional, hasta las fases que vienen:
+
+- **El tesoro y el camarero**, en la planta baja de la torre de la coracha (se baja a él por su caracol desde el
+  altar); su puerta, atrancada por dentro, da a la antecámara del Rey, y la de ésta, también atrancada por dentro,
+  al patio. Las cámaras del Rey de verdad (+5,5 y +12) y el puente cubierto a la torre, en la fase 2.
+- **La llave del capellán**, en el cordón de la campana de la espadaña, que baja a la tribuna de la capilla.
+- **El Tombo**, en la torre del sureste: cuatro plantas y su caracol; las arcas, arriba.
+- **La reina**: su sala y la planta baja de su torre (la cama, el libro de horas, el relicario).
+- **La puerta**: el rastrillo echado y el puente alzado; el foso y el torno, en la fase 3 (cuando se derribe la
+  torre vieja, que ahora le queda delante).
+- **La torre del homenaje**, maciza por ahora; su puerta de la escalinata, atrancada.
+- **El jardín del Rey**, tierra, naranjos secos y la alberca vacía, sin entrada (fase 4).
+- El pasadizo quemado de la torre vieja, tapiado.
+
+Pruebas: `tools/fortalezawalk.mjs` (la fortaleza a pie), `tools/corte.mjs`, `tools/progress.mjs`,
+`tools/castlewalk.mjs torre`, `tools/rey.mjs mesa`, `tools/caballero.mjs` y `tools/beastchase.mjs`.
 
 ## Fuentes
 
