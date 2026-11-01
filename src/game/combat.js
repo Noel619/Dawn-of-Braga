@@ -204,7 +204,10 @@ export class Combat {
     const p = g.player;
     // (ha caído Henrique: ya nada va a por ti; todo se funde a negro)
     if (g.failing) return false;
-    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip }, sx, sz);
+    // (tras un golpe crítico, los siguientes del mismo no te encadenan en el
+    // suelo: un respiro de 0,8 s para levantarte)
+    if (a.crit && p.lastHitBy && p.lastHitBy.crit && g.time - (p.lastHitT ?? -9) < 0.8) return false;
+    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip, crit: a.crit }, sx, sz);
     if (r === 'dodge' || r === 'none') return false;
     if (r === 'parry') {
       this.parryFx(src, a, sx, sz);
@@ -213,6 +216,14 @@ export class Combat {
       return r;
     }
     const hy = p.pos.y + 1.2;
+    // (los golpes críticos del Caballero: más sangre, un parón y un destello)
+    if (a.crit && (r === 'hit' || r === 'guardbreak')) {
+      g.fx.blood.emit(p.pos.x, hy, p.pos.z, 30, { speed: 6 });
+      g.audio && g.audio.play('riposte', p.pos);
+      g.hitstop = Math.max(g.hitstop, 0.12);
+      g.flash = Math.max(g.flash, 0.07);
+      g.flashTint = [1, 0.3, 0.2];
+    }
     if (r === 'block' || r === 'guardbreak') {
       g.fx.blood.emit(p.pos.x, hy, p.pos.z, 16, { color: [1.0, 0.8, 0.4], speed: 5, life: 0.35, up: 1.5 });
       g.audio && g.audio.play(r === 'guardbreak' ? 'guardbreak' : 'block', p.pos);

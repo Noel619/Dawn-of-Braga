@@ -305,6 +305,8 @@ export class Enemy {
       }
     }
     if (this.state === 'ceiling') this.drop();
+    // (la defensa de armadura: el arma hace lo que permite su calidad)
+    if (T.armor) dmg = Math.max(1, Math.round(dmg * this.armorK()));
     const toSrc = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);
     const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 55 * DEG;
     if (T.canBlock && !heavy && facing && this.state !== 'attack' && this.state !== 'hurt' && this.state !== 'stagger' && Math.random() < T.blockChance) {
@@ -353,6 +355,14 @@ export class Enemy {
     }
     if (T.onHit) T.onHit(this, 'hit', dmg, heavy);
     return 'hit';
+  }
+
+  // La defensa de armadura (el Caballero de la Orden): la parte del golpe
+  // que pasa, según la calidad del arma con que se le da (weapons.js: CALIDAD).
+  armorK() {
+    const W = this.game.player && this.game.player.weapon;
+    const q = W && W.calidad !== undefined ? W.calidad : 0.65;
+    return 1 - (this.T.armor || 0) * (1 - q);
   }
 
   die() {
@@ -501,6 +511,7 @@ export class Enemy {
     if (this.D && this.D.takeRiposte) return this.D.takeRiposte(dmg, fromX, fromZ);
     const T = this.T;
     this.parryT = 0;
+    if (T.armor) dmg = Math.max(1, Math.round(dmg * this.armorK()));
     this.hp -= dmg;
     this.flash = 0.08;
     this.hitShown = 3;

@@ -245,6 +245,7 @@ const ZONE_MUSIC = {
   city: 'city',
   paco: 'paco',
   sala: 'interior',
+  luna: 'luna',
   ramparts: 'ramparts',
   interior: 'interior',
   prison: 'prison',
@@ -263,6 +264,7 @@ const ZONE_ROOM = {
   city: ['street', 0.3],
   paco: ['street', 0.28],
   sala: ['hall', 0.52],
+  luna: ['open', 0.24],
   ramparts: ['open', 0.2],
   interior: ['room', 0.34],
   prison: ['room', 0.42],
@@ -281,6 +283,7 @@ const ZONE_BED = {
   city: [0.22, 0.1, 0, 0, 0],
   paco: [0.18, 0.06, 0, 0, 0],
   sala: [0.04, 0.03, 0.12, 0, 0],
+  luna: [0.5, 0.05, 0, 0, 0],
   ramparts: [0.42, 0.07, 0, 0, 0],
   interior: [0.05, 0.035, 0.12, 0, 0],
   prison: [0.03, 0, 0.16, 0.02, 0],
@@ -294,7 +297,7 @@ const ZONE_BED = {
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
-const OUTDOOR = { city: 1, paco: 1, ramparts: 1, dawn: 1 };
+const OUTDOOR = { city: 1, paco: 1, ramparts: 1, luna: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
 const FAR = { soulPlea: 38, soulScream: 45, bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
@@ -3765,7 +3768,7 @@ export class Audio {
     // (con el ambiente lleno, el suceso se aplaza un poco)
     if (this.admit('amb', 0, 0.3) !== 1) return rnd(1, 3);
     const r = Math.random();
-    if (z === 'city' || z === 'paco' || z === 'ramparts') {
+    if (z === 'city' || z === 'paco' || z === 'ramparts' || z === 'luna') {
       if (r < 0.13) {
         const d = O(far(40, 70, 15), 0.8, { life: 18 });
         this.smp(d, t, this.churchBell(), { gain: 0.3, rate: mtof(pick([40, 43, 45])) / mtof(45), lp: 1800 });
@@ -3992,7 +3995,7 @@ export class Audio {
         this.setP(w.bp[1].frequency, wf * 1.23, 0.3);
         this.setP(w.lp.frequency, OUTDOOR[z] ? 9000 : 450, 0.5);
       }
-      const wh = this.layerGain(this.L.whistle, z === 'ramparts' || z === 'tunnel' ? Math.max(0, this.gust - 0.5) * 0.08 : 0, 0.4);
+      const wh = this.layerGain(this.L.whistle, z === 'ramparts' || z === 'luna' || z === 'tunnel' ? Math.max(0, this.gust - 0.5) * 0.08 : 0, 0.4);
       if (wh) this.setP(wh.bp.frequency, 700 + this.gust * 600, 0.5);
       this.layerGain(this.L.roar, bed[1], 1.5);
       this.layerGain(this.L.room, bed[2], 1.5);

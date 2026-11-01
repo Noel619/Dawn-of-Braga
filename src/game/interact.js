@@ -341,7 +341,7 @@ function weaponItemMesh(id) {
 }
 
 function itemMesh(id) {
-  if (id === 'facon' || id === 'hacha' || id === 'lanza' || id === 'katana') return weaponItemMesh(id);
+  if (id === 'facon' || id === 'hacha' || id === 'lanza' || id === 'katana' || id === 'oxidada') return weaponItemMesh(id);
   const g = new THREE.Group();
   // la ballesta, tumbada sobre su banco
   if (id === 'ballesta') {

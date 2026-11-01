@@ -25,6 +25,7 @@ import { solid, blocker, stairs, merlons, archedWall, subtractRects, solidGableR
 import * as P from './props.js';
 import { interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { PENDON } from '../entities/caballero.js';
 import { buildReyMesa, REY_MESA } from './rey_mesa.js';
 import { CASTLE, holedWall, beam3, parapet, slit } from './level_castle.js';
 
@@ -186,11 +187,14 @@ export function torreZones() {
     ],
     atmo: 'ramparts',
   });
-  zones.push({ id: 'homenaje_terraza', rects: [[K.x0, K.z0, K.x1, K.z1 + 0.8, K.R - 0.3, K.R + 10]], atmo: 'ramparts' });
+  zones.push({ id: 'homenaje_terraza', rects: [[K.x0, K.z0, K.x1, K.z1 + 0.8, K.R - 0.3, K.R + 10]], atmo: 'luna' });
   return zones;
 }
 
 // ======================================================================== la torre
+// dónde espera el Caballero de la Orden (en la terraza)
+export const CAB = { x: -78.0, z: -27.3, yaw: 2.71 };
+
 export function buildTorre(ctx, S, L) {
   const wb = ctx.wb;
   const { K, ix0, ix1, iz0, iz1, s0, s1 } = torreDims();
@@ -480,6 +484,26 @@ export function buildTorre(ctx, S, L) {
 
   // --- lo alto: la terraza
   terrace(ctx, K, H3R, DR);
+  // el Caballero de la Orden (§10), junto al parapeto del norte, mirando la
+  // luna sobre el Paço; la niebla, en la puerta de la caseta de la escalera
+  L.enemies.push({ type: 'caballero', x: CAB.x, y: K.R, z: CAB.z, yaw: CAB.yaw, idle: 'boss', boss: true, id: 'b_caballero' });
+  L.interact.push({ kind: 'fog', id: 'f_caballero', boss: 'caballero', x: -92.55, y: K.R, z: -22.3, w: 1.5, h: 2.3, axis: 'x', enter: 1 });
+  // el pendón del Rey, clavado en su asta junto a él (a media vida lo
+  // arranca: game/caballero.js); el tocón de piedra en el que se clava
+  {
+    const wb = ctx.wb;
+    const R = K.R;
+    wb.cylinder('wallstone', PENDON.x, R, PENDON.z, 0.24, 0.3, 0.32, 8, { ao: false, capTop: true });
+    wb.cylinder('black', PENDON.x, R + 0.32, PENDON.z, 0.05, 0.05, 0.005, 6, { ao: false, capTop: true, grime: false });
+    ctx.col.add(PENDON.x - 0.3, R, PENDON.z - 0.3, PENDON.x + 0.3, R + 0.32, PENDON.z + 0.3);
+    ctx.beginGroup('pendon:caballero');
+    wb.cylinder('wooddark', PENDON.x, R + 0.3, PENDON.z, 0.024, 0.024, 2.55, 6, { ao: false });
+    wb.cylinder('iron', PENDON.x, R + 2.85, PENDON.z, 0.04, 0.0, 0.22, 4, { ao: false });
+    wb.box('wooddark', PENDON.x - 0.02, R + 2.66, PENDON.z - 0.02, PENDON.x + 0.98, R + 2.7, PENDON.z + 0.02, { ao: false });
+    P.banner(ctx, PENDON.x + 0.49, R + 2.66, PENDON.z + 0.04, 0, 'bannerRey', 0.95, 1.35);
+    ctx.col.add(PENDON.x - 0.08, R + 0.3, PENDON.z - 0.08, PENDON.x + 0.08, R + 2.9, PENDON.z + 0.08);
+    ctx.endGroup();
+  }
 
   // --- el antecuerpo: el rellano, la escalera exenta, el foso y el puente
   forebuilding(ctx, S, L, K, DR);
@@ -1086,6 +1110,8 @@ function furnish(ctx, L, K, d) {
       }
     }
     P.dropped(ctx, -89.8, y, -19.0, 0.6, 'spear');
+    // una espada de munición que nadie quiso, comida de herrumbre (§10)
+    L.interact.push({ kind: 'item', id: 'i_oxidada', item: 'oxidada', x: -88.7, y: y + 0.08, z: -20.7 });
     P.wallTorch(ctx, -90.0, y + 2.2, iz0, 's', { room, radius: 7 });
     wb.setRoom(null);
   }

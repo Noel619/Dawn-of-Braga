@@ -423,7 +423,33 @@ export function viroteParts(j = 'sword') {
   ];
 }
 
+// ------------------------------------------------------------- la oxidada
+// La espada de munición, comida de herrumbre: hoja algo más corta, roja de
+// óxido, con mellas en los filos; la cruz de hierro, torcida; el puño, con la
+// tira de cuero medio deshecha.
+export function oxidadaParts(j = 'sword') {
+  const y = -0.05,
+    len = 0.84;
+  return [
+    { j, type: 'cyl', s: [0.02, 0.023, 0.19], p: [0, y, 0.0], r: [90, 0, 0], seg: 6, mat: 'leather' },
+    { j, type: 'box', s: [0.05, 0.012, 0.022], p: [0.018, y + 0.016, 0.04], r: [0, 0, 20], mat: 'leather' },
+    { j, type: 'box', s: [0.24, 0.032, 0.04], p: [0, y, 0.105], r: [0, 0, 4], mat: 'iron' },
+    { j, type: 'box', s: [0.045, 0.045, 0.045], p: [0.12, y + 0.01, 0.105], r: [0, 0, 45], mat: 'iron' },
+    { j, type: 'box', s: [0.045, 0.045, 0.045], p: [-0.12, y - 0.006, 0.105], r: [0, 0, 45], mat: 'iron' },
+    { j, type: 'box', s: [0.056, len, 0.014], p: [0, y, 0.125 + len / 2], r: [-90, 0, 0], taper: [0.24, 1], mat: 'plateRust' },
+    { j, type: 'box', s: [0.012, len * 0.75, 0.018], p: [0, y, 0.145 + len * 0.375], r: [-90, 0, 0], mat: 'iron' },
+    // las mellas: muescas oscuras en los dos filos
+    ...[
+      [0.026, 0.34],
+      [-0.025, 0.5],
+      [0.022, 0.66],
+    ].map(([x, z]) => ({ j, type: 'box', s: [0.012, 0.018, 0.03], p: [x, y, z], mat: 'black' })),
+    { j, type: 'ico', s: [0.034], p: [0, y, -0.115], mat: 'iron' },
+  ];
+}
+
 export const WEAPON_PARTS = {
+  oxidada: oxidadaParts,
   facon: faconParts,
   hacha: axeParts,
   lanza: spearParts,

@@ -1,6 +1,6 @@
 // Iconos de objetos en pixel art (32x32) dibujados por código: rampas de
 // sombreado con la luz arriba a la izquierda, brillos y contorno oscuro.
-import { Bitmap, PAL as P, bayer } from '../ui/pixel.js';
+import { Bitmap, PAL as P, bayer, vnoise } from '../ui/pixel.js';
 
 const BRONZE = ['#2e1c0c', '#5a3818', '#8a5a26', '#bb8738', '#e8b860', '#fff0b0'];
 
@@ -138,6 +138,31 @@ const ICONS = {
     disc(b, 5, 27, 2.4, (l, d, x, y) => (d < 0.45 ? P.ruby2 : shade(GOLD, l, x, y)));
     b.set(4, 26, P.ruby3);
     sparkle(b, 22, 8);
+    b.outline(P.void);
+  },
+  // la espada oxidada: la hoja roja de herrumbre a manchas, con mellas en los
+  // filos; la cruz de hierro torcida y el puño de cuero deshecho
+  oxidada(b) {
+    const RUST = ['#2a1208', '#4e2410', '#7a3a18', '#a4582a', '#c8804a'];
+    seg(b, 12.5, 19.5, 27, 5, 2.0, 2.0, (t, s, x, y) => {
+      if (t > 0.86) {
+        const k = (1 - t) / 0.14;
+        if (Math.abs(s) > k * 1.05) return null;
+      }
+      // las mellas
+      if ((Math.abs(t - 0.35) < 0.03 && s > 0.5) || (Math.abs(t - 0.6) < 0.03 && s < -0.5) || (Math.abs(t - 0.78) < 0.025 && s > 0.45)) return null;
+      const n = vnoise(x * 0.42, y * 0.42, 7) * 0.8 + vnoise(x * 1.1, y * 1.1, 3) * 0.35;
+      const rust = n > 0.7 - t * 0.12;
+      if (s < -0.45) return rust ? RUST[1] : P.steel3;
+      if (s > 0.5) return rust ? RUST[3] : P.steel2;
+      if (Math.abs(s) < 0.2 && t < 0.7) return rust ? RUST[2] : P.steel1;
+      return rust ? (n > 0.8 ? RUST[4] : RUST[3]) : P.steel3;
+    });
+    seg(b, 7.5, 16, 16.5, 24, 1.3, 1.3, (t, s, x, y) => (s < -0.3 ? P.iron5 : s > 0.4 ? P.iron1 : shade(IRON, 0.5 - t * 0.2, x, y)));
+    seg(b, 6.5, 25.5, 11.5, 20.5, 1.2, 1.2, (t, s, x, y) => ((x + y) % 3 ? (s < 0 ? P.wood2 : P.wood1) : P.wood3));
+    b.set(9, 24, P.wood3);
+    b.set(10, 25, P.wood2);
+    disc(b, 5, 27, 2.1, (l, d, x, y) => shade(IRON, l - 0.1, x, y));
     b.outline(P.void);
   },
   // facón criollo: hoja larga con contrafilo, guardas de plata en S y cabo

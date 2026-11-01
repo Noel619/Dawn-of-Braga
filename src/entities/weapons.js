@@ -405,8 +405,25 @@ function solingenMoves(o) {
   return { clips: M.clips, light: M.light.map(up), heavy: M.heavy.map(up), run: up(M.run), roll: up(M.roll) };
 }
 
+// ---------------------------------------------------------------- la oxidada
+// Una espada de munición de la guarnición, comida de herrumbre: se maneja
+// como la del carcelero, pesa menos (cada golpe cansa algo menos) y corta
+// algo menos; contra armadura, la mitad (ver CALIDAD).
+const OXIDADA_K = 0.88,
+  OXIDADA_ST = 0.85;
+function oxidadaMoves(o) {
+  const M = swordMoves(o);
+  const dn = (a) => ({ ...a, dmg: Math.round(a.dmg * OXIDADA_K), st: Math.round(a.st * OXIDADA_ST) });
+  return { clips: M.clips, light: M.light.map(dn), heavy: M.heavy.map(dn), run: dn(M.run), roll: dn(M.roll) };
+}
+
 // ---------------------------------------------------------------- registro
-export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'espada', 'solingen', 'katana', 'ballesta'];
+export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'katana', 'ballesta'];
+
+// La calidad de cada arma contra armadura (PLAN_CASTILLO.md, §10): la parte
+// del daño que pasa a quien la lleva (por ahora, el Caballero de la Orden).
+// La espada de Solingen y la katana sagrada pasan entera.
+export const CALIDAD = { oxidada: 0.5, facon: 0.6, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1, katana: 1 };
 
 export const WEAPONS = {
   espada: {
@@ -428,6 +445,23 @@ export const WEAPONS = {
     runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: swordMoves,
+  },
+  oxidada: {
+    id: 'oxidada',
+    item: 'oxidada',
+    order: 3.5,
+    hands: 1,
+    trail: [
+      [0, -0.05, 0.2],
+      [0, -0.05, 0.96],
+    ],
+    trailColor: 0xe0c8a0,
+    tip: [0, -0.05, 0.99],
+    edge: 'double',
+    guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
+    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
+    block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
+    moves: oxidadaMoves,
   },
   solingen: {
     id: 'solingen',
@@ -456,6 +490,7 @@ const PARRY = {
   hacha: { win: 0.16, kind: 'haft', riposte: ['light', 2], dmg: 118 },
   lanza: { win: 0.2, kind: 'shield', riposte: ['heavy', 0], dmg: 110 },
   espada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 108 },
+  oxidada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * OXIDADA_K) },
   solingen: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * SOLINGEN_K) },
   katana: { win: 0.24, kind: 'blade', riposte: ['light', 3], dmg: 108 },
   // (la ballesta para con la cureña; remata con un culatazo)
@@ -466,6 +501,7 @@ for (const id in WEAPONS) {
   W.parts = WEAPON_PARTS[id];
   W.carry = W.hands === 2 ? carry2(W) : carry1(W);
   W.parry = PARRY[id] || PARRY.espada;
+  W.calidad = CALIDAD[id] ?? 0.65;
 }
 
 // Clips y ataques de un arma para un rig (se construyen una vez).

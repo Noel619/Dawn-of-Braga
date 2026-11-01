@@ -58,6 +58,7 @@ uniform vec2 uRes;
 uniform mat4 uProjInv; uniform mat4 uCamWorld; uniform vec3 uCamPos;
 uniform float uTime;
 uniform vec3 uFogColor; uniform float uVol; uniform float uVolY; uniform float uVolScale; uniform float uSkyGlow; uniform float uSun; uniform vec3 uSunDir;
+uniform float uMoonK; uniform vec3 uMoonDir;
 uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
 uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness, uBars;
@@ -90,6 +91,24 @@ void main(){
     if (uSun > 0.0) {
       float sd = max(dot(rd, normalize(uSunDir)), 0.0);
       col += vec3(1.0, 0.72, 0.42) * (pow(sd, 900.0) * 3.0 + pow(sd, 18.0) * 0.45 + pow(sd, 4.0) * 0.12) * uSun;
+    }
+    // la luna grande (lo alto de la torre del homenaje): el disco con sus
+    // mares y un halo frío
+    if (uMoonK > 0.0) {
+      vec3 md = normalize(uMoonDir);
+      float mc = dot(rd, md);
+      if (mc > 0.99) {
+        vec3 ux = normalize(cross(md, vec3(0.0, 1.0, 0.0)));
+        vec3 uy = cross(ux, md);
+        vec2 q = vec2(dot(rd, ux), dot(rd, uy)) / 0.044;
+        float r = length(q);
+        float disc = 1.0 - smoothstep(0.95, 1.05, r);
+        float mare = fbm3(vec3(q * 2.2, 1.7));
+        vec3 mcol = vec3(0.93, 0.95, 1.0) * (0.72 + 0.28 * smoothstep(0.32, 0.66, mare)) * (1.0 - 0.2 * r * r);
+        col = mix(col, mcol * 1.3, disc * uMoonK);
+      }
+      float mh = max(mc, 0.0);
+      col += vec3(0.42, 0.5, 0.66) * (pow(mh, 260.0) * 0.6 + pow(mh, 22.0) * 0.07) * uMoonK;
     }
   }
 
@@ -209,6 +228,8 @@ export class PostPipeline {
       uSkyGlow: G.uSkyGlow,
       uSun: G.uSun,
       uSunDir: G.uSunDir,
+      uMoonK: { value: 0 },
+      uMoonDir: { value: new THREE.Vector3(-0.2, 0.36, -1) },
       uVolY: { value: 0 },
       uVolScale: { value: 0.11 },
       uBloom: { value: 0.9 },

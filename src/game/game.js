@@ -47,6 +47,7 @@ import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { ReyQuest } from './rey.js';
 import { Virotes } from './virotes.js';
+import { Caballero, CaballeroCine } from './caballero.js';
 import { Cuerdas } from './cuerdas.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
@@ -65,7 +66,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossLeonor', 'bossLeonor2'] };
+const BOSS_MUSIC = { caballero: ['bossCaballero', 'bossCaballero2'], impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossLeonor', 'bossLeonor2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -253,6 +254,8 @@ export class Game {
     this.combat = new Combat(this);
     // los virotes de las ballestas (los tuyos y los de los ballesteros)
     this.virotes = new Virotes(this);
+    // el Caballero de la Orden: lo que suelta su espada, su pendón, las hojas
+    this.caballero = new Caballero(this);
     // las cuerdas que se cortan de un virote (y lo que cuelga de ellas)
     this.cuerdas = new Cuerdas(this, lvl.L.cuerdas);
     this.interact = new Interactables(this, lvl.L.interact);
@@ -478,6 +481,7 @@ export class Game {
     this.house.applyFlags();
     this.crypt.applyFlags();
     this.paio.applyFlags();
+    this.caballero.applyFlags();
     this.rey.applyFlags();
     this.ossuaries.applyFlags();
     this.souto.applyFlags();
@@ -573,6 +577,7 @@ export class Game {
     this.ui.closeAll();
     this.ui.showHud(false);
     this.combat.clear();
+    this.caballero && this.caballero.clear();
     this.lockTarget = null;
     this.activeBoss = null;
     this.player.spawn(0, 0, 0, 0);
@@ -921,6 +926,7 @@ export class Game {
     for (const e of this.enemies) if (!e.boss && !this.bossGone(e)) e.reset();
     this.fauna.reset();
     this.combat.clear();
+    this.caballero && this.caballero.clear();
     this.saveGame();
     this.later(1500, () => this.hint('altar'));
   }
@@ -1004,6 +1010,15 @@ export class Game {
 
   startBoss(b) {
     this.activeBoss = b;
+    // (el Caballero, la primera vez: la escena de la luna; la pelea empieza
+    // al acabar: caballeroFight)
+    if (b.type === 'caballero' && !this.flags['cine:caballero'] && !this.cutscene) {
+      this.hunt.reset();
+      this.audio.stopMusic();
+      this.cutscene = new CaballeroCine(this, b);
+      this.cutscene.start();
+      return;
+    }
     const p = this.player.pos;
     const dx = p.x - b.pos.x,
       dz = p.z - b.pos.z;
@@ -1028,6 +1043,14 @@ export class Game {
     this.audio.enemyVoice(b, 'alert');
     this.audio.music((BOSS_MUSIC[b.type] || BOSS_MUSIC.impaled)[0]);
     this.ui.area(b.T.name);
+  }
+
+  // Acaba la escena de la luna: su música y su nombre.
+  caballeroFight(b) {
+    this.audio.enemyVoice(b, 'alert');
+    this.audio.music(BOSS_MUSIC.caballero[0]);
+    this.ui.area(b.T.name);
+    this.saveGame();
   }
 
   onBossPhase(b) {
@@ -1194,6 +1217,7 @@ export class Game {
     // huyendo de la Bestia: desde el último punto de control de la huida
     if (this.chase.active) {
       this.combat.clear();
+    this.caballero && this.caballero.clear();
       this.lockTarget = null;
       for (const e of this.enemies) if (!(e.boss && this.flags['boss:' + e.type]) && e.type !== 'impaled') e.reset();
       this.player.spawn(this.player.pos.x, this.player.pos.y, this.player.pos.z, this.player.yaw);
@@ -1207,6 +1231,7 @@ export class Game {
     // en la película del jefe final: desde su último punto de control
     if (this.finale.filmActive) {
       this.combat.clear();
+    this.caballero && this.caballero.clear();
       this.lockTarget = null;
       this.activeBoss = null;
       this.atmo.override = null;
@@ -1241,6 +1266,7 @@ export class Game {
     this.activeBoss = null;
     this.atmo.override = null;
     this.combat.clear();
+    this.caballero && this.caballero.clear();
     for (const e of this.enemies) if (!this.bossGone(e)) e.reset();
     this.respawnAtAltar();
     this.fadeTarget = 1;
@@ -1901,7 +1927,7 @@ export class Game {
           // volvía a mostrar y su cuerpo se quedaba unos segundos dentro del
           // túnel, a la vista, hasta salir por la otra boca)
           const gone = e.T.deathDur ?? 5.5;
-          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < gone) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > gone - 0.5) && !(e.D && e.D.hidden);
+          if (!e.scripted) e.obj.visible = (e.state !== 'dead' || e.stT < gone || e.T.keepBody) && d < Math.min(90, this.camera.far + 6) && lvl && !(e.boss && e.dead && this.flags['boss:' + e.type] && e.stT > gone - 0.5 && !e.T.keepBody) && !(e.D && e.D.hidden);
           return act;
         });
       }
@@ -1914,6 +1940,7 @@ export class Game {
       this.fauna.update(dt, this.state === 'title' ? null : p, this.time);
       this.combat.update(dt);
       this.virotes.update(dt);
+      this.caballero.update(dt);
       this.cuerdas.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);

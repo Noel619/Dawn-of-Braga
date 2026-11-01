@@ -398,7 +398,7 @@ entre un 25 y un 40 % menos; **la espada de Solingen y la katana sagrada, nada m
 | 4g | **La reja de las cinco llaves** (**hecho**) | fuera la manivela; la pletina de las cinco cerraduras; los documentos (la carta del Rey, la confesión del capellán, el registro del Tombo, lo último del camarero, el cuaderno del mayordomo, las últimas líneas del alcaide); `progress.mjs` consigue las cinco llaves |
 | 5 | **Por fuera** (**hecho**) | `world/castillo_fuera.js`: las murallas que no se andan (sur, levante y poniente) suben a 11 m y las torres de las esquinas a 14,5 (la del norte sigue a 9, la de la poterna); dos torres nuevas en medio de los lienzos del sur y de poniente; los cadalsos de madera en las torres de levante; la barbacana, un muro almenado con su arco entre las casas de la boca de la calle del Soto (las armas del Rey, el matacán, la hoja arrancada); la brecha del lienzo sur, con su empalizada; los estandartes negros, más altos; `castlewalk.mjs` cruza la barbacana |
 | 6 | **Repaso** (**hecho**) | la música del Paço (una pavana de salterio que se calla a ratos, la zanfona, las dueñas y la campana de la capilla); sus atmósferas, `paco` (los patios y jardines: la ciudad, más quieta) y `sala` (la Sala de la Corte suena como una nave); los documentos, repasados (de quién es cada llave y dónde está); los recorridos (`castlewalk torre`, `pacowalk`, `jardineswalk`, `corte`, `progress` hasta el final); el rendimiento (en el Paço, por debajo de la praça en llamadas y triángulos); la versión jugable (`docs/index.html`) |
-| 7 | **El Caballero de la Orden** | la escena de la luna (el plano lateral), el modelo, las habilidades, la defensa de armadura, la espada oxidada |
+| 7 | **El Caballero de la Orden** (**hecho**) | `entities/caballero.js` (el cuerpo: los faldones van en los muslos para que sigan a las piernas; las poses, con los brazos por IK como las armas del jugador; la danza, el desvío y la contra, las habilidades, la segunda fase) y `game/caballero.js` (la cuchilla de viento, la cruz que corta después, la estela de la hoja, el pendón en su mano, las hojas, la escena de la luna); la terraza, con su atmósfera `luna` (la luna grande en el cielo: `post.js`) y su tema; la estampida de la pelea, en dos fases; los golpes críticos (`combat.js`) con un respiro tras cada uno; la defensa de armadura (`enemy.js`: `armorK`; la calidad de cada arma, `weapons.js`: `CALIDAD`; en el inventario, «contra armadura»); la espada oxidada (en la armería de la torre); `tools/caballero.mjs` |
 
 Cada fase deja el juego jugable de principio a fin.
 
@@ -412,8 +412,11 @@ Cada fase deja el juego jugable de principio a fin.
 4. **¿Se recogen los virotes disparados** de lo que no se rompe (madera, cuerpos)? Por ahora, no.
 5. **El Caballero, en la terraza de la torre del homenaje** (lo más alto). Ahí estaba pensada la pelea con la
    Bestia de Carne, que ahora sólo es la huida: ¿la Bestia se queda en la huida, o su pelea va a otro sitio?
+   (Hecho así: el Caballero en la terraza; la Bestia, en la huida.)
 6. **¿Quién es el Caballero?** Va como un caballero de una orden militar, sin nombre (como el Rey). ¿Templario,
-   de Évora (la que será de Avis), o del Rey sin más?
+   de Évora (la que será de Avis), o del Rey sin más? (Hecho así: sin nombre ni orden dicha; la cruz roja en
+   campo blanco lo acerca al Temple. Cambiarlo es cambiar el color de la cruz y dos líneas de los documentos.)
+7. **¿Recompensa por el Caballero?** Por ahora ninguna (como el Rey): se queda de rodillas mirando la luna.
 
 ## 13. Riesgos técnicos
 

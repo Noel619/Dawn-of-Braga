@@ -27,6 +27,13 @@ export const ITEMS = {
     key: false,
     weapon: 'lanza',
   },
+  oxidada: {
+    name: 'Espada oxidada',
+    desc: 'Una espada de munición de la guarnición, de las que se daban a cualquiera: la herrumbre se ha comido la hoja y los filos tienen mellas. Pesa menos que la del carcelero y corta algo menos. Contra una cota buena, no hace casi nada: la armadura se lleva la mitad del golpe.',
+    icon: 'oxidada',
+    key: false,
+    weapon: 'oxidada',
+  },
   espada: {
     name: 'Espada del carcelero',
     desc: 'Espada larga de la guarnición. La hoja está mellada, pero todavía corta.',
@@ -621,6 +628,8 @@ Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo
 
 La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, aquí abajo, en la planta de armas, y los otros cuatro en el Paço. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
+Arriba, en la terraza, el caballero de la Orden sigue mirando la luna. Era el mejor de los nuestros. Le he subido pan y no lo ha tocado; ni se ha vuelto. Que Dios me perdone, pero le tengo más miedo que a lo de abajo.
+
 He mandado alzar el puente de la torre. Que no suba nadie del patio.`,
   },
   guarnicion: {
@@ -633,7 +642,7 @@ El aljibe, a la mitad. Que nadie lave nada.
 Bolaños para el fundíbulo, los que quedan en el patio.
 
 Día once. Un tiro de los de fuera partió el fundíbulo. Otro se llevó la escalera del adarve norte: se sube por la torre.
-Día doce. Matamos los caballos.
+Día doce. Matamos los caballos. El caballero de la Orden no ha bajado de la terraza: mira al norte, hacia el Paço, apoyado en la espada, y no contesta a nadie.
 Día trece. Los heridos de la capilla ya no se quejan. No están muertos.`,
   },
   muralla: {

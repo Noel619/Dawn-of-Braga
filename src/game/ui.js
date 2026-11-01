@@ -719,6 +719,7 @@ export class UI {
     const W = it.weapon && WEAPONS[it.weapon];
     let extra = '';
     if (W && W.hands === 2) extra += '<p class="f-small">A dos manos: el escudo va a la espalda.</p>';
+    if (W && W.calidad !== undefined) extra += `<p class="f-small">Contra armadura: ${Math.round(W.calidad * 100)} %</p>`;
     if (it.armor) extra += `<p class="f-small">Defensa: ${it.def || 0}</p>`;
     const slot = g.slotOf(id);
     // (el escudo, con un arma a dos manos, a la espalda)

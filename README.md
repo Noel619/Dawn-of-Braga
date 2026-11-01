@@ -513,6 +513,32 @@ marfil**: más vitalidad). Si pierdes las tres, se ríe, flojo, y se pone a colo
 cae y él se queda doblado sobre el tablero (la pieza, **el rey de marfil**, te la quedas: un recuerdo). Después
 su cuerpo sigue en el sitial y el tablero como quedó. La Plañidera que esperaba en la sala llora ahora en la alcoba.
 
+**El Caballero de la Orden** (opcional; la pelea más difícil del juego). Por la escalera de la caseta se sube a
+la **terraza de la torre del homenaje**, lo más alto del mapa, que está por encima del humo: la noche clara y una
+**luna grande** sobre el Paço. Junto al parapeto del norte, apoyado en su espada larga, de espaldas, la mira **el
+Caballero de la Orden**: el mejor de los hombres del Rey, un caballero de una orden militar (sobreveste blanca con
+la cruz roja, cota de malla, yelmo cerrado con una cruz de hierro por cimera, la capa hecha jirones), ya infectado;
+a su lado, el pendón del Rey clavado en su asta. Al cruzar la niebla de la caseta, la escena: él, a contraluz de la
+luna, se vuelve y te mira; saca la espada de las losas, la alza delante del yelmo y la baja de un tajo; y en un
+**plano lateral**, tú a la izquierda y él a la derecha, el viento y las hojas pasan entre los dos mientras la cámara
+se aleja despacio. La pelea es **una danza** a media distancia, habilidad tras habilidad, con una estampida de
+zanfona y pandero en 6/8 de fondo: **la acometida** (cruza la terraza en línea recta con la punta por delante, de
+una a cuatro veces seguidas cambiando de rumbo), **el tajo del viento** (una media luna de luz fría que corre por
+las losas; tres en abanico a media vida), **la cruz** (dos tajos en aspa que dejan en el suelo una estela que corta
+un instante después: hay que salir de ella), **el salto** (cae de punta donde estabas, se queda con la espada
+clavada y barre al levantarse) y **el paso atrás** (si te le echas encima, salta hacia atrás y te deja una
+cuchilla). **Todos sus golpes son críticos.** De frente **desvía** todo lo que no le pille desprevenido y contesta
+en el acto; sólo se le hiere ya comprometido en un golpe, en sus huecos (tras la última acometida, con la espada
+clavada tras el salto), por la espalda o desequilibrado por **dos parrys seguidos** (el parry sí le abre: la
+acometida se desvía justo al salir, con el sonido de la estocada). En el aire no le alcanza nada. A media vida corre
+a por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del
+pendón**, dos vueltas con la tela tendida que barren cuatro metros y medio (no se para: se esquiva). Lleva
+**armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; el facón, el
+60 %; la del carcelero, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen y la katana
+sagrada, todo). Vencido, cae de rodillas con la espada clavada delante y se queda así, mirando la luna. Tras un
+golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse). (`entities/caballero.js`,
+`game/caballero.js`; `tools/caballero.mjs` lo prueba pieza a pieza.)
+
 **Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras, portadas de arco
 en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
 con su arco y su reja, que también para la cámara), el cuarto del carcelero (con la espada y el escudo) y la sala del
@@ -631,6 +657,9 @@ encontrarán:
 - **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
   que se lanza sin bajar el escudo.
 - **Espada del carcelero**: la de siempre, sin cambios.
+- **Espada oxidada** (una mano, con escudo; en la armería de la torre del homenaje, entre las lanzas): una espada de
+  munición comida de herrumbre, con mellas; se maneja como la del carcelero, cansa algo menos y corta algo menos, y
+  contra armadura hace la mitad.
 - **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
   al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
 - **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller de la torre del homenaje): el ataque
@@ -1041,6 +1070,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         jardineswalk.mjs los jardines del Paço: de la capilla a la torre de la reina, el
                                        pomar, el mirador, el jardín del Rey y, por el patio, la cocina
                         corte.mjs      la Corte de los Infieles, de principio a fin
+                        caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
+                                       de la acometida y el golpe de gracia, el hueco tras el salto, la
+                                       armadura con cada espada, la segunda fase (el pendón) y su muerte
                         cryptwalk.mjs  recorre a pie la cripta honda desde el templo romano: a qué salas de su
                                        planta se llega (con «abierto», con todas las puertas abiertas) y dónde
                                        no se ve suelo bajo lo que se pisa

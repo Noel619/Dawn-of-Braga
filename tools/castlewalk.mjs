@@ -139,7 +139,16 @@ const r = await p.evaluate((torre) => {
       )
     );
     out.push(`puente: ${g.flags['puente:homenaje'] ? 'bajado' : 'alzado'}`);
-    // y a la terraza
+    // y a la terraza (con el Caballero de la Orden ya vencido: si no, su
+    // niebla cierra la puerta de la caseta)
+    g.flags['boss:caballero'] = true;
+    const cab = g.enemies.find((q) => q.type === 'caballero');
+    if (cab) {
+      cab.dead = true;
+      cab.state = 'dead';
+      cab.stT = 99;
+    }
+    g.interact.applyFlags(g.flags);
     P.spawn(-79, 9, -11, Math.PI);
     for (let i = 0; i < 30; i++) g.update(1 / 60);
     out.push(

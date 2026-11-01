@@ -722,6 +722,19 @@ const PAVANA = [
   [-1, 0, 1, null],
   [0, null, null, null],
 ];
+// la estampida del Caballero: grados del modo (absolutos), una corchea por
+// casilla y seis por compás (null: silencio); la luna: un lamento muy lento
+const ESTAMPIDA = [
+  [0, null, 2, 4, 3, 2],
+  [1, null, 0, -1, 0, null],
+  [4, null, 3, 4, 5, 4],
+  [3, 2, 1, 2, null, null],
+  [4, 5, 6, 7, null, 6],
+  [5, 4, 3, 4, null, null],
+  [2, 3, 4, 3, 2, 1],
+  [0, null, -1, 0, null, null],
+];
+const LAMENTO = [0, 2, 1, -1, 0, 4, 3, 2, 1, null, 0, null];
 const CHANT = [
   [0, 1, 2, 1, 0, -1, 0],
   [4, 5, 4, 3, 2, 3, 4],
@@ -1369,6 +1382,63 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- jefe: el Caballero de la Orden
+  // Una danza: una estampida en 6/8 de zanfona (con su bordón de re y la),
+  // el pandero y el tamboril en el ritmo del saltarello, el coro de los
+  // caballeros abajo. Con el pendón en la mano: más deprisa, los cuernos en
+  // cada compás, las cuerdas en trémolo y los tambores grandes.
+  bossCaballero: {
+    bpm: 184,
+    root: 38,
+    mode: 'dorian',
+    meter: 6,
+    prog: [0, 6, 0, 4, 0, 6, 3, 4],
+    chordBars: 1,
+    verb: 0.7,
+    noTension: true,
+    drone: { notes: (T) => [degree(T.root - 12, T.mode, 0), degree(T.root - 12, T.mode, 4)], type: 'sawtooth', cutoff: 520, q: 2, level: 0.07, rate: 0.12 },
+    step(S) {
+      caballeroStep(S, 0);
+    },
+  },
+  bossCaballero2: {
+    bpm: 204,
+    root: 38,
+    mode: 'dorian',
+    meter: 6,
+    prog: [0, 6, 3, 4, 0, 6, 5, 4],
+    chordBars: 1,
+    verb: 0.7,
+    noTension: true,
+    drone: { notes: (T) => [degree(T.root - 12, T.mode, 0), degree(T.root - 12, T.mode, 4)], type: 'sawtooth', cutoff: 760, q: 2, level: 0.08, rate: 0.2 },
+    step(S) {
+      caballeroStep(S, 1);
+    },
+  },
+  // lo alto de la torre, antes de la pelea: la zanfona sola, muy despacio,
+  // un coro lejos y el viento
+  luna: {
+    bpm: 50,
+    root: 38,
+    mode: 'dorian',
+    prog: [0, 3, 6, 4],
+    chordBars: 2,
+    verb: 0.9,
+    drone: { notes: (T) => [degree(T.root - 12, T.mode, 0)], type: 'sawtooth', cutoff: 260, q: 1.5, level: 0.04, rate: 0.04 },
+    step(S) {
+      const { m, T, t, bar, inBar, spb, L, chord } = S;
+      const d = S.c.data;
+      if (d.i === undefined) d.i = 0;
+      if (inBar === 0 || (inBar === 2 && chance(0.5))) {
+        const g = LAMENTO[d.i % LAMENTO.length];
+        d.i++;
+        if (g !== null) m.vielle(L.base, t, spb * (inBar === 0 ? 2.4 : 1.6), degree(T.root + 12, T.mode, g), 0.028, { a: 0.4, r: 1.2 });
+      }
+      if (inBar === 0 && bar % 4 === 0) for (const n of m.triad(T, chord, 0)) m.choir(L.base, t, spb * 7, n, 0.012, 'o', { a: 2.5, r: 3 });
+      if (inBar === 0 && bar % 8 === 5) m.bell(L.base, t, T.root + 7, 0.04, { dur: 9, lp: 1100 });
+    },
+  },
+
   // ---------------------------------------------------------------- jefe final: el Turiferario (Dies irae)
   bossFinal: {
     bpm: 104,
@@ -1657,6 +1727,36 @@ function bonesStep(S, phase) {
 
 // Los Velados: tambores lentos y enormes, órgano en quintas, coro en una
 // nota, yunques; en la segunda fase, metales y el coro arriba.
+// El Caballero: la estampida (ver ESTAMPIDA), el pandero en el saltarello
+// (1 . 3 4 5 .), el tamboril en los contratiempos, el coro abajo cada dos
+// compases; en la segunda fase, los cuernos, las cuerdas y los tambores.
+function caballeroStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  // el ritmo
+  if (inBar === 0) m.drum(L.base, t, 'frame', 0.42, 0.9);
+  if (inBar === 3) m.drum(L.base, t, 'frame', 0.3, 1.05);
+  if (inBar === 2 || inBar === 4) m.drum(L.base, t, 'tabor', 0.16 + phase * 0.06, 1.4);
+  if (phase && inBar === 0) m.drum(L.base, t, 'taiko', 0.5);
+  if (phase && inBar === 3) m.drum(L.base, t, 'taiko', 0.32, 1.1);
+  if (inBar === 0 && bar % 8 === 0) m.drum(L.base, t, 'gong', 0.12 + phase * 0.08);
+  // la estampida (una octava más arriba con el pendón)
+  const row = ESTAMPIDA[bar % ESTAMPIDA.length];
+  const g = row[inBar];
+  if (g !== null && g !== undefined) {
+    const n = degree(T.root + 12 + phase * 12, T.mode, g);
+    m.vielle(L.base, t, spb * 0.9, n, 0.034, { a: 0.02, r: 0.18 });
+    if (phase && bar % 2 === 1) m.brass(L.base, t, spb * 0.9, n - 12, 0.02, { a: 0.03, r: 0.2, bright: 5 });
+  }
+  // el coro de los caballeros, abajo
+  if (inBar === 0 && bar % 2 === 0) for (const n of m.triad(T, chord, -1)) m.choir(L.base, t, spb * 11, n + 12, 0.022 + phase * 0.008, 'o', { a: 0.3, r: 1 });
+  // con el pendón: los cuernos en cada compás y las cuerdas en trémolo
+  if (phase && inBar === 0) {
+    const r = m.deg(T, chord, 0);
+    for (const n of [r, r + 7]) m.brass(L.base, t, spb * 2.6, n, 0.03, { a: 0.05, r: 0.5, bright: 6 });
+  }
+  if (phase && inBar === 0 && bar % 2 === 0) for (const n of m.triad(T, chord, 0)) m.strings(L.base, t, spb * 11.5, n + 12, 0.014, { trem: 9, a: 0.2, r: 0.8, bright: 6 });
+}
+
 function guardStep(S, phase) {
   const { m, T, t, bar, inBar, spb, L, chord } = S;
   if (inBar === 0) {
