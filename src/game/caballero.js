@@ -9,6 +9,7 @@ import { getTexture } from '../gfx/textures.js';
 import { SwordTrail } from '../gfx/effects.js';
 import { tipPos, PENDON, CAB_CLIPS } from '../entities/caballero.js';
 import { DIALOG } from './story.js';
+import { FORT } from '../world/fortaleza_medidas.js';
 
 const V3 = THREE.Vector3;
 const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
@@ -389,8 +390,15 @@ const T_B = 7.0;
 const T_C = 9.7;
 const T_END = 13.8;
 const T_CORTE = T_END - 0.4;
-// dónde quedas para el plano lateral (y para empezar la pelea)
-const FRENTE = { x: -84.4, z: -26.6 };
+// dónde quedas para el plano lateral (y para empezar la pelea): a seis pasos
+// y medio de donde espera él, a poniente; y la cámara del primer plano, de
+// lejos (las dos, desde donde espera: FORT.torre.caballero)
+const CB = FORT.torre.caballero;
+const FRENTE = { x: CB.x - 6.4, z: CB.z + 0.7 };
+const LEJOS = [
+  { x: CB.x - 5.4, z: CB.z + 13.3 },
+  { x: CB.x - 4.6, z: CB.z + 11.5 },
+];
 
 export class CaballeroCine {
   constructor(g, e) {
@@ -418,7 +426,9 @@ export class CaballeroCine {
     p.autoDir = { x: 0.62, z: -0.2, m: 0.3 };
     g.lockTarget = null;
     g.ui.cineHud(true);
+    // (a la que mueve el guion la muestra él: el bucle ya no la toca)
     e.scripted = true;
+    e.obj.visible = true;
     e.state = 'bossIdle';
     e.vx = e.vz = 0;
     e.yaw = e.home.yaw;
@@ -462,7 +472,7 @@ export class CaballeroCine {
     if (t < T_A) {
       // de lejos: la terraza, él al fondo junto al parapeto y la luna
       const s = seg(t, 0, T_A);
-      this.pos.set(lerp(-83.4, -82.6, s), ey + lerp(1.9, 2.1, s), lerp(-14.0, -15.8, s));
+      this.pos.set(lerp(LEJOS[0].x, LEJOS[1].x, s), ey + lerp(1.9, 2.1, s), lerp(LEJOS[0].z, LEJOS[1].z, s));
       this.look.set(ex - 0.4, ey + lerp(3.0, 2.7, s), ez);
       g.camRig.override = { pos: this.pos, look: this.look, fov: lerp(40, 35, s), snap: true };
     } else if (t < T_B) {

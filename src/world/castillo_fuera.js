@@ -1,6 +1,6 @@
 // El castillo por fuera (PLAN_CASTILLO.md, §2 y §11: fase 5): lo que se ve
 // desde la ciudad. Las murallas del sur, de levante y de poniente, que no se
-// andan, suben a CASTLE.wallH2 (la del norte sigue a la altura de la poterna)
+// andan, suben a CASTLE.wallH2 (la del norte sigue a la altura de la coracha)
 // y las torres de las esquinas a CASTLE.towerH (level_castle.js: buildWalls);
 // aquí, lo demás: las dos torres nuevas en medio de los lienzos largos, los
 // cadalsos de madera en lo alto de las de levante, la barbacana ante la

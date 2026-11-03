@@ -152,11 +152,20 @@ const steps = [
   "(()=>{const g=__game;g.flags['dead:alferez']=true;g.flags['dead:mayordomo']=true;g.flags['corte:vencida']=true;g.corte.applyFlags();g.interact.applyFlags(g.flags);return 'vencidos'})()",
   "__use('i_llave_alferez')", "__use('i_llave_mayordomo')", "__use('i_llave_camarero')", "__use('i_llave_capellan')", "__use('a_camara3')",
   "new Promise(r=>setTimeout(()=>{__game.ui.closeAll();r(['llave_alferez','llave_mayordomo','llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' '))},1500))",
-  // la torre del homenaje: la poterna del adarve, el libro de la guarnición,
-  // el torno del puente levadizo (atajo al patio) y el almacén
-  "__use('d_poterna')", "__use('n_guarnicion')", "__use('i_relicario3')", "__use('b_homenaje')",
-  "(()=>{const g=__game;__sim(3);const it=g.interact.list.find(i=>i.id==='b_homenaje');const x=g.interact.list.find(i=>i.id==='x_puente');return {flag:!!g.flags['puente:homenaje'],deck:it.deckBox.enabled,up:it.upBox.enabled,k:+it.k.toFixed(2),aviso:!(x.unless&&g.flags[x.unless])}})()",
-  "__use('h_almacen_arriba')", "__use('i_ampolla5')",
+  // la torre del homenaje (la puerta quemada del pasadizo del Rey, la tranca
+  // de la de la escalinata, el relicario de la cámara y la ampolla del
+  // almacén) y la puerta de la fortaleza (el libro de la guarnición, la
+  // ballesta del taller y su tabique, la palanca del rastrillo y el torno del
+  // puente levadizo: el atajo al patio de armas)
+  // (las dos atrancadas se abren desde dentro: la torre, desde la guardia; el
+  // tabique, desde el taller)
+  "__use('d_pasadizo_torre')",
+  "(()=>{const g=__game;g.player.spawn(-98,6,-89.6,0);__sim(0.3);return __useHere('d_torre_patio')})()",
+  "__use('i_relicario3')", "__use('i_ampolla5')",
+  "__use('d_guardia')", "__use('n_guarnicion')", "__use('i_ballesta')",
+  "(()=>{const g=__game;g.player.spawn(-81.9,5.5,-37.4,-Math.PI/2);__sim(0.3);return __useHere('d_tabique_taller')})()",
+  "__use('p_rastrillo_fort')", "__use('b_puente_fort')",
+  "(()=>{const g=__game;__sim(3);const it=g.interact.list.find(i=>i.id==='b_puente_fort');const x=g.interact.list.find(i=>i.id==='x_puente_fort');return {flag:!!g.flags['puente:fortaleza'],deck:it.deckBox.enabled,up:it.upBox.enabled,k:+it.k.toFixed(2),aviso:!(x.unless&&g.flags[x.unless]),rastrillo:!!g.flags['door:d_rastrillo_fort'],ballesta:g.inventory.has('ballesta')}})()",
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
   // la cripta honda: la Confesión, el panteón de los obispos, San Martín (su

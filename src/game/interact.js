@@ -1291,7 +1291,7 @@ export class Interactables {
     g.setGroupVisible('puerta:' + it.id, false);
     g.setGroupVisible('puerta:' + it.id + ':ruina', true);
     if (instant) return;
-    for (let k = 0; k < 4; k++) g.fx.blood.emit(it.x + (Math.random() - 0.5) * it.w, it.y + 0.4 + k * 0.5, it.z, 18, { color: [0.62, 0.6, 0.56], speed: 4, life: 0.9, up: 1.4 });
+    for (let k = 0; k < 4; k++) g.fx.blood.emit(it.x + (Math.random() - 0.5) * it.w, it.y + 0.4 + k * 0.5, it.z, 18, { color: it.dust ?? [0.62, 0.6, 0.56], speed: 4, life: 0.9, up: 1.4 });
     g.audio && g.audio.play('rubble', { x: it.x, y: it.y, z: it.z });
     g.camRig.shake(0.45);
     g.noise && g.noise(it.x, it.y, it.z, 12);
@@ -1550,6 +1550,7 @@ export class Interactables {
   label(it) {
     switch (it.kind) {
       case 'door':
+        if (it.label) return it.label;
         if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
         if (it.lock.type === 'seal') return 'Examinar la losa';
@@ -1578,7 +1579,7 @@ export class Interactables {
       case 'colossus':
         return it.label;
       case 'lever':
-        return it.font ? 'Tirar de la cadena de la compuerta' : 'Echar la palanca';
+        return it.label ?? (it.font ? 'Tirar de la cadena de la compuerta' : 'Echar la palanca');
       case 'censer':
         return this.game.crypt ? this.game.crypt.censerLabel() : 'Examinar el incensario';
       case 'well':
@@ -1623,7 +1624,9 @@ export class Interactables {
         p.playInteract('push');
         g.saveGame();
       };
-      if (L.type === 'none') openIt(null, it.mat === 'irongate' ? 'gateOpen' : 'doorOpen');
+      // (msg, sound: lo que se dice y lo que suena al abrirla: la puerta
+      // quemada del pasadizo, que se viene abajo)
+      if (L.type === 'none') openIt(L.msg ? MSG[L.msg] : null, L.sound ?? (it.mat === 'irongate' ? 'gateOpen' : 'doorOpen'));
       else if (L.type === 'key') {
         if (inv.has(L.item)) openIt(`Usas: ${ITEMS[L.item].name}.`, 'unlock');
         else {
@@ -1686,7 +1689,7 @@ export class Interactables {
       } else if (L.type === 'lever') {
         // (la sube una palanca, y la palanca está al otro lado: se ve entre
         // los barrotes)
-        g.ui.toast(MSG.leverGate, 4);
+        g.ui.toast(MSG[L.msg] || MSG.leverGate, 5);
         g.audio && g.audio.play('locked', it);
       } else if (L.type === 'npc') {
         // la abre (o no) quien está dentro: ver game/house.js

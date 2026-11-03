@@ -1,8 +1,9 @@
 // Recorre el castillo como un jugador, a pie: de la celda donde se despierta
 // a la calle del Soto (las mazmorras, las catacumbas, el aljibe, la escalera
 // de la torre de la cárcel, el patio de armas y la torre-puerta en recodo).
-// Con «torre», además: del adarve norte a la torre del homenaje por la
-// poterna, el torno del puente levadizo y de vuelta al patio por el puente.
+// Con «torre», además: la puerta de la fortaleza (del patio de honor, por la
+// guardia, al torno del puente levadizo, y de vuelta al patio de armas por el
+// puente) y la torre del homenaje (del pasadizo del Rey a la terraza).
 // Dice dónde se atasca, si se atasca.
 //   node tools/castlewalk.mjs [torre]      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
@@ -113,34 +114,51 @@ const r = await p.evaluate((torre) => {
     )
   );
   if (torre) {
-    P.spawn(-60, 9, -21.6, -Math.PI / 2);
+    // la puerta de la fortaleza: del patio de honor, por la guardia y su
+    // escalera, a la armería y a la cámara del torno (el rastrillo y el
+    // puente); de vuelta abajo, por el paso y el puente, al patio de armas
+    P.spawn(-82, 0, -50, 0);
     for (let i = 0; i < 30; i++) g.update(1 / 60);
+    const subir = [
+      [-82, -47.0, 'd_guardia'],
+      [-82, -44.0],
+      [-86, -43],
+      [-88.2, -43.0],
+      [-89.3, -44.3],
+      [-89.3, -37.0],
+      [-89.3, -36.4],
+      [-89.6, -35.6],
+      [-92.5, -35.6],
+    ];
     out.push(
       go(
         [
-          [-67.5, -21.9],
-          [-72.2, -20.9, 'd_poterna'],
-          [-74.8, -20.9],
-          [-76.2, -18.0],
-          [-76.2, -13.2],
-          [-74.15, -13.0],
-          [-74.15, -6.0],
-          [-77.2, -7.4],
-          [-78.3, -7.7, 'b_homenaje'],
-          [-82, -6.6],
-          [-82, -4.5],
-          [-82, -1.4],
-          [-82, 1.2],
-          [-78.8, 1.2],
-          [-71, 1.2],
-          [-68, 4],
+          ...subir,
+          [-96, -35.9],
+          [-102, -35.2],
+          [-103.45, -33.7, 'p_rastrillo_fort'],
+          [-98, -34.6, 'b_puente_fort'],
+          [-98, -35.2],
+          [-96, -35.9],
+          ...subir.slice(1).reverse(),
+          [-82, -47.2],
+          [-90, -47.5],
+          [-98, -47.5],
+          [-98, -45],
+          [-98, -31.5],
+          [-98, -27],
+          [-98, -22.5],
+          [-90, -18],
+          [-80, -14],
         ],
-        'adarve → torre → puente → patio'
+        'patio de honor → guardia → torno → puente → patio de armas'
       )
     );
-    out.push(`puente: ${g.flags['puente:homenaje'] ? 'bajado' : 'alzado'}`);
-    // y a la terraza (con el Caballero de la Orden ya vencido: si no, su
-    // niebla cierra la puerta de la caseta)
+    out.push(`rastrillo: ${g.flags['door:d_rastrillo_fort'] || g.flags['lever:p_rastrillo_fort'] ? 'alzado' : 'echado'} · puente: ${g.flags['puente:fortaleza'] ? 'bajado' : 'alzado'}`);
+    // la torre del homenaje: del pasadizo de la cámara del Rey (la puerta
+    // quemada), por la sala del consejo y la cámara, al caracol del rincón
+    // del noroeste y por él a la terraza (con el Caballero de la Orden ya
+    // vencido: si no, su niebla cierra la puerta de la caseta)
     g.flags['boss:caballero'] = true;
     const cab = g.enemies.find((q) => q.type === 'caballero');
     if (cab) {
@@ -149,28 +167,37 @@ const r = await p.evaluate((torre) => {
       cab.stT = 99;
     }
     g.interact.applyFlags(g.flags);
-    P.spawn(-79, 9, -11, Math.PI);
+    // (el caracol: su centro; a0, el ángulo de su primer peldaño; de u0 a u1)
+    const husillo = (a0, u0, u1, r = 0.95) => {
+      const pts = [];
+      for (let u = u0; u <= u1; u++) {
+        const a = ((a0 + 22.5 * (u + 0.5)) * Math.PI) / 180;
+        pts.push([-106.8 + Math.cos(a) * r, -107.8 + Math.sin(a) * r]);
+      }
+      return pts;
+    };
+    P.spawn(-80, 12, -98.79, -Math.PI / 2);
     for (let i = 0; i < 30; i++) g.update(1 / 60);
     out.push(
       go(
         [
-          [-80.5, -8.0],
-          [-83.0, -8.0],
-          [-85.2, -8.0],
-          [-85.2, -6.15],
-          [-92.5, -6.15],
-          [-91.6, -7.7],
-          [-91.6, -13.0],
-          [-88.6, -16.0],
-          [-86.4, -22.0],
-          [-84.9, -24.2],
-          [-84.9, -25.85],
-          [-92.4, -25.85],
-          [-92.5, -24.0],
-          [-92.5, -21.6],
-          [-90.0, -18.0],
+          [-83.4, -98.79],
+          [-84.4, -98.79, 'd_pasadizo_torre'],
+          [-86.4, -98.79],
+          [-88.4, -98.79],
+          [-92, -99],
+          [-95, -99.8],
+          [-95, -102.6],
+          [-100, -104.6],
+          [-104.2, -108.6],
+          [-105.2, -108.6],
+          ...husillo(0, 31, 59),
+          ...husillo(1350, 0, 19),
+          [-104.2, -108.6],
+          [-102.6, -108.6],
+          [-97, -98],
         ],
-        'sala del alcaide → terraza'
+        'pasadizo → consejo → caracol → terraza'
       )
     );
   }

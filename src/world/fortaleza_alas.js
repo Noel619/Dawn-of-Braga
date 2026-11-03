@@ -5,8 +5,8 @@
 // - Al oeste, el gran salón a doble altura, con sus arcos diafragma, el
 //   estrado y el sitial vacío del Rey, el hogar y el cancel: la Corte de los
 //   Infieles (game/corte.js). Se entra por el servicio.
-// - Al sur, la despensa y, en la torre del suroeste, la cocina con su campana;
-//   al otro lado de la puerta, el cuerpo de guardia.
+// - Al sur, la despensa y, en la torre del suroeste, la cocina con su campana
+//   (al otro lado de la puerta, el cuerpo de guardia: fortaleza_puerta.js).
 // - Al este, la capilla real con su tribuna y su espadaña (la llave del
 //   capellán, atada al cordón de la campana), la cancillería y, en la torre
 //   del sureste, el Tombo: cuatro plantas unidas por un caracol, y arriba las
@@ -39,7 +39,6 @@ export function buildAlas(ctx, S, L) {
   buildSalon(ctx, S, L);
   despensa(ctx, S, L);
   cocina(ctx, S, L);
-  guardia(ctx, S, L);
   buildCapilla(ctx, S, L);
   cancilleria(ctx, S, L);
   tombo(ctx, S, L);
@@ -257,43 +256,6 @@ function secadero(ctx, R, room, L) {
   // el rastrero, pegado a la campana: salta al que sube
   L.enemies.push({ type: 'crawler', x: sx1 - 2.2, y, z: iz0 + 1.2, yaw: Math.PI / 2, idle: 'stand', id: 'e_cocina2' });
   L.zones.push({ id: 'secadero', rects: [[ix0, iz0, sx1, sz1, y - 0.3, y + 3]], atmo: 'interior', room });
-}
-
-// ------------------------------------------------------------------------ el cuerpo de guardia
-// Al otro lado de la puerta: las mesas de la tropa, sus jergones, las
-// armaduras y las lanzas en sus soportes, el brasero.
-function guardia(ctx, S, L) {
-  const wb = ctx.wb;
-  const G = FORT.guardia,
-    SE = FORT.torres.SE;
-  const room = 'guardia';
-  const { x0, x1, z0, z1 } = G;
-  W(S, x0, z0, x1, z1);
-  wb.box('flag', x0, -0.05, z0, x1, 0.02, z1, { faces: 't', ao: false, sub: 2.5, uv: 0.7, room, tint: PISO });
-  interiorRoom(ctx, x0, z0, x1, z1, 0, F1, { room, floor: false, skip: ['n', 's', 'e', 'w'], skirting: false });
-  cara1(ctx, 'wallstone', 'w', SE.x0, z0, z1, 0, F1, room, [0.74, 0.7, 0.64]);
-  wb.setRoom(room);
-  P.table(ctx, (x0 + x1) / 2, 0, (z0 + z1) / 2, 3.2, 1.0, 0, {});
-  P.bench(ctx, (x0 + x1) / 2, 0, (z0 + z1) / 2 - 0.85, 2.8, 0);
-  P.bench(ctx, (x0 + x1) / 2, 0, (z0 + z1) / 2 + 0.85, 2.8, 0);
-  P.candles(ctx, (x0 + x1) / 2 + 0.6, 0.82, (z0 + z1) / 2, 3, 6411, { room, radius: 6, intensity: 0.8 });
-  P.weaponRack(ctx, x1 - 0.35, 0, z0 + 2.4, -Math.PI / 2);
-  P.weaponRack(ctx, x1 - 0.35, 0, z1 - 2.4, -Math.PI / 2);
-  P.armorStand(ctx, x0 + 0.8, 0, z0 + 1.2, Math.PI / 2, { room });
-  P.armorStand(ctx, x0 + 0.8, 0, z0 + 2.6, Math.PI / 2, { room });
-  for (const x of [x0 + 2.6, x0 + 5.0, x0 + 7.4]) P.hay(ctx, x, 0, z1 - 1.0, 0);
-  P.barrel(ctx, x1 - 1.0, 0, (z0 + z1) / 2, {});
-  P.brazier(ctx, x0 + 3.0, 0, (z0 + z1) / 2, { room });
-  P.arrows(ctx, x1 - 2.0, 0, z1 - 1.2, 6, 6412, 0.9);
-  bakeCorpse(wb, x0 + 5.2, 0, z1 - 1.0, 0.2, 'back', 'soldier', 44);
-  wb.setRoom(null);
-  P.wallTorch(ctx, x0 + 0.02, 2.4, z1 - 2.0, 'e', { room });
-  P.wallTorch(ctx, x1 - 0.02, 2.4, z0 + 4.4, 'w', { room });
-  ctx.lights.push({ x: (x0 + x1) / 2, y: 3.4, z: (z0 + z1) / 2, r: 1, g: 0.5, b: 0.24, radius: 11, intensity: 0.6, room });
-  L.interact.push({ kind: 'item', id: 'i_virotes_guardia', item: 'virote', n: 6, x: x1 - 1.6, y: 0.95, z: (z0 + z1) / 2 - 0.4 });
-  L.enemies.push({ type: 'soldier', x: (x0 + x1) / 2 - 2, y: 0, z: (z0 + z1) / 2 + 2.2, yaw: Math.PI, idle: 'stand', id: 'e_guardia1' }, { type: 'soldier', x: x1 - 2.4, y: 0, z: z0 + 1.6, yaw: -Math.PI / 2, idle: 'stand', id: 'e_guardia2' });
-  L.zones.push({ id: 'guardia_fortaleza', rects: [[x0, z0, x1, z1, -1, F1]], atmo: 'interior', room });
-  L.map.push({ id: 'guardia_fortaleza', r: [x0, z0, x1, z1] });
 }
 
 // ------------------------------------------------------------------------ la cancillería

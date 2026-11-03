@@ -535,9 +535,9 @@ Desde dentro.`,
     title: 'Tabla del maestro ballestero',
     text: `Rayado con un clavo en la tabla de su banco:
 
-El bolaño entró por el muro del norte a media mañana y se llevó el suelo del taller. Por el agujero subieron los de abajo. Tapiamos lo que pudimos: el arco de la guardia, la armería con tablones, la trampilla por debajo.
+El bolaño entró por la muralla a media mañana y se llevó media pared del taller y un pedazo del suelo. Por el agujero subieron los de abajo. Tapiamos lo que pudimos: un arco de la armería con cal; el otro se nos llenó de escombro solo.
 
-El alférez ha subido al cadalso con la ballesta de la guardia. Dice que desde ahí defiende al Rey. El Rey está arriba, alférez, y abajo no queda nadie a quien tirar.
+El alférez ha salido al cadalso de la puerta con la ballesta de la guardia. Dice que desde ahí defiende al Rey. El Rey está arriba, en su torre, alférez, y abajo no queda nadie a quien tirar.
 
 Le he visto los ojos bajo el nasal. Ya no es él. Lleva al cinto la llave que le dio el Rey, la de la reja de la Sé, y no la suelta.
 
@@ -632,17 +632,19 @@ Me subo con el sello. Que no lo use nadie mientras yo viva.`,
   },
   alcaide: {
     title: 'Últimas líneas del alcaide',
-    text: `Día catorce del asedio.
+    text: `En el suelo de la cámara del torno, junto a él, de su mano:
+
+Día catorce del asedio.
 
 Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo clavaron a su propia puerta con una pica de asedio, y la puerta aguantó. Él también. Al alba seguía en pie, con el asta dentro, y ya no nos conocía.
 
-Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
+Desde aquí le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
 
-La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, aquí abajo, en la planta de armas, y los otros cuatro en la fortaleza del Rey. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
+La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, que se ha salido con la ballesta al cadalso de esta puerta, y los otros cuatro aquí dentro, en la fortaleza. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
-Arriba, en la terraza, el caballero de la Orden sigue mirando la luna. Era el mejor de los nuestros. Le he subido pan y no lo ha tocado; ni se ha vuelto. Que Dios me perdone, pero le tengo más miedo que a lo de abajo.
+En lo alto de la torre, en la terraza, el caballero de la Orden sigue mirando la luna. Era el mejor de los nuestros. Le he subido pan y no lo ha tocado; ni se ha vuelto. Que Dios me perdone, pero le tengo más miedo que a lo de abajo.
 
-He mandado alzar el puente de la torre. Que no suba nadie del patio.`,
+He mandado alzar el puente. Que no entre nadie del patio de armas.`,
   },
   guarnicion: {
     title: 'Libro de la guarnición',
@@ -653,8 +655,8 @@ Trigo, sesenta fanegas. Vino, once toneles. Cecina y tocino, lo que cuelga en el
 El aljibe, a la mitad. Que nadie lave nada.
 Bolaños para el fundíbulo, los que quedan en el patio.
 
-Día once. Un tiro de los de fuera partió el fundíbulo. Otro se llevó la escalera del adarve norte: se sube por la torre.
-Día doce. Matamos los caballos. El caballero de la Orden no ha bajado de la terraza: mira al norte, hacia la fortaleza, apoyado en la espada, y no contesta a nadie.
+Día once. Un tiro de los de fuera partió el fundíbulo. Otro se llevó la escalera del adarve norte del castillo: ya no se sube a la muralla más que por la coracha.
+Día doce. Matamos los caballos. El caballero de la Orden no ha bajado de la terraza de la torre: mira al norte, por encima de la muralla, apoyado en la espada, y no contesta a nadie.
 Día trece. Los heridos de la capilla ya no se quejan. No están muertos.`,
   },
   muralla: {
@@ -1009,7 +1011,7 @@ export const DIALOG = {
   // vuelves (aún vive)
   miguelBack: ['¿Otra vez tú? ¿Por qué has vuelto?', 'Te dije que te fueras.'],
 
-  // El Rey, en su sitial de la sala del alcaide (game/rey.js)
+  // El Rey, en su sitial, al pie del trono (game/rey.js)
   // (solo, colocando las piezas, antes de verte)
   reyMutter: ['El rey, en su trono. Los ocho, alrededor...', 'Dieciséis. Quince... dieciséis.', 'Así. Así estaba.', '¿Dónde te has metido? Siempre se me pierde uno.', 'Empiezan los de fuera. Siempre empiezan los de fuera.'],
   // te ve: se intenta levantar y no puede
@@ -1019,7 +1021,7 @@ export const DIALOG = {
   reyMeet: [
     'No, no te arrodilles. Ya se ha arrodillado bastante gente en esta ciudad.',
     'Soy el Rey. Lo que queda de él: esto, la corona y un tablero.',
-    'Te conozco. Te oía de noche rascar la pared de tu celda. Esta torre está encima de la cárcel: aquí arriba se oye todo.',
+    'Te conozco. Te vi salir de la cárcel, desde esa ventana: el único que salía andando. Desde aquí arriba se ve todo.',
     'Cuando sonó la campana, mi corte entera se arrodilló. Yo también. Tú no.',
     'Desde entonces algo me come por dentro. Toso negro. No le voy a dar el gusto: me voy a morir siendo yo.',
     'Pero antes, una partida. Una última. ¿Sabes jugar al Cerco?',
@@ -1044,7 +1046,7 @@ export const DIALOG = {
     'Mi padre me enseñó en esta misma mesa. Yo me subía a un banco para llegar.',
     'Mi hijo me ganó una vez. Una. Tenía once años. Le dejé creer que había sido suerte.',
     'Mi reina se murió en la Cuaresma. Odiaba este juego: decía que era muy largo. Tenía razón.',
-    'Mi alcaide está ahí al lado, sobre sus cuentas. No he tenido valor de cerrarle los ojos.',
+    'Mi alcaide se quedó abajo, en la puerta, junto al torno. Alzó el puente él solo. No he tenido valor de bajar a cerrarle los ojos.',
     'Eso que ruge en la muralla era Don Gonçalo Mendes. El mejor de mis caballeros. Lo armé yo.',
     'El pequeño estaba en la sala la noche de la campana. A veces le oigo subir la escalera. No sube nunca.',
   ],
@@ -1165,33 +1167,31 @@ export const DIALOG = {
 };
 
 export const MSG = {
-  // la planta de armas de la torre del homenaje
-  escombroTaller: 'Escombro hasta la clave del arco: las piedras del muro del taller, que se vino abajo. Entre ellas se ve luz, y algo de madera. Por aquí no se pasa.',
+  // la armería y el taller del ballestero, sobre el cuerpo de guardia de la
+  // puerta de la fortaleza
+  escombroTaller: 'Escombro hasta la clave del arco: las piedras de la muralla del taller, que se vino abajo con el bolaño. Entre ellas se ve luz, y algo de madera. Por aquí no se pasa.',
   tabique: 'Un tabique de piedra y cal, nuevo, cierra el arco. Desde este lado no hay dónde hincar nada.',
-  tabiqueCae: 'Embistes el tabique con el hombro. La cal aún estaba tierna: se viene abajo. La guardia queda a un paso.',
-  armeriaTablones: 'Arrancas los tablones con la palanca. Dentro huele a aceite de armas y a cuero podrido.',
-  hatchShutBelow: 'La trampilla no cede: está atrancada por debajo.',
+  tabiqueCae: 'Embistes el tabique con el hombro. La cal aún estaba tierna: se viene abajo. La armería queda a un paso.',
   tapiaCeldas: 'Una pared de ladrillo nuevo donde antes hubo una puerta; la cal todavía está fresca. Alguien arañó en ella: LO QUE SUBE NO ES NUESTRO.',
-  tapiaArriba: 'Sacos, piedras y cal contra un tapiado de ladrillo. No se mueve. Encima, de una viga, cuelga un sillar atado con una cuerda.',
   tapiaCae: 'La cuerda se parte. El sillar cae sobre el tapiado y se lo lleva por delante: al otro lado, el pasillo de las celdas.',
-  hatchOpenBelow: 'Quitas la tranca de la trampilla y la empujas. La escalera de mano sube al dormitorio de los ballesteros.',
-  hatchUpTorre: 'Subes por la escalera de mano al dormitorio de los ballesteros.',
-  cuerdaArriba: 'Trepas por la cuerda del montacargas, mano sobre mano, hasta el pañol.',
-  cuerdaAbajo: 'Te descuelgas por la cuerda del montacargas hasta la bodega.',
   // la fortaleza
   corteArea: 'LA CORTE DE LOS INFIELES',
   corteVencida: 'LA CORTE HA CAÍDO',
   corteCerrada: 'La puerta del servicio no cede: la han atrancado por fuera. Detrás, nadie.',
   campanaSuena: 'Al soltar la llave, el cordón tira de la campana. Suena una vez, sola, por toda la ciudad.',
-  rastrilloFortaleza: 'El rastrillo de la puerta, echado hasta el suelo. Entre sus barrotes, el envés del puente levadizo, alzado contra el arco. El torno que lo baja estará arriba, en la puerta.',
+  rastrilloFortaleza: 'El rastrillo de la puerta, echado hasta el suelo. Entre sus barrotes, el envés del puente levadizo, alzado contra el arco. Lo suben desde arriba, desde la cámara del torno.',
   puertaTorreAtrancada: 'La puerta de la torre del homenaje, atrancada por dentro. Arriba, en lo alto de la torre, arde una vela.',
+  torrePatioAbre: 'Quitas la tranca de la puerta de la torre. Fuera, la escalinata baja al patio de honor.',
   almacenTorre: 'Bajo el rellano, la puerta del almacén de la torre, cegada con tablones y una cadena. Huele a grano podrido.',
+  almacenDentro: 'La puerta del patio, cegada: tablones clavados, una cadena y, al otro lado, el macizo de la escalinata. Por aquí no se sale.',
+  bajadaTorre: 'Una trampilla de hierro en el suelo, con su cadena y su candado: la bajada a la cárcel de la fortaleza. Por las rendijas sube un frío de pozo, y algo que rasca.',
+  pasadizoCede: 'Empujas la puerta y cede de golpe: el fuego la dejó en pie por fuera, pero por dentro era carbón. Las hojas y la tranca, quemada, se vienen abajo.',
+  camastroRey: 'Un camastro de soldado junto al fuego, con la manta revuelta. Aquí dormía el Rey desde la noche de la campana: no quiso volver a su cama.',
   fuentePatio: 'La fuente del patio de honor no corre desde el día del cerco. En la taza seca, un yelmo y las hojas del olmo.',
   antecamaraTranca: 'La puerta de la antecámara del Rey, atrancada por dentro. Por la rendija sale el olor de las velas.',
   // la reina y los jardines del Rey
   camaReina: 'La cama de la reina, bajo su dosel, tapada con la sábana. Por debajo se nota todavía la forma de la almohada. Junto a la cama, la silla del Rey, de cara a ella, y en el candelero, la vela que se acabó.',
   camaRey: 'La cama del Rey, con la colcha echada a un lado: se levantó de prisa. A sus pies, el arcón de la reina, y encima, doblada, su toca de lino.',
-  puertaPasadizo: 'La puerta de la torre del homenaje, al final del pasadizo: negra del fuego y entera. Atrancada por dentro. Del otro lado no se oye nada; por la rendija, olor a cera.',
   palomar: 'El palomar del Rey, y ni una paloma. En los nidales, plumas y huesecillos limpios. Lo que anida ahora en lo alto no es una paloma.',
   colmenas: 'Las colmenas, mudas. Al acercar el oído a una, algo dentro no zumba: respira.',
   vivero: 'El vivero de los peces del Rey. Las carpas flotan panza arriba en el agua negra, hinchadas, todas vueltas hacia el mismo lado: hacia la Sé.',
@@ -1291,9 +1291,9 @@ export const MSG = {
   arcaCerrada: 'El arca de la Hermandad. Una barra de hierro le atraviesa la tapa, pasada por dos grapas y cerrada con un candado en forma de calavera. No tiene ojo para llave.',
   toqueMal: 'Un soplo frío baja por la escalera y apaga las velas de los hermanos.',
   toqueBien: 'Los cuatro yelmos suenan a la vez. La barra del arca se descorre sola.',
-  puenteAlzado: 'El puente levadizo de la torre del homenaje está alzado. Sólo se baja con el torno, desde dentro.',
-  puenteBaja: 'Sueltas el freno del torno. Con un estruendo de cadenas, el puente levadizo cae sobre el rellano.',
-  escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan asoman de la torre, volados sobre el hueco.',
+  puenteFortaleza: 'El puente levadizo de la fortaleza, alzado contra su arco, al otro lado del foso de las estacas. Sólo se baja con el torno, desde dentro.',
+  puenteBaja: 'Sueltas el freno del torno. Con un estruendo de cadenas, el puente levadizo cae sobre el foso: la puerta de la fortaleza da otra vez al patio de armas.',
+  escaleraRota: 'La escalera del adarve se vino abajo con un tiro de los trabucos. Arriba, los peldaños que quedan asoman volados sobre el hueco.',
   rest: 'Descansas ante el altar. Las velas vuelven a arder. Las criaturas regresan a sus puestos.',
   doorAleman: 'Está atrancada por dentro. Al otro lado, alguien respira deprisa y reza en voz baja.',
   escaleraAleman: 'La puerta de la escalera, atrancada desde arriba. Está llena de arañazos, astillada a golpes.',
@@ -1359,23 +1359,17 @@ export const AREA_NAMES = {
   torre_carcel_alta: 'Sala de los guardas de la cárcel',
   castle_gate: 'Puerta del castillo',
   cuartel: 'Cuartel de la tropa',
+  // la torre del homenaje de la fortaleza (fortaleza_torre.js)
   homenaje: 'Torre del homenaje',
   homenaje_almacen: 'Almacén de la torre del homenaje',
   homenaje_granero: 'Granero de la torre',
-  homenaje_bodega: 'Bodega de la torre',
-  homenaje_pozo: 'Pozo de la torre',
-  homenaje_guardia: 'Cuerpo de guardia',
-  homenaje_dormitorio: 'Dormitorio de los ballesteros',
-  homenaje_panol: 'Pañol de los virotes',
-  bajada_torre: 'Bajada de la torre',
-  homenaje_cadalso: 'Cadalso de la torre',
-  homenaje_armeria: 'Armería',
-  homenaje_ballestero: 'Taller del ballestero',
-  homenaje_alcaide: 'Sala del alcaide',
-  homenaje_escritorio: 'Escritorio del alcaide',
-  homenaje_alcoba: 'Alcoba del alcaide',
-  homenaje_camara: 'Cámara alta de la torre',
-  homenaje_galeria: 'Galería de la sala',
+  homenaje_guardia: 'Guardia de la torre',
+  homenaje_dormitorio: 'Dormitorio de la guardia',
+  homenaje_consejo: 'Sala del consejo',
+  homenaje_camara: 'Cámara del Rey en su torre',
+  homenaje_trono: 'Sala del trono',
+  homenaje_galeria: 'Galería de la sala del trono',
+  homenaje_caracol: 'Escalera de la torre',
   homenaje_terraza: 'Terraza de la torre del homenaje',
   souto: 'Calle del Soto',
   praca: 'Plaza del Pan',
@@ -1470,6 +1464,10 @@ export const AREA_NAMES = {
   // la fortaleza (PLAN_FORTALEZA.md)
   fort_patio: 'Patio de honor',
   zaguan_fortaleza: 'Puerta de la fortaleza',
+  camara_torno: 'Cámara del torno',
+  armeria_fortaleza: 'Armería',
+  taller_ballestero: 'Taller del ballestero',
+  cadalso_puerta: 'Cadalso de la puerta',
   salon: 'Gran salón',
   despensa: 'Despensa y botillería',
   cocina: 'Cocina del Rey',

@@ -16,6 +16,7 @@ import { humanoidJoints, feetParts } from './models.js';
 import { solveArm } from './locomotion.js';
 import { rad } from './weapon_common.js';
 import { GAIT } from './locomotion.js';
+import { FORT } from '../world/fortaleza_medidas.js';
 
 const S = Math.sin;
 const K = 1.06;
@@ -439,8 +440,9 @@ const turnTo = (a, b, k) => {
   const d = angDiff(a, b);
   return a + Math.max(-k, Math.min(k, d));
 };
-// el pendón, en su asta junto al parapeto (lo pone level_torre.js)
-export const PENDON = { x: -75.9, z: -27.75 };
+// el pendón, en su asta junto al parapeto de la terraza de la torre del
+// homenaje (lo pone world/fortaleza_torre.js)
+export const PENDON = FORT.torre.pendon;
 
 // Sus golpes: todos críticos (crit: game/combat.js), con mucho daño al
 // aguante si se paran con el escudo, y algo que pasa a través.

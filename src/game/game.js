@@ -32,6 +32,7 @@ import { Waters } from '../gfx/water.js';
 import { Spring } from './spring.js';
 import { CELLAR } from '../world/level_cellar.js';
 import { CASTLE } from '../world/level_castle.js';
+import { FORT } from '../world/fortaleza_medidas.js';
 import { Corte } from './corte.js';
 import { RIVER } from '../world/level_sacred.js';
 import { DevMode } from '../dev/devmode.js';
@@ -204,11 +205,12 @@ export class Game {
       const yBot = A.cellar.y - T.n * T.rise;
       this.navLair = new NavGrid(lvl.U, this.world.col, (x, z) => (z > A.house.z0 ? A.cellar.y : z < T.zBot ? yBot : z > zTop ? A.cellar.y : yBot + ((z - T.zBot) / (zTop - T.zBot)) * (A.cellar.y - yBot)));
     }
-    // los pisos altos de la torre del homenaje, con sus muros, tabiques y
-    // escaleras, hasta la terraza
+    // los pisos altos de la torre del homenaje de la fortaleza (de la guardia
+    // a la terraza, con la galería), con sus muros, su muro de carga y su
+    // caracol
     {
-      const K = CASTLE.keep;
-      this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.F1 - 0.6, yMax: K.R + 1, layers: 5 })];
+      const K = FORT.torre;
+      this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.pisos[1] - 0.6, yMax: K.terraza + 1, layers: 6 })];
     }
     this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
@@ -1365,10 +1367,10 @@ export class Game {
 
   // ¿Está en la bodega del canónigo (o en su escalera)?
   // Bajo el castillo: las mazmorras, las catacumbas y el aljibe.
-  // ¿En un piso alto de la torre del homenaje?
+  // ¿En un piso alto de la torre del homenaje (de la guardia a la terraza)?
   inKeep(p) {
-    const K = CASTLE.keep;
-    return p.x > K.x0 && p.x < K.x1 && p.z > K.z0 && p.z < K.z1 && p.y > K.F1 - 0.6 && p.y < K.R - 0.5;
+    const K = FORT.torre;
+    return p.x > K.x0 && p.x < K.x1 && p.z > K.z0 && p.z < K.z1 && p.y > K.pisos[1] - 0.6 && p.y < K.terraza + 1;
   }
 
   // Bajo la Casa del Alemán: el sótano, el agujero y la gruta de Leonor.

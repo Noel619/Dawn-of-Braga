@@ -1,19 +1,20 @@
-// La mesa del Rey, en la sala del alcaide (torre del homenaje, planta
-// segunda): la mesa de juego con el tablero del Cerco, el sitial de respaldo
-// alto donde espera sentado, el banco para quien juega con él, sus velas, su
-// copa y el brasero. Las piezas se mueven (game/cerco/board.js); el tablero,
-// el sitial y lo demás se hornean aquí, con la luz de la sala.
+// La mesa del Rey, en la sala del trono (torre del homenaje, a +18), al pie
+// del estrado: la mesa de juego con el tablero del Cerco, el sitial de
+// respaldo alto donde espera sentado, de espaldas a su trono vacío, el banco
+// para quien juega con él, sus velas, su copa y el brasero. Las piezas se
+// mueven (game/cerco/board.js); el tablero, el sitial y lo demás se hornean
+// aquí, con la luz de la sala.
 //
 // El tablero se ve desde el banco, al norte: la fila 0 es la del lado del Rey
 // (al sur) y la columna 0 queda a la izquierda de quien se sienta en el banco
 // (al este, +x).
 import * as P from './props.js';
+import { FORT } from './fortaleza_medidas.js';
 
-// el suelo de la planta segunda (CASTLE.keep.F2: aquí escrito, que
-// level_castle.js importa este módulo)
-const F2 = 9;
-const TX = -78.55,
-  TZ = -17.35;
+// el suelo de la sala del trono y el sitio de la mesa (FORT.torre)
+const F2 = FORT.torre.pisos[3];
+const TX = FORT.torre.mesa.x,
+  TZ = FORT.torre.mesa.z;
 
 export const REY_MESA = {
   // la mesa (su centro) y su tamaño

@@ -5,26 +5,36 @@
 //   node tools/rey.mjs final a|b        los finales (ganar / perder las tres)
 // Las capturas van a tools/shots/rey_*.png.
 import { chromium } from 'playwright';
+import { FORT } from '../src/world/fortaleza_medidas.js';
+// la mesa del Rey (world/rey_mesa.js), en la sala del trono de la torre del
+// homenaje: su centro y el suelo; at(dx, dy, dz), un punto a esa distancia
+const MX = FORT.torre.mesa.x,
+  MY = FORT.torre.pisos[3],
+  MZ = FORT.torre.mesa.z;
+const at = (dx, dy, dz) => [+(MX + dx).toFixed(3), +(MY + dy).toFixed(3), +(MZ + dz).toFixed(3)];
 const [cmd = 'fotos', arg] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: +(process.env.W || 960), height: +(process.env.H || 540) } });
 const logs = [];
 p.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && logs.push(m.type() + ': ' + m.text()));
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + '\n' + e.stack));
-// en la sala del alcaide, al norte de la mesa, mirando al Rey (URL_BASE: otro
+// en la sala del trono, al norte de la mesa, mirando al Rey (URL_BASE: otro
 // servidor, p. ej. la versión compilada con `npx vite preview --port 5198`)
-await p.goto((process.env.URL_BASE || 'http://localhost:5199') + '/?dev=1&at=-78.55,9,-19.4&yaw=0');
+await p.goto((process.env.URL_BASE || 'http://localhost:5199') + '/?dev=1&at=' + at(0, 0, -2.05).join(',') + '&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 90000 });
-await p.evaluate(() => {
-  const g = __game;
-  // (sólo avanza lo que avanza la prueba: el bucle del navegador, quieto; si
-  // no, el juego corría a la vez a su ritmo y los tiempos cambiaban)
-  window.__pause = true;
-  g.ui.closeAll();
-  g.input.enabledPointerLock = false;
-  // sin criaturas despiertas cerca
-  for (const e of g.enemies) if (!e.T.friendly && !e.boss) e.alive && Math.hypot(e.pos.x + 78, e.pos.z + 17) < 30 && (e.dead = true, e.state = 'dead', e.obj.visible = false);
-});
+await p.evaluate(
+  ([cx, cz]) => {
+    const g = __game;
+    // (sólo avanza lo que avanza la prueba: el bucle del navegador, quieto; si
+    // no, el juego corría a la vez a su ritmo y los tiempos cambiaban)
+    window.__pause = true;
+    g.ui.closeAll();
+    g.input.enabledPointerLock = false;
+    // sin criaturas despiertas cerca
+    for (const e of g.enemies) if (!e.T.friendly && !e.boss) e.alive && Math.hypot(e.pos.x - cx, e.pos.z - cz) < 30 && ((e.dead = true), (e.state = 'dead'), (e.obj.visible = false));
+  },
+  [MX, MZ]
+);
 let shot = 0;
 const snap = async (name) => {
   await p.evaluate(() => {
@@ -68,15 +78,15 @@ if (cmd === 'fotos') {
     const r = g.player.render;
   });
   await p.evaluate(() => (window.__hidePlayer = true));
-  await cam([-78.55, 10.5, -19.2], [-78.55, 9.9, -16.6]);
+  await cam(at(0, 1.5, -1.85), at(0, 0.9, 0.75));
   await snap('frente');
-  await cam([-77.2, 10.2, -16.6], [-78.55, 9.9, -16.6]);
+  await cam(at(1.35, 1.2, 0.75), at(0, 0.9, 0.75));
   await snap('lado');
-  await cam([-78.3, 10.35, -17.5], [-78.55, 10.25, -16.65]);
+  await cam(at(0.25, 1.35, -0.15), at(0, 1.25, 0.7));
   await snap('cara');
-  await cam([-76.4, 11.6, -20.6], [-78.55, 9.6, -16.8]);
+  await cam(at(2.15, 2.6, -3.25), at(0, 0.6, 0.55));
   await snap('sala');
-  await cam([-78.55, 10.55, -17.95], [-78.55, 9.835, -17.33]);
+  await cam(at(0, 1.55, -0.6), at(0, 0.835, 0.02));
   await snap('tablero');
 } else if (cmd === 'retratos') {
   // el Rey de cerca: en reposo, tosiendo, pensando, alcanzando y muerto (las dos maneras)
@@ -89,16 +99,16 @@ if (cmd === 'fotos') {
     g.rey.script = null;
     window.__hidePlayer = true;
   });
-  const pose = async (name, fn, secs = 1.2) => {
-    await p.evaluate(fn);
+  const pose = async (name, fn, secs = 1.2, arg) => {
+    await p.evaluate(fn, arg);
     await sim(secs);
     await p.evaluate(() => (__game.player.obj.visible = false));
-    await cam([-78.32, 10.38, -17.55], [-78.55, 10.22, -16.68]);
+    await cam(at(0.23, 1.38, -0.2), at(0, 1.22, 0.67));
     await snap(name + '_cara');
-    await cam([-77.25, 10.25, -17.6], [-78.55, 9.95, -16.7]);
+    await cam(at(1.3, 1.25, -0.25), at(0, 0.95, 0.65));
     await snap(name + '_lado');
   };
-  await pose('reposo', () => (__game.rey.npc.data.look = new __game.THREE.Vector3(-78.55, 10.4, -18.6)));
+  await pose('reposo', (v) => (__game.rey.npc.data.look = new __game.THREE.Vector3(...v)), 1.2, at(0, 1.4, -1.25));
   await pose('tos', () => __game.rey.play('coughLong'), 1.6);
   await pose('piensa', () => __game.rey.play('think'), 1.5);
   await pose('dolor', () => __game.rey.play('pain'), 0.5);
@@ -207,22 +217,23 @@ if (cmd === 'fotos') {
   ok('P abre la pausa (y sigue sentado)', s.modal.includes('pause') && s.phase === 'you');
   await p.evaluate(() => __game.ui.closeAll());
   await sim(0.5);
-  // 4. una criatura despierta cerca: te levantas
-  await p.evaluate(() => {
+  // 4. una criatura despierta cerca (la plañidera de la cámara, subida a la
+  // sala del trono): te levantas
+  await p.evaluate((v) => {
     const g = __game;
-    const e = g.enemies.find((x) => x.id === 'e_alc1');
+    const e = g.enemies.find((x) => x.id === 'e_torre_camara');
     e.dead = false;
     e.state = 'dormant';
     e.obj.visible = true;
-    e.body.pos.set(-80, 9, -14);
+    e.body.pos.set(...v);
     e.aware = true;
     g._actT = 0;
-  });
+  }, at(2.6, 0, -2.6));
   await sim(0.6);
   s = await state();
   ok('una criatura cerca: de pie', !s.phase);
   await p.evaluate(() => {
-    const e = __game.enemies.find((x) => x.id === 'e_alc1');
+    const e = __game.enemies.find((x) => x.id === 'e_torre_camara');
     e.dead = true;
     e.state = 'dead';
     e.aware = false;

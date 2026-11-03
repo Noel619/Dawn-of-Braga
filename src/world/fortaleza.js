@@ -10,22 +10,26 @@
 //
 // Por fuera: la muralla de mampuesto sobre su talud, con su cordón, las
 // esquinas de sillería, las saeteras, los ajimeces de las cámaras y el
-// parapeto almenado; las torres, más altas, con sus chapiteles; la puerta con
-// sus matacanes, el rastrillo echado y el puente alzado. Por dentro: las
-// crujías (fortaleza_alas.js) y el patio (fortaleza_patio.js).
+// parapeto almenado; las torres, más altas, con sus chapiteles; la torre del
+// homenaje. Por dentro: las crujías (fortaleza_alas.js), el patio
+// (fortaleza_patio.js), la puerta y su cuerpo de guardia, con el puente
+// levadizo y el cadalso (fortaleza_puerta.js), y la torre del homenaje
+// (fortaleza_torre.js).
 //
 // Todo sale de unas medidas (FORT): norte = -z; la ciudad, al este. La coracha
 // corre pegada a la cara de levante (level_keep.js) y entra en la torre del
 // nordeste por la puerta de su adarve.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker, archedWall, archRing, barrelVault, solidGableRoof } from './builders.js';
+import { solid, blocker, archRing, solidGableRoof } from './builders.js';
 import * as P from './props.js';
-import { PIEDRA, pieza, tri, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes, caraTejado } from './fortaleza_atrezo.js';
+import { PIEDRA, pieza, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes, caraTejado } from './fortaleza_atrezo.js';
 import { tejadoCamaras } from './fortaleza_reina.js';
 import { FORT } from './fortaleza_medidas.js';
 import { buildPatio } from './fortaleza_patio.js';
 import { buildAlas } from './fortaleza_alas.js';
+import { buildPuerta } from './fortaleza_puerta.js';
+import { buildTorre } from './fortaleza_torre.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -36,8 +40,9 @@ const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 export function buildFortaleza(ctx, S, L) {
   muralla(ctx);
   torresEsquina(ctx);
-  puerta(ctx, S, L);
+  buildPuerta(ctx, S, L);
   torreHomenaje(ctx, L);
+  buildTorre(ctx, S, L);
   terrazas(ctx);
   cubiertas(ctx);
   buildPatio(ctx, S, L);
@@ -99,13 +104,11 @@ function muralla(ctx) {
     antepecho(ctx, 'w', x1 - t, C.z0, C.z1 + 0.6, walk);
     for (const z of [-82, -76, -70, -64, -56, -50]) saetera(ctx, 'e', x1, z, T.coracha.y + 0.6, { h: 1.3 });
   }
-  // sur: la despensa y el cuerpo de guardia, a los lados de la puerta
-  for (const [a, b, room] of [
-    [SO.x1, G.x0, 'despensa'],
-    [G.x1, SE.x0, 'guardia'],
-  ]) {
+  // sur: la despensa, al oeste de la puerta (la del cuerpo de guardia, con el
+  // boquete del bolaño y el cadalso, en fortaleza_puerta.js)
+  for (const [a, b, room] of [[SO.x1, G.x0, 'despensa']]) {
     pieza(ctx, 'wallstone', a, 0, z1 - t, b, walk, z1, [['s', null, Td.h - 0.05], ['n', room, 0, T.F1]], o);
-    talud(ctx, 's', z1, a, b, Td.h, Td.d, { ext: [0, b === SE.x0 ? Td.d : 0] });
+    talud(ctx, 's', z1, a, b, Td.h, Td.d);
     almenas(ctx, 's', z1, a, b, walk);
     for (const x of [a + 4, a + 10, b - 4]) saetera(ctx, 's', z1, x, 3.8);
     for (const x of [a + 7, b - 7.5]) vano(ctx, 's', z1, x, 7.2, 0.5, 1.2);
@@ -242,121 +245,15 @@ function torresEsquina(ctx) {
   P.banner(ctx, NE.x1 + 0.36, NE.h - 1.8, (NE.z0 + NE.z1) / 2, Math.PI / 2, 'bannerBlack', 1.4, 4.0);
 }
 
-// ------------------------------------------------------------------------ la puerta
-// Entre dos torres que asoman al campo, con la bóveda del paso, el rastrillo
-// echado y, por fuera, el puente levadizo alzado contra el arco (su torno, en
-// la planta de arriba: fase 3). Desde el patio se entra en el paso hasta el
-// rastrillo y se ve, entre sus barrotes, el envés del puente.
-function puerta(ctx, S, L) {
-  const wb = ctx.wb;
-  const G = T.puerta;
-  const Td = T.talud;
-  const tint = PIEDRA.lienzo;
-  const room = 'zaguan';
-  const Pt = T.patio;
-  const zf = G.z1; // la cara de fuera
-  const zi = G.z0; // la del patio
-  // las dos torres (macizas por ahora), con su talud y sus esquinas: sus caras
-  // al campo, al paso, a las salas de los lados (la despensa, el cuerpo de
-  // guardia), al claustro y, sobre las terrazas, las de lo alto
-  for (const [a, b, lado] of [
-    [G.x0, G.px0, -1],
-    [G.px1, G.x1, 1],
-  ]) {
-    const fo = lado < 0 ? 'w' : 'e',
-      fi = lado < 0 ? 'e' : 'w';
-    const xo = lado < 0 ? a : b;
-    pieza(ctx, 'wallstone', a, 0, zi, b, G.h, zf, [['s', null, Td.h - 0.05]], { tint, aoH: 3 });
-    // (al paso, a la sala del lado y al claustro)
-    wb.box('wallstone', a, 0, zi + 0.6, b, G.ys, zf - 0.6, { faces: fi, sub: 1.8, aoH: 1.4, room, tint: [0.7, 0.68, 0.64] });
-    wb.box('wallstone', a, 0, Pt.z1 + T.ti, b, T.F1, T.z1 - T.t, { faces: fo, sub: 2, aoH: 1.5, room: lado < 0 ? 'despensa' : 'guardia', tint: PIEDRA.patio });
-    wb.box('wallstone', a, 0, zi, b, T.claustro.yHi, zi + 0.01, { faces: 'n', sub: 2, aoH: 1.5, room: 'claustro', tint: PIEDRA.patio });
-    wb.box('wallstone', a, T.claustro.yHi, zi, b, T.walk, zi + 0.01, { faces: 'n', sub: 2.2, tint: PIEDRA.patio });
-    // (por encima de las terrazas)
-    wb.box('wallstone', a, T.walk, zi, b, G.h, zf, { faces: 'n' + fo + fi, sub: 2.2, tint });
-    // (lo que asoma de la muralla: su costado de fuera)
-    wb.box('wallstone', a, Td.h - 0.05, T.z1, b, T.walk, zf, { faces: fo, sub: 2.2, tint, aoH: 3 });
-    talud(ctx, 's', zf, a, b, Td.h, Td.d, { ext: lado < 0 ? [Td.d, 0] : [0, Td.d], tint, ends: lado < 0 ? [false, true] : [true, false] });
-    talud(ctx, fo, xo, T.z1, zf, Td.h, Td.d, { ext: [0, Td.d], tint });
-    esquina(ctx, xo, zf, lado, 1, Td.h, G.h - 0.6);
-    // matacanes en la cara de fuera y la cornisa con sus almenas
-    matacanes(ctx, 's', zf, a + 0.3, b - 0.3, G.h - 2.4);
-    wb.box('wallstone', a - 0.3, G.h - 0.5, zi - 0.3, b + 0.3, G.h, zf + 0.3, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' }, tint });
-    for (const [d, line, u0, u1] of [
-      ['n', zi - 0.3, a - 0.3, b + 0.3],
-      [fo, lado < 0 ? a - 0.3 : b + 0.3, zi, zf],
-    ])
-      almenas(ctx, d, line, u0, u1, G.h, { vuelo: 0, collide: false });
-    blocker(ctx, a, G.h, zi, b, G.h + 2, zf);
-    // saeteras
-    saetera(ctx, 's', zf, (a + b) / 2, 4.6);
-    saetera(ctx, fo, xo, (T.z1 + zf) / 2, 4.6, { cruz: false });
-    saetera(ctx, 's', zf, (a + b) / 2, 9.0);
-    P.banner(ctx, (a + b) / 2, G.h - 3.2, zf + 0.95, 0, 'bannerRey', 1.4, 3.6);
-  }
-  // el cuerpo de en medio, sobre el paso: del arco de fuera al del patio
-  const ys = G.ys,
-    rise = G.rise,
-    pw = G.px1 - G.px0,
-    pc = (G.px0 + G.px1) / 2;
-  archedWall(ctx, { axis: 'x', a0: G.px0, a1: G.px1, t0: zf - 0.6, t1: zf + 0.03, y0: 0, y1: G.hm, openings: [{ c: pc, w: pw, h: ys, rise, ring: 0.42, tint: PIEDRA.silla }], mat: 'wallstone', tint, rooms: [room, null], sub: 2 });
-  archedWall(ctx, { axis: 'x', a0: G.px0, a1: G.px1, t0: zi - 0.03, t1: zi + 0.6, y0: 0, y1: T.walk, openings: [{ c: pc, w: pw, h: ys, rise, ring: 0.36, tint: PIEDRA.silla }], mat: 'wallstone', tint: PIEDRA.patio, rooms: ['claustro', room], sub: 2 });
-  // la bóveda del paso y lo de encima (macizo)
-  barrelVault(ctx, { x0: G.px0, x1: G.px1, z0: zi + 0.6, z1: zf - 0.6, ys, rise, axis: 'z', room, tint: [0.56, 0.54, 0.5], mat: 'ashlar' });
-  solid(ctx, 'wallstone', G.px0, ys + rise, zi + 0.6, G.px1, G.hm, zf - 0.6, { faces: '', collide: true });
-  wb.box('wallstone', G.px0, T.walk, zi, G.px1, G.hm, zi + 0.6, { faces: 'n', sub: 2.2, tint });
-  wb.box('flag', G.px0 - 0.3, G.hm - 0.02, zi, G.px1 + 0.3, G.hm, zf, { faces: 't', ao: false });
-  almenas(ctx, 's', zf + 0.3, G.px0, G.px1, G.hm, { vuelo: 0, collide: false });
-  // el suelo del paso: el enlosado, con el carril del rastrillo
-  wb.box('flag', G.px0, -0.05, zi, G.px1, 0.02, zf, { faces: 't', ao: false, room, tint: [0.66, 0.63, 0.58] });
-  W(S, G.px0 + 0.1, zi - 0.2, G.px1 - 0.1, G.rastrillo - 0.25);
-  // el rastrillo, echado: la reja de hierro en su ranura
-  {
-    const zr = G.rastrillo;
-    for (let x = G.px0 + 0.22; x < G.px1 - 0.1; x += 0.36) wb.box('iron', x - 0.04, 0, zr - 0.05, x + 0.04, ys + rise * 0.9, zr + 0.05, { ao: false, room });
-    for (let y = 0.5; y < ys + rise * 0.8; y += 0.55) wb.box('iron', G.px0, y - 0.04, zr - 0.06, G.px1, y + 0.04, zr + 0.06, { ao: false, room });
-    for (let x = G.px0 + 0.22; x < G.px1 - 0.1; x += 0.36) wb.box('iron', x - 0.05, -0.05, zr - 0.06, x + 0.05, 0.06, zr + 0.06, { ao: false, room, tint: [0.7, 0.7, 0.7] });
-    ctx.col.add(G.px0, 0, zr - 0.15, G.px1, ys + rise, zr + 0.15);
-    L.interact.push({ kind: 'examine', id: 'x_rastrillo_fort', text: 'rastrilloFortaleza', x: pc, y: 0, z: zr - 0.9, r: 1.6 });
-  }
-  // el puente, alzado contra el arco de fuera: sus tablones, sus herrajes y
-  // las cadenas que suben a los mechinales
-  {
-    const zb = zf + 0.22;
-    const bw = pw + 0.7,
-      bh = ys + rise + 0.5;
-    wb.box('planks', pc - bw / 2, 0.15, zf + 0.05, pc + bw / 2, bh, zb, { faces: 'tnsewb', ao: false, sub: 2, tint: [0.55, 0.48, 0.4] });
-    for (const y of [0.9, bh * 0.5, bh - 0.7]) wb.box('iron', pc - bw / 2, y - 0.07, zb, pc + bw / 2, y + 0.07, zb + 0.035, { ao: false, faces: 'tnsewb' });
-    for (const x of [pc - bw / 2 + 0.25, pc + bw / 2 - 0.25]) {
-      wb.box('iron', x - 0.05, bh - 0.3, zb, x + 0.05, bh + 2.6, zb + 0.06, { ao: false });
-      wb.box('black', x - 0.12, bh + 2.5, zf + 0.012, x + 0.12, bh + 2.8, zf + 0.02, { ao: false, grime: false, faces: 's' });
-    }
-    ctx.col.add(pc - bw / 2, 0, zf, pc + bw / 2, bh, zb);
-  }
-  // el escudo del Rey sobre el arco, entre los matacanes de en medio
-  {
-    const ye = ys + rise + 1.8;
-    wb.box('ashlar', pc - 0.8, ye, zf, pc + 0.8, ye + 1.9, zf + 0.12, { ao: false, faces: 'swetb', tint: PIEDRA.silla });
-    wb.box('clothRed', pc - 0.55, ye + 0.25, zf + 0.12, pc + 0.55, ye + 1.45, zf + 0.14, { ao: false, faces: 's', tint: [0.7, 0.6, 0.6] });
-    wb.box('silver', pc - 0.12, ye + 0.45, zf + 0.14, pc + 0.12, ye + 1.25, zf + 0.15, { ao: false, faces: 's' });
-    wb.box('silver', pc - 0.4, ye + 0.85, zf + 0.14, pc + 0.4, ye + 1.0, zf + 0.15, { ao: false, faces: 's' });
-    matacanes(ctx, 's', zf, G.px0 - 0.2, G.px1 + 0.2, G.hm - 2.2, { paso: 0.9 });
-  }
-  // la luz del paso: una antorcha a cada lado
-  P.wallTorch(ctx, G.px0 + 0.02, 2.4, zi + 3.0, 'e', { room });
-  P.wallTorch(ctx, G.px1 - 0.02, 2.4, zf - 4.2, 'w', { room });
-  L.zones.push({ id: 'zaguan_fortaleza', rects: [[G.px0, zi + 0.6, G.px1, zf, -1, ys + rise]], atmo: 'interior', room });
-  L.map.push({ id: 'zaguan_fortaleza', r: [G.px0, zi, G.px1, zf] });
-}
-
 // ------------------------------------------------------------------------ la torre del homenaje
-// La torre del conde, por fuera: maciza por ahora (por dentro, en la fase 3),
-// de sillería oscura sobre su talud alto, con las impostas de cada piso, la
-// puerta de la planta de la guardia (a +6: a ella sube la escalinata),
-// atrancada; los ajimeces de las cámaras (+12) y los grandes de la sala del
-// trono (+18), uno encendido (la vela del Rey); la cornisa con sus canes, la
-// terraza almenada y las cuatro garitas de las esquinas con sus chapiteles; el
-// estandarte del Rey en lo alto.
+// La torre del conde, por fuera (por dentro, en fortaleza_torre.js, con sus
+// muros y su colisión), de sillería oscura sobre su talud alto, con las
+// impostas de cada piso, la puerta de la planta de la guardia (a +6: a ella
+// sube la escalinata), con sus tres roscas; las saeteras de la guardia, los
+// ajimeces de las cámaras (+12) y los grandes de la sala del trono (+18), uno
+// encendido (la vela del Rey), y los óculos de su galería; la cornisa con sus
+// canes, la terraza almenada y las cuatro garitas de las esquinas con sus
+// chapiteles; el estandarte del Rey en lo alto.
 function torreHomenaje(ctx, L) {
   const wb = ctx.wb;
   const K = T.torre;
@@ -365,22 +262,32 @@ function torreHomenaje(ctx, L) {
   const tint = PIEDRA.torre;
   const cx = (x0 + x1) / 2,
     cz = (z0 + z1) / 2;
-  // el macizo (con las caras que se ven: las del jardín y las de los lados
-  // por encima de las cámaras; la del patio, entera)
-  ctx.col.add(x0, 0, z0, x1, H, z1);
+  // las caras que se ven: la del jardín, entera, y las de los lados por
+  // encima de las cámaras (la del patio la pone su muro, con la puerta)
   const E = T.eave - 0.3;
-  for (const [f, ya, za, zb] of [
-    ['n', 0, z0, z0],
-    ['s', 0, z1, z1],
-  ])
-    wb.box('ashlar', x0, ya, za - 0.01, x1, H, zb + 0.01, { faces: f, sub: 2.6, aoH: 4, tint, uv: 0.8 });
+  wb.box('ashlar', x0, 0, z0 - 0.01, x1, H, z0 + 0.01, { faces: 'n', sub: 2.6, aoH: 4, tint, uv: 0.8 });
   // (los costados: al jardín, enteros; sobre las cámaras, desde su alero)
   wb.box('ashlar', x0 - 0.01, 0, z0, x0, H, T.z0, { faces: 'w', sub: 2.6, aoH: 4, tint });
   // (sobre el adarve y sobre los tejados de las cámaras: lo de fuera)
   wb.box('ashlar', x0 - 0.01, T.walk, T.z0, x0, H, T.reina.z0, { faces: 'w', sub: 2.6, aoH: 4, tint, baseY: 0 });
   caraTejado(ctx, 'ashlar', 'w', x0, T.reina.z0, z1, H, tejadoCamaras(T.reina), { sobre: true, sub: 2.6, aoH: 4, tint, baseY: 0 });
   wb.box('ashlar', x1, 0, z0, x1 + 0.01, H, T.z0, { faces: 'e', sub: 2.6, aoH: 4, tint });
-  wb.box('ashlar', x1, T.walk, T.z0, x1 + 0.01, H, T.rey.z0, { faces: 'e', sub: 2.6, aoH: 4, tint, baseY: 0 });
+  // (sobre el pasadizo, alrededor de la puerta de la torre: su arco y su
+  // rosca los pone el muro, en fortaleza_torre.js)
+  {
+    const c = T.rey.pasadizo,
+      w = 1.2,
+      r = 0.26,
+      ys = T.walk + 2.4;
+    for (const [a, b, ya, yb] of [
+      [T.z0, c - w / 2 - r, T.walk, H],
+      [c + w / 2 + r, T.rey.z0, T.walk, H],
+      [c - w / 2 - r, c - w / 2, T.walk, ys],
+      [c + w / 2, c + w / 2 + r, T.walk, ys],
+      [c - w / 2 - r, c + w / 2 + r, ys + w / 2 + r + 0.05, H],
+    ])
+      wb.box('ashlar', x1, ya, a, x1 + 0.01, yb, b, { faces: 'e', sub: 2.6, aoH: 4, tint, baseY: 0 });
+  }
   caraTejado(ctx, 'ashlar', 'e', x1, T.rey.z0, z1, H, tejadoCamaras(T.rey), { sobre: true, sub: 2.6, aoH: 4, tint, baseY: 0 });
   // (y por dentro de las cámaras, sus caras: la del oeste en la sala de la
   // reina, la del este en la antecámara)
@@ -419,18 +326,21 @@ function torreHomenaje(ctx, L) {
     ['e', x1 + 0.01, z0, z1],
   ]) {
     const c = (a + b) / 2;
+    // (las de los lados, al sur de la caja del caracol, que está en el rincón
+    // del noroeste)
     if (d === 'n') for (const u of [c - 6, c + 6]) saetera(ctx, d, line, u, 7.4, { h: 1.6 });
-    if (d === 'w' || d === 'e') saetera(ctx, d, line, c - 7, 7.4, { h: 1.6 });
-    for (const u of [c - 6.2, c + 6.2]) ajimez(ctx, d, line, u, 13.6, { h: 1.5, ...vt });
+    if (d === 'w' || d === 'e') saetera(ctx, d, line, c - 6.4, 7.4, { h: 1.6 });
+    for (const u of [c - 5.6, c + 5.6]) ajimez(ctx, d, line, u, 13.6, { h: 1.5, ...vt });
     for (const u of [c - 4.8, c, c + 4.8]) {
       const lit = d === 's' && Math.abs(u - c) < 0.1;
       ajimez(ctx, d, line, u, 19.4, { h: 2.4, w: 0.6, lit, radius: 9, intensity: 1.2, ...vt });
     }
     // los óculos de la galería del trono
-    for (const u of [c - 4.8, c + 4.8]) vano(ctx, d, line, u, 23.0, 0.7, 0.4, { ...vt, ring: 0.14 });
+    for (const u of [c - 4.8, c + 4.8]) vano(ctx, d, line, u, 23.4, 0.7, 0.4, { ...vt, ring: 0.14 });
   }
   // la puerta de la planta de la guardia, en lo alto de la escalinata: su
-  // arco abocinado de tres roscas y las hojas, atrancadas por dentro
+  // arco abocinado de tres roscas (las hojas, atrancadas por dentro, son de
+  // la puerta: fortaleza_torre.js)
   {
     const D = K.puerta;
     const yd = D.y;
@@ -440,18 +350,6 @@ function torreHomenaje(ctx, L) {
       archRing(ctx, { axis: 'x', c: D.x, w, y0: yd + D.h, rise: w / 2, ring: 0.28, t0: zf - 0.01, t1: zf + 0.12 + k * 0.08, mat: 'ashlar', tint: tint.map((v) => v * (1.25 - k * 0.06)), proud: 0, cam: false, n: 11 });
       for (const s of [-1, 1]) wb.box('ashlar', D.x + s * (w / 2) - (s > 0 ? 0 : 0.28), yd, zf, D.x + s * (w / 2) + (s > 0 ? 0.28 : 0), yd + D.h, zf + 0.12 + k * 0.08, { ao: false, faces: 'swetb', tint: tint.map((v) => v * (1.25 - k * 0.06)) });
     }
-    // las hojas, de tablones con sus clavos; el hueco del arco, a oscuras
-    wb.box('planks', D.x - D.w / 2, yd, zf - 0.02, D.x + D.w / 2, yd + D.h, zf + 0.02, { ao: false, faces: 's', tint: [0.5, 0.44, 0.38] });
-    const n = 10;
-    for (let i = 0; i < n; i++) {
-      const a = Math.PI - (i / n) * Math.PI,
-        b = Math.PI - ((i + 1) / n) * Math.PI,
-        r = D.w / 2;
-      tri(wb, 'planks', V(D.x, yd + D.h, zf + 0.02), V(D.x + Math.cos(a) * r, yd + D.h + Math.sin(a) * r, zf + 0.02), V(D.x + Math.cos(b) * r, yd + D.h + Math.sin(b) * r, zf + 0.02), V(0, 0, 1), { ao: false, tint: [0.45, 0.4, 0.34] });
-    }
-    for (const y of [yd + 0.5, yd + 1.4, yd + 2.3]) wb.box('iron', D.x - D.w / 2, y - 0.05, zf + 0.02, D.x + D.w / 2, y + 0.05, zf + 0.05, { ao: false, faces: 'stb' });
-    wb.box('black', D.x - 0.04, yd + 1.1, zf + 0.05, D.x + 0.04, yd + 1.3, zf + 0.06, { ao: false, faces: 's', grime: false });
-    L.interact.push({ kind: 'examine', id: 'x_puerta_torre', text: 'puertaTorreAtrancada', x: D.x, y: yd, z: zf + 0.9, r: 1.5 });
     // el escudo del Rey encima
     wb.box('ashlar', D.x - 0.7, yd + D.h + D.w / 2 + 1.2, zf, D.x + 0.7, yd + D.h + D.w / 2 + 2.9, zf + 0.14, { ao: false, faces: 'swetb', tint: PIEDRA.silla });
     wb.box('clothRed', D.x - 0.5, yd + D.h + D.w / 2 + 1.4, zf + 0.14, D.x + 0.5, yd + D.h + D.w / 2 + 2.6, zf + 0.16, { ao: false, faces: 's', tint: [0.7, 0.6, 0.6] });
@@ -468,7 +366,16 @@ function torreHomenaje(ctx, L) {
       const F = plano(d, line);
       for (let u = a + 0.8; u < b - 0.5; u += 1.3) for (let k = 0; k < 2; k++) wb.box('ashlar', ...F.box(u - 0.16, yc - 1.1 + k * 0.32, u + 0.16, yc - 0.78 + k * 0.32, -0.01, 0.22 + k * 0.22), { ao: false, faces: asoma(d), tint });
     }
-    wb.box('ashlar', x0 - 0.55, yc - 0.45, z0 - 0.55, x1 + 0.55, yc, z1 + 0.55, { ao: false, sub: 3, faces: 'tnsewb', mats: { t: 'flag' }, tint: tint.map((v) => v * 1.08) });
+    // (en anillo, sobre los muros: por dentro, el techo de la sala del trono y
+    // las losas de la terraza son de fortaleza_torre.js)
+    const t = K.t;
+    for (const [a, b, c, d, f] of [
+      [x0 - 0.55, z0 - 0.55, x1 + 0.55, z0 + t, 'tnweb'],
+      [x0 - 0.55, z1 - t, x1 + 0.55, z1 + 0.55, 'tsweb'],
+      [x0 - 0.55, z0 + t, x0 + t, z1 - t, 'twb'],
+      [x1 - t, z0 + t, x1 + 0.55, z1 - t, 'teb'],
+    ])
+      wb.box('ashlar', a, yc - 0.45, b, c, yc, d, { ao: false, sub: 3, faces: f, mats: { t: 'flag' }, tint: tint.map((v) => v * 1.08) });
     for (const [d, line, a, b] of [
       ['n', z0 - 0.55, x0 - 0.55, x1 + 0.55],
       ['s', z1 + 0.55, x0 - 0.55, x1 + 0.55],
@@ -596,7 +503,7 @@ function cubiertas(ctx) {
 // Lo que se ve desde lo alto: al norte, el jardín del Rey (fase 4: por ahora,
 // la tierra, los naranjos secos y la alberca vacía), cerrado por el muro de
 // poniente; al oeste, el campo, pelado, hasta perderse en la niebla; al sur,
-// entre la fortaleza y la torre vieja, lo que quedó del foso, cegado.
+// entre la fortaleza y la muralla del castillo, el escombro y el patíbulo.
 function afuera(ctx, L) {
   const wb = ctx.wb;
   const rng = new RNG(8801);
@@ -605,9 +512,10 @@ function afuera(ctx, L) {
   for (let i = 0; i < 16; i++) P.deadTree(ctx, rng.range(-230, -162), 0, rng.range(-170, 20), 7410 + i, rng.range(3.2, 5.6));
   for (let i = 0; i < 10; i++) P.roughStone(ctx, rng.range(-200, -158), 0, rng.range(-140, 0), rng.range(0.3, 0.8), 7430 + i);
   for (let i = 0; i < 9; i++) P.deadTree(ctx, rng.range(-152, -144), 0, rng.range(-118, -20), 7450 + i, rng.range(3.0, 5.0));
-  for (let i = 0; i < 6; i++) P.deadTree(ctx, rng.range(-134, -100), 0, rng.range(-26, 0), 7470 + i, rng.range(3.0, 4.6));
+  // (fuera de la empalizada del patio de armas: level_castle.js)
+  for (let i = 0; i < 6; i++) P.deadTree(ctx, rng.range(-134, -108), 0, rng.range(-26, 0), 7470 + i, rng.range(3.0, 4.6));
   ctx.crows.push({ x: -175, y: 14, z: -70, r: 9, n: 5 });
-  ctx.crows.push({ x: -98, y: 30.5, z: -99, r: 6, n: 4 });
+  ctx.crows.push({ x: -100, y: T.torre.terraza, z: -92, r: 4, n: 4 });
   // el muro que cierra el jardín por poniente, de la muralla norte a la torre
   // de la reina
   {
@@ -636,12 +544,12 @@ function afuera(ctx, L) {
     wb.box('black', A[0], 0.49, A[1], A[2], 0.5, A[3], { faces: 't', ao: false, grime: false, tint: [0.2, 0.2, 0.2] });
     P.well(ctx, -126, 0, -112, {});
   }
-  // al sur, lo que quedó del foso del Paço: cegado con escombro, entre la
-  // fortaleza, la torre vieja, la coracha y la muralla del castillo
+  // al sur, en el rincón del patio de armas entre la fortaleza, la coracha y
+  // la muralla del castillo: el escombro del asedio y el patíbulo
   P.rubble(ctx, -66.5, 0, -27.5, 14, 8840, 3.2, { mat: 'wallstone', scale: 1.3 });
   P.rubble(ctx, -69, 0, -24.5, 8, 8841, 1.6, { mat: 'wallstone', scale: 1.0 });
   P.gibbet(ctx, -64.6, 0, -30.5, 4.0);
   P.stake(ctx, -70.2, 0, -29.6, 0.3, 8842);
   P.stake(ctx, -68.8, 0, -30.4, -0.4, 8843);
-  for (let i = 0; i < 5; i++) P.roughStone(ctx, rng.range(-120, -100), 0, rng.range(-29, -24), rng.range(0.4, 0.9), 8850 + i);
+  for (let i = 0; i < 5; i++) P.roughStone(ctx, rng.range(-122, -106), 0, rng.range(-29, -24), rng.range(0.4, 0.9), 8850 + i);
 }

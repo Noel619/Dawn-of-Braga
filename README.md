@@ -334,8 +334,8 @@ que baja al aljibe; el **cuartel de la tropa** (jergones en el suelo, la mesa la
 del armero con su muela; la cocina con el horno de pan y la caldera; las caballerizas, sin caballos (se los
 comieron); la capilla de la guarnición, que acabó de hospital (el altar del castillo); el **fundíbulo** de la
 defensa, partido por un tiro de los de fuera, con sus bolaños labrados a pico; caballos de frisa y la barricada de
-la puerta. La escalera del adarve, pegada a la torre del homenaje, la partió un tiro: el tramo de arriba se desmoronó
-en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
+la puerta. La escalera del adarve, en el cabo de poniente de la muralla norte, la partió un tiro: el tramo de arriba
+se desmoronó en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
 
 **Por fuera**, el castillo manda sobre la ciudad: las murallas del sur, de levante y de poniente, más altas que la
 del norte (la que se anda), las torres de las esquinas por encima de ellas y dos torres nuevas en medio de los
@@ -346,48 +346,17 @@ arco, las armas del Rey labradas encima, el matacán y la hoja de fuera arrancad
 sur, **la brecha** que abrió un bolo de los trabucos, tapada con una empalizada de troncos aguzados, con el cascajo
 al pie (`world/castillo_fuera.js`).
 
-La **torre del homenaje**, el último reducto, rehecha como las románicas que se conservan enteras (Rochester,
-Castle Hedingham): 26 × 26 m, a caballo de la muralla norte (asoma al norte, hacia la fortaleza nueva), con muros de casi
-dos metros y medio, pilastras en las esquinas y en medio de cada lienzo, un zócalo en escalones, una imposta en
-cada planta, ventanas geminadas de medio punto en la sala y cuatro torrecillas por encima de la terraza, a 22 m:
-manda sobre el patio y sobre la ciudad. Se sube por una escalera exenta, metida en un antecuerpo de sillería que
-llega a la muralla y a la torre de la cárcel, hasta un rellano frente a la puerta, en la planta primera; un
-**puente levadizo** sobre un foso con estacas (quien cae en él se clava en ellas) la une con él, alzado desde
-dentro. Cada planta la parte un muro de carga, con tabiques y puertas de arco. Planta baja: el **granero**, la
-**bodega**, el **almacén** y el **pozo** de la torre, a los que sólo se baja por una trampilla. Primera: el
-**cuerpo de guardia** con el **torno del puente**, el **dormitorio de los ballesteros** (con la trampilla), la
-**armería** y el **taller del ballestero**. Segunda: la **sala del alcaide**, **a doble altura**, partida por un
-**gran arco diafragma** de muro a muro, con una **galería** de madera sobre canes a lo largo de dos lienzos, dos
-coronas de velas y el estandarte del Rey; bajo el arco, la mesa del Rey (ver más abajo), y al otro lado la mesa
-del consejo con el plano de la defensa y el atril del libro de la guarnición; el **escritorio**, con el alcaide
-muerto sobre sus cuentas junto a la chimenea (sus últimas líneas cuentan dónde están las cinco llaves de la reja
-de la cripta de la Sé), y tras él su **alcoba**. Tercera, sobre ellos: la **cámara alta**, con los arcones del Rey que el alcaide subió de la
-fortaleza, su armadura de la frontera, su estandarte enrollado y un camastro junto al cañón de la chimenea; de ella
-sale la puerta de la galería y la escalera de la terraza. Arriba, la **terraza** de combate: la caseta de la
-escalera con su tejado a dos aguas, el matacán sobre la puerta, la chimenea, el fanal, la caldera de la pez,
-piedras para tirar y, en su asta, el estandarte del Rey (la cruz azul en campo blanco). Forjados de tablas sobre
-viguetas; la sala, bajo vigas gruesas de muro a muro. Todo sale de unas pocas medidas (`world/level_torre.js`).
+**La antepuerta.** La torre del homenaje vieja, la que estaba a caballo de la muralla norte, se derribó: por donde
+estaba, el patio de armas llega ahora hasta **la puerta de la fortaleza** y su foso de estacas, con el puente alzado
+al otro lado. Lo que dejó el asedio: los caballos de frisa ante el foso, un carro, los barriles, los bolaños de los
+trabucos, los muertos y sus cuervos. Por poniente, hasta que se rehaga el patio de armas entero (`PLAN_FORTALEZA.md`,
+fase 4), lo cierra una empalizada de troncos aguzados con sus puntales, de la torre de la puerta a la muralla de
+poniente.
 
-**La planta de armas** (el camino hasta la ballesta). Un bolaño entró por el muro norte del taller y se llevó su
-suelo; los de dentro tapiaron lo que pudieron. Del cuerpo de guardia al taller, un arco está lleno de escombro hasta
-la clave (se ve la luz entre las piedras) y el otro, tapiado. La **armería**, clavada con tablones (la palanca);
-dentro, el agujero del bolaño baja al **granero**. La trampilla del dormitorio la atrancaron por abajo: se abre desde
-el almacén (el atajo de vuelta). En la **bodega**, la cuerda del **montacargas** sube al **pañol de los virotes**,
-y del pañol, por una saetera que alguien ensanchó a mazazos, se sale al **cadalso**: la galería de madera colgada
-por fuera de la torre, al norte y al este, con su pantalla de tablas, sus troneras, su tejadillo y tablas que faltan.
-En la garita de la esquina vigila **el alférez mayor**, convertido, con la ballesta de la guardia (se planta lejos,
-tira y la monta; si te le echas encima, culatazo; no vuelve). Lleva al cinto **la llave del alférez**, una de las
-cinco de la reja de la Sé. Por la ventana del taller se entra en él: el suelo hundido hacia el agujero, las vigas
-colgando, el maestro ballestero bajo una de ellas, su tabla rayada con un clavo y, en su banco, **la ballesta**.
-El tabique se derriba desde dentro: el atajo a la guardia.
-
-**La bajada tapiada.** Bajo la torre está la cárcel (la celda del fondo, la del jugador, queda justo debajo). Al
-principio del juego, al fondo del pasillo de las celdas, una pared de ladrillo nuevo con la cal todavía fresca, donde
-antes hubo una puerta; arañado en ella, LO QUE SUBE NO ES NUESTRO. Mucho después, desde el almacén de la torre, una
-escalera baja por su hueco (los pretiles, el marco de la puerta arrancada, los surcos de algo grande en los muros) a
-un pasadizo en recodo que acaba en el revés de ese tapiado: sacos, piedras y cal contra el ladrillo y, encima,
-colgado de su viga, el sillar que hacía de contrapeso. Un virote a la cuerda y el sillar cae y se lleva el tapiado
-por delante: el atajo de la torre a las celdas y a las catacumbas.
+**La bajada tapiada.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
+celdas, una pared de ladrillo nuevo con la cal todavía fresca, donde antes hubo una puerta; arañado en ella, LO QUE
+SUBE NO ES NUESTRO. La escalera que había detrás, la de la torre vieja, ya no lleva a ninguna parte: en la fase 5
+del plan, esa pared será el rastrillo de las mazmorras de la fortaleza (el atajo a la celda).
 
 **La fortaleza-palacio.** Al norte del castillo viejo, entre él y la muralla norte, la fortaleza del Rey: un solo
 conjunto, como la alcáçova de Lisboa (`PLAN_FORTALEZA.md`). Cuatro crujías alrededor de **un patio de honor** con su
@@ -402,14 +371,16 @@ su cordón, las esquinas de sillería, las saeteras y los ajimeces de las cámar
 cubiertas de teja del gran salón, de la capilla y de las cámaras asoman por encima, y las crujías del sur y la
 cancillería tienen terraza. El aire, más limpio que el de la ciudad: las siluetas se leen de lejos. Todo sale de unas
 medidas (`world/fortaleza_medidas.js`, `world/fortaleza.js`, `world/fortaleza_patio.js`, `world/fortaleza_alas.js` y
-sus salas: `fortaleza_salon.js`, `fortaleza_reina.js`, `fortaleza_rey.js`, `fortaleza_capilla.js`).
+sus salas: `fortaleza_salon.js`, `fortaleza_reina.js`, `fortaleza_rey.js`, `fortaleza_capilla.js`; la torre del
+homenaje, `fortaleza_torre.js`; la puerta y su guardia, `fortaleza_puerta.js`).
 
 **La llegada.** La coracha baja de la atalaya pegada a la cara de levante de la fortaleza: nada más dejar la
 atalaya, a la derecha, la puerta de **la torre de la coracha**, con su recerco de sillería y su farol. Dentro, el
 altar (el descanso de la llegada) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
 norte, cubierto, que llevaba al Rey de sus cámaras a su torre, y que quemaron con él al otro lado (los pies derechos
 negros, medio tejadillo hundido sobre las losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del
-homenaje, chamuscada y atrancada por dentro). De la planta de la llegada, un **caracol** baja por el rincón de la
+homenaje, chamuscada y atrancada por dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al
+primer empujón). De la planta de la llegada, un **caracol** baja por el rincón de la
 torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, el altarico) y, más abajo, al
 **tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el arca del Rey, con sus velas casi
 consumidas, la plata y **la llave del camarero**. La puerta del tesoro se desatranca por dentro y da a la
@@ -420,6 +391,48 @@ cámara del Rey**, bajo su armadura: la cama bajo el dosel con la colcha echada 
 reina con su toca doblada encima, la mesa de sus cartas junto a la ventana del patio, el brasero, y su guarda. De la
 cámara se pasa por el grueso del muro al oratorio de la torre de la coracha, y de él, por una puerta en el muro de la
 capilla, a **la tribuna del Rey**.
+
+**La torre del homenaje.** Por dentro, la torre del conde: cinco alturas unidas por un **caracol** en el rincón del
+noroeste (como el de Hedingham), y en cada planta el muro de carga, de poniente a levante, con su puerta de arco. Se
+entra **por el pasadizo del Rey**, a +12: la puerta quemada da a **la sala del consejo**, encalada, con la mesa larga
+y el plano de la defensa (la ciudad en un pergamino, con sus fichas), los bancos, el sitial del Rey a la cabecera y
+los estantes de los mapas; al otro lado del muro, **la cámara** adonde se subió el Rey cuando la corte se levantó: el
+hogar encendido en el muro de carga, el camastro de soldado junto a él (no quiso volver a su cama), su silla, la
+mesa con la vela y la copa, su armadura de la frontera, su estandarte enrollado, los arcones que subió del palacio
+(en uno, **un relicario**), el reclinatorio y la dueña que llora. Abajo, a +6, **la guardia de la torre**, con sus
+guardias, y **el dormitorio**, con sus jergones; la puerta de la escalinata, atrancada por dentro, se desatranca
+desde aquí: el atajo al patio de honor. En la planta baja, **el almacén** (los toneles, las tinajas, la cecina
+colgada de las vigas, el pozo de la torre, la puerta del patio cegada bajo el rellano de la escalinata, **una
+ampolla** y un penitente que come) y **el granero** (los sacos, la muela); en el suelo del almacén, **la trampilla de
+hierro** de la bajada a la cárcel de la fortaleza, con su cadena y su candado (por las rendijas sube algo que rasca).
+Arriba, a +18, **la sala del trono**, a doble altura, partida por tres arcos de sillería sobre dos pilares: el
+enlucido pintado de despiece fingido sobre su zócalo de cortinaje, los ajimeces a la luna, las coronas de velas y los
+paños del Rey; contra el muro del patio, bajo la ventana encendida, **el estrado** con el trono vacío y, a su pie,
+**el Rey y su mesa**. Por el grueso de los muros de poniente, del norte y de levante, a +22,5, corre **la galería**,
+abovedada, con sus óculos a la luna y sus vanos de tres en tres sobre la sala (en el último, un ballestero muerto
+con sus virotes). Por encima, la caseta del caracol sale a **la terraza**, a 28 m: la chimenea, el fanal apagado, la
+caldera de la pez, los montones de piedras, los muertos de la última defensa y, junto al parapeto del norte, **el
+Caballero de la Orden** con el pendón del Rey (`world/fortaleza_torre.js`).
+
+**La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta, con sus
+buhederas y el rastrillo echado; por fuera, el puente alzado sobre el foso de las estacas (quien cae en él se clava
+en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de la
+guarnición**, las armas a mano, dos soldados y, bajo el suelo hundido del taller, el bolaño que lo hundió, con las
+tablas y el cascajo. Su escalera de piedra sube por el muro de la torre a **la armería** (las astas contra la
+muralla, las cotas en sus perchas, los barriles de virotes y, entre las lanzas, **la espada oxidada**) y de ella, por
+el muro de la torre, a **la cámara del torno**, sobre el paso: el tambor del puente entre sus caballetes, con sus
+cadenas, las poleas y la palanca del rastrillo, las buhederas con sus rejas y las piedras para echar por ellas; y
+sentado contra el caballete, **el alcaide**, con sus últimas líneas («He mandado alzar el puente»). La palanca sube
+el rastrillo; suelto el freno del torno, **el puente cae** sobre el foso: el atajo al patio de armas. De la cámara se
+sale por la cara de fuera al **cadalso**, la galería de madera colgada de la torre y de la muralla de la guardia, con
+su pantalla de tablas, sus troneras, su tejadillo y las tablas que faltan; en la garita de su cabo vigila **el
+alférez mayor**, convertido, con la ballesta de la guardia (se planta lejos, tira y la monta; si te le echas encima,
+culatazo; no vuelve), y al cinto **la llave del alférez**, una de las cinco de la reja de la Sé. Un bolaño entró por
+la muralla del taller y se llevó media pared y parte del suelo: por **el boquete**, desde el cadalso, se entra en
+**el taller del ballestero** (las vigas colgando, el maestro bajo una de ellas, su tabla rayada con un clavo y, en
+su banco, **la ballesta**). El tabique entre el taller y la armería tiene dos arcos: uno, lleno de escombro hasta la
+clave (se ve la luz entre las piedras); el otro, tapiado con la cal todavía tierna, se derriba desde el taller: el
+atajo a la armería (`world/fortaleza_puerta.js`).
 
 **El patio de honor.** Cruzados sus dos ejes (de la puerta a la escalinata de la torre; de las puertas del gran
 salón a las de la capilla), la fuente seca; el **olmo del Rey**, con cien papelillos clavados en la corteza; el
@@ -483,7 +496,7 @@ y **su relicario**, del que salen la puerta de la sala y la de la galería del s
 bajo el dosel, tapada con la sábana, la silla del Rey a su lado, de cara a ella, con la vela que se acabó en el
 candelero, el reclinatorio con su libro de horas (con la nota de la dueña) y la dueña que se quedó con ella, con su
 farol. Al sur del patio, **el cuerpo de guardia**, y en el paso de la puerta, el rastrillo echado: entre sus
-barrotes, el envés del puente alzado (el torno está arriba, en la puerta: fase 3).
+barrotes, el envés del puente alzado (el torno está arriba, en la cámara de la puerta).
 
 **La reja de las cinco llaves.** La reja de la escalera de la cripta de la Sé ya no tiene torno: junto a ella, en
 su pilar, una pletina de hierro con cinco cerraduras, cada una con la marca del color de la cinta de su llave. Al
@@ -491,13 +504,15 @@ examinarla dice cuáles faltan; con las cinco (la del alférez, la del mayordomo
 la del canciller) se echan una a una, se quedan metidas en la pletina y la reja baja por su ranura. La carta del
 Rey que la mandó hacer, en la cancillería, dice para qué: que nadie bajara sin que lo supiera la corte entera.
 
-**El Rey y el Cerco.** En la sala del alcaide, bajo el arco diafragma, sentado en un sitial de respaldo alto (con
+**El Rey y el Cerco.** En la sala del trono de la torre del homenaje, al pie del estrado y de espaldas a su trono
+vacío, sentado en un sitial de respaldo alto (con
 las armas del rey, la cruz azul en campo blanco, por encima de la cabeza) ante una mesa de juego, espera **el Rey**:
 un viejo enjuto, pálido y gris, de pelo y barba blancos y largos, con la corona de oro ladeada, el manto rojo forrado
 de piel, una venda manchada de negro bajo el pecho, la manta sobre las rodillas y un pañuelo en la mano. Cuando sonó
 la campana se arrodilló, como toda su corte, y algo le come por dentro: tose negro, tiembla y se le van las fuerzas.
 No piensa darle el gusto: quiere morirse siendo él, y antes jugar una última partida a **El Cerco**, el juego que le
-enseñó su padre en esa misma torre (sabe quién eres: la torre está encima de la cárcel y te oía rascar la pared).
+enseñó su padre en esa misma mesa (sabe quién eres: desde su ventana, en lo alto de la torre, te vio salir de la
+cárcel).
 Antes de conocerte murmura inclinado sobre el tablero; al verte intenta levantarse agarrado a los brazos del
 sitial y las piernas no le sostienen.
 El Cerco es de la familia de los *tafl*: un tablero de 9 × 9 con el trono en medio y las afueras alrededor; tú
@@ -522,7 +537,7 @@ encima de la mesa; al tomarlo se echa atrás en el sitial, cierra los ojos y ya 
 marfil**: más vitalidad). Si pierdes las tres, se ríe, flojo, y se pone a colocar otra partida («Una más. La
 última, te lo prometo»); a la cuarta pieza, tu rey, se le para la mano a medio camino del trono, la pieza se le
 cae y él se queda doblado sobre el tablero (la pieza, **el rey de marfil**, te la quedas: un recuerdo). Después
-su cuerpo sigue en el sitial y el tablero como quedó. La Plañidera que esperaba en la sala llora ahora en la alcoba.
+su cuerpo sigue en el sitial y el tablero como quedó. Abajo, en su cámara, la dueña sigue llorando.
 
 **El Caballero de la Orden** (opcional; la pelea más difícil del juego). Por la escalera de la caseta se sube a
 la **terraza de la torre del homenaje**, lo más alto del mapa, que está por encima del humo: la noche clara y una
@@ -566,9 +581,9 @@ la muralla y a la escalera de la **torre de la cárcel**, que sube de frente a l
 igual). En la torre, la escalera de mano sube a la sala de los guardas, con sus jergones y el libro de presos.
 
 **Lo alto del castillo.** A donde lleva el salto: la atalaya (la cabeza de la coracha, con la paja y la leña del
-fanal), la coracha, un muro almenado que baja desde la muralla norte hasta el castillo con una torre en medio (y en
-ella un altar), y el adarve del castillo, que entra en la torre del homenaje por su poterna, en la sala del alcaide.
-Desde dentro, el torno baja el puente levadizo: el atajo de vuelta al patio.
+fanal) y la coracha, un muro almenado que baja desde la muralla norte, pegado a la cara de levante de la fortaleza,
+hasta la torre de la coracha (con su altar), por la que se entra en la fortaleza. Dentro, el torno de la puerta de
+la fortaleza baja su puente levadizo: el atajo de vuelta al patio de armas.
 
 **Una ciudad viva… de otra manera.** Bandadas de cuervos que picotean a los muertos y alzan el vuelo graznando al
 acercarte, ratas que huyen por los rincones, moscas zumbando sobre los cadáveres, ropa tendida entre las casas,
@@ -668,18 +683,19 @@ encontrarán:
 - **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
   que se lanza sin bajar el escudo.
 - **Espada del carcelero**: la de siempre, sin cambios.
-- **Espada oxidada** (una mano, con escudo; en la armería de la torre del homenaje, entre las lanzas): una espada de
+- **Espada oxidada** (una mano, con escudo; en la armería de la puerta de la fortaleza, entre las lanzas): una espada de
   munición comida de herrumbre, con mellas; se maneja como la del carcelero, cansa algo menos y corta algo menos, y
   contra armadura hace la mitad.
 - **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
   al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
-- **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller de la torre del homenaje): el ataque
+- **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller del ballestero, sobre la guardia de la
+  puerta de la fortaleza): el ataque
   ligero la alza a la cara y tira un virote, que vuela recto y deprisa (cae un poco), se clava donde da y tumba a las
   criaturas pequeñas; fijado un objetivo, va a su pecho. Tras el tiro se monta sola, con el pie en el estribo y las
   dos manos en la cuerda hasta la nuez: casi dos segundos quieto y a merced (si te golpean, se pierde). El pesado es
   un culatazo. Los **virotes se cuentan** (junto a las ampollas, con una raya dorada si está montada) y por ahora
-  sólo los hay en el castillo: en el pañol, en el taller, en el cadalso y en el carcaj del alférez. También cortan
-  cuerdas.
+  sólo los hay en la fortaleza: en la guardia, en la armería, en el taller, en el cadalso, en la galería de la sala
+  del trono y en el carcaj del alférez. También cortan cuerdas.
 
 Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
 queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`
@@ -953,17 +969,20 @@ src/
                         del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
-                        level_castle.js: el castillo y las mazmorras; castillo_fuera.js: lo de fuera (las
-                        torres nuevas, los cadalsos, la barbacana, la brecha); level_torre.js: la torre del homenaje,
-                        generada por medidas (estancias, zonas, forjados, escaleras); rey_mesa.js: la
-                        mesa del Rey (el tablero del Cerco, su sitial, el banco, las velas y el brasero);
+                        level_castle.js: el castillo y las mazmorras (y la antepuerta, donde estaba la torre
+                        vieja); castillo_fuera.js: lo de fuera (las torres nuevas, los cadalsos, la barbacana,
+                        la brecha); rey_mesa.js: la mesa del Rey (el tablero del Cerco, su sitial, el banco,
+                        las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; fortaleza_medidas.js: las medidas de la
                         fortaleza-palacio; fortaleza.js: la fortaleza por fuera (la muralla con su talud, las
                         torres de las esquinas, la puerta, la torre del homenaje nueva, las terrazas y las
                         cubiertas, lo de alrededor); fortaleza_patio.js: el patio de honor (sus muros y sus
                         puertas, el claustro, la escalinata, la fuente y el olmo); fortaleza_alas.js: las salas
-                        de la planta baja (la despensa, la cocina y su secadero, la guardia, la cancillería y
-                        el Tombo); fortaleza_salon.js: el gran salón, su armadura, la galería en el grueso del
+                        de la planta baja (la despensa, la cocina y su secadero, la cancillería y el Tombo);
+                        fortaleza_torre.js: la torre del homenaje por dentro (sus cinco plantas, el muro de
+                        carga, el caracol, la galería, la sala del trono, la terraza); fortaleza_puerta.js: la
+                        puerta (el paso, el rastrillo, la cámara del torno, el foso y el puente), el cuerpo de
+                        guardia, la armería, el taller del ballestero y el cadalso; fortaleza_salon.js: el gran salón, su armadura, la galería en el grueso del
                         muro y la Corte; fortaleza_reina.js: el estrado de las damas, la sala de la reina y su
                         torre; fortaleza_rey.js: la antecámara, la cámara del Rey, la torre de la coracha (el
                         tesoro, el oratorio, el altar) y el pasadizo; fortaleza_capilla.js: la capilla real (el
@@ -1080,15 +1099,19 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         cerco.mjs      el Cerco en la consola (sin navegador): las reglas, la velocidad de
                                        la IA y una liga del Rey contra jugadores de prueba
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
-                                       catacumbas, el aljibe y la torre-puerta; con «torre», del adarve a la
-                                       terraza y el puente levadizo
+                                       catacumbas, el aljibe y la torre-puerta; con «torre», la puerta de la
+                                       fortaleza (de la guardia al torno, y por el puente al patio de armas) y
+                                       la torre del homenaje (del pasadizo del Rey a la terraza)
                         fortalezawalk.mjs la fortaleza a pie: de la coracha al altar y al pasadizo, el caracol al
                                        oratorio del Rey, la tribuna y la llave del capellán (el cordón que cae),
                                        el altar de la capilla, la cámara del Rey y su escalera, el tesoro, las
                                        puertas atrancadas por dentro, la cancillería y el Tombo hasta sus arcas,
                                        el servicio, la cocina y su secadero, la galería del salón, la torre de
-                                       la reina (su oratorio, su cámara), su sala, la Corte, la guardia y el
-                                       rastrillo
+                                       la reina (su oratorio, su cámara), su sala, la Corte; la torre del
+                                       homenaje de abajo arriba por su caracol (la puerta quemada, la de la
+                                       escalinata, el almacén, la sala del trono, la galería, la terraza) y la
+                                       puerta (la guardia, la armería, el torno, el rastrillo y el puente, el
+                                       cadalso, el boquete, el taller y su tabique)
                         corte.mjs      la Corte de los Infieles, de principio a fin
                         caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
                                        de la acometida y el golpe de gracia, el hueco tras el salto, la

@@ -443,7 +443,9 @@ export function muroVanos(ctx, axis, a0, a1, t0, t1, y0, y1, vanos, A, B, o = {}
         if (r < a1 - 0.005) wb.box(mat, ...box(r, v.y, r + 0.001, ys), { faces: endLo, room: vr, tint, sub: 2, ao: false });
       }
       if (arco) {
-        archRing(ctx, { axis: axZ ? 'z' : 'x', c: v.c, w: v.w, y0: ys, rise: v.rise, ring, t0, t1, top: ytop, clip: [l - ring, r + ring], mat: 'ashlar', spMat: mat, rooms: [roomAt(A, ys), roomAt(B, ys)], tint: v.tint ?? PIEDRA.silla, spTint: tint, proud: 0.02 });
+        // (archRooms: la luz de cada cara del arco, si no es la de sus
+        // franjas: la puerta de una sala a un pasadizo que no tiene cara aquí)
+        archRing(ctx, { axis: axZ ? 'z' : 'x', c: v.c, w: v.w, y0: ys, rise: v.rise, ring, t0, t1, top: ytop, clip: [l - ring, r + ring], mat: 'ashlar', spMat: mat, rooms: v.archRooms ?? [roomAt(A, ys), roomAt(B, ys)], tint: v.tint ?? PIEDRA.silla, spTint: tint, proud: 0.02 });
         if (o.collide !== false) {
           ctx.col.add(...box(l, ys + v.rise * 0.62, r, ytop));
           ctx.col.add(...box(l - ring, ys, l, ytop));

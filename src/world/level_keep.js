@@ -5,8 +5,8 @@
 // recibe el salto. La coracha, un muro almenado que baja desde la muralla
 // norte hasta el castillo, corre pegada a la cara de levante de la fortaleza
 // (fortaleza.js): nada más bajar de la atalaya, a la derecha, la puerta de la
-// torre de la coracha, con su altar. Sigue hasta el adarve del castillo, y de
-// él se entra en la torre vieja por su poterna (level_castle.js).
+// torre de la coracha, con su altar. Sigue hasta el adarve del castillo, que
+// acaba, por poniente, donde estuvo la torre vieja (level_castle.js).
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { solid, blocker, stairs, merlons, cityWall, house } from './builders.js';
@@ -19,8 +19,8 @@ export const KEEP = {
   atalaya: { x: -60, z: -109, w: 7, top: 11.5 },
   // la coracha: de la atalaya al muro norte del castillo
   coracha: { x0: -62, x1: -58, z0: -105.5, z1: -23, y: 9 },
-  // el adarve del castillo (muro norte): de la torre del homenaje a la
-  // torre del nordeste
+  // el adarve del castillo (muro norte): de su cabo de poniente (donde
+  // estuvo la torre vieja) a la torre del nordeste
   walk: { x0: -71, x1: -52.5, z0: -23, z1: -20, y: 9 },
   // lo que la fortaleza tapa de la coracha por poniente (de su torre del
   // nordeste a la del sureste): ahí la coracha no tiene almenas

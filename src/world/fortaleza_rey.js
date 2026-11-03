@@ -11,7 +11,8 @@
 // cámara); arriba, la planta de la coracha con el altar de la llegada y la
 // escalera al pasadizo: el adarve cubierto que llevaba al Rey de sus cámaras a
 // su torre, a +12. Lo quemaron con él al otro lado: quedan los pies derechos
-// negros, la mitad del tejadillo y la puerta de la torre, atrancada.
+// negros, la mitad del tejadillo y la puerta de la torre: el fuego la dejó en
+// pie por fuera y carbón por dentro (cede al empujarla: fortaleza_torre.js).
 import * as THREE from 'three';
 import { beam, archRing } from './builders.js';
 import * as P from './props.js';
@@ -417,25 +418,19 @@ function pasadizo(ctx, L) {
     if (top - (y + 0.95) < 0.1) continue;
     wb.box('planks', x - 0.11, y + 0.95, zB - 0.02, x + 0.11, top, zB + 0.03, { ao: false, faces: 'nsewt', room, tint: burned ? negro : tiznado });
   }
-  // la puerta de la torre del homenaje: el arco, las hojas chamuscadas, la
-  // tranca por dentro
+  // la puerta de la torre del homenaje: el arco y sus hojas, chamuscadas,
+  // con la tranca por dentro (de la torre: fortaleza_torre.js, que la echa
+  // abajo al empujarla); aquí, su recerco de sillería oscura, tiznado
   {
     const zc = K.pasadizo,
       w = 1.2,
       h = 2.4,
-      xf = x0;
-    for (const s of [-1, 1]) wb.box('ashlar', xf, y, zc + s * (w / 2) - (s > 0 ? 0 : 0.26), xf + 0.12, y + h, zc + s * (w / 2) + (s > 0 ? 0.26 : 0), { ao: false, faces: 'enstb', room, tint: PIEDRA.torre.map((v) => v * 1.2) });
-    archRing(ctx, { axis: 'z', c: zc, w, y0: y + h, rise: w / 2, ring: 0.26, t0: xf - 0.01, t1: xf + 0.12, mat: 'ashlar', tint: PIEDRA.torre.map((v) => v * 1.2), proud: 0, cam: false, n: 9, rooms: [room, room] });
-    wb.box('planks', xf - 0.02, y, zc - w / 2, xf + 0.02, y + h, zc + w / 2, { ao: false, faces: 'e', room, tint: [0.3, 0.26, 0.22] });
-    const n = 8;
-    for (let i = 0; i < n; i++) {
-      const a = Math.PI - (i / n) * Math.PI,
-        b = Math.PI - ((i + 1) / n) * Math.PI,
-        r = w / 2;
-      cara(wb, 'planks', V(xf + 0.02, y + h, zc), V(xf + 0.02, y + h + Math.sin(a) * r, zc + Math.cos(a) * r), V(xf + 0.02, y + h + Math.sin(b) * r, zc + Math.cos(b) * r), V(xf + 0.02, y + h + Math.sin(b) * r, zc + Math.cos(b) * r), V(1, 0, 0), { ao: false, room, tint: [0.28, 0.24, 0.2] });
-    }
-    for (const yy of [y + 0.5, y + 1.4, y + 2.2]) wb.box('iron', xf + 0.02, yy - 0.05, zc - w / 2, xf + 0.05, yy + 0.05, zc + w / 2, { ao: false, faces: 'etb', room });
-    L.interact.push({ kind: 'examine', id: 'x_puerta_pasadizo', text: 'puertaPasadizo', x: xf + 0.9, y, z: zc, r: 1.3 });
+      xf = x0,
+      r = 0.26;
+    const tz = PIEDRA.torre.map((v) => v * 0.9);
+    for (const s of [-1, 1]) wb.box('ashlar', xf, y, zc + s * (w / 2 + r) - (s > 0 ? 0 : 0.22), xf + 0.1, y + h, zc + s * (w / 2 + r) + (s > 0 ? 0.22 : 0), { ao: false, faces: 'enstb', room, tint: tz });
+    archRing(ctx, { axis: 'z', c: zc, w: w + 2 * r, y0: y + h, rise: w / 2 + r, ring: 0.22, t0: xf - 0.01, t1: xf + 0.1, mat: 'ashlar', tint: tz, proud: 0, cam: false, n: 9, rooms: [room, room] });
+    wb.box('black', xf + 0.11, y + 0.004, zc - w / 2 - 0.5, xf + 1.4, y + 0.008, zc + w / 2 + 0.5, { ao: false, grime: false, faces: 't', room, tint: [0.5, 0.5, 0.5] });
   }
   // la luz: la luna, que entra por el tejadillo hundido, y la de la puerta de
   // la torre de la coracha

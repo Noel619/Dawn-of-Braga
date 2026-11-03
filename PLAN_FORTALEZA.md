@@ -372,6 +372,57 @@ Lo provisional, hasta las fases que vienen:
 - **La puerta del jardín** en la torre de la reina y **la poterna** de la cocina, con el jardín y el patio de armas
   (fase 4). La puerta, el cuerpo de guardia, la armería y el torno, en la fase 3.
 
+**Fase 3 (hecha).** La torre del homenaje por dentro (`world/fortaleza_torre.js`) y la puerta con su cuerpo de guardia
+(`world/fortaleza_puerta.js`), con sus medidas en `FORT.torre`, `FORT.puerta`, `FORT.guardia` y `FORT.cadalso`. Fuera
+la torre vieja (`world/level_torre.js`) y todo lo suyo en `world/level_castle.js`.
+
+- **La torre**: cinco alturas (la planta baja, +6, +12, +18 a doble altura y la terraza a +28), cada planta partida
+  por el muro de carga de poniente a levante, con su puerta de arco, y unidas por **el caracol** del rincón del
+  noroeste (de la planta baja a la galería; otro tramo sube a la caseta de la terraza). **La planta baja**: el
+  almacén (el pozo, la puerta del patio cegada bajo la escalinata, una ampolla y la trampilla de hierro de la bajada
+  a la cárcel, cerrada) y el granero. **+6**: la guardia de la torre, con la puerta de la escalinata atrancada por
+  dentro (el atajo al patio de honor), y el dormitorio. **+12**: la sala del consejo (el plano de la defensa) y la
+  cámara del Rey (el camastro junto al hogar, el relicario, la dueña). **La puerta del pasadizo**, quemada, cede al
+  primer empujón y es la entrada (en `game/interact.js`, la puerta sin cerrojo puede decir algo al abrirse, con su
+  sonido, y caer como un tabique, con el polvo de su color). **+18**: la sala del trono, encalada y pintada de
+  despiece, con los tres arcos sobre dos pilares, el estrado con el trono vacío bajo la ventana encendida y, a su
+  pie, **el Rey con su mesa y el Cerco** (`world/rey_mesa.js`, con su sitio en `FORT.torre.mesa`); y **la galería**
+  en el grueso de los muros de poniente, del norte y de levante, a +22,5, con sus vanos sobre la sala y sus óculos.
+  **La terraza**: la caseta del caracol, la chimenea, el fanal, la caldera de la pez, las piedras y **el Caballero de
+  la Orden** con su pendón: la escena de la luna, trasladada (`game/caballero.js` y `entities/caballero.js` toman
+  sus sitios de `FORT.torre`). La navegación de las criaturas por las plantas altas sale de las mismas medidas
+  (`game/game.js`, `entities/enemy.js`). Por fuera (`world/fortaleza.js`), sus vanos de verdad: la puerta de la
+  escalinata y la del pasadizo, las saeteras, los ajimeces y los óculos de la galería.
+- **La puerta**: el paso abovedado entre sus dos torres, con sus buhederas y el rastrillo, que sube con su palanca;
+  encima, **la cámara del torno**, con el torno del puente, las poleas, el alcaide muerto y sus últimas líneas;
+  fuera, **el foso de las estacas** y **el puente levadizo**, que cae al soltar el freno: el atajo al patio de armas.
+- **El cuerpo de guardia**: abajo, la sala (la mesa de los dados, el libro de la guarnición, la escalera por el muro
+  de la torre, el bolaño bajo el hundido); arriba, **la armería** (la espada oxidada, virotes) y **el taller del
+  ballestero** (la ballesta y la tabla del maestro), partidos por el tabique de los dos arcos: el del escombro y el
+  tapiado, que se derriba desde el taller (el atajo a la armería). La guardia que había en `fortaleza_alas.js` se
+  muda aquí.
+- **El cadalso**: colgado por fuera de la torre de levante de la puerta y de la muralla de la guardia, a la altura de
+  la planta alta, con sus tablas que faltan y su garita en el cabo, donde vigila **el alférez** (su llave y sus
+  virotes, donde caiga). Se sale a él por la cámara del torno, y del cadalso se entra al taller por **el boquete**
+  que abrió el bolaño en la muralla.
+- **Los documentos** (el libro de la guarnición, las líneas del alcaide, la tabla del ballestero), lo que dice el Rey
+  (te vio salir de la cárcel desde su ventana; su alcaide se quedó abajo, junto al torno), los avisos y los nombres
+  de las salas, al día.
+
+Lo provisional, hasta las fases que vienen:
+
+- **La antepuerta**: donde estaba la torre vieja, el patio de armas llega ya a la puerta de la fortaleza (la muralla
+  norte del castillo acaba en x −71, con su escalera rota); por poniente lo cierra una empalizada de troncos, de la
+  torre de la puerta a la muralla de poniente, hasta que se rehaga el patio de armas entero (fase 4).
+- **La bajada tapiada** de las celdas se queda tapiada, sin nada detrás, y la trampilla del almacén de la torre,
+  cerrada con su cadena y su candado (fase 5: las mazmorras y el rastrillo).
+- **El paso de la puerta** es recto, como se hizo en la fase 1, y con un solo rastrillo (no en recodo con dos).
+- La poterna de la cocina, la puerta del jardín de la reina y el paseo de las cámaras siguen como en la fase 2.
+
+Pruebas: `tools/fortalezawalk.mjs` (ahora también la torre de abajo arriba y la puerta con su guardia, su cadalso y
+su taller), `tools/castlewalk.mjs torre` (de la guardia al torno y por el puente al patio de armas; del pasadizo a la
+terraza), `tools/progress.mjs`, `tools/rey.mjs` y `tools/caballero.mjs` (con sus sitios de `FORT.torre`).
+
 ## Fuentes
 
 - La alcáçova de Lisboa (el castillo, el paço real y la plaza de armas en un mismo recinto, partido en dos patios

@@ -7,8 +7,11 @@ import { TYPES } from './enemies.js';
 import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
 import { CASTLE } from '../world/level_castle.js';
+import { FORT } from '../world/fortaleza_medidas.js';
 
-const KEEP = CASTLE.keep;
+// (la torre del homenaje de la fortaleza: de la planta de la guardia arriba,
+// su rejilla por capas)
+const KEEP = FORT.torre;
 import { registerMaterialPatch } from '../gfx/materials.js';
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -233,7 +236,7 @@ export class Enemy {
     // (la torre del homenaje, de la planta primera a la terraza, con sus
     // escaleras, si va de una planta a otra; si sale o entra, la de la
     // calle, que también tiene sus plantas)
-    const inKeep = (q) => q.x > KEEP.x0 && q.x < KEEP.x1 && q.z > KEEP.z0 && q.z < KEEP.z1 && q.y > KEEP.F1 - 0.6;
+    const inKeep = (q) => q.x > KEEP.x0 && q.x < KEEP.x1 && q.z > KEEP.z0 && q.z < KEEP.z1 && q.y > KEEP.pisos[1] - 0.6;
     if (g.navKeep && inKeep(p) && (!t || inKeep(t))) return g.navKeep[0];
     if (g.navCellar && y < -0.5 && g.inCellar(p)) return g.navCellar;
     // (las mazmorras, que por la escalera de la cárcel llegan hasta el patio:

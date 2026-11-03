@@ -55,7 +55,7 @@ rect(-74.8, -86, -72.4, -64.6, (110, 130, 170), (50, 60, 90), 1); rect(-74.8, -6
 rect(-72.2, -85.2, -68.2, -81.2, (210, 200, 180), (40, 40, 50), 2); label(-70.2, -83.2, 'camp.', f9, (40, 40, 50))
 rect(-74.8, -59.4, -64.4, -46, (170, 140, 100)); label(-69.6, -52.7, 'CANCI-\nLLERÍA', f11)
 rect(-126, -44.8, -106, -34.4, (150, 120, 90)); label(-116, -39.6, 'despensa ·\nbotillería', f11)
-rect(-106, -46, -90, -29, (90, 84, 78)); label(-98, -39, 'PUERTA\n(rastrillo)', f9, (240, 230, 220))
+rect(-106, -46, -90, -29, (90, 84, 78)); label(-98, -39, 'PUERTA\n(rastrillo ·\ntorno)', f9, (240, 230, 220))
 rect(-90, -44.8, -76, -34.4, (130, 112, 96)); label(-83, -39.6, 'cuerpo de guardia ·\narmería y taller\n(la ballesta)', f9)
 rect(-126, -97.6, -111, -87.2, (120, 90, 130)); label(-118.5, -92.4, 'estrado de las damas\n· sala de la reina\n(+5,5)', f9, (245, 235, 250))
 rect(-85, -97.6, -76, -87.2, (140, 100, 70)); label(-80.5, -92.4, 'antecámara\n· cámara\ndel Rey\n(+4,5)', f9, (250, 240, 230))
@@ -81,7 +81,10 @@ rect(-109.4, -86, -86.6, -83, (140, 132, 120), (80, 74, 66), 1); label(-98, -84.
 rect(-111, -112, -85, -86, (58, 52, 50), w=4)
 for (a, b) in [(-112, -113), (-87.4, -113), (-112, -88.4), (-87.4, -88.4)]:
     rect(a, b, a + 3.6, b + 3.6, (80, 74, 70), w=2)
-label(-98, -99, 'TORRE DEL\nHOMENAJE\n26 × 26 · 34 m\n(sala del trono:\nel REY)', f13, (250, 230, 190))
+# (por dentro: el muro de carga, de poniente a levante, y la caja del caracol, en el rincón del noroeste)
+rect(-108.4, -101.5, -87.6, -100.5, (84, 78, 74), (84, 78, 74), 1)
+rect(-108.4, -109.4, -104.8, -105.8, (96, 90, 86), (20, 18, 16), 1); label(-106.6, -107.6, 'car.', f9, (230, 220, 200))
+label(-98, -93.2, 'TORRE DEL HOMENAJE\n26 × 26 · 34 m\n(sala del trono: el REY\nterraza: el CABALLERO)', f11, (250, 230, 190))
 # torres de las esquinas
 for (x0, z0, x1, z1, t) in [(-140, -44.8, -126, -30, 'COCINA\n(secadero)'), (-76, -46, -62, -32, 'TOMBO'), (-140, -102, -126, -87.2, 'REINA\n(oratorio ·\ncámara)'), (-76, -102, -62, -86, 'CORACHA\n(altar · oratorio\ndel Rey · tesoro)')]:
     rect(x0, z0, x1, z1, (110, 104, 98), w=3); label((x0 + x1) / 2, (z0 + z1) / 2, t, f11, (250, 245, 235))
@@ -90,8 +93,6 @@ d.line([P(-64, -95.4), P(-62, -95.4)], fill=(240, 200, 120), width=5)
 # el eje
 for z in range(-29, -86, -3):
     d.line([P(-98, z), P(-98, z - 1.5)], fill=(240, 200, 120), width=2)
-# el foso y el puente (fase 3)
-rect(-102, -29, -94, -26, (40, 34, 30)); rect(-100, -29, -96, -26, (120, 96, 70), (60, 50, 40), 1); label(-98, -27.5, 'puente', f9, (240, 230, 220))
 # patio de armas
 rect(-120, -26, -47, 24, (120, 106, 84), w=3)
 rect(-120, -32, -106, -26, (120, 106, 84), (120, 106, 84), 1); rect(-90, -32, -62, -26, (120, 106, 84), (120, 106, 84), 1)
@@ -105,6 +106,17 @@ rect(-120, -22, -112, 6, (130, 112, 96), w=2); label(-116, -8, 'cuadras ·\nhalc
 rect(-112, 12, -102, 20, (140, 100, 80), w=2); label(-107, 16, 'fragua', f9)
 d.ellipse([P(-63, 11), P(-60.6, 13.4)], fill=(60, 60, 70)); label(-61.8, 9.4, 'pozo', f9)
 label(-97, -10, 'fundíbulo\nroto', f9)
+# el foso de las estacas y el puente levadizo (bajado)
+rect(-102, -28, -94, -24, (40, 34, 30)); rect(-100.5, -29, -95.5, -23.8, (120, 96, 70), (60, 50, 40), 1); label(-98, -26.4, 'puente', f9, (240, 230, 220))
+# el cadalso, colgado de la torre de levante de la puerta y de la muralla de la guardia, con la garita del alférez
+for (a, b, c, e) in [(-95.3, -29, -88.2, -27.2), (-90, -30.2, -88.2, -29), (-90, -32, -76, -30.2)]:
+    rect(a, b, c, e, (150, 110, 70), (70, 50, 30), 1)
+rect(-77.8, -32, -76, -30.2, (110, 76, 46), (60, 40, 24), 1)
+label(-80.5, -28.6, 'cadalso (el ALFÉREZ)', f9, (240, 220, 190))
+# (por ahora, hasta la fase 4: la antepuerta, cerrada por poniente con una empalizada)
+for (a, b, c, e) in [(-104.6, -28.4, -104.6, -3.3), (-104.6, -3.3, -92.9, -3.3)]:
+    d.line([P(a, b), P(c, e)], fill=(150, 100, 60), width=3)
+label(-99, -20.5, 'empalizada\n(por ahora)', f9, (60, 36, 20))
 rect(-120, 20, -47, 24, (110, 104, 98)); label(-84, 22, 'muralla sur · la brecha', f9, (230, 225, 220))
 # mazmorras (de puntos)
 dashed(-96, -24, -46, 24, (190, 160, 120)); label(-71, -3, 'mazmorras del principio (−5)', f11, (230, 200, 160))

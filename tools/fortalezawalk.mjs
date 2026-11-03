@@ -1,7 +1,9 @@
-// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 y 2): de la coracha a todas
+// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 3): de la coracha a todas
 // sus salas, por sus caracoles, sus escaleras, sus tribunas, su galería y su
-// pasadizo, abriendo sus puertas y cogiendo lo que hay en ellas, como un
-// jugador (andando de punto en punto, sin teletransportes salvo para volver).
+// pasadizo; la torre del homenaje, de abajo arriba, y la puerta, con su
+// guardia, su torno, su puente y su cadalso; abriendo sus puertas y cogiendo
+// lo que hay en ellas, como un jugador (andando de punto en punto, sin
+// teletransportes salvo para volver).
 //   node tools/fortalezawalk.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -65,18 +67,20 @@ await p.evaluate(() => {
     const u = __useHere(id);
     return u.ok ? u : { ...u, w };
   };
-  // los peldaños de un caracol (el del rincón del sureste de una torre: x1,
-  // z1), de u0 a u1
-  window.__caracol = (x1, z1, u0, u1) => {
-    const cx = x1 - 1.6, cz = z1 - 1.6, r = 0.95;
+  // los peldaños de un caracol (su centro; a0, el ángulo de su primer
+  // peldaño, en grados), de u0 a u1
+  window.__husillo = (cx, cz, a0, u0, u1) => {
+    const r = 0.95;
     const pts = [];
     const st = u1 > u0 ? 1 : -1;
     for (let u = u0; st > 0 ? u <= u1 : u >= u1; u += st) {
-      const a = ((270 + 22.5 * (u + 0.5)) * Math.PI) / 180;
+      const a = ((a0 + 22.5 * (u + 0.5)) * Math.PI) / 180;
       pts.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]);
     }
     return __walk(pts);
   };
+  // (el del rincón del sureste de una torre: x1, z1)
+  window.__caracol = (x1, z1, u0, u1) => __husillo(x1 - 1.6, z1 - 1.6, 270, u0, u1);
 });
 const T = (s) => p.evaluate(s);
 const out = [];
@@ -90,7 +94,7 @@ await step('altar', "(()=>{__walk([[-71.0,-95.2]]);return __useHere('a_coracha')
 // 2. la escalera al pasadizo (+12) y el pasadizo hasta la puerta de la torre del homenaje
 await step('escalera pasadizo', "__walk([[-66.6,-97.4],[-66.4,-99.3],[-71.8,-99.1],[-73.4,-98.8]])");
 await step('pasadizo', "__walk([[-75,-98.79],[-77,-98.79],[-81,-98.79],[-83.6,-98.79]])");
-await step('puerta torre', "__useHere('x_puerta_pasadizo')");
+await step('puerta torre', "__useHere('d_pasadizo_torre')");
 await step('vuelta', "__walk([[-77,-98.79],[-74.5,-98.79],[-72.8,-99.1],[-67.2,-99.3],[-66.4,-97],[-66.4,-93.4],[-66.4,-91.0]])");
 // 3. el caracol abajo, al oratorio del Rey (+4,5): la tribuna de la capilla y la llave del capellán
 await step('baja al oratorio', "__caracol(-64,-88,31,15)");
@@ -149,6 +153,50 @@ await step('sala de la reina', "(()=>{const g=__game;g.player.spawn(-131.5,5.5,-
 await step('corte', "(()=>{const g=__game;g.player.maxHp=g.player.hp=1e6;g.player.spawn(-128.4,0,-60,Math.PI);__sim(0.3);const w=__walk([[-128.4,-64],[-124.3,-66],[-124.3,-80],[-124.3,-83.5]]);return {w,estado:g.corte.state,y:+g.player.pos.y.toFixed(2)}})()");
 await step('guardia', "(()=>{const g=__game;g.corte.onRespawn&&g.corte.onRespawn();g.player.spawn(-85,0,-52,0);__sim(0.3);__walk([[-82,-47.6]]);const r=__useHere('d_guardia');const w=__walk([[-82,-44],[-86,-41.6]]);return {r,w}})()");
 await step('rastrillo', "(()=>{const g=__game;g.player.spawn(-98,0,-50,0);__sim(0.3);return __walk([[-98,-46],[-98,-40],[-98,-32]])})()");
+// 10. la torre del homenaje: por el pasadizo (su puerta, ya caída), la sala
+// del consejo y la cámara (+12); por el caracol, la guardia (+6) y la puerta
+// de la escalinata; el almacén (la trampilla de la cárcel, la ampolla); la
+// sala del trono (+18: el Rey), la galería y la terraza (la niebla)
+await step('al consejo', "(()=>{const g=__game;g.player.spawn(-82,12,-98.79,-Math.PI/2);__sim(0.3);return __walk([[-84.4,-98.79],[-86.4,-98.79],[-88.4,-98.79],[-92,-99]])})()");
+await step('a la cámara', "__walk([[-95,-99.8],[-95,-101],[-95,-102.6],[-100,-104.6],[-104.2,-108.6]])");
+await step('caracol a la guardia', "(()=>{__walk([[-105.2,-108.6],[-105.85,-108.1]]);return __husillo(-106.8,-107.8,0,31,15)})()");
+await step('guardia de la torre', "__walk([[-105.3,-108.5],[-104.2,-108.6],[-102,-106],[-102,-102.6],[-102,-101],[-102,-99.4],[-98,-92],[-98,-89.6]])");
+await step('d_torre_patio', "__useHere('d_torre_patio')");
+await step('rellano', "__walk([[-98,-88.4],[-98,-87],[-98,-85.4]])");
+await step('al caracol', "__walk([[-98,-87],[-98,-92],[-102,-99.4],[-102,-102.6],[-104.2,-108.6]])");
+await step('caracol abajo', "(()=>{__walk([[-105.2,-108.6],[-105.85,-108.1]]);return __husillo(-106.8,-107.8,0,15,0)})()");
+await step('almacén', "__walk([[-105.5,-107.2],[-104.2,-107.0],[-100,-104],[-95,-102.6],[-95,-101],[-95,-99.4],[-97,-96]])");
+await step('ampolla', "__ir('i_ampolla5', 0.8)");
+await step('trampilla', "__ir('x_bajada_torre', 0.6)");
+await step('caracol al trono', "(()=>{__walk([[-97,-96],[-95,-99.4],[-95,-102.6],[-100,-104],[-104.2,-107.0],[-105.2,-107.2],[-105.87,-107.6]]);return __husillo(-106.8,-107.8,0,0,47)})()");
+await step('sala del trono', "__walk([[-105.3,-108.5],[-104.2,-108.6],[-101,-106],[-98,-102.5],[-98,-100.5],[-98,-96.2]])");
+await step('el Rey', "(()=>{const g=__game;g.player.yaw=0;__sim(0.2);return {prompt:g.promptTarget&&g.promptTarget.id,rey:g.rey.mode}})()");
+await step('caracol a la galería', "(()=>{__walk([[-98,-100.5],[-98,-102.5],[-101,-106],[-104.2,-108.6],[-105.2,-108.6],[-105.85,-108.1]]);return __husillo(-106.8,-107.8,0,47,59)})()");
+await step('galería', "__walk([[-107.6,-108.9],[-107.6,-109.9],[-107.6,-110.7],[-100,-110.7],[-90,-110.7],[-86.3,-110.7],[-86.3,-100],[-86.3,-90]])");
+await step('virotes galería', "__ir('i_virotes_trono', 0.6)");
+await step('caracol a la terraza', "(()=>{__walk([[-86.3,-100],[-86.3,-110.7],[-100,-110.7],[-107.6,-110.7],[-107.6,-109.9],[-107.6,-108.9],[-107.4,-108.6]]);return __husillo(-106.8,-107.8,1350,0,19)})()");
+await step('niebla del Caballero', "(()=>{const g=__game;const f=g.interact.list.find(i=>i.id==='f_caballero');return {y:+g.player.pos.y.toFixed(2),zona:g.zone&&g.zone.id,niebla:!!(f&&f.obj&&f.obj.visible)}})()");
+// 11. la puerta de la fortaleza: la guardia (ya abierta) y su escalera, la
+// armería, la cámara del torno (la palanca del rastrillo, el alcaide, el
+// torno del puente); por el paso y el puente, al patio de armas; el cadalso,
+// el boquete del bolaño, el taller (la ballesta) y el tabique, que se
+// derriba desde él
+await step('escalera de la guardia', "(()=>{const g=__game;g.player.spawn(-82,0,-48,0);__sim(0.3);return __walk([[-82,-46.5],[-82,-44.0],[-86,-43],[-88.2,-43.0],[-89.3,-44.3],[-89.3,-37.0]])})()");
+await step('oxidada', "(()=>{__walk([[-89.3,-36.4],[-87.6,-36.6]]);return __ir('i_oxidada', 0.7)})()");
+await step('virotes armería', "(()=>{__walk([[-85.2,-37.2],[-85.2,-39.5],[-85.7,-41.3],[-86.3,-42.6]]);return __ir('i_virotes_armeria', 0.8)})()");
+await step('cámara del torno', "__walk([[-85.7,-41.3],[-85.2,-39.5],[-85.2,-37.0],[-89.3,-36.4],[-89.6,-35.6],[-92.5,-35.6]])");
+await step('palanca del rastrillo', "(()=>{__walk([[-96,-35.9],[-102,-35.2],[-103.45,-33.7]]);return __useHere('p_rastrillo_fort')})()");
+await step('alcaide', "(()=>{__walk([[-101,-34.8]]);return __ir('n_alcaide', 0.7)})()");
+await step('torno', "(()=>{__walk([[-98,-34.6]]);return __useHere('b_puente_fort')})()");
+await step('puente', "(()=>{__sim(5);const g=__game;return {puente:!!g.flags['puente:fortaleza'],rastrillo:g.interact.list.find(i=>i.id==='d_rastrillo_fort').open}})()");
+await step('al patio de armas', "__walk([[-98,-35.2],[-96,-35.9],[-92.5,-35.6],[-89.6,-35.6],[-89.3,-36.6],[-89.3,-37.2],[-89.3,-44.2],[-88.2,-43.0],[-86,-43],[-82,-44],[-82,-47.2],[-90,-47.5],[-98,-47.5],[-98,-45],[-98,-31.5],[-98,-27],[-98,-22.5],[-90,-18],[-80,-14]])");
+await step('cadalso', "(()=>{const g=__game;g.player.spawn(-92.5,5.5,-35.6,Math.PI);__sim(0.3);return __walk([[-92.2,-31.0],[-92.2,-29.6],[-92.2,-28.1]])})()");
+await step('virotes cadalso', "__ir('i_virotes_cadalso', 0.6)");
+await step('boquete', "__walk([[-89.1,-28.1],[-89.1,-31.1],[-83,-31.1],[-81,-31.1],[-81,-33.2],[-81,-35.2],[-81.6,-36.4]])");
+await step('ballesta', "(()=>{__walk([[-79.6,-37.2]]);return __ir('i_ballesta', 0.9)})()");
+await step('nota del ballestero', "__ir('n_ballestero', 0.8)");
+await step('tabique', "(()=>{__walk([[-81.6,-36.6],[-81.9,-37.4]]);return __useHere('d_tabique_taller')})()");
+await step('a la armería', "(()=>{__sim(2);return __walk([[-83.8,-37.4],[-85.4,-36.6],[-89.3,-36.4]])})()");
 out.push('llaves: ' + (await T("['llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
 console.log(out.join('\n'));
 console.log(logs.slice(0, 10).join('\n'));

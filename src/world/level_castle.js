@@ -8,14 +8,11 @@
 // hospital, y el fundíbulo de la guarnición, partido por un tiro de los de
 // fuera. La escalera del adarve norte se vino abajo con otro.
 //
-// La torre del homenaje, el último reducto, ocupa la esquina noroeste y los
-// adarves entran en ella. Se sube por una escalera exenta hasta un rellano y
-// un puente levadizo la une con la puerta, en la planta primera: lo alzaron
-// desde dentro y desde el patio ya no sube nadie. Planta baja: el almacén de
-// víveres (sólo por una trampilla desde arriba); primera: el cuerpo de
-// guardia y la armería, con el torno del puente; segunda: la sala del
-// alcaide, con el plano de la defensa y la poterna del adarve; arriba, la
-// terraza de combate (ahí se peleará con la Bestia de Carne).
+// Al norte, la fortaleza del Rey (world/fortaleza*.js): el patio de armas
+// llega hasta su puerta, con el puente levadizo alzado sobre su foso, por
+// donde estaba la torre vieja (PLAN_FORTALEZA.md, fase 3; la cierra por
+// poniente, hasta que se rehaga el patio de armas, una empalizada). El adarve
+// de la muralla norte, adonde baja la coracha, acaba donde acababa la torre.
 //
 // Bajo el patio, las mazmorras: el pasillo de las celdas (aquí despierta el
 // jugador) y el cuarto del carcelero, cavados junto a una necrópolis más
@@ -27,7 +24,6 @@ import { house, solid, blocker, stairs, merlons, cityWall, tower, archWall, subt
 import * as P from './props.js';
 import { floor, interiorRoom } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
-import { buildTorre, torreZones, BAJADA } from './level_torre.js';
 import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
 import { buildCastilloFuera, FUERA } from './castillo_fuera.js';
 
@@ -43,24 +39,23 @@ export const OSARIO_C = { x0: -93.5, x1: -85.5, z: 3, y: YD - 0.9, top: -1.25 };
 export const CASTLE = {
   // el patio, dentro de las murallas
   yard: { x0: -90, z0: -20, x1: -51, z1: 20 },
-  // la muralla: la del norte, a la altura de la poterna (se anda); las otras
+  // la muralla: la del norte, a la altura de la coracha (se anda); las otras
   // tres, más altas (no se andan); y las torres de las esquinas
   wallH: 9,
   wallH2: 11,
   towerH: 14.5,
-  // la torre del homenaje (esquina noroeste, a caballo de la muralla norte):
-  // planta, muros, plantas, la terraza y el grueso de los forjados (lo demás
-  // sale de aquí: world/level_torre.js)
-  keep: { x0: -97, z0: -29, x1: -71, z1: -3, t: 2.4, F1: 4.5, F2: 9, F3: 13.5, R: 18.4, slab: 0.4 },
-  // la puerta (planta primera, al sur) y el puente levadizo
-  door: { x: -82, w: 2.2, h: 2.6 },
-  bridge: { w: 2.6, len: 2.7 },
-  // el rellano de la escalera exenta, enfrente de la puerta
-  landing: { x0: -84.6, x1: -79.4, z0: -0.3, z1: 3.0 },
-  // la poterna del adarve (planta segunda, al este)
-  postern: { z0: -21.6, z1: -20.2, h: 2.5 },
-  // la trampilla del almacén (en la planta primera)
-  hatch: { x: -88.4, z: -10.8 },
+  // el patio de armas hasta la puerta de la fortaleza, donde estaba la torre
+  // vieja (PLAN_FORTALEZA.md, fase 3; lo demás, en la fase 4): la antepuerta,
+  // del cabo de la empalizada a la coracha y de la fortaleza a la muralla
+  // norte del castillo, y su franja de poniente hasta la muralla de poniente;
+  // la empalizada que lo cierra por poniente (de la torre de la puerta, en
+  // z0, hasta z1, y de ahí a la muralla, en x1)
+  antepuerta: { x0: -104.3, z0: -32, x1: -62, z1: -20, zo: -3.6 },
+  empalizada: { x: -104.6, z0: -28.4, z1: -3.3, x1: -92.9 },
+  // el cabo de poniente de la muralla norte (y de su adarve) y el de arriba de
+  // la de poniente: donde acababa la torre vieja
+  norte: { x0: -71 },
+  oeste: { z0: -3 },
   // la torre-puerta y su paso en recodo (A: de la calle hacia el oeste; B:
   // hacia el sur, al patio)
   gate: { x0: -59, x1: -48, z0: -7, z1: 5, h: 13, ph: 4.4 },
@@ -70,10 +65,6 @@ export const CASTLE = {
   ptHatch: { x: -83.0, z: 12.0 },
   // las mazmorras
   dun: { y: YD, x0: -96, z0: -24, x1: -46, z1: 24 },
-  // el pasadizo quemado: la puerta de la alcoba del alcaide (la planta del
-  // Rey de la torre) a la galería que la unía con la fortaleza, tapiada; su eje
-  // y su puerta
-  pasadizo: { x: -93.2, w: 1.2, h: 2.4 },
   // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
   well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador
@@ -161,18 +152,15 @@ export function buildCastle(ctx, S, D, L) {
   // lo de fuera: las torres nuevas, los cadalsos, la barbacana y la brecha
   buildCastilloFuera(ctx, S, L, CASTLE);
   buildGate(ctx, S, L);
-  buildTorre(ctx, S, L);
   buildYard(ctx, S, L, rng);
   buildPrisonTower(ctx, S, L);
   buildDungeon(ctx, D, L);
 
   // --- zonas
-  const K = CASTLE.keep;
   const G = CASTLE.gate,
-    T = CASTLE.ptower;
-  const keepZones = torreZones();
+    T = CASTLE.ptower,
+    A = CASTLE.antepuerta;
   L.zones.push(
-    ...keepZones,
     { id: 'torre_carcel', rects: [[T.x0 + T.t, T.z0 + T.t, T.x1 - T.t, T.z1 - T.t, -1, 4]], atmo: 'prison', room: 'torre_carcel' },
     { id: 'torre_carcel_alta', rects: [[T.x0 + T.t, T.z0 + T.t, T.x1 - T.t, T.z1 - T.t, 4.2, 8]], atmo: 'interior', room: 'torre_carcel_alta' },
     {
@@ -185,12 +173,22 @@ export function buildCastle(ctx, S, D, L) {
     },
     { id: 'castle_chapel', rects: [[-60, -20, -52, -14, -1, 5]], atmo: 'chapel', room: 'castle_chapel' },
     { id: 'cuartel', rects: [[-80, 13, -66, 20, -1, 3.2]], atmo: 'interior', room: 'cuartel' },
-    { id: 'castle', rects: [[-93, -23, -47.8, 23, -0.6, 20]], atmo: 'city' }
+    // (con la antepuerta, hasta la fortaleza: por debajo del cadalso)
+    {
+      id: 'castle',
+      rects: [
+        [-93, -23, -47.8, 23, -0.6, 20],
+        [A.x0, -29, -58, A.z1, -0.6, 4],
+        [-90, A.z0, A.x1, -29, -0.6, 4],
+        [A.x0, A.z1, -93, A.zo, -0.6, 20],
+      ],
+      atmo: 'city',
+    }
   );
   L.map.push(
-    { id: 'castle', r: [Y.x0, Y.z0, Y.x1, Y.z1], cut: [Y.x0, Y.z0, K.x1, K.z1] },
-    // (la torre, se entre por donde se entre, rotulada como tal)
-    ...[...new Set(keepZones.map((z) => z.id))].map((id) => ({ id, r: [K.x0, K.z0, K.x1, K.z1], label: 'homenaje' })),
+    { id: 'castle', r: [Y.x0, Y.z0, Y.x1, Y.z1] },
+    { id: 'castle', r: [A.x0, A.z0, A.x1, A.z1] },
+    { id: 'castle', r: [A.x0, A.z1, Y.x0, A.zo] },
     { id: 'castle_gate', r: [G.x0, G.z0, G.x1, G.z1] },
     { id: 'castle_chapel', r: [-60, -20, -52, -14] },
     { id: 'cuartel', r: [-80, 13, -66, 20] },
@@ -204,23 +202,27 @@ export function buildCastle(ctx, S, D, L) {
 function buildWalls(ctx, S, L, rng) {
   const wb = ctx.wb;
   const H = CASTLE.wallH;
-  const K = CASTLE.keep;
+  const N = CASTLE.norte;
   const G = CASTLE.gate;
   // la coracha llega a la muralla norte por aquí (level_keep.js)
   const cx0 = -62,
     cx1 = -58;
-  // norte (de la torre del homenaje a la torre del nordeste): su adarve se
-  // pisa (llega de la coracha y entra en la torre por la poterna)
-  cityWall(ctx, K.x1, -23, -48, -20, H, { merlons: false });
-  merlons(ctx, K.x1, -22.7, cx0, -22.7, H, { collide: false });
+  // norte (de donde acababa la torre vieja a la torre del nordeste): su
+  // adarve se pisa (llega de la coracha); en su cabo de poniente, un pretil
+  // almenado
+  cityWall(ctx, N.x0, -23, -48, -20, H, { merlons: false });
+  merlons(ctx, N.x0, -22.7, cx0, -22.7, H, { collide: false });
   merlons(ctx, cx1, -22.7, -48, -22.7, H, { collide: false });
+  parapet(ctx, N.x0, -22.4, N.x0 + 0.5, -20.6, H);
+  merlons(ctx, N.x0 + 0.25, -22.2, N.x0 + 0.25, -20.8, H + 0.95, { collide: false, t: 0.5, w: 0.7, gap: 0.5 });
+  blocker(ctx, N.x0 - 0.4, H - 0.2, -23, N.x0, H + 2.4, -20);
   // (la colisión de las almenas, alta: que no se ande por encima)
-  blocker(ctx, K.x1, H - 0.2, -23, cx0, H + 2.4, -22.4);
+  blocker(ctx, N.x0, H - 0.2, -23, cx0, H + 2.4, -22.4);
   blocker(ctx, cx1, H - 0.2, -23, -52.5, H + 2.4, -22.4);
   // pretil hacia el patio (con el hueco por donde desemboca la escalera)
-  parapet(ctx, K.x1 + 2.0, -20.5, -52.5, -20, H);
+  parapet(ctx, N.x0 + 2.0, -20.5, -52.5, -20, H);
   // restos de los cadalsos: canes de madera que asoman por fuera
-  for (let x = K.x1 + 0.7; x < -50; x += 1.6) {
+  for (let x = N.x0 + 0.7; x < -50; x += 1.6) {
     if (x > cx0 - 0.5 && x < cx1 + 0.5) continue;
     wb.box('wooddark', x - 0.1, H - 0.9, -23.9, x + 0.1, H - 0.65, -23, { ao: false });
   }
@@ -229,17 +231,17 @@ function buildWalls(ctx, S, L, rng) {
     [-55.8, -52.4],
   ])
     wb.box('planks', a, H - 0.68, -23.9, b, H - 0.62, -23.02, { ao: false, faces: 'tnsewb', tint: [0.7, 0.62, 0.55] });
-  // la escalera del adarve: sube pegada al muro este de la torre del homenaje
-  // y desemboca de frente en el adarve, por el hueco del pretil, junto a la
-  // poterna. Un tiro de los trabucos la partió por en medio: el macizo de
-  // arriba se desmoronó en talud, los primeros peldaños que quedan asoman
-  // volados de la torre y los de abajo acaban mordidos.
+  // la escalera del adarve: sube del patio, en su cabo de poniente, y
+  // desemboca de frente en el adarve, por el hueco del pretil. Un tiro de los
+  // trabucos la partió por en medio: el macizo de arriba se desmoronó en
+  // talud, los peldaños que quedan arriba asoman volados y los de abajo acaban
+  // mordidos.
   {
     const n = 30,
       rise = H / n,
       run = 0.42;
-    const sx0 = K.x1,
-      sx1 = K.x1 + 2.0;
+    const sx0 = N.x0,
+      sx1 = N.x0 + 2.0;
     const zt = -20; // arriba (el borde del adarve)
     const zf = zt + n * run; // el pie
     const gap0 = 11,
@@ -319,13 +321,14 @@ function buildWalls(ctx, S, L, rng) {
   const H2 = CASTLE.wallH2,
     TH = CASTLE.towerH,
     Bx = FUERA.brecha;
-  cityWall(ctx, -93, K.z1, -90, 20, H2, { merlonSides: ['w'] });
+  cityWall(ctx, -93, CASTLE.oeste.z0, -90, 20, H2, { merlonSides: ['w'] });
   holedWall(ctx, 'wallstone', 'x', -93, -48, 20, 23, 0, H2, [{ a0: Bx.x0, a1: Bx.x1, y0: Bx.y, y1: H2 }], 'tnsew', { mats: { t: 'flag' } });
   merlons(ctx, -93, 22.7, Bx.x0, 22.7, H2, {});
   merlons(ctx, Bx.x1, 22.7, -48, 22.7, H2, {});
   cityWall(ctx, -51, -20, -48, G.z0, H2, { merlonSides: ['e'] });
   cityWall(ctx, -51, G.z1, -48, 20, H2, { merlonSides: ['e'] });
-  // torres de las esquinas (la del noroeste es la del homenaje)
+  // torres de las esquinas (en la del noroeste, la antepuerta de la
+  // fortaleza)
   tower(ctx, -91.5, 21.5, 6, TH);
   tower(ctx, -49.5, 21.5, 6, TH);
   tower(ctx, -49.5, -21.5, 6, TH);
@@ -489,19 +492,18 @@ function chevaux(ctx, x, z, rot) {
 // ------------------------------------------------------------------------ el patio de armas
 function buildYard(ctx, S, L, rng) {
   const wb = ctx.wb;
-  const K = CASTLE.keep,
-    G = CASTLE.gate,
+  const G = CASTLE.gate,
     T = CASTLE.ptower;
   // suelo: tierra apisonada (sin pisar el de la torre-puerta ni el de la cárcel)
   for (const r of subtractRects(
     [-90, -20, -51, 20],
     [
-      [-90, -20, K.x1, K.z1],
       [G.x0, G.z0, -51, G.z1 + 0.6],
       [T.x0, T.z0, T.x1, T.z1],
     ]
   ))
     floor(ctx, r[0], r[1], r[2], r[3], 'dirt');
+  antepuerta(ctx, S, L);
   // enlosado del camino de la puerta a la torre y del pozo
   floor(ctx, -80, 6.4, -53, 8.2, 'flag', 0.02);
   floor(ctx, CASTLE.well.x - 1.8, 8.2, CASTLE.well.x + 1.8, CASTLE.well.z - 1.1, 'flag', 0.02);
@@ -749,6 +751,64 @@ function buildYard(ctx, S, L, rng) {
   );
 }
 
+// La antepuerta: el patio de armas, por donde estaba la torre vieja, hasta la
+// puerta de la fortaleza (su foso y su puente: world/fortaleza_puerta.js) y la
+// coracha. Por poniente, hasta que se rehaga el patio de armas (fase 4 del
+// PLAN_FORTALEZA.md), lo cierra una empalizada de troncos aguzados con sus
+// puntales, de la torre de la puerta a la muralla de poniente. Lo que dejó el
+// asedio: los caballos de frisa ante el foso, un carro, los bolaños y los
+// muertos.
+function antepuerta(ctx, S, L) {
+  const wb = ctx.wb;
+  const A = CASTLE.antepuerta,
+    E = CASTLE.empalizada;
+  const Fo = [-102, -28, -94, -24];
+  const torres = [-106, -32, -90, -29];
+  W(S, A.x0, A.z0, A.x1, A.z1);
+  W(S, A.x0, A.z1, CASTLE.yard.x0, A.zo);
+  for (const r of subtractRects([A.x0, A.z0, A.x1, A.z1], [Fo, torres])) floor(ctx, r[0], r[1], r[2], r[3], 'dirt');
+  floor(ctx, A.x0, A.z1, CASTLE.yard.x0, A.zo, 'dirt');
+  // la empalizada: troncos de pie, apuntados, con sus travesaños por dentro y
+  // sus puntales
+  const rr = new RNG(4561);
+  const tronco = (x, z) => {
+    const top = 4.2 + rr.range(-0.4, 0.4);
+    wb.cylinder('wooddark', x, -0.1, z, 0.15, 0.14, top + 0.1, 6, { ao: false, tint: [0.5, 0.42, 0.34] });
+    wb.cylinder('wooddark', x, top, z, 0.14, 0.01, 0.4, 6, { ao: false, tint: [0.5, 0.42, 0.34] });
+  };
+  for (let z = E.z0; z < E.z1 + 0.05; z += 0.29) tronco(E.x, z);
+  for (let x = E.x + 0.29; x < E.x1; x += 0.29) tronco(x, E.z1);
+  for (const y of [1.0, 3.2]) {
+    wb.box('wooddark', E.x + 0.14, y, E.z0, E.x + 0.3, y + 0.18, E.z1, { ao: false, faces: 'tnsewb', tint: [0.45, 0.38, 0.32] });
+    wb.box('wooddark', E.x, y, E.z1 - 0.3, E.x1, y + 0.18, E.z1 - 0.14, { ao: false, faces: 'tnsewb', tint: [0.45, 0.38, 0.32] });
+  }
+  for (let z = E.z0 + 2.0; z < E.z1 - 1; z += 3.4) beam3(ctx, 'timber', V(E.x + 2.0, 0, z), V(E.x + 0.25, 2.9, z), 0.14);
+  for (let x = E.x + 3.0; x < E.x1 - 1; x += 3.4) beam3(ctx, 'timber', V(x, 0, E.z1 - 2.0), V(x, 2.9, E.z1 - 0.25), 0.14);
+  ctx.col.add(E.x - 0.2, -0.5, E.z0 - 0.2, E.x + 0.3, 5, E.z1 + 0.2);
+  ctx.col.add(E.x - 0.2, -0.5, E.z1 - 0.3, E.x1 + 0.1, 5, E.z1 + 0.2);
+  // los caballos de frisa ante el foso, un carro, barriles y un brasero
+  chevaux(ctx, -105.4 + 3.6, -21.4, 1.4);
+  chevaux(ctx, -90.4, -21.0, 1.8);
+  P.cart(ctx, -86.6, 0, -26.4, 0.4, {});
+  P.barrel(ctx, -88.4, 0, -30.6, {});
+  P.barrel(ctx, -87.6, 0, -30.4, { lying: true, rot: 0.8 });
+  P.brazier(ctx, -92.0, 0, -22.2);
+  // los bolaños de los de fuera, el escombro, los muertos
+  P.siegeStone(ctx, -96.6, 0, -16.6, 0.55);
+  P.siegeStone(ctx, -82.4, 0, -12.2, 0.45);
+  P.siegeStone(ctx, -77.0, 0, -24.4, 0.5);
+  P.rubble(ctx, -95.4, 0, -10.0, 10, 4562, 2.2, { mat: 'wallstone', scale: 1.1 });
+  bakeCorpse(wb, -97.4, 0, -21.6, 2.0, 'back', 'soldier', 4563);
+  P.decal(ctx, -97.4, 0.02, -21.6, 2.2);
+  bakeCorpse(wb, -84.2, 0, -16.8, -0.7, 'face', 'villager', 4564);
+  P.decal(ctx, -84.2, 0.02, -16.8, 1.8);
+  P.arrows(ctx, -99.6, 0, -19.0, 8, 4565, 1.6);
+  P.dropped(ctx, -93.6, 0, -18.4, 1.0, 'shield');
+  P.dropped(ctx, -89.8, 0, -11.4, 2.2, 'spear');
+  ctx.crows.push({ x: -97.4, y: 0, z: -21.6, r: 1.5, n: 3 });
+  void L;
+}
+
 // El fundíbulo de la guarnición: bastidor, caballetes y el brazo partido
 // (un tiro de los de fuera); el contrapeso, caído en el suelo. Tiraba hacia
 // el norte, por encima de la muralla: u es la dirección del tiro (-z) y v,
@@ -981,17 +1041,9 @@ function buildDungeon(ctx, D, L) {
     CR = YD + 3.35;
   const gv = (axis) => ({ axis, ys: SG });
   const AJ = ALJIBE;
-  const BJ = BAJADA;
   const regs = [
     // el pasillo de las celdas y las celdas
     R(-89, -18, -75.5, -6, YD + 3.8, 'wallstone', 'mazmorra', { tint: mazT }),
-    // la bajada de la torre del homenaje (level_torre.js): el pasadizo hasta
-    // el tapiado del fondo del pasillo de las celdas, su rellano (abierto por
-    // arriba, al hueco de la escalera) y el hueco de la escalera
-    R(BJ.rellano[0], BJ.rellano[1], BJ.rellano[2], BJ.rellano[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
-    R(BJ.norte[0], BJ.norte[1], BJ.norte[2], BJ.norte[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
-    R(BJ.este[0], BJ.este[1], BJ.este[2], BJ.este[3], YD + 2.4, 'wallstone', 'bajada', { tint: mazT }),
-    R(BJ.stair.x0, BJ.stair.top, BJ.stair.x1, BJ.stair.bottom, 0, 'wallstone', 'bajada', { tint: mazT, noFloor: true, noCeil: true }),
     R(-75.5, -12.5, -75, -11.5, YD + 2.8, 'wallstone', 'mazmorra', { tint: mazT }),
     // el cuarto del carcelero
     R(-75, -15, -67, -8.5, YD + 3.8, 'wallstone', 'mazmorra', { tint: mazT, vault: { axis: 'x', ys: YD + 2.5, rise: 1.25 } }),
@@ -1762,6 +1814,42 @@ function buildDungeon(ctx, D, L) {
     { id: 'aljibe', r: [ALJIBE.xs[0], ALJIBE.zs[0], ALJIBE.xs[5], ALJIBE.zs[3]], level: 'dungeon' },
     { id: 'torre_carcel', r: [PSTAIR.x0, PSTAIR.z0, PSTAIR.x1, PSTAIR.z1], level: 'dungeon' }
   );
+  tapiado(ctx, L);
+}
+
+// ------------------------------------------------------- el tapiado de las celdas
+// Al fondo del pasillo de las celdas, a poniente, donde hubo una puerta: el
+// ladrillo nuevo, con la cal todavía fresca, y lo que alguien arañó en ella
+// (LO QUE SUBE NO ES NUESTRO). Del otro lado no queda nada: la torre vieja,
+// de la que bajaba su escalera, ya no está (PLAN_FORTALEZA.md, fase 3; en la
+// fase 5, el rastrillo de las mazmorras del castillo).
+const TAPIA = { x: -89.0, z: -12.0, w: 2.0, h: 2.4 };
+function tapiado(ctx, L) {
+  const wb = ctx.wb;
+  const T = TAPIA;
+  const room = 'mazmorra';
+  const z0 = T.z - T.w / 2,
+    z1 = T.z + T.w / 2;
+  const xf = T.x + 0.16;
+  // el marco de la puerta que hubo: las jambas y el dintel de sillería
+  for (const [a, b] of [
+    [z0 - 0.3, z0],
+    [z1, z1 + 0.3],
+  ])
+    wb.box('ashlar', T.x, YD, a, xf + 0.06, YD + T.h, b, { ao: false, faces: 'ensb', room, tint: [0.66, 0.64, 0.6] });
+  wb.box('ashlar', T.x, YD + T.h, z0 - 0.36, xf + 0.08, YD + T.h + 0.36, z1 + 0.36, { ao: false, faces: 'enstb', room, tint: [0.64, 0.62, 0.58] });
+  // el ladrillo, bajo la cal: las hiladas que asoman
+  wb.box('plaster', T.x, YD, z0, xf, YD + T.h, z1, { sub: 0.8, aoH: 1, faces: 'e', room, tint: [0.94, 0.9, 0.84] });
+  for (let k = 1; k < 10; k++) {
+    const y = YD + k * 0.24;
+    wb.box('wooddark', xf, y, z0 + 0.02, xf + 0.005, y + 0.018, z1 - 0.02, { ao: false, faces: 'e', room, tint: [0.5, 0.36, 0.3] });
+    for (let z = z0 + (k % 2 ? 0.1 : 0.22); z < z1 - 0.05; z += 0.26) wb.box('wooddark', xf, y - 0.24, z, xf + 0.005, y, z + 0.018, { ao: false, faces: 'e', room, tint: [0.5, 0.36, 0.3] });
+  }
+  // LO QUE SUBE NO ES NUESTRO, arañado en la cal
+  wb.geometry('scratchNoEsNuestro', new THREE.PlaneGeometry(1.4, 0.5), new THREE.Matrix4().compose(V(xf + 0.012, YD + 1.45, T.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0.03)), V(1, 1, 1)), { ao: false, grime: false, room });
+  // la cal que se cayó al pie
+  for (let k = 0; k < 4; k++) wb.box('plaster', xf + 0.05 + k * 0.07, YD, z0 + 0.3 + k * 0.4, xf + 0.2 + k * 0.07, YD + 0.03, z0 + 0.5 + k * 0.4, { ao: false, room, tint: [0.96, 0.94, 0.88] });
+  L.interact.push({ kind: 'examine', id: 'x_tapia_celdas', text: 'tapiaCeldas', x: xf + 0.9, y: YD, z: T.z, r: 1.6 });
 }
 
 // ------------------------------------------------------- el osario del castillo

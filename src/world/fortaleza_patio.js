@@ -117,15 +117,16 @@ function muros(ctx, S, L) {
     { kind: 'door', id: 'd_antecamara', x: K.puerta, y: 0, z: Pt.z0 - ti / 2, w: 1.6, h: 2.5 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: Pt.z0 - ti, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'antecamaraTranca' }
   );
   // sur: la despensa y el cuerpo de guardia, a los lados de la puerta (hasta
-  // la terraza)
-  for (const [a, b, Rm, room] of [
-    [Pt.x0, Pu.x0, D, 'despensa'],
-    [Pu.x1, Pt.x1, G, 'guardia'],
+  // la terraza; la franja de la guardia, hasta su techo: encima están la
+  // armería y el taller, que ponen su cara en fortaleza_puerta.js)
+  for (const [a, b, Rm, room, yF] of [
+    [Pt.x0, Pu.x0, D, 'despensa', yH],
+    [Pu.x1, Pt.x1, G, 'guardia', FORT.F1 - 0.3],
   ]) {
     const z0 = Pt.z1,
       z1 = Pt.z1 + ti;
-    franja('x', a, b, z0, z1, yH, [{ c: Rm.puerta, w: 1.6, h: 2.6, rise: 0.8, ...ring }], [null, room]);
-    pieza(ctx, 'wallstone', a, yH, z0, b, walk, z1, [['n', null]], { tint, baseY: 0 });
+    franja('x', a, b, z0, z1, yF, [{ c: Rm.puerta, w: 1.6, h: 2.6, rise: 0.8, ...ring }], [null, room]);
+    pieza(ctx, 'wallstone', a, yF, z0, b, walk, z1, [['n', null]], { tint, baseY: 0 });
     W(S, Rm.puerta - 0.7, z0 - 0.3, Rm.puerta + 0.7, z1 + 0.3);
     for (const x of [a + 3.5, b - 3.5]) ajimez(ctx, 'n', z0, x, 7.0, { h: 1.2 });
   }

@@ -5,13 +5,20 @@
 // si mueres tú, todo vuelve a su sitio.
 //   node tools/caballero.mjs        (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
+import { FORT } from '../src/world/fortaleza_medidas.js';
+// en la terraza de la torre del homenaje (FORT.torre): su suelo, dónde se
+// espera ante la niebla (en la caseta del caracol) y un sitio despejado en
+// medio, al sur del Caballero
+const Y = FORT.torre.terraza;
+const CASETA = { x: -105.7, z: -108.6 };
+const MEDIO = { x: FORT.torre.caballero.x - 5, z: FORT.torre.caballero.z + 12.3 };
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 320, height: 180 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
 await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,solingen,oxidada');
 await p.waitForFunction(() => window.__ready, null, { timeout: 120000 });
-const r = await p.evaluate(() => {
+const r = await p.evaluate(([Y, CASETA, C]) => {
   window.__pause = true;
   const g = __game;
   g.ui.closeAll();
@@ -31,24 +38,22 @@ const r = await p.evaluate(() => {
   const e = g.enemies.find((x) => x.type === 'caballero');
   const A = (n) => e.T.attacks.find((a) => a.name === n);
   g.flags['cine:caballero'] = true;
-  P.spawn(-92.55, 18.4, -24.5, 0);
+  P.spawn(CASETA.x, Y, CASETA.z, Math.PI / 2);
   step(20);
   g.enterFog(g.interact.list.find((i) => i.id === 'f_caballero'));
   // (el plano de presentación: 2,4 s)
   step(170);
   out.push(`pelea: activeBoss ${g.activeBoss === e} estado ${e.state}`);
-  // (un sitio despejado en medio de la terraza)
-  const C = { x: -83, z: -15 };
   const face = (d, yawE = 0) => {
     e.atk = null;
     e.state = 'chase';
     e.cooldown = 99;
     e.data.openT = 0;
-    e.body.pos.set(C.x, 18.4, C.z - d);
+    e.body.pos.set(C.x, Y, C.z - d);
     e.vx = e.vz = 0;
     e.yaw = 0;
     e.anim.stop(0);
-    P.spawn(C.x, 18.4, C.z, Math.PI);
+    P.spawn(C.x, Y, C.z, Math.PI);
     P.hp = P.maxHp = 400;
     P.st = P.maxSt;
     g.lockTarget = e;
@@ -62,7 +67,7 @@ const r = await p.evaluate(() => {
   face(1.9);
   // (sacar la espada lleva un momento)
   step(50);
-  e.body.pos.set(-83, 18.4, -15 - 1.9);
+  e.body.pos.set(C.x, Y, C.z - 1.9);
   e.yaw = 0;
   e.cooldown = 99;
   let hp0 = e.hp, ph0 = P.hp;
@@ -127,7 +132,7 @@ const r = await p.evaluate(() => {
       if (e.data.landed) { landed = true; break; }
     }
     // (te pones a su lado, no donde clava)
-    P.spawn(e.pos.x + 1.4, 18.4, e.pos.z + 0.4, Math.atan2(e.pos.x - (e.pos.x + 1.4), e.pos.z - (e.pos.z + 0.4)));
+    P.spawn(e.pos.x + 1.4, Y, e.pos.z + 0.4, Math.atan2(e.pos.x - (e.pos.x + 1.4), e.pos.z - (e.pos.z + 0.4)));
     P.hp = P.maxHp;
     step(4);
     const h0 = e.hp;
@@ -172,7 +177,7 @@ const r = await p.evaluate(() => {
   const hy = e.rig.worldPos('head', new g.THREE.Vector3()).y - e.pos.y;
   out.push(`muerte: muerto ${e.dead} · bandera ${!!g.flags['boss:caballero']} · se queda a la vista ${vis1} · tras cargar ${e.obj.visible} en ${e.pos.x.toFixed(1)},${e.pos.z.toFixed(1)} (cabeza a ${hy.toFixed(2)} m: de rodillas) · activeBoss ${!!g.activeBoss} · pendón del mundo ${g.groups['pendon:caballero'].on}`);
   return out;
-});
+}, [Y, CASETA, MEDIO]);
 console.log(r.join('\n'));
 if (errs.length) console.log(errs.slice(0, 10).join('\n'));
 await b.close();

@@ -30,7 +30,24 @@ export const FORT = {
   // (z0) a la cocina (z1), con sus arquerías al salón
   galeria: { x0: -137.4, x1: -136.2, y: 5.5, ys: 8.3, top: 8.9, z0: -89.2, z1: -42.8 },
   despensa: { x0: -126, x1: -106, z0: -44.8, z1: -34.4, puerta: -114 },
-  guardia: { x0: -90, x1: -76, z0: -44.8, z1: -34.4, puerta: -82 },
+  // (el cuerpo de guardia, abajo; arriba, a +5,5, la armería, de x0 al tabique,
+  // y el taller del ballestero, del tabique a x1: el tabique, de x0 a x1, con su
+  // arco lleno de escombro y el que se tapió, en z; la escalera de la guardia,
+  // por el muro de poniente, que sube hacia el sur; la puerta de la cámara del
+  // torno, en z; el boquete que abrió el bolaño en la muralla, en x, y lo que
+  // hundió del suelo del taller)
+  guardia: {
+    x0: -90,
+    x1: -76,
+    z0: -44.8,
+    z1: -34.4,
+    puerta: -82,
+    tabique: { x0: -83.2, x1: -82.4, escombro: -42.0, tapiado: -37.4 },
+    escalera: { x0: -90, x1: -88.6, z0: -43.6, z1: -37.6, n: 18 },
+    torno: -35.6,
+    boquete: { x: -81.0, w: 1.6, h: 2.1 },
+    hundido: [-80.4, -40.0, -78.0, -37.6],
+  },
   capilla: { x0: -74.8, x1: -64.4, z0: -86, z1: -60.6, ridge: 13.0, puerta: -68 },
   cancilleria: { x0: -74.8, x1: -64.4, z0: -59.4, z1: -46, puerta: -52 },
   // (la reina: el estrado de las damas abajo y su sala a +5,5; en su torre,
@@ -53,12 +70,65 @@ export const FORT = {
   },
   // la puerta: sus dos torres (de x0 a px0 y de px1 a x1), que asoman hasta
   // z1; el paso (de px0 a px1), el arranque de su bóveda y su flecha, el
-  // rastrillo (su z) y el puente alzado; el alto de las torres y el de en medio
-  puerta: { x0: -106, x1: -90, z0: -46, z1: -29, px0: -100, px1: -96, ys: 3.6, rise: 2.0, rastrillo: -30.7, h: 16, hm: 14 },
+  // rastrillo (su z); el alto de las torres y el de en medio. Encima del paso,
+  // la cámara del torno (su planta por dentro y su techo; su suelo, el de la
+  // planta alta de la guardia); el puente levadizo (su ancho, su largo y lo
+  // alto de los agujeros de sus cadenas) y el foso que salva, con sus estacas
+  // (de x0 a x1, de z0 —al pie del talud de las torres— a z1, y su fondo; a
+  // metros enteros, como la losa del suelo)
+  puerta: {
+    x0: -106,
+    x1: -90,
+    z0: -46,
+    z1: -29,
+    px0: -100,
+    px1: -96,
+    ys: 3.2,
+    rise: 2.0,
+    rastrillo: -30.7,
+    h: 16,
+    hm: 14,
+    camara: { x0: -104.8, x1: -91.2, z0: -38, z1: -30.2, top: 10.6 },
+    puente: { w: 5, len: 5.2, yc: 7.2 },
+    foso: { x0: -102, x1: -94, z0: -28, z1: -24, y: -2.6 },
+  },
+  // el cadalso del alférez: la galería de madera colgada por fuera de la torre
+  // de levante de la puerta (de x0 a su esquina) y de la muralla de la guardia
+  // (de la esquina a x1), a la altura de la planta alta (y), de w de vuelo; la
+  // puerta por la que se sale a él (x, en la cara de la torre) y la garita del
+  // alférez, en su cabo (de garita a x1)
+  cadalso: { x0: -95.3, x1: -76, w: 1.8, y: 5.5, puerta: -92.2, garita: -77.8 },
   // la torre del homenaje: su planta, el grueso de sus muros, sus pisos, la
   // galería de la sala del trono, la terraza y las garitas; la puerta de la
-  // planta de la guardia (a la que da la escalinata)
-  torre: { x0: -111, x1: -85, z0: -112, z1: -86, t: 2.6, pisos: [0, 6, 12, 18], galeria: 22.5, terraza: 28, garitas: 34, puerta: { x: -98, y: 6, w: 1.8, h: 2.6 } },
+  // planta de la guardia (a la que da la escalinata). Por dentro: el grueso
+  // de los forjados; el muro de carga, de poniente a levante (de z0 a z1), con
+  // la puerta de cada planta (en x), que en la sala del trono se abre en tres
+  // arcos sobre dos pilares (sus centros, su lado y el arranque de los arcos);
+  // la galería en el grueso de los muros de poniente, del norte y de levante
+  // (la hoja de fuera, el paso y lo alto de su bóveda); el caracol, en el
+  // rincón del noroeste (medio lado de su caja y el grueso de sus muros); la
+  // mesa del Rey (world/rey_mesa.js) y el estrado del trono, contra el muro
+  // del patio; y en la terraza, el Caballero de la Orden y su pendón
+  torre: {
+    x0: -111,
+    x1: -85,
+    z0: -112,
+    z1: -86,
+    t: 2.6,
+    pisos: [0, 6, 12, 18],
+    galeria: 22.5,
+    terraza: 28,
+    garitas: 34,
+    puerta: { x: -98, y: 6, w: 1.8, h: 2.6 },
+    slab: 0.3,
+    muro: { z0: -101.5, z1: -100.5, puertas: [-95, -102, -95], pilares: [-101.6, -94.4], pl: 1.2, ys: 22.2 },
+    gal: { hoja: 0.7, paso: 1.2, top: 25.2 },
+    caracol: { h: 1.6, t: 0.4 },
+    mesa: { x: -98, z: -94.2 },
+    estrado: { x0: -102, x1: -94, z0: -91, h: 0.4 },
+    caballero: { x: -92, z: -110.3, yaw: 2.71 },
+    pendon: { x: -89.9, z: -110.75 },
+  },
   // la escalinata: el rellano ante la puerta de la torre (de x0 a x1, hasta
   // z1), sus dos tramos (n peldaños de rise y run, de ancho w) y su pretil
   escalinata: { x0: -101, x1: -95, z1: -82.6, n: 20, rise: 0.3, run: 0.42, w: 2.6 },
