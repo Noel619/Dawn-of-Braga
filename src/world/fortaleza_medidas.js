@@ -25,18 +25,30 @@ export const FORT = {
   eje: -98,
   // las crujías, por dentro (lo que se pisa, de cara a cara de sus muros)
   salon: { x0: -135.6, x1: -121.2, z0: -86, z1: -47.2, ridge: 14.2, puerta: -68, servicio: -123.6, arcos: [-78.2, -70.4, -62.6, -54.8], estrado: { x0: -135.6, x1: -121.2, z0: -86, z1: -82.4, y: 0.45 } },
+  // la galería del gran salón, en el grueso del muro de poniente (de x0 a x1;
+  // su suelo, el arranque de su bóveda y su clave): de la torre de la reina
+  // (z0) a la cocina (z1), con sus arquerías al salón
+  galeria: { x0: -137.4, x1: -136.2, y: 5.5, ys: 8.3, top: 8.9, z0: -89.2, z1: -42.8 },
   despensa: { x0: -126, x1: -106, z0: -44.8, z1: -34.4, puerta: -114 },
   guardia: { x0: -90, x1: -76, z0: -44.8, z1: -34.4, puerta: -82 },
   capilla: { x0: -74.8, x1: -64.4, z0: -86, z1: -60.6, ridge: 13.0, puerta: -68 },
   cancilleria: { x0: -74.8, x1: -64.4, z0: -59.4, z1: -46, puerta: -52 },
-  reina: { x0: -126, x1: -111, z0: -97.6, z1: -87.2, ridge: 13.0, puerta: -113.4 },
-  rey: { x0: -85, x1: -76, z0: -97.6, z1: -87.2, ridge: 13.0, puerta: -82.8 },
+  // (la reina: el estrado de las damas abajo y su sala a +5,5; en su torre,
+  // la del noroeste, tres plantas —la entrada, el oratorio y su cámara— con
+  // su techo y la puerta que da a la sala, en z, en las dos primeras)
+  reina: { x0: -126, x1: -111, z0: -97.6, z1: -87.2, ridge: 13.0, puerta: -113.4, pisos: [0, 5.5, 11], techo: 15.8, puertaTorre: -94.0 },
+  // (el Rey: la antecámara abajo y su cámara a +4,5, a la altura del oratorio
+  // de la torre de la coracha —sus plantas: pisos, y el techo de la de arriba—
+  // y de la tribuna de la capilla; la escalera de la antecámara, por el muro
+  // de la torre del homenaje; la puerta de la cámara a la torre y la del
+  // pasadizo, en z)
+  rey: { x0: -85, x1: -76, z0: -97.6, z1: -87.2, ridge: 13.0, puerta: -82.8, alto: 4.5, pisos: [0, 4.5, 9], techo: 15.6, puertaTorre: -95.6, pasadizo: -98.79 },
   // las torres de las esquinas: su planta, su alto, el grueso de sus muros y
   // cómo acaban (chapitel o almenas)
   torres: {
-    NO: { x0: -140, x1: -126, z0: -102, z1: -87.2, h: 19, t: 2, techo: 'chapitel', fuera: ['n', 'w'], alas: ['e'] },
-    SO: { x0: -140, x1: -126, z0: -44.8, z1: -30, h: 17, t: 2, techo: 'almenas', fuera: ['s', 'w'], alas: ['e'] },
-    NE: { x0: -76, x1: -62, z0: -102, z1: -86, h: 18, t: 2, techo: 'almenas', fuera: ['n', 'e'], alas: ['w', 'e'] },
+    NO: { x0: -140, x1: -126, z0: -102, z1: -87.2, h: 19, t: 2, techo: 'chapitel', fuera: ['n', 'w'], alas: ['e', 's'] },
+    SO: { x0: -140, x1: -126, z0: -44.8, z1: -30, h: 17, t: 2, techo: 'almenas', fuera: ['s', 'w'], alas: ['e', 'n'] },
+    NE: { x0: -76, x1: -62, z0: -102, z1: -86, h: 18, t: 2, techo: 'almenas', fuera: ['n', 'e'], alas: ['w', 'e', 's'] },
     SE: { x0: -76, x1: -62, z0: -46, z1: -32, h: 22, t: 2, techo: 'chapitel', fuera: ['s', 'e'], alas: ['n'] },
   },
   // la puerta: sus dos torres (de x0 a px0 y de px1 a x1), que asoman hasta

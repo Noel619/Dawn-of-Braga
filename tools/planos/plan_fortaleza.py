@@ -46,13 +46,21 @@ label(-74, -111, 'naranjos\nsecos', f9, (220, 235, 210))
 # la fortaleza: alas
 rect(-138, -100, -62, -32, (96, 90, 84), w=3)
 rect(-135.6, -86, -121.2, -47.2, (150, 70, 60)); label(-128.4, -66, 'GRAN\nSALÓN\n14 × 39\n(la Corte)', f13, (250, 235, 220))
-rect(-74.8, -86, -64.4, -60.6, (70, 92, 140)); label(-69.6, -73, 'CAPILLA\nREAL\n(tribuna,\nespadaña)', f11, (235, 240, 250))
+# la galería del salón, en el grueso del muro (+5,5), de la torre de la reina a la cocina
+rect(-137.4, -89.2, -136.2, -42.8, (200, 150, 110), (90, 60, 40), 1)
+label(-143, -66, 'G\nA\nL\nE\nR\nÍ\nA', f9, (220, 190, 160))
+rect(-74.8, -86, -64.4, -60.6, (70, 92, 140)); label(-69.6, -73, 'CAPILLA\nREAL\n(tribuna,\naltar)', f11, (235, 240, 250))
+# la tribuna del Rey (+4,5) y el campanario sobre el presbiterio
+rect(-74.8, -86, -72.4, -64.6, (110, 130, 170), (50, 60, 90), 1); rect(-74.8, -64.6, -64.4, -60.6, (110, 130, 170), (50, 60, 90), 1)
+rect(-72.2, -85.2, -68.2, -81.2, (210, 200, 180), (40, 40, 50), 2); label(-70.2, -83.2, 'camp.', f9, (40, 40, 50))
 rect(-74.8, -59.4, -64.4, -46, (170, 140, 100)); label(-69.6, -52.7, 'CANCI-\nLLERÍA', f11)
 rect(-126, -44.8, -106, -34.4, (150, 120, 90)); label(-116, -39.6, 'despensa ·\nbotillería', f11)
 rect(-106, -46, -90, -29, (90, 84, 78)); label(-98, -39, 'PUERTA\n(rastrillo)', f9, (240, 230, 220))
 rect(-90, -44.8, -76, -34.4, (130, 112, 96)); label(-83, -39.6, 'cuerpo de guardia ·\narmería y taller\n(la ballesta)', f9)
-rect(-126, -97.6, -111, -87.2, (120, 90, 130)); label(-118.5, -92.4, 'sala de\nla reina', f11, (245, 235, 250))
-rect(-85, -97.6, -76, -87.2, (140, 100, 70)); label(-80.5, -92.4, 'ante-\ncámara\ndel Rey', f11, (250, 240, 230))
+rect(-126, -97.6, -111, -87.2, (120, 90, 130)); label(-118.5, -92.4, 'estrado de las damas\n· sala de la reina\n(+5,5)', f9, (245, 235, 250))
+rect(-85, -97.6, -76, -87.2, (140, 100, 70)); label(-80.5, -92.4, 'antecámara\n· cámara\ndel Rey\n(+4,5)', f9, (250, 240, 230))
+# el pasadizo del Rey (+12), por el adarve norte, a la torre
+rect(-85, -100, -76, -97.6, (60, 40, 30), (30, 20, 16), 1); label(-78.8, -103.4, 'pasadizo (+12)', f9, (220, 200, 180))
 # patio de honor y claustro
 rect(-120, -86, -76, -46, (182, 170, 150))
 for (a, b, c, e) in [(-120, -86, -116, -46), (-80, -86, -76, -46), (-120, -50, -76, -46)]:
@@ -75,7 +83,7 @@ for (a, b) in [(-112, -113), (-87.4, -113), (-112, -88.4), (-87.4, -88.4)]:
     rect(a, b, a + 3.6, b + 3.6, (80, 74, 70), w=2)
 label(-98, -99, 'TORRE DEL\nHOMENAJE\n26 × 26 · 34 m\n(sala del trono:\nel REY)', f13, (250, 230, 190))
 # torres de las esquinas
-for (x0, z0, x1, z1, t) in [(-140, -44.8, -126, -30, 'COCINA'), (-76, -46, -62, -32, 'TOMBO'), (-140, -102, -126, -87.2, 'REINA'), (-76, -102, -62, -86, 'CORACHA\n(altar ·\ntesoro)')]:
+for (x0, z0, x1, z1, t) in [(-140, -44.8, -126, -30, 'COCINA\n(secadero)'), (-76, -46, -62, -32, 'TOMBO'), (-140, -102, -126, -87.2, 'REINA\n(oratorio ·\ncámara)'), (-76, -102, -62, -86, 'CORACHA\n(altar · oratorio\ndel Rey · tesoro)')]:
     rect(x0, z0, x1, z1, (110, 104, 98), w=3); label((x0 + x1) / 2, (z0 + z1) / 2, t, f11, (250, 245, 235))
 # puerta del adarve de la coracha
 d.line([P(-64, -95.4), P(-62, -95.4)], fill=(240, 200, 120), width=5)

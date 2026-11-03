@@ -922,6 +922,9 @@ export class Interactables {
       it.obj.visible = !it.hidden;
       g.scene.add(it.obj);
       it.r = s.r ?? 1.7;
+      // (lo que cambia en el mundo al cogerlo: swap = [lo que se va, lo que
+      // queda], dos grupos; el cordón de la campana, tenso y suelto)
+      if (s.swap) this.poseSwap(it, false);
     } else if (s.kind === 'note') {
       it.obj = new THREE.Group();
       it.obj.position.set(s.x, s.y, s.z);
@@ -1078,6 +1081,7 @@ export class Interactables {
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
         it.obj.visible = false;
+        if (it.swap) this.poseSwap(it, true);
       }
       if (it.kind === 'note' && flags['take:' + it.id] && it.glow) it.glow.visible = false;
       // (la de la cisterna, también tras el rito: allí ya no hay pelea)
@@ -1110,6 +1114,11 @@ export class Interactables {
   }
 
   // La tapa de un arca: cerrada con sus sellos o abierta, con ellos rotos.
+  poseSwap(it, taken) {
+    this.game.setGroupVisible(it.swap[0], !taken);
+    this.game.setGroupVisible(it.swap[1], !!taken);
+  }
+
   poseArca(it, open) {
     const g = this.game;
     g.setGroupVisible('arca:' + it.id, !open);
@@ -1228,6 +1237,7 @@ export class Interactables {
       it.hidden = !!it.afterBoss || !!it.afterFlag;
       it.obj.visible = !it.hidden;
       it.obj.position.y = it.y;
+      if (it.swap) this.poseSwap(it, false);
     } else if (it.kind === 'note') {
       if (it.glow) it.glow.visible = true;
     } else if (it.kind === 'lever') {
@@ -1736,9 +1746,20 @@ export class Interactables {
       g.giveItem(it.item, it.n ?? 1);
       setTimeout(() => (it.obj.visible = false), 300);
       // (lo que pasa al cogerlo: la llave atada al cordón de la campana la hace
-      // sonar; it.sound / it.soundAt, it.msg)
+      // sonar; it.sound / it.soundAt, it.msg; it.swap, lo que cambia en el
+      // mundo; it.wake, el radio en el que se despierta todo lo que oye)
       if (it.sound) g.later(250, () => g.audio && g.audio.play(it.sound, it.soundAt ? { x: it.soundAt[0], y: it.soundAt[1], z: it.soundAt[2] } : it));
       if (it.msg) g.later(900, () => g.ui.toast(MSG[it.msg] || it.msg, 5));
+      if (it.swap) g.later(200, () => this.poseSwap(it, true));
+      if (it.wake)
+        g.later(700, () => {
+          for (const e of g.enemies) {
+            if (e.dead || e.aware || e.scripted || !e.T.hearsNoise) continue;
+            if (Math.hypot(e.pos.x - it.x, e.pos.z - it.z) > it.wake) continue;
+            e.data.heard = [it.x, it.y, it.z];
+            e.alert();
+          }
+        });
       return true;
     }
     if (it.kind === 'note') {

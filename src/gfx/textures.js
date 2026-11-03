@@ -2497,6 +2497,65 @@ const GEN = {
     });
   },
 
+  // El zócalo pintado de los salones de la fortaleza: un cortinaje de almagre
+  // colgado de su cenefa (una línea negra, la faja de ocre con sus rombos y otra
+  // negra), con sus pliegues y las ondas de la caída, y abajo la faja oscura
+  // del rodapié. Se dibuja entero de abajo arriba en la altura del zócalo (la
+  // fila de arriba de la imagen, arriba).
+  zocalo() {
+    const W = 64,
+      H = 64;
+    return pixels(W, H, (x, y, o) => {
+      const n = fbm2(x / 6, y / 9, 3, W / 6, 211);
+      const wear = fbm2(x / 5 + 7, y / 5, 3, W / 5, 217);
+      // (desconchones: la cal de debajo)
+      if (wear > 0.76) return set(o, 168 + n * 30, 158 + n * 28, 136 + n * 22);
+      if (y <= 1 || y === 9) return set(o, 28, 22, 20);
+      if (y <= 8) {
+        // la faja de la cenefa, con rombos de almagre sobre el ocre
+        const dx = Math.abs(((x + 4) % 8) - 4),
+          dy = Math.abs(y - 5);
+        if (dx + dy <= 2) return set(o, 128, 44, 30);
+        return set(o, 190 + n * 24, 150 + n * 20, 84 + n * 14);
+      }
+      if (y >= 58) return set(o, 46 + n * 12, 34 + n * 9, 28 + n * 8);
+      if (y === 57) return set(o, 26, 20, 18);
+      // el cortinaje: los pliegues (claro en el lomo, oscuro en el fondo) y
+      // las ondas de la caída junto a la cenefa
+      const sag = y < 16 ? Math.max(0, 1 - Math.abs(((x % 16) - 8) / 8)) * (16 - y) * 0.4 : 0;
+      const fold = 0.5 + 0.5 * Math.cos(((x + sag * 0.3) / 8) * Math.PI * 2);
+      const k = 0.62 + fold * 0.42 + n * 0.14;
+      set(o, 150 * k, 52 * k, 36 * k);
+    });
+  },
+
+  // El despiece fingido de la capilla: la cal, blanca, con las juntas de
+  // sillería pintadas a doble línea de almagre y una flor de cuatro pétalos
+  // en cada sillar, como en las iglesias de la Sé.
+  despiece() {
+    const S = 64;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 7, y / 7, 3, S / 7, 223);
+      const stain = fbm2(x / 13, y / 5, 3, S / 13, 229);
+      const peel = fbm2(x / 9 + 5, y / 9, 3, S / 9, 233);
+      let k = 0.86 + n * 0.16;
+      k *= 1 - Math.max(0, stain - 0.6) * 0.9;
+      if (peel > 0.78) return set(o, 132 * k, 118 * k, 98 * k);
+      const row = Math.floor(y / 16),
+        ly = y % 16;
+      const lx = (x + (row % 2) * 16) % 32;
+      const red = [150, 58, 40];
+      // las juntas: doble línea
+      if (ly === 0 || ly === 2 || lx === 0 || lx === 2) return set(o, red[0] * k, red[1] * k, red[2] * k);
+      // la flor, en medio del sillar
+      const fx = lx - 17,
+        fy = ly - 9;
+      if ((Math.abs(fx) <= 2 && fy === 0) || (Math.abs(fy) <= 2 && fx === 0)) return set(o, red[0] * k * 0.9, red[1] * k, red[2] * k);
+      if (Math.abs(fx) === 1 && Math.abs(fy) === 1) return set(o, 196 * k, 150 * k, 70 * k);
+      set(o, 226 * k, 216 * k, 196 * k);
+    });
+  },
+
   black() {
     return pixels(4, 4, (x, y, o) => set(o, 8, 8, 8));
   },

@@ -21,7 +21,8 @@ import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { solid, blocker, archedWall, archRing, barrelVault, solidGableRoof } from './builders.js';
 import * as P from './props.js';
-import { PIEDRA, pieza, tri, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes } from './fortaleza_atrezo.js';
+import { PIEDRA, pieza, tri, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes, caraTejado } from './fortaleza_atrezo.js';
+import { tejadoCamaras } from './fortaleza_reina.js';
 import { FORT } from './fortaleza_medidas.js';
 import { buildPatio } from './fortaleza_patio.js';
 import { buildAlas } from './fortaleza_alas.js';
@@ -63,19 +64,19 @@ function muralla(ctx) {
     G = T.puerta,
     K = T.torre;
   const o = { tint: Lt, mats: { t: 'flag' } };
-  // poniente: el gran salón por dentro (a doble altura, hasta el tejado)
-  pieza(ctx, 'wallstone', x0, 0, NO.z1, x0 + t, walk, SO.z0, [['w', null, Td.h - 0.05], ['t'], ['e', 'salon', 0, E], ['e', null, E, walk]], o);
+  // poniente: el muro del gran salón, con la galería en su grueso (en
+  // fortaleza_salon.js); aquí, lo de fuera
   talud(ctx, 'w', x0, NO.z1, SO.z0, Td.h, Td.d);
   almenas(ctx, 'w', x0, NO.z1, SO.z0, walk);
   antepecho(ctx, 'e', x0 + t, NO.z1, SO.z0, walk);
   for (const z of [-80.5, -72.5, -64.5, -56.5, -49]) saetera(ctx, 'w', x0, z, 4.2);
-  for (const z of [-82.1, -74.3, -66.5]) ajimez(ctx, 'w', x0, z, 6.6, { h: 1.4 });
+  for (const z of [-82.1, -74.3, -66.5, -50.8]) ajimez(ctx, 'w', x0, z, 6.6, { h: 1.4 });
   // norte: las cámaras de la reina y las del Rey, a los lados de la torre
-  for (const [a, b, room] of [
-    [NO.x1, K.x0, 'reina_sala'],
-    [K.x1, NE.x0, 'antecamara'],
+  for (const [a, b, room, alta, yA] of [
+    [NO.x1, K.x0, 'estrado_damas', 'reina_alta', T.F1],
+    [K.x1, NE.x0, 'antecamara', 'camara_rey', T.rey.alto],
   ]) {
-    pieza(ctx, 'wallstone', a, 0, z0, b, walk, z0 + t, [['n', null, Td.h - 0.05], ['t'], ['s', room, 0, T.F1], ['s', null, E, walk]], o);
+    pieza(ctx, 'wallstone', a, 0, z0, b, walk, z0 + t, [['n', null, Td.h - 0.05], ['t'], ['s', room, 0, yA], ['s', alta, yA, E], ['s', null, E, walk]], o);
     talud(ctx, 'n', z0, a, b, Td.h, Td.d);
     almenas(ctx, 'n', z0, a, b, walk);
     antepecho(ctx, 's', z0 + t, a, b, walk);
@@ -153,7 +154,6 @@ function torresEsquina(ctx) {
         ['w', x0, z0, z1, 0, [d, d]],
         ['s', z1, x0, T.x0, 0, [d, 0]],
         ['e', x1, z0, T.z0, 0, [d, 0]],
-        ['e', x1, T.z0, z1, yv, null],
         ['s', z1, T.x0, x1, yv, null],
       ],
       SO: [
@@ -169,7 +169,6 @@ function torresEsquina(ctx) {
         ['w', x0, z0, T.z0, 0, [d, 0]],
         ['e', x1, z0, z0 + t, yc, null],
         ['e', x1, z1 - t, z1, yc, null],
-        ['w', x0, T.z0, z1, yv, null],
         ['s', z1, x0, x1, yv, null],
       ],
       SE: [
@@ -225,7 +224,10 @@ function torresEsquina(ctx) {
       saetera(ctx, dd, line, c, 4.4);
       if (k === 'NO') ajimez(ctx, dd, line, c, T.F1 + 1.6, { h: 1.4, lit: dd === 'w' });
       else saetera(ctx, dd, line, c, T.F1 + 2.2);
-      saetera(ctx, dd, line, c, T.walk + 1.4);
+      // (en la de la reina, arriba, los ajimeces de su cámara: el del jardín,
+      // con la luz del farol de la dueña)
+      if (k === 'NO') ajimez(ctx, dd, line, c, T.reina.pisos[2] + 1.4, { h: 1.4, lit: dd === 'n', intensity: 0.5, radius: 4 });
+      else saetera(ctx, dd, line, c, T.walk + 1.4);
     }
   }
   // los estandartes del Rey: en las torres de poniente, por fuera; en la del
@@ -374,13 +376,16 @@ function torreHomenaje(ctx, L) {
     wb.box('ashlar', x0, ya, za - 0.01, x1, H, zb + 0.01, { faces: f, sub: 2.6, aoH: 4, tint, uv: 0.8 });
   // (los costados: al jardín, enteros; sobre las cámaras, desde su alero)
   wb.box('ashlar', x0 - 0.01, 0, z0, x0, H, T.z0, { faces: 'w', sub: 2.6, aoH: 4, tint });
-  wb.box('ashlar', x0 - 0.01, E, T.z0, x0, H, z1, { faces: 'w', sub: 2.6, aoH: 4, tint });
+  // (sobre el adarve y sobre los tejados de las cámaras: lo de fuera)
+  wb.box('ashlar', x0 - 0.01, T.walk, T.z0, x0, H, T.reina.z0, { faces: 'w', sub: 2.6, aoH: 4, tint, baseY: 0 });
+  caraTejado(ctx, 'ashlar', 'w', x0, T.reina.z0, z1, H, tejadoCamaras(T.reina), { sobre: true, sub: 2.6, aoH: 4, tint, baseY: 0 });
   wb.box('ashlar', x1, 0, z0, x1 + 0.01, H, T.z0, { faces: 'e', sub: 2.6, aoH: 4, tint });
-  wb.box('ashlar', x1, E, T.z0, x1 + 0.01, H, z1, { faces: 'e', sub: 2.6, aoH: 4, tint });
+  wb.box('ashlar', x1, T.walk, T.z0, x1 + 0.01, H, T.rey.z0, { faces: 'e', sub: 2.6, aoH: 4, tint, baseY: 0 });
+  caraTejado(ctx, 'ashlar', 'e', x1, T.rey.z0, z1, H, tejadoCamaras(T.rey), { sobre: true, sub: 2.6, aoH: 4, tint, baseY: 0 });
   // (y por dentro de las cámaras, sus caras: la del oeste en la sala de la
   // reina, la del este en la antecámara)
-  wb.box('ashlar', x0 - 0.01, 0, T.reina.z0, x0, T.F1, T.reina.z1, { faces: 'w', sub: 2, aoH: 1.5, room: 'reina_sala', tint: tint.map((v) => v * 1.1) });
-  wb.box('ashlar', x1, 0, T.rey.z0, x1 + 0.01, T.F1, T.rey.z1, { faces: 'e', sub: 2, aoH: 1.5, room: 'antecamara', tint: tint.map((v) => v * 1.1) });
+  wb.box('ashlar', x0 - 0.01, 0, T.reina.z0, x0, T.F1, T.reina.z1, { faces: 'w', sub: 2, aoH: 1.5, room: 'estrado_damas', tint: tint.map((v) => v * 1.1) });
+  wb.box('ashlar', x1, 0, T.rey.z0, x1 + 0.01, T.rey.alto, T.rey.z1, { faces: 'e', sub: 2, aoH: 1.5, room: 'antecamara', tint: tint.map((v) => v * 1.1) });
   // el talud: al jardín y a los lados (lo que asoma de la muralla); al patio,
   // detrás de la escalinata
   const Td = { h: 4.2, d: 1.3 };
@@ -395,7 +400,8 @@ function torreHomenaje(ctx, L) {
     esquina(ctx, ex, z1, dx, 1, T.eave, H - 0.8, { tint: tint.map((v) => v * 1.12) });
   }
   // las impostas de los pisos
-  for (const y of [12, 18, 24.6]) {
+  // (la de +12, un dedo por encima del adarve, que llega a la torre)
+  for (const y of [12.06, 18, 24.6]) {
     wb.box('ashlar', x0 - 0.12, y - 0.2, z0 - 0.12, x1 + 0.12, y, z0, { ao: false, faces: 'nsewb', tint: tint.map((v) => v * 1.15) });
     wb.box('ashlar', x0 - 0.12, y - 0.2, z1, x1 + 0.12, y, z1 + 0.12, { ao: false, faces: 'nsewb', tint: tint.map((v) => v * 1.15) });
     wb.box('ashlar', x0 - 0.12, y - 0.2, z0, x0, y, z1, { ao: false, faces: 'wtb', tint: tint.map((v) => v * 1.15) });
@@ -404,11 +410,13 @@ function torreHomenaje(ctx, L) {
   // las ventanas: saeteras abajo; ajimeces en las cámaras; los grandes de la
   // sala del trono, de dos órdenes (el de cara al patio, encendido)
   const vt = { tint: tint.map((v) => v * 1.18) };
+  // (en el plano de sus caras, que van un dedo por fuera de la planta: las
+  // bocas, delante de ellas)
   for (const [d, line, a, b] of [
-    ['n', z0, x0, x1],
-    ['s', z1, x0, x1],
-    ['w', x0, z0, z1],
-    ['e', x1, z0, z1],
+    ['n', z0 - 0.01, x0, x1],
+    ['s', z1 + 0.01, x0, x1],
+    ['w', x0 - 0.01, z0, z1],
+    ['e', x1 + 0.01, z0, z1],
   ]) {
     const c = (a + b) / 2;
     if (d === 'n') for (const u of [c - 6, c + 6]) saetera(ctx, d, line, u, 7.4, { h: 1.6 });
@@ -578,10 +586,10 @@ function cubiertas(ctx) {
   solidGableRoof(ctx, Pt.x1, C.z0, C.x1, C.z1 + 1.2, E, C.ridge, 'z', { ovs: [0.75, 0], gableOverhang: 0, gables: [false, { y0: E, t: 1.2 }], underRoom: 'capilla', room: 'capilla', wallTint });
   // la sala de la reina: del muro del salón a la torre, en dos trozos (el de
   // poniente, sin alero al patio: ahí está el hastial del salón)
-  solidGableRoof(ctx, R.x0, R.z0, Pt.x0, Pt.z0, E, R.ridge, 'x', { ovs: [0, 0], gableOverhang: 0, gables: [false, false], open: [false, true], underRoom: 'reina_sala', wallTint });
-  solidGableRoof(ctx, Pt.x0, R.z0, R.x1, Pt.z0, E, R.ridge, 'x', { ovs: [0, 0.75], gableOverhang: 0, gables: [false, false], open: [true, false], underRoom: 'reina_sala', wallTint });
+  solidGableRoof(ctx, R.x0, R.z0, Pt.x0, Pt.z0, E, R.ridge, 'x', { ovs: [0, 0], gableOverhang: 0, gables: [false, false], open: [false, true], underRoom: 'reina_alta', wallTint });
+  solidGableRoof(ctx, Pt.x0, R.z0, R.x1, Pt.z0, E, R.ridge, 'x', { ovs: [0, 0.75], gableOverhang: 0, gables: [false, false], open: [true, false], underRoom: 'reina_alta', wallTint });
   // las cámaras del Rey
-  solidGableRoof(ctx, K.x0, K.z0, K.x1, Pt.z0, E, K.ridge, 'x', { ovs: [0, 0.75], gableOverhang: 0, gables: [false, false], underRoom: 'antecamara', wallTint });
+  solidGableRoof(ctx, K.x0, K.z0, K.x1, Pt.z0, E, K.ridge, 'x', { ovs: [0, 0.75], gableOverhang: 0, gables: [false, false], underRoom: 'camara_rey', wallTint });
 }
 
 // ------------------------------------------------------------------------ alrededor

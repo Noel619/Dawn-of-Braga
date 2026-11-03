@@ -9,7 +9,7 @@
 // 's', z en las 'e' y 'w').
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker, merlons, archRing, husillo, subtractRects } from './builders.js';
+import { solid, blocker, merlons, archRing, husillo, subtractRects, beam } from './builders.js';
 import * as P from './props.js';
 import { palo } from './barrio_atrezo.js';
 
@@ -166,14 +166,21 @@ export function vano(ctx, dir, line, u, y, w, h, o = {}) {
   const wb = ctx.wb;
   const F = plano(dir, line);
   const room = o.room;
-  const boca = o.lit ? 'ember' : 'black';
+  // (la boca: negra, encendida —las velas de dentro— o, vista desde dentro,
+  // la luna: o.boca = 'luna')
+  const boca = o.boca ?? (o.lit ? 'ember' : 'black');
+  const bt = boca === 'ember' ? [1, 0.85, 0.6] : undefined;
   const e = 0.012;
-  cara(wb, boca, F.Pt(u - w / 2, y, e), F.Pt(u + w / 2, y, e), F.Pt(u + w / 2, y + h, e), F.Pt(u - w / 2, y + h, e), F.N, { ao: false, grime: false, room, tint: o.lit ? [1, 0.85, 0.6] : undefined });
+  cara(wb, boca, F.Pt(u - w / 2, y, e), F.Pt(u + w / 2, y, e), F.Pt(u + w / 2, y + h, e), F.Pt(u - w / 2, y + h, e), F.N, { ao: false, grime: false, room, tint: bt });
   const n = 8;
   for (let k = 0; k < n; k++) {
     const a = Math.PI - (k / n) * Math.PI,
       b = Math.PI - ((k + 1) / n) * Math.PI;
-    tri(wb, boca, F.Pt(u, y + h, e), F.Pt(u + Math.cos(a) * (w / 2), y + h + Math.sin(a) * (w / 2), e), F.Pt(u + Math.cos(b) * (w / 2), y + h + Math.sin(b) * (w / 2), e), F.N, { ao: false, grime: false, room, tint: o.lit ? [1, 0.85, 0.6] : undefined });
+    tri(wb, boca, F.Pt(u, y + h, e), F.Pt(u + Math.cos(a) * (w / 2), y + h + Math.sin(a) * (w / 2), e), F.Pt(u + Math.cos(b) * (w / 2), y + h + Math.sin(b) * (w / 2), e), F.N, { ao: false, grime: false, room, tint: bt });
+  }
+  if (boca === 'luna' && o.light !== false) {
+    const p = F.Pt(u, y + h * 0.5, 0.7);
+    ctx.lights.push({ x: p.x, y: p.y, z: p.z, r: 0.5, g: 0.58, b: 0.78, radius: o.radius ?? 4.5, intensity: o.intensity ?? 0.55, room });
   }
   const r = o.ring ?? 0.13,
     pr = o.proud ?? 0.05;
@@ -215,6 +222,10 @@ export function ajimez(ctx, dir, line, u, y, o = {}) {
   if (o.lit && o.light !== false) {
     const p = F.Pt(u, y + h * 0.6, 0.9);
     ctx.lights.push({ x: p.x, y: p.y, z: p.z, r: 1, g: 0.52, b: 0.2, radius: o.radius ?? 6, intensity: o.intensity ?? 0.9 });
+  }
+  if (o.boca === 'luna' && o.light !== false) {
+    const p = F.Pt(u, y + h * 0.5, 0.8);
+    ctx.lights.push({ x: p.x, y: p.y, z: p.z, r: 0.5, g: 0.58, b: 0.78, radius: o.radius ?? 5, intensity: o.intensity ?? 0.6, room });
   }
 }
 
@@ -379,7 +390,7 @@ export function muroVanos(ctx, axis, a0, a1, t0, t1, y0, y1, vanos, A, B, o = {}
     return b ? b.room ?? null : null;
   };
   const rev = o.revealRoom !== undefined ? o.revealRoom : A.length ? A[0].room ?? null : null;
-  const piece = (u0, v0, u1, v1, ends = '', top = false) => {
+  const piece = (u0, v0, u1, v1, ends = '', top = false, rr = rev) => {
     if (u1 - u0 < 0.005 || v1 - v0 < 0.005) return;
     if (o.collide !== false) ctx.col.add(...box(u0, v0, u1, v1));
     for (const [side, bands] of [
@@ -389,10 +400,10 @@ export function muroVanos(ctx, axis, a0, a1, t0, t1, y0, y1, vanos, A, B, o = {}
       for (const bd of bands) {
         const ya = Math.max(v0, bd.y0),
           yb = Math.min(v1, bd.y1);
-        if (yb - ya > 0.005) wb.box(mat, ...box(u0, ya, u1, yb), { faces: side, room: bd.room ?? null, tint: bd.tint ?? tint, sub: o.sub ?? 2, aoH: 1.8, baseY: bd.y0 });
+        if (yb - ya > 0.005) wb.box(bd.mat ?? mat, ...box(u0, ya, u1, yb), { faces: side, room: bd.room ?? null, tint: bd.tint ?? tint, sub: o.sub ?? 2, aoH: 1.8, baseY: bd.y0 });
       }
     const f = ends + (top ? 't' : '');
-    if (f) wb.box(mat, ...box(u0, v0, u1, v1), { faces: f, room: rev, tint, sub: 2, ao: false, mats: top ? { t: 'flag' } : undefined });
+    if (f) wb.box(mat, ...box(u0, v0, u1, v1), { faces: f, room: rr, tint, sub: 2, ao: false, mats: top ? { t: 'flag' } : undefined });
   };
   // (los vanos con el mismo eje y el mismo ancho, uno encima de otro, van en
   // la misma columna: las puertas de cada planta de un caracol)
@@ -404,24 +415,32 @@ export function muroVanos(ctx, axis, a0, a1, t0, t1, y0, y1, vanos, A, B, o = {}
   }
   const gs = [...cols.values()].map((g) => g.sort((p, q) => p.y - q.y)).sort((A, B) => A[0].c - B[0].c);
   let cur = a0;
+  // (tras un vano adintelado, su derrame de la derecha lo pone él: el cabo
+  // del trozo de muro que sigue, no)
+  let llano = false;
   for (const G of gs) {
     const ring = Math.max(...G.map((v) => (v.rise > 0 ? v.ring ?? 0.26 : 0)));
     const l = G[0].c - G[0].w / 2,
       r = G[0].c + G[0].w / 2;
-    piece(cur, y0, l - ring, y1, cur > a0 ? endLo : '');
+    piece(cur, y0, l - ring, y1, cur > a0 && !llano ? endLo : '');
     let yc = y0;
     for (const v of G) {
       const ys = v.y + v.h;
       const arco = v.rise > 0;
       const ytop = arco ? ys + v.rise + ring + 0.05 : ys;
+      // (las jambas, el umbral y el dintel, con la luz de la sala del vano:
+      // v.room, si cada uno da a una)
+      const vr = v.room !== undefined ? v.room : rev;
       // lo de debajo del vano (con el umbral) y sus jambas
-      piece(l - ring, yc, r + ring, v.y, '', true);
+      piece(l - ring, yc, r + ring, v.y, '', true, vr);
       if (ring > 0) {
-        piece(l - ring, v.y, l, arco ? ys : ytop, endHi);
-        piece(r, v.y, r + ring, arco ? ys : ytop, endLo);
+        piece(l - ring, v.y, l, arco ? ys : ytop, endHi, false, vr);
+        piece(r, v.y, r + ring, arco ? ys : ytop, endLo, false, vr);
       } else {
-        wb.box(mat, ...box(l - 0.001, v.y, l, ys), { faces: endHi, room: rev, tint, sub: 2, ao: false });
-        wb.box(mat, ...box(r, v.y, r + 0.001, ys), { faces: endLo, room: rev, tint, sub: 2, ao: false });
+        // (los derrames de un vano adintelado; no el que cae en un cabo del
+        // muro: ahí está la cara del muro de al lado)
+        if (l > a0 + 0.005) wb.box(mat, ...box(l - 0.001, v.y, l, ys), { faces: endHi, room: vr, tint, sub: 2, ao: false });
+        if (r < a1 - 0.005) wb.box(mat, ...box(r, v.y, r + 0.001, ys), { faces: endLo, room: vr, tint, sub: 2, ao: false });
       }
       if (arco) {
         archRing(ctx, { axis: axZ ? 'z' : 'x', c: v.c, w: v.w, y0: ys, rise: v.rise, ring, t0, t1, top: ytop, clip: [l - ring, r + ring], mat: 'ashlar', spMat: mat, rooms: [roomAt(A, ys), roomAt(B, ys)], tint: v.tint ?? PIEDRA.silla, spTint: tint, proud: 0.02 });
@@ -430,13 +449,14 @@ export function muroVanos(ctx, axis, a0, a1, t0, t1, y0, y1, vanos, A, B, o = {}
           ctx.col.add(...box(l - ring, ys, l, ytop));
           ctx.col.add(...box(r, ys, r + ring, ytop));
         }
-      } else wb.box(mat, ...box(l, ys, r, ys + 0.001), { faces: 'b', room: rev, tint, ao: false, sub: 2 });
+      } else wb.box(mat, ...box(l, ys, r, ys + 0.001), { faces: 'b', room: vr, tint, ao: false, sub: 2 });
       yc = ytop;
     }
     piece(l - ring, yc, r + ring, y1);
     cur = r + ring;
+    llano = ring === 0;
   }
-  piece(cur, y0, a1, y1, gs.length ? endLo : '');
+  piece(cur, y0, a1, y1, gs.length && !llano ? endLo : '');
 }
 
 // Forjado de tablas a la altura y, de x0..x1 por z0..z1, con sus huecos
@@ -714,4 +734,235 @@ export function tapiz(ctx, x, y, z, rot, w, h, o = {}) {
     wb.box('gold', -w / 2, -h, 0.05, w / 2, -h + 0.14, 0.055, { ao: false, faces: 's', room, tint: [0.6, 0.48, 0.24] });
     wb.box('gold', -w / 2, -0.2, 0.05, w / 2, -0.12, 0.055, { ao: false, faces: 's', room, tint: [0.6, 0.48, 0.24] });
   });
+}
+
+// ------------------------------------------------------------------ por dentro
+// Las caras de dentro de una torre (las de sus muros sin puertas), por franjas
+// de alto, cada una con su sala.
+export function dentro(ctx, R, lados, bands, o = {}) {
+  const wb = ctx.wb;
+  const ix0 = R.x0 + R.t,
+    ix1 = R.x1 - R.t,
+    iz0 = R.z0 + R.t,
+    iz1 = R.z1 - R.t;
+  for (const l of lados)
+    for (const b of bands) {
+      const bx = { n: [ix0, b.y0, iz0 - 0.01, ix1, b.y1, iz0], s: [ix0, b.y0, iz1, ix1, b.y1, iz1 + 0.01], w: [ix0 - 0.01, b.y0, iz0, ix0, b.y1, iz1], e: [ix1, b.y0, iz0, ix1 + 0.01, b.y1, iz1] }[l];
+      wb.box(b.mat ?? o.mat ?? 'wallstone', ...bx, { faces: { n: 's', s: 'n', w: 'e', e: 'w' }[l], room: b.room, tint: b.tint ?? o.tint ?? [0.72, 0.69, 0.64], sub: 2, aoH: 1.6, baseY: b.y0 });
+    }
+}
+
+// Una cara suelta (sin colisión), en el plano de un muro.
+export function cara1(ctx, mat, dir, line, a, b, y0, y1, room, tint) {
+  const box = { n: [a, y0, line - 0.01, b, y1, line], s: [a, y0, line, b, y1, line + 0.01], w: [line - 0.01, y0, a, line, y1, b], e: [line, y0, a, line + 0.01, y1, b] }[dir];
+  ctx.wb.box(mat, ...box, { faces: dir, room, tint, sub: 2, aoH: 1.6, baseY: y0 });
+}
+
+// Saetera por dentro (la hendidura en su derrame), en una cara que mira a dir.
+export function saeteraDentro(ctx, dir, line, u, y, room) {
+  const e = 0.012;
+  const bx = { n: [u - 0.11, y, line - e, u + 0.11, y + 1.3, line], s: [u - 0.11, y, line, u + 0.11, y + 1.3, line + e], w: [line - e, y, u - 0.11, line, y + 1.3, u + 0.11], e: [line, y, u - 0.11, line + e, y + 1.3, u + 0.11] }[dir];
+  ctx.wb.box('black', ...bx, { faces: dir, ao: false, grime: false, room });
+}
+
+// Los tramos de a0 a a1 sin los huecos ([[u0, u1], ...]).
+export function tramos(a0, a1, huecos = []) {
+  const out = [];
+  let cur = a0;
+  for (const [u0, u1] of [...huecos].sort((p, q) => p[0] - q[0])) {
+    if (u1 <= cur || u0 >= a1) continue;
+    if (u0 > cur + 0.01) out.push([cur, Math.min(u0, a1)]);
+    cur = Math.max(cur, u1);
+  }
+  if (a1 > cur + 0.01) out.push([cur, a1]);
+  return out;
+}
+
+// La línea de un tejado a dos aguas (el de solidGableRoof) sobre la cara de
+// un muro que corre a lo ancho de él: uc, la cumbrera; half, de ella al
+// alero; yE e yR, lo alto del tejado en el alero y en la cumbrera; th, su
+// grueso. y(u): por encima de las tejas; yb(u): la cara de abajo.
+export function lineaTejado(uc, half, yE, yR, th = 0.2) {
+  const slope = (yR - yE) / half;
+  const tv = th * Math.sqrt(1 + slope * slope);
+  return { uc, half, slope, tv, yE, yR, y: (u) => yR - Math.abs(u - uc) * slope, yb: (u) => yR - tv - Math.abs(u - uc) * slope };
+}
+
+// La cara de un muro (en el plano dir, line; de a0 a a1) bajo un tejado: de y0
+// hasta la cara de abajo del tejado (lo de dentro, con su sala); o, con
+// o.sobre, de lo alto del tejado hasta y0 (lo de fuera: el muro de una torre
+// que asoma por encima).
+export function caraTejado(ctx, mat, dir, line, a0, a1, y0, T, o = {}) {
+  const F = plano(dir, line);
+  const cuts = [a0];
+  if (T.uc > a0 + 0.01 && T.uc < a1 - 0.01) cuts.push(T.uc);
+  cuts.push(a1);
+  const off = o.off ?? 0;
+  const lineY = o.sobre ? T.y : T.yb;
+  for (let i = 0; i + 1 < cuts.length; i++) {
+    const ua = cuts[i],
+      ub = cuts[i + 1];
+    const ya = lineY(ua),
+      yb = lineY(ub);
+    const pts = o.sobre ? [F.Pt(ua, ya, off), F.Pt(ub, yb, off), F.Pt(ub, y0, off), F.Pt(ua, y0, off)] : [F.Pt(ua, y0, off), F.Pt(ub, y0, off), F.Pt(ub, yb, off), F.Pt(ua, ya, off)];
+    cara(ctx.wb, mat, pts[0], pts[1], pts[2], pts[3], F.N, { sub: o.sub ?? 2, aoH: o.aoH ?? 1.6, baseY: o.baseY ?? y0, room: o.room ?? null, tint: o.tint, ao: o.ao });
+  }
+}
+
+// El zócalo pintado (el cortinaje de almagre de la textura 'zocalo') en una
+// cara que mira a dir, de a0 a a1 y de y0 a y0 + h, a un dedo del muro; sin
+// él en los huecos ([[u0, u1]]: las puertas, el hogar).
+export function zocalo(ctx, dir, line, a0, a1, y0, h, room, huecos = [], o = {}) {
+  const F = plano(dir, line);
+  const s = 1 / h;
+  for (const [u0, u1] of tramos(a0, a1, huecos)) ctx.wb.box(o.mat ?? 'zocalo', ...F.box(u0, y0, u1, y0 + h, -0.005, 0.03), { faces: asoma(dir), ao: false, room, uv: s, vo: -y0 * s, sub: 1.2, tint: o.tint });
+}
+
+// La armadura de madera de un tejado a dos aguas, por debajo (las medidas,
+// las de su solidGableRoof): axis, la cumbrera; s0..s1, a lo largo de ella;
+// T, la línea del tejado (lineaTejado); ui0..ui1, las caras de dentro de los
+// muros de los aleros. Las soleras sobre los muros, los pares (cada paso; no
+// en los tramos de skip: los arcos), la hilera, las correas (o.correas por
+// faldón) y, si se piden, los tirantes pareados (o.tirantes: [s, ...]) sobre
+// sus canes y los nudillos de cada par.
+export function armadura(ctx, o) {
+  const { axis, s0, s1, ui0, ui1, room } = o;
+  const T = o.T;
+  const uc = T.uc;
+  const P = (s, y, u) => (axis === 'x' ? V(s, y, u) : V(u, y, s));
+  const S = axis === 'x' ? V(1, 0, 0) : V(0, 0, 1);
+  const U = axis === 'x' ? V(0, 0, 1) : V(1, 0, 0);
+  const cos = 1 / Math.sqrt(1 + T.slope * T.slope);
+  const tint = o.tint ?? [0.56, 0.46, 0.38];
+  const skip = o.skip ?? [];
+  const libre = (s) => skip.every(([a, b]) => s < a || s > b);
+  const pw = o.parW ?? 0.12,
+    pd = o.parD ?? 0.15;
+  const off = pd / 2 / cos;
+  const paso = o.paso ?? 0.62;
+  const yTop = T.yb(uc);
+  // los pares, de las soleras a la hilera, y sus nudillos
+  const nud = o.nudillo;
+  for (let s = s0 + paso / 2; s < s1 - 0.1; s += paso) {
+    if (!libre(s)) continue;
+    for (const ue of [ui0, ui1]) beam(ctx, 'timber', P(s, T.yb(ue) - off, ue), P(s, yTop - off, uc), pw, { d: pd, side: S, room, tint });
+    if (nud) {
+      const yn = yTop - nud * (Math.min(uc - ui0, ui1 - uc) * T.slope);
+      const d = (yTop - yn) / T.slope;
+      beam(ctx, 'timber', P(s, yn - off - 0.06, uc - d), P(s, yn - off - 0.06, uc + d), 0.1, { d: 0.12, side: S, room, tint: tint.map((v) => v * 0.92) });
+    }
+  }
+  // la hilera y las correas
+  const hd = o.hileraD ?? 0.28;
+  beam(ctx, 'timber', P(s0, yTop - pd / cos - hd / 2 + 0.03, uc), P(s1, yTop - pd / cos - hd / 2 + 0.03, uc), 0.26, { d: hd, side: U, room, tint: tint.map((v) => v * 0.9) });
+  const nc = o.correas ?? 0;
+  const hw = Math.min(uc - ui0, ui1 - uc);
+  for (let k = 1; k <= nc; k++)
+    for (const sg of [-1, 1]) {
+      const u = uc + (sg * hw * k) / (nc + 1);
+      const y = T.yb(u) - pd / cos - 0.15;
+      beam(ctx, 'timber', P(s0, y, u), P(s1, y, u), 0.22, { d: 0.28, side: U, room, tint: tint.map((v) => v * 0.88) });
+    }
+  // las soleras, sobre lo alto de los muros
+  for (const ue of [ui0, ui1]) {
+    const y = T.yb(ue) - pd / cos - 0.1;
+    const uu = ue + (ue < uc ? 0.12 : -0.12);
+    beam(ctx, 'timber', P(s0, y, uu), P(s1, y, uu), 0.24, { d: 0.2, side: U, room, tint: tint.map((v) => v * 0.85) });
+  }
+  // los tirantes pareados, con sus canes
+  for (const st of o.tirantes ?? []) {
+    const y = Math.min(T.yb(ui0), T.yb(ui1)) - pd / cos - 0.36;
+    for (const ds of [-0.24, 0.24]) beam(ctx, 'timber', P(st + ds, y, ui0), P(st + ds, y, ui1), 0.18, { d: 0.24, side: S, room, tint: tint.map((v) => v * 0.94) });
+    for (const ue of [ui0, ui1]) {
+      const sg = ue < uc ? 1 : -1;
+      for (let k = 0; k < 3; k++) {
+        const L = 0.25 + k * 0.22;
+        const a = P(st, y - 0.12 - 0.17 * (2 - k), ue),
+          b = P(st, y - 0.12 - 0.17 * (2 - k), ue + sg * L);
+        beam(ctx, 'wooddark', a, b, 0.17, { d: 0.17, side: S, room, tint: tint.map((v) => v * 0.8) });
+      }
+    }
+  }
+}
+
+// Escalera de tablas (sin macizo debajo: cada peldaño, su tabla y su tabica),
+// con sus zancas y su pasamanos del lado de fuera (side: 1, a la derecha de
+// quien sube; -1, a la izquierda; 0, sin él): sube hacia dir desde (x, y, z),
+// n peldaños de rise y run, de ancho w.
+export function escaleraTablas(ctx, x, y, z, dir, w, n, rise, run, o = {}) {
+  const wb = ctx.wb;
+  const room = o.room;
+  const D = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] }[dir];
+  const R = [-D[1], D[0]]; // a la derecha de quien sube
+  const at = (a, r, yy) => V(x + D[0] * a + R[0] * r, yy, z + D[1] * a + R[1] * r);
+  const tint = o.tint ?? [0.66, 0.56, 0.46];
+  for (let i = 0; i < n; i++) {
+    const top = y + rise * (i + 1);
+    const a0 = run * i,
+      a1 = run * (i + 1) + 0.03;
+    const p0 = at(a0, -w / 2, 0),
+      p1 = at(a1, w / 2, 0);
+    const bx = [Math.min(p0.x, p1.x), top - 0.07, Math.min(p0.z, p1.z), Math.max(p0.x, p1.x), top, Math.max(p0.z, p1.z)];
+    wb.box('planks', ...bx, { ao: false, faces: 'tnsewb', room, tint: tint.map((v) => v * (i % 2 ? 0.95 : 1.02)), sub: 3 });
+    // (la tabica: la cara del peldaño de abajo a arriba)
+    const q0 = at(a0, -w / 2, 0),
+      q1 = at(a0 + 0.03, w / 2, 0);
+    wb.box('wooddark', Math.min(q0.x, q1.x), top - rise, Math.min(q0.z, q1.z), Math.max(q0.x, q1.x), top - 0.07, Math.max(q0.z, q1.z), { ao: false, faces: 'nsewb', room, tint: [0.5, 0.44, 0.38] });
+    ctx.col.add(bx[0], top - rise - 0.02, bx[2], bx[3], top, bx[5]);
+  }
+  // las zancas
+  const L = n * run;
+  for (const r of [-w / 2 - 0.04, w / 2 + 0.04]) beam(ctx, 'wooddark', at(0, r, y - 0.05), at(L, r, y + n * rise - 0.05), 0.08, { d: 0.26, side: V(R[0], 0, R[1]), room, tint: [0.5, 0.42, 0.36] });
+  // el pasamanos, sobre sus balaustres (desde el peldaño o.desde: por los
+  // de abajo se sube también de lado)
+  if (o.side) {
+    const r = (o.side * w) / 2 + o.side * 0.06;
+    const k0 = o.desde ?? 0;
+    const a0 = Math.max(0.1, k0 * run);
+    beam(ctx, 'wooddark', at(a0, r, y + k0 * rise + 0.95), at(L, r, y + n * rise + 0.95), 0.07, { d: 0.08, room });
+    for (let i = Math.max(1, k0); i < n; i += o.cada ?? 3) {
+      const p = at(i * run + run / 2, r, 0);
+      wb.box('wooddark', p.x - 0.03, y + (i + 1) * rise, p.z - 0.03, p.x + 0.03, y + (i + 1) * rise + 0.95, p.z + 0.03, { ao: false, room });
+    }
+    const pa = at(a0, r, 0),
+      pb = at(L, r, 0);
+    ctx.col.add(Math.min(pa.x, pb.x) - 0.04, y + k0 * rise, Math.min(pa.z, pb.z) - 0.04, Math.max(pa.x, pb.x) + 0.04, y + n * rise + 1.1, Math.max(pa.z, pb.z) + 0.04);
+  }
+}
+
+// Una pierna de cerdo, una ristra de chorizos, un manojo de hierbas: lo que
+// cuelga de una vara en el secadero de la cocina.
+export function colgado(ctx, x, y, z, k, room, rng) {
+  const wb = ctx.wb;
+  if (k === 0) {
+    // el jamón: la pata, la caña y la cuerda
+    wb.box('rope', x - 0.01, y - 0.18, z - 0.01, x + 0.01, y, z + 0.01, { ao: false, room });
+    wb.cylinder('hide', x, y - 0.42, z, 0.04, 0.035, 0.24, 6, { ao: false, room, tint: [0.62, 0.44, 0.34], capTop: true });
+    wb.cylinder('hide', x, y - 0.98, z, 0.17, 0.05, 0.56, 8, { ao: false, room, tint: [0.66, 0.36, 0.26], capTop: true, capBot: true });
+  } else if (k === 1) {
+    // la ristra de chorizos, en curva
+    for (let i = 0; i < 5; i++) {
+      const t = i / 4;
+      const px = x + (t - 0.5) * 0.36,
+        py = y - 0.1 - Math.sin(t * Math.PI) * 0.34;
+      wb.cylinder('hide', px, py - 0.08, z, 0.035, 0.035, 0.16, 6, { ao: false, room, tint: [0.5, 0.16, 0.12], capTop: true, capBot: true });
+    }
+    wb.box('rope', x - 0.2, y - 0.03, z - 0.01, x + 0.2, y, z + 0.01, { ao: false, room });
+  } else {
+    // el manojo de hierbas, cabeza abajo
+    wb.box('rope', x - 0.01, y - 0.12, z - 0.01, x + 0.01, y, z + 0.01, { ao: false, room });
+    for (let i = 0; i < 6; i++) palo(wb, V(x, y - 0.12, z), V(x + rng.range(-0.12, 0.12), y - rng.range(0.4, 0.55), z + rng.range(-0.12, 0.12)), 0.012, 'leaves', { room, tint: [0.5, 0.5, 0.32] });
+  }
+}
+
+// Una capa pintada (el despiece fingido, el enlucido) a un dedo de la cara de
+// un muro que mira a dir: de a0 a a1 y de y0 a y1, sin los huecos ([u0, y0,
+// u1, y1]: las puertas y las ventanas).
+export function enlucido(ctx, mat, dir, line, a0, a1, y0, y1, huecos, room, o = {}) {
+  const F = plano(dir, line);
+  // (en el plano: u a lo largo, y de alto, como rectángulos de subtractRects)
+  for (const [u0, v0, u1, v1] of subtractRects([a0, y0, a1, y1], huecos ?? [])) {
+    if (u1 - u0 < 0.02 || v1 - v0 < 0.02) continue;
+    ctx.wb.box(mat, ...F.box(u0, v0, u1, v1, -0.004, o.off ?? 0.03), { faces: asoma(dir), ao: o.ao ?? true, aoH: 1.4, baseY: o.baseY ?? y0, room, sub: o.sub ?? 1.6, tint: o.tint });
+  }
 }

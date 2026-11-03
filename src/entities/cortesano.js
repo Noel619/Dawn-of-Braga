@@ -271,7 +271,7 @@ export const MAYORDOMO_TYPE = {
   onHit: (e) => e.game.corte && e.game.corte.provoked(e),
 };
 
-// Los sueltos por el Paço: rezan de rodillas por los pasillos y las cámaras y
+// Los sueltos por la fortaleza: rezan de rodillas por los pasillos y las cámaras y
 // se levantan al verte; sin compás, cada uno a lo suyo.
 export const CORTESANO_SUELTO_TYPE = {
   ...CORTESANO_TYPE,

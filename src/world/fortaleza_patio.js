@@ -74,7 +74,7 @@ function muros(ctx, S, L) {
   {
     const x0 = Pt.x1,
       x1 = Pt.x1 + ti;
-    franja('z', C.z0, C.z1, x0, x1, yH, [{ c: C.puerta, w: 2.2, h: 3.0, rise: 1.1, ring: 0.38, tint: PIEDRA.silla }], [null, 'capilla']);
+    franja('z', C.z0, C.z1, x0, x1, yH, [{ c: C.puerta, w: 2.2, h: 2.5, rise: 1.1, ring: 0.38, tint: PIEDRA.silla }], [null, 'capilla']);
     pieza(ctx, 'wallstone', x0, yH, C.z0, x1, E, C.z1, [['w', null], ['e', 'capilla']], { tint, baseY: 0 });
     franja('z', C.z1, Pt.z1, x0, x1, yH, [{ c: Cn.puerta, w: 1.6, h: 2.6, rise: 0.8, ...ring }], [null, 'cancilleria']);
     pieza(ctx, 'wallstone', x0, yH, C.z1, x1, walk, Pt.z1, [['w', null]], { tint, baseY: 0 });
@@ -83,32 +83,34 @@ function muros(ctx, S, L) {
     // la portada de la capilla: el arco de tres roscas y la cruz encima
     for (let k = 0; k < 2; k++) {
       const w = 2.2 + 0.76 + k * 0.56;
-      archRing(ctx, { axis: 'z', c: C.puerta, w, y0: 3.0, rise: w / 2, ring: 0.26, t0: x0 - 0.1 - k * 0.08, t1: x0 + 0.01, mat: 'ashlar', tint: PIEDRA.silla.map((v) => v * (1 - k * 0.05)), proud: 0, cam: false, n: 9 });
-      for (const s of [-1, 1]) wb.box('ashlar', x0 - 0.1 - k * 0.08, 0, C.puerta + s * (w / 2) - (s > 0 ? 0 : 0.26), x0, 3.0, C.puerta + s * (w / 2) + (s > 0 ? 0.26 : 0), { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
+      archRing(ctx, { axis: 'z', c: C.puerta, w, y0: 2.5, rise: w / 2, ring: 0.26, t0: x0 - 0.1 - k * 0.08, t1: x0 + 0.01, mat: 'ashlar', tint: PIEDRA.silla.map((v) => v * (1 - k * 0.05)), proud: 0, cam: false, n: 9 });
+      for (const s of [-1, 1]) wb.box('ashlar', x0 - 0.1 - k * 0.08, 0, C.puerta + s * (w / 2) - (s > 0 ? 0 : 0.26), x0, 2.5, C.puerta + s * (w / 2) + (s > 0 ? 0.26 : 0), { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
     }
-    wb.box('ashlar', x0 - 0.12, 5.25, C.puerta - 0.06, x0, 6.15, C.puerta + 0.06, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
-    wb.box('ashlar', x0 - 0.12, 5.75, C.puerta - 0.3, x0, 5.87, C.puerta + 0.3, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
+    wb.box('ashlar', x0 - 0.12, 4.85, C.puerta - 0.06, x0, 5.75, C.puerta + 0.06, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
+    wb.box('ashlar', x0 - 0.12, 5.35, C.puerta - 0.3, x0, 5.47, C.puerta + 0.3, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
     // las ventanas altas de la capilla (encendidas: las velas del altar) y la
     // de la cancillería
-    for (const z of [-82, -76, -62.5]) vano(ctx, 'w', x0, z, 6.6, 0.55, 1.6, { lit: true, intensity: 0.6, radius: 5 });
+    for (const z of [-76, -71.2, -62.5]) vano(ctx, 'w', x0, z, 6.6, 0.55, 1.6, { lit: true, intensity: 0.6, radius: 5 });
     for (const z of [-56, -49.5]) ajimez(ctx, 'w', x0, z, 7.2, { h: 1.2 });
     L.interact.push(
-      { kind: 'door', id: 'd_capilla', x: x0 + ti / 2, y: 0, z: C.puerta, w: 2.2, h: 3.0 + 1.1, arch: true, axis: 'z', mat: 'planks', double: true, hinge: 0, swing: 1, plane: x1, inset: 0.06, mark: 'cross', lock: { type: 'none' } },
+      { kind: 'door', id: 'd_capilla', x: x0 + ti / 2, y: 0, z: C.puerta, w: 2.2, h: 2.5 + 1.1, arch: true, axis: 'z', mat: 'planks', double: true, hinge: 0, swing: 1, plane: x1, inset: 0.06, mark: 'cross', lock: { type: 'none' } },
       { kind: 'door', id: 'd_cancilleria', x: x0 + ti / 2, y: 0, z: Cn.puerta, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: x1, inset: 0.06, ajar: 0.25, lock: { type: 'none' } }
     );
   }
   // norte: las cámaras de la reina y las del Rey, a los lados de la torre
-  for (const [a, b, Rm, room, lit] of [
-    [Pt.x0, R.x1, R, 'reina_sala', true],
-    [K.x0, Pt.x1, K, 'antecamara', false],
+  for (const [a, b, Rm, room, alta, yA, lit] of [
+    [Pt.x0, R.x1, R, 'estrado_damas', 'reina_alta', FORT.F1, true],
+    [K.x0, Pt.x1, K, 'antecamara', 'camara_rey', K.alto, false],
   ]) {
     const z0 = Pt.z0 - ti,
       z1 = Pt.z0;
-    franja('x', a, b, z0, z1, yH, [{ c: Rm.puerta, w: 1.6, h: 2.5, rise: 0.8, ...ring }], [room, null]);
-    pieza(ctx, 'wallstone', a, yH, z0, b, E, z1, [['s', null]], { tint, baseY: 0 });
+    // (la franja de abajo, hasta el suelo de la sala de arriba; de ahí al
+    // alero, con su cara de dentro)
+    franja('x', a, b, z0, z1, yA, [{ c: Rm.puerta, w: 1.6, h: 2.5, rise: 0.8, ...ring }], [room, null]);
+    pieza(ctx, 'wallstone', a, yA, z0, b, E, z1, [['s', null], ['n', alta, yA, E, [0.8, 0.76, 0.7]]], { tint, baseY: 0 });
     W(S, Rm.puerta - 0.7, z0 - 0.3, Rm.puerta + 0.7, z1 + 0.3);
     ajimez(ctx, 's', z1, Rm.puerta, 6.9, { h: 1.25, lit, intensity: 0.5, radius: 4 });
-    vano(ctx, 's', z1, Rm.puerta + (lit ? 2.6 : 2.2), 2.6, 0.42, 0.9);
+    vano(ctx, 's', z1, Rm.puerta + (lit ? -2.6 : 2.2), 2.6, 0.42, 0.9);
   }
   L.interact.push(
     { kind: 'door', id: 'd_reina', x: R.puerta, y: 0, z: Pt.z0 - ti / 2, w: 1.6, h: 2.5 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: Pt.z0 - ti, inset: 0.06, lock: { type: 'none' } },

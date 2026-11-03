@@ -96,6 +96,10 @@ export const MAT_DEFS = {
   frescoObispos: { tex: 'frescoObispos', uv: 1 },
   limestone: { tex: 'limestone', uv: 0.8 },
   frescoRates: { tex: 'frescoRates', uv: 1 },
+  // la fortaleza: el zócalo de cortinaje pintado de los salones y el despiece
+  // fingido de la capilla
+  zocalo: { tex: 'zocalo', uv: 1 },
+  despiece: { tex: 'despiece', uv: 0.5 },
   // (recortados: lo transparente de la textura no se dibuja)
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
   scratchNoEsNuestro: { tex: 'scratchNoEsNuestro', uv: 1, alphaTest: 0.5 },
@@ -219,6 +223,8 @@ export const MAT_DEFS = {
   eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },
   // la noche que se ve por la reja del lucernario
   nightSky: { tex: 'white', uv: 1, color: 0x000000, emissive: 0x5a6a84, emissiveIntensity: 0.55 },
+  // la luna por las ventanas de la fortaleza, vista desde dentro
+  luna: { tex: 'white', uv: 1, color: 0x020306, emissive: 0x6f84aa, emissiveIntensity: 0.62 },
 };
 
 const matCache = new Map();

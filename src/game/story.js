@@ -557,6 +557,18 @@ Esta noche subimos a la sala a velar. Cuando suene, nos levantaremos todos a la 
 
 Señor, perdonadnos. O no nos perdonéis, y volveremos a arrodillarnos aquí hasta que volváis.`,
   },
+  paje: {
+    title: 'El papel del paje del tambor',
+    text: `Doblado en la bolsa de las baquetas, con letra de niño que acaba de aprender:
+
+El señor mayordomo me ha subido a la galería con el tambor de las fiestas. Dice que cuando suene la campana toque fuerte, un golpe solo, para que se levanten todos a la vez y no sea de ninguno.
+
+Ha sonado. He tocado. No se ha levantado nadie.
+
+Luego se han ido levantando de uno en uno, cada uno a su golpe, y miraban hacia aquí arriba. He seguido tocando porque me miraban.
+
+Ya no tengo fuerza en las manos. Abajo siguen de rodillas, esperando a que toque otra vez. No voy a tocar.`,
+  },
   camarero: {
     title: 'Lo último del camarero',
     text: `Escrito con un carbón en la tapa de un arca, de abajo arriba, cada vez más torcido:
@@ -626,7 +638,7 @@ Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo cl
 
 Desde aquí arriba le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
 
-La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, aquí abajo, en la planta de armas, y los otros cuatro en el Paço. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
+La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, aquí abajo, en la planta de armas, y los otros cuatro en la fortaleza del Rey. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
 Arriba, en la terraza, el caballero de la Orden sigue mirando la luna. Era el mejor de los nuestros. Le he subido pan y no lo ha tocado; ni se ha vuelto. Que Dios me perdone, pero le tengo más miedo que a lo de abajo.
 
@@ -642,7 +654,7 @@ El aljibe, a la mitad. Que nadie lave nada.
 Bolaños para el fundíbulo, los que quedan en el patio.
 
 Día once. Un tiro de los de fuera partió el fundíbulo. Otro se llevó la escalera del adarve norte: se sube por la torre.
-Día doce. Matamos los caballos. El caballero de la Orden no ha bajado de la terraza: mira al norte, hacia el Paço, apoyado en la espada, y no contesta a nadie.
+Día doce. Matamos los caballos. El caballero de la Orden no ha bajado de la terraza: mira al norte, hacia la fortaleza, apoyado en la espada, y no contesta a nadie.
 Día trece. Los heridos de la capilla ya no se quejan. No están muertos.`,
   },
   muralla: {
@@ -1177,7 +1189,9 @@ export const MSG = {
   fuentePatio: 'La fuente del patio de honor no corre desde el día del cerco. En la taza seca, un yelmo y las hojas del olmo.',
   antecamaraTranca: 'La puerta de la antecámara del Rey, atrancada por dentro. Por la rendija sale el olor de las velas.',
   // la reina y los jardines del Rey
-  camaReina: 'La cama de la reina, bajo su dosel, con el paño encima. En la almohada se nota todavía la forma de una cabeza. En el suelo, la vela que se acabó.',
+  camaReina: 'La cama de la reina, bajo su dosel, tapada con la sábana. Por debajo se nota todavía la forma de la almohada. Junto a la cama, la silla del Rey, de cara a ella, y en el candelero, la vela que se acabó.',
+  camaRey: 'La cama del Rey, con la colcha echada a un lado: se levantó de prisa. A sus pies, el arcón de la reina, y encima, doblada, su toca de lino.',
+  puertaPasadizo: 'La puerta de la torre del homenaje, al final del pasadizo: negra del fuego y entera. Atrancada por dentro. Del otro lado no se oye nada; por la rendija, olor a cera.',
   palomar: 'El palomar del Rey, y ni una paloma. En los nidales, plumas y huesecillos limpios. Lo que anida ahora en lo alto no es una paloma.',
   colmenas: 'Las colmenas, mudas. Al acercar el oído a una, algo dentro no zumba: respira.',
   vivero: 'El vivero de los peces del Rey. Las carpas flotan panza arriba en el agua negra, hinchadas, todas vueltas hacia el mismo lado: hacia la Sé.',
@@ -1467,9 +1481,16 @@ export const AREA_NAMES = {
   tombo_legajos: 'Torre del Tombo · los legajos',
   tombo_cartas: 'Torre del Tombo · las cartas',
   tombo_arcas: 'Torre del Tombo · las arcas del Rey',
-  reina_sala: 'Sala de la reina',
+  estrado_damas: 'Estrado de las damas',
+  reina_alta: 'Sala de la reina',
   reina_torre: 'Torre de la reina',
+  reina_oratorio: 'Oratorio de la reina',
+  reina_camara: 'Cámara de la reina',
+  salon_galeria: 'Galería del gran salón',
+  secadero: 'Secadero de la cocina',
+  camara_rey: 'Cámara del Rey',
+  oratorio_rey: 'Oratorio y guardarropa del Rey',
+  pasadizo_rey: 'Pasadizo del Rey',
   antecamara: 'Antecámara del Rey',
   tesoro: 'Tesoro del Rey',
-  guardarropa: 'Guardarropa del Rey',
 };

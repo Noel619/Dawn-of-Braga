@@ -64,7 +64,7 @@ function bladeGeo() {
 }
 const addMat = (o = {}) => additiveFog(new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, ...o }));
 
-// Las hojas secas que sube el viento (del pomar del Paço) a lo alto de la
+// Las hojas secas que sube el viento (del jardín del Rey) a lo alto de la
 // torre: cruzan de poniente a levante, dando vueltas.
 class Leaves {
   constructor(scene, n = 70) {
@@ -377,7 +377,7 @@ const PT = new V3(0, 0, 1.86);
 // ======================================================================
 // LA ESCENA DE LA LUNA (la primera vez que se cruza la niebla de la caseta).
 // A: de lejos, la terraza y, junto al parapeto del norte, él, de espaldas,
-//    apoyado en la espada, mirando la luna grande sobre el Paço; tú sales de
+//    apoyado en la espada, mirando la luna grande sobre la fortaleza; tú sales de
 //    la caseta. B: detrás de él, a contraluz; el viento le mueve la capa; se
 //    vuelve y te mira. C: de frente: saca la espada de las losas, la alza
 //    delante del yelmo y la baja de un tajo: en guardia. D: el plano lateral:

@@ -172,12 +172,12 @@ Norte = −z (arriba). La ciudad, al este. Medidas en metros. (El plano dibujado
 | 1 | **Patio de armas** | 0 | El recinto exterior del castillo: la guarnición. Amplio, para pelear. | Cuadras con sus pesebres, la halconera, la fragua (yunque, fuelle, la forja encendida), el fundíbulo roto, carros, paja, la capilla del castillo (el altar de siempre), el cuartel, el pozo al aljibe, la torre de la cárcel. Al norte, la fortaleza con el puente alzado sobre su foso; al este, la torre-puerta. Penitentes, soldados, un mastín. |
 | 2 | **La puerta y el cuerpo de guardia** | 0 / +5,5 | La puerta en recodo entre dos torres, con dos rastrillos y buhederas; la sala de la guardia; arriba, la **armería** y el **taller del ballestero**, y el **torno del puente**. | La ballesta y sus virotes, el libro de la guarnición, las últimas líneas del alcaide (en el torno: «He mandado alzar el puente»). El **cadalso** de madera sobre la puerta: allí está el **alférez** con su ballesta (su llave). Bajar el puente es el atajo al patio de armas. |
 | 3 | **Patio de honor** | 0 | El centro: claustro de arcos sobre columnas en dos alturas (abajo, galería; arriba, el paseo de las cámaras). | El olmo seco del Rey, la fuente seca, el brocal del aljibe del palacio. La escalinata de la torre, en el eje. Cortesanos sueltos, un soldado, un Campanero. |
-| 4 | **Gran salón** | 0 (a doble altura, hasta +11) | La sala de la corte: 14 × 40 m. Arcos diafragma de piedra cada 8 m sostienen la armadura de madera; una galería corre por el grueso del muro a +6; el estrado y el sitial vacío del Rey, al norte; el biombo y las puertas del servicio, al sur. | **La Corte de los Infieles** (veintidós cortesanos arrodillados y el mayordomo, su cuaderno y su llave). Mesas largas, los tapices y estandartes, dos coronas de luz y el hogar con su campana. |
+| 4 | **Gran salón** | 0 (a doble altura, hasta +11) | La sala de la corte: 14 × 40 m. Arcos diafragma de piedra cada 8 m sostienen la armadura de madera; una galería corre por el grueso del muro a +5,5 (de la torre de la reina a la cocina); el estrado y el sitial vacío del Rey, al norte; el biombo y las puertas del servicio, al sur. | **La Corte de los Infieles** (veintidós cortesanos arrodillados y el mayordomo, su cuaderno y su llave). Mesas largas, los tapices y estandartes, dos coronas de luz y el hogar con su campana. |
 | 5 | **Despensa, botillería y torre de la cocina** | 0 | El servicio del salón. La cocina, en la torre del suroeste: doble altura con una gran campana en medio, como la de Alcobaça. | Las tinajas, los toneles, el horno, los calderos y la mesa de despiece. Una ampolla. Una **poterna** al oeste: el atajo de fuera. |
-| 6 | **Capilla real** | 0 / +5,5 | En el ala este, con el altar al norte (como la Sé). Tiene nave enlucida y pintada, la **tribuna del Rey** a +5,5 (da a sus cámaras) y el **campanario** sobre el ábside. | La confesión del capellán. La llave, atada al cordón de la campana: al quitarla, la campana toca y despierta a la fortaleza. |
+| 6 | **Capilla real** | 0 / +4,5 | En el ala este, con el altar al norte (como la Sé). Tiene nave enlucida y pintada, la **tribuna del Rey** a +4,5 (da a su oratorio) y el **campanario** sobre el ábside. | La confesión del capellán. La llave, atada al cordón de la campana: al quitarla, la campana toca y despierta a la fortaleza. |
 | 7 | **Cancillería y Torre del Tombo** | 0 / +5 … +17 | La sala de los escribanos (mesas, atriles, la cera) al pie de la torre del sureste, que es el **Tombo**: cuatro sobrados con su escalera de caracol. | La carta del Rey, el registro, las seis arcas selladas (las de resorte) y la llave del canciller, con él muerto al lado. |
 | 8 | **Cámaras de la reina y Torre de la reina** | +5,5 … +17 | Al noroeste: la sala de la reina, el estrado de las damas y su torre. | El telar tapado, la cama bajo el dosel, su libro de horas y el relicario. Las dueñas que lloran. Una puerta al jardín. |
-| 9 | **Cámaras del Rey y tesoro** | +5,5 / +12 | Al nordeste: la antecámara, la cámara, el guardarropa y el oratorio (que da a la tribuna de la capilla). El **tesoro**, cerrado por dentro. | El camarero encerrado con lo del Rey: su llave y sus últimas líneas. Un puente cubierto a la torre del homenaje (+12). |
+| 9 | **Cámaras del Rey y tesoro** | +4,5 / +12 | Al nordeste: la antecámara, la cámara, el guardarropa y el oratorio (que da a la tribuna de la capilla). El **tesoro**, cerrado por dentro. | El camarero encerrado con lo del Rey: su llave y sus últimas líneas. El pasadizo cubierto (el adarve norte) a la torre del homenaje (+12), quemado. |
 | 10 | **Torre del homenaje** | 0 … +34 | El núcleo. **Planta baja:** almacén, el pozo y la bajada a las mazmorras del castillo. **+6:** sala de la guardia de la torre. **+12:** las cámaras privadas del Rey. **+18:** la **sala del trono**, a doble altura, con la galería en el muro. **+28:** la terraza. | Abajo, toneles y sacos. En la sala del trono, **el Rey, con su mesa y el Cerco**. En la terraza, el **Caballero de la Orden**, el pendón y la luna. |
 | 11 | **Jardín del Rey** | 0 | La terraza ajardinada entre la torre y la muralla norte. | La alberca, la fuente, los naranjos secos, las colmenas, el palomar, el vivero. **El mirador** en el adarve norte, con el campamento de los sitiadores abajo, y una ampolla. |
 | 12 | **Torre de la coracha** | +9 / +12 | Donde llega la coracha desde la atalaya. | El **altar** (el descanso de la llegada). Desde aquí, los adarves de las alas norte y este. |
@@ -316,6 +316,61 @@ la del Paço. Lo provisional, hasta las fases que vienen:
 
 Pruebas: `tools/fortalezawalk.mjs` (la fortaleza a pie), `tools/corte.mjs`, `tools/progress.mjs`,
 `tools/castlewalk.mjs torre`, `tools/rey.mjs mesa`, `tools/caballero.mjs` y `tools/beastchase.mjs`.
+
+**Fase 2 (hecha).** Las alas por dentro, cada una en su módulo (`world/fortaleza_salon.js`,
+`fortaleza_reina.js`, `fortaleza_rey.js`, `fortaleza_capilla.js`; la despensa, la cocina, la guardia, la
+cancillería y el Tombo siguen en `fortaleza_alas.js`), con piezas nuevas en `fortaleza_atrezo.js`: la armadura de
+madera (soleras, pares, hilera, correas, tirantes pareados sobre sus canes y nudillos), las caras de los muros que
+siguen la línea de un tejado (por dentro y por fuera), el zócalo pintado de cortinaje y el despiece fingido (dos
+texturas nuevas, `zocalo` y `despiece`), el enlucido con sus huecos, la escalera de tablas con sus zancas y su
+pasamanos, lo que cuelga en el secadero y las ventanas vistas desde dentro, con la luna (material `luna`).
+
+- **El gran salón**: la armadura entre los arcos diafragma, con la luz de las coronas que sube a ella; el zócalo
+  pintado por los cuatro muros; y **la galería en el grueso del muro de poniente**, a +5,5 (la hoja de fuera con
+  sus ajimeces a la luna, la de dentro con tres vanos en cada tramo sobre el salón —en el del hogar, ciega—, la
+  bóveda de cañón y el adarve encima). Va de la torre de la reina a la cocina; desde ella se ve a la corte de
+  rodillas, pero no se baja a la sala (la de la pelea). En el tramo del estrado, **el paje del tambor**, encogido
+  bajo el vano desde el que tocaba, con el tambor en el alféizar y su papel (un documento nuevo: los cortesanos
+  se levantaron de uno en uno, cada uno a su golpe).
+- **La cocina**: la escalera de tablas, empinada, por el muro del norte hasta **el secadero**, a +5,5 (los jamones
+  y los chorizos colgados sobre la escalera, las hierbas, el tonel de la manteca, el rastrero junto a la campana),
+  y la puerta del paso que lleva a la galería del salón. La puerta de la despensa abre ahora hacia el sur (abierta,
+  tapaba el pie de la escalera).
+- **La reina**: abajo, **el estrado de las damas** (lo que era su sala); arriba, a +5,5, **la sala de la reina**,
+  bajo su armadura de par y nudillo, con su estrado y su sitial bajo el dosel azul, la mesa con el ajedrez a medio
+  jugar, el hogar frío entre las ventanas del jardín y lo que se tapó con sábanas. **Su torre**, en tres plantas
+  unidas por un caracol: la entrada (los arcones, el aguamanil), **el oratorio** (+5,5: el altar con la Virgen
+  pintada y el relicario; sus puertas a la sala y a la galería) y **su cámara** (+11: la cama tapada bajo el
+  dosel, la silla del Rey a su lado con la vela que se acabó, el reclinatorio con el libro de horas, la dueña con
+  su farol). Por fuera, los ajimeces de la cámara (el del jardín, con la luz del farol).
+- **El Rey**: la antecámara con su escalera de tablas, pegada a la torre del homenaje, que sube a **la cámara del
+  Rey**, a +4,5 (la cama bajo el dosel, la colcha echada a un lado, el arcón de la reina con su toca, la mesa de
+  sus cartas, el brasero). De la cámara se pasa por el grueso del muro a la torre de la coracha, cuya planta de
+  en medio es ahora **el guardarropa y el oratorio del Rey** (sus arcones y la percha de su ropa; el altarico con
+  su tabla, el reclinatorio), con la puerta de la tribuna de la capilla. En lo alto de la torre, junto al altar de
+  la llegada, la escalera al **pasadizo del Rey** (+12): el adarve norte cubierto que llevaba a su torre, quemado
+  (los pies derechos negros, medio tejadillo hundido, los cabios en el suelo, la pantalla a medias); al fondo, la
+  puerta de la torre del homenaje, chamuscada y atrancada por dentro.
+- **La capilla real**: el presbiterio en alto bajo su **bóveda de estrellas**, con el fajón sobre sus ménsulas;
+  **el campanario** sobre él, saliendo del tejado (fuera la espadaña del patio); la nave, enlucida y pintada de
+  despiece fingido, con su zócalo, sus bancos y su armadura con tirantes; **la tribuna del Rey**, a +4,5, por el
+  muro del patio desde la puerta de su oratorio hasta los pies, y la de los pies con su sitial; su escalera de
+  tablas en el muro de levante. **El cordón de la campana** baja por la clave de la bóveda y está atado a una
+  argolla en la cabecera de la tribuna, con la llave del capellán en el nudo: al soltarla, el cordón cae a plomo
+  (dos grupos del mundo que cambia `game/interact.js`: `swap`), la campana suena y despierta a todo lo que la oye en
+  treinta y cuatro metros (`wake`). Junto al altar, **el altar de descanso** de en medio de la fortaleza. La puerta
+  del patio, más baja (pasa bajo la tribuna).
+- **La cancillería**, encalada, con su zócalo. Los documentos que hablaban del Paço dicen ya la fortaleza.
+
+Lo provisional, hasta las fases que vienen:
+
+- **La torre del homenaje**, maciza: su puerta de la escalinata (+6) y la del pasadizo (+12), atrancadas. En la
+  fase 3, la del pasadizo es la entrada (el fuego la dejó atrancada pero no entera por dentro, o la abre alguien).
+- **El paseo de las cámaras** (el claustro de arriba) no se ha hecho: a las salas altas se sube por sus torres y
+  sus escaleras. Si se hace, sus puertas dan a la sala de la reina (+5,5), a la cámara del Rey (+4,5) y a la
+  tribuna.
+- **La puerta del jardín** en la torre de la reina y **la poterna** de la cocina, con el jardín y el patio de armas
+  (fase 4). La puerta, el cuerpo de guardia, la armería y el torno, en la fase 3.
 
 ## Fuentes
 
