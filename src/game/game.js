@@ -47,7 +47,7 @@ import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
 import { ReyQuest } from './rey.js';
 import { Virotes } from './virotes.js';
-import { Caballero, CaballeroCine } from './caballero.js';
+import { Caballero, CaballeroCine, CaballeroFin } from './caballero.js';
 import { Cuerdas } from './cuerdas.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
@@ -969,6 +969,15 @@ export class Game {
     // (tras el rito, en la cisterna ya no queda nadie)
     if (it.boss === 'turibulario' && this.flags['finale:rite']) return;
     if (!this.activeBoss) this.startBoss(b);
+  }
+  // El Caballero de la Orden, vencido (Enemy.die): no muere aún; la escena
+  // del final, en lo alto de la torre (game/caballero.js: CaballeroFin), que
+  // al acabar le da por muerto. Devuelve true si se encarga.
+  caballeroVencido(e) {
+    if (this.cutscene || this.flags['boss:caballero']) return false;
+    this.cutscene = new CaballeroFin(this, e);
+    this.cutscene.start();
+    return true;
   }
   // El arzobispo, vencido en la cisterna: no muere, cae de rodillas y empieza
   // el rito (el dios se lo lleva a través de la cúpula). Devuelve true si se

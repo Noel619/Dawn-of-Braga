@@ -538,10 +538,21 @@ function afuera(ctx, L) {
     ])
       for (let x = x0 + 1.5; x < x1; x += 4.4)
         for (const z of [-118.4, -113.6, -108.8, -104.2]) P.deadTree(ctx, x + rr.range(-0.5, 0.5), 0, z + rr.range(-0.4, 0.4), 8830 + Math.round(-x * 3 - z), rr.range(2.4, 3.4));
-    // la alberca, vacía, ante la torre
+    // la alberca, vacía, ante la torre: su pretil y, dentro, el fondo de
+    // losas con el légamo seco (abajo, en ella, cae el Caballero de la
+    // Orden: game/caballero.js)
     const A = [-106, -118.6, -90, -114.6];
-    solid(ctx, 'ashlar', A[0] - 0.4, 0, A[1] - 0.4, A[2] + 0.4, 0.5, A[3] + 0.4, { faces: 'tnsew', sub: 2, tint: PIEDRA.silla });
-    wb.box('black', A[0], 0.49, A[1], A[2], 0.5, A[3], { faces: 't', ao: false, grime: false, tint: [0.2, 0.2, 0.2] });
+    const at = 0.4,
+      ah = 0.75;
+    for (const [a, b, c, d] of [
+      [A[0] - at, A[1] - at, A[2] + at, A[1]],
+      [A[0] - at, A[3], A[2] + at, A[3] + at],
+      [A[0] - at, A[1], A[0], A[3]],
+      [A[2], A[1], A[2] + at, A[3]],
+    ])
+      solid(ctx, 'ashlar', a, 0, b, c, ah, d, { faces: 'tnsew', sub: 2, tint: PIEDRA.silla });
+    wb.box('flag', A[0], 0, A[1], A[2], 0.1, A[3], { faces: 't', ao: false, sub: 3, tint: [0.44, 0.42, 0.38] });
+    for (let i = 0; i < 7; i++) P.decal(ctx, rr.range(A[0] + 1.2, A[2] - 1.2), 0.11, rr.range(A[1] + 0.9, A[3] - 0.9), rr.range(1.4, 2.6), 'splat', 0.55, { tint: [0.2, 0.22, 0.17] });
     P.well(ctx, -126, 0, -112, {});
   }
   // al sur, en el rincón del patio de armas entre la fortaleza, la coracha y

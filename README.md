@@ -544,25 +544,39 @@ la **terraza de la torre del homenaje**, lo más alto del mapa, que está por en
 **luna grande** sobre la fortaleza. Junto al parapeto del norte, apoyado en su espada larga, de espaldas, la mira **el
 Caballero de la Orden**: el mejor de los hombres del Rey, un caballero de una orden militar (sobreveste blanca con
 la cruz roja, cota de malla, yelmo cerrado con una cruz de hierro por cimera, la capa hecha jirones), ya infectado;
-a su lado, el pendón del Rey clavado en su asta. Al cruzar la niebla de la caseta, la escena: él, a contraluz de la
-luna, se vuelve y te mira; saca la espada de las losas, la alza delante del yelmo y la baja de un tajo; y en un
-**plano lateral**, tú a la izquierda y él a la derecha, el viento y las hojas pasan entre los dos mientras la cámara
-se aleja despacio. La pelea es **una danza** a media distancia, habilidad tras habilidad, con una estampida de
-zanfona y pandero en 6/8 de fondo: **la acometida** (cruza la terraza en línea recta con la punta por delante, de
-una a cuatro veces seguidas cambiando de rumbo), **el tajo del viento** (una media luna de luz fría que corre por
+a su lado, el pendón del Rey clavado en su asta. Al cruzar la niebla de la caseta, **la escena de la luna**, despacio,
+en siete planos: sales de la caseta y le ves al fondo, junto al parapeto; él, de lejos, contra la luna, y la cámara
+que sube; sus manos en el pomo y la punta entre dos losas; el yelmo, de perfil: te oye, se le encienden los ojos y
+vuelve la cabeza por encima del hombro; de espaldas, a contraluz, arranca la espada de las losas y se da la vuelta
+con todo el peso; de frente, **el saludo** (el puño ante el yelmo, la hoja en alto, quieto) y la baja de un tajo; y en
+un **plano lateral**, tú a la izquierda y él a la derecha, da dos pasos hacia ti en guardia mientras el viento y las
+hojas pasan entre los dos y la cámara se aleja. La pelea es **una danza** a media distancia, habilidad tras
+habilidad, con una estampida de zanfona y pandero en 6/8 de fondo. Todo lo suyo **pesa**: cada golpe se prepara (el
+cuerpo se carga y la espada se queda arriba un instante), sale de golpe y se pasa de largo con el peso, y volver a la
+guardia le lleva su tiempo. **La acometida** es una carga en línea recta: echa atrás el pie, recoge la espada a la
+cintura con la punta por delante y arranca, con zancadas largas que hacen temblar las losas y levantan polvo; al
+llegar, la estocada, y se pasa de largo frenando, arrastrando las suelas, antes de plantarse y darse la vuelta (a
+veces le quedan fuerzas para otra; a media vida, más a menudo). **El tajo del viento** (una media luna de luz fría que corre por
 las losas; tres en abanico a media vida), **la cruz** (dos tajos en aspa que dejan en el suelo una estela que corta
 un instante después: hay que salir de ella), **el salto** (cae de punta donde estabas, se queda con la espada
 clavada y barre al levantarse) y **el paso atrás** (si te le echas encima, salta hacia atrás y te deja una
 cuchilla). **Todos sus golpes son críticos.** De frente **desvía** todo lo que no le pille desprevenido y contesta
-en el acto; sólo se le hiere ya comprometido en un golpe, en sus huecos (tras la última acometida, con la espada
-clavada tras el salto), por la espalda o desequilibrado por **dos parrys seguidos** (el parry sí le abre: la
-acometida se desvía justo al salir, con el sonido de la estocada). En el aire no le alcanza nada. A media vida corre
-a por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del
-pendón**, dos vueltas con la tela tendida que barren cuatro metros y medio (no se para: se esquiva). Lleva
+en el acto; sólo se le hiere ya comprometido en un golpe, en sus huecos (la frenada y la vuelta de la acometida, con
+la espada clavada tras el salto), por la espalda o desequilibrado por **dos parrys seguidos** (el parry sí le abre:
+la acometida se desvía cuando la punta está a punto de llegar). En el aire no le alcanza nada. A media vida corre a
+por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del pendón**,
+vuelta y media con la tela tendida que barre cuatro metros y medio (no se para: se esquiva). Lleva
 **armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; el facón, el
 60 %; la del carcelero, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen y la katana
-sagrada, todo). Vencido, cae de rodillas con la espada clavada delante y se queda así, mirando la luna. Tras un
-golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse). (`entities/caballero.js`,
+sagrada, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
+Vencido, no muere ahí: **la escena del final**. Herido, se endereza y deja caer la espada con todo el cuerpo; tu hoja
+la para y **chocan**, hoja contra hoja, a cámara lenta. En el pulso le arden los ojos tras las rendijas del yelmo y,
+de pronto, se le apagan: **se da cuenta** de que no es él quien empuja. Te aparta y **salta hacia atrás**, lejos,
+hasta el parapeto. Se levanta despacio, se mira la mano de la espada (la carne que le revienta la malla), te mira;
+**no dice nada**. Clava la espada en las losas, se apoya en el pomo con la cabeza baja, como cuando esperaba a la luna,
+y la deja allí. Se da la vuelta, sube a una almena, de pie en el hueco y de cara a la luna, y **se deja caer**. La
+cámara baja por la cara de la torre: abajo, en la alberca vacía del jardín, queda de espaldas y con los brazos en
+cruz. Arriba quedan su espada clavada y el pendón del Rey tirado en el suelo. (`entities/caballero.js`,
 `game/caballero.js`; `tools/caballero.mjs` lo prueba pieza a pieza.)
 
 **Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras, portadas de arco

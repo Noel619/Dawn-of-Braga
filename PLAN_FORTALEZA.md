@@ -408,6 +408,17 @@ la torre vieja (`world/level_torre.js`) y todo lo suyo en `world/level_castle.js
 - **Los documentos** (el libro de la guarnición, las líneas del alcaide, la tabla del ballestero), lo que dice el Rey
   (te vio salir de la cárcel desde su ventana; su alcaide se quedó abajo, junto al torno), los avisos y los nombres
   de las salas, al día.
+- **El Caballero de la Orden, rehecho** (`entities/caballero.js`, `game/caballero.js`). **La escena de la luna**, más
+  lenta y en siete planos (la salida de la caseta; él contra la luna; sus manos en el pomo; el yelmo, que te oye y
+  vuelve la cabeza; arranca la espada de las losas y se da la vuelta; el saludo; dos pasos en guardia). **Sus
+  golpes, con peso**: cada uno se prepara, sale de golpe y se pasa de largo, y la vuelta a la guardia lleva su
+  tiempo; **la acometida** es una carga en línea recta (la preparación con la espada a la cintura, la carrera con sus
+  zancadas, el polvo y las losas que tiemblan, la estocada, la frenada arrastrando las suelas y la vuelta), una o
+  dos, no ya cuatro seguidas. **La escena del final**: vencido, no muere ahí (`onDefeat`, como el arzobispo); el
+  último golpe y el choque, hoja contra hoja; en el pulso se le apagan los ojos (se da cuenta de que le manejan);
+  salta hacia atrás hasta el parapeto, se queda pensando sin decir nada, clava la espada en las losas y la deja
+  allí, sube a una almena de cara a la luna y se deja caer. Queda abajo, en la alberca del jardín (que ahora es una
+  alberca de verdad: su pretil y su fondo); su espada, clavada en la terraza, y el pendón del Rey, en el suelo.
 
 Lo provisional, hasta las fases que vienen:
 
@@ -421,7 +432,8 @@ Lo provisional, hasta las fases que vienen:
 
 Pruebas: `tools/fortalezawalk.mjs` (ahora también la torre de abajo arriba y la puerta con su guardia, su cadalso y
 su taller), `tools/castlewalk.mjs torre` (de la guardia al torno y por el puente al patio de armas; del pasadizo a la
-terraza), `tools/progress.mjs`, `tools/rey.mjs` y `tools/caballero.mjs` (con sus sitios de `FORT.torre`).
+terraza), `tools/progress.mjs`, `tools/rey.mjs` y `tools/caballero.mjs` (con sus sitios de `FORT.torre`; ahora
+también las dos escenas enteras, la carga y el estado tras el final al cargar la partida).
 
 ## Fuentes
 

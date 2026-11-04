@@ -1,8 +1,10 @@
-// La pelea del Caballero de la Orden, pieza a pieza: el desvío (de frente,
-// en guardia) y su contra; el parry de la acometida (dos seguidos le abren)
-// y el golpe de gracia; el hueco tras el salto; la defensa de armadura con
-// cada espada; la segunda fase (el pendón); la muerte (de rodillas) y que,
-// si mueres tú, todo vuelve a su sitio.
+// La pelea del Caballero de la Orden, pieza a pieza: la escena de la luna,
+// entera; el desvío (de frente, en guardia) y su contra; el parry de la
+// acometida (dos seguidos le abren: la carga y la segunda que le queda) y el
+// golpe de gracia; el hueco tras el salto; la defensa de armadura con cada
+// espada; la segunda fase (el pendón); vencido, la escena del final (el
+// choque, el salto atrás, la espada clavada, la almena) y cómo queda, abajo
+// en la alberca, también al cargar la partida.
 //   node tools/caballero.mjs        (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 import { FORT } from '../src/world/fortaleza_medidas.js';
@@ -37,12 +39,15 @@ const r = await p.evaluate(([Y, CASETA, C]) => {
   const out = [];
   const e = g.enemies.find((x) => x.type === 'caballero');
   const A = (n) => e.T.attacks.find((a) => a.name === n);
-  g.flags['cine:caballero'] = true;
+  // --- 0. la escena de la luna, entera: al acabar, la pelea
   P.spawn(CASETA.x, Y, CASETA.z, Math.PI / 2);
-  step(20);
+  step(40);
   g.enterFog(g.interact.list.find((i) => i.id === 'f_caballero'));
-  // (el plano de presentación: 2,4 s)
-  step(170);
+  const c0 = g.cutscene && g.cutscene.constructor.name;
+  let n0 = 0;
+  for (; g.cutscene && n0 < 60 * 40; n0++) step(1);
+  out.push(`escena de la luna: ${c0} · ${(n0 / 60).toFixed(1)} s · bandera ${!!g.flags['cine:caballero']} · tú ${P.state}, a ${Math.hypot(P.pos.x - e.pos.x, P.pos.z - e.pos.z).toFixed(1)} m de él`);
+  step(30);
   out.push(`pelea: activeBoss ${g.activeBoss === e} estado ${e.state}`);
   const face = (d, yawE = 0) => {
     e.atk = null;
@@ -78,7 +83,10 @@ const r = await p.evaluate(([Y, CASETA, C]) => {
     if (e.atk && e.atk.name === 'contra') sawContra = true;
   }
   out.push(`desvío: daño al caballero ${hp0 - e.hp} · contra ${sawContra} · te quitó ${ph0 - P.hp}`);
-  // --- 2. el parry de la acometida (lead 0.06 s antes de que llegue)
+  // --- 2. el parry de la acometida: se prepara, carga en línea recta y la
+  // punta llega (se pulsa un poco antes de que la punta esté a tres palmos);
+  // le queda otra carga, la que le abre
+  const TIP = new g.THREE.Vector3(0, -0.05, 1.16);
   const parryDash = () => {
     face(6.5);
     e.parryHits = 0;
@@ -87,20 +95,23 @@ const r = await p.evaluate(([Y, CASETA, C]) => {
     const res = [];
     let pressed = false,
       lastAtk = null;
-    for (let i = 0; i < 160; i++) {
-      // (cada acometida, su pulsación; la encadenada empieza ya a 0,1 s)
+    for (let i = 0; i < 420; i++) {
+      // (cada carga, su pulsación)
       if (e.atk !== lastAtk) {
         pressed = false;
         lastAtk = e.atk;
       }
       const tap = [];
-      const d = e.distTo(P.pos);
-      const ac = e.state === 'attack' && e.atk && e.atk.name === 'acometida';
-      // (sale a 0,26 s; la punta va 1,6 m por delante, a 11-26 m/s: de cerca,
-      // se pulsa justo al salir; de lejos, cuando la punta está a punto)
-      const v = Math.max(11, Math.min(26, (d + 1.8) / 0.32));
-      const eta = Math.max(0, 0.26 - e.stT) + Math.max(0, d - 1.6 - 0.7) / v;
-      if (!pressed && ac && e.stT > 0.12 && e.stT < 0.6 && eta < 0.08) { tap.push('M2'); pressed = true; }
+      const corre = e.state === 'attack' && e.atk && e.atk.name === 'acometida' && e.data.fase === 'carga';
+      if (!pressed && corre) {
+        const tp = e.rig.worldPos('handR', new g.THREE.Vector3(), TIP);
+        const v = Math.max(5, Math.hypot(e.vx, e.vz));
+        const eta = Math.max(0, Math.hypot(P.pos.x - tp.x, P.pos.z - tp.z) - 0.75) / v;
+        if (eta < 0.07) {
+          tap.push('M2');
+          pressed = true;
+        }
+      }
       step(1, tap);
       if (P.state === 'parry' && res[res.length - 1] !== 'parry:' + e.state) res.push('parry:' + e.state);
       if (e.state === 'parried') break;
@@ -161,21 +172,28 @@ const r = await p.evaluate(([Y, CASETA, C]) => {
   e.data.pendon = true;
   ph0 = P.hp;
   e.startAttack(A('pendon'));
-  for (let i = 0; i < 110; i++) step(1);
+  for (let i = 0; i < 150; i++) step(1);
   out.push(`la carga del pendón: te quitó ${ph0 - P.hp}`);
-  // --- 5. muere: de rodillas, se queda
+  // --- 5. vencido: no muere ahí; la escena del final (el choque, el salto
+  // atrás, el silencio, la espada clavada, la almena) y, abajo, en la alberca
   face(1.5);
   e.hp = 1;
   e.data.openT = 1;
   step(1, ['M0']);
-  for (let i = 0; i < 60 * 4; i++) step(1);
-  for (let i = 0; i < 60 * 6; i++) step(1);
-  const vis1 = e.obj.visible;
+  for (let i = 0; i < 60 && !g.cutscene; i++) step(1);
+  const c1 = g.cutscene && g.cutscene.constructor.name;
+  let n1 = 0;
+  for (; g.cutscene && n1 < 60 * 45; n1++) step(1);
+  step(60 * 3);
+  const estado = () => {
+    const hy = e.rig.worldPos('head', new g.THREE.Vector3()).y - e.pos.y;
+    return `muerto ${e.dead} · a la vista ${e.obj.visible} · en ${e.pos.x.toFixed(1)},${e.pos.y.toFixed(1)},${e.pos.z.toFixed(1)} (cabeza a ${hy.toFixed(2)} m: tendido) · espada clavada ${!!(g.caballero.espada && g.caballero.espada.children.length)} · pendón en el suelo ${!!(g.caballero.suelo && g.caballero.suelo.visible)}`;
+  };
+  out.push(`el final: ${c1} · ${(n1 / 60).toFixed(1)} s · bandera ${!!g.flags['boss:caballero']} · activeBoss ${!!g.activeBoss} · tú ${P.state} · ${estado()}`);
   // (como al cargar la partida)
   g.applyWorldState();
-  for (let i = 0; i < 60; i++) step(1);
-  const hy = e.rig.worldPos('head', new g.THREE.Vector3()).y - e.pos.y;
-  out.push(`muerte: muerto ${e.dead} · bandera ${!!g.flags['boss:caballero']} · se queda a la vista ${vis1} · tras cargar ${e.obj.visible} en ${e.pos.x.toFixed(1)},${e.pos.z.toFixed(1)} (cabeza a ${hy.toFixed(2)} m: de rodillas) · activeBoss ${!!g.activeBoss} · pendón del mundo ${g.groups['pendon:caballero'].on}`);
+  step(60);
+  out.push(`tras cargar: ${estado()} · pendón en su asta ${g.groups['pendon:caballero'].on}`);
   return out;
 }, [Y, CASETA, MEDIO]);
 console.log(r.join('\n'));
