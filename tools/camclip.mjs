@@ -1,6 +1,7 @@
 // La cámara contra muros, rejas y techos: en puntos del castillo, las
-// mazmorras, la catedral y su cripta (pegados a paredes, junto a las rejas de
-// las celdas, en escaleras),
+// mazmorras, la torre del homenaje y la puerta de la fortaleza, la catedral y
+// su cripta (pegados a paredes, junto a las rejas de las celdas, en
+// escaleras),
 // doce orientaciones y tres inclinaciones en cada uno. Tras asentarse, ¿queda
 // la cámara tras un muro (el rayo desde el pivote choca antes de llegar a
 // ella) o a menos de 0,12 m de una caja?
@@ -28,9 +29,14 @@ const r = await p.evaluate(() => {
     [-81, -5, 0], [-71, -5, 0.2], [-61, -5, 5], [-65, -5, 5], [-65, -5, 8.6], [-72, -5, 12], [-71.8, -5, 15.6], [-58.4, -5, 8.6], [-61.8, -5, 9.3], [-57.6, -5.92, 11.6],
     // torre de la cárcel y su sala de arriba
     [-85.5, 0, 11.5], [-83, 0, 6], [-86, 4.4, 9],
-    // torre del homenaje, plantas y escaleras
-    [-90, 0, -20], [-78, 0, -6], [-90, 4.5, -10.5], [-78, 4.5, -18], [-74.15, 6.5, -9.5], [-88, 9, -8.5], [-80, 9, -18], [-90, 9, -17],
-    [-90, 13.5, -16], [-82.6, 13.5, -20], [-89, 15.9, -25.85], [-84, 18.4, -16], [-92.4, 18.4, -23.4],
+    // la torre del homenaje: sus plantas (junto a las puertas del caracol,
+    // de la escalinata y del pasadizo), el caracol, la sala del trono, la
+    // galería y la terraza
+    [-92, 0, -90], [-104, 0, -104], [-104, 0, -97], [-98, 6, -90], [-104, 6, -108.6], [-92, 12, -99], [-104.2, 12, -108.6], [-106.99, 7.9, -106.87],
+    [-98, 18, -96], [-101.6, 18, -102.4], [-86.3, 22.5, -100], [-107.6, 22.5, -110.7], [-97, 28, -98], [-104.2, 28, -108.6],
+    // la puerta de la fortaleza: el paso, la guardia y su escalera, la
+    // armería, el taller, la cámara del torno, el cadalso; la antepuerta
+    [-98, 0, -40], [-98, 0, -32], [-86, 0, -43], [-89.3, 3.4, -40], [-87, 5.5, -40], [-79, 5.5, -36.5], [-98, 5.5, -34.5], [-92.2, 5.5, -28.1], [-84, 5.5, -31.1], [-98, 0, -22],
     // patio y puerta
     [-70, 0, 0], [-72, 0, -10], [-55, 0, -2], [-54.4, 0, 2.5],
     // la catedral, el claustro, la escalera de la cripta y la cripta

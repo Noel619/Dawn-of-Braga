@@ -111,6 +111,10 @@ function cara(ctx, mat, dir, line, a, b, y0, y1, room, tint, o = {}) {
   ctx.wb.box(mat, ...bx, { faces: dir, room, tint, sub: o.sub ?? 2, aoH: o.aoH ?? 1.6, baseY: o.baseY ?? y0, uv: o.uv });
 }
 
+// (los vanos y las saeteras que se pintan en esas caras van sobre ellas, no
+// sobre el plano del muro: la cara está a un centímetro de él)
+const enCara = (dir, line) => line + (dir === 's' || dir === 'e' ? 0.01 : -0.01);
+
 // Las caras de dentro de un tramo de muro, planta a planta (R: las salas de
 // ese lado), de y0 a y1.
 function caras(ctx, dir, line, a, b, R, y0 = 0, y1 = TOP - SL) {
@@ -223,6 +227,8 @@ function galeria(ctx, L) {
   const zi = PASO.n[3];
   const vN = vanos([...tri(-101.4), ...tri(-94.6)]);
   muroVanos(ctx, 'x', PASO.w[2], cx1 + C.t, zi, iz0, GY, GA.top, [{ c: ccx - C.h / 2, w: C.h, y: GY, h: 2.4, rise: 0 }], ga, ca, { ...o, revealRoom: room });
+  // (el umbral de esa puerta, en el grueso de la hoja)
+  wb.box('flag', ccx - C.h, GY - 0.04, zi, ccx, GY, iz0, { faces: 't', ao: false, room, uv: 0.7, tint: [0.68, 0.65, 0.6] });
   muroVanos(ctx, 'x', cx1 + C.t, PASO.e[0], zi, iz0, GY, GA.top, vN, ga, tr, { ...o, revealRoom: room });
   // (de poniente: el tramo de la caja y el de la sala)
   const vW = vanos([-103.6, ...tri(-94.6)]);
@@ -237,10 +243,10 @@ function galeria(ctx, L) {
   for (const v of vE) blocker(ctx, ix1, v.y, v.c - v.w / 2, PASO.e[0], v.y + v.h + v.rise, v.c + v.w / 2);
   // los óculos, por dentro (los de fuera, en fortaleza.js): la luna
   const yo = 23.4;
-  for (const u of [cx - 4.8, cx + 4.8]) vano(ctx, 's', z0 + h, u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
+  for (const u of [cx - 4.8, cx + 4.8]) vano(ctx, 's', enCara('s', z0 + h), u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
   for (const u of [-103.8, -94.2]) {
-    vano(ctx, 'e', x0 + h, u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
-    vano(ctx, 'w', x1 - h, u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
+    vano(ctx, 'e', enCara('e', x0 + h), u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
+    vano(ctx, 'w', enCara('w', x1 - h), u, yo, 0.7, 0.4, { room, boca: 'luna', radius: 3.2, intensity: 0.45, ring: 0.1 });
   }
   // la luz: antorchas en la hoja de fuera, en los rincones y en medio
   P.wallTorch(ctx, x0 + h + 0.02, GY + 1.9, -99, 'e', { room, radius: 5 });
@@ -543,9 +549,9 @@ function guardia(ctx, L) {
   P.wallTorch(ctx, -100.4, y + 2.3, iz1 - 0.02, 'n', { room: RG, radius: 6 });
   P.hangingLamp(ctx, -97.0, techo(1), -95.4, { room: RG, len: 1.2, radius: 7.5 });
   // las saeteras, por dentro (las de fuera, en fortaleza.js)
-  saeteraDentro(ctx, 'w', ix1, -105.4, y + 1.4, RD);
-  saeteraDentro(ctx, 'e', ix0, -105.4 + 0.0001, y + 1.4, RD);
-  for (const x of [cx - 6, cx + 6]) saeteraDentro(ctx, 's', iz0, x, y + 1.4, RD);
+  saeteraDentro(ctx, 'w', enCara('w', ix1), -105.4, y + 1.4, RD);
+  saeteraDentro(ctx, 'e', enCara('e', ix0), -105.4 + 0.0001, y + 1.4, RD);
+  for (const x of [cx - 6, cx + 6]) saeteraDentro(ctx, 's', enCara('s', iz0), x, y + 1.4, RD);
   L.enemies.push({ type: 'soldier', x: -95.6, y, z: -91.6, yaw: Math.PI, idle: 'stand', id: 'e_torre_guardia1' }, { type: 'soldier', x: -103.4, y, z: -97.6, yaw: 0.6, idle: 'wander', id: 'e_torre_guardia2' });
   // --- el dormitorio: jergones en el suelo, sus mantas, lo de cada uno
   wb.setRoom(RD);
@@ -597,9 +603,9 @@ function consejo(ctx, L) {
   zocalo(ctx, 'n', iz1, ix0, ix1, y + 0.03, 0.96, room);
   zocalo(ctx, 's', M.z1, ix0, ix1, y + 0.03, 0.96, room, [[M.puertas[2] - 0.95, M.puertas[2] + 0.95]]);
   // las ventanas, por dentro: la luna
-  for (const u of [cx - 5.6, cx + 5.6]) ajimez(ctx, 'n', iz1, u, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
-  ajimez(ctx, 'e', ix0, -93.4, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
-  ajimez(ctx, 'w', ix1, -93.4, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
+  for (const u of [cx - 5.6, cx + 5.6]) ajimez(ctx, 'n', enCara('n', iz1), u, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
+  ajimez(ctx, 'e', enCara('e', ix0), -93.4, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
+  ajimez(ctx, 'w', enCara('w', ix1), -93.4, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
   // la mesa del consejo con el plano de la defensa (de la sala del alcaide de
   // la torre vieja: el Rey la quiso aquí, y luego para su juego)
   wb.setRoom(room);
@@ -724,9 +730,9 @@ function camara(ctx, L) {
     [M.puertas[2] - 0.95, M.puertas[2] + 0.95],
     [hx - 1.0, hx + 1.0],
   ]);
-  for (const u of [cx - 5.6, cx + 5.6]) ajimez(ctx, 's', iz0, u, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
-  ajimez(ctx, 'w', ix1, -104.6, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
-  ajimez(ctx, 'e', ix0, -104.6, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 4, intensity: 0.4 });
+  for (const u of [cx - 5.6, cx + 5.6]) ajimez(ctx, 's', enCara('s', iz0), u, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
+  ajimez(ctx, 'w', enCara('w', ix1), -104.6, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 5, intensity: 0.5 });
+  ajimez(ctx, 'e', enCara('e', ix0), -104.6, y + 1.6, { h: 1.5, room, boca: 'luna', radius: 4, intensity: 0.4 });
   // el hogar, en el muro de carga (su cañón sube por el pilar de poniente de
   // los arcos hasta la chimenea de la terraza)
   P.hearth(ctx, hx, y, M.z0, 'n', { room, lit: true, ceil: techo(2), w: 1.9, radius: 9 });
@@ -803,12 +809,12 @@ function trono(ctx, L) {
   // las ventanas por dentro: la luna (la del trono, también: la vela que se
   // ve desde el patio son sus candeleros)
   for (const u of [cx - 4.8, cx, cx + 4.8]) {
-    ajimez(ctx, 'n', iz1, u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
-    ajimez(ctx, 's', iz0, u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
+    ajimez(ctx, 'n', enCara('n', iz1), u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
+    ajimez(ctx, 's', enCara('s', iz0), u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
   }
   for (const u of [-103.8, -99, -94.2]) {
-    ajimez(ctx, 'e', ix0, u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
-    ajimez(ctx, 'w', ix1, u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
+    ajimez(ctx, 'e', enCara('e', ix0), u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
+    ajimez(ctx, 'w', enCara('w', ix1), u, 19.4, { h: 2.4, w: 0.6, room, boca: 'luna', radius: 6, intensity: 0.5 });
   }
   // el estrado, con su peldaño, y el trono vacío
   solid(ctx, 'ashlar', E.x0, y, E.z0, E.x1, y + E.h, iz1, { faces: 'tnsew', sub: 2, aoH: 0.5, room, mats: { t: 'flag' }, tint: [0.78, 0.75, 0.7] });

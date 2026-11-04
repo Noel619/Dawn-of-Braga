@@ -256,7 +256,9 @@ export function matacanes(ctx, dir, line, a0, a1, y, o = {}) {
   for (let i = 0; i <= n; i++) {
     const u = a0 + i * step;
     const hw = 0.17;
-    for (let k = 0; k < 3; k++) wb.box('ashlar', ...F.box(u - hw, y - 0.95 + k * 0.3, u + hw, y - 0.65 + k * 0.3, -0.01, (d * (k + 1)) / 3), { ao: false, faces: asoma(dir), tint: PIEDRA.silla, room: o.room });
+    // (el último, un dedo más corto que el suelo de la galería: si no, sus
+    // frentes coincidían y parpadeaban)
+    for (let k = 0; k < 3; k++) wb.box('ashlar', ...F.box(u - hw, y - 0.95 + k * 0.3, u + hw, y - 0.65 + k * 0.3, -0.01, Math.min((d * (k + 1)) / 3, d - 0.02)), { ao: false, faces: asoma(dir), tint: PIEDRA.silla, room: o.room });
   }
   // las buhederas, entre los canes (desde abajo, negras)
   wb.box('black', ...F.box(a0, y - 0.32, a1, y - 0.3, 0.05, d - 0.16), { ao: false, grime: false, faces: 'b', room: o.room });

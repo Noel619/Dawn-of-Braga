@@ -88,7 +88,7 @@ export const ITEMS = {
   },
   ballesta: {
     name: 'Ballesta de estribo',
-    desc: 'La ballesta del maestro ballestero de la torre: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
+    desc: 'La ballesta del maestro ballestero de la guardia de la puerta: cureña de nogal, arco de acero atado a la cabeza con cuerda de cáñamo y la nuez de hueso. Se lleva a dos manos (el escudo, a la espalda). Se alza a la cara y se tira; luego hay que montarla con el pie en el estribo, quieto y a merced. Un virote tumba a lo pequeño. Con el ataque pesado, un culatazo.',
     icon: 'crossbow',
     key: false,
     weapon: 'ballesta',

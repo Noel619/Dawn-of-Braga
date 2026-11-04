@@ -170,7 +170,7 @@ Norte = −z (arriba). La ciudad, al este. Medidas en metros. (El plano dibujado
 | | Espacio | Nivel | Qué es | Qué hay |
 |---|---|---|---|---|
 | 1 | **Patio de armas** | 0 | El recinto exterior del castillo: la guarnición. Amplio, para pelear. | Cuadras con sus pesebres, la halconera, la fragua (yunque, fuelle, la forja encendida), el fundíbulo roto, carros, paja, la capilla del castillo (el altar de siempre), el cuartel, el pozo al aljibe, la torre de la cárcel. Al norte, la fortaleza con el puente alzado sobre su foso; al este, la torre-puerta. Penitentes, soldados, un mastín. |
-| 2 | **La puerta y el cuerpo de guardia** | 0 / +5,5 | La puerta en recodo entre dos torres, con dos rastrillos y buhederas; la sala de la guardia; arriba, la **armería** y el **taller del ballestero**, y el **torno del puente**. | La ballesta y sus virotes, el libro de la guarnición, las últimas líneas del alcaide (en el torno: «He mandado alzar el puente»). El **cadalso** de madera sobre la puerta: allí está el **alférez** con su ballesta (su llave). Bajar el puente es el atajo al patio de armas. |
+| 2 | **La puerta y el cuerpo de guardia** | 0 / +5,5 | La puerta entre dos torres, recta (en el eje de la torre: §4), con dos rastrillos y buhederas; la sala de la guardia; arriba, la **armería** y el **taller del ballestero**, y el **torno del puente**. | La ballesta y sus virotes, el libro de la guarnición, las últimas líneas del alcaide (en el torno: «He mandado alzar el puente»). El **cadalso** de madera sobre la puerta: allí está el **alférez** con su ballesta (su llave). Bajar el puente es el atajo al patio de armas. |
 | 3 | **Patio de honor** | 0 | El centro: claustro de arcos sobre columnas en dos alturas (abajo, galería; arriba, el paseo de las cámaras). | El olmo seco del Rey, la fuente seca, el brocal del aljibe del palacio. La escalinata de la torre, en el eje. Cortesanos sueltos, un soldado, un Campanero. |
 | 4 | **Gran salón** | 0 (a doble altura, hasta +11) | La sala de la corte: 14 × 40 m. Arcos diafragma de piedra cada 8 m sostienen la armadura de madera; una galería corre por el grueso del muro a +5,5 (de la torre de la reina a la cocina); el estrado y el sitial vacío del Rey, al norte; el biombo y las puertas del servicio, al sur. | **La Corte de los Infieles** (veintidós cortesanos arrodillados y el mayordomo, su cuaderno y su llave). Mesas largas, los tapices y estandartes, dos coronas de luz y el hogar con su campana. |
 | 5 | **Despensa, botillería y torre de la cocina** | 0 | El servicio del salón. La cocina, en la torre del suroeste: doble altura con una gran campana en medio, como la de Alcobaça. | Las tinajas, los toneles, el horno, los calderos y la mesa de despiece. Una ampolla. Una **poterna** al oeste: el atajo de fuera. |
@@ -393,8 +393,8 @@ la torre vieja (`world/level_torre.js`) y todo lo suyo en `world/level_castle.js
   sus sitios de `FORT.torre`). La navegación de las criaturas por las plantas altas sale de las mismas medidas
   (`game/game.js`, `entities/enemy.js`). Por fuera (`world/fortaleza.js`), sus vanos de verdad: la puerta de la
   escalinata y la del pasadizo, las saeteras, los ajimeces y los óculos de la galería.
-- **La puerta**: el paso abovedado entre sus dos torres, con sus buhederas y el rastrillo, que sube con su palanca;
-  encima, **la cámara del torno**, con el torno del puente, las poleas, el alcaide muerto y sus últimas líneas;
+- **La puerta**: el paso abovedado entre sus dos torres, con sus dos rastrillos (el de fuera, echado, que sube con
+  su palanca; el de dentro, alzado en su ranura) y las buhederas entre ellos; encima, **la cámara del torno**, con el torno del puente, las poleas, el alcaide muerto y sus últimas líneas;
   fuera, **el foso de las estacas** y **el puente levadizo**, que cae al soltar el freno: el atajo al patio de armas.
 - **El cuerpo de guardia**: abajo, la sala (la mesa de los dados, el libro de la guarnición, la escalera por el muro
   de la torre, el bolaño bajo el hundido); arriba, **la armería** (la espada oxidada, virotes) y **el taller del
@@ -427,8 +427,17 @@ Lo provisional, hasta las fases que vienen:
   torre de la puerta a la muralla de poniente, hasta que se rehaga el patio de armas entero (fase 4).
 - **La bajada tapiada** de las celdas se queda tapiada, sin nada detrás, y la trampilla del almacén de la torre,
   cerrada con su cadena y su candado (fase 5: las mazmorras y el rastrillo).
-- **El paso de la puerta** es recto, como se hizo en la fase 1, y con un solo rastrillo (no en recodo con dos).
+- **El paso de la puerta** es recto, no en recodo: la torre del homenaje está en su eje (§4) y desde la puerta se ve
+  entera.
 - La poterna de la cocina, la puerta del jardín de la reina y el paseo de las cámaras siguen como en la fase 2.
+
+Las revisiones de §9, en la torre y la puerta: `tools/holes.mjs alto` (con sus plantas entre las semillas: la viga
+del taller, que dejaba pisar el aire; los rincones del muro del Tombo y de la torre de la puerta, sin colisión por
+encima de la guardia; el umbral de la puerta del caracol en la galería, sin suelo), `tools/zfight.mjs` (la tierra del
+jardín, que pasaba bajo el suelo de la planta baja de la torre; las ventanas y las saeteras pintadas sobre el plano
+del muro y no sobre su cara; los canes de los matacanes contra el suelo de su galería; las esquinas de las pantallas
+del cadalso; los umbrales del tabique) y `tools/camclip.mjs` (con veinticuatro puntos nuevos: ninguna cámara tras un
+muro). El alférez y los guardias de la torre, despiertos, pelean en su planta sin caerse ni atravesar nada.
 
 Pruebas: `tools/fortalezawalk.mjs` (ahora también la torre de abajo arriba y la puerta con su guardia, su cadalso y
 su taller), `tools/castlewalk.mjs torre` (de la guardia al torno y por el puente al patio de armas; del pasadizo a la

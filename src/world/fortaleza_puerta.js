@@ -2,7 +2,8 @@
 // fase 3).
 //
 // La puerta, entre sus dos torres, en el eje del patio y de la torre: el paso
-// abovedado con sus buhederas, el rastrillo echado y, por fuera, el puente
+// abovedado, recto, con sus dos rastrillos (el de fuera, echado; el de
+// dentro, alzado) y las buhederas entre ellos y, por fuera, el puente
 // levadizo alzado sobre su foso de estacas. Encima del paso, la cámara del
 // torno: el torno del puente (suelto el freno, el puente cae: el atajo al
 // patio de armas), la palanca del rastrillo y el alcaide, muerto junto al
@@ -135,6 +136,42 @@ function torres(ctx, S, L) {
     wb.box('black', G.px0 + 0.1, 0.021, zr - 0.06, G.px1 - 0.1, 0.022, zr + 0.06, { faces: 't', ao: false, grime: false, room });
     L.interact.push({ kind: 'door', id: 'd_rastrillo_fort', x: pc, y: 0, z: zr, w: pw, h: ys + rise, lift: ys + rise - 0.4, axis: 'x', lock: { type: 'lever', msg: 'rastrilloFortaleza' }, mat: 'grate', lit: true });
   }
+  // el rastrillo de dentro, junto al arco del patio: alzado y metido en su
+  // ranura de la bóveda (sólo le asoman las puntas); la ranura baja por las
+  // jambas y cruza el enlosado. Entre los dos rastrillos, las buhederas
+  {
+    const zr = zi + 1.2;
+    // (el intradós de la bóveda: el de barrelVault, con su retranqueo)
+    const R = pw / 2 - 0.03;
+    const yb = ys + R - 0.42;
+    for (const [u, f] of [
+      [G.px0, 'e'],
+      [G.px1 - 0.012, 'w'],
+    ])
+      wb.box('black', u, 0, zr - 0.06, u + 0.012, ys + 0.05, zr + 0.06, { faces: f, ao: false, grime: false, room });
+    wb.box('black', G.px0 + 0.1, 0.021, zr - 0.06, G.px1 - 0.1, 0.022, zr + 0.06, { faces: 't', ao: false, grime: false, room });
+    const N = 16,
+      r = R - 0.012;
+    for (let i = 0; i < N; i++) {
+      const aa = Math.PI - (i / N) * Math.PI,
+        ab = Math.PI - ((i + 1) / N) * Math.PI;
+      const ua = pc + Math.cos(aa) * r,
+        va = ys + Math.sin(aa) * r,
+        ub = pc + Math.cos(ab) * r,
+        vb = ys + Math.sin(ab) * r;
+      wb.quad('black', V(ub, vb, zr - 0.06), V(ub, vb, zr + 0.06), V(ua, va, zr + 0.06), V(ua, va, zr - 0.06), { ao: false, grime: false, room });
+    }
+    // la reja: sus barrotes hasta la ranura, el travesaño de abajo y las
+    // puntas
+    const alto = (x) => ys + Math.sqrt(Math.max(0, r * r - (x - pc) * (x - pc)));
+    for (let x = pc - 1.12; x <= pc + 1.13; x += 0.32) {
+      wb.box('iron', x - 0.03, yb, zr - 0.03, x + 0.03, alto(x), zr + 0.03, { ao: false, faces: 'nsewb', room, tint: [0.62, 0.6, 0.58] });
+      wb.box('iron', x - 0.018, yb - 0.16, zr - 0.018, x + 0.018, yb, zr + 0.018, { ao: false, faces: 'nsewb', room, tint: [0.62, 0.6, 0.58] });
+    }
+    const yc = yb + 0.16,
+      hw = Math.sqrt(Math.max(0, r * r - (yc - ys) * (yc - ys))) - 0.02;
+    wb.box('iron', pc - hw, yc - 0.04, zr - 0.04, pc + hw, yc + 0.04, zr + 0.04, { ao: false, faces: 'nsewtb', room, tint: [0.62, 0.6, 0.58] });
+  }
   // los agujeros de las cadenas del puente, sobre el arco
   const PU = G.puente;
   for (const s of [-1, 1]) {
@@ -181,6 +218,10 @@ function camaraTorno(ctx, L) {
   ctx.col.add(G.x0, YB, z0, x0, G.hm, zf);
   ctx.col.add(x0, YB, z0, x1, F1, z1);
   ctx.col.add(x0, top, z0, x1, G.hm, z1);
+  // (y el rincón de la torre de levante, entre su cara de fuera y su costado,
+  // que no es de ninguno de los dos muros: si no, desde el cadalso se metía
+  // uno en él)
+  ctx.col.add(x1, YB, z1, G.x1, G.hm, zf);
   const dentro = [{ room, y0: F1, y1: top, tint: ct }];
   // el de levante: la puerta de la armería (a ella, la cara de la armería)
   const pa = { c: T.guardia.torno, w: 1.2, y: F1, h: 2.2, rise: 0.6, ring: 0.24, tint: PIEDRA.silla, archRooms: [room, ROOM.armeria] };
@@ -275,7 +316,7 @@ function camaraTorno(ctx, L) {
   }
   // --- las buhederas, con sus rejas, y las piedras para echar por ellas
   for (const z of BUHEDERAS) {
-    wb.box('black', pc - 0.3, F1 + 0.001, z - 0.3, pc + 0.3, F1 + 0.004, z + 0.3, { faces: 't', ao: false, grime: false, room });
+    wb.box('black', pc - 0.3, F1 + 0.001, z - 0.3, pc + 0.3, F1 + 0.012, z + 0.3, { faces: 't', ao: false, grime: false, room });
     for (let k = -2; k <= 2; k++) wb.box('iron', pc - 0.32, F1, z + k * 0.13 - 0.02, pc + 0.32, F1 + 0.04, z + k * 0.13 + 0.02, { ao: false, room });
   }
   const rr = new RNG(7811);
@@ -411,6 +452,8 @@ function guardia(ctx, S, L) {
     const za = E.z0 + run * i,
       zb = za + run;
     const top = Math.min(rise * (i + 1) + 0.95, YB);
+    // (arriba, donde el pretil ya no cabe bajo el suelo de la armería, nada)
+    if (top - rise * (i + 1) < 0.05) continue;
     wb.box('wallstone', E.x1 - 0.2, rise * (i + 1), za, E.x1, top, zb, { ao: false, faces: 'tnsew', sub: 2, room, tint: [0.76, 0.73, 0.68] });
     ctx.col.add(E.x1 - 0.2, rise * (i + 1), za, E.x1, top, zb);
   }
@@ -511,8 +554,12 @@ function plantaAlta(ctx, L) {
   cara1(ctx, 'wallstone', 's', z0, xt, x1, y, YT, RT, ta);
   cara1(ctx, 'wallstone', 'e', G.x1, z0, CAM.z0, y, YT, RA, ta);
   cara1(ctx, 'wallstone', 'w', SE.x0, z0, z1, y, YT, RT, ta);
-  ajimez(ctx, 's', z0, x0 + 3.5, 7.0, { h: 1.2, room: RA, boca: 'luna', radius: 4.5, intensity: 0.45 });
-  ajimez(ctx, 's', z0, x1 - 3.5, 7.0, { h: 1.2, room: RT, boca: 'luna', radius: 4.5, intensity: 0.45 });
+  // (el muro de poniente del Tombo, entero a esta altura: sus rincones no
+  // tenían colisión por encima de la guardia, y desde el taller se llegaba)
+  ctx.col.add(SE.x0, YB, SE.z0, SE.x0 + SE.t, T.walk, SE.z1);
+  // (sobre la cara del muro, que está a un centímetro de su plano)
+  ajimez(ctx, 's', z0 + 0.01, x0 + 3.5, 7.0, { h: 1.2, room: RA, boca: 'luna', radius: 4.5, intensity: 0.45 });
+  ajimez(ctx, 's', z0 + 0.01, x1 - 3.5, 7.0, { h: 1.2, room: RT, boca: 'luna', radius: 4.5, intensity: 0.45 });
   // la muralla de la guardia, de la torre de la puerta a la del Tombo: por
   // fuera, su talud, sus saeteras y sus almenas; por dentro, la guardia abajo
   // y arriba la armería y el taller, con el boquete del bolaño
@@ -558,7 +605,9 @@ function plantaAlta(ctx, L) {
     rooms: [RA, RT],
     sub: 2,
   });
-  for (const zc of [TB.escombro, TB.tapiado]) wb.box('ashlar', TB.x0, y - 0.05, zc - 0.65, TB.x1, y, zc + 0.65, { faces: 't', ao: false, room: RA, tint: [0.7, 0.68, 0.64] });
+  // (los umbrales de sillería de los dos arcos, un dedo por encima de las
+  // tablas)
+  for (const zc of [TB.escombro, TB.tapiado]) wb.box('ashlar', TB.x0, y - 0.05, zc - 0.65, TB.x1, y + 0.012, zc + 0.65, { faces: 't', ao: false, room: RA, tint: [0.7, 0.68, 0.64] });
   // (el del escombro: lleno hasta la clave; entre las piedras, la luz)
   {
     const zc = TB.escombro;
@@ -650,10 +699,11 @@ function plantaAlta(ctx, L) {
     [-78.6, -39.4, -0.4],
   ])
     beam(ctx, 'wooddark', V(x, YT - 0.1, z), V(x + Math.sin(a) * 1.4, YT - 2.2, z + Math.cos(a) * 0.4), 0.2, { room: RT });
-  // la viga que mató al maestro: tumbada, sobre él
+  // la viga que mató al maestro: tumbada, sobre él (se rodea: alta para
+  // subirse, que la caja es más ancha que la viga)
   bakeCorpse(wb, -80.0, y, -42.4, 0.3, 'back', 'villager', 4493);
   beam(ctx, 'timber', V(-81.6, y + 0.05, -43.2), V(-78.2, y + 0.32, -41.6), 0.26, { room: RT });
-  ctx.col.add(-81.6, y, -43.4, -78.2, y + 0.5, -41.4);
+  ctx.col.add(-81.6, y, -43.4, -78.2, y + 1.1, -41.4);
   P.decal(ctx, -80.0, y + 0.01, -42.4, 2.0);
   // el banco, con la ballesta y su tabla; la caja de los virotes
   P.table(ctx, -77.6, y, -36.6, 1.6, 0.8, Math.PI / 2);
@@ -751,14 +801,15 @@ function cadalso(ctx, L) {
     wb.box('planks', a, y, b, c, y + 2.0, d, { faces: f, ao: false, uv: 0.9, tint: [0.6, 0.52, 0.45] });
     ctx.col.add(a, y, b, c, y + 2.4, d);
   };
-  scr(C.x0 - 0.06, zf, C.x0, zf + w + 0.06, 'nsewt');
+  // (sin solaparse en las esquinas: sus caras parpadeaban)
+  scr(C.x0 - 0.06, zf, C.x0, zf + w, 'nsewt');
   scr(C.x0 - 0.06, zf + w, xe + w + 0.06, zf + w + 0.06, 'nsewt');
-  scr(xe + w, zc + w, xe + w + 0.06, zf + w, 'nsewt');
+  scr(xe + w, zc + w + 0.06, xe + w + 0.06, zf + w, 'nsewt');
   scr(xe + w, zc + w, C.x1 + 0.06, zc + w + 0.06, 'nsewt');
   scr(C.x1, zc, C.x1 + 0.06, zc + w, 'nsewt');
-  for (let x = C.x0 + 0.9; x < xe + w - 0.4; x += 1.6) wb.box('black', x - 0.07, y + 0.7, zf + w + 0.06, x + 0.07, y + 1.6, zf + w + 0.065, { ao: false, faces: 's', grime: false });
-  for (let x = xe + w + 1.0; x < C.garita - 0.4; x += 1.6) wb.box('black', x - 0.07, y + 0.7, zc + w + 0.06, x + 0.07, y + 1.6, zc + w + 0.065, { ao: false, faces: 's', grime: false });
-  wb.box('black', xe + w + 0.06, y + 0.7, zf - 0.3, xe + w + 0.065, y + 1.6, zf + 0.3, { ao: false, faces: 'e', grime: false });
+  for (let x = C.x0 + 0.9; x < xe + w - 0.4; x += 1.6) wb.box('black', x - 0.07, y + 0.7, zf + w + 0.06, x + 0.07, y + 1.6, zf + w + 0.072, { ao: false, faces: 's', grime: false });
+  for (let x = xe + w + 1.0; x < C.garita - 0.4; x += 1.6) wb.box('black', x - 0.07, y + 0.7, zc + w + 0.06, x + 0.07, y + 1.6, zc + w + 0.072, { ao: false, faces: 's', grime: false });
+  wb.box('black', xe + w + 0.06, y + 0.7, zf - 0.3, xe + w + 0.072, y + 1.6, zf + 0.3, { ao: false, faces: 'e', grime: false });
   // el tejadillo, a un agua, del muro a la pantalla (delante de la torre,
   // en su esquina y delante de la muralla)
   const yh = y + 2.95,

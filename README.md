@@ -414,9 +414,10 @@ con sus virotes). Por encima, la caseta del caracol sale a **la terraza**, a 28 
 caldera de la pez, los montones de piedras, los muertos de la última defensa y, junto al parapeto del norte, **el
 Caballero de la Orden** con el pendón del Rey (`world/fortaleza_torre.js`).
 
-**La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta, con sus
-buhederas y el rastrillo echado; por fuera, el puente alzado sobre el foso de las estacas (quien cae en él se clava
-en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de la
+**La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta (en el eje de
+la torre del homenaje), con sus dos rastrillos (el de fuera, echado; el de dentro, alzado en su ranura, con las
+puntas asomando bajo la bóveda) y entre ellos las buhederas; por fuera, el puente alzado sobre el foso de las
+estacas (quien cae en él se clava en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de la
 guarnición**, las armas a mano, dos soldados y, bajo el suelo hundido del taller, el bolaño que lo hundió, con las
 tablas y el cascajo. Su escalera de piedra sube por el muro de la torre a **la armería** (las astas contra la
 muralla, las cotas en sus perchas, los barriles de virotes y, entre las lanzas, **la espada oxidada**) y de ella, por
@@ -709,7 +710,7 @@ encontrarán:
   dos manos en la cuerda hasta la nuez: casi dos segundos quieto y a merced (si te golpean, se pierde). El pesado es
   un culatazo. Los **virotes se cuentan** (junto a las ampollas, con una raya dorada si está montada) y por ahora
   sólo los hay en la fortaleza: en la guardia, en la armería, en el taller, en el cadalso, en la galería de la sala
-  del trono y en el carcaj del alférez. También cortan cuerdas.
+  del trono y en el carcaj del alférez.
 
 Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
 queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`
@@ -1098,7 +1099,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         colposes.mjs   hojas de poses de las animaciones de los colosos
                         fuzz.mjs       prueba de estrés con entradas aleatorias
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
-                                       en alto y bajo el castillo, recorrido como andaría el jugador)
+                                       en alto —también las plantas de la torre del homenaje y la planta
+                                       alta de la puerta de la fortaleza— y bajo el castillo, recorrido como
+                                       andaría el jugador)
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
                         voids.mjs      rendijas a la nada en la cripta: fondo magenta y la cámara en cada sala
@@ -1133,7 +1136,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         cryptwalk.mjs  recorre a pie la cripta honda desde el templo romano: a qué salas de su
                                        planta se llega (con «abierto», con todas las puertas abiertas) y dónde
                                        no se ve suelo bajo lo que se pisa
-                        camclip.mjs    la cámara en el castillo, las mazmorras, la catedral y la cripta, contra
+                        camclip.mjs    la cámara en el castillo, las mazmorras, la torre del homenaje, la puerta
+                                       de la fortaleza, la catedral y la cripta, contra
                                        muros, rejas y en escaleras, en muchas orientaciones: que no quede tras
                                        un muro ni pegada
                         freecam.mjs    capturas con cámara libre

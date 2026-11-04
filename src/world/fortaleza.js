@@ -530,7 +530,15 @@ function afuera(ctx, L) {
   {
     const z0 = T.norte.zi,
       z1 = T.z0;
-    wb.box('dirt', T.norte.oeste.x1, 0.0, z0, T.x1, 0.02, z1, { faces: 't', ao: false, sub: 3, tint: [0.5, 0.47, 0.4] });
+    // (la tierra, alrededor de la torre del homenaje: dentro está el suelo de
+    // su planta baja)
+    const K = T.torre;
+    for (const [a, b, c, d] of [
+      [T.norte.oeste.x1, z0, K.x0, z1],
+      [K.x1, z0, T.x1, z1],
+      [K.x0, z0, K.x1, K.z0],
+    ])
+      wb.box('dirt', a, 0.0, b, c, 0.02, d, { faces: 't', ao: false, sub: 3, tint: [0.5, 0.47, 0.4] });
     const rr = new RNG(8820);
     for (const [x0, x1] of [
       [-135, -114],
