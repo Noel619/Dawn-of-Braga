@@ -1,10 +1,11 @@
-// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 3): de la coracha a todas
+// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 4): de la coracha a todas
 // sus salas, por sus caracoles, sus escaleras, sus tribunas, su galería y su
 // pasadizo; la torre del homenaje, de abajo arriba, y la puerta, con su
 // guardia, su torno, su puente y su cadalso; abriendo sus puertas y cogiendo
 // lo que hay en ellas, como un jugador (andando de punto en punto, sin
 // teletransportes salvo para volver).
 //   node tools/fortalezawalk.mjs      (requiere npx vite --port 5199)
+//   SOLO4=1 node tools/fortalezawalk.mjs   (sólo lo de la fase 4)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
@@ -84,9 +85,14 @@ await p.evaluate(() => {
 });
 const T = (s) => p.evaluate(s);
 const out = [];
-const step = async (name, s) => {
+// (SOLO4=1: sólo lo de la fase 4, los recorridos 12 a 14)
+const solo4 = !!process.env.SOLO4;
+const step4 = async (name, s) => {
   const r = await T(s);
   out.push(name + ': ' + JSON.stringify(r));
+};
+const step = async (name, s) => {
+  if (!solo4) await step4(name, s);
 };
 // 1. de la coracha a la torre de la coracha (a su altura), el altar
 await step('coracha', "(()=>{const g=__game;g.player.spawn(-60,9,-100.8,Math.PI);__sim(0.5);return __walk([[-60,-95.4],[-63,-95.4],[-66.5,-95.4]])})()");
@@ -197,6 +203,38 @@ await step('ballesta', "(()=>{__walk([[-79.6,-37.2]]);return __ir('i_ballesta', 
 await step('nota del ballestero', "__ir('n_ballestero', 0.8)");
 await step('tabique', "(()=>{__walk([[-81.6,-36.6],[-81.9,-37.4]]);return __useHere('d_tabique_taller')})()");
 await step('a la armería', "(()=>{__sim(2);return __walk([[-83.8,-37.4],[-85.4,-36.6],[-89.3,-36.4]])})()");
+// 12. (fase 4) la torre de la coracha a +12: la escalera de tablas, el
+// sobrado, la puerta del sur y el puente; el adarve de levante hasta la
+// terraza de la cancillería; la puerta del Tombo, atrancada por dentro: se
+// desatranca desde la planta de las arcas y se sale a la terraza
+await step4('escalera a +12', "(()=>{const g=__game;g.player.spawn(-70,9,-93,Math.PI);__sim(0.3);return __walk([[-73.6,-91.0],[-73.6,-88.7],[-72.6,-88.7],[-69.0,-88.7],[-67.2,-88.7],[-65.0,-88.7]])})()");
+await step4('puente y adarve', "__walk([[-65.0,-87.0],[-65.0,-85.3],[-64.2,-85.3],[-63.3,-84.2],[-63.3,-76],[-63.3,-66],[-63.3,-61.0]])");
+await step4('terraza', "__walk([[-66,-58],[-72,-55],[-74.6,-52]])");
+await step4('puerta del Tombo, por fuera', "(()=>{__walk([[-66,-49.0],[-66,-48.2]]);const w=__walk([[-66,-47.0],[-66,-46.6]]);return {w,u:__useHere('d_tombo_terraza')}})()");
+await step4('desde las arcas', "(()=>{const g=__game;g.player.spawn(-66.0,13.5,-42.6,Math.PI);__sim(0.3);__walk([[-66,-43.4]]);return __useHere('d_tombo_terraza')})()");
+await step4('a la terraza', "__walk([[-66,-44.6],[-66,-46.4],[-66,-48.4],[-70,-52]])");
+// 13. (fase 4) el jardín del Rey: la puerta de la torre de la reina, el
+// crucero y la fuente, la alberca, el pomar, el palomar, el vivero, la
+// escalera del adarve, el adarve y el mirador (la ampolla)
+await step4('puerta del jardín', "(()=>{const g=__game;g.player.spawn(-130.6,0,-96,Math.PI);__sim(0.3);__walk([[-130.6,-99.2]]);return __useHere('d_jardin')})()");
+await step4('al crucero', "__walk([[-130.6,-101.2],[-130.6,-103.6],[-130.6,-108.0],[-130.6,-111.6],[-127,-111.6]])");
+await step4('fuente', "__ir('x_fuente_rey', 2.4)");
+await step4('glorieta', "__walk([[-126.8,-114.2],[-124.5,-114.4],[-122.2,-114.0],[-122.2,-111.6]])");
+await step4('a la alberca', "__walk([[-118,-111.6],[-113,-116],[-110,-120.4],[-100,-120.4],[-96,-120.4]])");
+await step4('alberca', "__ir('x_alberca', 0.8)");
+await step4('al pomar', "__walk([[-96,-120.4],[-90,-120.4],[-86,-120.4],[-84,-114.4],[-83.6,-112.6],[-80.4,-112.6]])");
+await step4('palomar', "__ir('x_palomar', 0.6)");
+await step4('vivero', "(()=>{__walk([[-80.6,-112.6],[-81.4,-108.4],[-80.6,-105.2]]);return __ir('x_vivero', 0.6)})()");
+await step4('colmenas', "__ir('x_colmenas', 1.0)");
+await step4('escalera del adarve', "(()=>{__walk([[-68,-106],[-64.2,-112],[-64.6,-119.4],[-65.6,-121.2]]);return __walk([[-66.4,-121.2],[-70,-121.2],[-74,-121.2],[-75.6,-121.2],[-75.4,-122.4],[-75.4,-124.0]])})()");
+await step4('por el adarve', "__walk([[-80,-124],[-90,-124],[-96,-124]])");
+await step4('mirador', "__walk([[-98,-125],[-98,-126.0],[-96.6,-126.7]])");
+await step4('ampolla del mirador', "__ir('i_ampolla_jardin', 0.6)");
+await step4('vista', "__ir('x_mirador', 0.5)");
+// 14. (fase 4) la poterna: desde la despensa, desatrancada, al corral de la
+// cocina y por su cancela al patio de armas
+await step4('poterna, por dentro', "(()=>{const g=__game;g.player.spawn(-113,0,-37,0);__sim(0.3);__walk([[-113,-35.2]]);return __useHere('d_poterna')})()");
+await step4('al corral', "__walk([[-113,-33.6],[-113,-32.2],[-113,-30.6],[-111.6,-28.2],[-111.6,-25.0],[-111.6,-23.6],[-104,-18]])");
 out.push('llaves: ' + (await T("['llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
 console.log(out.join('\n'));
 console.log(logs.slice(0, 10).join('\n'));

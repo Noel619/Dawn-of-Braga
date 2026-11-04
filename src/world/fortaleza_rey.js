@@ -206,10 +206,32 @@ function torreCoracha(ctx, S, L) {
   // el de levante, con la puerta de la coracha
   const zcor = FORT.coracha.z;
   muroVanos(ctx, 'z', iz0, iz1, T.x1 - T.t, T.x1, 0, T.h, [{ c: zcor, w: 1.6, y: yC, h: 2.4, rise: 0.8, ring: 0.28, room: rooms[2] }], bands, [{ room: null, y0: yC - 0.02, y1: T.h }], { tint: piedra });
-  // el del sur, con la puerta de la tribuna de la capilla (a +4,5)
+  // el del sur, con la puerta de la tribuna de la capilla (a +4,5) y, a +12,
+  // la del adarve de levante (por fuera, sobre el tejado de la capilla: lo de
+  // fuera de la torre, también aquí)
   const xtr = FORT.capilla.x0 + 1.5;
+  const AE = FORT.adarveE;
   W(S, xtr - 0.6, T.z1 - T.t - 0.3, xtr + 0.6, T.z1 + 0.3);
-  muroVanos(ctx, 'x', T.x0, T.x1, T.z1 - T.t, T.z1, 0, T.h, [{ c: xtr, w: 1.2, y: pisos[1], h: 2.6, rise: 0.6, ring: 0.24, room: rooms[1] }], bands, [{ room: 'capilla', y0: 0, y1: 9.0, tint: [0.8, 0.77, 0.72] }], { tint: piedra });
+  muroVanos(
+    ctx,
+    'x',
+    T.x0,
+    T.x1,
+    T.z1 - T.t,
+    T.z1,
+    0,
+    T.h,
+    [
+      { c: xtr, w: 1.2, y: pisos[1], h: 2.6, rise: 0.6, ring: 0.24, room: rooms[1] },
+      { c: AE.puerta, w: AE.w, y: FORT.walk, h: 2.2, rise: AE.w / 2, ring: 0.2, room: rooms[2] },
+    ],
+    bands,
+    [
+      { room: 'capilla', y0: 0, y1: 9.0, tint: [0.8, 0.77, 0.72] },
+      { room: null, y0: 9.0, y1: T.h, tint: PIEDRA.lienzo.map((v) => v * 0.97) },
+    ],
+    { tint: piedra }
+  );
   dentro(ctx, T, ['n'], bands, { tint: piedra });
   // (por fuera, en la coracha: el recerco de sillería de la puerta, su alfiz,
   // el farol encima y las antorchas a los lados)
@@ -310,7 +332,7 @@ function torreCoracha(ctx, S, L) {
     bakeCorpse(wb, ix0 + 1.2, y, iz0 + 3.2, 0.6, 'sit', 'soldier', 18);
     P.banner(ctx, ix0 + 0.08, y + 3.0, azz, Math.PI / 2, 'bannerBlack', 1.2, 2.4);
     P.weaponRack(ctx, ix0 + 0.35, y, iz1 - 4.6, Math.PI / 2);
-    P.hay(ctx, ix0 + 1.6, y, iz1 - 1.4, 0.4);
+    P.hay(ctx, ix1 - 4.2, y, iz1 - 2.2, Math.PI / 2);
     wb.setRoom(null);
     P.brazier(ctx, (ix0 + ix1) / 2 - 0.4, y, iz0 + 5.4, { room });
     P.wallTorch(ctx, ix1 - 0.02, y + 2.5, FORT.coracha.z - 1.6, 'w', { room });
@@ -343,12 +365,94 @@ function torreCoracha(ctx, S, L) {
       ctx.col.add(a, ay, b, c, ay + 1.3, d);
     }
   }
+  adarveLevante(ctx, S, L, { ix0, ix1, iz0, iz1, room: rooms[2], C });
   L.zones.push(
     { id: 'tesoro', rects: [[ix0, iz0, ix1, iz1, -1, pisos[1] - 0.3]], atmo: 'interior', room: rooms[0] },
     { id: 'oratorio_rey', rects: [[T.x0, iz0, ix1, iz1, pisos[1] - 0.3, yC - 0.3]], atmo: 'interior', room: rooms[1] },
     { id: 'coracha_torre', rects: [[ix0, iz0, ix1 + T.t, iz1, yC - 0.3, techo]], atmo: 'chapel', room: rooms[2] }
   );
   L.map.push({ id: 'coracha_torre', r: [T.x0, T.z0, T.x1, T.z1] });
+}
+
+// ------------------------------------------------------------------------ el adarve de levante
+// De lo alto de la torre de la coracha al adarve de la crujía de levante
+// (PLAN_FORTALEZA.md, §5.12): una escalera de tablas por el muro del sur, de
+// la planta del altar a un sobrado sobre la caja del caracol, a +12; en el
+// muro, la puerta, y fuera, el puente de tablas sobre el rincón del tejado de
+// la capilla, con su barandilla, que da al adarve. El adarve corre entre las
+// almenas y el antepecho hasta la terraza de la cancillería (desde ella se ve
+// el patio de honor entero, y la torre); en la terraza, los peldaños a la
+// puerta del Tombo (fortaleza_alas.js).
+function adarveLevante(ctx, S, L, o) {
+  const wb = ctx.wb;
+  const T = FORT.torres.NE,
+    AE = FORT.adarveE;
+  const { ix0, ix1, iz1, room, C } = o;
+  const y0 = FORT.coracha.y,
+    y = FORT.walk;
+  // la escalera, por el muro del sur, de poniente a levante
+  const n = 10,
+    run = 0.42,
+    w = 1.2;
+  const xs = ix0 + 0.6; // (su pie)
+  const xl = xs + n * run; // (donde llega: el sobrado)
+  escaleraTablas(ctx, xs, y0, iz1 - w / 2 - 0.06, 'e', w, n, (y - y0) / n, run, { room, side: -1, desde: 3 });
+  // el sobrado, de la escalera al muro de levante, sobre la caja del caracol
+  const sz0 = C.hueco[1];
+  forjado(ctx, xl + 0.03, sz0, ix1, iz1, y, [], room, room, { tint: [0.6, 0.52, 0.44] });
+  wb.box('timber', xl, y0, sz0, xl + 0.2, y - 0.3, sz0 + 0.2, { aoH: 0.8, faces: 'nsew', room });
+  ctx.col.add(xl, y0, sz0, xl + 0.2, y, sz0 + 0.2);
+  // (su barandilla, por el norte y por poniente, menos donde llega la
+  // escalera)
+  for (const [a, b, c, d] of [
+    [xl, sz0, ix1, sz0 + 0.08],
+    [xl, sz0, xl + 0.08, iz1 - w - 0.12],
+  ]) {
+    wb.box('wooddark', a, y + 0.95, b, c, y + 1.02, d, { ao: false, faces: 'tnsewb', room });
+    const alongX = c - a > d - b;
+    for (let u = alongX ? a + 0.3 : b + 0.2; u < (alongX ? c : d) - 0.1; u += 0.45) {
+      if (alongX) wb.box('wooddark', u - 0.03, y, b, u + 0.03, y + 0.95, d, { ao: false, room });
+      else wb.box('wooddark', a, y, u - 0.03, c, y + 0.95, u + 0.03, { ao: false, room });
+    }
+    ctx.col.add(a, y, b, c, y + 1.3, d);
+  }
+  W(S, AE.puerta - AE.w / 2, T.z1 - T.t - 0.3, AE.puerta + AE.w / 2, T.z1 + 0.3);
+  // fuera: el puente de tablas, del umbral al adarve, sobre sus vigas, con su
+  // barandilla del lado del tejado y del sur
+  const px0 = AE.puerta - AE.w / 2 - 0.3,
+    px1 = FORT.x1 - FORT.t + 0.5,
+    pz0 = T.z1,
+    pz1 = AE.z0;
+  const yp = y + 0.04;
+  // (las tablas, con su junta, sobre el entablado de abajo: entre ellas no
+  // se ve el tejado)
+  wb.box('wooddark', px0, yp - 0.09, pz0, px1, yp - 0.05, pz1, { ao: false, faces: 'tb', tint: [0.36, 0.32, 0.28] });
+  for (let x = px0 + 0.1; x < px1 - 0.05; x += 0.26) wb.box('planks', x, yp - 0.05, pz0, Math.min(px1, x + 0.24), yp, pz1, { ao: false, faces: 'tnsew', tint: [0.6, 0.52, 0.44] });
+  for (const x of [px0 + 0.2, px1 - 0.7]) wb.box('wooddark', x - 0.09, yp - 0.3, pz0, x + 0.09, yp - 0.05, pz1 + 0.15, { ao: false, faces: 'nsewb', tint: [0.46, 0.4, 0.34] });
+  ctx.col.add(px0, yp - 0.3, pz0, px1, yp, pz1).cam = true;
+  for (const [a, b, c, d] of [
+    [px0, pz0, px0 + 0.08, pz1],
+    [px0, pz1 - 0.08, FORT.x1 - FORT.t, pz1],
+  ]) {
+    wb.box('wooddark', a, yp + 0.95, b, c, yp + 1.02, d, { ao: false, faces: 'tnsewb' });
+    const alongX = c - a > d - b;
+    for (let u = alongX ? a + 0.04 : b + 0.3; u < (alongX ? c : d) - 0.02; u += 0.42) {
+      if (alongX) wb.box('wooddark', u - 0.03, yp, b, u + 0.03, yp + 0.95, d, { ao: false });
+      else wb.box('wooddark', a, yp, u - 0.03, c, yp + 0.95, u + 0.03, { ao: false });
+    }
+    ctx.col.add(a, yp, b, c, yp + 1.3, d);
+  }
+  // por el adarve: las piedras para tirar, contra las almenas, y un caído
+  const ax = (FORT.x1 - FORT.t + FORT.x1 - 0.6) / 2;
+  for (let k = 0; k < 4; k++) wb.geometry('wallstone', new THREE.SphereGeometry(1, 6, 5), new THREE.Matrix4().compose(V(FORT.x1 - 0.85, y + 0.2, -69.4 + k * 0.42), new THREE.Quaternion(), V(0.2, 0.18, 0.2)), { ao: false });
+  bakeCorpse(wb, ax, y, -64.6, Math.PI, 'face', 'soldier', 6540);
+  P.decal(ctx, ax, y + 0.01, -64.6, 1.6);
+  L.zones.unshift(
+    { id: 'adarve_levante', rects: [[px0, pz0, FORT.x1, FORT.cancilleria.z0 - 1.2, y - 0.5, y + 4]], atmo: 'castillo' },
+    { id: 'terraza_cancilleria', rects: [[FORT.patio.x1, FORT.cancilleria.z0 - 1.2, FORT.x1, FORT.torres.SE.z0, y - 0.5, y + 4]], atmo: 'castillo' }
+  );
+  L.map.push({ id: 'adarve_levante', r: [FORT.x1 - FORT.t, T.z1, FORT.x1, FORT.cancilleria.z0 - 1.2] }, { id: 'terraza_cancilleria', r: [FORT.patio.x1, FORT.cancilleria.z0 - 1.2, FORT.x1 - FORT.t, FORT.torres.SE.z0] });
+  L.enemies.push({ type: 'soldier', x: ax, y, z: -72.0, yaw: Math.PI, idle: 'stand', id: 'e_adarve_e1' });
 }
 
 // ------------------------------------------------------------------------ el pasadizo

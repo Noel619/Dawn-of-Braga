@@ -35,14 +35,25 @@ for k in range(-132, 30, 4):
 label(-41.5, -60, 'CIUDAD', f13, (200, 170, 150))
 # muralla norte, fanal, atalaya, coracha
 rect(-140, -126, -47, -122, (120, 116, 110))
-label(-100, -124, 'muralla norte · adarve · el MIRADOR', f9, (20, 20, 20))
+label(-118, -124, 'muralla norte · adarve del jardín', f9, (20, 20, 20))
 rect(-64, -128, -56, -120, (150, 146, 140)); label(-60, -124, 'FANAL', f9)
 rect(-64, -113, -56, -105, (150, 146, 140)); label(-60, -109, 'ATA-\nLAYA', f9)
 rect(-62, -105, -58, -23, (126, 122, 116), w=1); label(-60, -70, 'C\nO\nR\nA\nC\nH\nA', f9)
-# jardín del Rey
+# jardín del Rey: el crucero con la fuente, la alberca, el pomar, el palomar,
+# el colmenar, el vivero; la escalera del adarve y el mirador, volado
 rect(-138, -122, -62, -100, (62, 92, 56))
-label(-126, -111, 'JARDÍN DEL REY\nalberca · fuente · pomar\ncolmenas · palomar', f11, (230, 240, 220))
-label(-74, -111, 'naranjos\nsecos', f9, (220, 235, 210))
+for (a, b, c, e) in [(-136.7, -119.7, -125.8, -112.8), (-123.2, -120.2, -112.7, -112.8), (-137.7, -110.2, -131.8, -102.3), (-129.4, -110.2, -125.8, -102.3), (-123.2, -110.2, -112.7, -100.3)]:
+    rect(a, b, c, e, (78, 108, 66), (150, 96, 76), 1)
+d.ellipse([P(-126.4, -113.4), P(-122.6, -109.6)], fill=(150, 146, 140), outline=(60, 60, 60))
+label(-130.5, -116.2, 'JARDÍN\nDE LA REINA', f11, (230, 240, 220)); label(-124.5, -107.6, 'fuente', f9, (230, 240, 220))
+rect(-106.4, -119, -89.6, -114.2, (150, 146, 140), (60, 60, 60), 1); rect(-106, -118.6, -90, -114.6, (110, 104, 92), (110, 104, 92), 1); label(-98, -116.6, 'alberca', f9, (240, 240, 230))
+rect(-82.6, -119.6, -78.2, -115.2, (220, 214, 200), (60, 60, 60), 2); label(-80.4, -117.4, 'palo-\nmar', f9)
+rect(-79.5, -110.6, -71.5, -106.2, (60, 70, 72), (150, 146, 140), 2); label(-75.5, -108.4, 'vivero', f9, (230, 235, 240))
+rect(-75, -102.9, -66.4, -102, (200, 170, 110), (90, 70, 40), 1); label(-70.7, -104.2, 'colmenas', f9, (230, 240, 220))
+rect(-76, -122, -66, -120.4, (140, 136, 130), (60, 60, 60), 1); label(-71, -119.2, 'escalera del adarve', f9, (230, 240, 220))
+label(-70, -113.6, 'POMAR', f11, (230, 240, 220))
+rect(-101, -128.4, -95, -126, (170, 164, 156), (40, 40, 40), 2); label(-118, -129.4, 'MIRADOR del Rey (↑ el campamento)', f9, (230, 225, 215))
+d.line([P(-131.25, -102), P(-129.95, -102)], fill=(240, 200, 120), width=5); label(-136, -103.6, 'puerta', f9, (240, 220, 180))
 # la fortaleza: alas
 rect(-138, -100, -62, -32, (96, 90, 84), w=3)
 rect(-135.6, -86, -121.2, -47.2, (150, 70, 60)); label(-128.4, -66, 'GRAN\nSALÓN\n14 × 39\n(la Corte)', f13, (250, 235, 220))
@@ -90,22 +101,39 @@ for (x0, z0, x1, z1, t) in [(-140, -44.8, -126, -30, 'COCINA\n(secadero)'), (-76
     rect(x0, z0, x1, z1, (110, 104, 98), w=3); label((x0 + x1) / 2, (z0 + z1) / 2, t, f11, (250, 245, 235))
 # puerta del adarve de la coracha
 d.line([P(-64, -95.4), P(-62, -95.4)], fill=(240, 200, 120), width=5)
+# el adarve de levante (+12): de la torre de la coracha, por su puerta y su
+# puente, a la terraza de la cancillería y a la puerta del Tombo
+rect(-64.4, -86, -62, -60.6, (170, 150, 110), (90, 70, 40), 1)
+d.line([P(-65.6, -86), P(-64.4, -86)], fill=(240, 200, 120), width=5)
+d.line([P(-66.6, -46), P(-65.4, -46)], fill=(240, 200, 120), width=5)
+label(-56.5, -82, 'adarve de\nlevante\n(+12)', f9, (230, 210, 180))
+label(-69.6, -47.6, 'terraza (+12)', f9, (60, 40, 20))
 # el eje
 for z in range(-29, -86, -3):
     d.line([P(-98, z), P(-98, z - 1.5)], fill=(240, 200, 120), width=2)
-# patio de armas
-rect(-120, -26, -47, 24, (120, 106, 84), w=3)
-rect(-120, -32, -106, -26, (120, 106, 84), (120, 106, 84), 1); rect(-90, -32, -62, -26, (120, 106, 84), (120, 106, 84), 1)
-label(-84, -16, 'PATIO DE ARMAS · 73 × 56', f16, (35, 28, 20))
+# patio de armas: el recinto entero, de la muralla de poniente (corrida) a la
+# de levante, con lo que se hizo en lo ganado
+rect(-123, -32, -120, 23, (110, 104, 98), w=2)
+rect(-120, -32, -62, -23, (120, 106, 84), (120, 106, 84), 1)
+rect(-120, -23, -48, 20, (120, 106, 84), w=3)
+rect(-71, -23, -48, -20, (110, 104, 98), w=2); label(-59.5, -24.6, 'muralla norte (la escalera rota)', f9, (230, 210, 190))
+label(-84, -13, 'PATIO DE ARMAS · 73 × 56', f16, (35, 28, 20))
 rect(-90, 4, -81, 14, (100, 94, 88), w=2); label(-85.5, 9, 'TORRE DE\nLA CÁRCEL', f9, (240, 235, 230))
+rect(-93, 3.4, -90, 14.6, (96, 88, 80), (40, 36, 32), 1)
 rect(-59, -7, -48, 5, (100, 94, 88), w=2); label(-53.5, -1, 'TORRE-\nPUERTA', f9, (240, 235, 230))
 rect(-47, -3.5, -43, 3.5, (110, 104, 98), w=2); label(-38, 0, 'barbacana →\ncalle del Soto', f9, (230, 210, 190))
-rect(-62, -20, -54, -14, (130, 120, 110), w=2); label(-58, -17, 'capilla\n(altar)', f9)
+rect(-60, -20, -52, -14, (130, 120, 110), w=2); label(-56, -17, 'capilla\n(altar)', f9)
 rect(-80, 13, -66, 20, (130, 112, 96), w=2); label(-73, 16.5, 'cuartel', f9)
-rect(-120, -22, -112, 6, (130, 112, 96), w=2); label(-116, -8, 'cuadras ·\nhalconera', f9)
-rect(-112, 12, -102, 20, (140, 100, 80), w=2); label(-107, 16, 'fragua', f9)
+rect(-120, -23, -111, -15.2, (138, 118, 98), w=2); label(-115.5, -19.1, 'halco-\nnera', f9)
+rect(-120, -15.2, -111, 6, (130, 112, 96), w=2); label(-115.5, -4.6, 'CUADRAS', f9)
+rect(-120, -31.1, -107, -25.4, (106, 96, 76), (60, 50, 40), 2); label(-113.5, -28.2, 'corral de\nla cocina', f9, (235, 225, 210))
+d.line([P(-113.6, -32), P(-112.4, -32)], fill=(240, 200, 120), width=5); label(-118, -34.2, 'poterna', f9, (240, 220, 180))
+rect(-120, 7.4, -114.6, 11.4, (170, 150, 90), (90, 80, 50), 1); label(-111, 9.4, 'pajar ·\ncarros', f9)
+rect(-116.4, 13.8, -103, 20, (140, 100, 80), w=2); label(-109.7, 16.9, 'fragua', f9)
+rect(-128, -9, -122, -3, (110, 104, 98), w=2)
+rect(-124.5, 18.5, -118.5, 24.5, (110, 104, 98), w=2)
 d.ellipse([P(-63, 11), P(-60.6, 13.4)], fill=(60, 60, 70)); label(-61.8, 9.4, 'pozo', f9)
-label(-97, -10, 'fundíbulo\nroto', f9)
+rect(-103.4, -10, -100.6, -2, (90, 74, 56), (50, 40, 30), 1); label(-102, 0.2, 'fundíbulo\nroto', f9)
 # el foso de las estacas y el puente levadizo (bajado)
 rect(-102, -28, -94, -24, (40, 34, 30)); rect(-100.5, -29, -95.5, -23.8, (120, 96, 70), (60, 50, 40), 1); label(-98, -26.4, 'puente', f9, (240, 230, 220))
 # el cadalso, colgado de la torre de levante de la puerta y de la muralla de la guardia, con la garita del alférez
@@ -113,17 +141,13 @@ for (a, b, c, e) in [(-95.3, -29, -88.2, -27.2), (-90, -30.2, -88.2, -29), (-90,
     rect(a, b, c, e, (150, 110, 70), (70, 50, 30), 1)
 rect(-77.8, -32, -76, -30.2, (110, 76, 46), (60, 40, 24), 1)
 label(-80.5, -28.6, 'cadalso (el ALFÉREZ)', f9, (240, 220, 190))
-# (por ahora, hasta la fase 4: la antepuerta, cerrada por poniente con una empalizada)
-for (a, b, c, e) in [(-104.6, -28.4, -104.6, -3.3), (-104.6, -3.3, -92.9, -3.3)]:
-    d.line([P(a, b), P(c, e)], fill=(150, 100, 60), width=3)
-label(-99, -20.5, 'empalizada\n(por ahora)', f9, (60, 36, 20))
-rect(-120, 20, -47, 24, (110, 104, 98)); label(-84, 22, 'muralla sur · la brecha', f9, (230, 225, 220))
+rect(-123, 20, -48, 23, (110, 104, 98)); label(-84, 21.5, 'muralla sur · la brecha', f9, (230, 225, 220))
 # mazmorras (de puntos)
 dashed(-96, -24, -46, 24, (190, 160, 120)); label(-71, -3, 'mazmorras del principio (−5)', f11, (230, 200, 160))
 dashed(-124, -80, -80, -34, (200, 120, 110)); label(-102, -52.5, 'mazmorras del castillo (−5) y aljibe del palacio', f9, (120, 40, 30))
 d.line([P(-88.5, -20), P(-84.5, -20)], fill=(220, 80, 60), width=5); label(-79, -21.5, 'RASTRILLO', f11, (240, 120, 100))
 dashed(-98, -132, -46, -85, (100, 130, 160)); label(-72, -129, 'debajo: la cripta honda (no se cava)', f9, (150, 180, 210))
 # leyenda de recorrido
-d.text((M, H - 34), 'Se entra a media partida por la coracha (torre de la coracha) y se baja por dentro; el puente levadizo y el rastrillo son los atajos.', font=f11, fill=(220, 205, 180))
+d.text((M, H - 34), 'Se entra por la coracha (su torre) y se baja por dentro. Atajos: el puente levadizo, la poterna, la puerta del Tombo, el rastrillo.', font=f11, fill=(220, 205, 180))
 im.save('docs/planos/plan_fortaleza.png')
 print(W, H)

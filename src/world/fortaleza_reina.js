@@ -20,7 +20,7 @@ import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
-import { PIEDRA, ajimez, muroVanos, forjado, caracol, sitial, tapiz, dentro, cara1, saeteraDentro, armadura, lineaTejado, caraTejado, farol, tri, cara } from './fortaleza_atrezo.js';
+import { PIEDRA, ajimez, muroVanos, forjado, caracol, sitial, tapiz, dentro, cara1, saeteraDentro, armadura, lineaTejado, caraTejado, farol, tri, cara, talud } from './fortaleza_atrezo.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -222,8 +222,25 @@ function torre(ctx, S, L) {
   );
   // el del sur, con la puerta de la galería del gran salón (en el oratorio)
   muroVanos(ctx, 'x', T.x0, T.x1, T.z1 - T.t, T.z1, 0, T.h, [{ c: (G.x0 + G.x1) / 2, w: G.x1 - G.x0, y: G.y, h: 2.4, rise: 0, room: rooms[1] }], bands, [], { tint: piedra });
-  // los del norte y poniente, por dentro
-  dentro(ctx, T, ['n', 'w'], bands);
+  // el del norte, con la puerta del jardín del Rey (abajo): por fuera, sobre
+  // su talud, partido en la puerta, con su cordón por encima
+  {
+    const Pu = FORT.jardin.puerta;
+    const Td = FORT.talud;
+    const tint = PIEDRA.lienzo.map((v) => v * 0.97);
+    const ring = 0.22;
+    const l = Pu.x - Pu.w / 2 - ring,
+      r = Pu.x + Pu.w / 2 + ring;
+    muroVanos(ctx, 'x', T.x0, T.x1, T.z0, T.z0 + T.t, 0, T.h, [{ c: Pu.x, w: Pu.w, y: 0, h: Pu.h, rise: Pu.w / 2, ring, room: rooms[0] }], [{ room: null, y0: 0, y1: T.h, tint }], bands, { tint: piedra, revealRoom: rooms[0] });
+    talud(ctx, 'n', T.z0, T.x0, l, Td.h, Td.d, { ext: [Td.d, 0], ends: [false, true], tint });
+    talud(ctx, 'n', T.z0, r, T.x1, Td.h, Td.d, { ext: [0, Td.d], ends: [true, false], tint });
+    ctx.wb.box('ashlar', l, Td.h - 0.04, T.z0 - 0.16, r, Td.h + 0.2, T.z0 + 0.01, { ao: false, faces: 'nwetb', tint: PIEDRA.silla });
+    ctx.wb.box('flag', Pu.x - Pu.w / 2, -0.05, T.z0, Pu.x + Pu.w / 2, 0.02, T.z0 + T.t, { faces: 't', ao: false, room: rooms[0], tint: [0.66, 0.63, 0.58] });
+    W(S, Pu.x - Pu.w / 2, T.z0 - Td.d - 0.4, Pu.x + Pu.w / 2, iz0 + 0.3);
+    L.interact.push({ kind: 'door', id: 'd_jardin', x: Pu.x, y: 0, z: T.z0 + T.t / 2, w: Pu.w, h: Pu.h + Pu.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'none' } });
+  }
+  // el de poniente, por dentro
+  dentro(ctx, T, ['w'], bands);
   // el caracol, los forjados, el suelo y el techo
   const K = caracol(ctx, ix1, iz1, 1.6, pisos, rooms, { tint: [1, 1, 1] });
   for (let k = 1; k < 3; k++) forjado(ctx, ix0, iz0, ix1, iz1, pisos[k], [K.hueco], rooms[k], rooms[k - 1], { tint: [0.62, 0.54, 0.46] });

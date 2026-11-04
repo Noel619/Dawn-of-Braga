@@ -444,6 +444,81 @@ su taller), `tools/castlewalk.mjs torre` (de la guardia al torno y por el puente
 terraza), `tools/progress.mjs`, `tools/rey.mjs` y `tools/caballero.mjs` (con sus sitios de `FORT.torre`; ahora
 también las dos escenas enteras, la carga y el estado tras el final al cargar la partida).
 
+**Fase 4 (hecha).** El patio de armas entero (`world/castillo_patio.js`, con sus medidas en `CASTLE` de
+`world/level_castle.js`), el jardín del Rey con el mirador (`world/fortaleza_jardin.js`, con las suyas en
+`FORT.jardin`), el adarve de levante desde la torre de la coracha (`world/fortaleza_rey.js`, `FORT.adarveE`) y la
+poterna de la cocina (`FORT.poterna`).
+
+- **El patio de armas.** La muralla de poniente, corrida hasta la fortaleza (x −120), con su torre de en medio y la
+  de la esquina; fuera la empalizada y la muralla vieja, de la que queda el arranque, arrasado, al pie de la torre
+  de la cárcel (por debajo sube la escalera de las mazmorras). En lo ganado, contra la muralla, una nave de
+  mampuesto con su tejado: **la halconera** (las alcándaras con su faldón de lienzo y los halcones encapirotados,
+  muertos en la percha; la mesa del halconero con los capirotes, los guantes y los señuelos; la bañera, la jaula,
+  el halconero) y, tras su tabique, **las cuadras** (el pesebre corrido con su pesebrera de varas, las plazas con
+  sus tabiques de tablas, la paja, la reguera, las sillas y los arreos, la boca del pajar con su escalera; las
+  puertas grandes, arrancadas para la barricada; los tres últimos caballos, muertos en su plaza, y **el
+  mastín**). Al sur de las cuadras, **el pajar y los carros**; en el rincón, **la fragua del armero**, un cobertizo
+  contra la muralla con la forja encendida y su chimenea, el fuelle, el yunque con una hoja a medio sacar, la pila
+  de templar, la muela y el armero caído (un penitente come junto a ella). En medio, **el fundíbulo** partido, de
+  cara a la fortaleza, con sus bolaños. Ante la poterna, **el corral de la cocina**: el pretil con la cancela
+  caída, la leñera bajo su tejadillo contra el talud, el tajo con el hacha, el gallinero con las gallinas muertas
+  y el muladar. Donde estaban, la fragua vieja es el almacén de la tropa y las caballerizas, el secadero de la
+  carne de los caballos. El aire del patio es claro (la atmósfera `armas`: la de la fortaleza, con la música y el ambiente de la
+  ciudad): desde él se ve la fortaleza. Encuentros: los
+  penitentes que comen (en el corral, en la fragua), el soldado de ronda, el mastín.
+- **La poterna**: una puerta baja de medio punto en el muro de la despensa, por el grueso del muro y del talud,
+  atrancada por dentro; abierta, el atajo de la despensa al corral de la cocina y al patio de armas.
+- **El jardín del Rey**, alrededor de la torre del homenaje por el norte, con su puerta en la torre de la reina
+  (su muro del norte, partido: la puerta, el talud y el cordón). Al oeste, **el jardín de la reina**: el crucero
+  de andenes con la glorieta enlosada y **la fuente** seca en medio (la taza con su corona de flores secas), los
+  arriates de borde de ladrillo (los que dan a la glorieta, en escuadra), con sus arrayanes muertos y sus naranjos
+  secos, los poyos, y **el emparrado** sin hojas sobre el andén de la puerta, con una cortesana de rodillas ante la
+  fuente. Al norte de la torre, **la alberca** (vacía: el agua, al aljibe; en el fondo, las monedas, y abajo cae el
+  Caballero). Al este, **el pomar** de naranjos secos, **el palomar** encalado con sus piqueras (sin palomas: en lo
+  alto anida **el cuervo cebado**, que guarda el jardín), **el colmenar** contra la torre de la coracha y **el
+  vivero** con sus carpas panza arriba, vueltas hacia la Sé. El muro que cierra el jardín entre el fanal y la
+  atalaya.
+- **El mirador.** La escalera de piedra contra la muralla, del rincón del pomar al **adarve del jardín**
+  (`level_walls.js` pide ese tramo de muralla a `fortaleza_jardin.js`: sin almenas donde vuela el mirador y sin
+  parapeto donde llega la escalera), y en el adarve, en el eje de la torre, **el mirador del Rey**: un balcón
+  volado sobre cuatro canes, con su antepecho, sus columnillas, su tejadillo, los poyos, la jamuga del Rey de cara
+  al campo, un caído y **una ampolla**. Abajo, **el campamento de los sitiadores**: la fila de picas al pie de la
+  muralla, los manteletes, la cava con su empalizada, las tiendas, las hogueras, el pabellón del capitán con sus
+  estandartes, los dos trabucos con sus bolos y los carros. Nadie se mueve.
+- **La torre de la coracha y el adarve de levante.** De la planta del altar (+9), una escalera de tablas por el
+  muro del sur sube a un sobrado sobre la caja del caracol (+12); en el muro, la puerta, y fuera, **el puente de
+  tablas** sobre el rincón del tejado de la capilla, con su barandilla, que da al **adarve de levante**: entre las
+  almenas y el antepecho, con un soldado, las piedras para tirar y un caído, hasta **la terraza de la
+  cancillería**, desde la que se ve el patio de honor entero y la torre. En la terraza, unos peldaños suben a **la
+  puerta del Tombo**, a la altura de su planta de las arcas, atrancada por dentro: abierta desde el Tombo, el atajo
+  del patio de honor a la torre de la coracha por arriba. Las caras de fuera de esas dos torres, con sus puertas,
+  las ponen ya sus salas.
+- **Los textos**: la halconera, las cuadras, el gallinero, la fragua, la poterna, la puerta del Tombo; los del
+  jardín (la fuente, la alberca, el palomar, el colmenar, el vivero, el mirador), al día; los nombres de las
+  salas nuevas.
+
+Las revisiones de §9 en lo nuevo: `tools/holes.mjs alto` (con semillas en el sobrado de la torre de la coracha, el
+adarve de levante, la terraza, el adarve del jardín y el mirador: las rendijas entre las tablas del puente; los
+rincones del muro del norte del Tombo, sin colisión por encima de la terraza, por los que se entraba en el muro),
+`tools/zfight.mjs` (las plumas de la halconera y la paja de las cuadras, unas sobre otras; la reguera, a ras del
+suelo; los dinteles de las puertas de las cuadras contra el de su vano; los pilares de la cancela del corral, a ras
+de los cabos del pretil; la boca del gallinero; la glorieta, enlosada dos veces; la marca del agua de la alberca y
+el umbral de la puerta del jardín, en el plano de la piedra; los setos de arrayán, solapados; el sobrado de la torre
+de la coracha contra el último peldaño) y `tools/camclip.mjs` (con veinticuatro puntos nuevos: limpia). La fuente del
+jardín, que salía tapada por un disco, es ahora un pilón de verdad (aros con su cara de dentro).
+
+Lo provisional, hasta las fases que vienen:
+
+- **La bajada tapiada** de las celdas y la trampilla del almacén de la torre, como estaban (fase 5).
+- **El paseo de las cámaras** (el claustro de arriba), sin hacer (si se hace, fase 6).
+
+Pruebas: `tools/fortalezawalk.mjs` (ahora también la torre de la coracha a +12, el adarve de levante, la terraza y
+la puerta del Tombo; el jardín, de la puerta de la reina al mirador; la poterna; `SOLO4=1`, sólo eso),
+`tools/castlewalk.mjs` (el patio de armas de poniente: la halconera, las cuadras, el pajar, la fragua, el corral y la
+poterna, atrancada desde fuera), `tools/holes.mjs alto` (con sus semillas nuevas), `tools/zfight.mjs` y
+`tools/camclip.mjs` en lo nuevo, y las de siempre (`progress.mjs`, `rey.mjs`, `caballero.mjs`, `corte.mjs`,
+`beastchase.mjs`).
+
 ## Fuentes
 
 - La alcáçova de Lisboa (el castillo, el paço real y la plaza de armas en un mismo recinto, partido en dos patios

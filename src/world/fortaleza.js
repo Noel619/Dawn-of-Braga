@@ -21,15 +21,16 @@
 // nordeste por la puerta de su adarve.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { solid, blocker, archRing, solidGableRoof } from './builders.js';
+import { blocker, archRing, solidGableRoof } from './builders.js';
 import * as P from './props.js';
-import { PIEDRA, pieza, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes, caraTejado } from './fortaleza_atrezo.js';
+import { PIEDRA, pieza, plano, asoma, talud, esquina, almenas, antepecho, vano, ajimez, saetera, matacanes, caraTejado, muroVanos } from './fortaleza_atrezo.js';
 import { tejadoCamaras } from './fortaleza_reina.js';
 import { FORT } from './fortaleza_medidas.js';
 import { buildPatio } from './fortaleza_patio.js';
 import { buildAlas } from './fortaleza_alas.js';
 import { buildPuerta } from './fortaleza_puerta.js';
 import { buildTorre } from './fortaleza_torre.js';
+import { buildJardin } from './fortaleza_jardin.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -47,6 +48,7 @@ export function buildFortaleza(ctx, S, L) {
   cubiertas(ctx);
   buildPatio(ctx, S, L);
   buildAlas(ctx, S, L);
+  buildJardin(ctx, S, L);
   afuera(ctx, L);
 }
 
@@ -101,14 +103,25 @@ function muralla(ctx) {
     wb.box('wallstone', x1 - t, E, C.z0, x1, walk, C.z1, { faces: 'w', sub: 2.2, aoH: 2.5, tint: Lt });
     wb.box('wallstone', x1 - t, 0, Cn.z0, x1, T.F1, Cn.z1, { faces: 'w', sub: 2.2, aoH: 2.5, room: 'cancilleria', tint: Lt });
     almenas(ctx, 'e', x1, NE.z1, SE.z0, walk);
-    antepecho(ctx, 'w', x1 - t, C.z0, C.z1 + 0.6, walk);
+    // (el antepecho, desde el puente de tablas que sale de la torre de la
+    // coracha: fortaleza_rey.js)
+    antepecho(ctx, 'w', x1 - t, T.adarveE.z0, C.z1 + 0.6, walk);
     for (const z of [-82, -76, -70, -64, -56, -50]) saetera(ctx, 'e', x1, z, T.coracha.y + 0.6, { h: 1.3 });
   }
   // sur: la despensa, al oeste de la puerta (la del cuerpo de guardia, con el
-  // boquete del bolaño y el cadalso, en fortaleza_puerta.js)
+  // boquete del bolaño y el cadalso, en fortaleza_puerta.js), con la poterna
+  // de la cocina: una puerta baja, atrancada por dentro, que sale al corral
+  // de la cocina, en el patio de armas (el atajo de fuera)
   for (const [a, b, room] of [[SO.x1, G.x0, 'despensa']]) {
-    pieza(ctx, 'wallstone', a, 0, z1 - t, b, walk, z1, [['s', null, Td.h - 0.05], ['n', room, 0, T.F1]], o);
-    talud(ctx, 's', z1, a, b, Td.h, Td.d);
+    const Po = T.poterna;
+    const l = Po.x - Po.w / 2 - Po.ring,
+      r = Po.x + Po.w / 2 + Po.ring;
+    muroVanos(ctx, 'x', a, b, z1 - t, z1, 0, walk, [{ c: Po.x, w: Po.w, y: 0, h: Po.h, rise: Po.w / 2, ring: Po.ring, room }], [{ room, y0: 0, y1: T.F1, tint: [0.74, 0.7, 0.64] }], [{ room: null, y0: 0, y1: walk }], { tint: Lt, revealRoom: room });
+    talud(ctx, 's', z1, a, l, Td.h, Td.d, { ends: [false, true] });
+    talud(ctx, 's', z1, r, b, Td.h, Td.d, { ends: [true, false] });
+    wb.box('ashlar', l, Td.h - 0.04, z1 - 0.01, r, Td.h + 0.2, z1 + 0.16, { ao: false, faces: 'swetb', tint: PIEDRA.silla });
+    // (el paso, enlosado, por el grueso del muro y del talud)
+    wb.box('flag', Po.x - Po.w / 2, -0.05, z1 - t, Po.x + Po.w / 2, 0.02, z1 + Td.d, { faces: 't', ao: false, room, tint: [0.66, 0.63, 0.58] });
     almenas(ctx, 's', z1, a, b, walk);
     for (const x of [a + 4, a + 10, b - 4]) saetera(ctx, 's', z1, x, 3.8);
     for (const x of [a + 7, b - 7.5]) vano(ctx, 's', z1, x, 7.2, 0.5, 1.2);
@@ -152,8 +165,9 @@ function torresEsquina(ctx) {
     // esquinas de fuera: ext), y por encima de las crujías, las de dentro
     // [dir, line, a, b, y0, talud: ext | null]
     const L = {
+      // (la cara del norte de la de la reina, con la puerta del jardín, la
+      // pone su sala: fortaleza_reina.js)
       NO: [
-        ['n', z0, x0, x1, 0, [d, d]],
         ['w', x0, z0, z1, 0, [d, d]],
         ['s', z1, x0, T.x0, 0, [d, 0]],
         ['e', x1, z0, T.z0, 0, [d, 0]],
@@ -172,13 +186,15 @@ function torresEsquina(ctx) {
         ['w', x0, z0, T.z0, 0, [d, 0]],
         ['e', x1, z0, z0 + t, yc, null],
         ['e', x1, z1 - t, z1, yc, null],
-        ['s', z1, x0, x1, yv, null],
+        // (la del sur, con la puerta del adarve de levante, la pone su sala:
+        // fortaleza_rey.js)
       ],
       SE: [
         ['s', z1, x0, x1, 0, [0, 0]],
         ['e', x1, z0, z1, yc, null],
         ['w', x0, z0, z1, T.walk, null],
-        ['n', z0, x0, x1, T.walk, null],
+        // (la del norte, con la puerta de la terraza de la cancillería, la
+        // pone su sala: fortaleza_alas.js)
       ],
     }[k];
     for (const [dir, line, a, b, y0, ext] of L) {
@@ -500,10 +516,10 @@ function cubiertas(ctx) {
 }
 
 // ------------------------------------------------------------------------ alrededor
-// Lo que se ve desde lo alto: al norte, el jardín del Rey (fase 4: por ahora,
-// la tierra, los naranjos secos y la alberca vacía), cerrado por el muro de
-// poniente; al oeste, el campo, pelado, hasta perderse en la niebla; al sur,
-// entre la fortaleza y la muralla del castillo, el escombro y el patíbulo.
+// Lo que se ve desde lo alto: al norte, el muro de poniente que cierra el
+// jardín del Rey (el jardín, en fortaleza_jardin.js); al oeste, el campo,
+// pelado, hasta perderse en la niebla; al sur, en el rincón entre la
+// fortaleza y la coracha, el escombro y el patíbulo.
 function afuera(ctx, L) {
   const wb = ctx.wb;
   const rng = new RNG(8801);
@@ -512,8 +528,14 @@ function afuera(ctx, L) {
   for (let i = 0; i < 16; i++) P.deadTree(ctx, rng.range(-230, -162), 0, rng.range(-170, 20), 7410 + i, rng.range(3.2, 5.6));
   for (let i = 0; i < 10; i++) P.roughStone(ctx, rng.range(-200, -158), 0, rng.range(-140, 0), rng.range(0.3, 0.8), 7430 + i);
   for (let i = 0; i < 9; i++) P.deadTree(ctx, rng.range(-152, -144), 0, rng.range(-118, -20), 7450 + i, rng.range(3.0, 5.0));
-  // (fuera de la empalizada del patio de armas: level_castle.js)
-  for (let i = 0; i < 6; i++) P.deadTree(ctx, rng.range(-134, -108), 0, rng.range(-26, 0), 7470 + i, rng.range(3.0, 4.6));
+  // (al otro lado de la muralla de poniente del patio de armas; se gastan las
+  // tiradas de los árboles que había dentro, para que lo demás no cambie)
+  for (let i = 0; i < 6; i++) {
+    const x = rng.range(-134, -108),
+      z = rng.range(-26, 0),
+      h = rng.range(3.0, 4.6);
+    if (x < -125) P.deadTree(ctx, x, 0, z, 7470 + i, h);
+  }
   ctx.crows.push({ x: -175, y: 14, z: -70, r: 9, n: 5 });
   ctx.crows.push({ x: -100, y: T.torre.terraza, z: -92, r: 4, n: 4 });
   // el muro que cierra el jardín por poniente, de la muralla norte a la torre
@@ -525,44 +547,7 @@ function afuera(ctx, L) {
     talud(ctx, 'w', N.oeste.x0, N.zi, NO.z0, 2.4, 0.7);
     almenas(ctx, 'w', N.oeste.x0, N.zi, NO.z0, 9, { collide: false });
   }
-  // el jardín, por ahora: la tierra, los naranjos secos, la alberca vacía y el
-  // pozo (el resto, en la fase 4)
-  {
-    const z0 = T.norte.zi,
-      z1 = T.z0;
-    // (la tierra, alrededor de la torre del homenaje: dentro está el suelo de
-    // su planta baja)
-    const K = T.torre;
-    for (const [a, b, c, d] of [
-      [T.norte.oeste.x1, z0, K.x0, z1],
-      [K.x1, z0, T.x1, z1],
-      [K.x0, z0, K.x1, K.z0],
-    ])
-      wb.box('dirt', a, 0.0, b, c, 0.02, d, { faces: 't', ao: false, sub: 3, tint: [0.5, 0.47, 0.4] });
-    const rr = new RNG(8820);
-    for (const [x0, x1] of [
-      [-135, -114],
-      [-82, -66],
-    ])
-      for (let x = x0 + 1.5; x < x1; x += 4.4)
-        for (const z of [-118.4, -113.6, -108.8, -104.2]) P.deadTree(ctx, x + rr.range(-0.5, 0.5), 0, z + rr.range(-0.4, 0.4), 8830 + Math.round(-x * 3 - z), rr.range(2.4, 3.4));
-    // la alberca, vacía, ante la torre: su pretil y, dentro, el fondo de
-    // losas con el légamo seco (abajo, en ella, cae el Caballero de la
-    // Orden: game/caballero.js)
-    const A = [-106, -118.6, -90, -114.6];
-    const at = 0.4,
-      ah = 0.75;
-    for (const [a, b, c, d] of [
-      [A[0] - at, A[1] - at, A[2] + at, A[1]],
-      [A[0] - at, A[3], A[2] + at, A[3] + at],
-      [A[0] - at, A[1], A[0], A[3]],
-      [A[2], A[1], A[2] + at, A[3]],
-    ])
-      solid(ctx, 'ashlar', a, 0, b, c, ah, d, { faces: 'tnsew', sub: 2, tint: PIEDRA.silla });
-    wb.box('flag', A[0], 0, A[1], A[2], 0.1, A[3], { faces: 't', ao: false, sub: 3, tint: [0.44, 0.42, 0.38] });
-    for (let i = 0; i < 7; i++) P.decal(ctx, rr.range(A[0] + 1.2, A[2] - 1.2), 0.11, rr.range(A[1] + 0.9, A[3] - 0.9), rr.range(1.4, 2.6), 'splat', 0.55, { tint: [0.2, 0.22, 0.17] });
-    P.well(ctx, -126, 0, -112, {});
-  }
+  // (el jardín del Rey: fortaleza_jardin.js)
   // al sur, en el rincón del patio de armas entre la fortaleza, la coracha y
   // la muralla del castillo: el escombro del asedio y el patíbulo
   P.rubble(ctx, -66.5, 0, -27.5, 14, 8840, 3.2, { mat: 'wallstone', scale: 1.3 });
@@ -570,5 +555,4 @@ function afuera(ctx, L) {
   P.gibbet(ctx, -64.6, 0, -30.5, 4.0);
   P.stake(ctx, -70.2, 0, -29.6, 0.3, 8842);
   P.stake(ctx, -68.8, 0, -30.4, -0.4, 8843);
-  for (let i = 0; i < 5; i++) P.roughStone(ctx, rng.range(-122, -106), 0, rng.range(-29, -24), rng.range(0.4, 0.9), 8850 + i);
 }

@@ -14,6 +14,7 @@ import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { BREACH, wallBreach, MERLONS_N, merlonsN, TOWER_N, towerNHatch, towerNMerlons } from './level_finale.js';
 import { FORT } from './fortaleza_medidas.js';
+import { murallaJardin } from './fortaleza_jardin.js';
 
 // Alturas del adarve: muro este (como lo alto del Postigo) y muralla norte.
 const YE = 9,
@@ -211,6 +212,11 @@ export function buildNorthWalls(ctx, S, L) {
       wallRun(ctx, BREACH.x0, -126, BREACH.x1, -122, YN, 'n');
       ctx.endGroup();
       wallRun(ctx, BREACH.x1, -126, b, -122, YN, 'n');
+      continue;
+    }
+    // (el del jardín del Rey, con el mirador y su escalera: fortaleza_jardin.js)
+    if (b === fx0) {
+      murallaJardin(ctx, a, b, YN);
       continue;
     }
     // (el de la esquina no lleva parapeto donde llega el adarve del muro este)

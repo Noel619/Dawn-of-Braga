@@ -1,6 +1,7 @@
-// La cámara contra muros, rejas y techos: en puntos del castillo, las
-// mazmorras, la torre del homenaje y la puerta de la fortaleza, la catedral y
-// su cripta (pegados a paredes, junto a las rejas de las celdas, en
+// La cámara contra muros, rejas y techos: en puntos del castillo (también lo
+// de poniente del patio), las mazmorras, la torre del homenaje y la puerta de
+// la fortaleza, el jardín y el mirador, la torre de la coracha y el adarve de
+// levante, la catedral y su cripta (pegados a paredes, junto a las rejas de las celdas, en
 // escaleras),
 // doce orientaciones y tres inclinaciones en cada uno. Tras asentarse, ¿queda
 // la cámara tras un muro (el rayo desde el pivote choca antes de llegar a
@@ -39,6 +40,16 @@ const r = await p.evaluate(() => {
     [-98, 0, -40], [-98, 0, -32], [-86, 0, -43], [-89.3, 3.4, -40], [-87, 5.5, -40], [-79, 5.5, -36.5], [-98, 5.5, -34.5], [-92.2, 5.5, -28.1], [-84, 5.5, -31.1], [-98, 0, -22],
     // patio y puerta
     [-70, 0, 0], [-72, 0, -10], [-55, 0, -2], [-54.4, 0, 2.5],
+    // (fase 4) lo de poniente del patio: la halconera, su puerta y el
+    // tabique, las cuadras (la calle, junto a los tabiques de las plazas, la
+    // puerta del pajar), la fragua, el corral y la poterna (por fuera y por
+    // dentro); el jardín (la puerta de la reina, la glorieta, la alberca, el
+    // palomar), la escalera del adarve, el adarve y el mirador; el sobrado de
+    // la torre de la coracha, su puerta, el puente, el adarve de levante, la
+    // terraza y la puerta del Tombo
+    [-114, 0, -19], [-110.6, 0, -19], [-113.4, 0, -15.0], [-113.4, 0, -9], [-115.6, 0, -2], [-116, 0, 5.6], [-109, 0, 16], [-113, 0, -28], [-113, 0, -31.4], [-113, 0, -35.6],
+    [-130.6, 0, -101.6], [-124.5, 0, -114.2], [-98, 0, -120.4], [-80.4, 0, -114.4], [-70, 6, -121.2], [-75.4, 10, -123.8], [-98, 10, -126.8],
+    [-67, 12, -89], [-65, 12, -86.8], [-64.6, 12, -85.4], [-63.2, 12, -78], [-70, 12, -52], [-66, 13.5, -45.4], [-66, 13.5, -43.4],
     // la catedral, el claustro, la escalera de la cripta y la cripta
     [0, 0.6, -80], [-8.5, 0.6, -90], [16, 0, -70], [0, -2.6, -91], [-5, -7, -103], [0, -7, -120], [2, -7, -127.5], [10, -7, -114], [-12, -7, -114], [0, -10, -147], [0, -5.2, -180], [0, 0, -190],
     // la cripta honda: la Confesión, el panteón de los obispos (el umbral,

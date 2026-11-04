@@ -1,6 +1,8 @@
 // Recorre el castillo como un jugador, a pie: de la celda donde se despierta
 // a la calle del Soto (las mazmorras, las catacumbas, el aljibe, la escalera
-// de la torre de la cárcel, el patio de armas y la torre-puerta en recodo).
+// de la torre de la cárcel, el patio de armas y la torre-puerta en recodo), y
+// lo de poniente del patio (la halconera, las cuadras, el pajar, la fragua,
+// el corral de la cocina y la poterna de la fortaleza, atrancada).
 // Con «torre», además: la puerta de la fortaleza (del patio de honor, por la
 // guardia, al torno del puente levadizo, y de vuelta al patio de armas por el
 // puente) y la torre del homenaje (del pasadizo del Rey a la terraza).
@@ -113,6 +115,52 @@ const r = await p.evaluate((torre) => {
       'patio → calle'
     )
   );
+  // el patio de armas rehecho (PLAN_FORTALEZA.md, fase 4): de la torre de la
+  // cárcel a poniente, la halconera, por su tabique a las cuadras, por su
+  // puerta del sur al pajar y a la fragua; el corral de la cocina y la
+  // poterna de la fortaleza, atrancada por dentro
+  P.spawn(-79.5, 0, 8.0, -Math.PI / 2);
+  for (let i = 0; i < 30; i++) g.update(1 / 60);
+  out.push(
+    go(
+      [
+        [-79.5, 2.0],
+        [-88, -2.0],
+        [-98, -2.0],
+        [-106, -12],
+        [-109.6, -19.0, 'd_halconera'],
+        [-112.4, -19.0],
+        [-113.4, -16.4],
+        [-113.4, -14.0],
+        [-113.4, -9.0],
+        [-113.4, 2.0],
+        [-115.6, 4.0],
+        [-116.0, 6.6],
+        [-116.0, 8.4],
+        [-116.0, 12.2],
+        [-113.0, 12.6],
+        [-109.0, 12.8],
+        [-108.6, 15.4],
+      ],
+      'patio → halconera → cuadras → pajar → fragua'
+    )
+  );
+  out.push(
+    go(
+      [
+        [-108.6, 12.8],
+        [-103.4, 12.8],
+        [-101.6, 4],
+        [-104, -16],
+        [-111.6, -23.6],
+        [-111.6, -26.0],
+        [-113.0, -29.4],
+        [-113.0, -30.6, 'd_poterna'],
+      ],
+      'patio → corral → poterna'
+    )
+  );
+  out.push(`poterna: ${g.interact.list.find((i) => i.id === 'd_poterna').open ? 'abierta (mal: se atranca por dentro)' : 'atrancada'}`);
   if (torre) {
     // la puerta de la fortaleza: del patio de honor, por la guardia y su
     // escalera, a la armería y a la cámara del torno (el rastrillo y el

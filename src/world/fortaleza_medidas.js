@@ -30,6 +30,10 @@ export const FORT = {
   // (z0) a la cocina (z1), con sus arquerías al salón
   galeria: { x0: -137.4, x1: -136.2, y: 5.5, ys: 8.3, top: 8.9, z0: -89.2, z1: -42.8 },
   despensa: { x0: -126, x1: -106, z0: -44.8, z1: -34.4, puerta: -114 },
+  // la poterna de la cocina, en el muro de la despensa (al sur): su centro, su
+  // luz, el arranque de su arco y su rosca; sale al corral de la cocina, en el
+  // patio de armas
+  poterna: { x: -113.0, w: 1.2, h: 2.0, ring: 0.22 },
   // (el cuerpo de guardia, abajo; arriba, a +5,5, la armería, de x0 al tabique,
   // y el taller del ballestero, del tabique a x1: el tabique, de x0 a x1, con su
   // arco lleno de escombro y el que se tapió, en z; la escalera de la guardia,
@@ -61,9 +65,10 @@ export const FORT = {
   // pasadizo, en z)
   rey: { x0: -85, x1: -76, z0: -97.6, z1: -87.2, ridge: 13.0, puerta: -82.8, alto: 4.5, pisos: [0, 4.5, 9], techo: 15.6, puertaTorre: -95.6, pasadizo: -98.79 },
   // las torres de las esquinas: su planta, su alto, el grueso de sus muros y
-  // cómo acaban (chapitel o almenas)
+  // cómo acaban (chapitel o almenas); alas: los muros que pone su sala (con
+  // sus puertas: el del norte de la de la reina, con la del jardín)
   torres: {
-    NO: { x0: -140, x1: -126, z0: -102, z1: -87.2, h: 19, t: 2, techo: 'chapitel', fuera: ['n', 'w'], alas: ['e', 's'] },
+    NO: { x0: -140, x1: -126, z0: -102, z1: -87.2, h: 19, t: 2, techo: 'chapitel', fuera: ['n', 'w'], alas: ['e', 's', 'n'] },
     SO: { x0: -140, x1: -126, z0: -44.8, z1: -30, h: 17, t: 2, techo: 'almenas', fuera: ['s', 'w'], alas: ['e', 'n'] },
     NE: { x0: -76, x1: -62, z0: -102, z1: -86, h: 18, t: 2, techo: 'almenas', fuera: ['n', 'e'], alas: ['w', 'e', 's'] },
     SE: { x0: -76, x1: -62, z0: -46, z1: -32, h: 22, t: 2, techo: 'chapitel', fuera: ['s', 'e'], alas: ['n'] },
@@ -135,6 +140,34 @@ export const FORT = {
   // la puerta de la coracha en la torre del nordeste (su z), a la altura del
   // adarve de la coracha; y lo alto del suelo de esa planta de la torre
   coracha: { z: -95.4, y: 9 },
+  // el adarve de levante (fase 4): de la torre de la coracha, por la puerta
+  // de su muro del sur a +12 (en x, de ancho w) y el puente de tablas sobre el
+  // tejado de la capilla (hasta z0, donde empieza el antepecho), a la terraza
+  // de la cancillería; en ella, los peldaños a la puerta del Tombo (en x), a
+  // la altura de su planta de las arcas (y)
+  adarveE: { puerta: -65.0, w: 1.1, z0: -84.6, tombo: -66.0, y: 13.5 },
+  // el jardín del Rey (fortaleza_jardin.js), entre la fortaleza y la muralla
+  // norte: la tierra (de x0 a x1, de la muralla, z0, a la fortaleza, z1); la
+  // puerta de la torre de la reina (en x); el crucero del jardín de la reina
+  // (su centro y el ancho de sus andenes); la alberca (su vaso: aquí cae el
+  // Caballero); la escalera del adarve (su pie, en x: sube hacia poniente
+  // contra la muralla, de ancho w) y el mirador del Rey (de x0 a x1, volado
+  // d sobre el campo); el palomar, el colmenar (a lo largo de la torre de la
+  // coracha) y el vivero de los peces
+  jardin: {
+    x0: -138,
+    x1: -62,
+    z0: -122,
+    z1: -100,
+    puerta: { x: -130.6, w: 1.3, h: 2.2 },
+    crucero: { x: -124.5, z: -111.5, w: 2.0 },
+    alberca: [-106, -118.6, -90, -114.6],
+    escalera: { x: -66, n: 25, rise: 0.4, run: 0.4, w: 1.6 },
+    mirador: { x0: -101, x1: -95, d: 2.4 },
+    palomar: { x0: -82.6, x1: -78.2, z0: -119.6, z1: -115.2, h: 6.6 },
+    colmenar: { x0: -75, x1: -66.4 },
+    vivero: [-79.5, -110.6, -71.5, -106.2],
+  },
   // la muralla norte (level_walls.js): su cara de dentro, su torre de en medio
   // y la de la esquina de poniente; el muro que cierra el jardín por poniente
   norte: { zi: -122, torre: -121, esq: { x: -141, z: -124, w: 8, h: 16 }, oeste: { x0: -141, x1: -138 } },

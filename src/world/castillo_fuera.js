@@ -28,7 +28,7 @@ function cara(wb, mat, a, b, c, d, dir, o) {
 export const FUERA = {
   torres: [
     { x0: -79, x1: -73, z0: 20.3, z1: 26, out: 's' },
-    { x0: -98, x1: -92, z0: 6.5, z1: 12.5, out: 'w' },
+    { x0: -128, x1: -122, z0: -9, z1: -3, out: 'w' },
   ],
   barbacana: { x0: -44.8, x1: -43.4, z0: -3.5, z1: 3.5, h: 9.2, w: 3.2, ah: 4.0 },
   brecha: { x0: -64.2, x1: -59.4, y: 6.6 },

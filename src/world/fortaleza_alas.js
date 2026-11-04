@@ -75,18 +75,25 @@ function despensa(ctx, S, L) {
   P.shelf(ctx, x1 - 0.3, 0, z0 + 5.2, -Math.PI / 2, 2.0);
   P.shelf(ctx, x1 - 4.0, 0, z1 - 0.3, Math.PI, 2.0);
   P.sacks(ctx, x1 - 2.4, 0, z0 + 1.0, 3, 6301);
-  P.sacks(ctx, x0 + 9.0, 0, z1 - 1.1, 4, 6305);
+  P.sacks(ctx, x0 + 7.4, 0, z1 - 1.1, 4, 6305);
   P.basket(ctx, x1 - 1.4, 0, z1 - 0.8, { room });
   P.table(ctx, x0 + 10.5, 0, (z0 + z1) / 2, 2.6, 1.0, 0, {});
   P.counter(ctx, x0 + 4.8, 0, z0 + 0.9, 0, 3.0, { room });
   bakeCorpse(wb, x0 + 11.4, 0, (z0 + z1) / 2 + 1.4, 2.6, 'curl', 'villager', 43);
   wb.setRoom(null);
   ctx.lights.push({ x: (x0 + x1) / 2, y: 3.4, z: (z0 + z1) / 2, r: 1, g: 0.5, b: 0.24, radius: 13, intensity: 0.8, room });
-  P.wallTorch(ctx, (x0 + x1) / 2 + 2, 2.4, z1 - 0.02, 'n', { room });
+  P.wallTorch(ctx, FORT.poterna.x - 1.9, 2.4, z1 - 0.02, 'n', { room });
   P.wallTorch(ctx, x0 + 4.0, 2.4, z1 - 0.02, 'n', { room });
   P.hangingLamp(ctx, x0 + 10.5, F1 - 0.1, (z0 + z1) / 2, { room, len: 1.2 });
   P.candles(ctx, x0 + 10.0, 0.82, (z0 + z1) / 2 + 0.2, 3, 6306, { room, radius: 6, intensity: 0.9 });
   L.interact.push({ kind: 'item', id: 'i_ampolla_despensa', item: 'ampolla', x: x1 - 0.42, y: 1.25, z: z0 + 5.2 });
+  // la poterna (su muro, en fortaleza.js): atrancada por dentro; abierta, el
+  // atajo al patio de armas
+  {
+    const Po = FORT.poterna;
+    W(S, Po.x - Po.w / 2, z1 - 0.3, Po.x + Po.w / 2, FORT.z1 + FORT.talud.d + 0.4);
+    L.interact.push({ kind: 'door', id: 'd_poterna', x: Po.x, y: 0, z: FORT.z1 - FORT.t / 2, w: Po.w, h: Po.h + Po.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: z1, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'poternaAbre' }, barredMsg: 'poternaTranca' });
+  }
   L.enemies.push({ type: 'penitent', x: x0 + 10.4, y: 0, z: (z0 + z1) / 2 - 1.1, yaw: 0.4, idle: 'eat', id: 'e_despensa1' });
   L.zones.push({ id: 'despensa', rects: [[x0, z0, x1, z1, -1, F1]], atmo: 'interior', room });
   L.map.push({ id: 'despensa', r: [x0, z0, x1, z1] });
@@ -343,9 +350,56 @@ function tombo(ctx, S, L) {
   const rooms = ['tombo1', 'tombo2', 'tombo3', 'tombo4'];
   const bands = pisos.map((y, k) => ({ room: rooms[k], y0: k ? y - 0.3 : 0, y1: k < 3 ? pisos[k + 1] - 0.3 : techo }));
   W(S, ix0, iz0, ix1, iz1);
-  // el muro del norte, con la puerta de la cancillería
+  // el muro del norte, con la puerta de la cancillería y, en la planta de las
+  // arcas, la de la terraza de la cancillería (atrancada por dentro: el atajo
+  // del adarve de levante); por fuera, sobre la terraza, lo de la torre
   const xd = -69.2;
-  muroVanos(ctx, 'x', ix0, ix1, R.z0, R.z0 + R.t, 0, R.h, [{ c: xd, w: 1.4, y: 0, h: 2.4, rise: 0.7, ring: 0.24 }], [{ room: 'cancilleria', y0: 0, y1: F1 }], bands, { tint: [0.74, 0.7, 0.64], revealRoom: 'tombo1' });
+  const AE = FORT.adarveE;
+  const fuera = PIEDRA.lienzo.map((v) => v * 0.97);
+  muroVanos(
+    ctx,
+    'x',
+    ix0,
+    ix1,
+    R.z0,
+    R.z0 + R.t,
+    0,
+    R.h,
+    [
+      { c: xd, w: 1.4, y: 0, h: 2.4, rise: 0.7, ring: 0.24 },
+      { c: AE.tombo, w: 1.1, y: AE.y, h: 2.1, rise: 0.55, ring: 0.2, room: rooms[3] },
+    ],
+    [
+      { room: 'cancilleria', y0: 0, y1: F1 },
+      { room: null, y0: FORT.walk, y1: R.h, tint: fuera },
+    ],
+    bands,
+    { tint: [0.74, 0.7, 0.64], revealRoom: 'tombo1' }
+  );
+  // (los rincones del muro, a los lados de lo que pone muroVanos: su cara de
+  // fuera y su colisión, que no la pone nadie más; sin ella, desde la terraza
+  // se entraba en el muro)
+  for (const [a, b] of [
+    [R.x0, ix0],
+    [ix1, R.x1],
+  ]) {
+    cara1(ctx, 'wallstone', 'n', R.z0, a, b, FORT.walk, R.h, null, fuera);
+    ctx.col.add(a, 0, R.z0, b, R.h, R.z0 + R.t);
+  }
+  // los peldaños de la terraza a la puerta, con su pretil, y la puerta
+  {
+    const n = 5,
+      run = 0.36,
+      rise = (AE.y - FORT.walk) / n;
+    stairs(ctx, AE.tombo, FORT.walk, R.z0 - n * run, 's', 1.5, n, rise, run, 'wallstone', { solidBelow: true, base: FORT.walk - 0.4 });
+    L.interact.push({ kind: 'door', id: 'd_tombo_terraza', x: AE.tombo, y: AE.y, z: R.z0 + R.t / 2, w: 1.1, h: 2.1 + 0.55, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'barred', side: 1, msg: 'tomboTerrazaAbre' }, barredMsg: 'tomboTerraza' });
+    // la terraza: un brasero, un caído con sus virotes, un ballestero muerto
+    // contra el antepecho del patio
+    const Cn = FORT.cancilleria;
+    P.brazier(ctx, AE.tombo - 3.2, FORT.walk, R.z0 - 1.6, {});
+    bakeCorpse(wb, FORT.patio.x1 + 1.0, FORT.walk, Cn.z0 + 3.0, -Math.PI / 2, 'sit', 'soldier', 7351);
+    L.interact.push({ kind: 'item', id: 'i_virotes_terraza', item: 'virote', n: 5, x: FORT.patio.x1 + 1.6, y: FORT.walk + 0.1, z: Cn.z0 + 3.8 });
+  }
   W(S, xd - 0.7, R.z0 - 0.3, xd + 0.7, iz0 + 0.3);
   L.interact.push({ kind: 'door', id: 'd_tombo', x: xd, y: 0, z: R.z0 + R.t / 2, w: 1.4, h: 3.1, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: iz0, inset: 0.06, lock: { type: 'none' } });
   dentro(ctx, R, ['s', 'w', 'e'], bands, { tint: [0.72, 0.7, 0.66], mat: 'ashlar' });

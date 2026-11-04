@@ -3,7 +3,8 @@
 // superficie a la altura de la colisión. Agrupa los agujeros encontrados.
 // Con «alto» revisa lo que está en alto (adarves, torres, la atalaya, la
 // coracha, los pisos y la terraza de la torre del homenaje, la planta alta
-// de la puerta de la fortaleza y su cadalso) y lo que está
+// de la puerta de la fortaleza y su cadalso, el adarve de levante y la
+// terraza de la cancillería, el adarve del jardín y el mirador) y lo que está
 // bajo el castillo (mazmorras, catacumbas, aljibe): lo recorre por inundación
 // desde varios puntos, como andaría el jugador (escalones de medio metro, sin
 // atravesar muros ni almenas).
@@ -67,6 +68,14 @@ const r = await p.evaluate(([step, alto]) => {
       [-79, 5.5, -36],
       [-98, 5.5, -34.5],
       [-85, 5.5, -31.1],
+      // (fase 4) el sobrado de la torre de la coracha, su puente y el adarve
+      // de levante, la terraza de la cancillería; el adarve del jardín y el
+      // mirador
+      [-66, 12, -90],
+      [-63.3, 12, -75],
+      [-70, 12, -52],
+      [-90, 10, -124],
+      [-98, 10, -127],
       // bajo el castillo: mazmorras, catacumbas y aljibe
       [-80, -5, -12],
       [-71, -5, 0],

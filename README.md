@@ -329,13 +329,25 @@ susurrar. Por el este, la reja de la galería del río, que no se abre hasta que
 
 **El castillo, preparado para el asedio.** Una guarnición, no un palacio: cada parte sirve para resistir. Se entra
 desde la Calle del Soto por una **torre-puerta en recodo** (rastrillo, buhederas en la bóveda, saeteras a los lados y
-un giro a la izquierda antes del patio, para que nadie cargue en línea recta). El **patio de armas** tiene su pozo,
-que baja al aljibe; el **cuartel de la tropa** (jergones en el suelo, la mesa larga, las lanzas de todos); la fragua
-del armero con su muela; la cocina con el horno de pan y la caldera; las caballerizas, sin caballos (se los
-comieron); la capilla de la guarnición, que acabó de hospital (el altar del castillo); el **fundíbulo** de la
-defensa, partido por un tiro de los de fuera, con sus bolaños labrados a pico; caballos de frisa y la barricada de
-la puerta. La escalera del adarve, en el cabo de poniente de la muralla norte, la partió un tiro: el tramo de arriba
-se desmoronó en talud y quedan los peldaños volados y el escombro al pie; desde el patio no se sube a la muralla.
+un giro a la izquierda antes del patio, para que nadie cargue en línea recta). El **patio de armas**, del aire claro
+de la fortaleza (desde él se ve entera), tiene su pozo, que baja al aljibe; el **cuartel de la tropa** (jergones en el
+suelo, la mesa larga, las lanzas de todos); la cocina con el horno de pan y la caldera, y el almacén de la tropa; el
+secadero de la carne de los caballos (se los comieron); la capilla de la guarnición, que acabó de hospital (el altar
+del castillo); el **fundíbulo** de la defensa, en medio, partido por un tiro de los de fuera, con sus bolaños
+labrados a pico; caballos de frisa y la barricada de la puerta. La escalera del adarve, en el cabo de poniente de la
+muralla norte, la partió un tiro: el tramo de arriba se desmoronó en talud y quedan los peldaños volados y el
+escombro al pie; desde el patio no se sube a la muralla.
+
+**Lo de poniente.** La muralla de poniente se corrió hasta la fortaleza (de la vieja sólo queda el arranque, arrasado,
+al pie de la torre de la cárcel), y en lo ganado, contra ella, una nave de mampuesto con su tejado: **la halconera**
+del Rey (las alcándaras con su faldón de lienzo y los halcones, encapirotados y muertos en la percha; la mesa del
+halconero con sus capirotes, sus guantes y sus señuelos) y, tras su tabique, **las cuadras** (el pesebre corrido con
+su pesebrera, las plazas con sus tabiques de tablas, las sillas y los arreos, la boca del pajar; las puertas grandes,
+arrancadas para la barricada; los tres últimos caballos, muertos en su plaza, y el mastín que se los come). Al sur, el
+pajar y los carros, y en el rincón **la fragua del armero**, un cobertizo contra la muralla con la forja encendida (el
+carbón es de hoy), el fuelle, el yunque con una hoja a medio sacar, la pila de templar y la muela. Ante la fortaleza,
+**el corral de la cocina**, con la leñera, el tajo y el hacha, el gallinero y el muladar, y en el talud, **la poterna**
+de la despensa, atrancada por dentro (`world/castillo_patio.js`).
 
 **Por fuera**, el castillo manda sobre la ciudad: las murallas del sur, de levante y de poniente, más altas que la
 del norte (la que se anda), las torres de las esquinas por encima de ellas y dos torres nuevas en medio de los
@@ -346,12 +358,10 @@ arco, las armas del Rey labradas encima, el matacán y la hoja de fuera arrancad
 sur, **la brecha** que abrió un bolo de los trabucos, tapada con una empalizada de troncos aguzados, con el cascajo
 al pie (`world/castillo_fuera.js`).
 
-**La antepuerta.** La torre del homenaje vieja, la que estaba a caballo de la muralla norte, se derribó: por donde
-estaba, el patio de armas llega ahora hasta **la puerta de la fortaleza** y su foso de estacas, con el puente alzado
+**Ante la fortaleza.** La torre del homenaje vieja, la que estaba a caballo de la muralla norte, se derribó: por
+donde estaba, el patio de armas llega hasta **la puerta de la fortaleza** y su foso de estacas, con el puente alzado
 al otro lado. Lo que dejó el asedio: los caballos de frisa ante el foso, un carro, los barriles, los bolaños de los
-trabucos, los muertos y sus cuervos. Por poniente, hasta que se rehaga el patio de armas entero (`PLAN_FORTALEZA.md`,
-fase 4), lo cierra una empalizada de troncos aguzados con sus puntales, de la torre de la puerta a la muralla de
-poniente.
+trabucos, los muertos y sus cuervos.
 
 **La bajada tapiada.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
 celdas, una pared de ladrillo nuevo con la cal todavía fresca, donde antes hubo una puerta; arañado en ella, LO QUE
@@ -385,6 +395,13 @@ torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, 
 **tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el arca del Rey, con sus velas casi
 consumidas, la plata y **la llave del camarero**. La puerta del tesoro se desatranca por dentro y da a la
 **antecámara del Rey**; la de la antecámara, también atrancada por dentro, al patio de honor.
+
+**El adarve de levante.** En la planta del altar de la torre de la coracha, una escalera de tablas sube por el muro
+a un sobrado, a la altura del adarve; por su puerta y un puente de tablas sobre el tejado de la capilla se sale al
+**adarve de levante**, entre las almenas y el antepecho (un soldado de guardia, las piedras para echar al patio, un
+caído), y por él a **la terraza de la cancillería**, desde la que se ve el patio de honor entero y la torre del
+homenaje con su vela. En la terraza, unos peldaños suben a la puerta del Tombo, la de su planta de las arcas,
+atrancada por dentro: abierta desde el Tombo, es el atajo de vuelta, por arriba, al altar de la llegada.
 
 **Las cámaras del Rey.** Desde la antecámara, una escalera de tablas pegada a la torre del homenaje sube a **la
 cámara del Rey**, bajo su armadura: la cama bajo el dosel con la colcha echada a un lado, a sus pies el arcón de la
@@ -440,6 +457,20 @@ salón a las de la capilla), la fuente seca; el **olmo del Rey**, con cien papel
 brocal del aljibe del palacio. Las galerías del claustro, con sus antorchas, llevan a cada sala. La escalinata, de
 dos tramos, sube a la puerta de la torre (atrancada por dentro) y bajo su rellano, cegada, la del almacén. Por encima
 del tejado de la capilla asoma **el campanario**.
+
+**El jardín del Rey.** Por la puerta de la torre de la reina se sale al jardín que rodea la torre del homenaje por
+el norte, entre la fortaleza y la muralla. Al oeste, **el jardín de la reina**: un crucero de andenes con la
+glorieta enlosada y la fuente seca en medio (en la taza, una corona de flores, seca), los arriates de borde de
+ladrillo con sus arrayanes y sus naranjos secos, los poyos, y el emparrado sin hojas sobre el andén de la puerta; una
+cortesana reza de rodillas ante la fuente. Al pie de la torre, **la alberca** larga, vacía (el agua se la llevaron al
+aljibe; en el légamo del fondo, las monedas que echaban). Al este, el pomar de naranjos secos, **el palomar**
+encalado con sus piqueras, sin una paloma (en lo alto anida **el cuervo cebado**, que guarda el jardín), el colmenar
+contra la torre de la coracha y **el vivero**, con las carpas panza arriba, vueltas todas hacia la Sé. Una escalera
+de piedra sube contra la muralla al adarve, y en él, en el eje de la torre, **el mirador del Rey**: un balcón volado
+sobre sus canes, con su tejadillo, los poyos y la jamuga del Rey de cara al campo, un caído y una ampolla. Abajo, el
+**campamento de los sitiadores**: la fila de picas con lo que hay clavado en ellas, los manteletes, la cava con su
+empalizada, las tiendas, las hogueras, el pabellón del capitán con sus estandartes y los dos trabucos que tiraban a
+la muralla. Allí abajo no se mueve nadie (`world/fortaleza_jardin.js`).
 
 **La Corte de los Infieles.** Las puertas grandes del **gran salón** están atrancadas por dentro: se entra **por el
 servicio**, como se entraba de verdad. Del patio a **la despensa** (las tinajas, los toneles de la botillería, los
@@ -757,7 +788,7 @@ se encadena el anterior.
   descalzo, con los brazos vendados de las sangrías y la cruz de cal a la espalda, la cabeza vencida por el peso de la
   corona. No está infectado: está curado. Si te ve, sacude la cabeza: los cascabeles suenan por todo el barrio y el
   Físico viene. Garfio, embestida y agarrón (te sujeta para que llegue él).
-- **Cuervo cebado** (los tejados del barrio de los Pellejeros): un cuervo que comió tanto de los muertos que creció como un perro,
+- **Cuervo cebado** (los tejados del barrio de los Pellejeros y el palomar del jardín del Rey): un cuervo que comió tanto de los muertos que creció como un perro,
   con dos metros de alas, la pechuga pelada, el pescuezo desnudo lleno de bultos, tres pares de ojos y el pico
   ganchudo como una reja. Se posa en lo alto y mira (estos sí ven; bajo techo, no): grazna, se tira, vuela en círculos
   sobre ti, se queda en el aire con las alas arriba y chilla, y se lanza en picado. Ruédate o desvíalo: desviado, cae
@@ -984,9 +1015,10 @@ src/
                         del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
                         inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
-                        level_castle.js: el castillo y las mazmorras (y la antepuerta, donde estaba la torre
+                        level_castle.js: el castillo y las mazmorras (y ante la fortaleza, donde estaba la torre
                         vieja); castillo_fuera.js: lo de fuera (las torres nuevas, los cadalsos, la barbacana,
-                        la brecha); rey_mesa.js: la mesa del Rey (el tablero del Cerco, su sitial, el banco,
+                        la brecha); castillo_patio.js: lo de poniente del patio de armas (la halconera, las
+                        cuadras, el corral de la cocina, el pajar, la fragua, el arranque de la muralla vieja); rey_mesa.js: la mesa del Rey (el tablero del Cerco, su sitial, el banco,
                         las velas y el brasero);
                         level_keep.js: la atalaya y la coracha; fortaleza_medidas.js: las medidas de la
                         fortaleza-palacio; fortaleza.js: la fortaleza por fuera (la muralla con su talud, las
@@ -1000,7 +1032,10 @@ src/
                         guardia, la armería, el taller del ballestero y el cadalso; fortaleza_salon.js: el gran salón, su armadura, la galería en el grueso del
                         muro y la Corte; fortaleza_reina.js: el estrado de las damas, la sala de la reina y su
                         torre; fortaleza_rey.js: la antecámara, la cámara del Rey, la torre de la coracha (el
-                        tesoro, el oratorio, el altar) y el pasadizo; fortaleza_capilla.js: la capilla real (el
+                        tesoro, el oratorio, el altar, el sobrado y el puente al adarve de levante) y el pasadizo;
+                        fortaleza_jardin.js: el jardín del Rey (el crucero y la fuente, la alberca, el pomar, el
+                        palomar, el colmenar, el vivero), la escalera y el adarve del jardín, el mirador y el
+                        campamento de los sitiadores; fortaleza_capilla.js: la capilla real (el
                         presbiterio y su bóveda, la nave, la tribuna, el campanario, el cordón de la campana);
                         fortaleza_atrezo.js: sus piezas (el talud, las almenas, los ajimeces, los matacanes,
                         la arquería del claustro, los muros con vanos, el caracol, las arcas, la armadura de
@@ -1099,8 +1134,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         colposes.mjs   hojas de poses de las animaciones de los colosos
                         fuzz.mjs       prueba de estrés con entradas aleatorias
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
-                                       en alto —también las plantas de la torre del homenaje y la planta
-                                       alta de la puerta de la fortaleza— y bajo el castillo, recorrido como
+                                       en alto —también las plantas de la torre del homenaje, la planta
+                                       alta de la puerta de la fortaleza, el adarve de levante, la terraza
+                                       de la cancillería, el adarve del jardín y el mirador— y bajo el castillo, recorrido como
                                        andaría el jugador)
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
@@ -1116,7 +1152,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         cerco.mjs      el Cerco en la consola (sin navegador): las reglas, la velocidad de
                                        la IA y una liga del Rey contra jugadores de prueba
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
-                                       catacumbas, el aljibe y la torre-puerta; con «torre», la puerta de la
+                                       catacumbas, el aljibe y la torre-puerta; lo de poniente del patio (la
+                                       halconera, las cuadras, el pajar, la fragua, el corral y la poterna,
+                                       atrancada); con «torre», la puerta de la
                                        fortaleza (de la guardia al torno, y por el puente al patio de armas) y
                                        la torre del homenaje (del pasadizo del Rey a la terraza)
                         fortalezawalk.mjs la fortaleza a pie: de la coracha al altar y al pasadizo, el caracol al
@@ -1128,7 +1166,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        homenaje de abajo arriba por su caracol (la puerta quemada, la de la
                                        escalinata, el almacén, la sala del trono, la galería, la terraza) y la
                                        puerta (la guardia, la armería, el torno, el rastrillo y el puente, el
-                                       cadalso, el boquete, el taller y su tabique)
+                                       cadalso, el boquete, el taller y su tabique); la torre de la coracha a
+                                       +12, el adarve de levante, la terraza y la puerta del Tombo; el jardín
+                                       del Rey, de la puerta de la reina al mirador; la poterna (SOLO4=1: sólo
+                                       esto último, lo de la fase 4)
                         corte.mjs      la Corte de los Infieles, de principio a fin
                         caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
                                        de la acometida y el golpe de gracia, el hueco tras el salto, la
@@ -1136,8 +1177,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         cryptwalk.mjs  recorre a pie la cripta honda desde el templo romano: a qué salas de su
                                        planta se llega (con «abierto», con todas las puertas abiertas) y dónde
                                        no se ve suelo bajo lo que se pisa
-                        camclip.mjs    la cámara en el castillo, las mazmorras, la torre del homenaje, la puerta
-                                       de la fortaleza, la catedral y la cripta, contra
+                        camclip.mjs    la cámara en el castillo (también la halconera, las cuadras, la fragua, el
+                                       corral y la poterna), las mazmorras, la torre del homenaje, la puerta
+                                       de la fortaleza, el jardín del Rey y el mirador, la torre de la coracha
+                                       y el adarve de levante, la catedral y la cripta, contra
                                        muros, rejas y en escaleras, en muchas orientaciones: que no quede tras
                                        un muro ni pegada
                         freecam.mjs    capturas con cámara libre
