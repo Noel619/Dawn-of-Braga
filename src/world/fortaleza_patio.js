@@ -5,9 +5,10 @@
 // oeste, la de la capilla en el mismo eje al este, la de la cancillería, la de
 // la despensa y la del cuerpo de guardia al sur, las de las cámaras de la reina
 // y del Rey a los lados de la torre), el claustro en tres lados (una galería de
-// arcos sobre columnas con su tejaroz), la escalinata de la torre en el cuarto,
-// en el eje de la puerta, y en medio, cruzados los dos ejes, la fuente seca;
-// el olmo del Rey y el brocal del aljibe del palacio.
+// arcos sobre columnas y, encima, el paseo de las cámaras: un corredor de
+// madera con su tejaroz), la escalinata de la torre en el cuarto, en el eje
+// de la puerta, y en medio, cruzados los dos ejes, la fuente seca; el olmo del
+// Rey y el brocal del aljibe del palacio.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import { solid, blocker, stairs, archedWall, archRing } from './builders.js';
@@ -22,6 +23,7 @@ const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 export function buildPatio(ctx, S, L) {
   muros(ctx, S, L);
   claustro(ctx);
+  paseo(ctx, S, L);
   escalinata(ctx, S, L);
   enmedio(ctx, S, L);
 }
@@ -44,7 +46,8 @@ function muros(ctx, S, L) {
     K = FORT.rey,
     D = FORT.despensa,
     G = FORT.guardia,
-    Pu = FORT.puerta;
+    Pu = FORT.puerta,
+    Pa = FORT.claustro.paseo;
   const tint = PIEDRA.patio;
   const ring = { ring: 0.3, tint: PIEDRA.silla };
   // (una franja de abajo con sus puertas: archedWall; rooms: [lado de menos t,
@@ -74,8 +77,10 @@ function muros(ctx, S, L) {
   {
     const x0 = Pt.x1,
       x1 = Pt.x1 + ti;
-    franja('z', C.z0, C.z1, x0, x1, yH, [{ c: C.puerta, w: 2.2, h: 2.5, rise: 1.1, ring: 0.38, tint: PIEDRA.silla }], [null, 'capilla']);
-    pieza(ctx, 'wallstone', x0, yH, C.z0, x1, E, C.z1, [['w', null], ['e', 'capilla']], { tint, baseY: 0 });
+    // (la franja, hasta el suelo de la tribuna; encima, con la puerta del
+    // paseo de las cámaras a la tribuna, hasta el alero)
+    franja('z', C.z0, C.z1, x0, x1, K.alto, [{ c: C.puerta, w: 2.2, h: 2.5, rise: 1.1, ring: 0.38, tint: PIEDRA.silla }], [null, 'capilla']);
+    archedWall(ctx, { axis: 'z', a0: C.z0, a1: C.z1, t0: x0, t1: x1, y0: K.alto, y1: E, openings: [{ c: Pa.tribuna, w: 1.2, h: Pa.y - K.alto + 2.15, rise: 0.6, ring: 0.26, tint: PIEDRA.silla }], mat: 'wallstone', tint, rooms: [null, 'capilla'], sub: 2, baseY: 0 });
     franja('z', C.z1, Pt.z1, x0, x1, yH, [{ c: Cn.puerta, w: 1.6, h: 2.6, rise: 0.8, ...ring }], [null, 'cancilleria']);
     pieza(ctx, 'wallstone', x0, yH, C.z1, x1, walk, Pt.z1, [['w', null]], { tint, baseY: 0 });
     W(S, x0 - 0.3, C.puerta - 1.0, x1 + 0.3, C.puerta + 1.0);
@@ -86,8 +91,9 @@ function muros(ctx, S, L) {
       archRing(ctx, { axis: 'z', c: C.puerta, w, y0: 2.5, rise: w / 2, ring: 0.26, t0: x0 - 0.1 - k * 0.08, t1: x0 + 0.01, mat: 'ashlar', tint: PIEDRA.silla.map((v) => v * (1 - k * 0.05)), proud: 0, cam: false, n: 9 });
       for (const s of [-1, 1]) wb.box('ashlar', x0 - 0.1 - k * 0.08, 0, C.puerta + s * (w / 2) - (s > 0 ? 0 : 0.26), x0, 2.5, C.puerta + s * (w / 2) + (s > 0 ? 0.26 : 0), { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
     }
-    wb.box('ashlar', x0 - 0.12, 4.85, C.puerta - 0.06, x0, 5.75, C.puerta + 0.06, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
-    wb.box('ashlar', x0 - 0.12, 5.35, C.puerta - 0.3, x0, 5.47, C.puerta + 0.3, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
+    // (la cruz, sobre el arco y bajo las vigas del paseo)
+    wb.box('ashlar', x0 - 0.12, 4.56, C.puerta - 0.06, x0, 5.0, C.puerta + 0.06, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
+    wb.box('ashlar', x0 - 0.12, 4.72, C.puerta - 0.22, x0, 4.82, C.puerta + 0.22, { ao: false, faces: 'wnstb', tint: PIEDRA.silla });
     // las ventanas altas de la capilla (encendidas: las velas del altar) y la
     // de la cancillería
     for (const z of [-76, -71.2, -62.5]) vano(ctx, 'w', x0, z, 6.6, 0.55, 1.6, { lit: true, intensity: 0.6, radius: 5 });
@@ -107,7 +113,10 @@ function muros(ctx, S, L) {
     // (la franja de abajo, hasta el suelo de la sala de arriba; de ahí al
     // alero, con su cara de dentro)
     franja('x', a, b, z0, z1, yA, [{ c: Rm.puerta, w: 1.6, h: 2.5, rise: 0.8, ...ring }], [room, null]);
-    pieza(ctx, 'wallstone', a, yA, z0, b, E, z1, [['s', null], ['n', alta, yA, E, [0.8, 0.76, 0.7]]], { tint, baseY: 0 });
+    // (encima, la puerta del paseo de las cámaras: a nivel en la sala de la
+    // reina; a la cámara del Rey, un metro más baja, se baja por el grueso)
+    const pd = alta === 'reina_alta' ? Pa.reina : Pa.rey;
+    archedWall(ctx, { axis: 'x', a0: a, a1: b, t0: z0, t1: z1, y0: yA, y1: E, openings: [{ c: pd, w: 1.2, h: Pa.y - yA + 2.15, rise: 0.6, ring: 0.26, tint: PIEDRA.silla }], mat: 'wallstone', tints: [[0.8, 0.76, 0.7], tint], rooms: [alta, null], sub: 2, baseY: 0 });
     W(S, Rm.puerta - 0.7, z0 - 0.3, Rm.puerta + 0.7, z1 + 0.3);
     ajimez(ctx, 's', z1, Rm.puerta, 6.9, { h: 1.25, lit, intensity: 0.5, radius: 4 });
     vano(ctx, 's', z1, Rm.puerta + (lit ? -2.6 : 2.2), 2.6, 0.42, 0.9);
@@ -134,18 +143,21 @@ function muros(ctx, S, L) {
     { kind: 'door', id: 'd_despensa', x: D.puerta, y: 0, z: Pt.z1 + ti / 2, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: Pt.z1 + ti, inset: 0.06, ajar: 0.2, lock: { type: 'none' } },
     { kind: 'door', id: 'd_guardia', x: G.puerta, y: 0, z: Pt.z1 + ti / 2, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: -1, plane: Pt.z1 + ti, inset: 0.06, lock: { type: 'none' } }
   );
-  // la imposta corrida del claustro, por encima del tejaroz, y la cornisa de
-  // los muros de las crujías bajo el alero
-  for (const [d, line, a, b] of [
-    ['e', Pt.x0, Pt.z0, Pt.z1],
-    ['w', Pt.x1, Pt.z0, Pt.z1],
-    ['s', Pt.z0, Pt.x0, R.x1],
-    ['s', Pt.z0, K.x0, Pt.x1],
-    ['n', Pt.z1, Pt.x0, Pu.x0],
-    ['n', Pt.z1, Pu.x1, Pt.x1],
+  // la imposta corrida del claustro, por encima del tejaroz del paseo (en
+  // los muros del norte, sin él, a la altura de antes y sin entrar en el
+  // paseo)
+  const dP = FORT.claustro.d,
+    yI = Pa.yHi;
+  for (const [d, line, a, b, y] of [
+    ['e', Pt.x0, Pt.z0, Pt.z1, yI],
+    ['w', Pt.x1, Pt.z0, Pt.z1, yI],
+    ['s', Pt.z0, Pt.x0 + dP + 0.45, R.x1, yH],
+    ['s', Pt.z0, K.x0, Pt.x1 - dP - 0.45, yH],
+    ['n', Pt.z1, Pt.x0, Pu.x0, yI],
+    ['n', Pt.z1, Pu.x1, Pt.x1, yI],
   ]) {
     const F = plano(d, line);
-    wb.box('ashlar', ...F.box(a, yH + 0.05, b, yH + 0.25, -0.01, 0.14), { ao: false, faces: asoma(d), tint: PIEDRA.silla });
+    wb.box('ashlar', ...F.box(a, y + 0.05, b, y + 0.25, -0.01, 0.14), { ao: false, faces: asoma(d), tint: PIEDRA.silla });
   }
 }
 
@@ -173,17 +185,13 @@ function claustro(ctx) {
     wb.box('ashlar', x - 0.38, Cl.ys - 0.14, Pt.z0, x + 0.38, Cl.ys, Pt.z0 + 0.34, { ao: false, faces: 'tsewb', tint: PIEDRA.patio });
     ctx.col.add(x - 0.28, 0, Pt.z0, x + 0.28, Cl.ys, Pt.z0 + 0.22);
   }
-  // los tejaroces (en inglete en las dos esquinas del sur)
-  tejaroz(ctx, 'e', Pt.x0, Pt.z0, Pt.z1, d, Cl.yHi, Cl.yLo, { cut: [0, -1] });
-  tejaroz(ctx, 'w', Pt.x1, Pt.z0, Pt.z1, d, Cl.yHi, Cl.yLo, { cut: [0, -1] });
-  tejaroz(ctx, 'n', Pt.z1, Pt.x0, Pt.x1, d, Cl.yHi, Cl.yLo, { cut: [-1, -1] });
+  // (el techo de las galerías es el suelo del paseo de las cámaras: paseo())
   // los suelos de las galerías (enlosados) y el escalón de las arquerías
   const fl = { faces: 't', ao: false, sub: 2.4, uv: 0.7, tint: [0.74, 0.71, 0.66] };
   wb.box('flag', Pt.x0, -0.05, Pt.z0, Pt.x0 + d, 0.03, Pt.z1, fl);
   wb.box('flag', Pt.x1 - d, -0.05, Pt.z0, Pt.x1, 0.03, Pt.z1, fl);
   wb.box('flag', Pt.x0 + d, -0.05, Pt.z1 - d, Pt.x1 - d, 0.03, Pt.z1, fl);
-  // las vigas del techo de las galerías, de muro a arquería (bajo el tejaroz)
-  // y las antorchas entre los vanos
+  // las antorchas entre los vanos
   const libre = (c, puertas) => puertas.every((q) => Math.abs(c - q) > 2.1);
   for (const z of zs.slice(1)) {
     const c = z - 2;
@@ -192,6 +200,145 @@ function claustro(ctx) {
     if (libre(c, [FORT.capilla.puerta, FORT.cancilleria.puerta])) P.wallTorch(ctx, Pt.x1 - 0.02, 2.5, c, 'w', {});
   }
   for (const x of [-110, -86]) P.wallTorch(ctx, x, 2.5, Pt.z1 - 0.02, 'n', {});
+}
+
+// ------------------------------------------------------------------------ el paseo de las cámaras
+// El claustro de arriba (PLAN_FORTALEZA.md, fase 7). Sobre las tres
+// galerías, a +5,5, un corredor de madera: el suelo de tablas sobre sus vigas
+// (el techo de la galería de abajo, apoyado en la cornisa de la arquería), los
+// pies derechos con sus zapatas y la carrera, el antepecho de tablas y, encima,
+// el tejaroz. Une las cámaras: la sala de la reina, al noroeste, y la del Rey,
+// al noreste —las dos atrancadas por dentro: se abren desde ellas y son
+// atajos—, y la tribuna de la capilla, a levante, por donde se sube (a ella y
+// a la cámara del Rey, un metro más bajas, por cuatro peldaños en el grueso
+// del muro). Por aquí iban el Rey y la reina de sus cámaras a misa sin pisar
+// el patio.
+function paseo(ctx, S, L) {
+  const wb = ctx.wb;
+  const Pt = FORT.patio,
+    Cl = FORT.claustro,
+    Pa = Cl.paseo,
+    K = FORT.rey,
+    Pu = FORT.puerta,
+    ti = FORT.ti,
+    d = Cl.d;
+  const y = Pa.y,
+    yb = K.alto;
+  // (lo que vuela la cornisa de la arquería a cada lado de su eje)
+  const ed = 0.43;
+  const xW = Pt.x0 + d,
+    xE = Pt.x1 - d,
+    zS = Pt.z1 - d;
+  const tabla = [0.6, 0.52, 0.44],
+    oscura = [0.46, 0.4, 0.34],
+    pino = [0.62, 0.54, 0.46];
+  // los tres brazos del suelo (sin solaparse): [x0, z0, x1, z1]
+  const brazos = [
+    [Pt.x0, Pt.z0, xW + ed, Pt.z1],
+    [xE - ed, Pt.z0, Pt.x1, Pt.z1],
+    [xW + ed, zS - ed, xE - ed, Pt.z1],
+  ];
+  for (const [x0, z0, x1, z1] of brazos) {
+    wb.box('planks', x0, y - 0.1, z0, x1, y, z1, { faces: 't', ao: false, sub: 2.2, uv: 0.8, tint: tabla });
+    wb.box('wooddark', x0, y - 0.3, z0, x1, y - 0.28, z1, { faces: 'b', ao: false, sub: 2.4, tint: [0.5, 0.45, 0.4] });
+    ctx.col.add(x0, y - 0.3, z0, x1, y, z1);
+  }
+  // el canto de los suelos, al patio, sobre la cornisa
+  wb.box('wooddark', xW + ed - 0.04, y - 0.3, Pt.z0, xW + ed, y, zS - ed, { faces: 'e', ao: false, tint: oscura });
+  wb.box('wooddark', xE - ed, y - 0.3, Pt.z0, xE - ed + 0.04, y, zS - ed, { faces: 'w', ao: false, tint: oscura });
+  wb.box('wooddark', xW + ed, y - 0.3, zS - ed, xE - ed, y, zS - ed + 0.04, { faces: 'n', ao: false, tint: oscura });
+  // las vigas, del muro a la arquería (sobre su cornisa)
+  for (let z = Pt.z0 + 0.45; z < Pt.z1 - 0.2; z += 0.9) {
+    wb.box('timber', Pt.x0, y - 0.48, z - 0.08, xW, y - 0.3, z + 0.08, { faces: 'nsb', ao: false, tint: pino });
+    wb.box('timber', xE, y - 0.48, z - 0.08, Pt.x1, y - 0.3, z + 0.08, { faces: 'nsb', ao: false, tint: pino });
+  }
+  for (let x = xW + ed + 0.45; x < xE - ed - 0.2; x += 0.9) wb.box('timber', x - 0.08, y - 0.48, zS, x + 0.08, y - 0.3, Pt.z1, { faces: 'ewb', ao: false, tint: pino });
+  // los pies derechos sobre el eje de la arquería, cada dos metros, con sus
+  // zapatas; contra el muro del norte, medio pie
+  const pie = (x, z, dirs, z0 = z - 0.1, z1 = z + 0.1) => {
+    wb.box('timber', x - 0.1, y, z0, x + 0.1, Pa.pie, z1, { faces: 'nsew', aoH: 0.6, tint: pino });
+    ctx.col.add(x - 0.1, y, z0, x + 0.1, Pa.pie, z1);
+    for (const ax of dirs) {
+      if (ax === 'x') wb.box('wooddark', x - 0.48, Pa.pie, z - 0.09, x + 0.48, Pa.pie + 0.18, z + 0.09, { faces: 'nsewb', ao: false, tint: oscura });
+      else wb.box('wooddark', x - 0.09, Pa.pie, Math.max(z0, z - 0.48), x + 0.09, Pa.pie + 0.18, z + 0.48, { faces: z0 > z - 0.48 ? 'sewb' : 'nsewb', ao: false, tint: oscura });
+    }
+  };
+  for (const x of [xW, xE]) {
+    pie(x, Pt.z0 + 0.05, ['z'], Pt.z0, Pt.z0 + 0.1);
+    for (let z = Pt.z0 + 2; z <= zS + 0.01; z += 2) pie(x, z, Math.abs(z - zS) < 0.01 ? ['z', 'x'] : ['z']);
+  }
+  for (let x = xW + 2; x <= xE - 1.99; x += 2) pie(x, zS, ['x']);
+  // la carrera, sobre las zapatas (la del sur, entera; las de los lados,
+  // hasta ella)
+  const yc = Pa.pie + 0.18,
+    yc1 = Pa.pie + 0.39;
+  for (const x of [xW, xE]) wb.box('timber', x - 0.11, yc, Pt.z0, x + 0.11, yc1, zS - 0.11, { faces: 'ewsb', ao: false, tint: pino });
+  wb.box('timber', xW - 0.11, yc, zS - 0.11, xE + 0.11, yc1, zS + 0.11, { faces: 'nsewb', ao: false, tint: pino });
+  // el antepecho: tablas entre los pies, con su pasamanos; y lo que no deja
+  // saltar al patio
+  const ya = y + 0.92;
+  for (const x of [xW, xE]) {
+    wb.box('planks', x - 0.03, y, Pt.z0, x + 0.03, ya, zS - 0.03, { faces: 'ew', ao: false, sub: 2, tint: tabla.map((v) => v * 0.88) });
+    wb.box('wooddark', x - 0.08, ya, Pt.z0, x + 0.08, ya + 0.08, zS - 0.08, { faces: 'tewb', ao: false, tint: oscura });
+    blocker(ctx, x - 0.1, y, Pt.z0, x + 0.1, y + 2.5, zS + 0.1);
+  }
+  wb.box('planks', xW - 0.03, y, zS - 0.03, xE + 0.03, ya, zS + 0.03, { faces: 'nsew', ao: false, sub: 2, tint: tabla.map((v) => v * 0.88) });
+  wb.box('wooddark', xW - 0.08, ya, zS - 0.08, xE + 0.08, ya + 0.08, zS + 0.08, { faces: 'tnsewb', ao: false, tint: oscura });
+  blocker(ctx, xW - 0.1, y, zS - 0.1, xE + 0.1, y + 2.5, zS + 0.1);
+  // el tejaroz (en inglete en las dos esquinas del sur)
+  tejaroz(ctx, 'e', Pt.x0, Pt.z0, Pt.z1, d, Pa.yHi, Pa.yLo, { cut: [0, -1] });
+  tejaroz(ctx, 'w', Pt.x1, Pt.z0, Pt.z1, d, Pa.yHi, Pa.yLo, { cut: [0, -1] });
+  tejaroz(ctx, 'n', Pt.z1, Pt.x0, Pt.x1, d, Pa.yHi, Pa.yLo, { cut: [-1, -1] });
+  // las puertas. La de la reina, a nivel: su umbral
+  {
+    const x = Pa.reina;
+    wb.box('flag', x - 0.6, y - 0.02, Pt.z0 - ti, x + 0.6, y, Pt.z0, { faces: 't', ao: false, tint: PIEDRA.silla });
+  }
+  // la del Rey y la de la tribuna: cuatro peldaños en el grueso del muro y el
+  // umbral, abajo; por la cara del patio, bajo el suelo del paseo, la piedra
+  // que tapa el hueco, y arriba, el canto de las tablas
+  const n = 4,
+    run = ti / (n + 1),
+    rise = (y - yb) / (n + 1);
+  {
+    const x = Pa.rey;
+    for (let k = 0; k < n; k++) solid(ctx, 'ashlar', x - 0.6, yb, Pt.z0 - run * (k + 1), x + 0.6, y - rise * (k + 1), Pt.z0 - run * k, { faces: 'tn', ao: false, tint: PIEDRA.silla });
+    wb.box('flag', x - 0.6, yb - 0.02, Pt.z0 - ti, x + 0.6, yb, Pt.z0 - run * n, { faces: 't', ao: false, tint: PIEDRA.silla });
+    wb.box('wallstone', x - 0.6, yb, Pt.z0, x + 0.6, y - 0.3, Pt.z0 + 0.01, { faces: 's', tint: PIEDRA.patio, baseY: 0 });
+    wb.box('wooddark', x - 0.6, y - rise, Pt.z0, x + 0.6, y, Pt.z0 + 0.02, { faces: 'n', ao: false, tint: oscura });
+  }
+  {
+    const z = Pa.tribuna;
+    for (let k = 0; k < n; k++) solid(ctx, 'ashlar', Pt.x1 + run * k, yb, z - 0.6, Pt.x1 + run * (k + 1), y - rise * (k + 1), z + 0.6, { faces: 'te', ao: false, tint: PIEDRA.silla });
+    wb.box('flag', Pt.x1 + run * n, yb - 0.02, z - 0.6, Pt.x1 + ti, yb, z + 0.6, { faces: 't', ao: false, tint: PIEDRA.silla });
+    wb.box('wallstone', Pt.x1 - 0.01, yb, z - 0.6, Pt.x1, y - 0.3, z + 0.6, { faces: 'w', tint: PIEDRA.patio, baseY: 0 });
+    wb.box('wooddark', Pt.x1 - 0.02, y - rise, z - 0.6, Pt.x1, y, z + 0.6, { faces: 'e', ao: false, tint: oscura });
+  }
+  // (en la rejilla de la calle, los muros son macizos hasta +5,2: los huecos
+  // de estas dos puertas, por debajo, transitables; abajo los cierra el muro)
+  W(S, Pa.rey - 0.6, Pt.z0 - ti, Pa.rey + 0.6, Pt.z0);
+  W(S, Pt.x1, Pa.tribuna - 0.6, Pt.x1 + ti, Pa.tribuna + 0.6);
+  L.interact.push(
+    { kind: 'door', id: 'd_paseo_reina', x: Pa.reina, y, z: Pt.z0 - ti / 2, w: 1.2, h: 2.15 + 0.6, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: Pt.z0 - ti, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'paseoReinaTranca' },
+    { kind: 'door', id: 'd_paseo_rey', x: Pa.rey, y: yb, z: Pt.z0 - ti / 2, w: 1.2, h: 3.15 + 0.6, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: Pt.z0 - ti, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'paseoReyTranca' },
+    { kind: 'door', id: 'd_paseo_tribuna', x: Pt.x1 + ti / 2, y: yb, z: Pa.tribuna, w: 1.2, h: 3.15 + 0.6, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: Pt.x1 + ti, inset: 0.06, ajar: 0.3, lock: { type: 'none' } }
+  );
+  // las antorchas, contra los muros (entre sus ventanas)
+  for (const z of [-80, -56]) P.wallTorch(ctx, Pt.x0 + 0.02, y + 1.7, z, 'e', {});
+  for (const z of [-83, -59.2]) P.wallTorch(ctx, Pt.x1 - 0.02, y + 1.7, z, 'w', {});
+  for (const x of [-113, Pu.px0 + (Pu.px1 - Pu.px0) / 2, -83]) P.wallTorch(ctx, x, y + 1.7, Pt.z1 - 0.02, 'n', {});
+  // lo que hay: la vista del patio, desde la baranda del sur; los virotes
+  // y la capelina de un ballestero que tiraba desde aquí al patio; un
+  // cortesano que reza ante la puerta de la reina y la ronda, en la esquina
+  // de levante
+  L.interact.push({ kind: 'examine', id: 'x_paseo', text: 'paseoVista', x: FORT.eje + 4, y, z: zS + 0.6, r: 1.8 }, { kind: 'item', id: 'i_virotes_paseo', item: 'virote', n: 3, x: Pt.x1 - 1.4, y: y + 0.02, z: Pt.z1 - 1.0 });
+  P.dropped(ctx, Pt.x1 - 0.8, y, Pt.z1 - 0.6, 0.9, 'helmet');
+  L.enemies.push({ type: 'cortesanoSuelto', x: Pa.reina + 0.4, y, z: Pt.z0 + 3.2, yaw: Math.PI, idle: 'kneel', id: 'e_paseo1' }, { type: 'soldier', x: xE + 1.0, y, z: Pt.z1 - 2.2, yaw: -Math.PI / 2, idle: 'stand', id: 'e_paseo2' });
+  // zona (con los huecos de las puertas) y mapa
+  const rects = brazos.map(([x0, z0, x1, z1]) => [x0, z0, x1, z1, y - 0.25, Pa.yHi]);
+  rects.push([Pa.reina - 0.7, Pt.z0 - ti, Pa.reina + 0.7, Pt.z0, y - 0.25, y + 2.6], [Pa.rey - 0.7, Pt.z0 - ti, Pa.rey + 0.7, Pt.z0, yb - 0.25, y + 2.6], [Pt.x1, Pa.tribuna - 0.7, Pt.x1 + ti, Pa.tribuna + 0.7, yb - 0.25, y + 2.6]);
+  L.zones.push({ id: 'paseo_camaras', rects, atmo: 'castillo' });
+  for (const [x0, z0, x1, z1] of brazos) L.map.push({ id: 'paseo_camaras', r: [x0, z0, x1, z1] });
 }
 
 // ------------------------------------------------------------------------ la escalinata

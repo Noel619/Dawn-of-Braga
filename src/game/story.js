@@ -1213,6 +1213,10 @@ export const MSG = {
   camastroRey: 'Un camastro de soldado junto al fuego, con la manta revuelta. Aquí dormía el Rey desde la noche de la campana: no quiso volver a su cama.',
   fuentePatio: 'La fuente del patio de honor no corre desde el día del cerco. En la taza seca, un yelmo y las hojas del olmo.',
   antecamaraTranca: 'La puerta de la antecámara del Rey, atrancada por dentro. Por la rendija sale el olor de las velas.',
+  paseoReinaTranca: 'La puerta de la sala de la reina, atrancada por dentro. Por la cerradura se ve el estrado vacío y, en una mesa, una partida de ajedrez a medio jugar.',
+  paseoReyTranca: 'La puerta de la cámara del Rey, atrancada por dentro. Detrás, unos peldaños bajan en el grueso del muro; huele a cera y a vino agrio.',
+  paseoVista:
+    'Desde el paseo de las cámaras se ve el patio entero: la fuente seca, el olmo con sus papelillos, el brocal del aljibe. Por aquí iban el Rey y la reina de sus cámaras a misa sin pisar el patio. En la baranda, alguien ha ido grabando rayas con la punta de un cuchillo, de cinco en cinco: treinta y una. La última, a medias.',
   // la cárcel de la fortaleza (fortaleza_carcel.js): la trampilla del almacén
   // de la torre, lo que hay abajo y el rastrillo del fondo del pasillo de las
   // celdas (su palanca está de su lado)
@@ -1523,6 +1527,7 @@ export const AREA_NAMES = {
   guardia_fortaleza: 'Cuerpo de guardia',
   capilla_real: 'Capilla Real',
   capilla_tribuna: 'Tribuna del Rey',
+  paseo_camaras: 'Paseo de las cámaras',
   cancilleria: 'Cancillería del Rey',
   tombo_registros: 'Torre del Tombo',
   tombo_legajos: 'Torre del Tombo · los legajos',

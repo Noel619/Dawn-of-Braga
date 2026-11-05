@@ -1198,6 +1198,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        de la cancillería, el adarve del jardín y el mirador— y bajo el castillo
                                        y la fortaleza —las mazmorras, la cárcel del Rey—, recorrido como
                                        andaría el jugador)
+                        golpes.mjs     los golpes de una criatura fotograma a fotograma (de lado y de tres
+                                       cuartos) y lo que delata un golpe sin peso: el pie que patina, los
+                                       pasos, el giro de la cadera y la cabeza fuera del blanco
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
                         voids.mjs      rendijas a la nada en la cripta: fondo magenta y la cámara en cada sala

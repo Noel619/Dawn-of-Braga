@@ -85,8 +85,12 @@ const KNEEL = { root: [0, -52, 0], legL: [-98, 0, 6], shinL: [104, 0, 0], legR: 
 const HIGH = { chest: [4, 0, 0], head: [6, 0, 0], armR: [-148, 0, -18], foreR: [-34, 0, 0], handR: [52, 0, 0], armL: [-46, 0, 22], foreL: [-40, 0, 0], handL: [0, 0, 0] };
 // el que señala el compás: más alto todavía, echado atrás
 const MARK = { chest: [-12, 0, 0], head: [-6, 0, 0], armR: [-172, 0, -8], foreR: [-16, 0, 0], handR: [40, 0, 0], armL: [-70, 0, 30], foreL: [-30, 0, 0], handL: [0, 0, 0] };
-// la puñalada: hacia delante y abajo, con todo el cuerpo
-const STAB = { root: [0, -10, 6], chest: [32, -10, 0], head: [10, 8, 0], armR: [-72, 0, -6], foreR: [-8, 0, 0], handR: [84, 0, 0], armL: [-20, 0, 40], foreL: [-30, 0, 0], legL: [-40, 0, 0], shinL: [36, 0, 0], legR: [20, 0, 0], shinR: [14, 0, 0] };
+// la puñalada: hacia delante y abajo, con todo el cuerpo (fase 7: sin
+// piernas, que las pone el anclaje de los pies con el paso; la cadera
+// entra con el hombro del cuchillo, la mano libre por delante, como quien
+// agarra, y la cabeza mirando a quien apuñala)
+const STAB = { root: [0, -13, 10], hips: [6, -12, 0], chest: [34, -10, 0], head: [-16, 20, 0], armR: [-70, 0, -6], foreR: [-8, 0, 0], handR: [84, 0, 0], armL: [-58, 0, 26], foreL: [-40, 0, 0] };
+const STAB2 = { ...STAB, root: [0, -15, 12], hips: [8, -14, 0], chest: [38, -12, 0], head: [-20, 24, 0], armR: [-62, 0, -4], foreR: [-12, 0, 0] };
 
 export const CORT_CLIPS = {
   // levantarse: primero una rodilla, luego de pie, y el cuchillo arriba
@@ -102,13 +106,21 @@ export const CORT_CLIPS = {
   ]),
   // la puñalada, a compás: el golpe entra a los 0,42 s (el director la
   // arranca para que caiga en el tiempo)
-  stab: clip('cort_stab', 0.9, [
-    [0, { ...MARK }],
-    [0.26, { ...MARK, chest: [-16, 0, 0], armR: [-178, 0, -6] }],
-    [0.42, { ...STAB }, 'snap'],
-    [0.58, { ...STAB, chest: [26, -8, 0] }],
-    [0.9, { ...HIGH }],
-  ]),
+  // (fase 7: se estira hacia atrás, en las puntas, cargando el brazo; cae
+  // con el paso y el cuchillo baja con el peso del cuerpo, y se pasa)
+  stab: clip(
+    'cort_stab',
+    0.9,
+    [
+      [0, { ...MARK, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.22, { ...MARK, hips: [-4, 8, 0], chest: [-18, 6, 0], head: [8, -14, 0], root: [0, -3, -6], armR: [-180, 0, -8], foreR: [-22, 0, 0], armL: [-74, 0, 30] }],
+      [0.3, { ...MARK, hips: [-5, 9, 0], chest: [-19, 7, 0], head: [9, -16, 0], root: [0, -4, -7], armR: [-182, 0, -8], foreR: [-24, 0, 0], armL: [-76, 0, 30] }, 'hold'],
+      [0.42, { ...STAB }, 'strike'],
+      [0.56, { ...STAB2 }, 'settle'],
+      [0.9, { ...HIGH, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.03 } }
+  ),
   hurt: clip('cort_hurt', 0.45, [
     [0, { ...HIGH, chest: [-22, 12, 0], head: [-20, 0, 0], armL: [-24, 0, 40], root: [0, -4, -8] }, 'snap'],
     [0.45, { ...HIGH }],
@@ -138,28 +150,56 @@ export const CORT_CLIPS = {
 const MAY = { ...HIGH, armR: [-60, 0, -20], foreR: [-50, 0, 0], handR: [70, 0, 0] };
 export const MAY_CLIPS = {
   ...CORT_CLIPS,
-  combo: clip('may_combo', 1.6, [
-    [0, { ...MAY }],
-    [0.3, { ...MAY, chest: [-6, 30, 0], armR: [-120, 0, -70], foreR: [-30, 0, 0] }],
-    [0.46, { ...MAY, chest: [14, -30, 0], armR: [-80, 0, 40], foreR: [-10, 0, 0], handR: [60, 0, 0] }, 'snap'],
-    [0.78, { ...MAY, chest: [-6, -26, 0], armR: [-110, 0, 30], foreR: [-30, 0, 0] }],
-    [0.94, { ...MAY, chest: [16, 30, 0], armR: [-74, 0, -50], foreR: [-10, 0, 0], handR: [60, 0, 0] }, 'snap'],
-    [1.6, { ...MAY }],
-  ]),
-  lunge: clip('may_lunge', 1.5, [
-    [0, { ...MAY }],
-    [0.55, { ...MAY, root: [0, -14, -10], chest: [-14, 0, 0], armR: [-40, 0, -16], foreR: [-90, 0, 0], legL: [-30, 0, 0], shinL: [50, 0, 0], legR: [20, 0, 0] }],
-    [0.78, { ...STAB, armR: [-86, 0, -6] }, 'snap'],
-    [1.0, { ...STAB }],
-    [1.5, { ...MAY }],
-  ]),
-  embrace: clip('may_embrace', 1.9, [
-    [0, { ...MAY }],
-    [0.7, { ...MAY, chest: [-10, 0, 0], armL: [-100, 0, 50], foreL: [-30, 0, 0], armR: [-160, 0, -20], foreR: [-30, 0, 0] }],
-    [0.95, { ...STAB, armL: [-90, 0, -20], foreL: [-40, 0, 0] }, 'snap'],
-    [1.3, { ...STAB, armL: [-90, 0, -20], foreL: [-40, 0, 0] }],
-    [1.9, { ...MAY }],
-  ]),
+  // (fase 7: con peso) dos cuchilladas de revés y de derecho, cada una desde
+  // la cadera, con su paso: se carga el cuerpo hacia el lado del cuchillo, la
+  // mano libre por delante, y sale la cadera antes que el brazo
+  combo: clip(
+    'may_combo',
+    1.6,
+    [
+      [0, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.28, { ...MAY, hips: [0, -14, 0], chest: [0, -28, 0], head: [-2, 40, 0], root: [-2, -5, -8], armR: [-104, 0, -70], foreR: [-46, 0, 0], handR: [62, 0, -20], armL: [-60, 0, 30], foreL: [-50, 0, 0] }],
+      [0.35, { ...MAY, hips: [0, -16, 0], chest: [0, -31, 0], head: [-2, 44, 0], root: [-2, -6, -9], armR: [-108, 0, -74], foreR: [-48, 0, 0], handR: [60, 0, -22], armL: [-62, 0, 30], foreL: [-50, 0, 0] }, 'hold'],
+      [0.46, { ...MAY, hips: [3, 14, 0], chest: [12, 24, 0], head: [-10, -36, 0], root: [2, -9, 12], armR: [-82, 0, 40], foreR: [-10, 0, 0], handR: [80, 0, 20], armL: [-30, 0, 10], foreL: [-70, 0, 0] }, 'strike'],
+      [0.56, { ...MAY, hips: [4, 20, 0], chest: [14, 32, 0], head: [-12, -48, 0], root: [3, -10, 14], armR: [-66, 0, 58], foreR: [-20, 0, 0], handR: [72, 0, 26], armL: [-30, 0, 10], foreL: [-70, 0, 0] }, 'settle'],
+      [0.76, { ...MAY, hips: [2, 18, 0], chest: [4, 34, 0], head: [-6, -48, 0], root: [0, -6, 6], armR: [-112, 0, 48], foreR: [-38, 0, 0], handR: [60, 0, 30], armL: [-46, 0, 20], foreL: [-60, 0, 0] }],
+      [0.83, { ...MAY, hips: [2, 20, 0], chest: [4, 37, 0], head: [-6, -52, 0], root: [0, -7, 6], armR: [-116, 0, 50], foreR: [-40, 0, 0], handR: [58, 0, 32], armL: [-48, 0, 20], foreL: [-60, 0, 0] }, 'hold'],
+      [0.94, { ...MAY, hips: [4, -14, 0], chest: [14, -26, 0], head: [-12, 36, 0], root: [-2, -10, 14], armR: [-86, 0, -70], foreR: [-10, 0, 0], handR: [82, 0, -28], armL: [-40, 0, 26], foreL: [-60, 0, 0] }, 'strike'],
+      [1.06, { ...MAY, hips: [5, -20, 0], chest: [16, -34, 0], head: [-14, 48, 0], root: [-3, -11, 16], armR: [-70, 0, -90], foreR: [-22, 0, 0], handR: [72, 0, -32], armL: [-40, 0, 26], foreL: [-60, 0, 0] }, 'settle'],
+      [1.6, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.03 } }
+  ),
+  // la puñalada larga: agachado, el cuchillo recogido a la cadera y la punta
+  // por delante; se lanza a fondo, todo en línea, y se queda tendido
+  lunge: clip(
+    'may_lunge',
+    1.5,
+    [
+      [0, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.48, { ...MAY, hips: [6, -16, 0], chest: [10, -20, 0], head: [-8, 36, 0], root: [0, -16, -12], armR: [-30, 0, -24], foreR: [-100, 0, 0], handR: [20, 0, 0], armL: [-70, 0, 30], foreL: [-40, 0, 0] }],
+      [0.58, { ...MAY, hips: [7, -18, 0], chest: [11, -22, 0], head: [-9, 40, 0], root: [0, -17, -13], armR: [-30, 0, -26], foreR: [-104, 0, 0], handR: [18, 0, 0], armL: [-72, 0, 30], foreL: [-40, 0, 0] }, 'hold'],
+      [0.78, { ...MAY, hips: [8, 12, 0], chest: [30, 12, 0], head: [-26, -24, 0], root: [0, -18, 28], armR: [-92, 0, -4], foreR: [-2, 0, 0], handR: [88, 0, 0], armL: [-20, 0, 30], foreL: [-60, 0, 0] }, 'strike'],
+      [1.0, { ...MAY, hips: [9, 14, 0], chest: [32, 13, 0], head: [-28, -27, 0], root: [0, -19, 30], armR: [-90, 0, -2], foreR: [-4, 0, 0], handR: [86, 0, 0], armL: [-22, 0, 30], foreL: [-60, 0, 0] }, 'settle'],
+      [1.5, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.03 } }
+  ),
+  // el abrazo: la izquierda por delante, a por tu hombro, y el cuchillo en
+  // alto; tira de ti hacia él y te lo clava de arriba abajo con el peso
+  embrace: clip(
+    'may_embrace',
+    1.9,
+    [
+      [0, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.6, { ...MAY, hips: [-2, -8, 0], chest: [-8, -6, 0], head: [-2, 14, 0], root: [0, -4, -6], armL: [-96, 0, 20], foreL: [-20, 0, 0], armR: [-166, 0, -16], foreR: [-30, 0, 0], handR: [50, 0, 0] }],
+      [0.72, { ...MAY, hips: [-3, -9, 0], chest: [-10, -7, 0], head: [0, 16, 0], root: [0, -5, -7], armL: [-100, 0, 18], foreL: [-16, 0, 0], armR: [-172, 0, -16], foreR: [-30, 0, 0], handR: [50, 0, 0] }, 'hold'],
+      [0.95, { ...STAB, armL: [-70, 0, -10], foreL: [-70, 0, 0] }, 'strike'],
+      [1.3, { ...STAB2, armL: [-66, 0, -12], foreL: [-76, 0, 0] }, 'settle'],
+      [1.9, { ...MAY, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.03 } }
+  ),
 };
 
 function idlePose(e, kind, t) {
@@ -229,6 +269,7 @@ export const CORTESANO_TYPE = {
   parryDur: 2.0,
   clips: CORT_CLIPS,
   voice: 'penitent',
+  impulso: 'campana',
   attacks: [STAB_ATK],
   STAB: STAB_ATK,
   biped: { scale: 0.98, style: GAIT.shamble, stance: 0.07 },
@@ -257,6 +298,7 @@ export const MAYORDOMO_TYPE = {
   parryDur: 1.5,
   clips: MAY_CLIPS,
   voice: 'soldier',
+  impulso: 'campana',
   attacks: [
     { name: 'combo', clip: MAY_CLIPS.combo, dur: 1.6, min: 0, max: 2.4, hits: [[0.42, 0.52], [0.9, 1.0]], dmg: 19, range: 2.2, arc: 110, lunge: [[0.36, 0.46, 2.4], [0.86, 0.96, 2.4]], weight: 3 },
     { name: 'lunge', clip: MAY_CLIPS.lunge, dur: 1.5, min: 1.8, max: 6, hits: [[0.74, 0.86]], dmg: 26, range: 2.4, arc: 50, lunge: [[0.6, 0.84, 8]], weight: 2, turn: 4 },

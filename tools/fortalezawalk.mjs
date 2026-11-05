@@ -88,8 +88,8 @@ await p.evaluate(() => {
 const T = (s) => p.evaluate(s);
 const out = [];
 // (SOLO4=1: sólo lo de la fase 4, los recorridos 12 a 14; SOLO5=1, sólo lo de
-// la fase 5, el 15)
-const solo = process.env.SOLO4 ? 4 : process.env.SOLO5 ? 5 : 0;
+// la fase 5, el 15; SOLO7=1, sólo lo de la fase 7, el 16)
+const solo = process.env.SOLO4 ? 4 : process.env.SOLO5 ? 5 : process.env.SOLO7 ? 7 : 0;
 const run = async (name, s) => {
   const r = await T(s);
   out.push(name + ': ' + JSON.stringify(r));
@@ -102,6 +102,9 @@ const step4 = async (name, s) => {
 };
 const step5 = async (name, s) => {
   if (!solo || solo === 5) await run(name, s);
+};
+const step7 = async (name, s) => {
+  if (!solo || solo === 7) await run(name, s);
 };
 // 1. de la coracha a la torre de la coracha (a su altura), el altar
 await step('coracha', "(()=>{const g=__game;g.player.spawn(-60,9,-100.8,Math.PI);__sim(0.5);return __walk([[-60,-95.4],[-63,-95.4],[-66.5,-95.4]])})()");
@@ -278,6 +281,20 @@ await step5('carcelero mayor', "__ir('n_carcelero_mayor', 0.7)");
 await step5('palanca del rastrillo', "(()=>{const g=__game;__walk([[-90.25,-12.1]]);const r=__useHere('p_rastrillo_carcel');__sim(4);const d=g.interact.list.find(i=>i.id==='d_rastrillo_carcel');return {...r,abierto:!!g.flags['door:d_rastrillo_carcel'],caja:d.box.enabled,open:+d.open.toFixed(2)}})()");
 await step5('a la celda del principio', "__walk([[-89.3,-12],[-88.2,-12],[-87.6,-12.6],[-87.6,-14.6],[-87.6,-16.2]])");
 await step5('lo cogido', "(()=>{const g=__game;return {ampolla:!!g.flags['take:i_ampolla_carcel'],virotes:!!g.flags['take:i_virotes_aljibe'],libro:!!g.flags['note:libroCarcel'],carcelero:!!g.flags['note:carceleroMayor']}})()");
+// 16. (fase 7) el paseo de las cámaras: de la tribuna de la capilla, por su
+// puerta y sus peldaños, al paseo; la vuelta entera por los tres brazos; las
+// puertas de la cámara del Rey y de la sala de la reina, atrancadas por
+// dentro; la vista del patio y los virotes; y, desde la cámara del Rey, su
+// puerta desatrancada y los peldaños arriba, al paseo
+await step7('a la tribuna', "(()=>{const g=__game;g.player.spawn(-73.3,4.5,-78,-Math.PI/2);__sim(0.4);return __ir('d_paseo_tribuna', 1.0)})()");
+await step7('al paseo', "__walk([[-74.6,-78],[-75.4,-78],[-76.4,-78],[-77.6,-78]])");
+await step7('puerta del Rey, por fuera', "(()=>{const w=__walk([[-78,-80],[-78,-84.9]]);return {w,u:__useHere('d_paseo_rey')}})()");
+await step7('la vuelta', "__walk([[-78,-60],[-78,-48.2],[-90,-47.6],[-106,-47.6],[-118,-48.2],[-118,-70],[-118,-84.9]])");
+await step7('puerta de la reina, por fuera', "__useHere('d_paseo_reina')");
+await step7('la vista', "(()=>{__walk([[-118,-60],[-118,-48.2],[-94,-48.2]]);return __ir('x_paseo', 1.0)})()");
+await step7('virotes del paseo', "(()=>{__walk([[-94,-48.2],[-79,-48.2]]);return __ir('i_virotes_paseo', 0.6)})()");
+await step7('puerta del Rey, por dentro', "(()=>{const g=__game;g.player.spawn(-78,4.5,-90,0);__sim(0.4);return __ir('d_paseo_rey', 1.0)})()");
+await step7('arriba, al paseo', "__walk([[-78,-87.6],[-78,-86.6],[-78,-85.4],[-78,-84]])");
 out.push('llaves: ' + (await T("['llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
 console.log(out.join('\n'));
 console.log(logs.slice(0, 10).join('\n'));

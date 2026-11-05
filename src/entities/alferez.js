@@ -115,13 +115,23 @@ export const ALF_CLIPS = {
     [3.1, { ...BASE }],
   ]),
   // culatazo: la cabeza de hierro de la ballesta por delante
-  bash: clip('alf_bash', 1.2, [
-    [0, { ...BASE }],
-    [0.36, { chest: [0, -32, 0], head: [0, 14, 0], armR: [-62, 0, -40], foreR: [-70, 0, 0], handR: [40, 0, 0], armL: [-60, 0, 30], foreL: [-50, 0, 0], legL: [16, 0, 0], legR: [-18, 0, 0], shinR: [18, 0, 0] }],
-    [0.5, { chest: [16, 26, 0], head: [-6, -12, 0], armR: [-92, 0, 8], foreR: [-8, 0, 0], handR: [80, 0, 0], armL: [-80, 0, 30], foreL: [-30, 0, 0], legL: [-36, 0, 0], shinL: [36, 0, 0], legR: [26, 0, 0], root: [0, -10, 0] }, 'snap'],
-    [0.82, { chest: [14, 24, 0], armR: [-88, 0, 6], foreR: [-12, 0, 0], handR: [76, 0, 0], armL: [-76, 0, 28], foreL: [-34, 0, 0], legL: [-34, 0, 0], shinL: [34, 0, 0], legR: [24, 0, 0], root: [0, -9, 0] }],
-    [1.2, { ...BASE }],
-  ]),
+  // culatazo (fase 7: con peso): la ballesta atrás, a la cadera del lado de
+  // la cuerda, el cuerpo enroscado y el peso atrás; sale la cadera, luego los
+  // hombros, y la cabeza de hierro de la ballesta barre por delante con todo
+  // el cuerpo, que se pasa. Sin piernas: las pone el anclaje, con su paso.
+  bash: clip(
+    'alf_bash',
+    1.2,
+    [
+      [0, { ...BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.32, { hips: [0, -16, 0], chest: [2, -30, 0], head: [-2, 42, 0], root: [0, -6, -8], armR: [-62, 0, -40], foreR: [-70, 0, 0], handR: [40, 0, 0], armL: [-60, 0, 30], foreL: [-50, 0, 0] }],
+      [0.4, { hips: [0, -18, 0], chest: [2, -33, 0], head: [-2, 46, 0], root: [0, -7, -9], armR: [-64, 0, -42], foreR: [-72, 0, 0], handR: [40, 0, 0], armL: [-62, 0, 31], foreL: [-50, 0, 0] }, 'hold'],
+      [0.52, { hips: [4, 16, 0], chest: [16, 26, 0], head: [-10, -38, 0], root: [0, -11, 16], armR: [-92, 0, 8], foreR: [-8, 0, 0], handR: [80, 0, 0], armL: [-80, 0, 30], foreL: [-30, 0, 0] }, 'strike'],
+      [0.66, { hips: [5, 20, 0], chest: [18, 32, 0], head: [-12, -46, 0], root: [0, -12, 18], armR: [-88, 0, 14], foreR: [-12, 0, 0], handR: [76, 0, 0], armL: [-76, 0, 28], foreL: [-34, 0, 0] }, 'settle'],
+      [1.2, { ...BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { armL: 0.02 } }
+  ),
   hurt: clip('alf_hurt', 0.5, [
     [0, { ...BASE, chest: [-24, 14, 0], head: [-22, 0, 0], armL: [-30, 0, 40], root: [0, -5, -8] }, 'snap'],
     [0.5, { ...BASE }],
@@ -181,6 +191,7 @@ export const ALFEREZ_TYPE = {
   parryDur: 1.6,
   clips: ALF_CLIPS,
   voice: 'soldier',
+  impulso: 'campana',
   attacks: [
     {
       name: 'shoot',

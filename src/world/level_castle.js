@@ -1925,7 +1925,12 @@ function buildHermandad(ctx, L, portal) {
           bake(skullParts({ jaw: false, tint: boneT() }), M(px, YO + 0.068 + lv * 0.128, pz, face));
         }
     }
-    ctx.col.add(cx - 0.34, YO, cz - 0.34, cx + 0.34, YO + 0.52, cz + 0.34);
+    // (su colisión, en gradas como la pirámide: una caja entera dejaba pisar
+    // en el aire sobre las calaveras de las esquinas)
+    for (let lv = 0; lv < 4; lv++) {
+      const h = (4 - lv) * 0.085;
+      ctx.col.add(cx - h, YO, cz - h, cx + h, YO + 0.13 * (lv + 1), cz + h);
+    }
     // y encima, en el muro, un escudo con dos lanzas cruzadas detrás
     bake(shieldParts({ device: s > 0 ? 'band' : 'cross' }), M(O.x1 - 0.04, YO + 2.0, cz, -Math.PI / 2));
     for (const a of [-0.6, 0.6]) {

@@ -1,6 +1,7 @@
 // Atmósfera por zona: niebla, luz ambiente, luna, ceniza, gradación de color.
 import * as THREE from 'three';
 import { damp } from '../core/util.js';
+import { G } from '../gfx/materials.js';
 
 export const ATMO = {
   city: { fog: 0x5c625e, density: 0.042, sky: 0x9aa6b2, ground: 0x2c2723, hemi: 2.2, moon: 0.9, vol: 0.038, ash: 1, exposure: 1.0, sat: 0.7, lamp: 9, bloom: 0.9 },
@@ -9,11 +10,16 @@ export const ATMO = {
   // de más allá de cien, la niebla ya se lo ha comido —queda menos del 2 %—:
   // no se dibuja. Con el plano lejano de la niebla, a 130, desde el jardín o
   // los adarves se dibujaba media ciudad.)
-  castillo: { fog: 0x56606a, density: 0.02, sky: 0x95a3b4, ground: 0x2c2723, hemi: 2.25, moon: 1.15, vol: 0.022, ash: 0.5, exposure: 1.02, sat: 0.68, lamp: 9, bloom: 0.95, far: 100 },
+  // (hf: la niebla de altura —materials.js, uHFog—: de y0 a y1 la densidad
+  // baja hasta la fracción k; la torre del homenaje y las de las esquinas
+  // asoman sobre la bruma. El plano lejano, el de siempre: a 140-150 m los
+  // patios costaban más que la plaza del Pan, y desde el patio de armas la
+  // torre la tapa el cuerpo de la puerta)
+  castillo: { fog: 0x56606a, density: 0.02, sky: 0x95a3b4, ground: 0x2c2723, hemi: 2.25, moon: 1.15, vol: 0.022, ash: 0.5, exposure: 1.02, sat: 0.68, lamp: 9, bloom: 0.95, far: 100, hf: [9, 24, 0.3] },
   // el patio de armas: el aire de la fortaleza, que se ve entera desde él
   // (PLAN_FORTALEZA.md, §3), algo más cargado de ceniza; suena como la
   // ciudad (core/audio.js)
-  armas: { fog: 0x585f64, density: 0.022, sky: 0x96a4b2, ground: 0x2c2723, hemi: 2.22, moon: 1.05, vol: 0.026, ash: 0.75, exposure: 1.01, sat: 0.69, lamp: 9, bloom: 0.93, far: 100 },
+  armas: { fog: 0x585f64, density: 0.022, sky: 0x96a4b2, ground: 0x2c2723, hemi: 2.22, moon: 1.05, vol: 0.026, ash: 0.75, exposure: 1.01, sat: 0.69, lamp: 9, bloom: 0.93, far: 100, hf: [9, 24, 0.3] },
   // lo alto de la torre del homenaje: por encima del humo, la noche clara y
   // la luna grande sobre la fortaleza (moonDisc: el disco en el cielo)
   luna: { fog: 0x4d5563, density: 0.026, sky: 0x95a5bc, ground: 0x2c2723, hemi: 2.3, moon: 1.8, moonPos: [25, 16, -54], moonColor: 0xaebfdc, vol: 0.016, ash: 0.45, exposure: 1.05, sat: 0.72, lamp: 9, bloom: 1.0, moonDisc: 1 },
@@ -42,6 +48,7 @@ export const ATMO = {
 };
 
 const tmpC = new THREE.Color();
+const HF0 = [9, 24, 1];
 
 export class Atmosphere {
   constructor(scene, post, fx) {
@@ -70,6 +77,7 @@ export class Atmosphere {
     this.name = name;
     if (instant) {
       Object.assign(this.cur, this.target);
+      this.cur.hfv = [...(this.target.hf || HF0)];
       this.fogC.set(this.target.fog);
       this.skyC.set(this.target.sky);
       this.groundC.set(this.target.ground);
@@ -83,11 +91,16 @@ export class Atmosphere {
     if (this.override && this.override.snap) {
       this.override.snap = false;
       for (const key of ['density', 'hemi', 'moon', 'vol', 'ash', 'exposure', 'sat', 'lamp', 'bloom']) this.cur[key] = T[key];
+      this.cur.hfv = [...(T.hf || HF0)];
       this.fogC.set(T.fog);
       this.skyC.set(T.sky);
       if (T.moonPos) this.moon.position.set(...T.moonPos);
     }
     for (const key of ['density', 'hemi', 'moon', 'vol', 'ash', 'exposure', 'sat', 'lamp', 'bloom']) this.cur[key] = damp(this.cur[key], T[key], k, dt);
+    // (la niebla de altura: sin ella, densidad arriba 1)
+    const hf = T.hf || HF0;
+    const ch = this.cur.hfv || (this.cur.hfv = [...hf]);
+    for (let i = 0; i < 3; i++) ch[i] = damp(ch[i], hf[i], k, dt);
     this.fogC.lerp(tmpC.set(T.fog), 1 - Math.exp(-k * dt));
     this.skyC.lerp(tmpC.set(T.sky), 1 - Math.exp(-k * dt));
     this.groundC.lerp(tmpC.set(T.ground), 1 - Math.exp(-k * dt));
@@ -124,11 +137,14 @@ export class Atmosphere {
     // el plano lejano se ajusta a la niebla: lo que la niebla oculta no se dibuja
     if (this.camera) {
       // (el jefe final puede pedir más: Deo Ignoto mide noventa metros)
-      const far = Math.min(T.far || 170, Math.max(46, 2.6 / Math.max(0.005, c.density)));
+      // (con niebla de altura, lo alto asoma más lejos: el plano lejano, el
+      // de la atmósfera)
+      const far = Math.min(T.far || 170, Math.max(46, (c.hfv[2] < 0.99 ? 3.4 : 2.6) / Math.max(0.005, c.density)));
       if (Math.abs(this.camera.far - far) > 1) {
         this.camera.far = far;
         this.camera.updateProjectionMatrix();
       }
+      G.uHFog.value.set(c.hfv[0], c.hfv[1], c.hfv[2], this.camera.far);
     }
   }
 }

@@ -47,6 +47,8 @@ export const ACUSTICA = {
   // la capilla real y su tribuna
   capilla_real: { suelo: 'stone', eco: ['hall', 0.6] },
   capilla_tribuna: { suelo: 'wood', eco: ['hall', 0.5] },
+  // (el paseo de las cámaras: tablas, abierto al patio)
+  paseo_camaras: { suelo: 'wood', eco: ['street', 0.3] },
   // la cancillería y el Tombo: papel y tablas, y arriba el viento
   cancilleria: { suelo: 'wood', eco: ['room', 0.28], amb: 'tombo' },
   tombo_registros: { suelo: 'stone', eco: ['room', 0.3], amb: 'tombo' },

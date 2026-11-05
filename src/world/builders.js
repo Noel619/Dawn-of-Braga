@@ -2195,7 +2195,10 @@ export function husillo(ctx, o) {
     mat = o.mat ?? 'ashlar';
   const walls = o.walls ?? ['n', 's', 'e', 'w'];
   wb.cylinder(mat, x, y0, z, r0, r0, n * rise + 0.02, 8, { room, capTop: true, tint: o.newelTint ?? [0.66, 0.64, 0.6] });
-  ctx.col.add(x - r0, y0, z - r0, x + r0, y0 + n * rise, z + r0);
+  // (la colisión del machón, el cuadrado inscrito: el de fuera asomaba por
+  // las esquinas sobre el hueco de la escalera, arriba del todo)
+  const rn = r0 * 0.72;
+  ctx.col.add(x - rn, y0, z - rn, x + rn, y0 + n * rise, z + rn);
   const rad = (d) => (d * Math.PI) / 180;
   const edge = (a) => h / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
   const pt = (a, r) => [x + Math.cos(a) * r, z + Math.sin(a) * r];
@@ -2233,11 +2236,21 @@ export function husillo(ctx, o) {
       yb = i ? y0 + i * rise - 0.3 : y0;
     const tint = i % 2 ? [0.64, 0.62, 0.58] : [0.7, 0.68, 0.64];
     prism(wb, mat, poly, yb, yt, { room, ao: false, tint: o.tint ? tint.map((v, k) => v * o.tint[k]) : tint, sub: 4, bottom: i > 0, skipSide: hidden });
-    // (su colisión: lo que se pisa, por la mitad de la huella)
+    // (su colisión: lo que se pisa, en cinco tramos del machón al muro, cada
+    // uno tan ancho como la cuña en su mitad: con una sola caja, junto al
+    // machón —donde la cuña se estrecha— la caja se salía de ella y se podía
+    // pisar en el aire sobre el peldaño de abajo, o sobre el hueco en el de
+    // arriba del todo; y junto al muro quedaba una rendija entre peldaño y
+    // peldaño. Así, ni asoma ni deja rendija más de dos o tres centímetros)
     const am = (A0 + A1) / 2,
       ro = edge(am) - 0.08,
-      rm = (r0 + ro) / 2;
-    ctx.col.addOBB(x + Math.cos(am) * rm, z + Math.sin(am) * rm, (ro - r0) / 2, Math.max(0.12, rm * Math.sin(rad(da) / 2) * 0.95), -am, yb, yt);
+      tg = Math.tan(rad(da) / 2);
+    for (let k = 0; k < 5; k++) {
+      const ra = r0 + ((ro - r0) * k) / 5,
+        rb = r0 + ((ro - r0) * (k + 1)) / 5,
+        rc = (ra + rb) / 2;
+      ctx.col.addOBB(x + Math.cos(am) * rc, z + Math.sin(am) * rc, (rb - ra) / 2, Math.max(0.05, rc * tg), -am, yb, yt);
+    }
   }
   const at = (u, r = (h + r0) / 2) => {
     const a = rad(a0 + da * u);

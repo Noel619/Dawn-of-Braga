@@ -286,6 +286,7 @@ Repartidos con intención:
 | 4 | **El patio de armas** rehecho (cuadras, fragua, halconera, cuartel, la capilla del castillo), el **jardín del Rey** y el mirador, y la **torre de la coracha**. |
 | 5 | **Las mazmorras del castillo** y el rastrillo (el atajo a la celda). |
 | 6 | **Repaso:** encuentros, luz, sonido de cada sala, documentos, pruebas de punta a punta, rendimiento, README y versión jugable. |
+| 7 | **El paseo de las cámaras, los golpes con peso y la revisión crítica** (abajo, en §12). Lo que queda, en `bugs_y_correciones.txt` (21-32). |
 
 ## 11. Riesgos
 
@@ -649,10 +650,55 @@ anteriores: la reja del olvidadero, que se pisa a propósito; la ranura del rast
 cámara del torno; los peldaños del caracol de la torre del homenaje (su colisión, 0,37 m por encima de lo dibujado) y
 su salida a la terraza; la mesa del Rey; el osario del castillo. Quedan por mirar.
 
-Lo que queda: **el paseo de las cámaras** (el claustro de arriba), que el plan dejaba para esta fase «si se hace». No
-se ha hecho: es una obra nueva (la galería alta en los tres lados del claustro, su suelo, su antepecho, el tejaroz
-más arriba y las puertas a la sala de la reina, a la cámara del Rey y a la tribuna), no un repaso. A las salas altas
-se sigue subiendo por sus torres y sus escaleras.
+Lo que quedaba: **el paseo de las cámaras**, hecho en la fase 7.
+
+### Fase 7: el paseo de las cámaras, los golpes con peso y la revisión crítica
+
+- **El paseo de las cámaras** (`paseo()` en `fortaleza_patio.js`): un corredor de madera a +5,5 sobre las tres galerías
+  del claustro (el suelo de tablas sobre vigas, que es el techo de la galería de abajo; pies derechos con zapatas, la
+  carrera, el antepecho y el tejaroz, más arriba). Se sube desde la tribuna de la capilla, por cuatro peldaños en el
+  grueso del muro; las puertas de la sala de la reina y de la cámara del Rey, atrancadas por dentro, son atajos. Con
+  su zona, su sonido, sus antorchas, un cortesano, un soldado, unos virotes y la vista del patio.
+- **Los golpes con peso**: pies anclados en `locomotion.js` (el cuerpo se mueve sobre los pies, el pie del arma da el
+  paso del golpe, los saltos despegan) y los golpes rehechos (carga, cadera por delante, pasada, recogida, la cabeza
+  en el blanco). Medido con `tools/golpes.mjs`: el pie patinando, de 92-354 cm a 0-19 por golpe.
+- **Las casillas sin suelo**: de 97 a 0 (el caracol, su machón, las pirámides del osario; `holes.mjs` sube ya por el
+  caracol como el jugador).
+- **La niebla de altura** (`materials.js`, `atmosphere.js`): en el castillo y la fortaleza la bruma pesa abajo y lo
+  alto asoma por encima, dentro del plano lejano de siempre.
+
+**Revisión crítica de lo que el plan quería evitar** (§1 y §3), medida:
+
+| Nota | Qué | Por qué |
+|---|---|---|
+| A | Sin lógica | La cocina junto al salón, el Rey en su torre, la tribuna unida a sus cámaras (y ahora el paseo, de las cámaras a misa). |
+| A | Sin centro | El patio de honor (44 × 40 m) se ve desde las cuatro alas y se vuelve a él; desde el paseo, entero. |
+| A | Atajos | Puente, rastrillo, poterna y las dos puertas del paseo. |
+| A | Se sube | 0 → 12 → 28 → 34 m. |
+| B | Cuartos pequeños | Las salas, de 75 a 560 m²; pero hay tres pasillos largos de 1,2 m (galerías en el grueso del muro). |
+| B | La torre en caja | Talud, garitas, sillería; por fuera aún se lee como un prisma. |
+| B | Se ve | Densidad 0,02 y niebla de altura; a 60 m queda un cuarto del contraste. |
+| C | Vacíos | 11-27 triángulos/m² en las salas frente a 75-232 en la cripta honda; cinco zonas sin «algo». |
+| C | Hitos | La torre no se ve desde el patio de armas: la tapa la puerta (haría falta ~50 m). |
+| C | Encuentros | Casi todo, una criatura quieta por sala; ninguna composición (tirador arriba y cuerpo a cuerpo abajo). |
+
+**Comparativa.** Resident Evil (la mansión Spencer) hace de la casa un centro con puertas que se abren con llaves
+temáticas que se ven antes que la cerradura, y atajos que se abren tarde; aquí lo hacen el patio, las cinco llaves de la
+reja y las puertas atrancadas del paseo, pero la vuelta no cambia nada (la mansión cambia al volver). Dark Souls y
+Elden Ring (el Castillo de Velo Tormentoso) enseñan con la colocación de las criaturas —arqueros en lo alto que
+obligan a buscar el camino arriba— y dan varias entradas al mismo sitio, con la meta a la vista desde fuera; aquí hay un
+solo camino principal y la torre no se ve desde el patio de armas. Hollow Knight (la Ciudad de las Lágrimas) da a cada
+zona un motivo que se repite (la lluvia); la corte muerta (cuchillos, rezos) lo tiene. Se ha hecho ya lo que cabía en
+esta fase (el paseo como mirador y atajo, la niebla de altura, los golpes legibles); lo demás, a las fases siguientes:
+
+- **Fase 8, encuentros compuestos**: criaturas que tiran de un piso a otro (un ballestero en el paseo), rondas por los
+  adarves, emboscadas desde arriba y el patio que cambia al volver con las llaves.
+- **Fase 9, detalle**: las salas de la fortaleza a la mitad de la densidad de la cripta honda (≥ 45 triángulos/m²),
+  «algo» en las cinco vacías y una parada en las galerías largas.
+- **Fase 10, el hito**: el remate de la torre a la vista desde el patio de armas (el estandarte del Rey en su asta, la
+  vela encendida) y la niebla de altura en la ciudad.
+- **Fase 11, animación**: más claves y dos variantes por golpe, reacciones por dirección, el pie en el estribo del
+  alférez y la túnica que se abre con el paso.
 
 ## Fuentes
 
@@ -665,4 +711,9 @@ se sigue subiendo por sus torres y sus escaleras.
   [Historic England](https://www.historicengland.org.uk/listing/the-list/list-entry/1122959).
 - El castillo-palacio románico con su iglesia y la torre de la reina de ventanas geminadas: [Castle of Loarre](https://en.wikipedia.org/wiki/Castle_of_Loarre).
 - El paço real de tres plantas entre torres con su galería de arcos: [Leiria Castle](https://www.portugalvisitor.com/portugal-castles/leiria-castle).
-- La mazmorra de leyenda como tutorial, la verticalidad y los atajos: [Stormveil Castle](https://www.escapistmagazine.com/elden-ring-stormveil-castle-game-design-tutorial-anatomy/).
+- La mazmorra de leyenda como tutorial, la verticalidad y los atajos: [Stormveil Castle](https://www.escapistmagazine.com/elden-ring-stormveil-castle-game-design-tutorial-anatomy/),
+  [GameSpot](https://gamespot.com/articles/how-stormveil-castle-embodies-the-brilliance-of-elden-ring/1100-6510147/).
+- La mansión Spencer: la llave antes que la cerradura, las puertas como tensión, los atajos tardíos: [Bloody Disgusting](https://bloody-disgusting.com/video-games/3655219/horror-resident-evil-baked-right-level-design-resident-evil-25/),
+  [DreadXP](https://www.dreadxp.com/?p=13962), [GamesRadar](https://www.gamesradar.com/hostile-architecture-resident-evils-spencer-mansion-wants-to-kill-you).
+- Los pies plantados por IK (pie de apoyo y pie libre, la cadera que baja): [ozz-animation](https://guillaumeblanc.github.io/ozz-animation/samples/foot_ik),
+  [Footwerk](https://d34kmbgkaszffl.cloudfront.net/blog/footwerk-a-foot-placement-plugin-made-to-reduce-foot-sliding).

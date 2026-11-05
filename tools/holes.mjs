@@ -19,7 +19,7 @@ const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
 await p.goto('http://localhost:5199/?dev=1');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
-const r = await p.evaluate(([step, alto]) => {
+const r = await p.evaluate(async ([step, alto]) => {
   window.__pause = true;
   const g = __game;
   const T = g.THREE;
@@ -29,14 +29,38 @@ const r = await p.evaluate(([step, alto]) => {
   const o = new T.Vector3();
   const holes = [];
   const col = g.world.col;
-  // ¿hay suelo dibujado bajo (x, gy, z)?
-  const seen = (x, gy, z) => {
+  // ¿hay suelo dibujado bajo (x, gy, z)? (En el borde de una caja —la de un
+  // escabel redondo, la de un peldaño— la colisión puede asomar unos
+  // centímetros de lo dibujado: si a 6 cm hay suelo, el pie lo pisa.)
+  const ray = (x, gy, z) => {
     o.set(x, gy + 0.6, z);
     rc.set(o, down);
     rc.far = 2.2;
-    const hit = rc.intersectObjects(meshes, false)[0];
-    return { ok: !!hit && hit.point.y > gy - 0.35, y: hit ? hit.point.y : null };
+    return rc.intersectObjects(meshes, false)[0];
   };
+  const seen = (x, gy, z) => {
+    const hit = ray(x, gy, z);
+    if (hit && hit.point.y > gy - 0.35) return { ok: true, y: hit.point.y };
+    for (const [dx, dz] of [
+      [0.06, 0],
+      [-0.06, 0],
+      [0, 0.06],
+      [0, -0.06],
+    ]) {
+      const h = ray(x + dx, gy, z + dz);
+      if (h && h.point.y > gy - 0.35) return { ok: true, y: h.point.y };
+    }
+    return { ok: false, y: hit ? hit.point.y : null };
+  };
+  // (a propósito, y se dice: la reja del olvidadero, que se pisa, y la
+  // rendija del rastrillo de fuera en el suelo de la cámara del torno, que se
+  // salta)
+  const { FORT } = await import('/src/world/fortaleza_medidas.js');
+  const olv = g.interact.list.find((i) => i.id === 'x_olvidadero');
+  const Pu = FORT.puerta;
+  let adrede = 0;
+  const aproposito = (x, y, z) =>
+    (olv && Math.hypot(x - (olv.x - 1.1), z - olv.z) < 1.05 && Math.abs(y - olv.y) < 0.6) || (Math.abs(z - Pu.rastrillo) < 0.3 && x > Pu.px0 - 0.1 && x < Pu.px1 + 0.1 && y > 4 && y < 7);
   if (alto) {
     // inundación por lo alto: celdas de 0,25 m, suelo = la caja más alta bajo
     // los pies (+0,55), con 1,6 m libres encima y sin pared al pasar
@@ -77,6 +101,9 @@ const r = await p.evaluate(([step, alto]) => {
       [-70, 12, -52],
       [-90, 10, -124],
       [-98, 10, -127],
+      // (fase 7) el paseo de las cámaras
+      [-118, 6, -70],
+      [-78, 6, -60],
       // bajo el castillo: mazmorras, catacumbas y aljibe
       [-80, -5, -12],
       [-71, -5, 0],
@@ -92,7 +119,11 @@ const r = await p.evaluate(([step, alto]) => {
     ];
     const done = new Set();
     const q = [];
-    const free = (x, z, gy) => !col.query(x - 0.12, z - 0.12, x + 0.12, z + 0.12, []).some((b) => !b.camOnly && b.miny < gy + 1.6 && b.maxy > gy + 0.05 && col.overlapXZ(b, x, z, 0.12));
+    const porZona = {};
+    // (lo que estorba al estar de pie: lo que queda entre el suelo y 1,6 m
+    // por encima, salvo lo que se sube de un paso —hasta 0,5 m, como
+    // moveBody—: el peldaño siguiente de un caracol no es una pared)
+    const free = (x, z, gy) => !col.query(x - 0.12, z - 0.12, x + 0.12, z + 0.12, []).some((b) => !b.camOnly && b.miny < gy + 1.6 && b.maxy > gy + 0.5 && col.overlapXZ(b, x, z, 0.12));
     // (lo de arriba no baja al suelo; lo de abajo no sube a él)
     // (abajo, hasta los peldaños secos de la escalera del aljibe del palacio)
     const band = (y) => (y < -1 ? [-8.5, -1.2] : [2.5, 99]);
@@ -109,8 +140,13 @@ const r = await p.evaluate(([step, alto]) => {
       n++;
       const x = i * R,
         z = j * R;
+      const zn = g.zoneAt({ x, y: y + 0.5, z });
+      porZona[zn ? zn.id : '-'] = (porZona[zn ? zn.id : '-'] || 0) + 1;
       const s = seen(x, y, z);
-      if (!s.ok) holes.push([+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), s.y === null ? null : +s.y.toFixed(2)]);
+      if (!s.ok) {
+        if (aproposito(x, y, z)) adrede++;
+        else holes.push([+x.toFixed(2), +y.toFixed(2), +z.toFixed(2), s.y === null ? null : +s.y.toFixed(2)]);
+      }
       for (const [di, dj] of [
         [1, 0],
         [-1, 0],
@@ -137,7 +173,7 @@ const r = await p.evaluate(([step, alto]) => {
       gr.cx = (gr.minx + gr.maxx) / 2;
       gr.cz = (gr.minz + gr.maxz) / 2;
     }
-    return { tested: n, holes: holes.length, groups: groups.sort((a, b) => b.n - a.n).map((q) => `${q.n} celdas  x[${q.minx}..${q.maxx}] z[${q.minz}..${q.maxz}] y=${q.y} ${q.hitY === null ? 'sin suelo' : 'suelo a ' + q.hitY}`) };
+    return { tested: n, holes: holes.length, adrede, porZona, groups: groups.sort((a, b) => b.n - a.n).map((q) => `${q.n} celdas  x[${q.minx}..${q.maxx}] z[${q.minz}..${q.maxz}] y=${q.y} ${q.hitY === null ? 'sin suelo' : 'suelo a ' + q.hitY}`) };
   }
   // [rejilla, techo de búsqueda del suelo]: nivel de calle, cripta y la
   // bodega del canónigo (con su escalera)
@@ -171,13 +207,9 @@ const r = await p.evaluate(([step, alto]) => {
         }
         if (gy === null) continue;
         tested++;
-        o.set(x, gy + 0.6, z);
-        rc.set(o, down);
-        rc.far = 2.2;
-        const hit = rc.intersectObjects(meshes, false)[0];
         // hay suelo si algo visible queda a la altura del suelo o encima (atrezo)
-        const ok = hit && hit.point.y > gy - 0.35;
-        if (!ok) holes.push([+x.toFixed(1), +gy.toFixed(2), +z.toFixed(1), hit ? +hit.point.y.toFixed(2) : null]);
+        const sv = seen(x, gy, z);
+        if (!sv.ok) holes.push([+x.toFixed(1), +gy.toFixed(2), +z.toFixed(1), sv.y === null ? null : +sv.y.toFixed(2)]);
       }
     }
   }
@@ -196,7 +228,9 @@ const r = await p.evaluate(([step, alto]) => {
   }
   return { tested, holes: holes.length, groups: groups.sort((a, b) => b.n - a.n).map((q) => `${q.n} celdas  x[${q.minx}..${q.maxx}] z[${q.minz}..${q.maxz}] y=${q.y} ${q.hitY === null ? 'sin suelo' : 'suelo a ' + q.hitY}`) };
 }, [step, alto]);
-console.log('celdas probadas:', r.tested, ' agujeros:', r.holes);
+console.log('celdas probadas:', r.tested, ' agujeros:', r.holes, r.adrede ? ` (y ${r.adrede} a propósito: la reja del olvidadero y la rendija del rastrillo)` : '');
 for (const q of r.groups) console.log('  ' + q);
+// (con ZONAS=1, cuántas casillas se han probado en cada zona: lo que alcanza)
+if (process.env.ZONAS && r.porZona) console.log(Object.entries(r.porZona).sort((a, c) => c[1] - a[1]).map(([k, v]) => k + ' ' + v).join(' · '));
 console.log(logs.join('\n'));
 await b.close();

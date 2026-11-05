@@ -14,6 +14,9 @@ import { FORT } from '../world/fortaleza_medidas.js';
 const KEEP = FORT.torre;
 import { registerMaterialPatch } from '../gfx/materials.js';
 
+// los estados en que la criatura no anda: sus pies se quedan anclados
+const ANCLA = new Set(['attack', 'hurt', 'stagger', 'parried']);
+
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 const _RED = new THREE.Color(1, 0.08, 0.03);
 let shadowMat = null;
@@ -401,6 +404,7 @@ export class Enemy {
 
   startAttack(a) {
     this.state = 'attack';
+    this.atkSerial = (this.atkSerial || 0) + 1;
     this.flare = 1;
     // (los golpes que no se pueden desviar: los ojos en rojo, un destello
     // rojo y un toque grave)
@@ -413,6 +417,33 @@ export class Enemy {
     this.anim.play(a.clip, { blend: a.blend ?? 0.1 });
     if (a.onStart) a.onStart(this);
     this.game.audio && this.game.audio.enemyVoice(this, 'attack', a);
+  }
+
+  // El paso del golpe (Biped._anchor): lo que le queda al cuerpo del impulso
+  // de la ventana en curso (o de la que va a empezar: el pie despega un
+  // instante antes que el cuerpo), en el mundo, y qué pie sale: el que diga
+  // la ventana (a.lunge[i][3]) o, si no, el del lado del arma (T.pieGolpe,
+  // 'R' por omisión) y luego alternos, como quien avanza golpe a golpe.
+  attackPlan() {
+    const a = this.atk;
+    if (!a || !a.lunge || this.state !== 'attack') return null;
+    const t = this.stT;
+    const campana = (a.impulso ?? this.T.impulso) === 'campana';
+    for (let i = 0; i < a.lunge.length; i++) {
+      const [l0, l1, ls, foot] = a.lunge[i];
+      if (t < l0 - 0.06 || t > l1) continue;
+      const u = Math.min(1, Math.max(0, (t - l0) / Math.max(1e-3, l1 - l0)));
+      const rem = campana ? (ls * (l1 - l0) * (1 + Math.cos(Math.PI * u))) / 2 : ls * (l1 - Math.max(t, l0));
+      const P = this._plan || (this._plan = {});
+      P.x = Math.sin(this.yaw) * rem;
+      P.z = Math.cos(this.yaw) * rem;
+      P.t = l1 - t;
+      P.id = this.atkSerial * 8 + i;
+      const lead = this.T.pieGolpe ?? 'R';
+      P.foot = foot || (ls < 0 ? (lead === 'R' ? 'L' : 'R') : i % 2 === 0 ? lead : lead === 'R' ? 'L' : 'R');
+      return P;
+    }
+    return null;
   }
 
   pickAttack(d) {
@@ -689,10 +720,15 @@ export class Enemy {
         if (t < trackUntil) this.yaw = approachAngle(this.yaw, toP, (a.turn ?? T.turn ?? 5) * dt);
         let lunging = false;
         if (a.lunge) {
+          // (impulso 'campana': arranca y frena —la misma distancia que la
+          // velocidad constante, con su pico en medio—; el cuerpo no sale
+          // disparado ni se para en seco, y los pies, por IK, dan el paso)
+          const campana = (a.impulso ?? T.impulso) === 'campana';
           for (const [l0, l1, ls] of a.lunge) {
             if (t >= l0 && t <= l1) {
-              this.vx = Math.sin(this.yaw) * ls;
-              this.vz = Math.cos(this.yaw) * ls;
+              const v = campana ? ls * 1.5708 * Math.sin((Math.PI * (t - l0)) / Math.max(1e-3, l1 - l0)) : ls;
+              this.vx = Math.sin(this.yaw) * v;
+              this.vz = Math.cos(this.yaw) * v;
               lunging = true;
             }
           }
@@ -890,11 +926,26 @@ export class Enemy {
     const ik = !!gait && !pose.legL;
     if (gait) {
       this.legIK = damp(this.legIK, ik ? 1 : 0, 7, dt);
+      // (pies anclados mientras golpea, se tambalea o le desvían el golpe: el
+      // cuerpo no anda, se mueve por encima de ellos y da pasos de verdad;
+      // no con los clips que llevan sus propias piernas —un salto—)
+      const c0 = this.anim.clip;
+      const own = c0 && c0.legs && this.anim.weight > 0.3;
+      const lockT = T.anclaje !== false && !own && ANCLA.has(this.state) ? 1 : 0;
+      this.footLock = damp(this.footLock || 0, lockT, lockT ? 14 : 9, dt);
+      const a = this.atk;
+      const hits = a && a.hits;
       const gp = gait.update(dt, this.vx, this.vz, this.yaw, {
         time: t,
         grounded: this.body.grounded,
         ground: T.boss || T.heavy ? this._groundFn : null,
         pos: this._gpos.set(this.pos.x, this.pos.y, this.pos.z),
+        lock: this.footLock,
+        lockT,
+        quieto: T.anclaje !== false && !own,
+        plan: lockT ? this.attackPlan() : null,
+        // (la zancada del golpe se aguanta hasta que acaba el último tajo)
+        hold: this.state === 'attack' && !!a && this.stT < (hits && hits.length ? hits[hits.length - 1][1] : a.dur * 0.6) + 0.12,
       });
       if (ik) {
         const r = pose.root || [0, 0, 0];

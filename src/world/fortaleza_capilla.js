@@ -71,7 +71,9 @@ function nave(ctx, S, L) {
   for (const z of [-75, -66]) ctx.lights.push({ x: T.uc, y: 9.4, z, r: 1, g: 0.56, b: 0.3, radius: 7, intensity: 0.5, room });
   // el enlucido pintado de despiece fingido, y abajo el zócalo de cortinaje
   const vanosPatio = [-76, -71.2, -62.5].map((z) => [z - 0.5, 6.42, z + 0.5, 8.66]);
-  enlucido(ctx, 'despiece', 'e', x0, CAP.arco - 0.4, z1, 1.0, E, [[C.puerta - 1.5, 0, C.puerta + 1.5, 4.0], ...vanosPatio], room, { tint: CAL });
+  // (con el hueco de la puerta del paseo de las cámaras, en la tribuna)
+  const pt = FORT.claustro.paseo.tribuna;
+  enlucido(ctx, 'despiece', 'e', x0, CAP.arco - 0.4, z1, 1.0, E, [[C.puerta - 1.5, 0, C.puerta + 1.5, 4.0], [pt - 0.9, CAP.trib.y - 0.1, pt + 0.9, 8.6], ...vanosPatio], room, { tint: CAL });
   enlucido(ctx, 'despiece', 'w', x1, CAP.arco - 0.4, z1, 1.0, T.yb(x1), [], room, { tint: CAL });
   enlucido(ctx, 'despiece', 'n', z1, x0, x1, 1.0, E, [], room, { tint: CAL });
   zocalo(ctx, 'e', x0, CAP.arco - 0.4, z1, 0.04, 0.96, room, [[C.puerta - 1.5, C.puerta + 1.5]]);

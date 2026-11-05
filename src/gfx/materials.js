@@ -15,6 +15,12 @@ export const G = {
   uSkyGlow: { value: 1 },
   uSun: { value: 0 },
   uSunDir: { value: new THREE.Vector3(0.15, 0.12, -1) },
+  // niebla de altura (atmosphere.js, por atmósfera): la bruma pesa abajo; lo
+  // alto —las torres— asoma por encima. (y0, y1, densidad arriba, plano
+  // lejano): de y0 a y1 la densidad baja hasta esa fracción, y cerca del
+  // plano lejano vuelve a la de abajo, para que el corte no se vea.
+  // Densidad arriba 1: sin ella.
+  uHFog: { value: new THREE.Vector4(0, 1, 1, 100) },
 };
 
 // Color del cielo (espacio lineal) en la dirección rd; idéntico al de post.js.
@@ -253,6 +259,7 @@ function patch(material, opts = {}) {
     shader.uniforms.uSkyGlow = G.uSkyGlow;
     shader.uniforms.uSun = G.uSun;
     shader.uniforms.uSunDir = G.uSunDir;
+    shader.uniforms.uHFog = G.uHFog;
     if (probe) {
       shader.uniforms.uProbe = material._u.uProbe;
       shader.uniforms.uGround = material._u.uGround;
@@ -344,6 +351,7 @@ uniform float uTime;
 uniform float uSkyGlow;
 uniform float uSun;
 uniform vec3 uSunDir;
+uniform vec4 uHFog;
 varying vec3 vAffUv;
 varying float vPulse;
 varying vec3 vSkyDir;
@@ -362,7 +370,11 @@ ${SKY_GLSL}`
       '#include <fog_fragment>',
       `#ifdef USE_FOG
   #ifdef FOG_EXP2
-    float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
+    // (niebla de altura: más clara en lo alto, salvo cerca del plano lejano)
+    float fh = mix(1.0, uHFog.z, smoothstep(uHFog.x, uHFog.y, cameraPosition.y + vSkyDir.y));
+    fh = mix(fh, 1.0, smoothstep(uHFog.w * 0.7, uHFog.w * 0.97, vFogDepth));
+    float fd = fogDensity * fh;
+    float fogFactor = 1.0 - exp( - fd * fd * vFogDepth * vFogDepth );
   #else
     float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
   #endif

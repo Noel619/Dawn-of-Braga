@@ -63,30 +63,64 @@ const penClips = {
     [0.6, { chest: [10, 0, 0], head: [5, 0, -20], armL: [-30, 0, 50], armR: [-40, 0, -50], foreR: [-40, 0, 0] }],
     [0.9, { ...PEN_BASE }],
   ]),
-  slash: clip('slash', 1.3, [
-    [0, { ...PEN_BASE }],
-    [0.48, { chest: [0, -25, 0], head: [-5, 0, 0], armR: [-175, 0, -30], foreR: [-40, 0, 0], handR: [60, 0, 0], armL: [-20, 0, 30], legL: [15, 0, 0], legR: [-20, 0, 0], shinR: [20, 0, 0] }],
-    [0.62, { chest: [50, 25, 0], head: [-25, 0, 0], armR: [-40, 0, 10], foreR: [-10, 0, 0], handR: [85, 0, 0], armL: [-20, 0, 30], legL: [30, 0, 0], legR: [-35, 0, 0], shinR: [30, 0, 0], root: [0, -10, 0] }, 'snap'],
-    [0.95, { chest: [48, 22, 0], head: [-25, 0, 0], armR: [-36, 0, 12], foreR: [-12, 0, 0], handR: [80, 0, 0], legL: [30, 0, 0], legR: [-35, 0, 0], shinR: [30, 0, 0], root: [0, -10, 0] }],
-    [1.3, { ...PEN_BASE }],
-  ]),
-  double: clip('double', 1.7, [
-    [0, { ...PEN_BASE }],
-    [0.36, { chest: [25, -45, 0], armR: [-85, 0, -90], foreR: [-25, 0, 0], handR: [75, 0, 0] }],
-    [0.48, { chest: [40, 40, 0], armR: [-90, 0, 40], foreR: [-8, 0, 0], handR: [85, 0, 0], root: [0, -6, 0] }, 'snap'],
-    [0.85, { chest: [40, 50, 0], armR: [-85, 0, 55], foreR: [-20, 0, 0], handR: [80, 0, 0] }],
-    [1.0, { chest: [42, -40, 0], armR: [-92, 0, -85], foreR: [-8, 0, 0], handR: [85, 0, 0], root: [0, -8, 0] }, 'snap'],
-    [1.35, { chest: [40, -45, 0], armR: [-80, 0, -90], foreR: [-20, 0, 0], handR: [75, 0, 0] }],
-    [1.7, { ...PEN_BASE }],
-  ]),
-  lunge: clip('lunge', 1.55, [
-    [0, { ...PEN_BASE }],
-    [0.55, { chest: [60, 0, 0], head: [-40, 0, 0], armR: [-190, 0, -20], foreR: [-30, 0, 0], handR: [60, 0, 0], armL: [30, 0, 20], legL: [-40, 0, 0], shinL: [80, 0, 0], legR: [-30, 0, 0], shinR: [90, 0, 0], root: [0, -35, 0] }],
-    [0.75, { chest: [20, 0, 0], head: [-20, 0, 0], armR: [-200, 0, -20], foreR: [-20, 0, 0], handR: [60, 0, 0], armL: [-60, 0, 40], legL: [-50, 0, 0], shinL: [30, 0, 0], legR: [40, 0, 0], shinR: [40, 0, 0], root: [0, 15, 0] }],
-    [0.92, { chest: [60, 0, 0], head: [-35, 0, 0], armR: [-35, 0, 0], foreR: [-5, 0, 0], handR: [85, 0, 0], armL: [-20, 0, 30], legL: [-60, 0, 0], shinL: [70, 0, 0], legR: [30, 0, 0], shinR: [50, 0, 0], root: [0, -30, 0] }, 'snap'],
-    [1.2, { chest: [60, 0, 0], head: [-35, 0, 0], armR: [-35, 0, 0], foreR: [-5, 0, 0], handR: [85, 0, 0], legL: [-60, 0, 0], shinL: [70, 0, 0], legR: [30, 0, 0], shinR: [50, 0, 0], root: [0, -30, 0] }],
-    [1.55, { ...PEN_BASE }],
-  ]),
+  // (fase 7: con peso) el tajo de la hoz: se endereza de su joroba y la
+  // alza por encima de la cabeza, el cuerpo enroscado y el peso atrás; la
+  // descarga en diagonal con la cadera por delante, volcándose sobre la
+  // pierna de delante, y la hoz se pasa de largo hasta la otra cadera. Sin
+  // piernas en el clip (los pies, plantados por IK); la cabeza, mirando.
+  slash: clip(
+    'slash',
+    1.3,
+    [
+      [0, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.4, { hips: [-6, -16, 0], chest: [10, -26, 0], head: [-8, 30, 0], root: [0, -4, -10], armR: [-176, 0, -34], foreR: [-46, 0, 0], handR: [56, 0, 0], armL: [-36, 0, 34], foreL: [-30, 0, 0] }],
+      [0.49, { hips: [-7, -18, 0], chest: [8, -28, 0], head: [-6, 33, 0], root: [0, -5, -11], armR: [-182, 0, -36], foreR: [-50, 0, 0], handR: [54, 0, 0], armL: [-38, 0, 36], foreL: [-30, 0, 0] }, 'hold'],
+      [0.6, { hips: [10, 14, 0], chest: [36, 22, 0], head: [-30, -26, 0], root: [0, -12, 16], armR: [-44, 0, 14], foreR: [-12, 0, 0], handR: [84, 0, 0], armL: [-14, 0, 22], foreL: [-50, 0, 0] }, 'strike'],
+      [0.76, { hips: [12, 20, 0], chest: [42, 30, 0], head: [-34, -34, 0], root: [0, -14, 20], armR: [-24, 0, 26], foreR: [-22, 0, 0], handR: [76, 0, 0], armL: [-12, 0, 18], foreL: [-46, 0, 0] }, 'settle'],
+      [1.3, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.04, foreR: 0.02 } }
+  ),
+  // los dos barridos: de la derecha a la izquierda y de vuelta, cada uno
+  // desde la cadera, con el peso de un pie al otro
+  double: clip(
+    'double',
+    1.7,
+    [
+      [0, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.3, { hips: [4, -22, 0], chest: [26, -30, 0], head: [-14, 44, 0], root: [-4, -6, -6], armR: [-84, 0, -92], foreR: [-26, 0, 0], handR: [74, 0, 0], armL: [-30, 0, 40], foreL: [-24, 0, 0] }],
+      [0.37, { hips: [4, -24, 0], chest: [26, -33, 0], head: [-14, 48, 0], root: [-5, -6, -7], armR: [-86, 0, -96], foreR: [-28, 0, 0], handR: [74, 0, 0], armL: [-32, 0, 42], foreL: [-24, 0, 0] }, 'hold'],
+      [0.48, { hips: [8, 20, 0], chest: [36, 26, 0], head: [-24, -40, 0], root: [4, -10, 10], armR: [-90, 0, 42], foreR: [-8, 0, 0], handR: [85, 0, 0], armL: [-20, 0, 10], foreL: [-30, 0, 0] }, 'strike'],
+      [0.62, { hips: [8, 26, 0], chest: [38, 34, 0], head: [-26, -48, 0], root: [5, -10, 12], armR: [-82, 0, 58], foreR: [-18, 0, 0], handR: [82, 0, 0], armL: [-18, 0, 8], foreL: [-32, 0, 0] }, 'settle'],
+      [0.84, { hips: [6, 22, 0], chest: [30, 36, 0], head: [-18, -50, 0], root: [4, -8, 8], armR: [-96, 0, 52], foreR: [-30, 0, 0], handR: [80, 0, 0], armL: [-22, 0, 14], foreL: [-30, 0, 0] }],
+      [0.91, { hips: [6, 24, 0], chest: [30, 39, 0], head: [-18, -53, 0], root: [5, -8, 8], armR: [-98, 0, 55], foreR: [-32, 0, 0], handR: [80, 0, 0], armL: [-22, 0, 14], foreL: [-30, 0, 0] }, 'hold'],
+      [1.02, { hips: [8, -20, 0], chest: [36, -28, 0], head: [-24, 40, 0], root: [-4, -10, 14], armR: [-92, 0, -86], foreR: [-8, 0, 0], handR: [85, 0, 0], armL: [-30, 0, 36], foreL: [-24, 0, 0] }, 'strike'],
+      [1.16, { hips: [8, -26, 0], chest: [38, -36, 0], head: [-26, 48, 0], root: [-5, -10, 16], armR: [-80, 0, -96], foreR: [-20, 0, 0], handR: [80, 0, 0], armL: [-32, 0, 40], foreL: [-24, 0, 0] }, 'settle'],
+      [1.7, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.035 } }
+  ),
+  // el salto (fase 7: con peso): se agazapa con la hoz atrás, a la espalda,
+  // mirándote; salta —el pie de delante sale con el cuerpo y el de atrás
+  // despega tras él: los dos en el aire, la pelvis arriba— con la hoz por
+  // encima de la cabeza y la mano libre por delante, y cae encima de ti con
+  // todo el peso: la hoz baja con el cuerpo, que se queda agachado un
+  // instante antes de rehacerse. Sin piernas en el clip: los pasos los da
+  // el anclaje de los pies (Biped._anchor).
+  lunge: clip(
+    'lunge',
+    1.55,
+    [
+      [0, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.48, { hips: [8, -12, 0], chest: [48, -16, 0], head: [-32, 20, 0], root: [0, -26, -10], armR: [-196, 0, -26], foreR: [-34, 0, 0], handR: [58, 0, 0], armL: [26, 0, 26], foreL: [-20, 0, 0] }],
+      [0.6, { hips: [9, -13, 0], chest: [52, -17, 0], head: [-34, 21, 0], root: [0, -28, -12], armR: [-200, 0, -27], foreR: [-36, 0, 0], handR: [58, 0, 0], armL: [28, 0, 27], foreL: [-20, 0, 0] }, 'hold'],
+      [0.74, { hips: [-4, 0, 0], chest: [22, 0, 0], head: [-14, 0, 0], root: [0, 10, 14], armR: [-206, 0, -18], foreR: [-18, 0, 0], handR: [64, 0, 0], armL: [-70, 0, 40], foreL: [-20, 0, 0] }, 'out'],
+      [0.86, { hips: [10, 12, 0], chest: [62, 16, 0], head: [-40, -12, 0], root: [0, -30, 20], armR: [-36, 0, 6], foreR: [-6, 0, 0], handR: [86, 0, 0], armL: [-24, 0, 30], foreL: [-40, 0, 0] }, 'strike'],
+      [1.18, { hips: [11, 14, 0], chest: [64, 18, 0], head: [-42, -14, 0], root: [0, -32, 20], armR: [-30, 0, 10], foreR: [-8, 0, 0], handR: [84, 0, 0], armL: [-22, 0, 30], foreL: [-40, 0, 0] }, 'settle'],
+      [1.55, { ...PEN_BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.04 } }
+  ),
   hurt: clip('hurt', 0.55, [
     [0, { chest: [0, 20, 0], head: [-30, 0, 20], armL: [-40, 0, 40], armR: [-30, 0, -40], root: [0, -5, -10] }, 'snap'],
     [0.55, { ...PEN_BASE }],
@@ -144,29 +178,59 @@ const solClips = {
     [0.35, { ...SOL_BASE, chest: [-12, 0, 0], head: [-20, 0, 15], arm3: [-40, 0, 20] }, 'snap'],
     [0.8, { ...SOL_BASE }],
   ]),
-  combo: clip('combo', 1.7, [
-    [0, { ...SOL_BASE }],
-    [0.36, { chest: [8, -50, 0], armR: [-85, 0, -95], foreR: [-25, 0, 0], handR: [75, 0, -20], armL: [-40, 0, 20], foreL: [-70, 0, 0], legL: [15, 0, 0], legR: [-22, 0, 0], shinR: [22, 0, 0] }],
-    [0.48, { chest: [14, 42, 0], armR: [-90, 0, 32], foreR: [-8, 0, 0], handR: [84, 0, 20], armL: [-40, 0, 20], foreL: [-70, 0, 0], legL: [15, 0, 0], legR: [-22, 0, 0], shinR: [22, 0, 0] }, 'snap'],
-    [0.82, { chest: [10, 50, 0], armR: [-80, 0, 50], foreR: [-25, 0, 0], handR: [70, 0, 25], armL: [-40, 0, 20], foreL: [-70, 0, 0] }],
-    [1.0, { chest: [14, -45, 0], armR: [-92, 0, -80], foreR: [-8, 0, 0], handR: [84, 0, -30], armL: [-40, 0, 20], foreL: [-70, 0, 0], legL: [22, 0, 0], legR: [-30, 0, 0], shinR: [28, 0, 0] }, 'snap'],
-    [1.3, { chest: [10, -52, 0], armR: [-80, 0, -95], foreR: [-25, 0, 0], handR: [70, 0, -30] }],
-    [1.7, { ...SOL_BASE }],
-  ]),
-  thrust: clip('thrust', 1.35, [
-    [0, { ...SOL_BASE }],
-    [0.5, { chest: [-5, -30, 0], armR: [-40, 0, -30], foreR: [-120, 0, 0], handR: [10, 0, 0], armL: [-50, 0, 20], foreL: [-60, 0, 0], legL: [20, 0, 0], legR: [-15, 0, 0] }],
-    [0.62, { chest: [20, 15, 0], armR: [-88, 0, 0], foreR: [0, 0, 0], handR: [88, 0, 0], armL: [-30, 0, 30], foreL: [-60, 0, 0], legL: [-40, 0, 0], shinL: [40, 0, 0], legR: [30, 0, 0], root: [0, -10, 0] }, 'snap'],
-    [0.95, { chest: [20, 15, 0], armR: [-86, 0, 0], foreR: [-5, 0, 0], handR: [86, 0, 0], legL: [-40, 0, 0], shinL: [40, 0, 0], legR: [30, 0, 0], root: [0, -10, 0] }],
-    [1.35, { ...SOL_BASE }],
-  ]),
+  // Los golpes (PLAN_FORTALEZA.md, fase 7: con peso). Sin piernas en el
+  // clip: los pies los pone el IK, plantados, y el paso lo da la marcha si
+  // el impulso lo pide. Cada golpe se carga: el peso atrás (la raíz), la
+  // cadera y el pecho enroscados del lado de la hoja, el escudo por delante;
+  // sale la cadera primero y luego el pecho y el brazo (golpe 'strike': el
+  // pico de velocidad al tercio), el peso se vuelca sobre la pierna de
+  // delante, y se pasa de largo antes de recogerse ('settle'). La cabeza no
+  // se va con el pecho: sigue mirando al que tiene delante.
+  combo: clip(
+    'combo',
+    1.7,
+    [
+      [0, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }],
+      [0.3, { hips: [0, -18, 0], chest: [2, -34, 0], head: [-4, 42, 0], root: [-2, -5, -10], armR: [-120, 0, -88], foreR: [-40, 0, 0], handR: [60, 0, -20], armL: [-62, 0, 26], foreL: [-58, 0, 0] }],
+      [0.38, { hips: [0, -20, 0], chest: [0, -37, 0], head: [-4, 46, 0], root: [-2, -6, -11], armR: [-128, 0, -92], foreR: [-44, 0, 0], handR: [56, 0, -22], armL: [-64, 0, 26], foreL: [-56, 0, 0] }, 'hold'],
+      [0.48, { hips: [4, 16, 0], chest: [16, 26, 0], head: [-12, -34, 0], root: [2, -10, 16], armR: [-88, 0, 34], foreR: [-8, 0, 0], handR: [84, 0, 20], armL: [-34, 0, 12], foreL: [-82, 0, 0] }, 'strike'],
+      [0.6, { hips: [6, 22, 0], chest: [20, 34, 0], head: [-16, -44, 0], root: [3, -12, 20], armR: [-62, 0, 62], foreR: [-24, 0, 0], handR: [70, 0, 28], armL: [-30, 0, 8], foreL: [-86, 0, 0] }, 'settle'],
+      [0.8, { hips: [2, 20, 0], chest: [6, 36, 0], head: [-6, -44, 0], root: [0, -6, 8], armR: [-118, 0, 46], foreR: [-36, 0, 0], handR: [62, 0, 32], armL: [-52, 0, 20], foreL: [-64, 0, 0] }],
+      [0.89, { hips: [2, 22, 0], chest: [6, 40, 0], head: [-6, -48, 0], root: [0, -7, 7], armR: [-124, 0, 50], foreR: [-40, 0, 0], handR: [58, 0, 34], armL: [-54, 0, 20], foreL: [-62, 0, 0] }, 'hold'],
+      [1.0, { hips: [4, -16, 0], chest: [14, -28, 0], head: [-12, 36, 0], root: [-2, -10, 18], armR: [-90, 0, -78], foreR: [-8, 0, 0], handR: [84, 0, -30], armL: [-40, 0, 26], foreL: [-66, 0, 0] }, 'strike'],
+      [1.14, { hips: [6, -24, 0], chest: [18, -38, 0], head: [-16, 48, 0], root: [-3, -12, 21], armR: [-70, 0, -98], foreR: [-24, 0, 0], handR: [70, 0, -34], armL: [-40, 0, 26], foreL: [-66, 0, 0] }, 'settle'],
+      [1.7, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.035, foreR: 0.02 } }
+  ),
+  // la estocada: se recoge (la espada atrás, a la cintura, la punta por
+  // delante; el escudo adelante), y se tira a fondo con todo el cuerpo: la
+  // pierna de delante cargada, la de atrás estirada, el brazo y la hoja en
+  // línea con el hombro
+  thrust: clip(
+    'thrust',
+    1.35,
+    [
+      [0, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }],
+      [0.44, { hips: [0, -24, 0], chest: [-4, -22, 0], head: [-2, 40, 0], root: [0, -9, -14], armR: [-46, 0, -28], foreR: [-118, 0, 0], handR: [12, 0, 0], armL: [-70, 0, 30], foreL: [-50, 0, 0] }],
+      [0.53, { hips: [0, -26, 0], chest: [-6, -24, 0], head: [-2, 44, 0], root: [0, -10, -16], armR: [-48, 0, -30], foreR: [-122, 0, 0], handR: [10, 0, 0], armL: [-72, 0, 30], foreL: [-48, 0, 0] }, 'hold'],
+      [0.64, { hips: [6, 12, 0], chest: [22, 10, 0], head: [-18, -18, 0], root: [0, -16, 30], armR: [-90, 0, -2], foreR: [0, 0, 0], handR: [88, 0, 0], armL: [-30, 0, 20], foreL: [-80, 0, 0] }, 'strike'],
+      [0.8, { hips: [8, 16, 0], chest: [26, 12, 0], head: [-22, -22, 0], root: [0, -18, 34], armR: [-92, 0, 0], foreR: [0, 0, 0], handR: [90, 0, 0], armL: [-28, 0, 18], foreL: [-82, 0, 0] }, 'settle'],
+      [1.0, { hips: [4, 6, 0], chest: [16, 4, 0], head: [-10, -8, 0], root: [0, -10, 18], armR: [-70, 0, -10], foreR: [-40, 0, 0], handR: [60, 0, 0], armL: [-36, 0, 20], foreL: [-72, 0, 0] }],
+      [1.35, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.03 } }
+  ),
+  // el tercer brazo: sube despacio por encima del hombro, echando atrás el
+  // cuerpo (se ve venir), y aplasta con todo el peso: las rodillas se doblan
+  // con el golpe y el cuerpo se queda encima un instante
   arm3: clip('arm3', 1.7, [
-    [0, { ...SOL_BASE }],
-    [0.3, { ...SOL_BASE, chest: [-5, 0, 0], arm3: [30, 0, -10], fore3: [30, 0, 0] }],
-    [0.85, { ...SOL_BASE, chest: [-15, 0, 0], head: [-15, 0, 0], arm3: [60, 0, -20], fore3: [40, 0, 0] }],
-    [0.98, { ...SOL_BASE, chest: [30, 0, 0], head: [10, 0, 0], arm3: [150, 0, -30], fore3: [10, 0, 0], root: [0, -12, 0] }, 'snap'],
-    [1.3, { ...SOL_BASE, chest: [28, 0, 0], arm3: [145, 0, -30], fore3: [15, 0, 0], root: [0, -12, 0] }],
-    [1.7, { ...SOL_BASE }],
+    [0, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }],
+    [0.3, { ...SOL_BASE, hips: [-2, 0, 0], chest: [-6, 0, 0], head: [2, 0, 0], root: [0, -2, -4], arm3: [30, 0, -10], fore3: [30, 0, 0] }],
+    [0.85, { ...SOL_BASE, hips: [-4, -6, 0], chest: [-18, -8, 0], head: [8, 10, 0], root: [0, -6, -10], armR: [-44, 0, -30], foreR: [-50, 0, 0], armL: [-54, 0, 34], arm3: [70, 0, -22], fore3: [44, 0, 0] }, 'hold'],
+    [0.98, { ...SOL_BASE, hips: [8, 4, 0], chest: [32, 6, 0], head: [-22, -6, 0], root: [0, -16, 10], armR: [-50, 0, -30], foreR: [-50, 0, 0], armL: [-40, 0, 24], arm3: [150, 0, -30], fore3: [10, 0, 0] }, 'strike'],
+    [1.25, { ...SOL_BASE, hips: [8, 4, 0], chest: [30, 4, 0], head: [-20, -4, 0], root: [0, -16, 10], armR: [-46, 0, -26], foreR: [-56, 0, 0], arm3: [146, 0, -30], fore3: [16, 0, 0] }, 'settle'],
+    [1.7, { ...SOL_BASE, hips: [0, 0, 0], head: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
   ]),
   block: clip('block', 0.45, [
     [0, { ...SOL_BASE, armL: [-75, 20, -5], foreL: [-40, 0, 0], chest: [-8, -10, 0], root: [0, -4, -8] }, 'snap'],
@@ -379,23 +443,37 @@ const bellClips = {
     ],
     { events: [{ t: 0.36, name: 'ring' }] }
   ),
-  slam: clip('slam', 2.3, [
-    [0, { ...BELL_BASE }],
-    // alza el badajo por la derecha, bien alto
-    [0.5, { chest: [4, -14, 0], bellJ: [-10, 6, 0], root: [0, 0, 0], armR: [-30, 20, -95], foreR: [-20, 0, 0], handR: [95, -10, 150], armL: [-60, -10, 50], foreL: [-24, 0, 0], handL: [0, 0, 0] }],
-    [0.95, { chest: [-6, -22, 0], bellJ: [-12, 10, 0], root: [0, 4, 0], ...BA.slamUp, legL: [-14, 0, 0], shinL: [10, 0, 0], legR: [8, 0, 0], shinR: [6, 0, 0] }, 'hold'],
-    // y lo descarga delante con todo el cuerpo
-    [1.1, { chest: [38, 6, 0], bellJ: [2, 0, 0], root: [0, -30, 14], ...BA.slamHit, legL: [-40, 0, 0], shinL: [44, 0, 0], legR: [18, 0, 0], shinR: [30, 0, 0] }, 'snap'],
-    [1.7, { chest: [36, 4, 0], bellJ: [0, 0, 0], root: [0, -28, 14], ...BA.slamHit, foreR: [-10, 0, 0], legL: [-40, 0, 0], shinL: [44, 0, 0], legR: [18, 0, 0], shinR: [30, 0, 0] }],
-    [2.3, { ...BELL_BASE }],
-  ]),
-  sweep: clip('sweep', 1.9, [
-    [0, { ...BELL_BASE }],
-    [0.8, { chest: [8, -58, 0], bellJ: [-6, 18, 0], root: [0, -10, 0], ...BA.sweepWind, legL: [-22, 0, 0], shinL: [22, 0, 0], legR: [12, 0, 0], shinR: [14, 0, 0] }, 'hold'],
-    [0.98, { chest: [14, 48, 0], bellJ: [-6, -14, 0], root: [0, -14, 6], ...BA.sweepHit, legL: [-26, 0, 0], shinL: [26, 0, 0], legR: [14, 0, 0], shinR: [12, 0, 0] }, 'strike'],
-    [1.4, { chest: [16, 62, 0], bellJ: [-8, -18, 0], root: [0, -12, 6], ...BA.sweepEnd, legL: [-24, 0, 0], shinL: [24, 0, 0], legR: [14, 0, 0], shinR: [12, 0, 0] }, 'settle'],
-    [1.9, { ...BELL_BASE }],
-  ]),
+  // (fase 7: con peso; sin piernas en los clips, que las pone el anclaje de
+  // los pies, y con el paso del golpe: el pie izquierdo entra con el badajo.
+  // El giro, repartido entre la cadera y el pecho —el mismo en total, que
+  // los brazos están medidos sobre él—, y la cabeza contra el giro)
+  slam: clip(
+    'slam',
+    2.3,
+    [
+      [0, { ...BELL_BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      // alza el badajo por la derecha, bien alto, cargando el peso atrás
+      [0.5, { hips: [0, -6, 0], chest: [4, -8, 0], head: [0, 12, 0], bellJ: [-10, 6, 0], root: [0, -2, -4], armR: [-30, 20, -95], foreR: [-20, 0, 0], handR: [95, -10, 150], armL: [-60, -10, 50], foreL: [-24, 0, 0], handL: [0, 0, 0] }],
+      [0.95, { hips: [-4, -10, 0], chest: [-2, -12, 0], head: [4, 18, 0], bellJ: [-12, 10, 0], root: [0, -3, -9], ...BA.slamUp }, 'hold'],
+      // y lo descarga delante con todo el cuerpo, que cae con él
+      [1.1, { hips: [10, 4, 0], chest: [28, 2, 0], head: [-24, -6, 0], bellJ: [2, 0, 0], root: [0, -30, 14], ...BA.slamHit }, 'strike'],
+      [1.7, { hips: [10, 3, 0], chest: [26, 1, 0], head: [-22, -4, 0], bellJ: [0, 0, 0], root: [0, -28, 14], ...BA.slamHit, foreR: [-10, 0, 0] }, 'settle'],
+      [2.3, { ...BELL_BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.05 } }
+  ),
+  sweep: clip(
+    'sweep',
+    1.9,
+    [
+      [0, { ...BELL_BASE, hips: [0, 0, 0], root: [0, 0, 0] }],
+      [0.8, { hips: [0, -22, 0], chest: [8, -36, 0], head: [-4, 46, 0], bellJ: [-6, 18, 0], root: [0, -10, -6], ...BA.sweepWind }, 'hold'],
+      [0.98, { hips: [4, 20, 0], chest: [10, 28, 0], head: [-8, -38, 0], bellJ: [-6, -14, 0], root: [0, -14, 8], ...BA.sweepHit }, 'strike'],
+      [1.4, { hips: [5, 26, 0], chest: [11, 36, 0], head: [-10, -50, 0], bellJ: [-8, -18, 0], root: [0, -12, 8], ...BA.sweepEnd }, 'settle'],
+      [1.9, { ...BELL_BASE, hips: [0, 0, 0], root: [0, 0, 0] }, 'settle'],
+    ],
+    { lag: { handR: 0.05 } }
+  ),
   // se planta, echa atrás el puño y se da en la campana: ¡DONG!
   toll: clip('toll', 2.5, [
     [0, { ...BELL_BASE }],
@@ -793,6 +871,7 @@ export const TYPES = {
     leash: 28,
     clips: penClips,
     voice: 'penitent',
+    impulso: 'campana',
     // (tras un parry, desequilibrado: abierto al golpe de gracia)
     parryDur: 1.7,
     attacks: [
@@ -824,9 +903,10 @@ export const TYPES = {
     parryDur: 1.5,
     clips: solClips,
     voice: 'soldier',
+    impulso: 'campana',
     attacks: [
-      { name: 'combo', clip: solClips.combo, dur: 1.7, min: 0, max: 2.3, hits: [[0.44, 0.58], [0.98, 1.12]], dmg: 18, range: 2.4, arc: 110, weight: 3, lunge: [[0.4, 0.5, 2], [0.95, 1.05, 2]] },
-      { name: 'thrust', clip: solClips.thrust, dur: 1.35, min: 1.5, max: 3.6, hits: [[0.6, 0.74]], dmg: 24, range: 2.8, arc: 40, lunge: [[0.56, 0.74, 5]], weight: 2 },
+      { name: 'combo', clip: solClips.combo, dur: 1.7, min: 0, max: 2.3, hits: [[0.44, 0.58], [0.98, 1.12]], dmg: 18, range: 2.4, arc: 110, weight: 3, lunge: [[0.4, 0.54, 1.6], [0.93, 1.07, 1.6]] },
+      { name: 'thrust', clip: solClips.thrust, dur: 1.35, min: 1.5, max: 3.6, hits: [[0.6, 0.74]], dmg: 24, range: 2.8, arc: 40, lunge: [[0.54, 0.76, 4]], weight: 2 },
       // (el tercer brazo aplasta: no se puede desviar)
       { name: 'arm3', clip: solClips.arm3, dur: 1.7, min: 0, max: 2.2, hits: [[0.98, 1.12]], dmg: 28, range: 2.3, arc: 70, weight: 1.5, stDmg: 40, noParry: true },
     ],
@@ -977,6 +1057,7 @@ export const TYPES = {
     parryDur: 1.5,
     clips: bellClips,
     voice: 'bell',
+    impulso: 'campana',
     alertTime: 1.2,
     attacks: [
       {
@@ -991,12 +1072,13 @@ export const TYPES = {
         arc: 60,
         weight: 3,
         turn: 2,
+        lunge: [[0.96, 1.12, 1.6, 'L']],
         // la onda sale donde da la bola
         events: [{ t: 1.12, fn: (e, g) => (e.rig.worldPos('handR', _bb, BELL_BALL), g.combat.shockwave(_bb.x, e.pos.y, _bb.z, 3.4, 16, e)) }],
         stagger: true,
         noParry: true,
       },
-      { name: 'sweep', clip: bellClips.sweep, dur: 1.9, min: 0, max: 3.6, hits: [[0.9, 1.12]], dmg: 30, range: 3.7, arc: 170, weight: 2, turn: 2.2 },
+      { name: 'sweep', clip: bellClips.sweep, dur: 1.9, min: 0, max: 3.6, hits: [[0.9, 1.12]], dmg: 30, range: 3.7, arc: 170, weight: 2, turn: 2.2, lunge: [[0.84, 1.0, 1.3, 'L']] },
       { name: 'toll', clip: bellClips.toll, dur: 2.5, min: 0, max: 7, hits: [], weight: 1, cd: 2.5, noParry: true, events: [{ t: 1.3, fn: (e, g) => (g.combat.toll(e, 6.5, 12), bellRing(e, 0.085)) }] },
     ],
     biped: { scale: 1.38, style: GAIT.heavy, stance: 0.1 },

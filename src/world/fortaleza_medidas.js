@@ -20,7 +20,10 @@ export const FORT = {
   // del claustro, su arquería (el arranque de los arcos y lo alto de las
   // enjutas) y su tejaroz (de lo alto, contra el muro, a lo bajo)
   patio: { x0: -120, x1: -76, z0: -86, z1: -46 },
-  claustro: { d: 4, ys: 3.0, top: 5.0, yHi: 6.5, yLo: 5.3 },
+  // (el paseo de las cámaras, encima: su suelo, lo alto de sus pies derechos
+  // y su tejaroz; sus puertas: la de la sala de la reina y la de la cámara
+  // del Rey, en x, y la de la tribuna de la capilla, en z)
+  claustro: { d: 4, ys: 3.0, top: 5.0, yHi: 6.5, yLo: 5.3, paseo: { y: 5.5, pie: 7.85, yHi: 9.1, yLo: 8.43, reina: -118, rey: -78, tribuna: -78 } },
   // el eje: la puerta, el patio, la escalinata y la torre
   eje: -98,
   // las crujías, por dentro (lo que se pisa, de cara a cara de sus muros)
