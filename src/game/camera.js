@@ -4,11 +4,32 @@ import * as THREE from 'three';
 import { clamp, damp, dampAngle, angleDiff, smoothstep } from '../core/util.js';
 
 const _dir = new THREE.Vector3();
+const _rd = new THREE.Vector3();
 const _tp = new THREE.Vector3();
 const camBox = (b) => b.cam !== false;
 // lo más que se arrima la cámara al pivote (más cerca, en vez de meterse en
 // el muro, sube por encima de la cabeza)
 const MIN_D = 0.14;
+// el haz de la colisión: el rayo del centro y cuatro que se abren hacia los
+// bordes del plano cercano (a lo ancho y a lo alto)
+const CR = 0.24;
+const HAZ = [
+  [0, 0],
+  [CR, 0],
+  [-CR, 0],
+  [0, CR],
+  [0, -CR],
+];
+// los rayos con los que se mira el techo al subir sobre la cabeza: el de
+// encima y cuatro a los lados (bajo un techo en cuesta, o escalonado, el de
+// encima no basta)
+const SOBRE = [
+  [0, 0],
+  [0.2, 0],
+  [-0.2, 0],
+  [0, 0.2],
+  [0, -0.2],
+];
 
 export class CameraRig {
   constructor(camera) {
@@ -23,6 +44,9 @@ export class CameraRig {
     this.lookAt = new THREE.Vector3();
     this.override = null; // {pos, look} para escenas
     this.lift = 0; // lo que sube sobre la cabeza cuando no cabe detrás
+    this.dip = 0; // lo que baja ella sola (subiendo bajo una bóveda en cuesta)
+    this.dipT = 0; // (y lo que quiere bajar)
+    this.dipWait = 0; // (sin dónde bajar, cuánto falta para volver a buscar)
     this.fovBase = 60;
     this.fovKick = 0;
     this.recenterT = 0;
@@ -35,6 +59,7 @@ export class CameraRig {
     this.yaw = player.yaw;
     this.curDist = this.dist;
     this.recenterT = 0;
+    this.dip = this.dipT = this.dipWait = 0;
   }
 
   // Gira la cámara hasta quedar detrás del jugador (animado, no instantáneo).
@@ -139,63 +164,88 @@ export class CameraRig {
     const cap = up === Infinity ? 1.5 : Math.asin(clamp((up - 0.38) / Math.max(1, want), -0.25, 0.99));
     if (this.pitchCap === undefined) this.pitchCap = cap;
     this.pitchCap = damp(this.pitchCap, cap, cap < this.pitchCap ? 14 : 2.5, dt);
-    const pe = Math.min(this.pitch, this.pitchCap);
-    const cp = Math.cos(pe),
-      sp = Math.sin(pe);
-    const dir = _dir.set(Math.sin(this.yaw) * cp, -sp, Math.cos(this.yaw) * cp);
-    // colisión de cámara: se acerca al instante, se aleja suavemente. Un haz
-    // de rayos (el del centro y cuatro que se abren hacia los bordes del
-    // plano cercano): con uno solo, en un pasillo o rozando un muro de lado,
-    // la cámara se quedaba a dos dedos de la pared y se veía a través
-    let hit = Infinity;
-    {
-      const rx = Math.cos(this.yaw),
-        rz = -Math.sin(this.yaw);
-      const ux = -dir.x * dir.y,
-        uy = 1 - dir.y * dir.y,
-        uz = -dir.z * dir.y;
-      const ul = Math.hypot(ux, uy, uz) || 1;
-      const cr = 0.24;
-      for (const [ox, oy] of [
-        [0, 0],
-        [cr, 0],
-        [-cr, 0],
-        [0, cr],
-        [0, -cr],
-      ]) {
-        const tx = -dir.x * want + rx * ox + (ux / ul) * oy,
-          ty = -dir.y * want + (uy / ul) * oy,
-          tz = -dir.z * want + rz * ox + (uz / ul) * oy;
-        const tl = Math.hypot(tx, ty, tz);
-        const d = col.raycast(this.pivot.x, this.pivot.y, this.pivot.z, tx / tl, ty / tl, tz / tl, tl + 0.3, camBox);
-        if (d !== Infinity) hit = Math.min(hit, (d * want) / tl);
+    const pe0 = Math.min(this.pitch, this.pitchCap);
+    // lo más bajo que puede quedar la cámara: no bajo el suelo (con el
+    // coloso, más abajo, contra el suelo que tenga debajo)
+    const floorY = F ? -Infinity : player.visY + 0.3;
+    // subiendo una escalera bajo bóveda, detrás de quien sube y por encima no
+    // cabe (la bóveda baja con los peldaños) y la cámara se le pegaba a la
+    // cabeza. Si mirando más desde abajo cabe bastante más lejos, baja ella
+    // sola (mira cuesta arriba: donde quepa más lejos, con algo de ventaja
+    // para lo que menos baje) y, cuando deja de hacer falta, vuelve despacio.
+    // Sólo con el suelo de detrás más bajo (una cuesta que baja a espaldas):
+    // de espaldas a un muro, o bajo un dintel en llano, como siempre. (Con el
+    // coloso, no: aquello es otra cámara)
+    let a0 = -1,
+      dipWant = 0,
+      pk = NaN,
+      ak = 0;
+    this.dipWait = Math.max(0, this.dipWait - dt);
+    if (!F && !this.body) {
+      a0 = this._reach(pe0, want, col, floorY, _dir);
+      if (a0 < want * 0.5) {
+        const good = Math.min(want * 0.75, a0 + 0.8);
+        // (la que ya lleva, mientras siga valiendo: que no vaya y venga)
+        if (this.dipT < -0.05) {
+          pk = Math.max(-0.6, pe0 + this.dipT);
+          ak = this._reach(pk, want, col, floorY, _rd);
+          if (ak >= good * 0.85) dipWant = this.dipT;
+        }
+        // (el suelo de detrás: lo más alto hasta la cabeza; cuesta arriba, el
+        // peldaño de detrás; contra un muro, el suelo a su pie)
+        if (dipWant === 0 && this.dipWait === 0 && col.groundHeight(this.pivot.x - Math.sin(this.yaw) * 1.5, this.pivot.z - Math.cos(this.yaw) * 1.5, 0.2, player.visY + 1.5) < player.visY - 0.5) {
+          let best = -Infinity;
+          for (let k = 1; k <= 6; k++) {
+            const p = Math.max(-0.6, pe0 - 0.15 * k);
+            if (p > pe0 - 0.1) break;
+            const a = this._reach(p, want, col, floorY, _rd);
+            const score = a - 0.5 * (pe0 - p);
+            if (a >= good && score > best) {
+              best = score;
+              dipWant = p - pe0;
+              pk = p;
+              ak = a;
+            }
+            if (p === -0.6) break;
+          }
+          // (si no hay dónde, no se vuelve a buscar en un rato: buscar cuesta)
+          if (dipWant === 0) this.dipWait = 0.3;
+        }
       }
     }
-    // (el coloso del final no está en el mundo de colisión: su cuerpo, aparte)
-    if (this.body) {
-      const d = this.body.ray(this.pivot, _tp.copy(dir).negate(), want + 0.3);
-      if (d !== Infinity) hit = Math.min(hit, d);
-    }
-    let allowed = want;
-    if (hit !== Infinity) allowed = Math.max(MIN_D, hit - 0.28);
-    // holgura: el rayo da con el muro, pero la cámara no es un punto (su
-    // plano cercano tiene anchura); a ras de una pared o en una esquina se
-    // veía el otro lado. Se acerca hasta tener 0,2 m libres a su alrededor
-    for (let i = 0; i < 50 && allowed > MIN_D; i++) {
-      if (!col.sphereHits(this.pivot.x - dir.x * allowed, this.pivot.y - dir.y * allowed, this.pivot.z - dir.z * allowed, 0.2, camBox)) break;
-      allowed = Math.max(MIN_D, allowed - 0.1);
-    }
+    this.dipT = dipWant;
+    this.dip = damp(this.dip, dipWant, dipWant < this.dip ? 4 : 1.5, dt);
+    // (llegada, se queda: y lo medido para ella vale)
+    if (Math.abs(this.dip - dipWant) < 0.004) this.dip = dipWant;
+    const pe = Math.max(-0.6, pe0 + this.dip);
+    // colisión de cámara: se acerca al instante, se aleja suavemente
+    let allowed;
+    if (a0 >= 0 && pe === pe0) allowed = a0;
+    else if (Math.abs(pe - pk) < 1e-9) {
+      allowed = ak;
+      this._dirOf(pe, _dir);
+    } else allowed = this._reach(pe, want, col, floorY, _dir);
+    const dir = _dir;
     if (allowed < this.curDist) this.curDist = damp(this.curDist, allowed, 30, dt);
     else this.curDist = damp(this.curDist, allowed, 3.5, dt);
     // de espaldas a un muro no cabe detrás (antes se quedaba a medio metro
     // aunque fuera dentro del muro): sube por encima de la cabeza y mira
-    // hacia abajo, sin pasar del techo
+    // hacia abajo, sin pasar del techo (ni del de al lado: si baja, en cuesta
+    // o a escalones, el de encima no basta). Si el techo baja, al instante
     let lift = this.curDist < 0.5 ? (0.5 - this.curDist) * 1.1 : 0;
-    if (lift > 0) {
-      const upHit = col.raycast(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist, this.pivot.z - dir.z * this.curDist, 0, 1, 0, lift + 0.3, camBox);
-      if (upHit !== Infinity) lift = Math.max(0, Math.min(lift, upHit - 0.22));
+    let liftMax = Infinity;
+    if (lift > 0 || this.lift > 0) {
+      const bx = this.pivot.x - dir.x * this.curDist,
+        by = this.pivot.y - dir.y * this.curDist,
+        bz = this.pivot.z - dir.z * this.curDist;
+      const reach = Math.max(lift, this.lift) + 0.3;
+      for (const [ox, oz] of SOBRE) {
+        const upHit = col.raycast(bx + ox, by, bz + oz, 0, 1, 0, reach, camBox);
+        if (upHit !== Infinity) liftMax = Math.min(liftMax, Math.max(0, upHit - 0.22));
+      }
     }
-    this.lift = damp(this.lift, lift, lift > this.lift ? 16 : 6, dt);
+    lift = Math.min(lift, liftMax);
+    this.lift = Math.min(damp(this.lift, lift, lift > this.lift ? 16 : 6, dt), liftMax);
 
     cam.position.set(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist + this.lift, this.pivot.z - dir.z * this.curDist);
     // no bajar del suelo (trepando a un coloso, la cámara puede quedar por
@@ -242,6 +292,71 @@ export class CameraRig {
       cam.updateProjectionMatrix();
     }
     this._applyShake(dt);
+  }
+
+  // La dirección en la que mira la cámara con el cabeceo pe (en out).
+  _dirOf(pe, out) {
+    const cp = Math.cos(pe);
+    return out.set(Math.sin(this.yaw) * cp, -Math.sin(pe), Math.cos(this.yaw) * cp);
+  }
+
+  // Hasta dónde cabe la cámara detrás del pivote con el cabeceo pe (su
+  // dirección, en out). Un haz de rayos (HAZ): con uno solo, en un pasillo o
+  // rozando un muro de lado, la cámara se quedaba a dos dedos de la pared y
+  // se veía a través. Y holgura: el rayo da con el muro, pero la cámara no es
+  // un punto (su plano cercano tiene anchura); a ras de una pared o en una
+  // esquina se veía el otro lado: se acerca hasta tener 0,2 m libres a su
+  // alrededor. Por debajo de floorY sube hasta ahí, y entonces también ha de
+  // estar libre ese sitio, y lo que hay de él al pivote (mirando cuesta
+  // arriba bajo una bóveda en rampa, la subida la metía en la bóveda)
+  _reach(pe, want, col, floorY, out) {
+    const pv = this.pivot;
+    const dir = this._dirOf(pe, out);
+    let hit = Infinity;
+    const rx = Math.cos(this.yaw),
+      rz = -Math.sin(this.yaw);
+    const ux = -dir.x * dir.y,
+      uy = 1 - dir.y * dir.y,
+      uz = -dir.z * dir.y;
+    const ul = Math.hypot(ux, uy, uz) || 1;
+    for (const [ox, oy] of HAZ) {
+      const tx = -dir.x * want + rx * ox + (ux / ul) * oy,
+        ty = -dir.y * want + (uy / ul) * oy,
+        tz = -dir.z * want + rz * ox + (uz / ul) * oy;
+      const tl = Math.hypot(tx, ty, tz);
+      const d = col.raycast(pv.x, pv.y, pv.z, tx / tl, ty / tl, tz / tl, tl + 0.3, camBox);
+      if (d !== Infinity) hit = Math.min(hit, (d * want) / tl);
+    }
+    // (el coloso del final no está en el mundo de colisión: su cuerpo, aparte)
+    if (this.body) {
+      const d = this.body.ray(pv, _tp.copy(dir).negate(), want + 0.3);
+      if (d !== Infinity) hit = Math.min(hit, d);
+    }
+    let allowed = want;
+    if (hit !== Infinity) allowed = Math.max(MIN_D, hit - 0.28);
+    let raised = false;
+    for (let i = 0; i < 50 && allowed > MIN_D; i++) {
+      const x = pv.x - dir.x * allowed,
+        y = pv.y - dir.y * allowed,
+        z = pv.z - dir.z * allowed;
+      if (col.sphereHits(x, y, z, 0.2, camBox)) {
+        allowed = Math.max(MIN_D, allowed - 0.1);
+        continue;
+      }
+      if (y >= floorY) break;
+      // (subida al suelo: una vez; si ahí no cabe, por el rayo hasta donde ya
+      // no haga falta subirla)
+      if (!raised) {
+        raised = true;
+        const vx = x - pv.x,
+          vy = floorY - pv.y,
+          vz = z - pv.z;
+        const L = Math.hypot(vx, vy, vz);
+        if (!col.sphereHits(x, floorY, z, 0.2, camBox) && (L < 0.05 || col.raycast(pv.x, pv.y, pv.z, vx / L, vy / L, vz / L, L, camBox) === Infinity)) break;
+      }
+      allowed = Math.max(MIN_D, Math.min(allowed - 0.1, (pv.y - floorY) / dir.y));
+    }
+    return allowed;
   }
 
   _applyShake(dt) {

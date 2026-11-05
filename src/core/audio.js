@@ -2511,6 +2511,19 @@ export class Audio {
         this.noise(d, t, 0.8, { type: 'lowpass', f0: 300, gain: 0.18, a: 0.05, buf: this.brown, rate: 2, curve: 'lin' });
         break;
       }
+      // los barrotes de una celda, sacudidos a puñetazos desde dentro: golpes
+      // sordos de hierro, uno tras otro, y el tintineo de lo que está suelto
+      case 'barsRattle': {
+        d = this.out(P, { gain: 0.6, verb: 0.45, life: 2, ref: 4 });
+        const n = 2 + Math.floor(Math.random() * 2);
+        for (let k = 0; k < n; k++) {
+          const tk = t + k * rnd(0.09, 0.17);
+          this.metal(d, tk, rnd(190, 260), 0.15, 0.45, { ratios: [1, 2.6, 4.1] });
+          this.tone(d, tk, 0.06, { f0: 130, f1: 70, gain: 0.25 });
+        }
+        this.jingle(d, t + 0.04, 0.22, 0.06, 0.9);
+        break;
+      }
       // el rastrillo sube un palmo y se queda colgando
       case 'gateStep': {
         d = this.out(P, { gain: 0.9, verb: 0.6, life: 4, ref: 6 });

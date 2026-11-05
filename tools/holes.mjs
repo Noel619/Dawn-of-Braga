@@ -5,7 +5,8 @@
 // coracha, los pisos y la terraza de la torre del homenaje, la planta alta
 // de la puerta de la fortaleza y su cadalso, el adarve de levante y la
 // terraza de la cancillería, el adarve del jardín y el mirador) y lo que está
-// bajo el castillo (mazmorras, catacumbas, aljibe): lo recorre por inundación
+// bajo el castillo (mazmorras, catacumbas, aljibe; la cárcel de la fortaleza,
+// del pie de su bajada al rastrillo): lo recorre por inundación
 // desde varios puntos, como andaría el jugador (escalones de medio metro, sin
 // atravesar muros ni almenas).
 //   node tools/holes.mjs [paso=1] [alto]      (requiere npx vite --port 5199)
@@ -80,12 +81,21 @@ const r = await p.evaluate(([step, alto]) => {
       [-80, -5, -12],
       [-71, -5, 0],
       [-71, -5, 8.7],
+      // (fase 5) la cárcel de la fortaleza: la sala de los carceleros (y por
+      // ella la bajada, la cárcel y el aljibe), el cuarto de los verdugos, la
+      // capilla de los reos y el rellano del rastrillo
+      [-106, -7, -80],
+      [-97.25, -7, -60],
+      [-97, -7, -35],
+      [-97, -7, -12],
+      [-90.25, -5, -12],
     ];
     const done = new Set();
     const q = [];
     const free = (x, z, gy) => !col.query(x - 0.12, z - 0.12, x + 0.12, z + 0.12, []).some((b) => !b.camOnly && b.miny < gy + 1.6 && b.maxy > gy + 0.05 && col.overlapXZ(b, x, z, 0.12));
     // (lo de arriba no baja al suelo; lo de abajo no sube a él)
-    const band = (y) => (y < -1 ? [-7, -1.2] : [2.5, 99]);
+    // (abajo, hasta los peldaños secos de la escalera del aljibe del palacio)
+    const band = (y) => (y < -1 ? [-8.5, -1.2] : [2.5, 99]);
     for (const [x, y, z] of seeds) {
       const gy = col.groundHeight(x, z, 0.05, y + 0.5);
       q.push([Math.round(x / R), Math.round(z / R), gy, band(y)]);

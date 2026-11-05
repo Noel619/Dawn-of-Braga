@@ -166,6 +166,14 @@ const steps = [
   "(()=>{const g=__game;g.player.spawn(-81.9,5.5,-37.4,-Math.PI/2);__sim(0.3);return __useHere('d_tabique_taller')})()",
   "__use('p_rastrillo_fort')", "__use('b_puente_fort')",
   "(()=>{const g=__game;__sim(3);const it=g.interact.list.find(i=>i.id==='b_puente_fort');const x=g.interact.list.find(i=>i.id==='x_puente_fort');return {flag:!!g.flags['puente:fortaleza'],deck:it.deckBox.enabled,up:it.upBox.enabled,k:+it.k.toFixed(2),aviso:!(x.unless&&g.flags[x.unless]),rastrillo:!!g.flags['door:d_rastrillo_fort'],ballesta:g.inventory.has('ballesta')}})()",
+  // la cárcel de la fortaleza (fase 5): la trampilla del almacén de la torre
+  // (con la palanca), el libro de los presos, la ampolla de la celda del
+  // fondo, los virotes del aljibe, lo último del carcelero mayor y su
+  // palanca, que sube el rastrillo de la mazmorra del castillo (el atajo)
+  "__use('t_bajada_carcel')",
+  "(()=>{const g=__game;const it=g.interact.list.find(i=>i.id==='t_bajada_carcel');return {abierta:!!g.flags['trampa:carcel'],tapa:it.box.enabled}})()",
+  "__use('n_libro_carcel')", "__use('i_ampolla_carcel')", "__use('i_virotes_aljibe')", "__use('n_carcelero_mayor')", "__use('p_rastrillo_carcel')",
+  "(()=>{const g=__game;const d=g.interact.list.find(i=>i.id==='d_rastrillo_carcel');return {rastrillo:!!g.flags['door:d_rastrillo_carcel'],caja:d.box.enabled}})()",
   "__use('d_postigo')",
   "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
   // la cripta honda: la Confesión, el panteón de los obispos, San Martín (su

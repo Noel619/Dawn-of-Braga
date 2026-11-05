@@ -30,6 +30,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbowParts, hornParts, bucketParts, trophyParts, shieldParts, spearheadParts, chainParts } from './ossuary_props.js';
 import { buildCastilloFuera, FUERA } from './castillo_fuera.js';
 import { buildPatioArmas } from './castillo_patio.js';
+import { FORT } from './fortaleza_medidas.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -83,7 +84,10 @@ export const CASTLE = {
   ptower: { x0: -90, x1: -81, z0: 4, z1: 14, t: 1, h: 12 },
   ptHatch: { x: -83.0, z: 12.0 },
   // las mazmorras
-  dun: { y: YD, x0: -96, z0: -24, x1: -46, z1: 24 },
+  // (y, por el rastrillo, la cárcel de la fortaleza, bajo su mitad sur, con
+  // la bajada desde la torre del homenaje: fortaleza_carcel.js; una sola
+  // rejilla para las dos, que se andan de una a otra)
+  dun: { y: YD, x0: -116, z0: -96, x1: -46, z1: 24 },
   // el pozo del patio (baja al aljibe, a la clave de uno de sus tramos)
   well: { x: -61.8, z: 12.0 },
   // dónde despierta el jugador
@@ -1144,6 +1148,12 @@ function buildDungeon(ctx, D, L) {
   bays(6, -1, [-82, ...FS, -60], [[-82, -79.7], [-77.9, -74.9], [-66.3, -63.7], [-63.8, -62.2]], 'catacumbas');
   // celdas de castigo en el pasadizo: huecos hasta el suelo, con reja
   for (const x of [-82.8, -76.8]) addNiche('z', 13, -1, x - 0.6, x + 0.6, YD, YD + 1.9, 0.95, 'cell', 'mazmorra');
+  // al fondo del pasillo de las celdas, el paso del rastrillo de la cárcel de
+  // la fortaleza (el rastrillo y lo de detrás: fortaleza_carcel.js)
+  {
+    const RA = FORT.carcel.rastrillo;
+    holes.push({ plane: 'x', line: RA.x1, a0: RA.z - RA.w / 2, a1: RA.z + RA.w / 2, y0: YD - 0.1, y1: YD + RA.h });
+  }
 
   dungeonWalls(ctx, D, regs, holes);
   // los cruces: donde una galería abovedada desemboca de lado en otra (de la
@@ -1831,42 +1841,37 @@ function buildDungeon(ctx, D, L) {
     { id: 'aljibe', r: [ALJIBE.xs[0], ALJIBE.zs[0], ALJIBE.xs[5], ALJIBE.zs[3]], level: 'dungeon' },
     { id: 'torre_carcel', r: [PSTAIR.x0, PSTAIR.z0, PSTAIR.x1, PSTAIR.z1], level: 'dungeon' }
   );
-  tapiado(ctx, L);
+  rastrilloCeldas(ctx);
 }
 
-// ------------------------------------------------------- el tapiado de las celdas
-// Al fondo del pasillo de las celdas, a poniente, donde hubo una puerta: el
-// ladrillo nuevo, con la cal todavía fresca, y lo que alguien arañó en ella
-// (LO QUE SUBE NO ES NUESTRO). Del otro lado no queda nada: la torre vieja,
-// de la que bajaba su escalera, ya no está (PLAN_FORTALEZA.md, fase 3; en la
-// fase 5, el rastrillo de las mazmorras del castillo).
-const TAPIA = { x: -89.0, z: -12.0, w: 2.0, h: 2.4 };
-function tapiado(ctx, L) {
+// ------------------------------------------------------- el rastrillo de las celdas
+// Al fondo del pasillo de las celdas, a poniente, el paso a la cárcel de la
+// fortaleza (PLAN_FORTALEZA.md, fase 5): su marco de sillería y, metido en el
+// grueso del muro, el rastrillo, echado; entre sus barrotes, el rellano, la
+// palanca que lo sube, y una escalera que baja hacia una luz. Encima, en la
+// cal, lo que arañó alguien de este lado: LO QUE SUBE NO ES NUESTRO. (La reja,
+// su palanca y lo de detrás: fortaleza_carcel.js.)
+function rastrilloCeldas(ctx) {
   const wb = ctx.wb;
-  const T = TAPIA;
+  const RA = FORT.carcel.rastrillo;
   const room = 'mazmorra';
-  const z0 = T.z - T.w / 2,
-    z1 = T.z + T.w / 2;
-  const xf = T.x + 0.16;
-  // el marco de la puerta que hubo: las jambas y el dintel de sillería
+  const x = RA.x1;
+  const z0 = RA.z - RA.w / 2,
+    z1 = RA.z + RA.w / 2;
+  const xf = x + 0.16;
+  // el marco: las jambas y el dintel de sillería
   for (const [a, b] of [
     [z0 - 0.3, z0],
     [z1, z1 + 0.3],
   ])
-    wb.box('ashlar', T.x, YD, a, xf + 0.06, YD + T.h, b, { ao: false, faces: 'ensb', room, tint: [0.66, 0.64, 0.6] });
-  wb.box('ashlar', T.x, YD + T.h, z0 - 0.36, xf + 0.08, YD + T.h + 0.36, z1 + 0.36, { ao: false, faces: 'enstb', room, tint: [0.64, 0.62, 0.58] });
-  // el ladrillo, bajo la cal: las hiladas que asoman
-  wb.box('plaster', T.x, YD, z0, xf, YD + T.h, z1, { sub: 0.8, aoH: 1, faces: 'e', room, tint: [0.94, 0.9, 0.84] });
-  for (let k = 1; k < 10; k++) {
-    const y = YD + k * 0.24;
-    wb.box('wooddark', xf, y, z0 + 0.02, xf + 0.005, y + 0.018, z1 - 0.02, { ao: false, faces: 'e', room, tint: [0.5, 0.36, 0.3] });
-    for (let z = z0 + (k % 2 ? 0.1 : 0.22); z < z1 - 0.05; z += 0.26) wb.box('wooddark', xf, y - 0.24, z, xf + 0.005, y, z + 0.018, { ao: false, faces: 'e', room, tint: [0.5, 0.36, 0.3] });
-  }
-  // LO QUE SUBE NO ES NUESTRO, arañado en la cal
-  wb.geometry('scratchNoEsNuestro', new THREE.PlaneGeometry(1.4, 0.5), new THREE.Matrix4().compose(V(xf + 0.012, YD + 1.45, T.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0.03)), V(1, 1, 1)), { ao: false, grime: false, room });
+    wb.box('ashlar', x, YD, a, xf + 0.06, YD + RA.h, b, { ao: false, faces: 'ensb', room, tint: [0.66, 0.64, 0.6] });
+  wb.box('ashlar', x, YD + RA.h, z0 - 0.36, xf + 0.08, YD + RA.h + 0.36, z1 + 0.36, { ao: false, faces: 'enstb', room, tint: [0.64, 0.62, 0.58] });
+  // encima, un paño de cal, y en él LO QUE SUBE NO ES NUESTRO, arañado
+  const yc = YD + RA.h + 0.36 + 0.46;
+  wb.box('plaster', x, yc - 0.4, z0 + 0.05, x + 0.012, yc + 0.4, z1 - 0.05, { sub: 0.8, aoH: 1, faces: 'e', room, tint: [0.9, 0.86, 0.8] });
+  wb.geometry('scratchNoEsNuestro', new THREE.PlaneGeometry(1.4, 0.5), new THREE.Matrix4().compose(V(x + 0.024, yc, RA.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0.03)), V(1, 1, 1)), { ao: false, grime: false, room });
   // la cal que se cayó al pie
-  for (let k = 0; k < 4; k++) wb.box('plaster', xf + 0.05 + k * 0.07, YD, z0 + 0.3 + k * 0.4, xf + 0.2 + k * 0.07, YD + 0.03, z0 + 0.5 + k * 0.4, { ao: false, room, tint: [0.96, 0.94, 0.88] });
-  L.interact.push({ kind: 'examine', id: 'x_tapia_celdas', text: 'tapiaCeldas', x: xf + 0.9, y: YD, z: T.z, r: 1.6 });
+  for (let k = 0; k < 3; k++) wb.box('plaster', xf + 0.12 + k * 0.09, YD, z0 + 0.2 + k * 0.6, xf + 0.27 + k * 0.09, YD + 0.03, z0 + 0.4 + k * 0.6, { ao: false, room, tint: [0.96, 0.94, 0.88] });
 }
 
 // ------------------------------------------------------- el osario del castillo
@@ -2101,7 +2106,7 @@ function buildHermandad(ctx, L, portal) {
 // cara mirando hacia dentro; donde linda con otra de techo más bajo o de
 // suelo más alto, el trozo que falta (dinteles, el borde de los andenes).
 // holes: huecos en esos muros (los nichos), { plane, line, a0, a1, y0, y1 }.
-function dungeonWalls(ctx, D, regs, holes = []) {
+export function dungeonWalls(ctx, D, regs, holes = []) {
   const wb = ctx.wb;
   const res = D.res;
   const at = (x, z) => {

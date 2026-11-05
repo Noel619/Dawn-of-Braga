@@ -133,7 +133,7 @@ function torres(ctx, S, L) {
       [G.px1 - 0.012, 'w'],
     ])
       wb.box('black', u, 0, zr - 0.06, u + 0.012, ys + 0.2, zr + 0.06, { faces: f, ao: false, grime: false, room });
-    wb.box('black', G.px0 + 0.1, 0.021, zr - 0.06, G.px1 - 0.1, 0.022, zr + 0.06, { faces: 't', ao: false, grime: false, room });
+    wb.box('black', G.px0 + 0.1, 0.033, zr - 0.06, G.px1 - 0.1, 0.035, zr + 0.06, { faces: 't', ao: false, grime: false, room });
     L.interact.push({ kind: 'door', id: 'd_rastrillo_fort', x: pc, y: 0, z: zr, w: pw, h: ys + rise, lift: ys + rise - 0.4, axis: 'x', lock: { type: 'lever', msg: 'rastrilloFortaleza' }, mat: 'grate', lit: true });
   }
   // el rastrillo de dentro, junto al arco del patio: alzado y metido en su
@@ -149,7 +149,7 @@ function torres(ctx, S, L) {
       [G.px1 - 0.012, 'w'],
     ])
       wb.box('black', u, 0, zr - 0.06, u + 0.012, ys + 0.05, zr + 0.06, { faces: f, ao: false, grime: false, room });
-    wb.box('black', G.px0 + 0.1, 0.021, zr - 0.06, G.px1 - 0.1, 0.022, zr + 0.06, { faces: 't', ao: false, grime: false, room });
+    wb.box('black', G.px0 + 0.1, 0.033, zr - 0.06, G.px1 - 0.1, 0.035, zr + 0.06, { faces: 't', ao: false, grime: false, room });
     const N = 16,
       r = R - 0.012;
     for (let i = 0; i < N; i++) {
@@ -406,7 +406,7 @@ function fosoPuente(ctx, S, L) {
     [Fo.x0 - 0.3, Fo.z0, Fo.x0, Fo.z1],
     [Fo.x1, Fo.z0, Fo.x1 + 0.3, Fo.z1],
   ])
-    wb.box('ashlar', a, -0.02, b, c, 0.04, d, { faces: 'tnsew', ao: false, tint: PIEDRA.silla });
+    wb.box('ashlar', a, 0, b, c, 0.06, d, { faces: 'tnsew', ao: false, tint: PIEDRA.silla });
   // las estacas, aguzadas, y lo que se clavó en ellas
   const rr = new RNG(7821);
   for (let i = 0; i < 7; i++)

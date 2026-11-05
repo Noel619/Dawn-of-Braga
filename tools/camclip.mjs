@@ -1,11 +1,13 @@
 // La cámara contra muros, rejas y techos: en puntos del castillo (también lo
 // de poniente del patio), las mazmorras, la torre del homenaje y la puerta de
 // la fortaleza, el jardín y el mirador, la torre de la coracha y el adarve de
-// levante, la catedral y su cripta (pegados a paredes, junto a las rejas de las celdas, en
-// escaleras),
-// doce orientaciones y tres inclinaciones en cada uno. Tras asentarse, ¿queda
-// la cámara tras un muro (el rayo desde el pivote choca antes de llegar a
-// ella) o a menos de 0,12 m de una caja?
+// levante, la cárcel de la fortaleza, la catedral y su cripta (pegados a paredes, junto a
+// las rejas de las celdas, en escaleras),
+// doce orientaciones y cuatro inclinaciones en cada uno (también la más baja,
+// mirando desde el suelo: ahí el tope del suelo la subía). Tras asentarse,
+// ¿queda la cámara tras un muro (el rayo desde el pivote choca antes de llegar
+// a ella) o a menos de 0,12 m de una caja? (Con la trampilla de la bajada a la
+// cárcel abierta: cerrada, en lo alto de la escalera se estaría en la tapa.)
 //   node tools/camclip.mjs [puerto]      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const port = process.argv[2] || '5199';
@@ -20,6 +22,8 @@ const r = await p.evaluate(() => {
   const g = __game;
   g.ui.closeAll();
   for (const e of g.enemies) if (!e.boss) { e.dead = true; e.state = 'dead'; e.stT = 99; e.obj.visible = false; }
+  g.flags['trampa:carcel'] = true;
+  g.interact.applyFlags(g.flags);
   const P = g.player, col = g.world.col, cam = g.camera, rig = g.camRig;
   const pts = [
     // mazmorras: pasillo de las celdas, junto a las rejas, galerías, escalera
@@ -64,11 +68,24 @@ const r = await p.evaluate(() => {
     [-40, -10.6, -100.7], [-44, -10.6, -93.5], [-36.2, -10.6, -97.2], [-22, -10.6, -93.5], [-14.2, -10.6, -96], [-10, -8.9, -101.75], [-52, -10.6, -92], [-23.2, -10.6, -98],
     [-63.6, -11.6, -93.5], [-70, -12.7, -93.5], [-71, -12.7, -102], [-78, -12.7, -103], [-88, -12.7, -94], [-74, -10.5, -115.6],
     [18.3, -7, -120], [21, -7.6, -120], [28.5, -8.2, -122.5], [28.5, -9.4, -139.5], [28.5, -10.6, -153], [28.5, -8.2, -101],
+    // (fase 5) la cárcel de la fortaleza: el almacén de la torre junto al
+    // hueco de la trampilla; la bajada (en su boca, a media escalera, bajo el
+    // muro) y su pie; la sala de los carceleros; la cárcel (la nave, junto a
+    // las rejas, dentro de una celda, la puerta del aljibe); el aljibe (el
+    // andén, junto al pretil, la escalera que baja al agua); los pasos (junto
+    // a una celda de castigo, bajo el foso); el cuarto de los verdugos (junto
+    // al olvidadero); la capilla de los reos (junto al altar); la subida, el
+    // rellano y el paso del rastrillo, por los dos lados
+    [-106, 0, -94.4], [-106, -0.875, -91.6], [-106, -2.917, -89.2], [-106, -4.667, -87.1], [-106, -7, -83.6], [-109.4, -7, -77.4], [-102.4, -7, -83.4],
+    [-106, -7, -73.8], [-107.6, -7, -63.75], [-104.4, -7, -59.2], [-110.6, -7, -54.2], [-100.6, -7, -68.25],
+    [-98.4, -7, -68.25], [-96.2, -7, -62], [-96.2, -7, -69.8], [-94.6, -7.533, -69.8], [-97.3, -7, -53.4],
+    [-97, -7, -48.4], [-97, -7, -45.6], [-97, -7, -41], [-97.6, -7, -38.4], [-95.2, -7, -31.4], [-97, -7, -26], [-97, -7, -16.4],
+    [-98.4, -7, -12], [-95.4, -7, -9.4], [-93.2, -6.75, -12], [-92, -5.75, -12], [-90.25, -5, -12.1], [-89.25, -5, -12], [-87.8, -5, -12],
   ];
   let bad = [], n = 0, near = 0;
   for (const [x, y, z] of pts) {
     for (let k = 0; k < 12; k++)
-      for (const pitch of [-0.3, 0.22, 0.7]) {
+      for (const pitch of [-0.6, -0.3, 0.22, 0.7]) {
         P.spawn(x, y, z, 0);
         rig.snapTo(P);
         rig.yaw = (k / 12) * Math.PI * 2;

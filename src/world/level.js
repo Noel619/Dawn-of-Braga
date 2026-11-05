@@ -13,6 +13,8 @@ import { buildCanon } from './level_canon.js';
 import { buildNorthWalls } from './level_walls.js';
 import { buildCastleTop } from './level_keep.js';
 import { buildFortaleza } from './fortaleza.js';
+import { buildCarcel } from './fortaleza_carcel.js';
+import { FORT } from './fortaleza_medidas.js';
 import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
@@ -78,7 +80,18 @@ export function buildLevel() {
   const C = new WalkGrid(-100, -200, 36, -84, 0.5); // cripta (y la cripta honda)
   const B = new WalkGrid(24, -86, 74, -24, 0.5); // bodegas del canónigo
   const Dg = CASTLE.dun;
-  const D = new WalkGrid(Dg.x0, Dg.z0, Dg.x1, Dg.z1, 0.5); // mazmorras del castillo
+  const D = new WalkGrid(Dg.x0, Dg.z0, Dg.x1, Dg.z1, 0.5); // mazmorras del castillo y cárcel de la fortaleza
+  // (lo que no es suyo, aunque caiga dentro: bajo el jardín y la torre del
+  // homenaje, la cripta honda, que tiene su rejilla (C) y su roca, así que
+  // ahí las mazmorras no ponen nada (2); bajo el foso de la puerta de la
+  // fortaleza, que baja hasta y = -3,6, su roca empieza por debajo (3))
+  {
+    const cx1 = C.x0 + C.w * C.res,
+      cz1 = C.z0 + C.h * C.res;
+    D.paint(Math.max(C.x0, Dg.x0), Math.max(C.z0, Dg.z0), Math.min(cx1, Dg.x1), Math.min(cz1, Dg.z1), 2);
+    const Fo = FORT.puerta.foso;
+    D.paint(Fo.x0 - 0.4, Fo.z0 - 0.4, Fo.x1 + 0.4, Fo.z1 + 0.4, 3);
+  }
   const Ag = ALEMAN.grid;
   const U = new WalkGrid(Ag[0], Ag[1], Ag[2], Ag[3], 0.5); // el sótano del Alemán y la gruta de Leonor
   ctx.S = S; // las casas visitables pintan su huella transitable
@@ -88,6 +101,9 @@ export function buildLevel() {
   ctx.slabHoles = [];
 
   buildCastle(ctx, S, D, L);
+  // la cárcel de la fortaleza, bajo su mitad sur (por el rastrillo, da a la
+  // mazmorra del castillo; por la bajada, a la torre del homenaje)
+  buildCarcel(ctx, D, L);
   // los barrios primero: sus fachadas son los muros en los que trepan las
   // carnosidades de las calles principales
   buildNW(ctx, S, L);
@@ -146,7 +162,10 @@ export function buildLevel() {
   }
   // (hasta el suelo del Pozo de los Condenados, a -16)
   const nC = C.toColliders(ctx.col, -17.2, -1.2);
-  const nD = D.toColliders(ctx.col, Dg.y - 1.8, -0.9);
+  // (la roca de las mazmorras baja hasta el fondo del aljibe del palacio; bajo
+  // el foso, sólo hasta él)
+  const nD = D.toColliders(ctx.col, FORT.carcel.aljibe.fondo - 1.1, -0.9);
+  for (const [a, b, c, d] of D.rects(3)) ctx.col.add(a, FORT.carcel.aljibe.fondo - 1.1, b, c, FORT.puerta.foso.y - 1.1, d, 'block').cam = true;
   const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(WORLD_X0, -232, 84, 72, 1);

@@ -654,6 +654,81 @@ function hatchMesh() {
   return g;
 }
 
+// La trampilla de la bajada a la cárcel (la del almacén de la torre del
+// homenaje): dos hojas de roble, cada una de w/2 por len, herradas, con sus
+// goznes en los bordes largos del hueco (sobre el brocal) y una argolla junto
+// al borde de en medio; una cadena pasa por las dos argollas y la cierra un
+// candado. Abiertas, quedan de pie a los lados de la escalera. En local: el
+// centro del hueco, x a lo ancho y z a lo largo.
+const TRAMPA_ANG = 1.66;
+function trampaMesh(w, len) {
+  const g = new THREE.Group();
+  const wood = cloneMat(objMat('planks')),
+    dark = cloneMat(objMat('wooddark')),
+    iron = cloneMat(objMat('iron'));
+  const leaves = [];
+  const lw = w / 2 + 0.1; // (cada hoja apoya 10 cm en el brocal)
+  for (const side of [-1, 1]) {
+    // el gozne, en el borde de fuera de la hoja, a media altura de su canto
+    const pivot = new THREE.Group();
+    pivot.position.set(side * (w / 2 + 0.08), 0.06, 0);
+    const leaf = new THREE.Group();
+    // (la hoja, en local, va del gozne hacia el medio: -side·x)
+    const dir = -side;
+    const tabla = new THREE.Mesh(new THREE.BoxGeometry(lw - 0.01, 0.07, len), wood);
+    tabla.position.set((dir * (lw - 0.01)) / 2, 0, 0);
+    leaf.add(tabla);
+    // las tablas (las juntas, oscuras) y las bandas de hierro de lado a lado
+    for (let k = 1; k < 4; k++) {
+      const j = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.072, len), dark);
+      j.position.set(dir * (lw * k) / 4, 0.001, 0);
+      leaf.add(j);
+    }
+    for (const z of [-len / 2 + 0.25, -len / 6, len / 6, len / 2 - 0.25]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(lw - 0.04, 0.02, 0.09), iron);
+      b.position.set((dir * (lw - 0.01)) / 2, 0.045, z);
+      leaf.add(b);
+      for (const u of [0.15, lw * 0.5, lw - 0.15]) {
+        const c = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 0.04), iron);
+        c.position.set(dir * u, 0.058, z);
+        leaf.add(c);
+      }
+    }
+    // la argolla, junto al borde de en medio
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.014, 4, 10), iron);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(dir * (lw - 0.17), 0.05, 0);
+    leaf.add(ring);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.12), iron);
+    plate.position.set(dir * (lw - 0.08), 0.045, 0);
+    leaf.add(plate);
+    pivot.add(leaf);
+    pivot.userData.side = side;
+    g.add(pivot);
+    leaves.push(pivot);
+  }
+  // la cadena por las dos argollas y el candado
+  const chain = new THREE.Group();
+  for (let k = 0; k < 9; k++) {
+    const l = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.009, 3, 6), iron);
+    l.position.set(-0.2 + k * 0.05, 0.11, (k % 3) * 0.012);
+    l.rotation.set(Math.PI / 2, k % 2 ? Math.PI / 2 : 0, 0);
+    l.scale.set(1, 1.4, 1);
+    chain.add(l);
+  }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.05), iron);
+  lock.position.set(0.04, 0.16, 0.05);
+  lock.rotation.z = 0.25;
+  chain.add(lock);
+  const shackle = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.01, 3, 8, Math.PI), iron);
+  shackle.position.set(0.03, 0.23, 0.05);
+  shackle.rotation.z = 0.25;
+  chain.add(shackle);
+  g.add(chain);
+  g.userData = { leaves, chain, mats: [wood, dark, iron] };
+  return g;
+}
+
 // Puente levadizo: la hoja (tablones con herrajes) gira en su eje, en el
 // umbral de la puerta; alzada, tapa el vano.
 function bridgeMesh(w, len) {
@@ -1009,6 +1084,34 @@ export class Interactables {
         // (las que siempre están abiertas, ya abiertas)
         if (s.open) this.poseHatch(it, 1);
       }
+    } else if (s.kind === 'trampa') {
+      // la trampilla de dos hojas sobre una escalera (la bajada a la cárcel de
+      // la fortaleza): cerrada, se pisa; abierta, sus hojas quedan de pie a
+      // los lados, como un pretil. (x, z): donde se pone quien la abre, en la
+      // boca de la escalera; (hx, hz): el centro del hueco
+      it.obj = trampaMesh(s.w, s.len);
+      it.obj.position.set(s.hx, s.y, s.hz);
+      g.scene.add(it.obj);
+      const zn = g.zoneAt({ x: s.hx, y: s.y + 0.5, z: s.hz });
+      const pr = g.probe.sample(s.hx, s.y + 0.9, s.hz, zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0);
+      for (const m of it.obj.userData.mats)
+        if (m._u) {
+          m._u.uProbe.value.set(pr[0], pr[1], pr[2]);
+          m._u.uGround.value.set(s.y, 0.34);
+        }
+      const x0 = s.hx - s.w / 2,
+        x1 = s.hx + s.w / 2,
+        z0 = s.hz - s.len / 2,
+        z1 = s.hz + s.len / 2;
+      it.box = g.world.col.add(x0 - 0.1, s.y - 0.3, z0, x1 + 0.1, s.y + 0.095, z1);
+      it.leafBoxes = [g.world.col.add(x0 - 0.2, s.y, z0, x0 - 0.02, s.y + 0.98, z1), g.world.col.add(x1 + 0.02, s.y, z0, x1 + 0.2, s.y + 0.98, z1)];
+      for (const b of it.leafBoxes) {
+        b.enabled = false;
+        b.cam = false;
+      }
+      it.lift = 0;
+      it.r = s.r ?? 1.5;
+      this.poseTrampa(it, 0);
     } else if (s.kind === 'bridge') {
       // la hoja, en su eje (el umbral); las cadenas, de la punta a los
       // agujeros del muro
@@ -1106,6 +1209,7 @@ export class Interactables {
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
       }
       if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] || it.open ? 1 : 0);
+      if (it.kind === 'trampa' && flags[it.flag] && !it.done) this.openTrampa(it, true);
       if (it.kind === 'bridge' && flags[it.flag]) this.lowerBridge(it, true);
       if (it.kind === 'board' && flags['board:' + it.win]) it.done = true;
     }
@@ -1132,6 +1236,37 @@ export class Interactables {
     u.lidG.rotation.z = k * 2.75;
     // (con un hueco de verdad debajo, se ve lo de abajo, no el negro)
     u.hole.visible = k > 0.02 && !it.realHole;
+  }
+
+  // Las hojas de la trampilla: 0 echadas sobre el hueco, 1 de pie a los lados
+  // (un poco pasadas de la vertical, contra sus topes).
+  poseTrampa(it, k) {
+    it.lift = k;
+    const e = 1 - Math.pow(1 - Math.min(1, k), 3);
+    for (const pv of it.obj.userData.leaves) pv.rotation.z = -pv.userData.side * TRAMPA_ANG * e;
+  }
+  // Abierta (con la palanca, o al cargar la partida): la cadena, en el suelo;
+  // el hueco, para andar por él; las hojas, que no se atraviesan.
+  openTrampa(it, instant = false) {
+    it.done = true;
+    this.game.flags[it.flag] = true;
+    it.box.enabled = false;
+    for (const b of it.leafBoxes) b.enabled = true;
+    const ch = it.obj.userData.chain;
+    ch.position.set(-(it.w / 2 + 0.45), -0.085, -it.len / 2 - 0.2);
+    ch.rotation.y = 0.7;
+    if (instant) {
+      it.opening = false;
+      this.poseTrampa(it, 1);
+    } else {
+      it.opening = true;
+      this.poseTrampa(it, 0);
+    }
+    this.refreshTrampaNav(it);
+  }
+  refreshTrampaNav(it) {
+    const g = this.game;
+    for (const n of [g.navSurface, g.navDungeon]) if (n) n.refresh(it.hx - it.w / 2 - 1, it.hz - it.len / 2 - 1, it.hx + it.w / 2 + 1, it.hz + it.len / 2 + 1);
   }
 
   // Puente levadizo: 0 alzado (tapa la puerta), 1 bajado (se pisa).
@@ -1249,6 +1384,15 @@ export class Interactables {
     } else if (it.kind === 'hatch') {
       it.opening = false;
       if (it.obj) this.poseHatch(it, it.open ? 1 : 0);
+    } else if (it.kind === 'trampa') {
+      it.opening = false;
+      it.box.enabled = true;
+      for (const b of it.leafBoxes) b.enabled = false;
+      const ch = it.obj.userData.chain;
+      ch.position.set(0, 0, 0);
+      ch.rotation.y = 0;
+      this.poseTrampa(it, 0);
+      this.refreshTrampaNav(it);
     } else if (it.kind === 'bridge') {
       it.lowering = false;
       it.upBox.enabled = true;
@@ -1586,6 +1730,8 @@ export class Interactables {
         return this.game.flags['pozo:salida'] ? 'Bajar por el pozo' : 'Asomarse al pozo';
       case 'bridge':
         return 'Soltar el torno del puente';
+      case 'trampa':
+        return this.game.inventory.has('palanca') ? 'Arrancar la cadena' : 'Examinar la trampilla';
       case 'board':
         return 'Tapiar la ventana';
       case 'plank':
@@ -1829,6 +1975,27 @@ export class Interactables {
       }
       return true;
     }
+    if (it.kind === 'trampa') {
+      if (it.done) return true;
+      const at = { x: it.hx, y: it.y, z: it.hz };
+      if (!inv.has('palanca')) {
+        g.ui.toast(MSG.trampaCerrada, 6);
+        g.audio && g.audio.play('locked', at);
+        return true;
+      }
+      // la palanca bajo una argolla: salta de la madera con sus clavos, cae
+      // la cadena y las dos hojas se abren sobre la escalera; lo que rascaba
+      // abajo lo ha oído
+      p.playInteract('interact', Math.atan2(it.hx - p.pos.x, it.hz - p.pos.z));
+      g.audio && g.audio.play('boards', at);
+      g.later(320, () => g.audio && g.audio.play('clang', at, { k: 0.7 }));
+      g.later(700, () => g.audio && g.audio.play('doorOpen', at));
+      this.openTrampa(it);
+      g.ui.toast(MSG.trampaAbre, 6);
+      g.noise(it.hx, it.y - 3, it.hz, 9);
+      g.saveGame();
+      return true;
+    }
     if (it.kind === 'bridge') {
       if (it.done) return true;
       // se suelta el freno del torno y el puente cae con sus cadenas
@@ -1935,6 +2102,10 @@ export class Interactables {
           const d = Math.hypot(g.player.pos.x - tip.x, g.player.pos.z - tip.z);
           if (d < 14) g.camRig.shake(0.5 * (1 - d / 14));
         }
+      }
+      if (it.kind === 'trampa' && it.opening) {
+        this.poseTrampa(it, Math.min(1, it.lift + dt / 1.3));
+        if (it.lift >= 1) it.opening = false;
       }
       if (it.kind === 'hatch' && it.opening && it.obj) {
         const k = Math.min(1, it.lift + dt / 0.7);

@@ -89,7 +89,7 @@ export class Enemy {
   // (data.air: trepando por el techo o cayendo de él, fuera del alcance)
   // (y Henrique, que es un aliado, nunca)
   get lockable() {
-    return !this.dead && this.obj.visible && this.state !== 'ceiling' && !this.data.air && !this.scripted && !this.T.friendly;
+    return !this.dead && this.obj.visible && this.state !== 'ceiling' && !this.data.air && !this.scripted && !this.T.friendly && !this.spec.caged;
   }
 
   reset() {
@@ -181,7 +181,9 @@ export class Enemy {
   }
 
   alert() {
-    if (this.aware) return;
+    // (las encerradas en su celda —spec.caged— no despiertan: la reja no se
+    // abre; ver 'dormant')
+    if (this.aware || this.spec.caged) return;
     this.aware = true;
     // (la que despierta a su manera: T.wake; si devuelve true, se encarga
     // ella de todo)
@@ -352,7 +354,7 @@ export class Enemy {
       this.vx = ((this.pos.x - fromX) / d) * kb;
       this.vz = ((this.pos.z - fromZ) / d) * kb;
       this.atk = null;
-    } else if (this.state === 'dormant' || this.state === 'alert') {
+    } else if ((this.state === 'dormant' || this.state === 'alert') && !this.spec.caged) {
       this.state = 'chase';
     }
     if (T.onHit) T.onHit(this, 'hit', dmg, heavy);
@@ -588,6 +590,18 @@ export class Enemy {
         }
         // si estás cerca sin que te vea, se le oye: rezos, jadeos, sollozos
         if (d < 14 && this.game.audio && Math.random() < dt * 0.07) this.game.audio.enemyVoice(this, 'idle');
+        // (encerrada en su celda: de cara a su reja, y si te oye cerca, la
+        // sacude a puñetazos)
+        if (this.spec.caged) {
+          this.yaw = approachAngle(this.yaw, this.home.yaw, 3 * dt);
+          if (this.idle === 'pound' && d < 9 && Math.abs(player.pos.y - this.pos.y) < 3) {
+            this.data.rattle = (this.data.rattle ?? Math.random()) - dt;
+            if (this.data.rattle <= 0) {
+              this.data.rattle = 0.8 + Math.random() * 1.4;
+              this.game.audio && this.game.audio.play('barsRattle', { x: this.pos.x + Math.sin(this.yaw) * 0.5, y: this.pos.y + 1.5, z: this.pos.z + Math.cos(this.yaw) * 0.5 });
+            }
+          }
+        }
         if (this.sees) this.alert();
         break;
       case 'ceiling':
@@ -731,7 +745,7 @@ export class Enemy {
         this.vz = damp(this.vz, 0, 5, dt);
         const dur = this.state === 'hurt' ? T.clips.hurt.dur : T.clips.stagger.dur;
         if (this.stT >= dur) {
-          this.state = 'chase';
+          this.state = this.spec.caged ? 'dormant' : 'chase';
           this.cooldown = 0.2 + Math.random() * 0.4;
           this.anim.stop(0.15);
         }

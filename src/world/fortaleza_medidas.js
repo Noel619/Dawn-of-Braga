@@ -171,4 +171,42 @@ export const FORT = {
   // la muralla norte (level_walls.js): su cara de dentro, su torre de en medio
   // y la de la esquina de poniente; el muro que cierra el jardín por poniente
   norte: { zi: -122, torre: -121, esq: { x: -141, z: -124, w: 8, h: 16 }, oeste: { x0: -141, x1: -138 } },
+  // la cárcel de la fortaleza (fase 5; fortaleza_carcel.js), bajo la mitad
+  // sur, a y: dos metros más honda que la mazmorra del castillo (yc), con la
+  // que da por el rastrillo. Sus muros, en la rejilla de medio metro de las
+  // mazmorras (y el hueco del almacén, en la de metro de la losa del suelo);
+  // los tramos de las bóvedas, de 4,5:
+  // - la bajada, desde la trampilla del almacén de la torre del homenaje: su
+  //   escalera (de x0 a x1, de su boca, z0, a ras del almacén, a su pie, z1, en
+  //   n peldaños); el hueco del suelo llega casi a la cara del muro del patio
+  //   (hueco), y de ahí la escalera baja por debajo de él; la losa del suelo
+  //   del mundo (de un metro de grueso) se abre hasta pasado el muro (losa):
+  //   entre el hueco y el muro queda una tira de suelo fina;
+  // - la sala de los carceleros, al pie, con una bóveda de arista;
+  // - la cárcel: tres naves sobre columnas (sus líneas, xs y zs), con las
+  //   celdas en las de los lados; en el tramo 'paso' de levante, en vez de
+  //   celda, la puerta del aljibe;
+  // - el aljibe del palacio, bajo el patio de honor (sus líneas; el andén, de
+  //   su muro de poniente a anden; el agua, la marca del lleno y el fondo; el
+  //   tramo del óculo, bajo el brocal del patio);
+  // - al sur, por el eje (y pasos de ese ancho, como las galerías de la
+  //   mazmorra del castillo): el cuarto de los verdugos y, pasado el foso de
+  //   la puerta por debajo, la capilla de los reos; de ella, la subida al
+  //   rellano del rastrillo (en n peldaños), y el rastrillo, en el muro del
+  //   fondo del pasillo de las celdas (de x0 a x1; la reja, en x)
+  carcel: {
+    y: -7,
+    yc: -5,
+    bajada: { x0: -107, x1: -105, z0: -93, z1: -84.5, n: 24, hueco: -89, losa: -88 },
+    carceleros: { x0: -110.5, x1: -101.5, z0: -84.5, z1: -76 },
+    celdas: { xs: [-112, -108.5, -103.5, -100], zs: [-75, -70.5, -66, -61.5, -57, -52.5], paso: 1 },
+    aljibe: { xs: [-99, -94.5, -90, -85.5, -81], zs: [-70.5, -66, -61.5, -57, -52.5], anden: -95.5, agua: -8.3, lleno: -7.25, fondo: -9.4, pozo: [2, 2] },
+    eje: -97,
+    paso: 2,
+    verdugos: { x0: -100, x1: -94, z0: -41.5, z1: -29 },
+    capilla: { x0: -100.5, x1: -93.5, z0: -15.5, z1: -8.5 },
+    subida: { x0: -93.5, x1: -91, n: 8 },
+    rellano: { x0: -91, x1: -89.5 },
+    rastrillo: { x: -89.25, x0: -89.5, x1: -89, z: -12, w: 2, h: 2.4 },
+  },
 };

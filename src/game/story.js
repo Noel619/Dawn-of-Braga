@@ -630,6 +630,33 @@ Lo último, de otra tinta y de prisa:
 La llave de la reja que me toca la guardo en el arca de la cámara del Rey, la de los tres sellos bermejos. En la de tres, no en otra. Las de dos sellos negros tienen cerradura de resorte, que las mandó poner el alférez para los ladrones: que no las abra quien no sepa.
 Me subo con el sello. Que no lo use nadie mientras yo viva.`,
   },
+  // la cárcel de la fortaleza: el libro de los presos (en la sala de los
+  // carceleros) y lo último del carcelero mayor (junto a la palanca del
+  // rastrillo, que bajó él)
+  libroCarcel: {
+    title: 'Libro de la cárcel del Rey',
+    text: `En la mesa de los carceleros, el libro de los presos, de mano del carcelero mayor:
+
+Día seis del asedio. Entran dos de los de fuera, cogidos en la cava. No gritan: cantan.
+Día ocho. Un mozo de las cuadras del Rey, que mordió al herrador. Dice que no tiene hambre.
+Día diez. Una dueña de la reina, que se arrancó los dientes rezando. La trae su marido, y se queda a la puerta.
+Día doce. Ya no se apunta quién entra. Los baja la guardia por la trampilla de la torre, atados. Manda el Rey que no se mate a ninguno: que se guarden, por si sanan.
+
+Lo último, de otra tinta y de prisa:
+No duermen. No comen. Esta noche se han vuelto todos a la vez hacia el mismo muro, el de levante, y se han puesto de rodillas.`,
+  },
+  carceleroMayor: {
+    title: 'Lo último del carcelero mayor',
+    text: `En la tapa del libro de las raciones, junto a la palanca del rastrillo, de su mano:
+
+Ha sonado la campana. Abajo se han levantado todos a la vez, como si los llamaran por su nombre. Unos han reventado sus rejas como si fueran de mimbre; los otros siguen dentro, aporreándolas.
+
+Arriba han echado la cadena a la trampilla. No los culpo.
+
+Por esta escalera se sube a la cárcel del castillo, y allí quedan hombres, y el caballero de la primera celda, el que no quiso arrodillarse. He bajado el rastrillo. La palanca es mía, y no la subo.
+
+Que no suba nada por aquí.`,
+  },
   alcaide: {
     title: 'Últimas líneas del alcaide',
     text: `En el suelo de la cámara del torno, junto a él, de su mano:
@@ -1172,8 +1199,7 @@ export const MSG = {
   escombroTaller: 'Escombro hasta la clave del arco: las piedras de la muralla del taller, que se vino abajo con el bolaño. Entre ellas se ve luz, y algo de madera. Por aquí no se pasa.',
   tabique: 'Un tabique de piedra y cal, nuevo, cierra el arco. Desde este lado no hay dónde hincar nada.',
   tabiqueCae: 'Embistes el tabique con el hombro. La cal aún estaba tierna: se viene abajo. La armería queda a un paso.',
-  tapiaCeldas: 'Una pared de ladrillo nuevo donde antes hubo una puerta; la cal todavía está fresca. Alguien arañó en ella: LO QUE SUBE NO ES NUESTRO.',
-  tapiaCae: 'La cuerda se parte. El sillar cae sobre el tapiado y se lo lleva por delante: al otro lado, el pasillo de las celdas.',
+  tapiaCae: 'La cuerda se parte. El sillar cae sobre el tapiado y se lo lleva por delante.',
   // la fortaleza
   corteArea: 'LA CORTE DE LOS INFIELES',
   corteVencida: 'LA CORTE HA CAÍDO',
@@ -1184,11 +1210,23 @@ export const MSG = {
   torrePatioAbre: 'Quitas la tranca de la puerta de la torre. Fuera, la escalinata baja al patio de honor.',
   almacenTorre: 'Bajo el rellano, la puerta del almacén de la torre, cegada con tablones y una cadena. Huele a grano podrido.',
   almacenDentro: 'La puerta del patio, cegada: tablones clavados, una cadena y, al otro lado, el macizo de la escalinata. Por aquí no se sale.',
-  bajadaTorre: 'Una trampilla de hierro en el suelo, con su cadena y su candado: la bajada a la cárcel de la fortaleza. Por las rendijas sube un frío de pozo, y algo que rasca.',
   pasadizoCede: 'Empujas la puerta y cede de golpe: el fuego la dejó en pie por fuera, pero por dentro era carbón. Las hojas y la tranca, quemada, se vienen abajo.',
   camastroRey: 'Un camastro de soldado junto al fuego, con la manta revuelta. Aquí dormía el Rey desde la noche de la campana: no quiso volver a su cama.',
   fuentePatio: 'La fuente del patio de honor no corre desde el día del cerco. En la taza seca, un yelmo y las hojas del olmo.',
   antecamaraTranca: 'La puerta de la antecámara del Rey, atrancada por dentro. Por la rendija sale el olor de las velas.',
+  // la cárcel de la fortaleza (fortaleza_carcel.js): la trampilla del almacén
+  // de la torre, lo que hay abajo y el rastrillo del fondo del pasillo de las
+  // celdas (su palanca está de su lado)
+  trampaCerrada: 'La trampilla de la bajada a la cárcel: dos hojas de roble herradas, con una cadena por sus argollas y un candado. Por las rendijas sube un frío de pozo, y algo que rasca. Con un hierro se podría arrancar una argolla de la madera.',
+  trampaAbre: 'Metes la palanca bajo una argolla y tiras: salta de la madera con sus clavos y la cadena se escurre. Las dos hojas se abren sobre una escalera que baja a oscuras.',
+  celdaRayas: 'Rayas en la pared, de cinco en cinco, hechas con una piedra: once días. Al lado, con la misma piedra, una campana.',
+  aljibePalacio: 'El aljibe del palacio, a la mitad. Por el óculo de la bóveda baja la luz del brocal del patio de honor, y la soga, cortada. Del agua sube un olor dulce.',
+  olvidadero: 'El olvidadero: un pozo en el suelo, cerrado con una reja. Al que echaban ahí no se le volvía a sacar. Abajo, huesos, y uno sentado contra la pared, con la cara vuelta hacia la reja.',
+  tajoVerdugo: 'El tajo del verdugo del Rey, negro de sangre vieja, con el hacha clavada. En el muro, en sus ganchos, la espada de la justicia: ancha y sin punta. No salía de aquí más que para lo suyo.',
+  pasoFoso: 'Bajo el foso de la puerta, la bóveda rezuma: el verdín le chorrea por la clave y gotea en charcos. Encima están las estacas, y lo que cayó en ellas.',
+  altarReos: 'El altar de los reos: aquí oían su última misa los que iban a morir. Los que quedan rezan de rodillas, de espaldas a él, vueltos hacia levante: hacia la Sé.',
+  rastrilloCarcel: 'El rastrillo no cede: está echado hasta el suelo y su palanca está al otro lado, en el muro del rellano. Enfrente de ella, sentado, un hombre que no se mueve. Más allá, una escalera baja hacia una luz.',
+  rastrilloCarcelSube: 'La palanca cede de un tirón. El rastrillo sube chirriando por sus ranuras hasta perderse en el muro: al otro lado, el pasillo de las celdas, y la primera, la tuya.',
   // la reina y los jardines del Rey
   camaReina: 'La cama de la reina, bajo su dosel, tapada con la sábana. Por debajo se nota todavía la forma de la almohada. Junto a la cama, la silla del Rey, de cara a ella, y en el candelero, la vela que se acabó.',
   camaRey: 'La cama del Rey, con la colcha echada a un lado: se levantó de prisa. A sus pies, el arcón de la reina, y encima, doblada, su toca de lino.',
@@ -1507,4 +1545,14 @@ export const AREA_NAMES = {
   adarve_jardin: 'Adarve del jardín',
   antecamara: 'Antecámara del Rey',
   tesoro: 'Tesoro del Rey',
+  // la cárcel de la fortaleza (fortaleza_carcel.js)
+  carcel_bajada: 'Bajada a la cárcel',
+  carcel_carceleros: 'Sala de los carceleros',
+  carcel_celdas: 'Cárcel del Rey',
+  aljibe_palacio: 'Aljibe del palacio',
+  carcel_paso: 'Paso de las celdas de castigo',
+  carcel_verdugos: 'Cuarto de los verdugos',
+  carcel_foso: 'Paso bajo el foso',
+  carcel_capilla: 'Capilla de los reos',
+  carcel_rastrillo: 'Rastrillo de la cárcel',
 };

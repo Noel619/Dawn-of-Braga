@@ -412,12 +412,16 @@ function almacen(ctx, L) {
   const wb = ctx.wb;
   const rr = new RNG(7711);
   const [RA, RG] = [RS[0], RN[0]];
-  for (const [a, b, c, d, room] of [
-    [ix0, M.z1, ix1, iz1, RA],
-    [cx1 + C.t, iz0, ix1, M.z0, RG],
-    [ix0, cz1 + C.t, cx1 + C.t, M.z0, RG],
+  // (el hueco de la bajada a la cárcel y su brocal, fuera del enlosado)
+  const BJ = FORT.carcel.bajada;
+  const hueco = [BJ.x0, BJ.z0, BJ.x1, BJ.hueco];
+  const brocal = [BJ.x0 - 0.22, BJ.z0 - 0.22, BJ.x1 + 0.22, BJ.hueco];
+  for (const [a, b, c, d, room, holes] of [
+    [ix0, M.z1, ix1, iz1, RA, [brocal]],
+    [cx1 + C.t, iz0, ix1, M.z0, RG, []],
+    [ix0, cz1 + C.t, cx1 + C.t, M.z0, RG, []],
   ])
-    wb.box('flag', a, -0.05, b, c, 0.02, d, { faces: 't', ao: false, sub: 2.5, uv: 0.7, room, tint: [0.66, 0.63, 0.58] });
+    for (const r of subtractRects([a, b, c, d], holes)) wb.box('flag', r[0], -0.05, r[1], r[2], 0.02, r[3], { faces: 't', ao: false, sub: 2.5, uv: 0.7, room, tint: [0.66, 0.63, 0.58] });
   // --- el almacén
   wb.setRoom(RA);
   for (let z = M.z1 + 1.0; z < iz1 - 3.5; z += 1.15) P.cask(ctx, ix1 - 0.8, 0, z, Math.PI / 2, { r: 0.52, room: RA });
@@ -427,7 +431,7 @@ function almacen(ctx, L) {
     [-91.1, iz1 - 1.6],
   ])
     P.barrel(ctx, x, 0, z, {});
-  for (let k = 0; k < 5; k++) P.jar(ctx, -106.8 + k * 0.82, 0, iz1 - 0.55, 1.15 + (k % 2) * 0.15, { room: RA, broken: k === 2 });
+  for (let k = 0; k < 5; k++) P.jar(ctx, -104.1 + k * 0.82, 0, iz1 - 0.55, 1.15 + (k % 2) * 0.15, { room: RA, broken: k === 2 });
   P.firewood(ctx, ix0 + 0.7, 0, -97.6, Math.PI / 2, 4);
   P.firewood(ctx, ix0 + 0.7, 0, -99.4, Math.PI / 2, 3);
   for (const [x, z] of [
@@ -457,17 +461,21 @@ function almacen(ctx, L) {
     wb.cylinder('planks', px, 1.0, pz, 0.16, 0.19, 0.3, 8, { ao: false, capBot: true, room: RA });
     ctx.col.add(px - 0.95, 0, pz - 0.95, px + 0.95, 1.0, pz + 0.95);
   }
-  // la trampilla de la bajada a la cárcel de la fortaleza: de hierro, con su
-  // cadena y su candado (fase 5)
+  // la bajada a la cárcel de la fortaleza (fase 5): el hueco del suelo, con
+  // su brocal de sillería a ras, que llega hasta el muro del patio; lo tapa
+  // la trampilla, dos hojas de roble herradas, con una cadena por sus
+  // argollas y un candado (game/interact.js: la palanca arranca una argolla).
+  // La escalera, por debajo del muro, baja a la cárcel (fortaleza_carcel.js)
   {
-    const hx = -106.2,
-      hz = -91.2;
-    wb.box('iron', hx - 0.75, 0.02, hz - 0.6, hx + 0.75, 0.07, hz + 0.6, { ao: false, faces: 'tnsew', room: RA, tint: [0.62, 0.6, 0.58] });
-    for (const z of [hz - 0.3, hz + 0.3]) wb.box('iron', hx - 0.78, 0.07, z - 0.05, hx + 0.78, 0.1, z + 0.05, { ao: false, room: RA });
-    for (let k = 0; k < 14; k++) wb.geometry('iron', new THREE.TorusGeometry(0.035, 0.009, 3, 6), new THREE.Matrix4().compose(V(hx - 0.55 + k * 0.06, 0.12, hz), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, k % 2 ? Math.PI / 2 : 0, 0)), V(1, 1.4, 1)), { ao: false, room: RA });
-    wb.box('iron', hx + 0.3, 0.07, hz - 0.12, hx + 0.5, 0.3, hz + 0.12, { ao: false, room: RA, tint: [0.5, 0.45, 0.4] });
-    P.decal(ctx, hx, 0.03, hz, 2.0, 'splat', 0.4, { tint: [0.3, 0.32, 0.3] });
-    L.interact.push({ kind: 'examine', id: 'x_bajada_torre', text: 'bajadaTorre', x: hx, y: 0, z: hz + 1.1, r: 1.5 });
+    for (const r of subtractRects(brocal, [hueco])) wb.box('ashlar', r[0], -0.05, r[1], r[2], 0.025, r[3], { faces: 'tnswe', ao: false, room: RA, tint: SILLAR, sub: 2 });
+    // (la losa del suelo del mundo, de un metro de grueso, se abre hasta pasado
+    // el muro: si no, al que baja le daba en la cabeza donde acaba el hueco;
+    // la tira de suelo que queda entre el hueco y el muro es fina)
+    ctx.floorHoles.push([BJ.x0, BJ.z0, BJ.x1, BJ.losa]);
+    ctx.col.add(BJ.x0, -0.1, BJ.hueco, BJ.x1, 0, BJ.losa).cam = true;
+    const bx = (BJ.x0 + BJ.x1) / 2;
+    L.interact.push({ kind: 'trampa', id: 't_bajada_carcel', x: bx, y: 0, z: BJ.z0 - 0.75, hx: bx, hz: (BJ.z0 + BJ.hueco) / 2, w: BJ.x1 - BJ.x0, len: BJ.hueco - BJ.z0, flag: 'trampa:carcel', r: 1.5 });
+    P.decal(ctx, bx, 0.03, BJ.z0 - 0.9, 1.6, 'splat', 0.4, { tint: [0.3, 0.32, 0.3] });
   }
   // por dentro, la puerta del patio (bajo el rellano de la escalinata),
   // cegada: su arco, los tablones y la cadena

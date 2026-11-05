@@ -363,10 +363,12 @@ donde estaba, el patio de armas llega hasta **la puerta de la fortaleza** y su f
 al otro lado. Lo que dejó el asedio: los caballos de frisa ante el foso, un carro, los barriles, los bolaños de los
 trabucos, los muertos y sus cuervos.
 
-**La bajada tapiada.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
-celdas, una pared de ladrillo nuevo con la cal todavía fresca, donde antes hubo una puerta; arañado en ella, LO QUE
-SUBE NO ES NUESTRO. La escalera que había detrás, la de la torre vieja, ya no lleva a ninguna parte: en la fase 5
-del plan, esa pared será el rastrillo de las mazmorras de la fortaleza (el atajo a la celda).
+**El rastrillo.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
+celdas, donde estuvo la puerta de la escalera de la torre vieja, un **rastrillo** echado hasta el suelo en su marco
+de sillería, y encima, arañado en el enlucido, LO QUE SUBE NO ES NUESTRO. Entre sus barrotes, un rellano con su
+antorcha; en su muro, la palanca, que no se alcanza, y enfrente, sentado, un hombre que no se mueve; más allá, una
+escalera que baja hacia una luz y un altar. Es el cabo de la cárcel del Rey: desde ella se sube y la palanca abre el
+atajo a la celda (`world/level_castle.js`).
 
 **La fortaleza-palacio.** Al norte del castillo viejo, entre él y la muralla norte, la fortaleza del Rey: un solo
 conjunto, como la alcáçova de Lisboa (`PLAN_FORTALEZA.md`). Cuatro crujías alrededor de **un patio de honor** con su
@@ -420,8 +422,10 @@ mesa con la vela y la copa, su armadura de la frontera, su estandarte enrollado,
 guardias, y **el dormitorio**, con sus jergones; la puerta de la escalinata, atrancada por dentro, se desatranca
 desde aquí: el atajo al patio de honor. En la planta baja, **el almacén** (los toneles, las tinajas, la cecina
 colgada de las vigas, el pozo de la torre, la puerta del patio cegada bajo el rellano de la escalinata, **una
-ampolla** y un penitente que come) y **el granero** (los sacos, la muela); en el suelo del almacén, **la trampilla de
-hierro** de la bajada a la cárcel de la fortaleza, con su cadena y su candado (por las rendijas sube algo que rasca).
+ampolla** y un penitente que come) y **el granero** (los sacos, la muela); en el suelo del almacén, junto a las
+tinajas, **la trampilla** de la bajada a la cárcel: dos hojas de roble herradas, con una cadena por sus argollas y su
+candado (por las rendijas sube un frío de pozo, y algo que rasca). Con la palanca se arranca una argolla de la madera
+y las hojas se abren sobre la escalera.
 Arriba, a +18, **la sala del trono**, a doble altura, partida por tres arcos de sillería sobre dos pilares: el
 enlucido pintado de despiece fingido sobre su zócalo de cortinaje, los ajimeces a la luna, las coronas de velas y los
 paños del Rey; contra el muro del patio, bajo la ventana encendida, **el estrado** con el trono vacío y, a su pie,
@@ -430,6 +434,33 @@ abovedada, con sus óculos a la luna y sus vanos de tres en tres sobre la sala (
 con sus virotes). Por encima, la caseta del caracol sale a **la terraza**, a 28 m: la chimenea, el fanal apagado, la
 caldera de la pez, los montones de piedras, los muertos de la última defensa y, junto al parapeto del norte, **el
 Caballero de la Orden** con el pendón del Rey (`world/fortaleza_torre.js`).
+
+**La cárcel del Rey.** Bajo la fortaleza, dos metros más honda que la mazmorra del castillo. Por la trampilla del
+almacén de la torre se baja por **la bajada**, una escalera recta y empinada bajo su bóveda en rampa que pasa por
+debajo del muro del patio (en ella, uno que aporrea los peldaños, vuelto hacia la trampilla), a **la sala de los
+carceleros**, bajo una bóveda de arista de muro a muro: la mesa con la vela, la jarra y los dados, y en ella **el
+libro de la cárcel** (lo que entró en los días del asedio, y lo último, de prisa: esta noche se han vuelto todos a la
+vez hacia el muro de levante y se han puesto de rodillas); el tablero de las llaves, con los huecos de las que faltan,
+los grilletes, el brasero y un guarda. De ella, **la cárcel**: tres naves de bóvedas de arista sobre columnas, con sus
+fajones de sillería; las de los lados, enrejadas hasta la bóveda entre columna y columna, son las celdas, con su paja
+y sus argollas. Unas, las reventaron desde dentro (una puerta arrancada en el suelo de la nave, con el cubo y la
+parihuela de los muertos; en una celda, uno que come; en otra, **una ampolla**; en otra, rayas de cinco en cinco, once
+días, y al lado una campana); en las demás siguen encerrados los que no salieron: aporrean la reja cuando te oyen, o
+rezan en el fondo, de rodillas hacia la Sé. Por la bóveda anda un rastrero. Una puerta de la nave de levante da al
+**aljibe del palacio**, bajo el patio de honor: cuatro naves de bóvedas de arista sobre columnas que salen del agua
+negra, a la mitad; el andén con su pretil, la escalera que baja al agua y, por el óculo de una clave, la luz del
+brocal del patio y la soga cortada. En el andén, un Campanero; junto a la escalera, unos virotes. Al sur, por el eje
+de la puerta de la fortaleza: **el paso de las celdas de castigo** (dos nichos en la roca, con su reja y su candado, y
+dentro, huesos; un muerto a medio arrastrar), **el cuarto de los verdugos** (el tajo con el hacha, la espada de la
+justicia del Rey colgada del muro, las capuchas en sus clavos, la mesa de los hierros, el cepo y, en el suelo, **el
+olvidadero**: un pozo con su reja, y abajo, huesos; el verdugo, de guardia), **el paso bajo el foso**, cuya bóveda
+rezuma (por encima están las estacas), y **la capilla de los reos**: el altar contra el muro de poniente, con su
+crucifijo y sus velas, y los que quedan rezando de espaldas a él, vueltos hacia levante. De la capilla sube una
+escalera a **un rellano**, ya a la altura de la mazmorra del castillo: en su muro, **la palanca del rastrillo**, y
+enfrente, sentado contra el muro con su farol, **el carcelero mayor** y lo último que escribió («He bajado el
+rastrillo. La palanca es mía, y no la subo»). Subida la palanca, el rastrillo se mete en la fábrica por sus ranuras y
+al otro lado está el pasillo de las celdas del principio, y la primera, la tuya: el atajo
+(`world/fortaleza_carcel.js`, con sus medidas en `FORT.carcel`).
 
 **La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta (en el eje de
 la torre del homenaje), con sus dos rastrillos (el de fuera, echado; el de dentro, alzado en su ranura, con las
@@ -1029,7 +1060,10 @@ src/
                         fortaleza_torre.js: la torre del homenaje por dentro (sus cinco plantas, el muro de
                         carga, el caracol, la galería, la sala del trono, la terraza); fortaleza_puerta.js: la
                         puerta (el paso, el rastrillo, la cámara del torno, el foso y el puente), el cuerpo de
-                        guardia, la armería, el taller del ballestero y el cadalso; fortaleza_salon.js: el gran salón, su armadura, la galería en el grueso del
+                        guardia, la armería, el taller del ballestero y el cadalso; fortaleza_carcel.js: la
+                        cárcel del Rey (la bajada, la sala de los carceleros, las celdas, el aljibe del palacio,
+                        los pasos, el cuarto de los verdugos, la capilla de los reos, la subida y el rastrillo);
+                        fortaleza_salon.js: el gran salón, su armadura, la galería en el grueso del
                         muro y la Corte; fortaleza_reina.js: el estrado de las damas, la sala de la reina y su
                         torre; fortaleza_rey.js: la antecámara, la cámara del Rey, la torre de la coracha (el
                         tesoro, el oratorio, el altar, el sobrado y el puente al adarve de levante) y el pasadizo;
@@ -1136,7 +1170,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         holes.mjs      busca zonas transitables sin suelo visible (con «alto», lo que está
                                        en alto —también las plantas de la torre del homenaje, la planta
                                        alta de la puerta de la fortaleza, el adarve de levante, la terraza
-                                       de la cancillería, el adarve del jardín y el mirador— y bajo el castillo, recorrido como
+                                       de la cancillería, el adarve del jardín y el mirador— y bajo el castillo
+                                       y la fortaleza —las mazmorras, la cárcel del Rey—, recorrido como
                                        andaría el jugador)
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
@@ -1154,9 +1189,11 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; lo de poniente del patio (la
                                        halconera, las cuadras, el pajar, la fragua, el corral y la poterna,
-                                       atrancada); con «torre», la puerta de la
-                                       fortaleza (de la guardia al torno, y por el puente al patio de armas) y
-                                       la torre del homenaje (del pasadizo del Rey a la terraza)
+                                       atrancada) y el rastrillo de la cárcel, echado; con «torre», la puerta
+                                       de la fortaleza (de la guardia al torno, y por el puente al patio de
+                                       armas) y la torre del homenaje (del pasadizo del Rey a la terraza); con
+                                       «carcel», el atajo al revés: del pasillo de las celdas, por la cárcel del
+                                       Rey, a la trampilla del almacén de la torre
                         fortalezawalk.mjs la fortaleza a pie: de la coracha al altar y al pasadizo, el caracol al
                                        oratorio del Rey, la tribuna y la llave del capellán (el cordón que cae),
                                        el altar de la capilla, la cámara del Rey y su escalera, el tesoro, las
@@ -1169,7 +1206,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        cadalso, el boquete, el taller y su tabique); la torre de la coracha a
                                        +12, el adarve de levante, la terraza y la puerta del Tombo; el jardín
                                        del Rey, de la puerta de la reina al mirador; la poterna (SOLO4=1: sólo
-                                       esto último, lo de la fase 4)
+                                       lo de la fase 4); la cárcel del Rey, de la trampilla (sin palanca y con
+                                       ella) al rastrillo, sala a sala, con lo que hay que coger y leer, y la
+                                       palanca que lo sube (SOLO5=1: sólo la cárcel)
                         corte.mjs      la Corte de los Infieles, de principio a fin
                         caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
                                        de la acometida y el golpe de gracia, el hueco tras el salto, la
@@ -1180,9 +1219,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         camclip.mjs    la cámara en el castillo (también la halconera, las cuadras, la fragua, el
                                        corral y la poterna), las mazmorras, la torre del homenaje, la puerta
                                        de la fortaleza, el jardín del Rey y el mirador, la torre de la coracha
-                                       y el adarve de levante, la catedral y la cripta, contra
-                                       muros, rejas y en escaleras, en muchas orientaciones: que no quede tras
-                                       un muro ni pegada
+                                       y el adarve de levante, la cárcel del Rey, la catedral y la cripta,
+                                       contra muros, rejas y en escaleras, en doce orientaciones y cuatro
+                                       inclinaciones (también mirando desde el suelo): que no quede tras un
+                                       muro ni pegada
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)

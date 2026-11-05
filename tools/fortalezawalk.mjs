@@ -1,11 +1,13 @@
-// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 4): de la coracha a todas
+// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 5): de la coracha a todas
 // sus salas, por sus caracoles, sus escaleras, sus tribunas, su galería y su
 // pasadizo; la torre del homenaje, de abajo arriba, y la puerta, con su
-// guardia, su torno, su puente y su cadalso; abriendo sus puertas y cogiendo
-// lo que hay en ellas, como un jugador (andando de punto en punto, sin
-// teletransportes salvo para volver).
+// guardia, su torno, su puente y su cadalso; la cárcel, de la trampilla del
+// almacén de la torre al rastrillo de la mazmorra del castillo; abriendo sus
+// puertas y cogiendo lo que hay en ellas, como un jugador (andando de punto en
+// punto, sin teletransportes salvo para volver).
 //   node tools/fortalezawalk.mjs      (requiere npx vite --port 5199)
 //   SOLO4=1 node tools/fortalezawalk.mjs   (sólo lo de la fase 4)
+//   SOLO5=1 node tools/fortalezawalk.mjs   (sólo lo de la fase 5: la cárcel)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
@@ -85,14 +87,21 @@ await p.evaluate(() => {
 });
 const T = (s) => p.evaluate(s);
 const out = [];
-// (SOLO4=1: sólo lo de la fase 4, los recorridos 12 a 14)
-const solo4 = !!process.env.SOLO4;
-const step4 = async (name, s) => {
+// (SOLO4=1: sólo lo de la fase 4, los recorridos 12 a 14; SOLO5=1, sólo lo de
+// la fase 5, el 15)
+const solo = process.env.SOLO4 ? 4 : process.env.SOLO5 ? 5 : 0;
+const run = async (name, s) => {
   const r = await T(s);
   out.push(name + ': ' + JSON.stringify(r));
 };
 const step = async (name, s) => {
-  if (!solo4) await step4(name, s);
+  if (!solo) await run(name, s);
+};
+const step4 = async (name, s) => {
+  if (!solo || solo === 4) await run(name, s);
+};
+const step5 = async (name, s) => {
+  if (!solo || solo === 5) await run(name, s);
 };
 // 1. de la coracha a la torre de la coracha (a su altura), el altar
 await step('coracha', "(()=>{const g=__game;g.player.spawn(-60,9,-100.8,Math.PI);__sim(0.5);return __walk([[-60,-95.4],[-63,-95.4],[-66.5,-95.4]])})()");
@@ -156,7 +165,7 @@ await step('estrado', "(()=>{__walk([[-128.8,-93.4],[-128.8,-94.0]]);const d=__u
 await step('d_reina', "__ir('d_reina', 0.9)");
 await step('sala de la reina', "(()=>{const g=__game;g.player.spawn(-131.5,5.5,-94,Math.PI/2);__sim(0.3);__walk([[-128.8,-94.0]]);const d=__useHere('d_sala_reina');const w=__walk([[-126.6,-94.0],[-123,-94.0],[-117,-94]]);return {d,w}})()");
 // 9. la Corte; el cuerpo de guardia y la puerta (el rastrillo)
-await step('corte', "(()=>{const g=__game;g.player.maxHp=g.player.hp=1e6;g.player.spawn(-128.4,0,-60,Math.PI);__sim(0.3);const w=__walk([[-128.4,-64],[-124.3,-66],[-124.3,-80],[-124.3,-83.5]]);return {w,estado:g.corte.state,y:+g.player.pos.y.toFixed(2)}})()");
+await step('corte', "(()=>{const g=__game;g.player.maxHp=g.player.hp=1e6;g.player.spawn(-128.4,0,-60,Math.PI);__sim(0.3);const w=__walk([[-128.4,-64],[-124.3,-66],[-124.3,-80],[-124.3,-82.9]]);return {w,estado:g.corte.state,y:+g.player.pos.y.toFixed(2)}})()");
 await step('guardia', "(()=>{const g=__game;g.corte.onRespawn&&g.corte.onRespawn();g.player.spawn(-85,0,-52,0);__sim(0.3);__walk([[-82,-47.6]]);const r=__useHere('d_guardia');const w=__walk([[-82,-44],[-86,-41.6]]);return {r,w}})()");
 await step('rastrillo', "(()=>{const g=__game;g.player.spawn(-98,0,-50,0);__sim(0.3);return __walk([[-98,-46],[-98,-40],[-98,-32]])})()");
 // 10. la torre del homenaje: por el pasadizo (su puerta, ya caída), la sala
@@ -173,7 +182,8 @@ await step('al caracol', "__walk([[-98,-87],[-98,-92],[-102,-99.4],[-102,-102.6]
 await step('caracol abajo', "(()=>{__walk([[-105.2,-108.6],[-105.85,-108.1]]);return __husillo(-106.8,-107.8,0,15,0)})()");
 await step('almacén', "__walk([[-105.5,-107.2],[-104.2,-107.0],[-100,-104],[-95,-102.6],[-95,-101],[-95,-99.4],[-97,-96]])");
 await step('ampolla', "__ir('i_ampolla5', 0.8)");
-await step('trampilla', "__ir('x_bajada_torre', 0.6)");
+// (sin la palanca, la trampilla de la cárcel no se abre: se mira)
+await step('trampilla', "__ir('t_bajada_carcel', 0.5)");
 await step('caracol al trono', "(()=>{__walk([[-97,-96],[-95,-99.4],[-95,-102.6],[-100,-104],[-104.2,-107.0],[-105.2,-107.2],[-105.87,-107.6]]);return __husillo(-106.8,-107.8,0,0,47)})()");
 await step('sala del trono', "__walk([[-105.3,-108.5],[-104.2,-108.6],[-101,-106],[-98,-102.5],[-98,-100.5],[-98,-96.2]])");
 await step('el Rey', "(()=>{const g=__game;g.player.yaw=0;__sim(0.2);return {prompt:g.promptTarget&&g.promptTarget.id,rey:g.rey.mode}})()");
@@ -235,6 +245,35 @@ await step4('vista', "__ir('x_mirador', 0.5)");
 // cocina y por su cancela al patio de armas
 await step4('poterna, por dentro', "(()=>{const g=__game;g.player.spawn(-113,0,-37,0);__sim(0.3);__walk([[-113,-35.2]]);return __useHere('d_poterna')})()");
 await step4('al corral', "__walk([[-113,-33.6],[-113,-32.2],[-113,-30.6],[-111.6,-28.2],[-111.6,-25.0],[-111.6,-23.6],[-104,-18]])");
+// 15. (fase 5) la cárcel de la fortaleza: la trampilla del almacén de la torre
+// (sin palanca no se abre; con ella, salta una argolla y sus hojas quedan de
+// pie); la bajada, la sala de los carceleros (el libro de los presos), la
+// cárcel (la celda abierta del fondo y su ampolla; en las cerradas no se
+// entra), la puerta del aljibe y su andén (los virotes del caído), el paso de
+// las celdas de castigo, el cuarto de los verdugos, el paso bajo el foso, la
+// capilla de los reos y la subida al rellano: lo último del carcelero mayor y
+// su palanca, que sube el rastrillo; por él, al pasillo de las celdas de la
+// mazmorra del castillo y a la celda del principio
+await step5('trampilla, sin palanca', "(()=>{const g=__game;g.inventory.items.delete('palanca');g.player.spawn(-106,0,-96,0);__sim(0.3);return __ir('t_bajada_carcel', 0.4)})()");
+await step5('trampilla, con palanca', "(()=>{const g=__game;g.giveItem('palanca');g.ui.closeAll();__sim(0.2);const r=__useHere('t_bajada_carcel');__sim(1.5);const it=g.interact.list.find(i=>i.id==='t_bajada_carcel');return {...r,flag:!!g.flags['trampa:carcel'],tapa:it.box.enabled,hojas:it.leafBoxes.map(b=>b.enabled)}})()");
+await step5('bajada', "__walk([[-106,-93.3],[-106,-91],[-106,-88],[-106,-85.5],[-106,-83]])");
+await step5('libro de la cárcel', "__ir('n_libro_carcel', 0.9)");
+await step5('a la cárcel', "__walk([[-106,-80],[-106,-77],[-106,-74],[-106,-68.25]])");
+await step5('celda del fondo', "__walk([[-106,-60],[-106,-54.75],[-107.6,-54.75],[-109.5,-54.75],[-110.6,-54.2]])");
+await step5('ampolla de la celda', "__ir('i_ampolla_carcel', 0.5)");
+await step5('celda cerrada', "(()=>{const g=__game;__walk([[-109.5,-54.75],[-107.6,-54.75],[-106,-54.75],[-106,-63.75]]);const w=__walk([[-111,-63.75]]);return {atascado:!!w.stuck,dentro:g.player.pos.x<-108.7}})()");
+await step5('al aljibe', "__walk([[-106,-63.75],[-106,-68.25],[-102,-68.25],[-100.3,-68.25],[-98.6,-68.25],[-97.25,-67]])");
+await step5('andén', "__walk([[-97.25,-62],[-97.6,-59.6]])");
+await step5('virotes del aljibe', "__ir('i_virotes_aljibe', 0.5)");
+await step5('al paso', "__walk([[-97.25,-55],[-97,-53],[-97,-48],[-97,-42.5]])");
+await step5('verdugos', "__walk([[-97,-40],[-97,-35],[-97,-30],[-97,-28]])");
+await step5('bajo el foso', "__walk([[-97,-25],[-97,-20],[-97,-16.5]])");
+await step5('capilla', "__walk([[-96.5,-14.6],[-95.5,-13.4],[-94.2,-12]])");
+await step5('subida', "__walk([[-93.2,-12],[-92,-12],[-91.2,-12],[-90.3,-12.1]])");
+await step5('carcelero mayor', "__ir('n_carcelero_mayor', 0.7)");
+await step5('palanca del rastrillo', "(()=>{const g=__game;__walk([[-90.25,-12.1]]);const r=__useHere('p_rastrillo_carcel');__sim(4);const d=g.interact.list.find(i=>i.id==='d_rastrillo_carcel');return {...r,abierto:!!g.flags['door:d_rastrillo_carcel'],caja:d.box.enabled,open:+d.open.toFixed(2)}})()");
+await step5('a la celda del principio', "__walk([[-89.3,-12],[-88.2,-12],[-87.6,-12.6],[-87.6,-14.6],[-87.6,-16.2]])");
+await step5('lo cogido', "(()=>{const g=__game;return {ampolla:!!g.flags['take:i_ampolla_carcel'],virotes:!!g.flags['take:i_virotes_aljibe'],libro:!!g.flags['note:libroCarcel'],carcelero:!!g.flags['note:carceleroMayor']}})()");
 out.push('llaves: ' + (await T("['llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
 console.log(out.join('\n'));
 console.log(logs.slice(0, 10).join('\n'));

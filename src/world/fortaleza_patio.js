@@ -314,11 +314,13 @@ function enmedio(ctx, S, L) {
     L.interact.push({ kind: 'examine', id: 'x_olmo', text: 'olmoRey', x: ox + 1.9, y: 0, z: oz + 1.2, r: 2.2 });
     L.enemies.push({ type: 'cortesanoSuelto', x: ox + 1.6, y: 0, z: oz + 2.0, yaw: Math.PI + 0.6, idle: 'kneel', id: 'e_fp1' }, { type: 'cortesanoSuelto', x: ox - 1.9, y: 0, z: oz + 1.2, yaw: Math.PI - 0.8, idle: 'kneel', id: 'e_fp2' });
   }
-  // el brocal del aljibe del palacio
+  // el brocal del aljibe del palacio, sobre el óculo de su bóveda (abajo, en
+  // la cárcel: fortaleza_carcel.js)
   {
-    const bx = ex + 9.5,
-      bz = ez + 9;
-    P.well(ctx, bx, 0, bz, {});
+    const AJ = FORT.carcel.aljibe;
+    const bx = (AJ.xs[AJ.pozo[0]] + AJ.xs[AJ.pozo[0] + 1]) / 2,
+      bz = (AJ.zs[AJ.pozo[1]] + AJ.zs[AJ.pozo[1] + 1]) / 2;
+    P.well(ctx, bx, 0, bz, { deep: true });
     L.enemies.push({ type: 'bell', x: bx - 2.4, y: 0, z: bz - 1.4, yaw: 0.8, idle: 'stand', id: 'e_fp3' });
   }
   // lo que dejó la corte: un banco volcado, una litera, ropa, un caído

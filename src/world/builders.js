@@ -506,14 +506,16 @@ export function rampVault(ctx, o) {
         ya1 = ys0 + ((ys1 - ys0) * (j + 1)) / m;
       const ys = Math.min(ya0, ya1);
       const steps = 4;
-      for (let i = 0; i < steps; i++) {
+      for (let i = 0; i < steps - 1; i++) {
         const ya = ys + (rise * i) / steps,
           yb = ys + (rise * (i + 1)) / steps;
         const kk = Math.sqrt(Math.max(0, R * R - (yb - ys - yc) ** 2));
         if (c - kk - x0 > 0.02) cam(x0, ya, za, c - kk, yb, zb);
         if (x1 - c - kk > 0.02) cam(c + kk, ya, za, x1, yb, zb);
       }
-      cam(x0, ys + rise, za, x1, ys + rise + 0.6, zb);
+      // (la última capa llega a la clave de lado a lado: con la tapa, una
+      // sola caja)
+      cam(x0, ys + (rise * (steps - 1)) / steps, za, x1, ys + rise + 0.6, zb);
     }
   }
   return { rise, R };

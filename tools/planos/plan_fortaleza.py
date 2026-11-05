@@ -84,7 +84,7 @@ for (a, b, c, e) in [(-120, -86, -116, -46), (-80, -86, -76, -46), (-120, -50, -
             d.ellipse([P(x - 0.5, (b + e) / 2 - 0.5), P(x + 0.5, (b + e) / 2 + 0.5)], fill=(90, 84, 76))
 label(-98, -60, 'PATIO DE HONOR · 44 × 40\n(claustro)', f16, (40, 34, 28))
 label(-108, -73, 'olmo\nseco', f9); d.ellipse([P(-109.6, -77.6), P(-106.4, -74.4)], fill=(70, 60, 50))
-label(-88.5, -55.5, 'brocal del\naljibe', f9); d.ellipse([P(-89.5, -60), P(-87.5, -58)], fill=(80, 80, 90))
+label(-87.75, -55.5, 'brocal del\naljibe', f9); d.ellipse([P(-88.75, -60.25), P(-86.75, -58.25)], fill=(80, 80, 90))
 d.ellipse([P(-101, -71), P(-95, -65)], outline=(60, 60, 70), width=2); label(-98, -64, 'fuente', f9)
 # escalinata de la torre
 rect(-109.4, -86, -86.6, -83, (140, 132, 120), (80, 74, 66), 1); label(-98, -84.5, 'escalinata', f9)
@@ -95,7 +95,7 @@ for (a, b) in [(-112, -113), (-87.4, -113), (-112, -88.4), (-87.4, -88.4)]:
 # (por dentro: el muro de carga, de poniente a levante, y la caja del caracol, en el rincón del noroeste)
 rect(-108.4, -101.5, -87.6, -100.5, (84, 78, 74), (84, 78, 74), 1)
 rect(-108.4, -109.4, -104.8, -105.8, (96, 90, 86), (20, 18, 16), 1); label(-106.6, -107.6, 'car.', f9, (230, 220, 200))
-label(-98, -93.2, 'TORRE DEL HOMENAJE\n26 × 26 · 34 m\n(sala del trono: el REY\nterraza: el CABALLERO)', f11, (250, 230, 190))
+label(-98, -99.1, 'TORRE DEL HOMENAJE', f13, (250, 230, 190)); label(-98, -95.9, '26 × 26 · 34 m\n(sala del trono: el REY\nterraza: el CABALLERO)', f9, (250, 230, 190))
 # torres de las esquinas
 for (x0, z0, x1, z1, t) in [(-140, -44.8, -126, -30, 'COCINA\n(secadero)'), (-76, -46, -62, -32, 'TOMBO'), (-140, -102, -126, -87.2, 'REINA\n(oratorio ·\ncámara)'), (-76, -102, -62, -86, 'CORACHA\n(altar · oratorio\ndel Rey · tesoro)')]:
     rect(x0, z0, x1, z1, (110, 104, 98), w=3); label((x0 + x1) / 2, (z0 + z1) / 2, t, f11, (250, 245, 235))
@@ -117,7 +117,7 @@ rect(-123, -32, -120, 23, (110, 104, 98), w=2)
 rect(-120, -32, -62, -23, (120, 106, 84), (120, 106, 84), 1)
 rect(-120, -23, -48, 20, (120, 106, 84), w=3)
 rect(-71, -23, -48, -20, (110, 104, 98), w=2); label(-59.5, -24.6, 'muralla norte (la escalera rota)', f9, (230, 210, 190))
-label(-84, -13, 'PATIO DE ARMAS · 73 × 56', f16, (35, 28, 20))
+label(-76, -8.6, 'PATIO DE ARMAS · 73 × 56', f16, (35, 28, 20))
 rect(-90, 4, -81, 14, (100, 94, 88), w=2); label(-85.5, 9, 'TORRE DE\nLA CÁRCEL', f9, (240, 235, 230))
 rect(-93, 3.4, -90, 14.6, (96, 88, 80), (40, 36, 32), 1)
 rect(-59, -7, -48, 5, (100, 94, 88), w=2); label(-53.5, -1, 'TORRE-\nPUERTA', f9, (240, 235, 230))
@@ -144,10 +144,21 @@ label(-80.5, -28.6, 'cadalso (el ALFÉREZ)', f9, (240, 220, 190))
 rect(-123, 20, -48, 23, (110, 104, 98)); label(-84, 21.5, 'muralla sur · la brecha', f9, (230, 225, 220))
 # mazmorras (de puntos)
 dashed(-96, -24, -46, 24, (190, 160, 120)); label(-71, -3, 'mazmorras del principio (−5)', f11, (230, 200, 160))
-dashed(-124, -80, -80, -34, (200, 120, 110)); label(-102, -52.5, 'mazmorras del castillo (−5) y aljibe del palacio', f9, (120, 40, 30))
-d.line([P(-88.5, -20), P(-84.5, -20)], fill=(220, 80, 60), width=5); label(-79, -21.5, 'RASTRILLO', f11, (240, 120, 100))
+# la cárcel del Rey (−7), bajo la fortaleza y el patio de armas: la bajada
+# desde la trampilla del almacén de la torre, la sala de los carceleros, la
+# cárcel, el aljibe del palacio, los pasos del eje, el cuarto de los
+# verdugos, la capilla de los reos y la subida al rastrillo, al fondo del
+# pasillo de las celdas de la mazmorra del principio
+for (x0, z0, x1, z1) in [(-107, -93, -105, -84.5), (-110.5, -84.5, -101.5, -76), (-112, -75, -100, -52.5), (-99, -70.5, -81, -52.5), (-98, -52.5, -96, -41.5), (-100, -41.5, -94, -29), (-98, -29, -96, -15.5), (-100.5, -15.5, -93.5, -8.5), (-93.5, -13, -89.5, -11)]:
+    dashed(x0, z0, x1, z1, (200, 120, 110))
+rect(-107, -93, -105, -89, (120, 40, 34), (200, 120, 110), 1)
+label(-106, -81.4, 'cárcel del\nRey (−7)', f9, (120, 40, 30)); label(-102.2, -91, 'trampilla', f9, (240, 200, 180), 'lm')
+label(-90, -66.5, 'aljibe del palacio', f9, (120, 40, 30))
+label(-97, -31, 'verdugos', f9, (240, 220, 200))
+label(-97, -12, 'reos', f9, (240, 210, 190))
+d.line([P(-89.25, -13), P(-89.25, -11)], fill=(220, 80, 60), width=5); label(-87.5, -16, 'RASTRILLO', f11, (240, 120, 100))
 dashed(-98, -132, -46, -85, (100, 130, 160)); label(-72, -129, 'debajo: la cripta honda (no se cava)', f9, (150, 180, 210))
 # leyenda de recorrido
-d.text((M, H - 34), 'Se entra por la coracha (su torre) y se baja por dentro. Atajos: el puente levadizo, la poterna, la puerta del Tombo, el rastrillo.', font=f11, fill=(220, 205, 180))
+d.text((M, H - 34), 'Se entra por la coracha (su torre) y se baja por dentro; de la torre, por su trampilla, a la cárcel del Rey.\nAtajos: el puente levadizo, la poterna, la puerta del Tombo, el rastrillo.', font=f11, fill=(220, 205, 180))
 im.save('docs/planos/plan_fortaleza.png')
 print(W, H)

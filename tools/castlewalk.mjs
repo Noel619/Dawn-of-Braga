@@ -6,17 +6,22 @@
 // Con «torre», además: la puerta de la fortaleza (del patio de honor, por la
 // guardia, al torno del puente levadizo, y de vuelta al patio de armas por el
 // puente) y la torre del homenaje (del pasadizo del Rey a la terraza).
+// Siempre, que el rastrillo del fondo del pasillo de las celdas, echado, no
+// deja pasar; con «carcel», el atajo de la cárcel de la fortaleza al revés:
+// subido el rastrillo y abierta la trampilla, del pasillo de las celdas, por
+// la cárcel, al almacén de la torre del homenaje.
 // Dice dónde se atasca, si se atasca.
-//   node tools/castlewalk.mjs [torre]      (requiere npx vite --port 5199)
+//   node tools/castlewalk.mjs [torre] [carcel]      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const torre = process.argv.includes('torre');
+const carcel = process.argv.includes('carcel');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 320, height: 200 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message));
 await p.goto('http://localhost:5199/?dev=1&items=espada,escudo');
 await p.waitForFunction(() => window.__ready, null, { timeout: 90000 });
-const r = await p.evaluate((torre) => {
+const r = await p.evaluate(([torre, carcel]) => {
   window.__pause = true;
   const g = __game;
   g.ui.closeAll();
@@ -161,6 +166,65 @@ const r = await p.evaluate((torre) => {
     )
   );
   out.push(`poterna: ${g.interact.list.find((i) => i.id === 'd_poterna').open ? 'abierta (mal: se atranca por dentro)' : 'atrancada'}`);
+  // el rastrillo de la cárcel de la fortaleza, al fondo del pasillo de las
+  // celdas: echado, no se pasa (su palanca está al otro lado)
+  {
+    P.spawn(-87.6, -5, -12.0, -Math.PI / 2);
+    for (let i = 0; i < 30; i++) g.update(1 / 60);
+    for (let t = 0; t < 3; t += 1 / 60) {
+      P.autoDir = { x: -1, z: 0, m: 1 };
+      g.update(1 / 60);
+    }
+    P.autoDir = null;
+    out.push(`rastrillo de la cárcel: ${P.pos.x > -89.1 ? 'echado (no se pasa)' : 'pasa (mal)'} · x ${P.pos.x.toFixed(2)}`);
+  }
+  if (carcel) {
+    // subido el rastrillo y abierta la trampilla del almacén de la torre: del
+    // pasillo de las celdas, por el rellano, la subida, la capilla de los
+    // reos, el paso bajo el foso, el cuarto de los verdugos, el paso de las
+    // celdas de castigo, el andén del aljibe, la cárcel, la sala de los
+    // carceleros y la bajada, al almacén
+    for (const f of ['door:d_rastrillo_carcel', 'lever:p_rastrillo_carcel', 'trampa:carcel']) g.flags[f] = true;
+    g.interact.applyFlags(g.flags);
+    P.spawn(-87.6, -5, -12.0, -Math.PI / 2);
+    for (let i = 0; i < 30; i++) g.update(1 / 60);
+    out.push(
+      go(
+        [
+          [-89.25, -12.0],
+          [-90.3, -12.0],
+          [-91.4, -12.0],
+          [-93.0, -12.0],
+          [-94.4, -12.0],
+          [-96.4, -13.6],
+          [-97, -15.0],
+          [-97, -20],
+          [-97, -27],
+          [-97, -32],
+          [-97, -38],
+          [-97, -43],
+          [-97, -50],
+          [-97.25, -55],
+          [-97.25, -62],
+          [-97.25, -67.2],
+          [-98.5, -68.25],
+          [-100.4, -68.25],
+          [-102, -68.25],
+          [-106, -68.25],
+          [-106, -74],
+          [-106, -76.5],
+          [-106, -82],
+          [-106, -84.2],
+          [-106, -86],
+          [-106, -89],
+          [-106, -92],
+          [-106, -93.6],
+          [-106, -95.4],
+        ],
+        'rastrillo → cárcel → almacén de la torre'
+      )
+    );
+  }
   if (torre) {
     // la puerta de la fortaleza: del patio de honor, por la guardia y su
     // escalera, a la armería y a la cámara del torno (el rastrillo y el
@@ -250,7 +314,7 @@ const r = await p.evaluate((torre) => {
     );
   }
   return out;
-}, torre);
+}, [torre, carcel]);
 for (const l of r) console.log(l);
 if (errs.length) console.log(errs.join('\n'));
 await b.close();
