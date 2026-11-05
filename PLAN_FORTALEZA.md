@@ -643,7 +643,11 @@ Pruebas, de punta a punta: `tools/progress.mjs` (toda la partida, hasta el río)
 también la garita y los virotes del ballestero), `tools/castlewalk.mjs` (con `torre` y con `carcel`),
 `tools/corte.mjs`, `tools/rey.mjs mesa`, `tools/caballero.mjs`, `tools/beastchase.mjs` y `tools/camclip.mjs` (con tres
 puntos en la garita: 7776 pruebas, ninguna cámara tras un muro ni pegada); `tools/audiotest.mjs` (los ambientes de
-las salas), `tools/salas.mjs` (la luz) y `tools/rendimiento.mjs` (lo que se dibuja), nuevas.
+las salas), `tools/salas.mjs` (la luz) y `tools/rendimiento.mjs` (lo que se dibuja), nuevas. `tools/holes.mjs alto`
+no da nada en lo nuevo: sus 97 celdas son las mismas que antes de esta fase (comparado con la fase 5), de fases
+anteriores: la reja del olvidadero, que se pisa a propósito; la ranura del rastrillo de fuera en el suelo de la
+cámara del torno; los peldaños del caracol de la torre del homenaje (su colisión, 0,37 m por encima de lo dibujado) y
+su salida a la terraza; la mesa del Rey; el osario del castillo. Quedan por mirar.
 
 Lo que queda: **el paseo de las cámaras** (el claustro de arriba), que el plan dejaba para esta fase «si se hace». No
 se ha hecho: es una obra nueva (la galería alta en los tres lados del claustro, su suelo, su antepecho, el tejaroz
