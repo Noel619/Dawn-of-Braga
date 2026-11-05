@@ -595,6 +595,21 @@ Me acuso de la campana. Tocó sola, a medianoche, y me arrodillé con todos. Cua
 
 He atado mi llave al cordón. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
   },
+  // en el reclinatorio del oratorio del Rey (fortaleza_rey.js)
+  oracionRey: {
+    title: 'La oración del Rey',
+    text: `En el reclinatorio de su oratorio, una hoja de pergamino fino, de letra de la Sé, con las capitales en rojo:
+
+Domine, qui sub sede tua dormis, exaudi regem tuum. Accipe genua nostra pro muris, et serva civitatem tuam. Per eum qui descendit.
+
+En romance:
+Señor, que duermes bajo tu sede, oye a tu rey. Toma nuestras rodillas por murallas y guarda tu ciudad. Por el que bajó.
+
+Debajo, en rojo, como las rúbricas de los misales: «Flexis genibus, versus sedem». De rodillas, de cara a la Sé.
+
+Al dorso, de una letra grande y torcida, de quien no escribe nunca:
+Me la dio el arzobispo la Cuaresma en que se murió mi reina. La he rezado aquí cada noche como me dijo: de rodillas, de cara a la Sé y de espaldas al altar. Ahora sé a quién.`,
+  },
   reina: {
     title: 'Las horas de la reina',
     text: `En el reclinatorio de su cámara, un libro de horas pequeño, de los que caben en una mano, con las letras capitales en oro y azul. Entre las hojas, una cinta y un papel doblado, de otra letra:
@@ -1211,6 +1226,11 @@ export const MSG = {
   almacenDentro: 'La puerta del patio, cegada: tablones clavados, una cadena y, al otro lado, el macizo de la escalinata. Por aquí no se sale.',
   pasadizoCede: 'Empujas la puerta y cede de golpe: el fuego la dejó en pie por fuera, pero por dentro era carbón. Las hojas y la tranca, quemada, se vienen abajo.',
   camastroRey: 'Un camastro de soldado junto al fuego, con la manta revuelta. Aquí dormía el Rey desde la noche de la campana: no quiso volver a su cama.',
+  // lo que faltaba en el granero de la torre y en el zaguán de la puerta
+  // (PLAN_FORTALEZA.md, fase 7: salas sin nada)
+  muelaTorre: 'La muela de mano de la guardia de la torre, con el trigo a medio moler y la artesa llena de harina por cerner. Al lado, acurrucado contra los sacos, el que molía. Desde la campana el Rey no come pan que no se haya molido aquí.',
+  buhederas: 'Arriba, en la clave de la bóveda, las bocas de las buhederas de la cámara del torno. En las losas, la pez que echaron por ellas, negra y cuarteada, con huellas de manos que van hacia el rastrillo de fuera.',
+  zaguanMuerto: 'Uno de la guardia de la puerta, abrasado por la pez, con los dedos metidos entre los barrotes del rastrillo de fuera. Se arrodilló con todos cuando sonó la campana; al levantarse, quiso salir. Los de arriba no le abrieron.',
   fuentePatio: 'La fuente del patio de honor no corre desde el día del cerco. En la taza seca, un yelmo y las hojas del olmo.',
   antecamaraTranca: 'La puerta de la antecámara del Rey, atrancada por dentro. Por la rendija sale el olor de las velas.',
   paseoReinaTranca: 'La puerta de la sala de la reina, atrancada por dentro. Por la cerradura se ve el estrado vacío y, en una mesa, una partida de ajedrez a medio jugar.',

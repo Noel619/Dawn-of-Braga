@@ -8,6 +8,7 @@ import { FireSystem, LightPool, AshSystem, ParticleBurst, DecalPool, LightShafts
 import { buildDecals, buildBanners } from '../gfx/decals.js';
 import { BakedProbe } from '../gfx/probe.js';
 import { Atmosphere } from './atmosphere.js';
+import { Hitos } from './hitos.js';
 import { CameraRig } from './camera.js';
 import { Player } from '../entities/player.js';
 import { WEAPONS, WEAPON_ORDER } from '../entities/weapons.js';
@@ -167,6 +168,10 @@ export class Game {
     for (const n of Object.keys(this.groups)) if (/^(naveRuin|naveArcRuin|naveBancosRuin|almenaNRuin|almenaTRuin):/.test(n)) this.setGroupVisible(n, false);
     // (y lo que rompen los colosos en la plaza: ver finale/wrecks.js)
     for (const w of lvl.ctx.wrecks || []) this.setGroupVisible('wreck:' + w.id + ':ruin', false);
+    // la vela del Rey, en lo alto del mástil de la torre del homenaje: su
+    // resplandor se ve de lejos, y se apaga cuando muere el Rey (hitos.js;
+    // el farol, en world/fortaleza.js)
+    this.hitos = new Hitos(this, [{ x: FORT.eje, y: FORT.torre.terraza + 9.55, z: (FORT.torre.z0 + FORT.torre.z1) / 2 + 4, size: 2.4, minAng: 0.011, off: 'rey:muerto', group: 'vela_rey' }]);
     this.fx.ash = new AshSystem(this.scene);
     this.fx.blood = new ParticleBurst(this.scene, 900);
     this.fx.bloodDecals = new DecalPool(this.scene, 'splat', 48, { color: 0x9a8080 });
@@ -2008,6 +2013,7 @@ export class Game {
       }
     } else this.audio.setZone('city');
     this.atmo.update(dt, p);
+    this.hitos.update(this.time);
 
 
     // miedo: criaturas cercanas -> estática del relicario y grano en pantalla

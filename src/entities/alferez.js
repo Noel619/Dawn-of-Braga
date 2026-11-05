@@ -12,7 +12,7 @@
 import { Rig, clip } from './rig.js';
 import { humanoidJoints, feetParts } from './models.js';
 import { ballestaParts } from './weapon_models.js';
-import { DEG } from '../core/util.js';
+import { DEG, angleDiff, approachAngle, damp } from '../core/util.js';
 import { GAIT } from './locomotion.js';
 
 const S = Math.sin;
@@ -288,4 +288,50 @@ export const BALLESTERO_TYPE = {
     { ...BASH, dmg: 15, stDmg: 22 },
   ],
   biped: { scale: 1.0, style: GAIT.soldier, stance: 0.12 },
+};
+
+// El tirador (PLAN_FORTALEZA.md, fase 7, #27): un ballestero del Rey en lo
+// alto —el paseo de las cámaras, sobre el claustro— que tira al que está
+// abajo, en el patio. Ve hasta nueve metros más abajo (no más arriba que los
+// otros) y, si el que tiene a tiro está en otro piso, no baja a por él (lo
+// que tiene delante es un antepecho, no una escalera): vuelve a su puesto,
+// junto al antepecho, se vuelve hacia él y tira cuando le ve; si se esconde,
+// espera. En su piso pelea como los demás (spec.yaw: hacia dónde mira de
+// guardia).
+export const TIRADOR_TYPE = {
+  ...BALLESTERO_TYPE,
+  sight: 24,
+  perceive(e, p) {
+    if (p.dead || (e.game.dev && e.game.dev.invisible)) return false;
+    const T = e.T;
+    const dy = p.pos.y - e.pos.y;
+    if (dy > 3.2 || dy < -9) return false;
+    const d = e.distTo(p.pos);
+    let hear = T.hear;
+    if (p.sprinting) hear *= 2.2;
+    if (p.state === 'attack' || p.state === 'roll') hear *= 1.6;
+    if (d > Math.max(T.sight, hear)) return false;
+    const los = e.game.world.col.lineOfSight(e.pos.x, e.pos.y + T.height * 0.8, e.pos.z, p.pos.x, p.pos.y + 1.4, p.pos.z);
+    if (d < hear && Math.abs(dy) < 3.2 && los) return true;
+    if (d > T.sight) return false;
+    if (Math.abs(angleDiff(e.yaw, e.angleTo(p.pos))) > T.fov * 0.5 * DEG) return false;
+    return los;
+  },
+  think(e, p, d, dt) {
+    if (Math.abs(p.pos.y - e.pos.y) < 2.5) return;
+    const T = e.T;
+    const h = e.home;
+    if (Math.hypot(h.x - e.pos.x, h.z - e.pos.z) > 0.5) e.steerTo(h.x, h.z, T.walk, dt, false);
+    else {
+      e.vx = damp(e.vx, 0, 8, dt);
+      e.vz = damp(e.vz, 0, 8, dt);
+    }
+    e.yaw = approachAngle(e.yaw, e.angleTo(p.pos), T.turn * dt);
+    const shoot = T.attacks[0];
+    if (e.cooldown <= 0 && d >= shoot.min && d <= shoot.max && Math.abs(angleDiff(e.yaw, e.angleTo(p.pos))) < 0.35) {
+      const los = e.game.world.col.lineOfSight(e.pos.x, e.pos.y + 1.45, e.pos.z, p.pos.x, p.pos.y + 1.15, p.pos.z);
+      if (los) e.startAttack(shoot);
+    }
+    return 'handled';
+  },
 };

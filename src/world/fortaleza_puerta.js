@@ -113,7 +113,13 @@ function torres(ctx, S, L) {
   const ys = G.ys,
     rise = G.rise;
   archedWall(ctx, { axis: 'x', a0: G.px0, a1: G.px1, t0: zf - 0.6, t1: zf + 0.03, y0: 0, y1: G.hm, openings: [{ c: pc, w: pw, h: ys, rise, ring: 0.42, tint: PIEDRA.silla }], mat: 'wallstone', tint, rooms: [room, null], sub: 2 });
-  archedWall(ctx, { axis: 'x', a0: G.px0, a1: G.px1, t0: zi - 0.03, t1: zi + 0.6, y0: 0, y1: T.walk, openings: [{ c: pc, w: pw, h: ys, rise, ring: 0.36, tint: PIEDRA.silla }], mat: 'wallstone', tint: PIEDRA.patio, rooms: ['claustro', room], sub: 2 });
+  // (el del patio, más bajo que la bóveda —un arco de embocadura—: su rosca
+  // queda bajo las vigas del techo de la galería del claustro, que llevan el
+  // suelo del paseo de las cámaras; arrancando con la bóveda, la rosca
+  // cortaba esas vigas y asomaba seis centímetros sobre el suelo del paseo)
+  const ringP = 0.36,
+    ysP = T.claustro.paseo.y - 0.48 - 0.06 - ringP - rise;
+  archedWall(ctx, { axis: 'x', a0: G.px0, a1: G.px1, t0: zi - 0.03, t1: zi + 0.6, y0: 0, y1: T.walk, openings: [{ c: pc, w: pw, h: ysP, rise, ring: ringP, tint: PIEDRA.silla }], mat: 'wallstone', tint: PIEDRA.patio, rooms: ['claustro', room], sub: 2 });
   // la bóveda del paso, con las buhederas de la cámara del torno (las bocas
   // negras en la clave)
   barrelVault(ctx, { x0: G.px0, x1: G.px1, z0: zi + 0.6, z1: zf - 0.6, ys, rise, axis: 'z', room, tint: [0.56, 0.54, 0.5], mat: 'ashlar' });
@@ -190,6 +196,25 @@ function torres(ctx, S, L) {
   // la luz del paso: una antorcha a cada lado
   P.wallTorch(ctx, G.px0 + 0.02, 2.2, zi + 3.0, 'e', { room });
   P.wallTorch(ctx, G.px1 - 0.02, 2.2, zf - 4.2, 'w', { room });
+  // bajo las buhederas, la pez que se echó por ellas, negra, y las manchas
+  // que van hacia el rastrillo de fuera; contra él, abrasado, uno de la
+  // guardia de la puerta, con los dedos entre los barrotes (el zaguán no
+  // tenía nada: PLAN_FORTALEZA.md, fase 7)
+  {
+    for (const [dx, z, s] of [
+      [0.2, BUHEDERAS[0], 1.7],
+      [-0.3, BUHEDERAS[1], 1.9],
+      [0.1, BUHEDERAS[2], 1.6],
+      [0.5, -32.9, 1.1],
+      [-0.2, -31.9, 0.9],
+    ])
+      P.decal(ctx, pc + dx, 0.03, z, s, 'shadow', null, { opacity: 0.95 });
+    bakeCorpse(ctx.wb, pc + 0.45, 0.02, G.rastrillo - 1.25, 0.08, 'face', 'soldier', 4471, null, { tint: [0.46, 0.4, 0.36] });
+    L.interact.push(
+      { kind: 'examine', id: 'x_buhederas', text: 'buhederas', x: pc, y: 0, z: BUHEDERAS[1], r: 1.6 },
+      { kind: 'examine', id: 'x_zaguan_muerto', text: 'zaguanMuerto', x: pc + 0.45, y: 0, z: G.rastrillo - 1.9, r: 1.1 }
+    );
+  }
   L.zones.push({ id: 'zaguan_fortaleza', rects: [[G.px0, zi + 0.6, G.px1, zf, -1, ys + rise]], atmo: 'interior', room });
   L.map.push({ id: 'zaguan_fortaleza', r: [G.px0, zi, G.px1, zf] });
 }

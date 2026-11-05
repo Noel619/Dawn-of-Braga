@@ -116,6 +116,8 @@ await step('puerta torre', "__useHere('d_pasadizo_torre')");
 await step('vuelta', "__walk([[-77,-98.79],[-74.5,-98.79],[-72.8,-99.1],[-67.2,-99.3],[-66.4,-97],[-66.4,-93.4],[-66.4,-91.0]])");
 // 3. el caracol abajo, al oratorio del Rey (+4,5): la tribuna de la capilla y la llave del capellán
 await step('baja al oratorio', "__caracol(-64,-88,31,15)");
+// (fase 7: lo que le faltaba al oratorio) la oración del Rey, en su reclinatorio
+await step('oración del Rey', "(()=>{__walk([[-66.4,-92.6],[-68,-92.6],[-68,-90.6]]);return __ir('n_oracion_rey', 0.9)})()");
 await step('sale al oratorio', "__walk([[-66.4,-92.6],[-68,-92.6],[-68,-89.0],[-73.3,-89.0],[-73.3,-87.4],[-73.5,-85.6]])");
 await step('llave capellan', "__ir('i_llave_capellan', 0.6)");
 await p.waitForTimeout(600);
@@ -171,6 +173,9 @@ await step('sala de la reina', "(()=>{const g=__game;g.player.spawn(-131.5,5.5,-
 await step('corte', "(()=>{const g=__game;g.player.maxHp=g.player.hp=1e6;g.player.spawn(-128.4,0,-60,Math.PI);__sim(0.3);const w=__walk([[-128.4,-64],[-124.3,-66],[-124.3,-80],[-124.3,-82.9]]);return {w,estado:g.corte.state,y:+g.player.pos.y.toFixed(2)}})()");
 await step('guardia', "(()=>{const g=__game;g.corte.onRespawn&&g.corte.onRespawn();g.player.spawn(-85,0,-52,0);__sim(0.3);__walk([[-82,-47.6]]);const r=__useHere('d_guardia');const w=__walk([[-82,-44],[-86,-41.6]]);return {r,w}})()");
 await step('rastrillo', "(()=>{const g=__game;g.player.spawn(-98,0,-50,0);__sim(0.3);return __walk([[-98,-46],[-98,-40],[-98,-32]])})()");
+// (fase 7: lo que le faltaba al zaguán) el de la guardia, contra el rastrillo, y las buhederas
+await step('el del rastrillo', "__ir('x_zaguan_muerto', 0.5)");
+await step('buhederas', "__ir('x_buhederas', 0.6)");
 // 10. la torre del homenaje: por el pasadizo (su puerta, ya caída), la sala
 // del consejo y la cámara (+12); por el caracol, la guardia (+6) y la puerta
 // de la escalinata; el almacén (la trampilla de la cárcel, la ampolla); la
@@ -183,7 +188,9 @@ await step('d_torre_patio', "__useHere('d_torre_patio')");
 await step('rellano', "__walk([[-98,-88.4],[-98,-87],[-98,-85.4]])");
 await step('al caracol', "__walk([[-98,-87],[-98,-92],[-102,-99.4],[-102,-102.6],[-104.2,-108.6]])");
 await step('caracol abajo', "(()=>{__walk([[-105.2,-108.6],[-105.85,-108.1]]);return __husillo(-106.8,-107.8,0,15,0)})()");
-await step('almacén', "__walk([[-105.5,-107.2],[-104.2,-107.0],[-100,-104],[-95,-102.6],[-95,-101],[-95,-99.4],[-97,-96]])");
+// (fase 7: lo que le faltaba al granero) la muela de mano y su artesa
+await step('muela del granero', "(()=>{__walk([[-105.5,-107.2],[-104.2,-107.0],[-100,-104],[-98.2,-102.9],[-96.4,-102.9]]);return __useHere('x_muela_torre')})()");
+await step('almacén', "__walk([[-95,-102.6],[-95,-101],[-95,-99.4],[-97,-96]])");
 await step('ampolla', "__ir('i_ampolla5', 0.8)");
 // (sin la palanca, la trampilla de la cárcel no se abre: se mira)
 await step('trampilla', "__ir('t_bajada_carcel', 0.5)");
@@ -273,6 +280,9 @@ await step5('al aljibe', "__walk([[-106,-63.75],[-106,-68.25],[-102,-68.25],[-10
 await step5('andén', "__walk([[-97.25,-62],[-97.6,-59.6]])");
 await step5('virotes del aljibe', "__ir('i_virotes_aljibe', 0.5)");
 await step5('al paso', "__walk([[-97.25,-55],[-97,-53],[-97,-48],[-97,-42.5]])");
+// (fase 7: lo que le faltaba al paso) el preso de la celda de castigo, que
+// no sale de su nicho (la roca de detrás no tiene suelo)
+await step5('preso de castigo', "(()=>{const g=__game;__sim(1);const e=g.enemies.find(e=>e.spec&&e.spec.id==='e_preso_castigo');return {caged:!!e.spec.caged,pos:[+e.pos.x.toFixed(2),+e.pos.y.toFixed(2),+e.pos.z.toFixed(2)]}})()");
 await step5('verdugos', "__walk([[-97,-40],[-97,-35],[-97,-30],[-97,-28]])");
 await step5('bajo el foso', "__walk([[-97,-25],[-97,-20],[-97,-16.5]])");
 await step5('capilla', "__walk([[-96.5,-14.6],[-95.5,-13.4],[-94.2,-12]])");

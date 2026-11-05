@@ -828,6 +828,11 @@ export class Enemy {
     }
     if (this.state !== 'parried') this.parryT = 0;
     if (T.update) T.update(this, dt, player, d);
+    // (las encerradas no se mueven de su sitio: ni andan ni las empujan. Así
+    // cabe una en una celda de castigo, un nicho en la roca del paso de la
+    // cárcel que sólo está tallado a la vista: la colisión del muro lo llena,
+    // y la sacaba por detrás, al vacío)
+    if (this.spec.caged) move = false;
 
     // física
     if (this.state === 'dropping') {

@@ -306,8 +306,11 @@ function torreCoracha(ctx, S, L) {
     wb.geometry('animasRetablo', new THREE.PlaneGeometry(1.0, 1.2), new THREE.Matrix4().compose(V(ix0 + 0.1, y + 1.75, az), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0)), V(1, 1, 1)), { ao: false, room, grime: false });
     P.candles(ctx, ax + 0.1, y + 1.02, az - 0.45, 3, 6531, { room, radius: 6, intensity: 1.0 });
     P.candles(ctx, ax + 0.1, y + 1.02, az + 0.45, 3, 6532, { room, radius: 6, intensity: 1.0 });
+    // (el reclinatorio, de espaldas al altar y de cara a levante, a la Sé:
+    // así rezaba el Rey la oración que le dio el arzobispo, que está en él)
     const kx = ax + 1.6,
       kz = az;
+    L.interact.push({ kind: 'note', id: 'n_oracion_rey', note: 'oracionRey', x: kx + 0.39, y: y + 1.065, z: kz, model: 'paper' });
     wb.at(kx, y, kz, -Math.PI / 2, () => {
       wb.box('wooddark', -0.4, 0, -0.15, 0.4, 0.22, 0.25, { ao: false, room });
       wb.box('wooddark', -0.4, 0, -0.42, 0.4, 1.0, -0.3, { ao: false, room });

@@ -361,7 +361,9 @@ al pie (`world/castillo_fuera.js`).
 **Ante la fortaleza.** La torre del homenaje vieja, la que estaba a caballo de la muralla norte, se derribó: por
 donde estaba, el patio de armas llega hasta **la puerta de la fortaleza** y su foso de estacas, con el puente alzado
 al otro lado. Lo que dejó el asedio: los caballos de frisa ante el foso, un carro, los barriles, los bolaños de los
-trabucos, los muertos y sus cuervos.
+trabucos, los muertos y sus cuervos. (Lo de en medio del patio, donde estuvieron el patio y la torre del castillo
+viejo, está casi vacío; su reforma, el albacar —el refugio de la gente de fuera durante el cerco—, está propuesta en
+`PLAN_ALBACAR.md`.)
 
 **El rastrillo.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
 celdas, donde estuvo la puerta de la escalera de la torre vieja, un **rastrillo** echado hasta el suelo en su marco
@@ -374,7 +376,9 @@ atajo a la celda (`world/level_castle.js`).
 conjunto, como la alcáçova de Lisboa (`PLAN_FORTALEZA.md`). Cuatro crujías alrededor de **un patio de honor** con su
 claustro de arcos sobre columnas en tres lados; en medio del lado norte, **la torre del homenaje**, la torre del
 conde, de sillería oscura sobre su talud alto, con su terraza almenada a 28 m, sus cuatro garitas voladas con sus
-chapiteles y, en lo alto, el estandarte del Rey; en la cara del patio, una ventana encendida (la vela del Rey). Una
+chapiteles y, en lo alto, el estandarte del Rey y, en el tope de su mástil, **la vela del Rey**: un farol encendido
+cuyo resplandor se ve por encima de la niebla desde lejos (desde el patio de armas, nada más salir de la cárcel) y
+que se apaga cuando él muere (`game/hitos.js`); en la cara del patio, una ventana encendida. Una
 torre en cada esquina, con su oficio: la de la reina (noroeste) y el Tombo (sureste), con sus chapiteles; la cocina
 (suroeste), con el humo de su chimenea; y la de la coracha (nordeste). Al sur, **la puerta**, entre dos torres con
 matacanes, el rastrillo echado y el puente alzado contra el arco, en el eje del patio y de la escalinata de la
@@ -393,7 +397,8 @@ norte, cubierto, que llevaba al Rey de sus cámaras a su torre, y que quemaron c
 negros, medio tejadillo hundido sobre las losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del
 homenaje, chamuscada y atrancada por dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al
 primer empujón). De la planta de la llegada, un **caracol** baja por el rincón de la
-torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, el altarico) y, más abajo, al
+torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, el altarico y, en el reclinatorio,
+vuelto de espaldas al altar y de cara a la Sé, **la oración** que le dio el arzobispo) y, más abajo, al
 **tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el arca del Rey, con sus velas casi
 consumidas, la plata y **la llave del camarero**. La puerta del tesoro se desatranca por dentro y da a la
 **antecámara del Rey**; la de la antecámara, también atrancada por dentro, al patio de honor.
@@ -411,6 +416,13 @@ reina con su toca doblada encima, la mesa de sus cartas junto a la ventana del p
 cámara se pasa por el grueso del muro al oratorio de la torre de la coracha, y de él, por una puerta en el muro de la
 capilla, a **la tribuna del Rey**.
 
+**El paseo de las cámaras.** Desde la tribuna, cuatro peldaños en el grueso del muro suben al claustro de arriba: un
+corredor de madera a +5,5 sobre las tres galerías del patio de honor (el suelo de tablas sobre vigas, los pies
+derechos con sus zapatas, el antepecho y el tejaroz), por el que iban el Rey y la reina de sus cámaras a misa sin
+pisar el patio. Las puertas de la sala de la reina y de la cámara del Rey, atrancadas por dentro, son atajos. En la
+esquina de levante, la ronda; en el brazo del sur, entre dos pies derechos, **el tirador**: un ballestero del Rey que
+tira al patio desde la baranda y no baja (el que está abajo aprende que hay un arriba y busca por dónde se sube).
+
 **La torre del homenaje.** Por dentro, la torre del conde: cinco alturas unidas por un **caracol** en el rincón del
 noroeste (como el de Hedingham), y en cada planta el muro de carga, de poniente a levante, con su puerta de arco. Se
 entra **por el pasadizo del Rey**, a +12: la puerta quemada da a **la sala del consejo**, encalada, con la mesa larga
@@ -422,7 +434,8 @@ mesa con la vela y la copa, su armadura de la frontera, su estandarte enrollado,
 guardias, y **el dormitorio**, con sus jergones; la puerta de la escalinata, atrancada por dentro, se desatranca
 desde aquí: el atajo al patio de honor. En la planta baja, **el almacén** (los toneles, las tinajas, la cecina
 colgada de las vigas, el pozo de la torre, la puerta del patio cegada bajo el rellano de la escalinata, **una
-ampolla** y un penitente que come) y **el granero** (los sacos, la muela); en el suelo del almacén, junto a las
+ampolla** y un penitente que come) y **el granero** (los sacos, la muela de mano con su artesa de harina y, al lado,
+el que molía para el Rey); en el suelo del almacén, junto a las
 tinajas, **la trampilla** de la bajada a la cárcel: dos hojas de roble herradas, con una cadena por sus argollas y su
 candado (por las rendijas sube un frío de pozo, y algo que rasca). Con la palanca se arranca una argolla de la madera
 y las hojas se abren sobre la escalera.
@@ -451,7 +464,7 @@ rezan en el fondo, de rodillas hacia la Sé. Por la bóveda anda un rastrero. Un
 negra, a la mitad; el andén con su pretil, la escalera que baja al agua y, por el óculo de una clave, la luz del
 brocal del patio y la soga cortada. En el andén, un Campanero; junto a la escalera, unos virotes. Al sur, por el eje
 de la puerta de la fortaleza: **el paso de las celdas de castigo** (dos nichos en la roca, con su reja y su candado, y
-dentro, huesos; un muerto a medio arrastrar), **el cuarto de los verdugos** (el tajo con el hacha, la espada de la
+dentro, huesos; en uno, un preso que sigue encerrado y aporrea la reja; un muerto a medio arrastrar), **el cuarto de los verdugos** (el tajo con el hacha, la espada de la
 justicia del Rey colgada del muro, las capuchas en sus clavos, la mesa de los hierros, el cepo y, en el suelo, **el
 olvidadero**: un pozo con su reja, y abajo, huesos; el verdugo, de guardia), **el paso bajo el foso**, cuya bóveda
 rezuma (por encima están las estacas), y **la capilla de los reos**: el altar contra el muro de poniente, con su
@@ -464,7 +477,9 @@ al otro lado está el pasillo de las celdas del principio, y la primera, la tuya
 
 **La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta (en el eje de
 la torre del homenaje), con sus dos rastrillos (el de fuera, echado; el de dentro, alzado en su ranura, con las
-puntas asomando bajo la bóveda) y entre ellos las buhederas; por fuera, el puente alzado sobre el foso de las
+puntas asomando bajo la bóveda) y entre ellos las buhederas, con la pez que se echó por ellas negra en las losas y,
+contra el rastrillo de fuera, uno de la guardia abrasado, con los dedos entre los barrotes (el arco del patio, de
+embocadura, más bajo que la bóveda); por fuera, el puente alzado sobre el foso de las
 estacas (quien cae en él se clava en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de la
 guarnición**, las armas a mano, dos soldados y, bajo el suelo hundido del taller, el bolaño que lo hundió, con las
 tablas y el cascajo. Su escalera de piedra sube por el muro de la torre a **la armería** (las astas contra la
@@ -1161,7 +1176,8 @@ src/
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
                         los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la
-                        fortaleza (su reverberación, lo que se pisa y su ambiente);
+                        fortaleza (su reverberación, lo que se pisa y su ambiente); hitos.js: lo que se ve de
+                        lejos (la vela del Rey, por encima de la niebla y más allá del plano lejano);
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
                         film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
                         film_acts.js y film_rise.js, film_nave.js, film_grab.js, film_city.js, film_tower.js,
@@ -1198,6 +1214,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        de la cancillería, el adarve del jardín y el mirador— y bajo el castillo
                                        y la fortaleza —las mazmorras, la cárcel del Rey—, recorrido como
                                        andaría el jugador)
+                        tirador.mjs    el tirador del paseo de las cámaras: desde el patio de honor le acierta
+                                       sin moverse de su sitio; bajo la galería, sin línea de tiro, no le
+                                       hace nada y vuelve a la guardia
                         golpes.mjs     los golpes de una criatura fotograma a fotograma (de lado y de tres
                                        cuartos) y lo que delata un golpe sin peso: el pie que patina, los
                                        pasos, el giro de la cadera y la cabeza fuera del blanco

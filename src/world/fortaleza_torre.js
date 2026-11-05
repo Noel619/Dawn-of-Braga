@@ -511,6 +511,10 @@ function almacen(ctx, L) {
     beam(ctx, 'wooddark', V(qx + 0.3, 0.5, qz), V(qx + 0.3, 0.85, qz), 0.05, { room: RG });
     P.sacks(ctx, qx + 1.15, 0, qz + 0.5, 2, 7713);
     ctx.col.add(qx - 0.45, 0, qz - 0.45, qx + 0.45, 0.5, qz + 0.45);
+    // la artesa de la harina por cerner, junto a la muela: lo que se molía
+    // para el Rey (con su texto: el que molía es el que está acurrucado)
+    P.kneadTrough(ctx, qx - 1.5, 0, qz + 0.1, Math.PI / 2, { room: RG });
+    L.interact.push({ kind: 'examine', id: 'x_muela_torre', text: 'muelaTorre', x: qx - 0.6, y: 0, z: qz + 0.2, r: 1.7 });
   }
   for (let k = 0; k < 5; k++) wb.box('planks', -107.9, 0.02 + k * 0.08, -103.9 + (k % 2) * 0.08, -105.2, 0.09 + k * 0.08, -103.3 + (k % 2) * 0.08, { ao: false, room: RG, tint: [0.75, 0.68, 0.6] });
   ctx.col.add(-107.9, 0, -103.9, -105.2, 0.5, -103.2);

@@ -328,12 +328,16 @@ function paseo(ctx, S, L) {
   for (const z of [-83, -59.2]) P.wallTorch(ctx, Pt.x1 - 0.02, y + 1.7, z, 'w', {});
   for (const x of [-113, Pu.px0 + (Pu.px1 - Pu.px0) / 2, -83]) P.wallTorch(ctx, x, y + 1.7, Pt.z1 - 0.02, 'n', {});
   // lo que hay: la vista del patio, desde la baranda del sur; los virotes
-  // y la capelina de un ballestero que tiraba desde aquí al patio; un
-  // cortesano que reza ante la puerta de la reina y la ronda, en la esquina
-  // de levante
+  // y la capelina de otro ballestero, en la esquina; un cortesano que reza
+  // ante la puerta de la reina; la ronda, en la esquina de levante, y en el
+  // brazo del sur, entre dos pies derechos, el tirador: un ballestero que
+  // tira al patio desde la baranda y no baja (entities/alferez.js; fase 7,
+  // #27: el que está abajo aprende que hay un arriba y busca por dónde se
+  // sube). Muerto, deja sus virotes.
   L.interact.push({ kind: 'examine', id: 'x_paseo', text: 'paseoVista', x: FORT.eje + 4, y, z: zS + 0.6, r: 1.8 }, { kind: 'item', id: 'i_virotes_paseo', item: 'virote', n: 3, x: Pt.x1 - 1.4, y: y + 0.02, z: Pt.z1 - 1.0 });
   P.dropped(ctx, Pt.x1 - 0.8, y, Pt.z1 - 0.6, 0.9, 'helmet');
-  L.enemies.push({ type: 'cortesanoSuelto', x: Pa.reina + 0.4, y, z: Pt.z0 + 3.2, yaw: Math.PI, idle: 'kneel', id: 'e_paseo1' }, { type: 'soldier', x: xE + 1.0, y, z: Pt.z1 - 2.2, yaw: -Math.PI / 2, idle: 'stand', id: 'e_paseo2' });
+  L.enemies.push({ type: 'cortesanoSuelto', x: Pa.reina + 0.4, y, z: Pt.z0 + 3.2, yaw: Math.PI, idle: 'kneel', id: 'e_paseo1' }, { type: 'soldier', x: xE + 1.0, y, z: Pt.z1 - 2.2, yaw: -Math.PI / 2, idle: 'stand', id: 'e_paseo2' }, { type: 'tirador', x: FORT.eje - 7, y, z: zS + 0.8, yaw: Math.PI, idle: 'watch', id: 'e_tirador_paseo', dies: 'dead:tirador_paseo' });
+  L.interact.push({ kind: 'item', id: 'i_virotes_tirador', item: 'virote', n: 4, afterFlag: 'dead:tirador_paseo', x: FORT.eje - 7.4, y: y + 0.02, z: zS + 1.3 });
   // zona (con los huecos de las puertas) y mapa
   const rects = brazos.map(([x0, z0, x1, z1]) => [x0, z0, x1, z1, y - 0.25, Pa.yHi]);
   rects.push([Pa.reina - 0.7, Pt.z0 - ti, Pa.reina + 0.7, Pt.z0, y - 0.25, y + 2.6], [Pa.rey - 0.7, Pt.z0 - ti, Pa.rey + 0.7, Pt.z0, yb - 0.25, y + 2.6], [Pt.x1, Pa.tribuna - 0.7, Pt.x1 + ti, Pa.tribuna + 0.7, yb - 0.25, y + 2.6]);

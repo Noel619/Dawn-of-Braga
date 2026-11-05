@@ -444,6 +444,28 @@ function torreHomenaje(ctx, L) {
       mz = cz + 4;
     wb.cylinder('wooddark', mx, H, mz, 0.12, 0.09, 9, 6, { ao: false });
     wb.box('iron', mx - 0.12, H + 9, mz - 0.12, mx + 0.12, H + 9.3, mz + 0.12, { ao: false });
+    // la vela del Rey: el farol en lo alto del mástil, que no se apaga
+    // mientras él viva (su resplandor se ve de lejos: game/hitos.js). La
+    // jaula, el tejadillo y la anilla; la llama, en su grupo, que se apaga
+    // cuando muere el Rey
+    {
+      const y0 = H + 9.3,
+        r = 0.2;
+      wb.box('iron', mx - r - 0.02, y0, mz - r - 0.02, mx + r + 0.02, y0 + 0.05, mz + r + 0.02, { ao: false, faces: 'tnsewb' });
+      for (const [sx, sz] of [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ])
+        wb.box('iron', mx + sx * r - 0.02, y0, mz + sz * r - 0.02, mx + sx * r + 0.02, y0 + 0.5, mz + sz * r + 0.02, { ao: false });
+      wb.pyramid('iron', mx, mz, 2 * r + 0.12, 2 * r + 0.12, y0 + 0.5, 0.26);
+      wb.cylinder('iron', mx, y0 + 0.76, mz, 0.05, 0.05, 0.05, 6, { ao: false });
+      ctx.beginGroup('vela_rey');
+      wb.cylinder('ember', mx, y0 + 0.08, mz, 0.11, 0.11, 0.3, 6, { ao: false, grime: false });
+      if (ctx.fires) ctx.fires.push({ x: mx, y: y0 + 0.22, z: mz, s: 0.3, light: false, embers: false, glow: true });
+      ctx.endGroup();
+    }
     P.banner(ctx, mx + 1.7, H + 8.6, mz, 0, 'bannerRey', 3.0, 2.2);
     P.banner(ctx, cx - 2.4, H - 1.3, z1 + 0.36, 0, 'bannerRey', 1.8, 5.6);
     P.banner(ctx, cx + 2.4, H - 1.3, z1 + 0.36, 0, 'bannerRey', 1.8, 5.6);

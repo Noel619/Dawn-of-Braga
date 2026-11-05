@@ -700,6 +700,39 @@ esta fase (el paseo como mirador y atajo, la niebla de altura, los golpes legibl
 - **Fase 11, animación**: más claves y dos variantes por golpe, reacciones por dirección, el pie en el estribo del
   alférez y la túnica que se abre con el paso.
 
+**Lo que quedaba de la fase 7 (5 de noviembre).** Lo pendiente de `bugs_y_correciones.txt` (24–32), por orden de lo
+que más pesaba en la calidad:
+
+- **Las pruebas (#32)**, todas otra vez, con el paseo y la niebla de altura: `progress.mjs` (de la celda al río),
+  `castlewalk.mjs torre carcel`, `corte.mjs`, `rey.mjs mesa`, `caballero.mjs`, `beastchase.mjs`, `fortalezawalk.mjs`,
+  `camclip.mjs` (7776 pruebas, limpia), `zfight.mjs` (los mismos 547 grupos que una copia limpia del código: nada
+  nuevo) y `holes.mjs alto` (85.456 casillas, ningún agujero). Las largas, contra una copia del código servida aparte:
+  al editar mientras corrían, Vite recargaba la página a media prueba.
+- **La rosca del arco de la puerta (#31)**: el arco del patio es de embocadura, más bajo que la bóveda del paso
+  (arranca a 2,6 y no a 3,2); su rosca queda bajo las vigas del techo de la galería, que antes cortaba, y ya no asoma
+  en el suelo del paseo.
+- **Las salas sin «algo» (#25)**: la oración del Rey en su oratorio (un documento nuevo: la que le dio el arzobispo,
+  «Señor, que duermes bajo tu sede… toma nuestras rodillas por murallas», que rezaba de rodillas, de cara a la Sé y de
+  espaldas al altar: su reclinatorio ya estaba así, ahora a propósito); la artesa de la harina junto a la muela del
+  granero de la torre; la pez de las buhederas y el de la guardia abrasado contra el rastrillo de fuera, en el zaguán;
+  un preso que sigue encerrado en una celda de castigo del paso de la cárcel (las encerradas ya no hacen física: el
+  nicho sólo está tallado a la vista). El adarve norte se queda: es el pasillo de la huida de la Bestia.
+- **El tirador del paseo (#27)**: un ballestero del Rey en el brazo sur del paseo de las cámaras que tira al patio de
+  honor y no baja (`entities/alferez.js`, tipo `tirador`; `tools/tirador.mjs`). Con la ronda de la esquina, el primer
+  encuentro compuesto de la fortaleza: el que está abajo aprende que hay un arriba.
+- **La vela del Rey (#24)**: un farol en lo alto del mástil de la torre del homenaje, a 37,5 m, cuyo resplandor se ve
+  por encima de la niebla y más allá del plano lejano (`game/hitos.js`). Se ve desde la puerta de la torre de la cárcel
+  al salir —la promesa del principio— y desde casi todo el patio de armas; se apaga cuando muere el Rey.
+
+Con esto, en la tabla de arriba: **Hitos**, de C a B (la luz de lo alto; la torre, no); **Encuentros**, de C a B (el
+tirador y la ronda); **Vacíos**, las cinco salas resueltas, la densidad sigue en C (fase 9). Quedan #26 (la parada en
+las galerías largas) y la animación (#28–#30), en sus fases.
+
+**El patio de armas antiguo**: el vacío que quedó en medio (1.290 m² con menos de 4 triángulos/m²: el patio y la
+torre del castillo viejo) y el problema de por dónde sale el preso tienen su propuesta aparte, **el albacar**
+(`PLAN_ALBACAR.md`): el patio del castillo viejo como refugio de la gente de fuera durante el cerco. Pendiente de lo
+que decida el autor.
+
 ## Fuentes
 
 - La alcáçova de Lisboa (el castillo, el paço real y la plaza de armas en un mismo recinto, partido en dos patios

@@ -835,6 +835,12 @@ function pasos({ ctx, L }, nichos) {
       P.skullRow(ctx, xc, YF, q.z + 0.15, sg > 0 ? -Math.PI / 2 : Math.PI / 2, 1, { room, seed: Math.round(-q.z) });
       for (let k = 0; k < 7; k++) wb.box('iron', back - sg * 0.06, YF + 1.3 - k * 0.12, q.z - 0.4, back, YF + 1.4 - k * 0.12, q.z - 0.34, { ao: false, room });
     }
+    // en la de poniente sigue uno encerrado, y aporrea la reja al oírte (el
+    // paso no tenía a nadie: PLAN_FORTALEZA.md, fase 7)
+    {
+      const q = nichos[0];
+      L.enemies.push({ type: 'penitent', x: q.line + q.side * 0.5, y: YF, z: q.z, yaw: q.side < 0 ? Math.PI / 2 : -Math.PI / 2, idle: 'pound', caged: true, id: 'e_preso_castigo' });
+    }
     // un muerto en el paso, a medio arrastrar
     bakeCorpse(wb, ex + 0.3, YF, (C.aljibe.zs[4] + C.verdugos.z0) / 2 + 2.2, 0.2, 'face', 'villager', 8841);
     P.decal(ctx, ex + 0.3, YF + 0.01, (C.aljibe.zs[4] + C.verdugos.z0) / 2 + 2.6, 2.4, 'splat', 0.3);
