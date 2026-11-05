@@ -201,3 +201,80 @@ export const ALFEREZ_TYPE = {
   loco,
   idlePose,
 };
+
+// ------------------------------------------------------------ el ballestero
+// Los ballesteros del Rey (PLAN_FORTALEZA.md, §7: en los adarves, en sus
+// garitas): de la misma guardia que el alférez, sin su pendón ni su llave.
+// Gambesón acolchado sobre la malla, la capelina de ala ancha sobre el
+// almófar y el pavés a la espalda, con la cruz del Rey. Pelea como él (tira
+// de lejos, la monta con el pie en el estribo, culatazo si te le echas
+// encima), con menos vida y menos tino, y no deja su adarve.
+export function buildBallestero() {
+  const k = 1.0;
+  const joints = humanoidJoints(k);
+  joints.push({ name: 'paves', parent: 'chest', pos: [0, 0.22, -0.2], rot: [-6, 0, 0] });
+  const gamb = 'clothDark';
+  const parts = [
+    // la cadera: los faldones del gambesón, el cinto y el carcaj
+    { j: 'hips', type: 'box', s: [0.44, 0.4, 0.31], p: [0, -0.17, 0], taper: [1.15, 1.08], mat: gamb },
+    { j: 'hips', type: 'box', s: [0.45, 0.025, 0.32], p: [0, -0.24, 0], taper: [1.15, 1.08], mat: 'leather' },
+    { j: 'hips', type: 'box', s: [0.45, 0.07, 0.33], p: [0, 0.03, 0], mat: 'leather' },
+    { j: 'hips', type: 'box', s: [0.1, 0.36, 0.1], p: [-0.25, -0.12, -0.04], r: [-14, 0, 8], mat: 'leather' },
+    { j: 'hips', type: 'box', s: [0.08, 0.08, 0.06], p: [-0.27, 0.1, -0.02], r: [-14, 0, 8], mat: 'clothWhite' },
+    // el pecho: el gambesón con sus pespuntes y el almófar
+    { j: 'chest', type: 'box', s: [0.5, 0.54, 0.32], p: [0, 0.26, 0], taper: [0.84, 0.92], mat: gamb },
+    { j: 'chest', type: 'box', s: [0.47, 0.022, 0.33], p: [0, 0.12, 0], taper: [0.86, 0.92], mat: 'leather' },
+    { j: 'chest', type: 'box', s: [0.45, 0.022, 0.32], p: [0, 0.26, 0], taper: [0.86, 0.92], mat: 'leather' },
+    { j: 'chest', type: 'box', s: [0.43, 0.022, 0.31], p: [0, 0.4, 0], taper: [0.86, 0.92], mat: 'leather' },
+    { j: 'chest', type: 'cyl', s: [0.13, 0.16, 0.14], p: [0, 0.55, 0], mat: 'chainmail' },
+    // la infección: le ha reventado el gambesón por el hombro
+    { j: 'chest', type: 'ico', s: [0.11, 0.09, 0.08], p: [0.19, 0.4, 0.06], mat: 'flesh' },
+    { j: 'chest', type: 'ico', s: [0.06], p: [-0.17, 0.2, 0.15], mat: 'flesh' },
+    // el pavés, a la espalda: tablas con su borde y la cruz del Rey
+    { j: 'paves', type: 'box', s: [0.46, 0.7, 0.04], p: [0, 0, 0], taper: [1, 0.9], mat: 'wooddark' },
+    { j: 'paves', type: 'box', s: [0.06, 0.6, 0.012], p: [0, 0.02, -0.026], mat: 'clothBlue' },
+    { j: 'paves', type: 'box', s: [0.36, 0.06, 0.012], p: [0, 0.12, -0.026], mat: 'clothBlue' },
+    // la cabeza: el almófar, la cara gris, los ojos y la capelina de ala ancha
+    { j: 'head', type: 'cyl', s: [0.135, 0.15, 0.24], p: [0, 0.1, 0], seg: 8, mat: 'chainmail' },
+    { j: 'head', type: 'box', s: [0.15, 0.13, 0.03], p: [0, 0.12, 0.12], mat: 'skinCorrupt' },
+    { j: 'head', type: 'sphere', s: [0.022], p: [-0.04, 0.155, 0.137], mat: 'eyeGlow' },
+    { j: 'head', type: 'sphere', s: [0.022], p: [0.04, 0.155, 0.137], mat: 'eyeGlow' },
+    { j: 'head', type: 'cone', s: [0.15, 0.13], p: [0, 0.29, 0], seg: 10, mat: 'plateRust' },
+    { j: 'head', type: 'cyl', s: [0.27, 0.27, 0.025], p: [0, 0.225, 0], seg: 12, mat: 'plateRust' },
+    // los brazos, del gambesón, con sus brazales de cuero
+    { j: 'armL', type: 'box', s: [0.15, 0.32, 0.15], p: [0, -0.15, 0], taper: [0.86, 0.86], mat: gamb },
+    { j: 'foreL', type: 'box', s: [0.12, 0.28, 0.12], p: [0, -0.13, 0], taper: [0.85, 0.85], mat: 'leather' },
+    { j: 'handL', type: 'box', s: [0.09, 0.1, 0.1], p: [0, -0.05, 0.01], mat: 'leather' },
+    { j: 'armR', type: 'box', s: [0.15, 0.32, 0.15], p: [0, -0.15, 0], taper: [0.86, 0.86], mat: gamb },
+    { j: 'foreR', type: 'box', s: [0.12, 0.28, 0.12], p: [0, -0.13, 0], taper: [0.85, 0.85], mat: 'leather' },
+    { j: 'handR', type: 'box', s: [0.09, 0.1, 0.1], p: [0, -0.05, 0.01], mat: 'leather' },
+    ...ballestaParts('handR'),
+    // las calzas y las botas
+    { j: 'legL', type: 'box', s: [0.16, 0.46, 0.17], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: gamb },
+    { j: 'shinL', type: 'box', s: [0.13, 0.42, 0.14], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'leather' },
+    { j: 'legR', type: 'box', s: [0.16, 0.46, 0.17], p: [0, -0.22, 0], taper: [0.8, 0.85], mat: gamb },
+    { j: 'shinR', type: 'box', s: [0.13, 0.42, 0.14], p: [0, -0.2, 0], taper: [0.9, 0.9], mat: 'leather' },
+    ...feetParts(k, 'leather', { w: 0.12, h: 0.08, l: 0.25 }),
+  ];
+  return new Rig({ joints, parts });
+}
+
+const [SHOOT, BASH] = ALFEREZ_TYPE.attacks;
+export const BALLESTERO_TYPE = {
+  ...ALFEREZ_TYPE,
+  name: 'Ballestero del Rey',
+  build: buildBallestero,
+  hp: 95,
+  poise: 32,
+  height: 1.82,
+  lockHeight: 1.4,
+  sight: 22,
+  approach: 9,
+  // (no deja su adarve: si te vas, vuelve a su garita)
+  leash: 14,
+  attacks: [
+    { ...SHOOT, events: [{ t: 0.95, fn: (e, g) => g.virotes && g.virotes.enemyShoot(e, { dmg: 19, h: 1.45, spread: 0.05 }) }] },
+    { ...BASH, dmg: 15, stDmg: 22 },
+  ],
+  biped: { scale: 1.0, style: GAIT.soldier, stance: 0.12 },
+};

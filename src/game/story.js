@@ -1199,7 +1199,6 @@ export const MSG = {
   escombroTaller: 'Escombro hasta la clave del arco: las piedras de la muralla del taller, que se vino abajo con el bolaño. Entre ellas se ve luz, y algo de madera. Por aquí no se pasa.',
   tabique: 'Un tabique de piedra y cal, nuevo, cierra el arco. Desde este lado no hay dónde hincar nada.',
   tabiqueCae: 'Embistes el tabique con el hombro. La cal aún estaba tierna: se viene abajo. La armería queda a un paso.',
-  tapiaCae: 'La cuerda se parte. El sillar cae sobre el tapiado y se lo lleva por delante.',
   // la fortaleza
   corteArea: 'LA CORTE DE LOS INFIELES',
   corteVencida: 'LA CORTE HA CAÍDO',
@@ -1301,10 +1300,11 @@ export const MSG = {
   gateUp: 'La palanca cede de un tirón. A tu lado, la reja sube chirriando por sus ranuras hasta perderse en el muro.',
   slabOpen: 'La palanca cede de un tirón. Algo rueda dentro del muro: el lienzo del fondo se hunde en el suelo y deja ver la sala de llegada.',
   pozoCalle: 'El pozo del Postigo. Muy abajo gotea el agua… y algo más se mueve. Unos pates de hierro bajan por la pared del pozo.',
-  hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Una escalera de mano baja al almacén de la torre.',
+  // (lo que dice una trampilla con escalera de mano que no dice lo suyo)
+  hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Debajo, una escalera de mano.',
   hatchShut: 'Una trampilla en el techo, atrancada desde arriba.',
-  hatchDown: 'Bajas por la escalera de mano al almacén.',
-  hatchUp: 'Subes por la escalera de mano al cuerpo de guardia.',
+  hatchDown: 'Bajas por la escalera de mano.',
+  hatchUp: 'Subes por la escalera de mano.',
   carcelSube: 'Subes por la escalera de mano a la sala de los guardas.',
   carcelBaja: 'Bajas por la escalera de mano al cuerpo de guardia de la cárcel.',
   libroPresos:

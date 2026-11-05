@@ -591,6 +591,65 @@ con `carcel`, el atajo al revés: del pasillo de las celdas, por la cárcel, al 
 la palanca), `tools/holes.mjs alto`, `tools/zfight.mjs`, `tools/camclip.mjs` y las de siempre (`rey.mjs`,
 `caballero.mjs`, `corte.mjs`, `beastchase.mjs`).
 
+**Fase 6 (hecha).** El repaso: los encuentros, la luz y el sonido de cada sala, los documentos, las pruebas de punta a
+punta, el rendimiento, el README y la versión jugable.
+
+- **Los encuentros**, sala por sala contra §7: estaban todos menos los de los adarves. En el adarve del jardín, un
+  soldado de la ronda, más acá del mirador, y al cabo de poniente, contra la torre de en medio de la muralla, **la
+  garita** de tablas de las obras del cerco (sus postes, sus costados por encima de las almenas y del parapeto, con su
+  tronera, el tejadillo a un agua contra la torre, el brasero, el escabel, el haz de virotes y el pavés de repuesto),
+  con **el ballestero del Rey**: un tipo nuevo (`ballestero`, en `entities/alferez.js`), de la guardia del alférez y
+  convertido como él (gambesón acolchado con sus pespuntes, la capelina de ala ancha sobre el almófar, el pavés a la
+  espalda con la cruz del Rey), con sus golpes (tira, la monta con el pie en el estribo, culatazo), menos vida y menos
+  tino. Ve a quien sube al adarve en cuanto pasa el mirador y tira a lo largo de él; no deja su adarve (si bajas al
+  jardín, vuelve a su garita), y muerto deja sus virotes.
+- **La luz de cada sala**, medida (`tools/salas.mjs`: cuatro vistas a la altura de los ojos en cada zona, su brillo,
+  lo que queda a oscuras y la luz que recibe el jugador, con una hoja de vistas por sala): la fortaleza está en el
+  tono de la cripta honda. Se quedaban negros el dormitorio de la guardia de la torre (media sala; ahora, la lámpara
+  de las vigas, sobre los jergones), la entrada de la torre de la reina (una antorcha más, junto a la puerta del
+  estrado) y su oratorio, donde el jugador no recibía luz ninguna (la lámpara que la reina no dejaba apagar).
+- **El sonido de cada sala** (`game/acustica.js`): hasta ahora todas las salas de la fortaleza sonaban igual (las de
+  dentro, como una habitación, y con pisadas de madera aunque el suelo fuera de losas). Ahora cada una tiene su
+  reverberación según su tamaño y su fábrica (las de tablas y tapices, secas; el gran salón, la capilla y la sala del
+  trono, largas; los pasos abovedados y la cárcel, de piedra; el aljibe, como una nave), las pisadas de su suelo de
+  verdad (medido bajo cada zona: losas, tablas, tierra y, nueva, la paja de las cuadras) y su ambiente
+  (`core/audio.js`: `ambSala`): el caldero de la cocina, la despensa, las moscas y los arreos de las cuadras, los
+  cascabeles de los halcones, los legajos y el viento del Tombo, la torre del homenaje (el viento de arriba, el
+  pendón, las vigas), las gotas del aljibe, el jardín, los adarves, la corona de luz del gran salón, los pasos, el
+  torno, la armería y las cámaras. `audiotest.mjs` los renderiza y los mide con los de las atmósferas.
+- **Los documentos**, repasados: dicen dónde está cada cosa. Las frases por defecto de las trampillas hablaban del
+  almacén y del cuerpo de guardia de la torre vieja (ahora no dicen dónde). Fuera lo que quedaba de la cuerda y el
+  sillar de la bajada tapiada, que nadie usaba desde el rastrillo: `game/cuerdas.js`, su aviso y la cerradura `rope`
+  de `game/interact.js`.
+- **El rendimiento** (`tools/rendimiento.mjs`: llamadas de dibujo y triángulos desde sitios de la fortaleza,
+  comparados con la plaza del Pan y los miradores de antes). Con el aire claro de la fortaleza el plano lejano, que
+  sigue a la niebla, llegaba a 130 m, y desde el jardín o los adarves se dibujaba media ciudad: 1295 llamadas desde
+  el jardín y 1360 desde el adarve de levante, frente a unas 965 de la plaza del Pan. Ahora, en las atmósferas
+  `castillo` y `armas`, se queda en 100 m, donde la niebla no deja ni un 2 % (comparadas píxel a píxel, las vistas no
+  cambian más que con el ruido de las llamas y la ceniza). Así, desde los patios y las salas se dibuja menos que
+  desde la plaza (unas 965 llamadas y 461 000 triángulos): el patio de honor, 836–852 llamadas (436 000–499 000
+  triángulos); el patio de armas, 290–753; el jardín, 676; la terraza de la torre, 734; el gran salón, 386; la sala
+  del trono, 466; la cárcel, 369. Lo más caro es el adarve de levante, con el patio de armas y media ciudad a sus pies:
+  1067 llamadas y 537 000 triángulos, un 10 % más que la plaza (el adarve del castillo, 937). Desde el adarve del
+  jardín se ve el río por encima de la muralla, y por su hueco se dibuja el subsuelo: pocas llamadas (440) y muchos
+  triángulos (686 000).
+- **Los parpadeos** (`tools/zfight.mjs`, por toda la fortaleza, también lo de las fases 1 y 2, que no se había
+  revisado): los bancos de iglesia (`P.pew`, los de la capilla real y los de todo el juego), cuyo asiento y respaldo
+  llegaban a la cara de fuera de los costados. Lo que queda son caras tapadas (los asientos de los salmeres del
+  claustro, bajo el capitel), caras del mismo material, color y textura (no se distinguen al solaparse) o capas a 4–8
+  mm (las orlas de los paños, la luna pintada en las ventanas), que con el búfer de profundidad no llegan a parpadear.
+
+Pruebas, de punta a punta: `tools/progress.mjs` (toda la partida, hasta el río), `tools/fortalezawalk.mjs` (ahora
+también la garita y los virotes del ballestero), `tools/castlewalk.mjs` (con `torre` y con `carcel`),
+`tools/corte.mjs`, `tools/rey.mjs mesa`, `tools/caballero.mjs`, `tools/beastchase.mjs` y `tools/camclip.mjs` (con tres
+puntos en la garita); `tools/audiotest.mjs` (los ambientes de las salas), `tools/salas.mjs` (la luz) y
+`tools/rendimiento.mjs` (lo que se dibuja), nuevas.
+
+Lo que queda: **el paseo de las cámaras** (el claustro de arriba), que el plan dejaba para esta fase «si se hace». No
+se ha hecho: es una obra nueva (la galería alta en los tres lados del claustro, su suelo, su antepecho, el tejaroz
+más arriba y las puertas a la sala de la reina, a la cámara del Rey y a la tribuna), no un repaso. A las salas altas
+se sigue subiendo por sus torres y sus escaleras.
+
 ## Fuentes
 
 - La alcáçova de Lisboa (el castillo, el paço real y la plaza de armas en un mismo recinto, partido en dos patios

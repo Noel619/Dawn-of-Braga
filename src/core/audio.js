@@ -719,32 +719,40 @@ export class Audio {
     }
   }
 
-  // Zona del ambiente. En un umbral la zona puede ir y venir de un fotograma a
+  // Zona del ambiente: su atmósfera y, si la sala tiene la suya, su acústica
+  // (son: su reverberación, su ambiente, sus capas de fondo; ver
+  // game/acustica.js). En un umbral la zona puede ir y venir de un fotograma a
   // otro: el cambio solo se aplica cuando se mantiene un instante.
-  setZone(atmo) {
+  setZone(atmo, son = null) {
+    const key = son ? atmo + '/' + son.id : atmo;
     if (!this.ok || !this._roomSet) {
       this.zone = atmo;
+      this.son = son;
+      this.zoneKey = key;
       if (!this.ok) return;
       this._roomSet = true;
       this._zoneReq = null;
-      const [kind, lvl] = ZONE_ROOM[atmo] || ZONE_ROOM.city;
+      const [kind, lvl] = (son && son.eco) || ZONE_ROOM[atmo] || ZONE_ROOM.city;
       this.setRoom(kind, lvl, 0.05);
       return;
     }
-    if (atmo === this.zone) {
+    if (key === this.zoneKey) {
       this._zoneReq = null;
       return;
     }
-    if (this._zoneReq !== atmo) {
-      this._zoneReq = atmo;
+    if (!this._zoneReq || this._zoneReq.key !== key) {
+      this._zoneReq = { atmo, son, key };
       this._zoneReqT = this.t();
     }
   }
   applyZone(t) {
     if (!this._zoneReq || t - this._zoneReqT < 0.2) return;
-    this.zone = this._zoneReq;
+    const Q = this._zoneReq;
+    this.zone = Q.atmo;
+    this.son = Q.son;
+    this.zoneKey = Q.key;
     this._zoneReq = null;
-    const [kind, lvl] = ZONE_ROOM[this.zone] || ZONE_ROOM.city;
+    const [kind, lvl] = (this.son && this.son.eco) || ZONE_ROOM[this.zone] || ZONE_ROOM.city;
     this.setRoom(kind, lvl);
     // en la bodega puede empezar la caza: sus temas, preparados
     if (this.zone === 'cellar') for (const k of ['cellarHunt', 'bossCellar', 'bossCellar2']) this.warmTheme(k);
@@ -1354,6 +1362,12 @@ export class Audio {
       this.tone(d, t, 0.09, { f0: rnd(160, 210) * pv, f1: 110, gain: 0.4 * k });
       this.noise(d, t, 0.06, { f0: 700 * pv, q: 3, gain: 0.25 * k, a: 0.002, buf: this.brown, rate: 4 });
       if (Math.random() < 0.08) this.creak(d, t + 0.03, 0.35, rnd(90, 140), 0.07);
+    } else if (s === 'straw') {
+      // paja: el golpe sordo, ahogado, y el crujido de las briznas que se
+      // aplastan (unos chasquidos secos y agudos, repartidos)
+      this.noise(d, t, 0.08, { type: 'lowpass', f0: rnd(450, 650) * pv, gain: 0.32 * k, a: 0.008, buf: this.brown, rate: 4 });
+      this.noise(d, t + 0.01, 0.16, { f0: rnd(2600, 3800) * pv, q: 0.8, gain: 0.12 * k, a: 0.03, buf: this.pink });
+      this.debris(d, t + 0.01, 4, 0.12, { f0: 2500, f1: 5200, gain: 0.35 * k });
     } else {
       this.noise(d, t, 0.09, { type: 'lowpass', f0: rnd(600, 900) * pv, gain: 0.5 * k, a: 0.006, buf: this.brown, rate: 4 });
       this.noise(d, t + 0.02, 0.07, { f0: rnd(1500, 2200), q: 1.2, gain: 0.08 * k, a: 0.01 });
@@ -3783,6 +3797,12 @@ export class Audio {
     const O = (pos, gain, extra = {}) => this.out(pos, { gain, verb: 0.9, life: 8, ref: 18, roll: 0.35, occlude: false, ...extra });
     // (con el ambiente lleno, el suceso se aplaza un poco)
     if (this.admit('amb', 0, 0.3) !== 1) return rnd(1, 3);
+    // los de la sala, si tiene los suyos (y si no toca uno de ésos, los de su
+    // atmósfera)
+    if (this.son && this.son.amb) {
+      const w = this.ambSala(this.son.amb, cp, t, O, near, far);
+      if (w) return w;
+    }
     const r = Math.random();
     if (z === 'city' || z === 'castillo' || z === 'armas' || z === 'ramparts' || z === 'luna') {
       if (r < 0.13) {
@@ -3894,6 +3914,234 @@ export class Audio {
     }
     return rnd(8, 16);
   }
+  // Sucesos propios de una sala (game/acustica.js: amb). Devuelve la espera
+  // hasta el siguiente, o null: entonces suena uno de los de su atmósfera.
+  ambSala(kind, cp, t, O, near, far) {
+    const r = Math.random();
+    const I = (pos, g, life = 4) => O(pos, g, { ref: 3, roll: 1, verb: 0.5, life });
+    const up = (r0, h) => ({ x: cp.x + rnd(-r0, r0), y: cp.y + h, z: cp.z + rnd(-r0, r0) });
+    // tela que se mueve con la corriente (un tapiz, una cortina, un pendón)
+    const tela = (d, t0, n, gain) => {
+      for (let i = 0; i < n; i++) this.noise(d, t0 + i * rnd(0.09, 0.2), rnd(0.08, 0.16), { type: 'lowpass', f0: rnd(500, 900), gain: gain * rnd(0.5, 1), a: 0.02, buf: this.pink });
+    };
+    // una racha que gime por un hueco (una tronera, un paso, una escalera)
+    const racha = (d, t0, dur, f0, gain) => this.noise(d, t0, dur, { f0, f1: f0 * rnd(1.3, 1.8), q: 3.5, gain, a: dur * 0.45, buf: this.pink, curve: 'lin' });
+    switch (kind) {
+      case 'cocina': {
+        // el caldero que borbotea en el hogar, el cucharón contra la olla, las
+        // moscas de la carne
+        if (r < 0.34) {
+          const d = I(near(4, 0.6), 0.45, 3);
+          const n = 4 + Math.floor(Math.random() * 6);
+          for (let i = 0; i < n; i++) {
+            const tt = t + i * rnd(0.12, 0.35);
+            this.tone(d, tt, rnd(0.05, 0.09), { f0: rnd(120, 220), f1: rnd(60, 90), gain: 0.07 });
+            this.noise(d, tt, 0.05, { type: 'lowpass', f0: 700, gain: 0.05, a: 0.004, buf: this.brown, rate: 3 });
+          }
+        } else if (r < 0.52) {
+          const d = I(near(5, 1.2), 0.4, 2);
+          this.metal(d, t, rnd(700, 1100), 0.05, 0.5, { ratios: [1, 2.3, 4.1] });
+          if (Math.random() < 0.5) this.metal(d, t + rnd(0.3, 0.6), rnd(700, 1100), 0.03, 0.4, { ratios: [1, 2.3, 4.1] });
+        } else if (r < 0.74) this.zumbido(I(near(3, 1.5), 0.45, 3), t, rnd(1.5, 3));
+        else return null;
+        return rnd(4, 9);
+      }
+      case 'despensa': {
+        // la duela de un tonel que cede, la gota en la tinaja, las ratas por
+        // los sacos
+        if (r < 0.3) this.creak(I(near(5, 1), 0.45, 3), t, rnd(1, 1.6), rnd(40, 60), 0.12);
+        else if (r < 0.5) {
+          const d = I(near(5, 0.8), 0.45, 2);
+          this.smp(d, t, this.lib.drip(rnd(1500, 2200)), { gain: 0.22 });
+          this.tone(d, t + 0.01, 0.4, { f0: rnd(1300, 1900), f1: rnd(1100, 1300), gain: 0.025 });
+        } else if (r < 0.64) {
+          const d = I(near(4, 0.4), 0.4, 2);
+          for (let i = 0; i < 8; i++) this.noise(d, t + i * rnd(0.04, 0.09), 0.03, { type: 'highpass', f0: rnd(2500, 4000), gain: 0.05, a: 0.003 });
+          this.tone(d, t + 0.4, 0.07, { f0: rnd(3400, 4600), f1: rnd(2800, 5000), gain: 0.04, type: 'triangle' });
+        } else return null;
+        return rnd(5, 11);
+      }
+      case 'cuadras': {
+        // las moscas sobre los caballos muertos, la paja que se asienta, los
+        // arreos colgados, la puerta de una plaza
+        if (r < 0.36) this.zumbido(I(near(4, 0.8), 0.5, 3), t, rnd(2, 3.5));
+        else if (r < 0.54) {
+          const d = I(near(4, 0.2), 0.4, 2);
+          this.noise(d, t, rnd(0.6, 1.2), { f0: rnd(2800, 3800), q: 0.9, gain: 0.035, a: 0.2, buf: this.pink });
+          this.debris(d, t, 6, 0.9, { f0: 2600, f1: 5200, gain: 0.25 });
+        } else if (r < 0.68) {
+          const d = I(near(5, 1.6), 0.4, 2);
+          this.jingle(d, t, 0.25, 0.07, 0.8);
+          this.creak(d, t + 0.1, rnd(0.4, 0.8), rnd(120, 180), 0.05);
+        } else if (r < 0.8) this.creak(I(near(6, 1), 0.45, 3), t, rnd(0.8, 1.5), rnd(60, 95), 0.1);
+        else return null;
+        return rnd(4, 9);
+      }
+      case 'halconera': {
+        // los cascabeles de los halcones, muertos en la alcándara, cuando la
+        // corriente los mece; una pluma que se ahueca; la percha que cruje
+        if (r < 0.42) {
+          const d = I(near(4, 1.6), 0.45, 3);
+          this.cascabeles(d, t, 2 + Math.floor(Math.random() * 4), rnd(0.5, 1.2), 0.045, rnd(2400, 3000));
+          if (Math.random() < 0.5) tela(d, t + 0.2, 3, 0.03);
+        } else if (r < 0.6) this.creak(I(near(4, 1.5), 0.4, 2), t, rnd(0.4, 0.8), rnd(130, 200), 0.07);
+        else if (r < 0.74) this.zumbido(I(near(4, 1.2), 0.4, 3), t, rnd(1.5, 2.5));
+        else return null;
+        return rnd(5, 10);
+      }
+      case 'tombo': {
+        // los legajos que se mueven con el aire de las troneras, las tablas
+        // del sobrado, la racha que silba arriba
+        if (r < 0.36) {
+          const d = I(near(4, 1.2), 0.45, 2);
+          const n = 6 + Math.floor(Math.random() * 7);
+          for (let i = 0; i < n; i++) this.noise(d, t + i * rnd(0.03, 0.08), rnd(0.02, 0.05), { type: 'highpass', f0: rnd(2500, 5000), gain: rnd(0.03, 0.07), a: 0.002 });
+        } else if (r < 0.56) this.creak(I(near(5, 0.3), 0.45, 3), t, rnd(0.6, 1.3), rnd(70, 110), 0.1);
+        else if (r < 0.72) racha(I(up(4, 3), 0.45, 4), t, rnd(1.6, 2.6), rnd(420, 620), 0.05);
+        else return null;
+        return rnd(5, 10);
+      }
+      case 'torre': {
+        // la torre del homenaje: el viento que gime arriba, el pendón del Rey
+        // que restalla en lo alto, una viga que cruje, el polvo que cae
+        if (r < 0.28) racha(I(up(6, 7), 0.5, 5), t, rnd(2, 3.2), rnd(220, 380), 0.08);
+        else if (r < 0.46) tela(I(up(4, 12), 0.55, 4), t, 6 + Math.floor(Math.random() * 6), 0.07);
+        else if (r < 0.64) this.creak(I(near(6, 3), 0.5, 3), t, rnd(1, 2), rnd(50, 80), 0.13);
+        else if (r < 0.74) {
+          const d = I(near(5, 3), 0.35, 3);
+          this.noise(d, t, rnd(0.6, 1.2), { type: 'highpass', f0: 2500, gain: 0.03, a: 0.2, buf: this.pink });
+          this.debris(d, t, 5, 0.7, { f0: 3000, f1: 6000, gain: 0.3 });
+        } else return null;
+        return rnd(5, 11);
+      }
+      case 'aljibe': {
+        // el aljibe: las gotas que caen al agua (con su tono), el agua que
+        // lame el andén, algo que cae lejos
+        if (r < 0.55) {
+          const n = 1 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < n; i++) {
+            const d = I(near(8, 2.5), 0.5, 3);
+            const tt = t + i * rnd(0.4, 1.4),
+              f = rnd(700, 1500);
+            this.tone(d, tt, 0.14, { f0: f, f1: f * 0.72, gain: 0.05, a: 0.002 });
+            this.tone(d, tt + 0.03, 0.22, { f0: f * 1.5, f1: f * 1.2, gain: 0.02, a: 0.004 });
+            this.noise(d, tt, 0.02, { type: 'highpass', f0: 3000, gain: 0.03, a: 0.001 });
+          }
+        } else if (r < 0.76) this.noise(I(near(6, 0), 0.45, 4), t, rnd(1.6, 2.6), { type: 'lowpass', f0: rnd(260, 380), gain: 0.06, a: 0.7, buf: this.brown, rate: 2, curve: 'lin' });
+        else if (r < 0.86) {
+          const d = I(far(10, 18, 0), 0.6, 4);
+          this.noise(d, t, 0.5, { type: 'lowpass', f0: 900, f1: 300, gain: 0.12, a: 0.005, buf: this.brown, rate: 3 });
+          this.tone(d, t, 0.25, { f0: 140, f1: 70, gain: 0.08 });
+        } else return null;
+        return rnd(1.5, 4);
+      }
+      case 'jardin': {
+        // las ramas secas de los naranjos con el viento, las hojas muertas que
+        // se arrastran por los andenes, el emparrado que cruje
+        if (r < 0.32) {
+          const d = O(near(8, 2.5), 0.5, { ref: 4, roll: 0.8, life: 4 });
+          this.noise(d, t, rnd(1.5, 2.8), { f0: rnd(700, 1000), f1: rnd(1200, 1700), q: 1.2, gain: 0.05, a: 0.6, buf: this.pink, curve: 'lin' });
+          this.debris(d, t + 0.3, 8, 1.6, { f0: 1800, f1: 4200, gain: 0.3 });
+        } else if (r < 0.46) this.debris(O(near(6, 0), 0.45, { ref: 3, life: 3 }), t, 12, 1.4, { f0: 3000, f1: 6500, gain: 0.22 });
+        else if (r < 0.58) this.creak(O(near(8, 2.2), 0.45, { ref: 3, roll: 1, life: 3 }), t, rnd(0.8, 1.6), rnd(80, 130), 0.09);
+        else if (r < 0.7) this.play('crow', far(10, 25, 6), { pre: true });
+        else return null;
+        return rnd(5, 11);
+      }
+      case 'adarve': {
+        // en lo alto de la muralla: un pendón que restalla, una piedra que se
+        // suelta y cae al foso
+        if (r < 0.28) tela(O(near(8, 3), 0.55, { ref: 4, life: 4 }), t, 5 + Math.floor(Math.random() * 6), 0.08);
+        else if (r < 0.4) {
+          const d = O({ x: cp.x + rnd(-3, 3), y: cp.y - 8, z: cp.z + rnd(-3, 3) }, 0.6, { ref: 5, life: 4 });
+          this.debris(d, t, 4, 0.5, { f0: 900, f1: 2400 });
+          this.tone(d, t + 0.9, 0.3, { f0: 70, f1: 40, gain: 0.2 });
+        } else return null;
+        return rnd(6, 13);
+      }
+      case 'salon': {
+        // el gran salón: una corona de luz que se mece en su cadena, un tapiz
+        // que se mueve, la armadura que trabaja
+        if (r < 0.26) {
+          const d = I(up(5, 6), 0.45, 3);
+          this.creak(d, t, rnd(1, 1.8), rnd(140, 220), 0.06);
+          this.jingle(d, t + 0.2, 0.3, 0.05, 0.7);
+        } else if (r < 0.44) tela(I(near(7, 3), 0.45, 3), t, 4 + Math.floor(Math.random() * 4), 0.05);
+        else if (r < 0.58) this.creak(I(up(6, 9), 0.5, 3), t, rnd(1.2, 2.2), rnd(45, 70), 0.12);
+        else return null;
+        return rnd(6, 12);
+      }
+      case 'paso': {
+        // los pasos abovedados: el aire que gime al pasar, las cadenas del
+        // rastrillo que se mecen
+        if (r < 0.34) racha(I(near(5, 1.5), 0.45, 4), t, rnd(2, 3), rnd(180, 300), 0.06);
+        else if (r < 0.54) {
+          const d = I(near(6, 2.5), 0.45, 3);
+          this.jingle(d, t, 0.35, 0.08, 0.7);
+          this.metal(d, t + 0.25, rnd(180, 260), 0.04, 0.8, { ratios: [1, 2.4, 4.2] });
+        } else return null;
+        return rnd(5, 11);
+      }
+      case 'torno': {
+        // la cámara del torno: el trinquete que cede un diente, las cadenas
+        if (r < 0.36) {
+          const d = I(near(4, 1.2), 0.45, 2);
+          const n = 1 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < n; i++) this.metal(d, t + i * rnd(0.18, 0.3), rnd(900, 1300), 0.05, 0.25, { ratios: [1, 2.9, 5.1] });
+        } else if (r < 0.62) {
+          const d = I(near(5, 2), 0.45, 3);
+          this.jingle(d, t, 0.4, 0.09, 0.6);
+          this.creak(d, t + 0.1, rnd(0.8, 1.4), rnd(55, 85), 0.08);
+        } else return null;
+        return rnd(5, 10);
+      }
+      case 'armeria': {
+        // la armería y el taller: una cota que se asienta en su percha, una
+        // hoja que se escurre en el armero, una tabla
+        if (r < 0.34) this.jingle(I(near(4, 1.4), 0.45, 2), t, rnd(0.2, 0.4), 0.07, 0.9);
+        else if (r < 0.52) this.metal(I(near(4, 1), 0.4, 2), t, rnd(1500, 2400), 0.03, 0.6);
+        else if (r < 0.68) this.creak(I(near(5, 0.3), 0.45, 3), t, rnd(0.6, 1.2), rnd(70, 110), 0.09);
+        else return null;
+        return rnd(6, 12);
+      }
+      case 'camara': {
+        // las cámaras: una cortina que se mueve, un sollozo lejos (las
+        // dueñas), una tabla del suelo
+        if (r < 0.28) tela(I(near(5, 1.8), 0.4, 3), t, 3 + Math.floor(Math.random() * 3), 0.035);
+        else if (r < 0.42) {
+          const d = O(far(8, 14, 1), 0.5, { ref: 3, roll: 1 });
+          this.voice(d, t, rnd(1.4, 2.2), { f0: rnd(300, 340), f1: rnd(230, 260), vowel: 'o', v1: 'u', gain: 0.045, vib: 6, vibD: 25, breath: 0.7, jit: 20 });
+        } else if (r < 0.58) this.creak(I(near(5, 0.3), 0.45, 3), t, rnd(0.5, 1.1), rnd(80, 120), 0.08);
+        else return null;
+        return rnd(6, 13);
+      }
+    }
+    return null;
+  }
+  // Moscas: un zumbido que va y viene (la frecuencia tiembla con el aleteo).
+  zumbido(dest, t0, dur, gain = 0.05) {
+    if (this.defer(dest, t0, t0 + dur + 0.05, () => this.zumbido(dest, t0, dur, gain))) return;
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    const f = rnd(170, 240);
+    krate(o.frequency).setValueAtTime(f, t0);
+    const n = Math.max(4, Math.floor(dur * 9));
+    for (let i = 1; i <= n; i++) o.frequency.linearRampToValueAtTime(f * rnd(0.8, 1.25), t0 + (i / n) * dur);
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = rnd(380, 520);
+    bp.Q.value = 1.4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.15);
+    for (let i = 1; i < n; i++) g.gain.linearRampToValueAtTime(gain * rnd(0.2, 1), t0 + (i / n) * dur * 0.92);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(bp).connect(g).connect(dest);
+    o.start(t0);
+    o.stop(t0 + dur + 0.05);
+    this.reg(dest, o, t0 + dur + 0.05);
+  }
   procession(d, t) {
     const root = pick([48, 50, 52]);
     let tt = t;
@@ -3999,7 +4247,7 @@ export class Audio {
     const slowTick = this._slow <= 0;
     if (slowTick) {
       this._slow = 0.1;
-      const bed = ZONE_BED[z] || ZONE_BED.city;
+      const bed = (this.son && this.son.cama) || ZONE_BED[z] || ZONE_BED.city;
       // en lo alto de un coloso, el viento sopla más fuerte y más agudo
       // (en lo alto: trepando a un coloso o en la película del jefe final)
       const cl = game.finale && game.finale.climb;
@@ -4011,7 +4259,9 @@ export class Audio {
         this.setP(w.bp[1].frequency, wf * 1.23, 0.3);
         this.setP(w.lp.frequency, OUTDOOR[z] ? 9000 : 450, 0.5);
       }
-      const wh = this.layerGain(this.L.whistle, z === 'ramparts' || z === 'luna' || z === 'tunnel' ? Math.max(0, this.gust - 0.5) * 0.08 : 0, 0.4);
+      // (el silbo: en lo alto, al aire, y en las salas de troneras)
+      const silbo = z === 'ramparts' || z === 'luna' || z === 'tunnel' ? 0.08 : this.son && this.son.silbo ? 0.045 : 0;
+      const wh = this.layerGain(this.L.whistle, Math.max(0, this.gust - 0.5) * silbo, 0.4);
       if (wh) this.setP(wh.bp.frequency, 700 + this.gust * 600, 0.5);
       this.layerGain(this.L.roar, bed[1], 1.5);
       this.layerGain(this.L.room, bed[2], 1.5);

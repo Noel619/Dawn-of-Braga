@@ -35,7 +35,7 @@ for k in range(-132, 30, 4):
 label(-41.5, -60, 'CIUDAD', f13, (200, 170, 150))
 # muralla norte, fanal, atalaya, coracha
 rect(-140, -126, -47, -122, (120, 116, 110))
-label(-118, -124, 'muralla norte · adarve del jardín', f9, (20, 20, 20))
+label(-88, -124, 'muralla norte · adarve del jardín', f9, (20, 20, 20))
 rect(-64, -128, -56, -120, (150, 146, 140)); label(-60, -124, 'FANAL', f9)
 rect(-64, -113, -56, -105, (150, 146, 140)); label(-60, -109, 'ATA-\nLAYA', f9)
 rect(-62, -105, -58, -23, (126, 122, 116), w=1); label(-60, -70, 'C\nO\nR\nA\nC\nH\nA', f9)
@@ -53,6 +53,8 @@ rect(-75, -102.9, -66.4, -102, (200, 170, 110), (90, 70, 40), 1); label(-70.7, -
 rect(-76, -122, -66, -120.4, (140, 136, 130), (60, 60, 60), 1); label(-71, -119.2, 'escalera del adarve', f9, (230, 240, 220))
 label(-70, -113.6, 'POMAR', f11, (230, 240, 220))
 rect(-101, -128.4, -95, -126, (170, 164, 156), (40, 40, 40), 2); label(-118, -129.4, 'MIRADOR del Rey (↑ el campamento)', f9, (230, 225, 215))
+# la garita del ballestero, al cabo de poniente del adarve, contra la torre de en medio de la muralla
+rect(-117.5, -125.4, -115.2, -122.5, (110, 76, 46), (60, 40, 24), 1); label(-110.5, -120.9, 'garita (el BALLESTERO)', f9, (240, 220, 190))
 d.line([P(-131.25, -102), P(-129.95, -102)], fill=(240, 200, 120), width=5); label(-136, -103.6, 'puerta', f9, (240, 220, 180))
 # la fortaleza: alas
 rect(-138, -100, -62, -32, (96, 90, 84), w=3)

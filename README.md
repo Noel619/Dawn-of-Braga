@@ -498,10 +498,12 @@ aljibe; en el légamo del fondo, las monedas que echaban). Al este, el pomar de 
 encalado con sus piqueras, sin una paloma (en lo alto anida **el cuervo cebado**, que guarda el jardín), el colmenar
 contra la torre de la coracha y **el vivero**, con las carpas panza arriba, vueltas todas hacia la Sé. Una escalera
 de piedra sube contra la muralla al adarve, y en él, en el eje de la torre, **el mirador del Rey**: un balcón volado
-sobre sus canes, con su tejadillo, los poyos y la jamuga del Rey de cara al campo, un caído y una ampolla. Abajo, el
-**campamento de los sitiadores**: la fila de picas con lo que hay clavado en ellas, los manteletes, la cava con su
-empalizada, las tiendas, las hogueras, el pabellón del capitán con sus estandartes y los dos trabucos que tiraban a
-la muralla. Allí abajo no se mueve nadie (`world/fortaleza_jardin.js`).
+sobre sus canes, con su tejadillo, los poyos y la jamuga del Rey de cara al campo, un caído y una ampolla; un
+soldado de la ronda guarda el adarve y, al cabo de poniente, contra la torre de en medio de la muralla, en **su
+garita** de tablas con su brasero, vigila **un ballestero del Rey**, que tira a lo largo del adarve en cuanto se pasa
+el mirador (muerto, deja sus virotes). Abajo, el **campamento de los sitiadores**: la fila de picas con lo que hay
+clavado en ellas, los manteletes, la cava con su empalizada, las tiendas, las hogueras, el pabellón del capitán con sus
+estandartes y los dos trabucos que tiraban a la muralla. Allí abajo no se mueve nadie (`world/fortaleza_jardin.js`).
 
 **La Corte de los Infieles.** Las puertas grandes del **gran salón** están atrancadas por dentro: se entra **por el
 servicio**, como se entraba de verdad. Del patio a **la despensa** (las tinajas, los toneles de la botillería, los
@@ -825,6 +827,11 @@ se encadena el anterior.
   sobre ti, se queda en el aire con las alas arriba y chilla, y se lanza en picado. Ruédate o desvíalo: desviado, cae
   aturdido al tejado, a merced del golpe de gracia. El golpe empuja (cuidado con el alero). A veces se posa cerca y
   da picotazos.
+- **Ballestero del Rey** (los adarves de la fortaleza): de la guardia del alférez, y convertido como él (los ojos le
+  arden bajo el ala, la carne le revienta el gambesón por el hombro): gambesón acolchado con sus pespuntes, la
+  capelina de ala ancha sobre el almófar y el pavés a la espalda, con la cruz del Rey. Vigila desde su garita y tira de
+  lejos con la ballesta de estribo; luego la monta con el pie en el estribo, y ahí está a merced. Si te le echas
+  encima, culatazo. No deja su adarve; muerto, deja sus virotes.
 - **Mestre Clemente, el Físico de los Inocentes** (jefe del barrio de los Pellejeros): el médico de los locos de
   Braga, que la noche de la campana vio a sus inocentes quedarse quietos, curados por la carne, y entendió que la
   peste son los signos de los sanos (el pulso que corre, los ojos abiertos, el esperar). Ropón encerado, guantes,
@@ -938,6 +945,10 @@ mazmorras) no se dibuja con la cámara en la calle, salvo cuando se ve uno de lo
 escaleras, el cráter, el río) o la cámara está junto a él: lo demás lo tapa la losa de tierra de la calle. Tampoco se
 dibujan las criaturas ni los objetos de muchas piezas (rejas, puentes, puertas) que tapa un muro. En la calle se
 dibujan así, según el sitio, entre un 14 y un 54 % menos de triángulos, y hasta un 47 % menos de llamadas de dibujo.
+El plano lejano sigue a la niebla (donde se lo ha comido todo); en la fortaleza, con su aire claro, se queda en cien
+metros, donde ya no queda ni un 2 %: desde sus patios y sus salas se dibuja menos que desde la plaza del Pan, y desde
+lo más caro, el adarve de levante (con el patio de armas y media ciudad a sus pies), un 10 % más
+(`tools/rendimiento.mjs`).
 
 **Interfaz en pixel art.** Todos los menús se dibujan con sprites generados por código a resolución de arte y
 escalado entero: marcos de hierro con esquineras doradas, estandartes carmesí con espadas como cursor, una gran espada
@@ -966,14 +977,25 @@ campanas aditivas y tambores.
 
 **Sonido 100 % sintetizado (WebAudio).** Reverberación por convolución con salas generadas (calle, habitación,
 capilla, catedral, cripta, exterior) que se funden al pasar de una a otra; sonidos 3D con absorción del aire por
-distancia y oclusión (lo que suena tras un muro llega apagado); pisadas según el suelo (piedra, madera, tierra) con
-el tintineo de la cota de malla y golpe al aterrizar; filos que silban, carne, hueso, escudos y metal; puertas que
+distancia y oclusión (lo que suena tras un muro llega apagado); pisadas según el suelo (piedra, madera, tierra, paja)
+con el tintineo de la cota de malla y golpe al aterrizar; filos que silban, carne, hueso, escudos y metal; puertas que
 chirrían, cerrojos, trancas, tablones, rejas con cadenas y la losa del sello; voces de criaturas con formantes,
 aspereza y temblor (rezos que se oyen antes de que te vean, jadeos, sollozos, gritos); ambiente por capas (viento a
 rachas y silbando en las almenas, el rumor de la ciudad en llamas, fuegos posicionales, moscas, el acorde cálido de
 los altares, el río) y sucesos de cada zona (campanas lejanas, gritos, perros, vigas que se desploman, procesiones,
-cuernos, ratas, gotas en la cripta, pasos que no son tuyos en la catedral, pájaros al amanecer). La música se atenúa
-con los golpes fuertes y se oye «tras una puerta» en la pausa.
+cuernos, ratas, gotas en la cripta, pasos que no son tuyos en la catedral, pájaros al amanecer). En el castillo y la
+fortaleza, **cada sala suena como es** (`game/acustica.js`): su reverberación según su tamaño y su fábrica (las
+salas de tablas y tapices, secas; el gran salón, la capilla y la sala del trono, largas; los pasos abovedados, la
+cárcel y el aljibe del palacio, de piedra), las pisadas según su suelo de verdad (las losas de la cocina, del zaguán
+o del almacén de la torre; las tablas de los forjados, de la tribuna y de los sobrados del Tombo; la tierra del
+jardín; la paja de las cuadras) y su ambiente: el caldero que borbotea en la cocina y las moscas de la carne; la
+duela que cede y la gota en la tinaja de la despensa; las moscas sobre los caballos muertos, la paja y los arreos de
+las cuadras; los cascabeles de los halcones de la halconera cuando la corriente los mece; los legajos del Tombo y el
+viento que silba en sus troneras; la torre del homenaje, con el viento que gime arriba, el pendón que restalla en lo
+alto y las vigas; las gotas que caen al agua del aljibe; las ramas secas y las hojas muertas del jardín; los
+pendones de los adarves; la corona de luz que se mece en su cadena en el gran salón; las cadenas del rastrillo en
+los pasos; el trinquete del torno; las cotas en sus perchas de la armería; y en las cámaras, una cortina y, lejos,
+el sollozo de una dueña. La música se atenúa con los golpes fuertes y se oye «tras una puerta» en la pausa.
 
 **Mezcla que no se satura.** Todo pasa por un limitador que solo actúa cerca de 0 dBFS y un recorte suave de
 seguridad: nada sale nunca por encima de 0 dBFS y la mezcla no «bombea». Un presupuesto de voces decide cuántos
@@ -1103,6 +1125,8 @@ src/
                         coronado.js, el Coronado; fisico.js, el Físico de los Inocentes (su figura, sus hierros,
                         sus golpes por tiempos);
                         cuervo.js, el cuervo cebado, que se lleva solo en el aire (posarse, rondar, el picado);
+                        alferez.js, el alférez y los ballesteros del Rey (la ballesta de estribo: tirar,
+                        montarla, el culatazo);
                         turibulario_model.js, el arzobispo transfigurado de la cisterna; idol.js, la estatua de la
                         sima de la cisterna: dónde está y cómo se carga; idol_statue_geo.js, su geometría,
                         esculpida como los colosos, que se calcula en un hilo de fondo (idol_worker.js), e
@@ -1136,7 +1160,8 @@ src/
                         cornisas.js: el equilibrio en vigas y cornisas;
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
-                        los objetos que tapa un muro);
+                        los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la
+                        fortaleza (su reverberación, lo que se pisa y su ambiente);
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
                         film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
                         film_acts.js y film_rise.js, film_nave.js, film_grab.js, film_city.js, film_tower.js,
@@ -1205,9 +1230,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        puerta (la guardia, la armería, el torno, el rastrillo y el puente, el
                                        cadalso, el boquete, el taller y su tabique); la torre de la coracha a
                                        +12, el adarve de levante, la terraza y la puerta del Tombo; el jardín
-                                       del Rey, de la puerta de la reina al mirador; la poterna (SOLO4=1: sólo
-                                       lo de la fase 4); la cárcel del Rey, de la trampilla (sin palanca y con
-                                       ella) al rastrillo, sala a sala, con lo que hay que coger y leer, y la
+                                       del Rey, de la puerta de la reina al mirador y a la garita del
+                                       ballestero (sus virotes); la poterna (SOLO4=1: sólo lo de la
+                                       fase 4); la cárcel del Rey, de la trampilla (sin palanca y con ella)
+                                       al rastrillo, sala a sala, con lo que hay que coger y leer, y la
                                        palanca que lo sube (SOLO5=1: sólo la cárcel)
                         corte.mjs      la Corte de los Infieles, de principio a fin
                         caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
@@ -1218,11 +1244,20 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        no se ve suelo bajo lo que se pisa
                         camclip.mjs    la cámara en el castillo (también la halconera, las cuadras, la fragua, el
                                        corral y la poterna), las mazmorras, la torre del homenaje, la puerta
-                                       de la fortaleza, el jardín del Rey y el mirador, la torre de la coracha
+                                       de la fortaleza, el jardín del Rey, su adarve con la garita y el
+                                       mirador, la torre de la coracha
                                        y el adarve de levante, la cárcel del Rey, la catedral y la cripta,
                                        contra muros, rejas y en escaleras, en doce orientaciones y cuatro
                                        inclinaciones (también mirando desde el suelo): que no quede tras un
                                        muro ni pegada
+                        salas.mjs      la luz de cada sala del castillo y de la fortaleza: la cámara a la
+                                       altura de los ojos en cada zona, en cuatro rumbos; el brillo medio, lo
+                                       que queda a oscuras o se quema y la luz que recibe el jugador (la
+                                       sonda), de la sala más oscura a la más clara, con una hoja de vistas
+                                       por sala en tools/shots/salas/
+                        rendimiento.mjs llamadas de dibujo y triángulos de un fotograma desde los sitios de la
+                                       fortaleza, del patio de armas y de la cárcel, comparados con la plaza
+                                       del Pan y los miradores de antes (DESGLOSE=1: de qué son)
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
@@ -1232,7 +1267,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        filo por delante, agarre a dos manos, tirones y saltos al encadenar
                         gearcheck.mjs  escudo y hoja frente al cuerpo al andar, correr, girar y bloquear:
                                        cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
-                        audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente y mide niveles
+                        audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente (el de cada
+                                       atmósfera y el de cada sala con el suyo) y mide niveles
                         audiobench.mjs coste de CPU del audio
                         audiostress.mjs carga del audio en situaciones de juego con la cámara en movimiento
                                        (horda, umbral de puerta, recorrido por zonas, jefe, estruendo): CPU del

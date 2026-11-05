@@ -50,6 +50,7 @@ export function buildJardin(ctx, S, L) {
   vivero(ctx, L);
   escalera(ctx);
   mirador(ctx, L);
+  garita(ctx, L);
   // el muro que cierra el jardín por levante, del fanal a la atalaya
   solid(ctx, 'wallstone', -63.5, 0, -120.5, J.x1, 6.2, -112.5, { faces: 'tnswe', sub: 2.2, aoH: 2.5, mats: { t: 'flag' }, tint: PIEDRA.lienzo });
   merlons(ctx, -62.8, -120.3, -62.8, -112.7, 6.2, { collide: false, t: 0.5, h: 0.9 });
@@ -587,6 +588,85 @@ function mirador(ctx, L) {
   );
   L.map.push({ id: 'mirador_rey', r: [M.x0, zf, M.x1, zw] }, { id: 'adarve_jardin', r: [FORT.norte.torre + 3.5, zw, -63.5, J.z0] });
   campamento(ctx);
+}
+
+// ------------------------------------------------------------------------ la garita del ballestero
+// Al cabo de poniente del adarve, contra la torre de en medio de la muralla:
+// una garita de tablas de las obras del cerco, con su tejadillo a un agua
+// contra la torre, sus postes y su brasero. Dentro, de cara al adarve, el
+// ballestero del Rey (PLAN_FORTALEZA.md, §7: un ballestero en las garitas),
+// que tira a lo largo del adarve en cuanto se pasa el mirador; más acá del
+// mirador, de pie, un soldado de la ronda. El ballestero deja sus virotes.
+function garita(ctx, L) {
+  const wb = ctx.wb;
+  const y = 10;
+  const zw = J.z0 - 4;
+  // (lo que se anda del adarve: de las almenas al parapeto de dentro)
+  const z0 = zw + 0.6,
+    z1 = J.z0 - 0.5;
+  const x0 = FORT.norte.torre + 3.5,
+    x1 = x0 + 2.3;
+  const TABLA = [0.6, 0.52, 0.45];
+  // los postes, en las cuatro esquinas (los de levante, sueltos)
+  for (const [x, z] of [
+    [x0 + 0.08, z0 + 0.08],
+    [x0 + 0.08, z1 - 0.08],
+    [x1 - 0.08, z0 + 0.08],
+    [x1 - 0.08, z1 - 0.08],
+  ]) {
+    wb.box('wooddark', x - 0.08, y, z - 0.08, x + 0.08, y + (x > x0 + 1 ? 2.42 : 2.86), z + 0.08, { ao: false, tint: MADERA });
+    if (x > x0 + 1) ctx.col.add(x - 0.09, y, z - 0.09, x + 0.09, y + 2.4, z + 0.09);
+  }
+  // los costados de tablas, por encima de las almenas y del parapeto, con su
+  // tronera para la ballesta en el del campo
+  for (const [za, zb] of [
+    [z0 - 0.02, z0 + 0.03],
+    [z1 - 0.03, z1 + 0.02],
+  ]) {
+    wb.box('planks', x0 + 0.16, y + 1.07, za, x1 - 0.16, y + 1.5, zb, { ao: false, tint: TABLA });
+    wb.box('planks', x0 + 0.16, y + 1.5, za, x0 + 0.95, y + 1.78, zb, { ao: false, tint: TABLA });
+    wb.box('planks', x0 + 1.25, y + 1.5, za, x1 - 0.16, y + 1.78, zb, { ao: false, tint: TABLA });
+    wb.box('planks', x0 + 0.16, y + 1.78, za, x1 - 0.16, y + 2.3, zb, { ao: false, tint: TABLA });
+  }
+  // el tejadillo a un agua, de la torre hacia el adarve, con sus tablas
+  {
+    const ya = y + 2.95,
+      yb = y + 2.42;
+    const xa = x0,
+      xb = x1 + 0.3;
+    const q = [V(xa, ya + 0.08, z0 - 0.25), V(xa, ya + 0.08, z1 + 0.25), V(xb, yb, z1 + 0.25), V(xb, yb, z0 - 0.25)];
+    cara(wb, 'planks', q[0], q[1], q[2], q[3], V(0.2, 1, 0), { ao: false, tint: [0.46, 0.4, 0.36] });
+    const u = q.map((p) => p.clone().add(V(0, -0.07, 0)));
+    cara(wb, 'wooddark', u[3], u[2], u[1], u[0], V(-0.2, -1, 0), { ao: false, tint: [0.4, 0.36, 0.32] });
+    cara(wb, 'wooddark', u[2], u[3], q[3], q[2], V(1, 0, 0), { ao: false, tint: [0.4, 0.36, 0.32] });
+    for (const [s, z] of [
+      [-1, z0 - 0.25],
+      [1, z1 + 0.25],
+    ])
+      cara(wb, 'wooddark', s < 0 ? V(xa, u[0].y, z) : V(xb, u[2].y, z), s < 0 ? V(xb, u[3].y, z) : V(xa, u[1].y, z), s < 0 ? V(xb, q[3].y, z) : V(xa, q[1].y, z), s < 0 ? V(xa, q[0].y, z) : V(xb, q[2].y, z), V(0, 0, s), { ao: false, tint: [0.4, 0.36, 0.32] });
+    ctx.col.addCam(xa, yb - 0.1, z0 - 0.25, xb, ya + 0.2, z1 + 0.25);
+  }
+  // dentro: el brasero, un escabel, el haz de virotes y el pavés de repuesto
+  P.brazier(ctx, x0 + 0.55, y, z1 - 0.55, {});
+  P.stool(ctx, x0 + 0.5, y, z0 + 0.5);
+  ctx.col.add(x0 + 0.3, y, z0 + 0.3, x0 + 0.7, y + 0.45, z0 + 0.7);
+  for (let k = 0; k < 6; k++) {
+    const a = -0.5 + k * 0.2;
+    palo(wb, V(x0 + 0.12, y + 0.05, z0 + 1.1 + k * 0.05), V(x0 + 0.16 + Math.sin(a) * 0.06, y + 0.42, z0 + 1.1 + k * 0.05 + Math.cos(a) * 0.04), 0.012, 'wooddark', { tint: [0.7, 0.6, 0.45] });
+  }
+  wb.at(x0 + 0.1, y, (z0 + z1) / 2 + 0.35, 0, () => {
+    wb.box('wooddark', 0, 0, -0.25, 0.05, 0.75, 0.25, { ao: false, tint: MADERA });
+    wb.box('clothBlue', 0.05, 0.12, -0.03, 0.06, 0.66, 0.03, { ao: false });
+    wb.box('clothBlue', 0.05, 0.45, -0.2, 0.06, 0.51, 0.2, { ao: false });
+  });
+  // el ballestero, de cara al adarve; el soldado, más acá del mirador
+  const bx = x0 + 1.25,
+    bz = (z0 + z1) / 2;
+  L.enemies.push(
+    { type: 'ballestero', x: bx, y, z: bz, yaw: Math.PI / 2, idle: 'watch', id: 'e_ballestero_jardin', dies: 'dead:ballestero_jardin' },
+    { type: 'soldier', x: J.mirador.x1 + 9, y, z: bz + 0.2, yaw: Math.PI / 2, idle: 'stand', id: 'e_adarve_jardin' }
+  );
+  L.interact.push({ kind: 'item', id: 'i_virotes_garita', item: 'virote', n: 5, afterFlag: 'dead:ballestero_jardin', x: bx + 0.3, y: y + 0.08, z: bz - 0.4 });
 }
 
 // ------------------------------------------------------------------------ el campamento

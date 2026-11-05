@@ -1,8 +1,9 @@
 // La cámara contra muros, rejas y techos: en puntos del castillo (también lo
 // de poniente del patio), las mazmorras, la torre del homenaje y la puerta de
-// la fortaleza, el jardín y el mirador, la torre de la coracha y el adarve de
-// levante, la cárcel de la fortaleza, la catedral y su cripta (pegados a paredes, junto a
-// las rejas de las celdas, en escaleras),
+// la fortaleza, el jardín, su adarve con la garita y el mirador, la torre de
+// la coracha y el adarve de levante, la cárcel de la fortaleza, la catedral y
+// su cripta (pegados a paredes, junto a las rejas de las celdas, en
+// escaleras),
 // doce orientaciones y cuatro inclinaciones en cada uno (también la más baja,
 // mirando desde el suelo: ahí el tope del suelo la subía). Tras asentarse,
 // ¿queda la cámara tras un muro (el rayo desde el pivote choca antes de llegar
@@ -53,6 +54,9 @@ const r = await p.evaluate(() => {
     // terraza y la puerta del Tombo
     [-114, 0, -19], [-110.6, 0, -19], [-113.4, 0, -15.0], [-113.4, 0, -9], [-115.6, 0, -2], [-116, 0, 5.6], [-109, 0, 16], [-113, 0, -28], [-113, 0, -31.4], [-113, 0, -35.6],
     [-130.6, 0, -101.6], [-124.5, 0, -114.2], [-98, 0, -120.4], [-80.4, 0, -114.4], [-70, 6, -121.2], [-75.4, 10, -123.8], [-98, 10, -126.8],
+    // (fase 6) la garita del ballestero, al cabo del adarve del jardín: dentro,
+    // en su boca y junto a sus postes
+    [-116.4, 10, -124.0], [-115.0, 10, -123.4], [-114.9, 10, -125.0],
     [-67, 12, -89], [-65, 12, -86.8], [-64.6, 12, -85.4], [-63.2, 12, -78], [-70, 12, -52], [-66, 13.5, -45.4], [-66, 13.5, -43.4],
     // la catedral, el claustro, la escalera de la cripta y la cripta
     [0, 0.6, -80], [-8.5, 0.6, -90], [16, 0, -70], [0, -2.6, -91], [-5, -7, -103], [0, -7, -120], [2, -7, -127.5], [10, -7, -114], [-12, -7, -114], [0, -10, -147], [0, -5.2, -180], [0, 0, -190],

@@ -584,6 +584,8 @@ function guardia(ctx, L) {
   wb.setRoom(null);
   P.wallTorch(ctx, -99.0, y + 2.3, M.z0 - 0.02, 'n', { room: RD, radius: 7 });
   P.lantern(ctx, ix1 - 0.3, y + 2.2, -102.6, -Math.PI / 2, true, { room: RD });
+  // (la lámpara de las vigas, sobre los jergones: media sala quedaba negra)
+  P.hangingLamp(ctx, -98.6, techo(1), -105.6, { room: RD, len: 1.2, radius: 7.5 });
   L.enemies.push({ type: 'soldier', x: -99.2, y, z: -106.6, yaw: 0.4, idle: 'kneel', id: 'e_torre_dormitorio' });
 }
 

@@ -271,6 +271,8 @@ function torre(ctx, S, L) {
     wb.setRoom(null);
     farol(ctx, cx - 0.2, 0.5, iz0 + 0.5, room);
     P.wallTorch(ctx, ix0 + 0.02, 2.4, cz + 2.4, 'e', { room });
+    // (y otra junto a la puerta del estrado: la entrada se quedaba a oscuras)
+    P.wallTorch(ctx, ix1 - 0.02, 2.4, zd - 1.6, 'w', { room, radius: 6.5 });
   }
   // el oratorio: el altar, contra la muralla, con la Virgen pintada y el
   // relicario; el reclinatorio; las velas
@@ -294,6 +296,9 @@ function torre(ctx, S, L) {
     wb.box('wooddark', kx - 0.4, y, kz - 0.42, kx + 0.4, y + 1.0, kz - 0.3, { ao: false, room });
     wb.box('clothRed', kx - 0.45, y + 1.0, kz - 0.6, kx + 0.45, y + 1.06, kz - 0.18, { ao: false, faces: 'tnsewb', room });
     ctx.col.add(kx - 0.45, y, kz - 0.6, kx + 0.45, y + 1.06, kz + 0.25);
+    // la lámpara del oratorio, colgada de las vigas, que la reina no dejaba
+    // apagar
+    P.hangingLamp(ctx, cx + 0.6, pisos[2] - 0.3, cz + 0.4, { room, len: 1.4, radius: 7, intensity: 0.9 });
     L.interact.push({ kind: 'item', id: 'i_relicario_reina', item: 'relicario', x: ax + 0.2, y: y + 1.04, z: az - 0.1 });
     P.banner(ctx, ix1 - 0.08, y + 3.6, cz - 2.4, -Math.PI / 2, 'bannerRey', 1.2, 2.2);
     L.enemies.push({ type: 'cortesanoSuelto', x: kx + 1.4, y, z: kz + 0.4, yaw: Math.PI, idle: 'kneel', id: 'e_reina5' });

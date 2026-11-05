@@ -5,12 +5,15 @@ import { damp } from '../core/util.js';
 export const ATMO = {
   city: { fog: 0x5c625e, density: 0.042, sky: 0x9aa6b2, ground: 0x2c2723, hemi: 2.2, moon: 0.9, vol: 0.038, ash: 1, exposure: 1.0, sat: 0.7, lamp: 9, bloom: 0.9 },
   // la fortaleza (su patio de honor, sus jardines): el aire más limpio, por
-  // encima del humo de la ciudad; las siluetas se leen a sesenta metros
-  castillo: { fog: 0x56606a, density: 0.02, sky: 0x95a3b4, ground: 0x2c2723, hemi: 2.25, moon: 1.15, vol: 0.022, ash: 0.5, exposure: 1.02, sat: 0.68, lamp: 9, bloom: 0.95 },
+  // encima del humo de la ciudad; las siluetas se leen a sesenta metros. (Lo
+  // de más allá de cien, la niebla ya se lo ha comido —queda menos del 2 %—:
+  // no se dibuja. Con el plano lejano de la niebla, a 130, desde el jardín o
+  // los adarves se dibujaba media ciudad.)
+  castillo: { fog: 0x56606a, density: 0.02, sky: 0x95a3b4, ground: 0x2c2723, hemi: 2.25, moon: 1.15, vol: 0.022, ash: 0.5, exposure: 1.02, sat: 0.68, lamp: 9, bloom: 0.95, far: 100 },
   // el patio de armas: el aire de la fortaleza, que se ve entera desde él
   // (PLAN_FORTALEZA.md, §3), algo más cargado de ceniza; suena como la
   // ciudad (core/audio.js)
-  armas: { fog: 0x585f64, density: 0.022, sky: 0x96a4b2, ground: 0x2c2723, hemi: 2.22, moon: 1.05, vol: 0.026, ash: 0.75, exposure: 1.01, sat: 0.69, lamp: 9, bloom: 0.93 },
+  armas: { fog: 0x585f64, density: 0.022, sky: 0x96a4b2, ground: 0x2c2723, hemi: 2.22, moon: 1.05, vol: 0.026, ash: 0.75, exposure: 1.01, sat: 0.69, lamp: 9, bloom: 0.93, far: 100 },
   // lo alto de la torre del homenaje: por encima del humo, la noche clara y
   // la luna grande sobre la fortaleza (moonDisc: el disco en el cielo)
   luna: { fog: 0x4d5563, density: 0.026, sky: 0x95a5bc, ground: 0x2c2723, hemi: 2.3, moon: 1.8, moonPos: [25, 16, -54], moonColor: 0xaebfdc, vol: 0.016, ash: 0.45, exposure: 1.05, sat: 0.72, lamp: 9, bloom: 1.0, moonDisc: 1 },

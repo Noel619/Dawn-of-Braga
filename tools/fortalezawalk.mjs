@@ -1,4 +1,4 @@
-// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 5): de la coracha a todas
+// La fortaleza a pie (PLAN_FORTALEZA.md, fases 1 a 6): de la coracha a todas
 // sus salas, por sus caracoles, sus escaleras, sus tribunas, su galería y su
 // pasadizo; la torre del homenaje, de abajo arriba, y la puerta, con su
 // guardia, su torno, su puente y su cadalso; la cárcel, de la trampilla del
@@ -241,6 +241,10 @@ await step4('por el adarve', "__walk([[-80,-124],[-90,-124],[-96,-124]])");
 await step4('mirador', "__walk([[-98,-125],[-98,-126.0],[-96.6,-126.7]])");
 await step4('ampolla del mirador', "__ir('i_ampolla_jardin', 0.6)");
 await step4('vista', "__ir('x_mirador', 0.5)");
+// (fase 6) la garita del ballestero, al cabo de poniente del adarve: el
+// ballestero (aquí, de un golpe) deja sus virotes
+await step4('a la garita', "__walk([[-98,-124.2],[-106,-124.2],[-112,-124.2],[-113.9,-124.0]])");
+await step4('virotes del ballestero', "(()=>{const g=__game;const e=g.enemies.find(q=>q.id==='e_ballestero_jardin');e.dead=false;e.state='dormant';e.hp=1;e.takeHit(500,50,-112,-124,true);__sim(2);const r=__ir('i_virotes_garita',0.6);return {...r,flag:!!g.flags['dead:ballestero_jardin']}})()");
 // 14. (fase 4) la poterna: desde la despensa, desatrancada, al corral de la
 // cocina y por su cancela al patio de armas
 await step4('poterna, por dentro', "(()=>{const g=__game;g.player.spawn(-113,0,-37,0);__sim(0.3);__walk([[-113,-35.2]]);return __useHere('d_poterna')})()");

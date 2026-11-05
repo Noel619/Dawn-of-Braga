@@ -2,6 +2,8 @@
 // musical (calma, tensión y combate) y cada efecto, y mide picos, RMS, NaN y
 // el coste de CPU (segundos de cálculo por segundo de audio).
 // Uso: node tools/audiotest.mjs [temas|efectos|todo] (servidor vite en :5199)
+// (los ambientes: el de cada atmósfera y el de cada sala con el suyo, de
+// game/acustica.js; con ONLY=amb y «efectos», sólo ésos)
 import { chromium } from 'playwright';
 const mode = process.argv[2] || 'todo';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -170,6 +172,22 @@ const res = await p.evaluate(async (mode) => {
         null,
       );
       out['amb:' + z] = { ...stats(buf, 3, 20), cpu: Math.round((wall / 20) * 1000) / 1000 };
+    }
+    // el de cada sala con el suyo (game/acustica.js): una por cada ambiente,
+    // con su atmósfera, su reverberación y sus capas
+    const { ACUSTICA } = await import(base + '/src/game/acustica.js');
+    const salas = { cocina: 'interior', despensa: 'interior', cuadras: 'interior', halconera: 'interior', tombo_arcas: 'interior', homenaje_trono: 'sala', aljibe_palacio: 'crypt', jardin_rey: 'castillo', adarve_jardin: 'castillo', salon: 'sala', zaguan_fortaleza: 'interior', camara_torno: 'interior', armeria_fortaleza: 'interior', reina_camara: 'interior' };
+    for (const [id, atmo] of Object.entries(salas)) {
+      const { buf, wall } = await render(
+        30,
+        (au, g) => {
+          au.setVolumes(0, 0.9);
+          au.setZone(atmo, { id, ...ACUSTICA[id] });
+          g.fx.fires.list = [];
+        },
+        null,
+      );
+      out['sala:' + id] = { ...stats(buf, 3, 30), cpu: Math.round((wall / 30) * 1000) / 1000 };
     }
   }
   if (render.err) out.ERROR = render.err;

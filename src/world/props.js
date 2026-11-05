@@ -246,12 +246,13 @@ export function bench(ctx, x, y, z, w = 1.6, rot = 0) {
   });
 }
 
-// Banco de iglesia con respaldo.
+// Banco de iglesia con respaldo. (El asiento y el respaldo, entre los
+// costados: si llegan a su cara de fuera, sus testas parpadean con ella.)
 export function pew(ctx, x, y, z, w = 3.6, rot = 0, o = {}) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -w / 2, 0.42, -0.25, w / 2, 0.5, 0.2, { ao: false, faces: 'tnsewb' });
-    wb.box('wooddark', -w / 2, 0.5, -0.28, w / 2, 1.0, -0.22, { ao: false, faces: 'tnsew' });
+    wb.box('wooddark', -w / 2 + 0.08, 0.42, -0.25, w / 2 - 0.08, 0.5, 0.2, { ao: false, faces: 'tnsb' });
+    wb.box('wooddark', -w / 2 + 0.08, 0.5, -0.28, w / 2 - 0.08, 1.0, -0.22, { ao: false, faces: 'tns' });
     wb.box('wooddark', -w / 2, 0, -0.28, -w / 2 + 0.08, 1.0, 0.22, { ao: false });
     wb.box('wooddark', w / 2 - 0.08, 0, -0.28, w / 2, 1.0, 0.22, { ao: false });
   });

@@ -19,6 +19,7 @@ import { Combat } from './combat.js';
 import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
 import { NavGrid, LayerNav } from './nav.js';
+import { acusticaDe, sueloDe } from './acustica.js';
 import { WalkGrid } from '../world/walkgrid.js';
 import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
@@ -48,7 +49,6 @@ import { PaioQuest } from './paio.js';
 import { ReyQuest } from './rey.js';
 import { Virotes } from './virotes.js';
 import { Caballero, CaballeroCine, CaballeroFin } from './caballero.js';
-import { Cuerdas } from './cuerdas.js';
 import { SoutoQuest } from './souto.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
@@ -252,8 +252,6 @@ export class Game {
     this.virotes = new Virotes(this);
     // el Caballero de la Orden: lo que suelta su espada, su pendón, las hojas
     this.caballero = new Caballero(this);
-    // las cuerdas que se cortan de un virote (y lo que cuelga de ellas)
-    this.cuerdas = new Cuerdas(this, lvl.L.cuerdas);
     this.interact = new Interactables(this, lvl.L.interact);
     // la Corte de los Infieles: el director del compás (game/corte.js)
     this.corte = new Corte(this);
@@ -450,7 +448,6 @@ export class Game {
   applyWorldState() {
     this.interact.applyFlags(this.flags, true);
     if (this.corte) this.corte.applyFlags();
-    this.cuerdas.applyFlags(this.flags);
     this.breakables.applyFlags(this.flags, true);
     for (const ph of this.phantoms) ph.state = 'wait';
     this.phantomA = 0;
@@ -583,7 +580,6 @@ export class Game {
     this.titleT = 0;
     for (const e of this.enemies) e.reset();
     this.interact.applyFlags({}, true);
-    this.cuerdas.applyFlags({});
     this.breakables.applyFlags({}, true);
     const s = this.ui.open('title', { entries: [] });
     const has = !!loadSave();
@@ -1947,7 +1943,6 @@ export class Game {
       this.combat.update(dt);
       this.virotes.update(dt);
       this.caballero.update(dt);
-      this.cuerdas.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);
       this.spring.update(dt);
@@ -1991,8 +1986,10 @@ export class Game {
       if (z && z !== this.zone) {
         this.zone = z;
         this.atmo.set(z.atmo);
-        this.audio.setZone(z.atmo);
-        this.audio.surface = z.atmo === 'interior' || z.atmo === 'chapel' ? 'wood' : z.id === 'castle' || z.id === 'tanners' || z.id === 'river' || z.id === 'cloister' || z.id === 'jardin_rey' ? 'dirt' : 'stone';
+        // (cómo suena la sala: su reverberación, su ambiente y lo que se pisa;
+        // ver acustica.js)
+        this.audio.setZone(z.atmo, acusticaDe(z));
+        this.audio.surface = sueloDe(z);
         if (!this.visited.has(z.id)) {
           this.visited.add(z.id);
           if (AREA_NAMES[z.id] && this.state === 'play' && (!this.activeBoss || this.activeBoss.T.stalker) && !(this.chase.active && this.chase.lock)) {
