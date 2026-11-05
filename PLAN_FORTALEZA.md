@@ -642,8 +642,8 @@ punta, el rendimiento, el README y la versión jugable.
 Pruebas, de punta a punta: `tools/progress.mjs` (toda la partida, hasta el río), `tools/fortalezawalk.mjs` (ahora
 también la garita y los virotes del ballestero), `tools/castlewalk.mjs` (con `torre` y con `carcel`),
 `tools/corte.mjs`, `tools/rey.mjs mesa`, `tools/caballero.mjs`, `tools/beastchase.mjs` y `tools/camclip.mjs` (con tres
-puntos en la garita); `tools/audiotest.mjs` (los ambientes de las salas), `tools/salas.mjs` (la luz) y
-`tools/rendimiento.mjs` (lo que se dibuja), nuevas.
+puntos en la garita: 7776 pruebas, ninguna cámara tras un muro ni pegada); `tools/audiotest.mjs` (los ambientes de
+las salas), `tools/salas.mjs` (la luz) y `tools/rendimiento.mjs` (lo que se dibuja), nuevas.
 
 Lo que queda: **el paseo de las cámaras** (el claustro de arriba), que el plan dejaba para esta fase «si se hace». No
 se ha hecho: es una obra nueva (la galería alta en los tres lados del claustro, su suelo, su antepecho, el tejaroz
