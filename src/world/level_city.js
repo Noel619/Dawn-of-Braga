@@ -96,7 +96,10 @@ export function buildPraca(ctx, S, L) {
   house(ctx, { x0: -14, z0: -19.5, x1: -3.5, z1: -16.5, front: 's', seed: 201, lit: true, h: 7.4, style: 'timber', jetty: 2.5, arcade: true });
   house(ctx, { x0: 3.5, z0: -22, x1: 14, z1: -16.5, front: 's', seed: 202, h: 8, style: 'plaster', jetty: 2.5, arcade: true });
   ctx.endGroup();
-  house(ctx, { x0: -12.5, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true });
+  // (la quemada del sur de la plaza: por dentro no le queda nada, se le hundió
+  // el suelo en la cloaca; por su tejado abierto baja la luna a la sala de
+  // abajo: world/cloaca.js)
+  house(ctx, { x0: -12.5, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true, hueco: true });
   house(ctx, { x0: 3.5, z0: 14, x1: 14, z1: 22, front: 'n', seed: 204, wreck: 'pracaS' });
   house(ctx, { x0: 14, z0: -14, x1: 22, z1: -3, front: 'w', seed: 205, h: 7, wreck: 'pracaE1' });
   house(ctx, { x0: 14, z0: 3, x1: 23, z1: 11, front: 'w', seed: 206, lit: true, wreck: 'pracaE2' });

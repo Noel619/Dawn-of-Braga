@@ -684,6 +684,44 @@ const ICONS = {
     b.outline(P.void);
   },
   // la lágrima de Leonor: una perla clara en forma de gota, con un reflejo
+  // la flor blanca del Desfigurado: cinco pétalos redondos, el botón
+  // amarillo, el tallo y dos hojas
+  flor(b) {
+    // el tallo y las hojas
+    for (let y = 17; y < 30; y++) {
+      const x = 16 + Math.round(Math.sin(y * 0.35) * 0.8);
+      b.set(x, y, P.moss2);
+      b.set(x + 1, y, P.moss1);
+    }
+    for (const [cx, cy, sx] of [
+      [11, 24, -1],
+      [21, 21, 1],
+    ])
+      for (let y = -3; y <= 3; y++)
+        for (let x = -5; x <= 5; x++) {
+          if ((x * x) / 25 + (y * y) / 6 > 1) continue;
+          const l = 0.55 - y / 8 + x * sx * 0.03;
+          b.set(cx + x, cy + y - Math.round(x * sx * 0.3), shade([P.moss0, P.moss1, P.moss2, P.moss3, P.moss4], l, x, y));
+        }
+    // los pétalos
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2 - Math.PI / 2;
+      const px = 16 + Math.cos(a) * 5.4,
+        py = 11 + Math.sin(a) * 5.4;
+      for (let y = -5; y <= 5; y++)
+        for (let x = -5; x <= 5; x++) {
+          const d = Math.hypot(x, y);
+          if (d > 4.6) continue;
+          const l = 0.82 - d / 14 - (x + y) / 30;
+          b.set(Math.round(px + x), Math.round(py + y), shade([P.steel2, P.steel3, P.bone1, P.bone2, P.bone3, P.steel5], l, x, y));
+        }
+    }
+    // el botón
+    for (let y = -2; y <= 2; y++)
+      for (let x = -2; x <= 2; x++) if (x * x + y * y <= 5) b.set(16 + x, 11 + y, shade([P.gold1, P.gold2, P.gold3, P.gold4], 0.6 - (x + y) / 8, x, y));
+    sparkle(b, 23, 5);
+    b.outline(P.void);
+  },
   tear(b) {
     for (let y = 0; y < 32; y++)
       for (let x = 0; x < 32; x++) {

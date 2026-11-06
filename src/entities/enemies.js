@@ -8,6 +8,7 @@ import { HENRIQUE_TYPE } from './henrique.js';
 import { PAIO_TYPE, PAIO_HOLLOW_TYPE } from './paio.js';
 import { REY_TYPE } from './rey.js';
 import { MORADOR_TYPE } from './morador.js';
+import { DESFIGURADO_TYPE } from './desfigurado.js';
 import { CUSTODIO_TYPE } from './custodio.js';
 import { LEONOR_TYPE } from './leonor.js';
 import { GUARDIAN_L, GUARDIAN_R } from './guardian.js';
@@ -1262,6 +1263,7 @@ export const TYPES = {
   paio: PAIO_TYPE,
   rey: REY_TYPE,
   morador: MORADOR_TYPE,
+  desfigurado: DESFIGURADO_TYPE,
   paioHollow: PAIO_HOLLOW_TYPE,
   custodio: CUSTODIO_TYPE,
   leonor: LEONOR_TYPE,

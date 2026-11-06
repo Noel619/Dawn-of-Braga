@@ -478,6 +478,14 @@ export function head(o = {}) {
     }
     x += dx;
     z += dz;
+    // (lo que se le haga a una cara en particular: o.deform(x, y, z) da lo
+    // que se mueve cada punto, en el espacio de la cabeza sin escalar)
+    if (o.deform) {
+      const d = o.deform(x, y, z, t);
+      x += d[0];
+      y += d[1];
+      z += d[2];
+    }
     // (abajo se cierra)
     if (close > 0) {
       x *= 1 - close;

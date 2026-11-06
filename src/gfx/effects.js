@@ -570,14 +570,15 @@ export class LightShafts {
     this.col = [];
     this.idx = [];
   }
-  // haz desde 'a' (ventana) hasta 'b' (suelo), con anchura w
-  add(a, b, w, color) {
+  // haz desde 'a' (ventana) hasta 'b' (suelo), con anchura w (k: cuánto
+  // brilla, 1 el de siempre)
+  add(a, b, w, color, k = 1) {
     const n = this.pos.length / 3;
     const dir = new THREE.Vector3().subVectors(b, a);
     const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0));
     if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
     side.normalize().multiplyScalar(w / 2);
-    const c = new THREE.Color(color);
+    const c = new THREE.Color(color).multiplyScalar(k);
     // dos cintas cruzadas para que se vea desde cualquier ángulo
     const side2 = new THREE.Vector3().crossVectors(dir, side).normalize().multiplyScalar(w / 2);
     for (const s of [side, side2]) {

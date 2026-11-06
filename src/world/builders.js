@@ -1598,12 +1598,14 @@ function houseBody(ctx, s, sub) {
     ao: false,
     // (upperFaces: una fachada de la planta alta compuesta a mano, con un
     // hueco de verdad)
-    faces: s.upperFaces ?? (jetty && !hollow ? 'nsewb' : 'nsew'),
+    // (hueco: sin suelos por dentro —la quemada de encima de la cloaca—: de
+    // la planta alta sólo se tapa por abajo el voladizo)
+    faces: s.upperFaces ?? (jetty && !hollow && !s.hueco ? 'nsewb' : 'nsew'),
     mats: { b: 'wooddark' },
     room: 'out',
   });
   // en las visitables sólo se ve por debajo la franja del voladizo
-  if (jetty && hollow) {
+  if (jetty && (hollow || s.hueco)) {
     const jb = { n: [ux0, uz0, ux1, z0], s: [ux0, z1, ux1, uz1], e: [x1, uz0, ux1, uz1], w: [ux0, uz0, x0, uz1] }[front];
     wb.box('wooddark', jb[0], g1, jb[1], jb[2], g1 + 0.05, jb[3], { faces: 'b', ao: false, room: 'out' });
   }
@@ -1730,7 +1732,7 @@ function houseBody(ctx, s, sub) {
       // tejado quemado: en pie, los hastiales, la cumbrera y los pares
       // tiznados; de las tejas, lo que queda junto a los hastiales (antes eran
       // vigas sueltas sobre una tapa plana: de lejos, una casa de techo plano)
-      burnedRoof(ctx, { ux0, uz0, ux1, uz1, h, ridge, axis, upperMat, rng: new RNG(hashSeed(x0, z0, x1, z1, 91)) });
+      burnedRoof(ctx, { ux0, uz0, ux1, uz1, h, ridge, axis, upperMat, hueco: !!s.hueco, rng: new RNG(hashSeed(x0, z0, x1, z1, 91)) });
       if (ctx.fires && rng.chance(0.8)) ctx.fires.push({ x: (ux0 + ux1) / 2, y: h + 0.2, z: (uz0 + uz1) / 2, s: 2.2, light: true, smoke: true });
       if (s.roofCol !== false) roofCam(ctx, ux0, uz0, ux1, uz1, h, ridge, axis);
     } else {
@@ -1804,13 +1806,14 @@ function burnedRoof(ctx, o) {
   const th = 0.16;
   const yAt = (v) => ridge - Math.abs(v) * slope;
   // el desván, al aire: tablas negras de ceniza (desde arriba no se ve el
-  // vacío) y, encima, tejas y cascotes
-  wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.22, 0.19, 0.17] });
+  // vacío) y, encima, tejas y cascotes (en la casa hueca, no: el desván se
+  // fue abajo con todo lo demás)
+  if (!o.hueco) wb.box('wooddark', ux0, h - 0.05, uz0, ux1, h, uz1, { faces: 't', ao: false, tint: [0.22, 0.19, 0.17] });
   // el hueco: centrado en uh, con su semiancho junto a la cumbrera (w0) que
   // mengua hacia el alero
   const uh = s0 + L * rng.range(0.35, 0.65);
   const w0 = Math.max(0.9, L * rng.range(0.16, 0.26));
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < (o.hueco ? 0 : 9); i++) {
     const u = uh + rng.range(-w0, w0),
       v = rng.range(-half + 0.5, half - 0.5),
       sz = rng.range(0.2, 0.45);

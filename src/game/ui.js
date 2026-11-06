@@ -916,11 +916,12 @@ export class UI {
     // (la bodega del canónigo va en el plano de la ciudad, bajo su casa)
     const cellar = g.inCellar(g.player.pos);
     const dungeon = !cellar && g.inDungeon(g.player.pos);
-    const crypt = g.player.pos.y < -3 && !cellar && !dungeon && !g.inFoso(g.player.pos);
+    const cloaca = !cellar && !dungeon && g.inCloaca(g.player.pos);
+    const crypt = g.player.pos.y < -3 && !cellar && !dungeon && !cloaca && !g.inFoso(g.player.pos);
     const ey = $('map-eyebrow').querySelector('span');
-    const where = crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : 'Braga intramuros';
+    const where = crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : cloaca ? 'Bajo la plaza del Pan' : 'Braga intramuros';
     if (ey) ey.textContent = where + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
-    const layer = crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : undefined;
+    const layer = crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : cloaca ? 'cloaca' : undefined;
     const rects = g.level.L.map.filter((m) => m.level === layer && (layer || m.id !== 'river' || g.visited.has('river')));
     const seen = rects.filter((m) => g.visited.has(m.id));
     let x0 = 1e9,
@@ -1000,7 +1001,7 @@ export class UI {
     // puertas, altares y objetos en zonas visitadas (de este plano: en el de
     // las bodegas salían las puertas de la casa de arriba y no el rastrillo)
     const inVisited = (x, z) => vis.some((m) => x >= m.r[0] - 2 && x <= m.r[2] + 2 && z >= m.r[1] - 2 && z <= m.r[3] + 2);
-    const layerOf = (it) => (g.inCellar(it) ? 'cellar' : g.inDungeon(it) ? 'dungeon' : it.y < -3 && !g.inFoso(it) ? 'crypt' : undefined);
+    const layerOf = (it) => (g.inCellar(it) ? 'cellar' : g.inDungeon(it) ? 'dungeon' : g.inCloaca(it) ? 'cloaca' : it.y < -3 && !g.inFoso(it) ? 'crypt' : undefined);
     for (const it of g.interact.list) {
       if (layerOf(it) !== layer) continue;
       if (!inVisited(it.x, it.z)) continue;

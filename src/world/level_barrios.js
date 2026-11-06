@@ -217,35 +217,16 @@ export function buildNW(ctx, S, L) {
   P.decal(ctx, -23.2, 0.03, -16.4, 2.4);
   // despensa: toneles, cajas y, en el rincón, la trampilla de la bodega,
   // clavada con dos tablones («He cerrado la bodega: algo rasca las cubas
-  // desde dentro», dice la nota del tabernero; antes estaba suelta en medio
-  // de la despensa, como si llevara a alguna parte)
+  // desde dentro», dice la nota del tabernero)
   P.cask(ctx, -15.4, 0, -17.8, Math.PI / 2, { room });
   P.cask(ctx, -15.4, 0, -15.2, Math.PI / 2, { room });
   P.crate(ctx, -18.8, 0, -18.6, 0.8, 0.3);
   P.crate(ctx, -18.9, 0.8, -18.5, 0.6, 0.9);
   P.sacks(ctx, -17.6, 0, -13, 3, 1113);
-  {
-    const [tx0, tz0, tx1, tz1] = [-15.85, -13.65, -14.6, -12.4];
-    const cx = (tx0 + tx1) / 2,
-      cz = (tz0 + tz1) / 2;
-    wb.box('wooddark', tx0 - 0.08, 0.02, tz0 - 0.08, tx1 + 0.08, 0.035, tz1 + 0.08, { ao: false, faces: 'tnsew', tint: [0.42, 0.38, 0.34] });
-    wb.box('wooddark', tx0, 0.035, tz0, tx1, 0.05, tz1, { ao: false, faces: 'tnsew', tint: [0.75, 0.7, 0.64] });
-    wb.box('iron', cx - 0.4, 0.05, cz - 0.03, cx - 0.2, 0.065, cz + 0.03, { ao: false });
-    for (const [dz, r] of [
-      [-0.34, 0.12],
-      [0.3, -0.08],
-    ]) {
-      wb.push();
-      wb.translate(cx, 0.07, cz + dz);
-      wb.rotateY(r);
-      wb.box('planks', -0.82, -0.02, -0.11, 0.82, 0.02, 0.11, { ao: false, tint: [0.8, 0.72, 0.62] });
-      for (const nx of [-0.72, 0.72]) wb.box('iron', nx - 0.02, 0.02, -0.02, nx + 0.02, 0.03, 0.02, { ao: false });
-      wb.pop();
-    }
-  }
+  // (la trampilla misma, con sus tablones, es un interactuable: se arrancan
+  // con la palanca y se baja a la bodega, que da a la cloaca; world/cloaca.js)
   wb.setRoom(null);
   L.interact.push({ kind: 'note', id: 'n_tabernero', note: 'tabernero', x: -17.0, y: 1.1, z: -9.5, model: 'book' });
-  L.interact.push({ kind: 'examine', id: 'x_trampilla_taberna', text: 'trampillaTaberna', x: -15.2, y: 0, z: -13.0, r: 1.4 });
   ctx.rats.push({ x: -15.2, y: 0, z: -13.4, n: 2 }, { x: -25.6, y: 0, z: -18.6, n: 1 });
 
   // --- enemigos

@@ -51,6 +51,9 @@ import { ReyQuest } from './rey.js';
 import { Virotes } from './virotes.js';
 import { Caballero, CaballeroCine, CaballeroFin } from './caballero.js';
 import { SoutoQuest } from './souto.js';
+import { DesfiguradoQuest } from './desfigurado.js';
+import { CloacaFX } from './cloaca.js';
+import { CLOACA } from '../world/cloaca.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
 import { FisicoCine } from './fisico_cine.js';
@@ -109,7 +112,7 @@ export class Game {
       }
       for (const list of byKey.values()) {
         const shafts = new LightShafts(this.scene);
-        for (const s of list) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color);
+        for (const s of list) shafts.add(new THREE.Vector3(...s.a), new THREE.Vector3(...s.b), s.w, s.color, s.k ?? 1);
         shafts.build();
         if (!shafts.mesh) continue;
         if (list[0].group) shafts.mesh.userData.group = list[0].group;
@@ -276,6 +279,9 @@ export class Game {
     this.ossuaries = new Ossuaries(this);
     // la casa tapiada, el pasadizo del Soto y Miguel, el tonelero
     this.souto = new SoutoQuest(this);
+    // el Desfigurado, en la luz de la cloaca; la cascada y el agua de allí
+    this.desfigurado = new DesfiguradoQuest(this);
+    this.cloacaFX = new CloacaFX(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
     this.cornisas = new Cornisas(this);
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
@@ -483,6 +489,7 @@ export class Game {
     this.rey.applyFlags();
     this.ossuaries.applyFlags();
     this.souto.applyFlags();
+    this.desfigurado.applyFlags();
     this.fisico.applyFlags();
   }
 
@@ -564,6 +571,7 @@ export class Game {
     this.rey.onRespawn();
     this.corte.reset();
     this.souto.reset();
+    this.desfigurado.onRespawn();
     this.cornisas.reset();
     this.fisico.reset();
     this.trampas.reset();
@@ -1265,6 +1273,7 @@ export class Game {
     this.corte.onRespawn();
     this.ossuaries.onRespawn();
     this.souto.onRespawn();
+    this.desfigurado.onRespawn();
     this.cornisas.onRespawn();
     this.fisico.onRespawn();
     this.trampas.reset();
@@ -1387,6 +1396,12 @@ export class Game {
   inLair(p) {
     const A = ALEMAN.grid;
     return p.x > A[0] && p.x < A[2] && p.z > A[1] && p.z < A[3] && p.y < -1.2 && p.y > ALEMAN.lair.y - 3;
+  }
+
+  // Bajo la plaza del Pan: la bodega de la taberna y la cloaca.
+  inCloaca(p) {
+    const Q = CLOACA.grid;
+    return p.x > Q[0] && p.x < Q[2] && p.z > Q[1] && p.z < Q[3] && p.y < -1.2 && p.y > CLOACA.y0 - 1;
   }
 
   inDungeon(p) {
@@ -1950,6 +1965,7 @@ export class Game {
       this.caballero.update(dt);
       this.breakables.update(dt);
       this.waters.update(dt);
+      this.cloacaFX.update(dt);
       this.spring.update(dt);
       if (this.state === 'play') {
         this.hunt.update(dt);
@@ -1963,6 +1979,7 @@ export class Game {
         this.corte.update(dt);
         this.ossuaries.update(dt);
         this.souto.update(dt);
+        this.desfigurado.update(dt);
         this.cornisas.update(dt);
         this.fisico.update(dt);
         this.trampas.update(dt);

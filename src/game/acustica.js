@@ -19,6 +19,11 @@
 // ver tools/salas.mjs) y de su tamaño: las salas de tablas y tapices, secas;
 // las bóvedas de piedra y el aljibe, largas.
 export const ACUSTICA = {
+  // ---------------------------------------------------------- la cloaca (world/cloaca.js)
+  cloaca_bodega: { suelo: 'stone', eco: ['room', 0.32], amb: 'despensa' },
+  cloaca: { suelo: 'stone', eco: ['crypt', 0.62], amb: 'aljibe', cama: [0, 0, 0.12, 0.05, 0.32] },
+  cloaca_luz: { suelo: 'dirt', eco: ['hall', 0.55], amb: 'aljibe', cama: [0.03, 0, 0.1, 0.03, 0.55] },
+
   // ---------------------------------------------------------- el patio de armas
   castle: { suelo: 'dirt' },
   castle_gate: { suelo: 'stone', eco: ['crypt', 0.36], amb: 'paso' },

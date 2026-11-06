@@ -1589,6 +1589,17 @@ const GEN = {
   scratchCampana() {
     return scratchText(['LA CAMPANA', 'SÍ ES POR MÍ'], 192, 64, 92);
   },
+  // lo que el Desfigurado ha rayado en la piedra de la cloaca, junto a la
+  // luz, noche tras noche (con la uña de la mano mala: hondo y claro)
+  scratchHermosa() {
+    return scratchText(['HERMOSA'], 256, 56, 811, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
+  },
+  scratchHermosa2() {
+    return scratchText(['HERMOSA', 'HERMOSA'], 256, 100, 812, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
+  },
+  scratchMirala() {
+    return scratchText(['MÍRALA'], 192, 56, 813, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
+  },
   // «NO TE ARRODILLES», escrito a dedo con sangre por las paredes de la
   // celda del fondo, una y otra vez (la última, a medias)
   bloodNoTe1() {

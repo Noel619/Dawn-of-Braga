@@ -77,6 +77,28 @@ export const MAT_DEFS = {
   fiGlove: { tex: 'leather', uv: 1.6, color: 0x221c1a, phong: { specular: 0x707070, shininess: 40 } },
   fiLens: { tex: 'white', uv: 1, color: 0x3a1606, emissive: 0xff8a3c, emissiveIntensity: 1.3 },
   fiSkin: { tex: 'skinPale', uv: 2.0, color: 0xdccdbd },
+  // el Desfigurado: la piel de la mitad que sigue siendo suya (pálida, de no
+  // ver el sol), la de la otra mitad (amoratada, que se le va endureciendo),
+  // los bultos de carne (vivos, pero dormidos: apenas laten), los harapos
+  // de la capa y de la saya, las vendas, el pelo y el ojo que se le ha
+  // quedado la peste (con un rescoldo dentro)
+  deSkin: { tex: 'skinPale', uv: 2.0, color: 0x9c8878 },
+  deRot: { tex: 'skinCorrupt', uv: 1.6, color: 0x8a6e72 },
+  deFlesh: { tex: 'flesh', uv: 0.9, color: 0x9a6a62, emissiveTex: 'fleshEmit', emissive: 0xff6a3a, emissiveIntensity: 0.12, phong: { specular: 0x4a2a2a, shininess: 26 } },
+  deCloak: { tex: 'burlap', uv: 1.4, color: 0x726352 },
+  deTunic: { tex: 'linen', uv: 1.4, color: 0x544a3e },
+  dePatch: { tex: 'clothDark', uv: 1.4, color: 0x8a7a6a },
+  deWrap: { tex: 'linen', uv: 1.6, color: 0x857a66 },
+  deHair: { tex: 'hairGrey', uv: 1.6, color: 0x6a6258 },
+  deEye: { tex: 'white', uv: 1, color: 0x1a0804, emissive: 0xffa060, emissiveIntensity: 1.1 },
+  // lo verde de la cloaca, donde baja la luna (world/verdor.js): las hojas
+  // (helechos, hiedra, la higuera), la hierba, el musgo, las flores blancas
+  // (con un poco de luz propia: de noche se ven antes que nada) y su centro
+  hoja: { tex: 'grass', uv: 2.4, color: 0x9cc06c },
+  hierba: { tex: 'grass', uv: 2.0, color: 0xa8c874 },
+  musgo: { tex: 'mossstone', uv: 1.1, color: 0xa2c078 },
+  flor: { tex: 'white', uv: 1, color: 0xe2e8f2, emissive: 0x7088b8, emissiveIntensity: 0.32 },
+  florCentro: { tex: 'white', uv: 1, color: 0xd8b448, emissive: 0x403010, emissiveIntensity: 0.3 },
   // la esponja soporífera, empapada (adormidera, mandrágora, beleño)
   fiSponge: { tex: 'burlap', uv: 3.0, color: 0x8c6a3c, phong: { specular: 0x5a4a30, shininess: 60 } },
   feathers: { tex: 'feathers', uv: 1.8, phong: { specular: 0x405070, shininess: 26 } },
@@ -110,6 +132,9 @@ export const MAT_DEFS = {
   scratchMasAbajo: { tex: 'scratchMasAbajo', uv: 1, alphaTest: 0.5 },
   scratchNoEsNuestro: { tex: 'scratchNoEsNuestro', uv: 1, alphaTest: 0.5 },
   scratchCampana: { tex: 'scratchCampana', uv: 1, alphaTest: 0.5 },
+  scratchHermosa: { tex: 'scratchHermosa', uv: 1, alphaTest: 0.5 },
+  scratchHermosa2: { tex: 'scratchHermosa2', uv: 1, alphaTest: 0.5 },
+  scratchMirala: { tex: 'scratchMirala', uv: 1, alphaTest: 0.5 },
   araDeoIgnoto: { tex: 'araDeoIgnoto', uv: 1, alphaTest: 0.5 },
   portalDeoIgnoto: { tex: 'portalDeoIgnoto', uv: 1, alphaTest: 0.5 },
   bloodNoTe1: { tex: 'bloodNoTe1', uv: 1, alphaTest: 0.5 },

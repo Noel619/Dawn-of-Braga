@@ -18,6 +18,7 @@ import { FORT } from './fortaleza_medidas.js';
 import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
+import { buildCloaca, CLOACA } from './cloaca.js';
 import { scatterClutter } from './clutter.js';
 import { amueblar } from './amueblado.js';
 import { corpseLog } from '../entities/models.js';
@@ -95,6 +96,8 @@ export function buildLevel() {
   }
   const Ag = ALEMAN.grid;
   const U = new WalkGrid(Ag[0], Ag[1], Ag[2], Ag[3], 0.5); // el sótano del Alemán y la gruta de Leonor
+  const Qg = CLOACA.grid;
+  const Q = new WalkGrid(Qg[0], Qg[1], Qg[2], Qg[3], 0.5); // la bodega de la taberna y la cloaca
   ctx.S = S; // las casas visitables pintan su huella transitable
   ctx.floorHoles = []; // huecos en la losa de suelo (escaleras que bajan)
   // (huecos de la losa que no son portales del subsuelo: el foso del rey, que
@@ -130,6 +133,10 @@ export function buildLevel() {
   buildDeepCrypt(ctx, C, L);
   buildRiver(ctx, S, L);
   buildFillers(ctx, S, L);
+  // la cloaca, bajo la plaza del Pan (de la bodega de la taberna a la sala
+  // de la luz, bajo la casa quemada; su agujero en la losa, abajo)
+  buildCloaca(ctx, Q, L);
+  ctx.slabHoles.push(CLOACA.ojo);
   buildNorthWalls(ctx, S, L);
   buildCastleTop(ctx, S, L);
   buildFortaleza(ctx, S, L);
@@ -170,6 +177,7 @@ export function buildLevel() {
   const nD = D.toColliders(ctx.col, FORT.carcel.aljibe.fondo - 1.1, -0.9);
   for (const [a, b, c, d] of D.rects(3)) ctx.col.add(a, FORT.carcel.aljibe.fondo - 1.1, b, c, FORT.puerta.foso.y - 1.1, d, 'block').cam = true;
   const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
+  const nQ = Q.toColliders(ctx.col, CLOACA.y0, CLOACA.y1);
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(WORLD_X0, -232, 84, 72, 1);
   F.paint(WORLD_X0, -232, 84, 72, 1);
@@ -188,5 +196,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, B, D, U, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, lairBlocks: nU, clutter } };
+  return { ctx, L, meshes, S, C, B, D, U, Q, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, lairBlocks: nU, cloacaBlocks: nQ, clutter } };
 }

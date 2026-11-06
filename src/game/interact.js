@@ -654,6 +654,33 @@ function hatchMesh() {
   return g;
 }
 
+// Los dos tablones clavados de través sobre una trampilla (la de la bodega de
+// la taberna), con sus clavos; se quitan al arrancarlos.
+function hatchBoards(g) {
+  const b = new THREE.Group();
+  const wood = cloneMat(objMat('planks')),
+    iron = cloneMat(objMat('iron'));
+  for (const [dz, r] of [
+    [-0.34, 0.12],
+    [0.3, -0.08],
+  ]) {
+    const p = new THREE.Group();
+    p.position.set(0, 0.1, dz);
+    p.rotation.y = r;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.04, 0.22), wood);
+    p.add(m);
+    for (const nx of [-0.72, 0.72]) {
+      const n = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.04), iron);
+      n.position.set(nx, 0.026, 0);
+      p.add(n);
+    }
+    b.add(p);
+  }
+  g.add(b);
+  g.userData.mats.push(wood, iron);
+  return b;
+}
+
 // La trampilla de la bajada a la cárcel (la del almacén de la torre del
 // homenaje): dos hojas de roble, cada una de w/2 por len, herradas, con sus
 // goznes en los bordes largos del hueco (sobre el brocal) y una argolla junto
@@ -1081,6 +1108,8 @@ export class Interactables {
             m._u.uGround.value.set(s.y, 0.34);
           }
         it.lift = 0;
+        // (la clavada: los dos tablones de través, con sus clavos)
+        if (s.boards) it.obj.userData.boards = hatchBoards(it.obj);
         // (las que siempre están abiertas, ya abiertas)
         if (s.open) this.poseHatch(it, 1);
       }
@@ -1234,6 +1263,7 @@ export class Interactables {
     it.lift = k;
     const u = it.obj.userData;
     u.lidG.rotation.z = k * 2.75;
+    if (u.boards) u.boards.visible = k < 0.02;
     // (con un hueco de verdad debajo, se ve lo de abajo, no el negro)
     u.hole.visible = k > 0.02 && !it.realHole;
   }
@@ -1746,6 +1776,8 @@ export class Interactables {
         const op = this.game.flags[it.flag] || it.open;
         // (la cuerda del montacargas y otras: sus propios rótulos)
         if (it.labels) return it.labels[it.end === 'top' ? 0 : 1];
+        // (la clavada con tablones: con la palanca, se arrancan)
+        if (it.needs && !op && it.end === (it.opensFrom || 'top')) return this.game.inventory.has(it.needs) ? 'Arrancar los tablones' : 'Examinar la trampilla';
         if (it.end === (it.opensFrom || 'top')) return op ? (it.end === 'top' ? 'Bajar por la escalera' : 'Subir por la escalera') : it.end === 'top' ? 'Abrir la trampilla' : 'Desatrancar la trampilla';
         return op ? (it.end === 'top' ? 'Bajar por la escalera' : 'Subir por la escalera') : 'Examinar la trampilla';
       }
@@ -1862,7 +1894,7 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'npc') {
-      const q = it.npc === 'paio' ? g.paio : it.npc === 'rey' ? g.rey : g.house;
+      const q = it.npc === 'paio' ? g.paio : it.npc === 'rey' ? g.rey : it.npc === 'desfigurado' ? g.desfigurado : g.house;
       if (q) q.talk();
       return true;
     }
@@ -1953,10 +1985,19 @@ export class Interactables {
     }
     if (it.kind === 'hatch') {
       if (g.flags[it.flag] || it.open) g.hatchMove(it);
-      else if (it.end === (it.opensFrom || 'top')) {
+      else if (it.end === (it.opensFrom || 'top') && it.needs && !inv.has(it.needs)) {
+        // (clavada: sin la palanca no se mueve)
+        g.ui.toast(MSG[it.shutMsg] ?? MSG.hatchShut, 5);
+        g.audio && g.audio.play('locked', { x: it.x, y: it.y, z: it.z });
+      } else if (it.end === (it.opensFrom || 'top')) {
         // se descorre el cerrojo y la tapa se abre: el atajo (a la cárcel, o
-        // desde el almacén de la torre al dormitorio de arriba)
+        // desde el almacén de la torre al dormitorio de arriba); la clavada,
+        // se le arrancan los tablones con la palanca
         g.flags[it.flag] = true;
+        if (it.needs) {
+          g.audio && g.audio.play('boards', { x: it.x, y: it.y, z: it.z });
+          g.noise && g.noise(it.x, it.y, it.z, 9);
+        }
         for (const q of this.list) if (q.kind === 'hatch' && q.flag === it.flag && q.obj) q.opening = true;
         p.playInteract('interact', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
         g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z });

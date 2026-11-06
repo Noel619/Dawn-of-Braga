@@ -106,6 +106,12 @@ export const ITEMS = {
     icon: 'shield',
     key: false,
   },
+  flor_blanca: {
+    name: 'Flor blanca',
+    desc: 'Una flor pequeña, de cinco pétalos, de las que crecen bajo la casa quemada de la plaza, donde baja la luna. Te la dio el Desfigurado: «Para que te acuerdes de que todavía queda algo».',
+    icon: 'flor',
+    key: true,
+  },
   palanca: {
     name: 'Palanca de hierro',
     desc: 'Barra de hierro de la fragua de maese Lourenço, con la uña partida. Sirve para arrancar tablones clavados.',
@@ -916,6 +922,42 @@ Voy a rezar más abajo.`,
 
 // Lo que dicen los personajes (en bocadillos sobre la cabeza).
 export const DIALOG = {
+  // el Desfigurado, en la luz de la cloaca (game/desfigurado.js): lo que dice
+  // para sí mientras mira arriba (si estás cerca), lo que dice cuando te
+  // nota, la primera conversación (en dos tandas), lo de la peste, lo que
+  // dice cada vez que vuelves a hablarle, y al irte
+  desfMurmura: ['Hermosa...', 'Ahí está. Ahí está otra vez.', 'No te vayas todavía. Todavía no.', 'Hermosa. Hermosa. Hermosa.', 'Mírala cómo baja.', 'Una raya más. Una noche más.'],
+  desfVe: 'No la tapes. Quédate donde estás... Ahí. Así.',
+  desfMeet: [
+    '¿La ves? Baja todas las noches por el agujero de la casa quemada. Todas. Aunque arriba esté todo muerto.',
+    'No te asustes de mi cara. Yo ya no me asusto: hace mucho que no me miro en el agua.',
+    'Me mordió, como a todos. Pero cuando tocó la campana me tapé las orejas con barro y no me arrodillé. Y aquí estoy. A medias.',
+    'Lo de dentro quiere, y yo no le dejo. Unas noches gana él. Otras, yo. Esta noche, yo.',
+    'El sol no. El sol me arranca la piel a tiras. La luna sí me deja mirarla. La luna no le pregunta a uno qué es.',
+  ],
+  desfMeet2: [
+    'Mira lo que ha crecido aquí abajo, donde cae la luz. Los helechos. La higuera, que salió de entre las piedras de la casa. Las flores, que no saben nada de campanas.',
+    'Arriba lo han matado todo. Y esto ha crecido igual. Sin pedirle permiso a nadie.',
+    'Hermosa. Es hermosa, ¿verdad? La vida que ha quedado. Lo poco. Lo que no se arrodilló.',
+    'Toma. Cógela tú: aquí abajo hay muchas. Para que te acuerdes de que todavía queda algo.',
+  ],
+  desfPeste: [
+    'La odio. Odio esta peste. Odio lo que les ha hecho a los que conocía. Y a los que no.',
+    'Odio lo que me ha hecho a mí. Pero esto no me lo quita. Esto no me lo quita nadie.',
+    'Je... je, je. Perdona. A veces me río y no sé de qué. Es la otra mitad, que se ríe.',
+  ],
+  desfLoco: [
+    ['¿Lo oyes? ...No. No es nada. Es el agua. Es el agua. Es el agua.'],
+    ['Le he puesto nombre a cada helecho. Luego se me olvidan y se lo vuelvo a poner.'],
+    ['Cuento las noches en el pilar. Una raya por noche. Si un día no hay raya... es que ha ganado él. Ese día no bajes.'],
+    ['No me mires la mano mala. Esa ya no es mía. O todavía no.'],
+    ['A veces sueño que subo y el sol no me quema. Me despierto llorando. De alegría, creo.'],
+    ['Tú también la odias, ¿verdad? La peste. Se te ve en la espada.'],
+    ['Hermosa... ¿Has visto alguna vez algo tan hermoso? Dime que sí. Dime que sí.'],
+    ['Si subes a la Sé, no mires la campana cuando toque. No la mires.'],
+    ['Cuando ya no puedas más, baja. Siéntate aquí un rato. A la luz no le importa lo que seas.'],
+  ],
+  desfAdios: ['Vuelve. Mañana también baja.', 'No le digas a nadie que estoy aquí. Aunque ya no quede nadie a quien decírselo.', 'Ve con cuidado. Arriba no hay luna que valga.'],
   // asomado a la ventana de la sala alta, mientras las de dentro aporrean la
   // puerta de su escalera (al azar)
   henriqueWindow: [
@@ -1323,6 +1365,16 @@ export const MSG = {
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',
   southGate: 'La Puerta Sur está hundida bajo escombros y carne. No hay salida.',
   trampillaTaberna: 'La trampilla de la bodega, clavada con dos tablones. Abajo, en lo oscuro, algo rasca las cubas.',
+  // la bodega de la taberna y la cloaca (world/cloaca.js)
+  bodegaClavada: 'La trampilla de la bodega, clavada con dos tablones. Abajo, en lo oscuro, algo rasca las cubas. Con un hierro se podrían arrancar.',
+  bodegaAbre: 'Arrancas los tablones con la palanca y levantas la trampilla. Sube un olor a vino agrio y a agua estancada. Debajo, una escalera de mano.',
+  bodegaBaja: 'Bajas por la escalera de mano a la bodega del Cuervo.',
+  bodegaSube: 'Subes a la despensa de la taberna.',
+  bodegaArriba: 'La trampilla, cerrada por arriba.',
+  cubasBodega: 'Las cubas del tabernero. Una tiene la duela de abajo reventada y el vino se ha comido el suelo; en la madera, arañazos de uñas pequeñas. Ratas. Y otros, más arriba, más hondos, de una mano.',
+  cloacaMuerto: 'Un hombre sentado contra el muro, con la espada en el suelo. Bajó a esconderse donde nadie oyera la campana. Tiene barro en las orejas, como si se las hubiera tapado. No le sirvió de mucho: no tiene marcas, sólo se ha quedado así.',
+  hermosaRayas: 'En la piedra del pilar, a la altura de los ojos, rayado con algo duro una y otra vez: HERMOSA. Más abajo, las rayas de las noches, de cinco en cinco. La última está fresca.',
+  yacijaDesfigurado: 'Una yacija de trapos contra el pilar, una manta de sayal, la escudilla, el cántaro del agua del canal y un tarro con flores blancas. Huele a hombre, todavía.',
   rastrillo: (n) =>
     n === 0
       ? 'Un rastrillo de hierro cierra la cisterna. Al otro lado, bajo una luz pálida que cae de lo alto, el agua negra de un pozo. De la reja suben tres cadenas que se pierden en la bóveda.'
@@ -1432,6 +1484,10 @@ export const MSG = {
 };
 
 export const AREA_NAMES = {
+  // la cloaca (world/cloaca.js)
+  cloaca_bodega: 'Bodega del Cuervo',
+  cloaca: 'La cloaca de los romanos',
+  cloaca_luz: 'Bajo la casa quemada',
   prison: 'Mazmorras del castillo',
   castle: 'Patio de armas',
   catacumbas_castillo: 'Catacumbas del castillo',

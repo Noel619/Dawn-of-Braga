@@ -257,6 +257,8 @@ const ZONE_MUSIC = {
   arena: 'crypt',
   cellar: 'crypt',
   lair: 'crypt',
+  cloaca: 'crypt',
+  cloaca_luz: 'sanctuary',
   sanctum: 'sanctum',
   dawn: 'ending',
 };
@@ -277,6 +279,8 @@ const ZONE_ROOM = {
   arena: ['hall', 0.55],
   cellar: ['crypt', 0.5],
   lair: ['crypt', 0.55],
+  cloaca: ['crypt', 0.6],
+  cloaca_luz: ['hall', 0.55],
   sanctum: ['cathedral', 0.8],
   dawn: ['open', 0.16],
 };
@@ -297,6 +301,9 @@ const ZONE_BED = {
   arena: [0.02, 0, 0.12, 0.07, 0],
   cellar: [0, 0, 0.15, 0.08, 0],
   lair: [0, 0, 0.15, 0.09, 0],
+  // (la cloaca: el agua del canal corriendo; en la sala de la luz, la cascada)
+  cloaca: [0, 0, 0.12, 0.05, 0.32],
+  cloaca_luz: [0.03, 0, 0.1, 0.03, 0.5],
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
