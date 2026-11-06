@@ -825,6 +825,17 @@ tesoro, de 23,9 a 43,2; el Tombo de las cartas, de 18,9 a 38,2; la entrada de la
 de los 75-232 de la cripta honda, que está llena de otra manera (huesos y nichos de pared a pared): aquí no se busca
 la densidad, sino lo que cuenta cada pieza.
 
+### Cierre de la tanda del 6 de noviembre: lo hecho y lo que queda
+
+- **Hecho**: la segunda pasada de los muebles (los comunes rehechos y piezas nuevas de cualquier casa en
+  `mobiliario.js`; las salas más pobres según `tools/densidad.mjs`, amuebladas en `world/amueblado.js`); la marcha
+  que resbalaba al echar a andar (#29: el pie apoyado se clava en el suelo; `tools/arranque.mjs`); y, fuera del plan,
+  la cloaca bajo la plaza del Pan con el Desfigurado (#35).
+- **Queda** (anotado en `bugs_y_correciones.txt`, #36 y #37): el albacar (#33), que espera a lo que decida el autor;
+  de la fase 8, las rondas por los adarves, las emboscadas desde arriba y el patio que cambia al volver; de la 9, la
+  densidad; de la 10, la niebla de altura en la ciudad; de la 11, más claves y variantes por golpe y las reacciones
+  según de dónde venga; y volver a pasar las pruebas largas.
+
 ## Fuentes
 
 - La alcáçova de Lisboa (el castillo, el paço real y la plaza de armas en un mismo recinto, partido en dos patios

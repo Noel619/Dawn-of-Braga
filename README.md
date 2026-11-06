@@ -123,6 +123,20 @@ guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torr
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 
+**La cloaca y el Desfigurado.** En la despensa de la Taberna del Cuervo, la trampilla de la bodega está clavada con
+dos tablones («algo rasca las cubas»): se arrancan con la palanca de la fragua. Abajo, la bodega del Cuervo, y en su
+muro del sur, el boquete por el que se hundió sobre **la cloaca de los romanos**: una galería de sillería bajo su
+bóveda, con el agua corriendo por en medio, que lleva bajo la calle del Soto y la plaza del Pan hasta la cisterna
+donde se juntaban las aguas, cuatro pilares y sus arcos. Encima ardió una casa (la quemada del sur de la plaza) y se
+le hundió el suelo: por el agujero baja la luna, un haz de luz pálida, y donde cae la luz y la lluvia ha crecido de
+todo (helechos, hierba, musgo, flores blancas, una higuera; la hiedra baja por el agujero); el agua cae en cascada a
+una alberca y rodea la isla verde. En medio, en la luz, de pie y mirando al cielo, **el Desfigurado**: un vagabundo al
+que la infección no acabó de tomar, con media cara deshecha, que odia el sol y odia la peste y llama hermosa a la vida
+que queda («Hermosa...»). La primera vez que se pisa el rellano, la cámara baja despacio hasta él. Si te acercas te
+pide que no le tapes la luz; si le hablas se vuelve, te cuenta lo suyo y te da una **flor blanca**; luego, lo de la
+peste, y cada vez una de sus cosas, con sus respingos y su risa (`world/cloaca.js`, `world/verdor.js`,
+`entities/desfigurado.js`, `game/desfigurado.js`, `game/cloaca.js`).
+
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
 los Inocentes, ha puesto en cuarentena: la boca de la calleja, enfrente de la fragua, está cerrada con un portón de
@@ -772,7 +786,8 @@ la cabeza y deja de dibujar el cuerpo.
 
 **Animación procedural.** Clips con interpolación de Hermite y mezcla por cuaterniones, marcha bípeda con zancada
 ajustada a la velocidad, balanceo de cadera, inclinación en las curvas y cinemática inversa de dos huesos en piernas
-(los pies se apoyan en el suelo y en los escalones) y brazos; los escudos se estabilizan para mirar siempre al frente.
+(los pies se apoyan en el suelo y en los escalones; el pie apoyado se clava en el suelo donde cae y no resbala al
+echar a andar, al pararse, en las curvas ni en una media vuelta) y brazos; los escudos se estabilizan para mirar siempre al frente.
 El brazo del escudo lo lleva con soltura (muelles de guiñada, cabeceo y alabeo, y mezcla de las poses de guardia,
 marcha y carrera) y, si aun así fuera a meterse en el torso, la hombrera, la cadera o la pierna, se aparta; al trotar
 y correr la hoja va por delante.
@@ -1124,7 +1139,11 @@ src/
                         madera, las caras bajo el tejado, el zócalo pintado, el enlucido, la escalera de tablas);
                         mobiliario.js: lo que dice quién vivía en cada sala (la mesa puesta, la percha con lo
                         de cada uno, los paveses, los yelmos, el caldero, la imagen con sus velas, el
-                        aguamanil, el lecho, la estera, la tabla de la ronda); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        aguamanil, el lecho, la estera, la tabla de la ronda, y lo de cualquier casa: alfombras, escaños, sillas de
+                        tijera, alacenas, aparadores, tinajas, repisas, paños); amueblado.js: las salas más pobres
+                        amuebladas con eso; cloaca.js: la bodega del Cuervo, la cloaca romana y la sala de la luz;
+                        verdor.js: lo que crece (helechos, hierba, flores, musgo, hiedra, raíces, juncos, la higuera);
+                        level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
@@ -1239,6 +1258,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         circula.mjs    ¿se anda por cada sala amueblada de la fortaleza? Inunda su suelo con
                                        el tamaño del jugador desde sus entradas y dice qué interactuable (o
                                        pie de escalera) se queda sin alcanzar; una imagen por sala
+                        densidad.mjs   triángulos por m² de cada sala (las más pobres, primero)
+                        cloacawalk.mjs de la taberna a la luz: la trampilla clavada, la palanca, la bodega, la
+                                       galería, la llegada, hablar con el Desfigurado y la flor
+                        arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
+                                       del paso), andando, al pararse y en siete maniobras (curva, de lado,
+                                       hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»
                         voids.mjs      rendijas a la nada en la cripta: fondo magenta y la cámara en cada sala
                                        de la cripta honda, en ocho rumbos, al frente y hacia arriba; guarda
                                        las vistas con fondo a la vista (un muro que no llega a su bóveda, un
