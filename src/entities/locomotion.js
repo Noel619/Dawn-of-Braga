@@ -39,6 +39,7 @@ const _hmR = { x: 0, z: 0 };
 const _lc = { x: 0, z: 0 };
 const _lw = { x: 0, z: 0 };
 const _lf = { x: 0, z: 0 };
+const _lt = { x: 0, z: 0 };
 const _k1 = new THREE.Vector3();
 
 // Estilos de marcha (valores en metros para una escala 1 y grados).
@@ -127,6 +128,15 @@ export class Biped {
     this._fr = { px: 0, pz: 0, sy: 0, cy: 1 };
     this._over = { L: false, R: false };
     this.lkS = { L: 0, R: 0 };
+    // el pie apoyado, clavado en el mundo donde cayó (ver update): pl, su
+    // sitio; ox/oz, lo que se aparta de donde lo pondría la marcha
+    // (st: 0 suelto, sin sitio; 1 apoyado en x/z; 2 en el aire, con lo que
+    // le queda por volver, ox/oz, y lo alto que despegó, lh)
+    // (y 3, dando un saltito: de hx/hz, h de 0 a 1)
+    this.pl = { L: { x: 0, z: 0, st: 0, ox: 0, oz: 0, lh: 0, h: 0, hx: 0, hz: 0 }, R: { x: 0, z: 0, st: 0, ox: 0, oz: 0, lh: 0, h: 0, hx: 0, hz: 0 } };
+    this._tf = { L: { x: 0, z: 0 }, R: { x: 0, z: 0 } };
+    this._tw = { L: { x: 0, z: 0 }, R: { x: 0, z: 0 } };
+    this._still = true;
   }
 
   // vx, vz: velocidad en el mundo; yaw: orientación del cuerpo.
@@ -161,16 +171,73 @@ export class Biped {
       mw = this.mw;
     const stride = clamp(S.strideBase + S.strideK * v, S.strideMin, S.strideMax) * k;
     // girar sin avanzar: pasitos en el sitio
-    const shuffle = (1 - mw) * sstep(1.0, 2.6, Math.abs(this.yawRate));
-    const freq = this.spd / stride + shuffle * 1.7;
+    let shuffle = (1 - mw) * sstep(1.0, 2.6, Math.abs(this.yawRate));
+    const plant = !!o.pos && !air;
+    // (quieto con un pie fuera de su sitio —se paró a media zancada, lo
+    // empujaron, lo pusieron ahí—, se recoge con un pasito, como al girar en
+    // el sitio; con los pies anclados lo hace _anchor)
+    if (plant && mw < 0.1 && this.lkS.L === 0 && this.lkS.R === 0) {
+      let need = this.pl.L.st === 2 || this.pl.R.st === 2;
+      for (const side of ['L', 'R']) {
+        const pl = this.pl[side];
+        if (pl.st === 1 && Math.hypot(pl.ox * 1.6, pl.oz) > 0.15 * k) need = true;
+      }
+      if (need) shuffle = Math.max(shuffle, 0.7);
+    }
+    let freq = this.spd / stride + shuffle * 1.7;
+    // (al pararse con un pie en el aire, ese paso se acaba: no se queda
+    // colgado a medio vuelo y se posa luego arrastrándose)
+    if (plant && moveT < mw - 0.02 && (this.pl.L.st === 2 || this.pl.R.st === 2)) freq = Math.max(freq, 1.25);
     const prevPhase = this.phase;
     if (!air) this.phase = fract(this.phase + freq * dt);
     const duty = (this.duty = lerp(S.dutyWalk, S.dutyRun, run));
     const D = stride * duty * mw;
     const dirF = spd > 0.05 ? vf / spd : 1,
       dirS = spd > 0.05 ? vs / spd : 0;
-    const liftH = (lerp(S.liftWalk, S.liftRun, run) * mw + shuffle * 0.06) * k;
+    // (el pie que despega lo hace con la altura de la marcha a la que va,
+    // no con la que lleva: al echar a andar, mw aún va por detrás)
+    const liftH = (lerp(S.liftWalk, S.liftRun, run) * Math.max(mw, moveT) + shuffle * 0.06) * k;
     const limp = S.limp;
+    // (el marco del personaje en el mundo, para clavar los pies; si el
+    // cuerpo ha saltado de sitio —vuelve a su puesto, lo ponen en otra
+    // parte—, lo clavado de antes ya no vale)
+    const F = this._fr;
+    if (o.pos) {
+      if (Math.hypot(o.pos.x - F.px, o.pos.z - F.pz) > 1.5) {
+        this.lkS.L = this.lkS.R = 0;
+        this.pl.L.st = this.pl.R.st = 0;
+      }
+      F.px = o.pos.x;
+      F.pz = o.pos.z;
+    }
+    F.sy = sy;
+    F.cy = cy;
+    // Al echar a andar desde quieto, el primer paso lo da el pie que queda
+    // más atrás, y empieza levantándolo: la fase con la que se paró podía
+    // pillar un pie a medio vuelo (posado, porque quieto no se levanta) que
+    // al arrancar seguía su vuelo a ras de suelo. Los dos pies, apoyados
+    // donde están (la fase no se ve estando quieto: todo va por mw).
+    if (plant && this._still && v > 0.06 && shuffle < 0.3) {
+      let lead = 'L',
+        best = Infinity;
+      for (const side of ['L', 'R']) {
+        const a = this._toL(this._tw[side].x, this._tw[side].z, _lf);
+        const pj = a.x * dirS + a.z * dirF;
+        if (pj < best) {
+          best = pj;
+          lead = side;
+        }
+      }
+      this.phase = fract(duty + 0.004 - (lead === 'L' ? 0 : 0.5));
+      for (const side of ['L', 'R']) {
+        const pl = this.pl[side];
+        pl.x = this._tw[side].x;
+        pl.z = this._tw[side].z;
+        pl.st = 1;
+        this._u[side] = fract(this.phase + (side === 'L' ? 0 : 0.5));
+      }
+    }
+    this._still = mw < 0.04 && v < 0.06;
 
     for (const side of ['L', 'R']) {
       const off = side === 'L' ? 0 : 0.5;
@@ -190,7 +257,8 @@ export class Biped {
         const s = (u - duty) / (1 - duty);
         const e = s * s * (3 - 2 * s);
         along = D * (-0.5 + e);
-        lift = liftH * Math.pow(Math.sin(Math.PI * s), 0.85) * (side === 'R' ? 1 - limp * 0.6 : 1);
+        const lh = this.pl[side].st === 2 ? Math.max(liftH, this.pl[side].lh) : liftH;
+        lift = lh * Math.pow(Math.sin(Math.PI * s), 0.85) * (side === 'R' ? 1 - limp * 0.6 : 1);
         pitch = s < 0.5 ? lerp(0.55, 0.15, s / 0.5) : lerp(0.15, -0.26 * (1 - run * 0.7), (s - 0.5) / 0.5);
       }
       pitch *= Math.max(mw, shuffle * 0.5);
@@ -202,6 +270,85 @@ export class Biped {
       const roll = Math.max(0, pitch) * 0.15 * k + Math.max(0, -pitch) * 0.06 * k;
       t.set(wid + dirS * along, this.ankleH + lift + roll, idleZ + dirF * along);
       this.pitch[side] = pitch;
+      // El pie apoyado no patina: se clava en el mundo donde cae y el cuerpo
+      // pasa por encima. La fórmula de arriba sólo lo lleva atrás a la
+      // velocidad del cuerpo con la marcha ya hecha (mw = 1, sin girar); al
+      // echar a andar, al pararse o en las curvas, se iría arrastrando.
+      // Al levantarlo, sale de donde estaba y en el vuelo vuelve a la marcha.
+      this._tf[side].x = t.x;
+      this._tf[side].z = t.z;
+      const pl = this.pl[side];
+      if (!plant) {
+        pl.st = 0;
+        pl.ox = pl.oz = 0;
+      } else if (u < duty) {
+        if (pl.st === 0 || pl.st === 2) {
+          // (cae ahora: se clava donde lo pone la marcha)
+          this._toW(t.x, t.z, pl);
+          pl.st = 1;
+          pl.ox = pl.oz = 0;
+        } else if (pl.st === 3) {
+          // el saltito: de donde estaba a donde lo quiere la marcha, por el
+          // aire, y ahí se clava
+          pl.h = Math.min(1, pl.h + dt / 0.2);
+          const e = pl.h * pl.h * (3 - 2 * pl.h);
+          const a = this._toL(pl.hx, pl.hz, _lf);
+          const nx = lerp(a.x, t.x, e),
+            nz = lerp(a.z, t.z, e);
+          pl.ox = nx - t.x;
+          pl.oz = nz - t.z;
+          t.x = nx;
+          t.z = nz;
+          t.y += 0.07 * k * Math.pow(Math.sin(Math.PI * pl.h), 0.85);
+          this._toW(t.x, t.z, pl);
+          if (pl.h >= 1) {
+            pl.st = 1;
+            if (this.onStep) this.onStep(side, 0.5);
+          }
+        } else {
+          const a = this._toL(pl.x, pl.z, _lf);
+          const dx = a.x - t.x,
+            dz = a.z - t.z;
+          t.x += dx;
+          t.z += dz;
+          pl.ox = dx;
+          pl.oz = dz;
+          // (si se aparta demasiado —una media vuelta, un zigzag cerrado, un
+          // empujón—, no se arrastra ni se descoyunta la pierna: da un
+          // saltito a su sitio nuevo)
+          if (Math.hypot(dx, dz) > 0.32 * k) {
+            pl.st = 3;
+            pl.h = 0;
+            pl.hx = pl.x;
+            pl.hz = pl.z;
+          }
+        }
+      } else {
+        // en el vuelo: de donde despegó a donde lo quiere la marcha
+        const s = (u - duty) / (1 - duty);
+        const e = s * s * (3 - 2 * s);
+        if (pl.st === 1 || pl.st === 3) {
+          // (despega ahora: sale justo de donde estaba, aunque la marcha
+          // lo pille ya algo avanzado en el vuelo)
+          const a = this._toL(pl.x, pl.z, _lf);
+          const f = Math.max(0.25, 1 - e);
+          pl.ox = (a.x - t.x) / f;
+          pl.oz = (a.z - t.z) / f;
+          pl.lh = liftH;
+          pl.st = 2;
+        }
+        t.x += pl.ox * (1 - e);
+        t.z += pl.oz * (1 - e);
+        // (el despegue: la puntera aún en el suelo, donde estaba; el pie se
+        // va soltando de ahí mientras sube, no sale ya a la velocidad del
+        // cuerpo)
+        const b = sstep(0, 0.3, s);
+        if (b < 1) {
+          const a = this._toL(pl.x, pl.z, _lf);
+          t.x = lerp(a.x, t.x, b);
+          t.z = lerp(a.z, t.z, b);
+        }
+      }
       // adaptación al terreno (escalones)
       if (o.ground && o.pos) {
         const wx = o.pos.x + t.x * cy + t.z * sy,
@@ -212,6 +359,7 @@ export class Biped {
       } else this.gOff[side] = damp(this.gOff[side], 0, 10, dt);
     }
     this._anchor(dt, o, lock, sy, cy, k);
+    for (const side of ['L', 'R']) this._toW(this.target[side].x, this.target[side].z, this._tw[side]);
     this.drop = damp(this.drop, Math.min(0, this.gOff.L, this.gOff.R), 12, dt);
 
     // pelvis
@@ -286,17 +434,8 @@ export class Biped {
   // arma; el otro se queda atrás, estirado. o.hold: aguanta esa zancada (el
   // golpe aún no ha acabado); sin él, los pies se recogen.
   _anchor(dt, o, lock, sy, cy, k) {
-    const F = this._fr;
     const W = this.lkS;
-    if (o.pos) {
-      // (si el cuerpo ha saltado de sitio —vuelve a su puesto, lo ponen en
-      // otra parte—, los anclajes de antes ya no valen)
-      if (Math.hypot(o.pos.x - F.px, o.pos.z - F.pz) > 1.5) W.L = W.R = 0;
-      F.px = o.pos.x;
-      F.pz = o.pos.z;
-    }
-    F.sy = sy;
-    F.cy = cy;
+    // (el marco del personaje ya lo ha puesto update)
     const A = this.anc,
       ST = this.stp;
     // (al soltarse el anclaje —acabó el golpe—, cada pie se suelta cuando
@@ -310,7 +449,12 @@ export class Biped {
       // (o.quieto: también quieto se anclan, y al echar a andar cada pie se
       // suelta al levantarlo: el primer paso no resbala)
       else if (o.quieto && this.mw < 0.04 && !this.stp[side]) W[side] = 1;
-      else if ((this.mw > 0.15 && (this._u[side] >= this.duty || this._far(side, k))) || this._over[side]) {
+      // (andando ya, el pie anclado que está en el suelo se suelta sin más:
+      // la marcha lo tiene clavado en el mismo sitio; el que da un paso,
+      // cuando lo acaba; el que ha quedado lejos de donde lo quiere la
+      // marcha, de un saltito a un sitio nuevo)
+      else if ((this.mw > 0.15 && (this._u[side] >= this.duty || !ST[side] || this._far(side, k))) || this._over[side]) {
+        if (W[side] > 0.999 && this._u[side] < this.duty && !ST[side] && this._far(side, k)) this.pl[side].st = 0;
         W[side] = damp(W[side], 0, 14, dt);
         if (W[side] < 0.002) W[side] = 0;
       }
@@ -397,7 +541,12 @@ export class Biped {
           best = side;
         }
       }
-      if (best) ST[best] = { t: 0, dur: (0.22 + Math.min(0.12, bd * 0.16)) * slow, fx: A[best].x, fz: A[best].z, plan: false, lift: (0.06 + Math.min(0.05, bd * 0.08)) * k };
+      if (best) {
+        // (a su sitio de ahora, en el mundo: si el cuerpo echa a andar a
+        // media zancada, el pie no cae persiguiéndolo, arrastrándose)
+        const hw = this._toW(H[best].x, H[best].z, { x: 0, z: 0 });
+        ST[best] = { t: 0, dur: (0.22 + Math.min(0.12, bd * 0.16)) * slow, fx: A[best].x, fz: A[best].z, plan: false, wx: hw.x, wz: hw.z, lift: (0.06 + Math.min(0.05, bd * 0.08)) * k };
+      }
     }
     for (const side of ['L', 'R']) {
       const st = ST[side];
@@ -412,6 +561,11 @@ export class Biped {
         const e = s * s * (3 - 2 * s);
         let tx = H[side].x,
           tz = H[side].z;
+        if (st.wx !== undefined) {
+          const h = this._toL(st.wx, st.wz, _lt);
+          tx = h.x;
+          tz = h.z;
+        }
         if (st.plan) {
           if (P && P.id === this._planId) {
             tx += P.x * cy - P.z * sy;
@@ -450,6 +604,15 @@ export class Biped {
       // no arrastrándose por el suelo)
       t.y = lerp(t.y, ly, w) + (want === 0 && !st ? 4 * w * (1 - w) * 0.1 * k : 0);
       this.pitch[side] = lerp(this.pitch[side], pitch, w);
+      // (el pie anclado es el que está en el suelo: si la marcha lo tiene
+      // apoyado, lo clavado es esto, y al levantarlo saldrá de aquí)
+      if (w > 0.999 && this._u[side] < this.duty) {
+        const pl = this.pl[side];
+        this._toW(t.x, t.z, pl);
+        pl.st = 1;
+        pl.ox = t.x - this._tf[side].x;
+        pl.oz = t.z - this._tf[side].z;
+      }
     }
   }
 
