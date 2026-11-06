@@ -19,6 +19,18 @@ import { CLOACA } from '../world/cloaca.js';
 import { approachAngle, damp, clamp } from '../core/util.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const seg = (t, a, b) => sm((t - a) / (b - a));
+const V3 = THREE.Vector3;
+// la llegada: la primera vez que se pisa el rellano de la sala, la cámara se
+// aparta del jugador y baja despacio hasta la luz y él (dur, s): desde la
+// boca de la galería, mirando al haz (A, LA), por encima del pretil y de la
+// alberca (M), hasta el norte de la isla, entre los pilares, a la altura de
+// su cara: de perfil, el lado sano, que mira arriba en la luz (B, LB). (La
+// curva pasa por M a medio camino.)
+const LLEGADA = { dur: 8.0, A: [-15.4, -3.4, 8.9], M: [-11.0, -3.3, 10.9], B: [-8.05, -6.85, 13.4], LA: [-8.4, -5.4, 18.2], LB: [-8.25, -6.65, 18.3] };
+// (el punto de control de la curva: para que pase por M en s = 0,5)
+const LL_C = LLEGADA.M.map((m, i) => 2 * m - 0.5 * (LLEGADA.A[i] + LLEGADA.B[i]));
 
 export class DesfiguradoQuest {
   constructor(g) {
@@ -62,6 +74,7 @@ export class DesfiguradoQuest {
 
   // ------------------------------------------------------------ cada fotograma
   update(dt) {
+    this.updateLlegada(dt);
     this.updateScript();
     const it = this.talkIt,
       e = this.npc;
@@ -71,6 +84,52 @@ export class DesfiguradoQuest {
       it.y = e.pos.y;
       it.z = e.pos.z;
     }
+  }
+
+  // La llegada (una vez): la toma de la luz y él, con sus franjas; el jugador,
+  // quieto en el rellano; a media toma, él: «Hermosa...».
+  updateLlegada(dt) {
+    const g = this.g,
+      p = g.player;
+    if (!this.rev) {
+      if (this.F['desf:llegada'] || g.state !== 'play' || p.dead || g.climb || g.cine || !this.npc) return;
+      const R = CLOACA.sala.rellano;
+      const y = CLOACA.tunel.y;
+      if (p.pos.x > R[0] && p.pos.x < R[2] && p.pos.z > R[1] - 0.3 && p.pos.z < R[3] && Math.abs(p.pos.y - y) < 0.6) {
+        this.F['desf:llegada'] = true;
+        this.rev = { t: 0, pos: new V3(), look: new V3() };
+        p.state = 'cine';
+        p.vx = p.vz = 0;
+        p.autoDir = null;
+        g.lockTarget = null;
+      }
+      return;
+    }
+    const L = LLEGADA;
+    const t = (this.rev.t += dt);
+    g.post.U.uBars.value = 0.11 * Math.min(seg(t, 0, 0.7), 1 - seg(t, L.dur - 0.7, L.dur));
+    const s = seg(t, 0.2, L.dur - 0.3);
+    const r = this.rev;
+    const q = (i) => (1 - s) * (1 - s) * L.A[i] + 2 * s * (1 - s) * LL_C[i] + s * s * L.B[i];
+    r.pos.set(q(0), q(1), q(2));
+    r.look.set(L.LA[0] + (L.LB[0] - L.LA[0]) * s, L.LA[1] + (L.LB[1] - L.LA[1]) * s, L.LA[2] + (L.LB[2] - L.LA[2]) * s);
+    g.camRig.override = { pos: r.pos, look: r.look, fov: 50 - 16 * s, snap: true };
+    if (!r.dijo && t > 3.4) {
+      r.dijo = true;
+      g.speech.say(this.who, 'Hermosa...', { dur: 3.0 });
+    }
+    if (t >= L.dur || p.dead) this.finLlegada();
+  }
+  finLlegada() {
+    const g = this.g,
+      p = g.player;
+    this.rev = null;
+    g.post.U.uBars.value = 0;
+    g.camRig.override = null;
+    g.camRig.snapTo(p);
+    g.camera.fov = g.camRig.fovBase;
+    g.camera.updateProjectionMatrix();
+    if (p.state === 'cine') p.state = 'free';
   }
 
   // A su sitio (al descansar, al morir, al cargar): en la luz, mirando arriba;
@@ -222,7 +281,7 @@ export class DesfiguradoQuest {
         { say: DIALOG.desfMeet2.slice(3) },
         {
           fn: () => {
-            if (!g.inventory.has('flor_blanca')) g.later(350, () => g.giveItem('flor_blanca'));
+            if (!g.inventory.has('flor_blanca')) g.giveItem('flor_blanca');
             g.saveGame && g.saveGame();
           },
         },
@@ -254,6 +313,7 @@ export class DesfiguradoQuest {
     else this.reset();
   }
   onRespawn() {
+    if (this.rev) this.finLlegada();
     this.g.speech && this.g.speech.hush(this.who);
     if (this.npc) this.npcReset(this.npc);
     else this.reset();

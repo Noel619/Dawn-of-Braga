@@ -615,7 +615,9 @@ function sala(ctx, Q, L) {
   ctx.lights.push({ x: I.x, y: iy + 6.5, z: I.z, r: 0.5, g: 0.6, b: 0.82, radius: 13, intensity: 0.7, room });
   ctx.lights.push({ x: -13.9, y: -7.5, z: 11.6, r: 0.45, g: 0.56, b: 0.7, radius: 5, intensity: 0.5, room });
   ctx.lights.push({ x: -8.0, y: -1.8, z: 18.0, r: 0.5, g: 0.6, b: 0.8, radius: 6, intensity: 0.9, room });
-  if (ctx.dynLights) ctx.dynLights.push({ x: D.x + 0.25, y: iy + 2.6, z: D.z + 0.1, intensity: 3.2, range: 5.5, color: 0xbfd2f4 });
+  // (la luz de la luna en su cara: no parpadea, y se la lleva antes que a
+  // otra si hay pocas)
+  if (ctx.dynLights) ctx.dynLights.push({ x: D.x + 0.25, y: iy + 2.6, z: D.z + 0.1, intensity: 2.4, range: 5.5, color: 0xbfd2f4, flicker: 0, priority: 3 });
   if (ctx.shafts) {
     ctx.shafts.push({ a: [-7.85, CASA.h + 1.4, 17.9], b: [D.x + 0.05, iy + 0.05, D.z], w: 2.6, color: 0xa8bedc, k: 3.2 });
     ctx.shafts.push({ a: [-8.4, CASA.h + 0.8, 18.4], b: [-8.9, iy + 0.05, 17.6], w: 1.5, color: 0x8ea4c8, k: 2.4 });

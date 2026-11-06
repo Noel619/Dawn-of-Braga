@@ -104,7 +104,7 @@ await run('a la isla', "__walk([[-6.9,12.6],[-7.6,14.6],[-8.2,16.3]])");
 await run('hablar', "(()=>{const g=__game;const r=__useHere('t_desfigurado');for(let k=0;k<40;k++){g.speech.skip(g.desfigurado.who);__sim(0.4);}return {...r, met: !!g.flags['desf:met'], flor: g.inventory.has('flor_blanca')}})()");
 // 7. por el puente del oeste y la orilla, a la cascada; y de vuelta arriba
 await run('puente oeste', "__walk([[-10.9,18.0],[-12.6,18.0],[-13.8,18.0],[-15.2,18.0],[-15.2,14.6]])");
-await run('vuelta', "__walk([[-11.8,12.0],[-7.2,10.9],[-7.0,9.7],[-9.0,9.7],[-12.6,9.7],[-15.2,9.6],[-15.3,4.0],[-15.3,-6.0],[-15.3,-9.0],[-15.3,-11.6],[-15.3,-12.6],[-15.6,-13.6]])");
+await run('vuelta', "__walk([[-11.8,12.0],[-7.2,10.9],[-7.0,9.7],[-9.0,9.7],[-12.6,9.7],[-15.2,9.6],[-15.3,4.0],[-15.3,-6.0],[-15.3,-9.0],[-15.3,-11.6],[-15.3,-12.6],[-15.9,-13.9]])");
 await run('sube', "(()=>{const g=__game;const r=__useHere('h_bodega_abajo');__sim(2.0);const p=g.player.pos;return {...r,pos:[p.x,p.y,p.z].map(v=>+v.toFixed(2)), zona: g.zone&&g.zone.id}})()");
 console.log(out.join('\n'));
 if (logs.length) console.log(logs.join('\n'));
