@@ -43,6 +43,68 @@ export function feetParts(k, mat, o = {}) {
   return out;
 }
 
+// Los faldones de una ropa larga (el brial de los cortesanos, el hábito de
+// los penitentes): cada mitad de la falda cuelga de la cadera, donde nace su
+// muslo, en dos tramos: hasta la rodilla y, de ahí, el bajo. No van pegados
+// a las piernas: faldonesPose (el postPose de la criatura) los mueve sólo en
+// parte con el muslo y con algo de retraso, como la tela, y el bajo cuelga
+// más a plomo que el tramo de arriba. Así, al andar, la falda se abre con el
+// paso pero no vuela hacia atrás como una tabla, y de rodillas cubre los
+// muslos y cae desde las rodillas hasta el suelo (#30).
+export function faldonJoints(k = 1, knee = 0.46) {
+  return [
+    { name: 'faldaL', parent: 'hips', pos: [0.1 * k, -0.03 * k, 0] },
+    { name: 'faldaR', parent: 'hips', pos: [-0.1 * k, -0.03 * k, 0] },
+    { name: 'faldaL2', parent: 'faldaL', pos: [0, -knee, 0] },
+    { name: 'faldaR2', parent: 'faldaR', pos: [0, -knee, 0] },
+  ];
+}
+// Las piezas: w x d, la sección de arriba, que nace a y0 bajo la cadera y
+// llega al bajo en hem (la rodilla, en knee: la misma que faldonJoints),
+// ensanchándose hasta (tb, td); ins, lo que se separa del centro cada mitad
+// (con su anchura, se solapan un poco en medio).
+export function faldonParts(mat, o) {
+  const { w, d, y0, knee, hem, tb = 1, td = 1, ins = 0 } = o;
+  const ky = knee + 0.02;
+  const f = (ky - y0) / (hem - y0);
+  const wk = w * (1 + (tb - 1) * f),
+    dk = d * (1 + (td - 1) * f);
+  const out = [];
+  for (const [s, sd] of [['L', 1], ['R', -1]]) {
+    out.push({ j: 'falda' + s, type: 'box', s: [w, ky - y0, d], p: [ins * sd, -(y0 + ky) / 2, 0], taper: [wk / w, dk / d], mat });
+    // (el bajo empieza un poco por encima de la rodilla: al doblarse, no se
+    // abre una rendija entre los dos tramos)
+    out.push({ j: 'falda' + s + '2', type: 'box', s: [wk, hem - knee + 0.05, dk], p: [ins * sd, -(hem - knee - 0.05) / 2, 0], taper: [(w * tb) / wk, (d * td) / dk], mat });
+  }
+  return out;
+}
+// (el giro del tramo de arriba para el de su muslo, en radianes; hacia
+// delante, en negativo: hasta unos 35° lo sigue al 70%; más allá, sentado o
+// de rodillas, lo alcanza casi del todo, y hacia atrás, al 40%)
+function faldaX(x) {
+  const f = -x;
+  if (f <= 0) return x * 0.4;
+  return -(f < 0.6 ? f * 0.7 : 0.42 + (f - 0.6) * 1.1);
+}
+const ZERO3 = [0, 0, 0];
+export function faldonesPose(e, pose, dt) {
+  const F = e._falda || (e._falda = {});
+  const k = Math.min(1, dt * 16);
+  for (const s of ['L', 'R']) {
+    const l = pose['leg' + s] || ZERO3;
+    const want = [faldaX(l[0]), l[1] * 0.4, l[2] * 0.8];
+    const cur = F[s];
+    if (!cur || !(dt > 0) || dt > 0.25) F[s] = want;
+    else for (let i = 0; i < 3; i++) cur[i] += (want[i] - cur[i]) * k;
+    const a = F[s][0];
+    pose['falda' + s] = F[s].slice();
+    // el bajo: más a plomo (de rodillas, casi del todo: cae de la rodilla)
+    const t = Math.min(1, Math.max(0, (-a - 0.6) / 0.7));
+    const m = a < 0 ? 0.7 - 0.52 * t * t * (3 - 2 * t) : 0.75;
+    pose['falda' + s + '2'] = [a * (m - 1), 0, -F[s][2] * 0.3];
+  }
+}
+
 // Forma de escudo de lágrima (heater).
 function heaterShape(w = 0.56, h = 0.7) {
   const s = new THREE.Shape();

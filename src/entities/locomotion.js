@@ -474,17 +474,22 @@ export class Biped {
     // piernas del clip "aterrizadas": sus tobillos se proyectan al suelo
     for (const side of ['L', 'R']) {
       const tgt = _t.copy(this.target[side]);
-      if (clipPose && clipW > 0) {
+      // (o.ownLegs: el clip sólo mueve esas piernas; la otra sigue su anclaje)
+      const cw = o.ownLegs && !o.ownLegs.includes(side) ? 0 : clipW;
+      if (clipPose && cw > 0) {
         const fk = this.ankleFK(clipPose, side, _b);
         if (o.clipGround) fk.y = Math.max(this.ankleH, Math.min(fk.y, this.ankleH + 0.35 * this.scale));
-        tgt.lerp(fk, clipW);
+        tgt.lerp(fk, cw);
+        // (la pierna propia que entra o sale de su rato —el pie que va al
+        // estribo y vuelve— no se arrastra: hace su arco en el aire)
+        if (o.ownLegs && cw < 0.999) tgt.y += 0.17 * this.scale * Math.sin(Math.PI * cw);
       }
       tgt.y += this.gOff[side];
       const hr = this.hipsRest,
         root = pose.root || Z3;
       _hp.set(hr.x + root[0], hr.y + root[1], hr.z + root[2]);
       e2q(pose.hips || Z3, _hq);
-      if (this.lkS[side] > 0.3 && !this.stp[side] && clipW < 0.5) {
+      if (this.lkS[side] > 0.3 && !this.stp[side] && cw < 0.5) {
         // (el pie anclado que la pierna ya no alcanza —el de atrás en una
         // zancada larga— se arrastra: su anclaje viene hacia el cuerpo; sólo
         // si está bien apartado de la cadera: de pie, la pierna va casi
@@ -505,7 +510,7 @@ export class Biped {
           }
         }
       }
-      this._leg(side, _hp, _hq, tgt, this.pitch[side] * (1 - clipW), pose, o.w ?? 1);
+      this._leg(side, _hp, _hq, tgt, this.pitch[side] * (1 - cw), pose, o.w ?? 1);
     }
   }
 

@@ -287,6 +287,7 @@ Repartidos con intención:
 | 5 | **Las mazmorras del castillo** y el rastrillo (el atajo a la celda). |
 | 6 | **Repaso:** encuentros, luz, sonido de cada sala, documentos, pruebas de punta a punta, rendimiento, README y versión jugable. |
 | 7 | **El paseo de las cámaras, los golpes con peso y la revisión crítica** (abajo, en §12). Lo que queda, en `bugs_y_correciones.txt` (21-32). |
+| 9 y 11, en parte | **La personalidad de las salas y la animación pendiente** (abajo, en §12): el mobiliario de ocho salas, las paradas de las galerías largas, el pie en el estribo y las túnicas que se abren con el paso. |
 
 ## 11. Riesgos
 
@@ -732,6 +733,97 @@ las galerías largas) y la animación (#28–#30), en sus fases.
 torre del castillo viejo) y el problema de por dónde sale el preso tienen su propuesta aparte, **el albacar**
 (`PLAN_ALBACAR.md`): el patio del castillo viejo como refugio de la gente de fuera durante el cerco. Pendiente de lo
 que decida el autor.
+
+### Fases 9 y 11, en parte: la personalidad de las salas y la animación (6 de noviembre)
+
+La revisión de la fase 7 dejaba **Vacíos** en C: salas grandes y limpias, con «algo» que leer pero sin nadie que
+hubiera vivido en ellas. Esta pasada no sube la densidad por subirla: pone en cada sala lo que dice **quién la usaba y
+qué pasó allí**, con piezas pequeñas hechas a escala y una historia que se lee sin texto (y, si se examina, con él).
+
+- **El mobiliario** (`world/mobiliario.js`, nuevo): piezas que se reutilizan, todas en coordenadas locales
+  (`wb.at`) y con colisión sólo donde estorban: `mesaPuesta` (escudillas, vasos, la jarra, el pan, el cuchillo, la
+  vela y, si se pide, los dados o un tablero de tablas a medio jugar), `percha` (la tabla de clavijas con capas,
+  gambesones, cintos, zurrones o capelinas), `paveses`, `yelmos` (el clavijero, con clavijas vacías), `caldero` (en
+  sus llares), `imagenSanto` (la tabla pintada con su repisa y los cabos de vela), `aguamanil`, `lecho`, `estera` y
+  `tabla` (la de la ronda, con sus rayas de carbón y los nombres tachados).
+- **La guardia de la torre del homenaje**: la mesa puesta con la cena dejada a medias, las tablas a medio jugar y los
+  dados; el hogar en el muro de carga (uno por planta, por el mismo cañón, como en las torres de verdad) con el
+  caldero en sus llares, la leña y el escabel; los paveses de los ballesteros contra el muro de poniente (uno, con un
+  virote clavado) y el clavijero de los yelmos en el de levante, con uno de menos; la tabla de la ronda junto a la
+  puerta, con los nombres tachados menos dos y, de otra mano, «LA PUERTA NO SE ABRE. A NADIE»; y el rincón del herido:
+  el jergón, las vendas, la jofaina con el agua roja y la escudilla que no se comió.
+- **El dormitorio de la guardia**: sobre cada jergón, su percha con lo de cada uno, y a sus pies las botas, un yelmo
+  o una escudilla; el caballito de madera a medio tallar, con la navaja y las virutas («PARA NUNO, QUE CUMPLE SIETE»);
+  la imagen de los de la guardia en el muro de carga, con sus cabos de vela; en el rincón, el aguamanil, junto al
+  tonel del agua; y en medio, bajo la lámpara, la mesilla de los que no dormían, sobre su estera.
+- **La antecámara del Rey**: el atril del portero de cámara con el libro de las audiencias abierto (las últimas hojas:
+  «El señor arzobispo, a solas, de noche»; la última, de letra de la Sé: «El Rey bajará cuando se le llame»); el
+  repostero del Rey en el muro del norte (el paño azul con su orla de oro y sus armas, la cruz azul sobre el campo
+  blanco con las bezantes de plata); el brasero y la estera del paso.
+- **El tesoro**: lo que el camarero dice que guarda y no estaba. La espada de la frontera en su vaina, colgada de dos
+  garfios (la de Ourique, con el arriaz mellado); en la mesilla, junto al arca donde murió sentado, la corona de
+  diario en su cojín, el sello de la cámara y el lacre; a sus pies, el jarro vacío, volcado («Tengo sed»); la seda
+  enrollada en su caballete, la vajilla de plata sobre las arcas y el cofrecillo volcado del que salen las monedas
+  del suelo.
+- **Lo alto de la torre de la coracha**, donde se llega: el puesto de los que velaban la coracha y el fanal. Los haces
+  de leña, las ollas de la pez con su cazo y la soga; el catre del centinela, deshecho; junto a la puerta, la mesilla
+  con el cuerno de avisar, su farol, que sigue ardiendo, y el vaso; la estera ante el altar.
+- **La entrada de la torre de la reina**, que lo era también de su jardín: los zuecos con el barro seco, el sombrero
+  de paja en su clavo, el cesto de las rosas secas con la podadera; la percha de los mantos de las damas; la jaula
+  del jilguero junto a la saetera, con la puerta abierta y el pájaro muerto dentro («Nadie le cerró la puerta, y no
+  salió»); su silla tapada con la sábana, como todo lo suyo.
+- **El Tombo de las cartas**: el estante de los rollos y los libros de los fueros, el pupitre del copista a la luz de
+  la saetera, el cesto de las cartas enrolladas con sus sellos colgando y, en la mesa, la bula con su sello de plomo
+  («Que no la lea el arzobispo»). Con su candelero encendido: era la sala más oscura de la fortaleza.
+- **La despensa del gran salón**, que cuenta el cerco: la barra de los garfios casi vacía (un jamón, una ristra, un
+  manojo de hierbas), el jarro bajo la espita que gotea, el odre, el arca de la sal con su candado, los quesos (uno
+  empezado) y los huevos, y en la mesa las tarjas, cada vez más lisas, y la tablilla de cera del despensero
+  («No queda más que el vino de las misas y el trigo de sembrar… Todo»).
+- **Las paradas en las galerías largas (#26)**: en la del gran salón (42 m), el poyo de la ventana de en medio, bajo
+  la luna, con lo del juglar de la corte: la viola con la cuerda de en medio saltada, el arco, el vaso y la cantiga a
+  medio copiar («Madre, non ven o meu amigo, / e a candea ardeu ata o cabo…»). En la de la torre (25 m), bajo su
+  antorcha y junto al vano desde el que se ve la sala del trono entera, el escondite del pequeño: un nido de mantas
+  con una almohada de la cámara del Rey, una espada de madera, un caballero de barro sin cabeza y un cabo de vela.
+
+Once textos nuevos (`story.js`), uno por pieza que se examina. Ninguna de estas salas gana criaturas: la historia está
+en los objetos.
+
+**La animación pendiente (fase 11, en parte):**
+
+- **El pie en el estribo (#28)**: un clip puede llevar sólo algunas piernas suyas y sólo un rato (`ownLegs` y `ownT`
+  en `rig.clip`; `locomotion.js` las respeta pierna a pierna). El alférez, el ballestero y el tirador, al montar la
+  ballesta, llevan la izquierda en el estribo de 1,25 a 2,6 s (entra y sale con un arco, sin arrastrarse) y la derecha
+  sigue anclada. Medido con `tools/golpes.mjs`: el pie izquierdo patina de 43 a 9 cm; el derecho, de 39 a 0.
+- **Las túnicas que se abren con el paso (#30)**: el brial de los cortesanos y del mayordomo y el hábito del
+  penitente cuelgan ahora de la cadera en dos faldones, cada uno en dos tramos, hasta la rodilla y el bajo
+  (`faldonJoints`, `faldonParts` y `faldonesPose` en `entities/models.js`). No van pegados a la pierna: siguen al muslo
+  a medias y con retraso, como la tela (al 70 % hacia delante, al 40 % hacia atrás; el bajo, más a plomo). Al dar el
+  paso del golpe la falda se abre; al andar no vuela hacia atrás como una tabla; de rodillas, cubre los muslos y cae
+  de las rodillas al suelo (pegada a los muslos, salía recta hacia delante como un tablero; rígida, como antes, los
+  pies salían por ella). Los cortesanos llevan calzas bajo el brial, que asoman al dar el paso. Los pies, como antes:
+  la puñalada del cortesano, 2 y 1 cm; el penitente, de 0 a 5.
+- **Queda #29**: al echar a andar, la marcha de siempre aún resbala algo en los primeros pasos.
+
+**Las pruebas**, todas otra vez: `progress.mjs` (de la celda al río), `fortalezawalk.mjs`, `castlewalk.mjs torre
+carcel`, `corte.mjs`, `rey.mjs mesa`, `caballero.mjs`, `beastchase.mjs`, `tirador.mjs`, `camclip.mjs` (7776 pruebas,
+limpia), `zfight.mjs` y `holes.mjs alto` (85.279 casillas, ningún agujero). Lo que encontraron, arreglado:
+
+- `fortalezawalk` se atascaba en dos sitios: el caballete de las sedas tapaba la salida del caracol del tesoro y el
+  catre del centinela, el pie de la escalera del adarve. Van al rincón del nordeste y bajo el rellano del pasadizo.
+  Para que no vuelva a pasar, **`tools/circula.mjs`** (nueva): inunda el suelo de cada sala amueblada con el tamaño
+  del jugador desde sus entradas y dice qué se queda sin alcanzar; las trece salas, con todo al alcance.
+- `zfight`: las esteras quedaban 4 mm por debajo de los suelos que tienen la cara a +2 cm, y la cera de la tablilla,
+  la hoja de la cantiga, la pintura de la imagen, la manta del catre, los pliegues de las capas y el campo del
+  repostero, a 2-5 mm de lo de debajo. Separados: 549 grupos frente a los 547 de antes de esta pasada (los dos de más,
+  las orlas de oro del repostero, a 5 mm, como las de todos los paños).
+- `holes alto`: la caja de los escabeles asomaba 7 cm de su asiento redondo y se pisaba aire. Ahora es un octógono
+  dentro del asiento, en todos los escabeles del juego.
+
+En la tabla de la fase 7, **Vacíos** pasa de C a B: cada sala dice quién vivía en ella y qué pasó, y la densidad de
+las amuebladas sube de 13-26 a 24-43 triángulos/m² (la guardia, de 18,5 a 26,9; el dormitorio, de 17,9 a 29,9; el
+tesoro, de 23,9 a 43,2; el Tombo de las cartas, de 18,9 a 38,2; la entrada de la reina, de 13,4 a 24,3). Sigue lejos
+de los 75-232 de la cripta honda, que está llena de otra manera (huesos y nichos de pared a pared): aquí no se busca
+la densidad, sino lo que cuenta cada pieza.
 
 ## Fuentes
 

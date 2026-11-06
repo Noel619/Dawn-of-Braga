@@ -113,7 +113,7 @@ export const ALF_CLIPS = {
     [2.05, { ...SPAN, armL: [-46, 0, 16], foreL: [-70, 0, 0] }],
     [2.5, { ...PULL }],
     [3.1, { ...BASE }],
-  ]),
+  ], { ownLegs: ['L'], ownT: [1.25, 2.6] }),
   // culatazo: la cabeza de hierro de la ballesta por delante
   // culatazo (fase 7: con peso): la ballesta atrás, a la cadera del lado de
   // la cuerda, el cuerpo enroscado y el peso atrás; sale la cadera, luego los

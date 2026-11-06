@@ -2303,7 +2303,11 @@ export function stool(ctx, x, y, z, o = {}) {
     wb.box('wooddark', x + Math.cos(a) * 0.13 - 0.025, y, z + Math.sin(a) * 0.13 - 0.025, x + Math.cos(a) * 0.13 + 0.025, y + 0.42, z + Math.sin(a) * 0.13 + 0.025, { ao: false, room: o.room });
   }
   if (o.tipped) return;
-  col(ctx, x - 0.18, y, z - 0.18, x + 0.18, y + 0.45, z + 0.18);
+  // (un octógono, de dos cajas, dentro del asiento, que es un heptágono de
+  // 0,18 de apotema: con una caja de ±0,18 sus esquinas asomaban 7 cm de lo
+  // dibujado y se pisaba aire)
+  col(ctx, x - 0.115, y, z - 0.115, x + 0.115, y + 0.45, z + 0.115);
+  colOBB(ctx, x, z, 0.115, 0.115, Math.PI / 4, y, y + 0.45);
 }
 
 // Tonel grande tumbado sobre su cuna (bodega).

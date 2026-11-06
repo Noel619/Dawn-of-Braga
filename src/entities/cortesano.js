@@ -11,7 +11,7 @@
 // alto. Caen pronto (dos golpes; desviado a compás, el de gracia). El último,
 // solo y en silencio, el mayordomo: el que más quería el Rey.
 import { Rig, clip } from './rig.js';
-import { humanoidJoints, feetParts } from './models.js';
+import { humanoidJoints, feetParts, faldonJoints, faldonParts, faldonesPose } from './models.js';
 import { DEG } from '../core/util.js';
 import { GAIT } from './locomotion.js';
 
@@ -30,8 +30,14 @@ let nBuilt = 0;
 
 function cortesanoParts(k, brial, manto, cofia, o = {}) {
   const parts = [
-    // el brial, hasta los pies, más ancho abajo; el cinto
-    { j: 'hips', type: 'box', s: [0.42, 0.9, 0.32], p: [0, -0.43, 0], taper: [1.32, 1.08], mat: brial },
+    // el brial, hasta los pies, más ancho abajo: rígido en la cadera hasta
+    // medio muslo y, por debajo, en dos faldones (solapados un dedo en
+    // medio), de dos tramos, que siguen a los muslos a medias, como la tela
+    // (faldonesPose): al dar el paso del golpe la falda se abre y, de
+    // rodillas, cubre los muslos y cae de las rodillas al suelo
+    // (PLAN_FORTALEZA.md, #30); el cinto
+    { j: 'hips', type: 'box', s: [0.42, 0.33, 0.32], p: [0, -0.145, 0], taper: [1.12, 1.03], mat: brial },
+    ...faldonParts(brial, { w: 0.265, d: 0.33, y0: 0.25, knee: 0.46, hem: 0.85, tb: 1.16, td: 1.05, ins: 0.012 }),
     { j: 'hips', type: 'box', s: [0.4, 0.06, 0.3], p: [0, 0.03, 0], mat: o.gold ? 'gold' : 'leather' },
     // el cuerpo del brial y el manto sobre los hombros, cerrado al cuello
     { j: 'chest', type: 'box', s: [0.44, 0.52, 0.28], p: [0, 0.26, 0], taper: [0.86, 0.92], mat: brial },
@@ -52,6 +58,9 @@ function cortesanoParts(k, brial, manto, cofia, o = {}) {
     // el cuchillo (de mesa o de monte), a lo largo de +z de la mano
     { j: 'handR', type: 'box', s: [0.026, 0.036, 0.11], p: [0, -0.06, 0.04], mat: 'wooddark' },
     { j: 'handR', type: 'box', s: [0.012, 0.034, o.long ? 0.3 : 0.22], p: [0, -0.06, o.long ? 0.24 : 0.2], taper: [0.5, 1], mat: 'iron' },
+    // las calzas, bajo el brial (asoman al dar el paso) y los zapatos
+    { j: 'shinL', type: 'box', s: [0.085, 0.42, 0.085], p: [0, -0.2, 0], taper: [0.82, 0.82], mat: 'clothDark' },
+    { j: 'shinR', type: 'box', s: [0.085, 0.42, 0.085], p: [0, -0.2, 0], taper: [0.82, 0.82], mat: 'clothDark' },
     ...feetParts(k, 'leather', { w: 0.11, h: 0.07, l: 0.24 }),
   ];
   return parts;
@@ -60,7 +69,7 @@ function cortesanoParts(k, brial, manto, cofia, o = {}) {
 export function buildCortesano() {
   const i = nBuilt++;
   const k = 0.97 + (i % 3) * 0.02;
-  const joints = humanoidJoints(k);
+  const joints = [...humanoidJoints(k), ...faldonJoints(k, 0.46)];
   return new Rig({ joints, parts: cortesanoParts(k, BRIAL[i % BRIAL.length], MANTO[(i * 3) % MANTO.length], i % 2 ? 'clothDark' : 'linen', { bonete: i % 3 === 0, long: i % 4 === 1 }) });
 }
 
@@ -68,7 +77,7 @@ export function buildCortesano() {
 // oficio de oro, el bonete; un cuchillo de monte.
 export function buildMayordomo() {
   const k = 1.03;
-  const joints = humanoidJoints(k);
+  const joints = [...humanoidJoints(k), ...faldonJoints(k, 0.46)];
   const parts = cortesanoParts(k, 'clothDark', 'clothRed', 'clothDark', { bonete: true, long: true, gold: true });
   for (let a = 0; a < 8; a++) {
     const t = (a / 8) * Math.PI * 2;
@@ -275,6 +284,7 @@ export const CORTESANO_TYPE = {
   biped: { scale: 0.98, style: GAIT.shamble, stance: 0.07 },
   loco,
   idlePose,
+  postPose: faldonesPose,
   ...ctrl,
 };
 
@@ -307,6 +317,7 @@ export const MAYORDOMO_TYPE = {
   biped: { scale: 1.03, style: GAIT.soldier, stance: 0.1 },
   loco: (e, t) => rad({ ...MAY, chest: [MAY.chest[0] + S(t * 1.6) * 2, 0, 0] }),
   idlePose,
+  postPose: faldonesPose,
   ...ctrl,
   // (el mayordomo lo lleva él solo, cuando el compás ya calla)
   think: null,

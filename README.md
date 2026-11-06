@@ -392,7 +392,9 @@ homenaje, `fortaleza_torre.js`; la puerta y su guardia, `fortaleza_puerta.js`).
 
 **La llegada.** La coracha baja de la atalaya pegada a la cara de levante de la fortaleza: nada más dejar la
 atalaya, a la derecha, la puerta de **la torre de la coracha**, con su recerco de sillería y su farol. Dentro, el
-altar (el descanso de la llegada) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
+puesto de los que velaban la coracha y el fanal (los haces de leña y las ollas de la pez, el catre del centinela,
+deshecho, y junto a la puerta el cuerno de avisar con su farol, que sigue ardiendo), el altar (el descanso de la
+llegada) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
 norte, cubierto, que llevaba al Rey de sus cámaras a su torre, y que quemaron con él al otro lado (los pies derechos
 negros, medio tejadillo hundido sobre las losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del
 homenaje, chamuscada y atrancada por dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al
@@ -400,8 +402,10 @@ primer empujón). De la planta de la llegada, un **caracol** baja por el rincón
 torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, el altarico y, en el reclinatorio,
 vuelto de espaldas al altar y de cara a la Sé, **la oración** que le dio el arzobispo) y, más abajo, al
 **tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el arca del Rey, con sus velas casi
-consumidas, la plata y **la llave del camarero**. La puerta del tesoro se desatranca por dentro y da a la
-**antecámara del Rey**; la de la antecámara, también atrancada por dentro, al patio de honor.
+consumidas, la plata y **la llave del camarero**; a su lado, lo que guardaba: la espada de la frontera del Rey en su
+vaina, la corona de diario en su cojín con el sello de la cámara y, a sus pies, el jarro vacío. La puerta del tesoro
+se desatranca por dentro y da a la **antecámara del Rey** (el libro de las audiencias abierto en su atril, el
+repostero del Rey, el brasero); la de la antecámara, también atrancada por dentro, al patio de honor.
 
 **El adarve de levante.** En la planta del altar de la torre de la coracha, una escalera de tablas sube por el muro
 a un sobrado, a la altura del adarve; por su puerta y un puente de tablas sobre el tejado de la capilla se sale al
@@ -431,7 +435,9 @@ los estantes de los mapas; al otro lado del muro, **la cámara** adonde se subi�
 hogar encendido en el muro de carga, el camastro de soldado junto a él (no quiso volver a su cama), su silla, la
 mesa con la vela y la copa, su armadura de la frontera, su estandarte enrollado, los arcones que subió del palacio
 (en uno, **un relicario**), el reclinatorio y la dueña que llora. Abajo, a +6, **la guardia de la torre**, con sus
-guardias, y **el dormitorio**, con sus jergones; la puerta de la escalinata, atrancada por dentro, se desatranca
+guardias (la cena dejada a medias con las tablas y los dados, el caldero en el hogar, los paveses y los yelmos, la
+tabla de la ronda con los nombres tachados y el rincón del herido), y **el dormitorio**, con sus jergones (sobre cada
+uno, la percha con lo suyo; junto a uno, un caballito a medio tallar para un niño que cumplía siete); la puerta de la escalinata, atrancada por dentro, se desatranca
 desde aquí: el atajo al patio de honor. En la planta baja, **el almacén** (los toneles, las tinajas, la cecina
 colgada de las vigas, el pozo de la torre, la puerta del patio cegada bajo el rellano de la escalinata, **una
 ampolla** y un penitente que come) y **el granero** (los sacos, la muela de mano con su artesa de harina y, al lado,
@@ -443,8 +449,8 @@ Arriba, a +18, **la sala del trono**, a doble altura, partida por tres arcos de 
 enlucido pintado de despiece fingido sobre su zócalo de cortinaje, los ajimeces a la luna, las coronas de velas y los
 paños del Rey; contra el muro del patio, bajo la ventana encendida, **el estrado** con el trono vacío y, a su pie,
 **el Rey y su mesa**. Por el grueso de los muros de poniente, del norte y de levante, a +22,5, corre **la galería**,
-abovedada, con sus óculos a la luna y sus vanos de tres en tres sobre la sala (en el último, un ballestero muerto
-con sus virotes). Por encima, la caseta del caracol sale a **la terraza**, a 28 m: la chimenea, el fanal apagado, la
+abovedada, con sus óculos a la luna y sus vanos de tres en tres sobre la sala (a medio camino, el escondite de un
+niño que subía a mirar; en el último vano, un ballestero muerto con sus virotes). Por encima, la caseta del caracol sale a **la terraza**, a 28 m: la chimenea, el fanal apagado, la
 caldera de la pez, los montones de piedras, los muertos de la última defensa y, junto al parapeto del norte, **el
 Caballero de la Orden** con el pendón del Rey (`world/fortaleza_torre.js`).
 
@@ -522,7 +528,8 @@ estandartes y los dos trabucos que tiraban a la muralla. Allí abajo no se mueve
 
 **La Corte de los Infieles.** Las puertas grandes del **gran salón** están atrancadas por dentro: se entra **por el
 servicio**, como se entraba de verdad. Del patio a **la despensa** (las tinajas, los toneles de la botillería, los
-estantes; una puerta a **la cocina**, en su torre, con el hogar en medio bajo su campana de piedra, el caldero
+estantes y lo que dejó el cerco: los garfios casi vacíos, el vino que gotea de la espita, las tarjas y la tablilla
+del despensero; una puerta a **la cocina**, en su torre, con el hogar en medio bajo su campana de piedra, el caldero
 colgado, el horno del pan y el cocinero, que sigue comiendo) y, por la puerta del servicio, al paso que queda tras el
 **cancel**. El salón: catorce metros por casi cuarenta, a doble altura, con cuatro arcos diafragma de sillería que
 sostienen la armadura (la hilera, las correas, los pares), coronas de velas, las mesas largas contra los muros, el
@@ -541,7 +548,8 @@ mueres, vuelven a sus sitios, de rodillas (`game/corte.js`, `entities/cortesano.
 **La galería del salón.** Por el grueso del muro de poniente, a media altura, corre una galería abovedada (como la de
 Hedingham), con sus ventanas a la luna y, sobre el salón, sus arquerías de tres vanos: desde ellas se ve a la corte
 de rodillas sin que te vea, pero no se baja. En el tramo del estrado, el paje del tambor, encogido bajo el vano desde
-el que tocaba, con el tambor en el alféizar y su papel. La galería une **el secadero de la cocina** (una escalera de
+el que tocaba, con el tambor en el alféizar y su papel; en el poyo de la ventana de en medio, la viola del juglar
+de la corte y la cantiga que copiaba. La galería une **el secadero de la cocina** (una escalera de
 tablas, empinada, sube a él entre los jamones y los chorizos colgados; arriba, un rastrero junto a la campana) con
 **la torre de la reina**: el otro camino de la fortaleza, por arriba.
 
@@ -559,8 +567,9 @@ por toda la ciudad, y lo que la oye en la fortaleza se despierta.
 contra la muralla, las mesas de copiar, los estantes de los registros, la caldera de la cera y, en el testero, sobre
 su tarima y bajo el estandarte del Rey, la mesa del canciller con el traslado de **la carta del Rey** que mandó hacer
 la reja de las cinco cerraduras. Al fondo, la puerta de **la Torre del Tombo**, el archivo del Rey, en la esquina del
-sureste: cuatro plantas unidas por un caracol en su rincón, los registros (y en su atril **el registro de la torre**,
-que dice qué hay en cada planta y, de prisa, dónde guardó el canciller su llave), los legajos, las cartas y, en lo
+sureste: cuatro plantas unidas por un caracol en su rincón, las cartas (la bula de Roma con su sello de plomo, el
+pupitre del copista, el cesto de las cartas selladas), los registros (y en su atril **el registro de la torre**,
+que dice qué hay en cada planta y, de prisa, dónde guardó el canciller su llave), los legajos y, en lo
 alto, **las arcas del Rey**, cada una con sus sellos de cera colgando sobre la cerradura: bermejos, los de la cámara
 del Rey; negros, los de su guarda; verdes, los del cabildo de la Sé. Al abrirlas se rompen los sellos; las de dos
 sellos negros tienen **cerradura de resorte** (un virote a quemarropa); en la de los tres sellos bermejos está **la
@@ -571,7 +580,9 @@ encendido, el canciller, Mestre Alberto.
 tapado, los arcones, el torno de hilar, y sus dueñas, que lloran. Arriba, **la sala de la reina**, bajo su armadura de
 par y nudillo: su sitial bajo el dosel azul, la mesa con el ajedrez a medio jugar, el hogar frío entre las ventanas
 del jardín y lo que se tapó con sábanas cuando la bajaron a la Sé. **Su torre**, la del noroeste, en tres plantas
-unidas por un caracol: la entrada, con sus arcones y el aguamanil; **el oratorio**, con la Virgen pintada en el altar
+unidas por un caracol: la entrada, que lo era también de su jardín (sus zuecos con el barro seco, el sombrero de
+paja en su clavo, las rosas secas, la jaula del jilguero con la puerta abierta), con sus arcones y el aguamanil;
+**el oratorio**, con la Virgen pintada en el altar
 y **su relicario**, del que salen la puerta de la sala y la de la galería del salón; y arriba, **su cámara**: la cama
 bajo el dosel, tapada con la sábana, la silla del Rey a su lado, de cara a ella, con la vela que se acabó en el
 candelero, el reclinatorio con su libro de horas (con la nota de la dueña) y la dueña que se quedó con ella, con su
@@ -1110,7 +1121,10 @@ src/
                         presbiterio y su bóveda, la nave, la tribuna, el campanario, el cordón de la campana);
                         fortaleza_atrezo.js: sus piezas (el talud, las almenas, los ajimeces, los matacanes,
                         la arquería del claustro, los muros con vanos, el caracol, las arcas, la armadura de
-                        madera, las caras bajo el tejado, el zócalo pintado, el enlucido, la escalera de tablas); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
+                        madera, las caras bajo el tejado, el zócalo pintado, el enlucido, la escalera de tablas);
+                        mobiliario.js: lo que dice quién vivía en cada sala (la mesa puesta, la percha con lo
+                        de cada uno, los paveses, los yelmos, el caldero, la imagen con sus velas, el
+                        aguamanil, el lecho, la estera, la tabla de la ronda); level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
                         (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
@@ -1222,6 +1236,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        pasos, el giro de la cadera y la cabeza fuera del blanco
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
                                        parpadea entre dos texturas); con una región, sólo ahí
+                        circula.mjs    ¿se anda por cada sala amueblada de la fortaleza? Inunda su suelo con
+                                       el tamaño del jugador desde sus entradas y dice qué interactuable (o
+                                       pie de escalera) se queda sin alcanzar; una imagen por sala
                         voids.mjs      rendijas a la nada en la cripta: fondo magenta y la cámara en cada sala
                                        de la cripta honda, en ocho rumbos, al frente y hacia arriba; guarda
                                        las vistas con fondo a la vista (un muro que no llega a su bóveda, un

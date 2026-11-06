@@ -19,8 +19,9 @@ import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
 import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
-import { PIEDRA, ajimez, muroVanos, forjado, caracol, dentro, cara1, saeteraDentro, armadura, caraTejado, cara, tapiz, escaleraTablas } from './fortaleza_atrezo.js';
+import { PIEDRA, ajimez, muroVanos, forjado, caracol, dentro, cara1, saeteraDentro, armadura, caraTejado, cara, tapiz, escaleraTablas, atril, farol } from './fortaleza_atrezo.js';
 import { tejadoCamaras } from './fortaleza_reina.js';
+import { estera, lecho } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -87,6 +88,65 @@ function antecamara(ctx, S, L) {
   P.dropped(ctx, x1 - 1.6, 0.02, z1 - 2.2, 0.4, 'sword');
   P.banner(ctx, x1 - 0.08, 3.4, z0 + 1.6, -Math.PI / 2, 'bannerRey', 1.2, 2.2);
   P.wallTorch(ctx, (x0 + x1) / 2 + 1.0, 2.3, z0 + 0.02, 's', { room });
+  // (fase 9) la antecámara del Rey: donde esperaban los que pedían audiencia.
+  // El atril del portero de cámara con el libro de las audiencias, abierto;
+  // el repostero del Rey en el muro del norte; el brasero que no se dejaba
+  // apagar; la estera del paso, de la puerta del patio a la escalera
+  {
+    const lx = x1 - 1.0,
+      lz = z1 - 3.3;
+    atril(ctx, lx, 0, lz, -Math.PI / 2, room);
+    // el libro abierto sobre el atril (sus dos hojas y el lomo), y la pluma
+    wb.at(lx, 0, lz, -Math.PI / 2, () => {
+      wb.push();
+      wb.translate(0, 1.06, 0);
+      wb.rotateX(0.3);
+      for (const sx of [-1, 1]) {
+        wb.push();
+        wb.rotateZ(sx * -0.08);
+        wb.box('linen', sx > 0 ? 0.01 : -0.25, 0.026, -0.17, sx > 0 ? 0.25 : -0.01, 0.042, 0.17, { ao: false, room, faces: 'tnsew', tint: [0.94, 0.88, 0.74] });
+        for (let k = 0; k < 6; k++) wb.box('black', sx > 0 ? 0.04 : -0.22, 0.0425, -0.13 + k * 0.045, sx > 0 ? 0.04 + 0.08 + (k % 3) * 0.03 : -0.22 + 0.1 + (k % 2) * 0.04, 0.0435, -0.125 + k * 0.045, { ao: false, room, faces: 't', grime: false, tint: [0.3, 0.26, 0.24] });
+        wb.pop();
+      }
+      wb.box('leather', -0.012, 0.02, -0.18, 0.012, 0.03, 0.18, { ao: false, room, tint: [0.44, 0.28, 0.2] });
+      wb.box('feathers', 0.12, 0.045, 0.02, 0.15, 0.05, 0.24, { ao: false, room, tint: [0.9, 0.88, 0.84] });
+      wb.pop();
+    });
+    L.interact.push({ kind: 'examine', id: 'x_audiencias', text: 'libroAudiencias', x: lx - 0.7, y: 0, z: lz, r: 1.3 });
+    // el repostero del Rey: el paño azul con su orla de oro y, en medio, sus
+    // armas (la cruz azul sobre el campo blanco), con las bezantes de plata
+    {
+      const rx = (x0 + x1) / 2 - 0.4,
+        rz = z0 + 0.02;
+      tapiz(ctx, rx, 3.75, rz, 0, 2.6, 2.4, { room, mat: 'clothBlue', tint: [0.5, 0.54, 0.7] });
+      // (cada capa, a 1 cm de la de debajo: el campo sobre el paño, la cruz y
+      // las bezantes sobre el campo)
+      const zf = rz + 0.056;
+      wb.box('clothWhite', rx - 0.62, 1.78, zf, rx + 0.62, 3.3, zf + 0.004, { ao: false, faces: 's', room, tint: [0.88, 0.86, 0.8] });
+      wb.box('clothBlue', rx - 0.09, 1.86, zf + 0.004, rx + 0.09, 3.22, zf + 0.014, { ao: false, faces: 's', room });
+      for (const [a, b] of [
+        [-0.54, -0.09],
+        [0.09, 0.54],
+      ])
+        wb.box('clothBlue', rx + a, 2.66, zf + 0.004, rx + b, 2.84, zf + 0.014, { ao: false, faces: 's', room });
+      for (const [bx, by] of [
+        [-0.32, 3.02],
+        [0.32, 3.02],
+        [-0.32, 2.12],
+        [0.32, 2.12],
+      ])
+      {
+        // (las bezantes: discos de plata de cara a la sala)
+        wb.push();
+        wb.translate(rx + bx, by, zf + 0.004);
+        wb.rotateX(Math.PI / 2);
+        wb.cylinder('silver', 0, 0, 0, 0.06, 0.06, 0.01, 10, { ao: false, room, capTop: true });
+        wb.pop();
+      }
+    }
+    P.brazier(ctx, (x0 + x1) / 2 - 1.6, 0, (z0 + z1) / 2 - 1.2, { room });
+    estera(ctx, K.puerta, 0, z1 - 2.3, 0, 1.4, 3.6, { room });
+  }
   ctx.lights.push({ x: (x0 + x1) / 2, y: 2.8, z: (z0 + z1) / 2, r: 1, g: 0.52, b: 0.24, radius: 9, intensity: 0.6, room });
   L.enemies.push({ type: 'soldier', x: (x0 + x1) / 2 + 1.4, y: 0, z: z0 + 2.4, yaw: Math.PI / 2, idle: 'stand', id: 'e_antecamara1' });
   L.zones.push({ id: 'antecamara', rects: [[x0, z0, x1, z1, -1, yA - 0.3]], atmo: 'interior', room });
@@ -282,6 +342,7 @@ function torreCoracha(ctx, S, L) {
     P.hangingLamp(ctx, (ix0 + ix1) / 2 - 1, pisos[1] - 0.35, (iz0 + iz1) / 2 - 1, { room, len: 1.0 });
     ctx.lights.push({ x: (ix0 + ix1) / 2 - 1, y: 2.6, z: (iz0 + iz1) / 2 - 1, r: 1, g: 0.55, b: 0.26, radius: 9, intensity: 0.8, room });
     L.interact.push({ kind: 'item', id: 'i_llave_camarero', item: 'llave_camarero', x: ax + 0.5, y: 0.9, z: az + 0.2 }, { kind: 'note', id: 'n_camarero', note: 'camarero', x: ax - 0.3, y: 0.86, z: az + 0.3, model: 'paper' });
+    tesoroDelRey(ctx, L, { ix0, ix1, iz0, iz1, ax, az, room });
   }
   // el guardarropa y el oratorio del Rey: los arcones y la percha de su ropa,
   // al norte; al sur, junto a la puerta de la tribuna, el altarico con su
@@ -337,6 +398,7 @@ function torreCoracha(ctx, S, L) {
     P.weaponRack(ctx, ix0 + 0.35, y, iz1 - 4.6, Math.PI / 2);
     P.hay(ctx, ix1 - 4.2, y, iz1 - 2.2, Math.PI / 2);
     wb.setRoom(null);
+    llegadaCoracha(ctx, L, { ix0, ix1, iz0, iz1, y, room, axx, azz });
     P.brazier(ctx, (ix0 + ix1) / 2 - 0.4, y, iz0 + 5.4, { room });
     P.wallTorch(ctx, ix1 - 0.02, y + 2.5, FORT.coracha.z - 1.6, 'w', { room });
     L.interact.push(
@@ -547,3 +609,215 @@ function pasadizo(ctx, L) {
   L.zones.push({ id: 'pasadizo_rey', rects: [[x0, FORT.z0, x1, FORT.z0 + FORT.t, y - 0.3, y + 4]], atmo: 'castillo', room });
   L.map.push({ id: 'pasadizo_rey', r: [x0, FORT.z0, x1, FORT.z0 + FORT.t] });
 }
+
+
+// ------------------------------------------------------------------------ lo del Rey, en el tesoro
+// (fase 9) Lo que dice el camarero que guarda («la plata, el sello de la
+// cámara, la corona de diario, su espada de la frontera») y no estaba: la
+// espada, colgada en su vaina de dos garfios en el muro de levante; en la
+// mesilla, junto al arca donde murió sentado, la corona de diario sobre su
+// cojín y el sello con sus barras de lacre; a sus pies, el jarro vacío,
+// volcado («Tengo sed»). Las piezas de seda enrolladas en su caballete, la
+// vajilla de plata apilada sobre las arcas y el cofrecillo de las monedas,
+// volcado: de ahí las del suelo.
+function tesoroDelRey(ctx, L, { ix0, ix1, iz0, iz1, ax, az, room }) {
+  const wb = ctx.wb;
+  wb.setRoom(room);
+  // la espada de la frontera, en su vaina, de dos garfios
+  {
+    const ex = ix1 - 0.04,
+      ez = iz0 + 3.6,
+      ey = 1.62;
+    for (const dz of [-0.34, 0.3]) {
+      wb.box('iron', ex - 0.12, ey - 0.07, ez + dz - 0.012, ex, ey - 0.05, ez + dz + 0.012, { ao: false, room });
+      wb.box('iron', ex - 0.12, ey - 0.07, ez + dz - 0.012, ex - 0.1, ey + 0.02, ez + dz + 0.012, { ao: false, room });
+    }
+    // la vaina (cuero oscuro con la contera de azófar y su abrazadera) y la
+    // espada: el arriaz, el puño forrado y el pomo de disco
+    wb.box('leather', ex - 0.1, ey - 0.03, ez - 0.62, ex - 0.06, ey + 0.03, ez + 0.32, { ao: false, room, faces: 'tnsewb', tint: [0.42, 0.28, 0.2] });
+    wb.box('bronze', ex - 0.105, ey - 0.035, ez + 0.32, ex - 0.055, ey + 0.035, ez + 0.4, { ao: false, room });
+    wb.box('bronze', ex - 0.105, ey - 0.035, ez - 0.55, ex - 0.055, ey + 0.035, ez - 0.51, { ao: false, room });
+    wb.box('iron', ex - 0.1, ey - 0.012, ez - 0.66, ex - 0.06, ey + 0.012, ez - 0.62, { ao: false, room, tint: [0.7, 0.7, 0.74] });
+    wb.box('iron', ex - 0.105, ey - 0.13, ez - 0.68, ex - 0.055, ey + 0.13, ez - 0.66, { ao: false, room, faces: 'tnsewb', tint: [0.65, 0.65, 0.7] });
+    wb.box('leather', ex - 0.095, ey - 0.022, ez - 0.86, ex - 0.065, ey + 0.022, ez - 0.68, { ao: false, room, tint: [0.36, 0.24, 0.18] });
+    wb.cylinder('iron', ex - 0.08, ey - 0.055, ez - 0.885, 0.05, 0.05, 0.03, 10, { ao: false, room, capTop: true, capBot: true, tint: [0.7, 0.68, 0.62] });
+    // el cinto, enrollado y colgado del garfio de arriba
+    wb.box('leather', ex - 0.11, ey - 0.38, ez + 0.27, ex - 0.07, ey - 0.06, ez + 0.33, { ao: false, room, tint: [0.5, 0.34, 0.24] });
+    L.interact.push({ kind: 'examine', id: 'x_espada_frontera', text: 'espadaFrontera', x: ex - 0.6, y: 0, z: ez - 0.2, r: 1.4 });
+  }
+  // la mesilla junto al arca: la corona de diario en su cojín, el sello de
+  // la cámara y las barras de lacre; la vela consumida
+  {
+    const mx = ax + 1.75,
+      mz = az + 0.05;
+    P.table(ctx, mx, 0, mz, 0.9, 0.62, 0, {});
+    const y = 0.8;
+    wb.box('clothRed', mx - 0.17, y, mz - 0.14, mx + 0.17, y + 0.07, mz + 0.14, { ao: false, room, faces: 'tnsewb', tint: [0.7, 0.24, 0.24] });
+    for (const [sx, sz] of [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ])
+      wb.box('gold', mx + sx * 0.17 - 0.012, y + 0.05, mz + sz * 0.14 - 0.012, mx + sx * 0.17 + 0.012, y + 0.09, mz + sz * 0.14 + 0.012, { ao: false, room });
+    // la corona: un aro de oro con ocho florones y sus piedras
+    wb.ring('gold', mx, y + 0.07, mz, 0.1, 0.088, 0.045, 16, { room });
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      const fx = mx + Math.cos(a) * 0.094,
+        fz = mz + Math.sin(a) * 0.094;
+      wb.box('gold', fx - 0.012, y + 0.115, fz - 0.012, fx + 0.012, y + 0.15, fz + 0.012, { ao: false, room });
+      wb.box(k % 2 ? 'clothBlue' : 'clothRed', fx - 0.008, y + 0.085, fz - 0.008, fx + 0.008, y + 0.1, fz + 0.008, { ao: false, room, grime: false, tint: [1.4, 1.2, 1.2] });
+    }
+    // el sello: la matriz de azófar con su asa, y el lacre
+    wb.cylinder('bronze', mx + 0.3, y, mz + 0.12, 0.045, 0.045, 0.018, 12, { ao: false, room, capTop: true });
+    wb.cylinder('bronze', mx + 0.3, y + 0.018, mz + 0.12, 0.016, 0.01, 0.06, 6, { ao: false, room, capTop: true });
+    for (let k = 0; k < 3; k++) wb.box('clothRed', mx + 0.18 + k * 0.035, y, mz - 0.2, mx + 0.2 + k * 0.035, y + 0.02, mz - 0.07, { ao: false, room, tint: [0.62, 0.16, 0.14] });
+    wb.cylinder('candle', mx - 0.3, y, mz - 0.15, 0.05, 0.045, 0.02, 10, { ao: false, room, capTop: true, tint: [0.92, 0.88, 0.76] });
+    L.interact.push({ kind: 'examine', id: 'x_corona_diario', text: 'coronaDiario', x: mx, y: 0, z: mz - 0.6, r: 1.2 });
+  }
+  // a sus pies, el jarro volcado y vacío, y el vaso seco
+  {
+    const jx = ax - 0.55,
+      jz = az - 0.95;
+    wb.push();
+    wb.translate(jx, 0.13, jz);
+    wb.rotateZ(Math.PI / 2 - 0.1);
+    wb.translate(0, -0.13, 0);
+    P.jar(ctx, 0, 0, 0, 0.62, { room });
+    wb.pop();
+    wb.cylinder('wooddark', jx + 0.5, 0, jz - 0.2, 0.04, 0.046, 0.1, 8, { ao: false, room, capBot: true, tint: [0.6, 0.5, 0.4] });
+  }
+  // las piezas de seda y de brocado, enrolladas en su caballete, en el
+  // rincón del nordeste (no ante la salida del caracol, que está al sur)
+  {
+    const bx = ix1 - 0.58,
+      bz = iz0 + 1.05;
+    for (const dz of [-0.75, 0.75]) {
+      wb.box('wooddark', bx - 0.45, 0, bz + dz - 0.05, bx - 0.37, 0.7, bz + dz + 0.05, { ao: false, room });
+      wb.box('wooddark', bx + 0.37, 0, bz + dz - 0.05, bx + 0.45, 0.7, bz + dz + 0.05, { ao: false, room });
+      wb.box('wooddark', bx - 0.45, 0.62, bz + dz - 0.05, bx + 0.45, 0.7, bz + dz + 0.05, { ao: false, room });
+    }
+    const telas = [
+      ['clothPurple', [0.9, 0.8, 0.95]],
+      ['clothRed', [0.95, 0.75, 0.6]],
+      ['clothBlue', [0.9, 0.9, 1.0]],
+      ['linen', [1.0, 0.9, 0.55]],
+      ['clothRed', [0.6, 0.3, 0.4]],
+    ];
+    telas.forEach(([m, tint], k) => {
+      const px = bx - 0.3 + (k % 3) * 0.3,
+        py = 0.7 + Math.floor(k / 3) * 0.24 + 0.12;
+      wb.push();
+      wb.translate(px, py, bz);
+      wb.rotateX(Math.PI / 2);
+      wb.cylinder(m, 0, -0.95, 0, 0.12, 0.12, 1.9, 10, { ao: false, room, capTop: true, capBot: true, tint });
+      wb.pop();
+    });
+    ctx.col.add(bx - 0.5, 0, bz - 0.95, bx + 0.5, 1.2, bz + 0.95);
+  }
+  // la vajilla de plata, apilada sobre las arcas: las fuentes, los platos y
+  // un aguamanil
+  for (const [z, n] of [
+    [iz0 + 1.2, 5],
+    [iz0 + 4.6, 3],
+  ]) {
+    for (let k = 0; k < n; k++) wb.cylinder('silver', ix1 - 4.15, 0.75 + k * 0.025, z + (k % 2) * 0.02, 0.2 - k * 0.012, 0.22 - k * 0.012, 0.022, 14, { ao: false, room, capTop: true, capBot: true });
+  }
+  wb.cylinder('silver', ix1 - 4.15, 0.75, iz0 + 3.0, 0.08, 0.06, 0.26, 10, { ao: false, room, capTop: true, capBot: true });
+  wb.cylinder('silver', ix1 - 4.15, 1.01, iz0 + 3.0, 0.03, 0.07, 0.1, 10, { ao: false, room, capTop: true });
+  // el cofrecillo de las monedas, volcado
+  {
+    const cx = ix0 + 4.1,
+      cz = iz0 + 3.6;
+    wb.at(cx, 0, cz, 0.7, () => {
+      wb.push();
+      wb.translate(0, 0.17, 0);
+      wb.rotateX(Math.PI / 2 - 0.18);
+      wb.box('wooddark', -0.22, -0.17, -0.15, 0.22, 0.17, 0.15, { ao: false, room, tint: [0.62, 0.42, 0.3] });
+      wb.box('iron', -0.23, -0.18, -0.02, 0.23, 0.18, 0.02, { ao: false, room });
+      wb.pop();
+      wb.box('wooddark', -0.22, 0, 0.32, 0.22, 0.04, 0.62, { ao: false, room, tint: [0.62, 0.42, 0.3] });
+    });
+    for (let k = 0; k < 26; k++) {
+      const a = k * 2.399,
+        r = 0.18 + Math.sqrt(k) * 0.13;
+      wb.cylinder('gold', cx + Math.cos(a) * r, 0.02 + (k < 5 ? 0.012 * (5 - k) : 0), cz + 0.25 + Math.sin(a) * r * 0.7, 0.04, 0.04, 0.012, 7, { ao: false, room, capTop: true });
+    }
+  }
+  wb.setRoom(null);
+}
+
+// ------------------------------------------------------------------------ la llegada
+// (fase 9) Lo alto de la torre de la coracha, donde se llega: el puesto de
+// los que velaban la coracha y el fanal. Bajo la escalera del adarve, contra
+// el muro del sur, lo del fanal que se subía por la coracha (los haces de
+// leña, las ollas de la pez con su cazo, la soga); bajo el rellano del
+// pasadizo, el catre del centinela, deshecho, con su manta; junto a la puerta
+// de la coracha, la mesilla con el cuerno de avisar, su farol, que sigue
+// ardiendo, y el vaso; y ante el altar, la estera de los que rezaban.
+// (El pie de las dos escaleras queda libre: la del adarve arranca en
+// ix0 + 0,6, junto al muro del sur, y la del pasadizo en ix1 - 3,2, junto al
+// del norte.)
+function llegadaCoracha(ctx, L, { ix0, ix1, iz0, iz1, y, room, axx, azz }) {
+  const wb = ctx.wb;
+  wb.setRoom(room);
+  // los haces de leña y las ollas de la pez del fanal, bajo la escalera del
+  // adarve, donde ya va alta (de poniente a levante, hasta la caja del
+  // caracol, que empieza en ix1 - 3,2)
+  for (const [fx, n] of [
+    [ix0 + 3.0, 4],
+    [ix0 + 4.1, 3],
+  ])
+    P.firewood(ctx, fx, y, iz1 - 0.42, 0, n);
+  for (let k = 0; k < 3; k++) {
+    const ox = ix0 + 5.1 + k * 0.5,
+      oz = iz1 - 0.42 - (k % 2) * 0.12;
+    P.jar(ctx, ox, y, oz, 0.82 - k * 0.08, { room });
+    wb.cylinder('black', ox, y + 0.5 - k * 0.05, oz, 0.13, 0.13, 0.006, 10, { ao: false, room, capTop: true, grime: false });
+  }
+  wb.box('wooddark', ix0 + 4.9, y + 0.03, iz1 - 1.05, ix0 + 5.7, y + 0.06, iz1 - 0.98, { ao: false, room });
+  wb.cylinder('iron', ix0 + 5.8, y, iz1 - 1.0, 0.07, 0.08, 0.05, 8, { ao: false, room, capBot: true });
+  // (la soga, enrollada al final, contra la caja del caracol)
+  for (let k = 0; k < 4; k++) wb.cylinder('rope', ix0 + 6.45, y + 0.02 + k * 0.06, iz1 - 1.0, 0.3 - k * 0.04, 0.3 - k * 0.04, 0.06, 10, { ao: false, room });
+  ctx.col.add(ix0 + 2.5, y, iz1 - 0.9, ix0 + 6.4, y + 0.9, iz1);
+  ctx.col.add(ix0 + 6.1, y, iz1 - 1.35, ix0 + 6.8, y + 0.3, iz1 - 0.65);
+  // el catre del centinela, bajo el rellano del pasadizo, contra el muro del
+  // norte
+  lecho(ctx, ix0 + 1.12, y, iz0 + 0.56, Math.PI / 2, { room, w: 0.86, manta: 'burlap', revuelta: true });
+  // la mesilla de la puerta de la coracha: el cuerno, el farol y el vaso
+  {
+    const tx = ix1 - 0.4,
+      tz = iz0 + 7.0;
+    P.table(ctx, tx, y, tz, 1.1, 0.55, Math.PI / 2, {});
+    const yt = y + 0.8;
+    // el cuerno de avisar: cuatro tramos que se curvan, con su boquilla y su tahalí
+    let px = tx - 0.05,
+      pz = tz - 0.3,
+      py = yt + 0.06,
+      r = 0.022;
+    for (let k = 0; k < 5; k++) {
+      const nx = px + 0.02 + k * 0.012,
+        nz = pz + 0.13,
+        ny = py + (k > 2 ? 0.01 : 0);
+      wb.push();
+      const a = new THREE.Vector3(px, py, pz),
+        b = new THREE.Vector3(nx, ny, nz);
+      const d = b.clone().sub(a);
+      const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
+      wb.geometry('bone', new THREE.CylinderGeometry(r + 0.012, r, d.length(), 8), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)), { ao: false, room, tint: [0.92, 0.84, 0.66] });
+      wb.pop();
+      px = nx;
+      pz = nz;
+      py = ny;
+      r += 0.012;
+    }
+    wb.box('leather', tx - 0.12, yt, tz - 0.3, tx - 0.1, yt + 0.01, tz + 0.36, { ao: false, room, tint: [0.5, 0.34, 0.24] });
+    farol(ctx, tx + 0.02, yt, tz - 0.4, room);
+    wb.cylinder('wooddark', tx - 0.16, yt, tz + 0.45, 0.04, 0.046, 0.1, 8, { ao: false, room, capBot: true, tint: [0.6, 0.5, 0.4] });
+  }
+  // la estera ante el altar
+  estera(ctx, axx + 1.5, y, azz, Math.PI / 2, 2.0, 1.3, { room });
+  wb.setRoom(null);
+}
+

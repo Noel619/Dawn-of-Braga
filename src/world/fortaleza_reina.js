@@ -21,6 +21,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
 import { PIEDRA, ajimez, muroVanos, forjado, caracol, sitial, tapiz, dentro, cara1, saeteraDentro, armadura, lineaTejado, caraTejado, farol, tri, cara, talud } from './fortaleza_atrezo.js';
+import { percha, estera } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -273,6 +274,7 @@ function torre(ctx, S, L) {
     P.wallTorch(ctx, ix0 + 0.02, 2.4, cz + 2.4, 'e', { room });
     // (y otra junto a la puerta del estrado: la entrada se quedaba a oscuras)
     P.wallTorch(ctx, ix1 - 0.02, 2.4, zd - 1.6, 'w', { room, radius: 6.5 });
+    entradaReina(ctx, L, { ix0, ix1, iz0, iz1, cx, cz, room });
   }
   // el oratorio: el altar, contra la muralla, con la Virgen pintada y el
   // relicario; el reclinatorio; las velas
@@ -372,3 +374,111 @@ function torre(ctx, S, L) {
     L.map.push({ id: names[k], r: [T.x0, T.z0, T.x1, T.z1] });
   });
 }
+
+// ------------------------------------------------------------------------ la entrada de la reina
+// (fase 9) La entrada de su torre era también la de su jardín: junto a la
+// puerta, sus zuecos con el barro seco, su sombrero de paja en su clavo y el
+// cesto de las rosas con la podadera; en el muro, la percha de los mantos de
+// las damas; colgada de su garfio, junto a la saetera, la jaula de su
+// jilguero, con la puerta abierta y él dentro; la silla tapada con su sábana,
+// como todo lo suyo; la estera.
+function entradaReina(ctx, L, { ix0, ix1, iz0, iz1, cx, cz, room }) {
+  const wb = ctx.wb;
+  const Pu = FORT.jardin.puerta;
+  wb.setRoom(room);
+  // los zuecos, con su barro
+  wb.at(Pu.x + 1.3, 0, iz0 + 1.0, 0.25, () => {
+    for (const s2 of [-1, 1]) {
+      wb.box('wooddark', s2 * 0.075 - 0.045, 0, -0.13, s2 * 0.075 + 0.045, 0.07, 0.13, { ao: false, room, tint: [0.66, 0.54, 0.4] });
+      wb.box('wooddark', s2 * 0.075 - 0.045, 0.07, -0.13, s2 * 0.075 + 0.045, 0.12, 0.0, { ao: false, room, tint: [0.62, 0.5, 0.38] });
+      wb.box('dirt', s2 * 0.075 - 0.046, 0, -0.131, s2 * 0.075 + 0.046, 0.025, 0.131, { ao: false, room, faces: 'nsew', tint: [0.5, 0.42, 0.32] });
+    }
+  });
+  // el sombrero de paja, en su clavo
+  {
+    const hx = Pu.x + Pu.w / 2 + 0.7,
+      hz = iz0 + 0.04;
+    wb.box('iron', hx - 0.01, 1.62, hz, hx + 0.01, 1.64, hz + 0.08, { ao: false, room });
+    wb.push();
+    wb.translate(hx, 1.45, hz + 0.05);
+    wb.rotateX(Math.PI / 2 - 0.12);
+    wb.cylinder('straw', 0, -0.012, 0, 0.24, 0.24, 0.014, 14, { ao: false, room, capTop: true, capBot: true, tint: [0.86, 0.74, 0.46] });
+    wb.cylinder('straw', 0, 0, 0, 0.11, 0.095, 0.1, 12, { ao: false, room, capTop: true, tint: [0.82, 0.7, 0.44] });
+    wb.cylinder('clothBlue', 0, 0.002, 0, 0.112, 0.112, 0.022, 12, { ao: false, room, tint: [0.7, 0.72, 0.9] });
+    wb.pop();
+  }
+  // el cesto de las rosas secas, con la podadera
+  {
+    const bx = Pu.x + 1.95,
+      bz = iz0 + 1.7;
+    P.basket(ctx, bx, 0, bz, { room });
+    for (let k = 0; k < 9; k++) {
+      const a = k * 2.2,
+        r = 0.05 + (k % 3) * 0.04;
+      const fx = bx + Math.cos(a) * r,
+        fz = bz + Math.sin(a) * r;
+      wb.box('leaves', fx - 0.004, 0.18, fz - 0.004, fx + 0.004, 0.42 + (k % 4) * 0.04, fz + 0.004, { ao: false, room, tint: [0.4, 0.38, 0.26] });
+      P.ellipsoid(ctx, 'clothRed', fx, 0.43 + (k % 4) * 0.04, fz, 0.03, 0.025, 0.03, [0.42, 0.18, 0.2], { room });
+    }
+    wb.box('iron', bx + 0.28, 0.0, bz - 0.04, bx + 0.42, 0.012, bz - 0.01, { ao: false, room, tint: [0.7, 0.68, 0.66] });
+    wb.box('wooddark', bx + 0.42, 0.0, bz - 0.045, bx + 0.54, 0.024, bz - 0.005, { ao: false, room });
+    L.interact.push({ kind: 'examine', id: 'x_jardin_reina', text: 'jardinReina', x: Pu.x + 1.6, y: 0, z: iz0 + 1.4, r: 1.3 });
+  }
+  // la percha de los mantos de las damas
+  percha(ctx, ix1, 0, iz0 + 2.6, -Math.PI / 2, 1.6, { room, cosas: ['capa', 'capa', 'nada', 'capa'], seed: 6801 });
+  // la jaula del jilguero, de su garfio en el muro de poniente
+  {
+    const gx = ix0 + 0.42,
+      gz = cz - 1.4,
+      gy = 2.0;
+    // el garfio: la pletina en el muro y el brazo
+    wb.box('iron', ix0, gy + 0.55, gz - 0.03, ix0 + 0.03, gy + 0.85, gz + 0.03, { ao: false, room });
+    wb.box('iron', ix0, gy + 0.78, gz - 0.015, gx + 0.02, gy + 0.81, gz + 0.015, { ao: false, room });
+    wb.box('iron', gx - 0.006, gy + 0.5, gz - 0.006, gx + 0.006, gy + 0.8, gz + 0.006, { ao: false, room });
+    // la jaula: el suelo, los barrotes, la cúpula, el aro y la puerta, abierta
+    wb.cylinder('wooddark', gx, gy - 0.02, gz, 0.15, 0.15, 0.03, 12, { ao: false, room, capTop: true, capBot: true, tint: [0.6, 0.5, 0.38] });
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2;
+      if (k === 3) continue;
+      const bx = gx + Math.cos(a) * 0.14,
+        bz = gz + Math.sin(a) * 0.14;
+      wb.box('iron', bx - 0.004, gy, bz - 0.004, bx + 0.004, gy + 0.28, bz + 0.004, { ao: false, room, tint: [0.75, 0.66, 0.4] });
+    }
+    wb.ring('bronze', gx, gy + 0.28, gz, 0.145, 0.135, 0.02, 14, { room });
+    wb.cylinder('bronze', gx, gy + 0.3, gz, 0.145, 0.02, 0.2, 10, { ao: false, room, tint: [0.8, 0.7, 0.42] });
+    {
+      const a = (3 / 14) * Math.PI * 2;
+      const dx = gx + Math.cos(a) * 0.14,
+        dz = gz + Math.sin(a) * 0.14;
+      // la puerta, de canto, abierta hacia fuera
+      wb.box('iron', dx, gy + 0.04, dz - 0.004, dx + 0.11, gy + 0.18, dz + 0.004, { ao: false, room, tint: [0.75, 0.66, 0.4] });
+    }
+    // la percha de dentro y el comedero
+    wb.box('wooddark', gx - 0.11, gy + 0.14, gz - 0.006, gx + 0.11, gy + 0.152, gz + 0.006, { ao: false, room });
+    wb.box('wooddark', gx + 0.05, gy + 0.01, gz + 0.04, gx + 0.1, gy + 0.04, gz + 0.09, { ao: false, room, tint: [0.75, 0.62, 0.44] });
+    // el jilguero, en el suelo de la jaula, de espaldas: el cuerpo, la cara
+    // roja y el ala con su franja amarilla
+    P.ellipsoid(ctx, 'feathers', gx - 0.03, gy + 0.035, gz, 0.04, 0.025, 0.028, [0.62, 0.5, 0.36], { room });
+    P.ellipsoid(ctx, 'clothRed', gx - 0.072, gy + 0.04, gz, 0.016, 0.016, 0.016, [0.8, 0.2, 0.18], { room });
+    wb.box('linen', gx - 0.03, gy + 0.05, gz + 0.02, gx + 0.03, gy + 0.056, gz + 0.03, { ao: false, room, tint: [1.0, 0.85, 0.2] });
+    for (const s2 of [-1, 1]) wb.box('bone', gx - 0.005, gy + 0.05, gz + s2 * 0.012 - 0.002, gx + 0.012, gy + 0.075, gz + s2 * 0.012 + 0.002, { ao: false, room, tint: [0.7, 0.55, 0.45] });
+    L.interact.push({ kind: 'examine', id: 'x_jaula_reina', text: 'jaulaReina', x: gx + 0.6, y: 0, z: gz, r: 1.3 });
+  }
+  // la silla de la reina, tapada con su sábana
+  {
+    const sx = cx - 1.6,
+      sz = iz1 - 1.6;
+    wb.at(sx, 0, sz, Math.PI, () => {
+      wb.box('linen', -0.32, 0, -0.3, 0.32, 0.5, 0.32, { ao: false, room, faces: 'tnsew', tint: [0.86, 0.84, 0.78] });
+      wb.box('linen', -0.3, 0.5, -0.32, 0.3, 1.18, -0.16, { ao: false, room, faces: 'tnsew', tint: [0.86, 0.84, 0.78] });
+      wb.box('linen', -0.34, 0.48, -0.3, -0.26, 0.7, 0.3, { ao: false, room, faces: 'tnsew', tint: [0.84, 0.82, 0.76] });
+      wb.box('linen', 0.26, 0.48, -0.3, 0.34, 0.7, 0.3, { ao: false, room, faces: 'tnsew', tint: [0.84, 0.82, 0.76] });
+      // el vuelo de la sábana hasta el suelo
+      wb.box('linen', -0.36, 0, 0.3, 0.36, 0.48, 0.34, { ao: false, room, faces: 'tnsewb', tint: [0.8, 0.78, 0.72] });
+    });
+    P.colOBB(ctx, sx, sz, 0.36, 0.36, Math.PI, 0, 1.2);
+  }
+  estera(ctx, cx - 0.6, 0, cz - 0.8, 0, 2.8, 2.0, { room, tint: [0.42, 0.38, 0.3] });
+  wb.setRoom(null);
+}
+

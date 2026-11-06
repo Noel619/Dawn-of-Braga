@@ -358,6 +358,13 @@ export function clip(name, dur, keys, opts = {}) {
     root: opts.root || null,
     ground: opts.ground ?? legs,
     legs,
+    // (ownLegs: las piernas que mueve el clip —['L'], ['R']—; la otra se
+    // queda anclada en el suelo con el IK, como en los golpes: el pie en el
+    // estribo de la ballesta lo pone el clip, el de apoyo no patina)
+    ownLegs: opts.ownLegs || null,
+    // (ownT: [t0, t1], cuándo son suyas: fuera de ese rato, ancladas; entra y
+    // sale en una quinta de segundo, con el pie en el aire)
+    ownT: opts.ownT || null,
     lagGroups,
   };
 }

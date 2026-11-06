@@ -1,15 +1,19 @@
 // Modelos de las criaturas: restos humanos, armaduras y deformaciones.
 import * as THREE from 'three';
 import { Rig } from './rig.js';
-import { humanoidJoints, swordParts, feetParts } from './models.js';
+import { humanoidJoints, swordParts, feetParts, faldonJoints, faldonParts } from './models.js';
 import { DEG } from '../core/util.js';
 
 // ------------------------------------------------------------ Penitente
 // Flagelante encorvado con capucha de arpillera, clavos en la espalda y hoz.
 export function buildPenitent() {
-  const joints = humanoidJoints(0.95, { arm: 1.12 });
+  const joints = [...humanoidJoints(0.95, { arm: 1.12 }), ...faldonJoints(0.95, 0.45)];
   const parts = [
-    { j: 'hips', type: 'box', s: [0.46, 0.95, 0.36], p: [0, -0.4, 0], taper: [1.5, 1.3], mat: 'burlap' },
+    // el hábito: rígido en la cadera hasta medio muslo y, por debajo, dos
+    // faldones que siguen a los muslos a medias (faldonesPose): se abren
+    // con el paso y, de rodillas, caen al suelo (#30)
+    { j: 'hips', type: 'box', s: [0.46, 0.35, 0.36], p: [0, -0.1, 0], taper: [1.18, 1.11], mat: 'burlap' },
+    ...faldonParts('burlap', { w: 0.3, d: 0.4, y0: 0.24, knee: 0.45, hem: 0.85, tb: 1.25, td: 1.17, ins: 0.035 }),
     { j: 'hips', type: 'box', s: [0.48, 0.06, 0.38], p: [0, 0.02, 0], mat: 'leather' },
     { j: 'chest', type: 'box', s: [0.42, 0.55, 0.3], p: [0, 0.25, 0], taper: [0.92, 0.9], mat: 'burlap' },
     { j: 'chest', type: 'ico', s: [0.22, 0.2, 0.2], p: [0, 0.42, -0.12], mat: 'burlap' },

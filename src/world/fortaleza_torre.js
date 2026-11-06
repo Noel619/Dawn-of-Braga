@@ -29,6 +29,7 @@ import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
 import { PIEDRA, muroVanos, ajimez, vano, saeteraDentro, sitial, tapiz, enlucido, zocalo } from './fortaleza_atrezo.js';
 import { buildReyMesa, REY_MESA } from './rey_mesa.js';
+import { mesaPuesta, percha, paveses, yelmos, caldero, imagenSanto, aguamanil, estera, tabla } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -259,6 +260,35 @@ function galeria(ctx, L) {
     [(PASO.e[0] + PASO.e[2]) / 2, iz1 - 1],
   ])
     ctx.lights.push({ x: lx, y: GY + 1.6, z: lz, r: 1, g: 0.5, b: 0.22, radius: 4, intensity: 0.55, room });
+  // (fase 9, #26: una parada a medio camino) en medio del paso del norte, bajo
+  // su antorcha y junto al vano desde el que se ve la sala entera, el
+  // escondite del pequeño: un nido de mantas con una almohada de la cámara del
+  // Rey, su espada de madera, un caballero de barro sin cabeza (la cabeza, al
+  // lado) y un cabo de vela. Sin colisión: se pasa por encima
+  {
+    const nx = cx - 0.5,
+      nz = z0 + h + 0.45,
+      y = GY;
+    wb.at(nx, y, nz, 0.05, () => {
+      wb.box('clothBlue', -0.55, 0.0, -0.3, 0.5, 0.06, 0.32, { ao: false, room, faces: 'tnsew', tint: [0.55, 0.6, 0.75] });
+      wb.box('clothRed', -0.4, 0.06, -0.26, 0.42, 0.1, 0.18, { ao: false, room, faces: 'tnsew', tint: [0.7, 0.36, 0.32] });
+      wb.box('clothRed', 0.3, 0.02, 0.1, 0.6, 0.07, 0.42, { ao: false, room, faces: 'tnsew', tint: [0.66, 0.34, 0.3] });
+      wb.box('linen', -0.52, 0.08, -0.24, -0.22, 0.17, 0.06, { ao: false, room, faces: 'tnsew', tint: [0.92, 0.9, 0.84] });
+      // la espada de madera: la hoja, el arriaz y el puño
+      wb.box('planks', -0.1, 0.1, 0.0, 0.3, 0.112, 0.035, { ao: false, room, tint: [0.92, 0.8, 0.6] });
+      wb.box('planks', -0.12, 0.1, -0.04, -0.1, 0.116, 0.075, { ao: false, room, tint: [0.7, 0.56, 0.4] });
+      wb.box('leather', -0.22, 0.1, 0.006, -0.12, 0.114, 0.03, { ao: false, room });
+      // el caballero de barro: el cuerpo, las piernas, el escudo; sin cabeza
+      wb.cylinder('plaster', 0.2, 0.1, -0.14, 0.03, 0.025, 0.07, 8, { ao: false, room, capTop: true, tint: [0.78, 0.48, 0.32] });
+      for (const s2 of [-1, 1]) wb.box('plaster', 0.2 + s2 * 0.012 - 0.008, 0.06, -0.148, 0.2 + s2 * 0.012 + 0.008, 0.1, -0.132, { ao: false, room, tint: [0.72, 0.44, 0.3] });
+      wb.box('plaster', 0.165, 0.11, -0.16, 0.175, 0.15, -0.12, { ao: false, room, tint: [0.62, 0.62, 0.7] });
+      P.ellipsoid(ctx, 'plaster', 0.32, 0.11, -0.05, 0.018, 0.02, 0.018, [0.78, 0.48, 0.32], { room });
+      // el cabo de vela, pegado a la piedra
+      wb.cylinder('candle', -0.42, 0.0, 0.22, 0.04, 0.035, 0.012, 8, { ao: false, room, capTop: true, tint: [0.92, 0.88, 0.76] });
+      wb.cylinder('candle', -0.42, 0.012, 0.22, 0.013, 0.012, 0.04, 6, { ao: false, room, capTop: true });
+    });
+    L.interact.push({ kind: 'examine', id: 'x_nido_pequeno', text: 'nidoPequeno', x: nx, y, z: nz + 0.5, r: 1.2 });
+  }
   // lo que quedó: un ballestero de la guardia, con sus virotes, mirando a la
   // sala desde el último vano
   wb.setRoom(room);
@@ -544,9 +574,48 @@ function guardia(ctx, L) {
   P.table(ctx, tx, y, tz, 2.2, 1.0, 0);
   P.bench(ctx, tx, y, tz - 0.85, 2.0, 0);
   P.bench(ctx, tx, y, tz + 0.85, 2.0, 0);
-  P.jar(ctx, tx - 0.6, y + 0.8, tz + 0.2, 0.55, { room: RG });
-  P.candles(ctx, tx + 0.5, y + 0.8, tz - 0.1, 3, 7721, { room: RG, radius: 6, intensity: 1.0, spread: 0.2 });
-  for (let k = 0; k < 3; k++) wb.box('bone', tx - 0.2 + k * 0.09, y + 0.8, tz + 0.05 + (k % 2) * 0.06, tx - 0.16 + k * 0.09, y + 0.84, tz + 0.09 + (k % 2) * 0.06, { ao: false, room: RG });
+  // (fase 9: la personalidad de las salas) la mesa de la guardia, puesta: la
+  // cena que se dejó a medias, las tablas a medio jugar y los dados; la vela,
+  // en medio
+  mesaPuesta(ctx, tx, y + 0.8, tz, 0, 2.2, 1.0, { room: RG, n: 4, dados: true, tablero: true, revuelto: true, seed: 7720 });
+  P.candles(ctx, tx + 0.05, y + 0.8, tz - 0.12, 2, 7721, { room: RG, radius: 6, intensity: 1.0, spread: 0.06 });
+  // el hogar en el muro de carga (como en las torres del homenaje de verdad,
+  // uno por planta, por el mismo cañón), con el caldero de la guardia en sus
+  // llares, la leña al lado y el escabel del que lo atizaba
+  {
+    const hx = -92.6,
+      hz = M.z1 + 0.1;
+    P.hearth(ctx, hx, y, hz, 's', { w: 2.2, room: RG, ceil: techo(1), radius: 8.5 });
+    caldero(ctx, hx, y, hz + 0.32, y + 1.42, { room: RG, lleno: true });
+    P.firewood(ctx, hx + 1.75, y, hz + 0.35, Math.PI / 2, 3);
+    P.firewood(ctx, hx - 1.7, y, hz + 0.3, Math.PI / 2, 2);
+    P.stool(ctx, hx - 0.7, y, hz + 1.25, { room: RG });
+    P.basket(ctx, hx + 1.1, y, hz + 1.0, { room: RG });
+  }
+  // los paveses de los ballesteros de la torre, contra el muro de poniente
+  // (uno, con un virote clavado), y el clavijero de los yelmos en el de levante
+  paveses(ctx, ix0, y, -99.0, Math.PI / 2, 3, { room: RG, virote: true, seed: 7731 });
+  yelmos(ctx, ix1, y, -93.6, -Math.PI / 2, 4, { room: RG, vacias: [2], seed: 7732 });
+  // la tabla de la ronda, junto a la puerta de la escalinata: los nombres de la
+  // guardia de la torre, tachados casi todos
+  tabla(ctx, -99.6, y, iz1, 'n', { room: RG, filas: 8, tachadas: [0, 1, 2, 4, 5, 6], seed: 7733 });
+  L.interact.push({ kind: 'examine', id: 'x_ronda_torre', text: 'rondaTorre', x: -99.6, y, z: iz1 - 0.7, r: 1.4 });
+  // el rincón del herido, junto a la puerta del dormitorio: el jergón, las
+  // vendas, la jofaina con el agua roja y la escudilla que no se comió
+  {
+    const px = -105.4,
+      pz = -99.2;
+    wb.at(px, y, pz, Math.PI / 2, () => {
+      wb.box('straw', -0.42, 0, -0.95, 0.42, 0.14, 0.95, { ao: false, faces: 'tnsew', room: RG });
+      wb.box('burlap', -0.44, 0.14, -0.35, 0.44, 0.17, 0.85, { ao: false, faces: 'tnsew', room: RG, tint: [0.66, 0.58, 0.48] });
+      wb.box('burlap', -0.3, 0.14, -0.9, 0.3, 0.3, -0.62, { ao: false, room: RG });
+    });
+    for (let k = 0; k < 4; k++) wb.box('linen', px + 0.7 - k * 0.18, y + 0.01, pz + 0.7 + (k % 2) * 0.12, px + 0.82 - k * 0.18, y + 0.025, pz + 0.95 + (k % 2) * 0.12, { ao: false, faces: 't', room: RG, tint: k % 2 ? [0.8, 0.45, 0.4] : [0.86, 0.8, 0.72] });
+    wb.cylinder('bronze', px - 1.25, y, pz + 0.2, 0.16, 0.22, 0.08, 12, { ao: false, room: RG, capBot: true });
+    wb.cylinder('blood', px - 1.25, y + 0.06, pz + 0.2, 0.2, 0.2, 0.004, 12, { ao: false, room: RG, capTop: true, grime: false });
+    wb.cylinder('wooddark', px - 1.1, y, pz + 0.72, 0.07, 0.11, 0.06, 10, { ao: false, room: RG, capBot: true, tint: [0.6, 0.5, 0.4] });
+    P.decal(ctx, px, y + 0.01, pz, 1.6, 'splat', 0.4);
+  }
   P.weaponRack(ctx, ix0 + 0.32, y, -96.0, Math.PI / 2);
   P.weaponRack(ctx, ix0 + 0.32, y, -92.4, Math.PI / 2);
   P.armorStand(ctx, ix1 - 0.7, y, -91.2, -Math.PI / 2, { room: RG });
@@ -581,8 +650,73 @@ function guardia(ctx, L) {
       if (rr.chance(0.75)) wb.box(rr.pick(['clothDark', 'burlap', 'leather']), -0.44, 0.14, -0.2 + rr.range(-0.2, 0.2), 0.44, 0.17, 0.85, { ao: false, faces: 'tnsew', room: RD, tint: [0.8, 0.76, 0.7] });
       wb.box('burlap', -0.3, 0.14, -0.9, 0.3, 0.3, -0.62, { ao: false, room: RD });
     });
+  // (fase 9) sobre cada jergón, en su percha, lo de cada uno: la capa, el
+  // gambesón, el cinto, el zurrón o la capelina; a sus pies, las botas, y en
+  // alguno el yelmo o la escudilla
+  {
+    const cosas = [
+      ['capa', 'cinto'],
+      ['gambeson', 'zurron'],
+      ['capa', 'capelina'],
+      ['capa', 'nada'],
+    ];
+    [-100.6, -98.2, -95.8, -93.4].forEach((px, i) => percha(ctx, px, y, iz0, 0, 1.2, { room: RD, cosas: cosas[i], col: false, seed: 7740 + i }));
+    for (const [pz, i] of [
+      [-106.6, 0],
+      [-104.1, 1],
+    ])
+      percha(ctx, ix1, y, pz, -Math.PI / 2, 1.2, { room: RD, cosas: i ? ['zurron', 'capa'] : ['gambeson', 'cinto'], col: false, seed: 7746 + i });
+    const botas = (bx, bz, r) =>
+      wb.at(bx, y, bz, r, () => {
+        for (const s2 of [-1, 1]) {
+          wb.box('leather', s2 * 0.08 - 0.045, 0, -0.05, s2 * 0.08 + 0.045, 0.3, 0.06, { ao: false, room: RD, tint: [0.5, 0.36, 0.26] });
+          wb.box('leather', s2 * 0.08 - 0.045, 0, 0.06, s2 * 0.08 + 0.045, 0.09, 0.2, { ao: false, room: RD, tint: [0.46, 0.33, 0.24] });
+        }
+      });
+    botas(-99.5, -107.7, 0.2);
+    botas(-94.6, -107.75, -0.1);
+    botas(ix1 - 1.25, -105.3, Math.PI / 2);
+    wb.cylinder('plate', -97.1, y, -107.75, 0.13, 0.02, 0.2, 10, { ao: false, room: RD, capBot: true, tint: [0.8, 0.8, 0.84] });
+    wb.cylinder('wooddark', -101.6, y, -107.8, 0.07, 0.11, 0.06, 10, { ao: false, room: RD, capBot: true, tint: [0.6, 0.5, 0.4] });
+  }
+  // el caballito de madera a medio tallar, con la navaja y las virutas, junto
+  // al jergón del que lo tallaba
+  {
+    const hx = -92.5,
+      hz = -107.6;
+    wb.at(hx, y, hz, 0.6, () => {
+      wb.box('planks', -0.09, 0.07, -0.03, 0.09, 0.13, 0.03, { ao: false, room: RD, faces: 'tnsewb', tint: [0.95, 0.82, 0.62] });
+      for (const [sx, sz] of [
+        [-0.07, -0.02],
+        [-0.07, 0.02],
+        [0.07, -0.02],
+        [0.07, 0.02],
+      ])
+        wb.box('planks', sx - 0.012, 0, sz - 0.012, sx + 0.012, 0.07, sz + 0.012, { ao: false, room: RD, tint: [0.95, 0.82, 0.62] });
+      wb.box('planks', 0.07, 0.11, -0.02, 0.12, 0.2, 0.02, { ao: false, room: RD, tint: [0.95, 0.82, 0.62] });
+      wb.box('planks', 0.1, 0.17, -0.025, 0.17, 0.21, 0.025, { ao: false, room: RD, tint: [0.95, 0.82, 0.62] });
+      wb.box('iron', -0.28, 0, 0.12, -0.14, 0.006, 0.134, { ao: false, room: RD, tint: [0.8, 0.8, 0.82] });
+      wb.box('wooddark', -0.36, 0, 0.115, -0.28, 0.016, 0.139, { ao: false, room: RD });
+      for (let k = 0; k < 7; k++) wb.box('planks', -0.1 + k * 0.05, 0.002, 0.18 + (k % 3) * 0.04, -0.07 + k * 0.05, 0.008, 0.2 + (k % 3) * 0.04, { ao: false, room: RD, faces: 't', tint: [1.0, 0.88, 0.68] });
+    });
+    L.interact.push({ kind: 'examine', id: 'x_caballito', text: 'caballito', x: hx, y, z: hz, r: 1.2 });
+  }
+  // la imagen de los de la guardia, en el muro de carga, con sus cabos de vela
+  imagenSanto(ctx, -103.6, y, M.z0, 'n', { room: RD, velas: 4, seed: 7751 });
+  // y en medio, bajo la lámpara, la mesilla de los que no dormían: los dados
+  {
+    const mx = -96.6,
+      mz = -104.4;
+    P.table(ctx, mx, y, mz, 1.3, 0.75, 0);
+    P.stool(ctx, mx - 0.4, y, mz - 0.7, { room: RD });
+    P.stool(ctx, mx + 0.45, y, mz + 0.72, { room: RD });
+    mesaPuesta(ctx, mx, y + 0.8, mz, 0, 1.3, 0.75, { room: RD, n: 2, dados: true, vela: true, seed: 7752 });
+    estera(ctx, mx, y, mz, 0.08, 3.2, 2.2, { room: RD });
+  }
   chest(ctx, -95.0, y, M.z0 - 0.5, Math.PI, RD, 1.1);
   P.barrel(ctx, -91.0, y, M.z0 - 0.6, {});
+  // el aguamanil de la guardia, en el rincón, junto al tonel del agua
+  aguamanil(ctx, ix1 - 1.55, y, M.z0 - 0.55, 0.4, { room: RD });
   P.sacks(ctx, -106.6, y, -102.6, 3, 7724);
   for (let k = 0; k < 4; k++) wb.cylinder('rope', -104.0, y + 0.02 + k * 0.07, M.z0 - 0.6, 0.34 - k * 0.04, 0.34 - k * 0.04, 0.07, 10, { ao: false, room: RD });
   wb.setRoom(null);

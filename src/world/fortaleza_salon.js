@@ -215,6 +215,8 @@ function salon(ctx, S, L) {
 // de cañón y el macizo de arriba (el adarve). Sigue al norte por el muro de la
 // torre de la reina (fortaleza_reina.js) y al sur por el de la cocina
 // (fortaleza_alas.js), con sus puertas.
+const PERG_SALON = [0.95, 0.88, 0.7];
+
 function galeria(ctx, L) {
   const wb = ctx.wb;
   const G = FORT.galeria;
@@ -289,6 +291,49 @@ function galeria(ctx, L) {
     for (const s of [-1, 1]) wb.at(G.x1 - 0.55 + 0.1 * s, y + 0.012, v.c - 0.7, 0.4 * s, () => wb.box('wooddark', -0.012, -0.012, -0.2, 0.012, 0.012, 0.2, { ao: false, room }));
     L.interact.push({ kind: 'note', id: 'n_paje', note: 'paje', x: G.x0 + 0.35, y: y + 0.02, z: v.c - 0.9, model: 'paper' });
     P.candles(ctx, G.x0 + 0.15, y, v.c + 1.4, 3, 6351, { room, radius: 3.5, intensity: 0.7 });
+  }
+  // (fase 9, #26: una parada a medio camino) el poyo de la ventana de en
+  // medio, bajo la luna, con lo del juglar de la corte: su viola con la cuerda
+  // saltada y el arco, el vaso y la cantiga a medio copiar
+  {
+    const pz = -66.5,
+      px0 = G.x0,
+      px1 = G.x0 + 0.36,
+      py = G.y + 0.44;
+    wb.box('wooddark', px0, G.y, pz - 0.9, px1, py, pz + 0.9, { ao: false, room, faces: 'tnsewb', tint: [0.6, 0.5, 0.4] });
+    wb.box('wooddark', px0, py, pz - 0.95, px1 + 0.04, py + 0.05, pz + 0.95, { ao: false, room, faces: 'tnsewb', tint: [0.66, 0.56, 0.44] });
+    ctx.col.add(px0, G.y, pz - 0.95, px1 + 0.04, py + 0.05, pz + 0.95);
+    const yb = py + 0.05,
+      vx = (px0 + px1) / 2 + 0.01;
+    // la viola, echada: la caja, el mástil, el clavijero y las tres cuerdas
+    // (la de en medio, saltada y enroscada)
+    wb.at(vx, yb, pz - 0.45, 0.12, () => {
+      P.ellipsoid(ctx, 'wooddark', 0, 0.035, 0, 0.1, 0.035, 0.19, [0.95, 0.66, 0.38], { room });
+      wb.box('wooddark', -0.025, 0.04, 0.17, 0.025, 0.06, 0.42, { ao: false, room, tint: [0.7, 0.48, 0.3] });
+      wb.box('wooddark', -0.035, 0.035, 0.42, 0.035, 0.065, 0.5, { ao: false, room, tint: [0.5, 0.34, 0.22] });
+      for (const k of [-0.012, 0.012]) wb.box('linen', k - 0.002, 0.071, -0.12, k + 0.002, 0.074, 0.42, { ao: false, room, grime: false, tint: [0.9, 0.86, 0.74] });
+      for (let j = 0; j < 4; j++) wb.box('linen', -0.03 + j * 0.02, 0.071, -0.18 - j * 0.015, -0.02 + j * 0.02, 0.074, -0.14 - j * 0.015, { ao: false, room, grime: false, tint: [0.9, 0.86, 0.74] });
+      wb.box('black', -0.03, 0.068, -0.02, -0.012, 0.0705, 0.05, { ao: false, room, faces: 't', grime: false });
+      wb.box('black', 0.012, 0.068, -0.02, 0.03, 0.0705, 0.05, { ao: false, room, faces: 't', grime: false });
+    });
+    // el arco, la vara curvada con su cerda
+    wb.at(vx + 0.02, yb, pz + 0.05, -0.08, () => {
+      wb.box('wooddark', -0.008, 0, -0.3, 0.008, 0.016, 0.3, { ao: false, room, tint: [0.5, 0.34, 0.24] });
+      wb.box('linen', -0.004, 0.0, -0.27, 0.004, 0.006, 0.27, { ao: false, room, grime: false, tint: [0.95, 0.92, 0.86] });
+      wb.box('wooddark', -0.01, 0.0, 0.27, 0.01, 0.04, 0.3, { ao: false, room, tint: [0.5, 0.34, 0.24] });
+    });
+    // el vaso y la cantiga, enrollada a medias
+    wb.cylinder('wooddark', vx, yb, pz + 0.62, 0.04, 0.046, 0.1, 8, { ao: false, room, capBot: true, tint: [0.6, 0.5, 0.4] });
+    wb.push();
+    wb.translate(vx, yb + 0.03, pz + 0.35);
+    wb.rotateX(Math.PI / 2);
+    wb.cylinder('clothWhite', 0, -0.1, 0, 0.028, 0.028, 0.2, 8, { ao: false, room, grime: false, capTop: true, capBot: true, tint: PERG_SALON });
+    wb.pop();
+    // (la hoja, a 6 mm del poyo, y sus renglones, a 5 de la hoja: más
+    // juntas, parpadeaban)
+    wb.box('clothWhite', vx - 0.1, yb, pz + 0.38, vx + 0.1, yb + 0.006, pz + 0.55, { ao: false, room, faces: 'tnsew', grime: false, tint: PERG_SALON });
+    for (let j = 0; j < 3; j++) wb.box('black', vx - 0.08, yb + 0.006, pz + 0.41 + j * 0.04, vx + 0.02 + (j % 2) * 0.05, yb + 0.011, pz + 0.415 + j * 0.04, { ao: false, room, faces: 't', grime: false, tint: [0.35, 0.3, 0.26] });
+    L.interact.push({ kind: 'examine', id: 'x_cantiga', text: 'cantigaJogral', x: G.x1 - 0.2, y: G.y, z: pz, r: 1.3 });
   }
   // lo que quedó en la galería: un ballestero muerto con sus virotes, una
   // ampolla

@@ -21,6 +21,7 @@ import { CUERVO_TYPE } from './cuervo.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
+import { faldonesPose } from './models.js';
 import { getTexture } from '../gfx/textures.js';
 
 const S = Math.sin,
@@ -880,6 +881,7 @@ export const TYPES = {
       { name: 'lunge', clip: penClips.lunge, dur: 1.55, min: 2.8, max: 5.5, hits: [[0.8, 0.95]], dmg: 22, range: 2.2, arc: 70, lunge: [[0.62, 0.9, 7]], weight: 2, turn: 3 },
     ],
     idlePose: penIdle,
+    postPose: faldonesPose,
     biped: { scale: 0.95, style: GAIT.shamble, stance: 0.06 },
     loco: (e, t, spd) => rad(humanStyle(e, t, { hunch: 32, armR: [-30, 0, -10], foreR: [-40, 0, 0], handR: [30, 0, 0], armL: [-10, 0, 8], armRSwing: 0.3, headZ: S(t * 0.7) * 10 })),
   },

@@ -935,7 +935,7 @@ export class Enemy {
       // cuerpo no anda, se mueve por encima de ellos y da pasos de verdad;
       // no con los clips que llevan sus propias piernas —un salto—)
       const c0 = this.anim.clip;
-      const own = c0 && c0.legs && this.anim.weight > 0.3;
+      const own = c0 && c0.legs && !c0.ownLegs && this.anim.weight > 0.3;
       const lockT = T.anclaje !== false && !own && ANCLA.has(this.state) ? 1 : 0;
       this.footLock = damp(this.footLock || 0, lockT, lockT ? 14 : 9, dt);
       const a = this.atk;
@@ -978,7 +978,17 @@ export class Enemy {
     // sin apoyo conservan las suyas
     if (gait && this.legIK > 0.001 && this.state !== 'dead') {
       const w = this.legIK * (c && c.legs && !c.ground ? 1 - aw : 1);
-      if (w > 0.001) gait.solve(pose, { w, clipPose, clipW: clipPose ? aw : 0, clipGround: true });
+      // (las piernas propias de un clip, sólo en su rato: ownT)
+      let cwk = 1;
+      if (c && c.ownLegs && c.ownT) {
+        const tt = this.anim.t,
+          [o0, o1] = c.ownT,
+          ss = (a0, a1, v) => Math.min(1, Math.max(0, (v - a0) / (a1 - a0)));
+        const e0 = ss(o0, o0 + 0.2, tt),
+          e1 = ss(o1, o1 + 0.2, tt);
+        cwk = e0 * e0 * (3 - 2 * e0) * (1 - e1 * e1 * (3 - 2 * e1));
+      }
+      if (w > 0.001) gait.solve(pose, { w, clipPose, clipW: clipPose ? aw * cwk : 0, clipGround: true, ownLegs: c && c.ownLegs });
     }
     // retroceso de los golpes
     const fx = this.flX.update(dt),

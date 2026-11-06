@@ -87,6 +87,7 @@ function despensa(ctx, S, L) {
   P.hangingLamp(ctx, x0 + 10.5, F1 - 0.1, (z0 + z1) / 2, { room, len: 1.2 });
   P.candles(ctx, x0 + 10.0, 0.82, (z0 + z1) / 2 + 0.2, 3, 6306, { room, radius: 6, intensity: 0.9 });
   L.interact.push({ kind: 'item', id: 'i_ampolla_despensa', item: 'ampolla', x: x1 - 0.42, y: 1.25, z: z0 + 5.2 });
+  despensaCerco(ctx, L, { x0, x1, z0, z1, room });
   // la poterna (su muro, en fortaleza.js): atrancada por dentro; abierta, el
   // atajo al patio de armas
   {
@@ -465,6 +466,41 @@ function tombo(ctx, S, L) {
     wb.box('clothWhite', cx - 0.72, y + 0.8, cz - 0.1, cx - 0.08, y + 0.812, cz + 0.4, { ao: false, faces: 't', room, grime: false, tint: PERG[0] });
     wb.cylinder('iron', cx - 0.4, y + 0.8, cz + 0.52, 0.05, 0.05, 0.015, 10, { ao: false, capTop: true, room, tint: [0.7, 0.72, 0.76] });
     legajos(ctx, ix0 + 1.6, y, iz1 - 1.4, 0.3, room, rng);
+    // (fase 9) el estante de los rollos y los libros de los fueros, contra el
+    // muro de levante; el pupitre del copista, a la luz de la saetera del sur;
+    // el cesto de las cartas enrolladas, con sus sellos de cera colgando de los
+    // cordones; y en la mesa, la bula con su plomo, que se lee
+    estante(ctx, ix1 - 0.22, y, iz0 + 1.05, -Math.PI / 2, 1.9, room, 7321);
+    pupitre(ctx, cx - 0.6, y, iz1 - 1.3, 0, room, rng);
+    // (y su candelero, encendido: era la sala más oscura de la fortaleza)
+    P.candelabra(ctx, cx - 1.75, y, iz1 - 0.95, { room });
+    {
+      const bx = cx + 2.2,
+        bz = cz - 0.6;
+      wb.cylinder('wooddark', bx, y, bz, 0.26, 0.3, 0.46, 12, { ao: false, room, capBot: true, tint: [0.62, 0.52, 0.36] });
+      for (let k = 0; k < 7; k++) {
+        const a = (k / 7) * Math.PI * 2;
+        const rx = bx + Math.cos(a) * 0.13,
+          rz = bz + Math.sin(a) * 0.13;
+        wb.push();
+        wb.translate(rx, y + 0.2, rz);
+        wb.rotateX(Math.cos(a) * 0.25);
+        wb.rotateZ(Math.sin(a) * 0.25);
+        wb.cylinder('clothWhite', 0, 0, 0, 0.035, 0.035, 0.5, 6, { ao: false, room, grime: false, capTop: true, tint: PERG[k % PERG.length] });
+        wb.pop();
+        // el sello de cera en su cordón, por fuera del cesto
+        const sx = bx + Math.cos(a) * 0.31,
+          sz = bz + Math.sin(a) * 0.31;
+        wb.box('clothRed', sx - 0.004, y + 0.3, sz - 0.004, sx + 0.004, y + 0.46, sz + 0.004, { ao: false, room, tint: [0.7, 0.2, 0.18] });
+        wb.push();
+        wb.translate(sx, y + 0.3, sz);
+        wb.rotateX(Math.PI / 2);
+        wb.cylinder(k % 3 ? 'clothRed' : 'bronze', 0, -0.006, 0, 0.032, 0.032, 0.012, 10, { ao: false, room, capTop: true, capBot: true, tint: k % 3 ? [0.66, 0.16, 0.14] : undefined });
+        wb.pop();
+      }
+      ctx.col.add(bx - 0.32, y, bz - 0.32, bx + 0.32, y + 0.5, bz + 0.32);
+    }
+    L.interact.push({ kind: 'examine', id: 'x_bula_tombo', text: 'bulaTombo', x: cx - 0.4, y, z: cz - 0.5, r: 1.3 });
     wb.setRoom(null);
     L.enemies.push({ type: 'crawler', x: cx + 0.8, y, z: cz + 1.6, yaw: -Math.PI / 2, idle: 'stand', id: 'e_tombo2' });
   }
@@ -523,3 +559,104 @@ function tombo(ctx, S, L) {
     L.map.push({ id: names[k], r: [R.x0, R.z0, R.x1, R.z1] });
   });
 }
+
+// ------------------------------------------------------------------------ la despensa, en el cerco
+// (fase 9) Lo que cuenta el cerco en la despensa del gran salón: la barra de
+// los garfios, colgada de las vigas, casi vacía (un jamón, una ristra, un
+// manojo de hierbas; lo demás se lo comieron); bajo la espita del tonel de la
+// botillería, el jarro y el charco del vino que gotea; el odre en su clavo; el
+// arca de la sal, con su candado; en el mostrador, los quesos (uno empezado) y
+// el cesto de los huevos; y en la mesa, las tarjas de lo que salía y la
+// tablilla de cera del despensero.
+function despensaCerco(ctx, L, { x0, x1, z0, z1, room }) {
+  const wb = ctx.wb;
+  const rng = new RNG(6330);
+  wb.setRoom(room);
+  // la barra de los garfios, de sus dos sogas
+  {
+    const ya = 3.1,
+      zb = (z0 + z1) / 2 - 1.8,
+      xa = x0 + 2.0,
+      xb = x0 + 8.4;
+    wb.box('timber', xa, ya, zb - 0.07, xb, ya + 0.14, zb + 0.07, { ao: false, room, faces: 'tnsewb', tint: [0.62, 0.52, 0.42] });
+    for (const x of [xa + 0.4, xb - 0.4]) wb.box('rope', x - 0.015, ya + 0.14, zb - 0.015, x + 0.015, F1, zb + 0.015, { ao: false, room });
+    let k = 0;
+    for (let x = xa + 0.35; x < xb - 0.2; x += 0.42, k++) {
+      // el garfio
+      wb.box('iron', x - 0.008, ya - 0.16, zb - 0.008, x + 0.008, ya, zb + 0.008, { ao: false, room });
+      wb.box('iron', x - 0.008, ya - 0.18, zb - 0.008, x + 0.05, ya - 0.16, zb + 0.008, { ao: false, room });
+      const q = { 1: 0, 6: 1, 10: 2, 12: 1 }[k];
+      if (q !== undefined) colgado(ctx, x, ya - 0.17, zb, q, room, rng);
+    }
+  }
+  // el jarro bajo la espita del tonel, y el vino
+  {
+    const tx = x0 + 2.4 + 0.72,
+      tz = z1 - 1.0;
+    P.jar(ctx, tx + 0.06, 0, tz, 0.48, { room });
+    P.decal(ctx, tx + 0.1, 0.03, tz + 0.1, 1.1, 'splat', 0.2);
+    wb.box('blood', tx + 0.04, 0.02, tz - 0.01, tx + 0.06, 0.29, tz + 0.01, { ao: false, room, grime: false, tint: [0.6, 0.3, 0.4] });
+  }
+  // el odre, en su clavo del muro de poniente
+  {
+    const ox = x0 + 0.08,
+      oz = z1 - 2.6;
+    wb.box('iron', ox - 0.04, 1.7, oz - 0.012, ox + 0.08, 1.72, oz + 0.012, { ao: false, room });
+    wb.box('leather', ox + 0.04, 1.52, oz - 0.02, ox + 0.08, 1.7, oz + 0.02, { ao: false, room, tint: [0.4, 0.28, 0.2] });
+    P.ellipsoid(ctx, 'hide', ox + 0.18, 1.2, oz, 0.14, 0.32, 0.18, [0.5, 0.36, 0.26], { room });
+    wb.cylinder('wooddark', ox + 0.18, 1.5, oz, 0.03, 0.025, 0.08, 6, { ao: false, room, capTop: true });
+  }
+  // el arca de la sal, con su candado y la sal que se derramó
+  {
+    const ax = x0 + 8.6,
+      az = z0 + 0.5;
+    chest(ctx, ax, 0, az, 0, room, 1.1);
+    wb.box('iron', ax - 0.08, 0.32, az + 0.36, ax + 0.08, 0.5, az + 0.4, { ao: false, room });
+    wb.box('iron', ax - 0.05, 0.5, az + 0.37, ax - 0.03, 0.6, az + 0.39, { ao: false, room });
+    wb.box('iron', ax + 0.03, 0.5, az + 0.37, ax + 0.05, 0.6, az + 0.39, { ao: false, room });
+    wb.box('iron', ax - 0.05, 0.58, az + 0.37, ax + 0.05, 0.6, az + 0.39, { ao: false, room });
+    for (let k = 0; k < 5; k++) wb.box('linen', ax - 0.3 + k * 0.13, 0.004, az + 0.5 + (k % 2) * 0.08, ax - 0.18 + k * 0.13, 0.012, az + 0.62 + (k % 2) * 0.08, { ao: false, room, faces: 't', grime: false, tint: [1.0, 0.98, 0.94] });
+  }
+  // en el mostrador, los quesos y el cesto de los huevos
+  {
+    const cx = x0 + 4.8,
+      cz = z0 + 0.9,
+      cy = 0.95;
+    for (let k = 0; k < 3; k++) wb.cylinder('plaster', cx - 1.0 + k * 0.34, cy + (k === 2 ? 0 : 0), cz + (k % 2) * 0.06, 0.15, 0.15, 0.1, 12, { ao: false, room, capTop: true, capBot: true, tint: [0.92, 0.78, 0.44] });
+    // el empezado: le falta una cuña
+    wb.cylinder('plaster', cx - 0.15, cy, cz, 0.15, 0.15, 0.1, 12, { ao: false, room, capTop: true, capBot: true, tint: [0.92, 0.8, 0.5] });
+    wb.box('black', cx - 0.15, cy + 0.001, cz - 0.001, cx - 0.01, cy + 0.101, cz + 0.08, { ao: false, room, faces: 'tnsew', grime: false, tint: [0.25, 0.2, 0.15] });
+    P.basket(ctx, cx + 0.6, cy, cz, { room });
+    for (let k = 0; k < 6; k++) P.ellipsoid(ctx, 'linen', cx + 0.6 + Math.cos(k * 1.1) * 0.08, cy + 0.2, cz + Math.sin(k * 1.1) * 0.08, 0.032, 0.042, 0.032, [0.95, 0.9, 0.8], { room });
+  }
+  // en la mesa: las tarjas y la tablilla de cera
+  {
+    const mx = x0 + 10.5,
+      mz = (z0 + z1) / 2,
+      my = 0.8;
+    for (let k = 0; k < 6; k++) {
+      const tx = mx + 0.55 + k * 0.07,
+        tz = mz - 0.3 + (k % 2) * 0.05;
+      wb.box('planks', tx - 0.012, my, tz - 0.16, tx + 0.012, my + 0.022, tz + 0.16, { ao: false, room, tint: [0.92, 0.8, 0.62] });
+      const n = 9 - k;
+      // (las muescas, cortadas en el canto de arriba: 5 mm sobre la tarja)
+      for (let j = 0; j < n; j++) wb.box('black', tx - 0.0125, my + 0.012, tz - 0.14 + j * 0.03, tx + 0.0125, my + 0.027, tz - 0.135 + j * 0.03, { ao: false, room, grime: false, tint: [0.3, 0.26, 0.22] });
+    }
+    // la tablilla: el fondo, el marco y la cera, hundida en él; las letras,
+    // rayadas en la cera (cada capa, a medio centímetro de la otra)
+    wb.box('wooddark', mx - 0.85, my, mz - 0.3, mx - 0.45, my + 0.012, mz - 0.04, { ao: false, room, tint: [0.62, 0.5, 0.38] });
+    for (const [a, b, c, d] of [
+      [-0.85, -0.3, -0.45, -0.28],
+      [-0.85, -0.06, -0.45, -0.04],
+      [-0.85, -0.28, -0.83, -0.06],
+      [-0.47, -0.28, -0.45, -0.06],
+    ])
+      wb.box('wooddark', mx + a, my + 0.012, mz + b, mx + c, my + 0.03, mz + d, { ao: false, room, tint: [0.62, 0.5, 0.38] });
+    wb.box('black', mx - 0.83, my + 0.012, mz - 0.28, mx - 0.47, my + 0.022, mz - 0.06, { ao: false, room, faces: 't', grime: false, tint: [0.3, 0.24, 0.12] });
+    for (let j = 0; j < 4; j++) wb.box('wooddark', mx - 0.8, my + 0.022, mz - 0.25 + j * 0.05, mx - 0.6 + (j % 2) * 0.08, my + 0.027, mz - 0.245 + j * 0.05, { ao: false, room, faces: 't', tint: [0.75, 0.65, 0.4] });
+    wb.box('bone', mx - 0.42, my, mz - 0.18, mx - 0.4, my + 0.012, mz + 0.02, { ao: false, room });
+    L.interact.push({ kind: 'examine', id: 'x_cuenta_despensero', text: 'cuentaDespensero', x: mx, y: 0, z: mz + 0.9, r: 1.4 });
+  }
+  wb.setRoom(null);
+}
+
