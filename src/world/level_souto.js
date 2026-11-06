@@ -445,14 +445,44 @@ export function bowl(ctx, x, y, z, r, room, fill) {
   if (fill) wb.cylinder(fill[0], x, y + r * 0.4, z, r * 0.92, r * 0.92, 0.01, 8, { ao: false, capTop: true, room, tint: fill[1], grime: false });
 }
 
-// Arca de madera con herrajes.
+// Arca de madera con herrajes (el frente hacia +z): de bancal, con los
+// montantes de las esquinas que bajan a hacer de pies, los tableros del
+// frente con sus juntas, la tapa con su moldura, las bisagras de hierro que
+// pasan por encima de la tapa y bajan por detrás, los cinchos del frente, la
+// cerradura con su aldaba y el ojo de la llave, y las asas de los costados.
 export function chest(ctx, x, y, z, rot, room, w = 1.1) {
   const wb = ctx.wb;
+  const D = 'wooddark';
   wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -w / 2, 0, -0.28, w / 2, 0.5, 0.28, { faces: 'tnsew', aoH: 0.5, room });
-    wb.box('wooddark', -w / 2 - 0.02, 0.5, -0.3, w / 2 + 0.02, 0.58, 0.3, { ao: false, faces: 'tnsewb', room });
-    for (const s of [-1, 1]) wb.box('iron', s * (w / 2 - 0.15) - 0.03, 0, -0.31, s * (w / 2 - 0.15) + 0.03, 0.6, 0.31, { ao: false, room });
-    wb.box('iron', -0.05, 0.36, 0.3, 0.05, 0.48, 0.32, { ao: false, room });
+    // la caja, levantada sobre los pies
+    wb.box(D, -w / 2 + 0.05, 0.08, -0.27, w / 2 - 0.05, 0.5, 0.27, { faces: 'nsewb', aoH: 0.5, room, sub: 9 });
+    // los montantes de las esquinas, que hacen de pies
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) wb.box(D, sx * (w / 2 - 0.03) - 0.03, 0, sz * 0.25 - 0.035, sx * (w / 2 - 0.03) + 0.03, 0.5, sz * 0.25 + 0.035, { ao: false, faces: 'nsewb', room, tint: [0.82, 0.74, 0.66] });
+    // las juntas de los tableros del frente (y las de la espalda)
+    for (const sz of [-1, 1]) for (const yy of [0.22, 0.36]) wb.box('black', -w / 2 + 0.06, yy - 0.004, sz * 0.2705 - 0.0005, w / 2 - 0.06, yy + 0.004, sz * 0.2705 + 0.0005, { ao: false, faces: sz > 0 ? 's' : 'n', room, grime: false, tint: [0.5, 0.42, 0.36] });
+    // la tapa y su moldura
+    wb.box(D, -w / 2 - 0.02, 0.5, -0.3, w / 2 + 0.02, 0.56, 0.3, { ao: false, faces: 'tnsewb', room, sub: 9 });
+    wb.box(D, -w / 2 + 0.01, 0.56, -0.28, w / 2 - 0.01, 0.58, 0.28, { ao: false, faces: 'tnsew', room, sub: 9, tint: [0.86, 0.78, 0.7] });
+    // las bisagras: por encima de la tapa y bajando por la espalda
+    for (const s of [-1, 1]) {
+      const bx = s * (w / 2 - 0.18);
+      wb.box('iron', bx - 0.025, 0.58, -0.28, bx + 0.025, 0.586, 0.12, { ao: false, faces: 'tnsew', room });
+      wb.box('iron', bx - 0.04, 0.58, 0.08, bx + 0.04, 0.586, 0.13, { ao: false, faces: 'tnsew', room });
+      wb.box('iron', bx - 0.025, 0.22, -0.282, bx + 0.025, 0.56, -0.276, { ao: false, faces: 'tnsewb', room });
+    }
+    // los cinchos del frente y la cerradura
+    for (const s of [-1, 1]) wb.box('iron', s * (w / 2 - 0.3) - 0.02, 0.1, 0.27, s * (w / 2 - 0.3) + 0.02, 0.5, 0.276, { ao: false, faces: 'tnsewb', room });
+    wb.box('iron', -0.075, 0.3, 0.27, 0.075, 0.46, 0.28, { ao: false, faces: 'tnsewb', room });
+    wb.box('iron', -0.02, 0.4, 0.28, 0.02, 0.56, 0.29, { ao: false, faces: 'tnsewb', room, tint: [0.8, 0.8, 0.8] });
+    wb.box('black', -0.008, 0.33, 0.2805, 0.008, 0.37, 0.281, { ao: false, faces: 's', room, grime: false });
+    // las asas de los costados
+    for (const s of [-1, 1]) {
+      // (el aro, medio, colgando: en el plano del costado)
+      const g = new THREE.TorusGeometry(0.055, 0.009, 4, 10, Math.PI).rotateZ(Math.PI).rotateY(Math.PI / 2);
+      wb.geometry('iron', g, new THREE.Matrix4().makeTranslation(s * (w / 2 + 0.012), 0.37, 0), { ao: false, room });
+      wb.box('iron', s * (w / 2 + 0.002) - 0.006, 0.34, -0.07, s * (w / 2 + 0.002) + 0.006, 0.38, 0.07, { ao: false, faces: 'tnsewb', room });
+    }
   });
   P.colOBB(ctx, x, z, w / 2 + 0.02, 0.3, rot, y, y + 0.58);
 }

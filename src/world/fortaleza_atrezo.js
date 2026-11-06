@@ -12,6 +12,7 @@ import { RNG } from '../core/util.js';
 import { solid, blocker, merlons, archRing, husillo, subtractRects, beam } from './builders.js';
 import * as P from './props.js';
 import { palo } from './barrio_atrezo.js';
+import { pano } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const M4 = () => new THREE.Matrix4();
@@ -728,16 +729,10 @@ export function sitial(ctx, x, y, z, rot, room) {
 }
 
 // Un tapiz colgado de su vara (de cara a +z local), con su cenefa.
+// (el paño de mobiliario.js: con sus pliegues, sus cenefas y su figura; aquí,
+// a 6 cm del muro, como antes, y con rombos si no se dice otra cosa)
 export function tapiz(ctx, x, y, z, rot, w, h, o = {}) {
-  const wb = ctx.wb;
-  const room = o.room;
-  const mat = o.mat ?? 'clothRed';
-  wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -w / 2 - 0.12, -0.05, -0.02, w / 2 + 0.12, 0.05, 0.08, { ao: false, room });
-    wb.box(mat, -w / 2, -h, 0.02, w / 2, -0.04, 0.05, { ao: false, faces: 'nswe', room, tint: o.tint });
-    wb.box('gold', -w / 2, -h, 0.05, w / 2, -h + 0.14, 0.055, { ao: false, faces: 's', room, tint: [0.6, 0.48, 0.24] });
-    wb.box('gold', -w / 2, -0.2, 0.05, w / 2, -0.12, 0.055, { ao: false, faces: 's', room, tint: [0.6, 0.48, 0.24] });
-  });
+  pano(ctx, x, y, z, rot, w, h, { figura: 'rombos', ...o });
 }
 
 // ------------------------------------------------------------------ por dentro

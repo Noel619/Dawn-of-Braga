@@ -118,7 +118,7 @@ function antecamara(ctx, S, L) {
     {
       const rx = (x0 + x1) / 2 - 0.4,
         rz = z0 + 0.02;
-      tapiz(ctx, rx, 3.75, rz, 0, 2.6, 2.4, { room, mat: 'clothBlue', tint: [0.5, 0.54, 0.7] });
+      tapiz(ctx, rx, 3.75, rz, 0, 2.6, 2.4, { room, mat: 'clothBlue', tint: [0.5, 0.54, 0.7], plano: true, liso: true });
       // (cada capa, a 1 cm de la de debajo: el campo sobre el paño, la cruz y
       // las bezantes sobre el campo)
       const zf = rz + 0.056;

@@ -24,7 +24,16 @@ const SALAS = [
   { zona: 'homenaje_galeria', F: 22.5, entra: [[-86.3, -89.93]] },
   { zona: 'zaguan_fortaleza', F: 0, entra: null },
   { zona: 'homenaje_granero', F: 0, entra: null },
-  { zona: 'oratorio_rey', F: 4.5, entra: null },
+  { zona: 'oratorio_rey', F: 4.5, entra: [[-73.7, -95.6]], extra: { 'puerta de la tribuna': [-73.3, -88.4] } },
+  // (la segunda pasada de la fase 9: lo de cada día, world/amueblado.js)
+  { zona: 'estrado_damas', F: 0, entra: [[-125.6, -94.0]], extra: { 'puerta del patio': [-113.4, -87.6] } },
+  { zona: 'reina_oratorio', F: 5.5, entra: [[-128.4, -94.0]], extra: { 'puerta de la galería': [-136.8, -89.6] } },
+  { zona: 'reina_camara', F: 11, entra: null },
+  { zona: 'camara_rey', F: 4.5, entra: null, extra: { 'puerta de la torre': [-76.4, -95.6] } },
+  { zona: 'homenaje_consejo', F: 12, entra: [[-95, -100.2]], extra: { 'puerta del pasadizo': [-88.2, -98.79] } },
+  { zona: 'homenaje_camara', F: 12, entra: [[-95, -101.8]] },
+  { zona: 'sotano_aleman', F: -3.9, entra: [[53.0, -102.0]], extra: { 'agujero de Leonor': [47.5, -109.3] } },
+  { zona: 'chapel', F: 0, entra: [[49, 12.9]], extra: { 'ante el altar': [49, 18.8] } },
 ];
 const solo = process.argv[2] ? process.argv[2].split(',') : null;
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });

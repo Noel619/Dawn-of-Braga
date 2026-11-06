@@ -53,34 +53,123 @@ export function boxCorners(m, x0, y0, z0, x1, y1, z1) {
   return out;
 }
 
+// Un palo de a a b (puntos locales: van con la transformación del momento),
+// que se estrecha de r0 (en a) a r1 (en b): patas abiertas, travesaños,
+// varas. o.segs: caras alrededor (4: de sección cuadrada); o.caps: con tapas.
+export function rod(ctx, a, b, r0, r1, mat, o = {}) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const L = d.length();
+  if (L < 1e-4) return;
+  const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.multiplyScalar(1 / L));
+  const segs = o.segs ?? 6;
+  const g = new THREE.CylinderGeometry(r1, r0, L, segs, 1, !o.caps);
+  if (segs === 4) g.rotateY(Math.PI / 4);
+  const m = M4().compose(a.clone().add(b).multiplyScalar(0.5), q, V(1, 1, 1));
+  ctx.wb.geometry(mat, g, m, { ao: false, uvScale: o.uvs ?? 0.3, room: o.room, tint: o.tint, grime: o.grime });
+}
+
+// El perfil de la panza de un tonel (de 0 abajo a 1 arriba): lo que mide de
+// radio, en partes del radio de en medio.
+const PANZA = (t) => 0.84 + 0.16 * Math.sin(Math.PI * t);
+// Las UV de un torno (LatheGeometry) en metros: u alrededor y v a lo largo
+// del eje, que es por donde corren las tablas de la textura (las duelas de
+// un tonel, con la densidad de la textura de tablas).
+function duelas(g, r, h, k = 1.2) {
+  const uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * Math.PI * 2 * r * k, uv.getY(i) * h * k);
+  return g;
+}
+
 // ------------------------------------------------------------- básicos
+// Tonel de pie (o tumbado, o.lying): las duelas con su panza, los cuatro aros
+// de hierro, el gargol con la tapa metida dentro y, en la tapa, sus tablas.
 export function barrel(ctx, x, y, z, o = {}) {
   const wb = ctx.wb;
   const r = o.r ?? 0.38,
     h = o.h ?? 0.95;
+  const room = o.room;
+  const body = () => {
+    // (local: de y 0 a h, centrado) las duelas, a lo largo (las vetas de la
+    // textura, de arriba abajo)
+    const pts = [];
+    for (let i = 0; i <= 8; i++) pts.push(new THREE.Vector2(r * PANZA(i / 8), (h * i) / 8));
+    wb.geometry('planks', duelas(new THREE.LatheGeometry(pts, 14), r, h), null, { ao: false, room, tint: o.tint });
+    // los aros: siguen la panza, un pelo por fuera
+    for (const t of [0.07, 0.27, 0.73, 0.93]) {
+      const a = t - 0.025,
+        b = t + 0.025;
+      wb.cylinder('iron', 0, a * h, 0, r * PANZA(a) + 0.008, r * PANZA(b) + 0.008, 0.05 * h, 14, { ao: false, room, sub: 9 });
+    }
+    // el gargol (el canto de las duelas, que sobresale) y la tapa, metida
+    // dentro; arriba y abajo
+    const e = r * 0.84,
+      i0 = r * 0.78,
+      k = 0.035;
+    for (const top of [true, false]) {
+      const q = top
+        ? [
+            [e, h],
+            [i0, h],
+            [i0, h - k],
+            [0.0001, h - k],
+          ]
+        : [
+            [0.0001, k],
+            [i0, k],
+            [i0, 0],
+            [e, 0],
+          ];
+      const g = new THREE.LatheGeometry(
+        q.map(([a, b]) => new THREE.Vector2(a, b)),
+        14
+      ).toNonIndexed();
+      g.computeVertexNormals();
+      wb.geometry('planks', g, null, { ao: false, uvScale: 0.5, room, tint: [0.92, 0.84, 0.74] });
+    }
+    // las juntas de las tablas de la tapa
+    for (const dx of [-0.32, 0, 0.32]) wb.box('black', dx * r - 0.004, h - k + 0.0005, -r * 0.74, dx * r + 0.004, h - k + 0.0015, r * 0.74, { ao: false, room, faces: 't', grime: false, tint: [0.5, 0.45, 0.4] });
+  };
   if (o.lying) {
     wb.push();
     wb.translate(x, y + r, z);
     wb.rotateY(o.rot ?? 0);
     wb.rotateZ(Math.PI / 2);
-    wb.cylinder('planks', 0, -h / 2, 0, r * 0.9, r * 0.9, h, 8, { ao: false, capTop: true, capBot: true, uv: 1.2 });
-    for (const yy of [-h * 0.35, h * 0.35]) wb.cylinder('iron', 0, yy, 0, r * 0.93, r * 0.93, 0.06, 8, { ao: false });
+    wb.translate(0, -h / 2, 0);
+    body();
     wb.pop();
     col(ctx, x - r, y, z - r, x + r, y + r * 1.6, z + r);
     return;
   }
-  wb.cylinder('planks', x, y, z, r * 0.88, r * 0.88, h * 0.5, 8, { capBot: false, uv: 1.2, aoH: 0.5 });
-  wb.cylinder('planks', x, y + h * 0.5, z, r * 0.88, r * 0.84, h * 0.5, 8, { capTop: true, uv: 1.2, ao: false });
-  for (const yy of [0.12, h * 0.5 - 0.03, h - 0.14]) wb.cylinder('iron', x, y + yy, z, r * 0.92, r * 0.92, 0.06, 8, { ao: false });
+  wb.push();
+  wb.translate(x, y, z);
+  body();
+  wb.pop();
   if (o.collide !== false) col(ctx, x - r, y, z - r, x + r, y + h, z + r);
 }
 
+// Caja de tablas: los cuatro costados de tablas, los cantos con sus listones,
+// los zunchos de arriba y de abajo y una cruz de refuerzo en dos caras.
 export function crate(ctx, x, y, z, s = 0.8, rot = 0, o = {}) {
   const wb = ctx.wb;
   wb.at(x, y, z, rot, () => {
     wb.box('planks', -s / 2, 0, -s / 2, s / 2, s, s / 2, { uv: 1.3, faces: 'tnsew', aoH: 0.5 });
     wb.box('wooddark', -s / 2 - 0.02, s - 0.1, -s / 2 - 0.02, s / 2 + 0.02, s - 0.02, s / 2 + 0.02, { ao: false });
     wb.box('wooddark', -s / 2 - 0.02, 0.04, -s / 2 - 0.02, s / 2 + 0.02, 0.12, s / 2 + 0.02, { ao: false });
+    // los listones de las esquinas, entre los zunchos
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) wb.box('wooddark', sx * (s / 2 + 0.012) - 0.032, 0.12, sz * (s / 2 + 0.012) - 0.032, sx * (s / 2 + 0.012) + 0.032, s - 0.1, sz * (s / 2 + 0.012) + 0.032, { ao: false, faces: 'nsew' });
+    // la cruz de refuerzo, en el frente y en la espalda (y la cabeza de los
+    // clavos de las esquinas)
+    const wI = s - 0.128,
+      hI = s - 0.22,
+      dl = Math.hypot(wI, hI);
+    for (const sz of [-1, 1]) {
+      wb.push();
+      wb.translate(0, s / 2 + 0.01, sz * (s / 2 + 0.012));
+      wb.rotateZ(sz * Math.atan2(hI, wI));
+      wb.box('wooddark', -dl / 2, -0.03, -0.012, dl / 2, 0.03, 0.012, { ao: false, faces: 'tnsewb' });
+      wb.pop();
+    }
   });
   // caja orientada exacta (la caja alineada de 1,5 veces el tamaño que se
   // usaba antes dejaba paredes invisibles alrededor)
@@ -222,27 +311,84 @@ export function cart(ctx, x, y, z, rot = 0, o = {}) {
   }
 }
 
+// Mesa (el tablero, arriba, a 0,8 m). Hasta 2,4 m de largo, de bancal: el
+// tablero de dos o tres tablas con sus juntas y sus barrotes debajo, las
+// cuatro patas que se estrechan hacia el suelo, los faldones y, abajo, los
+// travesaños de los lados y el de en medio. Más larga, de caballetes, como
+// las de los salones: los dos caballetes de patas abiertas, con su
+// travesaño y su cuña, y la tabla que corre de uno a otro.
 export function table(ctx, x, y, z, w = 1.8, d = 0.9, rot = 0, o = {}) {
   const wb = ctx.wb;
+  const H = 0.8,
+    T = 0.05;
+  const rng = new RNG(Math.round(x * 17.3 + z * 29.1 + w * 7));
+  const D = 'wooddark';
   wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -w / 2, 0.72, -d / 2, w / 2, 0.8, d / 2, { ao: false, faces: 'tnsewb' });
-    for (const [sx, sz] of [
-      [-1, -1],
-      [1, -1],
-      [-1, 1],
-      [1, 1],
-    ])
-      wb.box('wooddark', sx * (w / 2 - 0.1) - 0.05, 0, sz * (d / 2 - 0.1) - 0.05, sx * (w / 2 - 0.1) + 0.05, 0.72, sz * (d / 2 - 0.1) + 0.05, { ao: false });
+    // el tablero: tablas a lo largo, cada una de su tono, con 6 mm de junta
+    const n = d > 0.7 ? 3 : 2,
+      gap = 0.006;
+    for (let i = 0; i < n; i++) {
+      const z0 = -d / 2 + (d * i) / n + (i ? gap / 2 : 0),
+        z1 = -d / 2 + (d * (i + 1)) / n - (i < n - 1 ? gap / 2 : 0);
+      const t = 0.9 + rng.range(-0.08, 0.08);
+      wb.box(D, -w / 2, H - T, z0, w / 2, H, z1, { ao: false, faces: 'tnsewb', sub: 9, tint: [t, t * 0.97, t * 0.92] });
+    }
+    // los barrotes que cosen las tablas por debajo
+    for (const s of [-1, 1]) wb.box(D, s * (w / 2 - 0.16) - 0.035, H - T - 0.035, -d / 2 + 0.05, s * (w / 2 - 0.16) + 0.035, H - T, d / 2 - 0.05, { ao: false, faces: 'nsewb', sub: 9 });
+    const leg = (lx, lz, h0, h1, r0, r1) => rod(ctx, V(lx, h0, lz), V(lx, h1, lz), r0, r1, D, { segs: 4 });
+    if (w <= 2.4) {
+      const lx = w / 2 - 0.1,
+        lz = d / 2 - 0.09;
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) leg(sx * lx, sz * lz, 0, H - T, 0.042, 0.056);
+      // los faldones, de pata a pata (bajo los barrotes)
+      for (const sz of [-1, 1]) wb.box(D, -lx + 0.03, H - T - 0.15, sz * lz - 0.016, lx - 0.03, H - T, sz * lz + 0.016, { ao: false, faces: 'nsb', sub: 9 });
+      for (const sx of [-1, 1]) wb.box(D, sx * lx - 0.016, H - T - 0.15, -lz + 0.03, sx * lx + 0.016, H - T, lz - 0.03, { ao: false, faces: 'ewb', sub: 9 });
+      // los travesaños de abajo: los de los lados cortos y el de en medio, que
+      // descansa en ellos
+      for (const sx of [-1, 1]) wb.box(D, sx * lx - 0.022, 0.1, -lz + 0.02, sx * lx + 0.022, 0.155, lz - 0.02, { ao: false, faces: 'tnsewb', sub: 9 });
+      wb.box(D, -lx + 0.02, 0.155, -0.024, lx - 0.02, 0.2, 0.024, { ao: false, faces: 'tnsewb', sub: 9 });
+    } else {
+      // los caballetes
+      const cx = w / 2 - 0.42;
+      for (const sx of [-1, 1]) {
+        const px = sx * cx;
+        // el larguero de arriba, bajo el tablero, de lado a lado
+        wb.box(D, px - 0.045, H - T - 0.09, -d / 2 + 0.06, px + 0.045, H - T, d / 2 - 0.06, { ao: false, faces: 'nsewb', sub: 9 });
+        // las patas, abiertas en V (dos a cada lado del larguero)
+        for (const sz of [-1, 1]) {
+          const top = V(px, H - T - 0.09, sz * (d / 2 - 0.16));
+          rod(ctx, V(px - 0.14, 0, sz * (d / 2 - 0.05)), top, 0.032, 0.04, D, { segs: 4 });
+          rod(ctx, V(px + 0.14, 0, sz * (d / 2 - 0.05)), top, 0.032, 0.04, D, { segs: 4 });
+        }
+        // el travesaño que une las dos V, abajo
+        wb.box(D, px - 0.03, 0.22, -d / 2 + 0.07, px + 0.03, 0.28, d / 2 - 0.07, { ao: false, faces: 'tnsewb', sub: 9 });
+      }
+      // la tabla de en medio, de caballete a caballete, con sus cuñas
+      wb.box(D, -cx - 0.12, 0.28, -0.03, cx + 0.12, 0.36, 0.03, { ao: false, faces: 'tnsewb', sub: 9 });
+      for (const sx of [-1, 1]) wb.box(D, sx * (cx + 0.07) - 0.012, 0.24, -0.04, sx * (cx + 0.07) + 0.012, 0.4, 0.04, { ao: false, faces: 'tnsewb', tint: [0.8, 0.72, 0.62] });
+    }
   });
   if (o.collide !== false) colOBB(ctx, x, z, w / 2, d / 2, rot, y, y + 0.8);
 }
 
+// Banco corrido: el asiento de una tabla gruesa, las patas de tablón con el
+// pie recortado en arco (dos pies cada una), el travesaño pasante con sus
+// cuñas y las espigas de las patas, que asoman en el asiento.
 export function bench(ctx, x, y, z, w = 1.6, rot = 0) {
   const wb = ctx.wb;
+  const D = 'wooddark';
   wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -w / 2, 0.42, -0.18, w / 2, 0.48, 0.18, { ao: false, faces: 'tnsewb' });
-    wb.box('wooddark', -w / 2 + 0.1, 0, -0.14, -w / 2 + 0.18, 0.42, 0.14, { ao: false });
-    wb.box('wooddark', w / 2 - 0.18, 0, -0.14, w / 2 - 0.1, 0.42, 0.14, { ao: false });
+    wb.box(D, -w / 2, 0.42, -0.18, w / 2, 0.48, 0.18, { ao: false, faces: 'tnsewb', sub: 9 });
+    const lx = w / 2 - 0.16;
+    for (const s of [-1, 1]) {
+      const px = s * lx;
+      wb.box(D, px - 0.03, 0.15, -0.14, px + 0.03, 0.42, 0.14, { ao: false, faces: 'nsewb' });
+      for (const f of [-1, 1]) wb.box(D, px - 0.03, 0, f > 0 ? 0.045 : -0.16, px + 0.03, 0.15, f > 0 ? 0.16 : -0.045, { ao: false, faces: 'nsew' });
+      // la espiga, en el asiento (asoma 4 mm), y la cuña del travesaño
+      wb.box(D, px - 0.032, 0.48, -0.07, px + 0.032, 0.484, 0.07, { ao: false, faces: 'tnsew', tint: [0.72, 0.64, 0.56] });
+      wb.box(D, px + s * 0.075 - 0.012, 0.22, -0.035, px + s * 0.075 + 0.012, 0.34, 0.035, { ao: false, faces: 'tnsewb', tint: [0.8, 0.72, 0.62] });
+    }
+    wb.box(D, -lx - 0.09, 0.25, -0.025, lx + 0.09, 0.31, 0.025, { ao: false, faces: 'tnsewb', sub: 9 });
   });
 }
 
@@ -1504,32 +1650,149 @@ export function pyre(ctx, x, y, z, seed = 1, rot = 0) {
   colOBB(ctx, x, z, half + 0.15, half + 0.15, rot, y, y + top + 0.5);
 }
 
-// Estantería con objetos.
+// Estantería contra el muro (su espalda, hacia -z): los costados con el
+// remate recortado, la trasera de tablas, el zócalo, el sombrerete y cuatro
+// baldas con su listón; y en ellas, lo de una casa: cántaros y orzas,
+// escudillas apiladas, libros con sus broches, paños doblados, una cesta, un
+// cofrecillo, un cabo de vela. Algún hueco vacío.
 export function shelf(ctx, x, y, z, rot = 0, w = 1.6) {
   const wb = ctx.wb;
+  const D = 'wooddark';
+  const rng = new RNG(Math.round(x * 13 + z * 7));
   wb.at(x, y, z, rot, () => {
-    for (const sx of [-w / 2, w / 2 - 0.06]) wb.box('wooddark', sx, 0, -0.2, sx + 0.06, 2.0, 0.2, { ao: false });
-    // (las baldas, entre los costados: si no, sus cantos coinciden con ellos)
-    for (let i = 0; i < 4; i++) wb.box('wooddark', -w / 2 + 0.06, 0.3 + i * 0.5, -0.19, w / 2 - 0.06, 0.34 + i * 0.5, 0.19, { ao: false, faces: 'tnsewb' });
-    const rng = new RNG(Math.round(x * 13 + z * 7));
-    for (let i = 0; i < 4; i++)
-      for (let k = 0; k < 3; k++) {
-        if (rng.chance(0.4)) continue;
-        const px = -w / 2 + 0.25 + k * (w / 3),
-          py = 0.34 + i * 0.5;
-        if (rng.chance(0.5)) wb.cylinder(rng.pick(['bronze', 'iron', 'bone']), px, py, 0, 0.07, 0.09, 0.2, 6, { ao: false, capTop: true });
-        else wb.box(rng.pick(['leather', 'clothRed', 'clothBlue']), px - 0.12, py, -0.1, px + 0.12, py + 0.28, 0.08, { ao: false });
+    // los costados (y su remate, que sube y se recorta)
+    for (const s of [-1, 1]) {
+      const sx = s * (w / 2 - 0.03);
+      wb.box(D, sx - 0.03, 0, -0.2, sx + 0.03, 2.0, 0.2, { ao: false, faces: 'nsewb', sub: 9 });
+    }
+    // la cresta, detrás, sobre el sombrerete
+    wb.box(D, -w / 2 + 0.02, 2.05, -0.22, w / 2 - 0.02, 2.15, -0.19, { ao: false, faces: 'tnsew', sub: 9, tint: [0.86, 0.8, 0.74] });
+    for (const s of [-1, 1]) wb.box(D, s * (w / 2 - 0.02) - s * 0.08, 2.15, -0.22, s * (w / 2 - 0.02), 2.21, -0.19, { ao: false, faces: 'tnsew', tint: [0.86, 0.8, 0.74] });
+    // la trasera de tablas, el zócalo y el sombrerete
+    wb.box('planks', -w / 2 + 0.06, 0.04, -0.2, w / 2 - 0.06, 2.0, -0.185, { ao: false, faces: 's', sub: 9, tint: [0.62, 0.52, 0.42] });
+    wb.box(D, -w / 2 + 0.06, 0, 0.16, w / 2 - 0.06, 0.12, 0.19, { ao: false, faces: 'tnsewb', sub: 9 });
+    wb.box(D, -w / 2 - 0.03, 2.0, -0.22, w / 2 + 0.03, 2.05, 0.23, { ao: false, faces: 'tnsewb', sub: 9 });
+    // las baldas y su listón de delante
+    const ys = [0.12, 0.6, 1.08, 1.56];
+    for (const by of ys) {
+      wb.box(D, -w / 2 + 0.06, by, -0.185, w / 2 - 0.06, by + 0.03, 0.18, { ao: false, faces: 'tnsewb', sub: 9 });
+      if (by > 0.2) wb.box(D, -w / 2 + 0.06, by - 0.05, 0.16, w / 2 - 0.06, by, 0.18, { ao: false, faces: 'nsb', sub: 9 });
+    }
+    // lo de las baldas (y la de arriba del todo)
+    const cosas = ['cantaro', 'orza', 'escudillas', 'libros', 'panos', 'cesta', 'cofre', 'vela', 'nada'];
+    for (const by of [...ys, 2.05]) {
+      const yb = by + (by > 2 ? 0 : 0.03);
+      const top = by > 2;
+      let px = -w / 2 + 0.1;
+      const lim = w / 2 - 0.08;
+      for (let guard = 0; guard < 20; guard++) {
+        let q = rng.pick(top ? ['cesta', 'orza', 'nada', 'panos'] : cosas);
+        // (lo que ocupa cada cosa, antes de ponerla: que no se salga)
+        const n = rng.int(2, 4),
+          r = rng.range(0.08, 0.11),
+          gap = rng.range(0.15, 0.35);
+        const ancho = { cantaro: 0.24, orza: r * 2 + 0.05, escudillas: 0.22, libros: n * 0.095 + 0.04, panos: 0.32, cesta: 0.3, cofre: 0.3, vela: 0.14, nada: gap };
+        if (px + ancho[q] > lim) q = 'vela';
+        if (px + ancho[q] > lim) break;
+        const ww = ancho[q];
+        if (q === 'cantaro') {
+          jar(ctx, px + 0.12, yb, 0, rng.range(0.36, 0.46), { collide: false, rot: rng.range(0, 6), tint: rng.pick([[0.66, 0.4, 0.28], [0.58, 0.44, 0.32], [0.7, 0.55, 0.4]]) });
+        } else if (q === 'orza') {
+          wb.cylinder('plaster', px + r, yb, 0, r * 0.7, r, r * 1.2, 9, { ao: false, tint: [0.6, 0.42, 0.3] });
+          wb.cylinder('plaster', px + r, yb + r * 1.2, 0, r, r * 0.7, r * 0.7, 9, { ao: false, capTop: true, tint: [0.6, 0.42, 0.3] });
+          wb.cylinder('linen', px + r, yb + r * 1.9, 0, r * 0.62, r * 0.55, 0.03, 8, { ao: false, capTop: true, tint: [0.8, 0.74, 0.6] });
+        } else if (q === 'escudillas') {
+          for (let k = 0; k < n + 1; k++) wb.cylinder('wooddark', px + 0.11, yb + k * 0.035, 0.02, 0.07, 0.1, 0.035, 10, { ao: false, capTop: true, capBot: k === 0, tint: [0.72, 0.6, 0.48] });
+        } else if (q === 'libros') {
+          for (let k = 0; k < n; k++) {
+            const bw = rng.range(0.06, 0.085),
+              bh = rng.range(0.24, 0.32),
+              bd = rng.range(0.18, 0.24);
+            const bx = px + k * 0.095;
+            const lean = k === n - 1 && rng.chance(0.5) ? -0.22 : 0;
+            wb.push();
+            wb.translate(bx + bw / 2, yb, -0.02);
+            wb.rotateZ(lean);
+            wb.box('leather', -bw / 2, 0, -bd / 2, bw / 2, bh, bd / 2, { ao: false, faces: 'tnsew', tint: rng.pick([[0.6, 0.36, 0.24], [0.42, 0.3, 0.22], [0.5, 0.22, 0.18], [0.36, 0.3, 0.26]]) });
+            wb.box('linen', -bw / 2 + 0.008, 0.01, bd / 2, bw / 2 - 0.008, bh - 0.01, bd / 2 + 0.004, { ao: false, faces: 's', tint: [0.86, 0.8, 0.66] });
+            wb.box('bronze', -bw / 2 - 0.003, bh * 0.45, bd / 2 - 0.005, bw / 2 + 0.003, bh * 0.55, bd / 2 + 0.012, { ao: false, faces: 'tnsewb' });
+            wb.pop();
+          }
+        } else if (q === 'panos') {
+          for (let k = 0; k < n; k++) {
+            const t = rng.pick([[0.86, 0.82, 0.72], [0.62, 0.3, 0.26], [0.36, 0.4, 0.56], [0.7, 0.62, 0.48]]);
+            const e = rng.range(-0.01, 0.01);
+            wb.box('linen', px + e, yb + k * 0.045, -0.13 + e, px + 0.28 + e, yb + k * 0.045 + 0.042, 0.12 + e, { ao: false, faces: 'tnsew', tint: t });
+          }
+        } else if (q === 'cesta') {
+          wb.cylinder('straw', px + 0.14, yb, 0, 0.11, 0.14, 0.16, 10, { ao: false, capBot: true, tint: [0.62, 0.5, 0.36] });
+          wb.ring('wooddark', px + 0.14, yb + 0.15, 0, 0.145, 0.125, 0.025, 10, { tint: [0.7, 0.58, 0.44] });
+          wb.cylinder('black', px + 0.14, yb + 0.12, 0, 0.13, 0.13, 0.004, 10, { ao: false, capTop: true, grime: false });
+        } else if (q === 'cofre') {
+          wb.box(D, px, yb, -0.1, px + 0.24, yb + 0.12, 0.08, { ao: false, faces: 'tnsew', tint: [0.8, 0.66, 0.5] });
+          wb.box(D, px - 0.01, yb + 0.12, -0.11, px + 0.25, yb + 0.15, 0.09, { ao: false, faces: 'tnsewb', tint: [0.7, 0.56, 0.42] });
+          wb.box('iron', px + 0.1, yb + 0.06, 0.08, px + 0.14, yb + 0.12, 0.09, { ao: false, faces: 'tnsew' });
+        } else if (q === 'vela') {
+          wb.cylinder('bronze', px + 0.06, yb, 0.04, 0.05, 0.04, 0.02, 8, { ao: false, capTop: true });
+          wb.cylinder('candle', px + 0.06, yb + 0.02, 0.04, 0.018, 0.017, rng.range(0.04, 0.12), 6, { ao: false, capTop: true, grime: false });
+        }
+        px += ww + 0.03;
       }
+    }
   });
   colOBB(ctx, x, z, w / 2, 0.2, rot, y, y + 2);
 }
 
-export function bed(ctx, x, y, z, rot = 0) {
+// Cama sencilla (la cabecera hacia -x): los cuatro pies con su perilla, el
+// cabecero de tablas con su remate, los pies más bajos, los largueros, el
+// jergón de lana (con su costura), el cabezal, la manta que cae por los
+// lados (o.revuelta: retirada a los pies) y una piel doblada a los pies.
+export function bed(ctx, x, y, z, rot = 0, o = {}) {
   const wb = ctx.wb;
+  const D = 'wooddark';
+  const rng = new RNG(Math.round(x * 11 + z * 23));
+  const manta = o.manta ?? rng.pick(['clothRed', 'clothBlue', 'burlap', 'clothDark']);
   wb.at(x, y, z, rot, () => {
-    wb.box('wooddark', -1, 0, -0.5, 1, 0.45, 0.5, { faces: 'tnsew', ao: false });
-    wb.box('clothWhite', -0.95, 0.45, -0.45, 0.95, 0.6, 0.45, { faces: 'tnsew', ao: false, tint: [0.7, 0.6, 0.55] });
-    wb.box('wooddark', -1.05, 0, -0.55, -0.95, 1.0, 0.55, { ao: false });
+    // los pies: los de la cabecera, más altos
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) {
+        const h = sx < 0 ? 1.02 : 0.72;
+        wb.box(D, sx * 0.99 - 0.035, 0, sz * 0.49 - 0.035, sx * 0.99 + 0.035, h, sz * 0.49 + 0.035, { ao: false, faces: 'tnsew' });
+        wb.cylinder(D, sx * 0.99, h, sz * 0.49, 0.03, 0.012, 0.06, 6, { ao: false, capTop: true });
+      }
+    // los largueros y los travesaños (el jergón descansa en las cinchas)
+    for (const sz of [-1, 1]) wb.box(D, -0.955, 0.22, sz * 0.49 - 0.03, 0.955, 0.36, sz * 0.49 + 0.03, { ao: false, faces: 'tnsewb', sub: 9 });
+    for (const sx of [-1, 1]) wb.box(D, sx * 0.99 - 0.03, 0.22, -0.455, sx * 0.99 + 0.03, 0.36, 0.455, { ao: false, faces: 'tnsewb' });
+    // el cabecero: tablas de canto entre los pies y su remate
+    for (let k = 0; k < 4; k++) {
+      const z0 = -0.455 + k * 0.2275;
+      wb.box('planks', -1.0, 0.36, z0 + 0.004, -0.975, 0.9, z0 + 0.2235, { ao: false, faces: 'tnsewb', tint: [0.72 + (k % 2) * 0.06, 0.6, 0.48] });
+    }
+    wb.box(D, -1.005, 0.9, -0.455, -0.97, 0.96, 0.455, { ao: false, faces: 'tnsewb' });
+    // los pies de la cama: un travesaño alto
+    wb.box(D, 0.975, 0.56, -0.455, 1.005, 0.62, 0.455, { ao: false, faces: 'tnsewb' });
+    // el jergón: dos cuerpos (el de abajo, más ancho), con su costura
+    wb.box('linen', -0.95, 0.33, -0.44, 0.95, 0.46, 0.44, { ao: false, faces: 'tnsew', tint: [0.8, 0.76, 0.64] });
+    wb.box('linen', -0.93, 0.46, -0.42, 0.93, 0.5, 0.42, { ao: false, faces: 'tnsew', tint: [0.84, 0.8, 0.68] });
+    // el cabezal
+    wb.push();
+    wb.translate(-0.8, 0.565, 0);
+    wb.rotateX(Math.PI / 2);
+    wb.cylinder('linen', 0, -0.36, 0, 0.075, 0.075, 0.72, 9, { ao: false, capTop: true, capBot: true, tint: [0.92, 0.9, 0.82] });
+    wb.pop();
+    if (o.revuelta) {
+      // la manta, retirada y hecha un bulto a los pies
+      ellipsoid(ctx, manta, 0.55, 0.56, 0.05, 0.36, 0.1, 0.4, [0.78, 0.72, 0.68]);
+      ellipsoid(ctx, manta, 0.78, 0.58, -0.12, 0.2, 0.09, 0.3, [0.74, 0.68, 0.64]);
+    } else {
+      // la manta, echada desde medio cabezal, con lo que cae por los lados
+      wb.box(manta, -0.62, 0.5, -0.53, 0.96, 0.53, 0.53, { ao: false, faces: 'tnsew', tint: [0.82, 0.76, 0.72] });
+      for (const s of [-1, 1]) wb.box(manta, -0.62, 0.25, s * 0.53 - 0.012, 0.96, 0.53, s * 0.53 + 0.012, { ao: false, faces: 'nsewb', tint: [0.76, 0.7, 0.66] });
+      // la vuelta de la sábana sobre la manta
+      wb.box('linen', -0.66, 0.53, -0.46, -0.5, 0.545, 0.46, { ao: false, faces: 'tnsew', tint: [0.9, 0.88, 0.8] });
+    }
+    // la piel, doblada a los pies
+    if (rng.chance(0.6)) wb.box('hide', 0.62, o.revuelta ? 0.5 : 0.53, -0.35, 0.92, o.revuelta ? 0.53 : 0.56, 0.3, { ao: false, faces: 'tnsew', tint: [0.7, 0.6, 0.5] });
   });
   colOBB(ctx, x, z, 1.05, 0.55, rot, y, y + 0.6);
 }
@@ -2294,14 +2557,35 @@ export function counter(ctx, x, y, z, rot = 0, len = 3, o = {}) {
   colOBB(ctx, x, z, len / 2 + 0.06, 0.38, rot, y, y + 1.08);
 }
 
-// Taburete.
+// Taburete de tres patas: el asiento redondo, de canto matado, y las patas
+// redondas, abiertas, metidas en él (asoman por arriba sus cuñas). Volcado
+// (o.tipped): de lado en el suelo, sin colisión.
 export function stool(ctx, x, y, z, o = {}) {
   const wb = ctx.wb;
-  wb.cylinder('wooddark', x, y + 0.42, z, 0.2, 0.2, 0.05, 7, { ao: false, capTop: true, capBot: true, room: o.room });
-  for (let i = 0; i < 3; i++) {
-    const a = (i / 3) * Math.PI * 2 + (x + z);
-    wb.box('wooddark', x + Math.cos(a) * 0.13 - 0.025, y, z + Math.sin(a) * 0.13 - 0.025, x + Math.cos(a) * 0.13 + 0.025, y + 0.42, z + Math.sin(a) * 0.13 + 0.025, { ao: false, room: o.room });
+  const room = o.room;
+  const a0 = x + z;
+  const make = () => {
+    wb.cylinder('wooddark', 0, 0.405, 0, 0.182, 0.2, 0.022, 12, { ao: false, capBot: true, room, sub: 9 });
+    wb.cylinder('wooddark', 0, 0.427, 0, 0.2, 0.188, 0.023, 12, { ao: false, capTop: true, room, sub: 9 });
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + a0;
+      const c = Math.cos(a),
+        s = Math.sin(a);
+      rod(ctx, V(c * 0.19, 0, s * 0.19), V(c * 0.11, 0.45, s * 0.11), 0.017, 0.022, 'wooddark', { room, segs: 6 });
+      wb.cylinder('wooddark', c * 0.111, 0.4505, s * 0.111, 0.023, 0.023, 0.002, 6, { ao: false, capTop: true, room, tint: [0.7, 0.62, 0.54] });
+    }
+  };
+  wb.push();
+  wb.translate(x, y, z);
+  if (o.tipped) {
+    // tumbado: el canto del asiento y una pata en el suelo
+    wb.rotateY(a0 * 1.7);
+    wb.translate(0, 0.2, 0);
+    wb.rotateZ(Math.PI / 2 - 0.12);
+    wb.translate(0, -0.22, 0);
   }
+  make();
+  wb.pop();
   if (o.tipped) return;
   // (un octógono, de dos cajas, dentro del asiento, que es un heptágono de
   // 0,18 de apotema: con una caja de ±0,18 sus esquinas asomaban 7 cm de lo

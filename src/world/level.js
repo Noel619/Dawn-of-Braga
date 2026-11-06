@@ -19,6 +19,7 @@ import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
 import { scatterClutter } from './clutter.js';
+import { amueblar } from './amueblado.js';
 import { corpseLog } from '../entities/models.js';
 
 // Donde empieza el mundo por el oeste (la ciudad creció hacia poniente con la
@@ -132,6 +133,8 @@ export function buildLevel() {
   buildNorthWalls(ctx, S, L);
   buildCastleTop(ctx, S, L);
   buildFortaleza(ctx, S, L);
+  // lo de cada día en las salas más pobres (alfombras, escaños, alacenas...)
+  amueblar(ctx, L);
 
   // moscas sobre los cadáveres (lejos del fuego; uno por grupo)
   for (const c of corpseLog) {
