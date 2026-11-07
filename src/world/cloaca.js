@@ -41,7 +41,7 @@ const CASA = { x0: -12.5, z0: 14, x1: -3.5, z1: 22, t: 0.35, h: new RNG(203).ran
 export const CLOACA = {
   // la rejilla de lo transitable (x0, z0, x1, z1) y la roca (de y0 a y1)
   // (con el Vergel, que sigue al este: world/vergel.js)
-  grid: [-21, -20, 34.5, 41],
+  grid: [-21, -20, 36.5, 42.5],
   y0: -12.8,
   y1: -1.1,
   // la bodega de la taberna (bajo su despensa) y la trampilla (en el rincón
@@ -79,6 +79,10 @@ export const CLOACA = {
 };
 
 const ROOMS = { bodega: 'cloaca_bodega', tunel: 'cloaca', sala: 'cloaca_luz' };
+
+// la boca de la galería del desagüe, en el muro de levante de la sala (la
+// galería, del kit de las cloacas: cloacas_hondas.js)
+export const DESAGUE = { z: 24, w: 3.4, h: 3.4 / 2 + 0.3 };
 
 export function buildCloaca(ctx, Q, L) {
   // (si a la casa quemada de encima le quedaba fuego en el desván, se apagó:
@@ -365,21 +369,17 @@ function sala(ctx, Q, L) {
     wb.box('mossstone', a, C.y - 0.05, b, c, y + 1.4, d, { faces: f, sub: 1.6, aoH: 1.2, aoMin: 0.45, baseY: y, room, tint: [0.48, 0.52, 0.44] });
     wb.box('ashlar', a, y + 1.4, b, c, top, d, { faces: f, sub: 1.8, ao: false, room, tint });
   }
-  // el de levante, con el arco por donde se va el agua (al caño del Vergel)
+  // el de levante, con el hueco de la galería del desagüe, que lleva el agua
+  // al Vergel (sus jambas y su arco los pone el kit de las cloacas:
+  // cloacas_hondas.js)
   {
-    const K = VERGEL.cano;
-    const ys = K.ys,
-      ring = 0.28;
-    const za = K.z0,
-      zb = K.z1;
-    const e0 = za - ring,
-      e1 = zb + ring;
+    const g0 = DESAGUE.z - DESAGUE.h,
+      g1 = DESAGUE.z + DESAGUE.h;
     const lo = { faces: 'w', sub: 1.6, aoH: 1.2, aoMin: 0.45, baseY: y, room, tint: [0.48, 0.52, 0.44] };
-    wb.box('mossstone', x1, C.y - 0.05, z0, x1 + 0.3, ys, za, { ...lo, faces: 'ws' });
-    wb.box('mossstone', x1, C.y - 0.05, zb, x1 + 0.3, ys, z1, { ...lo, faces: 'wn' });
-    wb.box('ashlar', x1, ys, z0, x1 + 0.3, top, e0, { faces: 'w', sub: 1.8, ao: false, room, tint });
-    wb.box('ashlar', x1, ys, e1, x1 + 0.3, top, z1, { faces: 'w', sub: 1.8, ao: false, room, tint });
-    archRing(ctx, { axis: 'z', c: (za + zb) / 2, w: zb - za, y0: ys, rise: (zb - za) / 2, ring, t0: x1, t1: x1 + 0.3, top, clip: [e0, e1], mat: 'ashlar', spMat: 'ashlar', tint: [0.5, 0.5, 0.46], spTint: tint, rooms: [room, ROOMS.tunel] });
+    wb.box('mossstone', x1, C.y - 0.05, z0, x1 + 0.3, y + 1.4, g0, { ...lo });
+    wb.box('mossstone', x1, C.y - 0.05, g1, x1 + 0.3, y + 1.4, z1, { ...lo });
+    wb.box('ashlar', x1, y + 1.4, z0, x1 + 0.3, top, g0, { faces: 'w', sub: 1.8, ao: false, room, tint });
+    wb.box('ashlar', x1, y + 1.4, g1, x1 + 0.3, top, z1, { faces: 'w', sub: 1.8, ao: false, room, tint });
   }
   // el del norte: la boca de la galería (arriba, a poniente), el rellano y la
   // escalera; el resto, liso
@@ -431,37 +431,45 @@ function sala(ctx, Q, L) {
   wb.box('ashlar', cs.x0 - 0.1, Tn.y, R[3] + 0.06, cs.x1 + 0.1, Tn.y + 0.4, R[3] + 0.22, { faces: 'tnsew', ao: false, tint: [0.42, 0.43, 0.42] });
   col.add(cs.x0 - 0.1, Tn.y, R[3], cs.x1 + 0.1, Tn.y + 1.0, R[3] + 0.22);
   // ---------------------------------------------------------- la reja de levante (la acequia del sur sale por ella)
-  // (sus barrotes: los de los lados, en su sitio; los dos de en medio,
-  // arrancados de abajo y doblados hacia fuera, como cortinas; el otro, roto:
-  // por ahí se pasa al caño)
+  // (en la boca de la galería del desagüe: sus barrotes, de lado a lado; los
+  // de encima del andén del sur, arrancados de abajo y doblados hacia fuera,
+  // como cortinas: los dobló él; por ahí se pasa)
   {
-    const K = VERGEL.cano;
     const bx = x1 + 0.15;
+    const g0 = DESAGUE.z - DESAGUE.w / 2,
+      g1 = DESAGUE.z + DESAGUE.w / 2;
     const yb = C.y,
-      yt = K.ys - 0.05;
-    const bar = (z) => {
-      wb.box('iron', bx - 0.025, yb, z - 0.025, bx + 0.025, yt, z + 0.025, { ao: false, faces: 'tnsew' });
-    };
-    for (const z of [23.42, 23.66, 24.62]) bar(z);
-    ctx.col.add(bx - 0.06, yb, K.z0, bx + 0.06, yt, 23.72);
-    ctx.col.add(bx - 0.06, yb, 24.56, bx + 0.06, yt, K.z1);
+      yt = y + 2.1 + DESAGUE.w / 2 - 0.12;
+    const bar = (z, ytop) => wb.box('iron', bx - 0.025, yb, z - 0.025, bx + 0.025, ytop, z + 0.025, { ao: false, faces: 'tnsew' });
+    // (la altura de cada barrote, bajo el arco de medio punto)
+    const tope = (z) => y + 2.1 + Math.sqrt(Math.max(0, (DESAGUE.w / 2) ** 2 - (z - DESAGUE.z) ** 2)) - 0.08;
+    const paso = [DESAGUE.z + 0.62, DESAGUE.z + 1.48];
+    for (let z = g0 + 0.14; z < g1 - 0.05; z += 0.22) {
+      if (z > paso[0] && z < paso[1]) continue;
+      bar(z, tope(z));
+    }
+    ctx.col.add(bx - 0.06, yb, g0, bx + 0.06, yt, paso[0]);
+    ctx.col.add(bx - 0.06, yb, paso[1], bx + 0.06, yt, g1);
+    // los travesaños (el de abajo, roto donde se dobló)
+    wb.box('iron', bx - 0.03, y + 1.9, g0 + 0.05, bx + 0.03, y + 1.96, g1 - 0.05, { ao: false, faces: 'tnsewb' });
+    wb.box('iron', bx - 0.03, y + 0.3, g0 + 0.05, bx + 0.03, y + 0.36, paso[0], { ao: false, faces: 'tnsewb' });
+    wb.box('iron', bx - 0.03, y + 0.3, paso[1], bx + 0.03, y + 0.36, g1 - 0.05, { ao: false, faces: 'tnsewb' });
     const curva = (z, dz, seed) => {
       const rr = new RNG(seed);
-      let p = V(bx, yt, z);
+      let p = V(bx, tope(z), z);
       const n = 7;
+      const ytop = tope(z);
       for (let k = 1; k <= n; k++) {
         const t = k / n;
-        const q = V(bx + Math.sin(t * Math.PI) * 0.12 + rr.range(-0.01, 0.01), yt - (yt - yb - 0.45) * t, z + dz * Math.pow(t, 1.4));
+        const q = V(bx + Math.sin(t * Math.PI) * 0.14 + rr.range(-0.01, 0.01), ytop - (ytop - yb - 0.45) * t, z + dz * Math.pow(t, 1.4));
         P.rod(ctx, p, q, 0.024, 0.024, 'iron', { segs: 5 });
         p = q;
       }
     };
-    curva(23.9, -0.42, 9161);
-    curva(24.14, 0.42, 9162);
-    // el roto: un cabo arriba y otro abajo
-    wb.box('iron', bx - 0.025, yt - 0.35, 24.36, bx + 0.025, yt, 24.41, { ao: false, faces: 'tnsewb' });
-    wb.box('iron', bx - 0.025, yb, 24.36, bx + 0.025, yb + 0.25, 24.41, { ao: false, faces: 'tnsewb' });
-    wb.box('iron', bx - 0.03, yt - 0.06, K.z0 + 0.05, bx + 0.03, yt, K.z1 - 0.05, { ao: false, faces: 'tnsewb' });
+    curva(paso[0] + 0.06, -0.38, 9161);
+    curva(paso[0] + 0.28, -0.3, 9163);
+    curva(paso[1] - 0.28, 0.3, 9164);
+    curva(paso[1] - 0.06, 0.38, 9162);
   }
   // ---------------------------------------------------------- los pilares y sus arcos
   const pl = 0.45;

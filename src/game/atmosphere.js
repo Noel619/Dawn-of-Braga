@@ -53,6 +53,14 @@ export const ATMO = {
   // negro y con la niebla espesa
   vergel: { fog: 0x14231f, density: 0.017, sky: 0x5f7c72, ground: 0x1a2618, hemi: 1.35, moon: 0, moonPos: [0.15, 60, -0.1], moonColor: 0xd2e0f6, moonDisc: 1, vol: 0.02, ash: 0, exposure: 1.34, sat: 1.04, lamp: 9.5, bloom: 1.45 },
   oscuro: { fog: 0x020303, density: 0.12, sky: 0x141818, ground: 0x050605, hemi: 0.32, moon: 0, vol: 0, ash: 0, exposure: 1.18, sat: 0.7, lamp: 12, bloom: 1.0 },
+  // las cloacas hondas (world/cloacas_hondas.js): la lobera, a oscuras y
+  // fría (el farol y los braseros son la luz: game/lobishome.js); las viejas,
+  // pardas; los aljibes, verdosos del agua; lo hondo, todo el verde que da
+  // luz, con la niebla clara y la saturación alta
+  lobera: { fog: 0x030405, density: 0.085, sky: 0x1c2026, ground: 0x07080a, hemi: 0.4, moon: 0, vol: 0, ash: 0, exposure: 1.2, sat: 0.72, lamp: 12.5, bloom: 1.1 },
+  viejas: { fog: 0x070605, density: 0.072, sky: 0x302c28, ground: 0x0d0b09, hemi: 0.46, moon: 0, vol: 0, ash: 0, exposure: 1.22, sat: 0.78, lamp: 12, bloom: 1.05 },
+  aljibes: { fog: 0x06100e, density: 0.055, sky: 0x34504a, ground: 0x0a1210, hemi: 0.62, moon: 0, vol: 0.01, ash: 0, exposure: 1.25, sat: 0.86, lamp: 11.5, bloom: 1.25 },
+  hondo: { fog: 0x0a1c18, density: 0.03, sky: 0x40806e, ground: 0x0e2018, hemi: 1.05, moon: 0, vol: 0.02, ash: 0, exposure: 1.32, sat: 1.12, lamp: 10, bloom: 1.6 },
   lair: { fog: 0x0c0d05, density: 0.07, sky: 0x4c5030, ground: 0x15150a, hemi: 0.55, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.85, lamp: 11.5, bloom: 1.25 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },
   dawn: { fog: 0xc8a08a, density: 0.012, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.2, moonColor: 0xffa860, vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, lamp: 1, bloom: 1.1 },

@@ -261,6 +261,10 @@ const ZONE_MUSIC = {
   cloaca_luz: 'sanctuary',
   vergel: 'sanctuary',
   oscuro: 'crypt',
+  lobera: 'crypt',
+  viejas: 'crypt',
+  aljibes: 'crypt',
+  hondo: 'sanctuary',
   sanctum: 'sanctum',
   dawn: 'ending',
 };
@@ -285,6 +289,10 @@ const ZONE_ROOM = {
   cloaca_luz: ['hall', 0.55],
   vergel: ['hall', 0.62],
   oscuro: ['crypt', 0.7],
+  lobera: ['crypt', 0.68],
+  viejas: ['crypt', 0.6],
+  aljibes: ['hall', 0.72],
+  hondo: ['hall', 0.58],
   sanctum: ['cathedral', 0.8],
   dawn: ['open', 0.16],
 };
@@ -310,6 +318,10 @@ const ZONE_BED = {
   cloaca_luz: [0.03, 0, 0.1, 0.03, 0.5],
   vergel: [0.02, 0, 0.07, 0.02, 0.42],
   oscuro: [0, 0, 0.18, 0.14, 0],
+  lobera: [0, 0, 0.16, 0.12, 0.08],
+  viejas: [0, 0, 0.14, 0.08, 0.18],
+  aljibes: [0, 0, 0.12, 0.06, 0.3],
+  hondo: [0.02, 0, 0.08, 0.04, 0.2],
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
@@ -2467,6 +2479,14 @@ export class Audio {
         d = this.out(P, { gain: 0.7, verb: 1, life: 3, ref: 3 });
         this.smp(d, t, this.lib.drip(rnd(900, 1500)), { gain: 0.35 });
         break;
+      // el agua a la rodilla, al andar (las cloacas hondas: game/cloacas.js)
+      case 'splash': {
+        d = this.out(P, { gain: o.gain ?? 0.6, verb: 0.6, life: 2, ref: 3 });
+        this.noise(d, t, 0.32, { type: 'bandpass', f0: rnd(500, 800), f1: rnd(1400, 2200), q: 0.9, gain: 0.2, a: 0.01, buf: this.pink, curve: 'lin' });
+        this.noise(d, t + 0.05, 0.4, { type: 'lowpass', f0: 900, f1: 400, gain: 0.12, a: 0.02, buf: this.brown, rate: 2 });
+        this.smp(d, t + 0.12, this.lib.drip(rnd(700, 1100)), { gain: 0.12 });
+        break;
+      }
       // el cuello que gira: vértebras una a una
       case 'neckTwist': {
         d = this.out(P, { gain: 0.8, verb: 0.5, life: 3, ref: 4 });
@@ -4089,6 +4109,39 @@ export class Audio {
           this.noise(d, t, 1.2, { type: 'lowpass', f0: 260, gain: 0.05, a: 0.3, buf: this.brown, rate: 2 });
         } else return null;
         return rnd(4, 9);
+      }
+      case 'lobera': {
+        // la lobera: lo que respira en otra galería, las uñas que corren por la
+        // piedra, el agua de los canales y, alguna vez, lejos, un aullido que
+        // rueda por las bóvedas
+        if (r < 0.22) {
+          const d = I(far(8, 16, 0.5), 0.6, 6);
+          this.noise(d, t, 1.4, { type: 'lowpass', f0: 400, gain: 0.05, a: 0.55, buf: this.brown, rate: 1, curve: 'lin' });
+          this.noise(d, t + 1.7, 1.6, { type: 'lowpass', f0: 300, gain: 0.06, a: 0.2, buf: this.brown, rate: 1, curve: 'lin' });
+        } else if (r < 0.4) this.debris(I(far(6, 14, 1.0), 0.5, 3), t, 8, 1.1, { f0: 2400, f1: 5200, gain: 0.16 });
+        else if (r < 0.46) {
+          const d = I(far(14, 24, 1.5), 0.7, 8);
+          this.tone(d, t, 2.6, { f0: rnd(330, 380), f1: rnd(250, 290), gain: 0.05, a: 0.6 });
+          this.tone(d, t + 0.2, 2.2, { f0: rnd(500, 560), f1: rnd(380, 420), gain: 0.02, a: 0.6 });
+        } else if (r < 0.62) {
+          const d = I(near(8, 2.5), 0.5, 3),
+            f = rnd(700, 1400);
+          this.tone(d, t, 0.14, { f0: f, f1: f * 0.72, gain: 0.04, a: 0.002 });
+        } else return null;
+        return rnd(3, 7);
+      }
+      case 'hondo': {
+        // lo hondo: las hojas que se mueven sin viento, las raíces que crujen,
+        // algo que se arrastra entre los helechos, las gotas
+        if (r < 0.3) this.noise(I(near(6, 1.2), 0.45, 3), t, rnd(1.0, 2.0), { f0: rnd(900, 1400), f1: rnd(1500, 2400), q: 1.3, gain: 0.04, a: 0.5, buf: this.pink, curve: 'lin' });
+        else if (r < 0.46) this.creak(I(near(8, 2), 0.45, 3), t, rnd(0.6, 1.4), rnd(60, 110), 0.07);
+        else if (r < 0.6) this.debris(I(near(7, 0.2), 0.4, 3), t, 10, 1.4, { f0: 1500, f1: 3800, gain: 0.16 });
+        else if (r < 0.78) {
+          const d = I(near(8, 1.5), 0.5, 3),
+            f = rnd(800, 1500);
+          this.tone(d, t, 0.14, { f0: f, f1: f * 0.72, gain: 0.04, a: 0.002 });
+        } else return null;
+        return rnd(1.6, 4);
       }
       case 'jardin': {
         // las ramas secas de los naranjos con el viento, las hojas muertas que

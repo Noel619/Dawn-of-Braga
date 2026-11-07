@@ -106,6 +106,9 @@ export class Waters {
       const m = new THREE.Mesh(geo, waterMat(w));
       if (w.shape === 'circle') m.position.set(w.x, w.y, w.z);
       else m.position.set((w.r[0] + w.r[2]) / 2, w.y, (w.r[1] + w.r[3]) / 2);
+      // (el agua de bajo tierra va con el subsuelo: sólo se dibuja cuando se
+      // está abajo o se ve por un hueco; son muchas, en las cloacas)
+      if (w.y < -1.5) m.layers.set(1);
       game.scene.add(m);
       this.list.push({ ...w, m, next: 1 + Math.random() * 3, slot: 0 });
     }

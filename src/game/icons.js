@@ -756,6 +756,133 @@ const ICONS = {
       b.set(px, py, P.moss2);
     b.outline(P.void);
   },
+  // las cloacas hondas: la llave de la reja (hierro, con su cordel de sal),
+  // lo que se cosecha en lo hondo y los dos cocimientos del Desfigurado
+  llaveReja(b) {
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const dx = x + 0.5 - 10,
+          dy = y + 0.5 - 10;
+        const d = Math.hypot(dx, dy);
+        if (d > 6.4 || d < 3.4) continue;
+        const l = (-dx - dy) / 12 + 0.5 + (d > 4.9 ? 0.1 : -0.15);
+        b.set(x, y, shade(IRON.slice(1), l, x, y));
+      }
+    seg(b, 14, 14, 26, 26, 1.8, 1.6, (t, s2, x, y) => shade(IRON.slice(1), s2 < -0.2 ? 0.85 : s2 > 0.4 ? 0.25 : 0.55, x, y));
+    for (const [x, y, w, h] of [
+      [20, 23, 3, 6],
+      [23, 26, 4, 4],
+    ])
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) b.set(x + i - (j >> 1), y + j, i === 0 ? P.iron4 : j === h - 1 ? P.iron1 : P.iron2);
+    // el óxido
+    for (const [x, y] of [
+      [17, 17],
+      [21, 21],
+      [6, 9],
+      [12, 6],
+    ])
+      b.set(x, y, P.wood3);
+    // el cordel, con su nudo de sal
+    for (let k = 0; k <= 14; k++) {
+      const t = k / 14;
+      b.set(Math.round(4 + t * 6 - Math.sin(t * 3) * 2), Math.round(14 + t * 12), k % 3 ? P.parch2 : P.parch3);
+    }
+    disc(b, 8, 27, 1.6, (l, d, x, y) => shade([P.bone1, P.bone2, P.bone3], l + 0.2, x, y));
+    b.outline(P.void);
+  },
+  musgoLuz(b) {
+    const M = [P.moss0, P.moss1, P.moss2, P.moss3, P.moss4];
+    for (const [cx, cy, rx, ry] of [
+      [16, 20, 11, 6],
+      [11, 16, 6, 5],
+      [21, 15, 6, 5],
+      [16, 13, 5, 4],
+    ])
+      for (let y = -ry; y <= ry; y++)
+        for (let x = -rx; x <= rx; x++) {
+          if ((x * x) / (rx * rx) + (y * y) / (ry * ry) > 1) continue;
+          const l = 0.62 - y / (ry * 3) - x / (rx * 6) + (((x * 7 + y * 13) & 3) === 0 ? 0.18 : 0);
+          b.set(cx + x, cy + y, shade(M, l, x, y));
+        }
+    // la luz: puntos pálidos que brillan
+    for (const [x, y] of [
+      [9, 15],
+      [14, 12],
+      [20, 13],
+      [23, 18],
+      [12, 21],
+      [18, 22],
+      [16, 17],
+    ]) {
+      b.set(x, y, P.glass4);
+      b.set(x + 1, y, P.glass3);
+    }
+    // la tierra de debajo
+    for (let x = 6; x <= 26; x++) b.set(x, 26, (x & 1) ? P.wood1 : P.wood0);
+    sparkle(b, 25, 8);
+    b.outline(P.void);
+  },
+  raizAmarga(b) {
+    for (let k = 0; k < 22; k++) {
+      const t = k / 21;
+      const x = 6 + t * 18 + Math.sin(t * 6) * 2.2,
+        y = 22 - t * 12 + Math.cos(t * 5) * 1.6;
+      const r = 3.0 - t * 1.4;
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          if (dx * dx + dy * dy > r * r) continue;
+          const l = 0.58 - (dx + dy) / (r * 5) - t * 0.1;
+          b.set(Math.round(x + dx), Math.round(y + dy), shade([P.wood0, P.wood1, P.wood2, P.wood3, P.wood4], l, dx, dy));
+        }
+    }
+    // el corte, rojo por dentro
+    disc(b, 6, 22, 2.8, (l, d, x, y) => shade([P.blood1, P.blood2, P.blood3, P.blood4], 0.5 + l * 0.4 - d / 6, x, y));
+    b.set(6, 22, P.blood4);
+    for (const [sx, sy, ex, ey] of [
+      [12, 18, 10, 26],
+      [18, 14, 22, 21],
+      [21, 12, 27, 9],
+    ])
+      for (let k = 0; k <= 7; k++) {
+        const t = k / 7;
+        b.set(Math.round(sx + (ex - sx) * t), Math.round(sy + (ey - sy) * t), k < 4 ? P.wood2 : P.wood1);
+      }
+    b.outline(P.void);
+  },
+  florHondo(b) {
+    // el tallo y la hoja
+    for (let y = 18; y <= 29; y++) b.set(16 + Math.round(Math.sin(y * 0.4) * 0.8), y, y > 26 ? P.moss1 : P.moss2);
+    for (let y = -2; y <= 2; y++) for (let x = -5; x <= 5; x++) if ((x * x) / 25 + (y * y) / 4 <= 1) b.set(11 + x, 24 + y - Math.round(x * 0.3), shade([P.moss0, P.moss1, P.moss2, P.moss3], 0.55 - y / 6, x, y));
+    // los pétalos: blancos, gruesos, como de cera; negro por dentro
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2 - Math.PI / 2;
+      const px = 16 + Math.cos(a) * 6,
+        py = 12 + Math.sin(a) * 5.4;
+      for (let y = -5; y <= 5; y++)
+        for (let x = -5; x <= 5; x++) {
+          const d = Math.hypot(x, y);
+          if (d > 4.4) continue;
+          const l = 0.86 - d / 12 - (x + y) / 30;
+          b.set(Math.round(px + x), Math.round(py + y), shade([P.steel3, P.bone1, P.bone2, P.bone3, P.steel5], l, x, y));
+        }
+    }
+    for (let y = -4; y <= 4; y++)
+      for (let x = -4; x <= 4; x++) {
+        const d = Math.hypot(x, y);
+        if (d > 3.8) continue;
+        b.set(16 + x, 12 + y, d > 2.8 ? P.ink2 : d > 1.4 ? P.ink1 : P.void);
+      }
+    b.set(15, 11, P.ink3);
+    sparkle(b, 25, 4);
+    b.outline(P.void);
+  },
+  cocimientoVerde(b) {
+    drawFlask(b, true, [P.moss0, P.moss1, P.moss2, P.moss3, P.moss4]);
+  },
+  cocimientoNegro(b) {
+    drawFlask(b, true, [P.void, P.ink1, P.ink3, P.ruby0, P.ruby1]);
+    sparkle(b, 24, 9);
+  },
   tear(b) {
     for (let y = 0; y < 32; y++)
       for (let x = 0; x < 32; x++) {
@@ -1232,9 +1359,9 @@ const ICONS = {
   },
 };
 
-function drawFlask(b, full) {
+function drawFlask(b, full, liq = null) {
   const inBody = (x, y) => Math.hypot(x + 0.5 - 16, (y + 0.5 - 20) * 1.05) <= 8.6;
-  const LIQ = [P.ember0, P.ember1, P.ember2, P.ember3, P.ember4];
+  const LIQ = liq || [P.ember0, P.ember1, P.ember2, P.ember3, P.ember4];
   for (let y = 0; y < 32; y++)
     for (let x = 0; x < 32; x++) {
       if (!inBody(x, y)) continue;
@@ -1251,7 +1378,7 @@ function drawFlask(b, full) {
       } else b.set(x, y, (x + y) % 3 === 0 ? P.glass1 : P.glass0);
     }
   // cuello y corcho
-  for (let y = 6; y <= 12; y++) for (let x = 13; x <= 18; x++) b.set(x, y, x === 13 ? P.glass3 : x === 18 ? P.glass1 : y > 9 && full ? P.ember2 : P.glass0);
+  for (let y = 6; y <= 12; y++) for (let x = 13; x <= 18; x++) b.set(x, y, x === 13 ? P.glass3 : x === 18 ? P.glass1 : y > 9 && full ? LIQ[2] : P.glass0);
   for (let y = 2; y <= 6; y++) for (let x = 13; x <= 18; x++) b.set(x, y, shade(WOOD, 0.8 - (x - 13) / 8 - (y - 2) / 12, x, y));
   b.hline(12, 19, 12, P.glass2);
   // reflejo
@@ -1259,14 +1386,31 @@ function drawFlask(b, full) {
   b.set(10, 17, P.glass4);
   b.set(10, 18, P.glass3);
   if (full) {
-    b.set(19, 22, P.ember4);
-    b.set(18, 23, P.ember4);
+    b.set(19, 22, LIQ[4]);
+    b.set(18, 23, LIQ[4]);
   }
   b.outline(P.void);
 }
 
 // ---------------------------------------------------------------- pequeños (9x9)
 const SMALL = {
+  // (los cocimientos, en el marcador: un frasquito verde y uno negro)
+  tonVerde(b) {
+    b.rect(3, 0, 3, 2, P.wood3);
+    b.rect(3, 2, 3, 2, P.glass1);
+    b.disc(4.5, 5.5, 3.2, P.moss2);
+    b.set(3, 4, P.glass4);
+    b.set(5, 6, P.moss4);
+    b.hline(2, 6, 4, P.moss3);
+  },
+  tonNegro(b) {
+    b.rect(3, 0, 3, 2, P.wood3);
+    b.rect(3, 2, 3, 2, P.glass1);
+    b.disc(4.5, 5.5, 3.2, P.ink3);
+    b.set(3, 4, P.glass4);
+    b.set(5, 6, P.ruby1);
+    b.hline(2, 6, 4, P.ruby0);
+  },
   bolt(b) {
     b.line(0, 8, 6, 2, P.wood4);
     b.line(1, 8, 6, 3, P.wood2);

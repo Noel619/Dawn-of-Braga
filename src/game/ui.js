@@ -165,6 +165,7 @@ const EQUIP_ROWS = [
 // Las clases de los objetos (la pestaña Objetos), en su orden.
 const ITEM_CATS = [
   ['cons', 'Consumibles'],
+  ['mat', 'Ingredientes'],
   ['weapon', 'Armas'],
   ['shield', 'Escudos'],
   ['armor', 'Armaduras'],
@@ -390,7 +391,7 @@ export class UI {
   }
 
   render(s) {
-    if (s.name === 'title' || s.name === 'pause') this.renderMenu(s);
+    if (s.name === 'title' || s.name === 'pause' || s.name === 'mesa') this.renderMenu(s);
     if (s.name === 'inv') this.renderInv();
     if (s.name === 'options') this.renderOptions(s);
     if (s.name === 'controls') this.renderControls();
@@ -404,7 +405,7 @@ export class UI {
     return this.open(name, { entries, ...opts });
   }
   renderMenu(s) {
-    const list = s.name === 'title' ? $('title-menu') : $('pause-menu');
+    const list = s.name === 'title' ? $('title-menu') : s.name === 'mesa' ? $('mesa-menu') : $('pause-menu');
     list.classList.remove('hidden');
     list.innerHTML = '';
     const cur = this.cursor;
@@ -431,6 +432,12 @@ export class UI {
       });
       list.appendChild(b);
     });
+  }
+  // lo que llevas y lo que hace falta, en la mesa del Desfigurado
+  // (game/alquimia.js)
+  renderMesaInfo(s) {
+    const el = $('mesa-info');
+    if (el) el.innerHTML = (s.data.info || []).map((l) => `<div>${esc(l)}</div>`).join('');
   }
   setMenu(s, entries) {
     s.data.entries = entries;
@@ -554,6 +561,10 @@ export class UI {
     const add = (id, cat, o = {}) => out.push({ id, cat, ...o });
     add('_flask', 'cons', { n: p.flasks + '/' + p.maxFlasks });
     if (inv.has('virote') || p.xbowLoaded) add('virote', 'cons', { n: '×' + inv.count('virote') });
+    // (los cocimientos del Desfigurado y lo que se cosecha para ellos:
+    // game/alquimia.js)
+    for (const k of ['cocimiento_verde', 'cocimiento_negro']) if (inv.has(k)) add(k, 'cons', { n: '×' + inv.count(k) });
+    for (const k of ['musgo_luz', 'raiz_amarga', 'flor_hondo']) if (inv.has(k)) add(k, 'mat', { n: '×' + inv.count(k) });
     for (const w of WEAPON_ORDER) {
       const id = WEAPONS[w].item;
       if (inv.has(id)) add(id, 'weapon', { worn: g.equipped('weapon') === id });
@@ -1148,7 +1159,13 @@ export class UI {
     // (con la ballesta en la mano: los virotes que quedan, y si está montada)
     const xb = p.weapon && p.weapon.ranged && p.hasSword;
     const nb = xb ? this.g.inventory.count('virote') : 0;
-    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded].join(',');
+    // (los cocimientos del Desfigurado que se llevan, y el que se ha bebido:
+    // lo que le queda)
+    const inv = this.g.inventory;
+    const tv = inv ? inv.count('cocimiento_verde') : 0,
+      tn = inv ? inv.count('cocimiento_negro') : 0;
+    const tk = p.tonico ? Math.ceil((p.tonico.t / p.tonico.dur) * stLen) : 0;
+    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded, tv, tn, tk, p.tonico && p.tonico.tipo].join(',');
     if (key === this._vitKey && this._vitU === this.sc.u) return;
     this._vitKey = key;
     this._vitU = this.sc.u;
@@ -1185,7 +1202,27 @@ export class UI {
       rx = 45 + nn.w + 3;
     }
     // el objeto bendito que se lleva
-    if (p.relic) b.blit(smallIcon(ITEMS[p.relic].icon), rx, 19);
+    if (p.relic) {
+      b.blit(smallIcon(ITEMS[p.relic].icon), rx, 19);
+      rx += 14;
+    }
+    // los cocimientos: verde y negro, con lo que queda de cada uno
+    for (const [n, ic] of [
+      [tv, 'tonVerde'],
+      [tn, 'tonNegro'],
+    ]) {
+      if (!n) continue;
+      b.blit(smallIcon(ic), rx, 19);
+      const nn = textBitmap(String(n), 'small', { color: P.bone3, outline: P.void });
+      b.blit(nn, rx + 12, 20);
+      rx += 12 + nn.w + 4;
+    }
+    // el que se ha bebido: una raya bajo el aguante que se va gastando
+    if (tk > 0) {
+      const c = p.tonico.tipo === 'negro' ? [P.ruby1, P.ruby2] : [P.moss3, P.moss4];
+      b.hline(11, 11 + tk, 15, c[1]);
+      b.hline(11, 11 + tk, 16, c[0]);
+    }
     b.outline(P.void);
     const cv = this.vit;
     if (cv.width !== W || cv.height !== H) {
@@ -1343,6 +1380,7 @@ export class UI {
     const au = this.g.audio;
     switch (s.name) {
       case 'title':
+      case 'mesa':
       case 'pause': {
         if (s.name === 'title' && !s.data.ready) return;
         const n = s.data.entries.length;

@@ -22,14 +22,19 @@ export class CloacaFX {
     this.g = g;
     const C = CLOACA.cascada,
       F = VERGEL.fuente,
-      Sa = VERGEL.acequia[1];
+      Rl = VERGEL.rellano,
+      Pi = VERGEL.pila,
+      Rg = VERGEL.reguero;
     // (c: el centro del labio; w: su ancho; d: hacia dónde sale el agua;
     // out: lo que se adelanta al caer; open: lo que se abre; foam: el radio
     // de la espuma; k: lo que revuelve el agua de abajo)
     this.cas = [
       { c: [(C.x0 + C.x1) / 2, C.z], w: C.x1 - C.x0, y0: C.y0, y1: C.y1, d: [0, 1], out: 0.42, open: 0.35, foam: 0.95, k: 1 },
-      { c: [(Sa[0] + Sa[2]) / 2, Sa[3]], w: Sa[2] - Sa[0], y0: VERGEL.cano.agua - 0.02, y1: VERGEL.agua, d: [0, 1], out: 0.55, open: 0.42, foam: 1.05, k: 1 },
-      { c: [F.x, F.z], w: 0.14, y0: F.y - 0.02, y1: VERGEL.agua, d: [-1, 0], out: 0.3, open: 0.9, foam: 0.35, k: 0.4 },
+      // (la del rellano del Vergel: de su canal a la alberca)
+      { c: [Rl[2], VERGEL.boca.z], w: 0.95, y0: VERGEL.boca.y - 0.19, y1: VERGEL.agua, d: [1, 0], out: 0.5, open: 0.4, foam: 1.0, k: 1 },
+      // (el caño de la fuente, a su pila; y la pila, que rebosa al reguero)
+      { c: [F.x - 0.42, F.z], w: 0.12, y0: F.y - 0.03, y1: VERGEL.y + 0.5, d: [-1, 0], out: 0.25, open: 0.8, foam: 0.3, k: 0.4 },
+      { c: [Pi[0], (Rg[1] + Rg[3]) / 2], w: Rg[3] - Rg[1] - 0.1, y0: VERGEL.y + 0.48, y1: VERGEL.agua, d: [-1, 0], out: 0.18, open: 0.2, foam: 0.4, k: 0.4 },
     ];
     for (const c of this.cas) c.rip = 0;
     this.mat = new THREE.ShaderMaterial({
@@ -234,7 +239,6 @@ export class CloacaFX {
 
   // Los ojos de lo oscuro, al fondo del paso.
   ojos() {
-    const Pa = VERGEL.paso;
     const grp = new THREE.Group();
     const mat = objMat('eyeGlow');
     for (const s of [-1, 1]) {
@@ -243,7 +247,8 @@ export class CloacaFX {
       m.scale.set(1.3, 0.7, 1);
       grp.add(m);
     }
-    grp.position.set((Pa.x0 + Pa.x1) / 2 + 0.2, Pa.y + 2.35, Pa.z0 + 2.2);
+    // (al fondo de la galería de la Sé, detrás de la reja)
+    grp.position.set(VERGEL.norte.x + 0.2, VERGEL.y + 2.35, 2.4);
     grp.layers.set(1);
     for (const m of grp.children) m.layers.set(1);
     grp.visible = false;
@@ -268,8 +273,8 @@ export class CloacaFX {
     let near = false;
     for (const c of this.cas) if (Math.hypot(p.x - c.c[0], p.z - c.c[1]) < 40) near = true;
     this.mesh.visible = under && near;
-    const B = VERGEL.box;
-    const enVergel = under && p.x > B[0] - 6 && p.x < B[2] + 2 && p.z > B[1] - 10 && p.z < B[3] + 2;
+    const B = VERGEL.sala;
+    const enVergel = under && p.y > VERGEL.y - 3 && p.x > B[0] - 6 && p.x < B[2] + 2 && p.z > B[1] - 10 && p.z < B[3] + 2;
     this.flies.visible = enVergel;
     this.sky.visible = enVergel;
     this.updateOjos(dt, enVergel);

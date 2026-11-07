@@ -1,5 +1,7 @@
 // Orquestación del juego: bucle, estados y sistemas.
 import * as THREE from 'three';
+import { TYPES } from '../entities/enemies.js';
+import { Cloacas } from './cloacas.js';
 import { buildLevel } from '../world/level.js';
 import { PostPipeline } from '../gfx/post.js';
 import { G, registerMaterialPatch } from '../gfx/materials.js';
@@ -228,7 +230,7 @@ export class Game {
     this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > S.bottom && x > S.x - S.w / 2 - 0.1 && x < S.x + S.w / 2 + 0.1 ? stairY(z) : CANON.cellar.y), { pad: 0.7 });
 
     // enemigos
-    this.enemies = lvl.L.enemies.map((s) => new Enemy(this, s));
+    this.enemies = lvl.L.enemies.filter((s) => TYPES[s.type]).map((s) => new Enemy(this, s));
     this.activeEnemies = [];
     this.bosses = {};
     for (const e of this.enemies) if (e.boss) this.bosses[e.type] = e;
@@ -282,6 +284,8 @@ export class Game {
     // el Desfigurado, en la luz de la cloaca; la cascada y el agua de allí
     this.desfigurado = new DesfiguradoQuest(this);
     this.cloacaFX = new CloacaFX(this);
+    // las cloacas hondas: el agua que frena, la cosecha y el pozo de la tapa
+    this.cloacas = new Cloacas(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
     this.cornisas = new Cornisas(this);
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
@@ -490,6 +494,7 @@ export class Game {
     this.ossuaries.applyFlags();
     this.souto.applyFlags();
     this.desfigurado.applyFlags();
+    this.cloacas.applyFlags();
     this.fisico.applyFlags();
   }
 
@@ -1966,6 +1971,7 @@ export class Game {
       this.breakables.update(dt);
       this.waters.update(dt);
       this.cloacaFX.update(dt);
+      this.cloacas.update(dt);
       this.spring.update(dt);
       if (this.state === 'play') {
         this.hunt.update(dt);

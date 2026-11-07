@@ -14,6 +14,9 @@ const KB = {
   sprint: ['ShiftLeft', 'ShiftRight'],
   lock: ['KeyQ', 'M1'],
   heal: ['KeyR'],
+  // (los cocimientos del Desfigurado: game/alquimia.js)
+  tonicoA: ['Digit1'],
+  tonicoB: ['Digit2'],
   interact: ['KeyE'],
   inventory: ['Tab', 'KeyI'],
   map: ['KeyM'],
@@ -46,6 +49,8 @@ const PAD = {
   dodge: [1], // B
   back: [1],
   heal: [2], // X
+  tonicoA: [14], // cruz, izquierda
+  tonicoB: [15], // cruz, derecha
   transcribe: [2],
   inventory: [3], // Y
   unequip: [2],

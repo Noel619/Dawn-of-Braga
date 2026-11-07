@@ -366,8 +366,11 @@ export class DesfiguradoQuest {
         { say: DIALOG.desfCura.slice(2) },
         {
           fn: () => {
+            // (no la raíz que daba vida: un cocimiento de los suyos, y su mesa
+            // para cocer más con lo que se traiga de lo hondo: game/alquimia.js)
             this.F['desf:cura'] = true;
-            if (!g.inventory.has('raiz_vergel')) g.giveItem('raiz_vergel');
+            this.F['desf:cocimientos'] = true;
+            if (g.inventory.count('cocimiento_verde') < 3) g.giveItem('cocimiento_verde');
             g.saveGame && g.saveGame();
           },
         },
@@ -400,7 +403,42 @@ export class DesfiguradoQuest {
         ],
         { peste: true }
       );
+    else if (!this.F['desf:llave'])
+      // (la llave de la reja de la galería de la Sé: se la da, a su pesar)
+      this.run(
+        [
+          { say: DIALOG.desfLlave.slice(0, 2) },
+          {
+            fn: () => {
+              this.F['desf:llave'] = true;
+              if (!g.inventory.has('llave_reja')) g.giveItem('llave_reja');
+              g.saveGame && g.saveGame();
+            },
+          },
+          { say: DIALOG.desfLlave.slice(2) },
+        ],
+        { peste: true }
+      );
+    else if (g.flags['boss:lobishome'] && !this.F['desf:lobo'])
+      // vencido el Lobishome: quién era
+      this.run([
+        { say: DIALOG.desfLobo.slice(0, 2) },
+        { say: DIALOG.desfLobo.slice(2, 4) },
+        {
+          fn: () => {
+            this.F['desf:lobo'] = true;
+            g.saveGame && g.saveGame();
+          },
+        },
+        { say: DIALOG.desfLobo.slice(4) },
+      ]);
     else {
+      // (de vez en cuando, cómo se cuecen los cocimientos)
+      if (this.locoK % 3 === 2 && this.F['desf:cocimientos']) {
+        this.locoK++;
+        this.run([{ say: DIALOG.desfCocer }]);
+        return;
+      }
       const L = DIALOG.desfLoco;
       const line = L[this.locoK++ % L.length];
       this.run([{ say: line, risa: line[0].startsWith('¿Lo oyes') ? 0 : Math.random() < 0.2 ? 1.6 : 0 }]);

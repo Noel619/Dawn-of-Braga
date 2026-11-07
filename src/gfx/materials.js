@@ -260,6 +260,10 @@ export const MAT_DEFS = {
   lacquer: { tex: 'wooddark', uv: 0.8, color: 0x3a1410 },
   ember: { tex: 'white', uv: 1, color: 0x220800, emissive: 0xff5a10, emissiveIntensity: 1.6 },
   eyeGlow: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xffc070, emissiveIntensity: 2.2 },
+  // lo que se cosecha en lo hondo (game/cloacas.js): el musgo que da luz, la
+  // flor blanca por fuera y negra por dentro
+  musgoGlow: { tex: 'white', uv: 1, color: 0x0c1c0a, emissive: 0x7ef0a0, emissiveIntensity: 1.5 },
+  florCera: { tex: 'white', uv: 1, color: 0xd8dccc, emissive: 0x8ea8b8, emissiveIntensity: 0.55 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
   eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },
   // la noche que se ve por la reja del lucernario

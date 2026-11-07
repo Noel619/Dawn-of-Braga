@@ -1,5 +1,6 @@
 // Interactuables: puertas y cierres, objetos, documentos, altares, niebla.
 import * as THREE from 'three';
+import { abrirMesa } from './alquimia.js';
 import { objMat, additiveFog, cloneMat, registerMaterialPatch } from '../gfx/materials.js';
 import { getTexture } from '../gfx/textures.js';
 import { ITEMS, NOTES, MSG } from './story.js';
@@ -1169,7 +1170,7 @@ export class Interactables {
       it.k = 0;
       this.poseBridge(it, 0);
       it.r = s.r ?? 2;
-    } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well') {
+    } else if (s.kind === 'examine' || s.kind === 'climb' || s.kind === 'well' || s.kind === 'alquimia' || s.kind === 'trepa' || s.kind === 'cosecha' || s.kind === 'brasero') {
       it.r = s.r ?? 2;
     } else if (s.kind === 'arca') {
       // un arca del archivo: se abre una vez (lo que dice, lo que guarda, la
@@ -1744,6 +1745,15 @@ export class Interactables {
         return 'Atravesar la niebla';
       case 'examine':
         return 'Examinar';
+      // las cloacas hondas (game/cloacas.js, game/alquimia.js, game/lobishome.js)
+      case 'cosecha':
+        return 'Recoger ' + (ITEMS[it.item] ? ITEMS[it.item].name.toLowerCase() : '');
+      case 'alquimia':
+        return 'Preparar un cocimiento';
+      case 'trepa':
+        return 'Subir por el pozo';
+      case 'brasero':
+        return 'Encender el brasero';
       case 'arca':
         return this.game.flags['arca:' + it.id] ? 'Mirar el arca' : it.label || 'Abrir el arca';
       case 'breakable':
@@ -1954,7 +1964,25 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'examine') {
-      g.ui.toast(MSG[it.text] || it.text);
+      // (alt: [bandera, texto]: lo que se dice una vez pasado algo)
+      const k = it.alt && g.flags[it.alt[0]] ? it.alt[1] : it.text;
+      g.ui.toast(MSG[k] || k);
+      return true;
+    }
+    if (it.kind === 'cosecha') {
+      if (g.cloacas) g.cloacas.cosechar(it);
+      return true;
+    }
+    if (it.kind === 'alquimia') {
+      abrirMesa(g, it);
+      return true;
+    }
+    if (it.kind === 'trepa') {
+      if (g.cloacas) g.cloacas.trepar(it);
+      return true;
+    }
+    if (it.kind === 'brasero') {
+      if (g.lobo) g.lobo.encender(it);
       return true;
     }
     if (it.kind === 'arca') {

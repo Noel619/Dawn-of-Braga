@@ -19,6 +19,7 @@ import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
 import { buildCloaca, CLOACA } from './cloaca.js';
+import { buildHondas, HONDAS } from './cloacas_hondas.js';
 import { VERGEL } from './vergel.js';
 import { scatterClutter } from './clutter.js';
 import { amueblar } from './amueblado.js';
@@ -99,6 +100,10 @@ export function buildLevel() {
   const U = new WalkGrid(Ag[0], Ag[1], Ag[2], Ag[3], 0.5); // el sótano del Alemán y la gruta de Leonor
   const Qg = CLOACA.grid;
   const Q = new WalkGrid(Qg[0], Qg[1], Qg[2], Qg[3], 0.5); // la bodega de la taberna y la cloaca
+  // las cloacas hondas: la lobera, las viejas, los aljibes y lo hondo (cada
+  // nivel, su rejilla y su roca)
+  const HG = {};
+  for (const [k, g] of Object.entries(HONDAS.grids)) HG[k] = new WalkGrid(g.r[0], g.r[1], g.r[2], g.r[3], 0.5);
   ctx.S = S; // las casas visitables pintan su huella transitable
   ctx.floorHoles = []; // huecos en la losa de suelo (escaleras que bajan)
   // (huecos de la losa que no son portales del subsuelo: el foso del rey, que
@@ -137,6 +142,7 @@ export function buildLevel() {
   // la cloaca, bajo la plaza del Pan (de la bodega de la taberna a la sala
   // de la luz, bajo la casa quemada; su agujero en la losa, abajo)
   buildCloaca(ctx, Q, L);
+  buildHondas(ctx, { Q, ...HG }, L);
   ctx.slabHoles.push(CLOACA.ojo);
   // (y la sima del Vergel, bajo el huerto seco de la plaza)
   ctx.slabHoles.push(VERGEL.sima);
@@ -181,6 +187,8 @@ export function buildLevel() {
   for (const [a, b, c, d] of D.rects(3)) ctx.col.add(a, FORT.carcel.aljibe.fondo - 1.1, b, c, FORT.puerta.foso.y - 1.1, d, 'block').cam = true;
   const nU = U.toColliders(ctx.col, ALEMAN.lair.y - 1, -1.2);
   const nQ = Q.toColliders(ctx.col, CLOACA.y0, CLOACA.y1);
+  let nH = 0;
+  for (const [k, g] of Object.entries(HONDAS.grids)) nH += HG[k].toColliders(ctx.col, g.y0, g.y1);
   // losa de suelo global con los huecos de las escaleras de la cripta
   const F = new WalkGrid(WORLD_X0, -232, 84, 72, 1);
   F.paint(WORLD_X0, -232, 84, 72, 1);
@@ -199,5 +207,5 @@ export function buildLevel() {
   // antorchas y braseros alimentan el pool de luces dinámicas
   ctx.wb.bake(ctx.lights);
   const meshes = ctx.wb.build();
-  return { ctx, L, meshes, S, C, B, D, U, Q, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, lairBlocks: nU, cloacaBlocks: nQ, clutter } };
+  return { ctx, L, meshes, S, C, B, D, U, Q, ...HG, stats: { ...ctx.wb.stats(), boxes: ctx.col.boxes.length, surfaceBlocks: nS, cryptBlocks: nC, cellarBlocks: nB, dungeonBlocks: nD, lairBlocks: nU, cloacaBlocks: nQ, hondasBlocks: nH, clutter } };
 }

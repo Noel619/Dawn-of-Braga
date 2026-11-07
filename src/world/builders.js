@@ -577,8 +577,10 @@ export function groinVaults(ctx, o) {
             else wb.quad(mat, P(s0, t0), P(s1, t0), P(s1, t1), P(s0, t1), opt);
           }
         // el tiro del óculo: del borde del hueco (que sigue la bóveda) arriba,
-        // con la cara hacia dentro
-        if (hole)
+        // con la cara hacia dentro (skip: los lados sin tiro, los que dan a
+        // otro tramo abierto)
+        const lado = ax === 'x' ? (sg > 0 ? 'e' : 'w') : sg > 0 ? 's' : 'n';
+        if (hole && !(oc.skip || []).includes(lado))
           for (let b = 0; b < n; b++) {
             const s0 = hole / m;
             const pa = P(s0, -1 + (2 * b) / n),

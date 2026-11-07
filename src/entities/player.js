@@ -1,5 +1,6 @@
 // El Condenado: controlador del jugador (combate Soulslike).
 import * as THREE from 'three';
+import { TONICOS } from '../game/alquimia.js';
 import { buildPlayer } from './models.js';
 import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
@@ -259,6 +260,10 @@ export class Player {
   }
 
   spawn(x, y, z, yaw) {
+    // (el cocimiento que se bebió se pasa al caer; el agua, al salir de ella)
+    this.tonico = null;
+    this.vadeo = 1;
+    this.bebe = null;
     this.body.pos.set(x, y, z);
     this.body.vy = 0;
     this.groundY = y;
@@ -364,6 +369,25 @@ export class Player {
     this.game.onPlayerAction && this.game.onPlayerAction('heal', {});
   }
 
+  // Beber un cocimiento del Desfigurado (game/alquimia.js): como una
+  // ampolla (el mismo trago), pero del inventario; lo que se bebe se pierde.
+  startTonico(tipo) {
+    const T = TONICOS[tipo];
+    const inv = this.game.inventory;
+    if (!inv || inv.count(T.item) <= 0) {
+      this.game.ui && this.game.ui.toast('No te queda ningún cocimiento de esos.');
+      return;
+    }
+    inv.add(T.item, -1);
+    this.bebe = tipo;
+    this.state = 'heal';
+    this.stT = 0;
+    this.flask.visible = true;
+    this.anim.play(this.clips.heal, { blend: 0.14 });
+    this.game.onPlayerAction && this.game.onPlayerAction('heal', {});
+    this.game.saveGame && this.game.saveGame();
+  }
+
   // 'smash': golpe de arriba abajo (romper un mueble); 'yaw' encara el objeto.
   // clip: otra animación para lo mismo (la palanca de un atajo, de un tirón).
   playInteract(kind = 'interact', yaw = null, dur = null, clip = null) {
@@ -408,6 +432,17 @@ export class Player {
       g.camRig && g.camRig.shake(0.12 + k * 0.2);
     }
     if (e === 'flick') g.audio && g.audio.play('flick', this.pos);
+    if (e === 'drink' && this.bebe) {
+      // (un cocimiento: el aliento vuelve antes, y con el negro se anda más
+      // ligero, durante un rato; si ya había uno, manda el que más dura)
+      const T = TONICOS[this.bebe];
+      this.tonico = { tipo: this.bebe, st: T.st, vel: T.vel, t: T.dur, dur: T.dur };
+      this.st = Math.min(this.maxSt, this.st + this.maxSt * 0.25);
+      this.bebe = null;
+      this.game.audio && this.game.audio.play('heal', this.pos);
+      this.game.fx && this.game.fx.blood && this.game.fx.blood.emit(this.pos.x, this.pos.y + 1.0, this.pos.z, 22, { color: T.vel > 1 ? [0.3, 0.26, 0.4] : [0.5, 1, 0.6], speed: 1.4, life: 1.0, up: 1.5, gravity: -2 });
+      return;
+    }
     if (e === 'drink') {
       const amt = Math.round(this.maxHp * 0.45 * this.mods.flask);
       this.hp = Math.min(this.maxHp, this.hp + amt);
@@ -777,7 +812,7 @@ export class Player {
 
     // buffer de entrada (0.4 s)
     if (allowControl) {
-      for (const a of ['light', 'heavy', 'heal', 'interact']) if (input.pressed(a)) this.buffer = { a, t: 0.4 };
+      for (const a of ['light', 'heavy', 'heal', 'interact', 'tonicoA', 'tonicoB']) if (input.pressed(a)) this.buffer = { a, t: 0.4 };
       if (input.released('dodge') && input.held('dodge') === 0) {
         // (la pulsación con la que se levanta del altar no es una esquiva)
         if (!this._eatDodge && this._dodgeHeld < 0.3) this.buffer = { a: 'dodge', t: 0.35 };
@@ -801,8 +836,16 @@ export class Player {
     // regeneración de aguante
     this.stDelay -= dt;
     if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll' && !this.sprinting) {
-      const rate = this.blocking && !this.mods.blockRegen ? 20 : 45;
+      const rate = (this.blocking && !this.mods.blockRegen ? 20 : 45) * (this.tonico ? this.tonico.st : 1);
       this.st = Math.min(this.maxSt, this.st + rate * dt);
+    }
+    // el cocimiento, mientras dura
+    if (this.tonico) {
+      this.tonico.t -= dt;
+      if (this.tonico.t <= 0) {
+        this.tonico = null;
+        this.game.ui && this.game.ui.toast('Se te pasa el cocimiento.', 3);
+      }
     }
     // lo del objeto bendito: la vida en el aire se va perdiendo (tras un
     // respiro) y los golpes que devuelve o remata caducan
@@ -873,7 +916,9 @@ export class Player {
       }
       const base = this.blocking ? BLOCKWALK : this.sprinting ? RUN : target ? STRAFE : mag < 0.55 ? lerp(0, WALK, mag / 0.55) / Math.max(mag, 0.01) : JOG;
       // (lento: dentro de la nube de beleño del Físico)
-      desiredSpeed = base * mag * (g.dev ? g.dev.speed : 1) * (this.lento || 1);
+      // (el agua a la rodilla de las cloacas hondas: game/cloacas.js; el
+      // cocimiento negro: más ligero)
+      desiredSpeed = base * mag * (g.dev ? g.dev.speed : 1) * (this.lento || 1) * (this.vadeo || 1) * (this.tonico ? this.tonico.vel : 1);
       if (st === 'blockhit') {
         desiredSpeed = 0;
         if (this.anim.done) this.state = 'free';
@@ -912,6 +957,8 @@ export class Player {
           this.orientForAttack(target, wx, wz, mag);
           this.startHeavy(false);
         } else if (take('heal')) this.startHeal();
+        else if (take('tonicoA')) this.startTonico('verde');
+        else if (take('tonicoB')) this.startTonico('negro');
         else if (take('interact')) g.tryInteract && g.tryInteract();
       }
     } else if (st === 'attack') {
