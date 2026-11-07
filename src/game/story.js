@@ -136,6 +136,23 @@ export const ITEMS = {
     key: false,
     ingrediente: true,
   },
+  // lo que deja el Lobishome, en su osario (world/cloacas_hondas.js)
+  colmillo: {
+    name: 'Colmillo del Lobishome',
+    desc: 'Un colmillo largo como un dedo, amarillo y negro en la raíz, que se le cayó en la paja de su cama. Alguien le hizo un agujero y lo colgó de un cordel: lo llevaba al cuello antes de dejar de ser alguien. Lo oscuro se le hace a uno de casa; la luz, no.',
+    icon: 'colmillo',
+    key: false,
+    relic: true,
+    pros: ['En lo oscuro, tus golpes hacen la mitad más de daño.'],
+    cons: ['En la luz, el aguante vuelve más despacio.'],
+  },
+  farol_bento: {
+    name: 'El farol del sepulturero',
+    desc: 'El farol de hierro de Bento, el que llevaba para cavar de noche en la necrópolis de los pobres: tiene los vidrios de cuerno y una cazoleta honda. Con su mecha en el tuyo, alumbra más lejos. Tu farol alumbra un metro más.',
+    icon: 'farol',
+    key: false,
+    upgrade: 'farol',
+  },
   cocimiento_verde: {
     name: 'Cocimiento verde',
     desc: 'Musgo de luz y raíz amarga, cocidos en el puchero del Desfigurado y colados por un trapo: un cuartillo verde que sabe a río. Bebido, el aliento vuelve antes, durante un rato. No cura. Lo que se bebe, se pierde: no se rellena al descansar ni al caer. Llevas tres como mucho.',
@@ -1057,6 +1074,13 @@ export const DIALOG = {
     'El verde: dos de musgo y una de raíz. Poco, y dura poco. El negro, si algún día me traes la flor: la flor, dos de raíz y dos de musgo. Ese te hace correr como un muchacho.',
     'No lleves más de tres verdes ni más de un negro. El cuerpo no aguanta más que eso; lo demás se agria en la tripa.',
   ],
+  // la flor de lo hondo: si se la llevas, se la queda para su remedio
+  desfFlor: [
+    'Eso que llevas... Blanca por fuera y negra por dentro. Como yo.',
+    'Es la que faltaba en el cuaderno. Con ella, y con lo que ya sé, se puede hacer. Déjamela. Abajo hay más: rebrota, si se la deja en paz.',
+    'Si mañana sale el sol y no me quema... subiré a verlo. Te lo prometo. Hermosa.',
+  ],
+  desfMurmuraRemedio: ['Un poco cada noche. Un poco.', 'Ya no me pica la cara. ¿Lo ves? Ya no.', 'Mañana subo. Mañana.', 'Negra por dentro... como yo. Como yo.'],
   // vencido el Lobishome: quién era
   desfLobo: [
     'Ya no lo oigo. Hace días que lo oía siempre, aunque no estuviera. Y ahora... nada.',
@@ -1509,6 +1533,8 @@ export const MSG = {
   cosechaNo: 'Aquí ya no queda nada. Rebrotará, si se le deja en paz un tiempo.',
   braseroEnciende: 'Acercas el farol a las brasas viejas. Prenden.',
   huertoPuerta: 'La puerta de un huerto, atrancada por dentro. Por encima de la tapia asoman las ramas de un nogal seco y el sombrero de un espantapájaros.',
+  candilApagado: 'A tu espalda, en la raya de sal, se apaga un candil. No hay corriente.',
+  loboHermano: 'Antes de quedarse quieto, lo que le queda de boca dice una palabra, con voz de hombre: «...Hermano.»',
   cocido: (n) => `Cueces un ${n.toLowerCase()} en el puchero del Desfigurado.`,
   cosecha: (n, k) => (k > 1 ? `Recoges ${n.toLowerCase()} (${k}).` : `Recoges ${n.toLowerCase()}.`),
   rastrillo: (n) =>

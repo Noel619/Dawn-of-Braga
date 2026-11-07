@@ -24,11 +24,42 @@ fuerte como mucho, y que no se rellena al morir. Así quedó:
 | El premio: la flor de lo hondo, para él | **La flor de lo hondo** es lo que hace el **cocimiento negro**; él te enseña a cocerlo (`game/alquimia.js`) |
 | El giro (es su hermano) | Vencido el lobo, **te lo dice** (`desf:lobo`) |
 
-**Queda** (no está hecho): la flor blanca que se cierra cuando él está cerca (el aviso en el marcador); la presa (te
-agarra y te arrastra a lo oscuro) y el entierro; el salto desde la bóveda; sus candiles apagados por el camino y el
-acecho de antes de la pelea (ahora la primera vez que se le ve es al cruzar la niebla); el hombre que se le ve a la luz
-de la luna al morir (cae como lobo); los dos finales del Desfigurado (su remedio y el amanecer, o los dos pares de
-ojos); el colmillo y la lumbre mayor del farol como premios. Prueba de la pelea: `tools/lobo.mjs`.
+Y lo que faltaba, después:
+
+| Del plan | Lo que hay |
+|---|---|
+| La flor blanca que avisa | Si la llevas (te la da el Desfigurado al conocerle), en el marcador: **se cierra** cuando él está cerca y no se le ve; abierta, no anda cerca (`Lobo.florEstado`) |
+| La presa y el entierro | Al final de la carga, a veces **te agarra** con las fauces y te arrastra lejos de la luz, sacudiéndote, con el farol apagado: forcejea (ataque, esquiva, guardia o interactuar) y te sueltas (y queda aturdido), o te lanza. En la tercera fase, **te entierra**: te tumba, escarba y te echa la tierra encima |
+| El salto desde la bóveda | Desde su escondite, a veces **trepa** (no se le ven ni los ojos); cae polvo de la bóveda encima de ti y, al poco, **se deja caer** donde estabas. Nunca donde hay un brasero encendido o la luna |
+| Sus candiles y el acecho | Al pasar la reja de la Sé, **se apaga un candil** de la raya de sal, a tu espalda (y no vuelve a lucir hasta que él cae); bajando la escalera, al fondo, tras la niebla, **unos ojos más altos que los de un hombre** se encienden un instante si miras abajo |
+| El hombre al morir | Cae como lobo; al rato, **se le ve el hombre** (lo del lobo se le va, la piel se le aclara) y el candil de la raya vuelve a lucir |
+| Los dos finales del Desfigurado | Si, sabiendo quién era, le llevas **una flor de lo hondo**, se la queda para su remedio (`desf:remedio`): en el final, **en la orilla, de cara al sol que sale**, que ya no le quema (le ves desde el agua). Si no, el pergamino lo cuenta: nadie vuelve a cambiar las mechas de **la raya de candiles** y, en lo oscuro, unos ojos más altos que los de un hombre (o **dos pares de ojos**, si el lobo sigue vivo) |
+| Los premios | En el osario, vencido él: **el colmillo** (objeto bendito: la mitad más de daño a oscuras, el aguante vuelve más despacio a la luz) y **el farol de Bento** (alumbra más lejos, y a él le cuesta más acercarse sin que se le vea) |
+
+Pruebas: `tools/lobo.mjs` (la pelea, fase a fase) y `tools/lobobot.mjs` (el equilibrio, abajo).
+
+**El equilibrio.** `tools/lobobot.mjs` pone a pelear a un jugador automático que entra por la niebla y sigue hasta
+vencer o morir: ve venir los golpes con su retraso, rueda antes o después de tiempo (y a veces no se da cuenta), se
+cubre con el escudo, sale rodando del primer zarpazo, bebe cuando hay un hueco, enciende braseros, forcejea y aprovecha
+el frenazo y el deslumbramiento; con tres perfiles (novato, medio, bueno) y dos equipos (el de empezar: 100 de vida, 3
+ampollas, daño ×1; uno medio: 130, 4, ×1,25). Lo que salió y lo que se cambió por ello:
+
+- La luz de tu propio farol contaba como luz para todo: con él encima, **nunca se dejaba caer de la bóveda**, nunca
+  cargaba en la pelea abierta y cada tercer golpe cerca de ti lo deslumbraba. Ahora, para eso cuenta la luz del sitio
+  (los braseros, la luna); la del farol, para verle y para que un golpe fuerte lo deslumbre.
+- Deslumbrado mientras caza, **volvía a la carga a quemarropa**: ahora se va a lo oscuro.
+- **La carga que no toca** se pasa de largo, frena derrapando y se vuelve (un segundo, sin golpe): es cuando se le pega.
+- La embestida y la presa avisan algo más (el golpe, a la media segunda en vez de a las cuatro décimas).
+- Se atascaba contra los braseros de los cruces (la rejilla de caminos no ve lo que estorba a un cuerpo tan ancho) y se
+  quedaba sin llegar, a veces minutos: los braseros van a la esquina del cruce y las criaturas, atascadas, dan un rodeo
+  (`entities/enemy.js`, `chaseTo`).
+- La caza, más viva (menos espera en el escondite, la retirada más corta), la primera fase acaba al 70 % (antes, al 65)
+  y la vida es de 1.350 (antes, 1.500).
+
+Al final: el **bueno** con equipo medio gana siempre, en unos cuatro minutos; el **medio** con equipo medio gana tres de
+cada cuatro, en unos tres minutos y medio, acabando con la mitad de la vida o menos; con el equipo de empezar, el medio
+no llega (le deja con dos a cuatro décimas de vida), y el **novato** tampoco, ni con el equipo medio (lo mismo). Lo que
+más daño hace: la embestida en la primera fase y el zarpazo doble en la segunda.
 
 Lo que pidió el autor:
 

@@ -21,8 +21,12 @@ export const RELIC_SLOTS = 1;
 //   parryWin: la ventana del parry (×); parrySt: cada parry devuelve todo el
 //   aguante; posture: parrys de menos para desequilibrar a los grandes y a los
 //   jefes; unbalance: lo que les dura el desequilibrio (×); ripK: el golpe de
-//   gracia (×); noBlock: la guardia sólo desvía (no se bloquea).
+//   gracia (×); noBlock: la guardia sólo desvía (no se bloquea);
+//   oscuroDmg: el daño de tus golpes en lo oscuro (×); luzSt: lo que vuelve el
+//   aguante en la luz (×) (lo oscuro: la luz horneada donde estás; player.js).
 const BASE = {
+  oscuroDmg: 1,
+  luzSt: 1,
   blockSt: 1,
   blockRegen: false,
   chip: 1,
@@ -54,6 +58,8 @@ export const RELICS = {
   obolo: { mods: { rally: 0.6, atkSpeed: 1.15, flask: 0.5, taken: 1.15 } },
   // el desvío (en la cripta de San Martín): el más fuerte
   cerrojo: { mods: { parryWin: 1.6, parrySt: true, posture: 1, unbalance: 1.4, ripK: 2, noBlock: true } },
+  // lo oscuro (en el osario del Lobishome)
+  colmillo: { mods: { oscuroDmg: 1.5, luzSt: 0.7 } },
 };
 export const RELIC_IDS = Object.keys(RELICS);
 

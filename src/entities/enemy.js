@@ -295,11 +295,49 @@ export class Enemy {
         this.pathT = 0.7 + Math.random() * 0.3;
       }
     }
+    let gx = tx,
+      gz = tz;
     if (this.path && this.pathI < this.path.length) {
       const [px, pz] = this.path[this.pathI];
       if (Math.hypot(px - this.pos.x, pz - this.pos.z) < 0.6) this.pathI++;
-      this.steerTo(px, pz, speed, dt);
-    } else this.steerTo(tx, tz, speed, dt);
+      gx = px;
+      gz = pz;
+    }
+    // (atascado contra lo que la rejilla no ve —un brasero, la arista de un
+    // pilar, para un cuerpo ancho—: medio segundo de rodeo hacia un lado,
+    // cada vez hacia el otro, y vuelta a buscar el camino)
+    const now = this.game.time;
+    const A = this._atasco || (this._atasco = { x: this.pos.x, z: this.pos.z, t: 0, at: now, rodeo: 0, lado: 1 });
+    if (now - A.at > 0.25) {
+      A.x = this.pos.x;
+      A.z = this.pos.z;
+      A.t = 0;
+      A.rodeo = 0;
+    }
+    A.at = now;
+    A.t += dt;
+    if (A.t > 0.6) {
+      // (no al llegar, que es cuando frena)
+      if (speed > 1 && Math.hypot(tx - this.pos.x, tz - this.pos.z) > 1.2 && Math.hypot(this.pos.x - A.x, this.pos.z - A.z) < 0.15 * speed * A.t) {
+        A.rodeo = 0.5;
+        A.lado = -A.lado;
+        this.pathT = 0;
+      }
+      A.x = this.pos.x;
+      A.z = this.pos.z;
+      A.t = 0;
+    }
+    if (A.rodeo > 0) {
+      A.rodeo -= dt;
+      const dx = gx - this.pos.x,
+        dz = gz - this.pos.z;
+      const d = Math.hypot(dx, dz) || 1;
+      const c = Math.cos(1.2),
+        s = Math.sin(1.2) * A.lado;
+      gx = this.pos.x + ((dx * c - dz * s) / d) * 2;
+      gz = this.pos.z + ((dx * s + dz * c) / d) * 2;
+    }
+    this.steerTo(gx, gz, speed, dt);
   }
 
   // ------------------------------------------------------------ combate
@@ -411,7 +449,9 @@ export class Enemy {
   startAttack(a) {
     this.state = 'attack';
     this.atkSerial = (this.atkSerial || 0) + 1;
-    this.flare = 1;
+    // (lo que no es un golpe, como el frenazo del Lobishome: sin el destello
+    // de los ojos ni el grito)
+    this.flare = a.quiet ? 0 : 1;
     // (los golpes que no se pueden desviar: los ojos en rojo, un destello
     // rojo y un toque grave)
     this.flareRed = a.noParry ? 1 : 0;
@@ -422,7 +462,7 @@ export class Enemy {
     this.evDone = [];
     this.anim.play(a.clip, { blend: a.blend ?? 0.1 });
     if (a.onStart) a.onStart(this);
-    this.game.audio && this.game.audio.enemyVoice(this, 'attack', a);
+    if (!a.quiet) this.game.audio && this.game.audio.enemyVoice(this, 'attack', a);
   }
 
   // El paso del golpe (Biped._anchor): lo que le queda al cuerpo del impulso

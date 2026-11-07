@@ -50,22 +50,29 @@ function buildLobishome() {
       [0, 0.36, -0.17, 0.22, 0.08, 0.12],
       [0.2, 0.55, 0, 0.12, 0.1, 0.14],
       [-0.2, 0.55, 0, 0.12, 0.1, 0.14],
-    ].map(([x, y, z, a, b, c]) => ({ j: 'chest', type: 'ico', s: [a, b, c], p: [x, y, z], mat: H })),
+    ].map(([x, y, z, a, b, c]) => ({ j: 'chest', type: 'ico', s: [a, b, c], p: [x, y, z], mat: H, grp: 'lobo' })),
     // el cuello, largo
     { j: 'chest', type: 'box', s: [0.15, 0.2, 0.16], p: [0, 0.6, 0.02], mat: P },
     // la cabeza: el cráneo de hombre, estirado; el hocico que le sale; las
     // orejas; los ojos
     { j: 'head', type: 'box', s: [0.2, 0.22, 0.24], p: [0, 0.1, 0], taper: [0.9, 1.05], mat: P },
-    { j: 'head', type: 'box', s: [0.13, 0.1, 0.24], p: [0, 0.06, 0.2], taper: [0.75, 0.85], mat: P },
-    { j: 'head', type: 'box', s: [0.06, 0.04, 0.05], p: [0, 0.09, 0.32], mat: 'black' },
-    ...[-0.045, -0.015, 0.015, 0.045].map((x) => ({ j: 'head', type: 'cone', s: [0.012, 0.05], p: [x, 0.0, 0.27], r: [180, 0, 0], mat: 'bone' })),
-    { j: 'head', type: 'cone', s: [0.05, 0.14], p: [0.08, 0.25, -0.03], r: [-15, 0, -20], mat: H },
-    { j: 'head', type: 'cone', s: [0.05, 0.14], p: [-0.08, 0.25, -0.03], r: [-15, 0, 20], mat: H },
-    { j: 'head', type: 'ico', s: [0.16, 0.1, 0.14], p: [0, 0.2, -0.06], mat: H },
+    { j: 'head', type: 'box', s: [0.13, 0.1, 0.24], p: [0, 0.06, 0.2], taper: [0.75, 0.85], mat: P, grp: 'lobo' },
+    { j: 'head', type: 'box', s: [0.06, 0.04, 0.05], p: [0, 0.09, 0.32], mat: 'black', grp: 'lobo' },
+    ...[-0.045, -0.015, 0.015, 0.045].map((x) => ({ j: 'head', type: 'cone', s: [0.012, 0.05], p: [x, 0.0, 0.27], r: [180, 0, 0], mat: 'bone', grp: 'lobo' })),
+    { j: 'head', type: 'cone', s: [0.05, 0.14], p: [0.08, 0.25, -0.03], r: [-15, 0, -20], mat: H, grp: 'lobo' },
+    { j: 'head', type: 'cone', s: [0.05, 0.14], p: [-0.08, 0.25, -0.03], r: [-15, 0, 20], mat: H, grp: 'lobo' },
+    { j: 'head', type: 'ico', s: [0.16, 0.1, 0.14], p: [0, 0.2, -0.06], mat: H, grp: 'lobo' },
+    // (lo que se le ve al morir: la cara de un hombre flaco, el pelo pegado,
+    // la barba de días; game/lobishome.js)
+    { j: 'head', type: 'box', s: [0.05, 0.06, 0.05], p: [0, 0.08, 0.13], mat: P, grp: 'hombre' },
+    { j: 'head', type: 'box', s: [0.15, 0.06, 0.08], p: [0, 0.0, 0.08], mat: 'loboPelo', grp: 'hombre' },
+    { j: 'head', type: 'box', s: [0.22, 0.08, 0.24], p: [0, 0.22, -0.01], mat: 'loboPelo', grp: 'hombre' },
+    { j: 'head', type: 'box', s: [0.03, 0.06, 0.05], p: [0.11, 0.1, 0], mat: P, grp: 'hombre' },
+    { j: 'head', type: 'box', s: [0.03, 0.06, 0.05], p: [-0.11, 0.1, 0], mat: P, grp: 'hombre' },
     { j: 'head', type: 'sphere', s: [0.024], p: [0.055, 0.12, 0.12], mat: 'eyeGlow' },
     { j: 'head', type: 'sphere', s: [0.024], p: [-0.055, 0.12, 0.12], mat: 'eyeGlow' },
-    { j: 'jaw', type: 'box', s: [0.11, 0.04, 0.22], p: [0, -0.02, 0.13], mat: P },
-    ...[-0.035, 0, 0.035].map((x) => ({ j: 'jaw', type: 'cone', s: [0.011, 0.045], p: [x, 0.02, 0.22], mat: 'bone' })),
+    { j: 'jaw', type: 'box', s: [0.11, 0.04, 0.22], p: [0, -0.02, 0.13], mat: P, grp: 'lobo' },
+    ...[-0.035, 0, 0.035].map((x) => ({ j: 'jaw', type: 'cone', s: [0.011, 0.045], p: [x, 0.02, 0.22], mat: 'bone', grp: 'lobo' })),
     // los brazos, largos, y las manos de cavar con sus uñas negras
     { j: 'armL', type: 'box', s: [0.1, 0.42, 0.1], p: [0, -0.2, 0], taper: [0.8, 0.85], mat: P },
     { j: 'foreL', type: 'box', s: [0.085, 0.42, 0.085], p: [0, -0.2, 0], taper: [0.7, 0.75], mat: P },
@@ -74,10 +81,10 @@ function buildLobishome() {
     { j: 'foreR', type: 'box', s: [0.085, 0.42, 0.085], p: [0, -0.2, 0], taper: [0.7, 0.75], mat: P },
     { j: 'handR', type: 'box', s: [0.1, 0.13, 0.06], p: [0, -0.07, 0], mat: P },
     ...['handL', 'handR'].flatMap((j) =>
-      [-0.035, -0.012, 0.012, 0.035].map((x) => ({ j, type: 'cone', s: [0.012, 0.12], p: [x, -0.19, 0.02], r: [175, 0, 0], mat: 'black' }))
+      [-0.035, -0.012, 0.012, 0.035].map((x) => ({ j, type: 'cone', s: [0.012, 0.12], p: [x, -0.19, 0.02], r: [175, 0, 0], mat: 'black', grp: 'lobo' }))
     ),
-    { j: 'armL', type: 'ico', s: [0.1, 0.08, 0.1], p: [0, -0.02, 0], mat: H },
-    { j: 'armR', type: 'ico', s: [0.1, 0.08, 0.1], p: [0, -0.02, 0], mat: H },
+    { j: 'armL', type: 'ico', s: [0.1, 0.08, 0.1], p: [0, -0.02, 0], mat: H, grp: 'lobo' },
+    { j: 'armR', type: 'ico', s: [0.1, 0.08, 0.1], p: [0, -0.02, 0], mat: H, grp: 'lobo' },
     // los jirones del sayo, colgando de la cadera; la cuerda con las llaves
     ...[
       [0.12, 0.08],
@@ -200,15 +207,29 @@ const lbClips = {
   // delante (las patas de delante abiertas)
   embestida: clip(
     'embestida',
-    1.15,
+    1.25,
     [
       [0, { root: [0, -36, 0], hips: [24, 0, 0], chest: [52, 0, 0], head: [-60, 0, 0], armL: [-74, 0, 6], armR: [-74, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
-      [0.3, { root: [0, -44, -10], hips: [30, 0, 0], chest: [58, 0, 0], head: [-66, 0, 0], jaw: [50, 0, 0], armL: [-50, 0, 30], armR: [-50, 0, -30], legL: [-10, 0, 0], shinL: [70, 0, 0], legR: [-10, 0, 0], shinR: [70, 0, 0] }],
-      [0.48, { root: [0, -20, 30], hips: [10, 0, 0], chest: [40, 0, 0], head: [-40, 0, 0], jaw: [10, 0, 0], armL: [-130, 0, 30], armR: [-130, 0, -30], legL: [-60, 0, 0], shinL: [20, 0, 0], legR: [-60, 0, 0], shinR: [20, 0, 0] }, 'strike'],
-      [0.75, { root: [0, -34, 10], hips: [20, 0, 0], chest: [48, 0, 0], head: [-55, 0, 0], jaw: [20, 0, 0], armL: [-80, 0, 10], armR: [-80, 0, -10], legL: [-30, 0, 0], shinL: [40, 0, 0], legR: [-30, 0, 0], shinR: [40, 0, 0] }],
-      [1.15, { root: [0, -36, 0], hips: [24, 0, 0], chest: [52, 0, 0], head: [-60, 0, 0], armL: [-74, 0, 6], armR: [-74, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
+      [0.38, { root: [0, -44, -10], hips: [30, 0, 0], chest: [58, 0, 0], head: [-66, 0, 0], jaw: [50, 0, 0], armL: [-50, 0, 30], armR: [-50, 0, -30], legL: [-10, 0, 0], shinL: [70, 0, 0], legR: [-10, 0, 0], shinR: [70, 0, 0] }],
+      [0.58, { root: [0, -20, 30], hips: [10, 0, 0], chest: [40, 0, 0], head: [-40, 0, 0], jaw: [10, 0, 0], armL: [-130, 0, 30], armR: [-130, 0, -30], legL: [-60, 0, 0], shinL: [20, 0, 0], legR: [-60, 0, 0], shinR: [20, 0, 0] }, 'strike'],
+      [0.85, { root: [0, -34, 10], hips: [20, 0, 0], chest: [48, 0, 0], head: [-55, 0, 0], jaw: [20, 0, 0], armL: [-80, 0, 10], armR: [-80, 0, -10], legL: [-30, 0, 0], shinL: [40, 0, 0], legR: [-30, 0, 0], shinR: [40, 0, 0] }],
+      [1.25, { root: [0, -36, 0], hips: [24, 0, 0], chest: [52, 0, 0], head: [-60, 0, 0], armL: [-74, 0, 6], armR: [-74, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
     ],
-    { events: [{ t: 0.36, name: 'swing' }], ground: false }
+    { events: [{ t: 0.46, name: 'swing' }], ground: false }
+  ),
+  // la carga que no toca: se pasa de largo, clava las manos, frena
+  // derrapando y se vuelve sacudiendo la cabeza (el momento de pegarle)
+  frena: clip(
+    'frena',
+    1.0,
+    [
+      [0, { root: [0, -36, 0], hips: [24, 0, 0], chest: [52, 0, 0], head: [-60, 0, 0], armL: [-74, 0, 6], armR: [-74, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
+      [0.22, { root: [0, -44, -6], hips: [14, 8, 0], chest: [34, 12, 6], head: [-46, 24, 12], jaw: [26, 0, 0], armL: [-104, 0, 16], armR: [-96, 0, -20], legL: [-44, 0, 0], shinL: [58, 0, 0], legR: [-20, 0, 0], shinR: [30, 0, 0] }],
+      [0.5, { root: [0, -40, 0], hips: [22, -6, 0], chest: [46, -10, -4], head: [-56, -26, -12], jaw: [38, 0, 0], armL: [-84, 0, 10], armR: [-90, 0, -10], legL: [-30, 0, 0], shinL: [40, 0, 0], legR: [-34, 0, 0], shinR: [44, 0, 0] }],
+      [0.74, { root: [0, -38, 0], hips: [24, 4, 0], chest: [50, 6, 2], head: [-58, 14, 6], jaw: [20, 0, 0], armL: [-76, 0, 6], armR: [-76, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
+      [1.0, { root: [0, -36, 0], hips: [24, 0, 0], chest: [52, 0, 0], head: [-60, 0, 0], armL: [-74, 0, 6], armR: [-74, 0, -6], legL: [-30, 0, 0], shinL: [36, 0, 0], legR: [-30, 0, 0], shinR: [36, 0, 0] }],
+    ],
+    { ground: false }
   ),
   // el aullido: se para, echa la cabeza atrás y aúlla
   aullido: clip('aullido', 3.4, [
@@ -217,6 +238,51 @@ const lbClips = {
     [2.6, { chest: [-22, 0, 0], head: [-76, 0, 0], jaw: [55, 0, 0], armL: [-24, 0, 44], armR: [-24, 0, -44] }],
     [3.4, {}],
   ]),
+  // la presa: se tira con las fauces abiertas, a la altura del pecho
+  presa: clip(
+    'presa',
+    1.26,
+    [
+      [0, {}],
+      [0.34, { chest: [10, 0, 0], head: [-55, 0, 0], jaw: [60, 0, 0], armL: [-80, 0, 40], foreL: [-40, 0, 0], armR: [-80, 0, -40], foreR: [-40, 0, 0], root: [0, -10, -10] }],
+      [0.54, { chest: [46, 0, 0], head: [-30, 0, 0], jaw: [10, 0, 0], armL: [-110, 0, 20], foreL: [-30, 0, 0], armR: [-110, 0, -20], foreR: [-30, 0, 0], root: [0, -16, 22] }, 'strike'],
+      [1.26, {}],
+    ],
+    { events: [{ t: 0.42, name: 'swing' }] }
+  ),
+  // te tiene: te sacude con las fauces y tira hacia atrás
+  sacude: clip(
+    'sacude',
+    0.5,
+    [
+      [0, { chest: [38, 0, 0], head: [-36, -18, 0], jaw: [18, 0, 0], armL: [-100, 0, 24], foreL: [-50, 0, 0], armR: [-100, 0, -24], foreR: [-50, 0, 0], root: [0, -14, -6] }],
+      [0.25, { chest: [42, 0, 0], head: [-30, 18, 0], jaw: [14, 0, 0], armL: [-104, 0, 20], foreL: [-46, 0, 0], armR: [-96, 0, -28], foreR: [-54, 0, 0], root: [0, -16, -4] }],
+      [0.5, { chest: [38, 0, 0], head: [-36, -18, 0], jaw: [18, 0, 0], armL: [-100, 0, 24], foreL: [-50, 0, 0], armR: [-100, 0, -24], foreR: [-50, 0, 0], root: [0, -14, -6] }],
+    ],
+    { loop: true }
+  ),
+  // el entierro: agachado sobre ti, escarba y te echa la tierra encima
+  escarba: clip(
+    'escarba',
+    0.6,
+    [
+      [0, { chest: [62, 0, 0], head: [-40, 0, 0], jaw: [20, 0, 0], armL: [-120, 0, 20], foreL: [-60, 0, 0], armR: [-60, 0, -20], foreR: [-20, 0, 0], root: [0, -40, 0], legL: [-60, 0, 0], shinL: [90, 0, 0], legR: [-60, 0, 0], shinR: [90, 0, 0] }],
+      [0.3, { chest: [64, 0, 0], head: [-38, 0, 0], jaw: [26, 0, 0], armL: [-60, 0, 20], foreL: [-20, 0, 0], armR: [-120, 0, -20], foreR: [-60, 0, 0], root: [0, -40, 0], legL: [-60, 0, 0], shinL: [90, 0, 0], legR: [-60, 0, 0], shinR: [90, 0, 0] }],
+      [0.6, { chest: [62, 0, 0], head: [-40, 0, 0], jaw: [20, 0, 0], armL: [-120, 0, 20], foreL: [-60, 0, 0], armR: [-60, 0, -20], foreR: [-20, 0, 0], root: [0, -40, 0], legL: [-60, 0, 0], shinL: [90, 0, 0], legR: [-60, 0, 0], shinR: [90, 0, 0] }],
+    ],
+    { loop: true, ground: false }
+  ),
+  // la caída desde la bóveda: llega agachado, a cuatro patas, y se alza
+  caida: clip(
+    'caida',
+    1.3,
+    [
+      [0, { root: [0, -60, 0], hips: [40, 0, 0], chest: [50, 0, 0], head: [-50, 0, 0], jaw: [40, 0, 0], armL: [-120, 0, 50], foreL: [-30, 0, 0], armR: [-120, 0, -50], foreR: [-30, 0, 0], legL: [-90, 0, 10], shinL: [120, 0, 0], legR: [-90, 0, -10], shinR: [120, 0, 0] }, 'snap'],
+      [0.25, { root: [0, -50, 0], hips: [30, 0, 0], chest: [40, 0, 0], head: [-40, 0, 0], jaw: [30, 0, 0], armL: [-90, 0, 40], foreL: [-30, 0, 0], armR: [-90, 0, -40], foreR: [-30, 0, 0], legL: [-80, 0, 10], shinL: [110, 0, 0], legR: [-80, 0, -10], shinR: [110, 0, 0] }],
+      [1.3, {}],
+    ],
+    { ground: false }
+  ),
   hurt: clip('hurt', 0.45, [
     [0, { chest: [-14, 18, 0], head: [-10, 30, 0], jaw: [40, 0, 0] }, 'snap'],
     [0.45, {}],
@@ -264,13 +330,18 @@ function setModo(e, m, t = 0) {
   D.modo = m;
   D.mt = t;
   D.dest = null;
+  if (m !== 'techo') {
+    D.oculto = false;
+    D.air = false;
+    D.blanco = null;
+  }
   D.cuatro = m === 'acecho' || m === 'carga' || m === 'retirada' || m === 'brasero';
 }
 
 // la fase, por la vida que le queda
 function fase(e) {
   const f = e.hp / e.maxHp;
-  return f > 0.65 ? 1 : f > 0.3 ? 2 : 3;
+  return f > 0.7 ? 1 : f > 0.3 ? 2 : 3;
 }
 
 // lo de cada fotograma, antes de lo de siempre (T.update va después: aquí,
@@ -328,7 +399,7 @@ function think(e, player, d, dt) {
       }
       D.mt = 4;
     }
-    if (d > 11 && L && L.luzEn(player.pos.x, player.pos.y, player.pos.z) < 0.3 && Math.random() < dt * 0.5) {
+    if (d > 11 && L && L.luzEn(player.pos.x, player.pos.y, player.pos.z, false) < 0.3 && Math.random() < dt * 0.5) {
       setModo(e, 'carga');
       e.state = 'lobo';
       return 'handled';
@@ -376,8 +447,8 @@ function estadoLobo(e, dt, player, d) {
     case 'acecho': {
       // a un cruce a oscuras, a unos metros de ti
       if (!D.dest || D.mt > 9) {
-        const n = L.escondite(e, player, final ? [7, 13] : [9, 17]);
-        D.dest = n ? { x: n.x, y: n.y, z: n.z, espera: (final ? 1.0 : 1.6) + Math.random() * (final ? 1.4 : 2.4) } : { x: player.pos.x, y: player.pos.y, z: player.pos.z, espera: 0 };
+        const n = L.escondite(e, player, final ? [7, 13] : [8, 15]);
+        D.dest = n ? { x: n.x, y: n.y, z: n.z, espera: (final ? 1.0 : 1.2) + Math.random() * (final ? 1.4 : 1.8) } : { x: player.pos.x, y: player.pos.y, z: player.pos.z, espera: 0 };
         D.mt = 0;
         D.llego = 0;
       }
@@ -392,16 +463,61 @@ function estadoLobo(e, dt, player, d) {
         e.vx = damp(e.vx, 0, 8, dt);
         e.vz = damp(e.vz, 0, 8, dt);
         e.yaw = approachAngle(e.yaw, e.angleTo(player.pos), 4 * dt);
-        if (D.mt - D.llego > D.dest.espera) setModo(e, 'carga');
+        if (D.mt - D.llego > D.dest.espera) {
+          // (a veces no carga: trepa por la bóveda y se te deja caer encima)
+          const lejos = Math.hypot(player.pos.x - e.pos.x, player.pos.z - e.pos.z);
+          // (no donde hay luz de verdad: un brasero, la luna; la de tu farol,
+          // que va contigo, no cuenta)
+          if (lejos < 16 && Math.random() < (final ? 0.45 : 0.3) && L.luzEn(player.pos.x, player.pos.y, player.pos.z, false) < 0.4 && !L.braseroCerca(player.pos.x, player.pos.z, 4.5)) setModo(e, 'techo');
+          else setModo(e, 'carga');
+        }
+      }
+      return;
+    }
+    case 'techo': {
+      // trepa (no se le ve, ni los ojos); al rato, el polvo que cae de la
+      // bóveda encima de ti; y cae donde estabas
+      e.vx = damp(e.vx, 0, 10, dt);
+      e.vz = damp(e.vz, 0, 10, dt);
+      D.oculto = true;
+      D.air = true;
+      if (!D.blanco && D.mt > 0.9) {
+        D.blanco = { x: player.pos.x, y: player.pos.y, z: player.pos.z };
+        e.game.audio && e.game.audio.play('rubble', { x: D.blanco.x, y: D.blanco.y + 3, z: D.blanco.z }, { gain: 0.5 });
+      }
+      if (D.blanco) {
+        D.polvo = (D.polvo || 0) - dt;
+        if (D.polvo <= 0 && L.polvo) {
+          D.polvo = 0.12;
+          L.polvo(D.blanco.x, D.blanco.y, D.blanco.z);
+        }
+      }
+      if (D.blanco && D.mt > 2.1) {
+        const B = D.blanco;
+        const gy = e.game.world.col.groundHeight(B.x, B.z, 0.3, B.y + 1.2);
+        e.body.pos.set(B.x, gy > B.y - 2 ? gy : B.y, B.z);
+        e.body.vy = 0;
+        e.yaw = e.angleTo(player.pos);
+        D.oculto = false;
+        D.air = false;
+        D.blanco = null;
+        D.cuatro = true;
+        D.cuatroW = 1;
+        e.startAttack(T.attacks.find((a) => a.name === 'caida'));
+        D.trasGolpe = true;
+        e.game.camRig && e.game.camRig.shake && e.game.camRig.shake(0.4);
+        e.game.audio && e.game.audio.play('slam', e.pos, { gain: 0.7 });
       }
       return;
     }
     case 'carga': {
       const vel = VEL.carga * (final ? 1.08 : 1);
       if (d < 2.9 && Math.abs(player.pos.y - e.pos.y) < 1.2 && e.cooldown <= 0) {
-        // la embestida: en lo oscuro no se desvía (en la luz, sí)
+        // la embestida (en lo oscuro no se desvía; en la luz, sí) o, a veces,
+        // la presa (en la tercera fase, el entierro)
         const enLuz = L.luzEn(e.pos.x, e.pos.y, e.pos.z) > 0.45;
-        e.startAttack(T.attacks.find((a) => a.name === (enLuz ? 'embestidaLuz' : 'embestida')));
+        const presa = e.game.time - (D.presaT ?? -99) > 12 && Math.random() < (final ? 0.45 : 0.32);
+        e.startAttack(T.attacks.find((a) => a.name === (presa ? 'presa' : enLuz ? 'embestidaLuz' : 'embestida')));
         D.trasGolpe = true;
         return;
       }
@@ -411,7 +527,7 @@ function estadoLobo(e, dt, player, d) {
     }
     case 'retirada': {
       if (!D.dest) {
-        const n = L.escondite(e, player, [12, 24]);
+        const n = L.escondite(e, player, [10, 18]);
         D.dest = n ? { x: n.x, y: n.y, z: n.z } : null;
         D.mt = 0;
       }
@@ -453,6 +569,129 @@ function estadoLobo(e, dt, player, d) {
   }
 }
 
+// ------------------------------------------------------------------------ la presa
+// Si te alcanza: te coge con las fauces y te arrastra hacia lo oscuro (lejos
+// del brasero encendido que tengas cerca), sacudiéndote; el farol se te apaga
+// hasta que te sueltas (forcejeando) o te lanza. En la tercera fase, el
+// entierro: te tumba y escarba, y te echa la tierra encima.
+function agarrar(e, g) {
+  const p = g.player;
+  const D = e.data;
+  if (e.state !== 'attack' || D.agarrado) return;
+  const d = e.distTo(p.pos);
+  const a = Math.abs(angleDiff(e.yaw, e.angleTo(p.pos)));
+  if (p.dead || p.iframe || d > 2.0 || a > 60 * DEG || Math.abs(p.pos.y - e.pos.y) > 0.9 || p.state === 'grabbed' || p.state === 'pinned') return;
+  D.agarrado = true;
+  D.presaT = g.time;
+  D.mash0 = 0;
+  e.atk = null;
+  e.stT = 0;
+  if (D.final) {
+    p.startPinned && p.startPinned();
+    e.state = 'enterrando';
+    e.anim.play(lbClips.escarba, { blend: 0.1, loop: true });
+  } else {
+    p.startGrabbed && p.startGrabbed(e);
+    e.state = 'arrastrando';
+    e.anim.play(lbClips.sacude, { blend: 0.08, loop: true });
+    // (hacia lo oscuro: lejos del brasero encendido que haya cerca)
+    let dx = -Math.sin(e.yaw),
+      dz = -Math.cos(e.yaw);
+    const b = g.lobo && g.lobo.braseroCerca(e.pos.x, e.pos.z, 12);
+    if (b) {
+      const bx = e.pos.x - b.x,
+        bz = e.pos.z - b.z,
+        L = Math.hypot(bx, bz) || 1;
+      dx = bx / L;
+      dz = bz / L;
+    }
+    D.arrastre = [dx, dz];
+  }
+  D.mash0 = p.mash || 0;
+  g.audio && g.audio.play('grab', p.pos);
+  g.audio && g.audio.enemyVoice(e, 'attack');
+  g.camRig && g.camRig.shake && g.camRig.shake(0.35);
+}
+function soltar(e, escapado) {
+  const g = e.game;
+  const p = g.player;
+  const D = e.data;
+  D.agarrado = false;
+  e.anim.stop(0.15);
+  const fx = Math.sin(e.yaw),
+    fz = Math.cos(e.yaw);
+  if (p.state === 'grabbed') {
+    if (escapado) p.releaseGrab && p.releaseGrab(2.4, fx, fz, 0);
+    else {
+      g.audio && g.audio.play('hit', p.pos);
+      p.releaseGrab && p.releaseGrab(4.4, fx, fz, 18);
+      g.camRig && g.camRig.shake && g.camRig.shake(0.45);
+    }
+  } else if (p.state === 'pinned') p.releasePin && p.releasePin(escapado, escapado ? 0 : 30);
+  g.lobo && g.lobo.farolVuelve(escapado);
+  if (escapado) {
+    e.state = 'stagger';
+    e.stT = 0;
+    e.anim.play(lbClips.stagger, { blend: 0.05 });
+    D.trasGolpe = true;
+  } else {
+    setModo(e, 'retirada');
+    e.state = 'lobo';
+    e.cooldown = 1.2;
+  }
+}
+function estadoArrastrando(e, dt, pl) {
+  const D = e.data;
+  if (pl.state !== 'grabbed' || pl.dead) {
+    D.agarrado = false;
+    setModo(e, 'retirada');
+    e.state = 'lobo';
+    e.anim.stop(0.15);
+    return;
+  }
+  // tira hacia atrás (hacia lo oscuro) y te tiene delante, en las fauces
+  const [dx, dz] = D.arrastre || [0, 0];
+  e.vx = damp(e.vx, dx * 1.9, 6, dt);
+  e.vz = damp(e.vz, dz * 1.9, 6, dt);
+  e.yaw = approachAngle(e.yaw, Math.atan2(-dx, -dz), 6 * dt);
+  const fx = Math.sin(e.yaw),
+    fz = Math.cos(e.yaw);
+  pl.pos.x = damp(pl.pos.x, e.pos.x + fx * 0.95, 12, dt);
+  pl.pos.z = damp(pl.pos.z, e.pos.z + fz * 0.95, 12, dt);
+  pl.yaw = Math.atan2(e.pos.x - pl.pos.x, e.pos.z - pl.pos.z);
+  D.mordT = (D.mordT ?? 0.3) - dt;
+  if (D.mordT <= 0) {
+    D.mordT = 0.55;
+    pl.receiveBite && pl.receiveBite(5);
+    e.game.audio && e.game.audio.play('bite', pl.pos, { gain: 0.6 });
+  }
+  if ((pl.mash || 0) - (D.mash0 || 0) >= 8) soltar(e, true);
+  else if (e.stT > 3.0) soltar(e, false);
+}
+function estadoEnterrando(e, dt, pl) {
+  const D = e.data;
+  if (pl.state !== 'pinned' || pl.dead) {
+    D.agarrado = false;
+    setModo(e, 'retirada');
+    e.state = 'lobo';
+    e.anim.stop(0.15);
+    return;
+  }
+  // a tus pies, de cara a ti: escarba y te echa la tierra encima
+  e.vx = damp(e.vx, 0, 10, dt);
+  e.vz = damp(e.vz, 0, 10, dt);
+  e.yaw = approachAngle(e.yaw, e.angleTo(pl.pos), 8 * dt);
+  D.mordT = (D.mordT ?? 0.25) - dt;
+  if (D.mordT <= 0) {
+    D.mordT = 0.5;
+    pl.receiveBite && pl.receiveBite(3);
+    e.game.lobo && e.game.lobo.polvo && e.game.lobo.polvo(pl.pos.x, pl.pos.y - 2.2, pl.pos.z, true);
+    e.game.audio && e.game.audio.play('dig', pl.pos, { gain: 0.6 });
+  }
+  if ((pl.mash || 0) - (D.mash0 || 0) >= 11) soltar(e, true);
+  else if (e.stT > 4.0) soltar(e, false);
+}
+
 // tras cada golpe: a lo oscuro (en la primera y la tercera fase), o a seguir
 // peleando
 function trasAtaque(e) {
@@ -468,7 +707,7 @@ function trasAtaque(e) {
 const T = {
   name: 'El Lobishome',
   build: buildLobishome,
-  hp: 1500,
+  hp: 1350,
   poise: 90,
   radius: 0.55,
   height: 2.3,
@@ -497,10 +736,19 @@ const T = {
       [0.88, 1.0, 3.0],
     ], weight: 3, cd: 0.7, cond: (e) => e.data.modo === 'pelea' },
     { name: 'dentellada', clip: lbClips.dentellada, dur: 1.0, min: 0, max: 2.4, hits: [[0.44, 0.56]], dmg: 25, range: 2.5, arc: 70, lunge: [[0.4, 0.52, 5]], weight: 2, cd: 0.6, cond: (e) => e.data.modo === 'pelea' },
-    { name: 'embestidaPelea', clip: lbClips.embestida, dur: 1.15, min: 3.5, max: 7.5, hits: [[0.4, 0.62]], dmg: 28, range: 2.6, arc: 80, lunge: [[0.3, 0.66, 10]], weight: 2, cd: 1.2, cond: (e) => e.data.modo === 'pelea' },
+    { name: 'embestidaPelea', clip: lbClips.embestida, dur: 1.25, min: 3.5, max: 7.5, hits: [[0.5, 0.72]], dmg: 28, range: 2.6, arc: 80, lunge: [[0.38, 0.76, 9.5]], weight: 2, cd: 1.2, cond: (e) => e.data.modo === 'pelea' },
     // (las de la carga: las lanza el estado 'lobo', no se eligen)
-    { name: 'embestida', clip: lbClips.embestida, dur: 1.15, min: 99, max: 99, hits: [[0.4, 0.62]], dmg: 30, range: 2.7, arc: 80, lunge: [[0.3, 0.66, 9.5]], noParry: true, weight: 0, cd: 0.8 },
-    { name: 'embestidaLuz', clip: lbClips.embestida, dur: 1.15, min: 99, max: 99, hits: [[0.4, 0.62]], dmg: 30, range: 2.7, arc: 80, lunge: [[0.3, 0.66, 9.5]], weight: 0, cd: 0.8 },
+    { name: 'embestida', clip: lbClips.embestida, dur: 1.25, min: 99, max: 99, hits: [[0.5, 0.72]], dmg: 30, range: 2.7, arc: 80, lunge: [[0.38, 0.76, 9]], noParry: true, weight: 0, cd: 0.8 },
+    { name: 'embestidaLuz', clip: lbClips.embestida, dur: 1.25, min: 99, max: 99, hits: [[0.5, 0.72]], dmg: 30, range: 2.7, arc: 80, lunge: [[0.38, 0.76, 9]], weight: 0, cd: 0.8 },
+    // la presa (la lanza la carga; en la pelea, de cerca, a veces)
+    { name: 'presa', clip: lbClips.presa, dur: 1.26, min: 0, max: 2.3, hits: [], dmg: 0, range: 2.0, arc: 60, lunge: [[0.34, 0.58, 7]], noParry: true, trackUntil: 0.34, weight: 0.8, cd: 1.0, cond: (e) => e.data.modo === 'pelea' && e.game.time - (e.data.presaT ?? -99) > 14, events: [
+      { t: 0.5, fn: agarrar },
+      { t: 0.58, fn: agarrar },
+    ] },
+    // (la carga que no toca: frena y se vuelve; sin golpe, sin aviso)
+    { name: 'frena', clip: lbClips.frena, dur: 1.0, min: 99, max: 99, hits: [], trackUntil: 0.8, turn: 3.5, quiet: true, weight: 0, cd: 0.3 },
+    // la caída desde la bóveda (la lanza el modo 'techo')
+    { name: 'caida', clip: lbClips.caida, dur: 1.3, min: 99, max: 99, hits: [[0.02, 0.16]], dmg: 26, range: 2.4, arc: 360, stagger: true, noParry: true, weight: 0, cd: 0.6 },
     {
       name: 'aullido',
       clip: lbClips.aullido,
@@ -537,13 +785,27 @@ const T = {
     D.cuatroW = damp(D.cuatroW || 0, D.cuatro && !D.luna ? 1 : 0, 6, dt);
   },
   think,
-  states: { lobo: estadoLobo },
+  states: { lobo: estadoLobo, arrastrando: estadoArrastrando, enterrando: estadoEnterrando },
   update: (e, dt) => {
     const D = e.data;
     D.aullidoCool = Math.max(0, (D.aullidoCool || 0) - dt);
     // (acabado un golpe, el de siempre lo deja en 'chase': de ahí, a lo
     // oscuro o a seguir)
-    if (D.prevState === 'attack' && e.state === 'chase') trasAtaque(e);
+    if (e.state === 'attack' && e.atk) D.ultimo = { n: e.atk.name, tocado: e.hitDone.some(Boolean) };
+    // (la carga que no toca: se pasa de largo, frena y se vuelve; es cuando
+    // se le puede pegar; luego, lo de siempre)
+    const u = D.ultimo;
+    if (D.prevState === 'attack' && e.state === 'chase' && u && u.n.startsWith('embestida') && !u.tocado && !e.dead) {
+      D.ultimo = null;
+      e.startAttack(T.attacks.find((a) => a.name === 'frena'));
+    } else if (D.prevState === 'attack' && e.state === 'chase') trasAtaque(e);
+    // (deslumbrado o herido de veras mientras caza: se va a lo oscuro; no
+    // vuelve a la carga a quemarropa)
+    else if ((D.prevState === 'stagger' || D.prevState === 'hurt') && e.state === 'chase' && D.modo !== 'pelea' && D.modo !== 'luna') {
+      setModo(e, 'retirada');
+      D.trasGolpe = false;
+      e.state = 'lobo';
+    }
     D.prevState = e.state;
   },
   // la primera vez que se le ve: al fondo de la primera galería, de pie,
@@ -559,14 +821,22 @@ const T = {
     e.data.cuatro = false;
     g.lobo && g.lobo.empieza(e);
   },
+  // (muerto, se queda: el hombre que era; game/lobishome.js)
+  keepCorpse: true,
+  keepBody: true,
+  deathDur: 30,
   // un golpe en la luz lo deslumbra (se tambalea)
   onHit: (e, kind, dmg, heavy) => {
     const L = e.game.lobo;
+    if (kind === 'kill' && L) L.muere(e);
     if (kind !== 'hit' || !L || e.dead) return;
     if (e.data.luna) return;
-    const luz = L.luzEn(e.pos.x, e.pos.y, e.pos.z);
+    // (la luz de un brasero o de la luna: cada tercer golpe, o uno fuerte; la
+    // de tu farol, sólo uno fuerte)
+    const luz = L.luzEn(e.pos.x, e.pos.y, e.pos.z, false);
+    const farol = L.luzEn(e.pos.x, e.pos.y, e.pos.z);
     e.data.golpes = (e.data.golpes || 0) + 1;
-    if (luz > 0.55 && (heavy || e.data.golpes % 3 === 0) && e.state !== 'stagger') {
+    if (((luz > 0.4 && (heavy || e.data.golpes % 3 === 0)) || (farol > 0.5 && heavy)) && e.state !== 'stagger') {
       e.state = 'stagger';
       e.stT = 0;
       e.atk = null;
@@ -574,7 +844,7 @@ const T = {
     }
   },
   // (en la luna, mirándola, se le pega a gusto)
-  preHit: (e, dmg, poise) => (e.data.luna ? { dmg: Math.round(dmg * 1.6), poise: poise * 1.5 } : null),
+  preHit: (e, dmg, poise) => (e.data.luna ? { dmg: Math.round(dmg * 1.6), poise: poise * 1.5 } : e.state === 'arrastrando' || e.state === 'enterrando' ? { dmg: Math.round(dmg * 0.6), poise: 0 } : null),
   onReset: (e) => {
     e.data = {};
     e.state = 'bossIdle';
@@ -586,5 +856,4 @@ export { lbClips };
 // (para game/lobishome.js: los modos)
 export const LOBO_VEL = VEL;
 void C;
-void angleDiff;
 void THREE;

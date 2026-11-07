@@ -1170,7 +1170,9 @@ export class UI {
     const tv = inv ? inv.count('cocimiento_verde') : 0,
       tn = inv ? inv.count('cocimiento_negro') : 0;
     const tk = p.tonico ? Math.ceil((p.tonico.t / p.tonico.dur) * stLen) : 0;
-    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded, tv, tn, tk, p.tonico && p.tonico.tipo].join(',');
+    // (la flor blanca, en la lobera: se cierra si él está cerca a oscuras)
+    const flor = this.g.lobo ? this.g.lobo.flor : null;
+    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded, tv, tn, tk, p.tonico && p.tonico.tipo, flor].join(',');
     if (key === this._vitKey && this._vitU === this.sc.u) return;
     this._vitKey = key;
     this._vitU = this.sc.u;
@@ -1221,6 +1223,10 @@ export class UI {
       const nn = textBitmap(String(n), 'small', { color: P.bone3, outline: P.void });
       b.blit(nn, rx + 12, 20);
       rx += 12 + nn.w + 4;
+    }
+    if (flor) {
+      b.blit(smallIcon(flor === 'cerrada' ? 'florCerrada' : 'florAbierta'), rx, 19);
+      rx += 14;
     }
     // el que se ha bebido: una raya bajo el aguante que se va gastando
     if (tk > 0) {

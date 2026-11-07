@@ -42,6 +42,10 @@ const LLEGADA = { dur: 8.0, A: [-15.4, -3.4, 8.9], M: [-11.0, -3.3, 10.9], B: [-
 // (el punto de control de la curva: para que pase por M en s = 0,5)
 const LL_C = LLEGADA.M.map((m, i) => 2 * m - 0.5 * (LLEGADA.A[i] + LLEGADA.B[i]));
 
+// en el final, si se tomó su remedio: en la orilla, junto al embarcadero, de
+// cara al sol (el plano desde el agua lo ve: game.js, ending)
+const ALBA = { x: 3.6, z: -211.2, yaw: Math.PI * 0.92 };
+
 export class DesfiguradoQuest {
   constructor(g) {
     this.g = g;
@@ -166,6 +170,15 @@ export class DesfiguradoQuest {
       this.mode = 'faena';
       this.W = { cielo: 0, vuelto: 0, moler: 1, leer: 0, untar: 0 };
       e.data = { W: { moler: 1 } };
+    } else if (sitio === 'alba') {
+      // (el final: en la orilla del Este, de cara al sol que sale, que ya no le
+      // quema; game.js: ending)
+      e.body.pos.set(ALBA.x, this.g.world.col.groundHeight(ALBA.x, ALBA.z, 0.3, 2), ALBA.z);
+      e.yaw = ALBA.yaw;
+      e.idle = 'cielo';
+      this.mode = 'cielo';
+      this.W = { cielo: 1, vuelto: 0, moler: 0, leer: 0, untar: 0 };
+      e.data = { W: { cielo: 1 } };
     } else {
       const D = CLOACA.desfigurado;
       e.body.pos.set(D.x, CLOACA.isla.y, D.z);
@@ -193,7 +206,7 @@ export class DesfiguradoQuest {
     // (ya te ha contado lo suyo: cuando te has ido de la cloaca, se baja a su
     // botica; no se le ve ir)
     if (this.sitio === 'luz' && this.F['desf:met'] && !this.script && !talking && !g.inCloaca(player.pos)) this.lugar(e, 'botica');
-    const D = this.sitio === 'botica' ? VERGEL.desfigurado : CLOACA.desfigurado;
+    const D = this.sitio === 'botica' ? VERGEL.desfigurado : this.sitio === 'alba' ? ALBA : CLOACA.desfigurado;
     if (this.mode === 'faena') {
       // en la botica: ante su mesa, a lo suyo; cada rato, otra cosa (moler,
       // leer el cuaderno, ponerse el emplasto, mirar arriba)
@@ -208,7 +221,7 @@ export class DesfiguradoQuest {
       this.murT -= dt;
       if (cerca && this.murT <= 0 && !talking) {
         this.murT = 8 + Math.random() * 7;
-        g.speech.say(this.who, pick(DIALOG.desfMurmuraBotica), { dur: 2.6 });
+        g.speech.say(this.who, pick(this.F['desf:remedio'] && Math.random() < 0.6 ? DIALOG.desfMurmuraRemedio : DIALOG.desfMurmuraBotica), { dur: 2.6 });
       }
     } else if (this.mode === 'cielo') {
       // en la luz: vuelve a su sitio de mirar
@@ -419,6 +432,20 @@ export class DesfiguradoQuest {
         ],
         { peste: true }
       );
+    else if (this.F['desf:lobo'] && !this.F['desf:remedio'] && g.inventory.has('flor_hondo'))
+      // la flor de lo hondo: se la queda para su remedio
+      this.run([
+        { say: DIALOG.desfFlor.slice(0, 2) },
+        {
+          fn: () => {
+            this.F['desf:remedio'] = true;
+            g.inventory.add('flor_hondo', -1);
+            g.audio && g.audio.play('pickup', g.player.pos);
+            g.saveGame && g.saveGame();
+          },
+        },
+        { say: DIALOG.desfFlor.slice(2) },
+      ]);
     else if (g.flags['boss:lobishome'] && !this.F['desf:lobo'])
       // vencido el Lobishome: quién era
       this.run([
@@ -443,6 +470,28 @@ export class DesfiguradoQuest {
       const line = L[this.locoK++ % L.length];
       this.run([{ say: line, risa: line[0].startsWith('¿Lo oyes') ? 0 : Math.random() < 0.2 ? 1.6 : 0 }]);
     }
+  }
+
+  // El final: con su remedio, sube a ver el sol (a la orilla del Este).
+  alAlba() {
+    const e = this.npc;
+    if (!e || !this.F['desf:remedio']) return;
+    this.script = null;
+    this.lugar(e, 'alba');
+    e.state = 'dormant';
+    e.obj.visible = true;
+    this.npcAlba(0);
+  }
+  // (en el final no se mueven las criaturas: game.js, updateEnding, le da
+  // esto cada fotograma; quieto, de cara al sol, sin murmurar ni volverse)
+  npcAlba(dt) {
+    const e = this.npc;
+    if (!e || this.sitio !== 'alba') return;
+    e.state = 'dormant';
+    e.idle = 'alba';
+    e.vx = e.vz = 0;
+    e.data = { W: { alba: 1 }, look: [0, 0], talk: 0, tic: 0, ticSide: 1, cara: 0, risa: 0 };
+    e.animate(dt);
   }
 
   // ------------------------------------------------------------ partida

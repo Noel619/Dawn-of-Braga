@@ -405,6 +405,7 @@ export class Game {
     p.maxFlasks = s.maxFlasks || 3;
     p.maxSt = s.maxSt || 100;
     p.dmgMul = s.dmgMul || 1;
+    p.setFarol(this.inventory.has('farol_bento'));
     this.savedWeapon = s.weapon || null;
     this.savedArmed = s.armed;
     this.savedShield = s.shielded;
@@ -656,6 +657,7 @@ export class Game {
     p.maxFlasks = 3;
     p.maxSt = 100;
     p.dmgMul = 1;
+    p.setFarol(false);
     this.applyWorldState();
     this.ui.closeAll();
     this.audio.stopMusic();
@@ -894,6 +896,7 @@ export class Game {
       p.refreshMaxHp();
       p.hp += p.maxHp - was;
     } else if (it.upgrade === 'dmg') p.dmgMul += 0.25;
+    else if (it.upgrade === 'farol') p.setFarol(true);
     // un objeto bendito: si no se lleva ninguno, se lo pone
     const relicNew = it.relic && !p.relic;
     if (relicNew) p.wearRelic(id);
@@ -1555,6 +1558,8 @@ export class Game {
     this.flags.finished = true;
     this.saveGame();
     this.ui.showHud(false);
+    // (el Desfigurado, si se tomó su remedio: en la orilla, de cara al sol)
+    this.desfigurado && this.desfigurado.alAlba();
     const path = RIVER.path.map(([x, z]) => new THREE.Vector3(x, 0, z));
     let len = Math.hypot(path[0].x - p.pos.x, path[0].z - p.pos.z);
     for (let i = 1; i < path.length; i++) len += path[i].distanceTo(path[i - 1]);
@@ -1580,6 +1585,8 @@ export class Game {
     if (!E) return;
     const p = this.player;
     E.t += dt;
+    // (el Desfigurado en la orilla, si está: quieto, de cara al sol)
+    if (this.desfigurado) this.desfigurado.npcAlba(dt);
     const t = E.t;
     // el paseo: de un punto del camino al siguiente; en la punta se para
     if (E.wp < E.path.length) {
@@ -1651,12 +1658,22 @@ export class Game {
     }
   }
 
+  // Lo que se cuenta del Desfigurado al final (game/desfigurado.js): con su
+  // remedio, el sol; sin él, la raya de candiles apagada y lo oscuro.
+  finalDesfigurado() {
+    const F = this.flags;
+    if (!F['desf:met']) return '';
+    if (F['desf:remedio']) return '<br><br>En la orilla, un hombre con media cara vendada miraba salir el sol, y el sol no le quemaba.<br>«Hermosa», dijo.';
+    if (F['boss:lobishome']) return '<br><br>Bajo la plaza del Pan, nadie volvió a cambiar las mechas de la raya de candiles.<br>En lo oscuro, unos ojos más altos que los de un hombre.';
+    return '<br><br>Bajo la plaza del Pan se apagó la raya de candiles.<br>En lo oscuro, dos pares de ojos.';
+  }
+
   showEndingCard() {
     const s = this.ui.open('ending', { ready: false, onDone: () => location.reload() });
     const body = document.getElementById('ending-body');
     const pc = body.querySelector('canvas.pxbg');
     body.innerHTML = `
-        <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, por primera vez desde el asedio, las campanas de Braga callaban.<br>Nadie volvió a entrar en la ciudad.</div>
+        <div class="f-bast" style="margin:0 auto">Al amanecer, el río Este arrastraba ceniza hacia el mar.<br>Detrás de ti, por primera vez desde el asedio, las campanas de Braga callaban.<br>Nadie volvió a entrar en la ciudad.${this.finalDesfigurado()}</div>
         <div style="display:grid;place-items:center;margin-top:calc(var(--u) * 6)">${this.ui.inkTitleHtml()}</div>
         <div class="stats f-hand"><span>Tiempo</span><b>${formatTime(this.playTime)}</b><span>Muertes</span><b>${this.deaths}</b><span>Documentos</span><b>${Object.keys(this.flags).filter((k) => k.startsWith('note:')).length} / ${Object.keys(NOTES).length}</b></div>
         <div class="credit f-hand">Todo en este juego (geometría, texturas, luz, sonido y música) se genera por código.</div>

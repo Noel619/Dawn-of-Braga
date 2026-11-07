@@ -504,7 +504,30 @@ const UNTAR = {
   handR: [10, 0, 10],
 };
 
-const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR };
+// Al alba, en la orilla (el final, si se tomó su remedio): derecho por una
+// vez, la cara al sol que sale (apenas alzada, no echada atrás como bajo la
+// reja), las manos abiertas a los lados, sin esconder la mala.
+const ALBA = {
+  ...STAND,
+  root: [0, 0, 0],
+  hips: [0, 0, 0],
+  chest: [-3, 0, 0],
+  head: [-10, 0, 0],
+  legL: [-3, 0, 3],
+  shinL: [4, 0, 0],
+  legR: [2, 0, -3],
+  shinR: [3, 0, 0],
+  armL: [-4, -8, 14],
+  foreL: [-12, 0, 0],
+  handL: [0, -46, -6],
+  armR: [-4, 8, -14],
+  foreR: [-12, 0, 0],
+  handR: [0, 46, 6],
+  jaw: [2, 0, 0],
+  lidR: [26, 0, 0],
+};
+
+const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR, alba: ALBA };
 
 // La pose: la mezcla de las posturas (e.data.W), con lo de cada momento:
 // la respiración; la cabeza que se vuelve hacia ti (e.data.look: [guiñada,
@@ -539,7 +562,7 @@ function desfIdle(e, kind, t) {
   out.armL[2] += br * 0.6;
   out.armR[2] -= br * 0.6;
   // en la luz: la cabeza se mece un poco, como quien oye algo
-  const cw = (W.cielo || 0) / tot;
+  const cw = ((W.cielo || 0) + (W.alba || 0) * 0.5) / tot;
   out.head[2] += S(t * 0.37 + ph) * 4 * cw;
   out.head[1] += S(t * 0.23 + ph * 2) * 5 * cw;
   out.handL[1] += S(t * 0.5 + ph) * 8 * cw;

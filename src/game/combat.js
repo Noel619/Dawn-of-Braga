@@ -67,7 +67,7 @@ export class Combat {
       // tras un parry: todo golpe es crítico)
       const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext;
       // atkMul: pesado cargado; crit: el facón hiere más por la espalda
-      const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
+      const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
       if (r !== 'blocked' && r !== 'none') {
         landed = true;
@@ -137,7 +137,7 @@ export class Combat {
       const d = Math.hypot(e.pos.x - tip.x, e.pos.z - tip.z);
       if (d > I.r + e.body.radius || Math.abs(e.pos.y - y) > 1.5) continue;
       player.hitSet.add(e);
-      const dmg = Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1));
+      const dmg = Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1));
       const r = e.takeHit(dmg, atk.poise * 0.5, tip.x, tip.z, true, 0);
       if (r !== 'blocked' && r !== 'none') this.relicHit(player, dmg, e.pos.x, e.pos.y + 1, e.pos.z);
       if (r === 'kill') g.audio && g.audio.enemyVoice(e, 'death');
@@ -273,7 +273,7 @@ export class Combat {
     if (!e || e.dead || p.hitSet.has(e)) return;
     p.hitSet.add(e);
     // (el Cerrojo de San Martín: el golpe de gracia, el doble)
-    const dmg = Math.round(a.dmg * p.dmgMul * p.mods.ripK * (0.95 + Math.random() * 0.1));
+    const dmg = Math.round(a.dmg * p.dmgMul * p.mods.ripK * (p.golpeK || 1) * (0.95 + Math.random() * 0.1));
     const r = e.takeRiposte ? e.takeRiposte(dmg, p.pos.x, p.pos.z) : e.takeHit(dmg, 999, p.pos.x, p.pos.z, true, 0);
     if (r === 'none') return;
     this.relicHit(p, dmg, e.pos.x, e.pos.y + 1, e.pos.z);

@@ -18,10 +18,15 @@
 import * as THREE from 'three';
 import { MSG } from './story.js';
 import { HONDAS } from '../world/cloacas_hondas.js';
+import { VERGEL } from '../world/vergel.js';
+import { objMat } from '../gfx/materials.js';
 
 const R_FAROL = 4.6;
+// (con el farol del sepulturero: un metro más)
+const R_FAROL_MEJOR = 5.6;
 const R_BRASERO = 6.5;
 const _v = new THREE.Vector3();
+const _piel = new THREE.Color(0xc8b29c);
 
 export class Lobo {
   constructor(g) {
@@ -40,15 +45,74 @@ export class Lobo {
     this.farolK = 1;
     this.activo = false;
     this.apagarTodos(false);
+    // el acecho de antes de la pelea: unos ojos al pie de la escalera de la
+    // Sé (detrás de la niebla), que se encienden un instante si miras hacia
+    // abajo; y el candil de la raya que se apaga a tu espalda
+    const grp = new THREE.Group();
+    for (const sx of [-1, 1]) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.042, 6, 4), objMat('eyeGlow'));
+      m.position.set(sx * 0.11, 0, 0);
+      m.scale.set(1.3, 0.7, 1);
+      m.layers.set(1);
+      grp.add(m);
+    }
+    grp.position.set(HONDAS.se.x - 0.2, HONDAS.y.n1 + 2.05, -16.4);
+    grp.layers.set(1);
+    grp.visible = false;
+    g.scene.add(grp);
+    this.ojos = grp;
+    this.ojosT = 0;
+    this.ojosCool = 4;
+  }
+  // (el candil de la raya: apagado desde que pasaste la reja, hasta que él cae)
+  candil(on) {
+    this.g.setGroupVisible('raya:3', on);
+  }
+  acecho(dt, e) {
+    const g = this.g,
+      p = g.player.pos;
+    // el candil, la primera vez que se pasa la reja
+    if (!g.flags['lobo:candil'] && !g.flags['boss:lobishome'] && p.y > -12.5 && p.y < -10.5 && p.z < 5 && p.z > 1 && Math.abs(p.x - HONDAS.se.x) < 1.8) {
+      g.flags['lobo:candil'] = true;
+      this.candil(false);
+      const R = VERGEL.raya;
+      g.audio && g.audio.play('candleOut', { x: R.x0 + 0.3 + ((R.x1 - R.x0 - 0.6) * 3) / 6, y: VERGEL.y + 0.2, z: R.z });
+      g.ui && g.ui.toast(MSG.candilApagado, 4);
+    }
+    // los ojos al pie de la escalera
+    const o = this.ojos;
+    this.ojosCool -= dt;
+    if (this.ojosT > 0) {
+      this.ojosT -= dt;
+      const k = this.ojosT;
+      o.visible = k > 0 && !(k > 0.7 && k < 0.78);
+      if (k <= 0) o.visible = false;
+      return;
+    }
+    o.visible = false;
+    if (this.ojosCool > 0 || g.state !== 'play' || !e || e.dead || e.aware || g.flags['boss:lobishome']) return;
+    const enEscalera = Math.abs(p.x - HONDAS.se.x) < 1.7 && p.z < -0.5 && p.z > -11.6 && p.y < -11.3 && p.y > -16.4;
+    if (!enEscalera) return;
+    const cam = g.camera;
+    const to = new THREE.Vector3().subVectors(o.position, cam.position).normalize();
+    const fw = new THREE.Vector3();
+    cam.getWorldDirection(fw);
+    if (fw.dot(to) < 0.93) return;
+    this.ojosT = 1.4;
+    this.ojosCool = 35 + Math.random() * 30;
+    o.visible = true;
+    g.audio && g.audio.play('snarl', { x: o.position.x, y: o.position.y, z: o.position.z }, { gain: 0.45 });
   }
 
   // ------------------------------------------------------------ la luz
-  luzEn(x, y, z) {
+  // (farol = false: sin la luz de tu propio farol; la de los braseros y la
+  // de la luna, la que hay en el sitio)
+  luzEn(x, y, z, farol = true) {
     const g = this.g;
     const p = g.player;
     let l = 0;
-    if (p && !p.dead) {
-      const r = R_FAROL * this.farolK;
+    if (farol && p && !p.dead) {
+      const r = (p.farolMejor ? R_FAROL_MEJOR : R_FAROL) * this.farolK;
       const d = Math.hypot(p.pos.x - x, p.pos.z - z) + Math.abs(p.pos.y - y) * 0.5;
       if (d < r) l = Math.max(l, 1 - d / r);
     }
@@ -196,6 +260,23 @@ export class Lobo {
     }
   }
 
+  // El polvo y la tierra que caen de la bóveda (el aviso de que se va a
+  // dejar caer desde arriba) o que te echa encima (el entierro).
+  polvo(x, y, z, encima = false) {
+    const g = this.g;
+    if (!g.fx || !g.fx.blood) return;
+    if (encima) {
+      g.fx.blood.emit(x, y + 2.6, z, 10, { color: [0.3, 0.25, 0.2], speed: 1.4, life: 0.9, up: 2.2, gravity: -9 });
+      return;
+    }
+    const top = y + 3.5;
+    for (let k = 0; k < 3; k++) g.fx.blood.emit(x + (Math.random() - 0.5) * 1.6, top, z + (Math.random() - 0.5) * 1.6, 4, { color: [0.42, 0.38, 0.32], speed: 0.3, life: 1.2, up: 0, gravity: -7 });
+  }
+  // Te ha soltado (o te has soltado): el farol vuelve, temblando.
+  farolVuelve() {
+    this.temblor = Math.max(this.temblor, 2.2);
+  }
+
   // ------------------------------------------------------------ cada fotograma
   update(dt) {
     const g = this.g;
@@ -214,17 +295,22 @@ export class Lobo {
     this.temblor = Math.max(0, this.temblor - dt);
     const base = e && e.data && e.data.final && !e.dead ? 0.78 : 1;
     const tk = this.temblor > 0 ? 0.32 + 0.25 * Math.abs(Math.sin(g.time * 23)) * Math.min(1, this.temblor) + 0.4 * (1 - Math.min(1, this.temblor / 4.5)) : 1;
-    this.farolK = base * Math.min(1, tk);
+    // (en sus fauces o enterrándote: el farol, apagado)
+    const presa = e && !e.dead && (e.state === 'arrastrando' || e.state === 'enterrando');
+    this.farolK = presa ? 0.1 : base * Math.min(1, tk);
     // (sólo en la lobera; al salir, se le devuelve)
     const enLobera = p && p.pos.y < -14 && p.pos.y > -20 && !g.cutscene;
     if (enLobera) {
-      p.lampK = 0.7 + 0.3 * this.farolK;
+      p.lampK = this.farolK < 0.2 ? 0.05 : 0.7 + 0.3 * this.farolK;
       this._farol = true;
     } else if (this._farol && p) {
       p.lampK = 1;
       this._farol = false;
     }
+    this.flor = this.florEstado(e);
+    this.acecho(dt, e);
     if (!e) return;
+    if (e.dead && e.data && e.data.hombreT === undefined) this.muere(e);
     // el cuerpo, en lo oscuro, se apaga: sólo los ojos
     this.sombra(e, dt);
   }
@@ -236,8 +322,13 @@ export class Lobo {
       this._body = rig.meshes.filter((m) => m.userData.matName !== 'eyeGlow');
       this._mats = [...new Set(this._body.map((m) => m.material))];
       for (const m of this._mats) m.userData.baseColor = m.color.clone();
+      this._piel = new Set(this._body.filter((m) => m.userData.matName === 'loboPiel').map((m) => m.material));
       this.vis = 1;
     }
+    // (lo del lobo y lo del hombre: muerto, al rato, se le ve el hombre)
+    const D = e.data || {};
+    if (e.dead && D.hombreT !== undefined) D.hombreT += dt;
+    const h = e.dead && D.hombreT !== undefined ? Math.min(1, Math.max(0, (D.hombreT - 1.6) / 2.2)) : 0;
     let want = 1;
     if (!e.dead && e.state !== 'bossIdle' && e.state !== 'alert') {
       e.rig.worldPos('chest', _v);
@@ -248,13 +339,48 @@ export class Lobo {
       if (e.data.luna) want = 1;
     }
     if (e.state === 'bossIdle') want = 0.05;
+    // (trepando por la bóveda: ni los ojos)
+    const oculto = !!(e.data && e.data.oculto);
+    if (oculto) want = 0;
     this.vis += (want - this.vis) * Math.min(1, dt * 6);
     const k = this.vis;
-    for (const m of this._mats) m.color.copy(m.userData.baseColor).multiplyScalar(0.06 + 0.94 * k);
-    for (const m of this._body) m.visible = e.obj.visible && k > 0.04;
+    for (const m of this._mats) {
+      m.color.copy(m.userData.baseColor).multiplyScalar(0.06 + 0.94 * k);
+      // (la piel del hombre, más clara)
+      if (h > 0 && this._piel.has(m)) m.color.lerp(_piel, h * 0.45);
+    }
+    for (const m of this._body) {
+      const g2 = m.userData.grp;
+      m.visible = e.obj.visible && k > 0.04 && (g2 === 'lobo' ? h < 0.5 : g2 === 'hombre' ? h >= 0.5 : true);
+    }
     // los ojos, más vivos cuanto más oscuro
-    for (const m of this._eyes) m.material.emissiveIntensity = (m.userData.baseEI ?? 2.2) * (1.6 - 0.6 * k) * (e.dead ? Math.max(0, 1 - e.stT * 0.5) : 1);
+    for (const m of this._eyes) {
+      m.visible = e.obj.visible && !oculto;
+      m.material.emissiveIntensity = (m.userData.baseEI ?? 2.2) * (1.6 - 0.6 * k) * (e.dead ? Math.max(0, 1 - e.stT * 0.5) : 1);
+    }
     e.shadow.visible = e.shadow.visible && k > 0.2;
+  }
+
+  // Muerto: cae como lobo y, al rato, se le ve el hombre (lo del lobo se le
+  // va, la piel se le aclara); su última palabra.
+  muere(e) {
+    if (e.data.hombreT !== undefined) return;
+    this.activo = false;
+    // (y el candil de la raya: él lo vuelve a encender)
+    this.candil(true);
+    e.data.hombreT = 0;
+    this.pend.push({ t: 3.2, fn: () => this.g.ui && this.g.ui.toast(MSG.loboHermano, 6) });
+  }
+  // La flor blanca (si la llevas), en el marcador: se cierra cuando él está
+  // cerca y no se le ve.
+  florEstado(e) {
+    const g = this.g,
+      p = g.player;
+    if (!g.inventory || !g.inventory.has('flor_blanca') || !p || p.dead) return null;
+    if (p.pos.y > -14 || p.pos.y < -20) return null;
+    if (!e || e.dead || g.flags['boss:lobishome']) return null;
+    const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
+    return d < 11 && (this.vis ?? 0) < 0.35 ? 'cerrada' : 'abierta';
   }
 
   // ------------------------------------------------------------ partida
@@ -267,5 +393,7 @@ export class Lobo {
   }
   applyFlags() {
     this.apagarTodos(false);
+    const F = this.g.flags;
+    this.candil(!(F['lobo:candil'] && !F['boss:lobishome']));
   }
 }

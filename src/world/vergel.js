@@ -1238,7 +1238,10 @@ function raya(ctx, L) {
     P.roughStone(ctx, x, y, z, 0.14, 12801 + k, { tint: [0.4, 0.39, 0.36], scl: [1, 0.6, 1] });
     wb.cylinder('plaster', x, y + 0.08, z, 0.06, 0.05, 0.04, 8, { ao: false, capTop: true, capBot: true, tint: [0.62, 0.42, 0.3] });
     wb.box('plaster', x + 0.04, y + 0.1, z - 0.012, x + 0.09, y + 0.115, z + 0.012, { ao: false, faces: 'tnsewb', tint: [0.62, 0.42, 0.3] });
+    // (cada llama, en su grupo: la que se apaga a tu espalda, game/lobishome.js)
+    ctx.beginGroup('raya:' + k);
     if (ctx.fires) ctx.fires.push({ x: x + 0.085, y: y + 0.13, z, s: 0.1 });
+    ctx.endGroup();
     if (k % 2 === 1) {
       P.jar(ctx, x, y, z + 0.3, 0.28, { collide: false, tint: [0.62, 0.48, 0.36] });
       flores(ctx, x, y + 0.16, z + 0.3, 0.03, 4, 12811 + k, { room: ROOM, h: 0.6 });

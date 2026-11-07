@@ -164,17 +164,30 @@ la cerró él la noche de la cabra. (`world/cloaca.js`, `world/vergel.js`, `worl
 cloacas de la Sé, un laberinto de galerías de sillería (con su canal, sus tramos secos y sus tramos ahogados) y sus
 cruces, siete por seis, con dos salas, **el pozo de las ánimas** (por su tiro baja la luna sobre unas flores blancas)
 y **el osario**, la cama de paja y jirones del que vive ahí, con lo que entierra en los nichos, la pala rota y el farol
-de un sepulturero. Al pie de la escalera, la niebla: es su casa y es la pelea. **El Lobishome** (Bento, el sétimo,
+de un sepulturero. Al pasar la reja, a tu espalda, se apaga un candil de la raya de sal; bajando la escalera, al fondo,
+se encienden un instante unos ojos más altos que los de un hombre. Al pie, la niebla: es su casa y es la pelea. Si
+llevas la flor blanca del Desfigurado, en el marcador **se cierra** cuando él anda cerca y no se le ve. **El
+Lobishome** (Bento, el sétimo,
 sepulturero de la necrópolis de los pobres) espera de pie al fondo de la primera galería; luego, a cuatro patas, se
 mete en lo oscuro. **La luz es tuya y la oscuridad es suya**: en lo oscuro sólo se le ven los ojos; caza por las
-galerías (va a un cruce a oscuras a unos metros de ti, te mira, carga y te embiste, y vuelve a lo oscuro); en lo
-oscuro su embestida no se desvía, en la luz sí, y un golpe en la luz lo deslumbra. En los cruces hay **braseros
+galerías (va a un cruce a oscuras a unos metros de ti, te mira, carga y te embiste, y vuelve a lo oscuro; si la
+embestida no te toca, se pasa de largo y frena: es cuando se le pega). A veces, en vez de cargar, **trepa por la
+bóveda** (no se le ven ni los ojos), cae polvo encima de ti y **se deja caer** donde estabas (nunca junto a un brasero
+encendido); y al final de la carga, a veces, **te agarra con las fauces** y te arrastra lejos de la luz, sacudiéndote,
+con el farol apagado: forcejea y te sueltas (y queda aturdido), o te lanza. En lo oscuro su embestida no se desvía, en
+la luz sí; a la luz de un brasero o de la luna, cada tercer golpe lo deslumbra (uno fuerte, también a la de tu
+farol), y deslumbrado se va a lo oscuro. En los cruces hay **braseros
 apagados** que se encienden con el farol (un segundo largo, a su merced). En la segunda fase se pone de pie y pelea en
 abierto (zarpazo doble, dentellada, embestida), **vuelca los braseros** y **aúlla**: el aullido los apaga a su
 alrededor, hace temblar el farol y, de cerca, deja sin aliento. En la tercera, un aullido los apaga todos y vuelve a
-cazar, más deprisa; pero si pisa la luz de la luna del pozo de las ánimas **se queda quieto, mirándola**, y se le pega
-a gusto. Vencido, se levanta la niebla de la salida, sus mastines vuelven a rondar la lobera y el Desfigurado,
-cuando le hablas, te dice quién era. Más abajo, **las cloacas viejas** (de mampuesto, largas, con tramos ahogados,
+cazar, más deprisa, con el farol más corto, y en vez de arrastrarte **te entierra** (te tumba, escarba y te echa la
+tierra encima); pero si pisa la luz de la luna del pozo de las ánimas **se queda quieto, mirándola**, y se le pega a
+gusto. Vencido, cae como lobo y, al rato, **se le ve el hombre**; el candil de la raya vuelve a lucir, se levanta la
+niebla de la salida, en el osario quedan **su colmillo** (objeto bendito: la mitad más de daño a oscuras; a la luz, el
+aliento vuelve más despacio) y **el farol de Bento** (alumbra más lejos), sus mastines vuelven a rondar la lobera y el
+Desfigurado, cuando le hablas, te dice quién era. Si después le llevas una **flor de lo hondo**, se la queda para su
+remedio: en el final, le verás en la orilla, de cara al sol que ya no le quema; si no, el pergamino cuenta lo de la
+raya de candiles y unos ojos en lo oscuro. Más abajo, **las cloacas viejas** (de mampuesto, largas, con tramos ahogados,
 ramales sin salida y los mastines), **los aljibes ahogados** (tres cisternas de pilares; en las dos primeras, y en las
 galerías que las unen, el agua llega a la rodilla y **se anda despacio**; en la tercera, el andén alrededor de su
 estanque hondo) y, bajo el Vergel, **lo hondo**: el ninfeo de los romanos, donde manaba la fuente, reventado de
@@ -192,7 +205,7 @@ minuto). Se llevan **tres verdes y un negro como mucho**; se beben con 1 y 2 (en
 derecha) y, como lo que se bebe se pierde, **no se rellenan al descansar ni al caer**. En el marcador, junto a las
 ampollas, los que llevas, y bajo el aguante, una raya con lo que le queda al que has bebido. (`world/cloaca_kit.js`,
 `world/cloacas_hondas.js`, `entities/lobishome.js`, `entities/plantas.js`, `game/lobishome.js`, `game/cloacas.js`,
-`game/alquimia.js`; el plan y lo que queda, `PLAN_LOBO.md`.)
+`game/alquimia.js`; el plan y lo que se hizo, `PLAN_LOBO.md`.)
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
@@ -1413,6 +1426,13 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        (jugador: wander, stopgo, still o look)
                         parrytest.mjs  parry contra cada criatura con un arma: desvío sin daño,
                                        desequilibrio, golpe de gracia, jefes y golpes imparables
+                        lobo.mjs       la pelea con el Lobishome fase a fase: la niebla, la aparición, el
+                                       acecho segundo a segundo, un brasero, la segunda fase (el aullido),
+                                       la luna del pozo y la muerte; con fotos
+                        lobobot.mjs    el equilibrio de esa pelea: un jugador robot (novato, medio o bueno:
+                                       su reacción, sus errores, si enciende braseros) con un equipo (base o
+                                       medio) entra por la niebla y pelea hasta vencer o morir; cuánto dura
+                                       cada fase, de dónde le viene el daño, ampollas, presas, caídas
                         beastchase.mjs el Empalado se transforma y un jugador robot hace la huida entera
                                        pulsando los avisos (con «fallos», falla algunos y muere en el fanal
                                        para probar el reintento): llega a la atalaya y queda vencido

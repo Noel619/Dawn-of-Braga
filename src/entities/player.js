@@ -356,6 +356,25 @@ export class Player {
     this.game.onPlayerAction && this.game.onPlayerAction('roll', { x: this.rollDir.x, z: this.rollDir.z, back: this.rollBack });
   }
 
+  // ¿En lo oscuro? (la luz horneada donde está: game.updateProbes; sin el
+  // farol, que alumbra siempre)
+  enOscuro() {
+    const q = this._probe;
+    if (!q) return false;
+    return q[0] * 0.3 + q[1] * 0.59 + q[2] * 0.11 < 0.16;
+  }
+  // lo que hacen tus golpes por el objeto bendito que llevas, aquí (el
+  // colmillo: en lo oscuro, más)
+  get golpeK() {
+    return this.mods.oscuroDmg !== 1 && this.enOscuro() ? this.mods.oscuroDmg : 1;
+  }
+  // El farol del sepulturero: alumbra más (y más lejos).
+  setFarol(mejor) {
+    this.farolMejor = !!mejor;
+    this.lampBase = mejor ? 11.5 : 9;
+    this.lamp.distance = mejor ? 14 : 12;
+  }
+
   startHeal() {
     if (this.flasks <= 0) {
       this.game.ui && this.game.ui.toast('No te quedan ampollas');
@@ -836,7 +855,7 @@ export class Player {
     // regeneración de aguante
     this.stDelay -= dt;
     if (this.stDelay <= 0 && this.state !== 'attack' && this.state !== 'roll' && !this.sprinting) {
-      const rate = (this.blocking && !this.mods.blockRegen ? 20 : 45) * (this.tonico ? this.tonico.st : 1);
+      const rate = (this.blocking && !this.mods.blockRegen ? 20 : 45) * (this.tonico ? this.tonico.st : 1) * (this.mods.luzSt !== 1 && !this.enOscuro() ? this.mods.luzSt : 1);
       this.st = Math.min(this.maxSt, this.st + rate * dt);
     }
     // el cocimiento, mientras dura

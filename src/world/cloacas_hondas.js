@@ -93,7 +93,8 @@ function braseros() {
     [6, 0],
     [6, 3],
   ];
-  for (const [c, r] of enCruce) out.push({ id: 'br_' + c + r, x: MX[c] + 1.05, z: MZ[r] + 1.05, nodo: L_(c, r) });
+  // (en la esquina del cruce, donde no estorba al que pasa)
+  for (const [c, r] of enCruce) out.push({ id: 'br_' + c + r, x: MX[c] + 1.22, z: MZ[r] + 1.22, nodo: L_(c, r) });
   out.push({ id: 'br_pozo1', x: 11.5, z: -40.6, nodo: 'sala:pozo' });
   out.push({ id: 'br_pozo2', x: 19.5, z: -31.4, nodo: 'sala:pozo' });
   out.push({ id: 'br_osario', x: 39.5, z: -52, nodo: 'sala:osario' });
@@ -528,6 +529,9 @@ function lobera(ctx, L, R) {
     wb.at(ox0 + 4.15, y + 0.03, oz0 + 2.68, 0.4, () => wb.box('iron', -0.12, 0, -0.02, 0.12, 0.02, 0.18, { ao: false, faces: 'tnsewb', tint: [0.5, 0.42, 0.34] }));
     wb.setRoom(null);
     L.interact.push({ kind: 'examine', id: 'x_osario', text: 'osarioLobo', x: ox1 - 2.0, y, z: oz0 + 2.2, r: 1.6 });
+    // (vencido él: su colmillo, en la paja; su farol, junto a la pala)
+    L.interact.push({ kind: 'item', id: 'i_colmillo', item: 'colmillo', x: ox1 - 1.6, y: y + 0.05, z: oz0 + 1.2, afterBoss: 'lobishome' });
+    L.interact.push({ kind: 'item', id: 'i_farol_bento', item: 'farol_bento', x: ox0 + 4.15, y: y + 0.05, z: oz0 + 2.68, afterBoss: 'lobishome' });
   }
   // sus mastines: vencido él, vuelven a la lobera (spec.trasJefe: game.js)
   L.enemies.push(

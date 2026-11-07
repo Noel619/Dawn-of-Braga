@@ -876,6 +876,56 @@ const ICONS = {
     sparkle(b, 25, 4);
     b.outline(P.void);
   },
+  // lo que deja el Lobishome: su colmillo, colgado de un cordel; su farol
+  colmillo(b) {
+    // el cordel
+    for (let k = 0; k <= 20; k++) {
+      const t = k / 20;
+      const a = Math.PI * (0.15 + 0.7 * t);
+      b.set(Math.round(16 - Math.cos(a) * 11), Math.round(4 + Math.sin(a) * 9 - 6), k % 3 ? P.parch2 : P.parch1);
+    }
+    // el colmillo: curvo, amarillo, negro en la raíz
+    for (let k = 0; k < 18; k++) {
+      const t = k / 17;
+      const x = 16 + Math.sin(t * 1.6) * 5 - 2,
+        y = 9 + t * 19;
+      const r = 3.2 * (1 - t * 0.85);
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          if (dx * dx + dy * dy > r * r) continue;
+          const l = 0.66 - dx / 9 - t * 0.1;
+          const pal = t < 0.18 ? [P.ink2, P.wood1, P.wood2, P.wood3] : [P.bone0, P.bone1, P.bone2, P.bone3, P.parch5];
+          b.set(Math.round(x + dx), Math.round(y + dy), shade(pal, l, dx, dy));
+        }
+    }
+    b.set(14, 9, P.void);
+    b.set(15, 9, P.void);
+    sparkle(b, 23, 18);
+    b.outline(P.void);
+  },
+  farol(b) {
+    const IR = IRON.slice(1);
+    // el asa y la tapa
+    for (let k = 0; k <= 12; k++) {
+      const a = Math.PI * (k / 12);
+      b.set(Math.round(16 + Math.cos(a) * 5), Math.round(6 - Math.sin(a) * 4), P.iron3);
+    }
+    for (let y = 6; y <= 9; y++) for (let x = 10 + (9 - y); x <= 22 - (9 - y); x++) b.set(x, y, shade(IR, 0.7 - (x - 10) / 20, x, y));
+    // el cuerpo: los vidrios de cuerno, con la llama dentro
+    for (let y = 10; y <= 24; y++)
+      for (let x = 10; x <= 22; x++) {
+        const borde = x === 10 || x === 22 || x === 16 || y === 10 || y === 24;
+        if (borde) b.set(x, y, x === 10 || y === 10 ? P.iron3 : P.iron1);
+        else {
+          const d = Math.hypot(x - 16, (y - 18) * 0.7);
+          b.set(x, y, d < 2 ? P.ember4 : d < 3.6 ? P.ember3 : d < 5.4 ? P.parch3 : P.parch1);
+        }
+      }
+    // el pie
+    for (let y = 25; y <= 27; y++) for (let x = 9; x <= 23; x++) b.set(x, y, shade(IR, 0.6 - (x - 9) / 24, x, y));
+    sparkle(b, 25, 12);
+    b.outline(P.void);
+  },
   cocimientoVerde(b) {
     drawFlask(b, true, [P.moss0, P.moss1, P.moss2, P.moss3, P.moss4]);
   },
@@ -1402,6 +1452,33 @@ const SMALL = {
     b.set(3, 4, P.glass4);
     b.set(5, 6, P.moss4);
     b.hline(2, 6, 4, P.moss3);
+  },
+  // (la flor blanca, en la lobera: abierta; cerrada, si él está cerca a
+  // oscuras: game/lobishome.js)
+  florAbierta(b) {
+    for (const [x, y] of [
+      [4, 1],
+      [1, 3],
+      [7, 3],
+      [2, 6],
+      [6, 6],
+    ]) {
+      b.disc(x + 0.5, y + 0.5, 1.6, P.bone3);
+      b.set(x, y, P.steel5);
+    }
+    b.disc(4.5, 4.2, 1.1, P.gold3);
+    b.set(4, 8, P.moss2);
+  },
+  florCerrada(b) {
+    b.vline(4, 5, 8, P.moss2);
+    for (let y = 0; y < 6; y++) {
+      const w = y < 2 ? 0 : y < 4 ? 1 : 1;
+      for (let x = 4 - w; x <= 4 + w; x++) b.set(x, y, y < 2 ? P.bone2 : P.bone1);
+    }
+    b.set(3, 4, P.moss3);
+    b.set(5, 4, P.moss3);
+    b.set(3, 5, P.moss2);
+    b.set(5, 5, P.moss2);
   },
   tonNegro(b) {
     b.rect(3, 0, 3, 2, P.wood3);
