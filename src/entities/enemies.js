@@ -19,6 +19,8 @@ import { CABALLERO_TYPE } from './caballero.js';
 import { CORTESANO_TYPE, MAYORDOMO_TYPE, CORTESANO_SUELTO_TYPE } from './cortesano.js';
 import { FISICO_TYPE } from './fisico.js';
 import { CUERVO_TYPE } from './cuervo.js';
+import { ZARZA_TYPE, BOCA_TYPE, BULBO_TYPE } from './plantas.js';
+import { LOBISHOME_TYPE } from './lobishome.js';
 import { descInit, descAI, descAnimate, descReset, descOnHit, descPreHit } from './descoyuntado.js';
 import { objMat, additiveFog } from '../gfx/materials.js';
 import { GAIT } from './locomotion.js';
@@ -1280,6 +1282,12 @@ export const TYPES = {
   mayordomo: MAYORDOMO_TYPE,
   fisico: FISICO_TYPE,
   cuervo: CUERVO_TYPE,
+  // las plantas que se mueven, en lo hondo (world/cloacas_hondas.js)
+  zarza: ZARZA_TYPE,
+  boca: BOCA_TYPE,
+  bulbo: BULBO_TYPE,
+  // el jefe de la lobera
+  lobishome: LOBISHOME_TYPE,
   guardianL: GUARDIAN_L,
   guardianR: GUARDIAN_R,
   turibulario: {

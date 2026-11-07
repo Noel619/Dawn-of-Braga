@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { TYPES } from '../entities/enemies.js';
 import { Cloacas } from './cloacas.js';
+import { Lobo } from './lobishome.js';
+import { HONDAS } from '../world/cloacas_hondas.js';
 import { buildLevel } from '../world/level.js';
 import { PostPipeline } from '../gfx/post.js';
 import { G, registerMaterialPatch } from '../gfx/materials.js';
@@ -72,7 +74,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { caballero: ['bossCaballero', 'bossCaballero2'], impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossLeonor', 'bossLeonor2'] };
+const BOSS_MUSIC = { lobishome: ['bossCellar', 'bossCellar2'], caballero: ['bossCaballero', 'bossCaballero2'], impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossLeonor', 'bossLeonor2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -222,6 +224,8 @@ export class Game {
       const K = FORT.torre;
       this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.pisos[1] - 0.6, yMax: K.terraza + 1, layers: 6 })];
     }
+    // las cloacas hondas (world/cloacas_hondas.js): cada nivel, por capas
+    this.navHondas = Object.entries(HONDAS.grids).map(([k, gr]) => ({ y0: gr.y0 - 0.5, y1: gr.y1 + 0.5, nav: new LayerNav(lvl[k], this.world.col, { yMin: gr.y0 - 0.6, yMax: gr.y1 + 0.6 }) }));
     this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
     // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
@@ -286,6 +290,8 @@ export class Game {
     this.cloacaFX = new CloacaFX(this);
     // las cloacas hondas: el agua que frena, la cosecha y el pozo de la tapa
     this.cloacas = new Cloacas(this);
+    // la lobera: los braseros, la luz y lo de la pelea con el Lobishome
+    this.lobo = new Lobo(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
     this.cornisas = new Cornisas(this);
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
@@ -495,6 +501,7 @@ export class Game {
     this.souto.applyFlags();
     this.desfigurado.applyFlags();
     this.cloacas.applyFlags();
+    this.lobo.applyFlags();
     this.fisico.applyFlags();
   }
 
@@ -577,6 +584,7 @@ export class Game {
     this.corte.reset();
     this.souto.reset();
     this.desfigurado.onRespawn();
+    this.lobo && this.lobo.onRespawn();
     this.cornisas.reset();
     this.fisico.reset();
     this.trampas.reset();
@@ -1279,6 +1287,7 @@ export class Game {
     this.ossuaries.onRespawn();
     this.souto.onRespawn();
     this.desfigurado.onRespawn();
+    this.lobo && this.lobo.onRespawn();
     this.cornisas.onRespawn();
     this.fisico.onRespawn();
     this.trampas.reset();
@@ -1404,6 +1413,18 @@ export class Game {
   }
 
   // Bajo la plaza del Pan: la bodega de la taberna y la cloaca.
+  // ¿En qué nivel de las cloacas hondas? (para el mapa: world/cloacas_hondas.js)
+  capaHonda(p) {
+    const Y = HONDAS.y;
+    const G = HONDAS.grids;
+    const en = (k) => p.x > G[k].r[0] && p.x < G[k].r[2] && p.z > G[k].r[1] && p.z < G[k].r[3];
+    if (p.y < Y.n1 + 3.2 && p.y > Y.n1 - 2 && en('H1')) return 'lobera';
+    if (p.y < Y.n2 + 3 && p.y > Y.n2 - 2 && en('H2')) return 'viejas';
+    if (p.y < Y.n3 + 3 && p.y > Y.n3 - 3 && en('H3')) return 'aljibes';
+    if (p.y < Y.n4 + 3 && p.y > Y.n4 - 2 && en('H4')) return 'hondo';
+    return null;
+  }
+
   inCloaca(p) {
     const Q = CLOACA.grid;
     return p.x > Q[0] && p.x < Q[2] && p.z > Q[1] && p.z < Q[3] && p.y < -1.2 && p.y > CLOACA.y0 - 1;
@@ -1972,6 +1993,7 @@ export class Game {
       this.waters.update(dt);
       this.cloacaFX.update(dt);
       this.cloacas.update(dt);
+      this.lobo.update(dt);
       this.spring.update(dt);
       if (this.state === 'play') {
         this.hunt.update(dt);

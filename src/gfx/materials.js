@@ -263,6 +263,15 @@ export const MAT_DEFS = {
   // lo que se cosecha en lo hondo (game/cloacas.js): el musgo que da luz, la
   // flor blanca por fuera y negra por dentro
   musgoGlow: { tex: 'white', uv: 1, color: 0x0c1c0a, emissive: 0x7ef0a0, emissiveIntensity: 1.5 },
+  // el Lobishome (entities/lobishome.js): la piel gris con sus islas de la
+  // peste y el pelo, a mechones
+  loboPiel: { tex: 'skinCorrupt', uv: 1.6, color: 0x9a948c },
+  loboPelo: { tex: 'hide', uv: 2.2, color: 0x3c3632 },
+  // las plantas que se mueven (entities/plantas.js)
+  plantaTallo: { tex: 'wooddark', uv: 1.2, color: 0x7a8a50 },
+  plantaHoja: { tex: 'grass', uv: 2.4, color: 0x7aa05a },
+  plantaBulbo: { tex: 'hide', uv: 1.4, color: 0xa8be7a, emissive: 0x1a2a08, emissiveIntensity: 0.5 },
+  espora: { tex: 'white', uv: 1, color: 0x101804, emissive: 0xc8f070, emissiveIntensity: 1.4 },
   florCera: { tex: 'white', uv: 1, color: 0xd8dccc, emissive: 0x8ea8b8, emissiveIntensity: 0.55 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
   eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },

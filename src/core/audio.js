@@ -327,7 +327,7 @@ const ZONE_BED = {
 };
 const OUTDOOR = { city: 1, castillo: 1, armas: 1, ramparts: 1, luna: 1, dawn: 1 };
 // distancia máxima a la que merece la pena sintetizar cada sonido
-const FAR = { soulPlea: 38, soulScream: 45, bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
+const FAR = { aullido: 160, soulPlea: 38, soulScream: 45, bellToll: 400, leonorWail: 120, roar: 120, explosion: 120, slam: 90, gateOpen: 60, slabSink: 60, crow: 60, crack: 80, scuttle: 45, beastRoar: 150, beastRoarBig: 220, colossusBreath: 110, ramImpact: 90, fleshBurst: 90, coreBeat: 120, coreBurst: 300, choke: 160 };
 // formantes (Hz, ancho de banda, ganancia) para voces y gritos
 const VOW = {
   a: [
@@ -2479,6 +2479,16 @@ export class Audio {
         d = this.out(P, { gain: 0.7, verb: 1, life: 3, ref: 3 });
         this.smp(d, t, this.lib.drip(rnd(900, 1500)), { gain: 0.35 });
         break;
+      // el aullido del Lobishome (game/lobishome.js): largo, que sube, se
+      // quiebra y rueda por las bóvedas
+      case 'aullido': {
+        d = this.out(P, { gain: 1, verb: 1.2, life: 6, ref: 14, roll: 0.6 });
+        const v = (o2) => this.voice(d, t + (o2.dt || 0), o2.dur ?? 0.6, o2);
+        v({ dur: 3.2, f0: 300, f1: 420, vowel: 'u', v1: 'o', gain: 0.34, vib: 5, vibD: 18, breath: 0.35, a: 0.4, rasp: 0.25 });
+        v({ dt: 0.25, dur: 2.9, f0: 450, f1: 610, vowel: 'u', gain: 0.12, vib: 5.5, vibD: 24, breath: 0.3, a: 0.5 });
+        v({ dt: 2.9, dur: 1.2, f0: 400, f1: 220, vowel: 'o', v1: 'u', gain: 0.22, vib: 7, vibD: 30, breath: 0.4, rasp: 0.4 });
+        break;
+      }
       // el agua a la rodilla, al andar (las cloacas hondas: game/cloacas.js)
       case 'splash': {
         d = this.out(P, { gain: o.gain ?? 0.6, verb: 0.6, life: 2, ref: 3 });
@@ -3302,6 +3312,42 @@ export class Audio {
           V({ dur: 0.8, f0: 900, f1: 180, vowel: 'e', v1: 'u', gain: 0.16, vib: 20, vibD: 80, type: 'square', breath: 0.5 });
           this.noise(d, t + 0.1, 0.4, { f0: 600, f1: 250, q: 3, gain: 0.3, buf: this.brown, rate: 3 });
         } else if (kind === 'idle') this.chitter(d, t, 0.6, 0.25);
+        break;
+      // las plantas de lo hondo (entities/plantas.js): no tienen voz; crujen,
+      // las hojas se arrastran, sisean, chascan
+      case 'planta':
+        if (kind === 'alert') {
+          this.creak(d, t, rnd(0.6, 1.0), rnd(70, 110), 0.12);
+          this.noise(d, t, 0.9, { f0: rnd(900, 1300), f1: rnd(1600, 2400), q: 1.2, gain: 0.08, a: 0.2, buf: this.pink, curve: 'lin' });
+        } else if (kind === 'attack') {
+          this.noise(d, t, 0.35, { type: 'highpass', f0: 1800, f1: 3200, gain: 0.08, a: 0.04, buf: this.pink });
+          this.noise(d, t + 0.05, 0.3, { f0: 600, f1: 300, q: 1, gain: 0.07, a: 0.02, buf: this.brown, rate: 3 });
+        } else if (kind === 'hurt') {
+          this.noise(d, t, 0.12, { f0: 700, q: 1.4, gain: 0.16, a: 0.002, buf: this.brown, rate: 4 });
+          this.creak(d, t + 0.05, 0.3, rnd(120, 160), 0.08);
+        } else if (kind === 'death') {
+          this.creak(d, t, 1.4, rnd(50, 80), 0.16);
+          this.noise(d, t + 0.2, 1.4, { f0: 1100, f1: 500, q: 1, gain: 0.07, a: 0.3, buf: this.pink, curve: 'lin' });
+        } else if (kind === 'idle') this.noise(d, t, rnd(0.6, 1.2), { f0: rnd(900, 1400), f1: rnd(1500, 2200), q: 1.3, gain: 0.03, a: 0.3, buf: this.pink, curve: 'lin' });
+        break;
+      // el Lobishome (entities/lobishome.js): gruñe hondo, ladra corto,
+      // gime como un perro y, al morir, el gemido es de hombre
+      case 'lobishome':
+        if (kind === 'alert') {
+          V({ dur: 1.4, f0: 70, f1: 92, vowel: 'o', gain: 0.32, vib: 22, vibD: 30, breath: 0.7, rasp: 1, dist: 1 });
+          V({ dt: 1.3, dur: 0.3, f0: 260, f1: 170, vowel: 'a', gain: 0.32, vibD: 0, breath: 0.5, a: 0.005, rasp: 0.8, dist: 1 });
+        } else if (kind === 'attack') {
+          V({ dur: 0.32, f0: 210, f1: 140, vowel: 'a', gain: 0.32, breath: 0.6, a: 0.005, rasp: 0.9, dist: 1 });
+          this.noise(d, t + 0.24, 0.05, { f0: 2400, q: 2, gain: 0.3, a: 0.001 });
+        } else if (kind === 'hurt') V({ dur: 0.34, f0: 560, f1: 380, vowel: 'i', v1: 'u', gain: 0.24, breath: 0.4, a: 0.005, rasp: 0.3 });
+        else if (kind === 'death') {
+          V({ dur: 1.6, f0: 480, f1: 220, vowel: 'i', v1: 'u', gain: 0.24, vib: 6, vibD: 30, breath: 0.5 });
+          V({ dt: 1.7, dur: 1.8, f0: 130, f1: 82, vowel: 'a', v1: 'o', gain: 0.22, vib: 5, vibD: 10, breath: 0.6, rasp: 0.3 });
+          this.bodyFall(d, t + 1.4, 1.4);
+        } else if (kind === 'idle') {
+          this.noise(d, t, 1.2, { type: 'lowpass', f0: 420, gain: 0.07, a: 0.5, buf: this.brown, rate: 1, curve: 'lin' });
+          this.noise(d, t + 1.5, 1.4, { type: 'lowpass', f0: 320, gain: 0.08, a: 0.2, buf: this.brown, rate: 1, curve: 'lin' });
+        }
         break;
       case 'hound':
         if (kind === 'alert') {

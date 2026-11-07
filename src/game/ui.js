@@ -517,6 +517,8 @@ export class UI {
       ['Fijar objetivo', 'Q|Clic central', 'R3'],
       ['Cambiar objetivo', 'Ratón', 'Stick der.'],
       ['Curarse (ampolla)', 'R', 'X'],
+      ['Beber un cocimiento verde', '1', 'Cruz izq.'],
+      ['Beber un cocimiento negro', '2', 'Cruz der.'],
       ['Interactuar', 'E', 'A'],
       ['Inventario', 'Tab I', 'Y'],
       ['Mapa', 'M', 'View'],
@@ -927,12 +929,15 @@ export class UI {
     // (la bodega del canónigo va en el plano de la ciudad, bajo su casa)
     const cellar = g.inCellar(g.player.pos);
     const dungeon = !cellar && g.inDungeon(g.player.pos);
-    const cloaca = !cellar && !dungeon && g.inCloaca(g.player.pos);
-    const crypt = g.player.pos.y < -3 && !cellar && !dungeon && !cloaca && !g.inFoso(g.player.pos);
+    // (las cloacas hondas: cada nivel, su plano)
+    const honda = !cellar && !dungeon && g.capaHonda ? g.capaHonda(g.player.pos) : null;
+    const cloaca = !cellar && !dungeon && !honda && g.inCloaca(g.player.pos);
+    const crypt = g.player.pos.y < -3 && !cellar && !dungeon && !cloaca && !honda && !g.inFoso(g.player.pos);
     const ey = $('map-eyebrow').querySelector('span');
-    const where = crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : cloaca ? 'Bajo la plaza del Pan' : 'Braga intramuros';
+    const HONDA = { lobera: 'Las cloacas de la Sé', viejas: 'Las cloacas viejas', aljibes: 'Los aljibes ahogados', hondo: 'Lo hondo' };
+    const where = honda ? HONDA[honda] : crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : cloaca ? 'Bajo la plaza del Pan' : 'Braga intramuros';
     if (ey) ey.textContent = where + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
-    const layer = crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : cloaca ? 'cloaca' : undefined;
+    const layer = honda || (crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : cloaca ? 'cloaca' : undefined);
     const rects = g.level.L.map.filter((m) => m.level === layer && (layer || m.id !== 'river' || g.visited.has('river')));
     const seen = rects.filter((m) => g.visited.has(m.id));
     let x0 = 1e9,

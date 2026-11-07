@@ -33,6 +33,7 @@ export class Cloacas {
     }
     this.splashT = 0;
     this.chk = 0;
+    this.pend = [];
     this.refresh();
   }
 
@@ -132,12 +133,16 @@ export class Cloacas {
     p.playInteract('interact', Math.atan2(c.x - p.pos.x, c.z - p.pos.z));
     g.flags['cosecha:' + c.id] = g.playTime;
     const n = RINDE[c.item] ?? 1;
-    g.later(380, () => {
-      g.inventory.add(c.item, n);
-      g.ui.toast(MSG.cosecha(ITEMS[c.item].name, n), 4);
-      g.audio && g.audio.play('pickup', c);
-      this.refresh();
-      g.saveGame && g.saveGame();
+    // (al cabo del gesto, en tiempo de juego)
+    this.pend.push({
+      t: 0.38,
+      fn: () => {
+        g.inventory.add(c.item, n);
+        g.ui.toast(MSG.cosecha(ITEMS[c.item].name, n), 4);
+        g.audio && g.audio.play('pickup', c);
+        this.refresh();
+        g.saveGame && g.saveGame();
+      },
     });
     // (al arrancarla, lo que la guarda se entera: las plantas de alrededor)
     g.noise && g.noise(c.x, c.y, c.z, 7);
@@ -174,6 +179,14 @@ export class Cloacas {
   update(dt) {
     const g = this.g;
     const p = g.player;
+    for (let i = this.pend.length - 1; i >= 0; i--) {
+      const q = this.pend[i];
+      q.t -= dt;
+      if (q.t <= 0) {
+        this.pend.splice(i, 1);
+        q.fn();
+      }
+    }
     // el agua a la rodilla
     let v = 1;
     if (p.pos.y < -12 && !p.dead) {

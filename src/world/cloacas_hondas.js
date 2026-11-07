@@ -268,7 +268,7 @@ export function buildHondas(ctx, G, L) {
     salas: [
       { id: 'ninfeo', ...HONDAS.ninfeo, y: Y.n4, sp: 4.5, rise: 2.45, room: 'hondo', ribs: true, bocas: [{ id: 's', side: 's', at: 14.5 }, { id: 'e', side: 'e', at: 21.5 }, { id: 'w', side: 'w', at: 11.5 }], canal: [[17.5, 4, 18.5, 24]], flow: [0, 0.3] },
       { id: 'semillero', ...HONDAS.semillero, y: Y.n4, sp: 3.2, rise: 1.95, room: 'hondo_semillero', bocas: [{ id: 's', side: 's', at: -4.5 }] },
-      { id: 'pozoTapa', r: HONDAS.pozoTapa.r, xs: [30.5, 34.5], zs: [32, 36], y: Y.n4, sp: 2.6, rise: 1.95, room: 'hondo_pozo', oculi: [{ i: 0, j: 0, k: 3, top: Y.n4 + 9, mat: 'ashlar', tint: [0.3, 0.3, 0.28] }], bocas: [{ id: 'e', side: 'e', at: 34 }] },
+      { id: 'pozoTapa', r: HONDAS.pozoTapa.r, xs: [30.5, 34.5], zs: [32, 36], y: Y.n4, sp: 2.6, rise: 1.95, room: 'hondo_pozo', oculi: [{ i: 0, j: 0, k: 4, top: Y.n4 + 9, mat: 'ashlar', tint: [0.3, 0.3, 0.28] }], bocas: [{ id: 'e', side: 'e', at: 34 }] },
     ],
     tramos: [
       ['al2.n', 'h0', { tipo: 'seco', room: 'hondo' }],
@@ -415,7 +415,7 @@ function lobera(ctx, L, R) {
   // los braseros
   for (const b of BRASEROS) brasero(ctx, b, y, b.nodo === 'sala:pozo' ? 'lobera_pozo' : b.nodo === 'sala:osario' ? 'lobera_osario' : 'lobera');
   L.braseros = BRASEROS.map((b) => ({ ...b, y }));
-  for (const b of BRASEROS) L.interact.push({ kind: 'brasero', id: 'ib_' + b.id, brasero: b.id, x: b.x, y, z: b.z, r: 1.6 });
+  for (const b of BRASEROS) L.interact.push({ kind: 'brasero', id: 'ib_' + b.id, brasero: b.id, x: b.x, y, z: b.z, r: 1.9 });
   // lo que caza y deja: huesos, jirones, un perro, un soldado, los candiles
   // del Desfigurado (los trajo hasta aquí y se le cayeron)
   wb.setRoom('lobera');
@@ -527,9 +527,9 @@ function lobera(ctx, L, R) {
     S = HONDAS.nieblaS;
   L.interact.push({ kind: 'fog', id: 'f_lobo', boss: 'lobishome', x: E.x, y, z: E.z, w: KIT.w - 0.2, h: KIT.sp + 0.6, axis: 'x', enter: -1 });
   L.interact.push({ kind: 'fog', id: 'f_lobo2', boss: 'lobishome', x: S.x, y, z: S.z, w: KIT.w - 0.2, h: KIT.sp + 0.6, axis: 'z', enter: 1 });
-  // el Lobishome (empieza en su osario; ver game/lobishome.js)
-  const O = HONDAS.osario;
-  L.enemies.push({ type: 'lobishome', x: (O.r[0] + O.r[2]) / 2 + 1.5, y, z: O.r[1] + 2.4, yaw: Math.PI, idle: 'boss', id: 'b_lobishome', boss: true });
+  // el Lobishome: espera a oscuras al fondo de la primera galería, de pie,
+  // mirando hacia la escalera (ver game/lobishome.js)
+  L.enemies.push({ type: 'lobishome', x: MX[3] + 0.6, y, z: MZ[0], yaw: Math.PI / 2, idle: 'boss', id: 'b_lobishome', boss: true });
 }
 
 // ------------------------------------------------------------------------ las cloacas viejas
@@ -626,8 +626,11 @@ function aljibes(ctx, L, R) {
 function raizGorda(ctx, a, b, r, seed, room) {
   const rng = new RNG(seed);
   const n = 9;
-  const mid = a.clone().lerp(b, 0.5).add(V(rng.range(-0.8, 0.8), rng.range(-0.6, 0.4), rng.range(-0.8, 0.8)));
-  const tint = [0.4 + rng.range(-0.04, 0.04), 0.34, 0.27];
+  // (la comba: la raíz baja pegada a la bóveda y se descuelga, o cae en
+  // vientre hacia un lado)
+  const lado = V(rng.range(-1, 1), 0, rng.range(-1, 1)).normalize().multiplyScalar(rng.range(1.2, 2.4));
+  const mid = a.clone().lerp(b, 0.45).add(lado).add(V(0, rng.range(0.4, 1.6), 0));
+  const tint = [0.3 + rng.range(-0.03, 0.03), 0.28, 0.23];
   let prev = a.clone();
   for (let k = 1; k <= n; k++) {
     const t = k / n;
@@ -638,8 +641,8 @@ function raizGorda(ctx, a, b, r, seed, room) {
       .add(mid.clone().multiplyScalar(2 * (1 - t) * t))
       .add(b.clone().multiplyScalar(t * t))
       .add(V(Math.sin(t * 9 + seed) * 0.06, 0, Math.cos(t * 7 + seed) * 0.06));
-    const ra = r * (1 - ((k - 1) / n) * 0.45),
-      rb = r * (1 - (k / n) * 0.45);
+    const ra = r * (1 - ((k - 1) / n) * 0.6),
+      rb = r * (1 - (k / n) * 0.6);
     P.rod(ctx, prev, p, ra, rb, 'wooddark', { segs: 6, room, tint });
     if (k > 2 && k < n && rng.chance(0.3)) {
       const ang = rng.range(0, Math.PI * 2),
@@ -766,14 +769,18 @@ function hondo(ctx, L, R) {
     const cx = (Pt[0] + Pt[2]) / 2,
       cz = (Pt[1] + Pt[3]) / 2;
     wb.setRoom('hondo_pozo');
-    for (let k = 0; k < 22; k++) {
-      const yy = y + 0.4 + k * 0.35;
-      wb.box('iron', cx - 0.25, yy, cz - 1.0, cx + 0.25, yy + 0.04, cz - 0.94, { ao: false, faces: 'tnsewb', tint: [0.4, 0.34, 0.3] });
+    // (en el muro del norte, del suelo a lo alto del tiro: la bóveda del
+    // cuarto está abierta del todo, y sus muros siguen arriba)
+    const zw = Pt[1];
+    for (let k = 0; k < 24; k++) {
+      const yy = y + 0.45 + k * 0.36;
+      wb.box('iron', cx - 0.26, yy, zw + 0.02, cx + 0.26, yy + 0.04, zw + 0.1, { ao: false, faces: 'tnsewb', tint: [0.4, 0.34, 0.3] });
+      for (const sx of [-0.26, 0.22]) wb.box('iron', cx + sx, yy - 0.02, zw, cx + sx + 0.04, yy + 0.04, zw + 0.1, { ao: false, faces: 'tnsew', tint: [0.36, 0.3, 0.28] });
     }
     // (lo alto del tiro, tapado: negro)
-    wb.box('black', cx - 1.2, y + 8.9, cz - 1.2, cx + 1.2, y + 8.92, cz + 1.2, { faces: 'b', ao: false, grime: false });
+    wb.box('black', Pt[0], y + 8.9, Pt[1], Pt[2], y + 8.92, Pt[3], { faces: 'b', ao: false, grime: false });
     wb.setRoom(null);
-    L.interact.push({ kind: 'trepa', id: 'pozo_tapa', x: cx, y, z: cz - 0.6, r: 1.4, to: [VERGEL.tapa.x + 0.9, VERGEL.y, VERGEL.tapa.z, Math.PI / 2] });
+    L.interact.push({ kind: 'trepa', id: 'pozo_tapa', x: cx, y, z: zw + 0.8, r: 1.4, to: [VERGEL.tapa.x + 0.9, VERGEL.y, VERGEL.tapa.z, Math.PI / 2] });
   }
   // lo que se cosecha: el musgo de luz (en muchos sitios), la raíz amarga
   // (en las raíces gordas del ninfeo y las galerías) y la flor de lo hondo

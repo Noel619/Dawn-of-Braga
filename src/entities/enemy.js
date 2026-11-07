@@ -249,6 +249,12 @@ export class Enemy {
     const D = CASTLE.dun;
     if (g.navDungeon && (g.inDungeon(p) || (t && g.inDungeon(t) && y < 0.5 && p.x > D.x0 && p.x < D.x1 && p.z > D.z0 && p.z < D.z1))) return g.navDungeon;
     if (g.navLair && g.inLair(p)) return g.navLair;
+    // (las cloacas hondas: la rejilla de cada nivel, por la altura)
+    if (g.navHondas)
+      for (const h of g.navHondas) {
+        const n = h.nav;
+        if (y > h.y0 && y < h.y1 && p.x > n.x0 && p.z > n.z0 && p.x < n.x0 + n.w * n.res && p.z < n.z0 + n.h * n.res) return n;
+      }
     if (y < -3) return this.game.navCrypt;
     if (y > -1.5 && y < 16) return this.game.navSurface;
     return null;
