@@ -380,7 +380,10 @@ function rellano(ctx) {
   wb.box('ashlar', E.x1, y - 0.05, rz1 - 0.01, rx1, yt, rz1, { ...mo, faces: 's' });
   // (la mancha verde del agua por la cara, de la boca abajo)
   wb.box('mossstone', rx1, y, c0 - 0.15, rx1 + 0.01, lecho, c1 + 0.15, { faces: 'e', ao: false, tint: [0.3, 0.4, 0.28] });
-  col.add(rx0, y - 0.5, rz0, rx1, yt - 0.02, rz1);
+  // (el macizo, para lo que choca: menos el canal, que baja a su lecho)
+  col.add(rx0, y - 0.5, rz0, rx1, yt - 0.02, c0);
+  col.add(rx0, y - 0.5, c1, rx1, yt - 0.02, rz1);
+  col.add(rx0, y - 0.5, c0, rx1, lecho - 0.02, c1);
   // el pretil del rellano: al norte, y al este menos donde cae el agua
   const pt = 0.22,
     ph = 0.85;
@@ -945,7 +948,7 @@ function verde(ctx) {
         musgo(ctx, px, yb, pz, 0.7, 0.4, 10900 + kk, { ...ctxR, n: 7 });
         if (kk % 2 === 0) helecho(ctx, px + nrm[0] * 0.25, yb, pz + nrm[1] * 0.25, rr.range(0.6, 1.1), 11000 + kk, ctxR);
       }
-      if (kk % 3 !== 0) for (let q = 0; q < 3; q++) hiedra(ctx, x + (q - 1) * 0.3 * Math.abs(nrm[1]), G.ys + rr.range(0.2, 1.4), z + (q - 1) * 0.3 * Math.abs(nrm[0]), rr.range(1.8, 5.2), 11100 + kk * 5 + q, { ...ctxR, dir: nrm, hoja: 1.7 });
+      if (kk % 3 !== 0) for (let q = 0; q < 2; q++) hiedra(ctx, x + (q - 0.5) * 0.36 * Math.abs(nrm[1]), G.ys + rr.range(0.2, 1.4), z + (q - 0.5) * 0.36 * Math.abs(nrm[0]), rr.range(1.8, 5.2), 11100 + kk * 5 + q, { ...ctxR, dir: nrm, hoja: 1.8 });
     }
   }
   PILARES().forEach(([px, pz], k) => {
@@ -1001,7 +1004,7 @@ function verde(ctx) {
   // Sé: matas, helechos grandes, hierba alta y flores donde cae alguna luz)
   const rj = REJAS();
   const luzEn = (x, z) => Math.hypot(x - D.x, z - D.z) < D.r1 + 1 || rj.some(([gx, gz]) => Math.hypot(x - gx, z - gz) < 3);
-  for (let k = 0; k < 300; k++) {
+  for (let k = 0; k < 230; k++) {
     const x = rr.range(x0 + 0.6, x1 - 0.6),
       z = rr.range(z0 + 0.6, z1 - 0.6);
     if (!libre(x, z, 0.5) || muerto(x, z)) continue;

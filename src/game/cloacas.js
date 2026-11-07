@@ -195,7 +195,7 @@ export class Cloacas {
       for (const a of this.ahogados) {
         if (x < a.r[0] || x > a.r[2] || z < a.r[1] || z > a.r[3]) continue;
         if (p.pos.y > a.y + 0.35) continue;
-        v = 0.6;
+        v = 0.55;
         break;
       }
     }

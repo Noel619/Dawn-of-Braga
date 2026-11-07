@@ -42,6 +42,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Fijar objetivo (el enemigo que tienes delante) | Q / clic central | R3 |
 | Cambiar de objetivo | Mover el ratón hacia un lado | Stick derecho |
 | Beber una ampolla | R | X |
+| Beber un cocimiento verde / negro (los del Desfigurado) | 1 / 2 | Cruz izquierda / derecha |
 | Interactuar | E | A |
 | Inventario y documentos | Tab / I | Y |
 | Inventario: cambiar de pestaña (Equipo, Objetos, Documentos) | Q / R | LB / RB |
@@ -133,24 +134,65 @@ un haz de luz pálida, y donde cae la luz y la lluvia ha crecido de todo; el agu
 la isla verde. En medio, en la luz, de pie y mirando al cielo, **el Desfigurado**: un vagabundo al que la infección no
 acabó de tomar, con media cara deshecha, que odia el sol y odia la peste y llama hermosa a la vida que queda
 («Hermosa...»). La primera vez que se pisa el rellano, la cámara baja despacio hasta él; si le hablas, te cuenta lo
-suyo, te da una **flor blanca** y te dice que sigas el agua. Por **la reja de levante** (sus barrotes, doblados) y el
-caño de los romanos, con el agua al tobillo, se llega a **el Vergel**: una gruta grande bajo el huerto seco de una
-casa de la plaza, que se hundió en ella. Por la sima baja la luna sobre el derrubio de tierra del huerto, hecho un
-prado con su higuera y sus saúcos en flor, y por él cuelgan las raíces del nogal muerto de arriba, que se ve recortado
-contra las estrellas; por los sumideros de la calle bajan otras tres rayas de luna. El agua del caño cae en cascada a
-una poza y corre en arroyo hasta un estanque con nenúfares, donde mana un caño romano de agua limpia; en lo umbrío dan
-luz los hongos, sobre el prado van las luciérnagas, y se oyen las ranas y los grillos. Arriba, en la plaza, sólo se ve
-una tapia, una puerta atrancada, el nogal seco y el sombrero de un espantapájaros. Él tiene su teoría: la vida no se
-murió, **se escondió aquí abajo**, y con ella la cura. La siguiente vez que bajas está en su **botica**, en el rincón
-del suroeste: muele hierbas en el mortero, lee su cuaderno, se aprieta un emplasto verde en la mejilla mala (lleva
-otro, vendado) y mira arriba a ratos; en la mesa, el **cuaderno de los remedios** (todo lo que ha probado: casi todo,
-«nada») y, rayada en una losa, la lista (ORTIGA - NO, AJO - NO… FLOR BLANCA - ??). Te cuenta su teoría, lo que busca
-(y te da **la Raíz del Vergel**: más vitalidad; «no cura, pero hace que dure más lo que no cura»), lo de la peste y
-**su miedo a lo oscuro**: en el rincón del nordeste, la gruta se abre a un paso hacia la Sé y sus catacumbas, donde lo
-verde se muere, hay zarpazos más altos que un hombre y una cabra arrastrada; él ha puesto una raya de sal y candiles
-de pared a pared, y a veces, al fondo, se encienden dos ojos. El paso acaba en un derrumbe: es la puerta del jefe que
-viene (`PLAN_LOBO.md`). (`world/cloaca.js`, `world/vergel.js`, `world/verdor.js`, `entities/desfigurado.js`,
+suyo, te da una **flor blanca** y te dice que sigas el agua. El agua se va por **la reja de levante** (sus barrotes,
+doblados: por el hueco de encima del andén se pasa) a **la galería del desagüe**, que la lleva a **el Vergel**: el
+colector de los romanos, donde se juntaban las aguas de media ciudad antes de bajar a las cloacas hondas. Una sala de
+treinta pasos por treinta, de seis tramos por seis de bóvedas de arista sobre pilares, con sus arcos fajones; la
+galería sale a un rellano alto, con su pretil y su escalera, y el agua cae de él en cascada a una alberca y corre por
+el canal mayor (con sus pasaderas) al estanque de decantación y, por el desagüe, al muro del sur; en el muro de
+levante, un caño romano con su mascarón aún mana a su pila. Encima de los dos tramos del noroeste estaba el huerto de
+una casa de la plaza: con la peste se secó, la bóveda se hundió con el peso de la tierra mojada y por la sima baja la
+luna sobre el derrubio, hecho un prado con su higuera y sus saúcos en flor, entre las dovelas caídas; por las raíces
+del nogal muerto de arriba, que se ve recortado contra las estrellas; y por tres sumideros de la calle (los óculos de
+la bóveda), otras tres rayas de luna. La tierra que trajo el agua cubre el enlosado de musgo y de hierba, la hiedra
+baja de los lunetos y los capiteles, en lo umbrío dan luz los hongos, sobre el prado van las luciérnagas, y se oyen
+las ranas y los grillos. Arriba, en la plaza, sólo se ve una tapia, una puerta atrancada, el nogal seco y el sombrero
+de un espantapájaros. Él tiene su teoría: la vida no se murió, **se escondió aquí abajo**, y con ella la cura. La
+siguiente vez que bajas está en su **botica**, en el rincón del suroeste, tras su mampara de cañizo: muele hierbas en
+el mortero, lee su cuaderno, se aprieta un emplasto verde en la mejilla mala (lleva otro, vendado) y mira arriba a
+ratos; en la mesa, el **cuaderno de los remedios** (todo lo que ha probado: casi todo, «nada») y, rayada en el muro, la
+lista (ORTIGA - NO, AJO - NO… FLOR BLANCA - ??); su fuego, su jergón, sus estantes de tarros. Te cuenta su teoría, lo
+que busca (y te da **un cocimiento verde**: «no cura, pero da aliento»; desde entonces **su mesa es tuya**, para cocer
+lo que se traiga de lo hondo), lo de la peste, **su miedo a lo oscuro** y, al final, a su pesar, **la llave de la
+reja**. En el muro del norte se abre **la galería de la Sé**, la que baja a las cloacas hondas: ante su boca, una raya
+de sal y siete candiles de pared a pared, y a veces, al fondo, se encienden dos ojos; dentro, lo verde se muere, hay
+zarpazos más altos que un hombre, una cabra arrastrada y, a los cinco metros, **una reja con su cadena y su candado**:
+la cerró él la noche de la cabra. (`world/cloaca.js`, `world/vergel.js`, `world/verdor.js`, `entities/desfigurado.js`,
 `game/desfigurado.js`, `game/cloaca.js`.)
+
+**Las cloacas hondas, el Lobishome y los cocimientos.** Detrás de la reja, una escalera baja a **la lobera**: las
+cloacas de la Sé, un laberinto de galerías de sillería (con su canal, sus tramos secos y sus tramos ahogados) y sus
+cruces, siete por seis, con dos salas, **el pozo de las ánimas** (por su tiro baja la luna sobre unas flores blancas)
+y **el osario**, la cama de paja y jirones del que vive ahí, con lo que entierra en los nichos, la pala rota y el farol
+de un sepulturero. Al pie de la escalera, la niebla: es su casa y es la pelea. **El Lobishome** (Bento, el sétimo,
+sepulturero de la necrópolis de los pobres) espera de pie al fondo de la primera galería; luego, a cuatro patas, se
+mete en lo oscuro. **La luz es tuya y la oscuridad es suya**: en lo oscuro sólo se le ven los ojos; caza por las
+galerías (va a un cruce a oscuras a unos metros de ti, te mira, carga y te embiste, y vuelve a lo oscuro); en lo
+oscuro su embestida no se desvía, en la luz sí, y un golpe en la luz lo deslumbra. En los cruces hay **braseros
+apagados** que se encienden con el farol (un segundo largo, a su merced). En la segunda fase se pone de pie y pelea en
+abierto (zarpazo doble, dentellada, embestida), **vuelca los braseros** y **aúlla**: el aullido los apaga a su
+alrededor, hace temblar el farol y, de cerca, deja sin aliento. En la tercera, un aullido los apaga todos y vuelve a
+cazar, más deprisa; pero si pisa la luz de la luna del pozo de las ánimas **se queda quieto, mirándola**, y se le pega
+a gusto. Vencido, se levanta la niebla de la salida, sus mastines vuelven a rondar la lobera y el Desfigurado,
+cuando le hablas, te dice quién era. Más abajo, **las cloacas viejas** (de mampuesto, largas, con tramos ahogados,
+ramales sin salida y los mastines), **los aljibes ahogados** (tres cisternas de pilares; en las dos primeras, y en las
+galerías que las unen, el agua llega a la rodilla y **se anda despacio**; en la tercera, el andén alrededor de su
+estanque hondo) y, bajo el Vergel, **lo hondo**: el ninfeo de los romanos, donde manaba la fuente, reventado de
+raíces, donde la vida que bajó se ha vuelto loca y **las plantas se mueven y muerden**: **la zarza** azota a ras o
+descarga desde arriba, **la boca** duerme caída entre los helechos y se tira a morder (una vez o dos seguidas) y **el
+bulbo** se hincha y **revienta en esporas** (no se para con el escudo). Ahí se cosecha lo de los cocimientos: el
+**musgo de luz**, la **raíz amarga** y, en el semillero del oeste, guardada, **la flor de lo hondo**. Lo cosechado
+**rebrota a los quince minutos de juego, pero sólo si te has ido lejos** (mirándolo no crece). De lo hondo se sube al
+Vergel por **el pozo de la tapa** (desde abajo se abre; al caer, se traba sola: no es un atajo de bajada). Bajar
+cuesta: andando sin pelear y sabiendo el camino son unos dos minutos (`tools/cloacawalk.mjs`); con el laberinto, las
+criaturas del camino (una treintena) y el agua, la primera vez, del orden de los diez. **Los cocimientos** se cuecen en
+la mesa del Desfigurado: el **verde** (dos de musgo y una de raíz: el aliento vuelve casi el doble de deprisa, cuarenta
+segundos) y el **negro** (la flor, dos de raíz y dos de musgo: casi el triple, y se anda un 15 % más ligero, un
+minuto). Se llevan **tres verdes y un negro como mucho**; se beben con 1 y 2 (en el mando, la cruz a izquierda y
+derecha) y, como lo que se bebe se pierde, **no se rellenan al descansar ni al caer**. En el marcador, junto a las
+ampollas, los que llevas, y bajo el aguante, una raya con lo que le queda al que has bebido. (`world/cloaca_kit.js`,
+`world/cloacas_hondas.js`, `entities/lobishome.js`, `entities/plantas.js`, `game/lobishome.js`, `game/cloacas.js`,
+`game/alquimia.js`; el plan y lo que queda, `PLAN_LOBO.md`.)
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
@@ -1157,7 +1199,11 @@ src/
                         aguamanil, el lecho, la estera, la tabla de la ronda, y lo de cualquier casa: alfombras, escaños, sillas de
                         tijera, alacenas, aparadores, tinajas, repisas, paños); amueblado.js: las salas más pobres
                         amuebladas con eso; cloaca.js: la bodega del Cuervo, la cloaca romana y la sala de la luz;
-                        vergel.js: el caño, la gruta del Vergel, su botica, lo oscuro y el huerto seco de arriba;
+                        vergel.js: el colector del Vergel (pilares, bóvedas, el rellano, el agua, la sima), su botica,
+                        la raya de candiles y el huerto seco de arriba; cloaca_kit.js: el kit del alcantarillado
+                        (galerías, cruces, escaleras, salas de pilares, vanos y el grafo de la red);
+                        cloacas_hondas.js: la galería de la Sé y su reja, la lobera, las cloacas viejas, los
+                        aljibes ahogados y lo hondo (los braseros, la cosecha, el pozo de la tapa);
                         verdor.js: lo que crece (helechos, hierba, flores, musgo, hiedra, raíces, juncos, la higuera, los
                         saúcos, las matas, los hongos que dan luz, los nenúfares, los troncos caídos);
                         level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
@@ -1276,10 +1322,13 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        el tamaño del jugador desde sus entradas y dice qué interactuable (o
                                        pie de escalera) se queda sin alcanzar; una imagen por sala
                         densidad.mjs   triángulos por m² de cada sala (las más pobres, primero)
-                        cloacawalk.mjs de la taberna a la luz: la trampilla clavada, la palanca, la bodega, la
-                                       galería, la llegada, hablar con el Desfigurado y la flor; por la reja
-                                       y el caño, el Vergel entero hasta el derrumbe de lo oscuro; y, de
-                                       vuelta, en su botica, lo que cuenta tema a tema (y la raíz)
+                        cloacawalk.mjs de la taberna a lo hondo y vuelta: la trampilla clavada, la palanca,
+                                       la bodega, la galería, hablar con el Desfigurado y la flor; por la reja
+                                       doblada, la galería del desagüe, el rellano y el Vergel; en su botica,
+                                       lo que cuenta tema a tema (el cocimiento, la mesa, la llave); la reja
+                                       de la Sé (sin llave y con ella), la lobera y su niebla, el laberinto, las
+                                       viejas, los aljibes (el agua que frena), lo hondo (la cosecha), el pozo
+                                       de la tapa hasta el Vergel y la mesa
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»

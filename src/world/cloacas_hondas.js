@@ -51,7 +51,7 @@ export const HONDAS = {
   grids: {
     H1: { r: [-16, -60, 47.5, 3], y0: -19, y1: -12.8 },
     H2: { r: [-24, -58, -1, 48], y0: -25, y1: -19 },
-    H3: { r: [-24.5, 26, 22.5, 62], y0: -31, y1: -25 },
+    H3: { r: [-24.5, 26, 22.5, 84], y0: -31, y1: -25 },
     H4: { r: [-12.5, -10.5, 42.5, 46.5], y0: -37.5, y1: -31 },
   },
   MX,
@@ -71,6 +71,7 @@ export const HONDAS = {
   // los aljibes ahogados y lo hondo
   aljibe1: { r: [-22.5, 44, -2.5, 60], xs: [-22.5, -18.5, -14.5, -10.5, -6.5, -2.5], zs: [44, 48, 52, 56, 60] },
   aljibe2: { r: [4.5, 44, 20.5, 60], xs: [4.5, 8.5, 12.5, 16.5, 20.5], zs: [44, 48, 52, 56, 60] },
+  aljibe3: { r: [-22.5, 66, -2.5, 82], xs: [-22.5, -18.5, -14.5, -10.5, -6.5, -2.5], zs: [66, 70, 74, 78, 82] },
   ninfeo: { r: [4, 4, 32, 24], xs: [4, 11, 18, 25, 32], zs: [4, 9, 14, 19, 24] },
   semillero: { r: [-10.5, -8, 1.5, 0], xs: [-10.5, -6.5, -2.5, 1.5], zs: [-8, -4, 0] },
   pozoTapa: { r: [30.5, 32, 34.5, 36] },
@@ -248,12 +249,18 @@ export function buildHondas(ctx, G, L) {
     aguaSky: 0x12201c,
     aguaGlint: 0x6a9a8a,
     salas: [
-      { id: 'al1', ...HONDAS.aljibe1, y: Y.n3, sp: 3.0, rise: 1.95, tipo: 'ahogado', room: 'aljibes', bocas: [{ id: 'n', side: 'n', at: -12.5 }, { id: 'e', side: 'e', at: 54 }], flow: [0.05, 0.08] },
-      { id: 'al2', ...HONDAS.aljibe2, y: Y.n3, sp: 3.0, rise: 1.95, tipo: 'estanque', anden: 1.6, hondo: 2.8, room: 'aljibes', bocas: [{ id: 'w', side: 'w', at: 54 }, { id: 'n', side: 'n', at: 14.5 }] },
+      { id: 'al1', ...HONDAS.aljibe1, y: Y.n3, sp: 3.0, rise: 1.95, tipo: 'ahogado', room: 'aljibes', bocas: [{ id: 'n', side: 'n', at: -12.5 }, { id: 's', side: 's', at: -12.5 }], flow: [0.05, 0.08] },
+      { id: 'al3', ...HONDAS.aljibe3, y: Y.n3, sp: 3.0, rise: 1.95, tipo: 'ahogado', room: 'aljibes', bocas: [{ id: 'n', side: 'n', at: -12.5 }, { id: 'e', side: 'e', at: 76 }], flow: [0.08, 0.03] },
+      { id: 'al2', ...HONDAS.aljibe2, y: Y.n3, sp: 3.0, rise: 1.95, tipo: 'estanque', anden: 1.6, hondo: 2.8, room: 'aljibes', bocas: [{ id: 's', side: 's', at: 6.5 }, { id: 'n', side: 'n', at: 14.5 }] },
     ],
+    nodos: { a3e: [6.5, 76] },
     tramos: [
       [V_(1, 7), 'al1.n', { tipo: 'seco', room: 'aljibes' }],
-      ['al1.e', 'al2.w', { tipo: 'ahogado', flow: 0.2 }],
+      // (del primero al tercero, por el sur; del tercero al segundo, por
+      // levante y al norte: todo con el agua a la rodilla)
+      ['al1.s', 'al3.n', { tipo: 'ahogado', flow: 0.2 }],
+      ['al3.e', 'a3e', { tipo: 'ahogado', flow: 0.25 }],
+      ['a3e', 'al2.s', { tipo: 'ahogado', flow: -0.25 }],
     ],
   };
   // lo hondo
@@ -522,6 +529,13 @@ function lobera(ctx, L, R) {
     wb.setRoom(null);
     L.interact.push({ kind: 'examine', id: 'x_osario', text: 'osarioLobo', x: ox1 - 2.0, y, z: oz0 + 2.2, r: 1.6 });
   }
+  // sus mastines: vencido él, vuelven a la lobera (spec.trasJefe: game.js)
+  L.enemies.push(
+    { type: 'hound', x: MX[1], y, z: MZ[2] + 0.6, yaw: 0, idle: 'eat', id: 'e_lobera1', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[0] + 0.5, y, z: MZ[4], yaw: Math.PI / 2, idle: 'eat', id: 'e_lobera2', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[2], y, z: MZ[5] + 0.4, yaw: Math.PI, idle: 'eat', id: 'e_lobera3', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[6], y, z: MZ[1], yaw: -Math.PI / 2, idle: 'eat', id: 'e_lobera4', trasJefe: 'lobishome' }
+  );
   // las nieblas de la pelea
   const E = HONDAS.nieblaE,
     S = HONDAS.nieblaS;
@@ -575,7 +589,9 @@ function cloacasViejas(ctx, L, R) {
     { type: 'crawler', x: -12.5, y, z: -5.5, yaw: Math.PI, idle: 'stand', id: 'e_viejas3' },
     { type: 'hound', x: -20.5, y, z: 6.5, yaw: 0, idle: 'eat', id: 'e_viejas4' },
     { type: 'crawler', x: -8.5, y, z: 20.0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_viejas5' },
-    { type: 'hound', x: -4.5, y, z: 25.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas6' }
+    { type: 'hound', x: -4.5, y, z: 25.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas6' },
+    { type: 'crawler', x: -20.5, y, z: -20.0, yaw: 0, idle: 'ceiling', id: 'e_viejas7' },
+    { type: 'hound', x: -12.5, y, z: 14.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas8' }
   );
 }
 
@@ -616,7 +632,10 @@ function aljibes(ctx, L, R) {
     { type: 'crawler', x: -18.5, y: y - KIT.prof, z: 50.0, yaw: 0, idle: 'stand', id: 'e_aljibe1' },
     { type: 'crawler', x: -6.5, y: y - KIT.prof, z: 56.0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_aljibe2' },
     { type: 'penitent', x: -12.5, y: y - KIT.prof, z: 58.0, yaw: Math.PI, idle: 'pray', id: 'e_aljibe3' },
-    { type: 'crawler', x: 12.5, y, z: 58.6, yaw: Math.PI, idle: 'ceiling', id: 'e_aljibe4' }
+    { type: 'crawler', x: 12.5, y, z: 58.6, yaw: Math.PI, idle: 'ceiling', id: 'e_aljibe4' },
+    { type: 'crawler', x: -16.5, y: y - KIT.prof, z: 72.0, yaw: 0, idle: 'stand', id: 'e_aljibe5' },
+    { type: 'penitent', x: -8.5, y: y - KIT.prof, z: 78.0, yaw: Math.PI, idle: 'pray', id: 'e_aljibe6' },
+    { type: 'crawler', x: 6.5, y: y - KIT.prof, z: 68.0, yaw: Math.PI, idle: 'stand', id: 'e_aljibe7' }
   );
 }
 
@@ -846,7 +865,7 @@ function luces(ctx, R) {
   if (ctx.shafts) ctx.shafts.push({ a: [cx, -2.4, cz], b: [cx + 0.3, HONDAS.y.n1 + 0.05, cz + 0.2], w: 1.6, color: 0x9fb4d4, k: 1.1 });
   if (ctx.dynLights) ctx.dynLights.push({ x: cx, y: HONDAS.y.n1 + 2.6, z: cz, intensity: 1.6, range: 7, color: 0xbfd2f4, flicker: 0, priority: 2 });
   // el osario: nada; las viejas: nada; los aljibes: el agua, verdosa
-  for (const s of [HONDAS.aljibe1, HONDAS.aljibe2])
+  for (const s of [HONDAS.aljibe1, HONDAS.aljibe2, HONDAS.aljibe3])
     for (let i = 0; i < s.xs.length - 1; i++)
       for (let j = 0; j < s.zs.length - 1; j++) if ((i + j) % 2 === 0) L((s.xs[i] + s.xs[i + 1]) / 2, HONDAS.y.n3 + 1.2, (s.zs[j] + s.zs[j + 1]) / 2, 0.3, 0.5, 0.46, 6, 0.4, 'aljibes');
   // lo hondo: el verde que dan los hongos y las flores, por todo el ninfeo

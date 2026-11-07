@@ -1,7 +1,34 @@
-# El Lobishome: el jefe de lo oscuro, en las catacumbas
+# El Lobishome: el jefe de lo oscuro, en las cloacas de la Sé
 
-Propuesta del 7 de noviembre de 2026 para el jefe que pidió el autor. **No está hecho**: es el plan, y espera a lo que
-decida el autor (§10). El plano, a escala: `docs/planos/plan_lobo.png` (`tools/planos/plan_lobo.py`).
+Propuesta del 7 de noviembre de 2026 para el jefe que pidió el autor, **hecha** el mismo mes con los cambios que pidió
+después (§0). El plano de la propuesta, a escala: `docs/planos/plan_lobo.png` (`tools/planos/plan_lobo.py`); lo que
+quedó, en `world/cloacas_hondas.js`.
+
+## 0. Lo que se hizo (y lo que cambió)
+
+El autor pidió, al aprobarlo: que fuera **el alcantarillado** (no cuevas), **más amplio**, con **un acceso que tuviera
+sentido**, y que **la zona y la pelea fueran mucho más laberínticas**; y, de paso, fuera los objetos que dan más vida
+(la Raíz del Vergel) y, en su lugar, **un consumible que se prepara** en la mesa del Desfigurado con lo que se cosecha
+en lo más hondo, muy lejos y muy difícil (unos diez minutos de bajada), que rebrota cada quince minutos si te alejas, y
+que da mucha más regeneración de aguante (el débil, barato; el fuerte, caro, con más velocidad), tres débiles y un
+fuerte como mucho, y que no se rellena al morir. Así quedó:
+
+| Del plan | Lo que hay |
+|---|---|
+| El paso oscuro de roca, con su derrumbe que él cava | **La galería de la Sé**, de sillería, del muro del norte del colector; a los cinco metros, **una reja con cadena y candado**: la cerró el Desfigurado, que te da la llave (`desf:llave`) |
+| La gruta del Vergel | **El colector** de los romanos: pilares, bóvedas de arista, el rellano de la boca con su cascada, canales con sus cantos, el estanque, la fuente, los tramos hundidos bajo el huerto (`world/vergel.js`) |
+| La galería de los lobos y la Fosa de los Pobres (un óvalo) | **La lobera**: un laberinto de galerías y cruces (7 × 6, con bucles) con **el pozo de las ánimas** (la luna) y **el osario** (su cama y lo que entierra); la pelea es en todo el laberinto, con su niebla a la entrada y a la salida |
+| Ocho braseros en la arena | **Trece braseros** en los cruces y las salas, que se encienden con el farol; él los vuelca y el aullido los apaga |
+| Fase 3: la fosa que se hunde | **Fase 3**: el aullido lo apaga todo y vuelve a cazar; **la luna del pozo** lo deja quieto, mirándola (se le pega a gusto) |
+| La reja de los pobres (atajo a la cripta honda) | La salida de la lobera baja a **las cloacas viejas**, **los aljibes ahogados** y **lo hondo** (el ninfeo, las plantas que muerden, la cosecha), y de lo hondo, **el pozo de la tapa** sube al Vergel |
+| El premio: la flor de lo hondo, para él | **La flor de lo hondo** es lo que hace el **cocimiento negro**; él te enseña a cocerlo (`game/alquimia.js`) |
+| El giro (es su hermano) | Vencido el lobo, **te lo dice** (`desf:lobo`) |
+
+**Queda** (no está hecho): la flor blanca que se cierra cuando él está cerca (el aviso en el marcador); la presa (te
+agarra y te arrastra a lo oscuro) y el entierro; el salto desde la bóveda; sus candiles apagados por el camino y el
+acecho de antes de la pelea (ahora la primera vez que se le ve es al cruzar la niebla); el hombre que se le ve a la luz
+de la luna al morir (cae como lobo); los dos finales del Desfigurado (su remedio y el amanecer, o los dos pares de
+ojos); el colmillo y la lumbre mayor del farol como premios. Prueba de la pelea: `tools/lobo.mjs`.
 
 Lo que pidió el autor:
 

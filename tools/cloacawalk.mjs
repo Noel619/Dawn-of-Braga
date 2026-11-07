@@ -125,8 +125,8 @@ await run('escalera a las viejas', "(()=>{const r=__walk([[-12.5,-52.0],[-12.5,-
 await run('las viejas', "__ruta(-12.5,30,-23)");
 await run('escalera a los aljibes', "(()=>{const r=__walk([[-12.5,32.0],[-12.5,37.0],[-12.5,42.0],[-12.5,46.0]]);return {...r,zona:__game.zone&&__game.zone.id,vadeo:__game.player.vadeo}})()");
 // 7. los aljibes: el agua a la rodilla (se va despacio)
-await run('aljibe primero', "(()=>{const g=__game;const t=g.time;const r=__ruta(-0.8,54,-29.4);return {...r,s:+(g.time-t).toFixed(1)}})()");
-await run('aljibe segundo', "__walk([[2.8,54.0],[5.4,54.0],[5.4,45.2],[14.5,45.2],[14.5,43.4]])");
+await run('aljibes ahogados', "(()=>{const g=__game;const t=g.time;const r=__ruta(6.5,62.2,-29.4);return {...r,s:+(g.time-t).toFixed(1)}})()");
+await run('aljibe del estanque', "__walk([[6.5,60.6],[6.5,58.6],[5.4,58.6],[5.4,45.2],[14.5,45.2],[14.5,43.4]])");
 await run('escalera a lo hondo', "(()=>{const r=__walk([[14.5,42.0],[14.5,37.0],[14.5,32.6],[14.5,30.0]]);return {...r,zona:__game.zone&&__game.zone.id}})()");
 // 8. lo hondo: el ninfeo, la cosecha
 await run('al ninfeo', "__ruta(11.8,16.6,-35)");

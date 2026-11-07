@@ -1,6 +1,5 @@
 // Orquestación del juego: bucle, estados y sistemas.
 import * as THREE from 'three';
-import { TYPES } from '../entities/enemies.js';
 import { Cloacas } from './cloacas.js';
 import { Lobo } from './lobishome.js';
 import { HONDAS } from '../world/cloacas_hondas.js';
@@ -234,7 +233,7 @@ export class Game {
     this.navCellar = new NavGrid(lvl.B, this.world.col, (x, z) => (z > S.bottom && x > S.x - S.w / 2 - 0.1 && x < S.x + S.w / 2 + 0.1 ? stairY(z) : CANON.cellar.y), { pad: 0.7 });
 
     // enemigos
-    this.enemies = lvl.L.enemies.filter((s) => TYPES[s.type]).map((s) => new Enemy(this, s));
+    this.enemies = lvl.L.enemies.map((s) => new Enemy(this, s));
     this.activeEnemies = [];
     this.bosses = {};
     for (const e of this.enemies) if (e.boss) this.bosses[e.type] = e;
@@ -1967,6 +1966,13 @@ export class Game {
       if (this._actT <= 0) {
         this._actT = 0.4;
         this.activeEnemies = this.enemies.filter((e) => {
+          // (las que sólo están vencido un jefe: los mastines del Lobishome,
+          // que vuelven a la lobera cuando él ya no está)
+          if (e.spec.trasJefe && !this.flags['boss:' + e.spec.trasJefe]) {
+            e.obj.visible = false;
+            e.shadow.visible = false;
+            return false;
+          }
           const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
           const lvl = Math.abs(e.pos.y - p.pos.y) < 14;
           const act = (d < 46 && lvl) || e === this.activeBoss || (e.aware && !e.dead && d < 70);
