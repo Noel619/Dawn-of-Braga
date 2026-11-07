@@ -19,6 +19,7 @@ import { buildCastle, CASTLE } from './level_castle.js';
 import { buildPostigoAlley, buildCarpenter, ALEMAN } from './level_postigo.js';
 import { buildDeepCrypt } from './level_crypt2.js';
 import { buildCloaca, CLOACA } from './cloaca.js';
+import { VERGEL } from './vergel.js';
 import { scatterClutter } from './clutter.js';
 import { amueblar } from './amueblado.js';
 import { corpseLog } from '../entities/models.js';
@@ -137,6 +138,8 @@ export function buildLevel() {
   // de la luz, bajo la casa quemada; su agujero en la losa, abajo)
   buildCloaca(ctx, Q, L);
   ctx.slabHoles.push(CLOACA.ojo);
+  // (y la sima del Vergel, bajo el huerto seco de la plaza)
+  ctx.slabHoles.push(VERGEL.sima);
   buildNorthWalls(ctx, S, L);
   buildCastleTop(ctx, S, L);
   buildFortaleza(ctx, S, L);

@@ -11,11 +11,21 @@
 //  - Los resquicios de la locura: los respingos de la cabeza, la mano mala
 //    que se le va a la cara hinchada, la risa.
 //
+//  - Tras conocerle, la vez siguiente que bajas (al volver de arriba, al
+//    descansar, al cargar) ya no está en la luz: está en su botica del
+//    Vergel, buscando su cura: muele en el mortero, lee su cuaderno, se pone
+//    el emplasto en la mejilla mala y, a ratos, mira arriba, a la reja de la
+//    calle. Lo que cuenta entonces, por orden: su teoría (la vida no se
+//    murió: se escondió aquí abajo), la cura que busca (y te da una raíz),
+//    lo de la peste y su miedo a lo oscuro que entra por las catacumbas.
+//
 // Banderas: desf:visto (ya te ha pedido que no tapes la luz), desf:met (te
-// ha contado lo suyo; la flor), desf:peste.
+// ha contado lo suyo; la flor), desf:vida, desf:cura (la raíz), desf:peste,
+// desf:oscuro.
 import * as THREE from 'three';
 import { DIALOG } from './story.js';
 import { CLOACA } from '../world/cloaca.js';
+import { VERGEL } from '../world/vergel.js';
 import { approachAngle, damp, clamp } from '../core/util.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -67,7 +77,10 @@ export class DesfiguradoQuest {
     this.risaOn = 0;
     this.look = 0;
     this.talkK = 0;
-    this.W = { cielo: 1, vuelto: 0 };
+    this.W = { cielo: 1, vuelto: 0, moler: 0, leer: 0, untar: 0 };
+    // (en la botica: lo que hace y cuánto le queda)
+    this.faena = 'moler';
+    this.faenaT = 8 + Math.random() * 6;
     this.locoK = Math.floor(Math.random() * DIALOG.desfLoco.length);
     this.dijoAdios = true;
   }
@@ -135,14 +148,34 @@ export class DesfiguradoQuest {
   // A su sitio (al descansar, al morir, al cargar): en la luz, mirando arriba;
   // el cayado, apoyado en el pilar (no en la mano).
   npcReset(e) {
-    const D = CLOACA.desfigurado;
-    e.body.pos.set(D.x, CLOACA.isla.y, D.z);
-    e.yaw = D.yaw;
-    e.state = 'dormant';
-    e.idle = 'cielo';
-    for (const m of e.rig.meshes) if (m.userData.grp === 'cayado') m.visible = false;
     this.reset();
-    e.data = { W: { cielo: 1 } };
+    this.lugar(e, this.F['desf:met'] ? 'botica' : 'luz');
+    e.state = 'dormant';
+    for (const m of e.rig.meshes) if (m.userData.grp === 'cayado' || m.userData.grp === 'trapo') m.visible = false;
+    this._trapo = false;
+  }
+  // A un sitio: la luz (de pie en la isla, mirando arriba) o su botica (ante
+  // la mesa, faenando).
+  lugar(e, sitio) {
+    this.sitio = sitio;
+    if (sitio === 'botica') {
+      const D = VERGEL.desfigurado;
+      e.body.pos.set(D.x, VERGEL.y, D.z);
+      e.yaw = D.yaw;
+      e.idle = 'moler';
+      this.mode = 'faena';
+      this.W = { cielo: 0, vuelto: 0, moler: 1, leer: 0, untar: 0 };
+      e.data = { W: { moler: 1 } };
+    } else {
+      const D = CLOACA.desfigurado;
+      e.body.pos.set(D.x, CLOACA.isla.y, D.z);
+      e.yaw = D.yaw;
+      e.idle = 'cielo';
+      this.mode = 'cielo';
+      this.W = { cielo: 1, vuelto: 0, moler: 0, leer: 0, untar: 0 };
+      e.data = { W: { cielo: 1 } };
+    }
+    e.vx = e.vz = 0;
   }
 
   // Lo que hace en cada momento (lo llama su tipo).
@@ -157,8 +190,27 @@ export class DesfiguradoQuest {
     const d = Math.hypot(dx, dz);
     const cerca = d < 10 && Math.abs(player.pos.y - e.pos.y) < 3 && !player.dead;
     const talking = g.speech && g.speech.busy(this.who);
-    const D = CLOACA.desfigurado;
-    if (this.mode === 'cielo') {
+    // (ya te ha contado lo suyo: cuando te has ido de la cloaca, se baja a su
+    // botica; no se le ve ir)
+    if (this.sitio === 'luz' && this.F['desf:met'] && !this.script && !talking && !g.inCloaca(player.pos)) this.lugar(e, 'botica');
+    const D = this.sitio === 'botica' ? VERGEL.desfigurado : CLOACA.desfigurado;
+    if (this.mode === 'faena') {
+      // en la botica: ante su mesa, a lo suyo; cada rato, otra cosa (moler,
+      // leer el cuaderno, ponerse el emplasto, mirar arriba)
+      e.yaw = approachAngle(e.yaw, D.yaw, 0.8 * dt);
+      this.faenaT -= dt;
+      if (this.faenaT <= 0) {
+        const next = { moler: ['leer', 'untar', 'cielo'], leer: ['moler', 'moler', 'untar'], untar: ['moler', 'leer'], cielo: ['moler', 'leer'] }[this.faena] || ['moler'];
+        this.faena = pick(next);
+        this.faenaT = this.faena === 'cielo' ? 4 + Math.random() * 3 : this.faena === 'untar' ? 5 + Math.random() * 3 : 9 + Math.random() * 8;
+        if (this.faena === 'untar') this.caraOn = 0;
+      }
+      this.murT -= dt;
+      if (cerca && this.murT <= 0 && !talking) {
+        this.murT = 8 + Math.random() * 7;
+        g.speech.say(this.who, pick(DIALOG.desfMurmuraBotica), { dur: 2.6 });
+      }
+    } else if (this.mode === 'cielo') {
       // en la luz: vuelve a su sitio de mirar
       e.yaw = approachAngle(e.yaw, D.yaw, 0.8 * dt);
       // lo que murmura para sí, si andas cerca (y no habla ya)
@@ -179,7 +231,7 @@ export class DesfiguradoQuest {
       e.yaw = approachAngle(e.yaw, Math.atan2(dx, dz), (talking ? 1.6 : 0.9) * dt);
       this.awayT = cerca && d < 6.5 ? 0 : this.awayT + dt;
       if (!this.script && !talking && this.awayT > 3.5) {
-        this.mode = 'cielo';
+        this.mode = this.sitio === 'botica' ? 'faena' : 'cielo';
         this.mt = 0;
         if (!this.dijoAdios) {
           this.dijoAdios = true;
@@ -188,7 +240,10 @@ export class DesfiguradoQuest {
       }
     }
     // los pesos de las posturas, suavizados
-    const want = this.mode === 'cielo' ? { cielo: 1, vuelto: 0 } : { cielo: 0, vuelto: 1 };
+    const want = { cielo: 0, vuelto: 0, moler: 0, leer: 0, untar: 0 };
+    if (this.mode === 'cielo') want.cielo = 1;
+    else if (this.mode === 'faena') want[this.faena] = 1;
+    else want.vuelto = 1;
     for (const k in want) this.W[k] = damp(this.W[k] ?? 0, want[k], 1.6, dt);
     // la cabeza hacia ti: cuando habla contigo (no cuando mira arriba)
     const wantLook = this.mode === 'vuelto' ? 1 : 0;
@@ -209,7 +264,7 @@ export class DesfiguradoQuest {
     if (this.tic > 0) this.tic = Math.max(0, this.tic - dt / 0.38);
     // la mano mala a la cara (se rasca la mejilla hinchada), a ratos
     this.caraT -= dt;
-    if (this.caraT <= 0) {
+    if (this.caraT <= 0 && !(this.mode === 'faena' && this.faena === 'untar')) {
       this.caraT = 14 + Math.random() * 12;
       this.caraOn = 2.6;
     }
@@ -218,8 +273,14 @@ export class DesfiguradoQuest {
     // la risa
     if (this.risaOn > 0) this.risaOn -= dt;
     this.risa = damp(this.risa, this.risaOn > 0 ? 1 : 0, 5, dt);
+    // (el trapo del emplasto, en la mano mala, sólo mientras se lo pone)
+    const trapo = this.W.untar > 0.35;
+    if (trapo !== this._trapo) {
+      this._trapo = trapo;
+      for (const m of e.rig.meshes) if (m.userData.grp === 'trapo') m.visible = trapo;
+    }
     e.data = {
-      W: { cielo: this.W.cielo, vuelto: this.W.vuelto },
+      W: { cielo: this.W.cielo, vuelto: this.W.vuelto, moler: this.W.moler, leer: this.W.leer, untar: this.W.untar },
       look: [rel, this.look],
       talk: this.talkK,
       tic: this.tic > 0 ? 1 - this.tic : 0,
@@ -278,10 +339,35 @@ export class DesfiguradoQuest {
             this.caraOn = 0;
           },
         },
-        { say: DIALOG.desfMeet2.slice(3) },
+        { say: DIALOG.desfMeet2.slice(3, 4) },
         {
           fn: () => {
             if (!g.inventory.has('flor_blanca')) g.giveItem('flor_blanca');
+            g.saveGame && g.saveGame();
+          },
+        },
+        // (y, cerrado lo de la flor, adónde seguir el agua)
+        { say: DIALOG.desfMeet2.slice(4) },
+      ]);
+    else if (!this.F['desf:vida'])
+      this.run([
+        { say: DIALOG.desfVida.slice(0, 2) },
+        { say: DIALOG.desfVida.slice(2) },
+        {
+          fn: () => {
+            this.F['desf:vida'] = true;
+            g.saveGame && g.saveGame();
+          },
+        },
+      ]);
+    else if (!this.F['desf:cura'])
+      this.run([
+        { say: DIALOG.desfCura.slice(0, 2) },
+        { say: DIALOG.desfCura.slice(2) },
+        {
+          fn: () => {
+            this.F['desf:cura'] = true;
+            if (!g.inventory.has('raiz_vergel')) g.giveItem('raiz_vergel');
             g.saveGame && g.saveGame();
           },
         },
@@ -294,6 +380,20 @@ export class DesfiguradoQuest {
           {
             fn: () => {
               this.F['desf:peste'] = true;
+              g.saveGame && g.saveGame();
+            },
+          },
+        ],
+        { peste: true }
+      );
+    else if (!this.F['desf:oscuro'])
+      this.run(
+        [
+          { say: DIALOG.desfOscuro.slice(0, 2) },
+          { say: DIALOG.desfOscuro.slice(2) },
+          {
+            fn: () => {
+              this.F['desf:oscuro'] = true;
               g.saveGame && g.saveGame();
             },
           },

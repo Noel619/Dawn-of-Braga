@@ -23,6 +23,9 @@ export const ACUSTICA = {
   cloaca_bodega: { suelo: 'stone', eco: ['room', 0.32], amb: 'despensa' },
   cloaca: { suelo: 'stone', eco: ['crypt', 0.62], amb: 'aljibe', cama: [0, 0, 0.12, 0.05, 0.32] },
   cloaca_luz: { suelo: 'dirt', eco: ['hall', 0.55], amb: 'aljibe', cama: [0.03, 0, 0.1, 0.03, 0.55] },
+  vergel_cano: { suelo: 'stone', eco: ['crypt', 0.6], amb: 'aljibe', cama: [0, 0, 0.12, 0.05, 0.4] },
+  vergel: { suelo: 'dirt', eco: ['hall', 0.62], amb: 'vergel', cama: [0.02, 0, 0.07, 0.02, 0.42] },
+  vergel_oscuro: { suelo: 'stone', eco: ['crypt', 0.72], amb: 'oscuro', cama: [0, 0, 0.18, 0.14, 0] },
 
   // ---------------------------------------------------------- el patio de armas
   castle: { suelo: 'dirt' },

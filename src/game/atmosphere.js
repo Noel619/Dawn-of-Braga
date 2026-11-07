@@ -47,6 +47,12 @@ export const ATMO = {
   // casa quemada (casi encima: moonPos)
   cloaca: { fog: 0x080b0a, density: 0.062, sky: 0x46524e, ground: 0x121612, hemi: 0.6, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.82, lamp: 11.5, bloom: 1.15 },
   cloaca_luz: { fog: 0x111a22, density: 0.03, sky: 0x6a7c94, ground: 0x18201a, hemi: 1.35, moon: 0, moonPos: [0.6, 60, -0.4], moonColor: 0xd2e0f6, moonDisc: 1, vol: 0.018, ash: 0, exposure: 1.32, sat: 0.95, lamp: 9.5, bloom: 1.4 },
+  // el Vergel (world/vergel.js): la gruta llena de vida bajo el huerto seco;
+  // la luna, casi encima, por la sima; más verde y más saturada que la sala
+  // de la luz. Lo oscuro: el paso del nordeste, hacia las catacumbas, casi
+  // negro y con la niebla espesa
+  vergel: { fog: 0x14231f, density: 0.017, sky: 0x5f7c72, ground: 0x1a2618, hemi: 1.35, moon: 0, moonPos: [0.15, 60, -0.1], moonColor: 0xd2e0f6, moonDisc: 1, vol: 0.02, ash: 0, exposure: 1.34, sat: 1.04, lamp: 9.5, bloom: 1.45 },
+  oscuro: { fog: 0x020303, density: 0.12, sky: 0x141818, ground: 0x050605, hemi: 0.32, moon: 0, vol: 0, ash: 0, exposure: 1.18, sat: 0.7, lamp: 12, bloom: 1.0 },
   lair: { fog: 0x0c0d05, density: 0.07, sky: 0x4c5030, ground: 0x15150a, hemi: 0.55, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.85, lamp: 11.5, bloom: 1.25 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },
   dawn: { fog: 0xc8a08a, density: 0.012, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.2, moonColor: 0xffa860, vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, lamp: 1, bloom: 1.1 },

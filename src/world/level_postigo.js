@@ -466,7 +466,7 @@ function sobrado(ctx) {
 // y1, con los vértices removidos hacia fuera (nunca hacia dentro de lo que se
 // pisa) y la última fila doblada hacia dentro, como el arranque de la bóveda.
 // closed: cierra del último punto al primero.
-function caveWall(ctx, pts, y0, y1, o = {}) {
+export function caveWall(ctx, pts, y0, y1, o = {}) {
   const wb = ctx.wb;
   const rng = new RNG(o.seed ?? 1);
   const step = o.step ?? 0.9;
@@ -509,11 +509,16 @@ function caveWall(ctx, pts, y0, y1, o = {}) {
     grid.push(row);
   }
   const opt = { ao: false, sub: 3, room: o.room, tint: o.tint, baseY: y0 };
+  // (o.bajo: { h, mat, tint }: la franja de abajo, de otro material —el musgo
+  // que sube por la roca—, hasta h sobre y0, con su borde mellado)
+  const B = o.bajo;
+  const optB = B ? { ...opt, tint: B.tint } : null;
   const nq = closed ? per.length : per.length - 1;
   for (let j = 0; j < rows; j++)
     for (let k = 0; k < nq; k++) {
       const k2 = (k + 1) % per.length;
-      wb.quad(o.mat ?? 'rock', grid[j][k], grid[j][k2], grid[j + 1][k2], grid[j + 1][k], opt);
+      const low = B && grid[j][k].y < y0 + B.h * (0.82 + 0.3 * Math.sin(k * 0.33 + 1.3) + 0.12 * Math.sin(k * 0.9));
+      wb.quad(low ? B.mat : (o.mat ?? 'rock'), grid[j][k], grid[j][k2], grid[j + 1][k2], grid[j + 1][k], low ? optB : opt);
     }
   return grid[rows];
 }

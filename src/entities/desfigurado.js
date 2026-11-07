@@ -190,6 +190,18 @@ export function buildDesfigurado() {
   // el izquierdo: lechoso, con el rescoldo, y el párpado hinchado que lo tapa
   // a medias
   parts.push(P('head', 'deEye', gSph(0.0132, [0.033, EY - 0.004, 0.0775], [1, 0.62, 0.8], 10, 8)));
+  // el emplasto en la mejilla mala (lo que se pone de su botica: musgo,
+  // raíz de higuera y flor machacados en un trapo) y la venda que lo sujeta,
+  // de la coronilla a la quijada
+  parts.push(P('head', 'deEmplasto', place(gSph(1, [0, 0, 0], [0.013, 0.036, 0.032], 9, 6), [0.066, EY - 0.04, 0.05], [0, 48, -6])));
+  {
+    // (una tira de lienzo de tres dedos, de la coronilla a la quijada por
+    // encima del emplasto)
+    const v = new THREE.CylinderGeometry(0.1, 0.1, 0.032, 22, 1, true);
+    v.rotateX(Math.PI / 2);
+    v.scale(0.9, 1.3, 1);
+    parts.push(PD('head', 'deWrap', place(v, [0.004, 0.13, 0.03], [10, 0, 0])));
+  }
   // los bultos de carne: la sien, tras la oreja, el cráneo
   for (const [x, y, z, r] of [
     [0.082, 0.19, 0.018, 0.012],
@@ -274,6 +286,8 @@ export function buildDesfigurado() {
     // derecha, con su correa cruzada por el pecho)
     parts.push(P('hips', 'wooddark', place(new THREE.SphereGeometry(0.065, 10, 6, 0, TAU, Math.PI / 2, Math.PI / 2), [0.19, -0.02, 0.05], [0, 0, 18], [1, 0.6, 1])));
     parts.push(P('hips', 'leather', merge([gSph(1, [-0.19, -0.06, 0.05], [0.045, 0.085, 0.075], 8, 6), gBox(0.09, 0.012, 0.12, [-0.2, 0.01, 0.05], [0, 0, -8])])));
+    // (y lo que asoma del zurrón: las hierbas que coge, con sus hojas)
+    parts.push(P('hips', 'hoja', merge([gBox(0.012, 0.075, 0.003, [-0.17, 0.04, 0.07], [0, 20, 14]), gBox(0.01, 0.06, 0.003, [-0.2, 0.035, 0.04], [0, -30, -10]), gBox(0.014, 0.05, 0.003, [-0.185, 0.03, 0.095], [10, 60, 4]), gBox(0.009, 0.08, 0.003, [-0.215, 0.045, 0.075], [-6, 0, -22])])));
     parts.push(
       P(
         'chest',
@@ -363,6 +377,9 @@ export function buildDesfigurado() {
     parts.push(P('shin' + s, 'deWrap', merge(w)));
     parts.push(P('foot' + s, 'deWrap', merge([gTorus(0.045, 0.008, [0, 0.0, 0.03], [90, 0, 0], 12, 3), gTorus(0.042, 0.008, [0, -0.012, 0.09], [80, 0, 0], 12, 3)])));
   }
+  // el trapo del emplasto, en la mano mala (sólo cuando se lo pone: grupo
+  // 'trapo')
+  parts.push(P('handL', 'deEmplasto', gBox(0.055, 0.075, 0.014, [-0.014, -0.065, 0.02], [0, 0, 0]), { grp: 'trapo' }));
   // la carne de la mano izquierda (en el dorso)
   parts.push(P('handL', 'deFlesh', gSph(1, [0.006, -0.05, 0.01], [0.012, 0.022, 0.018], 6, 5)));
 
@@ -448,7 +465,46 @@ const VUELTO = {
   handR: [10, 0, 10],
 };
 
-const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO };
+// En su botica, de pie ante la mesa: moliendo en el mortero (la mano buena
+// da vueltas a la mano del mortero; la mala sujeta el cuenco), leyendo su
+// cuaderno (inclinado, las manos en el canto de la mesa) y poniéndose el
+// emplasto (la mano buena, con el trapo, a la mejilla mala; la cabeza ladeada
+// hacia ella).
+const MOLER = {
+  ...STAND,
+  chest: [30, -6, 2],
+  head: [26, 4, 0],
+  armL: [-34, 8, 16],
+  foreL: [-62, 0, 0],
+  handL: [10, 0, 20],
+  armR: [-42, -12, -10],
+  foreR: [-58, 0, 0],
+  handR: [30, 0, -10],
+};
+const LEER = {
+  ...STAND,
+  chest: [36, 0, 0],
+  head: [34, 0, 2],
+  armL: [-40, 6, 20],
+  foreL: [-30, 0, 0],
+  handL: [40, 0, 10],
+  armR: [-40, -6, -20],
+  foreR: [-30, 0, 0],
+  handR: [40, 0, -10],
+};
+const UNTAR = {
+  ...STAND,
+  chest: [14, -4, 3],
+  head: [10, -8, -16],
+  armL: [-70, -42, 10],
+  foreL: [-122, 0, 0],
+  handL: [-24, 0, 18],
+  armR: [-26, -8, -14],
+  foreR: [-82, 0, 0],
+  handR: [10, 0, 10],
+};
+
+const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR };
 
 // La pose: la mezcla de las posturas (e.data.W), con lo de cada momento:
 // la respiración; la cabeza que se vuelve hacia ti (e.data.look: [guiñada,
@@ -492,6 +548,19 @@ function desfIdle(e, kind, t) {
   const blink = Math.pow(Math.max(0, S(t * 0.9 + ph * 3)), 40);
   out.lidR[0] = out.lidR[0] * (1 - blink) + 0 * blink;
   out.lidR[0] *= 1 - cw * clamp((S(t * 0.21 + ph) - 0.3) * 2, 0, 1) * 0.9;
+  // moliendo: la mano buena da vueltas al mortero
+  const mw = (W.moler || 0) / tot;
+  if (mw > 0.001) {
+    out.armR[1] += S(t * 3.2 + ph) * 9 * mw;
+    out.foreR[0] += S(t * 3.2 + ph + 1.6) * 8 * mw;
+    out.chest[1] += S(t * 3.2 + ph) * 2.5 * mw;
+  }
+  // leyendo: la cabeza baja renglón a renglón
+  const lw2 = (W.leer || 0) / tot;
+  if (lw2 > 0.001) out.head[1] += S(t * 0.8 + ph) * 7 * lw2;
+  // el emplasto: aprieta a ratos
+  const uw = (W.untar || 0) / tot;
+  if (uw > 0.001) out.foreL[0] += Math.max(0, S(t * 1.4 + ph)) * 7 * uw;
   // la cabeza hacia ti, por encima del hombro
   const [ly, lw] = D.look || [0, 0];
   if (lw > 0.001) {

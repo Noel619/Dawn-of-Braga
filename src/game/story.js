@@ -106,6 +106,13 @@ export const ITEMS = {
     icon: 'shield',
     key: false,
   },
+  raiz_vergel: {
+    name: 'Raíz del Vergel',
+    desc: 'Una raíz retorcida, del grueso de un dedo, que el Desfigurado arrancó de debajo del prado de su gruta. Sabe a tierra y a hierro. «No cura. Pero hace que dure más lo que no cura.» Tu vitalidad aumenta.',
+    icon: 'raiz',
+    key: false,
+    upgrade: 'hp',
+  },
   flor_blanca: {
     name: 'Flor blanca',
     desc: 'Una flor pequeña, de cinco pétalos, de las que crecen bajo la casa quemada de la plaza, donde baja la luna. Te la dio el Desfigurado: «Para que te acuerdes de que todavía queda algo».',
@@ -786,6 +793,28 @@ En algunas letras se ha quedado pegada una uña.
 Te miras las manos.`,
   },
   // (el id se queda: es el que guardan las partidas)
+  // el cuaderno de los remedios, en la mesa de la botica del Vergel
+  remedios: {
+    title: 'Cuaderno de los remedios',
+    text: `Unas hojas cosidas con hilo de cáñamo, escritas con un tizón y luego con tinta de agallas. La letra empieza clara y se va torciendo.
+
+Lo que he probado. Lo que sirve, con una cruz. (No hay ninguna cruz.)
+
+— Ortiga en caldo, siete días. Nada. Me picó la boca.
+— Ajo, en la herida y en la boca. Nada. El de dentro se rió.
+— Ruda y vinagre, como contra la otra peste, la de mi abuelo. Nada.
+— Beleño. Duermo y no le oigo. Pero al despertar está más cerca.
+— Me sangré con la navaja, como hacía el barbero. Salió negra. Salió negra.
+— El agua del caño de los romanos, sin hervir, al levantarme. La única de Braga que no sabe a hierro. Tres días mejor. Luego no.
+— Emplasto de musgo y raíz de higuera en la mejilla mala. Baja la hinchazón. El hambre no.
+— La flor blanca, la de debajo de la casa quemada, bajo la lengua. Esta noche no me he rascado la cara. Esta noche no he tenido hambre. Seguir. SEGUIR.
+
+Si la vida se escondió aquí abajo, la cura tiene que estar aquí abajo. La vida no huye sin llevarse lo que la cura. Está en algún sitio. En lo más hondo, donde no llega la peste.
+
+Lo más hondo es lo oscuro.
+
+Y en lo oscuro hay algo.`,
+  },
   abuelo: {
     title: 'Carta del padre de Henrique',
     text: `En latín de clérigo, y debajo, en romance, de otra mano:
@@ -940,6 +969,7 @@ export const DIALOG = {
     'Arriba lo han matado todo. Y esto ha crecido igual. Sin pedirle permiso a nadie.',
     'Hermosa. Es hermosa, ¿verdad? La vida que ha quedado. Lo poco. Lo que no se arrodilló.',
     'Toma. Cógela tú: aquí abajo hay muchas. Para que te acuerdes de que todavía queda algo.',
+    'Y si quieres ver adónde se fue la vida de verdad, sigue el agua. Por la reja de levante. Allí abajo tengo mis cosas.',
   ],
   desfPeste: [
     'La odio. Odio esta peste. Odio lo que les ha hecho a los que conocía. Y a los que no.',
@@ -956,7 +986,35 @@ export const DIALOG = {
     ['Hermosa... ¿Has visto alguna vez algo tan hermoso? Dime que sí. Dime que sí.'],
     ['Si subes a la Sé, no mires la campana cuando toque. No la mires.'],
     ['Cuando ya no puedas más, baja. Siéntate aquí un rato. A la luz no le importa lo que seas.'],
+    ['El agua de la fuente no sabe a hierro. Es la única de Braga. Bebe de ella, si todavía bebes.'],
+    ['Las luciérnagas se apagan cuando él pasa por detrás de la raya. Todas a la vez. Como si aguantaran la respiración.'],
+    ['Si un día no estoy en la botica, mírame en la luz. Si no estoy en la luz... no me busques en lo oscuro.'],
+    ['He probado la ortiga, el ajo, la ruda, el beleño, la sangre... Me quedan las flores. Y lo de allí dentro.'],
   ],
+  // ya en su botica del Vergel (game/desfigurado.js): su teoría (la vida
+  // no se murió: se escondió aquí abajo), la cura que busca (y la raíz que
+  // te da), su miedo a lo oscuro que entra por las catacumbas; lo que
+  // murmura mientras trabaja
+  desfVida: [
+    'Arriba creen que la vida se ha muerto. No. Se ha escondido. Como se esconde un niño cuando entran los soldados en la casa.',
+    'Bajó por las raíces del huerto de la plaza, siguiendo el agua, a donde la peste no mira. Aquí. Yo lo llamo el Vergel.',
+    '¿No lo notas? Arriba todo es gris. Aquí respira. Las ranas cantan. Las luciérnagas no saben nada de campanas.',
+    'La peste sólo mira hacia arriba, hacia la Sé y su campana. Por eso aquí abajo no la encuentra. Todavía.',
+  ],
+  desfCura: [
+    'Busco con qué curarme. Si la vida se escondió aquí abajo, la cura se escondió con ella. La vida no huye sin llevarse lo que la cura.',
+    'Lo pruebo todo. Lo apunto en el cuaderno y lo rayo en la piedra, para no olvidarlo cuando él me gana. Casi todo dice no.',
+    'La flor blanca... Con la flor bajo la lengua, unas noches, no le oigo. No es la cura. Pero es algo. Es por donde se va.',
+    'Toma. Masca esto cuando te falte el cuerpo. No cura. Pero hace que dure más lo que no cura.',
+  ],
+  desfOscuro: [
+    'Escucha. ¿Lo oyes? Ahí, al otro lado de la raya. No es el agua.',
+    'Algo está entrando por las catacumbas. Lo oscuro. Primero se murió el musgo de aquel rincón. Luego callaron las ranas. Luego se llevó la cabra.',
+    'Anda a cuatro patas cuando no quiere que lo oigas, y de pie cuando quiere que lo veas. Lo vi una vez, mirándome desde lo negro. Sólo los ojos. Más altos que los míos.',
+    'Por eso pongo los candiles. Lo oscuro no pasa la luz. Eso creo. Eso quiero creer.',
+    'Lo que me cura, si existe, está en lo más hondo. Y lo más hondo es lo suyo. No vayas. Todavía no.',
+  ],
+  desfMurmuraBotica: ['Ortiga, no. Ajo, no. Ruda, no...', 'Un poco más de flor. Un poco más.', '¿Dónde te has escondido, eh? ¿Dónde?', 'Esta vez sí. Esta vez sí.', 'Hermosa... hasta aquí abajo.', 'Agua de la fuente, sin hervir. Sin hervir.', 'No, no, no. Otra vez no.'],
   desfAdios: ['Vuelve. Mañana también baja.', 'No le digas a nadie que estoy aquí. Aunque ya no quede nadie a quien decírselo.', 'Ve con cuidado. Arriba no hay luna que valga.'],
   // asomado a la ventana de la sala alta, mientras las de dentro aporrean la
   // puerta de su escalera (al azar)
@@ -1375,6 +1433,15 @@ export const MSG = {
   cloacaMuerto: 'Un hombre sentado contra el muro, con la espada en el suelo. Bajó a esconderse donde nadie oyera la campana. Tiene barro en las orejas, como si se las hubiera tapado. No le sirvió de mucho: no tiene marcas, sólo se ha quedado así.',
   hermosaRayas: 'En la piedra del pilar, a la altura de los ojos, rayado con algo duro una y otra vez: HERMOSA. Más abajo, las rayas de las noches, de cinco en cinco. La última está fresca.',
   yacijaDesfigurado: 'Una yacija de trapos contra el pilar, una manta de sayal, la escudilla, el cántaro del agua del canal y un tarro con flores blancas. Huele a hombre, todavía.',
+  // el Vergel (world/vergel.js)
+  fuenteVergel: 'Un caño de piedra de los romanos, metido en la roca, que aún mana. El agua sale fría y limpia, y no sabe a hierro como la de los pozos de arriba. Junto a la pila, un cántaro: aquí viene él a por el agua de sus remedios.',
+  listaRemedios: 'Rayado en una losa lisa, encima de la mesa, con algo duro y con mucha paciencia: lo que ha probado contra la peste, uno debajo de otro. Casi todo dice NO. Lo último, FLOR BLANCA, lleva dos interrogaciones, y alrededor de ellas la piedra está más gastada, como si la hubiera tocado muchas veces.',
+  alambique: 'Dos ollas de barro y una caña: un alambique de pobre. En la de abajo, pétalos blancos que se han cocido hasta quedarse transparentes. En la de arriba, un dedo de agua que huele a flor y a quemado.',
+  rayaCandiles: 'Una raya de sal de pared a pared, y encima, siete candiles de barro encendidos, con sus vasos de flores blancas entre uno y otro. Las mechas son nuevas: alguien las cambia cada noche. A este lado de la raya, el musgo ya está gris.',
+  zarpazos: 'Cuatro surcos en la roca, del grueso de un dedo y más altos que tu cabeza. No los ha hecho una herramienta. Lo que los hizo estaba de pie.',
+  cabraOscuro: 'Una cabra, arrastrada hacia lo oscuro y dejada a medias. No la han comido: la han abierto. El rastro de sangre sale de la gruta, pasa por encima de la raya de sal y se mete aquí.',
+  derrumbeOscuro: 'El paso seguía hacia el norte, hacia la Sé, pero el techo se ha venido abajo. Por la rendija de arriba sale un aire frío que huele a sepultura. Si te quedas quieto, se oye algo al otro lado. Algo grande, que respira despacio.',
+  huertoPuerta: 'La puerta de un huerto, atrancada por dentro. Por encima de la tapia asoman las ramas de un nogal seco y el sombrero de un espantapájaros.',
   rastrillo: (n) =>
     n === 0
       ? 'Un rastrillo de hierro cierra la cisterna. Al otro lado, bajo una luz pálida que cae de lo alto, el agua negra de un pozo. De la reja suben tres cadenas que se pierden en la bóveda.'
@@ -1488,6 +1555,9 @@ export const AREA_NAMES = {
   cloaca_bodega: 'Bodega del Cuervo',
   cloaca: 'La cloaca de los romanos',
   cloaca_luz: 'Bajo la casa quemada',
+  vergel: 'El Vergel',
+  vergel_cano: 'El caño de los romanos',
+  vergel_oscuro: 'Lo oscuro',
   prison: 'Mazmorras del castillo',
   castle: 'Patio de armas',
   catacumbas_castillo: 'Catacumbas del castillo',

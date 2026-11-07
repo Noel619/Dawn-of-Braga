@@ -259,6 +259,8 @@ const ZONE_MUSIC = {
   lair: 'crypt',
   cloaca: 'crypt',
   cloaca_luz: 'sanctuary',
+  vergel: 'sanctuary',
+  oscuro: 'crypt',
   sanctum: 'sanctum',
   dawn: 'ending',
 };
@@ -281,6 +283,8 @@ const ZONE_ROOM = {
   lair: ['crypt', 0.55],
   cloaca: ['crypt', 0.6],
   cloaca_luz: ['hall', 0.55],
+  vergel: ['hall', 0.62],
+  oscuro: ['crypt', 0.7],
   sanctum: ['cathedral', 0.8],
   dawn: ['open', 0.16],
 };
@@ -304,6 +308,8 @@ const ZONE_BED = {
   // (la cloaca: el agua del canal corriendo; en la sala de la luz, la cascada)
   cloaca: [0, 0, 0.12, 0.05, 0.32],
   cloaca_luz: [0.03, 0, 0.1, 0.03, 0.5],
+  vergel: [0.02, 0, 0.07, 0.02, 0.42],
+  oscuro: [0, 0, 0.18, 0.14, 0],
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
@@ -4041,6 +4047,48 @@ export class Audio {
           this.tone(d, t, 0.25, { f0: 140, f1: 70, gain: 0.08 });
         } else return null;
         return rnd(1.5, 4);
+      }
+      case 'vergel': {
+        // el Vergel: las ranas de la orilla, los grillos del prado, las gotas
+        // que caen al estanque, las hojas que se mueven
+        if (r < 0.3) {
+          const d = I(near(9, 0.2), 0.5, 4);
+          const n = 3 + Math.floor(Math.random() * 4),
+            f = rnd(170, 300);
+          for (let i = 0; i < n; i++) {
+            const tt = t + i * rnd(0.12, 0.2);
+            this.tone(d, tt, rnd(0.06, 0.09), { f0: f, f1: f * 0.8, gain: 0.05, a: 0.006 });
+            this.noise(d, tt, 0.07, { f0: f * 2.2, q: 6, gain: 0.04, a: 0.005, buf: this.pink });
+          }
+        } else if (r < 0.55) {
+          const d = I(near(7, 0.1), 0.45, 3);
+          const f = rnd(4200, 5200);
+          const g = 2 + Math.floor(Math.random() * 3);
+          for (let j = 0; j < g; j++)
+            for (let i = 0; i < 3; i++) this.tone(d, t + j * rnd(0.35, 0.5) + i * 0.05, 0.022, { f0: f, f1: f * 0.98, gain: 0.014, a: 0.002 });
+        } else if (r < 0.72) {
+          const d = I(near(8, 1.5), 0.5, 3);
+          const f = rnd(800, 1500);
+          this.tone(d, t, 0.14, { f0: f, f1: f * 0.72, gain: 0.04, a: 0.002 });
+          this.noise(d, t, 0.02, { type: 'highpass', f0: 3000, gain: 0.025, a: 0.001 });
+        } else if (r < 0.84) this.noise(I(near(5, 1.2), 0.4, 3), t, rnd(0.8, 1.6), { f0: rnd(900, 1400), f1: rnd(1500, 2200), q: 1.4, gain: 0.025, a: 0.4, buf: this.pink, curve: 'lin' });
+        else return null;
+        return rnd(1.2, 3.5);
+      }
+      case 'oscuro': {
+        // lo oscuro: algo grande que respira al otro lado del derrumbe, unas
+        // uñas en la piedra, y alguna vez, un gruñido bajo
+        if (r < 0.28) {
+          const d = I(far(6, 10, 0.5), 0.55, 6);
+          this.noise(d, t, 1.3, { type: 'lowpass', f0: 420, gain: 0.06, a: 0.55, buf: this.brown, rate: 1, curve: 'lin' });
+          this.noise(d, t + 1.6, 1.6, { type: 'lowpass', f0: 320, gain: 0.07, a: 0.2, buf: this.brown, rate: 1, curve: 'lin' });
+        } else if (r < 0.42) this.debris(I(far(5, 9, 1.2), 0.45, 3), t, 6, 0.9, { f0: 2400, f1: 5200, gain: 0.18 });
+        else if (r < 0.5) {
+          const d = I(far(7, 11, 0.6), 0.6, 4);
+          this.tone(d, t, 1.3, { f0: rnd(62, 78), f1: rnd(50, 58), gain: 0.07, a: 0.3 });
+          this.noise(d, t, 1.2, { type: 'lowpass', f0: 260, gain: 0.05, a: 0.3, buf: this.brown, rate: 2 });
+        } else return null;
+        return rnd(4, 9);
       }
       case 'jardin': {
         // las ramas secas de los naranjos con el viento, las hojas muertas que

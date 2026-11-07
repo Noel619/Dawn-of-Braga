@@ -2,6 +2,7 @@
 // castillo está en level_castle.js).
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
+import { buildHuerto } from './vergel.js';
 import { RNG } from '../core/util.js';
 import { springaldTowerS, TOWER_S } from './level_finale.js';
 import { house, solid, stairs, merlons, cityWall, tower, archWall, archRing, stoneWall, waveProp, solidGableRoof } from './builders.js';
@@ -100,7 +101,9 @@ export function buildPraca(ctx, S, L) {
   // el suelo en la cloaca; por su tejado abierto baja la luna a la sala de
   // abajo: world/cloaca.js)
   house(ctx, { x0: -12.5, z0: 14, x1: -3.5, z1: 22, front: 'n', seed: 203, burned: true, hueco: true });
-  house(ctx, { x0: 3.5, z0: 14, x1: 14, z1: 22, front: 'n', seed: 204, wreck: 'pracaS' });
+  // (al lado, el huerto seco de una casa, con su tapia: se le hundió el suelo
+  // a la gruta de abajo, el Vergel: world/vergel.js)
+  buildHuerto(ctx);
   house(ctx, { x0: 14, z0: -14, x1: 22, z1: -3, front: 'w', seed: 205, h: 7, wreck: 'pracaE1' });
   house(ctx, { x0: 14, z0: 3, x1: 23, z1: 11, front: 'w', seed: 206, lit: true, wreck: 'pracaE2' });
   // (la taberna ocupa el lado oeste al norte del Soto: level_barrios.js)

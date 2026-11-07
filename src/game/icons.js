@@ -722,6 +722,40 @@ const ICONS = {
     sparkle(b, 23, 5);
     b.outline(P.void);
   },
+  // la raíz del Vergel: retorcida, con sus raicillas y tierra
+  raiz(b) {
+    let x = 7,
+      y = 9;
+    for (let k = 0; k < 22; k++) {
+      const t = k / 21;
+      x = 7 + t * 17 + Math.sin(t * 7) * 2.4;
+      y = 9 + t * 15 + Math.cos(t * 5) * 1.8;
+      const r = 2.6 - t * 1.6;
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          if (dx * dx + dy * dy > r * r) continue;
+          const l = 0.6 - (dx + dy) / (r * 5) - t * 0.15;
+          b.set(Math.round(x + dx), Math.round(y + dy), shade([P.wood0, P.wood1, P.wood2, P.wood3, P.wood4], l, dx, dy));
+        }
+    }
+    for (const [sx, sy, ex, ey] of [
+      [12, 13, 8, 19],
+      [17, 17, 22, 13],
+      [20, 21, 18, 27],
+      [9, 10, 4, 8],
+    ])
+      for (let k = 0; k <= 8; k++) {
+        const t = k / 8;
+        b.set(Math.round(sx + (ex - sx) * t), Math.round(sy + (ey - sy) * t), k < 4 ? P.wood2 : P.wood1);
+      }
+    for (const [px, py] of [
+      [10, 10],
+      [15, 15],
+      [19, 20],
+    ])
+      b.set(px, py, P.moss2);
+    b.outline(P.void);
+  },
   tear(b) {
     for (let y = 0; y < 32; y++)
       for (let x = 0; x < 32; x++) {

@@ -1,16 +1,37 @@
-// Lo que se mueve en la cloaca (world/cloaca.js): la cascada que cae de la
-// boca del conducto, bajo el rellano, a la alberca (una cortina de agua con
-// sus hilos que bajan, que se abre al caer, y la espuma al pie), y el agua de
-// la alberca, que no para de revolverse donde cae.
+// Lo que se mueve en la cloaca (world/cloaca.js y world/vergel.js):
+//  - las cascadas: la que cae de la boca del conducto, bajo el rellano, a la
+//    alberca de la sala de la luz; la del saliente del Vergel, que cae a la
+//    poza; y el chorro del caño de la fuente. Cada una, una cortina de agua
+//    con sus hilos que bajan, que se abre al caer, y la espuma al pie; y el
+//    agua de abajo, que no para de revolverse donde cae;
+//  - las luciérnagas del Vergel, por encima del prado y del agua (se mueven y
+//    se encienden en el sombreador: aquí sólo se ponen);
+//  - los ojos de lo oscuro: si te acercas a la raya de candiles y miras hacia
+//    el paso, alguna vez, un instante, se encienden dos ojos al fondo, a más
+//    altura que los de un hombre, y se oye un gruñido. Luego, nada.
 import * as THREE from 'three';
-import { G } from '../gfx/materials.js';
+import { G, objMat } from '../gfx/materials.js';
 import { CLOACA } from '../world/cloaca.js';
+import { VERGEL } from '../world/vergel.js';
+
+const FOG_CHUNK = `
+  float fog = 1.0 - exp(-fogDensity * fogDensity * vDist * vDist);`;
 
 export class CloacaFX {
   constructor(g) {
     this.g = g;
-    const C = CLOACA.cascada;
-    this.C = C;
+    const C = CLOACA.cascada,
+      F = VERGEL.fuente,
+      Sa = VERGEL.acequia[1];
+    // (c: el centro del labio; w: su ancho; d: hacia dónde sale el agua;
+    // out: lo que se adelanta al caer; open: lo que se abre; foam: el radio
+    // de la espuma; k: lo que revuelve el agua de abajo)
+    this.cas = [
+      { c: [(C.x0 + C.x1) / 2, C.z], w: C.x1 - C.x0, y0: C.y0, y1: C.y1, d: [0, 1], out: 0.42, open: 0.35, foam: 0.95, k: 1 },
+      { c: [(Sa[0] + Sa[2]) / 2, Sa[3]], w: Sa[2] - Sa[0], y0: VERGEL.cano.agua - 0.02, y1: VERGEL.agua, d: [0, 1], out: 0.55, open: 0.42, foam: 1.05, k: 1 },
+      { c: [F.x, F.z], w: 0.14, y0: F.y - 0.02, y1: VERGEL.agua, d: [-1, 0], out: 0.3, open: 0.9, foam: 0.35, k: 0.4 },
+    ];
+    for (const c of this.cas) c.rip = 0;
     this.mat = new THREE.ShaderMaterial({
       uniforms: { uTime: G.uTime, fogColor: { value: new THREE.Color() }, fogDensity: { value: 0 } },
       vertexShader: `
@@ -37,58 +58,18 @@ export class CloacaFX {
           float a = bordes * (0.1 + hilos * 0.42) * (0.6 + 0.4 * smoothstep(0.0, 0.25, v));
           a *= 1.0 - smoothstep(0.9, 1.0, v) * 0.5;
           vec3 c = mix(vec3(0.26, 0.32, 0.36), vec3(0.6, 0.68, 0.78), hilos);
-          float fog = 1.0 - exp(-fogDensity * fogDensity * vDist * vDist);
+          ${FOG_CHUNK}
           gl_FragColor = vec4(mix(c, fogColor, fog), a * (1.0 - fog));
         }`,
       transparent: true,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    // la cortina: de la boca del conducto hacia abajo, saliendo hacia delante
-    // (parábola) y abriéndose al caer; dos hojas, una algo detrás de otra
     const geo = new THREE.BufferGeometry();
     const pos = [],
       uv = [],
       idx = [];
-    const N = 14;
-    const H = C.y0 - C.y1;
-    for (const [dz, k] of [
-      [0, 1],
-      [-0.06, 0.82],
-    ]) {
-      const base = pos.length / 3;
-      for (let i = 0; i <= N; i++) {
-        const t = i / N;
-        const y = C.y0 - H * t;
-        const z = C.z + dz + 0.42 * Math.sqrt(t) * k;
-        const half = ((C.x1 - C.x0) / 2) * (1 + t * 0.35) * k;
-        const xc = (C.x0 + C.x1) / 2;
-        pos.push(xc - half, y, z, xc + half, y, z);
-        uv.push(0, t, 1, t);
-      }
-      for (let i = 0; i < N; i++) {
-        const a = base + i * 2;
-        idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
-      }
-    }
-    // la espuma del pie: un anillo plano sobre el agua
-    {
-      const base = pos.length / 3;
-      const cx = (C.x0 + C.x1) / 2,
-        cz = C.z + 0.45;
-      const R0 = 0.15,
-        R1 = 0.95;
-      const S = 16;
-      for (let i = 0; i <= S; i++) {
-        const a = (i / S) * Math.PI * 2;
-        pos.push(cx + Math.cos(a) * R0, C.y1 + 0.02, cz + Math.sin(a) * R0 * 0.8, cx + Math.cos(a) * R1, C.y1 + 0.02, cz + Math.sin(a) * R1 * 0.8);
-        uv.push(i / S, 0.98, i / S, 0.6);
-      }
-      for (let i = 0; i < S; i++) {
-        const a = base + i * 2;
-        idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
-      }
-    }
+    for (const c of this.cas) this.cortina(c, pos, uv, idx);
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     geo.setIndex(idx);
@@ -98,7 +79,178 @@ export class CloacaFX {
     // (bajo la calle: con el subsuelo)
     this.mesh.layers.set(1);
     g.scene.add(this.mesh);
-    this.rippleT = 0;
+    this.luciernagas();
+    this.ojos();
+    this.cielo();
+  }
+
+  // El cielo de la sima: lo que se ve por el agujero del huerto desde el
+  // Vergel (la niebla de abajo se comía el cielo de verdad): un plano alto,
+  // vuelto hacia abajo, con el azul de la noche, sus estrellas y la luna con
+  // su halo; sólo con el subsuelo (desde la calle no está).
+  cielo() {
+    const [sx0, sz0, sx1, sz1] = VERGEL.sima;
+    const cx = (sx0 + sx1) / 2,
+      cz = (sz0 + sz1) / 2;
+    const geo = new THREE.PlaneGeometry(46, 46);
+    geo.rotateX(Math.PI / 2);
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uTime: G.uTime, uMoon: { value: new THREE.Vector2(0.06, -0.12) } },
+      vertexShader: `
+        varying vec2 vP;
+        void main(){ vP = position.xz / 23.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `
+        uniform float uTime; uniform vec2 uMoon; varying vec2 vP;
+        float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+        void main(){
+          float r = length(vP - uMoon);
+          vec3 c = mix(vec3(0.16, 0.22, 0.34), vec3(0.05, 0.08, 0.14), smoothstep(0.0, 0.9, r));
+          // el halo y la luna
+          c += vec3(0.5, 0.58, 0.7) * exp(-r * 9.0) * 0.8;
+          float disc = smoothstep(0.022, 0.018, r);
+          vec2 q = (vP - uMoon) / 0.02;
+          float mares = 0.12 * sin(q.x * 3.1 + 1.0) * sin(q.y * 2.3);
+          c = mix(c, vec3(0.92, 0.95, 1.0) * (0.88 + mares), disc);
+          // las estrellas (que tiemblan un poco)
+          vec2 g = floor(vP * 160.0);
+          float st = step(0.992, h(g)) * (0.6 + 0.4 * sin(uTime * (1.0 + h(g + 3.0) * 3.0) + h(g) * 40.0));
+          c += vec3(0.8, 0.85, 1.0) * st * smoothstep(0.08, 0.3, r);
+          gl_FragColor = vec4(c, 1.0);
+        }`,
+      side: THREE.DoubleSide,
+      fog: false,
+      depthWrite: true,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(cx, 22, cz);
+    m.layers.set(1);
+    m.frustumCulled = false;
+    m.visible = false;
+    this.g.scene.add(m);
+    this.sky = m;
+  }
+
+  // La cortina de una cascada (dos hojas, una algo detrás de otra, que salen
+  // hacia delante en parábola y se abren al caer) y su anillo de espuma.
+  cortina(c, pos, uv, idx) {
+    const N = 14;
+    const H = c.y0 - c.y1;
+    const [dx, dz] = c.d;
+    const px = -dz,
+      pz = dx;
+    for (const [off, k] of [
+      [0, 1],
+      [-0.06, 0.82],
+    ]) {
+      const base = pos.length / 3;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const y = c.y0 - H * t;
+        const along = off + c.out * Math.sqrt(t) * k;
+        const half = (c.w / 2) * (1 + t * c.open) * k;
+        const cx = c.c[0] + dx * along,
+          cz = c.c[1] + dz * along;
+        pos.push(cx - px * half, y, cz - pz * half, cx + px * half, y, cz + pz * half);
+        uv.push(0, t, 1, t);
+      }
+      for (let i = 0; i < N; i++) {
+        const a = base + i * 2;
+        idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
+      }
+    }
+    // la espuma del pie: un anillo plano sobre el agua
+    const base = pos.length / 3;
+    const fx = c.c[0] + dx * (c.out + 0.03),
+      fz = c.c[1] + dz * (c.out + 0.03);
+    const R0 = 0.15 * Math.min(1, c.foam),
+      R1 = c.foam;
+    const S = 16;
+    for (let i = 0; i <= S; i++) {
+      const a = (i / S) * Math.PI * 2;
+      pos.push(fx + Math.cos(a) * R0, c.y1 + 0.02, fz + Math.sin(a) * R0 * 0.8, fx + Math.cos(a) * R1, c.y1 + 0.02, fz + Math.sin(a) * R1 * 0.8);
+      uv.push(i / S, 0.98, i / S, 0.6);
+    }
+    for (let i = 0; i < S; i++) {
+      const a = base + i * 2;
+      idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
+    }
+  }
+
+  // Las luciérnagas: puntos que dan luz, cada uno con su sitio, su fase y su
+  // ritmo; el sombreador los mece y los enciende y apaga.
+  luciernagas() {
+    const pos = [],
+      ph = [];
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (const [x, z, r, n] of VERGEL.luciernagas)
+      for (let i = 0; i < n; i++) {
+        const a = rnd() * Math.PI * 2,
+          d = Math.sqrt(rnd()) * r;
+        const px = x + Math.cos(a) * d,
+          pz = z + Math.sin(a) * d;
+        pos.push(px, VERGEL.y + 0.5 + rnd() * 1.8, pz);
+        ph.push(rnd() * 100, 0.4 + rnd() * 0.8, 0.5 + rnd() * 0.9);
+      }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('aPh', new THREE.Float32BufferAttribute(ph, 3));
+    this.flyMat = new THREE.ShaderMaterial({
+      uniforms: { uTime: G.uTime, fogDensity: { value: 0 }, uScale: { value: 300 } },
+      vertexShader: `
+        attribute vec3 aPh; uniform float uTime; uniform float uScale; varying float vA; varying float vDist;
+        void main(){
+          float t = uTime * aPh.y + aPh.x;
+          vec3 p = position + vec3(sin(t * 0.7) * 0.6 + sin(t * 1.9) * 0.15, sin(t * 0.9 + aPh.x) * 0.35, cos(t * 0.6) * 0.6 + cos(t * 1.7) * 0.15);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          vDist = -mv.z;
+          // (se encienden y se apagan, cada una a su ritmo)
+          float b = sin(uTime * aPh.z * 1.6 + aPh.x * 3.0);
+          vA = smoothstep(0.1, 0.9, b) * 0.9 + 0.05;
+          gl_PointSize = uScale * 0.045 / max(0.5, vDist);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float fogDensity; varying float vA; varying float vDist;
+        void main(){
+          vec2 q = gl_PointCoord - 0.5;
+          float r = length(q);
+          float a = smoothstep(0.5, 0.0, r);
+          a = a * a;
+          float fog = 1.0 - exp(-fogDensity * fogDensity * vDist * vDist * 0.5);
+          gl_FragColor = vec4(vec3(0.86, 1.0, 0.52) * (1.2 + a), a * vA * (1.0 - fog));
+        }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    this.flies = new THREE.Points(geo, this.flyMat);
+    this.flies.frustumCulled = false;
+    this.flies.layers.set(1);
+    this.flies.renderOrder = 7;
+    this.flies.visible = false;
+    this.g.scene.add(this.flies);
+  }
+
+  // Los ojos de lo oscuro, al fondo del paso.
+  ojos() {
+    const Pa = VERGEL.paso;
+    const grp = new THREE.Group();
+    const mat = objMat('eyeGlow');
+    for (const s of [-1, 1]) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), mat);
+      m.position.set(s * 0.13, 0, 0);
+      m.scale.set(1.3, 0.7, 1);
+      grp.add(m);
+    }
+    grp.position.set((Pa.x0 + Pa.x1) / 2 + 0.2, Pa.y + 2.35, Pa.z0 + 2.2);
+    grp.layers.set(1);
+    for (const m of grp.children) m.layers.set(1);
+    grp.visible = false;
+    this.g.scene.add(grp);
+    this.eyes = grp;
+    this.eyeT = 0;
+    this.eyeCool = 6;
   }
 
   update(dt) {
@@ -107,20 +259,60 @@ export class CloacaFX {
     if (f) {
       this.mat.uniforms.fogColor.value.copy(f.color);
       this.mat.uniforms.fogDensity.value = f.density;
+      this.flyMat.uniforms.fogDensity.value = f.density;
     }
+    this.flyMat.uniforms.uScale.value = (g.renderer ? g.renderer.domElement.height : 600) * 0.9;
     // (sólo cuando se puede ver: el jugador bajo la plaza, cerca)
     const p = g.player.pos;
-    const C = this.C;
-    const near = p.y < -2 && Math.hypot(p.x - (C.x0 + C.x1) / 2, p.z - C.z) < 40;
-    this.mesh.visible = near;
-    if (!near || !g.waters) return;
-    // el agua de la alberca, revuelta donde cae la cascada
-    this.rippleT -= dt;
-    if (this.rippleT <= 0) {
-      this.rippleT = 0.12 + Math.random() * 0.1;
-      const cx = (C.x0 + C.x1) / 2 + (Math.random() - 0.5) * 0.9,
-        cz = C.z + 0.35 + Math.random() * 0.4;
-      g.waters.ripple(cx, cz, 0.7 + Math.random() * 0.6);
+    const under = p.y < -2;
+    let near = false;
+    for (const c of this.cas) if (Math.hypot(p.x - c.c[0], p.z - c.c[1]) < 40) near = true;
+    this.mesh.visible = under && near;
+    const B = VERGEL.box;
+    const enVergel = under && p.x > B[0] - 6 && p.x < B[2] + 2 && p.z > B[1] - 10 && p.z < B[3] + 2;
+    this.flies.visible = enVergel;
+    this.sky.visible = enVergel;
+    this.updateOjos(dt, enVergel);
+    if (!this.mesh.visible || !g.waters) return;
+    // el agua de abajo, revuelta donde cae cada una
+    for (const c of this.cas) {
+      c.rip -= dt * c.k;
+      if (c.rip > 0) continue;
+      c.rip = 0.12 + Math.random() * 0.1;
+      const fx = c.c[0] + c.d[0] * (c.out + 0.03) + (Math.random() - 0.5) * c.w * 0.9,
+        fz = c.c[1] + c.d[1] * (c.out + 0.03) + (Math.random() - 0.5) * 0.4;
+      g.waters.ripple(fx, fz, (0.7 + Math.random() * 0.6) * Math.min(1, 0.4 + c.w));
     }
+  }
+
+  updateOjos(dt, enVergel) {
+    const g = this.g,
+      e = this.eyes;
+    this.eyeCool -= dt;
+    if (this.eyeT > 0) {
+      this.eyeT -= dt;
+      // (se encienden de golpe y se apagan despacio; parpadean una vez)
+      const k = this.eyeT;
+      e.visible = k > 0 && !(k > 0.62 && k < 0.7);
+      for (const m of e.children) m.scale.setScalar(Math.min(1, k * 1.4)).multiply(new THREE.Vector3(1.3, 0.7, 1));
+      if (this.eyeT <= 0) e.visible = false;
+      return;
+    }
+    e.visible = false;
+    if (!enVergel || this.eyeCool > 0 || g.state !== 'play') return;
+    const R = VERGEL.raya,
+      p = g.player.pos;
+    const d = Math.hypot(p.x - (R.x0 + R.x1) / 2, p.z - R.z);
+    if (d > 7.5 || p.z < R.z - 1.2) return;
+    // (mirando hacia el paso)
+    const cam = g.camera;
+    const to = new THREE.Vector3().subVectors(e.position, cam.position).normalize();
+    const fw = new THREE.Vector3();
+    cam.getWorldDirection(fw);
+    if (fw.dot(to) < 0.9) return;
+    this.eyeT = 1.6;
+    this.eyeCool = 40 + Math.random() * 40;
+    e.visible = true;
+    if (g.audio) g.audio.play('snarl', { x: e.position.x, y: e.position.y, z: e.position.z }, { gain: 0.5 });
   }
 }

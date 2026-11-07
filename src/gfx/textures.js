@@ -212,12 +212,24 @@ SCRATCH.T = [[0, 0.02, 1, 0], [0.5, 0, 0.48, 1]];
 SCRATCH.D = [[0.05, 0, 0.05, 1], [0.05, 0, 0.6, 0.08], [0.6, 0.08, 0.95, 0.42], [0.95, 0.42, 0.88, 0.78], [0.88, 0.78, 0.5, 1], [0.5, 1, 0.05, 1]];
 SCRATCH['Á'] = [...SCRATCH.A, [0.4, -0.22, 0.68, -0.4]];
 SCRATCH['Í'] = [...SCRATCH.I, [0.4, -0.22, 0.68, -0.4]];
+// (las que faltaban: la H de HERMOSA no se rayaba; y las de la lista de
+// remedios de la botica de la cloaca)
+SCRATCH.H = [[0, 0, 0.02, 1], [1, 0, 0.98, 1], [0.02, 0.5, 0.98, 0.48]];
+SCRATCH.G = [[0.95, 0.12, 0.5, 0], [0.5, 0, 0.05, 0.3], [0.05, 0.3, 0.1, 0.75], [0.1, 0.75, 0.5, 1], [0.5, 1, 0.95, 0.8], [0.95, 0.8, 0.93, 0.55], [0.93, 0.55, 0.55, 0.56]];
+SCRATCH.U = [[0, 0, 0.05, 0.75], [0.05, 0.75, 0.5, 1], [0.5, 1, 0.95, 0.75], [0.95, 0.75, 1, 0]];
+SCRATCH.F = [[0.9, 0, 0, 0.02], [0, 0.02, 0.05, 1], [0.02, 0.48, 0.7, 0.46]];
+SCRATCH.V = [[0, 0, 0.5, 1], [0.5, 1, 1, 0]];
+SCRATCH.X = [[0, 0, 1, 1], [1, 0.02, 0, 0.98]];
+SCRATCH.Y = [[0, 0, 0.5, 0.5], [1, 0, 0.5, 0.5], [0.5, 0.5, 0.5, 1]];
+SCRATCH['Ñ'] = [...SCRATCH.N, [0.12, -0.22, 0.38, -0.36], [0.38, -0.36, 0.62, -0.22], [0.62, -0.22, 0.88, -0.36]];
+SCRATCH['?'] = [[0.1, 0.2, 0.4, 0], [0.4, 0, 0.85, 0.15], [0.85, 0.15, 0.55, 0.52], [0.55, 0.52, 0.5, 0.72], [0.5, 0.9, 0.52, 1]];
+SCRATCH['-'] = [[0.15, 0.5, 0.85, 0.5]];
 function scratchText(lines, W, H, seed, cols = ['rgba(206,196,176,1)', 'rgba(150,142,128,1)']) {
   const c = makeCanvas(W, H);
   const g = c.getContext('2d');
   const rng = new RNG(seed);
-  const ch = H * 0.31,
-    lh = H / lines.length;
+  const lh = H / lines.length,
+    ch = Math.min(H * 0.31, lh * 0.7);
   lines.forEach((text, li) => {
     const n = text.length;
     const cw = Math.min(ch * 0.9, (W - 8) / (n * 1.35)),
@@ -1599,6 +1611,15 @@ const GEN = {
   },
   scratchMirala() {
     return scratchText(['MÍRALA'], 192, 56, 813, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
+  },
+  // lo que tiene rayado en la roca, sobre la mesa de su botica: lo que ha
+  // probado contra la peste (NO, NO, NO...; lo que no sabe, con su ?)
+  scratchRemedios() {
+    return scratchText(['ORTIGA - NO', 'AJO - NO', 'RUDA - NO', 'BELEÑO - ?', 'SANGRAR - NO', 'AGUA FUENTE - ?', 'MUSGO - NO', 'FLOR BLANCA - ??'], 320, 420, 814, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
+  },
+  // y en la boca de lo oscuro: NO PASES
+  scratchNoPases() {
+    return scratchText(['NO PASES'], 256, 56, 815, ['rgba(176,180,172,1)', 'rgba(120,124,118,1)']);
   },
   // «NO TE ARRODILLES», escrito a dedo con sangre por las paredes de la
   // celda del fondo, una y otra vez (la última, a medias)

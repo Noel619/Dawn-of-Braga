@@ -28,8 +28,9 @@ import { RNG } from '../core/util.js';
 import { stairs, barrelVault, archRing, solid } from './builders.js';
 import * as P from './props.js';
 import * as M from './mobiliario.js';
-import { helecho, hierba, flores, musgo, hiedra, raices, juncos, higuera, montecillo } from './verdor.js';
+import { helecho, hierba, flores, musgo, hiedra, raices, juncos, higuera, montecillo, hongos } from './verdor.js';
 import { bakeCorpse } from '../entities/models.js';
+import { buildVergel, VERGEL } from './vergel.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -39,8 +40,9 @@ const CASA = { x0: -12.5, z0: 14, x1: -3.5, z1: 22, t: 0.35, h: new RNG(203).ran
 
 export const CLOACA = {
   // la rejilla de lo transitable (x0, z0, x1, z1) y la roca (de y0 a y1)
-  grid: [-21, -20, 1, 28],
-  y0: -9.9,
+  // (con el Vergel, que sigue al este: world/vergel.js)
+  grid: [-21, -20, 34.5, 41],
+  y0: -12.8,
   y1: -1.1,
   // la bodega de la taberna (bajo su despensa) y la trampilla (en el rincón
   // de la despensa: level_barrios.js)
@@ -94,6 +96,8 @@ export function buildCloaca(ctx, Q, L) {
   tunel(ctx, Q, L);
   sala(ctx, Q, L);
   zonas(L);
+  // y más allá de la reja de levante, el caño y el Vergel
+  buildVergel(ctx, Q, L);
 }
 
 // ------------------------------------------------------------------------ la bodega
@@ -266,6 +270,38 @@ function tunel(ctx, Q, L) {
     wb.box('water', x1 - 0.1, y - 0.0, z - 0.03, x1 - 0.06, y + 1.4, z + 0.03, { ao: false, faces: 'nsew', grime: false });
     wb.box('mossstone', x1 - 0.005, y - 0.05, z - 0.4, x1, y + 1.36, z + 0.4, { faces: 'w', ao: false, tint: [0.36, 0.46, 0.32] });
   }
+  // lo verde de la galería: el musgo por los cantos de los andenes, junto al
+  // agua; los helechos al pie de los muros y en las grietas; la hiedra que
+  // cuelga de las juntas de la bóveda; los juncos en el canal; y, en lo más
+  // oscuro, los hongos que dan luz (ya empieza aquí lo que hay en el Vergel)
+  {
+    const vr = new RNG(9161);
+    for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.25) {
+      musgo(ctx, c0 - 0.3, y, z + vr.range(-0.3, 0.3), 0.32, 0.5, 9170 + Math.round(z * 10), { room, n: 5 });
+      if (vr.chance(0.7)) musgo(ctx, c1 + 0.2, y, z + vr.range(-0.3, 0.3), 0.18, 0.45, 9270 + Math.round(z * 10), { room, n: 4 });
+    }
+    for (let z = z0 + 1.2; z < z1 - 0.6; z += 2.4) {
+      const w = Math.round(z * 3) % 2 === 0;
+      helecho(ctx, w ? x0 + 0.28 : x1 - 0.18, y, z + vr.range(-0.4, 0.4), vr.range(0.55, 0.9), 9370 + Math.round(z * 10), { room, n: 7 });
+      if (vr.chance(0.5)) helecho(ctx, w ? x0 + 0.06 : x1 - 0.06, y + 0.9, z + vr.range(-0.5, 0.5), 0.4, 9470 + Math.round(z * 10), { room, n: 5 });
+    }
+    for (let z = z0 + 0.8; z < z1 - 0.4; z += 2.1) hiedra(ctx, (x0 + x1) / 2 + vr.range(-0.9, 0.9), ys + 1.5, z, vr.range(0.9, 2.0), 9570 + Math.round(z * 10), { room, hoja: 1.3 });
+    for (const z of [-7.6, -2.4, 3.0, 7.8]) juncos(ctx, c0 + 0.12, cy, z, 0.18, 6, 9670 + Math.round(z * 10), { room, h: 0.9 });
+    for (const [x, z, n] of [
+      [x0 + 1.1, 2.9, 7],
+      [x0 + 0.35, 5.6, 6],
+      [x1 - 0.25, -4.6, 5],
+      [x1 - 0.25, 1.2, 6],
+      [x0 + 0.3, -6.4, 5],
+    ])
+      hongos(ctx, x, y, z, n, 9770 + Math.round(x * 10 + z), { room, luz: true, r: 0.22 });
+    for (const [x, z] of [
+      [x0 + 0.9, 3.6],
+      [x1 - 0.4, -1.6],
+      [x0 + 0.5, -6.2],
+    ])
+      ctx.lights.push({ x, y: y + 0.5, z, r: 0.3, g: 0.86, b: 0.78, radius: 3.4, intensity: 0.75, room });
+  }
   bakeCorpse(wb, x0 + 0.6, y, 2.2, 1.5, 'sit', 'villager', 41);
   P.dropped(ctx, x0 + 0.9, y + 0.02, 3.1, 0.6, 'sword');
   P.bones(ctx, x0 + 0.7, y, -3.0, 6, 9141, 0.6);
@@ -301,7 +337,9 @@ function sala(ctx, Q, L) {
     col.add(a, y - 1, b, c, y, d, 'floor').cam = true;
   }
   for (const [a, b, c, d] of water) {
-    wb.box('mossstone', a, C.y - 0.1, b, c, C.y, d, { faces: 't', ao: false, sub: 2, tint: [0.38, 0.42, 0.34] });
+    // (donde se juntan la del oeste y la del sur, el lecho es de la del sur)
+    const dd = a === CLOACA.oeste[0] && b === CLOACA.oeste[1] ? CLOACA.sur[1] : d;
+    wb.box('mossstone', a, C.y - 0.1, b, c, C.y, dd, { faces: 't', ao: false, sub: 2, tint: [0.38, 0.42, 0.34] });
     col.add(a, C.y - 1, b, c, C.y, d, 'floor').cam = true;
     // los cantos de sillería (las caras de dentro de la acequia)
     wb.box('ashlar', a, C.y, b, c, y, b + 0.01, { faces: 's', ao: false, sub: 2, tint: [0.4, 0.42, 0.38] });
@@ -321,24 +359,39 @@ function sala(ctx, Q, L) {
   // ---------------------------------------------------------- los muros
   const muros = [
     [x0 - 0.3, z0, x0, z1, 'e'],
-    [x1, z0, x1 + 0.3, z1, 'w'],
     [x0, z1, x1, z1 + 0.3, 'n'],
   ];
   for (const [a, b, c, d, f] of muros) {
     wb.box('mossstone', a, C.y - 0.05, b, c, y + 1.4, d, { faces: f, sub: 1.6, aoH: 1.2, aoMin: 0.45, baseY: y, room, tint: [0.48, 0.52, 0.44] });
     wb.box('ashlar', a, y + 1.4, b, c, top, d, { faces: f, sub: 1.8, ao: false, room, tint });
   }
+  // el de levante, con el arco por donde se va el agua (al caño del Vergel)
+  {
+    const K = VERGEL.cano;
+    const ys = K.ys,
+      ring = 0.28;
+    const za = K.z0,
+      zb = K.z1;
+    const e0 = za - ring,
+      e1 = zb + ring;
+    const lo = { faces: 'w', sub: 1.6, aoH: 1.2, aoMin: 0.45, baseY: y, room, tint: [0.48, 0.52, 0.44] };
+    wb.box('mossstone', x1, C.y - 0.05, z0, x1 + 0.3, ys, za, { ...lo, faces: 'ws' });
+    wb.box('mossstone', x1, C.y - 0.05, zb, x1 + 0.3, ys, z1, { ...lo, faces: 'wn' });
+    wb.box('ashlar', x1, ys, z0, x1 + 0.3, top, e0, { faces: 'w', sub: 1.8, ao: false, room, tint });
+    wb.box('ashlar', x1, ys, e1, x1 + 0.3, top, z1, { faces: 'w', sub: 1.8, ao: false, room, tint });
+    archRing(ctx, { axis: 'z', c: (za + zb) / 2, w: zb - za, y0: ys, rise: (zb - za) / 2, ring, t0: x1, t1: x1 + 0.3, top, clip: [e0, e1], mat: 'ashlar', spMat: 'ashlar', tint: [0.5, 0.5, 0.46], spTint: tint, rooms: [room, ROOMS.tunel] });
+  }
   // el del norte: la boca de la galería (arriba, a poniente), el rellano y la
   // escalera; el resto, liso
   wb.box('mossstone', Tn.x1, y - 0.05, z0 - 0.3, x1, y + 1.4, z0, { faces: 's', sub: 1.6, aoH: 1.2, baseY: y, room, tint: [0.48, 0.52, 0.44] });
   wb.box('ashlar', Tn.x1, y + 1.4, z0 - 0.3, x1, top, z0, { faces: 's', sub: 1.8, ao: false, room, tint });
-  wb.box('ashlar', x0, Tn.ys + 1.6, z0 - 0.3, Tn.x1, top, z0, { faces: 's', sub: 1.8, ao: false, room, tint });
+  // (encima de la boca de la galería, las enjutas de su arco: archRing)
   archRing(ctx, { axis: 'x', c: (Tn.x0 + Tn.x1) / 2, w: Tn.x1 - Tn.x0, y0: Tn.ys, rise: 1.6, ring: 0.32, t0: z0 - 0.3, t1: z0, top, clip: [x0, Tn.x1], mat: 'ashlar', spMat: 'ashlar', tint: [0.5, 0.5, 0.46], spTint: tint, room });
   // el rellano (macizo, del suelo de la sala al de la galería) con el
   // conducto por donde pasa el agua por debajo y sale en cascada
   const R = S.rellano;
   const cs = CLOACA.cascada;
-  wb.box('ashlar', R[0], y, R[1], R[2], Tn.y, R[3], { faces: 'tew', sub: 1.6, aoH: 1.4, baseY: y, room, tint: [0.46, 0.47, 0.43] });
+  wb.box('ashlar', R[0], y, R[1], R[2], Tn.y, R[3], { faces: 'ew', sub: 1.6, aoH: 1.4, baseY: y, room, tint: [0.46, 0.47, 0.43] });
   wb.box('ashlar', R[0], y, R[3] - 0.01, cs.x0, Tn.y, R[3], { faces: 's', sub: 1.6, aoH: 1.4, baseY: y, room, tint: [0.46, 0.47, 0.43] });
   wb.box('ashlar', cs.x1, y, R[3] - 0.01, R[2], Tn.y, R[3], { faces: 's', sub: 1.6, aoH: 1.4, baseY: y, room, tint: [0.46, 0.47, 0.43] });
   wb.box('ashlar', cs.x0, y, R[3] - 0.01, cs.x1, cs.y0 - 0.05, R[3], { faces: 's', sub: 1.6, ao: false, room, tint: [0.36, 0.42, 0.36] });
@@ -377,16 +430,38 @@ function sala(ctx, Q, L) {
   }
   wb.box('ashlar', cs.x0 - 0.1, Tn.y, R[3] + 0.06, cs.x1 + 0.1, Tn.y + 0.4, R[3] + 0.22, { faces: 'tnsew', ao: false, tint: [0.42, 0.43, 0.42] });
   col.add(cs.x0 - 0.1, Tn.y, R[3], cs.x1 + 0.1, Tn.y + 1.0, R[3] + 0.22);
-  // ---------------------------------------------------------- el desagüe de levante (la acequia del sur sale por él)
+  // ---------------------------------------------------------- la reja de levante (la acequia del sur sale por ella)
+  // (sus barrotes: los de los lados, en su sitio; los dos de en medio,
+  // arrancados de abajo y doblados hacia fuera, como cortinas; el otro, roto:
+  // por ahí se pasa al caño)
   {
-    const Su = CLOACA.sur;
-    wb.box('black', x1 - 0.02, C.y, Su[1] + 0.05, x1 - 0.01, C.y + 0.9, Su[3] - 0.05, { faces: 'w', ao: false, grime: false });
-    for (let k = 0; k < 5; k++) {
-      const bz = Su[1] + 0.15 + k * 0.22;
-      wb.box('iron', x1 - 0.12, C.y, bz - 0.025, x1 - 0.06, C.y + 0.95, bz + 0.025, { ao: false, faces: 'tnsew' });
-    }
-    wb.box('iron', x1 - 0.12, C.y + 0.9, Su[1], x1 - 0.06, C.y + 0.97, Su[3], { ao: false, faces: 'tnsewb' });
-    wb.box('ashlar', x1 - 0.3, C.y + 0.95, Su[1] - 0.2, x1, C.y + 1.25, Su[3] + 0.2, { ao: false, faces: 'tnsewb', tint: [0.5, 0.5, 0.46] });
+    const K = VERGEL.cano;
+    const bx = x1 + 0.15;
+    const yb = C.y,
+      yt = K.ys - 0.05;
+    const bar = (z) => {
+      wb.box('iron', bx - 0.025, yb, z - 0.025, bx + 0.025, yt, z + 0.025, { ao: false, faces: 'tnsew' });
+    };
+    for (const z of [23.42, 23.66, 24.62]) bar(z);
+    ctx.col.add(bx - 0.06, yb, K.z0, bx + 0.06, yt, 23.72);
+    ctx.col.add(bx - 0.06, yb, 24.56, bx + 0.06, yt, K.z1);
+    const curva = (z, dz, seed) => {
+      const rr = new RNG(seed);
+      let p = V(bx, yt, z);
+      const n = 7;
+      for (let k = 1; k <= n; k++) {
+        const t = k / n;
+        const q = V(bx + Math.sin(t * Math.PI) * 0.12 + rr.range(-0.01, 0.01), yt - (yt - yb - 0.45) * t, z + dz * Math.pow(t, 1.4));
+        P.rod(ctx, p, q, 0.024, 0.024, 'iron', { segs: 5 });
+        p = q;
+      }
+    };
+    curva(23.9, -0.42, 9161);
+    curva(24.14, 0.42, 9162);
+    // el roto: un cabo arriba y otro abajo
+    wb.box('iron', bx - 0.025, yt - 0.35, 24.36, bx + 0.025, yt, 24.41, { ao: false, faces: 'tnsewb' });
+    wb.box('iron', bx - 0.025, yb, 24.36, bx + 0.025, yb + 0.25, 24.41, { ao: false, faces: 'tnsewb' });
+    wb.box('iron', bx - 0.03, yt - 0.06, K.z0 + 0.05, bx + 0.03, yt, K.z1 - 0.05, { ao: false, faces: 'tnsewb' });
   }
   // ---------------------------------------------------------- los pilares y sus arcos
   const pl = 0.45;
@@ -541,6 +616,35 @@ function sala(ctx, Q, L) {
     musgo(ctx, x, y, z, 0.7, 0.5, 9400 + Math.round(z * 10), { room, n: 6 });
   }
   for (const [px, pz2] of CLOACA.pilares) musgo(ctx, px, y, pz2, 0.9, 0.9, 9500 + Math.round(px * 7 + pz2), { room, n: 9 });
+  // la hiedra que baja por los pilares, de sus capiteles; los hongos que dan
+  // luz en los rincones a oscuras; más helechos al pie del muro del sur
+  {
+    const vr = new RNG(9531);
+    const pl0 = 0.45;
+    for (const [px, pz2] of CLOACA.pilares)
+      for (let k = 0; k < 6; k++) {
+        const sd = k % 4;
+        const dir = sd === 0 ? [1, 0] : sd === 1 ? [-1, 0] : sd === 2 ? [0, 1] : [0, -1];
+        const u = vr.range(-0.35, 0.35);
+        hiedra(ctx, px + dir[0] * (pl0 + 0.02) + (dir[0] ? 0 : u), -5.0 + 0.1, pz2 + dir[1] * (pl0 + 0.02) + (dir[1] ? 0 : u), vr.range(1.4, 3.2), 9540 + Math.round(px * 3 + pz2) * 7 + k, { room, dir, hoja: 1.4 });
+      }
+    for (const [x, z, n] of [
+      [x0 + 0.5, z1 - 0.6, 8],
+      [x1 - 0.5, z1 - 0.6, 7],
+      [x1 - 0.5, z0 + 1.6, 6],
+      [-4.6, z1 - 0.5, 6],
+      [-11.0, z1 - 0.5, 6],
+      [x1 - 0.5, 17.0, 5],
+    ])
+      hongos(ctx, x, y, z, n, 9590 + Math.round(x * 10 + z), { room, luz: true, r: 0.3 });
+    for (const [x, z] of [
+      [x0 + 0.6, z1 - 0.8],
+      [x1 - 0.6, z1 - 0.8],
+      [x1 - 0.6, z0 + 1.8],
+    ])
+      ctx.lights.push({ x, y: y + 0.5, z, r: 0.3, g: 0.86, b: 0.78, radius: 3.6, intensity: 0.8, room });
+    for (let k = 0; k < 8; k++) helecho(ctx, -14.0 + k * 1.9 + vr.range(-0.3, 0.3), y, z1 - 0.45, vr.range(0.7, 1.1), 9620 + k, { room });
+  }
   // la hiedra que baja por el agujero, y las raíces del techo
   const hr = new RNG(9601);
   for (let k = 0; k < 44; k++) {

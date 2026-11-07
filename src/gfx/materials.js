@@ -89,6 +89,9 @@ export const MAT_DEFS = {
   deTunic: { tex: 'linen', uv: 1.4, color: 0x544a3e },
   dePatch: { tex: 'clothDark', uv: 1.4, color: 0x8a7a6a },
   deWrap: { tex: 'linen', uv: 1.6, color: 0x857a66 },
+  // el emplasto que se pone en la mejilla mala (lino manchado de lo verde que
+  // machaca en su botica) y su venda
+  deEmplasto: { tex: 'linen', uv: 1.6, color: 0x5f6c44 },
   deHair: { tex: 'hairGrey', uv: 1.6, color: 0x6a6258 },
   deEye: { tex: 'white', uv: 1, color: 0x1a0804, emissive: 0xffa060, emissiveIntensity: 1.1 },
   // lo verde de la cloaca, donde baja la luna (world/verdor.js): las hojas
@@ -99,6 +102,11 @@ export const MAT_DEFS = {
   musgo: { tex: 'mossstone', uv: 1.1, color: 0xa2c078 },
   flor: { tex: 'white', uv: 1, color: 0xe2e8f2, emissive: 0x7088b8, emissiveIntensity: 0.32 },
   florCentro: { tex: 'white', uv: 1, color: 0xd8b448, emissive: 0x403010, emissiveIntensity: 0.3 },
+  // los hongos que dan luz en lo umbrío del Vergel (la cloaca), su pie, y
+  // la negrura que rezuma de lo oscuro (lisa, como brea)
+  hongoLuz: { tex: 'white', uv: 1, color: 0x1e4a44, emissive: 0x5cf2d2, emissiveIntensity: 1.3 },
+  hongoPie: { tex: 'white', uv: 1, color: 0xb4c2ae, emissive: 0x2a6a5e, emissiveIntensity: 0.35 },
+  negrura: { tex: 'white', uv: 1, color: 0x050606, phong: { specular: 0x58686a, shininess: 70 } },
   // la esponja soporífera, empapada (adormidera, mandrágora, beleño)
   fiSponge: { tex: 'burlap', uv: 3.0, color: 0x8c6a3c, phong: { specular: 0x5a4a30, shininess: 60 } },
   feathers: { tex: 'feathers', uv: 1.8, phong: { specular: 0x405070, shininess: 26 } },
@@ -135,6 +143,8 @@ export const MAT_DEFS = {
   scratchHermosa: { tex: 'scratchHermosa', uv: 1, alphaTest: 0.5 },
   scratchHermosa2: { tex: 'scratchHermosa2', uv: 1, alphaTest: 0.5 },
   scratchMirala: { tex: 'scratchMirala', uv: 1, alphaTest: 0.5 },
+  scratchRemedios: { tex: 'scratchRemedios', uv: 1, alphaTest: 0.5 },
+  scratchNoPases: { tex: 'scratchNoPases', uv: 1, alphaTest: 0.5 },
   araDeoIgnoto: { tex: 'araDeoIgnoto', uv: 1, alphaTest: 0.5 },
   portalDeoIgnoto: { tex: 'portalDeoIgnoto', uv: 1, alphaTest: 0.5 },
   bloodNoTe1: { tex: 'bloodNoTe1', uv: 1, alphaTest: 0.5 },

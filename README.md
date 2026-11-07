@@ -123,19 +123,34 @@ guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torr
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 
-**La cloaca y el Desfigurado.** En la despensa de la Taberna del Cuervo, la trampilla de la bodega está clavada con
-dos tablones («algo rasca las cubas»): se arrancan con la palanca de la fragua. Abajo, la bodega del Cuervo, y en su
-muro del sur, el boquete por el que se hundió sobre **la cloaca de los romanos**: una galería de sillería bajo su
-bóveda, con el agua corriendo por en medio, que lleva bajo la calle del Soto y la plaza del Pan hasta la cisterna
-donde se juntaban las aguas, cuatro pilares y sus arcos. Encima ardió una casa (la quemada del sur de la plaza) y se
-le hundió el suelo: por el agujero baja la luna, un haz de luz pálida, y donde cae la luz y la lluvia ha crecido de
-todo (helechos, hierba, musgo, flores blancas, una higuera; la hiedra baja por el agujero); el agua cae en cascada a
-una alberca y rodea la isla verde. En medio, en la luz, de pie y mirando al cielo, **el Desfigurado**: un vagabundo al
-que la infección no acabó de tomar, con media cara deshecha, que odia el sol y odia la peste y llama hermosa a la vida
-que queda («Hermosa...»). La primera vez que se pisa el rellano, la cámara baja despacio hasta él. Si te acercas te
-pide que no le tapes la luz; si le hablas se vuelve, te cuenta lo suyo y te da una **flor blanca**; luego, lo de la
-peste, y cada vez una de sus cosas, con sus respingos y su risa (`world/cloaca.js`, `world/verdor.js`,
-`entities/desfigurado.js`, `game/desfigurado.js`, `game/cloaca.js`).
+**La cloaca, el Vergel y el Desfigurado.** En la despensa de la Taberna del Cuervo, la trampilla de la bodega está
+clavada con dos tablones («algo rasca las cubas»): se arrancan con la palanca de la fragua. Abajo, la bodega del
+Cuervo, y en su muro del sur, el boquete por el que se hundió sobre **la cloaca de los romanos**: una galería de
+sillería bajo su bóveda, con el agua corriendo por en medio entre el musgo, los helechos y los hongos que dan luz, que
+lleva bajo la calle del Soto y la plaza del Pan hasta la cisterna donde se juntaban las aguas, cuatro pilares con su
+hiedra. Encima ardió una casa (la quemada del sur de la plaza) y se le hundió el suelo: por el agujero baja la luna,
+un haz de luz pálida, y donde cae la luz y la lluvia ha crecido de todo; el agua cae en cascada a una alberca y rodea
+la isla verde. En medio, en la luz, de pie y mirando al cielo, **el Desfigurado**: un vagabundo al que la infección no
+acabó de tomar, con media cara deshecha, que odia el sol y odia la peste y llama hermosa a la vida que queda
+(«Hermosa...»). La primera vez que se pisa el rellano, la cámara baja despacio hasta él; si le hablas, te cuenta lo
+suyo, te da una **flor blanca** y te dice que sigas el agua. Por **la reja de levante** (sus barrotes, doblados) y el
+caño de los romanos, con el agua al tobillo, se llega a **el Vergel**: una gruta grande bajo el huerto seco de una
+casa de la plaza, que se hundió en ella. Por la sima baja la luna sobre el derrubio de tierra del huerto, hecho un
+prado con su higuera y sus saúcos en flor, y por él cuelgan las raíces del nogal muerto de arriba, que se ve recortado
+contra las estrellas; por los sumideros de la calle bajan otras tres rayas de luna. El agua del caño cae en cascada a
+una poza y corre en arroyo hasta un estanque con nenúfares, donde mana un caño romano de agua limpia; en lo umbrío dan
+luz los hongos, sobre el prado van las luciérnagas, y se oyen las ranas y los grillos. Arriba, en la plaza, sólo se ve
+una tapia, una puerta atrancada, el nogal seco y el sombrero de un espantapájaros. Él tiene su teoría: la vida no se
+murió, **se escondió aquí abajo**, y con ella la cura. La siguiente vez que bajas está en su **botica**, en el rincón
+del suroeste: muele hierbas en el mortero, lee su cuaderno, se aprieta un emplasto verde en la mejilla mala (lleva
+otro, vendado) y mira arriba a ratos; en la mesa, el **cuaderno de los remedios** (todo lo que ha probado: casi todo,
+«nada») y, rayada en una losa, la lista (ORTIGA - NO, AJO - NO… FLOR BLANCA - ??). Te cuenta su teoría, lo que busca
+(y te da **la Raíz del Vergel**: más vitalidad; «no cura, pero hace que dure más lo que no cura»), lo de la peste y
+**su miedo a lo oscuro**: en el rincón del nordeste, la gruta se abre a un paso hacia la Sé y sus catacumbas, donde lo
+verde se muere, hay zarpazos más altos que un hombre y una cabra arrastrada; él ha puesto una raya de sal y candiles
+de pared a pared, y a veces, al fondo, se encienden dos ojos. El paso acaba en un derrumbe: es la puerta del jefe que
+viene (`PLAN_LOBO.md`). (`world/cloaca.js`, `world/vergel.js`, `world/verdor.js`, `entities/desfigurado.js`,
+`game/desfigurado.js`, `game/cloaca.js`.)
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
@@ -1142,7 +1157,9 @@ src/
                         aguamanil, el lecho, la estera, la tabla de la ronda, y lo de cualquier casa: alfombras, escaños, sillas de
                         tijera, alacenas, aparadores, tinajas, repisas, paños); amueblado.js: las salas más pobres
                         amuebladas con eso; cloaca.js: la bodega del Cuervo, la cloaca romana y la sala de la luz;
-                        verdor.js: lo que crece (helechos, hierba, flores, musgo, hiedra, raíces, juncos, la higuera);
+                        vergel.js: el caño, la gruta del Vergel, su botica, lo oscuro y el huerto seco de arriba;
+                        verdor.js: lo que crece (helechos, hierba, flores, musgo, hiedra, raíces, juncos, la higuera, los
+                        saúcos, las matas, los hongos que dan luz, los nenúfares, los troncos caídos);
                         level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
@@ -1260,7 +1277,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        pie de escalera) se queda sin alcanzar; una imagen por sala
                         densidad.mjs   triángulos por m² de cada sala (las más pobres, primero)
                         cloacawalk.mjs de la taberna a la luz: la trampilla clavada, la palanca, la bodega, la
-                                       galería, la llegada, hablar con el Desfigurado y la flor
+                                       galería, la llegada, hablar con el Desfigurado y la flor; por la reja
+                                       y el caño, el Vergel entero hasta el derrumbe de lo oscuro; y, de
+                                       vuelta, en su botica, lo que cuenta tema a tema (y la raíz)
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»
