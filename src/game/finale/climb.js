@@ -394,7 +394,6 @@ export class Climb {
       p.rig.joints.shield.visible = false;
       // (el escudo, a la espalda: no desaparece)
       p.shieldBack.group.visible = p.hasShield;
-      p.saya.group.visible = false;
     }
   }
 

@@ -376,7 +376,6 @@ export class ReyQuest {
       p.rig.joints.sword.visible = false;
       p.rig.joints.shield.visible = false;
       if (p.shieldBack) p.shieldBack.group.visible = false;
-      if (p.saya) p.saya.group.visible = false;
     }
   }
   // ¿hay alguna criatura despierta cerca? (entonces no se juega)

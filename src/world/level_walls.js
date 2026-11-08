@@ -44,6 +44,10 @@ export const CHASE = {
   fanal: { x: -60, z: -124, w: 7, top: 18, stairX: -44.8, leap: [-60, 18, -120.9] },
   // a dónde se salta (la paja de la atalaya)
   land: [-60, 11.5, -109.2],
+  // la estaca de la barricada del adarve norte (la de lo alto del Postigo:
+  // level_city.js), donde está clavada el hacha barbada: su centro, su radio
+  // y su alto
+  stake: { x: 72.75, z: -67.28, r: 0.12, h: 2.15 },
 };
 
 // Parapeto macizo (con su albardilla) en el lado de dentro del adarve.

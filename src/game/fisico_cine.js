@@ -389,7 +389,6 @@ export class CamillaCine {
     p.rig.joints.sword.visible = false;
     p.rig.joints.shield.visible = false;
     p.shieldBack.group.visible = false;
-    p.saya.group.visible = false;
     // él: lo mueve el guion; la vara, en la camilla
     F.show(VIAJE.x0 - 1.85, VIAJE.z, Math.PI / 2);
     e.scripted = true;

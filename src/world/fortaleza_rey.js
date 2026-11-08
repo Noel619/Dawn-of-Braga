@@ -512,6 +512,22 @@ function adarveLevante(ctx, S, L, o) {
   for (let k = 0; k < 4; k++) wb.geometry('wallstone', new THREE.SphereGeometry(1, 6, 5), new THREE.Matrix4().compose(V(FORT.x1 - 0.85, y + 0.2, -69.4 + k * 0.42), new THREE.Quaternion(), V(0.2, 0.18, 0.2)), { ao: false });
   bakeCorpse(wb, ax, y, -64.6, Math.PI, 'face', 'soldier', 6540);
   P.decal(ctx, ax, y + 0.01, -64.6, 1.6);
+  // su lanza, la de la guardia del adarve (con su lazo rojo): apoyada contra
+  // la almena de al lado (la de z -66,45 a -65,55), con el regatón en las
+  // losas a un palmo del parapeto y la moharra asomando por encima de la
+  // almena; se ve desde que se sale del puente de tablas
+  {
+    const lean = (8 * Math.PI) / 180;
+    const D = V(Math.sin(lean), Math.cos(lean), 0); // (del puño a la punta)
+    const X = V(0, 0, 1); // (las caras de la moharra, de cara al adarve)
+    const Yl = D.clone().cross(X);
+    // (el regatón, en la losa: el eje del asta va a y = -0,05 del puño y su
+    // punta, a 0,93 por detrás)
+    const B = V(FORT.x1 - 0.48 - 0.31, y + 0.005, -66.0);
+    const H = B.clone().addScaledVector(Yl, 0.05).addScaledVector(D, 0.93);
+    const quat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Yl, D)).toArray();
+    L.interact.push({ kind: 'item', id: 'i_lanza', item: 'lanza', x: H.x, y: H.y, z: H.z, raw: true, quat, r: 1.8 });
+  }
   L.zones.unshift(
     { id: 'adarve_levante', rects: [[px0, pz0, FORT.x1, FORT.cancilleria.z0 - 1.2, y - 0.5, y + 4]], atmo: 'castillo' },
     { id: 'terraza_cancilleria', rects: [[FORT.patio.x1, FORT.cancilleria.z0 - 1.2, FORT.x1, FORT.torres.SE.z0, y - 0.5, y + 4]], atmo: 'castillo' }

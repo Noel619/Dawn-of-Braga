@@ -1,4 +1,4 @@
-// Repertorio de golpes del facón, el hacha, la lanza y la katana sagrada.
+// Repertorio de golpes del hacha, la lanza y la ballesta.
 // Convenciones (las mismas que la espada): claves [t, pose, curva, {k}] con
 // ángulos en grados y 'root'/'ik*' en cm; ikR = muñeca derecha en el espacio
 // del pecho (+x izquierda, +y arriba, +z delante), bladeR = [yaw, pitch, roll]
@@ -14,8 +14,7 @@
 // El giro de la muñeca en cada impacto se calcula para que corte el filo.
 import * as THREE from 'three';
 import { clip as rigClip, e2q, sampleClip, makeTrack, evalTrack } from './rig.js';
-import { solveArm, bladeDir } from './locomotion.js';
-import { SAYA } from './weapon_models.js';
+import { bladeDir } from './locomotion.js';
 import { attack, STANCE, LUNGE, SHIELD_UP, SHIELD_GUARD } from './weapon_common.js';
 import { resolveArmsFn } from './weapon_common.js';
 import { DEG } from '../core/util.js';
@@ -35,7 +34,6 @@ function fillPoles(keys) {
 const clip = (name, dur, keys, opts = {}) => rigClip(name, dur, fillPoles(keys), { mono: true, ...opts });
 
 // Retrasos por familia de arma (s).
-const LAG_FAST = { chest: 0.006, head: 0.016, ikR: 0.012, elbowR: 0.012, bladeR: 0.02 };
 const LAG_MED = { chest: 0.008, head: 0.018, ikR: 0.016, elbowR: 0.016, bladeR: 0.026 };
 const LAG_HEAVY = { chest: 0.014, head: 0.026, ikR: 0.026, elbowR: 0.026, bladeR: 0.04, wSlide: 0.026 };
 const LAG_THRUST = { head: 0.02 };
@@ -346,164 +344,17 @@ function hitWindows(ctx, c, n = 1, thrust = false) {
 }
 
 
-// ================================================================ FACÓN
-// Esgrima criolla: agazapado, el pie derecho delante, cortes cortos y rápidos
-// que se encadenan en cuatro, y la puñalada que remata.
-const FST = { legL: [18, 0, 7], shinL: [28, 0, 0], legR: [-30, 0, -6], shinR: [36, 0, 0], root: [0, -11, 0] };
-const FLUNGE = { legL: [34, 0, 6], shinL: [14, 0, 0], legR: [-54, 0, -5], shinR: [50, 0, 0], root: [0, -22, 12] };
-const FDEEP = { legL: [42, 0, 6], shinL: [8, 0, 0], legR: [-66, 0, -4], shinR: [62, 0, 0], root: [0, -30, 20] };
-
-function faconMoves(ctx) {
-  const { G, rig } = ctx;
-  const g = { ...G };
-  // desde cuándo se encadena cada golpe ligero (y el pesado)
-  const CAN = [0.25, 0.25, 0.28, 0.56];
-  const CANH = 0.62;
-  // tajo: diagonal desde la oreja derecha hasta la cadera izquierda
-  const l1 = edgeClip(
-    ctx,
-    'f_light1',
-    0.46,
-    [
-      [0, { ...FST, chest: [6, -8, 0], ...g }],
-      [0.08, { ...FST, chest: [10, -40, 0], head: [0, 16, 0], ikR: [-40, 46, 8], bladeR: [-128, 50, 0], elbowR: [-0.8, -0.1, -0.6], ikL: [20, 24, 26] }, 'hold'],
-      [0.15, { ...FST, root: [0, -13, 5], chest: [14, 18, 0], head: [-2, -8, 0], ikR: [-2, 20, 46], bladeR: [20, -6, 0], elbowR: [-0.5, -0.7, -0.3], ikL: [24, 20, 20] }, 'smooth', HIT],
-      [0.24, { ...FST, root: [0, -12, 4], chest: [14, 42, 0], head: [-2, -20, 0], ikR: [22, -4, 32], bladeR: [100, -44, 0], elbowR: [-0.3, -0.8, -0.4], ikL: [26, 18, 14] }, 'settle'],
-      [0.46, { ...g, chest: [3, 6, 0] }],
-    ],
-    { lag: LAG_FAST, events: [{ t: 0.1, name: 'swing' }] }
-  );
-  // revés: de la cadera izquierda sube cruzando hasta arriba a la derecha
-  const l2 = edgeClip(
-    ctx,
-    'f_light2',
-    0.46,
-    [
-      [0, poseAt(l1.c, CAN[0])],
-      [0.07, { ...FST, chest: [12, 46, 0], head: [0, -18, 0], ikR: [24, -8, 26], bladeR: [128, -24, 0], elbowR: [0.1, -0.6, -0.8], ikL: [26, 20, 14] }, 'hold'],
-      [0.14, { ...FST, root: [0, -12, 5], chest: [8, 0, 0], head: [0, 0, 0], ikR: [-10, 24, 48], bladeR: [-6, 16, 0], elbowR: [-0.5, -0.6, -0.4], ikL: [22, 22, 20] }, 'smooth', HIT],
-      [0.24, { ...FST, root: [0, -11, 4], chest: [4, -42, 0], head: [0, 18, 0], ikR: [-42, 52, 24], bladeR: [-104, 46, 0], elbowR: [-0.8, -0.3, -0.4], ikL: [18, 24, 26] }, 'settle'],
-      [0.46, { ...g, chest: [3, -6, 0] }],
-    ],
-    { lag: LAG_FAST, edge: 'back', events: [{ t: 0.09, name: 'swing' }] }
-  );
-  // tajo corrido: horizontal a la altura del pecho, con paso
-  const l3 = edgeClip(
-    ctx,
-    'f_light3',
-    0.5,
-    [
-      [0, poseAt(l2.c, CAN[1])],
-      [0.09, { ...FST, chest: [6, -52, 0], head: [0, 20, 0], ikR: [-48, 30, 4], bladeR: [-160, 6, 0], elbowR: [-0.8, -0.3, -0.5], ikL: [20, 24, 26] }, 'hold'],
-      [0.17, { ...FLUNGE, chest: [10, -4, 0], head: [-2, 0, 0], ikR: [-18, 30, 52], bladeR: [-4, 4, 0], elbowR: [-0.6, -0.6, -0.3], ikL: [24, 22, 20] }, 'smooth', HIT],
-      [0.27, { ...FLUNGE, root: [0, -21, 11], chest: [10, 52, 0], head: [-2, -22, 0], ikR: [28, 22, 30], bladeR: [112, -6, 0], elbowR: [-0.3, -0.8, -0.4], ikL: [26, 20, 14] }, 'settle'],
-      [0.5, { ...g, chest: [2, 8, 0] }],
-    ],
-    { lag: LAG_FAST, events: [{ t: 0.11, name: 'swing' }] }
-  );
-  // puñalada: se recoge a la cadera y clava a fondo, recta
-  const p1 = { ...FST, root: [0, -9, -5], chest: [2, -30, 0], head: [0, 14, 0] };
-  const p2 = { ...FDEEP, root: [0, -22, 16], chest: [24, 16, 0], head: [-12, -8, 0] };
-  const l4 = {
-    c: clip(
-      'f_light4',
-      0.62,
-      [
-        [0, poseAt(l3.c, CAN[2])],
-        [0.12, { ...W2C(rig, p1, [-28, 94, 2], [6, 4, 0]), elbowR: [-0.5, -0.3, -0.9], ikL: [22, 28, 30] }, 'hold'],
-        [0.24, { ...W2C(rig, p2, [-10, 100, 84], [12, 3, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 20, 12] }, 'strike'],
-        [0.36, { ...W2C(rig, { ...p2, root: [0, -21, 15], chest: [22, 14, 0] }, [-10, 100, 80], [12, 2, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 20, 12] }],
-        [0.62, { ...FST, chest: [6, -8, 0], ...g }],
-      ],
-      { lag: LAG_THRUST, events: [{ t: 0.14, name: 'swing' }] }
-    ),
-  };
-  // molinete: dos tajos en aspa; entre ambos la muñeca gira la hoja por arriba
-  const h1 = edgeClip(
-    ctx,
-    'f_heavy1',
-    0.9,
-    [
-      [0, { ...FST, ...g, chest: [4, -6, 0] }],
-      [0.16, { ...FST, root: [0, -12, -3], chest: [6, -48, 0], head: [0, 20, 0], ikR: [-40, 62, 2], bladeR: [-140, 62, 0], elbowR: [-0.8, 0, -0.6], ikL: [20, 24, 26] }, 'hold'],
-      [0.23, { ...FST, root: [0, -14, 4], chest: [14, 0, 0], head: [-2, 0, 0], ikR: [-6, 24, 48], bladeR: [16, -8, 0], elbowR: [-0.5, -0.7, -0.3], ikL: [24, 20, 20] }, 'smooth', HIT],
-      [0.31, { ...FST, root: [0, -14, 6], chest: [16, 40, 0], head: [-4, -18, 0], ikR: [20, 4, 38], bladeR: [84, -40, 0], elbowR: [-0.4, -0.8, -0.3], ikL: [26, 18, 16] }, 'settle'],
-      [0.4, { ...FST, root: [0, -13, 5], chest: [14, 44, 0], head: [-2, -20, 0], ikR: [24, 32, 30], bladeR: [120, 44, 0], elbowR: [0.1, -0.5, -0.8], ikL: [26, 20, 14] }, 'hold'],
-      [0.47, { ...FLUNGE, chest: [14, 2, 0], head: [-2, 0, 0], ikR: [-4, 16, 50], bladeR: [-14, -12, 0], elbowR: [-0.5, -0.7, -0.3], ikL: [22, 24, 22] }, 'smooth', HIT],
-      [0.56, { ...FLUNGE, root: [0, -21, 11], chest: [14, -42, 0], head: [0, 18, 0], ikR: [-42, -8, 30], bladeR: [-104, -40, 0], elbowR: [-0.6, -0.7, -0.2], ikL: [20, 26, 26] }, 'settle'],
-      [0.9, { ...g }],
-    ],
-    { lag: LAG_FAST, events: [{ t: 0.17, name: 'swing' }, { t: 0.41, name: 'swing' }] }
-  );
-  // puñalada a fondo: se enrosca y se lanza con todo el cuerpo
-  const c1 = { ...FST, root: [0, -16, -8], chest: [0, -36, 0], head: [2, 18, 0] };
-  const c2 = { legL: [44, 0, 6], shinL: [6, 0, 0], legR: [-68, 0, -4], shinR: [64, 0, 0], root: [0, -32, 22], chest: [30, 14, 0], head: [-18, -6, 0] };
-  const h2 = {
-    c: clip(
-      'f_heavy2',
-      0.85,
-      [
-        [0, poseAt(h1.c, CANH)],
-        [0.24, { ...W2C(rig, c1, [-34, 92, -6], [8, 4, 0]), elbowR: [-0.5, -0.3, -0.9], ikL: [24, 30, 30] }, 'hold'],
-        [0.37, { ...W2C(rig, c2, [-8, 96, 94], [12, 2, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 12, 6] }, 'strike'],
-        [0.52, { ...W2C(rig, { ...c2, root: [0, -31, 21], chest: [28, 12, 0] }, [-8, 96, 90], [12, 1, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 12, 8] }],
-        [0.85, { ...g }],
-      ],
-      { lag: LAG_THRUST, events: [{ t: 0.27, name: 'swing' }] }
-    ),
-  };
-  // estocada corrida: un saltito y clava
-  const r0 = { ...FST, root: [0, -6, 0], chest: [16, -10, 0] };
-  const r1 = { root: [0, 4, 4], legL: [-40, 0, 6], shinL: [70, 0, 0], legR: [20, 0, -6], shinR: [40, 0, 0], chest: [10, -24, 0], head: [0, 10, 0] };
-  const r2 = { ...FDEEP, root: [0, -26, 18], chest: [28, 16, 0], head: [-14, -8, 0] };
-  const run = clip(
-    'f_run',
-    0.7,
-    [
-      [0, { ...W2C(rig, r0, [-28, 100, 12], [6, 2, 0]), ikL: [22, 26, 30] }],
-      [0.1, { ...W2C(rig, r1, [-32, 106, 0], [6, 4, 0]), elbowR: [-0.5, -0.3, -0.9], ikL: [22, 30, 30] }, 'hold'],
-      [0.26, { ...W2C(rig, r2, [-8, 100, 90], [10, 2, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 12, 8] }, 'strike'],
-      [0.4, { ...W2C(rig, { ...r2, root: [0, -25, 17], chest: [26, 14, 0] }, [-8, 100, 86], [10, 1, 0]), elbowR: [-0.3, -0.9, 0.1], ikL: [24, 12, 8] }],
-      [0.7, { ...g }],
-    ],
-    { lag: LAG_THRUST, events: [{ t: 0.16, name: 'swing' }] }
-  );
-  // tajo bajo al salir de la voltereta
-  const rl = edgeClip(
-    ctx,
-    'f_roll',
-    0.52,
-    [
-      [0, { root: [0, -28, 0], legL: [-60, 0, 8], shinL: [100, 0, 0], legR: [10, 0, -8], shinR: [80, 0, 0], chest: [30, -30, 0], head: [-14, 14, 0], ikR: [-40, -10, 20], bladeR: [-120, -20, 0], elbowR: [-0.8, -0.4, -0.3], ikL: [20, 20, 24] }],
-      [0.1, { root: [0, -26, 4], legL: [-56, 0, 8], shinL: [92, 0, 0], legR: [14, 0, -8], shinR: [70, 0, 0], chest: [30, 6, 0], head: [-12, -2, 0], ikR: [-10, -22, 44], bladeR: [-10, -26, 0], elbowR: [-0.6, -0.7, -0.3], ikL: [22, 20, 20] }, 'smooth', HIT],
-      [0.2, { root: [0, -20, 4], legL: [-40, 0, 8], shinL: [70, 0, 0], legR: [10, 0, -8], shinR: [50, 0, 0], chest: [22, 46, 0], head: [-6, -20, 0], ikR: [24, -26, 30], bladeR: [110, -26, 0], elbowR: [-0.3, -0.8, -0.4], ikL: [24, 18, 16] }, 'settle'],
-      [0.52, { ...g }],
-    ],
-    { windup0: true, lag: LAG_FAST, events: [{ t: 0.05, name: 'swing' }] }
-  );
-  const C = { f_light1: l1.c, f_light2: l2.c, f_light3: l3.c, f_light4: l4.c, f_heavy1: h1.c, f_heavy2: h2.c, f_run: run, f_roll: rl.c };
-  const K = { snd: 'swingKnife', crit: 2.1 };
-  const H = (c, n, th) => hitWindows(ctx, c, n, th);
-  const light = [
-    attack({ ...K, clip: C.f_light1, dmg: 13, st: 8, hits: H(C.f_light1), cancel: CAN[0], move: 0.32, lunge: [0.04, 0.17, 2.4], range: 1.95, arc: 120, poise: 11, dir: -1 }),
-    attack({ ...K, clip: C.f_light2, dmg: 13, st: 8, hits: H(C.f_light2), cancel: CAN[1], move: 0.32, lunge: [0.04, 0.16, 2.2], range: 1.95, arc: 120, poise: 11, dir: 1 }),
-    attack({ ...K, clip: C.f_light3, dmg: 15, st: 9, hits: H(C.f_light3), cancel: CAN[2], move: 0.35, lunge: [0.06, 0.2, 3.0], range: 2.0, arc: 150, poise: 13, dir: -1 }),
-    attack({ ...K, clip: C.f_light4, dmg: 20, st: 12, hits: H(C.f_light4, 1, true), cancel: CAN[3], move: 0.56, lunge: [0.13, 0.26, 3.6], range: 2.25, arc: 40, poise: 20, dir: 0, thrust: true }),
-  ];
-  const heavy = [
-    attack({ ...K, clip: C.f_heavy1, dmg: 22, st: 20, hits: H(C.f_heavy1, 2), cancel: CANH, move: 0.68, lunge: [0.18, 0.46, 2.6], range: 2.0, arc: 130, poise: 26, heavy: true, dir: -1 }),
-    attack({ ...K, clip: C.f_heavy2, dmg: 34, st: 22, hits: H(C.f_heavy2, 1, true), cancel: 0.58, move: 0.64, lunge: [0.25, 0.4, 5.2], range: 2.6, arc: 36, poise: 50, heavy: true, dir: 0, thrust: true }),
-  ];
-  const runA = attack({ ...K, clip: C.f_run, dmg: 24, st: 16, hits: H(C.f_run, 1, true), cancel: 0.44, move: 0.5, lunge: [0.02, 0.3, 6.2], range: 2.4, arc: 40, poise: 30, dir: 0, thrust: true });
-  const roll = attack({ ...K, clip: C.f_roll, dmg: 18, st: 10, hits: H(C.f_roll), cancel: 0.3, move: 0.36, lunge: [0.0, 0.14, 2.6], range: 2.0, arc: 140, poise: 14, dir: -1 });
-  return { clips: C, light, heavy, run: runA, roll };
-}
-
 // ================================================================ HACHA
 // A dos manos, pie izquierdo delante; golpes lentos que arrastran el cuerpo,
 // con el peso de la cabeza: anticipación larga, caída brutal, recuperación
 // trabajosa. La izquierda desliza por el mango en los barridos (wSlide).
 const AST = { legL: [-20, 0, 9], shinL: [26, 0, 0], legR: [20, 0, -9], shinR: [24, 0, 0], root: [0, -10, 0] };
+// Las manos en el mango del hacha clavada (espacio del personaje, cm): la
+// muñeca derecha, cerca de la cabeza, y el mango, que sube hacia la madera
+// por delante y a la derecha (rumbo, cabeceo y giro, en grados: el giro
+// pone la hoja de cara a la madera). La escena de la Bestia coloca al
+// jugador para que la hoja quede dentro de la estaca (beast_chase.js).
+export const AXE_TUG = { wrist: [-12, 112, 24], blade: [-32, 28, 55] };
 const ALUNGE = { legL: [-44, 0, 8], shinL: [46, 0, 0], legR: [30, 0, -8], shinR: [14, 0, 0], root: [0, -20, 10] };
 const ACHOP = { legL: [-50, 0, 8], shinL: [52, 0, 0], legR: [34, 0, -8], shinR: [16, 0, 0], root: [0, -30, 14] };
 
@@ -601,7 +452,43 @@ function axeMoves(ctx) {
     ],
     { windup0: true, lag: LAG_HEAVY, events: [{ t: 0.06, name: 'swing' }] }
   );
-  const C = { a_light1: l1.c, a_light2: l2.c, a_light3: l3.c, a_heavy: h1.c, a_run: run.c, a_roll: rl.c };
+  // ---- la escena de la Bestia de Carne (game/beast_chase.js): el hacha,
+  // clavada hasta el ojo en una estaca de la barricada del Postigo.
+  // Forcejear: las dos manos en el mango, el pie adelantado y el cuerpo
+  // echado atrás, a tirones (las manos quietas en el espacio del personaje:
+  // el cuerpo tira y la hoja no se mueve de la madera). En bucle.
+  const { rig } = ctx;
+  const TUG = { wrist: AXE_TUG.wrist, blade: AXE_TUG.blade };
+  const tugBody = (lean, back, dip) => ({ legL: [-34, 0, 9], shinL: [24, 0, 0], legR: [30, 0, -9], shinR: [30, 0, 0], root: [0, -16 - dip, -2 - back], hips: [0, -4, 0], chest: [-2 - lean, -6, 0], head: [12 - lean * 0.4, -14, 0] });
+  const tug = (lean, back, dip) => ({ ...tugBody(lean, back, dip), ...W2C(rig, tugBody(lean, back, dip), TUG.wrist, TUG.blade), elbowR: [-0.5, -0.8, -0.2] });
+  const tg = clip(
+    'a_tug',
+    0.62,
+    [
+      [0, tug(0, 0, 0)],
+      [0.2, tug(6, 3, 3), 'hold'],
+      [0.31, tug(9, 5, 4)],
+      [0.62, tug(0, 0, 0)],
+    ],
+    { loop: true, lag: { head: 0.03 } }
+  );
+  // Arrancarla: el tirón que la saca (la hoja sale de la madera con las
+  // astillas), el cuerpo que se va atrás de un paso, y el hacha que sube por
+  // encima de la cabeza, en alto, antes de bajar a la guardia.
+  const yk = clip(
+    'a_yank',
+    1.45,
+    [
+      [0, tug(9, 5, 4)],
+      [0.12, { legL: [-20, 0, 9], shinL: [18, 0, 0], legR: [40, 0, -9], shinR: [36, 0, 0], ...W2C(rig, { root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0] }, [-14, 128, 18], [-30, 62, AXE_TUG.blade[2]]), root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0], head: [-8, -8, 0], elbowR: [-0.6, -0.6, -0.4] }, 'snap'],
+      [0.5, { ...AST, root: [0, 4, -6], chest: [-26, -4, 0], head: [-18, 4, 0], ikR: [-8, 92, -6], bladeR: [-4, 160, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.65, 0, 0] }, 'hold'],
+      [0.82, { ...AST, root: [0, -6, 0], chest: [-12, -4, 0], head: [-10, 2, 0], ikR: [-8, 84, 0], bladeR: [-6, 150, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.7, 0, 0] }],
+      [1.15, { ...AST, chest: [10, 8, 0], head: [-4, -4, 0], ikR: [-6, 38, 38], bladeR: [-24, 56, 0], elbowR: [-0.6, -0.6, -0.4] }],
+      [1.45, { ...g }],
+    ],
+    { lag: LAG_HEAVY }
+  );
+  const C = { a_light1: l1.c, a_light2: l2.c, a_light3: l3.c, a_heavy: h1.c, a_run: run.c, a_roll: rl.c, a_tug: tg, a_yank: yk };
   const K = { snd: 'swingAxe', hitSnd: 'hitAxe' };
   const H = (c, n, th) => hitWindows(ctx, c, n, th);
   const light = [
@@ -792,187 +679,6 @@ function ballestaMoves(ctx) {
   return { clips: C, light: [shoot], heavy: [bash], run: bash, roll: bash, reload };
 }
 
-// ================================================================ KATANA
-// Kendo: guardia media, pie derecho delante; cuatro cortes fluidos que se
-// encadenan (kesa, gyaku-kesa, yoko y tsuki) y el iai del Juicio: la hoja
-// vuelve a la saya y sale en un destello que atraviesa al enemigo.
-const KST = { legL: [16, 0, 5], shinL: [22, 0, 0], legR: [-24, 0, -4], shinR: [24, 0, 0], root: [0, -7, 0] };
-const KLUNGE = { legL: [36, 0, 5], shinL: [10, 0, 0], legR: [-52, 0, -4], shinR: [46, 0, 0], root: [0, -18, 12] };
-const KDEEP = { legL: [44, 0, 6], shinL: [6, 0, 0], legR: [-64, 0, -4], shinR: [58, 0, 0], root: [0, -26, 20] };
-
-// Mano derecha con la katana metida en la saya para un giro de pecho dado
-// (el iai sale de aquí); pull la saca esa distancia a lo largo de la saya.
-// Devuelve ikR (cm), bladeR (°) e ikL sobre la boca de la saya.
-const _qa = new THREE.Quaternion();
-const _qf = new THREE.Quaternion();
-const _qh = new THREE.Quaternion();
-function sheathPose(rig, chestDeg, pull = 0) {
-  const qc = e2q(chestDeg.map((v) => v * DEG), new THREE.Quaternion()).invert();
-  const chestPos = rig.rest.chest.pos;
-  const mouth = SAYA.mouth.clone().sub(chestPos).applyQuaternion(qc);
-  const Z = SAYA.Z.clone().applyQuaternion(qc);
-  const Yv = SAYA.Y.clone().applyQuaternion(qc);
-  // el guardamano justo fuera de la boca, el eje del mango (y = -0.05) centrado
-  const wrist = mouth.clone().addScaledVector(Z, -0.035 - pull).addScaledVector(Yv, 0.05);
-  const bl = [Math.atan2(Z.x, Z.z), Math.asin(Math.max(-1, Math.min(1, Z.y))), 0];
-  // giro de la muñeca para que el lomo de la hoja mire como el de la saya
-  const p = { ikR: [wrist.x, wrist.y, wrist.z], bladeR: bl.slice() };
-  solveArm(p, rig, 'R');
-  e2q(p.armR, _qa).multiply(e2q(p.foreR, _qf)).multiply(e2q(p.handR, _qh));
-  const y0 = new THREE.Vector3(0, 1, 0).applyQuaternion(_qa);
-  const ang = Math.atan2(new THREE.Vector3().crossVectors(y0, Yv).dot(Z), y0.dot(Yv));
-  const left = mouth.clone().addScaledVector(Z, 0.1).addScaledVector(Yv, -0.05);
-  return {
-    ikR: [wrist.x * 100, wrist.y * 100, wrist.z * 100],
-    bladeR: [bl[0] / DEG, bl[1] / DEG, ang / DEG],
-    ikL: [left.x * 100, left.y * 100, left.z * 100],
-  };
-}
-
-function katanaMoves(ctx) {
-  const { G, rig } = ctx;
-  const g = { ...G };
-  const CAN = [0.3, 0.3, 0.32, 0.61];
-  const CANH = 1.0;
-  // kesa-giri: desde el hombro derecho hasta abajo a la izquierda
-  const l1 = edgeClip(
-    ctx,
-    'k_light1',
-    0.56,
-    [
-      [0, { ...KST, chest: [4, -6, 0], ...g }],
-      [0.1, { ...KST, root: [0, -6, -2], chest: [2, -34, 0], head: [0, 16, 0], ikR: [-18, 60, 22], bladeR: [20, 115, 0], elbowR: [-0.7, -0.2, -0.6] }, 'hold'],
-      [0.17, { ...KLUNGE, chest: [12, 0, 0], head: [-4, 0, 0], ikR: [-6, 34, 48], bladeR: [8, 12, 0], elbowR: [-0.5, -0.7, -0.3] }, 'smooth', HIT],
-      [0.26, { ...KLUNGE, root: [0, -17, 11], chest: [16, 36, 0], head: [-4, -18, 0], ikR: [12, 4, 34], bladeR: [62, -54, 0], elbowR: [-0.4, -0.8, -0.3] }, 'settle'],
-      [0.56, { ...g, chest: [3, 6, 0] }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.12, name: 'swing' }] }
-  );
-  // gyaku-kesa: sube de abajo a la izquierda hasta arriba a la derecha
-  const l2 = edgeClip(
-    ctx,
-    'k_light2',
-    0.56,
-    [
-      [0, poseAt(l1.c, CAN[0])],
-      [0.08, { ...KST, chest: [12, 42, 0], head: [0, -18, 0], ikR: [16, 2, 32], bladeR: [100, -40, 0], elbowR: [-0.3, -0.8, -0.4] }, 'hold'],
-      [0.15, { ...KLUNGE, chest: [8, 2, 0], head: [-2, 0, 0], ikR: [-8, 30, 50], bladeR: [0, 14, 0], elbowR: [-0.5, -0.7, -0.3] }, 'smooth', HIT],
-      [0.24, { ...KLUNGE, root: [0, -17, 11], chest: [2, -40, 0], head: [0, 18, 0], ikR: [-30, 58, 28], bladeR: [-66, 62, 0], elbowR: [-0.7, -0.2, -0.5] }, 'settle'],
-      [0.56, { ...g, chest: [3, -6, 0] }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.1, name: 'swing' }] }
-  );
-  // yoko-giri: horizontal de derecha a izquierda a la altura del pecho
-  const l3 = edgeClip(
-    ctx,
-    'k_light3',
-    0.6,
-    [
-      [0, poseAt(l2.c, CAN[1])],
-      [0.1, { ...KST, chest: [6, -50, 0], head: [0, 20, 0], ikR: [-30, 34, 18], bladeR: [-120, 12, 0], elbowR: [-0.8, -0.3, -0.4] }, 'hold'],
-      [0.17, { ...KLUNGE, chest: [10, -6, 0], head: [-2, 2, 0], ikR: [-10, 32, 50], bladeR: [-10, 6, 0], elbowR: [-0.6, -0.6, -0.3] }, 'smooth', HIT],
-      [0.27, { ...KLUNGE, root: [0, -17, 11], chest: [10, 46, 0], head: [-2, -20, 0], ikR: [16, 28, 30], bladeR: [96, -4, 0], elbowR: [-0.3, -0.8, -0.4] }, 'settle'],
-      [0.6, { ...g, chest: [2, 8, 0] }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.12, name: 'swing' }] }
-  );
-  // tsuki: estocada a dos manos con zancada, recta
-  const t1 = { ...KST, root: [0, -8, -4], chest: [0, -10, 0], head: [0, 4, 0] };
-  const t2 = { ...KDEEP, root: [0, -22, 16], chest: [22, 10, 0], head: [-12, -4, 0] };
-  const l4 = clip(
-    'k_light4',
-    0.66,
-    [
-      [0, poseAt(l3.c, CAN[2])],
-      [0.13, { ...W2C(rig, t1, [-6, 122, 26], [4, 8, 0]), elbowR: [-0.5, -0.7, -0.5] }, 'hold'],
-      [0.25, { ...W2C(rig, t2, [-4, 118, 88], [2, 4, 0]), elbowR: [-0.3, -0.9, 0] }, 'strike'],
-      [0.36, { ...W2C(rig, { ...t2, root: [0, -21, 15], chest: [20, 9, 0] }, [-4, 118, 85], [2, 3, 0]), elbowR: [-0.3, -0.9, 0] }],
-      [0.66, { ...KST, chest: [4, -6, 0], ...g }],
-    ],
-    { lag: LAG_THRUST, events: [{ t: 0.15, name: 'swing' }] }
-  );
-  // iai del Juicio: envaina, se agacha (aquí se carga), desenvaina con la hoja
-  // saliendo a lo largo de la saya y corta en horizontal en el mismo gesto;
-  // sacude la sangre (chiburi) y vuelve a la guardia
-  const sh1 = sheathPose(rig, [22, 26, 0]);
-  const sh2 = sheathPose(rig, [26, 30, 0]);
-  const draw = sheathPose(rig, [18, 12, 0], 0.6);
-  const free = { wGrip: [0, 0, 0], elbowL: [0.6, -0.6, -0.4] };
-  const h1 = edgeClip(
-    ctx,
-    'k_heavy1',
-    1.25,
-    [
-      [0, { ...KST, ...g }],
-      [0.2, { legL: [20, 0, 6], shinL: [34, 0, 0], legR: [-30, 0, -6], shinR: [40, 0, 0], root: [0, -16, -2], chest: [22, 26, 0], head: [-16, -20, 0], ...sh1, ...free, elbowR: [-0.3, -0.8, -0.4] }, 'smooth', { lock: true }],
-      [0.42, { legL: [22, 0, 6], shinL: [40, 0, 0], legR: [-34, 0, -6], shinR: [46, 0, 0], root: [0, -20, -3], chest: [26, 30, 0], head: [-18, -24, 0], ...sh2, ...free, elbowR: [-0.3, -0.8, -0.4] }, 'hold', { lock: true }],
-      [0.5, { ...KLUNGE, root: [0, -18, 8], chest: [18, 12, 0], head: [-10, -8, 0], ...draw, ...free, ikL: [26, 4, 2], elbowR: [-0.4, -0.8, -0.2] }, 'smooth', { k: 1.3 }],
-      [0.58, { ...KDEEP, root: [0, -24, 18], chest: [14, -4, 0], head: [-6, 2, 0], ikR: [-16, 30, 54], bladeR: [-20, 6, 0], ...free, ikL: [26, 4, -4], elbowR: [-0.6, -0.6, -0.2] }, 'smooth', HIT],
-      [0.68, { ...KDEEP, root: [0, -23, 19], chest: [10, -48, 0], head: [-4, 20, 0], ikR: [-46, 34, 26], bladeR: [-120, 10, 0], ...free, ikL: [26, 6, -4], elbowR: [-0.8, -0.4, -0.3] }, 'settle'],
-      [0.92, { ...KST, chest: [8, -20, 0], head: [0, 8, 0], ikR: [-34, 10, 30], bladeR: [-40, -40, 0], ...free, ikL: [24, 8, 10], elbowR: [-0.6, -0.6, -0.3] }, 'strike'],
-      [1.25, { ...g }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.47, name: 'draw' }, { t: 0.56, name: 'flash' }, { t: 0.86, name: 'flick' }] }
-  );
-  // makko-giri: corte vertical desde lo alto (segundo pesado encadenado)
-  const h2 = edgeClip(
-    ctx,
-    'k_heavy2',
-    0.95,
-    [
-      [0, poseAt(h1.c, CANH)],
-      [0.3, { ...KST, chest: [-14, -4, 0], head: [-8, 4, 0], ikR: [-8, 92, 18], bladeR: [6, 128, 0], elbowR: [-0.7, 0.2, -0.6] }, 'hold'],
-      [0.38, { ...KLUNGE, chest: [12, 0, 0], head: [-6, 0, 0], ikR: [-6, 46, 52], bladeR: [0, 30, 0], elbowR: [-0.6, -0.5, -0.3] }, 'smooth', HIT],
-      [0.47, { ...KLUNGE, root: [0, -22, 14], chest: [28, 0, 0], head: [-14, 0, 0], ikR: [-4, 12, 48], bladeR: [0, -26, 0], elbowR: [-0.5, -0.8, 0] }, 'settle'],
-      [0.95, { ...g }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.32, name: 'swing' }] }
-  );
-  // nuki-do: corte al costado mientras se pasa de largo corriendo
-  const run = edgeClip(
-    ctx,
-    'k_run',
-    0.72,
-    [
-      [0, { ...KST, chest: [10, -20, 0], ikR: [-20, 20, 30], bladeR: [-40, 20, 0], elbowR: [-0.6, -0.6, -0.4] }],
-      [0.1, { ...KST, chest: [8, -42, 0], head: [0, 16, 0], ikR: [-32, 26, 16], bladeR: [-112, 8, 0], elbowR: [-0.8, -0.3, -0.4] }, 'hold'],
-      [0.18, { ...KDEEP, chest: [14, 0, 0], head: [-4, 0, 0], ikR: [-10, 24, 50], bladeR: [-8, 2, 0], elbowR: [-0.6, -0.6, -0.3] }, 'smooth', HIT],
-      [0.28, { ...KDEEP, root: [0, -25, 19], chest: [16, 52, 0], head: [-6, -22, 0], ikR: [20, 18, 26], bladeR: [110, -12, 0], elbowR: [-0.3, -0.8, -0.4] }, 'settle'],
-      [0.72, { ...g }],
-    ],
-    { lag: LAG_MED, events: [{ t: 0.12, name: 'swing' }] }
-  );
-  // kiriage: corte ascendente al salir de la voltereta
-  const rl = edgeClip(
-    ctx,
-    'k_roll',
-    0.56,
-    [
-      [0, { root: [0, -24, 0], legL: [-50, 0, 8], shinL: [90, 0, 0], legR: [10, 0, -8], shinR: [70, 0, 0], chest: [26, -24, 0], head: [-12, 12, 0], ikR: [-20, -4, 30], bladeR: [-50, -50, 0], elbowR: [-0.7, -0.6, -0.2] }],
-      [0.1, { ...KLUNGE, chest: [14, 4, 0], head: [-6, 0, 0], ikR: [-8, 26, 48], bladeR: [0, 10, 0], elbowR: [-0.5, -0.7, -0.3] }, 'smooth', HIT],
-      [0.2, { ...KLUNGE, root: [0, -17, 11], chest: [-2, 42, 0], head: [2, -18, 0], ikR: [10, 62, 28], bladeR: [64, 72, 0], elbowR: [-0.3, -0.5, -0.6] }, 'settle'],
-      [0.56, { ...g }],
-    ],
-    { windup0: true, lag: LAG_MED, events: [{ t: 0.05, name: 'swing' }] }
-  );
-  const C = { k_light1: l1.c, k_light2: l2.c, k_light3: l3.c, k_light4: l4, k_heavy1: h1.c, k_heavy2: h2.c, k_run: run.c, k_roll: rl.c };
-  const K = { snd: 'swingKatana', holy: true };
-  const H = (c, n, th) => hitWindows(ctx, c, n, th);
-  const light = [
-    attack({ ...K, clip: C.k_light1, dmg: 22, st: 12, hits: H(C.k_light1), cancel: CAN[0], move: 0.38, lunge: [0.05, 0.2, 2.8], range: 2.7, arc: 130, poise: 20, dir: -1 }),
-    attack({ ...K, clip: C.k_light2, dmg: 22, st: 12, hits: H(C.k_light2), cancel: CAN[1], move: 0.38, lunge: [0.04, 0.18, 2.6], range: 2.7, arc: 130, poise: 20, dir: 1 }),
-    attack({ ...K, clip: C.k_light3, dmg: 24, st: 13, hits: H(C.k_light3), cancel: CAN[2], move: 0.4, lunge: [0.06, 0.2, 2.8], range: 2.75, arc: 160, poise: 22, dir: -1 }),
-    attack({ ...K, clip: C.k_light4, dmg: 30, st: 16, hits: H(C.k_light4, 1, true), cancel: CAN[3], move: 0.61, lunge: [0.13, 0.28, 3.8], range: 3.0, arc: 40, poise: 30, dir: 0, thrust: true }),
-  ];
-  const heavy = [
-    attack({ ...K, clip: C.k_heavy1, snd: 'iai', dmg: 56, st: 30, hits: H(C.k_heavy1), cancel: CANH, move: 1.05, lunge: [0.48, 0.64, 8.0], range: 3.2, arc: 150, poise: 70, heavy: true, dir: 1, charge: { at: 0.42, max: 1.2, dmg: 0.7 } }),
-    attack({ ...K, clip: C.k_heavy2, dmg: 50, st: 26, hits: H(C.k_heavy2), cancel: 0.7, move: 0.76, lunge: [0.3, 0.48, 3.8], range: 2.9, arc: 70, poise: 66, heavy: true, dir: 0 }),
-  ];
-  const runA = attack({ ...K, clip: C.k_run, dmg: 30, st: 16, hits: H(C.k_run), cancel: 0.42, move: 0.48, lunge: [0.0, 0.3, 7.0], range: 2.8, arc: 160, poise: 34, dir: -1 });
-  const roll = attack({ ...K, clip: C.k_roll, dmg: 24, st: 12, hits: H(C.k_roll), cancel: 0.3, move: 0.36, lunge: [0.0, 0.15, 2.8], range: 2.7, arc: 130, poise: 24, dir: 1 });
-  return { clips: C, light, heavy, run: runA, roll };
-}
-
 // ================================================================ registro
 export const MOVESETS = {
   ballesta: {
@@ -1000,25 +706,6 @@ export const MOVESETS = {
     blockK: { st: 1.3, chip: 0.2 },
     healR: { ikR: [-26, -6, 14], bladeR: [-10, -60, 0] },
     moves: ballestaMoves,
-  },
-  facon: {
-    id: 'facon',
-    item: 'facon',
-    order: 1,
-    wristMode: 'euler',
-    hands: 1,
-    trail: [
-      [0, -0.05, 0.12],
-      [0, -0.05, 0.47],
-    ],
-    trailColor: 0xffe8c0,
-    tip: [0, -0.05, 0.474],
-    edge: [0, -1, 0],
-    guard: { ikR: [-22, 14, 30], bladeR: [2, 20, 0], elbowR: [-0.6, -0.7, -0.3], ikL: SHIELD_GUARD },
-    runPose: { ikR: [-30, 6, 4], bladeR: [-8, -50, 0], elbowR: [-0.6, -0.6, -0.5] },
-    swing: [8, 26],
-    block: { ikR: [-26, 12, 16], bladeR: [-4, 30, 0], elbowR: [-0.6, -0.7, -0.3], ...SHIELD_UP },
-    moves: faconMoves,
   },
   hacha: {
     id: 'hacha',
@@ -1066,32 +753,5 @@ export const MOVESETS = {
     block: { ikR: [-26, 4, 14], bladeR: [0, 4, 0], elbowR: [-0.4, -0.5, -0.8], ...SHIELD_UP },
     healR: { ikR: [-26, 6, 18], bladeR: [-6, -20, 0] },
     moves: spearMoves,
-  },
-  katana: {
-    id: 'katana',
-    item: 'katana',
-    order: 5,
-    wristMode: 'euler',
-    hands: 2,
-    grip2: -0.2,
-    freeL: [0.24, 0.08, 0.12],
-    elbowL: [0.5, -0.8, -0.3],
-    trail: [
-      [0, -0.05, 0.12],
-      [0, -0.05 + 0.019, 0.77],
-    ],
-    trailColor: 0xfff0b8,
-    tip: [0, -0.05 + 0.019, 0.77],
-    edge: [0, -1, 0],
-    holy: true,
-    guard: { ikR: [-4, 24, 34], bladeR: [2, 32, 0], elbowR: [-0.5, -0.8, -0.3] },
-    // al correr, baja y por delante (como la espada: nunca apuntando atrás)
-    runPose: { ikR: [-30, 2, 16], bladeR: [-10, -16, 0], elbowR: [-0.6, -0.6, -0.4] },
-    swing: [6, 24],
-    block: { ikR: [-6, 40, 30], bladeR: [-96, 12, 0], elbowR: [-0.4, -0.8, -0.2], chest: [4, -6, 0], head: [6, 4, 0] },
-    blockK: { st: 1.45, chip: 0.22 },
-    healR: { ikR: [-26, 4, 18], bladeR: [-10, -40, 0] },
-    saya: true,
-    moves: katanaMoves,
   },
 };

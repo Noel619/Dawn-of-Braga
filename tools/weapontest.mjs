@@ -10,7 +10,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
-await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,facon,hacha,lanza,katana,oxidada,solingen&at=50,0,0&yaw=0');
+await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,hacha,lanza,oxidada,solingen&at=50,0,0&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const res = await p.evaluate((only) => {
   window.__pause = true;
@@ -70,7 +70,7 @@ const res = await p.evaluate((only) => {
   const tap = (k) => (press(k), g.update(1 / 30), release(k));
   const finite = () => isFinite(P.pos.x) && isFinite(P.pos.y) && isFinite(P.pos.z);
   const out = {};
-  for (const id of ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'katana']) {
+  for (const id of ['hacha', 'lanza', 'oxidada', 'espada', 'solingen']) {
     if (only && id !== only) continue;
     P.equipWeapon(id);
     const S = P.set;

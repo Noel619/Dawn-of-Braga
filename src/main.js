@@ -31,7 +31,7 @@ function boot() {
   if (q.get('dev')) {
     // arranque directo para pruebas: ?dev=1&at=x,y,z&yaw=grados&items=a,b&arma=id
     const items = (q.get('items') || 'espada,escudo').split(',').filter(Boolean);
-    // ?arma=facon|hacha|lanza|espada|katana para probar un arma (queda en el inventario)
+    // ?arma=oxidada|espada|solingen|hacha|lanza|ballesta para probar un arma (queda en el inventario)
     const arma = q.get('arma');
     if (arma && !items.includes(arma)) items.push(arma);
     game.newState();

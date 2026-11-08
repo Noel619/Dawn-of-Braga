@@ -1450,14 +1450,6 @@ export class Audio {
         break;
       }
       // ---- armas
-      case 'swingKnife': {
-        // facón: silbido corto y agudo con un tintineo de la guarda
-        d = this.out(P, { gain: 0.55, verb: 0.06, life: 1.2, occlude: false });
-        this.noise(d, t, 0.15, { f0: 900, f1: 3800, q: 2.4, gain: 0.45, a: 0.07, curve: 'lin' });
-        this.noise(d, t + 0.06, 0.1, { f0: 4200, f1: 2200, q: 3, gain: 0.1, a: 0.02 });
-        this.metal(d, t, rnd(2600, 3000), 0.012, 0.2, { ratios: [1, 2.7] });
-        break;
-      }
       case 'swingAxe': {
         // hacha: masa que corta el aire, crujido del mango y esfuerzo
         d = this.out(P, { gain: 0.85, verb: 0.12, life: 2, occlude: false });
@@ -1534,7 +1526,7 @@ export class Audio {
         break;
       }
       case 'swingKatana': {
-        // katana: silbido limpio y afinado, con un leve brillo sagrado
+        // la espada larga del Caballero: silbido limpio y afinado, con un leve brillo
         d = this.out(P, { gain: 0.6, verb: 0.12, life: 1.6, occlude: false });
         this.noise(d, t, 0.2, { f0: 1600, f1: 5200, q: 5, gain: 0.34, a: 0.1, curve: 'lin' });
         this.noise(d, t + 0.08, 0.14, { f0: 5200, f1: 2600, q: 4, gain: 0.12, a: 0.02 });
@@ -1543,7 +1535,7 @@ export class Audio {
         break;
       }
       case 'iai': {
-        // desenvainado: roce del acero contra la boca de la saya y el destello
+        // el Caballero arranca su espada de las losas: roce del acero y destello
         d = this.out(P, { gain: 0.75, verb: 0.3, life: 3, occlude: false });
         this.noise(d, t, 0.12, { type: 'highpass', f0: 3200, gain: 0.16, a: 0.01 });
         this.metal(d, t + 0.02, 2800, 0.05, 1.1, { ratios: [1, 1.5, 2.76] });
@@ -1551,13 +1543,6 @@ export class Audio {
         [83, 88, 95].forEach((m, i) => this.smp(d, t + 0.1 + i * 0.05, this.smallBell(), { gain: 0.05, rate: mtof(m) / mtof(76) }));
         this.voice(d, t + 0.08, 1.2, { f0: mtof(69), vowel: 'a', gain: 0.03, vib: 5, vibD: 8, breath: 0.4, a: 0.1, type: 'triangle' });
         this.duck(0.2, 0.5);
-        break;
-      }
-      case 'flick': {
-        // chiburi: sacudida rápida de la hoja y gotas al suelo
-        d = this.out(P, { gain: 0.5, verb: 0.1, life: 1.2, occlude: false });
-        this.noise(d, t, 0.1, { f0: 2400, f1: 900, q: 3, gain: 0.25, a: 0.02 });
-        for (let i = 0; i < 4; i++) this.noise(d, t + 0.12 + i * rnd(0.03, 0.06), 0.03, { f0: rnd(900, 1500), q: 4, gain: 0.08, a: 0.002, buf: this.brown, rate: 4 });
         break;
       }
       case 'hitAxe': {

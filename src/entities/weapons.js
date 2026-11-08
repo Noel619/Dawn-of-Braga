@@ -1,6 +1,9 @@
 // Armas del Condenado: registro, agarres y repertorio de golpes.
-// Orden en el que se encontrarán (implementación futura): facón, hacha,
-// lanza, espada y katana sagrada. Cada arma define:
+// Por el orden en que se encuentran: la espada oxidada (en el pasillo de las
+// celdas), la espada de la guardia y la ballesta (en la puerta de la
+// fortaleza), la lanza de la muralla (en el adarve de levante), el hacha
+// barbada (en la barricada del Postigo, en la escena de la Bestia) y la
+// espada de Solingen (en la casa de Henrique). Cada arma define:
 //   hands      1 (con escudo) o 2 (el escudo va a la espalda)
 //   guard      guardia (IK de muñeca en cm del pecho, dirección de hoja en °)
 //   carry      brazos al andar y correr
@@ -420,18 +423,21 @@ const solingenMoves = swordVariant({ filo: SOLINGEN_K, alcance: 1.04 });
 // Una espada de munición de la guarnición, comida de herrumbre (la que
 // mataron al guardia del pasillo de las celdas): se maneja como la de la
 // guardia, pesa menos (cada golpe cansa algo menos y va algo más deprisa),
-// la hoja es más corta y corta la mitad; contra armadura, la mitad también
-// (ver CALIDAD).
-const OXIDADA_K = 0.5;
+// la hoja es más corta y corta menos de la mitad (la mitad, y de eso un 15 %
+// menos); contra armadura, la mitad también (ver CALIDAD).
+const OXIDADA_K = 0.5 * 0.85;
 const oxidadaMoves = swordVariant({ filo: OXIDADA_K, st: 0.85, alcance: 0.94 });
+// su golpe de gracia: la mitad del que daba (la mitad del de la guardia),
+// aparte de su filo: la cuarta parte del de la guardia
+const OXIDADA_GRACIA = Math.round((108 * 0.5) / 2);
 
 // ---------------------------------------------------------------- registro
-export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'katana', 'ballesta'];
+export const WEAPON_ORDER = ['hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'ballesta'];
 
 // La calidad de cada arma contra armadura (PLAN_CASTILLO.md, §10): la parte
 // del daño que pasa a quien la lleva (por ahora, el Caballero de la Orden).
-// La espada de Solingen y la katana sagrada pasan entera.
-export const CALIDAD = { oxidada: 0.5, facon: 0.6, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1, katana: 1 };
+// La espada de Solingen pasa entera.
+export const CALIDAD = { oxidada: 0.5, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1 };
 
 // ---------------------------------------------------------------- cualidades
 // Lo que distingue a cada arma, a la vista en el inventario (con barras, a lo
@@ -449,12 +455,6 @@ export const CALIDAD = { oxidada: 0.5, facon: 0.6, espada: 0.65, lanza: 0.7, hac
 // Lo demás (el daño, el alcance, el aguante de cada golpe) sale de su
 // repertorio: weapon_moves.js y, para la familia de la espada, swordVariant.
 export const STATS = {
-  facon: {
-    peso: 0.6,
-    dureza: 20,
-    critico: 0.15,
-    especial: ['Una mano: el escudo, al brazo.', 'Cuatro cortes encadenados y una puñalada.', 'Por la espalda, crítico de ×2,1.'],
-  },
   hacha: {
     peso: 2.6,
     dureza: 85,
@@ -486,12 +486,6 @@ export const STATS = {
     dureza: 72,
     critico: 0.08,
     especial: ['Una mano: el escudo, al brazo.', 'Acero de Solingen: pasa la armadura.', 'Hoja larga: alcanza más, va más despacio.'],
-  },
-  katana: {
-    peso: 1.2,
-    dureza: 50,
-    critico: 0.12,
-    especial: ['A dos manos: el escudo, a la espalda.', 'Iaijutsu: el pesado se carga.', 'Sagrada: pasa la armadura.'],
   },
   ballesta: {
     peso: 4.0,
@@ -573,13 +567,11 @@ export const WEAPONS = {
 // pulsar la guardia, con qué se para (el escudo; a dos manos, la hoja o el
 // mango del hacha) y con qué golpe se remata al desequilibrado.
 const PARRY = {
-  facon: { win: 0.2, kind: 'shield', riposte: ['heavy', 1], dmg: 104 },
   hacha: { win: 0.16, kind: 'haft', riposte: ['light', 2], dmg: 118 },
   lanza: { win: 0.2, kind: 'shield', riposte: ['heavy', 0], dmg: 110 },
   espada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 108 },
-  oxidada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * OXIDADA_K) },
+  oxidada: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: OXIDADA_GRACIA },
   solingen: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * SOLINGEN_K) },
-  katana: { win: 0.24, kind: 'blade', riposte: ['light', 3], dmg: 108 },
   // (la ballesta para con la cureña; remata con un culatazo)
   ballesta: { win: 0.14, kind: 'haft', riposte: ['heavy', 0], dmg: 92 },
 };
@@ -651,7 +643,7 @@ export function weaponSheet(W, rig, dmgMul = 1) {
     peso: W.peso,
     dureza: W.dureza,
     critico: W.critico,
-    // (lo que multiplica un crítico: el facón, más; el virote, 1,6)
+    // (lo que multiplica un crítico: el de cada golpe; el virote, 1,6)
     critMul: W.ranged ? 1.6 : L[0].crit || 1.7,
     calidad: W.calidad,
     aguante: Math.round(avg((a) => a.st)),

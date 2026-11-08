@@ -3,9 +3,12 @@
 //
 // Con un cuarto de vida, el Empalado cae de rodillas, se le revienta lo que
 // le queda de armadura, se hincha y estalla en sangre: lo que se levanta es
-// la Bestia. Ruge, se arranca la pica de la espalda y te la tira (¡Esquiva!),
-// y embiste: si la esquivas se estrella contra la barricada del norte, la
-// revienta y se queda un instante con los cuernos clavados en la piedra.
+// la Bestia. Ruge y viene a por ti; reculas hasta la barricada del norte, en
+// cuya estaca está clavada el hacha barbada (¡Arráncala!: la arrancas y es
+// tuya). Se arranca la pica de la espalda y te la tira (¡Desvía!: el hacha la
+// barre de lado y cae al suelo), y embiste (¡Esquiva!): se estrella contra la
+// barricada, la revienta y se queda con los cuernos clavados en la piedra, y
+// le hundes el hacha en el lomo de un salto (¡Hachazo!).
 // Por el hueco empieza la huida, por el adarve del muro este, la esquina y
 // la muralla norte, con la Bestia pisándote los talones (si te alcanza, te
 // golpea). Por el camino, pulsaciones rápidas: te tira un sillar, una viga
@@ -21,11 +24,14 @@
 // se vuelve a empezar desde el último punto de control de la persecución.
 import * as THREE from 'three';
 import { Beast } from '../entities/beast.js';
-import { shedArmor, updateDebris, IMP_CLIPS } from '../entities/impaled.js';
+import { shedArmor, IMP_CLIPS } from '../entities/impaled.js';
 import { CHASE } from '../world/level_walls.js';
 import { KEEP } from '../world/level_keep.js';
 import { objMat } from '../gfx/materials.js';
-import { AREA_NAMES } from './story.js';
+import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
+import { WEAPONS, weaponSet, resolveWeaponArms } from '../entities/weapons.js';
+import { sampleClip } from '../entities/rig.js';
+import { AREA_NAMES, MSG } from './story.js';
 import { clamp, damp, dampAngle, angleDiff, lerp } from '../core/util.js';
 
 const V3 = THREE.Vector3;
@@ -81,9 +87,9 @@ const ARENA = {
   E: [74, 9, -59.2],
   // el jugador, delante de la barricada
   P: [74.0, 9, -65.2],
-  // a dónde salta al esquivar la pica (al oeste) y la embestida (al este)
-  dodgePike: [71.8, 9, -66.1],
-  dodgeCharge: [75.9, 9, -66.0],
+  // a dónde rueda al esquivar la embestida (al este, lejos de la estaca del
+  // hacha, que es donde se estrella)
+  dodgeCharge: [75.2, 9, -65.6],
   // donde se queda clavada la Bestia (los cuernos en la piedra)
   stuck: [72.7, 9, -68.3],
   // por donde se escapa el jugador, por el lado del hueco
@@ -124,7 +130,61 @@ export class BeastChase {
     this._pt = {};
     this._a = new V3();
     this._b = new V3();
+    this.pikeLoose = null;
     this.buildProps();
+    this.buildAxe();
+    this.applyFlags();
+  }
+
+  // ------------------------------------------------------------ el hacha
+  // El hacha barbada, clavada hasta el ojo en la estaca de la barricada del
+  // norte (la estaca es de la barricada: breakables.js). Su sitio sale de la
+  // pose con que se forcejea con ella (a_tug, weapon_moves.js): con el
+  // jugador en axeSpot, de cara al norte y con las manos en el mango, la hoja
+  // queda dentro de la madera; la de la estaca es la misma hacha, donde
+  // quedaría (así, al agarrarla, las manos caen en su mango).
+  buildAxe() {
+    const g = this.g,
+      p = g.player,
+      rig = p.rig;
+    const W = WEAPONS.hacha;
+    const pose = sampleClip(weaponSet(W, rig).clips.a_tug, 0, {});
+    resolveWeaponArms(pose, rig, W);
+    // (la pose, con el jugador en el origen y de cara a +z)
+    const o = p.obj;
+    const pos0 = o.position.clone(),
+      rot0 = o.rotation.clone();
+    o.position.set(0, 0, 0);
+    o.rotation.set(0, 0, 0);
+    rig.apply(pose);
+    o.updateMatrixWorld(true);
+    const M = rig.joints.sword.matrixWorld.clone();
+    o.position.copy(pos0);
+    o.rotation.copy(rot0);
+    o.updateMatrixWorld(true);
+    // el centro del filo y hacia dónde entra en la madera (del personaje)
+    const edge = new V3(0, -0.3, 0.44).applyMatrix4(M);
+    const eye = new V3(0, -0.05, 0.45).applyMatrix4(M);
+    const yaw = PI;
+    const R = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), yaw);
+    const bd = edge.clone().sub(eye).applyQuaternion(R);
+    const bh = new V3(bd.x, 0, bd.z).normalize();
+    // (el filo, 5 cm dentro de la madera, por el lado de donde viene)
+    const K = CHASE.stake;
+    const B = new V3(K.x, 0, K.z).addScaledVector(bh, -(K.r - 0.05));
+    const eW = edge.clone().applyQuaternion(R);
+    const P = new V3(B.x - eW.x, CHASE.YE, B.z - eW.z);
+    this.axeSpot = { x: P.x, y: P.y, z: P.z, yaw, bite: new V3(B.x, P.y + eW.y, B.z) };
+    const axe = buildParts(WEAPON_PARTS.hacha('x')).group;
+    new THREE.Matrix4().compose(P, R, new V3(1, 1, 1)).multiply(M).decompose(axe.position, axe.quaternion, axe.scale);
+    this.g.scene.add(axe);
+    this.axe = axe;
+  }
+  // Está en su estaca mientras nadie la haya arrancado (y la barricada siga
+  // en pie).
+  applyFlags() {
+    const f = this.g.flags || {};
+    if (this.axe) this.axe.visible = !f['take:i_hacha'] && !f['broken:barricada_norte'];
   }
 
   // ------------------------------------------------------------ atrezo propio
@@ -216,7 +276,7 @@ export class BeastChase {
 
   // ------------------------------------------------------------ cámara
   shot(pos, look, o = {}) {
-    this.cam = { pos: pos.clone ? pos.clone() : new V3(...pos), look: look.clone ? look.clone() : new V3(...look), speed: o.speed ?? 6, snap: !!o.snap, fov: o.fov ?? 55 };
+    this.cam = { pos: pos.clone ? pos.clone() : new V3(...pos), look: look.clone ? look.clone() : new V3(...look), speed: o.speed ?? 6, snap: !!o.snap, fov: o.fov ?? 55, roll: o.roll || 0 };
   }
   // Por delante del jugador, mirando hacia atrás: se ve a la Bestia que viene
   // (el sillar que te tira, el salto sobre ti en la esquina). El control sigue
@@ -350,9 +410,11 @@ export class BeastChase {
     this.fadeK = 1;
     this.beast.setFade(1);
     this.pike.visible = false;
+    this.pikeFly = this.pikeLoose = null;
     this.rock.visible = false;
     this.restoreBeam();
     this.setBars(0);
+    this.applyFlags();
     if (g.player.puppet) g.player.puppet = false;
   }
 
@@ -369,7 +431,6 @@ export class BeastChase {
     const g = this.g,
       p = g.player;
     const b = this.beast;
-    if (this.e) updateDebris(this.e, dt);
     // muerto: se para todo (vuelve a empezar al reaparecer)
     if (p.dead) {
       if (!this.deadSeen) {
@@ -722,42 +783,371 @@ export class BeastChase {
     g.ui.area('La Bestia de Carne');
     g.audio.music('chase');
     yield* this.waitClip(2.2);
-    // ---- se arranca la pica y te la tira: ¡Esquiva!
+    // ---- EL HACHA: la Bestia viene a por ti; reculas hasta la barricada y
+    // arrancas de su estaca el hacha que había clavada
+    yield* this.coAxe();
+    if (p.dead) return;
+    // ---- LA PICA: se la arranca de la espalda y te la tira: ¡Desvía!, con
+    // el hacha
+    yield* this.coPike();
+    if (p.dead) return;
+    yield* this.wait(0.3);
+    // ---- LA EMBESTIDA: ¡Esquiva!; se estrella contra la barricada y, con
+    // los cuernos clavados en la piedra, ¡Hachazo!
+    yield* this.coCharge();
+  }
+
+  // ======================================================================
+  // EL HACHA DE LA ESTACA
+  // ======================================================================
+  // La Bestia avanza a paso lento y tú reculas, de cara a ella, hasta la
+  // barricada; la espalda contra la madera y, al lado, el mango del hacha
+  // clavada en la estaca. ¡Arráncala! (machacando): forcejeas, el cuerpo
+  // echado atrás y las manos en el mango, mientras ella se acerca y ruge; de
+  // un tirón sale de la madera entre astillas, te vuelves con ella en alto y
+  // es tuya. Si no te da tiempo, la Bestia llega y te barre de un manotazo:
+  // con el golpe se arranca de la estaca y caes con ella en las manos.
+  *coAxe() {
+    const g = this.g,
+      p = g.player,
+      b = this.beast;
+    const A = this.axeSpot;
+    b.stopClip(0.35);
+    const pFrom = p.pos.clone();
+    const pTo = new V3(A.x, A.y, A.z);
+    const dP = pFrom.distanceTo(pTo) || 1;
+    const bDir = new V3(pTo.x - b.pos.x, 0, pTo.z - b.pos.z).normalize();
+    // (desde lo alto de la barricada, a la espalda del que recula: ella se
+    // le viene encima)
+    const side = new V3(-bDir.z, 0, bDir.x);
+    if (side.x > 0) side.negate();
+    this.shot(new V3(pTo.x + 0.9, A.y + 3.1, pTo.z - 1.7), b.pos.clone().lerp(pTo, 0.42).add(new V3(0, 1.2, 0)), { snap: true, fov: 54 });
+    const dur = 1.9;
+    for (let t = 0; t < dur; ) {
+      const dt = yield;
+      t += dt;
+      const u = Math.min(1, t / dur);
+      this.setP(lerp(pFrom.x, pTo.x, sm(u)), A.y, lerp(pFrom.z, pTo.z, sm(u)));
+      // reculando, de cara a ella (la marcha anda hacia atrás)
+      p.yaw = Math.atan2(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
+      const sp = (6 * u * (1 - u) * dP) / dur;
+      p.vx = ((pTo.x - pFrom.x) / dP) * sp;
+      p.vz = ((pTo.z - pFrom.z) / dP) * sp;
+      // ella, a paso lento, hasta unos pasos de ti
+      const vb = Math.hypot(p.pos.x - b.pos.x, p.pos.z - b.pos.z) > 4.6 ? 1.3 : 0;
+      b.pos.x += bDir.x * vb * dt;
+      b.pos.z += bDir.z * vb * dt;
+      b.vx = bDir.x * vb;
+      b.vz = bDir.z * vb;
+      b.yaw = dampAngle(b.yaw, Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z), 6, dt);
+    }
+    p.vx = p.vz = 0;
+    b.vx = b.vz = 0;
+    // la espalda contra la madera
+    g.audio && g.audio.play('woodHit', { x: CHASE.stake.x, y: A.y + 1.2, z: CHASE.stake.z });
+    g.camRig.shake(0.18);
+    // se vuelve hacia la estaca y agarra el mango: el hacha, clavada hasta el
+    // ojo, en primer plano (la suya, la misma, no se ve hasta arrancarla)
+    this.armAxe(false);
+    this.pClip('a_tug', { blend: 0.32, speed: 1.4 });
+    const y0 = p.yaw;
+    const bite = A.bite;
+    this.shot(bite.clone().add(new V3(1.75, 0.38, 0.6)), bite.clone().add(new V3(-0.3, -0.18, 0.38)), { snap: true, fov: 44 });
+    for (let t = 0; t < 0.35; ) {
+      t += yield;
+      p.yaw = y0 + angleDiff(y0, A.yaw) * sm(t / 0.35);
+    }
+    p.yaw = A.yaw;
+    // ¡Arráncala!: forcejea; detrás, ella se acerca y ruge
+    b.play('roar', { blend: 0.3 });
+    let ok = null;
+    g.qte.start({ action: 'interact', label: '¡Arráncala!', window: 2.6, mash: 7, slow: 0.45, onDone: (r) => (ok = r) });
+    let creak = 0.2,
+      tc = 0;
+    while (ok === null) {
+      const dt = yield;
+      tc += dt;
+      // la madera cruje con los tirones; la cámara se acerca despacio
+      creak -= dt;
+      if (creak <= 0) {
+        creak = 0.32;
+        g.audio && g.audio.play('woodHit', bite);
+        g.fx.blood.emit(bite.x, bite.y, bite.z, 3, { color: [0.3, 0.2, 0.12], speed: 1.2, life: 0.5, up: 0.4, gravity: 6 });
+        g.camRig.shake(0.05);
+      }
+      if (this.cam) this.cam.pos.lerp(bite.clone().add(new V3(1.35, 0.28, 0.48)), 1 - Math.exp(-0.6 * dt));
+    }
+    if (ok) {
+      yield* this.yankAxe();
+      return;
+    }
+    // no sale a tiempo: la Bestia llega y te barre de un manotazo; el golpe
+    // la arranca de la estaca y caes con ella en las manos
+    const toP = new V3(p.pos.x - b.pos.x, 0, p.pos.z - b.pos.z).normalize();
+    const bf = b.pos.clone(),
+      bt = p.pos.clone().addScaledVector(toP, -2.3);
+    bt.y = bf.y;
+    b.play('bash', { blend: 0.06 });
+    this.shot(p.pos.clone().addScaledVector(side, 4.2).add(new V3(0, 1.4, 0)), p.pos.clone().lerp(b.pos, 0.4).add(new V3(0, 1.4, 0)), { snap: true, fov: 54 });
+    for (let t = 0; t < 0.34; ) {
+      const dt = yield;
+      t += dt;
+      b.pos.lerpVectors(bf, bt, sm(t / 0.3));
+      b.yaw = Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z);
+    }
+    this.axe.visible = false;
+    this.splinters(bite, 0.7);
+    g.audio && g.audio.play('woodBreak', bite);
+    this.takeAxe();
+    this.hurtPlayer(16, b.pos.x, b.pos.z);
+    if (p.dead) return;
+    this.pClip('fallBack', { blend: 0.04 });
+    const from = p.pos.clone(),
+      to = from.clone().add(new V3(1.4, 0, 0.5));
+    for (let t = 0; t < 0.45; ) {
+      t += yield;
+      const u = sm(t / 0.45);
+      this.setP(lerp(from.x, to.x, u), from.y, lerp(from.z, to.z, u));
+    }
+    this.pClip('getup', { blend: 0.05 });
+    yield* this.wait(0.95);
+  }
+
+  // De un tirón: la hoja sale de la madera entre astillas, el cuerpo se va
+  // atrás de un paso y el hacha sube por encima de la cabeza mientras te
+  // vuelves hacia la Bestia; luego, a la guardia. Es tuya.
+  *yankAxe() {
+    const g = this.g,
+      p = g.player,
+      b = this.beast;
+    const A = this.axeSpot;
+    this.axe.visible = false;
+    this.pClip('a_yank', { blend: 0.03 });
+    this.splinters(A.bite, 1);
+    g.audio && g.audio.play('woodBreak', A.bite);
+    g.audio && g.audio.play('swingAxe', p.pos);
+    g.camRig.shake(0.55);
+    g.input.rumble(1, 0.8, 380);
+    g.hitstop = Math.max(g.hitstop, 0.1);
+    g.slowmo = { t: 0.6, k: 0.35 };
+    this.takeAxe();
+    // de héroe: bajo, desde el poniente, con la Bestia detrás
+    const toB = new V3(b.pos.x - p.pos.x, 0, b.pos.z - p.pos.z).normalize();
+    const w = new V3(-toB.z, 0, toB.x);
+    if (w.x > 0) w.negate();
+    this.shot(p.pos.clone().addScaledVector(w, 2.7).addScaledVector(toB, -0.5).add(new V3(0, 0.95, 0)), p.pos.clone().addScaledVector(toB, 2.2).add(new V3(0, 1.75, 0)), { snap: true, fov: 56 });
+    const y0 = p.yaw;
+    const yB = Math.atan2(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
+    const from = p.pos.clone();
+    for (let t = 0; t < 1.35; ) {
+      const dt = yield;
+      t += dt;
+      p.yaw = y0 + angleDiff(y0, yB) * sm((t - 0.12) / 0.6);
+      const s = sm(t / 0.3) * 0.35;
+      this.setP(from.x - Math.sin(y0) * s, from.y, from.z - Math.cos(y0) * s);
+      // (el plano se abre despacio)
+      if (this.cam) this.cam.pos.addScaledVector(w, 0.25 * dt);
+    }
+  }
+
+  // Empuña el hacha (show: que se vea; mientras forcejea con la de la estaca,
+  // la suya no): el escudo, a la espalda.
+  armAxe(show) {
+    const p = this.g.player;
+    if (p.weaponId !== 'hacha') p.equipWeapon('hacha');
+    p.setEquipment(true, p.hasShield);
+    p.rig.joints.sword.visible = !!show;
+  }
+  // El hacha es tuya: al inventario (y a la partida), empuñada.
+  takeAxe() {
+    const g = this.g;
+    if (!g.inventory.has('hacha')) g.inventory.add('hacha');
+    g.flags['take:i_hacha'] = true;
+    this.axe.visible = false;
+    this.armAxe(true);
+    g.ui.toast(MSG.hachaArrancada, 3.2);
+  }
+  // (si se vuelve a la huida sin haberla arrancado —se salió a mitad de la
+  // escena—, ya la lleva)
+  ensureAxe() {
+    const g = this.g;
+    this.axe.visible = false;
+    if (g.inventory.has('hacha')) return;
+    g.inventory.add('hacha');
+    g.flags['take:i_hacha'] = true;
+    this.armAxe(true);
+  }
+  // Astillas y polvo de la madera, al salir la hoja.
+  splinters(at, k = 1) {
+    const g = this.g;
+    g.fx.blood.emit(at.x, at.y, at.z, Math.round(34 * k), { color: [0.42, 0.3, 0.18], speed: 6, life: 0.8, up: 1.6 });
+    g.fx.blood.emit(at.x, at.y, at.z, Math.round(16 * k), { color: [0.22, 0.15, 0.09], speed: 3.5, life: 1.0, up: 1.0, gravity: 5 });
+    g.fx.blood.emit(at.x, at.y, at.z, Math.round(10 * k), { color: [0.5, 0.46, 0.4], speed: 1.6, life: 1.4, up: 0.5, gravity: 1.2 });
+  }
+
+  // ======================================================================
+  // LA PICA
+  // ======================================================================
+  // Se la arranca de la espalda y te la tira como una lanza. ¡Desvía!: el
+  // hacha le sale al encuentro y la barre de lado con el mango (chispas, el
+  // hierro que canta, un instante a cámara lenta) y la pica se va dando
+  // vueltas y cae con estrépito. Si no, te alcanza y te tumba, y cae a tu lado.
+  *coPike() {
+    const g = this.g,
+      p = g.player,
+      b = this.beast;
+    // (a unos pasos de ti: si se te había echado encima, recula)
+    const away = new V3(b.pos.x - p.pos.x, 0, b.pos.z - p.pos.z);
+    if (away.length() < 4.6) {
+      away.normalize();
+      const bf = b.pos.clone(),
+        bt = p.pos.clone().addScaledVector(away, 4.9);
+      bt.y = bf.y;
+      for (let t = 0; t < 0.7; ) {
+        const dt = yield;
+        t += dt;
+        b.pos.lerpVectors(bf, bt, sm(t / 0.7));
+        b.vx = ((bt.x - bf.x) / 0.7) * 0.5;
+        b.vz = ((bt.z - bf.z) / 0.7) * 0.5;
+      }
+      b.vx = b.vz = 0;
+    }
+    b.yaw = Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z);
+    p.yaw = Math.atan2(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
     b.play('pikeRip', { blend: 0.15 });
-    const over = E.clone()
-      .addScaledVector(F, -3.0)
-      .addScaledVector(Sd, 2.6)
-      .add(new V3(0, 4.0, 0));
-    this.shot(over, PP.clone().add(new V3(0, 1.2, 0)), { speed: 4, fov: 54 });
+    // por encima del hombro de la Bestia, de cara a ti
+    const F = new V3(p.pos.x - b.pos.x, 0, p.pos.z - b.pos.z).normalize();
+    const Sd = new V3(-F.z, 0, F.x);
+    if (Sd.x > 0) Sd.negate();
+    this.shot(b.pos.clone().addScaledVector(F, -2.0).addScaledVector(Sd, 4.2).add(new V3(0, 5.0, 0)), b.pos.clone().lerp(p.pos, 0.62).add(new V3(0, 1.3, 0)), { speed: 4, fov: 56 });
     yield* this.waitClip(0.93);
     this.ripPike();
-    yield* this.waitClip(1.28);
-    const okPike = yield* this.prompt({ action: 'dodge', label: '¡Esquiva!', window: 1.15, slow: 0.2 });
-    if (okPike) yield* this.dodgeTo(ARENA.dodgePike, 0.62);
-    else {
-      // la pica le alcanza
-      yield* this.waitClip(1.58);
-      this.throwPike(p.pos.clone().add(new V3(0, 1.1, 0)), false);
-      yield* this.wait(0.12);
-      this.hurtPlayer(26, E.x, E.z);
-      if (p.dead) return;
-      this.pClip('fallBack');
-      const from = p.pos.clone();
-      for (let t = 0; t < 0.4; ) {
-        t += yield;
-        const u = sm(t / 0.4);
-        this.setP(lerp(from.x, from.x - 0.6, u), from.y, lerp(from.z, from.z - 1.0, u));
-      }
-      this.pClip('getup', { blend: 0.05 });
+    yield* this.waitClip(1.24);
+    const ok = yield* this.prompt({ action: 'block', label: '¡Desvía!', window: 1.15, slow: 0.2 });
+    yield* this.waitClip(1.58);
+    this.throwPike(p.pos.clone().add(new V3(0, 1.25, 0)), false);
+    // de lado y bajo, a la altura del golpe
+    this.shot(p.pos.clone().addScaledVector(Sd, 2.3).addScaledVector(F, 1.5).add(new V3(0, 1.35, 0)), p.pos.clone().addScaledVector(F, -1.6).add(new V3(0, 1.35, 0)), { snap: true, fov: 52 });
+    if (ok) {
+      // el hacha le sale al encuentro (barre con el mango)
+      while (this.pikeFly && this.pikeLeft() > 2.2) yield;
+      this.pClip('parryA', { blend: 0.03 });
+      while (this.pikeFly && this.pikeLeft() > 0.6) yield;
+      this.deflectPike();
       yield* this.wait(0.9);
+      return;
     }
-    if (okPike) {
-      yield* this.waitClip(1.58);
-      this.throwPike(PP.clone().add(new V3(0, 1.1, 0)), true);
+    // le alcanza: le tumba y la pica cae a su lado
+    while (this.pikeFly) yield;
+    this.hurtPlayer(26, b.pos.x, b.pos.z);
+    if (p.dead) return;
+    this.pClip('fallBack');
+    const from = p.pos.clone();
+    for (let t = 0; t < 0.4; ) {
+      t += yield;
+      const u = sm(t / 0.4);
+      this.setP(from.x - F.x * 0.9 * u, from.y, from.z - F.z * 0.9 * u);
     }
-    yield* this.wait(0.5);
-    // ---- embiste: ¡Esquiva!
-    yield* this.coCharge();
+    this.pClip('getup', { blend: 0.05 });
+    yield* this.wait(0.9);
+  }
+
+  // Lo que le queda por volar a la pica hasta donde iba.
+  pikeLeft() {
+    const f = this.pikeFly;
+    return f ? f.dist - Math.min(f.dist, f.t * f.v) : 0;
+  }
+
+  // El hacha la barre de lado: chispas, el hierro que canta, un instante a
+  // cámara lenta, y la pica se va dando vueltas hacia donde la manda el mango.
+  deflectPike() {
+    const g = this.g,
+      p = g.player;
+    const f = this.pikeFly;
+    if (!f) return;
+    this.pikeFly = null;
+    const q = this.pike.position;
+    g.combat.impactFlash(q.x, q.y, q.z, 1.5, 0xfff0c8);
+    g.fx.blood.emit(q.x, q.y, q.z, 44, { color: [1, 0.85, 0.42], speed: 8.5, life: 0.45, up: 1.8 });
+    g.fx.blood.emit(q.x, q.y, q.z, 14, { color: [1, 1, 0.86], speed: 3, life: 0.25, up: 0.6 });
+    g.audio && g.audio.play('parry', q, { kind: 'haft' });
+    g.audio && g.audio.play('clang', q);
+    g.hitstop = Math.max(g.hitstop, 0.16);
+    g.slowmo = { t: 0.5, k: 0.3 };
+    g.flash = Math.max(g.flash, 0.18);
+    g.flashTint = [1, 0.9, 0.62];
+    g.camRig.shake(0.5);
+    g.input.rumble(0.9, 1, 220);
+    // (a la derecha del que la para, hacia arriba, dando vueltas)
+    const right = new V3(-Math.cos(p.yaw), 0, Math.sin(p.yaw));
+    const v = f.dir.clone().setY(0).multiplyScalar(4).addScaledVector(right, 10).add(new V3(0, 6, 0));
+    this.pikeLoose = { v, spin: new V3(11, 3, 0), rest: false, t: 0 };
+  }
+  // Le ha alcanzado: la pica cae a sus pies.
+  dropPike() {
+    const f = this.pikeFly;
+    this.pikeFly = null;
+    const d = f ? f.dir : new V3(0, 0, 1);
+    this.pikeLoose = { v: new V3(d.x * 1.5, 0.5, d.z * 1.5), spin: new V3(4, 0.5, 0), rest: false, t: 0 };
+  }
+
+  // La pica suelta: cae, rebota y se queda tumbada en el suelo; si se rompe
+  // lo que tenía debajo, vuelve a caer (nunca se queda en el aire).
+  pikePhysics(dt) {
+    const g = this.g,
+      L = this.pikeLoose,
+      o = this.pike;
+    const col = g.world.col;
+    const d = this._b.set(0, 0, 1).applyQuaternion(o.quaternion);
+    // (la pica, de punta a punta: de z -2,0 a z 1,72 en su espacio)
+    const low = Math.min(o.position.y - d.y * 2.0, o.position.y + d.y * 1.72) - 0.07;
+    if (L.rest) {
+      L.chk = (L.chk ?? 0.3) - dt;
+      if (L.chk > 0) return;
+      L.chk = 0.3;
+      if (low <= col.groundHeight(o.position.x, o.position.z, 0.1, low + 0.3, true) + 0.06) return;
+      L.rest = false;
+      L.v.set(0, 0, 0);
+      L.spin.set(0, 0, 0);
+      L.t = 0;
+    }
+    L.t += dt;
+    L.v.y -= 20 * dt;
+    o.position.addScaledVector(L.v, dt);
+    o.rotateX(L.spin.x * dt);
+    o.rotateY(L.spin.y * dt);
+    // (las almenas, el parapeto, los muros: rebota)
+    for (const ax of ['x', 'z']) {
+      const s = Math.sign(L.v[ax]);
+      if (!s) continue;
+      const hit = col.raycast(o.position.x, o.position.y, o.position.z, ax === 'x' ? s : 0, 0, ax === 'z' ? s : 0, 0.35, (bx) => bx.maxy - bx.miny > 0.6 && !bx.camOnly);
+      if (hit !== Infinity) L.v[ax] *= -0.35;
+    }
+    const gy = col.groundHeight(o.position.x, o.position.z, 0.1, low + 0.6, true);
+    if (low < gy) {
+      o.position.y += gy - low;
+      if (Math.abs(L.v.y) > 3 && L.t < 3) {
+        L.v.y *= -0.32;
+        L.v.x *= 0.6;
+        L.v.z *= 0.6;
+        L.spin.multiplyScalar(0.45);
+        g.audio && g.audio.play('woodHit', o.position);
+        g.fx.blood.emit(o.position.x, gy + 0.1, o.position.z, 8, { color: [0.3, 0.27, 0.24], speed: 2, up: 0.8, life: 0.7 });
+      } else {
+        // tumbada en el suelo, con su rumbo
+        L.rest = true;
+        const h = this._a.set(d.x, 0, d.z);
+        if (h.lengthSq() < 1e-4) h.set(1, 0, 0);
+        h.normalize();
+        o.position.y = gy + 0.07;
+        o.lookAt(o.position.x + h.x, o.position.y, o.position.z + h.z);
+        g.audio && g.audio.play('woodHit', o.position);
+      }
+    }
+    if (o.position.y < -30) {
+      o.visible = false;
+      this.pikeLoose = null;
+    }
   }
 
   // Se arranca el asta de la espalda: sangre, y la lleva en la mano.
@@ -770,21 +1160,22 @@ export class BeastChase {
     g.audio && g.audio.play('fleshTear', h);
     g.camRig.shake(0.4);
     this.pikeHeld = true;
+    this.pikeLoose = null;
     this.pike.visible = true;
   }
-  // La pica sale volando hacia 'to' (si falla, sigue hasta clavarse).
+  // La pica sale volando hacia 'to' (si falla, sigue hasta el muro o el
+  // suelo, y cae).
   throwPike(to, miss) {
     const g = this.g;
     this.pikeHeld = false;
     const from = this.beast.point('handR', new V3());
     const dir = to.clone().sub(from).normalize();
-    // (si esquivas, la pica sigue hasta el muro o el suelo)
     let dist = from.distanceTo(to);
     if (miss) {
       const hit = g.world.col.raycast(from.x, from.y, from.z, dir.x, dir.y, dir.z, 30, (bx) => bx.cam !== false);
       dist = hit === Infinity ? 18 : hit - 0.6;
     }
-    this.pikeFly = { from, dir, dist, t: 0, v: 30 };
+    this.pikeFly = { from, dir, dist, t: 0, v: 30, miss };
     g.audio && g.audio.play('pikeWhoosh', from);
   }
 
@@ -803,7 +1194,13 @@ export class BeastChase {
     }
   }
 
-  // La embestida contra la barricada y la huida por el hueco.
+  // ======================================================================
+  // LA EMBESTIDA Y EL HACHAZO
+  // ======================================================================
+  // Baja la testuz y se te echa encima. ¡Esquiva!: ruedas a un lado y pasa de
+  // largo; se estrella contra la barricada, la revienta (con la estaca) y se
+  // queda con los cuernos clavados en la piedra. Clavada: ¡Hachazo! Y por el
+  // hueco, a correr.
   *coCharge() {
     const g = this.g,
       p = g.player,
@@ -813,6 +1210,7 @@ export class BeastChase {
     b.yaw = Math.atan2(C.x - E.x, C.z - E.z);
     b.play('gore', { blend: 0.12 });
     const side = new V3(-(C.z - E.z), 0, C.x - E.x).normalize();
+    if (side.x > 0) side.negate();
     this.shot(
       E.clone()
         .lerp(C, 0.55)
@@ -857,11 +1255,12 @@ export class BeastChase {
       }
     }
     if (ok === null) g.qte.cancel();
-    // ---- se estrella: la barricada revienta y se queda clavado
+    // ---- se estrella: la barricada revienta (con la estaca) y se queda clavada
     b.vx = b.vz = 0;
     b.pos.copy(C);
     const B = g.breakables;
     for (const it of B.list) if (!it.broken && (it.id === 'barricada_norte' || (it.kind === 'merlon' && Math.hypot(it.x - C.x, it.z - C.z) < 2.2))) B.shatter(it, b.pos);
+    this.axe.visible = false;
     g.camRig.shake(1);
     g.input.rumble(1, 1, 500);
     g.audio && g.audio.play('wallBreak', C);
@@ -882,9 +1281,99 @@ export class BeastChase {
       this.pClip('getup', { blend: 0.05 });
       yield* this.wait(0.9);
     }
+    // ---- clavada en la piedra: ¡Hachazo!
+    yield* this.coChop();
+    if (p.dead) return;
     // ---- a correr por el hueco
     yield* this.scriptRun(ARENA.run, 6.2);
     yield* this.startChase(1.3);
+  }
+
+  // Clavada en la barricada, de espaldas: ¡Hachazo! (el ataque pesado).
+  // Saltas con el hacha en alto y se la hundes en el lomo: un instante a
+  // cámara lenta, la sangre, el bramido; se la arrancas y te apartas. Si no,
+  // se revuelve y te alcanza.
+  *coChop() {
+    const g = this.g,
+      p = g.player,
+      b = this.beast;
+    // detrás de ella, del lado del hueco por donde se huye
+    const fw = new V3(Math.sin(b.yaw), 0, Math.cos(b.yaw));
+    const rt = new V3(-fw.z, 0, fw.x);
+    if (rt.x < 0) rt.negate();
+    const land = b.pos.clone().addScaledVector(fw, -1.75).addScaledVector(rt, 0.55);
+    land.y = g.world.col.groundHeight(land.x, land.z, 0.2, b.pos.y + 1.2);
+    const face = () => Math.atan2(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
+    p.yaw = face();
+    // bajo, del lado del Postigo, un poco ladeado: ella en la barricada y tú
+    const mid = p.pos.clone().lerp(b.pos, 0.5);
+    this.shot(mid.clone().addScaledVector(rt, 3.9).addScaledVector(fw, -2.3).add(new V3(0, 1.0, 0)), mid.clone().add(new V3(0, 1.9, 0)), { snap: true, fov: 54, roll: -0.1 });
+    // (forcejea con los cuernos en la piedra)
+    b.anim.speed = 0.12;
+    yield* this.wait(0.3);
+    b.anim.speed = 0;
+    const ok = yield* this.prompt({ action: 'heavy', label: '¡Hachazo!', window: 1.15, slow: 0.25 });
+    if (!ok) {
+      // se revuelve: la grupa, el codo, te alcanza
+      b.flinch.kick(18);
+      g.audio && g.audio.play('beastRoar', b.pos);
+      this.hurtPlayer(12, b.pos.x, b.pos.z);
+      if (p.dead) return;
+      yield* this.knockBack(1.1);
+      return;
+    }
+    // salta con el hacha en alto y cae sobre ella
+    this.pClip('a_run', { blend: 0.04 });
+    g.audio && g.audio.play('swingAxe', p.pos);
+    const from = p.pos.clone();
+    const dur = 0.34;
+    for (let t = 0; t < dur; ) {
+      t += yield;
+      const u = Math.min(1, t / dur);
+      this.setP(lerp(from.x, land.x, u), lerp(from.y, land.y, u) + Math.sin(PI * u) * 0.75, lerp(from.z, land.z, u));
+      p.body.grounded = false;
+      p.yaw = face();
+    }
+    p.body.grounded = true;
+    this.setP(land.x, land.y, land.z);
+    this.chopImpact();
+    // (la cámara, encima del golpe)
+    if (this.cam) this.cam.pos.addScaledVector(rt, -0.6).add(new V3(0, 0.25, 0));
+    yield* this.wait(0.8);
+    // se la arranca del lomo y se aparta
+    const h = b.point('spine', new V3(), new V3(0, 0.3, -0.3));
+    g.fx.blood.emit(h.x, h.y, h.z, 40, { speed: 4, up: 1.6 });
+    g.audio && g.audio.play('fleshTear', h);
+    b.flinch.kick(-12);
+    this.pClip('backstep', { blend: 0.08 });
+    const f2 = p.pos.clone();
+    for (let t = 0; t < 0.46; ) {
+      t += yield;
+      const u = sm(t / 0.46);
+      this.setP(f2.x - fw.x * 0.9 * u, f2.y, f2.z - fw.z * 0.9 * u);
+    }
+  }
+
+  // El hachazo en el lomo: sangre, el hueso, el bramido, un instante a cámara
+  // lenta y un fogonazo rojo.
+  chopImpact() {
+    const g = this.g,
+      b = this.beast;
+    const h = b.point('spine', this._a, new V3(0, 0.3, -0.3));
+    g.fx.blood.emit(h.x, h.y, h.z, 90, { speed: 7, up: 2.4 });
+    g.fx.blood.emit(h.x, h.y, h.z, 40, { speed: 3, up: 3.5, life: 1.2 });
+    g.combat.impactFlash(h.x, h.y, h.z, 2.2, 0xff9070);
+    g.audio && g.audio.play('hitAxe', h);
+    g.audio && g.audio.play('boneCrack', h, { k: 1.4 });
+    g.audio && g.audio.play('beastRoarBig', b.pos);
+    g.hitstop = Math.max(g.hitstop, 0.22);
+    g.slowmo = { t: 0.7, k: 0.3 };
+    g.flash = Math.max(g.flash, 0.3);
+    g.flashTint = [1, 0.25, 0.15];
+    g.camRig.shake(1);
+    g.input.rumble(1, 1, 500);
+    b.flinch.kick(-30);
+    b.jawS.kick(6);
   }
 
   // Carrera guiada por puntos (sin control).
@@ -1730,7 +2219,9 @@ export class BeastChase {
     for (const it of B.list) if (it.area === 'chase') delete g.flags['broken:' + it.id];
     this.pike.visible = false;
     this.rock.visible = false;
-    this.pikeFly = this.rockFly = null;
+    this.pikeFly = this.rockFly = this.pikeLoose = null;
+    // (el hacha: arrancada; si se salió a mitad de la escena, la lleva)
+    this.ensureAxe();
     this.beatsDone = new Set();
     this.glanced = new Set();
     this.glance = null;
@@ -1855,12 +2346,13 @@ export class BeastChase {
       this.pike.position.copy(f.from).addScaledVector(f.dir, d);
       this.pike.lookAt(this.pike.position.clone().add(f.dir));
       if (d >= f.dist) {
-        // clavada
-        this.pikeFly = null;
+        // llega (a quien iba, o al muro): y cae, que no se quede en el aire
         g.audio && g.audio.play('woodHit', this.pike.position);
         g.fx.blood.emit(this.pike.position.x, this.pike.position.y, this.pike.position.z, 14, { color: [0.3, 0.27, 0.24], speed: 3, up: 1 });
+        this.dropPike();
       }
     }
+    if (this.pikeLoose) this.pikePhysics(dt);
     // el sillar
     if (this.rockHeld) {
       const h = b.point('handR', this._a);

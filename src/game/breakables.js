@@ -273,13 +273,15 @@ function merlonParts(s, rng) {
 function merlonRubble(s, rng) {
   const W = s.hx * 2,
     T = s.hz * 2;
-  const P = [{ type: 'box', s: [W - 0.04, rng.range(0.18, 0.4), T - 0.04], p: [0, 0.12, 0], r: [rng.range(-5, 5), rng.range(-6, 6), rng.range(-5, 5)], mat: 'wallstone' }];
+  const sh = rng.range(0.18, 0.4);
+  const P = [{ type: 'box', s: [W - 0.04, sh, T - 0.04], p: [0, sh / 2 - 0.02, 0], r: [rng.range(-3, 3), rng.range(-6, 6), rng.range(-3, 3)], mat: 'wallstone' }];
   // unos sillares caídos por dentro del adarve (los demás, al vacío)
   const ix = -(s.out ? s.out[0] : 0),
     iz = -(s.out ? s.out[1] : 0);
   for (let i = 0; i < 4; i++) {
-    const d = rng.range(0.5, 1.5);
-    P.push({ type: 'box', s: [rng.range(0.2, 0.36), rng.range(0.13, 0.22), rng.range(0.18, 0.3)], p: [ix * d + rng.range(-W * 0.6, W * 0.6), 0.09, iz * d + rng.range(-0.3, 0.3)], r: [rng.range(-20, 20), rng.range(0, 180), rng.range(-20, 20)], mat: 'wallstone' });
+    const d = rng.range(0.5, 1.5),
+      h = rng.range(0.13, 0.22);
+    P.push({ type: 'box', s: [rng.range(0.2, 0.36), h, rng.range(0.18, 0.3)], p: [ix * d + rng.range(-W * 0.6, W * 0.6), h * 0.44, iz * d + rng.range(-0.3, 0.3)], r: [rng.range(-8, 8), rng.range(0, 180), rng.range(-8, 8)], mat: 'wallstone' });
   }
   return P;
 }
@@ -315,9 +317,12 @@ function winchRubble(s, rng) {
     P.push({ type: 'box', s: [0.66, 0.12, 0.6], p: [x, 0.06, 0], mat: 'wooddark' });
     P.push({ type: 'box', s: [0.42, 0.9, 0.36], p: [x + rng.range(-0.9, 0.9), 0.2, rng.range(0.7, 1.3)], r: [86, rng.range(0, 180), 0], mat: 'wooddark' });
   }
-  // el madero, en el suelo y rodado
-  P.push({ type: 'cyl', s: [0.33, 0.33, 3.2], p: [0.3, 0.33, 1.1], r: [0, rng.range(-12, 12), 90], seg: 8, mat: 'wooddark' });
-  for (const x of [-0.85, 0.3, 1.45]) P.push({ type: 'cyl', s: [0.35, 0.35, 0.08], p: [x, 0.33, 1.1], r: [0, 0, 90], seg: 8, mat: 'iron' });
+  // el madero, en el suelo y rodado (sus aros de hierro, con él)
+  const yaw = rng.range(-12, 12);
+  P.push({ type: 'cyl', s: [0.33, 0.33, 3.2], p: [0.3, 0.33, 1.1], r: [0, yaw, 90], seg: 8, mat: 'wooddark' });
+  const ca = Math.cos(yaw * DEG),
+    sa = Math.sin(yaw * DEG);
+  for (const u of [-1.15, 0, 1.15]) P.push({ type: 'cyl', s: [0.35, 0.35, 0.08], p: [0.3 + u * ca, 0.33, 1.1 - u * sa], r: [0, yaw, 90], seg: 8, mat: 'iron' });
   P.push({ type: 'cyl', s: [0.5, 0.5, 0.08], p: [2.4, 0.05, -0.6], r: [0, 0, 4], seg: 12, mat: 'iron' });
   for (let i = 0; i < 14; i++) P.push({ type: 'torus', s: [0.052, 0.016], p: [rng.range(-1.5, 1.5), 0.02, rng.range(-0.6, 0.9)], r: [90, rng.range(0, 180), 0], seg: 6, seg2: 3, mat: 'iron' });
   for (let i = 0; i < 8; i++) P.push({ type: 'box', s: [0.06, 0.04, rng.range(0.3, 0.8)], p: [rng.range(-2, 2), 0.03, rng.range(-1, 1.4)], r: [0, rng.range(0, 180), 0], mat: 'wooddark' });
@@ -347,17 +352,39 @@ function barricadeParts(s, rng) {
   }
   // estacas hacia fuera (hacia el adarve norte, por donde venían)
   for (let i = 0; i < 4; i++) P.push({ type: 'cone', s: [0.06, 0.6], p: [-W / 2 + 0.6 + i * 0.95, 1.45, -0.5], r: [-70, 0, 0], seg: 4, mat: 'wooddark' });
+  // la estaca grande de su cara del sur (la del Postigo), que apuntala la
+  // barricada: un tronco descortezado, aguzado arriba, atado a las vigas con
+  // soga; en ella está clavada el hacha (beast_chase.js), con su tajo
+  if (s.stake) {
+    const K = s.stake;
+    P.push({ type: 'cyl', s: [K.r, K.r * 1.08, K.h - 0.3], p: [K.dx, (K.h - 0.3) / 2, K.dz], seg: 8, mat: 'wooddark' });
+    P.push({ type: 'cone', s: [K.r * 1.02, 0.3], p: [K.dx, K.h - 0.15, K.dz], seg: 8, mat: 'wooddark' });
+    for (const y of [0.62, 1.22]) P.push({ type: 'cyl', s: [K.r + 0.018, K.r + 0.018, 0.07], p: [K.dx, y, K.dz], seg: 8, mat: 'rope' });
+    // (a sus pies, las astillas de los tajos que llevaba)
+    for (let i = 0; i < 5; i++) P.push({ type: 'box', s: [0.05, 0.012, rng.range(0.08, 0.16)], p: [K.dx + rng.range(-0.3, 0.35), 0.006, K.dz + rng.range(0.12, 0.45)], r: [0, rng.range(0, 180), 0], mat: 'planks' });
+  }
   return P;
 }
 function barricadeRubble(s, rng) {
   const W = s.hx * 2;
   const P = [];
   // la mayoría sale hacia el norte (el golpe viene de la torre)
-  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [0.32, 0.07, rng.range(1.0, 2.0)], p: [rng.range(-W / 2, W / 2), 0.04 + i * 0.01, rng.range(-3.4, 0.4)], r: [rng.range(-8, 8), rng.range(-50, 50), rng.range(-6, 6)], mat: 'planks' });
-  for (let i = 0; i < 3; i++) P.push({ type: 'box', s: [0.28, 0.28, rng.range(2.2, 3.4)], p: [rng.range(-1.2, 1.2), 0.14 + i * 0.28, rng.range(-3.6, -1.2)], r: [0, rng.range(-70, 70), rng.range(-6, 6)], mat: 'wooddark' });
+  // (todo en el suelo: las vigas, que antes se apilaban en el aire a 0,4 y
+  // 0,7 m sin nada debajo, tumbadas, y las piedras, asentadas)
+  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [0.32, 0.07, rng.range(1.0, 2.0)], p: [rng.range(-W / 2, W / 2), 0.034 + i * 0.004, rng.range(-3.4, 0.4)], r: [rng.range(-1.5, 1.5), rng.range(-50, 50), rng.range(-1.5, 1.5)], mat: 'planks' });
+  for (let i = 0; i < 3; i++) P.push({ type: 'box', s: [0.28, 0.28, rng.range(2.2, 3.4)], p: [-1.2 + i * 1.2 + rng.range(-0.25, 0.25), 0.135 + i * 0.003, rng.range(-3.6, -1.2)], r: [0, rng.range(-40, 40), 0], mat: 'wooddark' });
   for (let i = 0; i < 6; i++) P.push({ type: 'sphere', s: [0.4, 0.08, 0.3], p: [rng.range(-W / 2, W / 2), 0.05, rng.range(-1.6, 0.6)], r: [0, rng.range(0, 180), 0], seg: 7, seg2: 4, mat: 'burlap' });
-  for (let i = 0; i < 7; i++) P.push({ type: 'box', s: [rng.range(0.25, 0.45), rng.range(0.2, 0.35), rng.range(0.25, 0.4)], p: [rng.range(-W / 2, W / 2), 0.13, rng.range(-2.8, 0.6)], r: [rng.range(-25, 25), rng.range(0, 180), rng.range(-25, 25)], mat: 'wallstone' });
+  for (let i = 0; i < 7; i++) {
+    const h = rng.range(0.2, 0.35);
+    P.push({ type: 'box', s: [rng.range(0.25, 0.45), h, rng.range(0.25, 0.4)], p: [rng.range(-W / 2, W / 2), h * 0.42, rng.range(-2.8, 0.6)], r: [rng.range(-8, 8), rng.range(0, 180), rng.range(-8, 8)], mat: 'wallstone' });
+  }
   P.push({ type: 'torus', s: [0.55, 0.07], p: [-0.8, 0.07, -2.4], r: [90, 0, 0], seg: 12, seg2: 4, mat: 'wooddark' });
+  // la estaca del hacha, partida: el tocón en su sitio y el resto tumbado
+  if (s.stake) {
+    const K = s.stake;
+    P.push({ type: 'cyl', s: [K.r * 0.9, K.r * 1.08, 0.42], p: [K.dx, 0.21, K.dz], r: [rng.range(-4, 4), 0, rng.range(-4, 4)], seg: 8, mat: 'wooddark' });
+    P.push({ type: 'cyl', s: [K.r, K.r, K.h - 0.75], p: [K.dx + 0.7, K.r, K.dz - 0.9], r: [0, rng.range(20, 50), 90], seg: 8, mat: 'wooddark' });
+  }
   puddle(P, rng, 0.2, -1, 1.4, 'straw');
   return P;
 }
@@ -376,7 +403,7 @@ function barrelRubble(s, rng) {
   const R = s.hx;
   const P = [];
   for (let i = 0; i < 10; i++) P.push({ type: 'box', s: [0.12, 0.025, rng.range(0.5, 0.9)], p: [rng.range(-0.9, 0.9), 0.02 + i * 0.005, rng.range(-0.9, 0.9)], r: [0, rng.range(0, 180), 0], mat: 'planks' });
-  for (let i = 0; i < 3; i++) P.push({ type: 'torus', s: [R * rng.range(0.85, 1), 0.022], p: [rng.range(-0.6, 0.6), 0.03 + i * 0.02, rng.range(-0.6, 0.6)], r: [90 + rng.range(-10, 10), 0, rng.range(0, 180)], seg: 12, seg2: 3, mat: 'iron' });
+  for (let i = 0; i < 3; i++) P.push({ type: 'torus', s: [R * rng.range(0.85, 1), 0.022], p: [rng.range(-0.6, 0.6), 0.022 + i * 0.004, rng.range(-0.6, 0.6)], r: [90, 0, rng.range(0, 180)], seg: 12, seg2: 3, mat: 'iron' });
   puddle(P, rng, 0, 0, 1.0, 'black');
   return P;
 }
@@ -400,7 +427,7 @@ function crateParts(s) {
 }
 function crateRubble(s, rng) {
   const P = [];
-  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [rng.range(0.4, 0.9), 0.025, 0.14], p: [rng.range(-0.8, 0.8), 0.02 + i * 0.006, rng.range(-0.8, 0.8)], r: [0, rng.range(0, 180), 0], mat: i % 3 ? 'planks' : 'wooddark' });
+  for (let i = 0; i < 9; i++) P.push({ type: 'box', s: [rng.range(0.4, 0.9), 0.025, 0.14], p: [rng.range(-0.8, 0.8), 0.013 + i * 0.003, rng.range(-0.8, 0.8)], r: [0, rng.range(0, 180), 0], mat: i % 3 ? 'planks' : 'wooddark' });
   return P;
 }
 // el carro de la plaza (con las varas recogidas: así cabe en su caja)
@@ -736,20 +763,47 @@ export class Breakables {
 
   update(dt) {
     const col = this.g.world.col;
+    // (el suelo de verdad: sin los muros invisibles —el parapeto del Postigo
+    // entre las almenas, los de las zonas que no se pisan—, que no se queden
+    // flotando encima)
+    const ground = (x, z, yMax) => col.groundHeight(x, z, 0.05, yMax, true);
     for (const c of this.chunks) {
-      if (c.rest) continue;
+      const p = c.m.position;
+      if (c.rest) {
+        // ¿sigue teniendo dónde apoyarse? (lo de debajo se ha roto: cae)
+        c.chk = (c.chk ?? Math.random() * 0.3) - dt;
+        if (c.chk > 0) continue;
+        c.chk = 0.3;
+        if (p.y + c.low <= ground(p.x, p.z, p.y + c.low + 0.3) + 0.05) continue;
+        c.rest = false;
+        c.settle = null;
+        c.v.set(0, 0, 0);
+      }
+      // tumbándose de plano, apoyado en el suelo
+      if (c.settle) {
+        const S = c.settle;
+        S.u = Math.min(1, S.u + dt / 0.16);
+        c.m.quaternion.slerpQuaternions(S.q0, S.q1, S.u * S.u * (3 - 2 * S.u));
+        c.low = chunkLow(c.m);
+        p.y = S.gy - c.low;
+        if (S.u >= 1) {
+          c.settle = null;
+          c.rest = true;
+        }
+        continue;
+      }
       c.v.y -= 18 * dt;
-      c.m.position.addScaledVector(c.v, dt);
+      p.addScaledVector(c.v, dt);
       c.m.rotation.x += c.w.x * dt;
       c.m.rotation.y += c.w.y * dt;
       c.m.rotation.z += c.w.z * dt;
-      const p = c.m.position;
-      const gy = col.groundHeight(p.x, p.z, 0.05, p.y + 0.5) + c.s;
-      if (p.y < gy) {
-        p.y = gy;
+      c.low = chunkLow(c.m);
+      const gy = ground(p.x, p.z, p.y + c.low + 0.5);
+      if (p.y + c.low < gy) {
+        p.y = gy - c.low;
         if (Math.abs(c.v.y) < 1.2) {
           c.v.set(0, 0, 0);
-          c.rest = true;
+          c.settle = { q0: c.m.quaternion.clone(), q1: flatBox(c.m, new THREE.Quaternion()), u: 0, gy };
         } else {
           c.v.y *= -0.3;
           c.v.x *= 0.5;
@@ -760,6 +814,46 @@ export class Breakables {
       // los muros los paran
       if (col.raycast(p.x, p.y, p.z, Math.sign(c.v.x) || 1, 0, 0, 0.12, (b) => b.tag === 'block') !== Infinity) c.v.x *= -0.3;
       if (col.raycast(p.x, p.y, p.z, 0, 0, Math.sign(c.v.z) || 1, 0.12, (b) => b.tag === 'block') !== Infinity) c.v.z *= -0.3;
+      // (lo que se va al vacío, fuera del mundo, se quita)
+      if (p.y < -30) {
+        this.g.scene.remove(c.m);
+        c.gone = true;
+      }
+    }
+    if (this.chunks.some((c) => c.gone)) this.chunks = this.chunks.filter((c) => !c.gone);
+  }
+}
+
+// Lo más bajo de un cascote (una caja de lado 1, escalada y girada) respecto
+// a su centro: la esquina más baja.
+const _cv = new THREE.Vector3(),
+  _cq = new THREE.Quaternion(),
+  _cup = new THREE.Vector3(0, 1, 0);
+function chunkLow(m) {
+  const s = m.scale;
+  let lo = Infinity;
+  for (let i = 0; i < 8; i++) {
+    _cv.set((i & 1 ? 0.5 : -0.5) * s.x, (i & 2 ? 0.5 : -0.5) * s.y, (i & 4 ? 0.5 : -0.5) * s.z).applyQuaternion(m.quaternion);
+    if (_cv.y < lo) lo = _cv.y;
+  }
+  return lo;
+}
+// El giro de plano más cercano al que lleva: la cara que más mira hacia
+// arriba (o hacia abajo), del todo hacia arriba; no se queda de canto.
+function flatBox(m, out) {
+  let best = null,
+    bd = -1;
+  for (const v of [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ]) {
+    const a = new THREE.Vector3(...v).applyQuaternion(m.quaternion);
+    if (Math.abs(a.y) > bd) {
+      bd = Math.abs(a.y);
+      best = a.y < 0 ? a.negate() : a;
     }
   }
+  _cq.setFromUnitVectors(best, _cup);
+  return out.copy(_cq).multiply(m.quaternion);
 }

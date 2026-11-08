@@ -11,6 +11,7 @@ import { buildFragua } from './level_fragua.js';
 import * as P from './props.js';
 import { floor, houseRow, interiorRoom, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { CHASE } from './level_walls.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 
@@ -627,8 +628,11 @@ function arenaMerlons(ctx, L, x0, z0, x1, z1, y, out, skip = []) {
     if (skip.some(([a0, b0, a1, b1]) => cx > a0 && cx < a1 && cz > b0 && cz < b1)) continue;
     L.breakables.push({ kind: 'merlon', id: `m_${Math.round(cx * 10)}_${Math.round(-cz * 10)}`, area: 'postigo', x: cx, y, z: cz, hx: alongX ? mw / 2 : t / 2, hz: alongX ? t / 2 : mw / 2, h: mh, out });
   }
-  if (alongX) ctx.col.add(sx, y - 0.2, z0 - t / 2, sx + len, y + mh, z0 + t / 2).noSight = true;
-  else ctx.col.add(x0 - t / 2, y - 0.2, sz, x0 + t / 2, y + mh, sz + len).noSight = true;
+  const pb = alongX ? ctx.col.add(sx, y - 0.2, z0 - t / 2, sx + len, y + mh, z0 + t / 2) : ctx.col.add(x0 - t / 2, y - 0.2, sz, x0 + t / 2, y + mh, sz + len);
+  pb.noSight = true;
+  // (lo que cae —los trozos de la armadura, los cascotes— no se posa en él:
+  // entre las almenas, y donde faltan, no hay piedra; se quedaba flotando)
+  pb.fall = false;
 }
 
 // ======================================================================== ADARVE Y POSTIGO
@@ -688,7 +692,21 @@ export function buildRamparts(ctx, S, L) {
   arenaMerlons(ctx, L, gx0 + 0.3, gz0, gx0 + 0.3, -60, 9, [-1, 0], towers);
   arenaMerlons(ctx, L, gx0 - 0.3, gz1 - 0.3, 72.3, gz1 - 0.3, 9, [0, 1], towers);
   arenaMerlons(ctx, L, 75.7, gz1 - 0.3, gx1 + 0.3, gz1 - 0.3, 9, [0, 1], towers);
-  L.breakables.push({ kind: 'barricade', id: 'barricada_norte', area: 'postigo', x: 74, y: 9, z: -67.75, hx: 2.0, hz: 0.6, h: 2.3 });
+  // (en su estaca, la de su cara del sur, está clavada el hacha barbada: no
+  // sale; la arranca el jugador en la escena de la Bestia, beast_chase.js)
+  const ST = CHASE.stake;
+  // (beastOnly: los golpes del Empalado no la rompen; sólo la Bestia, al
+  // estrellarse contra ella)
+  L.breakables.push({ kind: 'barricade', id: 'barricada_norte', area: 'postigo', x: 74, y: 9, z: -67.75, hx: 2.0, hz: 0.6, h: 2.3, beastOnly: true, stake: { dx: ST.x - 74, dz: ST.z + 67.75, r: ST.r, h: ST.h } });
+  L.interact.push({ kind: 'examine', id: 'x_hacha_estaca', text: 'hachaClavada', label: 'Arrancar el hacha', tug: true, x: ST.x - 0.1, y: 9, z: ST.z + 0.45, r: 1.5, unless: 'impaled:beast' });
+  // (en las partidas de antes de que se arrancara en la escena —la barricada
+  // ya rota y el hacha sin coger—, tirada entre los escombros, de plano)
+  {
+    const Z = new THREE.Vector3(1, 0, -0.4).normalize(),
+      X = new THREE.Vector3(0, 1, 0);
+    const quat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Z.clone().cross(X), Z)).toArray();
+    L.interact.push({ kind: 'item', id: 'i_hacha', item: 'hacha', x: ST.x + 0.5, y: 9.026, z: ST.z - 0.9, raw: true, quat, r: 1.6, afterFlag: 'broken:barricada_norte' });
+  }
   // torrecillas en las esquinas
   for (const [x, z] of [
     [gx0, gz0],

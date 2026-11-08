@@ -5,7 +5,7 @@ import { buildPlayer } from './models.js';
 import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
 import { WEAPONS, weaponSet, resolveWeaponArms, durezaK } from './weapons.js';
-import { buildParts, backShield, hipSaya, viroteParts } from './weapon_models.js';
+import { buildParts, backShield, viroteParts } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
 import { objMat } from '../gfx/materials.js';
@@ -55,13 +55,10 @@ export class Player {
       this.xbowBolt.group.visible = false;
     }
     this.xbowLoaded = false;
-    // escudo a la espalda (armas a dos manos) y saya de la katana
+    // escudo a la espalda (armas a dos manos)
     this.shieldBack = backShield();
     this.rig.joints.chest.add(this.shieldBack.group);
     this.rig.meshes.push(...this.shieldBack.meshes);
-    this.saya = hipSaya();
-    this.rig.joints.hips.add(this.saya.group);
-    this.rig.meshes.push(...this.saya.meshes);
     this.cloakZ0 = this.rig.joints.cloak.position.z;
     this.resolveArms = (p) => resolveWeaponArms(p, this.rig, this.weapon);
     this.body = { pos: new THREE.Vector3(), radius: 0.36, height: 1.8, stepH: 0.52, grounded: true, vy: 0 };
@@ -160,7 +157,7 @@ export class Player {
     this.equipWeapon('espada');
   }
 
-  // Empuña un arma del registro (facon, hacha, lanza, espada, katana).
+  // Empuña un arma del registro (oxidada, espada, solingen, hacha, lanza, ballesta).
   equipWeapon(id) {
     const W = WEAPONS[id] || WEAPONS.espada;
     this.weapon = W;
@@ -247,14 +244,13 @@ export class Player {
     return this.canBlock() && !this.mods.noBlock;
   }
 
-  // Escudo al brazo o a la espalda (la capa lo cubre), saya al cinto.
+  // Escudo al brazo o a la espalda (la capa lo cubre).
   updateGear() {
     const two = this.twoHanded && this.hasSword;
     this.rig.joints.sword.visible = this.hasSword;
     this.rig.joints.shield.visible = this.hasShield && !two;
     this.shieldBack.group.visible = this.hasShield && two;
     this.rig.joints.cloak.position.z = this.cloakZ0 - (this.hasShield && two ? 0.075 : 0);
-    this.saya.group.visible = !!this.weapon.saya && this.hasSword;
   }
 
   // Con escudo, o con el propio arma si es a dos manos.
@@ -456,15 +452,6 @@ export class Player {
     if (e === 'swing') g.audio && g.audio.play(a && a.snd ? a.snd : a && a.heavy ? 'swingHeavy' : 'swing', this.pos);
     // el hacha muerde el suelo
     if (e === 'impact' && this.state === 'attack' && a && a.impact) g.combat && g.combat.playerImpact && g.combat.playerImpact(this, a);
-    // katana: desenvainado y destello sagrado
-    if (e === 'draw') g.audio && g.audio.play('iai', this.pos);
-    if (e === 'flash' && this.state === 'attack') {
-      const k = Math.min(1, this.charge / ((a && a.charge && a.charge.max) || 1));
-      g.flash = Math.max(g.flash || 0, 0.25 + k * 0.45);
-      g.flashTint = [1, 0.9, 0.62];
-      g.camRig && g.camRig.shake(0.12 + k * 0.2);
-    }
-    if (e === 'flick') g.audio && g.audio.play('flick', this.pos);
     if (e === 'drink' && this.bebe) {
       // (un cocimiento: el aliento vuelve antes, y con el negro se anda más
       // ligero, durante un rato; si ya había uno, manda el que más dura)

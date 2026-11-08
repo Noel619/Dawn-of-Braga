@@ -261,7 +261,6 @@ export const MAT_DEFS = {
   // metales de las armas
   silver: { tex: 'plate', uv: 1.6, color: 0xe4e6ee },
   gold: { tex: 'bronze', uv: 1.0, color: 0xffd67a },
-  holySteel: { tex: 'plate', uv: 1.6, color: 0xf4f1ea, emissive: 0xffdf9a, emissiveIntensity: 0.3 },
   // las letras de latón del vaceo de la espada de Solingen (su textura lleva
   // las dos caras, una franja cada una)
   inscripcion: { tex: 'inscription', uv: 1 },

@@ -333,7 +333,7 @@ function weaponItemMesh(id) {
   const w = buildParts(WEAPON_PARTS[id]('x')).group;
   w.rotation.x = -Math.PI / 2;
   const tilt = new THREE.Group();
-  tilt.rotation.z = id === 'lanza' ? 0.55 : id === 'katana' ? 0.18 : 0.08;
+  tilt.rotation.z = id === 'lanza' ? 0.55 : 0.08;
   tilt.add(w);
   g.add(tilt);
   g.updateMatrixWorld(true);
@@ -1761,7 +1761,7 @@ export class Interactables {
       case 'fog':
         return 'Atravesar la niebla';
       case 'examine':
-        return 'Examinar';
+        return it.label || 'Examinar';
       // las cloacas hondas (game/cloacas.js, game/alquimia.js, game/lobishome.js)
       case 'cosecha':
         return 'Recoger ' + (ITEMS[it.item] ? ITEMS[it.item].name.toLowerCase() : '');
@@ -1985,6 +1985,12 @@ export class Interactables {
       // (alt: [bandera, texto]: lo que se dice una vez pasado algo)
       const k = it.alt && g.flags[it.alt[0]] ? it.alt[1] : it.text;
       g.ui.toast(MSG[k] || k);
+      // (tug: se tira de ello, y no sale: el hacha de la barricada)
+      if (it.tug) {
+        p.playInteract('lever', Math.atan2(it.x - p.pos.x, it.z - p.pos.z), 0.8);
+        p.anim.play(p.clips.interact, { blend: 0.12 });
+        g.later(420, () => g.audio && g.audio.play('woodHit', { x: it.x, y: it.y + 1.1, z: it.z }));
+      }
       return true;
     }
     if (it.kind === 'cosecha') {

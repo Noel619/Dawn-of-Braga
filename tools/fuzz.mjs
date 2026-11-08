@@ -8,7 +8,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
-// ARMA=facon|hacha|lanza|espada|katana para probar con otra arma
+// ARMA=oxidada|espada|solingen|hacha|lanza|ballesta para probar con otra arma
 await p.goto('http://localhost:' + (process.env.PORT || 5199) + '/?dev=1&items=espada,escudo' + (process.env.ARMA ? '&arma=' + process.env.ARMA : ''));
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const N = await p.evaluate(() => {

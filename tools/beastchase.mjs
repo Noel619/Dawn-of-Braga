@@ -1,9 +1,11 @@
 // La Bestia de Carne, de principio a fin: entra en el Postigo, le baja la
-// vida al Empalado hasta que se transforma y juega la huida con un «bot»
-// que pulsa los avisos (QTE) y corre por el recorrido. Comprueba que se
-// llega a la atalaya, que queda vencido el jefe y que no hay errores.
-// Con «fallos» falla a propósito algunos avisos (los que no matan) y, al
-// final, muere una vez en lo alto del fanal para probar el reintento.
+// vida al Empalado hasta que se transforma y juega la escena del hacha y la
+// huida con un «bot» que pulsa los avisos (QTE) y corre por el recorrido.
+// Comprueba que se arranca el hacha de la estaca (en el inventario y
+// empuñada), que se llega a la atalaya, que queda vencido el jefe y que no
+// hay errores. Con «fallos» falla a propósito algunos avisos (los que no
+// matan: el hacha, la pica, la viga, el hueco y la cornada) y, al final,
+// muere una vez en lo alto del fanal para probar el reintento.
 //   node tools/beastchase.mjs [fallos]      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const fallos = process.argv[2] === 'fallos';
@@ -22,10 +24,11 @@ const r = await p.evaluate(async (fallos) => {
     C = g.chase,
     inp = g.input;
   P.maxHp = P.hp = 400;
-  const KEY = { dodge: 'Space', interact: 'KeyE', block: 'M2', light: 'M0' };
-  // avisos que falla (por orden de aparición): la pica, la viga, el hueco
-  // (y el trepar), la cornada y el primer «¡Salta!» del fanal
-  const fail = new Set(fallos ? [0, 3, 5, 8] : []);
+  const KEY = { dodge: 'Space', interact: 'KeyE', block: 'M2', light: 'M0', heavy: 'KeyF' };
+  // avisos que falla (por orden de aparición): arrancar el hacha, desviar
+  // la pica, la viga, el hueco (y el trepar), la cornada y el primer
+  // «¡Salta!» del fanal
+  const fail = new Set(fallos ? [0, 1, 5, 7, 10] : []);
   const log = [];
   let n = 0;
   const frame = () => {
@@ -105,12 +108,14 @@ const r = await p.evaluate(async (fallos) => {
     pos: [+P.pos.x.toFixed(1), +P.pos.y.toFixed(1), +P.pos.z.toFixed(1)],
     hp: Math.round(P.hp),
     fog: g.fogActive(fog),
+    hacha: g.inventory.has('hacha') && g.flags['take:i_hacha'] && P.weaponId === 'hacha',
+    estaca: g.chase.axe.visible,
   };
 }, fallos);
 for (const l of r.log) console.log('  ' + l);
-const ok = r.seen.transform && r.seen.run && r.seen.top && r.flags.beast && r.flags.boss && r.flags.escaped && r.zone === 'atalaya' && !r.fog && r.moved > 1 && r.control;
+const ok = r.seen.transform && r.seen.run && r.seen.top && r.flags.beast && r.flags.boss && r.flags.escaped && r.zone === 'atalaya' && !r.fog && r.moved > 1 && r.control && r.hacha && !r.estaca;
 console.log(
-  `${ok ? 'OK ' : 'MAL'} ${fallos ? 'con fallos' : 'sin fallos'}: ${r.t} s, después se mueve ${r.moved} m (control: ${r.control ? 'sí' : 'NO'}), zona ${r.zone}, ${JSON.stringify(r.pos)}, vida ${r.hp}, banderas ${JSON.stringify(r.flags)}, niebla ${r.fog ? 'sigue' : 'disipada'}`
+  `${ok ? 'OK ' : 'MAL'} ${fallos ? 'con fallos' : 'sin fallos'}: ${r.t} s, después se mueve ${r.moved} m (control: ${r.control ? 'sí' : 'NO'}), zona ${r.zone}, ${JSON.stringify(r.pos)}, vida ${r.hp}, banderas ${JSON.stringify(r.flags)}, niebla ${r.fog ? 'sigue' : 'disipada'}, hacha ${r.hacha ? 'arrancada y empuñada' : 'NO'}${r.estaca ? ' (¡sigue en la estaca!)' : ''}`
 );
 if (errs.length) console.log(errs.join('\n'));
 await b.close();

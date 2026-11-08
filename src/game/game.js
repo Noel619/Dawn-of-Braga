@@ -32,6 +32,7 @@ import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
 import { CANON, stairY } from '../world/level_canon.js';
 import { CellarCutscene } from './cutscene.js';
 import { Breakables } from './breakables.js';
+import { updateDebris } from '../entities/impaled.js';
 import { CellarHunt } from './hunt.js';
 import { Waters } from '../gfx/water.js';
 import { Spring } from './spring.js';
@@ -392,6 +393,9 @@ export class Game {
     this.newState();
     this.flags = s.flags || {};
     this.inventory = new Inventory(s.inv);
+    // (el facón y la katana ya no están en el juego: fuera de las partidas
+    // guardadas que los tuvieran, del modo desarrollador)
+    for (const k of ['facon', 'katana']) this.inventory.items.delete(k);
     this.deaths = s.deaths || 0;
     this.playTime = s.playTime || 0;
     this.visited = new Set(s.visited || []);
@@ -493,6 +497,8 @@ export class Game {
     this.player.setEquipment(this.hasWeapon() && this.savedArmed !== false, this.inventory.has('escudo') && this.savedShield !== false);
     this.finale.applyFlags();
     this.house.applyFlags();
+    // (el hacha de la barricada del Postigo: en su estaca hasta que se arranca)
+    this.chase.applyFlags();
     this.crypt.applyFlags();
     this.paio.applyFlags();
     this.caballero.applyFlags();
@@ -2015,6 +2021,10 @@ export class Game {
       this.virotes.update(dt);
       this.caballero.update(dt);
       this.breakables.update(dt);
+      // (los trozos de la armadura del Empalado: caen, se posan y, si se rompe
+      // lo que tenían debajo, vuelven a caer; en la pelea, en la huida y
+      // después)
+      if (this.bosses.impaled) updateDebris(this.bosses.impaled, dt);
       this.waters.update(dt);
       this.cloacaFX.update(dt);
       this.cloacas.update(dt);
@@ -2108,7 +2118,7 @@ export class Game {
     U.uDesat.value = p.dead ? 0.8 : U.uLowHp.value * 0.4;
     U.uWarp.value = this.warp;
     U.uFlash.value = this.flash;
-    // destello: naranja por defecto; dorado tras el iai de la katana
+    // destello: naranja por defecto; del color que pida quien lo lance
     const ft = this.flashTint || [1, 0.6, 0.3];
     U.uFlashColor.value.setRGB(ft[0], ft[1], ft[2]);
     if (this.flash <= 0) this.flashTint = null;

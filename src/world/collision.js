@@ -124,9 +124,10 @@ export class CollisionWorld {
     let g = -100;
     for (const b of list) {
       // (noBlock: sin las paredes invisibles, para lo que cae: los trozos, las
-      // piedras; no se quedan flotando encima de ellas)
+      // piedras; no se quedan flotando encima de ellas. Tampoco encima de las
+      // que, sin ser de esas, lo dicen: fall = false, el parapeto del Postigo)
       const top = b.ramp ? rampTop(b, x, z) : b.maxy;
-      if (top > yMax || b.camOnly || (noBlock && !b.ramp && (b.tag === 'block' || (b.noSight && b.cam === false)))) continue;
+      if (top > yMax || b.camOnly || (noBlock && !b.ramp && (b.tag === 'block' || b.fall === false || (b.noSight && b.cam === false)))) continue;
       if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
       if (top > g) g = top;
     }

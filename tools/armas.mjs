@@ -1,8 +1,8 @@
 // Las armas del principio y sus cualidades: el guardia caído del pasillo de
 // las celdas (su escudo se le quita, la espada oxidada se le arranca y, al
 // arrancarla, se levanta el de la celda del fondo; su cuerpo para el paso),
-// la oxidada a la mitad que la de la guardia (golpes, pesado, golpe de
-// gracia), las cualidades de cada arma (peso, dureza, crítico: lo que de
+// la oxidada, a menos de la mitad que la de la guardia (golpes y pesado,
+// al 42,5 %; el golpe de gracia, a la cuarta parte), las cualidades de cada arma (peso, dureza, crítico: lo que de
 // verdad cambian), la ficha del inventario (las barras, la comparación con
 // lo que se lleva y la descripción) y la espada de la guardia en la armería
 // de la puerta de la fortaleza.
@@ -110,7 +110,7 @@ check(G.conEspada.inv && G.conEspada.weapon === 'oxidada' && G.conEspada.armed, 
 check(!G.antes.aware && G.despues.aware, 'al arrancarla se levanta el de la celda del fondo', { antes: G.antes, despues: G.despues });
 check(G.pistas.includes('sword') && G.pistas.includes('shield'), 'las pistas de pelear y del escudo', G.pistas);
 
-// ------------------------------------------------------------ la oxidada, a la mitad
+// ------------------------------------------------------------ la oxidada, a menos de la mitad
 const D = await p.evaluate(async () => {
   const { WEAPONS, weaponSet, weaponSheet, durezaK } = await import('/src/entities/weapons.js');
   const g = __game;
@@ -119,7 +119,7 @@ const D = await p.evaluate(async () => {
   const out = { ox: sum(weaponSet(WEAPONS.oxidada, rig)), es: sum(weaponSet(WEAPONS.espada, rig)), so: sum(weaponSet(WEAPONS.solingen, rig)) };
   out.sheets = {};
   out.k = {};
-  for (const id of ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'katana', 'ballesta']) {
+  for (const id of ['hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'ballesta']) {
     const S = weaponSheet(WEAPONS[id], rig, 1);
     out.sheets[id] = Object.fromEntries(Object.entries(S).map(([k, v]) => [k, typeof v === 'number' ? +v.toFixed(2) : v]));
     out.k[id] = +durezaK(WEAPONS[id]).toFixed(3);
@@ -127,7 +127,7 @@ const D = await p.evaluate(async () => {
   // la ventana del parry, con cada una (sin objeto bendito)
   const P = g.player;
   out.win = {};
-  for (const id of ['oxidada', 'espada', 'solingen', 'hacha', 'katana']) {
+  for (const id of ['oxidada', 'espada', 'solingen', 'hacha']) {
     P.equipWeapon(id);
     P.setEquipment(true, true);
     P.parryPress = [];
@@ -149,15 +149,17 @@ const D = await p.evaluate(async () => {
   P.anim.stop(0);
   return out;
 });
-const half = (a, b) => a.every((v, i) => Math.abs(v - b[i] / 2) <= 0.5);
-check(half(D.ox.light, D.es.light) && half(D.ox.heavy, D.es.heavy) && Math.abs(D.ox.run - D.es.run / 2) <= 0.5 && Math.abs(D.ox.rip - D.es.rip / 2) <= 0.5, 'la oxidada hace la mitad que la de la guardia (ligeros, pesado, carrera, gracia)', { oxidada: D.ox, guardia: D.es });
+// (la mitad, y de eso un 15 % menos: el 42,5 %; el golpe de gracia, la cuarta parte)
+const OX = 0.5 * 0.85;
+const part = (a, b) => a.every((v, i) => Math.abs(v - b[i] * OX) <= 0.5);
+check(part(D.ox.light, D.es.light) && part(D.ox.heavy, D.es.heavy) && Math.abs(D.ox.run - D.es.run * OX) <= 0.5 && Math.abs(D.ox.rip - D.es.rip / 4) <= 0.5, 'la oxidada hace el 42,5 % que la de la guardia (ligeros, pesado, carrera) y la cuarta parte rematando', { oxidada: D.ox, guardia: D.es });
 check(D.ox.range.every((r, i) => r < D.es.range[i]) && D.so.range.every((r, i) => r > D.es.range[i]), 'la hoja: la oxidada alcanza menos, la de Solingen más', { ox: D.ox.range, es: D.es.range, so: D.so.range });
 check(D.ox.st.every((s, i) => s < D.es.st[i]), 'la oxidada cansa menos', { ox: D.ox.st, es: D.es.st });
 check(D.k.espada === 1 && D.k.oxidada < 1 && D.k.hacha > 1, 'la dureza: la de la guardia como siempre, la oxidada ataja peor, el hacha mejor', D.k);
 check(Math.abs(D.win.espada - 0.2) < 1e-3 && D.win.oxidada < D.win.espada && D.win.solingen > D.win.espada, 'la ventana del parry según la dureza', D.win);
 check(Math.abs(D.spdOx / D.spdEs - 1.06) < 1e-3, 'la oxidada golpea un 6 % más deprisa', { oxidada: D.spdOx, guardia: D.spdEs });
 const S = D.sheets;
-check(S.oxidada.filo * 2 - S.espada.filo <= 1 && S.facon.vel > S.espada.vel && S.hacha.vel < S.espada.vel && S.lanza.alcance > S.espada.alcance && S.ballesta.alcance > 10, 'la ficha de cada arma sale de sus golpes', S);
+check(Math.abs(S.oxidada.filo - S.espada.filo * OX) <= 1 && S.oxidada.vel > S.espada.vel && S.hacha.vel < S.espada.vel && S.lanza.alcance > S.espada.alcance && S.ballesta.alcance > 10, 'la ficha de cada arma sale de sus golpes', S);
 
 // ------------------------------------------------------------ la ficha en el inventario
 const U = await p.evaluate(async () => {

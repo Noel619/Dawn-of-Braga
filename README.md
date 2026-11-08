@@ -278,13 +278,26 @@ atravesando el cuerpo, con un trozo del portón y el estandarte de la ciudad tod
 de carnero de un ariete montada en un madero, que arrastra echando chispas por la piedra: mazazo de arriba abajo
 (se queda clavado en la piedra), barrido, barrido y revés, pisotón, golpe de regatón, estocada con la pica de su
 propio vientre, embestida con la pica por delante y, sin yelmo, un salto con mazazo. Los golpes salen de donde de
-verdad pasa el arma y revientan lo que encuentran: las almenas, el torno del rastrillo, los barriles, las cajas.
-A medida que pierde vida se le va cayendo la armadura (hombreras, visera, medio peto) y asoma la carne.
+verdad pasa el arma y revientan lo que encuentran: las almenas, el torno del rastrillo, los barriles, las cajas (la
+barricada que cierra el adarve del norte, no: ésa sólo la revienta la Bestia).
+A medida que pierde vida se le va cayendo la armadura (hombreras, visera, medio peto) y asoma la carne: los trozos
+saltan, rebotan y se quedan tumbados de plano en el suelo, cada uno con su propia luz (no se encienden con los golpes
+que le das a él), y si caen sobre algo que luego se rompe (un barril, el torno, una almena), vuelven a caer. En la
+estaca grande de la barricada, la de la cara del Postigo, hay **un hacha barbada** clavada hasta el ojo: se ve desde
+toda la pelea, y si tiras de ella no sale («la madera la tiene cogida»).
 Con un cuarto de vida **se transforma**: cae de rodillas, se le revientan una a una las piezas que le quedan, se
 hincha y estalla en sangre, y lo que se levanta es **la Bestia de Carne**, un minotauro de músculo desollado con la
-testuz de toro, cuernos de hueso y la columna en cresta. Ruge, se arranca la pica de la espalda y te la tira, y
-embiste: si la esquivas, revienta el torno y la barricada que cerraba el adarve del norte y se queda un instante
-con los cuernos clavados en la piedra. Por el hueco empieza **la huida**, por el adarve, con la Bestia pisándote los
+testuz de toro, cuernos de hueso y la columna en cresta. Ruge y viene a por ti, a paso lento; tú reculas hasta la
+barricada, la espalda contra la madera y, al lado, el mango del hacha. **¡Arráncala!** (machacando): forcejeas con
+las dos manos en el mango, el cuerpo echado atrás, mientras ella se acerca rugiendo, y de un tirón la hoja sale de
+la estaca entre astillas; te vuelves con ella en alto, frente a la Bestia, y **el hacha es tuya** (si no te da
+tiempo, te alcanza de un manotazo y el golpe la arranca: caes con ella en las manos). Se arranca la pica de la
+espalda y te la tira: **¡Desvía!**, y el hacha le sale al encuentro y la barre de lado con el mango (chispas, el
+hierro que canta, un instante a cámara lenta); la pica se va dando vueltas y cae al suelo (si no, te tumba y cae a tu
+lado). Embiste: **¡Esquiva!**; pasa de largo, revienta la barricada (con la estaca) y se queda con los cuernos
+clavados en la piedra. Clavada, de espaldas: **¡Hachazo!** (el ataque pesado): saltas con el hacha en alto y se la
+hundes en el lomo, a cámara lenta, entre la sangre y el bramido; se la arrancas y te apartas (si no, se revuelve y te
+alcanza). Por el hueco empieza **la huida**, por el adarve, con la Bestia pisándote los
 talones (si te alcanza, te golpea; corres sin gastar aguante) y, de vez en cuando, un vistazo atrás. En cada tramo,
 **pulsaciones rápidas** (en un anillo que se vacía, a cámara lenta, lo que hay que pulsar parpadeando: la tecla,
 el ratón con el botón encendido o el botón del mando con su forma, gatillos y botones de los hombros): un sillar
@@ -749,9 +762,8 @@ la espada clavada tras el salto), por la espalda o desequilibrado por **dos parr
 la acometida se desvía cuando la punta está a punto de llegar). En el aire no le alcanza nada. A media vida corre a
 por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del pendón**,
 vuelta y media con la tela tendida que barre cuatro metros y medio (no se para: se esquiva). Lleva
-**armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; el facón, el
-60 %; la de la guardia, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen y la katana
-sagrada, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
+**armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; la de la
+guardia, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
 Vencido, no muere ahí: **la escena del final**. Herido, se endereza y deja caer la espada con todo el cuerpo; tu hoja
 la para y **chocan**, hoja contra hoja, a cámara lenta. En el pulso le arden los ojos tras las rendijas del yelmo y,
 de pronto, se le apagan: **se da cuenta** de que no es él quien empuja. Te aparta y **salta hacia atrás**, lejos,
@@ -874,10 +886,10 @@ icono va junto a la vida).
   grandes, y el golpe de gracia hace el doble; a cambio, no se puede bloquear).
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
-canta, hay un parón seco y un destello, y te vuelves hacia quien te ataca. La ventana dura 0,2 s (la katana, 0,24;
-el hacha, que para con el mango, 0,16), la **dureza** del arma la alarga o la acorta (con la oxidada, 0,18; con la
+canta, hay un parón seco y un destello, y te vuelves hacia quien te ataca. La ventana dura 0,2 s (el hacha, que
+para con el mango, 0,16), la **dureza** del arma la alarga o la acorta (con la oxidada, 0,18; con la
 de Solingen, casi 0,21) y machacar el botón la acorta. Cada familia de arma tiene sus animaciones de
-desvío, dos que se alternan en los combos de varios golpes: con escudo (facón, lanza, espada) lo saca hacia fuera
+desvío, dos que se alternan en los combos de varios golpes: con escudo (lanza, espadas) lo saca hacia fuera
 apartando el golpe o lo alza para desviarlo hacia arriba, con el arma atrás, lista; a dos manos barre el golpe con
 la hoja (o con el mango del hacha) hacia uno u otro lado. Mantener la guardia sigue siendo bloquear.
 Tras un parry la criatura queda **desequilibrada**, cada una con su animación (la hoz o la espada despedidas hacia
@@ -912,7 +924,7 @@ El brazo del escudo lo lleva con soltura (muelles de guiñada, cabeceo y alabeo,
 marcha y carrera) y, si aun así fuera a meterse en el torso, la hombrera, la cadera o la pierna, se aparta; al trotar
 y correr la hoja va por delante.
 
-**Armas.** Ocho armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
+**Armas.** Seis armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
 pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación), y con sus **cualidades**
 (`STATS`, en `entities/weapons.js`), que se ven en su ficha del inventario y hacen lo que dicen:
 - **Peso**: cuanto más pesa, más despacio va (la oxidada, más ligera, golpea un 6 % más deprisa; la de Solingen, un
@@ -921,30 +933,29 @@ pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y
   punto, un 0,4 % más o menos: la ventana del parry, lo que le dura el desequilibrio a quien se le desvía, el aguante
   que devuelve un desvío, lo que cuesta bloquear con el arma (a dos manos) y lo que cansa que te paren un golpe.
 - **Crítico**: la probabilidad de que un golpe cualquiera salga crítico (además de los de siempre: por la espalda, sin
-  que se lo espere, tras un parry); del 3 % de la oxidada al 15 % del facón. También los virotes.
+  que se lo espere, tras un parry); del 3 % de la oxidada al 10 % de la ballesta. También los virotes.
 - **Filo, golpe pesado, alcance y aguante**: los de su repertorio (la familia de la espada, en `swordVariant`: la
-  oxidada corta la mitad, cansa un 15 % menos y alcanza un 6 % menos; la de Solingen corta un 35 % más y alcanza un 4 %
-  más).
-- **Lo especial**, en palabras: a una o a dos manos, a distancia, quiebra guardias, iaijutsu…
+  oxidada corta el 42,5 % —la mitad, y de eso un 15 % menos—, cansa un 15 % menos y alcanza un 6 % menos; la de
+  Solingen corta un 35 % más y alcanza un 4 % más).
+- **Lo especial**, en palabras: a una o a dos manos, a distancia, quiebra guardias…
 
-Por el orden en que se encontrarán:
-- **Facón criollo** (una mano, con escudo; no cuadra con la historia: quedará como huevo de pascua): agazapado, cuatro cortes cortos que se encadenan (tajo, revés con el
-  contrafilo, tajo corrido y puñalada), molinete de dos tajos y puñalada a fondo; hiere más por la espalda.
-- **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango): golpes lentos y demoledores que
-  desequilibran a casi cualquiera, barrido con las manos deslizándose por el mango y un hachazo del verdugo que se
-  carga manteniendo el botón, rompe la guardia y parte el suelo con una onda.
-- **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
-  que se lanza sin bajar el escudo.
+(El facón criollo y la katana sagrada, que no eran de su tiempo, ya no están en el juego; si una partida guardada los
+tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mundo; por el orden en que se encuentran:
 - **Espada oxidada** (una mano, con escudo; **la primera**: clavada en la espalda del guardia muerto del pasillo de las
   celdas, nada más salir de la tuya): una espada de munición comida de herrumbre, con mellas; se maneja como la de la
-  guardia, pero **corta la mitad**, pesa menos (va algo más deprisa y cansa menos), su hoja es más corta, ataja peor y
-  contra armadura hace la mitad.
-- **Espada de la guardia** (antes, «del carcelero»; una mano, con escudo; en la armería de la puerta de la fortaleza,
-  apoyada en la muralla al cabo de las astas): la de siempre, el doble que la oxidada.
+  guardia, pero **corta menos de la mitad** (el 42,5 %) y su golpe de gracia, la cuarta parte (27 frente a 108), pesa
+  menos (va algo más deprisa y cansa menos), su hoja es más corta, ataja peor y contra armadura hace la mitad.
 - **Escudo de madera** (el del guardia muerto, al brazo): de lágrima, de tablas de pino con el canto de hierro y la
   cruz de Braga.
-- **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
-  al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
+- **Espada de la guardia** (antes, «del carcelero»; una mano, con escudo; en la armería de la puerta de la fortaleza,
+  apoyada en la muralla al cabo de las astas): la de siempre, más del doble que la oxidada.
+- **Lanza de la muralla** (una mano, con escudo; en **el adarve de levante** de la fortaleza, apoyada en la almena de
+  al lado del guardia caído de bruces, con la moharra asomando por encima): estocadas largas y rectas, un barrido con
+  el asta y una estocada que se lanza sin bajar el escudo.
+- **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango; clavada en la estaca de la barricada de
+  lo alto del Postigo: **se arranca en la escena de la Bestia de Carne**): golpes lentos y demoledores que
+  desequilibran a casi cualquiera, barrido con las manos deslizándose por el mango y un hachazo del verdugo que se
+  carga manteniendo el botón, rompe la guardia y parte el suelo con una onda.
 - **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller del ballestero, sobre la guardia de la
   puerta de la fortaleza): el ataque
   ligero la alza a la cara y tira un virote, que vuela recto y deprisa (cae un poco), se clava donde da y tumba a las
@@ -954,9 +965,11 @@ Por el orden en que se encontrarán:
   sólo los hay en la fortaleza: en la guardia, en la armería, en el taller, en el cadalso, en la galería de la sala
   del trono y en el carcaj del alférez.
 
-Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
-queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`
-(o `hacha`, `lanza`, `oxidada`, `espada`, `solingen`, `katana`, `ballesta`).
+- **Espada de Solingen** (una mano, con escudo; clavada en el hogar de la Casa del Alemán, ver arriba): un 35 % más
+  que la de la guardia.
+
+Al recogerlas se empuñan y el arma queda guardada en la partida. Para probarlas sin ir a por ellas:
+`?dev=1&arma=hacha` (o `lanza`, `oxidada`, `espada`, `solingen`, `ballesta`).
 
 Sus animaciones siguen la estructura de un golpe real: anticipación que frena, impacto que se cruza a la velocidad
 máxima y final del tajo que frena desde ahí (una sola campana de velocidad, sin paradas ni rebotes: tangentes
@@ -1328,7 +1341,8 @@ src/
                         armaduras.js, sus tres armaduras (la de guardia, la de caballero y la de cuero) en las cuatro
                         piezas de las ranuras del inventario, y cómo se visten sobre el cuerpo (aún sin enganchar);
                         armas: weapons.js (registro y clips comunes), weapon_moves.js
-                        (golpes del facón, el hacha, la lanza y la katana), weapon_models.js (modelos) y
+                        (golpes del hacha —y cómo se forcejea con ella clavada y se arranca—, la lanza y la
+                        ballesta), weapon_models.js (modelos) y
                         weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
                         y la de capas, con escaleras y pisos), interfaz, iconos, guardado, textos y cinemáticas
@@ -1489,7 +1503,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        bloqueo y curación contra un enemigo real
                         armas.mjs      el principio y las cualidades: el guardia caído (su escudo, la espada
                                        que se arranca, el que se levanta al fondo, el cuerpo que para el paso),
-                                       la oxidada a la mitad que la de la guardia, la dureza (la ventana del
+                                       la oxidada al 42,5 % de la de la guardia (la gracia, a la cuarta
+                                       parte), la dureza (la ventana del
                                        parry), el paso de cada arma, la ficha del inventario con sus barras y
                                        su comparación, y la espada de la guardia en la armería (capturas: con
                                        «capturas»)
@@ -1518,9 +1533,10 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        su reacción, sus errores, si enciende braseros) con un equipo (base o
                                        medio) entra por la niebla y pelea hasta vencer o morir; cuánto dura
                                        cada fase, de dónde le viene el daño, ampollas, presas, caídas
-                        beastchase.mjs el Empalado se transforma y un jugador robot hace la huida entera
-                                       pulsando los avisos (con «fallos», falla algunos y muere en el fanal
-                                       para probar el reintento): llega a la atalaya y queda vencido
+                        beastchase.mjs el Empalado se transforma y un jugador robot hace la escena del hacha
+                                       y la huida entera pulsando los avisos (con «fallos», falla algunos y
+                                       muere en el fanal para probar el reintento): arranca el hacha de la
+                                       estaca, llega a la atalaya y queda vencido
                         doorways.mjs   nada tapa los arcos y puertas de las bodegas, las bocas de las
                                        grutas ni las palancas
                         clipcheck.mjs  interpenetraciones de cada animación de una criatura (campanero,

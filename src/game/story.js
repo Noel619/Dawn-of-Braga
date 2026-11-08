@@ -2,41 +2,35 @@
 // la historia se cuenta sobre todo con el escenario.
 
 export const ITEMS = {
-  // Armas (weapon: id en src/entities/weapons.js). El hacha y la lanza
-  // todavía no están colocadas en el mundo. El facón y la katana no son de
-  // su tiempo (el juego pasa en 1167): no se colocan; quedan para algún
-  // guiño escondido.
-  facon: {
-    name: 'Facón criollo',
-    desc: 'Cuchillo largo de un marinero del Río de la Plata, con guardas de plata en S. Corto y veloz: tajos que se encadenan y una puñalada que remata.',
-    icon: 'facon',
-    key: false,
-    weapon: 'facon',
-  },
+  // Armas (weapon: id en src/entities/weapons.js), todas en su sitio: la
+  // oxidada en el pasillo de las celdas, la de la guardia y la ballesta en
+  // la puerta de la fortaleza, la lanza en el adarve de levante, el hacha en
+  // la barricada del Postigo (la arranca en la escena de la Bestia) y la de
+  // Solingen en la casa de Henrique.
   hacha: {
     name: 'Hacha barbada',
-    desc: 'Hacha de mango largo de los leñadores del Gerês. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
+    desc: 'Hacha de mango largo de los leñadores del Gerês. Estaba clavada hasta el ojo en la estaca de la barricada de lo alto del Postigo, y nadie había podido sacarla; la arrancaste cuando la Bestia de Carne se te echó encima. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
     icon: 'axe',
     key: false,
     weapon: 'hacha',
   },
   lanza: {
     name: 'Lanza de la muralla',
-    desc: 'Lanza de la guardia del adarve, con la moharra en hoja de laurel y un lazo rojo. Mantiene a raya: estocadas largas sin bajar el escudo.',
+    desc: 'Lanza de la guardia del adarve, con la moharra en hoja de laurel y un lazo rojo atado bajo el cubo. Estaba apoyada en una almena del adarve de levante de la fortaleza, al lado de su dueño, que cayó de bruces sin llegar a cogerla. Mantiene a raya: estocadas largas sin bajar el escudo.',
     icon: 'spear',
     key: false,
     weapon: 'lanza',
   },
   oxidada: {
     name: 'Espada oxidada',
-    desc: 'Una espada de munición de la guarnición, de las que se daban a cualquiera: la herrumbre se ha comido la hoja y los filos tienen mellas. Estaba clavada en la espalda de un guardia, en el pasillo de las celdas: lo dejaron clavado al suelo con ella. Pesa poco y va deprisa, pero corta la mitad que una espada buena, y contra una cota, la armadura se lleva la mitad de lo que queda.',
+    desc: 'Una espada de munición de la guarnición, de las que se daban a cualquiera: la herrumbre se ha comido la hoja y los filos tienen mellas. Estaba clavada en la espalda de un guardia, en el pasillo de las celdas: lo dejaron clavado al suelo con ella. Pesa poco y va deprisa, pero corta menos de la mitad que una espada buena (y rematando, la cuarta parte), y contra una cota, la armadura se lleva la mitad de lo que queda.',
     icon: 'oxidada',
     key: false,
     weapon: 'oxidada',
   },
   espada: {
     name: 'Espada de la guardia',
-    desc: 'Espada larga de la guardia de la fortaleza, de buen hierro y bien cuidada: estaba en la armería de la puerta, entre las lanzas, con la hoja aceitada. Tiene alguna mella, pero corta el doble que una de munición y ataja mejor.',
+    desc: 'Espada larga de la guardia de la fortaleza, de buen hierro y bien cuidada: estaba en la armería de la puerta, entre las lanzas, con la hoja aceitada. Tiene alguna mella, pero corta más del doble que una de munición y ataja mejor.',
     icon: 'sword',
     key: false,
     weapon: 'espada',
@@ -47,13 +41,6 @@ export const ITEMS = {
     icon: 'solingen',
     key: false,
     weapon: 'solingen',
-  },
-  katana: {
-    name: 'Katana sagrada',
-    desc: 'Hoja curva traída del Japón por un jesuita y bendecida en la Sé. Su acero reluce en la oscuridad. Se desenvaina y corta en un solo gesto.',
-    icon: 'katana',
-    key: false,
-    weapon: 'katana',
   },
   // las cinco llaves de la reja de la cripta de la Sé (PLAN_CASTILLO.md, §7)
   llave_alferez: {
@@ -1491,6 +1478,10 @@ export const MSG = {
   barred: 'Está atrancada desde el otro lado.',
   boarded: 'La puerta está cegada con tablones clavados. Necesitas algo para arrancarlos.',
   barricadaFrente: 'La barricada no se mueve: está clavada y apuntalada desde el otro lado. Por aquí no se pasa.',
+  // el hacha barbada, clavada en la estaca de la barricada del Postigo (la
+  // arranca en la escena de la Bestia de Carne: game/beast_chase.js)
+  hachaClavada: 'Un hacha barbada de leñador, clavada hasta el ojo en la estaca de la barricada. Tiras del mango con las dos manos y no se mueve: la madera la tiene cogida.',
+  hachaArrancada: 'Has arrancado el hacha barbada.',
   cordeleriaTranca: 'Atrancada por el otro lado. Al otro lado, la tienda del cordelero.',
   portonCerrado: 'La boca de la calleja, cerrada con tablas clavadas por dentro. En las tablas, una cruz de cal y un cartel: CVARENTENA. Detrás, ni un ruido. Con algo de hierro se arrancarían.',
   portonArranca: 'Metes la palanca entre las tablas y tiras. Saltan los clavos, y el portón de la cuarentena se viene abajo. Huele a cal y a vinagre.',

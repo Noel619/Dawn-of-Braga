@@ -26,6 +26,7 @@ import { clip as rigClip, e2q, Spring } from './rig.js';
 import { resolveWeaponArms } from './weapon_common.js';
 import { GAIT } from './locomotion.js';
 import { buildImpaled, IMP, RAM_GRIP } from './impaled_model.js';
+import { cloneMat } from '../gfx/materials.js';
 import { clamp, damp, lerp, DEG, angleDiff } from '../core/util.js';
 
 const V3 = THREE.Vector3;
@@ -407,7 +408,9 @@ function smashWith(e, c, r, from, heavy = true) {
   const B = e.game.breakables;
   if (!B) return;
   for (const it of B.list) {
-    if (it.broken || Math.abs(it.y - e.pos.y) > 4) continue;
+    // (la barricada del norte, con el hacha en su estaca, sólo la revienta la
+    // Bestia, en su embestida: beast_chase.js)
+    if (it.broken || it.beastOnly || Math.abs(it.y - e.pos.y) > 4) continue;
     if (!sphereBox(it, c, r)) continue;
     if ((e.data.smashed || (e.data.smashed = new Set())).has(it)) continue;
     e.data.smashed.add(it);
@@ -438,7 +441,10 @@ const STAGES = [
 export const BEAST_AT = 0.25;
 
 // Desprende los grupos del cuerpo: cada malla pasa a ser un trozo suelto con
-// su física (rebota, gira y se queda en el suelo) y debajo asoma la carne.
+// su física (rebota, gira, se tumba de plano y se queda en el suelo) y debajo
+// asoma la carne. Cada trozo lleva su propio material: si compartiera el del
+// cuerpo, se encendería con cada golpe que le dieras al Empalado (su destello
+// tiñe sus materiales) y llevaría la luz del sitio donde está él, no la suya.
 export function shedArmor(e, grps, o = {}) {
   const g = e.game;
   const D = e.P.debris || (e.P.debris = []);
@@ -449,10 +455,12 @@ export function shedArmor(e, grps, o = {}) {
     if (!m.visible || !grps.includes(m.userData.grp)) continue;
     m.updateWorldMatrix(true, false);
     if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
     const bs = m.geometry.boundingSphere;
     // un grupo con el centro de la pieza como origen (gira sobre sí misma)
     const grp = new THREE.Group();
-    const inner = new THREE.Mesh(m.geometry, m.material);
+    const mat = debrisMat(m.material);
+    const inner = new THREE.Mesh(m.geometry, mat);
     inner.position.copy(bs.center).negate();
     grp.add(inner);
     m.matrixWorld.decompose(grp.position, grp.quaternion, grp.scale);
@@ -467,6 +475,8 @@ export function shedArmor(e, grps, o = {}) {
     const k = o.k ?? 1;
     D.push({
       o: grp,
+      inner,
+      mat,
       v: new V3(dx * (2 + Math.random() * 3) * k, (2.5 + Math.random() * 3) * k, dz * (2 + Math.random() * 3) * k),
       w: new V3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9),
       r: Math.min(0.45, bs.radius * 0.5),
@@ -479,29 +489,134 @@ export function shedArmor(e, grps, o = {}) {
   if (!o.quiet && g.audio) g.audio.play('armorFall', { x: cx, y: e.pos.y + 2.4, z: cz });
 }
 
+// Copia del material de la pieza, tal como es (sin el destello del golpe ni
+// el rojo de la transformación que pueda llevar el cuerpo en ese momento) y
+// con la luz que tenía en el cuerpo, hasta que se posa (debrisLight).
+function debrisMat(src) {
+  const c = cloneMat(src);
+  const be = src.userData.baseEm;
+  if (c.emissive && be && be.isColor) c.emissive.copy(be);
+  if (src._u && c._u) {
+    c._u.uProbe.value.copy(src._u.uProbe.value);
+    c._u.uGround.value.copy(src._u.uGround.value);
+  }
+  return c;
+}
+
+// La luz del sitio donde se ha posado (la sonda) y la sombra del suelo.
+function debrisLight(g, d, gy) {
+  const u = d.mat._u;
+  if (!u || !g.probe) return;
+  const p = d.o.position;
+  const zn = g.zoneAt(p);
+  const rid = zn && zn.room ? g.level.ctx.wb.roomId(zn.room) : 0;
+  const q = g.probe.sample(p.x, p.y + 0.6, p.z, rid);
+  u.uProbe.value.set(q[0], q[1], q[2]);
+  u.uGround.value.set(gy, 0.34);
+}
+
+// Lo más bajo del trozo, respecto a su centro, con el giro que lleva: con las
+// esquinas de su caja (deprisa, mientras vuela) o con sus vértices (exacto,
+// al posarse).
+const _c = new V3(),
+  _qflat = new THREE.Quaternion(),
+  _up = new V3(0, 1, 0);
+function lowY(d, exact = false) {
+  const geo = d.inner.geometry,
+    off = d.inner.position,
+    q = d.o.quaternion,
+    s = d.o.scale;
+  let lo = Infinity;
+  if (exact) {
+    const P = geo.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      _c.set(P.getX(i), P.getY(i), P.getZ(i)).add(off).multiply(s).applyQuaternion(q);
+      if (_c.y < lo) lo = _c.y;
+    }
+    return lo;
+  }
+  const b = geo.boundingBox;
+  for (let i = 0; i < 8; i++) {
+    _c.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z)
+      .add(off)
+      .multiply(s)
+      .applyQuaternion(q);
+    if (_c.y < lo) lo = _c.y;
+  }
+  return lo;
+}
+
+// El giro con el que se queda tumbado: el más cercano al que lleva, con la
+// cara más ancha de la pieza (la de su eje más corto) hacia arriba o hacia
+// abajo; así no se queda de canto ni de punta.
+function flatQuat(d, out) {
+  const b = d.inner.geometry.boundingBox,
+    s = d.o.scale;
+  const ext = [(b.max.x - b.min.x) * Math.abs(s.x), (b.max.y - b.min.y) * Math.abs(s.y), (b.max.z - b.min.z) * Math.abs(s.z)];
+  const k = ext.indexOf(Math.min(...ext));
+  _c.set(k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0).applyQuaternion(d.o.quaternion);
+  if (_c.y < 0) _c.negate();
+  _qflat.setFromUnitVectors(_c, _up);
+  return out.copy(_qflat).multiply(d.o.quaternion);
+}
+
+// Altura del suelo de verdad bajo (x, z): sin los muros invisibles (el
+// parapeto del Postigo entre las almenas, los de las zonas que no se pisan),
+// que lo que cae no se quede flotando encima de ellos.
+const groundAt = (col, x, z, yMax) => col.groundHeight(x, z, 0.05, yMax, true);
+
 export function updateDebris(e, dt) {
   const D = e.P.debris;
   if (!D || !D.length) return;
-  const col = e.game.world.col;
+  const g = e.game;
+  const col = g.world.col;
   for (const d of D) {
-    if (d.rest) continue;
+    const p = d.o.position;
+    if (d.rest) {
+      // ¿sigue teniendo dónde apoyarse? (lo que había debajo, un barril, el
+      // torno, la barricada, una almena, se ha roto): si no, vuelve a caer
+      d.chk = (d.chk ?? Math.random() * 0.3) - dt;
+      if (d.chk > 0) continue;
+      d.chk = 0.3;
+      const gy = groundAt(col, p.x, p.z, p.y + d.low + 0.3);
+      if (p.y + d.low <= gy + 0.06) continue;
+      d.rest = false;
+      d.settle = null;
+      d.v.set(0, 0, 0);
+      d.w.set((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3);
+      d.t = 0;
+    }
     d.t += dt;
+    // tumbándose: del giro con que tocó el suelo al de plano, apoyado
+    if (d.settle) {
+      const S = d.settle;
+      S.u = Math.min(1, S.u + dt / S.dur);
+      d.o.quaternion.slerpQuaternions(S.q0, S.q1, S.u * S.u * (3 - 2 * S.u));
+      const exact = S.u >= 1;
+      d.low = lowY(d, exact);
+      p.y = S.gy - d.low;
+      if (exact) {
+        d.settle = null;
+        d.rest = true;
+        debrisLight(g, d, S.gy);
+      }
+      continue;
+    }
     d.v.y -= 20 * dt;
-    d.o.position.addScaledVector(d.v, dt);
+    p.addScaledVector(d.v, dt);
     d.o.rotation.x += d.w.x * dt;
     d.o.rotation.y += d.w.y * dt;
     d.o.rotation.z += d.w.z * dt;
-    const p = d.o.position;
-    const gy = col.groundHeight(p.x, p.z, 0.05, p.y + 0.6) + d.r;
-    if (p.y < gy) {
-      p.y = gy;
+    d.low = lowY(d);
+    const gy = groundAt(col, p.x, p.z, p.y + d.low + 0.6);
+    if (p.y + d.low < gy) {
+      p.y = gy - d.low;
       if (Math.abs(d.v.y) < 1.5 || d.t > 4) {
+        // se tumba de plano, sin quedarse de canto
         d.v.set(0, 0, 0);
-        d.rest = true;
-        // tumbada: sin quedar de canto
-        d.o.rotation.x = Math.round(d.o.rotation.x / (Math.PI / 2)) * (Math.PI / 2) * 0.15 + d.o.rotation.x * 0.85;
+        d.settle = { q0: d.o.quaternion.clone(), q1: flatQuat(d, new THREE.Quaternion()), u: 0, dur: 0.22, gy };
       } else {
-        if (d.metal && d.v.y < -4 && e.game.audio) e.game.audio.play('armorClank', { x: p.x, y: p.y, z: p.z });
+        if (d.metal && d.v.y < -4 && g.audio) g.audio.play('armorClank', { x: p.x, y: p.y, z: p.z });
         d.v.y *= -0.35;
         d.v.x *= 0.55;
         d.v.z *= 0.55;
@@ -512,17 +627,27 @@ export function updateDebris(e, dt) {
     for (const ax of [0, 2]) {
       const dir = ax === 0 ? Math.sign(d.v.x) : Math.sign(d.v.z);
       if (!dir) continue;
-      if (col.raycast(p.x, p.y, p.z, ax === 0 ? dir : 0, 0, ax === 2 ? dir : 0, d.r + 0.05, (b) => b.maxy - b.miny > 0.6 && !b.camOnly) !== Infinity) {
+      if (col.raycast(p.x, p.y, p.z, ax === 0 ? dir : 0, 0, ax === 2 ? dir : 0, d.r + 0.05, (b) => b.maxy - b.miny > 0.6 && !b.camOnly && b.fall !== false) !== Infinity) {
         if (ax === 0) d.v.x *= -0.3;
         else d.v.z *= -0.3;
       }
     }
+    // (si se va muy abajo, fuera del mundo, se quita)
+    if (p.y < -30) {
+      g.scene.remove(d.o);
+      d.gone = true;
+    }
   }
+  if (D.some((d) => d.gone)) e.P.debris = D.filter((d) => !d.gone);
 }
 
 export function clearDebris(e) {
   const D = e.P.debris;
-  if (D) for (const d of D) e.game.scene.remove(d.o);
+  if (D)
+    for (const d of D) {
+      e.game.scene.remove(d.o);
+      d.mat && d.mat.dispose();
+    }
   e.P.debris = [];
   for (const m of e.rig.meshes) m.visible = true;
 }
@@ -673,7 +798,7 @@ function preHit(e, dmg, poise) {
 function update(e, dt, player) {
   const g = e.game;
   const P = e.P;
-  updateDebris(e, dt);
+  // (los trozos de su armadura caen y se posan aunque él no esté: game.js)
   if (e.dead || e.data.transforming) return;
   // la armadura se le va cayendo
   const f = e.hp / e.maxHp;
@@ -761,7 +886,7 @@ function update(e, dt, player) {
         // lo que encuentra delante, lo atraviesa (o se estrella)
         const B = g.breakables;
         const br = B && B.contact(e.pos.x, e.pos.z, e.body.radius + 0.5, fx, fz, e.pos.y);
-        if (br) {
+        if (br && !br.beastOnly) {
           B.shatter(br, e.pos);
           g.camRig.shake(0.3);
         }

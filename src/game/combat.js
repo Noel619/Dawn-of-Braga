@@ -67,7 +67,7 @@ export class Combat {
       // tras un parry: todo golpe es crítico; si no, a veces, según el arma:
       // su probabilidad de crítico, weapons.js)
       const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext || (player.hasSword && Math.random() < (player.weapon.critico || 0));
-      // atkMul: pesado cargado; crit: el facón hiere más por la espalda
+      // atkMul: pesado cargado; crit: lo que multiplica un crítico de ese golpe
       const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
       if (r !== 'blocked' && r !== 'none') {
@@ -96,10 +96,9 @@ export class Combat {
         g.input.rumble(0.4, 0.6, 90);
       } else if (r !== 'none') {
         const f = player.forward();
-        this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, atk.holy ? 0xffe6a0 : 0xff9070);
+        this.impactFlash(hx, hy, hz, atk.heavy ? 1.7 : 1.2, 0xff9070);
         // (de la piedra saltan esquirlas, no sangre)
         g.fx.blood.emit(hx, hy, hz, atk.heavy ? 34 : 20, { dir: { x: f.x, z: f.z }, speed: atk.heavy ? 6 : 4.5, color: e.T.blood });
-        if (atk.holy) g.fx.blood.emit(hx, hy, hz, 10, { color: [1, 0.86, 0.45], speed: 3, life: 0.45, up: 1.2, gravity: -1 });
         g.audio && g.audio.play(atk.hitSnd || (atk.heavy ? 'hitHeavy' : 'hit'), e.pos);
         g.hitstop = Math.max(g.hitstop, atk.heavy ? 0.12 : 0.07);
         g.camRig.shake(atk.heavy ? 0.28 : 0.14);
@@ -285,7 +284,7 @@ export class Combat {
     const hx = e.pos.x - (dx / d) * e.body.radius * 0.5,
       hy = e.pos.y + Math.min(1.3, e.T.height * 0.55),
       hz = e.pos.z - (dz / d) * e.body.radius * 0.5;
-    this.impactFlash(hx, hy, hz, 1.5, p.weapon && p.weapon.holy ? 0xffe6a0 : 0xff8060);
+    this.impactFlash(hx, hy, hz, 1.5, 0xff8060);
     g.fx.blood.emit(hx, hy, hz, 60, { dir: { x: dx / d, z: dz / d }, speed: 7 });
     g.fx.blood.emit(hx, hy, hz, 24, { speed: 4, up: 2 });
     g.audio && g.audio.play('riposte', e.pos);
@@ -294,7 +293,7 @@ export class Combat {
     g.slowmo = { t: 0.32, k: 0.45 };
     g.camRig.shake(0.5);
     g.flash = Math.max(g.flash, 0.16);
-    g.flashTint = p.weapon && p.weapon.holy ? [1, 0.9, 0.62] : [1, 0.4, 0.25];
+    g.flashTint = [1, 0.4, 0.25];
     g.input.rumble(1, 1, 240);
     // el arma se queda un instante dentro
     p.anim.speed = 0.35;
