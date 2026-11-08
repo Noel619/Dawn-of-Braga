@@ -220,6 +220,32 @@ function commonClips(W, G, GUARD, BLOCK) {
       ],
       { ground: false }
     ),
+    // deslizarse de rodillas a la carrera (por debajo de la viga que arde):
+    // la pierna de delante estirada, la otra rodilla en el suelo, el cuerpo
+    // echado atrás y la cabeza mirando adelante; y vuelta a correr
+    slide: clip(
+      'slide',
+      0.9,
+      [
+        [0, { root: [0, -12, 0], chest: [22, 0, 0], legL: [-40, 0, 4], shinL: [60, 0, 0], legR: [22, 0, -4], shinR: [40, 0, 0], armL: [-30, 0, 20], foreL: [-40, 0, 0], armR: [-36, 0, -20], foreR: [-50, 0, 0] }],
+        [0.13, { root: [0, -50, 0], hips: [-34, 0, 0], chest: [-12, 0, 0], head: [34, 0, 0], legL: [-26, 0, 6], shinL: [6, 0, 0], legR: [44, 0, -6], shinR: [118, 0, 0], armL: [-24, 0, 52], foreL: [-30, 0, 0], armR: [-50, 0, -36], foreR: [-60, 0, 0] }, 'snap'],
+        [0.6, { root: [0, -48, 0], hips: [-30, 0, 0], chest: [-8, 0, 0], head: [30, 0, 0], legL: [-30, 0, 6], shinL: [10, 0, 0], legR: [42, 0, -6], shinR: [116, 0, 0], armL: [-28, 0, 46], foreL: [-34, 0, 0], armR: [-52, 0, -32], foreR: [-62, 0, 0] }],
+        [0.9, { root: [0, -14, 0], chest: [26, 0, 0], legL: [-50, 0, 4], shinL: [70, 0, 0], legR: [12, 0, -4], shinR: [50, 0, 0], armL: [-30, 0, 20], foreL: [-40, 0, 0], armR: [-36, 0, -20], foreR: [-50, 0, 0] }],
+      ],
+      { ground: false }
+    ),
+    // agacharse de golpe (un zarpazo le pasa por encima de la cabeza)
+    duck: clip(
+      'duck',
+      0.8,
+      [
+        [0, { ...GUARD }],
+        [0.12, { root: [0, -55, 0], hips: [20, 0, 0], chest: [40, 0, 0], head: [10, 0, 0], legL: [-110, 0, 8], shinL: [135, 0, 0], legR: [-80, 0, -8], shinR: [122, 0, 0], armL: [-50, 0, 30], foreL: [-70, 0, 0], armR: [-60, 0, -30], foreR: [-80, 0, 0] }, 'snap'],
+        [0.5, { root: [0, -52, 0], hips: [18, 0, 0], chest: [36, 0, 0], head: [6, 0, 0], legL: [-108, 0, 8], shinL: [132, 0, 0], legR: [-78, 0, -8], shinR: [120, 0, 0], armL: [-50, 0, 30], foreL: [-70, 0, 0], armR: [-60, 0, -30], foreR: [-80, 0, 0] }],
+        [0.8, { ...GUARD }],
+      ],
+      { ground: false }
+    ),
     // colgado del borde por las manos, pataleando
     hang: clip(
       'hang',

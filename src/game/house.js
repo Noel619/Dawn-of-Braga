@@ -980,9 +980,10 @@ export class HouseQuest {
           }
         }
         // los gritos desde arriba, cuando hay alguien cerca para oírlos
-        // (dentro de la casa, otros)
+        // (dentro de la casa, otros); huyendo de la Bestia por la muralla,
+        // no (pasa a menos de treinta metros y se colaban en la huida)
         const dd = Math.hypot(p.pos.x - A.door.x, p.pos.z - A.door.z);
-        if (dd < 30 && p.pos.y > -1) {
+        if (dd < 30 && p.pos.y > -1 && !(g.chase && g.chase.active)) {
           if (!this.seen && dd < 17) {
             this.seen = true;
             g.speech.say(this.who, DIALOG.henriqueSee, { dur: 4 });
