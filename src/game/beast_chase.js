@@ -28,7 +28,7 @@ import { shedArmor, IMP_CLIPS } from '../entities/impaled.js';
 import { CHASE } from '../world/level_walls.js';
 import { KEEP } from '../world/level_keep.js';
 import { objMat } from '../gfx/materials.js';
-import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
+import { buildParts, WEAPON_PARTS, AXE_HEAD } from '../entities/weapon_models.js';
 import { WEAPONS, weaponSet, resolveWeaponArms } from '../entities/weapons.js';
 import { sampleClip } from '../entities/rig.js';
 import { AREA_NAMES, MSG } from './story.js';
@@ -163,8 +163,8 @@ export class BeastChase {
     o.rotation.copy(rot0);
     o.updateMatrixWorld(true);
     // el centro del filo y hacia dónde entra en la madera (del personaje)
-    const edge = new V3(0, -0.3, 0.44).applyMatrix4(M);
-    const eye = new V3(0, -0.05, 0.45).applyMatrix4(M);
+    const edge = new V3(...AXE_HEAD.edge).applyMatrix4(M);
+    const eye = new V3(...AXE_HEAD.eye).applyMatrix4(M);
     const yaw = PI;
     const R = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), yaw);
     const bd = edge.clone().sub(eye).applyQuaternion(R);

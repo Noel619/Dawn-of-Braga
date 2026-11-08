@@ -22,19 +22,28 @@ function profile(pts, u0, d, mat, j) {
 }
 
 // ------------------------------------------------------------- hacha
-// Hacha barbuda a dos manos (la del verdugo): mango largo de fresno con
-// empuñaduras de cuero, cabeza de hierro con filo de acero y martillo detrás.
+// Hacha barbuda de mango largo (la de los leñadores del Gerês): un mango de
+// fresno de 1,25 m con dos empuñaduras de cuero abajo, cerca del regatón,
+// donde van las manos (la derecha, en z = 0; la izquierda, en AXE.grip2,
+// casi en el cabo), y la cabeza de hierro lejos de ellas, con su filo de
+// acero y el martillo detrás: alcanza, y el mango no se mete en el cuerpo.
+// (z a lo largo del mango, desde el puño derecho: el ojo de la cabeza, el
+// cabo, la izquierda; el centro del filo y del ojo, para quien lo necesite)
+export const AXE = { eye: 0.74, butt: -0.42, top: 0.82, grip2: -0.3 };
+const AXE_UP = AXE.eye - 0.45; // (cuánto más arriba va la cabeza que en el dibujo de la hoja)
+export const AXE_HEAD = { eye: [0, Y, AXE.eye], edge: [0, Y - 0.25, AXE.eye - 0.01] };
 export function axeParts(j = 'sword') {
+  const L = AXE.top - AXE.butt;
   return [
-    { j, type: 'box', s: [0.03, 0.038, 1.1], p: [0, Y, -0.02], mat: 'wooddark' },
-    { j, type: 'box', s: [0.037, 0.045, 0.17], p: [0, Y, -0.45], mat: 'leather' },
-    { j, type: 'box', s: [0.036, 0.044, 0.11], p: [0, Y, 0.0], mat: 'leather' },
-    { j, type: 'box', s: [0.042, 0.052, 0.035], p: [0, Y, -0.585], mat: 'iron' },
+    { j, type: 'box', s: [0.03, 0.038, L], p: [0, Y, (AXE.top + AXE.butt) / 2], mat: 'wooddark' },
+    { j, type: 'box', s: [0.037, 0.045, 0.17], p: [0, Y, AXE.grip2], mat: 'leather' },
+    { j, type: 'box', s: [0.036, 0.044, 0.12], p: [0, Y, 0.0], mat: 'leather' },
+    { j, type: 'box', s: [0.042, 0.052, 0.035], p: [0, Y, AXE.butt + 0.0175], mat: 'iron' },
     // tachones
-    ...[-0.25, 0.2].map((z) => ({ j, type: 'box', s: [0.036, 0.046, 0.018], p: [0, Y, z], mat: 'iron' })),
+    ...[-0.15, 0.3, 0.5].map((z) => ({ j, type: 'box', s: [0.036, 0.046, 0.018], p: [0, Y, z], mat: 'iron' })),
     // cabeza: ojo, martillo y hoja barbuda (filo hacia -Y)
-    { j, type: 'box', s: [0.05, 0.07, 0.15], p: [0, Y, 0.45], mat: 'iron' },
-    { j, type: 'box', s: [0.042, 0.05, 0.075], p: [0, Y + 0.058, 0.45], mat: 'iron' },
+    { j, type: 'box', s: [0.05, 0.07, 0.15], p: [0, Y, AXE.eye], mat: 'iron' },
+    { j, type: 'box', s: [0.042, 0.05, 0.075], p: [0, Y + 0.058, AXE.eye], mat: 'iron' },
     profile(
       [
         [0.515, -0.03],
@@ -49,7 +58,7 @@ export function axeParts(j = 'sword') {
         [0.35, -0.095],
         [0.385, -0.03],
       ],
-      0,
+      AXE_UP,
       0.017,
       'iron',
       j
@@ -69,7 +78,7 @@ export function axeParts(j = 'sword') {
         [0.515, -0.236],
         [0.567, -0.222],
       ],
-      0,
+      AXE_UP,
       0.02,
       'plate',
       j
@@ -354,10 +363,12 @@ export const WEAPON_PARTS = {
   ballesta: ballestaParts,
 };
 
-// Escudo colgado a la espalda (cuando se empuña un arma a dos manos).
+// Escudo colgado a la espalda (cuando se empuña un arma a dos manos): por
+// encima de la capa, que queda sujeta debajo (player.js no la deja
+// separarse de la espalda más de lo que cabe entre los dos).
 export function backShield(matFn = null) {
   const o = buildParts(shieldParts('x'), matFn);
-  o.group.position.set(0, 0.25, -0.215);
+  o.group.position.set(0, 0.25, -0.245);
   o.group.rotation.set(0.1, Math.PI, 0);
   return o;
 }

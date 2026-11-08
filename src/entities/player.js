@@ -250,7 +250,11 @@ export class Player {
     this.rig.joints.sword.visible = this.hasSword;
     this.rig.joints.shield.visible = this.hasShield && !two;
     this.shieldBack.group.visible = this.hasShield && two;
-    this.rig.joints.cloak.position.z = this.cloakZ0 - (this.hasShield && two ? 0.075 : 0);
+    // (la capa, en su sitio también con el escudo a la espalda: el escudo
+    // va por encima y la sujeta; antes se echaba atrás y quedaba en el
+    // mismo plano que él y lo atravesaba)
+    this.rig.joints.cloak.position.z = this.cloakZ0;
+    this.cloakPinned = this.hasShield && two;
   }
 
   // Con escudo, o con el propio arma si es a dos manos.
@@ -1409,6 +1413,12 @@ export class Player {
     // capa va debajo, no cuelga)
     const rollW = this.state === 'roll' || this.tumbado ? 0 : 1;
     pose.cloak = [cx + 0.07 - (chestP * 0.6 + hipsP * 0.5) * rollW + Math.sin(gait.phase * Math.PI * 4) * 0.025 * gait.mw, 0, cz];
+    // con el escudo a la espalda, la capa va debajo, sujeta: apenas se separa
+    // (más, y su bajo se metería en el escudo)
+    if (this.cloakPinned) {
+      pose.cloak[0] = clamp(pose.cloak[0], -0.15, 0.13);
+      pose.cloak[2] = clamp(pose.cloak[2], -0.12, 0.12);
+    }
     const ls = this.lampS.update(dt, clamp(-fwdSp * 0.05, -0.4, 0.4));
     pose.lantern = [ls + Math.sin(gait.phase * Math.PI * 4) * 0.08 * gait.mw, 0, 0];
     this.rig.apply(pose);

@@ -553,7 +553,14 @@ export class Beast {
     this.lift = 0; // altura sobre el suelo (saltos)
     this.anim = new Animator();
     this.anim.onEvent = (name) => this.onEvent && this.onEvent(name);
-    this.gait = new Biped(this.rig, { scale: 2.1, style: { ...GAIT.heavy, runFrom: 1.4, runTo: 2.6, lean: 4, leanRun: 6, liftRun: 0.2, armWalk: 14, armRun: 30 }, stance: 0.14 });
+    // (a la carrera, zancadas largas y pesadas con su vuelo, como un toro que
+    // embiste: unos tres metros por paso y dos pasos y medio por segundo a la
+    // velocidad de la huida; antes, pasitos cortos y rápidos bajo el cuerpo)
+    this.gait = new Biped(this.rig, {
+      scale: 2.1,
+      style: { ...GAIT.heavy, runFrom: 1.4, runTo: 2.6, strideK: 0.56, strideMax: 3.4, dutyRun: 0.3, lean: 4, leanRun: 8, liftRun: 0.3, bobRun: 0.075, twistRun: 14, chestTwistRun: 12, armWalk: 14, armRun: 30 },
+      stance: 0.14,
+    });
     this.gait.onStep = (side, w) => this.onStep && this.onStep(side, w);
     this._groundFn = (x, z) => game.world.col.groundHeight(x, z, 0.2, this.pos.y + 0.8);
     this._gp = new V3();
@@ -647,23 +654,29 @@ export class Beast {
     const sw = Math.cos(ph) * mw;
     const breath = S(t * 1.9) * (1 - mw * 0.6);
     const hunch = this.extraHunch;
-    // postura: encorvado (más al correr), la cabeza por delante
+    // postura: encorvado; a la carrera, embistiendo: el lomo adelante, casi
+    // tendido, la testuz baja con los cuernos por delante (no mirando al
+    // cielo), las patas largas (sin hundir la cadera) y, en cada zancada, el
+    // cuerpo que se estira y se recoge
+    const bound = Math.sin(ph * 2) * mw * run;
     pose.root = pose.root || [0, 0, 0];
-    pose.root[1] -= 0.1 + run * 0.06 + hunch * 0.15;
-    addRot(pose, 'hips', [(6 + run * 6) * DEG, 0, 0]);
-    pose.spine = [(12 + run * 8 + hunch * 10 + breath * 1.2) * DEG, -(pose.chest ? pose.chest[1] : 0) * 0.3, 0];
-    addRot(pose, 'chest', [(16 + run * 10 + hunch * 8 + breath * 2.5) * DEG, 0, 0]);
-    pose.neck = [(-12 - run * 8 - hunch * 6) * DEG, this.headLook * 0.4, 0];
-    pose.head = [(pose.head ? pose.head[0] : 0) + (-14 - run * 10 - hunch * 8 - breath * 1.5) * DEG, (pose.head ? pose.head[1] : 0) + this.headLook * 0.6, pose.head ? pose.head[2] : 0];
-    // brazos: cuelgan abiertos y se bambolean con la marcha
-    const armA = (8 + run * 34) * DEG;
-    pose.armL = [(-10 - run * 8) * DEG + sw * armA, 0, (16 + run * 8) * DEG + Math.abs(sw) * 4 * DEG];
-    pose.armR = [(-10 - run * 8) * DEG - sw * armA, 0, -(16 + run * 8) * DEG - Math.abs(sw) * 4 * DEG];
-    pose.foreL = [(-30 - run * 34 - Math.max(0, sw) * 20 * run) * DEG, 0, 0];
-    pose.foreR = [(-30 - run * 34 - Math.max(0, -sw) * 20 * run) * DEG, 0, 0];
-    pose.handL = [(-8 - run * 10) * DEG, 0, 0];
-    pose.handR = [(-8 - run * 10) * DEG, 0, 0];
-    pose.jaw = [(4 + run * 14 + Math.max(0, breath) * 4) * DEG, 0, 0];
+    pose.root[1] -= 0.1 + run * 0.02 + hunch * 0.15;
+    addRot(pose, 'hips', [(6 + run * 12 + bound * 3) * DEG, 0, 0]);
+    pose.spine = [(12 + run * 14 + hunch * 10 + breath * 1.2 - bound * 4) * DEG, -(pose.chest ? pose.chest[1] : 0) * 0.3, 0];
+    addRot(pose, 'chest', [(16 + run * 16 + hunch * 8 + breath * 2.5 + bound * 3) * DEG, 0, 0]);
+    pose.neck = [(-12 - run * 6 - hunch * 6) * DEG, this.headLook * 0.4, 0];
+    pose.head = [(pose.head ? pose.head[0] : 0) + (-14 + run * 22 - hunch * 8 - breath * 1.5 + bound * 3) * DEG, (pose.head ? pose.head[1] : 0) + this.headLook * 0.6, pose.head ? pose.head[2] : 0];
+    // brazos: cuelgan abiertos y se bambolean con la marcha; a la carrera
+    // bombean con todo el peso, adelante y atrás, abiertos, y por delante
+    // casi rozan el suelo con los nudillos
+    const armA = (8 + run * 50) * DEG;
+    pose.armL = [(-10 - run * 26) * DEG + sw * armA, 0, (16 + run * 14) * DEG + Math.abs(sw) * 6 * DEG];
+    pose.armR = [(-10 - run * 26) * DEG - sw * armA, 0, -(16 + run * 14) * DEG - Math.abs(sw) * 6 * DEG];
+    pose.foreL = [(-30 - run * 24 - Math.max(0, sw) * 46 * run) * DEG, 0, 0];
+    pose.foreR = [(-30 - run * 24 - Math.max(0, -sw) * 46 * run) * DEG, 0, 0];
+    pose.handL = [(-8 - run * 16) * DEG, 0, 0];
+    pose.handR = [(-8 - run * 16) * DEG, 0, 0];
+    pose.jaw = [(4 + run * 18 + Math.max(0, breath) * 4) * DEG, 0, 0];
     // clip de acción por encima
     const ap = this.anim.update(dt);
     const c = this.anim.clip;

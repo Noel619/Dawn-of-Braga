@@ -85,9 +85,13 @@ function commonClips(W, G, GUARD, BLOCK) {
       1.15,
       [
         [0, { ...G }],
+        // (el hacha baja por fuera, a la derecha)
+        ...(W.healUp ? [[0.14, { ...G, ...W.healUp, wGrip: [0.4, 0, 0] }]] : []),
         [0.3, healKey({ ikL: [8, 58, 26], elbowL: [1, -0.4, 0.1], head: [-5, 0, 0] })],
         [0.55, healKey({ ikL: [5, 68, 17], elbowL: [1, -0.2, 0.1], head: [-30, 0, 0], chest: [-8, 0, 0] }), 'hold'],
         [0.85, healKey({ ikL: [5, 68, 17], elbowL: [1, -0.2, 0.1], head: [-30, 0, 0], chest: [-8, 0, 0] })],
+        // (el hacha sube por fuera, a la derecha, sin pasar por el cuerpo)
+        ...(W.healUp ? [[1.0, { ...G, ...W.healUp, wGrip: [0.4, 0, 0] }]] : []),
         [1.15, { ...G }],
       ],
       { mask: UPPER, events: [{ t: 0.62, name: 'drink' }] }

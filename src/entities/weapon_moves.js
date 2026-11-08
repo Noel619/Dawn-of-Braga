@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { clip as rigClip, e2q, sampleClip, makeTrack, evalTrack } from './rig.js';
 import { bladeDir } from './locomotion.js';
+import { AXE } from './weapon_models.js';
 import { attack, STANCE, LUNGE, SHIELD_UP, SHIELD_GUARD } from './weapon_common.js';
 import { resolveArmsFn } from './weapon_common.js';
 import { DEG } from '../core/util.js';
@@ -354,57 +355,94 @@ const AST = { legL: [-20, 0, 9], shinL: [26, 0, 0], legR: [20, 0, -9], shinR: [2
 // por delante y a la derecha (rumbo, cabeceo y giro, en grados: el giro
 // pone la hoja de cara a la madera). La escena de la Bestia coloca al
 // jugador para que la hoja quede dentro de la estaca (beast_chase.js).
-export const AXE_TUG = { wrist: [-12, 112, 24], blade: [-32, 28, 55] };
+export const AXE_TUG = { wrist: [-34, 108, 32], blade: [-12, 26, 30] };
 const ALUNGE = { legL: [-44, 0, 8], shinL: [46, 0, 0], legR: [30, 0, -8], shinR: [14, 0, 0], root: [0, -20, 10] };
 const ACHOP = { legL: [-50, 0, 8], shinL: [52, 0, 0], legR: [34, 0, -8], shinR: [16, 0, 0], root: [0, -30, 14] };
 
+// El mango del hacha, de la mano derecha al cabo (AXE.butt, por detrás de
+// ella): si en una clave cruza el tronco (en el espacio del pecho, una caja
+// algo holgada que baja hasta la cadera), la muñeca se adelanta lo justo
+// para que el cabo quede por delante. Así ningún golpe se hace pegado al
+// cuerpo con el mango metido en el pecho.
+const TRONCO = { x: 0.25, y0: -0.42, y1: 0.6, z: 0.17 };
+function clearHaft(pose) {
+  if (!pose.ikR || !pose.bladeR) return pose;
+  const yw = pose.bladeR[0] * DEG,
+    pt = pose.bladeR[1] * DEG;
+  const dx = Math.sin(yw) * Math.cos(pt),
+    dy = Math.sin(pt),
+    dz = Math.cos(yw) * Math.cos(pt);
+  const wx = pose.ikR[0] / 100,
+    wy = pose.ikR[1] / 100;
+  let wz = pose.ikR[2] / 100,
+    push = 0;
+  for (let i = 0; i <= 10; i++) {
+    const u = (i / 10) * AXE.butt;
+    const x = wx + dx * u,
+      y = wy + dy * u,
+      z = wz + dz * u;
+    if (Math.abs(x) < TRONCO.x && y > TRONCO.y0 && y < TRONCO.y1 && z < TRONCO.z && z > -TRONCO.z) push = Math.max(push, TRONCO.z - z);
+  }
+  if (!push) return pose;
+  return { ...pose, ikR: [pose.ikR[0], pose.ikR[1], (wz + push) * 100] };
+}
+const axeKeys = (keys) => keys.map((k) => [k[0], clearHaft(k[1]), ...k.slice(2)]);
+
 function axeMoves(ctx) {
-  const { G } = ctx;
+  const { G, rig } = ctx;
   const g = { ...G };
   const CAN = [0.66, 0.7, 1.06];
-  // tajo al hombro: diagonal desde encima del hombro derecho al suelo
+  // Las claves, en el espacio del personaje (W2C): la muñeca derecha en cm
+  // desde los pies (+x izquierda, +z delante) y el mango con su rumbo y su
+  // cabeceo de verdad, aunque el torso se incline (en el del pecho, al
+  // rematar inclinado, el hacha quedaba vertical y se clavaba en el suelo).
+  // Golpes con los brazos extendidos y las manos en el cabo: la cabeza lejos
+  // y el mango, por delante del cuerpo (clearHaft lo vigila).
+  const A = (body, wrist, blade, extra = {}) => clearHaft({ ...body, ...W2C(rig, body, wrist, blade), elbowR: [-0.55, -0.7, -0.35], ...extra });
+  // tajo al hombro: de encima del hombro derecho, en diagonal, abajo a la izquierda
   const l1 = edgeClip(
     ctx,
     'a_light1',
     1.0,
-    [
+    axeKeys([
       [0, { ...AST, chest: [4, -8, 0], ...g }],
-      [0.28, { ...AST, root: [0, -8, -4], hips: [0, -10, 0], chest: [-6, -44, 0], head: [0, 22, 0], ikR: [-22, 60, 4], bladeR: [-150, 50, 0], elbowR: [-0.7, 0.1, -0.7] }, 'hold'],
-      [0.4, { ...ALUNGE, hips: [0, 4, 0], chest: [16, 0, 0], head: [-6, 0, 0], ikR: [-6, 30, 50], bladeR: [0, 10, 0], elbowR: [-0.5, -0.7, -0.3] }, 'smooth', HIT],
-      [0.52, { ...ALUNGE, root: [0, -22, 11], hips: [0, 16, 0], chest: [30, 44, 0], head: [-12, -22, 0], ikR: [14, -10, 36], bladeR: [70, -62, 0], elbowR: [-0.4, -0.8, -0.3] }, 'settle'],
-      [0.74, { ...AST, hips: [0, 6, 0], chest: [12, 20, 0], head: [-4, -8, 0], ikR: [0, 18, 38], bladeR: [10, 10, 0], elbowR: [-0.5, -0.7, -0.4] }],
+      [0.28, A({ ...AST, root: [0, -8, -4], hips: [0, -10, 0], chest: [-6, -40, 0], head: [0, 22, 0] }, [-30, 150, 8], [-150, 50], { elbowR: [-0.7, 0.1, -0.7] }), 'hold'],
+      [0.4, A({ ...ALUNGE, hips: [0, 4, 0], chest: [16, 0, 0], head: [-6, 0, 0] }, [-4, 118, 64], [8, -4]), 'smooth', HIT],
+      [0.52, A({ ...ALUNGE, root: [0, -22, 11], hips: [0, 16, 0], chest: [30, 40, 0], head: [-12, -22, 0] }, [26, 82, 54], [70, -46], { elbowR: [-0.4, -0.8, -0.3] }), 'settle'],
+      [0.74, A({ ...AST, hips: [0, 6, 0], chest: [12, 16, 0], head: [-4, -8, 0] }, [4, 110, 52], [10, 32])],
       [1.0, { ...g }],
-    ],
+    ]),
     { lag: LAG_HEAVY, events: [{ t: 0.32, name: 'swing' }] }
   );
-  // barrido: de la cadera izquierda, horizontal hacia la derecha
+  // barrido: de la cadera izquierda, en horizontal, hacia la derecha
   const l2 = edgeClip(
     ctx,
     'a_light2',
     1.02,
-    [
+    axeKeys([
       [0, poseAt(l1.c, CAN[0])],
-      [0.3, { ...AST, root: [0, -12, -2], hips: [0, 14, 0], chest: [10, 45, 0], head: [0, -24, 0], ikR: [22, 14, 8], bladeR: [75, 12, 0], elbowR: [0.2, -0.6, -0.8], wSlide: [0.6, 0, 0] }, 'hold'],
-      [0.42, { ...ALUNGE, hips: [0, 0, 0], chest: [14, 4, 0], head: [-4, 0, 0], ikR: [-2, 18, 50], bladeR: [22, 4, 0], elbowR: [-0.5, -0.7, -0.3], wSlide: [0.8, 0, 0] }, 'smooth', HIT],
-      [0.54, { ...AST, hips: [0, -14, 0], chest: [12, -48, 0], head: [-4, 22, 0], ikR: [-34, 18, 22], bladeR: [-80, 4, 0], elbowR: [-0.8, -0.4, -0.3], wSlide: [0.9, 0, 0] }, 'settle'],
-      [0.8, { ...AST, chest: [6, -20, 0], head: [0, 8, 0], ikR: [-16, 28, 32], bladeR: [-40, 30, 0], elbowR: [-0.6, -0.6, -0.4] }],
+      [0.3, A({ ...AST, root: [0, -12, -2], hips: [0, 14, 0], chest: [10, 45, 0], head: [0, -24, 0] }, [44, 102, 20], [110, 10], { elbowR: [0.2, -0.6, -0.8], wSlide: [0.6, 0, 0] }), 'hold'],
+      [0.42, A({ ...ALUNGE, hips: [0, 0, 0], chest: [14, 4, 0], head: [-4, 0, 0] }, [6, 108, 62], [20, 2], { wSlide: [0.8, 0, 0] }), 'smooth', HIT],
+      [0.54, A({ ...AST, hips: [0, -14, 0], chest: [12, -48, 0], head: [-4, 22, 0] }, [-46, 104, 34], [-110, 4], { elbowR: [-0.8, -0.4, -0.3], wSlide: [0.9, 0, 0] }), 'settle'],
+      [0.8, A({ ...AST, chest: [6, -20, 0], head: [0, 8, 0] }, [-16, 112, 48], [-30, 34])],
       [1.02, { ...g }],
-    ],
+    ]),
     { lag: LAG_HEAVY, events: [{ t: 0.34, name: 'swing' }] }
   );
-  // hachazo vertical: remate por encima de la cabeza
+  // hachazo vertical: remate por encima de la cabeza; la hoja muerde el suelo
+  // por delante, a la distancia del mango
   const l3 = edgeClip(
     ctx,
     'a_light3',
     1.15,
-    [
+    axeKeys([
       [0, poseAt(l2.c, CAN[1])],
-      [0.36, { ...AST, root: [0, -4, -4], chest: [-18, -6, 0], head: [-10, 6, 0], ikR: [-9, 88, -2], bladeR: [-8, 146, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.6, 0, 0] }, 'hold'],
-      [0.46, { ...ALUNGE, root: [0, -14, 6], chest: [14, -2, 0], head: [-8, 0, 0], ikR: [-6, 50, 52], bladeR: [-4, 30, 0], elbowR: [-0.6, -0.5, -0.3] }, 'smooth', HIT],
-      [0.56, { ...ACHOP, root: [0, -26, 13], chest: [42, 0, 0], head: [-20, 0, 0], ikR: [-6, -4, 48], bladeR: [-2, -64, 0], elbowR: [-0.5, -0.8, 0] }, 'settle'],
-      [0.84, { ...AST, chest: [14, 0, 0], head: [-6, 0, 0], ikR: [-6, 20, 40], bladeR: [-10, 10, 0], elbowR: [-0.5, -0.7, -0.4] }],
+      [0.36, A({ ...AST, root: [0, -4, -4], chest: [-18, -6, 0], head: [-10, 6, 0] }, [-8, 178, 10], [-4, 125], { elbowR: [-0.7, 0.2, -0.6], wSlide: [0.6, 0, 0] }), 'hold'],
+      [0.46, A({ ...ALUNGE, root: [0, -14, 6], chest: [14, -2, 0], head: [-8, 0, 0] }, [-6, 132, 64], [-4, 36], { elbowR: [-0.6, -0.5, -0.3] }), 'smooth', HIT],
+      [0.56, A({ ...ACHOP, root: [0, -24, 13], chest: [36, 0, 0], head: [-20, 0, 0] }, [-6, 78, 66], [-2, -34], { elbowR: [-0.5, -0.8, 0] }), 'settle'],
+      [0.84, A({ ...AST, chest: [14, 0, 0], head: [-6, 0, 0] }, [-8, 106, 52], [-12, 26])],
       [1.15, { ...AST, chest: [4, -8, 0], ...g }],
-    ],
+    ]),
     { lag: LAG_HEAVY, events: [{ t: 0.4, name: 'swing' }, { t: 0.56, name: 'impact' }] }
   );
   // hachazo del verdugo: se alza, se carga y cae partiendo el suelo
@@ -412,16 +450,16 @@ function axeMoves(ctx) {
     ctx,
     'a_heavy',
     1.6,
-    [
+    axeKeys([
       [0, { ...g }],
-      [0.3, { ...AST, root: [0, 2, -6], chest: [-24, -4, 0], head: [-14, 4, 0], ikR: [-8, 90, -4], bladeR: [-4, 156, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.65, 0, 0] }],
-      [0.5, { legL: [-24, 0, 10], shinL: [18, 0, 0], legR: [22, 0, -10], shinR: [10, 0, 0], root: [0, 5, -8], chest: [-30, -2, 0], head: [-18, 2, 0], ikR: [-6, 93, -10], bladeR: [0, 168, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.55, 0, 0] }, 'hold'],
-      [0.6, { ...ALUNGE, root: [0, -16, 8], chest: [16, -1, 0], head: [-10, 0, 0], ikR: [-5, 52, 54], bladeR: [-2, 28, 0], elbowR: [-0.6, -0.5, -0.3] }, 'smooth', HIT],
-      [0.7, { ...ACHOP, root: [0, -32, 14], chest: [48, 0, 0], head: [-22, 0, 0], ikR: [-4, -8, 50], bladeR: [0, -70, 0], elbowR: [-0.5, -0.8, 0] }, 'settle'],
-      [1.0, { ...ACHOP, root: [0, -28, 12], chest: [40, 0, 0], head: [-16, 0, 0], ikR: [-4, -2, 46], bladeR: [0, -62, 0], elbowR: [-0.5, -0.8, 0] }],
-      [1.25, { ...AST, chest: [16, 0, 0], head: [-6, 0, 0], ikR: [-6, 20, 40], bladeR: [-10, 20, 0], elbowR: [-0.5, -0.7, -0.4] }],
+      [0.3, A({ ...AST, root: [0, 2, -6], chest: [-24, -4, 0], head: [-14, 4, 0] }, [-8, 176, 6], [-4, 128], { elbowR: [-0.7, 0.2, -0.6], wSlide: [0.65, 0, 0] })],
+      [0.5, A({ legL: [-24, 0, 10], shinL: [18, 0, 0], legR: [22, 0, -10], shinR: [10, 0, 0], root: [0, 5, -8], chest: [-30, -2, 0], head: [-18, 2, 0] }, [-6, 182, 0], [0, 138], { elbowR: [-0.7, 0.2, -0.6], wSlide: [0.55, 0, 0] }), 'hold'],
+      [0.6, A({ ...ALUNGE, root: [0, -16, 8], chest: [16, -1, 0], head: [-10, 0, 0] }, [-5, 134, 66], [-2, 34], { elbowR: [-0.6, -0.5, -0.3] }), 'smooth', HIT],
+      [0.7, A({ ...ACHOP, root: [0, -30, 14], chest: [42, 0, 0], head: [-22, 0, 0] }, [-4, 72, 68], [0, -38], { elbowR: [-0.5, -0.8, 0] }), 'settle'],
+      [1.0, A({ ...ACHOP, root: [0, -26, 12], chest: [36, 0, 0], head: [-16, 0, 0] }, [-4, 74, 66], [0, -36], { elbowR: [-0.5, -0.8, 0] })],
+      [1.25, A({ ...AST, chest: [16, 0, 0], head: [-6, 0, 0] }, [-8, 106, 52], [-12, 28])],
       [1.6, { ...g }],
-    ],
+    ]),
     { lag: LAG_HEAVY, events: [{ t: 0.53, name: 'swing' }, { t: 0.7, name: 'impact' }] }
   );
   // salto con hachazo
@@ -429,14 +467,14 @@ function axeMoves(ctx) {
     ctx,
     'a_run',
     1.1,
-    [
-      [0, { ...AST, chest: [8, -10, 0], ikR: [-10, 40, 28], bladeR: [-40, 60, 0], elbowR: [-0.6, -0.4, -0.5] }],
-      [0.22, { legL: [-60, 0, 8], shinL: [80, 0, 0], legR: [10, 0, -8], shinR: [60, 0, 0], root: [0, 14, 6], chest: [-18, -10, 0], head: [-10, 6, 0], ikR: [-8, 89, -2], bladeR: [-6, 150, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.6, 0, 0] }, 'hold'],
-      [0.32, { ...ALUNGE, root: [0, -12, 10], chest: [16, -2, 0], head: [-8, 0, 0], ikR: [-5, 50, 54], bladeR: [-2, 28, 0], elbowR: [-0.6, -0.5, -0.3] }, 'smooth', HIT],
-      [0.42, { ...ACHOP, root: [0, -30, 16], chest: [46, 0, 0], head: [-20, 0, 0], ikR: [-4, -8, 50], bladeR: [0, -68, 0], elbowR: [-0.5, -0.8, 0] }, 'settle'],
-      [0.8, { ...AST, chest: [14, 0, 0], head: [-6, 0, 0], ikR: [-6, 20, 40], bladeR: [-10, 14, 0], elbowR: [-0.5, -0.7, -0.4] }],
+    axeKeys([
+      [0, A({ ...AST, chest: [8, -10, 0] }, [-12, 132, 46], [-40, 58], { elbowR: [-0.6, -0.4, -0.5] })],
+      [0.22, A({ legL: [-60, 0, 8], shinL: [80, 0, 0], legR: [10, 0, -8], shinR: [60, 0, 0], root: [0, 14, 6], chest: [-18, -10, 0], head: [-10, 6, 0] }, [-8, 186, 10], [-6, 126], { elbowR: [-0.7, 0.2, -0.6], wSlide: [0.6, 0, 0] }), 'hold'],
+      [0.32, A({ ...ALUNGE, root: [0, -12, 10], chest: [16, -2, 0], head: [-8, 0, 0] }, [-5, 132, 66], [-2, 34], { elbowR: [-0.6, -0.5, -0.3] }), 'smooth', HIT],
+      [0.42, A({ ...ACHOP, root: [0, -28, 16], chest: [40, 0, 0], head: [-20, 0, 0] }, [-4, 74, 68], [0, -38], { elbowR: [-0.5, -0.8, 0] }), 'settle'],
+      [0.8, A({ ...AST, chest: [14, 0, 0], head: [-6, 0, 0] }, [-8, 106, 52], [-12, 26])],
       [1.1, { ...g }],
-    ],
+    ]),
     { lag: LAG_HEAVY, events: [{ t: 0.26, name: 'swing' }, { t: 0.42, name: 'impact' }] }
   );
   // hachazo ascendente al salir de la voltereta
@@ -444,12 +482,12 @@ function axeMoves(ctx) {
     ctx,
     'a_roll',
     0.9,
-    [
-      [0, { root: [0, -26, 0], legL: [-50, 0, 8], shinL: [80, 0, 0], legR: [16, 0, -8], shinR: [60, 0, 0], chest: [28, -30, 0], head: [-12, 14, 0], ikR: [-24, -6, 26], bladeR: [-120, -40, 0], elbowR: [-0.8, -0.5, -0.2], wSlide: [0.7, 0, 0] }],
-      [0.12, { ...ALUNGE, root: [0, -16, 6], chest: [14, 2, 0], head: [-6, 0, 0], ikR: [-6, 26, 48], bladeR: [-10, 20, 0], elbowR: [-0.5, -0.6, -0.4] }, 'smooth', HIT],
-      [0.24, { ...AST, chest: [-6, 44, 0], head: [2, -18, 0], ikR: [14, 70, 26], bladeR: [90, 70, 0], elbowR: [-0.2, -0.5, -0.7] }, 'settle'],
+    axeKeys([
+      [0, A({ root: [0, -26, 0], legL: [-50, 0, 8], shinL: [80, 0, 0], legR: [16, 0, -8], shinR: [60, 0, 0], chest: [28, -30, 0], head: [-12, 14, 0] }, [-34, 62, 38], [-120, -34], { elbowR: [-0.8, -0.5, -0.2], wSlide: [0.7, 0, 0] })],
+      [0.12, A({ ...ALUNGE, root: [0, -16, 6], chest: [14, 2, 0], head: [-6, 0, 0] }, [-6, 112, 62], [-8, 22], { elbowR: [-0.5, -0.6, -0.4] }), 'smooth', HIT],
+      [0.24, A({ ...AST, chest: [-6, 44, 0], head: [2, -18, 0] }, [24, 168, 36], [80, 64], { elbowR: [-0.2, -0.5, -0.7] }), 'settle'],
       [0.9, { ...g }],
-    ],
+    ]),
     { windup0: true, lag: LAG_HEAVY, events: [{ t: 0.06, name: 'swing' }] }
   );
   // ---- la escena de la Bestia de Carne (game/beast_chase.js): el hacha,
@@ -457,7 +495,6 @@ function axeMoves(ctx) {
   // Forcejear: las dos manos en el mango, el pie adelantado y el cuerpo
   // echado atrás, a tirones (las manos quietas en el espacio del personaje:
   // el cuerpo tira y la hoja no se mueve de la madera). En bucle.
-  const { rig } = ctx;
   const TUG = { wrist: AXE_TUG.wrist, blade: AXE_TUG.blade };
   const tugBody = (lean, back, dip) => ({ legL: [-34, 0, 9], shinL: [24, 0, 0], legR: [30, 0, -9], shinR: [30, 0, 0], root: [0, -16 - dip, -2 - back], hips: [0, -4, 0], chest: [-2 - lean, -6, 0], head: [12 - lean * 0.4, -14, 0] });
   const tug = (lean, back, dip) => ({ ...tugBody(lean, back, dip), ...W2C(rig, tugBody(lean, back, dip), TUG.wrist, TUG.blade), elbowR: [-0.5, -0.8, -0.2] });
@@ -480,7 +517,7 @@ function axeMoves(ctx) {
     1.45,
     [
       [0, tug(9, 5, 4)],
-      [0.12, { legL: [-20, 0, 9], shinL: [18, 0, 0], legR: [40, 0, -9], shinR: [36, 0, 0], ...W2C(rig, { root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0] }, [-14, 128, 18], [-30, 62, AXE_TUG.blade[2]]), root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0], head: [-8, -8, 0], elbowR: [-0.6, -0.6, -0.4] }, 'snap'],
+      [0.12, { legL: [-20, 0, 9], shinL: [18, 0, 0], legR: [40, 0, -9], shinR: [36, 0, 0], ...W2C(rig, { root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0] }, [-34, 130, 32], [-24, 60, AXE_TUG.blade[2]]), root: [0, -10, -22], hips: [0, -6, 0], chest: [-22, -8, 0], head: [-8, -8, 0], elbowR: [-0.6, -0.6, -0.4] }, 'snap'],
       [0.5, { ...AST, root: [0, 4, -6], chest: [-26, -4, 0], head: [-18, 4, 0], ikR: [-8, 92, -6], bladeR: [-4, 160, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.65, 0, 0] }, 'hold'],
       [0.82, { ...AST, root: [0, -6, 0], chest: [-12, -4, 0], head: [-10, 2, 0], ikR: [-8, 84, 0], bladeR: [-6, 150, 0], elbowR: [-0.7, 0.2, -0.6], wSlide: [0.7, 0, 0] }],
       [1.15, { ...AST, chest: [10, 8, 0], head: [-4, -4, 0], ikR: [-6, 38, 38], bladeR: [-24, 56, 0], elbowR: [-0.6, -0.6, -0.4] }],
@@ -492,13 +529,13 @@ function axeMoves(ctx) {
   const K = { snd: 'swingAxe', hitSnd: 'hitAxe' };
   const H = (c, n, th) => hitWindows(ctx, c, n, th);
   const light = [
-    attack({ ...K, clip: C.a_light1, dmg: 34, st: 22, hits: H(C.a_light1), cancel: CAN[0], move: 0.74, lunge: [0.26, 0.46, 2.6], range: 2.55, arc: 110, poise: 46, dir: -1 }),
-    attack({ ...K, clip: C.a_light2, dmg: 36, st: 24, hits: H(C.a_light2), cancel: CAN[1], move: 0.78, lunge: [0.3, 0.48, 2.2], range: 2.6, arc: 170, poise: 50, dir: 1 }),
-    attack({ ...K, clip: C.a_light3, dmg: 42, st: 28, hits: H(C.a_light3), cancel: CAN[2], move: 1.06, lunge: [0.38, 0.56, 2.8], range: 2.6, arc: 70, poise: 60, dir: 0 }),
+    attack({ ...K, clip: C.a_light1, dmg: 34, st: 22, hits: H(C.a_light1), cancel: CAN[0], move: 0.74, lunge: [0.26, 0.46, 2.6], range: 2.85, arc: 110, poise: 46, dir: -1 }),
+    attack({ ...K, clip: C.a_light2, dmg: 36, st: 24, hits: H(C.a_light2), cancel: CAN[1], move: 0.78, lunge: [0.3, 0.48, 2.2], range: 2.9, arc: 170, poise: 50, dir: 1 }),
+    attack({ ...K, clip: C.a_light3, dmg: 42, st: 28, hits: H(C.a_light3), cancel: CAN[2], move: 1.06, lunge: [0.38, 0.56, 2.8], range: 2.9, arc: 70, poise: 60, dir: 0 }),
   ];
-  const heavy = [attack({ ...K, clip: C.a_heavy, dmg: 72, st: 36, hits: H(C.a_heavy), cancel: 1.2, move: 1.28, lunge: [0.5, 0.68, 2.6], range: 2.7, arc: 60, poise: 110, heavy: true, dir: 0, charge: { at: 0.5, max: 1.0, dmg: 0.6 }, impact: { r: 1.9, dmg: 0.35 } })];
-  const runA = attack({ ...K, clip: C.a_run, dmg: 44, st: 30, hits: H(C.a_run), cancel: 0.84, move: 0.9, lunge: [0.0, 0.34, 5.4], range: 2.6, arc: 70, poise: 70, dir: 0, impact: { r: 1.6, dmg: 0.25 } });
-  const roll = attack({ ...K, clip: C.a_roll, dmg: 30, st: 18, hits: H(C.a_roll), cancel: 0.6, move: 0.66, lunge: [0.0, 0.2, 2.6], range: 2.5, arc: 120, poise: 40, dir: 1 });
+  const heavy = [attack({ ...K, clip: C.a_heavy, dmg: 72, st: 36, hits: H(C.a_heavy), cancel: 1.2, move: 1.28, lunge: [0.5, 0.68, 2.6], range: 3.0, arc: 60, poise: 110, heavy: true, dir: 0, charge: { at: 0.5, max: 1.0, dmg: 0.6 }, impact: { r: 1.9, dmg: 0.35 } })];
+  const runA = attack({ ...K, clip: C.a_run, dmg: 44, st: 30, hits: H(C.a_run), cancel: 0.84, move: 0.9, lunge: [0.0, 0.34, 5.4], range: 2.9, arc: 70, poise: 70, dir: 0, impact: { r: 1.6, dmg: 0.25 } });
+  const roll = attack({ ...K, clip: C.a_roll, dmg: 30, st: 18, hits: H(C.a_roll), cancel: 0.6, move: 0.66, lunge: [0.0, 0.2, 2.6], range: 2.8, arc: 120, poise: 40, dir: 1 });
   return { clips: C, light, heavy, run: runA, roll };
 }
 
@@ -713,25 +750,31 @@ export const MOVESETS = {
     order: 2,
     wristMode: 'euler',
     hands: 2,
-    grip2: -0.42,
+    // (las dos manos abajo, cerca del cabo: la izquierda casi en él)
+    grip2: AXE.grip2,
     // el mango no gira durante el golpe (las dos manos lo sujetan y la cabeza
     // está lejos del eje): sólo el giro fijo de cada tajo
     noTrack: false,
     freeL: [0.24, 0.1, 0.14],
     elbowL: [0.6, -0.7, -0.3],
     trail: [
-      [0, -0.09, 0.46],
-      [0, -0.3, 0.43],
+      [0, -0.09, AXE.eye + 0.01],
+      [0, -0.3, AXE.eye - 0.02],
     ],
     trailColor: 0xffd8a8,
-    tip: [0, -0.3, 0.43],
+    tip: [0, -0.3, AXE.eye - 0.02],
     edge: [0, -1, 0],
-    guard: { ikR: [-6, 34, 34], bladeR: [-30, 50, 0], elbowR: [-0.6, -0.6, -0.4] },
-    runPose: { ikR: [-26, 40, 10], bladeR: [-170, 28, 0], elbowR: [-0.8, -0.2, -0.4] },
+    // (el cabo, por delante de la tripa; al correr, al hombro, con el mango
+    // por encima de la hombrera y la cabeza detrás, lejos de la cabeza)
+    guard: { ikR: [-6, 34, 40], bladeR: [-30, 50, 0], elbowR: [-0.6, -0.6, -0.4] },
+    runPose: { ikR: [-22, 56, 14], bladeR: [-172, 40, 0], elbowR: [-0.8, -0.2, -0.4] },
     swing: [4, 10],
     block: { ikR: [-8, 44, 32], bladeR: [-94, 8, 0], elbowR: [-0.4, -0.8, -0.2], chest: [4, -6, 0], head: [8, 4, 0] },
     blockK: { st: 1.25, chip: 0.16 },
-    healR: { ikR: [-26, 2, 16], bladeR: [-12, -70, 0] },
+    // (al beber, apoyada a un lado, con la cabeza abajo, como un bastón; al
+    // volver a la guardia, sube por fuera, a la derecha: healUp)
+    healR: { ikR: [-36, -6, 18], bladeR: [0, -84, 0] },
+    healUp: { ikR: [-40, 22, 30], bladeR: [-30, 80, 0] },
     moves: axeMoves,
   },
   lanza: {
