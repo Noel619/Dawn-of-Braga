@@ -94,6 +94,23 @@ export const MAT_DEFS = {
   deEmplasto: { tex: 'linen', uv: 1.6, color: 0x5f6c44 },
   deHair: { tex: 'hairGrey', uv: 1.6, color: 0x6a6258 },
   deEye: { tex: 'white', uv: 1, color: 0x1a0804, emissive: 0xffa060, emissiveIntensity: 1.1 },
+  // el Condenado sin armadura (entities/cuerpo.js): su piel, el pelo y la
+  // barba, oscuros; las bragas de lino, sucias de la celda; las yemas de los
+  // dedos, en carne viva (se arrancó las uñas arañando la pared)
+  conPiel: { tex: 'conPiel', uv: 2.0 },
+  conPelo: { tex: 'hairGrey', uv: 1.6, color: 0x5a4436 },
+  conLino: { tex: 'linen', uv: 1.4, color: 0xb8ae98 },
+  conYema: { tex: 'conPiel', uv: 2.0, color: 0xc86058 },
+  // sus armaduras (entities/armaduras.js): el acero bruñido de la del
+  // caballero (que coge la luz), el latón de sus ribetes y remaches; el cuero
+  // cocido de la de cuero, el blando (la capucha, los guantes, las botas), el
+  // gambesón y las calzas de lana
+  cabAcero: { tex: 'plate', uv: 1.6, color: 0xc2c6ce, phong: { specular: 0x767c88, shininess: 40 } },
+  cabLaton: { tex: 'bronze', uv: 1.0, color: 0xd8c08a, phong: { specular: 0x6a5226, shininess: 34 } },
+  cueCocido: { tex: 'cueroClaro', uv: 1.6, phong: { specular: 0x3a2a1a, shininess: 14 } },
+  cueBlando: { tex: 'cueroClaro', uv: 1.6, color: 0x9c8474 },
+  cueAcolchado: { tex: 'acolchado', uv: 3.0 },
+  cueLana: { tex: 'clothBrown', uv: 1.4 },
   // lo verde de la cloaca, donde baja la luna (world/verdor.js): las hojas
   // (helechos, hiedra, la higuera), la hierba, el musgo, las flores blancas
   // (con un poco de luz propia: de noche se ven antes que nada) y su centro

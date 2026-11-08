@@ -796,11 +796,39 @@ al lado, en letra de leer.
 
 **El inventario**, a lo Dark Souls, en tres pestañas. El **Equipo**: las ranuras de la mano derecha (el arma), la
 izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas: aún no hay ninguna pieza en el
-mundo, pero sus ranuras y lo que paran ya están), el objeto bendito y la ampolla; en cada una se elige qué ponerse de
+mundo, pero sus ranuras y lo que paran ya están, y las piezas ya tienen modelo: ver más abajo), el objeto bendito y la
+ampolla; en cada una se elige qué ponerse de
 lo que se lleva encima, o nada, y se puede ir desarmado o sin escudo (se guarda con la partida). Los **Objetos**, por
 clases (consumibles, armas, escudos, armaduras, objetos benditos, objetos clave y mejoras), desde donde también se
 pone y se quita lo que se lleva puesto. Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
 casillas, las pestañas y las teclas de la ayuda).
+
+**Las armaduras (todavía sin enganchar).** Están modeladas, pieza a pieza, las tres armaduras del jugador y el cuerpo
+que queda debajo, pero el juego aún no las usa: el Condenado sigue llevando la de siempre y sus ranuras, vacías.
+- **El cuerpo sin armadura** (`entities/cuerpo.js`), esculpido como los ecos y el Desfigurado: un hombre de armas de
+  unos treinta años, ancho de hombros pero chupado de las noches de la celda, con el pelo oscuro revuelto y la barba
+  de días, las bragas de lino atadas con su cordón, descalzo y con las yemas de los dedos en carne viva (las uñas se le
+  quedaron en la pared).
+- **La armadura de guardia** (peso medio) es la de siempre, partida en sus cuatro piezas: el yelmo de nasal con su
+  almófar (abierto ahora por delante: asoma la cara del cuerpo), la loriga con la sobreveste carmesí, las hombreras
+  y la capa, los brazales de cuero, y las calzas con sus botas.
+- **La de caballero** (pesada), la de un caballero del Rey, hierro de arriba abajo: el yelmo de calva apuntada con su
+  cresta, la banda de latón, el nasal ancho, las carrilleras, el cubrenuca y el camal de malla; el peto con su
+  arista y el espaldar, la gola, las hombreras de cúpula con sus lamas, el faldar de tres lamas, las escarcelas y los
+  faldones azules del Rey por detrás; los brazales con sus codales y los guanteletes; las calzas de malla, los
+  quijotes, las rodilleras, las grebas y los escarpes.
+- **La de cuero** (ligera), la de un batidor: la capucha con su esclavina; el gambesón acolchado con sus faldones y,
+  encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas, el cinto con la bolsa y el cuchillo; los
+  brazales atados y los guantes; las calzas de lana y las botas altas con su vuelta y sus hebillas.
+
+Cada pieza tapa unas zonas del cuerpo (cabeza, cuello, torso, brazos, antebrazos, manos, cadera, muslos, piernas y
+pies) y deja ver las demás, así que se pueden mezclar piezas de unas y otras; todas dejan la cara al aire (el
+protagonista es el que mira). Se ven con `tools/armaduras.mjs`. Para engancharlas faltan: los objetos (nombre,
+defensa e icono de cada pieza) y dónde se encuentran; lo que pesa cada armadura (la voltereta, el aguante); que el
+jugador cambie de piezas (rehaciendo su rig, o con `armaduraDef(equipo, { grupos: true })`, que deja cada pieza y cada
+zona del cuerpo en sus mallas, encendiendo y apagando las de cada ranura), y que el escudo se aparte también de las
+piezas más abultadas (las cajas de `keepShieldOut`, en `locomotion.js`, y las de `tools/gearcheck.mjs` son las de la
+de guardia).
 
 **Los osarios y los objetos benditos.** Cuatro osarios, cada uno con su gente y su manera de ordenar los huesos,
 guardan un **objeto bendito** tras un puzle con su pista en un documento. Los objetos no suben números a secas:
@@ -1257,7 +1285,10 @@ src/
                         idol_statue.js, su montaje y lo que se mueve: la cabeza, el ojo y lo que arde); sculpt.js (no el de colossus/), geometrías
                         esculpidas para los rigs (superficies, troncos, telas con sus pliegues, faldones, cabezas con
                         rasgos y manos con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan
-                        los ecos y el arzobispo); armas: weapons.js (registro y clips comunes), weapon_moves.js
+                        los ecos y el arzobispo); cuerpo.js, el Condenado sin armadura, esculpido y partido en zonas, y
+                        armaduras.js, sus tres armaduras (la de guardia, la de caballero y la de cuero) en las cuatro
+                        piezas de las ranuras del inventario, y cómo se visten sobre el cuerpo (aún sin enganchar);
+                        armas: weapons.js (registro y clips comunes), weapon_moves.js
                         (golpes del facón, el hacha, la lanza y la katana), weapon_models.js (modelos) y
                         weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
@@ -1406,6 +1437,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
+                        armaduras.mjs  hoja de las armaduras del jugador: el cuerpo sin armadura, cada armadura
+                                       o una mezcla de piezas (`head=caballero+body=cuero`), desde varios
+                                       lados, en la pose del jugador de verdad que se pida (POSE=light1@0.3,
+                                       loco@4.5@0.25; ARMA=espada), en un plató o en el juego (ESCENA=x,y,z),
+                                       con primeros planos de una articulación (MIRA=handR) o en cuadrícula
+                                       (COLUMNAS=4)
                         weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
                                        bloqueo y curación contra un enemigo real
                         animcheck.mjs  (sin navegador) análisis numérico de los golpes: velocidad de la punta,
