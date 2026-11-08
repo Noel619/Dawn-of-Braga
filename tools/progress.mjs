@@ -32,7 +32,11 @@ await p.evaluate(() => {
         const m = g.ui.stack.map((s) => s.name);
         for (let k = 0; k < 3; k++) if (g.ui.modal) { __sim(0.5); __sim(0.1, [], ['KeyE']); }
         __sim(2.5);
-        return { ok: true, id, modal: m, done: it.done, toast: [...document.querySelectorAll('.toast')].map((t) => t.textContent).slice(-1)[0] };
+        // (lo que se arranca —la espada del guardia caído— se tiene al acabar
+        // de salir: su ventana llega después)
+        const m2 = g.ui.stack.map((s) => s.name);
+        for (let k = 0; k < 3; k++) if (g.ui.modal) { __sim(0.5); __sim(0.1, [], ['KeyE']); }
+        return { ok: true, id, modal: m.length ? m : m2, done: it.done, toast: [...document.querySelectorAll('.toast')].map((t) => t.textContent).slice(-1)[0] };
       }
     }
     return { ok: false, id, prompt: g.promptTarget && g.promptTarget.id, pos: [g.player.pos.x, g.player.pos.y, g.player.pos.z], st: g.state, ps: g.player.state, modal: g.ui.stack.map(s=>s.name), dead: g.player.dead };
@@ -71,7 +75,7 @@ await p.evaluate(() => {
   };
 });
 const steps = [
-  "__use('i_espada')", "__use('i_escudo')", "__use('n_carcelero')", "__use('d_carcel')",
+  "__use('i_escudo')", "__use('i_oxidada')", "__use('n_carcelero')", "__use('d_carcel')",
   // la barricada de los Pelames, desde este lado, ni con la palanca se mueve
   "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
   "__use('i_palanca')", "__use('n_herrero')",

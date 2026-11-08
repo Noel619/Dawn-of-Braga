@@ -909,9 +909,11 @@ export class Game {
     const s = this.ui.top;
     s.data.onClose = () => {
       if (this.state === 'paused') this.state = 'play';
-      if (id === 'espada') {
-        this.hint('sword');
-        // algo se levanta en la celda del fondo
+      // (la primera arma, sea la que sea: cómo se pelea)
+      if (it.weapon) this.hint('sword');
+      if (id === 'oxidada') {
+        // al arrancarle la espada al guardia del pasillo, algo se levanta en
+        // la celda del fondo
         const e = this.enemies.find((x) => x.id === 'e_carcel1');
         if (e && !e.dead && !e.aware) this.later(1200, () => e.alert());
       }
@@ -1091,7 +1093,7 @@ export class Game {
 
   onEnemyAlert(e) {
     if (e.T.friendly) return;
-    if (!this.hintsShown.enemy && this.inventory.has('espada')) setTimeout(() => this.hint('enemy'), 600);
+    if (!this.hintsShown.enemy && this.hasWeapon()) setTimeout(() => this.hint('enemy'), 600);
     if (!e.boss && Math.random() < 0.35) this.audio.play('stinger');
     // las de un mismo grupo se vuelven todas a la vez (las que aporrean la
     // puerta de Henrique)

@@ -543,7 +543,8 @@ export class Enemy {
     // parry menos, y el desequilibrio les dura más)
     const pm = g.player.mods || {};
     const need = Math.max(1, (T.parryPosture ?? 1) - (pm.posture || 0));
-    this.parryK = pm.unbalance || 1;
+    // (y cuanto más dura es el arma con que se le desvía, más le dura)
+    this.parryK = (pm.unbalance || 1) * (g.player.durezaK || 1);
     this.atk = null;
     this.data.blockT = 0;
     const mass = clamp(T.height / 1.8, 1, 3.2);

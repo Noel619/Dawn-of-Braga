@@ -240,7 +240,8 @@ export class Virotes {
     const p = g.player;
     // por la espalda o sin que se lo espere: crítico
     const behind = Math.abs(angleDiff(e.yaw, Math.atan2(p.pos.x - e.pos.x, p.pos.z - e.pos.z))) > 125 * DEG;
-    const crit = (!e.boss && (!e.aware || behind)) || e.parryT > 0;
+    // (y, a veces, porque sí: la probabilidad de crítico de la ballesta)
+    const crit = (!e.boss && (!e.aware || behind)) || e.parryT > 0 || Math.random() < ((p.weapon && p.weapon.ranged && p.weapon.critico) || 0);
     const dmg = Math.round(B.dmg * (crit ? 1.6 : 1) * (0.92 + Math.random() * 0.16));
     // (a las pequeñas las tumba: el virote pesa)
     const poise = B.poise * (e.T.height < 2.2 ? 1.6 : 0.6);

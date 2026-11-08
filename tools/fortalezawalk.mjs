@@ -208,7 +208,7 @@ await step('niebla del Caballero', "(()=>{const g=__game;const f=g.interact.list
 // el boquete del bolaño, el taller (la ballesta) y el tabique, que se
 // derriba desde él
 await step('escalera de la guardia', "(()=>{const g=__game;g.player.spawn(-82,0,-48,0);__sim(0.3);return __walk([[-82,-46.5],[-82,-44.0],[-86,-43],[-88.2,-43.0],[-89.3,-44.3],[-89.3,-37.0]])})()");
-await step('oxidada', "(()=>{__walk([[-89.3,-36.4],[-87.6,-36.6]]);return __ir('i_oxidada', 0.7)})()");
+await step('espada de la guardia', "(()=>{__walk([[-89.3,-36.4],[-87.6,-36.6],[-84.4,-35.9]]);return __useHere('i_espada')})()");
 await step('virotes armería', "(()=>{__walk([[-85.2,-37.2],[-85.2,-39.5],[-85.7,-41.3],[-86.3,-42.6]]);return __ir('i_virotes_armeria', 0.8)})()");
 await step('cámara del torno', "__walk([[-85.7,-41.3],[-85.2,-39.5],[-85.2,-37.0],[-89.3,-36.4],[-89.6,-35.6],[-92.5,-35.6]])");
 await step('palanca del rastrillo', "(()=>{__walk([[-96,-35.9],[-102,-35.2],[-103.45,-33.7]]);return __useHere('p_rastrillo_fort')})()");

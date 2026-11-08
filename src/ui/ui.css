@@ -152,7 +152,7 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #title .foot { position: absolute; bottom: calc(var(--u) * 5); left: 0; right: 0; color: var(--dim); text-shadow: var(--sh); }
 
 /* inventario */
-#inv .panel { width: min(calc(var(--u) * 330), 96vw); }
+#inv .panel { width: min(calc(var(--u) * 400), 96vw); }
 #inv .cols { display: grid; grid-template-columns: calc(var(--u) * 152) minmax(0, 1fr); gap: calc(var(--u) * 10); margin-top: calc(var(--u) * 4); min-height: calc(var(--u) * 150); }
 #inv .tabs .tab { width: calc(var(--u) * 72); }
 /* la columna de las casillas: grupos con su rótulo (se desplaza si no cabe) */
@@ -182,6 +182,30 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .detail ul.fx li.pro::before { content: '+'; }
 .detail ul.fx li.con { color: #e8806a; }
 .detail ul.fx li.con::before { content: '−'; }
+/* la ficha de un arma, un escudo o una armadura: rótulo, barra blanca, valor
+   y, al compararla con lo que se lleva, la diferencia (lo que se gana, en
+   dorado; lo que se pierde, en rojo y hueco) */
+.detail .vs { color: var(--dim); text-shadow: var(--sh); }
+.detail .vs b { font-weight: normal; color: var(--ash); }
+.detail .sheet { display: grid; grid-template-columns: auto calc(var(--u) * 56) auto minmax(calc(var(--u) * 14), auto); justify-content: start; align-items: center; gap: 0 calc(var(--u) * 4); margin-top: calc(var(--u) * 2); line-height: calc(18px * var(--m)); color: var(--ash); text-shadow: var(--sh); }
+.sheet .lb { white-space: nowrap; }
+.sheet .bar { position: relative; height: calc(var(--u) * 5); background: var(--ink); box-shadow: 0 0 0 var(--u) var(--void), inset 0 var(--u) 0 #0d0b0a; }
+.sheet .bar i { position: absolute; top: 0; bottom: 0; left: 0; display: block; }
+.sheet .bar i.f { background: var(--bone-hi); box-shadow: inset 0 var(--u) 0 #fff6cf, inset 0 calc(var(--u) * -1) 0 var(--ash); }
+.sheet .bar i.add.good { background: var(--gold-hi); box-shadow: inset 0 calc(var(--u) * -1) 0 var(--gold); }
+.sheet .bar i.add.bad { background: #e8806a; box-shadow: inset 0 calc(var(--u) * -1) 0 var(--blood); }
+.sheet .bar i.add.neu { background: var(--ash); box-shadow: inset 0 calc(var(--u) * -1) 0 var(--dim); }
+.sheet .bar i.sub { background: rgba(6, 5, 5, 0.35); }
+.sheet .bar i.sub.good { box-shadow: inset 0 0 0 var(--u) var(--gold); }
+.sheet .bar i.sub.bad { box-shadow: inset 0 0 0 var(--u) #e8806a; }
+.sheet .bar i.sub.neu { box-shadow: inset 0 0 0 var(--u) var(--dim); }
+.sheet b.v { color: var(--bone-hi); font-weight: normal; text-align: right; white-space: nowrap; }
+.sheet .dc { white-space: nowrap; }
+.sheet .d.good { color: var(--gold-hi); }
+.sheet .d.bad { color: #e8806a; }
+.sheet .d.neu { color: var(--ash); }
+.detail ul.fx.esp li { color: var(--bone); }
+.detail ul.fx.esp li::before { content: '·'; color: var(--gold); }
 .docs { display: grid; gap: calc(var(--u) * 1); align-content: start; }
 .docs .doc { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 1) calc(var(--u) * 3); color: var(--ash); text-shadow: var(--sh); cursor: pointer; }
 .docs .doc.sel { color: var(--bone-hi); background: rgba(138, 60, 16, 0.28); box-shadow: inset var(--u) 0 0 var(--ember); }

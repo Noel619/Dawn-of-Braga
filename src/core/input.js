@@ -36,6 +36,9 @@ const KB = {
   unequip: ['KeyX', 'Delete'],
   // (en un documento: muestra u oculta su transcripción)
   transcribe: ['KeyT'],
+  // (en el inventario: la ficha de un arma, un escudo o una armadura —sus
+  // barras— o su descripción)
+  ficha: ['KeyT'],
   camL: ['KeyJ'],
   camR: ['KeyL'],
   camU: [],
@@ -52,6 +55,7 @@ const PAD = {
   tonicoA: [14], // cruz, izquierda
   tonicoB: [15], // cruz, derecha
   transcribe: [2],
+  ficha: [6], // LT
   inventory: [3], // Y
   unequip: [2],
   block: [4], // LB
@@ -454,6 +458,7 @@ export const GLYPHS = {
     tabR: 'R',
     unequip: 'X',
     transcribe: 'T',
+    ficha: 'T',
   },
   pad: {
     interact: 'A',
@@ -475,5 +480,6 @@ export const GLYPHS = {
     tabR: 'RB',
     unequip: 'X',
     transcribe: 'X',
+    ficha: 'LT',
   },
 };

@@ -7,6 +7,7 @@ import { ITEMS, NOTES, MSG } from './story.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
 import { G } from '../gfx/materials.js';
 import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
+import { shieldParts } from '../entities/models.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const glowTex = () => getTexture('glow');
@@ -341,8 +342,22 @@ function weaponItemMesh(id) {
   return g;
 }
 
-function itemMesh(id) {
-  if (id === 'facon' || id === 'hacha' || id === 'lanza' || id === 'katana' || id === 'oxidada') return weaponItemMesh(id);
+// raw: el modelo tal cual, en su propio espacio (un arma: el puño en el
+// origen y la hoja hacia +Z; el escudo: la cara hacia +Z y la punta hacia
+// -Y), para colocarlo con su giro (spec.quat): la espada clavada en la
+// espalda del guardia del pasillo de las celdas, su escudo en el suelo.
+function itemMesh(id, raw = false) {
+  if (raw && WEAPON_PARTS[id]) {
+    const g = new THREE.Group();
+    g.add(buildParts(WEAPON_PARTS[id]('x')).group);
+    return g;
+  }
+  if (raw && id === 'escudo') {
+    const g = new THREE.Group();
+    g.add(buildParts(shieldParts('x')).group);
+    return g;
+  }
+  if (WEAPON_PARTS[id] && id !== 'ballesta') return weaponItemMesh(id);
   const g = new THREE.Group();
   // la ballesta, tumbada sobre su banco
   if (id === 'ballesta') {
@@ -376,24 +391,11 @@ function itemMesh(id) {
     return g;
   }
   const iron = objMat('iron'),
-    plate = objMat('plate'),
     leather = objMat('leather'),
     bronze = objMat('bronze');
-  if (id === 'espada') {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 0.015), plate);
-    blade.position.y = 0.55;
-    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.04, 0.05), iron);
-    guard.position.y = 0.1;
-    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.2, 5), leather);
-    grip.position.y = -0.02;
-    g.add(blade, guard, grip);
-    g.position.y = -0.55;
-  } else if (id === 'escudo') {
-    const s = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.66, 0.05), objMat('planks'));
-    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), objMat('clothRed'));
-    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.06), objMat('clothRed'));
-    c2.position.y = 0.1;
-    g.add(s, c1, c2);
+  if (id === 'escudo') {
+    // el escudo de madera, el mismo que se lleva al brazo, de pie
+    g.add(buildParts(shieldParts('x')).group);
     g.position.y = -0.4;
   } else if (id === 'palanca') {
     const b = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.9), iron);
@@ -1014,8 +1016,10 @@ export class Interactables {
     } else if (s.kind === 'item') {
       it.obj = new THREE.Group();
       it.obj.position.set(s.x, s.y, s.z);
-      const m = itemMesh(s.item);
+      const m = itemMesh(s.item, s.raw);
+      if (s.quat) m.quaternion.fromArray(s.quat);
       if (m.children.length) it.obj.add(m);
+      it.mesh = m;
       const glow = new THREE.Sprite(additiveFog(new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff0c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: true })));
       glow.scale.set(0.6, 0.6, 1);
       it.obj.add(glow);
@@ -1247,6 +1251,17 @@ export class Interactables {
     for (const it of this.list) if (it.kind === 'door' && it.lock.type === 'levers' && !it.done) this.leverGate(it, true);
   }
 
+  // Un objeto cogido: queda cogido (en la partida), suena y se tiene (la
+  // ventana de «objeto obtenido»); lo que se arrancó, al acabar de salir.
+  takeItem(it) {
+    const g = this.game;
+    g.flags['take:' + it.id] = true;
+    g.audio && g.audio.play('pickup');
+    g.giveItem(it.item, it.n ?? 1);
+    if (it.arranca) it.obj.visible = false;
+    else setTimeout(() => (it.obj.visible = false), 300);
+  }
+
   // La tapa de un arca: cerrada con sus sellos o abierta, con ellos rotos.
   poseSwap(it, taken) {
     this.game.setGroupVisible(it.swap[0], !taken);
@@ -1403,6 +1418,8 @@ export class Interactables {
       it.hidden = !!it.afterBoss || !!it.afterFlag;
       it.obj.visible = !it.hidden;
       it.obj.position.y = it.y;
+      it.arrT = undefined;
+      if (it.mesh) it.mesh.position.set(0, 0, 0);
       if (it.swap) this.poseSwap(it, false);
     } else if (it.kind === 'note') {
       if (it.glow) it.glow.visible = true;
@@ -1736,7 +1753,7 @@ export class Interactables {
         if (it.lock.type === 'god') return this.game.crypt ? this.game.crypt.doorLabel() : 'Examinar la puerta';
         return 'Abrir';
       case 'item':
-        return 'Recoger';
+        return it.label || 'Recoger';
       case 'note':
         return it.model === 'wall' || it.model === 'stone' ? 'Examinar' : 'Leer';
       case 'altar':
@@ -1925,11 +1942,12 @@ export class Interactables {
     }
     if (it.kind === 'item') {
       it.done = true;
-      g.flags['take:' + it.id] = true;
       p.playInteract('interact');
-      g.audio && g.audio.play('pickup');
-      g.giveItem(it.item, it.n ?? 1);
-      setTimeout(() => (it.obj.visible = false), 300);
+      // (lo que está clavado se arranca: primero se le ve salir por donde
+      // entró —it.arranca, en metros— y, al salir, se tiene; al paso del
+      // juego: con la pausa abierta, espera, y si te matan antes, sigue ahí)
+      if (it.arranca) it.arrT = 0;
+      else this.takeItem(it);
       // (lo que pasa al cogerlo: la llave atada al cordón de la campana la hace
       // sonar; it.sound / it.soundAt, it.msg; it.swap, lo que cambia en el
       // mundo; it.wake, el radio en el que se despierta todo lo que oye)
@@ -2174,6 +2192,13 @@ export class Interactables {
         const k = Math.min(1, it.lift + dt / 0.7);
         this.poseHatch(it, k);
         if (k >= 1) it.opening = false;
+      }
+      // (lo que se arranca: primero resiste y luego sale de golpe)
+      if (it.kind === 'item' && it.arrT !== undefined && it.arrT < 1 && it.mesh) {
+        it.arrT = Math.min(1, it.arrT + dt / 0.36);
+        const k = it.arrT * it.arrT * it.arrT;
+        it.mesh.position.set(it.arranca[0] * k, it.arranca[1] * k, it.arranca[2] * k);
+        if (it.arrT >= 1) this.takeItem(it);
       }
       // (en la introducción, sin el brillo que marca lo que se coge)
       if ((it.kind === 'item' || it.kind === 'note') && it.glow) it.glow.material.visible = g.state !== 'intro';

@@ -64,8 +64,9 @@ export class Combat {
       // por la espalda o sin que se lo espere: golpe crítico
       const behind = Math.abs(angleDiff(e.yaw, Math.atan2(player.pos.x - e.pos.x, player.pos.z - e.pos.z))) > 125 * DEG;
       // (y el Descoyuntado tirado patas arriba, y quien está desequilibrado
-      // tras un parry: todo golpe es crítico)
-      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext;
+      // tras un parry: todo golpe es crítico; si no, a veces, según el arma:
+      // su probabilidad de crítico, weapons.js)
+      const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext || (player.hasSword && Math.random() < (player.weapon.critico || 0));
       // atkMul: pesado cargado; crit: el facón hiere más por la espalda
       const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
       const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
@@ -90,7 +91,8 @@ export class Combat {
         g.audio && g.audio.play('clang', e.pos);
         g.hitstop = Math.max(g.hitstop, 0.07);
         g.camRig.shake(0.12);
-        player.useSt(14);
+        // (que te paren un golpe cansa: menos cuanto más dura es el arma)
+        player.useSt(14 / player.durezaK);
         g.input.rumble(0.4, 0.6, 90);
       } else if (r !== 'none') {
         const f = player.forward();

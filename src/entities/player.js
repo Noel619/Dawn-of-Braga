@@ -4,7 +4,7 @@ import { TONICOS } from '../game/alquimia.js';
 import { buildPlayer } from './models.js';
 import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
-import { WEAPONS, weaponSet, resolveWeaponArms } from './weapons.js';
+import { WEAPONS, weaponSet, resolveWeaponArms, durezaK } from './weapons.js';
 import { buildParts, backShield, hipSaya, viroteParts } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
@@ -21,6 +21,15 @@ const WALK = 2.2,
   STRAFE = 3.6,
   BLOCKWALK = 1.9,
   BALANCE = 0.95;
+
+// El escudo (por ahora, el de madera: ITEMS.escudo): lo que cuesta parar con
+// él (×; con la estabilidad del de madera, ESTAB_REF, como siempre) y la
+// parte del golpe que pasa (lo que no absorbe).
+export const ESTAB_REF = 45;
+function shieldK() {
+  const S = ITEMS.escudo || {};
+  return { st: ESTAB_REF / (S.estabilidad || ESTAB_REF), chip: 1 - (S.absorcion ?? 92) / 100 };
+}
 
 export class Player {
   constructor(game) {
@@ -228,6 +237,11 @@ export class Player {
     this.maxHp = Math.round(this.baseMaxHp * this.mods.hp);
     this.hp = Math.min(this.hp, this.maxHp);
   }
+  // Lo que ataja el arma que se empuña (su dureza: weapons.js); sin arma en
+  // la mano, el escudo solo, como siempre.
+  get durezaK() {
+    return this.hasSword ? durezaK(this.weapon) : 1;
+  }
   // ¿Se puede alzar la guardia (bloquear, no sólo desviar)?
   canGuard() {
     return this.canBlock() && !this.mods.noBlock;
@@ -318,9 +332,9 @@ export class Player {
     this.chargeDone = !def.charge;
     this.atkMul = 1;
     this.useSt(def.st);
-    // (el reloj del golpe y su animación, al paso que marque el objeto bendito;
-    // el golpe de gracia, siempre al suyo)
-    this.atkSpd = def.riposte ? 1 : this.mods.atkSpeed * (this.lento || 1);
+    // (el reloj del golpe y su animación, al paso del arma —lo que pesa— y al
+    // que marque el objeto bendito; el golpe de gracia, siempre al suyo)
+    this.atkSpd = def.riposte ? 1 : this.mods.atkSpeed * (this.lento || 1) * (this.weapon.vel || 1);
     this.anim.play(def.clip, { blend: this.anim.weight > 0.3 ? 0.07 : 0.1, speed: this.atkSpd });
     this.combo = idx;
     this.game.onPlayerAttackStart && this.game.onPlayerAttackStart(def);
@@ -518,9 +532,12 @@ export class Player {
     // desviar: los golpes marcados en rojo, no)
     if (this.parryWin > 0 && Math.abs(angleDiff(this.yaw, toSrc)) < 100 * DEG && !atk.noParry && !atk.unblockable && this.canBlock()) return this.doParry(atk, fromX, fromZ);
     if (this.blocking && this.blockW > 0.5 && facing && !atk.unblockable && this.canGuard()) {
-      // a dos manos se para con el arma: cuesta más aguante y entra más daño
+      // a dos manos se para con el arma: cuesta más aguante (menos cuanto más
+      // dura) y entra más daño; con el escudo, lo que diga el escudo (su
+      // estabilidad y lo que absorbe)
       const bk = this.twoHanded && this.hasSword ? this.weapon.blockK || { st: 1.3, chip: 0.2 } : null;
-      const cost = (atk.stDmg ?? atk.dmg * 1.1) * (bk ? bk.st : 1) * M.blockSt;
+      const sh = shieldK();
+      const cost = (atk.stDmg ?? atk.dmg * 1.1) * (bk ? bk.st / durezaK(this.weapon) : sh.st) * M.blockSt;
       this.useSt(cost);
       const d = Math.hypot(dx, dz) || 1;
       this.vx = (-dx / d) * 3.2;
@@ -535,7 +552,7 @@ export class Player {
         if (this.hp <= 0) this.die();
         return 'guardbreak';
       }
-      this.hp -= Math.round(dmg * (bk ? Math.max(bk.chip, atk.chip ?? 0) : atk.chip ?? 0.08) * M.chip);
+      this.hp -= Math.round(dmg * (bk ? Math.max(bk.chip, atk.chip ?? 0) : atk.chip ?? sh.chip) * M.chip);
       // (la Saeta: lo parado se devuelve con el siguiente golpe)
       if (M.retaliate) this.retaliateT = M.retaliate.t;
       this.anim.play(this.clips.blockHit, { blend: 0.03 });
@@ -588,7 +605,8 @@ export class Player {
     this.parryPress = this.parryPress.filter((q) => t - q < 1.0);
     const k = [1, 0.75, 0.5, 0.34][Math.min(3, this.parryPress.length)];
     this.parryPress.push(t);
-    this.parryWin = (this.weapon.parry ? this.weapon.parry.win : 0.2) * k * this.mods.parryWin;
+    // (lo bien que ataja el arma: su dureza)
+    this.parryWin = (this.weapon.parry ? this.weapon.parry.win : 0.2) * k * this.mods.parryWin * this.durezaK;
     const th = target || this.threat();
     this.parryFace = th ? Math.atan2(th.pos.x - this.pos.x, th.pos.z - this.pos.z) : null;
     if (this.state === 'attack') {
@@ -642,8 +660,9 @@ export class Player {
     this.anim.play(c, { blend: 0.03 });
     this.parryFx = 1;
     this.flinchX.kick(-2.5);
-    // (el Cerrojo: cada parry devuelve todo el aguante)
-    this.st = this.mods.parrySt ? this.maxSt : Math.min(this.maxSt, this.st + 8);
+    // (el Cerrojo: cada parry devuelve todo el aguante; si no, un respiro,
+    // mayor cuanto más dura el arma)
+    this.st = this.mods.parrySt ? this.maxSt : Math.min(this.maxSt, this.st + 8 * this.durezaK);
     this.flask.visible = false;
     g.onPlayerAction && g.onPlayerAction('parry', { atk });
     return 'parry';

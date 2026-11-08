@@ -29,21 +29,21 @@ export const ITEMS = {
   },
   oxidada: {
     name: 'Espada oxidada',
-    desc: 'Una espada de munición de la guarnición, de las que se daban a cualquiera: la herrumbre se ha comido la hoja y los filos tienen mellas. Pesa menos que la del carcelero y corta algo menos. Contra una cota buena, no hace casi nada: la armadura se lleva la mitad del golpe.',
+    desc: 'Una espada de munición de la guarnición, de las que se daban a cualquiera: la herrumbre se ha comido la hoja y los filos tienen mellas. Estaba clavada en la espalda de un guardia, en el pasillo de las celdas: lo dejaron clavado al suelo con ella. Pesa poco y va deprisa, pero corta la mitad que una espada buena, y contra una cota, la armadura se lleva la mitad de lo que queda.',
     icon: 'oxidada',
     key: false,
     weapon: 'oxidada',
   },
   espada: {
-    name: 'Espada del carcelero',
-    desc: 'Espada larga de la guarnición. La hoja está mellada, pero todavía corta.',
+    name: 'Espada de la guardia',
+    desc: 'Espada larga de la guardia de la fortaleza, de buen hierro y bien cuidada: estaba en la armería de la puerta, entre las lanzas, con la hoja aceitada. Tiene alguna mella, pero corta el doble que una de munición y ataja mejor.',
     icon: 'sword',
     key: false,
     weapon: 'espada',
   },
   solingen: {
     name: 'Espada de Solingen',
-    desc: 'Espada del Sacro Imperio, forjada a orillas del Wupper, en Solingen, y traída a Braga por un cruzado de Colonia el año en que se tomó Lisboa. Hoja ancha con vaceo, guarda recta de hierro pavonado y pomo de rueda con una cruz de latón. En el vaceo, letras de latón incrustadas: en una cara, + IN NOMINE DOMINI +; en la otra, + CONRADVS ME FECIT +. Estuvo clavada en el hogar de Henrique desde el día en que su padre colgó la cruz. Corta un tercio más que la espada del carcelero.',
+    desc: 'Espada del Sacro Imperio, forjada a orillas del Wupper, en Solingen, y traída a Braga por un cruzado de Colonia el año en que se tomó Lisboa. Hoja ancha con vaceo, guarda recta de hierro pavonado y pomo de rueda con una cruz de latón. En el vaceo, letras de latón incrustadas: en una cara, + IN NOMINE DOMINI +; en la otra, + CONRADVS ME FECIT +. Estuvo clavada en el hogar de Henrique desde el día en que su padre colgó la cruz. Corta un tercio más que la espada de la guardia.',
     icon: 'solingen',
     key: false,
     weapon: 'solingen',
@@ -100,11 +100,18 @@ export const ITEMS = {
     key: false,
     ammo: true,
   },
+  // el escudo: lo que pesa, su estabilidad (0-100: lo que cuesta parar un
+  // golpe con él; entities/player.js, ESTAB_REF) y lo que absorbe (% del
+  // golpe que no pasa)
   escudo: {
-    name: 'Escudo de la guardia',
-    desc: 'Escudo de lágrima con la cruz de Braga, casi borrada a golpes.',
+    name: 'Escudo de madera',
+    desc: 'Escudo de lágrima de tablas de pino, con el canto de hierro y la cruz de Braga pintada, casi borrada a golpes. Lo llevaba al brazo el guardia muerto del pasillo de las celdas; no le sirvió de nada: lo mataron por la espalda.',
     icon: 'shield',
     key: false,
+    peso: 3.5,
+    estabilidad: 45,
+    absorcion: 92,
+    especial: ['Para los golpes y, en el último instante, los desvía.', 'Con un arma a dos manos, a la espalda.'],
   },
   // las cloacas hondas (world/cloacas_hondas.js): la llave de la reja de la
   // Sé, lo que se cosecha en lo hondo y los cocimientos que se preparan con

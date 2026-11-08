@@ -122,12 +122,14 @@ const r = await p.evaluate(async (arma) => {
   for (const [t, n] of [['soldier', 'arm3'], ['crawler', 'pounce'], ['hound', 'leap'], ['bell', 'slam'], ['impaled', 'slam']]) unp.push(trial(t, n, 0.08, false));
   // a destiempo: demasiado pronto (0,5 s antes) no hay parry
   const early = trial('penitent', 'slash', 0.5, false);
-  return { out, multi, unp, early };
+  // (lo que hace el golpe de gracia de esta arma: con la oxidada, la mitad)
+  const ripBase = P.set.riposte.dmg * P.dmgMul;
+  return { out, multi, unp, early, ripBase };
 }, arma);
 let fail = 0;
-console.log(`arma: ${arma}`);
+console.log(`arma: ${arma} (golpe de gracia: ${Math.round(r.ripBase)})`);
 for (const x of r.out) {
-  const ok = x.parried && x.took === 0 && (x.open ? x.riposte && (x.ripDmg > 60 || x.killed) : x.eState === 'hurt');
+  const ok = x.parried && x.took === 0 && (x.open ? x.riposte && (x.ripDmg > r.ripBase * 0.55 || x.killed) : x.eState === 'hurt');
   if (!ok) fail++;
   console.log(`${ok ? 'OK ' : 'MAL'} ${x.type.padEnd(12)} ${x.name.padEnd(7)} parry=${x.parried} daño=${x.took} criatura=${x.eState} abierta=${x.open}${x.riposte !== undefined ? ` gracia=${x.riposte} -${x.ripDmg}${x.killed ? ' (muerto)' : ''}` : ''}`);
 }

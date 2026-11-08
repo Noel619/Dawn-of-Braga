@@ -253,6 +253,11 @@ export const CORPSE_POSES = {
   // de rodillas ante la forja, echado sobre el hogar: la izquierda apoyada en
   // el borde y la derecha metida en las brasas (el herrero de la fragua)
   forge: { hips: [8, 0, 0], chest: [26, 8, 0], head: [24, -18, 8], armL: [-46, 0, 34], foreL: [-70, 0, 0], armR: [-98, -6, -4], foreR: [-8, 0, 0], legL: [-96, 0, 6], shinL: [100, 0, 0], legR: [-100, 0, -6], shinR: [96, 0, 0] },
+  // boca abajo en el suelo, como cayó huyendo: la derecha estirada por
+  // delante de la cabeza (arrastrándose), la izquierda —la del escudo—
+  // abierta a un lado, la cabeza vuelta y una rodilla algo doblada (el
+  // guardia del pasillo de las celdas, con la espada clavada en la espalda)
+  caido: { hips: [90, 0, 0], chest: [6, -8, 0], head: [16, 64, 0], armL: [-60, 0, 74], foreL: [-36, 0, 0], armR: [-158, 0, -18], foreR: [-16, 0, 0], legL: [4, 0, 9], shinL: [14, 0, 0], legR: [-18, 0, -10], shinR: [46, 0, 0] },
   // tendido boca arriba en el potro: brazos atados por encima de la cabeza y
   // piernas juntas y estiradas
   rack: { hips: [-90, 0, 0], chest: [-4, 0, 0], head: [-6, 32, 0], armL: [-174, 0, 9], foreL: [-4, 0, 0], armR: [-174, 0, -9], foreR: [-4, 0, 0], legL: [0, 0, 3], shinL: [2, 0, 0], legR: [0, 0, -3], shinR: [2, 0, 0] },
@@ -273,7 +278,7 @@ export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed =
   for (const k in P) pose[k] = P[k].map((v) => v * DEG);
   rig.apply(pose);
   // altura de la cadera según la pose
-  const lie = poseName === 'back' || poseName === 'face' || poseName === 'curl' || poseName === 'rack';
+  const lie = poseName === 'back' || poseName === 'face' || poseName === 'curl' || poseName === 'rack' || poseName === 'caido';
   const knee = poseName === 'kneel' || poseName === 'forge';
   const hipY = lie ? 0.16 : poseName === 'sit' ? 0.2 : knee ? 0.5 : 0;
   if (poseName !== 'hang') rig.joints.hips.position.y = hipY;
@@ -286,8 +291,12 @@ export function bakeCorpse(wb, x, y, z, yaw, poseName, kind = 'villager', seed =
     _m.copy(mesh.matrixWorld);
     wb.geometry(mesh.userData.matName, mesh.geometry, _m, { ao: false, uvScale: 1, tint: o.tint });
   }
-  // dónde quedan muñecas, tobillos y cabeza (en el mundo): para atarlos
+  // dónde quedan muñecas, tobillos y cabeza (en el mundo): para atarlos; y
+  // un punto cualquiera de una articulación, en el mundo (point: lo que se
+  // le clava o se le pone encima)
   const at = {};
   for (const k of ['handL', 'handR', 'footL', 'footR', 'head']) if (rig.joints[k]) at[k] = rig.joints[k].getWorldPosition(new THREE.Vector3()).applyMatrix4(wb.m);
+  const wm = wb.m.clone();
+  at.point = (j, x, y, z) => rig.joints[j].localToWorld(new THREE.Vector3(x, y, z)).applyMatrix4(wm);
   return at;
 }

@@ -708,9 +708,18 @@ function plantaAlta(ctx, L) {
   wb.setRoom(null);
   P.wallTorch(ctx, x0 + 0.02, y + 2.3, -40.6, 'e', { room: RA, radius: 6 });
   P.wallTorch(ctx, TB.x0 - 0.02, y + 2.3, -39.7, 'w', { room: RA, radius: 6 });
-  // (la espada de munición que nadie quiso, comida de herrumbre; los virotes
-  // del pañol)
-  L.interact.push({ kind: 'item', id: 'i_oxidada', item: 'oxidada', x: -85.0, y: y + 0.08, z: -37.4 }, { kind: 'item', id: 'i_virotes_armeria', item: 'virote', n: 12, x: -87.4, y: y + 0.78, z: -42.6 });
+  // (la espada de la guardia, la buena, apoyada en la muralla al cabo de las
+  // astas, con el pomo contra la piedra y la punta en el suelo —la oxidada es
+  // la que mataron al guardia del pasillo de las celdas—; los virotes del
+  // pañol)
+  {
+    // (D: del puño a la punta, que queda en el suelo, a 0,43 m del muro)
+    const D = V(0, -1, -0.45).normalize();
+    const H = V(-84.05, y, z1 - 0.58).addScaledVector(D, -1.05);
+    const X = V(1, 0, 0);
+    const quat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, D.clone().cross(X), D)).toArray();
+    L.interact.push({ kind: 'item', id: 'i_espada', item: 'espada', x: H.x, y: H.y, z: H.z, raw: true, quat, r: 1.9 }, { kind: 'item', id: 'i_virotes_armeria', item: 'virote', n: 12, x: -87.4, y: y + 0.78, z: -42.6 });
+  }
   // --- el taller del ballestero
   wb.setRoom(RT);
   // el suelo hundido hacia el hueco, las astillas y las vigas que cuelgan

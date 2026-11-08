@@ -6,13 +6,17 @@ import * as THREE from 'three';
 import { GLYPHS } from '../core/input.js';
 import { ITEMS, NOTES, AREA_NAMES } from './story.js';
 import { RELIC_IDS } from './relics.js';
-import { WEAPON_ORDER, WEAPONS } from '../entities/weapons.js';
+import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
 import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
 import { formatTime, clamp } from '../core/util.js';
 import { PAL as P, Bitmap, bayer, ramp, hash, uiScale, spriteImg, spriteHtml, attachBackdrop, panelBitmap, parchmentBitmap, bannerBitmap, dividerBitmap, cursorSword, greatSword, keyBitmap, reticleBitmap, slotBitmap, arrowBitmap, candleBitmap, notchBitmap, textBitmap } from '../ui/pixel.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// un número a la española (coma decimal), con d decimales
+const fmtN = (v, d = 0) => (d ? v.toFixed(d).replace('.', ',') : String(Math.round(v)));
+// lo largas que son las barras de la ficha (en píxeles de arte)
+const SHEET_BAR = 56;
 
 // ---------------------------------------------------------------- sprites propios
 // Filigrana dorada a un lado de un rótulo (dir 1: se aleja hacia la derecha).
@@ -218,6 +222,9 @@ export class UI {
     this.invSel = 0;
     // (la ranura del equipo que se está cambiando: { slot, name, at })
     this.invPick = null;
+    // (lo que se ve de un arma, un escudo o una armadura: su ficha, con las
+    // barras, o su descripción; se cambia con la tecla de la ficha)
+    this.invFicha = true;
     this.sc = uiScale();
     this._applyScale();
     addEventListener('resize', () => {
@@ -630,6 +637,13 @@ export class UI {
       au && au.ui('move');
       return;
     }
+    // (la ficha o la descripción de lo elegido)
+    if (a === 'ficha') {
+      this.invFicha = !this.invFicha;
+      au && au.ui('move');
+      this.renderInv();
+      return;
+    }
     // de la lista de una ranura se vuelve al equipo; si no, se cierra
     const unpick = () => {
       this.invSel = this.invPick.at;
@@ -716,28 +730,108 @@ export class UI {
     g.appendChild(grid);
     return g;
   }
+  // La tecla de la ficha (si lo elegido la tiene): cambia entre sus barras y
+  // su descripción.
+  fichaHint(id) {
+    return id && id !== '_flask' && this.hasSheet(id) ? [['ficha', this.invFicha ? 'Descripción' : 'Cualidades']] : [];
+  }
   // La barra de ayuda: [acción, rótulo]; 'tabs', las dos pestañas.
   invHint(acts) {
     const h = $('inv-hint');
     h.innerHTML = acts.map(([a, label]) => `<span data-a="${a}">${a === 'tabs' ? this.keyHtml('tabL') + this.keyHtml('tabR') : this.keyHtml(a)} ${esc(label)}</span>`).join('');
     h.querySelectorAll('span[data-a]').forEach((el) => el.addEventListener('click', () => this.invAction(el.dataset.a === 'tabs' ? 'tabR' : el.dataset.a)));
   }
-  // Nombre, descripción y lo que hace: los objetos benditos, lo que dan y lo
-  // que quitan; las armas a dos manos, dónde va el escudo; la armadura, lo que
-  // para; y si se lleva puesto.
-  itemInfo(id) {
+  // Nombre y, para lo que se lleva puesto con barras (armas, escudo,
+  // armadura: hasSheet), su ficha comparada con lo que se lleva en su ranura
+  // (cmp: el id con que se compara; undefined, lo de la ranura; null, nada)
+  // o, con la ficha apagada (invFicha), su descripción; los objetos benditos,
+  // lo que dan y lo que quitan; y si se lleva puesto.
+  itemInfo(id, cmp) {
     const g = this.g,
       it = ITEMS[id];
-    const fx = it.relic ? `<ul class="fx">${it.pros.map((t) => `<li class="pro">${esc(t)}</li>`).join('')}${it.cons.map((t) => `<li class="con">${esc(t)}</li>`).join('')}</ul>` : '';
-    const W = it.weapon && WEAPONS[it.weapon];
-    let extra = '';
-    if (W && W.hands === 2) extra += '<p class="f-small">A dos manos: el escudo va a la espalda.</p>';
-    if (W && W.calidad !== undefined) extra += `<p class="f-small">Contra armadura: ${Math.round(W.calidad * 100)} %</p>`;
-    if (it.armor) extra += `<p class="f-small">Defensa: ${it.def || 0}</p>`;
     const slot = g.slotOf(id);
+    let body;
+    if (this.hasSheet(id) && this.invFicha) {
+      if (cmp === undefined) cmp = g.equipped(slot);
+      body = this.sheetHtml(id, cmp === id ? null : cmp);
+    } else {
+      const fx = it.relic ? `<ul class="fx">${it.pros.map((t) => `<li class="pro">${esc(t)}</li>`).join('')}${it.cons.map((t) => `<li class="con">${esc(t)}</li>`).join('')}</ul>` : '';
+      body = `<p>${esc(it.desc)}</p>${fx}`;
+    }
     // (el escudo, con un arma a dos manos, a la espalda)
-    if (slot && g.equipped(slot) === id) extra += `<p class="f-small on">${slot === 'shield' && g.player.twoHanded && g.player.hasSword ? 'A la espalda' : WORN[slot] || WORN.armor}</p>`;
-    return `<h3 class="f-bast">${esc(it.name)}</h3><p>${esc(it.desc)}</p>${fx}${extra}`;
+    if (slot && g.equipped(slot) === id) body += `<p class="f-small on">${slot === 'shield' && g.player.twoHanded && g.player.hasSword ? 'A la espalda' : WORN[slot] || WORN.armor}</p>`;
+    return `<h3 class="f-bast">${esc(it.name)}</h3>${body}`;
+  }
+
+  // ------------------------------------------------------------ la ficha
+  // A lo Dark Souls: las cualidades de un arma, un escudo o una pieza de
+  // armadura en barras blancas y, al elegir otra, comparadas con la que se
+  // lleva (lo que se gana, en dorado; lo que se pierde, en rojo y hueco) y
+  // con la diferencia al lado. Las de un arma salen de lo que de verdad hacen
+  // sus golpes (weaponSheet: el daño, con lo que se haya afilado; el paso; el
+  // alcance; el aguante) y de sus cualidades (peso, dureza, crítico).
+  hasSheet(id) {
+    const it = ITEMS[id];
+    return !!it && ((!!it.weapon && !!WEAPONS[it.weapon]) || this.g.slotOf(id) === 'shield' || !!it.armor);
+  }
+  // [clave, rótulo, valor, máximo de la barra, texto, mejor (1: más; -1:
+  // menos; 0: ni lo uno ni lo otro), decimales de la diferencia]
+  sheetRows(id) {
+    const g = this.g,
+      it = ITEMS[id];
+    const kg = (v) => `${fmtN(v, 1)} kg`;
+    const pct = (v) => `${Math.round(v * 100)} %`;
+    if (it.weapon) {
+      const W = WEAPONS[it.weapon];
+      const S = weaponSheet(W, g.player.rig, g.player.dmgMul);
+      return [
+        ['filo', 'Filo', S.filo, 50, String(S.filo), 1, 0],
+        ['pesado', 'Golpe pesado', S.pesado, 80, String(S.pesado), 1, 0],
+        ['vel', 'Velocidad', S.vel, 3.2, `${fmtN(S.vel, 1)}/s`, 1, 1],
+        ['alcance', 'Alcance', S.alcance, 3.5, `${S.alcance >= 10 ? Math.round(S.alcance) : fmtN(S.alcance, 1)} m`, 1, 1],
+        ['peso', 'Peso', S.peso, 5, kg(S.peso), 0, 1],
+        ['dureza', 'Dureza', S.dureza, 100, String(S.dureza), 1, 0],
+        ['critico', 'Crítico', S.critico * 100, 20, pct(S.critico), 1, 0],
+        ['calidad', 'Contra armadura', S.calidad * 100, 100, pct(S.calidad), 1, 0],
+        ['aguante', 'Aguante', S.aguante, 30, String(S.aguante), -1, 0],
+      ];
+    }
+    if (g.slotOf(id) === 'shield')
+      return [
+        ['estabilidad', 'Estabilidad', it.estabilidad ?? 0, 100, String(it.estabilidad ?? 0), 1, 0],
+        ['absorcion', 'Absorción', it.absorcion ?? 0, 100, `${it.absorcion ?? 0} %`, 1, 0],
+        ['peso', 'Peso', it.peso ?? 0, 10, kg(it.peso ?? 0), 0, 1],
+      ];
+    return [
+      ['def', 'Defensa', it.def || 0, 25, `${it.def || 0} %`, 1, 0],
+      ['peso', 'Peso', it.peso ?? 0, 15, kg(it.peso ?? 0), 0, 1],
+    ];
+  }
+  sheetHtml(id, cmp) {
+    const rows = this.sheetRows(id);
+    const base = cmp && ITEMS[cmp] ? Object.fromEntries(this.sheetRows(cmp).map((r) => [r[0], r[2]])) : null;
+    const BW = SHEET_BAR;
+    const cells = rows.map(([k, label, v, max, txt, better, dec]) => {
+      const a = Math.round(clamp(v / max, 0, 1) * BW);
+      let bar = '',
+        delta = '';
+      if (base && base[k] !== undefined) {
+        const b = Math.round(clamp(base[k] / max, 0, 1) * BW);
+        const d = +(v - base[k]).toFixed(dec);
+        // (lo bueno, en dorado; lo malo, en rojo; lo que no es ni lo uno ni
+        // lo otro, como el peso, en ceniza)
+        const tone = !d || !better ? 'neu' : d * better > 0 ? 'good' : 'bad';
+        bar += `<i class="f" style="width:calc(var(--u) * ${Math.min(a, b)})"></i>`;
+        if (a > b) bar += `<i class="add ${tone}" style="left:calc(var(--u) * ${b});width:calc(var(--u) * ${a - b})"></i>`;
+        else if (b > a) bar += `<i class="sub ${tone}" style="left:calc(var(--u) * ${a});width:calc(var(--u) * ${b - a})"></i>`;
+        if (d) delta = `<span class="d ${tone}">${d > 0 ? '+' : '-'}${fmtN(Math.abs(d), dec)}</span>`;
+      } else bar = `<i class="f" style="width:calc(var(--u) * ${a})"></i>`;
+      return `<span class="lb">${esc(label)}</span><span class="bar">${bar}</span><b class="v">${esc(txt)}</b><span class="dc">${delta}</span>`;
+    });
+    const it = ITEMS[id];
+    const esp = it.weapon ? WEAPONS[it.weapon].especial : it.especial || [];
+    const vs = base ? `<div class="vs">Llevas: <b>${esc(ITEMS[cmp].name)}</b></div>` : '';
+    return `${vs}<div class="sheet">${cells.join('')}</div>` + (esp.length ? `<ul class="fx esp">${esp.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '');
   }
   statsHtml() {
     const g = this.g,
@@ -770,11 +864,8 @@ export class UI {
       const cur = g.equipped(P0.slot);
       left.appendChild(this.invGroup(P0.name, opts.map((id, i) => this.invSlot(i, iconBitmap(id ? ITEMS[id].icon : 'none'), { worn: id ? id === cur : !cur }))));
       const id = opts[this.invSel];
-      det.innerHTML = `<div class="eye f-small">${esc(P0.name)}</div>` + (id ? this.itemInfo(id) : `<h3 class="f-bast">Nada</h3><p>${esc(NOTHING[P0.slot] || NOTHING.armor)}</p>`);
-      this.invHint([
-        ['confirm', 'Elegir'],
-        ['back', 'Volver'],
-      ]);
+      det.innerHTML = `<div class="eye f-small">${esc(P0.name)}</div>` + (id ? this.itemInfo(id, cur) : `<h3 class="f-bast">Nada</h3><p>${esc(NOTHING[P0.slot] || NOTHING.armor)}</p>`);
+      this.invHint([['confirm', 'Elegir'], ...this.fichaHint(id), ['back', 'Volver']]);
       return;
     }
     const slots = this.equipSlots();
@@ -793,13 +884,13 @@ export class UI {
     let h = `<div class="eye f-small">${esc(S.name)}</div>`;
     const id = S.slot === '_flask' ? null : g.equipped(S.slot);
     if (S.slot === '_flask') h += `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>`;
-    else if (id) h += this.itemInfo(id);
+    else if (id) h += this.itemInfo(id, null);
     else h += `<h3 class="f-bast dim">Vacía</h3><p>${esc(EMPTY[S.slot] || EMPTY.armor)}</p>`;
     const can = S.slot !== '_flask' && g.equipOptions(S.slot).length > 0;
     if (S.slot !== '_flask' && !can) h += `<p class="f-small">${esc(NONE_YET[S.slot] || NONE_YET.armor)}</p>`;
-    if (!(id && ITEMS[id].relic)) h += sep + this.statsHtml();
+    if (!(id && (ITEMS[id].relic || (this.invFicha && this.hasSheet(id))))) h += sep + this.statsHtml();
     det.innerHTML = h;
-    this.invHint([...(can ? [['confirm', 'Cambiar']] : []), ...(id ? [['unequip', 'Quitar']] : []), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
+    this.invHint([...(can ? [['confirm', 'Cambiar']] : []), ...(id ? [['unequip', 'Quitar']] : []), ...this.fichaHint(id), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
   }
   renderItems(left, det) {
     const g = this.g,
@@ -818,12 +909,13 @@ export class UI {
     const cat = ITEM_CATS.find((c) => c[0] === e.cat)[1];
     let h = `<div class="eye f-small">${esc(cat)}</div>`;
     h += e.id === '_flask' ? `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>` : this.itemInfo(e.id);
-    if (e.cat !== 'relic') h += sep + this.statsHtml();
+    const sheet = e.id !== '_flask' && this.invFicha && this.hasSheet(e.id);
+    if (e.cat !== 'relic' && !sheet) h += sep + this.statsHtml();
     det.innerHTML = h;
     // (lo que se puede llevar puesto: se pone o se quita)
     const slot = g.slotOf(e.id);
     const act = slot ? (g.equipped(slot) === e.id ? TAKE_OFF[slot] || TAKE_OFF.armor : PUT_ON[slot] || PUT_ON.armor) : null;
-    this.invHint([...(act ? [['confirm', act]] : []), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
+    this.invHint([...(act ? [['confirm', act]] : []), ...this.fichaHint(e.id), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
   }
   renderDocs(left, det) {
     const read = this.readDocs();
@@ -1458,6 +1550,7 @@ export class UI {
           if (dir.x || dir.y) this.invMove(dir.x, dir.y);
           if (conf) this.invAction('confirm');
           else if (inp.pressed('unequip')) this.invAction('unequip');
+          else if (inp.pressed('ficha')) this.invAction('ficha');
         }
         break;
       }

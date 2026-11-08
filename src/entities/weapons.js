@@ -6,6 +6,8 @@
 //   carry      brazos al andar y correr
 //   block      pose de bloqueo (con escudo o con el arma)
 //   build(ctx) clips y ataques propios
+// y sus cualidades (STATS: peso, paso, dureza, crítico, lo especial), que se
+// ven en su ficha del inventario (weaponSheet) y hacen lo que dicen.
 import { clip, UPPER } from './rig.js';
 import { WEAPON_PARTS } from './weapon_models.js';
 import { MOVESETS } from './weapon_moves.js';
@@ -328,7 +330,7 @@ function parryClips(W, G, BLOCK) {
 }
 
 // ---------------------------------------------------------------- espada
-// La espada larga del carcelero: el repertorio original, sin cambios.
+// La espada larga de la guardia: el repertorio original, sin cambios.
 function swordMoves({ G }) {
   const C = {
     light1: clip(
@@ -395,27 +397,33 @@ function swordMoves({ G }) {
   return { clips: C, light, heavy, run, roll };
 }
 
-// ---------------------------------------------------------------- Solingen
-// La espada del padre de Henrique: se maneja como la del carcelero (es una
-// espada de su misma familia), pero su acero corta un 35 % más.
-const SOLINGEN_K = 1.35;
-function solingenMoves(o) {
-  const M = swordMoves(o);
-  const up = (a) => ({ ...a, dmg: Math.round(a.dmg * SOLINGEN_K) });
-  return { clips: M.clips, light: M.light.map(up), heavy: M.heavy.map(up), run: up(M.run), roll: up(M.roll) };
+// ---------------------------------------------------------------- la familia
+// Las espadas de la familia de la de la guardia (la oxidada, la de Solingen)
+// se manejan igual: cambia lo que cortan (filo: el daño de cada golpe), lo
+// que cansan (st: su aguante) y lo que alcanzan (la hoja, más corta o más
+// larga). Lo que pesan (y con ello lo deprisa que van) está en STATS.
+function swordVariant({ filo = 1, st = 1, alcance = 1 }) {
+  return (o) => {
+    const M = swordMoves(o);
+    const f = (a) => ({ ...a, dmg: Math.round(a.dmg * filo), st: Math.round(a.st * st), range: Math.round(a.range * alcance * 100) / 100 });
+    return { clips: M.clips, light: M.light.map(f), heavy: M.heavy.map(f), run: f(M.run), roll: f(M.roll) };
+  };
 }
 
+// ---------------------------------------------------------------- Solingen
+// La espada del padre de Henrique: de la misma familia que la de la guardia,
+// pero su acero corta un 35 % más y su hoja es algo más larga.
+const SOLINGEN_K = 1.35;
+const solingenMoves = swordVariant({ filo: SOLINGEN_K, alcance: 1.04 });
+
 // ---------------------------------------------------------------- la oxidada
-// Una espada de munición de la guarnición, comida de herrumbre: se maneja
-// como la del carcelero, pesa menos (cada golpe cansa algo menos) y corta
-// algo menos; contra armadura, la mitad (ver CALIDAD).
-const OXIDADA_K = 0.88,
-  OXIDADA_ST = 0.85;
-function oxidadaMoves(o) {
-  const M = swordMoves(o);
-  const dn = (a) => ({ ...a, dmg: Math.round(a.dmg * OXIDADA_K), st: Math.round(a.st * OXIDADA_ST) });
-  return { clips: M.clips, light: M.light.map(dn), heavy: M.heavy.map(dn), run: dn(M.run), roll: dn(M.roll) };
-}
+// Una espada de munición de la guarnición, comida de herrumbre (la que
+// mataron al guardia del pasillo de las celdas): se maneja como la de la
+// guardia, pesa menos (cada golpe cansa algo menos y va algo más deprisa),
+// la hoja es más corta y corta la mitad; contra armadura, la mitad también
+// (ver CALIDAD).
+const OXIDADA_K = 0.5;
+const oxidadaMoves = swordVariant({ filo: OXIDADA_K, st: 0.85, alcance: 0.94 });
 
 // ---------------------------------------------------------------- registro
 export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'katana', 'ballesta'];
@@ -424,6 +432,85 @@ export const WEAPON_ORDER = ['facon', 'hacha', 'lanza', 'oxidada', 'espada', 'so
 // del daño que pasa a quien la lleva (por ahora, el Caballero de la Orden).
 // La espada de Solingen y la katana sagrada pasan entera.
 export const CALIDAD = { oxidada: 0.5, facon: 0.6, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1, katana: 1 };
+
+// ---------------------------------------------------------------- cualidades
+// Lo que distingue a cada arma, a la vista en el inventario (con barras, a lo
+// Dark Souls, comparada con la que se empuña: weaponSheet) y de verdad en la
+// pelea:
+//   peso     kg. Cuanto más pesa, más despacio va y mejor ataja (dureza).
+//   vel      el paso de sus golpes (×; 1, como se animaron): la oxidada, más
+//            ligera, algo más deprisa; la de Solingen, algo más despacio.
+//   dureza   0-100: lo bien que ataja (con la de la guardia, DUREZA_REF, todo
+//            queda como siempre; ver durezaK).
+//   critico  la probabilidad de que un golpe cualquiera salga crítico (además
+//            de los de siempre: por la espalda, sin que se lo espere, tras
+//            un parry...).
+//   especial lo suyo, en palabras (el inventario lo lista bajo las barras).
+// Lo demás (el daño, el alcance, el aguante de cada golpe) sale de su
+// repertorio: weapon_moves.js y, para la familia de la espada, swordVariant.
+export const STATS = {
+  facon: {
+    peso: 0.6,
+    dureza: 20,
+    critico: 0.15,
+    especial: ['Una mano: el escudo, al brazo.', 'Cuatro cortes encadenados y una puñalada.', 'Por la espalda, crítico de ×2,1.'],
+  },
+  hacha: {
+    peso: 2.6,
+    dureza: 85,
+    critico: 0.05,
+    especial: ['A dos manos: el escudo, a la espalda.', 'Cada golpe quiebra la guardia.', 'El pesado se carga y parte el suelo.'],
+  },
+  lanza: {
+    peso: 2.2,
+    dureza: 55,
+    critico: 0.08,
+    especial: ['Una mano: el escudo, al brazo.', 'La que más alcanza: mantiene a raya.', 'Estocada sin bajar el escudo.'],
+  },
+  oxidada: {
+    peso: 1.0,
+    vel: 1.06,
+    dureza: 35,
+    critico: 0.03,
+    especial: ['Una mano: el escudo, al brazo.', 'Herrumbre: contra armadura, la mitad.', 'Ligera: cansa menos y va más deprisa.'],
+  },
+  espada: {
+    peso: 1.3,
+    dureza: 60,
+    critico: 0.06,
+    especial: ['Una mano: el escudo, al brazo.', 'Equilibrada en todo.'],
+  },
+  solingen: {
+    peso: 1.4,
+    vel: 0.97,
+    dureza: 72,
+    critico: 0.08,
+    especial: ['Una mano: el escudo, al brazo.', 'Acero de Solingen: pasa la armadura.', 'Hoja larga: alcanza más, va más despacio.'],
+  },
+  katana: {
+    peso: 1.2,
+    dureza: 50,
+    critico: 0.12,
+    especial: ['A dos manos: el escudo, a la espalda.', 'Iaijutsu: el pesado se carga.', 'Sagrada: pasa la armadura.'],
+  },
+  ballesta: {
+    peso: 4.0,
+    dureza: 75,
+    critico: 0.1,
+    especial: ['A dos manos: el escudo, a la espalda.', 'A distancia: tira virotes.', 'Se monta tras cada tiro, a merced.', 'El pesado es un culatazo.'],
+  },
+};
+
+// Lo que ataja un arma: con la de la guardia (DUREZA_REF), ×1; cada punto de
+// dureza, un 0,4 % más o menos (de ×0,8 a ×1,2). Multiplica la ventana del
+// parry, lo que le dura el desequilibrio a quien se le desvía y el aguante
+// que devuelve el desvío; divide lo que cuesta bloquear con el arma (a dos
+// manos) y lo que cansa que te paren un golpe.
+export const DUREZA_REF = 60;
+export function durezaK(W) {
+  const d = W && W.dureza !== undefined ? W.dureza : DUREZA_REF;
+  return Math.min(1.2, Math.max(0.8, 1 + (d - DUREZA_REF) * 0.004));
+}
 
 export const WEAPONS = {
   espada: {
@@ -502,6 +589,12 @@ for (const id in WEAPONS) {
   W.carry = W.hands === 2 ? carry2(W) : carry1(W);
   W.parry = PARRY[id] || PARRY.espada;
   W.calidad = CALIDAD[id] ?? 0.65;
+  const S = STATS[id] || STATS.espada;
+  W.peso = S.peso;
+  W.vel = S.vel ?? 1;
+  W.dureza = S.dureza;
+  W.critico = S.critico ?? 0;
+  W.especial = S.especial || [];
 }
 
 // Clips y ataques de un arma para un rig (se construyen una vez).
@@ -537,4 +630,30 @@ export function weaponSet(W, rig) {
   };
   SETS.set(W.id, set);
   return set;
+}
+
+// ---------------------------------------------------------------- la ficha
+// Lo que se ve de un arma en el inventario (los números de sus barras): lo
+// que de verdad hacen sus golpes (su daño, su paso, su alcance y su aguante,
+// del repertorio, con lo que se haya afilado: dmgMul) y sus cualidades
+// (STATS). La ballesta: el virote; su paso, del tiro a tenerla montada otra
+// vez.
+export function weaponSheet(W, rig, dmgMul = 1) {
+  const S = weaponSet(W, rig);
+  const L = W.ranged ? [S.light[0]] : S.light;
+  const avg = (f) => L.reduce((s, a) => s + f(a), 0) / L.length;
+  const ciclo = W.ranged && S.reload ? S.light[0].cancel + S.reload.clip.dur : avg((a) => a.cancel);
+  return {
+    filo: Math.round(avg((a) => a.dmg) * dmgMul),
+    pesado: Math.round(S.heavy[0].dmg * dmgMul),
+    vel: W.vel / ciclo,
+    alcance: avg((a) => a.range),
+    peso: W.peso,
+    dureza: W.dureza,
+    critico: W.critico,
+    // (lo que multiplica un crítico: el facón, más; el virote, 1,6)
+    critMul: W.ranged ? 1.6 : L[0].crit || 1.7,
+    calidad: W.calidad,
+    aguante: Math.round(avg((a) => a.st)),
+  };
 }

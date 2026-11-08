@@ -47,6 +47,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Inventario y documentos | Tab / I | Y |
 | Inventario: cambiar de pestaña (Equipo, Objetos, Documentos) | Q / R | LB / RB |
 | Inventario: elegir lo de una ranura / quitárselo | E o clic / X | A / X |
+| Inventario: la ficha de un arma, un escudo o una armadura (sus barras) o su descripción | T | LT |
 | Transcripción de un documento (mostrarla u ocultarla) | T | X |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
@@ -303,7 +304,7 @@ los tablones que hay por el callejón, el patio de la leña y el granero de arri
 para que su casa sea un lugar seguro. Hecho eso, te lleva al hogar de la sala: en la repisa, entre dos velas y
 bajo el escudo del águila, está clavada de punta la **espada de su padre**, una espada del Sacro Imperio forjada en
 Solingen, con + IN NOMINE DOMINI + en letras de latón en el vaceo y, en la otra cara, el nombre del que la forjó
-(hace un 35 % más de daño que la espada del carcelero). Su padre la clavó ahí el día que colgó la cruz; la sacas
+(hace un 35 % más de daño que la espada de la guardia). Su padre la clavó ahí el día que colgó la cruz; la sacas
 tú. Luego te da la llave del sótano: Leonor hizo un pacto con lo que él llama el diablo. Arriba, en el sobrado, se
 anda por la sala alta (su refugio, con el jergón junto a la ventana), la cuchillería, la alcoba de su padre (la
 capa blanca de cruzado colgada de un clavo, el yelmo sobre el arca, el altarcillo), el cuarto de los oficiales y
@@ -742,7 +743,7 @@ la acometida se desvía cuando la punta está a punto de llegar). En el aire no 
 por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del pendón**,
 vuelta y media con la tela tendida que barre cuatro metros y medio (no se para: se esquiva). Lleva
 **armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; el facón, el
-60 %; la del carcelero, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen y la katana
+60 %; la de la guardia, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen y la katana
 sagrada, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
 Vencido, no muere ahí: **la escena del final**. Herido, se endereza y deja caer la espada con todo el cuerpo; tu hoja
 la para y **chocan**, hoja contra hoja, a cámara lenta. En el pulso le arden los ojos tras las rendijas del yelmo y,
@@ -756,7 +757,10 @@ cruz. Arriba quedan su espada clavada y el pendón del Rey tirado en el suelo. (
 
 **Las mazmorras.** Bajo el patio, todo abovedado en medio punto, con arcos fajones sobre pilastras, portadas de arco
 en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
-con su arco y su reja, que también para la cámara), el cuarto del carcelero (con la espada y el escudo) y la sala del
+con su arco y su reja, que también para la cámara; nada más salir de la tuya, **el guardia muerto**, boca abajo, con
+**la espada oxidada clavada en la espalda** hasta las losas y **su escudo de madera** todavía al brazo: el escudo se le
+quita y la espada se le arranca —se la ve salir del cuerpo—, y al arrancarla algo se levanta en la celda del fondo),
+el cuarto del carcelero y la sala del
 tormento (el potro con su condenado atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los
 hierros). Cavadas junto a una necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros
 abiertos con el muerto tendido dentro, un arcosolio con el sarcófago destapado y su tapa partida, y al fondo el
@@ -801,6 +805,16 @@ lo que se lleva encima, o nada, y se puede ir desarmado o sin escudo (se guarda 
 clases (consumibles, armas, escudos, armaduras, objetos benditos, objetos clave y mejoras), desde donde también se
 pone y se quita lo que se lleva puesto. Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
 casillas, las pestañas y las teclas de la ayuda).
+Las armas, el escudo y las piezas de armadura tienen su **ficha**, a lo Dark Souls: sus cualidades en **barras
+blancas** con su valor al lado y, al elegir otra para la misma ranura (o al mirarla en los Objetos), **comparada con
+la que llevas** («Llevas: …»): lo que se gana, en dorado; lo que se pierde, en rojo y hueco; y la diferencia en
+número (el peso, que ni es bueno ni malo, en ceniza; el aguante, que cuanto menos mejor, al revés). Debajo, lo
+especial de cada una (a una o a dos manos, a distancia, lo que hace su pesado…). Con T (LT en el mando) se pasa de la
+ficha a la descripción y vuelta. Las de un arma: **filo** (el daño de su golpe ligero, con lo afilado), **golpe
+pesado**, **velocidad** (golpes por segundo del combo), **alcance**, **peso**, **dureza**, **crítico**, **contra
+armadura** y **aguante** (lo que cansa cada golpe); las del escudo, **estabilidad** (lo que cuesta parar con él),
+**absorción** (lo que no deja pasar) y peso; las de la armadura, defensa y peso. Las de las armas salen de lo que
+de verdad hacen sus golpes (`weaponSheet`, en `entities/weapons.js`): no son números de adorno.
 
 **Los osarios y los objetos benditos.** Cuatro osarios, cada uno con su gente y su manera de ordenar los huesos,
 guardan un **objeto bendito** tras un puzle con su pista en un documento. Los objetos no suben números a secas:
@@ -826,7 +840,8 @@ icono va junto a la vida).
 
 **Parry.** Pulsar la guardia justo antes de que llegue un golpe lo desvía: no hace daño, saltan chispas, el acero
 canta, hay un parón seco y un destello, y te vuelves hacia quien te ataca. La ventana dura 0,2 s (la katana, 0,24;
-el hacha, que para con el mango, 0,16) y machacar el botón la acorta. Cada familia de arma tiene sus animaciones de
+el hacha, que para con el mango, 0,16), la **dureza** del arma la alarga o la acorta (con la oxidada, 0,18; con la
+de Solingen, casi 0,21) y machacar el botón la acorta. Cada familia de arma tiene sus animaciones de
 desvío, dos que se alternan en los combos de varios golpes: con escudo (facón, lanza, espada) lo saca hacia fuera
 apartando el golpe o lo alza para desviarlo hacia arriba, con el arma atrás, lista; a dos manos barre el golpe con
 la hoja (o con el mango del hacha) hacia uno u otro lado. Mantener la guardia sigue siendo bloquear.
@@ -862,9 +877,22 @@ El brazo del escudo lo lleva con soltura (muelles de guiñada, cabeceo y alabeo,
 marcha y carrera) y, si aun así fuera a meterse en el torso, la hombrera, la cadera o la pierna, se aparta; al trotar
 y correr la hoja va por delante.
 
-**Armas.** Cinco armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
-pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación). Por el orden en que se
-encontrarán:
+**Armas.** Ocho armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
+pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación), y con sus **cualidades**
+(`STATS`, en `entities/weapons.js`), que se ven en su ficha del inventario y hacen lo que dicen:
+- **Peso**: cuanto más pesa, más despacio va (la oxidada, más ligera, golpea un 6 % más deprisa; la de Solingen, un
+  3 % más despacio) y mejor ataja.
+- **Dureza** (0-100, muy ligada al peso): lo bien que ataja. Con la de la guardia (60) todo queda como siempre; cada
+  punto, un 0,4 % más o menos: la ventana del parry, lo que le dura el desequilibrio a quien se le desvía, el aguante
+  que devuelve un desvío, lo que cuesta bloquear con el arma (a dos manos) y lo que cansa que te paren un golpe.
+- **Crítico**: la probabilidad de que un golpe cualquiera salga crítico (además de los de siempre: por la espalda, sin
+  que se lo espere, tras un parry); del 3 % de la oxidada al 15 % del facón. También los virotes.
+- **Filo, golpe pesado, alcance y aguante**: los de su repertorio (la familia de la espada, en `swordVariant`: la
+  oxidada corta la mitad, cansa un 15 % menos y alcanza un 6 % menos; la de Solingen corta un 35 % más y alcanza un 4 %
+  más).
+- **Lo especial**, en palabras: a una o a dos manos, a distancia, quiebra guardias, iaijutsu…
+
+Por el orden en que se encontrarán:
 - **Facón criollo** (una mano, con escudo; no cuadra con la historia: quedará como huevo de pascua): agazapado, cuatro cortes cortos que se encadenan (tajo, revés con el
   contrafilo, tajo corrido y puñalada), molinete de dos tajos y puñalada a fondo; hiere más por la espalda.
 - **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango): golpes lentos y demoledores que
@@ -872,10 +900,14 @@ encontrarán:
   carga manteniendo el botón, rompe la guardia y parte el suelo con una onda.
 - **Lanza de la muralla** (una mano, con escudo): estocadas largas y rectas, un barrido con el asta y una estocada
   que se lanza sin bajar el escudo.
-- **Espada del carcelero**: la de siempre, sin cambios.
-- **Espada oxidada** (una mano, con escudo; en la armería de la puerta de la fortaleza, entre las lanzas): una espada de
-  munición comida de herrumbre, con mellas; se maneja como la del carcelero, cansa algo menos y corta algo menos, y
+- **Espada oxidada** (una mano, con escudo; **la primera**: clavada en la espalda del guardia muerto del pasillo de las
+  celdas, nada más salir de la tuya): una espada de munición comida de herrumbre, con mellas; se maneja como la de la
+  guardia, pero **corta la mitad**, pesa menos (va algo más deprisa y cansa menos), su hoja es más corta, ataja peor y
   contra armadura hace la mitad.
+- **Espada de la guardia** (antes, «del carcelero»; una mano, con escudo; en la armería de la puerta de la fortaleza,
+  apoyada en la muralla al cabo de las astas): la de siempre, el doble que la oxidada.
+- **Escudo de madera** (el del guardia muerto, al brazo): de lágrima, de tablas de pino con el canto de hierro y la
+  cruz de Braga.
 - **Katana sagrada** (dos manos; también para un huevo de pascua): kesa-giri, kiriage, corte horizontal y tsuki; *iaijutsu* (desenvaina de la saya
   al cinto y corta en un gesto, con destello sagrado; también se carga) y un *makko* vertical.
 - **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller del ballestero, sobre la guardia de la
@@ -889,7 +921,7 @@ encontrarán:
 
 Las cuatro nuevas ya están en los datos (objetos, iconos, modelo recogible; al recogerlas se empuñan y el arma
 queda guardada en la partida) pero aún no están colocadas en el mundo. Para probarlas: `?dev=1&arma=facon`
-(o `hacha`, `lanza`, `espada`, `katana`).
+(o `hacha`, `lanza`, `oxidada`, `espada`, `solingen`, `katana`, `ballesta`).
 
 Sus animaciones siguen la estructura de un golpe real: anticipación que frena, impacto que se cruza a la velocidad
 máxima y final del tajo que frena desde ahí (una sola campana de velocidad, sin paradas ni rebotes: tangentes
@@ -1408,6 +1440,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
                         weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
                                        bloqueo y curación contra un enemigo real
+                        armas.mjs      el principio y las cualidades: el guardia caído (su escudo, la espada
+                                       que se arranca, el que se levanta al fondo, el cuerpo que para el paso),
+                                       la oxidada a la mitad que la de la guardia, la dureza (la ventana del
+                                       parry), el paso de cada arma, la ficha del inventario con sus barras y
+                                       su comparación, y la espada de la guardia en la armería (capturas: con
+                                       «capturas»)
                         animcheck.mjs  (sin navegador) análisis numérico de los golpes: velocidad de la punta,
                                        filo por delante, agarre a dos manos, tirones y saltos al encadenar
                         gearcheck.mjs  escudo y hoja frente al cuerpo al andar, correr, girar y bloquear:

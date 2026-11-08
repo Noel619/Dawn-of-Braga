@@ -1034,6 +1034,48 @@ function buildPrisonTower(ctx, S, L) {
 // Arranca bajo la muralla, en un rellano que da al pasadizo.
 export const PSTAIR = { x0: -90.5, x1: -84.0, z0: 7, z1: 9, n: 16 };
 
+// El guardia del pasillo de las celdas: cayó de bruces viniendo hacia la
+// primera celda (la del jugador), con la espada oxidada clavada en la
+// espalda hasta las losas (quien lo mató venía detrás) y su escudo de madera
+// todavía al brazo, tendido sobre él. Las dos cosas se cogen: la espada se
+// arranca (sale por donde entró) y el escudo se le quita del brazo. Su cuerpo
+// para el paso (no se le atraviesa) pero no la vista ni la cámara.
+//   (gx, gz): la cadera; yaw: hacia dónde queda la cabeza.
+function fallenGuard(ctx, L, gx, gz, yaw) {
+  const wb = ctx.wb;
+  const at = bakeCorpse(wb, gx, YD, gz, yaw, 'caido', 'soldier', 3);
+  const head = V(Math.sin(yaw), 0, Math.cos(yaw)),
+    left = V(Math.cos(yaw), 0, -Math.sin(yaw));
+  const q = (X, Y, Z) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z)).toArray();
+  // la espada: entra entre los omóplatos y baja hacia la cabeza, con el puño
+  // vencido hacia los pies (le empujaron de arriba abajo); la hoja (del
+  // puño, a 0,1 m de la cruz, a la punta, a 0,97) se hunde 0,45 m: atraviesa
+  // el cuerpo y se clava en el suelo
+  const E = at.point('chest', 0.04, 0.3, -0.13);
+  const Dv = V(0, -1, 0).addScaledVector(head, 0.32).addScaledVector(left, 0.07).normalize();
+  const H = E.clone().addScaledVector(Dv, -0.52);
+  const Xs = V(1, 0, 0).addScaledVector(Dv, -Dv.x).normalize();
+  // el escudo: atado al antebrazo izquierdo, que queda debajo, la cara hacia
+  // arriba y algo vencido hacia fuera (un canto en el suelo); su correa, a lo
+  // largo del antebrazo, con lo alto hacia el codo
+  const elbow = at.point('foreL', 0, 0, 0),
+    wrist = at.point('foreL', 0, -0.27, 0);
+  const Ys = elbow.clone().sub(wrist).setY(0).normalize();
+  const out = V(0, 1, 0).cross(Ys).normalize();
+  const Zs = V(0, 1, 0).multiplyScalar(Math.cos(0.26)).addScaledVector(out, Math.sin(0.26)).normalize();
+  const C = elbow.clone().lerp(wrist, 0.55).addScaledVector(Ys, -0.05);
+  C.y = YD + 0.12;
+  L.interact.push(
+    { kind: 'item', id: 'i_oxidada', item: 'oxidada', x: H.x, y: H.y, z: H.z, raw: true, quat: q(Xs, Dv.clone().cross(Xs), Dv), label: 'Arrancar la espada', arranca: Dv.clone().multiplyScalar(-0.55).toArray(), sound: 'fleshTear', r: 1.7 },
+    { kind: 'item', id: 'i_escudo', item: 'escudo', x: C.x, y: C.y, z: C.z, raw: true, quat: q(Ys.clone().cross(Zs), Ys, Zs), label: 'Quitarle el escudo', r: 1.7 }
+  );
+  // la sangre que se le fue, bajo el pecho, y el cuerpo, que para el paso
+  P.decal(ctx, E.x + head.x * 0.2, YD + 0.01, E.z + head.z * 0.2, 1.7);
+  const box = ctx.col.addOBB(gx - head.x * 0.05, gz - head.z * 0.05, 0.24, 0.86, yaw, YD, YD + 0.62);
+  box.cam = false;
+  box.noSight = true;
+}
+
 function buildDungeon(ctx, D, L) {
   const wb = ctx.wb;
   const R = (x0, z0, x1, z1, y1, mat, room, o = {}) => ({
@@ -1363,6 +1405,7 @@ function buildDungeon(ctx, D, L) {
       for (let k = 0; k < 6; k++) wb.box('iron', x, YD + 1.5 - k * 0.12, z, x + 0.06, YD + 1.6 - k * 0.12, z + 0.06, { ao: false, room });
     bakeCorpse(wb, -84.2, YD, -16.4, 0.5, 'curl', 'villager', 7);
     bakeCorpse(wb, -80.2, YD, -7.6, 2.6, 'back', 'villager', 38);
+    fallenGuard(ctx, L, -85.45, -12.2, -Math.PI / 2 + 0.2);
     // un preso que nadie sacó: los huesos sobre su jergón
     P.skeleton(ctx, -77.4, YD + 0.22, -17.3, Math.PI, { mess: 0.45, seed: 4511, room });
     P.bones(ctx, -87.4, YD, -17.0, 6, 3, 0.4);
@@ -1418,11 +1461,12 @@ function buildDungeon(ctx, D, L) {
     P.brazier(ctx, -69.2, YD, -11.6, {});
     P.wallTorch(ctx, -71.0, YD + 2.0, -15.0, 's', { room, radius: 7 });
     wb.setRoom(null);
+    // (la espada y el escudo ya no están aquí: el escudo, al brazo del
+    // guardia muerto del pasillo de las celdas, con la espada oxidada clavada
+    // en la espalda; la buena, en la armería de la puerta de la fortaleza)
     L.interact.push(
       { kind: 'note', id: 'n_celda', note: 'celda', x: -87.6, y: YD + 1.3, z: -17.85, model: 'wall', r: 1.5 },
-      { kind: 'note', id: 'n_carcelero', note: 'carcelero', x: -71.4, y: YD + 0.82, z: -13.5, model: 'paper' },
-      { kind: 'item', id: 'i_espada', item: 'espada', x: -69.2, y: YD + 0.9, z: -14.5 },
-      { kind: 'item', id: 'i_escudo', item: 'escudo', x: -68.0, y: YD + 0.9, z: -14.5 }
+      { kind: 'note', id: 'n_carcelero', note: 'carcelero', x: -71.4, y: YD + 0.82, z: -13.5, model: 'paper' }
     );
   }
 
