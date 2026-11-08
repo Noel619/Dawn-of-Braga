@@ -1443,7 +1443,26 @@ function drawFlask(b, full, liq = null) {
 }
 
 // ---------------------------------------------------------------- pequeños (9x9)
+// Un icono pequeño a partir de su dibujo: una fila por línea, una letra por
+// píxel (las que no están en la paleta, transparentes).
+function pix(b, rows, pal) {
+  rows.forEach((r, y) => {
+    for (let x = 0; x < r.length; x++) if (pal[r[x]]) b.set(x, y, pal[r[x]]);
+  });
+}
 const SMALL = {
+  // (lo que se cosecha en lo hondo, en pequeño: lo que se echa al puchero y
+  // flota en él, y lo que pide cada receta, en la mesa del Desfigurado:
+  // game/mesa.js)
+  musgoLuz(b) {
+    pix(b, ['.........', '..ahha...', '.ahhbbba.', 'ahbgbbbba', 'abbbbbgba', 'abgbbbbca', '.accccca.', '..ddddd..'], { a: P.moss1, b: P.moss3, h: P.moss4, c: P.moss2, g: P.glass4, d: P.wood1 });
+  },
+  raizAmarga(b) {
+    pix(b, ['.......c.', '......cb.', '..c..cb..', '...cbbc.c', '...bba.c.', '..bbba...', '.rbba....', 'rRrb.....', '.r.......'], { a: P.wood1, b: P.wood3, c: P.wood2, r: P.blood2, R: P.blood4 });
+  },
+  florHondo(b) {
+    pix(b, ['..w.w.w..', '.wWwWwWw.', '.Wwkkkww.', 'wWkKKkWw.', '.wkKKkww.', '.wWkkwW..', '..wwgww..', '....g....', '...gg....'], { w: P.bone2, W: P.steel5, k: P.ink2, K: P.void, g: P.moss2 });
+  },
   // (los cocimientos, en el marcador: un frasquito verde y uno negro)
   tonVerde(b) {
     b.rect(3, 0, 3, 2, P.wood3);

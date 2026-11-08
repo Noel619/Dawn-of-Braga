@@ -8,6 +8,7 @@ import { ITEMS, NOTES, AREA_NAMES } from './story.js';
 import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
 import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
+import { Mesa } from './mesa.js';
 import { formatTime, clamp } from '../core/util.js';
 import { PAL as P, Bitmap, bayer, ramp, hash, uiScale, spriteImg, spriteHtml, attachBackdrop, panelBitmap, parchmentBitmap, bannerBitmap, dividerBitmap, cursorSword, greatSword, keyBitmap, reticleBitmap, slotBitmap, arrowBitmap, candleBitmap, notchBitmap, textBitmap } from '../ui/pixel.js';
 
@@ -280,6 +281,8 @@ export class UI {
     }
     // pestañas con ratón
     document.querySelectorAll('#inv .tab').forEach((t) => t.addEventListener('click', () => this.invSwitch(+t.dataset.t)));
+    // la mesa del Desfigurado (game/mesa.js)
+    this.mesa = new Mesa(this);
   }
 
   // rótulo gótico dorado como sprite (primera línea de la introducción)
@@ -383,6 +386,7 @@ export class UI {
     const s = this.stack.pop();
     if (!s) return;
     s.el.classList.add('hidden');
+    if (s.name === 'mesa') this.mesa.cerrar();
     if (s.data.onClose) s.data.onClose();
     if (!this.modal) {
       document.body.style.cursor = '';
@@ -398,7 +402,8 @@ export class UI {
   }
 
   render(s) {
-    if (s.name === 'title' || s.name === 'pause' || s.name === 'mesa') this.renderMenu(s);
+    if (s.name === 'title' || s.name === 'pause') this.renderMenu(s);
+    if (s.name === 'mesa') this.mesa.render();
     if (s.name === 'inv') this.renderInv();
     if (s.name === 'options') this.renderOptions(s);
     if (s.name === 'controls') this.renderControls();
@@ -412,7 +417,7 @@ export class UI {
     return this.open(name, { entries, ...opts });
   }
   renderMenu(s) {
-    const list = s.name === 'title' ? $('title-menu') : s.name === 'mesa' ? $('mesa-menu') : $('pause-menu');
+    const list = s.name === 'title' ? $('title-menu') : $('pause-menu');
     list.classList.remove('hidden');
     list.innerHTML = '';
     const cur = this.cursor;
@@ -439,12 +444,6 @@ export class UI {
       });
       list.appendChild(b);
     });
-  }
-  // lo que llevas y lo que hace falta, en la mesa del Desfigurado
-  // (game/alquimia.js)
-  renderMesaInfo(s) {
-    const el = $('mesa-info');
-    if (el) el.innerHTML = (s.data.info || []).map((l) => `<div>${esc(l)}</div>`).join('');
   }
   setMenu(s, entries) {
     s.data.entries = entries;
@@ -1483,7 +1482,6 @@ export class UI {
     const au = this.g.audio;
     switch (s.name) {
       case 'title':
-      case 'mesa':
       case 'pause': {
         if (s.name === 'title' && !s.data.ready) return;
         const n = s.data.entries.length;
@@ -1554,6 +1552,11 @@ export class UI {
         }
         break;
       }
+      // la mesa del Desfigurado: los ingredientes, el puchero, las recetas
+      // (game/mesa.js)
+      case 'mesa':
+        this.mesa.update(s, dt, inp, dir, conf, back);
+        break;
       case 'story':
         if (s.data.skippable && (conf || back) && s.data.onSkip) s.data.onSkip();
         break;

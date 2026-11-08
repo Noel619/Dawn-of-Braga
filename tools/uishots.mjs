@@ -50,6 +50,19 @@ await step('note', () => { const { NOTES } = window.__notes || {}; __game.ui.sho
 await step('note', () => { __game.ui.closeAll(); __game.interact.list.find((i) => i.id === 'n_carcelero') && __game.interact.use ? 0 : 0; __game.ui.showNote({ title: 'Nota del carcelero', text: 'Tercera noche del asedio.\n\nLos de fuera ya no gritan. Cantan, toda la noche, frente a la muralla, en una lengua que no es de hombres.\n\nEl arzobispo bajó otra vez a la cripta con dos canónigos. Sólo subieron ellos dos.\n\nAl preso de la primera celda lo dejo sin comer. Que Dios me perdone: no pienso abrir esa puerta.' }); });
 await step('item', () => { __game.ui.closeAll(); __game.ui.showItem('relicario'); });
 await step('map', () => { __game.ui.closeAll(); __game.ui.open('map'); });
+// la mesa del Desfigurado (game/mesa.js): dos de musgo y una de raíz en el puchero
+await step('mesa', () => {
+  const g = __game;
+  g.ui.closeAll();
+  g.flags['desf:cocimientos'] = true;
+  g.inventory.add('musgo_luz', 3);
+  g.inventory.add('raiz_amarga', 2);
+  g.inventory.add('flor_hondo', 1);
+  g.ui.open('mesa');
+  const m = g.ui.mesa;
+  for (const id of ['musgo_luz', 'musgo_luz', 'raiz_amarga']) m.echar(id);
+  __sim(1);
+});
 await step('death', () => { __game.ui.closeAll(); const d = document.getElementById('death'); d.classList.remove('hidden'); d.classList.add('show'); }, 2200);
 await step('title', () => {
   const d = document.getElementById('death');

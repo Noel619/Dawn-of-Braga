@@ -107,7 +107,7 @@ await run('la peste', charla('desf:peste'));
 await run('lo oscuro', charla('desf:oscuro'));
 await run('la llave', charla('desf:llave'));
 await run('sus cosas', charla('desf:llave'));
-await run('la mesa', "(()=>{const g=__game;__walk([[7.0,38.6],[7.2,39.7]]);const r=__useHere('mesa_desf');const s=g.ui.top;const ents=s&&s.data.entries.map(e=>e.label+(e.off?' (no)':''));g.ui.closeAll();g.state='play';__sim(0.4);return {r:r.ok,pantalla:s&&s.name,ents}})()");
+await run('la mesa', "(()=>{const g=__game;__walk([[7.0,38.6],[7.2,39.7]]);const r=__useHere('mesa_desf');const s=g.ui.top;const q=(sel)=>[...document.querySelectorAll(sel)].map(e=>e.textContent.trim());const vista=s&&s.name==='mesa'?{traes:q('#mesa-ing .m-ing .nm'),sale:q('#mesa-sale .t')[0],recetas:q('#mesa-recetas .m-rec .nm')}:null;g.ui.closeAll();g.state='play';__sim(0.4);return {r:r.ok,pantalla:s&&s.name,vista}})()");
 // 4. la raya, la galería de la Sé y su reja
 await run('a la raya', "__walk([[7.0,33.0],[12.5,29.0],[17.5,26.5],[17.5,24.0],[21.4,24.0],[22.5,19.0],[27.5,14.6]])");
 await run('raya', "__useHere('x_raya')");
@@ -137,8 +137,10 @@ await run('musgo', "(()=>{const g=__game;const w=__ruta(-4.0,8.2,-35);const r=__
 // 9. el pozo de la tapa: arriba, al Vergel
 await run('al pozo', "__ruta(32.5,33.0,-35)");
 await run('sube', "(()=>{const g=__game;const r=__useHere('pozo_tapa');__sim(2.2);const q=g.player.pos;return {...r,pos:[q.x,q.y,q.z].map(v=>+v.toFixed(2)),zona:g.zone&&g.zone.id,tapa:!!g.flags['tapa:abierta']}})()");
-// 10. a la mesa: cocer
-await run('cocer', "(()=>{const g=__game;g.player.spawn(7.4,-11.5,39.6,Math.PI/2);__sim(0.5);g.inventory.add('musgo_luz',4);g.inventory.add('raiz_amarga',2);const r=__useHere('mesa_desf');const s=g.ui.top;if(s&&s.name==='mesa'){s.data.entries[1].action();s.data.entries[0].action();}g.ui.closeAll();g.state='play';return {r:r.ok,verde:g.inventory.count('cocimiento_verde'),negro:g.inventory.count('cocimiento_negro')}})()");
+// 10. a la mesa: cocer (game/mesa.js): el verde, echado a mano (dos de musgo
+// y una de raíz); el negro, con su receta (la flor es la de lo hondo); otro
+// negro ya no cabe
+await run('cocer', "(()=>{const g=__game;g.player.spawn(7.4,-11.5,39.6,Math.PI/2);__sim(0.5);g.inventory.add('musgo_luz',4);g.inventory.add('raiz_amarga',2);const v0=g.inventory.count('cocimiento_verde'),n0=g.inventory.count('cocimiento_negro');const r=__useHere('mesa_desf');const s=g.ui.top;const m=g.ui.mesa;const out={r:r.ok,pantalla:s&&s.name};const q=()=>{const x=m.sale();return x.tipo+(x.listo?' listo':'')+(m.aviso?' ('+m.aviso.text+')':'')};if(s&&s.name==='mesa'){m.echar('musgo_luz');m.echar('musgo_luz');m.echar('raiz_amarga');out.aMano=q();m.cocer();__sim(2.6);m.preparar('negro');out.receta=q();m.cocer();__sim(2.6);m.preparar('negro');out.otroNegro=m.aviso&&m.aviso.text;}g.ui.closeAll();g.state='play';return {...out,verde:g.inventory.count('cocimiento_verde')-v0,negro:g.inventory.count('cocimiento_negro')-n0,quedan:['musgo_luz','raiz_amarga','flor_hondo'].map(k=>g.inventory.count(k)).join('/')}})()");
 out.push('segundos: ' + Math.round((Date.now() - t0) / 1000));
 console.log(out.join('\n'));
 console.log(logs.join('\n') || 'sin errores');

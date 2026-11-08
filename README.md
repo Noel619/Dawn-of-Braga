@@ -49,6 +49,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Inventario: elegir lo de una ranura / quitárselo | E o clic / X | A / X |
 | Inventario: la ficha de un arma, un escudo o una armadura (sus barras) o su descripción | T | LT |
 | Transcripción de un documento (mostrarla u ocultarla) | T | X |
+| Mesa del Desfigurado: echar al puchero / sacar / cocer | E, clic o arrastrar al puchero / X o clic derecho / C | A / X / Y |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
 
@@ -202,11 +203,17 @@ cuesta: andando sin pelear y sabiendo el camino son unos dos minutos (`tools/clo
 criaturas del camino (una treintena) y el agua, la primera vez, del orden de los diez. **Los cocimientos** se cuecen en
 la mesa del Desfigurado: el **verde** (dos de musgo y una de raíz: el aliento vuelve casi el doble de deprisa, cuarenta
 segundos) y el **negro** (la flor, dos de raíz y dos de musgo: casi el triple, y se anda un 15 % más ligero, un
-minuto). Se llevan **tres verdes y un negro como mucho**; se beben con 1 y 2 (en el mando, la cruz a izquierda y
+minuto). **La mesa** tiene su pantalla: a la izquierda, lo que traes de lo hondo; en medio, **su puchero al fuego**,
+donde se echa de uno en uno lo que traes (se pincha, o se arrastra al puchero): se ve caer, salpicar, flotar y teñir el
+caldo, y debajo, lo que hay dentro y **lo que va saliendo** («va saliendo negro: le falta una de raíz», «así no agarra:
+sobra musgo»); a la derecha, en una hoja de su cuaderno, **lo que te enseñó**: las dos recetas, con lo que ya está en el
+puchero marcado en dorado y lo que no traes en rojo (pinchada una receta, se prepara sola). Cuando lo de dentro es justo
+una receta, **se cuece**: el fuego se aviva, hierve, lo de dentro se hunde, cuaja y el frasco sale del caldo. Lo echado
+no se gasta hasta cocerlo: al dejar la mesa vuelve a la bolsa. Se llevan **tres verdes y un negro como mucho**; se beben con 1 y 2 (en el mando, la cruz a izquierda y
 derecha) y, como lo que se bebe se pierde, **no se rellenan al descansar ni al caer**. En el marcador, junto a las
 ampollas, los que llevas, y bajo el aguante, una raya con lo que le queda al que has bebido. (`world/cloaca_kit.js`,
 `world/cloacas_hondas.js`, `entities/lobishome.js`, `entities/plantas.js`, `game/lobishome.js`, `game/cloacas.js`,
-`game/alquimia.js`; el plan y lo que se hizo, `PLAN_LOBO.md`.)
+`game/alquimia.js` y `game/mesa.js`; el plan y lo que se hizo, `PLAN_LOBO.md`.)
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
@@ -1344,7 +1351,9 @@ src/
                         fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, la camilla);
                         fisico_cine.js: sus escenas (la cortina, la camilla y el forcejeo, su muerte);
                         fisico_pelea.js: la pelea de su quirófano; trampas.js: sus cepos y sus campanillas;
-                        cornisas.js: el equilibrio en vigas y cornisas;
+                        cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
+                        Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
+                        mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
                         los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la
@@ -1404,7 +1413,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        lo que cuenta tema a tema (el cocimiento, la mesa, la llave); la reja
                                        de la Sé (sin llave y con ella), la lobera y su niebla, el laberinto, las
                                        viejas, los aljibes (el agua que frena), lo hondo (la cosecha), el pozo
-                                       de la tapa hasta el Vergel y la mesa
+                                       de la tapa hasta el Vergel y la mesa (el verde, echado a mano; el negro,
+                                       con su receta; otro negro, que ya no cabe)
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»

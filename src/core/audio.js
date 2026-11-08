@@ -65,6 +65,9 @@ const FX_PRIO = {
   rest: [5, 'jugador'],
   pickup: [5, 'jugador'],
   item: [5, 'jugador'],
+  // (la mesa del Desfigurado: lo que se echa al puchero y el hervor)
+  plop: [5, 'jugador'],
+  hervor: [5, 'jugador'],
   paper: [5, 'jugador'],
   // parry y golpe de gracia: la respuesta a tu acción, nunca se aparta
   parry: [5, 'jugador'],
@@ -2490,6 +2493,25 @@ export class Audio {
         break;
       }
       // el agua a la rodilla, al andar (las cloacas hondas: game/cloacas.js)
+      // la mesa del Desfigurado (game/mesa.js): lo que se echa al puchero (un
+      // chapoteo corto y gordo; o.k, más agudo: lo que se saca) y, al
+      // cocerlo, el hervor (la lumbre que se aviva y el borboteo)
+      case 'plop': {
+        const k = o.k ?? 1;
+        d = this.out(null, { gain: o.gain ?? 0.55, verb: 0.35, life: 1.5 });
+        this.tone(d, t, 0.09, { f0: 520 * k, f1: 150 * k, gain: 0.3, a: 0.004 });
+        this.noise(d, t, 0.16, { f0: 900 * k, f1: 380 * k, q: 1.4, gain: 0.12, a: 0.004, buf: this.pink });
+        this.smp(d, t + 0.05, this.lib.drip(rnd(700, 1000) * k), { gain: 0.14 });
+        break;
+      }
+      case 'hervor': {
+        d = this.out(null, { gain: 0.6, verb: 0.4, life: 3.5 });
+        this.noise(d, t, 0.9, { f0: 180, f1: 900, q: 0.8, gain: 0.28, a: 0.2, buf: this.brown, rate: 3 });
+        this.smp(d, t + 0.05, this.lib.crackle(6), { gain: 0.32, offset: rnd(0, 4), dur: 1.8, hp: 500 });
+        this.noise(d, t + 0.2, 1.6, { type: 'lowpass', f0: 520, gain: 0.12, a: 0.4, buf: this.brown, rate: 2 });
+        for (let i = 0, tt = t + 0.25; i < 16; i++, tt += rnd(0.06, 0.12)) this.tone(d, tt, 0.06, { f0: rnd(240, 420), f1: rnd(480, 820), gain: 0.1, a: 0.003 });
+        break;
+      }
       case 'splash': {
         d = this.out(P, { gain: o.gain ?? 0.6, verb: 0.6, life: 2, ref: 3 });
         this.noise(d, t, 0.32, { type: 'bandpass', f0: rnd(500, 800), f1: rnd(1400, 2200), q: 0.9, gain: 0.2, a: 0.01, buf: this.pink, curve: 'lin' });

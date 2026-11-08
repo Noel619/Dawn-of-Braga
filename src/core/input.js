@@ -39,6 +39,8 @@ const KB = {
   // (en el inventario: la ficha de un arma, un escudo o una armadura —sus
   // barras— o su descripción)
   ficha: ['KeyT'],
+  // (en la mesa del Desfigurado: cocer lo que hay en el puchero; game/mesa.js)
+  cocer: ['KeyC', 'KeyF'],
   camL: ['KeyJ'],
   camR: ['KeyL'],
   camU: [],
@@ -56,6 +58,7 @@ const PAD = {
   tonicoB: [15], // cruz, derecha
   transcribe: [2],
   ficha: [6], // LT
+  cocer: [3], // Y (en la mesa del Desfigurado)
   inventory: [3], // Y
   unequip: [2],
   block: [4], // LB
@@ -459,6 +462,7 @@ export const GLYPHS = {
     unequip: 'X',
     transcribe: 'T',
     ficha: 'T',
+    cocer: 'C',
   },
   pad: {
     interact: 'A',
@@ -481,5 +485,6 @@ export const GLYPHS = {
     unequip: 'X',
     transcribe: 'X',
     ficha: 'LT',
+    cocer: 'Y',
   },
 };

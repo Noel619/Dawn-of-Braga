@@ -51,8 +51,17 @@
 <section id="mesa" class="screen veil hidden">
   <div class="panel" data-crest="1">
     <div class="eyebrow f-small" data-div="1">La mesa del Desfigurado</div>
-    <div class="f-small" id="mesa-info" style="margin-top:calc(var(--u) * 5);max-width:calc(var(--u) * 230);line-height:1.5"></div>
-    <div class="menu-list" id="mesa-menu" style="margin-top:calc(var(--u) * 5)"></div>
+    <div class="mesa">
+      <div class="m-traes"><div class="lbl f-small">Lo que traes</div><div id="mesa-ing"></div><div class="m-pista" id="mesa-pista"></div></div>
+      <div class="m-centro">
+        <div class="m-puchero" id="mesa-puchero"><canvas class="px" id="mesa-cv"></canvas></div>
+        <div class="m-dentro" id="mesa-dentro"></div>
+        <div class="m-sale" id="mesa-sale"></div>
+        <div class="menu-list m-cocer" id="mesa-cocer"></div>
+      </div>
+      <div class="m-libro" id="mesa-libro"><div class="m-recetas f-hand" id="mesa-recetas"></div></div>
+    </div>
+    <div class="hint f-hand" id="mesa-hint"></div>
   </div>
 </section>
 

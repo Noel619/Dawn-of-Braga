@@ -247,6 +247,76 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 #item h2 { margin: 0; font-weight: normal; color: var(--gold-hi); text-shadow: var(--sh); }
 #item p { margin: calc(var(--u) * 3) auto 0; max-width: 40ch; color: var(--bone); text-shadow: var(--sh); }
 
+/* la mesa del Desfigurado (game/mesa.js): a la izquierda, lo que traes; en
+   medio, el puchero al fuego, lo que hay dentro, lo que va saliendo y el
+   botón de cocer; a la derecha, la hoja del cuaderno con las recetas */
+#mesa .panel { width: min(calc(var(--u) * 452), 96vw); }
+.mesa { display: grid; grid-template-columns: calc(var(--u) * 100) calc(var(--u) * 160) minmax(0, 1fr); gap: calc(var(--u) * 8); margin-top: calc(var(--u) * 4); align-items: start; }
+/* (con el píxel de arte de un píxel la letra pesa el doble: columnas a su
+   medida; en ventanas estrechas o bajas, fuera la pista y los efectos) */
+#mesa .panel.u1 { width: min(900px, 96vw); }
+.mesa.estrecha { grid-template-columns: calc(var(--u) * 92) calc(var(--u) * 140) minmax(0, 1fr); gap: calc(var(--u) * 6); }
+.mesa.estrecha .m-rec { grid-template-columns: minmax(0, 1fr); }
+.mesa.estrecha .m-rec .ic { display: none; }
+.mesa.u1 { grid-template-columns: minmax(0, 1fr) minmax(136px, 1.25fr) minmax(0, 1.4fr); }
+.mesa.u1 .m-sale .t { font-size: 13px; line-height: 19px; }
+.mesa.estrecha .m-rec .ef, .mesa.baja .m-rec .ef, .mesa.estrecha .m-pista, .mesa.baja .m-pista { display: none; }
+.m-traes .lbl { margin: 0 0 calc(var(--u) * 2); color: var(--gold); text-shadow: var(--sh); }
+#mesa-ing { display: grid; gap: calc(var(--u) * 2); }
+.m-ing { display: grid; grid-template-columns: calc(var(--u) * 36) minmax(0, 1fr); gap: calc(var(--u) * 4); align-items: center; padding: var(--u); cursor: grab; touch-action: none; user-select: none; }
+.m-ing.sel { background: rgba(138, 60, 16, 0.28); box-shadow: inset var(--u) 0 0 var(--ember); }
+.m-ing .nm { color: var(--bone); text-shadow: var(--sh); line-height: 1.1; }
+.m-ing.sel .nm { color: var(--bone-hi); }
+.m-ing .rl { color: var(--dim); text-shadow: var(--sh); line-height: 1.1; }
+.m-ing.sel .rl { color: var(--ash); }
+.m-ing.off { cursor: default; }
+.m-ing.off .nm, .m-ing.off .slot .n { color: var(--dim); }
+.m-pista { margin-top: calc(var(--u) * 5); padding: 0 calc(var(--u) * 2); color: var(--dim); text-shadow: var(--sh); line-height: 1.1; }
+.m-centro { display: grid; justify-items: center; gap: calc(var(--u) * 3); }
+.m-puchero { width: calc(var(--u) * 136); height: calc(var(--u) * 100); }
+.m-dentro { display: flex; gap: calc(var(--u) * 2); justify-content: center; }
+.m-hueco { position: relative; width: calc(var(--u) * 17); height: calc(var(--u) * 17); }
+.m-hueco > img { position: absolute; left: 0; top: 0; }
+.m-hueco > img.ic { left: calc(var(--u) * 3); top: calc(var(--u) * 3); }
+.m-hueco.lleno { cursor: grab; touch-action: none; }
+.m-sale { display: grid; grid-template-columns: calc(var(--u) * 36) minmax(0, 1fr); gap: calc(var(--u) * 5); align-items: center; width: 100%; min-height: calc(var(--u) * 40); }
+.m-sale .m-res { cursor: default; }
+.m-sale .m-res > img.rays { left: calc(var(--u) * -14); top: calc(var(--u) * -14); animation: raysPulse 2.4s steps(4) infinite; }
+.m-sale .m-res > img.sl { z-index: 1; }
+.m-sale .m-res > img.ic { z-index: 2; }
+.m-sale.listo .m-res > img.ic { animation: mesaLate 1.1s steps(2) infinite; }
+.m-sale.hecho.nuevo .m-res > img.ic { animation: mesaSale 0.5s steps(5); }
+.m-sale.cuece .m-res > img.ic { animation: mesaTiembla 0.2s steps(2) infinite; }
+.m-sale .t { color: var(--ash); text-shadow: var(--sh); line-height: 1.05; }
+.m-sale .s { color: var(--bone); text-shadow: var(--sh); line-height: 1.1; }
+.m-sale.listo .t, .m-sale.hecho .t { color: var(--gold-hi); }
+.m-sale.mal .t { color: #e8806a; }
+.m-sale.aviso .s { color: #e8806a; }
+.m-sale.aviso.nuevo .s { animation: mesaNo 0.3s steps(3); }
+.m-cocer { margin: 0 auto; }
+@keyframes mesaLate { 50% { transform: translateY(calc(var(--u) * -1)); } }
+@keyframes mesaSale { from { transform: scale(0.3) translateY(calc(var(--u) * 10)); opacity: 0; } 60% { transform: scale(1.25); opacity: 1; } }
+@keyframes mesaTiembla { 50% { transform: translateX(var(--u)); } }
+@keyframes mesaNo { 33% { transform: translateX(calc(var(--u) * -2)); } 66% { transform: translateX(calc(var(--u) * 2)); } }
+/* la hoja del cuaderno: lo que te enseñó (las muescas doradas, lo que ya
+   está en el puchero; las rojas, lo que no traes) */
+.m-libro { position: relative; padding: calc(var(--u) * 9) calc(var(--u) * 10) calc(var(--u) * 9); color: var(--pink); }
+.m-libro > :not(canvas.pxbg) { position: relative; z-index: 1; }
+.m-tit { text-align: center; color: #5a1a10; line-height: 1.1; margin-bottom: calc(var(--u) * 3); }
+.m-rec { display: grid; grid-template-columns: calc(var(--u) * 32) minmax(0, 1fr); gap: 0 calc(var(--u) * 4); align-items: center; padding: calc(var(--u) * 2) calc(var(--u) * 3); cursor: pointer; }
+.m-rec .nm, .m-rec .ef { grid-column: 1 / -1; }
+.m-rec.sel { background: rgba(138, 60, 16, 0.16); box-shadow: inset calc(var(--u) * 2) 0 0 #861b13; }
+.m-rec .nm { color: var(--pink); line-height: 1.05; }
+.m-rec.listo .nm { color: #861b13; }
+.m-rec .pide { display: flex; flex-wrap: wrap; gap: var(--u) calc(var(--u) * 4); margin-top: var(--u); }
+.m-rec .q, .m-rec .ms { display: inline-flex; align-items: center; gap: var(--u); }
+.m-rec .ef { margin-top: var(--u); color: var(--pink2); line-height: 1.1; }
+.m-rec .ll { margin-top: calc(var(--u) * 2); color: var(--pink2); }
+.m-raya { height: var(--u); margin: calc(var(--u) * 2) calc(var(--u) * 4); background: rgba(90, 58, 34, 0.4); }
+#mesa-hint span[data-a] { cursor: pointer; }
+/* lo que se arrastra, bajo el puntero */
+img.spr.mesa-drag { position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none; filter: drop-shadow(calc(var(--u) * 2) calc(var(--u) * 2) 0 rgba(6, 5, 5, 0.55)); }
+
 /* mapa */
 #map .panel { padding-bottom: calc(var(--u) * 9); }
 #map canvas.map { margin: calc(var(--u) * 3) auto 0; }
