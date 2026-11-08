@@ -873,6 +873,62 @@ const GEN = {
     });
   },
 
+  // La piel del Condenado (entities/cuerpo.js): la de un hombre sano que lleva
+  // tres noches en una celda, sin venas ni llagas: tostada, con su rubor, la
+  // mugre de la paja y algún cardenal.
+  conPiel() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 4, y / 4, 3, S / 4, 471);
+      const r = fbm2(x / 8 + 3, y / 8, 3, S / 8, 472);
+      const dirt = fbm2(x / 6, y / 6 + 5, 3, S / 6, 473);
+      let c = mix3([150, 116, 94], [182, 146, 120], n);
+      c = mix3(c, [176, 112, 96], Math.max(0, r - 0.55) * 0.9);
+      if (dirt > 0.62) c = mix3(c, [104, 84, 68], Math.min(0.55, (dirt - 0.62) * 2.2));
+      if (hash2(x, y, 474) > 0.94) c = c.map((v) => v * 0.9);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+
+  // Las armaduras del jugador (entities/armaduras.js). El gambesón: lienzo
+  // acolchado en canales (cada uno, un tubo de borra entre dos pespuntes),
+  // con sus costuras de través y la mugre.
+  acolchado() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const cx = (x % 8) - 3.5;
+      const sh = 1 - (cx / 4.2) ** 2 * 0.24;
+      const stitch = x % 8 === 0 ? 0.8 : 1;
+      const hs = y % 16 === 0 && x % 2 === 0 ? 0.86 : 1;
+      const w = (x + y) % 2 === 0 ? 1 : 0.95;
+      const n = fbm2(x / 5, y / 5, 3, S / 5, 481);
+      const dirt = fbm2(x / 8, y / 8, 3, S / 8, 482);
+      let c = mix3([126, 110, 84], [150, 134, 104], n);
+      if (dirt > 0.6) c = mix3(c, [96, 82, 62], Math.min(0.6, (dirt - 0.6) * 2.4));
+      const k = sh * stitch * hs * w;
+      set(o, c[0] * k, c[1] * k, c[2] * k);
+    });
+  },
+  // Cuero curtido al tanino, más claro que el de los cintos: el grano, las
+  // rozaduras y los pespuntes de las costuras.
+  cueroClaro() {
+    const S = 32;
+    return pixels(S, S, (x, y, o) => {
+      const n = fbm2(x / 3, y / 3, 3, S / 3, 485);
+      const g = fbm2(x / 1.5, y / 1.5, 2, S / 1.5, 486);
+      const scuff = fbm2(x / 7 + 2, y / 7, 3, S / 7, 487);
+      let c = mix3([98, 66, 40], [138, 96, 60], n);
+      c = c.map((v) => v * (0.92 + g * 0.14));
+      if (scuff > 0.64) c = mix3(c, [166, 128, 90], Math.min(0.5, (scuff - 0.64) * 2));
+      if (x % 32 === 3 && y % 4 < 2) c = mix3(c, [150, 126, 92], 0.6);
+      set(o, c[0], c[1], c[2]);
+    });
+  },
+  // Paño de lana parda (las calzas)
+  clothBrown() {
+    return clothGen([78, 60, 44], 23);
+  },
+
   // Piel corrupta: gris cerúleo con venas negras y llagas.
   skinCorrupt() {
     const S = 32;
