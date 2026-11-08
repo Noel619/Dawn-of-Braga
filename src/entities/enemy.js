@@ -19,6 +19,9 @@ const ANCLA = new Set(['attack', 'hurt', 'stagger', 'parried']);
 
 const shadowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 const _RED = new THREE.Color(1, 0.08, 0.03);
+// el destello del golpe (emisivo) y su color por omisión
+const FLASH_EM = [0.6, 0.15, 0.1];
+const _flashC = new THREE.Color();
 let shadowMat = null;
 
 export function makeBlobShadow(size) {
@@ -1077,10 +1080,12 @@ export class Enemy {
       }
       this._flareOn = this.flare > 0 || stun || this.flareRed > 0;
     }
-    // destello de golpe
+    // destello de golpe (T.flashEm: su color; en la armadura bruñida del
+    // Empalado, el de siempre dejaba todo el cuerpo de un color plano)
     if (this.flash > 0) {
       if (!this._flashing) {
-        this.rig.setTint(null, new THREE.Color(0.6, 0.15, 0.1));
+        const fe = T.flashEm || FLASH_EM;
+        this.rig.setTint(null, _flashC.setRGB(fe[0], fe[1], fe[2]));
         this._flashing = true;
       }
     } else if (this._flashing) {

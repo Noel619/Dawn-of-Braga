@@ -14,9 +14,12 @@
 // torno, las almenas, los barriles).
 //
 // Repertorio: mazazo de arriba abajo (se queda clavado en la piedra y lo
-// arranca), barrido, barrido y revés, pisotón, golpe de regatón, estocada
-// con la pica de su propio vientre, embestida con la pica por delante como
-// una lanza y, cuando ya ha perdido el yelmo, un salto con mazazo.
+// arranca), barrido, barrido y revés, pisotón, golpe de regatón, el
+// arietazo (lo echa atrás a dos manos y lo clava hacia delante, de frente,
+// como lo que es: un ariete), la embestida con el ariete por delante, a la
+// carrera, y, cuando ya ha perdido el yelmo, un salto con mazazo. (Antes
+// apuñalaba con la pica que le atraviesa, echando la cadera hacia delante,
+// y embestía con ella como una lanza: no tenía sentido.)
 //
 // La armadura se le va cayendo: a los cuatro quintos de vida, la hombrera
 // izquierda; luego la visera (se le ve la cara); después la hombrera derecha
@@ -84,8 +87,6 @@ const LNG = { legL: [-42, 0, 6], shinL: [48, 0, 0], legR: [34, 0, -6], shinR: [2
 // Arrastrando el ariete (la cabeza por el suelo, detrás, a la derecha).
 const DRAG_BODY = { chest: [14, 0, 0], head: [-10, 0, 0] };
 const DRAG = P(DRAG_BODY, [-62, 158, 22], [-165, -30], 0);
-// la pica: dónde la agarra la mano izquierda (espacio del pecho, cm)
-const PIKE_GRIP = [21, 36, 43];
 
 // ------------------------------------------------------------ clips
 const C = {};
@@ -177,28 +178,33 @@ C.jab = clip(
   ],
   { lag: { chest: 0.02, head: 0.05, ikR: 0.03, bladeR: 0.05 } }
 );
-// estocada con la pica de su propio vientre: se retuerce hacia atrás y
-// adelanta la cadera; la pica sale como una lanza
-const PK0 = { ...DRAG, ...P({ ...ST, root: [0, -8, -18], hips: [0, -16, 0], chest: [-6, -26, 0], head: [-4, 22, 0] }, [-62, 158, 0], [-165, -30], 0, { ikL: PIKE_GRIP }) };
-const PK1 = { ...DRAG, ...P({ ...LNG, root: [0, -22, 30], hips: [-12, 14, 0], chest: [-16, 12, 0], head: [16, -8, 0] }, [-70, 150, 10], [-160, -26], 0, { ikL: PIKE_GRIP }) };
-C.pike = clip(
-  'i_pike',
-  1.85,
+// el arietazo: lo echa atrás a dos manos, a la altura de la cadera, con el
+// cuerpo torcido y el peso en la pierna de atrás; se para un instante y lo
+// clava de frente, recto, con un paso largo (la cabeza de hierro por
+// delante, a la altura del pecho); la cabeza cae a las losas y la arrastra
+const RT0 = P({ ...ST, root: [0, -12, -18], hips: [0, -22, 0], chest: [-4, -30, 0], head: [-4, 26, 0] }, [-46, 128, -46], [10, 4]);
+const RT1 = P({ ...LNG, root: [0, -20, 28], hips: [0, 8, 0], chest: [20, 6, 0], head: [-12, -4, 0] }, [-26, 132, 78], [2, 1]);
+C.thrust = clip(
+  'i_thrust',
+  1.9,
   [
     [0, { ...DRAG }],
-    [0.62, PK0, 'hold'],
-    [0.84, PK1, 'strike'],
-    [1.15, PK1],
-    [1.85, { ...DRAG }],
+    [0.32, P({ ...ST, root: [0, -6, -6], hips: [0, -10, 0], chest: [6, -16, 0], head: [-4, 10, 0] }, [-56, 140, -10], [-30, -10], 0.7)],
+    [0.56, RT0, 'hold'],
+    [0.72, RT1, 'strike', HIT],
+    [0.9, P({ ...LNG, root: [0, -22, 30], hips: [0, 10, 0], chest: [24, 8, 0], head: [-12, -4, 0] }, [-24, 126, 84], [2, -8]), 'settle'],
+    [1.35, P({ ...ST, root: [0, -14, 8], chest: [20, 0, 0], head: [-8, 0, 0] }, [-40, 128, 56], [-16, -36], 0.5)],
+    [1.9, { ...DRAG }],
   ],
-  { lag: { chest: 0.02, head: 0.05 } }
+  { lag: LAG, events: [{ t: 0.6, name: 'swing' }] }
 );
-// embestida: agazapado, la mano en la pica y a la carrera (las piernas las
-// pone la marcha)
-const CH0 = { ...P({ root: [0, -28, 0], chest: [38, 0, 0], head: [-30, 0, 0] }, [-62, 132, -6], [-170, -26], 0, { ikL: PIKE_GRIP }) };
-const CH1 = { ...P({ root: [0, -14, 0], chest: [40, 0, 0], head: [-34, 0, 0] }, [-64, 136, -10], [-168, -28], 0, { ikL: PIKE_GRIP }) };
+// embestida: el ariete por delante, a dos manos y a la altura de la
+// cintura, agachado, y a la carrera (las piernas las pone la marcha)
+const CH0 = P({ root: [0, -24, 0], chest: [28, 0, 0], head: [-24, 0, 0] }, [-32, 118, 30], [0, 3]);
+const CH1 = P({ root: [0, -16, 0], chest: [30, 0, 0], head: [-26, 0, 0] }, [-30, 120, 40], [0, 1]);
 C.charge = clip('i_charge', 2.6, [
   [0, { ...DRAG }],
+  [0.4, P({ ...ST, root: [0, -10, -4], chest: [10, -10, 0], head: [-8, 6, 0] }, [-50, 138, 0], [-40, -6], 0.6)],
   [0.75, CH0, 'hold'],
   [0.86, CH1],
   [2.1, CH1],
@@ -252,7 +258,7 @@ C.intro = clip(
     ],
     [3.8, { ...DRAG, legL: [0, 0, 0], shinL: [0, 0, 0], legR: [0, 0, 0], shinR: [0, 0, 0] }],
   ],
-  { ground: false, lag: { chest: 0.04, head: 0.08, ikR: 0.06, bladeR: 0.1 } }
+  { ground: false, lag: { chest: 0.04, head: 0.08, ikR: 0.06, bladeR: 0.1 }, events: [{ t: 2.55, name: 'roar' }] }
 );
 C.hurt = clip('i_hurt', 0.55, [
   [0, { ...DRAG, chest: [-8, 14, 0], head: [-16, 0, 10], root: [0, -4, -8] }, 'snap'],
@@ -331,7 +337,6 @@ const BUTT = new V3(...IMP.ramButt);
 // alcance no se libra del barrido)
 const SHAFT = RAM.clone().multiplyScalar(0.62);
 const SHAFT2 = RAM.clone().multiplyScalar(0.3);
-const PIKE_TIP = new V3(...IMP.pikeOut).addScaledVector(new V3(...IMP.pikeDir), 0.62);
 export const ramPoint = (e, out) => e.rig.worldPos('weapon', out, RAM);
 const _a = new V3(),
   _b = new V3(),
@@ -383,7 +388,6 @@ function segDist(p1, q1, p2, q2) {
 // Punto de golpe del arma (en el mundo) para un tipo de ventana.
 function strikePoint(e, kind, out) {
   if (kind === 'butt') return e.rig.worldPos('weapon', out, BUTT);
-  if (kind === 'pike') return e.rig.worldPos('pike', out, PIKE_TIP);
   if (kind === 'shaft') return e.rig.worldPos('weapon', out, SHAFT);
   if (kind === 'shaft2') return e.rig.worldPos('weapon', out, SHAFT2);
   return e.rig.worldPos('weapon', out, RAM);
@@ -755,13 +759,15 @@ function postPose(e, pose, dt) {
   if (!pose.jaw) pose.jaw = [Math.max(0, Math.sin(g.time * 0.9)) * 0.05, 0, 0];
 }
 
-// Después de aplicar la pose: el estandarte cuelga hacia el suelo, mecido.
+// Después de aplicar la pose: la cabeza del ariete, nunca dentro del suelo, y
+// el estandarte cuelga hacia el suelo, mecido.
 function afterPose(e) {
   const P = e.P;
   const g = e.game;
+  e.obj.updateMatrixWorld(true);
+  keepRamUp(e);
   const j = e.rig.joints.banner;
   if (!j) return;
-  e.obj.updateMatrixWorld(true);
   j.parent.getWorldQuaternion(_qp);
   const dt = Math.min(0.05, P._dt || 1 / 60);
   const spd = Math.hypot(e.vx, e.vz);
@@ -773,6 +779,39 @@ function afterPose(e) {
   _qd.setFromEuler(_eu);
   j.quaternion.copy(_qp.invert().multiply(_qd));
   j.updateMatrixWorld(true);
+}
+
+// Si una pose hunde la cabeza del ariete en las losas (arrastrándolo con el
+// cuerpo echado atrás: el pisotón, el rugido de dolor), el madero pivota en
+// la mano hasta dejarla apoyada encima (se hundía hasta medio metro).
+const _rg = new V3(),
+  _rh = new V3(),
+  _rv = new V3(),
+  _rk = new V3(),
+  _rq = new THREE.Quaternion(),
+  _rw = new THREE.Quaternion(),
+  _rp = new THREE.Quaternion();
+const UP = new V3(0, 1, 0);
+function keepRamUp(e) {
+  const wj = e.rig.joints.weapon;
+  if (!wj || !e.obj.visible || e.dead) return;
+  wj.getWorldPosition(_rg);
+  _rh.copy(RAM).applyMatrix4(wj.matrixWorld);
+  const gy = e.game.world.col.groundHeight(_rh.x, _rh.z, 0.1, _rh.y + 1.2);
+  const lift = gy + 0.12 - _rh.y;
+  if (lift <= 0.005) return;
+  _rv.subVectors(_rh, _rg);
+  const L = _rv.length();
+  if (L < 0.1) return;
+  const a = Math.asin(clamp((_rv.y + lift) / L, -1, 1)) - Math.asin(clamp(_rv.y / L, -1, 1));
+  _rk.crossVectors(_rv, UP);
+  if (_rk.lengthSq() < 1e-6) return;
+  _rk.normalize();
+  _rq.setFromAxisAngle(_rk, a);
+  wj.getWorldQuaternion(_rw);
+  wj.parent.getWorldQuaternion(_rp);
+  wj.quaternion.copy(_rp.invert().multiply(_rq.multiply(_rw)));
+  wj.updateMatrixWorld(true);
 }
 
 function onHit(e, kind, dmg, heavy) {
@@ -833,7 +872,6 @@ function update(e, dt, player) {
       ['shaft', a.ram, 0.3],
       ['shaft2', a.ram, 0.3],
       ['butt', a.butt, 0.4],
-      ['pike', a.pikeHit, 0.32],
     ]) {
       if (!wins) continue;
       const cur = strikePoint(e, kind, _a);
@@ -871,7 +909,7 @@ function update(e, dt, player) {
       });
       prev.copy(cur);
     }
-    // la embestida: el cuerpo y la pica por delante
+    // la embestida: el cuerpo, detrás del ariete
     if (a.body) {
       for (const [h0, h1] of a.body) {
         if (t < h0 || t > h1 || e.hitDone.body) continue;
@@ -907,7 +945,7 @@ function update(e, dt, player) {
       }
     }
   } else {
-    e.data.prev_ram = e.data.prev_butt = e.data.prev_pike = null;
+    e.data.prev_ram = e.data.prev_butt = e.data.prev_shaft = e.data.prev_shaft2 = null;
     e.data.smashed = null;
   }
   e.data.lx = e.pos.x;
@@ -931,17 +969,19 @@ function update(e, dt, player) {
 
 // Al entrar en la niebla: se levanta y ruge (la cámara lo encuadra).
 function onWake(e, g) {
+  void g;
   e.aware = true;
   e.state = 'alert';
   e.stT = 0;
   e.anim.play(IMP_CLIPS.intro, { blend: 0.05 });
-  setTimeout(() => {
-    if (e.state === 'alert' || e.state === 'chase') {
-      g.camRig.shake(0.5);
-      g.audio && g.audio.play('roar', e.pos);
-      g.combat.ring(e.pos.x, e.pos.y, e.pos.z, 6, 0xc04020, 0.9);
-    }
-  }, 2550);
+}
+// el rugido al levantarse (evento de la animación del despertar)
+function wakeRoar(e) {
+  const g = e.game;
+  if (e.state !== 'alert' && e.state !== 'chase') return;
+  g.camRig.shake(0.5);
+  g.audio && g.audio.play('roar', e.pos);
+  g.combat.ring(e.pos.x, e.pos.y, e.pos.z, 6, 0xc04020, 0.9);
 }
 
 // ------------------------------------------------------------ tipo
@@ -960,8 +1000,12 @@ const stompEvt = (t) => ({
 export const IMPALED_TYPE = {
   name: 'El Empalado',
   build: buildImpaled,
-  hp: 680,
-  poise: 190,
+  // (antes 680: caía en nada)
+  hp: 1100,
+  poise: 240,
+  // (el destello del golpe, apagado: con el de siempre, la armadura bruñida
+  // se quedaba de un color plano, rosado, a cada golpe)
+  flashEm: [0.16, 0.035, 0.02],
   radius: 1.0,
   height: 3.4,
   lockHeight: 2.4,
@@ -1016,8 +1060,8 @@ export const IMPALED_TYPE = {
     }),
     strike({ name: 'stomp', clip: C.stomp, dur: 1.5, min: 0, max: 2.4, weight: 2, events: [stompEvt(0.68)], noParry: true }),
     strike({ name: 'jab', clip: C.jab, dur: 1.3, min: 0, max: 2.3, weight: 2, turn: 3, trackUntil: 0.4, butt: [[0.48, 0.66]], dmg: 18, knock: 9, lunge: [[0.42, 0.58, 3.5]] }),
-    strike({ name: 'pike', clip: C.pike, dur: 1.85, min: 1.0, max: 3.4, weight: 2, turn: 2.6, trackUntil: 0.62, pikeHit: [[0.76, 1.04]], dmg: 28, knock: 7, lunge: [[0.72, 0.98, 6.2]] }),
-    strike({ name: 'charge', clip: C.charge, dur: 2.6, min: 5, max: 16, weight: 2, turn: 1.6, trackUntil: 0.8, body: [[0.86, 2.1]], dmg: 34, lunge: [[0.84, 2.1, 8.4]], blend: 0.15, noParry: true }),
+    strike({ name: 'thrust', clip: C.thrust, dur: 1.9, min: 1.6, max: 4.2, weight: 2, turn: 2.6, trackUntil: 0.56, ram: [[0.62, 0.86]], dmg: 34, knock: 9, lunge: [[0.58, 0.84, 5.6]] }),
+    strike({ name: 'charge', clip: C.charge, dur: 2.6, min: 5, max: 16, weight: 2, turn: 1.6, trackUntil: 0.8, ram: [[0.86, 2.1]], body: [[0.86, 2.1]], dmg: 34, knock: 10, lunge: [[0.84, 2.1, 8.4]], blend: 0.15, noParry: true }),
     strike({
       name: 'leap',
       clip: C.leap,
@@ -1059,5 +1103,6 @@ export const IMPALED_TYPE = {
   update,
   onAnimEvent: (e, name) => {
     if (name === 'swing' && e.game.audio) e.game.audio.play('swingHeavy', e.pos);
+    if (name === 'roar') wakeRoar(e);
   },
 };

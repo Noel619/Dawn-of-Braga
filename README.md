@@ -275,39 +275,46 @@ a bajar, alguien cierra de un portazo allá arriba.
 **El Empalado y la Bestia de Carne.** En lo alto del Postigo espera, arrodillado, el Empalado: un caballero de la
 guarnición, gigante ya, al que los sitiadores clavaron a su propia puerta con una pica de asedio que le sigue
 atravesando el cuerpo, con un trozo del portón y el estandarte de la ciudad todavía en el asta. Pelea con la cabeza
-de carnero de un ariete montada en un madero, que arrastra echando chispas por la piedra: mazazo de arriba abajo
-(se queda clavado en la piedra), barrido, barrido y revés, pisotón, golpe de regatón, estocada con la pica de su
-propio vientre, embestida con la pica por delante y, sin yelmo, un salto con mazazo. Los golpes salen de donde de
-verdad pasa el arma y revientan lo que encuentran: las almenas, el torno del rastrillo, los barriles, las cajas (la
-barricada que cierra el adarve del norte, no: ésa sólo la revienta la Bestia).
+de carnero de un ariete montada en un madero, que arrastra echando chispas por la piedra (la cabeza de hierro rasca
+las losas, nunca se hunde en ellas): mazazo de arriba abajo (se queda clavado en la piedra), barrido, barrido y
+revés, pisotón, golpe de regatón, **el arietazo** (lo echa atrás a dos manos y lo clava de frente, recto, con un
+paso largo, como lo que es: un ariete), **la embestida** con el ariete por delante, a la carrera, y, sin yelmo, un
+salto con mazazo. Aguanta mucho (1.100 de vida). Los golpes salen de donde de verdad pasa el arma y revientan lo
+que encuentran: las almenas, el torno del rastrillo, los barriles, las cajas (la barricada que cierra el adarve del
+norte, no: ésa sólo la revienta la Bestia).
 A medida que pierde vida se le va cayendo la armadura (hombreras, visera, medio peto) y asoma la carne: los trozos
 saltan, rebotan y se quedan tumbados de plano en el suelo, cada uno con su propia luz (no se encienden con los golpes
 que le das a él), y si caen sobre algo que luego se rompe (un barril, el torno, una almena), vuelven a caer. En la
 estaca grande de la barricada, la de la cara del Postigo, hay **un hacha barbada** clavada hasta el ojo: se ve desde
 toda la pelea, y si tiras de ella no sale («la madera la tiene cogida»).
 Con un cuarto de vida **se transforma**: cae de rodillas, se le revientan una a una las piezas que le quedan, se
-hincha y estalla en sangre, y lo que se levanta es **la Bestia de Carne**, un minotauro de músculo desollado con la
-testuz de toro, cuernos de hueso y la columna en cresta. Ruge y viene a por ti, a paso lento; tú reculas hasta la
-barricada, la espalda contra la madera y, al lado, el mango del hacha. **¡Arráncala!** (machacando): forcejeas con
-las dos manos en el mango, el cuerpo echado atrás, mientras ella se acerca rugiendo, y de un tirón la hoja sale de
-la estaca entre astillas; te vuelves con ella en alto, frente a la Bestia, y **el hacha es tuya** (si no te da
-tiempo, te alcanza de un manotazo y el golpe la arranca: caes con ella en las manos). Se arranca la pica de la
-espalda y te la tira: **¡Desvía!**, y el hacha le sale al encuentro y la barre de lado con el mango (chispas, el
-hierro que canta, un instante a cámara lenta); la pica se va dando vueltas y cae al suelo (si no, te tumba y cae a tu
-lado). Embiste: **¡Esquiva!**; pasa de largo, revienta la barricada (con la estaca) y se queda con los cuernos
-clavados en la piedra. Clavada, de espaldas: **¡Hachazo!** (el ataque pesado): saltas con el hacha en alto y se la
-hundes en el lomo, a cámara lenta, entre la sangre y el bramido; se la arrancas y te apartas (si no, se revuelve y te
-alcanza). Por el hueco empieza **la huida**, por el adarve, con la Bestia pisándote los
-talones (si te alcanza, te golpea; corres sin gastar aguante) y, de vez en cuando, un vistazo atrás. En cada tramo,
-**pulsaciones rápidas** (en un anillo que se vacía, a cámara lenta, lo que hay que pulsar parpadeando: la tecla,
-el ratón con el botón encendido o el botón del mando con su forma, gatillos y botones de los hombros): un sillar
-arrancado del parapeto por el aire, una viga ardiendo atravesada en la torre (rodar por debajo), un salto sobre ti
-en la esquina, el adarve hundido (saltar; si te quedas corto, cuelgas del borde y hay que trepar machacando) y los
-**reflejos**: te corta el paso de un salto y llegan zarpazo (esquiva), cornada (desvía), zarpa (golpea) y mazazo
-(rueda entre sus piernas). Fallar cuesta vida, no la partida. Al final, en lo alto de la Torre del Fanal no hay
-salida: el **salto de fe** a la paja de la atalaya de la coracha. La Bestia se queda mirando desde lo alto, ruge y
-se va. Si mueres durante la huida, vuelves al último tramo; si sales a mitad, al cruzar la niebla del Postigo
-empieza otra vez la huida.
+hincha, la carne le late en rojo y estalla en sangre, y lo que se levanta es **la Bestia de Carne**, un minotauro de
+músculo desollado con la testuz de toro, cuernos de hueso y la columna en cresta. A partir de aquí todo es **una
+cinemática** que se juega con **pulsaciones rápidas** (en un anillo que se vacía, a cámara lenta, lo que hay que
+pulsar parpadeando: la tecla, el ratón con el botón encendido o el botón del mando con su forma). Ruge y viene a por
+ti a zancadas; tú reculas hacia la barricada y a medio camino te lanza un zarpazo: **¡Esquiva!** (te echas atrás y
+las garras pasan por delante de tu cara y revientan el torno). Con la espalda contra la madera, al lado del mango
+del hacha: **¡Arráncala!** (machacando), mientras ella se te viene encima rugiendo; de un tirón la hoja sale de la
+estaca entre astillas y **el hacha es tuya** (si no te da tiempo, te alcanza de un manotazo y el golpe la arranca:
+caes con ella en las manos). Te descarga los dos puños: **¡Esquiva!** (ruedas y revientan las losas) y, con los
+puños aún hundidos en la piedra, **¡Golpea!**: le hundes el hacha en el antebrazo. Recula bramando, se arranca la
+pica de la espalda y te la tira: **¡Esquiva!**, te tiras a un lado y la pica pasa silbando, a cámara lenta, y se
+clava temblando en la barricada (si no, te roza y te tumba). Embiste: **¡Esquiva!**; revienta la barricada (con la
+estaca, y la pica clavada cae) y se queda con los cuernos clavados en la piedra. **¡Hachazo!** (el ataque pesado):
+saltas con el hacha en alto y se la hundes en el lomo; se revuelve bramando y **¡Remata!**: la arrancas y se la
+vuelves a hundir, en la cerviz. Se arranca de la piedra con un sillar en la zarpa y te lo tira (**¡Esquiva!**), y
+empieza **la huida**: corres solo por el adarve del muro este, la esquina y la muralla norte, con la Bestia detrás,
+más cerca o más lejos según el tramo, y la cámara de plano en plano (por delante mirando atrás, por encima del
+hombro de la Bestia, desde fuera de la muralla, a ras del adarve, desde lo alto del fanal). Una viga ardiendo
+atravesada en la torre (**¡Agáchate!**: pasas por debajo deslizándote de rodillas y ella la revienta detrás, entre
+ascuas), un zarpazo a la espalda cuando te alcanza, un salto sobre ti en la esquina (cae justo detrás), el adarve
+hundido (**¡Salta!**; si te quedas corto, cuelgas del borde y hay que trepar machacando; ella lo salta detrás de
+ti) y los **reflejos**: te corta el paso de un salto y llegan el zarpazo (agáchate), las manos (golpea: el hacha en
+la zarpa), la cornada (esquiva: los cuernos revientan las almenas) y el mazazo (rueda entre sus patas, y a correr).
+Fallar cuesta vida. Al final, en lo alto de la Torre del Fanal no hay salida: el **salto de fe** a la paja de la
+atalaya de la coracha. La Bestia se asoma al borde, ruge y se va. Si mueres durante la huida, vuelves al último
+punto de control (al empezar a correr, la escalera de la esquina, el hueco, los reflejos o lo alto del fanal); si
+sales a mitad, al cruzar la niebla del Postigo empieza otra vez la huida.
 
 **El Callejón del Postigo y la Casa del Alemán.** Bajo la Torre del Postigo, un callejón de casas apiñadas lleva a
 la Casa del Alemán, la de Henrique, nieto de un espadero de Solingen que vino con los cruzados de Colonia: una
@@ -952,8 +959,9 @@ tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mu
 - **Lanza de la muralla** (una mano, con escudo; en **el adarve de levante** de la fortaleza, apoyada en la almena de
   al lado del guardia caído de bruces, con la moharra asomando por encima): estocadas largas y rectas, un barrido con
   el asta y una estocada que se lanza sin bajar el escudo.
-- **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango; clavada en la estaca de la barricada de
-  lo alto del Postigo: **se arranca en la escena de la Bestia de Carne**): golpes lentos y demoledores que
+- **Hacha barbada** (dos manos, el escudo a la espalda; se para con el mango; mango largo, de 1,24 m, y se toma por
+  abajo, cerca del regatón: llega a un metro; clavada en la estaca de la barricada de lo alto del Postigo: **se
+  arranca en la escena de la Bestia de Carne**): golpes lentos y demoledores que
   desequilibran a casi cualquiera, barrido con las manos deslizándose por el mango y un hachazo del verdugo que se
   carga manteniendo el botón, rompe la guardia y parte el suelo con una onda.
 - **Ballesta de estribo** (dos manos, el escudo a la espalda; está en el taller del ballestero, sobre la guardia de la
@@ -1533,10 +1541,15 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        su reacción, sus errores, si enciende braseros) con un equipo (base o
                                        medio) entra por la niebla y pelea hasta vencer o morir; cuánto dura
                                        cada fase, de dónde le viene el daño, ampollas, presas, caídas
+                        empalado.mjs   la pelea con el Empalado (sin transformarse; las fases, por tiempo)
+                                       contra un jugador robot que golpea, rueda y se aparta: salen sus ocho
+                                       golpes, nada sale de la arena ni flota, y la cabeza del ariete nunca
+                                       se hunde en el suelo
                         beastchase.mjs el Empalado se transforma y un jugador robot hace la escena del hacha
-                                       y la huida entera pulsando los avisos (con «fallos», falla algunos y
-                                       muere en el fanal para probar el reintento): arranca el hacha de la
-                                       estaca, llega a la atalaya y queda vencido
+                                       y la huida entera (una cinemática: corre solo) pulsando los avisos
+                                       (con «fallos», falla algunos y muere al empezar a correr, en la
+                                       esquina y en el fanal para probar los reintentos): arranca el hacha
+                                       de la estaca, corre el recorrido, llega a la atalaya y queda vencido
                         doorways.mjs   nada tapa los arcos y puertas de las bodegas, las bocas de las
                                        grutas ni las palancas
                         clipcheck.mjs  interpenetraciones de cada animación de una criatura (campanero,
