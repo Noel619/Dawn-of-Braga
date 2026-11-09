@@ -13,6 +13,7 @@ import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp 
 import { objMat } from '../gfx/materials.js';
 import { relicMods } from '../game/relics.js';
 import { ITEMS, MSG } from '../game/story.js';
+import { TIPO_IDS } from '../game/danos.js';
 
 // Los clips y golpes de cada arma están en weapons.js / weapon_moves.js.
 
@@ -267,22 +268,33 @@ export class Player {
   get carga() {
     return cargaDe(this.pesoArmadura());
   }
-  // Lo que quita la armadura de cada golpe (de 0 a 0,6): la suma de sus
-  // piezas (def: en puntos de cien).
-  armorDef() {
-    let d = 0;
-    for (const k in this.armor) if (this.armor[k] && ITEMS[this.armor[k]]) d += ITEMS[this.armor[k]].def || 0;
-    return Math.min(0.6, d / 100);
+  // Lo que quita la armadura de un golpe de cada tipo (cortante, perforante,
+  // contundente: game/danos.js; de 0 a 0,6): la suma de lo que paran sus
+  // piezas de ese tipo (res: en puntos de cien).
+  resistencias() {
+    const r = { cortante: 0, perforante: 0, contundente: 0 };
+    for (const k in this.armor) {
+      const it = this.armor[k] && ITEMS[this.armor[k]];
+      if (it && it.res) for (const t of TIPO_IDS) r[t] += it.res[t] || 0;
+    }
+    for (const t of TIPO_IDS) r[t] = Math.min(0.6, r[t] / 100);
+    return r;
+  }
+  // Lo que quita de un golpe de ese tipo; lo que no tiene tipo (el fuego, el
+  // pus, los gritos), lo que para de media.
+  armorDef(tipo = null) {
+    const r = this.res || (this.res = this.resistencias());
+    if (tipo && tipo in r) return r[tipo];
+    return (r.cortante + r.perforante + r.contundente) / 3;
   }
   // Lo que hacen el objeto bendito y la armadura (la armadura, en el daño
-  // que se recibe: todos los golpes pasan por mods.taken).
+  // que se recibe, según el tipo de cada golpe: receiveHit).
   // La carga (lo que pesa la armadura) cambia la voltereta y la carrera: con
   // la de la guardia, como siempre; ligero, más larga y más barata; cargado
   // con hierro, más corta y más cara (armaduras.js, CARGAS).
   refreshMods() {
     this.mods = relicMods(this.relic);
-    const d = this.armorDef();
-    if (d) this.mods = { ...this.mods, taken: this.mods.taken * (1 - d) };
+    this.res = this.resistencias();
     const C = CARGAS[this.carga];
     if (C) this.mods = { ...this.mods, rollSt: this.mods.rollSt * C.rollSt, rollIF: this.mods.rollIF * C.rollIF, rollDist: this.mods.rollDist * C.rollDist, sprintSt: this.mods.sprintSt * C.sprintSt };
   }
@@ -575,8 +587,9 @@ export class Player {
       dz = fromZ - this.pos.z;
     const toSrc = Math.atan2(dx, dz);
     const facing = Math.abs(angleDiff(this.yaw, toSrc)) < 80 * DEG;
-    // (el daño de verdad, con lo que haga el objeto bendito que se lleva)
-    const dmg = Math.round(atk.dmg * M.taken);
+    // (el daño de verdad, con lo que haga el objeto bendito que se lleva y lo
+    // que pare la armadura de su tipo)
+    const dmg = Math.round(atk.dmg * M.taken * (1 - this.armorDef(atk.tipo)));
     // parry: has pulsado la guardia justo antes del golpe (y se puede
     // desviar: los golpes marcados en rojo, no)
     if (this.parryWin > 0 && Math.abs(angleDiff(this.yaw, toSrc)) < 100 * DEG && !atk.noParry && !atk.unblockable && this.canBlock()) return this.doParry(atk, fromX, fromZ);
@@ -775,9 +788,10 @@ export class Player {
     this.flask.visible = false;
     this.anim.play(this.clips.hurt, { blend: 0.05 });
   }
+  // (los dientes y los cepos: perforan)
   receiveBite(dmg) {
     if (this.dead) return;
-    dmg = Math.round(dmg * this.mods.taken);
+    dmg = Math.round(dmg * this.mods.taken * (1 - this.armorDef('perforante')));
     this.hp -= dmg;
     if (this.mods.rally) {
       this.rally = Math.min(this.maxHp, this.rally + dmg);
@@ -810,16 +824,17 @@ export class Player {
   // invulnerable mientras se incorpora.
   releasePin(escaped, dmg = 0) {
     if (this.dead) return;
-    this.hp -= Math.round(dmg * this.mods.taken);
+    this.hp -= Math.round(dmg * this.mods.taken * (1 - this.armorDef('contundente')));
     if (this.hp <= 0) return this.die();
     this.state = 'getup';
     this.stT = 0;
     this.getupDur = escaped ? 0.85 : 1.05;
     this.anim.play(this.clips.getup, { blend: 0.08, speed: escaped ? 1.2 : 1 });
   }
+  // (lanzado o tirado al suelo: aplasta)
   releaseGrab(knock, fx, fz, dmg = 0) {
     if (this.dead) return;
-    this.hp -= Math.round(dmg * this.mods.taken);
+    this.hp -= Math.round(dmg * this.mods.taken * (1 - this.armorDef('contundente')));
     if (this.hp <= 0) return this.die();
     this.state = 'stagger';
     this.stT = 0;

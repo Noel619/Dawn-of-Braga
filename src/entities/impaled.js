@@ -31,6 +31,7 @@ import { GAIT } from './locomotion.js';
 import { buildImpaled, IMP, RAM_GRIP } from './impaled_model.js';
 import { cloneMat } from '../gfx/materials.js';
 import { clamp, damp, lerp, DEG, angleDiff } from '../core/util.js';
+import { tipoGolpe } from '../game/danos.js';
 
 const V3 = THREE.Vector3;
 const S = Math.sin;
@@ -896,7 +897,7 @@ function update(e, dt, player) {
           const dmg = shaft ? Math.round(a.dmg * 0.7) : a.dmg;
           const res = g.combat.apply(
             e,
-            { dmg, stDmg: a.stDmg ?? dmg * 1.5, stagger: true, knock: (a.knock ?? 7) * (shaft ? 0.7 : 1), chip: 0.2, noParry: !!a.noParry },
+            { dmg, stDmg: a.stDmg ?? dmg * 1.5, stagger: true, knock: (a.knock ?? 7) * (shaft ? 0.7 : 1), chip: 0.2, noParry: !!a.noParry, tipo: tipoGolpe(e, a) },
             player.pos.x - (kx / kk) * 2,
             player.pos.z - (kz / kk) * 2
           );
@@ -919,7 +920,7 @@ function update(e, dt, player) {
           qz = e.pos.z + fz * 1.1;
         if (Math.hypot(player.pos.x - qx, player.pos.z - qz) < 1.5 && Math.abs(player.pos.y - e.pos.y) < 2) {
           e.hitDone.body = true;
-          g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: 10, unblockable: false, noParry: true, chip: 0.35, stDmg: 80 }, e.pos.x, e.pos.z);
+          g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: 10, unblockable: false, noParry: true, chip: 0.35, stDmg: 80, tipo: 'contundente' }, e.pos.x, e.pos.z);
         }
         // lo que encuentra delante, lo atraviesa (o se estrella)
         const B = g.breakables;

@@ -4,6 +4,7 @@ import { Animator, blendInto, addRot, slerpE, Spring } from './rig.js';
 import { Biped, stabilizeShield } from './locomotion.js';
 import { moveBody } from '../world/collision.js';
 import { TYPES } from './enemies.js';
+import { resistencia } from '../game/danos.js';
 import { angleDiff, approachAngle, damp, dampAngle, clamp, DEG } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
 import { CASTLE } from '../world/level_castle.js';
@@ -344,9 +345,12 @@ export class Enemy {
   }
 
   // ------------------------------------------------------------ combate
-  takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0) {
+  // (tipo: el del golpe —cortante, perforante, contundente—; lo que aguanta
+  // de él la criatura, en game/danos.js)
+  takeHit(dmg, poiseDmg, fromX, fromZ, heavy, dir = 0, tipo = null) {
     if (this.dead || this.data.air || this.scripted) return 'none';
     const T = this.T;
+    dmg = this.resistir(dmg, tipo);
     // (desequilibrado tras un parry: el golpe es crítico, pero le espabila)
     if (this.state === 'parried') this.parryT = 0;
     // (el jefe puede parar el golpe, o recibir más o menos daño)
@@ -409,6 +413,13 @@ export class Enemy {
     }
     if (T.onHit) T.onHit(this, 'hit', dmg, heavy);
     return 'hit';
+  }
+
+  // Lo que aguanta del tipo del golpe (game/danos.js: en partes de uno;
+  // negativo, más daño): nunca menos de uno.
+  resistir(dmg, tipo) {
+    const k = resistencia(this.type, tipo);
+    return k ? Math.max(1, Math.round(dmg * (1 - k))) : dmg;
   }
 
   // La defensa de armadura (el Caballero de la Orden): la parte del golpe
@@ -591,8 +602,9 @@ export class Enemy {
   }
   // El golpe de gracia: crítico seguro, sin guardia que valga; si no le
   // mata, le tumba hacia atrás.
-  takeRiposte(dmg, fromX, fromZ) {
+  takeRiposte(dmg, fromX, fromZ, tipo = null) {
     if (this.dead) return 'none';
+    dmg = this.resistir(dmg, tipo);
     if (this.D && this.D.takeRiposte) return this.D.takeRiposte(dmg, fromX, fromZ);
     const T = this.T;
     this.parryT = 0;

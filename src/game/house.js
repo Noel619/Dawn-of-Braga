@@ -580,7 +580,7 @@ export class HouseQuest {
       const d = Math.hypot(dx, dz);
       if (d > 2.4 + o.body.radius) continue;
       if (Math.abs(angleDiff(e.yaw, Math.atan2(dx, dz))) > 70 * DEG) continue;
-      const r = o.takeHit(13, 26, e.pos.x, e.pos.z, false, 0);
+      const r = o.takeHit(13, 26, e.pos.x, e.pos.z, false, 0, 'cortante');
       if (r === 'none') continue;
       const hy = o.pos.y + Math.min(1.3, o.T.height * 0.55);
       g.fx.blood.emit(o.pos.x - dx * 0.2, hy, o.pos.z - dz * 0.2, 18, { dir: { x: dx / (d || 1), z: dz / (d || 1) }, speed: 4 });

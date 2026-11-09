@@ -101,9 +101,12 @@ export const ITEMS = {
     especial: ['Para los golpes y, en el último instante, los desvía.', 'Con un arma a dos manos, a la espalda.'],
   },
   // Las armaduras (entities/armaduras.js), en sus cuatro piezas: armor, la
-  // ranura; def, lo que quita de cada golpe (en puntos de cien; las cuatro
-  // juntas, hasta sesenta: entities/player.js, armorDef); peso, en kilos (la
-  // carga: ligera, media o pesada; armaduras.js, CARGAS). La de la guardia la
+  // ranura; res, lo que quita de cada golpe según su tipo (cortante,
+  // perforante, contundente: game/danos.js; en puntos de cien; las cuatro
+  // juntas, hasta sesenta de cada uno: entities/player.js, armorDef): la
+  // malla para el filo y poco la punta y el golpe; la placa, el filo y la
+  // punta; el cuero y el acolchado, el golpe; peso, en kilos (la carga:
+  // ligera, media o pesada; armaduras.js, CARGAS). La de la guardia la
   // lleva puesta el Condenado al despertar; las otras dos, todavía en
   // ninguna parte (ver README, «Las armaduras»).
   yelmo_guardia: {
@@ -112,16 +115,16 @@ export const ITEMS = {
     icon: 'yelmoGuardia',
     key: false,
     armor: 'head',
-    def: 2,
+    res: { cortante: 3, perforante: 2, contundente: 2 },
     peso: 2.4,
   },
   loriga_guardia: {
     name: 'Loriga de la guarnición',
-    desc: 'Cota de malla hasta medio muslo, abierta por delante y por detrás para montar, y encima la sobreveste carmesí de Braga con su cruz blanca; la capa, hecha jirones. Pesa lo que pesa la malla: ni corres como un batidor ni aguantas como un caballero.',
+    desc: 'Cota de malla hasta medio muslo, abierta por delante y por detrás para montar, y encima la sobreveste carmesí de Braga con su cruz blanca; la capa, hecha jirones. La malla para el filo; la punta y el mazazo, poco. Pesa lo que pesa: ni corres como un batidor ni aguantas como un caballero.',
     icon: 'lorigaGuardia',
     key: false,
     armor: 'body',
-    def: 6,
+    res: { cortante: 9, perforante: 4, contundente: 5 },
     peso: 9.8,
   },
   brazales_guardia: {
@@ -130,7 +133,7 @@ export const ITEMS = {
     icon: 'brazalesGuardia',
     key: false,
     armor: 'hands',
-    def: 1,
+    res: { cortante: 1, perforante: 0, contundente: 1 },
     peso: 0.8,
   },
   calzas_guardia: {
@@ -139,7 +142,7 @@ export const ITEMS = {
     icon: 'calzasGuardia',
     key: false,
     armor: 'legs',
-    def: 3,
+    res: { cortante: 3, perforante: 2, contundente: 2 },
     peso: 2.2,
   },
   yelmo_caballero: {
@@ -148,16 +151,16 @@ export const ITEMS = {
     icon: 'helm',
     key: false,
     armor: 'head',
-    def: 5,
+    res: { cortante: 6, perforante: 5, contundente: 3 },
     peso: 3.4,
   },
   peto_caballero: {
     name: 'Peto y faldar',
-    desc: 'Peto de pecho de paloma y espaldar, la gola, las hombreras de cúpula y el faldar de tres lamas; detrás, los faldones azules del Rey. Para el golpe que a otro lo partiría en dos; pesa como un niño a cuestas, y en la voltereta se nota.',
+    desc: 'Peto de pecho de paloma y espaldar, la gola, las hombreras de cúpula y el faldar de tres lamas; detrás, los faldones azules del Rey. En la placa resbalan el filo y la punta; un mazazo se nota igual. Pesa como un niño a cuestas, y en la voltereta se nota.',
     icon: 'cuirass',
     key: false,
     armor: 'body',
-    def: 11,
+    res: { cortante: 13, perforante: 12, contundente: 8 },
     peso: 13.5,
   },
   guanteletes_caballero: {
@@ -166,7 +169,7 @@ export const ITEMS = {
     icon: 'gauntlets',
     key: false,
     armor: 'hands',
-    def: 3,
+    res: { cortante: 4, perforante: 3, contundente: 2 },
     peso: 2.4,
   },
   grebas_caballero: {
@@ -175,7 +178,7 @@ export const ITEMS = {
     icon: 'greaves',
     key: false,
     armor: 'legs',
-    def: 7,
+    res: { cortante: 8, perforante: 6, contundente: 5 },
     peso: 5.8,
   },
   capucha_cuero: {
@@ -184,16 +187,16 @@ export const ITEMS = {
     icon: 'capuchaCuero',
     key: false,
     armor: 'head',
-    def: 1,
+    res: { cortante: 1, perforante: 1, contundente: 2 },
     peso: 0.7,
   },
   coleto_cuero: {
     name: 'Coleto y gambesón',
-    desc: 'Gambesón acolchado y, encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas y el cinto ancho con la bolsa y el cuchillo. Lo que se lleva para correr, no para aguantar.',
+    desc: 'Gambesón acolchado y, encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas y el cinto ancho con la bolsa y el cuchillo. El acolchado se traga los golpes; el filo y la punta, no tanto. Lo que se lleva para correr, no para aguantar.',
     icon: 'coletoCuero',
     key: false,
     armor: 'body',
-    def: 4,
+    res: { cortante: 4, perforante: 2, contundente: 6 },
     peso: 4.6,
   },
   guantes_cuero: {
@@ -202,7 +205,7 @@ export const ITEMS = {
     icon: 'guantesCuero',
     key: false,
     armor: 'hands',
-    def: 1,
+    res: { cortante: 1, perforante: 0, contundente: 1 },
     peso: 0.6,
   },
   botas_cuero: {
@@ -211,7 +214,7 @@ export const ITEMS = {
     icon: 'botasCuero',
     key: false,
     armor: 'legs',
-    def: 2,
+    res: { cortante: 2, perforante: 1, contundente: 3 },
     peso: 1.7,
   },
   // las cloacas hondas (world/cloacas_hondas.js): la llave de la reja de la

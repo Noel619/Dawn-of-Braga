@@ -1596,6 +1596,16 @@ function pix(b, rows, pal) {
   });
 }
 const SMALL = {
+  // (los tipos de daño, game/danos.js: el filo, la punta y la maza)
+  tCortante(b) {
+    pix(b, ['.......hh', '......hsh', '.....hsh.', '....hsh..', '...hsh...', '..hsh....', 'gghs.....', '.gg......', 'g.g......'], { h: P.steel5, s: P.steel3, g: P.gold3 });
+  },
+  tPerforante(b) {
+    pix(b, ['....h....', '...hhs...', '...hss...', '..hhsss..', '...hss...', '....s....', '....w....', '....w....', '....w....'], { h: P.steel5, s: P.steel3, w: P.wood3 });
+  },
+  tContundente(b) {
+    pix(b, ['...i.i...', '..iiiii..', '.ihhiiii.', '.ihiiiid.', '..iiiid..', '...idd...', '....w....', '....w....', '....w....'], { h: P.iron5, i: P.iron3, d: P.iron2, w: P.wood3 });
+  },
   // (la carga de la armadura, en las estadísticas del equipo: una pesa de
   // hierro con su asa)
   carga(b) {

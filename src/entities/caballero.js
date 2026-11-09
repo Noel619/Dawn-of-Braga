@@ -961,7 +961,8 @@ function saltoUpdate(e, dt, t) {
     e.anim.t = SALTO_CAE - 0.08;
   }
 }
-const PLUNGE = HIT(56, { noParry: true, stagger: true, knock: 9 });
+// (la espada clavada en la losa desde arriba: perfora)
+const PLUNGE = HIT(56, { noParry: true, stagger: true, knock: 9, tipo: 'perforante' });
 const SALTO = {
   name: 'salto',
   clip: CAB_CLIPS.salto,

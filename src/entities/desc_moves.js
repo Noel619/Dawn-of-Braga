@@ -850,7 +850,7 @@ export const MOVES = {
       this.shieldT = 0;
       // los sillares te caen encima si estabas detrás
       const pd = Math.hypot(p.pos.x - P.x, p.pos.z - P.z);
-      if (pd < a.range && !p.dead) g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: a.knock, chip: 0.3 }, P.x, P.z);
+      if (pd < a.range && !p.dead) g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: a.knock, chip: 0.3, tipo: 'contundente' }, P.x, P.z);
       g.audio && g.audio.enemyVoice(e, 'alert');
       this.releaseAll();
     }
@@ -923,7 +923,7 @@ export const MOVES = {
         g.camRig.shake(0.55);
         this.hS.kick(-3);
         // los cascotes (o el tonel reventado) te alcanzan si estabas detrás
-        if (B.edgeDist(P, p.pos.x, p.pos.z) < 1.7 && !p.dead) g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: a.knock, chip: 0.3 }, P.x, P.z);
+        if (B.edgeDist(P, p.pos.x, p.pos.z) < 1.7 && !p.dead) g.combat.apply(e, { dmg: a.dmg, stagger: true, knock: a.knock, chip: 0.3, tipo: 'contundente' }, P.x, P.z);
       }
     } else {
       const u = seg(t, 0.8, 1.4);
@@ -1548,7 +1548,7 @@ export const MOVES = {
       }
       if (!end && !P.hit && Math.hypot(q.x - p.pos.x, q.y - (p.pos.y + 1.1), q.z - p.pos.z) < 0.6 && !p.dead) {
         P.hit = true;
-        const r = g.combat.apply(this.e, { dmg: ATK.throw.dmg, knock: 2.5, deflect: true }, q.x - P.v.x * 0.1, q.z - P.v.z * 0.1);
+        const r = g.combat.apply(this.e, { dmg: ATK.throw.dmg, knock: 2.5, deflect: true, tipo: 'contundente' }, q.x - P.v.x * 0.1, q.z - P.v.z * 0.1);
         if (r === 'parry') {
           // desviado: sale despedido hacia un lado
           P.v.set(-P.v.x * 0.5 + (Math.random() - 0.5) * 4, 3, -P.v.z * 0.5 + (Math.random() - 0.5) * 4);

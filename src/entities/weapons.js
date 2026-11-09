@@ -514,6 +514,12 @@ export const CALIDAD = { oxidada: 0.5, espada: 0.65, lanza: 0.7, hacha: 0.75, ba
 //            de los de siempre: por la espalda, sin que se lo espere, tras
 //            un parry...).
 //   especial lo suyo, en palabras (el inventario lo lista bajo las barras).
+//   dano     el tipo de daño de sus golpes (game/danos.js): el principal y,
+//            si es especial, el secundario, el de los golpes de su repertorio
+//            que no son como los demás (segundo: cuáles, en palabras). Las
+//            espadas sólo cortan; la lanza estoca y su barrido con el asta
+//            aplasta; el hacha corta y la onda del suelo que parte aplasta; la
+//            ballesta perfora (el virote) y su culatazo aplasta.
 // Lo demás (el daño, el alcance, el aguante de cada golpe) sale de su
 // repertorio: weapon_moves.js y, para la familia de la espada, swordVariant.
 export const STATS = {
@@ -521,12 +527,16 @@ export const STATS = {
     peso: 2.6,
     dureza: 85,
     critico: 0.05,
+    dano: ['cortante', 'contundente'],
+    segundo: 'La onda del suelo que parte, contundente.',
     especial: ['A dos manos: el escudo, a la espalda.', 'Cada golpe quiebra la guardia.', 'El pesado se carga y parte el suelo.'],
   },
   lanza: {
     peso: 2.2,
     dureza: 55,
     critico: 0.08,
+    dano: ['perforante', 'contundente'],
+    segundo: 'El barrido con el asta, contundente.',
     especial: ['Una mano: el escudo, al brazo.', 'La que más alcanza: mantiene a raya.', 'Estocada sin bajar el escudo.'],
   },
   oxidada: {
@@ -534,12 +544,14 @@ export const STATS = {
     vel: 1.06,
     dureza: 35,
     critico: 0.03,
+    dano: ['cortante'],
     especial: ['Una mano: el escudo, al brazo.', 'Herrumbre: contra armadura, la mitad.', 'Ligera: cansa menos y va más deprisa.'],
   },
   espada: {
     peso: 1.3,
     dureza: 60,
     critico: 0.06,
+    dano: ['cortante'],
     especial: ['Una mano: el escudo, al brazo.', 'Equilibrada en todo.'],
   },
   solingen: {
@@ -547,12 +559,15 @@ export const STATS = {
     vel: 0.97,
     dureza: 72,
     critico: 0.08,
+    dano: ['cortante'],
     especial: ['Una mano: el escudo, al brazo.', 'Acero de Solingen: pasa la armadura.', 'Hoja larga: alcanza más, va más despacio.'],
   },
   ballesta: {
     peso: 4.0,
     dureza: 75,
     critico: 0.1,
+    dano: ['perforante', 'contundente'],
+    segundo: 'El culatazo, contundente.',
     especial: ['A dos manos: el escudo, a la espalda.', 'A distancia: tira virotes.', 'Se monta tras cada tiro, a merced.', 'El pesado es un culatazo.'],
   },
 };
@@ -660,6 +675,8 @@ for (const id in WEAPONS) {
   W.dureza = S.dureza;
   W.critico = S.critico ?? 0;
   W.especial = S.especial || [];
+  W.dano = S.dano || ['cortante'];
+  W.segundo = S.segundo || null;
 }
 
 // Clips y ataques de un arma para un rig (se construyen una vez).
@@ -675,6 +692,8 @@ export function weaponSet(W, rig) {
   for (const k of ['armR', 'foreR', 'handR', 'armL', 'foreL', 'handL']) GUARD[k] = gp[k].map((v) => v / DEG);
   const BLOCK = { ...W.block };
   const M = W.moves({ G, GUARD, W, rig });
+  // (el tipo de daño de cada golpe: el que diga su repertorio o el del arma)
+  for (const a of [...M.light, ...M.heavy, M.run, M.roll, M.guard]) if (a && !a.tipo) a.tipo = W.dano[0];
   const clips = { ...commonClips(W, G, GUARD, BLOCK), ...parryClips(W, G, BLOCK), ...M.clips };
   // golpe de gracia: uno de los golpes del arma, rematando (sin coste de
   // aguante, sin encadenar y con el daño de un crítico)
@@ -720,5 +739,9 @@ export function weaponSheet(W, rig, dmgMul = 1) {
     critMul: W.ranged ? 1.6 : L[0].crit || 1.7,
     calidad: W.calidad,
     aguante: Math.round(avg((a) => a.st)),
+    // (los tipos de daño: el principal y el de los golpes que no son como los
+    // demás; game/danos.js)
+    dano: W.dano,
+    segundo: W.segundo,
   };
 }

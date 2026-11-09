@@ -213,6 +213,13 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .detail p { margin: 0; color: var(--bone); text-shadow: var(--sh); }
 .detail .sep { margin: calc(var(--u) * 4) 0; }
 .detail .nm { margin-bottom: calc(var(--u) * 2); color: var(--gold-hi); text-shadow: var(--sh); }
+/* los tipos de daño (game/danos.js): el del arma, con su icono (el secundario,
+   más apagado), y la defensa de la armadura de cada uno */
+.detail .danos { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u) * 2) calc(var(--u) * 5); margin-top: calc(var(--u) * 2); color: var(--ash); text-shadow: var(--sh); }
+.detail .danos .lb { margin-right: calc(var(--u) * 1); }
+.tp { display: inline-flex; align-items: center; gap: calc(var(--u) * 1.5); color: var(--bone-hi); }
+.tp.sec { color: var(--ash); }
+.tps { display: inline-flex; gap: calc(var(--u) * 4); }
 .stats { display: grid; grid-template-columns: auto auto; gap: 0 calc(var(--u) * 8); justify-content: start; color: var(--ash); text-shadow: var(--sh); }
 .stats b { color: var(--bone-hi); font-weight: normal; }
 .stats .ico { display: inline-flex; align-items: center; gap: calc(var(--u) * 2); }

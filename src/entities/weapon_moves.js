@@ -533,8 +533,8 @@ function axeMoves(ctx) {
     attack({ ...K, clip: C.a_light2, dmg: 36, st: 24, hits: H(C.a_light2), cancel: CAN[1], move: 0.78, lunge: [0.3, 0.48, 2.2], range: 2.9, arc: 170, poise: 50, dir: 1 }),
     attack({ ...K, clip: C.a_light3, dmg: 42, st: 28, hits: H(C.a_light3), cancel: CAN[2], move: 1.06, lunge: [0.38, 0.56, 2.8], range: 2.9, arc: 70, poise: 60, dir: 0 }),
   ];
-  const heavy = [attack({ ...K, clip: C.a_heavy, dmg: 72, st: 36, hits: H(C.a_heavy), cancel: 1.2, move: 1.28, lunge: [0.5, 0.68, 2.6], range: 3.0, arc: 60, poise: 110, heavy: true, dir: 0, charge: { at: 0.5, max: 1.0, dmg: 0.6 }, impact: { r: 1.9, dmg: 0.35 } })];
-  const runA = attack({ ...K, clip: C.a_run, dmg: 44, st: 30, hits: H(C.a_run), cancel: 0.84, move: 0.9, lunge: [0.0, 0.34, 5.4], range: 2.9, arc: 70, poise: 70, dir: 0, impact: { r: 1.6, dmg: 0.25 } });
+  const heavy = [attack({ ...K, clip: C.a_heavy, dmg: 72, st: 36, hits: H(C.a_heavy), cancel: 1.2, move: 1.28, lunge: [0.5, 0.68, 2.6], range: 3.0, arc: 60, poise: 110, heavy: true, dir: 0, charge: { at: 0.5, max: 1.0, dmg: 0.6 }, impact: { r: 1.9, dmg: 0.35, tipo: 'contundente' } })];
+  const runA = attack({ ...K, clip: C.a_run, dmg: 44, st: 30, hits: H(C.a_run), cancel: 0.84, move: 0.9, lunge: [0.0, 0.34, 5.4], range: 2.9, arc: 70, poise: 70, dir: 0, impact: { r: 1.6, dmg: 0.25, tipo: 'contundente' } });
   const roll = attack({ ...K, clip: C.a_roll, dmg: 30, st: 18, hits: H(C.a_roll), cancel: 0.6, move: 0.66, lunge: [0.0, 0.2, 2.6], range: 2.8, arc: 120, poise: 40, dir: 1 });
   return { clips: C, light, heavy, run: runA, roll };
 }
@@ -642,7 +642,8 @@ function spearMoves(ctx) {
   const light = [
     attack({ ...T, clip: C.s_light1, dmg: 19, st: 11, hits: H(C.s_light1, 1, true), cancel: 0.28, move: 0.34, lunge: [0.06, 0.18, 2.6], range: 3.1, poise: 16 }),
     attack({ ...T, clip: C.s_light2, dmg: 19, st: 11, hits: H(C.s_light2, 1, true), cancel: 0.3, move: 0.36, lunge: [0.08, 0.2, 2.6], range: 3.1, poise: 16 }),
-    attack({ clip: C.s_light3, snd: 'swing', dmg: 22, st: 14, hits: H(C.s_light3), cancel: 0.64, move: 0.64, lunge: [0.14, 0.3, 2.0], range: 2.9, arc: 140, poise: 22, dir: -1 }),
+    // (el barrido con el asta: aplasta; game/danos.js)
+    attack({ clip: C.s_light3, snd: 'swing', tipo: 'contundente', dmg: 22, st: 14, hits: H(C.s_light3), cancel: 0.64, move: 0.64, lunge: [0.14, 0.3, 2.0], range: 2.9, arc: 140, poise: 22, dir: -1 }),
   ];
   const heavy = [attack({ ...T, clip: C.s_heavy, dmg: 44, st: 26, hits: H(C.s_heavy, 1, true), cancel: 0.62, move: 0.7, lunge: [0.32, 0.48, 5.0], range: 3.5, arc: 30, poise: 56, heavy: true })];
   const guard = attack({ ...T, clip: C.s_guard, dmg: 16, st: 13, hits: H(C.s_guard, 1, true), cancel: 0.28, move: 0.3, lunge: [0.08, 0.16, 1.2], range: 3.0, arc: 30, poise: 12, keepBlock: true });
@@ -716,7 +717,8 @@ function ballestaMoves(ctx) {
   };
   const shoot = attack({ name: 'shoot', clip: C.x_shoot, shoot: 0.22, hits: [[0.22, 0.23]], dmg: 48, poise: 34, st: 6, cancel: 0.42, move: 0.44, lunge: [0, 0, 0], range: 32, arc: 8 });
   const reload = attack({ name: 'reload', clip: C.x_reload, reload: true, hits: [[9, 9]], dmg: 0, st: 0, cancel: 9, move: 9, lunge: [0, 0, 0] });
-  const bash = attack({ clip: C.x_bash, snd: 'swing', thrust: true, dmg: 24, st: 16, hits: [[0.3, 0.42]], cancel: 0.6, move: 0.66, lunge: [0.18, 0.34, 3.2], range: 1.9, arc: 60, poise: 38, heavy: true });
+  // (el culatazo: aplasta; el virote, perfora: game/danos.js)
+  const bash = attack({ clip: C.x_bash, snd: 'swing', thrust: true, tipo: 'contundente', dmg: 24, st: 16, hits: [[0.3, 0.42]], cancel: 0.6, move: 0.66, lunge: [0.18, 0.34, 3.2], range: 1.9, arc: 60, poise: 38, heavy: true });
   return { clips: C, light: [shoot], heavy: [bash], run: bash, roll: bash, reload };
 }
 

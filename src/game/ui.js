@@ -8,6 +8,7 @@ import { ITEMS, NOTES, AREA_NAMES } from './story.js';
 import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
 import { CARGAS } from '../entities/armaduras.js';
+import { TIPOS, TIPO_IDS } from './danos.js';
 import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
 import { Mesa } from './mesa.js';
 import { formatTime, clamp } from '../core/util.js';
@@ -803,10 +804,14 @@ export class UI {
         ['absorcion', 'Absorción', it.absorcion ?? 0, 100, `${it.absorcion ?? 0} %`, 1, 0],
         ['peso', 'Peso', it.peso ?? 0, 10, kg(it.peso ?? 0), 0, 1],
       ];
-    return [
-      ['def', 'Defensa', it.def || 0, 25, `${it.def || 0} %`, 1, 0],
-      ['peso', 'Peso', it.peso ?? 0, 15, kg(it.peso ?? 0), 0, 1],
-    ];
+    // (la armadura: lo que para de cada tipo de golpe; game/danos.js)
+    const R = it.res || {};
+    return [...TIPO_IDS.map((t) => [t, TIPOS[t].nombre, R[t] || 0, 15, `${R[t] || 0} %`, 1, 0]), ['peso', 'Peso', it.peso ?? 0, 15, kg(it.peso ?? 0), 0, 1]];
+  }
+  // El tipo de daño (su icono y su nombre); sec: el secundario
+  tipoHtml(t, sec = false) {
+    const T = TIPOS[t];
+    return T ? `<span class="tp${sec ? ' sec' : ''}">${spriteHtml(smallIcon(T.icon))}${esc(T.nombre)}</span>` : '';
   }
   sheetHtml(id, cmp) {
     const rows = this.sheetRows(id);
@@ -830,19 +835,25 @@ export class UI {
       return `<span class="lb">${esc(label)}</span><span class="bar">${bar}</span><b class="v">${esc(txt)}</b><span class="dc">${delta}</span>`;
     });
     const it = ITEMS[id];
-    const esp = it.weapon ? WEAPONS[it.weapon].especial : it.especial || [];
+    const W = it.weapon ? WEAPONS[it.weapon] : null;
+    // (lo especial; de un arma, también qué golpes son de su tipo secundario)
+    const esp = W ? [...(W.segundo ? [W.segundo] : []), ...W.especial] : it.especial || [];
     const vs = base ? `<div class="vs">Llevas: <b>${esc(ITEMS[cmp].name)}</b></div>` : '';
-    return `${vs}<div class="sheet">${cells.join('')}</div>` + (esp.length ? `<ul class="fx esp">${esp.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '');
+    // (el tipo de daño del arma: el principal y, si es especial, el secundario)
+    const dano = W ? `<div class="danos"><span class="lb">Daño</span>${W.dano.map((t, i) => this.tipoHtml(t, i > 0)).join('')}</div>` : '';
+    return `${vs}${dano}<div class="sheet">${cells.join('')}</div>` + (esp.length ? `<ul class="fx esp">${esp.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '');
   }
   statsHtml() {
     const g = this.g,
       p = g.player;
     const row = (ic, label, v) => `<span class="ico">${spriteHtml(smallIcon(ic))}${label}</span><b>${v}</b>`;
-    const def = Math.round(p.armorDef() * 100);
+    // (la defensa: lo que para la armadura de cada tipo de golpe)
+    const R = p.resistencias();
+    const def = TIPO_IDS.some((t) => R[t] > 0) ? `<span class="tps">${TIPO_IDS.map((t) => `<span class="tp">${spriteHtml(smallIcon(TIPOS[t].icon))}${Math.round(R[t] * 100)}</span>`).join('')}</span>` : '';
     // (la carga: lo que pesa la armadura; con ella, la voltereta)
     const carga = `${CARGAS[p.carga].nombre} · ${fmtN(p.pesoArmadura(), 1)} kg`;
     const nombre = p.aspecto && p.aspecto.nombre ? `<div class="nm f-bast">${esc(p.aspecto.nombre)}</div>` : '';
-    return `${nombre}<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('stamina', 'Aguante', p.maxSt)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${def ? row('shield', 'Defensa', def + '%') : ''}${row('carga', 'Carga', carga)}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
+    return `${nombre}<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('stamina', 'Aguante', p.maxSt)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${def ? row('shield', 'Defensa', def) : ''}${row('carga', 'Carga', carga)}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
   }
   renderInv() {
     document.querySelectorAll('#inv .tab').forEach((t) => t.classList.toggle('on', +t.dataset.t === this.invTab));

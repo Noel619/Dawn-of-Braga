@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { angleDiff, DEG, clamp } from '../core/util.js';
 import { getTexture } from '../gfx/textures.js';
 import { additiveFog } from '../gfx/materials.js';
+import { tipoGolpe, resistencia } from './danos.js';
 
 const ringGeo = new THREE.RingGeometry(0.85, 1, 32).rotateX(-Math.PI / 2);
 
@@ -35,6 +36,22 @@ export class Combat {
     this.game.fx.blood.emit(x, y, z, 10, { color: [1, 0.82, 0.45], speed: 2, life: 0.7, up: 2, gravity: -2.5 });
   }
 
+  // Lo que se nota de lo que aguanta (o no) una criatura del tipo del golpe
+  // (game/danos.js): si lo aguanta, el golpe suena sordo, a hierro, y saltan
+  // chispas grises en vez de tanta sangre; si le hace más daño, más sangre y
+  // un parón más largo.
+  resisteFx(e, tipo, x, y, z, f) {
+    const g = this.game;
+    const k = resistencia(e.type, tipo);
+    if (k >= 0.25) {
+      g.fx.blood.emit(x, y, z, 12, { color: [0.78, 0.76, 0.7], speed: 4.5, life: 0.3, up: 1.2 });
+      g.audio && g.audio.play('armorHit', e.pos, { k: 0.7 });
+    } else if (k <= -0.15) {
+      g.fx.blood.emit(x, y, z, 26, { dir: f ? { x: f.x, z: f.z } : undefined, speed: 5.5, color: e.T.blood });
+      g.hitstop = Math.max(g.hitstop, 0.1);
+    }
+  }
+
   // ------------------------------------------------------------ jugador -> enemigos
   playerSwing(player, atk) {
     const g = this.game;
@@ -47,6 +64,8 @@ export class Combat {
     // esquivar en el último instante, deja el siguiente golpe en crítico)
     const ret = player.retaliateT > 0 && player.mods.retaliate ? player.mods.retaliate.k : 1;
     const critNext = player.critNextT > 0;
+    // (el tipo del golpe: el suyo o el del arma; game/danos.js)
+    const tipo = atk.tipo ?? (player.weapon && player.weapon.dano ? player.weapon.dano[0] : null);
     let landed = false;
     for (const e of g.activeEnemies) {
       // (a Henrique no se le hiere: es un aliado)
@@ -69,7 +88,7 @@ export class Combat {
       const crit = (!e.boss && (!e.aware || behind)) || !!(e.T.critWhen && e.T.critWhen(e)) || e.parryT > 0 || critNext || (player.hasSword && Math.random() < (player.weapon.critico || 0));
       // atkMul: pesado cargado; crit: lo que multiplica un crítico de ese golpe
       const dmg = Math.round(atk.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1) * (crit ? atk.crit || 1.7 : 1) * ret * (0.92 + Math.random() * 0.16));
-      const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0);
+      const r = e.takeHit(dmg, atk.poise * (crit ? 2 : 1), player.pos.x, player.pos.z, !!atk.heavy, atk.dir || 0, tipo);
       if (r !== 'blocked' && r !== 'none') {
         landed = true;
         this.relicHit(player, dmg, e.pos.x, e.pos.y + Math.min(1.3, e.T.height * 0.55), e.pos.z);
@@ -107,6 +126,7 @@ export class Combat {
           g.fx.blood.emit(hx, hy, hz, 30, { speed: 6 });
           g.audio && g.audio.enemyVoice(e, 'death');
         } else g.audio && g.audio.enemyVoice(e, 'hurt');
+        this.resisteFx(e, tipo, hx, hy, hz, f);
       }
     }
     // (lo que devolvía la Saeta o remataba el Escapulario se gasta en el golpe
@@ -139,7 +159,8 @@ export class Combat {
       if (d > I.r + e.body.radius || Math.abs(e.pos.y - y) > 1.5) continue;
       player.hitSet.add(e);
       const dmg = Math.round(atk.dmg * I.dmg * player.dmgMul * (player.atkMul || 1) * (player.golpeK || 1));
-      const r = e.takeHit(dmg, atk.poise * 0.5, tip.x, tip.z, true, 0);
+      // (la onda del suelo que se parte aplasta: el tipo del impacto)
+      const r = e.takeHit(dmg, atk.poise * 0.5, tip.x, tip.z, true, 0, I.tipo ?? atk.tipo ?? null);
       if (r !== 'blocked' && r !== 'none') this.relicHit(player, dmg, e.pos.x, e.pos.y + 1, e.pos.z);
       if (r === 'kill') g.audio && g.audio.enemyVoice(e, 'death');
       else if (r !== 'none' && r !== 'blocked') g.audio && g.audio.enemyVoice(e, 'hurt');
@@ -185,7 +206,7 @@ export class Combat {
     if (Math.abs(f.pos.y - e.pos.y) > 1.5) return false;
     if (d > (a.range ?? 2) + f.body.radius) return false;
     if (d > e.body.radius + 0.6 && Math.abs(angleDiff(e.yaw, Math.atan2(dx, dz))) > (a.arc ?? 90) * 0.5 * DEG) return false;
-    const r = f.takeHit(a.dmg, a.stDmg ?? a.dmg * 1.2, e.pos.x, e.pos.z, a.dmg >= 22, 0);
+    const r = f.takeHit(a.dmg, a.stDmg ?? a.dmg * 1.2, e.pos.x, e.pos.z, a.dmg >= 22, 0, tipoGolpe(e, a));
     if (r === 'none') return false;
     const hx = f.pos.x - (dx / d) * f.body.radius * 0.6,
       hy = f.pos.y + 1.2,
@@ -208,7 +229,8 @@ export class Combat {
     // (tras un golpe crítico, los siguientes del mismo no te encadenan en el
     // suelo: un respiro de 0,8 s para levantarte)
     if (a.crit && p.lastHitBy && p.lastHitBy.crit && g.time - (p.lastHitT ?? -9) < 0.8) return false;
-    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip, crit: a.crit }, sx, sz);
+    // (tipo: el del golpe; lo para la armadura a su manera: game/danos.js)
+    const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip, crit: a.crit, tipo: tipoGolpe(src, a) }, sx, sz);
     if (r === 'dodge' || r === 'none') return false;
     if (r === 'parry') {
       this.parryFx(src, a, sx, sz);
@@ -275,7 +297,8 @@ export class Combat {
     p.hitSet.add(e);
     // (el Cerrojo de San Martín: el golpe de gracia, el doble)
     const dmg = Math.round(a.dmg * p.dmgMul * p.mods.ripK * (p.golpeK || 1) * (0.95 + Math.random() * 0.1));
-    const r = e.takeRiposte ? e.takeRiposte(dmg, p.pos.x, p.pos.z) : e.takeHit(dmg, 999, p.pos.x, p.pos.z, true, 0);
+    const tipo = a.tipo ?? (p.weapon && p.weapon.dano ? p.weapon.dano[0] : null);
+    const r = e.takeRiposte ? e.takeRiposte(dmg, p.pos.x, p.pos.z, tipo) : e.takeHit(dmg, 999, p.pos.x, p.pos.z, true, 0, tipo);
     if (r === 'none') return;
     this.relicHit(p, dmg, e.pos.x, e.pos.y + 1, e.pos.z);
     const dx = e.pos.x - p.pos.x,
@@ -319,7 +342,7 @@ export class Combat {
     const p = g.player;
     // no castigar dos veces el mismo golpe (impacto directo + onda)
     const recent = p.lastHitT !== undefined && g.time - p.lastHitT < 0.4;
-    if (!recent && dd < r + 0.3 && Math.abs(p.pos.y - y) < 1.2 && p.body.grounded) this.apply(src, { dmg, knock, stagger: true, chip: 0.25, noParry: true }, x, z);
+    if (!recent && dd < r + 0.3 && Math.abs(p.pos.y - y) < 1.2 && p.body.grounded) this.apply(src, { dmg, knock, stagger: true, chip: 0.25, noParry: true, tipo: 'contundente' }, x, z);
   }
 
   // Tañido / rugido / crujido: onda que aturde (sólo se evita esquivando).
@@ -333,7 +356,7 @@ export class Combat {
     g.camRig.shake(0.45);
     const p = g.player;
     const d = Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
-    if (d < r && Math.abs(p.pos.y - e.pos.y) < 3) this.apply(e, { dmg, unblockable: true, noParry: true, stagger: true, knock: 4 }, e.pos.x, e.pos.z);
+    if (d < r && Math.abs(p.pos.y - e.pos.y) < 3) this.apply(e, { dmg, unblockable: true, noParry: true, stagger: true, knock: 4, tipo: null }, e.pos.x, e.pos.z);
   }
 
   ring(x, y, z, r, color, dur) {
@@ -453,7 +476,7 @@ export class Combat {
     g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
     const p = g.player;
     const d = Math.hypot(p.pos.x - x, p.pos.z - z);
-    if (d < r && Math.abs(p.pos.y - y) < 2) this.apply(src, { dmg, stagger: true, knock: 8, chip: 0.3, noParry: true }, x, z);
+    if (d < r && Math.abs(p.pos.y - y) < 2) this.apply(src, { dmg, stagger: true, knock: 8, chip: 0.3, noParry: true, tipo: null }, x, z);
     if (src && src.data && src.data.phase === 2) this.firePool(x, y, z, 2.2, 5);
   }
 
@@ -529,7 +552,9 @@ export class Combat {
       let dead = P.life <= 0 || hitWall !== Infinity;
       const pd = Math.hypot(P.pos.x - p.pos.x, P.pos.y - (p.pos.y + 1.1), P.pos.z - p.pos.z);
       if (!dead && pd < 0.8 && !p.dead) {
-        const r = p.receiveHit({ dmg: P.dmg, stagger: P.kind === 'ember', knock: 4, noParry: true }, P.pos.x - P.vel.x, P.pos.z - P.vel.z);
+        // (las calaveras del Custodio aplastan; el fuego, el pus y el lamento,
+        // sin tipo)
+        const r = p.receiveHit({ dmg: P.dmg, stagger: P.kind === 'ember', knock: 4, noParry: true, tipo: P.kind === 'skull' ? 'contundente' : null }, P.pos.x - P.vel.x, P.pos.z - P.vel.z);
         if (r !== 'dodge' && r !== 'none') {
           dead = true;
           if (r === 'hit') {
@@ -546,7 +571,7 @@ export class Combat {
           const gy = g.world.col.groundHeight(P.pos.x, P.pos.z, 0.2, P.pos.y + 0.5);
           if (P.src && P.src.data && P.src.data.phase === 2) this.firePool(P.pos.x, gy, P.pos.z, 1.5, 4);
           const d2 = Math.hypot(p.pos.x - P.pos.x, p.pos.z - P.pos.z);
-          if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4, noParry: true }, P.pos.x, P.pos.z);
+          if (d2 < 1.6 && !p.dead) this.apply(P.src, { dmg: 12, knock: 4, noParry: true, tipo: null }, P.pos.x, P.pos.z);
         } else if (P.kind === 'skull') {
           // se hace añicos
           g.fx.blood.emit(P.pos.x, P.pos.y, P.pos.z, 16, { color: [0.82, 0.78, 0.7], speed: 4, life: 0.7, up: 1.6 });

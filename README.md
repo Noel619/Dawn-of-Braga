@@ -857,13 +857,15 @@ especial de cada una (a una o a dos manos, a distancia, lo que hace su pesado…
 ficha a la descripción y vuelta. Las de un arma: **filo** (el daño de su golpe ligero, con lo afilado), **golpe
 pesado**, **velocidad** (golpes por segundo del combo), **alcance**, **peso**, **dureza**, **crítico**, **contra
 armadura** y **aguante** (lo que cansa cada golpe); las del escudo, **estabilidad** (lo que cuesta parar con él),
-**absorción** (lo que no deja pasar) y peso; las de la armadura, defensa y peso (y, en el equipo, la **carga**: lo
-que pesa todo lo que se lleva puesto). Las de las armas salen de lo que
+**absorción** (lo que no deja pasar) y peso; las de la armadura, lo que para de cada **tipo de daño** (cortante,
+perforante, contundente) y su peso (y, en el equipo, la **defensa** de cada tipo y la **carga**: lo que pesa todo lo
+que se lleva puesto). Sobre las barras de un arma, **su tipo de daño** (y el secundario, si es especial). Las de las armas salen de lo que
 de verdad hacen sus golpes (`weaponSheet`, en `entities/weapons.js`): no son números de adorno.
 
 **Las armaduras.** Tres armaduras del jugador, cada una en las cuatro piezas de las ranuras del inventario, sobre el
 cuerpo que queda debajo (`entities/armaduras.js`, `entities/cuerpo.js`). Cada pieza es un objeto, con su icono, su
-**defensa** (lo que quita de cada golpe; las cuatro juntas, hasta sesenta de cien) y su **peso**; lo que pesa todo
+**resistencia a cada tipo de daño** (lo que quita de cada golpe cortante, perforante o contundente; las cuatro
+juntas, hasta sesenta de cien de cada uno; ver «Los tipos de daño») y su **peso**; lo que pesa todo
 lo puesto es la **carga**: con la de la guardia (quince kilos), la voltereta y la carrera de siempre; con menos de
 nueve, **ligera** (la voltereta más larga, más barata y con más invulnerabilidad, y correr cansa menos); con más de
 veinte, **pesada** (todo lo contrario). Se cambian en el inventario y se ven al momento: el jugador se viste sin
@@ -873,17 +875,18 @@ otras. Todas dejan la cara al aire (el protagonista es el que mira).
   ancho de hombros pero chupado de las noches de la celda, las bragas de lino atadas con su cordón, descalzo y con
   las yemas de los dedos en carne viva (las uñas se le quedaron en la pared). La cara, el pelo, la barba y los
   colores, los del editor de personaje.
-- **La armadura de guardia** (media: 15 kg, defensa 12), la que lleva al despertar: el yelmo cónico de cuatro gajos
+- **La armadura de guardia** (media: 15 kg; para 16 de cada cien del corte, 8 de la punta y 10 del golpe: la malla
+  para el filo), la que lleva al despertar: el yelmo cónico de cuatro gajos
   con su banda remachada y su nasal, sobre el almófar de malla abierto a la cara; la loriga hasta medio muslo con
   mangas al codo, abierta por delante y por detrás para montar, la sobreveste carmesí con la cruz blanca y los
   faldones raídos, las hombreras, el cinto, la correa del escudo y la capa hecha jirones; los brazales de cuero
   atados y los guantes; las calzas oscuras y las botas.
-- **La de caballero** (pesada: 25 kg, defensa 26), la de un caballero del Rey, hierro de arriba abajo: el yelmo de
+- **La de caballero** (pesada: 25 kg; 31, 26 y 18: en la placa resbalan el filo y la punta), la de un caballero del Rey, hierro de arriba abajo: el yelmo de
   calva apuntada con su cresta, la banda de latón, el nasal ancho, las carrilleras, el cubrenuca y el camal de malla;
   el peto con su arista y el espaldar, la gola, las hombreras de cúpula con sus lamas, el faldar de tres lamas, las
   escarcelas y los faldones azules del Rey por detrás; los brazales con sus codales y los guanteletes; las calzas de
   malla, los quijotes, las rodilleras, las grebas y los escarpes.
-- **La de cuero** (ligera: 8 kg, defensa 8), la de un batidor: la capucha con su esclavina; el gambesón acolchado
+- **La de cuero** (ligera: 8 kg; 8, 4 y 12: el acolchado se traga los golpes), la de un batidor: la capucha con su esclavina; el gambesón acolchado
   con sus faldones y, encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas, el cinto con la bolsa
   y el cuchillo; los brazales atados y los guantes; las calzas de lana y las botas altas con su vuelta y sus hebillas.
 
@@ -972,6 +975,50 @@ pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y
   oxidada corta el 42,5 % —la mitad, y de eso un 15 % menos—, cansa un 15 % menos y alcanza un 6 % menos; la de
   Solingen corta un 35 % más y alcanza un 4 % más).
 - **Lo especial**, en palabras: a una o a dos manos, a distancia, quiebra guardias…
+- **El tipo de daño** (ver «Los tipos de daño», abajo): las tres espadas, **cortante**; la lanza, **perforante**, y
+  su barrido con el asta, contundente; el hacha, **cortante**, y la onda del suelo que parte, contundente; la
+  ballesta, **perforante** (el virote), y su culatazo, contundente.
+
+**Los tipos de daño** (`game/danos.js`). Cada golpe es **cortante** (el filo: tajos y hachazos), **perforante** (la
+punta: estocadas, virotes, dientes) o **contundente** (lo que aplasta: mazazos, culatazos, embestidas, el suelo que se
+parte); lo que no es de ninguno (el fuego, el pus, las esporas, los gritos, el tañido de la campana) no tiene tipo.
+Cada arma tiene el suyo y **las especiales, uno secundario**: el de los golpes de su repertorio que no son como los
+demás (la lanza, el hacha y la ballesta; las espadas sólo cortan). Las **armaduras** paran cada tipo a su manera (lo
+de cada pieza, en su ficha; lo que no tiene tipo, lo que paran de media) y las **criaturas** también, en puntos de
+cien (negativo: les hace más daño); cuando aguantan el golpe suena sordo, a hierro, y saltan chispas grises, y cuando
+les hace más daño, más sangre y un parón más largo. Sus golpes también son de un tipo (la hoz corta, los dientes
+perforan, el badajo aplasta...). Lo que aguanta cada una:
+
+| Criatura | Cortante | Perforante | Contundente | Por qué |
+|---|---|---|---|---|
+| Soldado cosido | 25 | | −15 | la cota bajo la carne |
+| Rastrero | −15 | 15 | | patas largas y flacas |
+| Mastín desollado | −20 | | | sin piel |
+| Campanero | 15 | 30 | −20 | la campana de bronce |
+| Plañidera | −15 | 35 | 20 | la mortaja y el encaje |
+| El Empalado | 20 | 10 | −10 | la armadura vieja |
+| Dom Paio, el Condenado | −10 | | 15 | |
+| El Custodio de la Garra | 25 | 40 | −30 | huesos |
+| Leonor, la Dolorosa | −15 | | 30 | la carne blanda |
+| Cavador | 10 | 15 | −10 | seco como la tierra |
+| Emparedada | 30 | 30 | −20 | la obra que arrastra |
+| Enrodado | 20 | | −15 | la rueda |
+| Coronado | −10 | | −10 | lino y el cráneo abierto |
+| El Físico | 20 | | −10 | la cera del ropón |
+| Cuervo cebado | 10 | −20 | | la pechuga pelada |
+| El alférez | 25 | | −10 | la cota metida en la carne |
+| Ballestero del Rey | 10 | −10 | 20 | el gambesón |
+| Cortesano | −10 | | | |
+| El Caballero de la Orden | 15 | −10 | | la punta busca las juntas (y la calidad del arma) |
+| Zarza de lo hondo | −25 | 40 | 20 | tallos |
+| Boca de lo hondo | −15 | 25 | | |
+| Bulbo de esporas | | −30 | 30 | blando |
+| El Lobishome | | −10 | 15 | pelo y hueso |
+| Los Velados | 35 | 25 | −25 | piedra |
+| El Turiferario | | −10 | 15 | la mole |
+| El Descoyuntado | | 15 | −15 | tendones y hueso |
+
+Los demás (el Penitente, el mayordomo, la gente) no aguantan nada en especial.
 
 (El facón criollo y la katana sagrada, que no eran de su tiempo, ya no están en el juego; si una partida guardada los
 tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mundo; por el orden en que se encuentran:
@@ -1396,11 +1443,12 @@ src/
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
                         sus figuras, cada una con su cara y su ropa); creador.js: el editor de personaje, después
-                        de la introducción (su escenario en lo oscuro, su lista y su cámara); spring.js: la fuente
-                        sin nombre de la cisterna
-                        (el agua negra y su latido, las pavesas, el agua roja de la sima, el rojo que late detrás
-                        de la cabeza de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y
-                        susurra); cutscene.js: la de la bodega; hunt.js: la caza en las
+                        de la introducción (su escenario en lo oscuro, su lista y su cámara); danos.js: los tipos
+                        de daño (cortante, perforante, contundente), de qué tipo es cada golpe de cada criatura y
+                        lo que aguanta de cada uno; spring.js: la fuente sin nombre de la cisterna (el agua negra
+                        y su latido, las pavesas, el agua roja de la sima, el rojo que late detrás de la cabeza
+                        de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y susurra);
+                        cutscene.js: la de la bodega; hunt.js: la caza en las
                         bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
                         fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, la camilla);
                         fisico_cine.js: sus escenas (la cortina, la camilla y el forcejeo, su muerte);

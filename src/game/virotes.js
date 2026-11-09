@@ -198,7 +198,7 @@ export class Virotes {
       } else if (!p.dead && B.owner) {
         const [dd] = segToAxis(p0, p1, p.pos.x, p.pos.y + 0.2, p.pos.y + 1.75, p.pos.z);
         if (dd < p.body.radius + 0.1) {
-          const r = g.combat.apply(B.owner, { dmg: B.dmg, noParry: true, knock: 3, stagger: false }, B.pos.x - B.vel.x, B.pos.z - B.vel.z);
+          const r = g.combat.apply(B.owner, { dmg: B.dmg, noParry: true, knock: 3, stagger: false, tipo: 'perforante' }, B.pos.x - B.vel.x, B.pos.z - B.vel.z);
           if (r) done = true;
         }
       }
@@ -245,7 +245,8 @@ export class Virotes {
     const dmg = Math.round(B.dmg * (crit ? 1.6 : 1) * (0.92 + Math.random() * 0.16));
     // (a las pequeñas las tumba: el virote pesa)
     const poise = B.poise * (e.T.height < 2.2 ? 1.6 : 0.6);
-    const r = e.takeHit(dmg, poise, at.x - B.vel.x * 0.05, at.z - B.vel.z * 0.05, false, 0);
+    // (el virote perfora: game/danos.js)
+    const r = e.takeHit(dmg, poise, at.x - B.vel.x * 0.05, at.z - B.vel.z * 0.05, false, 0, 'perforante');
     if (r === 'none') return;
     const hy = at.y;
     if (r === 'blocked') {
