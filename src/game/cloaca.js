@@ -52,9 +52,10 @@ export class CloacaFX {
           vec4 wp = modelMatrix * vec4(position, 1.0);
           vec4 mv = viewMatrix * wp;
           vDist = -mv.z;
-          // (la luz del sitio y la del farol, si está cerca)
+          // (la luz del sitio y la del farol, si está cerca: no más que la
+          // que coge una piedra mojada)
           float ld = length(uLamp - wp.xyz);
-          vLuz = aLuz + uLampK * 1.1 / (1.0 + ld * ld * 0.18);
+          vLuz = min(0.95, aLuz + uLampK * 0.7 / (1.0 + ld * ld * 0.3));
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
@@ -74,6 +75,8 @@ export class CloacaFX {
           a *= 1.0 - smoothstep(0.9, 1.0, v) * 0.5;
           vec3 c = mix(vec3(0.26, 0.32, 0.36), vec3(0.6, 0.68, 0.78), hilos) * min(1.2, vLuz);
           a *= 0.55 + 0.45 * min(1.0, vLuz);
+          // (pegada a la cámara se deshace: no tapa media pantalla)
+          a *= smoothstep(0.5, 1.6, vDist);
           ${FOG_CHUNK}
           gl_FragColor = vec4(mix(c, fogColor, fog), a * (1.0 - fog));
         }`,
@@ -312,6 +315,31 @@ export class CloacaFX {
         fz = c.c[1] + c.d[1] * (c.out + 0.03) + (Math.random() - 0.5) * 0.4;
       g.waters.ripple(fx, fz, (0.7 + Math.random() * 0.6) * Math.min(1, 0.4 + c.w), c.y1);
     }
+  }
+
+  // El agua que cae más cerca de p (a menos de maxD): dónde (el pie del
+  // chorro, o a la altura de p si es alto) y lo grande que es (k).
+  nearest(p, maxD = 14) {
+    let best = null,
+      bd = maxD;
+    for (const c of this.cas) {
+      const x = c.c[0] + c.d[0] * c.out,
+        z = c.c[1] + c.d[1] * c.out;
+      const y = Math.max(c.y1, Math.min(c.y0, p.y + 1));
+      const d = Math.hypot(x - p.x, (y - p.y) * 1.5, z - p.z);
+      if (d >= bd) continue;
+      bd = d;
+      best = c;
+    }
+    if (!best) return null;
+    const o = this._nr || (this._nr = {});
+    o.c = best;
+    o.x = best.c[0] + best.d[0] * best.out;
+    o.z = best.c[1] + best.d[1] * best.out;
+    o.y = Math.max(best.y1, Math.min(best.y0, p.y + 1));
+    // (lo grande: el ancho y lo que cae)
+    o.k = Math.min(2.2, best.w * 0.9 + (best.y0 - best.y1) * 0.12);
+    return o;
   }
 
   updateOjos(dt, enVergel) {

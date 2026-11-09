@@ -86,6 +86,16 @@ export class Nado {
     const bajo = p.state === 'swim' && S && S.sub && !p.dead;
     if (bajo) this.aliento = Math.max(0, this.aliento - dt);
     else this.aliento = Math.min(ALIENTO, this.aliento + dt * 6);
+    // (al acabarse, la vista se cierra; y el corazón se oye)
+    const falta = bajo ? Math.max(0, 1 - this.aliento / (ALIENTO * 0.3)) : 0;
+    U.uAhogo.value = falta * 0.9;
+    if (falta > 0) {
+      this.latT = (this.latT ?? 0) - dt;
+      if (this.latT <= 0) {
+        this.latT = 0.95 - falta * 0.45;
+        g.audio && g.audio.play('heartbeat', null, { gain: 0.3 + falta * 0.5 });
+      }
+    }
     // (sin aliento: se ahoga)
     if (bajo && this.aliento <= 0) {
       this.ahogoT -= dt;

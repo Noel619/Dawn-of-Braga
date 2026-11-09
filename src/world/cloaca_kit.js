@@ -528,32 +528,44 @@ export function suelo(ctx, piezas, y, room, d = {}) {
   // los cantos de los andenes sobre el canal (donde un andén da al lecho)
   const and = piezas.filter((p) => p[0] === 'anden').map((p) => p[1]);
   const bajo = piezas.filter((p) => p[0] !== 'anden').map((p) => p[1]);
-  const ct = [0.4, 0.42, 0.38];
+  // (mojados: lo de abajo, verde oscuro y brillante de agua, hasta un
+  // palmo por encima de ella —donde sube cuando llueve arriba—; lo de
+  // arriba, la sillería del canto)
+  const ct = [0.4, 0.42, 0.38],
+    cw = [0.22, 0.3, 0.22];
+  const yw = y - KIT.agua + 0.07;
+  const canto = (x0, z0, x1, z1, f) => {
+    wb.box('mossstone', x0, lechoY, z0, x1, yw, z1, { faces: f, ao: false, sub: 2, tint: cw, room });
+    wb.box('ashlar', x0, yw, z0, x1, y, z1, { faces: f, ao: false, sub: 2, tint: ct, room });
+  };
   const ov = (p0, p1, q0, q1) => [Math.max(p0, q0), Math.min(p1, q1)];
   for (const a of and)
     for (const b of bajo) {
       if (Math.abs(a[2] - b[0]) < 1e-4) {
         const [s, e] = ov(a[1], a[3], b[1], b[3]);
-        if (e - s > 1e-3) wb.box('ashlar', a[2] - 0.01, lechoY, s, a[2], y, e, { faces: 'e', ao: false, sub: 2, tint: ct, room });
+        if (e - s > 1e-3) canto(a[2] - 0.01, s, a[2], e, 'e');
       }
       if (Math.abs(a[0] - b[2]) < 1e-4) {
         const [s, e] = ov(a[1], a[3], b[1], b[3]);
-        if (e - s > 1e-3) wb.box('ashlar', a[0], lechoY, s, a[0] + 0.01, y, e, { faces: 'w', ao: false, sub: 2, tint: ct, room });
+        if (e - s > 1e-3) canto(a[0], s, a[0] + 0.01, e, 'w');
       }
       if (Math.abs(a[3] - b[1]) < 1e-4) {
         const [s, e] = ov(a[0], a[2], b[0], b[2]);
-        if (e - s > 1e-3) wb.box('ashlar', s, lechoY, a[3] - 0.01, e, y, a[3], { faces: 's', ao: false, sub: 2, tint: ct, room });
+        if (e - s > 1e-3) canto(s, a[3] - 0.01, e, a[3], 's');
       }
       if (Math.abs(a[1] - b[3]) < 1e-4) {
         const [s, e] = ov(a[0], a[2], b[0], b[2]);
-        if (e - s > 1e-3) wb.box('ashlar', s, lechoY, a[1], e, y, a[1] + 0.01, { faces: 'n', ao: false, sub: 2, tint: ct, room });
+        if (e - s > 1e-3) canto(s, a[1], e, a[1] + 0.01, 'n');
       }
     }
 }
 
-// el agua de un trozo
+// el agua de un trozo (a ras de sus vecinos: entre dos trozos del mismo
+// canal no queda rendija); en uno de cada tres, gotea de la bóveda
 export function aguaDe(r, y, d = {}, ahogado = false, flow = [0.3, 0]) {
-  return { shape: 'rect', r: [r[0] + 0.005, r[1] + 0.005, r[2] - 0.005, r[3] - 0.005], y, flow, amp: ahogado ? 0.012 : 0.016, deep: d.aguaDeep ?? 0x050807, sky: d.aguaSky ?? 0x0e1416, glint: d.aguaGlint ?? 0x6a8090, tint: d.aguaTint ?? 0x2e3e38, light: [(r[0] + r[2]) / 2, y + 2.4, (r[1] + r[3]) / 2], lightK: 0.35, drips: false };
+  const h = Math.abs(Math.sin(r[0] * 12.9898 + r[1] * 78.233 + y * 3.1)) * 43758.5453;
+  const gotea = h - Math.floor(h) < 0.33 && (r[2] - r[0]) * (r[3] - r[1]) > 0.8;
+  return { shape: 'rect', r: [r[0], r[1], r[2], r[3]], y, flow, amp: ahogado ? 0.012 : 0.016, deep: d.aguaDeep ?? 0x050807, sky: d.aguaSky ?? 0x0e1416, glint: d.aguaGlint ?? 0x6a8090, tint: d.aguaTint ?? 0x2e3e38, light: [(r[0] + r[2]) / 2, y + 2.4, (r[1] + r[3]) / 2], lightK: 0.35, drips: gotea, dripH: KIT.sp + KIT.w / 2 + KIT.agua - 0.15 };
 }
 
 // ------------------------------------------------------------------------ el muro
@@ -780,6 +792,19 @@ export function poza(ctx, o, y, room) {
   col.add(x0 - 0.5, yb, z1, x1 + 0.5, yt, z1 + 0.5).cam = true;
   col.add(x0 - 0.5, yb, z0, x0, yt, z1).cam = true;
   col.add(x1, yb, z0, x1 + 0.5, yt, z1).cam = true;
+  // el bordillo: una hilada de sillares a su alrededor (salvo el muro), un
+  // palmo por encima de las losas, gastado; se pisa y se sale por él
+  const bw = 0.26,
+    bh = 0.18;
+  const bt = [0.52, 0.5, 0.45];
+  const bord = (a, b, c, d) => {
+    wb.box('ashlar', a, y - 0.05, b, c, y + bh, d, { faces: 'tnsew', ao: false, sub: 1, room, tint: bt });
+    col.add(a, y - 0.3, b, c, y + bh, d, 'floor').cam = true;
+  };
+  if (o.muro !== 's') bord(x0 - bw, z1, x1 + bw, z1 + bw);
+  if (o.muro !== 'n') bord(x0 - bw, z0 - bw, x1 + bw, z0);
+  if (o.muro !== 'w') bord(x0 - bw, o.muro === 'n' ? z0 : z0 - bw, x0, o.muro === 's' ? z1 : z1 + bw);
+  if (o.muro !== 'e') bord(x1, o.muro === 'n' ? z0 : z0 - bw, x1 + bw, o.muro === 's' ? z1 : z1 + bw);
   const h = o.hueco;
   if (ctx.waters)
     ctx.waters.push({ shape: 'rect', r: [x0 + 0.005, z0 + 0.005, x1 - 0.005, z1 - 0.005], y: y - KIT.agua, bedFn: (x, z) => (h && x > h[0] && x < h[2] && z > h[1] && z < h[3] ? fondo - 4 : fondo), deep: 0x030c09, sky: 0x18302a, glint: 0xa8e8d0, tint: 0x1c4a3e, clear: 0.55, amb: 0x061210, refl: 0.25, flow: [0, 0.06], amp: 0.024, light: [(x0 + x1) / 2, y + 3, (z0 + z1) / 2], lightK: 0.5 });

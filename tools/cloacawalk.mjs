@@ -61,7 +61,8 @@ await p.evaluate(() => {
         g.update(1 / 30);
       }
       pl.autoDir = null;
-      if (t >= 25 || pl.dead) return { stuck: [x, z], pos: [pl.pos.x, pl.pos.y, pl.pos.z].map(r2), dead: pl.dead };
+      // (atascado: en qué estado, por si no es una pared)
+      if (t >= 25 || pl.dead) return { stuck: [x, z], pos: [pl.pos.x, pl.pos.y, pl.pos.z].map(r2), dead: pl.dead, ps: pl.state, gs: g.state, cine: !!g.cine, cutscene: !!g.cutscene, modal: g.ui.stack.map((q) => q.name) };
     }
     __sim(0.3);
     return { pos: [pl.pos.x, pl.pos.y, pl.pos.z].map(r2), zone: g.zone && g.zone.id };
@@ -117,7 +118,9 @@ await run('reja con llave', "(()=>{const g=__game;const r=__useHere('d_reja_se')
 await run('escalera de la Sé', "(()=>{const r=__walk([[27.5,4.8],[27.5,1.0],[27.5,-1.4],[27.5,-6.0],[27.5,-10.0],[27.5,-12.8]]);return {...r,zona:__game.zone&&__game.zone.id}})()");
 // 5. la lobera: la niebla, y el Lobishome (vencido aquí, a mano); por el
 // laberinto a su salida
-await run('niebla', "(()=>{const g=__game;const r=__useHere('f_lobo');__sim(3.6);const e=g.bosses.lobishome;e.takeHit(1e5,99,e.pos.x+1,e.pos.z,true);__sim(5);return {...r,muerto:e.dead,flag:!!g.flags['boss:lobishome'],niebla:g.fogActive(g.interact.list.find(i=>i.id==='f_lobo'))}})()");
+// (su IA es al azar: según lo que esté haciendo, un golpe no lo remata —una
+// fase no se salta de un golpe—; se le golpea hasta que cae)
+await run('niebla', "(()=>{const g=__game;const r=__useHere('f_lobo');__sim(3.6);const e=g.bosses.lobishome;let n=0;for(;n<10&&!e.dead;n++){e.takeHit(1e5,99,e.pos.x+1,e.pos.z,true);__sim(1.0);}__sim(5);return {...r,golpes:n,muerto:e.dead,flag:!!g.flags['boss:lobishome'],niebla:g.fogActive(g.interact.list.find(i=>i.id==='f_lobo'))}})()");
 await run('el laberinto', "__ruta(-4.5,-56,-17)");
 await run('a la bajada', "__walk([[-8.0,-56.0],[-12.5,-56.0],[-12.5,-54.6]])");
 await run('escalera a las viejas', "(()=>{const r=__walk([[-12.5,-52.0],[-12.5,-47.0],[-12.5,-42.6],[-12.5,-40.0]]);return {...r,zona:__game.zone&&__game.zone.id}})()");

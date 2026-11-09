@@ -166,10 +166,11 @@ function waterMat(o) {
         float st = ns(vec2(q.x * 0.9 - uTime * sp * 2.2, q.y * 15.0)) * ns(vec2(q.x * 0.45 - uTime * sp * 1.5, q.y * 5.0 + 4.0));
         // (las estelas: rayas finas a lo largo de la corriente, más junto a
         // las orillas, donde el agua se arruga)
-        float streak = smoothstep(0.5, 0.7, st) * smoothstep(0.12, 0.4, sp) * (0.45 + 0.55 * (1.0 - smoothstep(0.1, 0.6, vShore)));
+        // (finas y rotas: un hilo de espuma, no una raya de luz)
+        float streak = smoothstep(0.56, 0.72, st) * smoothstep(0.12, 0.4, sp) * (0.35 + 0.65 * (1.0 - smoothstep(0.1, 0.5, vShore))) * smoothstep(0.35, 0.6, ns(p * 4.0 - uFlow * uTime * 1.5));
         float sn = ns(p * 7.0 + vec2(uTime * 0.31, -uTime * 0.23) - uFlow * uTime * 2.5) * 0.65 + ns(p * 17.0 - vec2(uTime * 0.5, uTime * 0.4)) * 0.35;
         float foam = (1.0 - smoothstep(0.0, 0.04 + 0.13 * sn, vShore)) * (0.45 + 0.55 * sn);
-        foam = max(foam, streak * 0.3) * uFoam;
+        foam = max(foam, streak * 0.16) * uFoam;
         // donde cae luz de arriba (un pozo): una mancha que las ondas rompen
         vec3 spot = vec3(0.0);
         if (uSpot.w > 0.0) {
@@ -183,7 +184,7 @@ function waterMat(o) {
         if (!below) {
           float op = 1.0 - trans;
           // (premultiplicado: lo que pone el agua; el fondo entra por 1 - a)
-          col = body * op * (1.0 - F) + refl * F + spec + spot + vec3(0.55, 0.6, 0.56) * min(lit, vec3(0.9)) * foam * 0.6;
+          col = body * op * (1.0 - F) + refl * F + spec + spot + vec3(0.55, 0.6, 0.56) * min(lit, vec3(0.7)) * foam * 0.55;
           a = clamp(op * (1.0 - F) + F * 0.9 + foam * 0.45, 0.0, 1.0);
         } else {
           // desde abajo: por la ventana (lo que cae en ~48° de la vertical) se
@@ -375,6 +376,8 @@ export class Waters {
       this.list.push({ ...w, m, next: 1 + Math.random() * 3, slot: 0 });
     }
     this._lp = new THREE.Vector3();
+    // (las gotas que van cayendo de la bóveda)
+    this.cae = [];
   }
 
   // La luz horneada del sitio en cada vértice (con la sonda del juego, que
@@ -453,10 +456,13 @@ export class Waters {
       }
     }
     for (const w of this.list) {
+      // (gotea salvo que se diga lo contrario)
       if (w.drips === false) continue;
       w.next -= dt;
       if (w.next > 0) continue;
-      w.next = 1.4 + Math.random() * 3.5;
+      // (las de las cloacas, más espaciadas: son muchas; las goteras, lo que
+      // se diga)
+      w.next = w.dripEvery ? w.dripEvery * (0.6 + Math.random() * 0.8) : w.dripH ? 4 + Math.random() * 9 : 1.4 + Math.random() * 3.5;
       // (las de lejos no gotean: nadie las ve ni las oye)
       if (Math.abs(p.y - w.y) > 12) continue;
       let x, z;
@@ -469,8 +475,33 @@ export class Waters {
         x = w.r[0] + Math.random() * (w.r[2] - w.r[0]);
         z = w.r[1] + Math.random() * (w.r[3] - w.r[1]);
       }
-      this.ripple(x, z, 0.6 + Math.random() * 0.6, w.y);
-      if (g.audio && Math.hypot(p.x - x, p.z - z) < 16 && Math.abs(p.y - w.y) < 4) g.audio.play('drip', { x, y: w.y, z });
+      // (en el agua de verdad: el lago no es su rectángulo)
+      if (!this.inside(w, x, z)) continue;
+      // la gota que cae de la bóveda (si se ve: cerca), y al llegar, el
+      // anillo y su ruido; si no, el anillo sin más
+      const h = w.dripH ?? 0;
+      const near = Math.hypot(p.x - x, p.z - z) < 14 && Math.abs(p.y - w.y) < 5;
+      if (near && h > 0.5 && g.fx && g.fx.blood) {
+        g.fx.blood.emit(x, w.y + h, z, 1, { color: [0.5, 0.58, 0.6], speed: 0, up: 0, gravity: 14, life: 2, stain: false });
+        this.cae.push({ x, z, y: w.y, t: Math.sqrt((2 * h) / 14) });
+      } else this.gota(x, z, w.y, near);
     }
+    // las gotas que llegan
+    for (let i = this.cae.length - 1; i >= 0; i--) {
+      const c = this.cae[i];
+      c.t -= dt;
+      if (c.t > 0) continue;
+      this.cae.splice(i, 1);
+      this.gota(c.x, c.z, c.y, true);
+    }
+  }
+  // Una gota que cae en el agua: el anillo, unas salpicaduras y su ruido.
+  gota(x, z, y, near) {
+    const g = this.g,
+      p = g.player.pos;
+    this.ripple(x, z, 0.6 + Math.random() * 0.6, y);
+    if (!near) return;
+    if (g.fx && g.fx.blood) g.fx.blood.emit(x, y + 0.02, z, 3, { color: [0.55, 0.62, 0.64], speed: 0.5, up: 0.7, gravity: 9, life: 0.35, stain: false });
+    if (g.audio && Math.hypot(p.x - x, p.z - z) < 16 && Math.abs(p.y - y) < 4) g.audio.play('drip', { x, y, z });
   }
 }

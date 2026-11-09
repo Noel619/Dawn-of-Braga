@@ -63,7 +63,7 @@ uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
 uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness, uBars;
 uniform float uSleep, uBlind;
-uniform float uUnder; uniform vec3 uUnderC;
+uniform float uUnder; uniform vec3 uUnderC; uniform float uAhogo;
 uniform vec3 uFadeColor, uFlashColor;
 varying vec2 vUv;
 ${NOISE}
@@ -143,6 +143,12 @@ void main(){
     uc *= 0.85 + 0.3 * fbm3(vec3(rd.xz * 3.0 / max(0.2, rd.y + 1.2), uTime * 0.25));
     col = mix(col, col * vec3(0.42, 0.78, 0.74), uUnder);
     col = mix(col, uc, clamp(fu, 0.0, 1.0) * uUnder);
+  }
+  // sin aliento, la vista se cierra por los bordes, a latidos
+  if (uAhogo > 0.0) {
+    float ra = length(vUv - 0.5);
+    float lat = 0.85 + 0.15 * sin(uTime * 7.0);
+    col *= 1.0 - uAhogo * lat * smoothstep(0.62 - uAhogo * 0.4, 0.75, ra + 0.04);
   }
   col += texture2D(tBloom, uv).rgb * uBloom;
   col *= uExposure;
@@ -268,6 +274,7 @@ export class PostPipeline {
       uSleep: { value: 0 },
       uBlind: { value: 0 },
       uUnder: { value: 0 },
+      uAhogo: { value: 0 },
       uUnderC: { value: new THREE.Color(0.02, 0.05, 0.06) },
     };
     this.composite = fsMat(COMPOSITE_FS, this.U);

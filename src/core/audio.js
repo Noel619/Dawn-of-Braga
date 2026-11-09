@@ -2521,6 +2521,12 @@ export class Audio {
       }
       // a nado (game/nado.js): la brazada en la superficie, la zambullida al
       // caer o meterse, las burbujas bajo el agua y la boqueada al salir
+      // el corazón que se oye cuando falta el aire (a nado)
+      case 'heartbeat': {
+        d = this.out(null, { gain: o.gain ?? 0.6, verb: 0.02, life: 1.5 });
+        this.smp(d, t, this.lib.drum('heart'), { gain: 0.7, lp: 380 });
+        break;
+      }
       case 'brazada': {
         d = this.out(P, { gain: o.gain ?? 0.45, verb: 0.45, life: 1.5, ref: 3 });
         this.noise(d, t, 0.26, { type: 'bandpass', f0: rnd(380, 520), f1: rnd(900, 1400), q: 0.8, gain: 0.16, a: 0.04, buf: this.pink, curve: 'lin' });
@@ -3878,6 +3884,28 @@ export class Audio {
         sp.p.connect(A.amb);
         return { g, out: sp.p, src, ...sp };
       }),
+      // el agua que cae (un caño, un sumidero, una cascada): el chorro, que
+      // ruge más o menos según lo grande (lo pone el juego: chorroK)
+      chorro: this.layer(() => {
+        const g = A._gain(0);
+        const a = A._loop(A.pink, 1, 1.9);
+        const bp = A._filt('bandpass', 900, 0.6);
+        a.connect(bp).connect(g);
+        // (el borboteo: agudo, a golpes)
+        const sp = A._gain(0.3);
+        const b = A._loop(A.white, 1, 0.3);
+        b.connect(A._filt('highpass', 3200, 0.7)).connect(sp).connect(g);
+        const am = A._osc(5.3);
+        am.connect(A._gain(0.22)).connect(sp.gain);
+        // (lo grave, de lo grande que cae de alto)
+        const lo = A._gain(0);
+        const c = A._loop(A.brown, 0.6, 0.9);
+        c.connect(A._filt('lowpass', 260, 0.7)).connect(lo).connect(g);
+        const sp2 = A.spatNode(1.2, 1.3);
+        g.connect(sp2.a);
+        sp2.p.connect(A.amb);
+        return { g, out: sp2.p, src: [a, b, am, c], bp, lo, ...sp2 };
+      }),
       // zumbido de los altares: un acorde cálido que respira
       altar: this.layer(() => {
         const g = A._gain(0);
@@ -4516,6 +4544,18 @@ export class Audio {
       if (fb && fl) {
         this.place(fb, fl.x, fl.y + 0.3, fl.z, !!fb.placed);
         fb.placed = true;
+      }
+
+      // el agua que cae más cerca (game/cloaca.js: los chorros, las
+      // cascadas, los sumideros)
+      const ch = game.cloacaFX && game.state !== 'title' ? game.cloacaFX.nearest(cp, 14) : null;
+      const cb = this.layerGain(this.L.chorro, ch ? Math.min(0.32, 0.06 + ch.k * 0.16) : 0, 0.5);
+      if (cb && ch) {
+        this.place(cb, ch.x, ch.y, ch.z, !!cb.placed && this._chorro === ch.c);
+        cb.placed = true;
+        this._chorro = ch.c;
+        this.setP(cb.bp.frequency, ch.k > 1 ? 520 : 1100, 0.5);
+        this.setP(cb.lo.gain, ch.k > 1 ? 1.2 : 0.1, 0.5);
       }
 
       // altar más cercano

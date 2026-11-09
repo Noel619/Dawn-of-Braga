@@ -222,7 +222,20 @@ la ensenada del sur, una luz verde: **el venero**, una cueva bajo el agua por la
 veinte metros de roca con el musgo que va diciendo por dónde, y un tiro que sube a **la pila de la fuente del ninfeo
 de lo hondo**: se sale a nado entre las plantas que muerden. Y al revés: desde lo hondo, por la pila, se baja al lago.
 (`world/sumidero.js`, `game/nado.js`, `entities/nado.js`, `gfx/water.js`; las pruebas, `tools/nado.mjs` y
-`tools/nadopose.mjs`.) **El agua**, en todo el juego, se ve como agua: se ve el fondo a través de ella (cada vez
+`tools/nadopose.mjs`.) **Los detalles.** Por los canales baja lo que trae el agua (ramitas, hojas, briznas de
+paja, algún trapo), que sale de los caños, se junta en los cruces y se cuela por las rejas de los sumideros
+(`game/corriente.js`); de la bóveda caen gotas, que se ven caer y abren su anillo en el agua, y donde rezuma hay
+**goteras**, con su charco en el andén y su mancha de humedad; los cantos de los canales, mojados y verdes hasta
+un palmo sobre el agua. Hay tablones atados sobre algunos canales (se pisan), argollas con su cadena y su grillete,
+telarañas en los rincones de las bóvedas, ratas, el rastro de sangre de lo que arrastra hasta el osario y, en el
+fondo de los canales, lo que se ve a través del agua (huesos, una espada, un yelmo). Se oye el agua que cae cerca:
+el hilo de un caño o el estruendo de los chorros del Sumidero. En el Sumidero, la bruma que se arrastra a ras del
+lago, tablas y ramas que flotan y dan vueltas, gotas que caen del techo, una barca volcada y podrida en la playa con
+su remo partido, estalagmitas, **las burbujas que suben del venero** (desde la superficie se ve el agua que
+borbotea encima de la cueva) y, buceando, **peces ciegos**, pálidos, que huyen de quien se acerca; en el venero, la
+fístula de plomo de los romanos, rota a trozos; en lo hondo, la pila de la fuente con su bordillo y, en el muro,
+su **mascarón** de piedra, seco (`game/sumidero.js`). Sin aliento, la vista se cierra por los bordes y se oye el
+corazón. **El agua**, en todo el juego, se ve como agua: se ve el fondo a través de ella (cada vez
 menos cuanto más honda y más de lado se mira), coge la luz del sitio, la del farol y la de los fuegos cercanos, y
 refleja más cuanto más de lado; tiene su raya de espuma donde da contra la piedra, las estelas de la corriente
 hacia donde corre, los anillos de las gotas y, desde abajo, buceando, la ventana de la superficie. Bajar
@@ -1407,7 +1420,9 @@ src/
                         mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
                         nado.js: el agua honda (dónde no se hace pie, cuándo se entra en ella, el aliento y el
                         ahogo, la vista y el oído bajo el agua, las burbujas, el chapoteo; cómo nada el jugador
-                        y su brazada, en entities/nado.js);
+                        y su brazada, en entities/nado.js); corriente.js: lo que baja con el agua por los
+                        canales de las cloacas hondas; sumidero.js: lo que se mueve en el Sumidero (la bruma,
+                        lo que flota, los peces ciegos, las burbujas del venero);
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
                         los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la

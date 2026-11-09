@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { Cloacas } from './cloacas.js';
 import { Nado } from './nado.js';
+import { Corriente } from './corriente.js';
+import { SumideroFX } from './sumidero.js';
 import { Lobo } from './lobishome.js';
 import { HONDAS } from '../world/cloacas_hondas.js';
 import { buildLevel } from '../world/level.js';
@@ -301,6 +303,10 @@ export class Game {
     this.cloacas = new Cloacas(this);
     // a nado: el agua honda del Sumidero (game/nado.js)
     this.nado = new Nado(this);
+    // lo que baja con el agua por los canales (game/corriente.js)
+    this.corriente = new Corriente(this);
+    // la bruma, lo que flota, los peces y las burbujas del Sumidero
+    this.sumideroFX = new SumideroFX(this);
     // la lobera: los braseros, la luz y lo de la pelea con el Lobishome
     this.lobo = new Lobo(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
@@ -2042,6 +2048,8 @@ export class Game {
       this.cloacaFX.update(dt);
       this.cloacas.update(dt);
       this.nado.update(dt);
+      this.corriente.update(dt);
+      this.sumideroFX.update(dt);
       this.lobo.update(dt);
       this.spring.update(dt);
       if (this.state === 'play') {

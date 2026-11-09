@@ -57,6 +57,8 @@ function seco(ctx, x, y, z, r = 0.3) {
 const MX = [-4.5, 3.5, 11.5, 19.5, 27.5, 35.5, 43.5];
 const MZ = [-16, -24, -32, -40, -48, -56];
 const L_ = (c, r) => 'L' + c + r;
+// (las columnas de las cloacas viejas)
+const VX_ = [-20.5, -12.5, -4.5];
 
 export const HONDAS = {
   // la altura de los andenes de cada nivel
@@ -412,16 +414,279 @@ export function buildHondas(ctx, G, L) {
     const pozos = [LOBERA_AGUA.pozo, ...LOBERA_AGUA.sumideros.map((id) => [R.N[id].x - c, R.N[id].z - c, R.N[id].x + c, R.N[id].z + c])];
     buildSumidero(ctx, L, G.H5, G.H6, { pozos });
   }
+  // por dónde baja el agua (lo que flota: game/corriente.js)
+  L.corrientes = corrientes(R);
   // ---------------------------------------------------------- lo de cada sitio
   galeriaSe(ctx, L);
   lobera(ctx, L, R);
   cloacasViejas(ctx, L, R);
+  detalles(ctx, L, R);
   aljibes(ctx, L, R);
   hondo(ctx, L, R);
   luces(ctx, R);
   zonas(L);
   mapa(L, R);
   return R;
+}
+
+// Por dónde baja el agua: de cada caño, de cruce en cruce por los canales
+// (en el sentido de cada uno), hasta un sumidero, o hasta la boca de una
+// sala y, por su canal, hasta lo que hay en ella (el sumidero del pozo de
+// las ánimas; la repisa del Sumidero, de donde cae al lago); y en lo hondo,
+// de la pila de la fuente al sumidero del ninfeo. [{ y, pts: [[x, z]], fin }]
+function corrientes(R) {
+  const sale = new Map();
+  for (const t of R.T) {
+    if ((t.o.tipo !== 'canal' && t.o.tipo !== 'ahogado') || !t.o.de || Math.abs(t.a.y - t.b.y) > 0.05) continue;
+    const from = t.o.de === t.a.id ? t.a : t.b;
+    sale.set(from.id, from === t.a ? t.b : t.a);
+  }
+  const LADO = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+  const h = KIT.w / 2;
+  const Pz = LOBERA_AGUA.pozo;
+  const pc = [(Pz[0] + Pz[2]) / 2, (Pz[1] + Pz[3]) / 2];
+  // (lo que sigue por dentro de las salas, de cada boca)
+  const sigue = {
+    // (del sur, el de w2, entra en el pozo por su borde del sur; los del
+    // norte, por el del norte)
+    'pozo.w2': [[pc[0], MZ[2]], [pc[0], Pz[3] - 0.2]],
+    'pozo.w3': [[pc[0], MZ[3]], [pc[0], Pz[1] + 0.2]],
+    'pozo.n2': [[MX[2], MZ[3]], [pc[0], MZ[3]], [pc[0], Pz[1] + 0.2]],
+    'sumidero.w': [[SUMIDERO.repisa.r[2] + 0.1, SUMIDERO.boca.z]],
+  };
+  const out = [];
+  for (const n of Object.values(R.N)) {
+    if (!n.fuente) continue;
+    const L = LADO[n.fuente.side || n.fuente];
+    const pts = [[n.x + L[0] * (h - 0.3), n.z + L[1] * (h - 0.3)], [n.x, n.z]];
+    let cur = n,
+      k = 0;
+    while (sale.has(cur.id) && k++ < 60) {
+      cur = sale.get(cur.id);
+      pts.push([cur.x, cur.z]);
+    }
+    if (sigue[cur.id]) pts.push(...sigue[cur.id]);
+    out.push({ y: n.y - KIT.agua, pts, fin: cur.sumidero || sigue[cur.id] ? 'cae' : 'fin' });
+  }
+  // (la pila de la fuente del ninfeo, que rebosa a su canal)
+  const C = HONDAS.ninfeoCanal;
+  out.push({ y: HONDAS.y.n4 - KIT.agua, pts: [[(C[0] + C[2]) / 2, SUMIDERO.pila.r[3] - 1.0], [(C[0] + C[2]) / 2, HONDAS.ninfeoSumidero[1] + 0.3]], fin: 'cae' });
+  return out;
+}
+
+// ------------------------------------------------------------------------ los detalles
+const LADOS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+const CONTRA = { n: 's', s: 'n', e: 'w', w: 'e' };
+
+// Dos tablas de través sobre un canal, de andén a andén, algo torcidas (las
+// puso alguien para no mojarse): se pisan.
+function tablon(ctx, x, z, alongX, y, room, seed) {
+  const wb = ctx.wb;
+  const rr = new RNG(seed);
+  // (de través: a lo ancho de la galería, que va a lo largo de x si alongX;
+  // las tablas, en z entonces)
+  for (let k = 0; k < 2; k++) {
+    const off = (k - 0.5) * 0.27 + rr.range(-0.02, 0.02);
+    const rot = rr.range(-0.07, 0.07);
+    wb.at(alongX ? x + off : x, y + 0.004, alongX ? z : z + off, (alongX ? 0 : Math.PI / 2) + rot, () => wb.box('planks', -0.12, 0, -0.78, 0.12, 0.035, 0.78, { ao: false, faces: 'tnsewb', room, tint: [0.62, 0.52, 0.4] }));
+  }
+  // (atadas con una cuerda en cada punta)
+  for (const e of [-0.62, 0.62]) {
+    const cx = alongX ? x : x + e,
+      cz = alongX ? z + e : z;
+    wb.box('rope', alongX ? cx - 0.2 : cx - 0.025, y + 0.004, alongX ? cz - 0.025 : cz - 0.2, alongX ? cx + 0.2 : cx + 0.025, y + 0.05, alongX ? cz + 0.025 : cz + 0.2, { ao: false, faces: 'tnsewb', room, tint: [0.6, 0.52, 0.38] });
+  }
+  const hw = KIT.c / 2 + 0.1;
+  if (alongX) ctx.col.add(x - 0.27, y - 0.3, z - hw, x + 0.27, y + 0.035, z + hw, 'floor').cam = true;
+  else ctx.col.add(x - hw, y - 0.3, z - 0.27, x + hw, y + 0.035, z + 0.27, 'floor').cam = true;
+}
+
+// Una argolla de hierro en un muro (side: el muro; (x, z): su cara), a la
+// altura de la cintura; con cadena (n eslabones colgando y el resto
+// tirado, con su grillete abierto).
+function argolla(ctx, side, x, z, y, room, cadena = 0) {
+  const wb = ctx.wb;
+  const [dx, dz] = LADOS[CONTRA[side]];
+  const yy = y + 1.25;
+  const M4 = () => new THREE.Matrix4();
+  // (la grapa y el aro, de canto contra el muro)
+  wb.box('iron', x - 0.04 + dx * 0.0, yy - 0.05, z - 0.04, x + 0.04, yy + 0.05, z + 0.04, { ao: false, faces: 'tnsewb', room, tint: [0.36, 0.3, 0.26] });
+  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, dz !== 0 ? 0 : Math.PI / 2, 0));
+  wb.geometry('iron', new THREE.TorusGeometry(0.075, 0.013, 4, 10), M4().compose(V(x + dx * 0.05, yy - 0.08, z + dz * 0.05), q, V(1, 1, 1)), { ao: false, room, tint: [0.4, 0.34, 0.3] });
+  if (!cadena) return;
+  // (la cadena: colgando hasta el suelo, y luego por él)
+  const n = Math.round((yy - 0.16 - y) / 0.06);
+  for (let k = 0; k < n; k++) {
+    const qk = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, k % 2 ? Math.PI / 2 : 0, 0));
+    wb.geometry('iron', new THREE.TorusGeometry(0.03, 0.008, 3, 6), M4().compose(V(x + dx * 0.06, yy - 0.16 - k * 0.06, z + dz * 0.06), qk, V(1, 1.4, 1)), { ao: false, room, tint: [0.36, 0.3, 0.26] });
+  }
+  const px = -dz,
+    pz = dx;
+  for (let k = 0; k < cadena; k++) {
+    const t = (k + 1) * 0.07;
+    const cx = x + dx * (0.08 + t * 0.6) + px * t * 0.8,
+      cz = z + dz * (0.08 + t * 0.6) + pz * t * 0.8;
+    const qk = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, k % 2 ? Math.PI / 2 : 0));
+    wb.geometry('iron', new THREE.TorusGeometry(0.03, 0.008, 3, 6), M4().compose(V(cx, y + 0.012, cz), qk, V(1, 1.4, 1)), { ao: false, room, tint: [0.36, 0.3, 0.26] });
+  }
+  // (el grillete, abierto)
+  const t = (cadena + 1.5) * 0.07;
+  const gq = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0.6));
+  wb.geometry('iron', new THREE.TorusGeometry(0.06, 0.014, 4, 9, Math.PI * 1.4), M4().compose(V(x + dx * (0.08 + t * 0.6) + px * t * 0.8, y + 0.015, z + dz * (0.08 + t * 0.6) + pz * t * 0.8), gq, V(1, 1, 1)), { ao: false, room, tint: [0.4, 0.33, 0.28] });
+}
+
+// Una telaraña en el rincón de arriba de dos muros (a, b: los muros; c: la
+// esquina, en planta; ys: el arranque de la bóveda): de un muro al otro y
+// subiendo hacia la arista; por las dos caras.
+function telarana(ctx, c, a, b, ys, room, s = 0.9) {
+  const wb = ctx.wb;
+  const [ax, az] = LADOS[CONTRA[a]],
+    [bx, bz] = LADOS[CONTRA[b]];
+  const e = 0.02;
+  const C = V(c[0] + (ax + bx) * e, ys - 0.25, c[1] + (az + bz) * e);
+  const Pa = V(c[0] + bx * s + ax * e, ys - 0.05, c[1] + bz * s + az * e);
+  const Pb = V(c[0] + ax * s + bx * e, ys - 0.05, c[1] + az * s + bz * e);
+  const G = V(c[0] + (ax + bx) * s * 0.5, ys + s * 0.6, c[1] + (az + bz) * s * 0.5);
+  const o = { ao: false, grime: false, room, uvLocal: true, uv: 1 / s, sub: 9 };
+  wb.quad('telarana', C, Pa, G, Pb, o);
+  wb.quad('telarana', C, Pb, G, Pa, o);
+}
+
+// Lo que no es nada y da vida: tablones sobre los canales, argollas con
+// cadenas, telarañas, ratas, el rastro de lo que arrastra el lobo, lo que se
+// ve en el fondo de los canales a través del agua.
+function detalles(ctx, L, R) {
+  const rr = new RNG(24101);
+  const h = KIT.w / 2;
+  const ladosCiegos = (n) => ['n', 's', 'e', 'w'].filter((sd) => !n.conn[sd] && sd !== (n.fuente && (n.fuente.side || n.fuente)));
+  const pasa = (A, B) => R.T.find((t) => (t.a.id === A && t.b.id === B) || (t.a.id === B && t.b.id === A));
+  // los tablones, a media galería
+  for (const [A, B, k] of [
+    ['L20', 'L10', 0.55],
+    ['L01', 'L11', 0.5],
+    ['L15', 'L25', 0.45],
+    ['L51', 'L41', 0.5],
+    ['V02', 'V12', 0.5],
+    ['V16', 'V26', 0.6],
+    ['V04', 'V05', 0.4],
+  ]) {
+    const t = pasa(A, B);
+    if (!t || t.o.tipo !== 'canal') continue;
+    const x = t.a.x + (t.b.x - t.a.x) * k,
+      z = t.a.z + (t.b.z - t.a.z) * k;
+    tablon(ctx, x, z, t.alongX, t.a.y, t.o.room || t.def.room, 24110 + Math.round(x * 7 + z));
+  }
+  // argollas, telarañas y ratas, en los cruces con dos muros ciegos seguidos
+  // (los rincones), unos sí y otros no
+  const rincones = [];
+  for (const n of Object.values(R.N)) {
+    if (n.boca || n.sumidero || (n.def.id !== 'n1' && n.def.id !== 'n2')) continue;
+    const cg = ladosCiegos(n);
+    for (const [a, b] of [
+      ['n', 'e'],
+      ['e', 's'],
+      ['s', 'w'],
+      ['w', 'n'],
+    ])
+      if (cg.includes(a) && cg.includes(b)) rincones.push([n, a, b]);
+  }
+  rincones.forEach(([n, a, b], i) => {
+    const room = n.room || n.def.room;
+    const cx = n.x + (LADOS[a][0] + LADOS[b][0]) * h,
+      cz = n.z + (LADOS[a][1] + LADOS[b][1]) * h;
+    const ys = n.y + KIT.sp;
+    if (i % 2 === 0) telarana(ctx, [cx, cz], a, b, ys, room, rr.range(0.7, 1.05));
+    // (la argolla, en uno de los dos muros, a un paso del rincón; no junto a
+    // un brasero, que va en el rincón del sudeste)
+    const conBrasero = BRASEROS.some((q) => q.nodo === n.id) && ((a === 'e' && b === 's') || (a === 's' && b === 'e'));
+    if (i % 3 === 1 && !conBrasero) {
+      const sd = rr.chance(0.5) ? a : b,
+        ot = sd === a ? b : a;
+      const wx = n.x + LADOS[sd][0] * h + LADOS[ot][0] * 0.75,
+        wz = n.z + LADOS[sd][1] * h + LADOS[ot][1] * 0.75;
+      argolla(ctx, sd, wx, wz, n.y, room, i % 2 ? 6 : 0);
+    }
+    if (i % 4 === 3) (ctx.rats || (ctx.rats = [])).push({ x: cx - (LADOS[a][0] + LADOS[b][0]) * 0.6, y: n.y, z: cz - (LADOS[a][1] + LADOS[b][1]) * 0.6, n: 2 });
+  });
+  // en el osario, más telarañas (nadie las rompe) y las argollas de los
+  // nichos, con su cadena
+  {
+    const O = HONDAS.osario,
+      y = HONDAS.y.n1,
+      ys = y + 2.8;
+    const [x0, z0, x1, z1] = O.r;
+    // (en los rincones del levante, por encima de los nichos; el muro de
+    // poniente está abierto por sus dos bocas, salvo entre ellas: ahí, la
+    // argolla)
+    telarana(ctx, [x1, z0], 'e', 'n', ys, 'lobera_osario', 1.1);
+    telarana(ctx, [x1, z1], 'e', 's', ys, 'lobera_osario', 0.9);
+    argolla(ctx, 'w', x0, (MZ[4] + MZ[5]) / 2, y, 'lobera_osario', 7);
+    (ctx.rats || (ctx.rats = [])).push({ x: x1 - 2.6, y, z: z0 + 2.8, n: 3 });
+  }
+  // el rastro de lo que arrastra: del cruce de su galería al osario y, dentro,
+  // hasta la cama (manchas, cada vez más secas)
+  {
+    const y = HONDAS.y.n1 + 0.02;
+    const O = HONDAS.osario;
+    const pts = [
+      [MX[4] - 1.0, MZ[4]],
+      [O.r[0] - 1.2, MZ[4] + 0.2],
+      [O.r[0] + 2.0, MZ[4] - 0.4],
+      [O.r[2] - 2.6, O.r[1] + 3.2],
+      [O.r[2] - 1.6, O.r[1] + 1.6],
+    ];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, az] = pts[i],
+        [bx, bz] = pts[i + 1];
+      const d = Math.hypot(bx - ax, bz - az);
+      const n = Math.ceil(d / 0.45);
+      for (let k = 0; k < n; k++) {
+        const t = k / n;
+        P.decal(ctx, ax + (bx - ax) * t + rr.range(-0.12, 0.12), y, az + (bz - az) * t + rr.range(-0.12, 0.12), rr.range(0.28, 0.5), 'splat', Math.atan2(bx - ax, bz - az) + rr.range(-0.4, 0.4), { opacity: 0.35 + 0.35 * (1 - (i + t) / pts.length) });
+      }
+    }
+  }
+  // las goteras: donde la bóveda rezuma, un charco en el andén, con su
+  // mancha de humedad, y la gota que cae en él cada poco
+  {
+    const sitios = [
+      ['L00', 1, -1],
+      ['L12', -1, 1],
+      ['L24', 1, 1],
+      ['L33', -1, -1],
+      ['L61', -1, 1],
+      ['L05', 1, -1],
+      ['L45', 1, 1],
+      ['V01', -1, -1],
+      ['V22', 1, 1],
+      ['V15', -1, 1],
+      ['V27', 1, -1],
+    ];
+    for (const [id, sx, sz] of sitios) {
+      const n = R.N[id];
+      if (!n) continue;
+      const x = n.x + sx * rr.range(0.9, 1.15),
+        z = n.z + sz * rr.range(0.9, 1.15);
+      if (!seco(ctx, x, n.y, z, 0.45)) continue;
+      if (BRASEROS.some((b) => Math.hypot(b.x - x, b.z - z) < 1.0)) continue;
+      const r = rr.range(0.32, 0.5);
+      // (la mancha de humedad alrededor, oscura)
+      P.decal(ctx, x, n.y + 0.004, z, r * 3.4, 'shadow', rr.range(0, 6), { opacity: 0.4 });
+      if (ctx.waters) ctx.waters.push({ shape: 'circle', x, z, r, y: n.y + 0.007, depth: 0.02, deep: 0x07090a, sky: 0x1a2226, glint: 0x8aa0b0, tint: 0x2a3432, clear: 6, foam: 0, refl: 0.35, light: [x, n.y + 2.4, z], lightK: 0.5, amp: 0.01, flow: [0, 0], dripH: KIT.sp + 1.3, dripEvery: 2.6 });
+    }
+  }
+  // en el fondo de los canales, lo que se ve a través del agua: huesos, una
+  // espada que se le cayó a alguien, un cráneo, un caldero roto
+  {
+    const y1 = HONDAS.y.n1 - KIT.prof,
+      y2 = HONDAS.y.n2 - KIT.prof;
+    P.bones(ctx, MX[2] - 2.2, y1, MZ[0], 5, 24151, 0.25);
+    P.dropped(ctx, MX[1] - 0.05, y1 + 0.005, MZ[1] - 3.0, 0.25, 'sword');
+    P.bones(ctx, MX[0] + 3.4, y1, MZ[4], 4, 24152, 0.22);
+    P.bones(ctx, MX[6], y1, MZ[1] - 3.6, 4, 24153, 0.22);
+    P.dropped(ctx, VX_[0] + 0.05, y2 + 0.005, -26.0, 1.4, 'helmet');
+    P.bones(ctx, VX_[2], y2, 25.0, 5, 24154, 0.25);
+  }
 }
 
 // ------------------------------------------------------------------------ la galería de la Sé
@@ -897,6 +1162,48 @@ function hondo(ctx, L, R) {
     hiedra(ctx, x, y + 4.5 + rr.range(0, 1.4), z, rr.range(2.4, 5.6), 22700 + k, { room, dir, hoja: 1.9 });
   }
   wb.setRoom(null);
+  // el caño de la fuente, en el muro sobre la pila: un mascarón de piedra
+  // de los romanos, gastado, con la boca abierta y seca (el agua ya no sale
+  // por él: sube del fondo de la pila), y el verdín de cuando manaba
+  {
+    const Pi = SUMIDERO.pila.r;
+    const mx = (Pi[0] + Pi[2]) / 2,
+      mz = Pi[1] + 0.02;
+    const my = y + 1.45;
+    wb.setRoom(room);
+    // (la lápida en que va, con su moldura, más clara que el muro)
+    wb.box('limestone', mx - 0.5, my - 0.55, mz, mx + 0.5, my + 0.55, mz + 0.07, { faces: 'tsewb', ao: false, room, tint: [0.74, 0.72, 0.64] });
+    for (const [a, b, c, d] of [
+      [mx - 0.6, my + 0.55, mx + 0.6, my + 0.67],
+      [mx - 0.6, my - 0.67, mx + 0.6, my - 0.55],
+      [mx - 0.6, my - 0.55, mx - 0.5, my + 0.55],
+      [mx + 0.5, my - 0.55, mx + 0.6, my + 0.55],
+    ])
+      wb.box('limestone', a, b, mz, c, d, mz + 0.12, { faces: 'tsewb', ao: false, room, tint: [0.66, 0.64, 0.56] });
+    // (la cara de un viejo, un dios del agua: la frente, las mejillas, la
+    // nariz, las cuencas de los ojos, la barba en mechones y la boca
+    // abierta, negra; sin girar, de frente)
+    const M = 'limestone',
+      T = [0.7, 0.68, 0.6];
+    const bola = (mat, x, yy, z, sx, sy, sz, tint) => wb.geometry(mat, new THREE.SphereGeometry(1, 8, 6), new THREE.Matrix4().compose(V(x, yy, z), new THREE.Quaternion(), V(sx, sy, sz)), { ao: false, tint, room });
+    bola(M, mx, my + 0.06, mz + 0.07, 0.25, 0.3, 0.1, T);
+    bola(M, mx, my + 0.24, mz + 0.12, 0.2, 0.07, 0.06, T);
+    bola(M, mx, my + 0.05, mz + 0.16, 0.045, 0.11, 0.06, T.map((v) => v * 1.05));
+    for (const sd of [-1, 1]) {
+      bola(M, mx + sd * 0.13, my - 0.05, mz + 0.13, 0.09, 0.08, 0.06, T);
+      bola('black', mx + sd * 0.095, my + 0.14, mz + 0.15, 0.045, 0.03, 0.02, null);
+      // (la barba, que cae en mechones a los lados de la boca)
+      for (let k = 0; k < 3; k++) bola(M, mx + sd * (0.1 + k * 0.045), my - 0.2 - k * 0.075, mz + 0.11 - k * 0.012, 0.05, 0.085, 0.045, T.map((v) => v * 0.9));
+    }
+    bola(M, mx, my - 0.33, mz + 0.1, 0.075, 0.1, 0.045, T.map((v) => v * 0.9));
+    bola('black', mx, my - 0.13, mz + 0.16, 0.07, 0.05, 0.02, null);
+    // (el verdín de cuando manaba: de la boca a la pila)
+    wb.box('mossstone', mx - 0.09, y - 0.02, mz - 0.006, mx + 0.09, my - 0.2, mz + 0.004, { faces: 's', ao: false, room, tint: [0.24, 0.38, 0.22] });
+    musgo(ctx, mx - 1.6, y, Pi[3] + 0.5, 0.5, 0.35, 21001, { room, n: 6, k: [0.8, 1.1, 0.9] });
+    musgo(ctx, mx + 1.8, y, Pi[3] + 0.45, 0.4, 0.3, 21002, { room, n: 5, k: [0.8, 1.1, 0.9] });
+    wb.setRoom(null);
+    L.interact.push({ kind: 'examine', id: 'x_pila_ninfeo', text: 'pilaNinfeo', x: mx + 1.4, y, z: Pi[3] + 0.6, r: 1.5 });
+  }
   // el semillero (al oeste): donde crece la flor de lo hondo
   {
     const Sm = HONDAS.semillero;

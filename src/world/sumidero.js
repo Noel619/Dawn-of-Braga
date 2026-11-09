@@ -247,7 +247,7 @@ export function buildSumidero(ctx, L, G5, G6, o = {}) {
   const luna = [(pz[0] + pz[2]) / 2 + 0.3, (pz[1] + pz[3]) / 2 + 0.2];
   if (ctx.waters) {
     const [bx0, bz0, bx1, bz1] = bounds(0.4);
-    ctx.waters.push({ shape: 'rect', r: [bx0, bz0, bx1, bz1], y: S.agua, poly: (x, z) => dBorde(x, z) > -1.1 && !enR(x, z, S.repisa.r) && sendaY(x, z) === null, bedFn: (x, z) => sueloEn(x, z), shoreFn: orilla, cell: 0.7, deep: 0x020507, sky: 0x0c141a, glint: 0xa8bcd8, tint: 0x1c3236, clear: 0.75, amb: 0x05080a, refl: 0.3, light: [luna[0], S.techo + 6, luna[1]], lightK: 0.8, spot: [luna[0], luna[1], 2.4, 0.9], flow: [0.03, -0.02], amp: 0.022 });
+    ctx.waters.push({ shape: 'rect', r: [bx0, bz0, bx1, bz1], y: S.agua, poly: (x, z) => dBorde(x, z) > -1.1 && !enR(x, z, S.repisa.r) && sendaY(x, z) === null, bedFn: (x, z) => sueloEn(x, z), shoreFn: orilla, cell: 0.7, deep: 0x020507, sky: 0x0c141a, glint: 0xa8bcd8, tint: 0x1c3236, clear: 0.75, amb: 0x05080a, refl: 0.3, light: [luna[0], S.techo + 6, luna[1]], lightK: 0.8, spot: [luna[0], luna[1], 2.4, 0.9], flow: [0.03, -0.02], amp: 0.022, dripH: S.techo - S.agua - 0.6, dripEvery: 1.6 });
   }
   // la luna, que baja por el sumidero del pozo de las ánimas hasta el agua
   if (ctx.shafts) ctx.shafts.push({ a: [luna[0] - 0.3, S.techo - 0.05, luna[1] - 0.2], b: [luna[0], S.agua + 0.05, luna[1]], w: 1.3, color: 0x9fb4d4, k: 0.8 });
@@ -258,6 +258,10 @@ export function buildSumidero(ctx, L, G5, G6, o = {}) {
   }
   luces(ctx, luna, pozos);
   musgos(ctx, room);
+  wb.setRoom(room);
+  barca(ctx, room);
+  estalagmitas(ctx, room);
+  wb.setRoom(null);
   // la zona, el mapa
   L.zones.push(
     // (el venero, hasta el fondo de la pila: en la pila, ya es lo hondo)
@@ -768,6 +772,24 @@ function venero(ctx, room) {
     const z = Vn.z0 + L * t;
     hongos(ctx, cx + rr.range(-0.9, 0.9), at(t).fl + 0.02, z, 4, 32040 + i, { room: rm, luz: true, s: 0.8, r: 0.3 });
   }
+  // la fístula de los romanos: el caño de plomo que llevaba el agua del
+  // venero a la fuente, por el suelo de la cueva, roto a trozos y aplastado
+  // (de un gris de plomo)
+  {
+    const tr = [
+      [-12.4, -7.6],
+      [-6.8, -1.0],
+      [-0.2, 3.9],
+    ];
+    for (const [z0, z1] of tr) {
+      const ta = (z0 - Vn.z0) / L,
+        tb = (z1 - Vn.z0) / L;
+      const xa = Vn.x0 + 0.38;
+      P.rod(ctx, V(xa, at(ta).fl + 0.12, z0), V(xa + 0.05, at(tb).fl + 0.1, z1), 0.085, 0.08, 'iron', { segs: 6, room: rm, tint: [0.42, 0.44, 0.46] });
+      // (las bocas rotas, abiertas: negras)
+      wb.cylinder('black', xa, at(ta).fl + 0.04, z0 - 0.002, 0.07, 0.07, 0.16, 6, { ao: false, room: rm, grime: false, capTop: false });
+    }
+  }
   // (las raíces de lo hondo, que bajan por el tiro)
   for (let k = 0; k < 4; k++) raizLarga(ctx, T[0] + 0.2 + k * 0.35, yt1 - 0.05, T[1] + 0.25 + (k % 2) * 0.9, rr.range(1.2, 2.6), 32060 + k, { room: rm, r: 0.03, tint: [0.42, 0.36, 0.28] });
   wb.setRoom(room);
@@ -782,6 +804,91 @@ function venero(ctx, room) {
     P.ellipsoid(ctx, 'musgoGlow', x, y + 0.04, z, rr.range(0.15, 0.4), 0.05, rr.range(0.15, 0.35), null, { room });
   }
   helecho(ctx, cx - 1.6, lecho(cx - 1.6, -15.5), -15.5, 0.8, 32091, { room, k: [0.5, 0.9, 0.8] });
+}
+
+// Una barca volcada en la playa, contra el muro, medio podrida: el casco
+// (sus tracas, de proa a popa, con alguna que falta), la quilla, y un remo
+// partido al lado. ¿Quién la bajó hasta aquí? La colisión, una caja girada.
+function barca(ctx, room) {
+  const wb = ctx.wb;
+  const cx = 1.95,
+    cz = -20.4,
+    L = 2.9,
+    W = 0.62,
+    H = 0.42;
+  // (a lo largo de z, algo girada; la playa baja hacia levante: se apoya)
+  const rot = 0.16;
+  const ax = Math.sin(rot),
+    az = Math.cos(rot);
+  const sx = az,
+    sz = -ax;
+  const yb = (x, z) => lecho(x, z);
+  const S = 8,
+    K = 6;
+  const pt = (s, k) => {
+    const t = s / S;
+    const w = W * Math.pow(Math.sin(Math.PI * Math.min(0.999, Math.max(0.001, t))), 0.55);
+    const th = -Math.PI / 2 + (k / K) * Math.PI;
+    const u = (t - 0.5) * L;
+    const x = cx + ax * u + sx * Math.sin(th) * w,
+      z = cz + az * u + sz * Math.sin(th) * w;
+    // (volcada: la quilla arriba; la borda, en la arena)
+    const base = Math.max(yb(x, z), yb(cx + ax * u, cz + az * u)) - 0.04;
+    return V(x, base + Math.cos(th) * H * (0.55 + 0.45 * Math.sin(Math.PI * t)), z);
+  };
+  const rr = new RNG(33301);
+  for (let s2 = 0; s2 < S; s2++)
+    for (let k = 0; k < K; k++) {
+      // (las tracas podridas que faltan)
+      if ((s2 === 3 && k === 1) || (s2 === 4 && k === 1) || (s2 === 5 && k === 4)) continue;
+      const a = pt(s2, k),
+        b = pt(s2 + 1, k),
+        c = pt(s2 + 1, k + 1),
+        d = pt(s2, k + 1);
+      const tint = [0.36 + rr.range(-0.04, 0.04), 0.3, 0.24];
+      const o = { ao: false, room, tint, sub: 9 };
+      wb.quad('planks', a, b, c, d, o);
+      wb.quad('planks', a, d, c, b, { ...o, tint: tint.map((v) => v * 0.6) });
+    }
+  // (la quilla, de proa a popa)
+  for (let s2 = 0; s2 < S; s2++) P.rod(ctx, pt(s2, K / 2).add(V(0, 0.03, 0)), pt(s2 + 1, K / 2).add(V(0, 0.03, 0)), 0.04, 0.04, 'wooddark', { segs: 4, room, tint: [0.34, 0.28, 0.22] });
+  // el remo partido, en la arena
+  const rx = cx + sx * 1.0,
+    rz = cz + sz * 1.0 + 0.6;
+  P.rod(ctx, V(rx, yb(rx, rz) + 0.03, rz), V(rx + 0.9, yb(rx + 0.9, rz + 0.4) + 0.03, rz + 0.4), 0.025, 0.025, 'wooddark', { segs: 4, room, tint: [0.4, 0.32, 0.24] });
+  wb.at(rx + 0.98, yb(rx + 1, rz + 0.45) + 0.02, rz + 0.45, 1.15, () => wb.box('planks', -0.07, 0, -0.22, 0.07, 0.025, 0.12, { ao: false, faces: 'tnsewb', room, tint: [0.42, 0.34, 0.26] }));
+  ctx.col.addOBB(cx, cz, W * 0.92, L * 0.47, rot, yb(cx, cz) - 0.5, yb(cx, cz) + H * 0.9);
+}
+
+// Las estalagmitas: conos de roca que suben del suelo, junto a los muros de
+// la playa y de la repisa (donde no estorban), con su colisión.
+function estalagmitas(ctx, room) {
+  const S = SUMIDERO;
+  const wb = ctx.wb;
+  const rr = new RNG(33401);
+  const sitios = [
+    [1.4, -27.0],
+    [1.2, -18.9],
+    [3.2, -18.8],
+    [1.1, -36.0],
+    [1.0, -45.6],
+    [5.9, -46.1],
+    [2.0, -46.2],
+  ];
+  for (const [x, z] of sitios) {
+    if (!dentro(x, z)) continue;
+    const y = sueloEn(x, z);
+    const n = 1 + rr.int(0, 2);
+    for (let k = 0; k < n; k++) {
+      const px = x + rr.range(-0.3, 0.3),
+        pz = z + rr.range(-0.3, 0.3);
+      const h = rr.range(0.35, 1.3) * (k ? 0.6 : 1),
+        r = rr.range(0.1, 0.2) * (0.6 + h * 0.4);
+      wb.cylinder('rock', px, y - 0.05, pz, r, 0.015, h + 0.05, 6, { ao: false, room, tint: [0.44, 0.43, 0.4], phase: rr.range(0, 3) });
+      if (h > 0.5) ctx.col.add(px - r * 0.7, y - 0.3, pz - r * 0.7, px + r * 0.7, y + h, pz + r * 0.7);
+    }
+  }
+  void S;
 }
 
 // El musgo que da luz, que ha subido de lo hondo por el venero: en matas
