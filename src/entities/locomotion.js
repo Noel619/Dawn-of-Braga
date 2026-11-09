@@ -778,16 +778,30 @@ const BODY_BOXES = [
   { j: 'hips', c: [0, -0.12, 0], rz: 0, h: [0.24, 0.2, 0.15] },
   { j: 'legL', c: [0, -0.22, 0], rz: 0, h: [0.09, 0.24, 0.095] },
 ];
-for (const B of BODY_BOXES) {
-  B.L = new THREE.Matrix4().makeRotationZ(B.rz * DEG).setPosition(B.c[0], B.c[1], B.c[2]);
-  B.q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), B.rz * DEG);
-  B.inv = new THREE.Matrix4();
-  B.M = new THREE.Matrix4();
-  B.wq = new THREE.Quaternion();
+// (rig.bodyK: lo que se ensancha cada hueso con la complexión del jugador,
+// entities/aspecto.js; las cajas, con él)
+function cajas(B, K) {
+  const k = K && K[B.j];
+  const key = k ? k.join(',') : '1';
+  if (B.key === key) return;
+  B.key = key;
+  const kx = k ? k[0] : 1,
+    ky = k ? k[1] : 1,
+    kz = k ? k[2] : 1;
+  B.h = [B.h0[0] * kx, B.h0[1] * ky, B.h0[2] * kz];
+  B.L = new THREE.Matrix4().makeRotationZ(B.rz * DEG).setPosition(B.c[0] * kx, B.c[1] * ky, B.c[2] * kz);
   // esquinas, centros de aristas y de caras: una pieza pequeña (la hombrera)
   // puede atravesar el escudo entre dos puntos de su rejilla
   B.pts = [];
   for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) if (a || b || c) B.pts.push(new THREE.Vector3(a * B.h[0], b * B.h[1], c * B.h[2]));
+}
+for (const B of BODY_BOXES) {
+  B.h0 = B.h.slice();
+  B.q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), B.rz * DEG);
+  B.inv = new THREE.Matrix4();
+  B.M = new THREE.Matrix4();
+  B.wq = new THREE.Quaternion();
+  cajas(B, null);
 }
 // grosor del escudo en su espacio (correas por detrás, cruz pintada delante)
 const SH_BACK = -0.05,
@@ -807,6 +821,7 @@ export function keepShieldOut(rig, hold = null, dt = 0, margin = 0.012) {
   const chest = rig.joints.chest;
   if (!sj || !fore || !chest) return 0;
   for (const B of BODY_BOXES) {
+    cajas(B, rig.bodyK);
     const J = rig.joints[B.j];
     B.M.multiplyMatrices(J.matrixWorld, B.L);
     B.inv.copy(B.M).invert();

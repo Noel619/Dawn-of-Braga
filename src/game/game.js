@@ -47,6 +47,9 @@ import { BeastChase } from './beast_chase.js';
 import { ColossusBank } from '../entities/colossus/bank.js';
 import { Finale } from './finale/director.js';
 import { Intro } from './intro/intro.js';
+import { Creador } from './creador.js';
+import { PIEZAS_GUARDIA } from '../entities/armaduras.js';
+import { aspectoBase, normalizar, NOMBRES } from '../entities/aspecto.js';
 import { Culling } from './culling.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
@@ -272,6 +275,8 @@ export class Game {
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
+    // el editor de personaje (después de la introducción, al empezar)
+    this.creador = new Creador(this);
     // los bocadillos de diálogo y el guion de la Casa del Alemán
     this.speech = new Speech(this);
     this.house = new HouseQuest(this);
@@ -368,7 +373,7 @@ export class Game {
     // (las partidas que ya pasaron del arzobispo también la desbloquean)
     if (this.flags['finale:rite'] || this.flags['boss:turibulario']) unlockChronicle();
     writeSave({
-      v: 1,
+      v: 2,
       flags: this.flags,
       inv: this.inventory.toJSON(),
       // (la vitalidad ganada, sin lo que quite el objeto bendito que se lleva)
@@ -380,6 +385,8 @@ export class Game {
       armed: p.hasSword,
       shielded: p.hasShield,
       armor: { ...p.armor },
+      // (quién es: el editor de personaje)
+      aspecto: p.aspecto,
       relic: p.relic,
       lastAltar: this.lastAltar,
       playTime: this.playTime,
@@ -404,7 +411,21 @@ export class Game {
     const p = this.player;
     p.baseMaxHp = s.maxHp || 100;
     p.hp = p.baseMaxHp;
-    for (const k in p.armor) p.armor[k] = s.armor && s.armor[k] && this.inventory.has(s.armor[k]) ? s.armor[k] : null;
+    // (las partidas de antes del editor de personaje: el aspecto de siempre y
+    // la armadura de la guardia, que llevaba puesta sin estar en el
+    // inventario)
+    let armor = s.armor || {};
+    if (!s.aspecto) {
+      armor = {};
+      for (const id of PIEZAS_GUARDIA) {
+        if (!this.inventory.has(id)) this.inventory.add(id);
+        armor[ITEMS[id].armor] = id;
+      }
+    }
+    p.aspecto = normalizar(s.aspecto);
+    const a = {};
+    for (const k in p.armor) a[k] = armor[k] && this.inventory.has(armor[k]) ? armor[k] : null;
+    p.setArmorAll(a);
     p.wearRelic(s.relic && this.inventory.has(s.relic) ? s.relic : null);
     p.maxFlasks = s.maxFlasks || 3;
     p.maxSt = s.maxSt || 100;
@@ -583,6 +604,7 @@ export class Game {
     this.climb = null;
     this.finale.reset();
     if (this.intro && this.intro.active) this.intro.abort();
+    if (this.creador && this.creador.activo) this.creador.abortar();
     this.speech.clear();
     this.house.script = null;
     this.paio.script = null;
@@ -614,9 +636,12 @@ export class Game {
     this.interact.applyFlags({}, true);
     this.breakables.applyFlags({}, true);
     const s = this.ui.open('title', { entries: [] });
-    const has = !!loadSave();
+    const sv = loadSave();
+    const has = !!sv;
     const entries = [];
-    if (has) entries.push({ label: 'Continuar', action: () => this.continueGame() });
+    // (con el nombre de quien era)
+    const quien = sv && sv.aspecto && sv.aspecto.nombre ? ' · ' + String(sv.aspecto.nombre).slice(0, 16) : '';
+    if (has) entries.push({ label: 'Continuar' + quien, action: () => this.continueGame() });
     entries.push({
       label: 'Nueva partida',
       action: () => {
@@ -658,7 +683,15 @@ export class Game {
     const p = this.player;
     p.baseMaxHp = 100;
     p.hp = 100;
-    for (const k in p.armor) p.armor[k] = null;
+    // despierta con la armadura de la guardia, y con el aspecto de siempre
+    // hasta que se elija otro (el editor, después de la introducción)
+    p.aspecto = aspectoBase(NOMBRES[Math.floor(Math.random() * NOMBRES.length)]);
+    const guardia = {};
+    for (const id of PIEZAS_GUARDIA) {
+      this.inventory.add(id);
+      guardia[ITEMS[id].armor] = id;
+    }
+    p.setArmorAll(guardia);
     p.wearRelic(null);
     p.maxFlasks = 3;
     p.maxSt = 100;
@@ -676,7 +709,24 @@ export class Game {
     this.camRig.snapTo(this.player);
     this.camRig.yaw = -2.5;
     this.camRig.pitch = 0.62;
-    this.intro.start(() => this.beginPlay(true));
+    // la introducción y, después, quién eras (el editor de personaje); luego,
+    // a despertar en la celda
+    this.intro.start(() => this.creador.abrir(() => this.wakeUp()));
+  }
+  // Del editor de personaje a la celda: a oscuras, en su sitio, y a despertar
+  wakeUp() {
+    const p = this.player;
+    p.spawn(START.x, START.y, START.z, START.yaw);
+    p.obj.visible = true;
+    p.hp = p.maxHp;
+    p.st = p.maxSt;
+    p.flasks = p.maxFlasks;
+    this.camRig.snapTo(p);
+    this.audio.stopMusic();
+    // (lo elegido, guardado ya: si se sale antes de llegar a un altar, al
+    // continuar sigue siendo él)
+    this.saveGame();
+    this.beginPlay(true);
   }
 
   // La introducción corta, vista desde el modo de pruebas: como la crónica
@@ -1888,6 +1938,8 @@ export class Game {
     } else if (this.intro.active) {
       // la introducción (su cámara la pone su película)
       this.intro.update(dt);
+    } else if (this.state === 'creador') {
+      // el editor de personaje: su cámara la pone él (game/creador.js)
     } else if (this.introCam) {
       // plano fijo del despertar; al levantarse, la cámara pasa detrás del jugador
       if (this.player.state !== 'wake') {

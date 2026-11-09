@@ -120,7 +120,11 @@ function heaterShape(w = 0.56, h = 0.7) {
 
 // ------------------------------------------------------------- jugador
 // "El Condenado": caballero de la guarnición de Braga, cota de malla,
-// sobreveste carmesí raída, yelmo nasal, capa, lámpara al cinto.
+// sobreveste carmesí raída, yelmo nasal, capa, lámpara al cinto. De aquí sólo
+// se usan su esqueleto y el farol: lo que se ve de él (el cuerpo, con el
+// aspecto del editor de personaje, y la armadura que lleve puesta) lo viste
+// entities/player.js con armaduras.js. Las cajas de debajo son el modelo de
+// antes, el de las primeras versiones.
 export function playerDef() {
   const joints = humanoidJoints(1);
   joints.push({ name: 'cloak', parent: 'chest', pos: [0, 0.5, -0.15] });
@@ -207,13 +211,6 @@ export function shieldParts(j = 'shield') {
     // correas (se ven por detrás)
     { j, type: 'box', s: [0.05, 0.3, 0.03], p: [0, 0.05, -0.035], mat: 'leather' },
   ];
-}
-
-export function buildPlayer({ sword = true, shield = true } = {}) {
-  const def = playerDef();
-  if (sword) def.parts.push(...swordParts('sword'));
-  if (shield) def.parts.push(...shieldParts());
-  return new Rig(def);
 }
 
 // ------------------------------------------------------------- cadáveres

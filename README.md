@@ -52,6 +52,7 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Mesa del Desfigurado: echar al puchero / sacar / cocer | E, clic o arrastrar al puchero / X o clic derecho / C | A / X / Y |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
+| Editor de personaje: elegir / cambiar / girarle | ↑ ↓ (W S) / ← → (A D) / Q R, arrastrar con el ratón (la rueda acerca) | Cruz / cruz / LB RB o stick derecho |
 
 ## Qué hay dentro
 
@@ -67,6 +68,23 @@ casulla, el palio y el incensario; San Martín, encorvado bajo la capucha, con l
 farol; el sacerdote romano con la toga sobre la cabeza; el cantero con su mazo; los Velados con la cara bajo el
 paño; los canónigos (uno seco, otro gordo) con la muceta; los almohades con turbante, lizam, albornoz y adarga; y
 la gente de Braga, cada cual con lo suyo. Se salta manteniendo «interactuar».
+
+**Quién eras (el editor de personaje).** Después de la introducción, antes de despertar en la celda, como en los
+Souls: el preso se dejó en la pared las uñas y la memoria, y aquí se recuerda quién era. Sin clases ni dones: sólo
+él. A la izquierda, la lista; a la derecha, él, de pie en lo oscuro bajo una luz y con el farol al cinto, con la
+armadura de la guardia sin el yelmo (o con él, o sin nada), y la cámara se le acerca a la cara para la cara y se
+aleja para el cuerpo. Se elige **el nombre** («Él sabe tu nombre»: se escribe, o se pasa por los de su tierra y su
+tiempo con las flechas), **el rostro** de base (Soldado, Labriego, Hidalgo, Hosco, Mozo, Curtido) y **sus trece
+rasgos**, cada uno en su barra (el ancho y el largo de la cara, la frente y las cejas, los ojos hundidos, los
+pómulos, las mejillas chupadas, la nariz —su largo, su ancho, aguileña—, la mandíbula, el mentón, los labios y las
+orejas), **el peinado** (revuelto, corto, rapado, melena de paje, melena, atado atrás, tonsura o calvo), **el color
+del pelo** (nueve: el de la barba y las cejas), **la barba** (de días, afeitado, corta, larga, bigote o perilla),
+**los ojos** (seis colores), **la piel** (seis), **una cicatriz** (en la ceja, la mejilla, la nariz, el labio o la
+frente) y **la complexión**, de enjuto a corpulento (la armadura se ajusta al cuerpo: el cuerpo y lo que lleva
+encima se ensanchan juntos). «Al azar» da otro cualquiera. Al despertar se guarda con la partida (el nombre sale
+en el título, «Continuar · Soeiro», y en el equipo del inventario). Desde el modo de pruebas (F2) se abre desde
+donde se esté (`game/creador.js`, `entities/aspecto.js`, `tools/creador.mjs`).
+
 Al vencer al arzobispo por primera vez se desbloquea en el menú del título la **Crónica de Braga**: la versión
 larga (casi tres minutos), que sí lo cuenta todo y en orden, de Roma al sello (para verla antes: `?cronica=1`).
 
@@ -825,9 +843,8 @@ el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desd
 al lado, en letra de leer.
 
 **El inventario**, a lo Dark Souls, en tres pestañas. El **Equipo**: las ranuras de la mano derecha (el arma), la
-izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas: aún no hay ninguna pieza en el
-mundo, pero sus ranuras y lo que paran ya están, y las piezas ya tienen modelo: ver más abajo), el objeto bendito y la
-ampolla; en cada una se elige qué ponerse de
+izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas: al despertar, las de la guardia;
+ver más abajo), el objeto bendito y la ampolla; en cada una se elige qué ponerse de
 lo que se lleva encima, o nada, y se puede ir desarmado o sin escudo (se guarda con la partida). Los **Objetos**, por
 clases (consumibles, armas, escudos, armaduras, objetos benditos, objetos clave y mejoras), desde donde también se
 pone y se quita lo que se lleva puesto. Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
@@ -840,35 +857,45 @@ especial de cada una (a una o a dos manos, a distancia, lo que hace su pesado…
 ficha a la descripción y vuelta. Las de un arma: **filo** (el daño de su golpe ligero, con lo afilado), **golpe
 pesado**, **velocidad** (golpes por segundo del combo), **alcance**, **peso**, **dureza**, **crítico**, **contra
 armadura** y **aguante** (lo que cansa cada golpe); las del escudo, **estabilidad** (lo que cuesta parar con él),
-**absorción** (lo que no deja pasar) y peso; las de la armadura, defensa y peso. Las de las armas salen de lo que
+**absorción** (lo que no deja pasar) y peso; las de la armadura, defensa y peso (y, en el equipo, la **carga**: lo
+que pesa todo lo que se lleva puesto). Las de las armas salen de lo que
 de verdad hacen sus golpes (`weaponSheet`, en `entities/weapons.js`): no son números de adorno.
 
-**Las armaduras (todavía sin enganchar).** Están modeladas, pieza a pieza, las tres armaduras del jugador y el cuerpo
-que queda debajo, pero el juego aún no las usa: el Condenado sigue llevando la de siempre y sus ranuras, vacías.
-- **El cuerpo sin armadura** (`entities/cuerpo.js`), esculpido como los ecos y el Desfigurado: un hombre de armas de
-  unos treinta años, ancho de hombros pero chupado de las noches de la celda, con el pelo oscuro revuelto y la barba
-  de días, las bragas de lino atadas con su cordón, descalzo y con las yemas de los dedos en carne viva (las uñas se le
-  quedaron en la pared).
-- **La armadura de guardia** (peso medio) es la de siempre, partida en sus cuatro piezas: el yelmo de nasal con su
-  almófar (abierto ahora por delante: asoma la cara del cuerpo), la loriga con la sobreveste carmesí, las hombreras
-  y la capa, los brazales de cuero, y las calzas con sus botas.
-- **La de caballero** (pesada), la de un caballero del Rey, hierro de arriba abajo: el yelmo de calva apuntada con su
-  cresta, la banda de latón, el nasal ancho, las carrilleras, el cubrenuca y el camal de malla; el peto con su
-  arista y el espaldar, la gola, las hombreras de cúpula con sus lamas, el faldar de tres lamas, las escarcelas y los
-  faldones azules del Rey por detrás; los brazales con sus codales y los guanteletes; las calzas de malla, los
-  quijotes, las rodilleras, las grebas y los escarpes.
-- **La de cuero** (ligera), la de un batidor: la capucha con su esclavina; el gambesón acolchado con sus faldones y,
-  encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas, el cinto con la bolsa y el cuchillo; los
-  brazales atados y los guantes; las calzas de lana y las botas altas con su vuelta y sus hebillas.
+**Las armaduras.** Tres armaduras del jugador, cada una en las cuatro piezas de las ranuras del inventario, sobre el
+cuerpo que queda debajo (`entities/armaduras.js`, `entities/cuerpo.js`). Cada pieza es un objeto, con su icono, su
+**defensa** (lo que quita de cada golpe; las cuatro juntas, hasta sesenta de cien) y su **peso**; lo que pesa todo
+lo puesto es la **carga**: con la de la guardia (quince kilos), la voltereta y la carrera de siempre; con menos de
+nueve, **ligera** (la voltereta más larga, más barata y con más invulnerabilidad, y correr cansa menos); con más de
+veinte, **pesada** (todo lo contrario). Se cambian en el inventario y se ven al momento: el jugador se viste sin
+rehacer su esqueleto ni lo que lleva colgado (el arma, el escudo, el farol), y se pueden mezclar piezas de unas y
+otras. Todas dejan la cara al aire (el protagonista es el que mira).
+- **El cuerpo sin armadura**, esculpido como los ecos y el Desfigurado: un hombre de armas de unos treinta años,
+  ancho de hombros pero chupado de las noches de la celda, las bragas de lino atadas con su cordón, descalzo y con
+  las yemas de los dedos en carne viva (las uñas se le quedaron en la pared). La cara, el pelo, la barba y los
+  colores, los del editor de personaje.
+- **La armadura de guardia** (media: 15 kg, defensa 12), la que lleva al despertar: el yelmo cónico de cuatro gajos
+  con su banda remachada y su nasal, sobre el almófar de malla abierto a la cara; la loriga hasta medio muslo con
+  mangas al codo, abierta por delante y por detrás para montar, la sobreveste carmesí con la cruz blanca y los
+  faldones raídos, las hombreras, el cinto, la correa del escudo y la capa hecha jirones; los brazales de cuero
+  atados y los guantes; las calzas oscuras y las botas.
+- **La de caballero** (pesada: 25 kg, defensa 26), la de un caballero del Rey, hierro de arriba abajo: el yelmo de
+  calva apuntada con su cresta, la banda de latón, el nasal ancho, las carrilleras, el cubrenuca y el camal de malla;
+  el peto con su arista y el espaldar, la gola, las hombreras de cúpula con sus lamas, el faldar de tres lamas, las
+  escarcelas y los faldones azules del Rey por detrás; los brazales con sus codales y los guanteletes; las calzas de
+  malla, los quijotes, las rodilleras, las grebas y los escarpes.
+- **La de cuero** (ligera: 8 kg, defensa 8), la de un batidor: la capucha con su esclavina; el gambesón acolchado
+  con sus faldones y, encima, el coleto de cuero cocido con sus correas, las hombreras pequeñas, el cinto con la bolsa
+  y el cuchillo; los brazales atados y los guantes; las calzas de lana y las botas altas con su vuelta y sus hebillas.
 
-Cada pieza tapa unas zonas del cuerpo (cabeza, cuello, torso, brazos, antebrazos, manos, cadera, muslos, piernas y
-pies) y deja ver las demás, así que se pueden mezclar piezas de unas y otras; todas dejan la cara al aire (el
-protagonista es el que mira). Se ven con `tools/armaduras.mjs`. Para engancharlas faltan: los objetos (nombre,
-defensa e icono de cada pieza) y dónde se encuentran; lo que pesa cada armadura (la voltereta, el aguante); que el
-jugador cambie de piezas (rehaciendo su rig, o con `armaduraDef(equipo, { grupos: true })`, que deja cada pieza y cada
-zona del cuerpo en sus mallas, encendiendo y apagando las de cada ranura), y que el escudo se aparte también de las
-piezas más abultadas (las cajas de `keepShieldOut`, en `locomotion.js`, y las de `tools/gearcheck.mjs` son las de la
-de guardia).
+Van **ceñidas al cuerpo**: cada perfil sale de sus medidas (los cortes del cuerpo por altura en el espacio de cada
+hueso) más lo que abulta lo de debajo, a uno o dos dedos. Las de antes iban a cuatro o cinco: el yelmo de nasal era
+una caja de malla con un cono de quince centímetros de radio encima que subía catorce por encima de la coronilla (ahora,
+once y cuatro), el de carrilleras sobraba cuatro dedos por cada lado y las hombreras del caballero hacían sesenta y
+siete centímetros de hombro a hombro (ahora, sesenta). Cada pieza tapa unas zonas del cuerpo (cabeza, cara, cuello,
+torso, brazos, antebrazos, manos, cadera, muslos, piernas y pies) y deja ver las demás; las piezas de cadera de cada
+armadura (los faldones de la loriga y de la sobreveste, las escarcelas, los faldones del gambesón) van en los
+muslos y les siguen al andar. **La de caballero y la de cuero aún no están en el mundo** (en el modo de pruebas,
+`?dev=1&armadura=caballero`, o «Todos los objetos»). Se ven con `tools/armaduras.mjs`.
 
 **Los osarios y los objetos benditos.** Cuatro osarios, cada uno con su gente y su manera de ordenar los huesos,
 guardan un **objeto bendito** tras un puzle con su pista en un documento. Los objetos no suben números a secas:
@@ -1345,9 +1372,12 @@ src/
                         idol_statue.js, su montaje y lo que se mueve: la cabeza, el ojo y lo que arde); sculpt.js (no el de colossus/), geometrías
                         esculpidas para los rigs (superficies, troncos, telas con sus pliegues, faldones, cabezas con
                         rasgos y manos con dedos); figure.js, el cuerpo humano y la ropa hechos con ellas (los usan
-                        los ecos y el arzobispo); cuerpo.js, el Condenado sin armadura, esculpido y partido en zonas, y
+                        los ecos y el arzobispo); cuerpo.js, el Condenado sin armadura, esculpido y partido en zonas
+                        (la cara, el pelo, la barba y la cicatriz, según su aspecto); aspecto.js, su aspecto (lo del
+                        editor de personaje: rostros, rasgos, peinados, barbas, colores, complexión) y cómo se tiñe;
                         armaduras.js, sus tres armaduras (la de guardia, la de caballero y la de cuero) en las cuatro
-                        piezas de las ranuras del inventario, y cómo se visten sobre el cuerpo (aún sin enganchar);
+                        piezas de las ranuras del inventario, ceñidas al cuerpo, y cómo se visten sobre él, y la
+                        carga (ligera, media, pesada);
                         armas: weapons.js (registro y clips comunes), weapon_moves.js
                         (golpes del hacha —y cómo se forcejea con ella clavada y se arranca—, la lanza y la
                         ballesta), weapon_models.js (modelos) y
@@ -1365,7 +1395,9 @@ src/
                         en el mundo); intro/: las
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
-                        sus figuras, cada una con su cara y su ropa); spring.js: la fuente sin nombre de la cisterna
+                        sus figuras, cada una con su cara y su ropa); creador.js: el editor de personaje, después
+                        de la introducción (su escenario en lo oscuro, su lista y su cámara); spring.js: la fuente
+                        sin nombre de la cisterna
                         (el agua negra y su latido, las pavesas, el agua roja de la sima, el rojo que late detrás
                         de la cabeza de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y
                         susurra); cutscene.js: la de la bodega; hunt.js: la caza en las
@@ -1502,11 +1534,15 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
                         armaduras.mjs  hoja de las armaduras del jugador: el cuerpo sin armadura, cada armadura
-                                       o una mezcla de piezas (`head=caballero+body=cuero`), desde varios
-                                       lados, en la pose del jugador de verdad que se pida (POSE=light1@0.3,
-                                       loco@4.5@0.25; ARMA=espada), en un plató o en el juego (ESCENA=x,y,z),
-                                       con primeros planos de una articulación (MIRA=handR) o en cuadrícula
-                                       (COLUMNAS=4)
+                                       o una mezcla de piezas (`head=caballero+body=cuero`), con el aspecto
+                                       que se pida (`desnudo~peinado=melena~barba=larga~rasgos.nariz=0.9`,
+                                       `~azar=7`), desde varios lados, en la pose del jugador de verdad que
+                                       se pida (POSE=light1@0.3, loco@4.5@0.25; ARMA=espada), en un plató o
+                                       en el juego (ESCENA=x,y,z), con primeros planos de una articulación
+                                       (MIRA=handR) o en cuadrícula (COLUMNAS=4)
+                        creador.mjs    el editor de personaje, recorrido con el teclado: la lista, el rostro,
+                                       los rasgos, uno al azar sin armadura y, al despertar en la celda, que lo
+                                       elegido es lo del jugador y se ha guardado
                         weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
                                        bloqueo y curación contra un enemigo real; la ballesta, aparte
                                        (montarla, tirar, que se vuelva a montar sola gastando un virote, el
@@ -1522,6 +1558,7 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        filo por delante, agarre a dos manos, tirones y saltos al encadenar
                         gearcheck.mjs  escudo y hoja frente al cuerpo al andar, correr, girar y bloquear:
                                        cuánto se meten en el torso o las piernas y hacia dónde apunta la hoja
+                                       (las cajas del cuerpo se ensanchan con la complexión del jugador)
                         audiotest.mjs  renderiza sin altavoces cada tema, efecto y ambiente (el de cada
                                        atmósfera y el de cada sala con el suyo) y mide niveles
                         audiobench.mjs coste de CPU del audio

@@ -166,7 +166,7 @@ export class DevMode {
       <div class="di" id="dev-info"></div>
       <div class="ds"><div class="dt">Diseño</div>
         ${B('seeIdol', 'Ir a la estatua', 'act')}${B('seeNave', 'Ir al pasillo', 'act')}${B('statueEye', 'Ojo de la estatua: abrir', 'act')}
-        ${B('intro', 'Ver la introducción', 'act')}${B('chronicle', 'Ver la crónica', 'act')}${B('chronTitle', 'Crónica en el título', 'act')}
+        ${B('intro', 'Ver la introducción', 'act')}${B('chronicle', 'Ver la crónica', 'act')}${B('chronTitle', 'Crónica en el título', 'act')}${B('creador', 'Editor de personaje', 'act')}
       </div>
       <div class="ds"><div class="dt">Jugador</div>
         ${B('god', 'Invulnerable')}${B('stamina', 'Aguante infinito')}${B('fly', 'Volar (atraviesa muros)')}
@@ -420,6 +420,21 @@ export class DevMode {
         g.spring.eyeTo = g.spring.eyeTo === 1 ? null : 1;
         this.note(g.spring.eyeTo === 1 ? 'La estatua abre el ojo.' : 'El ojo de la estatua, a lo suyo: se abre cuando te acercas.');
         break;
+      case 'creador': {
+        // (el editor de personaje desde donde se esté; al acabar, de vuelta
+        // aquí, con el aspecto nuevo)
+        if (g.state !== 'play' || g.ui.modal) break;
+        const at = [p.pos.x, p.pos.y, p.pos.z, p.yaw];
+        this.close();
+        g.fade = 0;
+        g.creador.abrir(() => {
+          p.spawn(at[0], at[1], at[2], at[3]);
+          g.camRig.snapTo(p);
+          g.saveGame();
+          g.beginPlay(false);
+        });
+        break;
+      }
       case 'intro':
       case 'chronicle':
         // (como la crónica desde el título: el mundo como al empezar, sin

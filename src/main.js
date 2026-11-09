@@ -3,6 +3,7 @@ import './ui/ui.css';
 import { Game } from './game/game.js';
 import { unlockChronicle } from './game/save.js';
 import { loadFonts } from './ui/pixel.js';
+import { ARMADURAS, RANURAS } from './entities/armaduras.js';
 
 const canvas = document.getElementById('gl');
 const q = new URLSearchParams(location.search);
@@ -36,6 +37,20 @@ function boot() {
     if (arma && !items.includes(arma)) items.push(arma);
     game.newState();
     for (const i of items) game.inventory.add(i);
+    // ?armadura=guardia|caballero|cuero|desnudo: lo que lleva puesto (por
+    // defecto, la de la guardia, como al despertar; queda en el inventario)
+    {
+      const arm = q.get('armadura') || 'guardia';
+      const A = ARMADURAS[arm];
+      const puesto = {};
+      for (const r of RANURAS) {
+        if (!A) continue;
+        const id = A.piezas[r].item;
+        game.inventory.add(id);
+        puesto[r] = id;
+      }
+      game.player.setArmorAll(puesto);
+    }
     game.applyWorldState();
     game.player.obj.visible = true;
     const at = (q.get('at') || '-84.6,0,-15.8').split(',').map(Number);

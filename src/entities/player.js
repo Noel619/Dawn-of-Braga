@@ -1,8 +1,10 @@
 // El Condenado: controlador del jugador (combate Soulslike).
 import * as THREE from 'three';
 import { TONICOS } from '../game/alquimia.js';
-import { buildPlayer } from './models.js';
-import { Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
+import { playerDef, shieldParts } from './models.js';
+import { Rig, Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
+import { partesVestido, farolParts, equipoDeObjetos, PIEZAS_GUARDIA, CARGAS, cargaDe } from './armaduras.js';
+import { aspectoBase, normalizar, escalasDe, teñir } from './aspecto.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
 import { WEAPONS, weaponSet, resolveWeaponArms, durezaK } from './weapons.js';
 import { buildParts, backShield, viroteParts } from './weapon_models.js';
@@ -36,8 +38,16 @@ export class Player {
     this.game = game;
     this.hasSword = true;
     this.hasShield = true;
-    this.rig = buildPlayer({ sword: false });
+    // el esqueleto (el del Condenado: models.js, playerDef) con el farol del
+    // cinto y el escudo; lo que se ve de él, el cuerpo y la armadura, aparte
+    // (vestir): se cambia sin rehacer el esqueleto ni lo que lleva colgado
+    this.rig = new Rig({ joints: playerDef().joints, parts: [...farolParts(), ...shieldParts()] });
     this.obj = this.rig.root;
+    // quién era (el editor de personaje: aspecto.js) y la armadura: un objeto
+    // (id de ITEMS) o nada en cada ranura; al despertar, la de la guardia
+    this.aspecto = aspectoBase();
+    this.armor = { head: null, body: null, hands: null, legs: null };
+    for (const id of PIEZAS_GUARDIA) this.armor[ITEMS[id].armor] = id;
     // armas: cada una en su grupo bajo la articulación de la mano derecha
     this.weaponObjs = {};
     for (const id in WEAPONS) {
@@ -60,6 +70,7 @@ export class Player {
     this.rig.joints.chest.add(this.shieldBack.group);
     this.rig.meshes.push(...this.shieldBack.meshes);
     this.cloakZ0 = this.rig.joints.cloak.position.z;
+    this.vestir();
     this.resolveArms = (p) => resolveWeaponArms(p, this.rig, this.weapon);
     this.body = { pos: new THREE.Vector3(), radius: 0.36, height: 1.8, stepH: 0.52, grounded: true, vy: 0 };
     this.visY = 0;
@@ -100,9 +111,8 @@ export class Player {
     // el aire (rally), el golpe que devuelve lo parado y el crítico de la
     // esquiva en el último instante
     this.relic = null;
-    // la armadura: una pieza (id de ITEMS) o nada en cada ranura
-    this.armor = { head: null, body: null, hands: null, legs: null };
     this.mods = relicMods(null);
+    this.refreshMods();
     this.rally = 0;
     this.rallyHold = 0;
     this.retaliateT = 0;
@@ -208,11 +218,54 @@ export class Player {
     this.retaliateT = this.critNextT = 0;
     this.refreshMaxHp();
   }
-  // Se pone (o se quita, con null) una pieza de armadura en su ranura.
+  // Se pone (o se quita, con null) una pieza de armadura en su ranura (y se
+  // ve: vestir).
   setArmor(part, id) {
     if (!(part in this.armor)) return;
     this.armor[part] = id || null;
     this.refreshMods();
+    this.vestir();
+  }
+  // Toda la armadura de una vez ({ head, body, hands, legs }: objetos o null).
+  setArmorAll(a) {
+    for (const k in this.armor) this.armor[k] = (a && a[k]) || null;
+    this.refreshMods();
+    this.vestir();
+  }
+  // Quién es: el aspecto del editor de personaje (aspecto.js).
+  setAspecto(a) {
+    this.aspecto = normalizar(a);
+    this.vestir();
+  }
+  // Se viste: el cuerpo, con su aspecto, y encima lo que lleve puesto en cada
+  // ranura (armaduras.js). El esqueleto no se rehace: lo que lleva colgado
+  // (el arma, el escudo, el farol, la ampolla) sigue en su sitio.
+  vestir() {
+    const R = this.rig;
+    R.removeTagged('vestido');
+    R.addParts(partesVestido(equipoDeObjetos(this.armor), this.aspecto), { tag: 'vestido' });
+    // la complexión: lo que se ensancha cada hueso, el cuerpo y lo que lleva
+    // encima (y las cajas con que el escudo se aparta del cuerpo)
+    const E = escalasDe(this.aspecto);
+    for (const m of R.meshes) {
+      if (m.userData.tag !== 'vestido') continue;
+      const k = E[m.parent.name];
+      if (k) m.scale.set(k[0], k[1], k[2]);
+    }
+    R.bodyK = E;
+    // (la capa cuelga de la espalda: se aparta con ella)
+    this.cloakZ0 = R.rest.cloak.pos.z * E.chest[2];
+    R.joints.cloak.position.z = this.cloakZ0;
+    teñir(R, this.aspecto);
+  }
+  // Lo que pesa lo que lleva puesto (kg) y su carga (armaduras.js, CARGAS).
+  pesoArmadura() {
+    let kg = 0;
+    for (const k in this.armor) if (this.armor[k] && ITEMS[this.armor[k]]) kg += ITEMS[this.armor[k]].peso || 0;
+    return kg;
+  }
+  get carga() {
+    return cargaDe(this.pesoArmadura());
   }
   // Lo que quita la armadura de cada golpe (de 0 a 0,6): la suma de sus
   // piezas (def: en puntos de cien).
@@ -223,10 +276,15 @@ export class Player {
   }
   // Lo que hacen el objeto bendito y la armadura (la armadura, en el daño
   // que se recibe: todos los golpes pasan por mods.taken).
+  // La carga (lo que pesa la armadura) cambia la voltereta y la carrera: con
+  // la de la guardia, como siempre; ligero, más larga y más barata; cargado
+  // con hierro, más corta y más cara (armaduras.js, CARGAS).
   refreshMods() {
     this.mods = relicMods(this.relic);
     const d = this.armorDef();
     if (d) this.mods = { ...this.mods, taken: this.mods.taken * (1 - d) };
+    const C = CARGAS[this.carga];
+    if (C) this.mods = { ...this.mods, rollSt: this.mods.rollSt * C.rollSt, rollIF: this.mods.rollIF * C.rollIF, rollDist: this.mods.rollDist * C.rollDist, sprintSt: this.mods.sprintSt * C.sprintSt };
   }
   // La vitalidad máxima de verdad (la ganada, por lo que haga el objeto que se
   // lleve); quitárselo no cura.

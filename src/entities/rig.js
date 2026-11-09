@@ -113,15 +113,24 @@ export class Rig {
       this.joints[j.name] = o;
       (j.parent ? this.joints[j.parent] : this.root).add(o);
     }
-    // agrupar piezas por (articulación, material); las de un grupo con nombre
-    // (grp: una hombrera, el peto...) van en mallas propias para poder
-    // desprenderse del cuerpo
+    this.addParts(def.parts, opts);
+  }
+
+  // Cuelga unas piezas de sus articulaciones: agrupadas por (articulación,
+  // material); las de un grupo con nombre (grp: una hombrera, el peto...) van
+  // en mallas propias para poder desprenderse del cuerpo o encenderse y
+  // apagarse. o.tag: una etiqueta para quitarlas luego todas juntas
+  // (removeTagged: el jugador se cambia de armadura sin rehacer su esqueleto,
+  // con lo que lleva colgado: el arma, el escudo, el farol); o.matFn, el
+  // material de cada grupo. Devuelve las mallas nuevas.
+  addParts(parts, opts = {}) {
     const groups = new Map();
-    for (const pt of def.parts) {
+    for (const pt of parts) {
       const key = pt.j + '|' + pt.mat + '|' + (pt.ds ? 1 : 0) + '|' + (pt.grp || '');
       if (!groups.has(key)) groups.set(key, { j: pt.j, mat: pt.mat, ds: pt.ds, grp: pt.grp || null, geos: [] });
       groups.get(key).geos.push(partGeometry(pt));
     }
+    const out = [];
     for (const gr of groups.values()) {
       const geo = gr.geos.length > 1 ? mergeGeometries(gr.geos) : gr.geos[0];
       geo.computeBoundingSphere();
@@ -129,9 +138,27 @@ export class Rig {
       const mesh = new THREE.Mesh(geo, mat);
       mesh.userData.matName = gr.mat;
       if (gr.grp) mesh.userData.grp = gr.grp;
+      if (opts.tag) mesh.userData.tag = opts.tag;
       this.joints[gr.j].add(mesh);
       this.meshes.push(mesh);
+      out.push(mesh);
     }
+    // (si el rig ya tenía sus materiales propios, las nuevas también)
+    if (this._own) this.own(true);
+    return out;
+  }
+  // Quita (y suelta de la memoria) las mallas con esa etiqueta.
+  removeTagged(tag) {
+    const keep = [];
+    for (const m of this.meshes) {
+      if (m.userData.tag !== tag) {
+        keep.push(m);
+        continue;
+      }
+      if (m.parent) m.parent.remove(m);
+      m.geometry.dispose();
+    }
+    this.meshes = keep;
   }
 
   // Aplica una pose: { joint: [rx, ry, rz] } (radianes, relativo al reposo)
@@ -162,27 +189,47 @@ export class Rig {
   }
 
   // materiales propios (para destellos, ojos y la luz del lugar sin afectar a
-  // otras criaturas); la copia conserva el parche PSX
-  own() {
-    if (!this._own) {
-      const done = new Map();
-      for (const m of this.meshes) {
-        if (!done.has(m.material)) done.set(m.material, cloneMat(m.material));
-        m.material = done.get(m.material);
-        m.userData.baseEI = m.material.emissiveIntensity;
+  // otras criaturas); la copia conserva el parche PSX. Una copia por material
+  // (_copia: el de todos -> el suyo), que sirve también para las piezas que se
+  // cuelguen después (again: addParts)
+  own(again = false) {
+    if (this._own && !again) return;
+    const copia = this._copia || (this._copia = new Map());
+    const suyos = new Set(copia.values());
+    for (const m of this.meshes) {
+      if (suyos.has(m.material)) continue;
+      let c = copia.get(m.material);
+      if (!c) {
+        c = cloneMat(m.material);
+        // emisión original de cada material (varias piezas comparten
+        // material: guardarla por pieza hacía que la segunda guardase el
+        // destello como "original" y la criatura se quedaba teñida para
+        // siempre)
+        if (c.emissive) c.userData.baseEm = c.emissive.clone();
+        // (la luz del sitio, la que tengan ya los demás)
+        if (c._u && this._probe) {
+          c._u.uProbe.value.set(this._probe[0], this._probe[1], this._probe[2]);
+          c._u.uGround.value.set(this._probe[3], this._probe[4]);
+        }
+        copia.set(m.material, c);
+        suyos.add(c);
       }
-      this.mats = [...done.values()];
-      // emisión original de cada material (varias piezas comparten material:
-      // guardarla por pieza hacía que la segunda guardase el destello como
-      // "original" y la criatura se quedaba teñida para siempre)
-      for (const mat of this.mats) if (mat.emissive) mat.userData.baseEm = mat.emissive.clone();
-      this._own = true;
+      m.material = c;
+      m.userData.baseEI = c.emissiveIntensity;
     }
+    this.mats = [...copia.values()];
+    this._own = true;
   }
 
   // Luz horneada del lugar (sonda) y oclusión junto al suelo.
   setProbe(r, g, b, groundY, ao = 0.34) {
     this.own();
+    const P = this._probe || (this._probe = [0, 0, 0, 0, 0]);
+    P[0] = r;
+    P[1] = g;
+    P[2] = b;
+    P[3] = groundY;
+    P[4] = ao;
     for (const m of this.mats) {
       if (!m._u) continue;
       m._u.uProbe.value.set(r, g, b);

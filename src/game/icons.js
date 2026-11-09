@@ -107,12 +107,47 @@ function holySparkle(b, x, y) {
 // Pieza de armadura: lo que cae dentro de 'inside', en acero con la luz
 // arriba a la izquierda; el canto de la chapa, más oscuro.
 function plate(b, inside, l = (x, y) => 0.8 - (x - 4) / 34 - (y - 3) / 46) {
+  fill(b, inside, STEEL, l);
+}
+// Lo mismo con cualquier rampa (cuero, paño): el canto, más oscuro; tex(x, y),
+// lo que se suma a la luz en cada punto (la malla, los pespuntes)
+const LUZ = (x, y) => 0.8 - (x - 4) / 34 - (y - 3) / 46;
+function fill(b, inside, cols, l = LUZ, tex = null, edge = 0.32) {
   for (let y = 0; y < 32; y++)
     for (let x = 0; x < 32; x++) {
       if (!inside(x, y)) continue;
-      const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
-      b.set(x, y, shade(STEEL, l(x, y) - (edge ? 0.32 : 0), x, y));
+      const e = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      b.set(x, y, shade(cols, l(x, y) - (e ? edge : 0) + (tex ? tex(x, y) : 0), x, y));
     }
+}
+// la malla: anillas en damero, con su brillo
+const MALLA = (x, y) => ((x + y) % 2 ? 0.14 : -0.12) + (x % 4 === 0 && y % 2 === 0 ? 0.08 : 0);
+const CUERO = [P.wood0, P.wood1, P.wood2, P.wood3, P.wood4];
+const COCIDO = ['#2a170a', '#4e2e14', '#77481f', '#a0682f', '#c58d4b', '#e2b679'];
+const GRANA = [P.blood0, P.blood1, P.blood2, P.blood3, P.blood4];
+const PANO = [P.ink0, P.ink2, P.ink3, P.iron1, P.iron2];
+const LANA = [P.wood0, P.wood1, '#4c3a2a', '#6a523a', '#86684a'];
+const ACOLCHADO = [P.parch0, P.parch1, P.parch2, P.parch3, P.parch4];
+// una pierna con su bota (cx: el centro; la punta del pie, hacia la izquierda):
+// lo de arriba (calzas) hasta yb, la bota de ahí al suelo con su vuelta
+function piernaBota(b, cx, o) {
+  const muslo = (x, y) => {
+    const px = x + 0.5,
+      py = y + 0.5;
+    return py >= 3 && py < o.yb && Math.abs(px - cx) <= 3.6 - Math.max(0, py - 10) * 0.06;
+  };
+  fill(b, muslo, o.calza, LUZ, o.calzaTex);
+  const bota = (x, y) => {
+    const px = x + 0.5,
+      py = y + 0.5;
+    if (py < o.yb - 1 || py > 29) return false;
+    if (py < 24) return Math.abs(px - cx) <= 3.5;
+    return px >= cx - 3.5 - (py - 24) * 1.15 && px <= cx + 3.5;
+  };
+  fill(b, bota, o.bota);
+  // la vuelta de la caña
+  for (let x = cx - 4; x <= cx + 4; x++) for (const y of [o.yb - 1, o.yb]) if (bota(x, y) || Math.abs(x + 0.5 - cx) <= 4.3) b.set(x, y, shade(o.bota, 0.85 - (x - cx + 4) / 12, x, y));
+  for (const y of o.hebillas || []) b.set(cx + 2, y, P.iron4);
 }
 
 const ICONS = {
@@ -1295,6 +1330,199 @@ const ICONS = {
     }
     b.outline(P.void);
   },
+  // --- las piezas de la armadura de la guardia y de la de cuero (las del
+  // caballero son las de arriba: helm, cuirass, gauntlets, greaves)
+  // el yelmo cónico de la guarnición, con su banda y su nasal, sobre el
+  // almófar de malla, abierto a la cara
+  yelmoGuardia(b) {
+    const alm = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 11 || py > 29.5) return false;
+      const hw = py < 20 ? 10.5 : 10.5 + (py - 20) * 0.45;
+      return Math.abs(px - 16) <= hw;
+    };
+    fill(b, alm, IRON, (x, y) => 0.7 - (x - 5) / 40 - (y - 10) / 60, MALLA);
+    // la cara, abierta
+    for (let y = 15; y <= 25; y++) for (let x = 11; x <= 20; x++) if (Math.abs(x + 0.5 - 16) <= 4.6 - (y > 22 ? (y - 22) * 0.9 : 0)) b.set(x, y, y < 18 ? P.ink0 : P.void);
+    // el yelmo: el cono hasta la punta
+    const cono = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 2.5 || py > 14) return false;
+      return Math.abs(px - 16) <= 1 + (py - 2.5) * 0.85;
+    };
+    plate(b, cono, (x, y) => 0.92 - (x - 6) / 26 - (y - 2) / 40);
+    for (let y = 3; y <= 13; y++) b.set(16, y, P.steel1);
+    // la banda, remachada, y el nasal
+    for (let x = 5; x <= 26; x++) {
+      b.set(x, 13, shade(IRON, 0.85 - (x - 5) / 30, x, 13));
+      b.set(x, 14, shade(IRON, 0.45 - (x - 5) / 40, x, 14));
+    }
+    for (const x of [8, 12, 20, 24]) b.set(x, 13, P.iron5);
+    for (let y = 14; y <= 21; y++) {
+      b.set(15, y, P.iron4);
+      b.set(16, y, P.iron2);
+    }
+    b.outline(P.void);
+  },
+  // la loriga con mangas al codo y, encima, la sobreveste carmesí con la cruz
+  // blanca y el cinto
+  lorigaGuardia(b) {
+    const malla = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 4 || py > 29) return false;
+      if ((px - 16) ** 2 + (py - 3) ** 2 < 22) return false;
+      const ax = Math.abs(px - 16);
+      if (py < 14) return ax <= 14 - (py < 6 ? (6 - py) * 1.3 : 0);
+      if (py < 21) return ax <= 10.5;
+      return ax <= 10.5 + (py - 21) * 0.4;
+    };
+    fill(b, malla, IRON, (x, y) => 0.68 - (x - 4) / 40 - (y - 3) / 60, MALLA);
+    const sob = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 6 || py > 28.5) return false;
+      if ((px - 16) ** 2 + (py - 4) ** 2 < 14) return false;
+      const ax = Math.abs(px - 16);
+      if (ax > 6.6 + (py > 20 ? (py - 20) * 0.25 : 0)) return false;
+      // (raída abajo)
+      return py < 26 || (x * 7 + 3) % 5 > 1;
+    };
+    fill(b, sob, GRANA, (x, y) => 0.78 - (x - 8) / 26 - (y - 6) / 50);
+    // la cruz blanca
+    for (let y = 9; y <= 19; y++) for (const x of [15, 16]) b.set(x, y, x === 15 ? P.bone3 : P.bone1);
+    for (let x = 12; x <= 19; x++) for (const y of [12, 13]) b.set(x, y, y === 12 ? P.bone3 : P.bone1);
+    // el cinto con su hebilla
+    for (let x = 6; x <= 26; x++)
+      if (malla(x, 21)) {
+        b.set(x, 21, shade(WOOD, 0.75 - (x - 6) / 30, x, 21));
+        b.set(x, 22, P.wood1);
+      }
+    b.rect(18, 21, 2, 2, P.iron4);
+    b.outline(P.void);
+  },
+  // el brazal de cuero atado y el guante
+  brazalesGuardia(b) {
+    const brazal = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      return py >= 15 && py <= 29 && Math.abs(px - 15) <= 5.4 + (py - 15) * 0.12;
+    };
+    fill(b, brazal, CUERO);
+    // los cordones, en cruz
+    for (let k = 0; k < 3; k++) {
+      const y = 18 + k * 4;
+      for (let i = -2; i <= 2; i++) {
+        b.set(15 + i, y + i * 0.5, P.bone1);
+        b.set(15 - i, y + i * 0.5, P.bone2);
+      }
+    }
+    const guante = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py >= 4 && py <= 12 && px >= 9 && px <= 20 && (x - 9) % 3 !== 2) return true;
+      return py >= 11 && py < 16 && Math.abs(px - 15) <= 6;
+    };
+    fill(b, guante, CUERO, (x, y) => 0.9 - (x - 8) / 30 - (y - 4) / 40);
+    seg(b, 21, 14, 25, 9, 1.6, 1.3, (t, s2, x, y) => shade(CUERO, 0.7 - s2 * 0.3, x, y));
+    b.outline(P.void);
+  },
+  // las calzas de paño oscuro y las botas de cuero
+  calzasGuardia(b) {
+    piernaBota(b, 10, { yb: 15, calza: PANO, bota: CUERO });
+    piernaBota(b, 22, { yb: 15, calza: PANO, bota: CUERO });
+    b.outline(P.void);
+  },
+  // la capucha de cuero blando, abierta a la cara, con su esclavina
+  capuchaCuero(b) {
+    const cap = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 3 || py > 29.5) return false;
+      if (py < 16) return ((px - 16) / 10) ** 2 + ((py - 16) / 13) ** 2 <= 1;
+      return Math.abs(px - 16) <= 10 + (py - 16) * (py > 22 ? 0.75 : 0.1);
+    };
+    fill(b, cap, COCIDO, (x, y) => 0.72 - (x - 6) / 34 - (y - 3) / 60);
+    for (let y = 10; y <= 24; y++) for (let x = 11; x <= 21; x++) if (((x + 0.5 - 16) / 5) ** 2 + ((y + 0.5 - 17) / 7.5) ** 2 <= 1) b.set(x, y, y < 13 ? P.ink0 : P.void);
+    // el canto de la cara y el de la esclavina
+    for (let y = 9; y <= 24; y++) {
+      const hw = 5.6 * Math.sqrt(Math.max(0, 1 - ((y + 0.5 - 17) / 8.2) ** 2));
+      b.set(Math.round(16 - hw - 0.5), y, COCIDO[4]);
+    }
+    for (let x = 3; x <= 28; x++) if (cap(x, 23)) b.set(x, 23, COCIDO[1]);
+    b.outline(P.void);
+  },
+  // el gambesón acolchado (las mangas) y, encima, el coleto de cuero cocido
+  // con sus correas
+  coletoCuero(b) {
+    const gam = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 4 || py > 29) return false;
+      if ((px - 16) ** 2 + (py - 3) ** 2 < 24) return false;
+      const ax = Math.abs(px - 16);
+      if (py < 15) return ax <= 14 - (py < 6 ? (6 - py) * 1.3 : 0);
+      return ax <= 11 + (py - 15) * 0.15;
+    };
+    fill(
+      b,
+      gam,
+      ACOLCHADO,
+      (x, y) => 0.66 - (x - 4) / 40 - (y - 3) / 60,
+      (x) => (x % 3 === 0 ? -0.2 : 0)
+    );
+    const col = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py < 6 || py > 24) return false;
+      if ((px - 16) ** 2 + (py - 4) ** 2 < 16) return false;
+      return Math.abs(px - 16) <= 9 - (py > 18 ? (py - 18) * 0.3 : 0);
+    };
+    fill(b, col, COCIDO, (x, y) => 0.8 - (x - 7) / 26 - (y - 6) / 40);
+    // las correas de los costados y el cinto ancho
+    for (const y of [10, 14, 18]) for (const x of [7, 8, 24, 25]) b.set(x, y, P.wood1);
+    for (let x = 6; x <= 26; x++)
+      if (gam(x, 22)) {
+        b.set(x, 22, shade(WOOD, 0.7 - (x - 6) / 30, x, 22));
+        b.set(x, 23, P.wood1);
+      }
+    b.rect(14, 22, 3, 2, P.iron4);
+    // la bolsa
+    b.rect(21, 24, 4, 3, COCIDO[2]);
+    b.hline(21, 24, 24, COCIDO[4]);
+    b.outline(P.void);
+  },
+  // el brazal de cuero cocido con sus cordones y el guante de puño vuelto
+  guantesCuero(b) {
+    const brazal = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      return py >= 15 && py <= 29 && Math.abs(px - 15) <= 5.2 + (py - 15) * 0.14;
+    };
+    fill(b, brazal, COCIDO);
+    for (let y = 17; y <= 28; y += 2) {
+      b.set(13, y, P.bone2);
+      b.set(17, y + 1, P.bone1);
+    }
+    const guante = (x, y) => {
+      const px = x + 0.5,
+        py = y + 0.5;
+      if (py >= 4 && py <= 12 && px >= 9 && px <= 20 && (x - 9) % 3 !== 2) return true;
+      return py >= 11 && py < 17 && Math.abs(px - 15) <= 6.5;
+    };
+    fill(b, guante, CUERO, (x, y) => 0.95 - (x - 8) / 30 - (y - 4) / 40);
+    for (let x = 8; x <= 22; x++) if (guante(x, 15)) b.set(x, 15, COCIDO[4]);
+    seg(b, 21, 14, 25, 9, 1.6, 1.3, (t, s2, x, y) => shade(CUERO, 0.75 - s2 * 0.3, x, y));
+    b.outline(P.void);
+  },
+  // las botas altas con su vuelta y sus hebillas, y las calzas de lana
+  botasCuero(b) {
+    piernaBota(b, 10, { yb: 10, calza: LANA, bota: COCIDO, hebillas: [15, 20] });
+    piernaBota(b, 22, { yb: 10, calza: LANA, bota: COCIDO, hebillas: [15, 20] });
+    b.outline(P.void);
+  },
   // colgante con la cruz y la piedra (la ranura del objeto bendito)
   amulet(b) {
     for (let i = 0; i <= 26; i++) {
@@ -1368,6 +1596,11 @@ function pix(b, rows, pal) {
   });
 }
 const SMALL = {
+  // (la carga de la armadura, en las estadísticas del equipo: una pesa de
+  // hierro con su asa)
+  carga(b) {
+    pix(b, ['...aaa...', '..a...a..', '..a...a..', '.bbbbbbb.', '.bhcccccb', 'bhcccccdb', 'bccccccdb', 'bcccccddb', '.bbbbbbb.'], { a: P.iron3, b: P.iron1, c: P.iron2, h: P.iron4, d: P.iron1 });
+  },
   // (lo que se cosecha en lo hondo, en pequeño: lo que se echa al puchero y
   // flota en él, y lo que pide cada receta, en la mesa del Desfigurado:
   // game/mesa.js)

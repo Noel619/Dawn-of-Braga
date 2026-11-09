@@ -101,6 +101,13 @@ export const MAT_DEFS = {
   conPelo: { tex: 'hairGrey', uv: 1.6, color: 0x5a4436 },
   conLino: { tex: 'linen', uv: 1.4, color: 0xb8ae98 },
   conYema: { tex: 'conPiel', uv: 2.0, color: 0xc86058 },
+  // (lo que se elige en el editor de personaje, entities/aspecto.js: el iris
+  // de los ojos y las cicatrices; se tiñen en cada rig)
+  conIris: { tex: 'white', uv: 1, color: 0x24170f, phong: { specular: 0x404040, shininess: 60 } },
+  conCicatriz: { tex: 'conPiel', uv: 2.0, color: 0xe0b0a4 },
+  // (el pelo que apunta: la cabeza rapada y la barba de días, entre el color
+  // del pelo y el de la piel)
+  conApunta: { tex: 'hairGrey', uv: 1.6, color: 0x6a5446 },
   // sus armaduras (entities/armaduras.js): el acero bruñido de la del
   // caballero (que coge la luz), el latón de sus ribetes y remaches; el cuero
   // cocido de la de cuero, el blando (la capucha, los guantes, las botas), el

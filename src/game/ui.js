@@ -7,6 +7,7 @@ import { GLYPHS } from '../core/input.js';
 import { ITEMS, NOTES, AREA_NAMES } from './story.js';
 import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
+import { CARGAS } from '../entities/armaduras.js';
 import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
 import { Mesa } from './mesa.js';
 import { formatTime, clamp } from '../core/util.js';
@@ -404,6 +405,7 @@ export class UI {
   render(s) {
     if (s.name === 'title' || s.name === 'pause') this.renderMenu(s);
     if (s.name === 'mesa') this.mesa.render();
+    if (s.name === 'creador') this.g.creador && this.g.creador.render();
     if (s.name === 'inv') this.renderInv();
     if (s.name === 'options') this.renderOptions(s);
     if (s.name === 'controls') this.renderControls();
@@ -837,7 +839,10 @@ export class UI {
       p = g.player;
     const row = (ic, label, v) => `<span class="ico">${spriteHtml(smallIcon(ic))}${label}</span><b>${v}</b>`;
     const def = Math.round(p.armorDef() * 100);
-    return `<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('stamina', 'Aguante', p.maxSt)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${def ? row('shield', 'Defensa', def + '%') : ''}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
+    // (la carga: lo que pesa la armadura; con ella, la voltereta)
+    const carga = `${CARGAS[p.carga].nombre} · ${fmtN(p.pesoArmadura(), 1)} kg`;
+    const nombre = p.aspecto && p.aspecto.nombre ? `<div class="nm f-bast">${esc(p.aspecto.nombre)}</div>` : '';
+    return `${nombre}<div class="stats">${row('heart', 'Vitalidad', `${Math.ceil(p.hp)} / ${p.maxHp}`)}${row('stamina', 'Aguante', p.maxSt)}${row('flask', 'Ampollas', `${p.flasks} / ${p.maxFlasks}`)}${row('sword', 'Daño', Math.round(p.dmgMul * 100) + '%')}${def ? row('shield', 'Defensa', def + '%') : ''}${row('carga', 'Carga', carga)}${row('skull', 'Muertes', g.deaths)}${row('hourglass', 'Tiempo', formatTime(g.playTime))}</div>`;
   }
   renderInv() {
     document.querySelectorAll('#inv .tab').forEach((t) => t.classList.toggle('on', +t.dataset.t === this.invTab));
@@ -1556,6 +1561,10 @@ export class UI {
       // (game/mesa.js)
       case 'mesa':
         this.mesa.update(s, dt, inp, dir, conf, back);
+        break;
+      // el editor de personaje (game/creador.js)
+      case 'creador':
+        this.g.creador.update(s, dt, inp, dir, conf, back);
         break;
       case 'story':
         if (s.data.skippable && (conf || back) && s.data.onSkip) s.data.onSkip();

@@ -212,6 +212,7 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .detail h3 { margin: 0 0 calc(var(--u) * 2); font-weight: normal; color: var(--gold-hi); text-shadow: var(--sh); }
 .detail p { margin: 0; color: var(--bone); text-shadow: var(--sh); }
 .detail .sep { margin: calc(var(--u) * 4) 0; }
+.detail .nm { margin-bottom: calc(var(--u) * 2); color: var(--gold-hi); text-shadow: var(--sh); }
 .stats { display: grid; grid-template-columns: auto auto; gap: 0 calc(var(--u) * 8); justify-content: start; color: var(--ash); text-shadow: var(--sh); }
 .stats b { color: var(--bone-hi); font-weight: normal; }
 .stats .ico { display: inline-flex; align-items: center; gap: calc(var(--u) * 2); }
@@ -333,6 +334,25 @@ img.spr.mesa-drag { position: fixed; left: 0; top: 0; z-index: 50; pointer-event
 .ctl { display: grid; grid-template-columns: 1fr auto auto; gap: calc(var(--u) * 1) calc(var(--u) * 8); align-items: center; margin-top: calc(var(--u) * 4); color: var(--bone); text-shadow: var(--sh); }
 .ctl .h { color: var(--gold); }
 .ctl .k { display: inline-flex; gap: var(--u); align-items: center; justify-content: center; }
+
+/* el editor de personaje (game/creador.js): la lista a la izquierda, sin
+   velo; él, a la derecha, en lo oscuro; su nombre, al pie */
+#creador { place-items: center start; padding-left: max(2vw, calc(var(--u) * 6)); background: linear-gradient(to right, rgba(6, 5, 5, 0.55), rgba(6, 5, 5, 0) 46%); }
+#creador .cr-panel { width: min(calc(var(--u) * 200), 46vw); }
+#creador .cr-sub { min-height: calc(11px * var(--un)); margin-top: calc(var(--u) * 2); text-align: center; color: var(--dim); text-shadow: var(--sh); }
+#cr-list { margin-top: calc(var(--u) * 3); }
+#cr-list .opt { min-height: max(calc(var(--u) * 12), calc(21px * var(--m) + var(--u) * 1)); }
+#cr-list .opt .v { min-width: calc(var(--u) * 64); }
+#cr-list .opt .v > span { display: inline-flex; align-items: center; gap: calc(var(--u) * 2); }
+#cr-list .opt.k-accion .lb { color: var(--gold); }
+#cr-list .opt.k-accion.sel .lb { color: var(--gold-hi); }
+#cr-list .opt.escribe .v { min-width: calc(var(--u) * 70); }
+.cr-desc { min-height: calc(42px * var(--m)); margin-top: calc(var(--u) * 4); padding: 0 calc(var(--u) * 6); color: var(--ash); text-shadow: var(--sh); }
+#creador .hint { margin-top: calc(var(--u) * 3); gap: calc(var(--u) * 5); }
+.cr-nombre { position: fixed; right: 0; bottom: 2.5%; width: 54vw; text-align: center; color: var(--bone-hi); text-shadow: var(--sh), calc(-1px * var(--m)) 0 0 var(--void), 0 calc(-1px * var(--m)) 0 var(--void); pointer-events: none; }
+/* el campo del nombre: sólo se ve mientras se escribe */
+.cr-input { display: none; width: calc(var(--u) * 70); font-family: 'Handjet', monospace; font-size: var(--fs-hand); line-height: 1; color: var(--bone-hi); background: rgba(6, 5, 5, 0.6); border: 0; outline: 0; box-shadow: inset 0 calc(var(--u) * -1) 0 var(--gold); padding: 0 calc(var(--u) * 2); text-align: right; text-shadow: var(--sh); caret-color: var(--gold-hi); }
+#cr-list .opt.escribe .cr-input { display: inline-block; }
 
 /* muerte */
 #death { pointer-events: none; }

@@ -6,6 +6,9 @@
 //   node tools/armaduras.mjs out.png desnudo guardia caballero cuero
 //   node tools/armaduras.mjs out.png head=caballero+body=cuero+legs=guardia
 //   node tools/armaduras.mjs out.png caballero cuero@180   (@grados: girada)
+//   node tools/armaduras.mjs out.png desnudo~peinado=melena~barba=larga
+//        (~clave=valor: el aspecto del cuerpo, entities/aspecto.js; los
+//        rasgos, ~rasgos.nariz=0.9; ~azar=7, uno al azar con esa semilla)
 //   (requiere npx vite --port 5199)
 // ENV:
 //   VISTAS="az,el,dist,yMira[,xMira];..."  grados y metros (por defecto:
@@ -55,6 +58,7 @@ const res = await p.evaluate(
     g.ui.showHud(false);
     g.input.enabledPointerLock = false;
     const A = await import('/src/entities/armaduras.js');
+    const AS = await import('/src/entities/aspecto.js');
     const P = g.player;
     // dónde: en el plató (en 0, 0, -44) o en el juego, donde aparece el jugador
     let X = 0,
@@ -146,7 +150,19 @@ const res = await p.evaluate(
     for (const f of figuras) {
       // 'guardia' (las cuatro piezas), 'desnudo', o ranura=armadura+...; y
       // @grados, girada
-      const [fig, giro = 0] = f.split('@');
+      const [fig0, giro = 0] = f.split('@');
+      // (~clave=valor: el aspecto)
+      const [fig, ...asp] = fig0.split('~');
+      let aspecto = AS.aspectoBase();
+      for (const kv of asp) {
+        const [k, v] = kv.split('=');
+        if (k === 'azar') {
+          let s = +v || 1;
+          aspecto = AS.alAzar(() => ((s = (s * 16807) % 2147483647) - 1) / 2147483646);
+        } else if (k.startsWith('rasgos.')) aspecto.rasgos[k.slice(7)] = +v;
+        else aspecto[k] = k === 'complexion' ? +v : v;
+      }
+      aspecto = AS.normalizar(aspecto);
       let eq = fig;
       if (fig.includes('=')) {
         eq = {};
@@ -155,8 +171,15 @@ const res = await p.evaluate(
           eq[k] = v === '-' ? null : v;
         }
       }
-      const rig = A.buildArmado(eq, { farol, espada: !!arma, escudo: !!arma });
+      const rig = A.buildArmado(eq, { farol, espada: !!arma, escudo: !!arma, aspecto });
       rig.own();
+      AS.teñir(rig, aspecto);
+      // (la complexión: lo que se ensancha cada hueso)
+      const E = AS.escalasDe(aspecto);
+      for (const m of rig.meshes) {
+        const k = E[m.parent.name];
+        if (k && m.userData.matName !== 'ember') m.scale.set(k[0], k[1], k[2]);
+      }
       rig.root.position.set(X, Y, Z);
       rig.root.rotation.y = (+giro * Math.PI) / 180;
       g.scene.add(rig.root);

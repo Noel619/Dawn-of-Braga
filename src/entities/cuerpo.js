@@ -11,7 +11,10 @@
 // Va en el mismo esqueleto que el jugador (models.js, playerDef: el de
 // humanoidJoints(1)), esculpido como los ecos y el Desfigurado (sculpt.js,
 // figure.js), y partido en zonas: cada pieza de armadura (armaduras.js) dice
-// qué zonas tapa, y lo que tapa no se pone. Las zonas:
+// qué zonas tapa, y lo que tapa no se pone. La cara, el pelo, la barba y sus
+// colores, los del aspecto que se elige en el editor de personaje
+// (aspecto.js; el de siempre, aspectoBase: revuelto, con la barba de días).
+// Las zonas:
 //   cabeza      el pelo (lo que no cabe bajo un yelmo o una capucha)
 //   cara        la cabeza entera (la piel), los ojos, las cejas y la barba:
 //               se ve siempre por la abertura del yelmo (el protagonista va
@@ -30,6 +33,7 @@ import * as THREE from 'three';
 import { MAT_DEFS } from '../gfx/materials.js';
 import { tube, merge, place, gSph, gBox, head, table, mix, sstep, folds } from './sculpt.js';
 import { torso, legs } from './figure.js';
+import { aspectoBase, caraDe } from './aspecto.js';
 
 export const ZONAS = ['cabeza', 'cara', 'cuello', 'torso', 'brazos', 'antebrazos', 'manos', 'cadera', 'muslos', 'piernas', 'pies'];
 
@@ -105,68 +109,116 @@ export function partir(g, f) {
 // ------------------------------------------------------------ la cabeza
 // La de un hombre de treinta años con hambre atrasada: la nariz recta y algo
 // grande, las cejas marcadas, las cuencas hondas, los pómulos y la quijada
-// cuadrada; las orejas pegadas.
+// cuadrada; las orejas pegadas. (La de siempre: el rostro «Soldado» del
+// editor, con todos sus rasgos en el medio; aspecto.js, caraDe.)
 export const CARA = { w: 1.0, h: 1.0, d: 1.0, nose: 0.028, noseW: 1.08, brow: 0.011, socket: 0.014, cheek: 0.008, gaunt: 0.007, jaw: 0.98, chin: 0.009, mouth: 0.004, lips: 0.0026, ears: 0.017 };
 // (la barbilla, a y0 sobre la articulación; la cabeza llega a 0.241)
 const Y0 = -0.012;
 // el centro de la cabeza (para empujar el pelo y la barba hacia fuera)
 const CC = [0, 0.118, -0.006];
-// Lo que se aparta de la piel el pelo: por encima de la raya que va de la
-// frente (0,19) a la sien, por encima de la oreja y hasta la nuca (0,05),
-// revuelto (más en la coronilla y la nuca, a mechones)
-function gruesoPelo(x, y, z) {
-  const t = Math.atan2(x, z);
-  const at = Math.abs(t);
-  // la raya del pelo, alrededor (de delante a la nuca)
-  const raya = table(
-    [
-      [0, 0.188],
-      [0.55, 0.184],
-      [0.95, 0.162],
-      [1.35, 0.158],
-      [1.7, 0.16],
-      [2.15, 0.1],
-      [2.6, 0.062],
-      [3.15, 0.05],
-    ],
-    at
-  )[0];
-  const k = sstep(raya - 0.006, raya + 0.012, y);
-  if (k <= 0) return 0;
-  // el grueso: más en la coronilla y detrás; mechones (algo de ruido alrededor
-  // y de arriba abajo)
-  const mech = 0.75 + 0.25 * Math.sin(t * 9 + y * 40) * Math.sin(t * 5.3 - y * 23 + 1.1);
-  const grueso = 0.008 + 0.006 * sstep(0.12, 0.23, y) + 0.004 * sstep(1.2, 2.6, at);
-  return k * grueso * mech;
+// La raya del pelo, alrededor (t: el ángulo desde delante; de la frente,
+// 0,19, a la sien, por encima de la oreja y hasta la nuca, 0,05)
+const RAYA = [
+  [0, 0.188],
+  [0.55, 0.184],
+  [0.95, 0.162],
+  [1.35, 0.158],
+  [1.7, 0.16],
+  [2.15, 0.1],
+  [2.6, 0.062],
+  [3.15, 0.05],
+];
+// la melena de paje: el flequillo hasta las cejas y, alrededor, cortada en
+// redondo por encima de la nuca (tapa las orejas)
+const RAYA_PAJE = [
+  [0, 0.174],
+  [0.5, 0.172],
+  [0.85, 0.15],
+  [1.15, 0.11],
+  [1.7, 0.094],
+  [2.3, 0.086],
+  [3.15, 0.08],
+];
+// Lo que se aparta de la piel el pelo de cada peinado (en metros): por encima
+// de su raya (o.raya), g0 de grueso, más gc en la coronilla y gb detrás, con
+// mechones (ruido: lo que varía alrededor y de arriba abajo); o.coronilla: el
+// radio de la tonsura (lo rapado de arriba); o.cerco: sólo los lados y la
+// nuca (el calvo); o.nuca: dónde acaba por detrás (si no, la raya)
+const PELOS = {
+  revuelto: { g0: 0.008, gc: 0.006, gb: 0.004, ruido: 0.25 },
+  corto: { g0: 0.0055, gc: 0.0025, gb: 0.0015, ruido: 0.12, nuca: 0.068 },
+  rapado: { g0: 0.0024, gc: 0, gb: 0, ruido: 0, nuca: 0.066 },
+  paje: { g0: 0.0105, gc: 0.004, gb: 0.002, ruido: 0.07, raya: RAYA_PAJE, borde: 0.006 },
+  melena: { g0: 0.009, gc: 0.005, gb: 0.007, ruido: 0.2, nuca: 0.02 },
+  coleta: { g0: 0.0048, gc: 0.0015, gb: 0.002, ruido: 0.05, nuca: 0.056 },
+  tonsura: { g0: 0.0065, gc: 0.002, gb: 0.002, ruido: 0.14, coronilla: 0.052, nuca: 0.066 },
+  calvo: { g0: 0.0042, gc: 0, gb: 0.001, ruido: 0.12, cerco: true, nuca: 0.066 },
+};
+function gruesoPelo(o) {
+  const raya = o.raya || RAYA;
+  return (x, y, z) => {
+    const t = Math.atan2(x, z);
+    const at = Math.abs(t);
+    let ry = table(raya, at)[0];
+    // (por detrás, hasta donde acabe: corto, a ras de la nuca; la melena, más abajo)
+    if (o.nuca !== undefined && at > 2.1) ry = mix(ry, o.nuca, sstep(2.1, 2.7, at));
+    const bd = o.borde ?? 0.012;
+    let k = sstep(ry - bd * 0.5, ry + bd, y);
+    if (k <= 0) return 0;
+    // la tonsura: la coronilla rapada en redondo
+    if (o.coronilla) k *= sstep(o.coronilla - 0.006, o.coronilla + 0.006, Math.hypot(x, z + 0.01)) + sstep(0.2, 0.17, y);
+    // el calvo: el cerco de los lados y la nuca (por debajo de la sien)
+    if (o.cerco) k *= sstep(0.158, 0.138, y) * sstep(0.85, 1.25, at);
+    if (k <= 0) return 0;
+    k = Math.min(1, k);
+    const mech = 1 - o.ruido + o.ruido * Math.sin(t * 9 + y * 40) * Math.sin(t * 5.3 - y * 23 + 1.1);
+    const grueso = o.g0 + o.gc * sstep(0.12, 0.23, y) + o.gb * sstep(1.2, 2.6, at);
+    return k * grueso * mech;
+  };
 }
-// La barba de días: de patilla a patilla por la quijada, la barbilla y el
-// bigote (sin las mejillas de arriba)
-function gruesoBarba(x, y, z) {
-  const t = Math.atan2(x, z);
-  const at = Math.abs(t);
-  if (at > 1.75) return 0;
-  // la raya de arriba: de la patilla (0,125, delante de la oreja) baja por la
-  // mejilla (0,07) y sube al bigote (0,082) bajo la nariz
-  const top = table(
-    [
-      [0, 0.083],
-      [0.22, 0.078],
-      [0.42, 0.064],
-      [0.75, 0.072],
-      [1.15, 0.1],
-      [1.45, 0.126],
-      [1.75, 0.14],
-    ],
-    at
-  )[0];
-  const k = sstep(top + 0.006, top - 0.008, y) * sstep(1.75, 1.5, at);
-  // la boca, sin barba (los labios)
-  const boca = Math.exp(-((x / 0.022) ** 4)) * Math.exp(-(((y - (0.072 + Y0)) / 0.0085) ** 2)) * sstep(0.03, 0.06, z);
-  return k * (1 - boca) * 0.0036;
+// La barba de cada estilo: de patilla a patilla por la quijada (lados), la
+// barbilla (menton) y el bigote, cada parte con su grueso (en metros).
+const BARBAS = {
+  dias: { bigote: 0.0036, menton: 0.0036, lados: 0.0036 },
+  corta: { bigote: 0.0068, menton: 0.0105, lados: 0.0085 },
+  larga: { bigote: 0.0078, menton: 0.0125, lados: 0.0105 },
+  bigote: { bigote: 0.0066, menton: 0, lados: 0 },
+  perilla: { bigote: 0.0058, menton: 0.0105, lados: 0, estrecha: true },
+};
+function gruesoBarba(o) {
+  return (x, y, z) => {
+    const t = Math.atan2(x, z);
+    const at = Math.abs(t);
+    if (at > 1.75) return 0;
+    // la raya de arriba: de la patilla (0,125, delante de la oreja) baja por
+    // la mejilla (0,07) y sube al bigote (0,082) bajo la nariz
+    const top = table(
+      [
+        [0, 0.083],
+        [0.22, 0.078],
+        [0.42, 0.064],
+        [0.75, 0.072],
+        [1.15, 0.1],
+        [1.45, 0.126],
+        [1.75, 0.14],
+      ],
+      at
+    )[0];
+    const k = sstep(top + 0.006, top - 0.008, y) * sstep(1.75, 1.5, at);
+    if (k <= 0) return 0;
+    // la boca, sin barba (los labios)
+    const boca = Math.exp(-((x / 0.022) ** 4)) * Math.exp(-(((y - (0.072 + Y0)) / 0.0085) ** 2)) * sstep(0.03, 0.06, z);
+    // las partes: el bigote (sobre la boca), la barbilla (bajo ella) y los lados
+    const wB = sstep(0.052, 0.062, y) * sstep(0.5, 0.34, at);
+    const wM = sstep(0.056, 0.044, y) * (o.estrecha ? sstep(0.5, 0.32, at) : sstep(0.8, 0.6, at));
+    const wL = sstep(0.36, 0.62, at);
+    const g = Math.max(o.bigote * wB, o.menton * wM, o.lados * wL);
+    return k * (1 - boca) * g;
+  };
 }
 // Empuja hacia fuera una copia de la cabeza donde f diga (en metros) y se
 // queda con los triángulos que han salido (la mitad del grueso, al menos)
-function capa(geo, f) {
+function capa(geo, f, minimo = 0.0018) {
   const g = geo.clone();
   const pos = g.attributes.position;
   const v = new V3();
@@ -181,14 +233,8 @@ function capa(geo, f) {
     pos.setXYZ(i, v.x + (dx / r) * k, v.y + (dy / r) * k, v.z + (dz / r) * k);
   }
   g.computeVertexNormals();
-  const [, dentro] = partir(g, (x, y, z) => f(x, y, z) > 0.0018);
+  const [, dentro] = partir(g, (x, y, z) => f(x, y, z) > minimo);
   return dentro;
-}
-// la cabeza: la piel entera (sin pelo: con el yelmo puesto no asoma nada),
-// y aparte el pelo y la barba
-function cabeza() {
-  const piel = head({ ...CARA, y0: Y0, nu: 40, nv: 30 });
-  return { piel, pelo: capa(piel, gruesoPelo), barba: capa(piel, gruesoBarba) };
 }
 // el punto de la piel que más sale hacia delante cerca de (x, y)
 function frente(geo, x, y, r = 0.008) {
@@ -196,6 +242,190 @@ function frente(geo, x, y, r = 0.008) {
   let z = -1;
   for (let i = 0; i < p.count; i++) if (Math.abs(p.getX(i) - x) < r && Math.abs(p.getY(i) - y) < r) z = Math.max(z, p.getZ(i));
   return z > -1 ? z : 0.085;
+}
+// el punto de la piel que más sale hacia un lado (sx) cerca de (y, z)
+function costado(geo, sx, y, z, r = 0.01) {
+  const p = geo.attributes.position;
+  let x = -1;
+  for (let i = 0; i < p.count; i++) if (Math.abs(p.getY(i) - y) < r && Math.abs(p.getZ(i) - z) < r) x = Math.max(x, p.getX(i) * sx);
+  return x > -1 ? x * sx : sx * 0.08;
+}
+// Un pseudoaleatorio fijo (para los mechones: siempre los mismos)
+const rr = (s) => 0.5 + Math.sin(s * 91.7 + 0.3) * 0.5;
+
+// Los mechones sueltos de cada peinado (en la cabeza): el revuelto, sobre la
+// frente y por la nuca; la melena, hasta los hombros; atado atrás, la coleta.
+function mechones(piel, peinado) {
+  const out = [];
+  const lock = (pts, r0, r1, n = 4) => out.push(tube(pts, (q) => mix(r0, r1, q), { n, seg: 4, up: [0, 0, 1] }));
+  if (peinado === 'revuelto' || peinado === 'melena') {
+    // sobre la frente, hacia un lado
+    for (let i = 0; i < 6; i++) {
+      const x0 = -0.05 + i * 0.019 + (rr(i) - 0.5) * 0.008;
+      const y0 = 0.205 + rr(i + 2) * 0.012;
+      const z0 = frente(piel, x0, 0.19) - 0.006;
+      const len = (peinado === 'melena' ? 0.022 : 0.03) + rr(i + 5) * 0.025;
+      lock(
+        [
+          [x0, y0, z0],
+          [x0 + 0.008, y0 - len * 0.5, z0 + 0.012],
+          [x0 + 0.014, y0 - len, z0 + 0.008],
+        ],
+        0.0075,
+        0.0015
+      );
+    }
+  }
+  if (peinado === 'revuelto') {
+    // la nuca y detrás de las orejas
+    for (let i = 0; i < 9; i++) {
+      const a = Math.PI + (i - 4) * 0.27;
+      const r0 = 0.084;
+      const x0 = Math.sin(a) * r0,
+        z0 = Math.cos(a) * r0 - 0.006;
+      const y0 = 0.075 + Math.abs(i - 4) * 0.01;
+      const len = 0.03 + rr(i + 11) * 0.03;
+      lock(
+        [
+          [x0, y0 + 0.03, z0 * 1.02],
+          [x0 * 1.12, y0, z0 * 1.12],
+          [x0 * 1.14 + (rr(i + 3) - 0.5) * 0.01, y0 - len, z0 * 1.08],
+        ],
+        0.009,
+        0.002
+      );
+    }
+  }
+  if (peinado === 'melena') {
+    // de las sienes a la nuca: cae por detrás de las orejas hasta los hombros
+    // (por delante, a los lados de la cara, sólo hasta la quijada)
+    for (let i = 0; i < 17; i++) {
+      const a = Math.PI + (i - 8) * 0.235;
+      const fr = Math.abs(i - 8) / 8;
+      const r0 = 0.088 + fr * 0.006;
+      const x0 = Math.sin(a) * r0,
+        z0 = Math.cos(a) * r0 - 0.006;
+      const y0 = 0.15 - fr * 0.03;
+      const yb = -0.06 + fr * 0.11 + (rr(i + 21) - 0.5) * 0.02;
+      const o = 1.08 + fr * 0.04;
+      lock(
+        [
+          [x0, y0, z0],
+          [x0 * o, mix(y0, yb, 0.4), z0 * o],
+          [x0 * (o + 0.04) + (rr(i + 7) - 0.5) * 0.008, yb, z0 * (o + 0.06) - 0.004],
+        ],
+        0.016 - fr * 0.004,
+        0.004,
+        6
+      );
+    }
+  }
+  if (peinado === 'coleta') {
+    // la coleta: el nudo de cuero en la nuca y la cola que cae
+    out.push(gSph(0.016, [0, 0.085, -0.104], [1, 1.1, 0.8], 8, 6));
+    lock(
+      [
+        [0, 0.09, -0.106],
+        [0, 0.04, -0.118],
+        [0.004, -0.03, -0.112],
+      ],
+      0.017,
+      0.005,
+      6
+    );
+  }
+  return out;
+}
+// Lo que cuelga de la barba larga: de la barbilla al pecho, en punta
+function barbaLarga() {
+  return tube(
+    [
+      [0, 0.024, 0.066],
+      [0, -0.022, 0.08],
+      [0.002, -0.064, 0.074],
+      [0.004, -0.098, 0.064],
+    ],
+    (q) => [mix(0.048, 0.012, q * q), mix(0.022, 0.007, q)],
+    { n: 8, seg: 10, caps: true, capL: 0.02, mod: (a, q) => 1 + 0.12 * folds(a * 2, 5, 3) * q }
+  );
+}
+// Las puntas del bigote: le caen por las comisuras
+function puntasBigote(piel) {
+  const out = [];
+  for (const sx of [1, -1]) {
+    const x = sx * 0.026,
+      z = frente(piel, x, 0.06) + 0.004;
+    out.push(
+      tube(
+        [
+          [sx * 0.018, 0.068, z + 0.004],
+          [x, 0.054, z],
+          [sx * 0.03, 0.038, z - 0.004],
+        ],
+        (q) => mix(0.0045, 0.0018, q),
+        { n: 4, seg: 5, caps: true, capL: 0.003 }
+      )
+    );
+  }
+  return merge(out);
+}
+// Una cicatriz: una raya de carne levantada sobre la piel (de a a b, en x e
+// y, con una curva suave)
+const CICATRICES = {
+  ceja: [
+    [0.044, 0.188],
+    [0.039, 0.168],
+    [0.033, 0.151],
+  ],
+  mejilla: [
+    [-0.074, 0.158],
+    [-0.062, 0.135],
+    [-0.046, 0.108],
+  ],
+  nariz: [
+    [-0.028, 0.142],
+    [0, 0.136],
+    [0.026, 0.141],
+  ],
+  labio: [
+    [0.013, 0.086],
+    [0.015, 0.072],
+    [0.016, 0.056],
+  ],
+  frente: [
+    [0.052, 0.214],
+    [0.016, 0.198],
+    [-0.024, 0.187],
+  ],
+};
+function cicatriz(piel, id) {
+  const P = CICATRICES[id];
+  if (!P) return null;
+  const pts = [];
+  for (let i = 0; i <= 8; i++) {
+    const t = i / 8;
+    const k = t < 0.5 ? 0 : 1;
+    const u = t < 0.5 ? t * 2 : (t - 0.5) * 2;
+    const x = mix(P[k][0], P[k + 1][0], u),
+      y = mix(P[k][1], P[k + 1][1], u);
+    pts.push([x, y, frente(piel, x, y, 0.006) + 0.0006]);
+  }
+  return tube(pts, (q) => 0.0017 * (0.6 + 0.4 * Math.sin(q * Math.PI)), { n: 16, seg: 4, caps: true, capL: 0.004 });
+}
+// La cabeza: la piel entera (sin pelo: con el yelmo puesto no asoma nada) y,
+// aparte, lo que se ve de ella según el aspecto (aspecto.js)
+function cabeza(a) {
+  const cara = caraDe(a, CARA);
+  const piel = head({ ...cara, y0: Y0, nu: 40, nv: 30 });
+  const P = PELOS[a.peinado] || PELOS.revuelto;
+  const B = BARBAS[a.barba];
+  const pelo = [capa(piel, gruesoPelo(P), Math.min(0.0018, P.g0 * 0.6)), ...mechones(piel, a.peinado)];
+  const barba = [];
+  if (B) barba.push(capa(piel, gruesoBarba(B), 0.0018));
+  if (a.barba === 'larga') barba.push(barbaLarga());
+  if (a.barba === 'bigote' || a.barba === 'larga') barba.push(puntasBigote(piel));
+  // (la cabeza rapada y la barba de días: lo que apunta, entre pelo y piel)
+  return { piel, cara, pelo: merge(pelo), peloMat: a.peinado === 'rapado' ? 'conApunta' : 'conPelo', barba: barba.length ? merge(barba) : null, barbaMat: a.barba === 'dias' ? 'conApunta' : 'conPelo', cicatriz: cicatriz(piel, a.cicatriz) };
 }
 
 // ------------------------------------------------------------ las manos
@@ -334,73 +564,43 @@ function pie(sd) {
 
 // ------------------------------------------------------------ el cuerpo
 // Las piezas del cuerpo, cada una con su zona (la articulación, la del
-// esqueleto del jugador).
-export function cuerpoParts() {
+// esqueleto del jugador), con el aspecto a (aspecto.js; si no, el de siempre).
+export function cuerpoParts(a = aspectoBase()) {
   const out = [];
   const add = (zona, pt) => out.push({ ...pt, zona });
 
-  // --- la cara: la cabeza (piel), los ojos, las cejas y la barba
-  const C = cabeza();
+  // --- la cara: la cabeza (piel), los ojos, las cejas, la barba y la cicatriz
+  const C = cabeza(a);
   add('cara', P('head', 'conPiel', C.piel));
-  const EY = 0.153 + Y0;
+  const EY = (0.153 + Y0) * (C.cara.h ?? 1);
   for (const sx of [1, -1]) {
     const ex = sx * 0.031;
-    // el blanco, el iris (oscuro) y la niña, hundidos en su cuenca
-    add('cara', P('head', 'bone', gSph(0.0128, [ex, EY, 0.069], [1, 0.78, 0.8], 10, 8)));
-    add('cara', P('head', 'iron', gSph(0.0066, [ex, EY + 0.0005, 0.0788], [1, 1, 0.45], 8, 6)));
-    add('cara', P('head', 'black', gSph(0.0032, [ex, EY + 0.0005, 0.0816], [1, 1, 0.5], 6, 4)));
+    // el blanco, el iris y la niña, hundidos en su cuenca (lo que sea de
+    // honda la de esta cara)
+    const ez = frente(C.piel, ex, EY, 0.004) - 0.004;
+    add('cara', P('head', 'bone', gSph(0.0128, [ex, EY, ez], [1, 0.78, 0.8], 10, 8)));
+    add('cara', P('head', 'conIris', gSph(0.0066, [ex, EY + 0.0005, ez + 0.0098], [1, 1, 0.45], 8, 6)));
+    add('cara', P('head', 'black', gSph(0.0032, [ex, EY + 0.0005, ez + 0.0126], [1, 1, 0.5], 6, 4)));
     // la ceja: dos trazos, el de dentro más alto y más grueso
     const zc = frente(C.piel, sx * 0.03, EY + 0.019);
     add('cara', P('head', 'conPelo', gBox(0.026, 0.0065, 0.008, [sx * 0.024, EY + 0.02, zc + 0.001], [-14, sx * 14, sx * -8])));
     add('cara', P('head', 'conPelo', gBox(0.02, 0.005, 0.007, [sx * 0.045, EY + 0.0175, zc - 0.006], [-10, sx * 32, sx * 10])));
   }
-  add('cara', P('head', 'conPelo', C.barba));
+  if (C.barba) add('cara', P('head', C.barbaMat, C.barba));
+  if (C.cicatriz) add('cara', P('head', 'conCicatriz', C.cicatriz));
 
-  // --- la cabeza: el pelo, revuelto, con unos mechones que caen sobre la
-  // frente y por la nuca
-  {
-    const mechones = [C.pelo];
-    const rr = (s) => 0.5 + Math.sin(s * 91.7 + 0.3) * 0.5;
-    // sobre la frente, hacia un lado
-    for (let i = 0; i < 6; i++) {
-      const x0 = -0.05 + i * 0.019 + (rr(i) - 0.5) * 0.008;
-      const y0 = 0.205 + rr(i + 2) * 0.012;
-      const z0 = frente(C.piel, x0, 0.19) - 0.006;
-      const len = 0.03 + rr(i + 5) * 0.025;
-      mechones.push(
-        tube(
-          [
-            [x0, y0, z0],
-            [x0 + 0.008, y0 - len * 0.5, z0 + 0.012],
-            [x0 + 0.014, y0 - len, z0 + 0.008],
-          ],
-          (q) => mix(0.0075, 0.0015, q),
-          { n: 4, seg: 4, up: [0, 0, 1] }
-        )
-      );
-    }
-    // la nuca y detrás de las orejas
-    for (let i = 0; i < 9; i++) {
-      const a = Math.PI + (i - 4) * 0.27;
-      const r0 = 0.084;
-      const x0 = Math.sin(a) * r0,
-        z0 = Math.cos(a) * r0 - 0.006;
-      const y0 = 0.075 + Math.abs(i - 4) * 0.01;
-      const len = 0.03 + rr(i + 11) * 0.03;
-      mechones.push(
-        tube(
-          [
-            [x0, y0 + 0.03, z0 * 1.02],
-            [x0 * 1.12, y0, z0 * 1.12],
-            [x0 * 1.14 + (rr(i + 3) - 0.5) * 0.01, y0 - len, z0 * 1.08],
-          ],
-          (q) => mix(0.009, 0.002, q),
-          { n: 4, seg: 4, up: [0, 0, 1] }
-        )
-      );
-    }
-    add('cabeza', P('head', 'conPelo', merge(mechones)));
-  }
+  // --- la cabeza: el pelo, con sus mechones (lo que no cabe bajo un yelmo
+  // o una capucha)
+  if (C.pelo) add('cabeza', P('head', C.peloMat, C.pelo));
+  // (lo demás no depende del aspecto: se hace una vez)
+  return out.concat(RESTO || (RESTO = restoCuerpo()));
+}
+let RESTO = null;
+// Del cuello abajo: lo mismo para todos los aspectos (la complexión lo
+// ensancha al vestirlo: aspecto.js, escalasDe)
+function restoCuerpo() {
+  const out = [];
+  const add = (zona, pt) => out.push({ ...pt, zona });
 
   // --- el cuello, con sus tendones
   add(
@@ -501,7 +701,9 @@ export function cuerpoParts() {
   ];
   for (const s of ['L', 'R']) {
     const sx = s === 'L' ? 1 : -1;
-    add('brazos', P('arm' + s, 'conPiel', gSph(1, [-sx * 0.006, -0.02, 0], [0.062, 0.068, 0.064], 10, 6)));
+    // (el deltoides, algo caído y metido hacia el brazo: antes, una bola
+    // grande que asomaba por encima de la línea del hombro)
+    add('brazos', P('arm' + s, 'conPiel', gSph(1, [-sx * 0.009, -0.03, 0.002], [0.057, 0.062, 0.06], 10, 6)));
     add(
       'brazos',
       P(
