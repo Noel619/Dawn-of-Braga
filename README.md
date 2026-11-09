@@ -1508,7 +1508,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        con primeros planos de una articulación (MIRA=handR) o en cuadrícula
                                        (COLUMNAS=4)
                         weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
-                                       bloqueo y curación contra un enemigo real
+                                       bloqueo y curación contra un enemigo real; la ballesta, aparte
+                                       (montarla, tirar, que se vuelva a montar sola gastando un virote, el
+                                       culatazo, el bloqueo y beber)
                         armas.mjs      el principio y las cualidades: el guardia caído (su escudo, la espada
                                        que se arranca, el que se levanta al fondo, el cuerpo que para el paso),
                                        la oxidada al 42,5 % de la de la guardia (la gracia, a la cuarta

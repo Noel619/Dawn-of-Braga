@@ -1,8 +1,10 @@
 // Prueba de las armas dentro del juego: para cada una, combo ligero completo,
 // pesado (sin cargar y cargado), ataque en carrera, ataque tras la voltereta,
 // bloqueo, curación y (lanza) estocada tras el escudo, contra un enemigo real
-// inmóvil. Comprueba que los golpes conectan, que el jugador vuelve a quedar
-// libre y que no hay errores ni NaN.
+// inmóvil. La ballesta, aparte: montarla, tirar (el virote le da), que se
+// vuelva a montar sola gastando un virote, el culatazo, el bloqueo y beber.
+// Comprueba que los golpes conectan, que el jugador vuelve a quedar libre y
+// que no hay errores ni NaN.
 //   node tools/weapontest.mjs [arma]        (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const only = process.argv[2] || '';
@@ -10,7 +12,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
-await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,hacha,lanza,oxidada,solingen&at=50,0,0&yaw=0');
+await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,hacha,lanza,oxidada,solingen,ballesta&at=50,0,0&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const res = await p.evaluate((only) => {
   window.__pause = true;
@@ -170,6 +172,51 @@ const res = await p.evaluate((only) => {
     r.heal = { healed: P.hp > hp0, free: P.state === 'free' };
     r.finite = finite();
     out[id] = r;
+  }
+  // la ballesta
+  if (!only || only === 'ballesta') {
+    P.equipWeapon('ballesta');
+    P.xbowLoaded = false;
+    const inv = g.inventory;
+    const n0 = 4;
+    inv.add('virote', n0 - inv.count('virote'));
+    const r = {};
+    // sin montar: el primer «golpe» la monta (gasta un virote)
+    place(7);
+    hits = 0;
+    sim(0.05, [], ['M0']);
+    const first = P.atk && P.atk.clip.name;
+    sim(2.2);
+    r.span = { clip: first, loaded: !!P.xbowLoaded, bolts: inv.count('virote') };
+    // tira: el virote le da y se vuelve a montar sola (otro virote)
+    sim(0.05, [], ['M0']);
+    const shotClip = P.atk && P.atk.clip.name;
+    sim(0.6);
+    const hitShot = hits;
+    sim(2.6);
+    r.shot = { clip: shotClip, hits: hitShot, reloaded: !!P.xbowLoaded, bolts: inv.count('virote'), free: P.state === 'free' };
+    // el culatazo, de cerca
+    place(1.6);
+    hits = 0;
+    sim(0.1, ['KeyF']);
+    sim(1.4);
+    r.bash = { hits, free: P.state === 'free' };
+    // bloqueo y beber
+    place();
+    inp.keys.add('M2');
+    inp.kPressed.add('M2');
+    for (let k = 0; k < 12; k++) g.update(1 / 30);
+    r.block = { blocking: !!P.blocking, canBlock: P.canBlock() };
+    inp.keys.delete('M2');
+    inp.kReleased.add('M2');
+    sim(0.8);
+    place();
+    const hp0 = (P.hp = P.maxHp * 0.5);
+    sim(0.05, [], ['KeyR']);
+    sim(1.6);
+    r.heal = { healed: P.hp > hp0, free: P.state === 'free' };
+    r.finite = finite();
+    out.ballesta = r;
   }
   return out;
 }, only);

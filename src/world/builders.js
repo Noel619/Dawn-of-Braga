@@ -997,10 +997,13 @@ export function solidGableRoof(ctx, x0, z0, x1, z1, yEave, yRidge, axis = 'x', o
         q(mat, P(s1, yb, -u1), P(s0, yb, -u1), P(s0, ya, -u0), P(s1, ya, -u0), top);
         q(under, P(s1, ya - tv, -u0), P(s0, ya - tv, -u0), P(s0, yb - tv, -u1), P(s1, yb - tv, -u1), bot);
       }
-      // el canto del alero
+      // el canto del alero (sin vuelo, a ras del muro —el de la casa más alta
+      // contra la que se apoya, o el suyo—: un centímetro por dentro, que si
+      // no parpadeaba con el revoco)
       if (u1 < ue - 1e-6) continue;
-      if (sg > 0) q('wooddark', P(s0, ye - tv, ue), P(s1, ye - tv, ue), P(s1, ye, ue), P(s0, ye, ue), edge);
-      else q('wooddark', P(s1, ye - tv, -ue), P(s0, ye - tv, -ue), P(s0, ye, -ue), P(s1, ye, -ue), edge);
+      const uk = ovs[sg > 0 ? 1 : 0] < 0.02 ? ue - 0.01 : ue;
+      if (sg > 0) q('wooddark', P(s0, ye - tv, uk), P(s1, ye - tv, uk), P(s1, ye, uk), P(s0, ye, uk), edge);
+      else q('wooddark', P(s1, ye - tv, -uk), P(s0, ye - tv, -uk), P(s0, ye, -uk), P(s1, ye, -uk), edge);
     }
     // el canto de cada hueco (el grueso de las tejas y las tablas)
     for (const [s0, u0, s1, u1] of hs) {

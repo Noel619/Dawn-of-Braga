@@ -53,20 +53,48 @@ export function carry2(W) {
 // la guardia de cada arma (G en IK, GUARD resuelta a rotaciones).
 function commonClips(W, G, GUARD, BLOCK) {
   const two = W.hands === 2;
+  // la voltereta: la guardia del arma (sin el brazo del escudo: ése va a
+  // mano) y el arma recogida, de través; a dos manos, la izquierda la suelta
+  const { ikL: _ikL, ...RG0 } = G;
+  void _ikL;
+  const RG = { elbowR: [-0.55, -0.75, -0.4], ...RG0 };
+  // (al empezar, el cuerpo ya va echado 30° adelante: la hoja, alzada otro
+  // tanto, que la de la lanza no baje la punta a las losas)
+  const RG_UP = RG.bladeR ? { bladeR: [RG.bladeR[0], RG.bladeR[1] + 26, RG.bladeR[2] || 0] } : {};
+  const TUCK = W.rollTuck || { ikR: [-40, 6, 16], bladeR: [-90, 6, 0], elbowR: [-0.6, -0.7, -0.3] };
+  const rollGrip = (k) => (two ? { wGrip: [k, 0, 0] } : {});
+  // la muerte: el arma se suelta de la otra mano y acaba tendida en el suelo,
+  // a la derecha, de plano (boca abajo, el pecho mira al suelo: la hoja, en
+  // su plano, hacia la cabeza y hacia fuera); antes se hundía en las losas
+  // (las largas —la lanza, el hacha, la ballesta— llevan mucho detrás de la
+  // mano: más por fuera, que el regatón o la culata no se metan en la cadera)
+  const far = two || W.id === 'lanza' ? -16 : 0;
+  const DIE = [
+    { ikR: [-38, 12, 18], bladeR: [-40, 34, 0], elbowR: [-0.6, -0.6, -0.4], ...(two ? { wGrip: [1, 0, 0] } : {}) },
+    { ikR: [-34 + far, -10, 22], bladeR: [-60 - far, 10, 0], elbowR: [-0.6, -0.6, -0.4], ...(two ? { wGrip: [0, 0, 0] } : {}) },
+    // (la lanza, a lo largo del costado derecho, hacia la cabeza: de
+    // través, su regatón pasaba por debajo de la cadera)
+    { ikR: [-50 + far, 26, 12], bladeR: W.id === 'lanza' ? [180, 80, 0] : [-90, 44, 0], elbowR: [-0.6, -0.6, -0.4], ...(two ? { wGrip: [0, 0, 0] } : {}) },
+  ];
   // curación: el arma baja a un lado y la izquierda bebe
   const low = W.healR || { ikR: [-26, 6, 18], bladeR: [-10, -30, 0] };
   const healKey = (extra) => ({ ...(G.elbowR ? { elbowR: G.elbowR } : {}), ...low, ...(two ? { wGrip: [0, 0, 0] } : {}), ...extra });
   return {
+    // (el arma, recogida y de través, hacia fuera: en una voltereta hacia
+    // delante es la única dirección que no pasa por el suelo; antes la punta
+    // se metía en las losas hasta casi un metro, y la de la lanza, metro y
+    // medio)
     roll: clip(
       'roll',
       0.64,
       [
-        [0, { root: [0, -20, 0], chest: [30, 0, 0], legL: [-40, 0, 0], shinL: [60, 0, 0], legR: [-20, 0, 0], shinR: [60, 0, 0], armL: [-60, 0, 0], foreL: [-80, 0, 0], armR: [-50, 0, 0], foreR: [-80, 0, 0] }],
-        [0.1, { root: [0, -45, 0], hips: [70, 0, 0], chest: [40, 0, 0], head: [30, 0, 0], legL: [-110, 0, 0], shinL: [130, 0, 0], legR: [-100, 0, 0], shinR: [130, 0, 0], armL: [-70, 0, 0], foreL: [-100, 0, 0], armR: [-70, 0, 0], foreR: [-100, 0, 0] }],
-        [0.24, { root: [0, -60, 0], hips: [180, 0, 0], chest: [45, 0, 0], head: [30, 0, 0], legL: [-120, 0, 0], shinL: [140, 0, 0], legR: [-120, 0, 0], shinR: [140, 0, 0], armL: [-70, 0, 0], foreL: [-100, 0, 0], armR: [-70, 0, 0], foreR: [-100, 0, 0] }, 'linear'],
-        [0.38, { root: [0, -48, 0], hips: [300, 0, 0], chest: [40, 0, 0], head: [20, 0, 0], legL: [-100, 0, 0], shinL: [130, 0, 0], legR: [-90, 0, 0], shinR: [120, 0, 0], armL: [-50, 0, 0], foreL: [-90, 0, 0], armR: [-50, 0, 0], foreR: [-90, 0, 0] }, 'linear'],
-        [0.5, { root: [0, -22, 0], hips: [360, 0, 0], chest: [22, 0, 0], legL: [-50, 0, 0], shinL: [80, 0, 0], legR: [-10, 0, 0], shinR: [60, 0, 0], armL: [-30, 0, 10], foreL: [-60, 0, 0], armR: [-30, 0, -10], foreR: [-60, 0, 0] }],
-        [0.64, { hips: [360, 0, 0], ...GUARD, root: [0, -6, 0] }],
+        [0, { root: [0, -20, 0], chest: [30, 0, 0], legL: [-40, 0, 0], shinL: [60, 0, 0], legR: [-20, 0, 0], shinR: [60, 0, 0], armL: [-60, 0, 0], foreL: [-80, 0, 0], armR: [-50, 0, 0], foreR: [-80, 0, 0], ...RG, ...RG_UP, ...rollGrip(1) }],
+        [0.05, { root: [0, -32, 0], hips: [35, 0, 0], chest: [35, 0, 0], head: [15, 0, 0], legL: [-75, 0, 0], shinL: [95, 0, 0], legR: [-60, 0, 0], shinR: [95, 0, 0], armL: [-65, 0, 0], foreL: [-90, 0, 0], armR: [-60, 0, 0], foreR: [-90, 0, 0], ...TUCK, ...rollGrip(0) }],
+        [0.1, { root: [0, -45, 0], hips: [70, 0, 0], chest: [40, 0, 0], head: [30, 0, 0], legL: [-110, 0, 0], shinL: [130, 0, 0], legR: [-100, 0, 0], shinR: [130, 0, 0], armL: [-70, 0, 0], foreL: [-100, 0, 0], armR: [-70, 0, 0], foreR: [-100, 0, 0], ...TUCK, ...rollGrip(0) }],
+        [0.24, { root: [0, -60, 0], hips: [180, 0, 0], chest: [45, 0, 0], head: [30, 0, 0], legL: [-120, 0, 0], shinL: [140, 0, 0], legR: [-120, 0, 0], shinR: [140, 0, 0], armL: [-70, 0, 0], foreL: [-100, 0, 0], armR: [-70, 0, 0], foreR: [-100, 0, 0], ...TUCK, ...rollGrip(0) }, 'linear'],
+        [0.38, { root: [0, -48, 0], hips: [300, 0, 0], chest: [40, 0, 0], head: [20, 0, 0], legL: [-100, 0, 0], shinL: [130, 0, 0], legR: [-90, 0, 0], shinR: [120, 0, 0], armL: [-50, 0, 0], foreL: [-90, 0, 0], armR: [-50, 0, 0], foreR: [-90, 0, 0], ...TUCK, ...rollGrip(0) }, 'linear'],
+        [0.5, { root: [0, -22, 0], hips: [360, 0, 0], chest: [22, 0, 0], legL: [-50, 0, 0], shinL: [80, 0, 0], legR: [-10, 0, 0], shinR: [60, 0, 0], armL: [-30, 0, 10], foreL: [-60, 0, 0], armR: [-30, 0, -10], foreR: [-60, 0, 0], ...TUCK, ...rollGrip(0) }],
+        [0.64, { hips: [360, 0, 0], ...GUARD, root: [0, -6, 0], ...RG, ...rollGrip(1) }],
       ],
       { ground: false }
     ),
@@ -109,10 +137,10 @@ function commonClips(W, G, GUARD, BLOCK) {
       'death',
       2.0,
       [
-        [0, { chest: [-30, 0, 0], head: [-30, 0, 0], armL: [-20, 0, 40], armR: [-20, 0, -40], root: [0, -5, 0] }, 'snap'],
-        [0.5, { chest: [20, 0, 0], head: [30, 0, 0], armL: [0, 0, 10], armR: [0, 0, -10], foreR: [-10, 0, 0], root: [0, -45, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0] }],
-        [1.1, { hips: [80, 0, 0], chest: [10, 0, 0], head: [20, 30, 0], armL: [-160, 0, 20], armR: [-30, 0, -60], root: [0, -78, 0], legL: [-10, 0, 5], shinL: [20, 0, 0], legR: [-5, 0, -8], shinR: [30, 0, 0] }, 'in'],
-        [2.0, { hips: [86, 0, 0], chest: [4, 0, 0], head: [20, 40, 0], armL: [-160, 0, 20], armR: [-30, 0, -60], root: [0, -80, 0], legL: [-4, 0, 5], shinL: [10, 0, 0], legR: [-4, 0, -8], shinR: [10, 0, 0] }],
+        [0, { chest: [-30, 0, 0], head: [-30, 0, 0], armL: [-20, 0, 40], armR: [-20, 0, -40], root: [0, -5, 0], ...DIE[0] }, 'snap'],
+        [0.5, { chest: [20, 0, 0], head: [30, 0, 0], armL: [0, 0, 10], armR: [0, 0, -10], foreR: [-10, 0, 0], root: [0, -45, 0], legL: [-95, 0, 5], shinL: [100, 0, 0], legR: [-95, 0, -5], shinR: [100, 0, 0], ...DIE[1] }],
+        [1.1, { hips: [80, 0, 0], chest: [10, 0, 0], head: [20, 30, 0], armL: [-160, 0, 20], armR: [-30, 0, -60], root: [0, -78, 0], legL: [-10, 0, 5], shinL: [20, 0, 0], legR: [-5, 0, -8], shinR: [30, 0, 0], ...DIE[2] }, 'in'],
+        [2.0, { hips: [86, 0, 0], chest: [4, 0, 0], head: [20, 40, 0], armL: [-160, 0, 20], armR: [-30, 0, -60], root: [0, -80, 0], legL: [-4, 0, 5], shinL: [10, 0, 0], legR: [-4, 0, -8], shinR: [10, 0, 0], ...DIE[2] }],
       ],
       { ground: false }
     ),
@@ -124,10 +152,13 @@ function commonClips(W, G, GUARD, BLOCK) {
       3.2,
       (() => {
         const LIE = { root: [0, -80, 0], hips: [-88, 0, 0], chest: [-6, 0, 0], head: [-20, 0, 0] };
+        // (el arma, de través: boca arriba, la hoja a lo largo del suelo; si
+        // no, se hundía en las losas hasta metro y medio)
+        const PIN = (z) => ({ ikR: [-30, 8, z], bladeR: [-90, 0, 0], elbowR: [-0.6, -0.6, -0.4], ...(two ? { wGrip: [0, 0, 0] } : {}) });
         const K = [
-          [0, { ...GUARD }],
-          [0.16, { root: [0, -34, 0], hips: [-38, 0, 0], chest: [-22, 0, 0], head: [-28, 0, 0], armL: [-120, 0, 40], foreL: [-40, 0, 0], armR: [-120, 0, -40], foreR: [-40, 0, 0], legL: [-60, 0, 8], shinL: [70, 0, 0], legR: [-40, 0, -8], shinR: [60, 0, 0] }],
-          [0.34, { ...LIE, armL: [-150, 0, 25], foreL: [-60, 0, 0], armR: [-150, 0, -25], foreR: [-60, 0, 0], legL: [-50, 0, 10], shinL: [80, 0, 0], legR: [-30, 0, -10], shinR: [70, 0, 0] }, 'snap'],
+          [0, { ...GUARD, ...RG, ...(two ? { wGrip: [1, 0, 0] } : {}) }],
+          [0.16, { root: [0, -34, 0], hips: [-38, 0, 0], chest: [-22, 0, 0], head: [-28, 0, 0], armL: [-120, 0, 40], foreL: [-40, 0, 0], armR: [-120, 0, -40], foreR: [-40, 0, 0], legL: [-60, 0, 8], shinL: [70, 0, 0], legR: [-40, 0, -8], shinR: [60, 0, 0], ...PIN(36) }],
+          [0.34, { ...LIE, armL: [-150, 0, 25], foreL: [-60, 0, 0], armR: [-150, 0, -25], foreR: [-60, 0, 0], legL: [-50, 0, 10], shinL: [80, 0, 0], legR: [-30, 0, -10], shinR: [70, 0, 0], ...PIN(44) }, 'snap'],
         ];
         for (let i = 0; i < 8; i++) {
           const s = i % 2 ? 1 : -1;
@@ -145,6 +176,7 @@ function commonClips(W, G, GUARD, BLOCK) {
               shinL: [s > 0 ? 100 : 40, 0, 0],
               legR: [s > 0 ? -22 : -72, 0, -10],
               shinR: [s > 0 ? 40 : 100, 0, 0],
+              ...PIN(s > 0 ? 40 : 48),
             },
           ]);
         }
@@ -334,14 +366,14 @@ function parryClips(W, G, BLOCK) {
     return {
       parryA: pclip('parryA', 0.46, [
         [0, { ...B, ...S0 }],
-        [0.07, { ...B, ...S1, ikL: [24, 50, 50], elbowL: [0.9, -0.1, -0.2], chest: [10, 22, 0], head: [4, -8, 0], ikR: add(ikR, [-2, 8, -14]), bladeR: add(bl, [-10, 18, 0]) }, 'snap'],
-        [0.2, { ...B, ...S1, ikL: [30, 44, 40], elbowL: [0.9, -0.2, -0.3], chest: [8, 26, 0], head: [4, -10, 0], ikR: add(ikR, [-2, 10, -12]), bladeR: add(bl, [-12, 20, 0]) }],
+        [0.07, { ...B, ...S1, ikL: [24, 50, 50], elbowL: [0.9, -0.1, -0.2], chest: [10, 22, 0], head: [4, -8, 0], ikR: add(ikR, [-6, 8, -3]), bladeR: add(bl, [-14, 18, 0]) }, 'snap'],
+        [0.2, { ...B, ...S1, ikL: [30, 44, 40], elbowL: [0.9, -0.2, -0.3], chest: [8, 26, 0], head: [4, -10, 0], ikR: add(ikR, [-6, 10, -2]), bladeR: add(bl, [-16, 20, 0]) }],
         [0.46, end],
       ]),
       parryB: pclip('parryB', 0.46, [
         [0, { ...B, ...S0 }],
-        [0.07, { ...B, ...S1, ikL: [0, 66, 46], elbowL: [0.9, 0.1, -0.3], chest: [6, -28, 0], head: [10, 14, 0], ikR: add(ikR, [-4, 4, -12]), bladeR: add(bl, [-8, 16, 0]) }, 'snap'],
-        [0.2, { ...B, ...S1, ikL: [6, 70, 38], elbowL: [0.9, 0, -0.35], chest: [4, -22, 0], head: [10, 12, 0], ikR: add(ikR, [-4, 6, -10]), bladeR: add(bl, [-10, 18, 0]) }],
+        [0.07, { ...B, ...S1, ikL: [0, 66, 46], elbowL: [0.9, 0.1, -0.3], chest: [6, -28, 0], head: [10, 14, 0], ikR: add(ikR, [-6, 4, -3]), bladeR: add(bl, [-12, 16, 0]) }, 'snap'],
+        [0.2, { ...B, ...S1, ikL: [6, 70, 38], elbowL: [0.9, 0, -0.35], chest: [4, -22, 0], head: [10, 12, 0], ikR: add(ikR, [-6, 6, -2]), bladeR: add(bl, [-14, 18, 0]) }],
         [0.46, end],
       ]),
     };
@@ -371,7 +403,7 @@ function swordMoves({ G }) {
       0.62,
       [
         [0, { ...STANCE, root: [0, -2, 0], chest: [4, -16, 0], ...G }],
-        [0.14, { ...STANCE, chest: [8, -52, 0], head: [0, 20, 0], ikR: [-42, 64, -6], bladeR: [-150, 42, 0], elbowR: [-0.7, -0.1, -0.7], ikL: [22, 18, 24] }, 'hold'],
+        [0.14, { ...STANCE, chest: [8, -52, 0], head: [0, 20, 0], ikR: [-48, 64, 2], bladeR: [-156, 40, 0], elbowR: [-0.7, -0.1, -0.7], ikL: [22, 18, 24] }, 'hold'],
         [0.26, { ...STANCE, root: [0, -7, 4], chest: [14, 46, 0], head: [-4, -24, 0], ikR: [20, 6, 46], bladeR: [72, -28, 0], elbowR: [-0.4, -0.8, -0.3], ikL: [28, 14, 12] }, 'snap'],
         [0.4, { ...STANCE, root: [0, -6, 3], chest: [12, 58, 0], head: [-2, -26, 0], ikR: [30, 2, 30], bladeR: [112, -38, 0], elbowR: [-0.3, -0.8, -0.4], ikL: [28, 16, 12] }],
         [0.62, { ...G, chest: [2, 6, 0] }],
@@ -395,9 +427,9 @@ function swordMoves({ G }) {
       0.84,
       [
         [0, { ...STANCE, chest: [-4, -10, 0], ikR: [-22, 34, 22], bladeR: [0, 62, 0], ikL: [18, 22, 26] }],
-        [0.24, { ...STANCE, root: [0, 2, -4], chest: [-18, -12, 0], head: [-8, 0, 0], ikR: [-12, 96, -8], bladeR: [0, 128, 0], elbowR: [-0.8, 0.1, -0.5], ikL: [20, 26, 24] }, 'hold'],
-        [0.36, { ...LUNGE, chest: [30, 0, 0], head: [-12, 0, 0], ikR: [-8, 2, 54], bladeR: [0, -30, 0], elbowR: [-0.5, -0.8, 0], ikL: [20, 12, 22] }, 'snap'],
-        [0.56, { ...LUNGE, chest: [26, 0, 0], head: [-8, 0, 0], ikR: [-8, -2, 52], bladeR: [0, -38, 0], elbowR: [-0.5, -0.8, 0], ikL: [20, 12, 22] }],
+        [0.24, { ...STANCE, root: [0, 2, -4], chest: [-18, -12, 0], head: [-8, 0, 0], ikR: [-26, 94, -6], bladeR: [-12, 126, 0], elbowR: [-0.8, 0.1, -0.5], ikL: [20, 26, 24] }, 'hold'],
+        [0.36, { ...LUNGE, chest: [30, 0, 0], head: [-12, 0, 0], ikR: [-10, 4, 54], bladeR: [4, -10, 0], elbowR: [-0.5, -0.8, 0], ikL: [20, 12, 22] }, 'snap'],
+        [0.56, { ...LUNGE, chest: [26, 0, 0], head: [-8, 0, 0], ikR: [-10, 2, 52], bladeR: [4, -14, 0], elbowR: [-0.5, -0.8, 0], ikL: [20, 12, 22] }],
         [0.84, { ...G }],
       ],
       { events: [{ t: 0.29, name: 'swing' }] }
@@ -407,10 +439,10 @@ function swordMoves({ G }) {
       1.05,
       [
         [0, { ...G, root: [0, -2, 0] }],
-        [0.2, { legL: [20, 0, 8], shinL: [20, 0, 0], legR: [-24, 0, -8], shinR: [26, 0, 0], root: [0, -4, -3], chest: [-12, 14, 0], head: [-6, -8, 0], ikR: [-18, 72, 4], bladeR: [0, 112, 0], elbowR: [-0.8, 0, -0.5], ikL: [16, 30, 26] }],
-        [0.4, { legL: [20, 0, 8], shinL: [20, 0, 0], legR: [-30, 0, -8], shinR: [30, 0, 0], root: [0, -2, -5], chest: [-26, 12, 0], head: [-12, -6, 0], ikR: [-14, 100, -14], bladeR: [0, 166, 0], elbowR: [-0.8, 0.2, -0.4], ikL: [16, 34, 24] }, 'hold'],
-        [0.53, { legL: [36, 0, 6], shinL: [10, 0, 0], legR: [-56, 0, -4], shinR: [56, 0, 0], root: [0, -24, 14], chest: [42, 0, 0], head: [-20, 0, 0], ikR: [-6, -8, 60], bladeR: [0, -46, 0], elbowR: [-0.5, -0.8, 0], ikL: [22, 8, 20] }, 'snap'],
-        [0.78, { legL: [36, 0, 6], shinL: [10, 0, 0], legR: [-56, 0, -4], shinR: [56, 0, 0], root: [0, -22, 14], chest: [38, 0, 0], head: [-14, 0, 0], ikR: [-6, -10, 58], bladeR: [0, -50, 0], elbowR: [-0.5, -0.8, 0], ikL: [22, 8, 20] }],
+        [0.2, { legL: [20, 0, 8], shinL: [20, 0, 0], legR: [-24, 0, -8], shinR: [26, 0, 0], root: [0, -4, -3], chest: [-12, 14, 0], head: [-6, -8, 0], ikR: [-30, 72, 4], bladeR: [-10, 112, 0], elbowR: [-0.8, 0, -0.5], ikL: [16, 30, 26] }],
+        [0.4, { legL: [20, 0, 8], shinL: [20, 0, 0], legR: [-30, 0, -8], shinR: [30, 0, 0], root: [0, -2, -5], chest: [-26, 12, 0], head: [-12, -6, 0], ikR: [-36, 96, -12], bladeR: [-16, 162, 0], elbowR: [-0.8, 0.2, -0.4], ikL: [16, 34, 24] }, 'hold'],
+        [0.53, { legL: [36, 0, 6], shinL: [10, 0, 0], legR: [-56, 0, -4], shinR: [56, 0, 0], root: [0, -24, 14], chest: [42, 0, 0], head: [-20, 0, 0], ikR: [6, 2, 62], bladeR: [10, 4, 0], elbowR: [-0.5, -0.8, 0], ikL: [22, 8, 20] }, 'snap'],
+        [0.78, { legL: [36, 0, 6], shinL: [10, 0, 0], legR: [-56, 0, -4], shinR: [56, 0, 0], root: [0, -22, 14], chest: [38, 0, 0], head: [-14, 0, 0], ikR: [6, 0, 60], bladeR: [10, 2, 0], elbowR: [-0.5, -0.8, 0], ikL: [22, 8, 20] }],
         [1.05, { ...G }],
       ],
       { events: [{ t: 0.45, name: 'swing' }] }
@@ -536,6 +568,10 @@ export function durezaK(W) {
   return Math.min(1.2, Math.max(0.8, 1 + (d - DUREZA_REF) * 0.004));
 }
 
+// La familia de la espada: corriendo y bebiendo (ver la espada).
+const SWORD_RUN = { ikR: [-35, 2, 18], bladeR: [-38, 26, 0] };
+const SWORD_HEAL = { ikR: [-34, -6, 12], bladeR: [-128, -52, 0] };
+
 export const WEAPONS = {
   espada: {
     id: 'espada',
@@ -552,8 +588,13 @@ export const WEAPONS = {
     edge: 'double',
     guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
     // al trotar y correr, la hoja por delante y algo alzada (antes apuntaba
-    // hacia atrás en cuanto el personaje avanzaba)
-    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
+    // hacia atrás en cuanto el personaje avanzaba), la mano un poco por fuera
+    // y la hoja abierta hacia fuera: con la mano más cerca, el pomo se metía
+    // en el pecho (el 40 % de los pasos, hasta 6 cm)
+    runPose: SWORD_RUN,
+    // bebiendo, la espada baja y abierta a la derecha (con la de siempre, el
+    // pomo se metía en el pecho)
+    healR: SWORD_HEAL,
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: swordMoves,
   },
@@ -570,7 +611,8 @@ export const WEAPONS = {
     tip: [0, -0.05, 0.99],
     edge: 'double',
     guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
-    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
+    runPose: SWORD_RUN,
+    healR: SWORD_HEAL,
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: oxidadaMoves,
   },
@@ -587,7 +629,8 @@ export const WEAPONS = {
     tip: [0, -0.05, 1.09],
     edge: 'double',
     guard: { ikR: [-26, 16, 26], bladeR: [-6, 42, 0], ikL: SHIELD_GUARD },
-    runPose: { ikR: [-31, 4, 14], bladeR: [-14, 30, 0] },
+    runPose: SWORD_RUN,
+    healR: SWORD_HEAL,
     block: { ikR: [-28, 20, 18], bladeR: [-18, 52, 0], ...SHIELD_UP },
     moves: solingenMoves,
   },

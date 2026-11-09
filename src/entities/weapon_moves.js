@@ -663,13 +663,17 @@ function ballestaMoves(ctx) {
   const g = { ...XST, ...G };
   // a la cara: la culata al hombro, la cureña a nivel, la cabeza por detrás
   const aimBody = { ...XST, chest: [2, 10, 0], head: [4, -12, 0] };
-  const aim = { ...W2C(rig, aimBody, [-9, 146, 20], [0, 0, 0]), elbowR: [-0.8, -0.3, -0.5] };
-  const kick = { ...W2C(rig, { ...aimBody, chest: [-4, 10, 0] }, [-9, 149, 14], [0, 7, 0]), elbowR: [-0.8, -0.3, -0.5] };
+  // (la culata, contra el hueco del hombro derecho: antes la mano iba tan
+  // atrás que la culata se metía 13 cm en el pecho)
+  const aim = { ...W2C(rig, aimBody, [-12, 146, 33], [0, 0, 0]), elbowR: [-0.8, -0.3, -0.5] };
+  const kick = { ...W2C(rig, { ...aimBody, chest: [-4, 10, 0] }, [-12, 149, 28], [0, 7, 0]), elbowR: [-0.8, -0.3, -0.5] };
   // montarla: agachado, la cabeza en el suelo con el pie dentro del estribo,
   // las manos en la cuerda (la izquierda suelta la cureña)
   const down = { legL: [-46, 0, 8], shinL: [70, 0, 0], legR: [-8, 0, -10], shinR: [24, 0, 0], root: [0, -26, 4], chest: [40, 0, 0], head: [10, 0, 0] };
-  const low = { ...W2C(rig, down, [-6, 80, 34], [0, -78, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
-  const pull = { ...W2C(rig, { ...down, root: [0, -14, 2], chest: [26, 0, 0] }, [-6, 92, 30], [0, -82, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
+  // (la ballesta, de punta, bien por delante: antes la culata se metía en
+  // el pecho al tirar de la cuerda)
+  const low = { ...W2C(rig, down, [-6, 80, 48], [0, -78, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
+  const pull = { ...W2C(rig, { ...down, root: [0, -14, 2], chest: [22, 0, 0] }, [-6, 94, 44], [0, -82, 0]), elbowR: [-0.5, -0.8, -0.2], wGrip: [0, 0, 0] };
   const C = {
     x_shoot: clip(
       'x_shoot',
@@ -736,12 +740,20 @@ export const MOVESETS = {
     trailColor: 0xffd8a8,
     tip: [0, -0.05, 0.52],
     edge: [0, 1, 0],
-    guard: { ikR: [-18, -16, 22], bladeR: [2, -10, 0], elbowR: [-0.6, -0.6, -0.5] },
-    runPose: { ikR: [-24, -10, 12], bladeR: [-6, -30, 0], elbowR: [-0.7, -0.5, -0.5] },
+    // (a la cadera, cruzada, con la culata hacia fuera: recta, se metía en la
+    // cadera derecha)
+    guard: { ikR: [-20, -16, 26], bladeR: [16, -10, 0], elbowR: [-0.6, -0.6, -0.5] },
+    // (corriendo, más alta y a nivel: baja y de punta, el arco —de 66 cm— daba
+    // en el muslo izquierdo a cada zancada)
+    runPose: { ikR: [-26, -4, 18], bladeR: [0, -12, 0], elbowR: [-0.7, -0.5, -0.5] },
     swing: [4, 12],
     block: { ikR: [-10, 22, 26], bladeR: [-80, 6, 0], elbowR: [-0.4, -0.8, -0.2], chest: [4, -6, 0], head: [8, 4, 0] },
     blockK: { st: 1.3, chip: 0.2 },
-    healR: { ikR: [-26, -6, 14], bladeR: [-10, -60, 0] },
+    // bebiendo, abajo y abierta (la culata se metía en el pecho)
+    healR: { ikR: [-34, -10, 12], bladeR: [-40, -62, 0] },
+    // la voltereta: de través, con la mano bien por fuera (la culata, detrás
+    // de la mano, se metía en la cadera)
+    rollTuck: { ikR: [-58, 2, 14], bladeR: [-90, 4, 0], elbowR: [-0.6, -0.7, -0.3] },
     moves: ballestaMoves,
   },
   hacha: {
@@ -775,6 +787,9 @@ export const MOVESETS = {
     // volver a la guardia, sube por fuera, a la derecha: healUp)
     healR: { ikR: [-36, -6, 18], bladeR: [0, -84, 0] },
     healUp: { ikR: [-40, 22, 30], bladeR: [-30, 80, 0] },
+    // la voltereta: de través, con la mano bien por fuera (el mango, detrás
+    // de la mano hasta el regatón, se metía en la cadera)
+    rollTuck: { ikR: [-64, 4, 10], bladeR: [-90, 12, 0], elbowR: [-0.6, -0.7, -0.3] },
     moves: axeMoves,
   },
   lanza: {

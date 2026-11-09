@@ -224,7 +224,15 @@ export function palomero(ctx, L, h) {
   wb.setRoom(r3);
   const rng = new RNG(3305);
   for (const x of [I.x0 + 0.05, I.x1 - 0.32]) for (let z = 38.6; z < 43.2; z += 0.55) nidal(ctx, x, y3, z, r3, rng);
-  for (let i = 0; i < 12; i++) wb.box('linen', rng.range(63.5, 69.5), y3 + 0.005, rng.range(38.5, 43.3), rng.range(63.5, 69.5) + 0.06, y3 + 0.01, rng.range(38.5, 43.3) + 0.03, { ao: false, room: r3, faces: 't', grime: false, tint: [0.75, 0.75, 0.75] });
+  // (cada pluma, de 6 × 3 cm y a su altura: antes la esquina de enfrente
+  // salía de otro número al azar y eran sábanas blancas de hasta 6 × 5 m,
+  // unas encima de otras en el mismo plano, que parpadeaban)
+  for (let i = 0; i < 12; i++) {
+    const fx = rng.range(63.5, 69.4),
+      fz = rng.range(38.5, 43.2),
+      fy = y3 + 0.004 + i * 0.0015;
+    wb.box('linen', fx, fy, fz, fx + 0.06, fy + 0.004, fz + 0.03, { ao: false, room: r3, faces: 't', grime: false, tint: [0.75, 0.75, 0.75] });
+  }
   luna(ctx, 66.5, y3 + 1.4, 38.0, r3, 0.6, 5);
   wb.setRoom(null);
   palomar(ctx, L);
