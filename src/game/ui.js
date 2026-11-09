@@ -9,6 +9,7 @@ import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
 import { iconBitmap, smallIcon, ghostIcon } from './icons.js';
 import { Mesa } from './mesa.js';
+import { ALIENTO } from './nado.js';
 import { formatTime, clamp } from '../core/util.js';
 import { PAL as P, Bitmap, bayer, ramp, hash, uiScale, spriteImg, spriteHtml, attachBackdrop, panelBitmap, parchmentBitmap, bannerBitmap, dividerBitmap, cursorSword, greatSword, keyBitmap, reticleBitmap, slotBitmap, arrowBitmap, candleBitmap, notchBitmap, textBitmap } from '../ui/pixel.js';
 
@@ -1025,7 +1026,7 @@ export class UI {
     const cloaca = !cellar && !dungeon && !honda && g.inCloaca(g.player.pos);
     const crypt = g.player.pos.y < -3 && !cellar && !dungeon && !cloaca && !honda && !g.inFoso(g.player.pos);
     const ey = $('map-eyebrow').querySelector('span');
-    const HONDA = { lobera: 'Las cloacas de la Sé', viejas: 'Las cloacas viejas', aljibes: 'Los aljibes ahogados', hondo: 'Lo hondo' };
+    const HONDA = { lobera: 'Las cloacas de la Sé', viejas: 'Las cloacas viejas', aljibes: 'Los aljibes ahogados', hondo: 'Lo hondo', sumidero: 'El Sumidero' };
     const where = honda ? HONDA[honda] : crypt ? 'Bajo la catedral' : cellar ? 'Bajo la casa del canónigo' : dungeon ? 'Bajo el castillo' : cloaca ? 'Bajo la plaza del Pan' : 'Braga intramuros';
     if (ey) ey.textContent = where + (g.zone && AREA_NAMES[g.zone.id] ? ' · ' + AREA_NAMES[g.zone.id] : '');
     const layer = honda || (crypt ? 'crypt' : cellar ? 'cellar' : dungeon ? 'dungeon' : cloaca ? 'cloaca' : undefined);
@@ -1263,7 +1264,13 @@ export class UI {
     const tk = p.tonico ? Math.ceil((p.tonico.t / p.tonico.dur) * stLen) : 0;
     // (la flor blanca, en la lobera: se cierra si él está cerca a oscuras)
     const flor = this.g.lobo ? this.g.lobo.flor : null;
-    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded, tv, tn, tk, p.tonico && p.tonico.tipo, flor].join(',');
+    // (el aliento, a nado: bajo el aguante, mientras falte)
+    const nd = this.g.nado;
+    const af = nd ? clamp(nd.aliento / ALIENTO, 0, 1) : 1;
+    const ab = af < 0.999 || (p.state === 'swim' && p.nadoS && p.nadoS.sub);
+    const aLen = Math.round(stLen * 0.7);
+    const aBlink = af < 0.25 && Math.floor(this.g.time * 4) % 2;
+    const key = [W, Math.round(hf * hpLen), Math.round(this.hpLag * hpLen), Math.round(rf * hpLen), Math.round((p.st / p.maxSt) * stLen), p.st <= 0, p.flasks, p.maxFlasks, p.relic, xb, nb, p.xbowLoaded, tv, tn, tk, p.tonico && p.tonico.tipo, flor, ab, Math.round(af * aLen), aBlink].join(',');
     if (key === this._vitKey && this._vitU === this.sc.u) return;
     this._vitKey = key;
     this._vitU = this.sc.u;
@@ -1319,8 +1326,10 @@ export class UI {
       b.blit(smallIcon(flor === 'cerrada' ? 'florCerrada' : 'florAbierta'), rx, 19);
       rx += 14;
     }
+    // el aliento: una barra azul bajo el aguante (parpadea cuando se acaba)
+    if (ab) this._bar(b, 11, 15, aLen, 2, af, 0, aBlink ? [P.blood3, P.blood2] : [P.glass4, P.glass3]);
     // el que se ha bebido: una raya bajo el aguante que se va gastando
-    if (tk > 0) {
+    else if (tk > 0) {
       const c = p.tonico.tipo === 'negro' ? [P.ruby1, P.ruby2] : [P.moss3, P.moss4];
       b.hline(11, 11 + tk, 15, c[1]);
       b.hline(11, 11 + tk, 16, c[0]);

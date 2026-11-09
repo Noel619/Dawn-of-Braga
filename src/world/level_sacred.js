@@ -1417,7 +1417,8 @@ export function buildRiver(ctx, S, L) {
   }
   // el río: agua con su corriente, el cielo del amanecer reflejado y el
   // camino de brillos del sol (antes, una caja con la textura del agua)
-  if (ctx.waters) ctx.waters.push({ shape: 'rect', r: [-170, -345, 170, -212.6], y: -1.0, deep: 0x1a262c, sky: 0xe8b090, glint: 0xffe2b4, light: [294, 236, -2179], lightK: 1.5, amp: 0.06, flow: [0.45, 0.05], drips: false });
+  // (al aire libre: refleja mucho más; turbia, de río grande)
+  if (ctx.waters) ctx.waters.push({ shape: 'rect', r: [-170, -345, 170, -212.6], y: -1.0, deep: 0x1a262c, sky: 0xe8b090, glint: 0xffe2b4, tint: 0x324238, light: [294, 236, -2179], lightK: 1.5, amp: 0.06, flow: [0.45, 0.05], drips: false, depth: 3, clear: 1.1, refl: 0.7, foam: 0.6 });
   // juncos en la orilla, en matas
   for (let i = 0; i < 26; i++) {
     const cx = rng.range(-55, 55),

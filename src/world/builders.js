@@ -585,6 +585,18 @@ export function groinVaults(ctx, o) {
             const s0 = hole / m;
             const pa = P(s0, -1 + (2 * b) / n),
               pb = P(s0, -1 + (2 * (b + 1)) / n);
+            // (un óculo de todo el tramo sube a plomo del muro: donde el muro
+            // tiene el vano de una galería, el tiro empieza encima de lo que
+            // tapa su arco, o se pisarían las dos caras)
+            if (s0 >= 0.999)
+              for (const wh of (o.holes || []).filter((q) => q.side === lado)) {
+                const um = ax === 'x' ? (pa.z + pb.z) / 2 : (pa.x + pb.x) / 2;
+                if (um > wh.u0 && um < wh.u1) {
+                  pa.y = Math.max(pa.y, wh.y);
+                  pb.y = Math.max(pb.y, wh.y);
+                }
+              }
+            if (oc.top - Math.max(pa.y, pb.y) < 1e-3) continue;
             const q = [pa, pb, V3(pb.x, oc.top, pb.z), V3(pa.x, oc.top, pa.z)];
             const N = new THREE.Vector3().subVectors(q[1], q[0]).cross(new THREE.Vector3().subVectors(q[3], q[0]));
             if (N.x * (cx - pa.x) + N.z * (cz - pa.z) < 0) q.reverse();

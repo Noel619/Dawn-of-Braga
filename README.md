@@ -50,6 +50,9 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Inventario: la ficha de un arma, un escudo o una armadura (sus barras) o su descripción | T | LT |
 | Transcripción de un documento (mostrarla u ocultarla) | T | X |
 | Mesa del Desfigurado: echar al puchero / sacar / cocer | E, clic o arrastrar al puchero / X o clic derecho / C | A / X / Y |
+| A nado: zambullirse / bajar (mantener) | Espacio | B |
+| A nado: subir (mantener) | E | A |
+| A nado: nadar (bajo el agua, hacia donde miras) / más deprisa | W A S D / Mayús | Stick izquierdo / L3 |
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
 
@@ -163,9 +166,14 @@ la cerró él la noche de la cabra. (`world/cloaca.js`, `world/vergel.js`, `worl
 `game/desfigurado.js`, `game/cloaca.js`.)
 
 **Las cloacas hondas, el Lobishome y los cocimientos.** Detrás de la reja, una escalera baja a **la lobera**: las
-cloacas de la Sé, un laberinto de galerías de sillería (con su canal, sus tramos secos y sus tramos ahogados) y sus
-cruces, siete por seis, con dos salas, **el pozo de las ánimas** (por su tiro baja la luna sobre unas flores blancas)
-y **el osario**, la cama de paja y jirones del que vive ahí, con lo que entierra en los nichos, la pala rota y el farol
+cloacas de la Sé, un laberinto de galerías de sillería y sus cruces, siete por seis, con dos salas, **el pozo de las
+ánimas** (por su tiro baja la luna sobre unas flores blancas) y **el osario**. **El agua corre**: nace en los caños
+de los muros ciegos de algunos cruces (cada uno con su chorro y su verdín), baja por los canales de las galerías, se
+junta en los cruces y se va por **los sumideros**, pozos con su reja en medio del cruce (y uno en medio del pozo de
+las ánimas, bajo la luna), por los que cae al Sumidero; las galerías sin canal, secas. Nada de canales que se acaban
+contra un muro ni de charcos sueltos (lo mismo en las cloacas viejas, con sus dos cauces y sus tramos ahogados donde
+cedió la bóveda, y en lo hondo, con el arroyo del este y la pila de la fuente del ninfeo, que rebosa al canal). Y
+**el osario**, la cama de paja y jirones del que vive ahí, con lo que entierra en los nichos, la pala rota y el farol
 de un sepulturero. Al pasar la reja, a tu espalda, se apaga un candil de la raya de sal; bajando la escalera, al fondo,
 se encienden un instante unos ojos más altos que los de un hombre. Al pie, la niebla: es su casa y es la pelea. Si
 llevas la flor blanca del Desfigurado, en el marcador **se cierra** cuando él anda cerca y no se le ve. **El
@@ -190,7 +198,7 @@ aliento vuelve más despacio) y **el farol de Bento** (alumbra más lejos), sus 
 Desfigurado, cuando le hablas, te dice quién era. Si después le llevas una **flor de lo hondo**, se la queda para su
 remedio: en el final, le verás en la orilla, de cara al sol que ya no le quema; si no, el pergamino cuenta lo de la
 raya de candiles y unos ojos en lo oscuro. Más abajo, **las cloacas viejas** (de mampuesto, largas, con tramos ahogados,
-ramales sin salida y los mastines), **los aljibes ahogados** (tres cisternas de pilares; en las dos primeras, y en las
+ramales sin salida y los mastines; por la galería de levante de la primera fila se sale al Sumidero), **los aljibes ahogados** (tres cisternas de pilares; en las dos primeras, y en las
 galerías que las unen, el agua llega a la rodilla y **se anda despacio**; en la tercera, el andén alrededor de su
 estanque hondo) y, bajo el Vergel, **lo hondo**: el ninfeo de los romanos, donde manaba la fuente, reventado de
 raíces, donde la vida que bajó se ha vuelto loca y **las plantas se mueven y muerden**: **la zarza** azota a ras o
@@ -198,7 +206,26 @@ descarga desde arriba, **la boca** duerme caída entre los helechos y se tira a 
 bulbo** se hincha y **revienta en esporas** (no se para con el escudo). Ahí se cosecha lo de los cocimientos: el
 **musgo de luz**, la **raíz amarga** y, en el semillero del oeste, guardada, **la flor de lo hondo**. Lo cosechado
 **rebrota a los quince minutos de juego, pero sólo si te has ido lejos** (mirándolo no crece). De lo hondo se sube al
-Vergel por **el pozo de la tapa** (desde abajo se abre; al caer, se traba sola: no es un atajo de bajada). Bajar
+Vergel por **el pozo de la tapa** (desde abajo se abre; al caer, se traba sola: no es un atajo de bajada).
+
+**El Sumidero y el venero.** Donde desagua la lobera: bajo ella, una caverna de roca viva de cuarenta metros, de antes
+de los romanos, con **un lago negro de dieciocho metros de hondo**. Los sumideros de la lobera le echan el agua desde el
+techo en chorros (por el del pozo de las ánimas baja también la luna) y el musgo que da luz dibuja la orilla en lo
+negro. Se entra por la galería de levante de las cloacas viejas, que sale a una repisa con su canal, que se tira al
+lago; una senda baja por el muro a una playa de guijarros. **Se nada**: andando, el agua frena y, donde ya no se hace
+pie, o cayendo desde la repisa, se nada a braza en la superficie (quieto, pedaleando); con Espacio (B) **se zambulle**
+y bajo el agua se nada hacia donde mira la cámara (mirando abajo, se baja; con Espacio, al fondo; con E, A, arriba;
+sin tocar nada, el agua sube). Bajo el agua todo se ve verde y sordo, **el aliento se gasta** (una barra azul bajo el
+aguante, unos treinta segundos; sin él, se ahoga) y vuelve al salir a respirar; ni golpes, ni escudo, ni ampollas, y
+el farol alumbra menos. Se sale andando por la playa o agarrándose a un borde a ras del agua. **En lo más hondo**, en
+la ensenada del sur, una luz verde: **el venero**, una cueva bajo el agua por la que sube la fuente de los romanos,
+veinte metros de roca con el musgo que va diciendo por dónde, y un tiro que sube a **la pila de la fuente del ninfeo
+de lo hondo**: se sale a nado entre las plantas que muerden. Y al revés: desde lo hondo, por la pila, se baja al lago.
+(`world/sumidero.js`, `game/nado.js`, `entities/nado.js`, `gfx/water.js`; las pruebas, `tools/nado.mjs` y
+`tools/nadopose.mjs`.) **El agua**, en todo el juego, se ve como agua: se ve el fondo a través de ella (cada vez
+menos cuanto más honda y más de lado se mira), coge la luz del sitio, la del farol y la de los fuegos cercanos, y
+refleja más cuanto más de lado; tiene su raya de espuma donde da contra la piedra, las estelas de la corriente
+hacia donde corre, los anillos de las gotas y, desde abajo, buceando, la ventana de la superficie. Bajar
 cuesta: andando sin pelear y sabiendo el camino son unos dos minutos (`tools/cloacawalk.mjs`); con el laberinto, las
 criaturas del camino (una treintena) y el agua, la primera vez, del orden de los diez. **Los cocimientos** se cuecen en
 la mesa del Desfigurado: el **verde** (dos de musgo y una de raíz: el aliento vuelve casi el doble de deprisa, cuarenta
@@ -1255,7 +1282,7 @@ src/
                         audio.js (mezcla, efectos, ambiente), audio_music.js (música adaptativa),
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
   gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
-                        y agua (water.js: la cisterna y el pozo)
+                        y agua (water.js: todas las aguas, con su fondo, su orilla, su corriente y su luz)
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
@@ -1304,7 +1331,9 @@ src/
                         la raya de candiles y el huerto seco de arriba; cloaca_kit.js: el kit del alcantarillado
                         (galerías, cruces, escaleras, salas de pilares, vanos y el grafo de la red);
                         cloacas_hondas.js: la galería de la Sé y su reja, la lobera, las cloacas viejas, los
-                        aljibes ahogados y lo hondo (los braseros, la cosecha, el pozo de la tapa);
+                        aljibes ahogados y lo hondo (los braseros, la cosecha, el pozo de la tapa, por dónde
+                        corre el agua: LOBERA_AGUA, los caños y los sumideros); sumidero.js: el Sumidero (la
+                        caverna, el lago, la repisa, la senda, la playa, el venero y su tiro; lo que se nada);
                         verdor.js: lo que crece (helechos, hierba, flores, musgo, hiedra, raíces, juncos, la higuera, los
                         saúcos, las matas, los hongos que dan luz, los nenúfares, los troncos caídos);
                         level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
@@ -1376,6 +1405,9 @@ src/
                         cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
                         Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
                         mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
+                        nado.js: el agua honda (dónde no se hace pie, cuándo se entra en ella, el aliento y el
+                        ahogo, la vista y el oído bajo el agua, las burbujas, el chapoteo; cómo nada el jugador
+                        y su brazada, en entities/nado.js);
                         beast_chase.js: la transformación, la huida y el salto de fe; qte.js: las pulsaciones rápidas;
                         culling.js: lo que no se ve no se dibuja (el subsuelo desde la calle, y las criaturas y
                         los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la
@@ -1424,7 +1456,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        cuartos) y lo que delata un golpe sin peso: el pie que patina, los
                                        pasos, el giro de la cadera y la cabeza fuera del blanco
                         zfight.mjs     busca caras en el mismo plano que se solapan (el suelo o el muro que
-                                       parpadea entre dos texturas); con una región, sólo ahí
+                                       parpadea entre dos texturas); con una región, sólo ahí (y con dos
+                                       alturas más, sólo entre ellas: el subsuelo, sin la ciudad de encima)
                         circula.mjs    ¿se anda por cada sala amueblada de la fortaleza? Inunda su suelo con
                                        el tamaño del jugador desde sus entradas y dice qué interactuable (o
                                        pie de escalera) se queda sin alcanzar; una imagen por sala
@@ -1536,6 +1569,17 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        (jugador: wander, stopgo, still o look)
                         parrytest.mjs  parry contra cada criatura con un arma: desvío sin daño,
                                        desequilibrio, golpe de gracia, jefes y golpes imparables
+                        nado.mjs       a nado por el Sumidero: de la galería a la repisa, se tira al lago,
+                                       flota, nada, se zambulle, baja a la ensenada, cruza el venero, sube
+                                       por el tiro y sale a la pila de lo hondo; y al revés, hasta la playa y
+                                       la senda; y sin aliento, se ahoga; con fotos
+                        nadopose.mjs   la brazada de cerca: de lado, en tres cuartos y desde arriba, en la
+                                       superficie, quieto y bajo el agua
+                        vista.mjs      fotos de juego (el jugador, su farol y la cámara de siempre) en los
+                                       sitios que se digan: "x,y,z,yaw[,pitch[,dist]]"
+                        hondasvoids.mjs rendijas a la nada en las cloacas hondas y el Sumidero (fondo magenta
+                                       y la cámara en cada cruce, galería y sala, y bajo el agua)
+                        hondasholes.mjs suelo sin dibujar donde se pisa en las cloacas hondas y el Sumidero
                         lobo.mjs       la pelea con el Lobishome fase a fase: la niebla, la aparición, el
                                        acecho segundo a segundo, un brasero, la segunda fase (el aullido),
                                        la luna del pozo y la muerte; con fotos

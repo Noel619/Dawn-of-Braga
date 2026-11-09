@@ -167,7 +167,8 @@ export class CameraRig {
     const pe0 = Math.min(this.pitch, this.pitchCap);
     // lo más bajo que puede quedar la cámara: no bajo el suelo (con el
     // coloso, más abajo, contra el suelo que tenga debajo)
-    const floorY = F ? -Infinity : player.visY + 0.3;
+    // (a nado en la superficie, no bajo el agua: lo pone entities/nado.js)
+    const floorY = F ? -Infinity : Math.max(player.visY + 0.3, player.camFloor ?? -Infinity);
     // subiendo una escalera bajo bóveda, detrás de quien sube y por encima no
     // cabe (la bóveda baja con los peldaños) y la cámara se le pegaba a la
     // cabeza. Si mirando más desde abajo cabe bastante más lejos, baja ella
@@ -250,7 +251,7 @@ export class CameraRig {
     cam.position.set(this.pivot.x - dir.x * this.curDist, this.pivot.y - dir.y * this.curDist + this.lift, this.pivot.z - dir.z * this.curDist);
     // no bajar del suelo (trepando a un coloso, la cámara puede quedar por
     // debajo de quien trepa, mirando cuesta arriba, pero no bajo el suelo)
-    let minY = player.visY + 0.3;
+    let minY = Math.max(player.visY + 0.3, player.camFloor ?? -Infinity);
     if (F) {
       const gy = col.groundHeight(cam.position.x, cam.position.z, 0.2, F.y);
       minY = Math.max(gy + 0.5, F.y - 4.5);

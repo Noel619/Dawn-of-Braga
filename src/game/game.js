@@ -1,6 +1,7 @@
 // Orquestación del juego: bucle, estados y sistemas.
 import * as THREE from 'three';
 import { Cloacas } from './cloacas.js';
+import { Nado } from './nado.js';
 import { Lobo } from './lobishome.js';
 import { HONDAS } from '../world/cloacas_hondas.js';
 import { buildLevel } from '../world/level.js';
@@ -225,7 +226,10 @@ export class Game {
       this.navKeep = [new LayerNav(new WalkGrid(K.x0, K.z0, K.x1, K.z1, 0.5), this.world.col, { yMin: K.pisos[1] - 0.6, yMax: K.terraza + 1, layers: 6 })];
     }
     // las cloacas hondas (world/cloacas_hondas.js): cada nivel, por capas
-    this.navHondas = Object.entries(HONDAS.grids).map(([k, gr]) => ({ y0: gr.y0 - 0.5, y1: gr.y1 + 0.5, nav: new LayerNav(lvl[k], this.world.col, { yMin: gr.y0 - 0.6, yMax: gr.y1 + 0.6 }) }));
+    // (el Sumidero y su venero, no: nadie anda por ahí)
+    this.navHondas = Object.entries(HONDAS.grids)
+      .filter(([, gr]) => gr.nav !== false)
+      .map(([k, gr]) => ({ y0: gr.y0 - 0.5, y1: gr.y1 + 0.5, nav: new LayerNav(lvl[k], this.world.col, { yMin: gr.y0 - 0.6, yMax: gr.y1 + 0.6 }) }));
     this.navMs = performance.now() - tn;
     // (con holgura para el cuerpo del Descoyuntado: no se atasca en pilares ni arcos)
     // (la altura de la escalera, sólo en su hueco: la celda del canónigo, al
@@ -252,6 +256,11 @@ export class Game {
 
     // cada personaje con sus propios materiales: luz horneada del sitio (sonda)
     this.probe = new BakedProbe(lvl.ctx.lights);
+    // (el agua coge la luz horneada del sitio donde está)
+    this.waters.bakeLight(this.probe, (x, y, z) => {
+      const zn = this.zoneAt({ x, y, z });
+      return zn && zn.room ? lvl.ctx.wb.roomId(zn.room) : 0;
+    });
     for (const e of this.enemies) e.rig.own();
     this.player.rig.own();
     // pilares y estantes de las bodegas
@@ -290,6 +299,8 @@ export class Game {
     this.cloacaFX = new CloacaFX(this);
     // las cloacas hondas: el agua que frena, la cosecha y el pozo de la tapa
     this.cloacas = new Cloacas(this);
+    // a nado: el agua honda del Sumidero (game/nado.js)
+    this.nado = new Nado(this);
     // la lobera: los braseros, la luz y lo de la pelea con el Lobishome
     this.lobo = new Lobo(this);
     // las cornisas y las vigas por las que se pasa haciendo equilibrio
@@ -1432,6 +1443,8 @@ export class Game {
     if (p.y < Y.n2 + 3 && p.y > Y.n2 - 2 && en('H2')) return 'viejas';
     if (p.y < Y.n3 + 3 && p.y > Y.n3 - 3 && en('H3')) return 'aljibes';
     if (p.y < Y.n4 + 3 && p.y > Y.n4 - 2 && en('H4')) return 'hondo';
+    // (el Sumidero y su venero, bajo la lobera y lo hondo)
+    if (p.y < G.H5.y1 + 0.5 && p.y > G.H5.y0 && (en('H5') || en('H6'))) return 'sumidero';
     return null;
   }
 
@@ -2028,6 +2041,7 @@ export class Game {
       this.waters.update(dt);
       this.cloacaFX.update(dt);
       this.cloacas.update(dt);
+      this.nado.update(dt);
       this.lobo.update(dt);
       this.spring.update(dt);
       if (this.state === 'play') {
@@ -2059,7 +2073,8 @@ export class Game {
         if (fp !== undefined) this.promptTarget = fp;
         this.updatePhantoms(dt);
       } else this.promptTarget = null;
-      if (p.pos.y < -40 && !p.dead) p.die();
+      // (lo más hondo: el fondo del Sumidero, a -46)
+      if (p.pos.y < -58 && !p.dead) p.die();
       if (this.state === 'play' && !p.dead) this.checkPits(p);
     }
     // cámara

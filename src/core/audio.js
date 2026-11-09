@@ -268,6 +268,8 @@ const ZONE_MUSIC = {
   viejas: 'crypt',
   aljibes: 'crypt',
   hondo: 'sanctuary',
+  sumidero: 'crypt',
+  venero: 'sanctuary',
   sanctum: 'sanctum',
   dawn: 'ending',
 };
@@ -296,6 +298,8 @@ const ZONE_ROOM = {
   viejas: ['crypt', 0.6],
   aljibes: ['hall', 0.72],
   hondo: ['hall', 0.58],
+  sumidero: ['cathedral', 0.62],
+  venero: ['crypt', 0.5],
   sanctum: ['cathedral', 0.8],
   dawn: ['open', 0.16],
 };
@@ -325,6 +329,9 @@ const ZONE_BED = {
   viejas: [0, 0, 0.14, 0.08, 0.18],
   aljibes: [0, 0, 0.12, 0.06, 0.3],
   hondo: [0.02, 0, 0.08, 0.04, 0.2],
+  // (el Sumidero: el agua que cae de los sumideros, sin parar)
+  sumidero: [0, 0, 0.1, 0.1, 0.6],
+  venero: [0, 0, 0.08, 0.1, 0.2],
   sanctum: [0, 0, 0.1, 0.1, 0],
   dawn: [0.1, 0, 0, 0, 0.3],
 };
@@ -445,7 +452,12 @@ export class Audio {
     this.sfxVol.gain.value = this.vol.sfx;
     this.sfxVol.connect(this.master);
     this.worldBus = ctx.createGain();
-    this.worldBus.connect(this.sfxVol);
+    // (bajo el agua, todo sordo: setUnder)
+    this.underLP = ctx.createBiquadFilter();
+    this.underLP.type = 'lowpass';
+    this.underLP.frequency.value = 20000;
+    this.underLP.Q.value = 0.5;
+    this.worldBus.connect(this.underLP).connect(this.sfxVol);
     this.sfx = ctx.createGain();
     this.sfx.connect(this.worldBus);
     // los derrumbes, con un compresor que los «pega»: una manzana entera que
@@ -751,6 +763,16 @@ export class Audio {
   // (son: su reverberación, su ambiente, sus capas de fondo; ver
   // game/acustica.js). En un umbral la zona puede ir y venir de un fotograma a
   // otro: el cambio solo se aplica cuando se mantiene un instante.
+  // Bajo el agua (k, de 0 a 1): lo de fuera llega sordo y lejos.
+  setUnder(k) {
+    if (!this.ok || !this.underLP) return;
+    k = Math.max(0, Math.min(1, k));
+    if (Math.abs((this._under ?? 0) - k) < 0.02) return;
+    this._under = k;
+    const f = 20000 * Math.pow(650 / 20000, k);
+    this.underLP.frequency.setTargetAtTime(f, this.t(), 0.05);
+  }
+
   setZone(atmo, son = null) {
     const key = son ? atmo + '/' + son.id : atmo;
     if (!this.ok || !this._roomSet) {
@@ -2495,6 +2517,40 @@ export class Audio {
         this.smp(d, t + 0.05, this.lib.crackle(6), { gain: 0.32, offset: rnd(0, 4), dur: 1.8, hp: 500 });
         this.noise(d, t + 0.2, 1.6, { type: 'lowpass', f0: 520, gain: 0.12, a: 0.4, buf: this.brown, rate: 2 });
         for (let i = 0, tt = t + 0.25; i < 16; i++, tt += rnd(0.06, 0.12)) this.tone(d, tt, 0.06, { f0: rnd(240, 420), f1: rnd(480, 820), gain: 0.1, a: 0.003 });
+        break;
+      }
+      // a nado (game/nado.js): la brazada en la superficie, la zambullida al
+      // caer o meterse, las burbujas bajo el agua y la boqueada al salir
+      case 'brazada': {
+        d = this.out(P, { gain: o.gain ?? 0.45, verb: 0.45, life: 1.5, ref: 3 });
+        this.noise(d, t, 0.26, { type: 'bandpass', f0: rnd(380, 520), f1: rnd(900, 1400), q: 0.8, gain: 0.16, a: 0.04, buf: this.pink, curve: 'lin' });
+        this.noise(d, t + 0.1, 0.3, { type: 'lowpass', f0: 700, f1: 300, gain: 0.08, a: 0.05, buf: this.brown, rate: 2 });
+        if (Math.random() < 0.6) this.smp(d, t + 0.18, this.lib.drip(rnd(800, 1300)), { gain: 0.06 });
+        break;
+      }
+      case 'zambullida': {
+        const k = Math.min(1.4, o.k ?? 1);
+        d = this.out(P, { gain: 0.8 * k, verb: 0.7, life: 3, ref: 5 });
+        this.tone(d, t, 0.25, { f0: 120, f1: 45, gain: 0.3, a: 0.004 });
+        this.noise(d, t, 0.6, { type: 'bandpass', f0: rnd(300, 500), f1: rnd(1500, 2400), q: 0.7, gain: 0.32, a: 0.008, buf: this.pink, curve: 'lin' });
+        this.noise(d, t + 0.08, 1.0, { type: 'lowpass', f0: 1200, f1: 300, gain: 0.18, a: 0.03, buf: this.brown, rate: 2 });
+        for (let i = 0; i < 5; i++) this.smp(d, t + 0.3 + i * rnd(0.08, 0.2), this.lib.drip(rnd(600, 1400)), { gain: 0.08 });
+        break;
+      }
+      case 'burbujas': {
+        d = this.out(P, { gain: o.gain ?? 0.4, verb: 0.3, life: 1.5, ref: 2 });
+        const n = 3 + Math.floor(Math.random() * 4);
+        for (let i = 0, tt = t; i < n; i++, tt += rnd(0.04, 0.12)) {
+          const f = rnd(260, 520);
+          this.tone(d, tt, 0.07, { f0: f, f1: f * 1.9, gain: 0.08, a: 0.005 });
+        }
+        break;
+      }
+      case 'boqueada': {
+        d = this.out(P, { gain: o.gain ?? 0.55, verb: 0.3, life: 1.6, ref: 3 });
+        this.noise(d, t, 0.32, { type: 'bandpass', f0: 1400, f1: 2600, q: 1.2, gain: 0.22, a: 0.02, curve: 'lin' });
+        this.voice(d, t + 0.02, 0.3, { f0: 190, f1: 150, vowel: 'a', v1: 'o', gain: 0.07, vibD: 0, breath: 0.95, a: 0.02, rel: 0.5 });
+        this.noise(d, t + 0.4, 0.5, { type: 'bandpass', f0: 900, f1: 600, q: 1, gain: 0.08, a: 0.1 });
         break;
       }
       case 'splash': {

@@ -19,6 +19,14 @@
 //    ahogado o con un estanque hondo) y, si se quiere, óculos en la bóveda.
 //    Una sala «externa» la construye otro (el Vergel): la red sólo pone sus
 //    bocas.
+// El agua corre: cada canal, de un nodo a otro (o.de: el de arriba; sin él,
+// hacia +x o +z con o.flow, o al revés con o.flow negativo), y en los cruces
+// se junta y sigue por el lado que sale. Donde empieza un canal, su caño
+// (nodo.fuente: el lado ciego por el que mana, con su chorro); donde acaba,
+// un sumidero (nodo.sumidero: el centro del cruce es un pozo con su reja,
+// por el que cae a lo de abajo). Nada de canales que se acaban contra un
+// muro sin más. Lo que cae (los chorros de los caños, el agua de los
+// sumideros), en ctx.cascadas (las dibuja game/cloaca.js).
 // Donde una galería entra en una sala, su vano: las jambas en el grueso del
 // muro y el arco de dovelas con sus enjutas (vano).
 // Las galerías pintan lo transitable en la rejilla que les toca por altura
@@ -37,7 +45,9 @@ export const KIT = {
   banda: 0.85, // la banda de musgo, sobre los andenes
   prof: 0.4, // hondo del canal (lecho bajo los andenes)
   agua: 0.17, // el agua, bajo los andenes
-  ahog: 0.12, // el agua de lo ahogado, bajo los andenes (sobre el lecho, 0,28)
+  // el agua de lo ahogado, bajo los andenes: a la altura de la de los
+  // canales (donde se juntan, una sola lámina; sobre el lecho, 0,23)
+  ahog: 0.17,
   t: 0.3, // grueso de los muros (lo que se dibuja)
   ring: 0.3, // canto de la rosca de los vanos
 };
@@ -53,7 +63,7 @@ const OPP = { n: 's', s: 'n', e: 'w', w: 'e' };
 export function red(ctx, defs, o = {}) {
   const N = {};
   for (const d of defs)
-    for (const [id, p] of Object.entries(d.nodos || {})) N[id] = { id, x: p[0], z: p[1], y: p[2] ?? d.y, def: d, conn: { n: null, s: null, e: null, w: null } };
+    for (const [id, p] of Object.entries(d.nodos || {})) N[id] = { id, x: p[0], z: p[1], y: p[2] ?? d.y, def: d, conn: { n: null, s: null, e: null, w: null }, ...((d.nodoX && d.nodoX[id]) || {}) };
   const salas = {};
   for (const d of defs) for (const s of d.salas || []) salas[s.id] = { ...s, y: s.y ?? d.y, def: d };
   // las bocas de las salas también son nodos (sin cruce: la sala pone su
@@ -127,6 +137,104 @@ function ahogado(ctx, r, y) {
 }
 
 // ------------------------------------------------------------------------ el cruce
+const LADO = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+// ¿El agua del tramo t entra en el nodo n? (si no, sale de él)
+export function entra(t, n) {
+  if (t.o.de) return t.o.de !== n.id;
+  const f = t.o.flow ?? 0.5;
+  const other = t.a === n ? t.b : t.a;
+  const d = t.alongX ? n.x - other.x : n.z - other.z;
+  return Math.sign(d) === Math.sign(f) || f === 0;
+}
+// La corriente de un tramo (hacia dónde, cuánta).
+function corriente(t) {
+  const mag = Math.abs(t.o.flow ?? 0.5);
+  let sg = Math.sign(t.o.flow ?? 0.5) || 1;
+  if (t.o.de) {
+    const from = t.o.de === t.a.id ? t.a : t.b,
+      to = from === t.a ? t.b : t.a;
+    sg = Math.sign(t.alongX ? to.x - from.x : to.z - from.z) || 1;
+  }
+  return t.alongX ? [mag * sg, 0] : [0, mag * sg];
+}
+
+// Lo que cae (un chorro, una cascada): lo dibuja game/cloaca.js. c: el centro
+// del labio; w: su ancho; y0, y1: de dónde a dónde cae; d: hacia dónde sale;
+// out: lo que se adelanta; open: lo que se abre; foam: el radio de la
+// espuma; luz: la luz del sitio (0, a oscuras; 1, a la luz).
+export function cascada(ctx, c) {
+  (ctx.cascadas || (ctx.cascadas = [])).push({ out: 0.2, open: 0.3, foam: 0.5, k: 0.6, luz: 0.3, ...c });
+}
+
+// El caño de una fuente en el muro ciego de un cruce (o de una galería): la
+// boca negra con su labio de piedra, el verdín que baja hasta el agua y el
+// chorro. side: el muro (n: el del norte, mirando al sur); (x, z): el pie del
+// muro, en el eje del canal.
+export function cano(ctx, side, x, z, y, room, o = {}) {
+  const wb = ctx.wb;
+  const [dx, dz] = LADO[OPP[side]];
+  const yy = y + (o.alto ?? 0.78);
+  const tn = { ao: false, grime: false, room };
+  const ax = dz !== 0; // (el muro va a lo largo de x)
+  const w = o.w ?? 0.17;
+  // (la boca, un hueco negro en el muro; el labio, una losa que asoma)
+  if (ax) {
+    wb.box('black', x - w, yy, z - 0.006, x + w, yy + 0.28, z + 0.006, { ...tn, faces: dz > 0 ? 's' : 'n' });
+    wb.box('ashlar', x - w - 0.06, yy - 0.07, Math.min(z, z + dz * 0.16), x + w + 0.06, yy, Math.max(z, z + dz * 0.16), { ao: false, room, faces: 'tnsewb', tint: [0.5, 0.5, 0.46] });
+    wb.box('mossstone', x - w * 0.8, y - 0.02, z + dz * 0.008, x + w * 0.8, yy - 0.07, z + dz * 0.012, { ao: false, room, faces: dz > 0 ? 's' : 'n', tint: [0.26, 0.4, 0.24] });
+  } else {
+    wb.box('black', x - 0.006, yy, z - w, x + 0.006, yy + 0.28, z + w, { ...tn, faces: dx > 0 ? 'e' : 'w' });
+    wb.box('ashlar', Math.min(x, x + dx * 0.16), yy - 0.07, z - w - 0.06, Math.max(x, x + dx * 0.16), yy, z + w + 0.06, { ao: false, room, faces: 'tnsewb', tint: [0.5, 0.5, 0.46] });
+    wb.box('mossstone', x + dx * 0.008, y - 0.02, z - w * 0.8, x + dx * 0.012, yy - 0.07, z + w * 0.8, { ao: false, room, faces: dx > 0 ? 'e' : 'w', tint: [0.26, 0.4, 0.24] });
+  }
+  cascada(ctx, { c: [x + dx * 0.15, z + dz * 0.15], w: w * 1.1, y0: yy - 0.04, y1: y - KIT.agua, d: [dx, dz], out: 0.16, open: 0.5, foam: 0.35, k: 0.5, luz: o.luz ?? 0.3 });
+}
+
+// El pozo de un sumidero (en el suelo, donde acaba el canal): el agujero r
+// (x0, z0, x1, z1) con su reja de hierro a ras del suelo y, debajo, el tiro de
+// piedra hasta 'hasta' (el techo de lo de abajo: el Sumidero); las cascadas
+// de lo que entra (bocas: [[lado, ancho]]) caen por él. Con 'fondo' (lo de
+// abajo no se ve: no lleva a ningún sitio), el tiro se acaba en un agua
+// negra a esa altura.
+export function sumideroPozo(ctx, r, y, room, o) {
+  const wb = ctx.wb,
+    col = ctx.col;
+  const [x0, z0, x1, z1] = r;
+  const lecho = o.lecho ?? y - KIT.prof;
+  const hasta = o.hasta;
+  // el tiro: sus cuatro caras de dentro, de piedra húmeda
+  const T = [0.3, 0.34, 0.28];
+  wb.box('mossstone', x0, hasta, z0 - 0.3, x1, lecho, z0, { faces: 's', ao: false, sub: 1, room, tint: T });
+  wb.box('mossstone', x0, hasta, z1, x1, lecho, z1 + 0.3, { faces: 'n', ao: false, sub: 1, room, tint: T });
+  wb.box('mossstone', x0 - 0.3, hasta, z0, x0, lecho, z1, { faces: 'e', ao: false, sub: 1, room, tint: T });
+  wb.box('mossstone', x1, hasta, z0, x1 + 0.3, lecho, z1, { faces: 'w', ao: false, sub: 1, room, tint: T });
+  // (sin nada debajo: el agua negra del fondo del tiro)
+  if (o.fondo !== undefined) {
+    wb.box('black', x0, o.fondo - 0.2, z0, x1, o.fondo, z1, { faces: 't', ao: false, grime: false, room });
+    if (ctx.waters) ctx.waters.push({ shape: 'rect', r: [x0 + 0.005, z0 + 0.005, x1 - 0.005, z1 - 0.005], y: o.fondo + 0.25, deep: 0x020303, sky: 0x0a0e10, glint: 0x5a7080, tint: 0x182220, clear: 3, light: [(x0 + x1) / 2, y + 2, (z0 + z1) / 2], lightK: 0.3, flow: [0, 0], amp: 0.03, drips: false });
+  }
+  // la reja: barrotes a ras del suelo, sobre el agua que entra
+  const n = Math.max(3, Math.round((x1 - x0) / 0.17));
+  // (apoyada en el borde: sobresale un centímetro del suelo, que no se pisen
+  // las dos caras)
+  for (let i = 0; i <= n; i++) {
+    const x = x0 + ((x1 - x0) * i) / n;
+    wb.box('iron', x - 0.022, y - 0.07, z0 - 0.04, x + 0.022, y + 0.012, z1 + 0.04, { ao: false, faces: 'tnsewb', room, tint: [0.42, 0.36, 0.32] });
+  }
+  for (const z of [z0 + (z1 - z0) * 0.3, z0 + (z1 - z0) * 0.7]) wb.box('iron', x0 - 0.04, y - 0.11, z - 0.025, x1 + 0.04, y - 0.06, z + 0.025, { ao: false, faces: 'tnsewb', room, tint: [0.38, 0.32, 0.3] });
+  // (se pisa la reja: el suelo, a ras)
+  col.add(x0, y - 0.12, z0, x1, y, z1, 'floor').cam = true;
+  // lo que cae
+  for (const [side, w] of o.bocas || []) {
+    const [dx, dz] = LADO[side];
+    // (el labio: el borde del pozo por ese lado; cae hacia dentro)
+    const cx = (x0 + x1) / 2 + (dx * (x1 - x0)) / 2,
+      cz = (z0 + z1) / 2 + (dz * (z1 - z0)) / 2;
+    // (cae por el tiro: hasta su agua, o hasta lo de abajo, donde sigue)
+    cascada(ctx, { c: [cx, cz], w, y0: y - KIT.agua, y1: o.fondo !== undefined ? o.fondo + 0.25 : hasta, d: [-dx, -dz], out: 0.12, open: 0.45, foam: o.fondo !== undefined ? 0.6 : 0.01, k: 1, luz: o.luz ?? 0.25 });
+  }
+}
+
 function cruce(ctx, n, o) {
   const wb = ctx.wb,
     col = ctx.col;
@@ -144,22 +252,42 @@ function cruce(ctx, n, o) {
   const ys = y + KIT.sp;
   wb.setRoom(room);
   paint(d, [y], [x0, z0, x1, z1]);
-  // el suelo: los andenes y el canal (en cruz por los lados que lo traen)
-  const can = Object.fromEntries(Object.entries(n.conn).map(([k, t]) => [k, !!t && t.o.tipo === 'canal' && Math.abs(t.a.y - t.b.y) < 0.05]));
+  // el suelo: los andenes y el canal (en cruz por los lados que lo traen, y
+  // por el de su caño, si mana aquí)
+  const fuente = n.fuente ? n.fuente.side || n.fuente : null;
+  // (un tramo ahogado también trae su agua: el canal del cruce le llega)
+  const can = Object.fromEntries(Object.entries(n.conn).map(([k, t]) => [k, (!!t && (t.o.tipo === 'canal' || t.o.tipo === 'ahogado') && Math.abs(t.a.y - t.b.y) < 0.05) || k === fuente]));
   const conns = Object.values(n.conn).filter(Boolean);
   const ahog = n.ahogado ?? (conns.some((t) => t.o.tipo === 'ahogado') && !conns.some((t) => t.o.tipo === 'canal'));
+  n.suelo = { ahog, can };
+  // (la corriente de cada brazo: hacia el centro si entra, hacia fuera si
+  // sale; el centro, hacia donde sale)
+  const fl = {};
+  let out = null,
+    mag = 0.35;
+  for (const sd of ['n', 's', 'e', 'w']) {
+    if (!can[sd]) continue;
+    const t = n.conn[sd];
+    const L = LADO[sd];
+    if (t) mag = Math.max(mag, Math.abs(t.o.flow ?? 0.5));
+    const inn = sd === fuente || (t && entra(t, n));
+    const m = t ? Math.abs(t.o.flow ?? 0.5) : 0.3;
+    fl[sd] = inn ? [-L[0] * m, -L[1] * m] : [L[0] * m, L[1] * m];
+    if (!inn) out = sd;
+  }
+  const fc = n.sumidero ? [0, 0] : out ? [LADO[out][0] * mag, LADO[out][1] * mag] : [0, 0];
   const piezas = [];
-  if (ahog) piezas.push(['agua', [x0, z0, x1, z1]]);
+  if (ahog) piezas.push(['agua', [x0, z0, x1, z1], [0, 0]]);
   else if (can.n || can.s || can.e || can.w) {
     const cc0 = n.x - c / 2,
       cc1 = n.x + c / 2,
       cz0 = n.z - c / 2,
       cz1 = n.z + c / 2;
-    piezas.push(['canal', [cc0, cz0, cc1, cz1]]);
-    piezas.push([can.n ? 'canal' : 'anden', [cc0, z0, cc1, cz0]]);
-    piezas.push([can.s ? 'canal' : 'anden', [cc0, cz1, cc1, z1]]);
-    piezas.push([can.w ? 'canal' : 'anden', [x0, cz0, cc0, cz1]]);
-    piezas.push([can.e ? 'canal' : 'anden', [cc1, cz0, x1, cz1]]);
+    if (!n.sumidero) piezas.push(['canal', [cc0, cz0, cc1, cz1], fc]);
+    piezas.push([can.n ? 'canal' : 'anden', [cc0, z0, cc1, cz0], fl.n]);
+    piezas.push([can.s ? 'canal' : 'anden', [cc0, cz1, cc1, z1], fl.s]);
+    piezas.push([can.w ? 'canal' : 'anden', [x0, cz0, cc0, cz1], fl.w]);
+    piezas.push([can.e ? 'canal' : 'anden', [cc1, cz0, x1, cz1], fl.e]);
     for (const r of [
       [x0, z0, cc0, cz0],
       [cc1, z0, x1, cz0],
@@ -167,16 +295,30 @@ function cruce(ctx, n, o) {
       [cc1, cz1, x1, z1],
     ])
       piezas.push(['anden', r]);
+    // el sumidero: el centro es el pozo, con su reja
+    if (n.sumidero) {
+      const S = n.sumidero;
+      sumideroPozo(ctx, [cc0, cz0, cc1, cz1], y, room, { ...S, bocas: ['n', 's', 'e', 'w'].filter((sd) => can[sd]).map((sd) => [sd, c * 0.92]) });
+      // (los cantos del pozo, donde da a los andenes: los pone el suelo, que
+      // lo ve como lecho)
+      piezas.push(['pozo', [cc0, cz0, cc1, cz1]]);
+    }
   } else piezas.push(['anden', [x0, z0, x1, z1]]);
   suelo(ctx, piezas, y, room, d);
   // los muros de los lados ciegos
+  // (el del caño, hasta el lecho del canal que nace a su pie)
   for (const side of ['n', 's', 'e', 'w']) {
     if (n.conn[side]) continue;
-    muro(ctx, side, side === 'n' || side === 's' ? [x0, x1] : [z0, z1], side === 'n' ? z0 : side === 's' ? z1 : side === 'w' ? x0 : x1, y, ys, room, mat, tint, ahog);
+    muro(ctx, side, side === 'n' || side === 's' ? [x0, x1] : [z0, z1], side === 'n' ? z0 : side === 's' ? z1 : side === 'w' ? x0 : x1, y, ys, room, mat, tint, ahog || side === fuente);
+  }
+  // el caño de la fuente
+  if (fuente) {
+    const ax = fuente === 'n' || fuente === 's';
+    cano(ctx, fuente, ax ? n.x : fuente === 'w' ? x0 : x1, ax ? (fuente === 'n' ? z0 : z1) : n.z, y, room, { luz: n.fuente.luz });
   }
   crossVault(ctx, { x0, z0, x1, z1, ys, walls: { n: !n.conn.n, s: !n.conn.s, e: !n.conn.e, w: !n.conn.w }, mat, tint: tint.map((v) => v * 0.94), room });
   col.add(x0, ys + h * 0.75, z0, x1, ys + h + 0.6, z1).cam = true;
-  if (ctx.waters) for (const [k, r] of piezas) if (k === 'canal' || k === 'agua') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua'));
+  if (ctx.waters) for (const [k, r, f] of piezas) if (k === 'canal' || k === 'agua') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua', f || [0, 0]));
   for (const [k, r] of piezas) if (k === 'agua') ahogado(ctx, r, y - KIT.prof);
   wb.setRoom(null);
   void o;
@@ -249,6 +391,30 @@ function tramo(ctx, t, o) {
   else if (tipo === 'ahogado') piezas.push(['agua', R(s0, s1, u - h, u + h)]);
   else piezas.push(['anden', R(s0, s1, u - h, u + h)]);
   suelo(ctx, piezas, y, room, d);
+  // los cantos donde el suelo de la galería no casa con el del cruce (lo
+  // ahogado junto a un cruce seco, y al revés): la cara del más alto
+  for (const [E, sl, dirIn] of [
+    [E0, s0, 1],
+    [E1, s1, -1],
+  ]) {
+    if (E.boca || !E.suelo) continue;
+    const sideE = t.alongX ? (dirIn > 0 ? 'e' : 'w') : dirIn > 0 ? 's' : 'n';
+    const lowN = (a) => E.suelo.ahog || (E.suelo.can[sideE] && Math.abs(a - u) < c / 2);
+    const lowT = (a) => tipo === 'ahogado' || (tipo === 'canal' && Math.abs(a - u) < c / 2);
+    const cuts = [u - h, u - c / 2, u + c / 2, u + h];
+    const lecho = y - KIT.prof;
+    for (let i = 0; i < 3; i++) {
+      const a0 = cuts[i],
+        a1 = cuts[i + 1],
+        am = (a0 + a1) / 2;
+      const lt = lowT(am);
+      if (lowN(am) === lt) continue;
+      const f = lt ? dirIn : -dirIn;
+      const fo = { faces: t.alongX ? (f > 0 ? 'e' : 'w') : f > 0 ? 's' : 'n', ao: false, sub: 2, tint: [0.4, 0.42, 0.38], room };
+      if (t.alongX) wb.box('ashlar', f > 0 ? sl - 0.01 : sl, lecho, a0, f > 0 ? sl : sl + 0.01, y, a1, fo);
+      else wb.box('ashlar', a0, lecho, f > 0 ? sl - 0.01 : sl, a1, y, f > 0 ? sl : sl + 0.01, fo);
+    }
+  }
   // los muros, de un lado y del otro (hasta el grueso del muro de la sala)
   const sideA = t.alongX ? 'n' : 'w',
     sideB = t.alongX ? 's' : 'e';
@@ -260,7 +426,9 @@ function tramo(ctx, t, o) {
   barrelVault(ctx, { x0: rx0, z0: rz0, x1: rx1, z1: rz1, ys, axis: t.alongX ? 'x' : 'z', mat, tint: tint.map((v) => v * 0.94), room, impostTint: tint.map((v) => v * 1.08) });
   const [cx0, cz0, cx1, cz1] = R(s0, s1, u - h, u + h);
   col.add(cx0, ys + h * 0.75, cz0, cx1, ys + h + 0.6, cz1).cam = true;
-  if (ctx.waters) for (const [k, r] of piezas) if (k === 'canal' || k === 'agua') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua', t.alongX ? [t.o.flow ?? 0.5, 0] : [0, t.o.flow ?? 0.5]));
+  // (la corriente: la del canal; en lo ahogado, apenas se mueve)
+  const fv = corriente(t);
+  if (ctx.waters) for (const [k, r] of piezas) if (k === 'canal' || k === 'agua') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua', k === 'agua' ? [fv[0] * 0.3, fv[1] * 0.3] : fv));
   for (const [k, r] of piezas) if (k === 'agua') ahogado(ctx, r, y - KIT.prof);
   // lo de cada galería: los caños de las calles, la lamparilla
   detalles(ctx, t, m0, m1, u, y, room);
@@ -347,6 +515,8 @@ export function suelo(ctx, piezas, y, room, d = {}) {
   for (const [k, r] of piezas) {
     const [x0, z0, x1, z1] = r;
     if (x1 - x0 < 1e-3 || z1 - z0 < 1e-3) continue;
+    // (el pozo de un sumidero: un agujero; sólo cuenta para los cantos)
+    if (k === 'pozo') continue;
     if (k === 'anden') {
       wb.box('flag', x0, y - 0.1, z0, x1, y, z1, { faces: 't', ao: false, sub: 2, tint: d.suelo || [0.46, 0.45, 0.41], room });
       col.add(x0, y - 1.2, z0, x1, y, z1, 'floor').cam = true;
@@ -383,7 +553,7 @@ export function suelo(ctx, piezas, y, room, d = {}) {
 
 // el agua de un trozo
 export function aguaDe(r, y, d = {}, ahogado = false, flow = [0.3, 0]) {
-  return { shape: 'rect', r: [r[0] + 0.005, r[1] + 0.005, r[2] - 0.005, r[3] - 0.005], y, flow, amp: ahogado ? 0.012 : 0.016, deep: d.aguaDeep ?? 0x050807, sky: d.aguaSky ?? 0x0e1416, glint: d.aguaGlint ?? 0x6a8090, light: [(r[0] + r[2]) / 2, y + 2.4, (r[1] + r[3]) / 2], lightK: 0.35, drips: false };
+  return { shape: 'rect', r: [r[0] + 0.005, r[1] + 0.005, r[2] - 0.005, r[3] - 0.005], y, flow, amp: ahogado ? 0.012 : 0.016, deep: d.aguaDeep ?? 0x050807, sky: d.aguaSky ?? 0x0e1416, glint: d.aguaGlint ?? 0x6a8090, tint: d.aguaTint ?? 0x2e3e38, light: [(r[0] + r[2]) / 2, y + 2.4, (r[1] + r[3]) / 2], lightK: 0.35, drips: false };
 }
 
 // ------------------------------------------------------------------------ el muro
@@ -500,15 +670,20 @@ function sala(ctx, s, N, o) {
     const a = s.anden ?? 1.4;
     piezas.push(['anden', [x0, z0, x1, z0 + a]], ['anden', [x0, z1 - a, x1, z1]], ['anden', [x0, z0 + a, x0 + a, z1 - a]], ['anden', [x1 - a, z0 + a, x1, z1 - a]]);
   } else {
-    const can = s.canal || [];
-    if (!can.length) piezas.push(['anden', [x0, z0, x1, z1]]);
+    // (los canales: [x0, z0, x1, z1] o { r, flow }; el sumidero, su pozo)
+    const can = (s.canal || []).map((q) => (Array.isArray(q) ? { r: q, flow: s.flow } : q));
+    const pz = [...(s.sumidero ? [s.sumidero.r] : []), ...(s.poza ? [s.poza.r] : [])];
+    if (!can.length && !pz.length) piezas.push(['anden', [x0, z0, x1, z1]]);
     else {
-      for (const r of can) piezas.push(['canal', r]);
-      for (const r of restar([x0, z0, x1, z1], can)) piezas.push(['anden', r]);
+      for (const q of can) piezas.push(['canal', q.r, q.flow]);
+      for (const r of pz) piezas.push(['pozo', r]);
+      for (const r of restar([x0, z0, x1, z1], [...can.map((q) => q.r), ...pz])) piezas.push(['anden', r]);
     }
   }
   suelo(ctx, piezas, y, room, d);
-  if (ctx.waters) for (const [k, r] of piezas) if (k !== 'anden') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua', s.flow || [0.15, 0.1]));
+  if (s.sumidero) sumideroPozo(ctx, s.sumidero.r, y, room, s.sumidero);
+  if (s.poza) poza(ctx, s.poza, y, room);
+  if (ctx.waters) for (const [k, r, f] of piezas) if (k === 'canal' || k === 'agua') ctx.waters.push(aguaDe(r, y - (k === 'agua' ? KIT.ahog : KIT.agua), d, k === 'agua', f || s.flow || [0.15, 0.1]));
   for (const [k, r] of piezas) if (k === 'agua') ahogado(ctx, r, y - KIT.prof);
   // el estanque: hondo de verdad (no se pisa: su borde tiene pretil)
   if (s.tipo === 'estanque') {
@@ -572,6 +747,42 @@ function sala(ctx, s, N, o) {
   wb.setRoom(null);
   void N;
   void o;
+}
+
+// Una poza honda en el suelo de una sala (la pila de una fuente): r, su
+// hueco; fondo; muro: el lado que da al muro de la sala (su cara sube hasta
+// el suelo); hueco: un agujero en el fondo (por donde mana: abajo, lo de
+// world/sumidero.js); el agua, a la de los canales (rebosa al que sale de
+// ella). Sus caras de dentro, el fondo, el agua, y la roca de alrededor bajo
+// el suelo (no se sale nadando por debajo de las losas).
+export function poza(ctx, o, y, room) {
+  const wb = ctx.wb,
+    col = ctx.col;
+  const [x0, z0, x1, z1] = o.r;
+  const lecho = y - KIT.prof;
+  const fondo = o.fondo;
+  const T = [0.32, 0.38, 0.32];
+  const top = (sd) => (o.muro === sd ? y - 0.04 : lecho);
+  const fo = { ao: false, sub: 1.2, room, tint: T };
+  wb.box('mossstone', x0, fondo, z0 - 0.3, x1, top('n'), z0, { ...fo, faces: 's' });
+  wb.box('mossstone', x0, fondo, z1, x1, top('s'), z1 + 0.3, { ...fo, faces: 'n' });
+  wb.box('mossstone', x0 - 0.3, fondo, z0, x0, top('w'), z1, { ...fo, faces: 'e' });
+  wb.box('mossstone', x1, fondo, z0, x1 + 0.3, top('e'), z1, { ...fo, faces: 'w' });
+  // el fondo (con su agujero)
+  for (const [a, b, c, d] of restar([x0, z0, x1, z1], o.hueco ? [o.hueco] : [])) {
+    wb.box('mossstone', a, fondo - 0.1, b, c, fondo, d, { faces: 't', ao: false, sub: 1.2, room, tint: [0.24, 0.3, 0.24] });
+    col.add(a, fondo - 1.2, b, c, fondo, d, 'floor').cam = true;
+  }
+  // la roca de alrededor, bajo las losas
+  const yb = fondo - 1.2,
+    yt = y - 0.3;
+  col.add(x0 - 0.5, yb, z0 - 0.5, x1 + 0.5, yt, z0).cam = true;
+  col.add(x0 - 0.5, yb, z1, x1 + 0.5, yt, z1 + 0.5).cam = true;
+  col.add(x0 - 0.5, yb, z0, x0, yt, z1).cam = true;
+  col.add(x1, yb, z0, x1 + 0.5, yt, z1).cam = true;
+  const h = o.hueco;
+  if (ctx.waters)
+    ctx.waters.push({ shape: 'rect', r: [x0 + 0.005, z0 + 0.005, x1 - 0.005, z1 - 0.005], y: y - KIT.agua, bedFn: (x, z) => (h && x > h[0] && x < h[2] && z > h[1] && z < h[3] ? fondo - 4 : fondo), deep: 0x030c09, sky: 0x18302a, glint: 0xa8e8d0, tint: 0x1c4a3e, clear: 0.55, amb: 0x061210, refl: 0.25, flow: [0, 0.06], amp: 0.024, light: [(x0 + x1) / 2, y + 3, (z0 + z1) / 2], lightK: 0.5 });
 }
 
 // Un rectángulo menos otros.

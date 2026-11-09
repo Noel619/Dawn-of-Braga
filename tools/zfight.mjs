@@ -1,16 +1,17 @@
 // Busca «z-fighting»: caras de la geometría del nivel que están en el mismo
 // plano, miran hacia el mismo lado y se solapan (el suelo que parpadea entre
 // dos texturas al mover la cámara). Agrupa los solapes por sitio y plano.
-//   node tools/zfight.mjs [x0 z0 x1 z1]      (requiere npx vite --port 5199)
-// Con una región, sólo mira lo que cae dentro (en planta).
+//   node tools/zfight.mjs [x0 z0 x1 z1 [y0 y1]]      (requiere npx vite --port 5199)
+// Con una región, sólo mira lo que cae dentro (en planta; y, con y0 y1, en
+// altura: el subsuelo, sin la ciudad de encima).
 import { chromium } from 'playwright';
-const reg = process.argv.slice(2, 6).map(Number);
-const region = reg.length === 4 && reg.every((v) => Number.isFinite(v)) ? reg : null;
+const reg = process.argv.slice(2, 8).map(Number);
+const region = (reg.length === 4 || reg.length === 6) && reg.every((v) => Number.isFinite(v)) ? reg : null;
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 320, height: 200 } });
 const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
-await p.goto('http://localhost:5199/?dev=1');
+await p.goto('http://localhost:' + (process.env.PORT || 5199) + '/?dev=1');
 await p.waitForFunction(() => window.__ready, null, { timeout: 90000 });
 const r = await p.evaluate((region) => {
   window.__pause = true;
@@ -42,6 +43,10 @@ const r = await p.evaluate((region) => {
         const mx = (ax + bx + cx) / 3,
           mz = (az + bz + cz) / 3;
         if (mx < region[0] || mx > region[2] || mz < region[1] || mz > region[3]) continue;
+        if (region.length === 6) {
+          const my = (ay + by + cy) / 3;
+          if (my < region[4] || my > region[5]) continue;
+        }
       }
       const ux = bx - ax,
         uy = by - ay,

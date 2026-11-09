@@ -10,6 +10,7 @@ import { moveBody } from '../world/collision.js';
 import { clamp, damp, dampAngle, approachAngle, angleDiff, wrapAngle, DEG, lerp } from '../core/util.js';
 import { objMat } from '../gfx/materials.js';
 import { relicMods } from '../game/relics.js';
+import { nadoUpdate, nadoAnimate } from './nado.js';
 import { ITEMS, MSG } from '../game/story.js';
 
 // Los clips y golpes de cada arma están en weapons.js / weapon_moves.js.
@@ -300,6 +301,12 @@ export class Player {
     this.ripE = null;
     this.gait._yaw = null;
     this.balance = null;
+    // (fuera del agua, con el arma y el escudo en su sitio)
+    this.camFloor = null;
+    if (this.nadoS) {
+      this.nadoS = null;
+      this.updateGear();
+    }
     this.obj.position.set(x, y, z);
     this.obj.rotation.y = yaw;
   }
@@ -818,6 +825,12 @@ export class Player {
       this.animate(dt);
       return;
     }
+    // a nado (entities/nado.js): otra manera de moverse
+    if (this.state === 'swim' && this.nadoS) {
+      nadoUpdate(this, dt, input, cam, allowControl);
+      this.animate(dt);
+      return;
+    }
     this.stT += dt;
     this.comboT -= dt;
     const target = g.lockTarget;
@@ -1269,6 +1282,8 @@ export class Player {
     moveBody(g.world.col, this.body, this.vx * dt, this.vz * dt, dt);
     if (airVy < -5.5 && this.body.grounded && g.state === 'play') g.audio && g.audio.play('land', this.pos, { v: -airVy });
     if (wasAir && this.body.grounded && g.playerLanded) g.playerLanded((this.groundY ?? this.body.pos.y) - this.body.pos.y);
+    // ¿al agua honda? (andando, o cayendo en ella: game/nado.js)
+    if (g.nado) g.nado.entrada(this);
 
     // escudo arriba/abajo
     this.blockW = damp(this.blockW, this.blocking ? 1 : 0, 16, dt);
@@ -1294,6 +1309,8 @@ export class Player {
   // Locomoción procedural + clip de acción + IK de piernas + muelles.
   animate(dt) {
     const g = this.game;
+    // (a nado, la brazada: entities/nado.js)
+    if (this.state === 'swim' && this.nadoS) return nadoAnimate(this, dt);
     const t = g.time;
     const target = g.lockTarget;
     const gait = this.gait;
