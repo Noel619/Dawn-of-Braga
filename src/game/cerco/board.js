@@ -169,6 +169,28 @@ export class CercoBoard {
       m.renderOrder = 2;
       this.grp.add(m);
     }
+    // lo que te señala el Rey cuando te explica algo: las casillas (un marco
+    // blanco que late) y la línea (puntos)
+    this.hintMat = markMat(0xfff0c0, 0.9);
+    this.hintDotMat = markMat(0xffe6a0, 0.6);
+    const hintGeo = frameGeo(B.sq * 0.94, B.sq * 0.09);
+    this.hintMeshes = [];
+    for (let i = 0; i < 3; i++) {
+      const m = new THREE.Mesh(hintGeo, this.hintMat);
+      m.visible = false;
+      m.renderOrder = 3;
+      this.grp.add(m);
+      this.hintMeshes.push(m);
+    }
+    const hdot = new THREE.CircleGeometry(B.sq * 0.09, 10).rotateX(-Math.PI / 2);
+    this.hintDots = [];
+    for (let i = 0; i < 16; i++) {
+      const m = new THREE.Mesh(hdot, this.hintDotMat);
+      m.visible = false;
+      m.renderOrder = 2;
+      this.grp.add(m);
+      this.hintDots.push(m);
+    }
     this.cursor = { r: 8, c: 4, on: false };
     this.t = 0;
     this.setPosition(null);
@@ -347,10 +369,28 @@ export class CercoBoard {
       m.position.set(w.x, w.y + 0.003, w.z);
     });
   }
+  // Lo que señala el Rey: casillas enmarcadas (sqs) y una línea de puntos.
+  setHint(sqs = [], line = []) {
+    this.hintMeshes.forEach((m, i) => {
+      const sq = sqs[i];
+      m.visible = sq != null && sq >= 0;
+      if (!m.visible) return;
+      const w = this.sqWorld(sq);
+      m.position.set(w.x, w.y + 0.004, w.z);
+    });
+    this.hintDots.forEach((d, i) => {
+      const sq = line[i];
+      d.visible = sq != null && sq >= 0 && !sqs.includes(sq);
+      if (!d.visible) return;
+      const w = this.sqWorld(sq);
+      d.position.set(w.x, w.y + 0.0028, w.z);
+    });
+  }
   clearMarks() {
     this.setCursor(this.cursor.r, this.cursor.c, false);
     this.setSelected(-1);
     this.setLast();
+    this.setHint();
   }
 
   // ------------------------------------------------------------ cada fotograma
@@ -406,5 +446,7 @@ export class CercoBoard {
     // el cursor late; la marca de la última jugada se apaga despacio
     if (this.cursorMesh.visible) this.cursorMesh.material.opacity = 0.62 + Math.sin(this.t * 6) * 0.25;
     if (this.selMesh.visible) this.selMesh.material.opacity = 0.3 + Math.sin(this.t * 4) * 0.12;
+    this.hintMat.opacity = 0.65 + Math.sin(this.t * 5) * 0.3;
+    this.hintDotMat.opacity = 0.4 + Math.sin(this.t * 5 - 1) * 0.2;
   }
 }

@@ -15,17 +15,30 @@
 //     muere echado atrás en su sitial. Si pierdes las tres, se pone a colocar
 //     otra partida y se muere con el rey en la mano, antes de llegar al trono.
 //
+//  6. Se acuerda: si una jugada tuya (o suya) es la de una de las partidas de
+//     su vida (game/cerco/partidas.js: la de su padre, la de su hijo, la de
+//     la reina...), lo dice, la cuenta la primera vez y se ríe, o no; y en
+//     la apertura, a veces, juega como jugaban ellos. La primera vez que se
+//     acuerda te da el libro de Mestre Alberto, donde están todas.
+//  7. Te enseña: si juegas mal (game/cerco/maestro.js: una salida que no
+//     ves, una horquilla, una pieza que regalas, tu rey a tiro...), te lo
+//     explica señalando la casilla con el dedo; y entre partida y partida, si
+//     la has perdido mal, lo que le dijo su padre.
+//
 // Banderas: rey:met (ya se conocen), rey:reglas (ya las explicó), rey:n
 // (partidas jugadas), rey:ganada, rey:muerto, rey:final ('a' | 'b') y
-// rey:tablero (cómo quedó el tablero), note:cerco y las take: de lo que deja.
+// rey:tablero (cómo quedó el tablero), rey:rec:<partida> (ya la contó),
+// note:cerco, note:partidas y las take: de lo que deja.
 import * as THREE from 'three';
-import { DIALOG, MSG, NOTES } from './story.js';
+import { DIALOG, MSG, NOTES, PARTIDAS } from './story.js';
 import { REY_CLIPS, fingertip } from '../entities/rey.js';
 import { REY_MESA, squareWorld } from '../world/rey_mesa.js';
-import { Cerco, ATT, DEF, KING, SQ, N, rowOf, colOf, mv, mFrom, mTo, THRONE, NB } from './cerco/rules.js';
+import { Cerco, ATT, DEF, KING, SQ, N, rowOf, colOf, mv, mFrom, mTo, THRONE, NB, RAYS } from './cerco/rules.js';
 import { CercoBoard } from './cerco/board.js';
 import { Thinker } from './cerco/thinker.js';
-import { moveOpts } from './cerco/levels.js';
+import { moveOpts, BOOK_BONUS, BOOK_PLIES } from './cerco/levels.js';
+import { Recuerdos } from './cerco/partidas.js';
+import { examine } from './cerco/maestro.js';
 import { clamp } from '../core/util.js';
 import { attachBackdrop, bannerBitmap } from '../ui/pixel.js';
 import { clip } from '../entities/rig.js';
@@ -41,6 +54,8 @@ const HEIGHT = { [ATT]: 0.062, [DEF]: 0.066, [KING]: 0.094 };
 const CAM = {
   play: { pos: new V3(B.x, B.y + 0.72, B.z - 0.62), look: new V3(B.x, B.y, B.z + 0.02) },
   king: { pos: new V3(B.x + 0.22, B.y + 0.6, B.z - 0.98), look: new V3(B.x, B.y + 0.24, B.z + 0.44) },
+  // cuando te explica algo: el tablero de arriba, y él al fondo, señalando
+  lesson: { pos: new V3(B.x + 0.08, B.y + 0.86, B.z - 0.78), look: new V3(B.x, B.y + 0.06, B.z + 0.12) },
   // los finales: de lado, a su altura; y desde lejos, la sala entera
   side: { pos: new V3(B.x + 1.35, B.y + 0.62, B.z - 0.05), look: new V3(SEAT.x, B.y + 0.3, SEAT.z - 0.05) },
   face: { pos: new V3(B.x - 0.35, B.y + 0.62, B.z - 0.45), look: new V3(SEAT.x, B.y + 0.55, SEAT.z - 0.12) },
@@ -53,6 +68,24 @@ const CSS = `
 #cerco b { color: #f5d88a; font-weight: normal; }
 `;
 
+// Lo que lleva visto de ti, para explicarte (en esta visita y las
+// siguientes, hasta que se carga la partida): los fallos de cada clase, lo
+// que ya te ha explicado y las partidas que le has perdido.
+const newPupil = () => ({ kinds: {}, told: {}, lost: 0, bad: 0, any: false, game: false });
+// Las casillas de a (sin ella) a b (con ella), si están en línea.
+function rayTo(a, b) {
+  const out = [];
+  for (let d = 0; d < 4; d++) {
+    const ray = RAYS[a][d];
+    const j = ray.indexOf(b);
+    if (j >= 0) {
+      for (let q = 0; q <= j; q++) out.push(ray[q]);
+      break;
+    }
+  }
+  return out;
+}
+
 export class ReyQuest {
   constructor(g) {
     this.g = g;
@@ -61,6 +94,8 @@ export class ReyQuest {
     this.board = new CercoBoard(g);
     this.thinker = new Thinker();
     this.cerco = new Cerco();
+    this.recuerdos = new Recuerdos();
+    this.pupil = newPupil();
     this._h = new V3(0, 0.32, 0.02);
     this._v = new V3();
     this._w = new V3();
@@ -427,6 +462,19 @@ export class ReyQuest {
     S.sel = -1;
     S.last = null;
     S.over = null;
+    // (lo que recuerda y lo que te explica, de esta partida)
+    this.recuerdos.reset();
+    S.stillKing = 0;
+    S.bad = 0;
+    S.exam = null;
+    S.hits = null;
+    S.lastHits = null;
+    S.lesson = null;
+    S.lastLesson = -99;
+    S.said = new Set();
+    S.recallAt = -99;
+    S.escapeRec = null;
+    S.book = null;
     const n = this.played;
     this.gameNo = n;
     this.g.audio && this.g.audio.play('pieceSet', B);
@@ -435,7 +483,7 @@ export class ReyQuest {
   }
   setHud(turn = null) {
     const n = this.played + 1;
-    const t = turn === 'you' ? 'Mueves tú' : turn === 'king' ? 'Piensa el Rey' : '';
+    const t = turn === 'you' ? 'Mueves tú' : turn === 'king' ? 'Piensa el Rey' : turn === 'lesson' ? 'Te explica el Rey' : '';
     this.hudText = `Partida <b>${n}</b> de 3${t ? ' · ' + t : ''}`;
     this.hud.firstChild.innerHTML = this.hudText;
   }
@@ -446,7 +494,7 @@ export class ReyQuest {
     const e = this.npc;
     S.t += dt;
     // el plano: hacia el tablero o hacia él
-    const want = S.cam || (S.phase === 'you' || S.phase === 'youMove' ? 'play' : 'king');
+    const want = S.cam || (S.phase === 'you' || S.phase === 'youMove' ? 'play' : S.lesson && S.lesson.step !== 'back' ? 'lesson' : 'king');
     const C = CAM[want];
     const v = this.view;
     const k = Math.min(1, dt * (S.camSpeed ?? 2.2));
@@ -550,10 +598,13 @@ export class ReyQuest {
     // (en la segunda y la tercera, a veces se adormila mientras piensa)
     S.doze = lv > 0 && S.moves > 2 && Math.random() < 0.1 + lv * 0.08 ? { at: 1 + Math.random() * 1.5, dur: 2.4 + Math.random() * 2.2 } : null;
     if (S.doze) S.minT += S.doze.dur + 1.4;
+    // en la apertura, a veces, juega como en una de sus partidas (si la
+    // posición sigue en alguna y la jugada no es peor que la mejor)
+    S.book = this.cerco.ply < BOOK_PLIES ? this.pickBook() : null;
     this.setHud('king');
     const tok = (S.tok = {});
     this.thinker
-      .think(S.board, { depth: o.depth, ms: o.ms, noise: o.noise, jitter: o.jitter, seed: (Math.random() * 4294967296) >>> 0 })
+      .think(S.board, { depth: o.depth, ms: o.ms, noise: o.noise, jitter: o.jitter, seed: (Math.random() * 4294967296) >>> 0, prefer: S.book ? S.book.m : -1, preferBonus: S.book ? BOOK_BONUS : 0 })
       .then((r) => {
         if (this.seat && this.seat.tok === tok) S.result = r;
       })
@@ -564,17 +615,35 @@ export class ReyQuest {
           S.result = { move: ms[Math.floor(Math.random() * ms.length)], score: 0 };
         }
       });
+    // te explica tu jugada (y mientras, piensa la suya)
+    if (S.lesson) {
+      S.doze = null;
+      this.startLesson();
+      return;
+    }
     if (this.npc && !this.clipBusy()) this.play('think');
     // un recuerdo, de vez en cuando, mientras piensa
-    if (S.moves > 1 && Math.random() < 0.22 && this.memK < DIALOG.reyMemory.length && this.lineCool <= 0) {
+    if (S.moves > 1 && Math.random() < 0.22 && this.memK < DIALOG.reyMemory.length && this.lineCool <= 0 && !this.busy()) {
       this.say(DIALOG.reyMemory[this.memK++]);
       this.lineCool = 12;
     }
+  }
+  // De las partidas que recuerda, una cuya apertura siga la posición (mejor
+  // una que aún no ha contado); a veces, ninguna: juega lo suyo.
+  pickBook() {
+    const list = this.recuerdos.book(this.cerco);
+    if (!list.length || Math.random() < 0.2) return null;
+    const fresh = list.filter((b) => !this.F['rey:rec:' + b.id]);
+    return pick(fresh.length ? fresh : list);
   }
   updateThink(dt, D) {
     const S = this.seat;
     D.look = this._w.set(B.x, B.y, B.z);
     const e = this.npc;
+    if (S.lesson) {
+      this.updateLesson(dt, D);
+      return;
+    }
     // adormilado: la cabeza se le cae; despierta de golpe
     if (S.doze) {
       const z = S.doze;
@@ -588,7 +657,7 @@ export class ReyQuest {
         D.sleepy = 0;
         this.play('wake', 0.1);
         this.g.audio && this.g.audio.play('reyGasp', this.who.head(this._v));
-        this.say(pick(DIALOG.reyDoze));
+        if (!this.busy()) this.say(pick(DIALOG.reyDoze));
       }
     } else D.sleepy = Math.max(0, (D.sleepy ?? 0) - dt);
     // la tos, más a menudo cuanto peor está
@@ -700,7 +769,8 @@ export class ReyQuest {
       if (S.t > 0.12 && !S.placed) {
         S.placed = true;
         this.board.drop(P.from, P.to, S.caps);
-        this.cerco.play(S.move);
+        const u = this.cerco.play(S.move);
+        S.kingHits = S.lastHits = u ? this.recuerdos.onMove(this.cerco, S.move, u) : null;
         S.moves++;
         this.board.setLast(P.from, P.to);
       }
@@ -874,7 +944,13 @@ export class ReyQuest {
     this.board.setCursor(rowOf[mTo(m)], colOf[mTo(m)], false);
     this.board.setLast();
     const dur = this.board.move(mFrom(m), mTo(m), caps);
-    this.cerco.play(m);
+    // lo que ve en tu jugada (para explicártela) y lo que le recuerda
+    S.exam = examine(this.cerco, m, S.stillKing);
+    const pu = this.cerco.play(m);
+    S.hits = S.lastHits = this.recuerdos.onMove(this.cerco, m, pu);
+    S.stillKing = pu.p === KING ? 0 : S.stillKing + 1;
+    const esc = S.hits.find((h) => h.kind === 'escape' && PARTIDAS[h.id] && PARTIDAS[h.id].escape);
+    if (esc) S.escapeRec = esc;
     S.moves++;
     S.youMoves = (S.youMoves || 0) + 1;
     S.phase = 'youMove';
@@ -895,20 +971,36 @@ export class ReyQuest {
     }
     const lines = C.openLines();
     if (side === ATT) {
-      // la suya: si ha matado, si te ha cerrado una salida, si tu rey está en peligro
-      if (S.caps.length) {
+      // la suya: si le recuerda algo, si ha matado, si te ha cerrado una
+      // salida, si tu rey está en peligro (esto, sólo si vas mal: te avisa)
+      if (this.recall(S.kingHits, ATT)) S.blocking = false;
+      else if (S.caps.length) {
         this.remark(DIALOG.reyTake, 0.7, 5);
         if (S.caps.length && Math.random() < 0.3) this.play('nod');
       } else if (S.blocking) this.remark(DIALOG.reyBlock, 0.6, 6);
       else if (S.tired && this.gameNo >= 1) this.remark(DIALOG.reyTired, 0.35, 10);
-      else if (this.kingInDanger()) this.remark(DIALOG.reyDanger, 0.45, 9);
+      else if ((S.bad >= 4 || this.pupil.lost > 0) && this.kingInDanger()) this.remark(DIALOG.reyDanger, 0.6, 9);
       S.blocking = false;
       this.playerTurn();
     } else {
-      // la tuya: si le has matado una, si tu rey se asoma a las afueras
-      if (lines >= 2) {
-        this.remark(DIALOG.reyFork, 1, 3);
-        this.play('shake');
+      // la tuya: si juegas mal, te la explica; si no, lo que le recuerda, si
+      // le has matado una, si tu rey se asoma a las afueras
+      // (lo que le recuerda la jugada que te pierde el rey —la misma que le
+      // perdió a él de niño, o contra el arzobispo— puede más que explicarla)
+      const fatal = S.hits && S.hits.some((h) => h.kind === 'fatal' && PARTIDAS[h.id] && PARTIDAS[h.id].fatal);
+      S.lesson = fatal ? null : this.lessonFor(S.exam);
+      if (fatal && this.recall(S.hits, DEF, ['fatal'])) {
+        // (y la coge)
+      } else if (S.lesson) {
+        if (lines === 1) S.blocking = true;
+      } else if (lines >= 2) {
+        // (una horquilla: sólo si es la de una de sus partidas; si no, el «ay»)
+        if (!this.recall(S.hits, DEF, ['fork', 'pend', 'double', 'kingKill', 'habit2'])) {
+          this.remark(DIALOG.reyFork, 1, 3);
+          this.play('shake');
+        }
+      } else if (this.recall(S.hits, DEF)) {
+        if (lines === 1) S.blocking = true;
       } else if (lines === 1) {
         S.blocking = true;
         this.remark(DIALOG.reyThreat, 0.8, 4);
@@ -921,10 +1013,177 @@ export class ReyQuest {
       this.kingTurn();
     }
   }
-  // ¿puede el Rey atrapar a tu rey en su próxima jugada?
+
+  // ------------------------------------------------------------ lo que recuerda
+  // Lo que le recuerda la jugada (hits de Recuerdos.onMove): elige lo que más
+  // le dice y lo cuenta (la primera vez que se acuerda de una partida, la
+  // cuenta entera; la primera de todas, te da el libro). ¿Ha dicho algo?
+  recall(hits, side, only = null) {
+    const S = this.seat;
+    if (!hits || !hits.length) return false;
+    // (lo que pesa cada cosa: lo raro, más que la apertura)
+    const PR = { pend: 9, fork: 8, fatal: 8, double: 7, kingKill: 6, habit2: 6, taken: 6, habit: 5, draw: 5, leave: 3, book: 2, own: 2 };
+    let best = null;
+    for (const h of hits) {
+      const T = PARTIDAS[h.id];
+      if (!T) continue;
+      const kind = h.kind === 'book' && side === ATT ? 'own' : h.kind;
+      if (!T[kind] || !PR[kind] || (only && !only.includes(kind))) continue;
+      if (S.said.has(h.id + ':' + kind)) continue;
+      // la apertura: la tuya, una vez por partida; la suya, si la ha elegido él
+      if (kind === 'book' && (S.said.has('book') || this.cerco.ply < 2)) continue;
+      if (kind === 'own' && (!S.book || S.book.id !== h.id || S.said.has('own') || this.cerco.ply > 7 || Math.random() < 0.4)) continue;
+      if (kind === 'leave' && (side !== DEF || !S.said.has(h.id + ':book'))) continue;
+      const sc = PR[kind] + (this.F['rey:rec:' + h.id] ? 0 : 0.5) + Math.random() * 0.4;
+      if (!best || sc > best.sc) best = { h, kind, sc, T };
+    }
+    if (!best) return false;
+    // (lo menudo, con descanso: que no hable de su vida a cada jugada)
+    if (best.sc < 5 && (this.lineCool > 0 || S.moves - S.recallAt < 6)) return false;
+    const { h, kind, T } = best;
+    const lines = [pick(T[kind])];
+    // (la primera vez, la cuenta; pero no por abrir él como en ella: eso
+    // lo dice de pasada)
+    if (kind === 'own') {
+      this.g.speech.queue(this.who, lines);
+      this.lineCool = 6;
+      S.said.add(h.id + ':own');
+      S.said.add('own');
+      S.recallAt = S.moves;
+      return true;
+    }
+    const first = !this.F['rey:rec:' + h.id];
+    if (first && T.story) lines.push(...T.story);
+    this.F['rey:rec:' + h.id] = true;
+    // la primera vez que se acuerda de una: el libro de Mestre Alberto
+    if (!this.F['note:partidas']) {
+      lines.push(...DIALOG.reyLibro);
+      this.F['note:partidas'] = true;
+      this.g.later(1500, () => this.g.ui.toast(MSG.cercoLibro, 4));
+    }
+    this.g.speech.queue(this.who, lines);
+    this.lineCool = Math.max(6, lines.reduce((t, l) => t + 1 + l.length / 40, 0));
+    S.said.add(h.id + ':' + kind);
+    if (kind === 'book' || kind === 'own') S.said.add(kind);
+    S.recallAt = S.moves;
+    // y el gesto: se ríe, asiente o niega
+    const clip = (T.clip && T.clip[kind]) || 'nod';
+    if (clip === 'laugh') {
+      this.play('laugh');
+      this.g.audio && this.g.audio.play('reyLaugh', this.who.head(this._v));
+    } else this.play(clip);
+    return true;
+  }
+
+  // ------------------------------------------------------------ lo que te explica
+  // ¿Te explica tu jugada? Lo grave (una salida que no ves, tu rey a tiro),
+  // siempre la primera vez; lo demás, si vas mal (o ya le perdiste una); y
+  // nunca más de tres veces lo mismo, ni dos cosas leves seguidas.
+  lessonFor(ex) {
+    const S = this.seat;
+    const P = this.pupil;
+    if (!ex) return null;
+    if (!ex.bad.length) {
+      if (ex.good.some((x) => x.kind === 'fork' || x.kind === 'take')) S.bad = Math.max(0, S.bad - 1);
+      return null;
+    }
+    const f = ex.bad[0];
+    const w = { escape: 3, king: 3, fork: 2, hang: 1, throne: 1 }[f.kind] || 1;
+    S.bad += w;
+    P.bad += w;
+    P.kinds[f.kind] = (P.kinds[f.kind] || 0) + 1;
+    const told = P.told[f.kind] || 0;
+    if (told >= 3) return null;
+    const grave = f.kind === 'escape' || f.kind === 'king';
+    const bad = S.bad >= 4 || P.lost > 0;
+    if (!grave && !bad) return null;
+    if (!grave && S.moves - S.lastLesson < 8) return null;
+    P.told[f.kind] = told + 1;
+    S.lastLesson = S.moves;
+    // lo que señala: la casilla (y la línea, si la hay)
+    let line = [];
+    if (f.kind === 'escape') line = rayTo(f.from, f.sq[0]);
+    else if (f.kind === 'fork') for (const e of f.line) line.push(...rayTo(f.sq[0], e));
+    return { kind: f.kind, again: told > 0, sq: f.sq.slice(0, 3), line: line.slice(0, 16), f };
+  }
+  // Lo que dice: la primera vez que te explica algo, cómo empieza; luego, lo
+  // de esa clase (entero la primera vez; luego, corto).
+  lessonLines(L) {
+    const T = DIALOG.reyLesson;
+    const P = this.pupil;
+    const out = [];
+    if (!P.any) {
+      out.push(pick(P.lost > 0 ? T.introLost : T.intro));
+      P.any = true;
+    }
+    const set = T[L.kind];
+    if (L.kind === 'king' && L.f && !L.f.walked && set.ignored) out.push(...(L.again ? set.ignored.slice(-1) : set.ignored));
+    else if (L.kind === 'hang' && L.f && !L.f.moved && set.other) out.push(...(L.again ? set.other.slice(-1) : set.other));
+    else out.push(...(L.again ? set.again : set.first));
+    return out;
+  }
+  // Te lo explica: lo dice y, mientras, señala la casilla con el dedo.
+  startLesson() {
+    const S = this.seat;
+    const L = S.lesson;
+    L.t = 0;
+    L.step = 'reach';
+    this.g.speech.queue(this.who, this.lessonLines(L));
+    this.lineCool = 30;
+    this.board.setHint(L.sq, L.line);
+    const w = this.board.sqWorld(L.sq[0]);
+    L.p1 = new V3(w.x, w.y + 0.075, w.z);
+    L.p0 = this.npc ? fingertip(this.npc, new V3()) : L.p1.clone();
+    this.release(0.3);
+    if (this.npc) this.npc.data.reach = { pos: L.p0.clone(), w: 0 };
+    this.setHud('lesson');
+  }
+  updateLesson(dt, D) {
+    const S = this.seat;
+    const L = S.lesson;
+    const g = this.g;
+    L.t += dt;
+    const R = D.reach || (D.reach = { pos: L.p1.clone(), w: 0 });
+    D.look = this._w.copy(L.p1);
+    // (la E pasa las frases)
+    if (g.input.pressed('interact') || g.input.pressed('confirm')) g.speech.skip(this.who);
+    if (L.step === 'reach') {
+      const k = Math.min(1, L.t / 1.1);
+      R.w = sm(Math.min(1, k * 1.5));
+      R.pos.lerpVectors(L.p0, L.p1, sm(k));
+      R.pos.y += Math.sin(sm(k) * Math.PI) * 0.1;
+      if (k >= 1) {
+        L.step = 'point';
+        L.t = 0;
+      }
+    } else if (L.step === 'point') {
+      // (dos golpecitos con el dedo sobre la casilla, y quieto)
+      R.pos.copy(L.p1);
+      if (L.t < 1.3) R.pos.y += Math.max(0, Math.sin(L.t * 9.7)) * 0.016;
+      if ((!this.busy() && L.t > 1.4) || L.t > 40) {
+        L.step = 'back';
+        L.t = 0;
+        this.board.setHint();
+      }
+    } else if (L.step === 'back') {
+      const k = Math.min(1, L.t / 0.8);
+      R.w = 1 - sm(k);
+      R.pos.y = L.p1.y + k * 0.12;
+      if (k >= 1) {
+        D.reach = null;
+        S.lesson = null;
+        this.lineCool = 4;
+        // (y ahora sí, piensa: un momento más)
+        S.minT = Math.max(S.minT, S.t + 0.9);
+        this.setHud('king');
+        if (this.npc && !this.clipBusy()) this.play('think');
+      }
+    }
+  }
+  // ¿puede el Rey atrapar a tu rey en su próxima jugada? (si le tocara a él)
   kingInDanger() {
     const c = this.cerco.clone();
-    if (c.turn !== ATT) return false;
+    c.turn = ATT;
     const k = c.king;
     for (const m of c.moves()) {
       const to = mTo(m);
@@ -960,7 +1219,23 @@ export class ReyQuest {
     }
     // la ganó él (o tablas): lo dice, y te pide otra
     S.overWait = 2.6;
-    const lines = res.winner === 0 ? DIALOG.reyDraw : n === 1 ? DIALOG.reyWin1 : DIALOG.reyWin2;
+    const P = this.pupil;
+    const hits = S.lastHits || [];
+    let lines;
+    if (res.winner === 0) lines = hits.some((h) => h.id === 'reina' && h.kind === 'draw') ? [pick(PARTIDAS.reina.draw), ...DIALOG.reyDraw.slice(-1)] : DIALOG.reyDraw;
+    else {
+      P.lost++;
+      // (si has jugado mal, no te dice que juegas mejor: te explica cómo se
+      // juega, lo que le dijo su padre, antes de pedirte otra; una vez)
+      const mal = S.bad >= 5 && !P.game;
+      const base = mal ? DIALOG.reyWinMal[Math.min(n, 2) - 1] : n === 1 ? DIALOG.reyWin1 : DIALOG.reyWin2;
+      const otra = n === 1 ? DIALOG.reyWin1.slice(-1) : DIALOG.reyWin2.slice(-1);
+      lines = mal ? [...base, ...DIALOG.reyLessonGame, ...otra] : base;
+      if (mal) P.game = true;
+      // (en su trono, por los cuatro lados: como al alcaide)
+      const tk = hits.find((h) => h.id === 'alcaide' && h.kind === 'taken');
+      if (tk && !S.said.has('alcaide:taken')) lines = [pick(PARTIDAS.alcaide.taken), ...lines];
+    }
     this.run([{ wait: 1.0 }, { say: lines, clip: res.winner === 0 ? 'shake' : 'nod' }], null);
     if (res.winner === ATT) {
       this.play('laugh');
@@ -1022,9 +1297,12 @@ export class ReyQuest {
     if (kind === 'a') {
       // has ganado: lo mira, se ríe, te da tu rey y se echa atrás
       S.cam = 'king';
+      // (si ha salido por donde salió el de su hijo, o el del pequeño)
+      const er = S.escapeRec && PARTIDAS[S.escapeRec.id];
       this.run([
         { wait: 1.6 },
         { say: DIALOG.reyEndWin[0] },
+        ...(er ? [{ wait: 0.6 }, { say: [pick(er.escape)] }] : []),
         { clip: 'laugh', fn: () => g.audio && g.audio.play('reyLaugh', this.who.head(this._v), { long: true }) },
         { wait: 1.6 },
         { fn: () => this.cough('coughLong', 5) },
@@ -1341,6 +1619,7 @@ export class ReyQuest {
     this.script = null;
     if (this.seat) this.stand();
     this.reset();
+    this.pupil = newPupil();
     this.thinker = this.thinker || new Thinker();
     // el tablero: como quedó (muerto) o la salida
     const s = this.F['rey:tablero'];

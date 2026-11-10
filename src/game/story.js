@@ -562,6 +562,34 @@ Si una partida no se acaba nunca, son tablas.
 
 Un rey que se queda en su trono se muere en él. Sácalo.`,
   },
+  // te lo da el Rey la primera vez que se acuerda de una (game/rey.js); lo
+  // que pasa en cada una es lo que pasa en sus jugadas (cerco/partidas.js)
+  partidas: {
+    title: 'El libro de las partidas',
+    text: `Un cuaderno de pergamino cosido, de la mano del canciller, Mestre Alberto: las partidas del Rey al Cerco, cada una con su nombre. En la primera hoja, de otra tinta: «Que se apunten todas, las que gane y las que no».
+
+La del banco. El Rey, niño, con los de dentro, contra el rey su padre. Treinta y una jugadas. Le mataron los ocho y luego el rey, en medio del tablero, al apartar al último que le guardaba. No mató a ninguno. Ésta la apunto de oídas.
+
+La del real de Lisboa. Ante Lisboa, en el real, el Rey con los de dentro contra un caballero de los de Colonia. Cincuenta y una jugadas. El alemán le mató siete sin perder ninguno y le cogió el rey en su trono, por los cuatro lados.
+
+La de Don Gonçalo. El Rey con los de fuera contra Don Gonçalo Mendes. Sesenta y siete jugadas. Don Gonçalo le mató seis, uno con su propio rey, que sacó a pelear; y allí, fuera del trono, se lo cogieron en medio.
+
+La del arzobispo. El señor arzobispo con los de fuera. Cuarenta y nueve jugadas. A la cuarenta y siete cerró el cerco; el Rey sacó el rey por donde ya no había salida, y allí se lo cogió. Jugaron muchas. Ésta es la que el Rey mandó apuntar.
+
+La de Mestre Alberto. El Rey con los de fuera contra quien esto escribe. Ochenta y cinco jugadas, la más larga de este libro. A la setenta y tres el Rey me cerró el cerco; a la ochenta y cuatro saqué mi rey del trono, y allí al lado me lo cogió. No la apunto mejor de lo que fue.
+
+La del alcaide. El Rey con los de fuera contra su alcaide, que no movió el rey en toda la partida. Cincuenta y cinco jugadas. El alcaide le mató seis; el Rey le cogió el rey en su trono, por los cuatro lados.
+
+La de la Cuaresma. Con la señora reina, junto a su cama. Treinta y cinco jugadas, y ni una muerta. La señora movía la misma pieza arriba y abajo, y el Rey también, hasta que se repitió tres veces. Tablas. Fue la última.
+
+La de San Juan. El Rey con los de fuera contra el infante, de once años. Setenta jugadas. A la sesenta y ocho, el infante puso su rey donde veía dos caminos; a la setenta, salió. Ganó el infante. El Rey mandó que no se apuntara. La apunto.
+
+La del pequeño. Veintiocho jugadas. Ganó el pequeño.
+Al margen, de una letra grande y torcida: le dejé.
+
+Y en la última hoja, de la misma letra grande y torcida:
+La de la campana. Con el pequeño. Treinta y siete jugadas. Le tocaba a él. Sin acabar.`,
+  },
   animas: {
     title: 'Cuaderno del sacristán',
     text: `Día de Ánimas. Recogido el cepillo del osario: nada. Ya no baja nadie.
@@ -1451,6 +1479,49 @@ export const DIALOG = {
   // el final, si pierdes las tres
   reyEndLose: ['Tres.', 'No te lo tomes a mal. Es lo único que se me ha dado bien.', 'Otra. Una más. La última, te lo prometo.'],
   reyEndLoseMutter: ['Los de fuera... en medio de cada lado...', 'Dieciséis... quince...', 'Y el rey... en su trono...'],
+  // la primera vez que se acuerda de una de sus partidas: te da el libro
+  reyLibro: ['Las apuntaba todas Mestre Alberto, mi canciller: las que gané y las que no. Ahí tienes su libro. Léelo, si quieres: ahí está cómo perdí.'],
+  // Si juegas mal, te lo explica señalando la casilla (game/cerco/maestro.js):
+  // la primera vez, entero; luego, corto.
+  reyLesson: {
+    intro: ['Espera. Espera.', 'No, no. Mira.', 'Para. Para un momento.'],
+    introLost: ['Así no me vas a ganar nunca. Mira.', 'No te lo tomes a mal. Pero mira.'],
+    // tu rey tenía una línea libre y no salió
+    escape: {
+      first: ['¿No lo ves? Tu rey tenía el camino libre hasta el borde. Ahí.', 'Cuando no hay nadie entre tu rey y las afueras, sales, y has ganado. Mira las cuatro filas de tu rey antes de mover nada.', 'Y ahora te lo cierro, claro.'],
+      again: ['Otra vez el camino libre. Ahí. Sal cuando puedas: no te lo voy a dejar abierto.'],
+    },
+    // podía ponerse donde ve dos salidas
+    fork: {
+      first: ['Desde ahí tu rey veía dos salidas a la vez.', 'Una te la tapo; dos, no puedo: tengo una mano. Así se le gana a esto. No busques una salida: busca dos.'],
+      again: ['Ahí tenías otra vez las dos. Búscalas antes de mover.'],
+    },
+    // tu rey, a tiro
+    king: {
+      first: ['Mira tu rey. Lejos del trono se le coge en medio, como a cualquiera: uno de los míos a cada lado.', 'Pongo este aquí, y se acabó. Lo siento.'],
+      again: ['Tu rey, otra vez entre dos de los míos. Ahí lo cojo.'],
+      ignored: ['Tu rey ya estaba a tiro, y no lo has quitado. Mira: uno de los míos aquí, y se acabó.', 'Antes que nada, mira si te pueden coger el rey.'],
+    },
+    // una pieza que se queda donde la cojo en medio
+    hang: {
+      first: ['Ese que has movido se ha quedado con uno de los míos al lado y hueco al otro. Lo cojo en medio.', 'Antes de mover a uno, mira qué tiene a los lados.'],
+      again: ['Otra vez. Mira los lados. Ahí lo cojo.'],
+      other: ['Al mover, has dejado a ese sin quien le guarde. Lo cojo en medio.', 'Mira qué dejas atrás cuando mueves.'],
+    },
+    // el rey, quieto en su trono
+    throne: {
+      first: ['Tu rey no se ha movido. Un rey que se queda en su trono se muere en él: lo puso mi padre en el pergamino.', 'Aparta a los tuyos de su camino y sácalo.'],
+      again: ['Tu rey sigue sentado. Sácalo.'],
+    },
+  },
+  // entre partidas, si la has perdido mal: cómo se juega (y te pide otra)
+  reyWinMal: [['Uno. Y sin sudar.'], ['Dos. Y no has aprendido mucho, ¿eh?']],
+  reyLessonGame: [
+    'Escucha, que si no, esto no tiene gracia.',
+    'Tu rey gana en cuanto llega a cualquier casilla del borde. Yo sólo puedo tapar una fila cada vez.',
+    'Así que no busques un camino: busca dos a la vez. Y aparta a los tuyos de su paso.',
+    'Y no dejes a nadie con uno de los míos a un lado y hueco al otro. Tampoco a tu rey: lejos del trono, se muere como un peón.',
+  ],
   leonorIntro: ['Tomé... ¿eres tú, Tomé?', 'No... no eres él.'],
   leonorFight: ['¡Devuélvemelo!', 'Mi niño... mi niño...', '¿Por qué me lo quitaste?', '¡Dijo que me lo devolvía!', 'Tomé... Tomé...'],
   leonorDeath: ['...Henrique...'],
@@ -1529,6 +1600,113 @@ export const DIALOG = {
   fisicoLlave: 'En su cinto, entre las llaves de su casa, la de la cordelería.',
   // herido: se retira (con la cal)
   fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
+};
+
+// Las partidas que recuerda el Rey (game/cerco/partidas.js; sus jugadas, en
+// partidas_jugadas.js, simuladas): cómo las llama y lo que dice cuando una
+// jugada de la tuya (o de la suya) es la de una de ellas, la misma o vista
+// desde otro lado del tablero. story: lo que cuenta la primera vez que se
+// acuerda de ella; book: sigues su apertura, jugada a jugada; own: la sigue
+// él; leave: te sales de ella tras seguirla un rato; fork, escape, fatal,
+// double, kingKill, pend: su jugada señalada (la horquilla, la salida, la que
+// perdió al rey, dos de un golpe, el rey que mata, la que iba a jugar el
+// pequeño); habit, habit2, taken, draw: sus costumbres. clip: el gesto (si
+// no, asiente). Cada cosa, una lista de la que dice una.
+export const PARTIDAS = {
+  banco: {
+    name: 'La del banco',
+    story: ['Tenía siete años. Mi padre llevaba a los de fuera, y yo, subido a un banco para llegar, a los de dentro.', 'Me mató los ocho, uno detrás de otro, y luego el rey, en medio del tablero. Yo no le cogí ni uno.', 'Lloré. Me dijo que un rey no llora: que piensa. La llamó la del banco.'],
+    book: ['Así empezaba yo. Con siete años, subido a un banco.', 'Eso mismo jugué yo la primera vez. No sé si es buena señal.'],
+    own: ['Así abría mi padre. Siempre así.', 'Te abro como me abría mi padre.'],
+    leave: ['Ah. Aquí yo moví otra cosa. Y perdí igual.'],
+    fatal: ['Ay. Eso mismo hice yo, con siete años, en la del banco. Y mi padre hizo esto.', '¡Ja! Eso hice yo de niño. Mira lo que hizo mi padre.'],
+    clip: { fatal: 'laugh', book: 'laugh' },
+  },
+  hijo: {
+    name: 'La de San Juan',
+    story: ['Mi hijo. La noche de San Juan, con las hogueras encendidas ahí abajo. Tenía once años.', 'Setenta jugadas. Al final puso su rey donde veía dos caminos, y yo sólo tengo una mano.', 'Le dije que había sido suerte. No lo había sido. Es la única vez que me han ganado de verdad.'],
+    book: ['Así empezaba mi hijo.', 'Eso es de mi hijo. ¿Quién te lo ha enseñado?'],
+    own: ['Así le abría yo a mi hijo. No me sirvió de mucho.'],
+    leave: ['Ahí mi hijo hizo otra cosa. Mejor, creo.'],
+    fork: ['¡Ja! ¡Eso! Eso me hizo mi hijo. Dos caminos, y yo con una mano.', '¡Eso es de mi hijo! La de San Juan. Igual, igual.'],
+    escape: ['Por ahí salió el de mi hijo. Por ahí mismo.', 'Como el de mi hijo, la noche de San Juan. Por el mismo sitio.'],
+    clip: { fork: 'laugh' },
+  },
+  reina: {
+    name: 'La de la Cuaresma',
+    story: ['La reina jugó conmigo una vez en su vida. La última Cuaresma, junto a su cama.', 'No mató a nadie ni dejó que la matara: movía la misma, arriba y abajo, arriba y abajo, hasta que la partida se acabó sola.', 'Le dije que así no se juega. Me dijo: «Así se acaba». Tenía razón. Siempre la tenía.'],
+    book: ['Así empezaba la reina. Sin mirar mucho.'],
+    own: ['Así le abrí a la reina. Despacio, para no cansarla.'],
+    habit: ['Arriba y abajo... como la reina.', '¿También tú? Así jugaba la reina: para que se acabase.'],
+    draw: ['Tablas. Como con la reina, junto a su cama.'],
+    clip: { habit: 'laugh' },
+  },
+  alcaide: {
+    name: 'La del alcaide',
+    story: ['Mi alcaide no sacaba el rey nunca. Lo rodeaba de los suyos y a esperar: murallas, murallas.', 'Me mató seis. Pero se lo cogí en su trono, por los cuatro lados, sin que hubiera dado un paso.', 'Luego hizo lo mismo de verdad: alzó el puente él solo, y se quedó abajo, en el torno.'],
+    book: ['Así empezaba mi alcaide. Cerrando.'],
+    own: ['Así le abría a mi alcaide.'],
+    habit: ['Tu rey no sale. Como el de mi alcaide.', 'Murallas, murallas. Como mi alcaide.'],
+    taken: ['En su trono, por los cuatro lados. Como a mi alcaide.'],
+    fatal: ['Eso movió mi alcaide justo antes de perderlo.'],
+    clip: { fatal: 'shake' },
+  },
+  goncalo: {
+    name: 'La de Don Gonçalo',
+    story: ['Así jugaba Don Gonçalo Mendes: matando, con el rey por delante, como en la guerra.', 'Me mató seis, uno con su propio rey, antes de que se lo cogiera. Jugaba como peleaba: de frente, sin mirar atrás.', 'Se reía tanto que se le oía desde el patio. Ahora ruge.'],
+    book: ['Así empezaba Gonçalo. Directo, como cargaba.'],
+    own: ['Así le abría a Gonçalo, para que no se me echara encima. No servía.'],
+    habit: ['¡Con el rey! Como Gonçalo. Él también mataba con el rey.', '¡Ja! Así mataba Gonçalo: con el rey delante.'],
+    habit2: ['¡Dos de un golpe! Así jugaba Gonçalo.'],
+    double: ['¡Dos de un golpe! Igual que Gonçalo, igual.'],
+    kingKill: ['¡Ja! Eso mismo hizo Gonçalo con su rey. Ahí mismo.'],
+    fatal: ['Eso movió Gonçalo justo antes de perderlo. Un paso de más, como siempre.'],
+    clip: { habit: 'laugh', habit2: 'laugh', double: 'laugh', kingKill: 'laugh', fatal: 'laugh' },
+  },
+  arzobispo: {
+    name: 'La del arzobispo',
+    story: ['Con el arzobispo jugué muchas veces. Llevaba a los de fuera y cerraba despacio, sin prisa, como quien reza un rosario.', 'No me ganaba matando: me ganaba cerrando. Cuando me quería dar cuenta, no había por dónde salir.', 'Ahora sé a quién le rezaba.'],
+    book: ['Eso jugaba yo contra el arzobispo. Y perdía.'],
+    own: ['Así abría el arzobispo. Me lo aprendí perdiendo.'],
+    habit: ['Cerrado. Así me cerraba el arzobispo.', 'Ya no hay por dónde. Como con el arzobispo.'],
+    fatal: ['Eso hice yo contra el arzobispo. Ahí mismo lo perdí.'],
+    clip: { habit: 'shake', fatal: 'shake' },
+  },
+  canciller: {
+    name: 'La de Mestre Alberto',
+    story: ['Mestre Alberto, mi canciller, jugaba despacio, como escribía.', 'La más larga que he jugado: ochenta y cinco jugadas, hasta que cantó el gallo. La apuntó entera, claro. Lo apuntaba todo.'],
+    book: ['Así empezaba Mestre Alberto. Como quien moja la pluma.'],
+    own: ['Así le abría a Mestre Alberto.'],
+    habit: ['Ya van cien. Más que con Mestre Alberto, y eso que aquella no se acababa.', 'Cien jugadas. Mestre Alberto ya estaría afilando otra pluma.'],
+    fatal: ['Eso hizo Mestre Alberto al final de la más larga: sacó el rey del trono. Ahí se quedó.'],
+    clip: { fatal: 'shake' },
+  },
+  pequeno: {
+    name: 'La del pequeño',
+    story: ['El pequeño aprendió mirando desde la galería, sin que nadie le enseñara.', 'La primera vez que se sentó ahí, le dejé la puerta abierta. Es la única vez que he dejado ganar a alguien.', 'A ti no te la voy a dejar.'],
+    book: ['Así empezaba el pequeño. Moviendo lo que tenía más cerca.'],
+    own: ['Así le abría al pequeño. Con cuidado.'],
+    fork: ['Eso hizo el pequeño. Igual. Pero a él le dejé hacerlo.'],
+    escape: ['Por ahí salió el pequeño. Yo le dejé la puerta abierta. Tú te la has abierto solo.'],
+    clip: { fork: 'laugh' },
+  },
+  campana: {
+    name: 'La de la campana',
+    story: ['Estábamos aquí, él y yo, la noche de la campana. Le tocaba a él. Tenía su rey en la mano.', 'Sonó, y todos se arrodillaron. Él también, con el rey en la mano. Yo también.', 'No la acabamos. A veces la vuelvo a poner, para ver si me acuerdo de cómo estaba.'],
+    book: ['Así... así estaba. La de la campana.'],
+    own: ['Así le abrí al pequeño la noche de la campana.'],
+    leave: ['No. Así no estaba.'],
+    pend: ['Esa. Esa iba a mover el pequeño cuando sonó la campana.', 'Eso... eso iba a hacer el pequeño. Tenía el rey en la mano.'],
+    clip: { pend: 'shake' },
+  },
+  lisboa: {
+    name: 'La del real de Lisboa',
+    story: ['Un alemán de los de Colonia, en el real, ante Lisboa. Mientras esperábamos a que se rindieran, jugábamos.', 'Sabía de cercos: venía de uno. Me mató siete sin perder ninguno, y luego el rey, en su trono.', 'Dijo que en su tierra esto se juega en tableros más grandes. Le dije que aquí no hace falta.'],
+    book: ['Eso jugaba yo contra el alemán, ante Lisboa.'],
+    own: ['Así abría el alemán, en el real de Lisboa. Aprendí de él.'],
+    fatal: ['Eso moví yo contra el alemán, ante Lisboa. Y me lo cogió.'],
+    clip: { fatal: 'shake' },
+  },
 };
 
 export const MSG = {
@@ -1616,6 +1794,7 @@ export const MSG = {
   // el Rey y su mesa (game/rey.js)
   reyAhoraNo: 'Ahora no: algo anda cerca.',
   reyInterrumpido: 'Te levantas de la mesa.',
+  cercoLibro: 'Nuevo documento: El libro de las partidas',
   cercoLeave: 'Otra vez: levantarte (la partida cuenta como perdida)',
   reyHaMuerto: 'El Rey ha muerto',
   reyMuertoA: 'El Rey, echado atrás en su sitial, con los ojos cerrados. Sonríe.',

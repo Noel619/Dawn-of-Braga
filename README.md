@@ -805,13 +805,31 @@ cruceta; sentado, el ratón va suelto y señala la casilla que tiene debajo), E 
 la casilla, con las casillas posibles marcadas (las que matan, en rojo; la que sale, en blanco) y su última jugada
 también; R (X) para releer las reglas, P (Start) para la pausa y Esc (B) dos veces para levantarse (a media
 partida, cuenta como perdida). Él piensa en un hilo de fondo (búsqueda
-alfa-beta con profundización iterativa, tabla de transposición y una búsqueda de amenazas que ve las horquillas):
-juega muy bien en la primera partida y peor según se apaga. Mientras, piensa con la mano en la barbilla, alarga el
+alfa-beta con profundización iterativa, tabla de transposición y una búsqueda de amenazas que ve las horquillas,
+también las que se preparan con dos o tres amenazas seguidas, que es como le gana una persona; cuando tu rey se
+asoma a las afueras sólo mira lo que tapa, sin gastar profundidad): en la primera partida piensa hondo y con
+tiempo y no regala nada, y juega peor según se apaga. Mientras, piensa con la mano en la barbilla, alarga el
 brazo tembloroso hasta la pieza (cinemática inversa, inclinándose más cuanto más lejos), la lleva, a veces titubea a
 mitad de camino, y la deja con un golpe seco; comenta lo que pasa (lo que mata, lo que pierde, cuando tu rey se
 asoma a una salida, cuando no puede tapar dos a la vez), recuerda (su padre, su hijo, su reina, su alcaide, Don
 Gonçalo, el pequeño que estaba en la sala la noche de la campana), tose cada vez más (el pañuelo a la boca), se
-adormila mientras piensa y despierta de golpe («¿Me toca?»). Se juegan **tres partidas como mucho**: si le ganas
+adormila mientras piensa y despierta de golpe («¿Me toca?»).
+**Se acuerda de sus partidas**: diez partidas de su vida, simuladas con la misma IA y con nombre (la del banco, con
+su padre, a los siete años; la de San Juan, la única que le ganó su hijo; la de la Cuaresma, la última con la
+reina, que movía la misma pieza arriba y abajo para que se acabase; la del alcaide, que no sacaba el rey; la de
+Don Gonçalo, que mataba con el rey; la del arzobispo, que cerraba despacio; la de Mestre Alberto, la más larga; la
+del real de Lisboa; la del pequeño, al que dejó ganar; y la de la campana, que quedó a medias). Si una jugada tuya es
+la de una de ellas —la misma, o vista desde otro lado del tablero—, lo dice: sigues la apertura de su hijo, haces su
+horquilla, la que perdió su rey de niño, la que iba a mover el pequeño cuando sonó la campana; o tienes sus
+costumbres (arriba y abajo como la reina, el rey quieto como el alcaide, matar con el rey como Gonçalo); la primera
+vez la cuenta entera, y se ríe, o niega con la cabeza. En la apertura, a veces, juega como jugaban ellos (como abría
+su padre). La primera vez que se acuerda te da **el libro de las partidas** de Mestre Alberto, su canciller (un
+documento: las diez, con lo que pasó en cada una).
+**Te enseña si juegas mal**: si no sales con el camino libre, si no ves una horquilla, si dejas una pieza donde la
+coge en medio, si metes tu rey donde lo atrapa o lo dejas quieto en su trono, te lo explica (lo grave, siempre; lo
+demás, si vas mal o ya le perdiste una), inclinándose sobre el tablero y señalando la casilla con el dedo (la
+casilla, marcada en blanco, y la línea, con puntos), y luego juega lo suyo sin piedad; si pierdes una partida mal,
+antes de la siguiente te cuenta cómo se juega. Se juegan **tres partidas como mucho**: si le ganas
 una, se queda mirando el tablero («Ha salido»), se ríe hasta toser, coge tu rey del borde y te lo tiende por
 encima de la mesa; al tomarlo se echa atrás en el sitial, cierra los ojos y ya no los abre (te deja **el rey de
 marfil**: más vitalidad). Si pierdes las tres, se ríe, flojo, y se pone a colocar otra partida («Una más. La
@@ -1523,10 +1541,13 @@ src/
                         dice, cuándo se ahorca); crypt.js: la Puerta del Dios Ignoto, las pilas, el incensario, las
                         rejas y el arca del relicario; relics.js: los objetos benditos; ossuaries.js: los puzles de
                         los cuatro osarios y su vista de cerca; paio.js: el guion de Dom Paio; rey.js: el guion del
-                        Rey y su mesa (el encuentro, las partidas, los dos finales); cerco/: el Cerco (rules.js, las
-                        reglas, sin three.js; ai.js, cómo piensa el Rey; ai_worker.js y thinker.js, su hilo de
-                        fondo; levels.js, su fuerza en cada partida; board.js, las piezas, el cursor y las marcas
-                        en el mundo); intro/: las
+                        Rey y su mesa (el encuentro, las partidas, los recuerdos, lo que te explica, los dos
+                        finales); cerco/: el Cerco (rules.js, las reglas, sin three.js; ai.js, cómo piensa el Rey;
+                        ai_worker.js y thinker.js, su hilo de fondo; levels.js, su fuerza en cada partida;
+                        partidas.js, las partidas que recuerda y cómo se reconocen sus jugadas (con las ocho
+                        simetrías del tablero), y partidas_jugadas.js, sus jugadas, que escribe
+                        tools/partidas.mjs; maestro.js, los fallos tuyos que ve; board.js, las piezas, el cursor y
+                        las marcas en el mundo, también lo que te señala); intro/: las
                         introducciones (intro.js, el director: la corta, al empezar partida, y la crónica, larga;
                         ghosts.js, los ecos: figuras de luz con sus poses, su material y su ceniza; ghost_models.js,
                         sus figuras, cada una con su cara y su ropa); creador.js: el editor de personaje, después
@@ -1620,10 +1641,18 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         floorgaps.mjs  tiras sin suelo dibujado (cada 5 cm) en los bordes y los vanos de las
                                        salas de la cripta honda, donde la colisión sí sostiene al jugador
                         rey.mjs        el Rey y su mesa: fotos, sentarse a jugar (reglas, su turno y el
-                                       tuyo), los dos finales, tres partidas seguidas y retratos de sus
-                                       gestos (`node tools/rey.mjs fotos|mesa|final a|final b|tres|retratos`)
-                        cerco.mjs      el Cerco en la consola (sin navegador): las reglas, la velocidad de
-                                       la IA y una liga del Rey contra jugadores de prueba
+                                       tuyo), los dos finales, tres partidas seguidas, retratos de sus
+                                       gestos, una lección (no sales con el camino libre: te lo explica
+                                       señalando) y un recuerdo (la horquilla de su hijo: se ríe, la cuenta
+                                       y te da el libro) (`node tools/rey.mjs fotos|mesa|final a|final b|tres|
+                                       retratos|leccion|recuerdos`)
+                        cerco.mjs      el Cerco en la consola (sin navegador): las reglas, las partidas que
+                                       recuerda el Rey (que se reconozcan, también al revés), lo que te
+                                       explica, la velocidad de la IA y una liga del Rey contra jugadores de
+                                       prueba (`reglas|partidas|maestro|velocidad|liga|partida`)
+                        partidas.mjs   simula las diez partidas que recuerda el Rey (cada una con sus
+                                       jugadores y lo que tiene que pasar en ella) y escribe sus jugadas en
+                                       game/cerco/partidas_jugadas.js (`node tools/partidas.mjs [ver] [id]`)
                         castlewalk.mjs recorre a pie el castillo: de la celda a la calle por las mazmorras, las
                                        catacumbas, el aljibe y la torre-puerta; lo de poniente del patio (la
                                        halconera, las cuadras, el pajar, la fragua, el corral y la poterna,

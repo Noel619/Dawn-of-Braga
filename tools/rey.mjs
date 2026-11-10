@@ -3,6 +3,10 @@
 //   node tools/rey.mjs fotos            el Rey y la mesa desde varios sitios
 //   node tools/rey.mjs mesa             sentarse: las reglas, su turno y el tuyo
 //   node tools/rey.mjs final a|b        los finales (ganar / perder las tres)
+//   node tools/rey.mjs leccion          juegas mal (no sales con el camino libre):
+//                                       te lo explica señalando la casilla
+//   node tools/rey.mjs recuerdos        repites la horquilla de su hijo: se ríe, la
+//                                       cuenta y te da el libro; y abre como en una
 // Las capturas van a tools/shots/rey_*.png.
 import { chromium } from 'playwright';
 import { FORT } from '../src/world/fortaleza_medidas.js';
@@ -64,7 +68,8 @@ const state = () =>
     const q = __game.rey;
     const S = q.seat;
     const F = S && S.final;
-    return { mode: q.mode, phase: S && S.phase, script: q.script ? Object.keys(q.script.cur || {}).join(',') + ' ' + q.script.steps.length : false, n: __game.flags['rey:n'] | 0, turn: q.cerco.turn, ply: q.cerco.ply, res: q.cerco.result, modal: __game.ui.stack.map((s) => s.name), final: F ? { dying: F.dying, deadK: F.deadK && +F.deadK.toFixed(2), stopped: F.stopped, setup: F.setup && F.setup.step + F.setup.i } : null };
+    const b = __game.speech.list.get('rey');
+    return { mode: q.mode, phase: S && S.phase, script: q.script ? Object.keys(q.script.cur || {}).join(',') + ' ' + q.script.steps.length : false, n: __game.flags['rey:n'] | 0, turn: q.cerco.turn, ply: q.cerco.ply, res: q.cerco.result, modal: __game.ui.stack.map((s) => s.name), final: F ? { dying: F.dying, deadK: F.deadK && +F.deadK.toFixed(2), stopped: F.stopped, setup: F.setup && F.setup.step + F.setup.i } : null, lesson: S && S.lesson ? S.lesson.kind : null, says: b && b.line ? b.line : '' };
   });
 
 if (cmd === 'fotos') {
@@ -132,7 +137,8 @@ if (cmd === 'fotos') {
     g.rey.mode = 'idle';
     g.rey.talk();
   });
-  let last = '';
+  let last = '',
+    lastSaid = '';
   for (let i = 0; i < 2400; i++) {
     const s = await state();
     if (s.phase === 'you')
@@ -148,8 +154,13 @@ if (cmd === 'fotos') {
     else await sim(0.5, s.phase === 'final' ? ['KeyE'] : []);
     const k = s.mode + '/' + s.phase + '/' + s.n;
     if (k !== last) {
-      console.log(i, k, 'jugadas', s.ply, s.res ? JSON.stringify(s.res) : '');
+      console.log(i, k, 'jugadas', s.ply, s.res ? JSON.stringify(s.res) : '', s.lesson ? 'LECCIÓN ' + s.lesson : '');
       last = k;
+    }
+    // (lo que dice el Rey, cada frase nueva)
+    if (s.says && s.says !== lastSaid) {
+      console.log('     «' + s.says + '»');
+      lastSaid = s.says;
     }
     if (s.mode === 'dead') break;
   }
@@ -301,6 +312,125 @@ if (cmd === 'fotos') {
   await sim(1.2);
   console.log('tras mover', JSON.stringify(await state()));
   await snap('movida');
+} else if (cmd === 'leccion' || cmd === 'recuerdos') {
+  const ok = (name, cond) => console.log((cond ? 'ok   ' : 'MAL  ') + name);
+  await sim(1.0);
+  for (let i = 0; i < 30 && (await state()).script; i++) await sim(0.5);
+  await p.evaluate(() => {
+    const g = __game;
+    g.flags['rey:met'] = true;
+    g.flags['rey:reglas'] = true;
+    g.rey.mode = 'idle';
+    g.rey.noticed = true;
+    g.rey.script = null;
+    g.rey.talk();
+  });
+  const untilPhase = async (ph, max = 80) => {
+    for (let i = 0; i < max; i++) {
+      if ((await state()).phase === ph) return true;
+      await sim(0.5);
+    }
+    return false;
+  };
+  // (la primera jugada del Rey: ¿abre como en una de sus partidas?)
+  for (let i = 0; i < 20 && !(await p.evaluate(() => __game.rey.seat && __game.rey.seat.phase === 'think')); i++) await sim(0.3);
+  const book = await p.evaluate(() => __game.rey.seat.book && __game.rey.seat.book.id);
+  console.log('abre como en:', book || '(ninguna: lo suyo)');
+  ok('tu turno', await untilPhase('you'));
+  const speech = () => p.evaluate(() => {
+    const b = __game.speech.list.get('rey');
+    return b ? [b.line, ...b.queue].join(' | ') : '';
+  });
+  if (cmd === 'leccion') {
+    // tu rey, con el camino libre a la izquierda; y no sale
+    await p.evaluate(() => {
+      const q = __game.rey,
+        C = q.cerco;
+      const rows = ['..A......', '.........', '.A.......', '...A.....', '....+....', '.........', '..K....A.', '.D.......', '..A.A....'];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) C.b[r * 9 + c] = { A: 1, D: 2, K: 3 }[rows[r][c]] || 0;
+      C.king = C.b.indexOf(3);
+      C.turn = 2;
+      C.rehash();
+      C.seen = [C.key()];
+      q.board.setPosition(C.b);
+      q.playerTurn();
+    });
+    await sim(0.4);
+    // b2-b1 (no sale)
+    await p.evaluate(() => __game.rey.playerMove(7 * 9 * 81 + 1 * 81 + 8 * 9 + 1));
+    let lesson = null;
+    for (let i = 0; i < 30 && !lesson; i++) {
+      await sim(0.3);
+      lesson = await p.evaluate(() => __game.rey.seat && __game.rey.seat.lesson && { kind: __game.rey.seat.lesson.kind, step: __game.rey.seat.lesson.step });
+    }
+    ok('te lo explica: ' + JSON.stringify(lesson), lesson && lesson.kind === 'escape');
+    console.log('dice:', await speech());
+    await sim(1.6);
+    const pointing = await p.evaluate(() => {
+      const q = __game.rey;
+      const R = q.npc.data.reach;
+      return { reach: R && +R.w.toFixed(2), hint: q.board.hintMeshes[0].visible, dots: q.board.hintDots.filter((d) => d.visible).length };
+    });
+    ok('señala con el dedo (y la casilla, marcada): ' + JSON.stringify(pointing), pointing.reach > 0.9 && pointing.hint && pointing.dots >= 1);
+    await p.evaluate(() => (__game.rey.view && __game.camRig ? 0 : 0));
+    await snap('leccion');
+    // y luego juega (tapa)
+    ok('y luego juega', await untilPhase('you', 120));
+    const after = await p.evaluate(() => ({ lesson: !!__game.rey.seat.lesson, hint: __game.rey.board.hintMeshes[0].visible, reach: !!__game.rey.npc.data.reach, lines: __game.rey.cerco.openLines() }));
+    ok('se acabó la lección (y ha tapado): ' + JSON.stringify(after), !after.lesson && !after.hint && !after.reach && after.lines === 0);
+  } else {
+    // la partida de su hijo, hasta antes de la horquilla; y la horquilla
+    const r = await p.evaluate(async () => {
+      const q = __game.rey,
+        C = q.cerco;
+      const M = await import('/src/game/cerco/partidas.js');
+      const P = M.partida('hijo');
+      const S = P.info.findIndex((x) => x.p === 3 && x.lines >= 2);
+      C.reset();
+      q.recuerdos.reset();
+      for (let i = 0; i < S; i++) q.recuerdos.onMove(C, P.moves[i], C.play(P.moves[i]));
+      q.board.setPosition(C.b);
+      q.playerTurn();
+      return { ply: C.ply, fork: P.moves[S], turn: C.turn };
+    });
+    console.log('la de San Juan, jugada', r.ply, '; la horquilla', r.fork);
+    await sim(0.4);
+    await p.evaluate((m) => __game.rey.playerMove(m), r.fork);
+    await sim(1.2);
+    const said = await speech();
+    console.log('dice:', said);
+    ok('se acuerda de su hijo', /hijo/.test(said));
+    const fl = await p.evaluate(() => ({ rec: !!__game.flags['rey:rec:hijo'], libro: !!__game.flags['note:partidas'], clip: __game.rey.clipName }));
+    ok('la cuenta, te da el libro y se ríe: ' + JSON.stringify(fl), fl.rec && fl.libro && fl.clip === 'laugh');
+    await snap('recuerdo');
+    await sim(2.5);
+    ok('el libro, en tus documentos', await p.evaluate(() => __game.ui.readDocs().includes('partidas')));
+    // y si sales por donde salió el de su hijo: lo dice en el final
+    const r2 = await p.evaluate(async () => {
+      const q = __game.rey,
+        C = q.cerco;
+      const M = await import('/src/game/cerco/partidas.js');
+      const P = M.partida('hijo');
+      q.script = null;
+      __game.speech.hush(q.who);
+      C.reset();
+      q.recuerdos.reset();
+      for (let i = 0; i < P.moves.length - 1; i++) q.recuerdos.onMove(C, P.moves[i], C.play(P.moves[i]));
+      q.board.setPosition(C.b);
+      q.seat.escapeRec = null;
+      q.playerTurn();
+      return P.moves[P.moves.length - 1];
+    });
+    await sim(0.4);
+    await p.evaluate((m) => __game.rey.playerMove(m), r2);
+    let heard = '';
+    for (let i = 0; i < 40 && !/hijo/.test(heard); i++) {
+      await sim(0.5);
+      heard = await speech();
+    }
+    console.log('al salir:', heard);
+    ok('sales por donde el de su hijo: lo dice', /hijo/.test(heard) && (await state()).phase === 'final');
+  }
 } else if (cmd === 'final') {
   // salta a un final: a (le ganas) o b (pierdes las tres)
   await sim(1.0);

@@ -14,11 +14,31 @@
 //
 // La fuerza se gradúa con la profundidad, el tiempo y un ruido determinista en
 // la evaluación (el cansancio del Rey: ve peor, pero no regala lo evidente).
+//
+// Las amenazas, una detrás de otra: al final de cada rama, si mueven los de
+// dentro, se miran también las jugadas que le abren una línea al rey (el rey
+// que se asoma, o uno de los suyos que se aparta); los de fuera tienen que
+// tapar, y vuelta a empezar, hasta que no quedan amenazas o sale la
+// horquilla. Y en la búsqueda, cuando el rey está asomado, los de fuera sólo
+// miran lo que tapa o se le arrima, sin gastar profundidad (como un jaque).
+// Sin eso, el Rey no veía las horquillas que se preparan con dos o tres
+// amenazas seguidas, que es como le gana una persona.
 import { Cerco, SQ, THRONE, EMPTY, ATT, DEF, KING, RAYS, NB, isEdge, sideOf, MAX_PLY } from './rules.js';
 
 export const WIN = 100000;
 const INF = 1 << 30;
 const MAXP = 128;
+// lo que se alargan las ramas forzadas (el rey asomado) y cuántas amenazas
+// seguidas de los de dentro se miran al final de cada rama
+const EXT = 4,
+  QDEF = 6;
+// las dos direcciones de lado de cada una (0 arriba, 1 abajo, 2 izq., 3 der.)
+const PERP = [
+  [2, 3],
+  [2, 3],
+  [0, 1],
+  [0, 1],
+];
 // pesos de la evaluación
 const W = { att: 100, def: 180, mob: 3, t1def: 70, t1att: 28, t2def: 900, t2att: 240, edge: 9, closed: 420, small: 5, adjAtt: 34, adjDef: 9 };
 const now = typeof performance !== 'undefined' ? () => performance.now() : () => Date.now();
@@ -48,7 +68,8 @@ export class Brain {
     this.q = new Int8Array(SQ);
     this.mark = new Int32Array(SQ);
     this.stamp = 0;
-    this.lines = [];
+    this.lbuf = [];
+    for (let i = 0; i < MAXP; i++) this.lbuf.push([]);
   }
 
   // Piensa la jugada de 'state' (una Cerco o lo que devuelve save()).
@@ -77,13 +98,18 @@ export class Brain {
     const root = g.moves();
     if (!root.length) return { move: -1, score: -WIN, depth: 0, nodes: 0, ms: 0 };
     // variedad: un poco de ruido en la raíz (sólo para ordenar y desempatar)
-    const jit = opts.jitter ?? 0;
+    const jit0 = opts.jitter ?? 0;
     const rj = new Map();
     let rs = this.seed ^ 0x51ed;
     for (const m of root) {
       rs = (Math.imul(rs ^ (rs >>> 15), 0x2c1b3c6d) + m) >>> 0;
-      rj.set(m, jit ? (rs % (2 * jit + 1)) - jit : 0);
+      rj.set(m, jit0 ? (rs % (2 * jit0 + 1)) - jit0 : 0);
     }
+    // (y la jugada que le gustaría hacer, si no es peor que la mejor en más
+    // de opts.preferBonus: la de una partida que recuerda)
+    const pb = root.includes(opts.prefer) ? (opts.preferBonus ?? 0) : 0;
+    if (pb) rj.set(opts.prefer, rj.get(opts.prefer) + pb);
+    const jit = jit0 + pb;
     let best = root[0],
       bestScore = -INF,
       done = 0;
@@ -154,12 +180,26 @@ export class Brain {
   }
 
   // ------------------------------------------------------------ la búsqueda
-  search(depth, alpha, beta, ply) {
+  // ext: lo que lleva alargado esta rama (las jugadas forzadas no gastan
+  // profundidad, hasta EXT)
+  search(depth, alpha, beta, ply, ext = 0) {
     const g = this.g;
     this.nodes++;
     if (this.timeUp()) return 0;
-    if (depth <= 0 || ply >= MAXP - 4) return this.quiesce(alpha, beta, ply, 0);
+    // (mueven los de dentro con una línea libre: el rey sale)
+    if (g.turn === DEF && g.openLines() > 0) return WIN - ply - 1;
+    if (depth <= 0 || ply >= MAXP - 16) return this.quiesce(alpha, beta, ply, 0);
     if (g.ply >= MAX_PLY) return 0;
+    // mueven los de fuera con el rey asomado a las afueras: sólo sirve tapar
+    // o atraparle (y eso, como un jaque, no gasta profundidad)
+    let lines = null;
+    if (g.turn === ATT) {
+      lines = this.lbuf[ply];
+      lines.length = 0;
+      if (!g.openLines(lines)) lines = null;
+    }
+    const cd = depth - 1 + (lines && ext < EXT ? 1 : 0),
+      ce = ext + (lines ? 1 : 0);
     // la tabla
     const idx = g.h1 & this.mask;
     let ttMove = -1;
@@ -175,8 +215,9 @@ export class Brain {
         if (f === UPPER && s <= alpha) return s;
       }
     }
-    const n = this.gen(ply, ttMove);
-    if (!n) return -(WIN - ply);
+    const n = this.gen(ply, ttMove, lines);
+    // (sin jugadas: pierde; sin ninguna que tape: el rey sale a la siguiente)
+    if (!n) return lines ? -(WIN - ply - 2) : -(WIN - ply);
     const ms = this.mbuf[ply];
     const a0 = alpha;
     let best = -INF,
@@ -191,10 +232,10 @@ export class Brain {
       else {
         this.path[++this.np] = g.key();
         // (la primera, con la ventana entera; las demás, primero con una nula)
-        if (i === 0) s = -this.search(depth - 1, -beta, -alpha, ply + 1);
+        if (i === 0) s = -this.search(cd, -beta, -alpha, ply + 1, ce);
         else {
-          s = -this.search(depth - 1, -alpha - 1, -alpha, ply + 1);
-          if (s > alpha && s < beta && !this.stop) s = -this.search(depth - 1, -beta, -alpha, ply + 1);
+          s = -this.search(cd, -alpha - 1, -alpha, ply + 1, ce);
+          if (s > alpha && s < beta && !this.stop) s = -this.search(cd, -beta, -alpha, ply + 1, ce);
         }
         this.np--;
       }
@@ -230,20 +271,40 @@ export class Brain {
     return best;
   }
 
-  // Al final de una rama, sólo las amenazas del rey (y si se le puede
-  // atrapar ya).
+  // Al final de una rama, sólo las amenazas del rey: si mueven los de dentro,
+  // las jugadas que le abren al rey una línea a las afueras (el rey que se
+  // asoma, o uno de los suyos que se aparta), y si no, lo que hay; si mueven
+  // los de fuera, tapar (o atrapar al rey). Así se ven las horquillas que se
+  // preparan con amenazas, una detrás de otra, más allá de la profundidad.
   quiesce(alpha, beta, ply, qd) {
     const g = this.g;
     this.nodes++;
     if (g.turn === DEF) {
       // (una línea libre: el rey sale)
       if (g.openLines() > 0) return WIN - ply - 1;
-      return this.evaluate();
+      const stand = this.evaluate();
+      if (stand >= beta || qd >= QDEF || ply >= MAXP - 2) return stand;
+      if (stand > alpha) alpha = stand;
+      const n = this.genThreats(ply);
+      const ms = this.mbuf[ply];
+      let best = stand;
+      for (let i = 0; i < n; i++) {
+        this.pickNext(ply, i, n);
+        const u = g.make(ms[i]);
+        let s;
+        if (g.result) s = g.result.winner === DEF ? WIN - ply - 1 : g.result.winner ? -(WIN - ply - 1) : 0;
+        else s = -this.quiesce(-beta, -alpha, ply + 1, qd + 1);
+        g.unmake(u);
+        if (s > best) best = s;
+        if (s > alpha) alpha = s;
+        if (alpha >= beta) break;
+      }
+      return best;
     }
-    const lines = this.lines;
+    const lines = this.lbuf[ply];
     lines.length = 0;
     const open = g.openLines(lines);
-    if (qd > 4) return this.evaluate();
+    if (ply >= MAXP - 2) return open ? -(WIN - ply - 2) : this.evaluate();
     // mueven los de fuera: atrapar al rey, o tapar sus líneas
     const k = g.king;
     const ms = this.mbuf[ply],
@@ -266,7 +327,7 @@ export class Brain {
         }
       }
     }
-    let best = open ? -(WIN - ply) : this.evaluate();
+    let best = open ? -(WIN - ply - 2) : this.evaluate();
     if (!open) {
       // (sin líneas que tapar: sólo si alguna atrapa al rey)
       for (let i = 0; i < n; i++) {
@@ -281,6 +342,8 @@ export class Brain {
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
     for (let i = 0; i < n; i++) {
+      // (primero las que atrapan o tapan arrimándose al rey)
+      this.pickNext(ply, i, n);
       const u = g.make(ms[i]);
       let s;
       if (g.result) s = g.result.winner === ATT ? WIN - ply - 1 : g.result.winner ? -(WIN - ply - 1) : 0;
@@ -292,9 +355,75 @@ export class Brain {
     }
     return best;
   }
+  // Las amenazas de los de dentro (sin líneas libres ya): el rey a una
+  // casilla desde la que ve las afueras (las de dos líneas, primero) y los
+  // suyos que, apartándose, le dejan una línea libre.
+  genThreats(ply) {
+    const g = this.g,
+      b = g.b,
+      k = g.king;
+    const ms = this.mbuf[ply],
+      sc = this.sbuf[ply];
+    let n = 0;
+    if (k < 0) return 0;
+    b[k] = EMPTY;
+    for (let d = 0; d < 4; d++) {
+      const ray = RAYS[k][d];
+      for (let j = 0; j < ray.length; j++) {
+        const t = ray[j];
+        if (b[t] !== EMPTY) break;
+        let l = 0;
+        for (let d2 = 0; d2 < 4; d2++) {
+          const r2 = RAYS[t][d2];
+          if (!r2.length) continue;
+          let ok = true;
+          for (let q = 0; q < r2.length; q++)
+            if (b[r2[q]] !== EMPTY) {
+              ok = false;
+              break;
+            }
+          if (ok) l++;
+        }
+        if (l) {
+          ms[n] = k * SQ + t;
+          sc[n] = l * 10;
+          n++;
+        }
+      }
+    }
+    b[k] = KING;
+    for (let d = 0; d < 4; d++) {
+      // (el primero que hay en la fila del rey es de los suyos, y detrás de él, nada)
+      const ray = RAYS[k][d];
+      let j = 0;
+      while (j < ray.length && b[ray[j]] === EMPTY) j++;
+      if (j >= ray.length || b[ray[j]] !== DEF) continue;
+      let rest = true;
+      for (let q = j + 1; q < ray.length; q++)
+        if (b[ray[q]] !== EMPTY) {
+          rest = false;
+          break;
+        }
+      if (!rest) continue;
+      const f = ray[j];
+      for (const d2 of PERP[d]) {
+        const r2 = RAYS[f][d2];
+        for (let q = 0; q < r2.length; q++) {
+          const t = r2[q];
+          if (b[t] !== EMPTY || t === THRONE) break;
+          ms[n] = f * SQ + t;
+          sc[n] = 5;
+          n++;
+        }
+      }
+    }
+    return n;
+  }
 
   // ------------------------------------------------------------ jugadas, en orden
-  gen(ply, ttMove) {
+  // (lines: las casillas de las líneas libres del rey; si se da, sólo las que
+  // las tapan o se arriman al rey)
+  gen(ply, ttMove, lines = null) {
     const g = this.g,
       b = g.b;
     const ms = this.mbuf[ply],
@@ -313,6 +442,7 @@ export class Brain {
           const t = ray[j];
           if (b[t] !== EMPTY) break;
           if (t === THRONE && p !== KING) break;
+          if (lines && !lines.includes(t) && NB[t * 4] !== k && NB[t * 4 + 1] !== k && NB[t * 4 + 2] !== k && NB[t * 4 + 3] !== k) continue;
           const m = i * SQ + t;
           let s = this.hist[m] >> 4;
           if (m === ttMove) s += 1e7;

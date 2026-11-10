@@ -1,13 +1,18 @@
 // El Cerco (el juego del Rey), en la consola: comprueba las reglas, mide la
 // IA y juega partidas de prueba entre niveles.
 //   node tools/cerco.mjs reglas          comprueba capturas, trono, rey y huida
+//   node tools/cerco.mjs partidas        las partidas que recuerda el Rey: que se
+//                                        reconozcan al repetirlas (también al revés)
+//   node tools/cerco.mjs maestro         lo que te explica el Rey: los fallos que ve
 //   node tools/cerco.mjs velocidad       nodos por segundo y profundidad
 //   node tools/cerco.mjs liga n rey rival k   n partidas: el Rey (nivel 0-2) contra un rival de
 //                                        prueba de los de dentro (0-3); k escala los tiempos
 //   node tools/cerco.mjs partida rey rival una partida, jugada a jugada
-import { Cerco, ATT, DEF, KING, EMPTY, N, mv, mvName, mTo } from '../src/game/cerco/rules.js';
+import { Cerco, ATT, DEF, KING, EMPTY, N, mv, mvName, mTo, mFrom, sqName } from '../src/game/cerco/rules.js';
 import { Brain, WIN } from '../src/game/cerco/ai.js';
 import { LEVELS, DEF_LEVELS, moveOpts } from '../src/game/cerco/levels.js';
+import { PARTIDAS_JUGADAS, SENALADAS, Recuerdos, symMove, SYM } from '../src/game/cerco/partidas.js';
+import { examine } from '../src/game/cerco/maestro.js';
 
 const sq = (s) => {
   const c = 'abcdefghi'.indexOf(s[0]),
@@ -119,6 +124,72 @@ function rules() {
   console.log(fails ? `${fails} mal` : 'todo bien');
 }
 
+// Las partidas que recuerda el Rey: cada una se puede jugar entera (son
+// legales), y repetida jugada a jugada (tal cual o con una simetría) sigue
+// en su apertura y da sus jugadas señaladas.
+function partidas() {
+  check('diez partidas', PARTIDAS_JUGADAS.length === 10);
+  for (const P of PARTIDAS_JUGADAS) {
+    check(`${P.id}: ${P.plies} jugadas legales`, P.info.length === P.moves.length);
+    for (const s of [0, 5]) {
+      const g = new Cerco();
+      const R = new Recuerdos();
+      let inBook = true;
+      const kinds = new Set();
+      for (let i = 0; i < P.moves.length && !g.result; i++) {
+        const m = symMove(P.moves[i], s);
+        // (el Rey, cuando le toca, la propone para seguirla: esa jugada o la
+        // misma vista de otro lado, si la posición aún es simétrica)
+        if (g.turn === ATT && i < 14 && !R.book(g).some((b) => b.id === P.id)) inBook = false;
+        const u = g.play(m);
+        for (const h of R.onMove(g, m, u)) if (h.id === P.id) kinds.add(h.kind);
+        if (!R.inBook.get(P.id)) inBook = false;
+      }
+      const want = SENALADAS.filter((x) => x.id === P.id && x.kind !== 'pend').map((x) => x.kind);
+      const got = want.filter((k) => kinds.has(k));
+      check(`${P.id}${s ? ' (vuelta)' : ''}: la sigue de principio a fin${want.length ? ' y da ' + want.join(', ') : ''}`, inBook && kinds.has('book') && got.length === want.length);
+    }
+  }
+  // la que iba a jugar el pequeño: puesta la posición, su jugada la reconoce
+  const C = PARTIDAS_JUGADAS.find((p) => p.id === 'campana');
+  const g = new Cerco();
+  const R = new Recuerdos();
+  for (const m of C.moves) R.onMove(g, m, g.play(m));
+  const hits = R.onMove(g, C.pend, g.play(C.pend));
+  check('la de la campana: la que iba a mover el pequeño (' + mvName(C.pend) + ')', hits.some((h) => h.id === 'campana' && h.kind === 'pend'));
+  // el Rey sigue la jugada que prefiere si no es peor (y no si lo es)
+  const br = new Brain(16);
+  const s0 = new Cerco();
+  const P0 = PARTIDAS_JUGADAS[0];
+  const r1 = br.think(s0, { depth: 3, nodes: 60000, ms: 1e9, prefer: P0.moves[0], preferBonus: 30 });
+  check('el Rey abre como en ' + P0.id + ' (' + mvName(r1.move) + ')', r1.move === P0.moves[0]);
+  console.log(fails ? `${fails} mal` : 'todo bien');
+}
+
+// Lo que te explica el Rey: posiciones con un fallo de cada clase.
+function maestro() {
+  const kinds = (g, m) => {
+    const ex = examine(g, m);
+    return ex.bad.map((b) => b.kind);
+  };
+  // la salida, libre (a la izquierda): no sale
+  let g = board(['..A......', '.........', '.A.......', '...A.....', '....+....', '.........', '..K....A.', '.D.......', '..A.A....'], DEF);
+  check('no sale con la línea libre: escape', kinds(g, M('b2', 'b1'))[0] === 'escape');
+  check('sale: nada que decir', !kinds(g, M('c3', 'a3')).length);
+  // la horquilla: el rey en d5, sin líneas; desde d7 vería dos
+  g = board(['...A.....', '.........', '.........', '.........', 'A..K+...A', '.........', '.........', '.D.......', '...A.....'], DEF);
+  const ex = examine(g, M('b2', 'b1'));
+  check('no ve la horquilla: fork (' + (ex.bad[0] ? sqName(ex.bad[0].sq[0]) : '-') + ')', ex.bad[0] && ex.bad[0].kind === 'fork');
+  check('la ve: nada que decir', !kinds(g, M('d5', 'd7')).length);
+  // el rey, a tiro: junto a uno de los míos, y el otro llega
+  g = board(['..A......', '.........', '.........', '.........', '....+....', 'A.K.....A', '.........', '.........', '..A....D.'], DEF);
+  check('se mete a tiro: king', kinds(g, M('c4', 'b4')).includes('king'));
+  // la pieza que se queda donde la cogen en medio
+  g = board(['...A.....', '.........', '.........', '.........', 'A..K+...A', '.........', '...D.....', '..A......', '...AA....'], DEF);
+  check('se queda en medio: hang', kinds(g, M('d3', 'd2')).includes('hang'));
+  console.log(fails ? `${fails} mal` : 'todo bien');
+}
+
 function speed() {
   const g = new Cerco();
   const br = new Brain();
@@ -175,6 +246,8 @@ function league(n, lv, op, k) {
 
 const cmd = process.argv[2] || 'reglas';
 if (cmd === 'reglas') rules();
+else if (cmd === 'partidas') partidas();
+else if (cmd === 'maestro') maestro();
 else if (cmd === 'velocidad') speed();
 else if (cmd === 'liga') league(+(process.argv[3] || 4), +(process.argv[4] || 0), +(process.argv[5] || 0), +(process.argv[6] || 1));
 else if (cmd === 'partida') {
