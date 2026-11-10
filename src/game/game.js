@@ -605,6 +605,8 @@ export class Game {
   toTitle() {
     this.run = (this.run || 0) + 1;
     this.endCutscene();
+    // (sin el rótulo de antes de despertar, si quedara en pantalla)
+    this.intro && this.intro.unsay();
     this.hunt.reset();
     this.chase.reset();
     const death = document.getElementById('death');
@@ -728,7 +730,8 @@ export class Game {
     this.camRig.pitch = 0.62;
     // la introducción y, después, quién eras (el editor de personaje); luego,
     // a despertar en la celda
-    this.intro.start(() => this.creador.abrir(() => this.wakeUp()));
+    // (el rótulo de siempre, a oscuras, entre el editor y el despertar)
+    this.intro.start(() => this.creador.abrir(() => this.wakeUp(), { rotulo: MSG.intro[0] + '\n' + MSG.intro[1] }));
   }
   // Del editor de personaje a la celda: a oscuras, en su sitio, y a despertar
   wakeUp() {

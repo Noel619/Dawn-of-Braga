@@ -294,6 +294,12 @@ export class UI {
     if (!this._goth.has(text)) this._goth.set(text, textBitmap(text, 'gothic', { grad: [P.bone3, P.bone2, P.gold4, P.gold3, P.gold2], hilite: P.gold5, outline: P.void, glow: P.blood1, glow2: P.blood0 }));
     return spriteHtml(this._goth.get(text), 1);
   }
+  // el título al acabar la introducción, sobre negro: el dorado de la portada
+  // (el de tinta oscura es para el pergamino del final)
+  introTitleHtml() {
+    if (!this._introTitle) this._introTitle = textBitmap('Dawn of Braga', 'gothic', { grad: [P.bone3, P.bone2, P.gold4, P.gold3, P.gold2, P.gold1], hilite: P.gold5, outline: P.void, shadow: P.blood0, glow: P.blood1, glow2: P.blood0 });
+    return spriteHtml(this._introTitle, 1);
+  }
   // título en tinta oscura (pantalla final, sobre pergamino)
   inkTitleHtml() {
     if (!this._inkTitle) this._inkTitle = textBitmap('Dawn of Braga', 'gothic', { grad: [P.pink1, P.pink0, P.pink0], hilite: P.blood2, outline: P.parch1 });

@@ -24,6 +24,9 @@ import { spriteHtml, arrowBitmap, notchBitmap } from '../ui/pixel.js';
 import { clamp, damp } from '../core/util.js';
 
 const $ = (id) => document.getElementById(id);
+// el rótulo de antes de despertar (en segundos desde «Despertar»): sale ya a
+// negro, se va y, mientras se va, se despierta
+const ROTULO = { sale: 1.0, va: 3.4, fin: 4.0 };
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // el escenario: lejos de todo lo del mundo
@@ -110,10 +113,13 @@ export class Creador {
   // Abre el editor (con el jugador ya vestido de la guardia); al despertar,
   // done(). Lo de la partida (la armadura que lleva, si va armado) queda como
   // estaba: aquí sólo se mira.
-  abrir(done) {
+  abrir(done, o = {}) {
     const g = this.g,
       p = g.player;
     this.done = done;
+    // (al empezar partida: el rótulo de siempre, a oscuras, al despertar)
+    this.rotulo = o.rotulo || null;
+    this._rotulo = 0;
     this.activo = true;
     this.cerrando = 0;
     this.a = normalizar(p.aspecto);
@@ -130,6 +136,8 @@ export class Creador {
     this.escribiendo = false;
     this._built = undefined;
     this.montar();
+    const el = $('creador');
+    if (el) el.classList.remove('saliendo');
     g.state = 'creador';
     g.lockTarget = null;
     // él, de pie en el escenario, de cara a la cámara, sin el arma ni el escudo
@@ -189,11 +197,17 @@ export class Creador {
     p.rig.setProbe(0.34, 0.3, 0.28, STAGE.y);
   }
 
-  // Despertar: fundido a negro y, a oscuras, todo en su sitio
+  // Despertar: fundido a negro y, a oscuras, todo en su sitio (al empezar
+  // partida, con el rótulo de siempre: «Braga. Tercera noche después de la
+  // caída.», que se aclara cuando ya está a negro y se va al despertar)
   terminar() {
     if (this.cerrando) return;
-    this.cerrando = 1.1;
+    this.cerrando = this.rotulo ? ROTULO.fin : 1.1;
+    this.cerrandoT = 0;
     this.g.fadeTarget = 0;
+    // (la lista se va con él: ui.css, #creador.saliendo)
+    const el = $('creador');
+    if (el) el.classList.add('saliendo');
     this.g.audio && this.g.audio.ui('confirm');
     this.g.audio && this.g.audio.stopMusic();
   }
@@ -222,6 +236,7 @@ export class Creador {
   // (volver al título a mitad: nada de lo elegido)
   abortar() {
     this.done = null;
+    if (this._rotulo === 1) this.g.intro.unsay();
     this.cerrar(false);
   }
 
@@ -411,6 +426,15 @@ export class Creador {
     // despertando: a negro y fuera
     if (this.cerrando) {
       this.cerrando -= dt;
+      this.cerrandoT += dt;
+      // (el rótulo: a oscuras, y fuera antes de despertar)
+      if (this.rotulo && this._rotulo === 0 && this.cerrandoT >= ROTULO.sale) {
+        this._rotulo = 1;
+        g.intro.sayAside(this.rotulo);
+      } else if (this._rotulo === 1 && this.cerrandoT >= ROTULO.va) {
+        this._rotulo = 2;
+        g.intro.unsay();
+      }
       if (this.cerrando <= 0) this.cerrar(true);
       else this.animar(dt);
       return;

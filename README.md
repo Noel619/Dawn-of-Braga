@@ -70,7 +70,10 @@ con su cara y con lo suyo, que es lo que dice quién era: el arzobispo, viejo y 
 casulla, el palio y el incensario; San Martín, encorvado bajo la capucha, con la barba partida, el cayado y el
 farol; el sacerdote romano con la toga sobre la cabeza; el cantero con su mazo; los Velados con la cara bajo el
 paño; los canónigos (uno seco, otro gordo) con la muceta; los almohades con turbante, lizam, albornoz y adarga; y
-la gente de Braga, cada cual con lo suyo. Se salta manteniendo «interactuar».
+la gente de Braga, cada cual con lo suyo. Se salta manteniendo «interactuar». Acaba con **el título**: en cuanto el
+último plano se va a negro, el dorado de la portada, que se aclara despacio con la campana, se queda unos segundos y
+se va (unos cinco en total). Después, el editor de personaje y, al «Despertar», a oscuras, «Braga. Tercera noche
+después de la caída.»: y se abren los ojos en la celda.
 
 **Quién eras (el editor de personaje).** Después de la introducción, antes de despertar en la celda, como en los
 Souls: el preso se dejó en la pared las uñas y la memoria, y aquí se recuerda quién era. Sin clases ni dones: sólo

@@ -346,6 +346,11 @@ img.spr.mesa-drag { position: fixed; left: 0; top: 0; z-index: 50; pointer-event
    velo; él, a la derecha, en lo oscuro; su nombre, al pie */
 #creador { place-items: center start; padding-left: max(2vw, calc(var(--u) * 6)); background: linear-gradient(to right, rgba(6, 5, 5, 0.55), rgba(6, 5, 5, 0) 46%); }
 #creador .cr-panel { width: min(calc(var(--u) * 200), 46vw); }
+/* (al abrirse, la lista llega mientras se aclara la escena; al despertar, se
+   va con el fundido a negro) */
+#creador:not(.hidden) .cr-panel { animation: crEntra 0.8s ease-out 0.3s both; }
+@keyframes crEntra { from { opacity: 0; } to { opacity: 1; } }
+#creador.saliendo { opacity: 0; transition: opacity 0.7s ease-in; }
 #creador .cr-sub { min-height: calc(11px * var(--un)); margin-top: calc(var(--u) * 2); text-align: center; color: var(--dim); text-shadow: var(--sh); }
 #cr-list { margin-top: calc(var(--u) * 3); }
 #cr-list .opt { min-height: max(calc(var(--u) * 12), calc(21px * var(--m) + var(--u) * 1)); }
@@ -383,11 +388,12 @@ img.spr.mesa-drag { position: fixed; left: 0; top: 0; z-index: 50; pointer-event
 #story .big img { margin: 0 auto; }
 /* la introducción: los rótulos en la franja de abajo, el título y el aviso
    de saltar (aparecen y se van a saltos, como el resto) */
-#intro-cap { position: fixed; left: 0; right: 0; bottom: 2.6%; min-height: 8%; display: grid; place-items: center; align-content: center; padding: 0 8vw; text-align: center; color: var(--bone); text-shadow: var(--sh); opacity: 0; transition: opacity 1.2s steps(6); pointer-events: none; z-index: 5; }
+#intro-cap { position: fixed; left: 0; right: 0; bottom: 2.6%; min-height: 8%; display: grid; place-items: center; align-content: center; padding: 0 8vw; text-align: center; color: var(--bone); text-shadow: var(--sh); opacity: 0; transition: opacity 0.9s ease; pointer-events: none; z-index: 5; }
 #intro-cap.show { opacity: 1; }
 #intro-cap .big { font-family: 'Bastarda', serif; font-size: var(--fs-bastL); line-height: 1.15; color: var(--bone-hi); letter-spacing: 0.08em; }
-#intro-title { position: fixed; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 2.2s steps(11); pointer-events: none; z-index: 5; }
-#intro-title.show { opacity: 1; }
+/* (el título, sin saltos: se aclara en 1,4 s y se va en 0,9; intro.js, s_titulo) */
+#intro-title { position: fixed; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 0.9s ease-in; pointer-events: none; z-index: 5; }
+#intro-title.show { opacity: 1; transition: opacity 1.4s ease-out; }
 #intro-title img { margin: 0 auto; }
 #intro-skip { position: fixed; right: calc(var(--u) * 8); top: calc(var(--u) * 6); color: var(--ash); text-shadow: var(--sh); opacity: 0; transition: opacity 0.6s steps(3); pointer-events: none; z-index: 6; }
 #intro-skip.show { opacity: 1; }

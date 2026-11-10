@@ -17,7 +17,9 @@
 //   gente      la calle: los que la oyen se arrodillan
 //   celda      la pared de la celda del fondo: NO TE ARRODILLES. No todos
 //   mirada     la estatua vuelve la cara y abre el ojo: se fija en uno de ellos
-//   titulo     Dawn of Braga; «Braga. Tercera noche después de la caída.»
+//   titulo     Dawn of Braga (y, tras el editor de personaje, a oscuras
+//              antes de despertar: «Braga. Tercera noche después de la
+//              caída.»; game/creador.js)
 //
 // 'cronica', lo que pasó, en orden y explicado (larga; se desbloquea al
 // vencer al arzobispo y se ve desde el título):
@@ -49,7 +51,6 @@ import { objMat } from '../../gfx/materials.js';
 import { BELL_OUT, BELL_IN } from '../../entities/enemy_models.js';
 import { sampleClip } from '../../entities/rig.js';
 import { DEG } from '../../core/util.js';
-import { MSG } from '../story.js';
 
 const V3 = THREE.Vector3;
 const AY = CISTERN.AY;
@@ -117,6 +118,13 @@ export class Intro {
   }
   unsay() {
     this.cap && this.cap.classList.remove('show');
+    this.capEnd = 0;
+  }
+  // un rótulo fuera de la película, hasta que se quite (unsay): el de antes
+  // de despertar (game/creador.js)
+  sayAside(text) {
+    this.dom();
+    this.say(text, 0);
     this.capEnd = 0;
   }
 
@@ -1249,7 +1257,10 @@ export class Intro {
     }
   }
 
-  // 13. El título y, al empezar partida, el rótulo de siempre; y a despertar
+  // 13. El título: en cuanto el último plano se ha ido a negro, el dorado de
+  // la portada, que se aclara despacio (sin saltos) con la campana, se queda
+  // y se va; y a lo siguiente (al empezar partida, el editor de personaje; el
+  // rótulo de siempre sale después, a oscuras antes de despertar)
   *s_titulo(skipped = false) {
     const g = this.g,
       F = this.F,
@@ -1257,19 +1268,16 @@ export class Intro {
     g.atmo.override = null;
     g.fadeTarget = 0;
     this.unsay();
-    // (la cámara, ya en la celda: de ahí sale el despertar)
+    // (la cámara, ya en la celda, a oscuras)
     F.shot([CELL.x - 1.0, YD + 2.0, CELL.z - 1.45], [CELL.x + 0.2, YD + 0.4, CELL.z + 0.6], { fov: 55 });
-    this.titleEl.innerHTML = g.ui.inkTitleHtml();
-    yield* F.wait(skipped ? 0.2 : 0.8);
+    this.titleEl.innerHTML = g.ui.introTitleHtml();
+    yield* F.wait(0.1);
     this.titleEl.classList.add('show');
     a && a.play('bellToll', null);
-    yield* F.wait(skipped ? 2.2 : 4.0);
+    // (se aclara en 1,4 s: ui.css, #intro-title)
+    yield* F.wait(skipped ? 2.4 : 3.6);
     this.titleEl.classList.remove('show');
-    yield* F.wait(1.6);
-    if (this.cut !== 'intro') return;
-    this.say(MSG.intro[0] + '\n' + MSG.intro[1], 3.8);
-    yield* F.wait(4.4);
-    this.unsay();
-    yield* F.wait(0.4);
+    // (y se va en 0,9)
+    yield* F.wait(1.0);
   }
 }
