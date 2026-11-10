@@ -71,7 +71,9 @@ const CSS = `
 // Lo que lleva visto de ti, para explicarte (en esta visita y las
 // siguientes, hasta que se carga la partida): los fallos de cada clase, lo
 // que ya te ha explicado y las partidas que le has perdido.
-const newPupil = () => ({ kinds: {}, told: {}, lost: 0, bad: 0, any: false, game: false });
+// (said: las costumbres que ya te ha sacado, una vez por visita)
+const newPupil = () => ({ kinds: {}, told: {}, lost: 0, bad: 0, any: false, game: false, said: new Set() });
+const HABITS = ['habit', 'habit2', 'taken', 'draw'];
 // Las casillas de a (sin ella) a b (con ella), si están en línea.
 function rayTo(a, b) {
   const out = [];
@@ -576,6 +578,8 @@ export class ReyQuest {
         { act: 'back', label: 'Levantarse' },
       ];
     else if (S.phase === 'final' && S.final && S.final.prompt) list = [{ act: 'interact', label: S.final.prompt }];
+    // (mientras te explica algo: la E pasa sus frases)
+    else if (S.phase === 'think' && S.lesson && S.lesson.step !== 'back') list = [{ act: 'interact', label: 'Seguir' }];
     const key = list ? list.map((x) => x.label).join('|') : '';
     if (key === this._hintKey) return;
     this._hintKey = key;
@@ -1029,7 +1033,9 @@ export class ReyQuest {
       if (!T) continue;
       const kind = h.kind === 'book' && side === ATT ? 'own' : h.kind;
       if (!T[kind] || !PR[kind] || (only && !only.includes(kind))) continue;
-      if (S.said.has(h.id + ':' + kind)) continue;
+      // (lo de cada partida, una vez por partida; las costumbres, una vez
+      // por visita: no te saca al alcaide en cada una)
+      if ((HABITS.includes(kind) ? this.pupil.said : S.said).has(h.id + ':' + kind)) continue;
       // la apertura: la tuya, una vez por partida; la suya, si la ha elegido él
       if (kind === 'book' && (S.said.has('book') || this.cerco.ply < 2)) continue;
       if (kind === 'own' && (!S.book || S.book.id !== h.id || S.said.has('own') || this.cerco.ply > 7 || Math.random() < 0.4)) continue;
@@ -1063,7 +1069,7 @@ export class ReyQuest {
     }
     this.g.speech.queue(this.who, lines);
     this.lineCool = Math.max(6, lines.reduce((t, l) => t + 1 + l.length / 40, 0));
-    S.said.add(h.id + ':' + kind);
+    (HABITS.includes(kind) ? this.pupil.said : S.said).add(h.id + ':' + kind);
     if (kind === 'book' || kind === 'own') S.said.add(kind);
     S.recallAt = S.moves;
     // y el gesto: se ríe, asiente o niega
@@ -1225,16 +1231,22 @@ export class ReyQuest {
     if (res.winner === 0) lines = hits.some((h) => h.id === 'reina' && h.kind === 'draw') ? [pick(PARTIDAS.reina.draw), ...DIALOG.reyDraw.slice(-1)] : DIALOG.reyDraw;
     else {
       P.lost++;
-      // (si has jugado mal, no te dice que juegas mejor: te explica cómo se
-      // juega, lo que le dijo su padre, antes de pedirte otra; una vez)
-      const mal = S.bad >= 5 && !P.game;
-      const base = mal ? DIALOG.reyWinMal[Math.min(n, 2) - 1] : n === 1 ? DIALOG.reyWin1 : DIALOG.reyWin2;
+      // (si has jugado mal, no te dice que juegas mejor; y la primera vez,
+      // antes de pedirte otra, te explica cómo se juega: lo que le dijo su
+      // padre)
+      const mal = S.bad >= 5;
       const otra = n === 1 ? DIALOG.reyWin1.slice(-1) : DIALOG.reyWin2.slice(-1);
-      lines = mal ? [...base, ...DIALOG.reyLessonGame, ...otra] : base;
-      if (mal) P.game = true;
-      // (en su trono, por los cuatro lados: como al alcaide)
+      if (!mal) lines = n === 1 ? DIALOG.reyWin1 : DIALOG.reyWin2;
+      else {
+        lines = [...DIALOG.reyWinMal[Math.min(n, 2) - 1], ...(P.game ? [] : DIALOG.reyLessonGame), ...otra];
+        P.game = true;
+      }
+      // (en su trono, por los cuatro lados: como al alcaide; una vez)
       const tk = hits.find((h) => h.id === 'alcaide' && h.kind === 'taken');
-      if (tk && !S.said.has('alcaide:taken')) lines = [pick(PARTIDAS.alcaide.taken), ...lines];
+      if (tk && !P.said.has('alcaide:taken')) {
+        P.said.add('alcaide:taken');
+        lines = [pick(PARTIDAS.alcaide.taken), ...lines];
+      }
     }
     this.run([{ wait: 1.0 }, { say: lines, clip: res.winner === 0 ? 'shake' : 'nod' }], null);
     if (res.winner === ATT) {
