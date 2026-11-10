@@ -35,6 +35,9 @@ export const ACUSTICA = {
   hondo: { suelo: 'dirt', eco: ['hall', 0.6], amb: 'hondo', cama: [0.02, 0, 0.08, 0.04, 0.22] },
   hondo_semillero: { suelo: 'dirt', eco: ['room', 0.4], amb: 'hondo', cama: [0.02, 0, 0.08, 0.04, 0.1] },
   hondo_pozo: { suelo: 'stone', eco: ['crypt', 0.6], amb: 'aljibe', cama: [0, 0, 0.12, 0.06, 0.1] },
+  // el Sumidero (world/sumidero.js): la caverna grande, con el agua que cae
+  sumidero: { suelo: 'stone', eco: ['cathedral', 0.62], amb: 'aljibe', cama: [0, 0, 0.1, 0.1, 0.6] },
+  venero: { suelo: 'stone', eco: ['crypt', 0.5], amb: 'hondo', cama: [0, 0, 0.08, 0.1, 0.2] },
 
   // ---------------------------------------------------------- el patio de armas
   castle: { suelo: 'dirt' },

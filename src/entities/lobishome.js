@@ -640,6 +640,18 @@ function soltar(e, escapado) {
     e.cooldown = 1.2;
   }
 }
+// Muerto con el jugador en las fauces (un virote que llega tarde, lo que
+// sea): lo suelta. Antes se quedaba agarrado para siempre.
+function sueltaMuerto(e) {
+  const g = e.game;
+  const p = g.player;
+  const D = e.data;
+  if (!D.agarrado) return;
+  D.agarrado = false;
+  if (p.state === 'grabbed') p.releaseGrab && p.releaseGrab(1.2, Math.sin(e.yaw), Math.cos(e.yaw), 0);
+  else if (p.state === 'pinned') p.releasePin && p.releasePin(true, 0);
+  g.lobo && g.lobo.farolVuelve(true);
+}
 function estadoArrastrando(e, dt, pl) {
   const D = e.data;
   if (pl.state !== 'grabbed' || pl.dead) {
@@ -844,6 +856,7 @@ const T = {
     }
   },
   // (en la luna, mirándola, se le pega a gusto)
+  onDie: (e) => sueltaMuerto(e),
   preHit: (e, dmg, poise) => (e.data.luna ? { dmg: Math.round(dmg * 1.6), poise: poise * 1.5 } : e.state === 'arrastrando' || e.state === 'enterrando' ? { dmg: Math.round(dmg * 0.6), poise: 0 } : null),
   onReset: (e) => {
     e.data = {};

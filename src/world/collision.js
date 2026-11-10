@@ -134,6 +134,19 @@ export class CollisionWorld {
     return g;
   }
 
+  // Lo más bajo de lo que hay encima de (x, z) por encima de yMin (el techo,
+  // para quien nada: no se sube a través de la roca). Infinity si nada.
+  ceilHeight(x, z, r, yMin) {
+    const list = this.query(x - r, z - r, x + r, z + r, this._q5 || (this._q5 = []));
+    let c = Infinity;
+    for (const b of list) {
+      if (b.ramp || b.camOnly || b.tag === 'fog' || b.miny < yMin || b.miny >= c) continue;
+      if (!this.overlapXZ(b, x, z, r * 0.7)) continue;
+      c = b.miny;
+    }
+    return c;
+  }
+
   // Empuja un círculo fuera de las cajas que bloquean a esa altura.
   resolve(pos, r, feet, height, stepH) {
     let hit = false;
@@ -308,6 +321,28 @@ export class CollisionWorld {
     const t = this.raycast(ax, ay, az, dx / d, dy / d, dz / d, d, (b) => !b.noSight && (b.maxy - b.miny > 0.9 || (b.maxy - b.miny <= 0.6 && slabWidth(b) > 1.4)));
     return t === Infinity;
   }
+}
+
+// Mueve a quien nada: en las tres direcciones, sin gravedad (eso lo pone él),
+// contra las paredes (un cilindro de alto h, que empieza en pos.y + base) y
+// entre el fondo y el techo. Devuelve { suelo, techo, hit }.
+export function swimBody(world, body, dx, dy, dz, base = 0.55, h = 0.85) {
+  const r = body.radius;
+  const len = Math.hypot(dx, dz);
+  const steps = Math.max(1, Math.ceil(len / (r * 0.8)));
+  let hit = false;
+  for (let i = 0; i < steps; i++) {
+    body.pos.x += dx / steps;
+    body.pos.z += dz / steps;
+    if (world.resolve(body.pos, r, body.pos.y + base, h, 0.45)) hit = true;
+  }
+  body.pos.y += dy;
+  const feet = body.pos.y + base;
+  const g = world.groundHeight(body.pos.x, body.pos.z, r, feet + 0.45);
+  if (feet < g) body.pos.y = g - base;
+  const c = world.ceilHeight(body.pos.x, body.pos.z, r, body.pos.y + base + 0.05);
+  if (body.pos.y + base + h > c) body.pos.y = Math.max(g - base, c - base - h);
+  return { suelo: g, techo: c, hit };
 }
 
 // Mueve un cuerpo con gravedad, escalones y deslizamiento contra paredes.

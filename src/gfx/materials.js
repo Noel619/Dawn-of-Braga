@@ -176,6 +176,8 @@ export const MAT_DEFS = {
   bloodNoTe3: { tex: 'bloodNoTe3', uv: 1, alphaTest: 0.5 },
   bloodNoTe4: { tex: 'bloodNoTe4', uv: 1, alphaTest: 0.5 },
   saltRing: { tex: 'saltRing', uv: 1, alphaTest: 0.5 },
+  // las telarañas de los rincones de las cloacas (recortadas)
+  telarana: { tex: 'telarana', uv: 1, alphaTest: 0.4 },
   nanaSymbols: { tex: 'nanaSymbols', uv: 1 },
   skullNiches: { tex: 'skullNiches', uv: 0.62 },
   animasRetablo: { tex: 'animasRetablo', uv: 1 },

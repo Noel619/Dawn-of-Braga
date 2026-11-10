@@ -36,20 +36,31 @@ export class CloacaFX {
       { c: [F.x - 0.42, F.z], w: 0.12, y0: F.y - 0.03, y1: VERGEL.y + 0.5, d: [-1, 0], out: 0.25, open: 0.8, foam: 0.3, k: 0.4 },
       { c: [Pi[0], (Rg[1] + Rg[3]) / 2], w: Rg[3] - Rg[1] - 0.1, y0: VERGEL.y + 0.48, y1: VERGEL.agua, d: [-1, 0], out: 0.18, open: 0.2, foam: 0.4, k: 0.4 },
     ];
+    // (y las de las cloacas hondas: los caños, los sumideros, el Sumidero;
+    // luz: la del sitio, de 0 a 1; las de aquí, a la luz)
+    for (const c of this.cas) c.luz = 1;
+    this.cas.push(...(g.level.ctx.cascadas || []));
     for (const c of this.cas) c.rip = 0;
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uTime: G.uTime, fogColor: { value: new THREE.Color() }, fogDensity: { value: 0 } },
+      uniforms: { uTime: G.uTime, fogColor: { value: new THREE.Color() }, fogDensity: { value: 0 }, uLamp: { value: new THREE.Vector3(0, -99, 0) }, uLampK: { value: 0 } },
       vertexShader: `
-        varying vec2 vUv; varying float vDist;
+        attribute float aLuz;
+        uniform vec3 uLamp; uniform float uLampK;
+        varying vec2 vUv; varying float vDist; varying float vLuz;
         void main(){
           vUv = uv;
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vec4 mv = viewMatrix * wp;
           vDist = -mv.z;
+          // (la luz del sitio y la del farol, si está cerca: no más que la
+          // que coge una piedra mojada)
+          float ld = length(uLamp - wp.xyz);
+          vLuz = min(0.95, aLuz + uLampK * 0.7 / (1.0 + ld * ld * 0.3));
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
         uniform float uTime; uniform vec3 fogColor; uniform float fogDensity;
-        varying vec2 vUv; varying float vDist;
+        varying vec2 vUv; varying float vDist; varying float vLuz;
         float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
         float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
           return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
@@ -62,7 +73,10 @@ export class CloacaFX {
           // arriba, lisa (sale del caño); abajo, deshecha en espuma
           float a = bordes * (0.1 + hilos * 0.42) * (0.6 + 0.4 * smoothstep(0.0, 0.25, v));
           a *= 1.0 - smoothstep(0.9, 1.0, v) * 0.5;
-          vec3 c = mix(vec3(0.26, 0.32, 0.36), vec3(0.6, 0.68, 0.78), hilos);
+          vec3 c = mix(vec3(0.26, 0.32, 0.36), vec3(0.6, 0.68, 0.78), hilos) * min(1.2, vLuz);
+          a *= 0.55 + 0.45 * min(1.0, vLuz);
+          // (pegada a la cámara se deshace: no tapa media pantalla)
+          a *= smoothstep(0.5, 1.6, vDist);
           ${FOG_CHUNK}
           gl_FragColor = vec4(mix(c, fogColor, fog), a * (1.0 - fog));
         }`,
@@ -73,10 +87,16 @@ export class CloacaFX {
     const geo = new THREE.BufferGeometry();
     const pos = [],
       uv = [],
-      idx = [];
-    for (const c of this.cas) this.cortina(c, pos, uv, idx);
+      idx = [],
+      luz = [];
+    for (const c of this.cas) {
+      const n0 = pos.length / 3;
+      this.cortina(c, pos, uv, idx);
+      for (let i = n0; i < pos.length / 3; i++) luz.push(c.luz ?? 1);
+    }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setAttribute('aLuz', new THREE.Float32BufferAttribute(luz, 1));
     geo.setIndex(idx);
     geo.computeBoundingSphere();
     this.mesh = new THREE.Mesh(geo, this.mat);
@@ -138,7 +158,7 @@ export class CloacaFX {
   // La cortina de una cascada (dos hojas, una algo detrás de otra, que salen
   // hacia delante en parábola y se abren al caer) y su anillo de espuma.
   cortina(c, pos, uv, idx) {
-    const N = 14;
+    const N = c.y0 - c.y1 > 3 ? 24 : 14;
     const H = c.y0 - c.y1;
     const [dx, dz] = c.d;
     const px = -dz,
@@ -271,8 +291,13 @@ export class CloacaFX {
     const p = g.player.pos;
     const under = p.y < -2;
     let near = false;
-    for (const c of this.cas) if (Math.hypot(p.x - c.c[0], p.z - c.c[1]) < 40) near = true;
+    for (const c of this.cas) if (Math.hypot(p.x - c.c[0], p.z - c.c[1]) < 40 && p.y < c.y0 + 14 && p.y > c.y1 - 14) near = true;
     this.mesh.visible = under && near;
+    const lamp = g.player.lamp;
+    if (lamp) {
+      lamp.getWorldPosition(this.mat.uniforms.uLamp.value);
+      this.mat.uniforms.uLampK.value = lamp.visible && g.player.obj.visible ? Math.min(1.5, lamp.intensity / 8) : 0;
+    }
     const B = VERGEL.sala;
     const enVergel = under && p.y > VERGEL.y - 3 && p.x > B[0] - 6 && p.x < B[2] + 2 && p.z > B[1] - 10 && p.z < B[3] + 2;
     this.flies.visible = enVergel;
@@ -284,10 +309,37 @@ export class CloacaFX {
       c.rip -= dt * c.k;
       if (c.rip > 0) continue;
       c.rip = 0.12 + Math.random() * 0.1;
+      // (sólo las que están cerca: las de lejos no las ve nadie)
+      if (Math.abs(p.y - c.y1) > 16 || Math.hypot(p.x - c.c[0], p.z - c.c[1]) > 30) continue;
       const fx = c.c[0] + c.d[0] * (c.out + 0.03) + (Math.random() - 0.5) * c.w * 0.9,
         fz = c.c[1] + c.d[1] * (c.out + 0.03) + (Math.random() - 0.5) * 0.4;
-      g.waters.ripple(fx, fz, (0.7 + Math.random() * 0.6) * Math.min(1, 0.4 + c.w));
+      g.waters.ripple(fx, fz, (0.7 + Math.random() * 0.6) * Math.min(1, 0.4 + c.w), c.y1);
     }
+  }
+
+  // El agua que cae más cerca de p (a menos de maxD): dónde (el pie del
+  // chorro, o a la altura de p si es alto) y lo grande que es (k).
+  nearest(p, maxD = 14) {
+    let best = null,
+      bd = maxD;
+    for (const c of this.cas) {
+      const x = c.c[0] + c.d[0] * c.out,
+        z = c.c[1] + c.d[1] * c.out;
+      const y = Math.max(c.y1, Math.min(c.y0, p.y + 1));
+      const d = Math.hypot(x - p.x, (y - p.y) * 1.5, z - p.z);
+      if (d >= bd) continue;
+      bd = d;
+      best = c;
+    }
+    if (!best) return null;
+    const o = this._nr || (this._nr = {});
+    o.c = best;
+    o.x = best.c[0] + best.d[0] * best.out;
+    o.z = best.c[1] + best.d[1] * best.out;
+    o.y = Math.max(best.y1, Math.min(best.y0, p.y + 1));
+    // (lo grande: el ancho y lo que cae)
+    o.k = Math.min(2.2, best.w * 0.9 + (best.y0 - best.y1) * 0.12);
+    return o;
   }
 
   updateOjos(dt, enVergel) {

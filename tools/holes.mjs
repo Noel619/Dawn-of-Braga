@@ -17,7 +17,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 320, height: 200 } });
 const logs = [];
 p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
-await p.goto('http://localhost:5199/?dev=1');
+await p.goto('http://localhost:' + (process.env.PORT || 5199) + '/?dev=1');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const r = await p.evaluate(async ([step, alto]) => {
   window.__pause = true;

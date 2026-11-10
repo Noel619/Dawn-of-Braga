@@ -683,7 +683,8 @@ export function buildCellar(ctx, B, L, o = {}) {
   wb.box('ashlar', lg[0], F + 0.85, lg[1], lg[2] - lt, F + 0.95, lg[1] + 0.12, { ao: false, faces: 'ts', tint: [0.5, 0.47, 0.43] });
   wb.box('ashlar', lg[0], F + 0.85, lg[1] + 0.12, lg[0] + 0.12, F + 0.95, lg[3] - lt, { ao: false, faces: 'te', tint: [0.5, 0.47, 0.43] });
   col.add(lg[0], F, lg[1], lg[2], F + 0.95, lg[3]);
-  ctx.waters.push({ shape: 'rect', r: [lg[0] + 0.1, lg[1] + 0.1, lg[2] - lt, lg[3] - lt], y: F + 0.72, deep: 0x120204, sky: 0x2a0a0c, glint: 0xb07068, light: [29.5, TOP, -38.5], lightK: 0.35 });
+  // (vino viejo, o lo que sea: espeso, no se ve el fondo)
+  ctx.waters.push({ shape: 'rect', r: [lg[0] + 0.1, lg[1] + 0.1, lg[2] - lt, lg[3] - lt], y: F + 0.72, deep: 0x120204, sky: 0x2a0a0c, glint: 0xb07068, light: [29.5, TOP, -38.5], lightK: 0.35, clear: 9, foam: 0.35 });
   // la viga de la prensa sobre la pila, el husillo hasta la bóveda y el
   // contrapeso en el suelo
   wb.box('timber', 26.2, F + 0.95, -57.9, 31.2, F + 1.3, -57.5, { ao: false, faces: 'tnsewb' });

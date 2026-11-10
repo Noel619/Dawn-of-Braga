@@ -61,6 +61,14 @@ export const ATMO = {
   viejas: { fog: 0x070605, density: 0.072, sky: 0x302c28, ground: 0x0d0b09, hemi: 0.46, moon: 0, vol: 0, ash: 0, exposure: 1.22, sat: 0.78, lamp: 12, bloom: 1.05 },
   aljibes: { fog: 0x06100e, density: 0.055, sky: 0x34504a, ground: 0x0a1210, hemi: 0.62, moon: 0, vol: 0.01, ash: 0, exposure: 1.25, sat: 0.86, lamp: 11.5, bloom: 1.25 },
   hondo: { fog: 0x0a1c18, density: 0.03, sky: 0x40806e, ground: 0x0e2018, hemi: 1.05, moon: 0, vol: 0.02, ash: 0, exposure: 1.32, sat: 1.12, lamp: 10, bloom: 1.6 },
+  // el Sumidero (world/sumidero.js): la caverna del lago, negra y fría; la
+  // niebla, fina (se adivina la otra orilla en lo poco que alumbran la luna
+  // del sumidero y lo verde del fondo) y una bruma baja sobre el agua. El
+  // venero, la cueva bajo el agua, verde del musgo que da luz
+  // (el plano lejano, el de la caverna: lo de más allá —la lobera encima, lo
+  // hondo— no se ve desde dentro y no se dibuja)
+  sumidero: { fog: 0x03060a, density: 0.034, sky: 0x1e2a34, ground: 0x050708, hemi: 0.55, moon: 0, vol: 0.016, ash: 0, exposure: 1.26, sat: 0.84, lamp: 12, bloom: 1.25, far: 62 },
+  venero: { fog: 0x03100e, density: 0.05, sky: 0x2c5a50, ground: 0x061210, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.28, sat: 1.0, lamp: 11, bloom: 1.45, far: 40 },
   lair: { fog: 0x0c0d05, density: 0.07, sky: 0x4c5030, ground: 0x15150a, hemi: 0.55, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.85, lamp: 11.5, bloom: 1.25 },
   tunnel: { fog: 0x09090b, density: 0.06, sky: 0x5a5e66, ground: 0x1a1612, hemi: 0.7, moon: 0, vol: 0, ash: 0, exposure: 1.25, sat: 0.8, lamp: 12, bloom: 1.0 },
   dawn: { fog: 0xc8a08a, density: 0.012, sky: 0xffd6b8, ground: 0x5a4a3a, hemi: 2.6, moon: 3.2, moonColor: 0xffa860, vol: 0.03, ash: 0, exposure: 1.05, sat: 0.95, lamp: 1, bloom: 1.1 },
@@ -158,7 +166,8 @@ export class Atmosphere {
       // (el jefe final puede pedir más: Deo Ignoto mide noventa metros)
       // (con niebla de altura, lo alto asoma más lejos: el plano lejano, el
       // de la atmósfera)
-      const far = Math.min(T.far || 170, Math.max(46, (c.hfv[2] < 0.99 ? 3.4 : 2.6) / Math.max(0.005, c.density)));
+      // (farCap: bajo el agua no se ve más allá de unos metros: game/nado.js)
+      const far = Math.min(T.far || 170, this.farCap || 1e9, Math.max(46, (c.hfv[2] < 0.99 ? 3.4 : 2.6) / Math.max(0.005, c.density)));
       if (Math.abs(this.camera.far - far) > 1) {
         this.camera.far = far;
         this.camera.updateProjectionMatrix();

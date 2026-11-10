@@ -1692,6 +1692,51 @@ const GEN = {
     return bloodText(['NO TE', 'ARRODILLES'], 320, 128, 704, { upTo: 4, nails: 0 });
   },
 
+  // Una telaraña de rincón (recortada): los radios salen de la esquina de
+  // arriba a la izquierda (la del rincón) y los hilos de la espiral van de
+  // radio a radio, combándose; alguno roto, y polvo pegado.
+  telarana() {
+    const S = 64;
+    const c = makeCanvas(S, S);
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, S, S);
+    let sd = 17;
+    const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+    const R = 8;
+    const ang = [];
+    for (let i = 0; i < R; i++) ang.push((i / (R - 1)) * (Math.PI / 2) * 0.96 + 0.02 + (rnd() - 0.5) * 0.08);
+    g.strokeStyle = 'rgba(214,214,206,1)';
+    g.lineWidth = 1;
+    const P = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+    for (const a of ang) {
+      const L = S * (1.25 + rnd() * 0.15);
+      const [x, y] = P(a, L);
+      g.beginPath();
+      g.moveTo(0.5, 0.5);
+      g.lineTo(x, y);
+      g.stroke();
+    }
+    g.strokeStyle = 'rgba(200,200,192,1)';
+    for (let r = 7; r < S * 1.3; r += 5 + rnd() * 4) {
+      for (let i = 0; i < R - 1; i++) {
+        if (rnd() < 0.12) continue;
+        const [x0, y0] = P(ang[i], r + rnd() * 2),
+          [x1, y1] = P(ang[i + 1], r + rnd() * 2);
+        const [mx, my] = P((ang[i] + ang[i + 1]) / 2, r * 0.9);
+        g.beginPath();
+        g.moveTo(x0, y0);
+        g.quadraticCurveTo(mx, my, x1, y1);
+        g.stroke();
+      }
+    }
+    // (el polvo pegado y algún bicho seco)
+    g.fillStyle = 'rgba(170,166,150,1)';
+    for (let k = 0; k < 16; k++) g.fillRect(Math.floor(rnd() * S * 0.8), Math.floor(rnd() * S * 0.8), 1, 1);
+    g.fillStyle = 'rgba(40,34,30,1)';
+    g.fillRect(22, 18, 2, 2);
+    return c;
+  },
+
   // El círculo de sal del ama en el suelo (granos, con huecos), recortado.
   saltRing() {
     const S = 64;

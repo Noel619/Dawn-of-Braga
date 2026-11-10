@@ -35,14 +35,30 @@ import { red, KIT, SILLAR } from './cloaca_kit.js';
 import { VERGEL } from './vergel.js';
 import { CLOACA, DESAGUE } from './cloaca.js';
 import { helecho, hierba, flores, musgo, hiedra, raices, hongos, raizLarga, mata, juncos } from './verdor.js';
+import { SUMIDERO, buildSumidero } from './sumidero.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
+// ¿Suelo seco en (x, z), a la altura y, en un círculo de radio r? (el andén:
+// no el canal ni el agua; lo que se pone en el suelo, ahí, o flotaría)
+function seco(ctx, x, y, z, r = 0.3) {
+  for (const [dx, dz] of [
+    [0, 0],
+    [r, 0],
+    [-r, 0],
+    [0, r],
+    [0, -r],
+  ])
+    if (Math.abs(ctx.col.groundHeight(x + dx, z + dz, 0.01, y + 0.1) - y) > 0.02) return false;
+  return true;
+}
 
 // la lobera: la cuadrícula de sus cruces (columnas de poniente a levante,
 // filas del sur al norte)
 const MX = [-4.5, 3.5, 11.5, 19.5, 27.5, 35.5, 43.5];
 const MZ = [-16, -24, -32, -40, -48, -56];
 const L_ = (c, r) => 'L' + c + r;
+// (las columnas de las cloacas viejas)
+const VX_ = [-20.5, -12.5, -4.5];
 
 export const HONDAS = {
   // la altura de los andenes de cada nivel
@@ -53,6 +69,10 @@ export const HONDAS = {
     H2: { r: [-24, -58, -1, 48], y0: -25, y1: -19 },
     H3: { r: [-24.5, 26, 22.5, 84], y0: -31, y1: -25 },
     H4: { r: [-12.5, -10.5, 42.5, 46.5], y0: -37.5, y1: -31 },
+    // el Sumidero, bajo la lobera, y su venero, bajo lo hondo (world/sumidero.js;
+    // nadie anda por ahí: sin navegación)
+    H5: { ...SUMIDERO.grid, nav: false },
+    H6: { ...SUMIDERO.gridVenero, nav: false },
   },
   MX,
   MZ,
@@ -73,6 +93,9 @@ export const HONDAS = {
   aljibe2: { r: [4.5, 44, 20.5, 60], xs: [4.5, 8.5, 12.5, 16.5, 20.5], zs: [44, 48, 52, 56, 60] },
   aljibe3: { r: [-22.5, 66, -2.5, 82], xs: [-22.5, -18.5, -14.5, -10.5, -6.5, -2.5], zs: [66, 70, 74, 78, 82] },
   ninfeo: { r: [4, 4, 32, 24], xs: [4, 11, 18, 25, 32], zs: [4, 9, 14, 19, 24] },
+  // su canal (de la pila de la fuente al sumidero del sur) y su sumidero
+  ninfeoCanal: [19.0, 7.0, 20.0, 22.6],
+  ninfeoSumidero: [18.9, 22.6, 20.1, 23.8],
   semillero: { r: [-10.5, -8, 1.5, 0], xs: [-10.5, -6.5, -2.5, 1.5], zs: [-8, -4, 0] },
   pozoTapa: { r: [30.5, 32, 34.5, 36] },
 };
@@ -95,12 +118,71 @@ function braseros() {
   ];
   // (en la esquina del cruce, donde no estorba al que pasa)
   for (const [c, r] of enCruce) out.push({ id: 'br_' + c + r, x: MX[c] + 1.22, z: MZ[r] + 1.22, nodo: L_(c, r) });
-  out.push({ id: 'br_pozo1', x: 11.5, z: -40.6, nodo: 'sala:pozo' });
+  out.push({ id: 'br_pozo1', x: 13.2, z: -41.2, nodo: 'sala:pozo' });
   out.push({ id: 'br_pozo2', x: 19.5, z: -31.4, nodo: 'sala:pozo' });
   out.push({ id: 'br_osario', x: 39.5, z: -52, nodo: 'sala:osario' });
   return out;
 }
 export const BRASEROS = braseros();
+
+// El agua de la lobera: las galerías que llevan canal ([c0, r0, c1, r1]: el
+// agua va del primer cruce al segundo), las secas, los cruces donde nace (su
+// caño, en el lado ciego que se dice) y los sumideros por los que se va, por
+// un pozo con su reja, al Sumidero (world/sumidero.js). Tres redes: el
+// colector de la Sé, del caño del sur de L30 dando la vuelta por poniente
+// hasta el pozo de las ánimas, con los ramales de L02, L03 y del noroeste
+// (L04 y L05); y dos de levante, de L50 al sumidero de L43 y de L60 al de
+// L52. Nada ahogado: el agua va siempre a algún sitio.
+export const LOBERA_AGUA = {
+  canales: [
+    // el colector de la Sé
+    [3, 0, 3, 1],
+    [3, 1, 2, 1],
+    [2, 1, 2, 0],
+    [2, 0, 1, 0],
+    [1, 0, 0, 0],
+    [0, 0, 0, 1],
+    [0, 1, 1, 1],
+    [1, 1, 1, 2],
+    // sus ramales: de L02 y de L03
+    [0, 2, 1, 2],
+    [0, 3, 1, 3],
+    // el del noroeste
+    [0, 4, 1, 4],
+    [1, 4, 1, 5],
+    [0, 5, 1, 5],
+    [1, 5, 2, 5],
+    [2, 5, 2, 4],
+    // los de levante
+    [5, 0, 5, 1],
+    [5, 1, 4, 1],
+    [4, 1, 4, 2],
+    [4, 2, 4, 3],
+    [6, 0, 6, 1],
+    [6, 1, 6, 2],
+    [6, 2, 5, 2],
+  ],
+  secas: [
+    [0, 2, 0, 3],
+    [0, 3, 0, 4],
+    [0, 4, 0, 5],
+    [2, 5, 3, 5],
+    [3, 0, 4, 0],
+    [3, 4, 3, 5],
+    [3, 4, 4, 4],
+    [3, 5, 4, 5],
+    [4, 3, 4, 4],
+    [5, 0, 6, 0],
+    [5, 2, 5, 3],
+    [5, 3, 6, 3],
+    [6, 2, 6, 3],
+  ],
+  fuentes: { L30: 's', L02: 'w', L03: 'w', L04: 'w', L05: 'n', L50: 's', L60: 's' },
+  sumideros: ['L43', 'L52'],
+  // el del pozo de las ánimas: en medio de la sala, bajo la luna
+  pozo: [14.7, -36.8, 16.3, -35.2],
+};
+
 
 export function buildHondas(ctx, G, L) {
   const grids = [
@@ -109,6 +191,7 @@ export function buildHondas(ctx, G, L) {
     { grid: G.H2, y0: HONDAS.grids.H2.y0, y1: HONDAS.grids.H2.y1 },
     { grid: G.H3, y0: HONDAS.grids.H3.y0, y1: HONDAS.grids.H3.y1 },
     { grid: G.H4, y0: HONDAS.grids.H4.y0, y1: HONDAS.grids.H4.y1 },
+    { grid: G.H5, y0: HONDAS.grids.H5.y0, y1: HONDAS.grids.H5.y1 },
   ];
   const Y = HONDAS.y;
   const VE = VERGEL;
@@ -149,52 +232,46 @@ export function buildHondas(ctx, G, L) {
     nodos: {},
     tramos: [],
     salas: [
-      { id: 'pozo', ...HONDAS.pozo, y: Y.n1, sp: 3.0, rise: 1.95, room: 'lobera_pozo', ribs: true, oculi: [{ i: 1, j: 1, k: 2, top: -2.2, mat: 'ashlar', tint: [0.34, 0.34, 0.32] }], bocas: [{ id: 'w2', side: 'w', at: MZ[2] }, { id: 'w3', side: 'w', at: MZ[3] }, { id: 'n2', side: 'n', at: MX[2] }], canal: [[9.5, -32.5, 21.5, -31.5]], flow: [0.4, 0] },
+      {
+        id: 'pozo',
+        ...HONDAS.pozo,
+        y: Y.n1,
+        sp: 3.0,
+        rise: 1.95,
+        room: 'lobera_pozo',
+        ribs: true,
+        oculi: [{ i: 1, j: 1, k: 2, top: -2.2, mat: 'ashlar', tint: [0.34, 0.34, 0.32] }],
+        bocas: [
+          { id: 'w2', side: 'w', at: MZ[2] },
+          { id: 'w3', side: 'w', at: MZ[3] },
+          { id: 'n2', side: 'n', at: MX[2] },
+        ],
+        // (los tres canales que entran, hasta el sumidero de en medio: el de
+        // poniente, que tuerce al norte; el del norte, que se junta con el
+        // de poniente de arriba, y éste, que tuerce al sur)
+        canal: [
+          { r: [9.5, MZ[2] - 0.5, 16.0, MZ[2] + 0.5], flow: [0.4, 0] },
+          { r: [15.0, LOBERA_AGUA.pozo[3], 16.0, MZ[2] - 0.5], flow: [0, -0.4] },
+          { r: [9.5, MZ[3] - 0.5, 16.0, MZ[3] + 0.5], flow: [0.4, 0] },
+          { r: [15.0, MZ[3] + 0.5, 16.0, LOBERA_AGUA.pozo[1]], flow: [0, 0.4] },
+          { r: [MX[2] - 0.5, -42, MX[2] + 0.5, MZ[3] - 0.5], flow: [0, 0.4] },
+        ],
+        sumidero: { r: LOBERA_AGUA.pozo, hasta: SUMIDERO.techo, agua: SUMIDERO.agua, luz: 0.5, bocas: [['s', 0.92], ['n', 0.92]] },
+      },
       { id: 'osario', ...HONDAS.osario, y: Y.n1, sp: 2.8, rise: 1.95, room: 'lobera_osario', bocas: [{ id: 'w4', side: 'w', at: MZ[4] }, { id: 'w5', side: 'w', at: MZ[5] }, { id: 's5', side: 's', at: MX[5] }] },
     ],
   };
   const reservado = new Set(['2,2', '3,2', '2,3', '3,3', '5,4', '6,4', '5,5', '6,5']);
   for (let c = 0; c < MX.length; c++) for (let r = 0; r < MZ.length; r++) if (!reservado.has(c + ',' + r)) n1.nodos[L_(c, r)] = [MX[c], MZ[r]];
-  // (las galerías del laberinto: canal, salvo las ahogadas y las secas)
-  const lab = [
-    [0, 0, 0, 1],
-    [0, 0, 1, 0, 'seco'],
-    [0, 1, 1, 1],
-    [0, 2, 0, 3],
-    [0, 2, 1, 2],
-    [0, 3, 0, 4, 'ahogado'],
-    [0, 3, 1, 3],
-    [0, 4, 0, 5],
-    [0, 4, 1, 4],
-    [0, 5, 1, 5],
-    [1, 0, 2, 0],
-    [1, 1, 1, 2],
-    [1, 4, 1, 5, 'seco'],
-    [1, 5, 2, 5],
-    [2, 0, 2, 1],
-    [2, 1, 3, 1],
-    [2, 4, 2, 5],
-    [2, 5, 3, 5, 'ahogado'],
-    [3, 0, 3, 1],
-    [3, 0, 4, 0, 'seco'],
-    [3, 4, 3, 5],
-    [3, 4, 4, 4],
-    [3, 5, 4, 5],
-    [4, 1, 4, 2],
-    [4, 1, 5, 1],
-    [4, 2, 4, 3, 'ahogado'],
-    [4, 3, 4, 4],
-    [5, 0, 5, 1],
-    [5, 0, 6, 0, 'seco'],
-    [5, 2, 5, 3],
-    [5, 2, 6, 2],
-    [5, 3, 6, 3],
-    [6, 0, 6, 1],
-    [6, 1, 6, 2, 'ahogado'],
-    [6, 2, 6, 3],
-  ];
-  for (const [c0, r0, c1, r1, tipo] of lab) n1.tramos.push([L_(c0, r0), L_(c1, r1), { tipo: tipo || 'canal', flow: 0.35 }]);
-  n1.tramos.push([L_(1, 2), 'pozo.w2', { tipo: 'canal', flow: 0.35 }], [L_(1, 3), 'pozo.w3', { tipo: 'canal' }], [L_(2, 4), 'pozo.n2', { tipo: 'seco' }]);
+  // (las galerías del laberinto, con el agua que corre de sus caños a sus
+  // sumideros, que la echan al Sumidero, debajo: LOBERA_AGUA)
+  for (const [c0, r0, c1, r1] of LOBERA_AGUA.secas) n1.tramos.push([L_(c0, r0), L_(c1, r1), { tipo: 'seco' }]);
+  for (const [c0, r0, c1, r1] of LOBERA_AGUA.canales) n1.tramos.push([L_(c0, r0), L_(c1, r1), { tipo: 'canal', flow: 0.4, de: L_(c0, r0) }]);
+  // (sus caños y sus sumideros)
+  n1.nodoX = {};
+  for (const [k, side] of Object.entries(LOBERA_AGUA.fuentes)) n1.nodoX[k] = { fuente: { side, luz: 0.22 } };
+  for (const k of LOBERA_AGUA.sumideros) n1.nodoX[k] = { sumidero: { hasta: SUMIDERO.techo, agua: SUMIDERO.agua, luz: 0.2 } };
+  n1.tramos.push([L_(1, 2), 'pozo.w2', { tipo: 'canal', flow: 0.4, de: L_(1, 2) }], [L_(1, 3), 'pozo.w3', { tipo: 'canal', flow: 0.4, de: L_(1, 3) }], [L_(2, 4), 'pozo.n2', { tipo: 'canal', flow: 0.4, de: L_(2, 4) }]);
   n1.tramos.push([L_(4, 4), 'osario.w4', { tipo: 'seco' }], [L_(4, 5), 'osario.w5', { tipo: 'seco' }], [L_(5, 3), 'osario.s5', { tipo: 'seco' }]);
   // (la salida: a poniente, el cruce de la bajada; y la escalera a las viejas)
   n1.nodos.x1 = [-12.5, -56];
@@ -205,9 +282,15 @@ export function buildHondas(ctx, G, L) {
   const V_ = (c, r) => 'V' + c + r;
   const n2 = { id: 'n2', y: Y.n2, room: 'viejas', grids, mat: 'wallstone', tint: [0.4, 0.38, 0.34], suelo: [0.38, 0.36, 0.32], nodos: {}, tramos: [] };
   for (let c = 0; c < 3; c++) for (let r = 0; r < VZ.length; r++) n2.nodos[V_(c, r)] = [VX[c], VZ[r]];
+  // (el agua de las viejas, por el camino, en dos cauces: del caño del norte
+  // de V00 al sumidero de V13, y del caño de V14 al sumidero de V07; los
+  // tramos ahogados, donde la bóveda cedió y el canal se sale, en el mismo
+  // cauce; dos ramales que les llegan por levante, de sus caños, y el de
+  // V20, que va al Sumidero. Los sumideros la echan abajo, hacia los
+  // aljibes. [c0, r0, c1, r1, tipo]: el agua va del primero al segundo)
   const viejas = [
     // el camino (de la bajada, al norte, a la de los aljibes, al sur)
-    [1, 0, 0, 0],
+    [1, 0, 0, 0, 'seco'],
     [0, 0, 0, 1],
     [0, 1, 0, 2, 'ahogado'],
     [0, 2, 1, 2],
@@ -223,22 +306,35 @@ export function buildHondas(ctx, G, L) {
     [2, 6, 2, 7],
     [2, 7, 1, 7],
     // los ramales sin salida
-    [1, 0, 2, 0],
-    [2, 0, 2, 1, 'ahogado'],
-    [1, 0, 1, 1, 'ahogado'],
+    [1, 0, 2, 0, 'seco'],
+    [2, 0, 2, 1, 'seco'],
+    [1, 0, 1, 1, 'seco'],
     [1, 2, 1, 1, 'seco'],
-    [2, 3, 2, 4],
+    [2, 4, 2, 3],
     [2, 4, 2, 5, 'seco'],
     [2, 5, 1, 5],
     [0, 2, 0, 3, 'seco'],
-    [1, 6, 1, 5, 'ahogado'],
+    [1, 5, 1, 6],
     [1, 7, 0, 7],
   ];
-  for (const [c0, r0, c1, r1, tipo] of viejas) n2.tramos.push([V_(c0, r0), V_(c1, r1), { tipo: tipo || 'canal', flow: 0.45 }]);
+  for (const [c0, r0, c1, r1, tipo] of viejas) n2.tramos.push([V_(c0, r0), V_(c1, r1), { tipo: tipo || 'canal', flow: 0.45, de: V_(c0, r0) }]);
+  n2.nodoX = {
+    V00: { fuente: { side: 'n', luz: 0.2 } },
+    V24: { fuente: { side: 'e', luz: 0.2 } },
+    V25: { fuente: { side: 'e', luz: 0.2 } },
+    V14: { fuente: { side: 'e', luz: 0.2 } },
+    V20: { fuente: { side: 'n', luz: 0.2 } },
+    V13: { sumidero: { hasta: Y.n2 - 3.2, fondo: Y.n2 - 3.0, luz: 0.2 } },
+    V07: { sumidero: { hasta: Y.n2 - 3.2, fondo: Y.n2 - 3.0, luz: 0.2 } },
+  };
   // (los cruces sin galería en el plano, fuera)
   for (const k of Object.keys(n2.nodos)) if (!n2.tramos.some((t) => t[0] === k || t[1] === k)) delete n2.nodos[k];
   // la bajada de la lobera a las viejas
   n2.tramos.push(['x1', V_(1, 0), { tipo: 'seco', room: 'viejas' }]);
+  // la galería de levante de V20, que sale al Sumidero (su repisa), con el
+  // agua del caño de V20, que cae al lago
+  n2.salas = [{ id: 'sumidero', externa: true, r: [SUMIDERO.boca.x, -58, 46, -12], y: SUMIDERO.boca.y, ys: SUMIDERO.techo, room: 'sumidero', bocas: [{ id: 'w', side: 'w', at: SUMIDERO.boca.z }] }];
+  n2.tramos.push([V_(2, 0), 'sumidero.w', { tipo: 'canal', flow: 0.45, de: V_(2, 0), canos: 0 }]);
   // los aljibes ahogados
   const n3 = {
     id: 'n3',
@@ -273,8 +369,29 @@ export function buildHondas(ctx, G, L) {
     tint: [0.4, 0.42, 0.38],
     suelo: [0.36, 0.38, 0.32],
     nodos: { h0: [14.5, 30], h4: [38.5, 21.5], h5: [38.5, 34], h6: [-4.5, 11.5] },
+    nodoX: { h4: { fuente: { side: 'n', luz: 0.6 } }, h5: { sumidero: { hasta: Y.n4 - 2.6, fondo: Y.n4 - 2.4, luz: 0.6 } } },
     salas: [
-      { id: 'ninfeo', ...HONDAS.ninfeo, y: Y.n4, sp: 4.5, rise: 2.45, room: 'hondo', ribs: true, bocas: [{ id: 's', side: 's', at: 14.5 }, { id: 'e', side: 'e', at: 21.5 }, { id: 'w', side: 'w', at: 11.5 }], canal: [[17.5, 4, 18.5, 24]], flow: [0, 0.3] },
+      // (la pila de la fuente, contra el muro del norte: de su fondo mana el
+      // agua que sube por el venero, del Sumidero; rebosa al canal, que la
+      // lleva, entre la segunda y la tercera fila de pilares, al sumidero
+      // del sur)
+      {
+        id: 'ninfeo',
+        ...HONDAS.ninfeo,
+        y: Y.n4,
+        sp: 4.5,
+        rise: 2.45,
+        room: 'hondo',
+        ribs: true,
+        bocas: [
+          { id: 's', side: 's', at: 14.5 },
+          { id: 'e', side: 'e', at: 21.5 },
+          { id: 'w', side: 'w', at: 11.5 },
+        ],
+        canal: [{ r: HONDAS.ninfeoCanal, flow: [0, 0.3] }],
+        poza: { r: SUMIDERO.pila.r, fondo: SUMIDERO.pila.fondo, hueco: SUMIDERO.tiro, muro: 'n' },
+        sumidero: { r: HONDAS.ninfeoSumidero, hasta: Y.n4 - 2.6, fondo: Y.n4 - 2.4, luz: 0.7, bocas: [['n', 0.92]] },
+      },
       { id: 'semillero', ...HONDAS.semillero, y: Y.n4, sp: 3.2, rise: 1.95, room: 'hondo_semillero', bocas: [{ id: 's', side: 's', at: -4.5 }] },
       { id: 'pozoTapa', r: HONDAS.pozoTapa.r, xs: [30.5, 34.5], zs: [32, 36], y: Y.n4, sp: 2.6, rise: 1.95, room: 'hondo_pozo', oculi: [{ i: 0, j: 0, k: 4, top: Y.n4 + 9, mat: 'ashlar', tint: [0.3, 0.3, 0.28] }], bocas: [{ id: 'e', side: 'e', at: 34 }] },
     ],
@@ -282,23 +399,294 @@ export function buildHondas(ctx, G, L) {
       ['al2.n', 'h0', { tipo: 'seco', room: 'hondo' }],
       ['h0', 'ninfeo.s', { tipo: 'seco' }],
       ['ninfeo.e', 'h4', { tipo: 'seco' }],
-      ['h4', 'h5', { tipo: 'ahogado', flow: 0.2 }],
+      // (el arroyo del este: del caño de h4 al sumidero de h5; antes, un
+      // charco suelto en medio de una galería seca)
+      ['h4', 'h5', { tipo: 'canal', flow: 0.3, de: 'h4' }],
       ['h5', 'pozoTapa.e', { tipo: 'seco' }],
-      ['ninfeo.w', 'h6', { tipo: 'canal', flow: -0.3 }],
+      ['ninfeo.w', 'h6', { tipo: 'seco' }],
       ['h6', 'semillero.s', { tipo: 'seco' }],
     ],
   };
   const R = red(ctx, [desague, se, n1, n2, n3, n4]);
+  // el Sumidero: los pozos de los sumideros de la lobera salen por su techo
+  {
+    const c = KIT.c / 2;
+    const pozos = [LOBERA_AGUA.pozo, ...LOBERA_AGUA.sumideros.map((id) => [R.N[id].x - c, R.N[id].z - c, R.N[id].x + c, R.N[id].z + c])];
+    buildSumidero(ctx, L, G.H5, G.H6, { pozos });
+  }
+  // por dónde baja el agua (lo que flota: game/corriente.js)
+  L.corrientes = corrientes(R);
   // ---------------------------------------------------------- lo de cada sitio
   galeriaSe(ctx, L);
   lobera(ctx, L, R);
   cloacasViejas(ctx, L, R);
+  detalles(ctx, L, R);
   aljibes(ctx, L, R);
   hondo(ctx, L, R);
   luces(ctx, R);
   zonas(L);
   mapa(L, R);
   return R;
+}
+
+// Por dónde baja el agua: de cada caño, de cruce en cruce por los canales
+// (en el sentido de cada uno), hasta un sumidero, o hasta la boca de una
+// sala y, por su canal, hasta lo que hay en ella (el sumidero del pozo de
+// las ánimas; la repisa del Sumidero, de donde cae al lago); y en lo hondo,
+// de la pila de la fuente al sumidero del ninfeo. [{ y, pts: [[x, z]], fin }]
+function corrientes(R) {
+  const sale = new Map();
+  for (const t of R.T) {
+    if ((t.o.tipo !== 'canal' && t.o.tipo !== 'ahogado') || !t.o.de || Math.abs(t.a.y - t.b.y) > 0.05) continue;
+    const from = t.o.de === t.a.id ? t.a : t.b;
+    sale.set(from.id, from === t.a ? t.b : t.a);
+  }
+  const LADO = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+  const h = KIT.w / 2;
+  const Pz = LOBERA_AGUA.pozo;
+  const pc = [(Pz[0] + Pz[2]) / 2, (Pz[1] + Pz[3]) / 2];
+  // (lo que sigue por dentro de las salas, de cada boca)
+  const sigue = {
+    // (del sur, el de w2, entra en el pozo por su borde del sur; los del
+    // norte, por el del norte)
+    'pozo.w2': [[pc[0], MZ[2]], [pc[0], Pz[3] - 0.2]],
+    'pozo.w3': [[pc[0], MZ[3]], [pc[0], Pz[1] + 0.2]],
+    'pozo.n2': [[MX[2], MZ[3]], [pc[0], MZ[3]], [pc[0], Pz[1] + 0.2]],
+    'sumidero.w': [[SUMIDERO.repisa.r[2] + 0.1, SUMIDERO.boca.z]],
+  };
+  const out = [];
+  for (const n of Object.values(R.N)) {
+    if (!n.fuente) continue;
+    const L = LADO[n.fuente.side || n.fuente];
+    const pts = [[n.x + L[0] * (h - 0.3), n.z + L[1] * (h - 0.3)], [n.x, n.z]];
+    let cur = n,
+      k = 0;
+    while (sale.has(cur.id) && k++ < 60) {
+      cur = sale.get(cur.id);
+      pts.push([cur.x, cur.z]);
+    }
+    if (sigue[cur.id]) pts.push(...sigue[cur.id]);
+    out.push({ y: n.y - KIT.agua, pts, fin: cur.sumidero || sigue[cur.id] ? 'cae' : 'fin' });
+  }
+  // (la pila de la fuente del ninfeo, que rebosa a su canal)
+  const C = HONDAS.ninfeoCanal;
+  out.push({ y: HONDAS.y.n4 - KIT.agua, pts: [[(C[0] + C[2]) / 2, SUMIDERO.pila.r[3] - 1.0], [(C[0] + C[2]) / 2, HONDAS.ninfeoSumidero[1] + 0.3]], fin: 'cae' });
+  return out;
+}
+
+// ------------------------------------------------------------------------ los detalles
+const LADOS = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+const CONTRA = { n: 's', s: 'n', e: 'w', w: 'e' };
+
+// Dos tablas de través sobre un canal, de andén a andén, algo torcidas (las
+// puso alguien para no mojarse): se pisan.
+function tablon(ctx, x, z, alongX, y, room, seed) {
+  const wb = ctx.wb;
+  const rr = new RNG(seed);
+  // (de través: a lo ancho de la galería, que va a lo largo de x si alongX;
+  // las tablas, en z entonces)
+  for (let k = 0; k < 2; k++) {
+    const off = (k - 0.5) * 0.27 + rr.range(-0.02, 0.02);
+    const rot = rr.range(-0.07, 0.07);
+    wb.at(alongX ? x + off : x, y + 0.004, alongX ? z : z + off, (alongX ? 0 : Math.PI / 2) + rot, () => wb.box('planks', -0.12, 0, -0.78, 0.12, 0.035, 0.78, { ao: false, faces: 'tnsewb', room, tint: [0.62, 0.52, 0.4] }));
+  }
+  // (atadas con una cuerda en cada punta)
+  for (const e of [-0.62, 0.62]) {
+    const cx = alongX ? x : x + e,
+      cz = alongX ? z + e : z;
+    wb.box('rope', alongX ? cx - 0.2 : cx - 0.025, y + 0.004, alongX ? cz - 0.025 : cz - 0.2, alongX ? cx + 0.2 : cx + 0.025, y + 0.05, alongX ? cz + 0.025 : cz + 0.2, { ao: false, faces: 'tnsewb', room, tint: [0.6, 0.52, 0.38] });
+  }
+  const hw = KIT.c / 2 + 0.1;
+  if (alongX) ctx.col.add(x - 0.27, y - 0.3, z - hw, x + 0.27, y + 0.035, z + hw, 'floor').cam = true;
+  else ctx.col.add(x - hw, y - 0.3, z - 0.27, x + hw, y + 0.035, z + 0.27, 'floor').cam = true;
+}
+
+// Una argolla de hierro en un muro (side: el muro; (x, z): su cara), a la
+// altura de la cintura; con cadena (n eslabones colgando y el resto
+// tirado, con su grillete abierto).
+function argolla(ctx, side, x, z, y, room, cadena = 0) {
+  const wb = ctx.wb;
+  const [dx, dz] = LADOS[CONTRA[side]];
+  const yy = y + 1.25;
+  const M4 = () => new THREE.Matrix4();
+  // (la grapa y el aro, de canto contra el muro)
+  wb.box('iron', x - 0.04 + dx * 0.0, yy - 0.05, z - 0.04, x + 0.04, yy + 0.05, z + 0.04, { ao: false, faces: 'tnsewb', room, tint: [0.36, 0.3, 0.26] });
+  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, dz !== 0 ? 0 : Math.PI / 2, 0));
+  wb.geometry('iron', new THREE.TorusGeometry(0.075, 0.013, 4, 10), M4().compose(V(x + dx * 0.05, yy - 0.08, z + dz * 0.05), q, V(1, 1, 1)), { ao: false, room, tint: [0.4, 0.34, 0.3] });
+  if (!cadena) return;
+  // (la cadena: colgando hasta el suelo, y luego por él)
+  const n = Math.round((yy - 0.16 - y) / 0.06);
+  for (let k = 0; k < n; k++) {
+    const qk = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, k % 2 ? Math.PI / 2 : 0, 0));
+    wb.geometry('iron', new THREE.TorusGeometry(0.03, 0.008, 3, 6), M4().compose(V(x + dx * 0.06, yy - 0.16 - k * 0.06, z + dz * 0.06), qk, V(1, 1.4, 1)), { ao: false, room, tint: [0.36, 0.3, 0.26] });
+  }
+  const px = -dz,
+    pz = dx;
+  for (let k = 0; k < cadena; k++) {
+    const t = (k + 1) * 0.07;
+    const cx = x + dx * (0.08 + t * 0.6) + px * t * 0.8,
+      cz = z + dz * (0.08 + t * 0.6) + pz * t * 0.8;
+    const qk = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, k % 2 ? Math.PI / 2 : 0));
+    wb.geometry('iron', new THREE.TorusGeometry(0.03, 0.008, 3, 6), M4().compose(V(cx, y + 0.012, cz), qk, V(1, 1.4, 1)), { ao: false, room, tint: [0.36, 0.3, 0.26] });
+  }
+  // (el grillete, abierto)
+  const t = (cadena + 1.5) * 0.07;
+  const gq = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0.6));
+  wb.geometry('iron', new THREE.TorusGeometry(0.06, 0.014, 4, 9, Math.PI * 1.4), M4().compose(V(x + dx * (0.08 + t * 0.6) + px * t * 0.8, y + 0.015, z + dz * (0.08 + t * 0.6) + pz * t * 0.8), gq, V(1, 1, 1)), { ao: false, room, tint: [0.4, 0.33, 0.28] });
+}
+
+// Una telaraña en el rincón de arriba de dos muros (a, b: los muros; c: la
+// esquina, en planta; ys: el arranque de la bóveda): de un muro al otro y
+// subiendo hacia la arista; por las dos caras.
+function telarana(ctx, c, a, b, ys, room, s = 0.9) {
+  const wb = ctx.wb;
+  const [ax, az] = LADOS[CONTRA[a]],
+    [bx, bz] = LADOS[CONTRA[b]];
+  const e = 0.02;
+  const C = V(c[0] + (ax + bx) * e, ys - 0.25, c[1] + (az + bz) * e);
+  const Pa = V(c[0] + bx * s + ax * e, ys - 0.05, c[1] + bz * s + az * e);
+  const Pb = V(c[0] + ax * s + bx * e, ys - 0.05, c[1] + az * s + bz * e);
+  const G = V(c[0] + (ax + bx) * s * 0.5, ys + s * 0.6, c[1] + (az + bz) * s * 0.5);
+  const o = { ao: false, grime: false, room, uvLocal: true, uv: 1 / s, sub: 9 };
+  wb.quad('telarana', C, Pa, G, Pb, o);
+  wb.quad('telarana', C, Pb, G, Pa, o);
+}
+
+// Lo que no es nada y da vida: tablones sobre los canales, argollas con
+// cadenas, telarañas, ratas, el rastro de lo que arrastra el lobo, lo que se
+// ve en el fondo de los canales a través del agua.
+function detalles(ctx, L, R) {
+  const rr = new RNG(24101);
+  const h = KIT.w / 2;
+  const ladosCiegos = (n) => ['n', 's', 'e', 'w'].filter((sd) => !n.conn[sd] && sd !== (n.fuente && (n.fuente.side || n.fuente)));
+  const pasa = (A, B) => R.T.find((t) => (t.a.id === A && t.b.id === B) || (t.a.id === B && t.b.id === A));
+  // los tablones, a media galería
+  for (const [A, B, k] of [
+    ['L20', 'L10', 0.55],
+    ['L01', 'L11', 0.5],
+    ['L15', 'L25', 0.45],
+    ['L51', 'L41', 0.5],
+    ['V02', 'V12', 0.5],
+    ['V16', 'V26', 0.6],
+    ['V04', 'V05', 0.4],
+  ]) {
+    const t = pasa(A, B);
+    if (!t || t.o.tipo !== 'canal') continue;
+    const x = t.a.x + (t.b.x - t.a.x) * k,
+      z = t.a.z + (t.b.z - t.a.z) * k;
+    tablon(ctx, x, z, t.alongX, t.a.y, t.o.room || t.def.room, 24110 + Math.round(x * 7 + z));
+  }
+  // argollas, telarañas y ratas, en los cruces con dos muros ciegos seguidos
+  // (los rincones), unos sí y otros no
+  const rincones = [];
+  for (const n of Object.values(R.N)) {
+    if (n.boca || n.sumidero || (n.def.id !== 'n1' && n.def.id !== 'n2')) continue;
+    const cg = ladosCiegos(n);
+    for (const [a, b] of [
+      ['n', 'e'],
+      ['e', 's'],
+      ['s', 'w'],
+      ['w', 'n'],
+    ])
+      if (cg.includes(a) && cg.includes(b)) rincones.push([n, a, b]);
+  }
+  rincones.forEach(([n, a, b], i) => {
+    const room = n.room || n.def.room;
+    const cx = n.x + (LADOS[a][0] + LADOS[b][0]) * h,
+      cz = n.z + (LADOS[a][1] + LADOS[b][1]) * h;
+    const ys = n.y + KIT.sp;
+    if (i % 2 === 0) telarana(ctx, [cx, cz], a, b, ys, room, rr.range(0.7, 1.05));
+    // (la argolla, en uno de los dos muros, a un paso del rincón; no junto a
+    // un brasero, que va en el rincón del sudeste)
+    const conBrasero = BRASEROS.some((q) => q.nodo === n.id) && ((a === 'e' && b === 's') || (a === 's' && b === 'e'));
+    if (i % 3 === 1 && !conBrasero) {
+      const sd = rr.chance(0.5) ? a : b,
+        ot = sd === a ? b : a;
+      const wx = n.x + LADOS[sd][0] * h + LADOS[ot][0] * 0.75,
+        wz = n.z + LADOS[sd][1] * h + LADOS[ot][1] * 0.75;
+      argolla(ctx, sd, wx, wz, n.y, room, i % 2 ? 6 : 0);
+    }
+    if (i % 4 === 3) (ctx.rats || (ctx.rats = [])).push({ x: cx - (LADOS[a][0] + LADOS[b][0]) * 0.6, y: n.y, z: cz - (LADOS[a][1] + LADOS[b][1]) * 0.6, n: 2 });
+  });
+  // en el osario, más telarañas (nadie las rompe) y las argollas de los
+  // nichos, con su cadena
+  {
+    const O = HONDAS.osario,
+      y = HONDAS.y.n1,
+      ys = y + 2.8;
+    const [x0, z0, x1, z1] = O.r;
+    // (en los rincones del levante, por encima de los nichos; el muro de
+    // poniente está abierto por sus dos bocas, salvo entre ellas: ahí, la
+    // argolla)
+    telarana(ctx, [x1, z0], 'e', 'n', ys, 'lobera_osario', 1.1);
+    telarana(ctx, [x1, z1], 'e', 's', ys, 'lobera_osario', 0.9);
+    argolla(ctx, 'w', x0, (MZ[4] + MZ[5]) / 2, y, 'lobera_osario', 7);
+    (ctx.rats || (ctx.rats = [])).push({ x: x1 - 2.6, y, z: z0 + 2.8, n: 3 });
+  }
+  // el rastro de lo que arrastra: del cruce de su galería al osario y, dentro,
+  // hasta la cama (manchas, cada vez más secas)
+  {
+    const y = HONDAS.y.n1 + 0.02;
+    const O = HONDAS.osario;
+    const pts = [
+      [MX[4] - 1.0, MZ[4]],
+      [O.r[0] - 1.2, MZ[4] + 0.2],
+      [O.r[0] + 2.0, MZ[4] - 0.4],
+      [O.r[2] - 2.6, O.r[1] + 3.2],
+      [O.r[2] - 1.6, O.r[1] + 1.6],
+    ];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, az] = pts[i],
+        [bx, bz] = pts[i + 1];
+      const d = Math.hypot(bx - ax, bz - az);
+      const n = Math.ceil(d / 0.45);
+      for (let k = 0; k < n; k++) {
+        const t = k / n;
+        P.decal(ctx, ax + (bx - ax) * t + rr.range(-0.12, 0.12), y, az + (bz - az) * t + rr.range(-0.12, 0.12), rr.range(0.28, 0.5), 'splat', Math.atan2(bx - ax, bz - az) + rr.range(-0.4, 0.4), { opacity: 0.35 + 0.35 * (1 - (i + t) / pts.length) });
+      }
+    }
+  }
+  // las goteras: donde la bóveda rezuma, un charco en el andén, con su
+  // mancha de humedad, y la gota que cae en él cada poco
+  {
+    const sitios = [
+      ['L00', 1, -1],
+      ['L12', -1, 1],
+      ['L24', 1, 1],
+      ['L33', -1, -1],
+      ['L61', -1, 1],
+      ['L05', 1, -1],
+      ['L45', 1, 1],
+      ['V01', -1, -1],
+      ['V22', 1, 1],
+      ['V15', -1, 1],
+      ['V27', 1, -1],
+    ];
+    for (const [id, sx, sz] of sitios) {
+      const n = R.N[id];
+      if (!n) continue;
+      const x = n.x + sx * rr.range(0.9, 1.15),
+        z = n.z + sz * rr.range(0.9, 1.15);
+      if (!seco(ctx, x, n.y, z, 0.45)) continue;
+      if (BRASEROS.some((b) => Math.hypot(b.x - x, b.z - z) < 1.0)) continue;
+      const r = rr.range(0.32, 0.5);
+      // (la mancha de humedad alrededor, oscura)
+      P.decal(ctx, x, n.y + 0.004, z, r * 3.4, 'shadow', rr.range(0, 6), { opacity: 0.4 });
+      if (ctx.waters) ctx.waters.push({ shape: 'circle', x, z, r, y: n.y + 0.007, depth: 0.02, deep: 0x07090a, sky: 0x1a2226, glint: 0x8aa0b0, tint: 0x2a3432, clear: 6, foam: 0, refl: 0.35, light: [x, n.y + 2.4, z], lightK: 0.5, amp: 0.01, flow: [0, 0], dripH: KIT.sp + 1.3, dripEvery: 2.6 });
+    }
+  }
+  // en el fondo de los canales, lo que se ve a través del agua: huesos, una
+  // espada que se le cayó a alguien, un cráneo, un caldero roto
+  {
+    const y1 = HONDAS.y.n1 - KIT.prof,
+      y2 = HONDAS.y.n2 - KIT.prof;
+    P.bones(ctx, MX[2] - 2.2, y1, MZ[0], 5, 24151, 0.25);
+    P.dropped(ctx, MX[1] - 0.05, y1 + 0.005, MZ[1] - 3.0, 0.25, 'sword');
+    P.bones(ctx, MX[0] + 3.4, y1, MZ[4], 4, 24152, 0.22);
+    P.bones(ctx, MX[6], y1, MZ[1] - 3.6, 4, 24153, 0.22);
+    P.dropped(ctx, VX_[0] + 0.05, y2 + 0.005, -26.0, 1.4, 'helmet');
+    P.bones(ctx, VX_[2], y2, 25.0, 5, 24154, 0.25);
+  }
 }
 
 // ------------------------------------------------------------------------ la galería de la Sé
@@ -386,7 +774,7 @@ function galeriaSe(ctx, L) {
     for (let k = 0; k < 5; k++) P.decal(ctx, cx - 0.1 + k * 0.05, y + 0.02, cz + 0.8 + k * 0.6, 0.4, 'splat', 0.5);
   }
   // (el surco por debajo de la reja: por ahí la metió)
-  wb.box('black', S.x + 0.1, y - 0.02, rz - 0.3, S.x + 0.8, y + 0.002, rz + 0.3, { ao: false, faces: 't', grime: false, tint: [0.3, 0.26, 0.22] });
+  wb.box('black', S.x + 0.1, y - 0.02, rz - 0.3, S.x + 0.8, y + 0.008, rz + 0.3, { ao: false, faces: 't', grime: false, tint: [0.3, 0.26, 0.22] });
   wb.setRoom(null);
   L.interact.push(
     { kind: 'examine', id: 'x_zarpazos', text: 'zarpazos', x: x0 + 0.6, y, z: 9.2, r: 1.3 },
@@ -436,15 +824,26 @@ function lobera(ctx, L, R) {
     [3, 5],
     [0, 4],
   ];
+  // (en una esquina del cruce, en el andén: no encima del agua del canal; ni
+  // en la del brasero)
   restos.forEach(([c, r], k) => {
-    const x = MX[c] + rr.range(-1.0, 1.0),
-      z = MZ[r] + rr.range(-1.0, 1.0);
-    P.bones(ctx, x, y, z, 6 + (k % 3) * 2, 20110 + k, 0.7);
-    if (k % 2 === 0) P.decal(ctx, x, y + 0.02, z, 1.2, 'splat', rr.range(0, 6));
+    const conB = BRASEROS.some((b) => b.nodo === L_(c, r));
+    const esq = [
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+      [1, 1],
+    ].filter(([a, b]) => !(conB && a > 0 && b > 0));
+    const [sx, sz] = esq[rr.int(0, esq.length - 1)];
+    const x = MX[c] + sx * rr.range(0.95, 1.2),
+      z = MZ[r] + sz * rr.range(0.95, 1.2);
+    P.bones(ctx, x, y, z, 6 + (k % 3) * 2, 20110 + k, 0.45);
+    if (k % 2 === 0) P.decal(ctx, x, y + 0.02, z, 0.9, 'splat', rr.range(0, 6));
   });
-  // (el perro, junto al primer cruce; el soldado, en el ramal del este)
-  P.ellipsoid(ctx, 'hide', MX[3] - 0.6, y + 0.16, MZ[0] + 0.9, 0.42, 0.16, 0.22, [0.42, 0.34, 0.28], { room: 'lobera' });
-  P.ellipsoid(ctx, 'flesh', MX[3] - 0.3, y + 0.18, MZ[0] + 0.9, 0.16, 0.12, 0.14, [0.48, 0.2, 0.16], { room: 'lobera' });
+  // (el perro, en el andén del primer cruce, junto al muro; el soldado, en
+  // el ramal del este)
+  P.ellipsoid(ctx, 'hide', MX[3] - 1.15, y + 0.16, MZ[0] + 0.85, 0.42, 0.16, 0.22, [0.42, 0.34, 0.28], { room: 'lobera' });
+  P.ellipsoid(ctx, 'flesh', MX[3] - 0.85, y + 0.18, MZ[0] + 0.85, 0.16, 0.12, 0.14, [0.48, 0.2, 0.16], { room: 'lobera' });
   for (let k = 0; k < 4; k++) {
     const x = MX[4] - 0.6 + k * 0.4,
       z = MZ[0] + 1.2 - k * 0.1;
@@ -482,12 +881,14 @@ function lobera(ctx, L, R) {
     const cx = (Pz.xs[1] + Pz.xs[2]) / 2,
       cz = (Pz.zs[1] + Pz.zs[2]) / 2;
     wb.setRoom('lobera_pozo');
-    for (let k = 0; k < 14; k++) {
+    // (alrededor del sumidero, donde da la luna, sin meterse en los canales)
+    const enAgua = (x, z, m) => [LOBERA_AGUA.pozo, [15.0, MZ[2] - 0.5, 16.0, MZ[3] + 0.5], [9.5, MZ[2] - 0.5, 16.0, MZ[2] + 0.5], [9.5, MZ[3] - 0.5, 16.0, MZ[3] + 0.5]].some((q) => x > q[0] - m && x < q[2] + m && z > q[1] - m && z < q[3] + m);
+    for (let k = 0; k < 22; k++) {
       const a = rr.range(0, Math.PI * 2),
-        d = rr.range(0.1, 1.6);
+        d = rr.range(1.1, 2.4);
       const x = cx + Math.cos(a) * d,
         z = cz + Math.sin(a) * d;
-      if (Math.abs(z - (-32)) < 0.9) continue;
+      if (enAgua(x, z, 0.35)) continue;
       if (k % 2) flores(ctx, x, y, z, 0.25, 6, 20201 + k, { room: 'lobera_pozo', h: 0.9 });
       else musgo(ctx, x, y, z, 0.5, 0.4, 20221 + k, { room: 'lobera_pozo', n: 5 });
     }
@@ -534,11 +935,12 @@ function lobera(ctx, L, R) {
     L.interact.push({ kind: 'item', id: 'i_farol_bento', item: 'farol_bento', x: ox0 + 4.15, y: y + 0.05, z: oz0 + 2.68, afterBoss: 'lobishome' });
   }
   // sus mastines: vencido él, vuelven a la lobera (spec.trasJefe: game.js)
+  // (en los andenes, no dentro del canal)
   L.enemies.push(
-    { type: 'hound', x: MX[1], y, z: MZ[2] + 0.6, yaw: 0, idle: 'eat', id: 'e_lobera1', trasJefe: 'lobishome' },
-    { type: 'hound', x: MX[0] + 0.5, y, z: MZ[4], yaw: Math.PI / 2, idle: 'eat', id: 'e_lobera2', trasJefe: 'lobishome' },
-    { type: 'hound', x: MX[2], y, z: MZ[5] + 0.4, yaw: Math.PI, idle: 'eat', id: 'e_lobera3', trasJefe: 'lobishome' },
-    { type: 'hound', x: MX[6], y, z: MZ[1], yaw: -Math.PI / 2, idle: 'eat', id: 'e_lobera4', trasJefe: 'lobishome' }
+    { type: 'hound', x: MX[1] - 1.1, y, z: MZ[2] + 1.1, yaw: 0, idle: 'eat', id: 'e_lobera1', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[0] - 1.1, y, z: MZ[4] - 1.1, yaw: Math.PI / 2, idle: 'eat', id: 'e_lobera2', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[2] + 1.1, y, z: MZ[5] - 1.1, yaw: Math.PI, idle: 'eat', id: 'e_lobera3', trasJefe: 'lobishome' },
+    { type: 'hound', x: MX[6] - 1.1, y, z: MZ[1] + 1.1, yaw: -Math.PI / 2, idle: 'eat', id: 'e_lobera4', trasJefe: 'lobishome' }
   );
   // las nieblas de la pelea
   const E = HONDAS.nieblaE,
@@ -547,7 +949,7 @@ function lobera(ctx, L, R) {
   L.interact.push({ kind: 'fog', id: 'f_lobo2', boss: 'lobishome', x: S.x, y, z: S.z, w: KIT.w - 0.2, h: KIT.sp + 0.6, axis: 'z', enter: 1 });
   // el Lobishome: espera a oscuras al fondo de la primera galería, de pie,
   // mirando hacia la escalera (ver game/lobishome.js)
-  L.enemies.push({ type: 'lobishome', x: MX[3] + 0.6, y, z: MZ[0], yaw: Math.PI / 2, idle: 'boss', id: 'b_lobishome', boss: true });
+  L.enemies.push({ type: 'lobishome', x: MX[3] + 1.05, y, z: MZ[0] - 0.3, yaw: Math.PI / 2, idle: 'boss', id: 'b_lobishome', boss: true });
 }
 
 // ------------------------------------------------------------------------ las cloacas viejas
@@ -566,36 +968,42 @@ function cloacasViejas(ctx, L, R) {
   {
     const n = R.N['V25'] || R.N['V24'];
     if (n) {
+      // (en el andén del sur, contra el muro: el canal pasa por en medio)
       const x = n.x - 0.6,
-        z = n.z + 0.4;
-      P.ellipsoid(ctx, 'burlap', x, y + 0.18, z, 0.22, 0.16, 0.5, [0.44, 0.4, 0.34], { room: 'viejas' });
-      P.ellipsoid(ctx, 'bone', x, y + 0.14, z - 0.58, 0.1, 0.1, 0.12, [0.8, 0.76, 0.66], { room: 'viejas' });
-      wb.cylinder('iron', x + 0.5, y, z + 0.3, 0.08, 0.08, 0.2, 6, { ao: false, capTop: true, tint: [0.4, 0.36, 0.32] });
-      L.interact.push({ kind: 'item', id: 'i_pocero', item: 'virote', n: 4, x: x + 0.2, y, z: z + 0.1 });
+        z = n.z + 1.15;
+      P.ellipsoid(ctx, 'burlap', x, y + 0.18, z, 0.5, 0.16, 0.22, [0.44, 0.4, 0.34], { room: 'viejas' });
+      P.ellipsoid(ctx, 'bone', x - 0.58, y + 0.14, z, 0.12, 0.1, 0.1, [0.8, 0.76, 0.66], { room: 'viejas' });
+      wb.cylinder('iron', x + 0.6, y, z + 0.2, 0.08, 0.08, 0.2, 6, { ao: false, capTop: true, tint: [0.4, 0.36, 0.32] });
+      L.interact.push({ kind: 'item', id: 'i_pocero', item: 'virote', n: 4, x: x + 0.2, y, z });
     }
   }
+  // (los huesos, en una esquina del cruce: en el andén)
   for (const id of ['V11', 'V20', 'V03', 'V17']) {
     const n = R.N[id];
-    if (n) P.bones(ctx, n.x + 0.5, y, n.z - 0.4, 8, 20450 + id.charCodeAt(2), 0.6);
+    if (n) P.bones(ctx, n.x + 1.15, y, n.z + 1.15, 8, 20450 + id.charCodeAt(2), 0.4);
   }
   // el musgo y las raíces, que aquí ya bajan de lo hondo hacia arriba no:
   // de arriba (el Vergel queda lejos), pocas
   for (let k = 0; k < 12; k++) {
     const ids = Object.keys(R.N).filter((s) => s.startsWith('V'));
     const n = R.N[ids[k % ids.length]];
-    musgo(ctx, n.x + rr.range(-1.2, 1.2), y, n.z + rr.range(-1.2, 1.2), 0.5, 0.4, 20470 + k, { room: 'viejas', n: 5, k: [0.7, 0.8, 0.7] });
+    const x = n.x + rr.range(-1.2, 1.2),
+      z = n.z + rr.range(-1.2, 1.2);
+    if (!seco(ctx, x, y, z, 0.5)) continue;
+    musgo(ctx, x, y, z, 0.5, 0.4, 20470 + k, { room: 'viejas', n: 5, k: [0.7, 0.8, 0.7] });
   }
   wb.setRoom(null);
   // los mastines de él (cazan por las viejas) y los rastreros
   L.enemies.push(
-    { type: 'hound', x: -20.5, y, z: -30.6, yaw: 0, idle: 'eat', id: 'e_viejas1' },
-    { type: 'hound', x: -4.5, y, z: -14.0, yaw: Math.PI, idle: 'eat', id: 'e_viejas2' },
+    // (en los andenes: el canal va por en medio)
+    { type: 'hound', x: -21.7, y, z: -31.1, yaw: 0, idle: 'eat', id: 'e_viejas1' },
+    { type: 'hound', x: -3.4, y, z: -11.1, yaw: Math.PI, idle: 'eat', id: 'e_viejas2' },
     { type: 'crawler', x: -12.5, y, z: -5.5, yaw: Math.PI, idle: 'stand', id: 'e_viejas3' },
-    { type: 'hound', x: -20.5, y, z: 6.5, yaw: 0, idle: 'eat', id: 'e_viejas4' },
-    { type: 'crawler', x: -8.5, y, z: 20.0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_viejas5' },
-    { type: 'hound', x: -4.5, y, z: 25.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas6' },
-    { type: 'crawler', x: -20.5, y, z: -20.0, yaw: 0, idle: 'ceiling', id: 'e_viejas7' },
-    { type: 'hound', x: -12.5, y, z: 14.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas8' }
+    { type: 'hound', x: -21.6, y, z: 6.5, yaw: 0, idle: 'eat', id: 'e_viejas4' },
+    { type: 'crawler', x: -8.5, y, z: 21.1, yaw: -Math.PI / 2, idle: 'stand', id: 'e_viejas5' },
+    { type: 'hound', x: -3.4, y, z: 25.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas6' },
+    { type: 'crawler', x: -21.4, y, z: -18.9, yaw: 0, idle: 'ceiling', id: 'e_viejas7' },
+    { type: 'hound', x: -11.4, y, z: 14.5, yaw: Math.PI, idle: 'eat', id: 'e_viejas8' }
   );
 }
 
@@ -694,7 +1102,8 @@ function hondo(ctx, L, R) {
   const [nx0, nz0, nx1, nz1] = N.r;
   const room = 'hondo';
   wb.setRoom(room);
-  const enCanal = (x, z) => x > 17.2 && x < 18.8;
+  // (el canal, la pila de la fuente y el sumidero: ahí no crece nada)
+  const enCanal = (x, z) => (x > 18.7 && x < 20.3) || (x > 16.6 && x < 22.4 && z < 7.4);
   const pilares = [];
   for (let i = 1; i < N.xs.length - 1; i++) for (let j = 1; j < N.zs.length - 1; j++) pilares.push([N.xs[i], N.zs[j]]);
   const libre = (x, z, m = 0.5) => x > nx0 + m && x < nx1 - m && z > nz0 + m && z < nz1 - m && !enCanal(x, z) && !pilares.some(([px, pz]) => Math.abs(px - x) < 0.5 + m && Math.abs(pz - z) < 0.5 + m);
@@ -715,7 +1124,8 @@ function hondo(ctx, L, R) {
           bz = a.z + rr.range(-2.2, 2.2);
         bx = Math.max(nx0 + 0.6, Math.min(nx1 - 0.6, bx));
         bz = Math.max(nz0 + 0.6, Math.min(nz1 - 0.6, bz));
-        if (enCanal(bx, bz)) bx += 1.4;
+        if (enCanal(bx, bz)) bx = bx < 19.5 ? 18.2 : 21.1;
+        if (enCanal(bx, bz)) bz = 8.2;
         raizGorda(ctx, a, V(bx, y + 0.05, bz), rr.range(0.07, 0.14), 20810 + i * 10 + j * 3 + q, room);
       }
       // (y las que cuelgan sin llegar)
@@ -752,6 +1162,48 @@ function hondo(ctx, L, R) {
     hiedra(ctx, x, y + 4.5 + rr.range(0, 1.4), z, rr.range(2.4, 5.6), 22700 + k, { room, dir, hoja: 1.9 });
   }
   wb.setRoom(null);
+  // el caño de la fuente, en el muro sobre la pila: un mascarón de piedra
+  // de los romanos, gastado, con la boca abierta y seca (el agua ya no sale
+  // por él: sube del fondo de la pila), y el verdín de cuando manaba
+  {
+    const Pi = SUMIDERO.pila.r;
+    const mx = (Pi[0] + Pi[2]) / 2,
+      mz = Pi[1] + 0.02;
+    const my = y + 1.45;
+    wb.setRoom(room);
+    // (la lápida en que va, con su moldura, más clara que el muro)
+    wb.box('limestone', mx - 0.5, my - 0.55, mz, mx + 0.5, my + 0.55, mz + 0.07, { faces: 'tsewb', ao: false, room, tint: [0.74, 0.72, 0.64] });
+    for (const [a, b, c, d] of [
+      [mx - 0.6, my + 0.55, mx + 0.6, my + 0.67],
+      [mx - 0.6, my - 0.67, mx + 0.6, my - 0.55],
+      [mx - 0.6, my - 0.55, mx - 0.5, my + 0.55],
+      [mx + 0.5, my - 0.55, mx + 0.6, my + 0.55],
+    ])
+      wb.box('limestone', a, b, mz, c, d, mz + 0.12, { faces: 'tsewb', ao: false, room, tint: [0.66, 0.64, 0.56] });
+    // (la cara de un viejo, un dios del agua: la frente, las mejillas, la
+    // nariz, las cuencas de los ojos, la barba en mechones y la boca
+    // abierta, negra; sin girar, de frente)
+    const M = 'limestone',
+      T = [0.7, 0.68, 0.6];
+    const bola = (mat, x, yy, z, sx, sy, sz, tint) => wb.geometry(mat, new THREE.SphereGeometry(1, 8, 6), new THREE.Matrix4().compose(V(x, yy, z), new THREE.Quaternion(), V(sx, sy, sz)), { ao: false, tint, room });
+    bola(M, mx, my + 0.06, mz + 0.07, 0.25, 0.3, 0.1, T);
+    bola(M, mx, my + 0.24, mz + 0.12, 0.2, 0.07, 0.06, T);
+    bola(M, mx, my + 0.05, mz + 0.16, 0.045, 0.11, 0.06, T.map((v) => v * 1.05));
+    for (const sd of [-1, 1]) {
+      bola(M, mx + sd * 0.13, my - 0.05, mz + 0.13, 0.09, 0.08, 0.06, T);
+      bola('black', mx + sd * 0.095, my + 0.14, mz + 0.15, 0.045, 0.03, 0.02, null);
+      // (la barba, que cae en mechones a los lados de la boca)
+      for (let k = 0; k < 3; k++) bola(M, mx + sd * (0.1 + k * 0.045), my - 0.2 - k * 0.075, mz + 0.11 - k * 0.012, 0.05, 0.085, 0.045, T.map((v) => v * 0.9));
+    }
+    bola(M, mx, my - 0.33, mz + 0.1, 0.075, 0.1, 0.045, T.map((v) => v * 0.9));
+    bola('black', mx, my - 0.13, mz + 0.16, 0.07, 0.05, 0.02, null);
+    // (el verdín de cuando manaba: de la boca a la pila)
+    wb.box('mossstone', mx - 0.09, y - 0.02, mz - 0.006, mx + 0.09, my - 0.2, mz + 0.004, { faces: 's', ao: false, room, tint: [0.24, 0.38, 0.22] });
+    musgo(ctx, mx - 1.6, y, Pi[3] + 0.5, 0.5, 0.35, 21001, { room, n: 6, k: [0.8, 1.1, 0.9] });
+    musgo(ctx, mx + 1.8, y, Pi[3] + 0.45, 0.4, 0.3, 21002, { room, n: 5, k: [0.8, 1.1, 0.9] });
+    wb.setRoom(null);
+    L.interact.push({ kind: 'examine', id: 'x_pila_ninfeo', text: 'pilaNinfeo', x: mx + 1.4, y, z: Pi[3] + 0.6, r: 1.5 });
+  }
   // el semillero (al oeste): donde crece la flor de lo hondo
   {
     const Sm = HONDAS.semillero;
@@ -782,6 +1234,7 @@ function hondo(ctx, L, R) {
       const x = n.x + rr.range(-1.2, 1.2),
         z = n.z + rr.range(-1.2, 1.2);
       if (Math.abs(x - n.x) < 0.6 && Math.abs(z - n.z) < 0.6) continue;
+      if (!seco(ctx, x, y, z, 0.3)) continue;
       helecho(ctx, x, y, z, rr.range(0.9, 1.5), 23410 + k + id.charCodeAt(1) * 7, { room });
     }
     wb.setRoom(null);
@@ -812,7 +1265,7 @@ function hondo(ctx, L, R) {
     { id: 'c_musgo1', item: 'musgo_luz', x: 7.4, z: 6.6 },
     { id: 'c_musgo2', item: 'musgo_luz', x: 29.0, z: 7.2 },
     { id: 'c_musgo3', item: 'musgo_luz', x: 22.6, z: 21.8 },
-    { id: 'c_musgo4', item: 'musgo_luz', x: 38.8, z: 27.6 },
+    { id: 'c_musgo4', item: 'musgo_luz', x: 39.7, z: 27.6 },
     { id: 'c_musgo5', item: 'musgo_luz', x: -4.0, z: 7.0 },
     { id: 'c_raiz1', item: 'raiz_amarga', x: 11.6, z: 15.4 },
     { id: 'c_raiz2', item: 'raiz_amarga', x: 25.4, z: 9.6 },
@@ -832,7 +1285,7 @@ function hondo(ctx, L, R) {
     { type: 'boca', x: -4.5, y, z: -2.0, yaw: Math.PI, idle: 'stand', id: 'p_boca3' },
     { type: 'bulbo', x: 6.0, y, z: 12.0, yaw: 0, idle: 'stand', id: 'p_bulbo1' },
     { type: 'bulbo', x: 30.0, y, z: 6.0, yaw: 0, idle: 'stand', id: 'p_bulbo2' },
-    { type: 'bulbo', x: 38.5, y, z: 30.0, yaw: 0, idle: 'stand', id: 'p_bulbo3' },
+    { type: 'bulbo', x: 37.3, y, z: 30.0, yaw: 0, idle: 'stand', id: 'p_bulbo3' },
     { type: 'zarza', x: -8.0, y, z: -6.0, yaw: Math.PI / 2, idle: 'stand', id: 'p_zarza4' },
     { type: 'bulbo', x: -0.8, y, z: -6.0, yaw: 0, idle: 'stand', id: 'p_bulbo4' }
   );
@@ -909,7 +1362,8 @@ function zonas(L) {
     { id: 'viejas', rects: [rect('H2', Y.n2 - 0.8, Y.n1 - 0.4)], atmo: 'viejas', room: 'viejas' },
     { id: 'aljibes', rects: [rect('H3', Y.n3 - 3.6, Y.n2 - 0.4)], atmo: 'aljibes', room: 'aljibes' },
     { id: 'hondo_semillero', rects: [[...HONDAS.semillero.r, Y.n4 - 0.8, Y.n3 - 0.4]], atmo: 'hondo', room: 'hondo_semillero' },
-    { id: 'hondo', rects: [rect('H4', Y.n4 - 0.8, Y.n3 - 0.4)], atmo: 'hondo', room: 'hondo' }
+    // (y el agua de la pila de la fuente, del ninfeo: world/sumidero.js)
+    { id: 'hondo', rects: [rect('H4', Y.n4 - 0.8, Y.n3 - 0.4), [...SUMIDERO.pila.r, SUMIDERO.pila.fondo - 0.2, Y.n4 - 0.8]], atmo: 'hondo', room: 'hondo' }
   );
 }
 

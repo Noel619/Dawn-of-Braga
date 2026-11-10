@@ -63,6 +63,7 @@ uniform float uBloom, uExposure, uSat, uContrast, uVignette, uGrain;
 uniform vec3 uLift, uGain;
 uniform float uHurt, uLowHp, uFade, uFlash, uQuant, uWarp, uDesat, uBrightness, uBars;
 uniform float uSleep, uBlind;
+uniform float uUnder; uniform vec3 uUnderC; uniform float uAhogo;
 uniform vec3 uFadeColor, uFlashColor;
 varying vec2 vUv;
 ${NOISE}
@@ -73,6 +74,8 @@ void main(){
     float w = sin(uv.y*40.0 + uTime*30.0) * 0.004 * uWarp;
     uv.x += w;
   }
+  // bajo el agua: todo tiembla un poco
+  if (uUnder > 0.0) uv += vec2(sin(uv.y * 23.0 + uTime * 1.9), cos(uv.x * 19.0 + uTime * 1.6)) * 0.0028 * uUnder;
   vec3 col = texture2D(tScene, uv).rgb;
   float d = texture2D(tDepth, uv).x;
   vec4 ndc = vec4(uv*2.0-1.0, d*2.0-1.0, 1.0);
@@ -130,6 +133,23 @@ void main(){
     col = mix(col, uFogColor, clamp(fv, 0.0, 0.92));
   }
 
+  // bajo el agua: el color del agua se lo come todo enseguida (lo de cerca,
+  // verdoso; lo de lejos, el agua misma), y por arriba, más claro
+  if (uUnder > 0.0) {
+    float fu = 1.0 - exp(-dist * 0.2);
+    // (más claro hacia arriba, donde está la superficie; abajo, negro)
+    vec3 uc = uUnderC * (0.55 + 2.2 * smoothstep(-0.3, 0.9, rd.y));
+    // (y la luz que baja, que tiembla)
+    uc *= 0.85 + 0.3 * fbm3(vec3(rd.xz * 3.0 / max(0.2, rd.y + 1.2), uTime * 0.25));
+    col = mix(col, col * vec3(0.42, 0.78, 0.74), uUnder);
+    col = mix(col, uc, clamp(fu, 0.0, 1.0) * uUnder);
+  }
+  // sin aliento, la vista se cierra por los bordes, a latidos
+  if (uAhogo > 0.0) {
+    float ra = length(vUv - 0.5);
+    float lat = 0.85 + 0.15 * sin(uTime * 7.0);
+    col *= 1.0 - uAhogo * lat * smoothstep(0.62 - uAhogo * 0.4, 0.75, ra + 0.04);
+  }
   col += texture2D(tBloom, uv).rgb * uBloom;
   col *= uExposure;
   // tonemap suave (conserva los negros profundos)
@@ -253,6 +273,9 @@ export class PostPipeline {
       uBars: { value: 0 },
       uSleep: { value: 0 },
       uBlind: { value: 0 },
+      uUnder: { value: 0 },
+      uAhogo: { value: 0 },
+      uUnderC: { value: new THREE.Color(0.02, 0.05, 0.06) },
     };
     this.composite = fsMat(COMPOSITE_FS, this.U);
     this.blit = fsMat(BLIT_FS, {
