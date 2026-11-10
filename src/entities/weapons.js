@@ -1,9 +1,12 @@
 // Armas del Condenado: registro, agarres y repertorio de golpes.
 // Por el orden en que se encuentran: la espada oxidada (en el pasillo de las
-// celdas), la espada de la guardia y la ballesta (en la puerta de la
-// fortaleza), la lanza de la muralla (en el adarve de levante), el hacha
-// barbada (en la barricada del Postigo, en la escena de la Bestia) y la
-// espada de Solingen (en la casa de Henrique). Cada arma define:
+// celdas) y la maza de los carceleros (en una de ellas), la espada de la
+// guardia y la ballesta (en la puerta de la fortaleza), la lanza de la muralla
+// (en el adarve de levante), el hacha barbada (en la barricada del Postigo, en
+// la escena de la Bestia) y la espada de Solingen (en la casa de Henrique). El
+// martillo de guerra, todavía en ninguna parte (será de la cripta de la Sé).
+// Los golpes de la maza y el martillo, en weapon_moves_blunt.js. Cada arma
+// define:
 //   hands      1 (con escudo) o 2 (el escudo va a la espalda)
 //   guard      guardia (IK de muñeca en cm del pecho, dirección de hoja en °)
 //   carry      brazos al andar y correr
@@ -14,6 +17,7 @@
 import { clip, UPPER } from './rig.js';
 import { WEAPON_PARTS } from './weapon_models.js';
 import { MOVESETS } from './weapon_moves.js';
+import { MOVESETS_BLUNT } from './weapon_moves_blunt.js';
 import { rad, attack, sstep, resolveWeaponArms, STANCE, LUNGE, SHIELD_UP, SHIELD_GUARD } from './weapon_common.js';
 import { DEG, lerp } from '../core/util.js';
 
@@ -494,12 +498,14 @@ const oxidadaMoves = swordVariant({ filo: OXIDADA_K, st: 0.85, alcance: 0.94 });
 const OXIDADA_GRACIA = Math.round((108 * 0.5) / 2);
 
 // ---------------------------------------------------------------- registro
-export const WEAPON_ORDER = ['hacha', 'lanza', 'oxidada', 'espada', 'solingen', 'ballesta'];
+export const WEAPON_ORDER = ['hacha', 'martillo_guerra', 'lanza', 'oxidada', 'maza', 'espada', 'solingen', 'ballesta'];
 
 // La calidad de cada arma contra armadura (PLAN_CASTILLO.md, §10): la parte
 // del daño que pasa a quien la lleva (por ahora, el Caballero de la Orden).
 // La espada de Solingen pasa entera.
-export const CALIDAD = { oxidada: 0.5, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1 };
+// Lo que no corta, abolla: la maza pasa casi entera, y el martillo de guerra,
+// que se hizo para abrir yelmos, casi todo.
+export const CALIDAD = { oxidada: 0.5, espada: 0.65, lanza: 0.7, hacha: 0.75, ballesta: 0.75, solingen: 1, maza: 0.85, martillo_guerra: 0.95 };
 
 // ---------------------------------------------------------------- cualidades
 // Lo que distingue a cada arma, a la vista en el inventario (con barras, a lo
@@ -517,9 +523,11 @@ export const CALIDAD = { oxidada: 0.5, espada: 0.65, lanza: 0.7, hacha: 0.75, ba
 //   dano     el tipo de daño de sus golpes (game/danos.js): el principal y,
 //            si es especial, el secundario, el de los golpes de su repertorio
 //            que no son como los demás (segundo: cuáles, en palabras). Las
-//            espadas sólo cortan; la lanza estoca y su barrido con el asta
-//            aplasta; el hacha corta y la onda del suelo que parte aplasta; la
-//            ballesta perfora (el virote) y su culatazo aplasta.
+//            espadas sólo cortan y la maza sólo aplasta; la lanza estoca y su
+//            barrido con el asta aplasta; el hacha corta y la onda del suelo que
+//            parte aplasta; el martillo de guerra aplasta y su pico (el remate y
+//            el golpe de gracia) perfora; la ballesta perfora (el virote) y su
+//            culatazo aplasta.
 // Lo demás (el daño, el alcance, el aguante de cada golpe) sale de su
 // repertorio: weapon_moves.js y, para la familia de la espada, swordVariant.
 export const STATS = {
@@ -561,6 +569,21 @@ export const STATS = {
     critico: 0.08,
     dano: ['cortante'],
     especial: ['Una mano: el escudo, al brazo.', 'Acero de Solingen: pasa la armadura.', 'Hoja larga: alcanza más, va más despacio.'],
+  },
+  martillo_guerra: {
+    peso: 3.8,
+    dureza: 90,
+    critico: 0.04,
+    dano: ['contundente', 'perforante'],
+    segundo: 'El pico de cuervo (el remate y el golpe de gracia), perforante.',
+    especial: ['A dos manos: el escudo, a la espalda.', 'Cada golpe quiebra la guardia.', 'El pesado se carga y parte el suelo.', 'Lento: cada golpe se queda abajo.'],
+  },
+  maza: {
+    peso: 1.7,
+    dureza: 70,
+    critico: 0.05,
+    dano: ['contundente'],
+    especial: ['Una mano: el escudo, al brazo.', 'Pesa en la cabeza: desequilibra más que una espada.', 'No corta, abolla: la armadura apenas la para.'],
   },
   ballesta: {
     peso: 4.0,
@@ -650,6 +673,7 @@ export const WEAPONS = {
     moves: solingenMoves,
   },
   ...MOVESETS,
+  ...MOVESETS_BLUNT,
 };
 // Parry y golpe de gracia de cada arma: la ventana (s) que se abre al
 // pulsar la guardia, con qué se para (el escudo; a dos manos, la hoja o el
@@ -662,6 +686,10 @@ const PARRY = {
   solingen: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: Math.round(108 * SOLINGEN_K) },
   // (la ballesta para con la cureña; remata con un culatazo)
   ballesta: { win: 0.14, kind: 'haft', riposte: ['heavy', 0], dmg: 92 },
+  // (la maza para con el escudo; remata con el mazazo)
+  maza: { win: 0.2, kind: 'shield', riposte: ['light', 2], dmg: 104 },
+  // (el martillo para con el mango; remata con el pico)
+  martillo_guerra: { win: 0.14, kind: 'haft', riposte: ['light', 2], dmg: 126 },
 };
 for (const id in WEAPONS) {
   const W = WEAPONS[id];
@@ -709,6 +737,9 @@ export function weaponSet(W, rig) {
     guard: M.guard || null,
     // (la ballesta: montarla)
     reload: M.reload || null,
+    // (romper un mueble: el pesado, o el golpe que diga el arma si su pesado
+    // tarda en caer; el martillo de guerra)
+    smash: M.smash || M.heavy[0],
     riposte,
     blockRad: rad(BLOCK),
   };

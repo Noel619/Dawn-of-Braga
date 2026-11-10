@@ -3,10 +3,11 @@
 
 export const ITEMS = {
   // Armas (weapon: id en src/entities/weapons.js), todas en su sitio: la
-  // oxidada en el pasillo de las celdas, la de la guardia y la ballesta en
-  // la puerta de la fortaleza, la lanza en el adarve de levante, el hacha en
-  // la barricada del Postigo (la arranca en la escena de la Bestia) y la de
-  // Solingen en la casa de Henrique.
+  // oxidada en el pasillo de las celdas y la maza en una de ellas, la de la
+  // guardia y la ballesta en la puerta de la fortaleza, la lanza en el adarve
+  // de levante, el hacha en la barricada del Postigo (la arranca en la escena
+  // de la Bestia) y la de Solingen en la casa de Henrique. El martillo de
+  // guerra, todavía en ninguna: será de la cripta de la Sé, en una sala suya.
   hacha: {
     name: 'Hacha barbada',
     desc: 'Hacha de mango largo de los leñadores del Gerês. Estaba clavada hasta el ojo en la estaca de la barricada de lo alto del Postigo, y nadie había podido sacarla; la arrancaste cuando la Bestia de Carne se te echó encima. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
@@ -27,6 +28,20 @@ export const ITEMS = {
     icon: 'oxidada',
     key: false,
     weapon: 'oxidada',
+  },
+  maza: {
+    name: 'Maza de armas',
+    desc: 'La maza de los carceleros del castillo: cabeza de hierro de seis aletas, con los cantos brillantes de tanto golpe, y mango de hierro con el puño forrado de cuero. Con ella se tenía callado el pasillo de las celdas. Estaba en el suelo de una de ellas, la de la reja abierta, en una mancha de sangre seca; de quien la soltó no queda nada. No corta: abolla. Lo que es hueso, piedra o bronce lo nota, y una cota apenas la para; pesa en la cabeza y desequilibra más que una espada, pero alcanza menos.',
+    icon: 'mace',
+    key: false,
+    weapon: 'maza',
+  },
+  martillo_guerra: {
+    name: 'Martillo de guerra',
+    desc: 'Martillo de guerra a dos manos, de los que se forjaban para abrir yelmos: mango de fresno de vara y cuarto, herrado arriba con dos lengüetas, y la cabeza de hierro, con la boca cuadrada y dentada, el pico de cuervo detrás y una punta arriba. Lento, y con el escudo a la espalda: cada golpe se carga de lejos y cae con todo el cuerpo detrás. La boca aplasta; el pico, el remate y el golpe de gracia, perfora. El pesado se carga y parte el suelo.',
+    icon: 'warhammer',
+    key: false,
+    weapon: 'martillo_guerra',
   },
   espada: {
     name: 'Espada de la guardia',

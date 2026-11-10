@@ -53,6 +53,8 @@ const FX_PRIO = {
   swingHeavy: [4, 'jugador'],
   swingKnife: [4, 'jugador'],
   swingAxe: [4, 'jugador'],
+  swingMace: [4, 'jugador'],
+  swingHammer: [4, 'jugador'],
   thrust: [4, 'jugador'],
   swingKatana: [4, 'jugador'],
   iai: [4, 'jugador'],
@@ -79,6 +81,9 @@ const FX_PRIO = {
   hitHeavy: [3, 'golpe'],
   hitAxe: [3, 'golpe'],
   axeGround: [3, 'golpe'],
+  hitMace: [3, 'golpe'],
+  hitHammer: [3, 'golpe'],
+  hammerGround: [3, 'golpe'],
   clang: [3, 'golpe'],
   block: [4, 'golpe'],
   guardbreak: [4, 'golpe'],
@@ -1461,6 +1466,28 @@ export class Audio {
         this.jingle(d, t + 0.05, 0.2, 0.1);
         break;
       }
+      case 'swingMace': {
+        // maza: la cabeza de hierro que corta el aire, sin silbido de filo; un
+        // soplo grave y la malla
+        d = this.out(P, { gain: 0.7, verb: 0.1, life: 1.6, occlude: false });
+        this.noise(d, t, 0.34, { f0: 200, f1: 1050, q: 1.5, gain: 0.55, a: 0.2, curve: 'lin', buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.14, 0.2, { f0: 700, f1: 300, q: 2, gain: 0.18, a: 0.05 });
+        this.tone(d, t + 0.05, 0.3, { f0: 92, f1: 56, gain: 0.2, a: 0.08 });
+        this.jingle(d, t, 0.14, 0.06);
+        break;
+      }
+      case 'swingHammer': {
+        // martillo de guerra: mucha masa, despacio; el mango que cruje y el
+        // esfuerzo, más hondo que el del hacha
+        d = this.out(P, { gain: 0.9, verb: 0.14, life: 2.2, occlude: false });
+        this.noise(d, t, 0.66, { f0: 120, f1: 720, q: 1.3, gain: 0.66, a: 0.4, curve: 'lin', buf: this.brown, rate: 3 });
+        this.noise(d, t + 0.24, 0.38, { f0: 480, f1: 200, q: 2, gain: 0.24, a: 0.1 });
+        this.tone(d, t + 0.12, 0.55, { f0: 64, f1: 38, gain: 0.34, a: 0.16 });
+        this.creak(d, t, 0.2, rnd(90, 120), 0.06);
+        this.voice(d, t, 0.4, { f0: 104, f1: 84, vowel: 'a', v1: 'u', gain: 0.13, vibD: 0, breath: 0.7, a: 0.04, rasp: 0.35, rel: 0.6 });
+        this.jingle(d, t + 0.06, 0.22, 0.1);
+        break;
+      }
       case 'thrust': {
         // lanza: estocada seca, el asta que vibra y la malla
         d = this.out(P, { gain: 0.6, verb: 0.08, life: 1.2, occlude: false });
@@ -1554,6 +1581,41 @@ export class Audio {
         this.debris(d, t + 0.01, 6, 0.08, { f0: 1600, f1: 3400, gain: 1.4 });
         this.tone(d, t, 0.45, { f0: 58, f1: 28, gain: 0.55 });
         this.duck(0.25, 0.3);
+        break;
+      }
+      case 'hitMace': {
+        // maza en carne y hueso: un golpe sordo, sin tajo, y el hueso que cede
+        d = this.out(P, { gain: 1, verb: 0.2, life: 1.8 });
+        this.tone(d, t, 0.3, { f0: 112, f1: 36, gain: 0.85 });
+        this.noise(d, t, 0.08, { type: 'lowpass', f0: 2400, f1: 300, gain: 0.75, a: 0.001 });
+        this.noise(d, t + 0.01, 0.3, { f0: 560, f1: 190, q: 3, gain: 0.5, buf: this.brown, rate: 3 });
+        this.boneCrack(d, t + 0.015, 0.9);
+        this.metal(d, t, rnd(330, 390), 0.05, 0.3, { ratios: [1, 2.2, 3.6] });
+        this.tone(d, t, 0.4, { f0: 56, f1: 28, gain: 0.45 });
+        this.duck(0.22, 0.3);
+        break;
+      }
+      case 'hitHammer': {
+        // martillo de guerra en carne y hueso: hondo, el hueso que se parte
+        d = this.out(P, { gain: 1, verb: 0.24, life: 2.2 });
+        this.tone(d, t, 0.42, { f0: 96, f1: 30, gain: 0.95 });
+        this.noise(d, t, 0.1, { type: 'lowpass', f0: 2200, f1: 250, gain: 0.8, a: 0.001 });
+        this.noise(d, t + 0.01, 0.4, { f0: 480, f1: 160, q: 3, gain: 0.55, buf: this.brown, rate: 3 });
+        this.boneCrack(d, t + 0.01, 1.3);
+        this.boneCrack(d, t + 0.07, 0.9);
+        this.tone(d, t, 0.55, { f0: 50, f1: 24, gain: 0.6 });
+        this.duck(0.32, 0.36);
+        break;
+      }
+      case 'hammerGround': {
+        // la boca del martillo contra el suelo: un golpe que retumba, el
+        // hierro que suena y las piedras que saltan
+        d = this.out(P, { gain: 1, verb: 0.4, life: 2.8, ref: 6 });
+        this.tone(d, t, 0.6, { f0: 58, f1: 26, gain: 0.95 });
+        this.noise(d, t, 0.5, { type: 'lowpass', f0: 900, f1: 120, gain: 0.7, a: 0.002 });
+        this.metal(d, t, rnd(300, 340), 0.09, 0.7, { ratios: [1, 2.3, 3.9] });
+        this.debris(d, t + 0.03, 14, 0.6, { gain: 1.2 });
+        this.duck(0.35, 0.45);
         break;
       }
       case 'axeGround': {

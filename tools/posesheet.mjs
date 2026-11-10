@@ -2,7 +2,7 @@
 // de un clip o de la locomoción y los compone en una sola imagen.
 //   node tools/posesheet.mjs out.png "light1@0,0.14,0.26,0.4" "loco@4.5@0,0.25,0.5,0.75"
 //   CAM="yawDeg,height,dist"  WHO=player|<tipo de criatura>   (requiere npx vite --port 5199)
-//   ARMA=oxidada|espada|solingen|hacha|lanza|ballesta  el arma que empuña el jugador
+//   ARMA=oxidada|maza|espada|solingen|hacha|martillo_guerra|lanza|ballesta  el arma que empuña el jugador
 //   GHOST=0.25  superpone la hoja de los últimos 0,25 s (cada 1/60 s): el
 //               arco del golpe, con una marca hacia el filo en cada fotograma
 import { chromium } from 'playwright';

@@ -499,8 +499,9 @@ export class Player {
     this.vx = this.vz = 0;
     this.interactKind = kind;
     this.interactYaw = yaw;
-    // el golpe para romper es el pesado del arma que se empuña
-    const smash = this.set.heavy[0].clip;
+    // el golpe para romper es el pesado del arma que se empuña (o el que
+    // diga ella: weaponSet, smash)
+    const smash = this.set.smash.clip;
     this.anim.play(clip ? this.clips[clip] : kind === 'push' ? this.clips.push : kind === 'smash' ? smash : kind === 'lever' ? this.clips.pull : this.clips.interact, { blend: 0.12 });
     this.interactDur = dur ?? (kind === 'push' ? 0.8 : kind === 'smash' ? 1.0 : kind === 'lever' ? 7.45 : 0.7);
   }
@@ -521,8 +522,8 @@ export class Player {
 
   onAnimEvent(e) {
     const g = this.game;
-    // (al romper un mueble suena el pesado del arma empuñada)
-    const a = this.state === 'interact' ? this.set.heavy[0] : this.atk;
+    // (al romper un mueble suena el golpe con que se rompe)
+    const a = this.state === 'interact' ? this.set.smash : this.atk;
     if (e === 'swing') g.audio && g.audio.play(a && a.snd ? a.snd : a && a.heavy ? 'swingHeavy' : 'swing', this.pos);
     // el hacha muerde el suelo
     if (e === 'impact' && this.state === 'attack' && a && a.impact) g.combat && g.combat.playerImpact && g.combat.playerImpact(this, a);

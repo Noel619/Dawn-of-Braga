@@ -354,6 +354,135 @@ export function oxidadaParts(j = 'sword') {
   ];
 }
 
+// ------------------------------------------------------------- utilidades
+// Un perfil (como profile) girado ang grados alrededor del eje del mango: las
+// aletas de la maza, repartidas alrededor de su cabeza. (La geometría se hace
+// aquí, ya girada: la pieza es de tipo 'geo'.)
+function radialProfile(pts, u0, d, ang, mat, j) {
+  const s = new THREE.Shape();
+  s.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+  s.lineTo(pts[0][0], pts[0][1]);
+  const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false });
+  g.translate(0, 0, -d / 2);
+  // (u -> +Z, v -> +Y y el grosor en X, como profile; luego, alrededor del eje)
+  g.applyMatrix4(new THREE.Matrix4().makeRotationY(-Math.PI / 2));
+  g.applyMatrix4(new THREE.Matrix4().makeRotationZ((ang * Math.PI) / 180));
+  g.translate(0, Y, u0);
+  return { j, type: 'geo', geo: g, uvk: 1.2, mat };
+}
+
+// ------------------------------------------------------------- maza
+// La maza de armas de la guarnición (la que está en una de las celdas del
+// pasillo de la mazmorra): cabeza de hierro de seis aletas, cada una con el
+// canto gastado y brillante de tanto golpe, sobre su alma y rematada por una
+// perilla en punta; el mango, de hierro, con su collar bajo la cabeza y dos
+// anillos; el puño, forrado de cuero, y el pomo abajo. Corta (dos palmos y
+// medio) y cargada de la cabeza. Es redonda: no tiene filo que llevar por
+// delante.
+// (z a lo largo del mango, desde el puño: la cabeza, de head0 a head1; r, lo
+// que se abren sus aletas)
+export const MACE = { head0: 0.35, head1: 0.5, top: 0.535, butt: -0.13, r: 0.06 };
+// la aleta, de perfil (u a lo largo del mango, v hacia fuera): arranca dentro
+// del alma, sale en rampa hasta su canto, recto, y se corta arriba en bisel
+// hasta la punta
+const ALETA = [
+  [0, 0.012],
+  [0.006, 0.022],
+  [0.04, 0.057],
+  [0.1, MACE.r],
+  [0.128, 0.05],
+  [0.146, 0.026],
+  [0.15, 0.016],
+  [0.15, 0.012],
+];
+export function maceParts(j = 'sword') {
+  const H0 = MACE.head0,
+    H1 = MACE.head1;
+  // el canto de cada aleta: la tira de fuera (de la panza a la punta), un dedo
+  // de ancha, en acero gastado
+  const rim = ALETA.slice(1, 7);
+  const canto = [...rim, ...rim.slice().reverse().map(([u, v]) => [u + (u < 0.05 ? 0.004 : u > 0.13 ? -0.004 : 0), v - 0.0075])];
+  const P = [
+    // el puño de cuero, sus dos vueltas y el pomo
+    { j, type: 'cyl', s: [0.0195, 0.0205, 0.17], p: [0, Y, 0], r: [90, 0, 0], seg: 8, mat: 'leather' },
+    ...[-0.045, 0.04].map((z) => ({ j, type: 'cyl', s: [0.0218, 0.0218, 0.008], p: [0, Y, z], r: [90, 0, 0], seg: 8, mat: 'leather' })),
+    { j, type: 'cyl', s: [0.022, 0.025, 0.02], p: [0, Y, -0.095], r: [90, 0, 0], seg: 8, mat: 'iron' },
+    { j, type: 'ico', s: [0.02, 0.016, 0.02], p: [0, Y, -0.113], mat: 'iron' },
+    // la virola sobre el puño, el mango de hierro con sus dos anillos y el
+    // collar bajo la cabeza
+    { j, type: 'cyl', s: [0.022, 0.0215, 0.016], p: [0, Y, 0.09], r: [90, 0, 0], seg: 8, mat: 'iron' },
+    { j, type: 'cyl', s: [0.0145, 0.0145, H0 - 0.09], p: [0, Y, (H0 + 0.09) / 2], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    ...[0.19, 0.27].map((z) => ({ j, type: 'cyl', s: [0.0175, 0.0175, 0.01], p: [0, Y, z], r: [90, 0, 0], seg: 6, mat: 'iron' })),
+    { j, type: 'cyl', s: [0.022, 0.026, 0.016], p: [0, Y, H0 - 0.004], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    // el alma de la cabeza y la perilla en punta de arriba
+    { j, type: 'cyl', s: [0.021, 0.023, H1 - H0 + 0.006], p: [0, Y, (H0 + H1) / 2], r: [90, 0, 0], seg: 6, mat: 'iron' },
+    { j, type: 'cone', s: [0.018, MACE.top - H1], p: [0, Y, (H1 + MACE.top) / 2], r: [90, 0, 0], seg: 4, mat: 'iron' },
+  ];
+  // las seis aletas (entre los vértices del alma) con su canto
+  for (let k = 0; k < 6; k++) {
+    const a = 30 + k * 60;
+    P.push(radialProfile(ALETA, H0, 0.0085, a, 'iron', j));
+    P.push(radialProfile(canto, H0, 0.0105, a, 'plate', j));
+  }
+  return P;
+}
+
+// ------------------------------------------------------------- martillo de guerra
+// Martillo de guerra a dos manos: mango de fresno de vara y cuarto, herrado
+// arriba con dos lengüetas que bajan de la cabeza (con sus remaches), y dos
+// empuñaduras de cuero abajo, donde van las manos (la derecha, en z = 0; la
+// izquierda, en HAMMER.grip2, cerca del regatón, que es un casquillo de
+// hierro; corto: no se mete en el cuerpo al golpear). La cabeza, lejos de las manos: la boca, cuadrada y abierta, con
+// cuatro dientes de punta de diamante (hacia -Y: la que golpea, su «filo»);
+// detrás, el pico de cuervo (hacia +Y), algo vencido hacia el mango; y arriba,
+// la punta.
+// (z a lo largo del mango, desde el puño derecho: el centro de la cabeza, el
+// cabo y la punta; face y pick: lo que salen la boca y el pico del eje)
+export const HAMMER = { head: 0.74, butt: -0.36, top: 0.925, grip2: -0.27, face: 0.13, pick: 0.215 };
+export function warhammerParts(j = 'sword') {
+  const H = HAMMER.head;
+  // (el pico: una pirámide de cuatro caras desde el alma de la cabeza,
+  // vencida 14° hacia el mango)
+  const pa = (-14 * Math.PI) / 180,
+    pl = 0.19,
+    p0 = 0.032;
+  return [
+    // el mango, ochavado
+    { j, type: 'cyl', s: [0.0185, 0.0185, 0.8 - HAMMER.butt], p: [0, Y, (0.8 + HAMMER.butt) / 2], r: [90, 0, 0], seg: 8, mat: 'wooddark' },
+    // las empuñaduras de cuero, con sus vueltas
+    { j, type: 'cyl', s: [0.0225, 0.0225, 0.13], p: [0, Y, 0], r: [90, 0, 0], seg: 8, mat: 'leather' },
+    { j, type: 'cyl', s: [0.0225, 0.0225, 0.17], p: [0, Y, HAMMER.grip2], r: [90, 0, 0], seg: 8, mat: 'leather' },
+    ...[0.065, -0.065, HAMMER.grip2 + 0.085, HAMMER.grip2 - 0.085].map((z) => ({ j, type: 'cyl', s: [0.0245, 0.0245, 0.008], p: [0, Y, z], r: [90, 0, 0], seg: 8, mat: 'leather' })),
+    // el regatón: un casquillo de hierro con su botón
+    { j, type: 'cyl', s: [0.021, 0.024, 0.045], p: [0, Y, HAMMER.butt + 0.02], r: [90, 0, 0], seg: 8, mat: 'iron' },
+    { j, type: 'cyl', s: [0.024, 0.016, 0.014], p: [0, Y, HAMMER.butt - 0.009], r: [90, 0, 0], seg: 8, mat: 'iron' },
+    // el anillo donde empiezan las lengüetas, las lengüetas y sus remaches
+    { j, type: 'cyl', s: [0.022, 0.022, 0.016], p: [0, Y, 0.5], r: [90, 0, 0], seg: 8, mat: 'iron' },
+    ...[1, -1].flatMap((sx) => [
+      { j, type: 'box', s: [0.005, 0.017, 0.25], p: [sx * 0.0195, Y, 0.625], mat: 'iron' },
+      ...[0.55, 0.66].map((z) => ({ j, type: 'box', s: [0.007, 0.008, 0.008], p: [sx * 0.022, Y, z], mat: 'iron' })),
+    ]),
+    // el alma de la cabeza
+    { j, type: 'box', s: [0.054, 0.068, 0.12], p: [0, Y, H], mat: 'iron' },
+    // la boca: abierta hacia la cara, con la cara de acero y sus cuatro dientes
+    { j, type: 'box', s: [0.07, 0.08, 0.07], p: [0, Y - 0.074, H], taper: [1.2, 1.2], mat: 'iron' },
+    { j, type: 'box', s: [0.088, 0.012, 0.088], p: [0, Y - 0.118, H], mat: 'plate' },
+    ...[
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ].map(([sx, sz]) => ({ j, type: 'cone', s: [0.013, 0.014], p: [sx * 0.022, Y - 0.131, H + sz * 0.022], r: [180, 0, 0], seg: 4, mat: 'plate' })),
+    // el pico de cuervo, con su cuello
+    { j, type: 'box', s: [0.04, 0.03, 0.05], p: [0, Y + 0.045, H - 0.004], mat: 'iron' },
+    { j, type: 'cone', s: [0.023, pl], p: [0, Y + p0 + (Math.cos(pa) * pl) / 2, H + (Math.sin(pa) * pl) / 2], r: [-14, 0, 0], seg: 4, mat: 'iron' },
+    // la punta de arriba, con su base
+    { j, type: 'box', s: [0.032, 0.032, 0.022], p: [0, Y, H + 0.065], mat: 'iron' },
+    { j, type: 'cone', s: [0.016, 0.11], p: [0, Y, H + 0.13], r: [90, 0, 0], seg: 4, mat: 'iron' },
+  ];
+}
+
 export const WEAPON_PARTS = {
   oxidada: oxidadaParts,
   hacha: axeParts,
@@ -361,6 +490,8 @@ export const WEAPON_PARTS = {
   espada: (j) => swordParts(j),
   solingen: solingenParts,
   ballesta: ballestaParts,
+  maza: maceParts,
+  martillo_guerra: warhammerParts,
 };
 
 // Escudo colgado a la espalda (cuando se empuña un arma a dos manos): por

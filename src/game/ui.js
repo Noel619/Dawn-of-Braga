@@ -786,8 +786,10 @@ export class UI {
     if (it.weapon) {
       const W = WEAPONS[it.weapon];
       const S = weaponSheet(W, g.player.rig, g.player.dmgMul);
+      // (lo que hacen sus golpes: lo que no corta, golpea)
+      const filo = W.dano[0] === 'contundente' ? 'Golpe' : 'Filo';
       return [
-        ['filo', 'Filo', S.filo, 50, String(S.filo), 1, 0],
+        ['filo', filo, S.filo, 50, String(S.filo), 1, 0],
         ['pesado', 'Golpe pesado', S.pesado, 80, String(S.pesado), 1, 0],
         ['vel', 'Velocidad', S.vel, 3.2, `${fmtN(S.vel, 1)}/s`, 1, 1],
         ['alcance', 'Alcance', S.alcance, 3.5, `${S.alcance >= 10 ? Math.round(S.alcance) : fmtN(S.alcance, 1)} m`, 1, 1],

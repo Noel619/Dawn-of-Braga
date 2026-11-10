@@ -141,8 +141,9 @@ export class Combat {
     }
   }
 
-  // El arma del jugador muerde el suelo (hacha): polvo, onda y daño a lo que
-  // esté alrededor del punto de impacto (salvo a quien ya recibió el tajo).
+  // El arma del jugador muerde el suelo (el hacha, el martillo de guerra):
+  // polvo, onda y daño a lo que esté alrededor del punto de impacto (salvo a
+  // quien ya recibió el golpe); I.snd, lo que suena (si no, el hacha).
   playerImpact(player, atk) {
     const g = this.game;
     const tip = player.weaponPoint(player.weapon.tip, this._tip || (this._tip = new THREE.Vector3()));
@@ -150,7 +151,7 @@ export class Combat {
     const I = atk.impact;
     this.ring(tip.x, y, tip.z, I.r, 0x8a7a66, 0.4);
     g.fx.blood.emit(tip.x, y + 0.15, tip.z, 26, { color: [0.36, 0.33, 0.29], speed: 5.5, life: 0.6, up: 2 });
-    g.audio && g.audio.play('axeGround', { x: tip.x, y, z: tip.z });
+    g.audio && g.audio.play(I.snd || 'axeGround', { x: tip.x, y, z: tip.z });
     g.camRig.shake(0.3 + (player.atkMul - 1) * 0.4);
     g.input.rumble(0.7, 0.6, 160);
     for (const e of g.activeEnemies) {

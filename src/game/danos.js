@@ -5,8 +5,9 @@
 // Cada golpe es de un tipo. Las armas tienen el suyo (weapons.js, STATS.dano)
 // y las especiales, otro más, el de los golpes de su repertorio que no son
 // como los demás: la lanza estoca, pero su barrido con el asta aplasta; el
-// hacha corta, pero la onda del suelo que parte aplasta; la ballesta perfora,
-// pero su culatazo aplasta. Lo que no es de ninguno (el fuego, el pus, las
+// hacha corta, pero la onda del suelo que parte aplasta; el martillo de guerra
+// aplasta, pero su pico perfora; la ballesta perfora, pero su culatazo
+// aplasta. (La maza sólo aplasta.) Lo que no es de ninguno (el fuego, el pus, las
 // esporas, los gritos, el tañido de la campana) no tiene tipo.
 //
 // Las armaduras paran cada tipo a su manera (sus piezas, en game/story.js:

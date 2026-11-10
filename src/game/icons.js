@@ -236,6 +236,94 @@ const ICONS = {
     sparkle(b, 26, 16);
     b.outline(P.void);
   },
+  // maza de armas: el mango de hierro en diagonal con sus dos anillos, el puño
+  // de cuero y el pomo abajo; arriba, la cabeza de aletas, de lado (sus cantos,
+  // brillantes) y la perilla en punta
+  mace(b) {
+    seg(b, 7, 25, 19.6, 12.4, 1.1, 1.1, (t, s, x, y) => (s < -0.3 ? P.iron5 : s > 0.4 ? P.iron1 : shade(IRON, 0.55 - t * 0.1, x, y)));
+    for (const t of [0.42, 0.68]) {
+      const x = 7 + 12.6 * t,
+        y = 25 - 12.6 * t;
+      seg(b, x - 1.3, y - 1.3, x + 1.3, y + 1.3, 0.75, 0.75, (tt, s) => (s < 0 ? P.iron4 : P.iron2));
+    }
+    // el puño, de cuero, y el pomo
+    seg(b, 4.2, 27.8, 8, 24, 1.6, 1.6, (t, s, x, y) => ((x + y) % 2 ? (s < 0 ? P.wood3 : P.wood2) : s < 0 ? P.wood2 : P.wood1));
+    disc(b, 3.2, 28.8, 1.9, (l, d, x, y) => shade(IRON, l, x, y));
+    // la cabeza, en el marco del mango: a, a lo largo (hacia arriba a la
+    // derecha); c, de través (c < 0, del lado de la luz)
+    const hx = 23.2,
+      hy = 8.8,
+      K = Math.SQRT1_2;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const px = x + 0.5 - hx,
+          py = y + 0.5 - hy;
+        const a = (px - py) * K,
+          c = (px + py) * K;
+        const u = (a + 5.6) / 11.2;
+        if (u < 0 || u > 1) continue;
+        // (el perfil de las aletas: sale en rampa, canto recto, bisel arriba)
+        const w = u < 0.27 ? 1.5 + (u / 0.27) * 3.3 : u < 0.67 ? 4.8 + ((u - 0.27) / 0.4) * 0.3 : 5.1 - ((u - 0.67) / 0.33) * 4.1;
+        if (Math.abs(c) > w) continue;
+        const f = Math.abs(c) / w;
+        let col;
+        // los cantos de las aletas de los lados, la de en medio y el alma
+        if (f > 0.8) col = c < 0 ? P.steel5 : P.steel3;
+        else if (Math.abs(f - 0.4) < 0.11) col = c < 0 ? P.steel4 : P.steel2;
+        else if (f < 0.1) col = u > 0.15 ? P.steel3 : P.iron3;
+        else col = shade(IRON, 0.58 - c * 0.05 + (f > 0.5 ? -0.08 : 0.04), x, y);
+        b.set(x, y, col);
+      }
+    // el collar y la perilla
+    seg(b, 18.4, 13.6, 20.2, 11.8, 1.5, 1.5, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+    seg(b, 27.1, 4.9, 29.4, 2.6, 1.25, 0.3, (t, s) => (s < 0 ? P.iron5 : P.iron2));
+    sparkle(b, 21, 5);
+    b.outline(P.void);
+  },
+  // martillo de guerra: el mango largo de fresno en diagonal, con sus dos
+  // empuñaduras de cuero, el regatón y las lengüetas de hierro arriba; la
+  // cabeza, de través: la boca dentada (abajo a la derecha), el pico de cuervo
+  // (arriba a la izquierda) y la punta, siguiendo el mango
+  warhammer(b) {
+    seg(b, 4, 29, 21, 12, 1.25, 1.25, (t, s, x, y) => (s < -0.35 ? P.wood4 : s > 0.45 ? P.wood1 : shade(WOOD, 0.58 + (bayer(x, y) - 0.5) * 0.22, x, y)));
+    for (const [t0, t1] of [
+      [0.08, 0.2],
+      [0.34, 0.46],
+    ])
+      seg(b, 4 + 17 * t0, 29 - 17 * t0, 4 + 17 * t1, 29 - 17 * t1, 1.55, 1.55, (t, s, x, y) => ((x + y) % 2 ? (s < 0 ? P.wood3 : P.wood2) : s < 0 ? P.wood2 : P.wood1));
+    seg(b, 4, 29, 2.4, 30.6, 1.5, 1.2, (t, s) => (s < 0 ? P.iron4 : P.iron2));
+    seg(b, 16.6, 16.4, 20.6, 12.4, 1.5, 1.5, (t, s, x, y) => (s < -0.3 ? P.iron4 : s > 0.4 ? P.iron1 : shade(IRON, 0.5, x, y)));
+    // la cabeza, en el marco del mango (a, a lo largo; c, de través: c > 0,
+    // la boca, abajo a la derecha)
+    const hx = 22,
+      hy = 11,
+      K = Math.SQRT1_2;
+    for (let y = 0; y < 32; y++)
+      for (let x = 0; x < 32; x++) {
+        const px = x + 0.5 - hx,
+          py = y + 0.5 - hy;
+        const a = (px - py) * K,
+          c = (px + py) * K;
+        let col = null;
+        // el alma
+        if (Math.abs(a) <= 2.4 && Math.abs(c) <= 1.9) col = shade(IRON, 0.52 - c * 0.06 - a * 0.03, x, y);
+        // la boca: cuadrada, se abre hacia la cara, que es de acero, con sus
+        // dientes
+        if (c > 1.6 && c <= 7 && Math.abs(a) <= 2.3 + (c - 1.6) * 0.14) col = c > 6 ? ((Math.round(a) + 8) % 2 ? P.steel5 : P.steel3) : shade(IRON, 0.64 - (c - 1.6) * 0.03 + (a > 0.6 ? 0.1 : a < -0.6 ? -0.1 : 0), x, y);
+        // el pico de cuervo: largo, se afila y se vence hacia el mango
+        if (c < -1.6 && c >= -10.4) {
+          const k = (-c - 1.6) / 8.8;
+          const mid = -k * k * 2.4;
+          const hw = 1.5 * (1 - k) + 0.15;
+          if (Math.abs(a - mid) <= hw) col = a - mid > hw * 0.25 ? P.iron5 : shade(IRON, 0.48 - k * 0.15, x, y);
+        }
+        // la punta de arriba, corta
+        if (a > 2.2 && a <= 6.2 && Math.abs(c) <= 1.1 * (1 - (a - 2.2) / 4) + 0.12) col = c < 0 ? P.iron5 : P.iron2;
+        if (col) b.set(x, y, col);
+      }
+    sparkle(b, 27, 13);
+    b.outline(P.void);
+  },
   // lanza: asta larga, regatón, cubo con aletas, lazo rojo y moharra en hoja
   // de laurel con su nervio
   spear(b) {

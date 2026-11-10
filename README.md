@@ -788,7 +788,8 @@ la acometida se desvía cuando la punta está a punto de llegar). En el aire no 
 por **el pendón**, lo arranca de su asta y sigue con él en la izquierda: todo más deprisa y **la carga del pendón**,
 vuelta y media con la tela tendida que barre cuatro metros y medio (no se para: se esquiva). Lleva
 **armadura**: contra él, cada arma hace sólo lo que permite su calidad (la espada oxidada, la mitad; la de la
-guardia, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la espada de Solingen, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
+guardia, el 65 %; la lanza, el 70 %; el hacha y la ballesta, el 75 %; la maza, el 85 %; el martillo de guerra, el
+95 %; la espada de Solingen, todo). Tras un golpe crítico, los siguientes no te encadenan en el suelo (un respiro para levantarse).
 Vencido, no muere ahí: **la escena del final**. Herido, se endereza y deja caer la espada con todo el cuerpo; tu hoja
 la para y **chocan**, hoja contra hoja, a cámara lenta. En el pulso le arden los ojos tras las rendijas del yelmo y,
 de pronto, se le apagan: **se da cuenta** de que no es él quien empuja. Te aparta y **salta hacia atrás**, lejos,
@@ -803,7 +804,9 @@ cruz. Arriba quedan su espada clavada y el pendón del Rey tirado en el suelo. (
 en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
 con su arco y su reja, que también para la cámara; nada más salir de la tuya, **el guardia muerto**, boca abajo, con
 **la espada oxidada clavada en la espalda** hasta las losas y **su escudo de madera** todavía al brazo: el escudo se le
-quita y la espada se le arranca —se la ve salir del cuerpo—, y al arrancarla algo se levanta en la celda del fondo),
+quita y la espada se le arranca —se la ve salir del cuerpo—, y al arrancarla algo se levanta en la celda del fondo;
+dos celdas más allá de la tuya, en la de la reja abierta, **la maza de los carceleros**, tirada en el suelo en una
+mancha de sangre seca),
 el cuarto del carcelero y la sala del
 tormento (el potro con su condenado atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los
 hierros). Cavadas junto a una necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros
@@ -961,7 +964,7 @@ El brazo del escudo lo lleva con soltura (muelles de guiñada, cabeceo y alabeo,
 marcha y carrera) y, si aun así fuera a meterse en el torso, la hombrera, la cadera o la pierna, se aparta; al trotar
 y correr la hoja va por delante.
 
-**Armas.** Seis armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
+**Armas.** Ocho armas, cada una con su modelo, su estela, sus sonidos y su repertorio completo (combo ligero,
 pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y curación), y con sus **cualidades**
 (`STATS`, en `entities/weapons.js`), que se ven en su ficha del inventario y hacen lo que dicen:
 - **Peso**: cuanto más pesa, más despacio va (la oxidada, más ligera, golpea un 6 % más deprisa; la de Solingen, un
@@ -971,19 +974,20 @@ pesado, ataque a la carrera, ataque al salir de la voltereta, guardia, bloqueo y
   que devuelve un desvío, lo que cuesta bloquear con el arma (a dos manos) y lo que cansa que te paren un golpe.
 - **Crítico**: la probabilidad de que un golpe cualquiera salga crítico (además de los de siempre: por la espalda, sin
   que se lo espere, tras un parry); del 3 % de la oxidada al 10 % de la ballesta. También los virotes.
-- **Filo, golpe pesado, alcance y aguante**: los de su repertorio (la familia de la espada, en `swordVariant`: la
+- **Filo (o golpe, en las contundentes), golpe pesado, alcance y aguante**: los de su repertorio (la familia de la espada, en `swordVariant`: la
   oxidada corta el 42,5 % —la mitad, y de eso un 15 % menos—, cansa un 15 % menos y alcanza un 6 % menos; la de
   Solingen corta un 35 % más y alcanza un 4 % más).
 - **Lo especial**, en palabras: a una o a dos manos, a distancia, quiebra guardias…
-- **El tipo de daño** (ver «Los tipos de daño», abajo): las tres espadas, **cortante**; la lanza, **perforante**, y
-  su barrido con el asta, contundente; el hacha, **cortante**, y la onda del suelo que parte, contundente; la
-  ballesta, **perforante** (el virote), y su culatazo, contundente.
+- **El tipo de daño** (ver «Los tipos de daño», abajo): las tres espadas, **cortante**; la maza, sólo
+  **contundente**; la lanza, **perforante**, y su barrido con el asta, contundente; el hacha, **cortante**, y la onda
+  del suelo que parte, contundente; el martillo de guerra, **contundente**, y su pico de cuervo (el remate del combo y
+  el golpe de gracia), perforante; la ballesta, **perforante** (el virote), y su culatazo, contundente.
 
 **Los tipos de daño** (`game/danos.js`). Cada golpe es **cortante** (el filo: tajos y hachazos), **perforante** (la
 punta: estocadas, virotes, dientes) o **contundente** (lo que aplasta: mazazos, culatazos, embestidas, el suelo que se
 parte); lo que no es de ninguno (el fuego, el pus, las esporas, los gritos, el tañido de la campana) no tiene tipo.
 Cada arma tiene el suyo y **las especiales, uno secundario**: el de los golpes de su repertorio que no son como los
-demás (la lanza, el hacha y la ballesta; las espadas sólo cortan). Las **armaduras** paran cada tipo a su manera (lo
+demás (la lanza, el hacha, el martillo de guerra y la ballesta; las espadas sólo cortan y la maza sólo aplasta). Las **armaduras** paran cada tipo a su manera (lo
 de cada pieza, en su ficha; lo que no tiene tipo, lo que paran de media) y las **criaturas** también, en puntos de
 cien (negativo: les hace más daño); cuando aguantan el golpe suena sordo, a hierro, y saltan chispas grises, y cuando
 les hace más daño, más sangre y un parón más largo. Sus golpes también son de un tipo (la hoz corta, los dientes
@@ -1021,13 +1025,22 @@ perforan, el badajo aplasta...). Lo que aguanta cada una:
 Los demás (el Penitente, el mayordomo, la gente) no aguantan nada en especial.
 
 (El facón criollo y la katana sagrada, que no eran de su tiempo, ya no están en el juego; si una partida guardada los
-tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mundo; por el orden en que se encuentran:
+tenía, del modo desarrollador, se le quitan al cargarla.) Todas menos el martillo de guerra están en el mundo; por el
+orden en que se encuentran:
 - **Espada oxidada** (una mano, con escudo; **la primera**: clavada en la espalda del guardia muerto del pasillo de las
   celdas, nada más salir de la tuya): una espada de munición comida de herrumbre, con mellas; se maneja como la de la
   guardia, pero **corta menos de la mitad** (el 42,5 %) y su golpe de gracia, la cuarta parte (27 frente a 108), pesa
   menos (va algo más deprisa y cansa menos), su hoja es más corta, ataja peor y contra armadura hace la mitad.
 - **Escudo de madera** (el del guardia muerto, al brazo): de lágrima, de tablas de pino con el canto de hierro y la
   cruz de Braga.
+- **Maza de armas** (una mano, con escudo; la de los carceleros, en el suelo de **una celda del pasillo**, la tercera
+  del norte, la de la reja abierta, en una mancha de sangre seca): cabeza de hierro de seis aletas con los cantos
+  gastados y brillantes, mango de hierro y puño de cuero; dos palmos y medio. **Sólo aplasta**: lo que es hueso,
+  piedra o bronce lo nota, y contra una cota pasa el 85 %. Más lenta que una espada y con menos alcance, pero cada
+  golpe pesa (el doble que la oxidada) y desequilibra más. Sus golpes, de maza: el de derecha, en diagonal desde
+  encima del hombro; el revés, de vuelta, a la altura del pecho; el mazazo, de arriba abajo; y el del carcelero
+  (pesado), que sube por detrás del hombro, se pone de puntillas y cae con una zancada; todos se quedan abajo, donde
+  golpean, y cada uno llega con el brazo casi estirado.
 - **Espada de la guardia** (antes, «del carcelero»; una mano, con escudo; en la armería de la puerta de la fortaleza,
   apoyada en la muralla al cabo de las astas): la de siempre, más del doble que la oxidada.
 - **Lanza de la muralla** (una mano, con escudo; en **el adarve de levante** de la fortaleza, apoyada en la almena de
@@ -1049,9 +1062,18 @@ tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mu
 
 - **Espada de Solingen** (una mano, con escudo; clavada en el hogar de la Casa del Alemán, ver arriba): un 35 % más
   que la de la guardia.
+- **Martillo de guerra** (dos manos, el escudo a la espalda; se para con el mango; **todavía en ningún sitio**: será de
+  la cripta de la Sé, en una sala suya): mango de fresno de vara y cuarto, herrado arriba con dos lengüetas, y la
+  cabeza de hierro: la boca cuadrada con cuatro dientes de punta de diamante, el pico de cuervo detrás, vencido hacia
+  el mango, y una punta arriba. El más lento y el que más pesa (3,8 kg): cada golpe se carga de lejos, cae con todo
+  el cuerpo detrás, quiebra la guardia y se queda abajo; subirlo cuesta. El golpe de derecha, en diagonal desde el
+  hombro; el barrido, de la izquierda a la derecha a la altura del pecho (la izquierda sube por el mango); **el pico**,
+  el remate, de arriba abajo con el martillo vuelto y el pico por delante (perfora: también el golpe de gracia); y el
+  martillazo (pesado), por encima de la cabeza, echado atrás, que se carga manteniendo el botón y cae con una zancada:
+  la boca da en el suelo y lo parte con una onda. A la carrera, un salto y el martillazo; al correr, al hombro.
 
 Al recogerlas se empuñan y el arma queda guardada en la partida. Para probarlas sin ir a por ellas:
-`?dev=1&arma=hacha` (o `lanza`, `oxidada`, `espada`, `solingen`, `ballesta`).
+`?dev=1&arma=hacha` (o `lanza`, `oxidada`, `maza`, `espada`, `solingen`, `ballesta`, `martillo_guerra`).
 
 Sus animaciones siguen la estructura de un golpe real: anticipación que frena, impacto que se cruza a la velocidad
 máxima y final del tajo que frena desde ahí (una sola campana de velocidad, sin paradas ni rebotes: tangentes
@@ -1060,7 +1082,11 @@ se calcula fotograma a fotograma a lo largo del arco real de la hoja (sin medias
 alinea con el antebrazo) y el codo se elige para que la muñeca quede natural. Las estocadas se definen en el espacio del personaje para ir rectas aunque el torso gire; a dos
 manos, el puño izquierdo se coloca exactamente sobre el mango (y se desliza por él si el brazo no llega). Las
 ventanas de golpe salen del perfil de velocidad de la punta y cada golpe del combo empieza en la pose exacta en que
-se encadena el anterior.
+se encadena el anterior. Las contundentes llevan el peso en la cabeza: se cargan de lejos, caen con el cuerpo detrás
+y se quedan donde golpean. La maza, redonda, no tiene filo: lo que va por delante es el lado de los nudillos, como al
+clavar un clavo (la muñeca no da medias vueltas); en el martillo, la boca, y en el remate, el pico. El mango del
+martillo no cruza el pecho en ningún golpe (lo más, roza el vientre al apoyar la boca en el suelo) ni la mano
+izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
 
 **Criaturas.**
 - **Penitente**: flagelante encapuchado, con clavos en la espalda y una hoz oxidada.
@@ -1427,7 +1453,8 @@ src/
                         carga (ligera, media, pesada);
                         armas: weapons.js (registro y clips comunes), weapon_moves.js
                         (golpes del hacha —y cómo se forcejea con ella clavada y se arranca—, la lanza y la
-                        ballesta), weapon_models.js (modelos) y
+                        ballesta), weapon_moves_blunt.js (los de las contundentes: la maza y el martillo
+                        de guerra), weapon_models.js (modelos) y
                         weapon_common.js (agarre)
   game/                 juego, combate, interacción, cámara, atmósfera, fauna, navegación A* (nav.js: la rejilla plana
                         y la de capas, con escaleras y pisos), interfaz, iconos, guardado, textos y cinemáticas
@@ -1591,7 +1618,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         creador.mjs    el editor de personaje, recorrido con el teclado: la lista, el rostro,
                                        los rasgos, uno al azar sin armadura y, al despertar en la celda, que lo
                                        elegido es lo del jugador y se ha guardado
-                        weapontest.mjs cada arma en el juego: combo, pesado cargado, carrera, voltereta,
+                        weapontest.mjs cada arma en el juego (también la maza y el martillo de guerra):
+                                       combo, pesado cargado, carrera, voltereta,
                                        bloqueo y curación contra un enemigo real; la ballesta, aparte
                                        (montarla, tirar, que se vuelva a montar sola gastando un virote, el
                                        culatazo, el bloqueo y beber)

@@ -1,4 +1,5 @@
-// Prueba de las armas dentro del juego: para cada una, combo ligero completo,
+// Prueba de las armas dentro del juego: para cada una (también la maza y el
+// martillo de guerra), combo ligero completo,
 // pesado (sin cargar y cargado), ataque en carrera, ataque tras la voltereta,
 // bloqueo, curación y (lanza) estocada tras el escudo, contra un enemigo real
 // inmóvil. La ballesta, aparte: montarla, tirar (el virote le da), que se
@@ -12,7 +13,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const p = await b.newPage({ viewport: { width: 480, height: 270 } });
 const errs = [];
 p.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 4).join(' | ')));
-await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,hacha,lanza,oxidada,solingen,ballesta&at=50,0,0&yaw=0');
+await p.goto('http://localhost:5199/?dev=1&items=espada,escudo,hacha,lanza,oxidada,solingen,ballesta,maza,martillo_guerra&at=50,0,0&yaw=0');
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 });
 const res = await p.evaluate((only) => {
   window.__pause = true;
@@ -72,7 +73,7 @@ const res = await p.evaluate((only) => {
   const tap = (k) => (press(k), g.update(1 / 30), release(k));
   const finite = () => isFinite(P.pos.x) && isFinite(P.pos.y) && isFinite(P.pos.z);
   const out = {};
-  for (const id of ['hacha', 'lanza', 'oxidada', 'espada', 'solingen']) {
+  for (const id of ['hacha', 'martillo_guerra', 'lanza', 'oxidada', 'maza', 'espada', 'solingen']) {
     if (only && id !== only) continue;
     P.equipWeapon(id);
     const S = P.set;

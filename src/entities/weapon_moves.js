@@ -1,4 +1,6 @@
-// Repertorio de golpes del hacha, la lanza y la ballesta.
+// Repertorio de golpes del hacha, la lanza y la ballesta (y las utilidades
+// con que se hacen, que usan también la maza y el martillo de guerra:
+// weapon_moves_blunt.js).
 // Convenciones (las mismas que la espada): claves [t, pose, curva, {k}] con
 // ángulos en grados y 'root'/'ik*' en cm; ikR = muñeca derecha en el espacio
 // del pecho (+x izquierda, +y arriba, +z delante), bladeR = [yaw, pitch, roll]
@@ -35,10 +37,10 @@ function fillPoles(keys) {
 const clip = (name, dur, keys, opts = {}) => rigClip(name, dur, fillPoles(keys), { mono: true, ...opts });
 
 // Retrasos por familia de arma (s).
-const LAG_MED = { chest: 0.008, head: 0.018, ikR: 0.016, elbowR: 0.016, bladeR: 0.026 };
-const LAG_HEAVY = { chest: 0.014, head: 0.026, ikR: 0.026, elbowR: 0.026, bladeR: 0.04, wSlide: 0.026 };
+export const LAG_MED = { chest: 0.008, head: 0.018, ikR: 0.016, elbowR: 0.016, bladeR: 0.026 };
+export const LAG_HEAVY = { chest: 0.014, head: 0.026, ikR: 0.026, elbowR: 0.026, bladeR: 0.04, wSlide: 0.026 };
 const LAG_THRUST = { head: 0.02 };
-const HIT = { k: 1.6 };
+export const HIT = { k: 1.6 };
 
 // Brazo derecho y torso solamente (el escudo sigue en alto).
 const RIGHT_ARM = new Set(['chest', 'head', 'armR', 'foreR', 'handR', 'ikR', 'bladeR', 'elbowR']);
@@ -50,7 +52,7 @@ const _q2 = new THREE.Quaternion();
 
 // Muñeca y dirección dadas en el espacio del personaje (cm; yaw 0 = al
 // frente, pitch + arriba) -> canales ikR/bladeR del pecho para esa pose.
-function W2C(rig, body, wrist, blade) {
+export function W2C(rig, body, wrist, blade) {
   const qh = e2q((body.hips || [0, 0, 0]).map((v) => v * DEG), _q1);
   const qc = e2q((body.chest || [0, 0, 0]).map((v) => v * DEG), _q2);
   const root = body.root || [0, 0, 0];
@@ -79,10 +81,11 @@ function bladeState(rig, W, c, t, resolve, back = false) {
   return {
     tip: new THREE.Vector3().fromArray(W.tip).applyMatrix4(sj.matrixWorld),
     axis: new THREE.Vector3(0, 0, 1).applyQuaternion(q),
-    edge: new THREE.Vector3().fromArray(W.edge).multiplyScalar(back ? -1 : 1).applyQuaternion(q),
+    // (las armas redondas, como la maza, no tienen filo)
+    edge: Array.isArray(W.edge) ? new THREE.Vector3().fromArray(W.edge).multiplyScalar(back ? -1 : 1).applyQuaternion(q) : null,
   };
 }
-function edgeClip(ctx, name, dur, keys, opts = {}) {
+export function edgeClip(ctx, name, dur, keys, opts = {}) {
   const { rig, W } = ctx;
   let c = clip(name, dur, keys, opts);
   if (!Array.isArray(W.edge)) return { c, keys };
@@ -302,7 +305,7 @@ function rollTrack(ctx, c, keys, opts, lag) {
 
 // Pose (en unidades de clave) de un clip en el instante t: el siguiente golpe
 // del combo empieza exactamente donde estaba el anterior al encadenarse.
-function poseAt(c, t) {
+export function poseAt(c, t) {
   const p = sampleClip(c, t, {});
   const o = {};
   // (clip() guarda también los polos del codo multiplicados por DEG)
@@ -312,7 +315,7 @@ function poseAt(c, t) {
 
 // Ventanas de golpe a partir del perfil de velocidad real de la punta: los n
 // tramos más rápidos (por encima del 50 % de su pico), un poco ampliados.
-function hitWindows(ctx, c, n = 1, thrust = false) {
+export function hitWindows(ctx, c, n = 1, thrust = false) {
   const { rig, W } = ctx;
   const resolve = resolveArmsFn(rig, W);
   const dt = 1 / 120;
@@ -366,6 +369,11 @@ const ACHOP = { legL: [-50, 0, 8], shinL: [52, 0, 0], legR: [34, 0, -8], shinR: 
 // cuerpo con el mango metido en el pecho.
 const TRONCO = { x: 0.25, y0: -0.42, y1: 0.6, z: 0.17 };
 function clearHaft(pose) {
+  return clearHaftBy(pose, AXE.butt);
+}
+// (lo mismo para cualquier arma de mango largo: butt, lo que llega el mango
+// por detrás de la mano derecha; el martillo de guerra)
+export function clearHaftBy(pose, butt) {
   if (!pose.ikR || !pose.bladeR) return pose;
   const yw = pose.bladeR[0] * DEG,
     pt = pose.bladeR[1] * DEG;
@@ -377,7 +385,7 @@ function clearHaft(pose) {
   let wz = pose.ikR[2] / 100,
     push = 0;
   for (let i = 0; i <= 10; i++) {
-    const u = (i / 10) * AXE.butt;
+    const u = (i / 10) * butt;
     const x = wx + dx * u,
       y = wy + dy * u,
       z = wz + dz * u;
