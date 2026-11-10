@@ -878,7 +878,9 @@ export function bishopTombParts(o = {}) {
   const mb = M4().makeBasis(V(0, 0, 1), V(1, 0, 0), V(0, 1, 0));
   P.push(part(mitre, S, M4().setPosition(xh + 0.035 * e, yh + 0.01 * e, 0).multiply(mb).multiply(M4().makeScale(e, e, e)), ST));
   box(xh + 0.06 * e, yh + 0.01 * e, 0, 0.03 * e, 0.135 * e, 0.185 * e, T.map((c) => c * 1.08));
-  // el báculo, al costado derecho, con su voluta junto a la almohada
+  // el báculo, al costado derecho, con su voluta junto a la almohada (sin él,
+  // o.baculo false: el obispo Sisnando, que lleva ahí su martillo de verdad)
+  if (o.baculo === false) return P;
   const zb = 0.24 * e;
   P.push(sleeve(V(X(0.12), yl + 0.03 * e, zb), V(X(1.5), yl + 0.11 * e, zb), 0.016 * e, 0.016 * e, S, T.map((c) => c * 1.06)));
   P.push(part(geo('crook', () => new THREE.TorusGeometry(1, 0.22, 5, 12, Math.PI * 1.5)), S, TRS(X(1.5) + 0.06 * e, yl + 0.11 * e, zb - 0.05 * e, Q(-Math.PI / 2, 0, Math.PI), 0.065 * e), T.map((c) => c * 1.06)));

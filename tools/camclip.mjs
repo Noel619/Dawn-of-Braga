@@ -65,7 +65,10 @@ const r = await p.evaluate(() => {
     // la bajada), San Martín (nave, osario, capilla, pórtico), la
     // antesala (tribuna, escalinata, nave, estrado) y el pozo; las catacumbas
     // (galerías, cubículo, escaleras), los Inocentes y el relicario; el paso
-    // del arzobispo, el martyrium, la pila de los mártires y la sacristía
+    // del arzobispo, el martyrium, la pila de los mártires y la sacristía; la
+    // capilla de Sisnando (tras el arco, la nave, el rincón de la reclusa, la
+    // grada y tras el sepulcro, junto a la reja)
+    [-23, -7, -122.6], [-20.3, -7, -127], [-25.7, -7, -125], [-21, -7, -131.5], [-23, -6.8, -135.0], [-20.2, -7, -135.4],
     [0, -7, -134.5], [-23.2, -7, -118], [-30, -8.2, -125], [-63, -8.2, -128.25], [-57, -8.2, -125], [-37, -10.6, -118.5], [-40, -8.2, -133], [-40, -9.4, -104],
     [-74, -8.2, -140], [-80.5, -8.2, -146], [-89.5, -8.2, -146], [-74, -7.6, -171], [-63, -8.2, -152],
     [-58, -8.2, -152], [-52, -10.6, -152], [-40, -13, -160], [-20, -10, -152], [-36.5, -14.5, -169.25], [-36, -16, -184],

@@ -34,7 +34,9 @@ import { RNG } from '../core/util.js';
 import { stairs, archRing, barrelVault, rampVault, groinVaults, lunette, pilaster, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
-import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
+import { bakeParts, skullParts, boneParts, bishopTombParts } from './ossuary_props.js';
+import { HAMMER } from '../entities/weapon_models.js';
+import { MAT_DEFS } from '../gfx/materials.js';
 import { buildOsarioMartin, OSM } from './osario_martin.js';
 import { buildPanteon, PAN, GAL, PASO, BAJADA } from './panteon.js';
 import { buildLucernario, LUC } from './lucernario.js';
@@ -114,6 +116,11 @@ export const DEEP = {
   martyr: { x0: 22, z0: -137.5, x1: 35, z1: -107.5 },
   fontHall: { x0: 22, z0: -164.5, x1: 35, z1: -141.5 },
   sacristy: { x0: 23, z0: -107, x1: 34, z1: -95.5, door: { x: 28.5, z: -107.25, w: 2 } },
+  // la capilla de Sisnando (el martillo de guerra): tras el tabique del muro
+  // norte del rellano entre el panteón y el templo; una nave de tres tramos
+  // con su bóveda de cañón (arranque, flecha), el sepulcro al norte, en su
+  // grada, y en el testero la reja que da a lo alto de la antesala
+  sisnando: { x0: -26.5, z0: -136, x1: -19.5, z1: -121.5, YS: Y + 3.0, rise: 2.0, door: { x0: -24, x1: -22, z0: -121.5, z1: -120.5, ys: Y + 1.7 }, win: { x0: -23.7, x1: -22.3, y0: Y + 0.95, y1: Y + 2.25 }, tomb: { x: -23, z: -133, step: 0.2 } },
   // los Velados, a los lados de la puerta
   guards: [
     { x: -21, z: -155.6 },
@@ -186,6 +193,10 @@ function layout() {
   add('obisposRellano', [lx, pz - 2, xt, pz + 2], Y, ys, { ...ash, ceil: false, base: Y1, skip: 'e', zone: 'obispos' });
   add('obisposPeldanos', [PASO.x0, pz - 2, lx, pz + 2], Y1, ys, { ...ash, ceil: false, floor: false, stair: { axis: 'x', a0: PASO.x0, a1: lx, y0: Y1, y1: Y }, zone: 'obispos' });
   add('temploPuerta', [xt, TEMPLO.west.z - TEMPLO.west.w / 2, TEMPLO.x0, TEMPLO.west.z + TEMPLO.west.w / 2], Y, Y + 2.2, { ceil: false, walls: false, zone: 'roman' });
+  // la capilla de Sisnando y su arco (tapiado: game/interact.js lo derriba)
+  const SI = D.sisnando;
+  add('sisnandoPuerta', [SI.door.x0, SI.door.z0, SI.door.x1, SI.door.z1], Y, SI.door.ys, { ...ash, ceil: false, arch: SI.door.ys, zone: 'capilla_sisnando' });
+  add('sisnando', [SI.x0, SI.z0, SI.x1, SI.z1], Y, SI.YS, { ...ash, ceil: false, zone: 'capilla_sisnando' });
   // los tres arcos a la cripta de San Martín
   for (const [c, w] of ARCADE) add('obisposArco', [-64, c - w / 2, -62, c + w / 2], Y1, Y1 + 1.6, { ...ash, ceil: false, arch: Y1 + 1.6, zone: 'obispos' });
   // la bajada a las catacumbas (en el eje de la rotonda)
@@ -793,7 +804,12 @@ export function buildDeepCrypt(ctx, C, L) {
 
   // las ventanas: la gran reja del panteón (a la nave lateral del sur de la
   // antesala) y la de la Confesión (a la cisterna)
-  const WIN = [{ x0: PAN.cx - 1.5, z0: -137, x1: PAN.cx + 1.5, z1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 }];
+  // (y la de la capilla de Sisnando, en lo alto del muro sur de la antesala)
+  const SW = D.sisnando.win;
+  const WIN = [
+    { x0: PAN.cx - 1.5, z0: -137, x1: PAN.cx + 1.5, z1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 },
+    { x0: SW.x0, z0: -137, x1: SW.x1, z1: D.sisnando.z0, y0: SW.y0, y1: SW.y1 },
+  ];
   const CW = D.confessio.win;
   const holes = [...WIN, { x0: CW.x0, z0: D.confessio.z0, x1: CW.x1, z1: D.confessio.z0 + 0.2, y0: CW.y0, y1: CW.y1 }];
   const runs = [];
@@ -858,6 +874,7 @@ export function buildDeepCrypt(ctx, C, L) {
   grille(ctx, { axis: 'x', u0: PAN.cx - 1.5, u1: PAN.cx + 1.5, t0: -137, t1: -136, y0: Y1 + 0.6, y1: Y1 + 3.0 });
   L.phantoms.push({ x: -57, y: Y1, z: -131, trigger: [-30, Y1, PAN.cz], kind: 'mourner' });
   buildMartin(ctx, L, rng, C);
+  buildSisnando(ctx, L);
   buildAntesala(ctx, L);
   buildPozo(ctx, L);
   buildCatacumbas(ctx, C, L);
@@ -875,6 +892,7 @@ export function buildDeepCrypt(ctx, C, L) {
     obispos: 'crypt',
     martin: 'crypt',
     capilla_martin: 'chapel',
+    capilla_sisnando: 'chapel',
     osario_martin: 'crypt',
     antesala: 'sanctum',
     pila_honda: 'crypt',
@@ -902,6 +920,152 @@ export function buildDeepCrypt(ctx, C, L) {
     if ((g.ghost && !g.area) || !g.zone || !ZONES[g.zone]) continue;
     L.map.push({ id: g.zone, r: [g.r[0], g.r[1], g.r[2], g.r[3]], level: 'crypt' });
   }
+}
+
+// ------------------------------------------------------------ la capilla de Sisnando
+// El obispo que salió a la hueste con un martillo: un clérigo no puede
+// derramar sangre, y la boca de un martillo no la derrama; el pico, sí. El
+// cabildo no lo quiso entre sus hermanos del panteón: lo enterraron aparte,
+// en esta capilla del paso, con su martillo y mirando a la puerta del dios
+// (por la reja del testero se ve lo alto de la antesala), y tapiaron el arco
+// con la reclusa que pidió quedarse a rezar por él (la Emparedada; le pasaban
+// el pan por el ventanuco del tabique). Una nave de tres tramos, con bóveda
+// de cañón sobre fajones y pilastras; al norte, en su grada, el sepulcro, y
+// en él, donde los obispos llevan el báculo, el martillo de guerra (lo que se
+// coge). El tabique lo derriba game/interact.js (mat 'tabique').
+function buildSisnando(ctx, L) {
+  const wb = ctx.wb;
+  const SI = DEEP.sisnando,
+    DR = SI.door,
+    W = SI.win,
+    TB = SI.tomb;
+  const cx = (SI.x0 + SI.x1) / 2,
+    span = SI.x1 - SI.x0;
+  // la bóveda, sus lunetos y los fajones, con sus pilastras
+  barrelVault(ctx, { x0: SI.x0, z0: SI.z0, x1: SI.x1, z1: SI.z1, axis: 'z', ys: SI.YS, rise: SI.rise, mat: 'ashlar', tint: VT, room: ROOM, sub: 1.0, impostTint: AT });
+  lunette(ctx, { axis: 'z', at: SI.z0, c: cx, span, ys: SI.YS, rise: SI.rise, face: 1, mat: 'ashlar', tint: OT, room: ROOM });
+  lunette(ctx, { axis: 'z', at: SI.z1, c: cx, span, ys: SI.YS, rise: SI.rise, face: -1, mat: 'ashlar', tint: OT, room: ROOM });
+  crown(ctx, SI.x0, SI.z0, SI.x1, SI.z1, SI.YS + SI.rise);
+  const FAJ = [SI.z0 + (SI.z1 - SI.z0) / 3, SI.z0 + (2 * (SI.z1 - SI.z0)) / 3];
+  for (const z of FAJ) {
+    archRing(ctx, { axis: 'x', c: cx, w: span - 0.4, y0: SI.YS, rise: SI.rise - 0.25, ring: 0.3, t0: z - 0.28, t1: z + 0.28, mat: 'ashlar', room: ROOM, tint: AT, cam: false });
+    pilaster(ctx, SI.x0, z, 'e', Y, SI.YS, { room: ROOM, tint: AT, w: 0.56, d: 0.2 });
+    pilaster(ctx, SI.x1, z, 'w', Y, SI.YS, { room: ROOM, tint: AT, w: 0.56, d: 0.2 });
+  }
+
+  // el arco del tabique, por el grueso del muro, con sus enjutas hasta las
+  // dos bóvedas (la del paso del panteón arranca a la misma altura)
+  const dc = (DR.x0 + DR.x1) / 2,
+    dw = DR.x1 - DR.x0,
+    tz = (DR.z0 + DR.z1) / 2;
+  arch(ctx, { axis: 'x', c: dc, w: dw, y0: DR.ys, rise: dw / 2, ring: 0.3, t0: DR.z0, t1: DR.z1, top: SI.YS, clip: [DR.x0, DR.x1] });
+  // el tabique: piedra seca y cal vieja que llena el arco, con el ventanuco
+  // del pan (enrejado) y una cruz grabada encima; caído, sus escombros a los
+  // dos lados
+  ctx.beginGroup('puerta:d_sisnando');
+  {
+    const hw = dw / 2 - 0.01,
+      hy = DR.ys - Y;
+    const sh = new THREE.Shape();
+    sh.moveTo(-hw, 0);
+    sh.lineTo(hw, 0);
+    sh.lineTo(hw, hy);
+    for (let i = 1; i <= 12; i++) sh.lineTo(Math.cos((Math.PI * i) / 12) * hw, hy + Math.sin((Math.PI * i) / 12) * hw);
+    sh.lineTo(-hw, 0);
+    const wy = 1.3,
+      ww = 0.13,
+      wh = 0.1;
+    const win = new THREE.Path();
+    win.moveTo(-ww, wy - wh);
+    win.lineTo(-ww, wy + wh);
+    win.lineTo(ww, wy + wh);
+    win.lineTo(ww, wy - wh);
+    win.lineTo(-ww, wy - wh);
+    sh.holes.push(win);
+    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.36, bevelEnabled: false, curveSegments: 12 });
+    g.translate(0, 0, -0.18);
+    wb.geometry('wallstone', g, M4().setPosition(dc, Y, tz), { room: ROOM, tint: [0.84, 0.82, 0.76], uvScale: MAT_DEFS.wallstone.uv, ao: false });
+    // los barrotes del ventanuco y la cruz, del lado del paso
+    for (const u of [-0.045, 0.045]) wb.box('iron', dc + u - 0.012, Y + wy - wh, tz - 0.02, dc + u + 0.012, Y + wy + wh, tz + 0.02, { ao: false, room: ROOM });
+    const zf = tz + 0.18;
+    wb.box('black', dc - 0.018, Y + wy + 0.28, zf, dc + 0.018, Y + wy + 0.74, zf + 0.004, { faces: 's', ao: false, grime: false, room: ROOM });
+    wb.box('black', dc - 0.14, Y + wy + 0.52, zf, dc + 0.14, Y + wy + 0.56, zf + 0.004, { faces: 's', ao: false, grime: false, room: ROOM });
+    // la cal que rebosa de las juntas
+    for (let k = 0; k < 5; k++) {
+      const y = Y + 0.3 + k * 0.38;
+      if (Math.abs(y - (Y + wy)) < 0.16) continue;
+      wb.box('plaster', dc - hw + 0.06, y, zf, dc + hw - 0.06, y + 0.035, zf + 0.012, { faces: 'stb', ao: false, room: ROOM, tint: [0.92, 0.9, 0.84] });
+    }
+  }
+  ctx.endGroup();
+  ctx.beginGroup('puerta:d_sisnando:ruina');
+  P.rubble(ctx, dc + 0.2, Y, DR.z0 - 0.9, 9, 7301, 0.9, { mat: 'wallstone', scale: 0.85, blocks: 0.5 });
+  P.rubble(ctx, dc - 0.3, Y, DR.z1 + 0.55, 5, 7302, 0.55, { mat: 'wallstone', scale: 0.6 });
+  ctx.endGroup();
+  L.interact.push({ kind: 'door', id: 'd_sisnando', label: 'Derribar el tabique', x: dc, y: Y, z: tz, w: dw, h: DR.ys - Y + dw / 2, axis: 'x', mat: 'tabique', lock: { type: 'none', msg: 'sisnandoCae', sound: 'swingHeavy' }, dust: [0.7, 0.67, 0.6] });
+  // en el rellano, junto al arco, la lápida del cabildo
+  const px = DR.x1 + 1.25;
+  plaque(ctx, px, Y + 1.75, DR.z1 + 0.04, 's', 1.1, 0.7);
+  L.interact.push({ kind: 'note', id: 'n_sisnando', note: 'sisnando', x: px, y: Y + 1.4, z: DR.z1 + 0.45, model: 'wall', r: 1.8 });
+
+  // la reja del testero, por el grueso del muro: a lo alto de la antesala (y,
+  // de ella, la luz roja)
+  const wc = (W.x0 + W.x1) / 2;
+  grille(ctx, { axis: 'x', u0: W.x0, u1: W.x1, t0: -137, t1: SI.z0, y0: W.y0, y1: W.y1 });
+  ctx.lights.push({ x: wc, y: Y + 1.9, z: SI.z0 + 0.9, r: 1, g: 0.32, b: 0.18, radius: 6, intensity: 0.7, room: ROOM });
+  // (y, del otro lado, el resplandor de sus velas en el muro de la antesala:
+  // desde abajo se ve que hay algo encendido ahí arriba)
+  ctx.lights.push({ x: wc, y: (W.y0 + W.y1) / 2, z: -137.6, r: 1, g: 0.7, b: 0.4, radius: 4.2, intensity: 1.3, room: ROOM });
+
+  // la grada y el sepulcro, con la cabecera al norte, mirando a la reja
+  const ty = Y + TB.step;
+  wb.box('ashlar', TB.x - 2.0, Y, TB.z - 2.4, TB.x + 2.0, ty, TB.z + 2.4, { faces: 'tnsew', ao: false, room: ROOM, tint: AT });
+  ctx.col.add(TB.x - 2.0, Y, TB.z - 2.4, TB.x + 2.0, ty, TB.z + 2.4);
+  const O = { L: 1.1, W: 0.5, baculo: false };
+  const mt = M4().makeRotationY(Math.PI / 2).setPosition(TB.x, ty, TB.z);
+  bakeParts(wb, bishopTombParts(O), mt, { room: ROOM });
+  ctx.col.addOBB(TB.x, TB.z, O.L + 0.08, O.W + 0.08, Math.PI / 2, ty, ty + 1.1);
+  // el martillo, sobre la tapa, donde los obispos llevan el báculo: a su
+  // derecha, con la cabeza junto al hombro, la boca dentada contra la losa y
+  // el pico hacia arriba; el mango, hasta los pies, apoyado en el regatón (en
+  // el marco del sepulcro: +x hacia la cabecera, +z a la derecha del yacente)
+  {
+    const yl = 0.92, // (la losa de la tapa: bishopTombParts)
+      lo = 0.138, // (lo que bajan del eje del mango los dientes de la boca)
+      lb = 0.024; // (y el regatón)
+    const zH = HAMMER.head,
+      zB = HAMMER.butt - 0.016;
+    const al = Math.asin((lo - lb) / (zH - zB));
+    const Zf = V(Math.cos(al), Math.sin(al), 0),
+      Yf = V(-Math.sin(al), Math.cos(al), 0),
+      Xf = V(0, 0, -1);
+    const head = V(0.42, yl + lo, 0.3);
+    const org = head.clone().addScaledVector(Yf, 0.05).addScaledVector(Zf, -zH);
+    const m = mt.clone().multiply(M4().makeTranslation(org.x, org.y, org.z)).multiply(M4().makeBasis(Xf, Yf, Zf));
+    const pos = V(0, 0, 0),
+      q = new THREE.Quaternion(),
+      sc = V(1, 1, 1);
+    m.decompose(pos, q, sc);
+    L.interact.push({ kind: 'item', id: 'i_martillo_guerra', item: 'martillo_guerra', x: pos.x, y: pos.y, z: pos.z, raw: true, quat: q.toArray(), r: 1.7 });
+  }
+  L.interact.push(
+    { kind: 'examine', id: 'x_sisnando', text: 'sisnandoSepulcro', x: TB.x, y: ty, z: TB.z + O.L + 0.55, r: 1.5 },
+    { kind: 'examine', id: 'x_sisnando_reja', text: 'sisnandoReja', x: wc, y: ty, z: SI.z0 + 0.75, r: 1.3 }
+  );
+  // velas en las esquinas de la grada y una corona en el tramo de en medio
+  for (const [sx, sz, n, seed] of [
+    [-1, -1, 5, 7311],
+    [1, -1, 4, 7312],
+    [-1, 1, 3, 7313],
+    [1, 1, 5, 7314],
+  ])
+    P.candles(ctx, TB.x + sx * 1.6, ty, TB.z + sz * 2.0, n, seed, { room: ROOM, radius: 4.5, intensity: 0.85, spread: 0.2 });
+  P.candleCrown(ctx, cx, SI.YS - 0.55, (FAJ[0] + FAJ[1]) / 2, SI.YS + SI.rise - 0.05, { room: ROOM, r: 0.55, n: 6, radius: 8.5, intensity: 1.1 });
+  // (la luz de las velas sobre el yacente)
+  ctx.lights.push({ x: TB.x + 0.6, y: ty + 2.2, z: TB.z + 0.4, r: 1, g: 0.74, b: 0.46, radius: 5.5, intensity: 0.7, room: ROOM });
+  // el rincón de la reclusa, junto al arco: su jergón y su escudilla
+  wb.box('straw', SI.x0 + 0.15, Y, SI.z1 - 2.3, SI.x0 + 1.1, Y + 0.14, SI.z1 - 0.35, { faces: 'tnsew', ao: false, room: ROOM });
+  wb.cylinder('wooddark', SI.x0 + 1.4, Y, SI.z1 - 0.7, 0.09, 0.07, 0.06, 8, { ao: false, capTop: true, room: ROOM });
 }
 
 // ------------------------------------------------------------ la Confesión
@@ -1253,10 +1417,8 @@ function buildAntesala(ctx, L) {
     giantVeiled(ctx, x, DY, H.z1 - 1.3, Math.PI, 1.0);
   }
   // estandartes: negros al norte, rojos al sur (y uno sobre la reja del pozo)
-  for (const x of [-22.5]) {
-    P.banner(ctx, x, YS - 0.2, H.z0 + 0.08, 0, 'bannerBlack', 1.3, 3.6);
-    P.banner(ctx, x, YS - 0.2, H.z1 - 0.08, Math.PI, 'bannerRed', 1.3, 3.6);
-  }
+  // (en el muro sur, frente al negro, la reja de la capilla de Sisnando)
+  for (const x of [-22.5]) P.banner(ctx, x, YS - 0.2, H.z0 + 0.08, 0, 'bannerBlack', 1.3, 3.6);
   P.banner(ctx, -36.5, YS - 0.2, H.z0 + 0.08, 0, 'bannerBlack', 1.6, 3.4);
   for (const z of [H.z0 + 3.2, H.z1 - 3.2]) P.banner(ctx, TR.x0 + 0.08, YS - 0.2, z, Math.PI / 2, z < -152 ? 'bannerBlack' : 'bannerRed', 1.3, 3.0);
   // braseros: al pie de la escalinata, al pie del estrado y en la tribuna
@@ -2002,6 +2164,9 @@ function buildCreatures(L) {
   const cxr = (CL.x0 + CL.x1) / 2,
     czr = (CL.z0 + CL.z1) / 2;
   L.enemies.push(
+    // la capilla de Sisnando: la reclusa que pidió quedarse con él, tapiada
+    // en vida, de cara al muro, con las manos en la piedra
+    e('emparedada', D.sisnando.x0 + 0.72, Y, -128.8, 'e_sisnando', { idle: 'walled', yaw: -Math.PI / 2 }),
     // la sala de los obispos
     e('penitent', -44.5, Y1, -123.6, 'e_ob1', { idle: 'pray', yaw: Math.PI }),
     e('penitent', -57, Y1, -118, 'e_ob2', { idle: 'kneel', yaw: Math.PI / 2 }),

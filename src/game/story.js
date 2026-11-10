@@ -6,8 +6,8 @@ export const ITEMS = {
   // oxidada en el pasillo de las celdas y la maza en una de ellas, la de la
   // guardia y la ballesta en la puerta de la fortaleza, la lanza en el adarve
   // de levante, el hacha en la barricada del Postigo (la arranca en la escena
-  // de la Bestia) y la de Solingen en la casa de Henrique. El martillo de
-  // guerra, todavía en ninguna: será de la cripta de la Sé, en una sala suya.
+  // de la Bestia), la de Solingen en la casa de Henrique y el martillo de
+  // guerra en la capilla de Sisnando, en la cripta honda de la Sé.
   hacha: {
     name: 'Hacha barbada',
     desc: 'Hacha de mango largo de los leñadores del Gerês. Estaba clavada hasta el ojo en la estaca de la barricada de lo alto del Postigo, y nadie había podido sacarla; la arrancaste cuando la Bestia de Carne se te echó encima. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
@@ -38,7 +38,7 @@ export const ITEMS = {
   },
   martillo_guerra: {
     name: 'Martillo de guerra',
-    desc: 'Martillo de guerra a dos manos, de los que se forjaban para abrir yelmos: mango de fresno de vara y cuarto, herrado arriba con dos lengüetas, y la cabeza de hierro, con la boca cuadrada y dentada, el pico de cuervo detrás y una punta arriba. Lento, y con el escudo a la espalda: cada golpe se carga de lejos y cae con todo el cuerpo detrás. La boca aplasta; el pico, el remate y el golpe de gracia, perfora. El pesado se carga y parte el suelo.',
+    desc: 'El martillo del obispo Sisnando, que salió a la hueste con él porque un clérigo no puede derramar sangre, y la boca de un martillo no la derrama: rompe. Pero tenía pico, y por eso el cabildo no lo quiso entre los obispos: lo enterraron aparte, con el martillo a su derecha, donde los otros llevan el báculo, y tapiaron su capilla. Mango de fresno de vara y cuarto, herrado arriba; la cabeza, con la boca cuadrada y dentada, el pico de cuervo detrás y una punta arriba. Lento, y con el escudo a la espalda: cada golpe se carga de lejos y cae con todo el cuerpo detrás. La boca aplasta; el pico, el remate y el golpe de gracia, perfora. El pesado se carga y parte el suelo.',
     icon: 'warhammer',
     key: false,
     weapon: 'martillo_guerra',
@@ -1033,6 +1033,20 @@ TRES PILAS DE SANGRE TIENE EL DIOS: LA DE LOS INOCENTES, LA DE LOS MÁRTIRES Y L
 
 Y más abajo, de otra mano: «La de los Inocentes, en lo más hondo de las catacumbas. La de los Mártires, en su cripta, tras el sepulcro del arzobispo. La de los Condenados, bajo la antesala, donde ya no se sube. Siete tirones de cadena cada compuerta».`,
   },
+  sisnando: {
+    title: 'Lápida del arco tapiado',
+    text: `Junto al arco tapiado del paso del panteón, en latín, y debajo, a carbón, en romance:
+
+SISNANDVS EPISCOPVS · MALLEO NON GLADIO
+
+«Sisnando, obispo: con el martillo, no con la espada.»
+
+Salió a la hueste con el rey y peleó con un martillo, porque un clérigo no puede derramar sangre, y la boca de un martillo no la derrama: rompe. Pero el suyo tenía pico.
+
+Más abajo, el acuerdo del cabildo: que no yazga con sus hermanos; que se le entierre aparte, aquí, con su martillo y mirando a la puerta, «por si un día hace falta»; y que la reclusa que pidió quedarse a rezar por él se quede, tapiada, y que se le pase el pan por el ventanuco.
+
+Por el ventanuco del tabique, entre los barrotes, sale luz de velas.`,
+  },
   velados: {
     title: 'Inscripción de los Velados',
     text: `Junto al pórtico, en letras romanas:
@@ -1688,6 +1702,9 @@ export const MSG = {
   carcelBaja: 'Bajas por la escalera de mano al cuerpo de guardia de la cárcel.',
   libroPresos:
     'El libro de presos. La última entrada, de otra mano y torcida: «El de la celda del fondo no come. Toda la noche discute con alguien que no está, y le dice que no. Escribe en la pared con los dedos; ya no tiene uñas. Los otros se arriman a la reja para no oírle.»',
+  sisnandoCae: 'Embistes el tabique con el hombro. La cal, de hace siglos, se deshace en polvo y las piedras caen hacia dentro. Huele a cera fría y a cerrado. Al fondo, alguien reza de cara al muro.',
+  sisnandoSepulcro: 'El sepulcro del obispo Sisnando, apartado de los del panteón. El yacente tiene las manos juntas y la mitra, y el león a los pies; donde los otros obispos llevan el báculo, a su derecha, tiene un martillo de verdad, con la boca dentada contra la losa y el pico hacia arriba. A los pies, a punta de cuchillo, en romance: «EL PICO SÍ».',
+  sisnandoReja: 'La reja del testero da a lo alto de la antesala: desde aquí se ven la puerta del dios, con su luz roja, y a sus lados los Velados. Lo enterraron mirándolos.',
   primerObispo: 'El sepulcro más viejo del panteón, en el fondo del pozo. El obispo tiene la cara tapada con un paño de piedra, como los Velados. En el canto de la tapa, en latín, y debajo, a carbón, en romance: «FUI EL PRIMERO QUE BAJÓ, Y EL PRIMERO QUE NO QUISO VER».',
   osarioLetrero: 'En lo alto de los muros, sobre las filas de los hermanos, en letras negras: «NÓS OSSOS QUE AQUI ESTAMOS PELOS VOSSOS ESPERAMOS». Nosotros, los huesos que aquí estamos, por los vuestros esperamos.',
   // el osario de los hermanos de Dumio (la cripta de San Martín)
@@ -1865,6 +1882,7 @@ export const AREA_NAMES = {
   obispos: 'Panteón de los Obispos',
   martin: 'Cripta de San Martín',
   capilla_martin: 'Capilla de San Martín',
+  capilla_sisnando: 'Capilla de Sisnando',
   osario_martin: 'Osario de San Martín',
   catacumbas: 'Catacumbas de la Sé',
   huesos: 'Capilla de los Huesos',

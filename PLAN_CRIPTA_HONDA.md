@@ -119,6 +119,7 @@ Reglas del diseño:
 | 6 | **Catacumbas de la Sé** | -10,6 | La necrópolis de los canónigos: galerías cortas con nichos en tres alturas, cubículos con su arcosolio y un cruce de huesos. | El **lucernario**, con su pozo de luz y el **oratorio de San Pedro de Rates** (altar de descanso). Atajo a la sala de llegada: un lienzo de su muro que se hunde con la palanca de lo alto de la escalera (desde la sala no se nota). |
 | 7 | **Catacumba de los Inocentes** | -12,7 | El nivel de abajo: nichos pequeños, de niños. | La **Pila de los Inocentes**. El **Relicario de San Martín**: la arena del **Custodio de la Garra** (y ante su boca, Dom Mendo, muerto, con la nota de la Garra). Escalera de atajo a la cripta de San Martín. |
 | 8 | **Cripta de los Mártires** | -8,2 / -10,6 | Se entra por una puerta nueva en el sepulcro del arzobispo (en su eje): su paso privado, que baja. Un *martyrium* de tres naves con bóvedas de arista y los arcosolios de los mártires; frente a la puerta, su altar. | Al norte, bajando, la **Pila de los Mártires** entre cuatro columnas. Al sur, la **Sacristía del arzobispo**, abovedada (la cierra una losa con el sigilo del Pacto, que se hunde con su anillo): el incienso negro. |
+| 9 | **Capilla de Sisnando** | -7 | Tras un tabique en el muro norte del rellano del paso del panteón, entre el paso y lo alto de la antesala: la capilla del obispo que peleó con un martillo, tapiada con su reclusa dentro. | El sepulcro, y en él **el martillo de guerra**. La reja del testero da a lo alto de la antesala (la puerta del dios, los Velados). **Una Emparedada**. |
 
 ## 5. El recorrido
 
@@ -139,6 +140,8 @@ ella). Nunca un pasillo.
 - **Los Mártires:** el sepulcro del arzobispo (su anillo) → el martyrium → la pila, abajo → la sacristía y el
   incienso.
 - **Los Condenados:** sólo tras los Velados, desde la antesala.
+- **La capilla de Sisnando:** en el rellano del paso del panteón (en el camino principal), el tabique, que se
+  derriba → la reclusa → el sepulcro y el martillo de guerra. Sin llave: libre desde que se baja.
 
 **Atajos y vueltas.** El paso escondido del muro oeste de la sala de llegada se abre desde las catacumbas (un
 lienzo del muro que se hunde en el suelo con su palanca); el rastrillo del sur de la cripta de San Martín, desde
@@ -162,6 +165,7 @@ Más criaturas que antes, repartidas con intención (no una de cada en cada siti
 - **Mártires:** penitentes, un soldado, un Campanero junto a la pila, un rastrero y una plañidera en la
   sacristía.
 - **Antesala:** los Velados. **Pozo:** Dom Paio, convertido, solo.
+- **Capilla de Sisnando:** una Emparedada, sola, de cara al muro.
 
 ## 7. Dom Paio, el canónigo superviviente
 
@@ -263,3 +267,34 @@ Lo que pidió el autor después de jugarla, y cómo quedó:
 - **La sala de las calaveras** del cruce pasa a ser la **Capilla de los Huesos**, como la de Évora, con su lema
   (un documento más).
 - **El inventario**, rehecho a lo Dark Souls (ver el README).
+
+## 13. La capilla de Sisnando (10 de noviembre de 2026)
+
+El martillo de guerra a dos manos pedía una sala suya en la cripta de la Sé. Se hace con un hueco que ya había: el
+macizo entre el rellano del paso del panteón y lo alto de la antesala (`sisnando` en `DEEP` y en `LAYOUT`, en
+`world/level_crypt2.js`; la levanta `buildSisnando`).
+
+- **La historia.** Sisnando, obispo de Braga, salió a la hueste con el rey y peleó con un martillo, porque un clérigo
+  no puede derramar sangre y la boca de un martillo no la derrama: rompe. Pero el suyo tenía pico. El cabildo no lo
+  quiso en el panteón, con sus hermanos: lo enterró aparte, en una capilla del paso, con su martillo y mirando a la
+  puerta del dios, «por si un día hace falta», y tapió el arco con la reclusa que pidió quedarse a rezar por él (le
+  pasaban el pan por un ventanuco del tabique). El lema, en la lápida del arco: *SISNANDVS EPISCOPVS · MALLEO NON
+  GLADIO*; a los pies del yacente, a punta de cuchillo: «EL PICO SÍ». Es otro obispo que se quedó mirando la puerta,
+  como el primero del pozo del panteón, pero éste con el arma en la mano.
+- **Se ve antes de entrar.** El arco tapiado está en el camino principal, en el muro norte del rellano, a la vista
+  del que baja los peldaños del paso: piedra seca y cal vieja, una cruz grabada, el ventanuco enrejado con la luz de
+  las velas y, al lado, la lápida (un documento). Y desde la nave de la antesala, en lo alto de su muro sur, junto al
+  estrado, se ve un ventanuco encendido que no se sabe de dónde es; desde dentro, por esa reja, la puerta del dios y
+  los Velados.
+- **El tabique** es una puerta de las que se derriban (`mat: 'tabique'`): se embiste con el hombro, la cal se
+  deshace en polvo y las piedras caen hacia dentro (los escombros quedan a los dos lados del arco). Sin llave.
+- **La sala.** Una nave de tres tramos (7 × 14,5 m) con bóveda de cañón (arranque a 3 m, flecha de 2) sobre dos
+  fajones y sus pilastras, con lunetos en los testeros. Al norte, en su grada, el sepulcro: el yacente de manos
+  juntas, con la mitra y el león a los pies, y sin báculo (`bishopTombParts` con `baculo: false`); a su derecha,
+  donde los otros lo llevan, el martillo de verdad, con la boca dentada contra la losa, el pico hacia arriba y el
+  regatón a los pies: se coge, y se lleva a dos manos. Velas en las esquinas de la grada, una corona en el tramo de
+  en medio y, por la reja, la luz roja de la antesala. Junto al arco, el jergón y la escudilla de la reclusa.
+- **La guarda:** la reclusa, **una Emparedada**, de cara al muro oeste con las manos en la piedra. Aguanta el filo y
+  la punta (un 30 %) y no lo que aplasta: la pelea enseña para qué sirve lo que hay al fondo.
+- **La zona:** «Capilla de Sisnando» (en el mapa y al entrar), con la atmósfera de las capillas.
+

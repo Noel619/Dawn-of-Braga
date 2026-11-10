@@ -53,8 +53,13 @@ const r = await p.evaluate(async (abierto) => {
     }
   }
   // agujeros: cada medio metro de lo pisado, ¿hay suelo dibujado debajo?
+  // (el subsuelo va en la capa 1 y, con la cámara arriba, recortado:
+  // game/culling.js; sin esto, el rayo no lo ve y salen salas enteras «sin
+  // suelo»)
   const T = g.THREE;
   const rc = new T.Raycaster();
+  rc.layers.enableAll();
+  if (g.culling && g.culling.cut) for (const m of g.culling.cut) m.geometry.setDrawRange(0, Infinity);
   const meshes = g.level.meshes.filter((m) => !/water|glass|black|ember/.test(m.material.userData?.def?.tex || ''));
   const down = new T.Vector3(0, -1, 0);
   const o = new T.Vector3();

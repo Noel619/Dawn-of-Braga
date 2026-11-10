@@ -419,6 +419,21 @@ de la pila de los Inocentes tienen su marco de piedra con la cruz en el dintel. 
 osario de arriba, mira por una reja a la cisterna: por ella miraba Martín el agua de abajo y hoy sólo se ve piedra
 negra, la espalda de lo que ha subido de la sima.
 
+**La capilla de Sisnando.** En el rellano del paso entre el panteón y el templo romano, en su muro norte, un **arco
+tapiado**: piedra seca y cal vieja, una cruz grabada y, a la altura de la mano, el ventanuco enrejado por el que sale
+luz de velas. Al lado, la lápida del cabildo (un documento): *SISNANDVS EPISCOPVS · MALLEO NON GLADIO*. Sisnando, obispo
+de Braga, salió a la hueste con el rey y peleó con un martillo, porque un clérigo no puede derramar sangre y la boca de
+un martillo no la derrama; pero el suyo tenía pico. El cabildo no lo quiso entre sus hermanos: lo enterraron aparte,
+con su martillo y mirando a la puerta del dios, «por si un día hace falta», y la reclusa que pidió quedarse a rezar
+por él se quedó tapiada con él (le pasaban el pan por el ventanuco). El tabique **se derriba** de un empujón. Dentro,
+una nave de tres tramos con su bóveda de cañón sobre fajones y pilastras; al fondo, en su grada, entre velas, **el
+sepulcro**, con el yacente de manos juntas, la mitra y el león a los pies, y a su derecha, donde los otros obispos
+llevan el báculo, **el martillo de guerra** (el de verdad: se coge), con la boca dentada contra la losa y el pico
+hacia arriba; a los pies, a punta de cuchillo, «EL PICO SÍ». Detrás, en el testero, una **reja** da a lo alto de la
+antesala: desde ella se ven la puerta del dios y los Velados (y desde la antesala, en lo alto del muro sur, el
+ventanuco encendido). Y de cara al muro, con las manos en la piedra, la reclusa: **una Emparedada**, que aguanta el
+filo y la punta (un 30 %) y lo que aplasta, no.
+
 Desde la tribuna se ve entera la **Antesala del Dios Ignoto**: tres naves sobre columnas, con estatuas colosales
 veladas, estandartes y una avenida de braseros que lleva la vista hasta el estrado y la puerta del dios, dos hojas
 de piedra negra con un pentáculo invertido dentro de un círculo de signos, tres cabezas que lloran sobre el dintel
@@ -1025,8 +1040,7 @@ perforan, el badajo aplasta...). Lo que aguanta cada una:
 Los demás (el Penitente, el mayordomo, la gente) no aguantan nada en especial.
 
 (El facón criollo y la katana sagrada, que no eran de su tiempo, ya no están en el juego; si una partida guardada los
-tenía, del modo desarrollador, se le quitan al cargarla.) Todas menos el martillo de guerra están en el mundo; por el
-orden en que se encuentran:
+tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mundo; por el orden en que se encuentran:
 - **Espada oxidada** (una mano, con escudo; **la primera**: clavada en la espalda del guardia muerto del pasillo de las
   celdas, nada más salir de la tuya): una espada de munición comida de herrumbre, con mellas; se maneja como la de la
   guardia, pero **corta menos de la mitad** (el 42,5 %) y su golpe de gracia, la cuarta parte (27 frente a 108), pesa
@@ -1062,8 +1076,9 @@ orden en que se encuentran:
 
 - **Espada de Solingen** (una mano, con escudo; clavada en el hogar de la Casa del Alemán, ver arriba): un 35 % más
   que la de la guardia.
-- **Martillo de guerra** (dos manos, el escudo a la espalda; se para con el mango; **todavía en ningún sitio**: será de
-  la cripta de la Sé, en una sala suya): mango de fresno de vara y cuarto, herrado arriba con dos lengüetas, y la
+- **Martillo de guerra** (dos manos, el escudo a la espalda; se para con el mango; el del obispo Sisnando, sobre su
+  sepulcro, en **la capilla tapiada** del paso del panteón, en la cripta honda: ver arriba): mango de fresno de vara y
+  cuarto, herrado arriba con dos lengüetas, y la
   cabeza de hierro: la boca cuadrada con cuatro dientes de punta de diamante, el pico de cuervo detrás, vencido hacia
   el mango, y una punta arriba. El más lento y el que más pesa (3,8 kg): cada golpe se carga de lejos, cae con todo
   el cuerpo detrás, quiebra la guardia y se queda abajo; subirlo cuesta. El golpe de derecha, en diagonal desde el
@@ -1108,9 +1123,10 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   (el pico contra la piedra) y se le ve por la vela pegada a la frente y la lucerna del cordón; lleva a la espalda un
   cuévano de calaveras. Descarga el pico de arriba abajo, barre de lado y, si lo clava en el suelo, la bóveda suelta
   piedras.
-- **Emparedada** (las catacumbas): la reclusa tapiada en vida, a la que la pared se tragó de cintura para abajo y que
-  arrastra la obra. Máscara de yeso con un solo ojo y el ventanuco enrejado del pan; espera de cara a los nichos con
-  las manos en la piedra. Agarra, araña y se deja caer con todo el peso de la obra.
+- **Emparedada** (las catacumbas; y en la capilla de Sisnando, la que se quedó a rezar por él): la reclusa tapiada
+  en vida, a la que la pared se tragó de cintura para abajo y que arrastra la obra. Máscara de yeso con un solo ojo y
+  el ventanuco enrejado del pan; espera de cara a los nichos con las manos en la piedra. Agarra, araña y se deja caer
+  con todo el peso de la obra.
 - **Enrodado** (las catacumbas): el reo quebrado en la rueda y enterrado con ella, trenzado entre los radios. Se echa
   atrás, aúlla y embiste rodando en línea recta (esquivado, se estrella contra el muro y queda aturdido); se retira
   rodando para coger carrerilla, da zarpazos con el brazo suelto y se vuelca encima.
@@ -1410,8 +1426,8 @@ src/
                         level_postigo.js: el Callejón del Postigo, la Casa del Alemán (con su
                         sobrado y su escalera), su sótano y la gruta de Leonor; level_souto.js: la casa tapiada, el pasadizo del Soto y
                         la casa del tonelero; level_crypt2.js: la cripta honda, una planta de salas
-                        (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala
-                        y el pozo) de la que salen muros, suelos, navegación y mapa; sanctum.js: lo que hay tras
+                        (San Martín, las catacumbas, los Inocentes y el relicario, los Mártires, la antesala,
+                        el pozo y la capilla de Sisnando) de la que salen muros, suelos, navegación y mapa; sanctum.js: lo que hay tras
                         la puerta del dios (el Paso, el Pasillo de los Gigantes, el Círculo con la fuente, la
                         sima de la estatua y la galería del río); panteon.js: el Panteón
                         de los Obispos y la galilea; lucernario.js: el Lucernario de San Pedro de Rates;
