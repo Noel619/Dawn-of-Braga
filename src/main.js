@@ -1,5 +1,7 @@
 // Punto de entrada: carga, bucle principal y ganchos de depuración.
 import './ui/ui.css';
+// (antes que nada: lo que three.js hace en cada fotograma sin que haga falta)
+import './gfx/rendimiento.js';
 import { Game } from './game/game.js';
 import { unlockChronicle } from './game/save.js';
 import { loadFonts } from './ui/pixel.js';
@@ -24,6 +26,23 @@ function boot() {
     return;
   }
   window.__game = game;
+  // Los shaders de todo lo que hay en la escena, compilados ya, con la
+  // pantalla de carga delante: si no, cada material que aparece por primera
+  // vez —al entrar en una zona, al ver una criatura— se compilaba en mitad de
+  // la partida, y cada uno era un tirón (en un teléfono, de decenas de
+  // milisegundos). Con la luz de la lámpara del jugador, como al jugar (la
+  // cuenta de luces entra en cada shader).
+  {
+    const po = game.player.obj,
+      pv = po.visible;
+    po.visible = true;
+    try {
+      game.renderer.compile(game.scene, game.camera);
+    } catch (e) {
+      console.warn('[shaders] no se pudieron precompilar', e);
+    }
+    po.visible = pv;
+  }
   document.getElementById('loading').classList.add('hidden');
 
   // ?cronica=1: la crónica (la introducción larga) en el menú del título,
@@ -66,16 +85,20 @@ function boot() {
   let frames = 0,
     acc = 0;
   function frame(now) {
-    const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    const raw = Math.max(0, (now - last) / 1000);
+    const dt = Math.min(0.05, raw);
     last = now;
     if (window.__pause) {
       requestAnimationFrame(frame);
       return;
     }
+    const t0 = performance.now();
     // (saltar una cinemática: el juego corre varias veces por fotograma)
     const n = game.ffSteps > 1 ? game.ffSteps : 1;
     for (let i = 0; i < n; i++) game.update(dt);
     game.render();
+    // (si la tarjeta gráfica no da para la resolución interna: game/fluidez.js)
+    game.fluidez.frame(raw, (performance.now() - t0) / 1000);
     frames++;
     acc += dt;
     if (acc >= 1) {

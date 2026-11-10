@@ -54,6 +54,7 @@ import { Creador } from './creador.js';
 import { PIEZAS_GUARDIA } from '../entities/armaduras.js';
 import { aspectoBase, normalizar, NOMBRES } from '../entities/aspecto.js';
 import { Culling } from './culling.js';
+import { Fluidez } from './fluidez.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
@@ -286,6 +287,8 @@ export class Game {
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
     this.navCellar.refresh(CELLAR.bounds[0], CELLAR.bounds[1], CELLAR.bounds[2], CELLAR.bounds[3]);
     this.ui = new UI(this);
+    // que vaya fluido donde la tarjeta gráfica no da para tanto (fluidez.js)
+    this.fluidez = new Fluidez(this);
     // el editor de personaje (después de la introducción, al empezar)
     this.creador = new Creador(this);
     // los bocadillos de diálogo y el guion de la Casa del Alemán

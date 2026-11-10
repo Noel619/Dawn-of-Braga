@@ -473,7 +473,8 @@ export class UI {
       { label: 'Sensibilidad de cámara', kind: 'text', v: () => S.sens.toFixed(1), set: (d) => (S.sens = step(S.sens, d, 0.1, 0.3, 3)) },
       { label: 'Invertir eje vertical', kind: 'bool', n: () => S.invertY, set: () => (S.invertY = !S.invertY) },
       { label: 'Brillo', kind: 'text', v: () => (S.brightness >= 0 ? '+' : '') + Math.round(S.brightness * 100), set: (d) => (S.brightness = step(S.brightness, d, 0.02, -0.1, 0.2)) },
-      { label: 'Resolución interna', kind: 'text', v: () => S.res + 'p', set: (d) => (S.res = RES[(Math.max(0, RES.indexOf(S.res)) + d + RES.length) % RES.length]) },
+      // (elegida a mano, el juego ya no la baja solo: game/fluidez.js)
+      { label: 'Resolución interna', kind: 'text', v: () => S.res + 'p', set: (d) => ((S.resAuto = false), (S.res = RES[(Math.max(0, RES.indexOf(S.res)) + d + RES.length) % RES.length])) },
       { label: 'Temblor de vértices (PS1)', kind: 'bool', n: () => S.snap, set: () => (S.snap = !S.snap) },
       { label: 'Deformación de texturas', kind: 'pct', n: () => S.affine, set: (d) => (S.affine = step(S.affine, d, 0.1, 0, 1)) },
       { label: 'Filtro CRT', kind: 'pct', n: () => S.crt, set: (d) => (S.crt = step(S.crt, d, 0.1, 0, 1)) },

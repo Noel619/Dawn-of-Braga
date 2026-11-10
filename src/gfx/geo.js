@@ -14,6 +14,71 @@ const LAYER_Y = -0.55;
 const _p = new THREE.Vector3();
 const _n = new THREE.Vector3();
 
+// Lista de números que crece, guardada en un array tipado (Float32Array,
+// Uint32Array...). Antes eran arrays de JS: cada número, 8 bytes y otro tanto
+// de hueco, la ciudad entera (unos ochocientos megas) se quedaba en memoria
+// para siempre después de construirla, además de la copia que va a la GPU.
+class Grow {
+  constructor(T, n = 96) {
+    this.T = T;
+    this.a = new T(n);
+    this.length = 0;
+  }
+  _grow(need) {
+    let n = this.a.length * 2;
+    while (n < need) n *= 2;
+    const b = new this.T(n);
+    b.set(this.a);
+    this.a = b;
+  }
+  push1(x) {
+    const l = this.length;
+    if (l + 1 > this.a.length) this._grow(l + 1);
+    this.a[l] = x;
+    this.length = l + 1;
+  }
+  push2(x, y) {
+    const l = this.length;
+    if (l + 2 > this.a.length) this._grow(l + 2);
+    const a = this.a;
+    a[l] = x;
+    a[l + 1] = y;
+    this.length = l + 2;
+  }
+  push3(x, y, z) {
+    const l = this.length;
+    if (l + 3 > this.a.length) this._grow(l + 3);
+    const a = this.a;
+    a[l] = x;
+    a[l + 1] = y;
+    a[l + 2] = z;
+    this.length = l + 3;
+  }
+  push6(x, y, z, u, v, w) {
+    const l = this.length;
+    if (l + 6 > this.a.length) this._grow(l + 6);
+    const a = this.a;
+    a[l] = x;
+    a[l + 1] = y;
+    a[l + 2] = z;
+    a[l + 3] = u;
+    a[l + 4] = v;
+    a[l + 5] = w;
+    this.length = l + 6;
+  }
+  // otra lista detrás de esta
+  append(o) {
+    const l = this.length;
+    if (l + o.length > this.a.length) this._grow(l + o.length);
+    this.a.set(o.a.subarray(0, o.length), l);
+    this.length = l + o.length;
+  }
+  // lo que tiene, sin el hueco de sobra
+  trim() {
+    return this.a.length === this.length ? this.a : this.a.slice(0, this.length);
+  }
+}
+
 class Bucket {
   constructor(mat, key, group = null, groups = null, layer = null) {
     this.mat = mat;
@@ -21,13 +86,14 @@ class Bucket {
     this.group = group;
     this.groups = groups;
     this.layer = layer;
-    this.pos = [];
-    this.nor = [];
-    this.uv = [];
-    this.col = [];
-    this.room = [];
-    this.idx = [];
+    this.pos = new Grow(Float32Array);
+    this.nor = new Grow(Float32Array);
+    this.uv = new Grow(Float32Array);
+    this.col = new Grow(Float32Array);
+    this.room = new Grow(Int32Array, 32);
+    this.idx = new Grow(Uint32Array);
     this.count = 0;
+    this.tris = 0;
   }
 }
 
@@ -139,9 +205,9 @@ export class WorldBuilder {
   _vert(b, lx, ly, lz, nx, ny, nz, u, v, ao, o) {
     _p.set(lx, ly, lz).applyMatrix4(this.m);
     _n.set(nx, ny, nz).applyMatrix3(this.nm).normalize();
-    b.pos.push(_p.x, _p.y, _p.z);
-    b.nor.push(_n.x, _n.y, _n.z);
-    b.uv.push(u, v);
+    b.pos.push3(_p.x, _p.y, _p.z);
+    b.nor.push3(_n.x, _n.y, _n.z);
+    b.uv.push2(u, v);
     // suciedad/humedad procedural de baja frecuencia
     let g = 1;
     if (o.grime !== false) {
@@ -157,8 +223,8 @@ export class WorldBuilder {
       gg *= t[1];
       bb *= t[2];
     }
-    b.col.push(r, gg, bb);
-    b.room.push(o.room !== undefined ? this.roomId(o.room) : this.room);
+    b.col.push3(r, gg, bb);
+    b.room.push1(o.room !== undefined ? this.roomId(o.room) : this.room);
     return b.count++;
   }
 
@@ -196,7 +262,7 @@ export class WorldBuilder {
           bb = a + 1,
           c = a + row + 1,
           d = a + row;
-        b.idx.push(a, bb, c, a, c, d);
+        b.idx.push6(a, bb, c, a, c, d);
       }
   }
 
@@ -303,7 +369,7 @@ export class WorldBuilder {
     for (let j = 0; j < nv; j++)
       for (let i = 0; i < nu; i++) {
         const a = start + j * row + i;
-        b.idx.push(a, a + 1, a + row + 1, a, a + row + 1, a + row);
+        b.idx.push6(a, a + 1, a + row + 1, a, a + row + 1, a + row);
       }
   }
 
@@ -326,7 +392,7 @@ export class WorldBuilder {
       const ao = N.y > 0.7 ? 1 : this._ao(o, p.y - baseY);
       this._vert(b, p.x, p.y, p.z, N.x, N.y, N.z, u, v, ao, o);
     }
-    b.idx.push(start, start + 1, start + 2);
+    b.idx.push3(start, start + 1, start + 2);
   }
 
   // Cilindro/cono a lo largo de Y (en espacio local).
@@ -357,7 +423,7 @@ export class WorldBuilder {
     for (let j = 0; j < nv; j++)
       for (let i = 0; i < segs; i++) {
         const a = start + j * row + i;
-        b.idx.push(a, a + row, a + row + 1, a, a + row + 1, a + 1);
+        b.idx.push6(a, a + row, a + row + 1, a, a + row + 1, a + 1);
       }
     if (o.capTop && rTop > 0.001) this._cap(mat, cx, y0 + h, cz, rTop, segs, 1, s, o, a0);
     if (o.capBot) this._cap(mat, cx, y0, cz, rBot, segs, -1, s, o, a0);
@@ -390,8 +456,8 @@ export class WorldBuilder {
       this._vert(b, x, y, z, 0, dir, 0, x * s, -z * s, 1, o);
     }
     for (let i = 0; i < segs; i++) {
-      if (dir > 0) b.idx.push(c, first + i + 1, first + i);
-      else b.idx.push(c, first + i, first + i + 1);
+      if (dir > 0) b.idx.push3(c, first + i + 1, first + i);
+      else b.idx.push3(c, first + i, first + i + 1);
     }
   }
 
@@ -453,28 +519,46 @@ export class WorldBuilder {
   }
 
   // Copia una BufferGeometry arbitraria transformada por 'matrix'.
+  // (Con índices, cada vértice que usa algún triángulo va una sola vez, y los
+  // triángulos, en el mismo orden, apuntan a él: antes se copiaba como sin
+  // índices —toNonIndexed—, el mismo vértice con los mismos números una vez
+  // por cada triángulo que lo tocaba; cuatro de cada diez vértices del mundo
+  // eran repetidos. Lo que se dibuja es lo mismo.)
   geometry(mat, geom, matrix, o = {}) {
-    const g = geom.index ? geom.toNonIndexed() : geom;
-    const P = g.attributes.position,
-      N = g.attributes.normal,
-      UV = g.attributes.uv;
+    const P = geom.attributes.position,
+      N = geom.attributes.normal,
+      UV = geom.attributes.uv,
+      I = geom.index;
     const us = o.uvScale ?? 1;
     this.push();
     if (matrix) this.m.multiply(matrix);
     this.nm.getNormalMatrix(this.m);
+    const n = P.count;
+    // (los vértices que usa algún triángulo: sólo esos se copiaban)
+    let used = null;
+    if (I) {
+      used = new Int32Array(n);
+      for (let k = 0, kc = I.count; k < kc; k++) used[I.getX(k)] = 1;
+    }
     this._y0 = Infinity;
     this._y1 = -Infinity;
-    for (let i = 0; i < P.count; i++) this._spanPt(P.getX(i), P.getY(i), P.getZ(i));
-    const cxz = new THREE.Vector3(0, 0, 0);
-    const b = this._bucket(mat, cxz.x, cxz.z);
-    const start = b.count;
     let minY = Infinity;
-    for (let i = 0; i < P.count; i++) minY = Math.min(minY, P.getY(i));
-    for (let i = 0; i < P.count; i++) {
-      const ao = this._ao(o, P.getY(i) - minY);
-      this._vert(b, P.getX(i), P.getY(i), P.getZ(i), N.getX(i), N.getY(i), N.getZ(i), UV ? UV.getX(i) * us : 0, UV ? UV.getY(i) * us : 0, ao, o);
+    for (let i = 0; i < n; i++) {
+      if (used && !used[i]) continue;
+      const y = P.getY(i);
+      this._spanPt(P.getX(i), y, P.getZ(i));
+      if (y < minY) minY = y;
     }
-    for (let i = 0; i < P.count; i++) b.idx.push(start + i);
+    const b = this._bucket(mat, 0, 0);
+    const start = b.count;
+    for (let i = 0; i < n; i++) {
+      if (used && !used[i]) continue;
+      const ao = this._ao(o, P.getY(i) - minY);
+      const k = this._vert(b, P.getX(i), P.getY(i), P.getZ(i), N.getX(i), N.getY(i), N.getZ(i), UV ? UV.getX(i) * us : 0, UV ? UV.getY(i) * us : 0, ao, o);
+      if (used) used[i] = k;
+    }
+    if (I) for (let k = 0, kc = I.count; k < kc; k++) b.idx.push1(used[I.getX(k)]);
+    else for (let i = 0; i < n; i++) b.idx.push1(start + i);
     this.pop();
   }
 
@@ -483,7 +567,8 @@ export class WorldBuilder {
   bake(lights, ambientOcc = []) {
     const cell = 8;
     const grid = new Map();
-    const key = (x, z) => x + ',' + z;
+    // (clave numérica de la celda: antes, una cadena nueva por vértice)
+    const key = (x, z) => (x + 4096) * 8192 + (z + 4096);
     for (const L of lights) {
       const r = L.radius;
       const rid = this.roomId(L.room || 'out');
@@ -498,30 +583,34 @@ export class WorldBuilder {
     for (const b of this.buckets.values()) {
       const n = b.count;
       const bake = new Float32Array(n * 3);
+      const P = b.pos.a,
+        Nr = b.nor.a,
+        R = b.room.a;
       for (let i = 0; i < n; i++) {
-        const px = b.pos[i * 3],
-          py = b.pos[i * 3 + 1],
-          pz = b.pos[i * 3 + 2];
-        const nx = b.nor[i * 3],
-          ny = b.nor[i * 3 + 1],
-          nz = b.nor[i * 3 + 2];
+        const px = P[i * 3],
+          py = P[i * 3 + 1],
+          pz = P[i * 3 + 2];
+        const nx = Nr[i * 3],
+          ny = Nr[i * 3 + 1],
+          nz = Nr[i * 3 + 2];
         const list = grid.get(key(Math.floor(px / cell), Math.floor(pz / cell)));
         let r = 0,
           g = 0,
           bl = 0;
         if (list) {
-          const room = b.room[i];
-          for (const L of list) {
+          const room = R[i];
+          for (let j = 0, lc = list.length; j < lc; j++) {
+            const L = list[j];
             if (L._rid !== room && !(L.anyRoom)) continue;
             const dx = L.x - px,
               dy = L.y - py,
               dz = L.z - pz;
-            const d = Math.hypot(dx, dy, dz);
+            const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (d > L.radius) continue;
             const ndl = (nx * dx + ny * dy + nz * dz) / (d + 1e-4);
             const wrap = clamp((ndl + 0.25) / 1.25, 0, 1);
-            const att = Math.pow(1 - d / L.radius, 2);
-            const k = wrap * att * L.intensity;
+            const q = 1 - d / L.radius;
+            const k = wrap * q * q * L.intensity;
             r += L.r * k;
             g += L.g * k;
             bl += L.b * k;
@@ -545,11 +634,13 @@ export class WorldBuilder {
       const a = this.buckets.get(b.key.slice(0, -4));
       if (!a || a.count === 0) continue;
       a.subStart = a.idx.length;
-      for (const i of b.idx) a.idx.push(i + a.count);
-      a.pos = a.pos.concat(b.pos);
-      a.nor = a.nor.concat(b.nor);
-      a.uv = a.uv.concat(b.uv);
-      a.col = a.col.concat(b.col);
+      const bi = b.idx.a,
+        off = a.count;
+      for (let i = 0, l = b.idx.length; i < l; i++) a.idx.push1(bi[i] + off);
+      a.pos.append(b.pos);
+      a.nor.append(b.nor);
+      a.uv.append(b.uv);
+      a.col.append(b.col);
       if (a.bake || b.bake) {
         const k = new Float32Array((a.count + b.count) * 3);
         if (a.bake) k.set(a.bake);
@@ -557,17 +648,20 @@ export class WorldBuilder {
         a.bake = k;
       }
       a.count += b.count;
+      b.tris = b.idx.length / 3;
       b.count = 0;
+      b.pos = b.nor = b.uv = b.col = b.room = b.idx = b.bake = null;
     }
     for (const b of this.buckets.values()) {
       if (b.count === 0) continue;
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3));
-      g.setAttribute('normal', new THREE.Float32BufferAttribute(b.nor, 3));
-      g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(b.col, 3));
+      g.setAttribute('position', new THREE.BufferAttribute(b.pos.trim(), 3));
+      g.setAttribute('normal', new THREE.BufferAttribute(b.nor.trim(), 3));
+      g.setAttribute('uv', new THREE.BufferAttribute(b.uv.trim(), 2));
+      g.setAttribute('color', new THREE.BufferAttribute(b.col.trim(), 3));
       g.setAttribute('aBake', new THREE.BufferAttribute(b.bake || new Float32Array(b.count * 3), 3));
-      g.setIndex(b.count > 65535 ? new THREE.Uint32BufferAttribute(b.idx, 1) : new THREE.Uint16BufferAttribute(b.idx, 1));
+      const iv = b.idx.a.subarray(0, b.idx.length);
+      g.setIndex(new THREE.BufferAttribute(b.count > 65535 ? iv.slice() : Uint16Array.from(iv), 1));
       g.computeBoundingSphere();
       g.computeBoundingBox();
       const mesh = new THREE.Mesh(g, worldMat(b.mat));
@@ -579,6 +673,9 @@ export class WorldBuilder {
       if (b.group) mesh.userData.group = b.group;
       if (b.groups) mesh.userData.groups = b.groups;
       meshes.push(mesh);
+      // (lo de construir ya no hace falta: sólo queda lo que va a la GPU)
+      b.tris = b.idx.length / 3;
+      b.pos = b.nor = b.uv = b.col = b.room = b.idx = b.bake = null;
     }
     return meshes;
   }
@@ -588,7 +685,7 @@ export class WorldBuilder {
       t = 0;
     for (const b of this.buckets.values()) {
       v += b.count;
-      t += b.idx.length / 3;
+      t += b.idx ? b.idx.length / 3 : b.tris;
     }
     return { buckets: this.buckets.size, verts: v, tris: t };
   }

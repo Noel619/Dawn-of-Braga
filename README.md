@@ -1325,6 +1325,26 @@ metros, donde ya no queda ni un 2 %: desde sus patios y sus salas se dibuja meno
 lo más caro, el adarve de levante (con el patio de armas y media ciudad a sus pies), un 10 % más
 (`tools/rendimiento.mjs`).
 
+**Memoria, arranque y fotogramas.** El constructor del mundo guarda lo que va levantando en arrays tipados y lo
+suelta al terminar (antes, la ciudad entera se quedaba en memoria como números de JS, unos ochocientos megas, además
+de la copia que va a la tarjeta gráfica), y copia cada pieza con sus índices: un vértice que tocan varios triángulos
+va una sola vez (antes, una por triángulo: cuatro de cada diez vértices del mundo estaban repetidos). Se dibuja lo
+mismo, triángulo a triángulo y en el mismo orden. La luz horneada se calcula con claves numéricas y sin
+`Math.hypot`. Las matrices de los objetos sólo se recalculan si algo ha cambiado (de unos 19 000 objetos en la
+escena se mueven unos 300 por fotograma; antes, three.js los recalculaba todos), y la esfera con la que se mira si
+un objeto cae en el encuadre se guarda mientras no se mueva (`gfx/rendimiento.js`). Medido en el mismo equipo y en
+los mismos sitios (`tools/perfil.mjs`, `tools/memoria.mjs`): la memoria de JS, de unos 2 100 MB a unos 600–850; el
+arranque, de 20–23 s a 11–15; el paso del juego (`update`), de 4,0 a 2,1 ms en la plaza del Pan y de 6,1 a 3,7 en
+el patio de honor; y preparar el dibujo, de 26 a 10 ms en la plaza. Los shaders de toda la escena se compilan con
+la pantalla de carga delante, no en mitad de la partida al ver por primera vez un material (cada uno, un tirón).
+Las sombras de las criaturas que aún no se habían movido se quedaban todas en el origen, en medio de la plaza del
+Pan (un centenar apiladas en la fuente, dibujadas una a una cada fotograma): ahora esperan bajo su criatura a que
+se acerque. El tramado de Bayer se calcula con bits (la tabla local que se indexaba por píxel va lenta en muchas
+GPU de móvil). Si la tarjeta gráfica no puede dibujar en coma flotante, la escena va en 8 bits en vez de quedar en
+negro. Y donde la tarjeta gráfica no da para tanto (va por debajo de 45 fotogramas por segundo y no es por el
+procesador), el juego prueba un escalón menos de resolución interna (nunca por debajo de 360p) y se queda con él
+sólo si así va más fluido (`game/fluidez.js`); si se elige la resolución a mano en Opciones, ya no la toca.
+
 **Interfaz en pixel art.** Todos los menús se dibujan con sprites generados por código a resolución de arte y
 escalado entero: marcos de hierro con esquineras doradas, estandartes carmesí con espadas como cursor, una gran espada
 en la portada, pergamino rasgado con capitular iluminada y lacre para los documentos, iconos 32×32, mapa sobre
@@ -1430,8 +1450,9 @@ src/
   core/                 entrada (teclado/ratón/mando), utilidades, ruido y audio:
                         audio.js (mezcla, efectos, ambiente), audio_music.js (música adaptativa),
                         audio_lib.js (síntesis: salas, cuerdas pulsadas, campanas, tambores)
-  gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada
-                        y agua (water.js: todas las aguas, con su fondo, su orilla, su corriente y su luz)
+  gfx/                  texturas procedurales, materiales PSX, post-proceso, efectos, geometría fusionada,
+                        agua (water.js: todas las aguas, con su fondo, su orilla, su corriente y su luz) y
+                        rendimiento.js (las matrices y el encuadre de three.js, sólo cuando algo ha cambiado)
   world/                colisión, rejilla transitable, arquitectura, atrezo, detritos y el mapa de Braga
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
@@ -1574,6 +1595,7 @@ src/
                         los objetos que tapa un muro); acustica.js: cómo suena cada sala del castillo y de la
                         fortaleza (su reverberación, lo que se pisa y su ambiente); hitos.js: lo que se ve de
                         lejos (la vela del Rey, por encima de la niebla y más allá del plano lejano);
+                        fluidez.js: la resolución interna, un escalón menos donde la tarjeta gráfica no da;
                         finale/: el jefe final, la película: director.js, los puntos de control y el estado del mundo;
                         film.js, el armazón (corrutinas, planos, franjas, pulsaciones, el jugador como marioneta);
                         film_acts.js y film_rise.js, film_nave.js, film_grab.js, film_city.js, film_tower.js,
@@ -1700,6 +1722,14 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         rendimiento.mjs llamadas de dibujo y triángulos de un fotograma desde los sitios de la
                                        fortaleza, del patio de armas y de la cárcel, comparados con la plaza
                                        del Pan y los miradores de antes (DESGLOSE=1: de qué son)
+                        perfil.mjs     lo que cuesta arrancar y cada fotograma: memoria (montón de JS,
+                                       geometría, texturas, programas) y, por sitio, los milisegundos de
+                                       update() y de render() (sólo JS y con la GPU terminada), llamadas y
+                                       triángulos; PERFIL=1, las funciones que más CPU gastan; ASIGNA=1,
+                                       dónde se crea basura; SINGPU=1, sin esperar a la GPU; URL=..., otra
+                                       versión (para comparar dos)
+                        memoria.mjs    lo que ocupa el juego al arrancar, por la función y la pila que lo
+                                       creó (perfil del montón por muestreo, de antes de cargar a listo)
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)

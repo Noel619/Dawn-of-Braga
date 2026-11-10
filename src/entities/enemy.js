@@ -125,6 +125,13 @@ export class Enemy {
     this.obj.visible = true;
     this.obj.position.copy(this.body.pos);
     this.obj.rotation.set(0, this.yaw, 0);
+    // la sombra, bajo ella y oculta hasta que animate() la ponga (como
+    // siempre, al acercarse): antes se quedaba donde estuviera —las de las
+    // criaturas que aún no se habían movido, todas en el origen, en medio de
+    // la plaza del Pan (un centenar de sombras apiladas alrededor de la
+    // fuente, dibujadas una a una cada fotograma), y las demás donde murieron
+    this.shadow.position.set(s.x, this.home.y + 0.02, s.z);
+    this.shadow.visible = false;
     this.sink = 0;
     this.aware = false;
     this.data = {};

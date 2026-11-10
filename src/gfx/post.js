@@ -18,11 +18,15 @@ float vn3(vec3 p){
   return mix(mix(mix(a,b,f.x),mix(c,d,f.x),f.y), mix(mix(e,g,f.x),mix(h,k,f.x),f.y), f.z);
 }
 float fbm3(vec3 p){ return vn3(p)*0.55 + vn3(p*2.03+7.1)*0.3 + vn3(p*4.1+3.3)*0.15; }
+// (la matriz de Bayer 4×4 —0 8 2 10 / 12 4 14 6 / 3 11 1 9 / 15 7 13 5—, los
+// mismos valores calculados con bits: antes, una tabla local indexada por
+// píxel, que en muchas GPU, sobre todo de móvil, va a la memoria y no a los
+// registros)
 float bayer4(vec2 p){
   ivec2 q = ivec2(mod(p, 4.0));
-  int i = q.x + q.y*4;
-  float m[16] = float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.);
-  return m[i]/16.0;
+  int lo = 2 * ((q.x ^ q.y) & 1) + (q.y & 1);
+  int hi = 2 * (((q.x >> 1) ^ (q.y >> 1)) & 1) + ((q.y >> 1) & 1);
+  return float(4 * lo + hi) / 16.0;
 }`;
 
 const BRIGHT_FS = `
@@ -286,6 +290,10 @@ export class PostPipeline {
     });
     this.internalHeight = 300;
     this.rtScene = null;
+    // (la escena y el bloom, en coma flotante de 16 bits si la GPU puede
+    // dibujar así —casi todas—; si no, en 8 bits: antes, la pantalla en negro)
+    const ext = renderer.extensions;
+    this.hdrType = ext.has('EXT_color_buffer_float') || ext.has('EXT_color_buffer_half_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
   }
 
   // sw, sh: tamaño del lienzo en píxeles físicos. La resolución interna se
@@ -306,7 +314,7 @@ export class PostPipeline {
     const depth = new THREE.DepthTexture(w, h);
     depth.type = THREE.UnsignedIntType;
     this.rtScene = new THREE.WebGLRenderTarget(w, h, {
-      type: THREE.HalfFloatType,
+      type: this.hdrType,
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
       depthBuffer: true,
@@ -319,7 +327,7 @@ export class PostPipeline {
     });
     const bw = Math.max(40, w >> 2),
       bh = Math.max(24, h >> 2);
-    const bo = { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
+    const bo = { type: this.hdrType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
     this.rtB1 = new THREE.WebGLRenderTarget(bw, bh, bo);
     this.rtB2 = new THREE.WebGLRenderTarget(bw, bh, bo);
     this.bw = bw;
