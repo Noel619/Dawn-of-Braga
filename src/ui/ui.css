@@ -154,7 +154,9 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 /* inventario */
 #inv .panel { width: min(calc(var(--u) * 400), 96vw); }
 #inv .cols { display: grid; grid-template-columns: calc(var(--u) * 152) minmax(0, 1fr); gap: calc(var(--u) * 10); margin-top: calc(var(--u) * 4); min-height: calc(var(--u) * 150); }
-#inv .tabs .tab { width: calc(var(--u) * 72); }
+/* (con su texto dentro: en una pantalla pequeña —un teléfono, con el píxel de
+   arte a 1— «Documentos» no cabía en 72 y se montaba sobre «Objetos») */
+#inv .tabs .tab { width: auto; min-width: calc(var(--u) * 72); padding: 0 calc(var(--u) * 4); }
 /* la columna de las casillas: grupos con su rótulo (se desplaza si no cabe) */
 .inv-left { display: grid; gap: calc(var(--u) * 3); align-content: start; max-height: min(calc(var(--u) * 212), 60vh); overflow-y: auto; scrollbar-width: none; }
 .inv-left::-webkit-scrollbar { display: none; }
@@ -399,3 +401,43 @@ img.spr.mesa-drag { position: fixed; left: 0; top: 0; z-index: 50; pointer-event
 #intro-skip.show { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------------------------------------------------------------- táctil
+   El mando de la pantalla (ui/tactil.js): por encima de los menús, pero sólo
+   sus botones y sus zonas reciben los toques; lo demás pasa al menú. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html.tactil canvas#gl { touch-action: none; }
+html.tactil-movil body { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+html.tactil-movil .screen { touch-action: pan-y; }
+#tactil { position: fixed; inset: 0; z-index: 40; pointer-events: none; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#tactil.off { display: none; }
+#tactil .probe { position: fixed; left: 0; top: 0; width: 0; height: 0; visibility: hidden; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#tactil .zona { position: absolute; pointer-events: auto; touch-action: none; }
+#tactil .zona.cam { inset: 0; }
+#tactil[data-l='menu'] .zona { display: none; }
+#tactil .bt { position: absolute; display: grid; place-items: center; pointer-events: auto; touch-action: none; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; opacity: 0.8; }
+#tactil .bt.on { opacity: 1; }
+#tactil .bt.gone, #tactil[data-l='juego'] .bt.menu, #tactil[data-l='menu'] .bt.juego { display: none; }
+#tactil .bt .gl { display: block; image-rendering: pixelated; pointer-events: none; margin-top: -14%; }
+#tactil .bt.sinlb .gl { margin-top: 0; }
+#tactil .bt .lb { position: absolute; left: 0; right: 0; bottom: 14%; text-align: center; font-family: 'Silkscreen', monospace; font-size: 8px; line-height: 8px; letter-spacing: 0; text-transform: uppercase; color: var(--bone); text-shadow: 1px 1px 0 var(--void); pointer-events: none; white-space: nowrap; }
+#tactil .bt.sinlb .lb { display: none; }
+#tactil img.ring, #tactil img.knob { position: absolute; left: 0; top: 0; display: none; image-rendering: pixelated; pointer-events: none; }
+#tactil.stk img.ring, #tactil.stk img.knob { display: block; }
+#tactil img.hint { display: block; opacity: 0.55; }
+#tactil.stk img.hint, #tactil[data-l='menu'] img.hint { display: none; }
+/* (la muesca y la barra de inicio del teléfono: lo de las esquinas, dentro) */
+#vitals { left: calc(var(--u) * 6 + env(safe-area-inset-left, 0px)); top: calc(var(--u) * 6 + env(safe-area-inset-top, 0px)); }
+#fps { right: calc(var(--u) * 4 + env(safe-area-inset-right, 0px)); }
+/* en vertical, en el teléfono: girarlo */
+#girar { display: none; position: fixed; inset: 0; z-index: 60; background: var(--void); color: var(--bone); place-items: center; align-content: center; gap: 14px; padding: 0 10vw; text-align: center; text-shadow: var(--sh); }
+@media (orientation: portrait) { html.tactil-movil #girar { display: grid; } }
+
+/* pantallas bajas (un teléfono en horizontal): la ficha del inventario y la
+   lista de los controles se desplazan (con la cruz o con el dedo) en vez de
+   salirse del marco */
+@media (max-height: 500px) {
+  #inv .detail { max-height: 62vh; overflow-y: auto; scrollbar-width: none; }
+  #ctl-list { max-height: 64vh; overflow-y: auto; scrollbar-width: none; }
+}
+#ctl-tactil { margin-top: calc(var(--u) * 4); color: var(--ash); text-shadow: var(--sh); max-width: 100%; }

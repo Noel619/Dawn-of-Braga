@@ -55,6 +55,7 @@ import { PIEZAS_GUARDIA } from '../entities/armaduras.js';
 import { aspectoBase, normalizar, NOMBRES } from '../entities/aspecto.js';
 import { Culling } from './culling.js';
 import { Fluidez } from './fluidez.js';
+import { Tactil } from '../ui/tactil.js';
 import { Speech } from './speech.js';
 import { HouseQuest } from './house.js';
 import { PaioQuest } from './paio.js';
@@ -94,7 +95,8 @@ export class Game {
     const saved = loadSettings() || {};
     if ((saved.v | 0) < 2) for (const k of ['res', 'snap', 'affine', 'crt']) delete saved[k];
     // (transcript: la transcripción de los documentos, a la derecha del pergamino)
-    this.settings = { res: 540, snap: false, affine: 0, crt: 0, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, transcript: true, ...saved, v: 2 };
+    // (tactil: los controles de la pantalla táctil, 'auto' | 'si' | 'no')
+    this.settings = { res: 540, snap: false, affine: 0, crt: 0, sens: 1, invertY: false, brightness: 0, music: 0.7, sfx: 0.9, fps: false, transcript: true, tactil: 'auto', ...saved, v: 2 };
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }));
     r.setPixelRatio(1);
     setMaxAnisotropy(r.capabilities.getMaxAnisotropy());
@@ -289,6 +291,8 @@ export class Game {
     this.ui = new UI(this);
     // que vaya fluido donde la tarjeta gráfica no da para tanto (fluidez.js)
     this.fluidez = new Fluidez(this);
+    // el mando de la pantalla táctil (ui/tactil.js)
+    this.tactil = new Tactil(this);
     // el editor de personaje (después de la introducción, al empezar)
     this.creador = new Creador(this);
     // los bocadillos de diálogo y el guion de la Casa del Alemán
@@ -2214,6 +2218,8 @@ export class Game {
     this.playerShadow.position.set(p.pos.x, p.pos.y + 0.02, p.pos.z);
     this.playerShadow.visible = p.obj.visible;
     this.audio.update(dt, this);
+    // (los controles táctiles: si se ven y cuáles, según lo que haya en pantalla)
+    this.tactil.update();
     inp.endFrame();
   }
 

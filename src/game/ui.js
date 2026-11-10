@@ -466,6 +466,7 @@ export class UI {
     const g = this.g,
       S = g.settings;
     const RES = [240, 300, 360, 480, 540, 720];
+    const TACTIL = ['auto', 'si', 'no'];
     const step = (v, d, k, lo, hi) => clamp(Math.round((v + d * k) / k) * k, lo, hi);
     return [
       { label: 'Volumen de música', kind: 'pct', n: () => S.music, set: (d) => (S.music = step(S.music, d, 0.1, 0, 1)) },
@@ -479,6 +480,8 @@ export class UI {
       { label: 'Deformación de texturas', kind: 'pct', n: () => S.affine, set: (d) => (S.affine = step(S.affine, d, 0.1, 0, 1)) },
       { label: 'Filtro CRT', kind: 'pct', n: () => S.crt, set: (d) => (S.crt = step(S.crt, d, 0.1, 0, 1)) },
       { label: 'Mostrar FPS', kind: 'bool', n: () => S.fps, set: () => (S.fps = !S.fps) },
+      // (ui/tactil.js: automático, salen al tocar la pantalla)
+      { label: 'Controles táctiles', kind: 'text', v: () => ({ si: 'Siempre', no: 'Nunca' })[S.tactil] || 'Automático', set: (d) => (S.tactil = TACTIL[(Math.max(0, TACTIL.indexOf(S.tactil)) + d + TACTIL.length) % TACTIL.length]) },
       { label: 'Transcribir los documentos', kind: 'bool', n: () => S.transcript, set: () => (S.transcript = !S.transcript) },
     ];
   }
@@ -545,7 +548,19 @@ export class UI {
     const keys = (s, pad) => `<span class="k">${one(s)
       .map((k) => spriteHtml(keyBitmap(k, pad)))
       .join('')}</span>`;
-    $('ctl-list').innerHTML = `<span class="h f-small">Acción</span><span class="h f-small">Teclado</span><span class="h f-small">Mando</span>` + rows.map((r) => `<span>${esc(r[0])}</span>${keys(r[1], false)}${keys(r[2], true)}`).join('');
+    // (con los controles táctiles a la vista: sus botones llevan el dibujo del
+    // mando, y lo que no es un botón, dicho aparte; ui/tactil.js)
+    const tactil = this.g.tactil && this.g.tactil.shown;
+    $('ctl-list').innerHTML = `<span class="h f-small">Acción</span><span class="h f-small">Teclado</span><span class="h f-small">${tactil ? 'Mando · táctil' : 'Mando'}</span>` + rows.map((r) => `<span>${esc(r[0])}</span>${keys(r[1], false)}${keys(r[2], true)}`).join('');
+    let tc = $('ctl-tactil');
+    if (!tc) {
+      tc = document.createElement('div');
+      tc.id = 'ctl-tactil';
+      tc.className = 'f-hand';
+      $('ctl-list').after(tc);
+    }
+    tc.textContent = tactil ? 'En la pantalla táctil: el stick sale donde apoyes el pulgar, y más allá de su aro se corre; la cámara, arrastrando el dedo a la derecha (un golpe de lado cambia de objetivo); tocar un aviso es pulsar su botón.' : '';
+    tc.classList.toggle('hidden', !tactil);
     $('ctl-hint').innerHTML = `<span>${this.keyHtml('back')} Volver</span>`;
   }
 
@@ -1441,7 +1456,9 @@ export class UI {
     if ((t || struggle || rip) && !this.modal && g.state === 'play') {
       const label = struggle ? 'Forcejea' : rip ? 'Golpe de gracia' : g.interact.label(t);
       const d = this.device();
-      const glyph = GLYPHS[d][struggle || rip ? 'light' : (t && t.glyph) || 'interact'];
+      // (lo que pide: tocar el aviso en la pantalla táctil es pulsarlo)
+      this._promptAction = struggle || rip ? 'light' : (t && t.glyph) || 'interact';
+      const glyph = GLYPHS[d][this._promptAction];
       const k = d + ':' + glyph + ':' + label;
       if (k !== this._promptKey) {
         this._promptKey = k;
@@ -1551,6 +1568,8 @@ export class UI {
       }
       case 'controls':
       case 'map':
+        // (en una pantalla baja, la lista de los controles se desplaza)
+        if (s.name === 'controls' && dir.y) $('ctl-list').scrollBy(0, dir.y * 21 * this.sc.m * 2);
         if (back || conf || (s.name === 'map' && inp.pressed('map'))) this.close();
         break;
       case 'note':

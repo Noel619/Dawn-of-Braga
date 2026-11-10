@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- (maximum-scale: que el teléfono no acerque la página al escribir el nombre) -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Dawn of Braga</title>
+<!-- la web instalable: en el iPhone, Compartir › Añadir a pantalla de inicio -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#060505">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dawn of Braga">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
   /* mínimo para la pantalla de carga (el resto llega con src/ui/ui.css) */
   html, body { margin: 0; height: 100%; background: #060505; color: #a89c85; overflow: hidden; }

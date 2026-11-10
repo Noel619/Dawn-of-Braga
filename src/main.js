@@ -147,3 +147,10 @@ function boot() {
 // deja pintar la pantalla de carga (y cargar las fuentes pixeladas) antes de
 // construir la ciudad
 loadFonts().then(() => setTimeout(boot, 60));
+
+// La web instalable (public/sw.js): el juego, también sin red. Sólo en la
+// versión compilada (la de desarrollo cambia a cada momento) y donde se puede
+// (https o el propio ordenador, no abriendo el archivo a mano).
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}

@@ -17,14 +17,22 @@ PS1/PS2. Pensado para completarse en **45–60 minutos**.
 
 - **Versión lista para jugar:** abre `docs/index.html` en un navegador de escritorio (Chrome, Edge o Firefox).
   Es un único archivo autocontenido; también puede publicarse tal cual con GitHub Pages (carpeta `/docs`).
+- **En el teléfono o la tableta (iPhone, iPad, Android):** con la carpeta `/docs` publicada en GitHub Pages
+  (Settings › Pages › *Deploy from a branch*, la rama principal y `/docs`), se abre su dirección en el navegador
+  y se instala como una app: en el iPhone, Safari › Compartir › *Añadir a pantalla de inicio*; en Android,
+  Chrome › *Instalar aplicación*. Instalada, se abre a pantalla completa, en horizontal y también sin red
+  (`docs/manifest.webmanifest`, `docs/sw.js` y sus iconos, dibujados por código: `tools/iconos.mjs`). Se juega
+  con los controles táctiles o con un mando Bluetooth (Xbox, PlayStation o MFi).
 - **Desde el código:**
   ```bash
   npm install
   npm run dev      # servidor de desarrollo en http://localhost:5173
   npm run build    # genera dist/index.html (archivo único)
+  npm run build:play  # y lo copia a docs/, con lo de la web instalable
   ```
 
-Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
+Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón; en el teléfono, con los controles
+táctiles (o un mando).
 
 ## Controles
 
@@ -56,6 +64,18 @@ Requiere WebGL 2. Se recomienda jugar con mando (XInput) o con teclado y ratón.
 | Mapa | M | View |
 | Pausa y opciones | Esc | Start |
 | Editor de personaje: elegir / cambiar / girarle | ↑ ↓ (W S) / ← → (A D) / Q R, arrastrar con el ratón (la rueda acerca) | Cruz / cruz / LB RB o stick derecho |
+
+**En la pantalla táctil** (`ui/tactil.js`) se juega con un mando dibujado en ella, y sus botones llevan el mismo
+dibujo que los del mando de la tabla (y que los avisos de la pantalla). Jugando: el stick sale donde se apoya el
+pulgar izquierdo (y, llevado más allá de su aro, se corre); la cámara se gira arrastrando el dedo por la derecha (un
+golpe de lado, con un objetivo fijado, cambia de objetivo); abajo a la derecha, atacar (RB), el pesado (RT),
+bloquear y el parry (LB), esquivar y correr manteniendo (B), usar (A), beber una ampolla (X) y fijar objetivo (R3);
+arriba, la pausa, el mapa, el inventario y los cocimientos que se lleven. Tocar el aviso de «Abrir», «Hablar»... o
+«Golpe de gracia» es pulsar su botón. Con un menú abierto (y en el título, la introducción, el editor de personaje,
+la mesa del Rey y los osarios), la cruz, los cuatro botones, los de los hombros y los del centro; los menús también
+se pueden tocar. En vertical, un aviso para girar el teléfono (y la pausa). Opciones › *Controles táctiles*:
+automático (salen al tocar la pantalla, y en el teléfono desde el principio, y se van al usar el teclado o un mando
+de verdad), siempre o nunca.
 
 ## Qué hay dentro
 
@@ -1608,7 +1628,10 @@ src/
                         chunks.js, los cascotes y los trozos; dust.js, las nubes de polvo. De la pelea vieja quedan
                         turiferario_anim.js (animaciones que se siguen usando) y, sin enganchar, la de Deo Ignoto:
                         deo_boss.js, deo_anim.js, climb.js y surface.js)
-  ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos
+  ui/                   motor de sprites pixel art de la interfaz y su hoja de estilos; tactil.js, los controles de
+                        la pantalla táctil (un mando más: stick, cámara y botones, según lo que haya en pantalla)
+  public/               lo de la web instalable, que se copia a docs/: el manifiesto, el service worker (primero la
+                        red; sin red, lo guardado) y los iconos (tools/iconos.mjs)
   fonts/                fuentes pixeladas (OFL) y su licencia
 tools/                  pruebas automatizadas con Playwright (requieren `npx vite --port 5199`):
                         progress.mjs   recorre toda la progresión hasta el final (la cripta honda y su
@@ -1730,6 +1753,16 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        versión (para comparar dos)
                         memoria.mjs    lo que ocupa el juego al arrancar, por la función y la pila que lo
                                        creó (perfil del montón por muestreo, de antes de cargar a listo)
+                        tactil.mjs     los controles táctiles en un iPhone 13 emulado: dónde caen los botones,
+                                       el stick (andar y correr), la cámara, dos dedos a la vez, atacar,
+                                       bloquear, esquivar, tocar el aviso, la pausa y el inventario con la
+                                       cruz y los hombros, el clic de ratón que el navegador manda tras un
+                                       toque (no ataca), el título, el teléfono en vertical y que en el
+                                       ordenador no salga nada (URL=...: otra versión, p. ej. la compilada)
+                        webapp.mjs     la web instalable sobre la versión compilada (docs/ en el puerto
+                                       5197): el manifiesto y sus iconos, el service worker, que Chrome la dé
+                                       por instalable y que sin red se abra y arranque
+                        iconos.mjs     dibuja los iconos de la web instalable (public/icon-*.png)
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)

@@ -48,7 +48,7 @@ const KB = {
 };
 
 // Índices del mapeo estándar W3C (idéntico a XInput)
-const PAD = {
+export const PAD = {
   interact: [0], // A
   confirm: [0],
   dodge: [1], // B
@@ -109,6 +109,12 @@ export class Input {
     this.lockAllowed = null;
     this._lockReqAt = -1e9;
     this.anyPressed = false;
+    // el mando de la pantalla táctil (ui/tactil.js): { on, down[], tap[], ls }
+    // y cuándo se tocó la pantalla por última vez (performance.now())
+    this.touch = null;
+    this.touchT = -1e9;
+    // (lo llama _pollPad al usar un mando de verdad: ui/tactil.js)
+    this.onRealPad = null;
 
     // Firefox sólo concede la captura dentro de un gesto del jugador (no desde
     // el bucle del juego): si al volver al juego no se pudo recapturar, se
@@ -135,7 +141,12 @@ export class Input {
       this.keys.clear();
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    // (tras un toque en la pantalla, el navegador manda además un clic de
+    // ratón de mentira: contaba como el ataque ligero —el botón izquierdo— y
+    // ponía los avisos con las teclas del teclado)
+    const emulated = () => performance.now() - this.touchT < 900;
     addEventListener('mousedown', (e) => {
+      if (emulated()) return;
       const c = 'M' + e.button;
       if (!this.keys.has(c)) this.kPressed.add(c);
       this.keys.add(c);
@@ -144,6 +155,7 @@ export class Input {
       regain(c);
     });
     addEventListener('mouseup', (e) => {
+      if (emulated() && !this.keys.has('M' + e.button)) return;
       const c = 'M' + e.button;
       this.keys.delete(c);
       this.kReleased.add(c);
@@ -273,26 +285,54 @@ export class Input {
     this.pad = pad;
     this.padPrev = this.padNow;
     this.padNow = [];
-    if (!pad) {
+    const T = this.touch && this.touch.on ? this.touch : null;
+    if (!pad && !T) {
       // sin mando, sin sticks (al desconectarlo con uno inclinado, el
       // personaje seguía andando y la cámara girando solos)
       this.ls = this.rs = null;
       return;
     }
-    for (let i = 0; i < pad.buttons.length; i++) {
-      const b = pad.buttons[i];
-      const v = typeof b === 'object' ? (b.pressed || b.value > 0.45 ? 1 : 0) : b > 0.45 ? 1 : 0;
-      this.padNow[i] = v;
-      if (v && !this.padPrev[i]) {
+    if (pad) {
+      let real = false;
+      for (let i = 0; i < pad.buttons.length; i++) {
+        const b = pad.buttons[i];
+        const v = typeof b === 'object' ? (b.pressed || b.value > 0.45 ? 1 : 0) : b > 0.45 ? 1 : 0;
+        this.padNow[i] = v;
+        if (v && !this.padPrev[i]) {
+          this.device = 'pad';
+          this.anyPressed = true;
+          real = true;
+        }
+      }
+      const [lx, ly] = deadzone(pad.axes[0] || 0, pad.axes[1] || 0);
+      const [rx, ry] = deadzone(pad.axes[2] || 0, pad.axes[3] || 0);
+      this.ls = { x: lx, y: ly };
+      this.rs = { x: rx, y: ry };
+      if (Math.abs(lx) + Math.abs(ly) + Math.abs(rx) + Math.abs(ry) > 0.3) {
+        this.device = 'pad';
+        real = true;
+      }
+      if (real && this.onRealPad) this.onRealPad();
+    } else this.ls = this.rs = null;
+    if (T) this._mergeTouch(T);
+  }
+
+  // El mando de la pantalla táctil (ui/tactil.js), sumado al de verdad: sus
+  // botones (un toque más corto que un fotograma cuenta: tap[]) y su stick.
+  _mergeTouch(T) {
+    const down = T.down,
+      tap = T.tap;
+    for (let i = 0; i < down.length; i++) {
+      if (!down[i] && !tap[i]) continue;
+      tap[i] = 0;
+      if (!this.padNow[i] && !this.padPrev[i]) {
         this.device = 'pad';
         this.anyPressed = true;
       }
+      this.padNow[i] = 1;
     }
-    const [lx, ly] = deadzone(pad.axes[0] || 0, pad.axes[1] || 0);
-    const [rx, ry] = deadzone(pad.axes[2] || 0, pad.axes[3] || 0);
-    this.ls = { x: lx, y: ly };
-    this.rs = { x: rx, y: ry };
-    if (Math.abs(lx) + Math.abs(ly) + Math.abs(rx) + Math.abs(ry) > 0.3) this.device = 'pad';
+    const L = T.ls;
+    if (L && (L.x || L.y) && (!this.ls || Math.abs(this.ls.x) + Math.abs(this.ls.y) < Math.abs(L.x) + Math.abs(L.y))) this.ls = { x: L.x, y: L.y };
   }
 
   // Llamar al principio de cada fotograma.
