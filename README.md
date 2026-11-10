@@ -608,7 +608,8 @@ vez hacia el muro de levante y se han puesto de rodillas); el tablero de las lla
 los grilletes, el brasero y un guarda. De ella, **la cárcel**: tres naves de bóvedas de arista sobre columnas, con sus
 fajones de sillería; las de los lados, enrejadas hasta la bóveda entre columna y columna, son las celdas, con su paja
 y sus argollas. Unas, las reventaron desde dentro (una puerta arrancada en el suelo de la nave, con el cubo y la
-parihuela de los muertos; en una celda, uno que come; en otra, **una ampolla**; en otra, rayas de cinco en cinco, once
+parihuela de los muertos, y en la celda de la que la arrancaron, tirada en la sangre, **la maza de los carceleros**;
+en una celda, uno que come; en otra, **una ampolla**; en otra, rayas de cinco en cinco, once
 días, y al lado una campana); en las demás siguen encerrados los que no salieron: aporrean la reja cuando te oyen, o
 rezan en el fondo, de rodillas hacia la Sé. Por la bóveda anda un rastrero. Una puerta de la nave de levante da al
 **aljibe del palacio**, bajo el patio de honor: cuatro naves de bóvedas de arista sobre columnas que salen del agua
@@ -819,9 +820,7 @@ cruz. Arriba quedan su espada clavada y el pendón del Rey tirado en el suelo. (
 en cada paso y bóvedas de arista donde se cruzan las galerías: el pasillo de las celdas (donde despiertas; cada celda
 con su arco y su reja, que también para la cámara; nada más salir de la tuya, **el guardia muerto**, boca abajo, con
 **la espada oxidada clavada en la espalda** hasta las losas y **su escudo de madera** todavía al brazo: el escudo se le
-quita y la espada se le arranca —se la ve salir del cuerpo—, y al arrancarla algo se levanta en la celda del fondo;
-dos celdas más allá de la tuya, en la de la reja abierta, **la maza de los carceleros**, tirada en el suelo en una
-mancha de sangre seca),
+quita y la espada se le arranca —se la ve salir del cuerpo—, y al arrancarla algo se levanta en la celda del fondo),
 el cuarto del carcelero y la sala del
 tormento (el potro con su condenado atado de muñecas y tobillos, la garrucha, la jaula colgada, el brasero de los
 hierros). Cavadas junto a una necrópolis más antigua, las **catacumbas**: galerías de lóculos, unos tapiados y otros
@@ -1047,14 +1046,6 @@ tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mu
   menos (va algo más deprisa y cansa menos), su hoja es más corta, ataja peor y contra armadura hace la mitad.
 - **Escudo de madera** (el del guardia muerto, al brazo): de lágrima, de tablas de pino con el canto de hierro y la
   cruz de Braga.
-- **Maza de armas** (una mano, con escudo; la de los carceleros, en el suelo de **una celda del pasillo**, la tercera
-  del norte, la de la reja abierta, en una mancha de sangre seca): cabeza de hierro de seis aletas con los cantos
-  gastados y brillantes, mango de hierro y puño de cuero; dos palmos y medio. **Sólo aplasta**: lo que es hueso,
-  piedra o bronce lo nota, y contra una cota pasa el 85 %. Más lenta que una espada y con menos alcance, pero cada
-  golpe pesa (el doble que la oxidada) y desequilibra más. Sus golpes, de maza: el de derecha, en diagonal desde
-  encima del hombro; el revés, de vuelta, a la altura del pecho; el mazazo, de arriba abajo; y el del carcelero
-  (pesado), que sube por detrás del hombro, se pone de puntillas y cae con una zancada; todos se quedan abajo, donde
-  golpean, y cada uno llega con el brazo casi estirado.
 - **Espada de la guardia** (antes, «del carcelero»; una mano, con escudo; en la armería de la puerta de la fortaleza,
   apoyada en la muralla al cabo de las astas): la de siempre, más del doble que la oxidada.
 - **Lanza de la muralla** (una mano, con escudo; en **el adarve de levante** de la fortaleza, apoyada en la almena de
@@ -1073,6 +1064,14 @@ tenía, del modo desarrollador, se le quitan al cargarla.) Todas están en el mu
   un culatazo. Los **virotes se cuentan** (junto a las ampollas, con una raya dorada si está montada) y por ahora
   sólo los hay en la fortaleza: en la guardia, en la armería, en el taller, en el cadalso, en la galería de la sala
   del trono y en el carcaj del alférez.
+- **Maza de armas** (una mano, con escudo; la de los carceleros del Rey, en **la cárcel de la fortaleza**, a la que se
+  baja por la trampilla del almacén de la torre: tirada en el suelo de la celda que reventaron desde dentro, la de la
+  puerta arrancada, en la sangre): cabeza de hierro de seis aletas con los cantos gastados y brillantes, mango de
+  hierro y puño de cuero; dos palmos y medio. **Sólo aplasta**: lo que es hueso, piedra o bronce lo nota, y contra una
+  cota pasa el 85 %. Más lenta que una espada y con menos alcance, pero cada golpe pesa (el doble que la oxidada) y
+  desequilibra más. Sus golpes, de maza: el de derecha, en diagonal desde encima del hombro; el revés, de vuelta, a la
+  altura del pecho; el mazazo, de arriba abajo; y el del carcelero (pesado), que sube por detrás del hombro, se pone de
+  puntillas y cae con una zancada; todos se quedan abajo, donde golpean, y cada uno llega con el brazo casi estirado.
 
 - **Espada de Solingen** (una mano, con escudo; clavada en el hogar de la Casa del Alemán, ver arriba): un 35 % más
   que la de la guardia.

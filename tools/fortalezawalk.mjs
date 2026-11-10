@@ -262,17 +262,19 @@ await step4('al corral', "__walk([[-113,-33.6],[-113,-32.2],[-113,-30.6],[-111.6
 // 15. (fase 5) la cárcel de la fortaleza: la trampilla del almacén de la torre
 // (sin palanca no se abre; con ella, salta una argolla y sus hojas quedan de
 // pie); la bajada, la sala de los carceleros (el libro de los presos), la
-// cárcel (la celda abierta del fondo y su ampolla; en las cerradas no se
-// entra), la puerta del aljibe y su andén (los virotes del caído), el paso de
-// las celdas de castigo, el cuarto de los verdugos, el paso bajo el foso, la
-// capilla de los reos y la subida al rellano: lo último del carcelero mayor y
-// su palanca, que sube el rastrillo; por él, al pasillo de las celdas de la
-// mazmorra del castillo y a la celda del principio
+// cárcel (la maza de los carceleros, en la celda de la puerta arrancada, que
+// se coge desde el umbral; la celda abierta del fondo y su ampolla; en las
+// cerradas no se entra), la puerta del aljibe y su andén (los virotes del
+// caído), el paso de las celdas de castigo, el cuarto de los verdugos, el
+// paso bajo el foso, la capilla de los reos y la subida al rellano: lo último
+// del carcelero mayor y su palanca, que sube el rastrillo; por él, al pasillo
+// de las celdas de la mazmorra del castillo y a la celda del principio
 await step5('trampilla, sin palanca', "(()=>{const g=__game;g.inventory.items.delete('palanca');g.player.spawn(-106,0,-96,0);__sim(0.3);return __ir('t_bajada_carcel', 0.4)})()");
 await step5('trampilla, con palanca', "(()=>{const g=__game;g.giveItem('palanca');g.ui.closeAll();__sim(0.2);const r=__useHere('t_bajada_carcel');__sim(1.5);const it=g.interact.list.find(i=>i.id==='t_bajada_carcel');return {...r,flag:!!g.flags['trampa:carcel'],tapa:it.box.enabled,hojas:it.leafBoxes.map(b=>b.enabled)}})()");
 await step5('bajada', "__walk([[-106,-93.3],[-106,-91],[-106,-88],[-106,-85.5],[-106,-83]])");
 await step5('libro de la cárcel', "__ir('n_libro_carcel', 0.9)");
 await step5('a la cárcel', "__walk([[-106,-80],[-106,-77],[-106,-74],[-106,-68.25]])");
+await step5('maza de la celda', "(()=>{const g=__game;__walk([[-107.6,-68.25]]);const r=__ir('i_maza', 0.9);const w=__walk([[-107.6,-68.25],[-106,-68.25]]);return {...r,arma:g.player.weaponId,vuelta:w}})()");
 await step5('celda del fondo', "__walk([[-106,-60],[-106,-54.75],[-107.6,-54.75],[-109.5,-54.75],[-110.6,-54.2]])");
 await step5('ampolla de la celda', "__ir('i_ampolla_carcel', 0.5)");
 await step5('celda cerrada', "(()=>{const g=__game;__walk([[-109.5,-54.75],[-107.6,-54.75],[-106,-54.75],[-106,-63.75]]);const w=__walk([[-111,-63.75]]);return {atascado:!!w.stuck,dentro:g.player.pos.x<-108.7}})()");
@@ -290,7 +292,7 @@ await step5('subida', "__walk([[-93.2,-12],[-92,-12],[-91.2,-12],[-90.3,-12.1]])
 await step5('carcelero mayor', "__ir('n_carcelero_mayor', 0.7)");
 await step5('palanca del rastrillo', "(()=>{const g=__game;__walk([[-90.25,-12.1]]);const r=__useHere('p_rastrillo_carcel');__sim(4);const d=g.interact.list.find(i=>i.id==='d_rastrillo_carcel');return {...r,abierto:!!g.flags['door:d_rastrillo_carcel'],caja:d.box.enabled,open:+d.open.toFixed(2)}})()");
 await step5('a la celda del principio', "__walk([[-89.3,-12],[-88.2,-12],[-87.6,-12.6],[-87.6,-14.6],[-87.6,-16.2]])");
-await step5('lo cogido', "(()=>{const g=__game;return {ampolla:!!g.flags['take:i_ampolla_carcel'],virotes:!!g.flags['take:i_virotes_aljibe'],libro:!!g.flags['note:libroCarcel'],carcelero:!!g.flags['note:carceleroMayor']}})()");
+await step5('lo cogido', "(()=>{const g=__game;return {maza:!!g.flags['take:i_maza'],ampolla:!!g.flags['take:i_ampolla_carcel'],virotes:!!g.flags['take:i_virotes_aljibe'],libro:!!g.flags['note:libroCarcel'],carcelero:!!g.flags['note:carceleroMayor']}})()");
 // 16. (fase 7) el paseo de las cámaras: de la tribuna de la capilla, por su
 // puerta y sus peldaños, al paseo; la vuelta entera por los tres brazos; las
 // puertas de la cámara del Rey y de la sala de la reina, atrancadas por

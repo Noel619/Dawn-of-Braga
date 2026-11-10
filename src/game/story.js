@@ -3,11 +3,12 @@
 
 export const ITEMS = {
   // Armas (weapon: id en src/entities/weapons.js), todas en su sitio: la
-  // oxidada en el pasillo de las celdas y la maza en una de ellas, la de la
-  // guardia y la ballesta en la puerta de la fortaleza, la lanza en el adarve
-  // de levante, el hacha en la barricada del Postigo (la arranca en la escena
-  // de la Bestia), la de Solingen en la casa de Henrique y el martillo de
-  // guerra en la capilla de Sisnando, en la cripta honda de la Sé.
+  // oxidada en el pasillo de las celdas, la de la guardia y la ballesta en la
+  // puerta de la fortaleza, la lanza en el adarve de levante, la maza en una
+  // celda de la cárcel del Rey (bajo la fortaleza), el hacha en la barricada
+  // del Postigo (la arranca en la escena de la Bestia), la de Solingen en la
+  // casa de Henrique y el martillo de guerra en la capilla de Sisnando, en la
+  // cripta honda de la Sé.
   hacha: {
     name: 'Hacha barbada',
     desc: 'Hacha de mango largo de los leñadores del Gerês. Estaba clavada hasta el ojo en la estaca de la barricada de lo alto del Postigo, y nadie había podido sacarla; la arrancaste cuando la Bestia de Carne se te echó encima. Lenta y a dos manos, con el escudo a la espalda; cada golpe quiebra la guardia y el pesado estremece el suelo.',
@@ -31,7 +32,7 @@ export const ITEMS = {
   },
   maza: {
     name: 'Maza de armas',
-    desc: 'La maza de los carceleros del castillo: cabeza de hierro de seis aletas, con los cantos brillantes de tanto golpe, y mango de hierro con el puño forrado de cuero. Con ella se tenía callado el pasillo de las celdas. Estaba en el suelo de una de ellas, la de la reja abierta, en una mancha de sangre seca; de quien la soltó no queda nada. No corta: abolla. Lo que es hueso, piedra o bronce lo nota, y una cota apenas la para; pesa en la cabeza y desequilibra más que una espada, pero alcanza menos.',
+    desc: 'La maza de los carceleros del Rey: cabeza de hierro de seis aletas, con los cantos brillantes de tanto golpe, y mango de hierro con el puño forrado de cuero. Con ella se tenía callada la cárcel de la fortaleza. Estaba en el suelo de la celda que reventaron desde dentro, en la sangre; de quien la soltó no queda nada. No corta: abolla. Lo que es hueso, piedra o bronce lo nota, y una cota apenas la para; pesa en la cabeza y desequilibra más que una espada, pero alcanza menos.',
     icon: 'mace',
     key: false,
     weapon: 'maza',

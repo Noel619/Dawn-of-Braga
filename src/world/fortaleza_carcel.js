@@ -28,6 +28,7 @@ import { RNG } from '../core/util.js';
 import { solid, blocker, stairs, archRing, barrelVault, rampVault, groinVaults, pilaster, subtractRects } from './builders.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
+import { MACE } from '../entities/weapon_models.js';
 import { FORT } from './fortaleza_medidas.js';
 import { dungeonWalls, beam3 } from './level_castle.js';
 
@@ -507,11 +508,12 @@ function celdas({ ctx, L }) {
   puerta(ctx, 'z', zPa, xs[3], C.aljibe.xs[0], [room, RM.aljibe], PA);
   // --- las celdas: lo que hay en cada una (de norte a sur; la de levante del
   // tramo 'paso', sin celda). open: la puerta, abierta (su ángulo) o
-  // arrancada; dentro, quién o qué
+  // arrancada; dentro, quién o qué (en la que reventaron desde dentro, en la
+  // sangre, la maza de los carceleros)
   const CELDAS = {
     O: [
       { cerrada: true, preso: 'pound' },
-      { open: 'suelo', sangre: true },
+      { open: 'suelo', sangre: true, maza: true },
       { cerrada: true, huesos: true },
       { cerrada: true, preso: 'pound' },
       { open: 1.9, come: true, ampolla: true },
@@ -573,6 +575,9 @@ function celdas({ ctx, L }) {
         L.enemies.push({ type: 'penitent', x: xin - out * 0.3, y: YF, z: zc + 0.4, yaw: Math.PI, idle: 'eat', id: 'e_carcel_come' });
       }
       if (c.ampolla) L.interact.push({ kind: 'item', id: 'i_ampolla_carcel', item: 'ampolla', x: xm - out * 0.45, y: YF + 0.12, z: zc + 1.4 });
+      // (a un metro de la reja, en línea con el hueco de la puerta: se ve
+      // desde la nave, y se coge desde el umbral)
+      if (c.maza) mazaCarceleros(L, xf + out * 0.95, zc + 0.2, V(out * 0.9, 0, -0.44));
       if (c.preso) {
         // encerrado todavía: contra la reja (o de rodillas en el fondo, de
         // cara a levante, a la Sé)
@@ -620,6 +625,29 @@ function celdas({ ctx, L }) {
   ctx.rats.push({ x: xs[0] + 1.6, y: YF, z: zs[2] + 1.5, n: 2 }, { x: xs[3] - 1.4, y: YF, z: zs[3] + 2.0, n: 1 });
   // el que acecha en la bóveda de la nave
   L.enemies.push({ type: 'crawler', x: xc, y: YF, z: (zs[2] + zs[3]) / 2, yaw: Math.PI, idle: 'ceiling', id: 'e_carcel_techo' });
+}
+
+// La maza de los carceleros del Rey, en el suelo de la celda que reventaron
+// desde dentro, en la sangre: tumbada, con el puño hacia la reja y la cabeza
+// hacia el fondo, apoyada como cae una maza de seis aletas (en dos de ellas y
+// en el pomo). (gx, gz): el eje en el puño; h: hacia dónde queda la cabeza.
+function mazaCarceleros(L, gx, gz, h) {
+  h = h.clone().setY(0).normalize();
+  // (lo que levantan del suelo el pomo y las dos aletas de abajo, y dónde:
+  // a lo largo del mango, desde el puño)
+  const r0 = 0.02,
+    r1 = MACE.r * Math.cos(Math.PI / 6),
+    z0 = -0.113,
+    z1 = 0.45;
+  const th = Math.asin((r1 - r0) / (z1 - z0));
+  const D = V(h.x * Math.cos(th), Math.sin(th), h.z * Math.cos(th));
+  const X = V(0, 1, 0).cross(D).normalize();
+  const Yv = D.clone().cross(X);
+  // el eje en el puño (el modelo, a 5 cm de su origen, hacia los nudillos)
+  const A0 = V(gx, YF + r1 - z1 * Math.sin(th), gz);
+  const H = A0.clone().addScaledVector(Yv, 0.05);
+  const quat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Yv, D)).toArray();
+  L.interact.push({ kind: 'item', id: 'i_maza', item: 'maza', x: H.x, y: H.y, z: H.z, raw: true, quat, r: 1.3 });
 }
 
 // ------------------------------------------------------------ el aljibe del palacio

@@ -31,7 +31,6 @@ import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbo
 import { buildCastilloFuera, FUERA } from './castillo_fuera.js';
 import { buildPatioArmas } from './castillo_patio.js';
 import { FORT } from './fortaleza_medidas.js';
-import { MACE } from '../entities/weapon_models.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1077,31 +1076,6 @@ function fallenGuard(ctx, L, gx, gz, yaw) {
   box.noSight = true;
 }
 
-// La maza de los carceleros, en el suelo de la tercera celda del norte (la
-// de la reja abierta, dos más allá de la del jugador), en una mancha de
-// sangre seca: tumbada, con el puño hacia la reja y la cabeza hacia el fondo,
-// apoyada como cae una maza de seis aletas (en dos de ellas y en el pomo).
-function jailerMace(ctx, L) {
-  // (el puño, en el suelo, y hacia dónde queda la cabeza)
-  const h = V(-0.35, 0, -0.94).normalize();
-  // (lo que levantan del suelo el pomo y las dos aletas de abajo, y dónde:
-  // a lo largo del mango, desde el puño)
-  const r0 = 0.02,
-    r1 = MACE.r * Math.cos(Math.PI / 6),
-    z0 = -0.113,
-    z1 = 0.45;
-  const th = Math.asin((r1 - r0) / (z1 - z0));
-  const D = V(h.x * Math.cos(th), Math.sin(th), h.z * Math.cos(th));
-  const X = V(0, 1, 0).cross(D).normalize();
-  const Yv = D.clone().cross(X);
-  // el eje en el puño (el modelo, a 5 cm de su origen, hacia los nudillos)
-  const A0 = V(-80.62, YD + r1 - z1 * Math.sin(th), -14.95);
-  const H = A0.clone().addScaledVector(Yv, 0.05);
-  const quat = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Yv, D)).toArray();
-  L.interact.push({ kind: 'item', id: 'i_maza', item: 'maza', x: H.x, y: H.y, z: H.z, raw: true, quat, r: 1.6 });
-  P.decal(ctx, A0.x + h.x * 0.3, YD + 0.01, A0.z + h.z * 0.3, 1.3);
-}
-
 function buildDungeon(ctx, D, L) {
   const wb = ctx.wb;
   const R = (x0, z0, x1, z1, y1, mat, room, o = {}) => ({
@@ -1432,7 +1406,6 @@ function buildDungeon(ctx, D, L) {
     bakeCorpse(wb, -84.2, YD, -16.4, 0.5, 'curl', 'villager', 7);
     bakeCorpse(wb, -80.2, YD, -7.6, 2.6, 'back', 'villager', 38);
     fallenGuard(ctx, L, -85.45, -12.2, -Math.PI / 2 + 0.2);
-    jailerMace(ctx, L);
     // un preso que nadie sacó: los huesos sobre su jergón
     P.skeleton(ctx, -77.4, YD + 0.22, -17.3, Math.PI, { mess: 0.45, seed: 4511, room });
     P.bones(ctx, -87.4, YD, -17.0, 6, 3, 0.4);
