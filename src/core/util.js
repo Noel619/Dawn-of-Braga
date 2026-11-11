@@ -183,6 +183,20 @@ export function worley2(x, y, cells, seed = 0, jitter = 0.85) {
   return [f1, f2, id];
 }
 
+// Suelta en el acto la memoria de un array tipado que ya no se va a usar
+// (separando su ArrayBuffer: transfer(0)), sin esperar a que pase el
+// recolector, que puede tardar más de un minuto: en el teléfono, esa memoria
+// de más bastaba para que el sistema cerrara la pestaña. Sólo si el array es
+// su ArrayBuffer entero (de otro, no se toca) y si el navegador sabe hacerlo;
+// si no, se queda para el recolector, como siempre.
+export function soltarArray(a) {
+  const buf = a && a.buffer;
+  if (!buf || typeof buf.transfer !== 'function' || a.byteOffset !== 0 || a.byteLength !== buf.byteLength) return;
+  try {
+    buf.transfer(0);
+  } catch (e) {}
+}
+
 export function formatTime(sec) {
   const h = Math.floor(sec / 3600),
     m = Math.floor((sec % 3600) / 60),

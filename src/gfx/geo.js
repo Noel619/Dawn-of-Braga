@@ -4,7 +4,7 @@
 //   color -> albedo (oclusión ambiental falsa + suciedad procedural)
 //   aBake -> luz horneada de antorchas/velas/ventanas (iluminación por vértice)
 import * as THREE from 'three';
-import { fbm3, clamp, smoothstep } from '../core/util.js';
+import { fbm3, clamp, smoothstep, soltarArray } from '../core/util.js';
 import { worldMat, MAT_DEFS } from './materials.js';
 
 const CHUNK = 32;
@@ -29,7 +29,11 @@ class Grow {
     while (n < need) n *= 2;
     const b = new this.T(n);
     b.set(this.a);
+    // (el de antes ya está copiado: fuera en el acto; si no, al arrancar se
+    // juntaban cientos de MB de arrays viejos esperando al recolector)
+    const old = this.a;
     this.a = b;
+    soltarArray(old);
   }
   push1(x) {
     const l = this.length;
@@ -75,7 +79,13 @@ class Grow {
   }
   // lo que tiene, sin el hueco de sobra
   trim() {
-    return this.a.length === this.length ? this.a : this.a.slice(0, this.length);
+    return (this._out = this.a.length === this.length ? this.a : this.a.slice(0, this.length));
+  }
+  // ya no hace falta: su memoria, fuera en el acto (salvo el array que haya
+  // entregado trim, que es ya de otro)
+  free() {
+    if (this.a !== this._out) soltarArray(this.a);
+    this.a = this._out = null;
   }
 }
 
@@ -645,11 +655,15 @@ export class WorldBuilder {
         const k = new Float32Array((a.count + b.count) * 3);
         if (a.bake) k.set(a.bake);
         if (b.bake) k.set(b.bake, a.count * 3);
+        soltarArray(a.bake);
         a.bake = k;
       }
       a.count += b.count;
       b.tris = b.idx.length / 3;
       b.count = 0;
+      // (lo suyo ya está en la de arriba)
+      for (const G of [b.pos, b.nor, b.uv, b.col, b.room, b.idx]) G && G.free();
+      soltarArray(b.bake);
       b.pos = b.nor = b.uv = b.col = b.room = b.idx = b.bake = null;
     }
     for (const b of this.buckets.values()) {
@@ -675,6 +689,7 @@ export class WorldBuilder {
       meshes.push(mesh);
       // (lo de construir ya no hace falta: sólo queda lo que va a la GPU)
       b.tris = b.idx.length / 3;
+      for (const G of [b.pos, b.nor, b.uv, b.col, b.room, b.idx]) G && G.free();
       b.pos = b.nor = b.uv = b.col = b.room = b.idx = b.bake = null;
     }
     return meshes;

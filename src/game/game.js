@@ -105,6 +105,8 @@ export class Game {
     this.post = new PostPipeline(r);
     this.input = new Input(canvas);
     this.audio = new Audio();
+    // (los efectos horneados del sonido, tras un rato jugando: ver _ratoT)
+    this.audio.hornearLuego = true;
 
     // mundo
     const t0 = performance.now();
@@ -335,9 +337,14 @@ export class Game {
     // modo desarrollador (F2; sólo en localhost o desde la IP del autor)
     this.dev = new DevMode(this);
     // los colosos del jefe final: se generan en un hilo de fondo mientras se
-    // juega (unos segundos de cálculo que así no se notan)
+    // juega (unos segundos de cálculo que así no se notan). Sólo el
+    // Turiferario, el de la película del final (Deo Ignoto no lo pide nadie
+    // todavía y se generaba igual, en balde), y no al arrancar sino tras un
+    // rato jugando (update: _ratoT): al arrancar, su memoria se sumaba a la
+    // del arranque y el teléfono cerraba la pestaña. Al acabar, el hilo se
+    // cierra. (Si la película lo pide antes, lo genera entonces y espera.)
     this.colossi = new ColossusBank();
-    setTimeout(() => this.colossi.warm(), 1500);
+    this._ratoT = 0;
     // el jefe final (el Turiferario coloso y Deo Ignoto): su guion
     this.finale = new Finale(this);
     // la introducción (al empezar una partida nueva)
@@ -418,6 +425,19 @@ export class Game {
       visited: [...this.visited],
       hints: this.hintsShown,
     });
+  }
+
+  // Guarda como «Salir al título» en la pausa, si ahora se podría: jugando
+  // (sin un menú delante, sin estar muriendo, ni ante un mecanismo, ni a la
+  // mesa del Rey) o con la pausa abierta; si no, se queda lo último guardado.
+  // Lo pide main.js cuando el sistema le quita el contexto de WebGL a la
+  // página en el teléfono: al volver se recarga, y se sigue desde ahí.
+  guardarComoAlSalir() {
+    const enPausa = this.state === 'paused' && this.ui.stack.length > 0 && this.ui.stack[0].name === 'pause';
+    const jugando = this.state === 'play' && !this.ui.modal && !this.player.dead && !this.ossuaries.view && !(this.rey && this.rey.seat);
+    if (!enPausa && !jugando) return false;
+    this.saveGame();
+    return true;
   }
 
   loadGame(s) {
@@ -2049,6 +2069,29 @@ export class Game {
     if (this.state === 'paused' && !this.ui.modal) this.state = 'play';
 
     const simulate = this.state === 'play' || this.state === 'intro' || this.state === 'ending' || this.state === 'title';
+    // Lo que se prepara tras un rato jugando y no al arrancar, para que no se
+    // junte con lo que deja la carga (en el teléfono, el sistema cerraba la
+    // pestaña): el coloso del final, a los 40 s (ver colossi, arriba), y los
+    // efectos horneados del sonido, a los 90 (cada variante se hace en un
+    // contexto sin conexión que ocupa hasta que pasa el recolector; hasta
+    // entonces suenan como siempre, sintetizados al momento). Y antes, si
+    // llega lo que los usa: los efectos, con un jefe, la persecución de la
+    // Bestia o la película del final; el coloso, con el arzobispo (vencido,
+    // empieza la película) o la película (al seguir una partida guardada en
+    // mitad de ella).
+    if (this._ratoT >= 0 && this.state === 'play') {
+      this._ratoT += dt;
+      const peli = this.finale.stage === 'film';
+      if (!this._colosoPedido && (this._ratoT > 40 || peli || (this.activeBoss && this.activeBoss === this.bosses.turibulario))) {
+        this._colosoPedido = true;
+        this.colossi.warm(['turiferario']);
+      }
+      if (!this._hornoPedido && (this._ratoT > 90 || peli || this.activeBoss || this.chase.active)) {
+        this._hornoPedido = true;
+        this.audio.hornear();
+      }
+      if (this._colosoPedido && this._hornoPedido) this._ratoT = -1;
+    }
     if (simulate && !this.ui.modal) {
       const control = this.state === 'play' && !p.dead && !hadModal && !this.cine && !this.cutscene && !(this.chase.active && this.chase.lock) && !this.ossuaries.view && !this.rey.seat;
       if (this.state === 'play' || this.state === 'ending') {

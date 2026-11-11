@@ -99,8 +99,8 @@ export class Finale {
     return this._wrecks || (this._wrecks = new Wrecks(this.g));
   }
 
-  // El gigante, montado (el modelo se genera al cargar el juego, en un hilo
-  // de fondo: a estas alturas ya está).
+  // El gigante, montado (el modelo se genera tras un rato jugando, en un
+  // hilo de fondo: a estas alturas ya está; si no, se espera: waitGiant).
   ensureGiant() {
     if (this.giant) return Promise.resolve(this.giant);
     if (!this._giantP)

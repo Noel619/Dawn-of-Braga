@@ -1355,8 +1355,22 @@ escena se mueven unos 300 por fotograma; antes, three.js los recalculaba todos),
 un objeto cae en el encuadre se guarda mientras no se mueva (`gfx/rendimiento.js`). Medido en el mismo equipo y en
 los mismos sitios (`tools/perfil.mjs`, `tools/memoria.mjs`): la memoria de JS, de unos 2 100 MB a unos 600–850; el
 arranque, de 20–23 s a 11–15; el paso del juego (`update`), de 4,0 a 2,1 ms en la plaza del Pan y de 6,1 a 3,7 en
-el patio de honor; y preparar el dibujo, de 26 a 10 ms en la plaza. Los shaders de toda la escena se compilan con
-la pantalla de carga delante, no en mitad de la partida al ver por primera vez un material (cada uno, un tirón).
+el patio de honor; y preparar el dibujo, de 26 a 10 ms en la plaza. Con la pantalla de carga delante, los shaders de
+toda la escena se compilan para donde se dibuja de verdad (el destino intermedio, en lineal) y la geometría del mundo
+se sube entera a la GPU (`prepararGPU`): ni un material ni un trozo de ciudad se prepara en mitad de la partida (cada
+uno, un tirón). En el teléfono y la tableta (o con 4 GB o menos), además, sin la copia de esa geometría en la memoria
+de la página (281 MB que la GPU ya tiene): el sistema cerraba la pestaña al poco de jugar (Safari la recarga sin decir
+nada). Lo que ya no se usa se suelta en el acto, separando su ArrayBuffer, sin esperar al recolector (`soltarArray`, en
+`core/util.js`), que puede tardar más de un minuto: esa copia y, en todos los equipos, los arrays de paso con los que
+se levanta la ciudad (unos 700 MB que se crean y se tiran durante la carga). Si el sistema le quita el contexto de
+WebGL (en el iPhone, al volver de otra aplicación, por ejemplo), sin esa copia no se puede rehacer: se guarda como al
+salir al título desde la pausa (si en ese momento se podría), el juego se para y, cuando el sistema lo devuelve, la
+página se recarga y se sigue desde lo guardado. Lo que no hace falta al empezar se prepara tras un rato jugando, para
+que no se junte con lo que deja la carga: el coloso de la película del final, a los 40 s (y el hilo que lo genera se
+cierra), y los efectos horneados del sonido, a los 90; uno y otros, antes si llega lo que los usa (un jefe, la
+persecución de la Bestia, la película). Medido en un iPhone 13 emulado, con la versión compilada, directo a jugar
+(`tools/memoria_total.mjs`): en el primer minuto de juego, la página pasa de 1 158 MB de máximo a 819, y ya asentada,
+de unos 950 a unos 580; la GPU, de unos 430 a unos 690 (el mundo entero, subido en la carga).
 Las sombras de las criaturas que aún no se habían movido se quedaban todas en el origen, en medio de la plaza del
 Pan (un centenar apiladas en la fuente, dibujadas una a una cada fotograma): ahora esperan bajo su criatura a que
 se acerque. El tramado de Bayer se calcula con bits (la tabla local que se indexaba por píxel va lenta en muchas
@@ -1753,6 +1767,14 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        versión (para comparar dos)
                         memoria.mjs    lo que ocupa el juego al arrancar, por la función y la pila que lo
                                        creó (perfil del montón por muestreo, de antes de cargar a listo)
+                        memoria_total.mjs la memoria de verdad, segundo a segundo, en un iPhone emulado: la del
+                                       proceso de la página y la del de la GPU, con sus picos, de la carga al
+                                       título y, con el dedo, una partida nueva entera hasta jugar un rato
+                                       (DEV=1: directo a jugar; SEG=..., cuánto). Sólo lee lo del sistema:
+                                       preguntarle a la página cada segundo deja basura y parece una fuga
+                        contexto.mjs   la pérdida del contexto de WebGL: en el teléfono, se guarda (jugando o
+                                       en la pausa; con el inventario abierto, no), se para y, al devolverlo,
+                                       se recarga y arranca; en el ordenador, se rehace y se sigue dibujando
                         tactil.mjs     los controles táctiles en un iPhone 13 emulado: dónde caen los botones,
                                        el stick (andar y correr), la cámara, dos dedos a la vez, atacar,
                                        bloquear, esquivar, tocar el aviso, la pausa y el inventario con la

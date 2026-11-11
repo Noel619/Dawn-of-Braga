@@ -1,7 +1,7 @@
 // Punto de entrada: carga, bucle principal y ganchos de depuración.
 import './ui/ui.css';
 // (antes que nada: lo que three.js hace en cada fotograma sin que haga falta)
-import './gfx/rendimiento.js';
+import { prepararGPU } from './gfx/rendimiento.js';
 import { Game } from './game/game.js';
 import { unlockChronicle } from './game/save.js';
 import { loadFonts } from './ui/pixel.js';
@@ -26,22 +26,35 @@ function boot() {
     return;
   }
   window.__game = game;
-  // Los shaders de todo lo que hay en la escena, compilados ya, con la
-  // pantalla de carga delante: si no, cada material que aparece por primera
-  // vez —al entrar en una zona, al ver una criatura— se compilaba en mitad de
-  // la partida, y cada uno era un tirón (en un teléfono, de decenas de
-  // milisegundos). Con la luz de la lámpara del jugador, como al jugar (la
-  // cuenta de luces entra en cada shader).
+  // Los shaders y la geometría del mundo, ya en la GPU, con la pantalla de
+  // carga delante (gfx/rendimiento.js: prepararGPU). Con la luz de la lámpara
+  // del jugador, como al jugar (la cuenta de luces entra en cada shader). Con
+  // poca memoria —el teléfono, la tableta, o lo que diga tener 4 GB o menos—,
+  // sin la copia de la geometría en la memoria de la página; y entonces, si
+  // el sistema le quita el contexto de WebGL (en el iPhone, al volver de
+  // otra aplicación, por ejemplo), no se puede rehacer: se guarda como al
+  // salir al título desde la pausa (si se podría; game.guardarComoAlSalir),
+  // el juego se para (no se ve nada, y dibujar sin la copia daría error) y,
+  // cuando lo devuelve, se recarga (la partida, desde lo guardado).
+  let sinContexto = false;
   {
+    const poca = (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
     const po = game.player.obj,
       pv = po.visible;
     po.visible = true;
     try {
-      game.renderer.compile(game.scene, game.camera);
+      prepararGPU(game, poca);
     } catch (e) {
-      console.warn('[shaders] no se pudieron precompilar', e);
+      console.warn('[gpu] no se pudo preparar', e);
     }
     po.visible = pv;
+    if (poca) {
+      canvas.addEventListener('webglcontextlost', () => {
+        game.guardarComoAlSalir();
+        sinContexto = true;
+      });
+      canvas.addEventListener('webglcontextrestored', () => location.reload());
+    }
   }
   document.getElementById('loading').classList.add('hidden');
 
@@ -88,7 +101,7 @@ function boot() {
     const raw = Math.max(0, (now - last) / 1000);
     const dt = Math.min(0.05, raw);
     last = now;
-    if (window.__pause) {
+    if (window.__pause || sinContexto) {
       requestAnimationFrame(frame);
       return;
     }

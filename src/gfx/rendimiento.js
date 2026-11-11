@@ -19,6 +19,7 @@
 // la película— lo hace con matrixAutoUpdate en false y avisa con
 // matrixWorldNeedsUpdate, como pide three.js: sigue funcionando igual.)
 import * as THREE from 'three';
+import { soltarArray } from '../core/util.js';
 
 let _ver = 1;
 const proto = THREE.Object3D.prototype;
@@ -120,3 +121,61 @@ proto.updateWorldMatrix = function (updateParents, updateChildren, force = false
     for (let i = 0, l = children.length; i < l; i++) children[i].updateWorldMatrix(false, true, force);
   }
 };
+
+// Antes de jugar, con la pantalla de carga delante, lo que la GPU va a
+// necesitar, ya en ella:
+//  - los shaders de todo lo que hay en la escena, compilados para donde se
+//    dibuja de verdad: el destino intermedio del posproceso, en lineal (los
+//    de la pantalla, en sRGB, no se usan nunca); si no, cada material que
+//    aparecía por primera vez se compilaba en mitad de la partida (un tirón);
+//  - la geometría del mundo, subida de una vez (antes, la primera vez que se
+//    veía cada trozo: otro tirón al asomarse a una zona nueva);
+//  - y, con poca memoria (soltar: el teléfono, la tableta), sin su copia en la
+//    memoria de la página, unos 280 MB que la GPU ya tiene: el sistema cerraba
+//    la pestaña (y Safari la recarga sin decir nada). De lo que tiene grupo se
+//    quedan la posición y los índices (lo que se derrumba en la película los
+//    lee). Sin esa copia, si el sistema le quita el contexto de WebGL a la
+//    página no se puede rehacer: entonces se recarga (la partida, desde lo
+//    guardado; main.js).
+// (Y no basta con quitarle el array al atributo: esa memoria sólo vuelve
+// cuando pasa el recolector, que puede tardar; con el dato ya en la GPU, se
+// suelta en el acto: core/util.js, soltarArray.)
+export function prepararGPU(game, soltar) {
+  const R = game.renderer,
+    scene = game.scene,
+    cam = game.camera,
+    M = game.level.meshes;
+  if (soltar) {
+    const libre = function () {
+      const a = this.array;
+      this.array = null;
+      soltarArray(a);
+    };
+    for (const m of M) {
+      const G = m.geometry,
+        grp = !!(m.userData.group || m.userData.groups);
+      for (const k in G.attributes) if (!(grp && k === 'position')) G.attributes[k].onUpload(libre);
+      if (G.index && !grp) G.index.onUpload(libre);
+    }
+  }
+  const prev = R.getRenderTarget();
+  const rt = new THREE.WebGLRenderTarget(4, 4);
+  const fc = M.map((m) => m.frustumCulled);
+  const mask = cam.layers.mask;
+  // (pase lo que pase, todo vuelve a como estaba: si no, se dibujaría en el
+  // destino de 4×4, con la pantalla en negro)
+  try {
+    R.setRenderTarget(rt);
+    R.compile(scene, cam);
+    // (todo el mundo a la vista una vez: sin descarte por el encuadre y con el
+    // subsuelo; lo oculto, cuando se muestre)
+    for (const m of M) m.frustumCulled = false;
+    cam.layers.enable(1);
+    R.render(scene, cam);
+  } finally {
+    cam.layers.mask = mask;
+    M.forEach((m, i) => (m.frustumCulled = fc[i]));
+    R.setRenderTarget(prev);
+    rt.dispose();
+  }
+}

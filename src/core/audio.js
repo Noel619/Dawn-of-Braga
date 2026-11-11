@@ -602,8 +602,14 @@ export class Audio {
     this.idle(() => lib.static(4));
     for (const sec of [1.2, 0.9, 0.8]) this.idle(() => lib.chain(sec));
     this.idle(() => lib.drips());
-    // y los efectos horneados (cada variante, en su propio hilo)
-    this.idle(() => this.bakeAll());
+    // y los efectos horneados (cada variante, en su propio hilo); el juego
+    // los pide más tarde (hornearLuego: game.js, _ratoT)
+    if (!this.hornearLuego) this.idle(() => this.bakeAll());
+  }
+  // Los efectos horneados, ahora (o en cuanto arranque el sonido).
+  hornear() {
+    this.hornearLuego = false;
+    if (this.ok) this.idle(() => this.bakeAll());
   }
 
   // ------------------------------------------------------------ efectos horneados

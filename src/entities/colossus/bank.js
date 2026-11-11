@@ -1,7 +1,8 @@
 // Los colosos del jefe final: se generan una sola vez, en un hilo de fondo,
-// en cuanto carga el juego (cuando el jugador llega al final, o pide la
-// pelea en el modo de pruebas, ya están hechos). Si el navegador no deja
-// abrir el hilo, se generan en el principal (un tirón de unos segundos).
+// tras un rato jugando (game.js: _ratoT; cuando el jugador llega al final
+// ya están hechos) o cuando se piden, si es antes (el modo de pruebas): se
+// espera a que estén. Si el navegador no deja abrir el hilo, se generan en
+// el principal (un tirón de unos segundos).
 import BuildWorker from './build_worker.js?worker&inline';
 import { unpackData, assemble } from './model.js';
 
@@ -38,6 +39,14 @@ export class ColossusBank {
     }
     return this.worker;
   }
+  // Sin trabajo pendiente, el hilo de fondo se cierra (y su memoria con él);
+  // si luego hace falta otro coloso, se abre otro (_w).
+  release() {
+    if (this.worker && this.wait.size === 0) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+  }
   // Empieza a generarlos de uno en uno (no hace falta esperar).
   warm(kinds = ['turiferario', 'deo']) {
     let p = Promise.resolve();
@@ -70,6 +79,8 @@ export class ColossusBank {
         d.ms = Math.round(performance.now() - t0);
         this.data[kind] = d;
         delete this.jobs[kind];
+        // (sin más trabajo, el hilo se cierra: su memoria, fuera)
+        if (!Object.keys(this.jobs).length) this.release();
         return d;
       });
     return this.jobs[kind];
