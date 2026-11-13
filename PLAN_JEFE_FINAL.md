@@ -247,6 +247,10 @@ en el río. `tools/film.mjs` saca fotogramas de cualquier segundo.
 
 ## 9. El futuro (no se hace ahora)
 
+> **13 de noviembre**: el final lo manda ahora `PLAN_FINAL.md`. Hay un solo final canónico (la verdad, la
+> columna de almas y la lluvia de sangre, desde el río), y Deo Ignoto sólo sale en el final secreto, que no es
+> canon, con la espada forjada (el objeto verdadero de aquí abajo).
+
 - **El objeto verdadero** (nombre provisional): forjado, difícil de conseguir, a través de PNJ que se irán
   añadiendo. Al acabar con un ser maligno muestra su verdadera forma, su **Alma**, la única que se puede
   dañar de verdad: si se le hiere el Alma no puede volver a existir. Matar su forma terrenal revela la

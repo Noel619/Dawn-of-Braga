@@ -10,6 +10,11 @@ para elegir, la intro escrita plano a plano y las preguntas que hay que contesta
 
 Contestadas las preguntas (§7), lo que manda ahora es esto; el resto del documento queda como el plan de partida.
 
+> **13 de noviembre: el final y el dios**, en `PLAN_FINAL.md`, que manda sobre este documento en lo que choque.
+> Deo Ignoto es el dios de la abominación: no da, no pacta y no devuelve nada (fuera la regla del ara, la tabla
+> del §3.2 y la regla de escritura «multiplicar» del §3.5). Hay un solo final, y lo que dicen del final los §4 y
+> §6 queda sustituido.
+
 - **El plan B, a la manera del autor.** Deo Ignoto es una fuerza de la oscuridad, mala sin más, y **nadie lo sabe**:
   ni el arzobispo (los papeles de los romanos se perdieron hace mucho). Arrodillarse ante él es ceder, no un trato:
   no te devuelve nada. El arzobispo bajó a pedirle que salvara Braga, se arrodilló sobre la fuente y lo de dentro se

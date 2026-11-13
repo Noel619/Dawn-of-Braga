@@ -1893,6 +1893,7 @@ archive/estatua_primera/
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)
+PLAN_FINAL.md           el final (la terrible verdad), el final secreto y su plan de trabajo
 PLAN_JEFE_FINAL.md      el diseño del jefe final y su plan de trabajo
 PLAN_LORE.md            el rediseño del lore (1167, los almohades, el plan B) y de la introducción
 ```
