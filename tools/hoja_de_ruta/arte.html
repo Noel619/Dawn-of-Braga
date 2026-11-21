@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- Carga el arte de la hoja de ruta (arte.js) con las fuentes del juego;
+     la usa tools/hoja_de_ruta.mjs desde el servidor de Vite. -->
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Bastarda'; src: url('/src/fonts/jacquarda-bastarda-9.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'Handjet'; src: url('/src/fonts/handjet.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'Silkscreen'; src: url('/src/fonts/silkscreen.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'Jacquard24'; src: url('/src/fonts/jacquard-24.woff2') format('woff2'); font-display: block; }
+  @font-face { font-family: 'Jacquard12'; src: url('/src/fonts/jacquard-12.woff2') format('woff2'); font-display: block; }
+</style>
+<script type="module">
+  import { dibujar, recortar } from './arte.js';
+  window.__dibujar = dibujar;
+  window.__recortar = recortar;
+  window.__listo = true;
+</script>

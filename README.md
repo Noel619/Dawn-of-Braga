@@ -77,110 +77,110 @@ se pueden tocar. En vertical, un aviso para girar el teléfono (y la pausa). Opc
 automático (salen al tocar la pantalla, y en el teléfono desde el principio, y se van al usar el teclado o un mando
 de verdad), siempre o nunca.
 
+<!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-*Al día el 21 de noviembre de 2026.* El juego se juega entero, de la celda al río: `tools/progress.mjs` recorre la
-partida de punta a punta (167 pasos). Lo que falta va aquí, por orden. Los planes vivos están en la raíz; los que ya
-se hicieron, en `planes_jubilados/` (con su índice); los fallos sueltos, en `bugs_y_correciones.txt`, con su número
-(#).
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 76 % hacia la 1.0"></a></p>
 
-### Lo que ya está
+**76 % hacia la 1.0**: 79 de 104 tareas y 9 de las 14 fases hechas (al día el 21 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
-- [x] La ciudad y sus barrios, la Casa del Canónigo y sus bodegas, el Postigo con el Empalado y la huida de la Bestia.
-- [x] El castillo y la fortaleza-palacio: las cinco llaves, la Corte de los Infieles, el Rey y el Cerco, el Caballero
-  de la Orden y la cárcel del Rey.
-- [x] La cripta honda: los osarios y los objetos benditos, Dom Paio, el Custodio de la Garra, los Velados, la capilla
-  de Sisnando y la Puerta del Dios Ignoto.
-- [x] El barrio de los Pellejeros y el Físico de los Inocentes.
-- [x] La cloaca, el Vergel, las cloacas hondas, el Sumidero (a nado), el Lobishome y los cocimientos del Desfigurado.
-- [x] El jefe final: el arzobispo en la cisterna y la película del gigante; el final de ahora, el río al amanecer.
-- [x] Las dos introducciones (la corta y la Crónica de Braga) y el editor de personaje.
-- [x] El combate: ocho armas, tres armaduras, los tipos de daño, el parry y los objetos benditos.
-- [x] El rendimiento y el teléfono: la memoria, los fotogramas, los controles táctiles y la web instalable.
+La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
-### 1. Lo siguiente: el final, «la terrible verdad» (`PLAN_FINAL.md`)
+<p align="center"><img src="docs/hoja-de-ruta/camino.png" width="880" alt="El camino: las catorce fases de la 1.0 y lo que viene después"></p>
 
-Decidido con el autor el 13 de noviembre; todavía no hay nada hecho. **Un solo final**: al vencer al arzobispo se
-entiende que Deo Ignoto te usó para abrir su puerta y para matar su cuerpo, que era también su cadena. De donde
-estaba la estatua sube al cielo una columna roja llena de almas, el cielo se rompe en relámpagos, se vuelve negro y
-llueve sangre. Es el final de *Dawn of Braga* y el principio de *Dawn of the Devil*.
+| | Fase | Estado | Progreso |
+|---|---|---|---|
+| I | [Braga](docs/hoja-de-ruta/index.html#fase-braga) | Hecha | 100 % (7 de 7) |
+| II | [Los primeros jefes](docs/hoja-de-ruta/index.html#fase-jefes) | Hecha | 100 % (5 de 5) |
+| III | [El jefe final](docs/hoja-de-ruta/index.html#fase-pelicula) | Hecha | 100 % (9 de 9) |
+| IV | [La cripta honda](docs/hoja-de-ruta/index.html#fase-cripta) | Hecha | 100 % (9 de 9) |
+| V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
+| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (9 de 9) |
+| VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
+| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (8 de 8) |
+| IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
+| X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
+| XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
+| XII | [El albacar](docs/hoja-de-ruta/index.html#fase-albacar) | Espera al autor | 0 % (0 de 4) |
+| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
+| XIV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
 
-- [ ] Contestar las siete preguntas del plan (§7): dónde se ve (el embarcadero o el cráter), cuántos rótulos, si se
-  hace el montaje de los ecos, el título *Dawn of the Devil*, cómo se dice que el final secreto no es canon, si cambia
-  «Quiso pactar con lo que había dentro» en la introducción y qué hacen las criaturas mientras sube la columna.
-- [ ] Los textos: el pergamino, los rótulos y lo que cambia en este README (§5).
-- [ ] El animático: la escena como corrutina de la película (`finale/film_verdad.js`), con sus planos, sus rótulos y
-  el saltar.
-- [ ] El cielo que se rompe: la atmósfera `apocalipsis`, el sol que se apaga, las grietas, las nubes y los relámpagos.
-- [ ] La columna de almas (`finale/almas.js`).
-- [ ] La lluvia de sangre y el río rojo (`gfx/lluvia.js`).
-- [ ] El Condenado (se da la vuelta y se queda de pie bajo la lluvia) y el Desfigurado (se tapa la cara).
-- [ ] El montaje de los ecos: «Lo que hiciste».
-- [ ] El sonido (el latido, el coro, los truenos, la lluvia, las campanas que tocan solas), el título y el pergamino.
-- [ ] Las pruebas (`tools/final.mjs` y la instancia `final`), el teléfono y la versión jugable.
+### Lo que viene
 
-### 2. Espera a lo que decida el autor: el albacar (`PLAN_ALBACAR.md`)
+**XI · El final** — La terrible verdad: la columna de almas y la lluvia de sangre. *La siguiente, 0 %* · `PLAN_FINAL.md`
 
-El patio de armas viejo se quedó vacío (1.290 m² casi sin nada) y el preso sale a él dentro del castillo, como quien
-sale de casa (#33). La propuesta: que sea **el albacar**, el refugio de la gente de fuera durante el cerco, con su
-campamento, el reparto, los corrales, el fosal y la última embestida ante el foso, y trescientos muertos de rodillas
-mirando a la Sé.
+- [ ] Contestar las siete preguntas del plan (§7)
+- [ ] Los textos: el pergamino, los rótulos y lo que cambia
+- [ ] El animático: la escena como película, con sus planos y el saltar
+- [ ] El cielo que se rompe: el sol que se apaga, las grietas y los relámpagos
+- [ ] La columna de almas
+- [ ] La lluvia de sangre y el río rojo
+- [ ] El Condenado, de pie bajo la lluvia; el Desfigurado se tapa la cara
+- [ ] El montaje de los ecos: «Lo que hiciste»
+- [ ] El sonido: el latido, el coro, los truenos y las campanas que tocan solas
+- [ ] El título, Dawn of the Devil, y el pergamino
+- [ ] Las pruebas, el teléfono y la versión jugable
 
-- [ ] Decidir (§9): el albacar (A, la recomendada), la plaza de fuera (B) o el castillo viejo en ruinas (C); cuánta
-  gente y cuánto horror; si los carros cortan el camino recto de la salida; si cambia al volver; el nombre.
-- [ ] Hacerlo, en sus tres fases (A1 a A3, §10).
+**XII · El albacar** — El patio de armas viejo, refugio de la gente de fuera. *Espera al autor, 0 %* · `PLAN_ALBACAR.md`
 
-### 3. Pulido de lo que ya está
+- [ ] Decidir: el albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C), y lo demás del §9
+- [ ] A1: los cimientos de la torre vieja y el campamento; los carros atravesados
+- [ ] A2: el reparto y el libro del albacar, los corrales, el fosal y ante el foso
+- [ ] A3: los encuentros, los textos, el sonido y el cambio al volver
 
-**La fortaleza** (lo que quedó de `planes_jubilados/PLAN_FORTALEZA.md`, §12; #25 y #37):
+**VII · La fortaleza del Rey** — El castillo-palacio, la corte que le traicionó y el Rey que juega. *En curso, 86 %* · `planes_jubilados/PLAN_FORTALEZA.md`
 
-- [ ] Encuentros compuestos (fase 8): rondas por los adarves, emboscadas desde arriba y el patio que cambia al volver
-  con las llaves. El tirador del paseo ya está.
-- [ ] Más detalle (fase 9): las salas de la fortaleza aún no llegan a los 45 triángulos por m² que pedía el plan.
-- [ ] La niebla de altura también en la ciudad (fase 10): ahora sólo la tienen el castillo y la fortaleza.
-- [ ] Animación (fase 11): más claves y dos variantes por golpe, y reacciones según de dónde venga el golpe.
+- [x] El Rey y el Cerco: su juego de mesa, sus diez partidas y sus lecciones
+- [x] La fortaleza por fuera y el patio de honor (fase 1)
+- [x] Las alas por dentro: el gran salón, la capilla, el Tombo, la reina y las cámaras del Rey (fase 2)
+- [x] La torre del homenaje, la puerta, el alférez y la ballesta (fase 3)
+- [x] El patio de armas, el jardín del Rey y el adarve de levante (fase 4)
+- [x] La cárcel del Rey y el rastrillo de las celdas (fase 5)
+- [x] El repaso: encuentros, luz y sonido de cada sala (fase 6)
+- [x] El paseo de las cámaras y los golpes con peso (fase 7)
+- [x] La Corte de los Infieles y las cinco llaves de la reja
+- [x] El Caballero de la Orden, el jefe más difícil
+- [ ] Encuentros compuestos: rondas por los adarves, emboscadas desde arriba y el patio que cambia al volver (fase 8; el tirador del paseo, sí) *(a medias)*
+- [ ] Más detalle en las salas: 45 triángulos por m² (fase 9; los muebles de cada sala, sí) *(a medias)*
+- [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
+- [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
-**Nombres que chocan** (lo que quedó de `planes_jubilados/PLAN_LORE.md`, §2 y §7):
+**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
-- [ ] Dom Paio, convertido, se llama «Dom Paio, el Condenado», que es el nombre del protagonista. El plan proponía
-  «el Encadenado» (su pregunta 9 quedó sin contestar).
-- [ ] La zona de la cisterna se llama «Cisterna del Dios Desconocido», y todo lo demás dice «Dios Ignoto» (opcional).
+- [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
+- [ ] Los virotes: cómo se integran en todo el juego (hoy, sólo en el castillo; los disparados no se recogen)
+- [ ] El paso del Físico: un armario sin fondo entre dos casas, que se abre como atajo
+- [ ] La bodega de la viuda, el secreto del barrio que no se hizo
+- [ ] «Cisterna del Dios Desconocido» como «Dios Ignoto», como todo lo demás *(opcional)*
 
-**La ballesta** (`planes_jubilados/PLAN_CASTILLO.md`, §9):
+**XIV · Pruebas y fallos** — Que todo siga en pie, en cualquier sitio. *Por hacer, 0 %*
 
-- [ ] Cómo se integran los virotes en todo el juego (el autor lo dejó por pensar): hoy sólo los hay en el castillo y
-  la fortaleza, y los disparados no se recogen.
+- [ ] Las pruebas largas que faltan (#36): castlewalk, fortalezawalk, corte, caballero, rey mesa, holes alto y rendimiento
+- [ ] Los solapes pequeños que quedan (#59)
+- [ ] Probarlo en un iPhone de verdad (#74)
+- [ ] Medir cuánto dura una partida (el README dice 45–60 minutos, de antes del barrio, la fortaleza y lo hondo)
 
-**El barrio** (`planes_jubilados/PLAN_BARRIO.md`, §3):
+### Más allá de la 1.0
 
-- [ ] Dos secretos que no se hicieron: el paso del Físico (un armario sin fondo entre dos casas, que se abre como
-  atajo) y la bodega de la viuda.
+<p align="center"><img src="docs/hoja-de-ruta/mas.png" width="880" alt="Más allá de la 1.0: el final secreto, los otros finales y Dawn of the Devil"></p>
 
-**Por decidir:**
+- **Expansión I · El final secreto** (más adelante, 13 %) — Con la espada forjada, al subir la columna de almas la hoja le enseña como es: la columna se cierra sobre sí misma y Deo Ignoto se alza de la sima. Si le vences, la espada le hiere para siempre, las almas se sueltan y entra el amanecer. · *PLAN_FINAL.md, §4 (y su propio plan, PLAN_ESPADA.md, cuando toque)*
+- **Expansión II · Los otros finales** (descartado por ahora) — Finales que dependan de lo que se hizo: a quién se salvó, qué se le llevó a quién. Descartado por ahora: el juego tiene un solo final. Quizá un DLC, más adelante. · *PLAN_FINAL.md, §0*
+- **La segunda parte · Dawn of the Devil** (la segunda parte) — Deo Ignoto, libre, sin cuerpo y sin nombre, con las almas de Braga. El Condenado, vivo y de pie en el río bajo la lluvia de sangre: el único que no se arrodilló, y el que le dejó salir. · *PLAN_FINAL.md, §6*
 
-- [ ] ¿Una recompensa por vencer al Caballero de la Orden? Por ahora no da nada.
+### Por decidir
 
-### 4. Pruebas y fallos
+- **El albacar** — ¿El albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C)? Y cuánta gente y cuánto horror, si los carros cortan el camino de la salida, si cambia al volver y el nombre. · *PLAN_ALBACAR.md, §9*
+- **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*
+- **Dom Paio, convertido** — ¿Pasa a llamarse «el Encadenado»? Ahora se llama «el Condenado», que es el nombre del protagonista. · *planes_jubilados/PLAN_LORE.md, §7 (pregunta 9)*
+- **El Caballero de la Orden** — ¿Una recompensa por vencerle? Por ahora no da nada: clava la espada en las losas y se deja caer. · *planes_jubilados/PLAN_CASTILLO.md, §12 (pregunta 7)*
+- **Los virotes** — ¿Se recogen los disparados? ¿Los hay fuera del castillo? Hoy sólo los hay en el castillo y la fortaleza, y los que se disparan se pierden. · *planes_jubilados/PLAN_CASTILLO.md, §9 y §12*
 
-- [ ] Volver a pasar las pruebas largas que faltan desde la tanda de la cloaca (#36): castlewalk, fortalezawalk,
-  corte, caballero, rey mesa, holes alto y rendimiento.
-- [ ] Los solapes pequeños que quedan (#59): el entramado de las fachadas en algunas esquinas, muros que se cruzan en
-  las catacumbas, los montones de tierra del túnel y charcos de sangre de la cisterna, unos encima de otros.
-- [ ] Probarlo en un iPhone de verdad (#74): la memoria se midió en uno emulado. Si aún se recargase la página, lo
-  siguiente es el sonido, lo que más ocupa al empezar a jugar (unos 140–190 MB).
-- [ ] Medir cuánto dura una partida: arriba dice 45–60 minutos, pero desde entonces han entrado el barrio, la
-  fortaleza y las cloacas hondas.
+<p align="center"><img src="docs/hoja-de-ruta/jefes.png" width="880" alt="Los 13 jefes de Braga, fotografiados con sus modelos del juego"></p>
 
-### 5. Más adelante, con su propio plan
+<p align="center"><sub>Los 13 jefes de Braga, fotografiados con sus modelos del juego: El Empalado · El Descoyuntado · Leonor, la Dolorosa · El Turiferario · El Custodio de la Garra · Los Velados · Dom Paio, el Condenado · Mestre Clemente, el Físico de los Inocentes · El alférez · La Corte de los Infieles · El Rey · El Caballero de la Orden · El Lobishome.</sub></p>
 
-- [ ] **El final secreto**, que no es canon (`PLAN_FINAL.md`, §4): la espada forjada (el «objeto verdadero» del
-  código), que hace Henrique con el acero de la espada de su padre y el Cerrojo de San Martín, y que puede llevar el
-  nombre del dios, juntado en tres trozos. Con ella, al subir la columna se alza Deo Ignoto y se le pelea: su pelea
-  ya existe en el código, sin enganchar, y hay que rehacer su puesta en escena en el cráter. Pide su plan
-  (`PLAN_ESPADA.md`) y los personajes que llevan a la espada.
-- **_Dawn of the Devil_**, la segunda parte: lo que este final deja abierto (Deo Ignoto libre con las almas de Braga;
-  el Condenado de pie bajo la lluvia) es suyo.
-- Descartado por ahora: varios finales según lo que se haga por el camino (quizá un DLC, más adelante).
+<!-- /hoja-de-ruta -->
 
 ## Qué hay dentro
 
@@ -1890,6 +1890,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        5197): el manifiesto y sus iconos, el service worker, que Chrome la dé
                                        por instalable y que sin red se abra y arranque
                         iconos.mjs     dibuja los iconos de la web instalable (public/icon-*.png)
+                        hoja_de_ruta.mjs
+                                       la hoja de ruta (docs/hoja-de-ruta/ y su sección de este README),
+                                       desde hoja_de_ruta/datos.mjs (lo único que se toca a mano), con el
+                                       arte de la interfaz (hoja_de_ruta/arte.js) y los modelos y las vistas
+                                       del juego (hoja_de_ruta/modelos.mjs); arranca Vite si no lo hay
+                                       (--retratos: vuelve a fotografiar los modelos y las escenas)
                         freecam.mjs    capturas con cámara libre
                         uishots.mjs    capturas de todas las pantallas de la interfaz
                         posesheet.mjs  hoja de poses de las animaciones (ARMA=..., GHOST=s dibuja el arco)
@@ -2010,6 +2016,8 @@ planes_jubilados/       los planes ya hechos o sustituidos, guardados como histo
                         castillo, la fortaleza y el Lobishome (ver su README: qué fue cada uno y qué quedó)
 docs/planos/            los planos a escala de los planes (el albacar, la fortaleza, el Lobishome), que dibujan
                         los scripts de tools/planos/
+docs/hoja-de-ruta/      la hoja de ruta: una sola página (index.html), con el arte del propio juego, y las
+                        imágenes de su sección en este README (las genera tools/hoja_de_ruta.mjs)
 bugs_y_correciones.txt  la lista de fallos y correcciones, numerada, con el estado de cada uno
 ```
 
