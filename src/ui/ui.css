@@ -177,6 +177,14 @@ canvas.pxbg { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: n
 .slot .n { position: absolute; right: calc(var(--u) * 2); bottom: calc(var(--u) * 1); color: var(--bone-hi); text-shadow: var(--sh), calc(-1px * var(--m)) calc(-1px * var(--m)) 0 var(--void); }
 /* el objeto bendito que se lleva puesto */
 .slot > img.worn { left: auto; right: calc(var(--u) * 1); top: calc(var(--u) * 1); }
+/* combinando (las partes de la rueda, game/rueda.js): la parte elegida, con su
+   marca y más luz; lo que se dice al juntarlas, encima del nombre */
+.slot > img.comb { left: calc(var(--u) * 1); top: calc(var(--u) * 1); }
+.slot.comb > img.ic { filter: brightness(1.3) drop-shadow(0 0 calc(var(--u) * 1) rgba(245, 216, 138, 0.55)); animation: combPulse 1.2s steps(3) infinite alternate; }
+@keyframes combPulse { from { opacity: 1; } to { opacity: 0.72; } }
+.detail p.junta { margin: 0 0 calc(var(--u) * 3); text-shadow: var(--sh); }
+.detail p.junta.ok { color: var(--gold-hi); }
+.detail p.junta.no { color: #e8806a; }
 .detail ul.fx { list-style: none; margin: calc(var(--u) * 3) 0 0; padding: 0; text-shadow: var(--sh); }
 .detail ul.fx li { padding-left: calc(var(--u) * 6); text-indent: calc(var(--u) * -6); }
 .detail ul.fx li::before { display: inline-block; width: calc(var(--u) * 6); text-indent: 0; }

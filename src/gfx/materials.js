@@ -299,6 +299,14 @@ export const MAT_DEFS = {
   espora: { tex: 'white', uv: 1, color: 0x101804, emissive: 0xc8f070, emissiveIntensity: 1.4 },
   florCera: { tex: 'white', uv: 1, color: 0xd8dccc, emissive: 0x8ea8b8, emissiveIntensity: 0.55 },
   redGlow: { tex: 'white', uv: 1, color: 0x100000, emissive: 0xff2010, emissiveIntensity: 2.0 },
+  // la rueda de los tres ojos (world/rueda_modelo.js): la piedra negra, pulida
+  // de tanto girarla; lo rojo del fondo de la boca; y sus tres ojos, que dan un
+  // poco de luz (el carbúnculo, la esmeralda y el zafiro)
+  piedraRueda: { tex: 'rock', uv: 2.6, emissive: 0x24201a, emissiveIntensity: 1, phong: { specular: 0x6a665c, shininess: 26 } },
+  gargantaRueda: { tex: 'white', uv: 1, color: 0x2e0605, emissive: 0x3a0604, emissiveIntensity: 0.5 },
+  gemaRoja: { tex: 'white', uv: 1, color: 0x400812, emissive: 0xd0182c, emissiveIntensity: 0.9, phong: { specular: 0xffdcdc, shininess: 90 } },
+  gemaVerde: { tex: 'white', uv: 1, color: 0x06301a, emissive: 0x28c868, emissiveIntensity: 0.85, phong: { specular: 0xdcffe8, shininess: 90 } },
+  gemaAzul: { tex: 'white', uv: 1, color: 0x081c48, emissive: 0x2c64e8, emissiveIntensity: 0.9, phong: { specular: 0xdce8ff, shininess: 90 } },
   eyeCold: { tex: 'white', uv: 1, color: 0x000000, emissive: 0xbfd8ff, emissiveIntensity: 2.4 },
   // la noche que se ve por la reja del lucernario
   nightSky: { tex: 'white', uv: 1, color: 0x000000, emissive: 0x5a6a84, emissiveIntensity: 0.55 },

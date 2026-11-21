@@ -223,7 +223,9 @@ async function contenido() {
   return {
     zonas: Object.keys(S.AREA_NAMES).length,
     documentos: Object.keys(S.NOTES).length,
-    objetos: Object.keys(S.ITEMS).length,
+    // (de la rueda de los tres ojos juntada, sólo la entera: los estados de
+    // en medio son la misma rueda a medio juntar; game/rueda.js)
+    objetos: Object.keys(S.ITEMS).filter((k) => !S.ITEMS[k].rueda || k === 'rueda_cez').length,
     armas,
     armaduras,
     reliquias: nombres(R.RELIC_IDS),

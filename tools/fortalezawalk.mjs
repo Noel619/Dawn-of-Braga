@@ -114,12 +114,12 @@ await step('escalera pasadizo', "__walk([[-66.6,-97.4],[-66.4,-99.3],[-71.8,-99.
 await step('pasadizo', "__walk([[-75,-98.79],[-77,-98.79],[-81,-98.79],[-83.6,-98.79]])");
 await step('puerta torre', "__useHere('d_pasadizo_torre')");
 await step('vuelta', "__walk([[-77,-98.79],[-74.5,-98.79],[-72.8,-99.1],[-67.2,-99.3],[-66.4,-97],[-66.4,-93.4],[-66.4,-91.0]])");
-// 3. el caracol abajo, al oratorio del Rey (+4,5): la tribuna de la capilla y la llave del capellán
+// 3. el caracol abajo, al oratorio del Rey (+4,5): la tribuna de la capilla y la boca de la rueda (la del capellán)
 await step('baja al oratorio', "__caracol(-64,-88,31,15)");
 // (fase 7: lo que le faltaba al oratorio) la oración del Rey, en su reclinatorio
 await step('oración del Rey', "(()=>{__walk([[-66.4,-92.6],[-68,-92.6],[-68,-90.6]]);return __ir('n_oracion_rey', 0.9)})()");
 await step('sale al oratorio', "__walk([[-66.4,-92.6],[-68,-92.6],[-68,-89.0],[-73.3,-89.0],[-73.3,-87.4],[-73.5,-85.6]])");
-await step('llave capellan', "__ir('i_llave_capellan', 0.6)");
+await step('boca de la rueda', "__ir('i_pieza_capellan', 0.6)");
 await p.waitForTimeout(600);
 await step('cordón suelto', "(()=>{const g=__game;return {tenso:g.groups['cordon:tenso']&&g.groups['cordon:tenso'].meshes.some(m=>m.visible),suelto:g.groups['cordon:suelto']&&g.groups['cordon:suelto'].meshes.some(m=>m.visible)}})()");
 await step('tribuna', "__walk([[-73.6,-80],[-73.6,-70],[-73.6,-63.0],[-68,-62.6],[-65.2,-63.2]])");
@@ -128,10 +128,10 @@ await step('altar capilla', "(()=>{__walk([[-68.6,-68.6],[-68.6,-79],[-69.6,-83.
 // 4. la cámara del Rey (por el oratorio) y su escalera a la antecámara
 await step('a la cámara', "(()=>{const g=__game;g.player.spawn(-70,4.5,-93,Math.PI);__sim(0.3);return __walk([[-73.4,-95.6],[-75,-95.6],[-77.6,-95.6]])})()");
 await step('baja a la antecámara', "__walk([[-82.0,-96.4],[-84.25,-96.4],[-84.25,-95.2],[-84.25,-89.0],[-82.4,-88.6]])");
-// 5. el caracol abajo, al tesoro: la llave del camarero y su nota
+// 5. el caracol abajo, al tesoro: el zafiro del camarero y su nota
 await step('tesoro', "(()=>{const g=__game;g.player.spawn(-66.5,9,-95.4,Math.PI);__sim(0.3);__walk([[-66.4,-93.4],[-66.4,-91.0]]);return __caracol(-64,-88,31,1)})()");
 await step('sale', "__walk([[-64.8,-91.2],[-64.8,-92.6],[-68,-94]])");
-await step('llave camarero', "(()=>{const it=__game.interact.list.find(i=>i.id==='i_llave_camarero');__walk([[it.x+0.6,it.z-1.0]]);return __useHere('i_llave_camarero')})()");
+await step('zafiro del camarero', "(()=>{const it=__game.interact.list.find(i=>i.id==='i_pieza_camarero');__walk([[it.x+0.6,it.z-1.0]]);return __useHere('i_pieza_camarero')})()");
 await step('nota camarero', "__ir('n_camarero', 0.8)");
 // 6. la puerta del tesoro (atrancada por dentro), la antecámara y su puerta al patio
 await step('a la puerta del tesoro', "__walk([[-72,-92.8],[-73.4,-92.8]])");
@@ -148,7 +148,7 @@ await step('sube', "(()=>{__walk([[-64.9,-37.9],[-65.25,-37.0]]);return __caraco
 await step('arriba', "__walk([[-66.5,-36.7],[-66.5,-38.4],[-66.5,-41.0],[-70,-41]])");
 await step('arca', "__ir('a_camara3', 0.3)");
 await p.waitForTimeout(2500);
-await step('llave del canciller', "(()=>{const g=__game;g.ui.closeAll();return {llave:g.inventory.has('llave_canciller'),estado:g.state,ps:g.player.state,modal:g.ui.stack.map(s=>s.name)}})()");
+await step('esmeralda del canciller', "(()=>{const g=__game;g.ui.closeAll();return {esmeralda:g.inventory.has('ojo_esmeralda'),estado:g.state,ps:g.player.state,modal:g.ui.stack.map(s=>s.name)}})()");
 // 8. el servicio, la cocina y el secadero; la galería del salón, a la torre de la reina
 await step('al patio otra vez', "(()=>{const g=__game;g.player.spawn(-100,0,-55,Math.PI);__sim(0.3);return __walk([[-110,-50],[-114,-47.6]])})()");
 await step('d_despensa', "__useHere('d_despensa')");
@@ -307,7 +307,7 @@ await step7('la vista', "(()=>{__walk([[-118,-60],[-118,-48.2],[-94,-48.2]]);ret
 await step7('virotes del paseo', "(()=>{__walk([[-94,-48.2],[-79,-48.2]]);return __ir('i_virotes_paseo', 0.6)})()");
 await step7('puerta del Rey, por dentro', "(()=>{const g=__game;g.player.spawn(-78,4.5,-90,0);__sim(0.4);return __ir('d_paseo_rey', 1.0)})()");
 await step7('arriba, al paseo', "__walk([[-78,-87.6],[-78,-86.6],[-78,-85.4],[-78,-84]])");
-out.push('llaves: ' + (await T("['llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
+out.push('partes de la rueda: ' + (await T("['ojo_zafiro','rueda_boca','ojo_esmeralda'].map(k=>k+':'+__game.inventory.has(k)).join(' ')")));
 console.log(out.join('\n'));
 console.log(logs.slice(0, 10).join('\n'));
 await b.close();

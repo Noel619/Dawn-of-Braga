@@ -341,7 +341,9 @@ function torreCoracha(ctx, S, L) {
     P.candles(ctx, ax - 0.5, 0.85, az + 0.35, 3, 6504, { room, radius: 7, intensity: 1.1, spread: 0.12 });
     P.hangingLamp(ctx, (ix0 + ix1) / 2 - 1, pisos[1] - 0.35, (iz0 + iz1) / 2 - 1, { room, len: 1.0 });
     ctx.lights.push({ x: (ix0 + ix1) / 2 - 1, y: 2.6, z: (iz0 + iz1) / 2 - 1, r: 1, g: 0.55, b: 0.26, radius: 9, intensity: 0.8, room });
-    L.interact.push({ kind: 'item', id: 'i_llave_camarero', item: 'llave_camarero', x: ax + 0.5, y: 0.9, z: az + 0.2 }, { kind: 'note', id: 'n_camarero', note: 'camarero', x: ax - 0.3, y: 0.86, z: az + 0.3, model: 'paper' });
+    // (el ojo de la rueda que guardaba, el zafiro, en la tapa del arca, a su
+    // lado: «en la mano me mira»)
+    L.interact.push({ kind: 'item', id: 'i_pieza_camarero', item: 'ojo_zafiro', x: ax + 0.5, y: 0.852, z: az + 0.2 }, { kind: 'note', id: 'n_camarero', note: 'camarero', x: ax - 0.3, y: 0.86, z: az + 0.3, model: 'paper' });
     tesoroDelRey(ctx, L, { ix0, ix1, iz0, iz1, ax, az, room });
   }
   // el guardarropa y el oratorio del Rey: los arcones y la percha de su ropa,

@@ -149,13 +149,16 @@ const steps = [
   "__use('i_ampolla2')", "__use('n_muralla')",
   "(()=>{const g=__game;g.bosses.impaled.hp=1;g.bosses.impaled.die();__sim(3);return {boss:g.flags['boss:impaled'], deadState:g.bosses.impaled.state}})()",
   "new Promise(r=>setTimeout(()=>r(__game.flags['boss:impaled']),3000))",
-  // las cinco llaves de la reja (PLAN_CASTILLO.md, §7): las del alférez y
-  // el mayordomo, en el suelo donde cayeron (vencidos: se dan por vencidos);
-  // la del camarero, en su tesoro; la del capellán, en el cordón de la
-  // campana; la del canciller, en el arca de los tres sellos bermejos
+  // la rueda de los tres ojos (game/rueda.js): sus cinco partes, con los
+  // cinco oficiales de la corte (el carbúnculo del alférez y la frente del
+  // mayordomo, donde cayeron: se dan por vencidos; el zafiro del camarero, en
+  // su tesoro; la boca del capellán, en el cordón de la campana; la esmeralda
+  // del canciller, en el arca de los tres sellos bermejos); y se juntan en el
+  // inventario con el teclado, como en Resident Evil (E en una, E en la otra)
   "(()=>{const g=__game;g.flags['dead:alferez']=true;g.flags['dead:mayordomo']=true;g.flags['corte:vencida']=true;g.corte.applyFlags();g.interact.applyFlags(g.flags);return 'vencidos'})()",
-  "__use('i_llave_alferez')", "__use('i_llave_mayordomo')", "__use('i_llave_camarero')", "__use('i_llave_capellan')", "__use('a_camara3')",
-  "new Promise(r=>setTimeout(()=>{__game.ui.closeAll();r(['llave_alferez','llave_mayordomo','llave_camarero','llave_capellan','llave_canciller'].map(k=>k+':'+__game.inventory.has(k)).join(' '))},1500))",
+  "__use('i_pieza_alferez')", "__use('i_pieza_mayordomo')", "__use('i_pieza_camarero')", "__use('i_pieza_capellan')", "__use('a_camara3')",
+  "new Promise(r=>setTimeout(()=>{__game.ui.closeAll();r(['ojo_carbunculo','rueda_frente','ojo_zafiro','rueda_boca','ojo_esmeralda'].map(k=>k+':'+__game.inventory.has(k)).join(' '))},1500))",
+  "(()=>{const g=__game,u=g.ui;g.openOverlay('inv');__sim(0.1);u.invSwitch(1);const par=(a,b)=>{u.invSel=u.itemEntries().findIndex(e=>e.id===a);__sim(0.05,[],['KeyE']);u.invSel=u.itemEntries().findIndex(e=>e.id===b);__sim(0.05,[],['KeyE']);return u.invMsg&&u.invMsg.ok};const r=[par('rueda_boca','rueda_frente'),par('ojo_carbunculo','rueda'),par('rueda_c','ojo_esmeralda'),par('ojo_zafiro','rueda_ce')];__sim(0.5);g.ui.closeAll();g.state='play';return {juntas:r,entera:g.inventory.has('rueda_cez'),sueltas:['rueda_frente','rueda_boca','ojo_carbunculo','ojo_esmeralda','ojo_zafiro'].filter(k=>g.inventory.has(k))}})()",
   // la torre del homenaje (la puerta quemada del pasadizo del Rey, la tranca
   // de la de la escalinata, el relicario de la cámara y la ampolla del
   // almacén) y la puerta de la fortaleza (el libro de la guarnición, la
@@ -180,7 +183,8 @@ const steps = [
   "__use('n_libro_carcel')", "__use('i_maza')", "__use('i_ampolla_carcel')", "__use('i_virotes_aljibe')", "__use('n_carcelero_mayor')", "__use('p_rastrillo_carcel')",
   "(()=>{const g=__game;const d=g.interact.list.find(i=>i.id==='d_rastrillo_carcel');return {rastrillo:!!g.flags['door:d_rastrillo_carcel'],caja:d.box.enabled}})()",
   "__use('d_postigo')",
-  "__use('d_cripta')", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
+  // (con la rueda entera: se encaja, se gira y, al poco, la reja baja)
+  "__use('d_cripta')", "new Promise(r=>setTimeout(()=>r({reja:!!__game.flags['door:d_cripta'],rueda:!__game.inventory.has('rueda_cez')}),1700))", "__use('a_cripta')", "__use('i_anillo')", "__use('n_arzobispo')", "__use('i_relicario2')", "__use('n_romana')",
   // la cripta honda: la Confesión, el panteón de los obispos, San Martín (su
   // capilla y su osario), las catacumbas (el oratorio y el atajo de la sala
   // de llegada), los Inocentes y la Garra (su emboscada), las tres pilas, la

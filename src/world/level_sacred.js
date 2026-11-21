@@ -10,6 +10,8 @@ import { BELL_OUT, BELL_IN } from '../entities/enemy_models.js';
 import { bakeParts, skullParts, boneParts } from './ossuary_props.js';
 import { NAVE, naveSec, naveBreaks, CISTERN } from './level_finale.js';
 import { buildSanctum } from './sanctum.js';
+import { ruedaPartes, RUEDA_R } from './rueda_modelo.js';
+import { ENTERA } from '../game/rueda.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -383,38 +385,34 @@ export function buildCathedral(ctx, S, L) {
   wb.box('flag', -2, FY - 0.3, -97, 2, FY, CM, { faces: 't', ao: false, sub: 2.5, room, uv: 0.4 });
   ctx.col.add(-2, 0.2, -97, 2, FY, CM);
   for (const x of [-2.2, 2.2]) wb.box('ashlar', x - 0.26, FY, -86.5, x + 0.26, FY + 1.4, -85.98, { ao: false });
-  // junto a la reja, en su pilar, la pletina de las cinco cerraduras
-  // (PLAN_CASTILLO.md, §7): cada una con su marca, del color de la cinta de su
-  // llave (el alférez, el mayordomo, el camarero, el capellán y el
-  // canciller); las cinco llaves, metidas en ellas, sólo al abrirla (el
-  // grupo 'llaves:d_cripta': game/interact.js, la cerradura 'cinco')
+  // junto a la reja, en su pilar, el hueco de la rueda de los tres ojos
+  // (game/rueda.js): un molde redondo labrado en la piedra, de un palmo, con
+  // su bocel y, alrededor, la misma fila de figuritas de rodillas que lleva la
+  // rueda en el canto; en el fondo, el cuadrado de hierro en que encaja. La
+  // rueda, encajada, sólo al abrirla (el grupo 'rueda:d_cripta':
+  // game/interact.js, la cerradura 'rueda')
   {
     const px = 3.5,
       pz = -85.5,
       zf = pz + 0.2;
-    const cols = [
-      [0.62, 0.09, 0.06],
-      [0.85, 0.68, 0.2],
-      [0.55, 0.72, 0.9],
-      [0.92, 0.9, 0.84],
-      [0.22, 0.45, 0.2],
-    ];
+    const hy = FY + 0.92;
     solid(ctx, 'ashlar', px - 0.45, FY, pz - 0.3, px + 0.45, FY + 1.3, zf, { faces: 'tnsew', ao: false, sub: 1.5, room });
     wb.box('ashlar', px - 0.52, FY + 1.3, pz - 0.36, px + 0.52, FY + 1.4, zf + 0.06, { faces: 'tnsewb', ao: false, room });
-    wb.box('iron', px - 0.4, FY + 0.72, zf, px + 0.4, FY + 1.2, zf + 0.03, { faces: 'tsewb', ao: false, room, tint: [0.7, 0.68, 0.66] });
-    for (let k = 0; k < 5; k++) {
-      const x = px - 0.3 + k * 0.15;
-      wb.box('iron', x - 0.045, FY + 0.86, zf + 0.03, x + 0.045, FY + 1.0, zf + 0.055, { faces: 'tsewb', ao: false, room });
-      wb.box('black', x - 0.01, FY + 0.895, zf + 0.055, x + 0.01, FY + 0.965, zf + 0.057, { faces: 's', ao: false, grime: false, room });
-      wb.box('clothRed', x - 0.04, FY + 1.06, zf + 0.03, x + 0.04, FY + 1.12, zf + 0.034, { faces: 's', ao: false, grime: false, room, tint: cols[k] });
+    const M4 = new THREE.Matrix4();
+    // el hueco, negro, con su bocel y el cuadrado de hierro en medio
+    wb.geometry('black', new THREE.CircleGeometry(RUEDA_R + 0.012, 24), M4.makeTranslation(px, hy, zf + 0.001), { ao: false, grime: false, room });
+    wb.geometry('ashlar', new THREE.TorusGeometry(RUEDA_R + 0.026, 0.02, 6, 28), M4.makeTranslation(px, hy, zf), { ao: false, room, tint: [0.82, 0.8, 0.76] });
+    wb.box('iron', px - 0.016, hy - 0.016, zf + 0.001, px + 0.016, hy + 0.016, zf + 0.012, { faces: 'tsewb', ao: false, room });
+    // las figuritas de rodillas, alrededor del bocel
+    for (let k = 0; k < 16; k++) {
+      const a = ((k + 0.5) / 16) * Math.PI * 2;
+      const r = RUEDA_R + 0.07;
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a + Math.PI / 2);
+      wb.geometry('ashlar', new THREE.BoxGeometry(0.03, 0.022, 0.018), M4.compose(new THREE.Vector3(px + Math.cos(a) * r, hy + Math.sin(a) * r, zf), q, new THREE.Vector3(1, 1, 1)), { ao: false, room, tint: [0.78, 0.76, 0.72] });
+      wb.geometry('ashlar', new THREE.SphereGeometry(0.011, 6, 4), M4.makeTranslation(px + Math.cos(a) * (r + 0.02), hy + Math.sin(a) * (r + 0.02), zf + 0.004), { ao: false, room, tint: [0.78, 0.76, 0.72] });
     }
-    ctx.beginGroup('llaves:d_cripta');
-    for (let k = 0; k < 5; k++) {
-      const x = px - 0.3 + k * 0.15;
-      wb.box('iron', x - 0.008, FY + 0.922, zf + 0.055, x + 0.008, FY + 0.938, zf + 0.15, { ao: false, room });
-      wb.geometry('iron', new THREE.TorusGeometry(0.032, 0.008, 4, 10), new THREE.Matrix4().makeTranslation(x, FY + 0.93, zf + 0.165), { ao: false, room });
-      wb.box('clothRed', x - 0.008, FY + 0.78, zf + 0.16, x + 0.008, FY + 0.9, zf + 0.168, { ao: false, grime: false, room, tint: cols[k] });
-    }
+    ctx.beginGroup('rueda:d_cripta');
+    for (const { mat, geo } of ruedaPartes('entera', 7)) wb.geometry(mat, geo, M4.makeTranslation(px, hy, zf + 0.006), { ao: false, grime: false, room });
     ctx.endGroup();
   }
 
@@ -554,10 +552,11 @@ export function buildCathedral(ctx, S, L) {
     // (de medio punto: de 2,4 m en las jambas a 4 en la clave, como el arco)
     { kind: 'door', id: 'd_se', x: 0, y: FY, z: -60.75, w: 3.2, h: 4.0, arch: true, axis: 'x', lock: { type: 'barred', side: -1 }, mat: 'planks', hinge: 0, swing: -1, double: true, plane: -60.05 },
     { kind: 'door', id: 'd_claustro_se', x: 12, y: FY, z: -80, w: 2, h: 2.55, axis: 'z', lock: { type: 'none' }, mat: 'planks', hinge: -1, swing: -1, plane: 11.05 },
-    // (la reja de la cripta: con las cinco llaves baja por su ranura y se
-    // mete entera en el peldaño de arriba; subiendo, se quedaba colgada en el
-    // aire de la nave, sin nada de lo que colgar)
-    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, sink: true, axis: 'x', lock: { type: 'cinco', keys: ['llave_alferez', 'llave_mayordomo', 'llave_camarero', 'llave_capellan', 'llave_canciller'] }, mat: 'grate', ix: 3.5, iz: -84.7 }
+    // (la reja de la cripta: con la rueda de los tres ojos, encajada en el
+    // hueco de su pilar y girada, baja por su ranura y se mete entera en el
+    // peldaño de arriba; subiendo, se quedaba colgada en el aire de la nave,
+    // sin nada de lo que colgar. at: el hueco)
+    { kind: 'door', id: 'd_cripta', x: 0, y: FY, z: -86.1, w: 4, h: 3.2, sink: true, axis: 'x', lock: { type: 'rueda', item: ENTERA, at: [3.5, FY + 0.92, -85.29] }, mat: 'grate', ix: 3.5, iz: -84.7 }
   );
   // escalón de la puerta lateral y umbral a la altura de la nave bajo la hoja
   // (abre hacia dentro: con la hoja a ras del escalón rozaba el suelo de la nave)

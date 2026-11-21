@@ -281,6 +281,13 @@ transposición, ordenación de jugadas y una búsqueda de amenazas que ve las ho
 
 ## 7. Las cinco llaves y la reja de la Sé
 
+> **Cambiado después** (el 21 de noviembre de 2026; lo pidió el autor): las cinco llaves son ahora las cinco partes
+> de **la rueda de los tres ojos**, una rueda de piedra negra con una cara grotesca que se junta en el inventario como
+> en Resident Evil: dos mitades (la frente, del mayordomo; la boca, del capellán) y tres ojos, que son piedras finas
+> (el carbúnculo, del alférez; la esmeralda, del canciller; el zafiro, del camarero). La pletina de las cinco
+> cerraduras es ahora el hueco de la rueda, en el mismo pilar. Lo de abajo cuenta cómo era; lo de ahora, en el README
+> («La rueda de los tres ojos») y en `game/rueda.js`.
+
 **La reja** de la escalera de la cripta (`d_cripta`) ya no tiene torno (**hecho**): tiene **cinco cerraduras** en
 una pletina de hierro, en su pilar junto a la reja, cada una con su marca (del color de la cinta de su llave), y al
 examinarla dice cuáles faltan. Con las cinco, se echan una a una (se quedan metidas en la pletina) y la reja baja
@@ -406,6 +413,7 @@ Cada fase deja el juego jugable de principio a fin.
 
 1. **¿Llaves o amuletos?** Van como cinco llaves de los cinco oficiales (la cerradura de cinco llaves tiene su
    lógica: las arcas de varias llaves existieron). Si prefieres amuletos, cambian el modelo y los textos.
+   (Contestado después: ni lo uno ni lo otro, la rueda de los tres ojos en cinco partes, que se juntan; ver §7.)
 2. **La Corte de los Infieles empieza al pisar el estrado.** ¿O prefieres que sea al coger algo del trono?
 3. **El pasadizo quemado se cruza haciendo equilibrio** (de las cámaras a la torre). ¿O que no se cruce y sólo
    se vea?

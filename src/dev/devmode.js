@@ -310,7 +310,9 @@ export class DevMode {
         p.setEquipment(true, true);
         break;
       case 'items':
-        for (const id in ITEMS) if (!ITEMS[id].upgrade && !g.inventory.has(id)) g.inventory.add(id);
+        // (de la rueda de los tres ojos, sus cinco partes sueltas, sin juntar:
+        // la rueda juntada, en cada estado, es otro objeto; game/rueda.js)
+        for (const id in ITEMS) if (!ITEMS[id].upgrade && !ITEMS[id].rueda && !g.inventory.has(id)) g.inventory.add(id);
         p.setEquipment(g.hasWeapon(), g.inventory.has('escudo'));
         break;
       case 'weapon': {

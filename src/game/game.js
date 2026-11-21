@@ -31,6 +31,7 @@ import { WalkGrid } from '../world/walkgrid.js';
 import { UI } from './ui.js';
 import { ITEMS, MSG, AREA_NAMES, NOTES } from './story.js';
 import { loadSave, writeSave, clearSave, loadSettings, writeSettings, chronicleUnlocked, unlockChronicle, Inventory } from './save.js';
+import { esParte, casaCon, migrarLlaves } from './rueda.js';
 import { clamp, damp, angleDiff, DEG, formatTime } from '../core/util.js';
 import { CANON, stairY } from '../world/level_canon.js';
 import { CellarCutscene } from './cutscene.js';
@@ -447,6 +448,9 @@ export class Game {
     // (el facón y la katana ya no están en el juego: fuera de las partidas
     // guardadas que los tuvieran, del modo desarrollador)
     for (const k of ['facon', 'katana']) this.inventory.items.delete(k);
+    // (las cinco llaves de la reja de la Sé son ahora las cinco partes de la
+    // rueda de los tres ojos: game/rueda.js)
+    migrarLlaves(this.flags, this.inventory);
     this.deaths = s.deaths || 0;
     this.playTime = s.playTime || 0;
     this.visited = new Set(s.visited || []);
@@ -933,6 +937,7 @@ export class Game {
       map: `${k('map')} Mapa  ·  ${k('inventory')} Inventario y documentos`,
       relic: `Llevas puesto un objeto bendito: favorece una manera de pelear y castiga otra. Se llevan de uno en uno; cámbialo en el inventario ${k('inventory')}.`,
       relic2: `Otro objeto bendito. Se llevan de uno en uno: cámbialo por el que llevas en el inventario ${k('inventory')}.`,
+      combinar: `Lo que casa se combina en el inventario ${k('inventory')}: elige una parte, «Combinar», y luego la otra.`,
     };
     // las pistas se muestran de una en una
     this.hintQ = this.hintQ || [];
@@ -1023,6 +1028,9 @@ export class Game {
       if (id === 'escudo') this.hint('shield');
       if (id === 'palanca') this.hint('map');
       if (it.relic) this.hint(relicNew ? 'relic' : 'relic2');
+      // (una parte de la rueda que casa con otra que ya se lleva: cómo se
+      // juntan; game/rueda.js)
+      if (esParte(id) && casaCon(this.inventory, id)) this.hint('combinar');
     };
     this.saveGame();
   }

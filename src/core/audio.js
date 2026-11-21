@@ -119,6 +119,10 @@ const FX_PRIO = {
   doorSlam: [5, 'mundo'],
   amaWhisper: [5, 'mundo'],
   seal: [4, 'mundo'],
+  // la rueda de los tres ojos (game/rueda.js): sus partes, que se encajan en
+  // el inventario, y la rueda que gira en el pilar de la reja de la Sé
+  encaje: [5, 'jugador'],
+  rueda: [4, 'mundo'],
   pillarBreak: [4, 'derrumbe'],
   wallBreak: [4, 'derrumbe'],
   woodBreak: [3, 'derrumbe'],
@@ -2149,6 +2153,43 @@ export class Audio {
         this.tone(d, t + 0.43, 0.2, { f0: rnd(110, 140), f1: 55, gain: 0.4 }); // y la otra
         this.debris(d, t + 0.36, 5, 0.3, { f0: 600, f1: 1800 });
         this.duck(0.25, 0.4);
+        break;
+      }
+      // las partes de la rueda, que se encajan (o.k): las dos mitades, piedra
+      // contra piedra; un ojo, la gema que entra en su hueco, con un tintineo
+      // de vidrio; el último, la junta que se cierra de golpe, como un hueso
+      case 'encaje': {
+        d = this.out(null, { gain: 0.8, verb: 0.35, life: 3 });
+        const k = o.k || 'mitad';
+        if (k === 'mitad') {
+          this.noise(d, t, 0.28, { type: 'lowpass', f0: 900, f1: 300, gain: 0.35, a: 0.04, buf: this.brown, rate: 3 }); // se arriman
+          this.tone(d, t + 0.3, 0.16, { f0: 150, f1: 70, gain: 0.55 }); // casan
+          this.noise(d, t + 0.3, 0.06, { f0: 1700, q: 3, gain: 0.3, a: 0.001 });
+          this.debris(d, t + 0.32, 4, 0.12, { f0: 900, f1: 2400, gain: 0.6 });
+        } else {
+          this.noise(d, t, 0.12, { f0: 3200, f1: 2200, q: 3, gain: 0.08, a: 0.02 }); // la gema roza el hueco
+          this.metal(d, t + 0.14, rnd(2300, 2600), 0.12, 0.5, { ratios: [1, 2.1, 3.3] }); // y entra
+          this.tone(d, t + 0.14, 0.08, { f0: 420, f1: 260, gain: 0.25 });
+          if (k === 'entera') {
+            this.tone(d, t + 0.42, 0.2, { f0: 120, f1: 55, gain: 0.7 }); // la junta se cierra
+            this.noise(d, t + 0.42, 0.08, { type: 'lowpass', f0: 2600, f1: 500, gain: 0.5, a: 0.001 });
+            this.smp(d, t + 0.5, this.smallBell(), { gain: 0.05, rate: 0.5 });
+          }
+        }
+        break;
+      }
+      // la rueda, que se encaja en el hueco del pilar y gira: piedra que roza
+      // piedra, el cuadrado de hierro que entra y, dentro del pilar, lo que
+      // corre (luego baja la reja: gateOpen)
+      case 'rueda': {
+        d = this.out(P, { gain: 0.9, verb: 0.6, life: 5, ref: 5 });
+        this.tone(d, t, 0.18, { f0: 140, f1: 60, gain: 0.6 }); // encaja
+        this.noise(d, t, 0.07, { f0: 1500, q: 3, gain: 0.25, a: 0.001 });
+        this.noise(d, t + 0.35, 1.3, { type: 'lowpass', f0: 420, f1: 260, gain: 0.45, a: 0.25, buf: this.brown, rate: 2.4, curve: 'lin' }); // gira
+        this.creak(d, t + 0.4, 1.1, rnd(60, 80), 0.16);
+        for (const dt of [0.6, 0.95, 1.3]) this.noise(d, t + dt, 0.04, { f0: rnd(1800, 2400), q: 5, gain: 0.2, a: 0.001 }); // los dientes de dentro
+        this.metal(d, t + 1.6, 260, 0.14, 0.9, { ratios: [1, 2.4, 3.9] }); // algo corre
+        this.tone(d, t + 1.6, 0.3, { f0: 90, f1: 45, gain: 0.45 });
         break;
       }
       case 'seal': {

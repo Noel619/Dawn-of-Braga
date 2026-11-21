@@ -516,7 +516,7 @@ function tombo(ctx, S, L) {
     const arcas = [
       ['a_se', xw, iz0 + 2.2, Math.PI / 2, 'vv', 'arcaSe', null, 0],
       ['a_guarda1', xw, cz, Math.PI / 2, 'nn', 'arcaResorte1', null, 30],
-      ['a_camara3', xw, iz1 - 2.0, Math.PI / 2, 'rrr', 'arcaCamara3', 'llave_canciller', 0],
+      ['a_camara3', xw, iz1 - 2.0, Math.PI / 2, 'rrr', 'arcaCamara3', 'ojo_esmeralda', 0],
       ['a_guarda3', ix0 + 3.0, zn, 0, 'nnn', 'arcaGuarda3', 'virote', 0],
       ['a_camara2', cx + 0.6, zn, 0, 'rr', 'arcaCamara2', null, 0],
       ['a_guarda2', ix0 + 3.4, zs, Math.PI, 'nn', 'arcaResorte2', null, 30],
@@ -524,7 +524,7 @@ function tombo(ctx, S, L) {
     const NOM = { r: 'bermejo', n: 'negro', v: 'verde' };
     const NUM = ['', 'un sello', 'dos sellos', 'tres sellos'];
     for (const [id, ax, az, rot, seals, text, item, trap] of arcas) {
-      arcaSellada(ctx, ax, y, az, rot, room, id, seals.split(''), !trap && item !== 'llave_canciller');
+      arcaSellada(ctx, ax, y, az, rot, room, id, seals.split(''), !trap && item !== 'ojo_esmeralda');
       const s = Math.sin(rot),
         c = Math.cos(rot);
       const nom = NOM[seals[0]] + (seals.length > 1 ? 's' : '');

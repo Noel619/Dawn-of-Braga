@@ -3,7 +3,9 @@ import * as THREE from 'three';
 import { abrirMesa } from './alquimia.js';
 import { objMat, additiveFog, cloneMat, registerMaterialPatch } from '../gfx/materials.js';
 import { getTexture } from '../gfx/textures.js';
-import { ITEMS, NOTES, MSG } from './story.js';
+import { ITEMS, NOTES, MSG, RUEDA_OJOS } from './story.js';
+import { ruedaPartes, ojoPartes, RUEDA_R } from '../world/rueda_modelo.js';
+import { esMitad, esOjo, anteElHueco, gastar } from './rueda.js';
 import { angleDiff, DEG, clamp, damp } from '../core/util.js';
 import { G } from '../gfx/materials.js';
 import { buildParts, WEAPON_PARTS } from '../entities/weapon_models.js';
@@ -342,11 +344,66 @@ function weaponItemMesh(id) {
   return g;
 }
 
+// La rueda de los tres ojos, en sus partes (world/rueda_modelo.js): una mitad
+// tumbada de cara arriba, o colgada de su cordón (s.cuelga: lo que sube el
+// cordón hasta el nudo; la boca, en el de la campana de la Capilla Real), y
+// un ojo suelto, también de cara arriba (el carbúnculo, junto a la bolsa de
+// cuero del alférez, abierta). Lo tumbado, con lo de abajo en el origen.
+function partesMesh(partes) {
+  const g = new THREE.Group();
+  for (const { mat, geo } of partes) g.add(new THREE.Mesh(geo, objMat(mat)));
+  return g;
+}
+function cuerda(a, b, r, mat) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, a.distanceTo(b), 5), mat);
+  m.position.copy(a).add(b).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  return m;
+}
+function ruedaItemMesh(id, s) {
+  const g = new THREE.Group();
+  const m = esMitad(id) ? partesMesh(ruedaPartes(id === 'rueda_frente' ? 'frente' : 'boca')) : partesMesh(ojoPartes(RUEDA_OJOS.findIndex((o) => o.id === id)));
+  if (s && s.cuelga) {
+    // (de cara a +X, con la junta arriba: el cordón, atado a sus dos cantos)
+    m.rotation.y = Math.PI / 2;
+    g.add(m);
+    const rope = objMat('rope');
+    for (const sz of [-1, 1]) g.add(cuerda(new THREE.Vector3(0, 0.004, sz * (RUEDA_R - 0.012)), new THREE.Vector3(0, s.cuelga, 0), 0.006, rope));
+    return g;
+  }
+  m.rotation.x = -Math.PI / 2;
+  g.add(m);
+  g.updateMatrixWorld(true);
+  g.position.y = -new THREE.Box3().setFromObject(m).min.y;
+  const out = new THREE.Group();
+  out.add(g);
+  if (id === 'ojo_carbunculo') {
+    // la bolsa del alférez, tumbada y abierta, con su cordón; el ojo, rodado
+    // fuera de ella
+    g.position.x = -0.05;
+    const leather = objMat('leather');
+    const bolsa = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), leather);
+    bolsa.scale.set(1.25, 0.55, 0.9);
+    bolsa.position.set(0.03, 0.017, 0);
+    const boca = new THREE.Mesh(new THREE.CircleGeometry(0.014, 8), objMat('black'));
+    boca.position.set(-0.009, 0.02, 0);
+    boca.rotation.y = -Math.PI / 2;
+    const lazo = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.0025, 4, 10), objMat('rope'));
+    lazo.position.set(-0.004, 0.02, 0);
+    lazo.rotation.y = Math.PI / 2;
+    out.add(bolsa, boca, lazo);
+  }
+  out.rotation.y = s && s.giro !== undefined ? s.giro : 0.6;
+  return out;
+}
+
 // raw: el modelo tal cual, en su propio espacio (un arma: el puño en el
 // origen y la hoja hacia +Z; el escudo: la cara hacia +Z y la punta hacia
 // -Y), para colocarlo con su giro (spec.quat): la espada clavada en la
 // espalda del guardia del pasillo de las celdas, su escudo en el suelo.
-function itemMesh(id, raw = false) {
+// (s: lo demás del sitio; la rueda lo mira: s.cuelga, s.giro)
+function itemMesh(id, raw = false, s = null) {
+  if (esMitad(id) || esOjo(id)) return ruedaItemMesh(id, s);
   if (raw && WEAPON_PARTS[id]) {
     const g = new THREE.Group();
     g.add(buildParts(WEAPON_PARTS[id]('x')).group);
@@ -975,8 +1032,8 @@ export class Interactables {
         it.tabique = true;
         g.setGroupVisible('puerta:' + s.id + ':ruina', false);
       }
-      // (las cinco llaves, metidas en sus cerraduras: se ven al abrirla)
-      if (s.lock && s.lock.type === 'cinco') g.setGroupVisible('llaves:' + s.id, false);
+      // (la rueda de los tres ojos, encajada en su hueco: se ve al abrirla)
+      if (s.lock && s.lock.type === 'rueda') g.setGroupVisible('rueda:' + s.id, false);
       g.scene.add(it.obj);
       // colisión
       const t = s.mat === 'barricade' ? 0.5 : 0.25;
@@ -1016,7 +1073,7 @@ export class Interactables {
     } else if (s.kind === 'item') {
       it.obj = new THREE.Group();
       it.obj.position.set(s.x, s.y, s.z);
-      const m = itemMesh(s.item, s.raw);
+      const m = itemMesh(s.item, s.raw, s);
       if (s.quat) m.quaternion.fromArray(s.quat);
       if (m.children.length) it.obj.add(m);
       it.mesh = m;
@@ -1213,7 +1270,7 @@ export class Interactables {
       if (it.kind === 'door' && flags['door:' + it.id] && !it.done) {
         this.setOpen(it, true);
         if (it.lock.type === 'lever') this.refreshDoorNav(it);
-        if (it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, true);
+        if (it.lock.type === 'rueda') this.game.setGroupVisible('rueda:' + it.id, true);
       }
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
@@ -1260,6 +1317,17 @@ export class Interactables {
     g.giveItem(it.item, it.n ?? 1);
     if (it.arranca) it.obj.visible = false;
     else setTimeout(() => (it.obj.visible = false), 300);
+  }
+
+  // Los ojos de la rueda, que se encienden un momento al girarla en su hueco
+  // (la reja de la cripta de la Sé): una luz verdosa delante del pilar, que
+  // viene y se va (la reparte el juego entre sus luces: gfx/effects.js)
+  ojosEncendidos(x, y, z) {
+    const g = this.game;
+    if (!g.fx || !g.fx.lights) return;
+    if (!this._ojosLuz) this._ojosLuz = g.fx.lights.add({ x, y, z, color: 0xa8ffb8, intensity: 0, range: 5, flicker: 0, priority: 6, on: false });
+    Object.assign(this._ojosLuz, { x, y, z: z + 0.35, intensity: 4.5, on: true });
+    g.later(1100, () => (this._ojosLuz.on = false));
   }
 
   // La tapa de un arca: cerrada con sus sellos o abierta, con ellos rotos.
@@ -1412,7 +1480,7 @@ export class Interactables {
       }
       if (it.boards) it.boards.visible = it.lock.type === 'boards';
       if (it.mat === 'barricade') it.obj.visible = true;
-      if (it.lock && it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, false);
+      if (it.lock && it.lock.type === 'rueda') this.game.setGroupVisible('rueda:' + it.id, false);
       this.poseDoor(it, 0);
     } else if (it.kind === 'item') {
       it.hidden = !!it.afterBoss || !!it.afterFlag;
@@ -1743,7 +1811,7 @@ export class Interactables {
     switch (it.kind) {
       case 'door':
         if (it.label) return it.label;
-        if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
+        if (it.lock.type === 'rueda') return this.game.inventory.has(it.lock.item) ? 'Encajar la rueda' : 'Examinar el hueco';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
         if (it.lock.type === 'seal') return 'Examinar la losa';
         if (it.lock.type === 'boss') return 'Examinar la reja';
@@ -1858,21 +1926,32 @@ export class Interactables {
           g.ui.toast(MSG[L.shut] || MSG.boarded);
           g.audio && g.audio.play('locked', it);
         }
-      } else if (L.type === 'cinco') {
-        // (la reja de la cripta: cinco cerraduras en su pletina; dice cuáles
-        // faltan y, con las cinco, se echan una a una y la reja baja)
-        const faltan = L.keys.filter((k) => !inv.has(k));
-        if (faltan.length) {
-          const de = (k) => 'la ' + ITEMS[k].name.replace(/^Llave /, '');
-          const NUM = ['', 'una', 'dos', 'tres', 'cuatro'];
-          const lista = faltan.length === L.keys.length ? 'No tienes ninguna de sus llaves.' : `Te falta${faltan.length > 1 ? 'n' : ''} ${NUM[faltan.length]}: ${faltan.map(de).join(', ').replace(/, ([^,]*)$/, ' y $1')}.`;
-          g.ui.toast(MSG.rejaFaltan(lista), 7);
-          g.audio && g.audio.play('locked', it);
+      } else if (L.type === 'rueda') {
+        // (la reja de la cripta de la Sé: el hueco de la rueda de los tres
+        // ojos, en su pilar; game/rueda.js. Sin la rueda entera, el hueco y lo
+        // que le falta a lo que llevas; con ella, se encaja y se gira: los
+        // ojos se encienden un momento y la reja baja. La rueda se queda en
+        // el pilar)
+        const [hx, hy, hz] = L.at;
+        if (!inv.has(L.item)) {
+          g.ui.toast(anteElHueco(inv), 8);
+          g.audio && g.audio.play('locked', { x: hx, y: hy, z: hz });
         } else {
-          L.keys.forEach((k, i) => g.later(280 * i, () => g.audio && g.audio.play('unlock', it)));
-          g.setGroupVisible('llaves:' + it.id, true);
-          openIt(null, 'gateOpen');
-          g.ui.toast(MSG.rejaCinco, 8);
+          // (abierta ya en la partida: si se guarda antes de que baje, al
+          // volver está abierta; lo que tarda es sólo lo que se ve y se oye)
+          it.done = true;
+          gastar(inv, L.item);
+          g.flags['door:' + it.id] = true;
+          g.setGroupVisible('rueda:' + it.id, true);
+          p.playInteract('interact', Math.atan2(hx - p.pos.x, hz - p.pos.z), 1.4);
+          g.audio && g.audio.play('rueda', { x: hx, y: hy, z: hz });
+          this.ojosEncendidos(hx, hy, hz);
+          g.saveGame();
+          g.later(1300, () => {
+            this.setOpen(it);
+            g.ui.toast(MSG.ruedaGira, 8);
+            g.audio && g.audio.play('gateOpen', { x: it.x, y: it.y, z: it.z });
+          });
         }
       } else if (L.type === 'seal') {
         if (inv.has('anillo')) openIt('Encajas el anillo en el sello. La losa se hunde en el suelo.', 'seal');
@@ -1948,9 +2027,10 @@ export class Interactables {
       // juego: con la pausa abierta, espera, y si te matan antes, sigue ahí)
       if (it.arranca) it.arrT = 0;
       else this.takeItem(it);
-      // (lo que pasa al cogerlo: la llave atada al cordón de la campana la hace
-      // sonar; it.sound / it.soundAt, it.msg; it.swap, lo que cambia en el
-      // mundo; it.wake, el radio en el que se despierta todo lo que oye)
+      // (lo que pasa al cogerlo: la boca de la rueda, atada al cordón de la
+      // campana, la hace sonar; it.sound / it.soundAt, it.msg; it.swap, lo que
+      // cambia en el mundo; it.wake, el radio en el que se despierta todo lo
+      // que oye)
       if (it.sound) g.later(250, () => g.audio && g.audio.play(it.sound, it.soundAt ? { x: it.soundAt[0], y: it.soundAt[1], z: it.soundAt[2] } : it));
       if (it.msg) g.later(900, () => g.ui.toast(MSG[it.msg] || it.msg, 5));
       if (it.swap) g.later(200, () => this.poseSwap(it, true));

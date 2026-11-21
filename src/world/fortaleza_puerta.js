@@ -882,13 +882,13 @@ function cadalso(ctx, L) {
   bakeCorpse(wb, -94.0, y, zf + 0.7, 1.4, 'back', 'soldier', 4491);
   P.decal(ctx, -94.0, y + 0.01, zf + 0.7, 1.8);
   L.interact.push({ kind: 'item', id: 'i_virotes_cadalso', item: 'virote', n: 4, x: -89.4, y: y + 0.1, z: zf + 0.8 });
-  // el alférez, en su garita, vigilando el cadalso; su llave y su carcaj,
-  // donde caiga
+  // el alférez, en su garita, vigilando el cadalso; su bolsa (con el
+  // carbúnculo, uno de los ojos de la rueda de la Sé) y su carcaj, donde caiga
   const ax = (C.garita + C.x1) / 2,
     az = zc + w / 2;
   L.enemies.push({ type: 'alferez', x: ax, y, z: az, yaw: -Math.PI / 2, idle: 'watch', id: 'e_alferez', story: 'dead:alferez', dies: 'dead:alferez' });
   L.interact.push(
-    { kind: 'item', id: 'i_llave_alferez', item: 'llave_alferez', afterFlag: 'dead:alferez', x: ax - 0.4, y: y + 0.08, z: az + 0.3 },
+    { kind: 'item', id: 'i_pieza_alferez', item: 'ojo_carbunculo', afterFlag: 'dead:alferez', x: ax - 0.4, y: y + 0.005, z: az + 0.3 },
     { kind: 'item', id: 'i_virotes_alferez', item: 'virote', n: 6, afterFlag: 'dead:alferez', x: ax + 0.3, y: y + 0.08, z: az - 0.3 }
   );
   L.zones.push({

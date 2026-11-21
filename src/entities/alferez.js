@@ -1,14 +1,16 @@
 // El alférez mayor (PLAN_CASTILLO.md, §4.2 y §7): el que llevaba el pendón
-// del Rey y mandaba la hueste cuando el Rey no estaba. Uno de los cinco de las
-// llaves: le abrió la reja de la cripta al arzobispo con los otros cuatro, y
+// del Rey y mandaba la hueste cuando el Rey no estaba. Uno de los cinco de la
+// rueda de los tres ojos (game/rueda.js): le abrió la reja de la cripta al
+// arzobispo con los otros cuatro, y
 // cuando la corte fue a por el Rey, él se subió a la torre, al cadalso, con la
 // ballesta de la guardia, como si todavía la defendiera. Ya no es un hombre:
 // la cota se le ha metido en la carne y los ojos le arden bajo el nasal.
 //
 // Pelea a distancia: se planta lejos, se echa la ballesta a la cara, tira y
 // la monta otra vez con el pie en el estribo (ahí está a merced). Si te le
-// echas encima, culatazo. Lleva su llave al cinto: muerto, se queda en el
-// suelo. No vuelve (spec.story / spec.dies: 'dead:alferez').
+// echas encima, culatazo. Lleva al cinto su bolsa, con el carbúnculo, uno de
+// los ojos de la rueda: muerto, se queda en el suelo. No vuelve (spec.story /
+// spec.dies: 'dead:alferez').
 import { Rig, clip } from './rig.js';
 import { humanoidJoints, feetParts } from './models.js';
 import { ballestaParts } from './weapon_models.js';
@@ -33,13 +35,15 @@ export function buildAlferez() {
   const joints = humanoidJoints(k);
   joints.push({ name: 'pendon', parent: 'chest', pos: [0.14, 0.3, -0.2], rot: [-8, 0, -12] });
   const parts = [
-    // la cadera: la malla, la sobreveste partida y el cinto con la llave
+    // la cadera: la malla, la sobreveste partida y el cinto con la bolsa del
+    // carbúnculo (asoma por la boca: da un poco de luz)
     { j: 'hips', type: 'box', s: [0.42, 0.42, 0.3], p: [0, -0.18, 0], taper: [1.18, 1.1], mat: 'chainmail' },
     { j: 'hips', type: 'box', s: [0.36, 0.62, 0.03], p: [0, -0.3, 0.16], taper: [1.16, 1], mat: 'clothWhite' },
     { j: 'hips', type: 'box', s: [0.36, 0.62, 0.03], p: [0, -0.3, -0.16], taper: [1.16, 1], mat: 'clothWhite' },
     { j: 'hips', type: 'box', s: [0.07, 0.5, 0.01], p: [0, -0.28, 0.177], mat: 'clothBlue' },
     { j: 'hips', type: 'box', s: [0.44, 0.07, 0.32], p: [0, 0.03, 0], mat: 'leather' },
-    { j: 'hips', type: 'box', s: [0.05, 0.12, 0.012], p: [-0.12, -0.06, 0.17], mat: 'iron' },
+    { j: 'hips', type: 'box', s: [0.09, 0.1, 0.05], p: [-0.12, -0.08, 0.18], taper: [0.85, 1.15], mat: 'leather' },
+    { j: 'hips', type: 'sphere', s: [0.014], p: [-0.12, -0.025, 0.19], mat: 'redGlow' },
     // el carcaj, a la derecha, con las plumas asomando
     { j: 'hips', type: 'box', s: [0.1, 0.36, 0.1], p: [-0.25, -0.12, -0.04], r: [-14, 0, 8], mat: 'leather' },
     { j: 'hips', type: 'box', s: [0.08, 0.08, 0.06], p: [-0.27, 0.1, -0.02], r: [-14, 0, 8], mat: 'clothWhite' },
@@ -215,7 +219,7 @@ export const ALFEREZ_TYPE = {
 
 // ------------------------------------------------------------ el ballestero
 // Los ballesteros del Rey (PLAN_FORTALEZA.md, §7: en los adarves, en sus
-// garitas): de la misma guardia que el alférez, sin su pendón ni su llave.
+// garitas): de la misma guardia que el alférez, sin su pendón ni su bolsa.
 // Gambesón acolchado sobre la malla, la capelina de ala ancha sobre el
 // almófar y el pavés a la espalda, con la cruz del Rey. Pelea como él (tira
 // de lejos, la monta con el pie en el estribo, culatazo si te le echas

@@ -11,7 +11,8 @@
 // (una voltereta, una carrera), se deshace unos tiempos mientras te vuelven a
 // rodear. Callado el tambor, el mayordomo, solo. Cae y se acaba: se abre la
 // puerta del servicio, las puertas grandes se desatrancan desde dentro (el
-// atajo al patio) y su llave queda en el suelo.
+// atajo al patio) y la frente de la rueda de los tres ojos, que guardaba él,
+// queda en la grada del estrado.
 //
 // Si mueres, vuelven a sus sitios, de rodillas. Vencidos, sus cuerpos se
 // quedan en la sala (e.spec.story: 'corte:vencida').

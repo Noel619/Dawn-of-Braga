@@ -12,9 +12,10 @@
 // de tablas del muro de levante.
 //
 // El cordón de la campana baja por la clave de la bóveda y está atado a una
-// argolla en la cabecera de la tribuna: en el nudo, la llave del capellán. Al
-// soltarla, el cordón se suelta, la campana suena por toda la ciudad y lo que
-// la oye en la fortaleza se despierta.
+// argolla en la cabecera de la tribuna: del nudo cuelga la boca de la rueda de
+// los tres ojos, la parte que guardaba el capellán (game/rueda.js). Al
+// desatarla, el cordón se suelta, la campana suena por toda la ciudad y lo
+// que la oye en la fortaleza se despierta.
 import * as THREE from 'three';
 import { solid, archRing, barrelVault, blocker, beam } from './builders.js';
 import * as P from './props.js';
@@ -330,11 +331,11 @@ function campanario(ctx) {
   ctx.crows.push({ x: B.x, y: B.yc + 1.2, z: B.z, r: 3, n: 3 });
 }
 
-// ------------------------------------------------------------------------ el cordón y la llave
+// ------------------------------------------------------------------------ el cordón y la boca de la rueda
 // El cordón de la campana, en dos grupos del mundo: tenso (de la clave a la
-// argolla de la cabecera de la tribuna, con la llave atada en el nudo) y
-// suelto (colgando derecho de la clave, cuando se ha soltado la llave: la
-// campana ha sonado). game/interact.js los cambia al coger la llave.
+// argolla de la cabecera de la tribuna, con su nudo, del que cuelga la boca de
+// la rueda) y suelto (colgando derecho de la clave, cuando se ha desatado la
+// boca: la campana ha sonado). game/interact.js los cambia al cogerla.
 function cordon(ctx, L) {
   const wb = ctx.wb;
   const C = FORT.capilla;
@@ -356,15 +357,16 @@ function cordon(ctx, L) {
   }
   ctx.beginGroup('cordon:tenso');
   cuerda(V(B.x, yk, B.z), V(ax + 0.02, A.y - 0.12, A.z));
-  // (el nudo, y el cabo que cuelga de él)
+  // (el nudo; lo que cuelga de él, la boca de la rueda con su cordón, es el
+  // objeto que se coge)
   wb.cylinder('rope', ax + 0.04, A.y - 0.2, A.z, 0.04, 0.04, 0.12, 6, { ao: false, room, capTop: true, capBot: true });
-  cuerda(V(ax + 0.04, A.y - 0.2, A.z), V(ax + 0.08, A.y - 0.75, A.z + 0.05));
   ctx.endGroup();
   ctx.beginGroup('cordon:suelto');
   cuerda(V(B.x, yk, B.z), V(B.x, 1.5, B.z));
   // (el asidero de lana roja del cabo)
   wb.cylinder('clothRed', B.x, 1.45, B.z, 0.045, 0.045, 0.7, 6, { ao: false, room, capTop: true, capBot: true });
   ctx.endGroup();
-  // la llave, atada en el nudo: al soltarla, el cordón tira de la campana
-  L.interact.push({ kind: 'item', id: 'i_llave_capellan', item: 'llave_capellan', x: ax + 0.2, y: A.y - 0.35, z: A.z + 0.15, r: 1.5, sound: 'bellToll', soundAt: [B.x, B.yc - 1.4, B.z], msg: 'campanaSuena', swap: ['cordon:tenso', 'cordon:suelto'], wake: 34 });
+  // la boca de la rueda, colgada del nudo por su cordón (cuelga: lo que sube
+  // el cordón hasta el nudo): al desatarla, el cordón tira de la campana
+  L.interact.push({ kind: 'item', id: 'i_pieza_capellan', item: 'rueda_boca', cuelga: 0.14, x: ax + 0.04, y: A.y - 0.34, z: A.z, r: 1.5, sound: 'bellToll', soundAt: [B.x, B.yc - 1.4, B.z], msg: 'campanaSuena', swap: ['cordon:tenso', 'cordon:suelto'], wake: 34 });
 }

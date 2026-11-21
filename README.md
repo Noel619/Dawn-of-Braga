@@ -5,9 +5,9 @@ hace tres años Portugal pierde tierra ante los almohades, que han vuelto a lleg
 la campana de la catedral tocó sola, los que la oyeron se arrodillaron ante algo que dormía bajo ella, y la
 corrupción ha deformado a vivos y muertos. Despiertas en una celda de las mazmorras del castillo. Tu única meta: **salir de Braga**.
 
-*Dark Souls + Resident Evil 2 + Silent Hill*, en pequeño: un mapa compacto e interconectado, llaves y herramientas
-que abren atajos y zonas nuevas, pocos enemigos pero peligrosos, niebla espesa y una estética de juego perdido de
-PS1/PS2. Pensado para completarse en **45–60 minutos**.
+*Dark Souls + Resident Evil 2 + Silent Hill*, en pequeño: un mapa compacto e interconectado, llaves, herramientas y
+piezas que se juntan para abrir atajos y zonas nuevas, pocos enemigos pero peligrosos, niebla espesa y una estética
+de juego perdido de PS1/PS2. Pensado para completarse en **45–60 minutos**.
 
 > Todo el juego se genera por código: geometría, texturas (dibujadas píxel a píxel), iluminación, efectos,
 > animaciones, interfaz, sonido y música. No hay ni un solo archivo de imagen, modelo o audio; las únicas piezas
@@ -55,6 +55,7 @@ táctiles (o un mando).
 | Inventario y documentos | Tab / I | Y |
 | Inventario: cambiar de pestaña (Equipo, Objetos, Documentos) | Q / R | LB / RB |
 | Inventario: elegir lo de una ranura / quitárselo | E o clic / X | A / X |
+| Inventario: combinar dos piezas (elegir una, «Combinar», y luego la otra; Esc lo deja) | E o clic | A (B lo deja) |
 | Inventario: la ficha de un arma, un escudo o una armadura (sus barras) o su descripción | T | LT |
 | Transcripción de un documento (mostrarla u ocultarla) | T | X |
 | Mesa del Desfigurado: echar al puchero / sacar / cocer | E, clic o arrastrar al puchero / X o clic derecho / C | A / X / Y |
@@ -138,7 +139,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [x] La cárcel del Rey y el rastrillo de las celdas (fase 5)
 - [x] El repaso: encuentros, luz y sonido de cada sala (fase 6)
 - [x] El paseo de las cámaras y los golpes con peso (fase 7)
-- [x] La Corte de los Infieles y las cinco llaves de la reja
+- [x] La Corte de los Infieles y la rueda de los tres ojos: sus cinco partes, que se combinan para abrir la reja
 - [x] El Caballero de la Orden, el jefe más difícil
 - [ ] Encuentros compuestos: rondas por los adarves, emboscadas desde arriba y el patio que cambia al volver (fase 8; el tirador del paseo, sí) *(a medias)*
 - [ ] Más detalle en las salas: 45 triángulos por m² (fase 9; los muebles de cada sala, sí) *(a medias)*
@@ -703,22 +704,22 @@ medidas (`world/fortaleza_medidas.js`, `world/fortaleza.js`, `world/fortaleza_pa
 sus salas: `fortaleza_salon.js`, `fortaleza_reina.js`, `fortaleza_rey.js`, `fortaleza_capilla.js`; la torre del
 homenaje, `fortaleza_torre.js`; la puerta y su guardia, `fortaleza_puerta.js`).
 
-**La llegada.** La coracha baja de la atalaya pegada a la cara de levante de la fortaleza: nada más dejar la
-atalaya, a la derecha, la puerta de **la torre de la coracha**, con su recerco de sillería y su farol. Dentro, el
-puesto de los que velaban la coracha y el fanal (los haces de leña y las ollas de la pez, el catre del centinela,
-deshecho, y junto a la puerta el cuerno de avisar con su farol, que sigue ardiendo), el altar (el descanso de la
-llegada) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
-norte, cubierto, que llevaba al Rey de sus cámaras a su torre, y que quemaron con él al otro lado (los pies derechos
-negros, medio tejadillo hundido sobre las losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del
-homenaje, chamuscada y atrancada por dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al
-primer empujón). De la planta de la llegada, un **caracol** baja por el rincón de la
-torre al **guardarropa y oratorio del Rey** (sus arcones, la percha de su ropa, el altarico y, en el reclinatorio,
-vuelto de espaldas al altar y de cara a la Sé, **la oración** que le dio el arzobispo) y, más abajo, al
-**tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el arca del Rey, con sus velas casi
-consumidas, la plata y **la llave del camarero**; a su lado, lo que guardaba: la espada de la frontera del Rey en su
-vaina, la corona de diario en su cojín con el sello de la cámara y, a sus pies, el jarro vacío. La puerta del tesoro
-se desatranca por dentro y da a la **antecámara del Rey** (el libro de las audiencias abierto en su atril, el
-repostero del Rey, el brasero); la de la antecámara, también atrancada por dentro, al patio de honor.
+**La llegada.** La coracha baja de la atalaya pegada a la cara de levante de la fortaleza: nada más dejar la atalaya,
+a la derecha, la puerta de **la torre de la coracha**, con su recerco de sillería y su farol. Dentro, el puesto de
+los que velaban la coracha y el fanal (los haces de leña y las ollas de la pez, el catre del centinela, deshecho, y
+junto a la puerta el cuerno de avisar con su farol, que sigue ardiendo), el altar (el descanso de la llegada) y una
+escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve norte, cubierto, que llevaba al Rey de sus
+cámaras a su torre, y que quemaron con él al otro lado (los pies derechos negros, medio tejadillo hundido sobre las
+losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del homenaje, chamuscada y atrancada por
+dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al primer empujón). De la planta de la
+llegada, un **caracol** baja por el rincón de la torre al **guardarropa y oratorio del Rey** (sus arcones, la percha
+de su ropa, el altarico y, en el reclinatorio, vuelto de espaldas al altar y de cara a la Sé, **la oración** que le
+dio el arzobispo) y, más abajo, al **tesoro**, que el camarero cerró por dentro y en el que murió, sentado sobre el
+arca del Rey, con sus velas casi consumidas, la plata y, en la tapa del arca, **el zafiro**, uno de los tres ojos de
+la rueda de la Sé; a su lado, lo que guardaba: la espada de la frontera del Rey en su vaina, la corona de diario en
+su cojín con el sello de la cámara y, a sus pies, el jarro vacío. La puerta del tesoro se desatranca por dentro y da
+a la **antecámara del Rey** (el libro de las audiencias abierto en su atril, el repostero del Rey, el brasero); la de
+la antecámara, también atrancada por dentro, al patio de honor.
 
 **El adarve de levante.** En la planta del altar de la torre de la coracha, una escalera de tablas sube por el muro
 a un sobrado, a la altura del adarve; por su puerta y un puente de tablas sobre el tejado de la capilla se sale al
@@ -795,13 +796,13 @@ rastrillo. La palanca es mía, y no la subo»). Subida la palanca, el rastrillo 
 al otro lado está el pasillo de las celdas del principio, y la primera, la tuya: el atajo
 (`world/fortaleza_carcel.js`, con sus medidas en `FORT.carcel`).
 
-**La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta (en el eje de
-la torre del homenaje), con sus dos rastrillos (el de fuera, echado; el de dentro, alzado en su ranura, con las
+**La puerta de la fortaleza y su guardia.** El paso, recto y abovedado entre las dos torres de la puerta (en el eje
+de la torre del homenaje), con sus dos rastrillos (el de fuera, echado; el de dentro, alzado en su ranura, con las
 puntas asomando bajo la bóveda) y entre ellos las buhederas, con la pez que se echó por ellas negra en las losas y,
 contra el rastrillo de fuera, uno de la guardia abrasado, con los dedos entre los barrotes (el arco del patio, de
-embocadura, más bajo que la bóveda); por fuera, el puente alzado sobre el foso de las
-estacas (quien cae en él se clava en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de la
-guarnición**, las armas a mano, dos soldados y, bajo el suelo hundido del taller, el bolaño que lo hundió, con las
+embocadura, más bajo que la bóveda); por fuera, el puente alzado sobre el foso de las estacas (quien cae en él se
+clava en ellas). Al lado, **el cuerpo de guardia**: la mesa de los dados con sus bancos, el atril con **el libro de
+la guarnición**, las armas a mano, dos soldados y, bajo el suelo hundido del taller, el bolaño que lo hundió, con las
 tablas y el cascajo. Su escalera de piedra sube por el muro de la torre a **la armería** (las astas contra la
 muralla, las cotas en sus perchas, los barriles de virotes y, entre las lanzas, **la espada oxidada**) y de ella, por
 el muro de la torre, a **la cámara del torno**, sobre el paso: el tambor del puente entre sus caballetes, con sus
@@ -811,12 +812,12 @@ el rastrillo; suelto el freno del torno, **el puente cae** sobre el foso: el ata
 sale por la cara de fuera al **cadalso**, la galería de madera colgada de la torre y de la muralla de la guardia, con
 su pantalla de tablas, sus troneras, su tejadillo y las tablas que faltan; en la garita de su cabo vigila **el
 alférez mayor**, convertido, con la ballesta de la guardia (se planta lejos, tira y la monta; si te le echas encima,
-culatazo; no vuelve), y al cinto **la llave del alférez**, una de las cinco de la reja de la Sé. Un bolaño entró por
-la muralla del taller y se llevó media pared y parte del suelo: por **el boquete**, desde el cadalso, se entra en
-**el taller del ballestero** (las vigas colgando, el maestro bajo una de ellas, su tabla rayada con un clavo y, en
-su banco, **la ballesta**). El tabique entre el taller y la armería tiene dos arcos: uno, lleno de escombro hasta la
-clave (se ve la luz entre las piedras); el otro, tapiado con la cal todavía tierna, se derriba desde el taller: el
-atajo a la armería (`world/fortaleza_puerta.js`).
+culatazo; no vuelve), y al cinto, en una bolsa de cuero, **el carbúnculo**, uno de los tres ojos de la rueda de la
+reja de la Sé. Un bolaño entró por la muralla del taller y se llevó media pared y parte del suelo: por **el
+boquete**, desde el cadalso, se entra en **el taller del ballestero** (las vigas colgando, el maestro bajo una de
+ellas, su tabla rayada con un clavo y, en su banco, **la ballesta**). El tabique entre el taller y la armería tiene
+dos arcos: uno, lleno de escombro hasta la clave (se ve la luz entre las piedras); el otro, tapiado con la cal
+todavía tierna, se derriba desde el taller: el atajo a la armería (`world/fortaleza_puerta.js`).
 
 **El patio de honor.** Cruzados sus dos ejes (de la puerta a la escalinata de la torre; de las puertas del gran
 salón a las de la capilla), la fuente seca; el **olmo del Rey**, con cien papelillos clavados en la corteza; el
@@ -852,12 +853,13 @@ sitial vacío bajo su dosel y la mesa alta (y en ella el cuaderno del mayordomo)
 ante el sitial, **la corte**: veintidós cortesanos y, al pie del estrado, el mayordomo. Al pisar el estrado, la
 puerta del servicio se cierra de golpe y empieza **el tambor**. Se levantan de uno en uno, en su orden, y te rodean;
 **el compás manda**: en cada golpe ataca uno solo, el que el compás señala, que alza el cuchillo un tiempo antes (se
-ve venir y se oye) y lo clava en el golpe siguiente; los demás cierran el corro con los cuchillos en alto. Caen pronto
-(dos golpes; desviado a compás, el de gracia); si te sales del corro, se deshace unos tiempos mientras te vuelven a
-rodear. Tres oleadas, siete, ocho y siete, cada una más deprisa. Callado el tambor, **el mayordomo**, solo y en
-silencio, con su abrazo que no se desvía. Vencido: se abre la puerta del servicio, las puertas grandes se desatrancan
-desde dentro (el atajo al patio), los cuerpos se quedan en la sala y en el suelo queda **la llave del mayordomo**. Si
-mueres, vuelven a sus sitios, de rodillas (`game/corte.js`, `entities/cortesano.js`).
+ve venir y se oye) y lo clava en el golpe siguiente; los demás cierran el corro con los cuchillos en alto. Caen
+pronto (dos golpes; desviado a compás, el de gracia); si te sales del corro, se deshace unos tiempos mientras te
+vuelven a rodear. Tres oleadas, siete, ocho y siete, cada una más deprisa. Callado el tambor, **el mayordomo**, solo
+y en silencio, con su abrazo que no se desvía. Vencido: se abre la puerta del servicio, las puertas grandes se
+desatrancan desde dentro (el atajo al patio), los cuerpos se quedan en la sala y en la grada del estrado queda **la
+frente de la rueda**, la parte que guardaba el mayordomo. Si mueres, vuelven a sus sitios, de rodillas
+(`game/corte.js`, `entities/cortesano.js`).
 
 **La galería del salón.** Por el grueso del muro de poniente, a media altura, corre una galería abovedada (como la de
 Hedingham), con sus ventanas a la luna y, sobre el salón, sus arquerías de tres vanos: desde ellas se ve a la corte
@@ -869,26 +871,26 @@ tablas, empinada, sube a él entre los jamones y los chorizos colgados; arriba, 
 
 **La Capilla Real.** En la crujía de levante, con el altar al norte, contra la torre de la coracha: la nave enlucida
 y pintada de despiece fingido (las juntas de sillería a doble línea de almagre, una cruz en cada sillar), con su
-zócalo, sus bancos, sus coronas y su armadura con tirantes; el presbiterio en alto, bajo **su bóveda de estrellas**
-y su fajón sobre ménsulas, con el retablo, la cruz, el **altar** (el descanso de en medio de la fortaleza) y, en el
+zócalo, sus bancos, sus coronas y su armadura con tirantes; el presbiterio en alto, bajo **su bóveda de estrellas** y
+su fajón sobre ménsulas, con el retablo, la cruz, el **altar** (el descanso de en medio de la fortaleza) y, en el
 reclinatorio, la confesión del capellán mayor. **La tribuna del Rey** corre en alto por el muro del patio, de la
 puerta de su oratorio a los pies, donde está su sitial; se sube también por una escalera de tablas en el muro de
 levante. El cordón de la campana baja por la clave de la bóveda y está atado a una argolla en la cabecera de la
-tribuna; en el nudo, **la llave del capellán**. Al soltarla, el cordón cae a plomo, la campana suena una vez, sola,
-por toda la ciudad, y lo que la oye en la fortaleza se despierta.
+tribuna; del nudo cuelga **la boca de la rueda**, la parte que guardaba el capellán. Al desatarla, el cordón cae a
+plomo, la campana suena una vez, sola, por toda la ciudad, y lo que la oye en la fortaleza se despierta.
 
 **La Cancillería y la Torre del Tombo.** Junto a la capilla, **la sala de los escribanos**, encalada: los pupitres
 contra la muralla, las mesas de copiar, los estantes de los registros, la caldera de la cera y, en el testero, sobre
 su tarima y bajo el estandarte del Rey, la mesa del canciller con el traslado de **la carta del Rey** que mandó hacer
-la reja de las cinco cerraduras. Al fondo, la puerta de **la Torre del Tombo**, el archivo del Rey, en la esquina del
-sureste: cuatro plantas unidas por un caracol en su rincón, las cartas (la bula de Roma con su sello de plomo, el
-pupitre del copista, el cesto de las cartas selladas), los registros (y en su atril **el registro de la torre**,
-que dice qué hay en cada planta y, de prisa, dónde guardó el canciller su llave), los legajos y, en lo
-alto, **las arcas del Rey**, cada una con sus sellos de cera colgando sobre la cerradura: bermejos, los de la cámara
-del Rey; negros, los de su guarda; verdes, los del cabildo de la Sé. Al abrirlas se rompen los sellos; las de dos
-sellos negros tienen **cerradura de resorte** (un virote a quemarropa); en la de los tres sellos bermejos está **la
-llave del canciller**. Entre ellas, sentado contra el muro con el sello del Rey en el regazo y su farol aún
-encendido, el canciller, Mestre Alberto.
+partir en cinco la rueda de la reja de la Sé. Al fondo, la puerta de **la Torre del Tombo**, el archivo del Rey, en
+la esquina del sureste: cuatro plantas unidas por un caracol en su rincón, las cartas (la bula de Roma con su sello
+de plomo, el pupitre del copista, el cesto de las cartas selladas), los registros (y en su atril **el registro de la
+torre**, que dice qué hay en cada planta y, de prisa, dónde guardó el canciller su parte de la rueda), los legajos y,
+en lo alto, **las arcas del Rey**, cada una con sus sellos de cera colgando sobre la cerradura: bermejos, los de la
+cámara del Rey; negros, los de su guarda; verdes, los del cabildo de la Sé. Al abrirlas se rompen los sellos; las de
+dos sellos negros tienen **cerradura de resorte** (un virote a quemarropa); en la de los tres sellos bermejos está
+**la esmeralda**, el ojo de en medio de la rueda. Entre ellas, sentado contra el muro con el sello del Rey en el
+regazo y su farol aún encendido, el canciller, Mestre Alberto.
 
 **La reina.** Al otro lado de la torre del homenaje, abajo, **el estrado de las damas**: los almohadones, el telar
 tapado, los arcones, el torno de hilar, y sus dueñas, que lloran. Arriba, **la sala de la reina**, bajo su armadura de
@@ -903,11 +905,21 @@ candelero, el reclinatorio con su libro de horas (con la nota de la dueña) y la
 farol. Al sur del patio, **el cuerpo de guardia**, y en el paso de la puerta, el rastrillo echado: entre sus
 barrotes, el envés del puente alzado (el torno está arriba, en la cámara de la puerta).
 
-**La reja de las cinco llaves.** La reja de la escalera de la cripta de la Sé ya no tiene torno: junto a ella, en
-su pilar, una pletina de hierro con cinco cerraduras, cada una con la marca del color de la cinta de su llave. Al
-examinarla dice cuáles faltan; con las cinco (la del alférez, la del mayordomo, la del camarero, la del capellán y
-la del canciller) se echan una a una, se quedan metidas en la pletina y la reja baja por su ranura. La carta del
-Rey que la mandó hacer, en la cancillería, dice para qué: que nadie bajara sin que lo supiera la corte entera.
+**La rueda de los tres ojos.** La reja de la escalera de la cripta de la Sé sólo la abre la rueda de piedra del
+arzobispo: una rueda de piedra negra de un palmo, con una cara que no es de hombre (las cejas juntas y fruncidas, la
+nariz chata, los carrillos hinchados, la boca abierta de oreja a oreja con dos filas de dientes en punta y tres ojos
+en fila) y, en el canto, figuritas de rodillas, retorcidas, con las manos en la cara. El Rey la mandó partir en cinco
+y dio cada parte a uno de sus oficiales: las dos mitades, partidas a lo ancho por los ojos (**la frente**, al
+mayordomo; **la boca**, al capellán), y sus tres ojos, que son piedras finas (**el carbúnculo**, rojo, al alférez;
+**la esmeralda**, verde, al canciller; **el zafiro**, azul, al camarero). Las partes se juntan en el inventario, como
+en Resident Evil (`game/rueda.js`): primero las dos mitades y luego, en la junta, los ojos, que son lo que la cierra
+(con una mitad sola no tienen dónde encajar); cada paso, con su icono y su texto, y la rueda entera sale como un
+objeto nuevo. Junto a la reja, en su pilar, el hueco de la rueda: un molde redondo con su bocel y la misma fila de
+figuritas alrededor, y en el fondo un cuadrado de hierro gastado de girar. Al examinarlo dice lo que le falta a lo que
+llevas; con la rueda entera, se encaja, se gira, los ojos se encienden un momento y la reja baja por su ranura; la
+rueda se queda en el pilar (`world/rueda_modelo.js`, el modelo; las partidas de antes, con las cinco llaves, las
+cambian por sus partes). La carta del Rey que la mandó partir, en la cancillería, dice para qué: que nadie bajara sin
+que lo supiera la corte entera.
 
 **El Rey y el Cerco.** En la sala del trono de la torre del homenaje, al pie del estrado y de espaldas a su trono
 vacío, sentado en un sitial de respaldo alto (con
@@ -1034,9 +1046,10 @@ pie de todos los muros. Los crecimientos de carne nacen pegados al suelo y a las
 **Progresión (metroidvania / survival horror).** Barricadas que se arrancan con la palanca, una mesa atravesada en
 la cocina de la Taberna del Cuervo que se parte en dos de un golpe (acércate y pulsa E), la verja del claustro,
 puertas atrancadas que solo se abren desde dentro (atajos), y bajo la Sé, un rastrillo que sube y un lienzo de muro
-que se hunde, cada uno con su palanca al otro lado; la reja de la cripta, con cinco cerraduras en una pletina de
-hierro (las cinco llaves de los cinco oficiales de la corte, en la fortaleza: con las cinco, se echan una a una y baja
-por su ranura hasta el suelo), la losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
+que se hunde, cada uno con su palanca al otro lado; la reja de la cripta, que sólo abre la rueda de los tres ojos (sus
+cinco partes las guardan los cinco oficiales de la corte, en la fortaleza; se juntan en el inventario, como en
+Resident Evil, y entera se encaja y se gira en el hueco de su pilar: la reja baja por su ranura hasta el suelo), la
+losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
 tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojos, altares de descanso que curan,
 rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
@@ -1050,7 +1063,9 @@ izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas
 ver más abajo), el objeto bendito y la ampolla; en cada una se elige qué ponerse de
 lo que se lleva encima, o nada, y se puede ir desarmado o sin escudo (se guarda con la partida). Los **Objetos**, por
 clases (consumibles, armas, escudos, armaduras, objetos benditos, objetos clave y mejoras), desde donde también se
-pone y se quita lo que se lleva puesto. Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
+pone y se quita lo que se lleva puesto y, como en Resident Evil, **se combina** lo que casa (las partes de la rueda de
+los tres ojos): se elige una, «Combinar», y luego la otra; la elegida lleva su marca, y si no casan se dice por qué.
+Y los **Documentos**. Todo se maneja con teclado, mando o ratón (se pinchan las
 casillas, las pestañas y las teclas de la ayuda).
 Las armas, el escudo y las piezas de armadura tienen su **ficha**, a lo Dark Souls: sus cualidades en **barras
 blancas** con su valor al lado y, al elegir otra para la misma ranura (o al mirarla en los Objetos), **comparada con
@@ -1607,7 +1622,9 @@ src/
                         vieja); castillo_fuera.js: lo de fuera (las torres nuevas, los cadalsos, la barbacana,
                         la brecha); castillo_patio.js: lo de poniente del patio de armas (la halconera, las
                         cuadras, el corral de la cocina, el pajar, la fragua, el arranque de la muralla vieja); rey_mesa.js: la mesa del Rey (el tablero del Cerco, su sitial, el banco,
-                        las velas y el brasero);
+                        las velas y el brasero); rueda_modelo.js: el modelo de la rueda de los tres ojos (entera o
+                        en sus mitades, con los ojos que lleve; y los ojos sueltos), para lo que se coge y para el
+                        hueco del pilar de la reja de la Sé;
                         level_keep.js: la atalaya y la coracha; fortaleza_medidas.js: las medidas de la
                         fortaleza-palacio; fortaleza.js: la fortaleza por fuera (la muralla con su talud, las
                         torres de las esquinas, la puerta, la torre del homenaje nueva, las terrazas y las
@@ -1721,9 +1738,12 @@ src/
                         fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, la camilla);
                         fisico_cine.js: sus escenas (la cortina, la camilla y el forcejeo, su muerte);
                         fisico_pelea.js: la pelea de su quirófano; trampas.js: sus cepos y sus campanillas;
-                        cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
-                        Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
-                        mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
+                        cornisas.js: el equilibrio en vigas y cornisas; rueda.js: la rueda de los tres ojos (sus
+                        cinco partes, lo que casa con qué al combinarlas en el inventario, lo que dice el hueco del
+                        pilar de la reja de la Sé y las partidas de antes, con las cinco llaves); alquimia.js: los
+                        cocimientos del Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js:
+                        la pantalla de su mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas,
+                        arrastrar y soltar);
                         nado.js: el agua honda (dónde no se hace pie, cuándo se entra en ella, el aliento y el
                         ahogo, la vista y el oído bajo el agua, las burbujas, el chapoteo; cómo nada el jugador
                         y su brazada, en entities/nado.js); corriente.js: lo que baja con el agua por los
@@ -1826,7 +1846,7 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        «carcel», el atajo al revés: del pasillo de las celdas, por la cárcel del
                                        Rey, a la trampilla del almacén de la torre
                         fortalezawalk.mjs la fortaleza a pie: de la coracha al altar y al pasadizo, el caracol al
-                                       oratorio del Rey, la tribuna y la llave del capellán (el cordón que cae),
+                                       oratorio del Rey, la tribuna y la boca de la rueda (el cordón que cae),
                                        el altar de la capilla, la cámara del Rey y su escalera, el tesoro, las
                                        puertas atrancadas por dentro, la cancillería y el Tombo hasta sus arcas,
                                        el servicio, la cocina y su secadero, la galería del salón, la torre de
@@ -1842,6 +1862,12 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        al rastrillo, sala a sala, con lo que hay que coger y leer, y la
                                        palanca que lo sube (SOLO5=1: sólo la cárcel)
                         corte.mjs      la Corte de los Infieles, de principio a fin
+                        rueda.mjs      la rueda de los tres ojos: lo que dice el hueco del pilar de la reja
+                                       de la Sé (con nada, con algo, con las cinco partes sin juntar); juntarla
+                                       en el inventario con el teclado (lo que no casa, dejarlo con Esc, lo
+                                       que casa y la ventana de la rueda entera); encajarla y girarla (la
+                                       reja baja); las partidas de antes, con las cinco llaves; con «sitios»,
+                                       las cinco partes en su sitio, de cerca
                         caballero.mjs  el Caballero de la Orden pieza a pieza: el desvío y la contra, el parry
                                        de la acometida y el golpe de gracia, el hueco tras el salto, la
                                        armadura con cada espada, la segunda fase (el pendón) y su muerte

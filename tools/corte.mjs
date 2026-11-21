@@ -2,7 +2,7 @@
 // defiende y, cada 1,6 s, cae el más antiguo de los que están en pie): pisar
 // el estrado, la puerta del servicio que se cierra, las tres oleadas, los
 // señalados y sus puñaladas, el mayordomo y lo que pasa al vencerla (las
-// puertas, la llave, los cuerpos).
+// puertas, la frente de la rueda, los cuerpos).
 //   node tools/corte.mjs      (requiere npx vite --port 5199)
 import { chromium } from 'playwright';
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -65,8 +65,8 @@ const r = await p.evaluate(() => {
   out.push(...olas);
   out.push(`fin a ${tt.toFixed(1)} s: estado ${C.state}; señalados ${marks}, puñaladas ${stabs}, golpes recibidos ${hitsTaken}`);
   out.push(`vencida=${!!g.flags['corte:vencida']} mayordomo muerto=${!!g.flags['dead:mayordomo']} d_sala=${!!g.flags['door:d_sala']} servicio=${sv.done}/${sv.lock.type}`);
-  const key = g.interact.list.find((i) => i.id === 'i_llave_mayordomo');
-  out.push(`llave: visible=${key && key.obj && key.obj.visible} en (${key.x.toFixed(1)}, ${key.y.toFixed(2)}, ${key.z.toFixed(1)})`);
+  const key = g.interact.list.find((i) => i.id === 'i_pieza_mayordomo');
+  out.push(`la frente de la rueda: visible=${key && key.obj && key.obj.visible} en (${key.x.toFixed(1)}, ${key.y.toFixed(2)}, ${key.z.toFixed(1)})`);
   const vis = C.list.filter((e) => e.obj.visible).length;
   out.push(`cuerpos a la vista: ${vis}/${C.list.length}`);
   return out;

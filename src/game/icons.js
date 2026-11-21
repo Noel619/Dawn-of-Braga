@@ -58,33 +58,140 @@ const WOOD = [P.wood0, P.wood1, P.wood2, P.wood3, P.wood4];
 const IRON = [P.void, P.iron0, P.iron1, P.iron2, P.iron3, P.iron4, P.iron5];
 const RUBY = [P.ruby0, P.ruby1, P.ruby2, P.ruby3, P.ruby4];
 
-// Llave grande de hierro (la de una de las cinco cerraduras de la reja de la
-// Sé): la anilla con su cinta (rib: cuatro tonos), la caña y el paletón.
-function royalKey(b, rib) {
-  // la cinta, anudada a la anilla, con sus dos cabos
-  seg(b, 6, 9, 3, 18, 1.6, 1.1, (t, s, x, y) => shade(rib, 0.6 - t * 0.3 - (s > 0 ? 0.2 : 0), x, y));
-  seg(b, 7, 9, 9, 19, 1.5, 1.0, (t, s, x, y) => shade(rib, 0.7 - t * 0.3 - (s > 0 ? 0.2 : 0), x, y));
-  // la anilla
+// La rueda de los tres ojos (game/rueda.js): piedra negra, de un palmo, con
+// una cara que no es de hombre. En el canto, las figuritas de rodillas (una
+// fila de cuentas); dentro, la frente con sus arrugas y las cejas juntas, que
+// se fruncen; los tres ojos en fila, en la junta; la nariz chata, los carrillos
+// hinchados y la boca abierta de oreja a oreja, con dos filas de dientes. La
+// junta, un poco quebrada, va por en medio de los ojos: la frente queda
+// encima y la boca debajo. parte: 'entera', 'frente' o 'boca'; ojos: la
+// máscara de los que lleva puestos (bit i: RUEDA_OJOS[i]).
+const PIEDRA = ['#080907', '#121310', '#1d1f19', '#2a2c24', '#3a3c31', '#4f5143', '#6a6b58', '#8a8a72'];
+const GEMAS = [RUBY, ['#04140a', '#0a3a1c', '#14683a', '#2ea35c', '#86e0a0', '#dcffe6'], ['#060a22', '#0f2058', '#1c3e98', '#3a6ad4', '#90b4ff', '#e4eeff']];
+const OJOS_RUEDA = [
+  [-6.7, 2.5],
+  [0, 2.9],
+  [6.7, 2.5],
+];
+const juntaY = (x) => 16 + (((Math.floor(x) * 5) % 3) - 1) * 0.45;
+// un ojo de gema (en la rueda o suelto): la luz de una esfera, la niña negra
+// un poco abajo a la derecha, su iris y el brillo arriba a la izquierda
+function gemaPx(cols, ddx, ddy, r, x, y) {
+  const de = Math.hypot(ddx, ddy);
+  if (Math.hypot(ddx + r * 0.42, ddy + r * 0.42) < Math.max(0.7, r * 0.2)) return cols[cols.length - 1];
+  const pu = Math.hypot(ddx - r * 0.1, ddy - r * 0.08);
+  if (pu < r * 0.3) return pu < r * 0.2 ? P.void : cols[0];
+  const iris = pu < r * 0.55 ? 0.14 : 0;
+  return shade(cols, 0.3 + ((-ddx - ddy) / (r * 2.2)) * 0.7 + (1 - de / r) * 0.28 + iris, x, y);
+}
+function rueda(b, parte, ojos) {
+  const R = 14.3,
+    cx = 16,
+    cy = 16;
+  const base = (x, y, dx, dy) => 0.46 - (dx + dy) / (R * 2.2) + (vnoise(x * 0.7, y * 0.7, 5) - 0.5) * 0.14;
   for (let y = 0; y < 32; y++)
     for (let x = 0; x < 32; x++) {
-      const dx = x + 0.5 - 10,
-        dy = y + 0.5 - 8;
+      const px = x + 0.5,
+        py = y + 0.5;
+      const dx = px - cx,
+        dy = py - cy;
       const d = Math.hypot(dx, dy);
-      if (d > 5.6 || d < 3.2) continue;
-      b.set(x, y, shade(IRON, 0.62 - dx / 14 - dy / 16 + (d > 4.4 ? 0.08 : -0.12), x, y));
+      if (d > R) continue;
+      const js = juntaY(px);
+      if ((parte === 'frente' && py >= js) || (parte === 'boca' && py < js)) continue;
+      let l = base(x, y, dx, dy);
+      // el canto, más alto que la cara: las figuritas de rodillas, una fila
+      // de cuentas, y el surco que lo separa
+      if (d > R - 3.1) {
+        if (d < R - 2.5) {
+          b.set(x, y, P.void);
+          continue;
+        }
+        const f = (((Math.atan2(dy, dx) / (Math.PI * 2)) * 22 + 100) % 1 + 1) % 1;
+        const bump = 1 - Math.abs(f - 0.5) * 2;
+        const rr = (d - (R - 2.5)) / 2.5;
+        l += 0.08 + (bump - 0.5) * 0.55 + (0.5 - Math.abs(rr - 0.5)) * 0.2;
+        b.set(x, y, f < 0.16 ? PIEDRA[1] : shade(PIEDRA, l, x, y));
+        continue;
+      }
+      // los ojos, en la junta: la gema o el hueco, y el párpado alrededor
+      let hecho = false;
+      for (let i = 0; i < 3 && !hecho; i++) {
+        const [ex, re] = OJOS_RUEDA[i];
+        const ddx = px - (cx + ex),
+          ddy = py - cy;
+        const de = Math.hypot(ddx, ddy);
+        if (de < re) {
+          if (parte === 'entera' && ojos & (1 << i)) b.set(x, y, gemaPx(GEMAS[i], ddx, ddy, re, x, y));
+          else b.set(x, y, de > re - 0.9 && ddx + ddy > 0.5 ? PIEDRA[2] : P.void);
+          hecho = true;
+        } else if (de < re + 1.5) {
+          b.set(x, y, shade(PIEDRA, l + 0.12 + ((-ddx - ddy) / (re + 1.5)) * 0.42, x, y));
+          hecho = true;
+        }
+      }
+      if (hecho) continue;
+      // la junta: con los tres ojos, una raya fina; sin ellos, abierta
+      if (parte === 'entera' && Math.abs(py - js) < 0.5) {
+        b.set(x, y, ojos === 7 ? shade(PIEDRA, l - 0.22, x, y) : P.void);
+        continue;
+      }
+      // las cejas, juntas y gruesas, que se fruncen en medio; debajo, la
+      // sombra que echan sobre los ojos
+      const yb = cy - 5.6 + 1.1 * Math.exp(-(dx * dx) / 5);
+      if (Math.abs(dx) < 10.5 && Math.abs(py - yb) < 1.1) l += py < yb ? 0.42 : 0.16;
+      else if (Math.abs(dx) < 10.5 && py > yb && py < yb + 1.6) l -= 0.3;
+      // las arrugas de la frente
+      for (const [y0, k, ph] of [
+        [cy - 8.6, 0.7, 0],
+        [cy - 10.8, 0.55, 1.3],
+      ]) {
+        const yl = y0 + Math.sin(dx * k + ph) * 0.7;
+        if (Math.abs(dx) < 8.5 && Math.abs(py - yl) < 0.5) l -= 0.3;
+        else if (Math.abs(dx) < 8.5 && py < yl && py > yl - 1.1) l += 0.16;
+      }
+      // los carrillos, hinchados
+      for (const sx of [-1, 1]) {
+        const dc = Math.hypot(px - (cx + sx * 7.8), py - (cy + 4.4));
+        if (dc < 3.2) l += (1 - dc / 3.2) * 0.22;
+      }
+      // la nariz, chata, con sus dos agujeros
+      if (py > cy + 2.4 && py < cy + 6.4) {
+        const w = 0.9 + (py - (cy + 2.4)) * 0.55;
+        if (Math.abs(dx) < w) l += dx < 0 ? 0.34 : -0.18;
+        if (py > cy + 5.3 && Math.abs(Math.abs(dx) - 1.4) < 0.6) l = 0.02;
+      }
+      // la boca, de oreja a oreja: los labios, dos filas de dientes en punta
+      // y, al fondo, lo rojo
+      const mx = dx / 8.6,
+        my = (py - (cy + 9.8)) / 3.0;
+      const md = Math.hypot(mx, my);
+      if (md < 1) {
+        const fx = Math.floor(px),
+          fy = py - (cy + 9.8);
+        // (los de arriba cuelgan; los de abajo suben: dientes de dos píxeles,
+        // uno ancho y la punta)
+        const arriba = my < 0 && ((fy < -1.6 && fx % 2 === 0) || (fy >= -1.6 && fy < -0.6 && fx % 4 === 0));
+        const abajo = my > 0 && ((fy > 1.6 && fx % 2 === 1) || (fy <= 1.6 && fy > 0.6 && fx % 4 === 1));
+        if (arriba || abajo) b.set(x, y, dx < 0 ? P.bone2 : P.bone1);
+        else b.set(x, y, md < 0.5 ? P.blood1 : md < 0.8 ? P.blood0 : P.void);
+        continue;
+      }
+      if (md < 1.32) l += my < 0 ? 0.3 : -0.14;
+      b.set(x, y, shade(PIEDRA, l, x, y));
     }
-  // la caña, en diagonal, con su collar
-  seg(b, 14, 12, 26, 24, 1.6, 1.5, (t, s, x, y) => (s < -0.4 ? P.iron5 : s > 0.45 ? P.iron1 : shade(IRON, 0.55 - t * 0.1, x, y)));
-  seg(b, 13, 14, 16, 11, 1.4, 1.4, (t, s) => (s < 0 ? P.iron4 : P.iron2));
-  // el paletón: tres dientes
-  for (const [x0, y0, x1, y1] of [
-    [22, 22, 19, 26],
-    [24, 24, 21, 28],
-    [26, 25, 24, 28],
-  ])
-    seg(b, x0, y0, x1, y1, 1.4, 1.4, (t, s, x, y) => (s < -0.3 ? P.iron4 : shade(IRON, 0.45, x, y)));
-  b.set(18, 16, P.iron5);
-  sparkle(b, 25, 8);
+  b.outline(P.void);
+}
+// una mitad, centrada en el icono (la frente baja; la boca sube)
+function mediaRueda(b, parte) {
+  const t = new Bitmap(32, 32);
+  rueda(t, parte, 0);
+  b.blit(t, 0, parte === 'frente' ? 6 : -7);
+}
+// un ojo suelto: la gema pulida en redondo, del tamaño de una avellana
+function ojoSuelto(b, i) {
+  const r = i === 1 ? 8.6 : 7.6;
+  disc(b, 16, 16.5, r, (l, dn, x, y) => gemaPx(GEMAS[i], x + 0.5 - 16, y + 0.5 - 16.5, r, x, y));
   b.outline(P.void);
 }
 
@@ -438,22 +545,22 @@ const ICONS = {
     b.set(8, 5, BRONZE[5]);
     b.outline(P.void);
   },
-  // las cinco llaves de la reja de la Sé: hierro negro, de paletón grande, y
-  // la cinta del oficio atada a la anilla
-  llaveAlferez(b) {
-    royalKey(b, [P.blood1, P.blood2, P.blood3, P.blood4]);
+  // la rueda de los tres ojos: sus dos mitades y sus tres ojos, sueltos (la
+  // rueda juntada, en cada estado, se añade al final: ruedaC, ruedaCE…)
+  ruedaFrente(b) {
+    mediaRueda(b, 'frente');
   },
-  llaveMayordomo(b) {
-    royalKey(b, [P.gold1, P.gold2, P.gold3, P.gold4]);
+  ruedaBoca(b) {
+    mediaRueda(b, 'boca');
   },
-  llaveCamarero(b) {
-    royalKey(b, [P.glass0, P.glass1, P.glass2, P.glass3]);
+  ojoCarbunculo(b) {
+    ojoSuelto(b, 0);
   },
-  llaveCapellan(b) {
-    royalKey(b, [P.bone0, P.bone1, P.bone2, P.bone3]);
+  ojoEsmeralda(b) {
+    ojoSuelto(b, 1);
   },
-  llaveCanciller(b) {
-    royalKey(b, [P.moss0, P.moss1, P.moss2, P.moss3]);
+  ojoZafiro(b) {
+    ojoSuelto(b, 2);
   },
   // la ballesta de estribo: la cureña en diagonal (la culata abajo), el arco
   // de acero de través, la cuerda tensa hasta la nuez y el estribo delante
@@ -1684,6 +1791,10 @@ function pix(b, rows, pal) {
   });
 }
 const SMALL = {
+  // (la parte que se está combinando, en el inventario: un aro con su cruz)
+  junta(b) {
+    pix(b, ['...ggg...', '..g...g..', '.g..h..g.', 'g...h...g', 'g.hhhhh.g', 'g...h...g', '.g..h..g.', '..g...g..', '...ggg...'], { g: P.gold3, h: P.gold5 });
+  },
   // (los tipos de daño, game/danos.js: el filo, la punta y la maza)
   tCortante(b) {
     pix(b, ['.......hh', '......hsh', '.....hsh.', '....hsh..', '...hsh...', '..hsh....', 'gghs.....', '.gg......', 'g.g......'], { h: P.steel5, s: P.steel3, g: P.gold3 });
@@ -1918,6 +2029,10 @@ const SMALL = {
     b.set(4, 3, P.gold5);
   },
 };
+
+// la rueda juntada, con los ojos que lleva puestos: rueda, ruedaC… ruedaCEZ
+// (las letras, las de story.js, RUEDA_OJOS)
+for (let m = 0; m < 8; m++) ICONS['rueda' + ['C', 'E', 'Z'].filter((_, i) => m & (1 << i)).join('')] = (b) => rueda(b, 'entera', m);
 
 const cache = new Map();
 export function iconBitmap(name) {

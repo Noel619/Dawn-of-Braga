@@ -4,7 +4,8 @@
 // teclado, mando y ratón.
 import * as THREE from 'three';
 import { GLYPHS } from '../core/input.js';
-import { ITEMS, NOTES, AREA_NAMES } from './story.js';
+import { ITEMS, NOTES, AREA_NAMES, MSG } from './story.js';
+import { ORDEN as ORDEN_RUEDA, esParte, esOjo, juntar } from './rueda.js';
 import { RELIC_IDS } from './relics.js';
 import { WEAPON_ORDER, WEAPONS, weaponSheet } from '../entities/weapons.js';
 import { CARGAS } from '../entities/armaduras.js';
@@ -181,7 +182,8 @@ const ITEM_CATS = [
   ['key', 'Objetos clave'],
   ['upgrade', 'Mejoras'],
 ];
-const KEY_ORDER = ['palanca', 'llave_claustro', 'anillo', 'martillo', 'tablon', 'llave_sotano', 'garra', 'incienso', 'llave_alferez', 'llave_mayordomo', 'llave_camarero', 'llave_capellan', 'llave_canciller'];
+// (la rueda de los tres ojos, en sus partes y juntada: game/rueda.js)
+const KEY_ORDER = ['palanca', 'llave_claustro', 'anillo', 'martillo', 'tablon', 'llave_sotano', 'garra', 'incienso', ...ORDEN_RUEDA];
 const UPGRADE_ORDER = ['lagrima', 'rey_marfil', 'ampolla', 'relicario', 'rosario', 'piedra'];
 const FLASK = { name: 'Ampolla de Santa Bárbara', desc: 'Lágrimas de la santa en un frasco de vidrio. Restauran parte de tu vitalidad. Se rellenan al descansar en un altar.' };
 // lo que se dice de una ranura vacía, de «nada» en su lista y de una ranura
@@ -229,6 +231,11 @@ export class UI {
     // (lo que se ve de un arma, un escudo o una armadura: su ficha, con las
     // barras, o su descripción; se cambia con la tecla de la ficha)
     this.invFicha = true;
+    // (combinar, como en Resident Evil: la parte elegida, que se va a juntar
+    // con la siguiente que se elija; y lo que se dijo al juntarlas, en la
+    // casilla en que se dijo: { text, ok, at })
+    this.invComb = null;
+    this.invMsg = null;
     this.sc = uiScale();
     this._applyScale();
     addEventListener('resize', () => {
@@ -383,8 +390,9 @@ export class UI {
     el.classList.remove('hidden');
     const s = { name, el, data, sel: 0, fresh: true };
     this.stack.push(s);
-    // (el inventario se abre siempre en el equipo, no en la lista de una ranura)
-    if (name === 'inv') this.invPick = null;
+    // (el inventario se abre siempre en el equipo, no en la lista de una ranura,
+    // y sin nada a medio combinar)
+    if (name === 'inv') this.invPick = this.invComb = this.invMsg = null;
     this.g.input.exitLock();
     document.body.style.cursor = 'default';
     this.render(s);
@@ -575,7 +583,7 @@ export class UI {
   invSwitch(tab) {
     this.invTab = (tab + 3) % 3;
     this.invSel = 0;
-    this.invPick = null;
+    this.invPick = this.invComb = this.invMsg = null;
     this.renderInv();
   }
   // las ranuras del equipo, de una en una: { slot, name, ghost }
@@ -675,6 +683,13 @@ export class UI {
       this.invPick = null;
     };
     if (a === 'back') {
+      // (a medio combinar, «atrás» lo deja: no cierra)
+      if (this.invComb) {
+        this.invComb = null;
+        au && au.ui('move');
+        this.renderInv();
+        return;
+      }
       if (!this.invPick) return this.close();
       unpick();
       au && au.ui('move');
@@ -704,6 +719,8 @@ export class UI {
     }
     if (this.invTab === 1) {
       const e = this.itemEntries()[this.invSel];
+      // las partes de la rueda se combinan: se elige una y luego la otra
+      if (this.invComb || (e && esParte(e.id))) return a === 'confirm' && this.invCombine(e);
       const slot = e && g.slotOf(e.id);
       if (!slot) return;
       const on = g.equipped(slot) === e.id;
@@ -717,16 +734,56 @@ export class UI {
       if (read[this.invSel]) this.showNote(NOTES[read[this.invSel]]);
     }
   }
+  // Combinar, como en Resident Evil (game/rueda.js): la primera vez se elige
+  // la parte; la segunda, con qué se junta. Si casan, se gastan las dos y se
+  // tiene lo que sale, ya elegido, con lo que se dice al juntarlas; si no, por
+  // qué no. La misma otra vez, lo deja. La rueda entera sale como un objeto
+  // nuevo, en su ventana.
+  invCombine(e) {
+    const g = this.g,
+      au = g.audio;
+    if (!e) return;
+    if (!this.invComb) {
+      this.invComb = e.id;
+      this.invMsg = null;
+      au && au.ui('confirm');
+      this.renderInv();
+      return;
+    }
+    const a = this.invComb;
+    this.invComb = null;
+    if (e.id === a) {
+      au && au.ui('move');
+      this.renderInv();
+      return;
+    }
+    const r = esParte(e.id) ? juntar(g.inventory, a, e.id) : { ok: false, msg: MSG.juntaNo };
+    if (!r.ok) {
+      this.invMsg = { text: r.msg, ok: false, at: this.invSel };
+      au && au.ui('lock');
+      this.renderInv();
+      return;
+    }
+    this.invSel = Math.max(0, this.itemEntries().findIndex((x) => x.id === r.da));
+    this.invMsg = { text: r.msg, ok: true, at: this.invSel };
+    // (cómo suena: las dos mitades, piedra con piedra; un ojo, la gema que
+    // entra; el último, la junta que se cierra)
+    au && au.play('encaje', null, { k: r.entera ? 'entera' : esOjo(a) || esOjo(e.id) ? 'ojo' : 'mitad' });
+    this.renderInv();
+    g.saveGame();
+    if (r.entera) this.showItem(r.da, 'Objetos combinados');
+  }
   // Una casilla: el icono (o la silueta de la ranura vacía), la cuenta y la
   // marca de lo que se lleva puesto. Al pasar el ratón se elige; al
   // pincharla, se usa.
   invSlot(i, bm, o = {}) {
     const d = document.createElement('div');
     const sel = i === this.invSel;
-    d.className = 'slot' + (sel ? ' sel' : '');
+    d.className = 'slot' + (sel ? ' sel' : '') + (o.comb ? ' comb' : '');
     this._slot = this._slot || slotBitmap(36, false);
     this._slotSel = this._slotSel || slotBitmap(36, true);
-    d.innerHTML = spriteHtml(sel ? this._slotSel : this._slot) + (bm ? spriteHtml(bm, 1, 'ic') : '') + (o.n ? `<span class="n f-small">${esc(o.n)}</span>` : '') + (o.worn ? spriteHtml(smallIcon('worn'), 1, 'worn') : '');
+    // (o.comb: la parte que se está combinando, con su marca)
+    d.innerHTML = spriteHtml(sel ? this._slotSel : this._slot) + (bm ? spriteHtml(bm, 1, 'ic') : '') + (o.n ? `<span class="n f-small">${esc(o.n)}</span>` : '') + (o.worn ? spriteHtml(smallIcon('worn'), 1, 'worn') : '') + (o.comb ? spriteHtml(smallIcon('junta'), 1, 'comb') : '');
     d.addEventListener('mousemove', (ev) => this.invHover(i, ev));
     d.addEventListener('click', () => {
       this.invSel = i;
@@ -941,20 +998,28 @@ export class UI {
     for (const [cat, label] of ITEM_CATS) {
       const els = [];
       ents.forEach((e, i) => {
-        if (e.cat === cat) els.push(this.invSlot(i, iconBitmap(e.id === '_flask' ? (p.flasks > 0 ? 'flask' : 'flaskEmpty') : ITEMS[e.id].icon), e));
+        if (e.cat === cat) els.push(this.invSlot(i, iconBitmap(e.id === '_flask' ? (p.flasks > 0 ? 'flask' : 'flaskEmpty') : ITEMS[e.id].icon), { ...e, comb: e.id === this.invComb }));
       });
       if (els.length) left.appendChild(this.invGroup(label, els));
     }
     const e = ents[this.invSel];
     const cat = ITEM_CATS.find((c) => c[0] === e.cat)[1];
-    let h = `<div class="eye f-small">${esc(cat)}</div>`;
-    h += e.id === '_flask' ? `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>` : this.itemInfo(e.id);
+    // (combinando: lo que se combina y con qué; lo que se dijo al juntarlas,
+    // encima, mientras siga elegido lo que salió)
+    const comb = this.invComb && ITEMS[this.invComb];
+    const msg = this.invMsg && this.invMsg.at === this.invSel ? `<p class="junta ${this.invMsg.ok ? 'ok' : 'no'}">${esc(this.invMsg.text)}</p>` : '';
+    let h = `<div class="eye f-small">${comb ? 'Combinar: ' + esc(comb.name) : esc(cat)}</div>`;
+    h += msg;
+    if (comb && e.id === this.invComb) h += `<h3 class="f-bast dim">${esc(comb.name)}</h3><p>Elige la otra parte.</p>`;
+    else h += e.id === '_flask' ? `<h3 class="f-bast">${esc(FLASK.name)}</h3><p>${esc(FLASK.desc)}</p>` : this.itemInfo(e.id);
     const sheet = e.id !== '_flask' && this.invFicha && this.hasSheet(e.id);
-    if (e.cat !== 'relic' && !sheet) h += sep + this.statsHtml();
+    if (e.cat !== 'relic' && !sheet && !comb && !msg) h += sep + this.statsHtml();
     det.innerHTML = h;
-    // (lo que se puede llevar puesto: se pone o se quita)
+    if (comb) return this.invHint([['confirm', e.id === this.invComb ? 'Dejar' : 'Combinar con esto'], ['back', 'Cancelar']]);
+    // (lo que se puede llevar puesto: se pone o se quita; las partes de la
+    // rueda, se combinan)
     const slot = g.slotOf(e.id);
-    const act = slot ? (g.equipped(slot) === e.id ? TAKE_OFF[slot] || TAKE_OFF.armor : PUT_ON[slot] || PUT_ON.armor) : null;
+    const act = slot ? (g.equipped(slot) === e.id ? TAKE_OFF[slot] || TAKE_OFF.armor : PUT_ON[slot] || PUT_ON.armor) : esParte(e.id) ? 'Combinar' : null;
     this.invHint([...(act ? [['confirm', act]] : []), ...this.fichaHint(e.id), ['tabs', 'Pestañas'], ['back', 'Cerrar']]);
   }
   renderDocs(left, det) {
@@ -1037,8 +1102,12 @@ export class UI {
     h.innerHTML = `<span>${this.keyHtml('confirm')} Cerrar</span><span class="tg">${this.keyHtml('transcribe')} ${this.g.settings.transcript ? 'Ocultar la transcripción' : 'Transcripción'}</span>`;
     h.querySelector('.tg').addEventListener('click', () => this.toggleTranscript());
   }
-  showItem(id) {
+  // (eyebrow: el rótulo de encima; la rueda juntada sale como «Objetos
+  // combinados»)
+  showItem(id, eyebrow = 'Objeto obtenido') {
     const it = ITEMS[id];
+    const eb = $('item').querySelector('.eyebrow span');
+    if (eb) eb.textContent = eyebrow;
     const box = $('item-icon');
     box.innerHTML = '';
     this._rays = this._rays || raysBitmap(72);

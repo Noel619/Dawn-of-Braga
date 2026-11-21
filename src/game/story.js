@@ -58,35 +58,41 @@ export const ITEMS = {
     key: false,
     weapon: 'solingen',
   },
-  // las cinco llaves de la reja de la cripta de la Sé (PLAN_CASTILLO.md, §7)
-  llave_alferez: {
-    name: 'Llave del alférez',
-    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta roja, del color del pendón. La llevaba al cinto el alférez mayor. En la caña, grabado: SIGNIFER.',
-    icon: 'llaveAlferez',
+  // La rueda de los tres ojos (game/rueda.js): lo que abre la reja de la
+  // cripta de la Sé. El Rey la mandó partir en cinco y dio cada parte a uno de
+  // sus oficiales: las dos mitades (la frente, al mayordomo; la boca, al
+  // capellán) y los tres ojos (el carbúnculo, al alférez; la esmeralda, al
+  // canciller; el zafiro, al camarero). Se juntan en el inventario, como en
+  // Resident Evil: las dos mitades y, en la junta, los ojos. La rueda juntada,
+  // en cada uno de sus estados, se añade justo después de ITEMS (RUEDA_OJOS).
+  rueda_frente: {
+    name: 'La frente de la rueda',
+    desc: 'Media rueda de piedra negra, de un palmo, partida a lo ancho: la frente de una cara que no es de hombre. Las cejas, juntas y gruesas como sogas; la piel, arrugada como una nuez; y en el canto, figuritas de rodillas, retorcidas, con las manos en la cara. En la junta, los párpados de arriba de tres ojos en fila, vacíos. Pesa más de lo que debe, y está tibia. La guardaba el mayordomo mayor, el primero de la corte.',
+    icon: 'ruedaFrente',
     key: true,
   },
-  llave_mayordomo: {
-    name: 'Llave del mayordomo',
-    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda amarilla, del color de los dineros del Rey. La llevaba el mayordomo mayor, el primero de la corte. En la caña, grabado: MAIORDOMUS.',
-    icon: 'llaveMayordomo',
+  rueda_boca: {
+    name: 'La boca de la rueda',
+    desc: 'La otra media rueda de piedra negra: la nariz chata y la boca, abierta de oreja a oreja, con dos filas de dientes pequeños, demasiados. En el canto, más figuritas de rodillas. En la junta, los párpados de abajo de tres ojos en fila. Estaba atada al cordón de la campana de la Capilla Real: quien la desatara, tocaría. La guardaba el capellán mayor.',
+    icon: 'ruedaBoca',
     key: true,
   },
-  llave_camarero: {
-    name: 'Llave del camarero',
-    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda azul clara, del color de las ropas del Rey. La guardaba el camarero, el de la cámara del Rey y lo que hay en ella. En la caña, grabado: CAMERARIUS.',
-    icon: 'llaveCamarero',
+  ojo_carbunculo: {
+    name: 'El carbúnculo',
+    desc: 'Una piedra roja como una brasa, pulida en redondo, del tamaño de una avellana. Dentro tiene una mancha negra, redonda como la niña de un ojo, que no se está quieta cuando la giras; en lo oscuro da un poco de luz, como dicen los lapidarios del carbúnculo. Es uno de los tres ojos de la rueda de la reja de la Sé. Lo llevaba al cinto el alférez mayor, en una bolsa de cuero.',
+    icon: 'ojoCarbunculo',
     key: true,
   },
-  llave_canciller: {
-    name: 'Llave del canciller',
-    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta de seda verde, como los cordones de los sellos de las cartas del Rey. La guardaba el canciller, Mestre Alberto, el que guardaba también el sello. En la caña, grabado: CANCELLARIUS.',
-    icon: 'llaveCanciller',
+  ojo_esmeralda: {
+    name: 'La esmeralda',
+    desc: 'Una piedra verde, pulida en redondo, más grande que las otras dos: el ojo de en medio. Muy al fondo tiene una luz verde, como la de un pozo, y una mancha negra que se mueve si la miras mucho rato. Es uno de los tres ojos de la rueda de la reja de la Sé. La guardaba el canciller, Mestre Alberto, el que guardaba también el sello.',
+    icon: 'ojoEsmeralda',
     key: true,
   },
-  llave_capellan: {
-    name: 'Llave del capellán',
-    desc: 'Una de las cinco llaves de la reja de la cripta de la Sé: hierro negro, el paletón de tres dientes y, atada a la anilla, una cinta blanca de lino, de las de los manípulos. Estaba atada al cordón de la campana de la Capilla Real: quien la quitara, tocaría. En la caña, grabado: CAPELLANUS.',
-    icon: 'llaveCapellan',
+  ojo_zafiro: {
+    name: 'El zafiro',
+    desc: 'Una piedra azul como el agua honda, pulida en redondo, con su mancha negra en medio, como una pupila. Está fría, y en la mano no se calienta. Es uno de los tres ojos de la rueda de la reja de la Sé. Lo guardaba el camarero, el de la cámara del Rey y lo que hay en ella.',
+    icon: 'ojoZafiro',
     key: true,
   },
   ballesta: {
@@ -450,6 +456,38 @@ export const ITEMS = {
   },
 };
 
+// Los tres ojos de la rueda, en el orden de sus huecos (de izquierda a
+// derecha), con la letra que llevan en el id de la rueda (game/rueda.js).
+export const RUEDA_OJOS = [
+  { k: 'c', id: 'ojo_carbunculo', nombre: 'el carbúnculo', hueco: 'de la izquierda' },
+  { k: 'e', id: 'ojo_esmeralda', nombre: 'la esmeralda', hueco: 'de en medio' },
+  { k: 'z', id: 'ojo_zafiro', nombre: 'el zafiro', hueco: 'de la derecha' },
+];
+// La rueda juntada, en sus estados: sin ojos, con uno, con dos y entera. Su
+// id dice qué ojos lleva puestos: rueda, rueda_c, rueda_ce… y rueda_cez, la de
+// los tres ojos; su icono, lo mismo (ruedaC, ruedaCE…). Llevan 'rueda: true'
+// (el modo de pruebas, con «Todos los objetos», da sólo las cinco partes).
+for (let m = 0; m < 8; m++) {
+  const puestos = RUEDA_OJOS.filter((_, i) => m & (1 << i));
+  const vacios = RUEDA_OJOS.filter((_, i) => !(m & (1 << i)));
+  const id = 'rueda' + (puestos.length ? '_' + puestos.map((o) => o.k).join('') : '');
+  const icon = 'rueda' + puestos.map((o) => o.k.toUpperCase()).join('');
+  let name, desc;
+  if (!puestos.length) {
+    name = 'La rueda, sin ojos';
+    desc = 'La frente y la boca, encajadas por la junta: una rueda de piedra negra de un palmo, con una cara que no es de hombre, la boca abierta de oreja a oreja y tres ojos en fila, los tres vacíos. Sin ellos, las dos mitades bailan en la junta: los ojos son lo que la cierra.';
+  } else if (vacios.length) {
+    name = puestos.length === 1 ? 'La rueda, con un ojo' : 'La rueda, con dos ojos';
+    const en = puestos.map((o, i) => (i ? `y en el ${o.hueco}, ${o.nombre}` : `En el ojo ${o.hueco}, ${o.nombre}`)).join(', ');
+    const sin = vacios.length > 1 ? 'los otros dos, vacíos' : `el ${vacios[0].hueco}, vacío`;
+    desc = `La rueda de piedra negra, con la frente y la boca encajadas. ${en}; ${sin}. Le falta${vacios.length > 1 ? 'n dos ojos' : ' un ojo'}: hasta que no tenga los tres, la junta no cierra.`;
+  } else {
+    name = 'La rueda de los tres ojos';
+    desc = 'La rueda de piedra negra, entera: la frente y la boca, cerradas por sus tres ojos, el carbúnculo, la esmeralda y el zafiro. Una cara que no es de hombre, con la boca abierta de oreja a oreja y, alrededor, en el canto, los que se arrodillan. Está tibia, como algo que respira. Con los ojos puestos parece que mira; y cuando no la miras, que te mira a ti. Es lo que abre la reja de la cripta de la Sé: el Rey la mandó partir en cinco para que nadie bajara sin que lo supiera la corte entera.';
+  }
+  ITEMS[id] = { name, desc, icon, key: true, rueda: true };
+}
+
 export const NOTES = {
   // ---- el barrio de los Pellejeros
   tratado1: {
@@ -761,9 +799,9 @@ El bolaño entró por la muralla a media mañana y se llevó media pared del tal
 
 El alférez ha salido al cadalso de la puerta con la ballesta de la guardia. Dice que desde ahí defiende al Rey. El Rey está arriba, en su torre, alférez, y abajo no queda nadie a quien tirar.
 
-Le he visto los ojos bajo el nasal. Ya no es él. Lleva al cinto la llave que le dio el Rey, la de la reja de la Sé, y no la suelta.
+Le he visto los ojos bajo el nasal. Ya no es él. Lleva al cinto la bolsa que le dio el Rey, con uno de los ojos de la rueda de la reja de la Sé, y no la suelta. Dice que lo oye mirar.
 
-La mía está en el banco. Se monta con el pie en el estribo y las dos manos en la cuerda, hasta la nuez. No tiene más ciencia. Lo que tiene es que mientras se monta no se defiende uno.`,
+Mi ballesta está en el banco. Se monta con el pie en el estribo y las dos manos en la cuerda, hasta la nuez. No tiene más ciencia. Lo que tiene es que mientras se monta no se defiende uno.`,
   },
   mayordomo: {
     title: 'Cuaderno del mayordomo mayor',
@@ -773,7 +811,7 @@ Del trigo de los graneros, nada. Del vino, tres toneles en la botillería, y uno
 
 En la última hoja, la misma mano, más grande y torcida:
 
-Las cinco llaves abrieron la reja. El arzobispo bajó con los suyos y la volvimos a cerrar tras ellos, como manda la carta del Rey: que no baje nadie sin que lo sepa la corte entera. La corte entera lo sabía.
+Juntamos la rueda entre los cinco y abrimos la reja. El arzobispo bajó con los suyos; la volvimos a cerrar tras ellos y partimos otra vez la rueda, como manda la carta del Rey: que no baje nadie sin que lo sepa la corte entera. La corte entera lo sabía.
 
 Esta noche subimos a la sala a velar. Cuando suene, nos levantaremos todos a la vez, para que no sea de ninguno. Yo, el primero: soy el que más le quiere.
 
@@ -795,9 +833,9 @@ Ya no tengo fuerza en las manos. Abajo siguen de rodillas, esperando a que toque
     title: 'Lo último del camarero',
     text: `Escrito con un carbón en la tapa de un arca, de abajo arriba, cada vez más torcido:
 
-Cerré por dentro. La llave de la reja la tengo yo, y la del tesoro, y no se las doy a nadie.
+Cerré por dentro. El ojo de la rueda lo tengo yo, y la llave del tesoro, y no se los doy a nadie.
 
-Los otros cuatro bajaron con el arzobispo hasta la reja, y mi llave con ellos: se la di al mayordomo. Yo no bajé. Abrí sin bajar, que es peor. Me la devolvió al alba.
+Los otros cuatro bajaron con el arzobispo hasta la reja, y mi ojo con ellos: se lo di al mayordomo. Yo no bajé. Abrí sin bajar, que es peor. Me lo devolvió al alba. Lo he dejado aquí, en la tapa del arca, a mi lado, porque en la mano me mira.
 
 Arriba han quemado el pasadizo con el Rey al otro lado. Huele a humo por las rendijas del techo. Si se hunde, que se hunda.
 
@@ -809,13 +847,13 @@ Tengo sed.`,
     title: 'Confesión del capellán mayor',
     text: `En el reclinatorio del altar, doblada, sin firmar; la letra de alguien que sabía escribir bien y ya no puede:
 
-Me acuso de haber abierto. Éramos cinco y cinco cerraduras, como manda la carta del Rey, para que no bajara nadie sin que lo supiera la corte entera; y bajó, y la corte entera lo supo. El arzobispo nos dijo que abajo se arreglaba todo. No dijo qué.
+Me acuso de haber abierto. Éramos cinco, y cinco las partes de la rueda, como manda la carta del Rey, para que no bajara nadie sin que lo supiera la corte entera; y la juntamos, y bajó, y la corte entera lo supo. El arzobispo nos dijo que abajo se arreglaba todo. No dijo qué.
 
 Me acuso de haber oído lo que subía por la escalera de la cripta y de haber dicho que eran cánticos.
 
 Me acuso de la campana. Tocó sola, a medianoche, y me arrodillé con todos. Cuando nos levantamos, no éramos nosotros los que nos levantábamos.
 
-He atado mi llave al cordón. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
+He atado al cordón la parte que me toca, la boca. El que la quiera, que suba a buscarla, y que toque por nosotros, que ya no sabemos rezar.`,
   },
   // en el reclinatorio del oratorio del Rey (fortaleza_rey.js)
   oracionRey: {
@@ -846,10 +884,10 @@ Yo me quedo con vos. No sé rezar de otra manera.`,
     title: 'Carta del Rey sobre la reja',
     text: `En la mesa del canciller, el traslado de una carta, con su romance debajo, de mano de un escribano:
 
-In Dei nomine. Ego Alfonsus, Portugalensium rex, mando fieri cratem ferream in gradibus criptae Sanctae Mariae Bracarensis, cum quinque seris; et do quinque claves quinque de curia mea: signifero, maiordomo, camerario, capellano et cancellario; ut nemo descendat nisi tota curia sciente. Qui autem solus descenderit, sit maledictus. Facta carta Era MCCIV. Magister Albertus, cancellarius regis, notuit.
+In Dei nomine. Ego Alfonsus, Portugalensium rex, mando claudi cratem ferream in gradibus criptae Sanctae Mariae Bracarensis, et rotam lapideam archiepiscopi qua sola aperitur in quinque partes dividi: duas medietates et tres oculos eius; et do quinque partes quinque de curia mea: signifero, maiordomo, camerario, capellano et cancellario; ut nemo descendat nisi tota curia sciente. Qui autem solus descenderit, sit maledictus. Facta carta Era MCCIV. Magister Albertus, cancellarius regis, notuit.
 
 En romance:
-En el nombre de Dios. Yo, Alfonso, rey de los portugueses, mando hacer una reja de hierro en la escalera de la cripta de Santa María de Braga, con cinco cerraduras; y doy las cinco llaves a cinco de mi corte: al alférez, al mayordomo, al camarero, al capellán y al canciller; para que nadie baje sin que lo sepa la corte entera. Y el que baje solo, sea maldito.
+En el nombre de Dios. Yo, Alfonso, rey de los portugueses, mando cerrar la reja de hierro de la escalera de la cripta de Santa María de Braga, y partir en cinco la rueda de piedra del arzobispo, que es lo único que la abre: sus dos mitades y sus tres ojos; y doy las cinco partes a cinco de mi corte: al alférez, al mayordomo, al camarero, al capellán y al canciller; para que nadie baje sin que lo sepa la corte entera. Y el que baje solo, sea maldito.
 
 Al margen, de otra mano: lo supo la corte entera.`,
   },
@@ -864,7 +902,7 @@ En el tercero, los fueros, las paces con los reyes vecinos y las bulas de Roma.
 En el cuarto, las arcas del Rey, cada una con sus sellos: de cera bermeja, las de su cámara; de cera negra, las de su guarda; de cera verde, las del cabildo de la Sé.
 
 Lo último, de otra tinta y de prisa:
-La llave de la reja que me toca la guardo en el arca de la cámara del Rey, la de los tres sellos bermejos. En la de tres, no en otra. Las de dos sellos negros tienen cerradura de resorte, que las mandó poner el alférez para los ladrones: que no las abra quien no sepa.
+El ojo de la rueda que me toca lo guardo en el arca de la cámara del Rey, la de los tres sellos bermejos. En la de tres, no en otra. Las de dos sellos negros tienen cerradura de resorte, que las mandó poner el alférez para los ladrones: que no las abra quien no sepa.
 Me subo con el sello. Que no lo use nadie mientras yo viva.`,
   },
   // la cárcel de la fortaleza: el libro de los presos (en la sala de los
@@ -904,7 +942,7 @@ Don Gonçalo Mendes guardaba el Postigo con veinte hombres. Los sitiadores lo cl
 
 Desde aquí le oigo romperse por dentro. Algo más grande le crece debajo del hierro. Que Dios se apiade de quien le haga sangrar: lo que asome cuando se le caiga la armadura no será un hombre.
 
-La reja de la cripta de la Sé tiene cinco cerraduras, y sus cinco llaves las guardan cinco de la corte: el alférez, que se ha salido con la ballesta al cadalso de esta puerta, y los otros cuatro aquí dentro, en la fortaleza. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
+La reja de la cripta de la Sé sólo la abre la rueda de piedra del arzobispo, y el Rey la mandó partir en cinco: sus partes las guardan cinco de la corte, el alférez, que se ha salido con la ballesta al cadalso de esta puerta, y los otros cuatro aquí dentro, en la fortaleza. El arzobispo bajó con sus canónigos y no ha vuelto a subir. Que no la abra nadie más.
 
 En lo alto de la torre, en la terraza, el caballero de la Orden sigue mirando la luna. Era el mejor de los nuestros. Le he subido pan y no lo ha tocado; ni se ha vuelto. Que Dios me perdone, pero le tengo más miedo que a lo de abajo.
 
@@ -1719,7 +1757,7 @@ export const MSG = {
   corteArea: 'LA CORTE DE LOS INFIELES',
   corteVencida: 'LA CORTE HA CAÍDO',
   corteCerrada: 'La puerta del servicio no cede: la han atrancado por fuera. Detrás, nadie.',
-  campanaSuena: 'Al soltar la llave, el cordón tira de la campana. Suena una vez, sola, por toda la ciudad.',
+  campanaSuena: 'Al desatar la boca de la rueda, el cordón se suelta y tira de la campana. Suena una vez, sola, por toda la ciudad.',
   rastrilloFortaleza: 'El rastrillo de la puerta, echado hasta el suelo. Entre sus barrotes, el envés del puente levadizo, alzado contra el arco. Lo suben desde arriba, desde la cámara del torno.',
   puertaTorreAtrancada: 'La puerta de la torre del homenaje, atrancada por dentro. Arriba, en lo alto de la torre, arde una vela.',
   torrePatioAbre: 'Quitas la tranca de la puerta de la torre. Fuera, la escalinata baja al patio de honor.',
@@ -1772,7 +1810,7 @@ export const MSG = {
   alberca: 'La alberca larga, vacía: el agua se la llevaron al aljibe para el asedio. En el légamo seco del fondo brillan monedas, muchas, echadas de una en una. Pedían algo.',
   mirador: 'Desde el mirador del Rey se ve el campamento de los sitiadores: las hogueras en la niebla, las tiendas, y más cerca la fila de picas, con lo que hay clavado en ellas. Allí abajo no se mueve nadie.',
   // las arcas del Tombo
-  arcaCamara3: 'Rompes los tres sellos bermejos. Dentro, envuelta en un paño de seda de la cámara del Rey, la llave del canciller, con su cinta verde.',
+  arcaCamara3: 'Rompes los tres sellos bermejos. Dentro, envuelta en un paño de seda de la cámara del Rey, una piedra verde pulida en redondo: uno de los ojos de la rueda.',
   arcaCamara3Ya: 'El arca de la cámara del Rey, la de los tres sellos. Ya no guarda nada.',
   arcaCamara2: 'Rompes los dos sellos bermejos. Dentro, el inventario de la plata de la cámara del Rey, pieza por pieza, hasta la última copa. La plata no está.',
   arcaCamara2Ya: 'El inventario de la plata del Rey. Sólo papeles.',
@@ -1821,9 +1859,19 @@ export const MSG = {
   curtidorSube: 'Subes por la escala al desván.',
   curtidorBaja: 'Bajas por la escala al sobrado del curtidor.',
   torreSurDoor: 'La puerta de la torre está atrancada por dentro. Arriba no se oye nada.',
-  // la reja de la cripta de la Sé: cinco cerraduras, cinco llaves
-  rejaFaltan: (n) => `La reja de la cripta: una pletina de hierro con cinco cerraduras, cada una con su marca. ${n}`,
-  rejaCinco: 'Echas las cinco llaves, una tras otra: la del alférez, la del mayordomo, la del camarero, la del capellán y la del canciller. La reja baja chirriando por su ranura hasta perderse en el suelo.',
+  // la reja de la cripta de la Sé: el hueco de la rueda, en su pilar
+  // (game/rueda.js: lo que le falta a lo que llevas)
+  ruedaHueco: (n) => `En el pilar de la reja, un hueco redondo labrado en la piedra, de un palmo: el molde de una cara con tres ojos en fila y la boca abierta. En el fondo, un cuadrado de hierro, gastado de girar.${n ? ' ' + n : ''}`,
+  ruedaFalta: (falta) => `Lo que llevas es de ella, pero no basta: ${falta}.`,
+  ruedaSuelta: 'Llevas sus cinco partes, pero sin juntar: júntalas antes, en el inventario.',
+  ruedaGira: 'Encajas la rueda en el hueco, con la boca abajo, y la giras. Dentro del pilar algo corre, y los tres ojos se encienden un momento. La reja baja chirriando por su ranura hasta perderse en el suelo.',
+  // juntar las partes de la rueda en el inventario (game/rueda.js)
+  juntaMitades: 'Encajas la frente en la boca. Casan por la junta, a tope, pero bailan: le faltan los ojos.',
+  juntaOjo: (o) => `Encajas ${o.nombre} en el ojo ${o.hueco}. Entra solo, como si lo buscara.`,
+  juntaEntera: 'Encajas el último ojo y la junta se cierra con un chasquido, como un hueso que vuelve a su sitio. La rueda está entera.',
+  juntaMitad: 'Los ojos van en la junta, a medias entre la frente y la boca: con una mitad sola no tienen dónde encajar.',
+  juntaOjos: 'Dos piedras sueltas: no casan entre sí.',
+  juntaNo: 'No casan.',
   seal: 'Una losa con el sigilo del Pacto sella el paso. Tiene un hueco del tamaño de un anillo.',
   fog: 'Una niebla blanca y espesa bloquea el paso.',
   noExit: 'El rastrillo está bajado y una masa de carne lo ha soldado a la piedra. Por aquí no se sale.',

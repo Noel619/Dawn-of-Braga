@@ -348,7 +348,8 @@ function galeria(ctx, L) {
 // La Corte de los Infieles (game/corte.js): veintidós cortesanos de rodillas en
 // dos filas, mirando al sitial, y el mayordomo al pie del estrado. El orden: de
 // delante atrás, una fila y la otra. Vencidos, no vuelven (corte:vencida); la
-// llave del mayordomo queda donde cae.
+// frente de la rueda de los tres ojos, la parte que guardaba el mayordomo,
+// rueda hasta la grada de abajo del estrado (donde él cae, la tapaba su cuerpo).
 function corte(L) {
   const Sa = FORT.salon;
   const xc = (Sa.x0 + Sa.x1) / 2;
@@ -362,5 +363,5 @@ function corte(L) {
     }
   }
   L.enemies.push({ type: 'mayordomo', x: xc, y: 0, z: zE + 0.8, yaw: Math.PI, idle: 'kneel', id: 'e_mayordomo', story: 'corte:vencida', dies: 'dead:mayordomo' });
-  L.interact.push({ kind: 'item', id: 'i_llave_mayordomo', item: 'llave_mayordomo', afterFlag: 'dead:mayordomo', x: xc, y: 0.08, z: zE + 0.8 });
+  L.interact.push({ kind: 'item', id: 'i_pieza_mayordomo', item: 'rueda_frente', afterFlag: 'dead:mayordomo', x: xc + 0.55, y: Sa.estrado.y / 2 + 0.003, z: zE - 0.2, giro: 2.4 });
 }
