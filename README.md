@@ -77,6 +77,111 @@ se pueden tocar. En vertical, un aviso para girar el teléfono (y la pausa). Opc
 automático (salen al tocar la pantalla, y en el teléfono desde el principio, y se van al usar el teclado o un mando
 de verdad), siempre o nunca.
 
+## Hoja de ruta
+
+*Al día el 21 de noviembre de 2026.* El juego se juega entero, de la celda al río: `tools/progress.mjs` recorre la
+partida de punta a punta (167 pasos). Lo que falta va aquí, por orden. Los planes vivos están en la raíz; los que ya
+se hicieron, en `planes_jubilados/` (con su índice); los fallos sueltos, en `bugs_y_correciones.txt`, con su número
+(#).
+
+### Lo que ya está
+
+- [x] La ciudad y sus barrios, la Casa del Canónigo y sus bodegas, el Postigo con el Empalado y la huida de la Bestia.
+- [x] El castillo y la fortaleza-palacio: las cinco llaves, la Corte de los Infieles, el Rey y el Cerco, el Caballero
+  de la Orden y la cárcel del Rey.
+- [x] La cripta honda: los osarios y los objetos benditos, Dom Paio, el Custodio de la Garra, los Velados, la capilla
+  de Sisnando y la Puerta del Dios Ignoto.
+- [x] El barrio de los Pellejeros y el Físico de los Inocentes.
+- [x] La cloaca, el Vergel, las cloacas hondas, el Sumidero (a nado), el Lobishome y los cocimientos del Desfigurado.
+- [x] El jefe final: el arzobispo en la cisterna y la película del gigante; el final de ahora, el río al amanecer.
+- [x] Las dos introducciones (la corta y la Crónica de Braga) y el editor de personaje.
+- [x] El combate: ocho armas, tres armaduras, los tipos de daño, el parry y los objetos benditos.
+- [x] El rendimiento y el teléfono: la memoria, los fotogramas, los controles táctiles y la web instalable.
+
+### 1. Lo siguiente: el final, «la terrible verdad» (`PLAN_FINAL.md`)
+
+Decidido con el autor el 13 de noviembre; todavía no hay nada hecho. **Un solo final**: al vencer al arzobispo se
+entiende que Deo Ignoto te usó para abrir su puerta y para matar su cuerpo, que era también su cadena. De donde
+estaba la estatua sube al cielo una columna roja llena de almas, el cielo se rompe en relámpagos, se vuelve negro y
+llueve sangre. Es el final de *Dawn of Braga* y el principio de *Dawn of the Devil*.
+
+- [ ] Contestar las siete preguntas del plan (§7): dónde se ve (el embarcadero o el cráter), cuántos rótulos, si se
+  hace el montaje de los ecos, el título *Dawn of the Devil*, cómo se dice que el final secreto no es canon, si cambia
+  «Quiso pactar con lo que había dentro» en la introducción y qué hacen las criaturas mientras sube la columna.
+- [ ] Los textos: el pergamino, los rótulos y lo que cambia en este README (§5).
+- [ ] El animático: la escena como corrutina de la película (`finale/film_verdad.js`), con sus planos, sus rótulos y
+  el saltar.
+- [ ] El cielo que se rompe: la atmósfera `apocalipsis`, el sol que se apaga, las grietas, las nubes y los relámpagos.
+- [ ] La columna de almas (`finale/almas.js`).
+- [ ] La lluvia de sangre y el río rojo (`gfx/lluvia.js`).
+- [ ] El Condenado (se da la vuelta y se queda de pie bajo la lluvia) y el Desfigurado (se tapa la cara).
+- [ ] El montaje de los ecos: «Lo que hiciste».
+- [ ] El sonido (el latido, el coro, los truenos, la lluvia, las campanas que tocan solas), el título y el pergamino.
+- [ ] Las pruebas (`tools/final.mjs` y la instancia `final`), el teléfono y la versión jugable.
+
+### 2. Espera a lo que decida el autor: el albacar (`PLAN_ALBACAR.md`)
+
+El patio de armas viejo se quedó vacío (1.290 m² casi sin nada) y el preso sale a él dentro del castillo, como quien
+sale de casa (#33). La propuesta: que sea **el albacar**, el refugio de la gente de fuera durante el cerco, con su
+campamento, el reparto, los corrales, el fosal y la última embestida ante el foso, y trescientos muertos de rodillas
+mirando a la Sé.
+
+- [ ] Decidir (§9): el albacar (A, la recomendada), la plaza de fuera (B) o el castillo viejo en ruinas (C); cuánta
+  gente y cuánto horror; si los carros cortan el camino recto de la salida; si cambia al volver; el nombre.
+- [ ] Hacerlo, en sus tres fases (A1 a A3, §10).
+
+### 3. Pulido de lo que ya está
+
+**La fortaleza** (lo que quedó de `planes_jubilados/PLAN_FORTALEZA.md`, §12; #25 y #37):
+
+- [ ] Encuentros compuestos (fase 8): rondas por los adarves, emboscadas desde arriba y el patio que cambia al volver
+  con las llaves. El tirador del paseo ya está.
+- [ ] Más detalle (fase 9): las salas de la fortaleza aún no llegan a los 45 triángulos por m² que pedía el plan.
+- [ ] La niebla de altura también en la ciudad (fase 10): ahora sólo la tienen el castillo y la fortaleza.
+- [ ] Animación (fase 11): más claves y dos variantes por golpe, y reacciones según de dónde venga el golpe.
+
+**Nombres que chocan** (lo que quedó de `planes_jubilados/PLAN_LORE.md`, §2 y §7):
+
+- [ ] Dom Paio, convertido, se llama «Dom Paio, el Condenado», que es el nombre del protagonista. El plan proponía
+  «el Encadenado» (su pregunta 9 quedó sin contestar).
+- [ ] La zona de la cisterna se llama «Cisterna del Dios Desconocido», y todo lo demás dice «Dios Ignoto» (opcional).
+
+**La ballesta** (`planes_jubilados/PLAN_CASTILLO.md`, §9):
+
+- [ ] Cómo se integran los virotes en todo el juego (el autor lo dejó por pensar): hoy sólo los hay en el castillo y
+  la fortaleza, y los disparados no se recogen.
+
+**El barrio** (`planes_jubilados/PLAN_BARRIO.md`, §3):
+
+- [ ] Dos secretos que no se hicieron: el paso del Físico (un armario sin fondo entre dos casas, que se abre como
+  atajo) y la bodega de la viuda.
+
+**Por decidir:**
+
+- [ ] ¿Una recompensa por vencer al Caballero de la Orden? Por ahora no da nada.
+
+### 4. Pruebas y fallos
+
+- [ ] Volver a pasar las pruebas largas que faltan desde la tanda de la cloaca (#36): castlewalk, fortalezawalk,
+  corte, caballero, rey mesa, holes alto y rendimiento.
+- [ ] Los solapes pequeños que quedan (#59): el entramado de las fachadas en algunas esquinas, muros que se cruzan en
+  las catacumbas, los montones de tierra del túnel y charcos de sangre de la cisterna, unos encima de otros.
+- [ ] Probarlo en un iPhone de verdad (#74): la memoria se midió en uno emulado. Si aún se recargase la página, lo
+  siguiente es el sonido, lo que más ocupa al empezar a jugar (unos 140–190 MB).
+- [ ] Medir cuánto dura una partida: arriba dice 45–60 minutos, pero desde entonces han entrado el barrio, la
+  fortaleza y las cloacas hondas.
+
+### 5. Más adelante, con su propio plan
+
+- [ ] **El final secreto**, que no es canon (`PLAN_FINAL.md`, §4): la espada forjada (el «objeto verdadero» del
+  código), que hace Henrique con el acero de la espada de su padre y el Cerrojo de San Martín, y que puede llevar el
+  nombre del dios, juntado en tres trozos. Con ella, al subir la columna se alza Deo Ignoto y se le pelea: su pelea
+  ya existe en el código, sin enganchar, y hay que rehacer su puesta en escena en el cráter. Pide su plan
+  (`PLAN_ESPADA.md`) y los personajes que llevan a la espada.
+- **_Dawn of the Devil_**, la segunda parte: lo que este final deja abierto (Deo Ignoto libre con las almas de Braga;
+  el Condenado de pie bajo la lluvia) es suyo.
+- Descartado por ahora: varios finales según lo que se haga por el camino (quizá un DLC, más adelante).
+
 ## Qué hay dentro
 
 **La introducción.** Al empezar partida, poco más de un minuto contado como las de Dark Souls o Elden Ring: frases
@@ -294,7 +399,7 @@ no se gasta hasta cocerlo: al dejar la mesa vuelve a la bolsa. Se llevan **tres 
 derecha) y, como lo que se bebe se pierde, **no se rellenan al descansar ni al caer**. En el marcador, junto a las
 ampollas, los que llevas, y bajo el aguante, una raya con lo que le queda al que has bebido. (`world/cloaca_kit.js`,
 `world/cloacas_hondas.js`, `entities/lobishome.js`, `entities/plantas.js`, `game/lobishome.js`, `game/cloacas.js`,
-`game/alquimia.js` y `game/mesa.js`; el plan y lo que se hizo, `PLAN_LOBO.md`.)
+`game/alquimia.js` y `game/mesa.js`; el plan y lo que se hizo, `planes_jubilados/PLAN_LOBO.md`.)
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
@@ -446,7 +551,7 @@ cuenta lo que pasó. Si sales de su casa y tardas en volver (o descansas, o caes
 viga de la alcoba: el taburete volcado, la soga que cruje y, en el suelo, una duela escrita a carbón.
 
 **La cripta honda y la Puerta del Dios Ignoto.** Bajo la cripta de siempre hay tres épocas, cada una más honda
-(el diseño, en `PLAN_CRIPTA_HONDA.md` y `PLAN_OSARIOS.md`). Por la puerta del oeste del templo romano, un paso recto,
+(el diseño, en `planes_jubilados/PLAN_CRIPTA_HONDA.md` y `planes_jubilados/PLAN_OSARIOS.md`). Por la puerta del oeste del templo romano, un paso recto,
 bajo una sola bóveda, baja por seis peldaños al **Panteón de los Obispos**: una rotonda con ocho obispos yacentes en
 sus arcosolios (sepulcros de caliza con arquería ciega y, detrás, el fresco de cada uno con su nombre), un
 deambulatorio abovedado, un anillo de doce columnas, la cúpula
@@ -581,7 +686,7 @@ escalera que baja hacia una luz y un altar. Es el cabo de la cárcel del Rey: de
 atajo a la celda (`world/level_castle.js`).
 
 **La fortaleza-palacio.** Al norte del castillo viejo, entre él y la muralla norte, la fortaleza del Rey: un solo
-conjunto, como la alcáçova de Lisboa (`PLAN_FORTALEZA.md`). Cuatro crujías alrededor de **un patio de honor** con su
+conjunto, como la alcáçova de Lisboa (`planes_jubilados/PLAN_FORTALEZA.md`). Cuatro crujías alrededor de **un patio de honor** con su
 claustro de arcos sobre columnas en tres lados; en medio del lado norte, **la torre del homenaje**, la torre del
 conde, de sillería oscura sobre su talud alto, con su terraza almenada a 28 m, sus cuatro garitas voladas con sus
 chapiteles y, en lo alto, el estandarte del Rey y, en el tope de su mástil, **la vela del Rey**: un farol encendido
@@ -1287,7 +1392,7 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   de un combo que ya conoce, adelantarse con un mordisco cuando sabe que vas a atacar y apuntar su segundo zarpazo
   adonde sueles esquivar. Con poca vida entra en frenesí. Su barra sólo aparece cuando pelea contigo.
 - **El jefe final: la Película**, una película jugable a lo *God of War*, casi toda cinemática, con pulsaciones
-  rápidas y tramos jugables muy guiados (diseño en `PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra
+  rápidas y tramos jugables muy guiados (diseño en `planes_jubilados/PLAN_JEFE_FINAL.md`). En la cisterna **se pelea de verdad contra
   el arzobispo**, que espera de rodillas en la fuente, cara a la estatua, y ya anuncia lo que viene: cuatro metros de sacerdote enjuto
   con joroba de buitre y la cabeza colgando de un cuello larguísimo, por cara una jaula de hierro con púas (detrás,
   dos brasas y los dientes), la mitra partida en dos y clavada en dos cuernos de hueso, la aureola de hierro con
@@ -1893,9 +1998,21 @@ archive/estatua_primera/
 archive/colosos_propuestas/
                         las propuestas de jefe final que no se eligieron y el boceto del Plan A, guardadas
                         con su explicación (ver su README)
-PLAN_FINAL.md           el final (la terrible verdad), el final secreto y su plan de trabajo
-PLAN_JEFE_FINAL.md      el diseño del jefe final y su plan de trabajo
-PLAN_LORE.md            el rediseño del lore (1167, los almohades, el plan B) y de la introducción
+archive/jefe_final_trepar/
+                        el jefe final con escalada (el Plan A, a lo Shadow of the Colossus), el que hubo
+                        antes de la película: su plan (PLAN_JEFE_FINAL_v2.md) y su guion
+PLAN_FINAL.md           el final (la terrible verdad), el final secreto y su plan de trabajo (activo: decidido,
+                        sin empezar)
+PLAN_ALBACAR.md         el patio de armas viejo como albacar, el refugio de la gente de fuera (activo: una
+                        propuesta, pendiente de lo que decida el autor)
+planes_jubilados/       los planes ya hechos o sustituidos, guardados como historia: el jefe final, los
+                        osarios, la cripta honda, el lore y la introducción, los tejados, el barrio, el
+                        castillo, la fortaleza y el Lobishome (ver su README: qué fue cada uno y qué quedó)
+docs/planos/            los planos a escala de los planes (el albacar, la fortaleza, el Lobishome), que dibujan
+                        los scripts de tools/planos/
+bugs_y_correciones.txt  la lista de fallos y correcciones, numerada, con el estado de cada uno
 ```
+
+Lo que falta por hacer, en orden, está en la **Hoja de ruta** (arriba).
 
 El progreso se guarda automáticamente en el navegador (`localStorage`) al descansar, abrir pasos y recoger objetos.

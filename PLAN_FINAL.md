@@ -2,7 +2,7 @@
 
 Plan de diseño y de trabajo del final del juego, empezado el 13 de noviembre de 2026, a partir de lo que pidió el
 autor. **Todavía no hay nada hecho.** Manda sobre lo que dicen del final y de la naturaleza del dios
-`PLAN_LORE.md` (§1, §3.2, §3.5, §4 y §6) y `PLAN_JEFE_FINAL.md` (el final del acto 6 y el §9).
+`planes_jubilados/PLAN_LORE.md` (§1, §3.2, §3.5, §4 y §6) y `planes_jubilados/PLAN_JEFE_FINAL.md` (el final del acto 6 y el §9).
 
 ## 0. Lo decidido
 
@@ -181,14 +181,14 @@ que el título del final de la introducción.
 - **Hasta el plano 5, igual.** Con la espada, al subir la columna, la hoja arde en tu mano y le enseña como es: las
   almas no suben; la columna se cierra sobre sí misma y es Deo Ignoto, que se alza de la sima.
 - **La pelea contra Deo Ignoto**: la que ya existe (`deo_boss.js`, `deo_anim.js`, `climb.js` y `surface.js`), con
-  su puesta en escena rehecha en el cráter (ya estaba anotado en el §9 de `PLAN_JEFE_FINAL.md`). Falta decidir si
+  su puesta en escena rehecha en el cráter (ya estaba anotado en el §9 de `planes_jubilados/PLAN_JEFE_FINAL.md`). Falta decidir si
   se corta al cráter o se vuelve corriendo desde el río.
 - **Si le vences**: la espada le hiere para siempre; las almas se sueltan (blanquean y se dispersan), la columna se
   viene abajo, las grietas se cierran, el cielo negro se rasga y entra el amanecer. Y en el río, el final de
   siempre: el sol, la línea de siempre del Desfigurado y las campanas que callan.
 - **Que no es canon, dicho en el juego**: por ejemplo, un rótulo antes del pergamino, «Así lo cuentan en los
   montes. No fue así.» (por decidir).
-- **La espada**, con su propio plan (`PLAN_ESPADA.md`) cuando toque. Lo que ya está escrito (`PLAN_LORE.md`, §6):
+- **La espada**, con su propio plan (`PLAN_ESPADA.md`) cuando toque. Lo que ya está escrito (`planes_jubilados/PLAN_LORE.md`, §6):
   la forja Henrique con el acero de la espada de su padre (IN NOMINE DOMINI) y el Cerrojo de San Martín. Y como
   no se rompe lo que no se conoce, la espada puede llevar su nombre, juntado en tres trozos: la piedra de detrás
   del ara romana, el sermón de Martín y la memoria de Joana, la herbolera. Con el lore nuevo sigue valiendo: no
@@ -198,8 +198,8 @@ que el título del final de la introducción.
 
 | Dónde | Qué | Cambio |
 |---|---|---|
-| `PLAN_LORE.md` | §1 («La regla»), §3.2 (la regla, la tabla «qué le dio / qué le devolvió», «cada una es lo que dio, multiplicado»), §3.5 («Multiplicar»), §4 (los finales de cada plan) y §6 | Se tachan o se marcan como sustituidos por este plan. Las criaturas: lo que hace su presencia en la carne. |
-| `PLAN_JEFE_FINAL.md` | Acto 6 («Y al final normal: el río al amanecer») y §9 | El final es el de este plan; Deo Ignoto, sólo en el final secreto. |
+| `planes_jubilados/PLAN_LORE.md` | §1 («La regla»), §3.2 (la regla, la tabla «qué le dio / qué le devolvió», «cada una es lo que dio, multiplicado»), §3.5 («Multiplicar»), §4 (los finales de cada plan) y §6 | Se tachan o se marcan como sustituidos por este plan. Las criaturas: lo que hace su presencia en la carne. |
+| `planes_jubilados/PLAN_JEFE_FINAL.md` | Acto 6 («Y al final normal: el río al amanecer») y §9 | El final es el de este plan; Deo Ignoto, sólo en el final secreto. |
 | `finale/director.js` | Las notas de la cabecera («el final normal») | Igual. |
 | `game/game.js` | `ending()`, `updateEnding()`, `showEndingCard()` y `finalDesfigurado()` | La escena pasa a la película. El paseo con el amanecer de verdad se queda para el final secreto. |
 | `game/desfigurado.js` | `alAlba()` y `npcAlba()` | En el canónico, se tapa la cara al oscurecerse el cielo. |

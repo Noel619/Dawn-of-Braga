@@ -13,7 +13,7 @@ piel para un esqueleto) y fotografiadas en el motor del juego.
 
 - **Plan A: el Turiferario → Deo Ignoto.** El elegido el 8 de octubre de 2026. Sus modelos se rehicieron
   para el juego (versión 2, en `src/entities/colossus/`); los de aquí son el **boceto** con el que se
-  presentó. Ver `PLAN_JEFE_FINAL.md` en la raíz.
+  presentó. Ver `planes_jubilados/PLAN_JEFE_FINAL.md`.
 - **Plan B: el Tordo → la Masa.** El caballo del canónigo (la tablilla del mozo de cuadra: «Esta mañana
   tenía ocho patas»), sobre ocho patas de zancos; al morir le revienta el vientre y sale la masa de la
   nota del panadero («La masa no sube. Crece.»), que se traga la plaza.
