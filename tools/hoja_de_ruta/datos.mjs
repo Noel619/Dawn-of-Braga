@@ -10,7 +10,7 @@
 // de una fase es lo hecho entre lo que hay, y el de la 1.0, lo mismo con todas
 // las tareas de todas las fases: cada tarea cuenta igual, sea grande o pequeña.
 
-export const FECHA = '21 de noviembre de 2026';
+export const FECHA = '22 de noviembre de 2026';
 
 // Las fases de la 1.0, en orden. estado: se calcula (hecha, en curso, por
 // hacer) salvo que se diga: 'siguiente' (la que toca ahora) o 'espera' (espera
@@ -260,23 +260,25 @@ export const FASES = [
     ],
   },
   {
-    id: 'albacar',
+    id: 'pacos',
     num: 'XII',
-    nombre: 'El albacar',
-    lema: 'El patio de armas viejo, refugio de la gente de fuera',
-    cuando: 'propuesto el 5 de noviembre',
-    plan: 'PLAN_ALBACAR.md',
+    nombre: 'Los Paços',
+    lema: 'El barrio de los ricos de la corte, cerrado a cal y canto',
+    cuando: 'propuesto el 22 de noviembre',
+    plan: 'PLAN_PACOS.md',
     estado: 'espera',
     texto:
-      'Así está hoy: el patio de armas viejo, vacío (1.290 m² casi sin nada), y el preso sale a él dentro del castillo, como quien sale de casa. La propuesta: que sea el albacar, el refugio de la gente de fuera durante el cerco, con su campamento, el reparto, los corrales, el fosal y la última embestida ante el foso, y trescientos muertos de rodillas mirando a la Sé. Lo que dice el Rey cobraría sentido: «el único que salía andando».',
-    escena: 'albacar',
-    sprites: ['rodillas'],
-    iconos: ['note'],
+      'Así está hoy: el patio de armas viejo, vacío, con un foso suelto delante de la puerta de la fortaleza que parece un pozo. La propuesta: los Paços, las casas de la corte que traicionó al Rey, que se encerraron durante el cerco con su trigo y su oro. La cerca con su puerta encadenada, la Rúa con sus barricadas, el Terreiro ante la fortaleza (y la cava a lo largo en lugar del pozo), el Paço del mayordomo con la cena servida y la Casa de la Moneda con su cambista. Se ve desde el principio y no se entra hasta media partida: desde otras zonas y con llaves.',
+    escena: 'patio',
+    sprites: ['cortesano', 'soldier'],
+    iconos: ['key', 'ring', 'note'],
     tareas: [
-      ['Decidir: el albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C), y lo demás del §9', 0],
-      ['A1: los cimientos de la torre vieja y el campamento; los carros atravesados', 0],
-      ['A2: el reparto y el libro del albacar, los corrales, el fosal y ante el foso', 0],
-      ['A3: los encuentros, los textos, el sonido y el cambio al volver', 0],
+      ['Decidir lo del §11: la zona rica, cuándo se entra, el cambista, lo que se cuenta en cada casa, el relicario, el fundíbulo y los nombres', 0],
+      ['P1: la cerca y su puerta encadenada, el patio de la guardia, la cava en lugar del foso y el Terreiro', 0],
+      ['P2: la Rúa y sus barricadas, las casas por fuera, el pasadizo y los jardines', 0],
+      ['P3: por dentro: el mayordomo (la cena, los graneros), las dueñas, la Moneda, el canciller y la capilla', 0],
+      ['P4: las entradas y las llaves: el portillo de la cava, por arriba, el puente, la poterna y el atajo de la Puerta', 0],
+      ['P5: la gente (los hombres de la Cerca, los criados, los lebreles, el cambista), los textos, la luz y el sonido', 0],
     ],
   },
   {
@@ -370,10 +372,10 @@ export const EXPANSIONES = [
 // Lo que tiene que decidir el autor para seguir.
 export const DECISIONES = [
   {
-    que: 'El albacar',
-    pregunta: '¿El albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C)?',
-    mas: 'Y cuánta gente y cuánto horror, si los carros cortan el camino de la salida, si cambia al volver y el nombre.',
-    donde: 'PLAN_ALBACAR.md, §9',
+    que: 'Los Paços',
+    pregunta: '¿Es éste el barrio rico que quieres?',
+    mas: 'Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres.',
+    donde: 'PLAN_PACOS.md, §11',
   },
   {
     que: 'El final',
@@ -447,8 +449,6 @@ export const MODELOS = {
   guardia: { jugador: 'guardia', nombre: 'Armadura de guardia', az: -35 },
   caballeroJ: { jugador: 'caballero', nombre: 'Armadura de caballero', az: -35 },
   cuero: { jugador: 'cuero', nombre: 'Armadura de cuero', az: -35 },
-  // un penitente de rodillas (los del albacar, de cara a la Sé)
-  rodillas: { tipo: 'penitent', idle: 'pray', az: 60 },
 };
 
 // Los jefes del bestiario, en el orden en que se encuentran.
@@ -470,5 +470,5 @@ export const ESCENAS = {
   trono: { vista: [-98, 18, -87.5, 0, 0.2, 4], criaturas: true },
   vergel: { vista: [12, -11, 20, -45, 0.2, 0] },
   rio: { vista: [7.2, 0, -219, 180, 0.12, 0] },
-  albacar: { vista: [-70, 0, 0, 60, 0.18, 6] },
+  patio: { vista: [-70, 0, 0, 60, 0.18, 6] },
 };

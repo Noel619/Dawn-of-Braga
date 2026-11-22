@@ -80,9 +80,9 @@ de verdad), siempre o nunca.
 <!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 76 % hacia la 1.0"></a></p>
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 75 % hacia la 1.0"></a></p>
 
-**76 % hacia la 1.0**: 79 de 104 tareas y 9 de las 14 fases hechas (al día el 21 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**75 % hacia la 1.0**: 79 de 106 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -101,7 +101,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
-| XII | [El albacar](docs/hoja-de-ruta/index.html#fase-albacar) | Espera al autor | 0 % (0 de 4) |
+| XII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
 | XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
 | XIV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
 
@@ -121,12 +121,14 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El título, Dawn of the Devil, y el pergamino
 - [ ] Las pruebas, el teléfono y la versión jugable
 
-**XII · El albacar** — El patio de armas viejo, refugio de la gente de fuera. *Espera al autor, 0 %* · `PLAN_ALBACAR.md`
+**XII · Los Paços** — El barrio de los ricos de la corte, cerrado a cal y canto. *Espera al autor, 0 %* · `PLAN_PACOS.md`
 
-- [ ] Decidir: el albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C), y lo demás del §9
-- [ ] A1: los cimientos de la torre vieja y el campamento; los carros atravesados
-- [ ] A2: el reparto y el libro del albacar, los corrales, el fosal y ante el foso
-- [ ] A3: los encuentros, los textos, el sonido y el cambio al volver
+- [ ] Decidir lo del §11: la zona rica, cuándo se entra, el cambista, lo que se cuenta en cada casa, el relicario, el fundíbulo y los nombres
+- [ ] P1: la cerca y su puerta encadenada, el patio de la guardia, la cava en lugar del foso y el Terreiro
+- [ ] P2: la Rúa y sus barricadas, las casas por fuera, el pasadizo y los jardines
+- [ ] P3: por dentro: el mayordomo (la cena, los graneros), las dueñas, la Moneda, el canciller y la capilla
+- [ ] P4: las entradas y las llaves: el portillo de la cava, por arriba, el puente, la poterna y el atajo de la Puerta
+- [ ] P5: la gente (los hombres de la Cerca, los criados, los lebreles, el cambista), los textos, la luz y el sonido
 
 **VII · La fortaleza del Rey** — El castillo-palacio, la corte que le traicionó y el Rey que juega. *En curso, 86 %* · `planes_jubilados/PLAN_FORTALEZA.md`
 
@@ -170,7 +172,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
-- **El albacar** — ¿El albacar (A), la plaza de fuera (B) o el castillo viejo en ruinas (C)? Y cuánta gente y cuánto horror, si los carros cortan el camino de la salida, si cambia al volver y el nombre. · *PLAN_ALBACAR.md, §9*
+- **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
 - **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*
 - **Dom Paio, convertido** — ¿Pasa a llamarse «el Encadenado»? Ahora se llama «el Condenado», que es el nombre del protagonista. · *planes_jubilados/PLAN_LORE.md, §7 (pregunta 9)*
 - **El Caballero de la Orden** — ¿Una recompensa por vencerle? Por ahora no da nada: clava la espada en las losas y se deja caer. · *planes_jubilados/PLAN_CASTILLO.md, §12 (pregunta 7)*
@@ -675,8 +677,8 @@ al pie (`world/castillo_fuera.js`).
 donde estaba, el patio de armas llega hasta **la puerta de la fortaleza** y su foso de estacas, con el puente alzado
 al otro lado. Lo que dejó el asedio: los caballos de frisa ante el foso, un carro, los barriles, los bolaños de los
 trabucos, los muertos y sus cuervos. (Lo de en medio del patio, donde estuvieron el patio y la torre del castillo
-viejo, está casi vacío; su reforma, el albacar —el refugio de la gente de fuera durante el cerco—, está propuesta en
-`PLAN_ALBACAR.md`.)
+viejo, está casi vacío, y el foso es un hoyo suelto delante de la puerta; su reforma, los Paços —las casas de los ricos
+de la corte, cerradas a cal y canto—, está propuesta en `PLAN_PACOS.md`.)
 
 **El rastrillo.** La cárcel queda donde estaba (la celda del fondo, la del jugador). Al fondo del pasillo de las
 celdas, donde estuvo la puerta de la escalera de la torre vieja, un **rastrillo** echado hasta el suelo en su marco
@@ -2009,12 +2011,12 @@ archive/jefe_final_trepar/
                         antes de la película: su plan (PLAN_JEFE_FINAL_v2.md) y su guion
 PLAN_FINAL.md           el final (la terrible verdad), el final secreto y su plan de trabajo (activo: decidido,
                         sin empezar)
-PLAN_ALBACAR.md         el patio de armas viejo como albacar, el refugio de la gente de fuera (activo: una
-                        propuesta, pendiente de lo que decida el autor)
+PLAN_PACOS.md           el patio de armas viejo rehecho como los Paços, las casas de los ricos de la corte,
+                        cerradas (activo: una propuesta, pendiente de lo que decida el autor)
 planes_jubilados/       los planes ya hechos o sustituidos, guardados como historia: el jefe final, los
                         osarios, la cripta honda, el lore y la introducción, los tejados, el barrio, el
                         castillo, la fortaleza y el Lobishome (ver su README: qué fue cada uno y qué quedó)
-docs/planos/            los planos a escala de los planes (el albacar, la fortaleza, el Lobishome), que dibujan
+docs/planos/            los planos a escala de los planes (los Paços, la fortaleza, el Lobishome), que dibujan
                         los scripts de tools/planos/
 docs/hoja-de-ruta/      la hoja de ruta: una sola página (index.html), con el arte del propio juego, y las
                         imágenes de su sección en este README (las genera tools/hoja_de_ruta.mjs)

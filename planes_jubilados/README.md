@@ -29,10 +29,14 @@ Los planos dibujados de `PLAN_FORTALEZA.md` y `PLAN_LOBO.md` siguen en `docs/pla
 
 - **`PLAN_FINAL.md`** (13 de noviembre): el final, «la terrible verdad» (la columna de almas, el cielo que se rompe y
   la lluvia de sangre) y el final secreto con la espada. Decidido; todavía no hay nada hecho.
-- **`PLAN_ALBACAR.md`** (5 de noviembre): el patio de armas viejo, vacío, como albacar (el refugio de la gente de
-  fuera). Una propuesta: espera a lo que decida el autor.
+- **`PLAN_PACOS.md`** (22 de noviembre): el patio de armas viejo rehecho como los Paços, las casas de los ricos de la
+  corte, cerradas a cal y canto. Una propuesta: espera a lo que decida el autor.
 
 ## Cuándo se jubila un plan
 
 Cuando lo principal ya está en el juego. Lo que quede se pasa a la Hoja de ruta del `README.md`, y el plan se mueve
 aquí con `git mv` (así no pierde su historia). Si se retoma uno, se vuelve a sacar a la raíz.
+
+Una propuesta que el autor descarta no se jubila: se borra (queda en la historia de git). Así se fue el albacar
+(`PLAN_ALBACAR.md`, del 5 de noviembre: el patio de armas como refugio de la gente de fuera), el 22 de noviembre; lo
+sustituye `PLAN_PACOS.md`.
