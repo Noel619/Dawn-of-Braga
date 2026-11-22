@@ -75,7 +75,9 @@ export class PeleaFisico {
     e.data.llamo = false;
     F.setMusic(null);
     g.startBoss(e);
-    F.say(DIALOG.fisicoPelea, 3.4);
+    // (si se encerró herido, te esperaba: empieza con la vida que le quedó y,
+    // si no le queda la mitad, enseguida se quita la máscara: think)
+    F.say(F.encerrado ? DIALOG.fisicoEsperaba : DIALOG.fisicoPelea, 3.4);
   }
 
   // ------------------------------------------------------------ lo que piensa

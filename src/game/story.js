@@ -1600,6 +1600,10 @@ export const DIALOG = {
   fisicoLlave: 'En su cinto, entre las llaves de su casa, la de la cordelería.',
   // herido: se retira (con la cal)
   fisicoHerido: ['Bien. Muy bien. Hasta la fiebre tiene su dignidad.', 'Ya volveré. El médico siempre vuelve.'],
+  // con media vida o menos: se encierra en su casa y te espera en el quirófano
+  fisicoEncierra: ['Basta de calle. La consulta, en mi casa. Allí te espero.', 'Me has abierto tú a mí. Qué ironía. Ven a que te cosa yo a ti.'],
+  // encerrado, te ve entrar en su quirófano (antes de la pelea)
+  fisicoEsperaba: ['Pasa. Me he cosido yo mismo, ¿ves? Ahora tú.', 'Llegas tarde a tu consulta. Siéntate.'],
 };
 
 // Las partidas que recuerda el Rey (game/cerco/partidas.js; sus jugadas, en
@@ -1937,6 +1941,7 @@ export const MSG = {
   forcejea: '¡Forcejea!',
   calOjos: 'La cal en los ojos: no ves nada.',
   tapiada: 'Al otro lado, alguien termina de clavar la puerta.',
+  fisicoEncerrado: 'Mestre Clemente se ha encerrado en su casa: la tranca cae por dentro. Ya no saldrá a buscarte.',
   tapiadaDentro: 'La puerta no cede: la han clavado por fuera. Por la rendija huele a cal.',
   tapiadaArranca: 'Arrancas los tablones del Físico. La cruz de cal se deshace en polvo.',
   tapiadaFuera: 'Clavada con tablas, y con la cruz de cal encima. Con algo para hacer palanca...',

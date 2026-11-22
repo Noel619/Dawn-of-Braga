@@ -55,18 +55,18 @@ const ENTRADAS = [
   { id: 'n3', x: 29.4, z: 42.6, yaw: 0 },
   { id: 'n1', x: 17.6, z: 42.6, yaw: 0 },
 ];
-// las esquinas en las que se pierde de vista cuando todas esas puertas se ven
-// desde donde estás (la calleja es recta: desde ella se ve todo su largo)
-const ESCONDITES = [
-  [38.6, 40.0],
-  [47.4, 40.2],
-  [42.0, 50.2],
-  [35.2, 50.2],
-];
 // cuánto tarda en volver tras irse (s), y lo que le aguanta a uno antes de
 // retirarse (de su vida, en una aparición)
 const VUELVE = [22, 38];
-const AGUANTA = 0.22;
+const AGUANTA = 0.2;
+// Su vida es una sola, la de la caza y la de su quirófano (flags
+// 'fisico:vida'): lo que le hagas en la calle se queda, y no se cura al
+// volver a salir. Con la mitad o menos se encierra en su casa y ya no sale
+// (flags 'fisico:encerrado'): te espera en su quirófano, y la pelea empieza
+// en el tiempo que le toque. En la calle nunca baja de un cuarto (lo último,
+// el fuego, se pelea en su casa).
+const ENCIERRA = 0.5;
+const SUELO = 0.25;
 
 export class Fisico {
   constructor(g) {
@@ -160,7 +160,8 @@ export class Fisico {
     e.yaw = yaw;
     e.obj.position.copy(e.pos);
     e.obj.rotation.set(0, yaw, 0);
-    e.hp = e.maxHp;
+    // (sale con la vida que le quedó: no se cura entre una salida y otra)
+    e.hp = this.vida;
     this.hp0 = e.hp;
     e.D = e.D || {};
     e.D.engaged = false;
@@ -185,6 +186,19 @@ export class Fisico {
   }
   get shown() {
     return this.e && !this.e.scripted && this.e.obj.visible;
+  }
+  // La vida que le queda (la de la caza: la pelea de su quirófano empieza con
+  // ella y, si caes en ella, vuelve a empezar con ella)
+  get vida() {
+    const e = this.e;
+    const v = this.g.flags['fisico:vida'];
+    return e ? Math.max(1, Math.min(e.maxHp, v ?? e.maxHp)) : 0;
+  }
+  set vida(v) {
+    if (this.e) this.g.flags['fisico:vida'] = Math.max(1, Math.min(this.e.maxHp, Math.round(v)));
+  }
+  get encerrado() {
+    return !!this.g.flags['fisico:encerrado'];
   }
   say(lines, dur) {
     if (!this.e || !lines) return;
@@ -238,35 +252,25 @@ export class Fisico {
   }
   // Se va por la puerta más a mano (corriendo, si huye) y, al llegar, se
   // esfuma; vuelve al rato.
-  marcha(huye = false) {
+  // (a la vista, como cualquiera: se le puede seguir hasta su puerta; no se
+  // esfuma en una esquina)
+  marcha(huye = false, encierra = false) {
     const e = this.e;
     if (!this.shown) return this.fuera();
     this.modo = 'marcha';
     e.aware = false;
-    const E = this.entrada(e.pos.x, e.pos.z, true);
+    const E = encierra ? ENTRADAS[0] : this.entrada(e.pos.x, e.pos.z, true);
     const sp = huye ? e.T.run : e.T.walk * 1.15;
-    // (si esa puerta se ve, primero dobla la esquina más a mano que no se
-    // vea, y allí se pierde)
-    if (this.visto(E.x, 0, E.z)) {
-      let best = null,
-        bd = Infinity;
-      for (const [x, z] of ESCONDITES) {
-        if (this.visto(x, 0, z)) continue;
-        const d = Math.hypot(x - e.pos.x, z - e.pos.z);
-        if (d < bd) {
-          bd = d;
-          best = [x, z];
-        }
-      }
-      if (best) {
-        this.walk(best[0], best[1], sp, () => (this.visto(e.pos.x, e.pos.y, e.pos.z) ? this.marcha(huye) : this.fuera()));
-        return;
-      }
-    }
     this.walk(E.x, E.z, sp, () => {
-      this.g.audio && this.g.audio.play('doorSlam', { x: E.x, y: 1, z: E.z });
+      const g = this.g;
+      g.audio && g.audio.play('doorSlam', { x: E.x, y: 1, z: E.z });
+      // (encerrado: la tranca, por dentro; ya no sale)
+      if (encierra || this.encerrado) {
+        this.pelea.luego(0.7, () => g.audio && g.audio.play('chestBar', { x: E.x, y: 1, z: E.z }));
+        if (this.enBarrio(g.player.pos)) g.ui.toast(MSG.fisicoEncerrado || 'Al otro lado de la plazuela, una tranca cae en su sitio.', 4);
+      }
       this.fuera();
-    });
+    }, { r: 0.6 });
   }
   fuera(cool) {
     this.modo = 'fuera';
@@ -282,7 +286,7 @@ export class Fisico {
   // campanillas, un cepo, una puerta arrancada.
   alarma(x, y, z, src) {
     const g = this.g;
-    if (!this.e || g.flags['boss:fisico'] || this.modo === 'pelea' || this.modo === 'cine') return;
+    if (!this.e || g.flags['boss:fisico'] || this.modo === 'pelea' || this.modo === 'cine' || this.encerrado) return;
     if (!this.enBarrio({ x, y, z })) return;
     this.alarm = { x, y, z, src, t: g.time };
     // (si ya anda cerca, va directamente)
@@ -380,42 +384,64 @@ export class Fisico {
     e.data.calOk = !!e.data.retirada || this.modo === 'pelea';
     return null;
   }
-  // (fuera de la pelea no muere: aguanta un poco y se retira)
+  // Fuera de la pelea no muere, pero lo que le hagas se queda: aguanta un
+  // poco y se retira (herido, más deprisa); con la mitad o menos, se encierra
+  // en su casa. En la calle no baja de un cuarto.
   preHit(e, dmg, poise) {
     if (this.modo === 'pelea') return this.pelea.preHit(e, dmg, poise);
-    const lost = this.hp0 - (e.hp - dmg);
-    if (lost > e.maxHp * AGUANTA && !e.data.retirada) {
+    const suelo = Math.ceil(e.maxHp * SUELO);
+    const d = Math.max(0, Math.min(dmg, e.hp - suelo));
+    const queda = e.hp - d;
+    if (!e.data.retirada && (this.hp0 - queda > e.maxHp * AGUANTA || queda <= e.maxHp * ENCIERRA)) {
       e.data.retirada = true;
-      this.retirada();
-      return { dmg: Math.max(0, Math.min(dmg, e.hp - 1)), poise: 0 };
+      this.retirada(queda <= e.maxHp * ENCIERRA);
+      return { dmg: d, poise: 0 };
     }
-    if (e.hp - dmg < 1) return { dmg: Math.max(0, e.hp - 1), poise };
-    return null;
+    return d !== dmg ? { dmg: d, poise } : null;
   }
   onHit(e, r) {
+    if (this.modo === 'pelea' || this.modo === 'cine') return;
+    // (lo que le has hecho, apuntado: el golpe de gracia no pasa por preHit,
+    // y tampoco le deja en la calle por debajo de un cuarto)
+    const suelo = Math.ceil(e.maxHp * SUELO);
+    if (e.hp < suelo) e.hp = suelo;
+    if (e.hp < this.vida) this.vida = e.hp;
+    if (!e.data.retirada && e.hp <= e.maxHp * ENCIERRA) {
+      e.data.retirada = true;
+      this.retirada(true);
+    }
     // (herido, te busca: aunque no te viera)
-    if (r === 'hit' && this.g.flags['fisico:caza'] && !e.aware && this.modo !== 'marcha' && this.modo !== 'pelea') {
+    if (r === 'hit' && this.g.flags['fisico:caza'] && !e.aware && !e.data.retirada && this.modo !== 'marcha' && this.modo !== 'pelea') {
       e.aware = true;
       e.state = 'chase';
       this.modo = 'caza';
     }
   }
-  // Herido: la cal a los ojos (si estás cerca) y se va, deprisa.
-  retirada() {
+  // Herido: la cal a los ojos (si estás cerca) y se va, deprisa, a su casa.
+  // Con la mitad de la vida o menos (encierra), ya no vuelve a salir: se
+  // encierra y te espera en su quirófano.
+  retirada(encierra = false) {
     const e = this.e;
     const g = this.g;
-    this.say(DIALOG.fisicoHerido, 3.4);
+    this.say(encierra ? DIALOG.fisicoEncierra : DIALOG.fisicoHerido, 3.4);
+    if (encierra) {
+      g.flags['fisico:encerrado'] = true;
+      this.alarm = null;
+    }
+    this.vida = e.hp;
+    g.saveGame();
     const d = e.distTo(g.player.pos);
     const go = () => {
       e.data.retirada = true;
-      this.marcha(true);
+      this.marcha(true, encierra);
       this.cool = 55;
     };
     if (d < 5.5 && e.state !== 'attack') {
       e.state = 'attack';
       e.atk = null;
       e.startAttack({ ...e.T.attacks.find((a) => a.name === 'cal'), cond: null });
-      g.later(1500, go);
+      // (en tiempo de juego: en pausa, espera)
+      this.pelea.luego(1.5, go);
     } else go();
   }
   onHook() {
@@ -587,6 +613,9 @@ export class Fisico {
       g.post.U.uBlind.value = this.blind > 0 ? Math.min(1, this.blind) : 0;
     }
     this.pelea.update(dt);
+    // (su barra, también en la calle mientras te caza: lo que le haces se
+    // queda, y se ve)
+    if (e.D) e.D.barra = this.shown && (this.modo === 'caza' || this.modo === 'marcha') && !!F['fisico:caza'];
     if (p.dead || this.modo === 'cine' || this.modo === 'pelea') return;
     const inB = this.enBarrio(p.pos);
     // (la pelea: en su quirófano; no recién soltado de su mesa: hasta que
@@ -633,6 +662,8 @@ export class Fisico {
     }
     switch (this.modo) {
       case 'fuera': {
+        // (encerrado en su casa: ya no sale; te espera en su quirófano)
+        if (this.encerrado) break;
         this.cool -= dt;
         if (this.cool > 0) break;
         if (this.alarm) {

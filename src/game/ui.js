@@ -1472,8 +1472,9 @@ export class UI {
     // jefe
     const bb = $('bossbar');
     const b = g.activeBoss;
-    // (el que caza en la bodega sólo enseña su barra cuando pelea contigo)
-    if (b && !b.dead && (!b.T.stalker || (b.D && b.D.engaged))) {
+    // (el que caza en la bodega sólo enseña su barra cuando pelea contigo;
+    // el Físico, también mientras te caza por la calle: D.barra)
+    if (b && !b.dead && (!b.T.stalker || (b.D && (b.D.engaged || b.D.barra)))) {
       bb.classList.add('show');
       const nm = bb.querySelector('.name');
       if (nm.textContent !== b.T.name) nm.textContent = b.T.name;
