@@ -1,24 +1,30 @@
-// La Casa de los Inocentes, por dentro, su patio y el callejón de la capilla.
+// La Casa de los Inocentes, por dentro, su patio, el huerto de las hierbas
+// y el callejón de la capilla.
 //
 // Mestre Clemente, físico. Aquí guardó veinte años a los locos de Braga (los
 // inocentes): los que oyen lo que nadie oye, los melancólicos, los furiosos.
-// Abajo, su sala de visitas (la mesa de escribir bajo la rueda de las
-// orinas, el atril con su Galeno, la silla de sujetar a los que no se están
-// quietos, las matulas) y, detrás, todo lo ancho de la casa, el quirófano: la
-// mesa con sus correas bajo la lámpara, el brasero de los cauterios, el
-// trépano, las coronas. Arriba, su alcoba (la de la ventana de la cortina, en
-// el eje de la calleja: desde su taburete ve a quien entra en el barrio), la
-// botica (los frascos, el alambique, las esponjas, el cuenco de las piedras) y
-// la sala de los inocentes (los camastros con correas, las cadenas). En el
-// desván, lo que les quitó a todos (la ropa, los zapatos) y las coronas a
-// medio hacer.
+// Era la casa de un canónigo, que la dejó para ellos: grande, encalada, con
+// una sola escalera, de ida y vuelta, en el zaguán. Abajo, la consulta (la
+// mesa de escribir bajo la rueda de las orinas, el atril con su Galeno, la
+// silla de sujetar a los que no se están quietos, las matulas), las celdas
+// de los furiosos y, todo lo alto de la casa, la sala grande de los
+// inocentes, donde ahora opera: los camastros con sus cadenas contra los
+// muros y, en medio, la mesa con sus correas bajo la lámpara, el brasero de
+// los cauterios, el trépano, las coronas; una galería de madera la rodea
+// por el oeste, y por encima no tiene más que las cerchas. Arriba, su alcoba
+// (la de la ventana de la cortina, en el eje de la rúa: desde su taburete ve
+// a quien entra en el barrio), la botica (los frascos, el alambique, las
+// esponjas, el cuenco de las piedras) y su estudio. En el desván, que rodea
+// la sala por arriba, lo que les quitó a todos (la ropa, los zapatos) y las
+// coronas a medio hacer; y la claraboya.
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
 import * as P from './props.js';
 import { chest, bowl, herbBunch } from './level_souto.js';
 import { bakeCorpse } from '../entities/models.js';
-import { tapia, rotulo, V } from './kit_casa.js';
+import { tapia, rotulo, railing, V } from './kit_casa.js';
+import { BR } from './level_barrio.js';
 import { camastro, botas, palo, cruzCal } from './barrio_atrezo.js';
 
 const luna = (ctx, x, y, z, room, i = 0.45, r = 4) => ctx.lights.push({ x, y, z, r: 0.5, g: 0.6, b: 0.85, radius: r, intensity: i, room });
@@ -494,175 +500,243 @@ function asclepio(wb) {
 }
 
 // ------------------------------------------------------------ la casa
+// (las salas: level_barrio.js, BR.ino; la sala grande, BR.sala)
 export function casaInocentes(ctx, L, h) {
   const wb = ctx.wb;
-  const y1 = 4.05,
-    y2 = 7.25;
-  // ---- la sala de visitas
-  let r = 'ino_consulta';
+  const y1 = 4.25,
+    y2 = 8.5;
+  // ---- el zaguán: el banco, las perchas con lo de repuesto, el farol; la
+  // escalera, contra el muro del patio
+  let r = 'ino0';
   wb.setRoom(r);
-  // la mesa de escribir, bajo la rueda de las orinas; su silla, contra la
-  // pared; delante, la silla de sujetar, de cara a él
-  P.table(ctx, 52.8, 0, 42.45, 1.8, 0.8, 0);
-  P.stool(ctx, 52.8, 0, 41.55, { room: r });
-  ruedaOrinas(ctx, 52.8, 2.05, 41.01, 0, r);
-  pilaLibros(ctx, 51.95, 0.8, 42.3, 4, r, 2620);
-  pilaLibros(ctx, 53.55, 0.8, 42.55, 2, r, 2621);
-  craneo(wb, 53.25, 0.8, 42.2, -0.4, r, { ring: true });
-  P.candles(ctx, 52.55, 0.8, 42.25, 2, 2603, { room: r, radius: 4.5, intensity: 0.6, spread: 0.06 });
+  P.bench(ctx, 50.7, 0, 43.6, 1.6, Math.PI / 2);
+  P.bench(ctx, 50.7, 0, 49.4, 1.6, Math.PI / 2);
+  perchas(ctx, 53.6, 0, 50.72, Math.PI, r);
+  P.lantern(ctx, 56.95, 2.6, 47.6, -Math.PI / 2, true);
+  ctx.lights.push({ x: 56.4, y: 2.4, z: 47.6, r: 1, g: 0.55, b: 0.22, radius: 6, intensity: 0.75, room: r });
+  P.lantern(ctx, 50.15, 2.6, 39.2, Math.PI / 2, true);
+  ctx.lights.push({ x: 50.7, y: 2.4, z: 39.2, r: 1, g: 0.55, b: 0.22, radius: 5, intensity: 0.55, room: r });
+  // (las coronas que esperan a su paciente, en un clavo junto al portón de
+  // la sala, y la cruz de cal del suelo, que nadie pisa)
+  for (let i = 0; i < 3; i++) corona(wb, 56.93, 2.1 + i * 0.05, 41.2 + i * 0.55, 1.0, r, { tilt: 0.12 * (i - 1) });
+  cruzCal(ctx, 53.6, 0.025, 45.2, 0, 1.6, r);
+  luna(ctx, 50.4, 1.8, 42.5, r, 0.3);
+  wb.setRoom(null);
+  // ---- la consulta
+  r = 'ino_consulta';
+  wb.setRoom(r);
+  // la mesa de escribir, contra la muralla, bajo la rueda de las orinas; su
+  // silla; delante, la silla de sujetar, de cara a él
+  P.table(ctx, 53.6, 0, 56.5, 1.8, 0.8, 0);
+  P.stool(ctx, 53.6, 0, 57.0, { room: r });
+  ruedaOrinas(ctx, 53.6, 2.05, 57.39, Math.PI, r);
+  pilaLibros(ctx, 52.75, 0.8, 56.35, 4, r, 2620);
+  pilaLibros(ctx, 54.35, 0.8, 56.6, 2, r, 2621);
+  craneo(wb, 54.05, 0.8, 56.25, 0.4, r, { ring: true });
+  P.candles(ctx, 53.35, 0.8, 56.3, 2, 2603, { room: r, radius: 5, intensity: 0.65, spread: 0.06 });
   // (el tintero, la pluma y un papel a medio escribir)
-  wb.cylinder('black', 52.95, 0.8, 42.6, 0.03, 0.035, 0.05, 6, { ao: false, room: r });
-  palo(wb, V(52.95, 0.86, 42.6), V(53.1, 1.02, 42.5), 0.004, 'clothWhite', { room: r, tint: [0.9, 0.88, 0.8] });
-  wb.box('clothWhite', 52.4, 0.8, 42.55, 52.75, 0.803, 42.8, { ao: false, room: r, grime: false, tint: PERGAMINO, faces: 't' });
-  sillaSujecion(ctx, 52.8, 0, 43.75, Math.PI, r);
+  wb.cylinder('black', 53.75, 0.8, 56.65, 0.03, 0.035, 0.05, 6, { ao: false, room: r });
+  palo(wb, V(53.75, 0.86, 56.65), V(53.9, 1.02, 56.55), 0.004, 'clothWhite', { room: r, tint: [0.9, 0.88, 0.8] });
+  wb.box('clothWhite', 53.2, 0.8, 56.6, 53.55, 0.803, 56.85, { ao: false, room: r, grime: false, tint: PERGAMINO, faces: 't' });
+  sillaSujecion(ctx, 53.6, 0, 54.7, 0, r);
   // el atril, junto a la ventana: su Galeno abierto
-  atril(ctx, 50.75, 0, 42.6, Math.PI / 2 + 0.3, r);
-  // las matulas, en la mesita de la otra ventana, y la jofaina
-  P.table(ctx, 50.75, 0, 47.4, 0.6, 1.1, 0);
-  gradillaMatulas(ctx, 50.75, 0.8, 47.4, Math.PI / 2, r);
-  palanganero(ctx, 51.9, 0, 48.0, r);
-  // las librerías, contra el tabique del zaguán
-  estanteLibros(ctx, 55.08, 0, 42.6, -Math.PI / 2, 1.8, r, 2622, { skull: true });
-  estanteLibros(ctx, 55.08, 0, 47.85, -Math.PI / 2, 1.2, r, 2623);
-  // las hierbas colgadas de las vigas
-  for (let i = 0; i < 9; i++) herbBunch(ctx, 50.6 + (i % 3) * 1.6 + (i > 5 ? 0.5 : 0), 3.5, 44.6 + Math.floor(i / 3) * 0.9, 2630 + i, r, 0.25 + (i % 2) * 0.1);
-  luna(ctx, 50.4, 1.6, 42.0, r, 0.25);
+  atril(ctx, 50.8, 0, 53.0, Math.PI / 2 + 0.3, r);
+  // las matulas, en la mesita del rincón, y la jofaina
+  P.table(ctx, 50.75, 0, 56.7, 0.6, 1.1, Math.PI / 2);
+  gradillaMatulas(ctx, 50.75, 0.8, 56.7, 0, r);
+  palanganero(ctx, 56.3, 0, 52.0, r);
+  // las librerías, contra el tabique de las celdas
+  estanteLibros(ctx, 56.93, 0, 54.6, -Math.PI / 2, 2.0, r, 2622, { skull: true });
+  for (let i = 0; i < 6; i++) herbBunch(ctx, 51.4 + (i % 3) * 1.5, 3.7, 52.4 + Math.floor(i / 3) * 1.4, 2630 + i, r, 0.25 + (i % 2) * 0.1);
+  luna(ctx, 50.4, 1.6, 54.0, r, 0.3);
   wb.setRoom(null);
-  // ---- el zaguán: el banco, el farol y las perchas con lo de repuesto
-  r = 'ino0';
+  // ---- la sala grande
+  r = 'ino_sala';
   wb.setRoom(r);
-  P.bench(ctx, 57.6, 0, 48.2, 1.6, 0);
-  perchas(ctx, 55.52, 0, 43.4, Math.PI / 2, r);
-  P.lantern(ctx, 58.0, 2.4, 41.05, 0, true);
-  ctx.lights.push({ x: 58.0, y: 2.2, z: 41.6, r: 1, g: 0.55, b: 0.22, radius: 4.5, intensity: 0.7, room: r });
-  wb.setRoom(null);
-  // ---- el quirófano
-  r = 'ino_quir';
-  wb.setRoom(r);
-  const M = { x: 54.6, z: 37.6 };
+  const M = BR.mesa;
   quirofanoMesa(ctx, M.x, 0, M.z, r);
-  P.hangingLamp(ctx, M.x, 3.8, M.z, { room: r, len: 1.2, radius: 8, intensity: 1.5 });
+  // la lámpara, colgada de una viga echada de muro a muro sobre la mesa
+  wb.box('timber', 57.2, 8.05, M.z - 0.13, 65.4, 8.35, M.z + 0.13, { ao: false, room: r, faces: 'nsewb' });
+  ctx.col.addCam(57.2, 8.0, M.z - 0.2, 65.4, 8.4, M.z + 0.2);
+  P.hangingLamp(ctx, M.x, 8.05, M.z, { room: r, len: 3.6, radius: 10, intensity: 1.7 });
   // el brasero de los cauterios, con los hierros metidos en las ascuas
-  P.brazier(ctx, 57.4, 0, 38.9);
-  for (let i = 0; i < 3; i++) palo(wb, V(57.3 + i * 0.08, 0.95, 38.8), V(57.8 + i * 0.12, 1.45, 38.3 + i * 0.1), 0.012, 'iron', { room: r, round: true });
-  ctx.lights.push({ x: 57.4, y: 1.2, z: 38.9, r: 1, g: 0.35, b: 0.1, radius: 4, intensity: 0.9, room: r });
+  P.brazier(ctx, 63.6, 0, 47.0);
+  for (let i = 0; i < 3; i++) palo(wb, V(63.5 + i * 0.08, 0.95, 46.9), V(64.0 + i * 0.12, 1.45, 46.4 + i * 0.1), 0.012, 'iron', { room: r, round: true });
+  ctx.lights.push({ x: 63.6, y: 1.2, z: 47.0, r: 1, g: 0.35, b: 0.1, radius: 5, intensity: 1.0, room: r });
   // la mesa de los hierros (las sierras, los cuchillos, las tenazas, el
-  // trépano) y su tabla en la pared
-  P.table(ctx, 52.0, 0, 35.2, 1.6, 0.7, 0);
+  // trépano), bajo la galería, y su tabla en la pared
+  P.table(ctx, 58.4, 0, 36.0, 0.8, 1.8, Math.PI / 2);
   const rng = new RNG(2604);
   for (let i = 0; i < 6; i++) {
-    const px = 51.4 + i * 0.18;
-    wb.box('iron', px - 0.02, 0.8, 35.0 + rng.range(-0.05, 0.1), px + 0.02, 0.815, 35.4 + rng.range(-0.05, 0.1), { ao: false, room: r });
+    const pz = 35.4 + i * 0.2;
+    wb.box('iron', 58.2 + rng.range(-0.05, 0.1), 0.8, pz - 0.02, 58.6 + rng.range(-0.05, 0.1), 0.815, pz + 0.02, { ao: false, room: r });
   }
-  trepano(wb, 52.55, 0.83, 35.35, r);
-  tablaHierros(ctx, 52.0, 1.25, 34.47, 0, r, 2601);
-  // los cubos de debajo de la mesa y la sangre del suelo
-  P.barrel(ctx, 55.6, 0, 38.4, { r: 0.28 });
-  P.decal(ctx, M.x, 0.02, M.z, 2.4);
-  P.decal(ctx, 53.0, 0.02, 39.6, 1.2);
+  trepano(wb, 58.5, 0.83, 36.75, r);
+  tablaHierros(ctx, 57.23, 1.4, 38.4, Math.PI / 2, r, 2601);
+  // los camastros de los inocentes, contra el muro del huerto, con sus
+  // cadenas; y los cubos
+  for (const [z, b] of [
+    [36.6, true],
+    [39.2, true],
+    [41.8, false],
+    [44.4, true],
+  ]) {
+    camastro(ctx, 64.4, 0, z, Math.PI / 2, r, { blood: b });
+    wb.box('iron', 65.33, 1.45, z - 0.05, 65.4, 1.55, z + 0.05, { ao: false, room: r });
+    P.chains(ctx, 65.32, 1.45, z, 12, 0);
+  }
+  P.barrel(ctx, 62.1, 0, 42.6, { r: 0.25 });
+  P.barrel(ctx, 65.0, 0, 49.9, { r: 0.28 });
+  P.decal(ctx, M.x, 0.02, M.z, 2.6);
+  P.decal(ctx, 60.0, 0.02, 46.6, 1.4);
+  P.decal(ctx, 64.0, 0.02, 40.6, 1.2);
   // la balda de los cráneos y las coronas de repuesto, colgadas
-  estanteCraneos(ctx, 59.3, 0, 34.7, 0, 2.0, r, 2605);
-  for (let i = 0; i < 3; i++) corona(wb, 56.1 + i * 0.6, 2.2, 34.62, 1.0, r, { tilt: 0.1 * (i - 1) });
-  for (let i = 0; i < 3; i++) lamina(ctx, 50.0, 2.0, 36.6 + i * 1.2, Math.PI / 2, r, 2606 + i);
+  estanteCraneos(ctx, 63.3, 0, 34.75, 0, 2.0, r, 2605);
+  for (let i = 0; i < 3; i++) corona(wb, 59.6 + i * 0.6, 2.4, 34.62, 1.0, r, { tilt: 0.1 * (i - 1) });
+  for (let i = 0; i < 3; i++) lamina(ctx, 57.24, 2.0, 41.0 + i * 1.3, Math.PI / 2, r, 2606 + i);
+  for (let i = 0; i < 3; i++) lamina(ctx, 65.36, 5.6, 38.0 + i * 3.6, -Math.PI / 2, r, 2690 + i);
   // la otra mesa: el último paciente, tapado con una sábana
-  P.table(ctx, 51.0, 0, 39.3, 1.9, 0.8, 0);
+  P.table(ctx, 59.6, 0, 48.8, 1.9, 0.8, 0);
   wb.setRoom(r);
-  bakeCorpse(wb, 51.0, 0.8, 39.3, Math.PI / 2, 'back', 'villager', 26);
-  wb.box('linen', 50.05, 0.95, 38.92, 51.95, 1.1, 39.68, { ao: false, room: r, grime: false, tint: [0.8, 0.76, 0.68] });
-  wb.box('flesh', 50.6, 1.101, 39.0, 51.2, 1.105, 39.5, { ao: false, room: r, faces: 't', tint: [0.42, 0.1, 0.08], grime: false });
+  bakeCorpse(wb, 59.6, 0.8, 48.8, Math.PI / 2, 'back', 'villager', 26);
+  wb.box('linen', 58.65, 0.95, 48.42, 60.55, 1.1, 49.18, { ao: false, room: r, grime: false, tint: [0.8, 0.76, 0.68] });
+  wb.box('flesh', 59.2, 1.101, 48.5, 59.8, 1.105, 49.0, { ao: false, room: r, faces: 't', tint: [0.42, 0.1, 0.08], grime: false });
+  // la paja del suelo (la que prende con los cauterios)
+  const rp = new RNG(2680);
+  for (let i = 0; i < 46; i++) {
+    const x = rp.range(59.6, 64.8),
+      z = rp.range(36.2, 49.8);
+    if (Math.abs(x - M.x) < 1.3 && Math.abs(z - M.z) < 0.7) continue;
+    wb.box('straw', x - rp.range(0.15, 0.4), 0.012, z - rp.range(0.1, 0.3), x + rp.range(0.15, 0.4), 0.03, z + rp.range(0.1, 0.3), { ao: false, room: r, tint: [0.62, 0.56, 0.4] });
+  }
+  // la galería de madera, por el oeste (su barandilla, sobre la sala), y los
+  // bancos de los que miraban
+  railing(ctx, 59.2, 34.6, 59.2, 50.8, y1, r);
+  for (let i = 0; i < 6; i++) wb.box('timber', 59.12, y1 - 0.25, 35.4 + i * 2.85, 59.32, y1, 35.6 + i * 2.85, { ao: false, room: r, faces: 'nsewb' });
+  P.bench(ctx, 57.7, y1, 42.6, 1.6, Math.PI / 2);
+  P.bench(ctx, 57.7, y1, 48.2, 1.6, Math.PI / 2);
+  P.candles(ctx, 57.6, y1, 37.4, 3, 2681, { room: r, radius: 4.5, intensity: 0.55 });
+  // la luz de la luna por los ventanales altos
+  luna(ctx, 61.3, 6.4, 35.0, r, 0.7, 7);
+  luna(ctx, 65.0, 6.4, 39.0, r, 0.55, 6);
+  luna(ctx, 65.0, 6.4, 46.0, r, 0.55, 6);
+  if (ctx.shafts) {
+    ctx.shafts.push({ a: [64.9, 7.0, 39.0], b: [62.4, 0.05, 40.2], w: 1.2, color: 0x9fb2d8 });
+    ctx.shafts.push({ a: [64.9, 7.0, 46.0], b: [62.4, 0.05, 46.8], w: 1.2, color: 0x9fb2d8 });
+  }
   wb.setRoom(null);
-  // ---- arriba: la alcoba del Físico
+  // ---- las celdas de los furiosos
+  r = 'ino_celdas';
+  wb.setRoom(r);
+  camastro(ctx, 58.4, 0, 56.4, 0, r);
+  camastro(ctx, 61.0, 0, 56.4, 0, r, { blood: false });
+  camastro(ctx, 64.4, 0, 54.0, Math.PI / 2, r);
+  for (const [x, z] of [
+    [57.25, 52.6],
+    [57.25, 54.0],
+    [62.4, 57.35],
+    [63.4, 57.35],
+  ]) {
+    wb.box('iron', x - 0.05, 1.45, z - 0.05, x + 0.05, 1.55, z + 0.05, { ao: false, room: r });
+    P.chains(ctx, x, 1.45, z, 12, 0);
+  }
+  P.barrel(ctx, 65.0, 0, 56.9, { r: 0.25 });
+  luna(ctx, 65.0, 1.6, 52.6, r, 0.35);
+  luna(ctx, 65.0, 1.6, 55.6, r, 0.35);
+  wb.setRoom(null);
+  // ---- arriba: el rellano
+  r = 'ino1';
+  wb.setRoom(r);
+  P.candles(ctx, 56.4, y1, 40.4, 3, 2616, { room: r, radius: 4.5, intensity: 0.6 });
+  P.bench(ctx, 53.4, y1, 40.6, 1.6, 0);
+  luna(ctx, 52.5, y1 + 1.4, 35.0, r, 0.3);
+  wb.setRoom(null);
+  // ---- la alcoba del Físico
   r = 'ino_alcoba';
   wb.setRoom(r);
   // la cama, de fraile (recta, hecha, sin una arruga), el arca a los pies
-  P.bed(ctx, 53.9, y1, 47.85, 0);
-  chest(ctx, 51.45, y1, 48.1, 0, r, 0.9);
-  palanganero(ctx, 50.55, y1, 46.6, r);
-  // la mesa de escribir, contra el tabique de la botica: sus libros, sus
-  // papeles, la vela; y el taburete de cara a la ventana de la cortina
-  P.table(ctx, 52.4, y1, 41.6, 1.6, 0.8, 0);
-  P.stool(ctx, 52.4, y1, 42.45, { room: r });
-  pilaLibros(ctx, 51.85, y1 + 0.8, 41.45, 3, r, 2624);
-  pilaLibros(ctx, 53.0, y1 + 0.8, 41.4, 5, r, 2625);
-  wb.cylinder('black', 52.2, y1 + 0.8, 41.35, 0.03, 0.035, 0.05, 6, { ao: false, room: r });
-  P.candles(ctx, 52.65, y1 + 0.8, 41.35, 2, 2608, { room: r, radius: 4, intensity: 0.6, spread: 0.08 });
-  P.stool(ctx, 51.0, y1, 44.0, { room: r });
-  pilaLibros(ctx, 54.6, y1, 41.5, 6, r, 2626);
+  P.bed(ctx, 54.4, y1, 47.6, 0);
+  chest(ctx, 52.0, y1, 47.85, 0, r, 0.9);
+  palanganero(ctx, 56.4, y1, 42.2, r);
+  // la mesa de escribir, de cara a la ventana de la cortina: sus libros, sus
+  // papeles, la vela; y el taburete
+  P.table(ctx, 51.4, y1, 44.5, 0.8, 1.5, 0);
+  P.stool(ctx, 52.2, y1, 44.5, { room: r });
+  pilaLibros(ctx, 51.35, y1 + 0.8, 43.9, 3, r, 2624);
+  pilaLibros(ctx, 51.3, y1 + 0.8, 45.1, 5, r, 2625);
+  wb.cylinder('black', 51.55, y1 + 0.8, 44.25, 0.03, 0.035, 0.05, 6, { ao: false, room: r });
+  P.candles(ctx, 51.6, y1 + 0.8, 44.75, 2, 2608, { room: r, radius: 4.5, intensity: 0.65, spread: 0.08 });
+  pilaLibros(ctx, 56.4, y1, 46.8, 6, r, 2626);
   // la cortina de la ventana (por dentro)
-  cortina(ctx, 50.0, y1, 44.0, r);
+  cortina(ctx, 50.1, y1, 44.5, r);
   wb.setRoom(null);
   // ---- la botica
   r = 'ino_botica';
   wb.setRoom(r);
-  estanteFrascos(ctx, 52.6, y1, 34.65, 0, 2.6, r, 2609);
-  estanteFrascos(ctx, 50.15, y1, 37.6, Math.PI / 2, 2.2, r, 2610);
-  P.table(ctx, 53.0, y1, 38.4, 1.6, 0.8, 0);
+  estanteFrascos(ctx, 53.2, y1, 57.25, Math.PI, 3.0, r, 2609);
+  estanteFrascos(ctx, 50.25, y1, 52.6, Math.PI / 2, 2.4, r, 2610);
+  P.table(ctx, 53.4, y1, 52.4, 1.8, 0.9, 0);
   // (en la mesa, el cuenco de las piedras, el almirez, un brazo abierto y
   // clavado a la tabla, los papeles)
-  cuencoPiedras(ctx, 52.5, y1 + 0.8, 38.35, r);
-  wb.cylinder('bronzeAged', 53.65, y1 + 0.8, 38.55, 0.07, 0.09, 0.12, 8, { ao: false, room: r, capBot: true });
-  palo(wb, V(53.65, y1 + 0.85, 38.55), V(53.72, y1 + 1.05, 38.5), 0.012, 'bronzeAged', { room: r, round: true });
-  wb.box('flesh', 52.95, y1 + 0.8, 38.62, 53.5, y1 + 0.86, 38.74, { ao: false, room: r, tint: [0.62, 0.42, 0.36] });
-  alambique(ctx, 54.55, y1, 40.2, Math.PI, r);
-  esponjas(ctx, 50.3, 36.2, 55.2, 36.2, y1 + 2.5, r, 2627);
-  for (let i = 0; i < 4; i++) lamina(ctx, 50.6 + i * 1.0, y1 + 2.0, 40.75, Math.PI, r, 2611 + i);
-  for (let i = 0; i < 5; i++) herbBunch(ctx, 51.0 + i * 0.8, y1 + 2.7, 39.6, 2640 + i, r, 0.3);
-  P.candles(ctx, 52.6, y1 + 0.8, 38.6, 3, 2615, { room: r, radius: 4.5, intensity: 0.7, spread: 0.15 });
+  cuencoPiedras(ctx, 52.9, y1 + 0.8, 52.35, r);
+  wb.cylinder('bronzeAged', 54.05, y1 + 0.8, 52.55, 0.07, 0.09, 0.12, 8, { ao: false, room: r, capBot: true });
+  palo(wb, V(54.05, y1 + 0.85, 52.55), V(54.12, y1 + 1.05, 52.5), 0.012, 'bronzeAged', { room: r, round: true });
+  wb.box('flesh', 53.35, y1 + 0.8, 52.62, 53.9, y1 + 0.86, 52.74, { ao: false, room: r, tint: [0.62, 0.42, 0.36] });
+  alambique(ctx, 56.2, y1, 55.6, -Math.PI / 2, r);
+  esponjas(ctx, 50.8, 50.0, 56.4, 50.0, y1 + 2.7, r, 2627);
+  for (let i = 0; i < 4; i++) lamina(ctx, 51.0 + i * 1.3, y1 + 2.0, 48.83, 0, r, 2611 + i);
+  for (let i = 0; i < 5; i++) herbBunch(ctx, 51.4 + i * 1.0, y1 + 3.0, 54.2, 2640 + i, r, 0.3);
+  P.candles(ctx, 53.2, y1 + 0.8, 52.6, 3, 2615, { room: r, radius: 5, intensity: 0.75, spread: 0.15 });
+  luna(ctx, 50.4, y1 + 1.5, 53.0, r, 0.3);
   wb.setRoom(null);
-  // ---- la sala de los inocentes
-  r = 'ino_sala';
+  // ---- el estudio: los libros, el atril, las láminas, sus cuadernos
+  r = 'ino_estudio';
   wb.setRoom(r);
-  camastro(ctx, 57.0, y1, 35.4, 0, r);
-  camastro(ctx, 59.4, y1, 37.5, Math.PI / 2, r);
-  camastro(ctx, 56.6, y1, 39.8, 0, r, { blood: false });
-  // las argollas y las cadenas de la pared (las de los furiosos)
-  for (const [x, z] of [
-    [55.6, 35.2],
-    [55.6, 36.0],
-    [60.35, 39.4],
-    [60.35, 40.2],
-  ]) {
-    wb.box('iron', x - 0.05, y1 + 1.45, z - 0.05, x + 0.05, y1 + 1.55, z + 0.05, { ao: false, room: r });
-    P.chains(ctx, x, y1 + 1.45, z, 12, 0);
-  }
-  // (el cubo de los camastros, en el rincón: no delante de la puerta de la
-  // botica)
-  P.barrel(ctx, 60.1, y1, 35.0, { r: 0.25 });
-  luna(ctx, 58.5, y1 + 1.6, 34.7, r, 0.35);
+  estanteLibros(ctx, 61.3, y1, 57.25, Math.PI, 3.6, r, 2650, { skull: true });
+  estanteLibros(ctx, 65.25, y1, 53.6, -Math.PI / 2, 2.4, r, 2651);
+  P.table(ctx, 61.8, y1, 53.6, 2.0, 1.0, 0);
+  pilaLibros(ctx, 61.2, y1 + 0.8, 53.4, 5, r, 2652);
+  pilaLibros(ctx, 62.5, y1 + 0.8, 53.8, 3, r, 2653);
+  craneo(wb, 61.9, y1 + 0.8, 53.3, -0.6, r, {});
+  atril(ctx, 58.4, y1, 55.6, Math.PI / 2 + 0.5, r);
+  P.stool(ctx, 61.8, y1, 54.5, { room: r });
+  P.candles(ctx, 62.2, y1 + 0.8, 53.9, 2, 2654, { room: r, radius: 5, intensity: 0.65, spread: 0.08 });
+  for (let i = 0; i < 3; i++) lamina(ctx, 59.6 + i * 1.6, y1 + 2.0, 51.03, 0, r, 2660 + i);
+  luna(ctx, 65.0, y1 + 1.5, 54.0, r, 0.4);
   wb.setRoom(null);
-  // ---- el rellano
-  r = 'ino1';
-  wb.setRoom(r);
-  P.candles(ctx, 58.0, y1, 48.2, 3, 2616, { room: r, radius: 4, intensity: 0.55 });
-  wb.setRoom(null);
-  // ---- el desván: lo que les quitó a todos, las coronas a medio hacer
+  // ---- el desván: lo que les quitó a todos, las coronas a medio hacer; la
+  // barandilla sobre la sala
   r = 'ino2';
   wb.setRoom(r);
   const rd = new RNG(2617);
-  // (los montones de ropa y de zapatos, a lo largo, junto a los aleros)
-  for (let i = 0; i < 7; i++) {
-    const zz = 35.5 + i * 1.7;
-    const xx = rd.chance(0.5) ? 53.2 : 57.3;
+  // (los montones de ropa y de zapatos, a lo largo, donde baja el tejado)
+  for (let i = 0; i < 9; i++) {
+    const zz = 35.6 + i * 2.5;
+    const xx = zz < 50.6 ? 54.0 : rd.chance(0.5) ? 54.0 : 61.6;
     wb.geometry('burlap', new THREE.DodecahedronGeometry(0.55, 0), M4().compose(V(xx, y2 + 0.15, zz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rd.range(0, 3), 0)), V(1.3, 0.5, 1.0)), { ao: false, room: r, tint: rd.pick([[0.5, 0.4, 0.3], [0.35, 0.3, 0.3], [0.55, 0.3, 0.25]]) });
     for (let k = 0; k < 3; k++) botas(ctx, xx + rd.range(-0.6, 0.6), y2, zz + rd.range(0.5, 0.9), rd.range(0, 6), r, { tall: rd.chance(0.5), lying: rd.chance(0.5) });
   }
-  // el banco de las coronas
-  P.table(ctx, 55.25, y2, 36.3, 1.6, 0.7, 0);
-  for (let i = 0; i < 3; i++) corona(wb, 54.75 + i * 0.5, y2 + 0.8, 36.3, 1.0, r, { rods: 4 + i });
-  P.hangingLamp(ctx, 55.25, 9.35, 36.6, { room: r, len: 0.6, radius: 5.5, intensity: 0.75 });
+  // el banco de las coronas, sobre las celdas
+  P.table(ctx, 59.4, y2, 54.6, 1.6, 0.7, 0);
+  for (let i = 0; i < 3; i++) corona(wb, 58.9 + i * 0.5, y2 + 0.8, 54.6, 1.0, r, { rods: 4 + i });
+  P.hangingLamp(ctx, 59.4, 12.4, 54.9, { room: r, len: 1.4, radius: 6, intensity: 0.8 });
+  // las barandillas del borde, sobre la sala (abajo, catorce metros)
+  railing(ctx, 56.95, 34.6, 56.95, 50.8, y2, r);
+  railing(ctx, 57.0, 50.85, 65.4, 50.85, y2, r);
   // la luz de la luna por la claraboya
-  luna(ctx, 57.2, y2 + 1.4, 40.9, r, 0.9, 5);
-  if (ctx.shafts) ctx.shafts.push({ a: [57.2, 9.6, 40.9], b: [56.6, y2 + 0.05, 41.1], w: 1.0, color: 0x9fb2d8 });
+  const C = BR.claraboya;
+  luna(ctx, (C.x0 + C.x1) / 2, y2 + 1.6, (C.z0 + C.z1) / 2, r, 0.9, 5);
+  if (ctx.shafts) ctx.shafts.push({ a: [(C.x0 + C.x1) / 2, 11.0, (C.z0 + C.z1) / 2], b: [(C.x0 + C.x1) / 2 + 0.6, y2 + 0.05, (C.z0 + C.z1) / 2 + 0.2], w: 1.0, color: 0x9fb2d8 });
   wb.setRoom(null);
   claraboya(ctx);
-  // el rótulo del físico, junto a la puerta de la calle
-  rotulo(ctx, 'w', 49.5, 3.2, 46.35, asclepio, { len: 0.85 });
+  // el rótulo del físico, junto a la puerta de la plazuela
+  rotulo(ctx, 'w', 49.5, 3.4, 48.0, asclepio, { len: 0.85 });
   L.interact.push(
     // el tratado (la primera parte, en la botica; la de la corona, en el
     // desván) y la historia clínica del que no se arrodilló, en su mesa
-    { kind: 'note', id: 'n_tratado1', note: 'tratado1', x: 53.45, y: y1 + 0.82, z: 38.2, model: 'paper' },
-    { kind: 'note', id: 'n_tratado2', note: 'tratado2', x: 55.8, y: y2 + 0.82, z: 36.1, model: 'paper' },
-    { kind: 'note', id: 'n_historia', note: 'historia', x: 52.45, y: y1 + 0.82, z: 41.75, model: 'paper' }
+    { kind: 'note', id: 'n_tratado1', note: 'tratado1', x: 53.85, y: y1 + 0.82, z: 52.2, model: 'paper' },
+    { kind: 'note', id: 'n_tratado2', note: 'tratado2', x: 59.95, y: y2 + 0.82, z: 54.4, model: 'paper' },
+    { kind: 'note', id: 'n_historia', note: 'historia', x: 51.45, y: y1 + 0.82, z: 44.5, model: 'paper' }
   );
   void h;
 }
@@ -767,36 +841,39 @@ function cortina(ctx, x, y, z, room) {
   wb.box('linen', x + 0.04, y + 0.9, z + 0.42, x + 0.16, y + 2.55, z + 0.62, { ao: false, room, grime: false, tint: [0.72, 0.66, 0.56] });
 }
 
-// La claraboya del desván: el cerco de madera en el faldón del este, la tapa
-// (de vidrio emplomado, apuntalada abierta) y la luz de dentro.
+// La claraboya del desván: el cerco de madera en el faldón del oeste (el que
+// da a la plazuela), la tapa (de vidrio emplomado, apuntalada abierta) y la
+// luz de dentro.
 function claraboya(ctx) {
   const wb = ctx.wb;
-  const C = { x0: 56.6, z0: 40.3, x1: 57.8, z1: 41.5 };
-  const slope = 3 / 5.75;
-  const Y = (x) => 10.4 - (x - 55.25) * slope;
+  const C = BR.claraboya;
+  const slope = 4.5 / 8.25;
+  const Y = (x) => 13.0 - (57.75 - x) * slope;
   // el cerco: cuatro tablas de canto sobre las tejas
   palo(wb, V(C.x0, Y(C.x0) + 0.08, C.z0), V(C.x0, Y(C.x0) + 0.08, C.z1), 0.05, 'timber');
   palo(wb, V(C.x1, Y(C.x1) + 0.08, C.z0), V(C.x1, Y(C.x1) + 0.08, C.z1), 0.05, 'timber');
   palo(wb, V(C.x0, Y(C.x0) + 0.08, C.z0), V(C.x1, Y(C.x1) + 0.08, C.z0), 0.05, 'timber');
   palo(wb, V(C.x0, Y(C.x0) + 0.08, C.z1), V(C.x1, Y(C.x1) + 0.08, C.z1), 0.05, 'timber');
-  // la tapa, levantada sobre su gozne (el lado de arriba) y el puntal
+  // la tapa, levantada sobre su gozne (el lado de arriba, hacia la
+  // cumbrera) y el puntal
   wb.push();
-  wb.translate(C.x0, Y(C.x0) + 0.12, (C.z0 + C.z1) / 2);
-  wb.rotateZ(1.15);
-  wb.box('wooddark', 0, -0.03, -0.62, 1.25, 0.03, 0.62, { ao: false, faces: 'tnsewb' });
-  wb.box('glass', 0.08, 0.031, -0.52, 1.15, 0.035, 0.52, { ao: false, grime: false, tint: [0.6, 0.65, 0.55] });
+  wb.translate(C.x1, Y(C.x1) + 0.12, (C.z0 + C.z1) / 2);
+  wb.rotateZ(-1.15);
+  wb.box('wooddark', -1.25, -0.03, -0.62, 0, 0.03, 0.62, { ao: false, faces: 'tnsewb' });
+  wb.box('glass', -1.15, 0.031, -0.52, -0.08, 0.035, 0.52, { ao: false, grime: false, tint: [0.6, 0.65, 0.55] });
   wb.pop();
-  palo(wb, V(C.x1 - 0.1, Y(C.x1 - 0.1) + 0.1, (C.z0 + C.z1) / 2), V(C.x0 + 0.45, Y(C.x0) + 1.0, (C.z0 + C.z1) / 2), 0.025, 'wooddark', { round: true });
+  palo(wb, V(C.x0 + 0.1, Y(C.x0 + 0.1) + 0.1, (C.z0 + C.z1) / 2), V(C.x1 - 0.45, Y(C.x1) + 1.0, (C.z0 + C.z1) / 2), 0.025, 'wooddark', { round: true });
   // (desde fuera, la luz del farol del desván por el hueco)
-  ctx.lights.push({ x: (C.x0 + C.x1) / 2, y: Y(57.2) + 0.6, z: (C.z0 + C.z1) / 2, r: 1, g: 0.55, b: 0.22, radius: 2.6, intensity: 0.7 });
-  if (ctx.fires) ctx.fires.push({ x: (C.x0 + C.x1) / 2, y: Y(57.2) - 0.4, z: (C.z0 + C.z1) / 2, s: 0.5, light: false, embers: false, glow: true });
+  ctx.lights.push({ x: (C.x0 + C.x1) / 2, y: Y(C.x0) + 0.6, z: (C.z0 + C.z1) / 2, r: 1, g: 0.55, b: 0.22, radius: 2.6, intensity: 0.7 });
+  if (ctx.fires) ctx.fires.push({ x: (C.x0 + C.x1) / 2, y: Y(C.x0) - 0.4, z: (C.z0 + C.z1) / 2, s: 0.5, light: false, embers: false, glow: true });
 }
 
 // ------------------------------------------------------------ el patio
 // El patio de atrás: la tapia del callejón con su portón (atrancado por
 // dentro), la leñera contra la capilla, el pozo, el pozo de la cal viva (la
 // de los muertos de la peste), la camilla, las jaulas de los furiosos, las
-// sábanas tendidas.
+// sábanas tendidas; y, por el lado de la muralla, el huerto de sus hierbas
+// (la adormidera, la mandrágora, el beleño, la cicuta: lo de la esponja).
 export function patioInocentes(ctx, S, L) {
   const wb = ctx.wb;
   // la tapia del callejón, con el portón
@@ -808,41 +885,83 @@ export function patioInocentes(ctx, S, L) {
   P.firewood(ctx, 51.4, 0, 22.7, 0, 4);
   P.firewood(ctx, 53.4, 0, 22.7, 0, 3);
   // el pozo, el pozo de la cal (blanco, con su borde), la camilla
-  P.well(ctx, 58.8, 0, 24.8, {});
+  P.well(ctx, 60.6, 0, 25.4, {});
   wb.box('ashlar', 52.2, 0, 29.0, 55.2, 0.35, 29.25, { ao: false, sub: 2 });
   wb.box('ashlar', 52.2, 0, 31.25, 55.2, 0.35, 31.5, { ao: false, sub: 2 });
   wb.box('ashlar', 52.2, 0, 29.25, 52.45, 0.35, 31.25, { ao: false, sub: 2 });
   wb.box('ashlar', 54.95, 0, 29.25, 55.2, 0.35, 31.25, { ao: false, sub: 2 });
   wb.box('plaster', 52.45, 0.2, 29.25, 54.95, 0.22, 31.25, { ao: false, faces: 't', tint: [1.1, 1.08, 1.02] });
   ctx.col.add(52.2, 0, 29.0, 55.2, 0.35, 31.5);
-  camilla(ctx, 57.6, 0, 32.4, 0.15, 'out');
+  camilla(ctx, 58.0, 0, 31.6, 0.15, 'out');
   // las jaulas (en una, lo que queda de alguien)
   for (const [x, z] of [
-    [59.9, 28.6],
-    [59.9, 30.4],
+    [66.6, 27.4],
+    [66.6, 29.4],
   ])
     jaula(ctx, x, 0, z, 0.9, 1.6);
   wb.setRoom(null);
-  bakeCorpse(wb, 59.9, 0.06, 30.4, 1.4, 'curl', 'villager', 27);
+  bakeCorpse(wb, 66.6, 0.06, 29.4, 1.4, 'curl', 'villager', 27);
   // las sábanas tendidas, con sus manchas
   P.laundry(ctx, 50.0, 26.2, 50.0, 33.6, 2.8, 2618);
-  P.barrel(ctx, 56.5, 0, 33.4);
-  P.barrel(ctx, 57.3, 0, 33.55, { lying: true, rot: 0.4 });
-  P.decal(ctx, 56.4, 0.02, 31.6, 1.6);
-  P.decal(ctx, 54.6, 0.02, 33.2, 1.2);
-  P.lantern(ctx, 54.5, 2.8, 34.0, Math.PI, true);
-  ctx.lights.push({ x: 54.5, y: 2.6, z: 33.4, r: 1, g: 0.55, b: 0.22, radius: 6, intensity: 0.8 });
+  P.laundry(ctx, 69.0, 23.0, 69.0, 32.6, 2.9, 2619);
+  P.barrel(ctx, 63.8, 0, 33.3);
+  P.barrel(ctx, 64.6, 0, 33.45, { lying: true, rot: 0.4 });
+  P.decal(ctx, 59.6, 0.02, 32.0, 1.6);
+  P.decal(ctx, 61.3, 0.02, 33.2, 1.2);
+  P.lantern(ctx, 61.3, 3.2, 34.0, Math.PI, true);
+  ctx.lights.push({ x: 61.3, y: 3.0, z: 33.4, r: 1, g: 0.55, b: 0.22, radius: 7, intensity: 0.85 });
+  // ---- el huerto: los bancales de tablas, con sus hierbas en fila, y sus
+  // tablillas; la regadera; el espantapájaros con el ropón viejo
+  const rh = new RNG(2700);
+  const HIERBA = [
+    [0.36, 0.5, 0.26],
+    [0.48, 0.52, 0.3],
+    [0.3, 0.42, 0.22],
+    [0.55, 0.5, 0.36],
+  ];
+  for (let k = 0; k < 6; k++) {
+    const z0 = 35.6 + k * 3.6;
+    const x0 = 67.0,
+      x1 = 71.2;
+    for (const [a, b, c, d] of [
+      [x0, z0, x1, z0 + 0.06],
+      [x0, z0 + 1.94, x1, z0 + 2.0],
+      [x0, z0, x0 + 0.06, z0 + 2.0],
+      [x1 - 0.06, z0, x1, z0 + 2.0],
+    ])
+      wb.box('planks', a, 0, b, c, 0.3, d, { ao: false, tint: [0.62, 0.55, 0.46] });
+    wb.box('dirt', x0 + 0.06, 0.18, z0 + 0.06, x1 - 0.06, 0.24, z0 + 1.94, { ao: false, faces: 't', tint: [0.42, 0.34, 0.26] });
+    ctx.col.add(x0, 0, z0, x1, 0.3, z0 + 2.0);
+    const tint = HIERBA[k % HIERBA.length];
+    for (let i = 0; i < 12; i++) {
+      const x = x0 + 0.35 + (i % 6) * 0.7 + rh.range(-0.1, 0.1),
+        z = z0 + 0.55 + Math.floor(i / 6) * 0.9 + rh.range(-0.1, 0.1);
+      const hh = rh.range(0.18, 0.45);
+      wb.box('hoja', x - 0.12, 0.24, z - 0.12, x + 0.12, 0.24 + hh, z + 0.12, { ao: false, tint });
+      if (k % 3 === 1 && i % 3 === 0) wb.box('clothRed', x - 0.05, 0.24 + hh, z - 0.05, x + 0.05, 0.3 + hh, z + 0.05, { ao: false, grime: false, tint: [0.9, 0.3, 0.25] });
+    }
+    palo(wb, V(x0 - 0.15, 0, z0 + 1.0), V(x0 - 0.15, 0.7, z0 + 1.0), 0.02, 'wooddark', {});
+    wb.box('planks', x0 - 0.3, 0.55, z0 + 0.95, x0, 0.75, z0 + 1.05, { ao: false, tint: [0.78, 0.7, 0.58] });
+  }
+  P.basket(ctx, 66.5, 0, 57.2, { rot: 0.2 });
+  // el espantapájaros: dos palos, el ropón encerado viejo y una máscara rota
+  palo(wb, V(69.0, 0, 56.6), V(69.0, 2.4, 56.6), 0.04, 'wooddark', {});
+  palo(wb, V(68.2, 1.8, 56.6), V(69.8, 1.8, 56.6), 0.035, 'wooddark', {});
+  for (let i = 0; i < 4; i++) wb.box('leather', 68.55 + i * 0.22, 0.7, 56.5, 68.75 + i * 0.22, 1.85, 56.7, { ao: false, tint: [0.2, 0.17, 0.14] });
+  wb.geometry('leather', new THREE.ConeGeometry(0.06, 0.32, 8), M4().compose(V(69.0, 2.1, 56.85), Q(Math.PI / 2 + 0.4, 0, 0), V(1, 1, 0.85)), { ao: false, tint: [0.42, 0.3, 0.22] });
+  ctx.col.add(68.9, 0, 56.5, 69.1, 2.4, 56.7);
   // ---- el callejón de la capilla: la barricada de la plazuela (apuntalada
   // por el lado del callejón), los trastos, la ventanita de la capilla
-  L.interact.push({ kind: 'door', id: 'd_callejon', x: 47.75, y: 0, z: 38.45, w: 3.5, h: 2.6, axis: 'x', lock: { type: 'boards', side: -1, front: 'callejonFrente', msg: 'callejonCae', shut: 'callejonPuntales' }, mat: 'barricade', hinge: 0 });
-  P.barrel(ctx, 46.6, 0, 33.0);
-  P.crate(ctx, 48.8, 0, 31.4, 0.8, 0.3);
+  L.interact.push({ kind: 'door', id: 'd_callejon', x: 47.75, y: 0, z: 40.6, w: 3.5, h: 2.6, axis: 'x', lock: { type: 'boards', side: -1, front: 'callejonFrente', msg: 'callejonCae', shut: 'callejonPuntales' }, mat: 'barricade', hinge: 0 });
+  P.barrel(ctx, 46.6, 0, 35.4);
+  P.crate(ctx, 48.8, 0, 33.4, 0.8, 0.3);
   P.cart(ctx, 47.7, 0, 24.6, 1.5, { brokenWheel: true });
   // la ventanita enrejada de la capilla, al fondo, con la luz de su altar
   wb.box('black', 47.3, 2.2, 21.96, 48.2, 3.1, 21.97, { ao: false, grime: false, faces: 's' });
   for (let i = 0; i < 5; i++) wb.box('iron', 47.35 + i * 0.2, 2.2, 21.97, 47.38 + i * 0.2, 3.1, 22.0, { ao: false });
   wb.box('ember', 47.6, 2.3, 21.955, 47.9, 2.5, 21.96, { ao: false, grime: false, faces: 's' });
   ctx.lights.push({ x: 47.75, y: 2.6, z: 22.5, r: 1, g: 0.6, b: 0.3, radius: 3, intensity: 0.5 });
+  void S;
 }
 
 // Una jaula de hierro (de las de colgar, puesta en el suelo).

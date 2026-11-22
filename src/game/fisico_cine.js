@@ -1,7 +1,7 @@
 // Las escenas del Físico de los Inocentes (game/fisico.js).
 //
-// LA CORTINA (al entrar en la calleja, la primera vez). Por encima del
-// hombro, la calleja entera, larga y estrecha, y al fondo la Casa de los
+// LA CORTINA (al entrar en la rúa, la primera vez). Por encima del
+// hombro, la rúa entera, larga y recta, y al fondo la Casa de los
 // Inocentes. Luego, de lejos y muy cerrado, la ventana de arriba: la cortina
 // se aparta, asoma el pico y los dos ojos de vidrio cogen la luz de la vela;
 // te mira, ladea la cabeza (como un pájaro): «Ah. Uno sano.»; suelta el paño
@@ -13,22 +13,23 @@ import { clip } from '../entities/rig.js';
 import { DIALOG, MSG } from './story.js';
 import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
 import { MESA_CANTO } from './fisico_pelea.js';
+import { BR } from '../world/level_barrio.js';
 
 const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
 const lerp = (a, b, k) => a + (b - a) * k;
 const seg = (t, a, b) => sm((t - a) / (b - a));
 const V3 = THREE.Vector3;
 
-// la ventana de la cortina (la alcoba del Físico, en el eje de la calleja):
-// el hueco que deja el paño fijo, y el suelo de la alcoba
-const VEN = { x: 49.95, y0: 4.95, y1: 6.45, z0: 43.95, z1: 44.45, piso: 4.05 };
+// la ventana de la cortina (la alcoba del Físico, en el eje de la rúa): el
+// hueco que deja el paño fijo, y el suelo de la alcoba
+const VEN = { x: 50.1, y0: 5.15, y1: 6.65, z0: 44.45, z1: 44.95, piso: 4.25 };
 // dónde se asoma (y de dónde viene: de lo oscuro, detrás del paño fijo)
-const ASOMA = { x: 50.36, z: 44.2 };
-const DETRAS = { x: 50.81, z: 43.85 };
+const ASOMA = { x: 50.51, z: 44.7 };
+const DETRAS = { x: 50.96, z: 44.35 };
 
 // Guion (s). (Los gestos, FI_CLIPS.cortina, van con estos mismos tiempos.)
 const T_A = 2.9; // por encima del hombro
-const T_ANDA = 2.2; // lo que anda el jugador, calleja adentro
+const T_ANDA = 2.2; // lo que anda el jugador, rúa adentro
 const T_ABRE = [3.5, 4.3]; // la cortina se aparta
 const T_DICE = 5.5;
 const T_SE_VA = [7.4, 8.0]; // suelta el paño y se retira
@@ -79,7 +80,7 @@ export class CortinaCine {
     const p = g.player;
     g.flags['fisico:intro'] = true;
     F.modo = 'cine';
-    // (unos pasos más, calleja adentro, y se para)
+    // (unos pasos más, rúa adentro, y se para)
     p.state = 'free';
     p.autoDir = { x: 1, z: 0, m: 0.32 };
     g.lockTarget = null;
@@ -127,22 +128,22 @@ export class CortinaCine {
     this.luz.intensity = 2.4 * seg(t, T_ABRE[0], T_ABRE[1]) * (1 - seg(t, T_SE_VA[0] + 0.2, T_SE_VA[1] + 0.4));
     // --- el paño
     this.posePano(seg(t, T_ABRE[0], T_ABRE[1]) * (1 - seg(t, T_SE_VA[0] + 0.1, T_SE_VA[1] + 0.1)));
-    const at = { x: VEN.x, y: 5.5, z: 44.2 };
+    const at = { x: VEN.x, y: 5.9, z: (VEN.z0 + VEN.z1) / 2 };
     if (this.cue('abre', T_ABRE[0])) g.audio && g.audio.play('stairCreak', at);
     if (this.cue('dice', T_DICE)) fiSay(e, DIALOG.fisicoCortina, 2.6);
     if (this.cue('cae', T_SE_VA[0] + 0.2)) g.audio && g.audio.play('stairCreak', at);
     // --- cámara
     if (t < T_A) {
-      // por encima del hombro: la calleja entera y, al fondo, la casa
+      // por encima del hombro: la rúa entera y, al fondo, la casa
       const s = seg(t, 0, T_A);
       this.pos.set(Math.max(14.7, p.pos.x - 1.6 - s * 0.3), p.visY + 2.05, p.pos.z + 0.75);
-      this.look.set(VEN.x, lerp(3.6, 5.2, s), 44.1);
+      this.look.set(VEN.x, lerp(3.8, 5.5, s), (VEN.z0 + VEN.z1) / 2 - 0.1);
       g.camRig.override = { pos: this.pos, look: this.look, fov: lerp(46, 38, s), snap: true };
     } else if (t < T_CORTE) {
       // la ventana, de lejos y muy cerrado
       const s = seg(t, T_A, T_END);
-      this.pos.set(38.6, 2.1, 44.6);
-      this.look.set(VEN.x, 5.62 - s * 0.05, 44.15);
+      this.pos.set(38.6, 2.1, 45.1);
+      this.look.set(VEN.x, 5.95 - s * 0.05, (VEN.z0 + VEN.z1) / 2 - 0.05);
       g.camRig.override = { pos: this.pos, look: this.look, fov: lerp(14, 11.5, s), snap: true };
     } else if (this.cue('corte', T_CORTE)) this.camBack();
     return t < T_END;
@@ -185,7 +186,7 @@ export class CortinaCine {
 
 // ======================================================================
 // LA CAMILLA (te ha dormido con la esponja). A negro: su voz. Despiertas
-// atado a la camilla, boca arriba, mientras te lleva por la calleja: el
+// atado a la camilla, boca arriba, mientras te lleva por la rúa: el
 // cielo, los aleros que pasan, el farol que se mece y su máscara, del revés,
 // asomándose por encima de ti. La puerta de su casa, desde la plazuela. A
 // negro. En el quirófano, bajo la lámpara: ordena los hierros, te toma el
@@ -198,13 +199,17 @@ export class CortinaCine {
 // la mesa del quirófano (inocentes.js: quirofanoMesa; la cabecera, al
 // oeste), la puerta de la calle de su casa y la del patio (por donde va a la
 // fragua y vuelve)
-const MESA = { x: 54.6, y: 0.92, z: 37.6 };
-const PATIO = { x: 54.95, z: 34.95, id: 'd_quirofano_patio' };
-// el viaje, por la calleja (de oeste a este), y la entrada a su casa
-const VIAJE = { x0: 24.6, x1: 33.2, z: 44.0 };
-const ENTRA = { x0: 45.9, x1: 49.7, z: 45.45, puerta: 'd_inocentes' };
+const MESA = { x: BR.mesa.x, y: 0.92, z: BR.mesa.z };
+const PATIO = { x: BR.mesa.x, z: 35.0, id: 'd_quirofano_patio' };
+// la mesa de los hierros (bajo la galería), dónde se pone él a ordenarlos y
+// dónde, junto a la cabecera, para tomarte el pulso
+const HIERROS = { x: 58.4, z: 36.0, el: [59.15, 36.0] };
+const PULSO = { x: BR.mesa.x - 0.65, z: BR.mesa.z - 0.75 };
+// el viaje, por la rúa (de oeste a este), y la entrada a su casa
+const VIAJE = { x0: 24.6, x1: 33.2, z: 44.5 };
+const ENTRA = { x0: 45.4, x1: 49.9, z: 46.5, puerta: 'd_inocentes' };
 // el Coronado que espera a su puerta: se aparta
-const APARTA = { id: 'e_coronado_puerta', x: 47.1, z: 46.9, yaw: -2.2 };
+const APARTA = { id: 'e_coronado_puerta', x: 47.6, z: 49.4, yaw: -2.2 };
 
 // Guion (s)
 const C_DESPIERTA = 2.6; // a negro hasta aquí
@@ -345,7 +350,7 @@ export class CamillaCine {
     }
     return false;
   }
-  // material de objeto con la luz del sitio (la de la calleja; la del
+  // material de objeto con la luz del sitio (la de la rúa; la del
   // quirófano, para las correas)
   mat(x, y, z) {
     const g = this.g;
@@ -467,7 +472,7 @@ export class CamillaCine {
     // ---- a negro: su voz
     if (this.cue('duerme', 0.5)) fiSay(e, DIALOG.fisicoDuerme, 2.6);
     if (t < C_PUERTA) {
-      // ---- el viaje por la calleja
+      // ---- el viaje por la rúa
       const u = Math.max(0, (t - 0.2) / (C_PUERTA - 0.2));
       const x = lerp(VIAJE.x0, VIAJE.x1, u);
       const dx = x - (this._x ?? x);
@@ -516,8 +521,8 @@ export class CamillaCine {
       this._x = x;
       this.camilla(x, ENTRA.z, dx, dt);
       F.sleep = 0.25 + u * 0.5;
-      this.pos.set(42.9, 1.25, 47.9);
-      this.look.set(48.4, 1.15, 45.4);
+      this.pos.set(42.9, 1.25, 49.4);
+      this.look.set(48.9, 1.15, ENTRA.z);
       g.camRig.override = { pos: this.pos, look: this.look, fov: 48, snap: true };
       return;
     }
@@ -525,7 +530,7 @@ export class CamillaCine {
       // ---- a negro: el portazo
       if (this.cue('negro', C_NEGRO)) {
         g.fade = g.fadeTarget = 0;
-        g.audio && g.audio.play('doorSlam', { x: 50, y: 1, z: 45.4 });
+        g.audio && g.audio.play('doorSlam', { x: 49.5, y: 1, z: ENTRA.z });
         const d = g.interact.list.find((i) => i.id === ENTRA.puerta);
         if (d) g.interact.setOpen(d, false);
         g.scene.remove(this.cam.root);
@@ -542,22 +547,22 @@ export class CamillaCine {
       this.correas = correasMesh(this.mat(MESA.x, 0, MESA.z));
       for (const c of this.correas) g.scene.add(c);
       // él, en la mesa de los hierros
-      e.pos.set(52.0, 0, 35.95);
-      e.yaw = Math.PI;
+      e.pos.set(HIERROS.el[0], 0, HIERROS.el[1]);
+      e.yaw = -Math.PI / 2;
       e.anim.play(FI_CLIPS.ordena, { blend: 0 });
     }
     F.sleep = Math.max(0.12, F.sleep - dt * 0.12);
     const lamp = this.v.set(MESA.x + 0.05, 2.5, MESA.z);
     if (this.cue('hierros', C_MESA + 1.2)) {
       fiSay(e, DIALOG.fisicoHierros, 2.8);
-      g.audio && g.audio.play('chestBar', { x: 52, y: 1, z: 35.2 });
+      g.audio && g.audio.play('chestBar', { x: HIERROS.x, y: 1, z: HIERROS.z });
     }
-    if (this.cue('tintinea', C_MESA + 2.6)) g.audio && g.audio.play('coinDrop', { x: 52, y: 1, z: 35.2 });
+    if (this.cue('tintinea', C_MESA + 2.6)) g.audio && g.audio.play('coinDrop', { x: HIERROS.x, y: 1, z: HIERROS.z });
     // va a tu lado (andando) y te toma el pulso
-    if (t >= C_MESA + 3.0 && t < C_PULSO[0]) this.anda(52.0, 35.95, 53.95, 36.85, (t - C_MESA - 3.0) / (C_PULSO[0] - C_MESA - 3.0), dt);
+    if (t >= C_MESA + 3.0 && t < C_PULSO[0]) this.anda(HIERROS.el[0], HIERROS.el[1], PULSO.x, PULSO.z, (t - C_MESA - 3.0) / (C_PULSO[0] - C_MESA - 3.0), dt);
     if (this.cue('pulso', C_PULSO[0])) {
       e.vx = e.vz = 0;
-      e.pos.set(53.95, 0, 36.85);
+      e.pos.set(PULSO.x, 0, PULSO.z);
       e.yaw = 0.15;
       e.anim.play(FI_CLIPS.pulso, { blend: 0.3 });
     }
@@ -567,7 +572,7 @@ export class CamillaCine {
     // se va por la puerta del patio
     if (t >= C_PULSO[1] + 2.0 && t < C_SEVA) {
       if (this.cue('anda2', C_PULSO[1] + 2.0)) e.anim.stop(0.3);
-      this.anda(53.95, 36.85, PATIO.x, PATIO.z, (t - C_PULSO[1] - 2.0) / (C_SEVA - C_PULSO[1] - 2.0), dt);
+      this.anda(PULSO.x, PULSO.z, PATIO.x, PATIO.z, (t - C_PULSO[1] - 2.0) / (C_SEVA - C_PULSO[1] - 2.0), dt);
     }
     // la cámara: la lámpara; cuando te toma el pulso, a él
     if (t >= C_PULSO[0] && t < C_PULSO[1] + 1.6) {
@@ -703,7 +708,7 @@ export class CamillaCine {
     const e = F.e;
     this.hT += dt;
     const u = Math.min(1, this.hT / 2.2);
-    this.anda(PATIO.x, PATIO.z, 54.0, 36.8, u, dt);
+    this.anda(PATIO.x, PATIO.z, PULSO.x + 0.05, PULSO.z - 0.05, u, dt);
     if (this.hT > 2.2 && !this.cues.has('alza')) {
       this.cues.add('alza');
       e.vx = e.vz = 0;
@@ -895,7 +900,7 @@ export class MuerteCine {
       g.camRig.override = { pos: this.pos, look: this.look, fov: 50, snap: true };
     } else {
       const s = seg(t, M_SIENTA, M_END);
-      this.pos.set(lerp(57.0, 56.3, s), lerp(1.75, 1.6, s), lerp(40.45, 39.95, s));
+      this.pos.set(C.x + lerp(2.4, 1.7, s), lerp(1.75, 1.6, s), C.z + lerp(2.47, 1.97, s));
       this.look.set(C.x, lerp(1.45, 1.35, s), C.z);
       g.camRig.override = { pos: this.pos, look: this.look, fov: lerp(44, 34, s), snap: true };
     }

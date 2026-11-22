@@ -4,21 +4,25 @@
 // sitio: el barrio es suyo y lo recorre. Esto decide dónde está y qué hace.
 //
 //  - Te vigila desde el principio: la cortina (fisico_cine.js), y luego
-//    aparece al fondo de la calleja, te mira, ladea la cabeza y se va. Antes
-//    de la caza no se deja alcanzar: si te acercas, se marcha.
-//  - Cuarentena: mientras estás arriba, en casa de la viuda, clava tablas en
-//    su puerta por fuera; y, cazando, tapia la puerta de la casa en la que te
-//    has metido (si tiene otra salida).
+//    sale de su casa, viene andando hasta el fondo de la rúa, te mira, ladea
+//    la cabeza y se vuelve. Antes de la caza no se deja alcanzar: si te
+//    acercas, se marcha.
+//  - Cuarentena: mientras estás arriba, en casa de la cerera, baja la rúa y
+//    clava tablas en su puerta por fuera; y, cazando, tapia la puerta de la
+//    casa en la que te has metido (si tiene otra salida).
 //  - La caza empieza en la tintorería (entra detrás de ti). Desde entonces,
 //    lo que hace ruido le trae: los cascabeles de un Coronado, las
 //    campanillas de una cuerda, un cepo que salta, una puerta que se arranca
-//    (trampas.js). Aparece por la puerta de una de las casas que ya curó, la
-//    que no ves, la más cercana; va a donde fue el ruido, husmea, te busca
-//    por donde estuviste la última vez y, si no te encuentra, se va (y
-//    vuelve).
+//    (trampas.js). Sale de su casa, por su puerta (es la única: se le ve
+//    salir), va a donde fue el ruido, husmea, te busca por donde estuviste la
+//    última vez y, si no te encuentra, se vuelve a su casa andando (y vuelve
+//    a salir).
 //  - Por los tejados no te sigue: te acompaña desde la calle, debajo, sin
 //    quitarte los ojos de encima.
-//  - Si le hieres mucho, te echa la cal a los ojos y se retira; volverá.
+//  - Su vida es una sola, la de la calle y la de su quirófano: lo que le
+//    hagas se queda. Herido, te echa la cal a los ojos y se retira a su casa;
+//    con la mitad de la vida o menos se encierra en ella y te espera en la
+//    sala grande, donde la pelea empieza con la vida que le quedó.
 //  - Quiere atraparte, no matarte: el gancho de la vara te trae, la esponja
 //    te duerme (forcejea) y, si te duermes, la camilla (fisico_cine.js).
 //  - Habla siempre bajo, sin prisa: piensa en voz alta (story.js, DIALOG).
@@ -35,26 +39,21 @@ const inR = (r, x, z, m = 0) => x >= r.x0 - m && x <= r.x1 + m && z >= r.z0 - m 
 // el barrio entero (lo que él tiene por suyo)
 const BARRIO = { x0: 14, z0: 3, x1: 73, z1: 58 };
 // las calles (a ras de suelo), por donde anda
-const CALLES = [BR.calleja, BR.plazuela];
+const CALLES = [BR.rua, BR.plazuela];
 // las casas en las que entra a buscarte: su zona, su puerta y, delante y
 // detrás de la puerta, dónde se pone (para tapiarla: el lado de fuera)
 const CASAS = [
-  { zona: 'zapatero', puerta: 'd_zapatero', fuera: [24.0, 43.0], dentro: [24.0, 40.6], lado: 1, otra: 'd_zapatero_corral' },
-  { zona: 'viuda', puerta: 'd_viuda', fuera: [25.2, 45.0], dentro: [25.2, 47.5], lado: -1, otra: 'd_viuda_patio' },
-  { zona: 'quemada', puerta: 'd_quemada', fuera: [34.9, 48.4], dentro: [32.9, 48.4], lado: 1, otra: 'd_quemada_patio' },
-  { zona: 'tintoreria_pellejeros', puerta: 'd_tinte', fuera: [40.0, 39.4], dentro: [40.0, 37.2], lado: 1, otra: null },
+  { zona: 'zapatero', puerta: 'd_zapatero', fuera: [27.0, 42.0], dentro: [27.0, 40.0], lado: 1, otra: 'd_zapatero_corral' },
+  { zona: 'viuda', puerta: 'd_viuda', fuera: [27.5, 47.0], dentro: [27.5, 49.0], lado: -1, otra: 'd_viuda_patio' },
+  { zona: 'tintoreria_pellejeros', puerta: 'd_tinte', fuera: [40.0, 42.0], dentro: [40.0, 40.0], lado: 1, otra: null },
 ];
-// por dónde aparece y por dónde se va: las puertas de las casas que ya curó
-// (las de la cruz de cal); yaw, saliendo a la calle
-const ENTRADAS = [
-  { id: 'casa', x: 48.8, z: 45.0, yaw: -Math.PI / 2 },
-  { id: 'se', x: 48.8, z: 50.0, yaw: -Math.PI / 2 },
-  { id: 's5', x: 44.5, z: 50.4, yaw: Math.PI },
-  { id: 'agu', x: 37.0, z: 50.4, yaw: Math.PI },
-  { id: 's3', x: 31.75, z: 45.4, yaw: Math.PI },
-  { id: 'n3', x: 29.4, z: 42.6, yaw: 0 },
-  { id: 'n1', x: 17.6, z: 42.6, yaw: 0 },
-];
+// por dónde sale y por dónde se va: la puerta de su casa, a la plazuela (no
+// sale de las casas de los otros: sale de la suya, a la vista, y vuelve a
+// ella andando; se le puede ver venir y seguir hasta su puerta); yaw,
+// saliendo a la calle
+const ENTRADAS = [{ id: 'casa', x: 48.7, z: 46.5, yaw: -Math.PI / 2 }];
+// (dentro de su casa, tras su puerta: donde se pone al volver a ella)
+const ZAGUAN = { x: 51.0, z: 46.5 };
 // cuánto tarda en volver tras irse (s), y lo que le aguanta a uno antes de
 // retirarse (de su vida, en una aparición)
 const VUELVE = [22, 38];
@@ -226,7 +225,7 @@ export class Fisico {
 
   // ------------------------------------------------------------ entradas
   // La puerta por la que sale para ir a (x, z): la más cercana que no
-  // ves; si las ves todas, la más lejana de ti.
+  // ves; si las ves todas, la más lejana de ti. (Hoy es una sola: la suya.)
   entrada(x, z, salir = false, lejos = 6) {
     const p = this.g.player.pos;
     let best = null,
@@ -318,13 +317,15 @@ export class Fisico {
     const g = this.g;
     if (this.shown) return;
     const p = g.player.pos;
+    // (de cerca no se deja ver: si estás junto a su puerta, no sale)
+    if (Math.hypot(ENTRADAS[0].x - p.x, ENTRADAS[0].z - p.z) < 10) return;
     // (se pone en la calle, a una distancia, donde le veas; sale por una
     // puerta lejos de ti: de cerca no se deja ver)
     const E = this.entrada(x, z, false, 10);
     this.show(E.x, E.z, E.yaw);
     this.modo = 'vigia';
-    const tx = clamp(p.x + Math.sign(E.x - p.x) * 11, BR.calleja.x0 + 1, BR.plazuela.x1 - 1);
-    const tz = inR(BR.calleja, tx, 44) ? 44 : clamp(p.z, BR.plazuela.z0 + 1, BR.plazuela.z1 - 1);
+    const tx = clamp(p.x + Math.sign(E.x - p.x) * 11, BR.rua.x0 + 1, BR.plazuela.x1 - 1);
+    const tz = inR(BR.rua, tx, 44.5) ? 44.5 : clamp(p.z, BR.plazuela.z0 + 1, BR.plazuela.z1 - 1);
     this.walk(tx, tz, null, () => {
       // (cogido en un cepo: te mira forcejear, y se va)
       const cepo = g.trampas && g.trampas.held;
@@ -532,7 +533,7 @@ export class Fisico {
       }
     }
     // (lejos de las calles, te espera en medio de la plazuela)
-    if (bd > 14) best = [41.5, 45];
+    if (bd > 14) best = [41.8, 46.4];
     const d = Math.hypot(best[0] - e.pos.x, best[1] - e.pos.z);
     if (d > 2.5 && e.state !== 'camina') this.walk(best[0], best[1], d > 8 ? e.T.run * 0.8 : e.T.walk, () => this.look(999, null), { r: 1.2 });
     else if (e.state === 'camina' && e.data.goal) {
@@ -627,13 +628,13 @@ export class Fisico {
     }
     // ---- el guion
     // (la cortina: al pasar el portón, la primera vez)
-    if (!F['fisico:intro'] && F['door:d_porton'] && inR(BR.calleja, p.pos.x, p.pos.z) && p.pos.x > 15.6 && p.pos.y < 1) {
+    if (!F['fisico:intro'] && F['door:d_porton'] && inR(BR.rua, p.pos.x, p.pos.z) && p.pos.x > 15.6 && p.pos.y < 1) {
       if (g.fisicoCine && g.fisicoCine.cortina) g.fisicoCine.cortina(this);
       else F['fisico:intro'] = true;
       return;
     }
-    // (al fondo de la calleja, la primera vez que pasas de la del zapatero)
-    if (F['fisico:intro'] && !F['fisico:calleja'] && this.modo === 'fuera' && inR(BR.calleja, p.pos.x, p.pos.z) && p.pos.x > 22.5 && p.pos.y < 1) {
+    // (al fondo de la rúa, la primera vez que pasas de la del zapatero)
+    if (F['fisico:intro'] && !F['fisico:calleja'] && this.modo === 'fuera' && inR(BR.rua, p.pos.x, p.pos.z) && p.pos.x > 22.5 && p.pos.y < 1) {
       F['fisico:calleja'] = true;
       this.calleja();
       return;
@@ -641,7 +642,8 @@ export class Fisico {
     // (la viuda: mientras estás arriba, te clava la puerta)
     const casa = this.casaDe(p.pos);
     if (casa && casa.zona === 'viuda' && p.pos.y > 3) this.upT += dt;
-    if (!F['fisico:viuda'] && this.modo === 'fuera' && casa && casa.zona === 'viuda' && p.pos.y > 3 && (this.upT > 25 || F['take:i_llave_tinte'])) {
+    // (tarda en bajar la rúa desde su casa: sale a los doce segundos de subir)
+    if (!F['fisico:viuda'] && this.modo === 'fuera' && casa && casa.zona === 'viuda' && p.pos.y > 3 && (this.upT > 12 || F['take:i_llave_tinte'])) {
       F['fisico:viuda'] = true;
       this.viuda();
       return;
@@ -725,14 +727,15 @@ export class Fisico {
   vuelveFragua() {
     const g = this.g;
     const e = this.e;
-    this.show(55.0, 35.2, 0);
+    const M = BR.mesa;
+    this.show(M.x, 35.0, 0);
     this.setMusic('busca');
     this.say(DIALOG.fisicoSuelto, 3.2);
-    this.last = [54.6, 0, 38.4];
+    this.last = [M.x, 0, M.z + 0.8];
     this.searchN = 0;
     const d = g.interact.list.find((i) => i.id === 'd_quirofano_patio');
     if (d) g.interact.setOpen(d, true);
-    g.audio && g.audio.play('doorOpen', { x: 55.0, y: 1, z: 34.6 });
+    g.audio && g.audio.play('doorOpen', { x: M.x, y: 1, z: 34.3 });
     if (e.T.perceive(e, g.player)) {
       this.modo = 'caza';
       this.setMusic('caza');
@@ -743,51 +746,60 @@ export class Fisico {
     }
     // (si no te ve: a la puerta de la calle, por donde huiría cualquiera; y
     // de allí, a buscarte)
-    this.busca(48.6, 45.45, 0);
+    this.busca(ZAGUAN.x, ZAGUAN.z, 0);
   }
 
   // ------------------------------------------------------------ escenas
-  // Al fondo de la calleja: sale de la esquina de la plazuela, te mira,
-  // ladea la cabeza y se vuelve.
+  // Al fondo de la rúa: sale de su casa, viene andando hasta donde la rúa
+  // se abre a la plazuela, te mira, ladea la cabeza y se vuelve a su puerta.
   calleja() {
-    this.show(38.0, 40.0, -2.3);
+    const E = ENTRADAS[0];
+    this.show(E.x, E.z, E.yaw);
+    this.g.audio && this.g.audio.play('doorOpen', { x: E.x, y: 1, z: E.z });
     this.modo = 'vigia';
-    this.walk(35.8, 43.8, null, () => {
+    this.walk(36.4, 44.5, this.e.T.walk * 1.25, () => {
       this.say(DIALOG.fisicoCalleja, 3.6);
       this.look(4.5, () => this.marcha(), { clip: 'ladea' });
     }, { face: -Math.PI / 2 });
   }
   // La viuda: te clava la puerta mientras estás arriba; luego se va por la
   // calleja, y se para a mirar tu ventana.
+  // (sale de su casa y baja la rúa hasta la puerta de la cerera; la clava; y
+  // se para a mirar la ventana de la sala)
   viuda() {
     const c = CASAS.find((k) => k.zona === 'viuda');
-    this.show(25.2, 44.6, 0);
-    this.modo = 'tapia';
+    const E = ENTRADAS[0];
     const e = this.e;
-    e.data.tapia = {
-      t: 6.5,
-      x: 25.2,
-      z: 46.0,
-      face: 0,
-      then: () => {
-        this.tapiar(c);
-        this.g.flags['tapia:' + c.puerta] = true;
-        this.g.saveGame();
-        this.modo = 'vigia';
-        this.walk(30.0, 44.0, null, () => {
-          this.say(DIALOG.fisicoViudaVentana, 3.6);
-          this.look(3.2, () => this.marcha(), { x: 27.4, z: 46.0, clip: 'ladea' });
-        });
-      },
-    };
-    e.state = 'tapia';
-    e.stT = 0;
-    this.say(DIALOG.fisicoTapia, 3.4);
+    this.show(E.x, E.z, E.yaw);
+    this.g.audio && this.g.audio.play('doorOpen', { x: E.x, y: 1, z: E.z });
+    this.modo = 'tapia';
+    this.walk(c.fuera[0], c.fuera[1], e.T.walk * 1.6, () => {
+      e.data.tapia = {
+        t: 6.5,
+        x: c.fuera[0],
+        z: 48.0,
+        face: 0,
+        then: () => {
+          this.tapiar(c);
+          this.g.flags['tapia:' + c.puerta] = true;
+          this.g.saveGame();
+          this.modo = 'vigia';
+          this.walk(30.6, 45.4, null, () => {
+            this.say(DIALOG.fisicoViudaVentana, 3.6);
+            this.look(3.2, () => this.marcha(), { x: 24.5, z: 48.0, clip: 'ladea' });
+          });
+        },
+      };
+      e.state = 'tapia';
+      e.stT = 0;
+      this.say(DIALOG.fisicoTapia, 3.4);
+    }, { r: 0.5 });
   }
   // La tintorería: entra por la puerta, detrás de ti.
   tintoreria() {
     const e = this.e;
-    this.show(40.0, 39.6, Math.PI);
+    const c = CASAS.find((k) => k.zona === 'tintoreria_pellejeros');
+    this.show(c.fuera[0], c.fuera[1], Math.PI);
     this.modo = 'caza';
     this.setMusic('caza');
     this.say(DIALOG.fisicoTintoreria, 3.6);
@@ -799,4 +811,4 @@ export class Fisico {
   }
 }
 
-export { CASAS, ENTRADAS, CALLES };
+export { CASAS, ENTRADAS, CALLES, ZAGUAN };

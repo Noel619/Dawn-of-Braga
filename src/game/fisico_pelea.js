@@ -19,14 +19,18 @@ import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
 import { additiveFog } from '../gfx/materials.js';
 import { getTexture } from '../gfx/textures.js';
 import { damp, dampAngle } from '../core/util.js';
+import { BR } from '../world/level_barrio.js';
 
-// el quirófano (donde empieza la pelea), el brasero, la mesa y por dónde
-// entran los que llama (del zaguán, por el hueco del tabique)
-const QUIR = { x0: 50.1, z0: 34.6, x1: 60.4, z1: 40.75 };
-const BRASERO = { x: 57.4, z: 38.9, ante: [56.55, 38.35] };
-const SALE = { x: 57.0, z: 38.2 };
+// la sala grande de su casa (donde empieza la pelea: abierta hasta las
+// cerchas, de ocho metros por dieciséis), el brasero, por dónde sale él (de
+// las celdas de los furiosos; si se encerró herido, ya está en su mesa) y por
+// dónde entran los que llama (por la misma puerta de las celdas)
+const QUIR = { x0: BR.sala.x0 + 0.2, z0: BR.sala.z0 + 0.2, x1: BR.sala.x1 - 0.2, z1: BR.sala.z1 - 0.2 };
+const BRASERO = { x: 63.6, z: 47.0, ante: [62.75, 46.35] };
+const SALE = { x: 61.3, z: 50.2 };
+const EN_SU_MESA = { x: 60.2, z: 43.4 };
 const LLAMADOS = ['e_coronado_llamado1', 'e_coronado_llamado2'];
-const HUECO = { x: 57.6, z: 41.6 };
+const HUECO = { x: 61.3, z: 50.6 };
 // la nube de beleño: radio, lo que dura, lo que frena
 const NUBE = { r: 2.4, t: 9, lento: 0.55 };
 // lo que arde a la vez (la paja del suelo)
@@ -69,7 +73,8 @@ export class PeleaFisico {
     const e = this.e;
     const p = g.player;
     F.modo = 'pelea';
-    F.show(SALE.x, SALE.z, Math.atan2(p.pos.x - SALE.x, p.pos.z - SALE.z));
+    const S = F.encerrado ? EN_SU_MESA : SALE;
+    F.show(S.x, S.z, Math.atan2(p.pos.x - S.x, p.pos.z - S.z));
     e.D.engaged = true;
     e.data.fase = 1;
     e.data.llamo = false;
@@ -338,4 +343,4 @@ export class PeleaFisico {
 }
 
 // donde se sienta a morir: el canto sur de su mesa
-export const MESA_CANTO = { x: 54.6, z: 37.98 };
+export const MESA_CANTO = { x: BR.mesa.x, z: BR.mesa.z + 0.38 };

@@ -1,5 +1,6 @@
-// El barrio de los Pellejeros: la calleja, la plazuela de los Inocentes y sus casas,
-// entre la plaza de la Herrería, el corral, la capilla y la muralla.
+// El barrio de los Pellejeros: la rúa, la plazuela de los Inocentes y sus
+// casas grandes, entre la plaza de la Herrería, el corral, la capilla y la
+// muralla.
 //
 // Cuando la carne subió por las calles, los vecinos se encerraron en sus
 // casas y clavaron las puertas. Mestre Clemente, el físico de los inocentes
@@ -8,94 +9,109 @@
 // los enfermos eran los otros, los sanos. Salía de noche con su máscara de
 // pico, llamaba a las puertas, dormía a los sanos con su esponja, les abría
 // el cráneo. A los que sobrevivieron les atornilló una corona de hierro con
-// cascabeles. Luego puso el barrio en cuarentena: cerró la calleja con
-// tablas, puso cepos entre la paja y marcó con una cruz de cal las casas que
-// ya había curado.
+// cascabeles. Luego puso el barrio en cuarentena: cerró el arco de la rúa
+// con tablas, puso cepos entre la paja y marcó con una cruz de cal las casas
+// que ya había curado.
 //
-// El recorrido (ver PLAN_BARRIO.md):
-//  1. El portón de la calleja, en la plaza de la Herrería (la palanca).
-//  2. La calleja: la casa del zapatero (abierta), la de la viuda (la cerera:
-//     la alcoba cerrada, la cornisa, la llave de la tintorería), la quemada.
-//  3. La plazuela de los Inocentes: la Casa de los Inocentes, cerrada; la tintorería.
-//  4. La tintorería: los tintes, el secadero de paños y, por su puerta de
-//     arriba, los tejados: la viga caída sobre la calleja, la casa quemada,
-//     el aguador, las casas del sur, la del palomero (su desván, el palomar)
-//     y el tejado de la Casa de los Inocentes, con su claraboya.
-//  5. La Casa de los Inocentes, por arriba; su quirófano; su patio; el callejón
-//     de la capilla y la cordelería, cuya puerta da a los Pelames, detrás de
-//     la barricada.
+// Las casas son las de los maestros ricos del cuero y de la cera (el
+// zapatero de la Sé, la cerera que hacía las velas de media Braga, el
+// tintorero de los paños buenos): grandes, de tres alturas con su desván,
+// salas de nueve metros, techos de cuatro y una sola escalera en cada una.
+// La rúa tiene siete metros de ancho y se entra a ella por un arco.
+//
+// El recorrido (ver planes_jubilados/PLAN_BARRIO.md y el plano,
+// docs/planos/plan_barrio.png):
+//  1. El arco de la rúa, en la plaza de la Herrería (la palanca).
+//  2. La rúa: la casa del zapatero (abierta), la de la cerera (la alcoba
+//     cerrada, la viga del balcón, la llave de la tintorería; su puerta de
+//     al lado da a la plazuela).
+//  3. La plazuela de los Inocentes: la Casa de los Inocentes, atrancada; la
+//     tintorería; la casa quemada de los Gomes.
+//  4. La tintorería: los tintes, el piso de los paños y el secadero, bajo el
+//     tejado, que sigue por el desván del zapatero (las palomas, el
+//     aprendiz); por el tejado hundido se sale a los tejados: la viga que los
+//     vecinos echaron sobre la rúa, la casa de la cerera, la quemada y el
+//     tejado de la Casa de los Inocentes, con su claraboya.
+//  5. La Casa de los Inocentes, por arriba: el desván, la alcoba de la
+//     cortina, la botica, el estudio y la galería sobre la sala grande,
+//     donde se le pelea; su patio, el callejón y la cordelería, cuya puerta
+//     da a los Pelames, detrás de la barricada.
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { RNG } from '../core/util.js';
-import { house } from './builders.js';
+import { house, archedWall } from './builders.js';
 import { floor } from './level_util.js';
 import * as P from './props.js';
 import { casa, tapia, rotulo, piel, V, LIME } from './kit_casa.js';
 import { zapatero, viuda, quemada, tintoreria } from './barrio_casas.js';
 import { casaInocentes, patioInocentes } from './inocentes.js';
-import { palomero, vigaCalleja, tejadoQuemado, chimenea } from './barrio_tejados.js';
+import { desvanZapatero, vigaRua, tejadoQuemado, chimenea } from './barrio_tejados.js';
 import { cordeleriaDentro } from './cordeleria.js';
-import { horma, palo } from './barrio_atrezo.js';
+import { horma, palo, cruzCal } from './barrio_atrezo.js';
 
-// las plantas: la baja (de 0 a 3,8), la primera (su suelo, a 4,05; su techo,
-// a 7) y la de encima (a 7,25)
-export const PB = 3.8,
-  P1 = 4.05,
-  T1 = 7.0,
-  P2 = 7.25;
+// las plantas de las casas grandes: la baja (de 0 a 4), la de arriba (su
+// suelo, a 4,25; su techo, a 7,65) y el desván (a 7,9), con el muro hasta el
+// alero, a 9,4, y la cumbrera a 12,15
+export const PB = 4.0,
+  P1 = 4.25,
+  T1 = 7.65,
+  P2 = 7.9,
+  ALERO = 9.4,
+  CUMBRE = 12.15;
 const L0 = (o = {}) => ({ y: 0, top: PB, floor: 'flag', ...o });
 const L1 = (o = {}) => ({ y: P1, top: T1, ...o });
+const DESVAN = (o = {}) => ({ y: P2, top: ALERO, attic: true, ...o });
 
 export const BR = {
   // calles
-  calleja: { x0: 14, z0: 42, x1: 34, z1: 46 },
-  plazuela: { x0: 34, z0: 38.5, x1: 49.5, z1: 51 },
-  callejon: { x0: 46, z0: 22, x1: 49.5, z1: 38.5 },
-  // el portón de la calleja (en la plaza de la Herrería)
-  porton: { x: 14, z: 44, w: 4 },
-  // casas de la calleja: al norte (dan al corral por detrás) y al sur (con
-  // sus patios contra la muralla)
-  n1: { x0: 14, z0: 31, x1: 20, z1: 42 },
-  zap: { x0: 20, z0: 31, x1: 27, z1: 42 },
-  n3: { x0: 27, z0: 31, x1: 34, z1: 42 },
-  s1: { x0: 14, z0: 46, x1: 22, z1: 55 },
-  viu: { x0: 22, z0: 46, x1: 29.5, z1: 55 },
-  s3: { x0: 29.5, z0: 46, x1: 34, z1: 55 },
-  // el hundimiento del tejado de la quemada (por el norte) y la viga que cayó
-  // de él sobre la calleja, hasta el tejado de enfrente
-  hundido: { x0: 30.2, z0: 46.65, x1: 33.3, z1: 49.6 },
-  viga: { xa: 33.45, z0: 41.4, y0: 7.85, xb: 31.4, z1: 50.25, y1: 9.8, w: 0.34 },
-  // la plazuela: la tintorería (norte), el aguador y su vecina (sur), la
-  // Casa de los Inocentes (este)
-  tin: { x0: 34, z0: 31, x1: 46, z1: 38.5 },
-  agu: { x0: 34, z0: 51, x1: 42, z1: 58 },
-  s5: { x0: 42, z0: 51, x1: 49.5, z1: 58 },
-  ino: { x0: 49.5, z0: 34, x1: 61, z1: 49 },
-  // la claraboya del desván del Físico, en el faldón del este
-  claraboya: { x0: 56.6, z0: 40.3, x1: 57.8, z1: 41.5 },
-  // el quirófano: la mesa (y la lámpara encima)
-  mesa: { x: 54.6, z: 37.6 },
-  patio: { x0: 49.5, z0: 22, x1: 61, z1: 34 },
-  // el levante, contra la muralla
-  se: { x0: 49.5, z0: 49, x1: 61, z1: 58 },
-  se2: { x0: 61, z0: 44, x1: 72, z1: 58 },
-  pal: { x0: 61, z0: 30, x1: 72, z1: 44 },
-  // el palomar de la cumbrera: su huella, su suelo, la boca de su escalera
-  palomar: { x0: 65.0, z0: 33.0, x1: 68.0, z1: 37.0, y: 13.25, top: 16.4, hueco: 39.4 },
-  ne: { x0: 61, z0: 22, x1: 72, z1: 30 },
+  rua: { x0: 14, z0: 41, x1: 34, z1: 48 },
+  plazuela: { x0: 34, z0: 41, x1: 49.5, z1: 52 },
+  callejon: { x0: 46, z0: 22, x1: 49.5, z1: 41 },
+  // el arco de la rúa, en la plaza de la Herrería (y el portón de la
+  // cuarentena, bajo él)
+  arco: { x0: 14, x1: 15.2, z0: 41, z1: 48, c: 44.5, w: 5.0, h: 3.2 },
+  porton: { x: 14.6, z: 44.5, w: 5.0, h: 3.2 },
+  // las casas grandes de la rúa: la del zapatero (norte) y la de la cerera
+  // (sur, contra la muralla); la tintorería, al norte de la plazuela, pegada
+  // a la del zapatero; la quemada, al sur de la plazuela
+  zap: { x0: 14, z0: 31, x1: 34, z1: 41 },
+  viu: { x0: 14, z0: 48, x1: 34, z1: 58 },
+  tin: { x0: 34, z0: 31, x1: 46, z1: 41 },
+  que: { x0: 34, z0: 52, x1: 49.5, z1: 58 },
+  // la Casa de los Inocentes; su sala grande (de doble altura, abierta hasta
+  // las cerchas: donde se le pelea) y su galería
+  ino: { x0: 49.5, z0: 34, x1: 66, z1: 58 },
+  sala: { x0: 57.2, z0: 34.6, x1: 65.4, z1: 50.8 },
+  galeria: { x0: 57.2, z0: 34.6, x1: 59.2, z1: 50.8 },
+  // su patio de atrás y el huerto de las hierbas, contra la muralla
+  patio: { x0: 49.5, z0: 22, x1: 72, z1: 34 },
+  huerto: { x0: 66, z0: 34, x1: 72, z1: 58 },
+  // la viga que los vecinos echaron de tejado a tejado sobre la rúa
+  viga: { x: 30.6, z0: 41.3, z1: 47.7, y: 9.1, w: 0.34 },
+  // el hundimiento del tejado de la quemada (por el norte)
+  hundido: { x0: 38.6, z0: 52.25, x1: 44.6, z1: 54.65 },
+  // el tejado hundido del zapatero (por el sur), por donde se sale del
+  // desván a los tejados, y la rampa de escombros que sube a él
+  boquete: { x0: 29.3, z0: 37.9, x1: 31.5, z1: 39.6 },
+  rampa: { x0: 29.35, z0: 34.8, x1: 31.45, z1: 39.45, y0: P2, y1: 10.1 },
+  // la claraboya del desván del Físico, en el faldón del oeste
+  claraboya: { x0: 54.0, z0: 45.6, x1: 55.2, z1: 46.8 },
+  // la mesa de operar, en medio de la sala grande
+  mesa: { x: 61.3, z: 42.2 },
   // la cordelería: la tienda y el obrador (dos plantas, de la calle de los
   // Pelames a la capilla) y el almacén del cáñamo (al callejón)
   cor: { x0: 38.5, z0: 3, x1: 44, z1: 22 },
   cor2: { x0: 38.5, z0: 22, x1: 46, z1: 31 },
 };
+// (el nombre de antes de la rúa: la usan el Físico y sus escenas)
+BR.calleja = BR.rua;
 
 export function buildBarrio(ctx, S, L) {
   calles(ctx, S, L);
-  calleja(ctx, S, L);
+  arco(ctx, L);
+  rua(ctx, S, L);
   plazuela(ctx, S, L);
-  levante(ctx, S, L);
   cordeleria(ctx, S, L);
-  porton(L);
   adorno(ctx);
   vecinos(L);
   trampas(L);
@@ -105,9 +121,11 @@ export function buildBarrio(ctx, S, L) {
 // ------------------------------------------------------------ calles
 function calles(ctx, S, L) {
   const W = (r) => S.paint(r.x0, r.z0, r.x1, r.z1, 1);
-  const { calleja: C, plazuela: Z, callejon: J, patio: Q } = BR;
-  W(C);
-  floor(ctx, C.x0, C.z0, C.x1, C.z1, 'cobble');
+  const { rua: R, plazuela: Z, callejon: J, patio: Q, huerto: H } = BR;
+  W(R);
+  floor(ctx, R.x0, R.z0, R.x1, R.z1, 'cobble');
+  // (el arroyo de en medio de la rúa: losas en dos aguas)
+  floor(ctx, R.x0 + 1.2, 44.15, Z.x0 + 2, 44.85, 'flag', 0.005, { tint: [0.62, 0.6, 0.56] });
   W(Z);
   floor(ctx, Z.x0, Z.z0, Z.x1, Z.z1, 'cobble');
   floor(ctx, Z.x0 + 1.5, Z.z0 + 1.5, Z.x1 - 1.5, Z.z1 - 1.2, 'dirt', 0.01);
@@ -115,367 +133,331 @@ function calles(ctx, S, L) {
   floor(ctx, J.x0, J.z0, J.x1, J.z1, 'dirt');
   W(Q);
   floor(ctx, Q.x0, Q.z0, Q.x1, Q.z1, 'dirt');
-  // los patios de atrás de la calleja, contra la muralla
-  for (const h of [BR.s1, BR.viu, BR.s3]) {
-    S.paint(h.x0, h.z1, h.x1, 58, 1);
-    floor(ctx, h.x0, h.z1, h.x1, 58, 'dirt');
-  }
-  // las tapias entre patio y patio
-  tapia(ctx, BR.viu.x0 - 0.2, 55, BR.viu.x0 + 0.2, 58, 2.6);
-  tapia(ctx, BR.s3.x0 - 0.2, 55, BR.s3.x0 + 0.2, 58, 2.2);
-  // contra la de la viuda y la quemada, las cajas de la cerera apiladas en
-  // escalera (por ahí se sale cuando el Físico te clava la puerta de la
-  // calle): del patio a lo alto de la tapia, y abajo, al de la quemada
-  cajasTapia(ctx, BR.s3.x0 - 0.2, 56.3);
+  W(H);
+  floor(ctx, H.x0, H.z0, H.x1, H.z1, 'dirt', 0, { tint: [0.7, 0.66, 0.55] });
+  void L;
 }
 
-// ------------------------------------------------------------ la calleja
-function calleja(ctx, S, L) {
-  // al norte: la casa de la esquina, la del zapatero y la de al lado (la de
-  // la cruz de cal); al sur: la de la esquina (a la plaza), la de la viuda y
-  // la quemada
-  const { n1, zap, n3, s1, viu, s3 } = BR;
-  casa(ctx, S, L, {
-    id: 'n1',
-    ...n1,
-    solid: true,
-    levels: [L0(), L1({ top: 6.4 })],
-    roof: { axis: 'x', h: 6.65, ridge: 9.4, ovs: [0.45, 0.45], gov: 0.3, open: [false, true], walk: false },
-    sides: { n: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'timber' }, w: { low: 'wallstone', up: 'plaster', tint: [0.86, 0.82, 0.74] } },
-    open: [
-      { side: 's', lv: 0, at: 3.6, w: 1.3, h: 2.4, leaf: 'boarded' },
-      { side: 's', lv: 0, at: 1.4, w: 0.8, sill: 1.2, h: 1.0, shutters: 'boarded' },
-      { side: 's', lv: 1, at: 1.5, w: 0.9, sill: 0.8, h: 1.2 },
-      { side: 's', lv: 1, at: 4.4, w: 0.9, sill: 0.8, h: 1.2, shutters: 'broken' },
-      { side: 'n', lv: 1, at: 3, w: 0.9, sill: 0.8, h: 1.2 },
-      { side: 'w', lv: 1, at: 5.5, w: 0.9, sill: 0.8, h: 1.2, shutters: 'open' },
-    ],
-  });
+// ------------------------------------------------------------ el arco
+// La boca de la rúa, en la plaza de la Herrería: un arco de sillería de
+// cinco metros, con su muro hasta lo alto y un tejadillo encima, y en él la
+// cruz de cal del Físico. Bajo el arco, el portón de tablas de la cuarentena
+// (clavado y apuntalado por dentro; se arranca con la palanca, desde la
+// plaza). Por encima de las tablas se ve la rúa entera y, al fondo, la Casa
+// de los Inocentes.
+function arco(ctx, L) {
+  const wb = ctx.wb;
+  const A = BR.arco;
+  const top = 7.6;
+  archedWall(ctx, { axis: 'z', a0: A.z0, a1: A.z1, t0: A.x0, t1: A.x1, y0: 0, y1: top, mat: 'ashlar', tint: [0.74, 0.71, 0.66], openings: [{ c: A.c, w: A.w, h: A.h, rise: A.w / 2, ring: 0.3 }] });
+  // el tejadillo de encima (a dos aguas, de lado a lado) y su canto
+  wb.box('wooddark', A.x0 - 0.25, top, A.z0, A.x1 + 0.25, top + 0.12, A.z1, { ao: false, faces: 'tnsewb', tint: [0.55, 0.5, 0.45] });
+  wb.gableRoof(A.x0 - 0.35, A.z0, A.x1 + 0.35, A.z1, top + 0.12, top + 0.75, 'z', { wallMat: 'ashlar', overhang: 0.2 });
+  ctx.col.add(A.x0, top, A.z0, A.x1, top + 0.8, A.z1);
+  // la cruz de cal, encima de la clave, por los dos lados
+  for (const [x, rot] of [
+    [A.x0 - 0.02, -Math.PI / 2],
+    [A.x1 + 0.02, Math.PI / 2],
+  ])
+    cruzCal(ctx, x, 6.55, A.c, rot, 1.1);
+  // las dos antorchas de la plaza, a los lados del arco, y el farol de dentro
+  P.wallTorch(ctx, A.x0, 2.9, A.z0 + 0.45, 'w');
+  P.wallTorch(ctx, A.x0, 2.9, A.z1 - 0.45, 'w');
+  const { x, z, w, h } = BR.porton;
+  L.interact.push({ kind: 'door', id: 'd_porton', x, y: 0, z, w, h, axis: 'z', lock: { type: 'boards', side: -1, front: 'portonDentro', msg: 'portonArranca', shut: 'portonCerrado' }, mat: 'barricade', hinge: 0, props: 1, cuarentena: true, lit: true });
+}
+
+// ------------------------------------------------------------ la rúa
+function rua(ctx, S, L) {
+  const { zap, viu } = BR;
+  // ---- al norte: la casa del zapatero (maese Afonso, zapatero de la Sé):
+  // abajo, el obrador (al oeste) y el zaguán con la cocina y la escalera; arriba,
+  // la alcoba del matrimonio y el cuarto del hijo; el desván, que es el de las
+  // palomas, sólo se anda desde el de la tintorería
   const hZap = casa(ctx, S, L, {
     id: 'zap',
     ...zap,
-    levels: [L0(), L1()],
-    roof: { axis: 'x', h: 7.8, ridge: 10.55, ovs: [0.45, 0.45], gov: 0.3, walk: false },
-    sides: { n: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'timber' } },
+    t: 0.5,
+    levels: [
+      L0({ areas: [{ r: [14.5, 31.5, 23.9, 40.5], room: 'zap_tienda' }] }),
+      L1({ areas: [{ r: [14.5, 31.5, 23.9, 40.5], room: 'zap_alcoba' }] }),
+      DESVAN(),
+    ],
+    roof: { axis: 'x', h: ALERO, ridge: CUMBRE, ovs: [0.45, 0.45], gov: 0.3, open: [false, true], trusses: [17.6, 21.6, 25.6, 33.0], tieY: 10.25, holes: [{ side: 1, s0: BR.boquete.x0, s1: BR.boquete.x1, u0: BR.boquete.z0 - 36, u1: BR.boquete.z1 - 36 }], walkHoles: [[BR.boquete.x0, BR.boquete.z0, BR.boquete.x1, BR.boquete.z1]], camHoles: [[BR.boquete.x0 - 0.3, BR.boquete.z0 - 0.3, BR.boquete.x1 + 0.3, BR.boquete.z1 + 0.3]] },
+    sides: {
+      s: { low: 'ashlar', up: 'timber', tint: [0.9, 0.86, 0.78] },
+      n: { low: 'wallstone', up: 'timber' },
+      w: { low: 'wallstone', up: 'plaster', tint: [0.86, 0.82, 0.74] },
+      // (pegada a la tintorería: su muro lo pone ella)
+      e: { party: true },
+    },
     open: [
-      // la puerta de la tienda, entornada; el mostrador de la ventana
-      { side: 's', lv: 0, at: 4.0, w: 1.4, h: 2.5, door: { id: 'd_zapatero', lock: { type: 'none' }, ajar: 0.25 } },
-      { side: 's', lv: 0, at: 1.6, w: 1.4, sill: 0.85, h: 1.35, shutters: 'open' },
-      { side: 's', lv: 1, at: 1.6, w: 1.0, sill: 0.9, h: 1.4, shutters: 'open' },
-      { side: 's', lv: 1, at: 4.2, w: 1.0, sill: 0.9, h: 1.4, shutters: 'ajar' },
-      // la puerta de atrás, al corral: atrancada por dentro
-      { side: 'n', lv: 0, at: 5.2, w: 1.2, h: 2.3, door: { id: 'd_zapatero_corral', lock: { type: 'barred', side: 1 } } },
-      { side: 'n', lv: 0, at: 2.0, w: 1.0, sill: 1.1, h: 1.1, shutters: 'closed', bars: true },
-      { side: 'n', lv: 1, at: 2.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'ajar' },
-      { side: 'n', lv: 1, at: 5.0, w: 1.0, sill: 0.9, h: 1.4 },
+      // la rúa: la ventana del mostrador del obrador, su puerta (clavada), la
+      // del zaguán (entornada) y la de la cocina
+      { side: 's', lv: 0, at: 4.5, w: 2.0, sill: 0.8, h: 1.7, shutters: 'open', frame: 'stone' },
+      { side: 's', lv: 0, at: 8.2, w: 1.4, h: 2.6, leaf: 'boarded' },
+      { side: 's', lv: 0, at: 13.0, w: 1.6, h: 2.8, door: { id: 'd_zapatero', lock: { type: 'none' }, ajar: 0.25 } },
+      { side: 's', lv: 0, at: 17.6, w: 1.2, sill: 1.0, h: 1.5, shutters: 'ajar' },
+      { side: 's', lv: 1, at: 3.0, w: 1.2, sill: 0.7, h: 1.7, shutters: 'open' },
+      { side: 's', lv: 1, at: 7.2, w: 1.2, sill: 0.7, h: 1.7, shutters: 'ajar' },
+      { side: 's', lv: 1, at: 12.8, w: 1.2, sill: 0.7, h: 1.7, shutters: 'broken' },
+      { side: 's', lv: 1, at: 17.0, w: 1.2, sill: 0.7, h: 1.7 },
+      // los ventanucos del desván (los de las palomas)
+      { side: 's', lv: 2, at: 4.0, w: 0.7, sill: 0.6, h: 0.6, shutters: 'broken' },
+      { side: 's', lv: 2, at: 10.0, w: 0.7, sill: 0.6, h: 0.6 },
+      // el corral: la puerta de atrás (atrancada por dentro) y sus ventanas
+      { side: 'n', lv: 0, at: 6.0, w: 1.3, h: 2.5, door: { id: 'd_zapatero_corral', lock: { type: 'barred', side: 1 } } },
+      { side: 'n', lv: 0, at: 2.6, w: 1.0, sill: 1.2, h: 1.0, bars: true, shutters: 'closed' },
+      { side: 'n', lv: 0, at: 17.6, w: 1.0, sill: 1.3, h: 1.0, bars: true },
+      { side: 'n', lv: 1, at: 3.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'ajar' },
+      { side: 'n', lv: 1, at: 8.5, w: 1.0, sill: 0.9, h: 1.4 },
+      { side: 'n', lv: 1, at: 17.5, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      // (el paso del desván del zapatero al de la tintorería: medio muro de
+      // cada una)
+      { side: 'e', lv: 2, at: 5.0, w: 1.2, h: 2.2, frame: 'none' },
     ],
     walls: [
-      { lv: 0, x0: zap.x0 + 0.45, z0: 36.3, x1: zap.x1 - 0.45, z1: 36.5, doors: [{ at: 22.1, w: 1.2, h: 2.3 }] },
-      { lv: 1, x0: zap.x0 + 0.45, z0: 36.3, x1: 25.2, z1: 36.5, doors: [{ at: 22.1, w: 1.1, h: 2.2 }] },
+      { lv: 0, x0: 23.9, z0: 31.5, x1: 24.1, z1: 40.5, doors: [{ at: 36.8, w: 1.6, h: 2.7 }], rooms: ['zap_tienda', 'zap0'] },
+      { lv: 1, x0: 23.9, z0: 31.5, x1: 24.1, z1: 40.5, doors: [{ at: 37.6, w: 1.3, h: 2.4 }], rooms: ['zap_alcoba', 'zap1'] },
     ],
-    // (el pie de cada escalera, a medio metro del muro: si no, no se sube;
-    // de lado no se puede, por el pasamanos)
-    stairs: [{ lv: 0, x: 25.95, z: 41.05, dir: 'n', w: 1.2, n: 14, open: 'w' }],
+    // (la escalera, una sola: del zaguán, contra el muro del corral, al cuarto
+    // del hijo; el pie, a casi un metro del tabique)
+    stairs: [{ lv: 0, x: 25.0, z: 32.35, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 's' }],
   });
-  casa(ctx, S, L, {
-    id: 'n3',
-    ...n3,
-    solid: true,
-    levels: [L0(), L1()],
-    roof: { axis: 'z', h: 7.25, ridge: 9.0, ovs: [0, 0], gov: 0.3 },
-    sides: { s: { low: 'wallstone', up: 'timber' }, n: { low: 'wallstone', up: 'plaster', tint: [0.84, 0.8, 0.72] }, e: { low: 'wallstone', up: 'timber' } },
-    open: [
-      { side: 's', lv: 0, at: 2.4, w: 1.3, h: 2.4, leaf: 'cross' },
-      { side: 's', lv: 0, at: 5.2, w: 0.9, sill: 1.1, h: 1.0, shutters: 'boarded' },
-      { side: 's', lv: 1, at: 2.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'boarded' },
-      { side: 's', lv: 1, at: 5.0, w: 1.0, sill: 0.9, h: 1.3 },
-      { side: 'e', lv: 1, at: 9.2, w: 0.9, sill: 0.9, h: 1.3, shutters: 'boarded' },
-      { side: 'n', lv: 1, at: 1.6, w: 0.9, sill: 0.9, h: 1.2 },
-    ],
-  });
-  casa(ctx, S, L, {
-    id: 's1',
-    ...s1,
-    solid: true,
-    levels: [L0(), L1()],
-    roof: { axis: 'z', h: 7.25, ridge: 9.25, ovs: [0.45, 0], gov: 0.3 },
-    sides: { w: { low: 'wallstone', up: 'timber' }, n: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'plaster' } },
-    open: [
-      { side: 'w', lv: 0, at: 4.5, w: 1.3, h: 2.4, leaf: 'closed' },
-      { side: 'w', lv: 0, at: 7.4, w: 0.9, sill: 1.1, h: 1.0, lit: true, shutters: 'ajar' },
-      { side: 'w', lv: 1, at: 1.8, w: 1.0, sill: 0.9, h: 1.3, shutters: 'open' },
-      { side: 'w', lv: 1, at: 4.5, w: 1.0, sill: 0.9, h: 1.3, lit: true, shutters: 'ajar' },
-      { side: 'w', lv: 1, at: 7.2, w: 1.0, sill: 0.9, h: 1.3 },
-      { side: 'n', lv: 0, at: 5.5, w: 0.9, sill: 1.2, h: 1.0, shutters: 'boarded' },
-      { side: 'n', lv: 1, at: 2.4, w: 1.0, sill: 0.9, h: 1.3, shutters: 'broken' },
-      { side: 'n', lv: 1, at: 5.6, w: 1.0, sill: 0.9, h: 1.3 },
-    ],
-  });
+  // ---- al sur: la casa de la cerera (Dona Inês): abajo, la tienda de las
+  // velas (a la plaza y a la rúa) y el zaguán con la cocina, la escalera y la
+  // puerta de al lado, a la plazuela; arriba, la sala (con su oratorio) y la
+  // alcoba, atrancada por dentro
   const hViu = casa(ctx, S, L, {
     id: 'viu',
     ...viu,
-    // (arriba, tres salas: la alcoba, la sala y el oratorio)
-    levels: [
-      L0(),
-      L1({
-        areas: [
-          { r: [22.45, 46.45, 25.4, 50.7], room: 'viu_alcoba' },
-          { r: [22.45, 50.7, 29.05, 54.55], room: 'viu_oratorio' },
-        ],
-      }),
-    ],
-    roof: { axis: 'x', h: 7.25, ridge: 9.5, ovs: [0.45, 0.45], gov: 0.3, open: [false, true] },
-    sides: { n: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'plaster' } },
-    open: [
-      { side: 'n', lv: 0, at: 3.2, w: 1.4, h: 2.5, door: { id: 'd_viuda', lock: { type: 'none' }, ajar: 0.15 } },
-      { side: 'n', lv: 0, at: 1.3, w: 1.0, sill: 0.9, h: 1.3, shutters: 'closed' },
-      { side: 'n', lv: 0, at: 6.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'open' },
-      // las dos ventanas de sacada de arriba: la de la sala y la de la
-      // alcoba; entre una y otra, la viga de lo que fue el balcón
-      { side: 'n', lv: 1, at: 1.15, w: 1.0, sill: 0.05, h: 2.15, shutters: 'broken' },
-      { side: 'n', lv: 1, at: 5.4, w: 1.1, sill: 0.05, h: 2.15, shutters: 'open' },
-      { side: 's', lv: 0, at: 3.5, w: 1.2, h: 2.3, door: { id: 'd_viuda_patio', lock: { type: 'none' } } },
-      { side: 's', lv: 0, at: 1.4, w: 0.9, sill: 1.1, h: 1.1, shutters: 'ajar' },
-      { side: 's', lv: 1, at: 2.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'open' },
-      { side: 's', lv: 1, at: 5.4, w: 1.0, sill: 0.9, h: 1.3 },
-    ],
-    // (la escalera sube de la cocina, por el hueco del tabique, a la sala)
-    // (arriba, los tabiques de la alcoba y del oratorio, con la puerta de la
-    // alcoba: barrio_casas.js)
-    walls: [{ lv: 0, x0: viu.x0 + 0.45, z0: 50.6, x1: 27.7, z1: 50.8, doors: [{ at: 25.0, w: 1.2, h: 2.3 }] }],
-    stairs: [{ lv: 0, x: 28.45, z: 54.05, dir: 'n', w: 1.2, n: 14, run: 0.28, open: 'w' }],
-  });
-  const hS3 = casa(ctx, S, L, {
-    id: 's3',
-    ...s3,
-    levels: [L0({ tint: [0.6, 0.56, 0.52] }), L1({ tint: [0.5, 0.45, 0.4] })],
-    // (el tejado, hundido por el norte: de él cayó la viga que cruza la
-    // calleja; el agujero llega al techo de la planta de arriba)
-    roof: {
-      axis: 'x',
-      h: 7.25,
-      ridge: 9.5,
-      ovs: [0.45, 0.45],
-      gov: 0.3,
-      open: [true, false],
-      holes: [{ side: -1, s0: BR.hundido.x0, s1: BR.hundido.x1, u0: 50.5 - BR.hundido.z1, u1: 50.5 - BR.hundido.z0 }],
-      walkHoles: [[BR.hundido.x0, BR.hundido.z0, BR.hundido.x1, BR.hundido.z1]],
+    t: 0.5,
+    levels: [L0({ areas: [{ r: [14.5, 48.5, 23.9, 57.5], room: 'viu_tienda' }] }), L1({ areas: [{ r: [14.5, 48.5, 20.9, 57.5], room: 'viu_alcoba' }] })],
+    roof: { axis: 'x', h: ALERO, ridge: CUMBRE, ovs: [0.45, 0.2], gov: 0.3 },
+    sides: {
+      n: { low: 'ashlar', up: 'plaster', tint: [0.92, 0.86, 0.74] },
+      w: { low: 'wallstone', up: 'plaster', tint: [0.92, 0.86, 0.74] },
+      e: { low: 'wallstone', up: 'plaster', tint: [0.88, 0.82, 0.72] },
+      // (contra la muralla: por encima de ella asoma)
+      s: { low: 'wallstone', up: 'plaster', tint: [0.8, 0.76, 0.68] },
     },
-    ceilHoles: [[BR.hundido.x0, BR.hundido.z0, BR.hundido.x1, BR.hundido.z1]],
-    sides: { n: { low: 'wallstone', up: 'plaster', tint: [0.62, 0.58, 0.54] }, e: { low: 'wallstone', up: 'plaster', tint: [0.66, 0.62, 0.58] }, s: { low: 'wallstone', up: 'plaster', tint: [0.7, 0.66, 0.6] } },
     open: [
-      { side: 'n', lv: 0, at: 2.25, w: 1.3, h: 2.4, leaf: 'cross' },
-      { side: 'e', lv: 0, at: 2.4, w: 1.2, h: 2.3, door: { id: 'd_quemada', lock: { type: 'barred', side: -1 } } },
-      { side: 's', lv: 0, at: 2.25, w: 1.2, h: 2.3, door: { id: 'd_quemada_patio', lock: { type: 'none' }, ajar: 0.4 } },
-      { side: 'n', lv: 1, at: 2.25, w: 1.0, sill: 0.9, h: 1.3, shutters: 'broken' },
-      { side: 'e', lv: 1, at: 2.4, w: 1.0, sill: 0.9, h: 1.3 },
+      // la rúa: el escaparate de la tienda, la puerta del zaguán y la de la
+      // cocina; arriba, las dos ventanas de sacada (la de la alcoba y la de la
+      // sala) y, entre una y otra, la viga del balcón que se cayó
+      { side: 'n', lv: 0, at: 4.5, w: 2.0, sill: 0.8, h: 1.7, shutters: 'closed', frame: 'stone' },
+      { side: 'n', lv: 0, at: 13.5, w: 1.6, h: 2.8, door: { id: 'd_viuda', lock: { type: 'none' }, ajar: 0.15 } },
+      { side: 'n', lv: 0, at: 17.6, w: 1.2, sill: 1.0, h: 1.5, shutters: 'open' },
+      { side: 'n', lv: 1, at: 3.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'open' },
+      { side: 'n', lv: 1, at: 10.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'broken' },
+      { side: 'n', lv: 1, at: 16.6, w: 1.2, sill: 0.7, h: 1.7, shutters: 'ajar' },
+      // la plaza de la Herrería: la tienda (su puerta, clavada) y la alcoba
+      { side: 'w', lv: 0, at: 3.0, w: 1.6, sill: 0.8, h: 1.6, shutters: 'boarded', frame: 'stone' },
+      { side: 'w', lv: 0, at: 6.6, w: 1.4, h: 2.6, leaf: 'boarded' },
+      { side: 'w', lv: 1, at: 4.5, w: 1.1, sill: 0.8, h: 1.6, shutters: 'closed' },
+      // la plazuela: la puerta de al lado (por donde se sale cuando el Físico
+      // clava la de la rúa) y las ventanas de la cocina y de la sala
+      { side: 'e', lv: 0, at: 2.0, w: 1.3, h: 2.5, door: { id: 'd_viuda_patio', lock: { type: 'none' } } },
+      { side: 'e', lv: 1, at: 2.2, w: 1.1, sill: 0.8, h: 1.6, shutters: 'open' },
     ],
-    stairs: [{ lv: 0, x: 33.0, z: 54.05, dir: 'n', w: 1.0, n: 14, run: 0.28, open: 'w' }],
+    walls: [
+      { lv: 0, x0: 23.9, z0: 48.5, x1: 24.1, z1: 57.5, doors: [{ at: 52.4, w: 1.6, h: 2.7 }], rooms: ['viu_tienda', 'viu0'] },
+      // (el tabique de la alcoba, con su puerta: viuda() pone la hoja
+      // atrancada)
+      { lv: 1, x0: 20.9, z0: 48.5, x1: 21.1, z1: 57.5, doors: [{ at: 54.6, w: 1.1, h: 2.3 }], rooms: ['viu_alcoba', 'viu1'] },
+    ],
+    // (la escalera: del zaguán, contra la muralla, a la sala)
+    stairs: [{ lv: 0, x: 25.2, z: 56.65, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 'n' }],
   });
   zapatero(ctx, L, hZap);
+  desvanZapatero(ctx, L, hZap);
   viuda(ctx, L, hViu);
-  quemada(ctx, L, hS3);
-  tejadoQuemado(ctx, L);
-  vigaCalleja(ctx, L);
+  vigaRua(ctx, L);
 }
 
 // ------------------------------------------------------------ la plazuela
 function plazuela(ctx, S, L) {
-  const { tin, agu, s5, ino } = BR;
-  // la tintorería: la planta baja de los tintes, la de encima (los paños
-  // teñidos) y el secadero, bajo el tejado
+  const { tin, que, ino } = BR;
+  // ---- la tintorería: la planta baja de los tintes, la de encima (los paños
+  // teñidos) y el secadero, bajo el tejado, que sigue por el del zapatero
   const hTin = casa(ctx, S, L, {
     id: 'tin',
     ...tin,
-    levels: [L0(), L1(), { y: P2, top: 8.0, attic: true }],
-    roof: { axis: 'x', h: 8.0, ridge: 10.1, ovs: [0, 0.45], gov: 0.3, trusses: [36.5, 40, 43.5] },
-    sides: { s: { low: 'wallstone', up: 'timber' }, e: { low: 'wallstone', up: 'plaster' }, w: { low: 'wallstone', up: 'plaster' } },
+    t: 0.5,
+    levels: [L0(), L1(), DESVAN()],
+    roof: { axis: 'x', h: ALERO, ridge: CUMBRE, ovs: [0.45, 0.45], gov: 0.3, open: [true, false], trusses: [36.6, 40.0, 43.6], tieY: 10.25 },
+    sides: { s: { low: 'wallstone', up: 'timber' }, n: { low: 'wallstone', up: 'plaster' }, e: { low: 'wallstone', up: 'plaster' }, w: { low: 'wallstone', up: 'plaster' } },
     open: [
-      { side: 's', lv: 0, at: 6.0, w: 1.8, h: 2.7, door: { id: 'd_tinte', lock: { type: 'key', item: 'llave_tinte' } } },
-      { side: 's', lv: 0, at: 2.5, w: 1.2, sill: 1.0, h: 1.4, bars: true },
-      { side: 's', lv: 0, at: 9.5, w: 1.2, sill: 1.0, h: 1.4, bars: true },
-      { side: 's', lv: 1, at: 2.0, w: 1.1, sill: 0.9, h: 1.4, shutters: 'open' },
-      { side: 's', lv: 1, at: 6.0, w: 1.1, sill: 0.9, h: 1.4, shutters: 'open' },
-      { side: 's', lv: 1, at: 10.0, w: 1.1, sill: 0.9, h: 1.4, shutters: 'ajar' },
-      // la puerta del pescante, en el hastial del oeste: al tejado de al lado
-      { side: 'w', lv: 2, at: 3.1, w: 1.2, sill: 0.02, h: 2.2, frame: 'wood' },
-      { side: 'e', lv: 2, at: 3.75, w: 1.0, sill: 0.4, h: 1.3, shutters: 'open' },
+      { side: 's', lv: 0, at: 6.0, w: 1.8, h: 2.8, door: { id: 'd_tinte', lock: { type: 'key', item: 'llave_tinte' } } },
+      { side: 's', lv: 0, at: 2.5, w: 1.4, sill: 1.0, h: 1.5, bars: true },
+      { side: 's', lv: 0, at: 9.5, w: 1.4, sill: 1.0, h: 1.5, bars: true },
+      { side: 's', lv: 1, at: 2.5, w: 1.2, sill: 0.8, h: 1.6, shutters: 'open' },
+      { side: 's', lv: 1, at: 6.0, w: 1.2, sill: 0.8, h: 1.6, shutters: 'open' },
+      { side: 's', lv: 1, at: 9.5, w: 1.2, sill: 0.8, h: 1.6, shutters: 'ajar' },
+      // (el ventano del secadero, por donde se tendía al aire)
+      { side: 's', lv: 2, at: 6.0, w: 1.2, sill: 0.5, h: 0.9, shutters: 'open' },
+      { side: 'n', lv: 1, at: 6.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      { side: 'e', lv: 0, at: 6.0, w: 1.0, sill: 1.3, h: 1.0, bars: true },
+      { side: 'e', lv: 1, at: 5.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'open' },
+      // el paso al desván del zapatero
+      { side: 'w', lv: 2, at: 5.0, w: 1.2, h: 2.2, frame: 'wood' },
     ],
+    // (una sola escalera, de ida y vuelta: el primer tramo, de la planta de
+    // los tintes a la de los paños, contra el muro del norte; el segundo, al
+    // lado, de vuelta, al secadero)
     stairs: [
-      { lv: 0, x: 41.0, z: 32.1, dir: 'e', w: 1.2, n: 14, open: 's' },
-      { lv: 1, x: 37.0, z: 37.55, dir: 'n', w: 1.1, n: 11, open: 'e' },
+      { lv: 0, x: 35.2, z: 32.35, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 's' },
+      { lv: 1, x: 39.7, z: 33.95, dir: 'w', w: 1.5, n: 13, run: 0.3, open: 's' },
     ],
   });
   tintoreria(ctx, L, hTin);
-  // el aguador y la casa de al lado (la del tejado hundido), contra la
-  // muralla
-  casa(ctx, S, L, {
-    id: 'agu',
-    ...agu,
-    solid: true,
-    levels: [L0(), L1()],
-    roof: { axis: 'x', h: 7.25, ridge: 9.0, ovs: [0.45, 0], gov: 0.3 },
-    sides: { n: { low: 'wallstone', up: 'timber' }, w: { low: 'wallstone', up: 'plaster' } },
+  // ---- la quemada: la casa de los Gomes, que no le abrieron. Por dentro, lo
+  // que dejó el fuego; el piso de arriba, hundido, y el tejado, abierto por
+  // el norte. Su puerta, quemada, no cierra.
+  const hQue = casa(ctx, S, L, {
+    id: 'que',
+    ...que,
+    t: 0.45,
+    levels: [
+      { y: 0, top: 3.6, floor: 'flag', tint: [0.5, 0.46, 0.42] },
+      { y: 3.85, top: 6.75, tint: [0.45, 0.4, 0.36] },
+    ],
+    roof: {
+      axis: 'x',
+      h: 7.0,
+      ridge: 8.65,
+      ovs: [0.45, 0],
+      gov: 0.3,
+      open: [true, true],
+      holes: [{ side: -1, s0: BR.hundido.x0, s1: BR.hundido.x1, u0: 55 - BR.hundido.z1, u1: 55 - BR.hundido.z0 }],
+      walkHoles: [[BR.hundido.x0, BR.hundido.z0, BR.hundido.x1, BR.hundido.z1]],
+    },
+    ceilHoles: [[BR.hundido.x0, 52.45, BR.hundido.x1, BR.hundido.z1]],
+    holes: [{ lv: 1, r: [36.4, 52.45, 46.6, 57.55] }],
+    sides: { n: { low: 'wallstone', up: 'plaster', tint: [0.58, 0.54, 0.5] }, w: { party: true }, e: { party: true }, s: { party: true } },
     open: [
-      { side: 'n', lv: 0, at: 3.0, w: 1.3, h: 2.4, leaf: 'boarded' },
-      { side: 'n', lv: 0, at: 6.2, w: 1.0, sill: 1.0, h: 1.1, shutters: 'closed' },
-      { side: 'n', lv: 1, at: 2.0, w: 1.0, sill: 0.9, h: 1.3 },
-      { side: 'n', lv: 1, at: 5.8, w: 1.0, sill: 0.9, h: 1.3, shutters: 'boarded' },
+      { side: 'n', lv: 0, at: 7.75, w: 1.6, h: 2.6, frame: 'stone' },
+      { side: 'n', lv: 0, at: 3.5, w: 1.1, sill: 1.0, h: 1.3, shutters: 'broken' },
+      { side: 'n', lv: 0, at: 12.0, w: 1.1, sill: 1.0, h: 1.3, shutters: 'broken' },
+      { side: 'n', lv: 1, at: 3.5, w: 1.0, sill: 0.9, h: 1.3, shutters: 'broken' },
+      { side: 'n', lv: 1, at: 7.75, w: 1.0, sill: 0.9, h: 1.3 },
+      { side: 'n', lv: 1, at: 12.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'broken' },
     ],
   });
-  casa(ctx, S, L, {
-    id: 's5',
-    ...s5,
-    solid: true,
-    levels: [L0(), L1({ top: 6.3 })],
-    roof: { axis: 'x', h: 6.5, ridge: 8.25, ovs: [0.45, 0], gov: 0.3, open: [true, true] },
-    sides: { n: { low: 'wallstone', up: 'plaster', tint: [0.88, 0.8, 0.7] } },
-    open: [
-      { side: 'n', lv: 0, at: 2.5, w: 1.3, h: 2.4, leaf: 'cross' },
-      { side: 'n', lv: 0, at: 5.6, w: 1.0, sill: 1.0, h: 1.1, shutters: 'boarded' },
-      { side: 'n', lv: 1, at: 2.4, w: 1.0, sill: 0.8, h: 1.2, shutters: 'broken' },
-      { side: 'n', lv: 1, at: 5.4, w: 1.0, sill: 0.8, h: 1.2 },
-    ],
-  });
-  // la Casa de los Inocentes: abajo, la sala de visitas, el zaguán de la
-  // escalera y el quirófano (todo lo ancho de la casa, detrás, con su puerta
-  // al patio); arriba, la alcoba del Físico (la de la cortina), el rellano,
-  // la botica y la sala de los inocentes; el desván, con su claraboya
+  quemada(ctx, L, hQue);
+  tejadoQuemado(ctx, L);
+  // ---- la Casa de los Inocentes: abajo, el zaguán con la escalera, la
+  // consulta, la sala grande (la de los inocentes, donde opera: de doble
+  // altura, abierta hasta las cerchas, con su galería) y las celdas de los
+  // furiosos; arriba, el rellano, la alcoba del Físico (la de la cortina), la
+  // botica, el estudio y la galería; el desván, alrededor de la sala, con su
+  // claraboya
+  const C = BR.claraboya;
   const hIno = casa(ctx, S, L, {
     id: 'ino',
     ...ino,
+    t: 0.6,
     levels: [
       L0({
         areas: [
-          { r: [49.95, 34.45, 60.55, 40.9], room: 'ino_quir' },
-          { r: [49.95, 40.9, 55.4, 48.55], room: 'ino_consulta' },
+          { r: [57.2, 34.6, 65.4, 50.8], room: 'ino_sala' },
+          { r: [50.1, 51.0, 57.0, 57.4], room: 'ino_consulta' },
+          { r: [57.2, 51.0, 65.4, 57.4], room: 'ino_celdas' },
         ],
       }),
       L1({
+        top: 8.25,
         areas: [
-          { r: [49.95, 40.9, 55.4, 48.55], room: 'ino_alcoba' },
-          { r: [49.95, 34.45, 55.4, 40.9], room: 'ino_botica' },
-          { r: [55.4, 34.45, 60.55, 40.9], room: 'ino_sala' },
+          { r: [50.1, 41.2, 57.0, 48.6], room: 'ino_alcoba' },
+          { r: [50.1, 48.8, 57.0, 57.4], room: 'ino_botica' },
+          { r: [57.2, 34.6, 65.4, 50.8], room: 'ino_sala' },
+          { r: [57.2, 51.0, 65.4, 57.4], room: 'ino_estudio' },
         ],
       }),
-      { y: P2, top: 7.4, attic: true },
+      { y: 8.5, top: 8.5, attic: true, areas: [{ r: [57.0, 34.6, 65.4, 50.8], room: 'ino_sala' }] },
     ],
-    // (la claraboya, en el faldón del este: se baja por ella al desván)
     roof: {
       axis: 'z',
-      h: 7.4,
-      ridge: 10.4,
-      ovs: [0.45, 0],
+      h: 8.5,
+      ridge: 13.0,
+      ovs: [0.45, 0.45],
       gov: 0.3,
-      trusses: [36.6, 40.0, 44.0, 47.6],
-      tieY: 9.35,
-      holes: [{ side: 1, s0: BR.claraboya.z0, s1: BR.claraboya.z1, u0: BR.claraboya.x0 - 55.25, u1: BR.claraboya.x1 - 55.25 }],
-      walkHoles: [[BR.claraboya.x0, BR.claraboya.z0, BR.claraboya.x1, BR.claraboya.z1]],
-      camHoles: [[BR.claraboya.x0 - 0.3, BR.claraboya.z0 - 0.3, BR.claraboya.x1 + 0.3, BR.claraboya.z1 + 0.3]],
+      open: [false, true],
+      trusses: [36.6, 40.6, 44.6, 48.6, 52.6, 56.4],
+      tieY: 10.8,
+      holes: [{ side: -1, s0: C.z0, s1: C.z1, u0: 57.75 - C.x1, u1: 57.75 - C.x0 }],
+      walkHoles: [[C.x0, C.z0, C.x1, C.z1]],
+      camHoles: [[C.x0 - 0.3, C.z0 - 0.3, C.x1 + 0.3, C.z1 + 0.3]],
     },
-    sides: { w: { low: 'wallstone', up: 'timber' }, s: { low: 'wallstone', up: 'plaster' }, n: { low: 'wallstone', up: 'plaster' } },
+    sides: {
+      w: { low: 'ashlar', up: 'plaster', tint: [0.94, 0.92, 0.86] },
+      n: { low: 'wallstone', up: 'plaster', tint: [0.9, 0.88, 0.82] },
+      e: { low: 'wallstone', up: 'plaster', tint: [0.9, 0.88, 0.82] },
+      // (contra la muralla: su hastial asoma por encima)
+      s: { low: 'wallstone', up: 'plaster', tint: [0.86, 0.84, 0.78] },
+    },
     open: [
-      { side: 'w', lv: 0, at: 11.0, w: 1.4, h: 2.5, door: { id: 'd_inocentes', lock: { type: 'barred', side: 1 }, barredMsg: 'inocentesTranca' } },
-      { side: 'w', lv: 0, at: 8.0, w: 1.3, sill: 0.9, h: 1.4, shutters: 'closed' },
-      { side: 'w', lv: 0, at: 13.6, w: 1.0, sill: 1.0, h: 1.2, shutters: 'closed' },
-      // la ventana de la cortina: en el eje de la calleja
-      { side: 'w', lv: 1, at: 10.0, w: 1.0, sill: 0.9, h: 1.5 },
-      { side: 'w', lv: 1, at: 13.4, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
-      { side: 'w', lv: 1, at: 4.0, w: 0.9, sill: 0.9, h: 1.3, shutters: 'closed' },
-      { side: 'n', lv: 0, at: 5.0, w: 1.4, h: 2.4, door: { id: 'd_quirofano_patio', lock: { type: 'barred', side: 1 } } },
-      { side: 'n', lv: 0, at: 9.0, w: 1.0, sill: 1.2, h: 1.0, bars: true },
+      // la plazuela: la puerta (atrancada por dentro), sus ventanas; arriba,
+      // la de la cortina (en el eje de la rúa), la del rellano y la de la
+      // botica
+      { side: 'w', lv: 0, at: 12.5, w: 1.6, h: 2.8, door: { id: 'd_inocentes', lock: { type: 'barred', side: 1 }, barredMsg: 'inocentesTranca' } },
+      { side: 'w', lv: 0, at: 2.5, w: 1.0, sill: 1.4, h: 1.0, bars: true },
+      { side: 'w', lv: 0, at: 8.5, w: 1.2, sill: 1.0, h: 1.5, shutters: 'closed' },
+      { side: 'w', lv: 0, at: 16.0, w: 1.1, sill: 1.0, h: 1.5, shutters: 'closed' },
+      { side: 'w', lv: 0, at: 20.0, w: 1.1, sill: 1.0, h: 1.5, shutters: 'closed' },
+      { side: 'w', lv: 1, at: 10.5, w: 1.0, sill: 0.9, h: 1.5 },
+      { side: 'w', lv: 1, at: 5.5, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      { side: 'w', lv: 1, at: 19.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      // el patio: la puerta de la sala (atrancada por dentro) y sus ventanas
+      // altas; arriba, el ventanal de la sala y la ventana del rellano
+      { side: 'n', lv: 0, at: 11.8, w: 1.6, h: 2.8, door: { id: 'd_quirofano_patio', lock: { type: 'barred', side: 1 } } },
+      { side: 'n', lv: 0, at: 9.0, w: 1.0, sill: 2.2, h: 1.2, bars: true },
+      { side: 'n', lv: 0, at: 14.6, w: 1.0, sill: 2.2, h: 1.2, bars: true },
+      { side: 'n', lv: 1, at: 11.8, w: 1.4, sill: 0.9, h: 2.0 },
       { side: 'n', lv: 1, at: 3.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'closed' },
-      { side: 'n', lv: 1, at: 8.5, w: 1.0, sill: 0.9, h: 1.3, bars: true },
-      { side: 's', lv: 1, at: 3.0, w: 0.9, sill: 0.9, h: 1.2, shutters: 'closed' },
+      // el huerto: los ventanales altos de la sala, las rejas de las celdas y
+      // la ventana del estudio
+      { side: 'e', lv: 0, at: 5.0, w: 1.0, sill: 2.0, h: 1.4, bars: true },
+      { side: 'e', lv: 0, at: 12.0, w: 1.0, sill: 2.0, h: 1.4, bars: true },
+      { side: 'e', lv: 0, at: 18.6, w: 0.8, sill: 1.2, h: 1.0, bars: true },
+      { side: 'e', lv: 0, at: 21.6, w: 0.8, sill: 1.2, h: 1.0, bars: true },
+      { side: 'e', lv: 1, at: 5.0, w: 1.4, sill: 0.9, h: 2.0 },
+      { side: 'e', lv: 1, at: 12.0, w: 1.4, sill: 0.9, h: 2.0 },
+      { side: 'e', lv: 1, at: 20.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'open' },
     ],
     walls: [
-      // abajo: el quirófano (al norte) y la sala de visitas y el zaguán (al sur)
-      { lv: 0, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['ino_quir', 'ino_consulta'] },
-      { lv: 0, x0: 55.3, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 57.6, w: 1.2, h: 2.3 }], rooms: ['ino_quir', 'ino0'] },
-      { lv: 0, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 46.4, w: 1.1, h: 2.3 }], rooms: ['ino_consulta', 'ino0'] },
-      // arriba: la alcoba, el rellano, la botica y la sala de los inocentes
-      { lv: 1, x0: 49.95, z0: 40.8, x1: 55.3, z1: 41.0, rooms: ['ino_botica', 'ino_alcoba'] },
-      { lv: 1, x0: 55.5, z0: 40.8, x1: 60.55, z1: 41.0, doors: [{ at: 58.2, w: 1.1, h: 2.2 }], rooms: ['ino_sala', 'ino1'] },
-      { lv: 1, x0: 55.3, z0: 34.45, x1: 55.5, z1: 41.0, doors: [{ at: 37.7, w: 1.0, h: 2.2 }], rooms: ['ino_botica', 'ino_sala'] },
-      { lv: 1, x0: 55.3, z0: 41.0, x1: 55.5, z1: 48.55, doors: [{ at: 42.4, w: 1.0, h: 2.2 }], rooms: ['ino_alcoba', 'ino1'] },
+      // abajo: el zaguán y la sala grande (con su portón), la consulta y las
+      // celdas
+      { lv: 0, x0: 57.0, z0: 34.6, x1: 57.2, z1: 50.8, doors: [{ at: 44.0, w: 2.4, h: 3.1 }], rooms: ['ino0', 'ino_sala'] },
+      { lv: 0, x0: 50.1, z0: 50.8, x1: 57.0, z1: 51.0, doors: [{ at: 53.5, w: 1.3, h: 2.6 }], rooms: ['ino0', 'ino_consulta'] },
+      { lv: 0, x0: 57.0, z0: 50.8, x1: 65.4, z1: 51.0, doors: [{ at: 61.3, w: 1.6, h: 2.8 }], rooms: ['ino_sala', 'ino_celdas'] },
+      { lv: 0, x0: 57.0, z0: 51.0, x1: 57.2, z1: 57.4, rooms: ['ino_consulta', 'ino_celdas'] },
+      // arriba: el rellano, la alcoba y la botica, a un lado; la galería y el
+      // estudio, al otro
+      { lv: 1, x0: 50.1, z0: 41.0, x1: 57.0, z1: 41.2, doors: [{ at: 53.0, w: 1.2, h: 2.4 }], rooms: ['ino1', 'ino_alcoba'] },
+      { lv: 1, x0: 50.1, z0: 48.6, x1: 57.0, z1: 48.8, rooms: ['ino_alcoba', 'ino_botica'] },
+      { lv: 1, x0: 57.0, z0: 34.6, x1: 57.2, z1: 41.0, doors: [{ at: 39.4, w: 1.2, h: 2.4 }], rooms: ['ino1', 'ino_sala'] },
+      { lv: 1, x0: 57.0, z0: 41.0, x1: 57.2, z1: 48.7, doors: [{ at: 45.7, w: 1.1, h: 2.3 }], rooms: ['ino_alcoba', 'ino_sala'] },
+      { lv: 1, x0: 57.0, z0: 48.7, x1: 57.2, z1: 50.8, rooms: ['ino_botica', 'ino_sala'] },
+      { lv: 1, x0: 57.0, z0: 50.8, x1: 65.4, z1: 51.0, doors: [{ at: 58.2, w: 1.1, h: 2.3 }], rooms: ['ino_sala', 'ino_estudio'] },
+      { lv: 1, x0: 57.0, z0: 51.0, x1: 57.2, z1: 57.4, doors: [{ at: 54.4, w: 1.1, h: 2.3 }], rooms: ['ino_botica', 'ino_estudio'] },
     ],
+    // (una sola escalera, de ida y vuelta, en el zaguán: el primer tramo,
+    // contra el muro del patio, sube hacia la plazuela; el segundo, al lado,
+    // vuelve hacia la sala, al desván)
     stairs: [
-      { lv: 0, x: 60.0, z: 48.05, dir: 'n', w: 1.1, n: 14, open: 'w' },
-      { lv: 1, x: 56.15, z: 48.05, dir: 'n', w: 1.0, n: 11, open: 'e' },
+      { lv: 0, x: 56.0, z: 35.45, dir: 'w', w: 1.5, n: 15, run: 0.3, open: 's' },
+      { lv: 1, x: 51.5, z: 37.05, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 's' },
+    ],
+    // (la sala grande, abierta hasta el tejado: arriba, sólo su galería del
+    // oeste; en el desván, nada)
+    holes: [
+      { lv: 1, r: [59.2, 34.6, 65.4, 50.8] },
+      { lv: 2, r: [57.0, 34.6, 65.4, 50.8] },
     ],
   });
   casaInocentes(ctx, L, hIno);
   patioInocentes(ctx, S, L);
-}
-
-// ------------------------------------------------------------ el levante
-function levante(ctx, S, L) {
-  const { se, se2, pal, ne } = BR;
-  casa(ctx, S, L, {
-    id: 'se',
-    ...se,
-    solid: true,
-    levels: [L0(), L1({ top: 6.3 })],
-    roof: { axis: 'x', h: 6.5, ridge: 8.75, ovs: [0, 0], gov: 0.3 },
-    sides: { w: { low: 'wallstone', up: 'plaster', tint: [0.8, 0.76, 0.7] } },
-    open: [
-      { side: 'w', lv: 0, at: 1.0, w: 1.2, h: 2.3, leaf: 'boarded' },
-      { side: 'w', lv: 1, at: 1.0, w: 0.9, sill: 0.8, h: 1.2 },
-    ],
-  });
-  casa(ctx, S, L, {
-    id: 'se2',
-    ...se2,
-    solid: true,
-    levels: [L0({ top: 3.2 }), L1({ y: 3.45, top: 5.3 })],
-    roof: { axis: 'z', h: 5.5, ridge: 8.25, ovs: [0, 0], gov: 0.3, open: [true, true] },
-    sides: {},
-    open: [],
-  });
-  // la casa del palomero: tres plantas y el desván, y el palomar encima
-  const hPal = casa(ctx, S, L, {
-    id: 'pal',
-    ...pal,
-    levels: [L0(), L1(), { y: P2, top: 10.0 }, { y: 10.25, top: 10.6, attic: true }],
-    // (el palomar, en la cumbrera: el tejado se abre donde se levanta)
-    roof: {
-      axis: 'z',
-      h: 10.6,
-      ridge: 13.6,
-      ovs: [0, 0],
-      gov: 0.3,
-      walk: false,
-      trusses: [40.2, 42.6],
-      tieY: 12.6,
-      holes: [
-        { side: -1, s0: BR.palomar.z0, s1: BR.palomar.hueco, u0: 0, u1: 66.5 - BR.palomar.x0 },
-        { side: 1, s0: BR.palomar.z0, s1: BR.palomar.hueco, u0: 0, u1: BR.palomar.x1 - 66.5 },
-      ],
-      camHoles: [[BR.palomar.x0, BR.palomar.z0, BR.palomar.x1, BR.palomar.hueco]],
-    },
-    sides: { s: { low: 'wallstone', up: 'plaster', tint: [0.82, 0.78, 0.7] }, w: { low: 'wallstone', up: 'plaster', tint: [0.82, 0.78, 0.7] }, n: { low: 'wallstone', up: 'plaster' } },
-    open: [
-      { side: 'w', lv: 2, at: 10.0, w: 1.2, sill: 0.02, h: 2.2, frame: 'wood' },
-      { side: 'w', lv: 2, at: 6.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'open' },
-      { side: 's', lv: 2, at: 3.0, w: 1.6, sill: 0.0, h: 2.4, frame: 'none' },
-      { side: 'n', lv: 2, at: 5.5, w: 1.0, sill: 0.9, h: 1.3 },
-      { side: 'w', lv: 1, at: 2.0, w: 1.0, sill: 0.9, h: 1.3, shutters: 'closed' },
-    ],
-    stairs: [{ lv: 2, x: 66.5, z: 42.4, dir: 'n', w: 1.1, n: 10, open: 'e' }],
-  });
-  palomero(ctx, L, hPal);
-  casa(ctx, S, L, {
-    id: 'ne',
-    ...ne,
-    solid: true,
-    levels: [L0(), L1({ top: 5.8 })],
-    roof: { axis: 'z', h: 6.0, ridge: 8.4, ovs: [0.45, 0], gov: 0.3, walk: false },
-    sides: { w: { low: 'wallstone', up: 'plaster' } },
-    open: [
-      { side: 'w', lv: 1, at: 4.0, w: 1.0, sill: 0.8, h: 1.2, shutters: 'closed' },
-      { side: 'w', lv: 0, at: 4.0, w: 1.2, h: 2.3, leaf: 'closed' },
-    ],
-  });
 }
 
 // ------------------------------------------------------------ la cordelería
@@ -486,7 +468,7 @@ function cordeleria(ctx, S, L) {
     ...cor,
     // (de muros gruesos: el alero de la capilla se mete en el del este)
     t: 0.55,
-    levels: [L0(), L1()],
+    levels: [L0({ top: 3.8 }), { y: 4.05, top: 7.0 }],
     roof: { axis: 'z', h: 7.25, ridge: 8.8, ovs: [0.45, 0], gov: 0.3, walk: false },
     sides: { w: { low: 'wallstone', up: 'timber' }, n: { low: 'wallstone', up: 'timber' }, e: { low: 'wallstone', up: 'plaster' } },
     open: [
@@ -531,72 +513,66 @@ function cordeleria(ctx, S, L) {
 // Los Coronados (los curados del Físico: entities/coronado.js) y los cuervos
 // cebados de los tejados (entities/cuervo.js).
 function vecinos(L) {
-  const y1 = P1,
-    y2 = P2;
   L.enemies.push(
     // el hijo del zapatero, sentado a la mesa de la cocina, ante su cuenco
-    { type: 'coronado', x: 22.4, y: 0, z: 33.2, yaw: Math.PI / 2, idle: 'sit', id: 'e_hijo_zapatero' },
-    // en la tintorería, entre las tinas, junto a la escalera
-    { type: 'coronado', x: 39.6, y: 0, z: 33.3, yaw: 0.3, idle: 'stand', id: 'e_coronado_tinte' },
+    { type: 'coronado', x: 30.15, y: 0, z: 37.4, yaw: Math.PI / 2, idle: 'sit', id: 'e_hijo_zapatero' },
+    // en la tintorería, entre las tinas
+    { type: 'coronado', x: 42.6, y: 0, z: 36.6, yaw: -2.4, idle: 'stand', id: 'e_coronado_tinte' },
     // a la puerta de la Casa de los Inocentes, de cara a la plazuela,
     // esperando a que le abran (si te ve cruzarla, el Físico lo sabrá)
-    { type: 'coronado', x: 48.2, y: 0, z: 45.0, yaw: -Math.PI / 2, idle: 'stand', id: 'e_coronado_puerta' },
-    // dentro: en la sala de los inocentes, mirando por la reja, y en el
-    // desván, ante el banco de las coronas
-    { type: 'coronado', x: 58.0, y: y1, z: 35.1, yaw: Math.PI, idle: 'window', id: 'e_coronado_sala' },
-    { type: 'coronado', x: 55.25, y: y2, z: 37.35, yaw: Math.PI, idle: 'stand', id: 'e_coronado_desvan' },
-    // los cuervos: en la cumbrera del aguador (guarda los tejados del sur) y
-    // en la punta del palomar (los del levante y el boquete del palomero)
-    { type: 'cuervo', x: 41.75, y: 9.25, z: 54.5, yaw: -2.6, idle: 'perch', id: 'e_cuervo_aguador', guard: [33, 46, 50, 59] },
-    { type: 'cuervo', x: 66.5, y: 17.8, z: 35.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [49.5, 40, 73, 59] },
-    // los que llama la campanilla en la pelea: esperan en el zaguán, fuera de
-    // escena (game/fisico_pelea.js)
-    { type: 'coronado', x: 58.4, y: 0, z: 44.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado1' },
-    { type: 'coronado', x: 59.4, y: 0, z: 45.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado2' },
+    { type: 'coronado', x: 48.6, y: 0, z: 48.4, yaw: -Math.PI / 2, idle: 'stand', id: 'e_coronado_puerta' },
+    // dentro: en las celdas, mirando por la reja del huerto, y en el desván,
+    // ante el banco de las coronas
+    { type: 'coronado', x: 64.9, y: 0, z: 52.6, yaw: Math.PI / 2, idle: 'window', id: 'e_coronado_sala' },
+    { type: 'coronado', x: 59.4, y: 8.5, z: 53.6, yaw: Math.PI, idle: 'stand', id: 'e_coronado_desvan' },
+    // los cuervos: en la cumbrera de la cerera (guarda los tejados del sur) y
+    // en la de la quemada (los de la plazuela)
+    { type: 'cuervo', x: 22.0, y: CUMBRE + 0.15, z: 53.0, yaw: -2.6, idle: 'perch', id: 'e_cuervo_aguador', guard: [14, 47, 34, 58.5] },
+    { type: 'cuervo', x: 47.4, y: 8.8, z: 55.0, yaw: 2.6, idle: 'perch', id: 'e_cuervo_palomar', guard: [34, 51, 50, 58.5] },
+    // los que llama la campanilla en la pelea: esperan en las celdas, fuera
+    // de escena (game/fisico_pelea.js)
+    { type: 'coronado', x: 59.2, y: 0, z: 54.2, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado1' },
+    { type: 'coronado', x: 63.2, y: 0, z: 55.4, yaw: Math.PI, idle: 'stand', held: true, id: 'e_coronado_llamado2' },
     // y él: Mestre Clemente, el Físico (no está en ningún sitio: lo saca y lo
     // guarda game/fisico.js)
-    { type: 'fisico', x: 54.6, y: 0, z: 39.4, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
+    { type: 'fisico', x: 60.0, y: 0, z: 44.8, yaw: Math.PI, idle: 'boss', boss: true, held: true, id: 'e_fisico' }
   );
 }
 
 // ------------------------------------------------------------ lo que hay en las calles
-// En la calleja: la ropa tendida de lado a lado, las pieles clavadas a secar
-// en las fachadas, el carro volcado y los rótulos de los oficios. En la
+// En la rúa: la ropa tendida de lado a lado, las pieles clavadas a secar en
+// las fachadas, el carro volcado y los rótulos de los oficios. En la
 // plazuela: el pozo con su polea, la cruz de piedra, el árbol muerto con su
 // jaula colgada y la paja (con los cepos del Físico: trampas). Y, por los
 // tejados, las chimeneas (la de su casa, con humo: está en casa).
 function adorno(ctx) {
   const wb = ctx.wb;
   const rng = new RNG(3100);
-  // ---- la calleja
-  P.laundry(ctx, 17.6, 42.1, 17.9, 45.9, 5.75, 3101);
-  P.laundry(ctx, 24.8, 42.1, 24.4, 45.9, 5.6, 3102);
-  P.laundry(ctx, 30.2, 42.1, 30.5, 45.9, 5.8, 3103);
-  // (el carro, con la rueda rota, contra la casa de la esquina: volcado en
-  // medio, cerraba media calleja)
-  P.cart(ctx, 19.0, 0, 45.2, 0.04, { brokenWheel: true });
+  // ---- la rúa
+  P.laundry(ctx, 18.2, 41.1, 18.6, 47.9, 6.2, 3101);
+  P.laundry(ctx, 25.0, 41.1, 24.6, 47.9, 6.0, 3102);
+  // (el carro, con la rueda rota, contra la casa del zapatero)
+  P.cart(ctx, 20.2, 0, 42.3, 0.06, { brokenWheel: true });
   // las pieles: entre las puertas de abajo y las ventanas de arriba (al norte,
   // de cara al sur; al sur, de cara al norte)
   for (const [x, z, rot] of [
-    [15.3, 42.07, 0],
-    [18.4, 42.07, 0],
-    [20.9, 42.07, 0],
-    [28.6, 42.07, 0],
-    [31.4, 42.07, 0],
-    [15.9, 45.93, Math.PI],
-    [19.2, 45.93, Math.PI],
-    [24.0, 45.93, Math.PI],
+    [16.0, 41.07, 0],
+    [20.0, 41.07, 0],
+    [29.6, 41.07, 0],
+    [15.5, 47.93, Math.PI],
+    [21.4, 47.93, Math.PI],
+    [33.0, 47.93, Math.PI],
   ])
-    piel(ctx, x, 3.75, z, rot, rng.range(0.9, 1.25), rng.range(0.85, 1.1), rng.int(1, 999), undefined);
+    piel(ctx, x, 4.0, z, rot, rng.range(0.9, 1.25), rng.range(0.85, 1.1), rng.int(1, 999), undefined);
   // los rótulos: el zapatero (la bota), la cerera (la vela), el tintorero
   // (las madejas)
-  rotulo(ctx, 's', 23.6, 3.3, 42.0, (w) => {
+  rotulo(ctx, 's', 25.4, 3.6, 41.0, (w) => {
     palo(w, V(-0.12, -0.04, 0), V(-0.12, -0.24, 0), 0.005, 'iron', { round: true });
     palo(w, V(0.12, -0.04, 0), V(0.12, -0.24, 0), 0.005, 'iron', { round: true });
     w.box('wooddark', -0.2, -0.27, -0.02, 0.2, -0.24, 0.02, { ao: false });
     horma(w, 0, -0.62, 0, 0.42, undefined, true, Math.PI / 2);
   });
-  rotulo(ctx, 'n', 27.4, 3.3, 46.0, (w) => {
+  rotulo(ctx, 'n', 25.8, 3.6, 48.0, (w) => {
     palo(w, V(-0.18, -0.04, 0), V(-0.18, -0.2, 0), 0.005, 'iron', { round: true });
     palo(w, V(0.18, -0.04, 0), V(0.18, -0.2, 0), 0.005, 'iron', { round: true });
     w.box('wooddark', -0.27, -0.62, -0.02, 0.27, -0.2, 0.02, { ao: false, faces: 'tnsewb' });
@@ -605,7 +581,7 @@ function adorno(ctx) {
       w.box('ember', -0.018, -0.31, zz - 0.003, 0.018, -0.25, zz + 0.003, { ao: false, faces: zz < 0 ? 'n' : 's', grime: false });
     }
   });
-  rotulo(ctx, 's', 43.2, 3.5, 38.5, (w) => {
+  rotulo(ctx, 's', 42.4, 3.7, 41.0, (w) => {
     palo(w, V(-0.25, -0.06, 0), V(0.25, -0.06, 0), 0.02, 'wooddark', { round: true });
     [
       [0.22, 0.3, 0.62],
@@ -613,22 +589,29 @@ function adorno(ctx) {
       [0.78, 0.66, 0.2],
     ].forEach((t, i) => w.box('clothWhite', -0.2 + i * 0.2 - 0.05, -0.62, -0.05, -0.2 + i * 0.2 + 0.05, -0.08, 0.05, { ao: false, grime: false, tint: t }));
   });
+  // los faroles de las puertas de la rúa (el de la cerera, aún encendido)
+  P.lantern(ctx, 29.0, 3.2, 47.95, Math.PI, true);
+  P.lantern(ctx, 28.6, 3.2, 41.05, 0, false);
+  // las cruces de cal de las casas curadas: la del zapatero (en su puerta
+  // clavada) y la quemada
+  cruzCal(ctx, 22.2, 3.0, 41.06, 0, 0.8);
+  cruzCal(ctx, 41.75, 3.1, 51.94, Math.PI, 0.9);
   // ---- la plazuela
-  P.well(ctx, 41.5, 0, 47.9);
-  cruzPiedra(ctx, 35.6, 39.7);
+  P.well(ctx, 41.8, 0, 48.8);
+  cruzPiedra(ctx, 36.2, 50.2);
   // el árbol muerto, con la jaula colgada de una rama (dentro, lo que queda
   // de uno que no se dejó curar)
-  P.deadTree(ctx, 45.6, 0, 41.2, 3201, 5.2);
-  palo(wb, V(45.6, 3.7, 41.2), V(46.9, 4.25, 41.35), 0.07, 'wooddark', {});
-  P.chains(ctx, 46.75, 4.2, 41.35, 7, 0);
-  jaula(ctx, 46.75, 3.0, 41.35, rng);
-  ctx.col.add(45.3, 0, 40.9, 45.9, 3.5, 41.5);
+  P.deadTree(ctx, 46.4, 0, 50.2, 3201, 5.2);
+  palo(wb, V(46.4, 3.7, 50.2), V(47.7, 4.25, 50.35), 0.07, 'wooddark', {});
+  P.chains(ctx, 47.55, 4.2, 50.35, 7, 0);
+  jaula(ctx, 47.55, 3.0, 50.35, rng);
+  ctx.col.add(46.1, 0, 49.9, 46.7, 3.5, 50.5);
   // la paja, alrededor de los cepos
-  P.hay(ctx, 38.7, 0, 42.8, 0.4);
-  P.hay(ctx, 45.1, 0, 48.6, 1.1);
+  P.hay(ctx, 38.9, 0, 44.2, 0.4);
+  P.hay(ctx, 45.2, 0, 46.1, 1.1);
   for (const [cx, cz] of [
-    [37.4, 41.6],
-    [43.8, 47.2],
+    [37.6, 43.0],
+    [44.0, 47.4],
   ])
     for (let i = 0; i < 10; i++) {
       const a = rng.range(0, Math.PI * 2),
@@ -638,24 +621,16 @@ function adorno(ctx) {
       wb.box('straw', x - rng.range(0.15, 0.35), 0.012, z - rng.range(0.1, 0.25), x + rng.range(0.15, 0.35), 0.03, z + rng.range(0.1, 0.25), { ao: false, tint: [0.62, 0.56, 0.4] });
     }
   // ---- las chimeneas (fuera del paso de los tejados)
-  chimenea(ctx, 16.2, 35.0, 8.5, 10.4, 0.35);
-  chimenea(ctx, 25.8, 38.0, 9.7, 11.6, 0.38);
-  chimenea(ctx, 68.2, 26.0, 7.5, 9.4, 0.35);
+  // (las de las casas con desván suben desde su suelo: el cañón del hogar
+  // de abajo pasa por él)
+  chimenea(ctx, 16.6, 32.2, P2, 13.0, 0.38);
+  chimenea(ctx, 33.0, 38.6, P2, 13.2, 0.4);
+  chimenea(ctx, 16.8, 55.8, 10.4, 12.9, 0.38);
+  chimenea(ctx, 44.6, 32.4, P2, 12.8, 0.38);
   chimenea(ctx, 42.6, 17.0, 7.9, 9.6, 0.35);
-  chimenea(ctx, 53.8, 35.4, 9.5, 11.3, 0.4, { smoke: true });
-}
-
-// Cajas en escalera contra una tapia (de cara al oeste, hasta xt): cuatro
-// gradas de 0,45 m, que se suben andando; la última, a medio metro de lo alto
-// de la tapia.
-function cajasTapia(ctx, xt, z0) {
-  const s = 0.45;
-  const cols = [1, 2, 3, 4, 4];
-  cols.forEach((n, i) => {
-    const x = xt - (cols.length - i - 0.5) * s;
-    for (let k = 0; k < n; k++) for (let j = 0; j < 3; j++) P.crate(ctx, x, k * s, z0 + j * s, s - 0.01, (i * 7 + k * 3 + j) % 2 ? 0.04 : -0.03, { collide: false });
-    ctx.col.add(x - s / 2, 0, z0 - s / 2, x + s / 2, n * s, z0 + 2.5 * s);
-  });
+  // (la de su casa, con humo: está en casa; en el faldón del huerto, fuera del
+  // paso de la quemada a la claraboya)
+  chimenea(ctx, 62.6, 55.4, 8.5, 12.9, 0.42, { smoke: true });
 }
 
 // La cruz de piedra de la plazuela: dos gradas, el fuste y la cruz.
@@ -696,24 +671,15 @@ function jaula(ctx, x, y, z, rng) {
   for (let i = 0; i < 4; i++) palo(wb, V(x + rng.range(-0.2, 0.2), y + 0.03, z + rng.range(-0.2, 0.2)), V(x + rng.range(-0.2, 0.2), y + rng.range(0.03, 0.2), z + rng.range(-0.2, 0.2)), 0.018, 'bone', { round: true });
 }
 
-// ------------------------------------------------------------ el portón
-// La boca de la calleja, en la plaza de la Herrería: el portón de tablas de la
-// cuarentena del Físico (la cruz de cal, el cartel), clavado y apuntalado por
-// dentro; se arranca con la palanca, desde la plaza.
-function porton(L) {
-  const { x, z, w } = BR.porton;
-  L.interact.push({ kind: 'door', id: 'd_porton', x: x + 0.15, y: 0, z, w, h: 2.8, axis: 'z', lock: { type: 'boards', side: -1, front: 'portonDentro', msg: 'portonArranca', shut: 'portonCerrado' }, mat: 'barricade', hinge: 0, props: 1, cuarentena: true, lit: true });
-}
-
 // ------------------------------------------------------------ las trampas
 // Los cepos que dejó el Físico entre la paja de la plazuela (game/trampas.js;
 // las cuerdas con campanillas, en las casas: barrio_casas.js).
 function trampas(L) {
   (L.cepos || (L.cepos = [])).push(
-    // en el camino de la calleja a la tintorería, donde se pisa sin mirar
-    { id: 'c_plazuela', x: 37.4, y: 0, z: 41.6 },
-    // hacia la casa del aguador
-    { id: 'c_aguador', x: 43.8, y: 0, z: 47.2 }
+    // en el camino de la rúa a la tintorería, donde se pisa sin mirar
+    { id: 'c_plazuela', x: 37.6, y: 0, z: 43.0 },
+    // hacia la puerta de la Casa de los Inocentes
+    { id: 'c_aguador', x: 44.0, y: 0, z: 47.4 }
   );
 }
 
@@ -722,43 +688,46 @@ function zonas(L) {
   // donde se cae desde los tejados (de más de 3 m duele; de 5,5, mata): las
   // calles, los patios, el corral y su pasaje, el borde de la plaza
   (L.fallZones || (L.fallZones = [])).push(
-    [BR.calleja.x0, BR.calleja.z0, BR.calleja.x1, BR.calleja.z1],
+    [BR.rua.x0, BR.rua.z0, BR.rua.x1, BR.rua.z1],
     [BR.plazuela.x0, BR.plazuela.z0, BR.plazuela.x1, BR.plazuela.z1],
     [BR.callejon.x0, BR.callejon.z0, BR.callejon.x1, BR.callejon.z1],
     [BR.patio.x0, BR.patio.z0, BR.patio.x1, BR.patio.z1],
-    [BR.s1.x0, BR.s1.z1, BR.s3.x1, 58],
+    [BR.huerto.x0, BR.huerto.z0, BR.huerto.x1, BR.huerto.z1],
+    [BR.que.x0, BR.que.z0, BR.que.x1, BR.que.z1],
     [14, 17, 30, 31],
     [30, 17, 38.5, 19.5],
     [36, 3, 38.5, 19.5],
     [6, 42, 14, 58]
   );
-  const r = (b, y0 = -1, y1 = 12) => [b.x0, b.z0, b.x1, b.z1, y0, y1];
+  const r = (b, y0 = -1, y1 = 14) => [b.x0, b.z0, b.x1, b.z1, y0, y1];
   L.zones.push(
-    { id: 'calleja', rects: [r(BR.calleja)], atmo: 'city' },
-    { id: 'plazuela', rects: [r(BR.plazuela), r(BR.callejon), r(BR.patio)], atmo: 'city' },
-    { id: 'zapatero', rects: [r(BR.zap, -1, 7.2)], atmo: 'interior', room: 'zap0' },
-    { id: 'viuda', rects: [r(BR.viu, -1, 7.2)], atmo: 'interior', room: 'viu0' },
-    { id: 'quemada', rects: [r(BR.s3, -1, 7.2)], atmo: 'interior', room: 's30' },
-    { id: 'tintoreria_pellejeros', rects: [r(BR.tin, -1, 11)], atmo: 'interior', room: 'tin0' },
-    { id: 'casa_inocentes', rects: [r(BR.ino, -1, 11)], atmo: 'interior', room: 'ino0' },
-    { id: 'palomero', rects: [r(BR.pal, -1, 14)], atmo: 'interior', room: 'pal2' },
+    { id: 'calleja', rects: [r(BR.rua)], atmo: 'city' },
+    { id: 'plazuela', rects: [r(BR.plazuela), r(BR.callejon), r(BR.patio), r(BR.huerto)], atmo: 'city' },
+    // (el desván del zapatero, el de las palomas: se anda desde el de la
+    // tintorería)
+    { id: 'palomero', rects: [[BR.zap.x0, BR.zap.z0, BR.zap.x1, BR.zap.z1, P2 - 0.3, CUMBRE - 0.4]], atmo: 'interior', room: 'zap2' },
+    { id: 'zapatero', rects: [r(BR.zap, -1, P2 - 0.3)], atmo: 'interior', room: 'zap0' },
+    { id: 'viuda', rects: [r(BR.viu, -1, ALERO)], atmo: 'interior', room: 'viu0' },
+    { id: 'quemada', rects: [r(BR.que, -1, 6.8)], atmo: 'interior', room: 'que0' },
+    { id: 'tintoreria_pellejeros', rects: [r(BR.tin, -1, CUMBRE - 0.4)], atmo: 'interior', room: 'tin0' },
+    { id: 'casa_inocentes', rects: [r(BR.ino, -1, 12.6)], atmo: 'interior', room: 'ino0' },
     { id: 'cordeleria', rects: [r(BR.cor, -1, 8), r(BR.cor2, -1, 5)], atmo: 'interior', room: 'cor0' }
   );
   for (const [id, b] of [
-    ['calleja', BR.calleja],
+    ['calleja', BR.rua],
     ['plazuela', BR.plazuela],
     ['plazuela', BR.callejon],
     ['plazuela', BR.patio],
+    ['plazuela', BR.huerto],
     ['zapatero', BR.zap],
     ['viuda', BR.viu],
-    ['quemada', BR.s3],
+    ['quemada', BR.que],
     ['tintoreria_pellejeros', BR.tin],
     ['casa_inocentes', BR.ino],
-    ['palomero', BR.pal],
     ['cordeleria', BR.cor],
     ['cordeleria', BR.cor2],
   ])
     L.map.push({ id, r: [b.x0, b.z0, b.x1, b.z1] });
 }
 
-export { V, THREE, RNG, P, house, piel, rotulo, LIME };
+export { V, THREE, RNG, P, house, piel, rotulo, LIME, tapia };
