@@ -135,12 +135,14 @@ export const FASES = [
     tareas: [
       ['La torre de la primera espringala, con su husillo y su trampilla', 1],
       ['La fragua del maestre Lourenço', 1],
-      ['El barrio: la calleja, la plazuela y sus casas, de verdad y por dentro', 1],
+      ['El barrio: la rúa, la plazuela y sus casas, de verdad y por dentro', 1],
+      ['Rehecho con casas grandes: la rúa de siete metros con su arco, salas de nueve metros y una sola escalera en cada casa', 1],
       ['Las cornisas que se cruzan haciendo equilibrio', 1],
       ['Los Coronados, los curados del Físico', 1],
       ['El Físico: sus trampas, su vigilancia, su cuarentena y su caza', 1],
-      ['La captura: la camilla, el quirófano y el forcejeo', 1],
+      ['La captura: la camilla, la sala grande y el forcejeo', 1],
       ['La pelea en tres tiempos: las medicinas, el hierro y el fuego', 1],
+      ['Una sola vida: lo que le haces en la calle cuenta en su casa; herido, se encierra y te espera', 1],
       ['La cordelería y la salida detrás de la barricada; el tratado del Físico', 1],
     ],
   },
@@ -371,6 +373,12 @@ export const EXPANSIONES = [
 
 // Lo que tiene que decidir el autor para seguir.
 export const DECISIONES = [
+  {
+    que: 'El Físico que aprende',
+    pregunta: '¿Cómo quieres que aprenda sus tácticas?',
+    mas: 'La historia clínica (aprende de ti mientras juegas), una red entrenada aquí contra jugadores de prueba y tus grabaciones, o las dos; si quieres grabar tus peleas, y cuánto debe castigar.',
+    donde: 'PLAN_FISICO_ML.md, §6',
+  },
   {
     que: 'Los Paços',
     pregunta: '¿Es éste el barrio rico que quieres?',

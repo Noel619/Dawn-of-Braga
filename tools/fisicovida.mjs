@@ -33,7 +33,7 @@ const r = await p.evaluate(() => {
   });
   // (el jugador, en la plazuela; él, cerca, cazándole)
   const pl = g.player;
-  const PZ = window.__fisicoPrueba || { x: 41.5, z: 46.5 };
+  const PZ = window.__fisicoPrueba || { x: 41.0, z: 45.0 };
   pl.spawn(PZ.x, 0, PZ.z, Math.PI / 2);
   g.dev.god = true;
   // (aquí no se le deja dormirte: la camilla es otra prueba)
@@ -82,11 +82,15 @@ const r = await p.evaluate(() => {
   F.alarma(PZ.x, 0, PZ.z, 'cepo');
   sim(5);
   est('tras un cepo: no sale');
-  // 7) la pelea: con la vida que le quedó, y en su tiempo
-  const QX = window.__quirofano || { x: 55.5, z: 37.8 };
-  pl.spawn(QX.x, 0, QX.z, 0);
+  // 7) entras en su casa: te espera en su mesa, en la sala grande
+  pl.spawn(53.0, 0, 47.0, Math.PI / 2);
+  sim(0.5);
+  est('entras en su casa: te espera en su mesa');
+  // 8) la pelea: con la vida que le quedó, y en su tiempo
+  const QX = window.__quirofano || { x: 58.6, z: 44.0 };
+  pl.spawn(QX.x, 0, QX.z, Math.PI / 2);
   sim(0.2);
-  est('entras en el quirófano');
+  est('entras en la sala grande');
   sim(6);
   est('la pelea, 6 s después');
   return out;

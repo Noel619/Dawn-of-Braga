@@ -607,7 +607,8 @@ export function casaInocentes(ctx, L, h) {
     const x = rp.range(59.6, 64.8),
       z = rp.range(36.2, 49.8);
     if (Math.abs(x - M.x) < 1.3 && Math.abs(z - M.z) < 0.7) continue;
-    wb.box('straw', x - rp.range(0.15, 0.4), 0.012, z - rp.range(0.1, 0.3), x + rp.range(0.15, 0.4), 0.03, z + rp.range(0.1, 0.3), { ao: false, room: r, tint: [0.62, 0.56, 0.4] });
+    const yp = 0.012 + (i % 9) * 0.003;
+    wb.box('straw', x - rp.range(0.15, 0.4), yp, z - rp.range(0.1, 0.3), x + rp.range(0.15, 0.4), yp + 0.016, z + rp.range(0.1, 0.3), { ao: false, room: r, tint: [0.62, 0.56, 0.4] });
   }
   // la galería de madera, por el oeste (su barandilla, sobre la sala), y los
   // bancos de los que miraban
@@ -729,6 +730,14 @@ export function casaInocentes(ctx, L, h) {
   if (ctx.shafts) ctx.shafts.push({ a: [(C.x0 + C.x1) / 2, 11.0, (C.z0 + C.z1) / 2], b: [(C.x0 + C.x1) / 2 + 0.6, y2 + 0.05, (C.z0 + C.z1) / 2 + 0.2], w: 1.0, color: 0x9fb2d8 });
   wb.setRoom(null);
   claraboya(ctx);
+  // las puertas de la sala grande: la doble del zaguán (atrancada por fuera,
+  // por el zaguán: así guardaba a sus inocentes; él la cierra de un portazo
+  // al empezar la pelea) y la de las celdas (atrancada por el lado de la
+  // sala: la abre él cuando toca la campanilla)
+  L.interact.push(
+    { kind: 'door', id: 'd_sala_inocentes', x: 57.1, y: 0, z: 44.0, w: 2.4, h: 3.1, axis: 'z', mat: 'planks', double: true, swing: -1, plane: 57.0, inset: 0.06, lock: { type: 'barred', side: -1 }, barredMsg: 'salaInocentesTranca' },
+    { kind: 'door', id: 'd_celdas_inocentes', x: 61.3, y: 0, z: 50.9, w: 1.6, h: 2.8, axis: 'x', mat: 'planks', swing: -1, plane: 50.8, inset: 0.06, mark: 'cross', lock: { type: 'barred', side: -1 }, barredMsg: 'celdasInocentesTranca' }
+  );
   // el rótulo del físico, junto a la puerta de la plazuela
   rotulo(ctx, 'w', 49.5, 3.4, 48.0, asclepio, { len: 0.85 });
   L.interact.push(

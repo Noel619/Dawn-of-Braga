@@ -552,7 +552,8 @@ export class CamillaCine {
       e.anim.play(FI_CLIPS.ordena, { blend: 0 });
     }
     F.sleep = Math.max(0.12, F.sleep - dt * 0.12);
-    const lamp = this.v.set(MESA.x + 0.05, 2.5, MESA.z);
+    // (la lámpara cuelga de la viga, sobre la mesa: a cuatro metros y medio)
+    const lamp = this.v.set(MESA.x + 0.05, 4.3, MESA.z);
     if (this.cue('hierros', C_MESA + 1.2)) {
       fiSay(e, DIALOG.fisicoHierros, 2.8);
       g.audio && g.audio.play('chestBar', { x: HIERROS.x, y: 1, z: HIERROS.z });

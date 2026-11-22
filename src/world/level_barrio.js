@@ -42,7 +42,7 @@ import { RNG } from '../core/util.js';
 import { house, archedWall } from './builders.js';
 import { floor } from './level_util.js';
 import * as P from './props.js';
-import { casa, tapia, rotulo, piel, V, LIME } from './kit_casa.js';
+import { casa, tapia, rotulo, piel, V, LIME, ROT } from './kit_casa.js';
 import { zapatero, viuda, quemada, tintoreria } from './barrio_casas.js';
 import { casaInocentes, patioInocentes } from './inocentes.js';
 import { desvanZapatero, vigaRua, tejadoQuemado, chimenea } from './barrio_tejados.js';
@@ -69,7 +69,7 @@ export const BR = {
   callejon: { x0: 46, z0: 22, x1: 49.5, z1: 41 },
   // el arco de la rúa, en la plaza de la Herrería (y el portón de la
   // cuarentena, bajo él)
-  arco: { x0: 14, x1: 15.2, z0: 41, z1: 48, c: 44.5, w: 5.0, h: 3.2 },
+  arco: { x0: 14.03, x1: 15.2, z0: 41, z1: 48, c: 44.5, w: 5.0, h: 3.2 },
   porton: { x: 14.6, z: 44.5, w: 5.0, h: 3.2 },
   // las casas grandes de la rúa: la del zapatero (norte) y la de la cerera
   // (sur, contra la muralla); la tintorería, al norte de la plazuela, pegada
@@ -113,6 +113,7 @@ export function buildBarrio(ctx, S, L) {
   plazuela(ctx, S, L);
   cordeleria(ctx, S, L);
   adorno(ctx);
+  fachadas(ctx);
   vecinos(L);
   trampas(L);
   zonas(L);
@@ -125,7 +126,7 @@ function calles(ctx, S, L) {
   W(R);
   floor(ctx, R.x0, R.z0, R.x1, R.z1, 'cobble');
   // (el arroyo de en medio de la rúa: losas en dos aguas)
-  floor(ctx, R.x0 + 1.2, 44.15, Z.x0 + 2, 44.85, 'flag', 0.005, { tint: [0.62, 0.6, 0.56] });
+  floor(ctx, R.x0 + 1.2, 44.15, Z.x0 + 1.4, 44.85, 'flag', 0.012, { tint: [0.62, 0.6, 0.56] });
   W(Z);
   floor(ctx, Z.x0, Z.z0, Z.x1, Z.z1, 'cobble');
   floor(ctx, Z.x0 + 1.5, Z.z0 + 1.5, Z.x1 - 1.5, Z.z1 - 1.2, 'dirt', 0.01);
@@ -179,8 +180,8 @@ function rua(ctx, S, L) {
     ...zap,
     t: 0.5,
     levels: [
-      L0({ areas: [{ r: [14.5, 31.5, 23.9, 40.5], room: 'zap_tienda' }] }),
-      L1({ areas: [{ r: [14.5, 31.5, 23.9, 40.5], room: 'zap_alcoba' }] }),
+      L0({ areas: [{ r: [14.5, 31.5, 24.4, 40.5], room: 'zap_tienda' }] }),
+      L1({ areas: [{ r: [14.5, 31.5, 24.4, 40.5], room: 'zap_alcoba' }] }),
       DESVAN(),
     ],
     roof: { axis: 'x', h: ALERO, ridge: CUMBRE, ovs: [0.45, 0.45], gov: 0.3, open: [false, true], trusses: [17.6, 21.6, 25.6, 33.0], tieY: 10.25, holes: [{ side: 1, s0: BR.boquete.x0, s1: BR.boquete.x1, u0: BR.boquete.z0 - 36, u1: BR.boquete.z1 - 36 }], walkHoles: [[BR.boquete.x0, BR.boquete.z0, BR.boquete.x1, BR.boquete.z1]], camHoles: [[BR.boquete.x0 - 0.3, BR.boquete.z0 - 0.3, BR.boquete.x1 + 0.3, BR.boquete.z1 + 0.3]] },
@@ -200,7 +201,7 @@ function rua(ctx, S, L) {
       { side: 's', lv: 0, at: 17.6, w: 1.2, sill: 1.0, h: 1.5, shutters: 'ajar' },
       { side: 's', lv: 1, at: 3.0, w: 1.2, sill: 0.7, h: 1.7, shutters: 'open' },
       { side: 's', lv: 1, at: 7.2, w: 1.2, sill: 0.7, h: 1.7, shutters: 'ajar' },
-      { side: 's', lv: 1, at: 12.8, w: 1.2, sill: 0.7, h: 1.7, shutters: 'broken' },
+      { side: 's', lv: 1, at: 11.0, w: 1.2, sill: 0.7, h: 1.7, shutters: 'broken' },
       { side: 's', lv: 1, at: 17.0, w: 1.2, sill: 0.7, h: 1.7 },
       // los ventanucos del desván (los de las palomas)
       { side: 's', lv: 2, at: 4.0, w: 0.7, sill: 0.6, h: 0.6, shutters: 'broken' },
@@ -217,12 +218,13 @@ function rua(ctx, S, L) {
       { side: 'e', lv: 2, at: 5.0, w: 1.2, h: 2.2, frame: 'none' },
     ],
     walls: [
-      { lv: 0, x0: 23.9, z0: 31.5, x1: 24.1, z1: 40.5, doors: [{ at: 36.8, w: 1.6, h: 2.7 }], rooms: ['zap_tienda', 'zap0'] },
-      { lv: 1, x0: 23.9, z0: 31.5, x1: 24.1, z1: 40.5, doors: [{ at: 37.6, w: 1.3, h: 2.4 }], rooms: ['zap_alcoba', 'zap1'] },
+      // (no en x = 24: ahí cae una viga de los forjados, y se solapaban)
+      { lv: 0, x0: 24.4, z0: 31.5, x1: 24.6, z1: 40.5, doors: [{ at: 36.8, w: 1.6, h: 2.7 }], rooms: ['zap_tienda', 'zap0'] },
+      { lv: 1, x0: 24.4, z0: 31.5, x1: 24.6, z1: 40.5, doors: [{ at: 37.6, w: 1.3, h: 2.4 }], rooms: ['zap_alcoba', 'zap1'] },
     ],
     // (la escalera, una sola: del zaguán, contra el muro del corral, al cuarto
     // del hijo; el pie, a casi un metro del tabique)
-    stairs: [{ lv: 0, x: 25.0, z: 32.35, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 's' }],
+    stairs: [{ lv: 0, x: 25.4, z: 32.35, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 's' }],
   });
   // ---- al sur: la casa de la cerera (Dona Inês): abajo, la tienda de las
   // velas (a la plaza y a la rúa) y el zaguán con la cocina, la escalera y la
@@ -232,7 +234,7 @@ function rua(ctx, S, L) {
     id: 'viu',
     ...viu,
     t: 0.5,
-    levels: [L0({ areas: [{ r: [14.5, 48.5, 23.9, 57.5], room: 'viu_tienda' }] }), L1({ areas: [{ r: [14.5, 48.5, 20.9, 57.5], room: 'viu_alcoba' }] })],
+    levels: [L0({ areas: [{ r: [14.5, 48.5, 24.4, 57.5], room: 'viu_tienda' }] }), L1({ areas: [{ r: [14.5, 48.5, 20.9, 57.5], room: 'viu_alcoba' }] })],
     roof: { axis: 'x', h: ALERO, ridge: CUMBRE, ovs: [0.45, 0.2], gov: 0.3 },
     sides: {
       n: { low: 'ashlar', up: 'plaster', tint: [0.92, 0.86, 0.74] },
@@ -261,13 +263,13 @@ function rua(ctx, S, L) {
       { side: 'e', lv: 1, at: 2.2, w: 1.1, sill: 0.8, h: 1.6, shutters: 'open' },
     ],
     walls: [
-      { lv: 0, x0: 23.9, z0: 48.5, x1: 24.1, z1: 57.5, doors: [{ at: 52.4, w: 1.6, h: 2.7 }], rooms: ['viu_tienda', 'viu0'] },
+      { lv: 0, x0: 24.4, z0: 48.5, x1: 24.6, z1: 57.5, doors: [{ at: 52.4, w: 1.6, h: 2.7 }], rooms: ['viu_tienda', 'viu0'] },
       // (el tabique de la alcoba, con su puerta: viuda() pone la hoja
       // atrancada)
       { lv: 1, x0: 20.9, z0: 48.5, x1: 21.1, z1: 57.5, doors: [{ at: 54.6, w: 1.1, h: 2.3 }], rooms: ['viu_alcoba', 'viu1'] },
     ],
     // (la escalera: del zaguán, contra la muralla, a la sala)
-    stairs: [{ lv: 0, x: 25.2, z: 56.65, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 'n' }],
+    stairs: [{ lv: 0, x: 25.6, z: 56.65, dir: 'e', w: 1.5, n: 15, run: 0.3, open: 'n' }],
   });
   zapatero(ctx, L, hZap);
   desvanZapatero(ctx, L, hZap);
@@ -633,6 +635,103 @@ function adorno(ctx) {
   chimenea(ctx, 62.6, 55.4, 8.5, 12.9, 0.42, { smoke: true });
 }
 
+// ------------------------------------------------------------ las fachadas
+// Lo que hace de una casa grande una casa noble: el arco de sillería sobre
+// la puerta principal, el escudo de piedra encima (el del zapatero de la Sé,
+// la bota; el de la cerera, el cirio; el de la casa del canónigo que se la
+// dejó a los inocentes, la cruz y el capelo) y los canes bajo los aleros.
+function fachadas(ctx) {
+  // los arcos de las puertas principales
+  arcoPuerta(ctx, 's', 27.0, 41.0, 1.6, 3.1);
+  arcoPuerta(ctx, 'n', 27.5, 48.0, 1.6, 3.1);
+  arcoPuerta(ctx, 's', 40.0, 41.0, 1.8, 3.1);
+  arcoPuerta(ctx, 'w', 49.5, 46.5, 1.6, 3.1);
+  // los escudos
+  escudo(ctx, 's', 27.0, 4.75, 41.0, [0.42, 0.16, 0.12], (wb) => {
+    // la bota del zapatero de la Sé
+    wb.box('leather', -0.09, -0.16, 0.05, 0.05, 0.16, 0.08, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
+    wb.box('leather', -0.09, -0.2, 0.05, 0.16, -0.12, 0.08, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
+  });
+  escudo(ctx, 'n', 27.5, 4.75, 48.0, [0.2, 0.28, 0.5], (wb) => {
+    // el cirio de la cerera, con su llama
+    wb.box('candle', -0.04, -0.2, 0.05, 0.04, 0.12, 0.08, { ao: false, grime: false });
+    wb.box('ember', -0.025, 0.12, 0.05, 0.025, 0.2, 0.08, { ao: false, grime: false });
+  });
+  escudo(ctx, 'w', 49.5, 4.75, 46.5, [0.6, 0.58, 0.52], (wb) => {
+    // la cruz y el capelo del canónigo que dejó la casa a los inocentes
+    wb.box('clothRed', -0.03, -0.18, 0.05, 0.03, 0.12, 0.08, { ao: false, grime: false });
+    wb.box('clothRed', -0.12, -0.02, 0.05, 0.12, 0.04, 0.08, { ao: false, grime: false });
+    wb.box('clothRed', -0.2, 0.17, 0.05, 0.2, 0.21, 0.08, { ao: false, grime: false });
+    wb.box('clothRed', -0.1, 0.21, 0.05, 0.1, 0.28, 0.08, { ao: false, grime: false });
+  });
+  // los canes de los aleros: los de la rúa, la tintorería y la Casa
+  canes(ctx, 's', 14.4, 45.6, 41.0, 9.4);
+  canes(ctx, 'n', 14.4, 33.6, 48.0, 9.4);
+  // (la Casa, sólo por encima de la plazuela y el callejón: más al sur se le
+  // arrima el tejado de la quemada)
+  canes(ctx, 'w', 34.4, 51.6, 49.5, 8.5);
+}
+
+// Un arco de sillería de adorno sobre el dintel de una puerta (las dovelas,
+// un poco salidas del muro, en medio punto), en la fachada side, centrado en
+// (x, z), desde yTop.
+function arcoPuerta(ctx, side, x, z, w, yTop) {
+  const wb = ctx.wb;
+  const r = w / 2 + 0.18;
+  const n = 9;
+  wb.at(x, 0, z, ROT[side], () => {
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI * ((i + 0.5) / n);
+      const cx = Math.cos(a) * r,
+        cy = yTop + Math.sin(a) * r * 0.82;
+      wb.push();
+      wb.translate(cx, cy, 0);
+      wb.rotateZ(a - Math.PI / 2);
+      wb.box('ashlar', -0.13, -0.17, 0, 0.13, 0.17, 0.07, { ao: false, tint: i === (n - 1) / 2 ? [0.82, 0.8, 0.74] : [0.74, 0.72, 0.66] });
+      wb.pop();
+    }
+    // las impostas, a los lados
+    for (const sx of [-1, 1]) wb.box('ashlar', sx * r - 0.22, yTop - 0.12, 0, sx * r + 0.22, yTop + 0.02, 0.09, { ao: false, tint: [0.7, 0.68, 0.62] });
+  });
+}
+
+// Un escudo de piedra: la tabla, la punta de abajo, el campo de color y lo
+// que lleva (draw, en su marco: x a lo ancho, y arriba, z hacia fuera).
+function escudo(ctx, side, x, y, z, color, draw) {
+  const wb = ctx.wb;
+  wb.at(x, y, z, ROT[side], () => {
+    wb.box('ashlar', -0.4, -0.3, 0, 0.4, 0.4, 0.06, { ao: false, tint: [0.78, 0.76, 0.7] });
+    // (la punta: un rombo girado)
+    wb.push();
+    wb.translate(0, -0.3, 0.03);
+    wb.rotateZ(Math.PI / 4);
+    wb.box('ashlar', -0.28, -0.28, -0.03, 0.28, 0.28, 0.03, { ao: false, tint: [0.78, 0.76, 0.7] });
+    wb.pop();
+    wb.box('plaster', -0.32, -0.26, 0.075, 0.32, 0.33, 0.08, { ao: false, grime: false, faces: 's', tint: color });
+    // la moldura de arriba
+    wb.box('ashlar', -0.46, 0.4, 0, 0.46, 0.48, 0.09, { ao: false, tint: [0.72, 0.7, 0.64] });
+    wb.push();
+    wb.translate(0, 0, 0.0);
+    draw(wb);
+    wb.pop();
+  });
+}
+
+// Los canes de madera bajo el alero de una fachada (side), de a0 a a1 a lo
+// largo de ella, en la línea line, bajo y.
+function canes(ctx, side, a0, a1, line, y) {
+  const wb = ctx.wb;
+  const n = Math.max(2, Math.round((a1 - a0) / 0.75));
+  for (let i = 0; i <= n; i++) {
+    const a = a0 + ((a1 - a0) * i) / n;
+    const [x, z] = side === 'n' || side === 's' ? [a, line] : [line, a];
+    wb.at(x, 0, z, ROT[side], () => {
+      wb.box('wooddark', -0.06, y - 0.34, 0, 0.06, y - 0.16, 0.38, { ao: false, tint: [0.55, 0.48, 0.42] });
+      wb.box('wooddark', -0.06, y - 0.42, 0, 0.06, y - 0.34, 0.16, { ao: false, tint: [0.55, 0.48, 0.42] });
+    });
+  }
+}
+
 // La cruz de piedra de la plazuela: dos gradas, el fuste y la cruz.
 function cruzPiedra(ctx, x, z) {
   const wb = ctx.wb;
@@ -700,17 +799,33 @@ function zonas(L) {
     [6, 42, 14, 58]
   );
   const r = (b, y0 = -1, y1 = 14) => [b.x0, b.z0, b.x1, b.z1, y0, y1];
+  // (lo que hay bajo un tejado a dos aguas, sin su faldón: por fajas de medio
+  // metro, cada una hasta treinta centímetros por debajo de sus tejas; encima
+  // de ellas, en el tejado, ya no se está dentro)
+  const bajoTejado = (b, y0, axis, h, ridge, paso = 0.5) => {
+    const out = [];
+    const half = axis === 'x' ? (b.z1 - b.z0) / 2 : (b.x1 - b.x0) / 2;
+    const c = axis === 'x' ? (b.z0 + b.z1) / 2 : (b.x0 + b.x1) / 2;
+    const k = (ridge - h) / half;
+    const [a0, a1] = axis === 'x' ? [b.z0, b.z1] : [b.x0, b.x1];
+    for (let u = a0; u < a1 - 1e-6; u += paso) {
+      const v = Math.min(a1, u + paso);
+      const top = ridge - Math.max(Math.abs(u - c), Math.abs(v - c)) * k - 0.3;
+      if (top > y0) out.push(axis === 'x' ? [b.x0, u, b.x1, v, y0, top] : [u, b.z0, v, b.z1, y0, top]);
+    }
+    return out;
+  };
   L.zones.push(
     { id: 'calleja', rects: [r(BR.rua)], atmo: 'city' },
     { id: 'plazuela', rects: [r(BR.plazuela), r(BR.callejon), r(BR.patio), r(BR.huerto)], atmo: 'city' },
     // (el desván del zapatero, el de las palomas: se anda desde el de la
     // tintorería)
-    { id: 'palomero', rects: [[BR.zap.x0, BR.zap.z0, BR.zap.x1, BR.zap.z1, P2 - 0.3, CUMBRE - 0.4]], atmo: 'interior', room: 'zap2' },
+    { id: 'palomero', rects: bajoTejado(BR.zap, P2 - 0.3, 'x', ALERO, CUMBRE), atmo: 'interior', room: 'zap2' },
     { id: 'zapatero', rects: [r(BR.zap, -1, P2 - 0.3)], atmo: 'interior', room: 'zap0' },
-    { id: 'viuda', rects: [r(BR.viu, -1, ALERO)], atmo: 'interior', room: 'viu0' },
-    { id: 'quemada', rects: [r(BR.que, -1, 6.8)], atmo: 'interior', room: 'que0' },
-    { id: 'tintoreria_pellejeros', rects: [r(BR.tin, -1, CUMBRE - 0.4)], atmo: 'interior', room: 'tin0' },
-    { id: 'casa_inocentes', rects: [r(BR.ino, -1, 12.6)], atmo: 'interior', room: 'ino0' },
+    { id: 'viuda', rects: [r(BR.viu, -1, 9.0)], atmo: 'interior', room: 'viu0' },
+    { id: 'quemada', rects: [r(BR.que, -1, 6.5)], atmo: 'interior', room: 'que0' },
+    { id: 'tintoreria_pellejeros', rects: [r(BR.tin, -1, P2 - 0.3), ...bajoTejado(BR.tin, P2 - 0.3, 'x', ALERO, CUMBRE)], atmo: 'interior', room: 'tin0' },
+    { id: 'casa_inocentes', rects: [r(BR.ino, -1, 8.2), ...bajoTejado(BR.ino, 8.2, 'z', 8.5, 13.0)], atmo: 'interior', room: 'ino0' },
     { id: 'cordeleria', rects: [r(BR.cor, -1, 8), r(BR.cor2, -1, 5)], atmo: 'interior', room: 'cor0' }
   );
   for (const [id, b] of [

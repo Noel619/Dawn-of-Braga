@@ -93,12 +93,12 @@ export function zapatero(ctx, L, h) {
   P.shelf(ctx, 26.0, 0, 40.2, Math.PI, 1.6);
   P.jar(ctx, 32.9, 0, 39.9, 1.0);
   P.jar(ctx, 32.3, 0, 40.05, 0.8);
-  P.bench(ctx, 25.2, 0, 38.6, 1.6, Math.PI / 2);
+  P.bench(ctx, 25.4, 0, 38.6, 1.6, Math.PI / 2);
   herbBunch(ctx, 30.4, 3.75, 34.6, 1, r0);
   herbBunch(ctx, 31.2, 3.75, 34.65, 2, r0);
   herbBunch(ctx, 32.0, 3.75, 34.6, 3, r0);
-  P.lantern(ctx, 24.3, 2.5, 35.0, Math.PI / 2, true);
-  ctx.lights.push({ x: 24.8, y: 2.3, z: 35.0, r: 1, g: 0.55, b: 0.22, radius: 5, intensity: 0.6, room: r0 });
+  P.lantern(ctx, 24.8, 2.5, 35.0, Math.PI / 2, true);
+  ctx.lights.push({ x: 25.3, y: 2.3, z: 35.0, r: 1, g: 0.55, b: 0.22, radius: 5, intensity: 0.6, room: r0 });
   luna(ctx, 31.6, 1.8, 40.0, r0, 0.35);
   wb.setRoom(null);
   // ---- arriba: la alcoba del matrimonio (al oeste) y el cuarto del hijo
@@ -158,7 +158,7 @@ export function viuda(ctx, L, h) {
   luna(ctx, 15.0, 1.7, 51.0, rt, 0.3);
   // ---- el zaguán y la cocina (al este)
   wb.setRoom(r0);
-  P.hearth(ctx, 24.2, 0, 49.6, 'e', { room: r0, lit: false, w: 1.5, ceil: 4.0 });
+  P.hearth(ctx, 24.7, 0, 49.6, 'e', { room: r0, lit: false, w: 1.5, ceil: 4.0 });
   P.table(ctx, 30.0, 0, 52.2, 1.8, 0.9, 0);
   P.stool(ctx, 30.0, 0, 53.0, { room: r0 });
   P.stool(ctx, 31.2, 0, 51.6, { room: r0, tipped: true });

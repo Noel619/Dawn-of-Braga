@@ -28,7 +28,7 @@ import { BR } from '../world/level_barrio.js';
 const QUIR = { x0: BR.sala.x0 + 0.2, z0: BR.sala.z0 + 0.2, x1: BR.sala.x1 - 0.2, z1: BR.sala.z1 - 0.2 };
 const BRASERO = { x: 63.6, z: 47.0, ante: [62.75, 46.35] };
 const SALE = { x: 61.3, z: 50.2 };
-const EN_SU_MESA = { x: 60.2, z: 43.4 };
+export const EN_SU_MESA = { x: 60.2, z: 43.4 };
 const LLAMADOS = ['e_coronado_llamado1', 'e_coronado_llamado2'];
 const HUECO = { x: 61.3, z: 50.6 };
 // la nube de beleño: radio, lo que dura, lo que frena
@@ -79,6 +79,13 @@ export class PeleaFisico {
     e.data.fase = 1;
     e.data.llamo = false;
     F.setMusic(null);
+    // la puerta de la sala, de un portazo: la consulta ha empezado (no se
+    // sale hasta que acabe)
+    const d = g.interact.list.find((i) => i.id === 'd_sala_inocentes');
+    if (d && (d.done || d.open > 0.05)) {
+      g.interact.slamShut(d);
+      g.audio && g.audio.play('doorSlam', { x: d.x, y: 1, z: d.z });
+    }
     g.startBoss(e);
     // (si se encerró herido, te esperaba: empieza con la vida que le quedó y,
     // si no le queda la mitad, enseguida se quita la máscara: think)
@@ -217,6 +224,12 @@ export class PeleaFisico {
     const g = this.g;
     e.data.llamo = true;
     fiSay(e, DIALOG.fisicoLlama, 3.2);
+    // (la puerta de las celdas se abre: los suyos estaban detrás)
+    const dc = g.interact.list.find((i) => i.id === 'd_celdas_inocentes');
+    if (dc && !dc.done) {
+      g.interact.setOpen(dc);
+      g.audio && g.audio.play('doorOpen', { x: dc.x, y: 1, z: dc.z });
+    }
     LLAMADOS.forEach((id, i) => {
       const c = g.enemies.find((x) => x.id === id);
       if (!c || c.dead) return;
@@ -277,10 +290,13 @@ export class PeleaFisico {
       g.giveItem('llave_cordeleria');
       g.ui.toast(DIALOG.fisicoLlave, 5);
     }
-    const d = g.interact.list.find((i) => i.id === 'd_quirofano_patio');
-    if (d) {
-      g.interact.setOpen(d, true);
-      g.flags['door:d_quirofano_patio'] = true;
+    // las puertas: la del patio y la de la sala, abiertas
+    for (const id of ['d_quirofano_patio', 'd_sala_inocentes']) {
+      const d = g.interact.list.find((i) => i.id === id);
+      if (d) {
+        g.interact.setOpen(d, true);
+        g.flags['door:' + id] = true;
+      }
     }
     g.saveGame();
   }

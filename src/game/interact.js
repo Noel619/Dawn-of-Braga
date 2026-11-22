@@ -195,7 +195,7 @@ function barricadeMesh(w, h, props = 0) {
 }
 
 // El cartel de la cuarentena del Físico: una tabla con letras de almagre,
-// clavada en el portón de la calleja de los Pellejeros.
+// clavada en el portón del arco de la rúa de los Pellejeros.
 function cartelCuarentena() {
   const c = document.createElement('canvas');
   c.width = 128;

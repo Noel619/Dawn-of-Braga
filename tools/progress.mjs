@@ -81,37 +81,38 @@ const steps = [
   "__use('i_palanca')", "__use('n_herrero')",
   "(()=>{const g=__game;g.player.spawn(26.9,0,0,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_barricada')})()",
   // el barrio de los Pellejeros, andando (sin el Físico, sus trampas ni el
-  // equilibrio de las cornisas: lo suyo se prueba aparte; aquí, lo que se
-  // abre, se coge y se lee): el portón de la cuarentena (la palanca); la
-  // casa de la viuda: la escalera, la cornisa, la llave de la tintorería en
-  // el arcón de la alcoba, la tranca de la alcoba, la puerta del patio, las
-  // cajas de la tapia; la quemada; la tintorería (la llave), la nota del
-  // tintorero, el secadero, el pescante; los tejados (la viga de la
-  // calleja); el palomero y su palomar (la piedra de afilar); el tejado de la
-  // Casa de los Inocentes y la claraboya; el tratado (desván), la historia
-  // clínica (alcoba), el otro tratado (botica); el quirófano: la pelea (se le
-  // vence de un golpe; la escena, saltada): la llave de la cordelería y la
-  // puerta del patio; el patio, el callejón, la cordelería (la nota del
-  // cordelero) y su puerta a los Pelames
-  "(()=>{const g=__game;window.__fu=g.fisico.update;window.__tu=g.trampas.update;window.__cu=g.cornisas.update;g.fisico.update=()=>{};g.trampas.update=()=>{};g.cornisas.update=()=>{};g.flags['fisico:intro']=true;g.player.spawn(12.4,0,44,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_porton')})()",
-  "__walk([[20,43.6],[24,43.6],[24,43]])", "__useHere('d_zapatero')",
-  "__walk([[24,40.4],[23.6,39.4]])", "__useHere('n_zapatero')",
-  "__walk([[24,40.4],[24,42.6],[25.2,45.2]])", "__useHere('d_viuda')",
-  "__walk([[25.2,47.6],[25,50],[25,51.6],[27.3,53.6],[27.4,54.15],[28.45,54],[28.45,50.4],[28.4,49.6],[27.6,49.4],[27.4,46.8],[27.4,45.74],[23.15,45.74],[23.15,46.6],[24.2,46.7],[24.3,47.3]])", "__useHere('i_llave_tinte')",
-  "__walk([[24.6,49.55]])", "__useHere('d_alcoba')",
-  "__walk([[26,49.55],[28.4,49.7],[28.45,53.9],[27.3,54.15],[25.5,54.2]])", "__useHere('d_viuda_patio')",
-  "__walk([[25.5,56.3],[26.4,56.9],[27.3,56.9],[28.2,56.9],[29,56.9],[29.5,56.9],[30.4,56.9],[31.75,55.7]])", "__useHere('d_quemada_patio')",
-  "__walk([[31.75,54.3],[32,52],[32.6,49],[33.3,48.4]])", "__useHere('d_quemada')",
-  "__walk([[35,48.4],[40,40]])", "__useHere('d_tinte')",
-  "__walk([[40,38],[39.9,33],[40.6,32.1],[45,32.1],[45,33.3],[42.4,35.2]])", "__useHere('n_tintorero')",
-  "__walk([[38.2,37.2],[37,37.3],[37,34],[36.2,34.1],[34.6,34.1],[33.7,34.1],[33.5,41],[33.45,41.6],[31.45,50.1],[32.5,51.6],[34.3,52],[41.5,53.5],[48.5,53.5],[55,50],[60.8,49.6],[61.6,49.6],[63.9,45.2],[64,43.6],[66.5,43.1],[66.5,39.7],[66.5,36],[65.9,35.6]])", "__useHere('n_aprendiz')",
-  "__walk([[66.6,34.8]])", "__useHere('i_piedra')",
-  "__walk([[66.5,36.6],[66.5,39.9],[66.5,42.9],[64,42.6],[62.6,41.5],[61.6,40],[60.6,40],[58.6,40.9],[57.2,40.9],[56.6,38.6],[55.8,37]])", "__useHere('n_tratado2')",
-  "__walk([[56.15,43],[56.15,44.5],[56.15,47.9],[57.1,48.1],[56.6,42.4],[54.6,42.4],[53.3,42.2]])", "__useHere('n_historia')",
-  "__walk([[54.6,42.4],[56.6,42.4],[58.2,41.6],[58.2,39.8],[56.2,37.7],[54.6,37.7],[54.2,38.2]])", "__useHere('n_tratado1')",
-  "__walk([[54.6,37.7],[56.2,37.7],[58.2,39.8],[58.2,41.6],[60,43.4],[60,47.9],[59,48.1],[57.6,42],[57.6,40]])",
+  // equilibrio de las vigas: lo suyo se prueba aparte, tools/barriowalk.mjs,
+  // fisicovida.mjs y fisicopelea.mjs; aquí, lo que se abre, se coge y se
+  // lee): el arco de la rúa (la palanca); la casa del zapatero (su libro); la
+  // de la cerera: la escalera, la viga del balcón, la llave de la tintorería
+  // en el arcón de la alcoba, la tranca de la alcoba, la puerta de la
+  // plazuela; la tintorería (la llave), la nota del tintorero, los dos
+  // tramos de su escalera, el secadero y el desván del zapatero (la piedra
+  // del aprendiz); la rampa de escombros, los tejados, la viga de la rúa, la
+  // quemada, el tejado de la Casa de los Inocentes y la claraboya; el tratado
+  // (desván), la escalera de ida y vuelta, la historia clínica (alcoba), el
+  // otro tratado (botica, por la galería y el estudio); la sala grande: la
+  // pelea (se le vence de un golpe; la escena, saltada): la llave de la
+  // cordelería y la puerta del patio; el patio, el callejón, la cordelería
+  // (la nota del cordelero) y su puerta a los Pelames
+  "(()=>{const g=__game;window.__fu=g.fisico.update;window.__tu=g.trampas.update;window.__cu=g.cornisas.update;g.fisico.update=()=>{};g.trampas.update=()=>{};g.cornisas.update=()=>{};g.flags['fisico:intro']=true;g.player.spawn(12.4,0,44.5,Math.PI/2);__noEnemies();__sim(0.2);return __useHere('d_porton')})()",
+  "__walk([[17,44.5],[27,42.1]])", "__useHere('d_zapatero')",
+  "__walk([[27,40.2],[27,38],[24.6,36.8],[22.0,37.6]])", "__useHere('n_zapatero')",
+  "__walk([[24.6,36.8],[27,38.5],[27,41.8],[27.5,46.4]])", "__useHere('d_viuda')",
+  "__walk([[27.5,49.6],[26.2,54.0],[25.1,55.4],[25.1,56.65],[26.4,56.65],[30.7,56.65],[31.2,55.6],[30.4,52.0],[24.5,49.2],[24.5,47.75],[23.6,47.7],[18.4,47.7],[17.5,47.75],[17.5,49.6],[17.2,50.2]])", "__useHere('i_llave_tinte')",
+  "__walk([[19.6,54.6]])", "__useHere('d_alcoba')",
+  "__walk([[21.8,54.6],[30.6,53.2],[31.2,55.4],[30.6,56.65],[26.0,56.65],[25.1,56.65],[25.1,55.0],[27.5,52.5],[32.9,50.0]])", "__useHere('d_viuda_patio')",
+  "__walk([[35.0,50.0],[40.0,44.0],[40.0,42.4]])", "__useHere('d_tinte')",
+  "__walk([[40.0,39.8],[40.0,37.5],[35.0,37.0],[34.95,33.8],[34.95,32.35],[36.0,32.35],[40.3,32.35],[41.6,33.4],[41.6,36.6]])", "__useHere('n_tintorero')",
+  "__walk([[41.2,33.95],[40.3,33.95],[35.4,33.95],[35.0,35.0],[35.0,36.0],[33.0,36.0],[16.2,35.2]])", "__useHere('n_aprendiz')",
+  "__walk([[17.0,36.0]])", "__useHere('i_piedra')",
+  "__walk([[30.4,35.0],[30.4,39.3],[30.45,40.2],[30.6,41.2],[30.6,47.7],[30.8,49.2],[33.4,54.6],[35.0,55.35],[44.0,55.35],[49.6,55.4],[51.0,52.0],[53.6,47.2],[54.6,46.2],[56.4,48.0],[58.6,51.6],[59.9,53.8]])", "__useHere('n_tratado2')",
+  "__walk([[56.4,51.0],[56.4,38.6],[56.4,37.05],[55.6,37.05],[51.2,37.05],[50.7,37.05],[50.7,38.6],[53.0,40.4],[53.0,42.0],[52.6,44.5]])", "__useHere('n_historia')",
+  "__walk([[56.2,45.7],[58.2,45.7],[58.2,50.0],[58.2,52.2],[58.2,54.4],[56.0,54.4],[54.4,53.2]])", "__useHere('n_tratado1')",
+  "__walk([[56.0,54.4],[58.2,54.4],[58.2,52.2],[58.2,45.7],[56.2,45.7],[53.0,42.0],[53.0,40.4],[50.7,38.6],[50.7,35.45],[51.7,35.45],[56.5,35.45],[56.5,38.0],[55.6,44.0]])", "__useHere('d_sala_inocentes')",
+  "__walk([[58.5,44.0],[60.0,45.0]])",
   "(()=>{const g=__game;g.flags['fisico:caza']=true;g.fisico.update=window.__fu;__sim(0.5);const F=g.fisico,e=F.e;const st=F.modo;e.hp=1;e.die();for(let i=0;i<30&&g.cutscene;i++){g.cutscene.skip();__sim(0.2)}g.ui.closeAll();__sim(1);g.ui.closeAll();g.fisico.update=()=>{};return {pelea:st,boss:!!g.flags['boss:fisico'],llave:g.inventory.has('llave_cordeleria'),patio:!!g.flags['door:d_quirofano_patio'],sentado:e.dead&&e.obj.visible}})()",
-  "__walk([[54.5,35],[54.5,33],[50.6,28.1]])", "__useHere('d_patio_inocentes')",
+  "__walk([[59.6,40.0],[61.3,36.4],[61.3,33.0],[52.0,28.1],[50.6,28.1]])", "__useHere('d_patio_inocentes')",
   "__walk([[48,28],[46.7,27]])", "__useHere('d_cordeleria_atras')",
   "__walk([[44,26.5],[40.9,23],[41.8,20.9],[42.3,20.9],[42.85,20.4],[42.85,16],[42.6,12],[39.75,11.9],[39.7,11.3],[39.7,6.6],[41.6,8.6]])", "__useHere('n_cordelero')",
   "__walk([[40.9,3.8]])", "__useHere('d_cordeleria')",

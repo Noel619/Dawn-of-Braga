@@ -12,9 +12,11 @@ import { DEEP } from '../world/level_crypt2.js';
 import { SANCT } from '../world/level_finale.js';
 
 // las banderas del guion del Físico (game/fisico.js), hasta un punto: 1, ya
-// visto (la cortina, la calleja); 2, la viuda tapiada; 3, la caza empezada.
+// visto (la cortina, la rúa); 2, la viuda tapiada; 3, la caza empezada.
 // (Vivo, siempre.)
-const fisico = (n) => ({ 'fisico:intro': true, 'fisico:calleja': true, 'fisico:viuda': n >= 2, 'fisico:caza': n >= 3, 'boss:fisico': false });
+// (la vida del Físico, entera, y sin encerrarse: lo que se le hizo en otra
+// prueba no cuenta aquí)
+const fisico = (n) => ({ 'fisico:intro': true, 'fisico:calleja': true, 'fisico:viuda': n >= 2, 'fisico:caza': n >= 3, 'boss:fisico': false, 'fisico:encerrado': false, 'fisico:vida': false });
 
 export const INSTANCES = [
   { id: 'arzobispo', name: 'Final · el arzobispo en la cisterna (pelea)' },
@@ -31,13 +33,14 @@ export const INSTANCES = [
   { id: 'descoyuntado', name: 'La caza del Descoyuntado' },
   { id: 'casa', name: 'La Casa del Alemán · la defensa de Henrique' },
   { id: 'leonor', name: 'La Casa del Alemán · Leonor, la Dolorosa (pelea)' },
-  { id: 'porton', name: 'Los Pellejeros · el portón de la calleja, con la palanca' },
-  { id: 'cornisa', name: 'Los Pellejeros · la sala de la viuda, ante la cornisa' },
+  { id: 'porton', name: 'Los Pellejeros · el arco de la rúa, con la palanca' },
+  { id: 'cornisa', name: 'Los Pellejeros · la sala de la cerera, ante la viga del balcón' },
   { id: 'tintoreria', name: 'Los Pellejeros · la puerta de la tintorería, con la llave' },
-  { id: 'pescante', name: 'Los Pellejeros · la puerta del pescante: a los tejados' },
+  { id: 'pescante', name: 'Los Pellejeros · el desván de las palomas: la rampa a los tejados' },
   { id: 'claraboya', name: 'Los Pellejeros · la claraboya de la Casa de los Inocentes' },
   { id: 'captura', name: 'Los Pellejeros · la camilla del Físico (te ha dormido)' },
-  { id: 'fisico', name: 'Los Pellejeros · el Físico, en su quirófano (pelea)' },
+  { id: 'fisico', name: 'Los Pellejeros · el Físico, en la sala grande de su casa (pelea)' },
+  { id: 'fisicoEncerrado', name: 'Los Pellejeros · el Físico, herido y encerrado: te espera en su mesa' },
   { id: 'tablon', name: 'La casa tapiada · el pasadizo, con un tablón' },
   { id: 'tonelero', name: 'La casa del tonelero · Miguel, en su rincón' },
   { id: 'ahorcado', name: 'La casa del tonelero · Miguel, ahorcado' },
@@ -212,44 +215,54 @@ export async function goInstance(g, id) {
       return true;
     }
     // el sobrado de la casa tapiada, ante el hueco del pasadizo, con un tablón
-    // el barrio de los Pellejeros: en la plaza de la Herrería, ante el portón
-    // clavado de la calleja, con la palanca
+    // el barrio de los Pellejeros: en la plaza de la Herrería, ante el arco
+    // de la rúa, clavado, con la palanca
     case 'porton':
       prepare(g, { 'door:d_porton': false, 'fisico:intro': false, 'fisico:calleja': false, 'fisico:viuda': false, 'fisico:caza': false, 'boss:fisico': false });
       if (!g.inventory.has('palanca')) g.inventory.add('palanca');
-      place(g, 12.4, 0, 44, Math.PI / 2);
+      place(g, 12.4, 0, 44.5, Math.PI / 2);
       return true;
-    // arriba, en la sala de la viuda, ante la ventana de la cornisa
+    // arriba, en la sala de la cerera, ante la ventana de la viga del balcón
     case 'cornisa':
       prepare(g, { 'door:d_porton': true, ...fisico(1) });
-      place(g, 27.4, 4.05, 47.3, Math.PI);
+      place(g, 24.5, 4.25, 49.4, Math.PI);
       return true;
     // en la plazuela, ante la puerta de la tintorería, con su llave
     case 'tintoreria':
       prepare(g, { 'door:d_porton': true, 'door:d_tinte': false, ...fisico(2) });
       if (!g.inventory.has('llave_tinte')) g.inventory.add('llave_tinte');
-      place(g, 40, 0, 40.2, Math.PI);
+      place(g, 40, 0, 42.4, Math.PI);
       return true;
-    // en el secadero de la tintorería, ante la puerta del pescante
+    // en el desván de las palomas (el del zapatero), al pie de la rampa de
+    // escombros que sube al tejado hundido
     case 'pescante':
       prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
-      place(g, 35.2, 7.25, 34.1, -Math.PI / 2);
+      place(g, 30.4, 7.9, 34.4, 0);
       return true;
     // en el tejado de la Casa de los Inocentes, junto a la claraboya
     case 'claraboya':
       prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
-      place(g, 58.5, 8.85, 40.9, -Math.PI / 2);
+      place(g, 53.2, 10.5, 47.4, Math.PI / 2);
       return true;
-    // te ha dormido en la plazuela: la camilla, el quirófano y el forcejeo
+    // te ha dormido en la plazuela: la camilla, la sala grande y el forcejeo
     case 'captura':
       prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
-      place(g, 40, 0, 44, Math.PI / 2);
+      place(g, 40, 0, 45, Math.PI / 2);
       g.fisico.captura();
       return true;
-    // en su quirófano (bajado por la claraboya): la pelea empieza al pisarlo
+    // en el zaguán de su casa, ante la puerta de la sala grande (atrancada
+    // por este lado): la pelea empieza al entrar en ella
     case 'fisico':
       prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3) });
-      place(g, 52.6, 0, 39.8, Math.PI / 2);
+      place(g, 55.6, 0, 44.0, Math.PI / 2);
+      return true;
+    // lo mismo, pero herido en la calle hasta encerrarse: te espera en su mesa,
+    // con la vida que le quedó (un tercio)
+    case 'fisicoEncerrado':
+      prepare(g, { 'door:d_porton': true, 'door:d_tinte': true, ...fisico(3), 'fisico:encerrado': true });
+      g.flags['fisico:vida'] = Math.round(g.fisico.e.maxHp * 0.34);
+      g.fisico.reset();
+      place(g, 55.6, 0, 44.0, Math.PI / 2);
       return true;
     case 'tablon': {
       prepare(g, { 'door:d_souto': true, 'souto:tabla': false, 'morador:met': false, 'morador:ahorcado': false, 'morador:visto': false });

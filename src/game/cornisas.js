@@ -1,6 +1,6 @@
 // Las cornisas y las vigas por las que se anda haciendo equilibrio: las del
-// barrio de los Pellejeros (la viga del balcón de la viuda, la hilera que
-// cayó sobre la calleja). Las mismas cuentas que el tablón del Soto (ver
+// barrio de los Pellejeros (la viga del balcón de la cerera, la que los vecinos
+// echaron sobre la rúa). Las mismas cuentas que el tablón del Soto (ver
 // game/souto.js), para cualquier tramo recto de a a b y de ancho w
 // (L.ledges): mientras se está en él, se anda despacio a lo largo, el cuerpo
 // se va solo hacia un lado y hay que echarse hacia el otro; si se pasa,

@@ -836,7 +836,7 @@ export function buildFerraria(ctx, S, L) {
   house(ctx, { x0: -14, z0: 35.5, x1: -3.5, z1: 42, front: 's', seed: 803 });
   house(ctx, { x0: 3.5, z0: 33, x1: 14, z1: 42, front: 's', seed: 804, burned: true });
   ctx.endGroup();
-  // (enfrente de la fragua, la boca de la calleja de los Pellejeros, con su
+  // (enfrente de la fragua, el arco de la rúa de los Pellejeros, con su
   // portón, y las casas de las esquinas: level_barrio.js)
   stoneWall(ctx, -26, 56, -14, 58, 5);
   // muralla sur con la puerta hundida (hasta la torre del oeste, que es hueca)

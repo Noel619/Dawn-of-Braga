@@ -490,7 +490,7 @@ Me la puse yo el primero. No soy de los que mandan beber lo que no beben.`,
     title: 'Historia clínica (sin nombre)',
     text: `(Una hoja suelta, encima de las demás, con la tinta aún brillante.)
 
-Varón. Edad, la de la fuerza. Entró por el portón de la calleja después de la campana, arrancando con hierro mis tablas de la cuarentena.
+Varón. Edad, la de la fuerza. Entró por el arco de la rúa después de la campana, arrancando con hierro mis tablas de la cuarentena.
 
 No se arrodilló. Oyó la campana como la oyeron todos, y no se arrodilló.
 
@@ -526,7 +526,7 @@ Abajo, entre las tinas, el físico ha tendido una cuerda con campanillas, a la a
 
 No sale de día. De noche anda por la calle con su vara, mirando las ventanas, y habla solo, muy bajo, muy amable. Clava las puertas de los que se esconden y les pinta una cruz de cal. A los Gomes los quemó dentro de su casa porque no le abrieron.
 
-Por arriba se sale. En el secadero está la puerta del pescante: da al tejado de al lado, y por los tejados no te sigue. Te mira desde abajo, eso sí. No mires tú.
+Por arriba se sale. El secadero sigue por el desván del zapatero, el de las palomas, por el medio muro; allí se hundió una esquina del tejado, y por lo que se cayó se sube a los tejados. Por los tejados no te sigue. Te mira desde abajo, eso sí. No mires tú.
 
 Me voy por ahí esta noche. Si te encuentras a Inês, la cerera, dile que me fui por los tejados, que ella tiene la otra llave.`,
   },
@@ -1532,7 +1532,7 @@ export const DIALOG = {
   // una cortesía perfecta; piensa en voz alta. Ve la peste en los sanos.
   // (la cortina, al entrar en el barrio)
   fisicoCortina: 'Ah. Uno sano.',
-  // al fondo de la calleja, la primera vez
+  // al fondo de la rúa, la primera vez
   fisicoCalleja: ['Bienvenido al barrio. Aquí ya no enferma nadie.', 'No corras. Todavía no.'],
   // viene a mirar (antes de la caza) y se va si te acercas
   fisicoVigila: ['Te miro el color desde aquí. Malo. Muy malo.', 'Andas como andan los que todavía esperan algo.', 'No te acerques. Aún no.'],
@@ -1577,7 +1577,7 @@ export const DIALOG = {
   fisicoCepoTodavia: ['Todavía no. La fruta se coge cuando cae sola.', 'Tira, tira. Así se aprende dónde no pisar.'],
   // donde sonaron las campanillas
   fisicoCampanillas: ['Las campanillas no mienten nunca.', 'Alguien ha pasado por aquí con prisa. La prisa es un síntoma.'],
-  // la camilla (te ha dormido): a oscuras, por la calleja, a la puerta de su
+  // la camilla (te ha dormido): a oscuras, por la rúa, a la puerta de su
   // casa, en el quirófano
   fisicoDuerme: 'Shh. Ya está. Ya pasó lo peor, que es el miedo.',
   fisicoCamilla: ['Mira qué cielo. Hace años que nadie lo miraba en este barrio.', 'Pesas lo que pesa la salud. Demasiado.'],
@@ -1604,6 +1604,8 @@ export const DIALOG = {
   fisicoEncierra: ['Basta de calle. La consulta, en mi casa. Allí te espero.', 'Me has abierto tú a mí. Qué ironía. Ven a que te cosa yo a ti.'],
   // encerrado, te ve entrar en su quirófano (antes de la pelea)
   fisicoEsperaba: ['Pasa. Me he cosido yo mismo, ¿ves? Ahora tú.', 'Llegas tarde a tu consulta. Siéntate.'],
+  // encerrado, te ve asomado a la galería de su sala
+  fisicoEsperaGaleria: ['Desde ahí arriba miraban mis alumnos. Baja: la consulta es aquí.', 'No te quedes en la galería. Los que miran también enferman.'],
 };
 
 // Las partidas que recuerda el Rey (game/cerco/partidas.js; sus jugadas, en
@@ -1813,15 +1815,13 @@ export const MSG = {
   hachaClavada: 'Un hacha barbada de leñador, clavada hasta el ojo en la estaca de la barricada. Tiras del mango con las dos manos y no se mueve: la madera la tiene cogida.',
   hachaArrancada: 'Has arrancado el hacha barbada.',
   cordeleriaTranca: 'Atrancada por el otro lado. Al otro lado, la tienda del cordelero.',
-  portonCerrado: 'La boca de la calleja, cerrada con tablas clavadas por dentro. En las tablas, una cruz de cal y un cartel: CVARENTENA. Detrás, ni un ruido. Con algo de hierro se arrancarían.',
+  portonCerrado: 'El arco de la rúa de los Pellejeros, cerrado con tablas clavadas por dentro. En las tablas, una cruz de cal y un cartel: CVARENTENA. Por encima, al fondo de la rúa, una casa grande, encalada, con una ventana encendida. Detrás, ni un ruido. Con algo de hierro se arrancarían.',
   portonArranca: 'Metes la palanca entre las tablas y tiras. Saltan los clavos, y el portón de la cuarentena se viene abajo. Huele a cal y a vinagre.',
   portonDentro: 'Clavado por fuera. Desde aquí no se mueve.',
   barricadaCae: 'Haces palanca bajo los puntales y los arrancas uno a uno. La barricada se viene abajo.',
   barricadaPuntales: 'Los puntales están clavados al suelo. Sin algo de hierro no se arrancan.',
   desvanSube: 'Subes por la escala al desván.',
   desvanBaja: 'Bajas por la escala al sobrado.',
-  palomarSube: 'Subes por la escala al palomar.',
-  palomarBaja: 'Bajas por la escala al desván del palomero.',
   curtidorSube: 'Subes por la escala al desván.',
   curtidorBaja: 'Bajas por la escala al sobrado del curtidor.',
   torreSurDoor: 'La puerta de la torre está atrancada por dentro. Arriba no se oye nada.',
@@ -1946,6 +1946,8 @@ export const MSG = {
   tapiadaArranca: 'Arrancas los tablones del Físico. La cruz de cal se deshace en polvo.',
   tapiadaFuera: 'Clavada con tablas, y con la cruz de cal encima. Con algo para hacer palanca...',
   inocentesTranca: 'Atrancada por dentro. Sobre la puerta cuelga la vara con la serpiente: la casa del físico.',
+  salaInocentesTranca: 'La puerta de la sala grande, cerrada por fuera. Al otro lado, en el zaguán, alguien ha echado la tranca.',
+  celdasInocentesTranca: 'Atrancada por el otro lado. Detrás, cascabeles: alguien se mueve en las celdas.',
   cepoForcejea: '¡Ábrelo!',
   correas: 'Atado a la mesa de su quirófano. Machaca para soltar las correas antes de que vuelva.',
   correa: ['¡La muñeca!', '¡La otra muñeca!', '¡El pecho!'],
@@ -2052,13 +2054,13 @@ export const AREA_NAMES = {
   ferraria: 'Calle de la Herrería',
   smithy: 'Fragua de maese Lourenço',
   // el barrio de los Pellejeros
-  calleja: 'Calleja de los Pellejeros',
+  calleja: 'Rúa de los Pellejeros',
   plazuela: 'Plazuela de los Inocentes',
   zapatero: 'Casa del zapatero',
   viuda: 'Casa de la cerera',
   quemada: 'La casa quemada',
   tintoreria_pellejeros: 'Tintorería de maese Rodrigo',
-  palomero: 'Casa del palomero',
+  palomero: 'El desván de las palomas',
   casa_inocentes: 'Casa de los Inocentes',
   cordeleria: 'La cordelería',
   souto_house: 'Casa tapiada',

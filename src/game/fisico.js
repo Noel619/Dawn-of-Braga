@@ -31,7 +31,7 @@ import * as THREE from 'three';
 import { BR } from '../world/level_barrio.js';
 import { DIALOG, MSG } from './story.js';
 import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
-import { PeleaFisico } from './fisico_pelea.js';
+import { PeleaFisico, EN_SU_MESA } from './fisico_pelea.js';
 import { clamp } from '../core/util.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -98,6 +98,7 @@ export class Fisico {
     this.tapiado = null;
     this.fraguaT = 0;
     this.huyendo = false;
+    this.galeriaDicho = false;
     this.pelea.reset();
     if (this.e && !(this.g.flags && this.g.flags['boss:fisico'])) this.hide();
   }
@@ -339,8 +340,9 @@ export class Fisico {
   onWake(e) {
     const g = this.g;
     if (this.modo === 'pelea') return false;
-    // antes de la caza, no: se queda mirándote
-    if (!g.flags['fisico:caza'] || this.modo === 'sombra' || this.modo === 'vigia' || this.modo === 'marcha') {
+    // antes de la caza, no: se queda mirándote (y encerrado en su sala, te
+    // espera: no sale a por ti)
+    if (!g.flags['fisico:caza'] || this.modo === 'sombra' || this.modo === 'vigia' || this.modo === 'marcha' || this.modo === 'espera') {
       e.aware = false;
       return true;
     }
@@ -626,6 +628,20 @@ export class Fisico {
       this.pelea.empieza();
       return;
     }
+    // (encerrado y herido: te espera en su sala grande, en su mesa, cosiéndose
+    // la herida; se le ve desde la galería y al entrar)
+    if (this.encerrado && this.modo === 'fuera' && this.g.zoneAt(p.pos)?.id === 'casa_inocentes') {
+      this.espera();
+      return;
+    }
+    if (this.modo === 'espera') {
+      // (te ve asomado a la galería: que bajes)
+      if (!this.galeriaDicho && p.pos.y > 3.5 && p.pos.y < 6 && inR(BR.sala, p.pos.x, p.pos.z)) {
+        this.galeriaDicho = true;
+        this.say(DIALOG.fisicoEsperaGaleria, 3.4);
+      }
+      return;
+    }
     // ---- el guion
     // (la cortina: al pasar el portón, la primera vez)
     if (!F['fisico:intro'] && F['door:d_porton'] && inR(BR.rua, p.pos.x, p.pos.z) && p.pos.x > 15.6 && p.pos.y < 1) {
@@ -720,6 +736,20 @@ export class Fisico {
         }
         break;
     }
+  }
+
+  // Encerrado en su casa, herido: en su mesa, de espaldas a la puerta,
+  // cosiéndose (ordena sus hierros); no sale a por ti.
+  espera() {
+    const e = this.e;
+    this.show(EN_SU_MESA.x, EN_SU_MESA.z, Math.atan2(BR.mesa.x - EN_SU_MESA.x, BR.mesa.z - EN_SU_MESA.z));
+    this.modo = 'espera';
+    e.aware = false;
+    e.state = 'mira';
+    e.stT = 0;
+    e.data.look = { t: 1e9, x: BR.mesa.x, z: BR.mesa.z, track: false };
+    e.anim.play(FI_CLIPS.ordena, { blend: 0.2 });
+    this.setMusic(null);
   }
 
   // Vuelve de la fragua y la mesa está vacía: a buscarte (por su casa,

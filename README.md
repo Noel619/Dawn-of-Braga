@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 75 % hacia la 1.0"></a></p>
 
-**75 % hacia la 1.0**: 79 de 106 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**75 % hacia la 1.0**: 81 de 108 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -95,7 +95,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | III | [El jefe final](docs/hoja-de-ruta/index.html#fase-pelicula) | Hecha | 100 % (9 de 9) |
 | IV | [La cripta honda](docs/hoja-de-ruta/index.html#fase-cripta) | Hecha | 100 % (9 de 9) |
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
-| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (9 de 9) |
+| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (11 de 11) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
 | VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (8 de 8) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
@@ -172,6 +172,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
+- **El Físico que aprende** — ¿Cómo quieres que aprenda sus tácticas? La historia clínica (aprende de ti mientras juegas), una red entrenada aquí contra jugadores de prueba y tus grabaciones, o las dos; si quieres grabar tus peleas, y cuánto debe castigar. · *PLAN_FISICO_ML.md, §6*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
 - **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*
 - **Dom Paio, convertido** — ¿Pasa a llamarse «el Encadenado»? Ahora se llama «el Condenado», que es el nombre del protagonista. · *planes_jubilados/PLAN_LORE.md, §7 (pregunta 9)*
@@ -405,28 +406,37 @@ ampollas, los que llevas, y bajo el aguante, una raya con lo que le queda al que
 
 **El barrio de los Pellejeros.** La barricada de los Pelames está clavada y apuntalada desde las Curtidurías: desde
 la plaza no se mueve. Para llegar detrás hay que cruzar el barrio de los Pellejeros, que Mestre Clemente, el Físico de
-los Inocentes, ha puesto en cuarentena: la boca de la calleja, enfrente de la fragua, está cerrada con un portón de
-tablas con la cruz de cal y el cartel de CVARENTENA (se arranca con la palanca). Dentro, nada más entrar, una
-escena: al fondo de la calleja, en la ventana de su alcoba, la cortina se aparta y asoma el pico; te mira, ladea la
-cabeza como un pájaro: «Ah. Uno sano.» El barrio, casa por casa (todas con sus puertas a la calle, sus ventanas y
-sus habitaciones, con su escalera de verdad): la Calleja de los Pellejeros (la ropa tendida, las pieles clavadas en
-las fachadas, el carro volcado, los rótulos); la casa del zapatero, abierta (su hijo, ya curado, sentado a la mesa de
-la cocina ante su cuenco); la de la cerera, la viuda (la tienda de las velas, la cocina, la sala y el oratorio, con
-un altar de descanso, y la alcoba, atrancada por dentro: por la ventana de la sala se sale a la viga de lo que fue el
-balcón y, haciendo equilibrio, se entra por la de la alcoba, donde está la llave de la tintorería; mientras tanto, el
-Físico clava tablas en la puerta de la calle, por fuera, y se sale por el patio, por encima de la tapia, a la casa
-quemada); la Plazuela de los Inocentes (el pozo con su polea, la cruz de piedra, el árbol muerto con su jaula, la paja con
-sus cepos); la tintorería de maese Rodrigo (las tinas de añil, de rubia y de gualda, la cuerda con campanillas, y
-arriba el secadero de los paños y la puerta del pescante); los tejados (la viga caída de la casa quemada, que cruza
-la calleja: equilibrio; los tejados del sur, con sus cuervos; la casa del palomero, con su desván y el palomar de la
-cumbrera, donde murió el aprendiz del herrero con la piedra de afilar bendita); la Casa de los Inocentes, por la
-claraboya de su desván (las coronas a medio hacer y lo que les quitó a todos; su alcoba, con su mesa de escribir; la
-botica, con el alambique, los frascos de adormidera y el cuenco de las piedras; la sala de los inocentes, con sus
-camastros y sus cadenas; y el quirófano, donde se le pelea); su patio, el callejón y la cordelería (el almacén del
-cáñamo, el obrador de las sogas y la tienda), con su puerta a los Pelames, detrás de la barricada: desde allí, la
-barricada se viene abajo con la palanca (el atajo de vuelta). En los tejados, caer más de tres metros hiere, y más de
-cinco y medio, mata. Las notas cuentan lo que pasó: el tratado del Físico, *De peste sanorum*, en dos partes, tu
-historia clínica, el libro de cuentas del zapatero, el aviso del tintorero, lo que dejó escrito el cordelero.
+los Inocentes, ha puesto en cuarentena: enfrente de la fragua, el arco de sillería de la rúa está cerrado con un
+portón de tablas con la cruz de cal y el cartel de CVARENTENA (se arranca con la palanca); por encima de las tablas se
+ve la rúa entera y, al fondo, una casa grande, encalada, con una ventana encendida. Dentro, nada más entrar, una
+escena: al fondo de la rúa, en la ventana de su alcoba, la cortina se aparta y asoma el pico; te mira, ladea la
+cabeza como un pájaro: «Ah. Uno sano.» Son las casas de los maestros ricos del cuero, de la cera y de los tintes:
+grandes, de tres alturas con su desván, salas de nueve metros, techos de cuatro y **una sola escalera en cada casa**
+(en las de tres alturas, de ida y vuelta, por plantas), con sus arcos de sillería en la puerta, sus escudos y sus
+canes bajo el alero (plano: `docs/planos/plan_barrio.png`). La Rúa de los Pellejeros, de siete metros (la ropa
+tendida, las pieles clavadas en las fachadas, el carro volcado, los rótulos, y por encima, de tejado a tejado, la
+viga que echaron los vecinos); la casa del zapatero de la Sé, abierta (el obrador, y en la cocina su hijo, ya curado,
+sentado a la mesa ante su cuenco); la de la cerera, la viuda (la tienda de las velas, a la plaza y a la rúa; el zaguán
+con la cocina; arriba, la sala con su oratorio, con un altar de descanso, y la alcoba, atrancada por dentro: por la
+ventana de la sala se sale a la viga de lo que fue el balcón y, haciendo equilibrio, se entra por la de la alcoba,
+donde está la llave de la tintorería; mientras tanto, el Físico baja la rúa desde su casa y clava tablas en la
+puerta de la calle, por fuera, y se sale por la puerta de al lado, a la plazuela); la Plazuela de los Inocentes (el
+pozo con su polea, la cruz de piedra, el árbol muerto con su jaula, la paja con sus cepos); la quemada de los Gomes
+(los que no le abrieron: el piso de arriba, hundido sobre ellos; el tejado, abierto); la tintorería de maese Rodrigo
+(las tinas de añil, de rubia y de gualda, la cuerda con campanillas, arriba los paños y, bajo el tejado, el secadero,
+que sigue por el desván del zapatero: el de las palomas, donde murió el aprendiz del herrero con la piedra de afilar
+bendita); los tejados (de la esquina hundida del desván, subiendo por lo que se cayó, al tejado; la viga sobre la rúa:
+equilibrio, a nueve metros de la calle; el tejado de la cerera, la cumbrera de la quemada, junto a su agujero, con sus
+cuervos); la Casa de los Inocentes, por la claraboya de su desván (las coronas a medio hacer y lo que les quitó a
+todos; su alcoba, con su mesa de escribir ante la ventana de la cortina; la botica, con el alambique, los frascos de
+adormidera y el cuenco de las piedras; su estudio; la galería sobre la sala grande; abajo, el zaguán, la consulta y
+las celdas; y la sala grande de los inocentes, de ocho metros por dieciséis, abierta hasta las cerchas, con sus
+camastros y sus cadenas y, en medio, su mesa de operar: donde se le pelea); su patio, el huerto de sus hierbas, el
+callejón y la cordelería (el almacén del cáñamo, el obrador de las sogas y la tienda), con su puerta a los Pelames,
+detrás de la barricada: desde allí, la barricada se viene abajo con la palanca (el atajo de vuelta). En los tejados,
+caer más de tres metros hiere, y más de cinco y medio, mata. Las notas cuentan lo que pasó: el tratado del Físico,
+*De peste sanorum*, en dos partes, tu historia clínica, el libro de cuentas del zapatero, el aviso del tintorero, lo
+que dejó escrito el cordelero.
 
 **La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
@@ -1339,19 +1349,25 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   peste son los signos de los sanos (el pulso que corre, los ojos abiertos, el esperar). Ropón encerado, guantes,
   sombrero de ala ancha y la máscara de pico con dos ojos de vidrio; habla bajo, despacio, en frases que parecen
   versos. No es una criatura que espera en su sitio: el barrio es suyo y lo recorre. Te vigila desde que entras (la
-  cortina, el fondo de la calleja), clava las puertas de las casas en las que te metes, pone cepos entre la paja (los
-  pone donde más has pasado) y cuerdas con campanillas; lo que suena (un cascabel, una campanilla, un cepo, una puerta
-  arrancada) le trae, por la puerta de una de las casas que ya curó, la que no ves; te busca donde estuviste, te huele
-  por el pico y, por los tejados, te sigue desde la calle sin quitarte los ojos de encima. No quiere matarte: quiere
-  curarte. La vara del gancho te trae; la esponja de beleño te duerme (forcejea); herido, te echa cal viva a los ojos
-  y se retira. Si te duerme, la camilla: despiertas atado boca arriba mientras te lleva por la calleja hasta su
-  quirófano, donde te toma el pulso y se va a la fragua a poner el cauterio al rojo; tres correas, machacando, antes
-  de que vuelva, o el hierro. La pelea, en su quirófano, en los tres tiempos de su aforismo: las medicinas (la vara,
-  la esponja, el sahumerio de beleño, que todo lo vuelve lento, y la campanilla, que llama a dos Coronados); el hierro
-  (a media vida se quita la máscara: debajo, la cara lavada y en la frente el agujero de su propia trepanación; la
-  sierra, la lanceta y el trépano, que te taladra si te coge); y el fuego (los cauterios del brasero, que prenden la
-  paja del suelo). Vencido, se sienta en el canto de su mesa y se toma el pulso: «…y lo que el fuego no cura…
-  *insanabilia*».
+  cortina; luego sale de su casa y viene andando hasta el fondo de la rúa a mirarte), clava las puertas de las casas
+  en las que te metes, pone cepos entre la paja (los pone donde más has pasado) y cuerdas con campanillas; lo que
+  suena (un cascabel, una campanilla, un cepo, una puerta arrancada) le trae: sale de su casa, por su puerta (se le
+  ve salir y se le puede seguir hasta ella), te busca donde estuviste, te huele por el pico y, por los tejados, te
+  sigue desde la calle sin quitarte los ojos de encima. No quiere matarte: quiere curarte. La vara del gancho te
+  trae; la esponja de beleño te duerme (forcejea). **Su vida es una sola**, la de la calle y la de su casa: lo que le
+  haces en la caza se queda (mientras te caza se ve su barra), no se cura al volver a salir ni cuando caes tú; herido,
+  te echa cal viva a los ojos y se vuelve andando a su casa; con la mitad de la vida o menos **se encierra** en ella
+  (la tranca cae por dentro) y ya no sale: te espera en la sala grande, en su mesa, cosiéndose la herida. Si te
+  duerme, la camilla: despiertas atado boca arriba mientras te lleva por la rúa hasta su sala grande, donde te toma
+  el pulso y se va a la fragua a poner el cauterio al rojo; tres correas, machacando, antes de que vuelva, o el
+  hierro. La pelea, en la sala grande de su casa (al entrar, cierra la puerta de un portazo), con la vida que le
+  quedó y en los tres tiempos de su aforismo: las medicinas (la vara, la esponja, el sahumerio de beleño, que todo lo
+  vuelve lento, y la campanilla, que abre las celdas y llama a dos Coronados); el hierro (a media vida se quita la
+  máscara: debajo, la cara lavada y en la frente el agujero de su propia trepanación; la sierra, la lanceta y el
+  trépano, que te taladra si te coge); y el fuego (los cauterios del brasero, que prenden la paja del suelo). Si
+  caes en ella, vuelve a empezar con la vida con que empezó (lo de la calle no se pierde). Vencido, se sienta en el
+  canto de su mesa y se toma el pulso: «…y lo que el fuego no cura… *insanabilia*». (Cómo podría aprender sus
+  tácticas, de los jugadores de prueba y de ti: `PLAN_FISICO_ML.md`, pendiente.)
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -1565,8 +1581,12 @@ gracia. Con el panel abierto el ratón es del panel; un clic en el juego lo cier
   arzobispo en la cisterna, cada acto de la película del jefe final (el rito, del cráter a la nave, el agarrón,
   la Herrería, la primera espringala, la cabalgada, la segunda espringala y el final), el río al amanecer; el
   Empalado, la huida de la Bestia y la caza del Descoyuntado; la defensa de la Casa del Alemán y Leonor; el
-  pasadizo del Soto con un tablón en la mano, y Miguel, en su rincón o ahorcado; y en la cripta honda, el Custodio
-  de la Garra, los Velados, Dom Paio en el pozo y la Puerta del Dios Ignoto con todo listo para abrirla.
+  pasadizo del Soto con un tablón en la mano, y Miguel, en su rincón o ahorcado; en el barrio de los Pellejeros, el
+  arco de la rúa con la palanca, la viga del balcón de la cerera, la puerta de la tintorería con su llave, el desván
+  de las palomas (al pie de la rampa a los tejados), la claraboya, la camilla y el Físico en la sala grande de su
+  casa (entero, o herido y encerrado, esperándote en su mesa con un tercio de la vida: `fisicoEncerrado`); y en la
+  cripta honda, el Custodio de la Garra, los Velados, Dom Paio en el pozo y la Puerta del Dios Ignoto con todo listo
+  para abrirla.
 - **El jefe:** matar el sigilo que toca, saltar de fase y ver las rutas de trepar (de las peleas de colosos de
   antes; la película no los usa).
 - **Editor:** una cámara libre que se separa del jugador (WASD, ratón, Espacio y C), detener el tiempo, llevar al
@@ -1598,12 +1618,13 @@ src/
                         (level_canon.js: la Casa del Canónigo; level_cellar.js: el laberinto de sus bodegas,
                         generado por regiones: suelos, bóvedas, muros, pilares, grutas (madrigueras), posaderos,
                         palancas y el rastrillo; level_walls.js: la muralla norte y el recorrido de la huida;
-                        level_barrio.js: el barrio de los Pellejeros (la calleja, la plazuela, el portón, sus
-                        casas y sus calles), con kit_casa.js, el kit de las casas (muros con sus huecos, puertas,
-                        ventanas, forjados, escaleras, tejados que se andan), barrio_casas.js (el zapatero, la
-                        cerera, la quemada, la tintorería, por dentro), barrio_atrezo.js (lo de los oficios y lo
-                        del Físico), barrio_tejados.js (la viga de la calleja, el palomero y su palomar),
-                        inocentes.js (la Casa de los Inocentes y su patio) y cordeleria.js; level_fragua.js: la
+                        level_barrio.js: el barrio de los Pellejeros (el arco y la rúa, la plazuela, sus casas
+                        grandes y sus calles, sus fachadas), con kit_casa.js, el kit de las casas (muros con sus
+                        huecos, puertas, ventanas, forjados, escaleras, tejados que se andan), barrio_casas.js (el
+                        zapatero, la cerera, la quemada, la tintorería, por dentro), barrio_atrezo.js (lo de los
+                        oficios y lo del Físico), barrio_tejados.js (la viga sobre la rúa, el desván de las
+                        palomas y su rampa, el tejado de la quemada), inocentes.js (la Casa de los Inocentes, su
+                        sala grande, su patio y su huerto) y cordeleria.js; level_fragua.js: la
                         fragua del maestre Lourenço;
                         level_castle.js: el castillo y las mazmorras (y ante la fortaleza, donde estaba la torre
                         vieja); castillo_fuera.js: lo de fuera (las torres nuevas, los cadalsos, la barbacana,
@@ -1720,9 +1741,10 @@ src/
                         de la estatua y sus luces, y la estatua, que vuelve la cabeza, abre el ojo y susurra);
                         cutscene.js: la de la bodega; hunt.js: la caza en las
                         bodegas; breakables.js: pilares, estanterías, almenas, torno y barricadas que se rompen;
-                        fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, la camilla);
-                        fisico_cine.js: sus escenas (la cortina, la camilla y el forcejeo, su muerte);
-                        fisico_pelea.js: la pelea de su quirófano; trampas.js: sus cepos y sus campanillas;
+                        fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, su vida, que
+                        es una sola, la retirada y el encierro, la camilla); fisico_cine.js: sus escenas (la
+                        cortina, la camilla y el forcejeo, su muerte); fisico_pelea.js: la pelea de la sala
+                        grande de su casa; trampas.js: sus cepos y sus campanillas;
                         cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
                         Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
                         mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
@@ -1797,6 +1819,17 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        viejas, los aljibes (el agua que frena), lo hondo (la cosecha), el pozo
                                        de la tapa hasta el Vergel y la mesa (el verde, echado a mano; el negro,
                                        con su receta; otro negro, que ya no cabe)
+                        barriowalk.mjs el barrio de los Pellejeros andando, de la plaza a los Pelames: el arco,
+                                       las casas (sus escaleras, la viga del balcón, la llave), la tintorería,
+                                       el desván de las palomas, la rampa, los tejados, la viga de la rúa, la
+                                       claraboya, la Casa por dentro, la sala grande, el patio y la cordelería
+                        fisicovida.mjs la vida del Físico es una sola: herido en la calle, se retira con lo que
+                                       le queda; vuelve a salir igual; tras caer tú, igual; con la mitad, se
+                                       encierra y ya no sale; te espera en su mesa; la pelea empieza con eso
+                        fisicopelea.mjs la pelea con el Físico en su sala, contra un jugador de prueba
+                                       (agresivo, cauto o quieto): sus golpes y los que entran, sus tiempos, los
+                                       Coronados, el fuego, el daño de cada uno y por dónde se mueve
+                        fisicocine.mjs fotogramas de sus escenas (la cortina, la camilla, su muerte)
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»

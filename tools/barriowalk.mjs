@@ -77,13 +77,13 @@ const steps = [
   "__walk([[24.6,36.8],[27,38.5],[27,41.8]])",
   // la cerera: la puerta, la escalera (contra la muralla), la sala
   "__walk([[27.5,46.4]])", "__useHere('d_viuda')",
-  "__walk([[27.5,49.6],[26.2,54.0],[24.7,55.4],[24.7,56.65],[26.0,56.65],[30.3,56.65],[31.2,55.6],[30.4,52.0]])",
+  "__walk([[27.5,49.6],[26.2,54.0],[25.1,55.4],[25.1,56.65],[26.4,56.65],[30.7,56.65],[31.2,55.6],[30.4,52.0]])",
   // por la ventana de la sala, a la viga; por ella, a la de la alcoba; la llave
   "__walk([[24.5,49.2],[24.5,47.75],[23.6,47.7],[18.4,47.7],[17.5,47.75],[17.5,49.6],[17.2,50.2]])", "__useHere('i_llave_tinte')",
   // la tranca de la alcoba (por dentro), el oratorio, abajo, la puerta de la plazuela
   "__walk([[19.6,54.6]])", "__useHere('d_alcoba')",
   "__walk([[21.8,54.6],[31.7,53.2]])", "__useHere('a_viuda')",
-  "__walk([[31.2,55.4],[30.6,56.65],[25.6,56.65],[24.7,56.65],[24.7,55.0],[27.5,52.5],[32.9,50.0]])", "__useHere('d_viuda_patio')",
+  "__walk([[31.2,55.4],[30.6,56.65],[26.0,56.65],[25.1,56.65],[25.1,55.0],[27.5,52.5],[32.9,50.0]])", "__useHere('d_viuda_patio')",
   "__walk([[35.0,50.0],[40.0,44.0],[40.0,42.4]])", "__useHere('d_tinte')",
   // la tintorería: entre las tinas, al pie de la escalera; arriba, la nota
   "__walk([[40.0,39.8],[40.0,37.5],[35.0,37.0],[34.95,33.8],[34.95,32.35],[36.0,32.35],[40.3,32.35],[41.6,33.4],[41.6,36.6]])", "__useHere('n_tintorero')",
@@ -100,7 +100,7 @@ const steps = [
   // la galería, el estudio, la botica y el otro tratado
   "__walk([[56.2,45.7],[58.2,45.7],[58.2,50.0],[58.2,52.2],[58.2,54.4],[56.0,54.4],[54.4,53.2]])", "__useHere('n_tratado1')",
   // abajo, por el primer tramo, al zaguán; la sala grande
-  "__walk([[56.0,54.4],[58.2,54.4],[58.2,52.2],[58.2,45.7],[56.2,45.7],[53.0,42.0],[53.0,40.4],[50.7,38.6],[50.7,35.45],[51.7,35.45],[56.5,35.45],[56.5,38.0],[55.5,44.0],[58.5,44.0],[60.0,45.0]])",
+  "__walk([[56.0,54.4],[58.2,54.4],[58.2,52.2],[58.2,45.7],[56.2,45.7],[53.0,42.0],[53.0,40.4],[50.7,38.6],[50.7,35.45],[51.7,35.45],[56.5,35.45],[56.5,38.0],[55.6,44.0]])", "__useHere('d_sala_inocentes')", "__walk([[58.5,44.0],[60.0,45.0]])",
   // vencido de un golpe (la escena, saltada): la llave de la cordelería y la puerta del patio
   "(()=>{const g=__game;g.flags['fisico:caza']=true;g.fisico.update=window.__fu;__sim(0.5);const F=g.fisico,e=F.e;const st=F.modo;e.hp=1;e.die();for(let i=0;i<30&&g.cutscene;i++){g.cutscene.skip();__sim(0.2)}g.ui.closeAll();__sim(1);g.ui.closeAll();g.fisico.update=()=>{};return {pelea:st,boss:!!g.flags['boss:fisico'],llave:g.inventory.has('llave_cordeleria'),patio:!!g.flags['door:d_quirofano_patio'],sentado:e.dead&&e.obj.visible}})()",
   "__walk([[59.6,40.0],[61.3,36.4],[61.3,33.0],[52.0,28.1],[50.6,28.1]])", "__useHere('d_patio_inocentes')",

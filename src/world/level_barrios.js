@@ -669,7 +669,7 @@ export function buildSE(ctx, S, L) {
   ctx.crows.push({ x: 22.6, y: 0, z: 23.2, r: 1.8, n: 4 });
   ctx.crows.push({ pts: [[24.45, 1.25, 27.3], [27.25, 1.25, 27.3], [28.6, 1.25, 27.3]], yaw: 0 });
   ctx.rats.push({ x: 29.2, y: 0, z: 30.2, n: 2 });
-  // (las casas del sur del corral son las de la calleja de los Pellejeros, que
+  // (las casas del sur del corral son las de la rúa de los Pellejeros, que
   // dan a él por detrás: level_barrio.js)
   ctx.beginGroup('corralN');
   house(ctx, { x0: 23, z0: 12, x1: 30, z1: 17, front: 's', seed: 1407, h: 6.2 });
