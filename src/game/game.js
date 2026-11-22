@@ -1503,6 +1503,8 @@ export class Game {
   onPlayerAction(kind, info) {
     const b = this.activeBoss;
     if (b && b.D && b.D.observe) b.D.observe(kind, info);
+    // (el Físico lo apunta en tu historia clínica)
+    this.fisico && this.fisico.observa(kind, info);
   }
 
   // ¿Está en la bodega del canónigo (o en su escalera)?

@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 75 % hacia la 1.0"></a></p>
 
-**75 % hacia la 1.0**: 81 de 108 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**75 % hacia la 1.0**: 83 de 110 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -95,7 +95,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | III | [El jefe final](docs/hoja-de-ruta/index.html#fase-pelicula) | Hecha | 100 % (9 de 9) |
 | IV | [La cripta honda](docs/hoja-de-ruta/index.html#fase-cripta) | Hecha | 100 % (9 de 9) |
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
-| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (11 de 11) |
+| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (13 de 13) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
 | VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (8 de 8) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
@@ -172,7 +172,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
-- **El Físico que aprende** — ¿Cómo quieres que aprenda sus tácticas? La historia clínica (aprende de ti mientras juegas), una red entrenada aquí contra jugadores de prueba y tus grabaciones, o las dos; si quieres grabar tus peleas, y cuánto debe castigar. · *PLAN_FISICO_ML.md, §6*
+- **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
 - **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*
 - **Dom Paio, convertido** — ¿Pasa a llamarse «el Encadenado»? Ahora se llama «el Condenado», que es el nombre del protagonista. · *planes_jubilados/PLAN_LORE.md, §7 (pregunta 9)*
@@ -1366,8 +1366,14 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   máscara: debajo, la cara lavada y en la frente el agujero de su propia trepanación; la sierra, la lanceta y el
   trépano, que te taladra si te coge); y el fuego (los cauterios del brasero, que prenden la paja del suelo). Si
   caes en ella, vuelve a empezar con la vida con que empezó (lo de la calle no se pierde). Vencido, se sienta en el
-  canto de su mesa y se toma el pulso: «…y lo que el fuego no cura… *insanabilia*». (Cómo podría aprender sus
-  tácticas, de los jugadores de prueba y de ti: `PLAN_FISICO_ML.md`, pendiente.)
+  canto de su mesa y se toma el pulso: «…y lo que el fuego no cura… *insanabilia*». **Te estudia**: lleva tu
+  historia clínica (en la calle y en su sala apunta hacia dónde ruedas, si te adelantas, si desvías o te cubres,
+  cuándo bebes, si huyes herido, si subes a los tejados) y la usa: barre y pica hacia donde sueles rodar, retiene el
+  golpe si te adelantas, amaga, y te lo dice («Ruedas a tu izquierda. Lo tengo apuntado.»); la hoja de su mesa crece
+  con lo que ha apuntado de ti. **Sus tácticas están entrenadas**: lo que hace en cada momento de la pelea (guardar la
+  distancia de la vara, rodearte, esperar a que te descubras, cada golpe, el amago) lo elige una red pequeña entrenada
+  contra jugadores de prueba de diez maneras en un simulador de su sala, con los reflejos de una persona (ve con un
+  cuarto de segundo de retraso y nunca lee el mando). Cómo se hizo y cómo se vuelve a entrenar: `PLAN_FISICO_ML.md`.
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -1744,7 +1750,12 @@ src/
                         fisico.js: el Físico por el barrio (la vigilancia, la cuarentena, la caza, su vida, que
                         es una sola, la retirada y el encierro, la camilla); fisico_cine.js: sus escenas (la
                         cortina, la camilla y el forcejeo, su muerte); fisico_pelea.js: la pelea de la sala
-                        grande de su casa; trampas.js: sus cepos y sus campanillas;
+                        grande de su casa (lo que hace lo decide su cabeza: el movimiento y cada golpe, el amago,
+                        el golpe retenido y adónde apunta); fisico_mente.js: su cabeza (lo que ve, con un cuarto
+                        de segundo de retraso, lo que puede hacer y la red que lo elige; fisico_red.json, sus
+                        pesos, entrenados con tools/entrena_fisico.mjs); fisico_historia.js: su historia
+                        clínica de ti (lo que apunta, lo que hace con ello y lo que escribe en la hoja de su
+                        mesa); trampas.js: sus cepos y sus campanillas;
                         cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
                         Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
                         mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
@@ -1830,6 +1841,17 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        (agresivo, cauto o quieto): sus golpes y los que entran, sus tiempos, los
                                        Coronados, el fuego, el daño de cada uno y por dónde se mueve
                         fisicocine.mjs fotogramas de sus escenas (la cortina, la camilla, su muerte)
+                        fisico_sim.mjs la pelea con el Físico simplificada, sin el motor (unos 15 ms cada una): su
+                                       sala y sus muebles, sus golpes y los del jugador; para entrenar sus
+                                       tácticas y medirlas (node tools/fisico_sim.mjs todos 30 red|manual)
+                        fisico_bot.mjs los jugadores de prueba (los mismos en el simulador y en el motor): ven
+                                       con retraso, ruedan a su lado, desvían, se cubren, beben, huyen...;
+                                       fisico_datos.mjs: la sala, los golpes y los diez estilos
+                        entrena_fisico.mjs entrena la red de sus tácticas (estrategias evolutivas, en los
+                                       núcleos que haya) y la guarda en src/game/fisico_red.json
+                        fisicobanco.mjs los mismos jugadores de prueba, con teclas, contra el Físico de
+                                       verdad: varias peleas seguidas; red, manual o antes (la de antes); con
+                                       HOJA=1, lo que ha apuntado de cada uno
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»

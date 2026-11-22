@@ -232,6 +232,8 @@ export class Combat {
     if (a.crit && p.lastHitBy && p.lastHitBy.crit && g.time - (p.lastHitT ?? -9) < 0.8) return false;
     // (tipo: el del golpe; lo para la armadura a su manera: game/danos.js)
     const r = p.receiveHit({ dmg: a.dmg, stDmg: a.stDmg, unblockable: a.unblockable, noParry: a.noParry, stagger: a.stagger, knock: a.knock, chip: a.chip, crit: a.crit, tipo: tipoGolpe(src, a) }, sx, sz);
+    // (lo que ha pasado, a quien golpeaba: el Físico lo apunta)
+    if (src && src.T && src.T.onStrike && r !== 'none') src.T.onStrike(src, a, r);
     if (r === 'dodge' || r === 'none') return false;
     if (r === 'parry') {
       this.parryFx(src, a, sx, sz);

@@ -26,12 +26,17 @@
 //  - Quiere atraparte, no matarte: el gancho de la vara te trae, la esponja
 //    te duerme (forcejea) y, si te duermes, la camilla (fisico_cine.js).
 //  - Habla siempre bajo, sin prisa: piensa en voz alta (story.js, DIALOG).
+//  - Te estudia: lleva tu historia clínica (fisico_historia.js), en la calle
+//    y en su sala, y la usa (barre hacia donde ruedas, retiene el golpe si te
+//    adelantas, amaga...); la hoja de su mesa crece con lo que apunta.
 // Norte = -Z. Unidades en metros.
 import * as THREE from 'three';
 import { BR } from '../world/level_barrio.js';
-import { DIALOG, MSG } from './story.js';
+import { DIALOG, MSG, NOTA_VIVA } from './story.js';
 import { FI_CLIPS, fiSay, fiGrp } from '../entities/fisico.js';
 import { PeleaFisico, EN_SU_MESA } from './fisico_pelea.js';
+import { Historia } from './fisico_historia.js';
+import { RETIENE } from './fisico_mente.js';
 import { clamp } from '../core/util.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -73,7 +78,50 @@ export class Fisico {
     this.e = g.enemies.find((x) => x.type === 'fisico') || null;
     // la pelea de su quirófano (fisico_pelea.js)
     this.pelea = new PeleaFisico(g, this);
+    // (la hoja de su mesa: lo que tiene apuntado de ti, debajo)
+    NOTA_VIVA.historia = () => (g.flags && g.flags['fisico:historia'] ? this.H.texto() : '');
     this.reset();
+  }
+  // La historia clínica: lo que tiene apuntado de ti, en la partida (flags
+  // 'fisico:historia'; al cargar otra, la de esa).
+  get H() {
+    const f = this.g.flags;
+    const d = f['fisico:historia'];
+    if (!this._H || this._H.d !== d) {
+      this._H = new Historia(d);
+      f['fisico:historia'] = this._H.d;
+    }
+    return this._H;
+  }
+  // Lo que haces delante de él (game.onPlayerAction): rodar, desviar,
+  // cubrirte, beber, golpear.
+  observa(kind, info) {
+    const e = this.e;
+    const g = this.g;
+    if (!e || !this.shown || g.flags['boss:fisico'] || (this.modo !== 'caza' && this.modo !== 'pelea')) return;
+    const p = g.player;
+    const d = e.distTo(p.pos);
+    if (d > 9 || Math.abs(p.pos.y - e.pos.y) > 2) return;
+    this.H.accion(kind, info || {}, { t: g.time, px: p.pos.x, pz: p.pos.z, ex: e.pos.x, ez: e.pos.z, hpK: p.hp / p.maxHp, d });
+  }
+  // Lo que ha pasado con un golpe suyo que llegaba (combat.apply: 'hit',
+  // 'block', 'guardbreak', 'parry', 'dodge').
+  onStrike(e, a, r) {
+    if (this.modo !== 'caza' && this.modo !== 'pelea') return;
+    const R = r === 'hit' ? 'entra' : r === 'block' ? 'cubre' : r === 'guardbreak' ? 'rompe' : r === 'parry' ? 'desvia' : r === 'dodge' ? 'esquiva' : null;
+    const G = this.H.golpe;
+    // (te ha dado donde lo esperaba: has rodado adonde sueles, o antes de
+    // tiempo, y te ha cogido; lo dice, de vez en cuando)
+    if (r === 'hit' && e && (e.aimOff || e.data.reten) && G && G.reac && this.g.time - (this.aciertaT ?? -99) > 25) {
+      this.aciertaT = this.g.time;
+      this.say(DIALOG.fisicoAcierta, 2.4);
+    }
+    if (R && a && a.name) this.H.resultado(a.name, R);
+  }
+  // Lo que pasa, apuntado: 'tejado', 'casa', 'cepo', 'dormido', 'suelta',
+  // 'muere'.
+  apunta(k) {
+    if (this.e && !this.g.flags['boss:fisico']) this.H.evento(k);
   }
 
   // ------------------------------------------------------------ estado
@@ -103,7 +151,9 @@ export class Fisico {
     if (this.e && !(this.g.flags && this.g.flags['boss:fisico'])) this.hide();
   }
   onRespawn() {
-    // (al morir: se va; las tablas que clavó, clavadas siguen)
+    // (al morir: se va; las tablas que clavó, clavadas siguen; si has caído
+    // con él encima, lo apunta)
+    if (this.e && this.shown && (this.modo === 'caza' || this.modo === 'pelea')) this.apunta('muere');
     this.reset();
     this.setMusic(null);
   }
@@ -350,6 +400,9 @@ export class Fisico {
     this.setMusic('caza');
     this.say(DIALOG.fisicoVe, 3);
     e.anim.play(FI_CLIPS.alert, { blend: 0.15 });
+    // (un encuentro nuevo, para su historia: lo viejo pesa menos)
+    if (g.time - (this.encuentroT ?? -999) > 60) this.H.encuentro('caza');
+    this.encuentroT = g.time;
     return false;
   }
   // Persiguiéndote: lo que piensa (lo demás, el tipo: los golpes).
@@ -381,6 +434,7 @@ export class Fisico {
     const cepo = g.trampas && g.trampas.held;
     if (cepo && e.sees && d < 9 && this.cepoDicho !== cepo) {
       this.cepoDicho = cepo;
+      this.apunta('cepo');
       this.say(DIALOG.fisicoCepo, 3);
     } else if (this.sayT <= 0 && e.sees && d < 12) this.say(d < 4 ? DIALOG.fisicoCerca : DIALOG.fisicoVe, 3);
     // la cal, sólo cuando se va a retirar (o en la pelea)
@@ -449,20 +503,24 @@ export class Fisico {
   }
   onHook() {
     this.say(DIALOG.fisicoGancho, 2.4);
+    this.onStrike(this.e, { name: 'gancho' }, 'hit');
   }
   onSponge() {
+    this.onStrike(this.e, { name: 'esponja' }, 'hit');
     this.sleep = 0;
     this.say(DIALOG.fisicoEsponja, 2.6);
     const g = this.g;
     g.qte && g.qte.start({ action: 'light', label: MSG.forcejea || '¡Forcejea!', mash: 9, window: 2.8, slow: 1, lenient: true, onDone: () => {} });
   }
   onSpongeEscape() {
+    this.apunta('suelta');
     this.sleep = 0;
     this.say(DIALOG.fisicoSuelta, 2.6);
   }
   // Se duerme: la camilla (o, en la pelea, un buen rato indefenso).
   onAsleep(e) {
     const g = this.g;
+    this.apunta('dormido');
     if (this.modo === 'pelea') {
       g.player.releaseGrab && g.player.releaseGrab(1.5, Math.sin(e.yaw), Math.cos(e.yaw), 28);
       this.sleep = 1;
@@ -486,6 +544,7 @@ export class Fisico {
     if (d < 5.5 && a < 0.5 && !p.iframe && !p.dead) {
       p.receiveBite && p.receiveBite(6);
       this.blind = 3.2;
+      this.onStrike(e, { name: 'cal' }, 'hit');
       g.ui.toast(MSG.calOjos || 'La cal en los ojos: no ves nada.', 2.5);
     }
   }
@@ -493,6 +552,28 @@ export class Fisico {
   updateBody(e, dt, pl) {
     // mirando hacia arriba (te sigue por los tejados)
     e.data.lookUp = this.modo === 'sombra' && pl.pos.y - e.pos.y > 2.5;
+    // la historia: sus golpes (lo que haces al verlos venir), y lo que te
+    // alejas (si huyes herido)
+    if (this.modo === 'caza' || this.modo === 'pelea') {
+      const H = this.H;
+      const g = this.g;
+      if (e.state === 'attack' && e.atk && e.atkSerial !== this.serialVisto) {
+        this.serialVisto = e.atkSerial;
+        const a = e.atk;
+        const first = a.hits && a.hits.length ? a.hits[0][0] : a.events && a.events.length ? a.events[0].t : a.dur * 0.5;
+        // (retenido, el impacto llega más tarde)
+        const ret = e.data.reten ? first * RETIENE.hasta * (1 / RETIENE.paso - 1) : 0;
+        H.ataca(a.name, g.time, first + ret, a.dur + ret, !!e.data.amago);
+      } else if (e.state !== 'attack' && H.golpe) H.cierra();
+      this.muestraT = (this.muestraT ?? 0) - dt;
+      if (this.muestraT <= 0) {
+        const d = e.distTo(pl.pos);
+        H.muestra(0.25, d, (d - (this.prevD ?? d)) / 0.25, pl.hp / pl.maxHp);
+        this.prevD = d;
+        this.muestraT = 0.25;
+      }
+    }
+    if (this.modo === 'pelea' || this.modo === 'caza') this.pelea.cuerpo(e, dt, pl);
   }
 
   // ------------------------------------------------------------ guion
@@ -500,6 +581,7 @@ export class Fisico {
   sombra() {
     const e = this.e;
     if (this.modo === 'sombra') return;
+    if (this.modo === 'caza') this.apunta('tejado');
     this.modo = 'sombra';
     this.roofT = 0;
     this.setMusic('busca');
@@ -553,6 +635,7 @@ export class Fisico {
   cuarentena(c, then) {
     const e = this.e;
     const g = this.g;
+    if (this.modo === 'caza') this.apunta('casa');
     this.modo = 'tapia';
     e.aware = false;
     this.walk(c.fuera[0], c.fuera[1], e.T.walk * 1.3, () => {

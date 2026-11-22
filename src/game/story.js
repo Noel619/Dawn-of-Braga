@@ -450,6 +450,10 @@ export const ITEMS = {
   },
 };
 
+// Lo que se añade a una nota mientras se juega (la historia clínica que lleva
+// el Físico de ti: game/fisico.js lo pone aquí).
+export const NOTA_VIVA = {};
+
 export const NOTES = {
   // ---- el barrio de los Pellejeros
   tratado1: {
@@ -488,7 +492,11 @@ Me la puse yo el primero. No soy de los que mandan beber lo que no beben.`,
   },
   historia: {
     title: 'Historia clínica (sin nombre)',
-    text: `(Una hoja suelta, encima de las demás, con la tinta aún brillante.)
+    // (debajo, lo que el Físico ha apuntado de ti: game/fisico_historia.js)
+    get text() {
+      return this.base + (NOTA_VIVA.historia ? NOTA_VIVA.historia() : '');
+    },
+    base: `(Una hoja suelta, encima de las demás, con la tinta aún brillante.)
 
 Varón. Edad, la de la fuerza. Entró por el arco de la rúa después de la campana, arrancando con hierro mis tablas de la cuarentena.
 
@@ -1593,6 +1601,17 @@ export const DIALOG = {
   fisicoSahumerio: ['Respira. El beleño no hace daño: quita las ganas.', 'Despacio. Todo despacio. Así se cura.'],
   fisicoLlama: 'Venid, hijos. Hay uno que no se deja curar.',
   fisicoMascara: 'Ya no hace falta la máscara. El único aire malo que queda aquí es el tuyo.',
+  // (lo que tiene apuntado de ti: al empezar la consulta, y cuando acierta)
+  fisicoApunta: {
+    l: ['Ruedas a tu izquierda. Lo tengo apuntado.', 'A la izquierda, como siempre.'],
+    r: ['Ruedas a tu derecha. Lo tengo apuntado.', 'A la derecha, como siempre.'],
+    pronto: ['Te asustas antes de tiempo. Es un síntoma.', 'Te mueves antes del golpe. El miedo va por delante de ti.'],
+    desvia: ['Pones el hierro a todo. Ya lo sé.', 'Desvías. Lo tengo apuntado.'],
+    cubre: ['Detrás del escudo, como siempre.', 'Te escondes detrás de esa tabla. Lo tengo apuntado.'],
+    bebe: ['Bebes con el médico delante. Mal hecho.', 'Eso no te va a curar.'],
+    huye: ['Huyes cuando sangras. Aquí no hay adonde.', 'Siempre huyes. Lo tengo apuntado.'],
+  },
+  fisicoAcierta: ['¿Ves? Lo tenía apuntado.', 'Lo que yo decía.', 'Como siempre.'],
   fisicoTrepano: ['Quieto. Un agujero pequeño, y sale todo.', 'Yo también lo tuve dentro. Mira: por aquí salió.'],
   fisicoFuego: 'Lo que no cura el hierro, lo cura el fuego.',
   // vencido: sentado en su mesa, se toma el pulso

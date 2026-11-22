@@ -483,6 +483,9 @@ export class Enemy {
     this.stT = 0;
     this.hitDone = [];
     this.evDone = [];
+    // (hacia dónde apunta, respecto a ti, mientras te sigue: el Físico, adonde
+    // sueles rodar)
+    this.aimOff = 0;
     this.anim.play(a.clip, { blend: a.blend ?? 0.1 });
     if (a.onStart) a.onStart(this);
     if (!a.quiet) this.game.audio && this.game.audio.enemyVoice(this, 'attack', a);
@@ -559,7 +562,9 @@ export class Enemy {
     const T = this.T;
     const g = this.game;
     if (this.dead) return;
-    if (this.D) return this.D.parried(a);
+    // (la cabeza propia del Descoyuntado; el Físico también lleva un D, pero
+    // sólo con lo de su pelea: el parry, el de siempre)
+    if (this.D && this.D.parried) return this.D.parried(a);
     this.parryHits = (g.time - (this.lastParriedT ?? -9) < 4 ? this.parryHits || 0 : 0) + 1;
     this.lastParriedT = g.time;
     // (con el Cerrojo de San Martín, a los grandes y a los jefes les basta un
@@ -604,7 +609,7 @@ export class Enemy {
   }
   // Va a recibir el golpe de gracia: se queda desequilibrado hasta que llega.
   onRiposte() {
-    if (this.D) return this.D.onRiposte && this.D.onRiposte();
+    if (this.D && this.D.onRiposte) return this.D.onRiposte();
     const dur = (this.T.parryDur ?? 1.6) * (this.parryK || 1);
     if (this.state === 'parried') this.stT = Math.min(this.stT, dur - 0.9);
     this.parryT = Math.max(this.parryT, 0.9);
@@ -788,7 +793,7 @@ export class Enemy {
         const t = this.stT;
         const firstHit = a.hits && a.hits.length ? a.hits[0][0] : a.dur * 0.5;
         const trackUntil = a.trackUntil ?? firstHit - 0.05;
-        if (t < trackUntil) this.yaw = approachAngle(this.yaw, toP, (a.turn ?? T.turn ?? 5) * dt);
+        if (t < trackUntil) this.yaw = approachAngle(this.yaw, toP + (this.aimOff || 0), (a.turn ?? T.turn ?? 5) * dt);
         let lunging = false;
         if (a.lunge) {
           // (impulso 'campana': arranca y frena —la misma distancia que la

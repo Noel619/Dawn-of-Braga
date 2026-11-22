@@ -143,6 +143,8 @@ export const FASES = [
       ['La captura: la camilla, la sala grande y el forcejeo', 1],
       ['La pelea en tres tiempos: las medicinas, el hierro y el fuego', 1],
       ['Una sola vida: lo que le haces en la calle cuenta en su casa; herido, se encierra y te espera', 1],
+      ['Su historia clínica: apunta tus costumbres y las usa (barre adonde ruedas, retiene el golpe si te adelantas); la hoja de su mesa crece', 1],
+      ['Sus tácticas, entrenadas: una red pequeña contra jugadores de prueba en un simulador de su sala, comprobada en el juego', 1],
       ['La cordelería y la salida detrás de la barricada; el tratado del Físico', 1],
     ],
   },
@@ -375,9 +377,9 @@ export const EXPANSIONES = [
 export const DECISIONES = [
   {
     que: 'El Físico que aprende',
-    pregunta: '¿Cómo quieres que aprenda sus tácticas?',
-    mas: 'La historia clínica (aprende de ti mientras juegas), una red entrenada aquí contra jugadores de prueba y tus grabaciones, o las dos; si quieres grabar tus peleas, y cuánto debe castigar.',
-    donde: 'PLAN_FISICO_ML.md, §6',
+    pregunta: '¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar?',
+    mas: 'La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes.',
+    donde: 'PLAN_FISICO_ML.md, §5',
   },
   {
     que: 'Los Paços',

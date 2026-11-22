@@ -735,6 +735,7 @@ function sueltaTrepano(e, escaped) {
     e.state = 'stagger';
     e.stT = 0;
     e.anim.play(FI_CLIPS.stagger, { blend: 0.05 });
+    g.fisico && g.fisico.apunta('suelta');
   } else {
     // (te ha hecho el agujero)
     if (p.state === 'grabbed') p.releaseGrab && p.releaseGrab(4.5, fx, fz, 30);
@@ -1042,6 +1043,11 @@ export const FISICO_TYPE = {
   onHit: (e, r, dmg) => {
     const F = e.game.fisico;
     F && F.onHit(e, r, dmg);
+  },
+  // lo que ha pasado con un golpe suyo (para la historia clínica)
+  onStrike: (e, a, r) => {
+    const F = e.game.fisico;
+    F && F.onStrike(e, a, r);
   },
   onReset: (e) => {
     e.data = {};
