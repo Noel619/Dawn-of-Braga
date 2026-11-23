@@ -6,6 +6,7 @@ import { Rig, Animator, blendInto, UPPER, Spring, addRot } from './rig.js';
 import { partesVestido, farolParts, equipoDeObjetos, PIEZAS_GUARDIA, CARGAS, cargaDe } from './armaduras.js';
 import { aspectoBase, normalizar, escalasDe, teñir } from './aspecto.js';
 import { Biped, stabilizeShield, keepShieldOut } from './locomotion.js';
+import { Caida, puedeCaer } from './caida.js';
 import { WEAPONS, weaponSet, resolveWeaponArms, durezaK } from './weapons.js';
 import { buildParts, backShield, viroteParts } from './weapon_models.js';
 import { moveBody } from '../world/collision.js';
@@ -360,6 +361,8 @@ export class Player {
     this.anim.stop(0);
     this.anim.weight = 0;
     this.dead = false;
+    this.caida = null;
+    this.golpe = null;
     this.iframe = false;
     this.blocking = false;
     this.blockW = 0;
@@ -585,6 +588,8 @@ export class Player {
   receiveHit(atk, fromX, fromZ) {
     // (derribado con el Descoyuntado encima o levantándose: eso ya duele bastante)
     if (this.dead || this.state === 'wake' || this.state === 'pinned') return 'none';
+    // (de dónde viene: si le mata, hacia allí no cae)
+    this.golpe = { x: fromX, z: fromZ, fuerte: !!(atk && (atk.heavy || atk.noParry)) };
     if (this.state === 'getup' && this.stT < 0.75) return 'dodge';
     if (this.iframe) {
       if (this.state === 'roll') this.dodged();
@@ -859,11 +864,25 @@ export class Player {
     }
     this.hp = 0;
     if (this.dead) return;
+    // (cae como un cuerpo —entities/caida.js— si estaba de pie en el suelo:
+    // no a nado, ni derribado, ni agarrado, ni en una escena, ni cayendo)
+    const dePie = !['swim', 'pinned', 'grabbed', 'cine', 'wake', 'rest'].includes(this.state) && this.body.grounded && !this.tumbado && !this.puppet && this.obj.visible;
     this.dead = true;
     this.state = 'dead';
     this.stT = 0;
     this.blocking = false;
-    this.anim.play(this.clips.death, { blend: 0.08 });
+    if (dePie && puedeCaer(this.rig)) {
+      this.caida = new Caida(this.game, this.rig, this.obj, {
+        de: this.golpe,
+        fuerte: this.golpe && this.golpe.fuerte,
+        vel: { x: this.vx, z: this.vz },
+        adelante: this.yaw,
+        onGolpe: (p, v, n) => n === 1 && v > 1.2 && this.game.audio && this.game.audio.play('bodyFall', p),
+      });
+      this.anim.stop(0);
+      this.anim.weight = 0;
+    } else this.anim.play(this.clips.death, { blend: 0.08 });
+    this.golpe = null;
     this.game.onPlayerDeath && this.game.onPlayerDeath();
   }
 
@@ -1385,6 +1404,8 @@ export class Player {
     const g = this.game;
     // (a nado, la brazada: entities/nado.js)
     if (this.state === 'swim' && this.nadoS) return nadoAnimate(this, dt);
+    // (muerto, cayendo como un cuerpo)
+    if (this.caida) return this.animaCaida(dt);
     const t = g.time;
     const target = g.lockTarget;
     const gait = this.gait;
@@ -1513,6 +1534,9 @@ export class Player {
     const ls = this.lampS.update(dt, clamp(-fwdSp * 0.05, -0.4, 0.4));
     pose.lantern = [ls + Math.sin(gait.phase * Math.PI * 4) * 0.08 * gait.mw, 0, 0];
     this.rig.apply(pose);
+    // (la última pose viva: lo que no es del cuerpo —el agarre del arma, el
+    // farol— se queda así al caer)
+    this._ultPose = pose;
 
     // posición visual (suavizado de escalones)
     this.visY = this.body.grounded ? damp(this.visY, this.body.pos.y, 18, dt) : this.body.pos.y;
@@ -1552,6 +1576,21 @@ export class Player {
     // (lampK: las cinemáticas pueden hacerlo titilar o apagarse)
     this.lamp.intensity = this.lampBase * this.lampK * (0.9 + 0.07 * Math.sin(t * 11) + 0.05 * Math.sin(t * 23.7));
   }
+  // El cuerpo que cae (entities/caida.js): sus giros, desde sus puntos; lo
+  // demás (el arma en la mano, el farol), como estaba; la capa y el farol,
+  // sueltos. La raíz, donde murió.
+  animaCaida(dt) {
+    const C = this.caida;
+    C.update(dt);
+    const pose = this._poseC || (this._poseC = {});
+    if (this._ultPose) for (const j in this._ultPose) pose[j] = this._ultPose[j];
+    C.pose(pose);
+    pose.cloak = [0, 0, 0];
+    pose.lantern = [0, 0, 0];
+    this.rig.apply(pose);
+    this.obj.position.copy(C.p0);
+    this.obj.quaternion.copy(C.q0);
+    const t = this.game.time;
+    this.lamp.intensity = this.lampBase * this.lampK * (0.9 + 0.07 * Math.sin(t * 11) + 0.05 * Math.sin(t * 23.7));
+  }
 }
-
-

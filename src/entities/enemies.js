@@ -319,11 +319,23 @@ const crClips = {
     [0.9, { body: [-8, 0, 12], head: [30, 0, 25], root: [0, 0, 0] }],
     [1.3, {}],
   ]),
-  death: clip('death', 1.6, [
-    [0, { body: [-20, 0, 20], head: [0, 0, 60] }, 'snap'],
-    [0.6, { body: [0, 0, 150], root: [0, -45, 0], head: [60, 0, 0] }],
-    [1.6, { body: [0, 0, 170], root: [0, -50, 0], head: [80, 0, 0], lfA: [0, 0, -100], rfA: [0, 0, 100], lbA: [0, 0, -100], rbA: [0, 0, 100] }],
-  ]),
+  // muere: se le doblan las patas, se da la vuelta y cae de espaldas (rebota
+  // un poco), las patas se sacuden y se quedan al aire, dobladas por la
+  // rodilla, como las de una araña muerta (antes, rectas y tiesas)
+  death: clip(
+    'death',
+    1.9,
+    [
+      [0, { body: [-20, 0, 20], head: [0, 0, 60] }, 'snap'],
+      [0.28, { body: [-12, 0, 55], root: [0, -22, 0], head: [30, 0, 40], lfB: [-22, 0, 80], rfB: [-22, 0, -80], lbB: [22, 0, 80], rbB: [22, 0, -80] }],
+      [0.55, { body: [0, 0, 150], root: [0, -46, 0], head: [60, 0, 0], lfA: [0, 0, -80], rfA: [0, 0, 80], lbA: [0, 0, -80], rbA: [0, 0, 80], lfB: [-10, 0, 30], rfB: [-10, 0, -30], lbB: [10, 0, 30], rbB: [10, 0, -30] }, 'snap'],
+      [0.72, { body: [0, 0, 158], root: [0, -43, 0], head: [70, 0, -8], lfA: [0, 0, -112], rfA: [0, 0, 104], lbA: [0, 0, -96], rbA: [0, 0, 114], lfB: [-18, 0, 55], rfB: [-18, 0, -48], lbB: [18, 0, 40], rbB: [18, 0, -60] }],
+      [0.95, { body: [0, 0, 165], root: [0, -49, 0], head: [76, 0, 6], lfA: [0, 0, -94], rfA: [0, 0, 98], lbA: [0, 0, -104], rbA: [0, 0, 92], lfB: [-22, 0, 44], rfB: [-22, 0, -46], lbB: [22, 0, 48], rbB: [22, 0, -42] }],
+      [1.3, { body: [0, 0, 168], root: [0, -50, 0], head: [80, 0, 8], lfA: [0, 0, -100], rfA: [0, 0, 100], lbA: [0, 0, -100], rbA: [0, 0, 100], lfB: [-24, 0, 48], rfB: [-24, 0, -52], lbB: [24, 0, 50], rbB: [24, 0, -46] }],
+      [1.9, { body: [0, 0, 170], root: [0, -50, 0], head: [82, 0, 10], lfA: [0, 0, -101], rfA: [0, 0, 99], lbA: [0, 0, -99], rbA: [0, 0, 101], lfB: [-26, 0, 52], rfB: [-26, 0, -54], lbB: [26, 0, 54], rbB: [26, 0, -50] }],
+    ],
+    { ground: false }
+  ),
 };
 
 // ======================================================================= MASTÍN
@@ -388,11 +400,23 @@ const hdClips = {
     [0.8, { body: [-2, 0, 12], neck: [-6, 12, 0], head: [0, 0, 0], jaw: [25, 0, 0], root: [0, -4, 0] }],
     [1.1, {}],
   ]),
-  death: clip('death', 1.4, [
-    [0, { body: [0, 0, 30], jaw: [60, 0, 0] }, 'snap'],
-    [0.6, { body: [0, 0, 88], root: [0, -45, 0], neck: [20, 0, 0], jaw: [40, 0, 0], flA: [-30, 0, 0], blA: [30, 0, 0] }],
-    [1.4, { body: [0, 0, 90], root: [0, -48, 0], neck: [30, 0, 0], jaw: [50, 0, 0], flA: [-40, 0, 0], frA: [-20, 0, 0], blA: [40, 0, 0], brA: [20, 0, 0] }],
-  ]),
+  // muere: un respingo, se le doblan las patas, cae de lado de golpe (rebota
+  // un poco y las patas se pasan de largo) y se queda tendido con ellas
+  // flojas, a medio doblar, y el último aire (antes caía como un mueble y se
+  // quedaba con las cuatro patas rectas, tiesas)
+  death: clip(
+    'death',
+    1.8,
+    [
+      [0, { body: [0, 0, 28], neck: [-25, 0, 0], jaw: [62, 0, 0], flA: [-25, 0, 0], frA: [12, 0, 0] }, 'snap'],
+      [0.24, { body: [6, 0, 44], root: [0, -14, 0], neck: [-5, 0, 0], jaw: [55, 0, 0], flA: [-8, 0, 0], flB: [-45, 0, 0], frA: [-25, 0, 0], frB: [-55, 0, 0], blA: [25, 0, 0], blB: [45, 0, 0], brA: [15, 0, 0], brB: [50, 0, 0] }],
+      [0.5, { body: [3, 0, 92], root: [0, -47, 0], neck: [28, 0, 0], head: [8, 0, 0], jaw: [46, 0, 0], tail: [10, 0, 20], flA: [-32, 0, 8], flB: [-25, 0, 0], frA: [-12, 0, -12], frB: [-35, 0, 0], blA: [32, 0, 8], blB: [28, 0, 0], brA: [12, 0, -10], brB: [38, 0, 0] }, 'snap'],
+      [0.68, { body: [1, 0, 85], root: [0, -42, 0], neck: [38, 0, 0], head: [18, 0, 6], jaw: [54, 0, 0], tail: [20, 0, 34], flA: [-46, 0, 16], flB: [-12, 0, 0], frA: [-2, 0, -22], frB: [-52, 0, 0], blA: [46, 0, 16], blB: [16, 0, 0], brA: [2, 0, -16], brB: [58, 0, 0] }],
+      [1.1, { body: [0, 0, 90], root: [0, -48, 0], neck: [32, 0, 0], head: [24, 0, 10], jaw: [40, 0, 0], tail: [22, 0, 30], flA: [-38, 0, 12], flB: [-38, 0, 0], frA: [-20, 0, -12], frB: [-58, 0, 0], blA: [38, 0, 10], blB: [42, 0, 0], brA: [20, 0, -14], brB: [62, 0, 0] }],
+      [1.8, { body: [0, 0, 91], root: [0, -49, 0], neck: [34, 0, 0], head: [27, 0, 12], jaw: [30, 0, 0], tail: [26, 0, 34], flA: [-40, 0, 14], flB: [-42, 0, 0], frA: [-22, 0, -12], frB: [-62, 0, 0], blA: [40, 0, 12], blB: [46, 0, 0], brA: [22, 0, -16], brB: [66, 0, 0] }],
+    ],
+    { ground: false }
+  ),
 };
 
 // ======================================================================= CAMPANERO
@@ -1249,6 +1273,14 @@ export const TYPES = {
       }
       const h = 1.1875 + (pose.root ? pose.root[1] : 0) - 0.06;
       for (let i = 0; i < MOURNER_SKIRT; i++) {
+        // (tendida, si cae como un cuerpo —entities/caida.js—: los paños,
+        // a lo largo de las piernas; abiertos «hacia el suelo» se abrían en
+        // abanico hacia el cielo)
+        if (e.caida) {
+          pose['sk' + i] = [-0.1, 0, 0];
+          pose['ski' + i] = [-0.06, 0, 0];
+          continue;
+        }
         const a = (i / MOURNER_SKIRT) * Math.PI * 2;
         const L = MOURNER_SKIRT_LEN(i) + 0.12;
         const floor = Math.acos(clamp((h - 0.06) / L, -1, 1));

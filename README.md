@@ -1329,6 +1329,20 @@ clavar un clavo (la muñeca no da medias vueltas); en el martillo, la boca, y en
 martillo no cruza el pecho en ningún golpe (lo más, roza el vientre al apoyar la boca en el suelo) ni la mano
 izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
 
+**Las caídas.** Quien tiene cuerpo de persona (las criaturas de a pie y el Condenado) no muere con una animación
+fija: al morir deja de sostenerse y cae como un cuerpo (entities/caida.js). Es un muñeco de trapo sencillo: la
+pelvis, el cuello, la coronilla, los hombros, codos, muñecas y manos, las caderas, rodillas, tobillos y puntas de los
+pies son puntos que caen con la gravedad, el empujón del golpe que le mata (hacia el lado contrario) y lo que llevaba
+de carrera; el tronco es un sólido; los huesos guardan su largura; cada articulación tiene sus topes (las rodillas
+y los codos sólo se doblan hacia donde se doblan y nunca quedan del todo rectos, para que cedan; el cuello no da la
+vuelta) y los brazos y las piernas no se meten en el tronco; y todo choca con el suelo, con su roce, y con las paredes
+del mundo. Los primeros instantes aún le queda algo de fuerza (los brazos y la cabeza la pierden en medio segundo; las
+piernas, enseguida: se le doblan las rodillas) y la espalda se le afloja. Así se derrumba de rodillas, se dobla y
+queda tendido, flojo, cada vez de una manera: por una escalera resbala, contra una pared se queda apoyado. De los
+puntos salen los giros de su esqueleto, así que la ropa, las armas y el escudo le siguen; el golpe del cuerpo contra
+el suelo suena cuando de verdad da en él. Los jefes, con sus finales, y los que no tienen cuerpo de persona siguen
+con sus clips (el mastín y el rastrero, rehechos: ceden, rebotan y se quedan con las patas flojas).
+
 **Criaturas.**
 - **Penitente**: flagelante encapuchado, con clavos en la espalda y una hoz oxidada.
 - **Soldado cosido**: yelmo reventado por la carne y un tercer brazo que brota de la espalda; bloquea con el escudo.
@@ -1734,7 +1748,8 @@ src/
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el escultor
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; caida.js, la caída de
+                        quien muere (un muñeco de trapo); colossus/: el escultor
                         de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario (turiferario.js; sus
                         manos y su cara, esculpidas aparte y más finas, en turiferario_hero.js; el vestido de
                         catedral, en turiferario_dress.js), Deo Ignoto (deo.js, deo_skeleton.js) y el Web Worker que
