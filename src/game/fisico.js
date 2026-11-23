@@ -150,6 +150,39 @@ export class Fisico {
     this.pelea.reset();
     if (this.e && !(this.g.flags && this.g.flags['boss:fisico'])) this.hide();
   }
+  // Te has ido del barrio por el otro camino. Si no le has tocado nunca (ni
+  // en la calle ni en su sala), se le ha escapado un paciente: se va del
+  // barrio detrás de ti, adonde va el agua (game/fisico_rama.js), y deja una
+  // nota en su mesa de operar. Si le heriste, se queda en su casa,
+  // esperándote, como siempre.
+  escapa() {
+    const g = this.g;
+    const F = g.flags;
+    const e = this.e;
+    const limpio = !F['fisico:pelea'] && (F['fisico:vida'] == null || F['fisico:vida'] >= e.maxHp);
+    if (limpio) {
+      F['fisico:escapado'] = true;
+      // (y si aún no conoces al de la cloaca, la noche que le conozcas estará
+      // allí, detrás de él: game/fisico_rama.js; si ya le conocías, se va del
+      // barrio y nada más: «nos veremos donde va el agua»)
+      if (!F['desf:met']) {
+        F['rama:cisterna'] = true;
+        const D = g.desfigurado;
+        if (D && D.npc) D.npcReset(D.npc);
+      }
+      this.fuera(9999);
+      g.audio && g.audio.play('campanilla', { x: 42, y: 2, z: 10 });
+      g.ui.toast(MSG.fisicoEscapado, 5);
+      this.notaIda();
+    } else F['fisico:huido'] = true;
+    g.saveGame();
+  }
+  notaIda() {
+    const n = this.g.interact.list.find((i) => i.id === 'n_fisico_ida');
+    if (!n) return;
+    n.hidden = !this.g.flags['fisico:escapado'];
+    if (n.obj) n.obj.visible = !n.hidden;
+  }
   onRespawn() {
     // (al morir: se va; las tablas que clavó, clavadas siguen; si has caído
     // con él encima, lo apunta)
@@ -160,6 +193,8 @@ export class Fisico {
   applyFlags() {
     const g = this.g;
     for (const c of CASAS) if (g.flags['tapia:' + c.puerta]) this.tapiar(c, true);
+    // (la nota de su mesa de operar: sólo si se le escapó el paciente)
+    this.notaIda();
     // (vencido: sentado en su mesa, muerto)
     if (g.flags['boss:fisico']) this.pelea.sentado();
   }
@@ -223,6 +258,10 @@ export class Fisico {
     const g = this.g;
     if (!e) return;
     e.scripted = true;
+    // (y fuera de escena se queda: el que vuelve a ponerlo todo en su sitio al
+    // caer el jugador, Enemy.reset, le dejaba de pie en su quirófano, aunque
+    // se hubiera ido del barrio)
+    e.spec.held = true;
     e.aware = false;
     e.state = 'dormant';
     e.obj.visible = false;
@@ -390,6 +429,11 @@ export class Fisico {
   onWake(e) {
     const g = this.g;
     if (this.modo === 'pelea') return false;
+    // (en la cisterna le lleva su guion: game/fisico_rama.js)
+    if (this.modo === 'rama') {
+      e.aware = true;
+      return true;
+    }
     // antes de la caza, no: se queda mirándote (y encerrado en su sala, te
     // espera: no sale a por ti)
     if (!g.flags['fisico:caza'] || this.modo === 'sombra' || this.modo === 'vigia' || this.modo === 'marcha' || this.modo === 'espera') {
@@ -409,6 +453,7 @@ export class Fisico {
   think(e, pl, d, dt) {
     const g = this.g;
     if (this.modo === 'pelea') return this.pelea.think(e, pl, d, dt);
+    if (this.modo === 'rama') return 'handled';
     if (e.sees) {
       this.last = [pl.pos.x, pl.pos.y, pl.pos.z];
       this.lostT = 0;
@@ -457,7 +502,7 @@ export class Fisico {
     return d !== dmg ? { dmg: d, poise } : null;
   }
   onHit(e, r) {
-    if (this.modo === 'pelea' || this.modo === 'cine') return;
+    if (this.modo === 'pelea' || this.modo === 'cine' || this.modo === 'rama') return;
     // (lo que le has hecho, apuntado: el golpe de gracia no pasa por preHit,
     // y tampoco le deja en la calle por debajo de un cuarto)
     const suelo = Math.ceil(e.maxHp * SUELO);
@@ -702,7 +747,20 @@ export class Fisico {
     // (su barra, también en la calle mientras te caza: lo que le haces se
     // queda, y se ve)
     if (e.D) e.D.barra = this.shown && (this.modo === 'caza' || this.modo === 'marcha') && !!F['fisico:caza'];
+    // (se le ha escapado un paciente sin que le tocara: se ha ido del barrio
+    // a buscarle donde va el agua; lo de la cisterna lo lleva
+    // game/fisico_rama.js)
+    if (F['fisico:escapado']) {
+      if (this.modo !== 'rama' && this.modo !== 'fuera') this.fuera(9999);
+      return;
+    }
     if (p.dead || this.modo === 'cine' || this.modo === 'pelea') return;
+    // (te vas sin la llave, por el otro camino: el ventano de la tintorería y
+    // la trampilla del almacén, y por dentro de la cordelería a los Pelames)
+    if (F['fisico:caza'] && F['hatch:almacen'] && !F['fisico:huido'] && p.pos.z < 2.6 && p.pos.x > 36 && p.pos.x < 47 && p.pos.y < 2) {
+      this.escapa();
+      return;
+    }
     const inB = this.enBarrio(p.pos);
     // (la pelea: en su quirófano; no recién soltado de su mesa: hasta que
     // no sale de la casa, huye)

@@ -69,6 +69,7 @@ import { CLOACA } from '../world/cloaca.js';
 import { Cornisas } from './cornisas.js';
 import { Fisico } from './fisico.js';
 import { FisicoCine } from './fisico_cine.js';
+import { RamaCisterna } from './fisico_rama.js';
 import { Trampas } from './trampas.js';
 import { CryptQuest } from './crypt.js';
 import { Ossuaries } from './ossuaries.js';
@@ -328,6 +329,8 @@ export class Game {
     // el Físico de los Inocentes: la cabeza del barrio de los Pellejeros
     this.fisico = new Fisico(this);
     this.fisicoCine = new FisicoCine(this);
+    // si se le escapó el paciente: la cisterna, el Desfigurado y su bruma
+    this.fisicoRama = new RamaCisterna(this);
     // sus cepos y sus cuerdas con campanillas
     this.trampas = new Trampas(this);
     // la segunda forma del Empalado y la huida por la muralla norte
@@ -574,6 +577,7 @@ export class Game {
     this.cloacas.applyFlags();
     this.lobo.applyFlags();
     this.fisico.applyFlags();
+    this.fisicoRama.applyFlags();
   }
 
   // El Empalado ya es la Bestia: no vuelve a estar arrodillado en el Postigo
@@ -661,6 +665,7 @@ export class Game {
     this.lobo && this.lobo.onRespawn();
     this.cornisas.reset();
     this.fisico.reset();
+    this.fisicoRama.onRespawn();
     this.trampas.reset();
     this.failing = false;
     this.introCam = false;
@@ -1397,6 +1402,7 @@ export class Game {
     this.lobo && this.lobo.onRespawn();
     this.cornisas.onRespawn();
     this.fisico.onRespawn();
+    this.fisicoRama.onRespawn();
     this.trampas.reset();
     const b = this.activeBoss;
     this.activeBoss = null;
@@ -1768,10 +1774,13 @@ export class Game {
   }
 
   // Lo que se cuenta del Desfigurado al final (game/desfigurado.js): con su
-  // remedio, el sol; sin él, la raya de candiles apagada y lo oscuro.
+  // remedio, el sol; sin él, la raya de candiles apagada y lo oscuro; muerto
+  // en la cisterna, la alberca.
   finalDesfigurado() {
     const F = this.flags;
     if (!F['desf:met']) return '';
+    // (si al Físico se le escapó el paciente: game/fisico_rama.js)
+    if (F['desf:muerto']) return '<br><br>Bajo la plaza del Pan, en la alberca de la cisterna, el agua seguía meciendo a un hombre boca abajo.<br>En la isla, lo verde siguió creciendo, sin nadie que lo mirase.';
     if (F['desf:remedio']) return '<br><br>En la orilla, un hombre con media cara vendada miraba salir el sol, y el sol no le quemaba.<br>«Hermosa», dijo.';
     if (F['boss:lobishome']) return '<br><br>Bajo la plaza del Pan, nadie volvió a cambiar las mechas de la raya de candiles.<br>En lo oscuro, unos ojos más altos que los de un hombre.';
     return '<br><br>Bajo la plaza del Pan se apagó la raya de candiles.<br>En lo oscuro, dos pares de ojos.';
@@ -2174,6 +2183,7 @@ export class Game {
         this.desfigurado.update(dt);
         this.cornisas.update(dt);
         this.fisico.update(dt);
+        this.fisicoRama.update(dt);
         this.trampas.update(dt);
       }
       // partículas al ritmo del juego (antes, a 1/60 s por fotograma dibujado:

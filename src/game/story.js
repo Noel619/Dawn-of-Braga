@@ -510,6 +510,23 @@ Pronóstico: curable por el hierro. Si no, por el fuego.
 
 Nota: no odiarle. El odio también es un síntoma, y yo no estoy enfermo.`,
   },
+  // (si se le escapó el paciente sin tocarle: game/fisico.js, escapa)
+  fisicoIda: {
+    title: 'Hoja clavada en la mesa de operar',
+    text: `(Clavada en la madera con una lanceta, la tinta aún fresca.)
+
+Se me ha ido un paciente.
+
+No por la puerta, que la guardaban los míos, ni por la calle, que es mía: por el tejado del cordelero, como se van los gatos y las almas. No le toqué. No me tocó. Es la primera vez.
+
+Un caso así no se deja a medias. Lo tengo apuntado: cómo anda, cómo mira, lo que no hace. Lo que no hace dice más que lo que hace.
+
+Va adonde va todo en esta ciudad: hacia abajo, adonde va el agua. Allí abajo vive otro que se cree sano. Dice que la vida se escondió allí.
+
+Me llevo el hierro, los cascabeles y a los mejores de mi rebaño. A ésos les he enseñado más: a obedecer la campanilla. Ya no me hace falta la máscara contra el aire malo: lo llevo dentro, que es donde mejor se lleva.
+
+Nos veremos donde va el agua.`,
+  },
   zapatero: {
     title: 'Libro de cuentas de maese Afonso',
     text: `(Entre las cuentas de los zapatos, letra torcida, cada vez más grande.)
@@ -1195,6 +1212,10 @@ export const DIALOG = {
     'Lo de dentro quiere, y yo no le dejo. Unas noches gana él. Otras, yo. Esta noche, yo.',
     'El sol no. El sol me arranca la piel a tiras. La luna sí me deja mirarla. La luna no le pregunta a uno qué es.',
   ],
+  // (si al Físico se le escapó el paciente: esa noche, en el pretil sobre la
+  // cascada; lo que oye subir por el canal, y lo último que dice)
+  desfPretil: ['Esta noche no bajo a la isla. Por el canal suben cascabeles.', 'Desde aquí arriba, lo que venga, lo veo venir.'],
+  desfUltimo: ['¡Mira! Desde aquí arriba se ve todo.', 'Aquí abajo no manda la peste. Lo que queda es de los que quedan.', 'Y lo que queda, crece. Mira cómo crece.'],
   desfMeet2: [
     'Mira lo que ha crecido aquí abajo, donde cae la luz. Los helechos. La higuera, que salió de entre las piedras de la casa. Las flores, que no saben nada de campanas.',
     'Arriba lo han matado todo. Y esto ha crecido igual. Sin pedirle permiso a nadie.',
@@ -1612,6 +1633,14 @@ export const DIALOG = {
     huye: ['Huyes cuando sangras. Aquí no hay adonde.', 'Siempre huyes. Lo tengo apuntado.'],
   },
   fisicoAcierta: ['¿Ves? Lo tenía apuntado.', 'Lo que yo decía.', 'Como siempre.'],
+  // ---- la rama de la cisterna (game/fisico_rama.js): se le escapó el
+  // paciente sin tocarle, y le espera donde va el agua
+  fisicoRamaMuerto: 'Éste ya no necesitaba médico. Ninguno lo necesita, al final.',
+  fisicoRamaTu: ['Te fuiste por el tejado del cordelero sin dejarte tocar.', 'Lo tengo apuntado. Aquí abajo también hay enfermos.'],
+  fisicoRamaOrden: { cerco: 'Cercadle.', sujeta: 'Sujetadle.', carga: 'Ahora. Todos.' },
+  fisicoRamaPelea: ['Despacio. Que no se escape otra vez.', 'Respira. Así. Que se te note el miedo.', 'Mirad cómo se mueve. Lo tengo apuntado.', 'No le hagáis daño de más: es mío.'],
+  fisicoRamaFin: ['Esto no era la consulta.', 'La consulta es abajo, donde va el agua. Allí te espero.'],
+  fisicoRamaOtraVez: 'Otra vez tú. Lo tengo apuntado.',
   fisicoTrepano: ['Quieto. Un agujero pequeño, y sale todo.', 'Yo también lo tuve dentro. Mira: por aquí salió.'],
   fisicoFuego: 'Lo que no cura el hierro, lo cura el fuego.',
   // vencido: sentado en su mesa, se toma el pulso
@@ -1858,6 +1887,25 @@ export const MSG = {
   bodegaBaja: 'Bajas por la escalera de mano a la bodega del Cuervo.',
   bodegaSube: 'Subes a la despensa de la taberna.',
   bodegaArriba: 'La trampilla, cerrada por arriba.',
+  // el otro camino del barrio: el ventano de la tintorería y la trampilla del
+  // almacén del cáñamo (world/level_barrio.js: trampillaAlmacen)
+  ventanoTranca: 'El ventano de carga de la tintorería: atrancado por dentro.',
+  almacenClavada: 'En el tejado del almacén, la trampilla por la que se bajaban los fardos, clavada con dos tablones. Debajo huele a cáñamo. Con un hierro se podrían arrancar.',
+  almacenAbre: 'Arrancas los tablones con la palanca y levantas la trampilla. Abajo, entre las balas de cáñamo, una escalera de mano.',
+  almacenBaja: 'Bajas por la escalera de mano al almacén del cordelero.',
+  almacenSube: 'Subes al tejado del almacén.',
+  almacenArriba: 'La trampilla, cerrada por arriba.',
+  // (te has ido sin que te tocara: al otro lado de la cordelería, una
+  // campanilla, una sola vez)
+  fisicoEscapado: 'A tu espalda, al otro lado de la cordelería, suena una campanilla. Una sola vez.',
+  // (la rama de la cisterna: game/fisico_rama.js)
+  brumaSeVa: 'La bruma negra se retira por la galería, detrás de él. En la alberca, el Desfigurado sigue boca abajo.',
+  brumaMuro: 'Bruma negra, espesa como el humo de un candil. Por ahí no se pasa.',
+  desfCuerpo: 'El Desfigurado, boca abajo en la alberca, con los brazos abiertos. El agua le mueve la capa. Del cordón del cuello le cuelga una llave de hierro.',
+  desfCuerpoLlave: 'Le quitas la llave del cuello. La de la reja de la galería de la Sé, la que no quería darte.',
+  desfCuerpoFlor: 'Le quitas la llave del cuello. La de la reja de la galería de la Sé, la que no quería darte. En la mano mala, apretada, una flor blanca.',
+  desfCuerpoNada: 'El Desfigurado, boca abajo en la alberca, con los brazos abiertos. El agua le mueve la capa.',
+  cuadernoAprendes: 'En el cuaderno, con su letra torcida, cómo cocía lo que traía de lo hondo. Su mesa, ahora, es tuya.',
   cubasBodega: 'Las cubas del tabernero. Una tiene la duela de abajo reventada y el vino se ha comido el suelo; en la madera, arañazos de uñas pequeñas. Ratas. Y otros, más arriba, más hondos, de una mano.',
   cloacaMuerto: 'Un hombre sentado contra el muro, con la espada en el suelo. Bajó a esconderse donde nadie oyera la campana. Tiene barro en las orejas, como si se las hubiera tapado. No le sirvió de mucho: no tiene marcas, sólo se ha quedado así.',
   hermosaRayas: 'En la piedra del pilar, a la altura de los ojos, rayado con algo duro una y otra vez: HERMOSA. Más abajo, las rayas de las noches, de cinco en cinco. La última está fresca.',

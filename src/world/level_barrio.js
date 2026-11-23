@@ -298,7 +298,9 @@ function plazuela(ctx, S, L) {
       { side: 's', lv: 1, at: 9.5, w: 1.2, sill: 0.8, h: 1.6, shutters: 'ajar' },
       // (el ventano del secadero, por donde se tendía al aire)
       { side: 's', lv: 2, at: 6.0, w: 1.2, sill: 0.5, h: 0.9, shutters: 'open' },
-      { side: 'n', lv: 1, at: 6.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'closed' },
+      // (el ventano de carga, al tejado del almacén del cáñamo: por él se
+      // pasaban los fardos de paño a la cordelería; se abre desde dentro)
+      { side: 'n', lv: 1, at: 6.0, w: 1.1, h: 2.1, door: { id: 'd_tinte_ventano', lock: { type: 'barred', side: 1 }, barredMsg: 'ventanoTranca' } },
       { side: 'e', lv: 0, at: 6.0, w: 1.0, sill: 1.3, h: 1.0, bars: true },
       { side: 'e', lv: 1, at: 5.0, w: 1.0, sill: 0.9, h: 1.4, shutters: 'open' },
       // el paso al desván del zapatero
@@ -509,6 +511,65 @@ function cordeleria(ctx, S, L) {
   });
   L.interact.push({ kind: 'door', id: 'd_cordeleria_tienda', x: 41.6, y: 0, z: 12.5, w: 1.2, h: 2.3, axis: 'x', mat: 'planks', hinge: -1, plane: 12.6, inset: 0.05, lock: { type: 'barred', side: -1 }, barredMsg: 'cordeleriaTranca' });
   cordeleriaDentro(ctx, L, hCor, hCor2);
+  trampillaAlmacen(ctx, L, hCor2);
+}
+
+// ------------------------------------------------------------ el otro camino
+// La salida que el Físico no guarda: del ventano de carga de la tintorería
+// (primera planta, al norte) se sale al tejado del almacén del cáñamo, y en
+// su faldón está la trampilla por la que se bajaban los fardos, clavada con
+// dos tablones (se arrancan con la palanca); abajo, la escalera de mano, y por
+// dentro de la cordelería, a los Pelames. Quien se va por aquí sin haberle
+// tocado se le escapa (game/fisico.js: escapa) y le buscará más adelante,
+// donde va el agua (game/fisico_rama.js).
+export const TRAMPILLA_ALMACEN = { x: 41.4, z: 29.2, tilt: Math.atan2(5.4 - 3.85, 4.5) };
+function trampillaAlmacen(ctx, L, hCor2) {
+  const wb = ctx.wb;
+  const T = TRAMPILLA_ALMACEN;
+  // (el tejado del almacén: de la cumbrera, 5,4 en z 26,5, al alero, 3,85 en
+  // z 31)
+  const techo = (z) => 5.4 - ((z - 26.5) / 4.5) * (5.4 - 3.85);
+  const yT = techo(T.z);
+  L.interact.push(
+    { kind: 'hatch', id: 'h_almacen_arriba', end: 'top', flag: 'hatch:almacen', needs: 'palanca', boards: true, msgDown: 'almacenBaja', openMsg: 'almacenAbre', shutMsg: 'almacenClavada', x: T.x, y: yT, z: T.z, tilt: T.tilt, r: 1.5, to: [T.x, 0, T.z - 0.9, Math.PI] },
+    { kind: 'hatch', id: 'h_almacen_abajo', end: 'bottom', flag: 'hatch:almacen', msgUp: 'almacenSube', shutMsg: 'almacenArriba', x: T.x, y: 0, z: T.z - 0.7, r: 1.4, to: [T.x, techo(T.z - 0.9) + 0.1, T.z - 0.9, 0] }
+  );
+  // la escalera de mano, de las balas a la trampilla (dentro)
+  const [ra] = hCor2.rooms;
+  wb.setRoom(ra);
+  const x0 = T.x - 0.24,
+    x1 = T.x + 0.24;
+  const za = T.z - 0.75,
+    zb = T.z - 0.05;
+  const ya = 0,
+    yb = yT - 0.15;
+  for (const x of [x0, x1]) {
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const u0 = i / n,
+        u1 = (i + 1) / n;
+      wb.box('timber', x - 0.03, ya + (yb - ya) * u0, za + (zb - za) * u0 - 0.03, x + 0.03, ya + (yb - ya) * u1, za + (zb - za) * u1 + 0.03, { ao: false, tint: [0.6, 0.52, 0.42] });
+    }
+  }
+  for (let i = 1; i < 9; i++) {
+    const u = i / 9;
+    wb.box('timber', x0, ya + (yb - ya) * u - 0.02, za + (zb - za) * u - 0.02, x1, ya + (yb - ya) * u + 0.02, za + (zb - za) * u + 0.02, { ao: false, tint: [0.56, 0.48, 0.38] });
+  }
+  wb.setRoom(null);
+  // fuera: la garrucha sobre el ventano (el madero que sale del muro, la
+  // polea y la soga que baja al tejado del almacén) y dos fardos de paño
+  // olvidados junto a la trampilla
+  const yg = 4.25 + 2.55;
+  wb.box('timber', 39.86, yg, 29.4, 40.14, yg + 0.26, 31.2, { ao: false, tint: [0.5, 0.42, 0.34] });
+  wb.box('iron', 39.92, yg - 0.2, 29.55, 40.08, yg, 29.75, { ao: false });
+  wb.box('burlap', 39.98, techo(29.65) + 0.05, 29.62, 40.02, yg - 0.2, 29.68, { ao: false, tint: [0.62, 0.55, 0.4] });
+  for (const [x, z, c] of [
+    [40.6, 30.35, [0.22, 0.28, 0.5]],
+    [42.3, 29.9, [0.55, 0.18, 0.12]],
+  ]) {
+    const y = techo(z);
+    wb.box('linen', x - 0.4, y - 0.05, z - 0.25, x + 0.4, y + 0.38, z + 0.25, { ao: false, tint: c });
+  }
 }
 
 // ------------------------------------------------------------ los vecinos

@@ -76,6 +76,11 @@ export const CLOACA = {
   desfigurado: { x: -8.25, z: 18.3, yaw: -Math.PI / 2 },
   // la cascada: de la boca del conducto (bajo el rellano) a la alberca
   cascada: { x0: -14.45, x1: -13.45, z: 10.42, y0: -5.35, y1: -9.12 },
+  // (si al Físico se le escapó el paciente: game/fisico_rama.js) donde está
+  // él esa noche: en el pretil del rellano, sobre la cascada, de cara a la
+  // luz; y donde queda luego, boca abajo en la alberca (sus pies)
+  pretil: { x: -13.95, z: 10.08, yaw: 0.35 },
+  flota: { x: -13.62, z: 11.0, yaw: 0.35, y: -8.95 },
 };
 
 const ROOMS = { bodega: 'cloaca_bodega', tunel: 'cloaca', sala: 'cloaca_luz' };
@@ -738,6 +743,12 @@ function sala(ctx, Q, L) {
   wb.setRoom(null);
   // ---------------------------------------------------------- él
   L.enemies.push({ type: 'desfigurado', x: D.x, y: iy, z: D.z, yaw: D.yaw, idle: 'cielo', id: 'npc_desfigurado' });
+  // (si al Físico se le escapó el paciente: los de la bruma, los mejores de
+  // su rebaño, que salen de la bruma negra cuando toca la campanilla; esperan
+  // fuera de escena: game/fisico_rama.js)
+  // (y, si le mató, él: boca abajo en la alberca; se le mira desde el borde)
+  L.interact.push({ kind: 'examine', id: 'x_desf_cuerpo', text: 'desfCuerpoNada', x: -12.0, y: CLOACA.sala.y, z: 11.7, r: 1.7 });
+  for (let i = 0; i < 6; i++) L.enemies.push({ type: 'coronado_bruma', x: -6.6 + (i % 3) * 0.5, y: CLOACA.sala.y, z: 9.9 + Math.floor(i / 3) * 0.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_bruma' + (i + 1) });
   L.interact.push({ kind: 'npc', id: 't_desfigurado', npc: 'desfigurado', label: 'Hablar', x: D.x, y: iy, z: D.z, r: 2.6 });
 }
 

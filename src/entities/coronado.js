@@ -228,7 +228,7 @@ const CAMISA = [
 // (la espalda del camisón sigue la joroba)
 const camCZ = (y) => -0.03 * sstep(0.05, 0.42, y);
 
-export function buildCoronado() {
+export function buildCoronado(o = {}) {
   const joints = humanoidJoints(K, { arm: 1.08 });
   // los cascabeles cuelgan de la punta de cada varilla (se mecen: ver
   // postPose)
@@ -485,6 +485,30 @@ export function buildCoronado() {
     )
   );
   parts.push(P('handR', 'coBlood', gSph(1, [0.004, -0.235, 0.255], [0.016, 0.02, 0.011], 6, 4)));
+
+  // ---------------------------------------------------------- los de la bruma
+  // (CORONADO_BRUMA_TYPE) más curados todavía: sobre la correa, un bozal de
+  // hierro; flejes en los antebrazos; y en los cascabeles, cera negra (por
+  // los agujeros del hueso les sale la bruma: su update)
+  if (o.bruma) {
+    const arco = (y, r) => {
+      const pts = [];
+      for (let k = 0; k <= 20; k++) {
+        const a = -1.3 + (k / 20) * 2.6;
+        pts.push([Math.sin(a) * 0.067 * r, y, Math.cos(a) * 0.104 * r]);
+      }
+      return tube(pts, 0.0042, { n: 20, seg: 4 });
+    };
+    parts.push(P('head', 'iron', merge([arco(0.022, 1.02), arco(0.092, 1.0)])));
+    const barras = [];
+    for (let k = 0; k < 5; k++) {
+      const a = -1.0 + k * 0.5;
+      barras.push(gBox(0.006, 0.074, 0.006, [Math.sin(a) * 0.068, 0.057, Math.cos(a) * 0.106]));
+    }
+    parts.push(P('head', 'iron', merge(barras)));
+    for (const s of ['L', 'R']) for (const y of [-0.1, -0.2]) parts.push(P('fore' + s, 'iron', gTorus(0.042, 0.005, [0, y, 0], [90, 0, 0], 12, 3)));
+    RODS.forEach((_, i) => parts.push(P('b' + i, 'black', gSph(0.016, [0, -0.044, 0], [1, 0.6, 1], 6, 4))));
+  }
 
   // (todo hecho para una altura de 1: se escala)
   const out = parts.map((pt) => ({ ...pt, p: (pt.p || [0, 0, 0]).map((x) => x * K), sc: (pt.sc || [1, 1, 1]).map((x) => x * K) }));
@@ -791,3 +815,97 @@ function rad(p) {
 }
 void approachAngle;
 void sees;
+
+// ======================================================================= los de la bruma
+// (game/fisico_rama.js) Los mejores de su rebaño, los que se llevó a la cloaca
+// cuando se le escapó el paciente: más curados todavía, y enseñados. Pelean
+// mejor (más vida, más deprisa, el garfio y el cabezazo más fuertes) y, sobre
+// todo, obedecen a la campanilla del Físico (e.data.orden, que les pone su
+// guion): una vez, CERCO (te rodean a tres pasos, cada uno en su sitio, y
+// esperan; si te acercas a uno, te da con el garfio); dos, SUJETA (el que está
+// más cerca va a por ti con el agarrón; los demás, en el cerco); tres, CARGA
+// (todos a una, sin respiro). Sin orden, pelean a su aire.
+const BRUMA_K = { garfio: 1.25, cabezazo: 1.25 };
+// (el agarrón, cuando lo manda la campanilla: al que elige; sin orden, de
+// tarde en tarde, uno cada diez segundos entre todos; en el cerco y en la
+// carga, no)
+const agarreBruma = (e) => {
+  const O = e.data.orden;
+  if (O && O.k === 'sujeta') return O.quien === e;
+  if (O) return false;
+  const g = e.game;
+  let ult = -99;
+  for (const o of g.enemies) if (o.type === 'coronado_bruma' && (o.data.grabT ?? -99) > ult) ult = o.data.grabT;
+  return g.time - ult > 10;
+};
+const ataquesBruma = CORONADO_TYPE.attacks.map((a) => ({ ...a, dmg: Math.round((a.dmg || 0) * (BRUMA_K[a.name] || 1)), cd: (a.cd ?? 1) * 0.8, cond: a.name === 'agarre' ? agarreBruma : a.cond }));
+const GARFIO_B = ataquesBruma.find((a) => a.name === 'garfio');
+const AGARRE_B = ataquesBruma.find((a) => a.name === 'agarre');
+function thinkBruma(e, pl, d, dt) {
+  const O = e.data.orden;
+  const g = e.game;
+  if (!O || g.time > O.hasta) {
+    e.data.orden = null;
+    return null;
+  }
+  // (la orden, cuando acaba de sonar la campanilla)
+  if (O.t0 && g.time < O.t0) return null;
+  if (O.k === 'carga') {
+    if (e.cooldown > 0.25) e.cooldown = 0.25;
+    return null;
+  }
+  if (O.k === 'sujeta' && O.quien === e) {
+    if (d < 2.8 && e.cooldown <= 0 && pl.state !== 'grabbed') {
+      e.startAttack(AGARRE_B);
+      return 'handled';
+    }
+    return null;
+  }
+  // el cerco: a tres pasos y pico de ti, cada uno en su sitio, de cara
+  const a = e.data.slot ?? 0;
+  const R = 3.3;
+  const tx = pl.pos.x + Math.sin(a) * R,
+    tz = pl.pos.z + Math.cos(a) * R;
+  if (Math.hypot(tx - e.pos.x, tz - e.pos.z) > 0.4) e.chaseTo(tx, tz, e.T.run * 0.75, dt, pl.pos.y);
+  else {
+    e.vx = damp(e.vx, 0, 8, dt);
+    e.vz = damp(e.vz, 0, 8, dt);
+  }
+  e.yaw = approachAngle(e.yaw, e.angleTo(pl.pos), (e.T.turn ?? 3) * dt);
+  if (d < 1.8 && e.cooldown <= 0) e.startAttack(GARFIO_B);
+  return 'handled';
+}
+export const CORONADO_BRUMA_TYPE = {
+  ...CORONADO_TYPE,
+  name: 'Coronado de la bruma',
+  build: () => buildCoronado({ bruma: true }),
+  hp: 120,
+  poise: 40,
+  walk: 1.25,
+  run: 3.3,
+  runDist: 2.6,
+  sight: 40,
+  fov: 360,
+  hear: 40,
+  leash: 9999,
+  alertTime: 0.4,
+  blood: [0.12, 0.05, 0.06],
+  attacks: ataquesBruma,
+  // (no avisa al Físico del barrio: el suyo está aquí, con la campanilla)
+  wake: () => false,
+  think: (e, pl, d, dt) => thinkBruma(e, pl, d, dt),
+  update: (e, dt, pl) => {
+    CORONADO_TYPE.update(e, dt, pl);
+    // la bruma que les sale por los agujeros del hueso
+    if (e.dead || !e.obj.visible) return;
+    e.data.vapT = (e.data.vapT ?? Math.random() * 0.3) - dt;
+    if (e.data.vapT <= 0) {
+      e.data.vapT = 0.16 + Math.random() * 0.12;
+      const h = e.rig.joints.head;
+      const v = e._vp || (e._vp = new THREE.Vector3());
+      if (h) h.getWorldPosition(v);
+      else v.set(e.pos.x, e.pos.y + 1.85, e.pos.z);
+      e.game.fx.blood.emit(v.x, v.y + 0.12, v.z, 2, { color: [0.03, 0.025, 0.035], speed: 0.35, life: 1.1, up: 0.5, gravity: -0.6 });
+    }
+  },
+};

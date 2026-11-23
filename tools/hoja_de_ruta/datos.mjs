@@ -146,6 +146,7 @@ export const FASES = [
       ['Su historia clínica: apunta tus costumbres y las usa (barre adonde ruedas, retiene el golpe si te adelantas); la hoja de su mesa crece', 1],
       ['Sus tácticas, entrenadas: una red pequeña contra jugadores de prueba en un simulador de su sala, comprobada en el juego', 1],
       ['La cordelería y la salida detrás de la barricada; el tratado del Físico', 1],
+      ['El otro camino: el ventano de la tintorería, el tejado del almacén y su trampilla; si se va sin tocarle, se le escapa el paciente y cambia la historia', 1],
     ],
   },
   {
@@ -197,6 +198,8 @@ export const FASES = [
       ['El Sumidero: el lago y el nado', 1],
       ['El agua que corre y que se ve, y lo que baja con ella', 1],
       ['Los dos finales del Desfigurado', 1],
+      ['Si al Físico se le escapó el paciente: le mata por la espalda en el pretil (la escena del final de Scarface), la bruma negra y los Coronados de la bruma, que obedecen a su campanilla', 1],
+      ['El duelo con el Físico cambiado, abajo, donde va el agua', 0],
     ],
   },
   {
@@ -375,6 +378,12 @@ export const EXPANSIONES = [
 
 // Lo que tiene que decidir el autor para seguir.
 export const DECISIONES = [
+  {
+    que: 'El Físico cambiado',
+    pregunta: '¿Dónde y cómo es el duelo con él, después de la cisterna?',
+    mas: 'Se va diciendo que te espera abajo, donde va el agua. Falta decidir dónde, cómo pelea cambiado (la hoja de amputar, la corona, la bruma, sus órdenes), qué pasa si ya conocías al Desfigurado cuando se te escapó y si se le puede salvar.',
+    donde: 'PLAN_FISICO_RAMA.md, §8',
+  },
   {
     que: 'El Físico que aprende',
     pregunta: '¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar?',

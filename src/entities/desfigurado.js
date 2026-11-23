@@ -527,7 +527,86 @@ const ALBA = {
   lidR: [26, 0, 0],
 };
 
-const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR, alba: ALBA };
+// La rama de la cisterna (game/fisico_rama.js): en el pretil, sobre la
+// cascada, hablándole a la luz con los brazos abiertos (todo esto es de los
+// que quedan); atravesado por la espalda (el pecho echado adelante, la cabeza
+// atrás, los brazos que se abren solos, las rodillas que se le van); cayendo
+// (flojo, los brazos atrás); y boca abajo en la alberca, en cruz (el cuerpo
+// entero lo tumba su raíz: DesfiguradoQuest.rootRot).
+const PREDICA = {
+  ...CIELO,
+  chest: [-12, 0, 0],
+  head: [-16, 0, 0],
+  armL: [-30, -10, 70],
+  foreL: [-10, 0, 0],
+  handL: [0, -60, 0],
+  armR: [-30, 10, -70],
+  foreR: [-10, 0, 0],
+  handR: [0, 60, 0],
+  jaw: [8, 0, 0],
+};
+const ATRAVESADO = {
+  root: [0, -6, 0],
+  hips: [-10, 0, 0],
+  chest: [-24, 0, 0],
+  head: [-38, 0, 6],
+  legL: [-14, 0, 6],
+  shinL: [26, 0, 0],
+  footL: [-10, 0, 0],
+  legR: [-8, 0, -5],
+  shinR: [20, 0, 0],
+  footR: [-8, 0, 0],
+  armL: [20, -20, 52],
+  foreL: [-30, 0, 0],
+  handL: [10, 0, 30],
+  armR: [24, 20, -56],
+  foreR: [-34, 0, 0],
+  handR: [10, 0, -30],
+  jaw: [24, 0, 0],
+  lidR: [0, 0, 0],
+};
+const CAE = {
+  root: [0, 0, 0],
+  hips: [6, 0, 0],
+  chest: [10, 0, 0],
+  head: [20, 0, 0],
+  legL: [10, 0, 6],
+  shinL: [20, 0, 0],
+  footL: [0, 0, 0],
+  legR: [-6, 0, -6],
+  shinR: [14, 0, 0],
+  footR: [0, 0, 0],
+  armL: [40, -10, 40],
+  foreL: [-20, 0, 0],
+  handL: [0, 0, 0],
+  armR: [36, 10, -44],
+  foreR: [-24, 0, 0],
+  handR: [0, 0, 0],
+  jaw: [16, 0, 0],
+  lidR: [10, 0, 0],
+};
+const FLOTA = {
+  root: [0, 0, 0],
+  hips: [0, 0, 0],
+  chest: [2, 0, 0],
+  head: [10, 0, 0],
+  legL: [0, 0, 10],
+  shinL: [10, 0, 0],
+  footL: [30, 0, 0],
+  legR: [0, 0, -10],
+  shinR: [12, 0, 0],
+  footR: [30, 0, 0],
+  armL: [-10, 0, 84],
+  foreL: [-8, 0, 0],
+  handL: [0, -20, 0],
+  armR: [-10, 0, -84],
+  foreR: [-8, 0, 0],
+  handR: [0, 20, 0],
+  jaw: [20, 0, 0],
+  lidR: [0, 0, 0],
+};
+
+const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR, alba: ALBA, predica: PREDICA, atravesado: ATRAVESADO, cae: CAE, flota: FLOTA };
 
 // La pose: la mezcla de las posturas (e.data.W), con lo de cada momento:
 // la respiración; la cabeza que se vuelve hacia ti (e.data.look: [guiñada,
@@ -555,20 +634,22 @@ function desfIdle(e, kind, t) {
   if (tot <= 0) return rad(STAND);
   for (const j in out) for (let i = 0; i < 3; i++) out[j][i] /= tot;
   const ph = e.phase || 0;
+  // (muerto, ni respira ni se mece)
+  const vivo = D.muerto ? 0 : 1;
   // la respiración (lenta en la luz)
-  const br = S(t * 1.3 + ph);
+  const br = S(t * 1.3 + ph) * vivo;
   out.chest[0] += br * 1.6;
   out.head[0] -= br * 0.8;
   out.armL[2] += br * 0.6;
   out.armR[2] -= br * 0.6;
   // en la luz: la cabeza se mece un poco, como quien oye algo
-  const cw = ((W.cielo || 0) + (W.alba || 0) * 0.5) / tot;
+  const cw = (((W.cielo || 0) + (W.alba || 0) * 0.5) / tot) * vivo;
   out.head[2] += S(t * 0.37 + ph) * 4 * cw;
   out.head[1] += S(t * 0.23 + ph * 2) * 5 * cw;
   out.handL[1] += S(t * 0.5 + ph) * 8 * cw;
   out.handR[1] -= S(t * 0.47 + ph) * 8 * cw;
   // el párpado: parpadea (y en la luz lo cierra a ratos, despacio)
-  const blink = Math.pow(Math.max(0, S(t * 0.9 + ph * 3)), 40);
+  const blink = Math.pow(Math.max(0, S(t * 0.9 + ph * 3)), 40) * vivo;
   out.lidR[0] = out.lidR[0] * (1 - blink) + 0 * blink;
   out.lidR[0] *= 1 - cw * clamp((S(t * 0.21 + ph) - 0.3) * 2, 0, 1) * 0.9;
   // moliendo: la mano buena da vueltas al mortero
@@ -667,6 +748,8 @@ export const DESFIGURADO_TYPE = {
     else e.animate(dt);
   },
   onReset: (e) => e.game.desfigurado && e.game.desfigurado.npcReset(e),
+  // (caer, flotar: el cuerpo entero, de su raíz; game/desfigurado.js)
+  rootRot: (e) => e.game.desfigurado && e.game.desfigurado.rootRot(e),
 };
 
 void bump;

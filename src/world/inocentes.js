@@ -745,7 +745,10 @@ export function casaInocentes(ctx, L, h) {
     // desván) y la historia clínica del que no se arrodilló, en su mesa
     { kind: 'note', id: 'n_tratado1', note: 'tratado1', x: 53.85, y: y1 + 0.82, z: 52.2, model: 'paper' },
     { kind: 'note', id: 'n_tratado2', note: 'tratado2', x: 59.95, y: y2 + 0.82, z: 54.4, model: 'paper' },
-    { kind: 'note', id: 'n_historia', note: 'historia', x: 51.45, y: y1 + 0.82, z: 44.5, model: 'paper' }
+    { kind: 'note', id: 'n_historia', note: 'historia', x: 51.45, y: y1 + 0.82, z: 44.5, model: 'paper' },
+    // (si se le escapó el paciente sin que le tocara: lo que dejó en su mesa
+    // de operar antes de irse; game/fisico.js, escapa)
+    { kind: 'note', id: 'n_fisico_ida', note: 'fisicoIda', x: 61.0, y: 0.98, z: 42.15, model: 'paper', hidden: true }
   );
   void h;
 }

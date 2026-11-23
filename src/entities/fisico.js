@@ -320,6 +320,69 @@ export function buildFisico() {
     parts.push(P('handR', 'ember', gSph(1, [0.004, y, 0.62], [0.022, 0.016, 0.04], 8, 6), { grp: 'hierro' }));
   }
 
+  // ---------------------------------------------------------- lo que se ha hecho
+  // (si se le escapó el paciente: game/fisico_rama.js) Más adelante, en la
+  // cloaca, ya ha empezado a cambiarse a sí mismo: la máscara, clavada a las
+  // sienes; encima, su corona de hierro, como la de sus curados pero mayor,
+  // atornillada al hueso, con los cascabeles tapados con cera (para que no se
+  // le oiga llegar); bajo el ropón abierto, el pecho cerrado con una reja de
+  // hierro; en la izquierda, atada al antebrazo con flejes, la hoja larga de
+  // amputar; y la campanilla de las órdenes, en la derecha.
+  {
+    const ev = { grp: 'evol' };
+    const yc = 0.215;
+    parts.push(P('head', 'iron', gTorus(0.118, 0.008, [0, yc, 0.012], [90, 0, 0], 24, 4), ev));
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU + 0.2;
+      const bx = Math.sin(a) * 0.118,
+        bz = Math.cos(a) * 0.118 + 0.012;
+      const len = 0.17 + (i % 2) * 0.05;
+      const tx = bx + Math.sin(a) * len * 0.45,
+        tz = bz + Math.cos(a) * len * 0.45,
+        ty = yc + len * 0.9;
+      parts.push(P('head', 'iron', tube([[bx, yc, bz], [tx, ty, tz]], 0.0045, { n: 2, seg: 4 }), ev));
+      parts.push(P('head', 'bronze', gSph(0.017, [tx, ty + 0.012, tz], [1, 1.1, 1], 8, 6), ev));
+      // (la cera en la boca del cascabel)
+      parts.push(P('head', 'fiWax', gSph(0.012, [tx, ty - 0.002, tz], [1, 0.6, 1], 6, 4), ev));
+    }
+    // los clavos de las sienes, que sujetan la máscara al hueso
+    for (const sx of [1, -1])
+      for (const [y, z] of [
+        [0.17, 0.062],
+        [0.12, 0.08],
+        [0.07, 0.078],
+      ])
+        parts.push(P('head', 'iron', gSph(0.0075, [sx * 0.088, y, z], [1, 1, 0.7], 6, 4), ev));
+    // la reja del pecho: cuatro barrotes y tres travesaños, con sus tornillos
+    const rj = [];
+    for (const x of [-0.07, -0.024, 0.024, 0.07]) rj.push(gBox(0.009, 0.25, 0.009, [x, 0.33, 0.158]));
+    for (const y of [0.235, 0.33, 0.425]) rj.push(gBox(0.16, 0.009, 0.009, [0, y, 0.162]));
+    for (const x of [-0.07, 0.07]) for (const y of [0.235, 0.425]) rj.push(gSph(0.009, [x, y, 0.168], [1, 1, 0.6], 6, 4));
+    parts.push(P('chest', 'iron', merge(rj), ev));
+    // la hoja de amputar, en la izquierda (a lo largo de su z, como la
+    // lanceta: mucho más larga), y los flejes que la atan al antebrazo
+    parts.push(P('handL', 'silver', tube([[0.004, -0.07, 0.03], [0.004, -0.07, 0.34], [0.004, -0.066, 0.66]], (q) => [mix(0.024, 0.0025, q * q), 0.0042], { n: 10, seg: 6 }), ev));
+    parts.push(P('handL', 'iron', gBox(0.05, 0.012, 0.03, [0.004, -0.07, 0.03]), ev));
+    for (const y of [-0.12, -0.2, -0.28]) parts.push(P('foreL', 'iron', gTorus(0.046, 0.006, [0, y, 0], [90, 0, 0], 14, 4), ev));
+    parts.push(P('foreL', 'iron', gBox(0.012, 0.2, 0.01, [0, -0.2, 0.044]), ev));
+    // la campanilla de las órdenes, en la derecha
+    const bell2 = new THREE.LatheGeometry(
+      [
+        [0.003, 0],
+        [0.012, -0.006],
+        [0.016, -0.022],
+        [0.023, -0.046],
+        [0.034, -0.07],
+        [0.037, -0.078],
+        [0.031, -0.078],
+      ].map(([r, y]) => new THREE.Vector2(r, y)),
+      12
+    );
+    parts.push(P('handR', 'bronze', place(bell2, [0.004, -0.07, -0.05], [90, 0, 0]), { grp: 'campanillaR' }));
+    parts.push(P('handR', 'timber', gCyl(0.009, 0.011, 0.11, 6, [0.004, -0.07, 0.0], [90, 0, 0]), { grp: 'campanillaR' }));
+    parts.push(P('handR', 'iron', gSph(0.01, [0.004, -0.07, -0.118], [1, 1, 1], 5, 4), { grp: 'campanillaR' }));
+  }
+
   // (todo hecho para una altura de 1: se escala)
   const out = parts.map((pt) => ({ ...pt, p: (pt.p || [0, 0, 0]).map((x) => x * K), sc: (pt.sc || [1, 1, 1]).map((x) => x * K) }));
   return new Rig({ joints, parts: out });
@@ -586,6 +649,29 @@ export const FI_CLIPS = {
     [1.1, K_({ ...IZQ, armL: [-76, 0, 26], foreL: [-50, 0, 0], handL: [20, 0, 0], head: [-4, 0, -8] }), 'snap'],
     [1.35, K_({ ...IZQ, armL: [-70, 0, 26], foreL: [-60, 0, 0], handL: [-16, 0, 0], head: [-4, 0, -8] }), 'snap'],
     [2.2, K_({})],
+  ]),
+  // ---------------------------------------------------------- lo de la cisterna
+  // (game/fisico_rama.js) la hoja de amputar, por la espalda: recoge el brazo,
+  // la mete de un golpe a la altura del pecho, la deja dentro un momento y
+  // la saca empujando
+  apunala: clip('fi_apunala', 2.6, [
+    [0, K_({})],
+    [0.55, K_({ chest: [-6, -24, 0], head: [8, 14, -4], armL: [-46, 0, 22], foreL: [-118, 0, 0], handL: [0, 0, 0] }), 'hold'],
+    [0.72, K_({ chest: [18, 20, 0], head: [12, -6, -6], armL: [-84, 0, 6], foreL: [-4, 0, 0], handL: [-8, 0, 0], legL: [-22, 0, 0], shinL: [18, 0, 0], legR: [12, 0, 0], root: [0, -5, 10] }), 'strike'],
+    [1.75, K_({ chest: [20, 22, 0], head: [16, -8, -10], armL: [-82, 0, 6], foreL: [-6, 0, 0], handL: [-8, 0, 0], legL: [-22, 0, 0], shinL: [18, 0, 0], legR: [12, 0, 0], root: [0, -5, 10] }), 'settle'],
+    [2.15, K_({ chest: [10, 10, 0], head: [10, -4, -6], armL: [-60, 0, 14], foreL: [-60, 0, 0], handL: [0, 0, 0] }), 'snap'],
+    [2.6, K_({})],
+  ]),
+  // la campanilla de las órdenes, en alto, con la derecha: tres sacudidas
+  // (las que sean, las da el guion: el sonido)
+  tane: clip('fi_tane', 1.6, [
+    [0, K_({})],
+    [0.3, K_({ armR: [-120, 0, -20], foreR: [-30, 0, 0], handR: [10, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] })],
+    [0.5, K_({ armR: [-126, 0, -20], foreR: [-24, 0, 0], handR: [30, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] }), 'snap'],
+    [0.7, K_({ armR: [-120, 0, -20], foreR: [-30, 0, 0], handR: [-14, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] }), 'snap'],
+    [0.9, K_({ armR: [-126, 0, -20], foreR: [-24, 0, 0], handR: [30, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] }), 'snap'],
+    [1.1, K_({ armR: [-120, 0, -20], foreR: [-30, 0, 0], handR: [-14, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] }), 'snap'],
+    [1.6, K_({})],
   ]),
   // ---------------------------------------------------------- lo que recibe
   hurt: clip('fi_hurt', 0.6, [
@@ -971,6 +1057,11 @@ export const FISICO_TYPE = {
       const F = e.game.fisico;
       return F ? F.pelea.guion(e, dt, pl) : false;
     },
+    // la cisterna (game/fisico_rama.js): lo que haga, lo dice el guion
+    rama: (e, dt, pl) => {
+      const R = e.game.fisicoRama;
+      return R ? R.estadoFisico(e, dt, pl) : false;
+    },
     // va a un sitio (y al llegar, lo que diga el guion): data.goal
     camina: (e, dt, pl) => {
       const G = e.data.goal;
@@ -1027,6 +1118,8 @@ export const FISICO_TYPE = {
   // (fuera de la pelea no muere: se retira; game/fisico.js)
   preHit: (e, dmg, poise) => {
     const F = e.game.fisico;
+    // (en la cisterna, en lo alto del pretil, no se le toca)
+    if (F && F.modo === 'rama') return { dmg: 0, poise: 0 };
     if (e.state === 'sedando' || e.state === 'trepanando') return { dmg: dmg * 0.5, poise: 0 };
     return F ? F.preHit(e, dmg, poise) : null;
   },
@@ -1052,7 +1145,7 @@ export const FISICO_TYPE = {
   onReset: (e) => {
     e.data = {};
     for (const g of ['mascara', 'sombrero', 'vara']) fiGrp(e, g, true);
-    for (const g of ['esponja', 'campanilla', 'hierro', 'sierra', 'lanceta', 'trepano']) fiGrp(e, g, false);
+    for (const g of ['esponja', 'campanilla', 'hierro', 'sierra', 'lanceta', 'trepano', 'evol', 'campanillaR']) fiGrp(e, g, false);
     if (e.game.speech && e.P.who) e.game.speech.hush(e.P.who);
   },
   update: (e, dt, pl) => {

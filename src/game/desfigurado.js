@@ -41,6 +41,11 @@ const V3 = THREE.Vector3;
 const LLEGADA = { dur: 8.0, A: [-15.4, -3.4, 8.9], M: [-11.0, -3.3, 10.9], B: [-8.05, -6.85, 13.4], LA: [-8.4, -5.4, 18.2], LB: [-8.25, -6.65, 18.3] };
 // (el punto de control de la curva: para que pase por M en s = 0,5)
 const LL_C = LLEGADA.M.map((m, i) => 2 * m - 0.5 * (LLEGADA.A[i] + LLEGADA.B[i]));
+// (si al Físico se le escapó el paciente, esa noche está arriba, en el
+// pretil, sobre la cascada: la toma pasa a su lado y baja a la sala, y desde
+// abajo se le ve en lo alto, en la luz; game/fisico_rama.js)
+const LLEGADA_PRETIL = { dur: 7.5, A: [-14.6, -3.2, 7.2], M: [-12.4, -4.9, 12.2], B: [-10.9, -7.9, 15.6], LA: [-13.95, -3.9, 10.6], LB: [-13.95, -3.75, 10.1] };
+const LLP_C = LLEGADA_PRETIL.M.map((m, i) => 2 * m - 0.5 * (LLEGADA_PRETIL.A[i] + LLEGADA_PRETIL.B[i]));
 
 // en el final, si se tomó su remedio: en la orilla, junto al embarcadero, de
 // cara al sol (el plano desde el agua lo ve: game.js, ending)
@@ -68,6 +73,9 @@ export class DesfiguradoQuest {
 
   reset() {
     this.script = null;
+    // (la rama de la cisterna: lo que le pasa, lo lleva game/fisico_rama.js:
+    // { k: 'predica' | 'cielo' | 'atravesado' | 'cae' | 'flota', pitch, roll })
+    this.muerte = null;
     this.mode = 'cielo';
     this.mt = 0;
     this.awayT = 0;
@@ -122,12 +130,14 @@ export class DesfiguradoQuest {
       }
       return;
     }
-    const L = LLEGADA;
+    const pretil = this.sitio === 'pretil';
+    const L = pretil ? LLEGADA_PRETIL : LLEGADA;
+    const C = pretil ? LLP_C : LL_C;
     const t = (this.rev.t += dt);
     g.post.U.uBars.value = 0.11 * Math.min(seg(t, 0, 0.7), 1 - seg(t, L.dur - 0.7, L.dur));
     const s = seg(t, 0.2, L.dur - 0.3);
     const r = this.rev;
-    const q = (i) => (1 - s) * (1 - s) * L.A[i] + 2 * s * (1 - s) * LL_C[i] + s * s * L.B[i];
+    const q = (i) => (1 - s) * (1 - s) * L.A[i] + 2 * s * (1 - s) * C[i] + s * s * L.B[i];
     r.pos.set(q(0), q(1), q(2));
     r.look.set(L.LA[0] + (L.LB[0] - L.LA[0]) * s, L.LA[1] + (L.LB[1] - L.LA[1]) * s, L.LA[2] + (L.LB[2] - L.LA[2]) * s);
     g.camRig.override = { pos: r.pos, look: r.look, fov: 50 - 16 * s, snap: true };
@@ -153,7 +163,12 @@ export class DesfiguradoQuest {
   // el cayado, apoyado en el pilar (no en la mano).
   npcReset(e) {
     this.reset();
-    this.lugar(e, this.F['desf:met'] ? 'botica' : 'luz');
+    // (muerto en la cisterna: boca abajo en la alberca; si al Físico se le
+    // escapó el paciente, esa noche espera en el pretil: game/fisico_rama.js)
+    const F = this.F;
+    if (F['desf:muerto']) this.lugar(e, 'flota');
+    else if (F['rama:cisterna'] && !F['boss:fisico']) this.lugar(e, 'pretil');
+    else this.lugar(e, F['desf:met'] ? 'botica' : 'luz');
     e.state = 'dormant';
     for (const m of e.rig.meshes) if (m.userData.grp === 'cayado' || m.userData.grp === 'trapo') m.visible = false;
     this._trapo = false;
@@ -170,6 +185,15 @@ export class DesfiguradoQuest {
       this.mode = 'faena';
       this.W = { cielo: 0, vuelto: 0, moler: 1, leer: 0, untar: 0 };
       e.data = { W: { moler: 1 } };
+    } else if (sitio === 'pretil' || sitio === 'flota') {
+      const D = sitio === 'pretil' ? CLOACA.pretil : CLOACA.flota;
+      e.body.pos.set(D.x, sitio === 'pretil' ? CLOACA.tunel.y : CLOACA.flota.y, D.z);
+      e.yaw = D.yaw;
+      e.idle = 'cielo';
+      this.mode = 'cielo';
+      this.W = { cielo: 1, vuelto: 0, moler: 0, leer: 0, untar: 0 };
+      e.data = { W: { cielo: 1 } };
+      if (sitio === 'flota') this.muerte = { k: 'flota', pitch: 1.62, roll: 0.05, W: { flota: 1 }, muerto: true };
     } else if (sitio === 'alba') {
       // (el final: en la orilla del Este, de cara al sol que sale, que ya no le
       // quema; game.js: ending)
@@ -198,6 +222,7 @@ export class DesfiguradoQuest {
     e.stT += dt;
     e.state = 'dormant';
     e.idle = 'cielo';
+    if (this.muerte) return this.npcMuerte(e, dt);
     const dx = player.pos.x - e.pos.x,
       dz = player.pos.z - e.pos.z;
     const d = Math.hypot(dx, dz);
@@ -305,10 +330,42 @@ export class DesfiguradoQuest {
     e.animate(dt);
   }
 
+  // La rama de la cisterna (game/fisico_rama.js): lo que le pasa lo pone el
+  // guion (this.muerte: la postura a la que va, W, y lo que se inclina el
+  // cuerpo entero, pitch y roll); aquí, sólo se mezclan las posturas.
+  npcMuerte(e, dt) {
+    const M = this.muerte;
+    const W = (M.Wn = M.Wn || { ...(M.W || { [M.k]: 1 }) });
+    const want = M.W || { [M.k]: 1 };
+    const kk = new Set([...Object.keys(W), ...Object.keys(want)]);
+    for (const k of kk) W[k] = damp(W[k] ?? 0, want[k] ?? 0, M.rapido ?? 6, dt);
+    e.data = { W: { ...W }, look: [0, 0], talk: M.talk ?? 0, tic: 0, ticSide: 1, cara: 0, risa: 0, muerto: !!M.muerto };
+    e.vx = e.vz = 0;
+    // (boca abajo en el agua: lo mece, apenas, lo que trae la cascada)
+    if (M.k === 'flota') {
+      e.body.pos.y = CLOACA.flota.y + Math.sin(this.mt * 1.1) * 0.014;
+      M.roll = 0.05 + Math.sin(this.mt * 0.7) * 0.03;
+    }
+    e.animate(dt);
+  }
+  // (el cuerpo entero, de su raíz: cayendo, boca abajo en el agua)
+  rootRot(e) {
+    const M = this.muerte;
+    const o = e.obj;
+    if (M && (M.pitch || M.roll)) {
+      o.rotation.order = 'YXZ';
+      o.rotation.x = M.pitch || 0;
+      o.rotation.z = M.roll || 0;
+    } else if (o.rotation.x || o.rotation.z) {
+      o.rotation.x = 0;
+      o.rotation.z = 0;
+    }
+  }
+
   // ------------------------------------------------------------ hablar
   canTalk() {
     const e = this.npc;
-    return !!e && e.obj.visible && !e.scripted;
+    return !!e && e.obj.visible && !e.scripted && !this.muerte && !this.F['desf:muerto'];
   }
   // Un guion de pasos: { say: [...] }, { fn }, { risa }.
   run(steps, o = {}) {
@@ -361,6 +418,8 @@ export class DesfiguradoQuest {
         },
         // (y, cerrado lo de la flor, adónde seguir el agua)
         { say: DIALOG.desfMeet2.slice(4) },
+        // (esa noche, en el pretil: lo que oye subir por el canal)
+        ...(this.sitio === 'pretil' ? [{ say: DIALOG.desfPretil }] : []),
       ]);
     else if (!this.F['desf:vida'])
       this.run([
@@ -475,7 +534,7 @@ export class DesfiguradoQuest {
   // El final: con su remedio, sube a ver el sol (a la orilla del Este).
   alAlba() {
     const e = this.npc;
-    if (!e || !this.F['desf:remedio']) return;
+    if (!e || !this.F['desf:remedio'] || this.F['desf:muerto']) return;
     this.script = null;
     this.lugar(e, 'alba');
     e.state = 'dormant';

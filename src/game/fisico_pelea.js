@@ -121,6 +121,8 @@ export class PeleaFisico {
     const S = F.encerrado ? EN_SU_MESA : SALE;
     F.show(S.x, S.z, Math.atan2(p.pos.x - S.x, p.pos.z - S.z));
     e.D.engaged = true;
+    // (ya has peleado con él: no se te puede escapar; game/fisico.js, escapa)
+    g.flags['fisico:pelea'] = true;
     e.data.fase = 1;
     e.data.llamo = false;
     e.data.aliento = ALIENTO.max;

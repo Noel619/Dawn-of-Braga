@@ -1044,6 +1044,9 @@ export class Interactables {
       it.glow = glow;
       g.scene.add(it.obj);
       it.r = s.r ?? 1.7;
+      // (la que sólo aparece cuando pasa algo: la del Físico que se fue)
+      it.hidden = !!s.hidden;
+      it.obj.visible = !it.hidden;
     } else if (s.kind === 'altar') {
       it.r = 2.2;
       // (el del cruceiro, sólo tras reventar el Turiferario)
@@ -1103,6 +1106,10 @@ export class Interactables {
       if (s.end === 'top') {
         it.obj = hatchMesh();
         it.obj.position.set(s.x, s.y + 0.03, s.z);
+        // (la de un tejado, posada en su faldón: tilt, lo que se inclina hacia
+        // +z; rot, girada en Y)
+        if (s.rot) it.obj.rotation.y = s.rot;
+        if (s.tilt) it.obj.rotation.x = s.tilt;
         g.scene.add(it.obj);
         // con la luz horneada del sitio
         const zn = g.zoneAt(s);
@@ -1984,6 +1991,9 @@ export class Interactables {
     if (it.kind === 'examine') {
       // (alt: [bandera, texto]: lo que se dice una vez pasado algo)
       const k = it.alt && g.flags[it.alt[0]] ? it.alt[1] : it.text;
+      // (lo que pasa al mirarlo, si pasa algo: el cuerpo del Desfigurado y su
+      // llave; game/fisico_rama.js)
+      if (it.onUse && it.onUse(g, it)) return true;
       g.ui.toast(MSG[k] || k);
       // (tug: se tira de ello, y no sale: el hacha de la barricada)
       if (it.tug) {

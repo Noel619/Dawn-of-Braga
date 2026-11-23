@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 75 % hacia la 1.0"></a></p>
 
-**75 % hacia la 1.0**: 83 de 110 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**75 % hacia la 1.0**: 85 de 113 tareas y 8 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -95,9 +95,9 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | III | [El jefe final](docs/hoja-de-ruta/index.html#fase-pelicula) | Hecha | 100 % (9 de 9) |
 | IV | [La cripta honda](docs/hoja-de-ruta/index.html#fase-cripta) | Hecha | 100 % (9 de 9) |
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
-| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (13 de 13) |
+| VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (14 de 14) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
-| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (8 de 8) |
+| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | En curso | 90 % (9 de 10) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
@@ -147,6 +147,19 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
+**VIII · Lo hondo** — La cloaca, el Vergel, las cloacas hondas y el Lobishome. *En curso, 90 %* · `planes_jubilados/PLAN_LOBO.md`
+
+- [x] La cloaca bajo la plaza del Pan y el Desfigurado
+- [x] El Vergel: la gruta de los romanos, llena de vida, y la botica del Desfigurado
+- [x] Las cloacas hondas: la lobera, las viejas, los aljibes y lo hondo
+- [x] El Lobishome: la caza a oscuras, los braseros, la presa y el entierro
+- [x] Los cocimientos y la mesa del Desfigurado
+- [x] El Sumidero: el lago y el nado
+- [x] El agua que corre y que se ve, y lo que baja con ella
+- [x] Los dos finales del Desfigurado
+- [x] Si al Físico se le escapó el paciente: le mata por la espalda en el pretil (la escena del final de Scarface), la bruma negra y los Coronados de la bruma, que obedecen a su campanilla
+- [ ] El duelo con el Físico cambiado, abajo, donde va el agua
+
 **XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
@@ -172,6 +185,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
+- **El Físico cambiado** — ¿Dónde y cómo es el duelo con él, después de la cisterna? Se va diciendo que te espera abajo, donde va el agua. Falta decidir dónde, cómo pelea cambiado (la hoja de amputar, la corona, la bruma, sus órdenes), qué pasa si ya conocías al Desfigurado cuando se te escapó y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §8*
 - **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
 - **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*
@@ -437,6 +451,27 @@ detrás de la barricada: desde allí, la barricada se viene abajo con la palanca
 caer más de tres metros hiere, y más de cinco y medio, mata. Las notas cuentan lo que pasó: el tratado del Físico,
 *De peste sanorum*, en dos partes, tu historia clínica, el libro de cuentas del zapatero, el aviso del tintorero, lo
 que dejó escrito el cordelero.
+
+**El paciente que se le escapó.** Del barrio se sale también **por el otro camino**, sin la llave del Físico: en la
+primera planta de la tintorería, el ventano de carga (se le quita la tranca) da al tejado del almacén del cáñamo; en
+su faldón, la trampilla clavada de la garrucha (con la palanca) baja al almacén, y por dentro de la cordelería se
+llega a su puerta de los Pelames. **Si te vas así sin haberle tocado nunca**, se le ha escapado un paciente: suena
+una campanilla, una vez; se va del barrio para siempre y en su mesa de operar deja una nota clavada con una lanceta
+(«Nos veremos donde va el agua»). Si aún no conoces al Desfigurado, esa noche, en la cisterna de la cloaca, él no
+está en la isla sino **en el pretil del rellano**, sobre la cascada (oye subir cascabeles por el canal). Al bajar a
+la sala, **la escena** (una cita del final de *Scarface*): él, en lo alto, con los brazos abiertos, hablándole a la
+luz y a ti; detrás, de lo oscuro de la galería, sin hacer ruido, sale el Físico, **cambiado** (un aro de hierro
+clavado al cráneo con ocho varillas y sus campanillas tapadas con cera, clavos en las sienes, una jaula cosida al
+pecho y, en lugar de la mano izquierda, una hoja de amputar); «Hermosa...», y la hoja le sale por el pecho; cae, a
+cámara lenta, por la cascada, y se queda boca abajo, en cruz, en la alberca, que se tiñe. Arriba, el Físico te
+habla y detrás de él **se extiende la bruma negra**: sale de la galería, cubre el rellano, cae por el pretil como
+una segunda cascada y se tiende por el suelo de la sala, y cierra sus dos salidas. Toca la campanilla, y de la bruma
+salen **los Coronados de la bruma**, los mejores de su rebaño, más curados y enseñados, que **obedecen a la
+campanilla**: una vez, te cercan; dos, uno te sujeta; tres, todos a una (y si uno te sujeta, los demás se echan
+encima). Dos tandas de tres, con él en lo alto, donde no se le alcanza; al vencerles se va por la galería con su
+bruma: te espera abajo, donde va el agua. Del Desfigurado queda el cuerpo (en el cordón del cuello, la llave de la
+reja) y su botica (su cuaderno te deja su mesa); el final lo cuenta de otra manera. (`game/fisico_rama.js`,
+`game/bruma_negra.js`, `entities/coronado.js`; `PLAN_FISICO_RAMA.md`.)
 
 **La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
@@ -1374,6 +1409,10 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   distancia de la vara, rodearte, esperar a que te descubras, cada golpe, el amago) lo elige una red pequeña entrenada
   contra jugadores de prueba de diez maneras en un simulador de su sala, con los reflejos de una persona (ve con un
   cuarto de segundo de retraso y nunca lee el mando). Cómo se hizo y cómo se vuelve a entrenar: `PLAN_FISICO_ML.md`.
+  **Si se le escapa el paciente** (sales del barrio por el otro camino sin haberle tocado nunca), cambia la historia:
+  se va del barrio y aparece en la cisterna de la cloaca, cambiado (la corona clavada al cráneo, la hoja de amputar
+  en lugar de la mano izquierda), mata al Desfigurado por la espalda y te echa encima a los Coronados de la bruma,
+  que obedecen a su campanilla (ver «El paciente que se le escapó», arriba; `PLAN_FISICO_RAMA.md`).
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -1755,7 +1794,10 @@ src/
                         de segundo de retraso, lo que puede hacer y la red que lo elige; fisico_red.json, sus
                         pesos, entrenados con tools/entrena_fisico.mjs); fisico_historia.js: su historia
                         clínica de ti (lo que apunta, lo que hace con ello y lo que escribe en la hoja de su
-                        mesa); trampas.js: sus cepos y sus campanillas;
+                        mesa); fisico_rama.js: si se le escapa el paciente, la cisterna (la escena del
+                        Desfigurado en el pretil, la pelea con los Coronados de la bruma y sus órdenes, lo que
+                        queda); bruma_negra.js: su bruma (las capas, el sombreador, los muros de la pelea);
+                        trampas.js: sus cepos y sus campanillas;
                         cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
                         Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
                         mesa (lo que traes, el puchero al fuego dibujado a mano, las recetas, arrastrar y soltar);
@@ -1852,6 +1894,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         fisicobanco.mjs los mismos jugadores de prueba, con teclas, contra el Físico de
                                        verdad: varias peleas seguidas; red, manual o antes (la de antes); con
                                        HOJA=1, lo que ha apuntado de cada uno
+                        fisicorama.mjs si se le escapa el paciente: la huida por el otro camino (sin tocarle
+                                       y herido), la escena de la cisterna paso a paso (con fotos), la pelea
+                                       con los de la bruma y sus órdenes, caer y volver, el cuerpo y el cuaderno
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»
