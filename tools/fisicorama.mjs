@@ -253,7 +253,15 @@ const escena = async () => {
         __sim(0.1, [], ['KeyE']);
       } else g.update(1 / 30);
     }
-    return { ok: r.ok, met: !!g.flags['desf:met'], flor: g.inventory.has('flor_blanca'), script: !!D.script, modal, pstate: g.player.state };
+    // (te vas un rato: vuelve a mirar a la sala, no a la pared)
+    const pl = g.player,
+      p0 = [pl.pos.x, pl.pos.y, pl.pos.z];
+    pl.spawn(-15.2, -5.2, 1.0, 0);
+    for (let t = 0; t < 10; t += 1 / 30) g.update(1 / 30);
+    const yaw = +D.npc.yaw.toFixed(2);
+    pl.spawn(p0[0], p0[1], p0[2], Math.PI / 2);
+    __sim(0.3);
+    return { ok: r.ok, met: !!g.flags['desf:met'], flor: g.inventory.has('flor_blanca'), script: !!D.script, modal, pstate: g.player.state, yawSolo: yaw };
   }));
   await bajar();
   // la escena, a trozos (y sus fotos)
@@ -393,7 +401,12 @@ const cuerpo = async () => {
     const D = g.desfigurado;
     const a = __use('x_desf_cuerpo', 1.2);
     const b = __use('x_desf_cuerpo', 1.2);
-    return { a: a.toast, b: b.toast, llave: g.inventory.has('llave_reja'), flag: !!g.flags['desf:llave'], desf: P3(D.npc.pos), pose: D.muerte && D.muerte.k, hablar: D.canTalk() };
+    // (el final lo cuenta aunque no le hablaras)
+    const met = g.flags['desf:met'];
+    delete g.flags['desf:met'];
+    const fin = g.finalDesfigurado().replace(/<br>/g, ' ').trim();
+    g.flags['desf:met'] = met;
+    return { a: a.toast, b: b.toast, llave: g.inventory.has('llave_reja'), flag: !!g.flags['desf:llave'], desf: P3(D.npc.pos), pose: D.muerte && D.muerte.k, hablar: D.canTalk(), fin };
   }));
   out('el cuaderno', await ev(() => {
     const g = __game;

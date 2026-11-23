@@ -231,7 +231,9 @@ export class DesfiguradoQuest {
     // (ya te ha contado lo suyo: cuando te has ido de la cloaca, se baja a su
     // botica; no se le ve ir)
     if (this.sitio === 'luz' && this.F['desf:met'] && !this.script && !talking && !g.inCloaca(player.pos)) this.lugar(e, 'botica');
-    const D = this.sitio === 'botica' ? VERGEL.desfigurado : this.sitio === 'alba' ? ALBA : CLOACA.desfigurado;
+    // (en el pretil, de cara a la sala: no a la de la isla, que le dejaba mirando
+    // a la pared)
+    const D = this.sitio === 'botica' ? VERGEL.desfigurado : this.sitio === 'alba' ? ALBA : this.sitio === 'pretil' ? CLOACA.pretil : CLOACA.desfigurado;
     if (this.mode === 'faena') {
       // en la botica: ante su mesa, a lo suyo; cada rato, otra cosa (moler,
       // leer el cuaderno, ponerse el emplasto, mirar arriba)

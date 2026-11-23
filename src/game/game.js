@@ -1778,9 +1778,10 @@ export class Game {
   // en la cisterna, la alberca.
   finalDesfigurado() {
     const F = this.flags;
-    if (!F['desf:met']) return '';
-    // (si al Físico se le escapó el paciente: game/fisico_rama.js)
+    // (si al Físico se le escapó el paciente, aunque no le hablaras:
+    // game/fisico_rama.js)
     if (F['desf:muerto']) return '<br><br>Bajo la plaza del Pan, en la alberca de la cisterna, el agua seguía meciendo a un hombre boca abajo.<br>En la isla, lo verde siguió creciendo, sin nadie que lo mirase.';
+    if (!F['desf:met']) return '';
     if (F['desf:remedio']) return '<br><br>En la orilla, un hombre con media cara vendada miraba salir el sol, y el sol no le quemaba.<br>«Hermosa», dijo.';
     if (F['boss:lobishome']) return '<br><br>Bajo la plaza del Pan, nadie volvió a cambiar las mechas de la raya de candiles.<br>En lo oscuro, unos ojos más altos que los de un hombre.';
     return '<br><br>Bajo la plaza del Pan se apagó la raya de candiles.<br>En lo oscuro, dos pares de ojos.';
