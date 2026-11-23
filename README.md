@@ -468,10 +468,17 @@ habla y detrás de él **se extiende la bruma negra**: sale de la galería, cubr
 una segunda cascada y se tiende por el suelo de la sala, y cierra sus dos salidas. Toca la campanilla, y de la bruma
 salen **los Coronados de la bruma**, los mejores de su rebaño, más curados y enseñados, que **obedecen a la
 campanilla**: una vez, te cercan; dos, uno te sujeta; tres, todos a una (y si uno te sujeta, los demás se echan
-encima). Dos tandas de tres, con él en lo alto, donde no se le alcanza; al vencerles se va por la galería con su
-bruma: te espera abajo, donde va el agua. Del Desfigurado queda el cuerpo (en el cordón del cuello, la llave de la
-reja) y su botica (su cuaderno te deja su mesa); el final lo cuenta de otra manera. (`game/fisico_rama.js`,
-`game/bruma_negra.js`, `entities/coronado.js`; `PLAN_FISICO_RAMA.md`.)
+encima). Tres de ellos con él en lo alto, mirándote pelear y apuntándolo; luego **baja él**, por su bruma, a pelear
+con los otros tres: zurdo, con la hoja, con la misma cabeza entrenada que en su sala, dando las órdenes cuando le
+convienen y, si uno de los suyos te sujeta, **rematándote como al otro**. Peleando, **duda**: su tratado dice que la
+enfermedad es querer, y aquí abajo todo lo que vive quiere algo (la higuera busca el agujero, las raíces el agua) y
+está sano, y sus curados no quieren nada y no crecen; lo dice, se para a mirar la luz, se rehace («El tratamiento no
+se interrumpe») y pelea más fuerte. Vencido, se le caen la campanilla y los suyos, anda como puede hasta la luz donde
+estaba siempre el otro, se quita la máscara, mira la luna y **cae de espaldas**; tumbado, lo entiende, vuelve la cara
+hacia ti («Tú no te arrodillaste. Tú eras el único que...») y **se ahoga en su sangre** a media frase. Allí se queda,
+con los ojos abiertos a la luna. Del Desfigurado queda el cuerpo (en el cordón del cuello, la llave de la reja) y su
+botica (su cuaderno te deja su mesa); el final lo cuenta de otra manera. (`game/fisico_rama.js`,
+`game/fisico_duelo.js`, `game/bruma_negra.js`, `entities/coronado.js`; `PLAN_FISICO_RAMA.md`.)
 
 **La Casa del Canónigo.** Una casa-torre de piedra que se reconoce desde las Curtidurías y la Calle de la Muralla:
 portada de medio punto con tímpano, escudo pintado con el capelo y sus borlas, balcón de madera, faroles encendidos
@@ -1411,8 +1418,10 @@ izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
   cuarto de segundo de retraso y nunca lee el mando). Cómo se hizo y cómo se vuelve a entrenar: `PLAN_FISICO_ML.md`.
   **Si se le escapa el paciente** (sales del barrio por el otro camino sin haberle tocado nunca), cambia la historia:
   se va del barrio y aparece en la cisterna de la cloaca, cambiado (la corona clavada al cráneo, la hoja de amputar
-  en lugar de la mano izquierda), mata al Desfigurado por la espalda y te echa encima a los Coronados de la bruma,
-  que obedecen a su campanilla (ver «El paciente que se le escapó», arriba; `PLAN_FISICO_RAMA.md`).
+  en lugar de la mano izquierda), mata al Desfigurado por la espalda, te echa encima a los Coronados de la bruma,
+  que obedecen a su campanilla, y baja a pelear con ellos; peleando duda de su teoría, y vencido muere de espaldas
+  en la luz, mirando la luna, sin llegar a decirte lo que ha entendido (ver «El paciente que se le escapó», arriba;
+  `PLAN_FISICO_RAMA.md`).
 - **El Empalado** (jefe menor) y su segunda forma, **la Bestia de Carne** (ver arriba).
 - **El Descoyuntado** (jefe opcional, en las bodegas del canónigo): el canónigo, boca arriba sobre cuatro miembros
   descoyuntados, con la sotana hecha jirones, la cabeza del revés y la mandíbula suelta. Su cuerpo es procedural:
@@ -1795,8 +1804,10 @@ src/
                         pesos, entrenados con tools/entrena_fisico.mjs); fisico_historia.js: su historia
                         clínica de ti (lo que apunta, lo que hace con ello y lo que escribe en la hoja de su
                         mesa); fisico_rama.js: si se le escapa el paciente, la cisterna (la escena del
-                        Desfigurado en el pretil, la pelea con los Coronados de la bruma y sus órdenes, lo que
-                        queda); bruma_negra.js: su bruma (las capas, el sombreador, los muros de la pelea);
+                        Desfigurado en el pretil, la pelea con los Coronados de la bruma y sus órdenes, el
+                        duelo, su muerte en la luz, lo que queda); fisico_duelo.js: su cabeza en el duelo (la
+                        misma red, con la hoja; el remate; las órdenes; sus dudas); bruma_negra.js: su bruma
+                        (las capas, el sombreador, los muros de la pelea);
                         trampas.js: sus cepos y sus campanillas;
                         cornisas.js: el equilibrio en vigas y cornisas; alquimia.js: los cocimientos del
                         Desfigurado (sus recetas y lo que va saliendo en el puchero); mesa.js: la pantalla de su
@@ -1896,7 +1907,8 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                                        HOJA=1, lo que ha apuntado de cada uno
                         fisicorama.mjs si se le escapa el paciente: la huida por el otro camino (sin tocarle
                                        y herido), la escena de la cisterna paso a paso (con fotos), la pelea
-                                       con los de la bruma y sus órdenes, caer y volver, el cuerpo y el cuaderno
+                                       con los de la bruma y sus órdenes, el duelo con él, su muerte (con
+                                       fotos), caer y volver, el cuerpo y el cuaderno
                         arranque.mjs   lo que patina cada pie apoyado al echar a andar (desde ocho momentos
                                        del paso), andando, al pararse y en siete maniobras (curva, de lado,
                                        hacia atrás, media vuelta, giro en el sitio, zigzag); también «jugador»

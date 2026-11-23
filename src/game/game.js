@@ -1780,6 +1780,7 @@ export class Game {
     const F = this.flags;
     // (si al Físico se le escapó el paciente, aunque no le hablaras:
     // game/fisico_rama.js)
+    if (F['desf:muerto'] && F['rama:fisico']) return '<br><br>Bajo la plaza del Pan, en la cisterna, el agua seguía meciendo a un hombre boca abajo.<br>En la isla, en la luz, otro miraba la luna con los ojos abiertos. Entre los dos, lo verde siguió creciendo.';
     if (F['desf:muerto']) return '<br><br>Bajo la plaza del Pan, en la alberca de la cisterna, el agua seguía meciendo a un hombre boca abajo.<br>En la isla, lo verde siguió creciendo, sin nadie que lo mirase.';
     if (!F['desf:met']) return '';
     if (F['desf:remedio']) return '<br><br>En la orilla, un hombre con media cara vendada miraba salir el sol, y el sol no le quemaba.<br>«Hermosa», dijo.';

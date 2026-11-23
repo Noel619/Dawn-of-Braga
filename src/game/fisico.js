@@ -107,7 +107,7 @@ export class Fisico {
   // Lo que ha pasado con un golpe suyo que llegaba (combat.apply: 'hit',
   // 'block', 'guardbreak', 'parry', 'dodge').
   onStrike(e, a, r) {
-    if (this.modo !== 'caza' && this.modo !== 'pelea') return;
+    if (this.modo !== 'caza' && this.modo !== 'pelea' && this.modo !== 'duelo') return;
     const R = r === 'hit' ? 'entra' : r === 'block' ? 'cubre' : r === 'guardbreak' ? 'rompe' : r === 'parry' ? 'desvia' : r === 'dodge' ? 'esquiva' : null;
     const G = this.H.golpe;
     // (te ha dado donde lo esperaba: has rodado adonde sueles, o antes de
@@ -196,7 +196,8 @@ export class Fisico {
     // (la nota de su mesa de operar: sólo si se le escapó el paciente)
     this.notaIda();
     // (vencido: sentado en su mesa, muerto)
-    if (g.flags['boss:fisico']) this.pelea.sentado();
+    // (si murió en la cisterna, allí se queda: game/fisico_rama.js)
+    if (g.flags['boss:fisico'] && !g.flags['rama:fisico']) this.pelea.sentado();
   }
 
   // ¿Está en el barrio? ¿En la calle? ¿En una casa (cuál)? ¿En los tejados?
@@ -430,7 +431,7 @@ export class Fisico {
     const g = this.g;
     if (this.modo === 'pelea') return false;
     // (en la cisterna le lleva su guion: game/fisico_rama.js)
-    if (this.modo === 'rama') {
+    if (this.modo === 'rama' || this.modo === 'duelo' || this.modo === 'muere') {
       e.aware = true;
       return true;
     }
@@ -453,7 +454,9 @@ export class Fisico {
   think(e, pl, d, dt) {
     const g = this.g;
     if (this.modo === 'pelea') return this.pelea.think(e, pl, d, dt);
-    if (this.modo === 'rama') return 'handled';
+    // (en la cisterna: en lo alto o muriéndose, su guion; abajo, su duelo)
+    if (this.modo === 'duelo') return this.g.fisicoRama.duelo.think(e, pl, d, dt);
+    if (this.modo === 'rama' || this.modo === 'muere') return 'handled';
     if (e.sees) {
       this.last = [pl.pos.x, pl.pos.y, pl.pos.z];
       this.lostT = 0;
@@ -491,6 +494,7 @@ export class Fisico {
   // en su casa. En la calle no baja de un cuarto.
   preHit(e, dmg, poise) {
     if (this.modo === 'pelea') return this.pelea.preHit(e, dmg, poise);
+    if (this.modo === 'duelo') return this.g.fisicoRama.duelo.preHit(e, dmg, poise);
     const suelo = Math.ceil(e.maxHp * SUELO);
     const d = Math.max(0, Math.min(dmg, e.hp - suelo));
     const queda = e.hp - d;
@@ -502,7 +506,7 @@ export class Fisico {
     return d !== dmg ? { dmg: d, poise } : null;
   }
   onHit(e, r) {
-    if (this.modo === 'pelea' || this.modo === 'cine' || this.modo === 'rama') return;
+    if (this.modo === 'pelea' || this.modo === 'cine' || this.modo === 'rama' || this.modo === 'duelo' || this.modo === 'muere') return;
     // (lo que le has hecho, apuntado: el golpe de gracia no pasa por preHit,
     // y tampoco le deja en la calle por debajo de un cuarto)
     const suelo = Math.ceil(e.maxHp * SUELO);
@@ -596,10 +600,11 @@ export class Fisico {
   // Cada fotograma del cuerpo (desde su update).
   updateBody(e, dt, pl) {
     // mirando hacia arriba (te sigue por los tejados)
-    e.data.lookUp = this.modo === 'sombra' && pl.pos.y - e.pos.y > 2.5;
+    // (y en la cisterna, cuando duda: a la luz que baja por el agujero)
+    e.data.lookUp = (this.modo === 'sombra' && pl.pos.y - e.pos.y > 2.5) || (this.modo === 'duelo' && this.g.fisicoRama.duelo.mira > 0);
     // la historia: sus golpes (lo que haces al verlos venir), y lo que te
     // alejas (si huyes herido)
-    if (this.modo === 'caza' || this.modo === 'pelea') {
+    if (this.modo === 'caza' || this.modo === 'pelea' || this.modo === 'duelo') {
       const H = this.H;
       const g = this.g;
       if (e.state === 'attack' && e.atk && e.atkSerial !== this.serialVisto) {
@@ -619,6 +624,7 @@ export class Fisico {
       }
     }
     if (this.modo === 'pelea' || this.modo === 'caza') this.pelea.cuerpo(e, dt, pl);
+    else if (this.modo === 'duelo') this.g.fisicoRama.duelo.cuerpo(e, dt, pl);
   }
 
   // ------------------------------------------------------------ guion
@@ -751,7 +757,7 @@ export class Fisico {
     // a buscarle donde va el agua; lo de la cisterna lo lleva
     // game/fisico_rama.js)
     if (F['fisico:escapado']) {
-      if (this.modo !== 'rama' && this.modo !== 'fuera') this.fuera(9999);
+      if (this.modo !== 'rama' && this.modo !== 'duelo' && this.modo !== 'muere' && this.modo !== 'fuera') this.fuera(9999);
       return;
     }
     if (p.dead || this.modo === 'cine' || this.modo === 'pelea') return;

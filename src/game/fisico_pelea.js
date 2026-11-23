@@ -149,7 +149,7 @@ export class PeleaFisico {
   // Lo que tiene apuntado de ti, dicho (lo más claro), si lo hay.
   diceApunta() {
     const F = this.F;
-    if (F.modo !== 'pelea' || this.e.state === 'guion') return;
+    if ((F.modo !== 'pelea' && F.modo !== 'duelo') || this.e.state === 'guion') return;
     const R = F.H.rasgos();
     const lp = F.H.ladoProbable();
     const A = DIALOG.fisicoApunta;
@@ -193,7 +193,29 @@ export class PeleaFisico {
     const dur = s === 'attack' && p.atk ? p.atk.dur || 1 : s === 'roll' ? (p.rollBack ? 0.46 : 0.64) : s === 'heal' ? 1.15 : 1;
     let nube = 0;
     for (const n of this.nubes) if (Math.hypot(p.pos.x - n.x, p.pos.z - n.z) < NUBE.r) nube = 1;
-    return { t: g.time, d, rel: angleDiff(e.yaw, Math.atan2(dx, dz)), vr: -(p.vx * ux + p.vz * uz), vl: p.vx * uz - p.vz * ux, pe, pk: clamp((s === 'attack' ? p.atkT ?? p.stT : p.stT) / dur, 0, 1), php: p.hp / p.maxHp, pst: p.st / p.maxSt, pfr: p.flasks / (p.maxFlasks || 3), paredEl: pared(p.pos.x, p.pos.z, ux, uz), nube };
+    return { t: g.time, d, rel: angleDiff(e.yaw, Math.atan2(dx, dz)), vr: -(p.vx * ux + p.vz * uz), vl: p.vx * uz - p.vz * ux, pe, pk: clamp((s === 'attack' ? p.atkT ?? p.stT : p.stT) / dur, 0, 1), php: p.hp / p.maxHp, pst: p.st / p.maxSt, pfr: p.flasks / (p.maxFlasks || 3), paredEl: this.pared(p.pos.x, p.pos.z, ux, uz), nube };
+  }
+  // (lo que hay hasta la pared del sitio donde pelea: aquí, su sala grande;
+  // en la cisterna, la sala de la luz: game/fisico_duelo.js)
+  pared(x, z, ux, uz) {
+    return pared(x, z, ux, uz);
+  }
+  // los golpes de cada opción de su cabeza, y el que amaga en cada tiempo
+  // (en la cisterna, los de la hoja)
+  golpeDe(k) {
+    return GOLPE_DE[k];
+  }
+  amagaDe(fase) {
+    return AMAGA[fase];
+  }
+  // los suyos que pelean con él (los dos que llama)
+  coronados() {
+    let n = 0;
+    for (const id of LLAMADOS) {
+      const c = this.g.enemies.find((x) => x.id === id);
+      if (c && !c.dead && !c.scripted && c.obj.visible) n++;
+    }
+    return n;
   }
   // ¿Lo tiene a mano? (las condiciones de cada golpe, sin la distancia)
   puede(e, k, d) {
@@ -206,12 +228,7 @@ export class PeleaFisico {
     const dx = p.pos.x - e.pos.x,
       dz = p.pos.z - e.pos.z;
     const d = Math.hypot(dx, dz) || 1e-3;
-    let coronados = 0;
-    for (const id of LLAMADOS) {
-      const c = g.enemies.find((x) => x.id === id);
-      if (c && !c.dead && !c.scripted && c.obj.visible) coronados++;
-    }
-    return { hp: e.hp / e.maxHp, fase: e.data.fase || 1, cd: Math.max(0, e.cooldown), aliento: e.data.aliento ?? ALIENTO.max, desde: g.time - (e.data.finT ?? -9), paredYo: pared(e.pos.x, e.pos.z, -dx / d, -dz / d), coronados, fuegos: this.fuegos, listo: [this.puede(e, 'gancho', d), this.puede(e, 'esponja', d), this.puede(e, 'sahumerio', d), this.puede(e, 'trepano', d), this.puede(e, 'cal', d)] };
+    return { hp: e.hp / e.maxHp, fase: e.data.fase || 1, cd: Math.max(0, e.cooldown), aliento: e.data.aliento ?? ALIENTO.max, desde: g.time - (e.data.finT ?? -9), paredYo: this.pared(e.pos.x, e.pos.z, -dx / d, -dz / d), coronados: this.coronados(), fuegos: this.fuegos, listo: [this.puede(e, 'gancho', d), this.puede(e, 'esponja', d), this.puede(e, 'sahumerio', d), this.puede(e, this.golpeDe('trepano'), d), this.puede(e, 'cal', d)] };
   }
   // Lo que puede hacer, sobre lo que ha visto (o: Mente.visto).
   mascara(e, o) {
@@ -222,13 +239,13 @@ export class PeleaFisico {
     const fase = e.data.fase || 1;
     for (let i = N_MOV; i < N_OUT; i++) {
       const k = OPCIONES[i];
-      const key = k === 'amago' ? AMAGA[fase] : GOLPE_DE[k];
+      const key = k === 'amago' ? this.amagaDe(fase) : this.golpeDe(k);
       if (!key || !this.puede(e, key, o.d)) continue;
       const a = FI_ATTACKS[key];
       if (o.d < a.min || o.d > a.max) continue;
       if (k === 'amago' && this.g.time - this.mente.amagoT < ENTRE_AMAGOS) continue;
-      // (sin aliento para ese golpe, no)
-      if ((e.data.aliento ?? ALIENTO.max) < (k === 'amago' ? ALIENTO.coste.amago : ALIENTO.coste[key] ?? 0)) continue;
+      // (sin aliento para ese golpe, no; lo que cuesta, por su nombre)
+      if ((e.data.aliento ?? ALIENTO.max) < (k === 'amago' ? ALIENTO.coste.amago : ALIENTO.coste[a.name] ?? 0)) continue;
       M[i] = 1;
     }
     return M;
@@ -257,7 +274,7 @@ export class PeleaFisico {
       const op = M.decide(t, this.yo(e, pl), this.F.H.rasgos(), (o) => this.mascara(e, o));
       if (op >= N_MOV) {
         const amago = op === OP.amago;
-        this.golpe(e, amago ? AMAGA[e.data.fase || 1] : GOLPE_DE[OPCIONES[op]], { amago });
+        this.golpe(e, amago ? this.amagaDe(e.data.fase || 1) : this.golpeDe(OPCIONES[op]), { amago });
         return 'handled';
       }
       if (op >= 0) this.op = op;

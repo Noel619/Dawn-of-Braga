@@ -414,6 +414,69 @@ const PULSO = { chest: [26, 0, 0], head: [30, 0, -18], armL: [-44, 0, 8], foreL:
 // sentado en el canto de la mesa (las piernas colgando), tomándose el pulso
 // (las manos juntas en el regazo: la derecha, sobre la muñeca izquierda)
 const SIENTA = { root: [0, -10, 0], legL: [-82, 0, 4], shinL: [76, 0, 0], legR: [-80, 0, -4], shinR: [80, 0, 0], chest: [20, 0, 0], head: [30, 0, -14], armL: [-14, -30, -8], foreL: [-60, 0, 0], handL: [0, 0, 0], armR: [-14, 30, 10], foreR: [-66, 0, 0], handR: [0, 0, 0] };
+// Una pose al revés (de un lado al otro: la izquierda hace lo que hacía la
+// derecha). Los giros en y y en z cambian de signo; los de x, no; la raíz,
+// en x.
+const LR = { armL: 'armR', armR: 'armL', foreL: 'foreR', foreR: 'foreL', handL: 'handR', handR: 'handL', legL: 'legR', legR: 'legL', shinL: 'shinR', shinR: 'shinL', footL: 'footR', footR: 'footL' };
+export function espejo(p) {
+  const o = {};
+  for (const k in p) {
+    const v = p[k];
+    o[LR[k] || k] = k === 'root' ? [-v[0], v[1], v[2]] : [v[0], -v[1], -v[2]];
+  }
+  return o;
+}
+// (unas claves de un clip, al revés)
+const espejoK = (keys) => keys.map(([t, p, e, o]) => [t, espejo(p), e, o]);
+// En la cisterna (game/fisico_rama.js), cambiado: pelea con la izquierda,
+// la hoja de amputar delante, y la campanilla de las órdenes en la derecha, a
+// la espalda (la guardia de un esgrimidor: la de siempre, al revés)
+const ZURDO = espejo(B);
+const CAMPANA_ATRAS = { armR: ZURDO.armR, foreR: ZURDO.foreR, handR: ZURDO.handR };
+// (un golpe de la izquierda, con la derecha a la espalda)
+const zurdoK = (keys) => keys.map(([t, p, e, o]) => [t, { ...p, ...CAMPANA_ATRAS }, e, o]);
+
+// (las claves de la sierra, la lanceta y el picotazo: también, al revés,
+// los de la hoja de amputar)
+// la sierra: tres tajos seguidos (de derecha a izquierda, de vuelta, y de
+// arriba abajo)
+const K_SIERRA = [
+  [0, K_({})],
+  [0.28, K_({ chest: [6, 30, 0], head: [6, -16, -6], armR: [-60, 0, -50], foreR: [-60, 0, 0], handR: [70, 0, 30] }), 'hold'],
+  [0.44, K_({ chest: [12, -30, 0], head: [8, 14, -6], armR: [-82, 0, 10], foreR: [-18, 0, 0], handR: [82, 0, -30], legL: [-14, 0, 0], legR: [8, 0, 0], root: [0, -3, 5] }), 'strike'],
+  [0.62, K_({ chest: [12, -34, 0], head: [8, 14, -6], armR: [-82, 0, 14], foreR: [-22, 0, 0], handR: [82, 0, -34] }), 'hold'],
+  [0.86, K_({ chest: [10, 28, 0], head: [6, -12, -6], armR: [-78, 0, -44], foreR: [-26, 0, 0], handR: [80, 0, 30], legL: [-8, 0, 0], legR: [12, 0, 0], root: [0, -3, 5] }), 'strike'],
+  [1.08, K_({ chest: [-2, 4, 0], head: [2, 0, -6], armR: [-152, 0, -12], foreR: [-50, 0, 0], handR: [40, 0, 0] }), 'hold'],
+  [1.32, K_({ chest: [26, 0, 0], head: [16, 0, -6], armR: [-70, 0, -6], foreR: [-10, 0, 0], handR: [92, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 12] }), 'strike'],
+  [1.55, K_({ chest: [24, 0, 0], head: [14, 0, -6], armR: [-68, 0, -6], foreR: [-12, 0, 0], handR: [90, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 10] }), 'settle'],
+  [1.9, K_({})],
+];
+// la lanceta: de la izquierda, de punta, rápida
+const K_LANCETA = [
+  [0, K_({})],
+  [0.3, K_({ chest: [0, -20, 0], head: [6, 10, -6], armL: [-40, 0, 20], foreL: [-110, 0, 0], handL: [0, 0, 0] }), 'hold'],
+  [0.44, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-88, 0, 6], foreL: [-6, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 14] }), 'strike'],
+  [0.64, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-86, 0, 6], foreL: [-10, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 12] }), 'settle'],
+  [1.1, K_({})],
+];
+// el picotazo: recoge la vara junto al hombro y la mete de punta, con
+// todo el cuerpo detrás
+const K_PICA = [
+  [0, K_({})],
+  [0.42, K_({ chest: [0, 22, 0], head: [6, -14, -6], armR: [-34, 0, -20], foreR: [-112, 0, 0], handR: [88, 0, 0], legR: [10, 0, 0], legL: [-4, 0, 0] }), 'hold'],
+  [0.56, K_({ chest: [16, -8, 0], head: [10, 6, -4], armR: [-86, 0, -6], foreR: [-6, 0, 0], handR: [90, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 16] }), 'strike'],
+  [0.82, K_({ chest: [16, -8, 0], head: [10, 6, -4], armR: [-84, 0, -6], foreR: [-10, 0, 0], handR: [90, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 14] }), 'settle'],
+  [1.3, K_({})],
+];
+
+// tumbado boca arriba, los brazos abiertos (el cuerpo entero lo tumba su raíz:
+// RamaCisterna.rootRot): la pose, como si estuviera de pie
+const YACE = { root: [0, 0, 0], chest: [0, 0, 0], head: [-4, 0, 0], armL: [-4, 0, 78], foreL: [-14, 0, 0], handL: [0, 0, 0], armR: [-4, 0, -74], foreR: [-22, 0, 0], handR: [0, 0, 0], legL: [0, 0, 5], shinL: [6, 0, 0], footL: [0, 0, 0], legR: [0, 0, -7], shinR: [9, 0, 0], footR: [0, 0, 0] };
+// herido de muerte: encorvado, la derecha apretada contra la herida, la hoja
+// colgando de la izquierda
+const HERIDO = { chest: [26, 0, 6], head: [22, 8, 6], armR: [-34, 0, -26], foreR: [-112, 0, 0], handR: [0, 0, 0], armL: [4, 0, 14], foreL: [-18, 0, 0], handL: [0, 0, 10] };
+// de pie en la luz, sin máscara, mirando arriba
+const MIRA = { chest: [-6, 0, 0], head: [-36, 0, 0], armR: [-20, 0, -30], foreR: [-30, 0, 0], handR: [0, 0, 0], armL: [0, 0, 20], foreL: [-12, 0, 0], handL: [0, 0, 0] };
 
 export const FI_CLIPS = {
   // te ve: se queda quieto y ladea la cabeza, como un pájaro (de un golpe),
@@ -529,25 +592,9 @@ export const FI_CLIPS = {
   ]),
   // la sierra: tres tajos seguidos (de derecha a izquierda, de vuelta, y de
   // arriba abajo)
-  sierra: clip('fi_sierra', 1.9, [
-    [0, K_({})],
-    [0.28, K_({ chest: [6, 30, 0], head: [6, -16, -6], armR: [-60, 0, -50], foreR: [-60, 0, 0], handR: [70, 0, 30] }), 'hold'],
-    [0.44, K_({ chest: [12, -30, 0], head: [8, 14, -6], armR: [-82, 0, 10], foreR: [-18, 0, 0], handR: [82, 0, -30], legL: [-14, 0, 0], legR: [8, 0, 0], root: [0, -3, 5] }), 'strike'],
-    [0.62, K_({ chest: [12, -34, 0], head: [8, 14, -6], armR: [-82, 0, 14], foreR: [-22, 0, 0], handR: [82, 0, -34] }), 'hold'],
-    [0.86, K_({ chest: [10, 28, 0], head: [6, -12, -6], armR: [-78, 0, -44], foreR: [-26, 0, 0], handR: [80, 0, 30], legL: [-8, 0, 0], legR: [12, 0, 0], root: [0, -3, 5] }), 'strike'],
-    [1.08, K_({ chest: [-2, 4, 0], head: [2, 0, -6], armR: [-152, 0, -12], foreR: [-50, 0, 0], handR: [40, 0, 0] }), 'hold'],
-    [1.32, K_({ chest: [26, 0, 0], head: [16, 0, -6], armR: [-70, 0, -6], foreR: [-10, 0, 0], handR: [92, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 12] }), 'strike'],
-    [1.55, K_({ chest: [24, 0, 0], head: [14, 0, -6], armR: [-68, 0, -6], foreR: [-12, 0, 0], handR: [90, 0, 0], legL: [-26, 0, 0], shinL: [20, 0, 0], legR: [16, 0, 0], root: [0, -8, 10] }), 'settle'],
-    [1.9, K_({})],
-  ]),
+  sierra: clip('fi_sierra', 1.9, K_SIERRA),
   // la lanceta: de la izquierda, de punta, rápida
-  lanceta: clip('fi_lanceta', 1.1, [
-    [0, K_({})],
-    [0.3, K_({ chest: [0, -20, 0], head: [6, 10, -6], armL: [-40, 0, 20], foreL: [-110, 0, 0], handL: [0, 0, 0] }), 'hold'],
-    [0.44, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-88, 0, 6], foreL: [-6, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 14] }), 'strike'],
-    [0.64, K_({ chest: [14, 18, 0], head: [10, -8, -6], armL: [-86, 0, 6], foreL: [-10, 0, 0], handL: [-10, 0, 0], legL: [-26, 0, 0], shinL: [22, 0, 0], legR: [14, 0, 0], root: [0, -6, 12] }), 'settle'],
-    [1.1, K_({})],
-  ]),
+  lanceta: clip('fi_lanceta', 1.1, K_LANCETA),
   // el trépano: se te echa encima con las dos manos (la izquierda, a tu
   // cabeza; la derecha, la barrena)
   trepano: clip('fi_trepano', 1.6, [
@@ -601,13 +648,7 @@ export const FI_CLIPS = {
   ]),
   // el picotazo: recoge la vara junto al hombro y la mete de punta, con
   // todo el cuerpo detrás
-  pica: clip('fi_pica', 1.3, [
-    [0, K_({})],
-    [0.42, K_({ chest: [0, 22, 0], head: [6, -14, -6], armR: [-34, 0, -20], foreR: [-112, 0, 0], handR: [88, 0, 0], legR: [10, 0, 0], legL: [-4, 0, 0] }), 'hold'],
-    [0.56, K_({ chest: [16, -8, 0], head: [10, 6, -4], armR: [-86, 0, -6], foreR: [-6, 0, 0], handR: [90, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 16] }), 'strike'],
-    [0.82, K_({ chest: [16, -8, 0], head: [10, 6, -4], armR: [-84, 0, -6], foreR: [-10, 0, 0], handR: [90, 0, 0], legL: [-30, 0, 0], shinL: [24, 0, 0], legR: [18, 0, 0], root: [0, -8, 14] }), 'settle'],
-    [1.3, K_({})],
-  ]),
+  pica: clip('fi_pica', 1.3, K_PICA),
   // el gancho: alarga la vara, te engancha y tira de ti
   gancho: clip('fi_gancho', 1.8, [
     [0, K_({})],
@@ -673,6 +714,61 @@ export const FI_CLIPS = {
     [1.1, K_({ armR: [-120, 0, -20], foreR: [-30, 0, 0], handR: [-14, 0, 0], head: [-10, 0, -6], chest: [-4, 0, 0] }), 'snap'],
     [1.6, K_({})],
   ]),
+  // ---------------------------------------------------------- el duelo de la cisterna
+  // (game/fisico_duelo.js) con la hoja de amputar en la izquierda y la
+  // campanilla a la espalda: los tres tajos de la sierra, al revés; la lanceta;
+  // el picotazo de la vara, al revés: una estocada a fondo
+  tajos: clip('fi_tajos', 1.9, espejoK(K_SIERRA)),
+  lancetaZ: clip('fi_lancetaZ', 1.1, zurdoK(K_LANCETA)),
+  estocada: clip('fi_estocada', 1.3, espejoK(K_PICA)),
+  // al que le tiene sujeto uno de los suyos: como al otro, a fondo y dentro un
+  // momento
+  estoque: clip('fi_estoque', 1.5, [
+    [0, K_(ZURDO)],
+    [0.4, K_({ ...ZURDO, chest: [-6, -24, 0], head: [8, 14, -4], armL: [-46, 0, 22], foreL: [-118, 0, 0], handL: [0, 0, 0] }), 'hold'],
+    [0.56, K_({ ...ZURDO, chest: [18, 20, 0], head: [12, -6, -6], armL: [-84, 0, 6], foreL: [-4, 0, 0], handL: [-8, 0, 0], legL: [-22, 0, 0], shinL: [18, 0, 0], legR: [12, 0, 0], root: [0, -5, 10] }), 'strike'],
+    [1.0, K_({ ...ZURDO, chest: [20, 22, 0], head: [16, -8, -10], armL: [-82, 0, 6], foreL: [-6, 0, 0], handL: [-8, 0, 0], legL: [-22, 0, 0], shinL: [18, 0, 0], legR: [12, 0, 0], root: [0, -5, 10] }), 'settle'],
+    [1.2, K_({ ...ZURDO, chest: [10, 10, 0], head: [10, -4, -6], armL: [-60, 0, 14], foreL: [-60, 0, 0], handL: [0, 0, 0] }), 'snap'],
+    [1.5, K_(ZURDO)],
+  ]),
+  // ---------------------------------------------------------- su muerte, en la luz
+  // (game/fisico_rama.js) anda hacia la luz como puede (las piernas, las
+  // suyas)
+  tambalea: clip('fi_tambalea', 1.4, [[0, HERIDO], [0.7, { ...HERIDO, chest: [22, 0, -8], head: [16, -8, -4], armL: [2, 0, 18], foreL: [-14, 0, 0] }], [1.4, HERIDO]], { loop: true }),
+  // se quita la máscara (la derecha al pico, y fuera; la quita el guion a los
+  // 0,8 s) y se queda mirando arriba
+  quita: clip('fi_quita', 1.8, [
+    [0, HERIDO],
+    [0.55, { ...HERIDO, chest: [10, 0, 0], head: [-8, 0, 0], armR: [-128, 0, -4], foreR: [-118, 0, 0], handR: [24, 0, 0] }],
+    [0.85, { ...HERIDO, chest: [6, 0, 0], head: [-14, 0, 0], armR: [-96, 0, -46], foreR: [-56, 0, 0], handR: [44, 0, 0] }, 'snap'],
+    [1.8, MIRA],
+  ]),
+  mira: clip('fi_mira', 2.6, [[0, MIRA], [1.3, { ...MIRA, chest: [-9, 0, 2], head: [-39, 0, 2] }], [2.6, MIRA]], { loop: true }),
+  // cae de espaldas (el cuerpo lo tumba su raíz: los brazos se le van
+  // adelante, la barbilla al pecho)
+  caeAtras: clip(
+    'fi_caeAtras',
+    0.9,
+    [
+      [0, { ...MIRA, root: [0, 0, 0], legL: [0, 0, 0], shinL: [0, 0, 0], footL: [0, 0, 0], legR: [0, 0, 0], shinR: [0, 0, 0], footR: [0, 0, 0] }],
+      [0.45, { root: [0, 0, 0], chest: [18, 0, 0], head: [28, 0, 0], armR: [-84, 0, -48], foreR: [-30, 0, 0], handR: [0, 0, 0], armL: [-84, 0, 48], foreL: [-20, 0, 0], handL: [0, 0, 0], legL: [-24, 0, 0], shinL: [32, 0, 0], footL: [0, 0, 0], legR: [-12, 0, 0], shinR: [22, 0, 0], footR: [0, 0, 0] }],
+      [0.9, YACE, 'settle'],
+    ],
+    { ground: false }
+  ),
+  // tumbado, mirando la luna (respira, apenas)
+  yace: clip('fi_yace', 3.0, [[0, YACE], [1.5, { ...YACE, chest: [-3, 0, 0] }], [3.0, YACE]], { loop: true, ground: false }),
+  // se ahoga en su sangre: el pecho a sacudidas, la derecha al cuello
+  ahoga: clip(
+    'fi_ahoga',
+    0.42,
+    [
+      [0, { ...YACE, chest: [-12, 0, 0], head: [-24, 0, 0], armR: [-84, 0, -12], foreR: [-126, 0, 0] }],
+      [0.21, { ...YACE, chest: [6, 0, 0], head: [-6, 0, 0], armR: [-78, 0, -16], foreR: [-120, 0, 0] }, 'snap'],
+      [0.42, { ...YACE, chest: [-12, 0, 0], head: [-24, 0, 0], armR: [-84, 0, -12], foreR: [-126, 0, 0] }],
+    ],
+    { loop: true, ground: false }
+  ),
   // ---------------------------------------------------------- lo que recibe
   hurt: clip('fi_hurt', 0.6, [
     [0, K_({ chest: [-8, 12, -4], head: [-14, -10, 6], root: [0, -2, -6] }), 'snap'],
@@ -850,6 +946,8 @@ const caza = (e) => !(e.D && e.D.engaged) && !(e.game.trampas && e.game.trampas.
 // el hierro; 3, el fuego
 const fase = (e) => (e.D && e.D.engaged ? e.data.fase || 1 : 0);
 const pelea = (e) => fase(e) === 1;
+// (en la cisterna, cambiado: game/fisico_duelo.js)
+const duelo = (e) => !!e.game.fisico && e.game.fisico.modo === 'duelo';
 const A = {
   barrido: { name: 'barrido', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 18, stDmg: 22, range: 3.0, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 3, cd: 0.9, cond: pelea },
   pica: { name: 'pica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 16, range: 3.7, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 2.4, cd: 0.8, cond: pelea },
@@ -930,6 +1028,14 @@ const A = {
   // (el fuego) el cauterio al rojo: barre y pica, y donde da, prende la paja
   cauterio: { name: 'cauterio', clip: FI_CLIPS.barrido, dur: 1.55, min: 0, max: 3.0, hits: [[0.62, 0.8]], dmg: 17, stDmg: 24, range: 2.9, arc: 150, lunge: [[0.58, 0.72, 1.4]], weight: 3, cd: 0.8, events: [{ t: 0.76, fn: prende }], cond: (e) => fase(e) === 3 },
   cauterioPica: { name: 'cauterioPica', clip: FI_CLIPS.pica, dur: 1.3, min: 1.2, max: 3.6, hits: [[0.52, 0.64]], dmg: 16, range: 3.4, arc: 28, lunge: [[0.48, 0.6, 3.2]], weight: 2.2, cd: 0.7, events: [{ t: 0.62, fn: prende }], cond: (e) => fase(e) === 3 },
+  // en la cisterna, cambiado (game/fisico_duelo.js): la hoja de amputar en la
+  // izquierda (con los nombres de los golpes de los que salen: su historia
+  // clínica de ti los apunta igual)
+  hojaTajos: { name: 'sierra', clip: FI_CLIPS.tajos, dur: 1.9, min: 0, max: 2.8, hits: [[0.38, 0.5], [0.8, 0.92], [1.26, 1.4]], dmg: 13, stDmg: 18, range: 2.8, arc: 120, lunge: [[0.36, 0.48, 1.3], [0.78, 0.9, 1.1], [1.22, 1.36, 1.5]], weight: 0, cd: 0.7, cond: duelo },
+  hojaLanceta: { name: 'lanceta', clip: FI_CLIPS.lancetaZ, dur: 1.1, min: 0.8, max: 3.4, hits: [[0.42, 0.54]], dmg: 17, range: 3.0, arc: 36, lunge: [[0.36, 0.5, 3.6]], weight: 0, cd: 0.5, cond: duelo },
+  hojaEstocada: { name: 'pica', clip: FI_CLIPS.estocada, dur: 1.3, min: 1.2, max: 3.9, hits: [[0.52, 0.64]], dmg: 20, range: 3.7, arc: 26, lunge: [[0.48, 0.6, 3.4]], weight: 0, cd: 0.8, cond: duelo },
+  // (al que le tiene sujeto uno de los suyos)
+  hojaEstoque: { name: 'estoque', clip: FI_CLIPS.estoque, dur: 1.5, min: 0, max: 2.7, hits: [[0.54, 0.66]], dmg: 34, stDmg: 40, range: 2.7, arc: 70, lunge: [[0.4, 0.56, 2.6]], weight: 0, cd: 1.0, noParry: true, trackUntil: 0.5, cond: (e) => duelo(e) && e.game.player.state === 'grabbed' },
 };
 export const FI_ATTACKS = A;
 
@@ -1118,8 +1224,8 @@ export const FISICO_TYPE = {
   // (fuera de la pelea no muere: se retira; game/fisico.js)
   preHit: (e, dmg, poise) => {
     const F = e.game.fisico;
-    // (en la cisterna, en lo alto del pretil, no se le toca)
-    if (F && F.modo === 'rama') return { dmg: 0, poise: 0 };
+    // (en la cisterna, en lo alto del pretil, no se le toca; ni muriéndose)
+    if (F && (F.modo === 'rama' || F.modo === 'muere')) return { dmg: 0, poise: 0 };
     if (e.state === 'sedando' || e.state === 'trepanando') return { dmg: dmg * 0.5, poise: 0 };
     return F ? F.preHit(e, dmg, poise) : null;
   },
@@ -1127,6 +1233,8 @@ export const FISICO_TYPE = {
   // la pelea no muere (lleva al cinto la llave de la cordelería)
   onDefeat: (e) => {
     const F = e.game.fisico;
+    // (en la cisterna, su muerte la lleva su guion: game/fisico_rama.js)
+    if (F && F.modo === 'duelo' && e.game.fisicoRama) return e.game.fisicoRama.muere(e);
     if (F && F.modo !== 'pelea') {
       e.hp = 1;
       return true;
@@ -1142,6 +1250,9 @@ export const FISICO_TYPE = {
     const F = e.game.fisico;
     F && F.onStrike(e, a, r);
   },
+  // (cayendo de espaldas y tumbado en la luz de la cisterna: le tumba su
+  // raíz; game/fisico_rama.js)
+  rootRot: (e) => e.game.fisicoRama && e.game.fisicoRama.rootRot(e),
   onReset: (e) => {
     e.data = {};
     for (const g of ['mascara', 'sombrero', 'vara']) fiGrp(e, g, true);
@@ -1162,7 +1273,9 @@ export const FISICO_TYPE = {
   idlePose: (e, kind, t) => {
     const br = Math.sin(t * 1.1 + e.phase) * 1.2;
     const up = e.data.lookUp ? 1 : 0;
-    return rad({ ...B, chest: [6 + br * 0.4 - up * 8, 0, 0], head: [4 + br - up * 34, 0, -7 + up * 10] });
+    const p = { ...B, chest: [6 + br * 0.4 - up * 8, 0, 0], head: [4 + br - up * 34, 0, -7 + up * 10] };
+    // (en la cisterna, cambiado: la hoja delante, la campanilla a la espalda)
+    return rad(e.data.zurdo ? espejo(p) : p);
   },
   // andar: erguido, despacio, la vara marcando el paso, la izquierda a la
   // espalda (corriendo, la saca para equilibrarse)
@@ -1170,7 +1283,7 @@ export const FISICO_TYPE = {
     const run = clamp((spd - 1.8) / 1.6, 0, 1);
     const ph = e.phase;
     const sw = Math.sin(ph);
-    return rad({
+    const p = {
       ...B,
       chest: [6 + run * 10 - (e.data.lookUp ? 8 : 0), 0, 0],
       head: [4 - run * 4 - (e.data.lookUp ? 34 : 0), 0, -7 + run * 4 + (e.data.lookUp ? 10 : 0)],
@@ -1178,7 +1291,8 @@ export const FISICO_TYPE = {
       armL: [mix(30, -10 + sw * 24, run), mix(-95, 0, run), mix(8, 12, run)],
       foreL: [mix(-95, -40, run), 0, 0],
       handL: [0, 0, mix(20, 0, run)],
-    });
+    };
+    return rad(e.data.zurdo ? espejo(p) : p);
   },
 };
 

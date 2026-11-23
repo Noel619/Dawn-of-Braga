@@ -1639,7 +1639,24 @@ export const DIALOG = {
   fisicoRamaTu: ['Te fuiste por el tejado del cordelero sin dejarte tocar.', 'Lo tengo apuntado. Aquí abajo también hay enfermos.'],
   fisicoRamaOrden: { cerco: 'Cercadle.', sujeta: 'Sujetadle.', carga: 'Ahora. Todos.' },
   fisicoRamaPelea: ['Despacio. Que no se escape otra vez.', 'Respira. Así. Que se te note el miedo.', 'Mirad cómo se mueve. Lo tengo apuntado.', 'No le hagáis daño de más: es mío.'],
-  fisicoRamaFin: ['Esto no era la consulta.', 'La consulta es abajo, donde va el agua. Allí te espero.'],
+  // (baja de su pretil: game/fisico_rama.js; le has visto pelear con ellos
+  // desde arriba, y lo ha apuntado)
+  fisicoRamaBaja: ['Basta de mirar.', 'Te he visto pelear con ellos. Ya sé cómo te mueves.'],
+  // lo que ve en la cisterna, peleando (game/fisico_duelo.js): lo que vive
+  // aquí quiere algo, y está sano; lo que él cura no quiere nada
+  fisicoRamaDuda: [
+    'Aquí abajo no ha entrado la peste.',
+    'La higuera busca el agujero. Las raíces, el agua. Aquí todo quiere algo.',
+    'Y no está enfermo.',
+    'Veintitrés rayas en el pilar. Veintitrés noches mirándolo crecer.',
+    'Los míos no quieren nada. Tampoco crecen.',
+    'Si querer no es la enfermedad...',
+    'No. El tratamiento no se interrumpe.',
+    '¿Por qué no te arrodillas? ¿Por qué no te has arrodillado nunca?',
+  ],
+  // muriéndose, de espaldas en la luz: lo que entiende, y lo que no llega a
+  // decirte (la sangre a media frase)
+  fisicoRamaMuere: ['Ah...', 'Todo se mueve hacia ella. Todo.', 'Tú no te arrodillaste.', 'Tú eras el único que...'],
   fisicoRamaOtraVez: 'Otra vez tú. Lo tengo apuntado.',
   fisicoTrepano: ['Quieto. Un agujero pequeño, y sale todo.', 'Yo también lo tuve dentro. Mira: por aquí salió.'],
   fisicoFuego: 'Lo que no cura el hierro, lo cura el fuego.',
@@ -1899,12 +1916,12 @@ export const MSG = {
   // campanilla, una sola vez)
   fisicoEscapado: 'A tu espalda, al otro lado de la cordelería, suena una campanilla. Una sola vez.',
   // (la rama de la cisterna: game/fisico_rama.js)
-  brumaSeVa: 'La bruma negra se retira por la galería, detrás de él. En la alberca, el Desfigurado sigue boca abajo.',
   brumaMuro: 'Bruma negra, espesa como el humo de un candil. Por ahí no se pasa.',
   desfCuerpo: 'El Desfigurado, boca abajo en la alberca, con los brazos abiertos. El agua le mueve la capa. Del cordón del cuello le cuelga una llave de hierro.',
   desfCuerpoLlave: 'Le quitas la llave del cuello. La de la reja de la galería de la Sé, la que no quería darte.',
   desfCuerpoFlor: 'Le quitas la llave del cuello. La de la reja de la galería de la Sé, la que no quería darte. En la mano mala, apretada, una flor blanca.',
   desfCuerpoNada: 'El Desfigurado, boca abajo en la alberca, con los brazos abiertos. El agua le mueve la capa.',
+  fisicoCuerpo: 'Mestre Clemente, de espaldas en la isla, en la luz, con los brazos abiertos. Tiene los ojos abiertos, a la luna, y la boca llena de sangre, a medio decir algo.',
   cuadernoAprendes: 'En el cuaderno, con su letra torcida, cómo cocía lo que traía de lo hondo. Su mesa, ahora, es tuya.',
   cubasBodega: 'Las cubas del tabernero. Una tiene la duela de abajo reventada y el vino se ha comido el suelo; en la madera, arañazos de uñas pequeñas. Ratas. Y otros, más arriba, más hondos, de una mano.',
   cloacaMuerto: 'Un hombre sentado contra el muro, con la espada en el suelo. Bajó a esconderse donde nadie oyera la campana. Tiene barro en las orejas, como si se las hubiera tapado. No le sirvió de mucho: no tiene marcas, sólo se ha quedado así.',

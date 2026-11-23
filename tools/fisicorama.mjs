@@ -3,14 +3,17 @@
 // cáñamo, y por dentro de la cordelería a los Pelames) y, más adelante, en la
 // cisterna de la cloaca, mata al Desfigurado por la espalda; detrás de él, la
 // bruma negra y sus Coronados de la bruma (game/fisico_rama.js).
-//   node tools/fisicorama.mjs [partes: huida,herido,escena,pelea,cae,cuerpo] [fotos]
+//   node tools/fisicorama.mjs [partes: huida,herido,escena,pelea,muerte,cae,cuerpo] [fotos]
 //   huida: por el otro camino sin tocarle (se le escapa: su nota, él se va)
 //   herido: lo mismo, habiéndole herido en la calle (no se le escapa)
 //   escena: la cisterna: el Desfigurado en el pretil, hablarle, bajar, la
 //           escena (sus banderas, el cuerpo en la alberca, la bruma)
-//   pelea: los Coronados de la bruma y las órdenes de la campanilla, hasta
-//          vencerles (él se va con la bruma)
-//   cae: caer en la pelea y volver (vuelve a empezar, sin la escena)
+//   pelea: los Coronados de la bruma y las órdenes de la campanilla (él,
+//          arriba); cuando de ellos queda uno, baja él; el duelo (sus golpes
+//          con la hoja, el remate, las órdenes, sus dudas)
+//   muerte: vencerle; su muerte en la luz, paso a paso (con fotos); su cuerpo
+//   cae: caer en la pelea y volver (vuelve a empezar, sin la escena: baja
+//        enseguida)
 //   cuerpo: el cuerpo en la alberca (la llave de la reja) y su mesa (el
 //           cuaderno)
 //   fotos: capturas de la escena (tools/shots/rama_<i>.png)
@@ -25,7 +28,7 @@ try {
   vite = await createServer({ server: { port: PORT, strictPort: true }, logLevel: 'error' });
   await vite.listen();
 }
-const partes = (process.argv[2] || 'huida,herido,escena,pelea,cae,cuerpo').split(',');
+const partes = (process.argv[2] || 'huida,herido,escena,pelea,muerte,cae,cuerpo').split(',');
 const fotos = process.argv.includes('fotos');
 const AYUDA = () => {
   window.__pause = true;
@@ -233,6 +236,8 @@ const bajar = async () => {
       if (R.fase) break;
     }
     pl.autoDir = null;
+    // (ya en la sala: si aún no ha empezado, un rato quieto)
+    for (let t = 0; t < 8 && !R.fase; t += 1 / 30) g.update(1 / 30);
     return { fase: R.fase, pos: P3(pl.pos), fis: g.fisico.modo, fisPos: P3(g.fisico.e.pos), fisVis: g.fisico.e.obj.visible };
   }));
 };
@@ -342,24 +347,117 @@ const pelea = async () => {
     pl.autoDir = null;
     return { pos: P3(pl.pos), toast: __toast() };
   }));
-  // a por ellos: los de la primera tanda (menos uno), y la segunda
-  out('vencerles', await ev(() => {
+  // a por ellos: los de la primera tanda (menos uno): baja él
+  out('baja', await ev(() => {
     const g = __game,
       R = g.fisicoRama,
       pl = g.player;
     pl.spawn(-7.0, -9.0, 15.0, 0);
     const mata = (c) => c.takeHit(9999, 999, pl.pos.x, pl.pos.z, true);
-    const vivos = () => g.enemies.filter((e) => e.type === 'coronado_bruma' && !e.scripted && !e.dead);
-    const v1 = vivos();
+    const v1 = R.vivos();
     v1.slice(0, -1).forEach(mata);
-    for (let i = 0; i < 90; i++) g.update(1 / 30);
-    const ola = R.ola,
-      tanda2 = vivos().length;
-    vivos().forEach(mata);
-    for (let i = 0; i < 60; i++) g.update(1 / 30);
-    const fase = R.fase;
-    for (let i = 0; i < 420; i++) g.update(1 / 30);
-    return { primera: v1.length, ola, tanda2, fase, despues: R.fase, bruma: !!g.flags['rama:bruma'], fis: g.fisico.modo, fisVis: g.fisico.e.obj.visible, brumaOn: R.bruma.on, muros: R.bruma.muros.map((M) => !!M.box), toast: __toast() };
+    let baja = null;
+    for (let i = 0; i < 600 && R.fase !== 'duelo'; i++) {
+      g.update(1 / 30);
+      if (R.fase === 'baja' && baja == null) baja = +g.time.toFixed(1);
+    }
+    const e = g.fisico.e;
+    const t0 = g.time;
+    for (let i = 0; i < 120; i++) g.update(1 / 30);
+    return { fase: R.fase, modo: g.fisico.modo, tardo: +(t0 - (baja ?? t0)).toFixed(1), pos: P3(e.pos), air: !!e.data.air, zurdo: !!e.data.zurdo, barra: !!e.D.engaged && g.activeBoss === e, vivos: R.vivos().length, muros: R.bruma.muros.map((M) => !!M.box) };
+  }));
+  // el duelo: lo que hace él (quieto e invulnerable el jugador, 45 s)
+  out('duelo (45 s)', await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      D = R.duelo,
+      pl = g.player,
+      e = g.fisico.e;
+    const golpes = {},
+      ord = [],
+      dudas = [];
+    let serial = -1,
+      sujeto = 0,
+      estoques = 0,
+      cerca = 0;
+    const o0 = R.ordena.bind(R);
+    R.ordena = (k, v) => (ord.push([+g.time.toFixed(1), k]), o0(k, v));
+    const s0 = g.speech.say.bind(g.speech);
+    g.speech.say = (who, txt, o) => (who && who.id === 'fisico' && dudas.push(txt), s0(who, txt, o));
+    for (let i = 0; i < 1350; i++) {
+      g.update(1 / 30);
+      pl.hp = pl.maxHp;
+      if (e.state === 'attack' && e.atk && e.atkSerial !== serial) {
+        serial = e.atkSerial;
+        golpes[e.atk.name] = (golpes[e.atk.name] || 0) + 1;
+        if (e.atk.name === 'estoque') estoques++;
+      }
+      if (pl.state === 'grabbed') sujeto++;
+      if (e.distTo(pl.pos) < 3) cerca++;
+      // (le va quitando vida: sus dudas)
+      if (i % 150 === 149) e.hp = Math.max(1, e.hp - e.maxHp * 0.1);
+    }
+    R.ordena = o0;
+    g.speech.say = s0;
+    return { golpes, estoques, ord, sujeto: +(sujeto / 30).toFixed(1), cerca: +(cerca / 30).toFixed(1), hp: +(e.hp / e.maxHp).toFixed(2), frases: dudas.length, dudas: D.dudas, ultima: dudas.slice(-2), mente: [D.mente.reaccion, D.mente.temp].map((v) => +v.toFixed(2)) };
+  }));
+};
+// su muerte: vencido en el duelo, la escena entera (y sus fotos)
+const muerte = async () => {
+  await aLaPelea();
+  await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      pl = g.player;
+    g.dev.set('god', true);
+    pl.spawn(-7.0, -9.0, 15.0, 0);
+    R.vivos().forEach((c) => c.takeHit(9999, 999, pl.pos.x, pl.pos.z, true));
+    for (let i = 0; i < 600 && R.fase !== 'duelo'; i++) g.update(1 / 30);
+    for (let i = 0; i < 150; i++) g.update(1 / 30);
+  });
+  out('vencerle', await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      e = g.fisico.e,
+      pl = g.player;
+    e.hp = 5;
+    pl.spawn(e.pos.x + 1.2, e.pos.y, e.pos.z, Math.atan2(-1.2, 0));
+    const r = e.takeHit(50, 50, pl.pos.x, pl.pos.z, false);
+    g.update(1 / 30);
+    return { r, fase: R.fase, modo: g.fisico.modo, dead: e.dead, hp: e.hp, vivos: R.vivos().length, campana: R.bruma.muros.map((M) => !!M.box) };
+  }));
+  for (const [t, nombre] of [[2.0, 'm_anda'], [5.4, 'm_mascara'], [7.6, 'm_mira'], [9.3, 'm_cae'], [12.5, 'm_arriba'], [17.4, 'm_tu'], [21.0, 'm_ahoga'], [25.5, 'm_luna']]) {
+    out('muerte ' + t + ' ' + nombre, await ev(([t]) => {
+      const g = __game,
+        R = g.fisicoRama,
+        e = g.fisico.e;
+      for (let i = 0; i < 4000 && R.fase === 'muerte' && R.t < t; i++) g.update(1 / 30);
+      const hv = e.pos.clone();
+      e.rig.joints.head.getWorldPosition(hv);
+      return { t: +R.t.toFixed(2), fase: R.fase, pos: P3(e.pos), cabeza: P3(hv), rot: +e.obj.rotation.x.toFixed(2), mascara: e.rig.meshes.some((m) => m.userData.grp === 'mascara' && m.visible), timeK: g.timeK };
+    }, [t]));
+    await foto(nombre);
+  }
+  out('tras su muerte', await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      e = g.fisico.e;
+    for (let i = 0; i < 4000 && R.fase === 'muerte'; i++) g.update(1 / 30);
+    for (let i = 0; i < 120; i++) g.update(1 / 30);
+    const it = g.interact.list.find((i) => i.id === 'x_fisico_cuerpo');
+    return { fase: R.fase, flags: ['rama:fisico', 'boss:fisico', 'rama:bruma'].map((k) => !!g.flags[k]), dead: e.dead, visible: e.obj.visible, rot: +e.obj.rotation.x.toFixed(2), pstate: g.player.state, hud: !document.getElementById('hud').classList.contains('cine'), cuerpo: it && !it.hidden, luna: !!(R.luna && R.luna.visible), bruma: R.bruma.on, activo: g.activeBoss && g.activeBoss.type };
+  }));
+  out('su cuerpo', await ev(() => {
+    const r = __use('x_fisico_cuerpo', 1.4);
+    return r.toast;
+  }));
+  // (al cargar: tumbado en la luz, y no en su mesa del barrio)
+  out('al cargar', await ev(() => {
+    const g = __game,
+      e = g.fisico.e;
+    g.applyWorldState();
+    g.update(1 / 30);
+    return { pos: P3(e.pos), rot: +e.obj.rotation.x.toFixed(2), dead: e.dead, visible: e.obj.visible, final: g.finalDesfigurado().replace(/<br>/g, ' ').trim().slice(0, 90) };
   }));
 };
 // caer en la pelea y volver: vuelve a empezar, sin la escena
@@ -384,7 +482,11 @@ const cae = async () => {
     const g = __game,
       R = g.fisicoRama;
     for (let i = 0; i < 120; i++) g.update(1 / 30);
-    return { fase: R.fase, fis: P3(g.fisico.e.pos), fisVis: g.fisico.e.obj.visible, fuera: g.enemies.filter((e) => e.type === 'coronado_bruma' && !e.scripted && e.obj.visible).length, muros: R.bruma.muros.map((M) => !!M.box), cam: !!g.camRig.override };
+    const a = { fase: R.fase, fis: P3(g.fisico.e.pos), fisVis: g.fisico.e.obj.visible, fuera: R.vivos().length, muros: R.bruma.muros.map((M) => !!M.box) };
+    // (y baja enseguida, con los tres que ha llamado)
+    for (let i = 0; i < 600 && R.fase !== 'duelo'; i++) g.update(1 / 30);
+    for (let i = 0; i < 90; i++) g.update(1 / 30);
+    return { ...a, luego: R.fase, modo: g.fisico.modo, vivos: R.vivos().length, hp: +(g.fisico.e.hp / g.fisico.e.maxHp).toFixed(2) };
   }));
 };
 // lo que queda: el cuerpo (la llave) y su cuaderno (la mesa)
@@ -422,6 +524,10 @@ if (partes.includes('escena')) {
 if (partes.includes('pelea')) {
   console.log('--- pelea');
   await pelea();
+}
+if (partes.includes('muerte')) {
+  console.log('--- muerte');
+  await muerte();
 }
 if (partes.includes('cae')) {
   console.log('--- cae');

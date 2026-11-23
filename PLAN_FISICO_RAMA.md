@@ -10,8 +10,17 @@ Hecho el 22 de noviembre de 2026. Lo que pidió el autor:
 > mismo tiempo que aparece la cinemática en la que éste lo asesina, y el hombre raro cae por la cascada, detrás del
 > doctor una bruma negra se expande. Y vienen monstruosidades.
 
+Y después:
+
+> Integramos que él baja a luchar en conjunto con sus secuaces. Pero va a pelear de forma inteligente. Ahora, más
+> inteligente que nunca, está más liberado de su locura. Con el pasar de la batalla comprende que está posiblemente
+> mal en su juicio, que puede que se esté equivocando en su teoría al ver lo que lo rodea (vida). Aun así, continúa
+> peleando. Al llegar al final de la pelea, cuando está muriendo, cae de espaldas frente a la luna. La observa, y en
+> sus últimos momentos de vida se da cuenta de todo. Trata de decírtelo, pero ya es demasiado tarde. Se ahoga en su
+> propia sangre. Haz que todo tenga sentido con la historia y con el personaje.
+
 «El tipo de las cloacas» es **el Desfigurado** (la cloaca bajo la plaza del Pan, la sala de la luz). Lo que sigue
-cuenta cómo está hecho, cómo se prueba y lo que queda por decidir (§6).
+cuenta cómo está hecho, por qué tiene sentido con él (§6), cómo se prueba y lo que queda por decidir (§10).
 
 ## 1. Evadir su zona: el otro camino
 
@@ -52,8 +61,8 @@ empezado a cambiarse a sí mismo (el grupo de piezas `evol`):
 - en la izquierda, en lugar de la mano, **una hoja de amputar** larga, sujeta al antebrazo con correas;
 - y en la derecha, **la campanilla de las órdenes** (`campanillaR`).
 
-De la corona le sale la bruma negra en hilachas. Allí arriba es intocable: ni se le fija ni se le hiere (`data.air`,
-como lo que va por el techo).
+De la corona le sale la bruma negra en hilachas. Allí arriba, en el pretil, es intocable: ni se le fija ni se le
+hiere (`data.air`, como lo que va por el techo). Abajo, en el duelo, sí.
 
 ## 4. La noche de la cisterna
 
@@ -109,28 +118,102 @@ Las órdenes van **siempre en el mismo orden** (cerco, sujeción, carga, y un re
 con uno solo vivo, sólo la carga. Y **si uno te sujeta, las tres enseguida**: los demás se echan encima. Sin orden,
 el agarrón es raro (uno cada diez segundos entre todos).
 
-**La pelea**: dos tandas de tres (la segunda, cuando de la primera queda uno), con él en lo alto, tocando y hablando
-(*«Despacio. Que no se escape otra vez.»*, *«No le hagáis daño de más: es mío.»*…). Al vencerles: *«Esto no era la
-consulta. La consulta es abajo, donde va el agua. Allí te espero.»* Se va por la galería, con su bruma (y la luz se
-apaga con ella): *«La bruma negra se retira por la galería, detrás de él. En la alberca, el Desfigurado sigue boca
-abajo.»* (`rama:bruma`).
+**La primera tanda**: tres, con él en lo alto, tocando y hablando (*«Despacio. Que no se escape otra vez.»*, *«No le
+hagáis daño de más: es mío.»*…), **mirándote pelear y apuntándolo** (su historia clínica de ti sigue abierta). Cuando
+de ellos queda uno (o se cansa de mirar): *«Basta de mirar.»*, y baja.
 
-**Si caes**, la pelea vuelve a empezar al volver a bajar a la sala, sin la escena: él ya en el pretil (*«Otra vez tú.
-Lo tengo apuntado.»*), la bruma, la campanilla y los suyos.
+## 6. Él, abajo: el duelo
 
-## 6. Lo que queda
+`game/fisico_duelo.js`. **Baja**: por el rellano, a lo alto de la escalera, se mete en su bruma (el muro no le para:
+es suya) y sale por debajo, ya en la escalera. Su nombre, su barra, su música; de la bruma, **la segunda tanda**; y
+él: *«Te he visto pelear con ellos. Ya sé cómo te mueves.»* (y, si lo tiene claro, lo que ha apuntado: *«Ruedas a tu
+izquierda. Lo tengo apuntado.»*).
+
+**Pelea con cabeza**, la misma que en su sala del barrio: la red entrenada (`fisico_mente.js`: elige cada 0,3-0,45 s
+con lo que vio hace un cuarto de segundo, sostiene lo que decide, tiene aliento, amaga, retiene el golpe si te
+adelantas, apunta adonde sueles rodar), con lo que es ahora:
+
+- **zurdo**: la hoja de amputar delante y la campanilla a la espalda (la guardia de un esgrimidor; sus poses de
+  siempre, al revés);
+- sus golpes, **los del hierro con la hoja**: los tres tajos (los de la sierra, al revés), la lanceta y la estocada a
+  fondo (el picotazo de la vara, al revés); para su cabeza, el segundo tiempo de su aforismo, el del hierro;
+- y **piensa por los suyos**: si uno de ellos te tiene sujeto, va a por ti y **te remata como al otro** (la hoja, a
+  fondo: el que tiene la sujeción eres tú; forcejea); las órdenes, **cuando le convienen**: si estás con uno de los
+  suyos y él lejos, dos toques (que te sujeten, y viene); si estás con él, uno (que te cerquen: sin sitio para
+  rodar); si bebes o te quedas sin aliento, tres; y **nunca con tu espada encima** (tocar le deja al descubierto).
+
+**Y duda.** Lo que dice, por orden, según lo que ve y lo que le pasa (§7):
+
+1. (cerca de la luz, o a los 18 s) *«Aquí abajo no ha entrado la peste.»*
+2. (herido) *«La higuera busca el agujero. Las raíces, el agua. Aquí todo quiere algo.»* — y se para a mirar la luz.
+3. *«Y no está enfermo.»*
+4. *«Veintitrés rayas en el pilar. Veintitrés noches mirándolo crecer.»* — mirando la luz.
+5. (cuando caen los suyos) *«Los míos no quieren nada. Tampoco crecen.»*
+6. (con menos de la mitad) *«Si querer no es la enfermedad...»* — mirando la luz, más rato.
+7. *«No. El tratamiento no se interrumpe.»* — **se rehace, y pelea más fuerte** (ve antes y elige mejor: para no
+   oírse).
+8. (al final) *«¿Por qué no te arrodillas? ¿Por qué no te has arrodillado nunca?»*
+
+Cuando se para a mirar, nunca con tu espada encima: si estás a su lado, espera; y al rato lo dice sin pararse.
+
+**Si caes**, vuelve a empezar al bajar a la sala, sin la escena: él en el pretil (*«Otra vez tú. Lo tengo
+apuntado.»*), tres de los suyos, y baja enseguida.
+
+## 7. Por qué duda (y por qué muere así)
+
+Su tratado, *De peste sanorum*, dice que la peste es de los sanos: que los signos de la enfermedad son el miedo, el
+pulso de pájaro, el correr, **el querer y el esperar** («la piedra de querer, la que hace que uno espere», que él saca
+con el trépano), y que los que se arrodillaron la noche de la campana se curaron: **quietos, como los árboles**. A ti
+te tiene apuntado como el caso más grave de la ciudad: **el único que no se arrodilló**. Y en la nota que dejó al
+irse: «Allí abajo vive otro que se cree sano. Dice que la vida se escondió allí».
+
+La cisterna le enseña lo contrario: los árboles de verdad no están quietos. La higuera crece hacia el agujero, las
+raíces bajan al agua, las flores se abren a la luna; todo lo que vive ahí **quiere algo**, y está sano. Los suyos, sus
+curados, no quieren nada, y tampoco crecen. Las veintitrés rayas del pilar son las noches que el otro, el que acaba de
+matar, se pasó mirándolo crecer. Si querer no es la enfermedad, lo que él ha curado toda su vida era lo que estaba
+vivo. No lo dice entero: sigue peleando («el tratamiento no se interrumpe»), porque pararse sería saberlo.
+
+Y muere donde estaba siempre el otro: en la luz, mirando arriba. Sin la máscara (la que llevaba contra el aire malo,
+que decía llevar ya dentro), ve la luna con sus ojos. Entiende: *todo se mueve hacia ella*; querer era estar vivo; y
+tú, el que no se arrodilló, no eras el más enfermo: eras el único que... No llega a decirlo. La sangre, a media frase;
+como el otro, que también murió en mitad de una palabra («Hermosa...»).
+
+## 8. Su muerte, en la luz
+
+`game/fisico_rama.js` (`empiezaMuerte`, `muerte`), `entities/fisico.js` (sus posturas). Vencido:
+
+- se le cae **la campanilla** (suena una vez más) y, sin él, **los suyos se desploman** y **la bruma se deshace**;
+- **anda como puede hasta la luz** (encorvado, la derecha apretada contra la herida, la hoja colgando; tose, gotea),
+  donde estaba siempre el Desfigurado;
+- **se quita la máscara** (la boca, por primera vez, al aire de aquí abajo) y **mira arriba**: la luna, por el
+  agujero. *«Ah...»*;
+- **cae de espaldas**, a cámara lenta, en la hierba de la isla, con los brazos abiertos (la toma, desde arriba: la
+  luna le mira a él). *«Todo se mueve hacia ella. Todo.»*;
+- **vuelve la cara hacia ti** (la toma, a tu lado, a ras de la hierba): *«Tú no te arrodillaste.»* *«Tú eras el único
+  que...»* — y la sangre: **se ahoga en ella**, a media frase;
+- se queda quieto, la cara otra vez a la luna, los ojos abiertos; la cámara sube por la luz hasta la luna. Su nombre:
+  ha caído.
+
+Se puede saltar (la tecla de interactuar). Su cuerpo se queda allí, en la luz, para siempre (`rama:fisico`; y
+`boss:fisico`, como cualquier jefe vencido; no en su mesa del barrio, que sigue vacía con su nota): *«Mestre Clemente,
+de espaldas en la isla, en la luz, con los brazos abiertos. Tiene los ojos abiertos, a la luna, y la boca llena de
+sangre, a medio decir algo.»*
+
+## 9. Lo que queda
 
 - **El cuerpo**, boca abajo en la alberca, con la mancha de sangre en el agua, meciéndose apenas con lo que trae la
   cascada. Se le puede registrar: del cordón del cuello, **la llave de la reja** de la galería de la Sé (la que no
   quería darte: ahora no hace falta pedírsela) — y, si nunca le hablaste, la flor blanca.
 - **Su botica**, en el Vergel, sigue ahí: al leer **su cuaderno de los remedios**, su mesa es tuya (los cocimientos,
   `desf:cocimientos`), aunque ya no te dé el primero.
-- **El final**: no sube a ver el sol. En la hoja del final: *«Bajo la plaza del Pan, en la alberca de la cisterna, el
-  agua seguía meciendo a un hombre boca abajo. En la isla, lo verde siguió creciendo, sin nadie que lo mirase.»*
+- **El final**: no sube a ver el sol. En la hoja del final: *«Bajo la plaza del Pan, en la cisterna, el agua seguía
+  meciendo a un hombre boca abajo. En la isla, en la luz, otro miraba la luna con los ojos abiertos. Entre los dos, lo
+  verde siguió creciendo.»*
 
-Banderas: `fisico:escapado`, `rama:cisterna`, `desf:muerto`, `desf:llave`, `rama:bruma` (y las de siempre).
+Banderas: `fisico:escapado`, `rama:cisterna`, `desf:muerto`, `desf:llave`, `rama:fisico`, `rama:bruma` y
+`boss:fisico` (y las de siempre).
 
-## 7. Cómo se prueba
+## 10. Cómo se prueba
 
 `tools/fisicorama.mjs` (levanta su propio Vite si no hay uno en el 5199):
 
@@ -142,17 +225,19 @@ node tools/fisicorama.mjs escena fotos          # la escena, con capturas en too
 - `huida`: por el otro camino sin tocarle (se le escapa: su nota, él se va, el Desfigurado al pretil);
 - `herido`: lo mismo, habiéndole herido en la calle (no se le escapa);
 - `escena`: la cisterna (la llegada, hablarle, bajar) y la escena entera, paso a paso;
-- `pelea`: las órdenes de la campanilla (40 s, invulnerable y quieto), el muro de la escalera, vencerles;
-- `cae`: caer en la pelea y volver;
+- `pelea`: las órdenes de la campanilla (40 s, invulnerable y quieto), el muro de la escalera; cuando de ellos queda
+  uno, baja él; el duelo (45 s: sus golpes con la hoja, el remate, sus órdenes, sus dudas);
+- `muerte`: vencerle; su muerte, paso a paso (con fotos); su cuerpo; al cargar, sigue en la luz;
+- `cae`: caer en la pelea y volver (baja enseguida);
 - `cuerpo`: la llave del cuerpo y el cuaderno.
 
-## 8. Lo que tiene que decidir el autor
+## 11. Lo que tiene que decidir el autor
 
-1. **El duelo con el Físico cambiado.** Se va diciendo que te espera «abajo, donde va el agua». No está hecho:
-   ¿dónde (las cloacas hondas, el Sumidero, lo hondo)?, ¿cómo pelea cambiado (la hoja de amputar, la corona, la
-   bruma, sus órdenes)?, ¿aprende de lo que hiciste contra los suyos?
+1. **La dureza del duelo**: él con los suyos, con su cabeza entrenada y el remate cuando te sujetan, puede ser mucho;
+   está medido con pruebas, no jugado a mano. Y la música (hoy, la de los jefes que le tocaba).
 2. **Si ya conocías al Desfigurado** cuando se te escapó, hoy no pasa nada más que su nota. ¿Debería buscarle igual
    (en su botica, en el Vergel)?
 3. **¿Se puede salvar al Desfigurado?** Hoy no: la escena empieza al bajar. Podría haber un modo (avisarle, subir a
    tiempo al pretil, la flor de lo hondo…).
-4. **La dureza** de los de la bruma y la música de la pelea (hoy, la de su caza).
+4. **Lo que entiende el Físico, ¿lo encuentra alguien?** Hoy no lo dice entero, a propósito. Podría quedar algo (su
+   historia clínica de ti, con una última línea a medias) o nada, como ahora.

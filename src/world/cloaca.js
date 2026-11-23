@@ -748,6 +748,8 @@ function sala(ctx, Q, L) {
   // fuera de escena: game/fisico_rama.js)
   // (y, si le mató, él: boca abajo en la alberca; se le mira desde el borde)
   L.interact.push({ kind: 'examine', id: 'x_desf_cuerpo', text: 'desfCuerpoNada', x: -12.0, y: CLOACA.sala.y, z: 11.7, r: 1.7 });
+  // (y él, el Físico, si le vences: de espaldas en la luz de la isla)
+  L.interact.push({ kind: 'examine', id: 'x_fisico_cuerpo', text: 'fisicoCuerpo', x: D.x - 0.1, y: iy, z: D.z, r: 1.8 });
   for (let i = 0; i < 6; i++) L.enemies.push({ type: 'coronado_bruma', x: -6.6 + (i % 3) * 0.5, y: CLOACA.sala.y, z: 9.9 + Math.floor(i / 3) * 0.6, yaw: Math.PI, idle: 'stand', held: true, id: 'e_bruma' + (i + 1) });
   L.interact.push({ kind: 'npc', id: 't_desfigurado', npc: 'desfigurado', label: 'Hablar', x: D.x, y: iy, z: D.z, r: 2.6 });
 }

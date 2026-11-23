@@ -37,6 +37,7 @@ import { CLOACA } from '../world/cloaca.js';
 import { FI_CLIPS, fiGrp, fiSay } from '../entities/fisico.js';
 import { damp, dampAngle, clamp, lerp } from '../core/util.js';
 import { BrumaNegra } from './bruma_negra.js';
+import { DueloFisico } from './fisico_duelo.js';
 
 const SA = CLOACA.sala;
 const R = SA.rellano;
@@ -92,6 +93,49 @@ const TOMAS = [
 ];
 // (en la pelea, la luz se queda sobre él, en el pretil)
 const LUZ_PELEA = [-13.4, -4.6, 12.0, 1.0];
+
+// Su muerte: adonde va (la luz de la luna, en la isla, donde estaba siempre
+// el otro), de dónde vienen sus pasos (siempre los mismos: el corte de la
+// primera toma lo esconde) y dónde estás tú, a un lado. Anda a poniente; se
+// para pasada la luz, para caer de espaldas con el pecho en ella.
+const IY = CLOACA.isla.y;
+const MC = { x: CLOACA.desfigurado.x + 0.05, z: CLOACA.desfigurado.z };
+const MF = { x: -1, z: 0 };
+const MUERTE = {
+  C: MC,
+  f: MF,
+  S: { x: MC.x - MF.x * 3.0, z: MC.z - MF.z * 3.0 },
+  P: { x: MC.x + MF.x * 1.0, z: MC.z + MF.z * 1.0 },
+  // (su cabeza, tumbado de espaldas: detrás de donde miraba)
+  H: { x: MC.x - MF.x * 0.6, z: MC.z - MF.z * 0.6 },
+  Q: { x: MC.x, z: MC.z + 2.5 },
+  // (hacia dónde vuelve la cabeza para mirarte: tu lado)
+  lado: 1,
+  llega: 4.0,
+  cae: 8.6,
+  fin: 27.0,
+};
+// la luna, en lo alto del agujero (lo que mira)
+const LUNA = { x: MC.x + 1.6, y: 34, z: MC.z - 2.4 };
+// las tomas de su muerte (como las de la escena: de t0 a t1, de a a b,
+// mirando de la a lb; sigue: a su pecho; sube: cuándo va de la a lb)
+const TOMAS_MUERTE = [
+  // 1. a la luz, como puede (desde poniente, de frente; sin la higuera)
+  { t0: 0, t1: 4.2, a: [-11.8, IY + 1.05, 20.6], b: [-11.4, IY + 1.1, 20.2], la: [-8, IY + 1.2, 18.3], lb: [-9, IY + 1.2, 18.3], fov: 44, sigue: true, luz: [-8.2, IY + 3.4, 18.3, 1.0] },
+  // 2. se quita la máscara y mira arriba: la toma sube con él
+  // (de tres cuartos, a la altura de su cara: la de debajo de la máscara)
+  { t0: 4.2, t1: 8.6, a: [-10.35, IY + 2.05, 18.95], b: [-10.25, IY + 1.95, 18.85], la: [-9.2, IY + 1.85, 18.3], lb: [-8.9, IY + 6.4, 18.2], sube: [6.4, 8.3], fov: 40, luz: [-10.1, IY + 2.3, 18.6, 1.6] },
+  // 3. cae de espaldas (de lado, desde el sudeste)
+  { t0: 8.6, t1: 10.2, a: [-5.6, IY + 1.15, 21.2], b: [-5.9, IY + 1.05, 20.9], la: [-8.6, IY + 1.4, 18.3], lb: [-8.3, IY + 0.4, 18.3], fov: 50, luz: [-8.2, IY + 3.0, 18.6, 1.0] },
+  // 4. desde arriba: la luna le mira a él (tumbado en la luz, los brazos
+  // abiertos; la cabeza, arriba del encuadre)
+  { t0: 10.2, t1: 15.5, a: [-8.75, IY + 6.0, 18.3], b: [-8.7, IY + 4.6, 18.3], la: [-8.05, IY + 0.2, 18.3], lb: [-8.05, IY + 0.2, 18.3], fov: 46, luz: [-8.0, IY + 3.0, 18.4, 1.2] },
+  // 5. su cara, de cerca, de tu lado: se vuelve hacia ti
+  // (de tu lado, por encima de la hierba, más allá de su mano abierta)
+  { t0: 15.5, t1: 22.6, a: [-7.35, IY + 0.8, 19.6], b: [-7.4, IY + 0.72, 19.45], la: [-7.45, IY + 0.15, 18.3], lb: [-7.45, IY + 0.15, 18.3], fov: 34, luz: [-7.6, IY + 1.4, 19.2, 1.3] },
+  // 6. y la cámara sube por la luz, hasta la luna
+  { t0: 22.6, t1: 27.5, a: [-7.6, IY + 0.9, 18.55], b: [-8.2, IY + 7.0, 18.6], la: [-7.6, IY + 0.2, 18.3], lb: [LUNA.x, LUNA.y, LUNA.z], sube: [23.8, 26.4], fov: 50, luz: [-8.0, IY + 2.4, 18.5, 1.0] },
+];
 const FIN_ESCENA = 27.0;
 
 export class RamaCisterna {
@@ -108,6 +152,10 @@ export class RamaCisterna {
     // el cuerpo, en la alberca: la llave de la reja, del cordón del cuello
     this.cuerpo = g.interact.list.find((i) => i.id === 'x_desf_cuerpo') || null;
     if (this.cuerpo) this.cuerpo.onUse = (gg) => this.registra(gg);
+    // y el suyo, en la luz de la isla
+    this.cuerpoF = g.interact.list.find((i) => i.id === 'x_fisico_cuerpo') || null;
+    // su cabeza en el duelo (game/fisico_duelo.js)
+    this.duelo = new DueloFisico(g, g.fisico, this);
     this.applyFlags();
   }
   get F() {
@@ -154,10 +202,11 @@ export class RamaCisterna {
       g.saveGame();
     }
     if (this.cuerpo) this.cuerpo.hidden = !F['desf:muerto'];
+    if (this.cuerpoF) this.cuerpoF.hidden = !F['rama:fisico'];
     if (this.sangre && this.sangreK < 1) this.mancha(Math.min(1, this.sangreK + dt / 7));
     // la bruma que le sale de la corona
     const e = this.fis;
-    if (e && this.g.fisico.modo === 'rama' && e.obj.visible) {
+    if (e && (this.g.fisico.modo === 'rama' || this.g.fisico.modo === 'duelo') && e.obj.visible) {
       this.vapT = (this.vapT ?? 0) - dt;
       if (this.vapT <= 0) {
         this.vapT = 0.09;
@@ -169,7 +218,9 @@ export class RamaCisterna {
     }
     if (this.fase === 'escena') return this.escena(dt);
     if (this.fase === 'pelea') return this.pelea(dt);
-    if (this.fase === 'fin') return this.fin(dt);
+    if (this.fase === 'baja') return this.baja(dt);
+    if (this.fase === 'duelo') return this.enDuelo(dt);
+    if (this.fase === 'muerte') return this.muerte(dt);
     if (!this.activa) return;
     const p = g.player;
     if (p.dead || g.state !== 'play' || g.cine || g.climb) return;
@@ -217,12 +268,14 @@ export class RamaCisterna {
     e.data.air = true;
     for (const k of ['sombrero', 'vara', 'esponja', 'campanilla']) fiGrp(e, k, false);
     for (const k of ['mascara', 'evol', 'campanillaR']) fiGrp(e, k, true);
+    // (la hoja delante, la campanilla a la espalda)
+    e.data.zurdo = true;
     this.fEst = { k: 'quieto' };
   }
   // y se va (al acabar, o si caes)
   retira() {
     const F = this.g.fisico;
-    if (F && F.modo === 'rama') {
+    if (F && (F.modo === 'rama' || F.modo === 'duelo' || F.modo === 'muere')) {
       F.hide();
       F.modo = 'fuera';
     }
@@ -529,26 +582,43 @@ export class RamaCisterna {
     this.salidos = 0;
     this.ordenT = 7;
     this.ciclo = -1;
+    // (y baja enseguida: con los tres que llama, el duelo)
+    this.otraVez = true;
     this.dijoT = 12;
     this.luego(1.0, () => this.tane(3));
     this.luego(1.8, () => this.salen(3));
     g.audio && g.audio.music('bossCellar');
   }
+  // los suyos que pelean (y los que han caído)
+  vivos() {
+    return this.minions.filter((c) => !c.dead && !c.scripted && c.obj.visible);
+  }
+  muertos() {
+    return this.minions.filter((c) => c.dead).length;
+  }
+  // ¿Te tiene sujeto uno de ellos?
+  teSujetan() {
+    return this.minions.some((c) => !c.dead && c.state === 'agarrando');
+  }
+  // (lo de todos los fotogramas de la pelea: la bruma de las salidas)
+  muro() {
+    const g = this.g;
+    if (this.bruma.anteMuro(g.player.pos) && (this.muroT ?? 0) <= g.time) {
+      this.muroT = g.time + 6;
+      g.ui.toast(MSG.brumaMuro, 3);
+    }
+  }
+  // La primera tanda: él, en el pretil, mirándote pelear con ellos (y
+  // apuntando: su historia clínica de ti sigue abierta), dando las órdenes.
   pelea(dt) {
     const g = this.g;
     const p = g.player;
     const e = this.fis;
     this.t += dt;
     if (p.dead) return;
-    const vivos = this.minions.filter((c) => !c.dead && !c.scripted && c.obj.visible);
-    // la segunda tanda, cuando de la primera queda uno
-    if (this.ola === 1 && this.t > 3 && vivos.length <= 1 && (this.salidos ?? 0) < 6) {
-      this.ola = 2;
-      this.tane(1);
-      this.luego(0.8, () => this.salen(3));
-    }
-    // vencidos los seis
-    if (this.ola === 2 && (this.salidos ?? 0) >= 6 && vivos.length === 0 && !this.citas.length) return this.acaba();
+    const vivos = this.vivos();
+    // (cuando de ellos queda uno, o se cansa de mirar: baja él)
+    if (this.t > 3 && !this.citas.length && (vivos.length <= 1 || this.t > (this.otraVez ? 4.5 : 70))) return this.empiezaBaja();
     // si uno te sujeta: las tres, enseguida (todos a una)
     const sujeto = p.state === 'grabbed' && vivos.some((c) => c.state === 'agarrando');
     if (sujeto && !this.sujetoDicho) {
@@ -573,11 +643,7 @@ export class RamaCisterna {
       this.dijoT = 11 + Math.random() * 6;
       fiSay(e, pick(DIALOG.fisicoRamaPelea), 3);
     }
-    // ante la bruma de las salidas: por ahí no se pasa
-    if (this.bruma.anteMuro(p.pos) && (this.muroT ?? 0) <= g.time) {
-      this.muroT = g.time + 6;
-      g.ui.toast(MSG.brumaMuro, 3);
-    }
+    this.muro();
   }
   // Una orden: la campanilla (una vez, cercad; dos, sujetadle; tres, todos a
   // una), lo que dice, y a cada uno lo suyo.
@@ -609,36 +675,337 @@ export class RamaCisterna {
       c.data.orden = { k, t0, hasta, quien };
     });
   }
-  acaba() {
-    const g = this.g;
+
+  // ------------------------------------------------------------ baja
+  // «Basta de mirar»: por el rellano, a lo alto de la escalera, y se mete en
+  // su bruma; sale por debajo, ya en la escalera (el muro de bruma no le
+  // para: es suya; pasa a través sin que se le vea).
+  empiezaBaja() {
     const e = this.fis;
-    this.fase = 'fin';
+    this.fase = 'baja';
+    this.t = 0;
+    this.enBruma = null;
+    fiSay(e, DIALOG.fisicoRamaBaja[0], 2.2);
+    // (hasta pegado a la bruma: su caja no le deja pasar de ahí, y no hace
+    // falta)
+    this.fEst = { k: 'anda', pts: [[-13.7, SA.esc.z], [R[2] - 0.6, SA.esc.z]], v: 1.3, then: () => (this.enBruma = this.t) };
+  }
+  baja(dt) {
+    this.t += dt;
+    this.muro();
+    if ((this.enBruma != null && this.t - this.enBruma > 0.6) || this.t > 9) this.empiezaDuelo();
+  }
+  // Abajo: sale de la bruma de lo alto de la escalera, ya en ella; la
+  // segunda tanda, de la bruma; y el duelo (game/fisico_duelo.js).
+  empiezaDuelo() {
+    const g = this.g;
+    const F = g.fisico;
+    const e = this.fis;
+    const p = g.player;
+    this.fase = 'duelo';
+    this.t = 0;
+    const x = R[2] + 1.3;
+    e.body.pos.set(x, yEsc(x) + 0.02, SA.esc.z);
+    e.body.vy = 0;
+    e.yaw = Math.atan2(p.pos.x - x, p.pos.z - SA.esc.z);
+    e.obj.position.copy(e.body.pos);
+    e.data.air = false;
+    F.modo = 'duelo';
+    e.state = 'chase';
+    e.stT = 0;
+    e.aware = true;
+    e.cooldown = 1.5;
+    this.fEst = { k: 'quieto' };
+    g.fx.blood.emit(x, e.body.pos.y + 1.4, SA.esc.z, 20, { color: [0.03, 0.025, 0.04], speed: 1.6, life: 1.3, up: 1.2, gravity: -0.4 });
+    this.duelo.empiezaDuelo();
+    // (su nombre, su barra, su música)
+    g.startBoss(e);
+    this.luego(2.2, () => fiSay(e, DIALOG.fisicoRamaBaja[1], 3.4));
+    // la segunda tanda (si cuando bajó quedaba alguno de la primera, con él)
+    if (!this.otraVez) this.luego(1.4, () => this.salen(3));
+    this.otraVez = false;
+  }
+  // El duelo: lo que piensa, lo lleva su cabeza (game/fisico_duelo.js);
+  // aquí, lo que ve y le pasa (sus dudas), su luz y la bruma de las salidas.
+  enDuelo(dt) {
+    const e = this.fis;
+    this.t += dt;
+    this.duelo.update(dt);
+    if (!e || e.state === 'dead') return;
+    this.duelo.duda(dt);
+    // (la luz fría, sobre él: que se le vea en lo oscuro)
+    this.luz(e.pos.x + 0.6, e.pos.y + 3.4, e.pos.z + 0.6, 1.0);
+    this.muro();
+  }
+
+  // ------------------------------------------------------------ su muerte
+  // (entities/fisico.js, onDefeat) Vencido: su muerte la lleva su guion.
+  muere(e) {
+    e.hp = 1;
+    if (this.fase === 'duelo') this.empiezaMuerte();
+    return true;
+  }
+  // Se le cae la campanilla (la última vez que suena), y sin él los suyos se
+  // desploman y la bruma se deshace. Anda como puede hasta la luz, donde
+  // estaba siempre el otro; se quita la máscara; mira arriba, la luna; cae de
+  // espaldas. Tumbado, la ve, y entiende: lo que se mueve hacia ella, lo que
+  // quiere, está vivo; el que no se arrodilló, también. Trata de decírtelo; se
+  // ahoga en su sangre a media frase.
+  empiezaMuerte() {
+    const g = this.g;
+    const p = g.player;
+    const F = g.fisico;
+    const e = this.fis;
+    this.fase = 'muerte';
     this.t = 0;
     this.cues = new Set();
-    if (e) fiSay(e, DIALOG.fisicoRamaFin.join(' '), 4.4);
-    this.F['rama:bruma'] = true;
-    this.bruma.cierra(false);
+    this.citas = [];
+    this.duelo.citas = [];
+    F.modo = 'muere';
+    e.scripted = true;
+    // (el destello del último golpe: se apaga en su update, que ya no corre)
+    e.flash = 0;
+    e.atk = null;
+    e.state = 'chase';
+    e.vx = e.vz = 0;
+    e.data.lookUp = false;
+    e.anim.speed = 1;
+    e.D.engaged = false;
+    g.lockTarget = null;
+    g.speech && e.P.who && g.speech.hush(e.P.who);
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    p.autoDir = null;
+    g.ui.cineHud(true);
     g.audio && g.audio.stopMusic();
+    // la campanilla, al suelo (suena una vez más)
+    fiGrp(e, 'campanillaR', false);
+    g.audio && g.audio.play('campanilla', { x: e.pos.x, y: e.pos.y + 1, z: e.pos.z });
+    // los suyos: sin él (sin la bruma que les tenía en pie), se desploman
+    for (const c of this.vivos()) {
+      c.data.orden = null;
+      c.die();
+    }
+    if (p.state === 'grabbed' && p.releaseGrab) p.releaseGrab(0.5, 0, 0, 0);
+    p.state = 'cine';
+    // la bruma se deshace
+    this.bruma.cierra(false);
+    this.bruma.pon({ suelo: 0, suelo2: 0, cae: 0, radio: 0, galeria: 0, rellano: 0, rellano2: 0 });
+    // (a la luz: de donde vienen sus pasos, siempre los mismos —el corte de la
+    // primera toma lo esconde—; tú, a un lado)
+    const M = MUERTE;
+    const yI = (x, z) => g.world.col.groundHeight(x, z, 0.3, YS + 2);
+    e.body.pos.set(M.S.x, yI(M.S.x, M.S.z), M.S.z);
+    e.yaw = Math.atan2(M.f.x, M.f.z);
+    e.obj.position.copy(e.body.pos);
+    e.anim.play(FI_CLIPS.tambalea, { blend: 0.2, loop: true });
+    p.spawn(M.Q.x, yI(M.Q.x, M.Q.z), M.Q.z, Math.atan2(M.P.x - M.Q.x, M.P.z - M.Q.z));
+    p.state = 'cine';
+    this.yace = null;
+    this.lunaOn(true);
+  }
+  muerte(dt) {
+    const g = this.g;
+    const p = g.player;
+    const e = this.fis;
+    const M = MUERTE;
+    const t = (this.t += dt);
+    const cue = (id, at) => (t >= at && !this.cues.has(id) ? (this.cues.add(id), true) : false);
+    p.state = 'cine';
+    p.vx = p.vz = 0;
+    g.post.U.uBars.value = 0.11 * sm(t / 0.7);
+    if (t > 2 && t < 26 && !g.ui.modal && g.input.pressed('interact')) return this.finMuerte();
+    // 1. a la luz, como puede
+    if (t < M.llega) {
+      const u = t / M.llega;
+      const x = lerp(M.S.x, M.P.x, u),
+        z = lerp(M.S.z, M.P.z, u);
+      const v = Math.hypot(M.P.x - M.S.x, M.P.z - M.S.z) / M.llega;
+      e.body.pos.set(x, g.world.col.groundHeight(x, z, 0.3, YS + 2), z);
+      e.vx = M.f.x * v;
+      e.vz = M.f.z * v;
+      // (le cuesta: tose, gotea)
+      this.gotaT = (this.gotaT ?? 0) - dt;
+      if (this.gotaT <= 0) {
+        this.gotaT = 0.5 + Math.random() * 0.4;
+        g.fx.blood.emit(x, e.body.pos.y + 1.1, z, 3, { speed: 0.6, life: 0.8, up: 0.2, stain: true });
+      }
+    } else {
+      e.vx = damp(e.vx, 0, 10, dt);
+      e.vz = damp(e.vz, 0, 10, dt);
+    }
+    // 2. se quita la máscara y mira arriba: la luna
+    if (cue('quita', M.llega)) e.anim.play(FI_CLIPS.quita, { blend: 0.25 });
+    // (sin máscara: el aire de aquí abajo, por primera vez, con su boca)
+    if (cue('mascara', M.llega + 0.85)) {
+      fiGrp(e, 'mascara', false);
+      g.audio && g.audio.play('reyGasp', { x: e.pos.x, y: e.pos.y + 1.8, z: e.pos.z });
+    }
+    if (cue('mira', M.llega + 1.8)) e.anim.play(FI_CLIPS.mira, { blend: 0.4, loop: true });
+    if (cue('ah', 6.8)) fiSay(e, DIALOG.fisicoRamaMuere[0], 2.0);
+    // 3. cae de espaldas (a cámara lenta)
+    if (cue('cae', M.cae)) {
+      e.anim.play(FI_CLIPS.caeAtras, { blend: 0.12 });
+      e.state = 'dead';
+      g.timeK = 0.55;
+      this.yace = { pitch: 0, cabeza: 0, alto: 0 };
+    }
+    if (this.yace && t >= M.cae && t < M.cae + 1.0) {
+      const u = Math.min(1, (t - M.cae) / 0.9);
+      this.yace.pitch = -(Math.PI / 2) * u * u;
+      this.yace.alto = 0.11 * u;
+    }
+    if (cue('suelo', M.cae + 0.9)) {
+      this.yace.pitch = -Math.PI / 2;
+      this.yace.alto = 0.11;
+      e.anim.play(FI_CLIPS.yace, { blend: 0.2, loop: true });
+      g.audio && g.audio.play('bodyFall', { x: e.pos.x, y: e.pos.y, z: e.pos.z });
+      g.camRig.shake(0.15);
+      g.fx.blood.emit(M.H.x, e.body.pos.y + 0.1, M.H.z, 14, { color: [0.2, 0.26, 0.14], speed: 1.2, life: 0.9, up: 1.0 });
+    }
+    if (cue('normal', M.cae + 1.4)) g.timeK = 1;
+    // 4. tumbado, la ve; y lo dice
+    if (cue('todo', 11.0)) fiSay(e, DIALOG.fisicoRamaMuere[1], 3.2);
+    // 5. se vuelve hacia ti: trata de decírtelo
+    if (this.yace && t > 15.8 && t < 22) this.yace.cabeza = damp(this.yace.cabeza, M.lado * 0.95, 2.2, dt);
+    if (cue('tu', 16.6)) fiSay(e, DIALOG.fisicoRamaMuere[2], 2.6);
+    if (cue('unico', 19.4)) fiSay(e, DIALOG.fisicoRamaMuere[3], 4);
+    // (y a media frase, la sangre)
+    if (cue('ahoga', 20.5)) {
+      g.speech && e.P.who && g.speech.hush(e.P.who);
+      e.anim.play(FI_CLIPS.ahoga, { blend: 0.08, loop: true });
+      g.audio && g.audio.play('choke', { x: e.pos.x, y: e.pos.y, z: e.pos.z });
+    }
+    if (t > 20.5 && t < 22.6) {
+      this.sangreT = (this.sangreT ?? 0) - dt;
+      if (this.sangreT <= 0) {
+        this.sangreT = 0.16 + Math.random() * 0.1;
+        const h = e.rig.joints.jaw || e.rig.joints.head;
+        h.getWorldPosition(this._v);
+        g.fx.blood.emit(this._v.x, this._v.y + 0.06, this._v.z, 5, { speed: 0.9, life: 0.7, up: 1.3, stain: true });
+      }
+    }
+    if (cue('quieto', 22.6)) {
+      e.anim.play(FI_CLIPS.yace, { blend: 0.9, loop: true });
+      g.audio && g.audio.play('reyLastBreath', { x: e.pos.x, y: e.pos.y, z: e.pos.z });
+    }
+    // (y vuelve la cara a la luna, con los ojos abiertos)
+    if (this.yace && t > 22.6) this.yace.cabeza = damp(this.yace.cabeza, M.lado * 0.2, 0.9, dt);
+    if (cue('respira', 23.2)) e.anim.speed = 0.05;
+    this.camaraMuerte(t);
+    e.animate(dt);
+    if (t >= M.fin) this.finMuerte();
+  }
+  // las tomas de su muerte
+  camaraMuerte(t) {
+    const g = this.g;
+    const e = this.fis;
+    let T = TOMAS_MUERTE[TOMAS_MUERTE.length - 1];
+    for (const q of TOMAS_MUERTE)
+      if (t >= q.t0 && t < q.t1) {
+        T = q;
+        break;
+      }
+    const u = sm((t - T.t0) / (T.t1 - T.t0));
+    const ul = T.sube ? sm((t - T.sube[0]) / (T.sube[1] - T.sube[0])) : u;
+    const C = this.cam;
+    const { a, b, la, lb } = T;
+    C.pos.set(lerp(a[0], b[0], u), lerp(a[1], b[1], u), lerp(a[2], b[2], u));
+    C.look.set(lerp(la[0], lb[0], ul), lerp(la[1], lb[1], ul), lerp(la[2], lb[2], ul));
+    if (T.sigue) {
+      const h = e.rig.joints.chest || e.rig.joints.head;
+      h.getWorldPosition(this._v);
+      C.look.set(this._v.x, this._v.y + 0.3, this._v.z);
+    }
+    g.camRig.override = { pos: C.pos, look: C.look, fov: T.fov, snap: true };
+    this.luz(...T.luz);
+  }
+  // Acaba: muerto, tumbado en la luz, para siempre; su nombre, y lo de los
+  // jefes (game.onEnemyDeath).
+  finMuerte() {
+    const g = this.g;
+    const p = g.player;
+    const F = g.fisico;
+    const e = this.fis;
+    this.fase = 'tras';
+    this.t = 0;
+    g.speech && e.P.who && g.speech.hush(e.P.who);
+    this.F['rama:fisico'] = true;
+    this.F['rama:bruma'] = true;
+    this.yaceCuerpo();
+    F.modo = 'fuera';
+    g.camRig.override = null;
+    g.camRig.snapTo(p);
+    g.camera.fov = g.camRig.fovBase;
+    g.camera.updateProjectionMatrix();
+    g.post.U.uBars.value = 0;
+    g.timeK = 1;
+    if (p.state === 'cine') p.state = 'free';
+    g.ui.showHud(true);
+    this.bruma.quita();
+    this.lunaOn(false);
+    this.luzFuera();
+    g.onEnemyDeath(e);
     g.saveGame();
   }
-  fin(dt) {
+  // Su cuerpo, en la luz de la isla (al acabar, y al cargar).
+  yaceCuerpo() {
     const g = this.g;
-    this.t += dt;
-    const cue = (id, at) => (this.t >= at && !this.cues.has(id) ? (this.cues.add(id), true) : false);
-    if (cue('vase', 3.2)) {
-      this.fEst = { k: 'anda', pts: [[PASO.x, PASO.z], [SALE.x, SALE.z], [SALE.x, SALE.z - 5]], v: 1.0, then: () => this.retira() };
-      this.bruma.pon({ suelo: 0, suelo2: 0, cae: 0, radio: 0 });
+    const e = this.fis;
+    if (!e) return;
+    const M = MUERTE;
+    e.reset();
+    e.flash = 0;
+    e.spec.held = false;
+    e.dead = true;
+    e.hp = 0;
+    e.state = 'dead';
+    e.scripted = true;
+    e.D = e.D || {};
+    e.D.engaged = false;
+    e.D.hidden = false;
+    e.obj.visible = true;
+    e.shadow.visible = false;
+    for (const k of ['mascara', 'sombrero', 'vara', 'esponja', 'campanilla', 'campanillaR']) fiGrp(e, k, false);
+    fiGrp(e, 'evol', true);
+    e.data.zurdo = true;
+    e.body.pos.set(M.P.x, g.world.col.groundHeight(M.P.x, M.P.z, 0.3, YS + 2), M.P.z);
+    e.yaw = Math.atan2(M.f.x, M.f.z);
+    e.obj.position.copy(e.body.pos);
+    this.yace = { pitch: -Math.PI / 2, cabeza: M.lado * 0.2, alto: 0.11 };
+    e.anim.play(FI_CLIPS.yace, { blend: 0, t0: 0 });
+    e.anim.speed = 0;
+    e.animate(0.05);
+    if (this.cuerpoF) this.cuerpoF.hidden = false;
+  }
+  // (el cuerpo entero, de su raíz: cayendo de espaldas, tumbado; y la cabeza,
+  // hacia ti: entities/fisico.js)
+  rootRot(e) {
+    const Y = this.yace;
+    const o = e.obj;
+    if (Y && Y.pitch) {
+      o.rotation.order = 'YXZ';
+      o.rotation.x = Y.pitch;
+      o.rotation.z = 0;
+      o.position.y = e.body.pos.y + (Y.alto || 0);
+      if (Y.cabeza && e.rig.joints.head) e.rig.joints.head.rotateY(Y.cabeza);
+    } else if (o.rotation.x || o.rotation.z) {
+      o.rotation.x = 0;
+      o.rotation.z = 0;
     }
-    if (cue('galeria', 6.5)) this.bruma.pon({ galeria: 0, rellano: 0, rellano2: 0 });
-    // (y la luz se apaga despacio, con la bruma)
-    const L = g.bossLight;
-    if (this.t > 3.2 && L && this.luz0) L.intensity = Math.max(0, LUZ_PELEA[3] * (1 - (this.t - 3.2) / 5));
-    if (cue('acaba', 10)) {
-      this.fase = null;
-      this.retira();
-      this.luzFuera();
-      g.ui.toast(MSG.brumaSeVa, 5);
+  }
+  // La luna, en lo alto del agujero (sólo para su muerte: desde la ciudad no
+  // se ve un disco de más).
+  lunaOn(on) {
+    if (on && !this.luna) {
+      const m = new THREE.Mesh(new THREE.CircleGeometry(2.6, 28), new THREE.MeshBasicMaterial({ color: 0xe6edf7, fog: false }));
+      m.position.set(LUNA.x, LUNA.y, LUNA.z);
+      m.lookAt(MUERTE.C.x, YS, MUERTE.C.z);
+      m.renderOrder = -1;
+      this.g.scene.add(m);
+      this.luna = m;
     }
+    if (this.luna) this.luna.visible = on;
   }
 
   // La sangre en el agua, alrededor de él: crece despacio y se queda (k, de
@@ -712,6 +1079,11 @@ export class RamaCisterna {
     if (this.F['desf:muerto']) this.mancha(1);
     else if (this.sangre) this.mancha(0);
     if (this.cuerpo) this.cuerpo.hidden = !this.F['desf:muerto'];
+    this.lunaOn(false);
+    // (muerto en la cisterna: tumbado en la luz, para siempre)
+    this.yace = null;
+    if (this.F['rama:fisico']) this.yaceCuerpo();
+    if (this.cuerpoF) this.cuerpoF.hidden = !this.F['rama:fisico'];
   }
   onRespawn() {
     const g = this.g;
@@ -725,10 +1097,13 @@ export class RamaCisterna {
     }
     this.fase = null;
     this.citas = [];
+    this.duelo.citas = [];
     this.caida = null;
+    this.otraVez = false;
     this.retira();
     this.bruma.quita();
     this.luzFuera();
+    this.lunaOn(false);
     g.timeK = 1;
     if (g.camRig.override && this.cam && g.camRig.override.pos === this.cam.pos) g.camRig.override = null;
   }
