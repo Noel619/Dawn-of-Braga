@@ -98,6 +98,10 @@ export class Atmosphere {
     this.moonC = new THREE.Color(0x9fb2cc);
     this.brightness = 0;
     this.override = null;
+    // (una escena que pone su luna, game/fisico_rama.js: hacia dónde está,
+    // desde la cámara; la del cielo se pone justo detrás, y de ella sólo se
+    // ve su halo)
+    this.lunaDir = null;
   }
   set(name, instant = false) {
     this.target = ATMO[name] || ATMO.city;
@@ -144,8 +148,9 @@ export class Atmosphere {
     U.uFogColor.value.copy(this.fogC);
     U.uVol.value = c.vol;
     U.uSkyGlow.value = this.name === 'dawn' ? 0 : this.name === 'city' || this.name === 'castillo' || this.name === 'armas' || this.name === 'ramparts' || this.name === 'luna' ? 1 : 0;
-    U.uMoonK.value = damp(U.uMoonK.value, T.moonDisc || 0, 1.5, dt);
-    U.uMoonDir.value.copy(this.moon.position).normalize();
+    U.uMoonK.value = this.lunaDir ? 1 : damp(U.uMoonK.value, T.moonDisc || 0, 1.5, dt);
+    if (this.lunaDir) U.uMoonDir.value.copy(this.lunaDir);
+    else U.uMoonDir.value.copy(this.moon.position).normalize();
     U.uSun.value = damp(U.uSun.value, this.name === 'dawn' ? 1 : 0, 1, dt);
     // luz del amanecer: rasante desde el norte
     // (la película del jefe final puede mover la luna: de contraluz)

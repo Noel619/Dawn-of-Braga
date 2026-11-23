@@ -416,7 +416,9 @@ export class ParticleBurst {
         void main(){
           vec4 mv = viewMatrix * vec4(position, 1.0);
           gl_Position = psxSnap(projectionMatrix * mv);
-          gl_PointSize = uPix * max(1.0, 7.0 / max(0.5, -mv.z) * 2.0);
+          // (con tope: pegadas a la cámara —el humo de la bruma, el vaho de
+          // los Coronados— eran losas cuadradas de medio palmo de pantalla)
+          gl_PointSize = uPix * clamp(7.0 / max(0.5, -mv.z) * 2.0, 1.0, 8.0);
           vC = color;
         }`,
       fragmentShader: `varying vec3 vC; void main(){ if (vC.r+vC.g+vC.b <= 0.0) discard; gl_FragColor = vec4(vC, 1.0); }`,
@@ -537,27 +539,35 @@ export class LightShafts {
     this.mat = new THREE.ShaderMaterial({
       uniforms: { uTime: G.uTime },
       vertexShader: `
-        attribute vec3 color; attribute float aAlong;
-        varying vec2 vUv; varying vec3 vC; varying float vDist;
+        attribute vec3 color; attribute float aAsp;
+        varying vec2 vUv; varying vec3 vC; varying float vDist; varying vec3 vN; varying vec3 vV; varying float vAsp;
         void main(){
-          vUv = uv; vC = color;
+          vUv = uv; vC = color; vAsp = aAsp;
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
           vDist = -mv.z;
+          vN = normalMatrix * normal;
+          vV = -mv.xyz;
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `
         uniform float uTime;
-        varying vec2 vUv; varying vec3 vC; varying float vDist;
+        varying vec2 vUv; varying vec3 vC; varying float vDist; varying vec3 vN; varying vec3 vV; varying float vAsp;
         float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
         void main(){
           float across = sin(vUv.x * 3.14159);
           across = across * across * across;
           float along = smoothstep(0.0, 0.2, vUv.y) * pow(1.0 - vUv.y, 1.3);
-          // motas de polvo que caen lentamente
-          vec2 g = floor(vec2(vUv.x * 22.0, vUv.y * 60.0 + uTime * 1.2));
-          float dust = step(0.985, h(g)) * 1.5;
+          // motas de polvo que caen lentamente (una mota pequeña en su celda,
+          // no la celda entera: de cerca eran losetas claras flotando)
+          vec2 c = vec2(vUv.x * 22.0, vUv.y * 60.0 + uTime * 1.2);
+          vec2 g = floor(c);
+          vec2 f = abs(fract(c) - 0.5) * vec2(1.0, vAsp);
+          float dust = step(0.985, h(g)) * step(max(f.x, f.y), 0.2) * 1.5;
           float near = smoothstep(2.0, 7.0, vDist);
-          float a = across * along * near;
+          // (de canto, la cinta se apaga: mirada a lo largo del haz, o de
+          // perfil, era una cruz o una raya de luz)
+          float face = smoothstep(0.06, 0.45, abs(dot(normalize(vN), normalize(vV))));
+          float a = across * along * near * face;
           gl_FragColor = vec4(vC * (a * 0.13 + dust * a * 0.4), 1.0);
         }`,
       transparent: true,
@@ -568,17 +578,21 @@ export class LightShafts {
     this.pos = [];
     this.uv = [];
     this.col = [];
+    this.nor = [];
+    this.asp = [];
     this.idx = [];
   }
   // haz desde 'a' (ventana) hasta 'b' (suelo), con anchura w (k: cuánto
   // brilla, 1 el de siempre)
   add(a, b, w, color, k = 1) {
-    const n = this.pos.length / 3;
     const dir = new THREE.Vector3().subVectors(b, a);
     const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0));
     if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
     side.normalize().multiplyScalar(w / 2);
     const c = new THREE.Color(color).multiplyScalar(k);
+    // (lo alto de una celda de las motas, por lo ancho: para que la mota
+    // sea cuadrada; la cinta se abre al bajar, 1.6 veces)
+    const asp = dir.length() / 60 / ((w * 1.3) / 22);
     // dos cintas cruzadas para que se vea desde cualquier ángulo
     const side2 = new THREE.Vector3().crossVectors(dir, side).normalize().multiplyScalar(w / 2);
     for (const s of [side, side2]) {
@@ -586,7 +600,13 @@ export class LightShafts {
       const pts = [a.clone().sub(s), a.clone().add(s), b.clone().add(s.clone().multiplyScalar(1.6)), b.clone().sub(s.clone().multiplyScalar(1.6))];
       for (const p of pts) this.pos.push(p.x, p.y, p.z);
       this.uv.push(0, 0, 1, 0, 1, 1, 0, 1);
-      for (let i = 0; i < 4; i++) this.col.push(c.r, c.g, c.b);
+      // (la normal de la cinta: para apagarla de canto)
+      const nn = new THREE.Vector3().crossVectors(dir, s).normalize();
+      for (let i = 0; i < 4; i++) {
+        this.col.push(c.r, c.g, c.b);
+        this.nor.push(nn.x, nn.y, nn.z);
+        this.asp.push(asp);
+      }
       this.idx.push(k, k + 1, k + 2, k, k + 2, k + 3);
     }
   }
@@ -596,6 +616,8 @@ export class LightShafts {
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor, 3));
+    g.setAttribute('aAsp', new THREE.Float32BufferAttribute(this.asp, 1));
     g.setIndex(this.idx);
     g.computeBoundingSphere();
     const m = new THREE.Mesh(g, this.mat);

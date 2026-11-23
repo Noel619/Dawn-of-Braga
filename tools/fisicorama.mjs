@@ -16,7 +16,7 @@
 //        enseguida)
 //   cuerpo: el cuerpo en la alberca (la llave de la reja) y su mesa (el
 //           cuaderno)
-//   fotos: capturas de la escena (tools/shots/rama_<i>.png)
+//   fotos: capturas de la escena, la pelea y su muerte (tools/shots/rama_<i>.png)
 //   (con npx vite --port 5199 en marcha; si no lo está, levanta el suyo)
 import { chromium } from 'playwright';
 const PORT = +(process.env.PORT || 5199);
@@ -338,6 +338,7 @@ const pelea = async () => {
     R.ordena = o0;
     return { ord, agarrado: +(agarrado / 30).toFixed(1), golpes, dmin: +dmin.toFixed(2), cercoBien: cerco ? +(enCerco / cerco).toFixed(2) : null, L };
   }));
+  await foto('p_ordenes');
   out('la bruma de la escalera', await ev(() => {
     const g = __game,
       pl = g.player;
@@ -350,6 +351,7 @@ const pelea = async () => {
     pl.autoDir = null;
     return { pos: P3(pl.pos), toast: __toast() };
   }));
+  await foto('p_escalera');
   // a por ellos: los de la primera tanda (menos uno): baja él
   out('baja', await ev(() => {
     const g = __game,
@@ -369,6 +371,7 @@ const pelea = async () => {
     for (let i = 0; i < 120; i++) g.update(1 / 30);
     return { fase: R.fase, modo: g.fisico.modo, tardo: +(t0 - (baja ?? t0)).toFixed(1), pos: P3(e.pos), air: !!e.data.air, zurdo: !!e.data.zurdo, barra: !!e.D.engaged && g.activeBoss === e, vivos: R.vivos().length, muros: R.bruma.muros.map((M) => !!M.box), tema: __tema() };
   }));
+  await foto('p_baja');
   // el duelo: lo que hace él (quieto e invulnerable el jugador, 45 s)
   out('duelo (45 s)', await ev(() => {
     const g = __game,
@@ -404,6 +407,7 @@ const pelea = async () => {
     g.speech.say = s0;
     return { golpes, estoques, ord, sujeto: +(sujeto / 30).toFixed(1), cerca: +(cerca / 30).toFixed(1), hp: +(e.hp / e.maxHp).toFixed(2), frases: dudas.length, dudas: D.dudas, ultima: dudas.slice(-2), mente: [D.mente.reaccion, D.mente.temp].map((v) => +v.toFixed(2)), tema: __tema() };
   }));
+  await foto('p_duelo');
 };
 // su muerte: vencido en el duelo, la escena entera (y sus fotos)
 const muerte = async () => {

@@ -266,8 +266,10 @@ const ZONE_MUSIC = {
   cellar: 'crypt',
   lair: 'crypt',
   cloaca: 'crypt',
-  cloaca_luz: 'sanctuary',
-  vergel: 'sanctuary',
+  // (lo que se escondió aquí abajo: su tema, el de la sala de la luz y el
+  // del Vergel)
+  cloaca_luz: 'vergel',
+  vergel: 'vergel',
   oscuro: 'crypt',
   lobera: 'crypt',
   viejas: 'crypt',
@@ -327,8 +329,8 @@ const ZONE_BED = {
   lair: [0, 0, 0.15, 0.09, 0],
   // (la cloaca: el agua del canal corriendo; en la sala de la luz, la cascada)
   cloaca: [0, 0, 0.12, 0.05, 0.32],
-  cloaca_luz: [0.03, 0, 0.1, 0.03, 0.5],
-  vergel: [0.02, 0, 0.07, 0.02, 0.42],
+  cloaca_luz: [0.03, 0, 0.1, 0.03, 0.36],
+  vergel: [0.02, 0, 0.07, 0.02, 0.28],
   oscuro: [0, 0, 0.18, 0.14, 0],
   lobera: [0, 0, 0.16, 0.12, 0.08],
   viejas: [0, 0, 0.14, 0.08, 0.18],
@@ -4276,29 +4278,31 @@ export class Audio {
       case 'vergel': {
         // el Vergel: las ranas de la orilla, los grillos del prado, las gotas
         // que caen al estanque, las hojas que se mueven
-        if (r < 0.3) {
-          const d = I(near(9, 0.2), 0.5, 4);
-          const n = 3 + Math.floor(Math.random() * 4),
+        // (los grillos, más bajos y más lejos, y menos a menudo: tapaban la
+        // música y cansaban)
+        if (r < 0.26) {
+          const d = I(near(10, 0.2), 0.42, 4);
+          const n = 3 + Math.floor(Math.random() * 3),
             f = rnd(170, 300);
           for (let i = 0; i < n; i++) {
             const tt = t + i * rnd(0.12, 0.2);
-            this.tone(d, tt, rnd(0.06, 0.09), { f0: f, f1: f * 0.8, gain: 0.05, a: 0.006 });
-            this.noise(d, tt, 0.07, { f0: f * 2.2, q: 6, gain: 0.04, a: 0.005, buf: this.pink });
+            this.tone(d, tt, rnd(0.06, 0.09), { f0: f, f1: f * 0.8, gain: 0.035, a: 0.006 });
+            this.noise(d, tt, 0.07, { f0: f * 2.2, q: 6, gain: 0.028, a: 0.005, buf: this.pink });
           }
-        } else if (r < 0.55) {
-          const d = I(near(7, 0.1), 0.45, 3);
-          const f = rnd(4200, 5200);
-          const g = 2 + Math.floor(Math.random() * 3);
+        } else if (r < 0.38) {
+          const d = O(far(9, 16, 0.3), 0.5, { ref: 4, roll: 1, verb: 0.5, life: 3 });
+          const f = rnd(4200, 5000);
+          const g = 1 + Math.floor(Math.random() * 3);
           for (let j = 0; j < g; j++)
-            for (let i = 0; i < 3; i++) this.tone(d, t + j * rnd(0.35, 0.5) + i * 0.05, 0.022, { f0: f, f1: f * 0.98, gain: 0.014, a: 0.002 });
-        } else if (r < 0.72) {
+            for (let i = 0; i < 3; i++) this.tone(d, t + j * rnd(0.4, 0.6) + i * 0.055, 0.02, { f0: f, f1: f * 0.98, gain: 0.006, a: 0.002 });
+        } else if (r < 0.6) {
           const d = I(near(8, 1.5), 0.5, 3);
           const f = rnd(800, 1500);
           this.tone(d, t, 0.14, { f0: f, f1: f * 0.72, gain: 0.04, a: 0.002 });
           this.noise(d, t, 0.02, { type: 'highpass', f0: 3000, gain: 0.025, a: 0.001 });
-        } else if (r < 0.84) this.noise(I(near(5, 1.2), 0.4, 3), t, rnd(0.8, 1.6), { f0: rnd(900, 1400), f1: rnd(1500, 2200), q: 1.4, gain: 0.025, a: 0.4, buf: this.pink, curve: 'lin' });
+        } else if (r < 0.76) this.noise(I(near(5, 1.2), 0.4, 3), t, rnd(0.8, 1.6), { f0: rnd(900, 1400), f1: rnd(1500, 2200), q: 1.4, gain: 0.025, a: 0.4, buf: this.pink, curve: 'lin' });
         else return null;
-        return rnd(1.2, 3.5);
+        return rnd(2, 4.5);
       }
       case 'oscuro': {
         // lo oscuro: algo grande que respira al otro lado del derrumbe, unas

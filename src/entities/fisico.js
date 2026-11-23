@@ -470,8 +470,10 @@ const K_PICA = [
 ];
 
 // tumbado boca arriba, los brazos abiertos (el cuerpo entero lo tumba su raíz:
-// RamaCisterna.rootRot): la pose, como si estuviera de pie
-const YACE = { root: [0, 0, 0], chest: [0, 0, 0], head: [-4, 0, 0], armL: [-4, 0, 78], foreL: [-14, 0, 0], handL: [0, 0, 0], armR: [-4, 0, -74], foreR: [-22, 0, 0], handR: [0, 0, 0], legL: [0, 0, 5], shinL: [6, 0, 0], footL: [0, 0, 0], legR: [0, 0, -7], shinR: [9, 0, 0], footR: [0, 0, 0] };
+// RamaCisterna.rootRot): la pose, como si estuviera de pie; la muñeca
+// izquierda, caída (si no, la hoja, que va a lo largo de la mano, quedaba
+// de punta hacia el cielo: ahora sigue al brazo, por el suelo)
+const YACE = { root: [0, 0, 0], chest: [0, 0, 0], head: [-4, 0, 0], armL: [-4, 0, 78], foreL: [-14, 0, 0], handL: [84, 0, 0], armR: [-4, 0, -74], foreR: [-22, 0, 0], handR: [0, 0, 0], legL: [0, 0, 5], shinL: [6, 0, 0], footL: [0, 0, 0], legR: [0, 0, -7], shinR: [9, 0, 0], footR: [0, 0, 0] };
 // herido de muerte: encorvado, la derecha apretada contra la herida, la hoja
 // colgando de la izquierda
 const HERIDO = { chest: [26, 0, 6], head: [22, 8, 6], armR: [-34, 0, -26], foreR: [-112, 0, 0], handR: [0, 0, 0], armL: [4, 0, 14], foreL: [-18, 0, 0], handL: [0, 0, 10] };

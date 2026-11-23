@@ -22,9 +22,11 @@ export const ACUSTICA = {
   // ---------------------------------------------------------- la cloaca (world/cloaca.js)
   cloaca_bodega: { suelo: 'stone', eco: ['room', 0.32], amb: 'despensa' },
   cloaca: { suelo: 'stone', eco: ['crypt', 0.62], amb: 'aljibe', cama: [0, 0, 0.12, 0.05, 0.32] },
-  cloaca_luz: { suelo: 'dirt', eco: ['hall', 0.55], amb: 'aljibe', cama: [0.03, 0, 0.1, 0.03, 0.55] },
+  // (el agua de fondo, algo más baja en la sala de la luz y en el Vergel:
+  // tapaba su música; la cascada de cerca, la suya: game/cloaca.js)
+  cloaca_luz: { suelo: 'dirt', eco: ['hall', 0.55], amb: 'aljibe', cama: [0.03, 0, 0.1, 0.03, 0.36] },
   cloaca_desague: { suelo: 'stone', eco: ['crypt', 0.6], amb: 'aljibe', cama: [0, 0, 0.12, 0.05, 0.4] },
-  vergel: { suelo: 'dirt', eco: ['hall', 0.66], amb: 'vergel', cama: [0.02, 0, 0.07, 0.02, 0.42] },
+  vergel: { suelo: 'dirt', eco: ['hall', 0.66], amb: 'vergel', cama: [0.02, 0, 0.07, 0.02, 0.28] },
   cloaca_se: { suelo: 'stone', eco: ['crypt', 0.72], amb: 'oscuro', cama: [0, 0, 0.18, 0.14, 0] },
   // las cloacas hondas (world/cloacas_hondas.js)
   lobera: { suelo: 'stone', eco: ['crypt', 0.7], amb: 'lobera', cama: [0, 0, 0.16, 0.12, 0.1] },

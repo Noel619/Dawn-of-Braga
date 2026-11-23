@@ -80,9 +80,9 @@ de verdad), siempre o nunca.
 <!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 76 % hacia la 1.0"></a></p>
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 77 % hacia la 1.0"></a></p>
 
-**76 % hacia la 1.0**: 87 de 114 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**77 % hacia la 1.0**: 88 de 115 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -97,7 +97,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
 | VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (14 de 14) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
-| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (11 de 11) |
+| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (12 de 12) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
@@ -1558,7 +1558,10 @@ al otro lado; las casas, con una caja de música olvidada; las capillas con alta
 en paz (ahí no entra la tensión); el patio de honor de la fortaleza, con una pavana de salterio en dórico que de
 cuando en cuando se calla a media frase (alguien ha dejado de tocar), la zanfona debajo, un coro de dueñas muy lejos
 y la campana de la Capilla Real; la catedral, con órgano lleno y canto gregoriano; la cripta, con drones sordos y
-coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
+coros disonantes; la sala de la luz de la cisterna y el Vergel (la vida que se escondió bajo la ciudad), en mi
+lidio y en 6/8, como el agua que corre: un arpegio de salterio que no para, las cuerdas graves en la quinta, el coro
+que se abre cada dos compases, un canto de flauta que sube hacia la luz y, de tarde en tarde, una campanilla (sin
+tambores: allí no se pelea; los grillos y las ranas, debajo). El Empalado tiene su propia percusión de guerra en frigio dominante (más rápida en la segunda
 fase, y desbocada en la huida de la Bestia); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
 y un coro que salmodia en una sola nota (y, mientras te caza, un latido lento en 7/8 con la caja de música a medio
 sonar, clústeres de cuerda y susurros), y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies

@@ -193,8 +193,13 @@ export class Speech {
         b.el.style.left = Math.round(W / 2) + 'px';
         b.el.style.top = Math.round(H * (b.who.subY ?? 0.66)) + 'px';
       } else {
+        // (sin salirse por arriba: ni de la pantalla ni por la franja negra
+        // de las escenas, que lo cortaba si quien habla está en lo alto del
+        // cuadro)
+        const top = ((1 - v.y) / 2) * H;
+        const min = H * ((g.post && g.post.U.uBars.value) || 0) + b.el.offsetHeight + 4;
         b.el.style.left = Math.round(((v.x + 1) / 2) * W) + 'px';
-        b.el.style.top = Math.round(((1 - v.y) / 2) * H) + 'px';
+        b.el.style.top = Math.round(Math.max(top, min)) + 'px';
       }
     }
   }

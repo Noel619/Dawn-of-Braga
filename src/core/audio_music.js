@@ -1100,6 +1100,30 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- lo que se escondió aquí abajo
+  // La sala de la luz de la cisterna y el Vergel: la vida que se escondió
+  // bajo la ciudad (la del Desfigurado: «Hermosa...»). En mi lidio (la misma
+  // tónica que el frigio del Físico: su muerte va de lo suyo a esto), en 6/8,
+  // como el agua que corre: el salterio en un arpegio que no para, las cuerdas
+  // graves en la quinta, el coro que se abre cada dos compases y, cada cuatro,
+  // un canto de flauta que sube (lo que crece hacia el agujero, hacia la luz);
+  // una campanilla, de tarde en tarde. Sin tambores: aquí no se pelea.
+  vergel: {
+    bpm: 126,
+    root: 40,
+    mode: 'lydian',
+    meter: 6,
+    prog: [0, 1, 4, 0, 5, 1, 4, 4],
+    chordBars: 2,
+    level: 1.35,
+    verb: 0.85,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], wave: 'flute', cutoff: 900, level: 0.08, rate: 0.05, depth: 0.15, detune: [-2, 2] },
+    step(S) {
+      vergelStep(S);
+    },
+  },
+
   // ---------------------------------------------------------------- catedral
   cathedral: {
     bpm: 50,
@@ -1898,6 +1922,35 @@ function muerteFisicoStep(S) {
   });
   [76, 78, 80, 83].forEach((n, i) => en(MS_(23.8) + i * 1.3, (tt) => m.pluck(B, tt, n, 0.07, { bright: 0.55, dur: 5 })));
   en(MS_(26.2), (tt) => m.bell(B, tt, 88, 0.05, { kind: 'small', pan: -0.2 }));
+}
+
+// Lo que se escondió aquí abajo: el arpegio del salterio (corcheas: tónica,
+// quinta, décima, la novena arriba, décima, quinta), el canto que sube
+const ARPEGIO_V = [0, 4, 9, 8, 9, 4];
+const CANTO_V = [4, 5, 6, 7, 8, 7, 6, 9];
+function vergelStep(S) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  // el salterio, sin parar (al final de cada frase, un respiro)
+  if (!(bar % 4 === 3 && inBar >= 4)) {
+    const g = ARPEGIO_V[inBar];
+    m.pluck(L.base, t, m.deg(T, chord + g, 1), inBar === 0 ? 0.085 : rnd(0.05, 0.07), { bright: 0.42, dur: 3 });
+  }
+  // las cuerdas graves en la quinta, cada dos compases
+  if (inBar === 0 && bar % 2 === 0) {
+    const r = m.deg(T, chord, -1);
+    for (const n of [r, r + 7]) m.strings(L.base, t, spb * 11.5, n, 0.024, { a: 1.2, r: 1.6, bright: 4 });
+  }
+  // el coro que se abre (la tríada, arriba)
+  if (inBar === 0 && bar % 2 === 1) for (const n of m.triad(T, chord, 1)) m.choir(L.base, t, spb * 5.6, n, 0.018, 'a', { a: 1.4, r: 1.8 });
+  // el canto: una flauta que sube, una nota por negra con puntillo, en la
+  // segunda mitad de cada ocho compases (la última, larga)
+  if (bar % 8 >= 4 && (inBar === 0 || inBar === 3)) {
+    const i = ((bar % 8) - 4) * 2 + (inBar === 3 ? 1 : 0);
+    const ult = i === CANTO_V.length - 1;
+    m.organ(L.base, t, spb * (ult ? 5.6 : 2.8), m.deg(T, CANTO_V[i], 1), 0.034, 'flute', { a: 0.12, r: ult ? 1.4 : 0.7 });
+  }
+  // una campanilla, de tarde en tarde (la del pilar de las rayas)
+  if (inBar === 0 && bar % 8 === 0) m.bell(L.base, t, m.deg(T, chord + 4, 3), 0.045, { kind: 'small', pan: -0.3 });
 }
 
 function caballeroStep(S, phase) {

@@ -345,16 +345,31 @@ function sala(ctx, Q, L) {
     wb.box('flag', a, y - 0.1, b, c, y, d, { faces: 't', ao: false, sub: 2, tint: [0.42, 0.42, 0.38] });
     col.add(a, y - 1, b, c, y, d, 'floor').cam = true;
   }
-  for (const [a, b, c, d] of water) {
-    // (donde se juntan la del oeste y la del sur, el lecho es de la del sur)
-    const dd = a === CLOACA.oeste[0] && b === CLOACA.oeste[1] ? CLOACA.sur[1] : d;
-    wb.box('mossstone', a, C.y - 0.1, b, c, C.y, dd, { faces: 't', ao: false, sub: 2, tint: [0.38, 0.42, 0.34] });
-    col.add(a, C.y - 1, b, c, C.y, d, 'floor').cam = true;
+  for (const [a, b, c, d] of water) col.add(a, C.y - 1, b, c, C.y, d, 'floor').cam = true;
+  // (el agua, en trozos que no se pisan: donde se juntan la del oeste y la
+  // del sur, el cauce es de la del sur)
+  const cauces = [CLOACA.alberca, [CLOACA.oeste[0], CLOACA.oeste[1], CLOACA.oeste[2], CLOACA.sur[1]], CLOACA.sur];
+  // (lo de un borde que no da a otra agua: donde una acequia sale de otra o
+  // de la alberca, sin canto; si no, un murete cruzado en el agua)
+  const sinAgua = (lo, hi, otra) => {
+    let out = [[lo, hi]];
+    for (const r of cauces) {
+      const u = otra(r);
+      if (!u) continue;
+      out = out.flatMap(([p, q]) => (u[1] <= p || u[0] >= q ? [[p, q]] : [[p, Math.max(p, u[0])], [Math.min(q, u[1]), q]].filter(([m, n]) => n - m > 0.02)));
+    }
+    return out;
+  };
+  const canto = { ao: false, sub: 2, tint: [0.4, 0.42, 0.38] };
+  for (const [a, b, c, d] of cauces) {
+    wb.box('mossstone', a, C.y - 0.1, b, c, C.y, d, { faces: 't', ao: false, sub: 2, tint: [0.38, 0.42, 0.34] });
     // los cantos de sillería (las caras de dentro de la acequia)
-    wb.box('ashlar', a, C.y, b, c, y, b + 0.01, { faces: 's', ao: false, sub: 2, tint: [0.4, 0.42, 0.38] });
-    wb.box('ashlar', a, C.y, d - 0.01, c, y, d, { faces: 'n', ao: false, sub: 2, tint: [0.4, 0.42, 0.38] });
-    wb.box('ashlar', a, C.y, b, a + 0.01, y, d, { faces: 'e', ao: false, sub: 2, tint: [0.4, 0.42, 0.38] });
-    wb.box('ashlar', c - 0.01, C.y, b, c, y, d, { faces: 'w', ao: false, sub: 2, tint: [0.4, 0.42, 0.38] });
+    const zx = (z) => (r) => (r[1] <= z && z <= r[3] ? [r[0], r[2]] : null);
+    const xz = (x) => (r) => (r[0] <= x && x <= r[2] ? [r[1], r[3]] : null);
+    for (const [p, q] of sinAgua(a, c, zx(b - 0.05))) wb.box('ashlar', p, C.y, b, q, y, b + 0.01, { ...canto, faces: 's' });
+    for (const [p, q] of sinAgua(a, c, zx(d + 0.05))) wb.box('ashlar', p, C.y, d - 0.01, q, y, d, { ...canto, faces: 'n' });
+    for (const [p, q] of sinAgua(b, d, xz(a - 0.05))) wb.box('ashlar', a, C.y, p, a + 0.01, y, q, { ...canto, faces: 'e' });
+    for (const [p, q] of sinAgua(b, d, xz(c + 0.05))) wb.box('ashlar', c - 0.01, C.y, p, c, y, q, { ...canto, faces: 'w' });
   }
   if (ctx.waters) {
     const W = { y: C.agua, deep: 0x060a0a, sky: 0x141e26, glint: 0xa8c0dc, light: [I.x, -1.0, I.z], lightK: 0.7, amp: 0.022 };

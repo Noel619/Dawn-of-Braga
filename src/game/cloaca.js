@@ -44,11 +44,12 @@ export class CloacaFX {
     this.mat = new THREE.ShaderMaterial({
       uniforms: { uTime: G.uTime, fogColor: { value: new THREE.Color() }, fogDensity: { value: 0 }, uLamp: { value: new THREE.Vector3(0, -99, 0) }, uLampK: { value: 0 } },
       vertexShader: `
-        attribute float aLuz;
+        attribute float aLuz; attribute float aEsp;
         uniform vec3 uLamp; uniform float uLampK;
-        varying vec2 vUv; varying float vDist; varying float vLuz;
+        varying vec2 vUv; varying float vDist; varying float vLuz; varying float vEsp;
         void main(){
           vUv = uv;
+          vEsp = aEsp;
           vec4 wp = modelMatrix * vec4(position, 1.0);
           vec4 mv = viewMatrix * wp;
           vDist = -mv.z;
@@ -60,7 +61,7 @@ export class CloacaFX {
         }`,
       fragmentShader: `
         uniform float uTime; uniform vec3 fogColor; uniform float fogDensity;
-        varying vec2 vUv; varying float vDist; varying float vLuz;
+        varying vec2 vUv; varying float vDist; varying float vLuz; varying float vEsp;
         float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
         float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
           return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
@@ -70,6 +71,10 @@ export class CloacaFX {
           float s = n(vec2(u * 26.0, v * 3.0 + uTime * 3.4)) * 0.6 + n(vec2(u * 61.0, v * 7.0 + uTime * 5.1)) * 0.4;
           float hilos = smoothstep(0.35, 0.95, s);
           float bordes = smoothstep(0.0, 0.18, u) * smoothstep(1.0, 0.82, u);
+          // (el anillo de espuma del pie: entero, sin bordes a lo ancho, y que
+          // se deshace hacia fuera; era un plato blanco de canto vivo, con una
+          // muesca)
+          if (vEsp > 0.5) bordes = smoothstep(0.6, 0.86, v);
           // arriba, lisa (sale del caño); abajo, deshecha en espuma
           float a = bordes * (0.1 + hilos * 0.42) * (0.6 + 0.4 * smoothstep(0.0, 0.25, v));
           a *= 1.0 - smoothstep(0.9, 1.0, v) * 0.5;
@@ -88,15 +93,20 @@ export class CloacaFX {
     const pos = [],
       uv = [],
       idx = [],
-      luz = [];
+      luz = [],
+      esp = [];
     for (const c of this.cas) {
       const n0 = pos.length / 3;
-      this.cortina(c, pos, uv, idx);
-      for (let i = n0; i < pos.length / 3; i++) luz.push(c.luz ?? 1);
+      const r0 = this.cortina(c, pos, uv, idx);
+      for (let i = n0; i < pos.length / 3; i++) {
+        luz.push(c.luz ?? 1);
+        esp.push(i >= r0 ? 1 : 0);
+      }
     }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     geo.setAttribute('aLuz', new THREE.Float32BufferAttribute(luz, 1));
+    geo.setAttribute('aEsp', new THREE.Float32BufferAttribute(esp, 1));
     geo.setIndex(idx);
     geo.computeBoundingSphere();
     this.mesh = new THREE.Mesh(geo, this.mat);
@@ -199,6 +209,8 @@ export class CloacaFX {
       const a = base + i * 2;
       idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
     }
+    // (dónde empieza el anillo: el sombreador lo trata aparte)
+    return base;
   }
 
   // Las luciérnagas: puntos que dan luz, cada uno con su sitio, su fase y su

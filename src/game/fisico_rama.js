@@ -58,6 +58,10 @@ const ARRIBA = { x: PRE.x - 0.05, z: PRE.z - 0.12 };
 // la altura de la escalera de la sala (de su pie, en la sala, a lo alto, en
 // el rellano)
 const yEsc = (x) => YS + ((x - SA.esc.x) / (R[2] - SA.esc.x)) * (YR - YS);
+// (y la de su peldaño, en x: la rampa pasa por dentro de los peldaños; y quien
+// salía metido en la piedra de la escalera caía por debajo del suelo de la
+// sala, a las cloacas hondas, o salía despedido por un lado)
+const yPeldano = (g, x) => g.world.col.groundHeight(x, SA.esc.z, 0.3, yEsc(x) + 0.6);
 // de dónde salen los de la bruma: por la escalera (bajando de la bruma del
 // rellano) y por la galería del desagüe
 const SALIDAS = [
@@ -526,7 +530,10 @@ export class RamaCisterna {
       const c = libres.shift();
       const S = SALIDAS[(this.salidos ?? 0) % SALIDAS.length];
       this.salidos = (this.salidos ?? 0) + 1;
-      const y = S.x < R[2] + 6 && S.x > SA.esc.x - 0.2 && Math.abs(S.z - SA.esc.z) < 1 ? yEsc(S.x) : YS;
+      // (en la escalera, que sube a poniente: de su pie, SA.esc.x, a lo alto,
+      // R[2]; si no, en el suelo de la sala)
+      const enEsc = S.x <= SA.esc.x + 0.2 && S.x >= R[2] - 0.2 && Math.abs(S.z - SA.esc.z) < 1;
+      const y = enEsc ? yPeldano(g, S.x) : YS;
       c.scripted = false;
       c.body.pos.set(S.x, y, S.z);
       c.body.vy = 0;
@@ -709,7 +716,7 @@ export class RamaCisterna {
     this.fase = 'duelo';
     this.t = 0;
     const x = R[2] + 1.3;
-    e.body.pos.set(x, yEsc(x) + 0.02, SA.esc.z);
+    e.body.pos.set(x, yPeldano(g, x) + 0.02, SA.esc.z);
     e.body.vy = 0;
     e.yaw = Math.atan2(p.pos.x - x, p.pos.z - SA.esc.z);
     e.obj.position.copy(e.body.pos);
@@ -923,6 +930,7 @@ export class RamaCisterna {
       C.look.set(this._v.x, this._v.y + 0.3, this._v.z);
     }
     g.camRig.override = { pos: C.pos, look: C.look, fov: T.fov, snap: true };
+    this.lunaDetras(C.pos);
     this.luz(...T.luz);
   }
   // Acaba: muerto, tumbado en la luz, para siempre; su nombre, y lo de los
@@ -1004,10 +1012,34 @@ export class RamaCisterna {
     }
   }
   // La luna, en lo alto del agujero (sólo para su muerte: desde la ciudad no
-  // se ve un disco de más).
+  // se ve un disco de más). La del cielo, mientras, justo detrás de ella
+  // (si no, eran dos lunas juntas por el agujero): de esa sólo se ve el halo.
   lunaOn(on) {
+    const A = this.g.atmo;
+    if (A) A.lunaDir = on ? this.lunaDir || (this.lunaDir = new THREE.Vector3(0, 1, 0)) : null;
     if (on && !this.luna) {
-      const m = new THREE.Mesh(new THREE.CircleGeometry(2.6, 28), new THREE.MeshBasicMaterial({ color: 0xe6edf7, fog: false }));
+      // (el disco, con sus mares y el borde algo más oscuro)
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      ((x, h) => {
+        const gr = x.createRadialGradient(h, h, 0, h, h, h);
+        gr.addColorStop(0, '#f4f7fc');
+        gr.addColorStop(0.75, '#e6ecf5');
+        gr.addColorStop(1, '#c2cbd9');
+        x.fillStyle = gr;
+        x.fillRect(0, 0, 2 * h, 2 * h);
+        for (const [mx, my, r, a] of [[0.74, 0.68, 0.3, 0.2], [1.18, 0.8, 0.22, 0.18], [0.9, 1.22, 0.26, 0.16], [1.3, 1.26, 0.15, 0.2], [0.62, 1.08, 0.13, 0.14]]) {
+          const g2 = x.createRadialGradient(mx * h, my * h, 0, mx * h, my * h, r * h);
+          g2.addColorStop(0, `rgba(104,116,136,${a})`);
+          g2.addColorStop(0.7, `rgba(104,116,136,${a * 0.8})`);
+          g2.addColorStop(1, 'rgba(104,116,136,0)');
+          x.fillStyle = g2;
+          x.fillRect(0, 0, 2 * h, 2 * h);
+        }
+      })(c.getContext('2d'), 64);
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      const m = new THREE.Mesh(new THREE.CircleGeometry(2.6, 28), new THREE.MeshBasicMaterial({ map: t, fog: false }));
       m.position.set(LUNA.x, LUNA.y, LUNA.z);
       m.lookAt(MUERTE.C.x, YS, MUERTE.C.z);
       m.renderOrder = -1;
@@ -1015,6 +1047,10 @@ export class RamaCisterna {
       this.luna = m;
     }
     if (this.luna) this.luna.visible = on;
+  }
+  // (la del cielo, detrás de la suya, vista desde donde esté la cámara)
+  lunaDetras(pos) {
+    if (this.lunaDir) this.lunaDir.set(LUNA.x - pos.x, LUNA.y - pos.y, LUNA.z - pos.z).normalize();
   }
 
   // La sangre en el agua, alrededor de él: crece despacio y se queda (k, de
@@ -1024,23 +1060,31 @@ export class RamaCisterna {
       const c = document.createElement('canvas');
       c.width = c.height = 64;
       const x = c.getContext('2d');
-      const gr = x.createRadialGradient(32, 32, 2, 32, 32, 31);
-      gr.addColorStop(0, 'rgba(58,6,8,0.9)');
-      gr.addColorStop(0.5, 'rgba(50,5,7,0.6)');
-      gr.addColorStop(1, 'rgba(40,4,6,0)');
-      x.fillStyle = gr;
-      x.fillRect(0, 0, 64, 64);
-      // (deshilachada: unas manchas más, alrededor)
-      for (let i = 0; i < 9; i++) {
-        const a = (i / 9) * Math.PI * 2 + Math.sin(i * 7.3);
-        const r = 12 + (i % 3) * 4;
-        const g2 = x.createRadialGradient(32 + Math.cos(a) * r, 32 + Math.sin(a) * r, 1, 32 + Math.cos(a) * r, 32 + Math.sin(a) * r, 9);
-        g2.addColorStop(0, 'rgba(52,5,7,0.45)');
-        g2.addColorStop(1, 'rgba(52,5,7,0)');
+      // (una mancha que no es un círculo: un poco en el cuerpo, y lo demás
+      // en hilos que se lleva el agua, hacia la acequia: abajo en el lienzo)
+      const gota = (cx, cy, r, a) => {
+        const g2 = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g2.addColorStop(0, `rgba(46,4,6,${a})`);
+        g2.addColorStop(0.6, `rgba(40,4,6,${a * 0.55})`);
+        g2.addColorStop(1, 'rgba(36,3,5,0)');
         x.fillStyle = g2;
         x.fillRect(0, 0, 64, 64);
+      };
+      const az = (i) => Math.sin(i * 12.9898 + 4.1) * 0.5 + 0.5;
+      gota(32, 24, 15, 0.85);
+      gota(29, 30, 11, 0.6);
+      for (let h = 0; h < 5; h++) {
+        let cx = 22 + h * 5 + (az(h) - 0.5) * 6,
+          cy = 24 + az(h + 9) * 6;
+        for (let i = 0; i < 6; i++) {
+          gota(cx, cy, 6 - i * 0.6, 0.42 - i * 0.05);
+          cx += (az(h * 7 + i) - 0.5) * 6;
+          cy += 3 + az(h * 3 + i + 20) * 3;
+        }
       }
       const tex = new THREE.CanvasTexture(c);
+      // (sin esto, el rojo salía claro, casi rosa)
+      tex.colorSpace = THREE.SRGBColorSpace;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 }));
       m.rotation.x = -Math.PI / 2;
       const o = new THREE.Object3D();
@@ -1057,7 +1101,7 @@ export class RamaCisterna {
     this.sangre.visible = k > 0;
     const e = 1 - (1 - k) * (1 - k);
     this.sangreM.scale.set(0.6 + 1.6 * e, 1.0 + 1.9 * e, 1);
-    this.sangreM.material.opacity = 0.75 * Math.min(1, k * 3);
+    this.sangreM.material.opacity = 0.85 * Math.min(1, k * 3);
   }
 
   // ------------------------------------------------------------ lo que queda
