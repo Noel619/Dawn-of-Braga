@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 77 % hacia la 1.0"></a></p>
 
-**77 % hacia la 1.0**: 88 de 115 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**77 % hacia la 1.0**: 89 de 116 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -102,7 +102,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
 | XII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
-| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
+| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | En curso | 20 % (1 de 5) |
 | XIV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
 
 ### Lo que viene
@@ -147,13 +147,14 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
-**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
+**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *En curso, 20 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
 - [ ] Los virotes: cómo se integran en todo el juego (hoy, sólo en el castillo; los disparados no se recogen)
 - [ ] El paso del Físico: un armario sin fondo entre dos casas, que se abre como atajo
 - [ ] La bodega de la viuda, el secreto del barrio que no se hizo
 - [ ] «Cisterna del Dios Desconocido» como «Dios Ignoto», como todo lo demás *(opcional)*
+- [x] Las caídas: quien muere cae como un cuerpo y se queda flojo (antes caían como una tabla y se quedaban tiesos)
 
 **XIV · Pruebas y fallos** — Que todo siga en pie, en cualquier sitio. *Por hacer, 0 %*
 
