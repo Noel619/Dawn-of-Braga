@@ -80,9 +80,9 @@ de verdad), siempre o nunca.
 <!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 75 % hacia la 1.0"></a></p>
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 76 % hacia la 1.0"></a></p>
 
-**75 % hacia la 1.0**: 85 de 113 tareas y 8 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**76 % hacia la 1.0**: 86 de 113 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -97,7 +97,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
 | VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (14 de 14) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
-| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | En curso | 90 % (9 de 10) |
+| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (10 de 10) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
@@ -147,19 +147,6 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
-**VIII · Lo hondo** — La cloaca, el Vergel, las cloacas hondas y el Lobishome. *En curso, 90 %* · `planes_jubilados/PLAN_LOBO.md`
-
-- [x] La cloaca bajo la plaza del Pan y el Desfigurado
-- [x] El Vergel: la gruta de los romanos, llena de vida, y la botica del Desfigurado
-- [x] Las cloacas hondas: la lobera, las viejas, los aljibes y lo hondo
-- [x] El Lobishome: la caza a oscuras, los braseros, la presa y el entierro
-- [x] Los cocimientos y la mesa del Desfigurado
-- [x] El Sumidero: el lago y el nado
-- [x] El agua que corre y que se ve, y lo que baja con ella
-- [x] Los dos finales del Desfigurado
-- [x] Si al Físico se le escapó el paciente: le mata por la espalda en el pretil (la escena del final de Scarface), la bruma negra y los Coronados de la bruma, que obedecen a su campanilla
-- [ ] El duelo con el Físico cambiado, abajo, donde va el agua
-
 **XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
@@ -185,7 +172,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
-- **El Físico cambiado** — ¿Dónde y cómo es el duelo con él, después de la cisterna? Se va diciendo que te espera abajo, donde va el agua. Falta decidir dónde, cómo pelea cambiado (la hoja de amputar, la corona, la bruma, sus órdenes), qué pasa si ya conocías al Desfigurado cuando se te escapó y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §8*
+- **El duelo de la cisterna** — ¿Es así de duro? ¿Y si ya conocías al Desfigurado? El Físico cambiado baja a pelear con los suyos, duda y muere mirando la luna. Falta jugarlo a mano para medir la dureza, decidir qué pasa si se te escapó cuando ya conocías al Desfigurado y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §11*
 - **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
 - **El final** — Las siete preguntas del plan del final. Dónde se ve, cuántos rótulos, el montaje de los ecos, el título Dawn of the Devil, cómo se dice que el secreto no es canon, la frase del pacto en la introducción y qué hacen las criaturas. · *PLAN_FINAL.md, §7*

@@ -226,10 +226,11 @@ export class RamaCisterna {
     if (p.dead || g.state !== 'play' || g.cine || g.climb) return;
     // esperando: la escena (cuando, tras hablarle en el pretil, bajas a la
     // sala) o, si ya pasó, la pelea otra vez
-    // (la escena: aunque no le hayas hablado, si ya le has visto)
+    // (la escena: aunque no le hayas hablado, si ya le has visto; si estáis
+    // hablando, al acabar; lo que murmura para sí, lo corta)
     if (!F['desf:muerto']) {
       const D = this.desf;
-      if (F['desf:llegada'] && D && D.sitio === 'pretil' && !D.rev && !D.script && !(g.speech && g.speech.busy(D.who)) && this.enSala(p.pos)) this.empiezaEscena();
+      if (F['desf:llegada'] && D && D.sitio === 'pretil' && !D.rev && !D.script && this.enSala(p.pos)) this.empiezaEscena();
     } else if (this.enSala(p.pos)) this.empiezaOtraVez();
   }
 
