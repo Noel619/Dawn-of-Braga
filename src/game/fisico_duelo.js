@@ -187,6 +187,8 @@ export class DueloFisico extends PeleaFisico {
     if (Q.rehace) {
       this.mente.reaccion = DUREZA.reaccion * 0.85;
       this.mente.temp = DUREZA.temp * 0.7;
+      // (y su música, la del hierro)
+      g.audio && g.audio.music('bossFisico2');
     }
   }
   // (sin tiempos que guarden su vida: lo que le das, le quita)

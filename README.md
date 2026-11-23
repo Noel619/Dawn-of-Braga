@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 76 % hacia la 1.0"></a></p>
 
-**76 % hacia la 1.0**: 86 de 113 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**76 % hacia la 1.0**: 87 de 114 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -97,7 +97,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | V | [La historia](docs/hoja-de-ruta/index.html#fase-historia) | Hecha | 100 % (9 de 9) |
 | VI | [El barrio de los Pellejeros](docs/hoja-de-ruta/index.html#fase-barrio) | Hecha | 100 % (14 de 14) |
 | VII | [La fortaleza del Rey](docs/hoja-de-ruta/index.html#fase-fortaleza) | En curso | 86 % (12 de 14) |
-| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (10 de 10) |
+| VIII | [Lo hondo](docs/hoja-de-ruta/index.html#fase-hondo) | Hecha | 100 % (11 de 11) |
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
@@ -1562,7 +1562,15 @@ coros disonantes. El Empalado tiene su propia percusión de guerra en frigio dom
 fase, y desbocada en la huida de la Bestia); el Descoyuntado, la caja de música de las casas rota y desafinada sobre tambores en 7/8, chasquidos de hueso
 y un coro que salmodia en una sola nota (y, mientras te caza, un latido lento en 7/8 con la caja de música a medio
 sonar, clústeres de cuerda y susurros), y el Turiferario, un órgano de lengüetería y un coro que canta el *Dies
-irae*. La portada es canto llano en
+irae*. El Físico, la consulta: en mi frigio, un golpe seco en cada corchea (el pulso que cuenta con dos dedos), el
+latido del paciente, su campanilla de las órdenes (una, dos y tres veces), un coro que recita en un solo tono, como
+una lección, las vocales de su aforismo (*Quae medicamenta non sanant, ferrum sanat*) y las cuerdas en el semitono;
+con el hierro (al quitarse la máscara en su sala, o al rehacerse de sus dudas en la cisterna), más deprisa, con los
+tambores, los metales y las cuerdas en trémolo. Y su muerte, en la cisterna, tiene su propio tema, al paso de la
+escena: el latido cada vez más despacio, el salterio que sube nota a nota cuando mira la luna, el coro que se abre de
+frigio a mayor, una voz sola que sube con lo que te dice y se corta a media frase, el latido que se embala y se para,
+un silencio y el acorde abierto, sin cerrar, mientras la cámara sube a la luna (sin la fanfarria de los jefes
+vencidos). La portada es canto llano en
 *organum* con campanas y el amanecer, un coro y un arpa en mayor. Hay golpes de efecto al ser descubierto, al
 descubrir una zona, al descansar, al cruzar la niebla, al morir y al vencer. Los instrumentos se sintetizan en
 directo: órgano con registros, coro con formantes, cuerdas, zanfona, metales, salterio y arpa por Karplus-Strong,
@@ -1892,6 +1900,9 @@ tools/                  pruebas automatizadas con Playwright (requieren `npx vit
                         fisicobanco.mjs los mismos jugadores de prueba, con teclas, contra el Físico de
                                        verdad: varias peleas seguidas; red, manual o antes (la de antes); con
                                        HOJA=1, lo que ha apuntado de cada uno
+                        temas.mjs      los temas de la música, grabados sin tiempo real con el motor del
+                                       juego y su cadena (compresor, sala) a .wav y .mp3, con la fuerza de
+                                       cada segundo (node tools/temas.mjs bossFisico:40,fisicoMuerte:32)
                         fisicorama.mjs si se le escapa el paciente: la huida por el otro camino (sin tocarle
                                        y herido), la escena de la cisterna paso a paso (con fotos), la pelea
                                        con los de la bruma y sus órdenes, el duelo con él, su muerte (con

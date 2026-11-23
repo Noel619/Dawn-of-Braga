@@ -108,6 +108,9 @@ const AYUDA = () => {
     return { pos: [pl.pos.x, pl.pos.y, pl.pos.z].map((v) => +v.toFixed(2)), zone: g.zone && g.zone.id, hp: Math.round(pl.hp) };
   };
   window.P3 = (v) => [v.x, v.y, v.z].map((n) => +n.toFixed(2));
+  // (con el sonido en marcha: qué tema suena)
+  if (!g.audio.ctx) g.audio.init();
+  window.__tema = () => (g.audio.score && g.audio.score.cur ? g.audio.score.cur.name : null);
   // (en la cisterna: a los de la bruma y al Desfigurado no se les quita)
   window.KEEP = (e) => e.type === 'coronado_bruma' || e.type === 'desfigurado';
   // el barrio, hasta la tintorería: la caza empezada; él, sin verte
@@ -116,7 +119,7 @@ const AYUDA = () => {
     g.dev.invisible = true;
   };
 };
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const errores = [];
 let p = null;
 // (cada parte, en su partida: la página, recién cargada)
@@ -364,7 +367,7 @@ const pelea = async () => {
     const e = g.fisico.e;
     const t0 = g.time;
     for (let i = 0; i < 120; i++) g.update(1 / 30);
-    return { fase: R.fase, modo: g.fisico.modo, tardo: +(t0 - (baja ?? t0)).toFixed(1), pos: P3(e.pos), air: !!e.data.air, zurdo: !!e.data.zurdo, barra: !!e.D.engaged && g.activeBoss === e, vivos: R.vivos().length, muros: R.bruma.muros.map((M) => !!M.box) };
+    return { fase: R.fase, modo: g.fisico.modo, tardo: +(t0 - (baja ?? t0)).toFixed(1), pos: P3(e.pos), air: !!e.data.air, zurdo: !!e.data.zurdo, barra: !!e.D.engaged && g.activeBoss === e, vivos: R.vivos().length, muros: R.bruma.muros.map((M) => !!M.box), tema: __tema() };
   }));
   // el duelo: lo que hace él (quieto e invulnerable el jugador, 45 s)
   out('duelo (45 s)', await ev(() => {
@@ -399,7 +402,7 @@ const pelea = async () => {
     }
     R.ordena = o0;
     g.speech.say = s0;
-    return { golpes, estoques, ord, sujeto: +(sujeto / 30).toFixed(1), cerca: +(cerca / 30).toFixed(1), hp: +(e.hp / e.maxHp).toFixed(2), frases: dudas.length, dudas: D.dudas, ultima: dudas.slice(-2), mente: [D.mente.reaccion, D.mente.temp].map((v) => +v.toFixed(2)) };
+    return { golpes, estoques, ord, sujeto: +(sujeto / 30).toFixed(1), cerca: +(cerca / 30).toFixed(1), hp: +(e.hp / e.maxHp).toFixed(2), frases: dudas.length, dudas: D.dudas, ultima: dudas.slice(-2), mente: [D.mente.reaccion, D.mente.temp].map((v) => +v.toFixed(2)), tema: __tema() };
   }));
 };
 // su muerte: vencido en el duelo, la escena entera (y sus fotos)
@@ -424,7 +427,7 @@ const muerte = async () => {
     pl.spawn(e.pos.x + 1.2, e.pos.y, e.pos.z, Math.atan2(-1.2, 0));
     const r = e.takeHit(50, 50, pl.pos.x, pl.pos.z, false);
     g.update(1 / 30);
-    return { r, fase: R.fase, modo: g.fisico.modo, dead: e.dead, hp: e.hp, vivos: R.vivos().length, campana: R.bruma.muros.map((M) => !!M.box) };
+    return { r, fase: R.fase, modo: g.fisico.modo, dead: e.dead, hp: e.hp, vivos: R.vivos().length, campana: R.bruma.muros.map((M) => !!M.box), tema: __tema() };
   }));
   for (const [t, nombre] of [[2.0, 'm_anda'], [5.4, 'm_mascara'], [7.6, 'm_mira'], [9.3, 'm_cae'], [12.5, 'm_arriba'], [17.4, 'm_tu'], [21.0, 'm_ahoga'], [25.5, 'm_luna']]) {
     out('muerte ' + t + ' ' + nombre, await ev(([t]) => {
@@ -445,7 +448,9 @@ const muerte = async () => {
     for (let i = 0; i < 4000 && R.fase === 'muerte'; i++) g.update(1 / 30);
     for (let i = 0; i < 120; i++) g.update(1 / 30);
     const it = g.interact.list.find((i) => i.id === 'x_fisico_cuerpo');
-    return { fase: R.fase, flags: ['rama:fisico', 'boss:fisico', 'rama:bruma'].map((k) => !!g.flags[k]), dead: e.dead, visible: e.obj.visible, rot: +e.obj.rotation.x.toFixed(2), pstate: g.player.state, hud: !document.getElementById('hud').classList.contains('cine'), cuerpo: it && !it.hidden, luna: !!(R.luna && R.luna.visible), bruma: R.bruma.on, activo: g.activeBoss && g.activeBoss.type };
+    const tema = __tema();
+    for (let i = 0; i < 160; i++) g.update(1 / 30);
+    return { fase: R.fase, flags: ['rama:fisico', 'boss:fisico', 'rama:bruma'].map((k) => !!g.flags[k]), dead: e.dead, visible: e.obj.visible, rot: +e.obj.rotation.x.toFixed(2), pstate: g.player.state, hud: !document.getElementById('hud').classList.contains('cine'), cuerpo: it && !it.hidden, luna: !!(R.luna && R.luna.visible), bruma: R.bruma.on, activo: g.activeBoss && g.activeBoss.type, tema, luego: __tema() };
   }));
   out('su cuerpo', await ev(() => {
     const r = __use('x_fisico_cuerpo', 1.4);
@@ -460,6 +465,37 @@ const muerte = async () => {
     return { pos: P3(e.pos), rot: +e.obj.rotation.x.toFixed(2), dead: e.dead, visible: e.obj.visible, final: g.finalDesfigurado().replace(/<br>/g, ' ').trim().slice(0, 90) };
   }));
 };
+// su música: la de su pelea; al rehacerse de sus dudas, la del hierro (y en
+// su sala del barrio, al quitarse la máscara)
+const tema = async () => {
+  await aLaPelea();
+  out('su música', await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      D = R.duelo,
+      pl = g.player;
+    g.dev.set('god', true);
+    const a = __tema();
+    pl.spawn(-7.0, -9.0, 15.0, 0);
+    R.vivos().slice(0, -1).forEach((c) => c.takeHit(9999, 999, pl.pos.x, pl.pos.z, true));
+    for (let i = 0; i < 600 && R.fase !== 'duelo'; i++) g.update(1 / 30);
+    for (let i = 0; i < 60; i++) g.update(1 / 30);
+    const b = __tema();
+    // (las dudas, hasta la que le rehace)
+    D.dudas = 6;
+    D.dudaT = -99;
+    for (let i = 0; i < 60; i++) g.update(1 / 30);
+    const c = __tema();
+    // (y en el barrio: al quitarse la máscara, lo mismo)
+    g.audio.stopMusic();
+    g.onBossPhase(g.fisico.e);
+    return { arriba: a, abajo: b, rehecho: c, dudas: D.dudas, barrioFase2: __tema() };
+  }));
+};
+if (partes.includes('tema')) {
+  console.log('--- tema');
+  await tema();
+}
 // caer en la pelea y volver: vuelve a empezar, sin la escena
 const cae = async () => {
   await aLaPelea();

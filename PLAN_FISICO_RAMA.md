@@ -194,6 +194,24 @@ como el otro, que también murió en mitad de una palabra («Hermosa...»).
 - se queda quieto, la cara otra vez a la luna, los ojos abiertos; la cámara sube por la luz hasta la luna. Su nombre:
   ha caído.
 
+**Su música** (`core/audio_music.js`; sus dos temas, los suyos, también en su sala del barrio):
+
+- **su pelea**, la consulta (`bossFisico`): en mi frigio, un golpe seco en cada corchea (el pulso que cuenta con dos
+  dedos), el latido del paciente, su campanilla de las órdenes (una, dos y tres veces, como las que da), un coro que
+  recita en un solo tono, como una lección, las vocales de su aforismo (*Quae me-di-ca-men-ta non sa-nant, fer-rum
+  sa-nat*) y las cuerdas en el semitono; **el hierro** (`bossFisico2`), cuando se rehace de sus dudas (en su sala,
+  al quitarse la máscara): más deprisa, los tambores, los metales, las cuerdas en trémolo, el coro una octava más
+  arriba y la campanilla siempre tres veces;
+- **su muerte** (`fisicoMuerte`), al paso de la escena (un pulso por segundo; lo de después de la caída, un segundo
+  más tarde, por la cámara lenta): el latido, cada vez más despacio, y las cuerdas en su semitono; al mirar la luna,
+  el salterio sube nota a nota (lo que sube a la luz); con «Todo se mueve hacia ella», el coro se abre a mayor; una
+  voz sola sube con lo que te dice y se corta a media frase; el latido se embala y se para; un silencio; y, mientras
+  la cámara sube a la luna, el acorde abierto (mayor, con la novena) que no cierra, y una campanilla pequeña, lejos.
+  Después, sin la fanfarria de los jefes vencidos: se apaga sola.
+
+Se oyen sin jugar con `node tools/temas.mjs bossFisico:40,bossFisico2:30,fisicoMuerte:33` (los graba a .wav y .mp3
+en `tools/scratch/temas`).
+
 Se puede saltar (la tecla de interactuar). Su cuerpo se queda allí, en la luz, para siempre (`rama:fisico`; y
 `boss:fisico`, como cualquier jefe vencido; no en su mesa del barrio, que sigue vacía con su nota): *«Mestre Clemente,
 de espaldas en la isla, en la luz, con los brazos abiertos. Tiene los ojos abiertos, a la luna, y la boca llena de
@@ -228,6 +246,8 @@ node tools/fisicorama.mjs escena fotos          # la escena, con capturas en too
 - `pelea`: las órdenes de la campanilla (40 s, invulnerable y quieto), el muro de la escalera; cuando de ellos queda
   uno, baja él; el duelo (45 s: sus golpes con la hoja, el remate, sus órdenes, sus dudas);
 - `muerte`: vencerle; su muerte, paso a paso (con fotos); su cuerpo; al cargar, sigue en la luz;
+- `tema`: su música (la de su pelea, arriba y abajo; la del hierro al rehacerse, y en el barrio al quitarse la
+  máscara);
 - `cae`: caer en la pelea y volver (baja enseguida);
 - `cuerpo`: la llave del cuerpo y el cuaderno.
 

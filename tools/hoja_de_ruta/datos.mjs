@@ -200,6 +200,7 @@ export const FASES = [
       ['Los dos finales del Desfigurado', 1],
       ['Si al Físico se le escapó el paciente: le mata por la espalda en el pretil (la escena del final de Scarface), la bruma negra y los Coronados de la bruma, que obedecen a su campanilla', 1],
       ['El duelo con el Físico cambiado: baja a pelear con los suyos, duda de su teoría y muere de espaldas mirando la luna', 1],
+      ['Los dos temas del Físico: su pelea (la consulta y el hierro) y su muerte bajo la luna', 1],
     ],
   },
   {

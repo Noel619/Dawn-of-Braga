@@ -1382,6 +1382,66 @@ const THEMES = {
     },
   },
 
+  // ---------------------------------------------------------------- jefe: el Físico de los Inocentes
+  // La consulta: el pulso que cuenta (un golpe seco en cada corchea, como
+  // quien toma el pulso con dos dedos), el latido del paciente, la campanilla
+  // de las órdenes (una, dos y tres veces: cercad, sujetadle, todos), el coro
+  // que recita en un solo tono, como una lección, las vocales de su aforismo
+  // («Quae medicamenta non sanant, ferrum sanat») y abajo las cuerdas en el
+  // semitono del frigio. Con el hierro (bossFisico2: en su sala, al quitarse
+  // la máscara; en la cisterna, cuando se rehace de sus dudas): más deprisa,
+  // los tambores, los metales y las cuerdas en trémolo; el coro, una octava
+  // más arriba, y la campanilla, siempre tres veces.
+  bossFisico: {
+    bpm: 96,
+    root: 40,
+    mode: 'phrygian',
+    meter: 4,
+    prog: [0, 1, 0, 6, 3, 1, 0, 1],
+    chordBars: 1,
+    verb: 0.7,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d + 4)], wave: 'principal', cutoff: 380, level: 0.07, rate: 0.06 },
+    step(S) {
+      fisicoStep(S, 0);
+    },
+  },
+  bossFisico2: {
+    bpm: 112,
+    root: 40,
+    mode: 'phrygian',
+    meter: 4,
+    prog: [0, 1, 3, 1, 0, 1, 5, 1],
+    chordBars: 1,
+    verb: 0.7,
+    noTension: true,
+    drone: { notes: (T, d) => [degree(T.root - 12, T.mode, d), degree(T.root - 12, T.mode, d) + 1], type: 'sawtooth', cutoff: 300, level: 0.08, rate: 0.18 },
+    step(S) {
+      fisicoStep(S, 1);
+    },
+  },
+  // Su muerte, en la luz de la cisterna (game/fisico_rama.js). Sigue la escena
+  // a un pulso por segundo: el latido, cada vez más despacio; las cuerdas en
+  // el semitono del frigio (lo suyo); al mirar la luna, el salterio sube nota
+  // a nota y el coro se abre a mayor (lo que quiere, sube); una voz sola sube
+  // con lo que te dice y, a media frase, se corta: el latido se embala y se
+  // para. Un silencio; y la cámara sube a la luna con el acorde abierto, sin
+  // cerrar.
+  fisicoMuerte: {
+    bpm: 60,
+    root: 40,
+    mode: 'phrygian',
+    meter: 4,
+    prog: [0],
+    chordBars: 64,
+    level: 0.95,
+    verb: 0.9,
+    noTension: true,
+    step(S) {
+      muerteFisicoStep(S);
+    },
+  },
+
   // ---------------------------------------------------------------- jefe: el Caballero de la Orden
   // Una danza: una estampida en 6/8 de zanfona (con su bordón de re y la),
   // el pandero y el tamboril en el ritmo del saltarello, el coro de los
@@ -1730,6 +1790,116 @@ function bonesStep(S, phase) {
 // El Caballero: la estampida (ver ESTAMPIDA), el pandero en el saltarello
 // (1 . 3 4 5 .), el tamboril en los contratiempos, el coro abajo cada dos
 // compases; en la segunda fase, los cuernos, las cuerdas y los tambores.
+// El Físico: las vocales de su aforismo, sílaba a sílaba (corcheas: «Quae
+// me-di-ca-men-ta non sa-nant, fer-rum sa-nat»), y el grado en que las dice
+// (en un tono, la quinta; la cadencia, a la tónica)
+const AFORISMO = ['e', 'e', 'i', 'a', 'e', 'a', 'o', 'a', 'a', null, 'e', 'u', 'a', 'a', null, null];
+const AFORISMO_G = [4, 4, 4, 4, 4, 4, 4, 3, 3, null, 3, 2, 1, 0, null, null];
+function fisicoStep(S, phase) {
+  const { m, T, t, bar, inBar, spb, L, chord } = S;
+  const e8 = spb / 2;
+  // el pulso: un golpe seco en cada corchea (el de cada pulso, más fuerte)
+  for (let k = 0; k < 2; k++) m.drum(L.base, t + k * e8, 'rim', (k ? 0.05 : 0.09) + phase * 0.03, 1.35);
+  // el latido del paciente (con el hierro, dos por compás)
+  if (inBar === 0 || (phase && inBar === 2)) {
+    m.drum(L.base, t, 'heart', 0.3 + phase * 0.06, 0.95);
+    m.drum(L.base, t + spb * 0.28, 'heart', 0.18, 1.05);
+  }
+  if (phase) {
+    if (inBar === 0) m.drum(L.base, t, 'taiko', 0.42);
+    if (inBar === 2) m.drum(L.base, t, 'taiko', 0.3, 1.15);
+    if (inBar === 3) m.drum(L.base, t + e8, 'frame', 0.22, 1.2);
+  }
+  // la campanilla de las órdenes: una, dos, tres veces (cada dos compases)
+  if (bar % 2 === 1 && inBar === 2) {
+    const n = phase ? 3 : [1, 2, 3][Math.floor(bar / 2) % 3];
+    for (let k = 0; k < n; k++) m.bell(L.base, t + k * spb * 0.33, m.deg(T, 0, 3) + (k % 2 ? 1 : 0), 0.07, { kind: 'small', pan: 0.3 });
+  }
+  // el coro: el aforismo, recitado (dos compases de cada cuatro)
+  if (bar % 4 < 2)
+    for (let k = 0; k < 2; k++) {
+      const i = (bar % 4) * 8 + inBar * 2 + k;
+      const v = AFORISMO[i];
+      if (!v) continue;
+      const n = m.deg(T, AFORISMO_G[i], 1) + phase * 12;
+      m.choir(L.base, t + k * e8, e8 * 0.9, n, 0.032 + phase * 0.01, v, { a: 0.02, r: 0.12 });
+      m.choir(L.base, t + k * e8, e8 * 0.9, n - 12, 0.022, v === 'i' ? 'e' : v, { a: 0.02, r: 0.12 });
+    }
+  // las cuerdas graves, en el semitono: tónica, tónica, segunda menor, tónica
+  const r = m.deg(T, chord, -1);
+  for (let k = 0; k < 2; k++) {
+    const st = inBar * 2 + k;
+    m.strings(L.base, t + k * e8, e8 * 0.5, st % 4 === 2 ? r + 1 : r, 0.035 + phase * 0.01, { a: 0.005, r: 0.06, bright: 6, solo: true });
+  }
+  // el órgano: el acorde, quieto (la consulta)
+  if (inBar === 0) for (const n of m.triad(T, chord, 0)) m.organ(L.base, t, spb * 3.8, n, 0.016, 'flute', { a: 0.3, r: 0.6 });
+  // con el hierro: los metales al cambiar de acorde y las cuerdas en trémolo
+  if (phase && inBar === 0 && bar % 2 === 0) for (const n of m.triad(T, chord, 0)) m.brass(L.base, t, spb * 3.5, n, 0.03, { a: 0.06, r: 0.5, bright: 6 });
+  if (phase && inBar === 0) m.strings(L.base, t, spb * 3.9, m.deg(T, chord, 2) + 12, 0.016, { trem: 12, a: 0.2, r: 0.3, bright: 8 });
+  if (inBar === 0 && bar % 8 === 0) m.bell(L.base, t, T.root, 0.12, { dur: 6 });
+}
+
+// Su muerte: los momentos de la escena, en segundos de reloj (la cámara lenta
+// de la caída, de 8,6 a 10 s de escena a 0,55, alarga lo de después en algo
+// más de un segundo).
+const MS_ = (s) => (s <= 8.6 ? s : s <= 10 ? 8.6 + (s - 8.6) / 0.55 : s + (1.4 / 0.55 - 1.4));
+const LATIDOS_MUERTE = [0, 1.15, 2.4, 3.75, 5.2, 6.9, 8.7, MS_(10.4), MS_(12.6), MS_(15.0), MS_(17.6), MS_(19.8), MS_(20.6), MS_(20.9), MS_(21.15), MS_(21.35)];
+function muerteFisicoStep(S) {
+  const { m, T, t, beat: b, L } = S;
+  const B = L.base;
+  // (lo que cae en este segundo, a su hora)
+  const en = (s, fn) => {
+    if (s >= b && s < b + 1) fn(t + (s - b));
+  };
+  const E = T.root; // mi grave
+  // el latido, cada vez más despacio; al ahogarse, se embala; y se para
+  for (const s of LATIDOS_MUERTE)
+    en(s, (tt) => {
+      const flojo = s > MS_(20.5) ? 0.5 : Math.max(0.35, 1 - s / 30);
+      m.drum(B, tt, 'heart', 0.3 * flojo, 0.9);
+      m.drum(B, tt + 0.3, 'heart', 0.17 * flojo, 1.0);
+    });
+  // lo suyo: las cuerdas en el semitono (mi, fa), y el coro abajo
+  en(0, (tt) => {
+    m.strings(B, tt, 3.6, E - 12, 0.03, { a: 0.8, r: 1.2, bright: 4 });
+    m.choir(B, tt, 6.5, E, 0.02, 'u', { a: 1.2, r: 1.5 });
+  });
+  en(3.4, (tt) => m.strings(B, tt, 3.2, E - 11, 0.028, { a: 0.6, r: 1.2, bright: 4 }));
+  // se quita la máscara y mira arriba: el salterio sube, nota a nota (mi
+  // lidio: lo que sube a la luz); «Ah...»: la quinta vacía
+  [[5.8, 64], [6.5, 66], [7.2, 68], [7.9, 70]].forEach(([s, n]) => en(s, (tt) => m.pluck(B, tt, n, 0.1, { bright: 0.45, dur: 4 })));
+  en(6.8, (tt) => {
+    for (const n of [E - 12, E - 5]) m.strings(B, tt, 4.2, n, 0.03, { a: 1.0, r: 1.4, bright: 4 });
+  });
+  // la caída: una oleada y el golpe en la hierba
+  en(MS_(8.6), (tt) => m.swell(B, tt, MS_(9.5) - MS_(8.6), 0.05, 300, 2000));
+  en(MS_(9.5), (tt) => {
+    m.drum(B, tt, 'taiko', 0.22, 0.8);
+    m.drum(B, tt, 'thud', 0.3, 0.9);
+  });
+  // «Todo se mueve hacia ella»: el coro se abre a mayor, y el salterio sube
+  // despacio por mi lidio
+  en(MS_(10.9), (tt) => {
+    for (const n of [E + 24, E + 28, E + 31]) m.choir(B, tt, 10, n, 0.022, 'a', { a: 2.2, r: 2 });
+    for (const n of [E, E + 7]) m.strings(B, tt, 10, n, 0.022, { a: 2, r: 2, bright: 5 });
+  });
+  [64, 66, 68, 70, 71, 73, 75, 76].forEach((n, i) => en(MS_(11.2) + i * 0.85, (tt) => m.pluck(B, tt, n, 0.085, { bright: 0.5, dur: 4 })));
+  // lo que te dice: una voz sola sube con ello (si, do sostenido) y, a media
+  // frase, se corta
+  en(MS_(16.7), (tt) => m.choir(B, tt, 2.4, E + 31, 0.03, 'a', { solo: true, vib: 14, a: 0.4, r: 0.6, breath: 0.3 }));
+  en(MS_(19.5), (tt) => m.choir(B, tt, MS_(20.5) - MS_(19.5), E + 33, 0.034, 'a', { solo: true, vib: 16, a: 0.3, r: 0.08, breath: 0.3 }));
+  // (se ahoga: un golpe sordo de cuerdas, abajo, y nada)
+  en(MS_(20.55), (tt) => m.strings(B, tt, 0.9, E - 11, 0.03, { a: 0.01, r: 0.4, bright: 3 }));
+  // quieto; la cámara sube a la luna: el acorde abierto (mi mayor con la
+  // novena), que no cierra; una campanilla pequeña, lejos
+  en(MS_(23.4), (tt) => {
+    for (const n of [E + 12, E + 16, E + 19, E + 26]) m.choir(B, tt, 8, n + 12, 0.02, 'a', { a: 3, r: 3 });
+    m.strings(B, tt, 8, E, 0.02, { a: 3, r: 3, bright: 4 });
+  });
+  [76, 78, 80, 83].forEach((n, i) => en(MS_(23.8) + i * 1.3, (tt) => m.pluck(B, tt, n, 0.07, { bright: 0.55, dur: 5 })));
+  en(MS_(26.2), (tt) => m.bell(B, tt, 88, 0.05, { kind: 'small', pan: -0.2 }));
+}
+
 function caballeroStep(S, phase) {
   const { m, T, t, bar, inBar, spb, L, chord } = S;
   // el ritmo

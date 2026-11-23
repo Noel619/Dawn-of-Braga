@@ -346,6 +346,8 @@ export class RamaCisterna {
     // el Físico, en lo oscuro de la galería
     this.saca(SALE.x, SALE.z, 0);
     g.audio && g.audio.stopMusic();
+    // (lo que sonará: su pelea y su muerte, preparados de antemano)
+    if (g.audio && g.audio.warmTheme) for (const k of ['bossFisico', 'bossFisico2', 'fisicoMuerte']) g.audio.warmTheme(k);
   }
   escena(dt) {
     const g = this.g;
@@ -564,7 +566,8 @@ export class RamaCisterna {
     this.ciclo = -1;
     this.dijoT = 9;
     this.fEst = { k: 'quieto', mira: 'jugador' };
-    g.audio && g.audio.music('bossCellar');
+    // (su música: la de su pelea, la consulta)
+    g.audio && g.audio.music('bossFisico');
     g.saveGame();
   }
   // Si caes en la pelea y vuelves a bajar: él, ya en el pretil; la bruma,
@@ -588,7 +591,7 @@ export class RamaCisterna {
     this.dijoT = 12;
     this.luego(1.0, () => this.tane(3));
     this.luego(1.8, () => this.salen(3));
-    g.audio && g.audio.music('bossCellar');
+    g.audio && g.audio.music('bossFisico');
   }
   // los suyos que pelean (y los que han caído)
   vivos() {
@@ -778,7 +781,8 @@ export class RamaCisterna {
     p.vx = p.vz = 0;
     p.autoDir = null;
     g.ui.cineHud(true);
-    g.audio && g.audio.stopMusic();
+    // su muerte: su tema, al paso de la escena (core/audio_music.js)
+    g.audio && g.audio.music('fisicoMuerte');
     // la campanilla, al suelo (suena una vez más)
     fiGrp(e, 'campanillaR', false);
     g.audio && g.audio.play('campanilla', { x: e.pos.x, y: e.pos.y + 1, z: e.pos.z });
@@ -946,7 +950,11 @@ export class RamaCisterna {
     this.bruma.quita();
     this.lunaOn(false);
     this.luzFuera();
+    // (su nombre, como el de cualquier jefe vencido; sin fanfarria: su
+    // música, la de su muerte, se apaga sola un poco después)
+    e.data.sinFanfarria = true;
     g.onEnemyDeath(e);
+    this.luego(4.5, () => g.audio && g.audio.stopMusic());
     g.saveGame();
   }
   // Su cuerpo, en la luz de la isla (al acabar, y al cargar).

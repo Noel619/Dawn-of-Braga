@@ -83,7 +83,7 @@ const START = CASTLE.start;
 // la reja reventada y el pasillo quedan delante
 const WAKE_CAM = { pos: [START.x - 1.0, START.y + 2.0, START.z - 1.45], look: [START.x + 0.2, START.y + 0.4, START.z + 0.6] };
 // música de cada jefe (fase 1 y fase 2)
-const BOSS_MUSIC = { lobishome: ['bossCellar', 'bossCellar2'], caballero: ['bossCaballero', 'bossCaballero2'], impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossLeonor', 'bossLeonor2'] };
+const BOSS_MUSIC = { lobishome: ['bossCellar', 'bossCellar2'], caballero: ['bossCaballero', 'bossCaballero2'], impaled: ['boss', 'boss2'], turibulario: ['bossFinal', 'bossFinal2'], descoyuntado: ['bossCellar', 'bossCellar2'], leonor: ['bossLeonor', 'bossLeonor2'], guardianL: ['bossGuardians', 'bossGuardians2'], guardianR: ['bossGuardians', 'bossGuardians2'], paioHollow: ['bossCellar', 'bossCellar2'], custodio: ['bossBones', 'bossBones2'], fisico: ['bossFisico', 'bossFisico2'] };
 
 export class Game {
   constructor(canvas, opts = {}) {
@@ -1283,8 +1283,11 @@ export class Game {
     if (e.boss) {
       this.flags['boss:' + e.type] = true;
       this.activeBoss = null;
-      this.audio.stopMusic();
-      this.audio.play('victory');
+      // (el Físico en la cisterna: su música se apaga sola, y sin fanfarria)
+      if (!e.data.sinFanfarria) {
+        this.audio.stopMusic();
+        this.audio.play('victory');
+      }
       this.atmo.override = null;
       this.later(2500, () => {
         this.ui.area(e.partner ? `${e.T.name.toUpperCase()} HAN CAÍDO` : `${e.T.name.toUpperCase()} HA CAÍDO`);
