@@ -332,9 +332,7 @@ export class Caida {
       A[2].z += pz * qz;
     }
     const q = this.qT;
-    const r0 = new THREE.Vector3(),
-      r1 = new THREE.Vector3(),
-      r2 = new THREE.Vector3();
+    const [r0, r1, r2] = this._rc || (this._rc = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]);
     for (let it = 0; it < 8; it++) {
       _m.makeRotationFromQuaternion(q);
       r0.setFromMatrixColumn(_m, 0);
