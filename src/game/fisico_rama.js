@@ -34,7 +34,8 @@
 import * as THREE from 'three';
 import { DIALOG, MSG } from './story.js';
 import { CLOACA } from '../world/cloaca.js';
-import { FI_CLIPS, fiGrp, fiSay } from '../entities/fisico.js';
+import { FI_CLIPS, fiGrp, fiRopa, fiSay } from '../entities/fisico.js';
+import { deCapa } from '../entities/desfigurado.js';
 import { damp, dampAngle, clamp, lerp } from '../core/util.js';
 import { BrumaNegra } from './bruma_negra.js';
 import { DueloFisico } from './fisico_duelo.js';
@@ -390,7 +391,11 @@ export class RamaCisterna {
     if (cue('dentro', 9.1 + 0.72)) this.atraviesa();
     // 4. Cae, a cámara lenta, por la cascada, a la alberca
     if (cue('lento', 10.4)) g.timeK = 0.45;
-    if (cue('cae', 11.0)) this.caida = { t: 0 };
+    if (cue('cae', 11.0)) {
+      this.caida = { t: 0 };
+      // (la capa, partida: se dobla con él y ondea en el aire)
+      deCapa(D.npc, true);
+    }
     if (this.caida) this.cae(dt);
     if (cue('rapido', 12.9)) g.timeK = 1;
     // 5. Boca abajo, en cruz, en el agua (la toma sube luego hasta el pretil)
@@ -470,22 +475,49 @@ export class RamaCisterna {
     g.audio && g.audio.play('boneCrack', c);
     g.camRig.shake(0.2);
   }
-  // La caída: del pretil, por la cascada, a la alberca (boca abajo, en cruz).
+  // La caída: del pretil, por la cascada, a la alberca (boca abajo, con los
+  // brazos abiertos). Primero se dobla sobre el pretil (se le van las
+  // rodillas; el cuerpo, adelante, despacio y cada vez más deprisa, girando
+  // sobre los pies, que pasan el borde); luego, en el aire, cae y gira entero
+  // (lo que cuelga, atrás y a sacudidas). Antes caía girando de una pieza
+  // desde el primer instante, recto, como una tabla.
   cae(dt) {
     const g = this.g;
     const C = this.caida;
     const D = this.desf;
     const n = D.npc;
     C.t += dt;
-    const T = 1.1;
+    const T = 1.25;
     const u = Math.min(1, C.t / T);
-    const x = lerp(PRE.x, FLO.x, u),
-      z = lerp(PRE.z, FLO.z, u);
-    const y0 = YR,
-      y1 = FLO.y;
-    const y = y0 + (y1 - y0) * u * u + 0.28 * Math.sin(Math.PI * Math.min(1, u * 1.6)) * (1 - u);
+    const fx = Math.sin(PRE.yaw),
+      fz = Math.cos(PRE.yaw);
+    // (el borde: un palmo por delante del pretil)
+    const bx = PRE.x + fx * 0.22,
+      bz = PRE.z + fz * 0.22;
+    const U0 = 0.3;
+    let x, y, z, pitch, W;
+    if (u < U0) {
+      // se dobla: la caída empieza despacio
+      const a = u / U0;
+      x = lerp(PRE.x, bx, a);
+      z = lerp(PRE.z, bz, a);
+      y = YR - 0.1 * a * a;
+      pitch = 0.62 * a * a;
+      W = { atravesado: Math.max(0, 1 - a * 1.6), dobla: Math.min(1, a * 1.6) };
+    } else {
+      // en el aire: cae (desde parado, cada vez más deprisa) y gira entero;
+      // los brazos y las piernas, atrás, sacudiéndose
+      const b = (u - U0) / (1 - U0);
+      x = lerp(bx, FLO.x, b);
+      z = lerp(bz, FLO.z, b);
+      y = YR - 0.1 + (FLO.y - YR + 0.1) * b * b;
+      pitch = 0.62 + (1.62 - 0.62) * b;
+      const s = 0.5 + 0.5 * Math.sin(C.t * 11);
+      const d = Math.max(0, 1 - b * 2.5);
+      W = { dobla: d, cae: (1 - d) * (0.35 + 0.65 * s), cae2: (1 - d) * (0.65 - 0.65 * s) };
+    }
     n.body.pos.set(x, y, z);
-    this.pose({ k: 'cae', W: { cae: 1 }, rapido: 7, pitch: 1.62 * Math.pow(u, 0.8), roll: 0.05 * u, muerto: true });
+    this.pose({ k: 'cae', W, rapido: 16, pitch, roll: 0.06 * u, muerto: true });
     if (u >= 1) {
       this.caida = null;
       g.audio && g.audio.play('splash', { x, y: AGUA, z });
@@ -494,7 +526,9 @@ export class RamaCisterna {
         fz = Math.cos(FLO.yaw);
       g.fx.blood.emit(x + fx * 0.8, AGUA + 0.05, z + fz * 0.8, 60, { color: [0.72, 0.8, 0.84], speed: 3.6, life: 0.9, up: 2.6 });
       g.fx.blood.emit(x + fx * 0.6, AGUA + 0.05, z + fz * 0.6, 30, { speed: 1.2, life: 1.6, up: 0.4, gravity: 2, stain: true });
-      this.pose({ k: 'flota', W: { flota: 1 }, rapido: 5, pitch: 1.62, roll: 0.05, muerto: true });
+      // (el golpe contra el agua: se hunde un poco y sale; lo que cuelga se
+      // asienta despacio: game/desfigurado.js, npcMuerte)
+      this.pose({ k: 'flota', W: { flota: 1 }, rapido: 3.2, pitch: 1.62, roll: 0.05, muerto: true, golpe: 0 });
       this.mancha(0.02);
       g.saveGame();
     }
@@ -508,6 +542,7 @@ export class RamaCisterna {
     if (!this.F['desf:muerto']) this.atraviesa();
     this.caida = null;
     g.timeK = 1;
+    deCapa(D.npc, true);
     D.npc.body.pos.set(FLO.x, FLO.y, FLO.z);
     D.npc.yaw = FLO.yaw;
     this.pose({ k: 'flota', W: { flota: 1 }, rapido: 30, pitch: 1.62, roll: 0.05, muerto: true });
@@ -856,25 +891,24 @@ export class RamaCisterna {
     if (cue('mira', M.llega + 1.8)) e.anim.play(FI_CLIPS.mira, { blend: 0.4, loop: true });
     if (cue('ah', 6.8)) fiSay(e, DIALOG.fisicoRamaMuere[0], 2.0);
     // 3. cae de espaldas (a cámara lenta)
+    // (se le van las rodillas, cae sentado y luego de espaldas: su clip; ya
+    // no le tumba entero la raíz, como a un tablón)
     if (cue('cae', M.cae)) {
       e.anim.play(FI_CLIPS.caeAtras, { blend: 0.12 });
       e.state = 'dead';
       g.timeK = 0.55;
-      this.yace = { pitch: 0, cabeza: 0, alto: 0 };
+      this.yace = { cabeza: 0 };
+      // (el ropón, partido: se dobla con las piernas y queda tendido)
+      fiRopa(e, true);
     }
-    if (this.yace && t >= M.cae && t < M.cae + 1.0) {
-      const u = Math.min(1, (t - M.cae) / 0.9);
-      this.yace.pitch = -(Math.PI / 2) * u * u;
-      this.yace.alto = 0.11 * u;
-    }
-    if (cue('suelo', M.cae + 0.9)) {
-      this.yace.pitch = -Math.PI / 2;
-      this.yace.alto = 0.11;
-      e.anim.play(FI_CLIPS.yace, { blend: 0.2, loop: true });
-      g.audio && g.audio.play('bodyFall', { x: e.pos.x, y: e.pos.y, z: e.pos.z });
+    // (la cadera contra el suelo; y la espalda)
+    if (cue('sentado', M.cae + 0.56)) g.audio && g.audio.play('bodyFall', { x: e.pos.x, y: e.pos.y, z: e.pos.z });
+    if (cue('suelo', M.cae + 0.79)) {
+      g.audio && g.audio.play('bodyFall', { x: M.H.x, y: e.pos.y, z: M.H.z });
       g.camRig.shake(0.15);
       g.fx.blood.emit(M.H.x, e.body.pos.y + 0.1, M.H.z, 14, { color: [0.2, 0.26, 0.14], speed: 1.2, life: 0.9, up: 1.0 });
     }
+    if (cue('tendido', M.cae + 1.35)) e.anim.play(FI_CLIPS.yace, { blend: 0.3, loop: true });
     if (cue('normal', M.cae + 1.4)) g.timeK = 1;
     // 4. tumbado, la ve; y lo dice
     if (cue('todo', 11.0)) fiSay(e, DIALOG.fisicoRamaMuere[1], 3.2);
@@ -989,27 +1023,23 @@ export class RamaCisterna {
     e.body.pos.set(M.P.x, g.world.col.groundHeight(M.P.x, M.P.z, 0.3, YS + 2), M.P.z);
     e.yaw = Math.atan2(M.f.x, M.f.z);
     e.obj.position.copy(e.body.pos);
-    this.yace = { pitch: -Math.PI / 2, cabeza: M.lado * 0.2, alto: 0.11 };
+    this.yace = { cabeza: M.lado * 0.2 };
+    fiRopa(e, true);
     e.anim.play(FI_CLIPS.yace, { blend: 0, t0: 0 });
     e.anim.speed = 0;
     e.animate(0.05);
     if (this.cuerpoF) this.cuerpoF.hidden = false;
   }
-  // (el cuerpo entero, de su raíz: cayendo de espaldas, tumbado; y la cabeza,
-  // hacia ti: entities/fisico.js)
+  // (tumbado: la cabeza, hacia ti o hacia la luna; el cuerpo, ya no lo tumba
+  // su raíz: lo hace su clip, entities/fisico.js)
   rootRot(e) {
     const Y = this.yace;
     const o = e.obj;
-    if (Y && Y.pitch) {
-      o.rotation.order = 'YXZ';
-      o.rotation.x = Y.pitch;
-      o.rotation.z = 0;
-      o.position.y = e.body.pos.y + (Y.alto || 0);
-      if (Y.cabeza && e.rig.joints.head) e.rig.joints.head.rotateY(Y.cabeza);
-    } else if (o.rotation.x || o.rotation.z) {
+    if (o.rotation.x || o.rotation.z) {
       o.rotation.x = 0;
       o.rotation.z = 0;
     }
+    if (Y && Y.cabeza && e.rig.joints.head) e.rig.joints.head.rotateY(Y.cabeza);
   }
   // La luna, en lo alto del agujero (sólo para su muerte: desde la ciudad no
   // se ve un disco de más). La del cielo, mientras, justo detrás de ella

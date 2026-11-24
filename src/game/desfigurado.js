@@ -27,6 +27,7 @@ import { DIALOG } from './story.js';
 import { CLOACA } from '../world/cloaca.js';
 import { VERGEL } from '../world/vergel.js';
 import { approachAngle, damp, clamp } from '../core/util.js';
+import { deCapa } from '../entities/desfigurado.js';
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const sm = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
@@ -166,6 +167,8 @@ export class DesfiguradoQuest {
     // (muerto en la cisterna: boca abajo en la alberca; si al Físico se le
     // escapó el paciente, esa noche espera en el pretil: game/fisico_rama.js)
     const F = this.F;
+    // (la capa, entera; muerto en el agua, partida: lugar)
+    deCapa(e, false);
     if (F['desf:muerto']) this.lugar(e, 'flota');
     else if (F['rama:cisterna'] && !F['boss:fisico']) this.lugar(e, 'pretil');
     else this.lugar(e, F['desf:met'] ? 'botica' : 'luz');
@@ -193,7 +196,10 @@ export class DesfiguradoQuest {
       this.mode = 'cielo';
       this.W = { cielo: 1, vuelto: 0, moler: 0, leer: 0, untar: 0 };
       e.data = { W: { cielo: 1 } };
-      if (sitio === 'flota') this.muerte = { k: 'flota', pitch: 1.62, roll: 0.05, W: { flota: 1 }, muerto: true };
+      if (sitio === 'flota') {
+        this.muerte = { k: 'flota', pitch: 1.62, roll: 0.05, W: { flota: 1 }, muerto: true };
+        deCapa(e, true);
+      }
     } else if (sitio === 'alba') {
       // (el final: en la orilla del Este, de cara al sol que sale, que ya no le
       // quema; game.js: ending)
@@ -343,10 +349,24 @@ export class DesfiguradoQuest {
     for (const k of kk) W[k] = damp(W[k] ?? 0, want[k] ?? 0, M.rapido ?? 6, dt);
     e.data = { W: { ...W }, look: [0, 0], talk: M.talk ?? 0, tic: 0, ticSide: 1, cara: 0, risa: 0, muerto: !!M.muerto };
     e.vx = e.vz = 0;
-    // (boca abajo en el agua: lo mece, apenas, lo que trae la cascada)
+    // (boca abajo en el agua: lo mece, apenas, lo que trae la cascada, y le
+    // mueve los brazos y las piernas, despacio; recién caído, se hunde un
+    // poco, sale y se asienta)
     if (M.k === 'flota') {
-      e.body.pos.y = CLOACA.flota.y + Math.sin(this.mt * 1.1) * 0.014;
+      let hunde = 0,
+        cabeceo = 0;
+      if (M.golpe !== undefined) {
+        M.golpe += dt;
+        const k = Math.exp(-M.golpe * 2.4);
+        hunde = -0.17 * k * Math.cos(M.golpe * 6.2);
+        cabeceo = 0.14 * k * Math.sin(M.golpe * 5.1);
+        if (M.golpe > 3) M.golpe = undefined;
+      }
+      e.body.pos.y = CLOACA.flota.y + Math.sin(this.mt * 1.1) * 0.014 + hunde;
+      M.pitch = 1.62 + cabeceo;
       M.roll = 0.05 + Math.sin(this.mt * 0.7) * 0.03;
+      const v = 0.5 + 0.5 * Math.sin(this.mt * 0.37);
+      M.W = { flota: v, flota2: 1 - v };
     }
     e.animate(dt);
   }

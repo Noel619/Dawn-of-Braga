@@ -416,6 +416,41 @@ export function gown(PR, hem, o = {}) {
     { nt: o.nt ?? 48, nv: o.nv ?? 16, t0: o.t0, t1: o.t1, cz: o.cz }
   );
 }
+// La parte de abajo de una campana (gown) partida en cuatro trozos que siguen
+// a las piernas (como los faldones: models.js, faldonJoints y
+// faldonesPose): cada mitad, de la cintura a la rodilla y de la rodilla al
+// bajo, colgada de su articulación (faldaL, faldaL2; faldaR, faldaR2). Así la
+// ropa larga se dobla con el cuerpo (al sentarse, al caer, tumbado) en vez de
+// quedar como un tubo rígido; con el mismo perfil, los mismos pliegues y el
+// mismo bajo que la campana entera. Las mitades se pisan por detrás (dt) y
+// los dos tramos, en la rodilla (lap).
+//   o: las opciones de la campana (n, dep, seed, nt, nv, fy, y0, t0, t1) y
+//   top: lo alto (y, en el marco de la campana), knee: la rodilla (y, en el
+//   mismo marco), hemY: la altura del bajo (para el cz), czy(y): el cz por
+//   altura, off: dónde va la campana en la cadera ([x, y, z]), hip: la
+//   articulación faldaL en la cadera ([x, y, z]; la R, en -x), kneeLen: lo
+//   que hay de faldaL a faldaL2. Devuelve [[articulación, geometría], ...].
+export function gownFaldones(PR, hem, o) {
+  const { top, knee, hemY, czy, off = [0, 0, 0], hip, kneeLen, lap = 0.05, dt = 0.16 } = o;
+  const t0 = o.t0 ?? 0,
+    t1 = o.t1 ?? 2 * PI;
+  const out = [];
+  for (const [s, ta, tb] of [
+    ['L', t0, PI + dt],
+    ['R', PI - dt, t1],
+  ]) {
+    const sx = s === 'L' ? 1 : -1;
+    const J1 = [hip[0] * sx, hip[1], hip[2]];
+    const J2 = [J1[0], J1[1] - kneeLen, J1[2]];
+    const base = { ...o, t0: ta, t1: tb };
+    delete base.top;
+    const up = gown(PR, () => knee - lap, { ...base, top, nv: Math.max(4, Math.round((o.nv ?? 12) * 0.5)), cz: czy ? (v) => czy(mix(knee - lap, top, v)) : undefined });
+    const low = gown(PR, hem, { ...base, top: knee + lap, cz: czy ? (v) => czy(mix(hemY, knee + lap, v)) : undefined });
+    out.push(['falda' + s, place(up.geo, [off[0] - J1[0], off[1] - J1[1], off[2] - J1[2]])]);
+    out.push(['falda' + s + '2', place(low.geo, [off[0] - J2[0], off[1] - J2[1], off[2] - J2[2]])]);
+  }
+  return out;
+}
 // el perfil de los hombros de una campana: del cuello (0.6) a los hombros y
 // luego abajo, abriéndose hasta (ax, az) en y = yb
 export function shoulders(ax, az, yb, w = 1) {

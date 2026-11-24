@@ -25,7 +25,8 @@ import { Rig, clip } from './rig.js';
 import { DEG, clamp } from '../core/util.js';
 import { MAT_DEFS } from '../gfx/materials.js';
 import { tube, merge, place, gSph, gBox, gCyl, gTorus, folds, table, mix, sstep, bump, head, cloth } from './sculpt.js';
-import { humanoidJoints, torso, pelvis, arms, legs, gown, robe, cord, shoe, TAU } from './figure.js';
+import { humanoidJoints, torso, pelvis, arms, legs, gown, gownFaldones, robe, cord, shoe, TAU } from './figure.js';
+import { faldonJoints, faldonesPose } from './models.js';
 
 export const DE_K = 0.98;
 const K = DE_K;
@@ -140,7 +141,8 @@ function partir(g, f) {
 
 // ------------------------------------------------------------ el cuerpo
 export function buildDesfigurado() {
-  const joints = humanoidJoints(K, { arm: 1.04 });
+  // (con las articulaciones de los faldones: la capa partida, para caer)
+  const joints = [...humanoidJoints(K, { arm: 1.04 }), ...faldonJoints(K, 0.45 * K)];
   // los párpados (cuelgan de su bisagra: a 0, el ojo cerrado) y la quijada
   joints.push(
     { name: 'jaw', parent: 'head', pos: [0, 0.074, 0.02] },
@@ -327,7 +329,13 @@ export function buildDesfigurado() {
     const up = gown(PR, (t) => -0.12 - 0.02 * Math.max(0, folds(t, 5, 2)), { y0: PR[0][0], n: 9, dep: 0.03, seed: 2, nt: 52, nv: 10, t0: 0.42, t1: TAU - 0.42, cz: (v) => cz(0.6 + v * 0.4) });
     const low = gown(PR, hem, { top: 0.0, y0: PR[0][0], n: 11, dep: 0.034, seed: 2, nt: 56, nv: 14, t0: 0.5, t1: TAU - 0.5, cz: (v) => cz(v * 0.6) });
     parts.push(PD('chest', 'deCloak', up.geo));
-    parts.push(PD('hips', 'deCloak', place(low.geo, [0, 0.1, 0])));
+    parts.push(PD('hips', 'deCloak', place(low.geo, [0, 0.1, 0]), { grp: 'capaRigida' }));
+    // (y la misma, de la cintura abajo, partida en cuatro, que sigue a las
+    // piernas: sólo desde que cae del pretil, y en el agua; deCapa)
+    const kneeY = -0.03 * K - 0.45 * K - 0.1;
+    const czy = (y) => cz(0.6 * Math.min(1, Math.max(0, (y + 0.84) / 0.84)));
+    for (const [j, geo] of gownFaldones(PR, hem, { y0: PR[0][0], n: 11, dep: 0.034, seed: 2, nt: 56, nv: 14, t0: 0.5, t1: TAU - 0.5, top: 0.0, knee: kneeY, hemY: -0.84, czy, off: [0, 0.1, 0], hip: [0.1 * K, -0.03 * K, 0], kneeLen: 0.45 * K }))
+      parts.push(PD(j, 'deCloak', geo, { grp: 'capaSuelta' }));
     // los remiendos: paños de otro color cosidos (sobre la cara de fuera)
     const pt = [];
     for (const [t, v, w, h] of [
@@ -346,7 +354,7 @@ export function buildDesfigurado() {
       b.translate(p[0] + n[0] * 0.006, p[1] + n[1] * 0.006 + 0.1, p[2] + n[2] * 0.006);
       pt.push(b);
     }
-    parts.push(P('hips', 'dePatch', merge(pt)));
+    parts.push(P('hips', 'dePatch', merge(pt), { grp: 'capaRigida' }));
     // la capucha caída: el rollo alrededor del cuello, por detrás, y la punta
     // colgando a la espalda
     const roll = [];
@@ -395,7 +403,9 @@ export function buildDesfigurado() {
 
   // (todo hecho para una altura de 1: se escala)
   const out = parts.map((pt) => ({ ...pt, p: (pt.p || [0, 0, 0]).map((x) => x * K), sc: (pt.sc || [1, 1, 1]).map((x) => x * K) }));
-  return new Rig({ joints, parts: out });
+  const rig = new Rig({ joints, parts: out });
+  for (const m of rig.meshes) if (m.userData.grp === 'capaSuelta') m.visible = false;
+  return rig;
 }
 
 // ======================================================================= poses
@@ -530,9 +540,14 @@ const ALBA = {
 // La rama de la cisterna (game/fisico_rama.js): en el pretil, sobre la
 // cascada, hablándole a la luz con los brazos abiertos (todo esto es de los
 // que quedan); atravesado por la espalda (el pecho echado adelante, la cabeza
-// atrás, los brazos que se abren solos, las rodillas que se le van); cayendo
-// (flojo, los brazos atrás); y boca abajo en la alberca, en cruz (el cuerpo
-// entero lo tumba su raíz: DesfiguradoQuest.rootRot).
+// atrás, los brazos que se abren solos, las rodillas que se le van); se dobla
+// sobre el pretil (se le van las rodillas, la cadera, la cabeza y los brazos
+// colgando); en el aire, flojo (los brazos y las piernas se le quedan atrás y
+// se sacuden: dos posturas que se alternan); y boca abajo en la alberca, con
+// los brazos abiertos pero sueltos, una pierna doblada, la cabeza de lado (y
+// otra parecida, para que el agua le mueva). El cuerpo entero lo gira su raíz
+// (DesfiguradoQuest.rootRot): en el aire un cuerpo gira entero; lo que no
+// debe es ir tieso.
 const PREDICA = {
   ...CIELO,
   chest: [-12, 0, 0],
@@ -565,48 +580,109 @@ const ATRAVESADO = {
   jaw: [24, 0, 0],
   lidR: [0, 0, 0],
 };
+// se dobla sobre el pretil: las rodillas que se le van, la cadera, el pecho
+// y la cabeza que caen adelante, los brazos colgando
+const DOBLA = {
+  root: [0, -16, -4],
+  hips: [30, 0, 4],
+  chest: [22, 0, 3],
+  head: [36, 0, 10],
+  legL: [-58, 0, 6],
+  shinL: [70, 0, 0],
+  footL: [-14, 0, 0],
+  legR: [-48, 0, -5],
+  shinR: [58, 0, 0],
+  footR: [-10, 0, 0],
+  armL: [-38, -10, 16],
+  foreL: [-20, 0, 0],
+  handL: [10, 0, 10],
+  armR: [-32, 10, -18],
+  foreR: [-24, 0, 0],
+  handR: [10, 0, -10],
+  jaw: [26, 0, 0],
+  lidR: [8, 0, 0],
+};
+// en el aire, cayendo de cabeza: lo que cuelga se le queda atrás (los brazos
+// barridos hacia los pies, abiertos; las piernas, dobladas por la rodilla; la
+// cabeza echada atrás) y se sacude: CAE y CAE2, que se alternan
 const CAE = {
   root: [0, 0, 0],
-  hips: [6, 0, 0],
-  chest: [10, 0, 0],
-  head: [20, 0, 0],
-  legL: [10, 0, 6],
-  shinL: [20, 0, 0],
-  footL: [0, 0, 0],
-  legR: [-6, 0, -6],
-  shinR: [14, 0, 0],
-  footR: [0, 0, 0],
-  armL: [40, -10, 40],
-  foreL: [-20, 0, 0],
-  handL: [0, 0, 0],
-  armR: [36, 10, -44],
-  foreR: [-24, 0, 0],
-  handR: [0, 0, 0],
-  jaw: [16, 0, 0],
+  hips: [-4, 0, 0],
+  chest: [-10, 0, 2],
+  head: [-26, 0, 0],
+  legL: [14, 0, 8],
+  shinL: [52, 0, 0],
+  footL: [20, 0, 0],
+  legR: [4, 0, -6],
+  shinR: [34, 0, 0],
+  footR: [14, 0, 0],
+  armL: [48, -10, 62],
+  foreL: [-22, 0, 0],
+  handL: [10, 0, 10],
+  armR: [52, 10, -54],
+  foreR: [-26, 0, 0],
+  handR: [10, 0, -10],
+  jaw: [30, 0, 0],
   lidR: [10, 0, 0],
 };
+const CAE2 = {
+  root: [0, 0, 0],
+  hips: [2, 0, -3],
+  chest: [-4, 0, -2],
+  head: [-14, 0, -6],
+  legL: [-6, 0, 12],
+  shinL: [34, 0, 0],
+  footL: [12, 0, 0],
+  legR: [22, 0, -10],
+  shinR: [66, 0, 0],
+  footR: [24, 0, 0],
+  armL: [22, 14, 88],
+  foreL: [-34, 0, 0],
+  handL: [0, 0, 20],
+  armR: [66, -6, -38],
+  foreR: [-14, 0, 0],
+  handR: [20, 0, 0],
+  jaw: [22, 0, 0],
+  lidR: [10, 0, 0],
+};
+// boca abajo en la alberca: los brazos abiertos, sueltos y medio doblados,
+// uno más que otro; las piernas abiertas, una doblada; la cabeza de lado (y
+// FLOTA2, casi igual: el agua le mueve)
 const FLOTA = {
   root: [0, 0, 0],
-  hips: [0, 0, 0],
-  chest: [2, 0, 0],
-  head: [10, 0, 0],
-  legL: [0, 0, 10],
-  shinL: [10, 0, 0],
-  footL: [30, 0, 0],
-  legR: [0, 0, -10],
-  shinR: [12, 0, 0],
+  hips: [2, 0, 3],
+  chest: [6, 4, 2],
+  head: [12, 30, 10],
+  legL: [6, 4, 14],
+  shinL: [26, 0, 0],
+  footL: [36, 0, 0],
+  legR: [-14, -6, -8],
+  shinR: [46, 0, 0],
   footR: [30, 0, 0],
-  armL: [-10, 0, 84],
-  foreL: [-8, 0, 0],
-  handL: [0, -20, 0],
-  armR: [-10, 0, -84],
-  foreR: [-8, 0, 0],
-  handR: [0, 20, 0],
-  jaw: [20, 0, 0],
+  armL: [-24, 18, 68],
+  foreL: [-38, 0, 0],
+  handL: [6, -24, 8],
+  armR: [10, -12, -100],
+  foreR: [-18, 0, 0],
+  handR: [0, 20, -6],
+  jaw: [22, 0, 0],
   lidR: [0, 0, 0],
 };
+const FLOTA2 = {
+  ...FLOTA,
+  chest: [4, 6, 3],
+  head: [10, 26, 8],
+  legL: [2, 2, 12],
+  shinL: [32, 0, 0],
+  legR: [-10, -4, -10],
+  shinR: [40, 0, 0],
+  armL: [-16, 12, 76],
+  foreL: [-30, 0, 0],
+  armR: [6, -8, -94],
+  foreR: [-24, 0, 0],
+};
 
-const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR, alba: ALBA, predica: PREDICA, atravesado: ATRAVESADO, cae: CAE, flota: FLOTA };
+const KINDS = { stand: STAND, cielo: CIELO, vuelto: VUELTO, moler: MOLER, leer: LEER, untar: UNTAR, alba: ALBA, predica: PREDICA, atravesado: ATRAVESADO, dobla: DOBLA, cae: CAE, cae2: CAE2, flota: FLOTA, flota2: FLOTA2 };
 
 // La pose: la mezcla de las posturas (e.data.W), con lo de cada momento:
 // la respiración; la cabeza que se vuelve hacia ti (e.data.look: [guiñada,
@@ -722,6 +798,45 @@ function desfLoco(e, t) {
 
 const STILL = clip('dStill', 0.5, [[0, {}], [0.5, {}]]);
 
+// La capa, de la cintura abajo: entera (rígida, de la cadera) o partida en
+// cuatro, que sigue a las piernas (desde que cae del pretil de la cisterna, y
+// boca abajo en el agua: game/fisico_rama.js, game/desfigurado.js).
+export function deCapa(e, suelta) {
+  for (const m of e.rig.meshes) {
+    if (m.userData.grp === 'capaRigida') m.visible = !suelta;
+    else if (m.userData.grp === 'capaSuelta') m.visible = suelta;
+  }
+  e.capaSuelta = suelta;
+}
+// La capa partida: sigue a las piernas (faldonesPose); en el aire, cayendo de
+// cabeza, se le queda atrás y ondea; en el agua flota encima, abierta, y la
+// mueve el agua.
+function capaPose(e, pose, dt) {
+  if (!e.capaSuelta) return;
+  faldonesPose(e, pose, dt);
+  const q = e.game.desfigurado;
+  const k = q && q.muerte ? q.muerte.k : null;
+  const t = e.game.time;
+  for (const s of ['L', 'R']) {
+    const a = pose['falda' + s],
+      b = pose['falda' + s + '2'];
+    const sd = s === 'L' ? 1 : -1;
+    if (k === 'cae') {
+      const f = Math.sin(t * 17 + (s === 'L' ? 0 : 1.7)) * 0.12;
+      a[0] += 0.45 + f;
+      a[2] += sd * 0.16;
+      b[0] += 0.35 + f * 1.4;
+      b[2] += sd * 0.1;
+    } else if (k === 'flota') {
+      const f = Math.sin(t * 0.8 + (s === 'L' ? 0 : 2.1)) * 0.05;
+      a[0] += 0.3 + f;
+      a[2] += sd * 0.3;
+      b[0] += 0.12 + f;
+      b[2] += sd * 0.16;
+    }
+  }
+}
+
 export const DESFIGURADO_TYPE = {
   name: 'El Desfigurado',
   build: buildDesfigurado,
@@ -750,6 +865,7 @@ export const DESFIGURADO_TYPE = {
   onReset: (e) => e.game.desfigurado && e.game.desfigurado.npcReset(e),
   // (caer, flotar: el cuerpo entero, de su raíz; game/desfigurado.js)
   rootRot: (e) => e.game.desfigurado && e.game.desfigurado.rootRot(e),
+  postPose: capaPose,
 };
 
 void bump;

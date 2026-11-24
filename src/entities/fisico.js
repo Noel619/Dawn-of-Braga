@@ -21,7 +21,8 @@ import { Rig, clip } from './rig.js';
 import { DEG, clamp, damp, dampAngle, angleDiff } from '../core/util.js';
 import { MAT_DEFS } from '../gfx/materials.js';
 import { tube, merge, place, gSph, gBox, gCyl, gTorus, folds, table, mix, sstep } from './sculpt.js';
-import { humanoidJoints, torso, pelvis, arms, legs, neckHead, gown, capelet, hoodUp, TAU } from './figure.js';
+import { humanoidJoints, torso, pelvis, arms, legs, neckHead, gown, gownFaldones, capelet, hoodUp, TAU } from './figure.js';
+import { faldonJoints, faldonesPose } from './models.js';
 
 export const FI_K = 1.1;
 const K = FI_K;
@@ -113,7 +114,8 @@ function vara() {
 }
 
 export function buildFisico() {
-  const joints = humanoidJoints(K, { arm: 1.1 });
+  // (con las articulaciones de los faldones: el ropón partido, para caer)
+  const joints = [...humanoidJoints(K, { arm: 1.1 }), ...faldonJoints(K, 0.45 * K)];
   const parts = [];
   const UV = (mat) => (MAT_DEFS[mat]?.uv ?? 1) * 1.6 * K;
   const fig = (list) => list.map((p) => ({ ...p, geo: boxUV(p.geo), uvk: UV(p.mat) }));
@@ -209,7 +211,13 @@ export function buildFisico() {
     // (el faldón, abierto por delante: al andar se le ven las botas)
     const low = gown(ROPON, hem, { ...o, top: cut + lap, nv: 16, t0: 0.1, t1: TAU - 0.1, cz: (v) => ropCZ(mix(-0.98, cut + lap, v)) });
     parts.push(PD('chest', 'fiWax', up.geo));
-    parts.push(PD('hips', 'fiWax', place(low.geo, [0, 0.1, 0])));
+    parts.push(PD('hips', 'fiWax', place(low.geo, [0, 0.1, 0]), { grp: 'ropaRigida' }));
+    // (y el mismo faldón, partido en cuatro, que sigue a las piernas: sólo
+    // cuando cae y tendido, en la cisterna: así no cae ni se queda como un
+    // tablón; fiRopa)
+    const kneeY = -0.03 * K - 0.45 * K - 0.1;
+    for (const [j, geo] of gownFaldones(ROPON, hem, { ...o, nv: 16, t0: 0.1, t1: TAU - 0.1, top: cut + lap, knee: kneeY, hemY: -0.98, czy: ropCZ, off: [0, 0.1, 0], hip: [0.1 * K, -0.03 * K, 0], kneeLen: 0.45 * K }))
+      parts.push(PD(j, 'fiWax', geo, { grp: 'ropaSuelta' }));
     // los botones de latón, del cuello a la cintura
     const bt = [];
     for (let i = 0; i < 9; i++) {
@@ -385,7 +393,9 @@ export function buildFisico() {
 
   // (todo hecho para una altura de 1: se escala)
   const out = parts.map((pt) => ({ ...pt, p: (pt.p || [0, 0, 0]).map((x) => x * K), sc: (pt.sc || [1, 1, 1]).map((x) => x * K) }));
-  return new Rig({ joints, parts: out });
+  const rig = new Rig({ joints, parts: out });
+  for (const m of rig.meshes) if (m.userData.grp === 'ropaSuelta') m.visible = false;
+  return rig;
 }
 
 // ======================================================================= poses
@@ -469,11 +479,14 @@ const K_PICA = [
   [1.3, K_({})],
 ];
 
-// tumbado boca arriba, los brazos abiertos (el cuerpo entero lo tumba su raíz:
-// RamaCisterna.rootRot): la pose, como si estuviera de pie; la muñeca
-// izquierda, caída (si no, la hoja, que va a lo largo de la mano, quedaba
-// de punta hacia el cielo: ahora sigue al brazo, por el suelo)
-const YACE = { root: [0, 0, 0], chest: [0, 0, 0], head: [-4, 0, 0], armL: [-4, 0, 78], foreL: [-14, 0, 0], handL: [84, 0, 0], armR: [-4, 0, -74], foreR: [-22, 0, 0], handR: [0, 0, 0], legL: [0, 0, 5], shinL: [6, 0, 0], footL: [0, 0, 0], legR: [0, 0, -7], shinR: [9, 0, 0], footR: [0, 0, 0] };
+// tumbado boca arriba, flojo: la cadera, girada atrás del todo, y la raíz en
+// el suelo, detrás de los pies (donde queda quien cae de espaldas); una
+// rodilla algo levantada, las piernas abiertas, los brazos abiertos y medio
+// doblados; la muñeca izquierda, caída (si no, la hoja, que va a lo largo de
+// la mano, quedaba de punta hacia el cielo: así sigue al brazo, por el
+// suelo). Antes lo tumbaba entero su raíz, como a un tablón, girando sobre
+// los talones, y se quedaba recto y tieso.
+const YACE = { root: [0, -90, -95], hips: [-90, 0, 4], chest: [-3, 4, -3], head: [-6, 0, 0], armL: [-14, 0, 104], foreL: [-38, 0, 0], handL: [84, 0, 0], armR: [-6, 0, -52], foreR: [-26, 0, 0], handR: [0, 0, -10], legL: [-30, -8, 20], shinL: [68, 0, 0], footL: [18, 0, 0], legR: [-6, 4, -11], shinR: [15, 0, 0], footR: [26, 0, 0] };
 // herido de muerte: encorvado, la derecha apretada contra la herida, la hoja
 // colgando de la izquierda
 const HERIDO = { chest: [26, 0, 6], head: [22, 8, 6], armR: [-34, 0, -26], foreR: [-112, 0, 0], handR: [0, 0, 0], armL: [4, 0, 14], foreL: [-18, 0, 0], handL: [0, 0, 10] };
@@ -746,20 +759,26 @@ export const FI_CLIPS = {
     [1.8, MIRA],
   ]),
   mira: clip('fi_mira', 2.6, [[0, MIRA], [1.3, { ...MIRA, chest: [-9, 0, 2], head: [-39, 0, 2] }], [2.6, MIRA]], { loop: true }),
-  // cae de espaldas (el cuerpo lo tumba su raíz: los brazos se le van
-  // adelante, la barbilla al pecho)
+  // cae de espaldas, como cae un cuerpo que ya no se sostiene: se le van las
+  // rodillas, cae sentado hacia atrás (los brazos, por delante, al aire), da
+  // con la cadera en el suelo y luego con la espalda (la cabeza se le va
+  // atrás, los brazos caen abiertos), rebota un poco y se queda tendido
   caeAtras: clip(
     'fi_caeAtras',
-    0.9,
+    1.35,
     [
-      [0, { ...MIRA, root: [0, 0, 0], legL: [0, 0, 0], shinL: [0, 0, 0], footL: [0, 0, 0], legR: [0, 0, 0], shinR: [0, 0, 0], footR: [0, 0, 0] }],
-      [0.45, { root: [0, 0, 0], chest: [18, 0, 0], head: [28, 0, 0], armR: [-84, 0, -48], foreR: [-30, 0, 0], handR: [0, 0, 0], armL: [-84, 0, 48], foreL: [-20, 0, 0], handL: [0, 0, 0], legL: [-24, 0, 0], shinL: [32, 0, 0], footL: [0, 0, 0], legR: [-12, 0, 0], shinR: [22, 0, 0], footR: [0, 0, 0] }],
-      [0.9, YACE, 'settle'],
+      [0, { ...MIRA, root: [0, 0, 0], hips: [0, 0, 0], legL: [0, 0, 0], shinL: [0, 0, 0], footL: [0, 0, 0], legR: [0, 0, 0], shinR: [0, 0, 0], footR: [0, 0, 0] }],
+      [0.2, { root: [0, -17, -4], hips: [-6, 0, 2], chest: [8, 0, 2], head: [-24, 0, 0], armL: [-6, 0, 30], foreL: [-20, 0, 0], handL: [10, 0, 0], armR: [-14, 0, -34], foreR: [-30, 0, 0], handR: [0, 0, 0], legL: [-34, 0, 4], shinL: [62, 0, 0], footL: [-16, 0, 0], legR: [-26, 0, -4], shinR: [50, 0, 0], footR: [-12, 0, 0] }],
+      [0.42, { root: [0, -55, -32], hips: [-34, 0, 4], chest: [-6, 0, 2], head: [-10, 0, 0], armL: [-58, 0, 52], foreL: [-30, 0, 0], handL: [30, 0, 0], armR: [-66, 0, -48], foreR: [-34, 0, 0], handR: [0, 0, -10], legL: [-82, 0, 6], shinL: [96, 0, 0], footL: [-6, 0, 0], legR: [-70, 0, -6], shinR: [84, 0, 0], footR: [-4, 0, 0] }, 'in'],
+      [0.56, { root: [0, -82, -52], hips: [-50, 0, 4], chest: [-12, 0, 2], head: [8, 0, 0], armL: [-62, 0, 58], foreL: [-36, 0, 0], handL: [50, 0, 0], armR: [-70, 0, -54], foreR: [-40, 0, 0], handR: [0, 0, -10], legL: [-62, 0, 8], shinL: [74, 0, 0], footL: [6, 0, 0], legR: [-50, 0, -8], shinR: [58, 0, 0], footR: [8, 0, 0] }, 'snap'],
+      [0.79, { root: [0, -91, -93], hips: [-93, 0, 3], chest: [-6, 0, 0], head: [-24, 0, 0], armL: [-20, 0, 96], foreL: [-20, 0, 0], handL: [80, 0, 0], armR: [-16, 0, -64], foreR: [-20, 0, 0], handR: [0, 0, -10], legL: [-40, -6, 14], shinL: [70, 0, 0], footL: [14, 0, 0], legR: [-18, 2, -9], shinR: [28, 0, 0], footR: [20, 0, 0] }, 'snap'],
+      [0.97, { root: [0, -87, -95], hips: [-86, 0, 4], chest: [-1, 3, -2], head: [-3, 0, 0], armL: [-10, 0, 110], foreL: [-44, 0, 0], handL: [84, 0, 0], armR: [-4, 0, -46], foreR: [-32, 0, 0], handR: [0, 0, -10], legL: [-34, -8, 18], shinL: [74, 0, 0], footL: [16, 0, 0], legR: [-10, 4, -11], shinR: [20, 0, 0], footR: [24, 0, 0] }],
+      [1.35, YACE, 'settle'],
     ],
     { ground: false }
   ),
   // tumbado, mirando la luna (respira, apenas)
-  yace: clip('fi_yace', 3.0, [[0, YACE], [1.5, { ...YACE, chest: [-3, 0, 0] }], [3.0, YACE]], { loop: true, ground: false }),
+  yace: clip('fi_yace', 3.0, [[0, YACE], [1.5, { ...YACE, chest: [1, 0, 0], head: [-8, 0, 0] }], [3.0, YACE]], { loop: true, ground: false }),
   // se ahoga en su sangre: el pecho a sacudidas, la derecha al cuello
   ahoga: clip(
     'fi_ahoga',
@@ -819,6 +838,13 @@ export function fiSay(e, text, dur) {
 // campanilla (lo que saca de la espalda o del cinto)
 export function fiGrp(e, name, on) {
   for (const m of e.rig.meshes) if (m.userData.grp === name) m.visible = on;
+}
+// El ropón: entero (rígido, de la cadera) o partido en cuatro, que sigue a las
+// piernas (al caer de espaldas y tendido, en la cisterna). e.ropaSuelta.
+export function fiRopa(e, suelta) {
+  fiGrp(e, 'ropaRigida', !suelta);
+  fiGrp(e, 'ropaSuelta', suelta);
+  e.ropaSuelta = suelta;
 }
 
 // El gancho: si te alcanza la punta (de lejos, de frente), te engancha y
@@ -1255,8 +1281,31 @@ export const FISICO_TYPE = {
   // (cayendo de espaldas y tumbado en la luz de la cisterna: le tumba su
   // raíz; game/fisico_rama.js)
   rootRot: (e) => e.game.fisicoRama && e.game.fisicoRama.rootRot(e),
+  // el ropón partido (al caer y tendido): sus trozos siguen a las piernas; y,
+  // en el suelo, se aplastan y se extienden (la tela, no un tubo)
+  postPose: (e, pose, dt) => {
+    if (!e.ropaSuelta) return;
+    faldonesPose(e, pose, dt);
+    const h = pose.hips ? -pose.hips[0] : 0;
+    const k = Math.min(1, Math.max(0, (h - 0.6) / 0.9));
+    for (const s of ['L', 'R']) {
+      const a = pose['falda' + s],
+        b = pose['falda' + s + '2'];
+      // (tendido de espaldas: la tela cae hacia el suelo, a los lados de las
+      // piernas, y el bajo se abre)
+      a[0] += 0.22 * k;
+      a[2] += (s === 'L' ? 0.18 : -0.18) * k;
+      b[0] += 0.12 * k;
+      b[2] += (s === 'L' ? 0.14 : -0.14) * k;
+      // (aplastada contra el suelo: el tramo de abajo cuelga del de arriba y
+      // se aplasta con él)
+      const o = e.rig.joints['falda' + s];
+      if (o) o.scale.set(1 + 0.12 * k, 1, 1 - 0.38 * k);
+    }
+  },
   onReset: (e) => {
     e.data = {};
+    fiRopa(e, false);
     for (const g of ['mascara', 'sombrero', 'vara']) fiGrp(e, g, true);
     for (const g of ['esponja', 'campanilla', 'hierro', 'sierra', 'lanceta', 'trepano', 'evol', 'campanillaR']) fiGrp(e, g, false);
     if (e.game.speech && e.P.who) e.game.speech.hush(e.P.who);

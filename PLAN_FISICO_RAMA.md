@@ -83,8 +83,8 @@ brazos abiertos; el que llega por detrás sin hacer ruido; la caída; el cuerpo 
 | 0 | Él, en el pretil, con los brazos abiertos, hablándole a la luz y a ti: *«¡Mira! Desde aquí arriba se ve todo.» «Aquí abajo no manda la peste. Lo que queda es de los que quedan.» «Y lo que queda, crece. Mira cómo crece.»* | Desde la sala, de lejos y desde abajo: él contra el arco de la galería, la cascada debajo |
 | 4,4 | De lo oscuro de la galería sale el Físico, sin ruido, y se le pone a la espalda | De lado, a la altura del pretil: él predicando; detrás, la figura que se acerca |
 | 8,5 | *«Hermosa...»*; la hoja le sale por el pecho | De frente: la cabeza enmascarada asoma por encima de la suya |
-| 10,4 | Cae por la cascada, **a cámara lenta**, a la alberca | Desde la sala, siguiéndole |
-| 13,6 | Boca abajo, en cruz, en el agua, que se tiñe; arriba, el Físico se asoma al pretil a mirarle | Desde arriba (a ras del agua no se ve: la capa, oscura, de canto); luego la cámara se aparta y sube hasta él |
+| 10,4 | Cae por la cascada, **a cámara lenta**, a la alberca: se le van las rodillas y se dobla sobre el pretil; en el aire gira entero, flojo, con los brazos y las piernas atrás, sacudiéndose, y la capa ondeando; da en el agua, se hunde un poco y sale | Desde la sala, siguiéndole |
+| 13,6 | Boca abajo en el agua, que se tiñe, con los brazos abiertos pero sueltos, una pierna doblada, la cabeza de lado y la capa abierta flotando encima (el agua le mueve); arriba, el Físico se asoma al pretil a mirarle | Desde arriba (a ras del agua no se ve: la capa, oscura, de canto); luego la cámara se aparta y sube hasta él |
 | 18,3 | El Físico, en el pretil: *«Éste ya no necesitaba médico. Ninguno lo necesita, al final.»* Detrás de él **la bruma negra** sale de la galería, cubre el rellano, cae por el pretil como una segunda cascada y se extiende por el suelo de la sala | La misma toma: él desde abajo, la bruma creciendo |
 | 20,9 | *«Te fuiste por el tejado del cordelero sin dejarte tocar.» «Lo tengo apuntado. Aquí abajo también hay enfermos.»* | |
 | 23,6 | Levanta la campanilla, tres veces; y de la bruma, por la escalera, **ellos** | La sala entera; la luz, al pie de la escalera |
@@ -187,8 +187,11 @@ como el otro, que también murió en mitad de una palabra («Hermosa...»).
   donde estaba siempre el Desfigurado;
 - **se quita la máscara** (la boca, por primera vez, al aire de aquí abajo) y **mira arriba**: la luna, por el
   agujero. *«Ah...»*;
-- **cae de espaldas**, a cámara lenta, en la hierba de la isla, con los brazos abiertos (la toma, desde arriba: la
-  luna le mira a él). *«Todo se mueve hacia ella. Todo.»*;
+- **cae de espaldas**, a cámara lenta, en la hierba de la isla, como cae un cuerpo que ya no se sostiene: se le van
+  las rodillas, cae sentado, da con la cadera y luego con la espalda (la cabeza se le va atrás, los brazos caen
+  abiertos, rebota un poco) y queda tendido, flojo: una rodilla levantada, un brazo por encima de la cabeza, el ropón
+  caído a los lados de las piernas (la toma, desde arriba: la luna le mira a él). *«Todo se mueve hacia ella.
+  Todo.»*;
 - **vuelve la cara hacia ti** (la toma, a tu lado, a ras de la hierba): *«Tú no te arrodillaste.»* *«Tú eras el único
   que...»* — y la sangre: **se ahoga en ella**, a media frase;
 - se queda quieto, la cara otra vez a la luna, los ojos abiertos; la cámara sube por la luz hasta la luna. Su nombre:

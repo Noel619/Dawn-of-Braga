@@ -16,6 +16,8 @@
 //        enseguida)
 //   cuerpo: el cuerpo en la alberca (la llave de la reja) y su mesa (el
 //           cuaderno)
+//   caidas: las dos caídas, de costado, foto a foto (tools/shots/caida_*.png):
+//           la del Desfigurado por la cascada y la del Físico en la luz
 //   fotos: capturas de la escena, la pelea y su muerte (tools/shots/rama_<i>.png)
 //   (con npx vite --port 5199 en marcha; si no lo está, levanta el suyo)
 import { chromium } from 'playwright';
@@ -557,6 +559,105 @@ const cuerpo = async () => {
     return { ok: r.ok, nota: !!g.flags['note:remedios'], mesa: !!g.flags['desf:cocimientos'], toast: __toast() };
   }));
 };
+// las dos caídas, de costado, foto a foto (tools/shots/caida_<n>.png): la
+// del Desfigurado (la puñalada, la cascada, boca abajo en el agua) y la del
+// Físico (de espaldas en la luz, tendido, se ahoga)
+const fotoCam = async (C, nombre) => {
+  await ev((C) => {
+    const g = __game,
+      V = g.camera.position.constructor;
+    window.__camT = { pos: new V(...C.pos), look: new V(...C.look), fov: C.fov || 50, snap: true };
+    g.camRig.override = window.__camT;
+    g.update(0.0001);
+    // (sin el jugador por medio; y, si se pide, más claro)
+    const vis = g.player.obj.visible;
+    g.player.obj.visible = false;
+    const ex = g.post.U.uExposure.value;
+    if (C.luz) g.post.U.uExposure.value = ex * C.luz;
+    g.render();
+    g.post.U.uExposure.value = ex;
+    g.player.obj.visible = vis;
+  }, C);
+  await p.screenshot({ path: `tools/shots/caida_${nombre}.png` });
+};
+// (con la cámara de la escena, más claro)
+const fotoEsc = async (nombre) => {
+  await ev(() => {
+    const g = __game;
+    window.__camT = null;
+    const vis = g.player.obj.visible;
+    const ex = g.post.U.uExposure.value;
+    g.post.U.uExposure.value = ex * 1.8;
+    g.render();
+    g.post.U.uExposure.value = ex;
+    g.player.obj.visible = vis;
+  });
+  await p.screenshot({ path: `tools/shots/caida_${nombre}.png` });
+};
+const caidas = async () => {
+  await nueva();
+  await cisterna();
+  await alPretil();
+  await ev(() => (__game.flags['desf:met'] = true));
+  await bajar();
+  // (la cámara, la nuestra: la escena pone la suya en cada fotograma)
+  await ev(() => {
+    const g = __game,
+      R = g.fisicoRama;
+    const u0 = R.update.bind(R);
+    R.update = (dt) => {
+      u0(dt);
+      if (window.__camT) g.camRig.override = window.__camT;
+    };
+  });
+  // (de costado, desde la sala: el pretil y la cascada; luego, la alberca)
+  const C1 = { pos: [-8.4, -6.6, 11.3], look: [-13.8, -6.6, 10.6], fov: 62, luz: 2.2 };
+  const C1b = C1;
+  // (con las cámaras de la escena, las que se ven al jugar: CAM=lado, de
+  // costado)
+  const lado = process.env.CAM === 'lado';
+  for (const t of [9.0, 9.6, 9.9, 10.4, 10.9, 11.1, 11.25, 11.4, 11.55, 11.7, 11.85, 12.0, 12.15, 12.3, 12.6, 13.0, 14.0, 16.0]) {
+    out('desf ' + t, await hasta(t));
+    if (lado) await fotoCam(t < 11.6 ? C1 : C1b, 'd' + String(t.toFixed(2)).padStart(5, '0'));
+    else await fotoEsc('d' + String(t.toFixed(2)).padStart(5, '0'));
+  }
+  await ev(() => (window.__camT = null));
+  out('fin de la escena', await hasta(99));
+  // su muerte (como en 'muerte': los suyos, fuera; él, en el duelo, vencido)
+  await ev(() => {
+    const g = __game,
+      R = g.fisicoRama,
+      pl = g.player;
+    g.dev.set('god', true);
+    pl.spawn(-7.0, -9.0, 15.0, 0);
+    for (let k = 0; k < 2; k++) {
+      R.vivos().forEach((c) => c.takeHit(9999, 999, pl.pos.x, pl.pos.z, true));
+      for (let i = 0; i < 600 && R.fase !== 'duelo'; i++) g.update(1 / 30);
+    }
+    for (let i = 0; i < 150; i++) g.update(1 / 30);
+    const e = g.fisico.e;
+    e.hp = 5;
+    pl.spawn(e.pos.x + 1.2, e.pos.y, e.pos.z, Math.atan2(-1.2, 0));
+    e.takeHit(50, 50, pl.pos.x, pl.pos.z, false);
+    g.update(1 / 30);
+  });
+  const C2 = { pos: [-8.2, -7.3, 21.6], look: [-8.3, -8.0, 18.3], fov: 52, luz: 1.6 };
+  for (const t of [8.3, 8.6, 8.8, 9.0, 9.15, 9.3, 9.45, 9.6, 9.8, 10.2, 11.5, 16.0, 20.8, 21.0, 24.0]) {
+    out('fis ' + t, await ev(([t]) => {
+      const g = __game,
+        R = g.fisicoRama,
+        e = g.fisico.e;
+      for (let i = 0; i < 4000 && R.fase === 'muerte' && R.t < t; i++) g.update(1 / 30);
+      return { t: +R.t.toFixed(2), fase: R.fase, rot: +e.obj.rotation.x.toFixed(2), timeK: g.timeK };
+    }, [t]));
+    await fotoCam(C2, 'f' + String(t.toFixed(2)).padStart(5, '0'));
+  }
+  await ev(() => (window.__camT = null));
+};
+if (partes.includes('caidas')) {
+  console.log('--- caidas');
+  await caidas();
+}
 if (partes.includes('escena')) {
   console.log('--- escena');
   await escena();
