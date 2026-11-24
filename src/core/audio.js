@@ -1404,13 +1404,6 @@ export class Audio {
     const n = Math.floor(dur / 0.035);
     for (let i = 0; i < n; i++) if (Math.random() < 0.7) this.noise(d, t + i * 0.035 + rnd(0, 0.01), 0.015, { f0: rnd(2500, 4500), q: 8, gain: gain * rnd(0.4, 1), a: 0.001 });
   }
-  // El cuerpo de una criatura muerta, contra el suelo. Si cae como un cuerpo
-  // (entities/caida.js), suena cuando da en el suelo de verdad (lo apunta
-  // aquí y lo toca la caída: enemy.js, caidaGolpe); si no, cuando cae su clip.
-  cuerpoCae(e, d, t, k = 1, armor = false) {
-    if (e.caida) e.caida.sonido = { d, k, armor };
-    else this.bodyFall(d, t, k, armor);
-  }
   bodyFall(d, t, k = 1, armor = false) {
     this.tone(d, t, 0.3 * k, { f0: 85 / Math.sqrt(k), f1: 35, gain: 0.6 });
     this.noise(d, t, 0.25 * k, { type: 'lowpass', f0: 900, f1: 200, gain: 0.45, a: 0.003, buf: this.brown, rate: 3 });
@@ -3366,7 +3359,7 @@ export class Audio {
         else if (kind === 'hurt' || kind === 'alert') V({ dur: 0.36, f0: 150, f1: 110, vowel: 'a', v1: 'u', gain: 0.24, breath: 0.5, a: 0.01, rasp: 0.25, jit: 14 });
         else if (kind === 'death') {
           V({ dur: 1.2, f0: 135, f1: 70, vowel: 'a', v1: 'o', gain: 0.24, vib: 5, vibD: 12, breath: 0.6, rasp: 0.3 });
-          this.cuerpoCae(e, d, t + 1.0, 1);
+          this.bodyFall(d, t + 1.0, 1);
         }
         break;
       // el Custodio: un coro de calaveras (muchas voces huecas a la vez) y el
@@ -3395,7 +3388,7 @@ export class Audio {
         } else if (kind === 'hurt') V({ dur: 0.36, f0: 140 * pv, f1: 96, vowel: 'a', v1: 'u', gain: 0.24, breath: 0.55, a: 0.01, rasp: 0.4, jit: 18 });
         else if (kind === 'death') {
           V({ dur: 2.2, f0: 120 * pv, f1: 62, vowel: 'a', v1: 'o', gain: 0.24, vib: 4, vibD: 12, breath: 0.7, rasp: 0.4 });
-          this.cuerpoCae(e, d, t + 1.6, 0.9);
+          this.bodyFall(d, t + 1.6, 0.9);
         } else if (kind === 'idle') this.mutter(d, t, 1.8, 100 * pv);
         break;
       // los Velados: piedra que se mueve y, bajo el velo, una voz honda que
@@ -3416,7 +3409,7 @@ export class Audio {
           V({ dur: 2.6, f0: 66 * pv, f1: 38, vowel: 'u', v1: 'o', gain: 0.3, vib: 2, vibD: 14, breath: 0.5, a: 0.1, rasp: 0.5 });
           this.debris(d, t + 0.4, 30, 2.6, { f0: 300, f1: 1400, gain: 0.9 });
           this.noise(d, t + 0.3, 2.4, { type: 'lowpass', f0: 600, f1: 120, gain: 0.5, a: 0.1, buf: this.brown, rate: 2, curve: 'lin' });
-          this.cuerpoCae(e, d, t + 2.0, 2.4);
+          this.bodyFall(d, t + 2.0, 2.4);
           this.duck(0.35, 2.5);
         } else if (kind === 'idle') V({ dur: 2.4, f0: 58 * pv, vowel: 'u', gain: 0.1, vib: 2, vibD: 6, breath: 0.6, a: 1.0 });
         break;
@@ -3428,7 +3421,7 @@ export class Audio {
         } else if (kind === 'hurt') V({ dur: 0.32, f0: 480 * pv, f1: 290 * pv, vowel: 'a', gain: 0.2, breath: 0.5, a: 0.01, rasp: 0.25, jit: 20 });
         else if (kind === 'death') {
           V({ dur: 1.3, f0: 300 * pv, f1: 85, vowel: 'o', v1: 'u', gain: 0.22, vib: 11, vibD: 40, breath: 0.6, rasp: 0.3 });
-          this.cuerpoCae(e, d, t + 0.9, 0.7);
+          this.bodyFall(d, t + 0.9, 0.7);
         } else if (kind === 'idle') {
           if (Math.random() < 0.5) this.whisper(d, t, 1.4, 0.1);
           else this.mutter(d, t, 1.6, 110 * pv);
@@ -3446,7 +3439,7 @@ export class Audio {
           this.metal(d, t, rnd(600, 750), 0.07, 0.5);
         } else if (kind === 'death') {
           V({ dur: 1.1, f0: 105 * pv, f1: 48, vowel: 'o', v1: 'u', gain: 0.25, breath: 0.5, rasp: 0.4 });
-          this.cuerpoCae(e, d, t + 0.8, 1, true);
+          this.bodyFall(d, t + 0.8, 1, true);
         } else if (kind === 'idle') this.mutter(d, t, 1.2, 90 * pv);
         break;
       case 'crawler':
@@ -3489,7 +3482,7 @@ export class Audio {
         else if (kind === 'death') {
           V({ dur: 1.6, f0: 480, f1: 220, vowel: 'i', v1: 'u', gain: 0.24, vib: 6, vibD: 30, breath: 0.5 });
           V({ dt: 1.7, dur: 1.8, f0: 130, f1: 82, vowel: 'a', v1: 'o', gain: 0.22, vib: 5, vibD: 10, breath: 0.6, rasp: 0.3 });
-          this.cuerpoCae(e, d, t + 1.4, 1.4);
+          this.bodyFall(d, t + 1.4, 1.4);
         } else if (kind === 'idle') {
           this.noise(d, t, 1.2, { type: 'lowpass', f0: 420, gain: 0.07, a: 0.5, buf: this.brown, rate: 1, curve: 'lin' });
           this.noise(d, t + 1.5, 1.4, { type: 'lowpass', f0: 320, gain: 0.08, a: 0.2, buf: this.brown, rate: 1, curve: 'lin' });
@@ -3521,7 +3514,7 @@ export class Audio {
         else if (kind === 'death') {
           this.smp(d, t, this.churchBell(), { gain: 0.55 });
           V({ dur: 2.1, f0: 70, f1: 34, vowel: 'o', v1: 'u', gain: 0.3, breath: 0.6, rasp: 0.5 });
-          this.cuerpoCae(e, d, t + 1.3, 1.6, true);
+          this.bodyFall(d, t + 1.3, 1.6, true);
         }
         break;
       // el Cavador: polvo en el pecho (tose seco) y una voz de pozo
@@ -3539,7 +3532,7 @@ export class Audio {
           V({ dur: 2.2, f0: 90 * pv, f1: 36, vowel: 'o', v1: 'u', gain: 0.26, vib: 4, vibD: 20, breath: 0.9, a: 0.05, rasp: 0.7 });
           // (el cuévano: las calaveras ruedan por el suelo)
           for (let i = 0; i < 7; i++) this.boneCrack(d, t + 0.9 + i * rnd(0.08, 0.2), rnd(0.5, 0.9));
-          this.cuerpoCae(e, d, t + 1.0, 1.1);
+          this.bodyFall(d, t + 1.0, 1.1);
         } else if (kind === 'idle') {
           if (Math.random() < 0.5) for (let i = 0; i < 2; i++) this.noise(d, t + i * 0.2, 0.1, { f0: rnd(500, 650), q: 1.2, gain: 0.16, a: 0.004, buf: this.brown, rate: 3 });
           else this.mutter(d, t, 1.6, 80 * pv);
@@ -3561,7 +3554,7 @@ export class Audio {
         } else if (kind === 'death') {
           V({ dur: 2.4, f0: 340, f1: 140, vowel: 'a', v1: 'o', gain: 0.17, vib: 5, vibD: 40, breath: 0.8, a: 0.05, rasp: 0.5, jit: 25 });
           this.debris(d, t + 0.9, 24, 1.4, { f0: 300, f1: 1400, gain: 1 });
-          this.cuerpoCae(e, d, t + 1.4, 1.5);
+          this.bodyFall(d, t + 1.4, 1.5);
         } else if (kind === 'idle') this.whisper(d, t, 1.8, 0.1);
         break;
       // el Físico: la voz baja tras la máscara (un «hm»), el resoplido por
@@ -3605,7 +3598,7 @@ export class Audio {
         } else if (kind === 'death') {
           V({ dur: 1.8, f0: 140 * pv, f1: 62, vowel: 'u', v1: 'o', gain: 0.2, vib: 4, vibD: 20, breath: 0.9, a: 0.05, rasp: 0.5 });
           this.cascabeles(d, t + 0.3, 6, 0.6, 0.12, f);
-          this.cuerpoCae(e, d, t + 1.1, 1.0);
+          this.bodyFall(d, t + 1.1, 1.0);
           // (y los últimos, contra el suelo)
           this.cascabeles(d, t + 1.15, 5, 0.5, 0.1, f * 0.95);
         } else if (kind === 'idle') {
@@ -3647,7 +3640,7 @@ export class Audio {
         } else if (kind === 'death') {
           V({ dur: 2.0, f0: 240 * pv, f1: 70, vowel: 'a', v1: 'u', gain: 0.24, vib: 6, vibD: 40, breath: 0.7, rasp: 0.7, jit: 30 });
           this.creak(d, t + 0.5, 1.2, 70, 0.35);
-          this.cuerpoCae(e, d, t + 1.2, 1.6, true);
+          this.bodyFall(d, t + 1.2, 1.6, true);
         } else if (kind === 'idle') {
           this.creak(d, t, 1.0, rnd(70, 100), 0.18);
           if (Math.random() < 0.5) V({ dt: 0.6, dur: 0.9, f0: 160 * pv, f1: 140 * pv, vowel: 'o', gain: 0.1, breath: 0.9, rasp: 0.6, jit: 30 });
@@ -3676,7 +3669,7 @@ export class Audio {
         else if (kind === 'death') {
           V({ dur: 2.6, f0: 560, f1: 160, vowel: 'a', v1: 'o', gain: 0.2, vib: 5, vibD: 70, breath: 0.7, a: 0.05, rasp: 0.4, jit: 25 });
           for (let i = 0; i < 5; i++) V({ dt: 2.4 + i * 0.45, dur: 0.3, f0: 420 - i * 30, f1: 360 - i * 30, vowel: 'o', gain: 0.07 - i * 0.01, breath: 1, jit: 30 });
-          this.cuerpoCae(e, d, t + 2.2, 1.6);
+          this.bodyFall(d, t + 2.2, 1.6);
           this.duck(0.35, 2.5);
         } else if (kind === 'idle') for (let i = 0; i < 4; i++) V({ dt: i * 0.42, dur: 0.34, f0: 470 - i * 18, f1: 400 - i * 18, vowel: i % 2 ? 'o' : 'a', gain: 0.085, type: 'triangle', breath: 0.9, jit: 30, rasp: 0.25 }); // sollozos
         break;
@@ -3701,7 +3694,7 @@ export class Audio {
         } else if (kind === 'death') {
           V({ dur: 3.4, f0: 130 * pv, f1: 38, vowel: 'a', v1: 'u', gain: 0.26, vib: 5, vibD: 40, breath: 0.7, a: 0.1, rasp: 0.6, jit: 25 });
           for (let i = 0; i < 12; i++) this.boneCrack(d, t + 0.3 + i * rnd(0.12, 0.26), rnd(0.6, 1.1));
-          this.cuerpoCae(e, d, t + 1.6, 1.4);
+          this.bodyFall(d, t + 1.6, 1.4);
           this.whisper(d, t + 3.2, 1.6, 0.09);
           this.duck(0.35, 3);
         } else if (kind === 'idle') {
@@ -3723,7 +3716,7 @@ export class Audio {
         else if (kind === 'death') {
           V({ dur: 3.6, f0: 90 * lo, f1: 28, vowel: 'o', v1: 'u', gain: 0.45, vib: 4, vibD: 30, breath: 0.7, a: 0.2, rasp: 0.6, dist: 1 });
           this.smp(d, t + 0.5, this.churchBell(), { gain: 0.4, rate: mtof(38) / mtof(45) });
-          this.cuerpoCae(e, d, t + 2.4, 2.2, v === 'impaled');
+          this.bodyFall(d, t + 2.4, 2.2, v === 'impaled');
           this.duck(0.4, 3);
         }
         break;

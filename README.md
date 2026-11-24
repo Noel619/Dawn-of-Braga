@@ -82,7 +82,7 @@ de verdad), siempre o nunca.
 
 <p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 77 % hacia la 1.0"></a></p>
 
-**77 % hacia la 1.0**: 89 de 116 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**77 % hacia la 1.0**: 88 de 115 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -102,7 +102,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
 | XII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
-| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | En curso | 20 % (1 de 5) |
+| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
 | XIV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
 
 ### Lo que viene
@@ -147,14 +147,13 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
-**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *En curso, 20 %*
+**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
 - [ ] Los virotes: cómo se integran en todo el juego (hoy, sólo en el castillo; los disparados no se recogen)
 - [ ] El paso del Físico: un armario sin fondo entre dos casas, que se abre como atajo
 - [ ] La bodega de la viuda, el secreto del barrio que no se hizo
 - [ ] «Cisterna del Dios Desconocido» como «Dios Ignoto», como todo lo demás *(opcional)*
-- [x] Las caídas: quien muere cae como un cuerpo y se queda flojo (antes caían como una tabla y se quedaban tiesos)
 
 **XIV · Pruebas y fallos** — Que todo siga en pie, en cualquier sitio. *Por hacer, 0 %*
 
@@ -1330,20 +1329,6 @@ clavar un clavo (la muñeca no da medias vueltas); en el martillo, la boca, y en
 martillo no cruza el pecho en ningún golpe (lo más, roza el vientre al apoyar la boca en el suelo) ni la mano
 izquierda se le separa más de 4 cm, y al correr va apoyado en el hombro.
 
-**Las caídas.** Quien tiene cuerpo de persona (las criaturas de a pie y el Condenado) no muere con una animación
-fija: al morir deja de sostenerse y cae como un cuerpo (entities/caida.js). Es un muñeco de trapo sencillo: la
-pelvis, el cuello, la coronilla, los hombros, codos, muñecas y manos, las caderas, rodillas, tobillos y puntas de los
-pies son puntos que caen con la gravedad, el empujón del golpe que le mata (hacia el lado contrario) y lo que llevaba
-de carrera; el tronco es un sólido; los huesos guardan su largura; cada articulación tiene sus topes (las rodillas
-y los codos sólo se doblan hacia donde se doblan y nunca quedan del todo rectos, para que cedan; el cuello no da la
-vuelta) y los brazos y las piernas no se meten en el tronco; y todo choca con el suelo, con su roce, y con las paredes
-del mundo. Los primeros instantes aún le queda algo de fuerza (los brazos y la cabeza la pierden en medio segundo; las
-piernas, enseguida: se le doblan las rodillas) y la espalda se le afloja. Así se derrumba de rodillas, se dobla y
-queda tendido, flojo, cada vez de una manera: por una escalera resbala, contra una pared se queda apoyado. De los
-puntos salen los giros de su esqueleto, así que la ropa, las armas y el escudo le siguen; el golpe del cuerpo contra
-el suelo suena cuando de verdad da en él. Los jefes, con sus finales, y los que no tienen cuerpo de persona siguen
-con sus clips (el mastín y el rastrero, rehechos: ceden, rebotan y se quedan con las patas flojas).
-
 **Criaturas.**
 - **Penitente**: flagelante encapuchado, con clavos en la espalda y una hoz oxidada.
 - **Soldado cosido**: yelmo reventado por la carne y un tercer brazo que brota de la espalda; bloquea con el escudo.
@@ -1749,8 +1734,7 @@ src/
   dev/                  el modo desarrollador (devmode.js), quién puede abrirlo (access.js), las instancias de
                         las peleas y los controles del jefe (instances.js), el editor (editor.js) y el
                         laboratorio de los colosos (colossus_lab.js)
-  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; caida.js, la caída de
-                        quien muere (un muñeco de trapo); colossus/: el escultor
+  entities/             rig articulado + animador, locomoción con IK, jugador, criaturas e IA; colossus/: el escultor
                         de los colosos (sculpt.js), su modelo con piel (model.js), el Turiferario (turiferario.js; sus
                         manos y su cara, esculpidas aparte y más finas, en turiferario_hero.js; el vestido de
                         catedral, en turiferario_dress.js), Deo Ignoto (deo.js, deo_skeleton.js) y el Web Worker que

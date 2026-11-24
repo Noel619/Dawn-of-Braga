@@ -307,7 +307,6 @@ export const FASES = [
       ['El paso del Físico: un armario sin fondo entre dos casas, que se abre como atajo', 0],
       ['La bodega de la viuda, el secreto del barrio que no se hizo', 0],
       ['«Cisterna del Dios Desconocido» como «Dios Ignoto», como todo lo demás', 0, { opcional: true }],
-      ['Las caídas: quien muere cae como un cuerpo y se queda flojo (antes caían como una tabla y se quedaban tiesos)', 1],
     ],
   },
   {

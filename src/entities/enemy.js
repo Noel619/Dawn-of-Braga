@@ -2,7 +2,6 @@
 import * as THREE from 'three';
 import { Animator, blendInto, addRot, slerpE, Spring } from './rig.js';
 import { Biped, stabilizeShield } from './locomotion.js';
-import { Caida, puedeCaer } from './caida.js';
 import { moveBody } from '../world/collision.js';
 import { TYPES } from './enemies.js';
 import { resistencia } from '../game/danos.js';
@@ -111,8 +110,6 @@ export class Enemy {
     this.poise = this.T.poise;
     this.poiseT = 0;
     this.dead = false;
-    this.caida = null;
-    this.golpe = null;
     this.state = s.idle === 'ceiling' ? 'ceiling' : s.idle === 'boss' ? 'bossIdle' : 'dormant';
     this.idle = s.idle || 'stand';
     this.stT = 0;
@@ -400,8 +397,6 @@ export class Enemy {
       this.game.onEnemyAlert && this.game.onEnemyAlert(this);
     }
     if (this.hp <= 0) {
-      // (de dónde vino el golpe que le mata: hacia allí no cae)
-      this.golpe = { x: fromX, z: fromZ, fuerte: !!heavy };
       this.die();
       if (T.onHit) T.onHit(this, 'kill', dmg, heavy);
       return 'kill';
@@ -449,21 +444,7 @@ export class Enemy {
     this.state = 'dead';
     this.stT = 0;
     this.hp = 0;
-    // los que tienen cuerpo de persona caen como un cuerpo (entities/caida.js):
-    // dejan de sostenerse; los demás (y los jefes, con sus finales), con su
-    // clip de muerte
-    if (this.T.caida !== false && (!this.boss || this.T.caida) && !this.T.friendly && this.obj.visible && puedeCaer(this.rig)) {
-      this.caida = new Caida(this.game, this.rig, this.obj, {
-        de: this.golpe,
-        fuerte: this.golpe && this.golpe.fuerte,
-        vel: { x: this.vx, z: this.vz },
-        adelante: this.yaw,
-        onGolpe: (p, v, n) => this.caidaGolpe(p, v, n),
-      });
-      this.anim.stop(0);
-      this.anim.weight = 0;
-    } else this.anim.play(this.T.clips.death, { blend: 0.05 });
-    this.golpe = null;
+    this.anim.play(this.T.clips.death, { blend: 0.05 });
     // (lo que tenga que soltar al morir: al que tenía agarrado)
     if (this.T.onDie) this.T.onDie(this);
     // (los que no vuelven: muertos, se apunta; ver game.bossGone)
@@ -648,7 +629,6 @@ export class Enemy {
     const mass = clamp(T.height / 1.8, 1, 3.2);
     this.flX.kick(-16 / mass);
     if (this.hp <= 0) {
-      this.golpe = { x: fromX, z: fromZ, fuerte: true };
       this.die();
       if (T.onHit) T.onHit(this, 'kill', dmg, true);
       return 'kill';
@@ -906,20 +886,16 @@ export class Enemy {
       case 'dead': {
         this.vx = damp(this.vx, 0, 6, dt);
         this.vz = damp(this.vz, 0, 6, dt);
-        // (el que cae como un cuerpo: lo mueve su caída; y se queda un poco
-        // más, tendido, antes de deshacerse)
-        const dc = this.caida ? 0.9 : 0;
-        if (this.caida) move = false;
         // (los que se quedan donde caen: la corte del Rey)
         if (T.keepCorpse) break;
-        if (this.stT > 2.4 + dc) {
+        if (this.stT > 2.4) {
           this.sink += dt * 0.35;
-          if (!this.data.dissolved) {
+          if (this.stT > 2.4 && !this.data.dissolved) {
             this.data.dissolved = true;
             this.game.fx && this.game.fx.dissolve && this.game.fx.dissolve(this);
           }
         }
-        if (this.stT > 5.5 + dc) {
+        if (this.stT > 5.5) {
           this.obj.visible = false;
           this.shadow.visible = false;
         }
@@ -1004,12 +980,6 @@ export class Enemy {
     const T = this.T;
     if (T.animate) {
       T.animate(this, dt);
-      return;
-    }
-    // (muerto, si cae como un cuerpo)
-    if (this.caida) {
-      this.animaCaida(dt);
-      this.destello();
       return;
     }
     const spd = Math.hypot(this.vx, this.vz);
@@ -1136,14 +1106,11 @@ export class Enemy {
       }
       this._flareOn = this.flare > 0 || stun || this.flareRed > 0;
     }
-    this.destello();
-  }
-  // destello de golpe (T.flashEm: su color; en la armadura bruñida del
-  // Empalado, el de siempre dejaba todo el cuerpo de un color plano)
-  destello() {
+    // destello de golpe (T.flashEm: su color; en la armadura bruñida del
+    // Empalado, el de siempre dejaba todo el cuerpo de un color plano)
     if (this.flash > 0) {
       if (!this._flashing) {
-        const fe = this.T.flashEm || FLASH_EM;
+        const fe = T.flashEm || FLASH_EM;
         this.rig.setTint(null, _flashC.setRGB(fe[0], fe[1], fe[2]));
         this._flashing = true;
       }
@@ -1151,37 +1118,5 @@ export class Enemy {
       this.rig.setTint(null, null);
       this._flashing = false;
     }
-  }
-  // El cuerpo que cae (entities/caida.js): sus giros, desde sus puntos; lo
-  // que no es del cuerpo (la ropa, un tercer brazo) se queda como estaba y
-  // la ropa sigue a las piernas (T.postPose). La raíz, donde murió (y lo que
-  // se hunde al deshacerse); su sombra, bajo el cuerpo.
-  animaCaida(dt) {
-    const C = this.caida;
-    C.update(dt);
-    const pose = this._poseC || (this._poseC = {});
-    for (const j in this.lastPose) pose[j] = this.lastPose[j];
-    C.pose(pose);
-    if (this.T.postPose) this.T.postPose(this, pose, dt);
-    this.rig.apply(pose);
-    for (const j in pose) this.lastPose[j] = pose[j];
-    this.obj.position.set(C.p0.x, C.p0.y - this.sink, C.p0.z);
-    this.obj.quaternion.copy(C.q0);
-    const c = C.centro(this._cc || (this._cc = new THREE.Vector3()));
-    // (el cuerpo, para lo que lo busque: el polvo al deshacerse, el sonido)
-    this.body.pos.x = c.x;
-    this.body.pos.z = c.z;
-    const gy = this.game.world.col.groundHeight(c.x, c.z, 0.2, c.y + 0.3, true);
-    this.shadow.position.set(c.x, (gy > -99 ? gy : c.y - 0.15) + 0.02, c.z);
-    this.shadow.visible = this.obj.visible && this.sink < 0.05;
-  }
-  // El golpe del cuerpo contra el suelo: el primero, el de su muerte (el que
-  // apuntó su voz: core/audio.js, cuerpoCae); el segundo, más flojo.
-  caidaGolpe(p, v, n) {
-    const A = this.game.audio;
-    if (!A || !A.ok || v < 1.2) return;
-    const S = this.caida && this.caida.sonido;
-    if (S) A.bodyFall(S.d, A.t(), n === 1 ? S.k : S.k * 0.45, n === 1 && S.armor);
-    else if (n === 1) A.play('bodyFall', p);
   }
 }
