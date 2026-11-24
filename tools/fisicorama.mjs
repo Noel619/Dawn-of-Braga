@@ -18,6 +18,8 @@
 //           cuaderno)
 //   caidas: las dos caídas, de costado, foto a foto (tools/shots/caida_*.png):
 //           la del Desfigurado por la cascada y la del Físico en la luz
+//           (CAM=lado: de costado, no con las cámaras de la escena; CERCA=1:
+//           además, los dos cuerpos de cerca, como quedan: caida_cerca_*.png)
 //   fotos: capturas de la escena, la pelea y su muerte (tools/shots/rama_<i>.png)
 //   (con npx vite --port 5199 en marcha; si no lo está, levanta el suyo)
 import { chromium } from 'playwright';
@@ -621,6 +623,7 @@ const caidas = async () => {
     if (lado) await fotoCam(t < 11.6 ? C1 : C1b, 'd' + String(t.toFixed(2)).padStart(5, '0'));
     else await fotoEsc('d' + String(t.toFixed(2)).padStart(5, '0'));
   }
+  if (process.env.CERCA) for (const [i, C] of (await cercaDe('desf')).entries()) await fotoCam(C, 'cerca_d' + i);
   await ev(() => (window.__camT = null));
   out('fin de la escena', await hasta(99));
   // su muerte (como en 'muerte': los suyos, fuera; él, en el duelo, vencido)
@@ -652,8 +655,32 @@ const caidas = async () => {
     }, [t]));
     await fotoCam(C2, 'f' + String(t.toFixed(2)).padStart(5, '0'));
   }
+  if (process.env.CERCA) for (const [i, C] of (await cercaDe('fis')).entries()) await fotoCam(C, 'cerca_f' + i);
   await ev(() => (window.__camT = null));
 };
+// (CERCA=1: el cuerpo, de cerca, como queda: de lado y bajo, desde los pies y
+// desde arriba)
+const cercaDe = (quien) =>
+  ev((quien) => {
+    const g = __game,
+      V = g.camera.position.constructor;
+    const e = quien === 'fis' ? g.fisico.e : g.desfigurado.npc;
+    const J = e.rig.joints;
+    const w = (j) => J[j].getWorldPosition(new V());
+    const hip = w('hips'),
+      hd = w('head');
+    const pies = w('footL').add(w('footR')).multiplyScalar(0.5);
+    const ax = hd.clone().sub(pies).setY(0).normalize();
+    const pe = new V(-ax.z, 0, ax.x);
+    const c = hip.clone().add(hd).multiplyScalar(0.5);
+    const A = (p) => p.toArray();
+    const sube = (p, y) => p.add(new V(0, y, 0));
+    return [
+      { pos: A(sube(c.clone().addScaledVector(pe, 1.9), 0.35)), look: A(c), fov: 50, luz: 1.8 },
+      { pos: A(sube(pies.clone().addScaledVector(ax, -2.0), 0.8)), look: A(hip), fov: 50, luz: 1.8 },
+      { pos: A(sube(c.clone().addScaledVector(pe, -1.4), 1.8)), look: A(c), fov: 50, luz: 1.8 },
+    ];
+  }, quien);
 if (partes.includes('caidas')) {
   console.log('--- caidas');
   await caidas();
