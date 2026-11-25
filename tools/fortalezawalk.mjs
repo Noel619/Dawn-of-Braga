@@ -85,6 +85,15 @@ await p.evaluate(() => {
   // (el del rincón del sureste de una torre: x1, z1)
   window.__caracol = (x1, z1, u0, u1) => __husillo(x1 - 1.6, z1 - 1.6, 270, u0, u1);
 });
+await p.evaluate(() => {
+  // abre la puerta id si sigue cerrada (las de los refugios: la coracha, su
+  // caracol, el pasadizo, la cámara de la reina; PLAN_REFUGIOS.md)
+  window.__abre = (id) => {
+    const it = __game.interact.list.find((i) => i.id === id);
+    if (!it) return 'NO EXISTE ' + id;
+    return it.done ? 'ya abierta' : __useHere(id);
+  };
+});
 const T = (s) => p.evaluate(s);
 const out = [];
 // (SOLO4=1: sólo lo de la fase 4, los recorridos 12 a 14; SOLO5=1, sólo lo de
@@ -107,13 +116,13 @@ const step7 = async (name, s) => {
   if (!solo || solo === 7) await run(name, s);
 };
 // 1. de la coracha a la torre de la coracha (a su altura), el altar
-await step('coracha', "(()=>{const g=__game;g.player.spawn(-60,9,-100.8,Math.PI);__sim(0.5);return __walk([[-60,-95.4],[-63,-95.4],[-66.5,-95.4]])})()");
+await step('coracha', "(()=>{const g=__game;g.player.spawn(-60,9,-100.8,Math.PI);__sim(0.5);const a=__walk([[-60,-95.4],[-62.2,-95.4]]);const d=__abre('d_coracha');return {a,d,b:__walk([[-63,-95.4],[-66.5,-95.4]])}})()");
 await step('altar', "(()=>{__walk([[-71.0,-95.2]]);return __useHere('a_coracha')})()");
 // 2. la escalera al pasadizo (+12) y el pasadizo hasta la puerta de la torre del homenaje
-await step('escalera pasadizo', "__walk([[-66.6,-97.4],[-66.4,-99.3],[-71.8,-99.1],[-73.4,-98.8]])");
+await step('escalera pasadizo', "(()=>{const a=__walk([[-66.6,-97.4],[-66.4,-99.3],[-71.8,-99.1],[-73.4,-98.8]]);return {a,d:__abre('d_pasadizo_coracha')}})()");
 await step('pasadizo', "__walk([[-75,-98.79],[-77,-98.79],[-81,-98.79],[-83.6,-98.79]])");
 await step('puerta torre', "__useHere('d_pasadizo_torre')");
-await step('vuelta', "__walk([[-77,-98.79],[-74.5,-98.79],[-72.8,-99.1],[-67.2,-99.3],[-66.4,-97],[-66.4,-93.4],[-66.4,-91.0]])");
+await step('vuelta', "(()=>{const a=__walk([[-77,-98.79],[-74.5,-98.79],[-72.8,-99.1],[-67.2,-99.3],[-66.4,-97],[-66.4,-93.4]]);const d=__abre('d_caracol_coracha');return {a,d,b:__walk([[-66.4,-91.0]])}})()");
 // 3. el caracol abajo, al oratorio del Rey (+4,5): la tribuna de la capilla y la llave del capellán
 await step('baja al oratorio', "__caracol(-64,-88,31,15)");
 // (fase 7: lo que le faltaba al oratorio) la oración del Rey, en su reclinatorio
@@ -124,12 +133,13 @@ await p.waitForTimeout(600);
 await step('cordón suelto', "(()=>{const g=__game;return {tenso:g.groups['cordon:tenso']&&g.groups['cordon:tenso'].meshes.some(m=>m.visible),suelto:g.groups['cordon:suelto']&&g.groups['cordon:suelto'].meshes.some(m=>m.visible)}})()");
 await step('tribuna', "__walk([[-73.6,-80],[-73.6,-70],[-73.6,-63.0],[-68,-62.6],[-65.2,-63.2]])");
 await step('baja tribuna', "__walk([[-65.2,-64.4],[-65.2,-71.4],[-68.6,-72.4],[-68.6,-68.6],[-74.2,-68]])");
-await step('altar capilla', "(()=>{__walk([[-68.6,-68.6],[-68.6,-79],[-69.6,-83.4]]);return __useHere('a_capilla_real')})()");
+// (el altar de la capilla ya no es donde se descansa: es la Cancillería,
+// un refugio; PLAN_REFUGIOS.md)
 // 4. la cámara del Rey (por el oratorio) y su escalera a la antecámara
 await step('a la cámara', "(()=>{const g=__game;g.player.spawn(-70,4.5,-93,Math.PI);__sim(0.3);return __walk([[-73.4,-95.6],[-75,-95.6],[-77.6,-95.6]])})()");
 await step('baja a la antecámara', "__walk([[-82.0,-96.4],[-84.25,-96.4],[-84.25,-95.2],[-84.25,-89.0],[-82.4,-88.6]])");
 // 5. el caracol abajo, al tesoro: la llave del camarero y su nota
-await step('tesoro', "(()=>{const g=__game;g.player.spawn(-66.5,9,-95.4,Math.PI);__sim(0.3);__walk([[-66.4,-93.4],[-66.4,-91.0]]);return __caracol(-64,-88,31,1)})()");
+await step('tesoro', "(()=>{const g=__game;g.player.spawn(-66.5,9,-95.4,Math.PI);__sim(0.3);__walk([[-66.4,-93.4]]);__abre('d_caracol_coracha');__walk([[-66.4,-91.0]]);return __caracol(-64,-88,31,1)})()");
 await step('sale', "__walk([[-64.8,-91.2],[-64.8,-92.6],[-68,-94]])");
 await step('llave camarero', "(()=>{const it=__game.interact.list.find(i=>i.id==='i_llave_camarero');__walk([[it.x+0.6,it.z-1.0]]);return __useHere('i_llave_camarero')})()");
 await step('nota camarero', "__ir('n_camarero', 0.8)");
@@ -162,7 +172,7 @@ await step('paje', "__ir('n_paje', 0.6)");
 await step('a la torre de la reina', "__walk([[-136.8,-86.8],[-136.8,-88.4],[-136.8,-90.4],[-133.5,-91.4]])");
 await step('relicario', "__ir('i_relicario_reina', 0.9)");
 await step('al caracol', "__walk([[-131.5,-93.6],[-130.4,-93.4],[-130.4,-92.2]])");
-await step('sube a la cámara', "__caracol(-128,-89.2,15,31)");
+await step('sube a la cámara', "(()=>{const c=__caracol(-128,-89.2,15,31);return {c,d:__abre('d_camara_reina')}})()");
 await step('cámara de la reina', "__walk([[-130.4,-92.2],[-130.4,-94.4],[-131.5,-96.0]])");
 await step('libro de horas', "__ir('n_reina', 0.7)");
 await step('baja', "(()=>{__walk([[-130.4,-94.4],[-130.4,-92.2]]);return __caracol(-128,-89.2,31,0)})()");

@@ -404,7 +404,8 @@ function torreCoracha(ctx, S, L) {
     // el refugio de las cámaras del Rey (PLAN_REFUGIOS.md): lo alto de la
     // torre, con sus cuatro puertas cerradas (la de la coracha, la del
     // caracol, que baja al oratorio, y, arriba de sus escaleras de tablas, la
-    // del pasadizo y la del adarve, que dejaron abierta) y sin nadie dentro. En el altar, el candil
+    // del pasadizo y la del adarve, que dejaron abierta: su gozne, al levante,
+    // que abierta no tape el sobrado por donde se llega) y sin nadie dentro. En el altar, el candil
     // de los que velaban la coracha y el rosario, del brazo de la cruz; la
     // limosna del Rey, en la bolsa del soldado que la subía
     const candil = candilYRosario(ctx, axx, y + 1.05, azz, Math.PI / 2, { room, candil: [-0.12, 0.02, 0.36], rosario: [0.18, 0.5, -0.24] });
@@ -415,7 +416,7 @@ function torreCoracha(ctx, S, L) {
       { kind: 'door', id: 'd_coracha', x: ix1 + 0.4, y, z: FORT.coracha.z, w: 1.6, h: 3.2, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix1, inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
       { kind: 'door', id: 'd_caracol_coracha', x: C.cx - 0.8, y, z: C.hueco[1] + 0.2, w: 1.5, h: 2.4, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: C.hueco[1], inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
       { kind: 'door', id: 'd_pasadizo_coracha', x: ix0 - 0.25, y: FORT.walk, z: K.pasadizo, w: 1.2, h: 2.4, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: ix0, inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
-      { kind: 'door', id: 'd_adarve_coracha', x: FORT.adarveE.puerta, y: FORT.walk, z: iz1 + 0.25, w: FORT.adarveE.w, h: 2.2 + FORT.adarveE.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz1, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'coracha' }
+      { kind: 'door', id: 'd_adarve_coracha', x: FORT.adarveE.puerta, y: FORT.walk, z: iz1 + 0.25, w: FORT.adarveE.w, h: 2.2 + FORT.adarveE.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: iz1, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'coracha' }
     );
     // (el que se quedó dentro, rezando de rodillas ante el altar; muerto, con
     // el refugio encendido, no vuelve)

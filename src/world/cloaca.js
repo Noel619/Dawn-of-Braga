@@ -193,9 +193,10 @@ function bodega(ctx, Q, L) {
   L.interact.push(
     { kind: 'hatch', id: 'h_bodega_arriba', end: 'top', flag: 'hatch:bodega', needs: 'palanca', boards: true, msgDown: 'bodegaBaja', openMsg: 'bodegaAbre', shutMsg: 'bodegaClavada', refugio: 'taberna', x: T.x, y: 0, z: T.z, r: 1.5, to: [T.x, y, T.z - 1.65, Math.PI] },
     { kind: 'hatch', id: 'h_bodega_abajo', end: 'bottom', flag: 'hatch:bodega', msgUp: 'bodegaSube', shutMsg: 'bodegaArriba', refugio: 'taberna', x: T.x, y, z: T.z - 0.8, r: 1.4, to: [T.x - 0.5, 0, T.z - 1.0, Math.PI] },
-    // (su cerrojo, el del refugio de la taberna: al norte del hueco, donde
-    // se sale al subir; arrancados los tablones, se cierra por arriba)
-    { kind: 'cierre', id: 'c_bodega', of: 'h_bodega_arriba', refugio: 'taberna', x: T.x, y: 0, z: T.z - 0.9, r: 1.1 }
+    // (su cerrojo, el del refugio de la taberna: arrancados los tablones, se
+    // echa por arriba, desde el poniente del hueco; con poco alcance, que no le
+    // quite el rótulo a la trampilla a quien va a bajar o acaba de subir)
+    { kind: 'cierre', id: 'c_bodega', of: 'h_bodega_arriba', refugio: 'taberna', x: T.x - 0.95, y: 0, z: T.z + 0.15, r: 0.75 }
   );
   L.interact.push({ kind: 'examine', id: 'x_cubas', text: 'cubasBodega', x: x0 + 1.4, y, z: z0 + 2.6, r: 1.3 });
 }
