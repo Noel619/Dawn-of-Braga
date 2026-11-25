@@ -74,6 +74,12 @@ export class Refugios {
     const g = this.g;
     const R = this.de(it);
     if (!R) return;
+    // (el que pide algo más: la casa de Henrique, que te la deja cuando te ha
+    // contado lo suyo)
+    if (R.altar.pide && !g.flags[R.altar.pide]) {
+      g.ui.toast(MSG.refNoEsTuyo, 5);
+      return;
+    }
     const f = this.faltan(R);
     if (f.vivos || f.huecos) {
       g.hint('refugio');

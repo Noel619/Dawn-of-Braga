@@ -335,10 +335,11 @@ export class HouseQuest {
     this.ri = 0;
     this.waitT = 0;
     // la puerta de la calle: reventada (abierta) hasta la defensa, en la que
-    // la cierra él, y abierta desde que la gana; la de la escalera, atrancada
-    // hasta que baja
+    // la cierra él, y abierta desde que la gana (y, desde que te ha contado
+    // lo suyo, es la de tu refugio: como la dejaste, PLAN_REFUGIOS.md); la
+    // de la escalera, atrancada hasta que baja
     const d = this.door;
-    if (d) {
+    if (d && !F['ale:lore']) {
       if (!d.done) this.g.interact.setOpen(d, true);
       F['door:d_aleman'] = true;
     }

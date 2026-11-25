@@ -24,6 +24,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { calderaCera, panesCera } from './barrio_atrezo.js';
 import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
+import { rinconImagen } from './mobiliario.js';
 import { PIEDRA, tri, ajimez, vano, muroVanos, forjado, caracol, arcaSellada, estante, pupitre, atril, legajos, farol, hoja, sitial, tapiz, PERG, pieza, dentro, cara1, saeteraDentro, escaleraTablas, colgado, enlucido, zocalo } from './fortaleza_atrezo.js';
 import { buildSalon } from './fortaleza_salon.js';
 import { buildReina } from './fortaleza_reina.js';
@@ -65,7 +66,7 @@ function despensa(ctx, S, L) {
   muroVanos(ctx, 'z', SO.z0 + SO.t, SO.z1 - SO.t, SO.x1 - SO.t, SO.x1, 0, SO.h, [{ c: zk, w: 1.6, y: 0, h: 2.4, rise: 0.8, ring: 0.26 }], [{ room: 'cocina', y0: 0, y1: FORT.walk - 0.4 }], [{ room, y0: 0, y1: F1 }], { tint: [0.74, 0.7, 0.64], revealRoom: room });
   cara1(ctx, 'wallstone', 'e', x0, z0, SO.z0 + SO.t, 0, F1, room, [0.74, 0.7, 0.64]);
   W(S, SO.x1 - SO.t - 0.3, zk - 0.8, SO.x1 + 0.3, zk + 0.8);
-  L.interact.push({ kind: 'door', id: 'd_cocina', x: SO.x1 - SO.t / 2, y: 0, z: zk, w: 1.6, h: 3.2, arch: true, axis: 'z', mat: 'planks', hinge: 1, swing: -1, plane: SO.x1 - SO.t, inset: 0.06, ajar: 0.15, lock: { type: 'none' } });
+  L.interact.push({ kind: 'door', id: 'd_cocina', x: SO.x1 - SO.t / 2, y: 0, z: zk, w: 1.6, h: 3.2, arch: true, axis: 'z', mat: 'planks', hinge: 1, swing: -1, plane: SO.x1 - SO.t, inset: 0.06, ajar: 0.15, lock: { type: 'none' }, refugio: 'despensa' });
   // la botillería (al oeste) y la despensa (al este)
   wb.setRoom(room);
   for (let i = 0; i < 2; i++) P.cask(ctx, x0 + 1.0, 0, z0 + 1.6 + i * 1.6, Math.PI / 2, { room });
@@ -93,9 +94,25 @@ function despensa(ctx, S, L) {
   {
     const Po = FORT.poterna;
     W(S, Po.x - Po.w / 2, z1 - 0.3, Po.x + Po.w / 2, FORT.z1 + FORT.talud.d + 0.4);
-    L.interact.push({ kind: 'door', id: 'd_poterna', x: Po.x, y: 0, z: FORT.z1 - FORT.t / 2, w: Po.w, h: Po.h + Po.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: z1, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'poternaAbre' }, barredMsg: 'poternaTranca' });
+    L.interact.push({ kind: 'door', id: 'd_poterna', x: Po.x, y: 0, z: FORT.z1 - FORT.t / 2, w: Po.w, h: Po.h + Po.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: 1, plane: z1, inset: 0.06, lock: { type: 'barred', side: -1, msg: 'poternaAbre' }, barredMsg: 'poternaTranca' , refugio: 'despensa' });
   }
-  L.enemies.push({ type: 'penitent', x: x0 + 10.4, y: 0, z: (z0 + z1) / 2 - 1.1, yaw: 0.4, idle: 'eat', id: 'e_despensa1' });
+  L.enemies.push(
+    { type: 'penitent', x: x0 + 10.4, y: 0, z: (z0 + z1) / 2 - 1.1, yaw: 0.4, idle: 'eat', id: 'e_despensa1', refugio: 'despensa' },
+    { type: 'crawler', x: x0 + 6.2, y: 0, z: z0 + 3.2, yaw: 0.8, idle: 'ceiling', id: 'e_despensa2', refugio: 'despensa' }
+  );
+  // el refugio del ala de poniente (PLAN_REFUGIOS.md): cuatro puertas (la del
+  // patio, la del servicio, la de la cocina y la poterna). Su rincón: la tabla
+  // del despensero, en el muro de levante, pasados los estantes
+  {
+    wb.setRoom(room);
+    const candil = rinconImagen(ctx, x1, 0, z0 + 7.8, 'w', { room, imagen: 'tabla', tex: 'animasRetablo', yc: 1.8 });
+    wb.setRoom(null);
+    L.interact.push(
+      { kind: 'altar', id: 'a_despensa', name: 'La despensa', refugio: 'despensa', candil: [candil.x, candil.y, candil.z], x: x1 - 0.6, y: 0, z: z0 + 7.8, spawn: [x1 - 1.5, 0, z0 + 7.8], yaw: Math.PI / 2 },
+      // la sisa del despensero, en el mostrador
+      { kind: 'item', id: 'i_oro_despensa', item: 'oro', n: 8, x: x0 + 4.4, y: 1.02, z: z0 + 0.9 }
+    );
+  }
   L.zones.push({ id: 'despensa', rects: [[x0, z0, x1, z1, -1, F1]], atmo: 'interior', room });
   L.map.push({ id: 'despensa', r: [x0, z0, x1, z1] });
 }
@@ -323,6 +340,23 @@ function cancilleria(ctx, S, L) {
     L.interact.push({ kind: 'note', id: 'n_carta_rey', note: 'cartaRey', x: mx - 0.3, y: 1.07, z: mz - 0.1, model: 'paper' });
   }
   for (let i = 0; i < 9; i++) hoja(wb, x0 + 1 + rng.range(0, 8), 0.02, z0 + 1 + rng.range(0, 11), rng.range(0, 6), room, rng, i);
+  // el refugio de la fortaleza (PLAN_REFUGIOS.md): la sala y su torre, el
+  // Tombo, con sólo dos puertas afuera (la de la galería y la de la terraza
+  // del Tombo). Su rincón: el crucifijo de los escribanos, en el muro del
+  // Tombo, entre los panes de cera y su puerta
+  const candil = rinconImagen(ctx, xd - 2.3, 0, z1, 'n', { room, imagen: 'crucifijo', yc: 1.75 });
+  L.interact.push(
+    // (el id, el del altar de la Capilla Real: las partidas guardadas se
+    // levantan aquí)
+    { kind: 'altar', id: 'a_capilla_real', name: 'La Cancillería', refugio: 'cancilleria', candil: [candil.x, candil.y, candil.z], x: xd - 2.3, y: 0, z: z1 - 0.6, spawn: [xd - 2.3, 0, z1 - 1.5], yaw: 0 },
+    // los derechos del sello, en la mesa del canciller
+    { kind: 'item', id: 'i_oro_cancilleria', item: 'oro', n: 25, x: x1 - 1.9, y: 1.08, z: z1 - 1.45 }
+  );
+  // dos escribanos, que se quedaron a copiar
+  L.enemies.push(
+    { type: 'cortesanoSuelto', x: x1 - 1.7, y: 0, z: z0 + 4.4, yaw: Math.PI / 2, idle: 'kneel', id: 'e_escribano1', refugio: 'cancilleria' },
+    { type: 'cortesanoSuelto', x: (x0 + x1) / 2 - 1.6, y: 0, z: z0 + 5.3, yaw: -0.4, idle: 'kneel', id: 'e_escribano2', refugio: 'cancilleria' }
+  );
   wb.setRoom(null);
   ctx.lights.push({ x: (x0 + x1) / 2, y: 3.4, z: (z0 + z1) / 2, r: 1, g: 0.55, b: 0.26, radius: 12, intensity: 0.85, room });
   P.wallTorch(ctx, x0 + 0.02, 2.4, z0 + 5.6, 'e', { room });
@@ -393,7 +427,7 @@ function tombo(ctx, S, L) {
       run = 0.36,
       rise = (AE.y - FORT.walk) / n;
     stairs(ctx, AE.tombo, FORT.walk, R.z0 - n * run, 's', 1.5, n, rise, run, 'wallstone', { solidBelow: true, base: FORT.walk - 0.4 });
-    L.interact.push({ kind: 'door', id: 'd_tombo_terraza', x: AE.tombo, y: AE.y, z: R.z0 + R.t / 2, w: 1.1, h: 2.1 + 0.55, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'barred', side: 1, msg: 'tomboTerrazaAbre' }, barredMsg: 'tomboTerraza' });
+    L.interact.push({ kind: 'door', id: 'd_tombo_terraza', x: AE.tombo, y: AE.y, z: R.z0 + R.t / 2, w: 1.1, h: 2.1 + 0.55, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz0, inset: 0.06, lock: { type: 'barred', side: 1, msg: 'tomboTerrazaAbre' }, barredMsg: 'tomboTerraza', refugio: 'cancilleria' });
     // la terraza: un brasero, un caído con sus virotes, un ballestero muerto
     // contra el antepecho del patio
     const Cn = FORT.cancilleria;
@@ -450,7 +484,7 @@ function tombo(ctx, S, L) {
     ])
       legajos(ctx, px, y, pz, rng.range(0, 3), room, rng);
     wb.setRoom(null);
-    L.enemies.push({ type: 'cortesanoSuelto', x: cx - 0.2, y, z: cz - 0.9, yaw: Math.PI / 2, idle: 'kneel', id: 'e_tombo1' });
+    L.enemies.push({ type: 'cortesanoSuelto', x: cx - 0.2, y, z: cz - 0.9, yaw: Math.PI / 2, idle: 'kneel', id: 'e_tombo1', refugio: 'cancilleria' });
   }
   // la tercera: las cartas, los fueros y las bulas, en arcones; la mesa con
   // una bula desplegada, con su plomo
@@ -502,7 +536,7 @@ function tombo(ctx, S, L) {
     }
     L.interact.push({ kind: 'examine', id: 'x_bula_tombo', text: 'bulaTombo', x: cx - 0.4, y, z: cz - 0.5, r: 1.3 });
     wb.setRoom(null);
-    L.enemies.push({ type: 'crawler', x: cx + 0.8, y, z: cz + 1.6, yaw: -Math.PI / 2, idle: 'stand', id: 'e_tombo2' });
+    L.enemies.push({ type: 'crawler', x: cx + 0.8, y, z: cz + 1.6, yaw: -Math.PI / 2, idle: 'stand', id: 'e_tombo2', refugio: 'cancilleria' });
   }
   // la cuarta: las arcas del Rey, cada una con sus sellos, y el canciller
   {

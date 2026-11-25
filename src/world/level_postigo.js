@@ -30,6 +30,7 @@ import { hueco, forjado, vigas, tabique, cadaViga, quadN, ROT } from './kit_casa
 import { holedWall, railing, chest } from './level_souto.js';
 import * as P from './props.js';
 import { bakeCorpse } from '../entities/models.js';
+import { rinconImagen } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -1162,18 +1163,34 @@ export function buildPostigoAlley(ctx, S, U, L) {
   // (lo mueve game/house.js)
   // la puerta de la casa: la han reventado esta noche (por ahí entraron);
   // la cierra Henrique, a la defensa, y luego la abre
-  L.interact.push({ kind: 'door', id: 'd_aleman', x: D.x, y: 0, z: H.z1, w: D.w, h: D.h, axis: 'x', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: 1, plane: H.z1 - H.t, inset: 0.08, mark: 'broken' });
+  L.interact.push({ kind: 'door', id: 'd_aleman', x: D.x, y: 0, z: H.z1, w: D.w, h: D.h, axis: 'x', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: 1, plane: H.z1 - H.t, inset: 0.08, mark: 'broken' , refugio: 'aleman', refugioDesde: 'ale:lore' });
   // la de la escalera de arriba, en la sala: atrancada desde dentro; la abre
   // Henrique cuando baja (abre hacia la sala)
   L.interact.push({ kind: 'door', id: 'd_escalera_ale', x: US.door.x, y: 0, z: US.door.z, w: US.door.w, h: US.door.h, axis: 'z', lock: { type: 'npc' }, mat: 'planks', hinge: -1, swing: -1, plane: 52.8, inset: 0.06 });
   // la espada del padre, clavada en la repisa del hogar: se examina; cuando
   // Henrique te la da, se saca (ver game/house.js)
   L.interact.push({ kind: 'relic', id: 'r_solingen', x: A.mantel.x, y: 0, z: A.mantel.z + 0.85, r: 1.9 });
+  // el refugio del Postigo (PLAN_REFUGIOS.md): la casa de Henrique, cuando ya
+  // te ha contado lo suyo (ale:lore), con sus cinco ventanas tapiadas y sus
+  // puertas cerradas (la de la calle y la del sótano, que da al agujero de
+  // Leonor). Su rincón: el crucifijo de la familia, en el tabique del taller,
+  // entre sus dos vanos (en el del este está el pasillo por el que Henrique
+  // va a rezar ante el hogar; en el muro del hogar, sus estandartes)
+  {
+    const xw = 47.2,
+      zc = -103.9;
+    const candil = rinconImagen(ctx, xw, 0, zc, 'e', { room: 'aleman', imagen: 'crucifijo', yc: 1.75 });
+    L.interact.push(
+      { kind: 'altar', id: 'a_aleman', name: 'La Casa del Alemán', refugio: 'aleman', pide: 'ale:lore', candil: [candil.x, candil.y, candil.z], x: xw + 0.6, y: 0, z: zc, spawn: [xw + 1.25, 0, zc], yaw: -Math.PI / 2 },
+      // lo que el padre de Henrique guardaba para volver a Colonia, en la mesa
+      { kind: 'item', id: 'i_oro_aleman', item: 'oro', n: 20, x: 50.5, y: 0.8, z: -106.0 }
+    );
+  }
   // la del cuartucho de la escalera del sótano: con llave (se la da él)
-  L.interact.push({ kind: 'door', id: 'd_sotano_ale', x: ST.door.x, y: 0, z: ST.z1 + 0.4, w: ST.door.w, h: ST.door.h, axis: 'x', lock: { type: 'key', item: 'llave_sotano' }, mat: 'planks', hinge: -1, swing: 1, plane: ST.z1 });
+  L.interact.push({ kind: 'door', id: 'd_sotano_ale', x: ST.door.x, y: 0, z: ST.z1 + 0.4, w: ST.door.w, h: ST.door.h, axis: 'x', lock: { type: 'key', item: 'llave_sotano' }, mat: 'planks', hinge: -1, swing: 1, plane: ST.z1, refugio: 'aleman' });
   // hablar con Henrique (el punto le sigue) y tapiar cada ventana (por dentro)
   L.interact.push({ kind: 'npc', id: 't_henrique', label: 'Hablar con Henrique', x: 50, y: 0, z: -101.6 });
-  for (const w of A.windows) L.interact.push({ kind: 'board', id: 'b_' + w.id, win: w.id, x: w.inner[0] - w.nx * 0.3, y: 0, z: w.inner[1] - w.nz * 0.3, r: 1.9 });
+  for (const w of A.windows) L.interact.push({ kind: 'board', id: 'b_' + w.id, win: w.id, x: w.inner[0] - w.nx * 0.3, y: 0, z: w.inner[1] - w.nz * 0.3, r: 1.9, refugio: 'aleman' });
   // los tablones para tapiarlas (seis para cinco ventanas): en el taller del
   // carpintero, en el patio de la leña, en el carro volcado del recodo y,
   // arriba, en el granero
@@ -1205,12 +1222,12 @@ export function buildPostigoAlley(ctx, S, U, L) {
   const wave = (id, type, n, win) => ({ type, x: WN[win].out[0], y: 0, z: WN[win].out[1], yaw: yIn(WN[win]), idle: 'pound', id, held: true, wave: n, win });
   L.enemies.push(
     { type: 'henrique', x: 50, y: A.upWin.floor, z: H.z1 - 0.5, yaw: 0, idle: 'window', id: 'npc_henrique' },
-    { type: 'penitent', x: 52.05, y: 0, z: -102.45, yaw: Math.PI / 2 - 0.1, idle: 'pound', id: 'e_ale_p1', story: 'ale:door', group: 'aleEsc' },
-    { type: 'penitent', x: 52.1, y: 0, z: -101.5, yaw: Math.PI / 2 + 0.12, idle: 'pound', id: 'e_ale_p2', story: 'ale:door', group: 'aleEsc' },
-    { type: 'soldier', x: 51.25, y: 0, z: -102.0, yaw: Math.PI / 2, idle: 'pound', id: 'e_ale_s1', story: 'ale:door', group: 'aleEsc' },
-    { type: 'penitent', x: 43.45, y: 0, z: -100.45, yaw: -2.16, idle: 'eat', id: 'e_ale_i1', story: 'ale:door' },
-    { type: 'hound', x: 56.0, y: 0, z: -105.1, yaw: -2.0, idle: 'eat', id: 'e_ale_i2', story: 'ale:door' },
-    { type: 'penitent', x: 44.2, y: 0, z: -106.75, yaw: 2.63, idle: 'pray', id: 'e_ale_i3', story: 'ale:door' },
+    { type: 'penitent', x: 52.05, y: 0, z: -102.45, yaw: Math.PI / 2 - 0.1, idle: 'pound', id: 'e_ale_p1', story: 'ale:door', refugio: 'aleman', group: 'aleEsc' },
+    { type: 'penitent', x: 52.1, y: 0, z: -101.5, yaw: Math.PI / 2 + 0.12, idle: 'pound', id: 'e_ale_p2', story: 'ale:door', refugio: 'aleman', group: 'aleEsc' },
+    { type: 'soldier', x: 51.25, y: 0, z: -102.0, yaw: Math.PI / 2, idle: 'pound', id: 'e_ale_s1', story: 'ale:door', refugio: 'aleman', group: 'aleEsc' },
+    { type: 'penitent', x: 43.45, y: 0, z: -100.45, yaw: -2.16, idle: 'eat', id: 'e_ale_i1', story: 'ale:door', refugio: 'aleman' },
+    { type: 'hound', x: 56.0, y: 0, z: -105.1, yaw: -2.0, idle: 'eat', id: 'e_ale_i2', story: 'ale:door', refugio: 'aleman' },
+    { type: 'penitent', x: 44.2, y: 0, z: -106.75, yaw: 2.63, idle: 'pray', id: 'e_ale_i3', story: 'ale:door', refugio: 'aleman' },
     wave('e_ale_w1a', 'penitent', 1, 'v_taller'),
     wave('e_ale_w1b', 'penitent', 1, 'v_cocina'),
     wave('e_ale_w2a', 'hound', 2, 'v_oeste'),

@@ -1038,6 +1038,9 @@ export class Interactables {
       // (una puerta escondida no se ofrece: se abre desde el otro lado)
       it.hidden = !!s.hidden;
       it.r = s.r ?? 2.2;
+      // (la que sólo existe tras abrirse otra —tras: su id—, como la puerta de
+      // tablas de la capilla de Sisnando tras su tabique: hasta entonces, nada)
+      if (s.tras) this.ponerTras(it, false);
     } else if (s.kind === 'item') {
       it.obj = new THREE.Group();
       it.obj.position.set(s.x, s.y, s.z);
@@ -1251,6 +1254,7 @@ export class Interactables {
         if (it.lock.type === 'lever') this.refreshDoorNav(it);
         if (it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, true);
       }
+      if (it.kind === 'door' && it.tras) this.ponerTras(it, !!flags['door:' + it.tras]);
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
         it.obj.visible = false;
@@ -1440,7 +1444,7 @@ export class Interactables {
       it.rise = undefined;
       if (it.box) it.box.enabled = true;
       for (const b of it.leafBoxes || []) b.enabled = false;
-      if (it.lock && it.lock.type === 'lever') this.refreshDoorNav(it);
+      if ((it.lock && it.lock.type === 'lever') || it.refugio) this.refreshDoorNav(it);
       // (las que clavó el Físico vuelven a ser como eran)
       if (it.tapiada) {
         it.tapiada = false;
@@ -1555,12 +1559,33 @@ export class Interactables {
     if (it.box) it.box.enabled = true;
     for (const b of it.leafBoxes || []) b.enabled = false;
     delete g.flags['door:' + it.id];
+    // (cerrada por ti, queda con el pestillo: se vuelve a abrir desde
+    // cualquier lado, sea cual sea la cerradura que tenía)
+    g.flags['pestillo:' + it.id] = true;
     this.refreshDoorNav(it);
     p.playInteract('push', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
     g.audio && g.audio.play('doorOpen', { x: it.x, y: it.y, z: it.z });
     g.later(450, () => g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z }));
     g.refugios && g.refugios.alCerrar(it);
     g.saveGame();
+  }
+
+  // ¿De qué refugio es esta puerta? (la que sólo lo es desde una bandera,
+  // refugioDesde: la de la calle de la Casa del Alemán, desde que Henrique te ha
+  // contado lo suyo; antes la lleva su guion, game/house.js)
+  refDe(it) {
+    return it.refugio && (!it.refugioDesde || this.game.flags[it.refugioDesde]) ? it.refugio : null;
+  }
+
+  // La puerta que va tras otra (s.tras): hasta que se abre aquélla, ni se ve
+  // ni choca; luego, como cualquier puerta (abierta, si su bandera lo dice).
+  ponerTras(it, hay) {
+    it.hidden = !hay;
+    it.obj.visible = hay;
+    if (!hay) {
+      if (it.box) it.box.enabled = false;
+      for (const b of it.leafBoxes || []) b.enabled = false;
+    } else if (!this.game.flags['door:' + it.id] && it.box) it.box.enabled = true;
   }
 
   // ¿Abierta? Las trampillas de un refugio se cierran con su cerrojo (la
@@ -1812,7 +1837,7 @@ export class Interactables {
       bd = 1e9;
     for (const it of this.list) {
       // (las puertas de un refugio, abiertas, se ofrecen para cerrarlas)
-      if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note' && !(it.kind === 'door' && it.refugio)) continue;
+      if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note' && !(it.kind === 'door' && this.refDe(it))) continue;
       if (it.hidden) continue;
       if (it.unless && this.game.flags[it.unless]) continue;
       if (it.kind === 'trigger') continue;
@@ -1840,8 +1865,8 @@ export class Interactables {
     switch (it.kind) {
       case 'door':
         // (las de un refugio: se cierran; y, encendido, se abren con su llave)
-        if (it.refugio && it.done) return 'Cerrar la puerta';
-        if (it.refugio && this.game.refugios && this.game.refugios.encendido(it.refugio)) return 'Abrir';
+        if (this.refDe(it) && it.done) return 'Cerrar la puerta';
+        if (this.refDe(it) && (this.game.flags['pestillo:' + it.id] || (this.game.refugios && this.game.refugios.encendido(it.refugio)))) return 'Abrir';
         if (it.label) return it.label;
         if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
@@ -1928,6 +1953,12 @@ export class Interactables {
       const openIt = (msg, sound = 'doorOpen') => {
         this.setOpen(it);
         g.flags['door:' + it.id] = true;
+        for (const q of this.list)
+          if (q.kind === 'door' && q.tras === it.id) {
+            g.flags['door:' + q.id] = true;
+            this.ponerTras(q, true);
+            this.setOpen(q, true);
+          }
         if (msg) g.ui.toast(msg);
         g.audio && g.audio.play(sound, { x: it.x, y: it.y, z: it.z });
         // (arrancar tablones clavados se oye: lo que duerme cerca despierta)
@@ -1935,14 +1966,15 @@ export class Interactables {
         p.playInteract('push');
         g.saveGame();
       };
-      // (la de un refugio: abierta, se cierra; encendido el refugio, se abre
-      // desde cualquier lado, que tienes su llave)
-      if (it.refugio && it.done) {
+      // (la de un refugio: abierta, se cierra; cerrada por ti, se abre con
+      // el pestillo, y encendido el refugio, desde cualquier lado, que tienes
+      // su llave)
+      if (this.refDe(it) && it.done) {
         this.cerrar(it);
         return true;
       }
-      if (it.refugio && g.refugios && g.refugios.encendido(it.refugio) && L.type !== 'none') {
-        openIt(null, 'unlock');
+      if (this.refDe(it) && L.type !== 'none' && (g.flags['pestillo:' + it.id] || (g.refugios && g.refugios.encendido(it.refugio)))) {
+        openIt(null, g.flags['pestillo:' + it.id] ? 'doorOpen' : 'unlock');
         return true;
       }
       // (msg, sound: lo que se dice y lo que suena al abrirla: la puerta

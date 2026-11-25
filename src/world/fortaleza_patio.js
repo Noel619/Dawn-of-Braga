@@ -100,7 +100,7 @@ function muros(ctx, S, L) {
     for (const z of [-56, -49.5]) ajimez(ctx, 'w', x0, z, 7.2, { h: 1.2 });
     L.interact.push(
       { kind: 'door', id: 'd_capilla', x: x0 + ti / 2, y: 0, z: C.puerta, w: 2.2, h: 2.5 + 1.1, arch: true, axis: 'z', mat: 'planks', double: true, hinge: 0, swing: 1, plane: x1, inset: 0.06, mark: 'cross', lock: { type: 'none' } },
-      { kind: 'door', id: 'd_cancilleria', x: x0 + ti / 2, y: 0, z: Cn.puerta, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: x1, inset: 0.06, ajar: 0.25, lock: { type: 'none' } }
+      { kind: 'door', id: 'd_cancilleria', x: x0 + ti / 2, y: 0, z: Cn.puerta, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: x1, inset: 0.06, ajar: 0.25, lock: { type: 'none' }, refugio: 'cancilleria' }
     );
   }
   // norte: las cámaras de la reina y las del Rey, a los lados de la torre
@@ -140,7 +140,7 @@ function muros(ctx, S, L) {
     for (const x of [a + 3.5, b - 3.5]) ajimez(ctx, 'n', z0, x, 7.0, { h: 1.2 });
   }
   L.interact.push(
-    { kind: 'door', id: 'd_despensa', x: D.puerta, y: 0, z: Pt.z1 + ti / 2, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: Pt.z1 + ti, inset: 0.06, ajar: 0.2, lock: { type: 'none' } },
+    { kind: 'door', id: 'd_despensa', x: D.puerta, y: 0, z: Pt.z1 + ti / 2, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: Pt.z1 + ti, inset: 0.06, ajar: 0.2, lock: { type: 'none' }, refugio: 'despensa' },
     { kind: 'door', id: 'd_guardia', x: G.puerta, y: 0, z: Pt.z1 + ti / 2, w: 1.6, h: 2.6 + 0.8, arch: true, axis: 'x', mat: 'planks', hinge: 1, swing: -1, plane: Pt.z1 + ti, inset: 0.06, lock: { type: 'none' } }
   );
   // la imposta corrida del claustro, por encima del tejaroz del paseo (en

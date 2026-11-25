@@ -904,7 +904,8 @@ export function buildCrypt(ctx, S, C, L) {
     P.wallTorch(ctx, x1, Y + 2.7, -99.4, 'w', { room, radius: 7 });
     P.wallTorch(ctx, x1, Y + 2.7, -107.6, 'w', { room, radius: 7 });
     if (ctx.shafts) ctx.shafts.push({ a: [0, Y + 3.8, -97.3], b: [0.4, Y, -100.8], w: 2.0, color: 0xffb070 });
-    L.interact.push({ kind: 'altar', id: 'a_cripta', name: 'Altar de la Cripta', x: 5.8, y: Y, z: -103.5, spawn: [4.2, Y, -103.5], yaw: -Math.PI / 2 });
+    // (su altar se queda, de adorno: bajo la Sé se descansa en la capilla de
+    // Sisnando, cerrada; PLAN_REFUGIOS.md)
   }
 
   // --- el osario de las ánimas: el de los canónigos de la catedral. Los

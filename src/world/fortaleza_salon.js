@@ -65,7 +65,7 @@ function salon(ctx, S, L) {
   wb.box('wallstone', FORT.reina.x0, 0, z0, x1, E, z0 + 0.012, { faces: 's', room, tint, sub: 2.2, aoH: 2.5 });
   muroVanos(ctx, 'x', x0, x1, z1, z1 + 2.4, 0, E, [{ c: Sa.servicio, w: 1.6, y: 0, h: 2.6, rise: 0.8, ring: 0.28 }], [{ room, y0: 0, y1: E }], [{ room: 'despensa', y0: 0, y1: F1 }], { tint, revealRoom: 'despensa' });
   W(S, Sa.servicio - 0.8, z1 - 0.3, Sa.servicio + 0.8, z1 + 2.7);
-  L.interact.push({ kind: 'door', id: 'd_servicio', x: Sa.servicio, y: 0, z: z1 + 1.2, w: 1.6, h: 3.4, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: z1, inset: 0.06, lock: { type: 'none' } });
+  L.interact.push({ kind: 'door', id: 'd_servicio', x: Sa.servicio, y: 0, z: z1 + 1.2, w: 1.6, h: 3.4, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: z1, inset: 0.06, lock: { type: 'none' } , refugio: 'despensa' });
   // el muro del patio, por dentro, hasta la armadura (el tejado pasa por
   // encima de él hasta el alero del patio)
   const T = lineaTejado((x0 + FORT.patio.x0) / 2, (FORT.patio.x0 - x0) / 2, E, Sa.ridge);

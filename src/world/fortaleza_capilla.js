@@ -176,7 +176,8 @@ function presbiterio(ctx, L) {
   P.candelabra(ctx, xc + 2.6, 0.3, z0 + 1.4, { room });
   ctx.lights.push({ x: xc, y: 4.2, z: z0 + 3.2, r: 1, g: 0.6, b: 0.32, radius: 9, intensity: 0.7, room });
   // el altar de la capilla: el descanso de en medio de la fortaleza
-  L.interact.push({ kind: 'altar', id: 'a_capilla_real', name: 'Capilla Real', x: xc, y: 0.3, z: z0 + 1.0, spawn: [xc, 0.3, z0 + 3.2], yaw: 0 });
+  // (ya no se descansa aquí: el refugio de la fortaleza es la Cancillería,
+  // con su torre; PLAN_REFUGIOS.md)
   // el reclinatorio del capellán, con su confesión
   {
     const rx = xc + 1.9,

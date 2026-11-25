@@ -21,7 +21,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
 import { PIEDRA, ajimez, muroVanos, forjado, caracol, sitial, tapiz, dentro, cara1, saeteraDentro, armadura, lineaTejado, caraTejado, farol, tri, cara, talud } from './fortaleza_atrezo.js';
-import { percha, estera } from './mobiliario.js';
+import { percha, estera, rinconImagen } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -366,7 +366,22 @@ function torre(ctx, S, L) {
       { kind: 'examine', id: 'x_cama_reina', text: 'camaReina', x: bx + 0.9, y, z: bz - 0.6, r: 1.4 },
       { kind: 'note', id: 'n_reina', note: 'reina', x: kx - 0.18, y: y + 1.08, z: kz - 0.42, model: 'book' }
     );
-    L.enemies.push({ type: 'mourner', x: bx + 1.6, y, z: bz - 0.9, yaw: -Math.PI / 2, idle: 'stand', id: 'e_reina4' });
+    // el refugio del ala de poniente de arriba (PLAN_REFUGIOS.md): la cámara,
+    // en lo alto de su torre, sólo tiene el paso del caracol, y se le pone su
+    // puerta. Su rincón: la Virgen de la reina, en el muro del sur
+    const candil = rinconImagen(ctx, ix0 + 3.8, y, iz1, 'n', { room, imagen: 'tabla', tex: 'virgenCarmen', yc: 1.8 });
+    const hk = 1.6,
+      tk = 0.4;
+    L.interact.push(
+      { kind: 'door', id: 'd_camara_reina', x: ix1 - hk - hk / 2, y, z: iz1 - 2 * hk - tk / 2, w: hk - 0.1, h: 2.4, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: iz1 - 2 * hk - tk, inset: 0.06, lock: { type: 'none' }, refugio: 'reina' },
+      { kind: 'altar', id: 'a_reina', name: 'La cámara de la reina', refugio: 'reina', candil: [candil.x, candil.y, candil.z], x: ix0 + 3.8, y, z: iz1 - 0.6, spawn: [ix0 + 3.8, y, iz1 - 1.5], yaw: 0 },
+      // la limosna de la reina, en el arcón del norte
+      { kind: 'item', id: 'i_oro_reina', item: 'oro', n: 12, x: cx - 0.4, y: y + 0.62, z: iz0 + 0.5 }
+    );
+    L.enemies.push(
+      { type: 'mourner', x: bx + 1.6, y, z: bz - 0.9, yaw: -Math.PI / 2, idle: 'stand', id: 'e_reina4', refugio: 'reina' },
+      { type: 'cortesanoSuelto', x: ix1 - 1.4, y, z: iz0 + 2.3, yaw: Math.PI, idle: 'kneel', id: 'e_reina6', refugio: 'reina' }
+    );
   }
   const names = ['reina_torre', 'reina_oratorio', 'reina_camara'];
   pisos.forEach((y, k) => {

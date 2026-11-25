@@ -37,6 +37,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { bakeParts, skullParts, boneParts, bishopTombParts } from './ossuary_props.js';
 import { HAMMER } from '../entities/weapon_models.js';
 import { MAT_DEFS } from '../gfx/materials.js';
+import { rinconImagen } from './mobiliario.js';
 import { buildOsarioMartin, OSM } from './osario_martin.js';
 import { buildPanteon, PAN, GAL, PASO, BAJADA } from './panteon.js';
 import { buildLucernario, LUC } from './lucernario.js';
@@ -1003,6 +1004,22 @@ function buildSisnando(ctx, L) {
   P.rubble(ctx, dc - 0.3, Y, DR.z1 + 0.55, 5, 7302, 0.55, { mat: 'wallstone', scale: 0.6 });
   ctx.endGroup();
   L.interact.push({ kind: 'door', id: 'd_sisnando', label: 'Derribar el tabique', x: dc, y: Y, z: tz, w: dw, h: DR.ys - Y + dw / 2, axis: 'x', mat: 'tabique', lock: { type: 'none', msg: 'sisnandoCae', sound: 'swingHeavy' }, dust: [0.7, 0.67, 0.6] });
+  // el refugio de bajo la Sé (PLAN_REFUGIOS.md): la capilla estaba cerrada por
+  // su tabique; caído, en el boquete queda la puerta de tablas de la reclusa,
+  // abierta, que se cierra desde dentro
+  L.interact.push({ kind: 'door', id: 'd_sisnando_tablas', tras: 'd_sisnando', x: dc, y: Y, z: tz, w: dw - 0.12, h: DR.ys - Y + dw / 2 - 0.08, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: DR.z0, inset: 0.06, lock: { type: 'none' }, refugio: 'sisnando' });
+  // su rincón: la cruz de la reclusa, en el muro de poniente, entre la entrada
+  // y el primer fajón
+  {
+    const zr = SI.z1 - 2.4;
+    const candil = rinconImagen(ctx, SI.x0, Y, zr, 'e', { room: ROOM, imagen: 'cruz', yc: 1.6 });
+    L.interact.push(
+      // (el id, el del altar de la cripta: las partidas guardadas se levantan aquí)
+      { kind: 'altar', id: 'a_cripta', name: 'La capilla de Sisnando', refugio: 'sisnando', candil: [candil.x, candil.y, candil.z], x: SI.x0 + 0.6, y: Y, z: zr, spawn: [SI.x0 + 1.5, Y, zr], yaw: -Math.PI / 2 },
+      // lo que los fieles le echaban por el ventanuco
+      { kind: 'item', id: 'i_oro_sisnando', item: 'oro', n: 6, x: dc + 0.2, y: Y + 0.02, z: DR.z0 - 0.7 }
+    );
+  }
   // en el rellano, junto al arco, la lápida del cabildo
   const px = DR.x1 + 1.25;
   plaque(ctx, px, Y + 1.75, DR.z1 + 0.04, 's', 1.1, 0.7);
@@ -2166,7 +2183,7 @@ function buildCreatures(L) {
   L.enemies.push(
     // la capilla de Sisnando: la reclusa que pidió quedarse con él, tapiada
     // en vida, de cara al muro, con las manos en la piedra
-    e('emparedada', D.sisnando.x0 + 0.72, Y, -128.8, 'e_sisnando', { idle: 'walled', yaw: -Math.PI / 2 }),
+    e('emparedada', D.sisnando.x0 + 0.72, Y, -128.8, 'e_sisnando', { idle: 'walled', yaw: -Math.PI / 2, refugio: 'sisnando' }),
     // la sala de los obispos
     e('penitent', -44.5, Y1, -123.6, 'e_ob1', { idle: 'pray', yaw: Math.PI }),
     e('penitent', -57, Y1, -118, 'e_ob2', { idle: 'kneel', yaw: Math.PI / 2 }),
