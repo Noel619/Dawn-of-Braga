@@ -85,7 +85,10 @@ export function zapatero(ctx, L, h) {
   wb.setRoom(r0);
   P.hearth(ctx, I.x1 - 0.1, 0, 37.6, 'w', { room: r0, lit: true, w: 1.8, ceil: 4.0 });
   P.table(ctx, 31.0, 0, 37.4, 1.8, 0.9, Math.PI / 2);
-  P.stool(ctx, 30.15, 0, 37.4, { room: r0 }); // (sin choque: en él se sienta el hijo)
+  // (sin choque: en él se sienta el hijo. Con él, el cuerpo se le subía
+  // encima, a medio metro, y sentado se quedaba en el aire, con los pies a la
+  // altura del asiento)
+  P.stool(ctx, 30.15, 0, 37.4, { room: r0, col: false });
   P.stool(ctx, 31.8, 0, 36.6, { room: r0, tipped: true });
   bowl(ctx, 30.85, 0.8, 37.4, 0.12, r0, ['water', [0.4, 0.1, 0.08]]);
   bowl(ctx, 31.25, 0.8, 38.0, 0.12, r0, ['water', [0.5, 0.42, 0.3]]);

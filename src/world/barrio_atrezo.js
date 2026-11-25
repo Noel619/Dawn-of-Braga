@@ -272,12 +272,15 @@ export function campanillas(ctx, x0, z0, x1, z1, y, room) {
 
 // La cruz de cal, pintada a brochazos en una pared o en unas tablas: en el
 // plano local (x a lo largo, z hacia fuera) del lado 'side' en (x, y, z).
-export function cruzCal(ctx, x, y, z, rot, s = 1, room = 'out') {
+export function cruzCal(ctx, x, y, z, rot, s = 1, room = 'out', o = {}) {
   const wb = ctx.wb;
   const rng = new RNG(Math.round(x * 13 + z * 17));
   const W = [1.15, 1.13, 1.08];
   wb.at(x, y, z, rot, () => {
     wb.push();
+    // (o.suelo: pintada en el suelo, de cara arriba, con la cabeza hacia el
+    // -z local; si no, en un muro, de cara al +z local)
+    if (o.suelo) wb.rotateX(-Math.PI / 2);
     wb.rotateZ(rng.range(-0.08, 0.08));
     wb.box('plaster', -0.06 * s, -0.55 * s, 0, 0.06 * s, 0.55 * s, 0.006, { ao: false, faces: 's', room, tint: W });
     wb.box('plaster', -0.38 * s, 0.12 * s, 0, 0.38 * s, 0.24 * s, 0.006, { ao: false, faces: 's', room, tint: W });

@@ -531,8 +531,11 @@ export class CamillaCine {
       if (this.cue('negro', C_NEGRO)) {
         g.fade = g.fadeTarget = 0;
         g.audio && g.audio.play('doorSlam', { x: 49.5, y: 1, z: ENTRA.z });
+        // (de un portazo, y la tranca: setOpen(d, false), como estaba, no la
+        // cerraba, la abría (false es «no de golpe»): suena el portazo y la
+        // puerta de su casa se quedaba abierta de par en par para siempre)
         const d = g.interact.list.find((i) => i.id === ENTRA.puerta);
-        if (d) g.interact.setOpen(d, false);
+        if (d) g.interact.slamShut(d);
         g.scene.remove(this.cam.root);
         this.luz.intensity = 0;
       }
@@ -606,8 +609,10 @@ export class CamillaCine {
     this.fT = 0;
     F.hide();
     F.e.scripted = true;
+    // (se va por la puerta del patio, que se cierra tras él: antes se abría,
+    // con el portazo sonando)
     const d = g.interact.list.find((i) => i.id === PATIO.id);
-    if (d) g.interact.setOpen(d, false);
+    if (d) g.interact.slamShut(d);
     g.audio && g.audio.play('doorSlam', { x: PATIO.x, y: 1, z: PATIO.z });
     if (!g.hintsShown.correas) {
       g.hintsShown.correas = true;

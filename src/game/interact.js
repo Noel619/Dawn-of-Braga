@@ -208,7 +208,11 @@ function cartelCuarentena() {
     x.fillRect(0, Math.random() * 32, 128, 1);
   }
   x.fillStyle = '#6a1c12';
-  x.font = 'bold 21px serif';
+  // (la letra, la mayor que quepa en la tabla con un margen: con 21 px fijos,
+  // las diez letras medían más que la tabla y la C y la A se cortaban)
+  let fs = 21;
+  do x.font = `bold ${fs}px serif`;
+  while (x.measureText('CVARENTENA').width > 118 && --fs > 9);
   x.textAlign = 'center';
   x.textBaseline = 'middle';
   x.fillText('CVARENTENA', 64, 17);
@@ -613,10 +617,23 @@ function noteMesh(model) {
     const b = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.22), objMat('leather'));
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.065, 0.2), objMat('clothWhite'));
     g.add(b, p);
-  } else if (model === 'paper') {
+  } else if (model === 'paper' || model === 'lanceta') {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.01, 0.3), objMat('clothWhite', { tint: 0xd8c8a0 }));
     p.rotation.y = 0.3;
     g.add(p);
+    // (la del Físico que se fue: «clavada en la madera con una lanceta»; la
+    // hoja, metida en la mesa por una esquina del papel, y el mango de hueso,
+    // ladeado. Antes era un papel suelto, sin lanceta)
+    if (model === 'lanceta') {
+      const l = new THREE.Group();
+      const hoja = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.07, 0.002), objMat('iron'));
+      const mango = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0075, 0.08, 6), objMat('bone'));
+      mango.position.y = 0.075;
+      l.add(hoja, mango);
+      l.position.set(0.005, 0, -0.1);
+      l.rotation.set(-0.35, 0.3, 0.25);
+      g.add(l);
+    }
   } else if (model === 'stave') {
     // una duela de tonel, curva, escrita a carbón
     const d = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.78), objMat('planks'));
@@ -1404,6 +1421,8 @@ export class Interactables {
     if (it.kind === 'door') {
       it.target = 0;
       it.open = 0;
+      it.pasoT = 0;
+      it.closing = 0;
       if (it.lock && it.lock.type === 'levers' && this.game.navCellar) {
         it.box.enabled = true;
         this.game.navCellar.refresh(it.x - 3, it.z - 3, it.x + 3, it.z + 3);
@@ -1416,6 +1435,7 @@ export class Interactables {
       if (it.tapiada) {
         it.tapiada = false;
         it.lock = it.lock0;
+        if (it.ajar0 !== undefined) it.ajar = it.ajar0;
       }
       if (it.boards) it.boards.visible = it.lock.type === 'boards';
       if (it.mat === 'barricade') it.obj.visible = true;
@@ -1465,7 +1485,18 @@ export class Interactables {
     // la niebla la enciende update() según su jefe
   }
 
+  // El Físico sale o entra por su puerta, atrancada por dentro: la hoja se
+  // abre un momento y se cierra tras él de un portazo, sin tocar la tranca
+  // ni el paso (para el jugador sigue cerrada). Antes aparecía y desaparecía
+  // delante de la puerta cerrada.
+  paso(it, dur = 1.2) {
+    if (it.kind !== 'door' || it.done || it.target) return;
+    it.pasoT = dur;
+    it.closing = 0;
+  }
+
   setOpen(it, instant = false) {
+    it.pasoT = 0;
     it.done = true;
     if (it.tabique) this.knockDown(it, instant);
     if (it.box) it.box.enabled = false;
@@ -1516,6 +1547,10 @@ export class Interactables {
     if (it.tapiada) return;
     it.tapiada = true;
     it.lock0 = it.lock0 || it.lock;
+    // (la entornada, cerrada del todo: si no, la hoja se quedaba abierta
+    // detrás de las tablas y por las rendijas se veía la casa)
+    if (it.ajar0 === undefined) it.ajar0 = it.ajar || 0;
+    it.ajar = 0;
     it.lock = { type: 'boards', side, front: 'tapiadaDentro', msg: 'tapiadaArranca', shut: 'tapiadaFuera' };
     if (!it.boards) {
       it.boards = boardsOverDoor(it.w, it.h);
@@ -1560,9 +1595,12 @@ export class Interactables {
       return;
     }
     if (it.boards) {
+      // (cada pieza, desde donde está: las tablas, a 0,1 de la puerta; la
+      // cruz de cal que pinta encima el Físico, a 0,15. Antes todas a 0,1, y
+      // la cruz, de dos centímetros, quedaba metida dentro de las tablas)
       it.boards.children.forEach((b, i) => {
         b.position.y = Math.max(0.05, (b.userData.y0 ?? (b.userData.y0 = b.position.y)) * (1 - Math.min(1, k * 2)));
-        b.position.z = 0.1 + Math.min(1, k * 2) * 0.4;
+        b.position.z = (b.userData.z0 ?? (b.userData.z0 = b.position.z)) + Math.min(1, k * 2) * 0.4;
         b.rotation.x = Math.min(1, k * 2) * 1.4;
       });
     }
@@ -2128,6 +2166,12 @@ export class Interactables {
     const g = this.game;
     const t = g.time;
     for (const it of this.list) {
+      if (it.kind === 'door' && it.pasoT > 0) {
+        it.pasoT -= dt;
+        it.open = Math.min(1, it.open + dt * 2.2);
+        this.poseDoor(it, 1 - (1 - it.open) * (1 - it.open));
+        if (it.pasoT <= 0 && !it.target) it.closing = 1;
+      }
       if (it.kind === 'door' && it.closing) {
         // se cierra de un portazo (muy deprisa) y la tranca cae en su sitio
         it.open = Math.max(0, it.open - dt * 4.5);

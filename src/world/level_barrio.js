@@ -708,22 +708,27 @@ function fachadas(ctx) {
   arcoPuerta(ctx, 's', 40.0, 41.0, 1.8, 3.1);
   arcoPuerta(ctx, 'w', 49.5, 46.5, 1.6, 3.1);
   // los escudos
+  // (lo que lleva, en relieve: de la cara del campo, a 0,08, hasta 0,1; antes
+  // acababa en el mismo plano que el campo y las dos caras se peleaban: la
+  // bota y la cruz parpadeaban, el cirio casi no se veía y el capelo era una
+  // raya)
   escudo(ctx, 's', 27.0, 4.75, 41.0, [0.42, 0.16, 0.12], (wb) => {
-    // la bota del zapatero de la Sé
-    wb.box('leather', -0.09, -0.16, 0.05, 0.05, 0.16, 0.08, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
-    wb.box('leather', -0.09, -0.2, 0.05, 0.16, -0.12, 0.08, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
+    // la bota del zapatero de la Sé (la caña y el pie, de una pieza)
+    wb.box('leather', -0.09, -0.12, 0.06, 0.05, 0.16, 0.1, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
+    wb.box('leather', -0.09, -0.2, 0.06, 0.16, -0.12, 0.1, { ao: false, grime: false, tint: [0.3, 0.2, 0.14] });
   });
   escudo(ctx, 'n', 27.5, 4.75, 48.0, [0.2, 0.28, 0.5], (wb) => {
     // el cirio de la cerera, con su llama
-    wb.box('candle', -0.04, -0.2, 0.05, 0.04, 0.12, 0.08, { ao: false, grime: false });
-    wb.box('ember', -0.025, 0.12, 0.05, 0.025, 0.2, 0.08, { ao: false, grime: false });
+    wb.box('candle', -0.04, -0.2, 0.06, 0.04, 0.12, 0.1, { ao: false, grime: false });
+    wb.box('ember', -0.025, 0.12, 0.06, 0.025, 0.2, 0.1, { ao: false, grime: false });
   });
   escudo(ctx, 'w', 49.5, 4.75, 46.5, [0.6, 0.58, 0.52], (wb) => {
     // la cruz y el capelo del canónigo que dejó la casa a los inocentes
-    wb.box('clothRed', -0.03, -0.18, 0.05, 0.03, 0.12, 0.08, { ao: false, grime: false });
-    wb.box('clothRed', -0.12, -0.02, 0.05, 0.12, 0.04, 0.08, { ao: false, grime: false });
-    wb.box('clothRed', -0.2, 0.17, 0.05, 0.2, 0.21, 0.08, { ao: false, grime: false });
-    wb.box('clothRed', -0.1, 0.21, 0.05, 0.1, 0.28, 0.08, { ao: false, grime: false });
+    // (los brazos de la cruz, a los lados del palo: sin solaparse)
+    wb.box('clothRed', -0.03, -0.18, 0.06, 0.03, 0.12, 0.1, { ao: false, grime: false });
+    for (const s of [-1, 1]) wb.box('clothRed', Math.min(s * 0.03, s * 0.12), -0.02, 0.06, Math.max(s * 0.03, s * 0.12), 0.04, 0.1, { ao: false, grime: false });
+    wb.box('clothRed', -0.2, 0.17, 0.06, 0.2, 0.21, 0.1, { ao: false, grime: false });
+    wb.box('clothRed', -0.1, 0.21, 0.06, 0.1, 0.28, 0.1, { ao: false, grime: false });
   });
   // los canes de los aleros: los de la rúa, la tintorería y la Casa
   canes(ctx, 's', 14.4, 45.6, 41.0, 9.4);
@@ -762,11 +767,12 @@ function escudo(ctx, side, x, y, z, color, draw) {
   const wb = ctx.wb;
   wb.at(x, y, z, ROT[side], () => {
     wb.box('ashlar', -0.4, -0.3, 0, 0.4, 0.4, 0.06, { ao: false, tint: [0.78, 0.76, 0.7] });
-    // (la punta: un rombo girado)
+    // (la punta: un rombo girado; su cara, un centímetro por detrás de la de
+    // la tabla: en lo que se solapan, en el mismo plano, se peleaban)
     wb.push();
     wb.translate(0, -0.3, 0.03);
     wb.rotateZ(Math.PI / 4);
-    wb.box('ashlar', -0.28, -0.28, -0.03, 0.28, 0.28, 0.03, { ao: false, tint: [0.78, 0.76, 0.7] });
+    wb.box('ashlar', -0.28, -0.28, -0.03, 0.28, 0.28, 0.02, { ao: false, tint: [0.78, 0.76, 0.7] });
     wb.pop();
     wb.box('plaster', -0.32, -0.26, 0.075, 0.32, 0.33, 0.08, { ao: false, grime: false, faces: 's', tint: color });
     // la moldura de arriba

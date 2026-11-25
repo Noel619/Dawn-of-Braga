@@ -519,7 +519,9 @@ export function casaInocentes(ctx, L, h) {
   // (las coronas que esperan a su paciente, en un clavo junto al portón de
   // la sala, y la cruz de cal del suelo, que nadie pisa)
   for (let i = 0; i < 3; i++) corona(wb, 56.93, 2.1 + i * 0.05, 41.2 + i * 0.55, 1.0, r, { tilt: 0.12 * (i - 1) });
-  cruzCal(ctx, 53.6, 0.025, 45.2, 0, 1.6, r);
+  // (en el suelo, de cara arriba, con la cabeza hacia la sala; antes estaba de
+  // pie, como las de los muros, medio metida en el suelo)
+  cruzCal(ctx, 53.6, 0.025, 45.2, -Math.PI / 2, 1.6, r, { suelo: true });
   luna(ctx, 50.4, 1.8, 42.5, r, 0.3);
   wb.setRoom(null);
   // ---- la consulta
@@ -593,8 +595,13 @@ export function casaInocentes(ctx, L, h) {
   // la balda de los cráneos y las coronas de repuesto, colgadas
   estanteCraneos(ctx, 63.3, 0, 34.75, 0, 2.0, r, 2605);
   for (let i = 0; i < 3; i++) corona(wb, 59.6 + i * 0.6, 2.4, 34.62, 1.0, r, { tilt: 0.1 * (i - 1) });
-  for (let i = 0; i < 3; i++) lamina(ctx, 57.24, 2.0, 41.0 + i * 1.3, Math.PI / 2, r, 2606 + i);
-  for (let i = 0; i < 3; i++) lamina(ctx, 65.36, 5.6, 38.0 + i * 3.6, -Math.PI / 2, r, 2690 + i);
+  // (las láminas: en el muro del zaguán, entre la tabla de los hierros y el
+  // portón, que va de 42,8 a 45,2; en el del huerto, en los lienzos de entre
+  // los ventanales de arriba, que van de 38,3 a 39,7 y de 45,3 a 46,7. Antes
+  // la tercera del zaguán caía sobre el hueco del portón, colgada en el aire,
+  // y dos de las del huerto, sobre el marco de los ventanales)
+  for (let i = 0; i < 3; i++) lamina(ctx, 57.24, 2.0, 39.9 + i * 1.1, Math.PI / 2, r, 2606 + i);
+  for (const [i, z] of [36.6, 42.5, 48.7].entries()) lamina(ctx, 65.36, 5.6, z, -Math.PI / 2, r, 2690 + i);
   // la otra mesa: el último paciente, tapado con una sábana
   P.table(ctx, 59.6, 0, 48.8, 1.9, 0.8, 0);
   wb.setRoom(r);
@@ -675,7 +682,9 @@ export function casaInocentes(ctx, L, h) {
   r = 'ino_botica';
   wb.setRoom(r);
   estanteFrascos(ctx, 53.2, y1, 57.25, Math.PI, 3.0, r, 2609);
-  estanteFrascos(ctx, 50.25, y1, 52.6, Math.PI / 2, 2.4, r, 2610);
+  // (al norte de la ventana del muro de la plazuela, de 52,5 a 53,5: antes la
+  // tapaba, y la luz de la luna salía de detrás de los frascos)
+  estanteFrascos(ctx, 50.25, y1, 50.5, Math.PI / 2, 2.4, r, 2610);
   P.table(ctx, 53.4, y1, 52.4, 1.8, 0.9, 0);
   // (en la mesa, el cuenco de las piedras, el almirez, un brazo abierto y
   // clavado a la tabla, los papeles)
@@ -694,7 +703,8 @@ export function casaInocentes(ctx, L, h) {
   r = 'ino_estudio';
   wb.setRoom(r);
   estanteLibros(ctx, 61.3, y1, 57.25, Math.PI, 3.6, r, 2650, { skull: true });
-  estanteLibros(ctx, 65.25, y1, 53.6, -Math.PI / 2, 2.4, r, 2651);
+  // (al sur de la ventana del huerto, de 53,5 a 54,5: antes la tapaba)
+  estanteLibros(ctx, 65.25, y1, 56.0, -Math.PI / 2, 2.4, r, 2651);
   P.table(ctx, 61.8, y1, 53.6, 2.0, 1.0, 0);
   pilaLibros(ctx, 61.2, y1 + 0.8, 53.4, 5, r, 2652);
   pilaLibros(ctx, 62.5, y1 + 0.8, 53.8, 3, r, 2653);
@@ -748,7 +758,7 @@ export function casaInocentes(ctx, L, h) {
     { kind: 'note', id: 'n_historia', note: 'historia', x: 51.45, y: y1 + 0.82, z: 44.5, model: 'paper' },
     // (si se le escapó el paciente sin que le tocara: lo que dejó en su mesa
     // de operar antes de irse; game/fisico.js, escapa)
-    { kind: 'note', id: 'n_fisico_ida', note: 'fisicoIda', x: 61.0, y: 0.98, z: 42.15, model: 'paper', hidden: true }
+    { kind: 'note', id: 'n_fisico_ida', note: 'fisicoIda', x: 61.0, y: 0.98, z: 42.15, model: 'lanceta', hidden: true }
   );
   void h;
 }
@@ -875,9 +885,10 @@ function claraboya(ctx) {
   wb.box('glass', -1.15, 0.031, -0.52, -0.08, 0.035, 0.52, { ao: false, grime: false, tint: [0.6, 0.65, 0.55] });
   wb.pop();
   palo(wb, V(C.x0 + 0.1, Y(C.x0 + 0.1) + 0.1, (C.z0 + C.z1) / 2), V(C.x1 - 0.45, Y(C.x1) + 1.0, (C.z0 + C.z1) / 2), 0.025, 'wooddark', { round: true });
-  // (desde fuera, la luz del farol del desván por el hueco)
+  // (desde fuera, la luz del farol del desván por el hueco. Sólo la luz: con
+  // ella iba un fuego, y el fuego siempre dibuja su llama, que se quedaba
+  // ardiendo en el aire, bajo el hueco, en medio del desván)
   ctx.lights.push({ x: (C.x0 + C.x1) / 2, y: Y(C.x0) + 0.6, z: (C.z0 + C.z1) / 2, r: 1, g: 0.55, b: 0.22, radius: 2.6, intensity: 0.7 });
-  if (ctx.fires) ctx.fires.push({ x: (C.x0 + C.x1) / 2, y: Y(C.x0) - 0.4, z: (C.z0 + C.z1) / 2, s: 0.5, light: false, embers: false, glow: true });
 }
 
 // ------------------------------------------------------------ el patio

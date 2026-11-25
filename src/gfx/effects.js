@@ -178,7 +178,10 @@ export class FireSystem {
           vec3 p = iPos.xyz + vec3(sin(id*3.1 + t*6.0)*t*1.4*s, t*t*6.0*s + t*1.2, cos(id*1.7 + t*5.0)*t*1.4*s);
           vec4 mv = viewMatrix * vec4(p, 1.0);
           gl_Position = psxSnap(projectionMatrix * mv);
-          gl_PointSize = uPix * 2.0 * (8.0 / max(1.0, -mv.z));
+          // (con tope, como las de ParticleBurst: pegadas a la cámara —junto
+          // al brasero del Físico, la paja que arde, un hogar— eran losetas
+          // cuadradas de dieciséis píxeles)
+          gl_PointSize = uPix * clamp(16.0 / max(1.0, -mv.z), 1.0, 4.0);
           float d = length(mv.xyz);
           vA = (1.0 - t) * exp(-fogDensity*fogDensity*d*d*0.4) * farFade(d);
         }`,

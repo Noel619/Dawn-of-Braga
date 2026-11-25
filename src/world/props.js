@@ -2586,7 +2586,9 @@ export function stool(ctx, x, y, z, o = {}) {
   }
   make();
   wb.pop();
-  if (o.tipped) return;
+  // (o.col === false: sin choque, para quien se sienta en él, que si no se
+  // queda de pie encima y su pose de sentado le deja en el aire)
+  if (o.tipped || o.col === false) return;
   // (un octógono, de dos cajas, dentro del asiento, que es un heptágono de
   // 0,18 de apotema: con una caja de ±0,18 sus esquinas asomaban 7 cm de lo
   // dibujado y se pisaba aire)

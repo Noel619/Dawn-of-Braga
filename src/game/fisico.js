@@ -333,10 +333,18 @@ export class Fisico {
     }
     return best || ENTRADAS[0];
   }
+  // Su puerta, la de la plazuela: se abre al salir él y se cierra tras él
+  // (o al entrar), sin quitar la tranca (game/interact.js, paso).
+  puerta(dur = 1.4) {
+    const g = this.g;
+    const d = g.interact.list.find((i) => i.id === 'd_inocentes');
+    if (d) g.interact.paso(d, dur);
+  }
   // Aparece por una puerta y va a donde le llaman.
   aparece(x, z, then, speed) {
     const E = this.entrada(x, z);
     this.show(E.x, E.z, E.yaw);
+    this.puerta();
     this.g.audio && this.g.audio.play('doorOpen', { x: E.x, y: 1, z: E.z });
     this.walk(x, z, speed, then, { r: 1.2 });
   }
@@ -353,7 +361,10 @@ export class Fisico {
     const sp = huye ? e.T.run : e.T.walk * 1.15;
     this.walk(E.x, E.z, sp, () => {
       const g = this.g;
-      g.audio && g.audio.play('doorSlam', { x: E.x, y: 1, z: E.z });
+      // (la puerta, que se le abrió al acercarse: updateBody; tras él, el
+      // portazo)
+      this.puerta(0.15);
+      this.pelea.luego(0.3, () => g.audio && g.audio.play('doorSlam', { x: E.x, y: 1, z: E.z }));
       // (encerrado: la tranca, por dentro; ya no sale)
       if (encierra || this.encerrado) {
         this.pelea.luego(0.7, () => g.audio && g.audio.play('chestBar', { x: E.x, y: 1, z: E.z }));
@@ -414,6 +425,7 @@ export class Fisico {
     // puerta lejos de ti: de cerca no se deja ver)
     const E = this.entrada(x, z, false, 10);
     this.show(E.x, E.z, E.yaw);
+    this.puerta();
     this.modo = 'vigia';
     const tx = clamp(p.x + Math.sign(E.x - p.x) * 11, BR.rua.x0 + 1, BR.plazuela.x1 - 1);
     const tz = inR(BR.rua, tx, 44.5) ? 44.5 : clamp(p.z, BR.plazuela.z0 + 1, BR.plazuela.z1 - 1);
@@ -599,6 +611,9 @@ export class Fisico {
   }
   // Cada fotograma del cuerpo (desde su update).
   updateBody(e, dt, pl) {
+    // (vuelve a su casa: la puerta se le abre un poco antes de llegar a ella)
+    const gl = e.data.goal;
+    if (this.modo === 'marcha' && gl && gl.x === ENTRADAS[0].x && gl.z === ENTRADAS[0].z && Math.hypot(e.pos.x - gl.x, e.pos.z - gl.z) < 2.2) this.puerta(1.0);
     // mirando hacia arriba (te sigue por los tejados)
     // (y en la cisterna, cuando duda: a la luz que baja por el agujero)
     e.data.lookUp = (this.modo === 'sombra' && pl.pos.y - e.pos.y > 2.5) || (this.modo === 'duelo' && this.g.fisicoRama.duelo.mira > 0);
@@ -932,6 +947,7 @@ export class Fisico {
   calleja() {
     const E = ENTRADAS[0];
     this.show(E.x, E.z, E.yaw);
+    this.puerta();
     this.g.audio && this.g.audio.play('doorOpen', { x: E.x, y: 1, z: E.z });
     this.modo = 'vigia';
     this.walk(36.4, 44.5, this.e.T.walk * 1.25, () => {
@@ -948,6 +964,7 @@ export class Fisico {
     const E = ENTRADAS[0];
     const e = this.e;
     this.show(E.x, E.z, E.yaw);
+    this.puerta();
     this.g.audio && this.g.audio.play('doorOpen', { x: E.x, y: 1, z: E.z });
     this.modo = 'tapia';
     this.walk(c.fuera[0], c.fuera[1], e.T.walk * 1.6, () => {
