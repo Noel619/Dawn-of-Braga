@@ -540,7 +540,8 @@ export function buildTanners(ctx, S, L) {
   P.candles(ctx, 45.3, 0, 13.4, 6, 31, { room: croom, radius: 4, intensity: 0.8 });
   P.candles(ctx, 52.8, 0, 13.4, 6, 32, { room: croom, radius: 4, intensity: 0.8 });
   wb.setRoom(null);
-  L.interact.push({ kind: 'altar', id: 'a_capela', name: 'Capilla de San Fructuoso', x: 49, y: 0, z: 20.4, spawn: [49, 0, 18.8], yaw: Math.PI });
+  // (su altar ya no es donde se descansa: es la tintorería, el refugio que
+  // lo sustituye, PLAN_REFUGIOS.md; San Fructuoso se queda como capilla)
 
   // muralla oriental (de la puerta a la esquina sur)
   cityWall(ctx, 72, -56, 76, 26, 9, { merlons: false });

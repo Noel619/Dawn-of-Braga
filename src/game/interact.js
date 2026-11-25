@@ -963,7 +963,7 @@ export class Interactables {
         }
         it.leaves = leaves;
         // puerta entornada: la hoja queda algo abierta (se ve luz dentro)
-        it.ajar = s.ajar ?? 0;
+        it.ajar = it.ajar0 = s.ajar ?? 0;
         if (s.lock && s.lock.type === 'barred') {
           // (eje 'x': +z local = +z del mundo; eje 'z': +z local = -x del mundo)
           const ls = (s.axis === 'z' ? -1 : 1) * s.lock.side;
@@ -1258,6 +1258,11 @@ export class Interactables {
       // (abierta: la que ya estaba abierta, reventada —la de atrás de la
       // taberna—, hasta que la cierras tú: entonces queda con el pestillo)
       if (it.kind === 'door' && it.abierta && !it.done && !flags['pestillo:' + it.id]) this.setOpen(it, true);
+      // (la entornada de un refugio, cerrada por ti: del todo)
+      if (it.kind === 'door' && it.ajar && flags['pestillo:' + it.id]) {
+        it.ajar = 0;
+        if (!it.done) this.poseDoor(it, 0);
+      }
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
         it.obj.visible = false;
@@ -1445,6 +1450,7 @@ export class Interactables {
         this.game.navCellar.refresh(it.x - 3, it.z - 3, it.x + 3, it.z + 3);
       }
       it.rise = undefined;
+      it.ajar = it.ajar0 || 0;
       if (it.box) it.box.enabled = true;
       for (const b of it.leafBoxes || []) b.enabled = false;
       if ((it.lock && it.lock.type === 'lever') || it.refugio) this.refreshDoorNav(it);
@@ -1556,6 +1562,9 @@ export class Interactables {
       g.ui.toast(MSG.refVano, 3);
       return;
     }
+    // (la entornada se cierra desde lo poco que estaba abierta, y del todo)
+    if (!it.done && it.ajar) it.open = Math.sqrt(it.ajar);
+    it.ajar = 0;
     it.done = false;
     it.target = 0;
     it.closing = 1;
@@ -1571,6 +1580,14 @@ export class Interactables {
     g.later(450, () => g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z }));
     g.refugios && g.refugios.alCerrar(it);
     g.saveGame();
+  }
+
+  // ¿Está el jugador del lado de dentro de esta puerta, hacia el que abre?
+  // (la entornada: desde fuera se empuja y se abre; desde dentro, se cierra)
+  ladoDentro(it) {
+    const p = this.game.player.pos;
+    const sw = it.swing ?? 1;
+    return it.axis === 'x' ? (p.z - it.z) * sw < 0 : (p.x - it.x) * sw > 0;
   }
 
   // ¿De qué refugio es esta puerta? (la que sólo lo es desde una bandera,
@@ -1875,7 +1892,7 @@ export class Interactables {
     switch (it.kind) {
       case 'door':
         // (las de un refugio: se cierran; y, encendido, se abren con su llave)
-        if (this.refDe(it) && it.done) return 'Cerrar la puerta';
+        if (this.refDe(it) && (it.done || (it.ajar && this.ladoDentro(it)))) return 'Cerrar la puerta';
         if (this.refDe(it) && (this.game.flags['pestillo:' + it.id] || (this.game.refugios && this.game.refugios.encendido(it.refugio)))) return 'Abrir';
         if (it.label) return it.label;
         if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
@@ -1979,7 +1996,7 @@ export class Interactables {
       // (la de un refugio: abierta, se cierra; cerrada por ti, se abre con
       // el pestillo, y encendido el refugio, desde cualquier lado, que tienes
       // su llave)
-      if (this.refDe(it) && it.done) {
+      if (this.refDe(it) && (it.done || (it.ajar && this.ladoDentro(it)))) {
         this.cerrar(it);
         return true;
       }

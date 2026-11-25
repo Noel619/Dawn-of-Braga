@@ -1976,6 +1976,133 @@ const GEN = {
     return c;
   },
 
+  // Cristo en majestad (el Pantocrátor), como en las tablas de 1167 (la de la
+  // tintorería, PLAN_REFUGIOS.md §5): sentado de frente en su mandorla
+  // estrellada, la mano derecha alzada que bendice y el libro en la
+  // izquierda, el nimbo con la cruz; la A y la omega a los lados. Fondo de oro
+  // y la orla roja con sus perlas.
+  pantocrator() {
+    const W = 32,
+      H = 48;
+    const c = makeCanvas(W, H);
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#c49e3a');
+    bg.addColorStop(1, '#8a6824');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = '#7a2418';
+    g.fillRect(0, 0, W, 3);
+    g.fillRect(0, H - 3, W, 3);
+    g.fillRect(0, 0, 3, H);
+    g.fillRect(W - 3, 0, 3, H);
+    g.fillStyle = '#e8dcc0';
+    for (let x = 2; x < W - 1; x += 3) {
+      g.fillRect(x, 1, 1, 1);
+      g.fillRect(x, H - 2, 1, 1);
+    }
+    for (let y = 4; y < H - 2; y += 3) {
+      g.fillRect(1, y, 1, 1);
+      g.fillRect(W - 2, y, 1, 1);
+    }
+    // la mandorla, azul y con estrellas, con su filete claro
+    g.fillStyle = '#26365e';
+    g.beginPath();
+    g.ellipse(16, 25, 11, 19, 0, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#e8dcc0';
+    g.lineWidth = 0.8;
+    g.stroke();
+    g.fillStyle = '#d8c070';
+    for (const [x, y] of [[10, 15], [22, 14], [8, 30], [24, 30], [11, 39], [21, 40]]) g.fillRect(x, y, 1, 1);
+    // el trono (el arco en que se sienta) y el escabel
+    g.fillStyle = '#5a3a22';
+    g.fillRect(9, 30, 14, 2);
+    g.fillRect(11, 41, 10, 2);
+    // el nimbo con la cruz
+    g.fillStyle = '#ecc64c';
+    g.beginPath();
+    g.arc(16, 11, 5, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#8a2a1c';
+    g.fillRect(15.4, 6, 1.2, 2);
+    g.fillRect(11, 10.4, 2, 1.2);
+    g.fillRect(19, 10.4, 2, 1.2);
+    // el pelo, la barba y la cara
+    g.fillStyle = '#4a2c18';
+    g.beginPath();
+    g.ellipse(16, 11.6, 3, 3.8, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#e2c09a';
+    g.beginPath();
+    g.ellipse(16, 11, 2.1, 2.6, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#4a2c18';
+    g.fillRect(14.6, 12.6, 2.8, 1.6);
+    g.fillStyle = '#2a1a10';
+    g.fillRect(14.8, 10.2, 1, 1);
+    g.fillRect(16.4, 10.2, 1, 1);
+    // la túnica roja y el manto verde, del hombro a las rodillas
+    g.fillStyle = '#8a2a2a';
+    g.beginPath();
+    g.moveTo(12, 15);
+    g.lineTo(20, 15);
+    g.lineTo(21.5, 30);
+    g.lineTo(10.5, 30);
+    g.closePath();
+    g.fill();
+    g.fillStyle = '#2e5a4a';
+    g.beginPath();
+    g.moveTo(17, 15);
+    g.lineTo(21, 16);
+    g.lineTo(23, 31);
+    g.lineTo(9, 31);
+    g.lineTo(10, 27);
+    g.lineTo(18, 26);
+    g.closePath();
+    g.fill();
+    g.fillStyle = '#8a2a2a';
+    g.beginPath();
+    g.moveTo(10, 31);
+    g.lineTo(22, 31);
+    g.lineTo(21, 41);
+    g.lineTo(11, 41);
+    g.closePath();
+    g.fill();
+    g.fillStyle = '#6a1c1c';
+    g.fillRect(13, 32, 1, 9);
+    g.fillRect(16, 32, 1, 9);
+    g.fillRect(19, 32, 1, 9);
+    // los pies descalzos en el escabel
+    g.fillStyle = '#e2c09a';
+    g.fillRect(12, 40.5, 3, 1.5);
+    g.fillRect(17, 40.5, 3, 1.5);
+    // la mano que bendice, alzada, con su manga; el libro, en la rodilla
+    g.fillStyle = '#8a2a2a';
+    g.fillRect(10, 17, 1.6, 5);
+    g.fillStyle = '#e2c09a';
+    g.fillRect(9.6, 15, 1.6, 2.2);
+    g.fillStyle = '#e8dcc0';
+    g.fillRect(19, 21, 4, 5);
+    g.fillStyle = '#7a2418';
+    g.fillRect(19, 21, 4, 1);
+    g.fillRect(19, 25, 4, 1);
+    g.fillStyle = '#d6ae3e';
+    g.fillRect(20.5, 22.5, 1, 1.5);
+    // la A y la omega, en el oro
+    g.fillStyle = '#5a3a18';
+    g.fillRect(5, 9, 1, 3);
+    g.fillRect(7, 9, 1, 3);
+    g.fillRect(6, 8, 1, 1);
+    g.fillRect(6, 10, 1, 1);
+    g.fillRect(24, 10, 1, 2);
+    g.fillRect(25.5, 10.6, 1, 1.4);
+    g.fillRect(27, 10, 1, 2);
+    g.fillRect(24, 11.6, 4, 0.8);
+    grain(g, W, 0.86, 0.2, 97);
+    return c;
+  },
+
   // La Virgen del Carmen del ama: tabla pintada con la Virgen de hábito
   // pardo y manto blanco, el Niño, el escapulario en la mano y estrellas.
   virgenCarmen() {

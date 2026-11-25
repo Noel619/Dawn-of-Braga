@@ -539,6 +539,21 @@ export function buildNE(ctx, S, L) {
   P.decal(ctx, 38.8, 0.03, -26.4, 2.2);
   P.candles(ctx, 36.6, 0.8, -21.2, 3, 1304, { room, radius: 5, intensity: 1.0, spread: 0.25 });
   P.candles(ctx, 41.3, 0, -31.2, 4, 1305, { room, radius: 4, intensity: 0.7 });
+  // el refugio del patio de los Tintoreros (PLAN_REFUGIOS.md): la tintorería,
+  // con su puerta (entornada: dentro hay luz) cerrada y sin nadie dentro. Su
+  // rincón: la tabla del Pantocrátor, en el muro del fondo, entre las tinas;
+  // ahí lloraba la Plañidera. El oro de la grana, que se pagaba caro, en la
+  // mesa de los tarros
+  {
+    const candil = rinconImagen(ctx, 41.65, 0, -26.1, 'w', { room, imagen: 'tabla', tex: 'pantocrator', seed: 1308 });
+    L.interact.push(
+      // (el id, el del altar de antes, el de San Fructuoso: las partidas
+      // guardadas se levantan aquí)
+      { kind: 'altar', id: 'a_capela', name: 'La tintorería', refugio: 'tintoreria', candil: [candil.x, candil.y, candil.z], x: 41.05, y: 0, z: -26.1, spawn: [40.4, 0, -26.1], yaw: Math.PI / 2 },
+      { kind: 'item', id: 'i_oro_tintoreria', item: 'oro', n: 15, x: 37.7, y: 0.8, z: -21.3 },
+      { kind: 'door', id: 'd_tintoreria', x: 34.175, y: 0, z: -26, w: 1.3, h: 2.3, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: 34.35, inset: 0.06, lock: { type: 'none' }, ajar: 0.28, refugio: 'tintoreria' }
+    );
+  }
   wb.setRoom(null);
   L.interact.push({ kind: 'item', id: 'i_ampolla3', item: 'ampolla', x: 34.6, y: 1.4, z: -30.2 });
 
@@ -553,7 +568,11 @@ export function buildNE(ctx, S, L) {
   L.enemies.push(
     { type: 'soldier', x: 28, y: 0, z: -25.8, yaw: -2.6, idle: 'wander', id: 'e_tin1' },
     { type: 'penitent', x: 31.2, y: 0, z: -22.6, yaw: 3.1, idle: 'kneel', id: 'e_tin2' },
-    { type: 'mourner', x: 40.2, y: 0, z: -26.2, yaw: -Math.PI / 2, idle: 'stand', id: 'e_tin3' }
+    // (los de la tintorería: la Plañidera, de cara a la imagen; lo que cuelga
+    // del techo entre los paños; el que mete las manos en la tina negra)
+    { type: 'mourner', x: 39.4, y: 0, z: -25.3, yaw: 1.91, idle: 'stand', id: 'e_tin3', refugio: 'tintoreria' },
+    { type: 'crawler', x: 37.4, y: 2.6, z: -26.3, yaw: 1.6, idle: 'ceiling', id: 'e_tin4', refugio: 'tintoreria' },
+    { type: 'penitent', x: 38.35, y: 0, z: -29.6, yaw: Math.PI / 2, idle: 'eat', id: 'e_tin5', refugio: 'tintoreria' }
   );
   L.zones.push(
     { id: 'tintoreria', rects: [[34, -32, 42, -20, -1, 4]], atmo: 'interior', room: 'tintoreria' },

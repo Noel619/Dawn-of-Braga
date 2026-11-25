@@ -184,6 +184,7 @@ export const MAT_DEFS = {
   lapidasAnimas: { tex: 'lapidasAnimas', uv: 1 },
   virgenCarmen: { tex: 'virgenCarmen', uv: 1 },
   santaMaria: { tex: 'santaMaria', uv: 1 },
+  pantocrator: { tex: 'pantocrator', uv: 1 },
   mosaic: { tex: 'mosaic', uv: 0.2 },
   bone: { tex: 'bone', uv: 1.6 },
   straw: { tex: 'straw', uv: 1.0 },
