@@ -248,19 +248,22 @@ function rua(ctx, S, L) {
       // cocina; arriba, las dos ventanas de sacada (la de la alcoba y la de la
       // sala) y, entre una y otra, la viga del balcón que se cayó
       { side: 'n', lv: 0, at: 4.5, w: 2.0, sill: 0.8, h: 1.7, shutters: 'closed', frame: 'stone' },
-      { side: 'n', lv: 0, at: 13.5, w: 1.6, h: 2.8, door: { id: 'd_viuda', lock: { type: 'none' }, ajar: 0.15 } },
-      { side: 'n', lv: 0, at: 17.6, w: 1.2, sill: 1.0, h: 1.5, shutters: 'open' },
-      { side: 'n', lv: 1, at: 3.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'open' },
-      { side: 'n', lv: 1, at: 10.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'broken' },
-      { side: 'n', lv: 1, at: 16.6, w: 1.2, sill: 0.7, h: 1.7, shutters: 'ajar' },
+      // (el refugio del barrio, PLAN_REFUGIOS.md: sus dos puertas, las dos
+      // ventanas de sacada y las tres que se quedaron abiertas, con sus
+      // contraventanas por dentro, abiertas hasta que las cierras)
+      { side: 'n', lv: 0, at: 13.5, w: 1.6, h: 2.8, door: { id: 'd_viuda', lock: { type: 'none' }, ajar: 0.15, refugio: 'viuda' } },
+      { side: 'n', lv: 0, at: 17.6, w: 1.2, sill: 1.0, h: 1.5, shutters: 'open', contra: { id: 'v_viuda_cocina', refugio: 'viuda', abierta: true } },
+      { side: 'n', lv: 1, at: 3.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'open', contra: { id: 'v_viuda_alcoba', refugio: 'viuda', abierta: true, vano: true } },
+      { side: 'n', lv: 1, at: 10.5, w: 1.1, sill: 0.05, h: 2.15, shutters: 'broken', contra: { id: 'v_viuda_sala', refugio: 'viuda', abierta: true, vano: true } },
+      { side: 'n', lv: 1, at: 16.6, w: 1.2, sill: 0.7, h: 1.7, shutters: 'ajar', contra: { id: 'v_viuda_sala2', refugio: 'viuda', abierta: true } },
       // la plaza de la Herrería: la tienda (su puerta, clavada) y la alcoba
       { side: 'w', lv: 0, at: 3.0, w: 1.6, sill: 0.8, h: 1.6, shutters: 'boarded', frame: 'stone' },
       { side: 'w', lv: 0, at: 6.6, w: 1.4, h: 2.6, leaf: 'boarded' },
       { side: 'w', lv: 1, at: 4.5, w: 1.1, sill: 0.8, h: 1.6, shutters: 'closed' },
       // la plazuela: la puerta de al lado (por donde se sale cuando el Físico
       // clava la de la rúa) y las ventanas de la cocina y de la sala
-      { side: 'e', lv: 0, at: 2.0, w: 1.3, h: 2.5, door: { id: 'd_viuda_patio', lock: { type: 'none' } } },
-      { side: 'e', lv: 1, at: 2.2, w: 1.1, sill: 0.8, h: 1.6, shutters: 'open' },
+      { side: 'e', lv: 0, at: 2.0, w: 1.3, h: 2.5, door: { id: 'd_viuda_patio', lock: { type: 'none' }, refugio: 'viuda' } },
+      { side: 'e', lv: 1, at: 2.2, w: 1.1, sill: 0.8, h: 1.6, shutters: 'open', contra: { id: 'v_viuda_plazuela', refugio: 'viuda', abierta: true } },
     ],
     walls: [
       { lv: 0, x0: 24.4, z0: 48.5, x1: 24.6, z1: 57.5, doors: [{ at: 52.4, w: 1.6, h: 2.7 }], rooms: ['viu_tienda', 'viu0'] },
@@ -579,6 +582,11 @@ function vecinos(L) {
   L.enemies.push(
     // el hijo del zapatero, sentado a la mesa de la cocina, ante su cuenco
     { type: 'coronado', x: 30.15, y: 0, z: 37.4, yaw: Math.PI / 2, idle: 'sit', id: 'e_hijo_zapatero' },
+    // en la casa de la cerera (el refugio del barrio): la moza de la tienda,
+    // entre las varas de las velas, y el que reza de pie ante su oratorio;
+    // muertos, con el refugio encendido, no vuelven
+    { type: 'coronado', x: 18.4, y: 0, z: 54.9, yaw: 2.8, idle: 'stand', id: 'e_coronado_cerera1', refugio: 'viuda' },
+    { type: 'coronado', x: 31.0, y: P1, z: 54.6, yaw: Math.PI / 2, idle: 'stand', id: 'e_coronado_cerera2', refugio: 'viuda' },
     // en la tintorería, entre las tinas
     { type: 'coronado', x: 42.6, y: 0, z: 36.6, yaw: -2.4, idle: 'stand', id: 'e_coronado_tinte' },
     // a la puerta de la Casa de los Inocentes, de cara a la plazuela,

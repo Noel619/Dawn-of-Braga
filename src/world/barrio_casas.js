@@ -11,6 +11,7 @@ import * as P from './props.js';
 import { chest, saint, bowl, herbBunch } from './level_souto.js';
 import { bakeCorpse } from '../entities/models.js';
 import { banqueta, horma, botas, cuero, calderaCera, varaVelas, estanteVelas, panesCera, panos, madejas, rollos, campanillas, palo } from './barrio_atrezo.js';
+import { candilYRosario } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // la luz de la luna que entra por una ventana (fría, débil)
@@ -207,7 +208,16 @@ export function viuda(ctx, L, h) {
   }
   P.candles(ctx, 32.2, Y1, 54.8, 5, 2206, { room: r1, radius: 4.5, intensity: 0.75 });
   wb.setRoom(null);
-  L.interact.push({ kind: 'altar', id: 'a_viuda', name: 'Oratorio de la cerera', x: 32.9, y: Y1, z: 53.2, spawn: [31.5, Y1, 53.2], yaw: Math.PI / 2 });
+  // el oratorio, el rincón del refugio de la casa (PLAN_REFUGIOS.md): en el
+  // altar, el candil de barro de la cerera, apagado hasta que lo enciendes, y
+  // su rosario, colgado del brazo de la cruz. Lo que le dejó el marido,
+  // cosido en una saya, doblada en el arca de la sala
+  {
+    const candil = candilYRosario(ctx, 32.9, Y1 + 1.05, 53.2, -Math.PI / 2, { room: r1, candil: [-0.12, 0.02, 0.36], rosario: [0.18, 0.5, -0.24] });
+    L.interact.push({ kind: 'altar', id: 'a_viuda', name: 'La casa de la cerera', refugio: 'viuda', candil: [candil.x, candil.y, candil.z], x: 32.9, y: Y1, z: 53.2, spawn: [31.5, Y1, 53.2], yaw: Math.PI / 2 });
+    wb.box('clothRed', 22.05, Y1 + 0.586, 49.08, 22.7, Y1 + 0.646, 49.52, { ao: false, faces: 'tnsew', room: r1, tint: [0.55, 0.3, 0.26] });
+    L.interact.push({ kind: 'item', id: 'i_oro_cerera', item: 'oro', n: 8, x: 22.4, y: Y1 + 0.646, z: 49.3 });
+  }
   // ---- la alcoba: la viuda en su cama (contra el muro de la plaza), la vela
   // en la mesilla de la cabecera y, bajo la ventana de sacada, el arcón con
   // la llave (de la ventana a la puerta queda el paso, junto al tabique)

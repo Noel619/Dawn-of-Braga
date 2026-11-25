@@ -72,10 +72,12 @@ export class Refugios {
   faltan(R) {
     const g = this.g;
     const vivos = R.criaturas.filter((e) => !e.dead).length;
-    // (la entornada también está abierta)
-    const puertas = R.puertas.filter((d) => d.done || d.ajar).length;
+    // (la entornada también está abierta; las contraventanas y las ventanas
+    // de sacada, d.ventana, se cuentan con las ventanas)
+    const abierta = (d) => d.done || d.ajar;
+    const puertas = R.puertas.filter((d) => !d.ventana && abierta(d)).length;
     const trampillas = R.cierres.filter((c) => g.interact.cierreAbierto(c)).length;
-    const ventanas = R.tablas.filter((b) => !g.flags['board:' + b.win]).length;
+    const ventanas = R.tablas.filter((b) => !g.flags['board:' + b.win]).length + R.puertas.filter((d) => d.ventana && abierta(d)).length;
     return { vivos, puertas, trampillas, ventanas, huecos: puertas + trampillas + ventanas };
   }
 

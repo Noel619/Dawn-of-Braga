@@ -1671,6 +1671,7 @@ export class Interactables {
       if (it.lit) this.bakeLight(it);
     }
     it.boards.visible = true;
+    it.ajar = 0;
     it.done = false;
     it.target = 0;
     it.closing = 1;
@@ -1892,8 +1893,8 @@ export class Interactables {
     switch (it.kind) {
       case 'door':
         // (las de un refugio: se cierran; y, encendido, se abren con su llave)
-        if (this.refDe(it) && (it.done || (it.ajar && this.ladoDentro(it)))) return 'Cerrar la puerta';
-        if (this.refDe(it) && (this.game.flags['pestillo:' + it.id] || (this.game.refugios && this.game.refugios.encendido(it.refugio)))) return 'Abrir';
+        if (this.refDe(it) && (it.done || (it.ajar && this.ladoDentro(it)))) return it.rotuloCerrar || 'Cerrar la puerta';
+        if (this.refDe(it) && !it.tapiada && (this.game.flags['pestillo:' + it.id] || (this.game.refugios && this.game.refugios.encendido(it.refugio)))) return it.rotuloAbrir || 'Abrir';
         if (it.label) return it.label;
         if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
@@ -2000,7 +2001,7 @@ export class Interactables {
         this.cerrar(it);
         return true;
       }
-      if (this.refDe(it) && L.type !== 'none' && (g.flags['pestillo:' + it.id] || (g.refugios && g.refugios.encendido(it.refugio)))) {
+      if (this.refDe(it) && L.type !== 'none' && !it.tapiada && (g.flags['pestillo:' + it.id] || (g.refugios && g.refugios.encendido(it.refugio)))) {
         openIt(null, g.flags['pestillo:' + it.id] ? 'doorOpen' : 'unlock');
         return true;
       }

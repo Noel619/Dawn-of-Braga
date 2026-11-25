@@ -306,7 +306,6 @@ export function rinconImagen(ctx, x, y, z, dir, o = {}) {
   // (la repisa: la de la tabla, o una igual bajo la cruz)
   const yRep = yc - h / 2 - 0.26;
   if (imagen === 'tabla') imagenSanto(ctx, x, y, z, dir, { room, velas: 0, tex: o.tex, w, h, yc, seed: o.seed });
-  const BARRO = [0.66, 0.42, 0.3];
   wb.at(x, y, z, rot, () => {
     if (imagen !== 'tabla') {
       // la repisa y sus dos tornapuntas
@@ -329,34 +328,60 @@ export function rinconImagen(ctx, x, y, z, dir, o = {}) {
       wb.box('bone', -0.025, yc + 0.12, 0.05, 0.025, yc + 0.17, 0.078, { ao: false, room, tint: [0.86, 0.76, 0.62] });
       wb.box('clothWhite', -0.035, yc - 0.06, 0.07, 0.035, yc + 0.0, 0.085, { ao: false, room });
     }
-    // el clavo y el rosario: un lazo de cuentas de boj que cuelga de él, con
-    // su cruz de hueso abajo
-    const cx = imagen === 'tabla' ? w / 2 - 0.02 : 0.16,
-      cy = imagen === 'tabla' ? yc + h / 2 - 0.04 : yc + 0.22;
-    wb.box('iron', cx - 0.008, cy - 0.008, 0.0, cx + 0.008, cy + 0.008, 0.07, { ao: false, room });
-    const N = 26;
-    for (let i = 0; i < N; i++) {
-      const t = i / (N - 1);
-      // (las dos ramas del lazo bajan del clavo y se juntan abajo, un poco
-      // abiertas: la cuenta de en medio es la que pesa)
-      const a = t * Math.PI;
-      const px = cx + Math.sin(a) * 0.045 - 0.02 * t,
-        py = cy - 0.02 - Math.sin(a * 0.5) * 0.3,
-        pz = 0.07 + Math.sin(a) * 0.01;
-      // (una geometría por cuenta: wb.geometry se queda con la que recibe)
-      wb.geometry(i % 9 === 0 ? 'bone' : 'wooddark', new THREE.SphereGeometry(0.011, 5, 4), M4(px, py, pz), { ao: false, room, tint: i % 9 === 0 ? [0.9, 0.84, 0.7] : [0.5, 0.36, 0.22] });
-    }
-    const by = cy - 0.36;
-    wb.box('bone', cx - 0.004, by - 0.09, 0.065, cx + 0.004, by, 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
-    wb.box('bone', cx - 0.025, by - 0.035, 0.065, cx + 0.025, by - 0.027, 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
-    // el candil: la cazoleta de barro, su piquera y el asa
-    wb.cylinder('plaster', 0, yRep, 0.1, 0.05, 0.062, 0.035, 10, { ao: false, room, capTop: true, tint: BARRO });
-    wb.cylinder('black', 0, yRep + 0.035, 0.1, 0.03, 0.03, 0.004, 10, { ao: false, room, capTop: true, grime: false });
-    wb.box('plaster', 0.04, yRep + 0.012, 0.085, 0.1, yRep + 0.034, 0.115, { ao: false, room, tint: BARRO });
-    palo(wb, V(-0.06, yRep + 0.03, 0.1), V(-0.085, yRep + 0.055, 0.1), 0.014, 'plaster', { room, tint: BARRO });
+    // el clavo y el rosario; el candil, en la repisa
+    rosarioColgado(wb, imagen === 'tabla' ? w / 2 - 0.02 : 0.16, imagen === 'tabla' ? yc + h / 2 - 0.04 : yc + 0.22, 0, room);
+    candilBarro(wb, 0, yRep, 0.1, room);
   });
   // la punta de la piquera, en el mundo
   const p = V(0.095, yRep + 0.05, 0.1).applyAxisAngle(V(0, 1, 0), rot);
+  return { x: x + p.x, y: y + p.y, z: z + p.z };
+}
+
+// El clavo y el rosario (en el marco local de quien lo cuelga, de cara a +z):
+// un lazo de cuentas de boj que cuelga del clavo (cx, cy, en la cara cz), con
+// su cruz de hueso abajo.
+function rosarioColgado(wb, cx, cy, cz, room) {
+  wb.box('iron', cx - 0.008, cy - 0.008, cz, cx + 0.008, cy + 0.008, cz + 0.07, { ao: false, room });
+  const N = 26;
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    // (las dos ramas del lazo bajan del clavo y se juntan abajo, un poco
+    // abiertas: la cuenta de en medio es la que pesa)
+    const a = t * Math.PI;
+    const px = cx + Math.sin(a) * 0.045 - 0.02 * t,
+      py = cy - 0.02 - Math.sin(a * 0.5) * 0.3,
+      pz = cz + 0.07 + Math.sin(a) * 0.01;
+    // (una geometría por cuenta: wb.geometry se queda con la que recibe)
+    wb.geometry(i % 9 === 0 ? 'bone' : 'wooddark', new THREE.SphereGeometry(0.011, 5, 4), M4(px, py, pz), { ao: false, room, tint: i % 9 === 0 ? [0.9, 0.84, 0.7] : [0.5, 0.36, 0.22] });
+  }
+  const by = cy - 0.36;
+  wb.box('bone', cx - 0.004, by - 0.09, cz + 0.065, cx + 0.004, by, cz + 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
+  wb.box('bone', cx - 0.025, by - 0.035, cz + 0.065, cx + 0.025, by - 0.027, cz + 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
+}
+
+// El candil de barro (en el marco local): la cazoleta con su aceite, la
+// piquera hacia +x (la llama, en su punta: cx + 0.095, cy + 0.05) y el asa.
+function candilBarro(wb, cx, cy, cz, room) {
+  const BARRO = [0.66, 0.42, 0.3];
+  wb.cylinder('plaster', cx, cy, cz, 0.05, 0.062, 0.035, 10, { ao: false, room, capTop: true, tint: BARRO });
+  wb.cylinder('black', cx, cy + 0.035, cz, 0.03, 0.03, 0.004, 10, { ao: false, room, capTop: true, grime: false });
+  wb.box('plaster', cx + 0.04, cy + 0.012, cz - 0.015, cx + 0.1, cy + 0.034, cz + 0.015, { ao: false, room, tint: BARRO });
+  palo(wb, V(cx - 0.06, cy + 0.03, cz), V(cx - 0.085, cy + 0.055, cz), 0.014, 'plaster', { room, tint: BARRO });
+}
+
+// El rincón de un refugio que ya tenía su altar (el oratorio de la cerera,
+// PLAN_REFUGIOS.md): en él, el candil (o.candil: dónde, en el marco local del
+// altar, de cara a +z, sobre su tablero) y el rosario colgado (o.rosario: el
+// clavo, cx, cy, cz). Devuelve dónde arde el candil, en el mundo.
+export function candilYRosario(ctx, x, y, z, rot, o = {}) {
+  const wb = ctx.wb;
+  const room = o.room;
+  const [lx, ly, lz] = o.candil ?? [0, 0, 0.3];
+  wb.at(x, y, z, rot, () => {
+    if (o.rosario) rosarioColgado(wb, o.rosario[0], o.rosario[1], o.rosario[2], room);
+    candilBarro(wb, lx, ly, lz, room);
+  });
+  const p = V(lx + 0.095, ly + 0.05, lz).applyAxisAngle(V(0, 1, 0), rot);
   return { x: x + p.x, y: y + p.y, z: z + p.z };
 }
 

@@ -669,6 +669,17 @@ export function casa(ctx, S, L, def) {
             iz = axis === 'x' ? (side === 'n' ? I.z0 + 0.2 : I.z1 - 0.2) : c;
           const rm = (l.areas ?? []).find((a) => ix > a.r[0] && ix < a.r[2] && iz > a.r[1] && iz < a.r[3]);
           hueco(ctx, side, fx, fz, o.w, y0, y1, t, { room: rm ? rm.room : rooms[i], shutters: o.shutters, bars: o.bars, mat: o.frame === 'stone' ? 'ashlar' : 'timber', tint: o.tint, sill: o.frame !== 'none' });
+          // (contra: sus contraventanas por dentro, dos hojas que se abren y
+          // se cierran, como una puerta; las de un refugio, PLAN_REFUGIOS.md.
+          // vano: la ventana de sacada, que es puerta al balcón)
+          if (o.contra) {
+            const C = o.contra;
+            const mid = side === 'n' ? R.z0 + t / 2 : side === 's' ? R.z1 - t / 2 : side === 'w' ? R.x0 + t / 2 : R.x1 - t / 2;
+            const plane = side === 'n' ? R.z0 + t : side === 's' ? R.z1 - t : side === 'w' ? R.x0 + t : R.x1 - t;
+            const swing = side === 'n' || side === 'e' ? -1 : 1;
+            const rotulo = C.vano ? 'la ventana' : 'las contraventanas';
+            L.interact.push({ kind: 'door', x: axis === 'x' ? c : mid, y: y0, z: axis === 'x' ? mid : c, w: o.w, h: Math.min(o.h, y1 - y0), axis, mat: 'planks', double: true, swing, plane, inset: 0.04, lock: { type: 'none' }, ventana: true, rotuloCerrar: 'Cerrar ' + rotulo, rotuloAbrir: 'Abrir ' + rotulo, ...C });
+          }
         }
       }
     }
