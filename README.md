@@ -80,9 +80,9 @@ de verdad), siempre o nunca.
 <!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 72 % hacia la 1.0"></a></p>
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 77 % hacia la 1.0"></a></p>
 
-**72 % hacia la 1.0**: 88 de 123 tareas y 9 de las 15 fases hechas (al día el 25 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**77 % hacia la 1.0**: 96 de 125 tareas y 9 de las 15 fases hechas (al día el 25 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
@@ -101,7 +101,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
-| XII | [Los refugios](docs/hoja-de-ruta/index.html#fase-refugios) | Espera al autor | 0 % (0 de 8) |
+| XII | [Los refugios](docs/hoja-de-ruta/index.html#fase-refugios) | En curso | 80 % (8 de 10) |
 | XIII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
 | XIV | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
 | XV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
@@ -121,17 +121,6 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El sonido: el latido, el coro, los truenos y las campanas que tocan solas
 - [ ] El título, Dawn of the Devil, y el pergamino
 - [ ] Las pruebas, el teléfono y la versión jugable
-
-**XII · Los refugios** — Los lugares cerrados que se hacen tuyos: entrar, limpiar, cerrar y encender la lamparilla. *Espera al autor, 0 %* · `PLAN_REFUGIOS.md`
-
-- [ ] Decidir lo del §12: la lista, sentarse o arrodillarse, la primera noche, el oro y el viaje (los lugares cerrados, ya decidido)
-- [ ] R1: el refugio, en uno (la torre de la cárcel): puertas que se abren y se vuelven a cerrar, la llave, la lamparilla y descansar
-- [ ] R2: la regla y su prueba: que esté cerrado y que nunca aparezcas junto a una criatura (tools/refugios.mjs)
-- [ ] R3: los ya cerrados: la Cancillería y el Tombo, la despensa, la cámara de la reina, Sisnando y la Casa del Alemán
-- [ ] R4: los que piden puertas: la Taberna del Cuervo, la tintorería, la casa de la cerera y la torre de la coracha
-- [ ] R5: los que piden obra: el cancel de San Martín, la celda del enterrador, la choza del Desfigurado, la casa del sepulturero y la cámara de las aguas
-- [ ] R6: el oro: los morabetinos, los escondrijos y sus pistas
-- [ ] R7: el mapa, el documento de cada refugio, las partidas guardadas, las pruebas y la versión jugable
 
 **XIII · Los Paços** — El barrio de los ricos de la corte, cerrado a cal y canto. *Espera al autor, 0 %* · `PLAN_PACOS.md`
 
@@ -159,6 +148,19 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
+**XII · Los refugios** — Los lugares cerrados que se hacen tuyos: entrar, limpiar, cerrar y encender la lamparilla. *En curso, 80 %* · `PLAN_REFUGIOS.md`
+
+- [x] Lo del §12, con lo recomendado: sentado al descansar, la primera noche en la taberna, el oro sólo en los refugios y sin viaje
+- [x] R1: el refugio, en uno (la torre de la cárcel): puertas que se abren y se vuelven a cerrar, la lamparilla y descansar
+- [x] R2: la regla y su prueba: que esté cerrado y que nunca aparezcas junto a una criatura (tools/refugios.mjs)
+- [x] R3: los ya cerrados: la Cancillería y el Tombo, la despensa, la cámara de la reina, Sisnando y la Casa del Alemán
+- [x] R4: los que piden puertas: la Taberna del Cuervo (con su primera noche), la tintorería, la casa de la cerera y la torre de la coracha
+- [x] R5: los que piden obra: el cancel de San Martín, la celda del enterrador, la choza del Desfigurado, la casa del sepulturero y la cámara de las aguas
+- [x] R6: el oro: los morabetinos de cada refugio, en su escondrijo
+- [x] R7: las partidas guardadas, las pruebas y la versión jugable
+- [ ] R8: la cuenta de los huecos en pantalla, el mapa y el documento de cada refugio
+- [ ] R9: la llave de la puerta principal, el llavero y la puerta que se cierra sola detrás de ti
+
 **XIV · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
@@ -184,7 +186,6 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
-- **Los refugios** — ¿Esta lista de quince? ¿Se sienta o se arrodilla al descansar? Ya decidido: lugares cerrados (casas, torres, edificios de dos o tres plantas). Seis ya lo están hoy, cuatro piden puertas y cinco, obra, con tres sitios nuevos: la celda del enterrador, la choza del Desfigurado y la cámara de las aguas. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro. · *PLAN_REFUGIOS.md, §12*
 - **El duelo de la cisterna** — ¿Es así de duro? ¿Y si ya conocías al Desfigurado? El Físico cambiado baja a pelear con los suyos, duda y muere mirando la luna. Falta jugarlo a mano para medir la dureza, decidir qué pasa si se te escapó cuando ya conocías al Desfigurado y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §11*
 - **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
@@ -287,8 +288,8 @@ que se pueden visitar por dentro: el Callejón del Pozo y su plazuela (con el po
 su torno y su cubo), el Callejón del Arco, la Travesía de la Sé, la Taberna del Cuervo, el obrador de la tejedora
 (telar y torno de hilar), el patio y el horno de pan (con artesas y hornos de leña), el Callejón de la Fragua, el
 patio y el taller de los tintoreros (cubas de tinte y telas tendidas), el corral y el establo de los Pellejeros, y
-la cerca de la ciudad cerrando cada barrio. Los altares de descanso están en lugares a salvo: la capilla de la
-guarnición, el Oratorio de Santa Bárbara, la Capilla de San Fructuoso, la torre de la coracha y la cripta. Las casas que se pueden visitar
+la cerca de la ciudad cerrando cada barrio. Ya no se descansa en altares: se descansa en **refugios**, lugares
+cerrados que se hacen tuyos (más abajo, *Los refugios*); en la ciudad, la Taberna del Cuervo y la tintorería. Las casas que se pueden visitar
 se distinguen desde la calle (faroles encendidos, rótulos, antorchas, la puerta entornada con luz dentro); las de
 adorno tienen la puerta cerrada, y algunas clavadas con tablones o atrancadas.
 
@@ -431,7 +432,7 @@ canes bajo el alero (plano: `docs/planos/plan_barrio.png`). La Rúa de los Pelle
 tendida, las pieles clavadas en las fachadas, el carro volcado, los rótulos, y por encima, de tejado a tejado, la
 viga que echaron los vecinos); la casa del zapatero de la Sé, abierta (el obrador, y en la cocina su hijo, ya curado,
 sentado a la mesa ante su cuenco); la de la cerera, la viuda (la tienda de las velas, a la plaza y a la rúa; el zaguán
-con la cocina; arriba, la sala con su oratorio, con un altar de descanso, y la alcoba, atrancada por dentro: por la
+con la cocina; arriba, la sala con su oratorio, el rincón del refugio de la casa, y la alcoba, atrancada por dentro: por la
 ventana de la sala se sale a la viga de lo que fue el balcón y, haciendo equilibrio, se entra por la de la alcoba,
 donde está la llave de la tintorería; mientras tanto, el Físico baja la rúa desde su casa y clava tablas en la
 puerta de la calle, por fuera, y se sale por la puerta de al lado, a la plazuela); la Plazuela de los Inocentes (el
@@ -614,7 +615,7 @@ escalera pegada al muro y el sepulcro del primero, que tiene la cara tapada como
 cada una con su luz, que se ven todas desde dentro: el paso al templo, la gran reja que da a la antesala (luz roja),
 la bajada a las catacumbas (azul) y la **galilea** (oro), desde la que se pasa por tres arcos despejados a la
 **cripta de San Martín de Dumio**, una iglesia de tres naves con arquerías de herradura: al fondo, la **Capilla de
-San Martín** (altar de descanso), donde reza **Dom Paio**, el canónigo que bajó tras el arzobispo (al verte se
+San Martín** (un refugio: la cierra a la nave un cancel de tablas con su puerta), donde reza **Dom Paio**, el canónigo que bajó tras el arzobispo (al verte se
 levanta de un salto; te cuenta lo que pasó y, cada vez que vuelves, lo que le falta a la puerta); a un lado, un
 **osario de los hermanos de Dumio**; y en el eje, el **Pórtico de los Velados**, que da a la tribuna de la antesala.
 Bajo el panteón (se baja por doce peldaños, bajo una bóveda en rampa que sigue en la de la galería), las
@@ -624,7 +625,8 @@ forrados de calaveras y rosetones de huesos, el altar con el lema encima y el os
 en el **Lucernario de San Pedro de Rates**: una cámara redonda y alta tallada en la
 roca, con cinco alturas de nichos (a los de arriba se sube por escaleras de mano), la cúpula de roca con el ojo del
 lucernario, por donde cae la luz de la calle sobre una alberca de agua viva con velas que flotan, y el
-**Oratorio** del santo en un ábside (otro altar), con el fresco de su martirio y exvotos de cera; más
+**Oratorio** del santo en un ábside, con el fresco de su martirio y exvotos de cera (en la galería del este, la celda
+del enterrador, el refugio de las catacumbas); más
 abajo, la catacumba de los **Inocentes**, con su pila y el **Relicario de San Martín**, donde los muertos de la
 cámara se juntan en el **Custodio de la Garra**: un coloso de calaveras y fémures que sale de un montón de huesos,
 barre con los brazos, golpea el suelo con los dos (onda), lanza calaveras y agarra; se deshace en su montón para
@@ -760,8 +762,8 @@ homenaje, `fortaleza_torre.js`; la puerta y su guardia, `fortaleza_puerta.js`).
 **La llegada.** La coracha baja de la atalaya pegada a la cara de levante de la fortaleza: nada más dejar la
 atalaya, a la derecha, la puerta de **la torre de la coracha**, con su recerco de sillería y su farol. Dentro, el
 puesto de los que velaban la coracha y el fanal (los haces de leña y las ollas de la pez, el catre del centinela,
-deshecho, y junto a la puerta el cuerno de avisar con su farol, que sigue ardiendo), el altar (el descanso de la
-llegada) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
+deshecho, y junto a la puerta el cuerno de avisar con su farol, que sigue ardiendo), el altar (el refugio de la
+llegada, con sus cuatro puertas) y una escalera de tablas que sube por el muro al **pasadizo del Rey**: el adarve
 norte, cubierto, que llevaba al Rey de sus cámaras a su torre, y que quemaron con él al otro lado (los pies derechos
 negros, medio tejadillo hundido sobre las losas, la pantalla de tablas a medias; al fondo, la puerta de la torre del
 homenaje, chamuscada y atrancada por dentro: el fuego la dejó en pie por fuera, pero por dentro es carbón y cede al
@@ -924,7 +926,8 @@ tablas, empinada, sube a él entre los jamones y los chorizos colgados; arriba, 
 **La Capilla Real.** En la crujía de levante, con el altar al norte, contra la torre de la coracha: la nave enlucida
 y pintada de despiece fingido (las juntas de sillería a doble línea de almagre, una cruz en cada sillar), con su
 zócalo, sus bancos, sus coronas y su armadura con tirantes; el presbiterio en alto, bajo **su bóveda de estrellas**
-y su fajón sobre ménsulas, con el retablo, la cruz, el **altar** (el descanso de en medio de la fortaleza) y, en el
+y su fajón sobre ménsulas, con el retablo, la cruz, el **altar** (ya no se descansa en él: el refugio
+de en medio de la fortaleza es la Cancillería) y, en el
 reclinatorio, la confesión del capellán mayor. **La tribuna del Rey** corre en alto por el muro del patio, de la
 puerta de su oratorio a los pies, donde está su sitial; se sube también por una escalera de tablas en el muro de
 levante. El cordón de la campana baja por la clave de la bóveda y está atado a una argolla en la cabecera de la
@@ -1091,13 +1094,35 @@ puertas atrancadas que solo se abren desde dentro (atajos), y bajo la Sé, un ra
 que se hunde, cada uno con su palanca al otro lado; la reja de la cripta, con cinco cerraduras en una pletina de
 hierro (las cinco llaves de los cinco oficiales de la corte, en la fortaleza: con las cinco, se echan una a una y baja
 por su ranura hasta el suelo), la losa de la sacristía que hunde el anillo del arzobispo, las ventanas que se
-tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojos, altares de descanso que curan,
-rellenan las ampollas y devuelven a las criaturas a sus puestos. Las puertas atrancadas muestran la tranca por el
+tapian con martillo y tablones, la Puerta del Dios Ignoto con sus cuatro cerrojos, refugios que se aseguran y en los
+que se descansa: curan, rellenan las ampollas y devuelven a sus puestos a las criaturas de fuera. Las puertas atrancadas muestran la tranca por el
 lado desde el que se quita; las puertas escondidas no se ofrecen ni salen en el mapa hasta que se abren. Mejoras
 opcionales: ampollas vacías, relicarios de hueso (vitalidad), una piedra de afilar bendita (daño) y el rosario del
 canónigo (aguante), que deja el Descoyuntado al morir. Casi cincuenta documentos breves cuentan la historia junto con
 el escenario; cada uno se lee como está escrito y, con T (X en el mando, o desde las opciones), con su transcripción
 al lado, en letra de leer.
+
+**Los refugios** (`PLAN_REFUGIOS.md`, `game/refugios.js`). Los sitios de descanso son lugares cerrados que se hacen
+tuyos: casas, torres, edificios de dos plantas y cuartos bajo tierra, con los que se encerraron todavía dentro. Se
+entra por donde se puede, se limpia, se cierra hueco a hueco (las puertas se abren y se vuelven a cerrar; la que
+cierras tú queda con el pestillo; las trampillas, con su cerrojo; las ventanas rotas, tapiadas; las demás, con sus
+contraventanas) y, ante su imagen, se enciende la lamparilla: con alguien dentro o algo abierto no prende, y se dice
+qué falta. Encendido es tuyo: ahí descansas, sentado bajo la imagen, y ahí te levantas al caer; los de dentro no
+vuelven nunca, y cerradas, sus puertas son muro también para las criaturas (y para el Físico). Quince: la torre de
+la cárcel, la Taberna del Cuervo (la puerta del Soto, atrancada por el tabernero; la de atrás, reventada; y su
+**primera noche**: al encender, lo que andaba fuera viene a aporrear las puertas), la tintorería, la Casa del Alemán
+(cuando Henrique te ha contado lo suyo), la casa de la cerera (su oratorio, con dos puertas, dos ventanas de sacada y
+tres con contraventana), la Cancillería y el Tombo, la despensa, la cámara de la reina, la torre de la coracha (cuatro
+puertas), la capilla de Sisnando, la capilla de San Martín (con su cancel de tablas y Dom Paio dentro), la celda del
+enterrador (nueva, en las catacumbas), la choza del Desfigurado (la levantó él, de pilar a pilar, en el Vergel), la
+casa del sepulturero (el osario de la lobera, con dos bocas tapiadas con piedra y huesos; tuya cuando cae el
+Lobishome) y la cámara de las aguas (nueva, en lo hondo: el castellum de los romanos, con su puerta de bronce). El
+rincón: una tabla pintada en las casas de oficio (Santa María con el Niño, el Pantocrátor), una cruz de dos palos en
+las pobres (de dos huesos, la del sepulturero), un crucifijo en las ricas, un crismón labrado en la de los romanos; y
+siempre el rosario y el candil de barro. En cada uno, **oro**: morabetinos contados (unos 150 en los quince), lo que
+escondían los que se encerraron. Las partidas de antes se levantan en el refugio que sustituye a su altar, ya
+encendido. Se comprueba con `node tools/refugios.mjs`: que se enciende sólo limpio y cerrado, que te levantas en su
+rincón, que ninguna criatura de fuera llega andando ni te percibe al aparecer y que al recargar sigue igual.
 
 **El inventario**, a lo Dark Souls, en tres pestañas. El **Equipo**: las ranuras de la mano derecha (el arma), la
 izquierda (el escudo), las cuatro de la armadura (cabeza, torso, manos y piernas: al despertar, las de la guardia;

@@ -273,23 +273,24 @@ export const FASES = [
     num: 'XII',
     nombre: 'Los refugios',
     lema: 'Los lugares cerrados que se hacen tuyos: entrar, limpiar, cerrar y encender la lamparilla',
-    cuando: 'propuesto el 25 de noviembre',
+    cuando: 'propuesto y hecho el 25 de noviembre',
     plan: 'PLAN_REFUGIOS.md',
-    estado: 'espera',
     texto:
-      'Así está hoy: diez altares de velas, ninguno cerrado, ninguna puerta del juego que se vuelva a cerrar, y en tres reapareces junto a una criatura que te percibe (a 3,5 m en el cruceiro, a 4,8 en la Capilla Real, a 5,8 en las catacumbas). La propuesta: los sitios de descanso pasan a ser lugares cerrados (casas, torres, edificios de dos o tres plantas, cuartos con su puerta bajo tierra), con los que se encerraron todavía dentro. Se entra por donde se puede (con ruido o en silencio), se limpia, se cierra hueco a hueco y se enciende la lamparilla bajo la imagen y su rosario. Desde entonces es tuyo: ahí descansas, ahí te levantas y ahí no entra nada. Quince: seis ya están cerrados hoy, cuatro piden puertas y cinco, obra. Y en cada uno, el oro que escondieron: morabetinos, contados.',
+      'Los sitios de descanso ya no son altares de velas: son quince lugares cerrados (casas, torres, edificios de dos plantas, cuartos con su puerta bajo tierra), con los que se encerraron todavía dentro. Se entra por donde se puede, se limpia, se cierra hueco a hueco (las puertas se abren y se vuelven a cerrar; las trampillas, con su cerrojo; las ventanas, tapiadas o con sus contraventanas) y se enciende la lamparilla bajo la imagen y su rosario. Desde entonces es tuyo: ahí descansas, sentado, ahí te levantas y ahí no entra nada; tools/refugios.mjs lo comprueba en los quince. Tres sitios nuevos (la celda del enterrador, la choza del Desfigurado, la cámara de las aguas), la primera noche de la taberna y 157 morabetinos. Queda lo de encima: la cuenta de los huecos en pantalla, el mapa, el documento de cada refugio y la llave de la puerta principal.',
     escena: null,
     sprites: ['penitent', 'hound'],
     iconos: ['rosary', 'hammer', 'key'],
     tareas: [
-      ['Decidir lo del §12: la lista, sentarse o arrodillarse, la primera noche, el oro y el viaje (los lugares cerrados, ya decidido)', 0],
-      ['R1: el refugio, en uno (la torre de la cárcel): puertas que se abren y se vuelven a cerrar, la llave, la lamparilla y descansar', 0],
-      ['R2: la regla y su prueba: que esté cerrado y que nunca aparezcas junto a una criatura (tools/refugios.mjs)', 0],
-      ['R3: los ya cerrados: la Cancillería y el Tombo, la despensa, la cámara de la reina, Sisnando y la Casa del Alemán', 0],
-      ['R4: los que piden puertas: la Taberna del Cuervo, la tintorería, la casa de la cerera y la torre de la coracha', 0],
-      ['R5: los que piden obra: el cancel de San Martín, la celda del enterrador, la choza del Desfigurado, la casa del sepulturero y la cámara de las aguas', 0],
-      ['R6: el oro: los morabetinos, los escondrijos y sus pistas', 0],
-      ['R7: el mapa, el documento de cada refugio, las partidas guardadas, las pruebas y la versión jugable', 0],
+      ['Lo del §12, con lo recomendado: sentado al descansar, la primera noche en la taberna, el oro sólo en los refugios y sin viaje', 1],
+      ['R1: el refugio, en uno (la torre de la cárcel): puertas que se abren y se vuelven a cerrar, la lamparilla y descansar', 1],
+      ['R2: la regla y su prueba: que esté cerrado y que nunca aparezcas junto a una criatura (tools/refugios.mjs)', 1],
+      ['R3: los ya cerrados: la Cancillería y el Tombo, la despensa, la cámara de la reina, Sisnando y la Casa del Alemán', 1],
+      ['R4: los que piden puertas: la Taberna del Cuervo (con su primera noche), la tintorería, la casa de la cerera y la torre de la coracha', 1],
+      ['R5: los que piden obra: el cancel de San Martín, la celda del enterrador, la choza del Desfigurado, la casa del sepulturero y la cámara de las aguas', 1],
+      ['R6: el oro: los morabetinos de cada refugio, en su escondrijo', 1],
+      ['R7: las partidas guardadas, las pruebas y la versión jugable', 1],
+      ['R8: la cuenta de los huecos en pantalla, el mapa y el documento de cada refugio', 0],
+      ['R9: la llave de la puerta principal, el llavero y la puerta que se cierra sola detrás de ti', 0],
     ],
   },
   {
@@ -404,12 +405,6 @@ export const EXPANSIONES = [
 
 // Lo que tiene que decidir el autor para seguir.
 export const DECISIONES = [
-  {
-    que: 'Los refugios',
-    pregunta: '¿Esta lista de quince? ¿Se sienta o se arrodilla al descansar?',
-    mas: 'Ya decidido: lugares cerrados (casas, torres, edificios de dos o tres plantas). Seis ya lo están hoy, cuatro piden puertas y cinco, obra, con tres sitios nuevos: la celda del enterrador, la choza del Desfigurado y la cámara de las aguas. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro.',
-    donde: 'PLAN_REFUGIOS.md, §12',
-  },
   {
     que: 'El duelo de la cisterna',
     pregunta: '¿Es así de duro? ¿Y si ya conocías al Desfigurado?',

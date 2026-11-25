@@ -2,9 +2,10 @@
 
 Propuesta del 25 de noviembre de 2026, a partir de lo que pidió el autor, y rehecha el mismo día con su respuesta:
 **valen torres y edificios de dos o tres plantas, se puede rehacer o añadir lo que haga falta, y tienen que ser lugares
-cerrados**. **Sustituye a los altares de descanso.** **No está hecha**: espera a lo que queda por decidir (§12). Va
-antes que la fragua y el alfaqueque (la propuesta del herrero de Évora y del mercader, del mismo día, que todavía no
-tiene plan propio): los dos se apoyan en esto (§9).
+cerrados**. **Sustituye a los altares de descanso.** **Hecho el mismo día** (§15: lo hecho, refugio por refugio, lo
+que cambió del plan y lo que queda), con lo recomendado en el §12, porque el autor pidió integrarlo («Intégralo,
+rediseña, haz lo que sea necesario. Ve lugar a lugar»). Va antes que la fragua y el alfaqueque (la propuesta del
+herrero de Évora y del mercader, del mismo día, que todavía no tiene plan propio): los dos se apoyan en esto (§9).
 
 Lo que pidió el autor:
 
@@ -442,3 +443,62 @@ lamparilla), `holes.mjs`, `zfight.mjs` y `rendimiento.mjs`.
   del barrio), y la luz de las ventanas, una superficie que brilla, no una luz más.
 - **El final.** El cruceiro se queda como está (es del final secreto). La película del jefe final pasa por la Herrería
   (el acto 3): si la fragua se hace refugio, su fachada es también la de la película.
+
+## 15. Lo hecho (25 de noviembre)
+
+Con lo recomendado en el §12: **se sienta** a descansar (la espalda contra la pared, bajo la imagen); el oro son
+**morabetinos, sólo en los refugios** (157 en los quince: se cuentan en el inventario y se avisa al cogerlos); **no se
+viaja** entre refugios; **la primera noche**, en la taberna.
+
+**El módulo** (`game/refugios.js`): cada refugio se declara en su nivel, en lo que ya había (el altar, con `refugio`
+y `candil`; sus puertas, trampillas, ventanas y criaturas, con `refugio`). Encender pide que no quede nadie dentro y
+que todo esté cerrado, y si no, dice qué falta («quedan una puerta y cinco ventanas por cerrar»). Encendido: se
+descansa, se levanta uno ahí, sus criaturas no vuelven (`story` `ref:<id>`) y sus puertas se abren desde los dos
+lados. **Las puertas de un refugio se abren y se vuelven a cerrar**: la que cierras tú queda con el **pestillo** (se
+vuelve a abrir desde cualquier lado, sea cual sea su cerradura, salvo la que clavó el Físico); la **entornada**
+cuenta como abierta, se empuja desde fuera y se cierra del todo desde dentro; `abierta`, la que ya estaba abierta
+(reventada); `refugioDesde`, la que sólo es del refugio desde una bandera (la de la calle del Alemán, la del osario).
+Las **trampillas**, con su cerrojo (`cierre`), que no se ofrece mientras sigan clavadas. Las **contraventanas**: el
+kit de casas pone dos hojas por dentro en los huecos que se digan (`contra`), y cuentan como ventanas. Cerradas, las
+puertas de un refugio son muro para la navegación de las criaturas, en todas sus rejillas (también las de las
+cloacas hondas y la del sótano del Alemán, que no se rehacían al cerrar una puerta). Una partida de antes que
+descansó en un altar que ya no está tiene encendido el refugio que lo sustituye (se quedan sus ids). **La primera
+noche** (`noche: id` en las criaturas): no están hasta que se enciende; entonces aporrean las puertas desde fuera, a
+tandas; se avisa la primera vez que se las oye; si se abre, entran; muertas, no vuelven.
+
+**El rincón** (`world/mobiliario.js`): la imagen (`tabla`, con dos tablas románicas nuevas, Santa María con el Niño y
+el Pantocrátor; `cruz`, de dos palos o de dos huesos; `crucifijo`; `crismon`, labrado en la piedra), el rosario
+colgado de su clavo y el candil de barro, cuya llama y luz enciende el módulo. En los que ya tenían altar (la cerera,
+la coracha, San Martín), el candil y el rosario, en el altar (`candilYRosario`).
+
+**Refugio por refugio** (lo que cambió del §8):
+
+| | Refugio | Lo que se hizo |
+|---|---|---|
+| 1 | La torre de la cárcel | La planta de arriba, cerrada con el cerrojo de su trampilla; dos guardas dentro; la cruz de dos palos; 4 morabetinos |
+| 2 | La Cancillería y el Tombo | Sus dos puertas y la de la terraza del Tombo; cuatro dentro; el crucifijo; 25 en el arca del Tombo. Sin altar la Capilla Real |
+| 3 | La despensa | Sus cuatro puertas; dos dentro (uno, en el techo); la tabla de las ánimas; 8 |
+| 4 | La cámara de la reina | Una puerta nueva en su caracol (en lugar de la trampilla del plan); dos dentro; la tabla de la Virgen; 12 |
+| 5 | La capilla de Sisnando | Su tabique, que se derriba, y detrás una puerta de tablas que se cierra; la emparedada; la cruz; 6 |
+| 6 | La Casa del Alemán | Desde que Henrique te ha contado lo suyo: sus cinco ventanas tapiadas, la puerta de la calle (su guion ya no la reabre al cargar) y la del sótano, que da al agujero de Leonor; el crucifijo de la familia en el tabique del taller (bajo su estandarte se tapaba); 20 |
+| 7 | La Taberna del Cuervo | Tres puertas: la del Soto, atrancada por dentro por el tabernero; la de la plaza; la de atrás, reventada. El cerrojo de la trampilla de la bodega. Tres dentro (el perro de la despensa, nuevo) y la primera noche (tres que aporrean la del Soto y la de la plaza). Santa María con el Niño junto al hogar; 10 en una olla rota |
+| 8 | La tintorería | Su puerta, entornada (dentro se ve luz). Sin el secadero de arriba: queda de una planta. Tres dentro; el Pantocrátor; 15 junto a los tarros de grana |
+| 9 | La casa de la cerera | Su oratorio, con candil y rosario; sus dos puertas, las dos ventanas de sacada y las tres que estaban abiertas, con contraventanas (las otras tres ya tenían los postigos cerrados o clavados). Dos Coronados; 8 cosidos en una saya |
+| 10 | La torre de la coracha | Cuatro puertas, no dos: la de la coracha, la del caracol y, arriba de sus escaleras de tablas, la del pasadizo del Rey y la del adarve (abierta) |
+| 11 | La capilla de San Martín | El cancel de tablas, de pilastra a pilastra y con el arco entero cerrado, y su puerta, que abre hacia la nave (detrás reza Dom Paio); nadie que limpiar; sin oro |
+| 12 | La celda del enterrador | Nueva: un cubículo más, al sur de la galería del este, con su zona; el jergón, las palas, la tabla de los enterramientos, la cruz; un cavador y una emparedada; 10 |
+| 13 | La choza del Desfigurado | Su botica, cerrada de pilar a pilar y hasta la bóveda con cañizo y barro, su puerta de tablas y un ventanuco con un lienzo encerado; tuya cuando él te deja (`desf:met`); 2 en un tarro |
+| 14 | La casa del sepulturero | Dos bocas tapiadas con piedra y huesos y la del rastro, con su puerta; la cruz de dos huesos; tuya cuando cae el Lobishome (ni se enciende ni su puerta se cierra antes); 15 |
+| 15 | La cámara de las aguas | Nueva: el castellum, con su pila, el caño de bronce, tres cañerías de plomo, su boca de sillería y una puerta de bronce; un crismón; dos plantas; 10 en el fondo de la pila |
+
+**Lo que se arregló de paso**: los fuegos se dibujan los más cercanos primero (con el tope lleno, en la fortaleza no
+ardían ni las velas de los altares ni los candiles); las puertas de las cloacas hondas y del sótano del Alemán, que al
+cerrarse no rehacían la navegación.
+
+**Lo que queda**: la cuenta de los huecos en pantalla (hoy se dice al intentar encender); el ramo de olivo en la
+aldaba y la luz en las ventanas de los encendidos (§3, §4); en el mapa, cada refugio encendido o no; el documento de
+cada uno (quién se encerró); la llave de la puerta principal y el llavero, y que se cierre sola detrás de ti (hoy, el
+pestillo); lo que te persigue, aporreando la puerta (la primera noche lo hace, a lo demás le falta); la primera noche
+en la Casa del Alemán (ya tiene su defensa) y en la fragua; los refugios que dependen de otros planes (la fragua, la
+torre del homenaje, los Paços); y el secadero de la tintorería. Pruebas: `tools/refugios.mjs` (los quince, bien),
+`fortalezawalk.mjs` (al día con las puertas nuevas), `barriowalk.mjs`, `cloacawalk.mjs`.

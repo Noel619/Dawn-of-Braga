@@ -1814,9 +1814,8 @@ export class Interactables {
 
   // las criaturas dejan de rodear la mesa (o vuelven a hacerlo)
   refreshNav(it) {
-    const g = this.game;
     const r = Math.hypot(it.w, it.d) / 2 + 1.2;
-    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+    for (const n of this.navs()) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
   // (y con el puente levadizo: bajado, su tablero se pisa)
   refreshBridgeNav(it) {
@@ -1826,10 +1825,17 @@ export class Interactables {
     for (const n of [g.navSurface, g.navKeep && g.navKeep[0]]) if (n) n.refresh(hx - r, Math.min(hz, hz + it.len) - 1, hx + r, Math.max(hz, hz + it.len) + 1);
   }
   // (lo mismo con una puerta que se cierra o se abre)
-  refreshDoorNav(it) {
+  // Las rejillas de navegación en que puede estar una puerta o un obstáculo:
+  // también las de las cloacas hondas, por niveles, y la del sótano y la
+  // gruta del Alemán (la puerta del osario, la de la cámara de las aguas, la
+  // del sótano de Henrique: sin ellas, cerradas, seguían siendo de paso)
+  navs() {
     const g = this.game;
+    return [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, g.navLair, ...(g.navKeep || []), ...(g.navHondas || []).map((h) => h.nav)].filter(Boolean);
+  }
+  refreshDoorNav(it) {
     const r = it.w / 2 + 1;
-    for (const n of [g.navSurface, g.navCrypt, g.navCellar, g.navDungeon, ...(g.navKeep || [])]) if (n) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
+    for (const n of this.navs()) n.refresh(it.x - r, it.z - r, it.x + r, it.z + r);
   }
 
   // La hoja con la luz horneada del sitio, como los muebles del escenario:
