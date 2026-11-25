@@ -329,6 +329,28 @@ export function rinconImagen(ctx, x, y, z, dir, o = {}) {
           wb.box('bone', px - 0.045, py - 0.03, pz - 0.028, px + 0.045, py + 0.03, pz + 0.028, { ao: false, room, faces: 'tnsewb', tint: tc });
       for (const dy of [-0.012, 0.02]) wb.box('rope', -0.04, yc + 0.07 + dy, 0.09, 0.04, yc + 0.095 + dy, 0.098, { ao: false, room });
       palo(wb, V(-0.04, yc + 0.09, 0.095), V(0.04, yc + 0.11, 0.095), 0.01, 'rope', { room });
+    } else if (imagen === 'crismon') {
+      // el crismón grabado en la piedra (lo labraron los romanos de Bracara,
+      // que ya eran cristianos): la X y la P dentro de su círculo, a cincel
+      const ink = { ao: false, room, faces: 's', grime: false, tint: [0.16, 0.14, 0.12] };
+      for (let k = 0; k < 24; k++) {
+        const a = (k / 24) * Math.PI * 2;
+        const px = Math.cos(a) * 0.22,
+          py = yc + Math.sin(a) * 0.22;
+        wb.box('black', px - 0.03, py - 0.03, 0.002, px + 0.03, py + 0.03, 0.006, ink);
+      }
+      for (const s of [-1, 1]) {
+        wb.push();
+        wb.translate(0, yc, 0.004);
+        wb.rotateZ(s * Math.PI / 4);
+        wb.box('black', -0.012, -0.2, -0.002, 0.012, 0.2, 0.002, ink);
+        wb.pop();
+      }
+      wb.box('black', -0.012, yc - 0.2, 0.002, 0.012, yc + 0.2, 0.006, ink);
+      for (let k = 0; k < 8; k++) {
+        const a = -Math.PI / 2 + (k / 7) * Math.PI;
+        wb.box('black', Math.cos(a) * 0.06 - 0.01, yc + 0.14 + Math.sin(a) * 0.06 - 0.01, 0.002, Math.cos(a) * 0.06 + 0.01, yc + 0.14 + Math.sin(a) * 0.06 + 0.01, 0.006, ink);
+      }
     } else if (imagen === 'crucifijo') {
       // la cruz de nogal y el Cristo tallado, con su paño de pureza
       wb.box('wooddark', -0.025, yc - 0.36, 0.01, 0.025, yc + 0.34, 0.05, { ao: false, room, faces: 'tnsewb', tint: [0.45, 0.32, 0.22] });

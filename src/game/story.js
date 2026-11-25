@@ -2110,6 +2110,7 @@ export const AREA_NAMES = {
   aljibes: 'Los aljibes ahogados',
   hondo: 'Lo hondo',
   hondo_semillero: 'El semillero',
+  castellum: 'La cámara de las aguas',
   hondo_pozo: 'El pozo de la tapa',
   sumidero: 'El Sumidero',
   venero: 'El venero',

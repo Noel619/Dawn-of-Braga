@@ -61,6 +61,28 @@ function doorLeaf(w, h, mat, hAt = null, mark = null) {
     g.userData.sigil = [sig, sig2];
     return g;
   }
+  // (la de bronce de los romanos: una hoja lisa, verdecida, con sus cuatro
+  // cuarterones y la argolla)
+  if (mat === 'bronze') {
+    const br = objMat('bronze');
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.07), br);
+    leaf.position.set(w / 2, h / 2, 0);
+    g.add(leaf);
+    for (const [px, py] of [
+      [0.27, 0.26],
+      [0.73, 0.26],
+      [0.27, 0.69],
+      [0.73, 0.69],
+    ]) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(w * 0.36, h * 0.32, 0.03), br);
+      p.position.set(w * px, h * py, 0.045);
+      g.add(p);
+    }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.016, 4, 10), br);
+    ring.position.set(w * 0.86, h * 0.48, 0.08);
+    g.add(ring);
+    return g;
+  }
   // madera con herrajes
   const wood = objMat('planks'),
     iron = objMat('iron');

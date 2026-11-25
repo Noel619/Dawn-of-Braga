@@ -99,6 +99,8 @@ export const HONDAS = {
   ninfeoSumidero: [18.9, 22.6, 20.1, 23.8],
   semillero: { r: [-10.5, -8, 1.5, 0], xs: [-10.5, -6.5, -2.5, 1.5], zs: [-8, -4, 0] },
   pozoTapa: { r: [30.5, 32, 34.5, 36] },
+  // la cámara de las aguas: dos tramos, su boca al cruce del sur del ninfeo
+  castellum: { r: [1, 27, 9, 33], xs: [1, 5, 9], zs: [27, 33], boca: 30 },
 };
 
 // Los braseros de la lobera: en los cruces (en una esquina) y en las salas.
@@ -394,6 +396,9 @@ export function buildHondas(ctx, G, L) {
         sumidero: { r: HONDAS.ninfeoSumidero, hasta: Y.n4 - 2.6, fondo: Y.n4 - 2.4, luz: 0.7, bocas: [['n', 0.92]] },
       },
       { id: 'semillero', ...HONDAS.semillero, y: Y.n4, sp: 3.2, rise: 1.95, room: 'hondo_semillero', bocas: [{ id: 's', side: 's', at: -4.5 }] },
+      // la cámara de las aguas (PLAN_REFUGIOS.md): el castellum de los
+      // romanos, donde se repartía el agua de la fuente, al poniente del cruce
+      { id: 'castellum', r: HONDAS.castellum.r, xs: HONDAS.castellum.xs, zs: HONDAS.castellum.zs, y: Y.n4, sp: 2.8, rise: 1.95, room: 'castellum', bocas: [{ id: 'e', side: 'e', at: HONDAS.castellum.boca }] },
       { id: 'pozoTapa', r: HONDAS.pozoTapa.r, xs: [30.5, 34.5], zs: [32, 36], y: Y.n4, sp: 2.6, rise: 1.95, room: 'hondo_pozo', oculi: [{ i: 0, j: 0, k: 4, top: Y.n4 + 9, mat: 'ashlar', tint: [0.3, 0.3, 0.28] }], bocas: [{ id: 'e', side: 'e', at: 34 }] },
     ],
     tramos: [
@@ -406,6 +411,7 @@ export function buildHondas(ctx, G, L) {
       ['h5', 'pozoTapa.e', { tipo: 'seco' }],
       ['ninfeo.w', 'h6', { tipo: 'seco' }],
       ['h6', 'semillero.s', { tipo: 'seco' }],
+      ['h0', 'castellum.e', { tipo: 'seco' }],
     ],
   };
   const R = red(ctx, [desague, se, n1, n2, n3, n4]);
@@ -424,6 +430,7 @@ export function buildHondas(ctx, G, L) {
   detalles(ctx, L, R);
   aljibes(ctx, L, R);
   hondo(ctx, L, R);
+  castellum(ctx, L);
   luces(ctx, R);
   zonas(L);
   mapa(L, R);
@@ -805,11 +812,12 @@ function brasero(ctx, b, y, room) {
 }
 
 // ------------------------------------------------------------------------ la lobera
-// Una boca del osario tapiada como tapiaba él los nichos: piedra a hueso
-// seco, con los huesos de la fosa metidos entre las piedras, por las dos
-// caras. (side, line: el muro de la sala; at: el centro de la boca; puerta:
-// { w, h }, el hueco de la suya, en medio)
-function tapiaOsario(ctx, side, line, at, y, room, puerta) {
+// Una boca de galería tapiada: la del osario, como tapiaba él los nichos,
+// piedra a hueso seco con los huesos de la fosa metidos entre las piedras por
+// las dos caras (o.huesos); la de la cámara de las aguas, de sillería. (side,
+// line: el muro de la sala; at: el centro de la boca; puerta: { w, h }, el
+// hueco de la suya, en medio)
+function tapiaBoca(ctx, side, line, at, y, room, puerta, o = {}) {
   const wb = ctx.wb,
     col = ctx.col;
   const h = KIT.w / 2,
@@ -818,10 +826,11 @@ function tapiaOsario(ctx, side, line, at, y, room, puerta) {
   const t0 = Math.min(line, line + out * KIT.t),
     t1 = Math.max(line, line + out * KIT.t);
   const alongX = side === 'n' || side === 's';
-  const tint = [0.46, 0.44, 0.4];
+  const tint = o.tint ?? [0.46, 0.44, 0.4],
+    mat = o.mat ?? 'wallstone';
   const B = (u0, u1, ya, yb) => {
-    if (alongX) wb.box('wallstone', u0, ya, t0, u1, yb, t1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
-    else wb.box('wallstone', t0, ya, u0, t1, yb, u1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
+    if (alongX) wb.box(mat, u0, ya, t0, u1, yb, t1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
+    else wb.box(mat, t0, ya, u0, t1, yb, u1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
   };
   const K = (u0, u1, ya, yb) => (alongX ? col.add(u0, ya, t0, u1, yb, t1) : col.add(t0, ya, u0, t1, yb, u1));
   const a0 = at - h,
@@ -840,6 +849,7 @@ function tapiaOsario(ctx, side, line, at, y, room, puerta) {
     B(u, v, ys, Math.max(yA(u), yA(v)) + 0.05);
   }
   K(a0, a1, ys, ys + h);
+  if (o.huesos === false) return;
   // los huesos entre las piedras: calaveras y huesos largos
   const rng = new RNG(Math.round(at * 31 + line * 7));
   for (const f of [t0 - 0.03, t1 + 0.03]) {
@@ -989,9 +999,9 @@ function lobera(ctx, L, R) {
     // puerta de tablas. Su cruz, dos huesos atados, en el muro del sur, con
     // su candil; y lo que les sacaba de la boca a los de la fosa de los
     // pobres, ante los nichos. Vencido él, es tuya
-    tapiaOsario(ctx, 'w', ox0, MZ[5], y, room);
-    tapiaOsario(ctx, 's', oz1, MX[5], y, room);
-    tapiaOsario(ctx, 'w', ox0, MZ[4], y, room, { w: 1.3, h: 2.3 });
+    tapiaBoca(ctx, 'w', ox0, MZ[5], y, room);
+    tapiaBoca(ctx, 's', oz1, MX[5], y, room);
+    tapiaBoca(ctx, 'w', ox0, MZ[4], y, room, { w: 1.3, h: 2.3 });
     const candil = rinconImagen(ctx, ox0 + 8.0, y, oz1, 'n', { room, imagen: 'cruz', huesos: true, yc: 1.6 });
     wb.setRoom(null);
     L.interact.push(
@@ -1418,6 +1428,98 @@ function luces(ctx, R) {
   }
 }
 
+// ------------------------------------------------------------------------ la cámara de las aguas
+// El castellum de los romanos (PLAN_REFUGIOS.md): la cámara donde se
+// repartía el agua de la fuente. En medio, su pila de sillería; por el muro
+// del norte le entraba el agua del venero por un caño de bronce; de ella
+// salen, por el suelo, las tres cañerías de plomo que la llevaban a la
+// ciudad, y se meten en los muros por sus bocas. Su boca a la galería, de
+// sillería, con su puerta de bronce. En el fondo de la pila, lo que se
+// echaba a las fuentes de la ciudad (el agua lo juntaba aquí); en el muro
+// de poniente, el crismón que labraron. Lo de lo hondo ha entrado: dos
+// plantas. El refugio de lo más hondo.
+function castellum(ctx, L) {
+  const wb = ctx.wb,
+    col = ctx.col;
+  const C = HONDAS.castellum,
+    y = HONDAS.y.n4,
+    room = 'castellum';
+  const [x0, z0, x1, z1] = C.r;
+  const cx = (x0 + x1) / 2,
+    cz = (z0 + z1) / 2;
+  wb.setRoom(room);
+  const sill = [0.5, 0.5, 0.46];
+  // la pila: su brocal y el agua quieta
+  const px0 = cx - 1.4,
+    px1 = cx + 1.4,
+    pz0 = cz - 1.0,
+    pz1 = cz + 1.0;
+  for (const [a, b, c, d] of [
+    [px0, pz0, px1, pz0 + 0.25],
+    [px0, pz1 - 0.25, px1, pz1],
+    [px0, pz0 + 0.25, px0 + 0.25, pz1 - 0.25],
+    [px1 - 0.25, pz0 + 0.25, px1, pz1 - 0.25],
+  ]) {
+    wb.box('ashlar', a, y, b, c, y + 0.55, d, { ao: false, faces: 'tnsew', room, tint: sill, sub: 1.5 });
+    col.add(a, y, b, c, y + 0.55, d);
+  }
+  wb.box('rock', px0 + 0.25, y, pz0 + 0.25, px1 - 0.25, y + 0.05, pz1 - 0.25, { ao: false, faces: 't', room, tint: [0.3, 0.32, 0.3] });
+  wb.box('water', px0 + 0.25, y + 0.38, pz0 + 0.25, px1 - 0.25, y + 0.4, pz1 - 0.25, { ao: false, faces: 't', room, grime: false });
+  col.add(px0 + 0.25, y, pz0 + 0.25, px1 - 0.25, y + 0.42, pz1 - 0.25);
+  // (las monedas del fondo)
+  for (let k = 0; k < 14; k++) wb.cylinder('gold', px0 + 0.45 + ((k * 37) % 19) / 9.5, y + 0.06, pz0 + 0.45 + ((k * 53) % 11) / 10, 0.035, 0.035, 0.01, 6, { ao: false, capTop: true, room });
+  // el caño de bronce del venero, en el muro del norte, sobre la pila
+  wb.push();
+  wb.translate(cx, y + 1.3, z0);
+  wb.rotateX(Math.PI / 2);
+  wb.cylinder('bronze', 0, 0, 0, 0.1, 0.1, 0.5, 8, { ao: false, capTop: true, room });
+  wb.pop();
+  wb.box('black', cx - 0.07, y + 1.23, z0 + 0.49, cx + 0.07, y + 1.37, z0 + 0.5, { ao: false, faces: 's', grime: false, room });
+  wb.box('ashlar', cx - 0.4, y + 1.0, z0, cx + 0.4, y + 1.6, z0 + 0.12, { ao: false, faces: 'tnsewb', room, tint: sill });
+  // las tres cañerías de plomo: de la pila a sus bocas, en los muros
+  const plomo = [0.5, 0.54, 0.58];
+  const cano = (ax, az, bx, bz) => {
+    const L2 = Math.hypot(bx - ax, bz - az);
+    wb.push();
+    wb.translate((ax + bx) / 2, y + 0.12, (az + bz) / 2);
+    wb.rotateY(Math.atan2(bx - ax, bz - az));
+    wb.box('iron', -0.09, -0.09, -L2 / 2, 0.09, 0.09, L2 / 2, { ao: false, faces: 'tnsewb', room, tint: plomo });
+    wb.pop();
+  };
+  cano(cx - 0.6, pz1, cx - 0.6, z1);
+  cano(cx + 0.6, pz1, cx + 0.6, z1);
+  cano(px0, cz + 0.5, x0, cz + 0.5);
+  for (const [bx, bz, side] of [
+    [cx - 0.6, z1, 's'],
+    [cx + 0.6, z1, 's'],
+    [x0, cz + 0.5, 'w'],
+  ]) {
+    if (side === 's') wb.box('bronze', bx - 0.16, y, bz - 0.04, bx + 0.16, y + 0.28, bz, { ao: false, faces: 'tnsewb', room });
+    else wb.box('bronze', bx, y, bz - 0.16, bx + 0.04, y + 0.28, bz + 0.16, { ao: false, faces: 'tnsewb', room });
+  }
+  // su boca, de sillería, con el hueco de su puerta de bronce
+  tapiaBoca(ctx, 'e', x1, C.boca, y, room, { w: 1.4, h: 2.4 }, { mat: 'ashlar', tint: sill, huesos: false });
+  // el crismón, su rosario y su candil, en el muro de poniente
+  const candil = rinconImagen(ctx, x0, y, cz - 1.6, 'e', { room, imagen: 'crismon', yc: 1.6 });
+  // un poco de luz fría (la que baja por el venero) y lo verde que se ha
+  // metido
+  ctx.lights.push({ x: cx, y: y + 2.4, z: cz, r: 0.5, g: 0.62, b: 0.66, radius: 6, intensity: 0.35, room });
+  musgo(ctx, x1 - 0.6, y, z0 + 0.6, 0.8, 0.6, 21901, { room });
+  helecho(ctx, x0 + 0.5, y, z1 - 0.5, 0.7, 21902, { room });
+  wb.setRoom(null);
+  L.interact.push(
+    { kind: 'altar', id: 'a_aguas', name: 'La cámara de las aguas', refugio: 'aguas', candil: [candil.x, candil.y, candil.z], x: x0 + 0.6, y, z: cz - 1.6, spawn: [x0 + 1.3, y, cz - 1.6], yaw: -Math.PI / 2 },
+    { kind: 'item', id: 'i_oro_aguas', item: 'oro', n: 10, x: px1 - 0.12, y: y + 0.55, z: cz },
+    { kind: 'door', id: 'd_castellum', x: x1 + KIT.t / 2, y, z: C.boca, w: 1.4, h: 2.4, axis: 'z', mat: 'bronze', hinge: -1, swing: -1, plane: x1, inset: 0.04, lock: { type: 'none' }, refugio: 'aguas' }
+  );
+  // lo que ha entrado de lo hondo (muertas, con el refugio encendido, no
+  // vuelven)
+  L.enemies.push(
+    { type: 'zarza', x: x1 - 1.3, y, z: z1 - 1.2, yaw: -2.4, idle: 'stand', id: 'p_castellum1', refugio: 'aguas' },
+    { type: 'bulbo', x: x0 + 1.2, y, z: z1 - 1.3, yaw: 0, idle: 'stand', id: 'p_castellum2', refugio: 'aguas' }
+  );
+}
+
 // ------------------------------------------------------------------------ zonas y mapa
 function zonas(L) {
   const Y = HONDAS.y;
@@ -1432,6 +1534,7 @@ function zonas(L) {
     { id: 'viejas', rects: [rect('H2', Y.n2 - 0.8, Y.n1 - 0.4)], atmo: 'viejas', room: 'viejas' },
     { id: 'aljibes', rects: [rect('H3', Y.n3 - 3.6, Y.n2 - 0.4)], atmo: 'aljibes', room: 'aljibes' },
     { id: 'hondo_semillero', rects: [[...HONDAS.semillero.r, Y.n4 - 0.8, Y.n3 - 0.4]], atmo: 'hondo', room: 'hondo_semillero' },
+    { id: 'castellum', rects: [[...HONDAS.castellum.r, Y.n4 - 0.8, Y.n3 - 0.4]], atmo: 'hondo', room: 'castellum' },
     // (y el agua de la pila de la fuente, del ninfeo: world/sumidero.js)
     { id: 'hondo', rects: [rect('H4', Y.n4 - 0.8, Y.n3 - 0.4), [...SUMIDERO.pila.r, SUMIDERO.pila.fondo - 0.2, Y.n4 - 0.8]], atmo: 'hondo', room: 'hondo' }
   );
