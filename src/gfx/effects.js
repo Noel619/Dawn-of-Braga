@@ -201,8 +201,12 @@ export class FireSystem {
     return this.list[this.list.length - 1];
   }
 
-  // Actualiza qué fuegos cercanos se dibujan (llamar cada ~0.25 s)
-  refresh(cx, cz, radius = FX_FAR.value) {
+  // Actualiza qué fuegos cercanos se dibujan (llamar cada ~0.25 s). Los más
+  // cercanos primero (cy: la altura de la cámara; los de otra planta cuentan
+  // como más lejos): con muchos a la vista —la fortaleza tiene cientos de
+  // velas— se dibujaban los primeros de la lista hasta el tope, y no los de
+  // al lado (las velas de un altar, el candil de un refugio).
+  refresh(cx, cz, radius = FX_FAR.value, cy) {
     let nf = 0,
       ng = 0,
       ns = 0,
@@ -212,11 +216,20 @@ export class FireSystem {
       S = this.smoke.iPos.array,
       E = this.emberPos;
     const cap = this.max;
+    const near = this._near || (this._near = []);
+    near.length = 0;
     for (const f of this.list) {
       if (!f.on) continue;
       const dx = f.x - cx,
         dz = f.z - cz;
-      if (dx * dx + dz * dz > radius * radius) continue;
+      const d2 = dx * dx + dz * dz;
+      if (d2 > radius * radius) continue;
+      const dy = cy === undefined ? 0 : f.y - cy;
+      f._d = d2 + dy * dy * 4;
+      near.push(f);
+    }
+    if (near.length > cap) near.sort((a, b) => a._d - b._d);
+    for (const f of near) {
       if (nf >= cap * 2 - 2) break;
       // dos llamas cruzadas por fuego grande para volumen
       F.set([f.x, f.y, f.z, f.s], nf * 4);

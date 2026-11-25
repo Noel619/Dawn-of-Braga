@@ -21,7 +21,7 @@ import { chest } from './level_souto.js';
 import { FORT } from './fortaleza_medidas.js';
 import { PIEDRA, ajimez, muroVanos, forjado, caracol, dentro, cara1, saeteraDentro, armadura, caraTejado, cara, tapiz, escaleraTablas, atril, farol } from './fortaleza_atrezo.js';
 import { tejadoCamaras } from './fortaleza_reina.js';
-import { estera, lecho } from './mobiliario.js';
+import { estera, lecho, candilYRosario } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
@@ -401,10 +401,25 @@ function torreCoracha(ctx, S, L) {
     llegadaCoracha(ctx, L, { ix0, ix1, iz0, iz1, y, room, axx, azz });
     P.brazier(ctx, (ix0 + ix1) / 2 - 0.4, y, iz0 + 5.4, { room });
     P.wallTorch(ctx, ix1 - 0.02, y + 2.5, FORT.coracha.z - 1.6, 'w', { room });
+    // el refugio de las cámaras del Rey (PLAN_REFUGIOS.md): lo alto de la
+    // torre, con sus cuatro puertas cerradas (la de la coracha, la del
+    // caracol, que baja al oratorio, y, arriba de sus escaleras de tablas, la
+    // del pasadizo y la del adarve, que dejaron abierta) y sin nadie dentro. En el altar, el candil
+    // de los que velaban la coracha y el rosario, del brazo de la cruz; la
+    // limosna del Rey, en la bolsa del soldado que la subía
+    const candil = candilYRosario(ctx, axx, y + 1.05, azz, Math.PI / 2, { room, candil: [-0.12, 0.02, 0.36], rosario: [0.18, 0.5, -0.24] });
     L.interact.push(
-      { kind: 'altar', id: 'a_coracha', name: 'Torre de la coracha', x: axx, y, z: azz, spawn: [axx + 2.2, y, azz], yaw: -Math.PI / 2 },
-      { kind: 'item', id: 'i_ampolla4', item: 'ampolla', x: ix1 - 1.05, y: y + 0.62, z: iz0 + 2.9 }
+      { kind: 'altar', id: 'a_coracha', name: 'La torre de la coracha', refugio: 'coracha', candil: [candil.x, candil.y, candil.z], x: axx, y, z: azz, spawn: [axx + 1.4, y, azz], yaw: -Math.PI / 2 },
+      { kind: 'item', id: 'i_ampolla4', item: 'ampolla', x: ix1 - 1.05, y: y + 0.62, z: iz0 + 2.9 },
+      { kind: 'item', id: 'i_oro_coracha', item: 'oro', n: 12, x: ix0 + 1.6, y: y + 0.02, z: iz0 + 3.55 },
+      { kind: 'door', id: 'd_coracha', x: ix1 + 0.4, y, z: FORT.coracha.z, w: 1.6, h: 3.2, arch: true, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: ix1, inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
+      { kind: 'door', id: 'd_caracol_coracha', x: C.cx - 0.8, y, z: C.hueco[1] + 0.2, w: 1.5, h: 2.4, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: C.hueco[1], inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
+      { kind: 'door', id: 'd_pasadizo_coracha', x: ix0 - 0.25, y: FORT.walk, z: K.pasadizo, w: 1.2, h: 2.4, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: ix0, inset: 0.06, lock: { type: 'none' }, refugio: 'coracha' },
+      { kind: 'door', id: 'd_adarve_coracha', x: FORT.adarveE.puerta, y: FORT.walk, z: iz1 + 0.25, w: FORT.adarveE.w, h: 2.2 + FORT.adarveE.w / 2, arch: true, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: iz1, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'coracha' }
     );
+    // (el que se quedó dentro, rezando de rodillas ante el altar; muerto, con
+    // el refugio encendido, no vuelve)
+    L.enemies.push({ type: 'penitent', x: axx + 1.3, y, z: azz - 1.4, yaw: -0.75, idle: 'pray', id: 'e_coracha_torre', refugio: 'coracha' });
     ctx.lights.push({ x: (ix0 + ix1) / 2, y: y + 2.4, z: (iz0 + iz1) / 2, r: 1, g: 0.55, b: 0.26, radius: 7, intensity: 0.8, room });
     // la escalera: sube hacia poniente por el muro del norte; el rellano, ante
     // la puerta del pasadizo

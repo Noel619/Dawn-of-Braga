@@ -962,7 +962,7 @@ export class Game {
     for (const b of G.boxes) b.enabled = on && all(b);
     for (const f of G.fires) f.on = on && all(f);
     for (const l of G.lights) l.on = on && all(l);
-    this.fx.fires.refresh(this.camera.position.x, this.camera.position.z);
+    this.fx.fires.refresh(this.camera.position.x, this.camera.position.z, undefined, this.camera.position.y);
   }
   // Un mensaje del guion en la cola de las pistas (de uno en uno: varios a la
   // vez se amontonaban sobre el aviso de botón)
@@ -2330,7 +2330,7 @@ export class Game {
     FX_FAR.value = Math.min(80, this.camera.far);
     if (!this._fireT || this.time - this._fireT > 0.25 || this.time < this._fireT) {
       this._fireT = this.time;
-      this.fx.fires.refresh(c.x, c.z, FX_FAR.value + 2);
+      this.fx.fires.refresh(c.x, c.z, FX_FAR.value + 2, c.y);
     }
     // (en el título y en la introducción, las luces se reparten alrededor de la
     // cámara: el jugador está en su celda)

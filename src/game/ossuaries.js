@@ -254,7 +254,7 @@ class TolledHelmets extends Puzzle {
     h.light.on = on;
     h.light.intensity = on ? 2.4 : 0;
     const c = this.g.camera.position;
-    this.g.fx.fires.refresh(c.x, c.z);
+    this.g.fx.fires.refresh(c.x, c.z, undefined, c.y);
     if (snuff) this.sound('candleOut', { x: h.candle[0], y: h.candle[1], z: h.candle[2] });
     else if (on) this.sound('candleLit', { x: h.candle[0], y: h.candle[1], z: h.candle[2] });
   }
@@ -342,7 +342,7 @@ class TolledHelmets extends Puzzle {
     A.glow.on = on;
     this.poseArca();
     const c = this.g.camera.position;
-    this.g.fx.fires.refresh(c.x, c.z);
+    this.g.fx.fires.refresh(c.x, c.z, undefined, c.y);
   }
 }
 // dónde queda la coronilla de cada yelmo (desde su origen)

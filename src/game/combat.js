@@ -476,7 +476,7 @@ export class Combat {
       const f = g.fx.fires.add({ x: x + Math.cos(a) * r * 0.4, y, z: z + Math.sin(a) * r * 0.4, s: 1.4, smoke: i === 0 });
       this.tempFires.push({ f, t: 1.2 });
     }
-    g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+    g.fx.fires.refresh(g.camera.position.x, g.camera.position.z, undefined, g.camera.position.y);
     const p = g.player;
     const d = Math.hypot(p.pos.x - x, p.pos.z - z);
     if (d < r && Math.abs(p.pos.y - y) < 2) this.apply(src, { dmg, stagger: true, knock: 8, chip: 0.3, noParry: true, tipo: null }, x, z);
@@ -494,7 +494,7 @@ export class Combat {
     m.position.set(x, y + 0.05, z);
     g.scene.add(m);
     this.pools.push({ x, y, z, r, t: dur, fires, m, tick: 0 });
-    g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+    g.fx.fires.refresh(g.camera.position.x, g.camera.position.z, undefined, g.camera.position.y);
   }
 
   update(dt) {
@@ -628,7 +628,7 @@ export class Combat {
           F.glow.material.dispose();
         }
         this.pools.splice(i, 1);
-        if (!pus) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+        if (!pus) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z, undefined, g.camera.position.y);
       }
     }
     // fuegos temporales
@@ -640,7 +640,7 @@ export class Combat {
         this.tempFires.splice(i, 1);
       }
     }
-    if (this.tempFires.length === 0 && this._hadTemp) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z);
+    if (this.tempFires.length === 0 && this._hadTemp) g.fx.fires.refresh(g.camera.position.x, g.camera.position.z, undefined, g.camera.position.y);
     this._hadTemp = this.tempFires.length > 0;
     // limpiar fuegos apagados de la lista
     if (Math.random() < 0.02) g.fx.fires.list = g.fx.fires.list.filter((f) => f.on || f.keep);
