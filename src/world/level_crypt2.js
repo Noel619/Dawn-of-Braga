@@ -37,7 +37,7 @@ import { bakeCorpse } from '../entities/models.js';
 import { bakeParts, skullParts, boneParts, bishopTombParts } from './ossuary_props.js';
 import { HAMMER } from '../entities/weapon_models.js';
 import { MAT_DEFS } from '../gfx/materials.js';
-import { rinconImagen } from './mobiliario.js';
+import { rinconImagen, candilYRosario } from './mobiliario.js';
 import { buildOsarioMartin, OSM } from './osario_martin.js';
 import { buildPanteon, PAN, GAL, PASO, BAJADA } from './panteon.js';
 import { buildLucernario, LUC } from './lucernario.js';
@@ -1176,6 +1176,55 @@ function arcosolium(ctx, x, y, z, face, o = {}) {
   P.sarcophagus(ctx, alongX ? c : x + off, y, alongX ? z + off : c, rot, { room: ROOM, l: w / 2 - 0.15, w: 0.5, effigy: o.effigy, open: o.open });
 }
 
+// El cancel de la capilla de San Martín: tablas de pino de pilastra a
+// pilastra, en la boca de la capilla, hasta el arranque del arco triunfal, y
+// el arco cerrado también con tablas, que se meten en su rosca; dos
+// travesaños por cada cara y, en medio, el hueco de su puerta (la hoja, el
+// interactuable d_cancel_martin, abre hacia la nave).
+function cancelMartin(ctx, L, cx) {
+  const wb = ctx.wb;
+  const MB = DEEP.martin,
+    CH = DEEP.chapel;
+  const z0 = CH.z1 - 0.3,
+    z1 = CH.z1 - 0.1;
+  const x0 = MB.rows[0] + 0.5,
+    x1 = MB.rows[1] - 0.5;
+  const y0 = CH.y,
+    ys = MB.YS;
+  const dw = 1.2,
+    dh = 2.3;
+  const tint = [0.62, 0.52, 0.42];
+  const tabla = (a, b, ya, yb) => {
+    wb.box('planks', a, ya, z0, b, yb, z1, { ao: false, faces: 'nsewt', room: ROOM, tint, sub: 3 });
+  };
+  // abajo: a los lados de la puerta y encima de ella, hasta el arranque
+  for (const [a, b, ya, yb] of [
+    [x0, cx - dw / 2, y0, ys],
+    [cx + dw / 2, x1, y0, ys],
+    [cx - dw / 2, cx + dw / 2, y0 + dh, ys],
+  ]) {
+    tabla(a, b, ya, yb);
+    ctx.col.add(a, ya, z0, b, yb, z1).cam = true;
+  }
+  // el arco: tablas de un palmo, cada una hasta su intradós (el del arco
+  // triunfal: cuerda xb - xa - 0,5, flecha 1,72), metidas en la rosca
+  const w = MB.rows[1] - MB.rows[0] - 0.5,
+    f = 1.72;
+  const R = ((w / 2) ** 2 + f * f) / (2 * f),
+    yc = ys + f - R;
+  const yA = (x) => yc + Math.sqrt(Math.max(0, R * R - (x - cx) ** 2));
+  for (let a = cx - w / 2; a < cx + w / 2 - 0.01; a += 0.25) {
+    const b = Math.min(cx + w / 2, a + 0.25);
+    tabla(a, b, ys, Math.max(yA(a), yA(b)) + 0.05);
+  }
+  // los travesaños, por las dos caras
+  for (const zz of [z0 - 0.04, z1]) for (const yy of [y0 + 0.5, y0 + dh + 0.6]) {
+    wb.box('wooddark', x0, yy, zz, cx - dw / 2, yy + 0.14, zz + 0.04, { ao: false, faces: 'nsewtb', room: ROOM, tint: [0.5, 0.42, 0.34] });
+    wb.box('wooddark', cx + dw / 2, yy, zz, x1, yy + 0.14, zz + 0.04, { ao: false, faces: 'nsewtb', room: ROOM, tint: [0.5, 0.42, 0.34] });
+  }
+  L.interact.push({ kind: 'door', id: 'd_cancel_martin', x: cx, y: y0, z: (z0 + z1) / 2, w: dw, h: dh, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: z1, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'martin' });
+}
+
 // ------------------------------------------------------------ la cripta de San Martín
 // La iglesia del santo, bajo tierra: nave de 8 m con su bóveda de cañón y
 // fajones, naves laterales tras arquerías sobre columnas bajas, y al norte,
@@ -1246,9 +1295,17 @@ function buildMartin(ctx, L, rng, C) {
   P.banner(ctx, CH.x0 + 0.08, CH.y + 3.2, -171, Math.PI / 2, 'bannerRed', 1.1, 2.4);
   P.banner(ctx, CH.x1 - 0.08, CH.y + 3.2, -171, -Math.PI / 2, 'bannerRed', 1.1, 2.4);
   plaque(ctx, CH.x0 + 0.06, CH.y + 1.5, -169.2, 'e', 1.0, 0.7);
+  // el refugio de la cripta honda (PLAN_REFUGIOS.md): la capilla, cerrada a
+  // la nave con su cancel de tablas (lo que ponían las iglesias para cerrar
+  // una capilla), de pilastra a pilastra y, encima, el arco entero; con su
+  // puerta en medio, que abre hacia la nave (detrás reza Dom Paio). El único
+  // refugio con alguien vivo dentro; cuando él falte, sigue siendo tuyo. En
+  // el altar, el candil y el rosario
+  const candil = candilYRosario(ctx, cx, CH.y + 1.05, CH.z0 + 1.6, 0, { room: ROOM, candil: [-0.12, 0.02, 0.36], rosario: [0.18, 0.5, -0.24] });
+  cancelMartin(ctx, L, cx);
   const PA = DEEP.paio;
   L.interact.push(
-    { kind: 'altar', id: 'a_martin', name: 'Capilla de San Martín', x: cx, y: CH.y, z: CH.z0 + 1.6, spawn: [cx, CH.y, -172.4], yaw: Math.PI },
+    { kind: 'altar', id: 'a_martin', name: 'La capilla de San Martín', refugio: 'martin', candil: [candil.x, candil.y, candil.z], x: cx, y: CH.y, z: CH.z0 + 1.6, spawn: [cx, CH.y, -172.4], yaw: Math.PI },
     { kind: 'note', id: 'n_martin', note: 'sanmartin', x: CH.x0 + 0.4, y: CH.y + 1.4, z: -169.2, model: 'wall', r: 1.8 },
     // Dom Paio (game/paio.js): hablarle (el interactuable le sigue) y, cuando
     // se va al pozo, su breviario donde rezaba
