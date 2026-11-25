@@ -122,16 +122,16 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El título, Dawn of the Devil, y el pergamino
 - [ ] Las pruebas, el teléfono y la versión jugable
 
-**XII · Los refugios** — Las casas que se hacen tuyas: entrar, limpiar, cerrar y encender la lamparilla. *Espera al autor, 0 %* · `PLAN_REFUGIOS.md`
+**XII · Los refugios** — Los lugares cerrados que se hacen tuyos: entrar, limpiar, cerrar y encender la lamparilla. *Espera al autor, 0 %* · `PLAN_REFUGIOS.md`
 
-- [ ] Decidir lo del §12: los refugios, sentarse o arrodillarse, la primera noche, el oro y el viaje
-- [ ] R1: el refugio, en uno (la casa de la cerera): entrar, limpiar, cerrar, la llave, la lamparilla y descansar
-- [ ] R2: la regla y su prueba: que nunca aparezcas junto a una criatura (tools/refugios.mjs)
-- [ ] R3: los del principio: la torre de la cárcel y la Taberna del Cuervo, con su primera noche
-- [ ] R4: la tintorería y la Casa del Alemán
-- [ ] R5: lo de abajo y la fortaleza: el sacristán, San Martín, el enterrador, la botica, el osario de Bento, la Cancillería y la coracha
+- [ ] Decidir lo del §12: la lista, sentarse o arrodillarse, la primera noche, el oro y el viaje (los lugares cerrados, ya decidido)
+- [ ] R1: el refugio, en uno (la torre de la cárcel): puertas que se abren y se vuelven a cerrar, la llave, la lamparilla y descansar
+- [ ] R2: la regla y su prueba: que esté cerrado y que nunca aparezcas junto a una criatura (tools/refugios.mjs)
+- [ ] R3: los ya cerrados: la Cancillería y el Tombo, la despensa, la cámara de la reina, Sisnando y la Casa del Alemán
+- [ ] R4: los que piden puertas: la Taberna del Cuervo, la tintorería, la casa de la cerera y la torre de la coracha
+- [ ] R5: los que piden obra: el cancel de San Martín, la celda del enterrador, la choza del Desfigurado, la casa del sepulturero y la cámara de las aguas
 - [ ] R6: el oro: los morabetinos, los escondrijos y sus pistas
-- [ ] R7: el mapa, el documento de cada casa, las partidas guardadas, las pruebas y la versión jugable
+- [ ] R7: el mapa, el documento de cada refugio, las partidas guardadas, las pruebas y la versión jugable
 
 **XIII · Los Paços** — El barrio de los ricos de la corte, cerrado a cal y canto. *Espera al autor, 0 %* · `PLAN_PACOS.md`
 
@@ -184,7 +184,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
-- **Los refugios** — ¿Estos sitios? ¿Se sienta o se arrodilla al descansar? La torre de la cárcel, la Taberna del Cuervo y la tintorería en lugar de las capillas; bajo la Sé y en las cloacas, cuartos con su puerta y la casa de quien vivía allí. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro. · *PLAN_REFUGIOS.md, §12*
+- **Los refugios** — ¿Esta lista de quince? ¿Se sienta o se arrodilla al descansar? Ya decidido: lugares cerrados (casas, torres, edificios de dos o tres plantas). Seis ya lo están hoy, cuatro piden puertas y cinco, obra, con tres sitios nuevos: la celda del enterrador, la choza del Desfigurado y la cámara de las aguas. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro. · *PLAN_REFUGIOS.md, §12*
 - **El duelo de la cisterna** — ¿Es así de duro? ¿Y si ya conocías al Desfigurado? El Físico cambiado baja a pelear con los suyos, duda y muere mirando la luna. Falta jugarlo a mano para medir la dureza, decidir qué pasa si se te escapó cuando ya conocías al Desfigurado y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §11*
 - **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
