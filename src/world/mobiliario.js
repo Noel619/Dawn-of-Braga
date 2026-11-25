@@ -313,9 +313,20 @@ export function rinconImagen(ctx, x, y, z, dir, o = {}) {
       for (const s of [-0.5, 0.5]) palo(wb, V(s * 0.4, yRep - 0.04, 0.01), V(s * 0.4, yRep - 0.2, 0.14), 0.02, 'wooddark', { room });
     }
     if (imagen === 'cruz') {
-      // dos palos de pino descortezados, atados en cruz con un cordel
-      wb.box('wooddark', -0.032, yc - 0.42, 0.01, 0.032, yc + 0.36, 0.055, { ao: false, room, faces: 'tnsewb', tint: [0.92, 0.78, 0.6] });
-      wb.box('wooddark', -0.22, yc + 0.07, 0.05, 0.22, yc + 0.13, 0.09, { ao: false, room, faces: 'tnsewb', tint: [0.92, 0.78, 0.6] });
+      // dos palos de pino descortezados, atados en cruz con un cordel (o.huesos:
+      // dos huesos largos, con sus cabezas, la del sepulturero)
+      const mc = o.huesos ? 'bone' : 'wooddark',
+        tc = o.huesos ? [0.86, 0.8, 0.66] : [0.92, 0.78, 0.6];
+      wb.box(mc, -0.032, yc - 0.42, 0.01, 0.032, yc + 0.36, 0.055, { ao: false, room, faces: 'tnsewb', tint: tc });
+      wb.box(mc, -0.22, yc + 0.07, 0.05, 0.22, yc + 0.13, 0.09, { ao: false, room, faces: 'tnsewb', tint: tc });
+      if (o.huesos)
+        for (const [px, py, pz] of [
+          [0, yc - 0.42, 0.032],
+          [0, yc + 0.36, 0.032],
+          [-0.22, yc + 0.1, 0.07],
+          [0.22, yc + 0.1, 0.07],
+        ])
+          wb.box('bone', px - 0.045, py - 0.03, pz - 0.028, px + 0.045, py + 0.03, pz + 0.028, { ao: false, room, faces: 'tnsewb', tint: tc });
       for (const dy of [-0.012, 0.02]) wb.box('rope', -0.04, yc + 0.07 + dy, 0.09, 0.04, yc + 0.095 + dy, 0.098, { ao: false, room });
       palo(wb, V(-0.04, yc + 0.09, 0.095), V(0.04, yc + 0.11, 0.095), 0.01, 'rope', { room });
     } else if (imagen === 'crucifijo') {

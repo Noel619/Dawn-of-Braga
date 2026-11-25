@@ -36,6 +36,7 @@ import { VERGEL } from './vergel.js';
 import { CLOACA, DESAGUE } from './cloaca.js';
 import { helecho, hierba, flores, musgo, hiedra, raices, hongos, raizLarga, mata, juncos } from './verdor.js';
 import { SUMIDERO, buildSumidero } from './sumidero.js';
+import { rinconImagen } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // ¿Suelo seco en (x, z), a la altura y, en un círculo de radio r? (el andén:
@@ -804,6 +805,60 @@ function brasero(ctx, b, y, room) {
 }
 
 // ------------------------------------------------------------------------ la lobera
+// Una boca del osario tapiada como tapiaba él los nichos: piedra a hueso
+// seco, con los huesos de la fosa metidos entre las piedras, por las dos
+// caras. (side, line: el muro de la sala; at: el centro de la boca; puerta:
+// { w, h }, el hueco de la suya, en medio)
+function tapiaOsario(ctx, side, line, at, y, room, puerta) {
+  const wb = ctx.wb,
+    col = ctx.col;
+  const h = KIT.w / 2,
+    ys = y + KIT.sp;
+  const out = side === 'n' || side === 'w' ? -1 : 1;
+  const t0 = Math.min(line, line + out * KIT.t),
+    t1 = Math.max(line, line + out * KIT.t);
+  const alongX = side === 'n' || side === 's';
+  const tint = [0.46, 0.44, 0.4];
+  const B = (u0, u1, ya, yb) => {
+    if (alongX) wb.box('wallstone', u0, ya, t0, u1, yb, t1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
+    else wb.box('wallstone', t0, ya, u0, t1, yb, u1, { ao: false, faces: 'nsewt', room, tint, sub: 1.4 });
+  };
+  const K = (u0, u1, ya, yb) => (alongX ? col.add(u0, ya, t0, u1, yb, t1) : col.add(t0, ya, u0, t1, yb, u1));
+  const a0 = at - h,
+    a1 = at + h;
+  const yA = (u) => ys + Math.sqrt(Math.max(0, h * h - (u - at) ** 2));
+  // abajo, hasta el arranque (con el hueco de su puerta)
+  const hu = puerta ? [at - puerta.w / 2, at + puerta.w / 2] : null;
+  for (const [p, q, enHueco] of hu ? [[a0, hu[0], false], [hu[0], hu[1], true], [hu[1], a1, false]] : [[a0, a1, false]]) {
+    const ya = enHueco ? y + puerta.h : y - 0.05;
+    B(p, q, ya, ys);
+    K(p, q, ya, ys);
+  }
+  // el arco, hasta su intradós
+  for (let u = a0; u < a1 - 0.01; u += 0.2) {
+    const v = Math.min(a1, u + 0.2);
+    B(u, v, ys, Math.max(yA(u), yA(v)) + 0.05);
+  }
+  K(a0, a1, ys, ys + h);
+  // los huesos entre las piedras: calaveras y huesos largos
+  const rng = new RNG(Math.round(at * 31 + line * 7));
+  for (const f of [t0 - 0.03, t1 + 0.03]) {
+    for (let k = 0; k < 16; k++) {
+      const u = a0 + 0.25 + rng.range(0, 2 * h - 0.5),
+        yy = y + 0.3 + rng.range(0, KIT.sp + h - 0.5);
+      if (yy > yA(u) - 0.2) continue;
+      if (hu && u > hu[0] - 0.15 && u < hu[1] + 0.15 && yy < y + puerta.h + 0.15) continue;
+      const [px, pz] = alongX ? [u, f] : [f, u];
+      if (k % 3 === 0) P.ellipsoid(ctx, 'bone', px, yy, pz, 0.1, 0.12, 0.1, [0.8, 0.74, 0.62], { room });
+      else {
+        const L2 = rng.range(0.16, 0.28);
+        if (alongX) wb.box('bone', px - L2, yy - 0.025, pz - 0.025, px + L2, yy + 0.025, pz + 0.025, { ao: false, room, tint: [0.78, 0.72, 0.6] });
+        else wb.box('bone', px - 0.025, yy - 0.025, pz - L2, px + 0.025, yy + 0.025, pz + L2, { ao: false, room, tint: [0.78, 0.72, 0.6] });
+      }
+    }
+  }
+}
+
 function lobera(ctx, L, R) {
   const wb = ctx.wb;
   const y = HONDAS.y.n1;
@@ -928,7 +983,22 @@ function lobera(ctx, L, R) {
     // la pala rota del sepulturero, y su farol, apagado
     P.rod(ctx, V(ox0 + 3.0, y + 0.03, oz0 + 3.2), V(ox0 + 4.1, y + 0.05, oz0 + 2.7), 0.025, 0.022, 'wooddark', { segs: 4 });
     wb.at(ox0 + 4.15, y + 0.03, oz0 + 2.68, 0.4, () => wb.box('iron', -0.12, 0, -0.02, 0.12, 0.02, 0.18, { ao: false, faces: 'tnsewb', tint: [0.5, 0.42, 0.34] }));
+    // la casa del sepulturero (PLAN_REFUGIOS.md): Bento tapió dos de sus
+    // bocas, la del sur y la de poniente de más al norte, como tapiaba los
+    // nichos; la suya, la del rastro, la tapió hasta dejar el hueco de su
+    // puerta de tablas. Su cruz, dos huesos atados, en el muro del sur, con
+    // su candil; y lo que les sacaba de la boca a los de la fosa de los
+    // pobres, ante los nichos. Vencido él, es tuya
+    tapiaOsario(ctx, 'w', ox0, MZ[5], y, room);
+    tapiaOsario(ctx, 's', oz1, MX[5], y, room);
+    tapiaOsario(ctx, 'w', ox0, MZ[4], y, room, { w: 1.3, h: 2.3 });
+    const candil = rinconImagen(ctx, ox0 + 8.0, y, oz1, 'n', { room, imagen: 'cruz', huesos: true, yc: 1.6 });
     wb.setRoom(null);
+    L.interact.push(
+      { kind: 'altar', id: 'a_sepulturero', name: 'La casa del sepulturero', refugio: 'sepulturero', pide: 'boss:lobishome', pideMsg: 'sepultureroNoEsTuya', candil: [candil.x, candil.y, candil.z], x: ox0 + 8.0, y, z: oz1 - 0.6, spawn: [ox0 + 8.0, y, oz1 - 1.3], yaw: 0 },
+      { kind: 'item', id: 'i_oro_sepulturero', item: 'oro', n: 15, x: ox1 - 3.4, y: y + 0.02, z: oz0 + 0.9 },
+      { kind: 'door', id: 'd_osario', x: ox0 - KIT.t / 2, y, z: MZ[4], w: 1.3, h: 2.3, axis: 'z', mat: 'planks', hinge: -1, swing: 1, plane: ox0, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'sepulturero', refugioDesde: 'boss:lobishome' }
+    );
     L.interact.push({ kind: 'examine', id: 'x_osario', text: 'osarioLobo', x: ox1 - 2.0, y, z: oz0 + 2.2, r: 1.6 });
     // (vencido él: su colmillo, en la paja; su farol, junto a la pala)
     L.interact.push({ kind: 'item', id: 'i_colmillo', item: 'colmillo', x: ox1 - 1.6, y: y + 0.05, z: oz0 + 1.2, afterBoss: 'lobishome' });

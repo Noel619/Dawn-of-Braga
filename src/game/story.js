@@ -1992,6 +1992,7 @@ export const MSG = {
   refVano: 'Sal del vano para cerrarla.',
   refNoEsTuyo: 'Esta casa todavía no es tuya.',
   chozaNoEsTuya: 'Es la choza del que vive aquí. Sin que él te deje, no es tuya.',
+  sepultureroNoEsTuya: 'Mientras su dueño ande por la lobera, esta casa no es tuya.',
   refNoche: 'Aporrean la puerta. Lo que andaba fuera ha visto la luz: sabe que estás dentro.',
   refTrampilla: 'La trampilla está cerrada por arriba.',
   oro: (n, t) => `+${n} morabetino${n === 1 ? '' : 's'} · ${t} en total.`,
