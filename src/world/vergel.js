@@ -42,6 +42,7 @@ import { herbBunch, bowl } from './level_souto.js';
 import { tapia } from './kit_casa.js';
 import { KIT, muro, pilar, aguaDe, SILLAR } from './cloaca_kit.js';
 import { helecho, hierba, flores, musgo, hiedra, raices, juncos, higuera, arbolillo, hongos, nenufares, raizLarga, tronco, mata } from './verdor.js';
+import { rinconImagen } from './mobiliario.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -167,6 +168,7 @@ export function buildVergel(ctx, Q, L) {
   verde(ctx);
   fuente(ctx, L);
   botica(ctx, L);
+  choza(ctx, L);
   raya(ctx, L);
   tapa(ctx, L);
   luces(ctx);
@@ -1220,6 +1222,114 @@ function botica(ctx, L) {
   L.interact.push({ kind: 'examine', id: 'x_alambique', text: 'alambique', x: B.alambique[0] + 0.5, y, z: B.alambique[1] - 0.5, r: 1.2 });
   // la mesa, para los cocimientos (game/alquimia.js)
   L.interact.push({ kind: 'alquimia', id: 'mesa_desf', x: M.x - 1.25, y, z: M.z - 0.55, r: 1.3 });
+}
+
+// ------------------------------------------------------------------------ la choza
+// La choza del Desfigurado (PLAN_REFUGIOS.md): su botica, cerrada. La levantó
+// él, de pilar a pilar y hasta la bóveda: postes de madera de la cloaca,
+// cañizo y barro por las dos caras, por el norte (del muro de poniente al
+// pilar del rincón) y por levante (de ese pilar al muro del sur), y cada arco
+// cerrado también con su barro. Su puerta de tablas, en la del norte, junto
+// al muro (por donde se entraba a su rincón); un ventanuco con un lienzo
+// encerado. Dentro, en el muro de levante, junto a su jergón y al fuego, la
+// cruz de dos palos y su candil; dos monedas en un tarro. El refugio del
+// Vergel y de la cloaca: no es tuya hasta que él te deja (desf:met).
+export const CHOZA = { z: 31.5, x: 15, puerta: { x: 6.4, w: 1.1, h: 2.1 }, ventanuco: { x: 12.5, y0: 1.35, y1: 1.85, w: 0.6 }, cruz: 38.6 };
+function choza(ctx, L) {
+  const wb = ctx.wb,
+    col = ctx.col;
+  const G = VERGEL,
+    C = CHOZA,
+    y = G.y,
+    ys = G.ys,
+    f = G.rise;
+  const pl = 0.42,
+    t = 0.1;
+  const BARRO = [0.5, 0.41, 0.31];
+  wb.setRoom(ROOM);
+  // el arco de la bóveda a lo largo de una línea de apoyos, de a a b
+  const arco = (a, b) => {
+    const w = b - a,
+      c = (a + b) / 2;
+    const R = ((w / 2) ** 2 + f * f) / (2 * f),
+      yc = ys + f - R;
+    return (u) => yc + Math.sqrt(Math.max(0, R * R - (u - c) ** 2));
+  };
+  // (en el eje 'x' la pared va a lo largo de x, en z = at; en el 'z', al revés)
+  const B = (axis, at, u0, u1, ya, yb, mat = 'plaster', tint = BARRO, faces = 'nsewt') => {
+    if (axis === 'x') wb.box(mat, u0, ya, at - t, u1, yb, at + t, { ao: false, faces, room: ROOM, tint, sub: 2 });
+    else wb.box(mat, at - t, ya, u0, at + t, yb, u1, { ao: false, faces, room: ROOM, tint, sub: 2 });
+  };
+  const K = (axis, at, u0, u1, ya, yb) => (axis === 'x' ? col.add(u0, ya, at - t, u1, yb, at + t) : col.add(at - t, ya, u0, at + t, yb, u1));
+  // un tramo: de u0 a u1 (entre pilares, o del pilar al muro), bajo el arco
+  // de a a b, con sus huecos [u0, u1, y0, y1] (la puerta, el ventanuco)
+  const tramo = (axis, at, u0, u1, a, b, huecos = []) => {
+    const cortes = [u0, ...huecos.flatMap((h) => [h[0], h[1]]), u1].sort((p, q) => p - q);
+    for (let k = 0; k < cortes.length - 1; k++) {
+      const p = cortes[k],
+        q = cortes[k + 1];
+      if (q - p < 0.01) continue;
+      const h = huecos.find((hh) => p >= hh[0] - 0.001 && q <= hh[1] + 0.001);
+      if (!h) {
+        B(axis, at, p, q, y, ys);
+        K(axis, at, p, q, y, ys);
+      } else {
+        // (debajo y encima del hueco)
+        if (h[2] > y + 0.01) {
+          B(axis, at, p, q, y, h[2]);
+          K(axis, at, p, q, y, h[2]);
+        }
+        B(axis, at, p, q, h[3], ys);
+        K(axis, at, p, q, h[3], ys);
+      }
+    }
+    // el arco, cerrado con barro: tiras de un palmo hasta su intradós (se
+    // meten en la bóveda)
+    const yA = arco(a, b);
+    for (let u = a; u < b - 0.01; u += 0.25) {
+      const v = Math.min(b, u + 0.25);
+      B(axis, at, u, v, ys, Math.max(yA(u), yA(v)) + 0.06);
+    }
+    // los postes del entramado, por las dos caras
+    const n = Math.max(1, Math.round((u1 - u0) / 1.3));
+    for (let k = 1; k < n; k++) {
+      const u = u0 + ((u1 - u0) * k) / n;
+      if (huecos.some((hh) => u > hh[0] - 0.15 && u < hh[1] + 0.15)) continue;
+      for (const s of [-1, 1]) {
+        const o = at + s * (t + 0.03);
+        if (axis === 'x') wb.box('wooddark', u - 0.05, y, o - 0.03, u + 0.05, yA(u) - 0.05, o + 0.03, { ao: false, faces: 'nsewt', room: ROOM, tint: [0.42, 0.36, 0.3] });
+        else wb.box('wooddark', o - 0.03, y, u - 0.05, o + 0.03, yA(u) - 0.05, u + 0.05, { ao: false, faces: 'nsewt', room: ROOM, tint: [0.42, 0.36, 0.3] });
+      }
+    }
+  };
+  const [sx0, , , sz1] = G.sala;
+  const D = C.puerta,
+    W = C.ventanuco;
+  // el del norte: del muro de poniente al pilar (10, z) y de él al del rincón
+  tramo('x', C.z, sx0, 10 - pl, sx0, 10, [[D.x - D.w / 2, D.x + D.w / 2, y, y + D.h]]);
+  tramo('x', C.z, 10 + pl, C.x - pl, 10, C.x, [[W.x - W.w / 2, W.x + W.w / 2, y + W.y0, y + W.y1]]);
+  // el de levante: del pilar del rincón al de en medio y de él al muro del sur
+  tramo('z', C.x, C.z + pl, 36.5 - pl, C.z, 36.5);
+  tramo('z', C.x, 36.5 + pl, sz1, 36.5, sz1);
+  // la puerta: sus jambas y su dintel, de palos
+  for (const s of [-1, 1]) wb.box('wooddark', D.x + s * (D.w / 2 + 0.04) - 0.05, y, C.z - t - 0.04, D.x + s * (D.w / 2 + 0.04) + 0.05, y + D.h + 0.1, C.z + t + 0.04, { ao: false, room: ROOM, tint: [0.44, 0.38, 0.32] });
+  wb.box('wooddark', D.x - D.w / 2 - 0.12, y + D.h, C.z - t - 0.05, D.x + D.w / 2 + 0.12, y + D.h + 0.12, C.z + t + 0.05, { ao: false, room: ROOM, tint: [0.44, 0.38, 0.32] });
+  // el ventanuco: su marco y el lienzo encerado (amarillo, que deja pasar
+  // la luz del fuego)
+  wb.box('wooddark', W.x - W.w / 2 - 0.05, y + W.y0 - 0.05, C.z - t - 0.02, W.x + W.w / 2 + 0.05, y + W.y0, C.z + t + 0.02, { ao: false, room: ROOM, tint: [0.44, 0.38, 0.32] });
+  wb.box('wooddark', W.x - W.w / 2 - 0.05, y + W.y1, C.z - t - 0.02, W.x + W.w / 2 + 0.05, y + W.y1 + 0.05, C.z + t + 0.02, { ao: false, room: ROOM, tint: [0.44, 0.38, 0.32] });
+  wb.box('clothWhite', W.x - W.w / 2, y + W.y0, C.z - 0.01, W.x + W.w / 2, y + W.y1, C.z + 0.01, { ao: false, faces: 'ns', grime: false, room: ROOM, tint: [0.92, 0.76, 0.46] });
+  col.add(W.x - W.w / 2, y + W.y0, C.z - t, W.x + W.w / 2, y + W.y1, C.z + t);
+  // la cruz, en el muro de levante, por dentro; su candil
+  const candil = rinconImagen(ctx, C.x - t, y, C.cruz, 'w', { room: ROOM, imagen: 'cruz', yc: 1.6 });
+  // las dos monedas, en un tarro, junto al jergón
+  P.jar(ctx, C.x - t - 0.18, y, 35.2, 0.3, { collide: false, tint: [0.58, 0.46, 0.34] });
+  wb.setRoom(null);
+  L.interact.push(
+    { kind: 'altar', id: 'a_choza', name: 'La choza del Desfigurado', refugio: 'choza', pide: 'desf:met', pideMsg: 'chozaNoEsTuya', candil: [candil.x, candil.y, candil.z], x: C.x - t - 0.6, y, z: C.cruz, spawn: [C.x - t - 1.25, y, C.cruz], yaw: Math.PI / 2 },
+    { kind: 'item', id: 'i_oro_choza', item: 'oro', n: 2, x: C.x - t - 0.18, y: y + 0.19, z: 35.2 },
+    { kind: 'door', id: 'd_choza', x: D.x, y, z: C.z, w: D.w, h: D.h, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: C.z + t, inset: 0.04, lock: { type: 'none' }, refugio: 'choza' }
+  );
 }
 
 // ------------------------------------------------------------------------ la raya de candiles
