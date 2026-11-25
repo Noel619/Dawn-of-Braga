@@ -274,6 +274,10 @@ function layout() {
     add(id, r, YC, YC + GV.ys, { ...rock, ceil: false, vault: 'x', vaultRise: GV.rise, zone: 'catacumbas', cubiculum: true });
     door(id + 'Puerta', d, YC, 'catacumbas');
   }
+  // la celda del enterrador (el refugio de las catacumbas, PLAN_REFUGIOS.md):
+  // un cubículo más, al sur de la galería del este, con su puerta
+  add('c1CeldaEnterrador', CELDA.r, YC, YC + GV.ys, { ...rock, ceil: false, vault: 'x', vaultRise: GV.rise, zone: 'celda_enterrador', cubiculum: true });
+  door('c1CeldaEnterradorPuerta', CELDA.d, YC, 'catacumbas');
   add('c1Bajada', [-65.15, -95, -62, -92], YI, YC + GV.ys, { ...rock, ceil: false, floor: false, arch: YC + GV.ys, stair: { axis: 'x', a0: -62, a1: -65.15, y0: YC, y1: YI }, zone: 'inocentes' });
 
   // --- la catacumba de los Inocentes, su pila y el relicario
@@ -352,6 +356,9 @@ const CUBICULA = [
   ['c1CubiculoC', [-30.5, -100, -26, -96], [-29, -96, -27.5, -95]],
   ['c1CubiculoD', [-61, -100, -56.5, -96], [-59.5, -96, -58, -95]],
 ];
+// la celda del enterrador: su sala y el paso de su puerta (a la galería del
+// este, como los cubículos)
+const CELDA = { r: [-30.5, -91, -26, -87], d: [-29, -92, -27.5, -91] };
 export const LAYOUT = layout();
 
 // Altura del suelo en cada punto de la cripta (para la navegación de las
@@ -894,6 +901,7 @@ export function buildDeepCrypt(ctx, C, L) {
     martin: 'crypt',
     capilla_martin: 'chapel',
     capilla_sisnando: 'chapel',
+    celda_enterrador: 'crypt',
     osario_martin: 'crypt',
     antesala: 'sanctum',
     pila_honda: 'crypt',
@@ -1223,6 +1231,69 @@ function cancelMartin(ctx, L, cx) {
     wb.box('wooddark', cx + dw / 2, yy, zz, x1, yy + 0.14, zz + 0.04, { ao: false, faces: 'nsewtb', room: ROOM, tint: [0.5, 0.42, 0.34] });
   }
   L.interact.push({ kind: 'door', id: 'd_cancel_martin', x: cx, y: y0, z: (z0 + z1) / 2, w: dw, h: dh, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: z1, inset: 0.05, lock: { type: 'none' }, abierta: true, refugio: 'martin' });
+}
+
+// La celda del enterrador (PLAN_REFUGIOS.md): un cubículo con su puerta, al
+// sur de la galería del este, a dos pasos del lucernario. El que enterraba a
+// los canónigos dormía aquí: su jergón contra el muro, sus palas, la tabla de
+// los enterramientos (una raya por muerto) y, en el fondo, la cruz de dos
+// palos que se hizo; en un cofrecillo, lo que les quitaba a los muertos (los
+// anillos, las monedas de la boca). El refugio de las catacumbas: cerrada su
+// puerta y sin nadie dentro.
+function celdaEnterrador(ctx, L, FT) {
+  const wb = ctx.wb;
+  const [x0, z0, x1, z1] = CELDA.r;
+  const d = CELDA.d;
+  const cx = (d[0] + d[2]) / 2;
+  wb.setRoom(ROOM);
+  // la puerta: su marco de piedra por el lado de la galería; la hoja abre
+  // hacia dentro (entornada: dentro hay luz)
+  doorFrame(ctx, { face: 'n', at: d[1], c: cx, w: d[2] - d[0], y: YC, h: 1.9, jw: 0.25, lh: 0.32, tint: FT });
+  // el jergón: el saco de paja, la manta y la piedra que le hacía de almohada
+  wb.box('straw', x0 + 0.08, YC, z0 + 0.5, x0 + 0.92, YC + 0.16, z0 + 2.5, { ao: false, faces: 'tnsew', room: ROOM, tint: [0.72, 0.62, 0.42] });
+  wb.box('burlap', x0 + 0.12, YC + 0.16, z0 + 1.1, x0 + 0.88, YC + 0.2, z0 + 2.45, { ao: false, faces: 'tnsew', room: ROOM, tint: [0.42, 0.36, 0.3] });
+  wb.box('rock', x0 + 0.25, YC + 0.16, z0 + 0.55, x0 + 0.75, YC + 0.3, z0 + 0.85, { ao: false, faces: 'tnsew', room: ROOM, tint: RK });
+  // las palas, apoyadas en el muro del este
+  for (const [zz, a] of [
+    [z0 + 0.9, 0.16],
+    [z0 + 1.35, 0.24],
+  ]) {
+    wb.push();
+    wb.translate(x1 - 0.12, YC, zz);
+    wb.rotateZ(a);
+    wb.box('wooddark', -0.025, 0.28, -0.025, 0.025, 1.45, 0.025, { ao: false, room: ROOM, tint: [0.7, 0.6, 0.48] });
+    wb.box('iron', -0.012, 0.0, -0.11, 0.012, 0.32, 0.11, { ao: false, room: ROOM, tint: [0.55, 0.5, 0.46] });
+    wb.pop();
+  }
+  ctx.col.add(x1 - 0.4, YC, z0 + 0.7, x1, YC + 1.4, z0 + 1.55);
+  // la tabla de los enterramientos, clavada en el muro del este: rayas de
+  // cinco en cinco, y las últimas, sin terminar
+  {
+    const zc = z0 + 2.7,
+      yc = YC + 1.5;
+    wb.box('wooddark', x1 - 0.04, yc - 0.32, zc - 0.42, x1, yc + 0.32, zc + 0.42, { ao: false, faces: 'nsewtb', room: ROOM, tint: [0.66, 0.56, 0.44] });
+    for (let r = 0; r < 5; r++)
+      for (let k = 0; k < (r < 4 ? 7 : 3); k++) {
+        const zz = zc - 0.34 + k * 0.1,
+          yy = yc + 0.22 - r * 0.11;
+        wb.box('black', x1 - 0.044, yy - 0.04, zz - 0.006, x1 - 0.04, yy + 0.04, zz + 0.006, { ao: false, faces: 'w', grime: false, room: ROOM });
+        if (k % 5 === 4) wb.box('black', x1 - 0.045, yy - 0.006, zz - 0.42 + 0.02, x1 - 0.041, yy + 0.006, zz, { ao: false, faces: 'w', grime: false, room: ROOM });
+      }
+  }
+  // el cofrecillo de lo que les quitaba a los muertos, junto al jergón
+  wb.box('wooddark', x0 + 1.05, YC, z0 + 0.35, x0 + 1.45, YC + 0.24, z0 + 0.65, { ao: false, faces: 'tnsew', room: ROOM, tint: [0.6, 0.48, 0.36] });
+  wb.box('iron', x0 + 1.04, YC + 0.1, z0 + 0.34, x0 + 1.46, YC + 0.13, z0 + 0.66, { ao: false, faces: 'nsew', room: ROOM });
+  // la cruz de dos palos, en el fondo, con su rosario y su candil
+  const candil = rinconImagen(ctx, cx, YC, z1, 'n', { room: ROOM, imagen: 'cruz', yc: 1.6 });
+  P.candles(ctx, x1 - 0.45, YC, z1 - 0.4, 3, 4791, { room: ROOM, radius: 3, intensity: 0.5 });
+  P.bones(ctx, x1 - 0.6, YC, z0 + 2.4, 5, 4792, 0.5);
+  L.interact.push(
+    // (el id, el del altar de antes, el del oratorio de San Pedro de Rates:
+    // las partidas guardadas se levantan aquí)
+    { kind: 'altar', id: 'a_oratorio', name: 'La celda del enterrador', refugio: 'enterrador', candil: [candil.x, candil.y, candil.z], x: cx, y: YC, z: z1 - 0.6, spawn: [cx, YC, z1 - 1.3], yaw: 0 },
+    { kind: 'item', id: 'i_oro_enterrador', item: 'oro', n: 10, x: x0 + 1.25, y: YC + 0.24, z: z0 + 0.5 },
+    { kind: 'door', id: 'd_celda_enterrador', x: cx, y: YC, z: d[3] - 0.2, w: d[2] - d[0], h: 1.9, axis: 'x', mat: 'planks', hinge: -1, swing: -1, plane: d[3], inset: 0.05, lock: { type: 'none' }, ajar: 0.2, refugio: 'enterrador' }
+  );
 }
 
 // ------------------------------------------------------------ la cripta de San Martín
@@ -1674,6 +1745,7 @@ function buildCatacumbas(ctx, C, L) {
     const north = d[3] <= r[1] + 0.01;
     doorFrame(ctx, { face: north ? 'n' : 's', at: north ? d[1] : d[3], c: (d[0] + d[2]) / 2, w: d[2] - d[0], y: YC, h: 1.9, jw: 0.25, lh: 0.32, tint: FT, cross: true });
   }
+  celdaEnterrador(ctx, L, FT);
   // (y lo mismo en la boca del sur del lucernario, del lado de la galería:
   // del suyo ya tiene su dintel con el crismón; con las jambas estrechas, que
   // no toquen los nichos de al lado)
@@ -2261,6 +2333,11 @@ function buildCreatures(L) {
     e('enrodado', -52, YC, -96.6, 'e_c1d', { idle: 'stand', yaw: 0 }),
     e('emparedada', -34.4, YC, -85.75, 'e_c1e', { idle: 'walled', yaw: 0 }),
     e('cavador', -13.6, YC, -96, 'e_c1f', { idle: 'dig', yaw: Math.PI / 2 }),
+    // en la celda del enterrador: un cavador, cavando en su muro, y la que se
+    // metió con él, de cara a la pared (muertos, con el refugio encendido,
+    // no vuelven)
+    e('cavador', -26.75, YC, -90.1, 'e_celda1', { idle: 'dig', yaw: Math.PI / 2, refugio: 'enterrador' }),
+    e('emparedada', -29.95, YC, -87.5, 'e_celda2', { idle: 'walled', yaw: 0, refugio: 'enterrador' }),
     e('enrodado', -47.5, YC, -86.25, 'e_c1g', { idle: 'stand', yaw: 0 }),
     // los Inocentes
     e('mourner', -71, YI, -99.2, 'e_c2a', { idle: 'pray', yaw: Math.PI }),

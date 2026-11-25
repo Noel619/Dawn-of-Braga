@@ -448,8 +448,8 @@ export function buildLucernario(ctx, C, L, o = {}) {
       const ni = Q(hw - 0.6, 1.4, -0.3);
       L.interact.push({ kind: 'note', id: 'n_rates', note: 'rates', x: ni.x, y: Y + 1.4, z: ni.z, model: 'wall', r: 1.8 });
     }
-    const sp = Q(0, 0, 1.6);
-    L.interact.push({ kind: 'altar', id: 'a_oratorio', name: 'Oratorio de San Pedro de Rates', x: al.x, y: Y, z: al.z, spawn: [sp.x, Y, sp.z], yaw: Math.atan2(-n.x, -n.z) });
+    // (su altar ya no es donde se descansa: es la celda del enterrador, el
+    // refugio que lo sustituye, en la galería del este; PLAN_REFUGIOS.md)
     ctx.lights.push({ x: Q(0, 0, -0.6).x, y: Y + 1.8, z: Q(0, 0, -0.6).z, r: 1, g: 0.64, b: 0.34, radius: 5.5, intensity: 1.0, room });
   }
 

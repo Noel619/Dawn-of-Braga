@@ -2186,6 +2186,7 @@ export const AREA_NAMES = {
   martin: 'Cripta de San Martín',
   capilla_martin: 'Capilla de San Martín',
   capilla_sisnando: 'Capilla de Sisnando',
+  celda_enterrador: 'Celda del enterrador',
   osario_martin: 'Osario de San Martín',
   catacumbas: 'Catacumbas de la Sé',
   huesos: 'Capilla de los Huesos',
