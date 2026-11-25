@@ -9,6 +9,15 @@ const REPO = 'https://github.com/Noel619/Dawn-of-Braga/blob/HEAD/';
 
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const pct = (x) => Math.round(x * 100);
+// Cuántas fases, en letra («catorce fases hasta la 1.0»; si son más de las que
+// se escriben, en cifra).
+const LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte'];
+const enLetra = (n) => LETRA[n] ?? String(n);
+const mayus = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// Las columnas del camino en una pantalla ancha: hasta siete por fila, y las
+// filas, lo más llenas por igual (catorce: dos de siete; quince: tres de cinco;
+// nunca una fase sola en la última).
+const columnasCamino = (n) => Math.ceil(n / Math.ceil(n / 7));
 
 // El progreso de una lista de tareas (sin las opcionales).
 export function progreso(tareas) {
@@ -148,8 +157,8 @@ function camino(D, A) {
       <a href="${href}">${spr(A.medallones[num + ':' + TONO[estado]], { cls: 'med', alt: '' })}<span class="n">${esc(nombre)}</span>${p ? spr(A.barras[`mini:${pct(p.frac)}:${tonoBarra(estado)}`], { cls: 'mini', alt: '' }) : '<span class="sin"></span>'}<span class="p">${p ? pct(p.frac) + ' %' : esc(ESTADOS[estado])}</span></a></li>`;
   return `<section id="camino" class="envoltura">
   ${titulo(A, 'camino', 'El camino')}
-  <p class="intro">Catorce fases hasta la 1.0: las que ya están en el juego, la que toca ahora y las que esperan. Y, después, lo que vendrá.</p>
-  <ol class="camino">${D.FASES.map((f) => paso(f, f.num, estadoDe(f), progreso(f.tareas), '#fase-' + f.id, f.nombre)).join('')}</ol>
+  <p class="intro">${mayus(enLetra(D.FASES.length))} fases hasta la 1.0: las que ya están en el juego, la que toca ahora y las que esperan. Y, después, lo que vendrá.</p>
+  <ol class="camino" style="--cols:${columnasCamino(D.FASES.length)}">${D.FASES.map((f) => paso(f, f.num, estadoDe(f), progreso(f.tareas), '#fase-' + f.id, f.nombre)).join('')}</ol>
   <h3 class="sub-camino">Más allá de la 1.0</h3>
   <ol class="camino mas">${D.EXPANSIONES.map((x, i) => paso(x, NUM_EXP[i], x.estado, x.tareas.length ? progreso(x.tareas) : null, '#exp-' + x.id, x.nombre)).join('')}</ol>
 </section>`;
@@ -391,7 +400,7 @@ section,article{scroll-margin-top:52px}
 /* el camino */
 .camino{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:22px 8px}
 @media (min-width:560px){.camino{grid-template-columns:repeat(4,1fr)}}
-@media (min-width:860px){.camino{grid-template-columns:repeat(7,1fr)}}
+@media (min-width:860px){.camino{grid-template-columns:repeat(var(--cols,7),1fr)}}
 .camino.mas{grid-template-columns:repeat(3,1fr);max-width:calc(3 * 170px);margin:0 auto}
 .paso a{display:flex;flex-direction:column;align-items:center;gap:7px;text-decoration:none;color:var(--bone);text-align:center;padding:4px 2px}
 .paso a:hover .n,.paso a:focus-visible .n{color:var(--gold-hi)}
@@ -517,7 +526,7 @@ export function seccionReadme({ D, C, imgs, nombres }) {
   L.push('');
   L.push('La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.');
   L.push('');
-  L.push(`<p align="center"><img src="docs/hoja-de-ruta/${imgs.camino}" width="880" alt="El camino: las catorce fases de la 1.0 y lo que viene después"></p>`);
+  L.push(`<p align="center"><img src="docs/hoja-de-ruta/${imgs.camino}" width="880" alt="El camino: las ${enLetra(D.FASES.length)} fases de la 1.0 y lo que viene después"></p>`);
   L.push('');
   L.push('| | Fase | Estado | Progreso |');
   L.push('|---|---|---|---|');

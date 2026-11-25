@@ -10,7 +10,7 @@
 // de una fase es lo hecho entre lo que hay, y el de la 1.0, lo mismo con todas
 // las tareas de todas las fases: cada tarea cuenta igual, sea grande o pequeña.
 
-export const FECHA = '22 de noviembre de 2026';
+export const FECHA = '25 de noviembre de 2026';
 
 // Las fases de la 1.0, en orden. estado: se calcula (hecha, en curso, por
 // hacer) salvo que se diga: 'siguiente' (la que toca ahora) o 'espera' (espera
@@ -269,8 +269,32 @@ export const FASES = [
     ],
   },
   {
-    id: 'pacos',
+    id: 'refugios',
     num: 'XII',
+    nombre: 'Los refugios',
+    lema: 'Las casas que se hacen tuyas: entrar, limpiar, cerrar y encender la lamparilla',
+    cuando: 'propuesto el 25 de noviembre',
+    plan: 'PLAN_REFUGIOS.md',
+    estado: 'espera',
+    texto:
+      'Así está hoy: diez altares de velas, ninguno se cierra, y en tres reapareces junto a una criatura que te percibe (a 3,5 m en el cruceiro, a 4,8 en la Capilla Real, a 5,8 en las catacumbas). La propuesta: los sitios de descanso pasan a ser casas cerradas por dentro, con su familia todavía en ellas. Se entra por donde se puede (con ruido o en silencio), se limpia, se cierra hueco a hueco y se enciende la lamparilla bajo la imagen de la casa y su rosario. Desde entonces es tuya: ahí descansas, ahí te levantas y ahí no entra nada. Y en cada una, el oro que escondieron: morabetinos, contados.',
+    escena: null,
+    sprites: ['penitent', 'hound'],
+    iconos: ['rosary', 'hammer', 'key'],
+    tareas: [
+      ['Decidir lo del §12: los refugios, sentarse o arrodillarse, la primera noche, el oro y el viaje', 0],
+      ['R1: el refugio, en uno (la casa de la cerera): entrar, limpiar, cerrar, la llave, la lamparilla y descansar', 0],
+      ['R2: la regla y su prueba: que nunca aparezcas junto a una criatura (tools/refugios.mjs)', 0],
+      ['R3: los del principio: la torre de la cárcel y la Taberna del Cuervo, con su primera noche', 0],
+      ['R4: la tintorería y la Casa del Alemán', 0],
+      ['R5: lo de abajo y la fortaleza: el sacristán, San Martín, el enterrador, la botica, el osario de Bento, la Cancillería y la coracha', 0],
+      ['R6: el oro: los morabetinos, los escondrijos y sus pistas', 0],
+      ['R7: el mapa, el documento de cada casa, las partidas guardadas, las pruebas y la versión jugable', 0],
+    ],
+  },
+  {
+    id: 'pacos',
+    num: 'XIII',
     nombre: 'Los Paços',
     lema: 'El barrio de los ricos de la corte, cerrado a cal y canto',
     cuando: 'propuesto el 22 de noviembre',
@@ -292,7 +316,7 @@ export const FASES = [
   },
   {
     id: 'pulido',
-    num: 'XIII',
+    num: 'XIV',
     nombre: 'Pulido',
     lema: 'Lo que quedó suelto de lo que ya está',
     texto: 'Lo que quedó suelto de los planes hechos: un nombre que choca con el del protagonista, los virotes de la ballesta y dos secretos del barrio que no se llegaron a hacer.',
@@ -311,7 +335,7 @@ export const FASES = [
   },
   {
     id: 'pruebas',
-    num: 'XIV',
+    num: 'XV',
     nombre: 'Pruebas y fallos',
     lema: 'Que todo siga en pie, en cualquier sitio',
     texto: 'Antes de la 1.0: volver a pasar las pruebas largas que faltan, los últimos solapes, un iPhone de verdad y medir cuánto dura una partida.',
@@ -380,6 +404,12 @@ export const EXPANSIONES = [
 
 // Lo que tiene que decidir el autor para seguir.
 export const DECISIONES = [
+  {
+    que: 'Los refugios',
+    pregunta: '¿Estos sitios? ¿Se sienta o se arrodilla al descansar?',
+    mas: 'La torre de la cárcel, la Taberna del Cuervo y la tintorería en lugar de las capillas; bajo la Sé y en las cloacas, cuartos con su puerta y la casa de quien vivía allí. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro.',
+    donde: 'PLAN_REFUGIOS.md, §12',
+  },
   {
     que: 'El duelo de la cisterna',
     pregunta: '¿Es así de duro? ¿Y si ya conocías al Desfigurado?',

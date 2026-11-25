@@ -80,13 +80,13 @@ de verdad), siempre o nunca.
 <!-- hoja-de-ruta: la genera `node tools/hoja_de_ruta.mjs` desde tools/hoja_de_ruta/datos.mjs; no se toca a mano -->
 ## Hoja de ruta
 
-<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 77 % hacia la 1.0"></a></p>
+<p align="center"><a href="docs/hoja-de-ruta/index.html"><img src="docs/hoja-de-ruta/portada.png" width="880" alt="Dawn of Braga · Hoja de ruta: 72 % hacia la 1.0"></a></p>
 
-**77 % hacia la 1.0**: 88 de 115 tareas y 9 de las 14 fases hechas (al día el 22 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
+**72 % hacia la 1.0**: 88 de 123 tareas y 9 de las 15 fases hechas (al día el 25 de noviembre de 2026). Lo siguiente: **el final**, la terrible verdad (`PLAN_FINAL.md`).
 
 La hoja de ruta entera, con el arte del propio juego (las fases con su vista y su gente, lo que viene, las expansiones, lo que hay que decidir, lo que tiene el juego hoy y el bestiario): [`docs/hoja-de-ruta/`](docs/hoja-de-ruta/index.html), una sola página que se abre en el navegador (y que se puede publicar con la carpeta `/docs` en GitHub Pages, junto a la versión jugable). Se genera desde [`tools/hoja_de_ruta/datos.mjs`](tools/hoja_de_ruta/datos.mjs) con `node tools/hoja_de_ruta.mjs`.
 
-<p align="center"><img src="docs/hoja-de-ruta/camino.png" width="880" alt="El camino: las catorce fases de la 1.0 y lo que viene después"></p>
+<p align="center"><img src="docs/hoja-de-ruta/camino.png" width="880" alt="El camino: las quince fases de la 1.0 y lo que viene después"></p>
 
 | | Fase | Estado | Progreso |
 |---|---|---|---|
@@ -101,9 +101,10 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 | IX | [Armas y armaduras](docs/hoja-de-ruta/index.html#fase-armas) | Hecha | 100 % (6 de 6) |
 | X | [En todas partes](docs/hoja-de-ruta/index.html#fase-movil) | Hecha | 100 % (5 de 5) |
 | XI | [El final](docs/hoja-de-ruta/index.html#fase-final) | La siguiente | 0 % (0 de 11) |
-| XII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
-| XIII | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
-| XIV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
+| XII | [Los refugios](docs/hoja-de-ruta/index.html#fase-refugios) | Espera al autor | 0 % (0 de 8) |
+| XIII | [Los Paços](docs/hoja-de-ruta/index.html#fase-pacos) | Espera al autor | 0 % (0 de 6) |
+| XIV | [Pulido](docs/hoja-de-ruta/index.html#fase-pulido) | Por hacer | 0 % (0 de 4) |
+| XV | [Pruebas y fallos](docs/hoja-de-ruta/index.html#fase-pruebas) | Por hacer | 0 % (0 de 4) |
 
 ### Lo que viene
 
@@ -121,7 +122,18 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El título, Dawn of the Devil, y el pergamino
 - [ ] Las pruebas, el teléfono y la versión jugable
 
-**XII · Los Paços** — El barrio de los ricos de la corte, cerrado a cal y canto. *Espera al autor, 0 %* · `PLAN_PACOS.md`
+**XII · Los refugios** — Las casas que se hacen tuyas: entrar, limpiar, cerrar y encender la lamparilla. *Espera al autor, 0 %* · `PLAN_REFUGIOS.md`
+
+- [ ] Decidir lo del §12: los refugios, sentarse o arrodillarse, la primera noche, el oro y el viaje
+- [ ] R1: el refugio, en uno (la casa de la cerera): entrar, limpiar, cerrar, la llave, la lamparilla y descansar
+- [ ] R2: la regla y su prueba: que nunca aparezcas junto a una criatura (tools/refugios.mjs)
+- [ ] R3: los del principio: la torre de la cárcel y la Taberna del Cuervo, con su primera noche
+- [ ] R4: la tintorería y la Casa del Alemán
+- [ ] R5: lo de abajo y la fortaleza: el sacristán, San Martín, el enterrador, la botica, el osario de Bento, la Cancillería y la coracha
+- [ ] R6: el oro: los morabetinos, los escondrijos y sus pistas
+- [ ] R7: el mapa, el documento de cada casa, las partidas guardadas, las pruebas y la versión jugable
+
+**XIII · Los Paços** — El barrio de los ricos de la corte, cerrado a cal y canto. *Espera al autor, 0 %* · `PLAN_PACOS.md`
 
 - [ ] Decidir lo del §11: la zona rica, cuándo se entra, el cambista, lo que se cuenta en cada casa, el relicario, el fundíbulo y los nombres
 - [ ] P1: la cerca y su puerta encadenada, el patio de la guardia, la cava en lugar del foso y el Terreiro
@@ -147,7 +159,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] El hito y la niebla de altura también en la ciudad (fase 10; la vela del Rey, sí) *(a medias)*
 - [ ] Animación: más claves y variantes por golpe, y reacciones según de dónde venga (fase 11; el estribo y las túnicas, sí) *(a medias)*
 
-**XIII · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
+**XIV · Pulido** — Lo que quedó suelto de lo que ya está. *Por hacer, 0 %*
 
 - [ ] Dom Paio, convertido: un nombre que no sea el del protagonista («el Condenado»)
 - [ ] Los virotes: cómo se integran en todo el juego (hoy, sólo en el castillo; los disparados no se recogen)
@@ -155,7 +167,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 - [ ] La bodega de la viuda, el secreto del barrio que no se hizo
 - [ ] «Cisterna del Dios Desconocido» como «Dios Ignoto», como todo lo demás *(opcional)*
 
-**XIV · Pruebas y fallos** — Que todo siga en pie, en cualquier sitio. *Por hacer, 0 %*
+**XV · Pruebas y fallos** — Que todo siga en pie, en cualquier sitio. *Por hacer, 0 %*
 
 - [ ] Las pruebas largas que faltan (#36): castlewalk, fortalezawalk, corte, caballero, rey mesa, holes alto y rendimiento
 - [ ] Los solapes pequeños que quedan (#59)
@@ -172,6 +184,7 @@ La hoja de ruta entera, con el arte del propio juego (las fases con su vista y s
 
 ### Por decidir
 
+- **Los refugios** — ¿Estos sitios? ¿Se sienta o se arrodilla al descansar? La torre de la cárcel, la Taberna del Cuervo y la tintorería en lugar de las capillas; bajo la Sé y en las cloacas, cuartos con su puerta y la casa de quien vivía allí. Y la primera noche al encender, el oro (unos 250 morabetinos en todo el juego) y si se viaja de un refugio a otro. · *PLAN_REFUGIOS.md, §12*
 - **El duelo de la cisterna** — ¿Es así de duro? ¿Y si ya conocías al Desfigurado? El Físico cambiado baja a pelear con los suyos, duda y muere mirando la luna. Falta jugarlo a mano para medir la dureza, decidir qué pasa si se te escapó cuando ya conocías al Desfigurado y si se le puede salvar. · *PLAN_FISICO_RAMA.md, §11*
 - **El Físico que aprende** — ¿Grabamos tus peleas para que aprenda de ti? ¿Y cuánto debe castigar? La historia clínica y sus tácticas entrenadas ya están. Falta lo tuyo: grabar tus peleas con él para entrenarle contra tu manera de jugar, la dureza (hoy, la que sale del entrenamiento) y si lo mismo vale para sus Coronados y otros jefes. · *PLAN_FISICO_ML.md, §5*
 - **Los Paços** — ¿Es éste el barrio rico que quieres? Y cuándo se entra por primera vez, si el cambista es su jefe, si en cada casa se cuenta lo que quería cada oficial, qué guarda el relicario, el fundíbulo y los nombres. · *PLAN_PACOS.md, §11*
