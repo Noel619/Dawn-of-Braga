@@ -1150,6 +1150,9 @@ export class Game {
   // de Henrique)
   bossGone(e) {
     if (e.spec.story && this.flags[e.spec.story]) return true;
+    // (los de la primera noche de un refugio: hasta encenderlo no vienen;
+    // game/refugios.js)
+    if (e.spec.noche && !this.flags['ref:' + e.spec.noche]) return true;
     return e.boss && (this.flags['boss:' + e.type] || (e.type === 'turibulario' && this.flags['finale:rite']));
   }
 
@@ -2185,6 +2188,7 @@ export class Game {
         this.chase.update(dt);
         this.finale.update(dt);
         this.house.update(dt);
+        this.refugios.update(dt);
         this.crypt.update(dt);
         this.paio.update(dt);
         this.rey.update(dt);

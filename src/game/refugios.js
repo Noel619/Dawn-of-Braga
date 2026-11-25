@@ -11,7 +11,10 @@
 //     del Alemán);
 //   - los que se encerraron dentro: las criaturas con refugio: id y story
 //     'ref:<id>' (encendido el refugio, no vuelven nunca);
-//   - su oro: los morabetinos que haya dentro (ITEMS.oro).
+//   - su oro: los morabetinos que haya dentro (ITEMS.oro);
+//   - su primera noche (en algunos): las criaturas con noche: id no están
+//     hasta que se enciende; entonces vienen y aporrean sus puertas desde
+//     fuera (la pose pound) hasta que las matas, y muertas no vuelven.
 // Encender la lamparilla pide que no quede nadie dentro y que todo esté
 // cerrado. Encendido (la bandera ref:<id>), el refugio es tuyo: ante la imagen
 // se descansa, ahí te levantas al caer y sus puertas se abren también desde
@@ -24,7 +27,7 @@ export class Refugios {
     this.g = game;
     this.map = new Map();
     const de = (id) => {
-      if (!this.map.has(id)) this.map.set(id, { id, altar: null, puertas: [], cierres: [], tablas: [], criaturas: [], fuego: null, luz: null });
+      if (!this.map.has(id)) this.map.set(id, { id, altar: null, puertas: [], cierres: [], tablas: [], criaturas: [], noche: [], fuego: null, luz: null });
       return this.map.get(id);
     };
     for (const it of game.interact.list) {
@@ -35,12 +38,19 @@ export class Refugios {
       else if (it.kind === 'cierre') R.cierres.push(it);
       else if (it.kind === 'board') R.tablas.push(it);
     }
-    for (const e of game.enemies)
+    for (const e of game.enemies) {
       if (e.spec.refugio) {
         de(e.spec.refugio).criaturas.push(e);
         // (encendido el refugio, ya no vuelven: game.bossGone)
         if (!e.spec.story) e.spec.story = 'ref:' + e.spec.refugio;
       }
+      // (los de su primera noche: hasta encenderlo no están, game.bossGone;
+      // muertos, no vuelven)
+      if (e.spec.noche) {
+        de(e.spec.noche).noche.push(e);
+        e.spec.story = e.spec.dies = e.spec.story || 'noche:' + e.id;
+      }
+    }
     // la llama del candil y su luz, apagadas hasta que se enciende
     for (const R of this.map.values()) {
       const c = R.altar && R.altar.candil;
@@ -101,6 +111,48 @@ export class Refugios {
     if (!R || this.encendido(R.id)) return;
     const f = this.faltan(R);
     if (!f.huecos) this.g.ui.toast(f.vivos ? MSG.refCerradoVivos : MSG.refCerrado, 5);
+  }
+
+  // La primera noche: los que vinieron aporrean la puerta más cercana, a
+  // tandas (se oye y la hoja tiembla); si se abre, entran. La primera vez que
+  // se les oye desde dentro, se dice.
+  update(dt) {
+    const g = this.g;
+    const p = g.player.pos;
+    for (const R of this.map.values()) {
+      if (!R.noche.length || !this.encendido(R.id)) continue;
+      for (const e of R.noche) {
+        if (e.dead || e.state !== 'dormant') continue;
+        const d = e.data.puerta || (e.data.puerta = R.puertas.slice().sort((a, b) => Math.hypot(a.x - e.home.x, a.z - e.home.z) - Math.hypot(b.x - e.home.x, b.z - e.home.z))[0]);
+        if (!d) continue;
+        if (d.done) {
+          e.alert();
+          continue;
+        }
+        if (Math.hypot(e.pos.x - p.x, e.pos.z - p.z) > 18) continue;
+        e.data.golpe = (e.data.golpe ?? Math.random() * 1.5) - dt;
+        if (e.data.golpe > 0) continue;
+        // (tres o cuatro golpes, y un rato de nada)
+        e.data.tanda = (e.data.tanda ?? 4) - 1;
+        e.data.golpe = e.data.tanda > 0 ? 0.45 + Math.random() * 0.4 : 3.5 + Math.random() * 5;
+        if (e.data.tanda <= 0) e.data.tanda = 3 + Math.floor(Math.random() * 2);
+        g.audio && g.audio.play('doorPound', { x: d.x, y: 1.2, z: d.z });
+        d.shake = 1;
+        const zn = g.zone;
+        if (!R.oida && zn && R.altar && g.zoneAt(R.altar) === zn) {
+          R.oida = true;
+          g.ui.toast(MSG.refNoche, 6);
+        }
+      }
+      // las hojas tiemblan con los golpes
+      for (const d of R.puertas)
+        if (d.shake > 0) {
+          d.shake = Math.max(0, d.shake - dt * 4);
+          if (d.done) d.shake = 0;
+          else for (const lf of d.leaves || []) lf.rotation.y = Math.sin(g.time * 70) * 0.015 * d.shake;
+          if (!d.shake && !d.done) g.interact.poseDoor(d, 0);
+        }
+    }
   }
 
   luces() {

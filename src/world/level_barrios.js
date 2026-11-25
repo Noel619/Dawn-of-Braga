@@ -8,6 +8,7 @@ import { rampasTejado } from './kit_casa.js';
 import * as P from './props.js';
 import { floor, ARCO_SE } from './level_util.js';
 import { bakeCorpse } from '../entities/models.js';
+import { rinconImagen } from './mobiliario.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 
@@ -225,6 +226,31 @@ export function buildNW(ctx, S, L) {
   P.sacks(ctx, -17.6, 0, -13, 3, 1113);
   // (la trampilla misma, con sus tablones, es un interactuable: se arrancan
   // con la palanca y se baja a la bodega, que da a la cloaca; world/cloaca.js)
+  // el refugio de la ciudad (PLAN_REFUGIOS.md): la taberna, cuando ya no
+  // queda nadie dentro y están cerradas sus tres puertas (y la trampilla, si
+  // se arrancaron sus tablones). El tabernero empezó: atrancó la del Soto y
+  // clavó la de la bodega; lo terminas tú. Su rincón: la tabla de Santa María
+  // con el Niño, junto al hogar de la sala; y lo que no se atrevió a gastar,
+  // en una olla, al pie del hogar (rota: ya la buscó alguien antes)
+  {
+    const candil = rinconImagen(ctx, -26.15, 0, -5.1, 'e', { room, imagen: 'tabla', tex: 'santaMaria', seed: 1115 });
+    P.jar(ctx, -25.85, 0, -8.85, 0.62, { broken: true, collide: false, rot: 0.4 });
+    L.interact.push(
+      // (el id, el del altar de antes, el de Santa Bárbara: las partidas
+      // guardadas se levantan aquí)
+      { kind: 'altar', id: 'a_praca', name: 'La Taberna del Cuervo', refugio: 'taberna', candil: [candil.x, candil.y, candil.z], x: -25.55, y: 0, z: -5.1, spawn: [-24.9, 0, -5.1], yaw: -Math.PI / 2 },
+      { kind: 'item', id: 'i_oro_taberna', item: 'oro', n: 10, x: -25.85, y: 0.17, z: -8.85 },
+      // las tres puertas: la del Soto, la principal, atrancada por dentro (la
+      // abres tú desde dentro, y es la tuya); la de la plaza, cerrada; la de
+      // atrás, la del callejón del Arco, reventada: por ahí entraron
+      { kind: 'door', id: 'd_taberna_soto', x: -20, y: 0, z: -3.675, w: 1.3, h: 2.3, axis: 'x', mat: 'planks', hinge: -1, swing: 1, plane: -3.85, inset: 0.06, lock: { type: 'barred', side: -1 }, barAt: -3.85, refugio: 'taberna' },
+      { kind: 'door', id: 'd_taberna_plaza', x: -14.175, y: 0, z: -9, w: 1.3, h: 2.3, axis: 'z', mat: 'planks', hinge: -1, swing: -1, plane: -14.35, inset: 0.06, lock: { type: 'none' }, refugio: 'taberna' },
+      { kind: 'door', id: 'd_taberna_arco', x: -17.6, y: 0, z: -19.325, w: 1.3, h: 2.3, axis: 'x', mat: 'planks', hinge: 1, swing: -1, plane: -19.15, inset: 0.06, lock: { type: 'none' }, mark: 'broken', abierta: true, refugio: 'taberna' }
+    );
+    // lo que roe el perro en la despensa
+    P.decal(ctx, -17.3, 0.03, -16.95, 1.3);
+    P.bones(ctx, -17.0, 0, -17.2, 4, 1116, 0.6);
+  }
   wb.setRoom(null);
   L.interact.push({ kind: 'note', id: 'n_tabernero', note: 'tabernero', x: -17.0, y: 1.1, z: -9.5, model: 'book' });
   ctx.rats.push({ x: -15.2, y: 0, z: -13.4, n: 2 }, { x: -25.6, y: 0, z: -18.6, n: 1 });
@@ -233,8 +259,15 @@ export function buildNW(ctx, S, L) {
   L.enemies.push(
     { type: 'penitent', x: -37, y: 0, z: -24.3, yaw: 3.0, idle: 'kneel', id: 'e_pozo1' },
     { type: 'hound', x: -42.4, y: 0, z: -28.4, yaw: 2.2, idle: 'eat', id: 'e_pozo2' },
-    { type: 'crawler', x: -21, y: 2.6, z: -8.2, yaw: 0, idle: 'ceiling', id: 'e_tab1' },
-    { type: 'penitent', x: -23.9, y: 0, z: -17.2, yaw: 0.9, idle: 'eat', id: 'e_tab2' }
+    // (los de la taberna: muertos, con el refugio encendido, no vuelven)
+    { type: 'crawler', x: -21, y: 2.6, z: -8.2, yaw: 0, idle: 'ceiling', id: 'e_tab1', refugio: 'taberna' },
+    { type: 'penitent', x: -23.9, y: 0, z: -17.2, yaw: 0.9, idle: 'eat', id: 'e_tab2', refugio: 'taberna' },
+    { type: 'hound', x: -17.3, y: 0, z: -16.7, yaw: -2.4, idle: 'eat', id: 'e_tab3', refugio: 'taberna' },
+    // (su primera noche: encendida la lamparilla, vienen a la luz y aporrean
+    // la puerta del Soto y la de la plaza; game/refugios.js)
+    { type: 'penitent', x: -20.4, y: 0, z: -2.85, yaw: Math.PI, idle: 'pound', id: 'e_tab_noche1', noche: 'taberna' },
+    { type: 'penitent', x: -19.55, y: 0, z: -2.8, yaw: Math.PI - 0.15, idle: 'pound', id: 'e_tab_noche2', noche: 'taberna' },
+    { type: 'penitent', x: -13.35, y: 0, z: -9.1, yaw: -Math.PI / 2, idle: 'pound', id: 'e_tab_noche3', noche: 'taberna' }
   );
   L.zones.push(
     { id: 'taberna', rects: [[-26.5, -19.5, -14, -3.5, -1, 4]], atmo: 'interior', room: 'taberna' },
@@ -373,7 +406,8 @@ export function buildSW(ctx, S, L) {
     wb.box('candle', px - 0.05, yy - 0.12, side ? zw : zw - 0.05, px + 0.05, yy + 0.12, side ? zw + 0.05 : zw, { ao: false, grime: false, room: oroom, tint: [0.95, 0.9, 0.75] });
   }
   wb.setRoom(null);
-  L.interact.push({ kind: 'altar', id: 'a_praca', name: 'Oratorio de Santa Bárbara', x: -39.9, y: 0, z: 21.5, spawn: [-38.2, 0, 21.5], yaw: Math.PI / 2 });
+  // (su altar ya no es donde se descansa: es la Taberna del Cuervo, el
+  // refugio que lo sustituye, PLAN_REFUGIOS.md; se queda de adorno)
 
   // --- casas alrededor del patio
   // (hasta z = 36, y la de detrás desde ahí: la de x = -41 a -35 se metía un

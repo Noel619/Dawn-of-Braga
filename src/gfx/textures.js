@@ -1846,6 +1846,136 @@ const GEN = {
     return c;
   },
 
+  // Santa María sentada con el Niño, como se pintaba en 1167 (la tabla del
+  // rincón de la Taberna del Cuervo, PLAN_REFUGIOS.md §5): de frente, en su
+  // trono de columnillas, con el manto rojo sobre la cabeza y la túnica azul;
+  // el Niño en sus rodillas, también de frente, bendiciendo, con el libro.
+  // Fondo de oro y la orla roja con sus perlas.
+  santaMaria() {
+    const W = 32,
+      H = 48;
+    const c = makeCanvas(W, H);
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#c49e3a');
+    bg.addColorStop(1, '#8a6824');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+    // la orla, con sus perlas
+    g.fillStyle = '#7a2418';
+    g.fillRect(0, 0, W, 3);
+    g.fillRect(0, H - 3, W, 3);
+    g.fillRect(0, 0, 3, H);
+    g.fillRect(W - 3, 0, 3, H);
+    g.fillStyle = '#e8dcc0';
+    for (let x = 2; x < W - 1; x += 3) {
+      g.fillRect(x, 1, 1, 1);
+      g.fillRect(x, H - 2, 1, 1);
+    }
+    for (let y = 4; y < H - 2; y += 3) {
+      g.fillRect(1, y, 1, 1);
+      g.fillRect(W - 2, y, 1, 1);
+    }
+    // el trono: el asiento, el cojín verde, las columnillas con sus capiteles
+    // de oro y el escabel
+    g.fillStyle = '#5a3a22';
+    g.fillRect(6, 30, 20, 9);
+    g.fillRect(9, 42, 14, 3);
+    g.fillStyle = '#3e2616';
+    g.fillRect(5, 22, 2, 18);
+    g.fillRect(25, 22, 2, 18);
+    g.fillStyle = '#d6ae3e';
+    g.fillRect(4.5, 21, 3, 1);
+    g.fillRect(24.5, 21, 3, 1);
+    g.fillStyle = '#3a5a3a';
+    g.fillRect(7, 29, 18, 2);
+    // el nimbo de ella, con su filete rojo
+    g.fillStyle = '#ecc64c';
+    g.beginPath();
+    g.arc(16, 10, 5.3, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#8a2a1c';
+    g.lineWidth = 0.8;
+    g.stroke();
+    // el manto rojo, de la cabeza a las rodillas
+    g.fillStyle = '#8a2a2a';
+    g.beginPath();
+    g.moveTo(16, 5.6);
+    g.quadraticCurveTo(21.6, 7, 21.4, 13);
+    g.lineTo(24, 16);
+    g.lineTo(25, 31);
+    g.lineTo(7, 31);
+    g.lineTo(8, 16);
+    g.lineTo(10.6, 13);
+    g.quadraticCurveTo(10.4, 7, 16, 5.6);
+    g.fill();
+    g.fillStyle = '#6a1c1c';
+    g.fillRect(9, 17, 1, 13);
+    g.fillRect(22, 17, 1, 13);
+    // la túnica azul, de las rodillas a los pies, con sus pliegues
+    g.fillStyle = '#2c3c6c';
+    g.beginPath();
+    g.moveTo(8, 30);
+    g.lineTo(24, 30);
+    g.lineTo(23, 41);
+    g.lineTo(9, 41);
+    g.closePath();
+    g.fill();
+    g.fillStyle = '#1c284c';
+    g.fillRect(12, 32, 1, 9);
+    g.fillRect(16, 31, 1, 10);
+    g.fillRect(20, 32, 1, 9);
+    // los pies, en el escabel
+    g.fillStyle = '#5a1a14';
+    g.fillRect(11, 41, 3, 2);
+    g.fillRect(18, 41, 3, 2);
+    // la cara: de frente, los ojos grandes; la corona sobre el manto
+    g.fillStyle = '#e2c09a';
+    g.beginPath();
+    g.ellipse(16, 10.6, 2.4, 3, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#2a1a10';
+    g.fillRect(14.6, 9.7, 1, 1);
+    g.fillRect(16.6, 9.7, 1, 1);
+    g.fillStyle = '#a05a3a';
+    g.fillRect(15.6, 12.7, 1, 0.8);
+    g.fillStyle = '#d8b040';
+    g.fillRect(13.5, 5.4, 5, 1.3);
+    // el Niño: su nimbo con la cruz, la cara, la túnica clara con su franja
+    g.fillStyle = '#ecc64c';
+    g.beginPath();
+    g.arc(16, 19, 3.2, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#8a2a1c';
+    g.fillRect(15.5, 15.8, 1, 1.5);
+    g.fillRect(12.8, 18.5, 1.5, 1);
+    g.fillRect(17.7, 18.5, 1.5, 1);
+    g.fillStyle = '#e2c09a';
+    g.beginPath();
+    g.arc(16, 19.2, 1.8, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#e8dcc0';
+    g.fillRect(13, 21, 6, 8);
+    g.fillStyle = '#b8862c';
+    g.fillRect(13, 25, 6, 1);
+    // la mano que bendice, el libro (rojo, con su broche) y las manos de
+    // ella, que lo sostienen
+    g.fillStyle = '#e2c09a';
+    g.fillRect(11.5, 21, 1.5, 1.5);
+    g.fillRect(10, 25, 2, 1.5);
+    g.fillRect(20.5, 26.5, 2, 1.5);
+    g.fillStyle = '#7a2418';
+    g.fillRect(18.5, 23, 2.5, 3);
+    g.fillStyle = '#d6ae3e';
+    g.fillRect(19.2, 23.8, 1, 1.4);
+    // las letras, en el oro: MP ΘY, borradas
+    g.fillStyle = '#5a3a18';
+    g.fillRect(5, 5, 2, 1);
+    g.fillRect(25, 5, 2, 1);
+    grain(g, W, 0.86, 0.2, 96);
+    return c;
+  },
+
   // La Virgen del Carmen del ama: tabla pintada con la Virgen de hábito
   // pardo y manto blanco, el Niño, el escapulario en la mano y estrellas.
   virgenCarmen() {

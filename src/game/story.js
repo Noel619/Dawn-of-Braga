@@ -1991,6 +1991,7 @@ export const MSG = {
   refEncendido: (n) => `La lamparilla prende. ${n} ya es un refugio: aquí despertarás si caes.`,
   refVano: 'Sal del vano para cerrarla.',
   refNoEsTuyo: 'Esta casa todavía no es tuya.',
+  refNoche: 'Aporrean la puerta. Lo que andaba fuera ha visto la luz: sabe que estás dentro.',
   refTrampilla: 'La trampilla está cerrada por arriba.',
   oro: (n, t) => `+${n} morabetino${n === 1 ? '' : 's'} · ${t} en total.`,
   hatchDown: 'Bajas por la escalera de mano.',

@@ -1255,6 +1255,9 @@ export class Interactables {
         if (it.lock.type === 'cinco') this.game.setGroupVisible('llaves:' + it.id, true);
       }
       if (it.kind === 'door' && it.tras) this.ponerTras(it, !!flags['door:' + it.tras]);
+      // (abierta: la que ya estaba abierta, reventada —la de atrás de la
+      // taberna—, hasta que la cierras tú: entonces queda con el pestillo)
+      if (it.kind === 'door' && it.abierta && !it.done && !flags['pestillo:' + it.id]) this.setOpen(it, true);
       if (it.kind === 'item' && flags['take:' + it.id]) {
         it.done = true;
         it.obj.visible = false;
@@ -1598,6 +1601,10 @@ export class Interactables {
     const h = this.list.find((q) => q.id === c.of);
     return !!h && this.hatchAbierta(h);
   }
+  cierreVivo(c) {
+    const h = this.list.find((q) => q.id === c.of);
+    return !!h && !!(h.open || this.game.flags[h.flag]);
+  }
   // Echa (cerrar = true) o descorre el cerrojo de la trampilla de un refugio:
   // it, el cerrojo o una de las dos trampillas del par.
   echarCierre(it, cerrar) {
@@ -1841,6 +1848,9 @@ export class Interactables {
       if (it.hidden) continue;
       if (it.unless && this.game.flags[it.unless]) continue;
       if (it.kind === 'trigger') continue;
+      // (el cerrojo de una trampilla que sigue clavada, la de la bodega de la
+      // taberna: hasta que se arrancan sus tablones, no hay nada que cerrar)
+      if (it.kind === 'cierre' && !this.cierreVivo(it)) continue;
       if (it.kind === 'climb' && !this.game.canClimbWell()) continue;
       if (it.kind === 'fog' && (!this.game.fogActive(it) || this.game.activeBoss)) continue;
       const ix = it.ix ?? it.x,
