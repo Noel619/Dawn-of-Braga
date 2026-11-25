@@ -242,7 +242,10 @@ function commonClips(W, G, GUARD, BLOCK) {
       [1.3, { chest: [34, 0, 0], head: [20, 0, 0], armL: [-40, 0, 10], foreL: [-22, 0, 0], armR: [-40, 0, -10], foreR: [-22, 0, 0], legL: [-42, 0, 0], shinL: [62, 0, 0], legR: [10, 0, 0], shinR: [50, 0, 0], root: [0, -26, 0] }],
       [1.6, { ...GUARD }],
     ]),
-    rest: clip('rest', 1.0, [[0, { root: [0, -48, 0], chest: [22, 0, 0], head: [35, 0, 0], legL: [-95, 0, 6], shinL: [95, 0, 0], legR: [5, 0, -4], shinR: [100, 0, 0], armR: [-48, 0, -6], foreR: [-45, 0, 0], handR: [60, 0, 0], armL: [-48, 0, 6], foreL: [-60, 0, 0] }]], { ground: false }),
+    // (descansar: sentado en el suelo ante la imagen, una rodilla arriba y
+    // la mirada en la llama del candil. El que no se arrodilla no se arrodilla
+    // nunca, tampoco aquí: PLAN_REFUGIOS.md, §5)
+    rest: clip('rest', 1.0, [[0, { root: [0, -78, 0], chest: [6, 0, 0], head: [-8, 0, 0], legL: [-118, 0, 10], shinL: [112, 0, 0], legR: [-86, 0, -8], shinR: [14, 0, 0], armR: [-30, 0, -10], foreR: [-40, 0, 0], handR: [20, 0, 0], armL: [-58, 0, 14], foreL: [-62, 0, 0] }]], { ground: false }),
     // ---- secuencias con la Bestia de Carne (las mueve el guion)
     // salto a la carrera: se impulsa, encoge las piernas y prepara la caída
     jump: clip(

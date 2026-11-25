@@ -534,6 +534,28 @@ const ICONS = {
     sparkle(b, 22, 16);
     b.outline(P.void);
   },
+  // morabetinos: tres dinares de oro, el de delante con su orla y las letras
+  // de la leyenda (rayitas, a lo cúfico) en el campo
+  oro(b) {
+    const moneda = (cx, cy, r, letras) =>
+      disc(b, cx, cy, r, (l, d, x, y) => {
+        // el canto, más oscuro; la orla, un anillo de puntos
+        if (d > 0.88) return shade(GOLD, l * 0.55, x, y);
+        if (d > 0.68 && d < 0.8 && (x + y) % 2 === 0) return shade(GOLD, l * 0.62, x, y);
+        if (letras && d < 0.55) {
+          const u = x + 0.5 - cx,
+            v = y + 0.5 - cy;
+          // tres renglones de trazos verticales cortos
+          if ((Math.abs(v + 2) < 0.5 || Math.abs(v) < 0.5 || Math.abs(v - 2) < 0.5) && Math.abs(Math.sin(u * 2.1 + v)) > 0.55) return shade(GOLD, l * 0.5, x, y);
+        }
+        return shade(GOLD, l * 0.95 + 0.05, x, y);
+      });
+    moneda(10.5, 20.5, 7.2, false);
+    moneda(21.5, 21, 7.2, false);
+    moneda(16, 13.5, 8.2, true);
+    sparkle(b, 22, 8);
+    b.outline(P.void);
+  },
   // tablón de pino con dos clavos torcidos donde estuvo clavado
   plank(b) {
     seg(b, 3.5, 24, 28.5, 9, 4.4, 4.4, (t, s, x, y) => {

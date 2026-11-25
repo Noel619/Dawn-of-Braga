@@ -31,6 +31,7 @@ import { bakeParts, moveParts, skullParts, helmetedSkullParts, keyParts, crossbo
 import { buildCastilloFuera, FUERA } from './castillo_fuera.js';
 import { buildPatioArmas } from './castillo_patio.js';
 import { FORT } from './fortaleza_medidas.js';
+import { rinconImagen } from './mobiliario.js';
 
 const W = (S, x0, z0, x1, z1) => S.paint(x0, z0, x1, z1, 1);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -600,7 +601,8 @@ function buildYard(ctx, S, L, rng) {
   wb.setRoom(null);
   P.banner(ctx, -57.9, 5.2, -13.9, 0, 'bannerBlack', 1.2, 2.6);
   P.banner(ctx, -54.1, 5.2, -13.9, 0, 'bannerBlack', 1.2, 2.6);
-  L.interact.push({ kind: 'altar', id: 'a_castelo', name: 'Capilla de la guarnición', x: -56, y: 0, z: -19.05, spawn: [-56, 0, -17.3], yaw: 0 });
+  // (su altar se queda, de adorno: se descansa en la torre de la cárcel, el
+  // primer refugio; PLAN_REFUGIOS.md)
 
   // --- el cuartel de la tropa (contra la muralla sur)
   {
@@ -996,6 +998,11 @@ function buildPrisonTower(ctx, S, L) {
   beam3(ctx, 'wooddark', V(-83.5, FA + 1.3, iz0 + 0.1), V(-83.5, FA + 2.0, iz0 + 0.1), 0.07, { room: roomA });
   P.hangingLamp(ctx, -86.0, CA - 0.25, 9.6, { room: roomA, len: 0.7, radius: 6 });
   P.wallTorch(ctx, -87.6, FA + 1.9, iz1, 'n', { room: roomA, radius: 5 });
+  // el primer refugio (PLAN_REFUGIOS.md): la sala de los guardas se cierra con
+  // el cerrojo de su trampilla. Su rincón: la cruz de dos palos que los
+  // guardas ataron y clavaron en el muro de levante (entre la esquina y su
+  // saetera), su rosario y el candil
+  const candil = rinconImagen(ctx, ix1, FA, 7.8, 'w', { room: roomA, imagen: 'cruz', yc: 1.65 });
   wb.setRoom(null);
   P.banner(ctx, x1 + 0.12, 8.6, 9, Math.PI / 2, 'bannerBlack', 1.3, 3.2);
   L.interact.push(
@@ -1016,9 +1023,23 @@ function buildPrisonTower(ctx, S, L) {
     },
     // (la trampilla está abierta: sólo hay que subir o bajar por la escalera;
     // abajo se llega de lado a la escalera, para que la cámara no quede tras ella)
-    { kind: 'hatch', id: 'h_carcel_abajo', end: 'bottom', flag: 'hatch:carcel', open: true, msgUp: 'carcelSube', x: HT.x - 0.45, y: 0, z: HT.z, r: 1.5, to: [HT.x - 1.1, FA, HT.z, -Math.PI / 2] },
-    { kind: 'hatch', id: 'h_carcel_arriba', end: 'top', flag: 'hatch:carcel', open: true, realHole: true, msgDown: 'carcelBaja', x: HT.x, y: FA, z: HT.z, r: 1.6, to: [HT.x - 0.7, 0, HT.z - 1.1, -Math.PI / 2 + 0.4] },
-    { kind: 'examine', id: 'x_presos', text: 'libroPresos', x: -85.5, y: FA, z: 6.6, r: 1.6 }
+    { kind: 'hatch', id: 'h_carcel_abajo', end: 'bottom', flag: 'hatch:carcel', open: true, refugio: 'torre_carcel', msgUp: 'carcelSube', x: HT.x - 0.45, y: 0, z: HT.z, r: 1.5, to: [HT.x - 1.1, FA, HT.z, -Math.PI / 2] },
+    { kind: 'hatch', id: 'h_carcel_arriba', end: 'top', flag: 'hatch:carcel', open: true, refugio: 'torre_carcel', realHole: true, msgDown: 'carcelBaja', x: HT.x, y: FA, z: HT.z, r: 1.6, to: [HT.x - 0.7, 0, HT.z - 1.1, -Math.PI / 2 + 0.4] },
+    // (el cerrojo, al norte del hueco: de pie sobre él se cierra; para bajar,
+    // se llega al hueco por el oeste)
+    { kind: 'cierre', id: 'c_carcel', of: 'h_carcel_arriba', refugio: 'torre_carcel', x: HT.x, y: FA, z: HT.z - 0.9, r: 1.1 },
+    { kind: 'examine', id: 'x_presos', text: 'libroPresos', x: -85.5, y: FA, z: 6.6, r: 1.6 },
+    // el descanso del castillo (el id, el del altar de antes: las partidas
+    // guardadas se levantan aquí)
+    { kind: 'altar', id: 'a_castelo', name: 'Torre de la cárcel', refugio: 'torre_carcel', candil: [candil.x, candil.y, candil.z], x: ix1 - 0.6, y: FA, z: 7.8, spawn: [ix1 - 1.5, FA, 7.8], yaw: Math.PI / 2 },
+    // la bolsa de los guardas, en el arcón: lo que cobraban a los presos
+    { kind: 'item', id: 'i_oro_carcel', item: 'oro', n: 4, x: -88.25, y: FA + 0.62, z: 12.15 }
+  );
+  // los guardas, que se encerraron arriba y se cambiaron aquí: uno de pie
+  // ante su cruz y otro comiendo a la mesa del libro de presos
+  L.enemies.push(
+    { type: 'soldier', x: -86.6, y: FA, z: 11.2, yaw: 0.5, idle: 'stand', id: 'e_guarda1', refugio: 'torre_carcel' },
+    { type: 'penitent', x: -84.7, y: FA, z: 7.3, yaw: Math.PI, idle: 'eat', id: 'e_guarda2', refugio: 'torre_carcel' }
   );
 }
 

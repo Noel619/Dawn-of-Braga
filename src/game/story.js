@@ -96,6 +96,13 @@ export const ITEMS = {
     key: false,
     weapon: 'ballesta',
   },
+  oro: {
+    name: 'Morabetinos',
+    desc: 'Dinares de oro de los almorávides, con las letras de su fe en las dos caras: la moneda que corre a los dos lados de la frontera. Los dineros del Rey, de plata baja, fuera de Braga no valen nada; esto, sí. La gente de Braga los escondió cuando la hueste apareció ante la muralla, y nadie volvió a por ellos. Dentro de la ciudad no compran nada.',
+    icon: 'oro',
+    key: false,
+    oro: true,
+  },
   virote: {
     name: 'Virotes',
     desc: 'Virotes de ballesta, de fresno, con la punta cuadrada de hierro y las plumas de ganso. Los de la guarnición: sólo se encuentran en el castillo.',
@@ -1966,6 +1973,25 @@ export const MSG = {
   // (lo que dice una trampilla con escalera de mano que no dice lo suyo)
   hatchOpen: 'Descorres el cerrojo y levantas la trampilla. Debajo, una escalera de mano.',
   hatchShut: 'Una trampilla en el techo, atrancada desde arriba.',
+  // los refugios (game/refugios.js)
+  restRefugio: 'Descansas bajo la imagen. La lamparilla arde. Fuera, las criaturas vuelven a sus puestos.',
+  refVivos: 'No puedes encender nada aquí: todavía queda alguien dentro.',
+  refHuecos: (f) => {
+    const N = ['', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'];
+    const de = (n, s) => (n === 1 ? 'una ' + s : `${N[n] || n} ${s}s`);
+    const p = [];
+    if (f.puertas) p.push(de(f.puertas, 'puerta'));
+    if (f.trampillas) p.push(de(f.trampillas, 'trampilla'));
+    if (f.ventanas) p.push(de(f.ventanas, 'ventana'));
+    const l = p.length > 1 ? p.slice(0, -1).join(', ') + ' y ' + p[p.length - 1] : p[0];
+    return `Todavía entra el aire de fuera: queda${f.huecos > 1 ? 'n' : ''} ${l} por cerrar.`;
+  },
+  refCerrado: 'Ya no queda nada abierto. Enciende la lamparilla bajo la imagen.',
+  refCerradoVivos: 'Ya no queda nada abierto. Pero no estás solo aquí dentro.',
+  refEncendido: (n) => `La lamparilla prende. ${n} ya es un refugio: aquí despertarás si caes.`,
+  refVano: 'Sal del vano para cerrarla.',
+  refTrampilla: 'La trampilla está cerrada por arriba.',
+  oro: (n, t) => `+${n} morabetino${n === 1 ? '' : 's'} · ${t} en total.`,
   hatchDown: 'Bajas por la escalera de mano.',
   hatchUp: 'Subes por la escalera de mano.',
   carcelSube: 'Subes por la escalera de mano a la sala de los guardas.',

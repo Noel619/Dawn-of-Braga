@@ -25,6 +25,7 @@ import { Audio } from '../core/audio.js';
 import { Combat } from './combat.js';
 import { Fauna } from './fauna.js';
 import { Interactables } from './interact.js';
+import { Refugios } from './refugios.js';
 import { NavGrid, LayerNav } from './nav.js';
 import { acusticaDe, sueloDe } from './acustica.js';
 import { WalkGrid } from '../world/walkgrid.js';
@@ -287,6 +288,8 @@ export class Game {
     // el Caballero de la Orden: lo que suelta su espada, su pendón, las hojas
     this.caballero = new Caballero(this);
     this.interact = new Interactables(this, lvl.L.interact);
+    // los refugios: los lugares cerrados donde se descansa (game/refugios.js)
+    this.refugios = new Refugios(this);
     // la Corte de los Infieles: el director del compás (game/corte.js)
     this.corte = new Corte(this);
     // (el rastrillo de la cisterna cierra el paso también a las criaturas)
@@ -540,6 +543,8 @@ export class Game {
 
   applyWorldState() {
     this.interact.applyFlags(this.flags, true);
+    // (antes de mirar qué criaturas ya no vuelven: las de un refugio encendido)
+    this.refugios.applyFlags();
     if (this.corte) this.corte.applyFlags();
     this.breakables.applyFlags(this.flags, true);
     for (const ph of this.phantoms) ph.state = 'wait';
@@ -934,7 +939,8 @@ export class Game {
       shield: `${k('block')} Mantén para bloquear  ·  Púlsalo justo antes del golpe: parry`,
       parry: `¡Parry! Está desequilibrado: ${k('light')} golpe de gracia. Los golpes en rojo no se pueden desviar.`,
       enemy: `${k('lock')} Fijar objetivo  ·  ${k('heal')} Beber una ampolla`,
-      altar: `Descansar cura y rellena las ampollas, pero las criaturas vuelven a levantarse.`,
+      altar: `Descansar cura y rellena las ampollas, pero las criaturas de fuera vuelven a levantarse. Si caes, despiertas aquí.`,
+      refugio: `Un refugio: mata a los que se encerraron dentro, cierra puertas, trampillas y ventanas, y enciende la lamparilla bajo la imagen.`,
       map: `${k('map')} Mapa  ·  ${k('inventory')} Inventario y documentos`,
       relic: `Llevas puesto un objeto bendito: favorece una manera de pelear y castiga otra. Se llevan de uno en uno; cámbialo en el inventario ${k('inventory')}.`,
       relic2: `Otro objeto bendito. Se llevan de uno en uno: cámbialo por el que llevas en el inventario ${k('inventory')}.`,
@@ -980,13 +986,13 @@ export class Game {
     const p = this.player;
     this.inventory.add(id, n);
     const it = ITEMS[id];
-    // (la munición: la primera vez se enseña; luego, un aviso y ya)
-    if (it.ammo && this.flags['seen:' + id]) {
-      this.ui.toast(MSG.virotes(n), 2.4);
+    // (la munición y el oro: la primera vez se enseña; luego, un aviso y ya)
+    if ((it.ammo || it.oro) && this.flags['seen:' + id]) {
+      this.ui.toast(it.oro ? MSG.oro(n, this.inventory.count(id)) : MSG.virotes(n), 3);
       this.saveGame();
       return;
     }
-    if (it.ammo) this.flags['seen:' + id] = true;
+    if (it.ammo || it.oro) this.flags['seen:' + id] = true;
     // un arma nueva se empuña al recogerla; el escudo, al brazo; una pieza
     // de armadura, si su ranura está vacía
     if (it.weapon && WEAPONS[it.weapon]) {
@@ -1049,7 +1055,7 @@ export class Game {
     p.flasks = p.maxFlasks;
     p.st = p.maxSt;
     this.audio.play('rest');
-    this.ui.toast(MSG.rest, 4);
+    this.ui.toast(it.refugio ? MSG.restRefugio : MSG.rest, 4);
     this.lockTarget = null;
     this.fadeTarget = 0.55;
     this.later(900, () => (this.fadeTarget = 1));

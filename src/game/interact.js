@@ -462,6 +462,25 @@ function itemMesh(id, raw = false) {
     const gem = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.03), objMat('redGlow'));
     gem.position.y = 0.045;
     g.add(r, gem);
+  } else if (id === 'oro') {
+    // los morabetinos: la bolsita de cuero, atada, y unos dinares caídos
+    const bolsa = new THREE.Mesh(new THREE.SphereGeometry(0.06, 7, 5), objMat('leather'));
+    bolsa.scale.set(1, 0.8, 1);
+    bolsa.position.y = 0.045;
+    const nudo = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.026, 0.035, 6), objMat('leather'));
+    nudo.position.y = 0.105;
+    g.add(bolsa, nudo);
+    const gold = objMat('gold');
+    for (const [x, z, r] of [
+      [0.09, 0.02, 0.3],
+      [0.075, -0.06, 1.1],
+      [-0.02, 0.085, 2.0],
+    ]) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.004, 9), gold);
+      m.position.set(x, 0.003, z);
+      m.rotation.set(0.06, r, 0.04);
+      g.add(m);
+    }
   } else if (id === 'tablon') {
     // un tablón suelto, tirado de través (con un clavo torcido)
     const b = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 0.24), objMat('planks'));
@@ -1010,6 +1029,12 @@ export class Interactables {
       // navegación se hizo antes que las puertas)
       if (s.lock && (s.lock.type === 'levers' || s.lock.type === 'lever')) it.box.navSolid = true;
       if (s.lock && s.lock.type === 'lever') this.refreshDoorNav(it);
+      // (las de un refugio, también: cerradas, son muro para las criaturas;
+      // se abren y se vuelven a cerrar, ver cerrar())
+      if (s.refugio) {
+        it.box.navSolid = true;
+        this.refreshDoorNav(it);
+      }
       // (una puerta escondida no se ofrece: se abre desde el otro lado)
       it.hidden = !!s.hidden;
       it.r = s.r ?? 2.2;
@@ -1205,6 +1230,10 @@ export class Interactables {
       // hogar: los enseña y los esconde el guion de la casa (game/house.js)
       it.r = s.r ?? (s.kind === 'npc' ? 2.4 : 1.7);
       it.hidden = true;
+    } else if (s.kind === 'cierre') {
+      // el cerrojo de la trampilla de un refugio (of: la de arriba): se
+      // cierra y se abre desde dentro (game/refugios.js)
+      it.r = s.r ?? 1.3;
     }
     this.list.push(it);
     return it;
@@ -1249,7 +1278,7 @@ export class Interactables {
         it.pull = 0;
         it.obj.userData.arm.rotation.x = LEVER_DOWN;
       }
-      if (it.kind === 'hatch' && it.obj) this.poseHatch(it, flags[it.flag] || it.open ? 1 : 0);
+      if (it.kind === 'hatch' && it.obj) this.poseHatch(it, this.hatchAbierta(it) ? 1 : 0);
       if (it.kind === 'trampa' && flags[it.flag] && !it.done) this.openTrampa(it, true);
       if (it.kind === 'bridge' && flags[it.flag]) this.lowerBridge(it, true);
       if (it.kind === 'board' && flags['board:' + it.win]) it.done = true;
@@ -1473,7 +1502,7 @@ export class Interactables {
     it.target = 1;
     // (en el barrio de los Pellejeros, el Físico entra por las puertas que
     // abres: el paso, a su red)
-    if (it.kind === 'door' && enBarrio(it)) this.refreshDoorNav(it);
+    if (it.kind === 'door' && (enBarrio(it) || it.refugio)) this.refreshDoorNav(it);
     if (instant) {
       it.open = 1;
       this.poseDoor(it, 1);
@@ -1506,6 +1535,66 @@ export class Interactables {
     for (const b of it.leafBoxes || []) b.enabled = false;
     delete this.game.flags['door:' + it.id];
     if (enBarrio(it)) this.refreshDoorNav(it);
+  }
+
+  // Una puerta de refugio se vuelve a cerrar (PLAN_REFUGIOS.md): la hoja, a su
+  // sitio sin golpe; la caja, otra vez muro, también para las criaturas (su
+  // red). No con alguien en el vano.
+  cerrar(it) {
+    const g = this.game,
+      p = g.player;
+    const n = it.axis === 'x' ? p.pos.z - it.z : p.pos.x - it.x,
+      u = it.axis === 'x' ? p.pos.x - it.x : p.pos.z - it.z;
+    if (Math.abs(n) < 0.5 && Math.abs(u) < it.w / 2 + 0.2) {
+      g.ui.toast(MSG.refVano, 3);
+      return;
+    }
+    it.done = false;
+    it.target = 0;
+    it.closing = 1;
+    if (it.box) it.box.enabled = true;
+    for (const b of it.leafBoxes || []) b.enabled = false;
+    delete g.flags['door:' + it.id];
+    this.refreshDoorNav(it);
+    p.playInteract('push', Math.atan2(it.x - p.pos.x, it.z - p.pos.z));
+    g.audio && g.audio.play('doorOpen', { x: it.x, y: it.y, z: it.z });
+    g.later(450, () => g.audio && g.audio.play('bar', { x: it.x, y: it.y, z: it.z }));
+    g.refugios && g.refugios.alCerrar(it);
+    g.saveGame();
+  }
+
+  // ¿Abierta? Las trampillas de un refugio se cierran con su cerrojo (la
+  // bandera cerrada:<flag>), aunque sean de las que siempre estaban abiertas.
+  hatchAbierta(it) {
+    const F = this.game.flags;
+    return !!(F[it.flag] || it.open) && !F['cerrada:' + it.flag];
+  }
+  cierreAbierto(c) {
+    const h = this.list.find((q) => q.id === c.of);
+    return !!h && this.hatchAbierta(h);
+  }
+  // Echa (cerrar = true) o descorre el cerrojo de la trampilla de un refugio:
+  // it, el cerrojo o una de las dos trampillas del par.
+  echarCierre(it, cerrar) {
+    const g = this.game;
+    const h = it.kind === 'cierre' ? this.list.find((q) => q.id === it.of) : it;
+    if (!h) return;
+    if (cerrar) g.flags['cerrada:' + h.flag] = true;
+    else {
+      delete g.flags['cerrada:' + h.flag];
+      g.flags[h.flag] = true;
+    }
+    for (const q of this.list)
+      if (q.kind === 'hatch' && q.flag === h.flag && q.obj) {
+        q.opening = !cerrar;
+        if (cerrar) this.poseHatch(q, 0);
+      }
+    const at = { x: h.x, y: h.y, z: h.z };
+    g.player.playInteract('interact', Math.atan2(h.x - g.player.pos.x, h.z - g.player.pos.z));
+    g.audio && g.audio.play(cerrar ? 'doorOpen' : 'bar', at);
+    g.later(350, () => g.audio && g.audio.play(cerrar ? 'bar' : 'doorOpen', at));
+    if (cerrar) g.refugios && g.refugios.alCerrar(it.kind === 'cierre' ? it : h);
+    g.saveGame();
   }
 
   // La cuarentena del Físico: cierra una puerta y la clava por fuera, por el
@@ -1722,7 +1811,8 @@ export class Interactables {
     let best = null,
       bd = 1e9;
     for (const it of this.list) {
-      if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note') continue;
+      // (las puertas de un refugio, abiertas, se ofrecen para cerrarlas)
+      if (it.done && it.kind !== 'altar' && it.kind !== 'examine' && it.kind !== 'note' && !(it.kind === 'door' && it.refugio)) continue;
       if (it.hidden) continue;
       if (it.unless && this.game.flags[it.unless]) continue;
       if (it.kind === 'trigger') continue;
@@ -1749,6 +1839,9 @@ export class Interactables {
   label(it) {
     switch (it.kind) {
       case 'door':
+        // (las de un refugio: se cierran; y, encendido, se abren con su llave)
+        if (it.refugio && it.done) return 'Cerrar la puerta';
+        if (it.refugio && this.game.refugios && this.game.refugios.encendido(it.refugio)) return 'Abrir';
         if (it.label) return it.label;
         if (it.lock.type === 'cinco') return it.lock.keys.every((k) => this.game.inventory.has(k)) ? 'Echar las cinco llaves' : 'Examinar las cerraduras';
         if (it.lock.type === 'boards') return it.mat === 'barricade' ? 'Examinar la barricada' : 'Examinar la puerta';
@@ -1764,7 +1857,10 @@ export class Interactables {
       case 'note':
         return it.model === 'wall' || it.model === 'stone' ? 'Examinar' : 'Leer';
       case 'altar':
-        return 'Descansar';
+        // (el rincón de la imagen de un refugio: primero se enciende)
+        return it.refugio && this.game.refugios && !this.game.refugios.encendido(it.refugio) ? 'Encender la lamparilla' : 'Descansar';
+      case 'cierre':
+        return this.cierreAbierto(it) ? 'Cerrar la trampilla' : 'Abrir la trampilla';
       case 'fog':
         return 'Atravesar la niebla';
       case 'examine':
@@ -1807,7 +1903,10 @@ export class Interactables {
       case 'puzzle':
         return it.puzzle.label(it);
       case 'hatch': {
-        const op = this.game.flags[it.flag] || it.open;
+        const op = this.hatchAbierta(it);
+        // (la de un refugio, cerrada con su cerrojo: desde arriba se abre;
+        // desde abajo, sólo con el refugio encendido, que es tuyo)
+        if (this.game.flags['cerrada:' + it.flag]) return it.end === 'top' || (this.game.refugios && this.game.refugios.encendido(it.refugio)) ? 'Abrir la trampilla' : 'Examinar la trampilla';
         // (la cuerda del montacargas y otras: sus propios rótulos)
         if (it.labels) return it.labels[it.end === 'top' ? 0 : 1];
         // (la clavada con tablones: con la palanca, se arrancan)
@@ -1836,6 +1935,16 @@ export class Interactables {
         p.playInteract('push');
         g.saveGame();
       };
+      // (la de un refugio: abierta, se cierra; encendido el refugio, se abre
+      // desde cualquier lado, que tienes su llave)
+      if (it.refugio && it.done) {
+        this.cerrar(it);
+        return true;
+      }
+      if (it.refugio && g.refugios && g.refugios.encendido(it.refugio) && L.type !== 'none') {
+        openIt(null, 'unlock');
+        return true;
+      }
       // (msg, sound: lo que se dice y lo que suena al abrirla: la puerta
       // quemada del pasadizo, que se viene abajo)
       if (L.type === 'none') openIt(L.msg ? MSG[L.msg] : null, L.sound ?? (it.mat === 'irongate' ? 'gateOpen' : 'doorOpen'));
@@ -1981,7 +2090,14 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'altar') {
-      g.restAt(it);
+      // (el rincón de la imagen de un refugio sin encender: se enciende, si
+      // ya no queda nadie y todo está cerrado; game/refugios.js)
+      if (it.refugio && g.refugios && !g.refugios.encendido(it.refugio)) g.refugios.encender(it);
+      else g.restAt(it);
+      return true;
+    }
+    if (it.kind === 'cierre') {
+      this.echarCierre(it, this.cierreAbierto(it));
       return true;
     }
     if (it.kind === 'fog') {
@@ -2046,7 +2162,17 @@ export class Interactables {
       return true;
     }
     if (it.kind === 'hatch') {
-      if (g.flags[it.flag] || it.open) g.hatchMove(it);
+      // (la de un refugio, cerrada con su cerrojo: desde arriba se abre; desde
+      // abajo, sólo si el refugio ya es tuyo)
+      if (g.flags['cerrada:' + it.flag]) {
+        if (it.end === 'top' || (g.refugios && g.refugios.encendido(it.refugio))) this.echarCierre(it, false);
+        else {
+          g.ui.toast(MSG.refTrampilla, 4);
+          g.audio && g.audio.play('locked', { x: it.x, y: it.y + 4, z: it.z });
+        }
+        return true;
+      }
+      if (this.hatchAbierta(it)) g.hatchMove(it);
       else if (it.end === (it.opensFrom || 'top') && it.needs && !inv.has(it.needs)) {
         // (clavada: sin la palanca no se mueve)
         g.ui.toast(MSG[it.shutMsg] ?? MSG.hatchShut, 5);
@@ -2129,8 +2255,9 @@ export class Interactables {
     const t = g.time;
     for (const it of this.list) {
       if (it.kind === 'door' && it.closing) {
-        // se cierra de un portazo (muy deprisa) y la tranca cae en su sitio
-        it.open = Math.max(0, it.open - dt * 4.5);
+        // se cierra de un portazo (muy deprisa) y la tranca cae en su sitio;
+        // la de un refugio, la cierras tú, sin golpe
+        it.open = Math.max(0, it.open - dt * (it.refugio ? 1.7 : 4.5));
         this.poseDoor(it, it.open * it.open);
         if (it.open <= 0) it.closing = 0;
       }

@@ -286,6 +286,80 @@ export function imagenSanto(ctx, x, y, z, dir, o = {}) {
   wb.cylinder('candle', x + F[0] * 0.18, y, z + F[1] * 0.18, 0.12, 0.1, 0.012, 10, { ao: false, room, capTop: true, tint: [0.9, 0.86, 0.74] });
 }
 
+// ------------------------------------------------------------------ el rincón de la imagen
+// El de un refugio (PLAN_REFUGIOS.md, §5), en lugar del altar de velas: lo que
+// rezaban los que se encerraron, en el muro (dir: hacia dónde mira). o.imagen:
+// 'tabla' (la tabla pintada, imagenSanto, con o.tex), 'cruz' (dos palos atados
+// con un cordel, la de las casas pobres y los cuerpos de guardia) o
+// 'crucifijo' (el Cristo tallado de las casas de los ricos). Debajo, su
+// repisa y, en ella, el candil de barro, de piquera; del clavo de la imagen
+// cuelga el rosario. La llama del candil no va aquí: la enciende
+// game/refugios.js. Devuelve dónde arde (la punta de la piquera).
+export function rinconImagen(ctx, x, y, z, dir, o = {}) {
+  const wb = ctx.wb;
+  const room = o.room;
+  const imagen = o.imagen ?? 'tabla';
+  const rot = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 }[dir];
+  const w = o.w ?? 0.42,
+    h = o.h ?? 0.58,
+    yc = o.yc ?? 1.75;
+  // (la repisa: la de la tabla, o una igual bajo la cruz)
+  const yRep = yc - h / 2 - 0.26;
+  if (imagen === 'tabla') imagenSanto(ctx, x, y, z, dir, { room, velas: 0, tex: o.tex, w, h, yc, seed: o.seed });
+  const BARRO = [0.66, 0.42, 0.3];
+  wb.at(x, y, z, rot, () => {
+    if (imagen !== 'tabla') {
+      // la repisa y sus dos tornapuntas
+      wb.box('wooddark', -0.25, yRep - 0.04, 0, 0.25, yRep, 0.18, { ao: false, room, faces: 'tnsewb', tint: [0.6, 0.5, 0.4] });
+      for (const s of [-0.5, 0.5]) palo(wb, V(s * 0.4, yRep - 0.04, 0.01), V(s * 0.4, yRep - 0.2, 0.14), 0.02, 'wooddark', { room });
+    }
+    if (imagen === 'cruz') {
+      // dos palos de pino descortezados, atados en cruz con un cordel
+      wb.box('wooddark', -0.032, yc - 0.42, 0.01, 0.032, yc + 0.36, 0.055, { ao: false, room, faces: 'tnsewb', tint: [0.92, 0.78, 0.6] });
+      wb.box('wooddark', -0.22, yc + 0.07, 0.05, 0.22, yc + 0.13, 0.09, { ao: false, room, faces: 'tnsewb', tint: [0.92, 0.78, 0.6] });
+      for (const dy of [-0.012, 0.02]) wb.box('rope', -0.04, yc + 0.07 + dy, 0.09, 0.04, yc + 0.095 + dy, 0.098, { ao: false, room });
+      palo(wb, V(-0.04, yc + 0.09, 0.095), V(0.04, yc + 0.11, 0.095), 0.01, 'rope', { room });
+    } else if (imagen === 'crucifijo') {
+      // la cruz de nogal y el Cristo tallado, con su paño de pureza
+      wb.box('wooddark', -0.025, yc - 0.36, 0.01, 0.025, yc + 0.34, 0.05, { ao: false, room, faces: 'tnsewb', tint: [0.45, 0.32, 0.22] });
+      wb.box('wooddark', -0.2, yc + 0.12, 0.01, 0.2, yc + 0.165, 0.05, { ao: false, room, faces: 'tnsewb', tint: [0.45, 0.32, 0.22] });
+      wb.box('bone', -0.03, yc - 0.18, 0.05, 0.03, yc + 0.12, 0.075, { ao: false, room, tint: [0.86, 0.76, 0.62] });
+      palo(wb, V(-0.03, yc + 0.1, 0.062), V(-0.17, yc + 0.15, 0.062), 0.022, 'bone', { room, tint: [0.86, 0.76, 0.62] });
+      palo(wb, V(0.03, yc + 0.1, 0.062), V(0.17, yc + 0.15, 0.062), 0.022, 'bone', { room, tint: [0.86, 0.76, 0.62] });
+      wb.box('bone', -0.025, yc + 0.12, 0.05, 0.025, yc + 0.17, 0.078, { ao: false, room, tint: [0.86, 0.76, 0.62] });
+      wb.box('clothWhite', -0.035, yc - 0.06, 0.07, 0.035, yc + 0.0, 0.085, { ao: false, room });
+    }
+    // el clavo y el rosario: un lazo de cuentas de boj que cuelga de él, con
+    // su cruz de hueso abajo
+    const cx = imagen === 'tabla' ? w / 2 - 0.02 : 0.16,
+      cy = imagen === 'tabla' ? yc + h / 2 - 0.04 : yc + 0.22;
+    wb.box('iron', cx - 0.008, cy - 0.008, 0.0, cx + 0.008, cy + 0.008, 0.07, { ao: false, room });
+    const N = 26;
+    for (let i = 0; i < N; i++) {
+      const t = i / (N - 1);
+      // (las dos ramas del lazo bajan del clavo y se juntan abajo, un poco
+      // abiertas: la cuenta de en medio es la que pesa)
+      const a = t * Math.PI;
+      const px = cx + Math.sin(a) * 0.045 - 0.02 * t,
+        py = cy - 0.02 - Math.sin(a * 0.5) * 0.3,
+        pz = 0.07 + Math.sin(a) * 0.01;
+      // (una geometría por cuenta: wb.geometry se queda con la que recibe)
+      wb.geometry(i % 9 === 0 ? 'bone' : 'wooddark', new THREE.SphereGeometry(0.011, 5, 4), M4(px, py, pz), { ao: false, room, tint: i % 9 === 0 ? [0.9, 0.84, 0.7] : [0.5, 0.36, 0.22] });
+    }
+    const by = cy - 0.36;
+    wb.box('bone', cx - 0.004, by - 0.09, 0.065, cx + 0.004, by, 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
+    wb.box('bone', cx - 0.025, by - 0.035, 0.065, cx + 0.025, by - 0.027, 0.075, { ao: false, room, tint: [0.9, 0.84, 0.7] });
+    // el candil: la cazoleta de barro, su piquera y el asa
+    wb.cylinder('plaster', 0, yRep, 0.1, 0.05, 0.062, 0.035, 10, { ao: false, room, capTop: true, tint: BARRO });
+    wb.cylinder('black', 0, yRep + 0.035, 0.1, 0.03, 0.03, 0.004, 10, { ao: false, room, capTop: true, grime: false });
+    wb.box('plaster', 0.04, yRep + 0.012, 0.085, 0.1, yRep + 0.034, 0.115, { ao: false, room, tint: BARRO });
+    palo(wb, V(-0.06, yRep + 0.03, 0.1), V(-0.085, yRep + 0.055, 0.1), 0.014, 'plaster', { room, tint: BARRO });
+  });
+  // la punta de la piquera, en el mundo
+  const p = V(0.095, yRep + 0.05, 0.1).applyAxisAngle(V(0, 1, 0), rot);
+  return { x: x + p.x, y: y + p.y, z: z + p.z };
+}
+
 // ------------------------------------------------------------------ el aguamanil
 // El soporte de tres patas, de hierro, con la jofaina de azófar arriba, el
 // jarro en su anillo de abajo y el paño colgado.
