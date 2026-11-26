@@ -2,7 +2,8 @@
 //  - lo que tiene: su rincón (la imagen, el candil y su llama), sus puertas,
 //    trampillas y ventanas, los que se encerraron dentro;
 //  - encenderlo: no con alguien dentro ni con algo abierto; muertos los de
-//    dentro y cerrado todo, se enciende;
+//    dentro y cerrado todo, se enciende (y los de dentro se pueden matar: los
+//    del techo se cuelgan a menos de cinco metros, que se sueltan);
 //  - lo que importa: al caer te levantas en su rincón y, con todo cerrado,
 //    ninguna criatura de fuera llega andando hasta ahí (su navegación: las
 //    puertas cerradas de un refugio son muro) ni te percibe al aparecer (su
@@ -59,6 +60,9 @@ const out = await p.evaluate((SOLO) => {
     r.zona = zn && zn.id;
     if (!A.candil || !R.fuego || !R.luz) r.fallos.push('sin candil o sin su llama');
     r.dentro = R.criaturas.length;
+    // (las del techo: si se cuelgan a más de cinco metros de su suelo, no se
+    // sueltan nunca, y el refugio no se podría encender jugando)
+    for (const e of R.criaturas) if (e.spec.idle === 'ceiling' && e.home.y - e.floorY >= 4.9) r.fallos.push(`${e.spec.id} cuelga a ${(e.home.y - e.floorY).toFixed(1)} m de su suelo: no se suelta nunca`);
     r.puertas = R.puertas.length;
     r.trampillas = R.cierres.length;
     r.ventanas = R.tablas.length + R.puertas.filter((d) => d.ventana).length;

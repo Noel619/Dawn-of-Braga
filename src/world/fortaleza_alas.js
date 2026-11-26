@@ -69,6 +69,18 @@ function despensa(ctx, S, L) {
   L.interact.push({ kind: 'door', id: 'd_cocina', x: SO.x1 - SO.t / 2, y: 0, z: zk, w: 1.6, h: 3.2, arch: true, axis: 'z', mat: 'planks', hinge: 1, swing: -1, plane: SO.x1 - SO.t, inset: 0.06, ajar: 0.15, lock: { type: 'none' }, refugio: 'despensa' });
   // la botillería (al oeste) y la despensa (al este)
   wb.setRoom(room);
+  // la viga de colgar, de muro a muro, con sus jamones: de ella se cuelga lo
+  // que acecha (el techo es de tablas, sin nada que agarrar: el rastrero se
+  // colgaba de lo que hay encima, a once metros, y no se soltaba nunca)
+  {
+    const zv = z0 + 3.2;
+    wb.box('timber', x0, 4.0, zv - 0.15, x1, 4.25, zv + 0.15, { ao: false, faces: 'nsewb', room, tint: [0.62, 0.54, 0.46] });
+    ctx.col.add(x0, 4.0, zv - 0.15, x1, 4.25, zv + 0.15);
+    for (const hx of [x0 + 2.6, x0 + 3.4, x0 + 9.0]) {
+      wb.box('rope', hx - 0.01, 3.55, zv - 0.01, hx + 0.01, 4.0, zv + 0.01, { ao: false, room });
+      P.ellipsoid(ctx, 'skinCorrupt', hx, 3.3, zv, 0.15, 0.28, 0.11, [0.72, 0.42, 0.36], { room });
+    }
+  }
   for (let i = 0; i < 2; i++) P.cask(ctx, x0 + 1.0, 0, z0 + 1.6 + i * 1.6, Math.PI / 2, { room });
   P.cask(ctx, x0 + 2.4, 0, z1 - 1.0, 0, { room });
   for (let i = 0; i < 5; i++) P.jar(ctx, x0 + 5 + i * 0.8, 0, z1 - 0.6, 1.1 + (i % 2) * 0.2, { room, broken: i === 3 });
